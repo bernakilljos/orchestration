@@ -7,7 +7,9 @@
       "Edit(*)",
       "Glob(*)",
       "Grep(*)",
-      "mcp__*"
+      "mcp__*",
+      "Bash(cp /c/work/orchestration_v1/.claude/settings.json /c/work/lottoclaude/.claude/settings.json)",
+      "Bash(cp /c/work/orchestration_v1/.claude/settings.local.json /c/work/lottoclaude/.claude/settings.local.json)"
     ],
     "deny": []
   },

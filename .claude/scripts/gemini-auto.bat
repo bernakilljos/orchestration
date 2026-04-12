@@ -95,6 +95,8 @@ for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Date -Format yyyy
 set "DOCS_DATE_DIR=%PROJECT_ROOT%\docs\!TODAY!"
 if not exist "!DOCS_DATE_DIR!" mkdir "!DOCS_DATE_DIR!" >nul 2>&1
 
+set "IDLE_COUNT=0"
+
 :LOOP
 rem --- Stop 파일 체크 ---
 if exist "%PROJECT_ROOT%\.claude\tasks\stop" (
@@ -189,12 +191,20 @@ for %%F in ("%PROJECT_ROOT%\docs\implementation-report*.md") do (
 )
 
 rem --- No report: fall back to general verify ---
-echo [Verifier-%CHILD_ID%] No report found. Waiting 60s...
+rem --- Idle timeout: 1시간 대기 시 자동 종료 ---
+set /a IDLE_COUNT+=1
+if !IDLE_COUNT! GEQ 60 (
+  echo [Verifier-%CHILD_ID%] Idle timeout (1h). Exiting.
+  popd
+  goto END
+)
+echo [Verifier-%CHILD_ID%] No report found. Waiting 60s... (idle: !IDLE_COUNT!/60)
 popd
 timeout /t 60 /nobreak >nul
 goto LOOP
 
 :REPORT_PICKED
+set "IDLE_COUNT=0"
 echo [Verifier-%CHILD_ID%] Verifying: %PICKED_REPORT%
 
 rem --- Retry loop: up to 3 attempts ---
