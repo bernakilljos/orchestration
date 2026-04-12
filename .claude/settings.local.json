@@ -7,11 +7,7 @@
       "Edit(*)",
       "Glob(*)",
       "Grep(*)",
-      "mcp__*",
-      "mcp__playwright__browser_navigate",
-      "mcp__playwright__browser_take_screenshot",
-      "Bash(rm /c/work/orchestration_v1/\\\\!_TMPRUN\\\\!)",
-      "Bash(rm /c/work/orchestration_v1/.claude/tasks/locks/task-instruction.lock)"
+      "mcp__*"
     ],
     "deny": []
   },
