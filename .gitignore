@@ -53,3 +53,7 @@ _vr_work_*/
 Thumbs.db
 Desktop.ini
 .DS_Store
+!_TMPRUN!
+
+# Stale task locks
+.claude/tasks/locks/*.lock

@@ -1,6 +1,6 @@
-# Orchestration Kit - Multi-AI Automation Framework
+# Orchestration Kit v3 - Multi-AI Automation Framework
 
-Claude(Team Lead) + Codex(Implementation) + Gemini(Review) 3 AI role-sharing orchestration.
+Claude(Team Lead) + Codex(Implementation) + Gemini(Review) — 3 AI 역할 분담 오케스트레이션
 
 ---
 
@@ -22,9 +22,21 @@ OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 ```
 
 ### 설치 후
-```
 Claude Code 실행 → 자동으로 환경 구성 완료
-```
+
+---
+
+## 포함 항목
+
+| 카테고리 | 수량 | 내용 |
+|---------|------|------|
+| Skills | 25개 | research, implement, review, deploy, test, design, theme-factory, brand-guidelines, debugging-canvas, web-artifacts, skill-creator, claude-seo, marketing, remotion, owasp-security, ai-handoff, media-enhance 등 |
+| Hooks | 8개 | init, pre-task, post-impl, post-review, pre-deploy, post-deploy, notify, layout-lock, ai-handoff |
+| Agents | 6개 | team-lead, implementer, reviewer, architect, monitor, designer |
+| Plugins | 8개 | superpowers, ui-ux-pro-max, everything-claude-code, awesome-claude-code, get-shit-done, code-review, commit-commands, claude-md-management |
+| MCP | 7+6개 | context7, playwright, thinking, gemini, excel, n8n, light-rag + Figma, Gamma, Gmail, Calendar, HuggingFace, Mermaid |
+| Tools | 2개 | video-restore (CodeFormer+Real-ESRGAN), media-enhance (동영상/오디오/이미지/PDF/PPT) |
+| Advisor | Sonnet+Opus | claude-auto에서 자동 사용 |
 
 ---
 
@@ -32,40 +44,45 @@ Claude Code 실행 → 자동으로 환경 구성 완료
 
 | AI | Role | How |
 |----|------|-----|
-| Claude | Team Lead: design, judge, approve | Direct in session |
-| Codex | Implementer: 500+ line implementation | `codex-a --auto` |
-| Gemini | Reviewer: verify, search, supplement | `gemini-a --verify` |
+| Claude | Team Lead: design, judge, approve, 보완/고도화 | Direct in session |
+| Codex | Implementer: 500+ line 1차 구현 | `codex-a --auto` |
+| Gemini | Reviewer: verify, search, docs | `gemini-a --verify` |
+
+### Handoff Protocol (강제)
+```
+Claude → task-instruction.md + handoff-log.md → Codex
+Codex  → implementation-report.md → Claude (보완)
+Claude → verify-*.md → Gemini
+Gemini → review-result.md → Claude (채택/수정)
+```
 
 ---
 
 ## Pipeline
 
-### Standard Pipeline
 ```
-Request received
-  -> [HOOK-00]  init           First time: detect stack, create folders
-  -> [SKILL-04] context        Summarize 500+ line files first
-  -> [HOOK-01]  pre-task       Register task, lock files, check conflicts
-  -> [SKILL-01] research       Explore files, identify risks
-  -> [AGENT-01] team-lead      Write task-instruction.md
-  -> [SKILL-02] implement      codex-a --auto (or Claude direct for small tasks)
-  -> [HOOK-02]  quality-gate   Build / secret / quality check
-  -> [SKILL-03] review         gemini-a --verify
-  -> [HOOK-03]  post-review    Adopt review, update learning
-  -> [HOOK-04]  pre-deploy     Final check before deploy
-  -> [SKILL-05] deploy         EC2 auto deploy
-  -> [AGENT-05] monitor        Health check loop
+Request → init → research → team-lead → task-instruction.md
+  → Codex 1차 구현 → Claude 보완 → Gemini 검증
+  → Claude 채택 → deploy → monitor
 ```
 
-### Fast Pipeline (parallel - use when starting fresh or simple tasks)
-```
-[Parallel start]
-  -> SKILL-01 research     + SKILL-04 context-summary  (run together)
-  -> AGENT-01 team-lead    write task-instruction.md
-  -> codex-a --auto        implement
-  -> gemini-a --verify     review (skip if low risk)
-  -> Claude adopts         done
-```
+---
+
+## Setup Modules (11단계)
+
+| # | Module | 내용 |
+|---|--------|------|
+| 01 | core | .claude 폴더 + CLAUDE.md 복사 |
+| 02 | defender | Windows Defender 예외 |
+| 03 | settings | Claude 글로벌 설정, PS UTF-8 |
+| 04 | commands | codex-a, gemini-a 글로벌 설치 |
+| 05 | services | status-push, remote-agent |
+| 06 | prereqs | Node.js, Claude Code, Cloudflared |
+| 07 | github | Git 초기화, GitHub repo 생성 |
+| 08 | plugins | 플러그인 8개 자동 설치 |
+| 09 | finalize | init, npm install, Claude 실행 |
+| 10 | video-restore | CodeFormer + Real-ESRGAN |
+| 11 | media-enhance | 오디오/PDF/PPT 의존성 |
 
 ---
 
@@ -73,110 +90,19 @@ Request received
 
 | Command | Description |
 |---------|-------------|
-| `codex-a` | Codex interactive mode |
-| `codex-a --auto` | Codex reads task-instruction.md and implements |
-| `codex-a --full-auto` | No confirmation prompts |
-| `codex-a --analyze` | Full source analysis |
-| `gemini-a` | Gemini interactive mode |
-| `gemini-a --verify` | Gemini reviews against task-instruction.md |
-| `gemini-a --analyze` | Full source analysis |
-| `gemini-a --loop` | Continuous watch mode (30s interval) |
-
----
-
-## Session Resume
-
-If Claude session is interrupted mid-task:
-```
-1. New session opens
-2. Claude detects .claude/context-cache/session-snapshot.md
-3. Claude outputs: [RESUME] Previous session found
-                   Task: xxx  Completed: research, implement  Next: gemini-a --verify
-                   Continue? [Y/N]
-4. Approve -> resumes from next step
-```
-
-Snapshot is saved automatically at:
-- Context 80% reached
-- Each pipeline step completed
-- User requests save
-
----
-
-## File Structure
-
-```
-orchestration_v1/
-  README.md
-  CLAUDE.md                         <- Master instructions for Claude
-  install.bat                       <- Windows install
-  install.sh                        <- Linux/Mac install
-  .claude/
-    settings.local.json             <- Full permissions
-    deploy-config.env.example       <- Deploy config template
-    tasks/
-      task-instruction.md           <- Task spec (Claude writes this)
-      current-tasks.json
-      task-memory.json
-    context-cache/
-      session-snapshot.md           <- Session resume state
-    agents/
-      agent-01-team-lead.md
-      agent-02-implementer.md
-      agent-03-reviewer.md
-      agent-04-architect.md
-      agent-05-monitor.md
-      agent-06-designer.md
-    skills/
-      skill-01-research.md
-      skill-02-implement.md
-      skill-03-review.md
-      skill-04-context-summary.md
-      skill-05-deploy.md
-      skill-06-test.md
-      skill-07-rollback.md
-      skill-08-design.md
-      skill-09-memory-reset.md
-    hooks/
-      hook-00-init.md
-      hook-01-pre-task.md
-      hook-02-post-impl.md
-      hook-03-post-review.md
-      hook-04-pre-deploy.md
-      hook-05-post-deploy.md
-      hook-06-notify.md
-      hook-07-layout-lock.md
-    scripts/
-      codex-a.bat / codex-a.sh
-      gemini-a.bat / gemini-a.sh
-      init.bat / init.sh
-      deploy.bat / deploy.sh
-      ...
-    learning/
-      failure-patterns.json
-      optimization-rules.json
-```
-
----
-
-## Dev Rules (apply to all projects)
-
-```
-Frontend:  Vue 2.x - no optional chaining (?.) - explicit null checks
-Backend:   Spring Boot 2.x / Node.js Express
-DB:        MSSQL / MySQL / Oracle / SQLite
-Alert:     mapActions("alert",[ADD_ALERT]) / this.ADD_ALERT({message, color})
-No hardcoding: use process.env or config
-No comment containing word "juIn"
-```
+| `codex-a --auto` | Codex가 task-instruction.md 읽어서 구현 |
+| `gemini-a --verify` | Gemini가 구현 결과 검증 |
+| `claude-auto` | Claude 병렬 워커 (Sonnet + Opus advisor) |
+| `codex-auto N` | Codex N개 병렬 워커 |
+| `gemini-auto N` | Gemini N개 병렬 워커 |
 
 ---
 
 ## Extend
 
 ```
-New skill:  .claude/skills/skill-10-name.md  + .claude/scripts/name.bat
+New skill:  .claude/skills/skill-26-name.md
 New agent:  .claude/agents/agent-07-name.md
-New hook:   .claude/hooks/hook-08-name.md
--> Add to CLAUDE.md loading order and insert into pipeline
+New hook:   .claude/hooks/hook-09-name.md
+→ CLAUDE.md Loading Order에 추가
 ```

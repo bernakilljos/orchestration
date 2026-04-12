@@ -67,6 +67,7 @@ Name: "prereqs";     Description: "Node.js / Claude Code / Cloudflared"; Types: 
 Name: "github";      Description: "Git 초기화 + GitHub 연동";          Types: full custom
 Name: "plugins";     Description: "Claude 플러그인";                    Types: full custom
 Name: "videorestore"; Description: "동영상 복원 (CodeFormer + Real-ESRGAN)"; Types: full custom
+Name: "mediaenhance"; Description: "미디어 화질 개선 (오디오/PDF/PPT)"; Types: full custom
 
 [Files]
 ; --- Core: .claude 폴더 전체 ---
@@ -110,6 +111,9 @@ Name: "{app}\.claude\tasks\locks"
 Name: "{app}\.claude\tasks\done"
 Name: "{app}\.claude\context-cache"
 Name: "{app}\tools\video-restore"
+Name: "{app}\tools\media-enhance"
+Name: "{app}\tools\media-enhance\enhancers"
+Name: "{app}\tools\media-enhance\utils"
 
 [Run]
 ; --- Post-install: 각 모듈 실행 (프로그레스바 표시) ---
@@ -121,6 +125,7 @@ Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\06-prereqs.bat"""; Stat
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\07-github.bat"" ""{app}"""; StatusMsg: "Git / GitHub 설정..."; Components: github; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\08-plugins.bat"" ""{app}"" ""{app}\"""; StatusMsg: "Claude 플러그인 설치..."; Components: plugins; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\10-video-restore.bat"" ""{app}"""; StatusMsg: "동영상 복원 도구 설치 (CodeFormer + Real-ESRGAN)..."; Components: videorestore; Flags: runhidden waituntilterminated
+Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\11-media-enhance.bat"" ""{app}"""; StatusMsg: "미디어 화질 개선 도구 설치 (오디오/PDF/PPT)..."; Components: mediaenhance; Flags: runhidden waituntilterminated
 
 ; --- 설치 완료 후 선택적 실행 ---
 Filename: "{cmd}"; Parameters: "/k cd /d ""{app}"" && claude --dangerously-skip-permissions"; Description: "Claude 바로 실행"; Flags: postinstall nowait skipifsilent unchecked
