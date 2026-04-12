@@ -39,7 +39,7 @@ for %%P in (claude-md-management code-review commit-commands) do (
 )
 
 rem --- Superpowers marketplace + plugin ---
-echo [+] Superpowers plugin...
+echo [+] Superpowers + community plugins...
 echo "!PLUGIN_LIST!" | findstr /C:"superpowers" >nul 2>&1
 if errorlevel 1 (
   echo       Adding superpowers marketplace...
@@ -52,6 +52,19 @@ if errorlevel 1 (
      if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
 ) else (
   echo       [OK] superpowers
+)
+
+rem --- Community plugins (누락분만 설치) ---
+for %%P in (ui-ux-pro-max everything-claude-code awesome-claude-code get-shit-done) do (
+  echo "!PLUGIN_LIST!" | findstr /C:"%%P" >nul 2>&1
+  if errorlevel 1 (
+    echo       Installing %%P...
+    powershell -NoProfile -Command ^
+      "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
+       if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+  ) else (
+    echo       [OK] %%P
+  )
 )
 
 :COPY_GUIDE

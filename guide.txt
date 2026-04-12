@@ -4,33 +4,39 @@
 
 --- INSTALL ---
 
-  Install to a project (copy only):
+  방법 1: setup.exe (추천 — GUI 위자드)
+    https://github.com/bernakilljos/orchestration/releases
+    → OrchestrationKit-Setup.exe 다운로드 → 더블클릭
+
+  방법 2: setup.bat (CLI)
+    git clone https://github.com/bernakilljos/orchestration.git
+    cd orchestration
+    setup\setup.bat C:\work\myproject
+
+  방법 3: install.bat (레거시)
     install.bat C:\path\to\project
 
-  Install + source analysis:
-    install.bat anl C:\path\to\project
+  방법 4: 사일런트 설치
+    OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 
-  Install in current folder:
-    install.bat anl .
-
-  Restart services only (status-push + remote-agent):
+  서비스만 재시작:
     install.bat restart
-
-  Linux/Mac:
-    bash install.sh /path/to/project
 
   * codex-a, gemini-a are auto-registered as global commands
   * Claude global settings (bypassPermissions) auto-configured
   * API keys checked (ANTHROPIC/OPENAI/GEMINI_API_KEY)
-  * MCP servers auto-installed on first Claude session
-    (reads docs/CLAUDE_SETUP_GUIDE.md → configures → deletes)
+  * MCP servers: context7, playwright, thinking, gemini, excel, n8n, light-rag
+  * Plugins: superpowers, ui-ux-pro-max, everything-claude-code,
+             awesome-claude-code, get-shit-done, code-review, commit-commands
+  * Advisor mode: claude-auto uses Sonnet + Opus advisor
 
 --- FIRST RUN (New PC) ---
 
-  1. install.bat C:\path\to\project
+  1. setup.exe 또는 install.bat 실행
   2. Claude starts automatically
   3. Claude reads CLAUDE_SETUP_GUIDE.md:
-     - Installs MCP servers (context7, playwright, thinking)
+     - Installs MCP servers (context7, playwright, thinking, excel, n8n, light-rag)
+     - Installs plugins (superpowers, ui-ux-pro-max, etc.)
      - Verifies API keys and global settings
      - Deletes guide after setup
   4. Ready to work — identical environment on every PC
@@ -350,5 +356,75 @@
   task-review- lock 중복 생성 (task-review-task-review-...lock):
     → codex-auto.bat 버그 수정됨 (v3.1+)
     → 남은 파일 수동 삭제: del /Q .claude\tasks\locks\task-review-task-review-*.lock
+
+--- SKILLS (21개) ---
+
+  [Core Pipeline]
+  01 research            파일 탐색, 리스크 식별
+  02 implement           코드 구현 (codex-auto 연동)
+  03 review              코드 리뷰 (gemini-auto 연동)
+  04 context-summary     500줄+ 파일 요약
+  05 deploy              EC2 배포
+  06 test                테스트 자동화
+  07 rollback            배포 롤백
+  08 design              디자인 에셋 생성
+  09 memory-reset        세션 메모리 저장
+  10 quality-verify      성능/품질 검증
+
+  [Meta]
+  11 personas            페르소나 전환
+  12 domain-detect       도메인 자동 감지
+  13 parallel-dispatch   병렬 디스패치
+  14 auto-detail         짧은 요청 자동 확장
+
+  [Design & Brand]
+  15 theme-factory       테마/디자인 시스템 자동 생성
+  16 brand-guidelines    브랜드 가이드라인 관리
+
+  [Debug & Preview]
+  17 debugging-canvas    버그 시각적 분석 (Mermaid 다이어그램)
+  18 web-artifacts       HTML/CSS 미리보기 생성
+
+  [Meta & Marketing]
+  19 skill-creator       새 스킬 자동 생성 (메타 스킬)
+  20 claude-seo          SEO 분석/최적화
+  21 marketing           마케팅 콘텐츠 생성
+
+--- PLUGINS ---
+
+  [Auto-installed by setup]
+  claude-md-management       CLAUDE.md 품질 관리
+  code-review                PR 코드리뷰
+  commit-commands            git commit/push/PR
+  superpowers                TDD/계획/리뷰 자동화
+  ui-ux-pro-max              UI/UX 디자인 고급
+  everything-claude-code     올인원 확장
+  awesome-claude-code        커뮤니티 베스트
+  get-shit-done              실행 중심 워크플로우
+
+--- MCP SERVERS ---
+
+  [Auto-installed]
+  context7                   라이브러리 공식 문서 조회
+  playwright                 브라우저 자동화
+  thinking                   단계별 추론
+  gemini                     Gemini API 직접 호출
+
+  [Auto-installed (new)]
+  excel                      Excel/CSV 읽기·쓰기
+  n8n                        워크플로우 자동화
+  light-rag                  경량 문서 검색/참조
+
+  [Auto-connected (claude.ai)]
+  Figma, Gamma, Gmail, Google Calendar, Hugging Face, Mermaid Chart, Canva
+
+--- ADVISOR MODE ---
+
+  claude-auto가 자동으로 advisor 모드 사용:
+    실행: claude-sonnet-4-6 (빠르고 저렴)
+    조언: claude-opus-4-6 (복잡한 설계/판단)
+
+  수동으로:
+    claude --model claude-sonnet-4-6 --advisor claude-opus-4-6
 
 ============================================================

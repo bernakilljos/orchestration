@@ -145,6 +145,15 @@ claude mcp add -s user thinking -- npx -y @anthropic/thinking-mcp
 # Gemini MCP - Direct Gemini model access (second opinion, code review, large context)
 # API key is set separately after install (uses GEMINI_API_KEY)
 claude mcp add gemini -s user -e GEMINI_API_KEY=your-key -- npx -y @rlabs-inc/gemini-mcp
+
+# Excel MCP - Excel/CSV 파일 읽기·쓰기·분석
+claude mcp add excel -s user -- npx -y excel-mcp-server
+
+# n8n MCP - n8n 워크플로우 자동화 연동
+claude mcp add n8n -s user -- npx -y n8n-mcp-server
+
+# Light RAG - 경량 문서 검색/참조 (context7 보강)
+claude mcp add light-rag -s user -- npx -y light-rag-mcp
 ```
 
 > Note: claude.ai official integrations (Figma, Gamma, Gmail, Google Calendar, Hugging Face, Mermaid Chart, Canva) are auto-connected after login — no manual setup needed.
@@ -171,6 +180,12 @@ claude plugin install commit-commands        # git commit/push (/commit, /commit
 # Superpowers — TDD/계획/리뷰 자동화 프레임워크
 claude plugin marketplace add obra/superpowers-marketplace
 claude plugin install superpowers@superpowers-marketplace
+
+# Community Plugins
+claude plugin install ui-ux-pro-max          # UI/UX 디자인 고급 스킬
+claude plugin install everything-claude-code  # Claude Code 올인원 확장
+claude plugin install awesome-claude-code     # 커뮤니티 검증 스킬 모음
+claude plugin install get-shit-done           # 실행 중심 빠른 구현
 ```
 
 ### Superpowers Plugin 사용법

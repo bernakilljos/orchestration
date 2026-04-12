@@ -502,6 +502,11 @@ Each PC may have a different project root path.
 .claude/skills/skill-14-auto-detail.md
 .claude/skills/skill-15-theme-factory.md
 .claude/skills/skill-16-brand-guidelines.md
+.claude/skills/skill-17-debugging-canvas.md
+.claude/skills/skill-18-web-artifacts.md
+.claude/skills/skill-19-skill-creator.md
+.claude/skills/skill-20-claude-seo.md
+.claude/skills/skill-21-marketing.md
 .claude/learning/optimization-rules.json
 .claude/learning/failure-patterns.json
 ```

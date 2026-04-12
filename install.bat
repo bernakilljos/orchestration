@@ -414,6 +414,12 @@ if not errorlevel 1 (
     echo       Installing superpowers...
     powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','superpowers@superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
   )
+  for %%P in (ui-ux-pro-max everything-claude-code awesome-claude-code get-shit-done) do (
+    echo "!PLUGIN_LIST_CACHE!" | findstr /C:"%%P" >nul 2>&1 || (
+      echo       Installing %%P...
+      powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+    )
+  )
   echo       Plugins Done
 ) else (
   echo [WARN] claude not found - plugins will be installed after Claude install
