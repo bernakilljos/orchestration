@@ -509,6 +509,8 @@ Each PC may have a different project root path.
 .claude/skills/skill-21-marketing.md
 .claude/skills/skill-22-remotion.md
 .claude/skills/skill-23-owasp-security.md
+.claude/skills/skill-24-ai-handoff.md
+.claude/hooks/hook-08-ai-handoff.md
 .claude/learning/optimization-rules.json
 .claude/learning/failure-patterns.json
 ```

@@ -217,7 +217,7 @@ where git >nul 2>&1
 if errorlevel 1 goto SP_SKIP_GIT
 echo       Attempting to download latest status-push.ps1 from GitHub...
 set "SP_DEST=!REAL_USERPROFILE!\.claude\status-push.ps1"
-powershell -NoProfile -Command "try { $pat=[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User'); $headers=@{Accept='application/vnd.github.v3.raw'}; if($pat){$headers['Authorization']=('token ' + $pat)}; $url='https://api.github.com/repos/pjt-orchestration/orchestration/contents/status-push.ps1'; $r=Invoke-WebRequest -Uri $url -Headers $headers -TimeoutSec 10 -ErrorAction Stop; [System.IO.File]::WriteAllBytes('!SP_DEST!', $r.Content); Write-Host '      Latest downloaded' } catch { Write-Host '      GitHub download failed - using kit version' }" 2>nul
+powershell -NoProfile -Command "try { $pat=[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User'); $headers=@{Accept='application/vnd.github.v3.raw'}; if($pat){$headers['Authorization']=('token ' + $pat)}; $url='https://api.github.com/repos/bernakilljos/orchestration/contents/status-push.ps1'; $r=Invoke-WebRequest -Uri $url -Headers $headers -TimeoutSec 10 -ErrorAction Stop; [System.IO.File]::WriteAllBytes('!SP_DEST!', $r.Content); Write-Host '      Latest downloaded' } catch { Write-Host '      GitHub download failed - using kit version' }" 2>nul
 :SP_SKIP_GIT
 echo [LOG] github done %TIME% >> "!LOGFILE!"
 

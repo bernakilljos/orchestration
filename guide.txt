@@ -357,7 +357,7 @@
     → codex-auto.bat 버그 수정됨 (v3.1+)
     → 남은 파일 수동 삭제: del /Q .claude\tasks\locks\task-review-task-review-*.lock
 
---- SKILLS (21개) ---
+--- SKILLS (24개) + HOOKS (8개) ---
 
   [Core Pipeline]
   01 research            파일 탐색, 리스크 식별
@@ -393,6 +393,10 @@
   [Video & Security]
   22 remotion            React 프로그래매틱 동영상 생성
   23 owasp-security      OWASP Top 10 보안 감사
+
+  [Multi-AI Coordination]
+  24 ai-handoff          Claude↔Codex↔Gemini 강제 인수인계
+     + hook-08           handoff 프로토콜 검증 (산출물 미생성 시 차단)
 
 --- PLUGINS ---
 
