@@ -511,6 +511,7 @@ Each PC may have a different project root path.
 .claude/skills/skill-23-owasp-security.md
 .claude/skills/skill-24-ai-handoff.md
 .claude/skills/skill-25-media-enhance.md
+.claude/skills/skill-26-file-protection.md
 .claude/hooks/hook-08-ai-handoff.md
 .claude/learning/optimization-rules.json
 .claude/learning/failure-patterns.json

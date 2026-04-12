@@ -159,7 +159,31 @@ goto LOOP
 :TASK_PICKED
 set "IDLE_COUNT=0"
 echo [Worker-%CHILD_ID%] Picked: %PICKED_TASK%
+
+rem --- 지시서 원본 보호: 읽기 전용 + 백업 ---
+for %%F in ("%PICKED_TASK%") do (
+  attrib +r "%%F" >nul 2>&1
+  if not exist "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" (
+    copy /Y "%%F" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF.bak" >nul 2>&1
+  )
+)
+
 call codex-a --auto "%PICKED_TASK%"
+
+rem --- 읽기 전용 해제 ---
+for %%F in ("%PICKED_TASK%") do (
+  attrib -r "%%F" >nul 2>&1
+)
+
+rem --- 지시서가 삭제/손상됐으면 백업에서 복원 ---
+for %%F in ("%PICKED_TASK%") do (
+  if not exist "%%F" (
+    if exist "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF.bak" (
+      copy /Y "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF.bak" "%%F" >nul 2>&1
+      echo [Worker-%CHILD_ID%] [WARN] Task file was deleted by codex - restored from backup
+    )
+  )
+)
 
 rem --- Clean up lock after completion ---
 for %%F in ("%PICKED_TASK%") do (
