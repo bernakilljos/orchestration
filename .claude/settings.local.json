@@ -11,7 +11,9 @@
       "Bash(cp /c/work/orchestration_v1/.claude/settings.json /c/work/lottoclaude/.claude/settings.json)",
       "Bash(cp /c/work/orchestration_v1/.claude/settings.local.json /c/work/lottoclaude/.claude/settings.local.json)",
       "Bash(cp /c/work/orchestration_v1/.claude/hooks/post-impl-verify.sh /c/work/lottoclaude/.claude/hooks/)",
-      "Bash(cp /c/work/orchestration_v1/.claude/hooks/protect-critical-files.sh /c/work/lottoclaude/.claude/hooks/)"
+      "Bash(cp /c/work/orchestration_v1/.claude/hooks/protect-critical-files.sh /c/work/lottoclaude/.claude/hooks/)",
+      "Bash(cp /c/work/orchestration_v1/.claude/scripts/codex-auto.bat /c/work/lottoclaude/.claude/scripts/)",
+      "Bash(cp /c/work/orchestration_v1/.claude/scripts/gemini-auto.bat /c/work/lottoclaude/.claude/scripts/)"
     ],
     "deny": []
   },

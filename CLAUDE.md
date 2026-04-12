@@ -513,6 +513,16 @@ Each PC may have a different project root path.
 .claude/skills/skill-25-media-enhance.md
 .claude/skills/skill-26-file-protection.md
 .claude/skills/skill-27-mandatory-verify.md
+.claude/skills/skill-28-changelog.md
+.claude/skills/skill-29-api-tester.md
+.claude/skills/skill-30-docker.md
+.claude/skills/skill-31-i18n.md
+.claude/skills/skill-32-db-migration.md
+.claude/skills/skill-33-github-actions.md
+.claude/skills/skill-34-code-docs.md
+.claude/skills/skill-35-performance-profiler.md
+.claude/skills/skill-36-data-viz.md
+.claude/skills/skill-37-error-tracker.md
 .claude/hooks/hook-08-ai-handoff.md
 .claude/hooks/post-impl-verify.sh
 .claude/hooks/protect-critical-files.sh
