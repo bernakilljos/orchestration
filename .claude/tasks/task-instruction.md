@@ -1,82 +1,25 @@
-# Task: video-restore.py 고도화 구현
+# Task Instruction — [Task Title]
 
 ## Goal
-`tools/video-restore.py`를 실제 프로덕션 수준으로 고도화한다.
-현재 기본 틀만 있고, CodeFormer/Real-ESRGAN 연동이 pip fallback 수준이다.
-완전한 동작 + 에러 핸들링 + 진행률 표시가 필요하다.
+[What to build — be specific]
 
 ## Assigned Agent
-- Implementer: **Codex** (1차 구현)
-- Reviewer: **Gemini** (검증)
-- Final: **Claude** (보완/고도화)
+- Implementer: Codex (or Claude for small tasks)
+- Reviewer: Gemini
 
-## 현재 파일 위치
-- `tools/video-restore.py` (기존 파일 수정)
-
-## 기술 스택
-- Python 3.8+, CodeFormer, Real-ESRGAN, FFmpeg, PyTorch (CUDA/CPU)
-
-## 구현 요구사항
-
-### 1. --check / --install 모드
-- `--check`: Python, GPU(nvidia-smi), FFmpeg, CodeFormer, Real-ESRGAN 체크
-- `--install`: 미설치 항목 자동 설치 (git clone + pip + 모델 다운로드)
-
-### 2. 동영상 파이프라인
-```
-Step 1: FFmpeg → frame_%06d.png + audio.aac
-Step 2: CodeFormer → 얼굴 복원 + GFPGAN fallback
-  - detection_model: YOLOv5l (옆모습 감지율 높음)
-  - 정면 얼굴: w=0.5 (품질 우선)
-  - 옆모습/비스듬: w=0.7~0.8 (원본 보존, 과복원 방지)
-  - 얼굴 크기별 차등: 큰 얼굴 w=0.3~0.5 / 작은 얼굴 w=0.7~0.9
-  - CodeFormer 미감지 → GFPGAN fallback 시도
-Step 3: Real-ESRGAN → 업스케일 (inference_realesrgan.py 또는 pip)
-Step 4: FFmpeg → 프레임 + 오디오 → 출력 (libx264, crf=17)
-```
-
-### 2-1. 얼굴 감지 전략 (중요!)
-```
-문제: 옆모습/비스듬한 각도의 얼굴이 감지 안 됨
-해결:
-  1. detection_model 우선순위: YOLOv5l > retinaface_resnet50 > dlib
-     - YOLOv5l이 옆모습 감지 성능 가장 좋음
-  2. 감지 실패 시 GFPGAN으로 2차 시도 (다른 detector 사용)
-  3. 얼굴 각도 추정 → fidelity weight 자동 조절:
-     - 정면(0~30도): w=0.3~0.5 (강한 복원)
-     - 비스듬(30~60도): w=0.5~0.7 (중간)
-     - 옆모습(60~90도): w=0.8+ (약한 복원, 왜곡 방지)
-  4. --face-weight-map 옵션: 사용자가 직접 w값 매핑 가능
-```
-
-### 3. 이미지 단건: photo.jpg → photo_restored.jpg
-
-### 4. 진행률: tqdm (없으면 커스텀 프로그레스바)
-
-### 5. GPU OOM 대응: FP16 → tile 줄이�� → CPU fallback
-
-### 6. CLI
-```
-video-restore.py input.mp4 [-o out.mp4] [-w 0.5] [--scale 4]
-  [--face-only] [--upscale-only] [--fps 24] [--gpu 0]
-  [--keep-temp] [--model anime] [--install] [--check]
-```
-
-## Allowed Files
-- `tools/video-restore.py` (modify only)
+## Allowed Files (ONLY these may be modified)
+- `src/...` (specify exact files)
 
 ## Prohibited
-- 하드코딩, Windows 비호환, 한글 파일명 깨짐
+- Modifying files not in the allowed list
+- Hardcoding any values
+- Optional chaining (?.) — Vue 2 project
+- config.py / settings.json / .env modification
 
 ## Acceptance Criteria
-- [ ] `--check` 정상
-- [ ] `--install` 자동 설치
-- [ ] 동영상 4단계 파이프라인
-- [ ] 이미지 단건
-- [ ] 진행률 표시
-- [ ] GPU OOM fallback
-- [ ] --face-only / --upscale-only
-- [ ] 한글 파일명 안전
+- [ ] Feature works as specified
+- [ ] No lint errors
+- [ ] Build passes
 
 ## Completion Report
-`docs/implementation-report.md`
+After implementation, write `docs/implementation-report.md`
