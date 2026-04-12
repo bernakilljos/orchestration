@@ -12,12 +12,23 @@ CLI + Streamlit GUI 이중 인터페이스 제공.
 
 ### 동영상 (mp4, avi, mkv, wmv, asf, mov)
 ```
-도구: FFmpeg + Real-ESRGAN + CodeFormer
+도구: FFmpeg + Real-ESRGAN + CodeFormer + GFPGAN
 파이프라인:
   1. FFmpeg → 프레임 분리 + 오디오 추출
-  2. CodeFormer → 얼굴 복원 (있으면)
-  3. Real-ESRGAN → 해상도 업스케일
-  4. FFmpeg → 프레임 합성 + 오디오 복원
+  2. CodeFormer → 얼굴 복원 (정면/비스듬)
+  3. GFPGAN → 보조 얼굴 복원 (CodeFormer 미감지 보완)
+  4. Real-ESRGAN → 해상도 업스케일
+  5. FFmpeg → 프레임 합성 + 오디오 복원
+
+얼굴 감지 전략 (중요):
+  - detection_model: YOLOv5l (기본) → 옆모습 감지율 높음
+  - 정면 얼굴: CodeFormer w=0.5 (품질 우선)
+  - 옆모습/비스듬: CodeFormer w=0.7 (원본 보존 우선)
+  - 미감지 얼굴: GFPGAN fallback
+  - 얼굴별 fidelity 차등 적용:
+    - 주요 인물 (화면 중앙, 큰 얼굴): w=0.3~0.5
+    - 보조 인물 (화면 가장자리, 작은 얼굴): w=0.7~0.9
+    - 옆모습/뒷모습: w=0.8+ (과도한 복원 방지)
 ```
 
 ### 오디오 (mp3, wav, flac, aac, ogg)

@@ -25,9 +25,28 @@
 ### 2. 동영상 파이프라인
 ```
 Step 1: FFmpeg → frame_%06d.png + audio.aac
-Step 2: CodeFormer → 얼굴 복원 (inference_codeformer.py 또는 모듈 import)
+Step 2: CodeFormer → 얼굴 복원 + GFPGAN fallback
+  - detection_model: YOLOv5l (옆모습 감지율 높음)
+  - 정면 얼굴: w=0.5 (품질 우선)
+  - 옆모습/비스듬: w=0.7~0.8 (원본 보존, 과복원 방지)
+  - 얼굴 크기별 차등: 큰 얼굴 w=0.3~0.5 / 작은 얼굴 w=0.7~0.9
+  - CodeFormer 미감지 → GFPGAN fallback 시도
 Step 3: Real-ESRGAN → 업스케일 (inference_realesrgan.py 또는 pip)
 Step 4: FFmpeg → 프레임 + 오디오 → 출력 (libx264, crf=17)
+```
+
+### 2-1. 얼굴 감지 전략 (중요!)
+```
+문제: 옆모습/비스듬한 각도의 얼굴이 감지 안 됨
+해결:
+  1. detection_model 우선순위: YOLOv5l > retinaface_resnet50 > dlib
+     - YOLOv5l이 옆모습 감지 성능 가장 좋음
+  2. 감지 실패 시 GFPGAN으로 2차 시도 (다른 detector 사용)
+  3. 얼굴 각도 추정 → fidelity weight 자동 조절:
+     - 정면(0~30도): w=0.3~0.5 (강한 복원)
+     - 비스듬(30~60도): w=0.5~0.7 (중간)
+     - 옆모습(60~90도): w=0.8+ (약한 복원, 왜곡 방지)
+  4. --face-weight-map 옵션: 사용자가 직접 w값 매핑 가능
 ```
 
 ### 3. 이미지 단건: photo.jpg → photo_restored.jpg
