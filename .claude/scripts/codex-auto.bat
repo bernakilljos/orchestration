@@ -175,6 +175,18 @@ for %%F in ("%PICKED_TASK%") do (
   attrib -r "%%F" >nul 2>&1
 )
 
+rem --- 필수 검증 (Stage 1,2,3) — 실패 시 완료 처리 안 함 ---
+echo [Worker-%CHILD_ID%] Running mandatory verification...
+if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
+  bash "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
+  if errorlevel 1 (
+    echo [Worker-%CHILD_ID%] [VERIFY FAIL] Errors found — task NOT marked as done
+    for %%F in ("%PICKED_TASK%") do del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
+    goto LOOP
+  )
+  echo [Worker-%CHILD_ID%] [VERIFY OK] All checks passed
+)
+
 rem --- 지시서가 삭제/손상됐으면 백업에서 복원 ---
 for %%F in ("%PICKED_TASK%") do (
   if not exist "%%F" (

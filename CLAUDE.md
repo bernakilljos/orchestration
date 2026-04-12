@@ -512,7 +512,10 @@ Each PC may have a different project root path.
 .claude/skills/skill-24-ai-handoff.md
 .claude/skills/skill-25-media-enhance.md
 .claude/skills/skill-26-file-protection.md
+.claude/skills/skill-27-mandatory-verify.md
 .claude/hooks/hook-08-ai-handoff.md
+.claude/hooks/post-impl-verify.sh
+.claude/hooks/protect-critical-files.sh
 .claude/learning/optimization-rules.json
 .claude/learning/failure-patterns.json
 ```

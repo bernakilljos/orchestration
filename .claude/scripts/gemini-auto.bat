@@ -207,6 +207,16 @@ goto LOOP
 set "IDLE_COUNT=0"
 echo [Verifier-%CHILD_ID%] Verifying: %PICKED_REPORT%
 
+rem --- 사전 검증: 문법/인코딩 자동 체크 ---
+echo [Verifier-%CHILD_ID%] Running pre-verification checks...
+if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
+  bash "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
+  if errorlevel 1 (
+    echo [Verifier-%CHILD_ID%] [PRE-VERIFY FAIL] Code has syntax/encoding errors
+    echo [Verifier-%CHILD_ID%] Gemini will still verify to generate detailed report
+  )
+)
+
 rem --- Retry loop: up to 3 attempts ---
 set "RETRY=0"
 set "VERIFY_OK=false"

@@ -156,13 +156,21 @@ claude -p "You are a worker agent. Read and implement this task file: %PICKED_TA
 
 set "CLAUDE_EXIT=%errorlevel%"
 
+rem --- 필수 검증 (문법/인코딩/보호파일) ---
+echo [Worker-%CHILD_ID%] Running mandatory verification...
+set "VERIFY_PASS=true"
+if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
+  bash "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
+  if errorlevel 1 set "VERIFY_PASS=false"
+)
+
 rem --- Move to done + clean lock ---
 for %%F in ("%PICKED_TASK%") do (
-  if %CLAUDE_EXIT% EQU 0 (
-    move "%%F" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" >nul 2>&1
+  if %CLAUDE_EXIT% EQU 0 if "!VERIFY_PASS!"=="true" (
+    copy /Y "%%F" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" >nul 2>&1
     echo [Worker-%CHILD_ID%] DONE: %%~nxF
   ) else (
-    echo [Worker-%CHILD_ID%] FAILED: %%~nxF (exit code %CLAUDE_EXIT%)
+    echo [Worker-%CHILD_ID%] FAILED: %%~nxF (exit=%CLAUDE_EXIT%, verify=!VERIFY_PASS!)
   )
   del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
 )
