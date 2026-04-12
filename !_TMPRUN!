@@ -1,0 +1,4 @@
+@echo off 
+cd /d "E:\PJT\orchestration_v1 2\orchestration_v1\" 
+call "E:\PJT\orchestration_v1 2\orchestration_v1\install.bat" E:\PJT\ex 
+pause 

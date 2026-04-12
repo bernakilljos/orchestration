@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "mcp__*",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot"
+    ],
+    "deny": []
+  },
+  "autoApproveTools": true
+}

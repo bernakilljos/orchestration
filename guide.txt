@@ -1,0 +1,354 @@
+============================================================
+  Orchestration Kit v3 - Quick Guide
+============================================================
+
+--- INSTALL ---
+
+  Install to a project (copy only):
+    install.bat C:\path\to\project
+
+  Install + source analysis:
+    install.bat anl C:\path\to\project
+
+  Install in current folder:
+    install.bat anl .
+
+  Restart services only (status-push + remote-agent):
+    install.bat restart
+
+  Linux/Mac:
+    bash install.sh /path/to/project
+
+  * codex-a, gemini-a are auto-registered as global commands
+  * Claude global settings (bypassPermissions) auto-configured
+  * API keys checked (ANTHROPIC/OPENAI/GEMINI_API_KEY)
+  * MCP servers auto-installed on first Claude session
+    (reads docs/CLAUDE_SETUP_GUIDE.md → configures → deletes)
+
+--- FIRST RUN (New PC) ---
+
+  1. install.bat C:\path\to\project
+  2. Claude starts automatically
+  3. Claude reads CLAUDE_SETUP_GUIDE.md:
+     - Installs MCP servers (context7, playwright, thinking)
+     - Verifies API keys and global settings
+     - Deletes guide after setup
+  4. Ready to work — identical environment on every PC
+
+--- ANALYSIS MENU (anl mode) ---
+
+  After install, auto-detects stack and asks:
+
+    [C] Codex   - Implementation patterns, improvements
+    [G] Gemini  - Code quality, security, bugs
+    [B] Both    - Codex + Gemini sequential
+    [S] Skip    - Start Claude directly
+
+  * DB / SQL files are NEVER modified → suggestions only
+    (saved to docs\query-suggestions.md)
+
+--- NORMAL WORKFLOW ---
+
+  1. Give Claude a task
+     → Claude writes .claude\tasks\task-instruction.md
+
+  2. For large implementation, run Codex:
+       codex-a --auto
+
+  3. After implementation, run Gemini verification:
+       gemini-a --verify
+
+  * bypass permissions auto-configured (no restart needed)
+  * Existing files are confirmed before modification
+
+--- 5-PHASE IMPLEMENTATION ---
+
+  Phase 1 — Setup:       Config, folder structure, fixtures
+  Phase 2 — Tests:       Write failing tests first (red)
+  Phase 3 — Core:        Implement until tests pass (green)
+  Phase 4 — Integration: Connect frontend ↔ backend
+  Phase 5 — Polish:      Refactor, optimize, lint
+
+  Quick reference:
+    Full feature:  All 5 phases
+    Bug fix:       Phase 2 → 3 → 5
+    Refactor:      Phase 2 → 5
+    UI-only:       Phase 3 → 5
+    Config:        Phase 1 only
+
+--- EXPERT PERSONAS (auto-activated) ---
+
+  8 expert perspectives rotate per phase:
+    Architect    — System design, scalability
+    Security     — Threats, OWASP, input validation
+    Frontend     — UI/UX, accessibility, Vue patterns
+    Backend      — APIs, JPA, Spring Boot patterns
+    Performance  — Bundle size, query optimization
+    QA           — Test coverage, edge cases
+    DevOps       — Deployment, CI/CD, monitoring
+    Refactorer   — Complexity, duplication
+
+  Activated automatically — no manual invocation needed.
+
+--- DOMAIN AUTO-DETECTION ---
+
+  On first install, SKILL-12 auto-detects:
+    Frontend: Vue 2/3, React, Vanilla JS
+    Backend:  Spring Boot, Express, Django/Flask
+    Database: MSSQL, MySQL, Oracle, PostgreSQL
+
+  Result saved to: .claude\context-cache\domain-profile.md
+  Re-detect: ask Claude "re-detect stack"
+
+--- QUALITY & PERFORMANCE VERIFICATION ---
+
+  SKILL-10 checks 4 areas after implementation:
+
+  Frontend Performance:
+    - Bundle size (warn if chunk > 500KB)
+    - Render anti-patterns (v-for without :key, etc.)
+    - Lighthouse metrics (if available)
+
+  Backend Performance:
+    - API response time (< 3s threshold)
+    - DB query anti-patterns (N+1, SELECT *, no index)
+    - JPA-specific checks (EAGER fetch, missing DTO)
+
+  Code Quality:
+    - Method/file size limits
+    - Cyclomatic complexity
+    - Duplication detection
+    - Lint summary
+
+  Integration:
+    - Build time (warn if > 2 min)
+    - Test coverage (>= 60% target)
+    - Dependency vulnerability audit
+
+--- VIBE CODING MULTI-AGENT LOOP ---
+
+  Claude (design/orchestration)
+    ↓
+  Codex x N (parallel implementation)
+    ↓
+  Gemini x N (parallel verify + 1st error fix, max 3 retries)
+    ↓ On Gemini failure
+  Claude (2nd error fix escalation)
+    ↓
+  Loop repeats...
+
+  Daily 09:00 → auto-generate completion report
+  User "stop" → immediately halt
+
+  Guard conditions:
+    Goal achieved         → STOP
+    Gemini retries > 3    → Claude escalation
+    Code quality drop     → git rollback
+    User says "stop"      → Immediately halt
+
+--- PARALLEL EXECUTION (N workers) ---
+
+  Split a large task into subtasks:
+    Claude writes:
+      .claude\tasks\task-01-api.md       [P] parallel
+      .claude\tasks\task-02-store.md     [P] parallel
+      .claude\tasks\task-03-page.md      [S] sequential (depends on 01+02)
+
+  3 AI engines, all parallelizable:
+
+    Claude (orchestrator + implementation):
+      claude-auto                  18 workers (default = agent + skill count)
+      claude-auto 20               20 workers
+      claude-auto 50               50 workers
+      claude-auto 1                single worker mode
+
+    Codex (implementation):
+      codex-auto                   10 workers (default)
+      codex-auto 50                50 workers
+      codex-auto 100               100 workers
+      codex-auto 1                 single worker mode
+
+    Gemini (verification):
+      gemini-auto                  10 verifiers (default)
+      gemini-auto 50               50 verifiers
+      gemini-auto 100              100 verifiers
+      gemini-auto 1                single verifier mode
+
+  How it works:
+    - Each worker auto-picks the next unlocked task
+    - File-based locking prevents collision (.claude\tasks\locks\)
+    - Completed tasks move to .claude\tasks\done\
+    - Workers keep polling for new tasks (30s interval)
+    - Writer=1 rule: no two workers modify the same file
+
+  Interactive Claude (normal mode):
+    User gives instruction → Claude splits → spawns subagents internally
+    No manual commands needed — Claude auto-parallelizes via Agent tool
+
+  Full auto (user away):
+    Terminal 1: claude-auto 20       Claude workers
+    Terminal 2: codex-auto 50        Codex workers
+    Terminal 3: gemini-auto 50       Gemini verifiers
+    → All 3 engines running in parallel, 120 total workers
+
+--- CODEX-A USAGE ---
+
+  Interactive:         codex-a
+  Auto (task):         codex-a --auto
+  Source analysis:     codex-a --analyze
+  Fully automated:     codex-a --full-auto
+
+  * Uses PROJECT_ROOT env var or current directory
+  * Always run from the project root folder
+
+--- GEMINI-A USAGE ---
+
+  Interactive:         gemini-a
+  Verify:              gemini-a --verify
+  Source analysis:     gemini-a --analyze
+  Continuous watch:    gemini-a --loop
+  Full auto report:    gemini-a --full-auto
+
+  * Uses PROJECT_ROOT env var or current directory
+  * Always run from the project root folder
+
+--- DESIGN WORKFLOW ---
+
+  Check design references:
+    design.bat --check
+
+  Canva design generation (banner/graphics):
+    design.bat --canva
+
+  DALL-E image prompt generation:
+    design.bat --image "description"
+
+  Video prompt generation:
+    design.bat --video "description"
+
+  Interactive design session:
+    design.bat
+
+  * Canva / DALL-E / Figma / Sora / Runway / Pika supported
+  * Account/API keys in .claude\deploy-config.env
+  * layouts/ files are AI-locked (HOOK-07 auto-lock)
+
+--- DEPLOY ---
+
+  Deploy:              .claude\scripts\deploy.bat
+  PROD deploy:         .claude\scripts\deploy.bat --confirmed
+  Rollback:            .claude\scripts\rollback.bat
+  Server monitor:      .claude\scripts\monitor.bat
+  Full server check:   .claude\scripts\monitor.bat --all
+
+--- OUTPUT FILES ---
+
+  docs\project-analysis.md        Stack + file analysis
+  docs\codex-analysis.md          Codex analysis result
+  docs\gemini-analysis.md         Gemini analysis result
+  docs\query-suggestions.md       DB/query improvements (DBA review required)
+  docs\review-result.txt          Gemini verification result
+  docs\implementation-report.md   Codex implementation report
+  docs\design-decision.md         Design pattern decisions
+  docs\screens\                   UI screens / image assets
+  docs\screens\videos\            Video assets
+  docs\CLAUDE_SETUP_GUIDE.md      First-run setup (auto-deleted)
+
+--- SETTINGS ---
+
+  Server/API info:  .claude\deploy-config.env  (edit before use)
+  Permissions:      install.bat auto-configures ~/.claude/settings.json
+                    (bypassPermissions + skipDangerousModePermissionPrompt)
+                    Manual: edit ~/.claude/settings.json
+
+  deploy-config.env keys:
+    OPENAI_API_KEY=...
+    VIDEO_PROVIDER=sora|runway|pika
+    VIDEO_API_KEY=...
+    CANVA_ACCOUNT=...
+    FIGMA_TOKEN=...
+
+--- SCOPE (modifiable vs suggest-only) ---
+
+  [Modifiable]
+    Frontend : *.vue *.jsx *.tsx *.js *.ts *.css *.html
+    Backend  : *.java *.cs *.py *.go
+    Config   : *.yml *.json pom.xml
+
+  [Suggest only — no direct modification]
+    DB / SQL : *.sql DDL schema migrations
+    Queries  : MyBatis mapper, JPA JPQL, raw SQL
+    → Results saved to docs\query-suggestions.md
+    → Apply only after DBA review
+
+  [AI-locked — layout lock]
+    layouts/    : Page layout templates
+    components/ : UI component structure
+    → HOOK-07 auto-lock, business logic additions only
+
+--- DASHBOARD ---
+
+  Start dashboard:
+    dashboard.bat                    (opens http://localhost:8787)
+                                     + cloudflared tunnel 자동 시작
+                                     → 외부 URL이 콘솔에 출력됨
+                                     → GitHub에 URL 자동 저장 (각 PC가 읽음)
+
+  Remote screen too large:
+    → Use zoom slider (30~100%) on remote control page
+    → Or reduce capture resolution in remote-agent.ps1: $maxW = 960
+
+  "실행중 1" stuck after task done:
+    → Stale lock file — delete: del /Q .claude\tasks\locks\*.lock
+    → Then force status push on remote PC:
+        powershell -File "%USERPROFILE%\.claude\status-push.ps1"
+
+--- STATUS-PUSH / REMOTE-AGENT ---
+
+  통신 방식 (자동 선택):
+    1순위: 터널 직접 통신 (200ms 실시간)
+    2순위: git push fallback (60초 간격, 방화벽 환경용)
+
+  자동 업데이트:
+    status-push.ps1은 시작 시 GitHub repo에서 최신 버전 자동 다운.
+    install 없이도 최신 기능 적용됨.
+
+  install 없이 수동 업데이트:
+    powershell -NoProfile -Command "$pat=[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User'); git clone --depth 1 https://x:${pat}@github.com/bernakilljos/orchestration-status.git $env:TEMP\orch-upd; Copy-Item $env:TEMP\orch-upd\status-push.ps1 $env:USERPROFILE\.claude\status-push.ps1 -Force; Remove-Item $env:TEMP\orch-upd -Recurse -Force"
+
+  PC 현황에 안 나오는 경우 (status-push 안 돌고 있음):
+
+    방법 1) 탐색기에서 더블클릭:
+      %USERPROFILE%\.claude\status-push-silent.vbs
+
+    방법 2) CMD에서 실행:
+      wscript "%USERPROFILE%\.claude\status-push-silent.vbs"
+
+    방법 3) install.bat restart 실행:
+      install.bat restart
+
+  Registry Run 키 수동 등록 (로그온시 자동 시작):
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "OrchestrationStatusPush" /t REG_SZ /d "wscript.exe \"%USERPROFILE%\.claude\status-push-silent.vbs\"" /f
+
+--- TROUBLESHOOTING ---
+
+  Korean characters broken (garbled):
+    → Re-run install.bat (now uses UTF-8 BOM, not CP949)
+
+  codex-a / gemini-a not found:
+    → Run install.bat again (copies to %APPDATA%\npm)
+    → Or run from project root: .claude\scripts\codex-a.bat
+
+  Wrong project path in codex-a/gemini-a:
+    → Always run from project root folder
+    → Or set PROJECT_ROOT=C:\path\to\project before running
+
+  MCP servers missing:
+    → Delete docs\CLAUDE_SETUP_GUIDE.md check, re-copy from kit
+    → Or manually: claude mcp add -s user context7 -- npx -y @upstash/context7-mcp
+
+  task-review- lock 중복 생성 (task-review-task-review-...lock):
+    → codex-auto.bat 버그 수정됨 (v3.1+)
+    → 남은 파일 수동 삭제: del /Q .claude\tasks\locks\task-review-task-review-*.lock
+
+============================================================

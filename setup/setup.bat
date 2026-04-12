@@ -1,0 +1,146 @@
+@echo off
+chcp 65001 >nul
+rem =====================================================
+rem setup.bat - Orchestration Kit Modular Installer
+rem
+rem Usage:
+rem   setup.bat [path]          Install
+rem   setup.bat anl [path]      Install + source analysis
+rem
+rem Can also be called from setup.exe (Inno Setup)
+rem =====================================================
+
+rem --- Uninstall old npm Claude Code ---
+where volta >nul 2>&1
+if not errorlevel 1 (
+  volta list @anthropic-ai/claude-code 2>nul | findstr /C:"@anthropic-ai/claude-code" >nul 2>&1
+  if not errorlevel 1 call volta uninstall @anthropic-ai/claude-code >nul 2>&1
+  goto SKIP_NPM_UNINSTALL
+)
+where npm >nul 2>&1 || goto SKIP_NPM_UNINSTALL
+call npm list -g @anthropic-ai/claude-code >nul 2>&1 || goto SKIP_NPM_UNINSTALL
+call npm uninstall -g @anthropic-ai/claude-code >nul 2>&1
+:SKIP_NPM_UNINSTALL
+
+rem --- Auto-elevate ---
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+  echo Requesting administrator privileges...
+  echo @echo off > "%TEMP%\_setup_elevate.bat"
+  echo cd /d "%~dp0" >> "%TEMP%\_setup_elevate.bat"
+  echo call "%~f0" %* >> "%TEMP%\_setup_elevate.bat"
+  echo pause >> "%TEMP%\_setup_elevate.bat"
+  powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList @('/k','%TEMP%\_setup_elevate.bat') -Verb RunAs"
+  exit /b
+)
+
+setlocal enabledelayedexpansion
+
+rem --- Log ---
+set "LOGFILE=%TEMP%\orchestration-setup.log"
+echo ============================ > "!LOGFILE!"
+echo  Setup Log: %DATE% %TIME%   >> "!LOGFILE!"
+echo ============================ >> "!LOGFILE!"
+
+rem --- Real user profile ---
+echo (Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1).GetOwner().User > "%TEMP%\_getuser.ps1"
+for /f "tokens=*" %%N in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\_getuser.ps1"') do set "REAL_USERNAME=%%N"
+del "%TEMP%\_getuser.ps1" >nul 2>&1
+if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"
+set "REAL_USERPROFILE=C:\Users\!REAL_USERNAME!"
+
+rem --- Parse args ---
+set ANALYZE_MODE=false
+set TARGET=
+if /i "%~1"=="anl" (
+  set ANALYZE_MODE=true
+  if not "%~2"=="" (set TARGET=%~2) else (set TARGET=%CD%)
+) else (
+  if not "%~1"=="" (set TARGET=%~1) else (set TARGET=%CD%)
+)
+
+rem SCRIPT_DIR = orchestration kit root (parent of setup/)
+set "SETUP_DIR=%~dp0"
+for %%I in ("%SETUP_DIR%..") do set "SCRIPT_DIR=%%~fI\"
+
+:TRIM_TARGET
+if "!TARGET:~-1!"==" "  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
+if "!TARGET:~-1!"=="\"  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
+
+if not exist "%TARGET%" mkdir "%TARGET%" >nul 2>&1
+
+echo.
+echo ============================================================
+echo   Orchestration Kit Setup
+echo ============================================================
+echo   Target : %TARGET%
+echo   Kit    : %SCRIPT_DIR%
+echo ============================================================
+echo.
+
+set "MOD=%SETUP_DIR%modules"
+set "ERRORS=0"
+
+echo [Step 1/9] Core files...
+echo [STEP] 01-core %TIME% >> "!LOGFILE!"
+call "%MOD%\01-core.bat" "%TARGET%" "%SCRIPT_DIR%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 2/9] Defender exclusion...
+echo [STEP] 02-defender %TIME% >> "!LOGFILE!"
+call "%MOD%\02-defender.bat" "!REAL_USERPROFILE!"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 3/9] Settings...
+echo [STEP] 03-settings %TIME% >> "!LOGFILE!"
+call "%MOD%\03-settings.bat" "!REAL_USERPROFILE!" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 4/9] Global commands...
+echo [STEP] 04-commands %TIME% >> "!LOGFILE!"
+call "%MOD%\04-commands.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 5/9] Services...
+echo [STEP] 05-services %TIME% >> "!LOGFILE!"
+call "%MOD%\05-services.bat" "%TARGET%" "%SCRIPT_DIR%" "!REAL_USERPROFILE!"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 6/9] Prerequisites (Node.js, Claude, Cloudflared)...
+echo [STEP] 06-prereqs %TIME% >> "!LOGFILE!"
+call "%MOD%\06-prereqs.bat"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 7/9] GitHub setup...
+echo [STEP] 07-github %TIME% >> "!LOGFILE!"
+call "%MOD%\07-github.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 8/9] Plugins...
+echo [STEP] 08-plugins %TIME% >> "!LOGFILE!"
+call "%MOD%\08-plugins.bat" "%TARGET%" "%SCRIPT_DIR%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 9/10] Video Restoration Tools...
+echo [STEP] 10-video-restore %TIME% >> "!LOGFILE!"
+call "%MOD%\10-video-restore.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 10/10] Finalize...
+echo [STEP] 09-finalize %TIME% >> "!LOGFILE!"
+call "%MOD%\09-finalize.bat" "%TARGET%" "%ANALYZE_MODE%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo.
+echo ============================================================
+if "!ERRORS!"=="0" (
+  echo   Setup Complete! No errors.
+) else (
+  echo   Setup Complete with !ERRORS! warning(s).
+)
+echo   Log: %TEMP%\orchestration-setup.log
+echo ============================================================
+echo [DONE] %TIME% >> "!LOGFILE!"
+pause
+endlocal
+exit /b 0

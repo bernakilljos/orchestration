@@ -1,0 +1,65 @@
+[
+  {
+    "trigger": "새 Vue 페이지 생성",
+    "auto_inject": [
+      "라우터 index.js 등록 체크",
+      "메뉴/사이드바 등록 체크",
+      "API 연결 시 process.env 사용 확인",
+      "smoke test 파일 생성",
+      "기존 페이지 참조 패턴 확인"
+    ]
+  },
+  {
+    "trigger": "Spring Boot API 엔드포인트 추가",
+    "auto_inject": [
+      "Controller 어노테이션 한 줄 압축 형식 적용",
+      "로깅 단일행 형식 적용",
+      "하드코딩 없이 application.yml 참조",
+      "Java 8~11 호환 문법 사용",
+      "JPA/Hibernate 2.x 호환 확인"
+    ]
+  },
+  {
+    "trigger": "기존 파일 수정",
+    "auto_inject": [
+      "변경 영향도 분석 (AGENT-04) 실행",
+      "locked_files 등록 후 시작",
+      "기존 변수명·컬럼명 유지",
+      "TEMP/REAL 등 상태값 의미 유지"
+    ]
+  },
+  {
+    "trigger": "500줄 이상 파일 참조",
+    "auto_inject": [
+      "SKILL-04 context-summary 먼저 실행",
+      "캐시 파일 있으면 원본 대신 캐시 사용",
+      "thinking 30분 초과 시 태스크 재분해"
+    ]
+  },
+  {
+    "trigger": "Codex 호출 전",
+    "auto_inject": [
+      "task-instruction.md 존재 확인",
+      "Vue2 호환 문법 명시 (optional chaining 금지)",
+      "참조 파일 --context로 함께 전달",
+      "구현 예시 포함 여부 확인"
+    ]
+  },
+  {
+    "trigger": "Gemini 검색 포함 리뷰",
+    "auto_inject": [
+      "Vue2 기준 최신 패턴 비교",
+      "Spring Boot 2.x 호환 확인",
+      "보안 취약점 OWASP Top 10 기준 검토"
+    ]
+  },
+  {
+    "trigger": "배포 전",
+    "auto_inject": [
+      "HOOK-04 pre-deploy 실행",
+      "prod 환경은 반드시 수동 승인",
+      "백업 생성 확인",
+      "서버 디스크 85% 미만 확인"
+    ]
+  }
+]

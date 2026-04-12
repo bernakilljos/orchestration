@@ -1,0 +1,35 @@
+[
+  {
+    "name": "writer-violation",
+    "symptoms": "Codex 외 AI가 파일 수정 시도",
+    "detection": "locked_files 체크",
+    "prevention_rules": [
+      "태스크 시작 전 locked_files 등록 필수",
+      "모든 구현은 Codex에게만 위임"
+    ],
+    "severity": "high",
+    "count": 0
+  },
+  {
+    "name": "context-drift",
+    "symptoms": "task-instruction과 다른 방향으로 구현",
+    "detection": "acceptance criteria 미달성",
+    "prevention_rules": [
+      "task-instruction.md에 구현 예시 포함",
+      "Codex 호출 시 reference 파일 함께 전달"
+    ],
+    "severity": "medium",
+    "count": 0
+  },
+  {
+    "name": "secret-exposure",
+    "symptoms": "하드코딩된 키/패스워드 발견",
+    "detection": "post-impl secret-scan",
+    "prevention_rules": [
+      "process.env 또는 config 파일 참조 필수",
+      "task-instruction에 하드코딩 금지 명시"
+    ],
+    "severity": "critical",
+    "count": 0
+  }
+]

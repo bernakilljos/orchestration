@@ -1,0 +1,44 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/search-panel-guard.sh" }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/block-visible-windows.sh" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/check-secrets-lite.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/check-korean-only.sh" }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/check-page-performance.sh" }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "powershell -NoProfile -Command \"$f='.claude/orca-heartbeat'; if(Test-Path '.claude'){[datetime]::Now.ToString('s') | Set-Content $f -Encoding UTF8}\"" }
+        ]
+      }
+    ]
+  }
+}
