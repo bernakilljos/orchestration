@@ -1121,10 +1121,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 _status_store.pop(pc_id, None)
                 _gh_cache.pop(pc_id, None)
                 _deleted_pcs.add(pc_id)
-            # GitHub에서도 삭제 (git push)
+            # GitHub에서도 삭제 (git push) — PAT 없으면 스킵
             def _del_from_gh():
                 import tempfile, shutil
                 pat = get_pat()
+                if not pat:
+                    return
                 repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
                 tmpdir = tempfile.mkdtemp(prefix="gh-del-")
                 try:
@@ -1137,6 +1139,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         subprocess.run(["git","-C",tmpdir,"-c","user.name=dashboard","-c","user.email=auto@bot",
                             "commit","-m",f"remove: {pc_id}"], capture_output=True, timeout=10, check=True)
                         subprocess.run(["git","-C",tmpdir,"push"], capture_output=True, timeout=30, check=True)
+                except Exception as e:
+                    print(f"[WARN] GitHub delete failed: {_mask_pat(e)}")
                 finally:
                     shutil.rmtree(tmpdir, ignore_errors=True)
             threading.Thread(target=_del_from_gh, daemon=True).start()
@@ -1244,6 +1248,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     def _push_cmd_git():
                         import tempfile, shutil
                         pat = get_pat()
+                        if not pat:
+                            return
                         repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
                         tmpdir = tempfile.mkdtemp(prefix="gh-cmd-")
                         try:
@@ -1407,6 +1413,9 @@ def _save_tunnel_url_to_gh():
         _ensure_git()
         pc_id = _local_pc_id()
         pat = get_pat()
+        if not pat:
+            print("[WARN] PAT not set — GitHub URL 저장 스킵")
+            return
         repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
         tmpdir = tempfile.mkdtemp(prefix="gh-url-")
         try:
@@ -1755,10 +1764,12 @@ if __name__=="__main__":
     remote_thread.start()
     # GitHub 원격 PC 폴링 (시작 즉시 + 이후 60초마다)
     def _gh_poll_once():
-        """git clone으로 원격 PC status + 스크린 읽기 (API rate limit 무관)"""
+        """git clone으로 원격 PC status + 스크린 읽기"""
         global _gh_cache
         import tempfile, shutil
         pat = get_pat()
+        if not pat:
+            return
         repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
         tmpdir = tempfile.mkdtemp(prefix="gh-poll-")
         try:
