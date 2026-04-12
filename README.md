@@ -30,8 +30,8 @@ Claude Code 실행 → 자동으로 환경 구성 완료
 
 | 카테고리 | 수량 | 내용 |
 |---------|------|------|
-| Skills | 25개 | research, implement, review, deploy, test, design, theme-factory, brand-guidelines, debugging-canvas, web-artifacts, skill-creator, claude-seo, marketing, remotion, owasp-security, ai-handoff, media-enhance 등 |
-| Hooks | 8개 | init, pre-task, post-impl, post-review, pre-deploy, post-deploy, notify, layout-lock, ai-handoff |
+| Skills | 38개 | 01-14 core pipeline + 15-16 design/brand + 17-18 debug/preview + 19-21 meta/marketing + 22-23 video/security + 24-25 handoff/media + 26-27 protection/verify + 28-37 lifecycle(changelog, api-test, docker, i18n, db-migration, github-actions, code-docs, profiler, data-viz, error-tracker) + 38 token-watchdog |
+| Hooks | 11개 | 00-08 pipeline hooks + protect-critical-files + post-impl-verify |
 | Agents | 6개 | team-lead, implementer, reviewer, architect, monitor, designer |
 | Plugins | 8개 | superpowers, ui-ux-pro-max, everything-claude-code, awesome-claude-code, get-shit-done, code-review, commit-commands, claude-md-management |
 | MCP | 7+6개 | context7, playwright, thinking, gemini, excel, n8n, light-rag + Figma, Gamma, Gmail, Calendar, HuggingFace, Mermaid |
@@ -101,7 +101,7 @@ Request → init → research → team-lead → task-instruction.md
 ## Extend
 
 ```
-New skill:  .claude/skills/skill-26-name.md
+New skill:  .claude/skills/skill-39-name.md
 New agent:  .claude/agents/agent-07-name.md
 New hook:   .claude/hooks/hook-09-name.md
 → CLAUDE.md Loading Order에 추가
