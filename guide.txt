@@ -1,443 +1,304 @@
 ============================================================
-  Orchestration Kit v3 - Quick Guide
+  Orchestration Kit v3 — Complete Guide
+  Claude + Codex + Gemini Multi-AI Framework
 ============================================================
 
---- INSTALL ---
 
-  방법 1: setup.exe (추천 — GUI 위자드)
-    https://github.com/bernakilljos/orchestration/releases
-    → OrchestrationKit-Setup.exe 다운로드 → 더블클릭
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. 설치
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  방법 2: setup.bat (CLI)
+  [방법 A] setup.exe — GUI 위자드 (추천)
+    1. https://github.com/bernakilljos/orchestration/releases
+    2. OrchestrationKit-Setup.exe 다운로드
+    3. 더블클릭 → 경로 선택 → 컴포넌트 선택 → 설치
+    4. 완료 후 Claude 자동 실행 옵션
+
+  [방법 B] git clone — CLI
     git clone https://github.com/bernakilljos/orchestration.git
     cd orchestration
     setup\setup.bat C:\work\myproject
 
-  방법 3: install.bat (레거시)
-    install.bat C:\path\to\project
-
-  방법 4: 사일런트 설치
+  [방법 C] 사일런트 — 자동화/스크립트용
     OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 
-  서비스만 재시작:
+  [서비스만 재시작]
     install.bat restart
 
-  * codex-a, gemini-a are auto-registered as global commands
-  * Claude global settings (bypassPermissions) auto-configured
-  * API keys checked (ANTHROPIC/OPENAI/GEMINI_API_KEY)
-  * MCP servers: context7, playwright, thinking, gemini, excel, n8n, light-rag
-  * Plugins: superpowers, ui-ux-pro-max, everything-claude-code,
-             awesome-claude-code, get-shit-done, code-review, commit-commands
-  * Advisor mode: claude-auto uses Sonnet + Opus advisor
-
---- FIRST RUN (New PC) ---
-
-  1. setup.exe 또는 install.bat 실행
-  2. Claude starts automatically
-  3. Claude reads CLAUDE_SETUP_GUIDE.md:
-     - Installs MCP servers (context7, playwright, thinking, excel, n8n, light-rag)
-     - Installs plugins (superpowers, ui-ux-pro-max, etc.)
-     - Verifies API keys and global settings
-     - Deletes guide after setup
-  4. Ready to work — identical environment on every PC
-
---- ANALYSIS MENU (anl mode) ---
-
-  After install, auto-detects stack and asks:
-
-    [C] Codex   - Implementation patterns, improvements
-    [G] Gemini  - Code quality, security, bugs
-    [B] Both    - Codex + Gemini sequential
-    [S] Skip    - Start Claude directly
-
-  * DB / SQL files are NEVER modified → suggestions only
-    (saved to docs\query-suggestions.md)
-
---- NORMAL WORKFLOW ---
-
-  1. Give Claude a task
-     → Claude writes .claude\tasks\task-instruction.md
-
-  2. For large implementation, run Codex:
-       codex-a --auto
-
-  3. After implementation, run Gemini verification:
-       gemini-a --verify
-
-  * bypass permissions auto-configured (no restart needed)
-  * Existing files are confirmed before modification
-
---- 5-PHASE IMPLEMENTATION ---
-
-  Phase 1 — Setup:       Config, folder structure, fixtures
-  Phase 2 — Tests:       Write failing tests first (red)
-  Phase 3 — Core:        Implement until tests pass (green)
-  Phase 4 — Integration: Connect frontend ↔ backend
-  Phase 5 — Polish:      Refactor, optimize, lint
-
-  Quick reference:
-    Full feature:  All 5 phases
-    Bug fix:       Phase 2 → 3 → 5
-    Refactor:      Phase 2 → 5
-    UI-only:       Phase 3 → 5
-    Config:        Phase 1 only
-
---- EXPERT PERSONAS (auto-activated) ---
-
-  8 expert perspectives rotate per phase:
-    Architect    — System design, scalability
-    Security     — Threats, OWASP, input validation
-    Frontend     — UI/UX, accessibility, Vue patterns
-    Backend      — APIs, JPA, Spring Boot patterns
-    Performance  — Bundle size, query optimization
-    QA           — Test coverage, edge cases
-    DevOps       — Deployment, CI/CD, monitoring
-    Refactorer   — Complexity, duplication
-
-  Activated automatically — no manual invocation needed.
-
---- DOMAIN AUTO-DETECTION ---
-
-  On first install, SKILL-12 auto-detects:
-    Frontend: Vue 2/3, React, Vanilla JS
-    Backend:  Spring Boot, Express, Django/Flask
-    Database: MSSQL, MySQL, Oracle, PostgreSQL
-
-  Result saved to: .claude\context-cache\domain-profile.md
-  Re-detect: ask Claude "re-detect stack"
-
---- QUALITY & PERFORMANCE VERIFICATION ---
-
-  SKILL-10 checks 4 areas after implementation:
-
-  Frontend Performance:
-    - Bundle size (warn if chunk > 500KB)
-    - Render anti-patterns (v-for without :key, etc.)
-    - Lighthouse metrics (if available)
-
-  Backend Performance:
-    - API response time (< 3s threshold)
-    - DB query anti-patterns (N+1, SELECT *, no index)
-    - JPA-specific checks (EAGER fetch, missing DTO)
-
-  Code Quality:
-    - Method/file size limits
-    - Cyclomatic complexity
-    - Duplication detection
-    - Lint summary
-
-  Integration:
-    - Build time (warn if > 2 min)
-    - Test coverage (>= 60% target)
-    - Dependency vulnerability audit
-
---- VIBE CODING MULTI-AGENT LOOP ---
-
-  Claude (design/orchestration)
-    ↓
-  Codex x N (parallel implementation)
-    ↓
-  Gemini x N (parallel verify + 1st error fix, max 3 retries)
-    ↓ On Gemini failure
-  Claude (2nd error fix escalation)
-    ↓
-  Loop repeats...
-
-  Daily 09:00 → auto-generate completion report
-  User "stop" → immediately halt
-
-  Guard conditions:
-    Goal achieved         → STOP
-    Gemini retries > 3    → Claude escalation
-    Code quality drop     → git rollback
-    User says "stop"      → Immediately halt
-
---- PARALLEL EXECUTION (N workers) ---
-
-  Split a large task into subtasks:
-    Claude writes:
-      .claude\tasks\task-01-api.md       [P] parallel
-      .claude\tasks\task-02-store.md     [P] parallel
-      .claude\tasks\task-03-page.md      [S] sequential (depends on 01+02)
-
-  3 AI engines, all parallelizable:
-
-    Claude (orchestrator + implementation):
-      claude-auto                  18 workers (default = agent + skill count)
-      claude-auto 20               20 workers
-      claude-auto 50               50 workers
-      claude-auto 1                single worker mode
-
-    Codex (implementation):
-      codex-auto                   10 workers (default)
-      codex-auto 50                50 workers
-      codex-auto 100               100 workers
-      codex-auto 1                 single worker mode
-
-    Gemini (verification):
-      gemini-auto                  10 verifiers (default)
-      gemini-auto 50               50 verifiers
-      gemini-auto 100              100 verifiers
-      gemini-auto 1                single verifier mode
-
-  How it works:
-    - Each worker auto-picks the next unlocked task
-    - File-based locking prevents collision (.claude\tasks\locks\)
-    - Completed tasks move to .claude\tasks\done\
-    - Workers keep polling for new tasks (30s interval)
-    - Writer=1 rule: no two workers modify the same file
-
-  Interactive Claude (normal mode):
-    User gives instruction → Claude splits → spawns subagents internally
-    No manual commands needed — Claude auto-parallelizes via Agent tool
-
-  Full auto (user away):
-    Terminal 1: claude-auto 20       Claude workers
-    Terminal 2: codex-auto 50        Codex workers
-    Terminal 3: gemini-auto 50       Gemini verifiers
-    → All 3 engines running in parallel, 120 total workers
-
---- CODEX-A USAGE ---
-
-  Interactive:         codex-a
-  Auto (task):         codex-a --auto
-  Source analysis:     codex-a --analyze
-  Fully automated:     codex-a --full-auto
-
-  * Uses PROJECT_ROOT env var or current directory
-  * Always run from the project root folder
-
---- GEMINI-A USAGE ---
-
-  Interactive:         gemini-a
-  Verify:              gemini-a --verify
-  Source analysis:     gemini-a --analyze
-  Continuous watch:    gemini-a --loop
-  Full auto report:    gemini-a --full-auto
-
-  * Uses PROJECT_ROOT env var or current directory
-  * Always run from the project root folder
-
---- DESIGN WORKFLOW ---
-
-  Check design references:
-    design.bat --check
-
-  Canva design generation (banner/graphics):
-    design.bat --canva
-
-  DALL-E image prompt generation:
-    design.bat --image "description"
-
-  Video prompt generation:
-    design.bat --video "description"
-
-  Interactive design session:
-    design.bat
-
-  * Canva / DALL-E / Figma / Sora / Runway / Pika supported
-  * Account/API keys in .claude\deploy-config.env
-  * layouts/ files are AI-locked (HOOK-07 auto-lock)
-
---- DEPLOY ---
-
-  Deploy:              .claude\scripts\deploy.bat
-  PROD deploy:         .claude\scripts\deploy.bat --confirmed
-  Rollback:            .claude\scripts\rollback.bat
-  Server monitor:      .claude\scripts\monitor.bat
-  Full server check:   .claude\scripts\monitor.bat --all
-
---- OUTPUT FILES ---
-
-  docs\project-analysis.md        Stack + file analysis
-  docs\codex-analysis.md          Codex analysis result
-  docs\gemini-analysis.md         Gemini analysis result
-  docs\query-suggestions.md       DB/query improvements (DBA review required)
-  docs\review-result.txt          Gemini verification result
-  docs\implementation-report.md   Codex implementation report
-  docs\design-decision.md         Design pattern decisions
-  docs\screens\                   UI screens / image assets
-  docs\screens\videos\            Video assets
-  docs\CLAUDE_SETUP_GUIDE.md      First-run setup (auto-deleted)
-
---- SETTINGS ---
-
-  Server/API info:  .claude\deploy-config.env  (edit before use)
-  Permissions:      install.bat auto-configures ~/.claude/settings.json
-                    (bypassPermissions + skipDangerousModePermissionPrompt)
-                    Manual: edit ~/.claude/settings.json
-
-  deploy-config.env keys:
-    OPENAI_API_KEY=...
-    VIDEO_PROVIDER=sora|runway|pika
-    VIDEO_API_KEY=...
-    CANVA_ACCOUNT=...
-    FIGMA_TOKEN=...
-
---- SCOPE (modifiable vs suggest-only) ---
-
-  [Modifiable]
-    Frontend : *.vue *.jsx *.tsx *.js *.ts *.css *.html
-    Backend  : *.java *.cs *.py *.go
-    Config   : *.yml *.json pom.xml
-
-  [Suggest only — no direct modification]
-    DB / SQL : *.sql DDL schema migrations
-    Queries  : MyBatis mapper, JPA JPQL, raw SQL
-    → Results saved to docs\query-suggestions.md
-    → Apply only after DBA review
-
-  [AI-locked — layout lock]
-    layouts/    : Page layout templates
-    components/ : UI component structure
-    → HOOK-07 auto-lock, business logic additions only
-
---- DASHBOARD ---
-
-  Start dashboard:
-    dashboard.bat                    (opens http://localhost:8787)
-                                     + cloudflared tunnel 자동 시작
-                                     → 외부 URL이 콘솔에 출력됨
-                                     → GitHub에 URL 자동 저장 (각 PC가 읽음)
-
-  Remote screen too large:
-    → Use zoom slider (30~100%) on remote control page
-    → Or reduce capture resolution in remote-agent.ps1: $maxW = 960
-
-  "실행중 1" stuck after task done:
-    → Stale lock file — delete: del /Q .claude\tasks\locks\*.lock
-    → Then force status push on remote PC:
-        powershell -File "%USERPROFILE%\.claude\status-push.ps1"
-
---- STATUS-PUSH / REMOTE-AGENT ---
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. 설치 후 필수 설정 (수동)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  API 키 (CMD에서 실행, 설정 후 새 터미널 열기):
+    setx ANTHROPIC_API_KEY "sk-ant-..."
+    setx OPENAI_API_KEY    "sk-..."
+    setx GEMINI_API_KEY    "AI..."
+
+  확인:
+    echo %ANTHROPIC_API_KEY%
+
+  * 나머지(MCP, 플러그인, 설정)는 전부 자동 설치됨
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. 기본 사용법
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [일반 사용 — Claude에게 말하면 됨]
+    "로그인 페이지 만들어"
+    → Claude가 설계 → task-instruction.md 작성
+    → Codex가 구현 → Claude가 보완 → Gemini가 검증
+
+  [수동 실행]
+    codex-a --auto           Codex가 지시서 읽어 구현
+    gemini-a --verify        Gemini가 결과 검증
+    claude-auto              Claude 병렬 워커 (Sonnet+Opus)
+
+  [병렬 실행 — N개 워커]
+    codex-auto               10개 워커 (기본)
+    codex-auto 20            20개 워커
+    gemini-auto              10개 검증자 (기본)
+    gemini-auto 5            5개 검증자
+    claude-auto 30           30개 Claude 워커
+
+  [중단]
+    .claude\tasks\stop 파일 생성 → 모든 워커 즉시 종료
+    또는 /loop-stop 명령
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. AI 역할 분담
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌──────────┬───────────────────────────────────┐
+  │    AI    │              역할                 │
+  ├──────────┼───────────────────────────────────┤
+  │ Claude   │ 팀장: 설계, 판단, 승인, 보완      │
+  │          │ + 문서/기획/디자인 (Gamma, Canva)  │
+  ├──────────┼───────────────────────────────────┤
+  │ Codex    │ 구현: 500줄+ 코드 1차 구현        │
+  │          │ codex-a --auto로 실행              │
+  ├──────────┼───────────────────────────────────┤
+  │ Gemini   │ 검증: 코드 리뷰, 보안, 문서화     │
+  │          │ gemini-a --verify로 실행           │
+  └──────────┴───────────────────────────────────┘
+
+  [Advisor 모드]
+    claude-auto 실행 시 자동 적용:
+      실행 모델: claude-sonnet-4-6 (빠르고 저렴)
+      조언 모델: claude-opus-4-6 (복잡한 판단)
+    수동: claude --model claude-sonnet-4-6 --advisor claude-opus-4-6
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  5. 파이프라인
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [표준 파이프라인]
+    요청 접수
+      → init (스택 감지, 폴더 생성)
+      → research (파일 탐색, 리스크 식별)
+      → team-lead (task-instruction.md 작성)
+      → Codex 1차 구현 (codex-a --auto)
+      → Claude 보완/고도화
+      → Gemini 검증 (gemini-a --verify)
+      → Claude 채택 → 배포
+
+  [AI Handoff — 강제 인수인계]
+    Claude → Codex:  task-instruction.md + handoff-log.md 필수
+    Codex → Claude:  implementation-report.md 필수
+    Claude → Gemini: verify-*.md + 검증 포인트 필수
+    Gemini → Claude: review-result.md (합격/불합격) 필수
+    ※ 산출물 없으면 다음 단계 차단 (hook-08)
+
+  [워커 종료 조건 — 3중]
+    1. .claude\tasks\stop 파일 → 즉시 종료
+    2. heartbeat 5분 미갱신 → Claude 종료 감지 → 종료
+    3. 태스크 없이 1시간 대기 → 자동 종료
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6. 설치되는 것 — 전체 목록
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [Setup 모듈 — 11단계]
+    01 core            .claude 폴더 + CLAUDE.md 복사
+    02 defender         Windows Defender 예외
+    03 settings         Claude 글로벌 설정 + PS UTF-8
+    04 commands         codex-a, gemini-a 글로벌 설치
+    05 services         status-push, remote-agent 등록
+    06 prereqs          Node.js, Claude Code, Cloudflared
+    07 github           Git 초기화 + GitHub repo 생성
+    08 plugins          플러그인 8개 자동 설치
+    09 finalize         init, npm install, Claude 실행
+    10 video-restore    CodeFormer + Real-ESRGAN
+    11 media-enhance    오디오/PDF/PPT 의존성
+
+  [플러그인 — 8개]
+    claude-md-management     CLAUDE.md 품질 관리
+    code-review              PR 코드리뷰
+    commit-commands          git commit/push/PR
+    superpowers              TDD + 계획 + 리뷰 자동화
+    ui-ux-pro-max            UI/UX 디자인 고급
+    everything-claude-code   올인원 확장
+    awesome-claude-code      커뮤니티 베스트
+    get-shit-done            실행 중심 워크플로우
+
+  [MCP 서버 — 7개 (자동 설치)]
+    context7       라이브러리 공식 문서 조회
+    playwright     브라우저 자동화
+    thinking       단계별 추론
+    gemini         Gemini API 직접 호출
+    excel          Excel/CSV 읽기·쓰기
+    n8n            워크플로우 자동화
+    light-rag      경량 문서 검색/참조
+
+  [MCP 서버 — 6개 (claude.ai 로그인 후 자동 연결)]
+    Figma, Gamma, Gmail, Google Calendar,
+    Hugging Face, Mermaid Chart, Canva
+
+  [스킬 — 25개]
+    #  이름               용도
+    ── ────────────────── ──────────────────────────
+    01 research           파일 탐색, 리스크 식별
+    02 implement          코드 구현 (codex-auto 연동)
+    03 review             코드 리뷰 (gemini-auto 연동)
+    04 context-summary    500줄+ 파일 요약
+    05 deploy             EC2 배포
+    06 test               테스트 자동화
+    07 rollback           배포 롤백
+    08 design             디자인 에셋 생성
+    09 memory-reset       세션 메모리 저장
+    10 quality-verify     성능/품질 검증 (4영역)
+    11 personas           8개 전문가 페르소나
+    12 domain-detect      스택 자동 감지
+    13 parallel-dispatch  병렬 디스패치
+    14 auto-detail        짧은 요청 자동 확장
+    15 theme-factory      테마/디자인 시스템 생성
+    16 brand-guidelines   브랜드 가이드라인 관리
+    17 debugging-canvas   버그 시각적 분석 (Mermaid)
+    18 web-artifacts      HTML/CSS 미리보기 생성
+    19 skill-creator      새 스킬 자동 생성 (메타)
+    20 claude-seo         SEO 분석/최적화
+    21 marketing          마케팅 콘텐츠 생성
+    22 remotion           React 프로그래매틱 동영상
+    23 owasp-security     OWASP Top 10 보안 감사
+    24 ai-handoff         멀티AI 강제 인수인계
+    25 media-enhance      미디어 화질·음질 AI 개선
+
+  [훅 — 8개]
+    00 init               스택 감지, 폴더 생성
+    01 pre-task            태스크 등록, 파일 잠금
+    02 post-impl           구현 후 품질 게이트
+    03 post-review         리뷰 후 학습 반영
+    04 pre-deploy          배포 전 최종 점검
+    05 post-deploy         배포 후 알림
+    06 notify              알림 (성공/실패)
+    07 layout-lock         레이아웃 파일 보호
+    08 ai-handoff          인수인계 산출물 강제 검증
+
+  [에이전트 — 6개]
+    01 team-lead     설계/지시서 작성
+    02 implementer   구현 실행
+    03 reviewer      코드 리뷰
+    04 architect     아키텍처 설계
+    05 monitor       서버 헬스 체크
+    06 designer      디자인 참조/생성
+
+  [도구 — 2개]
+    tools/video-restore.py     동영상/이미지 복원 (CodeFormer+Real-ESRGAN)
+    tools/media-enhance/       미디어 종합 개선 (동영상/오디오/이미지/PDF/PPT)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  7. 대시보드
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  시작:
+    dashboard.bat    → http://localhost:8787 + cloudflared 터널
+
+  기능:
+    - 멀티 PC 실시간 상태 모니터링
+    - 원격 화면 캡처 + 리모트 컨트롤
+    - 태스크 상태 (대기/실행/완료)
+    - 원격 태스크 전송
+    - RDP 원클릭 연결
 
   통신 방식 (자동 선택):
-    1순위: 터널 직접 통신 (200ms 실시간)
-    2순위: git push fallback (60초 간격, 방화벽 환경용)
+    1순위: cloudflared 터널 → HTTP 직접 통신 (실시간)
+    2순위: git push fallback (30초 간격, 방화벽용)
 
-  자동 업데이트:
-    status-push.ps1은 시작 시 GitHub repo에서 최신 버전 자동 다운.
-    install 없이도 최신 기능 적용됨.
 
-  install 없이 수동 업데이트:
-    powershell -NoProfile -Command "$pat=[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User'); git clone --depth 1 https://x:${pat}@github.com/bernakilljos/orchestration-status.git $env:TEMP\orch-upd; Copy-Item $env:TEMP\orch-upd\status-push.ps1 $env:USERPROFILE\.claude\status-push.ps1 -Force; Remove-Item $env:TEMP\orch-upd -Recurse -Force"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  8. 개발 규칙
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  PC 현황에 안 나오는 경우 (status-push 안 돌고 있음):
+  Frontend:  Vue 2.x — optional chaining(?.) 금지
+  Backend:   Spring Boot 2.x / Node.js Express
+  DB:        MSSQL / MySQL / Oracle
+  Alert:     mapActions("alert",[ADD_ALERT])
+  하드코딩:  금지 (process.env 사용)
+  주석:      "주인" 단어 금지
 
-    방법 1) 탐색기에서 더블클릭:
-      %USERPROFILE%\.claude\status-push-silent.vbs
+  [수정 가능]
+    *.vue *.jsx *.tsx *.js *.ts *.css *.html
+    *.java *.cs *.py *.go *.yml *.json
 
-    방법 2) CMD에서 실행:
-      wscript "%USERPROFILE%\.claude\status-push-silent.vbs"
+  [수정 금지 — 제안만]
+    *.sql, DDL, migration → docs\query-suggestions.md
 
-    방법 3) install.bat restart 실행:
-      install.bat restart
+  [AI 잠금]
+    layouts/, components/ 구조 → hook-07이 자동 보호
 
-  Registry Run 키 수동 등록 (로그온시 자동 시작):
-    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "OrchestrationStatusPush" /t REG_SZ /d "wscript.exe \"%USERPROFILE%\.claude\status-push-silent.vbs\"" /f
 
---- TROUBLESHOOTING ---
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  9. 트러블슈팅
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Korean characters broken (garbled):
-    → Re-run install.bat (now uses UTF-8 BOM, not CP949)
+  [한글 깨짐]
+    → install.bat 재실행 (UTF-8 자동 적용)
 
-  codex-a / gemini-a not found:
-    → Run install.bat again (copies to %APPDATA%\npm)
-    → Or run from project root: .claude\scripts\codex-a.bat
+  [codex-a / gemini-a 못 찾음]
+    → install.bat 재실행 또는
+    → .claude\scripts\codex-a.bat 직접 실행
 
-  Wrong project path in codex-a/gemini-a:
-    → Always run from project root folder
-    → Or set PROJECT_ROOT=C:\path\to\project before running
+  [MCP 서버 누락]
+    → claude mcp list로 확인
+    → 수동: claude mcp add -s user context7 -- npx -y @upstash/context7-mcp
 
-  MCP servers missing:
-    → Delete docs\CLAUDE_SETUP_GUIDE.md check, re-copy from kit
-    → Or manually: claude mcp add -s user context7 -- npx -y @upstash/context7-mcp
+  [hook 에러 — "No such file"]
+    → .claude\settings.json에서 없는 hook 파일 참조 제거
+    → 최신 settings.json: git pull로 업데이트
 
-  task-review- lock 중복 생성 (task-review-task-review-...lock):
-    → codex-auto.bat 버그 수정됨 (v3.1+)
-    → 남은 파일 수동 삭제: del /Q .claude\tasks\locks\task-review-task-review-*.lock
+  [워커가 안 꺼짐]
+    → .claude\tasks\stop 파일 생성: echo stop > .claude\tasks\stop
+    → 또는 /loop-stop 명령
 
---- SKILLS (25개) + HOOKS (8개) ---
+  [대시보드에서 PC가 안 보임]
+    → wscript "%USERPROFILE%\.claude\status-push-silent.vbs"
+    → 또는 install.bat restart
 
-  [Core Pipeline]
-  01 research            파일 탐색, 리스크 식별
-  02 implement           코드 구현 (codex-auto 연동)
-  03 review              코드 리뷰 (gemini-auto 연동)
-  04 context-summary     500줄+ 파일 요약
-  05 deploy              EC2 배포
-  06 test                테스트 자동화
-  07 rollback            배포 롤백
-  08 design              디자인 에셋 생성
-  09 memory-reset        세션 메모리 저장
-  10 quality-verify      성능/품질 검증
+  [설치 로그 확인]
+    → type %TEMP%\orchestration-install.log
+    → type %TEMP%\orchestration-setup.log
 
-  [Meta]
-  11 personas            페르소나 전환
-  12 domain-detect       도메인 자동 감지
-  13 parallel-dispatch   병렬 디스패치
-  14 auto-detail         짧은 요청 자동 확장
 
-  [Design & Brand]
-  15 theme-factory       테마/디자인 시스템 자동 생성
-  16 brand-guidelines    브랜드 가이드라인 관리
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  10. 확장
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Debug & Preview]
-  17 debugging-canvas    버그 시각적 분석 (Mermaid 다이어그램)
-  18 web-artifacts       HTML/CSS 미리보기 생성
+  새 스킬:  .claude\skills\skill-26-name.md
+  새 훅:    .claude\hooks\hook-09-name.md
+  새 에이전트: .claude\agents\agent-07-name.md
+  새 커맨드:   .claude\commands\name.md
+  → CLAUDE.md Loading Order에 추가
 
-  [Meta & Marketing]
-  19 skill-creator       새 스킬 자동 생성 (메타 스킬)
-  20 claude-seo          SEO 분석/최적화
-  21 marketing           마케팅 콘텐츠 생성
+  또는 skill-19 (skill-creator)에게 시키면 자동 생성:
+    "새 스킬 만들어줘: 이메일 자동 발송"
 
-  [Video & Security]
-  22 remotion            React 프로그래매틱 동영상 생성
-  23 owasp-security      OWASP Top 10 보안 감사
 
-  [Multi-AI Coordination]
-  24 ai-handoff          Claude↔Codex↔Gemini 강제 인수인계
-     + hook-08           handoff 프로토콜 검증 (산출물 미생성 시 차단)
-
-  [Media]
-  25 media-enhance       동영상/오디오/이미지/PDF/PPT 화질·음질 AI 개선
-     + CLI: python media-enhance.py input.mp4
-     + GUI: streamlit run media-enhance-gui.py
-
---- PLUGINS ---
-
-  [Auto-installed by setup]
-  claude-md-management       CLAUDE.md 품질 관리
-  code-review                PR 코드리뷰
-  commit-commands            git commit/push/PR
-  superpowers                TDD/계획/리뷰 자동화
-  ui-ux-pro-max              UI/UX 디자인 고급
-  everything-claude-code     올인원 확장
-  awesome-claude-code        커뮤니티 베스트
-  get-shit-done              실행 중심 워크플로우
-
---- MCP SERVERS ---
-
-  [Auto-installed]
-  context7                   라이브러리 공식 문서 조회
-  playwright                 브라우저 자동화
-  thinking                   단계별 추론
-  gemini                     Gemini API 직접 호출
-
-  [Auto-installed (new)]
-  excel                      Excel/CSV 읽기·쓰기
-  n8n                        워크플로우 자동화
-  light-rag                  경량 문서 검색/참조
-
-  [Auto-connected (claude.ai)]
-  Figma, Gamma, Gmail, Google Calendar, Hugging Face, Mermaid Chart, Canva
-
---- ADVISOR MODE ---
-
-  claude-auto가 자동으로 advisor 모드 사용:
-    실행: claude-sonnet-4-6 (빠르고 저렴)
-    조언: claude-opus-4-6 (복잡한 설계/판단)
-
-  수동으로:
-    claude --model claude-sonnet-4-6 --advisor claude-opus-4-6
-
+============================================================
+  GitHub: https://github.com/bernakilljos/orchestration
+  Release: https://github.com/bernakilljos/orchestration/releases
 ============================================================
