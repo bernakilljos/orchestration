@@ -154,7 +154,26 @@ rem --- Run Claude non-interactively (Sonnet + Opus advisor, unlimited) ---
 rem Sonnet이 실행, 복잡한 판단은 Opus가 조언 (제한 없음)
 claude -p "You are a worker agent. Read and implement this task file: %PICKED_TASK%. Follow all rules in CLAUDE.md and context\rules.md. After completion, write a brief report to docs\report-%CHILD_ID%.md. Do not ask questions - make reasonable decisions and proceed." --dangerously-skip-permissions --model claude-sonnet-4-6 --advisor claude-opus-4-6
 
-set "CLAUDE_EXIT=%errorlevel%"
+set "CLAUDE_EXIT=!errorlevel!"
+
+rem --- Claude 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+if !CLAUDE_EXIT! NEQ 0 (
+  echo [Worker-%CHILD_ID%] Claude exited with !CLAUDE_EXIT! — checking token status...
+  echo exhausted> "%PROJECT_ROOT%\.claude\claude-token-status"
+  :CLAUDE_TOKEN_WAIT
+  if exist "%PROJECT_ROOT%\.claude\tasks\stop" goto END
+  timeout /t 600 /nobreak >nul
+  echo [Worker-%CHILD_ID%] Token check...
+  claude -p "echo ok" --dangerously-skip-permissions >nul 2>&1
+  if errorlevel 1 (
+    echo [Worker-%CHILD_ID%] Still exhausted. Waiting 10m...
+    goto CLAUDE_TOKEN_WAIT
+  )
+  echo [Worker-%CHILD_ID%] TOKEN RESTORED — 재실행!
+  del "%PROJECT_ROOT%\.claude\claude-token-status" 2>nul
+  claude -p "You are a worker agent. Read and implement this task file: %PICKED_TASK%. Follow all rules in CLAUDE.md and context\rules.md. After completion, write a brief report to docs\report-%CHILD_ID%.md. Do not ask questions - make reasonable decisions and proceed." --dangerously-skip-permissions --model claude-sonnet-4-6 --advisor claude-opus-4-6
+  set "CLAUDE_EXIT=!errorlevel!"
+)
 
 rem --- 필수 검증 (문법/인코딩/보호파일) ---
 echo [Worker-%CHILD_ID%] Running mandatory verification...

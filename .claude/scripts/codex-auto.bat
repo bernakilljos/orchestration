@@ -168,7 +168,30 @@ for %%F in ("%PICKED_TASK%") do (
   )
 )
 
-call codex-a --auto "%PICKED_TASK%"
+call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
+set "CODEX_EXIT=!errorlevel!"
+
+rem --- 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+if !CODEX_EXIT! NEQ 0 (
+  findstr /i /c:"rate" /c:"limit" /c:"quota" /c:"429" /c:"exceeded" "%TEMP%\codex-last-err.log" >nul 2>&1
+  if not errorlevel 1 (
+    echo [Worker-%CHILD_ID%] TOKEN EXHAUSTED — 10분 간격 체크 시작
+    echo exhausted> "%PROJECT_ROOT%\.claude\codex-token-status"
+    :CODEX_TOKEN_WAIT
+    if exist "%PROJECT_ROOT%\.claude\tasks\stop" goto END
+    timeout /t 600 /nobreak >nul
+    echo [Worker-%CHILD_ID%] Token check...
+    codex exec "echo ok" >nul 2>&1
+    if errorlevel 1 (
+      echo [Worker-%CHILD_ID%] Still exhausted. Waiting 10m more...
+      goto CODEX_TOKEN_WAIT
+    )
+    echo [Worker-%CHILD_ID%] TOKEN RESTORED — 재개!
+    del "%PROJECT_ROOT%\.claude\codex-token-status" 2>nul
+    rem 같은 태스크 다시 실행
+    call codex-a --auto "%PICKED_TASK%" 2>nul
+  )
+)
 
 rem --- 읽기 전용 해제 ---
 for %%F in ("%PICKED_TASK%") do (

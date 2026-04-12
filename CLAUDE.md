@@ -523,6 +523,7 @@ Each PC may have a different project root path.
 .claude/skills/skill-35-performance-profiler.md
 .claude/skills/skill-36-data-viz.md
 .claude/skills/skill-37-error-tracker.md
+.claude/skills/skill-38-token-watchdog.md
 .claude/hooks/hook-08-ai-handoff.md
 .claude/hooks/post-impl-verify.sh
 .claude/hooks/protect-critical-files.sh

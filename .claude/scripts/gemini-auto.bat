@@ -226,7 +226,27 @@ if %RETRY% GEQ 3 goto ESCALATE
 
 set /a RETRY+=1
 echo [Verifier-%CHILD_ID%] Attempt %RETRY%/3...
-call gemini-a --verify "%PICKED_REPORT%"
+call gemini-a --verify "%PICKED_REPORT%" 2>"%TEMP%\gemini-last-err.log"
+
+rem --- 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+findstr /i /c:"rate" /c:"limit" /c:"quota" /c:"429" /c:"exceeded" "%TEMP%\gemini-last-err.log" >nul 2>&1
+if not errorlevel 1 (
+  echo [Verifier-%CHILD_ID%] GEMINI TOKEN EXHAUSTED — 10분 간격 체크
+  echo exhausted> "%PROJECT_ROOT%\.claude\gemini-token-status"
+  :GEMINI_TOKEN_WAIT
+  if exist "%PROJECT_ROOT%\.claude\tasks\stop" goto END
+  timeout /t 600 /nobreak >nul
+  echo [Verifier-%CHILD_ID%] Token check...
+  gemini -p "test" >nul 2>&1
+  if errorlevel 1 (
+    echo [Verifier-%CHILD_ID%] Still exhausted. Waiting 10m...
+    goto GEMINI_TOKEN_WAIT
+  )
+  echo [Verifier-%CHILD_ID%] TOKEN RESTORED — 재시도!
+  del "%PROJECT_ROOT%\.claude\gemini-token-status" 2>nul
+  set /a RETRY-=1
+  goto RETRY_LOOP
+)
 
 rem Check result: gemini-a writes exit code or result to review-result.txt
 if exist "%PROJECT_ROOT%\docs\review-result.txt" (
