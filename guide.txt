@@ -390,6 +390,10 @@
   20 claude-seo          SEO 분석/최적화
   21 marketing           마케팅 콘텐츠 생성
 
+  [Video & Security]
+  22 remotion            React 프로그래매틱 동영상 생성
+  23 owasp-security      OWASP Top 10 보안 감사
+
 --- PLUGINS ---
 
   [Auto-installed by setup]
