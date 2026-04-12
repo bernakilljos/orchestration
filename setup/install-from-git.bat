@@ -9,7 +9,7 @@ rem   install-from-git.bat [TARGET_PATH]
 rem   install-from-git.bat C:\work\myproject
 rem
 rem 또는 이 한 줄로 어디서든 설치:
-rem   powershell -c "iwr https://raw.githubusercontent.com/pjt-orchestration/orchestration/main/setup/install-from-git.bat -OutFile setup.bat; .\setup.bat"
+rem   powershell -c "iwr https://raw.githubusercontent.com/bernakilljos/orchestration/main/setup/install-from-git.bat -OutFile setup.bat; .\setup.bat"
 rem =====================================================
 setlocal enabledelayedexpansion
 
@@ -45,10 +45,10 @@ rem --- Clone orchestration kit to temp ---
 set "TEMP_KIT=%TEMP%\orchestration-kit-%RANDOM%"
 echo [1/3] Cloning orchestration kit...
 
-git clone https://!GH_PAT!@github.com/pjt-orchestration/orchestration.git "!TEMP_KIT!" >nul 2>&1
+git clone https://!GH_PAT!@github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
 if errorlevel 1 (
   echo       Token auth failed, trying without token...
-  git clone https://github.com/pjt-orchestration/orchestration.git "!TEMP_KIT!" >nul 2>&1
+  git clone https://github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
   if errorlevel 1 (
     echo [ERROR] Clone failed. Check network or repository access.
     pause

@@ -4,25 +4,26 @@ Claude(Team Lead) + Codex(Implementation) + Gemini(Review) 3 AI role-sharing orc
 
 ---
 
-## Quick Start (3 steps)
+## Quick Start
 
-### Step 1 - Install
+### 방법 1: setup.exe (추천)
+[Releases](https://github.com/bernakilljos/orchestration/releases) 에서 **OrchestrationKit-Setup.exe** 다운로드 → 더블클릭 → 경로 선택 → 설치 끝
+
+### 방법 2: git clone
 ```bat
-install.bat C:\projects\myproject
+git clone https://github.com/bernakilljos/orchestration.git
+cd orchestration
+setup\setup.bat C:\work\myproject
 ```
 
-### Step 2 - Configure server (for deploy only)
-`.claude/deploy-config.env` - fill in server info.
-Skip if not deploying.
-
-### Step 3 - Start working
+### 방법 3: 사일런트 설치
+```bat
+OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 ```
-Open Claude Code in the project folder
-Tell Claude: "Build X feature"
-Claude writes task-instruction.md
-Run: codex-a --auto
-Run: gemini-a --verify
-Claude reviews results
+
+### 설치 후
+```
+Claude Code 실행 → 자동으로 환경 구성 완료
 ```
 
 ---
