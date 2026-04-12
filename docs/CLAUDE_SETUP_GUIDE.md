@@ -156,6 +156,16 @@ claude mcp add n8n -s user -- npx -y n8n-mcp-server
 claude mcp add light-rag -s user -- npx -y light-rag-mcp
 ```
 
+### Media Enhance Dependencies
+
+setup이 자동 설치. 수동 설치 시:
+```bash
+pip install noisereduce pydub librosa soundfile demucs
+pip install PyMuPDF pytesseract Pillow
+pip install python-pptx streamlit tqdm
+winget install UB-Mannheim.TesseractOCR   # OCR용
+```
+
 > Note: claude.ai official integrations (Figma, Gamma, Gmail, Google Calendar, Hugging Face, Mermaid Chart, Canva) are auto-connected after login — no manual setup needed.
 > Note: gemini MCP requires GEMINI_API_KEY from Google AI Studio (free tier available). Set after install.
 

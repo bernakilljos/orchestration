@@ -357,7 +357,7 @@
     → codex-auto.bat 버그 수정됨 (v3.1+)
     → 남은 파일 수동 삭제: del /Q .claude\tasks\locks\task-review-task-review-*.lock
 
---- SKILLS (24개) + HOOKS (8개) ---
+--- SKILLS (25개) + HOOKS (8개) ---
 
   [Core Pipeline]
   01 research            파일 탐색, 리스크 식별
@@ -397,6 +397,11 @@
   [Multi-AI Coordination]
   24 ai-handoff          Claude↔Codex↔Gemini 강제 인수인계
      + hook-08           handoff 프로토콜 검증 (산출물 미생성 시 차단)
+
+  [Media]
+  25 media-enhance       동영상/오디오/이미지/PDF/PPT 화질·음질 AI 개선
+     + CLI: python media-enhance.py input.mp4
+     + GUI: streamlit run media-enhance-gui.py
 
 --- PLUGINS ---
 
