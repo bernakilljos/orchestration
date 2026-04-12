@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 OWNER       = "bernakilljos"
 REPO        = "orchestration-status"
 PORT        = 8787
-_FALLBACK   = ""
+_FALLBACK   = ""  # PAT는 환경변수(GITHUB_PERSONAL_ACCESS_TOKEN)에서만 로드. 비어있으면 GitHub 기능 비활성
 
 # ── 로컬 메모리 저장소 ──
 _status_store   = {}   # pc_id → status dict

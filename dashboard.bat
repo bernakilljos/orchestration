@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 
 for /f "tokens=*" %%P in ('powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable(''GITHUB_PERSONAL_ACCESS_TOKEN'',''User'')"') do set "PAT=%%P"
 
-if "!PAT!"=="" set "PAT="
+if "!PAT!"=="" ( echo [WARN] GITHUB_PERSONAL_ACCESS_TOKEN not set - GitHub features disabled )
 
 set "GITHUB_PERSONAL_ACCESS_TOKEN=!PAT!"
 echo [+] 대시보드 시작...

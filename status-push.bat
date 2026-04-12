@@ -12,8 +12,7 @@ set "CONFIG=%USERPROFILE%\.claude\status-projects.txt"
 
 rem --- PAT ---
 for /f "tokens=*" %%P in ('powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable(\"GITHUB_PERSONAL_ACCESS_TOKEN\",\"User\")"') do set "PAT=%%P"
-if "!PAT!"=="" set "PAT="
-if "!PAT!"=="" ( echo [WARN] PAT not set & exit /b 1 )
+if "!PAT!"=="" ( echo [WARN] GITHUB_PERSONAL_ACCESS_TOKEN not set - run: setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_..." & exit /b 1 )
 
 if not exist "!CONFIG!" ( echo [WARN] No projects registered & exit /b 1 )
 

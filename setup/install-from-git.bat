@@ -38,14 +38,19 @@ rem --- GitHub PAT 가져오기 ---
 set "GH_PAT="
 for /f "tokens=*" %%T in ('powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable(\"GITHUB_PERSONAL_ACCESS_TOKEN\",\"User\")" 2^>nul') do set "GH_PAT=%%T"
 
-rem Fallback PAT
-if "!GH_PAT!"=="" set "GH_PAT="
-
 rem --- Clone orchestration kit to temp ---
 set "TEMP_KIT=%TEMP%\orchestration-kit-%RANDOM%"
 echo [1/3] Cloning orchestration kit...
 
-git clone https://!GH_PAT!@github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
+rem PAT 있으면 인증 clone, 없으면 public clone
+if not "!GH_PAT!"=="" (
+  git clone https://!GH_PAT!@github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
+) else (
+  git clone https://github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
+)
+if not errorlevel 1 goto CLONE_OK
+git clone https://github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1
+:CLONE_OK
 if errorlevel 1 (
   echo       Token auth failed, trying without token...
   git clone https://github.com/bernakilljos/orchestration.git "!TEMP_KIT!" >nul 2>&1

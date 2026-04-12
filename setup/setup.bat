@@ -81,54 +81,54 @@ echo.
 set "MOD=%SETUP_DIR%modules"
 set "ERRORS=0"
 
-echo [Step 1/9] Core files...
+echo [Step 1/10] Core files...
 echo [STEP] 01-core %TIME% >> "!LOGFILE!"
 call "%MOD%\01-core.bat" "%TARGET%" "%SCRIPT_DIR%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 2/9] Defender exclusion...
+echo [Step 2/10] Defender exclusion...
 echo [STEP] 02-defender %TIME% >> "!LOGFILE!"
 call "%MOD%\02-defender.bat" "!REAL_USERPROFILE!"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 3/9] Settings...
+echo [Step 3/10] Settings...
 echo [STEP] 03-settings %TIME% >> "!LOGFILE!"
 call "%MOD%\03-settings.bat" "!REAL_USERPROFILE!" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 4/9] Global commands...
+echo [Step 4/10] Global commands...
 echo [STEP] 04-commands %TIME% >> "!LOGFILE!"
 call "%MOD%\04-commands.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 5/9] Services...
+echo [Step 5/10] Services...
 echo [STEP] 05-services %TIME% >> "!LOGFILE!"
 call "%MOD%\05-services.bat" "%TARGET%" "%SCRIPT_DIR%" "!REAL_USERPROFILE!"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 6/9] Prerequisites (Node.js, Claude, Cloudflared)...
+echo [Step 6/10] Prerequisites (Node.js, Claude, Cloudflared)...
 echo [STEP] 06-prereqs %TIME% >> "!LOGFILE!"
 call "%MOD%\06-prereqs.bat"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 7/9] GitHub setup...
+echo [Step 7/10] GitHub setup...
 echo [STEP] 07-github %TIME% >> "!LOGFILE!"
 call "%MOD%\07-github.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 8/9] Plugins...
+echo [Step 8/10] Plugins...
 echo [STEP] 08-plugins %TIME% >> "!LOGFILE!"
 call "%MOD%\08-plugins.bat" "%TARGET%" "%SCRIPT_DIR%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 9/10] Video Restoration Tools...
-echo [STEP] 10-video-restore %TIME% >> "!LOGFILE!"
-call "%MOD%\10-video-restore.bat" "%TARGET%"
-if errorlevel 1 set /a ERRORS+=1
-
-echo [Step 10/10] Finalize...
+echo [Step 9/10] Finalize...
 echo [STEP] 09-finalize %TIME% >> "!LOGFILE!"
 call "%MOD%\09-finalize.bat" "%TARGET%" "%ANALYZE_MODE%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 10/10] Video Restoration Tools...
+echo [STEP] 10-video-restore %TIME% >> "!LOGFILE!"
+call "%MOD%\10-video-restore.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
 echo.
