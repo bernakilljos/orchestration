@@ -38,6 +38,22 @@ for %%P in (claude-md-management code-review commit-commands) do (
   )
 )
 
+rem --- Superpowers marketplace + plugin ---
+echo [+] Superpowers plugin...
+echo "!PLUGIN_LIST!" | findstr /C:"superpowers" >nul 2>&1
+if errorlevel 1 (
+  echo       Adding superpowers marketplace...
+  powershell -NoProfile -Command ^
+    "$p=Start-Process 'claude' -ArgumentList @('plugin','marketplace','add','obra/superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
+     if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+  echo       Installing superpowers...
+  powershell -NoProfile -Command ^
+    "$p=Start-Process 'claude' -ArgumentList @('plugin','install','superpowers@superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
+     if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
+) else (
+  echo       [OK] superpowers
+)
+
 :COPY_GUIDE
 rem Copy CLAUDE_SETUP_GUIDE.md for first-run MCP setup
 if not "%SCRIPT_DIR%"=="" (

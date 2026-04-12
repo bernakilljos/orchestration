@@ -163,10 +163,65 @@ claude mcp add gemini -s user -e GEMINI_API_KEY=your-key -- npx -y @rlabs-inc/ge
 install.bat이 자동 설치. Claude 세션 시작 시 누락된 항목만 보완.
 
 ```bash
+# 기본 플러그인
 claude plugin install claude-md-management   # CLAUDE.md 품질 관리 (/revise-claude-md)
 claude plugin install code-review            # PR 코드리뷰 (/code-review)
 claude plugin install commit-commands        # git commit/push (/commit, /commit-push-pr)
+
+# Superpowers — TDD/계획/리뷰 자동화 프레임워크
+claude plugin marketplace add obra/superpowers-marketplace
+claude plugin install superpowers@superpowers-marketplace
 ```
+
+### Superpowers Plugin 사용법
+
+| 명령 | 기능 |
+|------|------|
+| `/superpowers:brainstorm` | 아이디어 브레인스토밍 → 설계 문서 생성 |
+| `/superpowers:plan` | 작업을 2-5분 단위 태스크로 분해 |
+| `/superpowers:code-review` | 2단계 코드 리뷰 (스펙 준수 → 품질) |
+| TDD 자동 | RED-GREEN-REFACTOR 사이클 자동 적용 |
+
+> 우리 파이프라인(Codex→Claude→Gemini)과 공존 가능. TDD 부분을 superpowers가 보강.
+
+---
+
+### Advisor 설정 (Sonnet + Opus)
+
+claude-auto.bat이 자동으로 advisor 모드 사용:
+- **실행**: claude-sonnet-4-6 (빠르고 저렴)
+- **조언**: claude-opus-4-6 (복잡한 설계/판단 시 자동 호출)
+
+```
+claude -p "task..." --model claude-sonnet-4-6 --advisor claude-opus-4-6
+```
+
+수동으로 advisor 사용 시:
+```bash
+# CLI에서 직접
+claude --model claude-sonnet-4-6 --advisor claude-opus-4-6
+
+# API 호출 시 (Python)
+import anthropic
+client = anthropic.Anthropic()
+response = client.beta.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=4096,
+    betas=["advisor-tool-2026-03-01"],
+    tools=[{
+        "type": "advisor_20260301",
+        "name": "advisor",
+        "model": "claude-opus-4-6"
+    }],
+    messages=[{"role": "user", "content": "..."}]
+)
+```
+
+| 설정 | 값 | 설명 |
+|------|-----|------|
+| model | claude-sonnet-4-6 | 실행 모델 (빠름, 저렴) |
+| advisor | claude-opus-4-6 | 조언 모델 (고지능, 설계/판단) |
+| max_uses | 없음 (무제한) | 복잡한 작업에서 Opus 제한 없이 활용 |
 
 ---
 

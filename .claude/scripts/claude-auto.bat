@@ -150,8 +150,9 @@ for /f "usebackq delims=" %%L in ("%PICKED_TASK%") do (
   )
 )
 
-rem --- Run Claude non-interactively ---
-claude -p "You are a worker agent. Read and implement this task file: %PICKED_TASK%. Follow all rules in CLAUDE.md and context\rules.md. After completion, write a brief report to docs\report-%CHILD_ID%.md. Do not ask questions - make reasonable decisions and proceed." --dangerously-skip-permissions
+rem --- Run Claude non-interactively (Sonnet + Opus advisor, unlimited) ---
+rem Sonnet이 실행, 복잡한 판단은 Opus가 조언 (제한 없음)
+claude -p "You are a worker agent. Read and implement this task file: %PICKED_TASK%. Follow all rules in CLAUDE.md and context\rules.md. After completion, write a brief report to docs\report-%CHILD_ID%.md. Do not ask questions - make reasonable decisions and proceed." --dangerously-skip-permissions --model claude-sonnet-4-6 --advisor claude-opus-4-6
 
 set "CLAUDE_EXIT=%errorlevel%"
 

@@ -408,6 +408,12 @@ if not errorlevel 1 (
     echo       Installing commit-commands...
     powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','commit-commands') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
   )
+  echo "!PLUGIN_LIST_CACHE!" | findstr /C:"superpowers" >nul 2>&1 || (
+    echo       Adding superpowers marketplace...
+    powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','marketplace','add','obra/superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+    echo       Installing superpowers...
+    powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','superpowers@superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
+  )
   echo       Plugins Done
 ) else (
   echo [WARN] claude not found - plugins will be installed after Claude install
