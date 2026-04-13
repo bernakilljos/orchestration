@@ -36,6 +36,10 @@ Path: `~/.claude/settings.json`
 
 ## 3. MCP 서버 — 누락분만 설치
 
+> **Deferred Tools (토큰 최적화):** Claude Code 최신 버전은 MCP 스키마를 지연 로딩함.
+> 세션 시작 시 도구 이름만 로드 → 호출 전 ToolSearch로 스키마 fetch → 미사용 도구 토큰 0.
+> 별도 설정 불필요, 자동 적용. MCP 서버가 많아도 컨텍스트 폭발 없음.
+
 `claude mcp list`로 확인 후, 없는 것만 실행:
 
 ```bash

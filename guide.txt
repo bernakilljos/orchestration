@@ -158,6 +158,22 @@
     Figma, Gamma, Gmail, Google Calendar,
     Hugging Face, Mermaid Chart, Canva
 
+  [MCP 토큰 최적화 — Deferred Tools (자동 적용)]
+    Claude Code 최신 버전부터 MCP 도구 스키마를 지연 로딩(Lazy Load)함.
+
+    문제:  MCP 서버가 많아지면 매 턴마다 수만 토큰이 컨텍스트에 자동 주입
+           → 비용 폭증 + 컨텍스트 조기 소진 ("MCP 토큰 폭발")
+
+    해결:  Deferred Tools 방식
+           - 세션 시작 시 도구 이름만 system-reminder에 나열 (스키마 없음)
+           - 실제 호출 전 ToolSearch("select:도구이름")로 스키마 fetch
+           - 사용하지 않는 도구는 토큰 0 소비
+
+    효과:  매 턴 MCP 토큰 5,000~20,000+ → ~100 (이름만)
+           컨텍스트 수명 대폭 연장, API 비용 절감
+
+    * Claude Code에 기본 내장 — 별도 설치/설정 불필요
+
   [스킬 — 38개]
     #  이름                 용도
     ── ──────────────────── ──────────────────────────
@@ -281,6 +297,12 @@
   [MCP 서버 누락]
     → claude mcp list로 확인
     → 수동: claude mcp add -s user context7 -- npx -y @upstash/context7-mcp
+
+  [MCP 토큰 폭발 — 컨텍스트가 빠르게 줄어드는 경우]
+    → Deferred Tools는 자동 적용됨 (Claude Code 최신 버전)
+    → claude --version으로 최신 버전 확인
+    → MCP 서버 수 줄이기: claude mcp remove {불필요한서버}
+    → 자주 쓰는 MCP만 남기고 나머지 제거 권장
 
   [hook 에러 — "No such file"]
     → .claude\settings.json에서 없는 hook 파일 참조 제거
