@@ -72,7 +72,7 @@ Compile discovered information into structured context:
 ## Auto-Detected Project Context
 
 ### Tech Stack
-- Frontend: [Vue2/Vue3/React/...] (Port: [XXXX])
+- Frontend: [자동 감지됨] (Port: [XXXX])
 - Backend: [Spring Boot/Node/...] (Port: [XXXX])
 - DB: [MySQL/MSSQL/Oracle] (Name: [db_name], Port: [XXXX])
 - Server: [IP or hostname]
@@ -85,7 +85,7 @@ Compile discovered information into structured context:
 - [patterns found in source that relate to the request]
 
 ### Constraints (from CLAUDE.md)
-- [relevant rules: Vue2 no optional chaining, Java 8-11, etc.]
+- [프로젝트 CLAUDE.md에서 자동 감지된 규칙들]
 ```
 
 ### 4. Expand to Detailed Instruction

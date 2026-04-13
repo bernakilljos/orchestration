@@ -33,9 +33,9 @@ if [ -n "$TARGET_FILE" ] && [ -f "$TARGET_FILE" ]; then
 
     if command -v codex >/dev/null; then
       codex --model gpt-4o \
-        --instructions "$(cat .claude/tasks/task-instruction.md 2>/dev/null || echo 'Generate Vue 2 smoke test')" \
+        --instructions "$(cat .claude/tasks/task-instruction.md 2>/dev/null || echo 'Generate unit test for this component')" \
         --context "$(cat "$TARGET_FILE")" \
-        "Generate Vue 2 smoke test. Use @vue/test-utils shallowMount. No optional chaining. Save to: $SPEC_FILE"
+        "Generate a unit test for this component. Follow project testing conventions. Save to: $SPEC_FILE"
     else
       echo "[WARN] codex CLI not found → Write tests manually"
     fi

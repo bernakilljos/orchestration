@@ -1,28 +1,28 @@
-# API Specification — [Domain Name]
+# API 명세 — [도메인명]
 
-## Basic Info
+## 기본 정보
 
-- Base URL: `process.env.VUE_APP_API_URL`
+- Base URL: `[환경변수 참조 — 예: process.env.API_URL]`
 - Content-Type: `application/json`
-- Auth: Bearer Token (Authorization header)
+- 인증: Bearer Token (Authorization 헤더)
 
 ---
 
-## [API Name]
+## [API명]
 
-### GET /api/v1/[resource]
+### GET /api/v1/[리소스]
 
-**Description**: [What this API does]
+**설명**: [이 API가 하는 일]
 
-**Request**
+**요청 파라미터**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| page | Integer | N | Page number (default: 0) |
-| size | Integer | N | Page size (default: 20) |
-| [param] | [type] | Y/N | [Description] |
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| page | Integer | N | 페이지 번호 (기본: 0) |
+| size | Integer | N | 페이지 크기 (기본: 20) |
+| [파라미터] | [타입] | Y/N | [설명] |
 
-**Response 200**
+**응답 200**
 
 ```json
 {
@@ -38,66 +38,66 @@
 }
 ```
 
-**Response 400**
+**응답 400**
 
 ```json
 {
   "code": "400",
-  "message": "[Error message]",
+  "message": "[에러 메시지]",
   "data": null
 }
 ```
 
 ---
 
-### POST /api/v1/[resource]
+### POST /api/v1/[리소스]
 
-**Description**: [What this API does]
+**설명**: [이 API가 하는 일]
 
-**Request Body**
+**요청 바디**
 
 ```json
 {
-  "[field]": "[value]",
-  "[field2]": "[value2]"
+  "[필드]": "[값]",
+  "[필드2]": "[값2]"
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| [field] | String | Y | [Description] |
-| [field2] | Integer | N | [Description] |
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| [필드] | String | Y | [설명] |
+| [필드2] | Integer | N | [설명] |
 
-**Response 200**
+**응답 200**
 
 ```json
 {
   "code": "200",
   "message": "SUCCESS",
   "data": {
-    "id": "[Created ID]"
+    "id": "[생성된 ID]"
   }
 }
 ```
 
 ---
 
-## Error Codes
+## 에러 코드
 
-| Code | Message | Description |
-|------|---------|-------------|
-| 400 | Bad Request | Request parameter error |
-| 401 | Unauthorized | Authentication failed |
-| 403 | Forbidden | No permission |
-| 404 | Not Found | Resource not found |
-| 500 | Internal Server Error | Server error |
+| 코드 | 메시지 | 설명 |
+|------|--------|------|
+| 400 | Bad Request | 요청 파라미터 오류 |
+| 401 | Unauthorized | 인증 실패 |
+| 403 | Forbidden | 권한 없음 |
+| 404 | Not Found | 리소스 없음 |
+| 500 | Internal Server Error | 서버 오류 |
 
-## Vue Call Example
+## 호출 예시
 
 ```javascript
-// Use process.env (hardcoding prohibited)
-const response = await this.$http.get(
-  `${process.env.VUE_APP_API_URL}/api/v1/[resource]`,
-  { params: { page: 0, size: 20 } }
+// 환경변수 사용 (하드코딩 금지)
+const response = await fetch(
+  `${API_BASE_URL}/api/v1/[리소스]`,
+  { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } }
 )
 ```

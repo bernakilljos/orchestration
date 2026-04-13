@@ -1,68 +1,68 @@
-# PRD — [Feature Name]
+# PRD — [기능명]
 
-## Background and Purpose
-[Why this feature is needed. The problem it solves.]
+## 배경 및 목적
+[이 기능이 필요한 이유. 해결하려는 문제.]
 
-## Scope
-- IN: [Included scope]
-- OUT: [Excluded scope]
+## 범위
+- 포함: [포함 범위]
+- 제외: [제외 범위]
 
-## User Stories
+## 사용자 스토리
 
 ```
-As a [User type]
-I want to [Action]
-So that [Value/Purpose]
+[사용자 유형]으로서
+[행동]을 하고 싶다
+그래서 [가치/목적]을 달성한다
 ```
 
-## Functional Requirements
+## 기능 요구사항
 
-### FR-01. [Feature Title]
-- Description: [Detailed description]
-- Input: [Input values]
-- Output: [Output values]
-- Exceptions: [Exception handling]
+### FR-01. [기능 제목]
+- 설명: [상세 설명]
+- 입력: [입력값]
+- 출력: [출력값]
+- 예외: [예외 처리]
 
-### FR-02. [Feature Title]
-- Description:
-- Input:
-- Output:
-- Exceptions:
+### FR-02. [기능 제목]
+- 설명:
+- 입력:
+- 출력:
+- 예외:
 
-## Non-Functional Requirements
+## 비기능 요구사항
 
-| Item | Criteria |
-|------|----------|
-| Response time | Within 3 seconds |
-| Concurrent users | [Number] |
-| Browser | Chrome latest, IE11+ |
+| 항목 | 기준 |
+|------|------|
+| 응답 시간 | 3초 이내 |
+| 동시 사용자 | [명수] |
+| 브라우저 | Chrome 최신 |
 
-## API List
+## API 목록
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| GET | /api/v1/[resource] | [Description] |
-| POST | /api/v1/[resource] | [Description] |
+| 메서드 | URL | 설명 |
+|--------|-----|------|
+| GET | /api/v1/[리소스] | [설명] |
+| POST | /api/v1/[리소스] | [설명] |
 
-## Screen List
+## 화면 목록
 
-| Screen ID | Screen Name | URL |
-|-----------|-------------|-----|
-| SCR-01 | [Screen Name] | /[path] |
+| 화면 ID | 화면명 | URL |
+|---------|--------|-----|
+| SCR-01 | [화면명] | /[경로] |
 
-## Acceptance Criteria
+## 완료 조건
 
-- [ ] [Verification item 1]
-- [ ] [Verification item 2]
-- [ ] lint passes
-- [ ] build passes
-- [ ] smoke test passes
+- [ ] [검증 항목 1]
+- [ ] [검증 항목 2]
+- [ ] 린트 통과
+- [ ] 빌드 통과
+- [ ] 스모크 테스트 통과
 
-## Schedule
+## 일정
 
-| Phase | Assigned | Duration |
-|-------|----------|----------|
-| Design | Claude | |
-| Implementation | Codex | |
-| Verification | Gemini | |
-| Deployment | Claude | |
+| 단계 | 담당 | 기간 |
+|------|------|------|
+| 설계 | Claude | |
+| 구현 | Codex | |
+| 검증 | Gemini | |
+| 배포 | Claude | |

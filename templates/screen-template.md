@@ -1,93 +1,61 @@
-# Screen Design — [Screen Name]
+# 화면 설계 — [화면명]
 
-## Basic Info
+## 기본 정보
 
-| Item | Content |
-|------|---------|
-| Screen ID | SCR-[Number] |
-| Screen Name | [Screen Name] |
-| URL | /[path] |
-| File Path | src/pages/[filename].vue |
-| Assignee | |
+| 항목 | 내용 |
+|------|------|
+| 화면 ID | SCR-[번호] |
+| 화면명 | [화면명] |
+| URL | /[경로] |
+| 파일 경로 | src/pages/[파일명] |
+| 담당자 | |
 
-## Screen Purpose
-[Why this screen exists. What the user achieves on this screen.]
+## 화면 목적
+[이 화면이 존재하는 이유. 사용자가 이 화면에서 달성하는 것.]
 
-## Layout
+## 레이아웃
 
 ```
 +------------------------------------------+
-| [Header / Navigation]                     |
+| [헤더 / 네비게이션]                       |
 +------------------------------------------+
-| [Search/Filter Area]                      |
-|   [Input Field1]  [Input Field2]  [Search Button] |
+| [검색/필터 영역]                          |
+|   [입력필드1]  [입력필드2]  [검색버튼]    |
 +------------------------------------------+
-| [List/Table Area]                         |
-|   Column1 | Column2 | Column3 | Action   |
-|   --------+---------+---------+--------  |
-|   data    | data    | data    | [Edit][Delete] |
+| [목록/테이블 영역]                        |
+|   컬럼1 | 컬럼2 | 컬럼3 | 액션          |
+|   ------+-------+-------+------          |
+|   데이터 | 데이터 | 데이터 | [수정][삭제] |
 +------------------------------------------+
-| [Pagination]                              |
+| [페이지네이션]                            |
 +------------------------------------------+
 ```
 
-## Component List
+## 컴포넌트 목록
 
-| Component | Role | Path |
+| 컴포넌트 | 역할 | 경로 |
 |-----------|------|------|
-| [Component Name] | [Role] | src/components/[path] |
+| [컴포넌트명] | [역할] | src/components/[경로] |
 
-## Data Flow
+## 데이터 흐름
 
 ```
-mounted()
-  -> API call: GET /api/v1/[resource]
-  -> Save to data.list
-  -> Render screen
+마운트 시
+  -> API 호출: GET /api/v1/[리소스]
+  -> data.list에 저장
+  -> 화면 렌더링
 
-Search button click
-  -> Call searchData()
-  -> API call (with filter parameters)
-  -> Update results
+검색 버튼 클릭
+  -> searchData() 호출
+  -> API 호출 (필터 파라미터 포함)
+  -> 결과 갱신
 ```
 
-## Main data / computed / methods
+## 완료 조건
 
-```javascript
-data() {
-  return {
-    list: [],
-    searchParams: {
-      keyword: '',
-      page: 0,
-      size: 20
-    },
-    totalCount: 0
-  }
-},
-methods: {
-  async fetchList() { /* API call */ },
-  async searchData() { /* Search */ },
-  async deleteItem(id) { /* Delete */ }
-}
-```
-
-## Alert Usage Rules
-
-```javascript
-// Use mapActions (direct this.$alert usage prohibited)
-...mapActions("alert", ["ADD_ALERT"]),
-
-this.ADD_ALERT({ message: "Saved successfully.", color: "success" })
-this.ADD_ALERT({ message: "An error occurred.", color: "error" })
-```
-
-## Acceptance Criteria
-
-- [ ] List query works correctly
-- [ ] Search/filter works correctly
-- [ ] Pagination works correctly
-- [ ] Alert displayed on error
-- [ ] No optional chaining
-- [ ] No hardcoding
-- [ ] lint passes
+- [ ] 목록 조회 정상 동작
+- [ ] 검색/필터 정상 동작
+- [ ] 페이지네이션 정상 동작
+- [ ] 에러 시 알림 표시
+- [ ] 하드코딩 없음
+- [ ] 린트 통과

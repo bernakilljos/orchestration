@@ -62,8 +62,8 @@
 ```markdown
 ## [2026-04-12 11:00] Claude → Codex
 - **Task**: task-instruction.md (login page 구현)
-- **Context**: Vue 2 + Vuex, API는 /api/auth/login
-- **Constraints**: optional chaining 금지, mapActions 사용
+- **Context**: [프로젝트 스택], API는 /api/auth/login
+- **Constraints**: 프로젝트 CLAUDE.md 규칙 준수
 - **Expected**: src/pages/Login.vue, src/store/auth.js
 
 ## [2026-04-12 11:30] Codex → Claude

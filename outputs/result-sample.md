@@ -1,91 +1,63 @@
-# Implementation Result Report — [Task Name]
+# 구현 결과 보고서 — [작업명]
 
-> Date: [YYYY-MM-DD]
-> Assigned: Codex / Claude
-> Reviewed: Gemini
-
----
-
-## Summary
-
-| Item | Content |
-|------|---------|
-| Task | [task-instruction.md title] |
-| Status | Complete / Partial / Failed |
-| Implementation Time | [Time spent] |
+> 날짜: [YYYY-MM-DD]
+> 담당: Codex / Claude
+> 검증: Gemini
 
 ---
 
-## Acceptance Criteria Results
+## 요약
 
-| Item | Result | Notes |
-|------|--------|-------|
-| Registered in router | PASS | src/router/index.js |
-| API connected | PASS | process.env usage confirmed |
-| lint passes | PASS | 0 errors |
-| build passes | PASS | |
-| smoke test | PASS | 1 written |
+| 항목 | 내용 |
+|------|------|
+| 작업 | [task-instruction.md 제목] |
+| 상태 | 완료 / 부분완료 / 실패 |
+| 소요 시간 | [소요시간] |
 
 ---
 
-## Created/Modified Files
+## 완료 조건 결과
 
-### Created
-- `src/pages/SamplePage.vue` — New page
-
-### Modified
-- `src/router/index.js` — Router registration added
-
----
-
-## Key Implementation Details
-
-### SamplePage.vue
-
-```javascript
-// API call example
-async fetchData() {
-  const res = await this.$http.get(
-    `${process.env.VUE_APP_API_URL}/api/v1/sample`
-  )
-  this.list = res.data.data.content
-  this.totalCount = res.data.data.totalElements
-}
-```
-
-### Router Registration
-
-```javascript
-{
-  path: '/sample',
-  name: 'SamplePage',
-  component: () => import('@/pages/SamplePage.vue')
-}
-```
+| 항목 | 결과 | 비고 |
+|------|------|------|
+| 라우터 등록 | PASS | src/router/index.js |
+| API 연결 | PASS | 환경변수 사용 확인 |
+| 린트 통과 | PASS | 에러 0건 |
+| 빌드 통과 | PASS | |
+| 스모크 테스트 | PASS | 1건 작성 |
 
 ---
 
-## Verification Results (Gemini Review)
+## 생성/수정 파일
 
-> gemini-a --verify execution results
+### 생성
+- `src/pages/SamplePage.vue` — 신규 페이지
 
-| Item | Result |
-|------|--------|
-| Security issues | None |
-| Hardcoding | None |
-| optional chaining | None |
-| Performance issues | None |
+### 수정
+- `src/router/index.js` — 라우터 등록 추가
 
 ---
 
-## Remaining Issues
+## 검증 결과 (Gemini 리뷰)
 
-- [ ] [Record any issues here]
+> gemini-a --verify 실행 결과
+
+| 항목 | 결과 |
+|------|------|
+| 보안 이슈 | 없음 |
+| 하드코딩 | 없음 |
+| 성능 이슈 | 없음 |
 
 ---
 
-## Next Steps
+## 남은 이슈
 
-1. Claude review and adoption decision
-2. Confirm gemini-a --verify passed
-3. Execute deploy.bat (--confirmed)
+- [ ] [이슈가 있으면 여기에 기록]
+
+---
+
+## 다음 단계
+
+1. Claude 검토 및 채택 결정
+2. gemini-a --verify 통과 확인
+3. deploy.bat 실행 (--confirmed)

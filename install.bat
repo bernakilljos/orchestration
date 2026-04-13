@@ -555,7 +555,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$pat='!GITHUB_PAT!'; $ba
 
 rem git 초기화 + 원격 연결 + 초기 커밋
 if exist "%TARGET%\.github-repo-url.txt" (
-  for /f "tokens=*" %%U in ("%TARGET%\.github-repo-url.txt") do set "GH_REPO_URL=%%U"
+  for /f "usebackq tokens=*" %%U in ("%TARGET%\.github-repo-url.txt") do set "GH_REPO_URL=%%U"
 )
 cd /d "%TARGET%"
 git init >nul 2>&1

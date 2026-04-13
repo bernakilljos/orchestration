@@ -131,22 +131,21 @@ Save result to `.claude/context-cache/domain-profile.md`:
 Generated: YYYY-MM-DD HH:mm
 
 ## Stack
-- Frontend: Vue 2.x (confidence: 90)
-- Backend: Spring Boot 2.x (confidence: 110)
-- Database: MSSQL (detected from application.yml)
-- Build: Maven / npm
-- Test: Jest + JUnit
+- Frontend: [자동 감지] (confidence: NN)
+- Backend: [자동 감지] (confidence: NN)
+- Database: [자동 감지] (detected from config files)
+- Build: [자동 감지]
+- Test: [자동 감지]
 
 ## Applicable Rules
-- No optional chaining (?.) — Vue 2 requirement
-- ES5/ES2015 syntax — Node compatibility
-- Java 8-11 — Spring Boot 2.x constraint
-- Single-line annotations — project convention
+- [프로젝트 CLAUDE.md에서 감지된 규칙들]
+- [package.json / pom.xml / go.mod 등에서 추론된 제약]
+- [예: Vue 2 → optional chaining 금지, Java 8 → var 금지 등]
 
 ## Recommended Tools
-- Lint: ESLint (frontend), Checkstyle (backend)
-- Test: @vue/test-utils + Jest, JUnit + Mockito
-- Build: npm run build, mvnw package
+- Lint: [스택에 맞는 린터]
+- Test: [스택에 맞는 테스트 프레임워크]
+- Build: [스택에 맞는 빌드 도구]
 - Deploy: deploy.bat → EC2
 ```
 

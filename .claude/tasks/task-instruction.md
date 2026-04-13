@@ -1,25 +1,25 @@
-# Task Instruction — [Task Title]
+# 작업 지시서 — [작업 제목]
 
-## Goal
-[What to build — be specific]
+## 목표
+[구현할 내용 — 구체적으로 작성]
 
-## Assigned Agent
-- Implementer: Codex (or Claude for small tasks)
-- Reviewer: Gemini
+## 담당 에이전트
+- 구현: Codex (소규모는 Claude 직접)
+- 검증: Gemini
 
-## Allowed Files (ONLY these may be modified)
-- `src/...` (specify exact files)
+## 수정 허용 파일 (이 파일만 수정 가능)
+- `src/...` (정확한 파일 지정)
 
-## Prohibited
-- Modifying files not in the allowed list
-- Hardcoding any values
-- Optional chaining (?.) — Vue 2 project
-- config.py / settings.json / .env modification
+## 금지 사항
+- 허용 목록 외 파일 수정
+- 하드코딩 (환경변수/설정 참조 필수)
+- 대상 프로젝트 CLAUDE.md에 정의된 금지 패턴
+- config.py / settings.json / .env 수정
 
-## Acceptance Criteria
-- [ ] Feature works as specified
-- [ ] No lint errors
-- [ ] Build passes
+## 완료 조건
+- [ ] 기능이 명세대로 동작
+- [ ] 린트 에러 없음
+- [ ] 빌드 통과
 
-## Completion Report
-After implementation, write `docs/implementation-report.md`
+## 완료 보고서
+구현 후 `docs/implementation-report.md` 작성

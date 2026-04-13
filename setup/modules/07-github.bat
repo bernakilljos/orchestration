@@ -58,7 +58,7 @@ cd /d "%TARGET%"
 git init >nul 2>&1
 
 if exist "%TARGET%\.github-repo-url.txt" (
-  for /f "tokens=*" %%U in ("%TARGET%\.github-repo-url.txt") do set "GH_URL=%%U"
+  for /f "usebackq tokens=*" %%U in ("%TARGET%\.github-repo-url.txt") do set "GH_URL=%%U"
   if not "!GH_URL!"=="" git remote add origin "!GH_URL!" >nul 2>&1
 )
 

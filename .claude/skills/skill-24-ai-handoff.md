@@ -37,7 +37,7 @@ context:
   - 테스트 우선순위
 constraints:
   - 수정 금지 파일
-  - 코딩 규칙 (Vue 2, optional chaining 금지 등)
+  - 코딩 규칙 (대상 프로젝트 CLAUDE.md에 정의된 금지 패턴)
 expected_output:
   - 구현 파일 목록
   - 테스트 파일
