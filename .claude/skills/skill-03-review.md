@@ -46,14 +46,14 @@ $(cat docs/implementation-report.md)" \
 ```bash
 # Secret scan
 grep -rE "(password|secret|api_key|token)\s*=\s*['\"][^'\"]{5,}" \
-  src/ --include="*.js" --include="*.vue" --include="*.java" \
+  src/ \
   | grep -v "process.env" | grep -v "config\." \
   > docs/security-report.md
 
 # Gemini security review
 gemini --model gemini-2.0-flash \
   --prompt "Find security vulnerabilities in the following code. Based on OWASP Top 10.
-$(cat src/pages/NewPage.vue)" \
+$(cat docs/implementation-report.md)" \
   >> docs/security-report.md
 ```
 

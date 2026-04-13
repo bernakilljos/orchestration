@@ -47,4 +47,4 @@ API Test Results: 15/18 passed (83%)
 
 ## MCP 연동
 - **playwright MCP**: 브라우저 기반 API 테스트
-- **context7**: API 프레임워크 문서 참조
+- **WebSearch / WebFetch**: API 프레임워크 문서 참조 (내장, MCP 불필요) / context7 MCP 설치 시 추가 활용

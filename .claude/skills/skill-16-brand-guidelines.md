@@ -119,7 +119,7 @@
 ```
 Figma: get_design_context → 디자인 토큰 추출 → 가이드라인 생성
 Canva: list-brand-kits → 브랜드 키트 가져오기 → 가이드라인 생성
-URL:   WebFetch → 기존 사이트 색상/폰트 분석 → 가이드라인 생성
+URL:   WebFetch (내장 툴, MCP 불필요) → 기존 사이트 색상/폰트 분석 → 가이드라인 생성
 ```
 
 ## 출력

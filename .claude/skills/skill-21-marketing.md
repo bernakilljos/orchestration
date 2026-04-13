@@ -78,4 +78,4 @@
 - **Gamma MCP**: 마케팅 프레젠테이션
 - **Canva MCP**: SNS 이미지/배너 디자인
 - **Gmail MCP**: 이메일 캠페인 초안 생성
-- **WebSearch**: 경쟁사/키워드 리서치
+- **WebSearch**: 경쟁사/키워드 리서치 (내장 툴, MCP 불필요)

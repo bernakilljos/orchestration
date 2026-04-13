@@ -75,7 +75,7 @@ class TargetServiceTest {
 }
 ```
 
-### Vue 2 (vue-test-utils + Jest)
+### Vue 2 (vue-test-utils + Jest) — Vue 프로젝트에만 적용
 ```javascript
 import { shallowMount } from '@vue/test-utils'
 import TargetPage from '@/pages/TargetPage.vue'

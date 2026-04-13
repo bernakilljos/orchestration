@@ -83,8 +83,13 @@ Step 3: Session Resume (snapshot 확인)
 **다음 상황에서는 반드시 검색/조사 후 답변:**
 
 ```
+검색 우선순위:
+  1순위: WebSearch / WebFetch  (내장 툴 — 항상 사용 가능, MCP 불필요)
+  2순위: context7 MCP          (npm/GitHub 공식 문서 특화 — 설치된 경우 추가 활용)
+
 1. 라이브러리·프레임워크·API 관련 질문
-   → context7 MCP 로 공식 문서 먼저 조회
+   → WebSearch 로 공식 문서 검색 (MCP 설치 없이 즉시)
+   → context7 MCP 설치 시 병행 활용
    → 예: "Vue router 사용법", "Spring Boot 설정", "npm 패키지"
 
 2. 오류 메시지·버그 원인 파악
@@ -95,7 +100,7 @@ Step 3: Session Resume (snapshot 확인)
    → WebSearch 필수 (학습 데이터 outdated 가능)
 
 4. 구현 방법이 불확실한 경우
-   → WebSearch 또는 context7 로 레퍼런스 확인 후 구현
+   → WebSearch 로 레퍼런스 확인 후 구현
 
 5. 리서치·조사·비교 분석 요청
    → task-research-*.md 작성 → gemini-auto (--research) 위임

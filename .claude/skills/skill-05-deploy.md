@@ -31,7 +31,7 @@ Build verification passed
   → [HOOK-05] post-deploy: record deployment results
 ```
 
-## Frontend Deployment (Vue2)
+## Frontend Deployment (Node.js 빌드 — Vue/React/Svelte 등)
 
 ```bash
 #!/bin/bash

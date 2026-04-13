@@ -146,5 +146,5 @@ OWASP Security Score: 72/100
 
 ## MCP 연동
 - **WebSearch**: CVE 데이터베이스 조회
-- **context7**: 보안 라이브러리 문서 참조
+- **WebSearch / WebFetch**: 보안 라이브러리 문서 참조 (내장, MCP 불필요) / context7 MCP 설치 시 추가 활용
 - skill-03 (review)의 Security-Only Scan과 연동

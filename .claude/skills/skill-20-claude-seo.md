@@ -77,4 +77,4 @@ SEO Score: 78/100
 
 ## MCP 연동
 - **playwright MCP**: 페이지 렌더링 + Lighthouse 호출
-- **WebSearch**: 키워드 리서치
+- **WebSearch**: 키워드 리서치 (내장 툴, MCP 불필요)
