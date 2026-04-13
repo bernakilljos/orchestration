@@ -12,8 +12,8 @@ Update `.claude\tasks\current-tasks.json`:
 {
   "task_id": "TASK-NNN",
   "title": "Task title",
-  "target_files": ["path/file.vue"],
-  "locked_files": ["path/file.vue"],
+  "target_files": ["path/to/file"],
+  "locked_files": ["path/to/file"],
   "writer": "codex",
   "agent": "codex",
   "priority": "high",
@@ -43,7 +43,7 @@ if exist ".claude\tasks\task-instruction.md" (
 ### 4. Context cache check (500+ line files)
 ```bat
 rem Find large files that need summarizing
-for /r src %%f in (*.vue *.java *.js) do (
+for /r src %%f in (*.vue *.jsx *.tsx *.java *.py *.go *.js *.ts *.cs *.rb) do (
   for /f %%c in ('find /c /v "" "%%f"') do (
     if %%c GEQ 500 echo [LARGE] %%f ^(%%c lines^) - summarize needed
   )

@@ -24,7 +24,7 @@ Read research-report.md
 ```bash
 gemini --model gemini-2.0-flash \
   --tools google_search \
-  --prompt "Compare the following two design alternatives. Vue2 + Spring Boot environment.
+  --prompt "Compare the following two design alternatives for this project's tech stack.
 
 Alternative A: $(cat docs/option-a.md)
 Alternative B: $(cat docs/option-b.md)
@@ -71,15 +71,15 @@ Implementer: [Codex / Claude]
 Reason: [500+ lines → Codex / under 500 → Claude]
 
 ## Allowed Files
-- `path/file.vue` (create)
-- `path/file.java` (modify: [modification scope])
+- `path/to/file` (create)
+- `path/to/file` (modify: [modification scope])
 
 ## Prohibited Files
 - `src/store/` (read-only)
 - `config/` (absolutely no modifications)
 
 ## Reference Patterns
-- `src/pages/ExistingPage.vue` → copy this pattern as-is
+- `src/path/ExistingFile` → copy this pattern as-is
 
 ## Acceptance Criteria
 - [ ] [Criterion 1]

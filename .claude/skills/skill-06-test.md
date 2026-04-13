@@ -9,8 +9,8 @@ Cannot pass hook-02-post-impl quality gate without tests.
 # Run all tests
 bash .claude/scripts/test.sh
 
-# Generate + run tests for a specific component
-bash .claude/scripts/test.sh src/pages/TargetPage.vue
+# Generate + run tests for a specific file
+bash .claude/scripts/test.sh src/path/to/TargetFile
 ```
 
 ## Test Classification
@@ -24,44 +24,41 @@ bash .claude/scripts/test.sh src/pages/TargetPage.vue
 ## Auto-Generate Tests with Codex
 
 ```bash
+# Adapt prompt to your stack:
 codex --model gpt-4o \
-  --instructions "Generate Vue 2 smoke test.
+  --instructions "Generate [stack-specific] unit test.
   Rules:
-  - Use @vue/test-utils shallowMount
-  - Do not use optional chaining (?.)
-  - Mock $store/$router with jest.fn()
-  - File location: tests/unit/[ComponentName].spec.js" \
-  --context "$(cat src/pages/TargetPage.vue)" \
-  "generate smoke test"
+  - Use [test framework appropriate for the stack]
+  - Cover: happy path, error path, edge cases
+  - File location: tests/[TestFileName]" \
+  --context "$(cat src/path/to/TargetFile)" \
+  "generate unit test"
 ```
 
-## Vue 2 Test Pattern (Reference)
+## Test Patterns by Stack (Reference — pick what applies)
 
+### Node.js / JavaScript (Jest)
 ```javascript
-// tests/unit/TargetPage.spec.js
-import { shallowMount } from '@vue/test-utils'
-import TargetPage from '@/pages/TargetPage.vue'
+// tests/unit/target.spec.js
+const { myFunction } = require('../../src/target')
 
-describe('TargetPage', function() {
-  var wrapper
-  beforeEach(function() {
-    wrapper = shallowMount(TargetPage, {
-      mocks: {
-        $store: { getters: {}, dispatch: jest.fn(), commit: jest.fn() },
-        $router: { push: jest.fn() },
-        $route: { params: {}, query: {} }
-      }
-    })
-  })
-
-  it('renders successfully', function() {
-    expect(wrapper.exists()).toBe(true)
+describe('myFunction', function() {
+  it('returns expected result', function() {
+    expect(myFunction('input')).toBe('expected')
   })
 })
 ```
 
-## Spring Boot Test Pattern (Reference)
+### Python (pytest)
+```python
+# tests/test_target.py
+from src.target import my_function
 
+def test_returns_expected():
+    assert my_function('input') == 'expected'
+```
+
+### Java / Spring Boot (JUnit 5 + Mockito)
 ```java
 @ExtendWith(MockitoExtension.class)
 class TargetServiceTest {
@@ -76,6 +73,21 @@ class TargetServiceTest {
         verify(targetRepository, times(1)).findAll();
     }
 }
+```
+
+### Vue 2 (vue-test-utils + Jest)
+```javascript
+import { shallowMount } from '@vue/test-utils'
+import TargetPage from '@/pages/TargetPage.vue'
+
+describe('TargetPage', function() {
+  it('renders successfully', function() {
+    var wrapper = shallowMount(TargetPage, {
+      mocks: { $store: { getters: {}, dispatch: jest.fn() }, $router: { push: jest.fn() } }
+    })
+    expect(wrapper.exists()).toBe(true)
+  })
+})
 ```
 
 ## Failure Handling

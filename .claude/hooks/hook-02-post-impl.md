@@ -7,28 +7,42 @@ Auto-run immediately after Codex or Claude finishes implementation.
 
 ### 1. Build gate
 
-**Frontend (Vue/React)**
+Run the command matching your stack:
+
+**Node.js / Frontend (Vue/React/Svelte/etc.)**
 ```bat
 call npm run lint 2>&1 | tee docs\lint-result.txt
 call npm run build 2>&1 | tee docs\build-result.txt
 ```
 
-**Backend (Spring Boot)**
-```bat
-call mvnw compile 2>&1 | tee docs\build-result.txt
-call mvnw test 2>&1 | tee docs\test-result.txt
-```
-
-**Node.js**
+**Node.js (no bundler)**
 ```bat
 node --check src\index.js 2>&1 | tee docs\build-result.txt
 call npm test 2>&1 | tee docs\test-result.txt
 ```
 
+**Java / Spring Boot**
+```bat
+call mvnw compile 2>&1 | tee docs\build-result.txt
+call mvnw test 2>&1 | tee docs\test-result.txt
+```
+
+**Python**
+```bat
+python -m flake8 src\ 2>&1 | tee docs\lint-result.txt
+python -m pytest 2>&1 | tee docs\test-result.txt
+```
+
+**Go**
+```bat
+go build ./... 2>&1 | tee docs\build-result.txt
+go test ./... 2>&1 | tee docs\test-result.txt
+```
+
 ### 2. Hardcoding scan
 ```bat
 rem Scan for hardcoded absolute paths in source and scripts
-findstr /s /i /r /c:"C:\\Users\\" /c:"C:\\work\\" /c:"D:\\" /c:"/home/" src\*.js src\*.vue src\*.java .claude\scripts\*.bat > docs\hardcode-scan.txt 2>nul
+findstr /s /i /r /c:"C:\\Users\\" /c:"C:\\work\\" /c:"D:\\" /c:"/home/" src\ .claude\scripts\*.bat > docs\hardcode-scan.txt 2>nul
 for /f %%i in ('type docs\hardcode-scan.txt 2^>nul ^| find /c /v ""') do set HC_COUNT=%%i
 if %HC_COUNT% GTR 0 (
   echo [BLOCK] Hardcoded path detected - fix before proceeding
@@ -41,7 +55,7 @@ if %HC_COUNT% GTR 0 (
 ### 3. Secret scan
 ```bat
 rem Scan for hardcoded credentials
-findstr /s /i /r /c:"password\s*=" /c:"api_key\s*=" /c:"secret\s*=" /c:"token\s*=" src\*.js src\*.vue src\*.java > docs\secret-scan.txt
+findstr /s /i /r /c:"password\s*=" /c:"api_key\s*=" /c:"secret\s*=" /c:"token\s*=" src\ > docs\secret-scan.txt
 findstr /v "process.env\|config\." docs\secret-scan.txt > docs\secret-scan-filtered.txt
 for /f %%i in ('type docs\secret-scan-filtered.txt ^| find /c /v ""') do set SECRET_COUNT=%%i
 if %SECRET_COUNT% GTR 0 (
@@ -74,14 +88,14 @@ Codex may change architecture (add files, rename modules, restructure). Verify b
 Claude checks:
 1. List all files Codex created/modified
 2. Verify imports are consistent (no broken references)
-3. Check if Codex added new routes → update store/router accordingly
-4. Check if Codex renamed props → update parent components
+3. Check if Codex added new routes → update routing accordingly
+4. Check if Codex renamed interfaces/props → update consumers
 5. List any NEW files Codex created that weren't in task-instruction.md
 ```
 
 If structure changed significantly:
 - Update task-instruction.md to reflect actual structure
-- Update Vue pages to match new component contracts
+- Update dependent files to match new contracts
 - Notify: [STRUCTURE CHANGED] Codex reorganized - reviewed and aligned
 
 ---

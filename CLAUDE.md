@@ -305,26 +305,21 @@ gemini --yolo
 
 ## Development Environment Rules
 
+> This orchestration kit is stack-agnostic. Project-specific rules go in the project's own CLAUDE.md.
+> Universal rules below apply to all projects.
+
 ```
-Frontend:  Vue 2.x
-           optional chaining(?.) prohibited
-           explicit null/undefined check required
-           No ESLint errors
-Backend:   Spring Boot 2.x, Java 8~11
-           JPA/Hibernate 2.x
-           Annotations/parameters compressed to single line
-           Single-line logging
-DB:        MSSQL / MySQL / Oracle
-Node:      ES5/ES2015 syntax
-Variables: Keep existing names
-           compSum = CID total
-           plSum   = ing_CID total (no mixing)
-Alert:     mapActions("alert",[ADD_ALERT])
-           this.ADD_ALERT({message, color})
+Stack:      Detect from package.json / pom.xml / go.mod / requirements.txt etc.
+            Use existing patterns — do not introduce new frameworks without approval
+Variables:  Keep existing names — do not rename without explicit instruction
 Hardcoding: Strictly prohibited (use process.env or config references)
-Comments:  Do not use the word "owner" (Korean: "주인")
-Shell:     Do not use Unix commands (cp/mv/rm), use Windows copy/move/del
+Comments:   Do not use the word "owner" (Korean: "주인")
+Shell:      Do not use Unix commands (cp/mv/rm), use Windows copy/move/del
+Lint:       No lint errors — run the project's lint tool before marking done
 ```
+
+> Per-project overrides (e.g. Vue 2.x, Spring Boot 2.x, Java 8-11) belong in
+> the target project's own CLAUDE.md — not here.
 
 ---
 

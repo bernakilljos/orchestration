@@ -21,16 +21,23 @@ powershell -Command "Get-ChildItem dist/js/*.js | Where-Object { $_.Length -gt 5
 find dist/js -name "*.js" -size +500k -exec ls -lh {} \; 2>/dev/null
 ```
 
-### Render Performance Indicators
+### Render Performance Indicators (apply checks relevant to your stack)
 ```
-Claude checks (code review):
-1. v-for without :key                        → FAIL
-2. v-for + v-if on same element              → WARN (move v-if to wrapper)
-3. Unnecessary watchers (computed preferred)  → WARN
+Universal checks:
+1. Unthrottled scroll/resize event handlers  → WARN
+2. Rendering user input without escaping     → FAIL (XSS risk)
+3. Missing lazy-load on heavy routes         → WARN for pages > 200 lines
 4. Large inline styles or deep nesting (>5)  → WARN
-5. Missing lazy-load on route components     → WARN for pages > 200 lines
-6. Unthrottled scroll/resize event handlers  → WARN
-7. v-html with user input                    → FAIL (XSS risk)
+
+Vue-specific (skip if not Vue):
+5. v-for without :key                        → FAIL
+6. v-for + v-if on same element              → WARN (move v-if to wrapper)
+7. Unnecessary watchers (computed preferred) → WARN
+8. v-html with user input                    → FAIL (XSS risk)
+
+React-specific (skip if not React):
+9. Missing key prop in lists                 → FAIL
+10. Inline function creation in render       → WARN
 ```
 
 ### Frontend Metrics (when Lighthouse/Playwright available)
@@ -82,13 +89,21 @@ Claude checks (code review):
 7. LIKE '%keyword%' on large tables           → WARN (full table scan)
 ```
 
-### JPA/Hibernate Specific
+### ORM / DB Layer (apply if relevant)
 ```
-Claude checks:
+JPA/Hibernate (Java):
 1. FetchType.EAGER on @ManyToOne/@OneToMany   → WARN (prefer LAZY)
 2. Missing @BatchSize on collections          → WARN
 3. Entity without @ToString(exclude=...)      → WARN (lazy-load trigger)
 4. No DTO projection (returning Entity to API)→ WARN
+
+SQLAlchemy (Python):
+1. Missing lazy='dynamic' on large relations  → WARN
+2. N+1 query without joinedload               → FAIL
+
+Prisma / TypeORM / Sequelize (Node.js):
+1. Missing select fields (selecting all)      → WARN
+2. Missing transaction on multi-step writes   → WARN
 ```
 
 ---
@@ -111,7 +126,7 @@ Claude checks (code review):
 ```bash
 # Quick duplication scan — find repeated code blocks
 # Windows
-powershell -Command "$files = Get-ChildItem -Recurse -Include *.js,*.vue,*.java -Exclude node_modules,dist,target; $hashes = @{}; foreach ($f in $files) { $lines = Get-Content $f.FullName; for ($i=0; $i -lt $lines.Count-5; $i++) { $block = ($lines[$i..($i+4)] -join '`n').Trim(); if ($block.Length -gt 50) { $h = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($block)); $key = [BitConverter]::ToString($h).Substring(0,16); if ($hashes.ContainsKey($key)) { Write-Host '[DUP]' $f.Name ':' ($i+1) '~' $hashes[$key] } else { $hashes[$key] = \"$($f.Name):$($i+1)\" } } } }"
+powershell -Command "$files = Get-ChildItem -Recurse -Include *.js,*.ts,*.vue,*.jsx,*.tsx,*.java,*.py,*.go,*.cs,*.rb -Exclude node_modules,dist,target,.git; $hashes = @{}; foreach ($f in $files) { $lines = Get-Content $f.FullName; for ($i=0; $i -lt $lines.Count-5; $i++) { $block = ($lines[$i..($i+4)] -join '`n').Trim(); if ($block.Length -gt 50) { $h = [System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($block)); $key = [BitConverter]::ToString($h).Substring(0,16); if ($hashes.ContainsKey($key)) { Write-Host '[DUP]' $f.Name ':' ($i+1) '~' $hashes[$key] } else { $hashes[$key] = \"$($f.Name):$($i+1)\" } } } }"
 ```
 
 ### Lint Summary
@@ -146,17 +161,23 @@ echo "Build time: ${elapsed}s"
 
 ### Test Coverage
 ```bash
-# Vue/React (Jest)
+# JavaScript/TypeScript (Jest)
 npx jest --coverage --coverageReporters=text-summary 2>&1 | tee docs/coverage-result.txt
-# Thresholds:
+
+# Java/Spring Boot (JaCoCo)
+# mvnw test jacoco:report -q 2>&1
+
+# Python (pytest-cov)
+# python -m pytest --cov=src --cov-report=term-missing 2>&1 | tee docs/coverage-result.txt
+
+# Go
+# go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out
+
+# Thresholds (universal):
 #   Statements: >= 60%
 #   Branches:   >= 50%
 #   Functions:  >= 60%
 #   Lines:      >= 60%
-
-# Spring Boot (JaCoCo)
-mvnw test jacoco:report -q 2>&1
-# Check target/site/jacoco/index.html for coverage %
 ```
 
 ### Dependency Check

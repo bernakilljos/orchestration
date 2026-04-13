@@ -48,12 +48,25 @@ codex exec --full-auto "task"
 ## Post-Implementation Check
 
 ```bat
-rem Vue build/lint
-npm run build
-npm run lint
+rem Adapt to your project stack:
 
-rem Spring Boot
-mvnw compile
+rem Node.js / Frontend (Vue/React/etc.)
+rem npm run build
+rem npm run lint
+
+rem Java / Spring Boot
+rem mvnw compile
+rem mvnw test
+
+rem Python
+rem python -m pytest
+rem flake8 src/
+
+rem Go
+rem go build ./...
+rem go test ./...
+
+rem Run whichever matches your stack
 ```
 
 ## Output: `docs/implementation-report.md`

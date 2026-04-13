@@ -7,20 +7,33 @@ Understand the project structure and identify risk points before implementation.
 
 ### 1. Understand Project Structure
 ```bash
-find . -type f \( -name "*.vue" -o -name "*.js" -o -name "*.java" -o -name "*.ts" \) \
-  | grep -v node_modules | grep -v .git | sort > docs/file-list.txt
+# Auto-detect stack from project root
+find . -type f \( -name "*.vue" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.svelte" \
+  -o -name "*.js" -o -name "*.ts" -o -name "*.java" -o -name "*.py" \
+  -o -name "*.go" -o -name "*.cs" -o -name "*.rb" \) \
+  | grep -v node_modules | grep -v .git | grep -v dist | grep -v target | sort > docs/file-list.txt
 ```
 
 ### 2. Check Packages/Dependencies
 ```bash
-cat package.json 2>/dev/null || cat pom.xml 2>/dev/null || cat build.gradle 2>/dev/null
+# Detect package manager / build tool
+cat package.json 2>/dev/null \
+  || cat pom.xml 2>/dev/null \
+  || cat build.gradle 2>/dev/null \
+  || cat requirements.txt 2>/dev/null \
+  || cat go.mod 2>/dev/null \
+  || cat Gemfile 2>/dev/null \
+  || cat *.csproj 2>/dev/null \
+  || echo "[INFO] No package manifest found — check project root manually"
 ```
 
 ### 3. Identify Existing Patterns
 ```bash
-# Vue project example
-grep -r "export default" src/ --include="*.vue" -l | head -20
-grep -r "axios\|fetch\|api" src/ --include="*.js" -l | head -10
+# Adapt search to detected stack
+# Frontend (Vue/React/Svelte): grep -r "export default" src/ -l | head -20
+# Backend (Java/Spring): grep -r "@RestController" src/ -l | head -20
+# Node.js: grep -r "require\|import" src/ --include="*.js" -l | head -10
+# Python: grep -r "def \|class " src/ --include="*.py" -l | head -10
 ```
 
 ### 4. Identify Do-Not-Modify Files
@@ -39,9 +52,9 @@ grep -r "axios\|fetch\|api" src/ --include="*.js" -l | head -10
 ## Research Report
 
 ### Project Stack
-- Frontend: [Vue2/Vue3/React]
-- Backend: [Spring Boot/Node]
-- DB: [MSSQL/MySQL/Oracle]
+- Frontend: [Vue/React/Svelte/Angular/Next.js/etc.]
+- Backend: [Spring Boot/Node.js/Python/Go/Ruby/etc.]
+- DB: [MSSQL/MySQL/Oracle/PostgreSQL/MongoDB/etc.]
 
 ### Related File List
 - [file path]: [role]
