@@ -158,6 +158,11 @@
     Figma, Gamma, Gmail, Google Calendar,
     Hugging Face, Mermaid Chart, Canva
 
+  [토큰 최적화 환경변수 — install.bat 자동 설정]
+    CLAUDE_CODE_MAX_THINKING_TOKENS=10000   thinking 과다 소비 차단
+    CLAUDE_AUTOCOMPACT_THRESHOLD=50         컨텍스트 50%% 시 자동 압축
+    CLAUDE_CODE_SUBAGENT_MODEL=haiku        서브에이전트 저비용 모델 사용
+
   [MCP 토큰 최적화 — Deferred Tools (자동 적용)]
     Claude Code 최신 버전부터 MCP 도구 스키마를 지연 로딩(Lazy Load)함.
 

@@ -33,6 +33,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
      if($add){($cur.TrimEnd()+\"`n\"+($add -join \"`n\")+\"`n\")|Set-Content $prof -Encoding UTF8} }catch{} }" >nul 2>&1
 echo       Done
 
+rem --- 토큰 최적화 환경변수 설정 ---
+echo [+] Setting token optimization env vars...
+setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000 >nul 2>&1
+setx CLAUDE_AUTOCOMPACT_THRESHOLD 50 >nul 2>&1
+setx CLAUDE_CODE_SUBAGENT_MODEL claude-haiku-4-5-20251001 >nul 2>&1
+echo       Done (MAX_THINKING=10000, AUTOCOMPACT=50%%, SUBAGENT=haiku)
+
 rem Orca-auto 활성화 플래그
 if not "%TARGET%"=="" (
   if not exist "%TARGET%\.claude\orca-stopped" (

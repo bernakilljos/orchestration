@@ -379,6 +379,13 @@ if not exist "!REAL_USERPROFILE!\.claude" mkdir "!REAL_USERPROFILE!\.claude" >nu
 powershell -NoProfile -Command "$f = '!REAL_USERPROFILE!\.claude\settings.json'; if (Test-Path $f) { $j = Get-Content $f -Raw | ConvertFrom-Json } else { $j = [PSCustomObject]@{} }; if (-not $j.PSObject.Properties['permissions']) { $j | Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{}) }; $j.permissions | Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j | Add-Member -NotePropertyName 'skipDangerousModePermissionPrompt' -NotePropertyValue $true -Force; $j | Add-Member -NotePropertyName 'autoUpdatesChannel' -NotePropertyValue 'latest' -Force; $j | Add-Member -NotePropertyName 'checkpointingEnabled' -NotePropertyValue $true -Force; $j | ConvertTo-Json -Depth 10 | Set-Content $f -Encoding UTF8" >nul 2>&1
 echo       Done
 
+rem --- 토큰 최적화 환경변수 (MCP 토큰 폭발 방지 + 비용 절감) ---
+echo [+] Setting token optimization env vars...
+setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000 >nul 2>&1
+setx CLAUDE_AUTOCOMPACT_THRESHOLD 50 >nul 2>&1
+setx CLAUDE_CODE_SUBAGENT_MODEL claude-haiku-4-5-20251001 >nul 2>&1
+echo       Done ^(MAX_THINKING=10000, AUTOCOMPACT=50%%, SUBAGENT=haiku^)
+
 echo [CHECKPOINT 1/3] %TIME% >> "!LOGFILE!"
 echo.
 echo ============================================================

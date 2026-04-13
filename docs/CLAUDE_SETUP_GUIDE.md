@@ -32,6 +32,25 @@ Path: `~/.claude/settings.json`
 }
 ```
 
+### 토큰 최적화 환경변수 (install.bat 자동 설정)
+
+```bash
+# thinking 토큰 상한 제한 → 불필요한 과사고 방지
+setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000
+
+# 컨텍스트 50% 도달 시 자동 압축 → 컨텍스트 수명 연장
+setx CLAUDE_AUTOCOMPACT_THRESHOLD 50
+
+# 서브에이전트에 Haiku 사용 → 비용 절감 (메인은 Sonnet 유지)
+setx CLAUDE_CODE_SUBAGENT_MODEL claude-haiku-4-5-20251001
+```
+
+| 변수 | 값 | 효과 |
+|------|----|------|
+| `CLAUDE_CODE_MAX_THINKING_TOKENS` | 10000 | thinking 과다 소비 차단 |
+| `CLAUDE_AUTOCOMPACT_THRESHOLD` | 50 | 컨텍스트 50% 시 자동 압축 |
+| `CLAUDE_CODE_SUBAGENT_MODEL` | claude-haiku-4-5-20251001 | 서브에이전트 저비용 모델 |
+
 ---
 
 ## 3. MCP 서버 — 누락분만 설치
