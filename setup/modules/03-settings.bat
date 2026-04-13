@@ -33,6 +33,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
      if($add){($cur.TrimEnd()+\"`n\"+($add -join \"`n\")+\"`n\")|Set-Content $prof -Encoding UTF8} }catch{} }" >nul 2>&1
 echo       Done
 
+rem --- 글로벌 커맨드 설치 (godmode, devil, 10x 등 13개) ---
+echo [+] Installing global slash commands...
+if not exist "!REAL_USERPROFILE!\.claude\commands" mkdir "!REAL_USERPROFILE!\.claude\commands" >nul 2>&1
+set "CMD_SRC=%~dp0..\.claude\commands"
+if exist "!CMD_SRC!" (
+  robocopy "!CMD_SRC!" "!REAL_USERPROFILE!\.claude\commands" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
+  echo       Done ^(godmode, devil, 10x, pitch, ghost, compare, scout, artifacts, ooda, critique, explainlikeim5, brief, teacher^)
+) else (
+  echo       [SKIP] commands source not found: !CMD_SRC!
+)
+
 rem --- 토큰 최적화 환경변수 설정 ---
 echo [+] Setting token optimization env vars...
 setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000 >nul 2>&1

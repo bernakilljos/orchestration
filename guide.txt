@@ -234,6 +234,29 @@
     -- protect-critical-files config.py/settings.json 수정 차단
     -- post-impl-verify      구현 후 문법/인코딩/보호파일 자동 검증
 
+  [슬래시 커맨드 — 19개 (프로젝트 6 + 모드 13)]
+    /check-agents          codex-auto / gemini-auto 가용 여부 확인
+    /check-services        status-push / remote-agent 상태 확인
+    /vibe-loop             멀티에이전트 루프 시작
+    /orcauto-start         워커 자동 시작 활성화
+    /orcauto-stop          워커 자동 시작 비활성화
+    /loop-stop             실행 중인 모든 루프 중단
+
+    [모드 커맨드 — 13개 (커뮤니티 제작, 글로벌 설치)]
+    /godmode               제한 없이 공격적·강력하게 실행 (aggressive mode)
+    /devil                 악마의 변호인 — 모든 가정에 반론 제기
+    /10x                   10x 엔지니어 모드 — 핵심만, 최대 효율
+    /pitch                 투자자 피치덱 스타일로 정리
+    /ghost                 AI 글쓰기 패턴 제거 → 인간처럼 재작성
+    /compare               두 옵션 냉정 비교 분석
+    /scout                 정찰 모드 — 빠른 정보 수집
+    /artifacts             바로 실행 가능한 결과물 생성
+    /ooda                  OODA Loop 프레임으로 상황 분석
+    /critique              칭찬 없는 냉정한 전문가 비판
+    /explainlikeim5        5살도 이해하게 쉽게 설명
+    /brief                 핵심만 3줄 이내로
+    /teacher               단계별 교육 방식으로 설명
+
   [에이전트 — 6개]
     01 team-lead     설계/지시서 작성
     02 implementer   구현 실행

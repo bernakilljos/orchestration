@@ -103,7 +103,32 @@ claude plugin install get-shit-done
 
 ---
 
-## 5. API 키 확인
+## 5. 슬래시 커맨드 (자동 설치)
+
+install.bat이 `.claude/commands/`의 커맨드 파일을 `~/.claude/commands/`에 글로벌 복사함.
+
+| 커맨드 | 용도 |
+|--------|------|
+| `/godmode` | 제한 없이 공격적·강력하게 실행 (aggressive mode) |
+| `/devil` | 악마의 변호인 — 모든 가정에 반론 제기 |
+| `/10x` | 10x 엔지니어 모드 — 핵심만, 최대 효율 |
+| `/pitch` | 투자자 피치덱 스타일로 정리 |
+| `/ghost` | AI 글쓰기 패턴 제거 → 인간처럼 재작성 |
+| `/compare` | 두 옵션 냉정 비교 분석 |
+| `/scout` | 정찰 모드 — 빠른 정보 수집 |
+| `/artifacts` | 바로 실행 가능한 결과물 생성 |
+| `/ooda` | OODA Loop 프레임으로 상황 분석 |
+| `/critique` | 칭찬 없는 냉정한 전문가 비판 |
+| `/explainlikeim5` | 5살도 이해하게 쉽게 설명 |
+| `/brief` | 핵심만 3줄 이내로 |
+| `/teacher` | 단계별 교육 방식으로 설명 |
+
+> 커뮤니티 제작 커맨드. Anthropic 공식 기능 아님.
+> 수동 확인: `dir %USERPROFILE%\.claude\commands`
+
+---
+
+## 7. API 키 확인
 
 ```bash
 # 없으면 경고만 (설치는 안 함)
@@ -119,7 +144,7 @@ echo %GEMINI_API_KEY%       # Gemini
 
 ---
 
-## 6. Advisor 모드 (Sonnet + Opus)
+## 8. Advisor 모드 (Sonnet + Opus)
 
 claude-auto.bat이 자동 사용:
 ```
@@ -150,7 +175,7 @@ response = client.beta.messages.create(
 
 ---
 
-## 7. AI 역할 분담
+## 9. AI 역할 분담
 
 | AI | 역할 | 도구 |
 |---|---|---|
@@ -165,7 +190,7 @@ Codex → 1차 구현 → Claude → 보완 → Gemini → 검증 → Claude →
 
 ---
 
-## 8. Media Enhance 의존성
+## 10. Media Enhance 의존성
 
 ```bash
 # 오디오 처리
@@ -181,7 +206,7 @@ pip install python-pptx streamlit tqdm
 
 ---
 
-## 9. 서비스 확인
+## 11. 서비스 확인
 
 ```bash
 # status-push 실행 확인 → 안 돌면 시작
@@ -197,7 +222,7 @@ reg add "HKCU\...\Run" /v "OrchestrationRemoteAgent" /d "wscript.exe ..." /f
 
 ---
 
-## 10. 트러블슈팅
+## 12. 트러블슈팅
 
 | 문제 | 해결 |
 |------|------|
