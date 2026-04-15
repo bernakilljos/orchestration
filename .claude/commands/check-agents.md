@@ -18,24 +18,10 @@ allowed-tools: Bash(where:*), Bash(powershell:*), Bash(tasklist:*)
 - heartbeat: !`cat .claude/orca-heartbeat 2>/dev/null || echo "no heartbeat"`
 - orca-workers: !`cat .claude/orca-workers 2>/dev/null || echo "default (10)"`
 
+> **[Wrapper]** 실제 로직: `.claude/skills/state_session.md` (`state_session` · STATUS 액션)
+
 ## Your task
 
-Report the status in a clean table format:
-
-| Agent | 설치 | 프로세스 | 비고 |
-|-------|------|---------|------|
-| codex-auto | ... | N개 실행 중 | ... |
-| gemini-auto | ... | N개 실행 중 | ... |
-| claude-auto | ... | N개 실행 중 | ... |
-
-Then show:
-- Task stats (대기/실행/완료)
-- Heartbeat 시각 (마지막 갱신)
-- Worker 설정값
-
-Recommendations:
-- agents available + tasks pending → "vibe-loop 시작 권장: /vibe-loop"
-- no agents → "Claude 직접 처리 모드"
-- stop signal active → "루프 중단 상태 — 재시작: /vibe-loop"
-- process 0개인데 lock 있으면 → "stale lock 감지 — 정리 필요"
-- heartbeat 5분+ 전이면 → "heartbeat 오래됨 — 워커 종료되었을 수 있음"
+`state_session` skill의 **STATUS 액션**을 실행한다.
+에이전트 가용 여부, 실행 중인 태스크 현황, heartbeat 상태를 표로 출력한다.
+자세한 실행 절차는 `.claude/skills/state_session.md` 참조.
