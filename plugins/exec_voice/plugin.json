@@ -1,0 +1,9 @@
+{
+  "name": "exec_voice",
+  "display": "음성 처리 — STT·TTS·회의록·음성 명령·오디오 편집",
+  "prefix": "exec_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/"
+}

@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "name": "orchestration-kit",
   "display_name": "Multi-AI Orchestration Kit",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Claude + Codex + Gemini 멀티AI 오케스트레이션 킷 — 설계·구현·검증 파이프라인 자동화",
   "author": "bernakilljos",
   "repository": "https://github.com/bernakilljos/orchestration",
@@ -10,48 +10,66 @@
   "entry_points": {
     "session_start": "exec_orca-auto",
     "task_route":    "route_dispatch",
-    "state_save":    "state_session"
+    "state_save":    "state_session",
+    "learning":      "exec_learning"
   },
 
-  "skills": {
-    "prefix_convention": {
-      "exec_":   "실행 계열 — 작업 수행",
-      "design_": "디자인/PPT/UI 계열",
-      "review_": "검증/리뷰 계열",
-      "route_":  "라우팅/판단 계열",
-      "state_":  "상태 저장/복구 계열",
-      "hook_":   "훅 관련 계열"
-    },
-    "new": [
-      "exec_orca-auto",
-      "state_session",
-      "route_dispatch"
+  "pipeline": {
+    "standard": [
+      "Hook      → 사전 확인 (파일 잠금·충돌·MCP 체크)",
+      "Planner   → Claude 구조 설계 (task-instruction.md)",
+      "Executor  → Codex 구현 (codex-auto 4개)",
+      "Validator → Gemini 검증 (gemini-auto 2개)",
+      "State     → 스냅샷 저장 (.claude/context-cache/)",
+      "Retry     → 실패 시 3회 재시도 후 Claude 에스컬레이션"
     ],
-    "legacy": [
-      "skill-01-research",       "skill-02-implement",     "skill-03-review",
-      "skill-04-context-summary","skill-05-deploy",        "skill-06-test",
-      "skill-07-rollback",       "skill-08-design",        "skill-09-memory-reset",
-      "skill-10-quality-verify", "skill-11-personas",      "skill-12-domain-detect",
-      "skill-13-parallel-dispatch","skill-14-auto-detail", "skill-15-theme-factory",
-      "skill-16-brand-guidelines","skill-17-debugging-canvas","skill-18-web-artifacts",
-      "skill-19-skill-creator",  "skill-20-claude-seo",    "skill-21-marketing",
-      "skill-22-remotion",       "skill-23-owasp-security","skill-24-ai-handoff",
-      "skill-25-media-enhance",  "skill-26-file-protection","skill-27-mandatory-verify",
-      "skill-28-changelog",      "skill-29-api-tester",    "skill-30-docker",
-      "skill-31-i18n",           "skill-32-db-migration",  "skill-33-github-actions",
-      "skill-34-code-docs",      "skill-35-performance-profiler","skill-36-data-viz",
-      "skill-37-error-tracker",  "skill-38-token-watchdog"
-    ]
+    "design_ppt":   ["Claude → Canva → Mermaid → Figma"],
+    "design_excel": ["Claude → openpyxl → 차트 → Google Sheets"],
+    "design_word":  ["Claude → python-docx → Mermaid → PDF"],
+    "voice":        ["마이크/파일 → Whisper STT → Claude 분석 → edge-tts TTS"],
+    "learning":     ["작업 완료 → Claude 패턴 추출 → JSON 저장 → 다음 세션 활용"]
   },
 
-  "agents": {
-    "roles": {
-      "route":   ["agent-01-team-lead", "agent-04-architect"],
-      "exec":    ["agent-02-implementer"],
-      "review":  ["agent-03-reviewer"],
-      "monitor": ["agent-05-monitor"],
-      "design":  ["agent-06-designer"]
-    }
+  "plugins": {
+    "exec_orch":    "plugins/exec_orch/",
+    "exec_voice":   "plugins/exec_voice/",
+    "exec_learning":"plugins/exec_learning/",
+    "design_ppt":   "plugins/design_ppt/",
+    "design_excel": "plugins/design_excel/",
+    "design_word":  "plugins/design_word/",
+    "review_qa":    "plugins/review_qa/",
+    "mcp_dev":      "plugins/mcp_dev/",
+    "mcp_data":     "plugins/mcp_data/",
+    "mcp_collab":   "plugins/mcp_collab/",
+    "mcp_web":      "plugins/mcp_web/",
+    "mcp_docs":     "plugins/mcp_docs/",
+    "mcp_media":    "plugins/mcp_media/"
+  },
+
+  "prefix_convention": {
+    "exec_":   "실행 계열 — 작업 수행·부트스트랩",
+    "design_": "디자인/문서/PPT/시각화 계열",
+    "review_": "검증·리뷰·품질 계열",
+    "route_":  "라우팅·판단·분기 계열",
+    "state_":  "상태 저장·복구 계열",
+    "hook_":   "훅 관련 계열",
+    "bridge_": "외부 AI 연동 계열",
+    "mcp_":    "MCP 설치·연결 계열"
+  },
+
+  "workers": {
+    "codex":       { "bat": "codex-auto.bat",  "count": 4, "role": "구현" },
+    "gemini":      { "bat": "gemini-auto.bat", "count": 2, "role": "검증" },
+    "claude":      { "bat": "claude-auto.bat", "count": 3, "role": "보완" },
+    "config":      ".claude/orca-workers-config.json",
+    "task_dir":    ".claude/tasks/"
+  },
+
+  "state": {
+    "orca_flags":  ".claude/",
+    "new_state":   ".claude/state/",
+    "snapshot":    ".claude/context-cache/session-snapshot.md",
+    "learning":    ".claude/learning/"
   },
 
   "hooks": {
@@ -60,30 +78,9 @@
     "runtime":     ".claude/settings.json"
   },
 
-  "state": {
-    "new_dir":   ".claude/state/",
-    "orca_flags":".claude/",
-    "notes": "orca-* 플래그 파일은 하위 호환성을 위해 .claude/ 루트에 유지. 신규 상태 파일은 .claude/state/ 사용."
-  },
-
-  "workers": {
-    "codex":    "codex-auto.bat",
-    "gemini":   "gemini-auto.bat",
-    "task_dir": ".claude/tasks/"
-  },
-
-  "pipeline": {
-    "code": [
-      "Claude → task-instruction.md",
-      "Codex  → 1차 구현 (codex-auto)",
-      "Claude → 보완/고도화",
-      "Gemini → 검증 + 문서화 (gemini-auto)"
-    ],
-    "docs": [
-      "Gamma MCP  → PPT/프레젠테이션",
-      "Canva MCP  → 디자인/배너",
-      "Figma MCP  → 디자인→코드",
-      "Mermaid    → 다이어그램"
-    ]
+  "codex": {
+    "instructions": "AGENTS.md",
+    "config":       ".codex/config.toml",
+    "mcp_servers":  ["filesystem", "github", "playwright", "figma", "canva", "mermaid"]
   }
 }
