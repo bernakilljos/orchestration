@@ -56,6 +56,28 @@ if errorlevel 1 (
   goto END
 )
 
+rem --- Local LLM 감지 및 설정 ---
+echo [+] Local LLM 감지 중...
+set "LOCAL_LLM_TYPE=null"
+where ollama >nul 2>&1 && set "LOCAL_LLM_TYPE=ollama"
+if "!LOCAL_LLM_TYPE!"=="null" where lms >nul 2>&1 && set "LOCAL_LLM_TYPE=lm-studio"
+if "!LOCAL_LLM_TYPE!"=="null" where llamafile >nul 2>&1 && set "LOCAL_LLM_TYPE=llamafile"
+
+if not "!LOCAL_LLM_TYPE!"=="null" (
+  echo       감지됨: !LOCAL_LLM_TYPE!
+  echo       로컬 LLM 워커를 활성화할까요? (워커 1개, 보조 역할)
+  set /p "USE_LLM=  [Y/N]: "
+  if /i "!USE_LLM!"=="Y" (
+    powershell -NoProfile -Command ^
+      "$cfg = Get-Content '%TARGET%\.claude\orca-workers-config.json' | ConvertFrom-Json; $cfg.local_llm.type = '!LOCAL_LLM_TYPE!'; $cfg | ConvertTo-Json -Depth 5 | Set-Content '%TARGET%\.claude\orca-workers-config.json'"
+    echo       [OK] orca-workers-config.json 업데이트됨
+  ) else (
+    echo       [SKIP] 로컬 LLM 비활성화
+  )
+) else (
+  echo       로컬 LLM 없음 - 나중에 설치 후 .claude\orca-workers-config.json 에서 설정 가능
+)
+
 echo   Start Claude now?
 echo     [Y] Yes - launch Claude
 echo     [N] No  - exit

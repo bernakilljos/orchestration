@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "description": "AI 워커 수 고정 설정 — 설치 시 자동 구성, 수동 수정 가능",
+  "workers": {
+    "codex": 4,
+    "gemini": 2,
+    "claude": 3,
+    "local_llm": 1
+  },
+  "local_llm": {
+    "type": null,
+    "note": "설치 시 setup/modules/09-finalize.bat 에서 자동 감지 및 설정. null이면 사용 안 함",
+    "supported": ["ollama", "lm-studio", "llamafile"]
+  },
+  "notes": "이 파일이 없으면 .claude/orca-workers (단일 숫자) fallback 사용"
+}

@@ -1,7 +1,7 @@
 # exec_orca-auto — Orca Auto Worker 관리
 
 > **분류:** `exec_` (실행 계열)
-> **레거시 커맨드:** `/orcauto-start`, `/orcauto-stop`
+> **레거시 커맨드:** `/orcauto-stop` (orcauto-start는 삭제됨 — 이 skill로 직접 실행)
 > **참조 plugin:** `.claude-plugin/plugin.json` → `entry_points.session_start`
 
 ## 목적
@@ -18,7 +18,8 @@ codex-auto / gemini-auto 워커를 시작·중단·상태 조회한다.
 | `orca-enabled`   | 자동 시작 활성화 플래그 | 쓰기 (START) |
 | `orca-stopped`   | 비활성화 플래그 | 쓰기 (STOP) / 삭제 (START) |
 | `orca-heartbeat` | 마지막 활동 시각 | 쓰기 (매 툴 사용) |
-| `orca-workers`   | 워커 수 (없으면 기본값 1) | 읽기 |
+| `orca-workers`   | 단일 워커 수 (레거시 fallback) | 읽기 |
+| `orca-workers-config.json` | per-agent 워커 수 설정 (우선) | 읽기 |
 
 ---
 
@@ -40,27 +41,44 @@ codex-auto / gemini-auto 워커를 시작·중단·상태 조회한다.
 3. orca-heartbeat 갱신 (현재 시각):
      date +%Y-%m-%dT%H:%M:%S > .claude/orca-heartbeat
 
-4. 워커 수 결정:
-     if exist .claude\orca-workers → type .claude\orca-workers
-     없으면 → 1
+4. 워커 수 결정 (우선순위 순):
+     a. .claude/orca-workers-config.json 존재 시 → per-agent 값 사용
+          codex:  workers.codex  (기본 4)
+          gemini: workers.gemini (기본 2)
+          claude: workers.claude (기본 3)
+     b. .claude/orca-workers 존재 시 → 전체 동일 값 적용 (레거시)
+     c. 둘 다 없으면 → codex=4, gemini=2, claude=3 (하드코딩 기본값)
 
 5. codex-auto 가용 확인:
      where codex-auto 2>nul && echo YES || echo NO
 
-6. codex-auto YES → 시작:
-     start "Codex-Worker-1" cmd /c "cd /d %CD% && codex-auto [N]"
+6. codex-auto YES → 시작 (CODEX_N = 4):
+     start "Codex-Worker-1" cmd /c "cd /d %CD% && codex-auto [CODEX_N]"
 
 7. gemini-auto 가용 확인:
      where gemini-auto 2>nul && echo YES || echo NO
 
-8. gemini-auto YES → 시작:
-     start "Gemini-Verifier-1" cmd /c "cd /d %CD% && gemini-auto [N]"
+8. gemini-auto YES → 시작 (GEMINI_N = 2):
+     start "Gemini-Verifier-1" cmd /c "cd /d %CD% && gemini-auto [GEMINI_N]"
 
-9. 결과 보고:
+9. claude-auto 가용 확인 (선택적):
+     where claude-auto 2>nul && echo YES || echo NO
+
+10. claude-auto YES → 시작 (CLAUDE_N = 3):
+     start "Claude-Worker-1" cmd /c "cd /d %CD% && claude-auto [CLAUDE_N]"
+
+11. local LLM 확인 (.claude/orca-workers-config.json의 local_llm.type 값):
+     null → 스킵
+     "ollama" → where ollama → 가용 시 start "LLM-Worker-1" cmd /c "ollama-auto 1"
+     (기타 타입은 설치 시 추가)
+
+12. 결과 보고:
    | 에이전트    | 상태       | 워커 수 |
    |------------|-----------|--------|
-   | codex-auto  | 시작됨/없음 | N     |
-   | gemini-auto | 시작됨/없음 | N     |
+   | codex-auto  | 시작됨/없음 | 4     |
+   | gemini-auto | 시작됨/없음 | 2     |
+   | claude-auto | 시작됨/없음 | 3     |
+   | local LLM   | 시작됨/없음/미설정 | 1 |
    "자동 종료: Claude 종료 후 5분 이내 자동 중단됩니다."
 ```
 
