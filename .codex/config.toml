@@ -1,44 +1,31 @@
 # Codex 프로젝트 설정
-# Claude의 .claude/settings.json 에 대응하는 Codex 설정 파일
+# 전역 설정: ~/.codex/config.toml
+# 프로젝트 설정: .codex/config.toml (trusted 프로젝트만)
 
 [settings]
-# 승인 없이 자동 실행
 approval_mode = "auto-edit"
-
-# 모델 설정
-model = "o4-mini"
-
-# 최대 토큰
-max_tokens = 8000
+model         = "o4-mini"
 
 # ──────────────────────────────────────────
-# MCP 서버 설정
-# Claude의 `claude mcp add` 에 대응
+# 기능(Dev) MCP
 # ──────────────────────────────────────────
-
-# 기본 필수 MCP
-[mcp_servers.context7]
-command = "npx"
-args    = ["-y", "@upstash/context7-mcp"]
-
-[mcp_servers.playwright]
-command = "npx"
-args    = ["@playwright/mcp@latest"]
 
 [mcp_servers.filesystem]
 command = "npx"
-args    = ["-y", "@modelcontextprotocol/server-filesystem", "."]
+args    = ["-y", "@modelcontextprotocol/server-filesystem"]
 
-# 개발 (mcp_dev 플러그인 설치 시 활성화)
-# [mcp_servers.github]
-# command = "npx"
-# args    = ["-y", "@modelcontextprotocol/server-github"]
+[mcp_servers.github]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-github"]
 
-# 데이터 (mcp_data 플러그인 설치 시 활성화)
-# [mcp_servers.mcp-toolbox]
-# command = "npx"
-# args    = ["-y", "@googleapis/mcp-toolbox"]
+[mcp_servers.playwright]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-playwright"]
 
-# [mcp_servers.mongodb]
-# command = "npx"
-# args    = ["-y", "@mongodb-js/mcp-server-mongodb"]
+# ──────────────────────────────────────────
+# 디자인 MCP
+# ──────────────────────────────────────────
+
+[mcp_servers.figma]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-figma"]
