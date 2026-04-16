@@ -29,3 +29,51 @@ args    = ["-y", "@modelcontextprotocol/server-playwright"]
 [mcp_servers.figma]
 command = "npx"
 args    = ["-y", "@modelcontextprotocol/server-figma"]
+
+[mcp_servers.canva]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-canva"]
+
+[mcp_servers.mermaid]
+command = "npx"
+args    = ["-y", "mermaid-mcp-server"]
+
+# ──────────────────────────────────────────
+# 데이터 MCP
+# ──────────────────────────────────────────
+
+[mcp_servers.postgres]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-postgres"]
+
+[mcp_servers.mongodb]
+command = "npx"
+args    = ["-y", "@mongodb-js/mcp-server-mongodb"]
+
+[mcp_servers.google-sheets]
+command = "npx"
+args    = ["-y", "@googleapis/mcp-server-sheets"]
+
+# ──────────────────────────────────────────
+# 협업 MCP
+# ──────────────────────────────────────────
+
+[mcp_servers.slack]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-slack"]
+
+[mcp_servers.notion]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-notion"]
+
+# ──────────────────────────────────────────
+# 문서 MCP
+# ──────────────────────────────────────────
+
+[mcp_servers.pdf]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-pdf"]
+
+[mcp_servers.fetch]
+command = "npx"
+args    = ["-y", "@modelcontextprotocol/server-fetch"]
