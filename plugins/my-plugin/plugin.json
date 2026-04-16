@@ -1,7 +1,0 @@
-{
-  "name": "my-plugin",
-  "display_name": "내 커스텀 플러그인",
-  "version": "1.0.0",
-  "description": "사용자 정의 커맨드·스킬 모음",
-  "commands": "commands/"
-}

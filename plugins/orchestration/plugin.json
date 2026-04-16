@@ -1,9 +1,0 @@
-{
-  "name": "orchestration",
-  "display_name": "Multi-AI Orchestration",
-  "version": "3.0.0",
-  "description": "Claude + Codex + Gemini 멀티AI 오케스트레이션 — 설계·구현·검증 파이프라인",
-  "commands": "commands/",
-  "skills":   "skills/",
-  "agents":   "agents/"
-}
