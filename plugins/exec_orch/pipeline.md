@@ -63,15 +63,33 @@
 
 ---
 
-## 4. Validator (검증) — Gemini 담당
+## 4. Validator (검증) — Gemini + review_qa 담당
 
 ```
-실행 항목:
-  - 구현 결과 vs task-instruction.md 비교
-  - 보안 검사 (OWASP 기준)
-  - 코드 품질 (가독성·유지보수성)
-  - 성능 이슈
-  - 누락 기능
+실행 순서:
+  4-1. 테스트 자동 실행 (/validate)
+       → npm test / pytest / mvn test
+       → 결과: docs/YYYY-MM-DD/validation/test-result.txt
+
+  4-2. 스크린샷 캡처 (/screenshot)
+       → Playwright MCP로 로컬 서버 캡처
+       → 결과: docs/YYYY-MM-DD/validation/screenshots/*.png
+       → Playwright 없으면 PowerShell 화면 캡처
+
+  4-3. 보안 검사 (/security)
+       → npm audit / pip-audit
+       → 시크릿 노출 패턴 검색
+       → 결과: docs/YYYY-MM-DD/validation/security-report.md
+
+  4-4. 성능 검사 (/performance)
+       → 응답시간 10회 측정
+       → 번들 크기 확인
+       → 결과: docs/YYYY-MM-DD/validation/performance-report.md
+
+  4-5. Gemini 코드 리뷰
+       → 구현 결과 vs task-instruction.md 비교
+       → OWASP 기준 취약점 검토
+       → 코드 품질·가독성·유지보수성
 
 실행 방법:
   gemini-auto 2   ← 2개 워커
