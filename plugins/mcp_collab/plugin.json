@@ -1,1 +1,7 @@
-{"name":"mcp_collab","display":"협업 MCP 설치 — Slack·Notion·Jira·Trello·Gmail·Google Calendar","prefix":"mcp_","commands":"commands/"}
+{
+  "name": "mcp_collab",
+  "display": "협업 MCP 설치 — Slack·Notion·Jira·Trello·Gmail·Google Calendar",
+  "prefix": "mcp_",
+  "commands": "commands/",
+  "version": "1.0"
+}

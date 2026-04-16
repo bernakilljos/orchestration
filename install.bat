@@ -342,23 +342,35 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 echo       Done
 
 rem -----------------------------------------
-rem Install global commands (codex-a, gemini-a) - AFTER encoding fix
+rem Install global commands — AFTER encoding fix
+rem
+rem  명칭 정리:
+rem    codex-a     = 단일 태스크 실행 (태스크 파일 한 개 처리)
+rem    codex-auto  = 병렬 워커 (N개 동시 실행, 기본 4개)
+rem    gemini-a    = 단일 검증 실행
+rem    gemini-auto = 병렬 검증 워커 (기본 2개)
+rem    claude-auto = Claude 병렬 워커 (기본 3개)
 rem -----------------------------------------
 echo [+] Installing global commands...
+echo       codex-a     : 단일 태스크 실행
+echo       codex-auto  : 병렬 구현 워커 (기본 4개)
+echo       gemini-a    : 단일 검증 실행
+echo       gemini-auto : 병렬 검증 워커 (기본 2개)
+echo       claude-auto : Claude 병렬 워커 (기본 3개)
 if not exist "%APPDATA%\npm" mkdir "%APPDATA%\npm" >nul 2>&1
-for %%F in (codex-a codex-auto gemini-a gemini-auto gemini-verify claude-auto) do (
+for %%F in (codex-a codex-auto gemini-a gemini-auto claude-auto) do (
   if exist "%TARGET%\.claude\scripts\%%F.bat" (
     if exist "%APPDATA%\npm\%%F.bat" attrib -r "%APPDATA%\npm\%%F.bat" >nul 2>&1
     copy /Y "%TARGET%\.claude\scripts\%%F.bat" "%APPDATA%\npm\%%F.bat" >nul 2>&1
     if exist "%APPDATA%\npm\%%F.bat" (
-      echo       %%F.bat -^> %APPDATA%\npm\
+      echo       [OK] %%F.bat
     ) else (
       echo [WARN] %%F.bat copy failed - run as administrator
     )
   )
 )
 echo [+] Normalizing global command wrappers (CRLF)...
-powershell -NoProfile -Command "$enc = New-Object System.Text.UTF8Encoding($false); foreach($n in 'codex-a','codex-auto','gemini-a','gemini-auto','gemini-verify','claude-auto'){ $p = Join-Path '%APPDATA%\npm' ($n + '.bat'); if(Test-Path $p){ $c = Get-Content $p -Raw -Encoding UTF8; $c = $c -replace '\r?\n', ([char]13+[char]10); [System.IO.File]::WriteAllText($p, $c, $enc) } }" >nul 2>&1
+powershell -NoProfile -Command "$enc = New-Object System.Text.UTF8Encoding($false); foreach($n in 'codex-a','codex-auto','gemini-a','gemini-auto','claude-auto'){ $p = Join-Path '%APPDATA%\npm' ($n + '.bat'); if(Test-Path $p){ $c = Get-Content $p -Raw -Encoding UTF8; $c = $c -replace '\r?\n', ([char]13+[char]10); [System.IO.File]::WriteAllText($p, $c, $enc) } }" >nul 2>&1
 if errorlevel 1 (
   echo [WARN] Failed to normalize one or more global wrappers in %APPDATA%\npm
 ) else (

@@ -1,1 +1,8 @@
-{"name":"review_qa","display":"코드 리뷰·보안 검사·품질 검증·테스트 자동화","prefix":"review_","commands":"commands/","skills":"skills/"}
+{
+  "name": "review_qa",
+  "display": "코드 리뷰·보안 검사·품질 검증·테스트 자동화",
+  "prefix": "review_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "version": "1.0"
+}

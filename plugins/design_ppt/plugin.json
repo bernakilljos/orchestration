@@ -1,1 +1,8 @@
-{"name":"design_ppt","display":"PPT·디자인·다이어그램 자동화 — Gamma·Canva·Figma·Mermaid","prefix":"design_","commands":"commands/","skills":"skills/"}
+{
+  "name": "design_ppt",
+  "display": "PPT·디자인·다이어그램 자동화 — Gamma·Canva·Figma·Mermaid",
+  "prefix": "design_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "version": "1.0"
+}

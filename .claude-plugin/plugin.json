@@ -2,7 +2,7 @@
   "schema_version": "1.1",
   "name": "orchestration-kit",
   "display_name": "Multi-AI Orchestration Kit",
-  "version": "3.1.0",
+  "version": "1.0",
   "description": "Claude + Codex + Gemini 멀티AI 오케스트레이션 킷 — 설계·구현·검증 파이프라인 자동화",
   "author": "bernakilljos",
   "repository": "https://github.com/bernakilljos/orchestration",

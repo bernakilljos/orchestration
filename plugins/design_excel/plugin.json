@@ -1,1 +1,8 @@
-{"name":"design_excel","display":"Excel·스프레드시트 자동화 — 데이터 분석·차트·리포트 생성","prefix":"design_","commands":"commands/","skills":"skills/"}
+{
+  "name": "design_excel",
+  "display": "Excel·스프레드시트 자동화 — 데이터 분석·차트·리포트 생성",
+  "prefix": "design_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "version": "1.0"
+}

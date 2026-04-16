@@ -1,1 +1,9 @@
-{"name":"exec_orch","display":"오케스트레이션 — 워커·파이프라인·라우팅·AI 역할 분배","prefix":"exec_","commands":"commands/","skills":"skills/","agents":"agents/"}
+{
+  "name": "exec_orch",
+  "display": "오케스트레이션 — 워커·파이프라인·라우팅·AI 역할 분배",
+  "prefix": "exec_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "agents": "agents/",
+  "version": "1.0"
+}

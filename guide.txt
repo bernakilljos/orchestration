@@ -50,21 +50,24 @@
     → Claude가 설계 → task-instruction.md 작성
     → Codex가 구현 → Claude가 보완 → Gemini가 검증
 
+  [명칭 정리 — 헷갈리지 말 것]
+    codex-a      단일 태스크 실행 (태스크 파일 1개 처리)
+    codex-auto   병렬 구현 워커  (기본 4개 동시 실행)
+    gemini-a     단일 검증 실행
+    gemini-auto  병렬 검증 워커  (기본 2개)
+    claude-auto  Claude 병렬 워커 (기본 3개)
+
   [수동 실행]
-    codex-a --auto           Codex가 지시서 읽어 구현
-    gemini-a --verify        Gemini가 결과 검증
-    claude-auto              Claude 병렬 워커 (Sonnet+Opus)
+    codex-a --auto           태스크 1개 구현
+    codex-auto               4개 워커로 병렬 구현 (기본값)
+    codex-auto 10            10개 워커
+    gemini-a --verify        단일 검증
+    gemini-auto              2개 검증 워커 (기본값)
+    claude-auto              3개 Claude 워커 (기본값)
 
-  [병렬 실행 — N개 워커]
-    codex-auto               10개 워커 (기본)
-    codex-auto 20            20개 워커
-    gemini-auto              10개 검증자 (기본)
-    gemini-auto 5            5개 검증자
-    claude-auto 30           30개 Claude 워커
-
-  [중단]
-    .claude\tasks\stop 파일 생성 → 모든 워커 즉시 종료
-    또는 /loop-stop 명령
+  [중단 — /loop-stop 사용 권장]
+    /loop-stop               즉시 프로세스 종료 + 플래그 설정
+    수동: echo stop > .claude\tasks\stop
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -350,25 +353,43 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  10. 커스텀 플러그인 만들기
+  10. 플러그인 구조 (plugins/)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  플러그인 = 내 커맨드·스킬·에이전트를 폴더로 묶은 것.
-  파일 두면 Claude가 자동으로 읽고 슬래시 커맨드로 실행됨.
+  각 플러그인 = commands/ + skills/ + agents/ + hooks/ + codex/ + rules.md
+  파이프라인: Hook → Planner → Executor → Validator → State → Retry
 
-  [구조]
-    plugins/
-    ├── orchestration/          ← 기본 오케스트레이션 플러그인
-    │   ├── plugin.json
-    │   ├── commands/
-    │   ├── skills/
-    │   └── agents/
-    └── my-plugin/              ← 내 커스텀 플러그인
-        ├── plugin.json
-        └── commands/
-            ├── my-report.md    → /my-report
-            ├── daily-push.md   → /daily-push
-            └── deploy-prod.md  → /deploy-prod
+  [현재 플러그인 목록 — 버전 1.0]
+    exec_orch      오케스트레이션 핵심 (pipeline.md 참조)
+    exec_voice     음성 STT·TTS·회의록·음성 명령
+    exec_learning  세션 학습·실패 패턴·최적화 규칙
+    design_ppt     PPT (Claude→Canva→Mermaid→Figma)
+    design_excel   Excel (Claude→openpyxl→차트→Sheets)
+    design_word    Word (Claude→python-docx→Mermaid→PDF)
+    review_qa      코드 리뷰·보안·품질·테스트
+    mcp_dev        개발 MCP 설치 (GitHub·Docker·AWS·Vercel)
+    mcp_data       데이터 MCP 설치 (MySQL·MongoDB·BigQuery)
+    mcp_collab     협업 MCP 설치 (Slack·Notion·Jira)
+    mcp_web        웹자동화 MCP 설치 (Playwright·Puppeteer)
+    mcp_docs       문서처리 MCP 설치 (PDF·DOCX·OCR)
+    mcp_media      미디어 설치 (Whisper·TTS·FFmpeg)
+
+  [접두사 규칙]
+    exec_    실행·부트스트랩
+    design_  디자인·문서·시각화
+    review_  검증·리뷰·품질
+    route_   라우팅·판단
+    state_   상태 저장·복구
+    mcp_     MCP 설치·연결
+
+  [Codex 연동]
+    AGENTS.md           Codex 루트 지시서
+    .codex/config.toml  Codex MCP 설정
+    plugins/*/codex/    플러그인별 Codex 지시서
+
+  [커스텀 플러그인 추가]
+    plugins/내이름/ 폴더 생성 → commands/*.md 추가
+    파일명 = 슬래시 커맨드명 (daily-push.md → /daily-push)
 
   [커맨드 만드는 법]
     1. plugins/my-plugin/commands/ 폴더에 .md 파일 생성

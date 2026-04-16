@@ -1,1 +1,8 @@
-{"name":"design_word","display":"Word·문서 자동화 — 계약서·보고서·기획서 생성","prefix":"design_","commands":"commands/","skills":"skills/"}
+{
+  "name": "design_word",
+  "display": "Word·문서 자동화 — 계약서·보고서·기획서 생성",
+  "prefix": "design_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "version": "1.0"
+}

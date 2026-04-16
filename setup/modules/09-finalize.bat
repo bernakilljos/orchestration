@@ -40,10 +40,17 @@ if exist "%TARGET%\package.json" (
 
 echo.
 echo ============================================================
-echo   Installation Complete!
+echo   Installation Complete! — Orchestration Kit v1.0
 echo ============================================================
 echo.
 echo   Target: %TARGET%
+echo.
+echo   AI 명칭 정리:
+echo     codex-a      단일 태스크 실행
+echo     codex-auto   병렬 구현 워커 (기본 4개)
+echo     gemini-a     단일 검증 실행
+echo     gemini-auto  병렬 검증 워커 (기본 2개)
+echo     claude-auto  Claude 병렬 워커 (기본 3개)
 echo.
 
 where claude >nul 2>&1
