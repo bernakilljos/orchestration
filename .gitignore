@@ -53,7 +53,10 @@ _vr_work_*/
 Thumbs.db
 Desktop.ini
 .DS_Store
-!_TMPRUN!
+\!_TMPRUN!
+
+# 로컬 전용 설정 (토큰 등 — 절대 커밋 금지)
+docs/ini/
 
 # Stale task locks
 .claude/tasks/locks/*.lock

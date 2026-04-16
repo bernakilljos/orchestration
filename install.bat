@@ -475,47 +475,57 @@ if not defined GEMINI_API_KEY (
 
 rem --- GitHub PAT ---
 echo [+] GitHub PAT 확인 중...
-rem Fallback PAT (split to avoid secret scanning)
-set "_P1=ghp_4k0gEz32MePQ"
-set "_P2=5eHBU8UkqGNhAFA4Og4EPhgr"
-set "FALLBACK_PAT=!_P1!!_P2!"
+set "FALLBACK_PAT="
+set "GITHUB_PAT="
 
-rem 1) User 환경변수에 저장된 PAT 확인 (temp file - for/f 싱글쿼트 파싱 오류 방지)
+rem 1) User 환경변수에 저장된 PAT 확인
 powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat_saved.txt" 2>nul
 set "SAVED_PAT="
 set /p "SAVED_PAT=" < "%TEMP%\_ghpat_saved.txt"
 del "%TEMP%\_ghpat_saved.txt" >nul 2>&1
 
 if not "!SAVED_PAT!"=="" (
-  rem 저장된 PAT 유효성 테스트
   powershell -NoProfile -Command "$r=Invoke-RestMethod -Uri 'https://api.github.com/user' -Headers @{Authorization='token !SAVED_PAT!'} -ErrorAction SilentlyContinue; exit ($r.login -eq $null)" >nul 2>&1
   if not errorlevel 1 (
     echo       GITHUB_PAT = configured [OK]
+    set "GITHUB_PAT=!SAVED_PAT!"
     goto SKIP_GITHUB_PAT
   )
   echo [WARN] 저장된 PAT 가 유효하지 않습니다.
 )
 
-rem 2) Fallback PAT 테스트
-powershell -NoProfile -Command "$r=Invoke-RestMethod -Uri 'https://api.github.com/user' -Headers @{Authorization='token !FALLBACK_PAT!'} -ErrorAction SilentlyContinue; exit ($r.login -eq $null)" >nul 2>&1
-if not errorlevel 1 (
-  echo       Fallback PAT 유효 - 환경변수에 저장합니다.
-  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!FALLBACK_PAT!','User')" >nul 2>&1
+rem 2) docs/ini/github.ini 에서 읽기 (로컬 전용, gitignore)
+set "INI_PAT="
+if exist "%~dp0docs\ini\github.ini" (
+  for /f "tokens=2 delims==" %%A in ('findstr /i "GITHUB_PAT" "%~dp0docs\ini\github.ini" 2^>nul') do set "INI_PAT=%%A"
+  set "INI_PAT=!INI_PAT: =!"
+)
+if not "!INI_PAT!"=="" (
+  echo       docs\ini\github.ini 에서 PAT 로드됨
+  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!INI_PAT!','User')" >nul 2>&1
+  set "GITHUB_PAT=!INI_PAT!"
   echo       GITHUB_PAT = saved [OK]
   goto SKIP_GITHUB_PAT
 )
 
-rem 3) 둘 다 실패 - rate limit 가능성 있으므로 fallback PAT 그냥 저장 후 계속
-echo [WARN] PAT 검증 실패 ^(rate limit 또는 만료^) - fallback PAT 사용
-powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!FALLBACK_PAT!','User')" >nul 2>&1
-:SKIP_GITHUB_PAT
+rem 3) 수동 입력
+echo [INFO] GitHub PAT가 없습니다.
+echo        docs\ini\github.ini 의 GITHUB_PAT= 에 입력하거나 직접 입력하세요.
+set /p "MANUAL_PAT=  PAT 입력 (없으면 Enter): "
+if not "!MANUAL_PAT!"=="" (
+  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!MANUAL_PAT!','User')" >nul 2>&1
+  set "GITHUB_PAT=!MANUAL_PAT!"
+  echo       GITHUB_PAT = saved [OK]
+) else (
+  echo [WARN] PAT 없음 - GitHub 기능 제한됨
+)
 
-rem --- 최종 PAT 값을 GITHUB_PAT 변수에 저장 (temp file) ---
-powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat_final.txt" 2>nul
-set "GITHUB_PAT="
-set /p "GITHUB_PAT=" < "%TEMP%\_ghpat_final.txt"
-del "%TEMP%\_ghpat_final.txt" >nul 2>&1
-if "!GITHUB_PAT!"=="" set "GITHUB_PAT=!FALLBACK_PAT!"
+:SKIP_GITHUB_PAT
+if "!GITHUB_PAT!"=="" (
+  powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat_final.txt" 2>nul
+  set /p "GITHUB_PAT=" < "%TEMP%\_ghpat_final.txt"
+  del "%TEMP%\_ghpat_final.txt" >nul 2>&1
+)
 
 echo [CHECKPOINT 2/3] %TIME% >> "!LOGFILE!"
 echo.
