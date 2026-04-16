@@ -78,6 +78,24 @@ if not "!LOCAL_LLM_TYPE!"=="null" (
   echo       로컬 LLM 없음 - 나중에 설치 후 .claude\orca-workers-config.json 에서 설정 가능
 )
 
+echo.
+echo ============================================================
+echo   추가 MCP 설치 (Claude 실행 후 슬래시 커맨드로)
+echo ============================================================
+echo.
+echo   /plug_dev     GitHub, Docker, AWS, Firebase, Vercel...  개발/배포 자동화
+echo   /plug_data    MySQL, MongoDB, BigQuery, Sheets...       데이터 분석/리포트
+echo   /plug_design  Canva, Figma, Gamma, Mermaid...           슬라이드/다이어그램
+echo   /plug_collab  Slack, Notion, Jira, Gmail...             협업/알림 자동화
+echo   /plug_web     Playwright, Puppeteer, Apify...           크롤링/웹 자동화
+echo   /plug_docs    PDF, DOCX, OCR...                         문서 처리/분석
+echo   /plug_media   Whisper, TTS, FFmpeg...                   음성/영상 처리
+echo   /plug_all     위 전체 한 번에 설치
+echo.
+echo   기본 MCP (이미 설치됨): context7, playwright, thinking
+echo   자동 연결 (claude.ai): Figma, Gamma, Gmail, Canva, Mermaid
+echo ============================================================
+echo.
 echo   Start Claude now?
 echo     [Y] Yes - launch Claude
 echo     [N] No  - exit

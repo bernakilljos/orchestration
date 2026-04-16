@@ -53,30 +53,39 @@ setx CLAUDE_CODE_SUBAGENT_MODEL claude-haiku-4-5-20251001
 
 ---
 
-## 3. MCP 서버 — 누락분만 설치
+## 3. MCP 서버 — 최소 3개만 설치 (필수)
 
-> **Deferred Tools (토큰 최적화):** Claude Code 최신 버전은 MCP 스키마를 지연 로딩함.
-> 세션 시작 시 도구 이름만 로드 → 호출 전 ToolSearch로 스키마 fetch → 미사용 도구 토큰 0.
-> 별도 설정 불필요, 자동 적용. MCP 서버가 많아도 컨텍스트 폭발 없음.
+> **Deferred Tools (토큰 최적화):** MCP 스키마 지연 로딩 자동 적용 — MCP가 많아도 토큰 폭발 없음.
 
 `claude mcp list`로 확인 후, 없는 것만 실행:
 
 ```bash
-# 기본 (필수)
-claude mcp add -s user context7    -- npx -y @upstash/context7-mcp
-claude mcp add -s user playwright  -- npx @playwright/mcp@latest
-claude mcp add -s user thinking    -- npx -y @anthropic/thinking-mcp
+# ① 문서/코드 검색 (npm·GitHub 공식 문서 특화)
+claude mcp add -s user context7   -- npx -y @upstash/context7-mcp
 
-# Gemini (GEMINI_API_KEY 필요)
-claude mcp add gemini -s user -e GEMINI_API_KEY=your-key -- npx -y @rlabs-inc/gemini-mcp
+# ② 웹 자동화 (브라우저 조작·크롤링·스크린샷)
+claude mcp add -s user playwright -- npx @playwright/mcp@latest
 
-# 확장
-claude mcp add excel     -s user -- npx -y excel-mcp-server
-claude mcp add n8n       -s user -- npx -y n8n-mcp-server
-claude mcp add light-rag -s user -- npx -y light-rag-mcp
+# ③ 사고 강화 (복잡한 설계·분석 시 Claude 사고력 향상)
+claude mcp add -s user thinking   -- npx -y @anthropic/thinking-mcp
 ```
 
-자동 연결 (claude.ai 로그인 후): Figma, Gamma, Gmail, Calendar, HuggingFace, Mermaid, Canva
+자동 연결 (claude.ai 로그인 후 무설치): Figma, Gamma, Gmail, Calendar, Mermaid, Canva
+
+---
+
+### 추가 MCP — 필요할 때 슬래시 커맨드로 설치
+
+| 커맨드 | 설치 대상 | 용도 |
+|--------|---------|------|
+| `/plug_dev` | GitHub·GitLab·Docker·K8s·AWS·Firebase·Supabase·Vercel·Netlify | 코드 생성→push→배포 자동화 |
+| `/plug_data` | MySQL·PostgreSQL·MongoDB·BigQuery·Snowflake·Sheets·Airtable | 데이터 분석·리포트·PPT 연동 |
+| `/plug_design` | Canva·Figma·Gamma·PowerPoint·Slides·Mermaid | 슬라이드·다이어그램·UI 설계 |
+| `/plug_collab` | Slack·Notion·Jira·Trello·Gmail·Calendar | 알림·작업 트리거·일정 자동화 |
+| `/plug_web` | Playwright·Puppeteer·Fetch·Apify | 크롤링·경쟁사 분석·자동화 |
+| `/plug_docs` | PDF·DOCX·OCR | 문서→데이터화·계약서 분석 |
+| `/plug_media` | Whisper·TTS·FFmpeg | 음성인식·TTS·영상 처리 |
+| `/plug_all` | 전체 7그룹 | 한 번에 전부 설치 |
 
 ---
 
