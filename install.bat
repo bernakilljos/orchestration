@@ -776,6 +776,55 @@ if exist "%TARGET%\package.json" (
   echo       Done
 )
 
+rem -----------------------------------------
+rem exec_voice 도구 설치 (Whisper / edge-tts / FFmpeg)
+rem -----------------------------------------
+echo.
+echo ============================================================
+echo   exec_voice 도구 설치 (음성 처리)
+echo ============================================================
+where python >nul 2>&1
+if not errorlevel 1 (
+  echo [+] Whisper STT 설치 중...
+  python -c "import whisper" >nul 2>&1
+  if errorlevel 1 (
+    pip install openai-whisper --quiet && echo       [OK] Whisper || echo [WARN] Whisper 설치 실패
+  ) else ( echo       [OK] Whisper 이미 설치됨 )
+
+  echo [+] edge-tts 설치 중...
+  python -c "import edge_tts" >nul 2>&1
+  if errorlevel 1 (
+    pip install edge-tts --quiet && echo       [OK] edge-tts || echo [WARN] edge-tts 설치 실패
+  ) else ( echo       [OK] edge-tts 이미 설치됨 )
+
+  echo [+] 오디오 처리 라이브러리 설치 중...
+  python -c "import noisereduce" >nul 2>&1
+  if errorlevel 1 (
+    pip install noisereduce pydub soundfile --quiet && echo       [OK] 오디오 라이브러리 || echo [WARN] 일부 설치 실패
+  ) else ( echo       [OK] 오디오 라이브러리 이미 설치됨 )
+) else (
+  echo [WARN] Python 없음 - exec_voice 도구 건너뜀
+  echo        Python 설치 후: pip install openai-whisper edge-tts noisereduce pydub soundfile
+)
+
+where ffmpeg >nul 2>&1
+if errorlevel 1 (
+  echo [+] FFmpeg 설치 중...
+  where winget >nul 2>&1
+  if not errorlevel 1 (
+    winget install Gyan.FFmpeg --accept-source-agreements --accept-package-agreements --silent >nul 2>&1
+    where ffmpeg >nul 2>&1
+    if not errorlevel 1 ( echo       [OK] FFmpeg ) else ( echo [WARN] FFmpeg 설치 실패 - 수동: winget install Gyan.FFmpeg )
+  ) else ( echo [WARN] winget 없음 - FFmpeg 수동 설치 필요 )
+) else ( echo       [OK] FFmpeg 이미 설치됨 )
+
+rem -----------------------------------------
+rem exec_learning 도구 (Python 표준 라이브러리 - 추가 설치 불필요)
+rem -----------------------------------------
+echo [+] exec_learning: Python JSON 라이브러리 확인...
+where python >nul 2>&1
+if not errorlevel 1 ( echo       [OK] Python JSON 사용 가능 ) else ( echo [WARN] Python 없음 - exec_learning 제한됨 )
+
 echo [STEP] Starting Claude Code native install %TIME% >> "!LOGFILE!"
 rem -----------------------------------------
 rem Install Claude Code native (if not already)

@@ -84,4 +84,6 @@ npm·GitHub 문서 특화 → context7 MCP 병행
 `.claude/skills/exec_orca-auto.md`
 `.claude/skills/state_session.md`
 `.claude/skills/route_dispatch.md`
+`plugins/exec_voice/skills/` (음성 처리)
+`plugins/exec_learning/skills/` (학습·메모리)
 → 전체 목록: `guide.txt` § Loading Order

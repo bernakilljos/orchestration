@@ -17,24 +17,18 @@ if errorlevel 1 (
   goto COPY_GUIDE
 )
 
-rem Marketplace update (30s timeout)
-powershell -NoProfile -Command ^
-  "$p=Start-Process 'claude' -ArgumentList @('plugin','marketplace','update') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-   if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
-
-rem Check installed
-set "PLUGIN_LIST="
-for /f "delims=" %%L in ('powershell -NoProfile -Command "$j=Start-Job{claude plugin list 2>$null};if(Wait-Job $j -Timeout 15){Receive-Job $j}else{Remove-Job $j -Force}" 2^>nul') do set "PLUGIN_LIST=!PLUGIN_LIST! %%L"
-
-for %%P in (claude-md-management code-review commit-commands) do (
-  echo "!PLUGIN_LIST!" | findstr /C:"%%P" >nul 2>&1
-  if errorlevel 1 (
-    echo       Installing %%P...
+rem install-plugins.ps1 사용 (TTY 없이 안정적 설치)
+if exist "%SCRIPT_DIR%install-plugins.ps1" (
+  echo [+] install-plugins.ps1 로 플러그인 설치 중...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%install-plugins.ps1" -UserProfile "%USERPROFILE%"
+) else (
+  rem 폴백: 직접 설치
+  echo [+] Fallback 플러그인 설치...
+  for %%P in (claude-md-management code-review commit-commands) do (
     powershell -NoProfile -Command ^
       "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
        if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
-  ) else (
-    echo       [OK] %%P
+    echo       %%P
   )
 )
 
