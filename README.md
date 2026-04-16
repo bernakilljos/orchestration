@@ -1,6 +1,6 @@
-# Orchestration Kit v3 - Multi-AI Automation Framework
+# Orchestration Kit v1.0 — Multi-AI Automation Framework
 
-Claude(Team Lead) + Codex(Implementation) + Gemini(Review) — 3 AI 역할 분담 오케스트레이션
+Claude(Team Lead) + Codex(Implementation) + Gemini(Review) — Plugin-Centric 3AI 오케스트레이션
 
 ---
 
@@ -22,7 +22,8 @@ OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 ```
 
 ### 설치 후
-Claude Code 실행 → 자동으로 환경 구성 완료
+Claude Code 실행 → 자동으로 환경 구성 완료  
+추가 MCP 필요 시: `/plug_dev`, `/plug_data` 등 슬래시 커맨드 실행
 
 ---
 
@@ -30,41 +31,71 @@ Claude Code 실행 → 자동으로 환경 구성 완료
 
 | 카테고리 | 수량 | 내용 |
 |---------|------|------|
-| Skills | 38개 | 01-14 core pipeline + 15-16 design/brand + 17-18 debug/preview + 19-21 meta/marketing + 22-23 video/security + 24-25 handoff/media + 26-27 protection/verify + 28-37 lifecycle(changelog, api-test, docker, i18n, db-migration, github-actions, code-docs, profiler, data-viz, error-tracker) + 38 token-watchdog |
-| Hooks | 11개 | 00-08 pipeline hooks + protect-critical-files + post-impl-verify |
+| Skills | 38개 + 3개 | skill-01~38 (레거시) + exec_orca-auto, state_session, route_dispatch |
+| Hooks | 9개 명세 + 9개 스크립트 | hook-00~08 + Python/Shell 실행 스크립트 |
 | Agents | 6개 | team-lead, implementer, reviewer, architect, monitor, designer |
-| Plugins | 8개 | superpowers, ui-ux-pro-max, everything-claude-code, awesome-claude-code, get-shit-done, code-review, commit-commands, claude-md-management |
-| MCP | 7+6개 | context7, playwright, thinking, gemini, excel, n8n, light-rag + Figma, Gamma, Gmail, Calendar, HuggingFace, Mermaid |
-| Tools | 2개 | video-restore (CodeFormer+Real-ESRGAN), media-enhance (동영상/오디오/이미지/PDF/PPT) |
-| Advisor | Sonnet+Opus | claude-auto에서 자동 사용 |
+| Plugins | 13개 | exec_orch, exec_voice, exec_learning, design_ppt/excel/word, review_qa, mcp_dev/data/collab/web/docs/media |
+| Commands | 21개 | vibe-loop, loop-stop, plug_*, check-*, godmode, 10x, brief 등 |
+| Codex 연동 | AGENTS.md + .codex/ | Codex용 지시서 + MCP config.toml |
 
 ---
 
-## AI Roles
+## AI 역할 분담
 
-| AI | Role | How |
-|----|------|-----|
-| Claude | Team Lead: design, judge, approve, 보완/고도화 | Direct in session |
-| Codex | Implementer: 500+ line 1차 구현 | `codex-a --auto` |
-| Gemini | Reviewer: verify, search, docs | `gemini-a --verify` |
+| AI | 역할 | 명령어 |
+|----|------|--------|
+| Claude | 팀장: 설계·판단·승인·보완 | 대화에서 직접 |
+| Codex | 구현: 500줄+ 1차 구현 | `codex-a --auto` (단일) / `codex-auto 4` (병렬) |
+| Gemini | 검증: 리뷰·보안·문서화 | `gemini-a --verify` (단일) / `gemini-auto 2` (병렬) |
 
-### Handoff Protocol (강제)
+### 명칭 정리
 ```
-Claude → task-instruction.md + handoff-log.md → Codex
-Codex  → implementation-report.md → Claude (보완)
-Claude → verify-*.md → Gemini
-Gemini → review-result.md → Claude (채택/수정)
+codex-a     = 단일 태스크 실행
+codex-auto  = 병렬 구현 워커 (기본 4개)
+gemini-a    = 단일 검증 실행
+gemini-auto = 병렬 검증 워커 (기본 2개)
+claude-auto = Claude 병렬 워커 (기본 3개)
 ```
 
 ---
 
-## Pipeline
+## 파이프라인
 
 ```
-Request → init → research → team-lead → task-instruction.md
-  → Codex 1차 구현 → Claude 보완 → Gemini 검증
-  → Claude 채택 → deploy → monitor
+Hook → Planner → Executor → Validator → State → Retry
+  ↓        ↓          ↓           ↓         ↓       ↓
+사전확인  Claude    Codex 4개   Gemini 2개  스냅샷  3회재시도
+         설계      구현        검증        저장    →에스컬레이션
 ```
+
+### 디자인 파이프라인
+```
+PPT:   Claude → Canva → Mermaid → Figma
+Excel: Claude → openpyxl → 차트 → Google Sheets
+Word:  Claude → python-docx → Mermaid → PDF
+```
+
+---
+
+## 플러그인 구조 (plugins/)
+
+```
+exec_orch      오케스트레이션 핵심 (pipeline.md)
+exec_voice     음성 STT·TTS·회의록·음성명령
+exec_learning  세션학습·패턴저장·요약
+design_ppt     PPT 자동생성
+design_excel   Excel 자동생성
+design_word    Word 자동생성
+review_qa      코드리뷰·보안·품질
+mcp_dev        개발 MCP (GitHub·Docker·AWS)
+mcp_data       데이터 MCP (MySQL·MongoDB·BigQuery)
+mcp_collab     협업 MCP (Slack·Notion·Jira)
+mcp_web        웹자동화 MCP (Playwright·Puppeteer)
+mcp_docs       문서처리 MCP (PDF·DOCX·OCR)
+mcp_media      미디어 (Whisper·TTS·FFmpeg)
+```
+
+각 플러그인: `commands/` + `skills/` + `agents/` + `hooks/` + `codex/` + `rules.md`
 
 ---
 
@@ -72,37 +103,58 @@ Request → init → research → team-lead → task-instruction.md
 
 | # | Module | 내용 |
 |---|--------|------|
-| 01 | core | .claude 폴더 + CLAUDE.md 복사 |
+| 01 | core | .claude 폴더 + 설정 복사 |
 | 02 | defender | Windows Defender 예외 |
 | 03 | settings | Claude 글로벌 설정, PS UTF-8 |
-| 04 | commands | codex-a, gemini-a 글로벌 설치 |
+| 04 | commands | codex-a, gemini-a 등 글로벌 설치 |
 | 05 | services | status-push, remote-agent |
 | 06 | prereqs | Node.js, Claude Code, Cloudflared |
-| 07 | github | Git 초기화, GitHub repo 생성 |
-| 08 | plugins | 플러그인 8개 자동 설치 |
-| 09 | finalize | init, npm install, Claude 실행 |
+| 07 | github | Git 초기화, GitHub repo 연동 |
+| 08 | plugins | install-plugins.ps1 (TTY 없이 안정 설치) |
+| 09 | finalize | exec_voice 도구 설치, 로컬LLM 감지, Claude 실행 |
 | 10 | video-restore | CodeFormer + Real-ESRGAN |
 | 11 | media-enhance | 오디오/PDF/PPT 의존성 |
 
 ---
 
-## CLI Commands
+## MCP 추가 설치
 
-| Command | Description |
-|---------|-------------|
-| `codex-a --auto` | Codex가 task-instruction.md 읽어서 구현 |
-| `gemini-a --verify` | Gemini가 구현 결과 검증 |
-| `claude-auto` | Claude 병렬 워커 (Sonnet + Opus advisor) |
-| `codex-auto N` | Codex N개 병렬 워커 |
-| `gemini-auto N` | Gemini N개 병렬 워커 |
+기본 설치됨: `context7`, `playwright`, `thinking`  
+자동 연결 (claude.ai): Figma, Gamma, Gmail, Canva, Mermaid
+
+추가 설치 — Claude에서 실행:
+```
+/plug_dev      GitHub, Docker, AWS, Vercel...
+/plug_data     MySQL, MongoDB, BigQuery...
+/plug_design   Canva, Figma, Gamma, PowerPoint...
+/plug_collab   Slack, Notion, Jira, Gmail...
+/plug_media    Whisper, TTS, FFmpeg
+/plug_all      전체 한번에
+```
 
 ---
 
-## Extend
+## Codex 연동 (.codex/)
+
+```toml
+# .codex/config.toml
+[mcp_servers.filesystem]  # 파일 처리
+[mcp_servers.github]      # GitHub
+[mcp_servers.playwright]  # 웹 자동화
+[mcp_servers.figma]       # 디자인
+[mcp_servers.canva]       # 디자인
+[mcp_servers.mermaid]     # 다이어그램
+```
+
+`AGENTS.md` = Codex용 루트 지시서 (`CLAUDE.md` 대응)
+
+---
+
+## 확장
 
 ```
-New skill:  .claude/skills/skill-39-name.md
-New agent:  .claude/agents/agent-07-name.md
-New hook:   .claude/hooks/hook-09-name.md
-→ CLAUDE.md Loading Order에 추가
+새 플러그인:  plugins/내이름/commands/커맨드명.md
+새 스킬:     .claude/skills/exec_이름.md
+새 에이전트: .claude/agents/agent-07-name.md
+새 훅:       .claude/hooks/hook-09-name.md
 ```
