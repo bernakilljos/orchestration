@@ -28,13 +28,18 @@ set "CHILD_ID="
 
 rem --- Read claude worker count from .claude/orca-workers-config.json (overrides default) ---
 rem Order: CLI arg > config file > hardcoded default (18)
-if exist "%PROJECT_ROOT%\.claude\orca-workers-config.json" (
-  for /f "usebackq tokens=*" %%C in (`powershell -NoProfile -Command "try { (Get-Content '%PROJECT_ROOT%\.claude\orca-workers-config.json' -Raw | ConvertFrom-Json).workers.claude } catch { '' }" 2^>nul`) do (
-    if not "%%C"=="" set "WORKER_COUNT=%%C"
-  )
-) else if exist "%PROJECT_ROOT%\.claude\orca-workers" (
-  for /f "usebackq tokens=*" %%C in ("%PROJECT_ROOT%\.claude\orca-workers") do set "WORKER_COUNT=%%C"
-)
+rem goto 방식 — if () 블록 안 PS 문자열의 ) 가 블록 종료로 오해되는 문제 회피
+if not exist "%PROJECT_ROOT%\.claude\orca-workers-config.json" goto CFG_FALLBACK
+set "_WC_TMP=%TEMP%\_claude_wc_%RANDOM%.txt"
+powershell -NoProfile -Command "try { (Get-Content '%PROJECT_ROOT%\.claude\orca-workers-config.json' -Raw | ConvertFrom-Json).workers.claude } catch { '' }" > "%_WC_TMP%" 2>nul
+if not exist "%_WC_TMP%" goto CFG_DONE
+set /p _WC_VAL=<"%_WC_TMP%"
+if not "%_WC_VAL%"=="" set "WORKER_COUNT=%_WC_VAL%"
+del "%_WC_TMP%" >nul 2>&1
+goto CFG_DONE
+:CFG_FALLBACK
+if exist "%PROJECT_ROOT%\.claude\orca-workers" set /p WORKER_COUNT=<"%PROJECT_ROOT%\.claude\orca-workers"
+:CFG_DONE
 
 rem --- Parse args ---
 :PARSE_ARGS
