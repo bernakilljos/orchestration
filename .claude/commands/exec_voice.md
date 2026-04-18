@@ -10,7 +10,7 @@ description: "exec_voice — 음성 STT·TTS·회의록·음성 명령"
 - `/meeting` — 회의 녹음 → 회의록 자동 생성
 - `/convert` — 오디오 포맷 변환
 - `/voice-task` — 음성으로 작업 지시
-- `/status` — 음성 플러그인 상태 (design_excel/word와 이름 충돌 주의)
+- `/voice-status` — 음성 플러그인 상태
 
 ## 기본 실행
 용도에 따라 `/transcribe` (듣기) 또는 `/speak` (말하기) 사용.

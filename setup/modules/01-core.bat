@@ -41,25 +41,44 @@ if exist "%SCRIPT_DIR%plugins" (
 
   rem --- Fanout: plugins/*/commands|skills|agents|hooks → .claude/{commands,skills,agents,hooks} ---
   rem Claude Code는 .claude/ 하위만 읽으므로 plugin 자산을 중복 복사 (plugins/ 는 마스터 보관)
+  rem 이름 충돌 방지: 여러 플러그인이 같은 파일명(make.md/status.md/install.md)을 쓰는 경우
+  rem → plugin명 접두사로 리네임 (예: design_excel/make.md → excel-make.md, mcp_dev/install.md → mcp_dev-install.md)
+  if not exist "%TARGET%\.claude\commands" mkdir "%TARGET%\.claude\commands"
+  if not exist "%TARGET%\.claude\skills" mkdir "%TARGET%\.claude\skills"
+  if not exist "%TARGET%\.claude\agents" mkdir "%TARGET%\.claude\agents"
+  if not exist "%TARGET%\.claude\hooks" mkdir "%TARGET%\.claude\hooks"
+
   for /d %%P in ("%TARGET%\plugins\*") do (
+    set "PLUGIN_NAME=%%~nxP"
+    rem 접두사 정규화: design_excel → excel, design_word → word, design_ppt → ppt, exec_voice → voice, mcp_* → mcp_*
+    set "PREFIX=!PLUGIN_NAME!"
+    if /i "!PLUGIN_NAME!"=="design_excel" set "PREFIX=excel"
+    if /i "!PLUGIN_NAME!"=="design_word"  set "PREFIX=word"
+    if /i "!PLUGIN_NAME!"=="design_ppt"   set "PREFIX=ppt"
+    if /i "!PLUGIN_NAME!"=="exec_voice"   set "PREFIX=voice"
+
     if exist "%%P\commands" (
-      if not exist "%TARGET%\.claude\commands" mkdir "%TARGET%\.claude\commands"
-      robocopy "%%P\commands" "%TARGET%\.claude\commands" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
+      for %%F in ("%%P\commands\*.md") do (
+        set "BASENAME=%%~nxF"
+        set "DEST=%TARGET%\.claude\commands\!BASENAME!"
+        rem 충돌 예상 파일(make/status/install)은 무조건 접두사 붙임
+        if /i "!BASENAME!"=="make.md"    set "DEST=%TARGET%\.claude\commands\!PREFIX!-make.md"
+        if /i "!BASENAME!"=="status.md"  set "DEST=%TARGET%\.claude\commands\!PREFIX!-status.md"
+        if /i "!BASENAME!"=="install.md" set "DEST=%TARGET%\.claude\commands\!PREFIX!-install.md"
+        if not exist "!DEST!" copy /Y "%%F" "!DEST!" >nul 2>&1
+      )
     )
     if exist "%%P\skills" (
-      if not exist "%TARGET%\.claude\skills" mkdir "%TARGET%\.claude\skills"
       robocopy "%%P\skills" "%TARGET%\.claude\skills" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
     )
     if exist "%%P\agents" (
-      if not exist "%TARGET%\.claude\agents" mkdir "%TARGET%\.claude\agents"
       robocopy "%%P\agents" "%TARGET%\.claude\agents" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
     )
     if exist "%%P\hooks" (
-      if not exist "%TARGET%\.claude\hooks" mkdir "%TARGET%\.claude\hooks"
       robocopy "%%P\hooks" "%TARGET%\.claude\hooks" /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
     )
   )
-  echo       plugins/*/{commands,skills,agents,hooks} → .claude/ fanout
+  echo       plugins/*/{commands,skills,agents,hooks} → .claude/ fanout (네임스페이스 충돌 해결)
 )
 echo       Done
 
