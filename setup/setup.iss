@@ -73,6 +73,10 @@ Name: "mediaenhance"; Description: "미디어 관련 의존성 (오디오/PDF/PP
 Source: "..\.claude\*"; DestDir: "{app}\.claude"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\CLAUDE.md"; DestDir: "{app}"; Components: core; Flags: ignoreversion
 
+; --- Core: Plugin manifest + local plugins (exec_*, design_*, mcp_*, review_*, exec_session_guard 등 14개) ---
+Source: "..\.claude-plugin\*"; DestDir: "{app}\.claude-plugin"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\plugins\*"; DestDir: "{app}\plugins"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+
 ; --- Docs/Templates ---
 Source: "..\docs\*"; DestDir: "{app}\docs"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 Source: "..\context\*"; DestDir: "{app}\context"; Components: core; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist

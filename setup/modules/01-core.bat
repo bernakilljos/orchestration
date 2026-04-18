@@ -21,10 +21,24 @@ if exist "%TARGET%\.claude" (
   echo       Fresh install
 )
 
-echo [2/4] Installing .claude folder...
+echo [2/4] Installing .claude folder + plugin manifest + local plugins...
 if not exist "%TARGET%\.claude" mkdir "%TARGET%\.claude"
 robocopy "%SCRIPT_DIR%.claude" "%TARGET%\.claude" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
 if exist "%SCRIPT_DIR%CLAUDE.md" copy /Y "%SCRIPT_DIR%CLAUDE.md" "%TARGET%\CLAUDE.md" >nul
+
+rem --- Plugin manifest (.claude-plugin/) ---
+if exist "%SCRIPT_DIR%.claude-plugin" (
+  if not exist "%TARGET%\.claude-plugin" mkdir "%TARGET%\.claude-plugin"
+  robocopy "%SCRIPT_DIR%.claude-plugin" "%TARGET%\.claude-plugin" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
+  echo       .claude-plugin/ copied
+)
+
+rem --- Local plugins (exec_*, design_*, mcp_*, review_*, exec_session_guard 등) ---
+if exist "%SCRIPT_DIR%plugins" (
+  if not exist "%TARGET%\plugins" mkdir "%TARGET%\plugins"
+  robocopy "%SCRIPT_DIR%plugins" "%TARGET%\plugins" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
+  echo       plugins/ copied
+)
 echo       Done
 
 echo [3/4] Creating project folders...

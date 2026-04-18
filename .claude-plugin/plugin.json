@@ -31,19 +31,20 @@
   },
 
   "plugins": {
-    "exec_orch":    "plugins/exec_orch/",
-    "exec_voice":   "plugins/exec_voice/",
-    "exec_learning":"plugins/exec_learning/",
-    "design_ppt":   "plugins/design_ppt/",
-    "design_excel": "plugins/design_excel/",
-    "design_word":  "plugins/design_word/",
-    "review_qa":    "plugins/review_qa/",
-    "mcp_dev":      "plugins/mcp_dev/",
-    "mcp_data":     "plugins/mcp_data/",
-    "mcp_collab":   "plugins/mcp_collab/",
-    "mcp_web":      "plugins/mcp_web/",
-    "mcp_docs":     "plugins/mcp_docs/",
-    "mcp_media":    "plugins/mcp_media/"
+    "exec_orch":         "plugins/exec_orch/",
+    "exec_voice":        "plugins/exec_voice/",
+    "exec_learning":     "plugins/exec_learning/",
+    "exec_session_guard":"plugins/exec_session_guard/",
+    "design_ppt":        "plugins/design_ppt/",
+    "design_excel":      "plugins/design_excel/",
+    "design_word":       "plugins/design_word/",
+    "review_qa":         "plugins/review_qa/",
+    "mcp_dev":           "plugins/mcp_dev/",
+    "mcp_data":          "plugins/mcp_data/",
+    "mcp_collab":        "plugins/mcp_collab/",
+    "mcp_web":           "plugins/mcp_web/",
+    "mcp_docs":          "plugins/mcp_docs/",
+    "mcp_media":         "plugins/mcp_media/"
   },
 
   "prefix_convention": {

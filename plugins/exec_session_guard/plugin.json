@@ -1,0 +1,9 @@
+{
+  "name": "exec_session_guard",
+  "display": "세션 가드 — 토큰 부족·강제 종료 대비 자동 스냅샷 저장",
+  "prefix": "exec_",
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/",
+  "version": "1.0"
+}
