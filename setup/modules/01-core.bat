@@ -38,6 +38,28 @@ if exist "%SCRIPT_DIR%plugins" (
   if not exist "%TARGET%\plugins" mkdir "%TARGET%\plugins"
   robocopy "%SCRIPT_DIR%plugins" "%TARGET%\plugins" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
   echo       plugins/ copied
+
+  rem --- Fanout: plugins/*/commands|skills|agents|hooks → .claude/{commands,skills,agents,hooks} ---
+  rem Claude Code는 .claude/ 하위만 읽으므로 plugin 자산을 중복 복사 (plugins/ 는 마스터 보관)
+  for /d %%P in ("%TARGET%\plugins\*") do (
+    if exist "%%P\commands" (
+      if not exist "%TARGET%\.claude\commands" mkdir "%TARGET%\.claude\commands"
+      robocopy "%%P\commands" "%TARGET%\.claude\commands" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
+    )
+    if exist "%%P\skills" (
+      if not exist "%TARGET%\.claude\skills" mkdir "%TARGET%\.claude\skills"
+      robocopy "%%P\skills" "%TARGET%\.claude\skills" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
+    )
+    if exist "%%P\agents" (
+      if not exist "%TARGET%\.claude\agents" mkdir "%TARGET%\.claude\agents"
+      robocopy "%%P\agents" "%TARGET%\.claude\agents" *.md /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
+    )
+    if exist "%%P\hooks" (
+      if not exist "%TARGET%\.claude\hooks" mkdir "%TARGET%\.claude\hooks"
+      robocopy "%%P\hooks" "%TARGET%\.claude\hooks" /NFL /NDL /NJH /NJS /NP /XC /XN /XO >nul 2>&1
+    )
+  )
+  echo       plugins/*/{commands,skills,agents,hooks} → .claude/ fanout
 )
 echo       Done
 
