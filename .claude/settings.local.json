@@ -13,7 +13,17 @@
       "Bash(cp /c/work/orchestration_v1/.claude/hooks/post-impl-verify.sh /c/work/lottoclaude/.claude/hooks/)",
       "Bash(cp /c/work/orchestration_v1/.claude/hooks/protect-critical-files.sh /c/work/lottoclaude/.claude/hooks/)",
       "Bash(cp /c/work/orchestration_v1/.claude/scripts/codex-auto.bat /c/work/lottoclaude/.claude/scripts/)",
-      "Bash(cp /c/work/orchestration_v1/.claude/scripts/gemini-auto.bat /c/work/lottoclaude/.claude/scripts/)"
+      "Bash(cp /c/work/orchestration_v1/.claude/scripts/gemini-auto.bat /c/work/lottoclaude/.claude/scripts/)",
+      "Bash(cp /c/work/orchestration_v1/.claude/commands/exec_orch.md /c/work/orchestration_v1/.claude/commands/exec_voice.md /c/work/orchestration_v1/.claude/commands/exec_learning.md /c/work/orchestration_v1/.claude/commands/exec_session_guard.md /c/work/orchestration_v1/.claude/commands/design_ppt.md /c/work/orchestration_v1/.claude/commands/design_excel.md /c/work/orchestration_v1/.claude/commands/design_word.md /c/work/orchestration_v1/.claude/commands/review_qa.md /c/work/orchestration_v1/.claude/commands/mcp_dev.md /c/work/orchestration_v1/.claude/commands/mcp_data.md /c/work/orchestration_v1/.claude/commands/mcp_collab.md /c/work/orchestration_v1/.claude/commands/mcp_web.md /c/work/orchestration_v1/.claude/commands/mcp_docs.md /c/work/orchestration_v1/.claude/commands/mcp_media.md /c/work/lottoclaude/.claude/commands/)",
+      "Read(//c/work/lottoclaude/.claude/commands//**)",
+      "Bash(cp .claude/scripts/claude-auto.bat /c/Users/ja205/AppData/Roaming/npm/claude-auto.bat)",
+      "Bash(cp .claude/scripts/claude-auto.bat /c/work/lottoclaude/.claude/scripts/claude-auto.bat)",
+      "Read(//c/Users/ja205/AppData/Roaming/npm/**)",
+      "Read(//c/work/lottoclaude/.claude/scripts/**)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(rm /c/work/lottoclaude/.claude/tasks/stop)",
+      "Read(//c/work/lottoclaude/.claude/**)"
     ],
     "deny": []
   },
