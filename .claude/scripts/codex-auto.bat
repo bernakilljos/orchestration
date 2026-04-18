@@ -16,6 +16,16 @@ set "WORKER_COUNT=10"
 set "IS_CHILD=false"
 set "CHILD_ID="
 
+rem --- Read codex worker count from .claude/orca-workers-config.json (overrides default) ---
+rem Order: CLI arg > config file > hardcoded default (10)
+if exist "%PROJECT_ROOT%\.claude\orca-workers-config.json" (
+  for /f "usebackq tokens=*" %%C in (`powershell -NoProfile -Command "try { (Get-Content '%PROJECT_ROOT%\.claude\orca-workers-config.json' -Raw | ConvertFrom-Json).workers.codex } catch { '' }" 2^>nul`) do (
+    if not "%%C"=="" set "WORKER_COUNT=%%C"
+  )
+) else if exist "%PROJECT_ROOT%\.claude\orca-workers" (
+  for /f "usebackq tokens=*" %%C in ("%PROJECT_ROOT%\.claude\orca-workers") do set "WORKER_COUNT=%%C"
+)
+
 rem --- Parse args ---
 :PARSE_ARGS
 if "%~1"=="" goto VALIDATE
