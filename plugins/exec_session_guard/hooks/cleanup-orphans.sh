@@ -71,4 +71,23 @@ if [ -n "$BIG_PY" ]; then
   done <<< "$BIG_PY"
 fi
 
+# ─────────────────────────────────────────────
+# 4. .bak / .safe_bak / .bak_YYYYMMDD_* 파일 제거
+#    git 저장소 안에서는 백업 파일이 불필요 (git history 가 대체)
+#    .git/ 디렉터리와 node_modules 는 제외
+# ─────────────────────────────────────────────
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  BAK_REMOVED=0
+  while IFS= read -r -d '' bak; do
+    rm -f "$bak" 2>/dev/null && BAK_REMOVED=$((BAK_REMOVED + 1))
+  done < <(find . \
+    -path ./.git -prune -o \
+    -path ./node_modules -prune -o \
+    -path ./venv -prune -o \
+    -path ./.venv -prune -o \
+    \( -name "*.bak" -o -name "*.safe_bak" -o -name "*.bak_*" -o -name "*.bak.*" -o -name "*.orig" \) \
+    -type f -print0 2>/dev/null)
+  [ "$BAK_REMOVED" -gt 0 ] && log_line "removed $BAK_REMOVED backup file(s) (.bak/.safe_bak) — git history 대체"
+fi
+
 exit 0
