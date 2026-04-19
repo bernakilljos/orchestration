@@ -1,10 +1,36 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "exec_voice",
   "display": "음성 처리 — STT·TTS·회의록·음성 명령·오디오 편집",
   "prefix": "exec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
   "agents": "agents/",
   "hooks": "hooks/",
-  "version": "1.0"
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "transcribe",
+    "core_skills": [
+      "skill-22-remotion",
+      "skill-25-media-enhance"
+    ]
+  },
+  "metadata": {
+    "category": "실행/음성",
+    "tags": [
+      "exec"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

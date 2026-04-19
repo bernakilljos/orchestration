@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestration Kit Plugin Schema",
+  "description": "개별 플러그인 plugin.json 표준 스키마 (v1.2)",
+  "type": "object",
+  "required": ["name", "display", "prefix", "version", "status", "phase"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "display": { "type": "string", "minLength": 1 },
+    "prefix": { "type": "string", "pattern": "^[a-z][a-z0-9]*_$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+(\\.\\d+)?$" },
+    "status": {
+      "type": "string",
+      "enum": ["stable", "experimental", "spec-only", "deprecated"]
+    },
+    "phase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "0=완성, 1~3=로드맵"
+    },
+    "commands": { "type": "string" },
+    "skills": { "type": "string" },
+    "agents": { "type": "string" },
+    "hooks": { "type": "string" },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "plugins": { "type": "array", "items": { "type": "string" } },
+        "mcp": { "type": "array", "items": { "type": "string" } },
+        "env": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "entry_points": {
+      "type": "object",
+      "properties": {
+        "default_command": { "type": ["string", "null"] },
+        "core_skills": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "author": { "type": "string" },
+        "created": { "type": "string", "format": "date" },
+        "updated": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}

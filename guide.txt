@@ -481,6 +481,106 @@
     /plug_all      전체 한 번에
 
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  13. 플러그인 생태계 (v3 업데이트 — 2026-04-19)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [구조 원칙]
+    plugins/<name>/         ← 소스 오브 트루스 (편집은 여기만)
+    .claude/commands,skills ← sync 결과물 (자동 생성)
+    sync-plugins.sh         ← plugins/ → .claude/ 단방향
+
+  [플러그인 — 14개 완성 + 3개 스펙]
+    ● exec_  (실행 계열)
+        exec_orch            멀티AI 오케스트레이션 엔진 (코어)
+        exec_learning        세션 학습·실패 패턴
+        exec_session_guard   스냅샷 자동 저장
+        exec_voice           음성 STT·TTS·회의록
+
+    ● mcp_  (MCP 설치 허브)
+        mcp_dev              GitHub·Docker·AWS·Firebase
+        mcp_collab           Slack·Notion·Jira·Gmail
+        mcp_data             MySQL·MongoDB·BigQuery
+        mcp_docs             PDF·DOCX·OCR
+        mcp_media            Whisper·TTS·FFmpeg
+        mcp_web              Playwright·Puppeteer·Apify
+
+    ● design_  (문서 생성)
+        design_excel         Excel (openpyxl·차트)
+        design_ppt           PPT (Canva·Figma·Gamma)
+        design_word          Word (python-docx·Mermaid)
+
+    ● review_
+        review_qa            코드 리뷰·보안·품질·테스트
+
+    ● Phase 1 스펙 (status=spec-only, 플랫폼에서 구현)
+        exec_scheduler       크론·DAG 워크플로우
+        mcp_social           YouTube Data API v3
+        cost_youtube         YouTube 수익화 (research·upload·analytics)
+
+    ※ 전체 로드맵 (미래 26개): docs/2026-04-19/로드맵.md
+
+  [plugin.json 표준 스키마 v1.2]
+    필수: name, display, prefix, version, status, phase
+    옵션: commands, skills, agents, hooks, dependencies, entry_points, metadata
+    검증: python .claude/scripts/validate-plugin-schema.py
+
+  [신규 스크립트 (v2)]
+    sync-plugins.sh --dry      내용 diff + rename 미리보기
+    sync-plugins.sh --check    드리프트·orphan 점검만
+    sync-plugins.sh --verbose  상세 출력
+    install.sh                 macOS/Linux 초기 설치
+    uninstall.sh               sync 결과물 제거
+    validate-plugin-schema.py  plugin.json 일괄 검증
+    resolve-plugin-order.py    dependencies 위상정렬
+    orca-status.sh             워커·큐·heartbeat 통합 조회
+
+  [신규 커맨드]
+    /status    오케스트레이션 통합 대시보드 (워커·큐·sync·heartbeat)
+    /help      플러그인 도움말 (/help 또는 /help <plugin>)
+    /help --roadmap   로드맵 요약
+
+  [라우팅 고도화 (route_dispatch v2)]
+    AI별 특성 매트릭스 반영:
+      Claude Opus   → 설계·판단·복잡 추론 (단가 높음 — 결정만)
+      Claude Sonnet → 일반 구현·보완 (중단가)
+      Codex         → 대량 코드 500줄+ (병렬 4대)
+      Gemini Flash  → 검증·리뷰·문서 (저단가, 비용 효율)
+    비용 절감: 프롬프트 캐싱 + Gemini Flash 우선 검증
+
+  [템플릿]
+    plugins/_template/       새 플러그인 만들 때 복사 기준
+      ├─ plugin.json         스키마 v1.2 표준 예시
+      ├─ README.md           사용법 문서 템플릿
+      ├─ SPEC.md             상세 스펙 (spec-only 단계)
+      ├─ commands/example.md
+      ├─ skills/skill-example.md
+      ├─ hooks/hook-example.md
+      └─ agents/agent-example.md
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  14. v3 추가 사항 요약
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  2026-04-19 커밋 누적:
+    ✓ 14개 허브 커맨드 description 한글 통일
+    ✓ 13개 orphan 허브 → plugins/ SoT 이동
+    ✓ Bash 권한 28개 allow (프롬프트 최소화)
+    ✓ plugins/_template/ 표준 구조
+    ✓ plugin.json 스키마 v1.2 (14개 업그레이드)
+    ✓ .claude-plugin/marketplace.json (Claude 플러그인 마켓 형식)
+    ✓ sync-plugins.sh v2 (orphan·drift·dependency 순서)
+    ✓ validate-plugin-schema.py (필수 필드·타입 검증)
+    ✓ install.sh / uninstall.sh (Unix 계열)
+    ✓ Phase 1 스펙 3개 (spec-only)
+    ✓ 14개 README.md 자동 생성
+    ✓ docs/2026-04-19/: 플러그인.txt + 로드맵.md
+    ✓ prefix 13개 신규 등록 (cost_/perf_/growth_/ai_/sec_/infra_/...)
+    ✓ route_dispatch v2 (AI 단가·특성 매트릭스)
+    ✓ /status, /help 커맨드 추가
+
+
 ============================================================
   GitHub: https://github.com/bernakilljos/orchestration
   Release: https://github.com/bernakilljos/orchestration/releases

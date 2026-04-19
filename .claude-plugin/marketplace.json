@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json.schemastore.org/claude-plugin-marketplace.json",
+  "name": "orchestration-kit",
+  "version": "1.0",
+  "description": "Claude + Codex + Gemini 멀티AI 오케스트레이션 킷 — 14개 플러그인 + 로드맵 26개",
+  "owner": {
+    "name": "bernakilljos",
+    "url": "https://github.com/bernakilljos/orchestration"
+  },
+  "plugins": [
+    {
+      "name": "exec_orch",
+      "source": "./plugins/exec_orch",
+      "description": "멀티AI 오케스트레이션 엔진 (코어)",
+      "version": "1.0",
+      "strict": true
+    },
+    {
+      "name": "exec_learning",
+      "source": "./plugins/exec_learning",
+      "description": "세션 학습·실패 패턴 축적",
+      "version": "1.0"
+    },
+    {
+      "name": "exec_session_guard",
+      "source": "./plugins/exec_session_guard",
+      "description": "세션 종료 대비 자동 스냅샷",
+      "version": "1.0"
+    },
+    {
+      "name": "exec_voice",
+      "source": "./plugins/exec_voice",
+      "description": "음성 STT·TTS·회의록",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_dev",
+      "source": "./plugins/mcp_dev",
+      "description": "개발 MCP (GitHub·Docker·AWS·Firebase)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_collab",
+      "source": "./plugins/mcp_collab",
+      "description": "협업 MCP (Slack·Notion·Jira·Gmail)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_data",
+      "source": "./plugins/mcp_data",
+      "description": "데이터 MCP (MySQL·MongoDB·BigQuery)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_docs",
+      "source": "./plugins/mcp_docs",
+      "description": "문서처리 MCP (PDF·DOCX·OCR)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_media",
+      "source": "./plugins/mcp_media",
+      "description": "미디어 MCP (Whisper·TTS·FFmpeg)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_web",
+      "source": "./plugins/mcp_web",
+      "description": "웹 자동화 MCP (Playwright·Puppeteer)",
+      "version": "1.0"
+    },
+    {
+      "name": "design_excel",
+      "source": "./plugins/design_excel",
+      "description": "Excel 생성 (openpyxl·차트)",
+      "version": "1.0"
+    },
+    {
+      "name": "design_ppt",
+      "source": "./plugins/design_ppt",
+      "description": "PPT 생성 (Canva·Mermaid·Figma·Gamma)",
+      "version": "1.0"
+    },
+    {
+      "name": "design_word",
+      "source": "./plugins/design_word",
+      "description": "Word 생성 (python-docx·Mermaid·PDF)",
+      "version": "1.0"
+    },
+    {
+      "name": "review_qa",
+      "source": "./plugins/review_qa",
+      "description": "코드 리뷰·보안·품질·테스트 검증",
+      "version": "1.0"
+    }
+  ]
+}

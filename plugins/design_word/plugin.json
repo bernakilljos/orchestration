@@ -1,8 +1,35 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "design_word",
   "display": "Word·문서 자동화 — 계약서·보고서·기획서 생성",
   "prefix": "design_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
-  "version": "1.0"
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "word-make",
+    "core_skills": [
+      "skill-34-code-docs"
+    ]
+  },
+  "metadata": {
+    "category": "디자인/Word",
+    "tags": [
+      "design"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

@@ -1,7 +1,35 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_web",
   "display": "웹자동화 MCP 설치 — Playwright·Puppeteer·Fetch·Apify",
   "prefix": "mcp_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
-  "version": "1.0"
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": [
+      "skill-29-api-tester"
+    ]
+  },
+  "metadata": {
+    "category": "MCP/웹",
+    "tags": [
+      "mcp"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

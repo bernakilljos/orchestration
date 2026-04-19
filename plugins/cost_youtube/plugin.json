@@ -1,0 +1,36 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "cost_youtube",
+  "display": "YouTube 수익화 (Phase 1 축소판: research·upload·analytics 3개)",
+  "prefix": "cost_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch",
+      "mcp_social",
+      "exec_scheduler"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "yt-analytics",
+    "core_skills": [
+      "skill-yt-hook-writing",
+      "skill-yt-algorithm"
+    ]
+  },
+  "metadata": {
+    "category": "수익화/YouTube",
+    "tags": [
+      "cost"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19"
+  }
+}

@@ -1,10 +1,35 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "exec_learning",
   "display": "학습·메모리·요약 — 세션 학습·실패 패턴·최적화 규칙 관리",
   "prefix": "exec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
   "agents": "agents/",
   "hooks": "hooks/",
-  "version": "1.0"
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "learn",
+    "core_skills": [
+      "skill-09-memory-reset"
+    ]
+  },
+  "metadata": {
+    "category": "실행/학습",
+    "tags": [
+      "exec"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

@@ -1,8 +1,37 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "review_qa",
   "display": "코드 리뷰·보안 검사·품질 검증·테스트 자동화",
   "prefix": "review_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
-  "version": "1.0"
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "check",
+    "core_skills": [
+      "skill-03-review",
+      "skill-06-test",
+      "skill-10-quality-verify"
+    ]
+  },
+  "metadata": {
+    "category": "검증/QA",
+    "tags": [
+      "review"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

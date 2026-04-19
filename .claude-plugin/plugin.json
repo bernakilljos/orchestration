@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "name": "orchestration-kit",
   "display_name": "Multi-AI Orchestration Kit",
   "version": "1.0",
@@ -55,7 +55,27 @@
     "state_":  "상태 저장·복구 계열",
     "hook_":   "훅 관련 계열",
     "bridge_": "외부 AI 연동 계열",
-    "mcp_":    "MCP 설치·연결 계열"
+    "mcp_":    "MCP 설치·연결 계열",
+    "cost_":   "수익화 계열 — YouTube·IG·블로그·제휴·SaaS (로드맵 Phase 1~2)",
+    "perf_":   "성능·관측 계열 — monitor·loadtest·optimize (로드맵 Phase 2)",
+    "growth_": "그로스 계열 — A/B·퍼널·리텐션 (로드맵 Phase 2)",
+    "ai_":     "AI/ML 계열 — RAG·벡터DB·파인튜닝 (로드맵 Phase 3)",
+    "sec_":    "보안·컴플라이언스 계열 — ISMS-P·감사·시크릿 (로드맵 Phase 3)",
+    "infra_":  "인프라 계열 — AWS·Terraform·백업·IAM (로드맵 Phase 3)",
+    "data_":   "데이터 파이프라인 계열 — ETL·레이크·크롤링 (로드맵 Phase 3)",
+    "edu_":    "교육·강의 계열 (로드맵 Phase 3)",
+    "test_":   "테스트 자동화 계열 (로드맵 Phase 3)",
+    "db_":     "DB 운영 계열 — MSSQL·MySQL·Oracle (로드맵 Phase 3)",
+    "life_":   "개인·취미 계열 (로드맵 Phase 3)",
+    "biz_":    "창업·비즈니스 계열 (로드맵 Phase 3)",
+    "i18n_":   "국제화 계열 (로드맵 Phase 3)"
+  },
+  "phase": {
+    "0": "현재 완성 (14개 플러그인)",
+    "1": "실구현 대상 (3개): exec_scheduler·mcp_social·cost_youtube",
+    "2": "수익화·성능 확장 (13개)",
+    "3": "본업·확장 (10개) — ai_/sec_/infra_ 우선",
+    "roadmap": "docs/2026-04-19/로드맵.md"
   },
 
   "workers": {

@@ -1,7 +1,36 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_media",
   "display": "미디어 설치 — Whisper(STT)·TTS·FFmpeg",
   "prefix": "mcp_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
-  "version": "1.0"
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": [
+      "skill-22-remotion",
+      "skill-25-media-enhance"
+    ]
+  },
+  "metadata": {
+    "category": "MCP/미디어",
+    "tags": [
+      "mcp"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

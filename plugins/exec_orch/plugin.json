@@ -1,9 +1,35 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "exec_orch",
   "display": "오케스트레이션 — 워커·파이프라인·라우팅·AI 역할 분배",
   "prefix": "exec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
   "agents": "agents/",
-  "version": "1.0"
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "check-agents",
+    "core_skills": [
+      "route_dispatch",
+      "exec_orca-auto",
+      "state_session"
+    ]
+  },
+  "metadata": {
+    "category": "코어",
+    "tags": [
+      "exec"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

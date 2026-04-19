@@ -1,0 +1,29 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "_template",
+  "display": "플러그인 한 줄 설명 (이름 반복 없이)",
+  "prefix": "template_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 3,
+  "commands": "commands/",
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": null,
+    "core_skills": []
+  },
+  "metadata": {
+    "category": "기타",
+    "tags": [],
+    "author": "",
+    "created": "2026-04-19",
+    "updated": "2026-04-19"
+  }
+}

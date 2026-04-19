@@ -1,8 +1,35 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "design_excel",
   "display": "Excel·스프레드시트 자동화 — 데이터 분석·차트·리포트 생성",
   "prefix": "design_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
   "skills": "skills/",
-  "version": "1.0"
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "excel-make",
+    "core_skills": [
+      "skill-36-data-viz"
+    ]
+  },
+  "metadata": {
+    "category": "디자인/Excel",
+    "tags": [
+      "design"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

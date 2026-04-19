@@ -1,7 +1,36 @@
 {
+  "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_dev",
   "display": "개발 MCP 설치 — GitHub·GitLab·Docker·K8s·AWS·Firebase·Supabase·Vercel·Netlify",
   "prefix": "mcp_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
   "commands": "commands/",
-  "version": "1.0"
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": [
+      "skill-30-docker",
+      "skill-33-github-actions"
+    ]
+  },
+  "metadata": {
+    "category": "MCP/개발",
+    "tags": [
+      "mcp"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-10",
+    "updated": "2026-04-19"
+  }
 }

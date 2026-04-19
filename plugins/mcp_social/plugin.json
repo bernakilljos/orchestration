@@ -1,0 +1,31 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "mcp_social",
+  "display": "소셜 플랫폼 MCP — YouTube·Instagram·TikTok·X·Naver·Tistory (Phase 1: YouTube 한정)",
+  "prefix": "mcp_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": []
+  },
+  "metadata": {
+    "category": "MCP/소셜",
+    "tags": [
+      "mcp"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19"
+  }
+}
