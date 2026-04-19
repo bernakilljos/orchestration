@@ -101,6 +101,10 @@ if not exist "!DOCS_DATE_DIR!" mkdir "!DOCS_DATE_DIR!" >nul 2>&1
 set "IDLE_COUNT=0"
 
 :LOOP
+rem --- Worker heartbeat 갱신 (v3: worker-health.sh 연동) ---
+if not exist "%PROJECT_ROOT%\.claude\state\workers" mkdir "%PROJECT_ROOT%\.claude\state\workers" >nul 2>&1
+powershell -NoProfile -Command "[int][double]::Parse((Get-Date -UFormat %%s)) | Set-Content '%PROJECT_ROOT%\.claude\state\workers\codex-%CHILD_ID%.hb'" >nul 2>&1
+
 rem --- Stop 파일 체크 ---
 if exist "%PROJECT_ROOT%\.claude\tasks\stop" (
   echo [Worker-%CHILD_ID%] Stop file detected. Exiting.

@@ -1,19 +1,17 @@
 # design_word — Word·문서 자동화 — 계약서·보고서·기획서 생성
 
 > **Prefix**: `design_` | **버전**: 1.0 | **Status**: stable | **Phase**: 0
+> **Precedence**: 10 | **Token estimate**: ~1100
 
 ## 📖 개요
 
-Word 문서 자동 생성 — python-docx + Mermaid + PDF 변환.
-
-- **Why**: 긴 문서·계약서·기술문서 자동화.
-- **When**: 제안서 문서, 기술 스펙, 매뉴얼.
+Word 문서 자동 생성 — python-docx + Mermaid + PDF.
 
 ## 📋 커맨드
 
 - `/design_word`
-- `/make`
-- `/status`
+- `/word-make` ⭐ 기본
+- `/word-status`
 
 ## 🧠 스킬
 
@@ -26,27 +24,27 @@ Word 문서 자동 생성 — python-docx + Mermaid + PDF 변환.
 
 ## 🪝 훅
 
-- `hook-02-post-impl`
-- `hook-06-notify`
+- `hook-02-post-impl` (spec)
+- `hook-06-notify` (spec)
 
 ## 🔗 의존성
 
 - **플러그인**: `exec_orch`
-- **MCP**: 해당 없음
-- **환경변수**: 해당 없음
 
 ## 💡 사용 예시
 
-### 예시 1: 기본 생성
-```
+### 예시 1: Word 생성
+```bash
 /word-make outline.md
 ```
 
 ### 예시 2: 상태 확인
-```
+```bash
 /word-status
 ```
 
-## 📝 변경 이력
+## 📝 참조
 
-- 1.0 (2026-04-19) — 현재 버전
+- 스펙: `plugin.json`
+- 공유 규칙: `.claude/rules/`
+- 아키텍처: `docs/architecture-patterns.md`

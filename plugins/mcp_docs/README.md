@@ -1,13 +1,11 @@
 # mcp_docs — 문서처리 MCP 설치 — PDF·DOCX·OCR
 
 > **Prefix**: `mcp_` | **버전**: 1.0 | **Status**: stable | **Phase**: 0
+> **Precedence**: 10 | **Token estimate**: ~1100
 
 ## 📖 개요
 
 문서처리 MCP — PDF·DOCX·OCR(Tesseract).
-
-- **Why**: 문서 읽기·쓰기·이미지 텍스트 추출 자동화.
-- **When**: 계약서 분석, OCR, 보고서 변환.
 
 ## 📋 커맨드
 
@@ -25,26 +23,26 @@
 
 ## 🪝 훅
 
-- `hook-02-post-impl`
+- `hook-02-post-impl` (spec)
 
 ## 🔗 의존성
 
 - **플러그인**: `exec_orch`
-- **MCP**: 해당 없음
-- **환경변수**: 해당 없음
 
 ## 💡 사용 예시
 
 ### 예시 1: 일괄 설치
-```
+```bash
 /plug_docs
 ```
 
-### 예시 2: PDF만
-```
-/install pdf
+### 예시 2: 상태 확인
+```bash
+/mcp_docs-status
 ```
 
-## 📝 변경 이력
+## 📝 참조
 
-- 1.0 (2026-04-19) — 현재 버전
+- 스펙: `plugin.json`
+- 공유 규칙: `.claude/rules/`
+- 아키텍처: `docs/architecture-patterns.md`

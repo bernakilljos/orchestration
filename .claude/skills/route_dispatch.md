@@ -121,6 +121,47 @@
 
 ---
 
+## Quota Fallback (Codex/Gemini API 한도 초과 시)
+
+**트리거**: codex 또는 gemini 호출에서 "usage limit / rate limit / quota exceed / 429" 감지
+
+**플래그 파일**:
+- Codex: `.claude/state/codex-quota-exceeded` (JSON, expire_epoch 포함)
+- Gemini: `.claude/state/gemini-quota-exceeded`
+
+**자동 감지 스크립트**:
+```bash
+# bat 러너 내부에서 실패 후:
+bash plugins/exec_orch/scripts/codex-quota-check.sh --check-error "$STDERR_LOG"
+# → "usage limit" 감지 시 플래그 생성 + exit 2
+
+# 세션 시작 시 (exec_orca-auto):
+bash plugins/exec_orch/scripts/codex-quota-check.sh --status
+# → 플래그 있고 TTL 안 지났으면 exit 2
+```
+
+**플래그 존재 시 라우팅 변경**:
+
+| 원래 경로 | 한도 시 대체 |
+|----------|-------------|
+| LARGE → codex 4대 병렬 | **Claude 직접 구현** (용량 분할 필요 시 2~3회 split) |
+| VERIFY → gemini 2대 | **Claude 자체 검증** 또는 다른 AI (Codex 쪽이 가용하면) |
+| SMALL → 그대로 | 변경 없음 |
+
+**사용자 고지 (필수)**:
+한도 감지 시 **항상 명시**:
+```
+⚠️ Codex API 한도 초과 — Claude 직접 모드로 fallback
+  만료 예정: 2026-04-19 13:35 (플래그 TTL 3h)
+  수동 해제: bash plugins/exec_orch/scripts/codex-quota-check.sh --clear
+```
+
+**금지**:
+- 한도 상황에서 task-N.md 를 done/ 으로 이동 (빈 완료 위장) — 절대 금지
+- 사용자에게 "어느 AI 쓸까요?" 재질문 — 자동 fallback 수행 후 보고
+
+---
+
 ## task-instruction.md 작성 조건
 
 | 조건 | task-instruction.md 필요 여부 |

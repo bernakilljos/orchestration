@@ -1,13 +1,11 @@
 # mcp_media — 미디어 설치 — Whisper(STT)·TTS·FFmpeg
 
 > **Prefix**: `mcp_` | **버전**: 1.0 | **Status**: stable | **Phase**: 0
+> **Precedence**: 10 | **Token estimate**: ~1600
 
 ## 📖 개요
 
-미디어·AI 처리 MCP — Whisper(STT)·TTS·FFmpeg.
-
-- **Why**: 음성·영상 처리 파이프라인 통합.
-- **When**: 영상 편집, 자막 생성, 오디오 정제.
+미디어 MCP — Whisper·TTS·FFmpeg.
 
 ## 📋 커맨드
 
@@ -27,27 +25,27 @@
 
 ## 🪝 훅
 
-- `hook-02-post-impl`
-- `hook-06-notify`
+- `hook-02-post-impl` (spec)
+- `hook-06-notify` (spec)
 
 ## 🔗 의존성
 
 - **플러그인**: `exec_orch`
-- **MCP**: 해당 없음
-- **환경변수**: 해당 없음
 
 ## 💡 사용 예시
 
 ### 예시 1: 일괄 설치
-```
+```bash
 /plug_media
 ```
 
-### 예시 2: FFmpeg만
-```
-/install ffmpeg
+### 예시 2: 상태 확인
+```bash
+/mcp_media-status
 ```
 
-## 📝 변경 이력
+## 📝 참조
 
-- 1.0 (2026-04-19) — 현재 버전
+- 스펙: `plugin.json`
+- 공유 규칙: `.claude/rules/`
+- 아키텍처: `docs/architecture-patterns.md`

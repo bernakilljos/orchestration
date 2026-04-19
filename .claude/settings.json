@@ -106,7 +106,8 @@
       {
         "hooks": [
           { "type": "command", "command": "bash plugins/exec_session_guard/hooks/stop-snapshot.sh SessionEnd" },
-          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/cleanup-orphans.sh SessionEnd" }
+          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/cleanup-orphans.sh SessionEnd" },
+          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/hook-token-log.sh", "timeout": 5 }
         ]
       }
     ]

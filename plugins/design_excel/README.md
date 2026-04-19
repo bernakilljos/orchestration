@@ -1,19 +1,17 @@
 # design_excel — Excel·스프레드시트 자동화 — 데이터 분석·차트·리포트 생성
 
 > **Prefix**: `design_` | **버전**: 1.0 | **Status**: stable | **Phase**: 0
+> **Precedence**: 10 | **Token estimate**: ~1100
 
 ## 📖 개요
 
 Excel·스프레드시트 자동 생성 — openpyxl + 차트 + Google Sheets.
 
-- **Why**: 데이터 입력 → 차트·피벗 자동.
-- **When**: 리포트 생성, 데이터 시각화, 예산 시트.
-
 ## 📋 커맨드
 
 - `/design_excel`
-- `/make`
-- `/status`
+- `/excel-make` ⭐ 기본
+- `/excel-status`
 
 ## 🧠 스킬
 
@@ -26,27 +24,27 @@ Excel·스프레드시트 자동 생성 — openpyxl + 차트 + Google Sheets.
 
 ## 🪝 훅
 
-- `hook-02-post-impl`
-- `hook-06-notify`
+- `hook-02-post-impl` (spec)
+- `hook-06-notify` (spec)
 
 ## 🔗 의존성
 
 - **플러그인**: `exec_orch`
-- **MCP**: 해당 없음
-- **환경변수**: 해당 없음
 
 ## 💡 사용 예시
 
-### 예시 1: 기본 생성
-```
+### 예시 1: Excel 생성
+```bash
 /excel-make "월간 매출" data.csv
 ```
 
 ### 예시 2: 상태 확인
-```
+```bash
 /excel-status
 ```
 
-## 📝 변경 이력
+## 📝 참조
 
-- 1.0 (2026-04-19) — 현재 버전
+- 스펙: `plugin.json`
+- 공유 규칙: `.claude/rules/`
+- 아키텍처: `docs/architecture-patterns.md`
