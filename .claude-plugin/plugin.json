@@ -35,6 +35,7 @@
     "exec_voice":        "plugins/exec_voice/",
     "exec_learning":     "plugins/exec_learning/",
     "exec_session_guard":"plugins/exec_session_guard/",
+    "exec_scheduler":    "plugins/exec_scheduler/",
     "design_ppt":        "plugins/design_ppt/",
     "design_excel":      "plugins/design_excel/",
     "design_word":       "plugins/design_word/",
@@ -44,7 +45,9 @@
     "mcp_collab":        "plugins/mcp_collab/",
     "mcp_web":           "plugins/mcp_web/",
     "mcp_docs":          "plugins/mcp_docs/",
-    "mcp_media":         "plugins/mcp_media/"
+    "mcp_media":         "plugins/mcp_media/",
+    "mcp_social":        "plugins/mcp_social/",
+    "cost_youtube":      "plugins/cost_youtube/"
   },
 
   "prefix_convention": {

@@ -1,2 +1,29 @@
+# Git attribute — 줄바꿈 일관성
+# 기본: 텍스트는 저장소에 LF 로 저장, 체크아웃 시 OS 기본값
+* text=auto eol=lf
+
+# Windows batch 스크립트는 CRLF 유지 (cmd.exe 안정성)
 *.bat text eol=crlf
 *.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Bash / Python / Markdown / JSON / YAML 은 LF 강제
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+
+# 바이너리
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.exe binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary

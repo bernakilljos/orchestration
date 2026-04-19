@@ -41,14 +41,9 @@ renamed=0
 drift=0
 orphan=0
 
-# 충돌 룰
+# 충돌 룰 — 여러 플러그인에 동명 파일 있을 때만 사용
+# design_excel/make.md 같은 건 이미 파일명이 excel-make.md 로 rename 됨 (RENAME_MAP 불필요)
 declare -A RENAME_MAP=(
-  ["design_excel/commands/make.md"]="excel-make.md"
-  ["design_excel/commands/status.md"]="excel-status.md"
-  ["design_word/commands/make.md"]="word-make.md"
-  ["design_word/commands/status.md"]="word-status.md"
-  ["design_ppt/commands/install.md"]="ppt-install.md"
-  ["exec_voice/commands/status.md"]="voice-status.md"
   ["mcp_collab/commands/install.md"]="mcp_collab-install.md"
   ["mcp_collab/commands/status.md"]="mcp_collab-status.md"
   ["mcp_data/commands/install.md"]="mcp_data-install.md"
@@ -61,6 +56,9 @@ declare -A RENAME_MAP=(
   ["mcp_media/commands/status.md"]="mcp_media-status.md"
   ["mcp_web/commands/install.md"]="mcp_web-install.md"
   ["mcp_web/commands/status.md"]="mcp_web-status.md"
+  ["mcp_social/commands/install.md"]="mcp_social-install.md"
+  ["mcp_social/commands/status.md"]="mcp_social-status.md"
+  ["mcp_social/commands/auth.md"]="mcp_social-auth.md"
 )
 
 # target_name → plugins/ 원본 경로 역맵 (orphan 탐지용)

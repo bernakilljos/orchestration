@@ -92,6 +92,24 @@
       "source": "./plugins/review_qa",
       "description": "코드 리뷰·보안·품질·테스트 검증",
       "version": "1.0"
+    },
+    {
+      "name": "exec_scheduler",
+      "source": "./plugins/exec_scheduler",
+      "description": "크론 잡·워크플로우 스케줄러 (Phase 1 spec)",
+      "version": "0.1"
+    },
+    {
+      "name": "mcp_social",
+      "source": "./plugins/mcp_social",
+      "description": "소셜 플랫폼 MCP — YouTube·IG·TikTok·X·Naver (Phase 1 spec)",
+      "version": "0.1"
+    },
+    {
+      "name": "cost_youtube",
+      "source": "./plugins/cost_youtube",
+      "description": "YouTube 수익화 — research·upload·analytics (Phase 1 spec)",
+      "version": "0.1"
     }
   ]
 }

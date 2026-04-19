@@ -7,7 +7,8 @@
 #   - 워커 heartbeat (최근 60초 내 활동 여부)
 #   - 마지막 sync 시각
 
-set -euo pipefail
+set -uo pipefail
+# set -e 제외 — glob 매치 없을 때 조기 종료 방지 (ls *.md → no match)
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
@@ -62,11 +63,13 @@ echo ""
 
 # 워커 상한 설정
 echo "[워커 설정]"
-if [ -f ~/.claude/orca/workers-config.json ]; then
-  python -c "import json; c=json.load(open('$HOME/.claude/orca/workers-config.json')); print('  전역 상한:', c.get('max_workers', {}))" 2>/dev/null || echo "  (파싱 실패)"
+GLOBAL_CFG="$HOME/.claude/orca/workers-config.json"
+LOCAL_CFG=".claude/orca-workers-config.json"
+if [ -f "$GLOBAL_CFG" ]; then
+  python -c "import json,sys; c=json.load(open(sys.argv[1])); print('  전역 상한:', c.get('max_workers', {}))" "$GLOBAL_CFG" 2>/dev/null || echo "  전역: (파싱 실패)"
 fi
-if [ -f .claude/orca-workers-config.json ]; then
-  python -c "import json; c=json.load(open('.claude/orca-workers-config.json')); print('  로컬 상한:', c)" 2>/dev/null || echo "  (파싱 실패)"
+if [ -f "$LOCAL_CFG" ]; then
+  python -c "import json,sys; c=json.load(open(sys.argv[1])); print('  로컬 상한:', c)" "$LOCAL_CFG" 2>/dev/null || echo "  로컬: (파싱 실패)"
 fi
 echo ""
 

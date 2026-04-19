@@ -13,7 +13,8 @@
 #   bash .claude/scripts/worker-health.sh --reset <worker>  heartbeat 리셋
 #   bash .claude/scripts/worker-health.sh --beat <worker>   heartbeat 갱신 (워커가 직접 호출)
 
-set -euo pipefail
+set -uo pipefail
+# set -e 제외 — glob/ls 빈 매치에서 조기 종료 방지
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"

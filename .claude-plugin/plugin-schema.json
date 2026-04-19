@@ -46,7 +46,17 @@
         "tags": { "type": "array", "items": { "type": "string" } },
         "author": { "type": "string" },
         "created": { "type": "string", "format": "date" },
-        "updated": { "type": "string", "format": "date" }
+        "updated": { "type": "string", "format": "date" },
+        "precedence": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "파일 충돌 해결 우선순위 (낮을수록 우선). 코어=1, 일반=10"
+        },
+        "token_estimate": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "플러그인 전체 로드 시 대략 토큰 수"
+        }
       }
     }
   }

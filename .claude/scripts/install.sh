@@ -60,7 +60,8 @@ echo ""
 # 3. plugins → .claude sync
 # ------------------------------------------
 echo "[3/5] 플러그인 동기화..."
-bash .claude/scripts/sync-plugins.sh | tail -8
+# sync-plugins.sh 는 orphan/drift 있을 때 exit 2 — 설치 단계에서는 경고로만 취급
+bash .claude/scripts/sync-plugins.sh 2>&1 | tail -8 || true
 echo ""
 
 # ------------------------------------------
