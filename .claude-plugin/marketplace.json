@@ -146,6 +146,18 @@
       "source": "./plugins/ai_arch",
       "description": "AI 모델 아키텍처 라우팅 — 8가지 (Phase 3 spec)",
       "version": "0.1"
+    },
+    {
+      "name": "exec_offline",
+      "source": "./plugins/exec_offline",
+      "description": "로컬/오프라인 AI 스택 — Ollama·ChromaDB·Phoenix ($0 운영)",
+      "version": "0.1"
+    },
+    {
+      "name": "bundles_cowork",
+      "source": "./plugins/bundles_cowork",
+      "description": "업무 자동화 번들 — IG @aifornontechies Cowork Essentials (Phase 2 spec)",
+      "version": "0.1"
     }
   ]
 }

@@ -1,0 +1,37 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "exec_offline",
+  "display": "로컬/오프라인 AI 스택 — Ollama·ChromaDB·Phoenix ($0 운영)",
+  "prefix": "exec_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 2,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "exec_offline-setup",
+    "core_skills": [
+      "skill-local-llm",
+      "skill-cost-zero"
+    ]
+  },
+  "metadata": {
+    "category": "실행/로컬",
+    "tags": [
+      "exec"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19",
+    "precedence": 6,
+    "token_estimate": 2000,
+    "source": "docs/upgrade § 이미지 3 ($0 AI Stack 2026, Brij Kishore Pandey)"
+  }
+}

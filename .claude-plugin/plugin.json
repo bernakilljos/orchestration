@@ -53,7 +53,9 @@
     "design_pdf":        "plugins/design_pdf/",
     "design_video":      "plugins/design_video/",
     "ai_rag":            "plugins/ai_rag/",
-    "ai_arch":           "plugins/ai_arch/"
+    "ai_arch":           "plugins/ai_arch/",
+    "exec_offline":      "plugins/exec_offline/",
+    "bundles_cowork":    "plugins/bundles_cowork/"
   },
 
   "prefix_convention": {
@@ -77,7 +79,8 @@
     "db_":     "DB 운영 계열 — MSSQL·MySQL·Oracle (로드맵 Phase 3)",
     "life_":   "개인·취미 계열 (로드맵 Phase 3)",
     "biz_":    "창업·비즈니스 계열 (로드맵 Phase 3)",
-    "i18n_":   "국제화 계열 (로드맵 Phase 3)"
+    "i18n_":   "국제화 계열 (로드맵 Phase 3)",
+    "bundles_":"업무 자동화 번들 계열 (여러 플러그인 조합 워크플로우)"
   },
   "phase": {
     "0": "현재 완성 (14개 플러그인)",

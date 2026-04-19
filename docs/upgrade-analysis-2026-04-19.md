@@ -124,8 +124,15 @@ my_project/
 
 1. ✅ **CLAUDE.md 재구성** — Brij 5 Rules + WHAT/WHY/HOW + 3 Scopes 프레임 적용
 2. ✅ **`.claude/rules/claude-md-design.md`** — CLAUDE.md 작성 규칙 박제
-3. ✅ **로드맵 확장** — `ai_rag` 8 패턴 명시, `ai_arch` 신규 추가
-4. ✅ **이 문서** — 외부 자료 출처·시사점 박제
+3. ✅ **`.claude/rules/best-practices.md`** — 이미지 6 Best Practices + Extended Thinking + 1M + Artifacts/Skills/Plugins/Commands 구분
+4. ✅ **로드맵 확장** — `ai_rag` 8 패턴, `ai_arch` 8 아키텍처
+5. ✅ **`plugins/ai_rag/`** — 8 RAG 패턴 스펙 (이미지 1·2)
+6. ✅ **`plugins/ai_arch/`** — 8 AI 아키텍처 (IG Reel 2)
+7. ✅ **`plugins/exec_offline/`** — 로컬 $0 AI 스택 (이미지 3 Brij)
+8. ✅ **`plugins/bundles_cowork/`** — 50 업무 번들 (IG Post 1 @aifornontechies)
+9. ✅ **`plugins/_template/.mcp.json.example`** — MCP 표준 예시 (이미지 6)
+10. ✅ **prefix_convention** — `bundles_` 신규 등록
+11. ✅ **이 문서** — 외부 자료 출처·시사점 박제
 
 ---
 
