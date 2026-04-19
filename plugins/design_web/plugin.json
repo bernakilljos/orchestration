@@ -16,7 +16,7 @@
     "env": []
   },
   "entry_points": {
-    "default_command": "landing",
+    "default_command": "design_web-landing",
     "core_skills": [
       "skill-web-seo",
       "skill-web-conversion"

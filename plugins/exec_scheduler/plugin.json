@@ -16,7 +16,7 @@
     "env": []
   },
   "entry_points": {
-    "default_command": "status",
+    "default_command": "exec_scheduler-status",
     "core_skills": [
       "skill-scheduler-idempotency",
       "skill-scheduler-distributed"

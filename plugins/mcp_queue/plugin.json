@@ -16,7 +16,7 @@
     "env": []
   },
   "entry_points": {
-    "default_command": "install",
+    "default_command": "mcp_queue-topic",
     "core_skills": [
       "skill-queue-patterns"
     ]
