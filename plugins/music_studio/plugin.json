@@ -1,0 +1,52 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "music_studio",
+  "display": "음악 스튜디오 — 녹음·작곡·믹싱·편곡·가사·MIDI·커버",
+  "prefix": "music_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 2,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch",
+      "mcp_media",
+      "exec_voice"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "music_studio-compose",
+    "core_skills": [
+      "skill-music-production",
+      "skill-music-mixing",
+      "skill-music-copyright"
+    ]
+  },
+  "metadata": {
+    "category": "음악/Studio",
+    "tags": [
+      "music"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19",
+    "precedence": 10,
+    "token_estimate": 3500,
+    "triggers": [
+      "작곡",
+      "녹음",
+      "믹싱",
+      "편곡",
+      "MIDI",
+      "커버곡",
+      "가사",
+      "Suno",
+      "Udio",
+      "Logic",
+      "Ableton"
+    ]
+  }
+}
