@@ -121,13 +121,19 @@ echo [STEP] 08-plugins %TIME% >> "!LOGFILE!"
 call "%MOD%\08-plugins.bat" "%TARGET%" "%SCRIPT_DIR%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 9/10] Finalize...
+echo [Step 9/11] Kit Sync (plugins/ to .claude/)...
+echo [STEP] 12-kit-sync %TIME% >> "!LOGFILE!"
+call "%MOD%\12-kit-sync.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 10/11] Finalize...
 echo [STEP] 09-finalize %TIME% >> "!LOGFILE!"
 call "%MOD%\09-finalize.bat" "%TARGET%" "%ANALYZE_MODE%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 10/10] Media Enhance Dependencies...
+echo [Step 11/11] Media Enhance Dependencies...
 echo [STEP] 11-media-enhance %TIME% >> "!LOGFILE!"
+rem (Step 9는 12-kit-sync, Step 10은 09-finalize, Step 11은 11-media-enhance)
 call "%MOD%\11-media-enhance.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 

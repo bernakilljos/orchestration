@@ -80,6 +80,14 @@
         ]
       }
     ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "bash plugins/exec_learning/hooks/hook-worker-failure.sh", "timeout": 5 }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
