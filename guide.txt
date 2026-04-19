@@ -125,7 +125,7 @@
   6. 설치되는 것 — 전체 목록
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Setup 모듈 — 11단계]
+  [Setup 모듈 — 12단계]
     01 core            .claude 폴더 + CLAUDE.md 복사
     02 defender         Windows Defender 예외
     03 settings         Claude 글로벌 설정 + PS UTF-8
@@ -133,10 +133,11 @@
     05 services         status-push, remote-agent 등록
     06 prereqs          Node.js, Claude Code, Cloudflared
     07 github           Git 초기화 + GitHub repo 생성
-    08 plugins          플러그인 8개 자동 설치
+    08 plugins          외부 커뮤니티 플러그인 자동 설치
     09 finalize         init, npm install, Claude 실행
     10 video-restore    CodeFormer + Real-ESRGAN
     11 media-enhance    오디오/PDF/PPT 의존성
+    12 kit-sync         plugins/ to .claude/ 자동 동기화 + 스키마 검증 (v3 신규)
 
   [플러그인 — 8개]
     claude-md-management     CLAUDE.md 품질 관리

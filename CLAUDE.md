@@ -43,6 +43,13 @@ Team Lead. Design, judge, approve, implement directly when needed.
 
 라우팅 자동 결정: `plugins/exec_orch/skills/route_dispatch.md` (원본) → sync 후 `.claude/skills/route_dispatch.md` 로드됨
 
+### API 한도 Fallback (v2)
+Codex/Gemini API 한도 초과 감지 시 **Claude 직접 모드** 자동 전환:
+- 감지 스크립트: `plugins/exec_orch/scripts/codex-quota-check.sh`
+- 플래그 파일: `.claude/state/codex-quota-exceeded` (JSON, TTL 3h)
+- **절대 금지**: 빈 task 를 `done/` 으로 이동 (위장 완료)
+- 상세: `plugins/exec_orch/skills/route_dispatch.md` § Quota Fallback
+
 ---
 
 ## 검색 규칙
@@ -55,21 +62,41 @@ npm·GitHub 문서 특화 → context7 MCP 병행
 
 **소스 오브 트루스 규칙**: `plugins/` 가 원본, `.claude/` 는 sync 결과물.
 커맨드·스킬 편집은 `plugins/<name>/` 에서만. `.claude/` 직접 수정 금지 (sync시 덮어씀).
-동기화: `bash .claude/scripts/sync-plugins.sh` (dry run: `--dry`)
+동기화: `bash .claude/scripts/sync-plugins.sh` (옵션: `--dry`, `--check`, `--prune`, `--verbose`)
 
 | 경로 | 용도 | 편집 |
 |------|------|------|
-| `plugins/` | **원본** — 사용자 커스텀 플러그인 (14개) | ✅ 여기만 |
+| `plugins/` | **원본** — 14개 완성 + 3개 Phase 1 스펙 | ✅ 여기만 |
+| `plugins/_template/` | 새 플러그인 만들 때 복사 기준 | ✅ |
 | `.claude/commands/` | sync 결과물 — 슬래시 커맨드 | ❌ 자동 생성 |
-| `.claude/skills/` | sync 결과물 — 38개 레거시 + 플러그인 skill | ❌ 자동 생성 |
+| `.claude/skills/` | sync 결과물 — 레거시 + 플러그인 skill | ❌ 자동 생성 |
 | `.claude/agents/` | agent-01~06 | ✅ |
 | `.claude/hooks/` | hook 명세 + 실행 스크립트 + hooks.json | ✅ |
-| `.claude/scripts/` | codex-auto, gemini-auto, sync-plugins, orca-dispatch | ✅ |
+| `.claude/scripts/` | sync·validate·install·uninstall·orca-status 등 | ✅ |
+| `.claude/rules/` | **공유 규칙** (plugin-structure·frontmatter·file-naming·sync·indentation) | ✅ |
 | `.claude/tasks/` | task-instruction.md, locks/, done/ | 자동 |
-| `.claude/state/` | 상태 파일 | 자동 |
+| `.claude/state/` | 상태 파일 (heartbeat, workers/, codex-quota-exceeded) | 자동 |
 | `~/.claude/orca/` | **전역 큐** (멀티 프로젝트 공유) | 자동 |
-| `.claude-plugin/` | plugin.json 메타 + migration-map.md | ✅ |
+| `.claude-plugin/` | plugin.json 메타 + plugin-schema.json + marketplace.json | ✅ |
+| `docs/architecture-patterns.md` | 설계 원칙 9가지 (CMDS 영감) | ✅ |
+| `docs/2026-04-19/로드맵.md` | 미래 26개 플러그인 스펙 (Phase 1~3) | ✅ |
 | `guide.txt` | 전체 사용 가이드 | ✅ |
+| `.env.example` | 환경변수 템플릿 (복사 → `.env` 편집) | ✅ |
+| `.gitattributes` | 줄바꿈 일관성 (LF 기본, bat=CRLF) | ✅ |
+
+### plugin.json 스키마 v1.2
+필수 필드: `name, display, prefix, version, status, phase`
+권장 메타: `precedence` (충돌 우선순위), `token_estimate` (로드 비용)
+검증: `python .claude/scripts/validate-plugin-schema.py`
+스키마: `.claude-plugin/plugin-schema.json`
+
+### 유용한 스크립트
+- `sync-plugins.sh` — plugins/ → .claude/ 단방향 (orphan·drift 자동 탐지)
+- `validate-plugin-schema.py` — 17개 plugin.json 일괄 검증
+- `install.sh` / `uninstall.sh` — Unix 설치 (Windows는 `setup/setup.bat`)
+- `orca-status.sh` — 워커·큐·heartbeat 통합 조회
+- `plugin-overview.py` — 플러그인 상태 색상 표시
+- `codex-quota-check.sh` — Codex API 한도 감지 + 플래그 관리
 
 ---
 

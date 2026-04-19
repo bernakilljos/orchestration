@@ -14,16 +14,19 @@
 #   bash .claude/scripts/sync-plugins.sh --dry          미리보기 (변경 없음)
 #   bash .claude/scripts/sync-plugins.sh --check        드리프트·orphan 점검만
 #   bash .claude/scripts/sync-plugins.sh --verbose      상세 출력
+#   bash .claude/scripts/sync-plugins.sh --prune        orphan 자동 삭제 (주의)
 
 set -euo pipefail
 
 MODE="sync"
 VERBOSE="false"
+PRUNE="false"
 
 for arg in "$@"; do
   case "$arg" in
     --dry|--dry-run) MODE="dry" ;;
     --check)         MODE="check" ;;
+    --prune)         PRUNE="true" ;;
     --verbose|-v)    VERBOSE="true" ;;
     -h|--help)
       sed -n '2,18p' "$0"
@@ -193,7 +196,15 @@ if [ "$orphan" -gt 0 ]; then
     echo "   - $f"
   done
   echo ""
-  echo "   해결: plugins/<name>/commands/<name>.md 로 이동하거나 삭제"
+  if [ "$PRUNE" = "true" ]; then
+    echo "   [--prune] 삭제 진행..."
+    for f in "${orphan_list[@]}"; do
+      rm -f "$f" && echo "      ✂ $f 삭제됨" || echo "      ⚠ $f 삭제 실패"
+    done
+    orphan=0
+  else
+    echo "   해결: plugins/<name>/commands/<name>.md 로 이동 또는 --prune 으로 일괄 삭제"
+  fi
 else
   echo "✓ Orphan 없음"
 fi
