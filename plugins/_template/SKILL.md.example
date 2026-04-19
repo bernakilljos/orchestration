@@ -1,0 +1,50 @@
+---
+name: your-skill-name
+description: |
+  이 스킬이 하는 일을 한 문단으로 설명.
+  사용자가 "특정 트리거 문구"를 말하거나 [상황]일 때 이 스킬을 사용하세요.
+  파일 유형 관련이면: .xlsx, .pdf 등 구체 언급.
+license: MIT
+metadata:
+  author: bernakilljos
+  version: "0.1"
+  kit: orchestration_v1
+---
+
+# Your Skill Name
+
+## 개요
+이 스킬은 [무엇]을 [언제] 자동화합니다.
+
+## 활용 사례
+- 시나리오 1: ...
+- 시나리오 2: ...
+
+## 워크플로우
+1. **입력 수집**
+   - 필수: [arg1], [arg2]
+   - 선택: [option1]
+2. **처리**
+   - 단계별 로직
+3. **출력**
+   - 결과 형식·저장 경로
+
+## 참조 파일 (3단계 점진적 로드)
+- `scripts/process.py` — 실행 코드
+- `references/api-guide.md` — API 문서
+- `assets/template.md` — 결과물 템플릿
+
+## 완료 체크리스트
+- [ ] 모든 필수 입력 검증됨
+- [ ] 드라이런 모드 지원
+- [ ] 에러 복구 지점 명시
+- [ ] 결과물 품질 체크
+
+## 주의사항
+- 시크릿은 `.env` 또는 환경변수 사용
+- 하드코딩 금지
+- XML 태그 (`< >`) frontmatter 사용 금지
+
+## 출처
+- `docs/upgrade/클로드 스킬 만들기 완벽 가이드(한국어 번역본).pdf`
+- `.claude/rules/skill-design.md`

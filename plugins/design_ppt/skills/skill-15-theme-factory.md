@@ -2,7 +2,7 @@
 
 ## 목적
 프로젝트의 테마/디자인 시스템을 자동 생성·관리한다.
-브랜드 가이드라인 기반으�� 색상, 타이포그래피, 컴포넌트 스타일을 일관되게 유지.
+브랜드 가이드라인 기반으로 색상, 타이포그래피, 컴포넌트 스타일을 일관되게 유지.
 
 ## 트리거
 - 사용자가 "테마 만들어", "디자인 시스템", "theme factory", "ThemeFactory" 언급
@@ -68,7 +68,7 @@ Breakpoints:
 
 ### 4. 다크모드 자동 생성
 ```
-- 라이트 테마 기반으로 다크모드 변수 자��� 계산
+- 라이트 테마 기반으로 다크모드 변수 자동 계산
 - prefers-color-scheme 미디어 쿼리 포함
 - [data-theme="dark"] 선택자도 생성
 ```
@@ -84,12 +84,12 @@ docs/YYYY-MM-DD/theme-guide.md 생성:
 
 ## 출력 파일
 - `context/brand-guidelines.md` (브랜드 정의)
-- `src/assets/theme.css` 또는 `context/theme.json` (테��� 변수)
+- `src/assets/theme.css` 또는 `context/theme.json` (테마 변수)
 - `docs/YYYY-MM-DD/theme-guide.md` (스타일 가이드 문서)
 
 ## MCP 연동
 - **Figma MCP**: 디자인 토큰 읽어와서 테마에 반영
-- **Canva MCP**: 브랜드 키트에서 색상/폰�� 추출
+- **Canva MCP**: 브랜드 키트에서 색상/폰트 추출
 - **Gamma MCP**: 브랜드 가이드라인 프레젠테이션 생성
 
 ## 사용 예시

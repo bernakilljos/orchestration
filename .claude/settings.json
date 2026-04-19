@@ -56,7 +56,8 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "bash .claude/hooks/protect-critical-files.sh" }
+          { "type": "command", "command": "bash .claude/hooks/protect-critical-files.sh" },
+          { "type": "command", "command": "bash .claude/hooks/check-mojibake.sh", "timeout": 3 }
         ]
       },
       {
