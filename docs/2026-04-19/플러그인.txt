@@ -1,0 +1,336 @@
+================================================================================
+멀티AI 오케스트레이션 v3 — 플러그인 전체 목록
+생성일: 2026-04-19 | 총 14개 플러그인
+================================================================================
+
+주요 경로:
+  - plugins/<name>/           : 소스 오브 트루스 (편집 여기만)
+  - .claude/commands/*.md     : sync 결과물 (/<cmd> 슬래시 커맨드)
+  - .claude/skills/*.md       : sync 결과물 (Skill 툴에서 사용)
+  - .claude/scripts/sync-plugins.sh : 동기화 스크립트
+
+사용법:
+  1) plugins/ 에서 편집
+  2) bash .claude/scripts/sync-plugins.sh
+  3) git commit plugins/ + .claude/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ exec_learning ]  v1.0  (prefix: exec_)
+  학습·메모리·요약 — 세션 학습·실패 패턴·최적화 규칙 관리
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /learn                  세션 학습 저장 — 성공·실패 패턴을 JSON에 기록
+    /recall                 학습 데이터 조회 — 관련 실패 패턴·최적화 규칙 검색
+    /summarize              세션 요약 + 학습 데이터 자동 생성 — 대화 끝날 때 실행
+
+  스킬:
+    skill-09-memory-reset          SKILL-09 - Memory Reset (Session Interruption/Recovery)
+
+  에이전트:
+    agent-01-team-lead
+
+  훅:
+    hook-03-post-review.md
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ exec_orch ]  v1.0  (prefix: exec_)
+  오케스트레이션 — 워커·파이프라인·라우팅·AI 역할 분배
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /check-agents           codex-auto / gemini-auto / claude-auto 가용 여부 + 실행 중인 작업 현황 확인
+    /exec_orch              멀티AI 오케스트레이션 진입점 (codex+gemini 루프)
+    /gemini-verify          Gemini 검증 실행 — 구현 결과 리뷰·보안·품질 체크
+    /godmode                God Mode — 최대 워커·직통 라우팅·검증 스킵·최대 출력
+    /loop-stop              실행 중인 모든 codex-auto / gemini-auto 루프를 중단
+    /orcauto-stop           codex-auto / gemini-auto 자동 시작 비활성화 + 실행 중인 워커 종료
+
+  스킬:
+    exec_orca-auto                 exec_orca-auto — Orca Auto Worker 관리 (로컬 + 글로벌)
+    route_dispatch                 route_dispatch — AI 라우팅 · 판단
+    skill-03-review                SKILL-03 — Review (Verification & Enhancement)
+    state_session                  state_session — 세션 상태 관리
+
+  에이전트:
+    agent-01-team-lead
+    agent-02-implementer
+    agent-03-reviewer
+    agent-04-architect
+    agent-05-monitor
+    agent-06-designer
+
+  훅:
+    hook-00-init.md
+    hook-01-pre-task.md
+    hook-04-pre-deploy.md
+    hook-05-post-deploy.md
+    hook-06-notify.md
+    hook-08-ai-handoff.md
+    memory_guard.sh
+    protect-critical-files.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ exec_session_guard ]  v1.0  (prefix: exec_)
+  세션 가드 — 토큰 부족·강제 종료 대비 자동 스냅샷 저장
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /guard-save             현재 세션 상태 즉시 스냅샷 저장 — 토큰 소진 대비 방어적 저장
+
+  스킬:
+    guard_snapshot                 guard_snapshot — 세션 스냅샷 능동 저장
+
+  훅:
+    cleanup-orphans.sh
+    stop-snapshot.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ exec_voice ]  v1.0  (prefix: exec_)
+  음성 처리 — STT·TTS·회의록·음성 명령·오디오 편집
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /convert                오디오 파일 변환·편집 — FFmpeg 기반 (mp3↔wav↔m4a, 자르기, 노이즈 제거)
+    /meeting                회의 녹음 → 텍스트 변환 → 요약 → 회의록 자동 생성
+    /speak                  텍스트 → 음성 출력 (edge-tts TTS) — 결과 읽어주기
+    /status                 음성 도구 설치 상태 확인 — Whisper·edge-tts·FFmpeg
+    /transcribe             음성 파일 → 텍스트 변환 (Whisper STT)
+    /voice-task             음성 명령 → task-instruction.md 자동 생성 — 말하면 태스크가 만들어짐
+
+  스킬:
+    skill-22-remotion              Skill 22: Remotion (프로그래매틱 동영상 생성)
+    skill-25-media-enhance         Skill 25: Media Enhance (미디어 화질/품질 개선)
+
+  에이전트:
+    agent-02-implementer
+    agent-05-monitor
+
+  훅:
+    hook-02-post-impl.md
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_collab ]  v1.0  (prefix: mcp_)
+  협업 MCP 설치 — Slack·Notion·Jira·Trello·Gmail·Google Calendar
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                협업/자동화 MCP 설치 — Slack·Notion·Jira·Trello·Gmail·Google Calendar
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-24-ai-handoff            Skill 24: AI Handoff (멀티AI 강제 연동)
+
+  에이전트:
+    agent-01-team-lead
+
+  훅:
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_data ]  v1.0  (prefix: mcp_)
+  데이터 MCP 설치 — MySQL·PostgreSQL·MongoDB·BigQuery·Snowflake·Sheets·Airtable
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                데이터/분석 MCP 설치 — MySQL·PostgreSQL·MongoDB·BigQuery·Snowflake·Sheets·Airtable
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-32-db-migration          Skill 32: DB Migration
+
+  에이전트:
+    agent-02-implementer
+    agent-04-architect
+
+  훅:
+    hook-01-pre-task.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_dev ]  v1.0  (prefix: mcp_)
+  개발 MCP 설치 — GitHub·GitLab·Docker·K8s·AWS·Firebase·Supabase·Vercel·Netlify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                개발/코드 MCP 설치 — GitHub·GitLab·Docker·K8s·AWS·Firebase·Supabase·Vercel·Netlify
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-30-docker                Skill 30: Docker Compose
+    skill-33-github-actions        Skill 33: GitHub Actions (CI/CD)
+
+  에이전트:
+    agent-02-implementer
+    agent-04-architect
+
+  훅:
+    hook-01-pre-task.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_docs ]  v1.0  (prefix: mcp_)
+  문서처리 MCP 설치 — PDF·DOCX·OCR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                문서 처리 MCP 설치 — PDF·DOCX·OCR(Tesseract)
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-34-code-docs             Skill 34: Code Documentation
+
+  에이전트:
+    agent-02-implementer
+
+  훅:
+    hook-02-post-impl.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_media ]  v1.0  (prefix: mcp_)
+  미디어 설치 — Whisper(STT)·TTS·FFmpeg
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                미디어/AI 처리 설치 — Whisper(STT)·TTS·FFmpeg
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-22-remotion              Skill 22: Remotion (프로그래매틱 동영상 생성)
+    skill-25-media-enhance         Skill 25: Media Enhance (미디어 화질/품질 개선)
+
+  에이전트:
+    agent-02-implementer
+    agent-05-monitor
+
+  훅:
+    hook-02-post-impl.md
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ mcp_web ]  v1.0  (prefix: mcp_)
+  웹자동화 MCP 설치 — Playwright·Puppeteer·Fetch·Apify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /install                웹 자동화/크롤링 MCP 설치 — Playwright·Puppeteer·Selenium·Apify·Fetch
+    /status                 설치 상태 확인
+
+  스킬:
+    skill-29-api-tester            Skill 29: API Tester
+
+  에이전트:
+    agent-02-implementer
+    agent-03-reviewer
+
+  훅:
+    hook-02-post-impl.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ design_excel ]  v1.0  (prefix: design_)
+  Excel·스프레드시트 자동화 — 데이터 분석·차트·리포트 생성
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /make                   Excel·스프레드시트 자동 생성 — Claude 구조 → Sheets/openpyxl → 차트 → 데이터 시각화
+    /status                 Excel 관련 MCP/도구 설치 상태 확인
+
+  스킬:
+    skill-36-data-viz              Skill 36: Data Visualization
+
+  에이전트:
+    agent-02-implementer
+    agent-06-designer
+
+  훅:
+    hook-02-post-impl.md
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ design_ppt ]  v1.0  (prefix: design_)
+  PPT·디자인·다이어그램 자동화 — Gamma·Canva·Figma·Mermaid
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /ai-system-stages       AI 시스템 6단계 PPT 생성 — Prompt→Agent→Orchestration→Automation→Autonomous→Platform
+    /install-mcp            디자인/PPT MCP 설치 — Canva·Figma·Gamma·PowerPoint·Google Slides·Mermaid
+    /install                디자인/PPT MCP 설치 — Canva·Figma·Gamma·PowerPoint·Google Slides·Mermaid
+    /make-ppt               PPT 자동 생성 — Claude 구조 → Canva 초안 → Mermaid 다이어그램 → Figma 완성
+
+  스킬:
+    skill-08-design                SKILL-08 — Design (Design Asset Generation)
+    skill-14-auto-detail           SKILL-14 — Auto Detail (Request Auto-Expansion)
+    skill-15-theme-factory         Skill 15: Theme Factory
+    skill-16-brand-guidelines      Skill 16: Brand Guidelines
+    skill-21-marketing             Skill 21: Marketing Skill
+    skill-22-remotion              Skill 22: Remotion (프로그래매틱 동영상 생성)
+
+  에이전트:
+    agent-04-architect
+    agent-06-designer
+
+  훅:
+    hook-07-layout-lock.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ design_word ]  v1.0  (prefix: design_)
+  Word·문서 자동화 — 계약서·보고서·기획서 생성
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /make                   Word 문서 자동 생성 — Claude 구조 → python-docx → 표·이미지·Mermaid 다이어그램 삽입
+    /status                 Word 관련 도구 설치 상태 확인
+
+  스킬:
+    skill-34-code-docs             Skill 34: Code Documentation
+
+  에이전트:
+    agent-02-implementer
+    agent-06-designer
+
+  훅:
+    hook-02-post-impl.md
+    hook-06-notify.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[ review_qa ]  v1.0  (prefix: review_)
+  코드 리뷰·보안 검사·품질 검증·테스트 자동화
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  커맨드:
+    /check                  빠른 종합 체크 — 서비스 상태 + 테스트 + 스크린샷 한 번에
+    /performance            성능 검사 — 응답시간·메모리·번들크기·Lighthouse 점수
+    /screenshot             스크린샷 캡처 — Playwright로 페이지 캡처 + 시각적 검증
+    /security               보안 검사 — OWASP 기준 취약점 스캔 + 의존성 감사 + 시크릿 노출 체크
+    /validate               전체 검증 — 테스트 실행 + 스크린샷 캡처 + 결과 증거 저장
+
+  스킬:
+    skill-03-review                SKILL-03 — Review (Verification & Enhancement)
+    skill-06-test                  SKILL-06 — Test (Automated Test Generation and Execution)
+    skill-10-quality-verify        SKILL-10 — Quality & Performance Verification
+    skill-17-debugging-canvas      Skill 17: Debugging Canvas
+    skill-23-owasp-security        Skill 23: OWASP Security Audit
+    skill-27-mandatory-verify      Skill 27: Mandatory Verification (필수 검증)
+    skill-35-performance-profiler  Skill 35: Performance Profiler
+    skill-37-error-tracker         Skill 37: Error Tracker
+
+  에이전트:
+    agent-03-reviewer
+    agent-04-architect
+
+  훅:
+    hook-02-post-impl.md
+    hook-03-post-review.md
+    post-impl-verify.sh
+
+================================================================================
+요약
+================================================================================
+
+exec_   (실행/오케스트레이션) : 4개  — exec_learning, exec_orch, exec_session_guard, exec_voice
+mcp_    (MCP 서버 설치)       : 6개  — mcp_collab, mcp_data, mcp_dev, mcp_docs, mcp_media, mcp_web
+design_ (문서/디자인 생성)    : 3개  — design_excel, design_ppt, design_word
+기타                          : 1개  — review_qa
+
+총 커맨드 수: 41
+총 스킬 수:   32

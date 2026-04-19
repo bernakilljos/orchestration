@@ -28,7 +28,8 @@
       "Read(//c/Users/ja205/.claude/**)",
       "Bash(cp .claude/scripts/codex-auto-global.bat ~/AppData/Roaming/npm/codex-auto-global.bat)",
       "Bash(cp .claude/scripts/gemini-auto-global.bat ~/AppData/Roaming/npm/gemini-auto-global.bat)",
-      "Bash(cp .claude/scripts/orca-dispatch.bat ~/AppData/Roaming/npm/orca-dispatch.bat)"
+      "Bash(cp .claude/scripts/orca-dispatch.bat ~/AppData/Roaming/npm/orca-dispatch.bat)",
+      "Skill(update-config)"
     ],
     "deny": []
   },

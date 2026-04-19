@@ -1,5 +1,5 @@
 ---
-description: "exec_orch — 멀티AI 오케스트레이션 진입점 (codex+gemini 루프)"
+description: "멀티AI 오케스트레이션 진입점 (codex+gemini 루프)"
 ---
 
 # /exec_orch — 오케스트레이션 허브
