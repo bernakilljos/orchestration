@@ -51,7 +51,9 @@
     "cost_youtube":      "plugins/cost_youtube/",
     "design_web":        "plugins/design_web/",
     "design_pdf":        "plugins/design_pdf/",
-    "design_video":      "plugins/design_video/"
+    "design_video":      "plugins/design_video/",
+    "ai_rag":            "plugins/ai_rag/",
+    "ai_arch":           "plugins/ai_arch/"
   },
 
   "prefix_convention": {

@@ -62,6 +62,9 @@ declare -A RENAME_MAP=(
   ["mcp_social/commands/install.md"]="mcp_social-install.md"
   ["mcp_social/commands/status.md"]="mcp_social-status.md"
   ["mcp_social/commands/auth.md"]="mcp_social-auth.md"
+  ["mcp_queue/commands/install.md"]="mcp_queue-install.md"
+  ["exec_scheduler/commands/status.md"]="scheduler-status.md"
+  ["exec_scheduler/commands/history.md"]="scheduler-history.md"
 )
 
 # target_name → plugins/ 원본 경로 역맵 (orphan 탐지용)

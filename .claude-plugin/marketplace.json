@@ -134,6 +134,18 @@
       "source": "./plugins/mcp_queue",
       "description": "메시지 브로커 MCP — Kafka·RabbitMQ·Redis·SQS (Phase 2 spec)",
       "version": "0.1"
+    },
+    {
+      "name": "ai_rag",
+      "source": "./plugins/ai_rag",
+      "description": "RAG 파이프라인 — 8 패턴 (Phase 2 spec)",
+      "version": "0.1"
+    },
+    {
+      "name": "ai_arch",
+      "source": "./plugins/ai_arch",
+      "description": "AI 모델 아키텍처 라우팅 — 8가지 (Phase 3 spec)",
+      "version": "0.1"
     }
   ]
 }
