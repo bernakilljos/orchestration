@@ -35,7 +35,7 @@ Claude Code 실행 → 자동으로 환경 구성 완료
 | Hooks | 9개 명세 + 9개 스크립트 | hook-00~08 + Python/Shell 실행 스크립트 |
 | Agents | 6개 | team-lead, implementer, reviewer, architect, monitor, designer |
 | Plugins | 13개 | exec_orch, exec_voice, exec_learning, design_ppt/excel/word, review_qa, mcp_dev/data/collab/web/docs/media |
-| Commands | 21개 | vibe-loop, loop-stop, plug_*, check-*, godmode, 10x, brief 등 |
+| Commands | 20개 | loop-stop, plug_*, check-*, godmode, 10x, brief 등 |
 | Codex 연동 | AGENTS.md + .codex/ | Codex용 지시서 + MCP config.toml |
 
 ---

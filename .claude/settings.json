@@ -1,13 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Edit(.claude/**)",
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "Write(*)",
+      "Edit(*)",
+      "Write(**)",
+      "Edit(**)",
       "Write(.claude/**)",
-      "Edit(plugins/**)",
+      "Edit(.claude/**)",
       "Write(plugins/**)",
+      "Edit(plugins/**)",
+      "Write(docs/**)",
       "Edit(docs/**)",
-      "Write(docs/**)"
-    ]
+      "Write(C:\\**)",
+      "Edit(C:\\**)",
+      "Write(//C/**)",
+      "Edit(//C/**)"
+    ],
+    "defaultMode": "acceptEdits"
   },
   "hooks": {
     "PreToolUse": [

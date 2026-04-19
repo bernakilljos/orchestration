@@ -22,7 +22,7 @@
 | `.claude/state/README.md` | 상태 파일 가이드 | 신규 |
 | `.claude/skills/exec_orca-auto.md` | Orca 워커 관리 (START/STOP/STATUS) | `/orcauto-start`, `/orcauto-stop` command 로직 |
 | `.claude/skills/state_session.md` | 세션 상태 관리 (SNAPSHOT/RESTORE/STATUS) | `skill-09-memory-reset` + `check-agents` command 로직 |
-| `.claude/skills/route_dispatch.md` | AI 라우팅·판단 (자동 감지) | `vibe-loop` command 로직 + CLAUDE.md Multi-Agent Auto-Detection |
+| `.claude/skills/route_dispatch.md` | AI 라우팅·판단 (자동 감지) | (구 `vibe-loop` 로직 흡수, 2026-04-19 command 제거) + CLAUDE.md Multi-Agent Auto-Detection |
 
 ---
 
@@ -32,7 +32,7 @@
 |---------|--------|--------|-----------|
 | `/orcauto-start` | 직접 실행 로직 포함 (7단계) | wrapper (3줄) | `exec_orca-auto` · START |
 | `/orcauto-stop` | 직접 실행 로직 포함 (4단계) | wrapper (3줄) | `exec_orca-auto` · STOP |
-| `/vibe-loop` | 직접 판단 로직 포함 | wrapper (3줄) | `route_dispatch` · Vibe Loop |
+| ~~`/vibe-loop`~~ | 직접 판단 로직 포함 | **삭제됨 (2026-04-19)** — 세션 시작 시 `exec_orca-auto` 자동 실행으로 불필요 | — |
 | `/check-agents` | 직접 상태 조회 로직 포함 | wrapper (3줄) | `state_session` · STATUS |
 
 ---

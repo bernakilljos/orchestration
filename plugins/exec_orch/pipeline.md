@@ -56,9 +56,15 @@
   - 완료 보고서 작성
 
 실행 방법:
-  codex-auto 4    ← 4개 병렬 워커
-  
-완료: .claude/tasks/done/ 이동
+  ▸ 글로벌 (기본, 여러 프로젝트 공유):
+      orca-dispatch .claude/tasks/task-instruction.md codex
+      codex-auto-global                    ← 전역 상한까지 spawn
+  ▸ 로컬 (단일 프로젝트만 작업할 때):
+      codex-auto 4                          ← 4개 병렬 워커
+
+완료:
+  ▸ 글로벌: ~/.claude/orca/done/ 로 이동
+  ▸ 로컬:   .claude/tasks/done/ 로 이동
 ```
 
 ---
@@ -92,7 +98,8 @@
        → 코드 품질·가독성·유지보수성
 
 실행 방법:
-  gemini-auto 2   ← 2개 워커
+  ▸ 글로벌: orca-dispatch <task> gemini && gemini-auto-global
+  ▸ 로컬:   gemini-auto 2   ← 2개 워커
 
 출력 형식:
   MUST:     [반드시 적용]

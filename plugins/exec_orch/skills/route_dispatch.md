@@ -1,7 +1,7 @@
 # route_dispatch — AI 라우팅 · 판단
 
 > **분류:** `route_` (라우팅/판단 계열)
-> **통합 레거시:** `vibe-loop` command, CLAUDE.md `Multi-Agent Auto-Detection`
+> **통합 레거시:** (`vibe-loop` command — 2026-04-19 삭제), CLAUDE.md `Multi-Agent Auto-Detection`
 > **참조 plugin:** `.claude-plugin/plugin.json` → `entry_points.task_route`
 
 ## 목적
@@ -13,13 +13,17 @@
 ## Step 1: 가용 AI 감지
 
 ```
-1. codex-auto 가용 확인:
-     where codex-auto 2>nul && echo YES || echo NO
-     CODEX_AVAILABLE = true / false
+1. codex-auto / codex-auto-global 가용 확인:
+     where codex-auto 2>nul && echo YES || echo NO       (로컬 워커)
+     where codex-auto-global 2>nul && echo YES || echo NO (글로벌 워커)
+     CODEX_AVAILABLE        = true / false
+     CODEX_GLOBAL_AVAILABLE = true / false
 
-2. gemini-auto 가용 확인:
+2. gemini-auto / gemini-auto-global 가용 확인:
      where gemini-auto 2>nul && echo YES || echo NO
-     GEMINI_AVAILABLE = true / false
+     where gemini-auto-global 2>nul && echo YES || echo NO
+     GEMINI_AVAILABLE        = true / false
+     GEMINI_GLOBAL_AVAILABLE = true / false
 ```
 
 ---
@@ -48,23 +52,31 @@
 
 ---
 
-## Vibe Loop 모드 (CODEX + GEMINI 모두 가용)
+## 자동 시작 모드 (CODEX + GEMINI 모두 가용)
 
 ```
 전제: .claude/tasks/stop 파일 없음
 
-1. stop 파일 제거 (있으면): del .claude\tasks\stop 2>nul
+1. stop 파일 제거:
+     del .claude\tasks\stop 2>nul
+     del %USERPROFILE%\.claude\orca\stop 2>nul
 
-2. 사용자 안내:
-   "codex-auto + gemini-auto 루프를 시작합니다.
-    터미널 두 개를 열어 각각 실행하세요:"
-   
-   Terminal 1: codex-auto    ← 구현 워커
-   Terminal 2: gemini-auto   ← 검증 워커
+2. 워커 spawn (인자 없음 — config의 수치 자동 적용):
+   ▸ 글로벌 우선 (codex-auto-global 있으면):
+       start /min cmd /c "codex-auto-global"        ← ~/.claude/orca/workers-config.json 의 max_workers.codex 까지 채움
+       start /min cmd /c "gemini-auto-global"
+   ▸ 없으면 로컬:
+       start /min cmd /c "codex-auto"                ← .claude/orca-workers-config.json 의 workers.codex 개수 spawn
+       start /min cmd /c "gemini-auto"
 
-3. 중단 방법 안내:
-   /loop-stop 커맨드 실행
-   또는 .claude/tasks/stop 파일 생성
+   ⚠️ 절대 `codex-auto 1` 처럼 1을 명시적으로 주지 말 것 — config의 4/2 가 무시됨.
+      인자 생략 = config값 사용.
+
+3. 상태 확인 (10초 후):
+   tasklist | findstr /i "cmd.exe codex" → 프로세스 수 확인
+   또는 /check-agents 로 보고
+
+4. 중단: /loop-stop 또는 .claude/tasks/stop 생성 (로컬) / ~/.claude/orca/stop (글로벌)
 ```
 
 ---
@@ -103,3 +115,57 @@
 - 사용자에게 "어떤 AI 사용할까요?" 묻지 않는다
 - codex-auto 없이 task-instruction.md만 작성하지 않는다
 - gemini 리뷰 의견을 Claude 승인 없이 자동 적용하지 않는다
+
+---
+
+## Step 4: 스코프 결정 (로컬 vs 글로벌)
+
+여러 프로젝트에서 동시에 `/exec_orch` 를 쓰면 프로젝트마다 워커 N개 spawn → 총 N×프로젝트수 → 메모리 과부하.
+이를 막기 위해 `/exec_orch` 플로우는 **글로벌 큐**를 기본으로 사용한다.
+
+```
+IF CODEX_GLOBAL_AVAILABLE (codex-auto-global 설치됨):
+    스코프 = 글로벌
+    →  orca-dispatch .claude/tasks/task-instruction.md codex
+       (태스크를 ~/.claude/orca/tasks/ 로 복사, frontmatter에 project_root 자동 삽입)
+    →  codex-auto-global  (빈자리만큼 워커 spawn, max_workers.codex 상한 엄수)
+ELSE:
+    스코프 = 로컬 (기존 동작)
+    →  codex-auto N  (프로젝트 로컬 워커)
+```
+
+Validator 단계도 동일:
+```
+IF GEMINI_GLOBAL_AVAILABLE:
+    orca-dispatch .claude/tasks/task-instruction.md gemini
+    gemini-auto-global
+ELSE:
+    gemini-auto N
+```
+
+### 글로벌 태스크 포맷
+
+`orca-dispatch` 헬퍼가 아래 frontmatter를 자동 삽입한다:
+
+```yaml
+---
+task_id: 20260419-123045-projA-a1b2
+project_root: C:\work\projectA
+project_id: projectA
+agent: codex        # 또는 gemini, claude
+source: <원본 task-instruction.md 절대경로>
+created_at: 2026-04-19T12:30:45
+---
+```
+
+워커는 `project_root` 로 cd → `codex-a --auto <task>` 호출 → 완료 시 `~/.claude/orca/done/` 로 이동.
+
+### 글로벌 상한 관리
+
+`~/.claude/orca/workers-config.json` 의 `max_workers.codex`/`.gemini`/`.claude` 값이 전역 상한.
+워커는 spawn 전 `~/.claude/orca/workers/*.hb` (2분 이내 갱신된 것만) 를 센 뒤 빈자리만큼만 생성.
+
+### 언제 로컬?
+
+- 단일 프로젝트에서 수동으로 `.claude/tasks/task-*.md` 편집 후 `codex-auto` 직접 실행할 때
+- 프로젝트 고유 경로/워크스페이스에 강하게 결합된 태스크 (예: 특정 venv에서만 빌드 가능)
