@@ -29,6 +29,8 @@
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-04-19"
+    "updated": "2026-04-19",
+    "precedence": 3,
+    "token_estimate": 1600
   }
 }
