@@ -122,17 +122,33 @@ my_project/
 
 ## 즉시 반영한 것 (오늘 세션)
 
-1. ✅ **CLAUDE.md 재구성** — Brij 5 Rules + WHAT/WHY/HOW + 3 Scopes 프레임 적용
-2. ✅ **`.claude/rules/claude-md-design.md`** — CLAUDE.md 작성 규칙 박제
-3. ✅ **`.claude/rules/best-practices.md`** — 이미지 6 Best Practices + Extended Thinking + 1M + Artifacts/Skills/Plugins/Commands 구분
-4. ✅ **로드맵 확장** — `ai_rag` 8 패턴, `ai_arch` 8 아키텍처
-5. ✅ **`plugins/ai_rag/`** — 8 RAG 패턴 스펙 (이미지 1·2)
-6. ✅ **`plugins/ai_arch/`** — 8 AI 아키텍처 (IG Reel 2)
-7. ✅ **`plugins/exec_offline/`** — 로컬 $0 AI 스택 (이미지 3 Brij)
-8. ✅ **`plugins/bundles_cowork/`** — 50 업무 번들 (IG Post 1 @aifornontechies)
-9. ✅ **`plugins/_template/.mcp.json.example`** — MCP 표준 예시 (이미지 6)
-10. ✅ **prefix_convention** — `bundles_` 신규 등록
-11. ✅ **이 문서** — 외부 자료 출처·시사점 박제
+1. ✅ **CLAUDE.md 재구성** — Brij 5 Rules + WHAT/WHY/HOW + 3 Scopes
+2. ✅ **`.claude/rules/claude-md-design.md`** — CLAUDE.md 규칙 박제
+3. ✅ **`.claude/rules/best-practices.md`** — Best Practices + Extended Thinking + 1M + Artifacts/Skills/Plugins 구분
+4. ✅ **`plugins/ai_rag/`** — 8 RAG 패턴 신규 (이미지 1·2) — 기존에 없던 영역
+5. ✅ **`plugins/exec_offline/`** — 로컬 $0 스택 신규 (이미지 3) — 기존에 없던 영역
+6. ✅ **`plugins/_template/.mcp.json.example`** — MCP 표준 예시 (이미지 6)
+7. ✅ **`route_dispatch.md § Step 2.6`** — 8 AI 아키텍처 인지 섹션 (IG Reel 2 통합)
+
+## 삭제된 것 (중복 — 기존 플러그인과 겹쳐 제거)
+
+- ❌ **`plugins/ai_arch/`** — `route_dispatch` 와 개념 중복 → route_dispatch 에 Step 2.6 섹션으로 통합
+- ❌ **`plugins/bundles_cowork/`** — 7개 커맨드 모두 기존 플러그인 호출 wrapper:
+  - email → `mcp_collab` (Gmail)
+  - receipt → `mcp_docs` (OCR)
+  - deck → `design_ppt/make-ppt`
+  - proposal → `design_word/word-make`
+  - contract → `design_pdf/pdf-sign`
+  - plan → `exec_scheduler`
+  - briefing → Claude 직접 (세션 요약 `/summarize` 유사)
+  → 각 기존 플러그인에서 조합 호출 (wrapper 불필요)
+
+## 원칙: "기존 건드리지 않고 신규만, 있으면 보완"
+
+사용자 지시 반영:
+- 신규 영역만 **신규 플러그인** (ai_rag, exec_offline)
+- 개념 중복이면 **기존 스킬에 섹션 추가** (ai_arch → route_dispatch)
+- 커맨드 wrapper 는 **불필요** (Claude 가 기존 커맨드 조합 호출)
 
 ---
 

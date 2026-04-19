@@ -32,7 +32,9 @@
       "Skill(update-config)",
       "Bash(rm -f .claude/commands/status.md .claude/commands/install.md .claude/commands/history.md)",
       "Bash(bash .claude/scripts/sync-plugins.sh)",
-      "WebFetch(domain:www.instagram.com)"
+      "WebFetch(domain:www.instagram.com)",
+      "Bash(rm -f .claude/commands/arch-*.md .claude/commands/bundles_cowork-*.md)",
+      "Bash(rm -f .claude/skills/skill-arch-selector.md .claude/skills/skill-cowork-flow.md .claude/skills/skill-cowork-personal.md)"
     ],
     "deny": []
   },

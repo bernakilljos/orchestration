@@ -57,6 +57,29 @@
 - 검증 단계는 Gemini Flash (저단가) 우선
 - Claude Opus 는 결정·설계에만 (자주 호출 X)
 
+### Step 2.6: 8 AI 아키텍처 인지 (LLM 외)
+
+**출처**: IG Reel `DUrAxgmDa9p` — "LLMs are AI models, but not all AI models are LLMs"
+
+작업 특성이 순수 텍스트 추론이 아니면 **다른 아키텍처** 고려:
+
+| 아키텍처 | 용도 | 대표 모델 |
+|---|---|---|
+| **LLM** | 텍스트 추론 (기본) | Claude · GPT · Gemini |
+| **VLM** | 이미지+텍스트 멀티모달 | GPT-4o · Gemini Vision · Claude Vision |
+| **SLM** | 엣지·로컬·비용 최적 | Llama 3.3 70B · Mistral Small · Gemma 4 |
+| **MoE** | 선택적 전문가 활성화 | Mixtral · DeepSeek V3 |
+| **MLM** | 양방향 컨텍스트 (임베딩) | BERT · RoBERTa |
+| **LAM** | 시스템·도구 조작 | 장래형 (에이전트) |
+| **SAM** | 픽셀 세그먼트 | Meta SAM 2 |
+| **LCM** | 문장/개념 단위 | Meta SONAR |
+
+**라우팅 확장 규칙**:
+- 이미지 포함 요청 → VLM (Claude Vision 또는 Gemini)
+- 로컬 처리·비용 0 → SLM (`exec_offline` 플러그인 위임)
+- 임베딩·RAG → MLM 또는 전용 모델 (`ai_rag` 플러그인)
+- 비디오/이미지 세그먼트 → SAM (`mcp_media` 위임)
+
 ---
 
 ## Step 3: 라우팅 결정표
