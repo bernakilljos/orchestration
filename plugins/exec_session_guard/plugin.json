@@ -31,6 +31,12 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 3,
-    "token_estimate": 1600
+    "token_estimate": 1600,
+    "triggers": [
+      "스냅샷",
+      "세션 저장",
+      "guard-save",
+      "토큰 소진 대비"
+    ]
   }
 }

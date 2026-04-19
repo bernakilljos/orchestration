@@ -31,7 +31,14 @@
     "created": "2026-04-19",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 1800
+    "token_estimate": 1800,
+    "triggers": [
+      "랜딩",
+      "웹사이트",
+      "블로그 템플릿",
+      "SEO",
+      "포트폴리오"
+    ]
   },
   "hooks": "hooks/"
 }

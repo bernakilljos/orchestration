@@ -32,6 +32,12 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 5,
-    "token_estimate": 1300
+    "token_estimate": 1300,
+    "triggers": [
+      "학습",
+      "패턴 저장",
+      "recall",
+      "summarize"
+    ]
   }
 }

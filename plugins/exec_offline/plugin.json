@@ -32,6 +32,12 @@
     "updated": "2026-04-19",
     "precedence": 6,
     "token_estimate": 2000,
-    "source": "docs/upgrade § 이미지 3 ($0 AI Stack 2026, Brij Kishore Pandey)"
+    "source": "docs/upgrade § 이미지 3 ($0 AI Stack 2026, Brij Kishore Pandey)",
+    "triggers": [
+      "로컬 LLM",
+      "Ollama",
+      "오프라인",
+      "$0 AI"
+    ]
   }
 }

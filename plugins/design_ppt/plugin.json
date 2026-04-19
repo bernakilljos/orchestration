@@ -34,6 +34,12 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 4000
+    "token_estimate": 4000,
+    "triggers": [
+      "PPT",
+      "슬라이드",
+      "프레젠테이션",
+      "Gamma"
+    ]
   }
 }

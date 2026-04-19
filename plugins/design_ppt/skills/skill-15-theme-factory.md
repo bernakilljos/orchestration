@@ -1,3 +1,9 @@
+---
+name: skill-15-theme-factory
+description: |
+  프로젝트의 테마/디자인 시스템을 자동 생성·관리한다. 사용자가 관련 키워드 언급 시 또는 design_ppt 플러그인 관련 작업 시 활성화.
+---
+
 # Skill 15: Theme Factory
 
 ## 목적

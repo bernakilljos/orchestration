@@ -32,6 +32,12 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 1100
+    "token_estimate": 1100,
+    "triggers": [
+      "Playwright",
+      "Puppeteer",
+      "크롤링",
+      "웹 자동화"
+    ]
   }
 }

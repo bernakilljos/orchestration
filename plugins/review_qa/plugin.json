@@ -34,6 +34,13 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 5,
-    "token_estimate": 5200
+    "token_estimate": 5200,
+    "triggers": [
+      "코드 리뷰",
+      "보안",
+      "품질",
+      "테스트",
+      "OWASP"
+    ]
   }
 }

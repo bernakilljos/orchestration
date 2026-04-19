@@ -1,3 +1,9 @@
+---
+name: skill-token-tracker
+description: |
+  Claude Code 세션당 토큰 사용량을 영구 로깅해서: 사용자가 관련 키워드 언급 시 또는 exec_session_guard 플러그인 관련 작업 시 활성화.
+---
+
 # skill-token-tracker — 세션별 토큰 소비 추적
 
 > **분류**: `exec_session_guard`

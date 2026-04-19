@@ -1,3 +1,9 @@
+---
+name: route_dispatch
+description: |
+  태스크 규모와 가용 AI 도구를 자동 감지해 최적 실행 경로를 결정한다. 사용자가 관련 키워드 언급 시 또는 exec_orch 플러그인 관련 작업 시 활성화.
+---
+
 # route_dispatch — AI 라우팅 · 판단
 
 > **분류:** `route_` (라우팅/판단 계열)

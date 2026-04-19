@@ -1,3 +1,9 @@
+---
+name: skill-16-brand-guidelines
+description: |
+  프로젝트의 브랜드 가이드라인을 정의·관리·적용한다. 사용자가 관련 키워드 언급 시 또는 design_ppt 플러그인 관련 작업 시 활성화.
+---
+
 # Skill 16: Brand Guidelines
 
 ## 목적

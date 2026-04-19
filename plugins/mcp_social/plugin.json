@@ -28,6 +28,12 @@
     "created": "2026-04-19",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 600
+    "token_estimate": 600,
+    "triggers": [
+      "YouTube API",
+      "Instagram",
+      "TikTok",
+      "소셜"
+    ]
   }
 }

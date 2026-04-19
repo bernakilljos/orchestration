@@ -9,21 +9,46 @@
   "commands": "commands/",
   "skills": "skills/",
   "dependencies": {
-    "plugins": ["exec_orch", "mcp_data"],
-    "mcp": ["llamaindex", "chromadb", "qdrant"],
-    "env": ["ANTHROPIC_API_KEY", "OPENAI_API_KEY"]
+    "plugins": [
+      "exec_orch",
+      "mcp_data"
+    ],
+    "mcp": [
+      "llamaindex",
+      "chromadb",
+      "qdrant"
+    ],
+    "env": [
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY"
+    ]
   },
   "entry_points": {
     "default_command": "rag-naive",
-    "core_skills": ["skill-rag-patterns", "skill-vector-db"]
+    "core_skills": [
+      "skill-rag-patterns",
+      "skill-vector-db"
+    ]
   },
   "metadata": {
     "category": "AI/RAG",
-    "tags": ["ai", "rag", "vector"],
+    "tags": [
+      "ai",
+      "rag",
+      "vector"
+    ],
     "author": "bernakilljos",
     "created": "2026-04-19",
     "updated": "2026-04-19",
     "precedence": 5,
-    "token_estimate": 3600
+    "token_estimate": 3600,
+    "triggers": [
+      "RAG",
+      "임베딩",
+      "벡터DB",
+      "retrieval",
+      "chromadb",
+      "qdrant"
+    ]
   }
 }

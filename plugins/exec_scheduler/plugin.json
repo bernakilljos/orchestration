@@ -31,6 +31,13 @@
     "created": "2026-04-19",
     "updated": "2026-04-19",
     "precedence": 3,
-    "token_estimate": 2200
+    "token_estimate": 2200,
+    "triggers": [
+      "크론",
+      "스케줄",
+      "정기 실행",
+      "workflow",
+      "DAG"
+    ]
   }
 }

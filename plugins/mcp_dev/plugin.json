@@ -33,6 +33,13 @@
     "created": "2026-04-10",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 1600
+    "token_estimate": 1600,
+    "triggers": [
+      "GitHub",
+      "Docker",
+      "AWS",
+      "Vercel",
+      "개발 MCP"
+    ]
   }
 }

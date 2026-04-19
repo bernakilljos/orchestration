@@ -31,6 +31,12 @@
     "created": "2026-04-19",
     "updated": "2026-04-19",
     "precedence": 10,
-    "token_estimate": 1800
+    "token_estimate": 1800,
+    "triggers": [
+      "PDF 생성",
+      "양식 채우기",
+      "전자서명",
+      "암호화"
+    ]
   }
 }
