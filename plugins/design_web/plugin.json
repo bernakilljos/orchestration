@@ -1,0 +1,37 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "design_web",
+  "display": "웹사이트·랜딩·블로그 템플릿 자동 생성 (HTML·Tailwind·SEO)",
+  "prefix": "design_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "landing",
+    "core_skills": [
+      "skill-web-seo",
+      "skill-web-conversion"
+    ]
+  },
+  "metadata": {
+    "category": "디자인/Web",
+    "tags": [
+      "design"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19",
+    "precedence": 10,
+    "token_estimate": 1800
+  },
+  "hooks": "hooks/"
+}

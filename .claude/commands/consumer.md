@@ -1,5 +1,5 @@
 ---
-description: "큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)"
+description: "컨슈머 그룹 lag·오프셋 모니터링"
 allowed-tools: Bash(bash:*), Write, Read
 ---
 
@@ -24,7 +24,7 @@ fi
 
 ### 커맨드별 로직
 
-**목적**: 큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)
+**목적**: 컨슈머 그룹 lag·오프셋 모니터링
 
 **단계**:
 1. 입력 검증 (필수 인자·환경변수)

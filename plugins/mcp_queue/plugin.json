@@ -1,0 +1,35 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "mcp_queue",
+  "display": "메시지 브로커 MCP — Kafka·RabbitMQ·Redis Pub/Sub·AWS SQS",
+  "prefix": "mcp_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 2,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": [
+      "skill-queue-patterns"
+    ]
+  },
+  "metadata": {
+    "category": "MCP/Queue",
+    "tags": [
+      "mcp"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19",
+    "precedence": 10,
+    "token_estimate": 1300
+  }
+}

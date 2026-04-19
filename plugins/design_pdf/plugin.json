@@ -1,0 +1,36 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "design_pdf",
+  "display": "PDF 생성·양식·서명·암호화 (mcp_docs 는 파싱만)",
+  "prefix": "design_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 2,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "pdf-generate",
+    "core_skills": [
+      "skill-pdf-form",
+      "skill-pdf-compliance"
+    ]
+  },
+  "metadata": {
+    "category": "디자인/PDF",
+    "tags": [
+      "design"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-04-19",
+    "updated": "2026-04-19",
+    "precedence": 10,
+    "token_estimate": 1800
+  }
+}

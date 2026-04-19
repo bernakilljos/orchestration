@@ -47,7 +47,11 @@
     "mcp_docs":          "plugins/mcp_docs/",
     "mcp_media":         "plugins/mcp_media/",
     "mcp_social":        "plugins/mcp_social/",
-    "cost_youtube":      "plugins/cost_youtube/"
+    "mcp_queue":         "plugins/mcp_queue/",
+    "cost_youtube":      "plugins/cost_youtube/",
+    "design_web":        "plugins/design_web/",
+    "design_pdf":        "plugins/design_pdf/",
+    "design_video":      "plugins/design_video/"
   },
 
   "prefix_convention": {

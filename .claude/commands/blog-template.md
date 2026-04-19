@@ -1,12 +1,12 @@
 ---
-description: "큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)"
+description: "블로그 템플릿 (Tistory·Ghost·Jekyll)"
 allowed-tools: Bash(bash:*), Write, Read
 ---
 
 ## Context
 
-- 플러그인: `mcp_queue` (status=spec-only)
-- 출력: `data/mcp_queue/$(date +%Y-%m-%d)/`
+- 플러그인: `design_web` (status=spec-only)
+- 출력: `data/design_web/$(date +%Y-%m-%d)/`
 - DRY_RUN 환경변수: `${DRY_RUN:-false}`
 
 ## Your task
@@ -14,7 +14,7 @@ allowed-tools: Bash(bash:*), Write, Read
 ### 기본 공통 (모든 커맨드 공유)
 
 ```bash
-source plugins/mcp_queue/scripts/common.sh
+source plugins/design_web/scripts/common.sh
 load_env
 
 if is_dry_run "$@"; then
@@ -24,7 +24,7 @@ fi
 
 ### 커맨드별 로직
 
-**목적**: 큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)
+**목적**: 블로그 템플릿 (Tistory·Ghost·Jekyll)
 
 **단계**:
 1. 입력 검증 (필수 인자·환경변수)

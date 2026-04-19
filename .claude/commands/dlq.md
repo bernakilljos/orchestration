@@ -1,5 +1,5 @@
 ---
-description: "큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)"
+description: "DLQ 재처리"
 allowed-tools: Bash(bash:*), Write, Read
 ---
 
@@ -24,7 +24,7 @@ fi
 
 ### 커맨드별 로직
 
-**목적**: 큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)
+**목적**: DLQ 재처리
 
 **단계**:
 1. 입력 검증 (필수 인자·환경변수)
