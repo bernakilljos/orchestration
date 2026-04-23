@@ -37,7 +37,14 @@
       "Bash(rm -f .claude/skills/skill-arch-selector.md .claude/skills/skill-cowork-flow.md .claude/skills/skill-cowork-personal.md)",
       "Bash(git show *)",
       "Bash(git mv *)",
-      "Bash(mv .claude/commands/orcauto-start.md plugins/exec_orch/commands/orcauto-start.md)"
+      "Bash(mv .claude/commands/orcauto-start.md plugins/exec_orch/commands/orcauto-start.md)",
+      "mcp__sequentialthinking__sequentialthinking",
+      "PowerShell(python -m pip list | Select-String pptx)",
+      "PowerShell(python -c \"from pptx import Presentation; print\\('OK'\\)\")",
+      "PowerShell(python3 -c \"import sys; print\\(sys.version\\)\")",
+      "PowerShell(pip install *)",
+      "PowerShell(which python *)",
+      "PowerShell(Get-Command *)"
     ],
     "deny": []
   },
