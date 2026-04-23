@@ -124,4 +124,36 @@ Gemini Flash 는 저단가 · 빠른 검증에 강점. 다음에 우선 활용:
 - 반복 검증 (빌드마다)
 - 긴 문서 요약 (1M 컨텍스트)
 
-복잡 추론·아키텍처 결정은 Claude Opus 에게 위임.
+복잡 추론·아키텍처 결정은 Claude Opus 에게 위임 (orchestration 환경에서).
+
+---
+
+## Standalone 모드 (Claude 없이 Gemini 단독 사용)
+
+`installgemini` 로 셋업한 환경에서는 Claude orchestration 없이 Gemini 만으로 작업.
+이 경우 Gemini 의 역할이 **검증 전용 → 일반 작업 가능**으로 확장됨.
+
+| 항목 | Orchestrated | Standalone |
+|------|--------------|-----------|
+| 역할 | 검증 전용 (Codex 가 구현) | **구현·검증·요약·문서화 모두 가능** |
+| 작업 폴더 | `.claude/tasks/` | `tasks/` |
+| 완료 폴더 | `.claude/tasks/done/` | `tasks/done/` |
+| 태스크 파일 | `verify-instruction.md` (단일) | `task-001.md` ... (다중, Mode 명시) |
+| 설계 출처 | Claude 가 작성 | **사용자가 직접 작성** |
+| 채택 결정 | Claude (팀장) | **사용자** |
+| MCP 설정 | `.gemini/config.toml` | 동일 |
+
+### Standalone Mode 옵션 (task 파일 안에 명시)
+- `implement` — 일반 구현 (Codex 처럼)
+- `verify`    — 코드 리뷰·보안·품질 검증
+- `summarize` — 긴 문서·로그 요약 (1M 컨텍스트 활용)
+- `document`  — README·docstring·CHANGELOG
+
+### Standalone 사용 흐름
+1. `cp tasks/task-template.md tasks/task-001.md` 후 편집 (Mode 선택)
+2. `gemini-a --auto` (자동 처리) 또는 `gemini-go` (대화)
+3. 완료 시 결과 파일 + `tasks/done/TASK-ID-{report|review}.md`
+4. 사용자가 직접 검토·채택
+
+### 코드 규칙
+위 "검증 규칙 § 코드 규칙" 과 동일 적용 (orchestration 여부 무관).

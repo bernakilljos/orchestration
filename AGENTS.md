@@ -72,3 +72,29 @@
 - 결과: [요약]
 - 다음: Claude 검토 필요
 ```
+
+---
+
+## Standalone 모드 (Claude 없이 Codex 단독 사용)
+
+`installcodex` 로 셋업한 환경에서는 Claude orchestration 없이 Codex 만으로 작업.
+이 경우 위 규칙 중 일부 변경:
+
+| 항목 | Orchestrated | Standalone |
+|------|--------------|-----------|
+| 작업 폴더 | `.claude/tasks/` | `tasks/` |
+| 완료 폴더 | `.claude/tasks/done/` | `tasks/done/` |
+| 태스크 파일 | `task-instruction.md` (단일) | `task-001.md`, `task-002.md` ... (다중) |
+| 설계 출처 | Claude 가 작성 | **사용자가 직접 작성** (template 복사) |
+| 검증 | Gemini 가 자동 | **본인 또는 별도 도구** |
+| 채택 결정 | Claude (팀장) | **사용자** |
+| MCP 설정 | `.codex/config.toml` | 동일 |
+
+### Standalone 사용 흐름
+1. `cp tasks/task-template.md tasks/task-001.md` 후 편집
+2. `codex-a --auto` (자동 처리) 또는 `codex-go` (대화)
+3. 완료 시 결과 파일 + `tasks/done/TASK-ID-report.md`
+4. 사용자가 직접 검토·채택
+
+### 코드 규칙
+위 "코드 규칙" 섹션과 동일하게 적용 (orchestration 여부 무관).
