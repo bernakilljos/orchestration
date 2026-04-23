@@ -34,7 +34,14 @@ __pycache__/
 
 # Task locks (자동 생성)
 .claude/tasks/locks/
+.claude/tasks/done/
 .claude/orca-heartbeat
+.claude/orca-enabled
+.claude/orca-stopped
+.claude/state/
+
+# 설치/테스트 임시 출력
+install-test-*.txt
 
 # Large binaries (download separately)
 cloudflared.exe

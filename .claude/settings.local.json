@@ -35,7 +35,9 @@
       "WebFetch(domain:www.instagram.com)",
       "Bash(rm -f .claude/commands/arch-*.md .claude/commands/bundles_cowork-*.md)",
       "Bash(rm -f .claude/skills/skill-arch-selector.md .claude/skills/skill-cowork-flow.md .claude/skills/skill-cowork-personal.md)",
-      "Bash(git show *)"
+      "Bash(git show *)",
+      "Bash(git mv *)",
+      "Bash(mv .claude/commands/orcauto-start.md plugins/exec_orch/commands/orcauto-start.md)"
     ],
     "deny": []
   },
