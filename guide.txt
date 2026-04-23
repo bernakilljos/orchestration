@@ -382,7 +382,52 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  8. 대시보드
+  8. MCP 도구 추가 (로그인 협조 필요 시)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [카테고리별 설치 명령]
+    /plug_design     Canva·Mermaid·Figma·PowerPoint (PDF 생성)
+    /plug_dev        GitHub·Docker·AWS·Firebase
+    /plug_data       PostgreSQL·SQLite·MongoDB (로컬 기반)
+    /plug_web        Playwright·Puppeteer·Fetch API
+    /plug_collab     Slack·Notion·Gmail·Calendar
+    /plug_docs       PDF·DOCX·OCR (로컬 CLI 기반)
+    /plug_media      Whisper·TTS·FFmpeg (로컬 CLI 기반)
+    /plug_all        위 7개 순차 실행
+
+  [인증이 필요한 도구와 개발자 콘솔]
+    Canva      → https://www.canva.dev/api/
+    GitHub     → https://github.com/settings/tokens (Personal Access Token)
+    Figma      → https://www.figma.com/developers/api
+    Notion     → https://www.notion.so/my-integrations (Internal Integration)
+    Slack      → https://api.slack.com/apps (OAuth Tokens)
+    Google API → https://console.cloud.google.com (Service Account)
+    Firebase   → https://console.firebase.google.com
+
+  [환경변수 설정 (OAuth/API Keys)]
+    Windows:   set CANVA_API_KEY=<token> && set GITHUB_TOKEN=<token>
+    또는        .env 파일에 작성 (gitignore)
+    인증 모드:   `claude mcp add -s user <name> -- npx -y <package>`
+                 (설치 중 브라우저로 로그인 가능)
+
+  [Windows 필수 조건]
+    - cmd /c npx 래퍼 사용 (PowerShell 호환성)
+    - 예: `cmd /c npx -y @modelcontextprotocol/server-github`
+    - 환경 설정: C:\Users\<NAME>\.claude.json의 mcpServers 편집
+
+  [설치 확인]
+    claude mcp list              (설치된 MCP 서버 목록)
+    claude mcp remove <name>     (제거 필요 시)
+
+  [트러블슈팅]
+    - "failed to connect": cmd /c 래퍼 누락 → 해당 /plug_* 재실행
+    - "404 Not Found": npm 패키지 이름 변경됨 → docs/upgrade-notes 확인
+    - "EACCES: permission denied": 권한 부족 → Windows 다시시작 후 재시도
+    - OAuth 실패: 환경변수 잘못됨 → claude mcp remove 후 재설치
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  10. 대시보드
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   시작:
@@ -401,7 +446,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  9. 개발 규칙
+  11. 개발 규칙
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Frontend:  Vue 2.x — optional chaining(?.) 금지
@@ -423,7 +468,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  10. 트러블슈팅
+  11. 트러블슈팅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   [한글 깨짐]
@@ -461,7 +506,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  11. 플러그인 구조 (plugins/)
+  12. 플러그인 구조 (plugins/)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   각 플러그인 = commands/ + skills/ + agents/ + hooks/ + codex/ + rules.md
@@ -555,7 +600,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  12. Loading Order (전체 목록)
+  13. Loading Order (전체 목록)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   .claude/hooks/hook-00-init.md
@@ -572,7 +617,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  13. MCP 추가 설치 (필요할 때)
+  14. MCP 추가 설치 (필요할 때)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   기본 설치됨: context7, playwright, thinking
@@ -590,7 +635,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  14. 플러그인 생태계 (2026-04-19 업데이트)
+  15. 플러그인 생태계 (2026-04-19 업데이트)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   [구조 원칙]
@@ -683,7 +728,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  15. 추가 사항 요약
+  16. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   2026-04-19 커밋 누적:

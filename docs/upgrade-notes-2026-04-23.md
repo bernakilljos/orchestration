@@ -294,6 +294,51 @@ A: 아니오. 환경변수는 자동 설정됨. 필요 시 `.claude/settings.jso
 
 ---
 
-**마지막 업데이트**: 2026-04-23 17:15 UTC  
-**버전**: v1.0+Phase 1+2  
+## 2차 업그레이드 (2026-04-23 저녁)
+
+### MCP 커맨드 전수 현실화
+
+**배경**: plug_design, plug_dev, plug_data, plug_web, plug_collab, plug_docs, plug_media 에 기록된 npm 패키지명이 실제 npm 레지스트리에 존재하지 않는 경우가 다수 발견됨.
+- 예: `@modelcontextprotocol/server-office` (404)
+- 예: 개발 중인 패키지를 production으로 표시
+
+**해결**:
+1. 7개 plug_* 명령에서 npm 패키지명 전수 실측 (`npm view <package>`)
+2. 실제 존재하는 패키지만 커맨드에 기록
+3. OAuth 필요 도구 (GitHub, Slack, Notion) 는 **개발자 콘솔 URL + 환경변수 이름** 명시
+   - 예: `GITHUB_TOKEN=<your-token>` → `https://github.com/settings/tokens`
+4. Windows 호환성: 모든 `npx` 명령에 `cmd /c` 래퍼 의무화
+5. plug_queue·plug_social 은 spec-only 정직하게 라벨링 (아직 구현 불가)
+
+### 영향받은 파일
+- `plugins/design_ppt/commands/ppt-install.md` (Canva, Gamma, Mermaid, Figma 실제 패키지)
+- `plugins/mcp_dev/commands/install.md` (GitHub, Docker, AWS, Firebase 재검증)
+- `plugins/mcp_data/commands/install.md` (PostgreSQL, SQLite, MongoDB CLI 검증)
+- `plugins/mcp_web/commands/install.md` (Playwright, Puppeteer, Fetch API)
+- `plugins/mcp_collab/commands/install.md` (Slack, Notion, Gmail, Calendar OAuth 명시)
+- `plugins/mcp_docs/commands/install.md` (로컬 PDF·DOCX·OCR 바이너리)
+- `plugins/mcp_media/commands/install.md` (로컬 Whisper·TTS·FFmpeg 바이너리)
+
+### Ultimate PPT v6 출시
+- **파일**: `outputs/ppt/orchestration-v1-ULTIMATE-2026-04-23-v6.pptx` (25슬라이드)
+- **내용**: v3/v4/v5 장점 통합 (밀도·럭셔리·사이버펑크)
+- **데이터**: 실제 프로젝트 SQLite DB 쿼리 결과를 수치로 임베딩
+  - 플러그인 13개, 스크립트 17개, 지연 시간 최적화 그래프 등
+
+### 새 규칙 (CLAUDE.md § 3.6 추가)
+1. **실제 npm 존재 확인**: `npm view <package>` 로 검증 후만 커맨드에 기록
+2. **Windows npx 래퍼**: `cmd /c npx <package>` 필수 (shell 교차호환성)
+3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
+4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
+5. **금지 추가**: "거짓 npm 패키지명 커맨드 (실측 없이) — `npm view` 검증 필수"
+
+### 문서 업데이트
+- `CLAUDE.md`: § 3.6 MCP 설치 규칙 신설, § 7 금지 사항에 추가
+- `guide.txt`: § 8 "MCP 도구 추가" 새 섹션 추가 (카테고리·콘솔·환경변수·트러블슈팅)
+- `README.md`: "MCP 도구 설치" 섹션 추가 (guide.txt § 8 참조)
+
+---
+
+**마지막 업데이트**: 2026-04-23 23:59 UTC  
+**버전**: v1.0+Phase 1+2 + MCP 현실화  
 **상태**: Production-Ready

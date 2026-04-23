@@ -44,7 +44,13 @@
       "PowerShell(python3 -c \"import sys; print\\(sys.version\\)\")",
       "PowerShell(pip install *)",
       "PowerShell(which python *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "mcp__fetch__fetch_json",
+      "mcp__fetch__fetch_markdown",
+      "mcp__fetch__fetch_html",
+      "mcp__fetch__fetch_txt",
+      "WebSearch",
+      "WebFetch"
     ],
     "deny": []
   },

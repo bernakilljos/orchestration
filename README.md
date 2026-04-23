@@ -40,6 +40,11 @@ OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
 Claude Code 실행 → 자동으로 환경 구성 완료  
 추가 MCP 필요 시: `/plug_dev`, `/plug_data` 등 슬래시 커맨드 실행
 
+## MCP 도구 설치
+
+카테고리별 설치 명령 (`/plug_design`, `/plug_dev`, ...) — 실제 동작하는 npm 패키지만 설치.
+상세: [guide.txt](guide.txt) 섹션 8
+
 ---
 
 ## 포함 항목

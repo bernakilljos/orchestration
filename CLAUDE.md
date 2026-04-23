@@ -68,7 +68,15 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 
 상세: `plugins/exec_orch/skills/route_dispatch.md § Step 4`
 
-### 3.6 24/7 자동화 필수 설정
+### 3.6 MCP 설치 규칙
+1. **실제 npm 존재 확인**: `npm view <package>` 로 검증 후만 커맨드에 기록 (404 방지)
+2. **Windows npx 래퍼**: `cmd /c npx <package>` 필수 (shell 교차호환성)
+3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
+4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
+
+상세: `guide.txt` § 8 · `docs/upgrade-notes-2026-04-23.md`
+
+### 3.7 24/7 자동화 필수 설정
 1. **SQLite 초기화**: `python .claude/scripts/init-state-db.py` (`.claude/state/orca.db` 생성)
 2. **Watchdog 백그라운드**: `.claude/scripts/watchdog-start.bat` (워커 heartbeat 체크)
 3. **예산 상한** (선택): `python .claude/scripts/route.py --set-daily-limit 50` (USD)
@@ -133,6 +141,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 6. 코드 주석에 "owner(주인)" 사용
 7. `.claude/` 직접 편집 (sync가 덮어씀)
 8. 빈 task `done/` 이동 (위장 완료)
+9. 거짓 npm 패키지명 커맨드 (실측 없이) — `npm view` 검증 필수
 
 ---
 

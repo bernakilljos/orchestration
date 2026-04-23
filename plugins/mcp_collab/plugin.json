@@ -26,19 +26,31 @@
   "metadata": {
     "category": "MCP/협업",
     "tags": [
-      "mcp"
+      "mcp",
+      "slack",
+      "notion",
+      "jira",
+      "trello",
+      "gmail",
+      "calendar",
+      "oauth"
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-04-19",
+    "updated": "2026-04-23",
     "precedence": 10,
-    "token_estimate": 1100,
+    "token_estimate": 2800,
     "triggers": [
-      "Slack",
-      "Notion",
-      "Jira",
-      "Gmail",
-      "협업 MCP"
-    ]
+      "Slack MCP",
+      "Notion MCP",
+      "Jira MCP",
+      "Trello MCP",
+      "Gmail 자동화",
+      "Google Calendar",
+      "협업 도구 설치",
+      "채팅 도구 연결",
+      "프로젝트 관리 MCP"
+    ],
+    "note": "2026-04-23: npm 검증 완료. @sigmacomputing/slack-mcp-server (공식 deprecated 대체), @notionhq/notion-mcp-server (공식), @rui.branco/jira-mcp (권장), trello-mcp (권장). Gmail/Calendar는 claude.ai 내장."
   }
 }
