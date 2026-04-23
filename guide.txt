@@ -93,6 +93,19 @@
       조언 모델: claude-opus-4-6 (복잡한 판단)
     수동: claude --model claude-sonnet-4-6 --advisor claude-opus-4-6
 
+  [exec_orch vs exec_claude — 두 코어 플러그인 분담]
+    exec_orch    "어떤 AI 가 할 것인가" — 멀티AI 라우팅·워커·핸드오프
+    exec_claude  "Claude 는 어떻게 잘 할 것인가" — 구조화 질문·아티팩트·확장 사고
+    근거: docs/2026-04-23/claude-vs-orchestration-comparison.md
+    다이어그램: docs/screens/arch/claude-mindmap-eating-everything-hassid.png
+
+    exec_claude 커맨드 (5개):
+      /claude-status        가용성 + 시나리오 한 화면 요약
+      /claude-ask <topic>   구조화 질문 폼 (자유텍스트 대신 선택지)
+      /claude-artifact      인터랙티브 HTML (대시보드·계산기·차트·폼·게임)
+      /claude-connectors    Slack/Notion/Drive 등 1-click 인증 흐름
+      /claude-thinking      Extended Thinking — 복잡 추론 8단계 분해
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   5. 파이프라인
@@ -494,6 +507,7 @@
   [플러그인 — 14개 완성 + 3개 스펙]
     ● exec_  (실행 계열)
         exec_orch            멀티AI 오케스트레이션 엔진 (코어)
+        exec_claude          Claude 깊이 활용 — 구조화 질문·아티팩트·커넥터·확장 사고 (NEW 2026-04-23)
         exec_learning        세션 학습·실패 패턴
         exec_session_guard   스냅샷 자동 저장
         exec_voice           음성 STT·TTS·회의록
@@ -540,6 +554,20 @@
     /status    오케스트레이션 통합 대시보드 (워커·큐·sync·heartbeat)
     /help      플러그인 도움말 (/help 또는 /help <plugin>)
     /help --roadmap   로드맵 요약
+
+  [아키텍처 다이어그램 커맨드 (NEW 2026-04-23)]
+    /arch-mindmap <주제>     방사형 마인드맵 1장 (Mermaid → PNG)
+    /arch-layered <주제>     레이어 케이크 1페이지 (위→아래 계층)
+    /arch-cheatsheet <주제>  3컬럼 치트시트 (트리+블록+코드)
+    /arch-auto <주제>        주제 보고 자동 패턴 선택
+    출력: outputs/arch/<pattern>-<slug>-<date>.{md,png,pptx,pdf}
+
+  [Claude 깊이 활용 커맨드 (NEW 2026-04-23, exec_claude)]
+    /claude-status           가용성 + 시나리오 안내
+    /claude-ask <topic>      구조화 질문 폼 생성
+    /claude-artifact         인터랙티브 HTML (단일 파일)
+    /claude-connectors       SaaS 커넥터 1-click 추가
+    /claude-thinking         Extended Thinking 8단계 분해
 
   [라우팅 고도화 (route_dispatch v2)]
     AI별 특성 매트릭스 반영:

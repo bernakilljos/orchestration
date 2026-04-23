@@ -28,6 +28,14 @@ rem --- sync 실행 ---
 if exist ".claude\scripts\sync-plugins.sh" (
   echo       plugins/ to .claude/ 동기화...
   bash .claude/scripts/sync-plugins.sh 2>nul | findstr /R "Summary copied skipped renamed orphan"
+  echo.
+  echo       [내장 코어 플러그인]
+  echo         exec_orch    멀티AI 라우팅 (Claude+Codex+Gemini)
+  echo         exec_claude  Claude 깊이 활용 (NEW 2026-04-23)
+  echo                       /claude-status  /claude-ask  /claude-artifact
+  echo                       /claude-connectors  /claude-thinking
+  echo       [신규 다이어그램 커맨드]
+  echo         /arch-mindmap /arch-layered /arch-cheatsheet /arch-auto
 ) else (
   echo       [WARN] sync-plugins.sh 없음
 )

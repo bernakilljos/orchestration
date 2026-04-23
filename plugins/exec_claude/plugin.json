@@ -1,0 +1,46 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "exec_claude",
+  "display": "Claude 전용 심화 — 구조화 질문·아티팩트·커넥터·확장 사고",
+  "prefix": "exec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": ["exec_orch"],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "claude-status",
+    "core_skills": [
+      "skill-claude-ask",
+      "skill-claude-artifact",
+      "skill-claude-thinking"
+    ]
+  },
+  "metadata": {
+    "category": "코어",
+    "tags": ["exec", "claude"],
+    "author": "bernakilljos",
+    "created": "2026-04-23",
+    "updated": "2026-04-23",
+    "precedence": 2,
+    "token_estimate": 2800,
+    "triggers": [
+      "구조화 질문",
+      "AskUserQuestion",
+      "아티팩트",
+      "interactive output",
+      "확장 사고",
+      "extended thinking",
+      "커넥터",
+      "connectors",
+      "Claude 전용"
+    ],
+    "complements": "exec_orch",
+    "purpose": "exec_orch가 멀티AI 라우팅을 담당한다면, exec_claude는 Claude를 깊게 활용하는 패턴을 제공한다 (Claude is eating up everything 다이어그램 기반)"
+  }
+}
