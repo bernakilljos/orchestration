@@ -1,7 +1,7 @@
 {
   "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_web",
-  "display": "웹자동화 MCP 설치 — Playwright·Puppeteer·Fetch·Apify",
+  "display": "웹자동화 MCP 설치 — Playwright·Puppeteer·PDF (실측 npm 기반)",
   "prefix": "mcp_",
   "version": "1.0",
   "status": "stable",
@@ -36,8 +36,11 @@
     "triggers": [
       "Playwright",
       "Puppeteer",
+      "PDF",
       "크롤링",
-      "웹 자동화"
+      "웹 자동화",
+      "브라우저 자동화",
+      "스크린샷"
     ]
   }
 }
