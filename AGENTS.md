@@ -77,24 +77,39 @@
 
 ## Standalone 모드 (Claude 없이 Codex 단독 사용)
 
-`installcodex` 로 셋업한 환경에서는 Claude orchestration 없이 Codex 만으로 작업.
-이 경우 위 규칙 중 일부 변경:
+`install_codex` 로 셋업한 환경에서는 Claude orchestration 없이 Codex 만으로 작업.
+**task 파일 수동 편집 필요 없음 — 자연어 한 줄로 끝.**
 
 | 항목 | Orchestrated | Standalone |
 |------|--------------|-----------|
-| 작업 폴더 | `.claude/tasks/` | `tasks/` |
+| 작업 폴더 | `.claude/tasks/` | `tasks/` (선택) |
 | 완료 폴더 | `.claude/tasks/done/` | `tasks/done/` |
-| 태스크 파일 | `task-instruction.md` (단일) | `task-001.md`, `task-002.md` ... (다중) |
-| 설계 출처 | Claude 가 작성 | **사용자가 직접 작성** (template 복사) |
-| 검증 | Gemini 가 자동 | **본인 또는 별도 도구** |
+| 태스크 입력 | `task-instruction.md` (Claude 작성) | **자연어로 codex-go 호출** (가장 단순) |
+| 설계 출처 | Claude 가 작성 | 사용자 의도 → Codex 가 직접 해석 |
+| 검증 | Gemini 가 자동 | 본인 또는 별도 도구 |
 | 채택 결정 | Claude (팀장) | **사용자** |
 | MCP 설정 | `.codex/config.toml` | 동일 |
 
-### Standalone 사용 흐름
-1. `cp tasks/task-template.md tasks/task-001.md` 후 편집
-2. `codex-a --auto` (자동 처리) 또는 `codex-go` (대화)
-3. 완료 시 결과 파일 + `tasks/done/TASK-ID-report.md`
-4. 사용자가 직접 검토·채택
+### Standalone 사용법 (3단계)
+
+**A. 일반 — 자연어 한 줄 (권장)**
+```
+codex-go "회원가입 페이지 만들어줘"
+codex-go "이 모듈 리팩토링 — DRY 원칙"
+codex-go                              # 대화 모드
+```
+→ task 파일 만들 필요 없음. Codex 가 직접 처리.
+
+**B. 배치 처리 — 여러 작업 한꺼번에**
+```
+codex-go "다음 3개를 tasks/task-001~003.md 로 정리해줘:
+  1. 로그인 페이지
+  2. 회원가입 페이지
+  3. 비밀번호 리셋"
+
+codex-a --auto    # 큐 자동 처리
+```
+→ Codex 에게 task 파일 생성을 시키고, 큐 모드로 실행.
 
 ### 코드 규칙
 위 "코드 규칙" 섹션과 동일하게 적용 (orchestration 여부 무관).

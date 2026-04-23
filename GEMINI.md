@@ -130,30 +130,48 @@ Gemini Flash 는 저단가 · 빠른 검증에 강점. 다음에 우선 활용:
 
 ## Standalone 모드 (Claude 없이 Gemini 단독 사용)
 
-`installgemini` 로 셋업한 환경에서는 Claude orchestration 없이 Gemini 만으로 작업.
-이 경우 Gemini 의 역할이 **검증 전용 → 일반 작업 가능**으로 확장됨.
+`install_gemini` 로 셋업한 환경에서는 Claude orchestration 없이 Gemini 만으로 작업.
+역할이 **검증 전용 → 일반 작업 가능**으로 확장됨.
+**task 파일 수동 편집 필요 없음 — 자연어 한 줄로 끝.**
 
 | 항목 | Orchestrated | Standalone |
 |------|--------------|-----------|
 | 역할 | 검증 전용 (Codex 가 구현) | **구현·검증·요약·문서화 모두 가능** |
-| 작업 폴더 | `.claude/tasks/` | `tasks/` |
+| 작업 폴더 | `.claude/tasks/` | `tasks/` (선택) |
 | 완료 폴더 | `.claude/tasks/done/` | `tasks/done/` |
-| 태스크 파일 | `verify-instruction.md` (단일) | `task-001.md` ... (다중, Mode 명시) |
-| 설계 출처 | Claude 가 작성 | **사용자가 직접 작성** |
+| 태스크 입력 | `verify-instruction.md` (Claude 작성) | **자연어로 gemini-go 호출** (가장 단순) |
+| 설계 출처 | Claude 가 작성 | 사용자 의도 → Gemini 가 직접 해석 |
 | 채택 결정 | Claude (팀장) | **사용자** |
 | MCP 설정 | `.gemini/config.toml` | 동일 |
 
-### Standalone Mode 옵션 (task 파일 안에 명시)
-- `implement` — 일반 구현 (Codex 처럼)
+### Standalone 사용법 (3단계)
+
+**A. 일반 — 자연어 한 줄 (권장)**
+```
+gemini-go "이 코드 보안 검증해줘"           # verify
+gemini-go "긴 로그 요약해줘"                # summarize (1M 컨텍스트)
+gemini-go "API 문서 자동 생성해줘"          # document
+gemini-go "회원가입 페이지 만들어줘"        # implement
+gemini-go                                   # 대화 모드
+```
+→ task 파일 만들 필요 없음. Gemini 가 직접 해석·처리.
+
+**B. 배치 처리 — 여러 작업 한꺼번에**
+```
+gemini-go "다음 3개를 tasks/task-001~003.md 로 정리해줘:
+  1. 인증 모듈 보안 검증
+  2. 로그 100MB 요약
+  3. README 자동 생성"
+
+gemini-a --auto    # 큐 자동 처리
+```
+→ Gemini 에게 task 파일 생성을 시키고, 큐 모드로 실행.
+
+### Standalone Mode 4종 (task 파일 또는 자연어에 명시)
+- `implement` — 일반 구현
 - `verify`    — 코드 리뷰·보안·품질 검증
 - `summarize` — 긴 문서·로그 요약 (1M 컨텍스트 활용)
 - `document`  — README·docstring·CHANGELOG
-
-### Standalone 사용 흐름
-1. `cp tasks/task-template.md tasks/task-001.md` 후 편집 (Mode 선택)
-2. `gemini-a --auto` (자동 처리) 또는 `gemini-go` (대화)
-3. 완료 시 결과 파일 + `tasks/done/TASK-ID-{report|review}.md`
-4. 사용자가 직접 검토·채택
 
 ### 코드 규칙
 위 "검증 규칙 § 코드 규칙" 과 동일 적용 (orchestration 여부 무관).
