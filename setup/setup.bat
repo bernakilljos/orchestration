@@ -4,13 +4,17 @@ rem =====================================================
 rem setup.bat - Orchestration Kit Modular Installer
 rem
 rem Usage:
-rem   setup.bat [path]          Install
-rem   setup.bat anl [path]      Install + source analysis
+rem   setup.bat [path]                     Full (Claude+Codex+Gemini, default)
+rem   setup.bat full   [path]              Same as above
+rem   setup.bat codex  [path]              Codex 단독 (Claude 없이)
+rem   setup.bat gemini [path]              Gemini 단독 (Claude 없이)
+rem   setup.bat anl    [path]              Full + 소스 분석
+rem   setup.bat full anl [path]            Full + 소스 분석 (명시)
 rem
 rem Can also be called from setup.exe (Inno Setup)
 rem =====================================================
 
-rem --- Uninstall old npm Claude Code ---
+rem --- Uninstall old npm Claude Code (only for full mode) ---
 where volta >nul 2>&1
 if not errorlevel 1 (
   volta list @anthropic-ai/claude-code 2>nul | findstr /C:"@anthropic-ai/claude-code" >nul 2>&1
@@ -49,15 +53,18 @@ del "%TEMP%\_getuser.ps1" >nul 2>&1
 if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"
 set "REAL_USERPROFILE=C:\Users\!REAL_USERNAME!"
 
-rem --- Parse args ---
-set ANALYZE_MODE=false
-set TARGET=
-if /i "%~1"=="anl" (
-  set ANALYZE_MODE=true
-  if not "%~2"=="" (set TARGET=%~2) else (set TARGET=%CD%)
-) else (
-  if not "%~1"=="" (set TARGET=%~1) else (set TARGET=%CD%)
-)
+rem --- Mode parse (full | codex | gemini) ---
+set "MODE=full"
+if /i "%~1"=="full"   ( set "MODE=full"   & shift )
+if /i "%~1"=="codex"  ( set "MODE=codex"  & shift )
+if /i "%~1"=="gemini" ( set "MODE=gemini" & shift )
+
+rem --- Analyze flag (full mode only) ---
+set "ANALYZE_MODE=false"
+if /i "%~1"=="anl" ( set "ANALYZE_MODE=true" & shift )
+
+rem --- Target path ---
+if not "%~1"=="" (set "TARGET=%~1") else (set "TARGET=%CD%")
 
 rem SCRIPT_DIR = orchestration kit root (parent of setup/)
 set "SETUP_DIR=%~dp0"
@@ -73,10 +80,35 @@ echo.
 echo ============================================================
 echo   Orchestration Kit Setup
 echo ============================================================
+echo   Mode   : !MODE!
 echo   Target : %TARGET%
 echo   Kit    : %SCRIPT_DIR%
 echo ============================================================
 echo.
+
+rem ════════════════════════════════════════════════════════
+rem  Mode 분기
+rem ════════════════════════════════════════════════════════
+
+if /i "!MODE!"=="codex" (
+  echo [Codex Standalone Mode] Claude 없이 Codex 만 설치
+  echo [STEP] install_codex %TIME% >> "!LOGFILE!"
+  call "%SCRIPT_DIR%install_codex.bat" "%TARGET%"
+  set ERR=!ERRORLEVEL!
+  goto MODE_DONE
+)
+
+if /i "!MODE!"=="gemini" (
+  echo [Gemini Standalone Mode] Claude 없이 Gemini 만 설치
+  echo [STEP] install_gemini %TIME% >> "!LOGFILE!"
+  call "%SCRIPT_DIR%install_gemini.bat" "%TARGET%"
+  set ERR=!ERRORLEVEL!
+  goto MODE_DONE
+)
+
+rem ════════════════════════════════════════════════════════
+rem  Full Mode (Claude+Codex+Gemini)
+rem ════════════════════════════════════════════════════════
 
 set "MOD=%SETUP_DIR%modules"
 set "ERRORS=0"
@@ -133,19 +165,32 @@ if errorlevel 1 set /a ERRORS+=1
 
 echo [Step 11/11] Media Enhance Dependencies...
 echo [STEP] 11-media-enhance %TIME% >> "!LOGFILE!"
-rem (Step 9는 12-kit-sync, Step 10은 09-finalize, Step 11은 11-media-enhance)
 call "%MOD%\11-media-enhance.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
+set "ERR=!ERRORS!"
+goto MODE_DONE
+
+rem ════════════════════════════════════════════════════════
+rem  Common end
+rem ════════════════════════════════════════════════════════
+
+:MODE_DONE
 echo.
 echo ============================================================
-if "!ERRORS!"=="0" (
-  echo   Setup Complete! No errors.
+if "!MODE!"=="full" (
+  if "!ERR!"=="0" ( echo   Setup Complete (Full)! No errors. ) else ( echo   Setup Complete with !ERR! warning^(s^). )
 ) else (
-  echo   Setup Complete with !ERRORS! warning(s).
+  echo   Setup Complete (Mode: !MODE!)
 )
 echo   Log: %TEMP%\orchestration-setup.log
 echo ============================================================
+echo.
+echo   Mode 별 사용법:
+if /i "!MODE!"=="codex"  echo     cd /d "%TARGET%" ^&^& codex-go "회원가입 페이지 만들어줘"
+if /i "!MODE!"=="gemini" echo     cd /d "%TARGET%" ^&^& gemini-go "이 코드 검증해줘"
+if /i "!MODE!"=="full"   echo     cd /d "%TARGET%" ^&^& claude
+echo.
 echo [DONE] %TIME% >> "!LOGFILE!"
 pause
 endlocal

@@ -6,6 +6,12 @@
 ;
 ; 컴파일: iscc setup.iss
 ; 결과:   Output\OrchestrationKit-Setup.exe
+;
+; 위자드 첫 화면에서 3가지 모드 선택 (라디오 버튼):
+;   ⦿ Full Orchestration (Claude+Codex+Gemini)
+;   ○ Codex 단독 (Claude 없이)
+;   ○ Gemini 단독 (Claude 없이)
+;   ○ 사용자 지정
 ; =====================================================
 
 #define MyAppName "Orchestration Kit"
@@ -22,28 +28,18 @@ AppSupportURL={#MyAppURL}
 DefaultDirName=C:\work\new_project
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-; 압축 설정 (프로그레스바 표시됨)
 Compression=lzma2/max
 SolidCompression=yes
-; 출력 설정
 OutputDir=Output
 OutputBaseFilename=OrchestrationKit-Setup
-; 아이콘 (있으면 사용, 없으면 기본)
-; SetupIconFile=..\icon.ico
-; 관리자 권한 요청
 PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
-; 설치 위자드 설정
 WizardStyle=modern
 WizardSizePercent=120
-; 언인스톨러
 Uninstallable=yes
 UninstallDisplayName={#MyAppName}
-; 디렉토리 선택 허용
 AllowNoIcons=yes
 DisableDirPage=no
-; 라이센스/정보 페이지 (선택)
-; LicenseFile=..\LICENSE
 InfoBeforeFile=setup-info.rtf
 
 [Languages]
@@ -51,101 +47,142 @@ Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-korean.WelcomeLabel2=Multi-AI Orchestration Kit을 설치합니다.%n%nClaude + Codex + Gemini를 자동 연동하는 개발 환경을 구성합니다.%n%n설치할 프로젝트 경로를 선택하세요.
-korean.FinishedLabel=설치가 완료되었습니다!%n%nClaude를 실행하면 자동으로 환경이 구성됩니다.
+korean.WelcomeLabel2=Multi-AI Orchestration Kit을 설치합니다.%n%n다음 화면에서 모드를 선택하세요:%n%n  · Full Orchestration — Claude + Codex + Gemini 풀 연동%n  · Codex 단독 — Claude 없이 Codex 만 사용%n  · Gemini 단독 — Claude 없이 Gemini 만 사용%n%n설치할 프로젝트 경로를 선택하세요.
+korean.SelectComponentsLabel2=원하는 모드를 라디오 버튼으로 선택하세요. 컴포넌트는 자동으로 맞춰집니다.
+korean.FinishedLabel=설치가 완료되었습니다!%n%n사용법은 guide.txt 참조.
 
 [Types]
-Name: "full"; Description: "전체 설치 (추천)"
-Name: "minimal"; Description: "최소 설치 (코어 파일만)"
-Name: "custom"; Description: "사용자 지정"; Flags: iscustom
+Name: "full_orch";  Description: "Full Orchestration — Claude + Codex + Gemini (추천)"
+Name: "codex_only"; Description: "Codex 단독 — Claude 없이"
+Name: "gemini_only"; Description: "Gemini 단독 — Claude 없이"
+Name: "custom";     Description: "사용자 지정"; Flags: iscustom
 
 [Components]
-Name: "core";        Description: ".claude 폴더 + CLAUDE.md";          Types: full minimal custom; Flags: fixed
-Name: "commands";    Description: "글로벌 명령어 (codex-a, gemini-a)"; Types: full custom
-Name: "services";    Description: "status-push / remote-agent 서비스"; Types: full custom
-Name: "prereqs";     Description: "Node.js / Claude Code / Cloudflared"; Types: full custom
-Name: "github";      Description: "Git 초기화 + GitHub 연동";          Types: full custom
-Name: "plugins";     Description: "Claude 플러그인";                    Types: full custom
-Name: "mediaenhance"; Description: "미디어 관련 의존성 (오디오/PDF/PPT)"; Types: full custom
+; --- 공통 (모든 모드) ---
+Name: "core_common";  Description: "공통 — 폴더 구조 + docs/guide.txt"; Types: full_orch codex_only gemini_only custom; Flags: fixed
+
+; --- Claude 오케스트레이션 (full_orch 만) ---
+Name: "claude_orch";  Description: "Claude 오케스트레이션 (.claude/, plugins/, CLAUDE.md)"; Types: full_orch custom
+
+; --- Codex 환경 ---
+Name: "codex_env";    Description: "Codex 환경 (AGENTS.md, .codex/, install_codex.bat)"; Types: full_orch codex_only custom
+
+; --- Gemini 환경 ---
+Name: "gemini_env";   Description: "Gemini 환경 (GEMINI.md, .gemini/, install_gemini.bat)"; Types: full_orch gemini_only custom
+
+; --- 보조 ---
+Name: "commands";     Description: "글로벌 명령어 (codex-a, gemini-a)"; Types: full_orch codex_only gemini_only custom
+Name: "services";     Description: "status-push / remote-agent (Claude 전용)"; Types: full_orch custom
+Name: "prereqs";      Description: "Node.js / Claude Code / Cloudflared"; Types: full_orch codex_only gemini_only custom
+Name: "github";       Description: "Git 초기화 + GitHub 연동"; Types: full_orch custom
+Name: "plugins";      Description: "Claude 플러그인 (Claude 전용)"; Types: full_orch custom
+Name: "mediaenhance"; Description: "미디어 의존성 (오디오/PDF/PPT)"; Types: full_orch custom
 
 [Files]
-; --- Core: .claude 폴더 전체 ---
-Source: "..\.claude\*"; DestDir: "{app}\.claude"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\CLAUDE.md"; DestDir: "{app}"; Components: core; Flags: ignoreversion
+; --- Common: docs / templates / outputs / guide ---
+Source: "..\docs\*";      DestDir: "{app}\docs";      Components: core_common; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\templates\*"; DestDir: "{app}\templates"; Components: core_common; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
+Source: "..\outputs\*";   DestDir: "{app}\outputs";   Components: core_common; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
+Source: "..\guide.txt";   DestDir: "{app}";           Components: core_common; Flags: ignoreversion skipifsourcedoesntexist
 
-; --- Core: Plugin manifest + local plugins (exec_*, design_*, mcp_*, review_*, exec_session_guard 등 14개) ---
-Source: "..\.claude-plugin\*"; DestDir: "{app}\.claude-plugin"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "..\plugins\*"; DestDir: "{app}\plugins"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+; --- Claude 오케스트레이션 ---
+Source: "..\.claude\*";        DestDir: "{app}\.claude";        Components: claude_orch; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\CLAUDE.md";        DestDir: "{app}";                Components: claude_orch; Flags: ignoreversion
+Source: "..\.claude-plugin\*"; DestDir: "{app}\.claude-plugin"; Components: claude_orch; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\plugins\*";        DestDir: "{app}\plugins";        Components: claude_orch; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\context\*";        DestDir: "{app}\context";        Components: claude_orch; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
 
-; --- Docs/Templates ---
-Source: "..\docs\*"; DestDir: "{app}\docs"; Components: core; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
-Source: "..\context\*"; DestDir: "{app}\context"; Components: core; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
-Source: "..\templates\*"; DestDir: "{app}\templates"; Components: core; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
-Source: "..\outputs\*"; DestDir: "{app}\outputs"; Components: core; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
+; --- Codex 환경 ---
+Source: "..\AGENTS.md";          DestDir: "{app}";       Components: codex_env; Flags: ignoreversion
+Source: "..\.codex\*";           DestDir: "{app}\.codex"; Components: codex_env; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\install_codex.bat";  DestDir: "{app}";       Components: codex_env; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\codex-auto.bat";     DestDir: "{app}";       Components: codex_env; Flags: ignoreversion skipifsourcedoesntexist
 
-; --- Service scripts (project root에 있는 것들) ---
-Source: "..\status-push.ps1"; DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
+; --- Gemini 환경 ---
+Source: "..\GEMINI.md";          DestDir: "{app}";        Components: gemini_env; Flags: ignoreversion
+Source: "..\.gemini\*";          DestDir: "{app}\.gemini"; Components: gemini_env; Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
+Source: "..\install_gemini.bat"; DestDir: "{app}";        Components: gemini_env; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\gemini-auto.bat";    DestDir: "{app}";        Components: gemini_env; Flags: ignoreversion skipifsourcedoesntexist
+
+; --- 보조 ---
+Source: "..\status-push.ps1";        DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\status-push-silent.vbs"; DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
-Source: "..\remote-agent.ps1"; DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\remote-agent.ps1";       DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\remote-agent-silent.vbs"; DestDir: "{app}"; Components: services; Flags: ignoreversion skipifsourcedoesntexist
-Source: "..\cloudflared.exe"; DestDir: "{app}"; Components: prereqs; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\cloudflared.exe";        DestDir: "{app}"; Components: prereqs;  Flags: ignoreversion skipifsourcedoesntexist
 
-; --- Setup modules (post-install에서 사용) ---
+; --- Setup 모듈 (post-install용 임시) ---
 Source: "modules\*"; DestDir: "{tmp}\setup-modules"; Flags: ignoreversion deleteafterinstall
 Source: "setup.bat"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall
-
-; --- Root scripts ---
-Source: "..\codex-auto.bat"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "..\gemini-auto.bat"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "..\guide.txt"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Dirs]
 Name: "{app}\docs\adr"
 Name: "{app}\docs\deploy-history"
 Name: "{app}\docs\screens"
-Name: "{app}\context"
 Name: "{app}\templates"
 Name: "{app}\outputs"
-Name: "{app}\.claude\tasks"
-Name: "{app}\.claude\tasks\locks"
-Name: "{app}\.claude\tasks\done"
-Name: "{app}\.claude\context-cache"
-Name: "{app}\tools\media-enhance"
-Name: "{app}\tools\media-enhance\enhancers"
-Name: "{app}\tools\media-enhance\utils"
+; Claude 모드 전용
+Name: "{app}\context";                Components: claude_orch
+Name: "{app}\.claude\tasks";          Components: claude_orch
+Name: "{app}\.claude\tasks\locks";    Components: claude_orch
+Name: "{app}\.claude\tasks\done";     Components: claude_orch
+Name: "{app}\.claude\context-cache";  Components: claude_orch
+Name: "{app}\tools\media-enhance";    Components: mediaenhance
+Name: "{app}\tools\media-enhance\enhancers"; Components: mediaenhance
+Name: "{app}\tools\media-enhance\utils";     Components: mediaenhance
+; Codex / Gemini standalone 모드 전용
+Name: "{app}\tasks";       Components: codex_env or gemini_env
+Name: "{app}\tasks\done";  Components: codex_env or gemini_env
 
 [Run]
-; --- Post-install: 각 모듈 실행 (프로그레스바 표시) ---
-Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\02-defender.bat"" ""{userappdata}\.."""; StatusMsg: "Windows Defender 예외 설정..."; Components: core; Flags: runhidden waituntilterminated
-Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\03-settings.bat"" ""{userappdata}\.."" ""{app}"""; StatusMsg: "Claude 설정 구성..."; Components: core; Flags: runhidden waituntilterminated
+; --- Claude 오케스트레이션 모듈 (claude_orch 선택 시) ---
+Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\02-defender.bat"" ""{userappdata}\.."""; StatusMsg: "Windows Defender 예외 설정..."; Components: claude_orch; Flags: runhidden waituntilterminated
+Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\03-settings.bat"" ""{userappdata}\.."" ""{app}"""; StatusMsg: "Claude 설정 구성..."; Components: claude_orch; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\04-commands.bat"" ""{app}"""; StatusMsg: "글로벌 명령어 설치..."; Components: commands; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\05-services.bat"" ""{app}"" ""{app}\"" ""{userappdata}\.."""; StatusMsg: "서비스 등록..."; Components: services; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\06-prereqs.bat"""; StatusMsg: "필수 도구 설치 (Node.js, Claude Code, Cloudflared)..."; Components: prereqs; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\07-github.bat"" ""{app}"""; StatusMsg: "Git / GitHub 설정..."; Components: github; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\08-plugins.bat"" ""{app}"" ""{app}\"""; StatusMsg: "Claude 플러그인 설치..."; Components: plugins; Flags: runhidden waituntilterminated
-Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\11-media-enhance.bat"" ""{app}"""; StatusMsg: "미디어 관련 의존성 설치..."; Components: mediaenhance; Flags: runhidden waituntilterminated
+Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\11-media-enhance.bat"" ""{app}"""; StatusMsg: "미디어 의존성 설치..."; Components: mediaenhance; Flags: runhidden waituntilterminated
+
+; --- Codex standalone (codex_env 선택 + claude_orch 미선택 시) ---
+Filename: "{cmd}"; Parameters: "/c ""{app}\install_codex.bat"" ""{app}"""; StatusMsg: "Codex Standalone 환경 구성..."; Components: codex_env; Check: NotClaudeOrch; Flags: runhidden waituntilterminated
+
+; --- Gemini standalone (gemini_env 선택 + claude_orch 미선택 시) ---
+Filename: "{cmd}"; Parameters: "/c ""{app}\install_gemini.bat"" ""{app}"""; StatusMsg: "Gemini Standalone 환경 구성..."; Components: gemini_env; Check: NotClaudeOrch; Flags: runhidden waituntilterminated
 
 ; --- 설치 완료 후 선택적 실행 ---
-Filename: "{cmd}"; Parameters: "/k cd /d ""{app}"" && claude --dangerously-skip-permissions"; Description: "Claude 바로 실행"; Flags: postinstall nowait skipifsilent unchecked
+Filename: "{cmd}"; Parameters: "/k cd /d ""{app}"" && claude --dangerously-skip-permissions"; Description: "Claude 바로 실행"; Components: claude_orch; Flags: postinstall nowait skipifsilent unchecked
+Filename: "{cmd}"; Parameters: "/k cd /d ""{app}"" && codex-go"; Description: "Codex 대화 모드 시작"; Components: codex_env; Check: NotClaudeOrch; Flags: postinstall nowait skipifsilent unchecked
+Filename: "{cmd}"; Parameters: "/k cd /d ""{app}"" && gemini-go"; Description: "Gemini 대화 모드 시작"; Components: gemini_env; Check: NotClaudeOrch; Flags: postinstall nowait skipifsilent unchecked
 
 [UninstallRun]
-; 서비스 정리
 Filename: "{cmd}"; Parameters: "/c taskkill /f /fi ""WINDOWTITLE eq remote-agent*"" >nul 2>&1"; RunOnceId: "KillRemoteAgent"; Flags: runhidden
 Filename: "{cmd}"; Parameters: "/c reg delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""OrchestrationStatusPush"" /f >nul 2>&1"; RunOnceId: "UnregStatusPush"; Flags: runhidden
 Filename: "{cmd}"; Parameters: "/c reg delete ""HKCU\Software\Microsoft\Windows\CurrentVersion\Run"" /v ""OrchestrationRemoteAgent"" /f >nul 2>&1"; RunOnceId: "UnregRemoteAgent"; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\.claude"
+Type: filesandordirs; Name: "{app}\.codex"
+Type: filesandordirs; Name: "{app}\.gemini"
 Type: filesandordirs; Name: "{app}\docs"
 Type: filesandordirs; Name: "{app}\context"
 Type: filesandordirs; Name: "{app}\templates"
 Type: filesandordirs; Name: "{app}\outputs"
+Type: filesandordirs; Name: "{app}\tasks"
 Type: filesandordirs; Name: "{app}\tools"
 
 [Code]
 // =====================================================
-// Pascal Script: 설치 중 .gitignore 자동 생성
+// Pascal Script
 // =====================================================
+
+// codex/gemini standalone 모드 — Claude orchestration 미선택일 때만 install_*.bat 실행
+function NotClaudeOrch: Boolean;
+begin
+  Result := not WizardIsComponentSelected('claude_orch');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   GitIgnorePath: string;
@@ -153,15 +190,21 @@ var
 begin
   if CurStep = ssPostInstall then
   begin
+    // 모든 모드에서 .gitignore 생성
     GitIgnorePath := ExpandConstant('{app}\.gitignore');
     if not FileExists(GitIgnorePath) then
     begin
       Content := '.claude/deploy-config.env' + #13#10 +
                  '.claude/context-cache/' + #13#10 +
                  '.claude/tasks/locks/' + #13#10 +
+                 '.claude/tasks/done/' + #13#10 +
                  '.claude/orca-heartbeat' + #13#10 +
+                 '.claude/orca-enabled' + #13#10 +
+                 '.claude/state/' + #13#10 +
+                 'tasks/done/' + #13#10 +
                  'docs/secret-scan.txt' + #13#10 +
                  'docs/build-result.txt' + #13#10 +
+                 'install-test-*.txt' + #13#10 +
                  'node_modules/' + #13#10 +
                  '.env' + #13#10 +
                  '.env.local' + #13#10 +
@@ -169,22 +212,26 @@ begin
       SaveStringToFile(GitIgnorePath, Content, False);
     end;
 
-    // deploy-config.env 생성
-    if not FileExists(ExpandConstant('{app}\.claude\deploy-config.env')) then
+    // Claude 모드 전용 파일들
+    if WizardIsComponentSelected('claude_orch') then
     begin
-      if FileExists(ExpandConstant('{app}\.claude\deploy-config.env.example')) then
-        CopyFile(
-          ExpandConstant('{app}\.claude\deploy-config.env.example'),
-          ExpandConstant('{app}\.claude\deploy-config.env'),
-          False
-        );
-    end;
+      // deploy-config.env
+      if not FileExists(ExpandConstant('{app}\.claude\deploy-config.env')) then
+      begin
+        if FileExists(ExpandConstant('{app}\.claude\deploy-config.env.example')) then
+          CopyFile(
+            ExpandConstant('{app}\.claude\deploy-config.env.example'),
+            ExpandConstant('{app}\.claude\deploy-config.env'),
+            False
+          );
+      end;
 
-    // orca-enabled 플래그
-    if not FileExists(ExpandConstant('{app}\.claude\orca-stopped')) then
-    begin
-      if not FileExists(ExpandConstant('{app}\.claude\orca-enabled')) then
-        SaveStringToFile(ExpandConstant('{app}\.claude\orca-enabled'), 'enabled', False);
+      // orca-enabled 플래그
+      if not FileExists(ExpandConstant('{app}\.claude\orca-stopped')) then
+      begin
+        if not FileExists(ExpandConstant('{app}\.claude\orca-enabled')) then
+          SaveStringToFile(ExpandConstant('{app}\.claude\orca-enabled'), 'enabled', False);
+      end;
     end;
   end;
 end;

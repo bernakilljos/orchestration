@@ -64,13 +64,21 @@ echo ============================================================
 echo   Orchestration Kit
 echo ============================================================
 
-rem --- Parse: install.bat anl [path] OR install.bat [path] OR install.bat restart ---
+rem --- Parse: install.bat [mode] [anl] [path] OR install.bat restart/delete ---
+rem Modes: full (default) | codex | gemini
 set ANALYZE_MODE=false
+set MODE=full
 set TARGET=
 
 if /i "%~1"=="restart" goto DO_RESTART
 if /i "%~1"=="delete" goto DO_DELETE
 
+rem Mode parse (consume first arg if matched)
+if /i "%~1"=="full"   ( set "MODE=full"   & shift )
+if /i "%~1"=="codex"  ( set "MODE=codex"  & shift )
+if /i "%~1"=="gemini" ( set "MODE=gemini" & shift )
+
+rem Analyze flag
 if /i "%~1"=="anl" (
   set ANALYZE_MODE=true
   if not "%~2"=="" ( set TARGET=%~2 ) else ( set TARGET=%CD% )
@@ -85,8 +93,9 @@ rem --- Strip trailing spaces and backslashes from TARGET ---
 if "!TARGET:~-1!"==" "  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
 if "!TARGET:~-1!"=="\"  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
 
-echo   Mode   : %ANALYZE_MODE% (analyze=%ANALYZE_MODE%)
-echo   Target : %TARGET%
+echo   Mode    : %MODE%
+echo   Analyze : %ANALYZE_MODE%
+echo   Target  : %TARGET%
 echo ============================================================
 
 if not exist "%TARGET%" (
@@ -97,6 +106,37 @@ if not exist "%TARGET%" (
     pause & exit /b 1
   )
   echo       Done
+)
+
+rem -----------------------------------------
+rem Mode 분기 (codex/gemini standalone)
+rem -----------------------------------------
+if /i "%MODE%"=="codex" (
+  echo.
+  echo [Codex Standalone Mode] Claude 없이 Codex 만 설치
+  call "%SCRIPT_DIR%install_codex.bat" "%TARGET%"
+  echo.
+  echo ============================================================
+  echo   설치 완료. 사용법:
+  echo     cd /d "%TARGET%"
+  echo     codex-go "회원가입 페이지 만들어줘"
+  echo ============================================================
+  pause
+  exit /b 0
+)
+
+if /i "%MODE%"=="gemini" (
+  echo.
+  echo [Gemini Standalone Mode] Claude 없이 Gemini 만 설치
+  call "%SCRIPT_DIR%install_gemini.bat" "%TARGET%"
+  echo.
+  echo ============================================================
+  echo   설치 완료. 사용법:
+  echo     cd /d "%TARGET%"
+  echo     gemini-go "이 코드 검증해줘"
+  echo ============================================================
+  pause
+  exit /b 0
 )
 
 rem -----------------------------------------

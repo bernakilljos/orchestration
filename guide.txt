@@ -8,19 +8,40 @@
   1. 설치
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  [3 가지 모드] — 라디오 버튼 또는 인자로 선택
+    ⦿ Full Orchestration   Claude + Codex + Gemini (추천)
+    ○ Codex 단독           Claude 없이 Codex 만 사용
+    ○ Gemini 단독          Claude 없이 Gemini 만 사용
+
   [방법 A] setup.exe — GUI 위자드 (추천)
     1. https://github.com/bernakilljos/orchestration/releases
     2. OrchestrationKit-Setup.exe 다운로드
-    3. 더블클릭 → 경로 선택 → 컴포넌트 선택 → 설치
-    4. 완료 후 Claude 자동 실행 옵션
+    3. 더블클릭 → 위자드에서 모드 라디오 선택 → 경로 → 설치
+    4. 완료 후 모드별 자동 실행 옵션 (Claude / codex-go / gemini-go)
 
-  [방법 B] git clone — CLI
+  [방법 B] git clone — CLI 인자로 모드 지정
     git clone https://github.com/bernakilljos/orchestration.git
     cd orchestration
-    setup\setup.bat C:\work\myproject
+    setup\setup.bat        C:\work\myproject       ← Full (기본)
+    setup\setup.bat full   C:\work\myproject       ← Full (명시)
+    setup\setup.bat codex  C:\work\myproject       ← Codex 단독
+    setup\setup.bat gemini C:\work\myproject       ← Gemini 단독
+    setup\setup.bat anl    C:\work\myproject       ← Full + 소스 분석
+
+    또는 install.bat 직접:
+      install.bat              C:\work\myproject  ← Full
+      install.bat codex        C:\work\myproject  ← Codex 단독
+      install.bat gemini       C:\work\myproject  ← Gemini 단독
 
   [방법 C] 사일런트 — 자동화/스크립트용
     OrchestrationKit-Setup.exe /VERYSILENT /DIR="C:\work\myproject"
+    OrchestrationKit-Setup.exe /VERYSILENT /TYPE="codex_only"  /DIR="..."
+    OrchestrationKit-Setup.exe /VERYSILENT /TYPE="gemini_only" /DIR="..."
+
+  [모드별 사용 흐름]
+    Full   →  cd <target>  →  claude
+    Codex  →  cd <target>  →  codex-go "회원가입 페이지 만들어줘"
+    Gemini →  cd <target>  →  gemini-go "이 코드 검증해줘"
 
   [서비스만 재시작]
     install.bat restart
