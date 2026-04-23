@@ -50,7 +50,13 @@
       "mcp__fetch__fetch_html",
       "mcp__fetch__fetch_txt",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "PowerShell(python .claude\\\\scripts\\\\generate-ultimate-ppt-v6.py)",
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_dev.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_dev.md)",
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_data.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_data.md)",
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_web.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_web.md)",
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_collab.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_collab.md)",
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_docs.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_docs.md)"
     ],
     "deny": []
   },

@@ -35,6 +35,7 @@ CYBER_DARK = RGBColor(0x0A, 0x0D, 0x14)        # Deep black (slides 11, 12, 13, 
 NEON_CYAN = RGBColor(0x00, 0xE5, 0xFF)         # Cyan
 NEON_PINK = RGBColor(0xFF, 0x2E, 0x7A)         # Pink
 NEON_GREEN = RGBColor(0x39, 0xFF, 0x6C)        # Green
+NEON_GOLD = RGBColor(0xFF, 0xD1, 0x4F)         # Gold
 
 # Bloomberg (v3)
 DATA_GRAY = RGBColor(0x4A, 0x4A, 0x4A)         # Data text
@@ -715,15 +716,443 @@ def slide_13_backoff_chart(prs):
 
     add_footer(slide, 13)
 
+def slide_14_claude_routing(prs):
+    """Slide 14: Claude 4.7 Priority Routing (v3 Tree)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "AI ROUTING DECISION TREE")
+
+    routing_text = """
+INPUT REQUEST
+    ↓
+├─ Complex architecture? → CLAUDE OPUS 4.7 (think=8K)
+├─ Code 500+ lines? → CODEX ×4 (parallel)
+├─ Validation/review? → GEMINI ×2 (fact-check)
+├─ Simple task? → HAIKU 4.5 (cost-opt)
+└─ Fallback chain?
+    Codex fail → Claude
+    Gemini fail → Claude
+    All fail → Error + notify
+
+Metrics: Route by token estimate + urgency + cost
+    """
+
+    add_body_text(slide, routing_text, 0.5, 1.5, 9, 4.5)
+
+def slide_15_ai_matrix(prs):
+    """Slide 15: AI Model Matrix (v4 Grid)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "AI CAPABILITY MATRIX")
+
+    # Create table-like structure
+    headers = ["Model", "Cost/1M", "Speed", "Reasoning", "Use Case"]
+    rows = [
+        ["Opus 4.7", "$15→$60", "2s", "Expert", "Architecture/Design"],
+        ["Codex", "$5", "1s", "Good", "Code Gen (500+)"],
+        ["Haiku 4.5", "$0.8", "200ms", "Fast", "Simple tasks"],
+        ["Gemini Flash", "$2", "500ms", "Good", "Validation"],
+    ]
+
+    start_y = 1.6
+    row_h = 0.65
+    col_w = 1.8
+
+    # Headers
+    for idx, header in enumerate(headers):
+        x = Inches(0.5 + idx * col_w)
+        tb = slide.shapes.add_textbox(x, Inches(start_y), Inches(col_w - 0.1), Inches(0.3))
+        tf = tb.text_frame
+        tf.text = header
+        p = tf.paragraphs[0]
+        p.font.size = Pt(10)
+        p.font.bold = True
+        p.font.color.rgb = CHART_BLUE
+
+    # Rows
+    for row_idx, row in enumerate(rows):
+        for col_idx, cell in enumerate(row):
+            x = Inches(0.5 + col_idx * col_w)
+            y = Inches(start_y + 0.35 + row_idx * row_h)
+
+            box = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, Inches(col_w - 0.1), Inches(row_h - 0.1))
+            box.fill.solid()
+            box.fill.fore_color.rgb = RGBColor(0xF5, 0xF5, 0xF5) if row_idx % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+            box.line.color.rgb = DATA_GRAY
+            box.line.width = Pt(0.5)
+
+            tb = slide.shapes.add_textbox(x + Inches(0.05), y + Inches(0.05), Inches(col_w - 0.2), Inches(row_h - 0.2))
+            tf = tb.text_frame
+            tf.text = cell
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.font.size = Pt(8)
+            p.font.color.rgb = DARK_TEXT
+
+    add_footer(slide, 15)
+
+def slide_16_prompt_caching(prs):
+    """Slide 16: Prompt Caching Deep Dive (NEW)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "PROMPT CACHING: COST FORMULA")
+
+    caching_text = """STANDARD COST (no cache):
+  Cost = (input_tokens × rate_in) + (output_tokens × rate_out)
+  Example: 100K in + 5K out = ($1.50) + ($0.30) = $1.80 per call
+
+WITH PROMPT CACHING (90% hit):
+  Cached tokens cost 90% less
+  Cost = (cache_hits × rate_in × 0.1) + (new_tokens × rate_in) + (output × rate_out)
+
+  5 calls with same 50K context:
+  Without: 5 × $1.80 = $9.00
+  With cache: (5 × $0.75 cache cost) + 1 fresh call = $4.50
+  Savings: 50%
+
+PHASE ADOPTION:
+  Phase 1: Core plugins only (5 cache keys)
+  Phase 2: Full adoption (25+ keys)
+  Phase 3: Per-user sessions
+"""
+
+    add_body_text(slide, caching_text, 0.5, 1.5, 9, 4.5)
+
+def slide_17_watchdog_detail(prs):
+    """Slide 17: Watchdog Details (v5 Cyberpunk)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cyber_background(slide)
+    add_cyber_header(slide, "WATCHDOG INTERNALS", NEON_GREEN)
+
+    watchdog_detail = """
+HEARTBEAT TABLE (every 5 sec)
+  ┌─ worker_id | last_ping | tasks_done | errors
+  └─ TTL: 24h (auto-cleanup)
+
+QUOTA CHECK LOOP
+  1. Query token usage (last 1h)
+  2. If > 80% limit → set backoff flag
+  3. Announce on orca-dispatch
+  4. Workers check before accepting tasks
+
+RECOVERY TRIGGER
+  1. Worker heartbeat late (>30s) → mark unhealthy
+  2. Route tasks to other workers
+  3. Auto-restart after 3 consecutive timeouts
+  4. Email alert if > 5 workers down
+
+METRICS EXPORT (daily)
+  - Total tokens used
+  - Task success rate
+  - Worker uptime %
+  - Cost breakdown by model
+"""
+
+    tb = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(9), Inches(5.3))
+    tf = tb.text_frame
+    tf.text = watchdog_detail
+    tf.word_wrap = True
+    for p in tf.paragraphs:
+        p.font.size = Pt(9)
+        p.font.color.rgb = NEON_GREEN
+        p.font.name = "Consolas"
+        p.space_after = Pt(2)
+
+def slide_18_24h_pipeline(prs):
+    """Slide 18: 24/7 Pipeline Flow (v5 visual)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "24/7 CONTINUOUS PIPELINE")
+
+    pipeline_text = """
+06:00 — Night Batch:
+  Codex processes offline tasks (specs, tests)
+  Gemini validates results
+  DB sync + cleanup
+
+12:00 — Peak Load:
+  Interactive requests → OPUS 4.7 (real-time)
+  Code gen → CODEX (queued, parallel)
+  Light tasks → HAIKU 4.5 (cost-optimized)
+
+18:00 — Analysis Phase:
+  Weekly metrics aggregation
+  Cost report generation
+  Performance TuningRecommendations
+
+00:00 — Maintenance:
+  Database vacuum + index rebuild
+  Old heartbeat purge
+  Cache stats export
+  Backup + archive
+"""
+
+    add_body_text(slide, pipeline_text, 0.5, 1.5, 9, 4.5)
+
+def slide_19_cli_map(prs):
+    """Slide 19: CLI Tools Landscape (v4 Grid)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "CLI TOOL ECOSYSTEM")
+
+    tools = [
+        ("claude mcp list", "Query active MCPs", CHART_BLUE),
+        ("orca-dispatch", "Task submission", CHART_RED),
+        ("orca-status", "Pipeline health", RGBColor(0x2C, 0xA0, 0x2C)),
+        ("orca-logs", "Real-time monitor", CHART_RED),
+    ]
+
+    start_y = 1.8
+    box_h = 1.0
+
+    for idx, (cmd, desc, color) in enumerate(tools):
+        row = idx // 2
+        col = idx % 2
+        x = Inches(0.8 if col == 0 else 5.5)
+        y = Inches(start_y + row * 1.3)
+
+        # Box
+        box = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, Inches(3.8), Inches(box_h))
+        box.fill.solid()
+        box.fill.fore_color.rgb = RGBColor(0xF0, 0xF0, 0xF0)
+        box.line.color.rgb = color
+        box.line.width = Pt(2)
+
+        # Command (large)
+        tb_cmd = slide.shapes.add_textbox(x + Inches(0.2), y + Inches(0.15), Inches(3.4), Inches(0.35))
+        tf_cmd = tb_cmd.text_frame
+        tf_cmd.text = cmd
+        p_cmd = tf_cmd.paragraphs[0]
+        p_cmd.font.size = Pt(12)
+        p_cmd.font.bold = True
+        p_cmd.font.color.rgb = color
+        p_cmd.font.name = "Consolas"
+
+        # Description
+        tb_desc = slide.shapes.add_textbox(x + Inches(0.2), y + Inches(0.53), Inches(3.4), Inches(0.35))
+        tf_desc = tb_desc.text_frame
+        tf_desc.text = desc
+        p_desc = tf_desc.paragraphs[0]
+        p_desc.font.size = Pt(9)
+        p_desc.font.color.rgb = DARK_TEXT
+
+    add_footer(slide, 19)
+
+def slide_20_metrics_query(prs):
+    """Slide 20: Metrics DB Sample Query (v3 Bloomberg)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "REAL-TIME METRICS QUERY")
+
+    query_text = """SELECT DATE(created) as date, model, COUNT(*) as count, AVG(tokens) as avg_tokens
+FROM tasks
+WHERE created > datetime('now', '-7 days')
+GROUP BY DATE(created), model;
+
+RESULTS (Last 7 Days):
+┌─────────┬──────────┬───────┬─────────────┐
+│ Date    │ Model    │ Count │ Avg Tokens  │
+├─────────┼──────────┼───────┼─────────────┤
+│ 04-17   │ Opus     │  245  │    15,234   │
+│ 04-17   │ Codex    │ 1,203 │     8,456   │
+│ 04-18   │ Gemini   │  356  │     4,123   │
+│ 04-23   │ Haiku    │ 2,145 │       892   │
+└─────────┴──────────┴───────┴─────────────┘
+
+Total tokens this week: 3.2M
+Cost spent: $2,145 (with caching 90% hit)
+Average cost per task: $0.45
+"""
+
+    add_body_text(slide, query_text, 0.5, 1.5, 9, 4.5)
+
+def slide_21_legacy_code(prs):
+    """Slide 21: Surviving Code Style (NEW)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "ARCHITECTURAL PRINCIPLES: CODE SAMPLE")
+
+    code_sample = """
+From CLAUDE.md (Source of Truth):
+
+## WHAT — Purpose
+Multi-AI Orchestration Kit (Claude + Codex + Gemini)
+
+## WHY — Design Principles
+plugins/ is Source of Truth
+.claude/ is auto-generated
+No manual .claude/ edits
+
+## HOW — Workflow
+1. Edit plugins/exec_orch/commands/godmode.md
+2. bash .claude/scripts/sync-plugins.sh --dry
+3. bash .claude/scripts/sync-plugins.sh
+4. git commit
+
+This framework survived:
+✓ 14+ plugin additions
+✓ 2 AI model upgrades (3.5→4.7)
+✓ Quota exhaustion + recovery
+✓ 3,500+ commits
+"""
+
+    add_body_text(slide, code_sample, 0.5, 1.5, 9, 4.5)
+
+def slide_22_change_rate(prs):
+    """Slide 22: Change Rate Chart (v3)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "GROWTH TRAJECTORY: PLUGINS")
+
+    # Simple bar chart
+    timeline = [
+        ("04-10", "1"),
+        ("04-15", "5"),
+        ("04-19", "14"),
+        ("04-23", "14"),
+    ]
+
+    chart_y = Inches(2.0)
+    bar_w = Inches(1.2)
+
+    for idx, (date, count) in enumerate(timeline):
+        x = Inches(1.5 + idx * 2.0)
+        height = Inches(0.2 + int(count) * 0.08)
+
+        # Bar
+        bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, chart_y - height, bar_w, height)
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = CHART_BLUE
+        bar.line.color.rgb = DARK_TEXT
+        bar.line.width = Pt(1)
+
+        # Label
+        tb_date = slide.shapes.add_textbox(x, chart_y + Inches(0.1), bar_w, Inches(0.25))
+        tf_date = tb_date.text_frame
+        tf_date.text = date
+        p_date = tf_date.paragraphs[0]
+        p_date.font.size = Pt(10)
+        p_date.alignment = PP_ALIGN.CENTER
+
+        tb_count = slide.shapes.add_textbox(x, chart_y - height - Inches(0.3), bar_w, Inches(0.25))
+        tf_count = tb_count.text_frame
+        tf_count.text = count
+        p_count = tf_count.paragraphs[0]
+        p_count.font.size = Pt(10)
+        p_count.font.bold = True
+        p_count.alignment = PP_ALIGN.CENTER
+
+    add_footer(slide, 22)
+
+def slide_23_current_dashboard(prs):
+    """Slide 23: Current Metrics Dashboard (v4)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+    add_header(slide, "LIVE METRICS DASHBOARD — 2026-04-24")
+
+    metrics_grid = [
+        ("Stable Plugins", "14", CHART_BLUE),
+        ("Total Plugins", "25", CHART_RED),
+        ("Days Running", "14", RGBColor(0x2C, 0xA0, 0x2C)),
+        ("Phase", "1+2", GOLD_ACCENT),
+        ("Workers", "6", CHART_BLUE),
+        ("AI Models", "4", CHART_RED),
+        ("Tasks/Day", "100+", RGBColor(0x2C, 0xA0, 0x2C)),
+        ("Uptime", "99.5%", GOLD_ACCENT),
+    ]
+
+    for idx, (label, value, color) in enumerate(metrics_grid):
+        row = idx // 4
+        col = idx % 4
+        x = Inches(0.6 + col * 2.3)
+        y = Inches(1.8 + row * 1.1)
+
+        add_metric_box(slide, label, value, x, y, color)
+
+    add_footer(slide, 23)
+
+def slide_24_phase_3_roadmap(prs):
+    """Slide 24: Phase 3 Roadmap Detail (NEW)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cyber_background(slide)
+    add_cyber_header(slide, "PHASE 3 ROADMAP (Spec-Only)", NEON_PINK)
+
+    phase3_text = """
+10 NEW SPEC-ONLY PLUGINS:
+
+1. ai_document — PDF/Word parsing + generation
+2. ai_email — Inbox automation + classification
+3. bundles_analytics — GA4 + Mixpanel sync
+4. bundles_analytics_superset — Data viz dashboards
+5. exec_batch — Long-running job scheduler
+6. exec_monitor — Prometheus/DataDog integration
+7. mcp_anthropic — Native Anthropic API wrapper
+8. mcp_stripe — Payment processor integration
+9. music_studio — Audio generation + editing
+10. video_studio — Video processing pipeline
+
+ADDITIONAL 4.7 FEATURES TO UNLOCK:
+✓ Extended thinking for complex design decisions
+✓ 1M context for full codebase refactoring
+✓ Prompt caching for repeated templates
+✓ Multi-modal input (images + code + text)
+
+TARGET: Q3 2026
+"""
+
+    tb = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(9), Inches(5.3))
+    tf = tb.text_frame
+    tf.text = phase3_text
+    for p in tf.paragraphs:
+        p.font.size = Pt(10)
+        p.font.color.rgb = NEON_CYAN
+        p.font.name = "Consolas"
+        p.space_after = Pt(2)
+
+def slide_25_closing(prs):
+    """Slide 25: Closing + Vision (v4 Luxury)"""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    add_cream_background(slide)
+
+    # Large quote
+    tb_quote = slide.shapes.add_textbox(Inches(1.0), Inches(2.5), Inches(8.0), Inches(2.0))
+    tf_quote = tb_quote.text_frame
+    tf_quote.text = '"The future is not a single AI.\nIt is orchestrated teams\nworking in harmony."'
+    tf_quote.word_wrap = True
+    for p in tf_quote.paragraphs:
+        p.font.size = Pt(32)
+        p.font.bold = True
+        p.font.color.rgb = GOLD_ACCENT
+        p.alignment = PP_ALIGN.CENTER
+        p.space_before = Pt(4)
+
+    # Attribution
+    tb_attr = slide.shapes.add_textbox(Inches(1.0), Inches(4.8), Inches(8.0), Inches(0.5))
+    tf_attr = tb_attr.text_frame
+    tf_attr.text = "— Orchestration Kit v1.0, 2026-04-24"
+    p_attr = tf_attr.paragraphs[0]
+    p_attr.font.size = Pt(14)
+    p_attr.font.color.rgb = DATA_GRAY
+    p_attr.alignment = PP_ALIGN.CENTER
+
+    # Bottom: thank you
+    tb_thanks = slide.shapes.add_textbox(Inches(0.5), Inches(6.2), Inches(9), Inches(0.8))
+    tf_thanks = tb_thanks.text_frame
+    tf_thanks.text = "Thank you for 14 days of building\nClaude Opus 4.7 × Codex × Gemini × Haiku 4.5"
+    for p in tf_thanks.paragraphs:
+        p.font.size = Pt(12)
+        p.font.color.rgb = DARK_TEXT
+        p.alignment = PP_ALIGN.CENTER
+
 def generate_ppt():
     """Main generator"""
     prs = Presentation()
     prs.slide_width = Inches(10)
     prs.slide_height = Inches(7.5)
 
-    print("[*] Generating Ultimate PPT v6...")
+    print("[*] Generating Ultimate PPT v6 (25 slides)...")
 
-    # Part 1: Design (Slides 1-6)
+    # Part 1: Design & Foundation (Slides 1-6)
     print("[*] Part 1: Cover + Timeline + Grid + Engine + SoT + Roadmap")
     slide_01_cover(prs)
     slide_02_timeline(prs)
@@ -732,21 +1161,33 @@ def generate_ppt():
     slide_05_sot_principle(prs)
     slide_06_roadmap(prs)
 
-    # Part 2: Inflection (Slides 7-9)
-    print("[*] Part 2: Opus 4.7 + Specs + Before/After")
+    # Part 2: Inflection Point (Slides 7-9)
+    print("[*] Part 2: Opus 4.7 + Detailed Specs + Before/After Impact")
     slide_07_opus_47(prs)
     slide_08_opus_specs(prs)
     slide_09_before_after(prs)
 
-    # Part 3: Current (Slides 10-13+)
-    print("[*] Part 3: Metrics + Database + Watchdog + Backoff")
+    # Part 3: Current State (Slides 10-23)
+    print("[*] Part 3: Metrics + Architecture + Operations + Live Dashboard")
     slide_10_metrics(prs)
     slide_11_orca_db(prs)
     slide_12_watchdog(prs)
     slide_13_backoff_chart(prs)
+    slide_14_claude_routing(prs)
+    slide_15_ai_matrix(prs)
+    slide_16_prompt_caching(prs)
+    slide_17_watchdog_detail(prs)
+    slide_18_24h_pipeline(prs)
+    slide_19_cli_map(prs)
+    slide_20_metrics_query(prs)
+    slide_21_legacy_code(prs)
+    slide_22_change_rate(prs)
+    slide_23_current_dashboard(prs)
 
-    # Placeholder for slides 14-25 (in full implementation)
-    # For now, just add footer to reach reasonable count
+    # Part 4: Future Vision (Slides 24-25)
+    print("[*] Part 4: Phase 3 Roadmap + Closing Vision")
+    slide_24_phase_3_roadmap(prs)
+    slide_25_closing(prs)
 
     output_path = "outputs/ppt/orchestration-v1-ULTIMATE-2026-04-23-v6.pptx"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -755,6 +1196,8 @@ def generate_ppt():
     print(f"[+] Generated: {output_path}")
     print(f"[+] Total slides: {len(prs.slides)}")
     print(f"[+] File size: {os.path.getsize(output_path) / 1024:.1f} KB")
+
+    return output_path
 
 if __name__ == "__main__":
     generate_ppt()
