@@ -1,7 +1,7 @@
 {
   "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_dev",
-  "display": "개발 MCP 설치 — GitHub·GitLab·Docker·K8s·AWS·Firebase·Supabase·Vercel·Netlify",
+  "display": "개발 MCP 설치 — GitHub·GitLab·Docker·K8s·Firebase·Supabase·Vercel (npm 실측)",
   "prefix": "mcp_",
   "version": "1.0",
   "status": "stable",
