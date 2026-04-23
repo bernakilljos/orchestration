@@ -1,4 +1,4 @@
-# GEMINI.md — Multi-AI Orchestration Kit v3 (Gemini용)
+# GEMINI.md — Multi-AI Orchestration Kit v1 (Gemini용)
 
 > Claude용: `CLAUDE.md` | Codex용: `AGENTS.md` | Gemini용: 이 파일
 > MCP 설정: `.gemini/config.toml`

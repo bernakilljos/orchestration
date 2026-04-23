@@ -1,4 +1,4 @@
-# CLAUDE.md — Multi-AI Orchestration Kit v3
+# CLAUDE.md — Multi-AI Orchestration Kit v1
 
 > **목적**: Claude Code 가 이 프로젝트에서 **어떻게 일해야 하는지** 정의.
 > **대상**: AI 에이전트 (Claude 우선). 사람용 가이드는 `guide.txt`.

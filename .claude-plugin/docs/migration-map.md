@@ -1,7 +1,7 @@
 # Migration Map — Old → New (Plugin-Centric Restructure)
 
 > 작성일: 2026-04-15  
-> 버전: v2.x → v3.0 (plugin-centric)
+> 버전: v1.0 (plugin-centric)
 
 ## 개요
 

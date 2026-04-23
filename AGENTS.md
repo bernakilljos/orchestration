@@ -1,4 +1,4 @@
-# AGENTS.md — Multi-AI Orchestration Kit v3 (Codex용)
+# AGENTS.md — Multi-AI Orchestration Kit v1 (Codex용)
 
 > Claude용: `CLAUDE.md` | Codex용: 이 파일
 > MCP 설정: `.codex/config.toml`

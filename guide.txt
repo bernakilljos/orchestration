@@ -1,5 +1,5 @@
 ============================================================
-  Orchestration Kit v3 — Complete Guide
+  Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
 ============================================================
 
@@ -171,7 +171,7 @@
     09 finalize         init, npm install, Claude 실행
     10 video-restore    CodeFormer + Real-ESRGAN
     11 media-enhance    오디오/PDF/PPT 의존성
-    12 kit-sync         plugins/ to .claude/ 자동 동기화 + 스키마 검증 (v3 신규)
+    12 kit-sync         plugins/ to .claude/ 자동 동기화 + 스키마 검증
 
   [플러그인 — 8개]
     claude-md-management     CLAUDE.md 품질 관리
@@ -517,7 +517,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  13. 플러그인 생태계 (v3 업데이트 — 2026-04-19)
+  13. 플러그인 생태계 (2026-04-19 업데이트)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   [구조 원칙]
@@ -610,7 +610,7 @@
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  14. v3 추가 사항 요약
+  14. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   2026-04-19 커밋 누적:

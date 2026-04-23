@@ -15,7 +15,7 @@
 ; =====================================================
 
 #define MyAppName "Orchestration Kit"
-#define MyAppVersion "3.0"
+#define MyAppVersion "1.0"
 #define MyAppPublisher "Multi-AI Orchestration"
 #define MyAppURL "https://github.com/bernakilljos/orchestration"
 
