@@ -105,6 +105,22 @@ rem --- Worker heartbeat 갱신 (v3: worker-health.sh 연동) ---
 if not exist "%PROJECT_ROOT%\.claude\state\workers" mkdir "%PROJECT_ROOT%\.claude\state\workers" >nul 2>&1
 powershell -NoProfile -Command "[int][double]::Parse((Get-Date -UFormat %%s)) | Set-Content '%PROJECT_ROOT%\.claude\state\workers\codex-%CHILD_ID%.hb'" >nul 2>&1
 
+rem --- Update SQLite heartbeat (watchdog integration) ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\worker_heartbeat.py" "codex-%CHILD_ID%" "codex" >nul 2>&1
+
+rem --- Pre-flight check: Budget breaker + Codex quota ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\pre_task_check.py" codex >nul 2>&1
+if errorlevel 2 (
+  echo [Worker-%CHILD_ID%] Budget breaker tripped. Waiting 10 min...
+  timeout /t 600 /nobreak >nul
+  goto LOOP
+)
+if errorlevel 3 (
+  echo [Worker-%CHILD_ID%] Codex quota exceeded. Waiting 10 min...
+  timeout /t 600 /nobreak >nul
+  goto LOOP
+)
+
 rem --- Stop 파일 체크 ---
 if exist "%PROJECT_ROOT%\.claude\tasks\stop" (
   echo [Worker-%CHILD_ID%] Stop file detected. Exiting.
@@ -256,6 +272,14 @@ if exist "%PROJECT_ROOT%\.git" (
     echo [Worker-%CHILD_ID%] Git push 실패 (원격 없거나 인증 오류)
   )
 )
+
+rem --- Record metrics to SQLite ---
+for %%F in ("%PICKED_TASK%") do set /a TOKENS_IN=(%%~zF)/4
+python "%PROJECT_ROOT%\.claude\scripts\lib\record_call.py" ^
+  --ai codex --model codex ^
+  --tokens-in !TOKENS_IN! --tokens-out 0 ^
+  --latency-ms 0 --success 1 ^
+  --task-id "%%~nF" 2>nul
 
 rem --- Create review task for Claude ---
 for %%F in ("%PICKED_TASK%") do (

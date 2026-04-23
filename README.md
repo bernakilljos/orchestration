@@ -1,6 +1,21 @@
 # Orchestration Kit v1.0 — Multi-AI Automation Framework
 
-Claude(Team Lead) + Codex(Implementation) + Gemini(Review) — Plugin-Centric 3AI 오케스트레이션
+Claude Opus 4.7 (Team Lead) + Codex (Implementation) + Haiku 4.5 (Review) — Plugin-Centric 멀티AI 오케스트레이션
+
+---
+
+## 24/7 자동화 (v1.0+)
+
+- **SQLite 상태머신**: 원자적 워커·태스크·quota 관리 (`.claude/state/orca.db`, 8 테이블)
+- **Watchdog + 자동부활**: 죽은 워커 복구, quota-aware 지수 backoff (10m→20m→40m→2h)
+- **Budget ceiling**: 일일 비용 상한 초과 시 자동 breaker (신규 태스크 차단)
+- **Haiku 4.5 검증**: Gemini 대체 기본 검증자 (Prompt caching, 90% 비용 절감, 2개 병렬)
+- **4.7 라우팅**: Claude Opus 4.7 + Extended Thinking 우선, Codex/Gemini는 fallback (route.py)
+- **통합 메트릭**: SQLite 기반 성능·비용·quota 대시보드 (metrics-report.py)
+
+설정: `python .claude/scripts/init-state-db.py` → `.claude/scripts/watchdog-start.bat`  
+상태: `python .claude/scripts/route.py --status`  
+상세: [guide.txt](guide.txt) 섹션 7
 
 ---
 

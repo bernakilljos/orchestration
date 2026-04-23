@@ -34,21 +34,23 @@
 2. **First-Run** — `docs/CLAUDE_SETUP_GUIDE.md` 있으면 처리 후 삭제
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
 
-### 3.2 AI 역할 (규모·특성 기반)
+### 3.2 AI 역할 (규모·특성 기반, 4.7 우선)
 | 태스크 | AI | 방법 |
 |--------|-----|------|
-| 설계·판단·승인 | Claude (Opus) | 직접 |
+| 설계·복잡추론 | Claude Opus 4.7 | Extended Thinking (1M context) |
+| 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
-| 코드 보완 | Claude (Sonnet) | Codex 결과 위에 |
-| 검증·문서 | Gemini (Flash) | `gemini-auto` |
+| 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
+| 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성 매트릭스 포함)
+라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성·quota 매트릭스)
 
-### 3.3 API 한도 Fallback
-Codex/Gemini 한도 감지 → Claude 직접 모드 자동 전환.
-- 감지: `plugins/exec_orch/scripts/codex-quota-check.sh`
-- 플래그: `.claude/state/codex-quota-exceeded` (TTL 3h)
+### 3.3 API 한도 + Budget Fallback
+SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
+- 감지: `.claude/state/orca.db` (quota·budget 테이블)
+- Quota 초과: 10m→20m→40m→2h 지수 backoff
+- Budget 초과: 일일 상한 (기본 무제한, `route.py --set-daily-limit` 설정 가능)
 - **절대 금지**: 빈 task 를 `done/` 으로 이동 (위장 완료)
 
 ### 3.4 Orca Auto 규칙
@@ -66,6 +68,13 @@ Codex/Gemini 한도 감지 → Claude 직접 모드 자동 전환.
 
 상세: `plugins/exec_orch/skills/route_dispatch.md § Step 4`
 
+### 3.6 24/7 자동화 필수 설정
+1. **SQLite 초기화**: `python .claude/scripts/init-state-db.py` (`.claude/state/orca.db` 생성)
+2. **Watchdog 백그라운드**: `.claude/scripts/watchdog-start.bat` (워커 heartbeat 체크)
+3. **예산 상한** (선택): `python .claude/scripts/route.py --set-daily-limit 50` (USD)
+
+상세: `guide.txt` § 7 · `docs/routing-policy.md` · `docs/caching-strategy.md` · `docs/metrics-guide.md`
+
 ---
 
 ## 4. 핵심 경로 (참조 전용 — 내용은 해당 파일에)
@@ -75,13 +84,17 @@ Codex/Gemini 한도 감지 → Claude 직접 모드 자동 전환.
 | `plugins/` | **원본** (14 stable + 7 spec-only + `_template`) | ✅ 여기만 |
 | `.claude/commands,skills/` | sync 결과물 | ❌ 자동 생성 |
 | `.claude/rules/` | 공유 규칙 (plugin-structure·frontmatter·file-naming·sync·indentation) | ✅ |
-| `.claude/scripts/` | sync·validate·install·orca-status·worker-health 등 17개 | ✅ |
+| `.claude/scripts/` | sync·validate·install·orca-status·worker-health·route·watchdog·metrics 등 | ✅ |
+| `.claude/scripts/lib/` | state_db·router·pricing·prompt_cache·watchdog_helpers (10개) | ✅ |
 | `.claude/hooks/` | PreToolUse·PostToolUse·SessionEnd 훅 스크립트 | ✅ |
-| `.claude/state/` | heartbeat·workers·quota-flag·token-log | 자동 |
+| `.claude/state/orca.db` | **SQLite 통합 상태** (workers·tasks·metrics·quota·budget·session) | 자동 |
 | `.claude/tasks/` | task-instruction.md, locks/, done/ | 자동 |
 | `~/.claude/orca/` | **전역 큐** (멀티 프로젝트) | 자동 |
 | `.claude-plugin/` | plugin.json + schema + marketplace.json | ✅ |
 | `docs/architecture-patterns.md` | 설계 원칙 9가지 | ✅ |
+| `docs/caching-strategy.md` | Prompt caching TTL 전략 | ✅ |
+| `docs/routing-policy.md` | 4.7 라우팅 결정 트리 상세 | ✅ |
+| `docs/metrics-guide.md` | Metrics DB 스키마·쿼리 | ✅ |
 | `docs/2026-04-19/로드맵.md` | Phase 1~3 스펙 (미래 26개) | ✅ |
 | `guide.txt` | 사람용 전체 가이드 (섹션 1~14) | ✅ |
 | `.env` / `.env.example` | 환경변수 (하드코딩 금지) | .env 는 gitignore |

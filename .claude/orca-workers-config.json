@@ -5,6 +5,7 @@
     "codex": 4,
     "gemini": 2,
     "claude": 2,
+    "haiku": 2,
     "local_llm": 1
   },
   "local_llm": {

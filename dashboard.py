@@ -5,7 +5,8 @@ http://localhost:8787          전체 PC 현황
 http://localhost:8787/pc/ID   PC 상세 + 원격 지시
 """
 
-import http.server, json, urllib.request, urllib.parse, urllib.error, os, subprocess, base64, threading, time, socket, uuid, glob as globmod, re as _re
+import http.server, json, urllib.request, urllib.parse, urllib.error, os, subprocess, base64, threading, time, socket, uuid, glob as globmod, re as _re, sys
+from pathlib import Path
 from datetime import datetime, timezone
 
 OWNER       = "bernakilljos"
@@ -553,7 +554,8 @@ def make_index(statuses, err, body_only=False):
     if not pcs:
         pcs = f'<div style="display:flex;flex-direction:column;align-items:center;opacity:.4">{monitor_svg("#4f8ef7","wait",0,0,0)}<div style="margin-top:8px;font-size:14px;color:#64748b;font-weight:700">대기 중입니다</div><div style="font-size:12px;color:#475569;margin-top:4px">각 PC에서 install.bat을 실행하세요</div></div>'
 
-    body = stat_row + '<div class="section-title">PC 현황</div><div class="pc-grid">'+pcs+'</div>'
+    metrics_section = '<div class="section-title">메트릭 (24h)</div><div id="metrics-summary" style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:12px;margin-bottom:16px;font-family:monospace;font-size:12px;white-space:pre;overflow-x:auto;color:#94a3b8;max-height:200px;overflow-y:auto"><span style="color:#64748b">로딩 중...</span></div>'
+    body = stat_row + metrics_section + '<div class="section-title">PC 현황</div><div class="pc-grid">'+pcs+'</div>'
     if body_only: return body
     ajax_poll = """<script>
 function quickCtrl(pcId, action, btn) {
@@ -585,6 +587,35 @@ function delPc(pcId) {
   };
   ov.onclick = function(e){ if(e.target===ov) ov.remove(); };
 }
+function updateMetrics(){
+  fetch('/api/metrics?hours=24').then(function(r){return r.json();}).then(function(data){
+    var el=document.getElementById('metrics-summary');
+    if(!el) return;
+    var lines=['Period: last 24h','─────────────────────────────────────────────'];
+    var total_cost=0, total_calls=0;
+    for(var ai in data){
+      var m=data[ai];
+      var cost=m.total_cost_usd||0;
+      var calls=m.count||0;
+      var sr=(m.success_rate*100).toFixed(1);
+      total_cost+=cost;
+      total_calls+=calls;
+      var tokens_in=m.tokens_in||0;
+      var tokens_out=m.tokens_out||0;
+      var t_in=tokens_in>1000000?(tokens_in/1000000).toFixed(1)+'M':tokens_in>1000?(tokens_in/1000).toFixed(1)+'K':tokens_in;
+      var t_out=tokens_out>1000000?(tokens_out/1000000).toFixed(1)+'M':tokens_out>1000?(tokens_out/1000).toFixed(1)+'K':tokens_out;
+      lines.push(ai.padEnd(20) + calls.toString().padEnd(10) + sr.padEnd(11)+'% ' + (t_in+'/'+t_out).padEnd(20) + ('$'+cost.toFixed(4)).padEnd(12));
+    }
+    lines.push('─────────────────────────────────────────────');
+    lines.push(('TOTAL').padEnd(20) + total_calls.toString().padEnd(10) + '' + ('$'+total_cost.toFixed(4)).padEnd(12));
+    el.innerHTML=lines.join('\\n');
+  }).catch(function(e){
+    var el=document.getElementById('metrics-summary');
+    if(el) el.innerHTML='Error loading metrics';
+  });
+}
+updateMetrics();
+setInterval(updateMetrics, 30000);
 setInterval(function(){
   if(document.querySelector('.modal-overlay')) return;
   fetch('/api/index-body').then(function(r){return r.text();}).then(function(html){
@@ -1058,6 +1089,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         if path=="/health":
             self.send_json({"ok":True,"tunnel": _tunnel_url})
+            return
+        if path=="/api/metrics":
+            try:
+                qs=urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                hours=int(qs.get("hours",["24"])[0])
+                sys.path.insert(0,str(Path(__file__).parent/".claude"/"scripts"/"lib"))
+                from state_db import get_metrics_summary
+                summary=get_metrics_summary(hours=hours)
+                self.send_json(summary)
+            except Exception as e:
+                self.send_json({"error":str(e)})
             return
         if path.startswith("/control/"):
             parts=path[9:].split("/")
