@@ -67,3 +67,8 @@ docs/ini/
 
 # Stale task locks
 .claude/tasks/locks/*.lock
+
+# Microsoft Office 임시 잠금 파일
+~$*.pptx
+~$*.docx
+~$*.xlsx
