@@ -55,70 +55,70 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .display-xxl {
-  font-size: 180px;
+  font-size: 220px;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 
 .display-xl {
-  font-size: 120px;
+  font-size: 160px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .display-l {
-  font-size: 80px;
+  font-size: 104px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
 .heading-1 {
-  font-size: 56px;
+  font-size: 68px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .heading-2 {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .heading-3 {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
 .eyebrow {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 .body-lead {
-  font-size: 18px;
+  font-size: 23px;
   font-weight: 400;
   line-height: 1.65;
   letter-spacing: -0.005em;
 }
 
 .body {
-  font-size: 15px;
+  font-size: 19px;
   font-weight: 400;
   line-height: 1.7;
   letter-spacing: -0.003em;
 }
 
 .caption {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--stone);
@@ -216,7 +216,7 @@ body {
 }
 
 .bullet-box h3 {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -243,7 +243,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.5;
 }
 
@@ -280,7 +280,7 @@ body {
 
 .stat-number {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 200px;
+  font-size: 240px;
   font-weight: 800;
   line-height: 0.9;
   color: var(--gold);
@@ -292,7 +292,7 @@ body {
 .part-4 .stat-number { color: var(--plum); }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -314,7 +314,7 @@ body {
 .compare-col.plum { border-left-color: var(--plum); }
 
 .compare-col h4 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -326,7 +326,7 @@ body {
 .compare-col.plum h4 { color: var(--plum); }
 
 .compare-col p {
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.6;
   color: var(--ink);
   margin-bottom: 12px;
@@ -353,7 +353,7 @@ body {
 
 .plugin-prefix {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--gold);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -361,14 +361,14 @@ body {
 }
 
 .plugin-name {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   margin-top: 6px;
   color: var(--ink);
 }
 
 .plugin-role {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--stone);
   margin-top: 8px;
   line-height: 1.4;
@@ -396,7 +396,7 @@ body {
 }
 
 .footnote {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--stone);
   font-weight: 500;
 }
@@ -502,7 +502,7 @@ em {
 }
 
 .mermaid .label text {
-  font-size: 13px !important;
+  font-size: 16px !important;
 }
 
 /* Mermaid state diagram */
@@ -516,17 +516,17 @@ iconify-icon {
   display: inline-block;
   vertical-align: -0.15em;
   color: var(--gold);
-  font-size: 1.3em;
+  font-size: 1.5em;
 }
 
 .icon-accent  { color: var(--gold); }
 .icon-warn    { color: var(--terracotta); }
 .icon-success { color: var(--sage); }
 .icon-muted   { color: var(--stone); }
-.icon-xl      { font-size: 48px; }
-.icon-lg      { font-size: 32px; }
-.icon-md      { font-size: 20px; }
-.icon-sm      { font-size: 16px; }
+.icon-xl      { font-size: 60px; }
+.icon-lg      { font-size: 40px; }
+.icon-md      { font-size: 26px; }
+.icon-sm      { font-size: 20px; }
 
 /* ── Unsplash 배경 ── */
 .hero-bg {
@@ -570,7 +570,7 @@ iconify-icon {
 .display-serif {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  font-size: 92px;
+  font-size: 110px;
   line-height: 1.05;
   letter-spacing: -0.02em;
 }

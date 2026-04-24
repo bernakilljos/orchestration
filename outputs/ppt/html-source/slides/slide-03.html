@@ -7,12 +7,14 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
     .plugin-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 24px; }
-    .plugin-card-mini { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); border: 0.5px solid var(--fog); }
-    .plugin-prefix { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--gold); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-    .plugin-name { font-size: 13px; font-weight: 700; margin-top: 4px; color: var(--ink); }
-    .plugin-role { font-size: 10px; color: var(--stone); margin-top: 6px; line-height: 1.3; }
+    .plugin-card-mini { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); border: 0.5px solid var(--fog); display: flex; flex-direction: column; }
+    .plugin-icon { font-size: 28px; margin-bottom: 12px; }
+    .plugin-prefix { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+    .plugin-name { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--ink); }
+    .plugin-role { font-size: 12px; color: var(--stone); margin-top: 6px; line-height: 1.3; }
   </style>
 </head>
 <body>
@@ -34,71 +36,85 @@
 
       <div class="plugin-grid-4">
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon></div>
           <div class="plugin-prefix">EXEC_</div>
           <div class="plugin-name">exec_orch</div>
           <div class="plugin-role">멀티AI 오케스트레이션 엔진</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon></div>
           <div class="plugin-prefix">EXEC_</div>
           <div class="plugin-name">exec_learning</div>
           <div class="plugin-role">세션 학습 · 패턴 메모리</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:speaker-wave"></iconify-icon></div>
           <div class="plugin-prefix">EXEC_</div>
           <div class="plugin-name">exec_voice</div>
           <div class="plugin-role">STT · TTS · 오디오 편집</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:shield-exclamation"></iconify-icon></div>
           <div class="plugin-prefix">EXEC_</div>
           <div class="plugin-name">exec_session_guard</div>
           <div class="plugin-role">토큰 부족 대비 스냅샷</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:globe-alt"></iconify-icon></div>
           <div class="plugin-prefix">MCP_</div>
           <div class="plugin-name">mcp_web</div>
           <div class="plugin-role">웹 브라우징 · 스크린샷</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:server-stack"></iconify-icon></div>
           <div class="plugin-prefix">MCP_</div>
           <div class="plugin-name">mcp_data</div>
           <div class="plugin-role">DB · SQL · BigQuery</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:code-bracket"></iconify-icon></div>
           <div class="plugin-prefix">MCP_</div>
           <div class="plugin-name">mcp_dev</div>
           <div class="plugin-role">Git · 파일 탐색</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:document-text"></iconify-icon></div>
           <div class="plugin-prefix">MCP_</div>
           <div class="plugin-name">mcp_docs</div>
           <div class="plugin-role">Slack · Notion API</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:link"></iconify-icon></div>
           <div class="plugin-prefix">MCP_</div>
           <div class="plugin-name">mcp_collab</div>
           <div class="plugin-role">Figma · Canva · Gamma</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:presentation-chart-bar"></iconify-icon></div>
           <div class="plugin-prefix">DESIGN_</div>
           <div class="plugin-name">design_ppt</div>
           <div class="plugin-role">Gamma PPT 생성</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:table-cells"></iconify-icon></div>
           <div class="plugin-prefix">DESIGN_</div>
           <div class="plugin-name">design_excel</div>
           <div class="plugin-role">엑셀 템플릿 생성</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:document"></iconify-icon></div>
           <div class="plugin-prefix">DESIGN_</div>
           <div class="plugin-name">design_word</div>
           <div class="plugin-role">Word 문서 생성</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:globe-alt"></iconify-icon></div>
           <div class="plugin-prefix">DESIGN_</div>
           <div class="plugin-name">design_web-*</div>
           <div class="plugin-role">웹 랜딩 페이지</div>
         </div>
         <div class="plugin-card-mini">
+          <div class="plugin-icon"><iconify-icon icon="heroicons:shield-check"></iconify-icon></div>
           <div class="plugin-prefix">REVIEW_</div>
           <div class="plugin-name">review_qa</div>
           <div class="plugin-role">코드 검증 · QA</div>

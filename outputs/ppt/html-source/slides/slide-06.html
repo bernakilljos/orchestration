@@ -7,13 +7,16 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
+    .mermaid-wrapper { background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); margin-top: 32px; }
     .roadmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
     .roadmap-phase { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 28px; border: 0.5px solid var(--fog); }
-    .phase-number { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
-    .phase-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
-    .phase-count { font-size: 13px; font-weight: 600; color: var(--stone); margin-bottom: 16px; }
-    .phase-items { font-size: 12px; line-height: 1.6; color: var(--ink); }
+    .phase-number { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+    .phase-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+    .phase-count { font-size: 15px; font-weight: 600; color: var(--stone); margin-bottom: 16px; }
+    .phase-items { font-size: 14px; line-height: 1.6; color: var(--ink); }
   </style>
 </head>
 <body>
@@ -33,7 +36,23 @@
         각각은 명확한 목적을 가지며, 현재 14개와 느슨하게 통합된다.
       </p>
 
-      <div class="roadmap">
+      <div class="mermaid-wrapper">
+        <div class="mermaid">
+graph LR
+  P1["🚀<br/>Phase 1<br/>2026 Q2<br/>14 stable"]
+  P2["🔧<br/>Phase 2<br/>2026 Q3<br/>6 experimental"]
+  P3["✨<br/>Phase 3<br/>2026 Q4<br/>6 spec-only"]
+
+  P1 --> P2
+  P2 --> P3
+
+  style P1 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
+  style P2 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
+  style P3 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
+        </div>
+      </div>
+
+      <div class="roadmap" style="display: none;">
         <div class="roadmap-phase">
           <div class="phase-number">1</div>
           <div class="phase-title">CURRENT</div>

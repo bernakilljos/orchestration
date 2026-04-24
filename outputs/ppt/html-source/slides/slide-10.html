@@ -6,6 +6,16 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .metric-card { background: white; padding: 20px; border-radius: 8px; border: 0.5px solid var(--fog); display: flex; align-items: flex-start; gap: 16px; }
+    .metric-icon { font-size: 32px; flex-shrink: 0; margin-top: 2px; }
+    .metric-content { flex: 1; }
+    .metric-number { font-size: 13px; font-weight: 600; color: var(--stone); font-family: 'JetBrains Mono'; }
+    .metric-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-top: 4px; }
+    .metric-desc { font-size: 14px; color: var(--stone); margin-top: 4px; line-height: 1.4; }
+  </style>
 </head>
 <body>
   <div class="slide part-3">
@@ -20,49 +30,85 @@
         전체 프로젝트 컨텍스트를 갖추면서 우리는 이제 측정할 수 있게 됐다.
         <strong>10개의 신규 지표</strong>를 orca.db에 추가했다.
       </p>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; font-size: 13px; line-height: 1.6;">
-        <div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">① Worker Efficiency</strong><br/>
-            실제 작업 시간 / 전체 시간
-          </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">② Token Waste</strong><br/>
-            버려진 토큰 / 전체 사용량
-          </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">③ Cache Hit Rate</strong><br/>
-            Prompt Caching 성공률
-          </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">④ Latency P95</strong><br/>
-            95분위 응답 시간
-          </div>
-          <div style="background: white; padding: 16px; border-radius: 8px;">
-            <strong style="color: var(--sage);">⑤ Error Rate</strong><br/>
-            API 실패율 (목표: <0.1%)
+      <div class="metric-grid" style="margin-top: 32px;">
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:cpu-chip" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">①</div>
+            <div class="metric-title">Worker Efficiency</div>
+            <div class="metric-desc">실제 작업 시간 / 전체 시간</div>
           </div>
         </div>
-        <div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">⑥ Cost/Task</strong><br/>
-            평균 작업당 비용 ($)
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:trash" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">②</div>
+            <div class="metric-title">Token Waste</div>
+            <div class="metric-desc">버려진 토큰 / 전체 사용량</div>
           </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">⑦ Model Accuracy</strong><br/>
-            Haiku vs Opus 정확도 차이
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:bolt" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">③</div>
+            <div class="metric-title">Cache Hit Rate</div>
+            <div class="metric-desc">Prompt Caching 성공률</div>
           </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">⑧ Queue Depth</strong><br/>
-            대기 중인 작업 수
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:clock" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">④</div>
+            <div class="metric-title">Latency P95</div>
+            <div class="metric-desc">95분위 응답 시간</div>
           </div>
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
-            <strong style="color: var(--sage);">⑨ Retry Rate</strong><br/>
-            실패 후 재시도 비율
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:exclamation-triangle" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑤</div>
+            <div class="metric-title">Error Rate</div>
+            <div class="metric-desc">API 실패율 (목표: <0.1%)</div>
           </div>
-          <div style="background: white; padding: 16px; border-radius: 8px;">
-            <strong style="color: var(--sage);">⑩ User Satisfaction</strong><br/>
-            완료된 작업 만족도 (NPS)
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:banknotes" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑥</div>
+            <div class="metric-title">Cost/Task</div>
+            <div class="metric-desc">평균 작업당 비용 ($)</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:chart-bar" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑦</div>
+            <div class="metric-title">Model Accuracy</div>
+            <div class="metric-desc">Haiku vs Opus 정확도 차이</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:queue-list" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑧</div>
+            <div class="metric-title">Queue Depth</div>
+            <div class="metric-desc">대기 중인 작업 수</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:arrow-path" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑨</div>
+            <div class="metric-title">Retry Rate</div>
+            <div class="metric-desc">실패 후 재시도 비율</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon"><iconify-icon icon="heroicons:heart" style="color: var(--sage);"></iconify-icon></div>
+          <div class="metric-content">
+            <div class="metric-number">⑩</div>
+            <div class="metric-title">User Satisfaction</div>
+            <div class="metric-desc">완료된 작업 만족도 (NPS)</div>
           </div>
         </div>
       </div>

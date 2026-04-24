@@ -7,12 +7,16 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
+    .mermaid-wrapper { background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); margin-top: 32px; }
     .sot-flow { display: flex; gap: 16px; margin-top: 32px; align-items: center; }
     .flow-step { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 0.5px solid var(--fog); flex: 1; }
-    .flow-arrow { font-size: 28px; color: var(--gold); }
-    .step-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
-    .step-detail { font-size: 12px; color: var(--stone); line-height: 1.4; }
+    .flow-arrow { font-size: 32px; color: var(--gold); }
+    .step-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .step-icon { font-size: 24px; }
+    .step-detail { font-size: 14px; color: var(--stone); line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -32,26 +36,19 @@
         그 결과는 자동으로 <code style="background: var(--bone); padding: 2px 6px; border-radius: 3px;">.claude/</code> 로 동기화된다.
       </p>
 
-      <div class="sot-flow">
-        <div class="flow-step">
-          <div class="step-title">✏️ 원본</div>
-          <div class="step-detail">plugins/
-          <br/>커맨드 · 스킬
-          <br/>플러그인 구조</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-title">🔄 동기화</div>
-          <div class="step-detail">sync-plugins.sh
-          <br/>자동 위상정렬
-          <br/>드리프트 감지</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-title">✨ 결과물</div>
-          <div class="step-detail">.claude/commands/
-          <br/>.claude/skills/
-          <br/>/ 슬래시 커맨드</div>
+      <div class="mermaid-wrapper">
+        <div class="mermaid">
+graph LR
+  P["plugins/<br/>원본"]
+  S["sync-plugins.sh<br/>자동 동기화"]
+  C[".claude/<br/>결과물"]
+
+  P -->|위상정렬<br/>스키마 검증| S
+  S -->|커맨드·스킬<br/>슬래시 커맨드| C
+
+  style P fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
+  style S fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
+  style C fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
         </div>
       </div>
 

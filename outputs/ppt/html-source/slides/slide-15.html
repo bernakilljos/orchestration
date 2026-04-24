@@ -2,45 +2,98 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 15</title>
+  <title>AI 모델 매트릭스</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .model-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 32px; }
+    .model-card { background: white; padding: 20px; border-radius: 8px; border: 0.5px solid var(--fog); text-align: center; }
+    .model-icon { font-size: 36px; margin-bottom: 12px; }
+    .model-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; font-family: 'JetBrains Mono'; }
+    .model-spec { font-size: 12px; color: var(--stone); line-height: 1.4; }
+    .spec-row { margin-top: 10px; text-align: left; border-top: 0.5px solid var(--bone); padding-top: 8px; }
+    .spec-check { color: #5C8A5C; }
+  </style>
 </head>
 <body>
   <div class="slide part-3">
     <div class="slide-header">
-      <span class="eyebrow">SLIDE 15</span>
+      <span class="eyebrow">PART 03 · AI MODEL SELECTION MATRIX</span>
       <span class="mono caption">15 / 25</span>
     </div>
     <div class="main-content">
-      <h1 class="heading-1">Slide 15</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Content subtitle</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        Detailed content for slide 15. This is a placeholder slide.
-        Additional paragraphs and information will be added here.
-      </p>
-      <div style="margin-top: 40px; background: white; padding: 24px; border-radius: 8px; border: 0.5px solid var(--fog);">
-        <ul style="font-size: 14px; line-height: 1.8; color: var(--ink);">
-          <li><strong>Point 1:</strong> First key information point</li>
-          <li><strong>Point 2:</strong> Second key information point</li>
-          <li><strong>Point 3:</strong> Third key information point</li>
-        </ul>
+      <h1 class="heading-1">AI 모델 매트릭스</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">각 태스크에 맞는 AI 선택</p>
+
+      <div class="model-grid">
+        <div class="model-card">
+          <div class="model-icon"><iconify-icon icon="heroicons:academic-cap" style="color: var(--sage);"></iconify-icon></div>
+          <div class="model-name">Opus 4.7</div>
+          <div class="model-spec">설계, 판단, 복잡 분석</div>
+          <div class="spec-row">
+            <div style="font-size: 11px;">• 1M 토큰</div>
+            <div style="font-size: 11px;">• Thinking <iconify-icon icon="heroicons:check-circle" class="spec-check"></iconify-icon></div>
+            <div style="font-size: 11px;">• Caching <iconify-icon icon="heroicons:check-circle" class="spec-check"></iconify-icon></div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-icon"><iconify-icon icon="heroicons:pencil" style="color: var(--sage);"></iconify-icon></div>
+          <div class="model-name">Sonnet 4.6</div>
+          <div class="model-spec">코드 작성, 보완</div>
+          <div class="spec-row">
+            <div style="font-size: 11px;">• 200K 토큰</div>
+            <div style="font-size: 11px;">• 빠른 응답</div>
+            <div style="font-size: 11px;">• 균형 설정</div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-icon"><iconify-icon icon="heroicons:bolt" style="color: var(--sage);"></iconify-icon></div>
+          <div class="model-name">Haiku 4.5</div>
+          <div class="model-spec">검증, 분류</div>
+          <div class="spec-row">
+            <div style="font-size: 11px;">• 초고속</div>
+            <div style="font-size: 11px;">• 저가격</div>
+            <div style="font-size: 11px;">• 간단 작업</div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-icon"><iconify-icon icon="heroicons:code-bracket" style="color: var(--sage);"></iconify-icon></div>
+          <div class="model-name">Codex</div>
+          <div class="model-spec">대규모 구현</div>
+          <div class="spec-row">
+            <div style="font-size: 11px;">• 병렬 4개</div>
+            <div style="font-size: 11px;">• 500줄+</div>
+            <div style="font-size: 11px;">• API 통합</div>
+          </div>
+        </div>
+        <div class="model-card">
+          <div class="model-icon"><iconify-icon icon="heroicons:sparkles" style="color: var(--sage);"></iconify-icon></div>
+          <div class="model-name">Gemini</div>
+          <div class="model-spec">문서, 검증</div>
+          <div class="spec-row">
+            <div style="font-size: 11px;">• 한국어</div>
+            <div style="font-size: 11px;">• 다중서식</div>
+            <div style="font-size: 11px;">• Google API</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="side-panel">
       <div class="bullet-box part-3">
-        <h3>◆ Key Highlights</h3>
-        <ul>
-          <li>Insight 1</li>
-          <li>Insight 2</li>
-          <li>Insight 3</li>
-          <li>Insight 4</li>
+        <h3>◆ 라우팅 규칙</h3>
+        <ul style="font-size: 13px;">
+          <li>복잡도 높음 → Opus</li>
+          <li>코드 200~500줄 → Sonnet</li>
+          <li>검증·분류 → Haiku</li>
+          <li>대규모 구현 → Codex</li>
+          <li>문서·검토 → Gemini</li>
         </ul>
         <hr>
-        <div class="stat-display">
-          <div class="stat-number" style="font-size: 64px;">15</div>
-          <div class="stat-label">SLIDE</div>
+        <div style="margin-top: 16px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--ink);">최적 비용</div>
+          <div style="font-size: 13px; color: var(--stone); margin-top: 6px;">작업별 AI 배정</div>
         </div>
       </div>
     </div>

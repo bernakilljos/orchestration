@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
     .timeline {
       display: flex;
@@ -22,7 +24,7 @@
     }
     .timeline-date {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 600;
       color: var(--gold);
       text-transform: uppercase;
@@ -33,12 +35,12 @@
       gap: 8px;
     }
     .timeline-title {
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 700;
       color: var(--ink);
     }
     .timeline-desc {
-      font-size: 13px;
+      font-size: 16px;
       line-height: 1.5;
       color: var(--stone);
     }
@@ -47,6 +49,15 @@
       border-left: 3px solid var(--gold);
       padding: 16px;
       border-radius: 6px;
+    }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      margin-top: 32px;
     }
   </style>
 </head>
@@ -61,29 +72,15 @@
       <h1 class="heading-1">14일의 여정</h1>
       <p class="heading-2 text-stone" style="font-weight: 400;">당신의 설계가 프레임워크가 되기까지</p>
 
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="timeline-date">4월 19일</div>
-          <div class="timeline-content">
-            <div class="timeline-title">원본 설계 완성</div>
-            <div class="timeline-desc">14개 플러그인 구조 확정 · exec_orch 핵심 엔진 설계</div>
-          </div>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-date">4월 20일</div>
-          <div class="timeline-content">
-            <div class="timeline-title">Opus 4.7 변곡점</div>
-            <div class="timeline-desc">1M 토큰 윈도우 · Prompt Caching · Extended Thinking 도입</div>
-          </div>
-        </div>
-
-        <div class="timeline-item">
-          <div class="timeline-date">4월 23일</div>
-          <div class="timeline-content">
-            <div class="timeline-title">프로덕션 배포</div>
-            <div class="timeline-desc">orca.db 도입 · 10개 신규 지표 · 24/7 Watchdog 활성화</div>
-          </div>
+      <div class="mermaid-wrapper">
+        <div class="mermaid">
+timeline
+  title 14일 여정 (2026-04-10 → 04-23)
+  2026-04-10 : 킷 시작
+  2026-04-13 : 첫 플러그인 구조화
+  2026-04-19 : 14 stable 플러그인 완성
+  2026-04-20 : Opus 4.7 변곡점
+  2026-04-23 : 프로덕션 배포
         </div>
       </div>
 
