@@ -8,39 +8,127 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light", securityLevel: "loose" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-06 {
+      display: flex;
+      flex-direction: column;
+      height: 1080px;
+      padding: 60px 80px 50px 80px;
+      box-sizing: border-box;
+    }
+    .scope-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-top: 32px;
+      align-items: start;
+    }
+    .scope-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .scope-card {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-left: 6px solid var(--gold);
+      border-radius: 12px;
+      padding: 24px 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .scope-card.folder { border-left-color: #1A1D24; background: rgba(184,134,78,0.12); }
+    .scope-card.project { border-left-color: #8A6235; }
+    .scope-card.global { border-left-color: #B8864E; opacity: 0.85; }
+    .scope-card .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .scope-card .name {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .scope-card .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: var(--stone);
+    }
+    .scope-card .note {
+      font-size: 16px;
+      color: var(--stone);
+      margin-top: 6px;
+    }
+    .scope-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .ring-svg {
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      align-self: center;
+    }
+    .core-box {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 32px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      padding: 24px 28px;
+    }
+    .core-box h3 {
+      font-size: 18px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 12px 0;
       display: flex;
       align-items: center;
-      justify-content: center;
-      max-width: 100%;
-      max-height: 400px;
-      overflow: hidden;
+      gap: 8px;
     }
-
-    .mermaid {
-      max-width: 1500px !important; width: 100%;
-      max-height: 100% !important;
-      height: auto !important;
+    .core-box ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 24px;
     }
-
-    .mermaid svg {
-      max-width: 1500px !important; width: 100%;
-      max-height: 100% !important;
-      height: auto !important;
+    .core-box li {
+      font-size: 20px;
+      line-height: 1.4;
+      color: var(--ink);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .core-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+    .slide-06 .footer-border {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 0.5px solid var(--fog);
+    }
+    .slide-06 .footnote {
+      font-size: 14px;
+      color: var(--stone);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-1">
+  <div class="slide bg-subtle part-1 slide-06">
     <div class="slide-header">
       <span class="slide-eyebrow">
         <iconify-icon icon="heroicons:circle-stack" class="icon-sm"></iconify-icon>
@@ -49,57 +137,62 @@
       <span class="mono caption">06 / 25</span>
     </div>
 
-    <div class="main-content">
-      <div class="title-with-icon">
-        <iconify-icon icon="heroicons:brain" class="icon-lg"></iconify-icon>
-        <h1 class="heading-1">기억의 3 단계</h1>
-      </div>
-
-      <p class="body-lead" style="margin-bottom: 24px;">
-        Claude는 세 단계 Memory 에서 컨텍스트를 구성합니다.
-      </p>
-
-      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start;">
-        <div>
-          <h3 class="heading-3" style="margin-bottom: 20px;">우선순위</h3>
-          <div style="font-size: 22px; line-height: 2;">
-            <div><strong>1. Folder</strong><br><span class="text-stone">./src/CLAUDE.md</span></div>
-            <div style="margin-top: 16px;"><strong>2. Project</strong><br><span class="text-stone">./CLAUDE.md</span></div>
-            <div style="margin-top: 16px;"><strong>3. Global</strong><br><span class="text-stone">~/.claude/CLAUDE.md</span></div>
-            <div style="margin-top: 24px; padding-top: 24px; border-top: 0.5px solid var(--fog); font-size: 14px; color: var(--stone);">
-              가장 가까운 규칙이 우선 적용됨
-            </div>
-          </div>
-        </div>
-
-        <div class="mermaid-wrapper">
-          <div class="mermaid">
-graph TD
-  A["Folder<br>./src/CLAUDE.md<br>▲ 가장 가까움"] --> D["최종 규칙<br>결정"]
-  B["Project<br>./CLAUDE.md"] --> D
-  C["Global<br>~/.claude/CLAUDE.md<br>▼ 가장 멀음"] --> D
-          </div>
-        </div>
-      </div>
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:cpu-chip" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">기억의 3 단계</h1>
     </div>
+    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">
+      Claude는 세 단계 Memory 로 컨텍스트를 구성한다 · <strong style="color: var(--ink);">Folder &gt; Project &gt; Global</strong>
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>
-          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
-          핵심
-        </h3>
-        <ul>
-          <li>Last wins (마지막이 이김)</li>
-          <li>가까운 것 우선</li>
-          <li>.local.md는 병합</li>
-          <li>git ignore (개인)</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.5;">
-          충돌 시 폴더 레벨이<br>
-          프로젝트·글로벌을<br>
-          덮어쓴다
+    <div class="scope-body">
+      <div class="scope-cards">
+        <div class="scope-card folder">
+          <div class="num">01</div>
+          <div>
+            <div class="name">Folder <span style="font-size:18px;color:var(--gold);">(최우선)</span></div>
+            <div class="path">./src/CLAUDE.md</div>
+            <div class="note">모듈·컴포넌트 국소 규칙</div>
+          </div>
+        </div>
+        <div class="scope-card project">
+          <div class="num">02</div>
+          <div>
+            <div class="name">Project</div>
+            <div class="path">./CLAUDE.md</div>
+            <div class="note">팀 공유 빌드·테스트·컨벤션</div>
+          </div>
+        </div>
+        <div class="scope-card global">
+          <div class="num">03</div>
+          <div>
+            <div class="name">Global</div>
+            <div class="path">~/.claude/CLAUDE.md</div>
+            <div class="note">개인 코딩 스타일·선호</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="scope-visual">
+        <svg viewBox="0 0 420 420" class="ring-svg">
+          <circle cx="210" cy="210" r="190" fill="none" stroke="#B8864E" stroke-width="1.5" stroke-dasharray="5,6" opacity="0.5"/>
+          <circle cx="210" cy="210" r="190" fill="rgba(184,134,78,0.08)"/>
+          <circle cx="210" cy="210" r="135" fill="rgba(184,134,78,0.16)" stroke="#8A6235" stroke-width="2"/>
+          <circle cx="210" cy="210" r="75"  fill="rgba(184,134,78,0.38)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="210" y="46" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="600" fill="#1A1D24">Global</text>
+          <text x="210" y="94" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="600" fill="#1A1D24">Project</text>
+          <text x="210" y="216" text-anchor="middle" font-family="Pretendard Variable" font-size="28" font-weight="700" fill="#1A1D24">Folder</text>
+          <text x="210" y="250" text-anchor="middle" font-family="Pretendard Variable" font-size="16" fill="#6E685C">(이긴다)</text>
+        </svg>
+
+        <div class="core-box">
+          <h3><iconify-icon icon="heroicons:check-circle"></iconify-icon> 핵심 규칙</h3>
+          <ul>
+            <li>Last wins (마지막이 이김)</li>
+            <li>가까운 것 우선</li>
+            <li>.local.md 병합 가능</li>
+            <li>.local.md 는 gitignore</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -108,17 +201,5 @@ graph TD
       <span class="footnote">참조: CLAUDE.md § 3 Scopes</span>
     </div>
   </div>
-
-    <svg viewBox="0 0 400 400" class="memory-scopes" style="width: 280px; height: 280px;">
-  <!-- 동심원 3개 (Global → Project → Folder) -->
-  <circle cx="200" cy="200" r="180" fill="rgba(184,134,78,0.1)" stroke="#B8864E" stroke-width="2"/>
-  <circle cx="200" cy="200" r="130" fill="rgba(184,134,78,0.2)" stroke="#8A6235" stroke-width="2"/>
-  <circle cx="200" cy="200" r="80" fill="rgba(184,134,78,0.4)" stroke="#1A1D24" stroke-width="2"/>
-
-  <text x="200" y="60" font-family="'Pretendard Variable'" font-size="28" fill="#1A1D24" text-anchor="middle" font-weight="600">Global</text>
-  <text x="200" y="120" font-family="'Pretendard Variable'" font-size="28" fill="#1A1D24" text-anchor="middle" font-weight="600">Project</text>
-  <text x="200" y="205" font-family="'Pretendard Variable'" font-size="32" fill="#1A1D24" text-anchor="middle" font-weight="700">Folder</text>
-  <text x="200" y="235" font-family="'Pretendard Variable'" font-size="20" fill="#6E685C" text-anchor="middle">(이김)</text>
-</svg>
 </body>
 </html>

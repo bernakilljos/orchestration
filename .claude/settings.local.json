@@ -59,7 +59,8 @@
       "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_docs.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_docs.md)",
       "PowerShell(python --version)",
       "PowerShell(playwright install *)",
-      "PowerShell(python -m playwright install chromium 2>&1 | Select-Object -Last 10)"
+      "PowerShell(python -m playwright install chromium 2>&1 | Select-Object -Last 10)",
+      "PowerShell(Stop-Process *)"
     ],
     "deny": []
   },
