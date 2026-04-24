@@ -9,102 +9,142 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-09 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s09-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s09-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .s09-right { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+    .s09-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      line-height: 1.5;
+      padding: 24px 28px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex: 1;
+      white-space: pre;
+      margin-top: 16px;
+    }
+    .s09-box {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 1000px;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s09-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 10px 0;
     }
-    td {
-      color: var(--stone);
+    .s09-box ul { list-style: none; padding: 0; margin: 0; }
+    .s09-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s09-box li code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--deep-gold);
+    }
+    .s09-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-09 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-09">
+  <div class="slide bg-tech slide-09">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · COMMANDS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:command-line" class="icon-sm"></iconify-icon>
+        PART 02 · COMMANDS
+      </span>
       <span class="mono caption">09 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">commands/ 슬래시 명령</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">나만의 /report, /deploy 등 정의</p>
-      <p class="body-lead" style="margin-top: 28px;">파일명 = 명령어. <strong>report.md</strong> → <strong>/report</strong>. frontmatter 로 description, allowed-tools 등 명시. $ARGUMENTS 로 인자 받기. ! 접두 로 Bash 실행, @ 로 파일 참조.</p>
-      <p class="body" style="margin-top: 24px;">예시: report.md 에 '오늘 커밋 요약' 이라 쓰면 claude /report 하면 git log --since=yesterday 돌려서 결과 출력.</p>
-      <p class="body" style="margin-top: 24px;">명령은 description 을 읽고 트리거 → 본문 실행 → 결과 반환. 도구 제한 (allowed-tools) 으로 보안 확보. 팀 표준 명령을 여기에 모아두면 새 팀원도 쉽게 따라갈 수 있음.</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">파일명 = 명령어 · <code>report.md</code> → <code>/report</code></p>
 
-      <pre class="code-block">---
+    <div class="s09-body">
+      <div class="s09-left">
+        <p class="body">
+          YAML frontmatter 에 <code>description</code>·<code>allowed-tools</code>. 본문에서 <code>$ARGUMENTS</code> 로 인자, <code>!</code> 접두로 Bash, <code>@파일</code> 로 파일 참조.
+        </p>
+        <pre class="s09-code">---
 description: "일일 리포트 생성"
 allowed-tools: Bash(git:*), Read
 ---
 
 # Daily Report
 
-오늘 커밋 요약:
-!`git log --oneline --since=yesterday`</pre>
+오늘 커밋:
+!`git log --oneline --since=yesterday`
 
-    </div>
+참조 파일:
+@CHANGELOG.md</pre>
+      </div>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ Command 구성</h3>
-        <ul>
-          <li>파일명 = 슬래시명</li>
-          <li>YAML frontmatter</li>
-          <li>Bash 실행: ! 접두</li>
-          <li>파일 참조: @<path></li>
-          <li>인자: $ARGUMENTS</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          /mycommand --flag arg
+      <div class="s09-right">
+        <div class="s09-box">
+          <h3>◆ Command 문법</h3>
+          <ul>
+            <li>파일명 = 슬래시명</li>
+            <li>YAML frontmatter</li>
+            <li><code>$ARGUMENTS</code> 인자</li>
+            <li><code>!</code> Bash 실행</li>
+            <li><code>@</code> 파일 참조</li>
+          </ul>
+        </div>
+        <div class="s09-box">
+          <h3>◆ 사용 예</h3>
+          <ul>
+            <li>/report — 일일 보고</li>
+            <li>/deploy — 배포</li>
+            <li>/review — 코드 리뷰</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: commands/ 사례</span>
+      <span class="footnote">참조: commands/ 가이드</span>
     </div>
   </div>
 </body>

@@ -9,133 +9,142 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-13 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s13-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+      min-height: 0;
+    }
+    .s13-card {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      padding: 18px 20px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+    .s13-card iconify-icon { font-size: 32px; color: var(--gold); }
+    .s13-card .name {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+      font-size: 18px;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
       color: var(--ink);
+      margin-top: 2px;
     }
-    td {
+    .s13-card .desc {
+      font-size: 13px;
       color: var(--stone);
+      line-height: 1.4;
+    }
+    .s13-card.danger { border-left: 4px solid var(--terracotta); }
+    .s13-card.danger iconify-icon { color: var(--terracotta); }
+    .s13-card.success { border-left: 4px solid var(--sage); }
+    .s13-card.success iconify-icon { color: var(--sage); }
+    .slide-13 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
+    }
+    .s13-lead {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .s13-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(184,134,78,0.12);
+      border-radius: 100px;
+      font-size: 15px;
+      color: var(--deep-gold);
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-13">
+  <div class="slide bg-tech slide-13">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · HOOKS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:bolt" class="icon-sm"></iconify-icon>
+        PART 02 · HOOKS
+      </span>
       <span class="mono caption">13 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">hooks/ 이벤트 훅</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">자동 실행되는 스크립트</p>
-      <p class="body-lead" style="margin-top: 28px;">훅은 <strong>특정 이벤트</strong>에서 자동 실행. 메모리·프롬프트보다 강력 (100% 실행 보장). settings.json 에 등록, .sh/.py 스크립트 연결.</p>
-      <p class="body" style="margin-top: 24px;">주요 이벤트: PreToolUse (툴 실행 직전, 차단 가능) · PostToolUse (툴 실행 후) · Stop (세션 종료) · SessionStart (세션 시작) · PreCompact (컨텍스트 압축 전).</p>
-      <p class="body" style="margin-top: 24px;">예: Edit/Write 후 자동 prettier --write $FILE 실행. 또는 rm -rf 명령 차단. 또는 세션 시작 시 상태 DB 검증. 이 모든 게 settings.json 설정 1줄로 100% 강제됨.</p>
-
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px;">
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:play" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PreToolUse</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">툴 실행 직전</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:arrow-right" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PostToolUse</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">툴 실행 후</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:stop-circle" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">SessionEnd</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">세션 종료</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:rocket-launch" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">SessionStart</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">세션 시작</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:document" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PreCompact</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">압축 직전</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:check" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PostCompact</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">압축 후</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:chat-bubble-left" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">UserPromptSubmit</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">프롬프트 제출</p>
-        </div>
-        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
-          <iconify-icon icon="heroicons:puzzle-piece" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
-          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">Custom</h4>
-          <p style="font-size: 12px; color: var(--stone); margin: 0;">커스텀 이벤트</p>
-        </div>
-      </div>
-
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">hooks/ 이벤트 훅 · 100% 강제</h1>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      메모리·프롬프트보다 강력 · <code>settings.json</code> 에 이벤트 → 명령 등록
+    </p>
+    <div class="s13-lead">
+      <span class="s13-chip"><iconify-icon icon="heroicons:shield-check"></iconify-icon> 차단 가능</span>
+      <span class="s13-chip"><iconify-icon icon="heroicons:arrow-path"></iconify-icon> 자동 실행</span>
+      <span class="s13-chip"><iconify-icon icon="heroicons:code-bracket"></iconify-icon> .sh / .py</span>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 훅 이벤트 8+</h3>
-        <ul>
-          <li>PreToolUse · PostToolUse</li>
-          <li>Stop · SessionStart</li>
-          <li>PreCompact · PostCompact</li>
-          <li>UserPromptSubmit</li>
-          <li>+ 커스텀 이벤트</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          100% 실행 · 차단 가능<br>메모리보다 강력
-        </div>
+    <div class="s13-grid">
+      <div class="s13-card danger">
+        <iconify-icon icon="heroicons:play-circle"></iconify-icon>
+        <div class="name">PreToolUse</div>
+        <div class="desc">툴 실행 직전 · 차단 가능 · 가장 강력</div>
+      </div>
+      <div class="s13-card success">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <div class="name">PostToolUse</div>
+        <div class="desc">툴 실행 직후 · 자동 포맷·검증</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:stop-circle"></iconify-icon>
+        <div class="name">Stop</div>
+        <div class="desc">세션 종료 시 · 스냅샷 저장</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:power"></iconify-icon>
+        <div class="name">SessionStart</div>
+        <div class="desc">세션 시작 · 초기화 로직</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:archive-box-arrow-down"></iconify-icon>
+        <div class="name">PreCompact</div>
+        <div class="desc">컨텍스트 압축 전 · 보존 규칙</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:archive-box"></iconify-icon>
+        <div class="name">PostCompact</div>
+        <div class="desc">압축 후 · 요약 주입</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:chat-bubble-bottom-center-text"></iconify-icon>
+        <div class="name">UserPromptSubmit</div>
+        <div class="desc">유저 프롬프트 제출 시 · 가드</div>
+      </div>
+      <div class="s13-card">
+        <iconify-icon icon="heroicons:bell"></iconify-icon>
+        <div class="name">Notification</div>
+        <div class="desc">알림 이벤트 · 외부 연동</div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: hooks/ 사례</span>
+      <span class="footnote">참조: hooks/ 이벤트 목록 · Anthropic 공식</span>
     </div>
   </div>
 </body>

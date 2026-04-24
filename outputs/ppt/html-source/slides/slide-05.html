@@ -9,75 +9,136 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .tree-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-05 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s05-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s05-tree {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 32px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-    }
-    .tree-code {
+      padding: 28px 32px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      line-height: 1.8;
+      font-size: 20px;
+      line-height: 1.4;
       color: var(--ink);
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
       white-space: pre;
-      overflow-x: auto;
+      margin: 0;
+    }
+    .s05-tree .note {
+      color: var(--stone);
+      font-size: 18px;
+      margin-left: 12px;
+    }
+    .s05-tree .highlight { color: var(--deep-gold); font-weight: 700; }
+    .s05-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .s05-card {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      padding: 18px 22px;
+    }
+    .s05-card.first { border-left-color: var(--gold); }
+    .s05-card.second { border-left-color: #8A6235; }
+    .s05-card.third { border-left-color: var(--sage); }
+    .s05-card.fourth { border-left-color: var(--stone); }
+    .s05-card .name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .s05-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .tag-commit { background: rgba(107, 142, 127, 0.2); color: #4A6F60; }
+    .tag-ignore { background: rgba(178, 90, 62, 0.15); color: #8A3E26; }
+    .s05-card .desc {
+      font-size: 16px;
+      color: var(--stone);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .slide-05 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-1 slide-05">
+  <div class="slide bg-subtle slide-05">
     <div class="slide-header">
       <span class="slide-eyebrow">
         <iconify-icon icon="heroicons:folder-open" class="icon-sm"></iconify-icon>
-        PART 01 · YOUR-PROJECT ROOT
+        PART 01 · YOUR PROJECT ROOT
       </span>
       <span class="mono caption">05 / 25</span>
     </div>
 
-    <div class="main-content">
-      <div class="title-with-icon">
-        <iconify-icon icon="heroicons:folder-tree" class="icon-lg"></iconify-icon>
-        <h1 class="heading-1">프로젝트 루트 구조</h1>
-      </div>
-
-      <p class="body text-stone" style="margin-bottom: 24px;">
-        /init 실행 후 생성되는 최상위 디렉토리 구조. 4개 핵심 요소로 구분됨.
-      </p>
-
-      <div class="tree-wrapper">
-        <div class="tree-code">your-project/
-├── CLAUDE.md           ▸ 팀 공유 기억
-├── CLAUDE.local.md     ▸ 개인 기억
-├── .claude/            ▸ 런타임 설정
-│   ├── commands/
-│   ├── skills/
-│   ├── hooks/
-│   ├── scripts/
-│   ├── rules/
-│   └── state/
-└── .mcp.json           ▸ MCP 서버</div>
-      </div>
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:folder-open" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">프로젝트 루트 구조</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      <code>/init</code> 실행 후 생성되는 최상위 디렉토리 · 4개 핵심 요소
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>
-          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
-          구성 요소
-        </h3>
-        <ul>
-          <li><strong>CLAUDE.md</strong> — 커밋 (공유)</li>
-          <li><strong>CLAUDE.local.md</strong> — gitignore (개인)</li>
-          <li><strong>.claude/</strong> — 전체 설정</li>
-          <li><strong>.mcp.json</strong> — 외부 연결</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.5;">
-          공유 ↔ 개인<br>
-          명확히 분리
+    <div class="s05-body">
+      <pre class="s05-tree">your-project/
+├─ <span class="highlight">CLAUDE.md</span>           <span class="note">◆ 팀 공유 기억</span>
+├─ <span class="highlight">CLAUDE.local.md</span>     <span class="note">◆ 나만의 기억</span>
+├─ <span class="highlight">.claude/</span>            <span class="note">◆ 런타임 설정</span>
+│  ├─ settings.json      <span class="note">권한·훅</span>
+│  ├─ commands/          <span class="note">/슬래시</span>
+│  ├─ skills/            <span class="note">자동 스킬</span>
+│  ├─ rules/             <span class="note">항상 규칙</span>
+│  ├─ agents/            <span class="note">서브에이전트</span>
+│  ├─ hooks/             <span class="note">이벤트 훅</span>
+│  ├─ output-styles/     <span class="note">응답 스타일</span>
+│  └─ status-line/       <span class="note">상태바</span>
+└─ <span class="highlight">.mcp.json</span>           <span class="note">◆ 외부 서비스</span></pre>
+
+      <div class="s05-right">
+        <div class="s05-card first">
+          <div><span class="name">CLAUDE.md</span><span class="tag tag-commit">commit</span></div>
+          <div class="desc">팀 공유 규칙 · 프로젝트 컨벤션</div>
+        </div>
+        <div class="s05-card second">
+          <div><span class="name">CLAUDE.local.md</span><span class="tag tag-ignore">gitignore</span></div>
+          <div class="desc">개인 메모 · PR 전 체크리스트</div>
+        </div>
+        <div class="s05-card third">
+          <div><span class="name">.claude/</span></div>
+          <div class="desc">9 하위 폴더 · 런타임 전체 설정</div>
+        </div>
+        <div class="s05-card fourth">
+          <div><span class="name">.mcp.json</span></div>
+          <div class="desc">GitHub · Slack · Postgres 외부 도구</div>
         </div>
       </div>
     </div>
@@ -86,19 +147,5 @@
       <span class="footnote">참조: CLAUDE.md 설계 규칙</span>
     </div>
   </div>
-
-    <svg viewBox="0 0 400 400" class="folder-stack-3d" style="width: 280px; height: 280px;">
-  <!-- 폴더 3단계 3D 스택 -->
-  <g filter="drop-shadow(0px 10px 20px rgba(0,0,0,0.1))">
-    <rect x="40" y="280" width="320" height="80" rx="8" fill="#E5DDCA" stroke="#B8864E" stroke-width="2"/>
-    <path d="M40,280 L50,265 L370,265 L360,280" fill="#D4A574" stroke="#8A6235" stroke-width="1"/>
-
-    <rect x="60" y="220" width="320" height="80" rx="8" fill="#EDE4D3" stroke="#8A6235" stroke-width="2"/>
-    <path d="M60,220 L70,205 L390,205 L380,220" fill="#E5C8A8" stroke="#6E5A38" stroke-width="1"/>
-
-    <rect x="80" y="160" width="320" height="80" rx="8" fill="#F7F2EA" stroke="#1A1D24" stroke-width="2"/>
-    <path d="M80,160 L90,145 L410,145 L400,160" fill="#FFFFFF" stroke="#1A1D24" stroke-width="1"/>
-  </g>
-</svg>
 </body>
 </html>

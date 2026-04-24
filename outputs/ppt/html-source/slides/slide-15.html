@@ -9,147 +9,183 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-15 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s15-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s15-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .s15-right { display: flex; flex-direction: column; min-width: 0; gap: 14px; }
+    .s15-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      line-height: 1.5;
+      padding: 22px 26px;
+      border-radius: 12px;
+      white-space: pre;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .s15-box {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
+      flex: 0 0 auto;
+    }
+    .s15-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s15-box ul { list-style: none; padding: 0; margin: 0; }
+    .s15-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s15-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .s15-servers {
+      background: rgba(255,255,255,0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
       padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      flex: 1;
       display: flex;
+      align-items: center;
       justify-content: center;
+      min-height: 0;
     }
-    .code-block {
-      background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 900px;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
-      color: var(--stone);
+    .slide-15 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-3 slide-15">
+  <div class="slide bg-tech slide-15">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · MCP SERVERS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:link" class="icon-sm"></iconify-icon>
+        PART 03 · MCP SERVERS
+      </span>
       <span class="mono caption">15 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:link" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">MCP 서버 연결</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">외부 서비스 = Claude 의 도구</p>
-      <p class="body-lead" style="margin-top: 28px;"><strong>MCP (Model Context Protocol)</strong> — 외부 서비스를 Claude가 도구로 쓰게 하는 표준. 프로젝트 루트 .mcp.json 또는 유저 ~/.claude.json 에 정의. 서버 예: GitHub, Playwright, PostgreSQL, Slack 등.</p>
-      <p class="body" style="margin-top: 24px;">표준 프로토콜: stdio / http / sse 지원. 공식 서버 (Anthropic) + 커뮤니티 서버 다수 존재.</p>
-      <p class="body" style="margin-top: 24px;">Windows 주의: cmd /c 필수. 예: ['cmd', '/c', 'npx', '-y', '@modelcontextprotocol/server-github']</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">외부 서비스 = Claude 의 도구 · <code>.mcp.json</code> 프로젝트 루트 · stdio / http / sse</p>
 
-      <pre class="code-block">{
+    <div class="s15-body">
+      <div class="s15-left">
+        <pre class="s15-code">{
   "mcpServers": {
     "github": {
       "command": "cmd",
       "args": ["/c", "npx", "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+        "@modelcontextprotocol/server-github"],
       "env": {
-        "GITHUB_TOKEN":
-          "${env:GITHUB_TOKEN}"
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
       }
     }
   }
 }</pre>
+        <div class="s15-box">
+          <h3>◆ MCP 특징</h3>
+          <ul>
+            <li>표준 프로토콜 (Anthropic)</li>
+            <li>stdio / http / sse</li>
+            <li>Windows: <code>cmd /c</code> 필수</li>
+            <li>공식 + 커뮤니티 서버</li>
+          </ul>
+        </div>
+      </div>
 
-    </div>
+      <div class="s15-right">
+        <div class="s15-servers">
+          <svg viewBox="0 0 480 340" style="width:100%; height:auto; max-width:480px;">
+            <!-- 중앙 Claude -->
+            <circle cx="240" cy="170" r="48" fill="#F7F2EA" stroke="#B8864E" stroke-width="3"/>
+            <text x="240" y="177" text-anchor="middle" font-family="Pretendard Variable" font-size="18" font-weight="700" fill="#1A1D24">Claude</text>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ MCP 특징</h3>
-        <ul>
-          <li>표준 프로토콜</li>
-          <li>stdio / http / sse</li>
-          <li>공식 + 커뮤니티 서버</li>
-          <li>Windows: cmd /c 필수</li>
-          <li>.mcp.json 또는 ~/.claude.json</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          외부 API 직접 접근
+            <!-- 연결선 -->
+            <g stroke="#6E685C" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.5" fill="none">
+              <line x1="240" y1="170" x2="100" y2="60"/>
+              <line x1="240" y1="170" x2="380" y2="60"/>
+              <line x1="240" y1="170" x2="60" y2="200"/>
+              <line x1="240" y1="170" x2="420" y2="200"/>
+              <line x1="240" y1="170" x2="140" y2="310"/>
+              <line x1="240" y1="170" x2="340" y2="310"/>
+            </g>
+
+            <!-- 서비스 6 -->
+            <g font-family="Pretendard Variable" font-size="14" font-weight="600">
+              <circle cx="100" cy="60" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="100" y="65" text-anchor="middle" fill="#1A1D24">GitHub</text>
+
+              <circle cx="380" cy="60" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="380" y="65" text-anchor="middle" fill="#1A1D24">Slack</text>
+
+              <circle cx="60" cy="200" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="60" y="205" text-anchor="middle" fill="#1A1D24">Notion</text>
+
+              <circle cx="420" cy="200" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="420" y="205" text-anchor="middle" fill="#1A1D24">PG</text>
+
+              <circle cx="140" cy="310" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="140" y="315" text-anchor="middle" fill="#1A1D24">Playwright</text>
+
+              <circle cx="340" cy="310" r="30" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+              <text x="340" y="315" text-anchor="middle" fill="#1A1D24">FS</text>
+            </g>
+          </svg>
+        </div>
+        <div class="s15-box">
+          <h3>◆ 서버 예</h3>
+          <ul>
+            <li>GitHub · Slack · Notion</li>
+            <li>PostgreSQL · Playwright</li>
+            <li>Filesystem · Memory</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .mcp.json 스키마</span>
+      <span class="footnote">참조: .mcp.json 스키마 · modelcontextprotocol.io</span>
     </div>
   </div>
-
-    <svg viewBox="0 0 600 400" class="mcp-services" style="width: 100%; max-width: 600px;">
-  <!-- 중앙 Claude + 6개 외부 서비스 -->
-  <circle cx="300" cy="200" r="50" fill="#F7F2EA" stroke="#1A1D24" stroke-width="3"/>
-  <text x="300" y="205" font-family="'Fraunces'" font-size="24" font-weight="700" fill="#1A1D24" text-anchor="middle">Claude</text>
-
-  <!-- 6개 외부 서비스 방사형 -->
-  <g font-family="'Pretendard Variable'" font-size="16" font-weight="600" text-anchor="middle">
-    <!-- GitHub (상) -->
-    <circle cx="300" cy="80" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="300" y="90" fill="#1A1D24">GitHub</text>
-    <line x1="300" y1="135" x2="300" y2="150" stroke="#B8864E" stroke-width="2"/>
-
-    <!-- Figma (우상) -->
-    <circle cx="430" cy="120" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="430" y="130" fill="#1A1D24">Figma</text>
-    <line x1="365" y1="165" x2="400" y2="150" stroke="#B8864E" stroke-width="2"/>
-
-    <!-- Drive (우하) -->
-    <circle cx="430" cy="280" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="430" y="290" fill="#1A1D24">Drive</text>
-    <line x1="365" y1="235" x2="400" y2="250" stroke="#B8864E" stroke-width="2"/>
-
-    <!-- Linear (하) -->
-    <circle cx="300" cy="320" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="300" y="330" fill="#1A1D24">Linear</text>
-    <line x1="300" y1="250" x2="300" y2="285" stroke="#B8864E" stroke-width="2"/>
-
-    <!-- Slack (좌하) -->
-    <circle cx="170" cy="280" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="170" y="290" fill="#1A1D24">Slack</text>
-    <line x1="235" y1="235" x2="200" y2="250" stroke="#B8864E" stroke-width="2"/>
-
-    <!-- Notion (좌상) -->
-    <circle cx="170" cy="120" r="35" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <text x="170" y="130" fill="#1A1D24">Notion</text>
-    <line x1="235" y1="165" x2="200" y2="150" stroke="#B8864E" stroke-width="2"/>
-  </g>
-</svg>
 </body>
 </html>

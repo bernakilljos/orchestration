@@ -8,124 +8,182 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-16 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
+    .s16-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s16-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .s16-right { display: flex; flex-direction: column; min-width: 0; gap: 14px; }
+    .s16-code {
       background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.5;
       color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 900px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 19px;
+      line-height: 1.5;
+      padding: 22px 26px;
+      border-radius: 12px;
+      white-space: pre;
+      overflow: hidden;
+      flex: 0 0 auto;
     }
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .s16-flow {
+      background: rgba(255,255,255,0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
+      flex: 1;
+      min-height: 0;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s16-flow h4 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
+      margin: 0 0 12px 0;
+    }
+    .s16-pipeline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .s16-pipeline .step {
+      flex: 1;
+      min-width: 100px;
+      text-align: center;
+      padding: 12px 10px;
+      background: rgba(184,134,78,0.1);
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
       color: var(--ink);
     }
-    td {
-      color: var(--stone);
+    .s16-pipeline .arrow {
+      color: var(--gold);
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .s16-box {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .s16-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s16-box ul { list-style: none; padding: 0; margin: 0; }
+    .s16-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s16-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-16 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-3 slide-16">
+  <div class="slide bg-subtle slide-16">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · PLUGINS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:puzzle-piece" class="icon-sm"></iconify-icon>
+        PART 03 · PLUGINS
+      </span>
       <span class="mono caption">16 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:puzzle-piece" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">플러그인 시스템</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">.claude-plugin/ + plugin.json</p>
-      <p class="body-lead" style="margin-top: 28px;"><strong>플러그인 = commands/skills/hooks/agents를 묶은 배포 단위.</strong> plugin.json 에 이름·버전·의존성. marketplace.json 으로 여러 플러그인 번들 공유. 설치: claude plugin install <name> 또는 git clone.</p>
-      <p class="body" style="margin-top: 24px;">필수 필드: name, display, version, status (stable/experimental/spec-only), commands.</p>
-      <p class="body" style="margin-top: 24px;">선택 필드: skills, agents, hooks, dependencies.plugins (의존성), entry_points.default_command.</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      <code>.claude-plugin/plugin.json</code> · commands / skills / hooks / agents 묶음 배포 단위
+    </p>
 
-      <pre class="code-block">{
+    <div class="s16-body">
+      <div class="s16-left">
+        <pre class="s16-code">{
   "name": "my-team-kit",
   "version": "1.0.0",
+  "display_name": "Team Standard Kit",
   "commands": "commands/",
   "skills": "skills/",
-  "hooks": "hooks/"
+  "hooks": "hooks/",
+  "agents": "agents/"
 }</pre>
+        <div class="s16-flow">
+          <h4>◆ 배포 플로우</h4>
+          <div class="s16-pipeline">
+            <div class="step">작성</div>
+            <span class="arrow">→</span>
+            <div class="step">git commit</div>
+            <span class="arrow">→</span>
+            <div class="step">marketplace.json</div>
+            <span class="arrow">→</span>
+            <div class="step">install</div>
+          </div>
+        </div>
+      </div>
 
-      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
-    A["작성"] --> B["git commit"]
-    B --> C["marketplace.json"]
-    C --> D["claude plugin install"]
-    D --> E["Ready"]
-
-    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style B fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style C fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style D fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style E fill:#6B8E7F,stroke:#1A1D24,stroke-width:2px,color:#FFF</div></div>
-
-    </div>
-
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 플러그인 장점</h3>
-        <ul>
-          <li>공유·재사용</li>
-          <li>버전 관리</li>
-          <li>팀 표준 배포</li>
-          <li>공개 마켓플레이스</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          재사용 가능한<br>단위로 번들링
+      <div class="s16-right">
+        <div class="s16-box">
+          <h3>◆ 플러그인 장점</h3>
+          <ul>
+            <li>공유 · 재사용</li>
+            <li>버전 관리</li>
+            <li>팀 표준 배포</li>
+            <li>공개 마켓플레이스</li>
+          </ul>
+        </div>
+        <div class="s16-box">
+          <h3>◆ 설치 명령</h3>
+          <ul>
+            <li><code>claude plugin install</code></li>
+            <li>또는 git clone</li>
+            <li><code>marketplace.json</code> 번들</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude-plugin/ 구조</span>
+      <span class="footnote">참조: .claude-plugin/ · plugin.json 스키마</span>
     </div>
   </div>
 </body>

@@ -9,138 +9,144 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-10 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s10-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s10-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .s10-right { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+    .s10-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 19px;
+      line-height: 1.5;
+      padding: 22px 26px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex: 1;
+      white-space: pre;
+      margin-top: 14px;
+    }
+    .s10-box {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 1000px;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s10-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 10px 0;
     }
-    td {
-      color: var(--stone);
+    .s10-box ul { list-style: none; padding: 0; margin: 0; }
+    .s10-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s10-box li code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--deep-gold);
+    }
+    .s10-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-10 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-10">
+  <div class="slide bg-tech slide-10">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · SKILLS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>
+        PART 02 · SKILLS
+      </span>
       <span class="mono caption">10 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">skills/ 자동 활성 스킬</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">SKILL.md — YAML + 본문</p>
-      <p class="body-lead" style="margin-top: 28px;">스킬은 description 의 트리거 문구로 <strong>자동 활성</strong>. kebab-case 폴더명 필수, SKILL.md 정확히. 점진적 공개: 단계별 로드 (frontmatter → 본문 → scripts/references/assets).</p>
-      <p class="body" style="margin-top: 24px;">예시 description: '사용자가 PR 리뷰를 요청하면 자동 코드 리뷰 수행' — 이 문구를 보면 Claude 가 이 스킬을 자동으로 활성화.</p>
-      <p class="body" style="margin-top: 24px;">본문 5,000 단어 이하 권장. 더 크면 references/ 폴더에 세부 분리. Anthropic 공식 스킬 표준 따름 (Skill Design 규칙 참조).</p>
-
-      <div class="code-block">---
-name: code-review-pr
-description: |
-  PR 리뷰 요청이 있으면 자동으로
-  코드 품질·보안·성능 검증
----
-# Code Review PR Skill
-
-사용자가 "PR 리뷰 부탁해"라고 하면
-이 스킬이 자동 활성화됨.</div>
-
-      <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; height: auto; margin-top: 24px;">
-        <!-- 1단계 -->
-        <rect x="20" y="30" width="140" height="70" rx="8" fill="rgba(184, 134, 78, 0.15)" stroke="#B8864E" stroke-width="2"/>
-        <text x="90" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">1단계: Frontmatter</text>
-        <text x="90" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">name · description</text>
-        <text x="90" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#B25A3E">(항상 로드)</text>
-
-        <!-- 화살표 1 -->
-        <path d="M 160 65 L 200 65" stroke="#B8864E" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
-
-        <!-- 2단계 -->
-        <rect x="200" y="30" width="140" height="70" rx="8" fill="rgba(107, 142, 127, 0.15)" stroke="#6B8E7F" stroke-width="2"/>
-        <text x="270" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">2단계: 본문</text>
-        <text x="270" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">명령어 · 워크플로우</text>
-        <text x="270" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6B8E7F">(작업시 로드)</text>
-
-        <!-- 화살표 2 -->
-        <path d="M 340 65 L 380 65" stroke="#6B8E7F" stroke-width="2" fill="none" marker-end="url(#arrowhead2)"/>
-
-        <!-- 3단계 -->
-        <rect x="380" y="30" width="140" height="70" rx="8" fill="rgba(178, 90, 62, 0.15)" stroke="#B25A3E" stroke-width="2"/>
-        <text x="450" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">3단계: 자산</text>
-        <text x="450" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">scripts/ · references/</text>
-        <text x="450" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#B25A3E">(필요시만)</text>
-
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-            <polygon points="0 0, 10 3, 0 6" fill="#B8864E"/>
-          </marker>
-          <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-            <polygon points="0 0, 10 3, 0 6" fill="#6B8E7F"/>
-          </marker>
-        </defs>
-      </svg>
-
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">SKILL.md — YAML frontmatter + 본문 · description 트리거로 자동 활성</p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ Skill 원칙</h3>
-        <ul>
-          <li>kebab-case 폴더명</li>
-          <li>SKILL.md 정확히</li>
-          <li>description ≤ 1024자</li>
-          <li>본문 ≤ 5,000단어</li>
-          <li>트리거 문구 구체적</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          자동화로 효율성
+    <div class="s10-body">
+      <div class="s10-left">
+        <p class="body">
+          <strong>점진적 공개</strong>: frontmatter → 본문 → <code>scripts/</code>·<code>references/</code>·<code>assets/</code> 순서로 로드. 폴더명은 kebab-case 필수, SKILL.md 정확한 철자.
+        </p>
+        <pre class="s10-code">---
+name: auto-pr-review
+description: |
+  PR 열리면 자동 코드 리뷰 수행.
+  사용자가 'review this PR' 언급 시
+  활성. TypeScript · Python 지원.
+license: MIT
+---
+
+# Auto PR Review
+
+1. git diff main..HEAD 변경점 추출
+2. 보안·성능·테스트 체크
+3. 결과를 PR 코멘트로 작성</pre>
+      </div>
+
+      <div class="s10-right">
+        <div class="s10-box">
+          <h3>◆ SKILL 원칙</h3>
+          <ul>
+            <li>kebab-case 폴더명</li>
+            <li>SKILL.md 정확히</li>
+            <li>description ≤ 1024자</li>
+            <li>본문 ≤ 5000단어</li>
+            <li>트리거 문구 구체</li>
+          </ul>
+        </div>
+        <div class="s10-box">
+          <h3>◆ 점진 공개 3단계</h3>
+          <ul>
+            <li>1. frontmatter (항상)</li>
+            <li>2. 본문 (관련 시)</li>
+            <li>3. assets/scripts (필요시)</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: skill-design.md (Anthropic 표준)</span>
+      <span class="footnote">참조: skills/ 가이드 · Anthropic</span>
     </div>
   </div>
 </body>

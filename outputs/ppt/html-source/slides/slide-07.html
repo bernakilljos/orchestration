@@ -8,116 +8,162 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-07 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s07-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 24px;
+      min-height: 0;
+    }
+    .s07-card {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      padding: 18px 22px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.2s;
+      min-height: 0;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+    .s07-card.category-settings { border-left: 4px solid #8A6235; }
+    .s07-card.category-context  { border-left: 4px solid var(--gold); }
+    .s07-card.category-automation { border-left: 4px solid var(--sage); }
+    .s07-card.category-display  { border-left: 4px solid #7A4E6B; }
+    .s07-card .head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .s07-card iconify-icon { font-size: 28px; color: var(--gold); }
+    .s07-card .name {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+      font-size: 20px;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
       color: var(--ink);
     }
-    td {
-      color: var(--stone);
+    .s07-card .tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(184,134,78,0.12);
+      color: var(--deep-gold);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: auto;
     }
-    .mermaid-mindmap {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      max-width: 800px;
+    .s07-card .desc {
+      font-size: 15px;
+      color: var(--stone);
+      line-height: 1.4;
+    }
+    .slide-07 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-07">
+  <div class="slide bg-tech slide-07">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · .CLAUDE FOLDER</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:folder" class="icon-sm"></iconify-icon>
+        PART 02 · .CLAUDE FOLDER
+      </span>
       <span class="mono caption">07 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">.claude/ 폴더</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 의 모든 설정이 여기에</p>
-      <div class="mermaid-mindmap"><div class="mermaid">mindmap
-  root((.claude))
-    설정
-      settings.json
-      settings.local.json
-    작업
-      commands
-      skills
-      agents
-    규칙
-      rules
-      hooks
-    표시
-      output-styles
-      status-line</div></div>
-
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:folder" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">.claude/ 폴더 · 9 하위 요소</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      Claude Code 의 모든 설정 · 4 카테고리 (Settings · Context · Automation · Display)
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 9 하위 요소</h3>
-        <ul>
-          <li>settings · commands · skills</li>
-          <li>rules · agents · hooks</li>
-          <li>output-styles · status-line</li>
-          <li>state/ · scripts/ (자동)</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          DK.method + 공식 확장
+    <div class="s07-grid">
+      <div class="s07-card category-settings">
+        <div class="head">
+          <iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon>
+          <span class="name">settings.json</span>
+          <span class="tag">commit</span>
         </div>
+        <div class="desc">권한 · 훅 · MCP · 플러그인</div>
+      </div>
+      <div class="s07-card category-settings">
+        <div class="head">
+          <iconify-icon icon="heroicons:lock-closed"></iconify-icon>
+          <span class="name">settings.local.json</span>
+          <span class="tag">ignore</span>
+        </div>
+        <div class="desc">개인 오버라이드 설정</div>
+      </div>
+      <div class="s07-card category-context">
+        <div class="head">
+          <iconify-icon icon="heroicons:command-line"></iconify-icon>
+          <span class="name">commands/</span>
+        </div>
+        <div class="desc">슬래시 명령 · /report · /deploy</div>
+      </div>
+      <div class="s07-card category-context">
+        <div class="head">
+          <iconify-icon icon="heroicons:sparkles"></iconify-icon>
+          <span class="name">skills/</span>
+        </div>
+        <div class="desc">자동 활성 스킬 · SKILL.md</div>
+      </div>
+      <div class="s07-card category-context">
+        <div class="head">
+          <iconify-icon icon="heroicons:document-text"></iconify-icon>
+          <span class="name">rules/</span>
+        </div>
+        <div class="desc">항상 적용 규칙 · 공유 지식</div>
+      </div>
+      <div class="s07-card category-context">
+        <div class="head">
+          <iconify-icon icon="heroicons:user-group"></iconify-icon>
+          <span class="name">agents/</span>
+        </div>
+        <div class="desc">서브에이전트 · 역할별 분리</div>
+      </div>
+      <div class="s07-card category-automation">
+        <div class="head">
+          <iconify-icon icon="heroicons:bolt"></iconify-icon>
+          <span class="name">hooks/</span>
+        </div>
+        <div class="desc">이벤트 훅 · 100% 강제 실행</div>
+      </div>
+      <div class="s07-card category-display">
+        <div class="head">
+          <iconify-icon icon="heroicons:paint-brush"></iconify-icon>
+          <span class="name">output-styles/</span>
+        </div>
+        <div class="desc">응답 톤 · 형식 커스터마이징</div>
+      </div>
+      <div class="s07-card category-display">
+        <div class="head">
+          <iconify-icon icon="heroicons:signal"></iconify-icon>
+          <span class="name">status-line/</span>
+        </div>
+        <div class="desc">터미널 상태바 커스텀</div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/ 구조 상세</span>
+      <span class="footnote">참조: DK.method + 공식 Anthropic 기능</span>
     </div>
   </div>
 </body>

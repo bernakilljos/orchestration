@@ -9,72 +9,116 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-08 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s08-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s08-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .s08-right { display: flex; flex-direction: column; min-width: 0; }
+    .s08-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      line-height: 1.5;
+      padding: 24px 28px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex: 1;
+      white-space: pre;
+      margin-top: 16px;
+    }
+    .s08-box {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 1000px;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s08-box h3 {
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 12px 0;
     }
-    td {
+    .s08-box ul { list-style: none; padding: 0; margin: 0; }
+    .s08-box li {
+      font-size: 18px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 6px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .s08-box li code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: var(--deep-gold);
+      background: rgba(184,134,78,0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .s08-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 8px;
+    }
+    .s08-note {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
+      font-size: 14px;
       color: var(--stone);
+      line-height: 1.4;
+    }
+    .slide-08 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-08">
+  <div class="slide bg-tech slide-08">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · SETTINGS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>
+        PART 02 · SETTINGS
+      </span>
       <span class="mono caption">08 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">settings.json</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">권한 · 훅 · MCP · 플러그인</p>
-      <p class="body-lead" style="margin-top: 28px;">settings.json 은 <strong>권한 관리</strong> (allow/deny/ask 배열), <strong>훅 정의</strong> (이벤트 → 명령), <strong>MCP 서버 활성화</strong>, <strong>플러그인 설정</strong> 을 한 곳에서 처리. 팀 공유 (git commit).</p>
-      <p class="body" style="margin-top: 24px;">defaultMode 로 전체 권한 수준 결정: 'default' (매번 물음), 'acceptEdits' (에디터 명령 자동 승인), 'plan' (계획만), 'bypassPermissions' (관리자 모드).</p>
-      <p class="body" style="margin-top: 24px;">env 섹션 으로 환경변수 정의. enabledMcpjsonServers, enabledPlugins 로 활성화할 MCP/플러그인 목록 관리.</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">권한 · 훅 · MCP · 플러그인 · 한 곳에서 · 팀 공유 (git commit)</p>
 
-      <pre class="code-block">{
+    <div class="s08-body">
+      <div class="s08-left">
+        <p class="body">
+          <strong>defaultMode</strong> 로 전체 권한 수준을 정한다: <code>default</code> (매번 물음), <code>acceptEdits</code> (에디터 명령 자동 승인), <code>plan</code> (계획만), <code>bypassPermissions</code> (관리자).
+        </p>
+        <pre class="s08-code">{
   "permissions": {
     "allow": ["Bash(npm:*)", "Edit"],
     "deny": ["Bash(rm -rf *)"],
@@ -83,30 +127,29 @@
   "hooks": {
     "PostToolUse": [{
       "matcher": "Edit|Write",
-      "hooks": [{
-        "type": "command",
-        "command": "prettier --write $FILE"
-      }]
+      "hooks": [{"type": "command",
+                 "command": "prettier --write $FILE"}]
     }]
   },
-  "enabledMcpjsonServers": ["github", "filesystem"]
+  "enabledMcpjsonServers": ["github"]
 }</pre>
+      </div>
 
-    </div>
-
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 주요 필드</h3>
-        <ul>
-          <li>permissions (allow/deny/ask)</li>
-          <li>hooks (이벤트 훅)</li>
-          <li>enabledMcpjsonServers</li>
-          <li>enabledPlugins</li>
-          <li>env (환경변수)</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          팀 설정 = 공유<br>개인 설정 = .local.json
+      <div class="s08-right">
+        <div class="s08-box">
+          <h3>◆ 주요 필드</h3>
+          <ul>
+            <li><code>permissions</code> allow/deny/ask</li>
+            <li><code>hooks</code> 이벤트 훅</li>
+            <li><code>defaultMode</code> 권한 수준</li>
+            <li><code>env</code> 환경변수</li>
+            <li><code>enabledMcpjsonServers</code></li>
+            <li><code>enabledPlugins</code></li>
+          </ul>
+          <div class="s08-note">
+            팀 설정 = settings.json (공유)<br>
+            개인 설정 = settings.local.json
+          </div>
         </div>
       </div>
     </div>

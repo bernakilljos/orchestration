@@ -9,143 +9,139 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
+    .slide-14 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s14-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
       margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      min-height: 0;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
-      color: var(--stone);
-    }
-    .card-row {
-      display: flex;
-      gap: 32px;
-      margin-top: 32px;
-      justify-content: flex-start;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.6);
+    .s14-card {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 16px;
-      padding: 28px;
-      backdrop-filter: blur(10px);
-      width: 45%;
-      flex-shrink: 0;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
-    .card h3 {
-      font-family: 'Pretendard Variable';
-      font-size: 18px;
+    .s14-card h3 {
+      font-size: 26px;
       font-weight: 700;
       color: var(--ink);
-      margin-bottom: 16px;
+      margin: 0 0 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .card-code {
+    .s14-card h3 code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      color: var(--deep-gold);
+      background: rgba(184,134,78,0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .s14-card .sub { font-size: 15px; color: var(--stone); margin-bottom: 16px; }
+    .s14-code {
       background: #1A1D24;
-      border-radius: 8px;
-      padding: 16px;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      line-height: 1.5;
+      padding: 18px 22px;
+      border-radius: 10px;
+      white-space: pre;
+      overflow: hidden;
+    }
+    .s14-terminal {
+      background: #1A1D24;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-top: 12px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      color: #39FF6C;
+      color: #A8B0C0;
       line-height: 1.5;
-      overflow-x: auto;
+    }
+    .s14-terminal .prompt { color: #39FF6C; }
+    .s14-terminal .status-bar { color: #F5C67A; }
+    .s14-usecases {
+      margin-top: 14px;
+      padding: 14px 18px;
+      background: rgba(184,134,78,0.08);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .s14-usecases strong { color: var(--deep-gold); font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; }
+    .slide-14 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-3 slide-14">
+  <div class="slide bg-subtle slide-14">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · ECOSYSTEM</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:paint-brush" class="icon-sm"></iconify-icon>
+        PART 03 · ECOSYSTEM
+      </span>
       <span class="mono caption">14 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:paint-brush" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">출력 스타일 + 상태바</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Claude 응답 톤·형식 커스터마이징</p>
-      <p class="body-lead" style="margin-top: 28px;"><strong>output-styles/</strong> — 응답 포맷 정의 (예: 한국어·영어 분기, 기술적/대화적 톤). <strong>status-line/</strong> — 터미널 하단에 커스텀 상태 표시 (세션 토큰·비용·브랜치 등). 팀 브랜딩·일관성에 도움.</p>
-      <p class="body" style="margin-top: 24px;">output-style 예: 'technical-kr' (한글 본문 + 영어 코드 주석 + 3줄 이내 요약). 또는 'management-brief' (임원진 보고용 한 장 요약).</p>
-      <p class="body" style="margin-top: 24px;">status-line 예: '[Session: 45K/100K · Branch: feat/xyz · Status: 🟢 Active]' 같은 정보를 터미널 하단에 계속 표시.</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude 응답 톤·형식 커스터마이징 · 터미널 상태 모니터</p>
 
-      <div class="card-row">
-        <div class="card">
-          <h3>◆ Output Style 예시</h3>
-          <div class="card-code">---
+    <div class="s14-body">
+      <div class="s14-card">
+        <h3><iconify-icon icon="heroicons:pencil-square" class="icon-sm" style="color:var(--gold);"></iconify-icon> <code>output-styles/</code></h3>
+        <p class="sub">응답 포맷 · 톤 정의 — 팀 브랜딩·일관성</p>
+        <pre class="s14-code">---
 name: technical-kr
 description: |
-  한글 본문
-  영어 코드 주석
-  3줄 이내 요약
----</div>
-        </div>
-        <div class="card">
-          <h3>◆ Status Line 예시</h3>
-          <svg viewBox="0 0 350 60" width="100%" style="margin-top: 12px;">
-            <rect width="350" height="60" rx="8" fill="#1A1D24"/>
-            <text x="20" y="40" fill="#39FF6C" font-family="JetBrains Mono" font-size="16" font-weight="600">
-              [Session: 45K/100K · Branch: feat/xyz · 🟢]
-            </text>
-          </svg>
+  한글 본문 + 영어 코드 주석
+  + 3줄 이내 요약
+---</pre>
+        <div class="s14-usecases">
+          <strong>사용 예</strong><br>
+          공식 문서 톤 · 팀 브리핑 · 임원 보고 요약
         </div>
       </div>
 
-    </div>
-
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 활용 예</h3>
-        <ul>
-          <li>공식 문서 톤</li>
-          <li>팀 브리핑 형식</li>
-          <li>커스텀 상태 모니터</li>
-          <li>개인 선호 반영</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          일관성 강화
+      <div class="s14-card">
+        <h3><iconify-icon icon="heroicons:signal" class="icon-sm" style="color:var(--gold);"></iconify-icon> <code>status-line/</code></h3>
+        <p class="sub">터미널 하단 커스텀 상태 표시</p>
+        <div class="s14-terminal">
+<span class="status-bar">[Session: 45K/100K · Branch: feat/xyz · 🟢 Active]</span>
+<span class="prompt">$</span> claude<br>
+Welcome back. Ready to help.<br>
+<span class="prompt">&gt;</span> _
+        </div>
+        <div class="s14-usecases">
+          <strong>사용 예</strong><br>
+          토큰 잔여·비용·브랜치·세션 상태 실시간
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: output-styles/, status-line/</span>
+      <span class="footnote">참조: output-styles/ · status-line/</span>
     </div>
   </div>
 </body>

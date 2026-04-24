@@ -9,136 +9,176 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
+    .slide-12 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s12-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s12-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .s12-right { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+    .s12-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 19px;
+      line-height: 1.5;
+      padding: 22px 26px;
+      border-radius: 12px;
+      flex: 0 0 auto;
+      white-space: pre;
+      margin-top: 14px;
+      overflow: hidden;
+    }
+    .s12-table {
+      margin-top: 16px;
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
+      flex: 1;
     }
-    .code-block {
-      background: #1A1D24;
-      border: 0.5px solid var(--fog);
-      border-radius: 16px;
-      padding: 32px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.5;
-      color: #39FF6C;
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-width: 1000px;
+    .s12-table h4 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
+    .s12-table table { width: 100%; border-collapse: collapse; font-size: 17px; }
+    .s12-table th {
       text-align: left;
+      padding: 8px 10px;
+      color: var(--stone);
+      font-weight: 600;
+      border-bottom: 1px solid var(--fog);
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .s12-table td {
+      padding: 10px;
+      color: var(--ink);
       border-bottom: 0.5px solid var(--fog);
     }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+    .s12-table td.label { font-weight: 600; color: var(--deep-gold); }
+    .s12-box {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
     }
-    td {
-      color: var(--stone);
+    .s12-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s12-box ul { list-style: none; padding: 0; margin: 0; }
+    .s12-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s12-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-12 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-12">
+  <div class="slide bg-tech slide-12">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · AGENTS</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:user-group" class="icon-sm"></iconify-icon>
+        PART 02 · AGENTS
+      </span>
       <span class="mono caption">12 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:user-group" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">agents/ 서브에이전트</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">역할별 Claude 분리 실행</p>
-      <p class="body-lead" style="margin-top: 28px;">메인 Claude가 특정 작업을 서브에이전트에 위임. 각 agent.md 는 YAML frontmatter 로 model, tools, prompt 정의. 예: reviewer.md (코드 리뷰 전문), researcher.md (리서치 전문).</p>
-      <p class="body" style="margin-top: 24px;">토큰 격리: 메인 대화 토큰 절약 가능. 각 agent 는 독립 세션에서 실행.</p>
-      <p class="body" style="margin-top: 24px;">model 선택: 코드 리뷰 는 Opus, 빠른 사실 확인 은 Haiku 지정 가능. tools 제한으로 보안 확보 (예: reviewer 는 Read/Bash 만, 파일 쓰기 금지).</p>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">메인 Claude가 특정 작업을 독립 세션에 위임 · 토큰 격리 · 모델 선택</p>
 
-      <pre class="code-block">---
+    <div class="s12-body">
+      <div class="s12-left">
+        <pre class="s12-code">---
 name: code-reviewer
-description: "코드 변경점 리뷰"
+description: "코드 변경점 리뷰 · 보안·성능"
 model: claude-sonnet-4-6
 tools: Read, Grep, Bash(git:*)
 ---
 
 당신은 엄격한 코드 리뷰어입니다.
-보안·가독성·성능 관점에서
-변경점을 평가하세요.</pre>
+역할: 안전성·가독성·성능 평가.</pre>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30%;">구분</th>
-              <th style="width: 35%;">Main Claude</th>
-              <th style="width: 35%;">Sub-Agent</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>토큰</strong></td>
-              <td>공용</td>
-              <td>격리 (독립 세션)</td>
-            </tr>
-            <tr>
-              <td><strong>도구</strong></td>
-              <td>모두 사용 가능</td>
-              <td>제한 가능</td>
-            </tr>
-            <tr>
-              <td><strong>모델</strong></td>
-              <td>기본값</td>
-              <td>선택 가능</td>
-            </tr>
-            <tr>
-              <td><strong>병렬</strong></td>
-              <td>단일 흐름</td>
-              <td>N개 병렬 실행</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="s12-table">
+          <h4>◆ Main vs Sub-Agent</h4>
+          <table>
+            <thead><tr><th></th><th>Main</th><th>Sub-Agent</th></tr></thead>
+            <tbody>
+              <tr><td class="label">토큰</td><td>공용</td><td>격리</td></tr>
+              <tr><td class="label">도구</td><td>전체</td><td>제한 가능</td></tr>
+              <tr><td class="label">모델</td><td>기본</td><td>선택 가능</td></tr>
+              <tr><td class="label">병렬</td><td>불가</td><td>가능</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-    </div>
-
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 서브에이전트 효과</h3>
-        <ul>
-          <li>토큰 격리 (메인 대화 절약)</li>
-          <li>역할별 model 선택 가능</li>
-          <li>도구 제한으로 안전성</li>
-          <li>병렬 실행 가능</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          메인 Claude + N개<br>전문 서브에이전트
+      <div class="s12-right">
+        <div class="s12-box">
+          <h3>◆ 서브에이전트 효과</h3>
+          <ul>
+            <li>토큰 격리</li>
+            <li>역할별 model 선택</li>
+            <li>도구 제한 = 안전</li>
+            <li>병렬 실행</li>
+          </ul>
+        </div>
+        <div class="s12-box">
+          <h3>◆ 활용 패턴</h3>
+          <ul>
+            <li>code-reviewer (검증)</li>
+            <li>researcher (리서치)</li>
+            <li>test-runner (테스트)</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: agents/ 사례</span>
+      <span class="footnote">참조: agents/ 가이드</span>
     </div>
   </div>
 </body>
