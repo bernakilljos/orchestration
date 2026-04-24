@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>14일의 여정</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      margin-top: 32px;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .timeline-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .timeline-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .timeline-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .timeline-desc {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--stone);
+    }
+    .milestone {
+      background: rgba(255, 255, 255, 0.6);
+      border-left: 3px solid var(--gold);
+      padding: 16px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide part-1">
+    <div class="slide-header">
+      <span class="eyebrow">PART 01 · YOUR DESIGN · THE 14-DAY JOURNEY</span>
+      <span class="mono caption">02 / 25</span>
+    </div>
+
+    <div class="main-content">
+      <h1 class="heading-1">14일의 여정</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">당신의 설계가 프레임워크가 되기까지</p>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">4월 19일</div>
+          <div class="timeline-content">
+            <div class="timeline-title">원본 설계 완성</div>
+            <div class="timeline-desc">14개 플러그인 구조 확정 · exec_orch 핵심 엔진 설계</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">4월 20일</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Opus 4.7 변곡점</div>
+            <div class="timeline-desc">1M 토큰 윈도우 · Prompt Caching · Extended Thinking 도입</div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-date">4월 23일</div>
+          <div class="timeline-content">
+            <div class="timeline-title">프로덕션 배포</div>
+            <div class="timeline-desc">orca.db 도입 · 10개 신규 지표 · 24/7 Watchdog 활성화</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="body-lead" style="margin-top: 48px;">
+        처음엔 단순한 통합 아이디어였다. <strong>Claude가 설계하고, Codex가 구현하고, Gemini가 검증한다.</strong>
+        그런데 Opus 4.7의 1M 토큰 윈도우가 변수가 됐다. 이제 전체 프로젝트 컨텍스트를 한 번에 올릴 수 있다.
+      </p>
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 핵심 변화</h3>
+        <ul>
+          <li>14개 플러그인 stable 달성</li>
+          <li>1M 토큰 Prompt Caching</li>
+          <li>10개 신규 지표 추가</li>
+          <li>24/7 자동 Watchdog</li>
+          <li>SQLite orca.db 도입</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">연관 문서: CLAUDE.md · guide.txt · docs/2026-04-19/로드맵.md</span>
+    </div>
+  </div>
+</body>
+</html>

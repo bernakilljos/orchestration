@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orchestration Kit v1 - Cover</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .slide.cover {
+      background: linear-gradient(135deg, #B8864E 0%, #8A6235 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .cover::before { background: linear-gradient(135deg, #B8864E 0%, #8A6235 100%); }
+    .cover-top { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; text-align: center; width: 100%; }
+    .cover-middle { flex: 2; display: flex; flex-direction: column; justify-content: center; width: 100%; }
+    .cover-bottom { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; text-align: center; width: 100%; }
+    .cover-eyebrow { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.9; margin-bottom: 40px; }
+    .cover-title { font-size: 140px; font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-bottom: 20px; }
+    .cover-subtitle { font-size: 32px; font-weight: 300; letter-spacing: -0.01em; opacity: 0.95; margin-bottom: 60px; }
+    .cover-tagline { font-size: 18px; font-weight: 400; letter-spacing: 0.05em; opacity: 0.85; }
+    .cover-meta { font-size: 13px; opacity: 0.8; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="slide cover">
+    <div class="cover-top">
+      <div class="cover-eyebrow">오케스트레이션 킷 v1</div>
+    </div>
+
+    <div class="cover-middle">
+      <h1 class="cover-title">Multi-AI</h1>
+      <h2 class="cover-subtitle">멀티 AI 오케스트레이션 프레임워크</h2>
+      <p class="cover-tagline">Claude + Codex + Gemini를 한 번에 orchestrate</p>
+    </div>
+
+    <div class="cover-bottom">
+      <p class="cover-meta">당신의 설계 · 14일의 여정</p>
+      <p class="cover-meta" style="margin-top: 40px;">2026년 4월 19일 — 2026년 4월 23일</p>
+    </div>
+  </div>
+</body>
+</html>

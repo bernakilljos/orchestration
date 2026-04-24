@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>exec_orch 엔진</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .diagram { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 32px; }
+    .diagram-box { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 32px; border: 0.5px solid var(--fog); }
+    .diagram-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 16px; }
+    .diagram-icon { font-size: 64px; margin-bottom: 16px; }
+    .diagram-text { font-size: 13px; line-height: 1.6; color: var(--stone); }
+  </style>
+</head>
+<body>
+  <div class="slide part-1">
+    <div class="slide-header">
+      <span class="eyebrow">PART 01 · THE ORCHESTRATION ENGINE</span>
+      <span class="mono caption">04 / 25</span>
+    </div>
+
+    <div class="main-content">
+      <h1 class="heading-1">exec_orch 엔진</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">3개 AI를 한 번에 지휘하는 오케스트라</p>
+
+      <p class="body-lead" style="margin-top: 28px;">
+        멀티AI 협업의 핵심은 <strong>올바른 순간에 올바른 AI를 부른다</strong>는 것이다.
+        exec_orch는 작업의 특성(규모, 유형, 복잡도)을 읽어 Claude는 설계를,
+        Codex는 구현을, Gemini는 검증을 하도록 라우팅한다.
+      </p>
+
+      <div class="diagram">
+        <div class="diagram-box">
+          <div class="diagram-icon">🧠</div>
+          <div class="diagram-title">Claude</div>
+          <div class="diagram-text">설계 · 판단 · 승인 · 문서 작성 · 아티팩트 생성</div>
+        </div>
+        <div class="diagram-box">
+          <div class="diagram-icon">⚙️</div>
+          <div class="diagram-title">Codex</div>
+          <div class="diagram-text">500줄+ 코드 1차 구현 · 병렬 실행 · 속도 최적화</div>
+        </div>
+        <div class="diagram-box">
+          <div class="diagram-icon">🔍</div>
+          <div class="diagram-title">Gemini</div>
+          <div class="diagram-text">초장문 검증 · 보안·성능·품질 체크 · 500k 토큰</div>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top: 40px;">
+        라우팅 로직은 <strong>route_dispatch.md</strong> 스킬에 명시되어 있다.
+        작업 규모(줄 수), 복잡도(의존성), 시간(deadline)을 종합해 판단한다.
+      </p>
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 라우팅 기준</h3>
+        <ul>
+          <li>코드 <200줄: Claude</li>
+          <li>코드 200~500줄: Codex 1st</li>
+          <li>코드 >500줄: 병렬 Codex</li>
+          <li>검증 필요: Gemini</li>
+          <li>설계 판단: Claude 최종</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 20px;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">스킬 위치</div>
+          <div class="mono" style="font-size: 10px; color: var(--stone); line-height: 1.4;">plugins/exec_orch/<br/>skills/route_dispatch.md</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참고: docs/architecture-patterns.md § Pattern 2 "AI 역할 분담"</span>
+    </div>
+  </div>
+</body>
+</html>

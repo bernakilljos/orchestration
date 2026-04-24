@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>추가된 10 지표</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+</head>
+<body>
+  <div class="slide part-3">
+    <div class="slide-header">
+      <span class="eyebrow">PART 03 · CURRENT STATE · 10 NEW METRICS</span>
+      <span class="mono caption">10 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">추가된 10 지표</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">2026-04-23 프로덕션 배포</p>
+      <p class="body-lead" style="margin-top: 28px;">
+        전체 프로젝트 컨텍스트를 갖추면서 우리는 이제 측정할 수 있게 됐다.
+        <strong>10개의 신규 지표</strong>를 orca.db에 추가했다.
+      </p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; font-size: 13px; line-height: 1.6;">
+        <div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">① Worker Efficiency</strong><br/>
+            실제 작업 시간 / 전체 시간
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">② Token Waste</strong><br/>
+            버려진 토큰 / 전체 사용량
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">③ Cache Hit Rate</strong><br/>
+            Prompt Caching 성공률
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">④ Latency P95</strong><br/>
+            95분위 응답 시간
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px;">
+            <strong style="color: var(--sage);">⑤ Error Rate</strong><br/>
+            API 실패율 (목표: <0.1%)
+          </div>
+        </div>
+        <div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">⑥ Cost/Task</strong><br/>
+            평균 작업당 비용 ($)
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">⑦ Model Accuracy</strong><br/>
+            Haiku vs Opus 정확도 차이
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">⑧ Queue Depth</strong><br/>
+            대기 중인 작업 수
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <strong style="color: var(--sage);">⑨ Retry Rate</strong><br/>
+            실패 후 재시도 비율
+          </div>
+          <div style="background: white; padding: 16px; border-radius: 8px;">
+            <strong style="color: var(--sage);">⑩ User Satisfaction</strong><br/>
+            완료된 작업 만족도 (NPS)
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-3">
+        <h3>◆ 지표 저장소</h3>
+        <ul style="font-size: 13px;">
+          <li>SQLite: orca.db</li>
+          <li>테이블: 8개</li>
+          <li>기록: 매초</li>
+          <li>보유: 7일</li>
+          <li>API: metrics 명령</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 64px;">10</div>
+          <div class="stat-label">NEW METRICS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Watchdog 2분 주기</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+</head>
+<body>
+  <div class="slide part-3">
+    <div class="slide-header">
+      <span class="eyebrow">PART 03 · WATCHDOG · 2-MIN CYCLE</span>
+      <span class="mono caption">12 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">Watchdog 2분 주기</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">자동 모니터링 및 자가 치유</p>
+      <p class="body-lead" style="margin-top: 28px;">
+        24/7 자동으로 시스템 상태를 감시한다. 2분마다 체크하면서 문제가 있으면 자동으로 고친다.
+        <strong>인터벤션 없이 99.9% 가용성</strong>을 목표로 한다.
+      </p>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 32px; font-size: 13px;">
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [0s] 시작</strong><br/>
+          2분 타이머 시작 · 이전 상태 로드
+        </div>
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [10s] 워커 상태</strong><br/>
+          codex-auto, gemini-auto, claude-auto heartbeat 확인
+        </div>
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [30s] 큐 깊이</strong><br/>
+          .claude/tasks/ 에서 pending 개수 · 평균 대기 시간 계산
+        </div>
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [60s] 메트릭 수집</strong><br/>
+          orca.db에 지표 기록 · 에러율, 캐시 히트율 등 계산
+        </div>
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [90s] 자가치유</strong><br/>
+          이상 감지 시 자동 재시작: 데드 워커, 스턱 큐, API 한도 초과
+        </div>
+        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
+          <strong>✓ [120s] 보고</strong><br/>
+          알림 전송 (Slack), metrics 갱신, 다음 사이클 준비
+        </div>
+      </div>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-3">
+        <h3>◆ Watchdog 기능</h3>
+        <ul style="font-size: 13px;">
+          <li>주기: 2분</li>
+          <li>단계: 6개</li>
+          <li>총시간: ~120초</li>
+          <li>오버헤드: <5%</li>
+          <li>가용성: 99.9%</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 64px;">24</div>
+          <div class="stat-label">/7 AUTOMATIC</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

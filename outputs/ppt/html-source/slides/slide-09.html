@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Before vs After 비교</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+</head>
+<body>
+  <div class="slide part-2">
+    <div class="slide-header">
+      <span class="eyebrow">PART 02 · PARADIGM SHIFT</span>
+      <span class="mono caption">09 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">Before (4/20) vs After (4/23)</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">3일 만에 아키텍처가 진화하다</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--stone); margin-bottom: 24px;">4월 20일</h3>
+          <div style="background: rgba(255,255,255,0.5); border-radius: 8px; padding: 24px; border-left: 4px solid var(--stone);">
+            <div style="font-size: 13px; line-height: 1.8;">
+              <div style="margin-bottom: 16px;">
+                <strong>라우팅</strong><br/>
+                작업 크기로 AI 판단 (간단)
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>컨텍스트</strong><br/>
+                200K 제한 · 부분 로드
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>비용</strong><br/>
+                매번 full request
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>검증</strong><br/>
+                표면적 점검만 가능
+              </div>
+              <div>
+                <strong>속도</strong><br/>
+                순차 처리 (느림)
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700; color: var(--terracotta); margin-bottom: 24px;">4월 23일</h3>
+          <div style="background: rgba(255,255,255,0.6); border-radius: 8px; padding: 24px; border-left: 4px solid var(--terracotta);">
+            <div style="font-size: 13px; line-height: 1.8;">
+              <div style="margin-bottom: 16px;">
+                <strong>라우팅</strong><br/>
+                전체 컨텍스트 기반 (정교)
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>컨텍스트</strong><br/>
+                1M 전체 · 프로젝트 한 번에
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>비용</strong><br/>
+                Caching으로 90% 절감
+              </div>
+              <div style="margin-bottom: 16px;">
+                <strong>검증</strong><br/>
+                전체 맥락에서 검증
+              </div>
+              <div>
+                <strong>속도</strong><br/>
+                병렬 처리 (빠름)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="body" style="margin-top: 40px;">
+        변화의 핵심: <strong>"부분 최적화"에서 "전체 최적화"로.</strong>
+        이전엔 각 AI가 자기 몫만 했다. 이제 전체 프로젝트를 보고 판단한다.
+      </p>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-2">
+        <h3>◆ 3일 사이의 변화</h3>
+        <ul>
+          <li>라우팅 정확도 ↑</li>
+          <li>컨텍스트 깊이 ↑↑↑</li>
+          <li>비용 효율성 ↑↑</li>
+          <li>검증 수준 ↑</li>
+          <li>병렬화 가능 ↑</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 72px;">3</div>
+          <div class="stat-label">DAYS TO PARADIGM SHIFT</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

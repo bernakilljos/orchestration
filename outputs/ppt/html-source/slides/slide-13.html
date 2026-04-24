@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>지수 Backoff 상세</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+</head>
+<body>
+  <div class="slide part-3">
+    <div class="slide-header">
+      <span class="eyebrow">PART 03 · EXPONENTIAL BACKOFF</span>
+      <span class="mono caption">13 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">지수 Backoff 상세</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">실패에서 회복하는 방법</p>
+      <p class="body-lead" style="margin-top: 28px;">
+        API가 429(Rate Limit) 또는 503(Service Unavailable)을 반환할 때, 무작정 재시도하면 더 악화된다.
+        대신 <strong>지수적으로 대기 시간을 늘린다</strong>. 이는 시스템을 보호하고 복구 기회를 준다.
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 32px; font-size: 12px;">
+        <div style="background: white; padding: 14px; border-radius: 6px; text-align: center; border: 0.5px solid var(--fog);">
+          <div style="font-weight: 700; color: var(--sage); margin-bottom: 8px;">시도 1</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--sage); margin-bottom: 4px;">10m</div>
+          <div style="color: var(--stone); font-size: 11px;">10분 대기</div>
+        </div>
+        <div style="background: white; padding: 14px; border-radius: 6px; text-align: center; border: 0.5px solid var(--fog);">
+          <div style="font-weight: 700; color: var(--sage); margin-bottom: 8px;">시도 2</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--sage); margin-bottom: 4px;">20m</div>
+          <div style="color: var(--stone); font-size: 11px;">20분 대기</div>
+        </div>
+        <div style="background: white; padding: 14px; border-radius: 6px; text-align: center; border: 0.5px solid var(--fog);">
+          <div style="font-weight: 700; color: var(--sage); margin-bottom: 8px;">시도 3</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--sage); margin-bottom: 4px;">40m</div>
+          <div style="color: var(--stone); font-size: 11px;">40분 대기</div>
+        </div>
+        <div style="background: white; padding: 14px; border-radius: 6px; text-align: center; border: 0.5px solid var(--fog);">
+          <div style="font-weight: 700; color: var(--sage); margin-bottom: 8px;">시도 4</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--sage); margin-bottom: 4px;">2h</div>
+          <div style="color: var(--stone); font-size: 11px;">2시간 (cap)</div>
+        </div>
+      </div>
+      <p class="body" style="margin-top: 40px;">
+        공식: <code style="background: var(--bone); padding: 3px 8px; border-radius: 3px; font-family: 'JetBrains Mono';">wait = min(max_wait, initial * 2^attempt) + jitter</code>
+        <br/>jitter는 ±10% 랜덤이므로 동시 재시도를 피한다.
+      </p>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-3">
+        <h3>◆ 재시도 정책</h3>
+        <ul style="font-size: 13px;">
+          <li>초기 대기: 10분</li>
+          <li>배수: 2배</li>
+          <li>상한: 2시간</li>
+          <li>최대 시도: 4회</li>
+          <li>jitter: ±10%</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          429/503 자동 감지<br/>→ orca.db 기록<br/>→ alert 발송
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

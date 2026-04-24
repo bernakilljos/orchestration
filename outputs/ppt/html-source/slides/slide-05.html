@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Source of Truth 원칙</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .sot-flow { display: flex; gap: 16px; margin-top: 32px; align-items: center; }
+    .flow-step { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 0.5px solid var(--fog); flex: 1; }
+    .flow-arrow { font-size: 28px; color: var(--gold); }
+    .step-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+    .step-detail { font-size: 12px; color: var(--stone); line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="slide part-1">
+    <div class="slide-header">
+      <span class="eyebrow">PART 01 · SOURCE OF TRUTH</span>
+      <span class="mono caption">05 / 25</span>
+    </div>
+
+    <div class="main-content">
+      <h1 class="heading-1">SoT 원칙</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">편집 한 곳, 동기화 자동</p>
+
+      <p class="body-lead" style="margin-top: 28px;">
+        이 킷의 가장 중요한 설계 원칙은 <strong>"한 곳만 편집한다"</strong>는 것이다.
+        모든 플러그인은 <code style="background: var(--bone); padding: 2px 6px; border-radius: 3px;">plugins/</code> 에서만 수정한다.
+        그 결과는 자동으로 <code style="background: var(--bone); padding: 2px 6px; border-radius: 3px;">.claude/</code> 로 동기화된다.
+      </p>
+
+      <div class="sot-flow">
+        <div class="flow-step">
+          <div class="step-title">✏️ 원본</div>
+          <div class="step-detail">plugins/
+          <br/>커맨드 · 스킬
+          <br/>플러그인 구조</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="step-title">🔄 동기화</div>
+          <div class="step-detail">sync-plugins.sh
+          <br/>자동 위상정렬
+          <br/>드리프트 감지</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="step-title">✨ 결과물</div>
+          <div class="step-detail">.claude/commands/
+          <br/>.claude/skills/
+          <br/>/ 슬래시 커맨드</div>
+        </div>
+      </div>
+
+      <p class="body" style="margin-top: 40px;">
+        이 원칙을 따르면 세 가지가 보장된다:
+      </p>
+
+      <ul style="margin-top: 16px; font-size: 15px; line-height: 1.7;">
+        <li>✓ <strong>드리프트 방지</strong> — .claude/ 는 덮어써도 상관없음</li>
+        <li>✓ <strong>버전 관리</strong> — git은 plugins/ 만 추적</li>
+        <li>✓ <strong>자동 검증</strong> — sync 시 schema 검사</li>
+      </ul>
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 편집 규칙</h3>
+        <ul>
+          <li>✅ plugins/ 편집</li>
+          <li>✅ .claude/scripts/ 편집</li>
+          <li>❌ .claude/commands/ 편집</li>
+          <li>❌ .claude/skills/ 편집</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px;">
+          <div class="step-title">sync 실행</div>
+          <div class="caption" style="margin-top: 8px; color: var(--ink);">bash .claude/scripts/
+          <br/>sync-plugins.sh</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">워크플로우 상세: .claude/rules/sync-workflow.md</span>
+    </div>
+  </div>
+</body>
+</html>

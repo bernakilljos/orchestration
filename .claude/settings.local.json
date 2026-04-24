@@ -56,7 +56,10 @@
       "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_data.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_data.md)",
       "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_web.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_web.md)",
       "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_collab.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_collab.md)",
-      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_docs.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_docs.md)"
+      "Bash(cp /c/pjt/orchestration_v1/.claude/commands/plug_docs.md /c/pjt/orchestration_v1/plugins/exec_orch/commands/plug_docs.md)",
+      "PowerShell(python --version)",
+      "PowerShell(playwright install *)",
+      "PowerShell(python -m playwright install chromium 2>&1 | Select-Object -Last 10)"
     ],
     "deny": []
   },

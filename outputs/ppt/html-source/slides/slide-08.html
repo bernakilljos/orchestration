@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>4.7의 4대 기능</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px; }
+    .feature-card { background: white; border-left: 4px solid var(--terracotta); padding: 28px; border-radius: 8px; }
+    .feature-icon { font-size: 48px; margin-bottom: 12px; }
+    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+    .feature-text { font-size: 13px; line-height: 1.6; color: var(--stone); }
+  </style>
+</head>
+<body>
+  <div class="slide part-2">
+    <div class="slide-header">
+      <span class="eyebrow">PART 02 · CLAUDE 4.7 FEATURES</span>
+      <span class="mono caption">08 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">4.7의 4대 기능</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">1M 토큰과 그것을 가능하게 하는 기술들</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">1️⃣</div>
+          <div class="feature-title">1M Token Window</div>
+          <div class="feature-text">
+            200K에서 1M으로 5배 확대. 전체 프로젝트 컨텍스트를 한 번에 로드 가능.
+            코드 리뷰, 아키텍처 결정이 이제 한 번의 질문으로 끝난다.
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <div class="feature-title">Prompt Caching</div>
+          <div class="feature-text">
+            5분 이내 같은 컨텍스트 재사용 시 90% 비용 절감.
+            예: 파일 600개(1M 토큰)를 캐시하면 재사용 때 $1.50 → $0.15. 반복 작업 최적화.
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-title">Extended Thinking</div>
+          <div class="feature-text">
+            내부 추론 프로세스 노출. 복잡한 아키텍처 결정을 8단계로 분해 가능.
+            설계 검증, 버그 원인 분석, 리팩토링 계획 수립에 강력.
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <div class="feature-title">$15 / $75</div>
+          <div class="feature-text">
+            input $15/M 토큰, output $75/M 토큰.
+            Caching 포함 시 실효 비용은 더 낮음. 이전 4.6대 비 가성비 극적 개선.
+          </div>
+        </div>
+      </div>
+      <p class="body" style="margin-top: 40px;">
+        이 네 가지는 <strong>독립적이 아니라 상호 보강된다.</strong> 1M 토큰이 있어야 Caching이 의미 있고,
+        Caching이 있어야 비용이 경제성이 생긴다. Extended Thinking은 복잡도를 제어한다.
+      </p>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-2">
+        <h3>◆ 경제성 비교</h3>
+        <ul style="font-size: 13px;">
+          <li><strong>4.6</strong>: $3M + $15M = $18/req</li>
+          <li><strong>4.7</strong>: $15M + $75M = $90/req</li>
+          <li><strong>cache ON</strong>: 재사용 $1.50/req</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px;">
+          <div class="stat-number" style="font-size: 64px;">90%</div>
+          <div class="stat-label">비용 절감</div>
+          <div style="font-size: 11px; color: var(--stone); margin-top: 8px;">caching 활용 시</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

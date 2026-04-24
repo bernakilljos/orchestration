@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>전제가 바뀌었다</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+</head>
+<body>
+  <div class="slide part-2">
+    <div class="slide-header">
+      <span class="eyebrow">PART 02 · THE INFLECTION POINT · 4.7 SHIFT</span>
+      <span class="mono caption">07 / 25</span>
+    </div>
+    <div class="main-content">
+      <h1 class="heading-1">전제가 바뀌었다</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">2026-04-20, Claude Opus 4.7 배포</p>
+      <p class="body-lead" style="margin-top: 28px;">
+        당신이 설계한 14일 후, Anthropic이 Opus 4.7을 배포했다.
+        <strong>이것은 단순 업그레이드가 아니라 작동 원리의 변화</strong>였다.
+      </p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 40px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 16px;">🔴 Before (4.6)</h3>
+          <ul style="font-size: 14px; line-height: 1.8; color: var(--ink);">
+            <li>• 200K 토큰 제한</li>
+            <li>• 매번 전체 컨텍스트</li>
+            <li>• API 호출 때마다 비용</li>
+            <li>• 간단한 분석만 가능</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; color: var(--terracotta); margin-bottom: 16px;">🟢 After (4.7)</h3>
+          <ul style="font-size: 14px; line-height: 1.8; color: var(--ink);">
+            <li>• <strong>1M 토큰 윈도우</strong></li>
+            <li>• <strong>Prompt Caching</strong></li>
+            <li>• <strong>Extended Thinking</strong></li>
+            <li>• <strong>5배 저렴</strong></li>
+          </ul>
+        </div>
+      </div>
+      <p class="body" style="margin-top: 40px;">
+        1M 토큰은 무엇을 의미하는가? <strong>전체 프로젝트(코드, 문서, 테스트, 예시 25개)를 한 번에 올릴 수 있다.</strong>
+        이전엔 불가능했다.
+      </p>
+    </div>
+    <div class="side-panel">
+      <div class="bullet-box part-2">
+        <h3>◆ 4가지 핵심 변화</h3>
+        <ul>
+          <li>1M 토큰 윈도우</li>
+          <li>Prompt Caching (5분 재사용)</li>
+          <li>Extended Thinking (다단계 추론)</li>
+          <li>가격 5배 저렴</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          이 변화는 당신의<br/>설계를 <strong>재평가</strong>하게 만들었다.
+        </div>
+      </div>
+    </div>
+    <div class="footer-border">
+      <span class="footnote">참고: docs/upgrade-analysis-2026-04-19.md</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,462 @@
+/* ============================================================================
+   Orchestration Kit v1 — Design System CSS
+   Editorial Magazine Style · 1920×1080 Slides
+   ============================================================================ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  /* Ink & Paper Palette — Warm Editorial Tone */
+  --ink:          #1A1D24;        /* Primary text */
+  --cream:        #F7F2EA;        /* Background */
+  --bone:         #EDE4D3;        /* Section dividers */
+  --fog:          #C9C1B0;        /* Borders, subtle dividers */
+
+  /* Accent Colors — Part-specific */
+  --gold:         #B8864E;        /* Part 1 (Original Design) */
+  --deep-gold:    #8A6235;
+  --terracotta:   #B25A3E;        /* Part 2 (Inflection Point) */
+  --sage:         #6B8E7F;        /* Part 3 (Current) */
+  --plum:         #7A4E6B;        /* Part 4 (Future) */
+
+  /* Neutral */
+  --stone:        #6E685C;        /* Secondary text */
+  --sand:         #E5DDCA;        /* Light boxes */
+  --smoke:        #9C958C;
+
+  /* Data Visualization */
+  --positive:     #5C8A5C;
+  --negative:     #A85757;
+  --neutral:      #8B7F6C;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+  font-feature-settings: 'ss01', 'ss02';
+  color: var(--ink);
+  background: var(--cream);
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* TYPOGRAPHY SCALE */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.display-xxl {
+  font-size: 180px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.display-xl {
+  font-size: 120px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.display-l {
+  font-size: 80px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.heading-1 {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.heading-2 {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.heading-3 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.body-lead {
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+}
+
+.body {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: -0.003em;
+}
+
+.caption {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--stone);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'liga' 0;
+  letter-spacing: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SLIDE BASE */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide {
+  width: 1920px;
+  height: 1080px;
+  background: var(--cream);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  padding: 80px 120px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Left color stripe — Part-specific */
+.slide::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: var(--gold);
+}
+
+.slide.part-2::before { background: var(--terracotta); }
+.slide.part-3::before { background: var(--sage); }
+.slide.part-4::before { background: var(--plum); }
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SLIDE HEADER (Eyebrow + Page Number) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 0.5px solid var(--fog);
+  padding-bottom: 20px;
+  margin-bottom: 40px;
+}
+
+.slide-eyebrow {
+  flex: 1;
+  color: var(--stone);
+}
+
+.slide-pagenumber {
+  color: var(--stone);
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* LAYOUT GRID */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.main-content {
+  grid-column: 1 / 9;
+}
+
+.side-panel {
+  grid-column: 9 / -1;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* BULLET BOX — Side Panel Essentials */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.bullet-box {
+  background: rgba(255, 255, 255, 0.6);
+  border: 0.5px solid var(--fog);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.bullet-box h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bullet-box.part-2 h3 { color: var(--terracotta); }
+.bullet-box.part-3 h3 { color: var(--sage); }
+.bullet-box.part-4 h3 { color: var(--plum); }
+
+.bullet-box ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bullet-box li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bullet-box li::before {
+  content: '';
+  flex-shrink: 0;
+  margin-top: 7px;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+
+.bullet-box.part-2 li::before { background: var(--terracotta); }
+.bullet-box.part-3 li::before { background: var(--sage); }
+.bullet-box.part-4 li::before { background: var(--plum); }
+
+/* Divider in bullet box */
+.bullet-box hr {
+  border: 0;
+  border-top: 0.5px solid var(--fog);
+  margin: 20px 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* STAT DISPLAY — Large Numbers */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.stat-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 200px;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--gold);
+  letter-spacing: -0.05em;
+}
+
+.part-2 .stat-number { color: var(--terracotta); }
+.part-3 .stat-number { color: var(--sage); }
+.part-4 .stat-number { color: var(--plum); }
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* COMPARISON COLUMNS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.compare-col {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 32px;
+  border-left: 4px solid var(--terracotta);
+}
+
+.compare-col.sage { border-left-color: var(--sage); }
+.compare-col.plum { border-left-color: var(--plum); }
+
+.compare-col h4 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+
+.compare-col.sage h4 { color: var(--sage); }
+.compare-col.plum h4 { color: var(--plum); }
+
+.compare-col p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* PLUGIN GRID */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.plugin-card {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 0.5px solid var(--fog);
+}
+
+.plugin-prefix {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.plugin-name {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 6px;
+  color: var(--ink);
+}
+
+.plugin-role {
+  font-size: 11px;
+  color: var(--stone);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* UTILITY CLASSES */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.mt-32 { margin-top: 32px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-40 { margin-bottom: 40px; }
+.gap-16 { gap: 16px; }
+.gap-24 { gap: 24px; }
+
+.text-stone { color: var(--stone); }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.footer-border {
+  grid-column: 1 / -1;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--fog);
+}
+
+.footnote {
+  font-size: 11px;
+  color: var(--stone);
+  font-weight: 500;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SVG INLINE ICONS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+svg.icon {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+svg.icon-small {
+  width: 16px;
+  height: 16px;
+}
+
+svg.icon-large {
+  width: 32px;
+  height: 32px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* EMPHASIS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: italic;
+  color: var(--stone);
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* GRADIENT BACKGROUND (for cover slide) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.bg-gradient-gold {
+  background: linear-gradient(135deg, #B8864E 0%, #8A6235 100%);
+  color: white;
+}
+
+.bg-gradient-gold::before {
+  background: linear-gradient(135deg, #B8864E 0%, #8A6235 100%);
+}
+
+.bg-gradient-gold .slide-header {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.bg-gradient-gold .eyebrow {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bg-gradient-gold h1,
+.bg-gradient-gold h2 {
+  color: white;
+}
