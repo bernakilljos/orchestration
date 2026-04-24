@@ -9,6 +9,9 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
+    .icon-sm { font-size: 20px !important; }
+  </style>
+  <style>
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
@@ -61,12 +64,18 @@
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · INTRODUCTION</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>
+        PART 01 · INTRODUCTION
+      </span>
       <span class="mono caption">02 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">Claude Code</h1>
+      <div class="title-with-icon">
+        <iconify-icon icon="heroicons:code-bracket" class="icon-lg"></iconify-icon>
+        <h1 class="heading-1">Claude Code</h1>
+      </div>
       <p class="heading-2 text-stone" style="font-weight: 400;">터미널에 들어온 AI 페어 프로그래머</p>
       <p class="body-lead" style="margin-top: 28px;">Claude Code는 터미널에서 돌아가는 AI 에이전트. 파일 읽고·쓰고·실행하고·git 조작하고·MCP 서버 호출한다. 웹 UI가 아니라 <strong>프로젝트 폴더 자체가 작업 공간</strong>이다.</p>
       <p class="body" style="margin-top: 24px;">핵심은 <strong>.claude/ 폴더</strong>. 여기 안에 Claude가 이 프로젝트에서 어떻게 일해야 하는지 모든 규칙·명령·훅·스킬이 담긴다. 새 세션을 시작해도 자동으로 로드되고, 팀원이 같은 리포를 쓰면 동일한 규칙이 적용된다.</p>
@@ -76,7 +85,10 @@
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 핵심 특징</h3>
+        <h3>
+          <iconify-icon icon="heroicons:bolt"></iconify-icon>
+          핵심 특징
+        </h3>
         <ul>
           <li>터미널 CLI 기반</li>
           <li>프로젝트 폴더 = 작업공간</li>

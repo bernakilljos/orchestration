@@ -3,98 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>/init 후 생기는 것</title>
+  <title>프로젝트 루트 트리</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
+    .tree-wrapper {
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
+      padding: 32px;
       backdrop-filter: blur(10px);
       margin-top: 24px;
-      display: flex;
-      justify-content: center;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+    .tree-code {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 16px;
+      line-height: 1.8;
       color: var(--ink);
+      white-space: pre;
       overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
-      color: var(--stone);
     }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · PROJECT ROOT</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:folder-open" class="icon-sm"></iconify-icon>
+        PART 01 · YOUR-PROJECT ROOT
+      </span>
       <span class="mono caption">05 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">/init 후 생기는 것</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">프로젝트 최상위 — 4개 핵심 요소</p>
-      <div class="code-block">your-project/
-├── CLAUDE.md           ◆ 팀 공유 기억         [commit]
-├── CLAUDE.local.md     ◆ 나만의 기억          [gitignore]
-├── .claude/            ◆ 런타임 설정 폴더
-│   └── ...             (다음 슬라이드에서 해부)
-└── .mcp.json           ◆ MCP 서버 정의         [commit]</div>
+      <div class="title-with-icon">
+        <iconify-icon icon="heroicons:folder-tree" class="icon-lg"></iconify-icon>
+        <h1 class="heading-1">프로젝트 루트 구조</h1>
+      </div>
 
+      <p class="body text-stone" style="margin-bottom: 24px;">
+        /init 실행 후 생성되는 최상위 디렉토리 구조. 4개 핵심 요소로 구분됨.
+      </p>
+
+      <div class="tree-wrapper">
+        <div class="tree-code">your-project/
+├── CLAUDE.md           ▸ 팀 공유 기억
+├── CLAUDE.local.md     ▸ 개인 기억
+├── .claude/            ▸ 런타임 설정
+│   ├── commands/
+│   ├── skills/
+│   ├── hooks/
+│   ├── scripts/
+│   ├── rules/
+│   └── state/
+└── .mcp.json           ▸ MCP 서버</div>
+      </div>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 3 가지 구분</h3>
+        <h3>
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          구성 요소
+        </h3>
         <ul>
-          <li>CLAUDE.md — 공유 (커밋)</li>
-          <li>CLAUDE.local.md — 개인 (gitignore)</li>
-          <li>.claude/ — 전체 설정</li>
-          <li>.mcp.json — 외부 서비스 연결</li>
+          <li><strong>CLAUDE.md</strong> — 커밋 (공유)</li>
+          <li><strong>CLAUDE.local.md</strong> — gitignore (개인)</li>
+          <li><strong>.claude/</strong> — 전체 설정</li>
+          <li><strong>.mcp.json</strong> — 외부 연결</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          용도 명확히 분리
+        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.5;">
+          공유 ↔ 개인<br>
+          명확히 분리
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: CLAUDE.md vs CLAUDE.local.md</span>
+      <span class="footnote">참조: CLAUDE.md 설계 규칙</span>
     </div>
   </div>
 </body>

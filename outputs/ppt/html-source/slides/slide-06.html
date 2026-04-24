@@ -9,95 +9,103 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light", securityLevel: "loose" });</script>
   <style>
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
+      padding: 32px;
       backdrop-filter: blur(10px);
       margin-top: 24px;
       display: flex;
+      align-items: center;
       justify-content: center;
+      max-width: 100%;
+      max-height: 400px;
+      overflow: hidden;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
+
+    .mermaid {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      height: auto !important;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
-      color: var(--stone);
+
+    .mermaid svg {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      height: auto !important;
     }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · MEMORY SYSTEM</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:circle-stack" class="icon-sm"></iconify-icon>
+        PART 01 · MEMORY SCOPE
+      </span>
       <span class="mono caption">06 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">기억의 3 단계</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Global → Project → Folder (마지막이 이김)</p>
-      <p class="body-lead" style="margin-top: 28px;">Claude는 세 단계의 Memory를 읽어서 컨텍스트 구성. <strong>Global</strong> (~/.claude/CLAUDE.md) 은 모든 프로젝트 공통 — 개인 코딩 스타일·선호도. <strong>Project</strong> (./CLAUDE.md) 는 이 프로젝트 규칙 — 빌드·테스트·팀 컨벤션. <strong>Folder</strong> (./src/CLAUDE.md) 는 국소 규칙 — 특정 모듈·컴포넌트 주의사항.</p>
-      <p class="body" style="margin-top: 24px;">충돌 발생 시 <strong>가까운 것이 이긴다</strong> (Folder > Project > Global). 즉 ./src/CLAUDE.md 에 'TypeScript strict 모드' 있고 ./CLAUDE.md 에 'JavaScript OK' 있으면 src/ 안에서는 strict 적용.</p>
-      <p class="body" style="margin-top: 24px;">CLAUDE.local.md 는 같은 위치의 일반 CLAUDE.md 와 병합되지만 git ignore — 개인 비밀·PR 전 TODO 메모 등.</p>
-      <div class="mermaid-wrapper"><div class="mermaid">graph TD
-  G["Global<br>~/.claude/CLAUDE.md"] --> P
-  P["Project<br>./CLAUDE.md"] --> F
-  F["Folder<br>./src/CLAUDE.md"]
-  F --> A["가장 가까운<br>규칙 적용"]</div></div>
+      <div class="title-with-icon">
+        <iconify-icon icon="heroicons:brain" class="icon-lg"></iconify-icon>
+        <h1 class="heading-1">기억의 3 단계</h1>
+      </div>
 
+      <p class="body-lead" style="margin-bottom: 24px;">
+        Claude는 세 단계 Memory 에서 컨텍스트를 구성합니다.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start;">
+        <div>
+          <h3 class="heading-3" style="margin-bottom: 20px;">우선순위</h3>
+          <div style="font-size: 16px; line-height: 2;">
+            <div><strong>1. Folder</strong><br><span class="text-stone">./src/CLAUDE.md</span></div>
+            <div style="margin-top: 16px;"><strong>2. Project</strong><br><span class="text-stone">./CLAUDE.md</span></div>
+            <div style="margin-top: 16px;"><strong>3. Global</strong><br><span class="text-stone">~/.claude/CLAUDE.md</span></div>
+            <div style="margin-top: 24px; padding-top: 24px; border-top: 0.5px solid var(--fog); font-size: 14px; color: var(--stone);">
+              가장 가까운 규칙이 우선 적용됨
+            </div>
+          </div>
+        </div>
+
+        <div class="mermaid-wrapper">
+          <div class="mermaid">
+graph TD
+  A["Folder<br>./src/CLAUDE.md<br>▲ 가장 가까움"] --> D["최종 규칙<br>결정"]
+  B["Project<br>./CLAUDE.md"] --> D
+  C["Global<br>~/.claude/CLAUDE.md<br>▼ 가장 멀음"] --> D
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 우선순위 (가까운 순)</h3>
+        <h3>
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          핵심
+        </h3>
         <ul>
-          <li>Folder (모듈)</li>
-          <li>Project (리포)</li>
-          <li>Global (개인)</li>
+          <li>Last wins (마지막이 이김)</li>
+          <li>가까운 것 우선</li>
+          <li>.local.md는 병합</li>
+          <li>git ignore (개인)</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          같은 레벨 .local.md<br>는 병합·gitignore
+        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.5;">
+          충돌 시 폴더 레벨이<br>
+          프로젝트·글로벌을<br>
+          덮어쓴다
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/rules/claude-md-design.md</span>
+      <span class="footnote">참조: CLAUDE.md § 3 Scopes</span>
     </div>
   </div>
 </body>

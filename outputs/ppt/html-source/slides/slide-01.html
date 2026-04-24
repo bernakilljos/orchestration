@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orchestration Kit v1 - Cover</title>
+  <title>Claude Code 설계 - Cover</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <style>
     .cover {
       width: 1920px;
       height: 1080px;
       background:
-        radial-gradient(ellipse 1400px 900px at 75% 30%, rgba(184, 134, 78, 0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 1000px 700px at 20% 80%, rgba(107, 142, 127, 0.08) 0%, transparent 60%),
-        linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+        radial-gradient(ellipse 900px 700px at 85% 15%, rgba(184, 134, 78, 0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 700px 500px at 10% 85%, rgba(107, 142, 127, 0.15) 0%, transparent 55%),
+        linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%);
       position: relative;
       overflow: hidden;
       padding: 100px 120px;
@@ -24,47 +24,39 @@
       justify-content: space-between;
     }
 
-    /* 장식 원 — 우상단에 크게 */
-    .cover::before {
-      content: '';
-      position: absolute;
-      top: -200px;
-      right: -200px;
-      width: 800px;
-      height: 800px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(184, 134, 78, 0.18) 0%, transparent 70%);
-      z-index: 0;
-    }
-
-    /* 미세한 그리드 라인 — 배경 질감 */
     .cover::after {
       content: '';
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(90deg, rgba(184, 134, 78, 0.05) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(184, 134, 78, 0.05) 1px, transparent 1px);
-      background-size: 80px 80px;
+        linear-gradient(90deg, rgba(26, 29, 36, 0.04) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(26, 29, 36, 0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.6;
+      mask-image: radial-gradient(ellipse at center, black, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
 
-    /* 상단 라벨 */
+    /* 상단 메타 */
     .cover-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: relative;
       z-index: 2;
+      margin-bottom: 60px;
     }
-    .cover-version {
+
+    .cover-brand {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
       letter-spacing: 0.3em;
-      color: #B8864E;
+      color: #8A6235;
       font-weight: 600;
+      text-transform: uppercase;
     }
+
     .cover-tag {
       display: inline-flex;
       align-items: center;
@@ -78,69 +70,63 @@
       color: #6E685C;
       font-weight: 500;
     }
-    .cover-tag::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #6B8E7F;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
 
-    /* 메인 타이틀 */
+    /* 메인 콘텐츠 */
     .cover-main {
       position: relative;
       z-index: 2;
+      margin-bottom: 100px;
     }
+
     .cover-eyebrow {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
+      font-size: 13px;
       letter-spacing: 0.25em;
       text-transform: uppercase;
       color: #8A6235;
       font-weight: 600;
       margin-bottom: 32px;
     }
+
     .cover-title {
       font-family: 'Fraunces', serif;
       font-size: 180px;
-      font-weight: 600;
+      font-weight: 300;
       line-height: 0.92;
       letter-spacing: -0.04em;
       color: #1A1D24;
-      margin-bottom: 48px;
+      margin-bottom: 24px;
     }
+
     .cover-title .accent {
       color: #B8864E;
       font-style: italic;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 240px;
+      display: block;
+      margin-top: -40px;
+      margin-bottom: 20px;
     }
+
     .cover-sub {
       font-family: 'Pretendard Variable', sans-serif;
-      font-size: 32px;
+      font-size: 20px;
       font-weight: 400;
       color: #6E685C;
-      line-height: 1.4;
+      line-height: 1.5;
       max-width: 900px;
     }
 
-    /* 하단 메타 */
-    .cover-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+    /* 하단 스탯 */
+    .cover-footer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
       position: relative;
       z-index: 2;
     }
-    .meta-stack {
-      display: flex;
-      gap: 48px;
-    }
-    .meta-item .label {
+
+    .stat-item .label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       letter-spacing: 0.2em;
@@ -148,15 +134,12 @@
       color: #6E685C;
       margin-bottom: 8px;
     }
-    .meta-item .value {
+
+    .stat-item .value {
       font-family: 'Fraunces', serif;
       font-size: 22px;
       font-weight: 500;
       color: #1A1D24;
-    }
-    .meta-item .value .mono {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
     }
 
     /* 장식 — 우하단 도형 */
@@ -170,60 +153,57 @@
       opacity: 0.35;
       z-index: 1;
     }
+
     .decor-dots span {
       width: 12px;
       height: 12px;
       background: #B8864E;
       border-radius: 50%;
     }
-    .decor-dots span:nth-child(3n) { opacity: 0.5; }
-    .decor-dots span:nth-child(7) { opacity: 0.3; }
   </style>
 </head>
 <body>
   <div class="cover">
     <div class="cover-top">
-      <div class="cover-version">CLAUDE CODE · ARCHITECTURE · 2026.04.24</div>
-      <div class="cover-tag">REFERENCE · EDUCATION</div>
+      <div class="cover-brand">CLAUDE CODE · ARCHITECTURE · 2025.04</div>
+      <div class="cover-tag">● REFERENCE</div>
     </div>
 
     <div class="cover-main">
-      <div class="cover-eyebrow">Architecture Reference</div>
+      <div class="cover-eyebrow">KOREA · DESIGN REFERENCE · OPUS 4.7 BASELINE</div>
       <h1 class="cover-title">
-        Claude<br>
-        <span class="accent">Code</span>
+        Claude Code
+        <span class="accent">설계</span>
       </h1>
       <p class="cover-sub">
-        설계 구조 · 폴더 해부 · /init 의 이유<br>
-        v1.0 · DK.method inspired · 2026-04-24
+        폴더 구조 · /init 원리 · 메모리 · 훅 · 플러그인<br>
+        Opus 4.7 기준 (2025년 4월)
       </p>
     </div>
 
-    <div class="cover-meta">
-      <div class="meta-stack">
-        <div class="meta-item">
-          <div class="label">Part</div>
-          <div class="value"><span class="mono">5</span> sections</div>
-        </div>
-        <div class="meta-item">
-          <div class="label">Slides</div>
-          <div class="value"><span class="mono">25</span> total</div>
-        </div>
-        <div class="meta-item">
-          <div class="label">Framework</div>
-          <div class="value">WHAT/WHY/HOW</div>
-        </div>
-        <div class="meta-item">
-          <div class="label">Version</div>
-          <div class="value">v<span class="mono">1.0</span></div>
-        </div>
+    <div class="cover-footer">
+      <div class="stat-item">
+        <div class="label">Sections</div>
+        <div class="value">5</div>
       </div>
+      <div class="stat-item">
+        <div class="label">Slides</div>
+        <div class="value">25</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">Framework</div>
+        <div class="value">WHAT/WHY/HOW</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">Baseline</div>
+        <div class="value">Opus 4.7</div>
+      </div>
+    </div>
 
-      <div class="decor-dots">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-      </div>
+    <div class="decor-dots">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
     </div>
   </div>
 </body>

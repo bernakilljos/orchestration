@@ -9,89 +9,114 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
+    .tree-wrapper {
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
       padding: 24px;
       backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
-    }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      margin-top: 16px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.7;
       color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
+      white-space: pre;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
+
+    .info-card {
       background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 15px;
+      line-height: 1.6;
     }
-    td {
-      color: var(--stone);
+
+    .info-card strong {
+      display: block;
+      color: var(--terracotta);
+      margin-bottom: 8px;
     }
   </style>
 </head>
 <body>
   <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · RULES</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:document-text" class="icon-sm"></iconify-icon>
+        PART 02 · SHARED RULES
+      </span>
       <span class="mono caption">11 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">rules/ 공통 규칙</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">프로젝트 전체에 항상 적용</p>
-      <p class="body-lead" style="margin-top: 28px;">code-style.md, naming.md, testing.md 등 주제별 규칙. CLAUDE.md 에서 [참조] 로 연결 → 본문 중복 방지. rules/ 는 Claude가 항상 참조 가능한 공유 지식 풀.</p>
-      <p class="body" style="margin-top: 24px;">예: code-style.md 에 'camelCase 변수, PascalCase 클래스' 하면 CLAUDE.md 에는 '[코드 스타일은 rules/code-style.md 참조]' 만 적음. 수정할 때도 한 곳만 건드림.</p>
-      <p class="body" style="margin-top: 24px;">rules/ 로 분리하면 CLAUDE.md 를 500줄 이하로 유지 쉬움. 또한 같은 규칙을 여러 프로젝트에서 재사용 가능 (공통 rules.zip 공유).</p>
+      <div class="title-with-icon">
+        <iconify-icon icon="heroicons:folder-open" class="icon-lg"></iconify-icon>
+        <h1 class="heading-1">rules/ 공통 규칙</h1>
+      </div>
 
+      <p class="body" style="margin-bottom: 20px;">
+        주제별로 분리된 규칙 파일들. 프로젝트 전체에서 항상 참조 가능한 공유 지식 기지.
+      </p>
+
+      <div class="tree-wrapper">.claude/rules/
+├── code-style.md          → camelCase, PascalCase
+├── naming.md              → 파일·변수·함수 명명
+├── testing.md             → 테스트 작성 기준
+├── git-workflow.md        → commit·PR 규칙
+└── documentation.md       → 문서·주석 기준</div>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <strong>주제별 분리</strong>
+          CLAUDE.md 에서 [참조] 로만 연결 → 본문 중복 제거
+        </div>
+        <div class="info-card">
+          <strong>경량 유지</strong>
+          rules/ 분리로 CLAUDE.md 500줄 이하 달성 가능
+        </div>
+        <div class="info-card">
+          <strong>재사용성</strong>
+          같은 규칙을 여러 프로젝트에서 공유 가능
+        </div>
+        <div class="info-card">
+          <strong>단일 수정점</strong>
+          규칙 변경 시 한 파일만 수정
+        </div>
+      </div>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ rules/ 장점</h3>
+        <h3>
+          <iconify-icon icon="heroicons:bookmark"></iconify-icon>
+          파일 목록
+        </h3>
         <ul>
-          <li>주제별 분리</li>
-          <li>CLAUDE.md 가볍게 유지</li>
-          <li>참조 재사용</li>
-          <li>팀 공유 규칙</li>
+          <li>code-style.md</li>
+          <li>naming.md</li>
+          <li>testing.md</li>
+          <li>git-workflow.md</li>
+          <li>documentation.md</li>
+          <li>indentation.md</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          파일명 예:<br>code-style.md<br>naming.md<br>testing.md
+        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.6;">
+          CLAUDE.md 에서<br>
+          [참조] 링크로<br>
+          연결·재사용
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/rules/ 구조</span>
+      <span class="footnote">참조: .claude/rules/ 전체 구조</span>
     </div>
   </div>
 </body>
