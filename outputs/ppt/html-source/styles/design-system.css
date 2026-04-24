@@ -55,70 +55,70 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .display-xxl {
-  font-size: 253px;
+  font-size: 300px;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 
 .display-xl {
-  font-size: 184px;
+  font-size: 220px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .display-l {
-  font-size: 120px;
+  font-size: 144px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
 .heading-1 {
-  font-size: 78px;
+  font-size: 94px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .heading-2 {
-  font-size: 46px;
+  font-size: 56px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .heading-3 {
-  font-size: 37px;
+  font-size: 42px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
 .eyebrow {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
 .body-lead {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 400;
-  line-height: 1.65;
+  line-height: 1.6;
   letter-spacing: -0.005em;
 }
 
 .body {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.6;
   letter-spacing: -0.003em;
 }
 
 .caption {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--stone);
@@ -142,7 +142,7 @@ body {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   gap: 24px;
-  padding: 80px 120px;
+  padding: 90px 120px;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -172,8 +172,8 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 0.5px solid var(--fog);
-  padding-bottom: 20px;
-  margin-bottom: 40px;
+  padding-bottom: 28px;
+  margin-bottom: 48px;
 }
 
 .slide-eyebrow {
@@ -216,7 +216,7 @@ body {
 }
 
 .bullet-box h3 {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -243,8 +243,8 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 19px;
-  line-height: 1.5;
+  font-size: 23px;
+  line-height: 1.55;
 }
 
 .bullet-box li::before {
@@ -280,7 +280,7 @@ body {
 
 .stat-number {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 276px;
+  font-size: 340px;
   font-weight: 800;
   line-height: 0.9;
   color: var(--gold);
@@ -292,7 +292,7 @@ body {
 .part-4 .stat-number { color: var(--plum); }
 
 .stat-label {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -353,7 +353,7 @@ body {
 
 .plugin-prefix {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--gold);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -361,17 +361,17 @@ body {
 }
 
 .plugin-name {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   margin-top: 6px;
   color: var(--ink);
 }
 
 .plugin-role {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--stone);
   margin-top: 8px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
@@ -516,17 +516,17 @@ iconify-icon {
   display: inline-block;
   vertical-align: -0.15em;
   color: var(--gold);
-  font-size: 1.5em;
+  font-size: 1.8em;
 }
 
 .icon-accent  { color: var(--gold); }
 .icon-warn    { color: var(--terracotta); }
 .icon-success { color: var(--sage); }
 .icon-muted   { color: var(--stone); }
-.icon-xl      { font-size: 69px; }
-.icon-lg      { font-size: 46px; }
-.icon-md      { font-size: 30px; }
-.icon-sm      { font-size: 23px; }
+.icon-xl      { font-size: 84px; }
+.icon-lg      { font-size: 56px; }
+.icon-md      { font-size: 36px; }
+.icon-sm      { font-size: 28px; }
 
 /* ── Unsplash 배경 ── */
 .hero-bg {
@@ -570,7 +570,7 @@ iconify-icon {
 .display-serif {
   font-family: 'Fraunces', serif;
   font-weight: 600;
-  font-size: 110px;
+  font-size: 140px;
   line-height: 1.05;
   letter-spacing: -0.02em;
 }
@@ -582,3 +582,102 @@ iconify-icon {
   line-height: 1;
   letter-spacing: -0.03em;
 }
+
+/* ═════════════════════════════════════════════════════════════
+   배경 패턴 4종 (2026-04-24)
+   ════════════════════════════════════════════════════════════ */
+
+/* Pattern A — 표지·클로징용 */
+.slide.bg-hero {
+  background:
+    radial-gradient(ellipse 1400px 900px at 75% 30%, rgba(184, 134, 78, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 1000px 700px at 20% 80%, rgba(107, 142, 127, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+  position: relative;
+}
+.slide.bg-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(184, 134, 78, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(184, 134, 78, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pattern B — 본문용 */
+.slide.bg-subtle {
+  background:
+    radial-gradient(ellipse 1200px 800px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #F7F2EA 0%, #F2EBDE 100%);
+  position: relative;
+}
+.slide.bg-subtle::before {
+  content: '';
+  position: absolute;
+  top: 40px; right: 80px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 134, 78, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pattern C — 강조·변곡점용 */
+.slide.bg-accent {
+  background:
+    radial-gradient(ellipse 1600px 1000px at 50% 100%, rgba(178, 90, 62, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+  position: relative;
+}
+.slide.bg-accent::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 60px,
+    rgba(178, 90, 62, 0.02) 60px,
+    rgba(178, 90, 62, 0.02) 61px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pattern D — 데이터·기술용 */
+.slide.bg-tech {
+  background:
+    radial-gradient(ellipse 1200px 700px at 0% 100%, rgba(107, 142, 127, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 800px 500px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #F7F2EA 0%, #F0E9DA 100%);
+  position: relative;
+}
+.slide.bg-tech::before {
+  content: '';
+  position: absolute;
+  bottom: -150px; left: -150px;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 142, 127, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 공통 장식 — 우하단 dot 그리드 */
+.slide-decor-dots {
+  position: absolute;
+  bottom: 60px; right: 100px;
+  display: grid;
+  grid-template-columns: repeat(5, 10px);
+  gap: 14px;
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 1;
+}
+.slide-decor-dots span {
+  width: 10px; height: 10px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+.slide-decor-dots span:nth-child(3n) { opacity: 0.5; }
