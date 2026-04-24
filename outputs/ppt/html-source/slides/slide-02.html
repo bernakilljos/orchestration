@@ -64,47 +64,39 @@
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow"><iconify-icon icon="heroicons:calendar-days" class="icon-md" style="margin-right: 12px;"></iconify-icon>PART 01 · YOUR DESIGN · THE 14-DAY JOURNEY</span>
+      <span class="eyebrow"><iconify-icon icon="heroicons:folder-open" class="icon-md" style="margin-right: 12px;"></iconify-icon>PART 01 · INSTALLED STRUCTURE</span>
       <span class="mono caption">02 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">14일의 여정</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">당신의 설계가 프레임워크가 되기까지</p>
+      <h1 class="heading-1">설치하면 무엇이 생기나</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">install.sh / install.bat 실행 직후 프로젝트 구조</p>
 
-      <div class="mermaid-wrapper">
-        <div class="mermaid">
-timeline
-  title 14일 여정 (2026-04-10 → 04-23)
-  2026-04-10 : 킷 시작
-  2026-04-13 : 첫 플러그인 구조화
-  2026-04-19 : 14 stable 플러그인 완성
-  2026-04-20 : Opus 4.7 변곡점
-  2026-04-23 : 프로덕션 배포
-        </div>
-      </div>
+      <p class="body-lead" style="margin-top: 0;">install 스크립트는 프로젝트 루트에 3개의 핵심 폴더와 1개의 AI 규칙 파일을 배치한다. <strong>`.claude/` (Claude Code 런타임), `plugins/` (25개 플러그인 원본), `docs/` (문서), 그리고 최상위에 `CLAUDE.md` (AI 지시서).</strong></p>
 
-      <p class="body-lead" style="margin-top: 48px;">
-        처음엔 단순한 통합 아이디어였다. <strong>Claude가 설계하고, Codex가 구현하고, Gemini가 검증한다.</strong>
-        그런데 Opus 4.7의 1M 토큰 윈도우가 변수가 됐다. 이제 전체 프로젝트 컨텍스트를 한 번에 올릴 수 있다.
-      </p>
+      <p class="body-text">`.claude-plugin/` 은 Claude Code 의 네이티브 플러그인 매니페스트가 들어간다. `setup/` 은 Windows 인스톨러(Inno Setup) 빌드. `install_codex.bat` · `install_gemini.bat` 은 Claude 없는 standalone 모드 설치용.</p>
+
+      <p class="body-text">설치 과정 5단계: (1) 폴더 생성·권한 부여, (2) `.claude/` 파일 복사, (3) `CLAUDE.md` 배포, (4) `.claude/scripts/init-state-db.py` 로 SQLite 초기화, (5) 환경변수 검증.</p>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 핵심 변화</h3>
+        <h3>◆ INSTALLED ROOT</h3>
         <ul>
-          <li>14개 플러그인 stable 달성</li>
-          <li>1M 토큰 Prompt Caching</li>
-          <li>10개 신규 지표 추가</li>
-          <li>24/7 자동 Watchdog</li>
-          <li>SQLite orca.db 도입</li>
+          <li>● `.claude/` — 런타임</li>
+          <li>● `.claude-plugin/` — 매니페스트</li>
+          <li>● `plugins/` — 25개 원본</li>
+          <li>● `docs/` — 가이드·문서</li>
+          <li>● `CLAUDE.md` — AI 규칙</li>
+          <li>● `guide.txt` — 사람용 가이드</li>
+          <li>────────────</li>
+          <li>Install time · ~30s</li>
         </ul>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">연관 문서: CLAUDE.md · guide.txt · docs/2026-04-19/로드맵.md</span>
+      <span class="footnote">참조: .claude/ · plugins/ 원본 · CLAUDE.md</span>
     </div>
   </div>
 </body>

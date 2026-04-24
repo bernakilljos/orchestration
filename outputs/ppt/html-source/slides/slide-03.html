@@ -20,18 +20,18 @@
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · 14 STABLE PLUGINS</span>
+      <span class="eyebrow"><iconify-icon icon="heroicons:folder-open" class="icon-md" style="margin-right: 12px;"></iconify-icon>PART 01 · INSTALLED STRUCTURE</span>
       <span class="mono caption">03 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">14개의 기둥</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">하나의 엔진과 그 위의 응용들</p>
+      <h1 class="heading-1">프로젝트 루트</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">최상위 디렉토리 + 핵심 파일</p>
 
       <p class="body-lead" style="margin-top: 28px;">
-        9일 만에 14개의 안정화된 플러그인을 완성했다. 핵심은 <strong>exec_orch 엔진</strong> 하나,
-        그 위에 실행·MCP·문서·검증 4개 카테고리가 올라간다. 각각은 명확한 책임을 가지며,
-        순환 의존성 없이 느슨하게 결합된다.
+        프로젝트 루트 구조는 <strong>3개 폴더 + 1 AI 규칙</strong> 로 구성된다.
+        `.claude/` 은 Claude Code 런타임, `plugins/` 은 25개 플러그인 원본(SoT), `docs/` 은 가이드와 로드맵,
+        그리고 `CLAUDE.md` 는 AI 에이전트가 따를 지시서다. 모든 파일은 Git으로 관리되며 `.env` 는 로컬 보안.
       </p>
 
       <div class="plugin-grid-4">
