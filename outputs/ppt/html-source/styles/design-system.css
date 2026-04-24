@@ -973,3 +973,49 @@ pre, code.block {
 .slide {
   padding: 60px 80px 50px 80px !important;
 }
+
+/* ═════════════════════════════════════════════════════════════
+   잘림 방지 전역 가드 (2026-04-24)
+   ════════════════════════════════════════════════════════════ */
+
+.slide {
+  overflow: hidden !important;
+  box-sizing: border-box;
+  max-height: 1080px !important;
+}
+
+/* 모든 슬라이드에 flex-column 강제 */
+.slide-02, .slide-03, .slide-04, .slide-05, .slide-07, .slide-08,
+.slide-09, .slide-10, .slide-11, .slide-12, .slide-13, .slide-14,
+.slide-15, .slide-16, .slide-17, .slide-18, .slide-19, .slide-20,
+.slide-21, .slide-22, .slide-23, .slide-24, .slide-25 {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 1080px !important;
+  max-height: 1080px !important;
+  padding: 60px 80px 50px 80px !important;
+  box-sizing: border-box !important;
+}
+
+/* 메인 영역은 flex: 1 로 남은 공간 채움 */
+.slide .main-content,
+.slide .content,
+.slide .scope-body,
+.slide .slide-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* side-panel 이 main 바깥에 있으면 안 됨 — grid 안으로 */
+.slide .side-panel {
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* footer 항상 하단 */
+.slide .footer-border {
+  margin-top: auto !important;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--fog);
+}
