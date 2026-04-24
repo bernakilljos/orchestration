@@ -9,95 +9,155 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-23 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
+    .s23-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 12px 20px;
+      margin-top: 28px;
+      align-content: start;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
+    .s23-th {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       color: var(--stone);
+      font-weight: 700;
+      padding: 10px 14px 10px 0;
+      border-bottom: 1px solid var(--fog);
+    }
+    .s23-th.center { padding: 10px 18px; border-bottom: 1px solid var(--fog); }
+    .s23-cat {
+      padding: 14px 18px 14px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .s23-cat iconify-icon {
+      font-size: 24px;
+      color: var(--terracotta);
+    }
+    .s23-symptom {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      background: rgba(178,90,62,0.08);
+      border-left: 4px solid var(--terracotta);
+      display: flex;
+      align-items: center;
+    }
+    .s23-fix {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      background: rgba(107,142,127,0.1);
+      border-left: 4px solid var(--sage);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .s23-fix iconify-icon { color: var(--sage); font-size: 22px; flex-shrink: 0; }
+    .s23-symptom code, .s23-fix code, .s23-cat code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--deep-gold);
+    }
+    .slide-23 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-5 slide-23">
+  <div class="slide bg-subtle slide-23">
     <div class="slide-header">
-      <span class="eyebrow">PART 05 · TROUBLESHOOTING</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:exclamation-triangle" class="icon-sm"></iconify-icon>
+        PART 05 · TROUBLESHOOTING
+      </span>
       <span class="mono caption">23 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">흔한 실수</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">이것만 피하면</p>
-      <p class="body-lead" style="margin-top: 28px;">가장 흔한 실수 5가지와 해결책:</p>
-      <div class="table-wrapper"><table><thead><tr><th>실수</th><th>증상</th><th>해결</th></tr></thead><tbody>
-      <tr><td>SKILL.md 철자 오류</td><td>스킬 안 열림</td><td>SKILL.md 정확히 (대소문자)</td></tr>
-      <tr><td>YAML frontmatter '---' 누락</td><td>잘못된 frontmatter 에러</td><td>앞뒤 '---' 구분자 추가</td></tr>
-      <tr><td>description 모호</td><td>트리거 안 됨 또는 과잉</td><td>구체 키워드·트리거 문구</td></tr>
-      <tr><td>CLAUDE.md 500줄 초과</td><td>무시됨</td><td>rules/ 로 분리</td></tr>
-      <tr><td>.claude/ 직접 편집 (sync 있을 때)</td><td>덮어씀 (원본이 SoT)</td><td>plugins/ 원본 수정 후 sync</td></tr>
-      </tbody></table></div>
-
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:exclamation-triangle" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">흔한 실수 · 이것만 피하면</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">실제 현장에서 자주 발생하는 5가지 실수 · 원인 · 해결</p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 피해야 할 것</h3>
-        <ul>
-          <li>파일 직접 편집 (.claude/ 안)</li>
-          <li>500줄 초과 CLAUDE.md</li>
-          <li>하드코딩된 API 키</li>
-          <li>순환 의존성 (plugins)</li>
-          <li>빈 task 를 done/ 이동</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          예방이 치료
-        </div>
+    <div class="s23-grid">
+      <div class="s23-th">실수</div>
+      <div class="s23-th center">증상</div>
+      <div class="s23-th center">해결</div>
+
+      <div class="s23-cat">
+        <iconify-icon icon="heroicons:document-minus"></iconify-icon>
+        <code>SKILL.md</code> 철자 오류
+      </div>
+      <div class="s23-symptom">스킬이 열리지 않음 · 활성 안 됨</div>
+      <div class="s23-fix">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        정확히 <code>SKILL.md</code> (대문자)
+      </div>
+
+      <div class="s23-cat">
+        <iconify-icon icon="heroicons:code-bracket"></iconify-icon>
+        YAML <code>---</code> 누락
+      </div>
+      <div class="s23-symptom">"잘못된 frontmatter" 에러</div>
+      <div class="s23-fix">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        앞뒤 <code>---</code> 구분자 추가
+      </div>
+
+      <div class="s23-cat">
+        <iconify-icon icon="heroicons:question-mark-circle"></iconify-icon>
+        description 모호
+      </div>
+      <div class="s23-symptom">트리거 안 됨 · 스킬 활성 실패</div>
+      <div class="s23-fix">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        구체 키워드 · "X 할 때" 명시
+      </div>
+
+      <div class="s23-cat">
+        <iconify-icon icon="heroicons:document-text"></iconify-icon>
+        CLAUDE.md 500줄 초과
+      </div>
+      <div class="s23-symptom">AI가 일부 규칙을 무시</div>
+      <div class="s23-fix">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>rules/</code> 로 분리 · 참조만
+      </div>
+
+      <div class="s23-cat">
+        <iconify-icon icon="heroicons:folder-minus"></iconify-icon>
+        <code>.claude/</code> 직접 편집 (sync 환경)
+      </div>
+      <div class="s23-symptom">다음 sync 시 편집 내용 덮어씀</div>
+      <div class="s23-fix">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        원본 <code>plugins/</code> 만 수정
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: troubleshooting 가이드</span>
+      <span class="footnote">참조: troubleshooting.md · 공식 FAQ</span>
     </div>
   </div>
 </body>

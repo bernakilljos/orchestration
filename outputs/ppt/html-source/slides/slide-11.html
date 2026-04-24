@@ -9,114 +9,130 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .tree-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-11 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s11-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s11-left { display: flex; flex-direction: column; gap: 18px; min-width: 0; min-height: 0; }
+    .s11-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .s11-tree {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 16px;
+      padding: 24px 28px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.7;
+      font-size: 19px;
+      line-height: 1.6;
       color: var(--ink);
       white-space: pre;
+      margin: 0;
+      flex: 0 0 auto;
     }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-top: 20px;
+    .s11-tree .note { color: var(--stone); font-size: 16px; }
+    .s11-tree .file { color: var(--deep-gold); font-weight: 700; }
+    .s11-why {
+      background: rgba(184,134,78,0.08);
+      border: 0.5px solid rgba(184,134,78,0.3);
+      border-radius: 12px;
+      padding: 18px 22px;
+      font-size: 17px;
+      color: var(--ink);
+      line-height: 1.5;
     }
-
-    .info-card {
-      background: rgba(255, 255, 255, 0.4);
+    .s11-why strong { color: var(--deep-gold); }
+    .s11-card {
+      background: rgba(255, 255, 255, 0.75);
+      border: 0.5px solid var(--fog);
+      border-left: 4px solid var(--gold);
       border-radius: 10px;
-      padding: 16px;
-      font-size: 15px;
-      line-height: 1.6;
+      padding: 16px 22px;
     }
-
-    .info-card strong {
-      display: block;
-      color: var(--terracotta);
-      margin-bottom: 8px;
+    .s11-card h4 {
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+    }
+    .s11-card p { font-size: 16px; color: var(--ink); margin: 0; line-height: 1.5; }
+    .s11-card.a { border-left-color: var(--gold); }
+    .s11-card.b { border-left-color: var(--sage); }
+    .s11-card.c { border-left-color: #7A4E6B; }
+    .s11-card.d { border-left-color: var(--terracotta); }
+    .slide-11 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-2 slide-11">
+  <div class="slide bg-tech slide-11">
     <div class="slide-header">
       <span class="slide-eyebrow">
-        <iconify-icon icon="heroicons:document-text" class="icon-sm"></iconify-icon>
+        <iconify-icon icon="heroicons:book-open" class="icon-sm"></iconify-icon>
         PART 02 · SHARED RULES
       </span>
       <span class="mono caption">11 / 25</span>
     </div>
 
-    <div class="main-content">
-      <div class="title-with-icon">
-        <iconify-icon icon="heroicons:folder-open" class="icon-lg"></iconify-icon>
-        <h1 class="heading-1">rules/ 공통 규칙</h1>
-      </div>
-
-      <p class="body" style="margin-bottom: 20px;">
-        주제별로 분리된 규칙 파일들. 프로젝트 전체에서 항상 참조 가능한 공유 지식 기지.
-      </p>
-
-      <div class="tree-wrapper">.claude/rules/
-├── code-style.md          → camelCase, PascalCase
-├── naming.md              → 파일·변수·함수 명명
-├── testing.md             → 테스트 작성 기준
-├── git-workflow.md        → commit·PR 규칙
-└── documentation.md       → 문서·주석 기준</div>
-
-      <div class="info-grid">
-        <div class="info-card">
-          <strong>주제별 분리</strong>
-          CLAUDE.md 에서 [참조] 로만 연결 → 본문 중복 제거
-        </div>
-        <div class="info-card">
-          <strong>경량 유지</strong>
-          rules/ 분리로 CLAUDE.md 500줄 이하 달성 가능
-        </div>
-        <div class="info-card">
-          <strong>재사용성</strong>
-          같은 규칙을 여러 프로젝트에서 공유 가능
-        </div>
-        <div class="info-card">
-          <strong>단일 수정점</strong>
-          규칙 변경 시 한 파일만 수정
-        </div>
-      </div>
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:book-open" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">rules/ 공통 규칙</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">주제별 분리된 규칙 파일들 · 프로젝트 전체에 항상 참조 가능한 공유 지식</p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>
-          <iconify-icon icon="heroicons:bookmark"></iconify-icon>
-          파일 목록
-        </h3>
-        <ul>
-          <li>code-style.md</li>
-          <li>naming.md</li>
-          <li>testing.md</li>
-          <li>git-workflow.md</li>
-          <li>documentation.md</li>
-          <li>indentation.md</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 14px; color: var(--stone); line-height: 1.6;">
-          CLAUDE.md 에서<br>
-          [참조] 링크로<br>
-          연결·재사용
+    <div class="s11-body">
+      <div class="s11-left">
+        <pre class="s11-tree">.claude/rules/
+├─ <span class="file">code-style.md</span>       <span class="note">→ camelCase, PascalCase</span>
+├─ <span class="file">naming.md</span>           <span class="note">→ 파일·변수·함수 명명</span>
+├─ <span class="file">testing.md</span>          <span class="note">→ 테스트 작성 기준</span>
+├─ <span class="file">git-workflow.md</span>     <span class="note">→ commit·PR 규칙</span>
+├─ <span class="file">documentation.md</span>    <span class="note">→ 문서·주석 기준</span>
+├─ <span class="file">indentation.md</span>      <span class="note">→ 들여쓰기</span>
+└─ <span class="file">security.md</span>         <span class="note">→ 시크릿·PII</span></pre>
+        <div class="s11-why">
+          <strong>예</strong> — <code>code-style.md</code> 에 'camelCase 변수, PascalCase 클래스' 적으면 CLAUDE.md 엔 '<code>[코드 스타일은 rules/code-style.md 참조]</code>' 만 적음. 한 곳에서만 수정.
+        </div>
+      </div>
+
+      <div class="s11-right">
+        <div class="s11-card a">
+          <h4>주제별 분리</h4>
+          <p>CLAUDE.md 에서 [참조] 로만 연결 → 본문 중복 제거</p>
+        </div>
+        <div class="s11-card b">
+          <h4>경량 유지</h4>
+          <p>rules/ 로 분리하면 CLAUDE.md 500줄 이하 달성 쉬움</p>
+        </div>
+        <div class="s11-card c">
+          <h4>재사용성</h4>
+          <p>같은 규칙을 여러 프로젝트에서 공유 (rules.zip 번들)</p>
+        </div>
+        <div class="s11-card d">
+          <h4>단일 수정점</h4>
+          <p>규칙 변경 시 한 파일만 수정 → 팀 즉시 반영</p>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/rules/ 전체 구조</span>
+      <span class="footnote">참조: .claude/rules/ 전체 구조 · 공유 지식 기지</span>
     </div>
   </div>
 </body>

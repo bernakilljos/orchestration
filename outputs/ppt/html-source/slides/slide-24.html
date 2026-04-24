@@ -8,113 +8,193 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-24 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s24-pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 28px;
+      align-items: stretch;
+    }
+    .s24-stage {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      border-radius: 14px;
+      padding: 22px 24px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s24-stage::after {
+      content: '→';
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 28px;
+      color: var(--gold);
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
+      z-index: 2;
+    }
+    .s24-stage:last-child::after { display: none; }
+    .s24-stage iconify-icon { font-size: 40px; }
+    .s24-stage.personal { border-top: 5px solid var(--gold); }
+    .s24-stage.personal iconify-icon { color: var(--gold); }
+    .s24-stage.team { border-top: 5px solid var(--sage); }
+    .s24-stage.team iconify-icon { color: var(--sage); }
+    .s24-stage.org { border-top: 5px solid #7A4E6B; }
+    .s24-stage.org iconify-icon { color: #7A4E6B; }
+    .s24-stage.community { border-top: 5px solid var(--terracotta); }
+    .s24-stage.community iconify-icon { color: var(--terracotta); }
+    .s24-stage .name {
+      font-size: 22px;
+      font-weight: 700;
       color: var(--ink);
     }
-    td {
+    .s24-stage .scope {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
       color: var(--stone);
+      letter-spacing: 0.1em;
     }
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .s24-stage .desc {
+      font-size: 16px;
+      color: var(--stone);
+      line-height: 1.45;
+    }
+    .s24-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 32px;
+      min-height: 0;
+    }
+    .s24-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .s24-box {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
+      padding: 20px 24px;
+    }
+    .s24-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s24-box ul { list-style: none; padding: 0; margin: 0; }
+    .s24-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
       display: flex;
-      justify-content: center;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s24-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .s24-box li code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--deep-gold);
+    }
+    .slide-24 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-5 slide-24">
+  <div class="slide bg-subtle slide-24">
     <div class="slide-header">
-      <span class="eyebrow">PART 05 · EXPANSION</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:arrow-trending-up" class="icon-sm"></iconify-icon>
+        PART 05 · EXPANSION
+      </span>
       <span class="mono caption">24 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">다음 단계</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">팀 → 조직 → 커뮤니티</p>
-      <p class="body-lead" style="margin-top: 28px;">개인 프로젝트에서 시작한 Claude Code 설정을 팀, 조직, 공개 커뮤니티로 확장하는 방법:</p>
-      <p class="body" style="margin-top: 24px;">개인 → 팀: .claude/ 와 CLAUDE.md 를 git 으로 공유. 또는 .claude-plugin/ 으로 플러그인 패키지화.</p>
-      <p class="body" style="margin-top: 24px;">팀 → 조직: 플러그인 마켓플레이스 운영. 조직 표준 규칙을 plugin.json 에 등록 후 배포.</p>
-      <p class="body" style="margin-top: 24px;">조직 → 공개: github.com/anthropics/plugins 에 기여 또는 독립 marketplace 운영.</p>
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:arrow-trending-up" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">다음 단계 · 팀 → 조직 → 커뮤니티</h1>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">개인 프로젝트에서 시작한 Claude Code 설정의 4단계 확장</p>
 
-      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
-    A["개인<br/>Git repo 공유"] --> B["팀<br/>plugin 패키지화"]
-    B --> C["조직<br/>마켓플레이스"]
-    C --> D["커뮤니티<br/>공개 기여"]
-
-    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style B fill:#E8D8B0,stroke:#8A6235,stroke-width:2px
-    style C fill:#D4A574,stroke:#6B6044,stroke-width:2px
-    style D fill:#6B8E7F,stroke:#1A1D24,stroke-width:3px,color:#FFF</div></div>
-
+    <div class="s24-pipeline">
+      <div class="s24-stage personal">
+        <iconify-icon icon="heroicons:user"></iconify-icon>
+        <div class="name">Personal</div>
+        <div class="scope">1 developer</div>
+        <div class="desc">Git repo 공유 · CLAUDE.md 개인 설정</div>
+      </div>
+      <div class="s24-stage team">
+        <iconify-icon icon="heroicons:users"></iconify-icon>
+        <div class="name">Team</div>
+        <div class="scope">2 ~ 30 people</div>
+        <div class="desc">.claude-plugin/ 패키지화 · marketplace.json</div>
+      </div>
+      <div class="s24-stage org">
+        <iconify-icon icon="heroicons:building-office"></iconify-icon>
+        <div class="name">Organization</div>
+        <div class="scope">30 ~ 1000+</div>
+        <div class="desc">내부 마켓플레이스 · 조직 표준 규칙</div>
+      </div>
+      <div class="s24-stage community">
+        <iconify-icon icon="heroicons:globe-alt"></iconify-icon>
+        <div class="name">Community</div>
+        <div class="scope">Open Source</div>
+        <div class="desc">github.com/anthropics/plugins 기여</div>
+      </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 배포 전략</h3>
-        <ul>
-          <li>개인: Git repo 공유</li>
-          <li>팀: .claude-plugin/ 패키지</li>
-          <li>조직: 마켓플레이스</li>
-          <li>공개: GitHub · NPM</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          표준화 → 재사용
+    <div class="s24-body">
+      <div class="s24-col">
+        <div class="s24-box">
+          <h3>◆ 배포 전략</h3>
+          <ul>
+            <li>개인: Git repo 공유</li>
+            <li>팀: .claude-plugin/ 패키지</li>
+            <li>조직: 사설 마켓플레이스</li>
+            <li>커뮤니티: 공개 기여</li>
+          </ul>
+        </div>
+      </div>
+      <div class="s24-col">
+        <div class="s24-box">
+          <h3>◆ 확장 도구</h3>
+          <ul>
+            <li><code>claude plugin install</code></li>
+            <li><code>marketplace.json</code> 번들</li>
+            <li><code>@claude-plugins-official</code></li>
+            <li>내부 프라이빗 registry</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: marketplace.json</span>
+      <span class="footnote">참조: github.com/anthropics/plugins · marketplace 스키마</span>
     </div>
   </div>
 </body>

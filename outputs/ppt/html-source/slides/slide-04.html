@@ -8,104 +8,224 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-04 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
+    .s04-pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 28px;
+      align-items: stretch;
+    }
+    .s04-step {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .s04-step::after {
+      content: '→';
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 28px;
+      color: var(--gold);
+      font-weight: 700;
+      z-index: 2;
+    }
+    .s04-step:last-child::after { display: none; }
+    .s04-step iconify-icon { font-size: 36px; color: var(--gold); }
+    .s04-step .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--stone);
+      font-weight: 600;
+      letter-spacing: 0.18em;
+    }
+    .s04-step .name {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .s04-step .desc {
+      font-size: 14px;
+      color: var(--stone);
+      line-height: 1.4;
+    }
+    .s04-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 40px;
+      margin-top: 32px;
+      min-height: 0;
+    }
+    .s04-left { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+    .s04-right { display: flex; flex-direction: column; gap: 16px; }
+    .s04-step-card {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-left: 5px solid var(--gold);
+      border-radius: 10px;
+      padding: 18px 22px;
+    }
+    .s04-step-card h4 {
+      font-size: 19px;
+      margin: 0 0 6px 0;
+      color: var(--ink);
+      font-weight: 700;
+    }
+    .s04-step-card h4 .num {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
+      color: var(--deep-gold);
+      letter-spacing: 0.15em;
+      margin-right: 8px;
     }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
+    .s04-step-card p { font-size: 16px; color: var(--stone); margin: 0; line-height: 1.5; }
+    .s04-box {
+      background: rgba(255, 255, 255, 0.75);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s04-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 10px 0;
     }
-    td {
-      color: var(--stone);
+    .s04-box ul { list-style: none; padding: 0; margin: 0; }
+    .s04-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s04-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .s04-box li code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); }
+    .slide-04 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-1 slide-04">
+  <div class="slide bg-subtle slide-04">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · WHAT INIT DOES</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:play-circle" class="icon-sm"></iconify-icon>
+        PART 01 · WHAT INIT DOES
+      </span>
       <span class="mono caption">04 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:play-circle" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">init 실행 시 순서</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">자동 스캔 + 초안 생성 + 큐레이션</p>
-      <p class="body-lead" style="margin-top: 28px;"><strong>Step 1: 코드베이스 분석</strong> — 패키지 매니저(package.json/requirements.txt/go.mod), 빌드 도구, 테스트 프레임워크, 디렉토리 구조, 주요 엔트리 포인트 식별.</p>
-      <p class="body" style="margin-top: 24px;"><strong>Step 2: CLAUDE.md 초안 작성</strong> — WHAT (프로젝트 소개) / WHY (원칙) / HOW (빌드·테스트·배포 명령) 구조로 자동 채움.</p>
-      <p class="body" style="margin-top: 24px;"><strong>Step 3: 유저 큐레이션</strong> — Claude가 놓친 팀 컨벤션, 안티패턴, 보안 주의사항을 유저가 직접 편집해서 최종본 만듦.</p>
-      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
-    A["init 실행"] --> B["코드베이스 스캔"]
-    B --> C["CLAUDE.md 초안 생성"]
-    C --> D["유저 큐레이션"]
-    D --> E["✓ Ready"]
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">자동 스캔 + 초안 생성 + 큐레이션 · 약 30초</p>
 
-    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style B fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style C fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style D fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style E fill:#6B8E7F,stroke:#1A1D24,stroke-width:2px,color:#FFF</div></div>
-
+    <div class="s04-pipeline">
+      <div class="s04-step">
+        <iconify-icon icon="heroicons:command-line"></iconify-icon>
+        <div class="num">STEP 01</div>
+        <div class="name">실행</div>
+        <div class="desc"><code>/init</code> 명령 입력</div>
+      </div>
+      <div class="s04-step">
+        <iconify-icon icon="heroicons:magnifying-glass"></iconify-icon>
+        <div class="num">STEP 02</div>
+        <div class="name">스캔</div>
+        <div class="desc">package·빌드·구조</div>
+      </div>
+      <div class="s04-step">
+        <iconify-icon icon="heroicons:document-plus"></iconify-icon>
+        <div class="num">STEP 03</div>
+        <div class="name">초안 생성</div>
+        <div class="desc">CLAUDE.md WHAT/WHY/HOW</div>
+      </div>
+      <div class="s04-step">
+        <iconify-icon icon="heroicons:pencil-square"></iconify-icon>
+        <div class="num">STEP 04</div>
+        <div class="name">큐레이션</div>
+        <div class="desc">팀 컨벤션 추가 편집</div>
+      </div>
+      <div class="s04-step">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <div class="num">STEP 05</div>
+        <div class="name">Ready</div>
+        <div class="desc">git commit 후 공유</div>
+      </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 스캔 대상</h3>
-        <ul>
-          <li>package.json / requirements.txt</li>
-          <li>빌드·테스트 설정</li>
-          <li>디렉토리 구조</li>
-          <li>README.md</li>
-          <li>Git history (최근 커밋)</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          자동화 → 수동 검증<br>품질 담보
+    <div class="s04-body">
+      <div class="s04-left">
+        <div class="s04-step-card">
+          <h4><span class="num">STEP 02</span>코드베이스 분석</h4>
+          <p>패키지 매니저 (package.json / requirements.txt / go.mod), 빌드 도구, 테스트 프레임워크, 디렉토리 구조, 엔트리 포인트 식별.</p>
+        </div>
+        <div class="s04-step-card">
+          <h4><span class="num">STEP 03</span>CLAUDE.md 초안 작성</h4>
+          <p>WHAT (프로젝트 소개) · WHY (원칙) · HOW (빌드·테스트·배포 명령) 구조로 자동 채움. 유저는 이후 큐레이션만.</p>
+        </div>
+        <div class="s04-step-card">
+          <h4><span class="num">STEP 04</span>유저 큐레이션</h4>
+          <p>Claude 가 놓친 팀 컨벤션, 안티패턴, 보안 주의사항을 직접 편집해 최종본 만듦.</p>
+        </div>
+      </div>
+
+      <div class="s04-right">
+        <div class="s04-box">
+          <h3>◆ 스캔 대상</h3>
+          <ul>
+            <li><code>package.json</code></li>
+            <li><code>requirements.txt</code></li>
+            <li>빌드·테스트 설정</li>
+            <li>디렉토리 구조</li>
+            <li>README.md</li>
+            <li>Git history (최근)</li>
+          </ul>
+        </div>
+        <div class="s04-box">
+          <h3>◆ 결과물</h3>
+          <ul>
+            <li><code>CLAUDE.md</code> 생성</li>
+            <li><code>.claude/</code> 스캐폴드</li>
+            <li>기본 permissions</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/scripts/init.py</span>
+      <span class="footnote">참조: docs.claude.com/claude-code/init</span>
     </div>
   </div>
 </body>

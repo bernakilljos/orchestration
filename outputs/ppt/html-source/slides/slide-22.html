@@ -9,114 +9,185 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-22 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s22-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s22-checklist {
+      background: rgba(255, 255, 255, 0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 14px;
+      padding: 24px 28px;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s22-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 18px;
+      color: var(--ink);
+      padding: 6px 0;
+    }
+    .s22-item .box {
+      width: 24px; height: 24px;
+      border: 2px solid var(--gold);
+      border-radius: 6px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .s22-item .num {
+      color: var(--deep-gold);
+      font-weight: 700;
+      font-size: 15px;
+      min-width: 24px;
+    }
+    .s22-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .s22-timeline {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+    .s22-timeline h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+    }
+    .s22-day {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: start;
+    }
+    .s22-day .tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      color: white;
+      background: var(--gold);
+      padding: 4px 10px;
+      border-radius: 100px;
+      text-align: center;
+      letter-spacing: 0.1em;
     }
-    td {
-      color: var(--stone);
+    .s22-day .desc { font-size: 16px; color: var(--ink); line-height: 1.4; }
+    .s22-box {
+      background: rgba(255, 255, 255, 0.75);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .s22-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s22-box ul { list-style: none; padding: 0; margin: 0; }
+    .s22-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s22-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-22 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-5 slide-22">
+  <div class="slide bg-subtle slide-22">
     <div class="slide-header">
-      <span class="eyebrow">PART 05 · IN PRACTICE</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:clipboard-document-check" class="icon-sm"></iconify-icon>
+        PART 05 · IN PRACTICE
+      </span>
       <span class="mono caption">22 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">시작하기</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 새 프로젝트 10 분</p>
-      <div class="code-block">□ claude code CLI 설치
-□ cd project-root
-□ claude 실행
-□ /init — CLAUDE.md 초안 생성
-□ CLAUDE.md 큐레이션 (WHAT/WHY/HOW)
-□ .claude/rules/ 분리 (긴 규칙)
-□ .claude/commands/ 추가 (자주 쓰는 명령)
-□ settings.json 권한 설정
-□ hooks 등록 (자동화)
-□ .mcp.json 외부 서비스 연결
-□ git commit .claude/ CLAUDE.md</div>
-
-      <svg viewBox="0 0 700 140" style="width: 100%; max-width: 700px; height: auto; margin-top: 32px;">
-        <!-- 타임라인 -->
-        <line x1="40" y1="70" x2="680" y2="70" stroke="#B8864E" stroke-width="2"/>
-
-        <!-- Day 1 -->
-        <circle cx="100" cy="70" r="20" fill="#B8864E"/>
-        <circle cx="100" cy="70" r="14" fill="white"/>
-        <text x="100" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="18" font-weight="700" fill="#1A1D24">Day 1</text>
-        <text x="100" y="110" text-anchor="middle" font-family="'Pretendard Variable'" font-size="14" fill="#6E685C">초기 세팅</text>
-
-        <!-- Day 3 -->
-        <circle cx="390" cy="70" r="20" fill="#6B8E7F"/>
-        <circle cx="390" cy="70" r="14" fill="white"/>
-        <text x="390" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="18" font-weight="700" fill="#1A1D24">Day 3</text>
-        <text x="390" y="110" text-anchor="middle" font-family="'Pretendard Variable'" font-size="14" fill="#6E685C">튜닝·피드백</text>
-
-        <!-- Day 7 -->
-        <circle cx="620" cy="70" r="20" fill="#B25A3E"/>
-        <circle cx="620" cy="70" r="14" fill="white"/>
-        <text x="620" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="18" font-weight="700" fill="#1A1D24">Day 7</text>
-        <text x="620" y="110" text-anchor="middle" font-family="'Pretendard Variable'" font-size="14" fill="#6E685C">팀 공유 완성</text>
-      </svg>
-
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:clipboard-document-check" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">시작하기 · 10분</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude Code 새 프로젝트 체크리스트</p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 첫 주 팁</h3>
-        <ul>
-          <li>작게 시작</li>
-          <li>반복 시 규칙화</li>
-          <li>주 1회 CLAUDE.md 갱신</li>
-          <li>팀 공유 후 피드백</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          설정 완성도<br>= 팀 생산성
+    <div class="s22-body">
+      <div class="s22-checklist">
+        <div class="s22-item"><span class="num">01</span><span class="box"></span>claude code CLI 설치</div>
+        <div class="s22-item"><span class="num">02</span><span class="box"></span>cd project-root</div>
+        <div class="s22-item"><span class="num">03</span><span class="box"></span>claude 실행</div>
+        <div class="s22-item"><span class="num">04</span><span class="box"></span>/init — CLAUDE.md 초안 생성</div>
+        <div class="s22-item"><span class="num">05</span><span class="box"></span>CLAUDE.md 큐레이션 (WHAT/WHY/HOW)</div>
+        <div class="s22-item"><span class="num">06</span><span class="box"></span>.claude/rules/ 분리 (긴 규칙)</div>
+        <div class="s22-item"><span class="num">07</span><span class="box"></span>.claude/commands/ 추가</div>
+        <div class="s22-item"><span class="num">08</span><span class="box"></span>settings.json 권한 설정</div>
+        <div class="s22-item"><span class="num">09</span><span class="box"></span>hooks 등록 (자동화)</div>
+        <div class="s22-item"><span class="num">10</span><span class="box"></span>.mcp.json 외부 서비스 연결</div>
+        <div class="s22-item"><span class="num">11</span><span class="box"></span>git commit .claude/ CLAUDE.md</div>
+      </div>
+
+      <div class="s22-right">
+        <div class="s22-timeline">
+          <h3>◆ Day 1 · 3 · 7</h3>
+          <div class="s22-day">
+            <span class="tag">DAY 1</span>
+            <span class="desc">초기 세팅 · /init + CLAUDE.md 큐레이션</span>
+          </div>
+          <div class="s22-day">
+            <span class="tag">DAY 3</span>
+            <span class="desc">실사용 피드백 · 반복 지시 발견 → rules 추가</span>
+          </div>
+          <div class="s22-day">
+            <span class="tag">DAY 7</span>
+            <span class="desc">팀 공유 · PR 리뷰 · 훅 자동화</span>
+          </div>
+        </div>
+        <div class="s22-box">
+          <h3>◆ 첫 주 팁</h3>
+          <ul>
+            <li>작게 시작</li>
+            <li>반복 시 규칙화</li>
+            <li>주 1회 CLAUDE.md 갱신</li>
+            <li>팀 공유 후 피드백</li>
+          </ul>
         </div>
       </div>
     </div>

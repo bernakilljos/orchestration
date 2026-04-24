@@ -9,90 +9,163 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-03 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s03-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+    }
+    .s03-left { display: flex; flex-direction: column; min-width: 0; gap: 20px; }
+    .s03-right { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+    .s03-compare {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: center;
+      flex: 1;
+      min-height: 0;
+    }
+    .s03-side {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 14px;
+      padding: 24px 28px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .s03-side.before { border: 1px solid rgba(178,90,62,0.3); border-left: 5px solid var(--terracotta); }
+    .s03-side.after  { border: 1px solid rgba(107,142,127,0.3); border-left: 5px solid var(--sage); }
+    .s03-side h4 {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin: 0 0 8px 0;
+      font-weight: 700;
+    }
+    .s03-side.before h4 { color: var(--terracotta); }
+    .s03-side.after h4 { color: var(--sage); }
+    .s03-side p { font-size: 17px; margin: 4px 0; color: var(--ink); line-height: 1.4; }
+    .s03-side p.faded { color: var(--stone); font-size: 15px; }
+    .s03-arrow {
+      font-size: 40px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .s03-box {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s03-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 10px 0;
     }
-    td {
-      color: var(--stone);
+    .s03-box ul { list-style: none; padding: 0; margin: 0; }
+    .s03-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s03-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-03 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-1 slide-03">
+  <div class="slide bg-subtle slide-03">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · WHY INIT</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>
+        PART 01 · WHY INIT
+      </span>
       <span class="mono caption">03 / 25</span>
     </div>
 
-    <h1 class="heading-1">/init 의 이유</h1>
-    <p class="heading-2 text-stone" style="font-weight: 400; margin-top: 8px;">왜 매번 설명하지 말고, 한 번 세팅해서 영원히</p>
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">/init 의 이유</h1>
+    </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">왜 매번 설명하지 말고, 한 번 세팅해서 영원히</p>
 
-    <div class="content" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 48px; flex: 1; min-height: 0; margin-top: 24px;">
-      <div class="main-content">
-        <p class="body-lead">매 대화마다 규칙을 다시 말하는 건 낭비. Claude가 <strong>항상 알고 있어야 할 규칙</strong>은 CLAUDE.md 에 한 번 쓰면 이후 자동 로드된다.</p>
-        <p class="body" style="margin-top: 20px;">/init 은 이걸 자동화한다. 실행하면 Claude가 프로젝트를 스캔해서 초안 CLAUDE.md 를 생성하고, 유저는 <strong>큐레이션만</strong> 하면 된다.</p>
+    <div class="s03-body">
+      <div class="s03-left">
+        <p class="body">
+          매 대화마다 'Python 3.11 써', 'snake_case 로', 'pytest 통과 후 커밋' 반복은 낭비. <strong>항상 알고 있어야 할 규칙</strong>은 <code>CLAUDE.md</code> 한 번 쓰면 이후 자동 로드.
+        </p>
+        <div class="s03-compare">
+          <div class="s03-side before">
+            <h4>BEFORE · 매번 반복</h4>
+            <p>"Python 3.11 써"</p>
+            <p>"snake_case 로"</p>
+            <p>"테스트 통과해야 커밋"</p>
+            <p class="faded">매 세션마다 재설명</p>
+          </div>
+          <div class="s03-arrow">→</div>
+          <div class="s03-side after">
+            <h4>AFTER · /init 후</h4>
+            <p>CLAUDE.md 자동 로드</p>
+            <p>팀원 간 통일</p>
+            <p>맥락 유지</p>
+            <p class="faded">반복 지시 불필요</p>
+          </div>
+        </div>
       </div>
 
-      <div class="side-panel">
-        <div class="bullet-box">
-          <h3>◆ /init 이 해결하는 것</h3>
+      <div class="s03-right">
+        <div class="s03-box">
+          <h3>◆ /init 이 해결</h3>
           <ul>
             <li>반복 지시 제거</li>
             <li>팀원 간 규칙 통일</li>
             <li>새 세션도 맥락 유지</li>
+            <li>품질 일관성</li>
             <li>자동 스캔 → 초안</li>
           </ul>
-          <hr>
-          <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-            설정 한 번,<br>효과 영원
-          </div>
+        </div>
+        <div class="s03-box">
+          <h3>◆ 효과</h3>
+          <ul>
+            <li>한 번 · 영원</li>
+            <li>AI 실수 감소</li>
+            <li>온보딩 시간 1/3</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: CLAUDE.md 설계 원칙</span>
+      <span class="footnote">참조: CLAUDE.md 설계 원칙 · Brij Kishore Pandey</span>
     </div>
   </div>
 </body>

@@ -9,91 +9,155 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-19 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
+    .s19-table {
+      flex: 1;
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 14px 24px;
+      margin-top: 28px;
+      min-height: 0;
+      align-content: start;
+    }
+    .s19-th {
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
-    }
-    td {
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
       color: var(--stone);
+      font-weight: 700;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--fog);
+    }
+    .s19-cell {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 19px;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .s19-cell.vague { background: rgba(178,90,62,0.08); color: var(--ink); }
+    .s19-cell.precise { background: rgba(107,142,127,0.1); color: var(--ink); }
+    .s19-cell .icon-wrap {
+      flex-shrink: 0;
+      font-size: 24px;
+    }
+    .s19-cell.vague iconify-icon { color: var(--terracotta); }
+    .s19-cell.precise iconify-icon { color: var(--sage); }
+    .s19-cell code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: var(--deep-gold);
+    }
+    .s19-cat {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--deep-gold);
+      padding: 14px 18px 14px 0;
+      display: flex;
+      align-items: center;
+    }
+    .slide-19 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-4 slide-19">
+  <div class="slide bg-tech slide-19">
     <div class="slide-header">
-      <span class="eyebrow">PART 04 · BE SPECIFIC</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>
+        PART 04 · BE SPECIFIC
+      </span>
       <span class="mono caption">19 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">구체적으로 써라</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">CLAUDE.md 모호성 ↔ 정확성</p>
-      <p class="body-lead" style="margin-top: 28px;">모호한 규칙은 AI가 기억 못 함. 구체적으로 써야 실행된다.</p>
-      <p class="body" style="margin-top: 24px;">❌ Vague: '깨끗한 코드' → ✅ Precise: 'camelCase 변수, PascalCase 컴포넌트'</p>
-      <p class="body" style="margin-top: 24px;">❌ Vague: '테스트 해' → ✅ Precise: 'npm test --watch, utils/ 커버리지 80%+'</p>
-      <p class="body" style="margin-top: 24px;">❌ Vague: '안전하게' → ✅ Precise: '에러는 try/catch, 로그에 PII 금지'</p>
-
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      모호성 ↔ 정확성 · 모호한 규칙은 AI 가 기억 못 함 · 구체적이어야 실행됨
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 구체화 체크리스트</h3>
-        <ul>
-          <li>수량 명시 (몇 %, 몇 줄)</li>
-          <li>도구명 명시 (npm, pytest)</li>
-          <li>파일/폴더 명시 (src/, utils/)</li>
-          <li>명령어 전체 기재</li>
-          <li>예외 케이스 명시</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          Precise = Followed
-        </div>
+    <div class="s19-table">
+      <div class="s19-th"></div>
+      <div class="s19-th">❌ Vague (모호)</div>
+      <div class="s19-th">✅ Precise (정확)</div>
+
+      <div class="s19-cat">코드 스타일</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "깨끗한 코드"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>camelCase 변수, PascalCase 컴포넌트</code>
+      </div>
+
+      <div class="s19-cat">테스트</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "테스트 해"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>npm test --watch, utils/ 커버리지 80%+</code>
+      </div>
+
+      <div class="s19-cat">보안</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "안전하게"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>에러는 try/catch, 로그에 PII 금지</code>
+      </div>
+
+      <div class="s19-cat">성능</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "빠르게"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>p95 &lt; 200ms, DB query N+1 금지</code>
+      </div>
+
+      <div class="s19-cat">문서</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "문서 잘 써"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>공개 함수 JSDoc + 예제 1개</code>
+      </div>
+
+      <div class="s19-cat">커밋</div>
+      <div class="s19-cell vague">
+        <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+        "잘 커밋"
+      </div>
+      <div class="s19-cell precise">
+        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <code>Conventional Commits, 제목 50자 이하</code>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: best-practices.md</span>
+      <span class="footnote">참조: best-practices.md · Brij Kishore Pandey 설계 원칙</span>
     </div>
   </div>
 </body>

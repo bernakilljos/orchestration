@@ -8,102 +8,196 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-20 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
+    .s20-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s20-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+    .s20-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    .s20-scenario {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 24px 28px;
+      flex: 1;
+      min-height: 0;
+    }
+    .s20-scenario h4 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 14px 0;
+    }
+    .s20-layer {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: rgba(184,134,78,0.05);
+    }
+    .s20-layer.winner {
+      background: rgba(107,142,127,0.2);
+      border: 2px solid var(--sage);
+    }
+    .s20-layer .label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+      color: var(--deep-gold);
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.1em;
+    }
+    .s20-layer .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: var(--stone);
+    }
+    .s20-layer .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
       color: var(--ink);
     }
-    td {
-      color: var(--stone);
+    .s20-layer.winner .value { color: var(--sage); }
+    .s20-result {
+      margin-top: 14px;
+      padding: 14px 18px;
+      background: rgba(107,142,127,0.15);
+      border-left: 4px solid var(--sage);
+      border-radius: 8px;
+      font-size: 17px;
+      color: var(--ink);
+    }
+    .s20-result strong { color: var(--sage); font-weight: 700; }
+    .s20-card {
+      background: rgba(255, 255, 255, 0.75);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .s20-card h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s20-card ol { padding: 0 0 0 24px; margin: 0; }
+    .s20-card li {
+      font-size: 17px;
+      line-height: 1.5;
+      color: var(--ink);
+      padding: 3px 0;
+    }
+    .s20-card li code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--deep-gold);
+    }
+    .s20-rule {
+      background: rgba(184,134,78,0.08);
+      border: 0.5px solid rgba(184,134,78,0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 18px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .s20-rule strong { color: var(--deep-gold); font-weight: 700; }
+    .slide-20 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-4 slide-20">
+  <div class="slide bg-tech slide-20">
     <div class="slide-header">
-      <span class="eyebrow">PART 04 · 3 SCOPES</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:arrows-pointing-in" class="icon-sm"></iconify-icon>
+        PART 04 · 3 SCOPES
+      </span>
       <span class="mono caption">20 / 25</span>
     </div>
 
-    <div class="main-content">
-      <h1 class="heading-1">3 스코프 · 같은 규칙 충돌 시</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Folder > Project > Global</p>
-      <p class="body-lead" style="margin-top: 28px;">세 단계 Memory 중 가장 가까운 곳의 규칙이 이김. Global CLAUDE.md 에 'tab 4 space', Project 에 'tab 2 space', Folder 에 'tab 8 space' 있으면 그 Folder 안에서는 8 space 적용.</p>
-      <p class="body" style="margin-top: 24px;">Global (~/.claude/CLAUDE.md): 모든 프로젝트 공통 (개인 선호)</p>
-      <p class="body" style="margin-top: 24px;">Project (./CLAUDE.md): 이 리포 규칙 (팀 컨벤션)</p>
-      <p class="body" style="margin-top: 24px;">Folder (./src/CLAUDE.md): 모듈 국소 규칙 (필요 시)</p>
-      <div class="mermaid-wrapper"><div class="mermaid">flowchart TD
-    G["Global<br/>~/.claude/CLAUDE.md<br/>tab: 4 space"] --> P["Project<br/>./CLAUDE.md<br/>tab: 2 space"]
-    P --> F["Folder<br/>./src/CLAUDE.md<br/>tab: 8 space"]
-    F --> R["src/ 안에서<br/>8 space 적용!"]
-
-    style G fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
-    style P fill:#E8D8B0,stroke:#8A6235,stroke-width:2px
-    style F fill:#B8864E,stroke:#1A1D24,stroke-width:3px,color:#FFF
-    style R fill:#6B8E7F,stroke:#1A1D24,stroke-width:3px,color:#FFF</div></div>
-
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:arrows-pointing-in" class="icon-lg"></iconify-icon>
+      <h1 class="heading-1">3 스코프 · 충돌 시</h1>
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      Folder &gt; Project &gt; Global · <strong>가까운 것이 이긴다</strong>
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ 우선순위</h3>
-        <ul>
-          <li>1. Folder (가장 가까움)</li>
-          <li>2. Project</li>
-          <li>3. Global (가장 멀음)</li>
-          <li>Last wins on conflicts</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          가까운 규칙이<br>먼 규칙을 이김
+    <div class="s20-body">
+      <div class="s20-left">
+        <div class="s20-scenario">
+          <h4>◆ 실제 충돌 시나리오 · 들여쓰기</h4>
+          <div class="s20-layer">
+            <span class="label">Global</span>
+            <span class="path">~/.claude/CLAUDE.md</span>
+            <span class="value">tab 4 space</span>
+          </div>
+          <div class="s20-layer">
+            <span class="label">Project</span>
+            <span class="path">./CLAUDE.md</span>
+            <span class="value">tab 2 space</span>
+          </div>
+          <div class="s20-layer winner">
+            <span class="label">Folder ★</span>
+            <span class="path">./src/CLAUDE.md</span>
+            <span class="value">tab 8 space</span>
+          </div>
+          <div class="s20-result">
+            <strong>→ src/ 안에서는 8 space 적용.</strong> 바깥은 2 space.
+          </div>
+        </div>
+      </div>
+
+      <div class="s20-right">
+        <div class="s20-card">
+          <h3>◆ 우선순위</h3>
+          <ol>
+            <li><strong>Folder</strong> (모듈 국소)</li>
+            <li><strong>Project</strong> (리포 공통)</li>
+            <li><strong>Global</strong> (개인 선호)</li>
+          </ol>
+        </div>
+        <div class="s20-rule">
+          <strong>규칙</strong> — 같은 키가 여러 레벨에 정의되면 <code>가장 가까운 것</code> 만 적용. 멀리 있는 규칙은 무시.
+        </div>
+        <div class="s20-card">
+          <h3>◆ 활용</h3>
+          <ol>
+            <li>개인 선호 → Global</li>
+            <li>팀 컨벤션 → Project</li>
+            <li>특수 모듈 → Folder</li>
+          </ol>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: claude-md-design.md</span>
+      <span class="footnote">참조: claude-md-design.md · 3 Scopes</span>
     </div>
   </div>
 </body>

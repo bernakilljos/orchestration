@@ -9,60 +9,90 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .icon-sm { font-size: 28px !important; }
-  </style>
-  <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
+    .slide-02 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .s02-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 48px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s02-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 18px; }
+    .s02-right { display: flex; flex-direction: column; min-width: 0; gap: 16px; }
+    .s02-terminal {
+      background: #0D1017;
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      line-height: 1.7;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .s02-terminal::before {
+      content: '● ● ●';
+      color: #FF5F56;
+      letter-spacing: 8px;
+      font-size: 14px;
+      display: block;
+      margin-bottom: 16px;
+    }
+    .s02-terminal .prompt { color: #39FF6C; }
+    .s02-terminal .output { color: #A8B0C0; }
+    .s02-terminal .comment { color: #7C8A99; font-style: italic; }
+    .s02-box {
+      background: rgba(255, 255, 255, 0.75);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+      padding: 20px 24px;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
-      border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
+    .s02-box h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
+      margin: 0 0 12px 0;
     }
-    td {
-      color: var(--stone);
+    .s02-box ul { list-style: none; padding: 0; margin: 0; }
+    .s02-box li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s02-box li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-02 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-1 slide-02">
+  <div class="slide bg-subtle slide-02">
     <div class="slide-header">
       <span class="slide-eyebrow">
         <iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>
@@ -72,67 +102,53 @@
     </div>
 
     <div class="title-with-icon">
-      <iconify-icon icon="heroicons:code-bracket" class="icon-lg"></iconify-icon>
+      <iconify-icon icon="heroicons:code-bracket"  class="icon-lg"></iconify-icon>
       <h1 class="heading-1">Claude Code</h1>
     </div>
-    <p class="heading-2 text-stone" style="font-weight: 400;">터미널에 들어온 AI 페어 프로그래머</p>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">터미널에 들어온 AI 페어 프로그래머 · 프로젝트 폴더 = 작업공간</p>
 
-    <div class="content" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 48px; flex: 1; min-height: 0; margin-top: 24px;">
-      <div class="main-content">
-        <p class="body-lead">Claude Code는 터미널에서 돌아가는 AI 에이전트. 파일을 읽고·쓰고·실행하고·git을 조작하고·MCP 서버를 호출한다. 핵심은 <strong>.claude/ 폴더</strong>에 모든 규칙·명령·훅·스킬이 담긴다는 것.</p>
-        <p class="body" style="margin-top: 20px;">새 프로젝트에서 <strong>/init을 실행</strong>하면 Claude가 코드베이스를 스캔해서 .claude/ 와 CLAUDE.md를 자동 생성한다.</p>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px;">
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:terminal" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">CLI</p>
-          </div>
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:folder-open" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">Project</p>
-          </div>
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:cube" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">MCP</p>
-          </div>
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:wrench-screwdriver" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">Hooks</p>
-          </div>
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:puzzle-piece" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">Plugins</p>
-          </div>
-          <div style="text-align: center;">
-            <iconify-icon icon="heroicons:sparkles" style="font-size: 40px; color: var(--gold); display: block; margin-bottom: 6px;"></iconify-icon>
-            <p style="font-size: 13px; color: var(--stone);">Multi-AI</p>
-          </div>
-        </div>
+    <div class="s02-body">
+      <div class="s02-left">
+        <p class="body">
+          Claude Code 는 터미널에서 돌아가는 AI 에이전트. 파일 읽고·쓰고·실행·git·MCP. 웹 UI 가 아니라 <strong>프로젝트 폴더 자체가 작업 공간</strong>이다. 새 프로젝트에서 <code>/init</code> 실행하면 자동으로 <code>.claude/</code> 와 <code>CLAUDE.md</code> 생성.
+        </p>
+        <pre class="s02-terminal">
+<span class="prompt">$</span> cd my-project
+<span class="prompt">$</span> claude
+Welcome to Claude Code. Ready to help.
+<span class="prompt">&gt;</span> /init
+<span class="output">Scanning codebase...
+Detected: Next.js 15, TypeScript, Tailwind
+Generating CLAUDE.md draft...</span>
+<span class="comment">// Done. Review docs/CLAUDE.md</span>
+<span class="prompt">&gt;</span> _</pre>
       </div>
 
-      <div class="side-panel">
-        <div class="bullet-box">
-          <h3>
-            <iconify-icon icon="heroicons:bolt"></iconify-icon>
-            핵심 특징
-          </h3>
+      <div class="s02-right">
+        <div class="s02-box">
+          <h3>◆ 핵심 특징</h3>
           <ul>
             <li>터미널 CLI 기반</li>
-            <li>프로젝트 폴더 = 작업공간</li>
-            <li>.claude/ 에 모든 맥락</li>
-            <li>/init 으로 자동 세팅</li>
+            <li>폴더 = 작업공간</li>
+            <li><code>.claude/</code> 에 모든 맥락</li>
+            <li><code>/init</code> 자동 세팅</li>
+            <li>MCP·훅·플러그인</li>
             <li>Multi-AI 오케스트레이션</li>
           </ul>
-          <hr>
-          <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-            폴더가 곧 컨텍스트<br>한 번 설정해서 영원히
-          </div>
+        </div>
+        <div class="s02-box">
+          <h3>◆ 시작</h3>
+          <ul>
+            <li><code>claude --help</code></li>
+            <li><code>/init</code> — 자동 세팅</li>
+            <li>CLAUDE.md 큐레이션</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">시작: claude code --help</span>
+      <span class="footnote">참조: docs.claude.com/claude-code</span>
     </div>
   </div>
 </body>

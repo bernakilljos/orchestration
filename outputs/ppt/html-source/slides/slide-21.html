@@ -9,107 +9,202 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper {
-      background: rgba(255, 255, 255, 0.6);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 24px;
-      backdrop-filter: blur(10px);
-      margin-top: 24px;
-      display: flex;
-      justify-content: center;
+    .slide-21 {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 1080px !important;
+      padding: 60px 80px 50px 80px !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
     }
-    .code-block {
-      background: rgba(26, 29, 36, 0.05);
+    .s21-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 40px;
+      margin-top: 24px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .s21-left { display: flex; flex-direction: column; gap: 18px; min-width: 0; min-height: 0; }
+    .s21-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .s21-chart {
+      background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 14px;
+      padding: 28px 32px;
+    }
+    .s21-chart h4 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 18px 0;
+    }
+    .s21-bar {
+      display: grid;
+      grid-template-columns: 90px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .s21-bar .label {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .s21-bar .track {
+      height: 32px;
+      background: rgba(184,134,78,0.12);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .s21-bar .fill {
+      height: 100%;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      padding-right: 12px;
+      justify-content: flex-end;
+      color: white;
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-      overflow-x: auto;
-      margin-top: 24px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .table-wrapper {
-      width: 100%;
-      margin-top: 24px;
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 0.5px solid var(--fog);
-    }
-    th {
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.4);
-      color: var(--ink);
     }
-    td {
-      color: var(--stone);
+    .s21-bar.memory .fill { width: 75%; background: linear-gradient(90deg, #B25A3E, #CA6E4A); }
+    .s21-bar.hook .fill { width: 100%; background: linear-gradient(90deg, var(--sage), #80A091); }
+    .s21-bar .pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 19px;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: right;
+    }
+    .s21-bar.memory .pct { color: var(--terracotta); }
+    .s21-bar.hook .pct { color: var(--sage); }
+    .s21-code {
+      background: #1A1D24;
+      color: #39FF6C;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      line-height: 1.5;
+      padding: 22px 26px;
+      border-radius: 12px;
+      white-space: pre;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .s21-card {
+      background: rgba(255, 255, 255, 0.75);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .s21-card h3 {
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    .s21-card ul { list-style: none; padding: 0; margin: 0; }
+    .s21-card li {
+      font-size: 17px;
+      line-height: 1.4;
+      color: var(--ink);
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .s21-card li::before {
+      content: '';
+      flex-shrink: 0;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      position: relative;
+      top: 7px;
+    }
+    .slide-21 .footer-border {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--fog);
     }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-4 slide-21">
+  <div class="slide bg-tech slide-21">
     <div class="slide-header">
-      <span class="eyebrow">PART 04 · HOOKS ENFORCEMENT</span>
+      <span class="slide-eyebrow">
+        <iconify-icon icon="heroicons:bolt" class="icon-sm"></iconify-icon>
+        PART 04 · HOOKS ENFORCEMENT
+      </span>
       <span class="mono caption">21 / 25</span>
     </div>
 
-    <div class="main-content">
+    <div class="title-with-icon">
+      <iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon>
       <h1 class="heading-1">메모리 말고 Hook 으로</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">70~80% 지킴 → 100% 실행</p>
-      <p class="body-lead" style="margin-top: 28px;">CLAUDE.md 의 규칙은 <strong>AI 가 '기억'</strong> 해야 적용 — 놓칠 수 있음. 훅은 <strong>시스템이 강제 실행</strong> — 100% 작동.</p>
-      <p class="body" style="margin-top: 24px;">예: '모든 Python 파일 저장 시 black 실행' → PostToolUse 훅으로 settings.json 에 등록. Edit/Write 이벤트마다 자동 실행 (메모리 전혀 안 쓰임).</p>
-      <p class="body" style="margin-top: 24px;">또는 '커밋 전 테스트 필수' → PreToolUse 훅으로 git commit 차단. hooks/pre-commit.sh 에서 npm test 돌려서 실패하면 차단. Claude 가 아무리 바빠도 강제됨.</p>
-
-      <svg viewBox="0 0 700 200" style="width: 100%; max-width: 700px; height: auto; margin-top: 32px;">
-        <!-- 제목 -->
-        <text x="350" y="30" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="700" fill="#1A1D24">규칙 준수율 비교</text>
-
-        <!-- 메모리 바 -->
-        <text x="20" y="85" font-family="Pretendard Variable" font-size="20" font-weight="600" fill="#1A1D24">메모리</text>
-        <rect x="150" y="65" width="350" height="40" fill="#E5DDCA" stroke="#B25A3E" stroke-width="1"/>
-        <rect x="150" y="65" width="245" height="40" fill="#B25A3E"/>
-        <text x="405" y="92" text-anchor="start" font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#B25A3E">70%</text>
-
-        <!-- 훅 바 -->
-        <text x="20" y="155" font-family="Pretendard Variable" font-size="20" font-weight="600" fill="#1A1D24">Hook</text>
-        <rect x="150" y="135" width="350" height="40" fill="#E5DDCA" stroke="#6B8E7F" stroke-width="1"/>
-        <rect x="150" y="135" width="350" height="40" fill="#6B8E7F"/>
-        <text x="510" y="162" text-anchor="start" font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#6B8E7F">100%</text>
-      </svg>
-
     </div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">
+      AI 는 잊을 수 있지만 시스템은 잊지 않는다 · 70~80% 지킴 → <strong>100% 실행</strong>
+    </p>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>◆ Hook 활용 사례</h3>
-        <ul>
-          <li>포매터 자동 실행</li>
-          <li>커밋 전 검증</li>
-          <li>위험 명령 차단</li>
-          <li>보안 스캔</li>
-          <li>자동 로깅</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          메모리: 70~80%<br>Hook: 100%
+    <div class="s21-body">
+      <div class="s21-left">
+        <div class="s21-chart">
+          <h4>◆ 규칙 준수율 비교</h4>
+          <div class="s21-bar memory">
+            <span class="label">Memory</span>
+            <div class="track"><div class="fill">75%</div></div>
+            <span class="pct">75%</span>
+          </div>
+          <div class="s21-bar hook">
+            <span class="label">Hook</span>
+            <div class="track"><div class="fill">100%</div></div>
+            <span class="pct">100%</span>
+          </div>
+        </div>
+        <pre class="s21-code">// settings.json 훅 등록 예
+"hooks": {
+  "PostToolUse": [{
+    "matcher": "Edit|Write",
+    "hooks": [{
+      "type": "command",
+      "command": "prettier --write $FILE"
+    }]
+  }]
+}</pre>
+      </div>
+
+      <div class="s21-right">
+        <div class="s21-card">
+          <h3>◆ Hook 활용 사례</h3>
+          <ul>
+            <li>포매터 자동 실행</li>
+            <li>커밋 전 테스트</li>
+            <li>위험 명령 차단</li>
+            <li>보안 스캔</li>
+            <li>API 키 노출 방지</li>
+          </ul>
+        </div>
+        <div class="s21-card">
+          <h3>◆ 전략</h3>
+          <ul>
+            <li>메모리: 선호·판단</li>
+            <li>Hook: 절대 규칙</li>
+            <li>중요할수록 Hook</li>
+          </ul>
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: hooks/, settings.json hooks</span>
+      <span class="footnote">참조: hooks/ · settings.json hooks</span>
     </div>
   </div>
 </body>
