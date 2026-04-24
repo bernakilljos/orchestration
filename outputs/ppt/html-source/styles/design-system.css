@@ -50,6 +50,43 @@ body {
   background: var(--cream);
 }
 
+/* ═════════════════════════════════════════════════════════════
+   한글 텍스트 렌더링 안정화 (긴급 수정 2026-04-24)
+   ════════════════════════════════════════════════════════════ */
+
+.slide {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.slide h1,
+.slide h2,
+.slide h3,
+.slide p,
+.slide li,
+.slide span:not(.mono) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.main-content,
+.side-panel,
+.bullet-box,
+.slide > div {
+  min-width: 0;
+}
+
+.heading-1,
+.heading-2,
+.display-serif,
+.display-xxl,
+.display-xl,
+.display-l {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* ──────────────────────────────────────────────────────────────────────── */
 /* TYPOGRAPHY SCALE */
 /* ──────────────────────────────────────────────────────────────────────── */
