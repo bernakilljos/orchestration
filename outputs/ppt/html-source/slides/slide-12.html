@@ -6,6 +6,21 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        fontFamily: 'Pretendard Variable, sans-serif',
+        primaryColor: '#F7F2EA',
+        primaryTextColor: '#1A1D24',
+        primaryBorderColor: '#6B8E7F',
+        lineColor: '#6E685C',
+        fontSize: '12px'
+      }
+    });
+  </script>
 </head>
 <body>
   <div class="slide part-3">
@@ -20,30 +35,19 @@
         24/7 자동으로 시스템 상태를 감시한다. 2분마다 체크하면서 문제가 있으면 자동으로 고친다.
         <strong>인터벤션 없이 99.9% 가용성</strong>을 목표로 한다.
       </p>
-      <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 32px; font-size: 13px;">
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [0s] 시작</strong><br/>
-          2분 타이머 시작 · 이전 상태 로드
-        </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [10s] 워커 상태</strong><br/>
-          codex-auto, gemini-auto, claude-auto heartbeat 확인
-        </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [30s] 큐 깊이</strong><br/>
-          .claude/tasks/ 에서 pending 개수 · 평균 대기 시간 계산
-        </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [60s] 메트릭 수집</strong><br/>
-          orca.db에 지표 기록 · 에러율, 캐시 히트율 등 계산
-        </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [90s] 자가치유</strong><br/>
-          이상 감지 시 자동 재시작: 데드 워커, 스턱 큐, API 한도 초과
-        </div>
-        <div style="background: rgba(255,255,255,0.6); padding: 16px; border-radius: 8px; border-left: 3px solid var(--sage);">
-          <strong>✓ [120s] 보고</strong><br/>
-          알림 전송 (Slack), metrics 갱신, 다음 사이클 준비
+      <div class="mermaid-wrapper" style="margin-top: 28px;">
+        <div class="mermaid">
+stateDiagram-v2
+    [*] --> Start: [0s]
+    Start --> Worker: [10s] heartbeat 체크
+    Worker --> Queue: [30s] 큐 깊이
+    Queue --> Metrics: [60s] 메트릭 기록
+    Metrics --> Heal: [90s] 자가 치유
+    Heal --> Ok: 이상 없음
+    Heal --> Fix: 이상 감지
+    Fix --> Ok: 자동 복구
+    Ok --> Report: [120s] 보고
+    Report --> [*]
         </div>
       </div>
     </div>

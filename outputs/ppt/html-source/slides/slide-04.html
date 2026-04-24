@@ -7,12 +7,26 @@
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        fontFamily: 'Pretendard Variable, sans-serif',
+        primaryColor: '#F7F2EA',
+        primaryTextColor: '#1A1D24',
+        primaryBorderColor: '#B8864E',
+        lineColor: '#6E685C',
+        secondaryColor: '#EDE4D3',
+        tertiaryColor: '#E5DDCA',
+        fontSize: '13px',
+        flowchart: { htmlLabels: true }
+      }
+    });
+  </script>
   <style>
-    .diagram { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 32px; }
-    .diagram-box { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 32px; border: 0.5px solid var(--fog); }
-    .diagram-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 16px; }
-    .diagram-icon { font-size: 64px; margin-bottom: 16px; }
-    .diagram-text { font-size: 13px; line-height: 1.6; color: var(--stone); }
+    .mermaid-container { margin-top: 32px; }
   </style>
 </head>
 <body>
@@ -32,21 +46,18 @@
         Codex는 구현을, Gemini는 검증을 하도록 라우팅한다.
       </p>
 
-      <div class="diagram">
-        <div class="diagram-box">
-          <div class="diagram-icon">🧠</div>
-          <div class="diagram-title">Claude</div>
-          <div class="diagram-text">설계 · 판단 · 승인 · 문서 작성 · 아티팩트 생성</div>
-        </div>
-        <div class="diagram-box">
-          <div class="diagram-icon">⚙️</div>
-          <div class="diagram-title">Codex</div>
-          <div class="diagram-text">500줄+ 코드 1차 구현 · 병렬 실행 · 속도 최적화</div>
-        </div>
-        <div class="diagram-box">
-          <div class="diagram-icon">🔍</div>
-          <div class="diagram-title">Gemini</div>
-          <div class="diagram-text">초장문 검증 · 보안·성능·품질 체크 · 500k 토큰</div>
+      <div class="mermaid-wrapper mermaid-container">
+        <div class="mermaid">
+graph LR
+    U["📋 사용자 요청"] --> C["🧠 Claude Opus<br/>설계·판단"]
+    C -->|대규모 구현| CX["⚙️ Codex ×4<br/>500줄+ 코드"]
+    C -->|소규모 작업| CS["🎯 Claude Sonnet<br/>직접 구현"]
+    CX --> V["🔍 검증 필터"]
+    CS --> V
+    V -->|초장문| G["📚 Gemini Flash<br/>500k 토큰"]
+    V --> M["📊 orca.db<br/>메트릭 기록"]
+    G --> M
+    M --> DB["✓ 결과 저장"]
         </div>
       </div>
 
