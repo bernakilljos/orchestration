@@ -55,70 +55,70 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .display-xxl {
-  font-size: 220px;
+  font-size: 253px;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 
 .display-xl {
-  font-size: 160px;
+  font-size: 184px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .display-l {
-  font-size: 104px;
+  font-size: 120px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
 .heading-1 {
-  font-size: 68px;
+  font-size: 78px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .heading-2 {
-  font-size: 40px;
+  font-size: 46px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .heading-3 {
-  font-size: 32px;
+  font-size: 37px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
 .eyebrow {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
 .body-lead {
-  font-size: 23px;
+  font-size: 26px;
   font-weight: 400;
   line-height: 1.65;
   letter-spacing: -0.005em;
 }
 
 .body {
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 400;
   line-height: 1.7;
   letter-spacing: -0.003em;
 }
 
 .caption {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--stone);
@@ -216,7 +216,7 @@ body {
 }
 
 .bullet-box h3 {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -243,7 +243,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 17px;
+  font-size: 19px;
   line-height: 1.5;
 }
 
@@ -280,7 +280,7 @@ body {
 
 .stat-number {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 240px;
+  font-size: 276px;
   font-weight: 800;
   line-height: 0.9;
   color: var(--gold);
@@ -292,7 +292,7 @@ body {
 .part-4 .stat-number { color: var(--plum); }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -523,10 +523,10 @@ iconify-icon {
 .icon-warn    { color: var(--terracotta); }
 .icon-success { color: var(--sage); }
 .icon-muted   { color: var(--stone); }
-.icon-xl      { font-size: 60px; }
-.icon-lg      { font-size: 40px; }
-.icon-md      { font-size: 26px; }
-.icon-sm      { font-size: 20px; }
+.icon-xl      { font-size: 69px; }
+.icon-lg      { font-size: 46px; }
+.icon-md      { font-size: 30px; }
+.icon-sm      { font-size: 23px; }
 
 /* ── Unsplash 배경 ── */
 .hero-bg {

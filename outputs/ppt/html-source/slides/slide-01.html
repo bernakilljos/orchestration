@@ -6,53 +6,223 @@
   <title>Orchestration Kit v1 - Cover</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <style>
-    .slide.cover {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      color: white;
+    .cover {
+      width: 1920px;
+      height: 1080px;
+      background:
+        radial-gradient(ellipse 1400px 900px at 75% 30%, rgba(184, 134, 78, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 1000px 700px at 20% 80%, rgba(107, 142, 127, 0.08) 0%, transparent 60%),
+        linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
       position: relative;
       overflow: hidden;
+      padding: 100px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
-    .slide.cover::before {
-      background: none;
+
+    /* 장식 원 — 우상단에 크게 */
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184, 134, 78, 0.18) 0%, transparent 70%);
+      z-index: 0;
     }
-    .hero-bg {
-      background-image: url('https://source.unsplash.com/1920x1080/?minimal,abstract,warm,architecture');
-      background-attachment: fixed;
+
+    /* 미세한 그리드 라인 — 배경 질감 */
+    .cover::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(90deg, rgba(184, 134, 78, 0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(184, 134, 78, 0.05) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 0;
     }
-    .cover-top { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; text-align: center; width: 100%; }
-    .cover-middle { flex: 2; display: flex; flex-direction: column; justify-content: center; width: 100%; }
-    .cover-bottom { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; text-align: center; width: 100%; }
-    .cover-eyebrow { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.9; margin-bottom: 40px; }
-    .cover-title { font-family: 'Fraunces', serif; font-size: 140px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 20px; }
-    .cover-subtitle { font-size: 32px; font-weight: 300; letter-spacing: -0.01em; opacity: 0.95; margin-bottom: 60px; }
-    .cover-tagline { font-size: 18px; font-weight: 400; letter-spacing: 0.05em; opacity: 0.85; }
-    .cover-meta { font-size: 13px; opacity: 0.8; margin-top: 20px; }
+
+    /* 상단 라벨 */
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    .cover-version {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      letter-spacing: 0.3em;
+      color: #B8864E;
+      font-weight: 600;
+    }
+    .cover-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border: 0.5px solid rgba(184, 134, 78, 0.3);
+      border-radius: 100px;
+      font-size: 13px;
+      color: #6E685C;
+      font-weight: 500;
+    }
+    .cover-tag::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6B8E7F;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* 메인 타이틀 */
+    .cover-main {
+      position: relative;
+      z-index: 2;
+    }
+    .cover-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #8A6235;
+      font-weight: 600;
+      margin-bottom: 32px;
+    }
+    .cover-title {
+      font-family: 'Fraunces', serif;
+      font-size: 180px;
+      font-weight: 600;
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      color: #1A1D24;
+      margin-bottom: 48px;
+    }
+    .cover-title .accent {
+      color: #B8864E;
+      font-style: italic;
+      font-weight: 500;
+    }
+    .cover-sub {
+      font-family: 'Pretendard Variable', sans-serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: #6E685C;
+      line-height: 1.4;
+      max-width: 900px;
+    }
+
+    /* 하단 메타 */
+    .cover-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      position: relative;
+      z-index: 2;
+    }
+    .meta-stack {
+      display: flex;
+      gap: 48px;
+    }
+    .meta-item .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #6E685C;
+      margin-bottom: 8px;
+    }
+    .meta-item .value {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: #1A1D24;
+    }
+    .meta-item .value .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+    }
+
+    /* 장식 — 우하단 도형 */
+    .decor-dots {
+      position: absolute;
+      bottom: 100px;
+      right: 120px;
+      display: grid;
+      grid-template-columns: repeat(6, 12px);
+      gap: 16px;
+      opacity: 0.35;
+      z-index: 1;
+    }
+    .decor-dots span {
+      width: 12px;
+      height: 12px;
+      background: #B8864E;
+      border-radius: 50%;
+    }
+    .decor-dots span:nth-child(3n) { opacity: 0.5; }
+    .decor-dots span:nth-child(7) { opacity: 0.3; }
   </style>
 </head>
 <body>
-  <div class="slide cover">
-    <div class="hero-bg"></div>
-    <div class="hero-content">
-      <div class="cover-top">
-        <div class="cover-eyebrow">오케스트레이션 킷 v1</div>
+  <div class="cover">
+    <div class="cover-top">
+      <div class="cover-version">ORCHESTRATION · V1.0 · 2026.04.24</div>
+      <div class="cover-tag">24/7 AUTOMATED · MULTI-AI</div>
+    </div>
+
+    <div class="cover-main">
+      <div class="cover-eyebrow">A Developer's Journey · 14 Days + Opus 4.7</div>
+      <h1 class="cover-title">
+        Orchestration<br>
+        <span class="accent">Kit</span>
+      </h1>
+      <p class="cover-sub">
+        Claude Opus 4.7 · Codex · Haiku 4.5 · Gemini<br>
+        하나의 엔진 위에 자라난 25개 플러그인의 기록.
+      </p>
+    </div>
+
+    <div class="cover-meta">
+      <div class="meta-stack">
+        <div class="meta-item">
+          <div class="label">Plugins</div>
+          <div class="value"><span class="mono">15</span> stable · <span class="mono">10</span> spec</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">State DB</div>
+          <div class="value"><span class="mono">8</span> tables · SQLite</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Code</div>
+          <div class="value"><span class="mono">2,061</span> Python lines</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Tests</div>
+          <div class="value"><span class="mono">33/33</span> passing</div>
+        </div>
       </div>
 
-      <div class="cover-middle">
-        <h1 class="cover-title">Multi-AI</h1>
-        <h2 class="cover-subtitle">멀티 AI 오케스트레이션 프레임워크</h2>
-        <p class="cover-tagline">Claude + Codex + Gemini를 한 번에 orchestrate</p>
-      </div>
-
-      <div class="cover-bottom">
-        <p class="cover-meta">당신의 설계 · 14일의 여정</p>
-        <p class="cover-meta" style="margin-top: 40px;">2026년 4월 19일 — 2026년 4월 23일</p>
+      <div class="decor-dots">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
       </div>
     </div>
   </div>
