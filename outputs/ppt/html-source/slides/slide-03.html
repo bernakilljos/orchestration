@@ -72,6 +72,36 @@
       <p class="body" style="margin-top: 24px;">/init 은 이걸 자동화한다. 실행 순간 Claude가 프로젝트를 스캔해서 언어·프레임워크·빌드 도구·테스트 방식·디렉토리 구조를 파악하고 초안 CLAUDE.md 를 생성. 유저는 <strong>큐레이션만</strong> 하면 됨.</p>
       <p class="body" style="margin-top: 24px;">한번 세팅하면: (1) 새 세션 시작해도 맥락 유지, (2) 팀원이 같은 리포 쓰면 동일 규칙, (3) Claude 실수 줄어들고 품질 일관, (4) 반복 지시 불필요.</p>
 
+      <svg viewBox="0 0 600 280" class="before-after" style="width: 100%; max-width: 700px; height: auto; margin-top: 24px;">
+  <!-- 좌측 혼돈 (Before) -->
+  <g>
+    <text x="80" y="30" font-family="'JetBrains Mono'" font-size="20" font-weight="700" fill="#1A1D24">Before</text>
+    <rect x="20" y="60" width="140" height="60" rx="4" fill="white" stroke="#A85757" stroke-width="2" opacity="0.6"/>
+    <rect x="30" y="75" width="80" height="30" rx="2" fill="none" stroke="#A85757" stroke-width="1"/>
+    <text x="75" y="95" font-family="'JetBrains Mono'" font-size="12" fill="#A85757" text-anchor="middle">?</text>
+    <rect x="20" y="140" width="140" height="60" rx="4" fill="white" stroke="#A85757" stroke-width="2" opacity="0.5"/>
+    <circle cx="90" cy="175" r="15" fill="none" stroke="#A85757" stroke-width="2"/>
+    <text x="90" y="182" font-family="'JetBrains Mono'" font-size="20" fill="#A85757" text-anchor="middle">?</text>
+  </g>
+  <!-- 우측 정돈 (After) -->
+  <g>
+    <text x="420" y="30" font-family="'JetBrains Mono'" font-size="20" font-weight="700" fill="#1A1D24">After</text>
+    <rect x="360" y="60" width="140" height="60" rx="4" fill="white" stroke="#5C8A5C" stroke-width="2"/>
+    <rect x="370" y="75" width="80" height="30" rx="2" fill="none" stroke="#5C8A5C" stroke-width="1"/>
+    <text x="415" y="93" font-family="'JetBrains Mono'" font-size="16" fill="#5C8A5C" text-anchor="middle">✓</text>
+    <rect x="360" y="140" width="140" height="60" rx="4" fill="white" stroke="#5C8A5C" stroke-width="2"/>
+    <circle cx="430" cy="175" r="15" fill="none" stroke="#5C8A5C" stroke-width="2"/>
+    <text x="430" y="182" font-family="'JetBrains Mono'" font-size="20" fill="#5C8A5C" text-anchor="middle">✓</text>
+  </g>
+  <!-- 중앙 화살표 -->
+  <path d="M 280 150 L 340 150" stroke="#B8864E" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#B8864E"/>
+    </marker>
+  </defs>
+</svg>
+
     </div>
 
     <div class="side-panel">
@@ -95,35 +125,5 @@
       <span class="footnote">참조: CLAUDE.md 설계 원칙</span>
     </div>
   </div>
-
-    <svg viewBox="0 0 600 300" class="before-after" style="width: 100%; max-width: 600px;">
-  <!-- 좌측 혼돈 (Before) -->
-  <g>
-    <text x="80" y="30" font-family="'GmarketSans'" font-size="24" font-weight="700" fill="#1A1D24">혼돈 (Before)</text>
-    <rect x="20" y="60" width="140" height="60" rx="4" fill="white" stroke="#A85757" stroke-width="2" opacity="0.6"/>
-    <rect x="30" y="75" width="80" height="30" rx="2" fill="none" stroke="#A85757" stroke-width="1"/>
-    <text x="75" y="95" font-family="'JetBrains Mono'" font-size="12" fill="#A85757" text-anchor="middle">?</text>
-    <rect x="20" y="140" width="140" height="60" rx="4" fill="white" stroke="#A85757" stroke-width="2" opacity="0.5"/>
-    <circle cx="90" cy="175" r="15" fill="none" stroke="#A85757" stroke-width="2"/>
-    <text x="90" y="182" font-family="'JetBrains Mono'" font-size="20" fill="#A85757" text-anchor="middle">?</text>
-  </g>
-  <!-- 우측 정돈 (After) -->
-  <g>
-    <text x="420" y="30" font-family="'GmarketSans'" font-size="24" font-weight="700" fill="#1A1D24">정돈 (After)</text>
-    <rect x="360" y="60" width="140" height="60" rx="4" fill="white" stroke="#5C8A5C" stroke-width="2"/>
-    <rect x="370" y="75" width="80" height="30" rx="2" fill="none" stroke="#5C8A5C" stroke-width="1"/>
-    <text x="415" y="93" font-family="'JetBrains Mono'" font-size="16" fill="#5C8A5C" text-anchor="middle">✓</text>
-    <rect x="360" y="140" width="140" height="60" rx="4" fill="white" stroke="#5C8A5C" stroke-width="2"/>
-    <circle cx="430" cy="175" r="15" fill="none" stroke="#5C8A5C" stroke-width="2"/>
-    <text x="430" y="182" font-family="'JetBrains Mono'" font-size="20" fill="#5C8A5C" text-anchor="middle">✓</text>
-  </g>
-  <!-- 중앙 화살표 -->
-  <path d="M 280 150 L 340 150" stroke="#B8864E" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
-  <defs>
-    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-      <polygon points="0 0, 10 3, 0 6" fill="#B8864E"/>
-    </marker>
-  </defs>
-</svg>
 </body>
 </html>

@@ -72,6 +72,52 @@
       <p class="body" style="margin-top: 24px;">예시 description: '사용자가 PR 리뷰를 요청하면 자동 코드 리뷰 수행' — 이 문구를 보면 Claude 가 이 스킬을 자동으로 활성화.</p>
       <p class="body" style="margin-top: 24px;">본문 5,000 단어 이하 권장. 더 크면 references/ 폴더에 세부 분리. Anthropic 공식 스킬 표준 따름 (Skill Design 규칙 참조).</p>
 
+      <div class="code-block">---
+name: code-review-pr
+description: |
+  PR 리뷰 요청이 있으면 자동으로
+  코드 품질·보안·성능 검증
+---
+# Code Review PR Skill
+
+사용자가 "PR 리뷰 부탁해"라고 하면
+이 스킬이 자동 활성화됨.</div>
+
+      <svg viewBox="0 0 700 220" style="width: 100%; max-width: 700px; height: auto; margin-top: 24px;">
+        <!-- 1단계 -->
+        <rect x="20" y="30" width="140" height="70" rx="8" fill="rgba(184, 134, 78, 0.15)" stroke="#B8864E" stroke-width="2"/>
+        <text x="90" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">1단계: Frontmatter</text>
+        <text x="90" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">name · description</text>
+        <text x="90" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#B25A3E">(항상 로드)</text>
+
+        <!-- 화살표 1 -->
+        <path d="M 160 65 L 200 65" stroke="#B8864E" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+
+        <!-- 2단계 -->
+        <rect x="200" y="30" width="140" height="70" rx="8" fill="rgba(107, 142, 127, 0.15)" stroke="#6B8E7F" stroke-width="2"/>
+        <text x="270" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">2단계: 본문</text>
+        <text x="270" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">명령어 · 워크플로우</text>
+        <text x="270" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6B8E7F">(작업시 로드)</text>
+
+        <!-- 화살표 2 -->
+        <path d="M 340 65 L 380 65" stroke="#6B8E7F" stroke-width="2" fill="none" marker-end="url(#arrowhead2)"/>
+
+        <!-- 3단계 -->
+        <rect x="380" y="30" width="140" height="70" rx="8" fill="rgba(178, 90, 62, 0.15)" stroke="#B25A3E" stroke-width="2"/>
+        <text x="450" y="50" text-anchor="middle" font-family="'Pretendard Variable'" font-size="16" font-weight="700" fill="#1A1D24">3단계: 자산</text>
+        <text x="450" y="75" text-anchor="middle" font-family="'JetBrains Mono'" font-size="13" fill="#6E685C">scripts/ · references/</text>
+        <text x="450" y="93" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#B25A3E">(필요시만)</text>
+
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill="#B8864E"/>
+          </marker>
+          <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill="#6B8E7F"/>
+          </marker>
+        </defs>
+      </svg>
+
     </div>
 
     <div class="side-panel">

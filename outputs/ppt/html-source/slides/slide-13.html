@@ -72,6 +72,49 @@
       <p class="body" style="margin-top: 24px;">주요 이벤트: PreToolUse (툴 실행 직전, 차단 가능) · PostToolUse (툴 실행 후) · Stop (세션 종료) · SessionStart (세션 시작) · PreCompact (컨텍스트 압축 전).</p>
       <p class="body" style="margin-top: 24px;">예: Edit/Write 후 자동 prettier --write $FILE 실행. 또는 rm -rf 명령 차단. 또는 세션 시작 시 상태 DB 검증. 이 모든 게 settings.json 설정 1줄로 100% 강제됨.</p>
 
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px;">
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:play" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PreToolUse</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">툴 실행 직전</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:arrow-right" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PostToolUse</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">툴 실행 후</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:stop-circle" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">SessionEnd</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">세션 종료</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:rocket-launch" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">SessionStart</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">세션 시작</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:document" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PreCompact</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">압축 직전</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:check" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">PostCompact</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">압축 후</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:chat-bubble-left" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">UserPromptSubmit</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">프롬프트 제출</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.7); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px; text-align: center; min-height: 120px;">
+          <iconify-icon icon="heroicons:puzzle-piece" style="font-size: 36px; color: var(--gold); display: block; margin-bottom: 10px;"></iconify-icon>
+          <h4 style="font-size: 14px; color: var(--ink); margin: 0 0 6px 0; font-weight: 700;">Custom</h4>
+          <p style="font-size: 12px; color: var(--stone); margin: 0;">커스텀 이벤트</p>
+        </div>
+      </div>
+
     </div>
 
     <div class="side-panel">
@@ -95,35 +138,5 @@
       <span class="footnote">참조: hooks/ 사례</span>
     </div>
   </div>
-
-    <svg viewBox="0 0 600 280" class="hooks-grid" style="width: 100%; max-width: 600px;">
-  <!-- 2x4 카드 그리드 (아이콘 + 이름) -->
-  <g font-family="'Pretendard Variable'">
-    <!-- Row 1 -->
-    <rect x="10" y="10" width="130" height="120" rx="8" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <circle cx="75" cy="40" r="15" fill="#F7F2EA" stroke="#B8864E" stroke-width="2"/>
-    <path d="M65,40 L72,47 L85,34" stroke="#B8864E" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <text x="75" y="85" font-size="14" font-weight="700" text-anchor="middle">PreToolUse</text>
-    <text x="75" y="105" font-size="11" text-anchor="middle" fill="#6E685C">Before</text>
-
-    <rect x="160" y="10" width="130" height="120" rx="8" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <circle cx="225" cy="40" r="15" fill="#F7F2EA" stroke="#B8864E" stroke-width="2"/>
-    <path d="M220,35 L230,45 M230,35 L220,45" stroke="#B8864E" stroke-width="2" stroke-linecap="round"/>
-    <text x="225" y="85" font-size="14" font-weight="700" text-anchor="middle">PostToolUse</text>
-    <text x="225" y="105" font-size="11" text-anchor="middle" fill="#6E685C">After</text>
-
-    <rect x="310" y="10" width="130" height="120" rx="8" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <circle cx="375" cy="40" r="15" fill="#F7F2EA" stroke="#B8864E" stroke-width="2"/>
-    <path d="M370,35 L380,35 L380,50 L370,50 Z" stroke="#B8864E" stroke-width="2" fill="none"/>
-    <text x="375" y="85" font-size="14" font-weight="700" text-anchor="middle">SessionEnd</text>
-    <text x="375" y="105" font-size="11" text-anchor="middle" fill="#6E685C">Cleanup</text>
-
-    <rect x="460" y="10" width="130" height="120" rx="8" fill="white" stroke="#B8864E" stroke-width="2"/>
-    <circle cx="525" cy="40" r="15" fill="#F7F2EA" stroke="#B8864E" stroke-width="2"/>
-    <path d="M525,30 L535,45 L515,45 Z" stroke="#B8864E" stroke-width="2" fill="none"/>
-    <text x="525" y="85" font-size="14" font-weight="700" text-anchor="middle">Custom</text>
-    <text x="525" y="105" font-size="11" text-anchor="middle" fill="#6E685C">Event</text>
-  </g>
-</svg>
 </body>
 </html>
