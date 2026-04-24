@@ -2,6 +2,31 @@
 
 > Claude용: `CLAUDE.md` | Codex용: `AGENTS.md` | Gemini용: 이 파일
 > MCP 설정: `.gemini/config.toml`
+> 버전: v1.0.1 · 2026-04-24
+
+---
+
+## 시작: Standalone vs Full
+
+**이 문서를 읽고 있다면:**
+- **Standalone 모드**: `install_gemini` 로 설치함. Claude 없이 Gemini 단독. 자연어 한 줄로 끝.
+- **Full 모드**: `install.bat` 로 설치함. Claude 설계 → Codex 구현 → Gemini 검증 자동화.
+
+| 측면 | Standalone | Full Mode |
+|------|-----------|-----------|
+| 설치 | `install_gemini <폴더>` | `install.bat <폴더>` |
+| 설정 | `.gemini/` 만 | `.gemini/` + `.claude/` |
+| 사용 | `gemini-go "자연어"` | Codex 작성 후 Gemini가 검증 |
+| 역할 | 검증+구현+요약+문서화 모두 | 검증만 전담 (Codex가 구현) |
+| 1M 컨텍스트 | 자유롭게 활용 | 대용량 파일 검증에 활용 |
+| 비용 | Gemini만 (저가) | Codex+Gemini+Claude (높음) |
+| 팀 크기 | 개인·소팀 | 팀/조직 |
+
+**업그레이드 경로:**
+```bash
+# Standalone → Full 전환 (기존 .gemini/ 유지)
+install.bat <현재 폴더>
+```
 
 ---
 
@@ -134,44 +159,116 @@ Gemini Flash 는 저단가 · 빠른 검증에 강점. 다음에 우선 활용:
 역할이 **검증 전용 → 일반 작업 가능**으로 확장됨.
 **task 파일 수동 편집 필요 없음 — 자연어 한 줄로 끝.**
 
-| 항목 | Orchestrated | Standalone |
-|------|--------------|-----------|
-| 역할 | 검증 전용 (Codex 가 구현) | **구현·검증·요약·문서화 모두 가능** |
-| 작업 폴더 | `.claude/tasks/` | `tasks/` (선택) |
-| 완료 폴더 | `.claude/tasks/done/` | `tasks/done/` |
-| 태스크 입력 | `verify-instruction.md` (Claude 작성) | **자연어로 gemini-go 호출** (가장 단순) |
-| 설계 출처 | Claude 가 작성 | 사용자 의도 → Gemini 가 직접 해석 |
-| 채택 결정 | Claude (팀장) | **사용자** |
-| MCP 설정 | `.gemini/config.toml` | 동일 |
+### 특징
 
-### Standalone 사용법 (3단계)
+1. **1M 토큰 컨텍스트** — Gemini의 최대 강점. 100MB 로그도 한 번에 처리
+2. **저단가** — 반복 검증·요약에 경제적
+3. **다목적** — 검증·구현·요약·문서화 모두 가능
+4. **자동 로깅** — 모든 호출이 `.gemini/usage.jsonl` 에 기록 (비용 추적)
+5. **모델 선택** — `gemini-2.0-flash` (기본, 빠름) 또는 `gemini-1.5-pro` (1M 컨텍스트)
 
-**A. 일반 — 자연어 한 줄 (권장)**
-```
-gemini-go "이 코드 보안 검증해줘"           # verify
-gemini-go "긴 로그 요약해줘"                # summarize (1M 컨텍스트)
-gemini-go "API 문서 자동 생성해줘"          # document
-gemini-go "회원가입 페이지 만들어줘"        # implement
-gemini-go                                   # 대화 모드
-```
-→ task 파일 만들 필요 없음. Gemini 가 직접 해석·처리.
+### 사용법
 
-**B. 배치 처리 — 여러 작업 한꺼번에**
+**A. 검증 (기본)**
+```bash
+cd C:\myproject
+gemini-go "이 코드 보안 검증해줘"
+gemini-go "PR 코드 리뷰해줘"
 ```
+
+**B. 1M 컨텍스트 활용 (Gemini 강점)**
+```bash
+# 100MB 이상의 대용량 파일도 처리 가능
+gemini-go "로그 파일 분석해줘"
+gemini-go "PDF 문서 100개 요약해줘"
+gemini-go "데이터베이스 스키마 분석 후 ERD 만들어줘"
+```
+
+**C. 구현·문서화**
+```bash
+gemini-go "회원가입 페이지 만들어줘"
+gemini-go "README 작성해줘"
+gemini-go "CHANGELOG 업데이트해줘"
+gemini-go                            # 대화 모드
+```
+
+**D. 배치 처리 — 여러 작업 한꺼번에**
+```bash
+# Gemini 에게 task 파일 생성 요청
 gemini-go "다음 3개를 tasks/task-001~003.md 로 정리해줘:
   1. 인증 모듈 보안 검증
   2. 로그 100MB 요약
   3. README 자동 생성"
 
-gemini-a --auto    # 큐 자동 처리
+# 큐 자동 처리
+gemini-a --auto
 ```
-→ Gemini 에게 task 파일 생성을 시키고, 큐 모드로 실행.
 
-### Standalone Mode 4종 (task 파일 또는 자연어에 명시)
-- `implement` — 일반 구현
-- `verify`    — 코드 리뷰·보안·품질 검증
-- `summarize` — 긴 문서·로그 요약 (1M 컨텍스트 활용)
-- `document`  — README·docstring·CHANGELOG
+### API 키 설정
 
-### 코드 규칙
-위 "검증 규칙 § 코드 규칙" 과 동일 적용 (orchestration 여부 무관).
+```bash
+# 1. 환경변수 (권장)
+setx GOOGLE_API_KEY "YOUR_API_KEY"
+
+# 2. .env 파일
+copy .env.example .env
+# [편집기로 GOOGLE_API_KEY 값 입력]
+
+# 3. 명령줄
+set GOOGLE_API_KEY=... && gemini-go "작업"
+```
+
+### 선택 설정
+
+```env
+# .env 또는 환경변수로 설정
+GEMINI_MODEL=gemini-1.5-pro             # 모델 선택 (기본: gemini-2.0-flash)
+GEMINI_DAILY_LIMIT_USD=20               # 일일 예산 상한
+```
+
+### 모델 비교
+
+| 모델 | 컨텍스트 | 속도 | 가격 | 추천 |
+|------|---------|------|------|------|
+| **gemini-2.0-flash** | 일반 | 매우 빠름 | 매우 저가 | 기본 선택 |
+| **gemini-1.5-pro** | **1M 토큰** | 빠름 | 저가 | 대용량 파일 분석 |
+
+```bash
+# 모델 변경
+set GEMINI_MODEL=gemini-1.5-pro && gemini-go "..."
+```
+
+### 사용량 추적
+
+```bash
+# 사용량 확인
+type .gemini\usage.jsonl
+
+# 형식: JSON Lines (JSONL)
+# 예: {"ts": "2026-04-24T10:30:00Z", "model": "gemini-2.0-flash", "in": 1500, "out": 800, "cost_usd": 0.001}
+```
+
+### 비용 예시 (gemini-2.0-flash)
+
+| 작업 | 입력 토큰 | 출력 토큰 | 비용 |
+|------|---------|---------|------|
+| 코드 리뷰 | ~500 | ~300 | $0.0001 |
+| 요약 (100MB) | ~50,000 | ~1,000 | $0.005 |
+| 문서 생성 | ~1,000 | ~2,000 | $0.0005 |
+
+일일 예산 `$20` 이면 대용량 작업 수천 개 처리 가능.
+
+### 역할 비교: Standalone vs Full
+
+| 역할 | Standalone Gemini | Full Mode Gemini |
+|------|----------------|------------------|
+| 설계 | 자신이 판단 | Claude (Opus) |
+| 구현 | Gemini 직접 | Codex 담당 |
+| 검증 | 자신이 판단 | Gemini가 자동 검증 |
+| 채택 | 사용자 최종 결정 | Claude가 최종 결정 |
+
+### 코드 규칙 (필수)
+
+위의 "검증 규칙 § 코드 규칙" 섹션과 동일하게 적용 (orchestration 여부 무관).
+
+---

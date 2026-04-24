@@ -1,0 +1,25 @@
+# Gemini Standalone 환경변수
+# 이 파일을 .env 로 복사한 후 값을 입력하세요.
+
+# REQUIRED: Google Gemini API 키
+# https://aistudio.google.com/app/apikeys 에서 생성
+GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+
+# OPTIONAL: Gemini 모델 선택 (기본값: gemini-2.0-flash)
+# 옵션:
+#   gemini-2.0-flash     - 최신, 빠르고 저단가 (추천)
+#   gemini-1.5-pro       - 고성능, 1M 토큰 컨텍스트
+# GEMINI_MODEL=gemini-2.0-flash
+
+# OPTIONAL: 일일 토큰 한도 (USD, 기본값: 무제한)
+# 초과 시 gemini-go 명령이 경고 메시지 출력
+# 예: GEMINI_DAILY_LIMIT_USD=20
+# GEMINI_DAILY_LIMIT_USD=20
+
+# OPTIONAL: 프로젝트 이름 (로그에 기록)
+# PROJECT_NAME=my-project
+
+# NOTES:
+# - 1M 컨텍스트가 필요하면 gemini-1.5-pro 선택
+# - gemini-2.0-flash 가 일반적으로 비용 대비 가장 좋음
+# - 대용량 파일 분석 시 gemini-1.5-pro 권장
