@@ -27,13 +27,13 @@
     }
 
     .mermaid {
-      max-width: 100% !important;
+      max-width: 1500px !important; width: 100%;
       max-height: 100% !important;
       height: auto !important;
     }
 
     .mermaid svg {
-      max-width: 100% !important;
+      max-width: 1500px !important; width: 100%;
       max-height: 100% !important;
       height: auto !important;
     }
@@ -62,7 +62,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 32px; align-items: start;">
         <div>
           <h3 class="heading-3" style="margin-bottom: 20px;">우선순위</h3>
-          <div style="font-size: 16px; line-height: 2;">
+          <div style="font-size: 22px; line-height: 2;">
             <div><strong>1. Folder</strong><br><span class="text-stone">./src/CLAUDE.md</span></div>
             <div style="margin-top: 16px;"><strong>2. Project</strong><br><span class="text-stone">./CLAUDE.md</span></div>
             <div style="margin-top: 16px;"><strong>3. Global</strong><br><span class="text-stone">~/.claude/CLAUDE.md</span></div>
@@ -108,5 +108,17 @@ graph TD
       <span class="footnote">참조: CLAUDE.md § 3 Scopes</span>
     </div>
   </div>
+
+    <svg viewBox="0 0 400 400" class="memory-scopes" style="width: 280px; height: 280px;">
+  <!-- 동심원 3개 (Global → Project → Folder) -->
+  <circle cx="200" cy="200" r="180" fill="rgba(184,134,78,0.1)" stroke="#B8864E" stroke-width="2"/>
+  <circle cx="200" cy="200" r="130" fill="rgba(184,134,78,0.2)" stroke="#8A6235" stroke-width="2"/>
+  <circle cx="200" cy="200" r="80" fill="rgba(184,134,78,0.4)" stroke="#1A1D24" stroke-width="2"/>
+
+  <text x="200" y="60" font-family="'Pretendard Variable'" font-size="28" fill="#1A1D24" text-anchor="middle" font-weight="600">Global</text>
+  <text x="200" y="120" font-family="'Pretendard Variable'" font-size="28" fill="#1A1D24" text-anchor="middle" font-weight="600">Project</text>
+  <text x="200" y="205" font-family="'Pretendard Variable'" font-size="32" fill="#1A1D24" text-anchor="middle" font-weight="700">Folder</text>
+  <text x="200" y="235" font-family="'Pretendard Variable'" font-size="20" fill="#6E685C" text-anchor="middle">(이김)</text>
+</svg>
 </body>
 </html>
