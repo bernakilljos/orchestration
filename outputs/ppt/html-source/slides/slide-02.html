@@ -3,100 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>14일의 여정</title>
+  <title>Claude Code</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-      margin-top: 32px;
-    }
-    .timeline-item {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 32px;
-      align-items: start;
-    }
-    .timeline-date {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--gold);
-      text-transform: uppercase;
-    }
-    .timeline-content {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .timeline-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-    .timeline-desc {
-      font-size: 16px;
-      line-height: 1.5;
-      color: var(--stone);
-    }
-    .milestone {
-      background: rgba(255, 255, 255, 0.6);
-      border-left: 3px solid var(--gold);
-      padding: 16px;
-      border-radius: 6px;
-    }
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
       border: 0.5px solid var(--fog);
       border-radius: 12px;
-      padding: 32px;
+      padding: 24px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-      margin-top: 32px;
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
     }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow"><iconify-icon icon="heroicons:folder-open" class="icon-md" style="margin-right: 12px;"></iconify-icon>PART 01 · INSTALLED STRUCTURE</span>
+      <span class="eyebrow">PART 01 · INTRODUCTION</span>
       <span class="mono caption">02 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">설치하면 무엇이 생기나</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">install.sh / install.bat 실행 직후 프로젝트 구조</p>
+      <h1 class="heading-1">Claude Code</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">터미널에 들어온 AI 페어 프로그래머</p>
+      <p class="body-lead" style="margin-top: 28px;">Claude Code는 터미널에서 돌아가는 AI 에이전트. 파일 읽고·쓰고·실행하고·git 조작하고·MCP 서버 호출한다. 웹 UI가 아니라 <strong>프로젝트 폴더 자체가 작업 공간</strong>이다.</p>
+      <p class="body" style="margin-top: 24px;">핵심은 <strong>.claude/ 폴더</strong>. 여기 안에 Claude가 이 프로젝트에서 어떻게 일해야 하는지 모든 규칙·명령·훅·스킬이 담긴다. 새 세션을 시작해도 자동으로 로드되고, 팀원이 같은 리포를 쓰면 동일한 규칙이 적용된다.</p>
+      <p class="body" style="margin-top: 24px;">새 프로젝트에서 <strong>/init을 실행</strong>하면 Claude가 코드베이스를 스캔해서 .claude/ 와 CLAUDE.md를 자동 생성한다. 이게 시작점. 초안을 큐레이션한 후 git commit 하면 끝.</p>
 
-      <p class="body-lead" style="margin-top: 0;">install 스크립트는 프로젝트 루트에 3개의 핵심 폴더와 1개의 AI 규칙 파일을 배치한다. <strong>`.claude/` (Claude Code 런타임), `plugins/` (25개 플러그인 원본), `docs/` (문서), 그리고 최상위에 `CLAUDE.md` (AI 지시서).</strong></p>
-
-      <p class="body-text">`.claude-plugin/` 은 Claude Code 의 네이티브 플러그인 매니페스트가 들어간다. `setup/` 은 Windows 인스톨러(Inno Setup) 빌드. `install_codex.bat` · `install_gemini.bat` 은 Claude 없는 standalone 모드 설치용.</p>
-
-      <p class="body-text">설치 과정 5단계: (1) 폴더 생성·권한 부여, (2) `.claude/` 파일 복사, (3) `CLAUDE.md` 배포, (4) `.claude/scripts/init-state-db.py` 로 SQLite 초기화, (5) 환경변수 검증.</p>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ INSTALLED ROOT</h3>
+        <h3>◆ 핵심 특징</h3>
         <ul>
-          <li>● `.claude/` — 런타임</li>
-          <li>● `.claude-plugin/` — 매니페스트</li>
-          <li>● `plugins/` — 25개 원본</li>
-          <li>● `docs/` — 가이드·문서</li>
-          <li>● `CLAUDE.md` — AI 규칙</li>
-          <li>● `guide.txt` — 사람용 가이드</li>
-          <li>────────────</li>
-          <li>Install time · ~30s</li>
+          <li>터미널 CLI 기반</li>
+          <li>프로젝트 폴더 = 작업공간</li>
+          <li>.claude/ 에 모든 맥락</li>
+          <li>/init 으로 자동 세팅</li>
+          <li>MCP·훅·플러그인 지원</li>
+          <li>Multi-AI 오케스트레이션</li>
         </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          폴더가 곧 컨텍스트<br>매번 지시하지 말고<br>한 번 설정해서 영원히
+        </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참조: .claude/ · plugins/ 원본 · CLAUDE.md</span>
+      <span class="footnote">시작: claude code --help 또는 docs.claude.com</span>
     </div>
   </div>
 </body>

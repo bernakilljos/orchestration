@@ -2,79 +2,103 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>전제가 바뀌었다</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>.claude/ 폴더</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 40px; }
-    .feature-card { background: rgba(255, 255, 255, 0.6); border-radius: 12px; padding: 24px; text-align: center; border: 0.5px solid var(--fog); }
-    .feature-icon { font-size: 40px; margin-bottom: 16px; }
-    .feature-label { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
-    .feature-desc { font-size: 13px; color: var(--stone); line-height: 1.4; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
-  <div class="slide part-2" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&h=1080&fit=crop'); background-size: cover; background-position: center;">
-    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(247,242,234,0.1) 0%, rgba(247,242,234,0.6) 60%, rgba(247,242,234,0.95) 100%); pointer-events: none;"></div>
-    <div class="slide part-2" style="position: relative; z-index: 1;">
-    <div class="slide bg-accent part-2">
-      <span class="eyebrow">PART 02 · CORE SYSTEMS
+  <div class="slide bg-tech part-2">
+    <div class="slide-header">
+      <span class="eyebrow">PART 02 · .CLAUDE FOLDER</span>
       <span class="mono caption">07 / 25</span>
     </div>
+
     <div class="main-content">
-      <h1 class="heading-1">exec_orch 엔진</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">2026-04-20, Claude Opus 4.7 배포</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        당신이 설계한 14일 후, Anthropic이 Opus 4.7을 배포했다.
-        <strong>이것은 단순 업그레이드가 아니라 작동 원리의 변화</strong>였다.
-      </p>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon"><iconify-icon icon="heroicons:document-text"></iconify-icon></div>
-          <div class="feature-label">1M 토큰</div>
-          <div class="feature-desc">전체 프로젝트를 한 번에 로드 가능</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><iconify-icon icon="heroicons:bolt"></iconify-icon></div>
-          <div class="feature-label">Caching</div>
-          <div class="feature-desc">5분 재사용 가능, 70% 저렴</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><iconify-icon icon="heroicons:light-bulb"></iconify-icon></div>
-          <div class="feature-label">Thinking</div>
-          <div class="feature-desc">다단계 추론으로 더 정확</div>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon"><iconify-icon icon="heroicons:sparkles"></iconify-icon></div>
-          <div class="feature-label">Haiku 4.5</div>
-          <div class="feature-desc">검증용 초고속 모델</div>
-        </div>
-      </div>
-      <p class="body" style="margin-top: 40px;">
-        1M 토큰은 무엇을 의미하는가? <strong>전체 프로젝트(코드, 문서, 테스트, 예시 25개)를 한 번에 올릴 수 있다.</strong>
-        이전엔 불가능했다.
-      </p>
+      <h1 class="heading-1">.claude/ 폴더</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 의 모든 설정이 여기에</p>
+      <div class="code-block">.claude/
+├── settings.json       ◆ 팀 공유 권한·훅       [commit]
+├── settings.local.json ◆ 개인 오버라이드        [gitignore]
+├── commands/           ◆ 슬래시 명령 (/<cmd>)
+├── skills/             ◆ 자동 활성 스킬
+├── rules/              ◆ 항상 적용 규칙
+├── agents/             ◆ 서브에이전트
+├── hooks/              ◆ 이벤트 훅 스크립트
+├── output-styles/      ◆ 응답 스타일 커스터마이징
+└── status-line/        ◆ 커스텀 상태바</div>
+
     </div>
+
     <div class="side-panel">
-      <div class="bullet-box part-2">
-        <h3>◆ 4가지 핵심 변화</h3>
+      <div class="bullet-box">
+        <h3>◆ 9 하위 요소</h3>
         <ul>
-          <li>1M 토큰 윈도우</li>
-          <li>Prompt Caching (5분 재사용)</li>
-          <li>Extended Thinking (다단계 추론)</li>
-          <li>가격 5배 저렴</li>
+          <li>settings · commands · skills</li>
+          <li>rules · agents · hooks</li>
+          <li>output-styles · status-line</li>
+          <li>state/ · scripts/ (자동)</li>
         </ul>
         <hr>
         <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          이 변화는 당신의<br/>설계를 <strong>재평가</strong>하게 만들었다.
+          DK.method + 공식 확장
         </div>
       </div>
     </div>
+
     <div class="footer-border">
-      <span class="footnote">참고: docs/upgrade-analysis-2026-04-19.md</span>
-    </div>
+      <span class="footnote">참조: .claude/ 구조 상세</span>
     </div>
   </div>
 </body>

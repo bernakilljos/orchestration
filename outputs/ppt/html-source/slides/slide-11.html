@@ -2,70 +2,96 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>orca.db 8개 테이블</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rules/ 공통 규칙</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'base',
-      themeVariables: {
-        fontFamily: 'Pretendard Variable, sans-serif',
-        primaryColor: '#F7F2EA',
-        primaryTextColor: '#1A1D24',
-        primaryBorderColor: '#6B8E7F',
-        lineColor: '#6E685C',
-        secondaryColor: '#EDE4D3',
-        tertiaryColor: '#E5DDCA'
-      }
-    });
-  </script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · CORE SYSTEMS
+      <span class="eyebrow">PART 02 · RULES</span>
       <span class="mono caption">11 / 25</span>
     </div>
+
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:circle-stack" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">orca.db 8개 테이블</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">모든 메트릭을 한곳에</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        SQLite 기반 로컬 데이터베이스 orca.db. 매초 수집한 지표들을 저장한다.
-        필요한 것을 쿼리하면 된다. 의존성 없이, API 초과 비용 없이.
-      </p>
-      <div class="mermaid-wrapper" style="margin-top: 32px;">
-        <div class="mermaid">
-erDiagram
-    WORKERS ||--o{ TASKS : assigned
-    WORKERS ||--o{ METRICS : generates
-    WORKERS }|--|| QUOTA : checks
-    TASKS ||--o{ METRICS : emits
-    TASKS ||--o{ COSTS : incurs
-    METRICS ||--o{ ERRORS : may_trigger
-    METRICS ||--o{ LATENCIES : records
-    METRICS ||--o{ CACHE_HITS : samples
-    TASKS ||--o{ QUEUE_STATS : updates
-        </div>
-      </div>
+      <h1 class="heading-1">rules/ 공통 규칙</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">프로젝트 전체에 항상 적용</p>
+      <p class="body-lead" style="margin-top: 28px;">code-style.md, naming.md, testing.md 등 주제별 규칙. CLAUDE.md 에서 [참조] 로 연결 → 본문 중복 방지. rules/ 는 Claude가 항상 참조 가능한 공유 지식 풀.</p>
+      <p class="body" style="margin-top: 24px;">예: code-style.md 에 'camelCase 변수, PascalCase 클래스' 하면 CLAUDE.md 에는 '[코드 스타일은 rules/code-style.md 참조]' 만 적음. 수정할 때도 한 곳만 건드림.</p>
+      <p class="body" style="margin-top: 24px;">rules/ 로 분리하면 CLAUDE.md 를 500줄 이하로 유지 쉬움. 또한 같은 규칙을 여러 프로젝트에서 재사용 가능 (공통 rules.zip 공유).</p>
+
     </div>
+
     <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>◆ 접근방법</h3>
-        <ul style="font-size: 13px;">
-          <li>위치: .claude/orca.db</li>
-          <li>형식: SQLite 3</li>
-          <li>크기: ~500MB/월</li>
-          <li>보유: 7일 자동 롤링</li>
+      <div class="bullet-box">
+        <h3>◆ rules/ 장점</h3>
+        <ul>
+          <li>주제별 분리</li>
+          <li>CLAUDE.md 가볍게 유지</li>
+          <li>참조 재사용</li>
+          <li>팀 공유 규칙</li>
         </ul>
         <hr>
         <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          쿼리: <strong>metrics</strong> 명령
-          <br/>또는 직접 <code style="background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 3px;">sqlite3</code>
+          파일명 예:<br>code-style.md<br>naming.md<br>testing.md
         </div>
       </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: .claude/rules/ 구조</span>
     </div>
   </div>
 </body>

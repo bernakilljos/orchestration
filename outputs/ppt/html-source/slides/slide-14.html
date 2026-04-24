@@ -2,76 +2,96 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 14 - 4.7 우선 라우팅 결정</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>출력 스타일 + 상태바</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-subtle part-3">
     <div class="slide-header">
-      <span class="eyebrow">AI 라우팅 결정 트리</span>
+      <span class="eyebrow">PART 03 · ECOSYSTEM</span>
       <span class="mono caption">14 / 25</span>
     </div>
 
     <div class="main-content">
-      <div class="mermaid-wrapper" style="padding: 48px; margin-top: 0;">
-        <div class="mermaid">
-flowchart TD
-    S["📥 태스크 도착"] --> B{"❌ Budget<br/>Breaker?"}
-    B -->|yes| W1["⏸ WAIT<br/>+ quota 회복"]
-    B -->|no| Q{"📊 API 할당량<br/>사용 가능?"}
-    Q -->|소진| W2["⏸ WAIT<br/>+ backoff 대기"]
-    Q -->|OK| T{"🎯 작업 종류?"}
+      <h1 class="heading-1">출력 스타일 + 상태바</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">Claude 응답 톤·형식 커스터마이징</p>
+      <p class="body-lead" style="margin-top: 28px;"><strong>output-styles/</strong> — 응답 포맷 정의 (예: 한국어·영어 분기, 기술적/대화적 톤). <strong>status-line/</strong> — 터미널 하단에 커스텀 상태 표시 (세션 토큰·비용·브랜치 등). 팀 브랜딩·일관성에 도움.</p>
+      <p class="body" style="margin-top: 24px;">output-style 예: 'technical-kr' (한글 본문 + 영어 코드 주석 + 3줄 이내 요약). 또는 'management-brief' (임원진 보고용 한 장 요약).</p>
+      <p class="body" style="margin-top: 24px;">status-line 예: '[Session: 45K/100K · Branch: feat/xyz · Status: 🟢 Active]' 같은 정보를 터미널 하단에 계속 표시.</p>
 
-    T -->|설계/애매| OP1["🧠 Claude Opus 4.7<br/>+ Extended Thinking<br/>최대 8K 토큰"]
-    T -->|단순 &lt;200줄| SN["📝 Claude Sonnet 4.6<br/>신속 구현"]
-    T -->|IMPL &lt;800k| OP2["🧠 Claude Opus 4.7<br/>최적화 및<br/>프로덕션 코드"]
-    T -->|IMPL ≥800k| CX["⚡ Codex ×4<br/>병렬 모듈 분할"]
-    T -->|검증 &lt;500k| HK["🚀 Haiku 4.5<br/>저비용 QA"]
-    T -->|검증 ≥500k| GM["✨ Gemini Flash<br/>병렬 검증 1M ctx"]
+    </div>
 
-    W1 --> S
-    W2 --> S
-
-    style S fill:#EDE4D3,stroke:#B8864E,stroke-width:2px
-    style OP1 fill:#F5E5E0,stroke:#8A6235,stroke-width:2px
-    style SN fill:#F5E5E0,stroke:#B8864E
-    style OP2 fill:#F5E5E0,stroke:#8A6235,stroke-width:2px
-    style CX fill:#F5E5E0,stroke:#B25A3E
-    style HK fill:#F5E5E0,stroke:#6B8E7F
-    style GM fill:#F5E5E0,stroke:#6B8E7F
-    style W1 fill:#FFE8E8,stroke:#A85757
-    style W2 fill:#FFE8E8,stroke:#A85757
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 활용 예</h3>
+        <ul>
+          <li>공식 문서 톤</li>
+          <li>팀 브리핑 형식</li>
+          <li>커스텀 상태 모니터</li>
+          <li>개인 선호 반영</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          일관성 강화
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>🎯 AI 모델 가이드</h3>
-        <div style="display: grid; gap: 20px; margin-top: 16px;">
-          <div style="padding: 12px; background: rgba(139, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-weight: 700; font-size: 15px; color: #6B8E7F; margin-bottom: 4px;">Opus 4.7</div>
-            <div style="font-size: 16px; color: var(--ink); line-height: 1.4;">복잡한 설계·최적화·생각해야 할 결정</div>
-          </div>
-          <div style="padding: 12px; background: rgba(184, 134, 78, 0.08); border-radius: 8px; border-left: 3px solid #B8864E;">
-            <div style="font-weight: 700; font-size: 15px; color: #B8864E; margin-bottom: 4px;">Sonnet 4.6</div>
-            <div style="font-size: 16px; color: var(--ink); line-height: 1.4;">빠른 구현·간단한 작업·QA</div>
-          </div>
-          <div style="padding: 12px; background: rgba(178, 90, 62, 0.08); border-radius: 8px; border-left: 3px solid #B25A3E;">
-            <div style="font-weight: 700; font-size: 15px; color: #B25A3E; margin-bottom: 4px;">Codex</div>
-            <div style="font-size: 16px; color: var(--ink); line-height: 1.4;">대형 구현·병렬 분할</div>
-          </div>
-        </div>
-        <hr style="margin-top: 20px; margin-bottom: 16px;">
-        <div class="stat-display" style="align-items: center;">
-          <div class="stat-number" style="font-size: 72px; text-align: center;">3</div>
-          <div class="stat-label" style="text-align: center;">우선 결정점</div>
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: output-styles/, status-line/</span>
     </div>
   </div>
 </body>

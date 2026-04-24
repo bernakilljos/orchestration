@@ -3,86 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Source of Truth 원칙</title>
+  <title>/init 후 생기는 것</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper { background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); margin-top: 32px; }
-    .sot-flow { display: flex; gap: 16px; margin-top: 32px; align-items: center; }
-    .flow-step { background: white; border-radius: 8px; padding: 24px; text-align: center; border: 0.5px solid var(--fog); flex: 1; }
-    .flow-arrow { font-size: 32px; color: var(--gold); }
-    .step-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .step-icon { font-size: 24px; }
-    .step-detail { font-size: 14px; color: var(--stone); line-height: 1.4; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · SOURCE OF TRUTH</span>
+      <span class="eyebrow">PART 01 · PROJECT ROOT</span>
       <span class="mono caption">05 / 25</span>
     </div>
 
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:circle-stack" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">SoT 원칙</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">편집 한 곳, 동기화 자동</p>
+      <h1 class="heading-1">/init 후 생기는 것</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">프로젝트 최상위 — 4개 핵심 요소</p>
+      <div class="code-block">your-project/
+├── CLAUDE.md           ◆ 팀 공유 기억         [commit]
+├── CLAUDE.local.md     ◆ 나만의 기억          [gitignore]
+├── .claude/            ◆ 런타임 설정 폴더
+│   └── ...             (다음 슬라이드에서 해부)
+└── .mcp.json           ◆ MCP 서버 정의         [commit]</div>
 
-      <p class="body-lead" style="margin-top: 28px;">
-        이 킷의 가장 중요한 설계 원칙은 <strong>"한 곳만 편집한다"</strong>는 것이다.
-        모든 플러그인은 <code style="background: var(--bone); padding: 2px 6px; border-radius: 3px;">plugins/</code> 에서만 수정한다.
-        그 결과는 자동으로 <code style="background: var(--bone); padding: 2px 6px; border-radius: 3px;">.claude/</code> 로 동기화된다.
-      </p>
-
-      <div class="mermaid-wrapper">
-        <div class="mermaid">
-graph LR
-  P["plugins/<br/>원본"]
-  S["sync-plugins.sh<br/>자동 동기화"]
-  C[".claude/<br/>결과물"]
-
-  P -->|위상정렬<br/>스키마 검증| S
-  S -->|커맨드·스킬<br/>슬래시 커맨드| C
-
-  style P fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-  style S fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-  style C fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-        </div>
-      </div>
-
-      <p class="body" style="margin-top: 40px;">
-        이 원칙을 따르면 세 가지가 보장된다:
-      </p>
-
-      <ul style="margin-top: 16px; font-size: 15px; line-height: 1.7;">
-        <li>✓ <strong>드리프트 방지</strong> — .claude/ 는 덮어써도 상관없음</li>
-        <li>✓ <strong>버전 관리</strong> — git은 plugins/ 만 추적</li>
-        <li>✓ <strong>자동 검증</strong> — sync 시 schema 검사</li>
-      </ul>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 편집 규칙</h3>
+        <h3>◆ 3 가지 구분</h3>
         <ul>
-          <li>✅ plugins/ 편집</li>
-          <li>✅ .claude/scripts/ 편집</li>
-          <li>❌ .claude/commands/ 편집</li>
-          <li>❌ .claude/skills/ 편집</li>
+          <li>CLAUDE.md — 공유 (커밋)</li>
+          <li>CLAUDE.local.md — 개인 (gitignore)</li>
+          <li>.claude/ — 전체 설정</li>
+          <li>.mcp.json — 외부 서비스 연결</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px;">
-          <div class="step-title">sync 실행</div>
-          <div class="caption" style="margin-top: 8px; color: var(--ink);">bash .claude/scripts/
-          <br/>sync-plugins.sh</div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          용도 명확히 분리
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">워크플로우 상세: .claude/rules/sync-workflow.md</span>
+      <span class="footnote">참조: CLAUDE.md vs CLAUDE.local.md</span>
     </div>
   </div>
 </body>

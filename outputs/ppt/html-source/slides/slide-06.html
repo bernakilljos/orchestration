@@ -3,114 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>로드맵 26개</title>
+  <title>기억의 3 단계</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-wrapper { background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); margin-top: 32px; }
-    .roadmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
-    .roadmap-phase { background: rgba(255,255,255,0.6); border-radius: 12px; padding: 28px; border: 0.5px solid var(--fog); }
-    .phase-number { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
-    .phase-title { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
-    .phase-count { font-size: 15px; font-weight: 600; color: var(--stone); margin-bottom: 16px; }
-    .phase-items { font-size: 14px; line-height: 1.6; color: var(--ink); }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · ROADMAP · PHASE 1~3</span>
+      <span class="eyebrow">PART 01 · MEMORY SYSTEM</span>
       <span class="mono caption">06 / 25</span>
     </div>
 
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:map" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">로드맵 26개</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">14 stable + 12 experimental</p>
+      <h1 class="heading-1">기억의 3 단계</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">Global → Project → Folder (마지막이 이김)</p>
+      <p class="body-lead" style="margin-top: 28px;">Claude는 세 단계의 Memory를 읽어서 컨텍스트 구성. <strong>Global</strong> (~/.claude/CLAUDE.md) 은 모든 프로젝트 공통 — 개인 코딩 스타일·선호도. <strong>Project</strong> (./CLAUDE.md) 는 이 프로젝트 규칙 — 빌드·테스트·팀 컨벤션. <strong>Folder</strong> (./src/CLAUDE.md) 는 국소 규칙 — 특정 모듈·컴포넌트 주의사항.</p>
+      <p class="body" style="margin-top: 24px;">충돌 발생 시 <strong>가까운 것이 이긴다</strong> (Folder > Project > Global). 즉 ./src/CLAUDE.md 에 'TypeScript strict 모드' 있고 ./CLAUDE.md 에 'JavaScript OK' 있으면 src/ 안에서는 strict 적용.</p>
+      <p class="body" style="margin-top: 24px;">CLAUDE.local.md 는 같은 위치의 일반 CLAUDE.md 와 병합되지만 git ignore — 개인 비밀·PR 전 TODO 메모 등.</p>
+      <div class="mermaid-wrapper"><div class="mermaid">graph TD
+  G["Global<br>~/.claude/CLAUDE.md"] --> P
+  P["Project<br>./CLAUDE.md"] --> F
+  F["Folder<br>./src/CLAUDE.md"]
+  F --> A["가장 가까운<br>규칙 적용"]</div></div>
 
-      <p class="body-lead" style="margin-top: 28px;">
-        당신이 설계한 14개 플러그인은 이미 안정화됐다. 하지만 미래는 훨씬 광활하다.
-        <strong>Phase 2와 Phase 3에 12개의 신규 플러그인</strong>이 계획되어 있다.
-        각각은 명확한 목적을 가지며, 현재 14개와 느슨하게 통합된다.
-      </p>
-
-      <div class="mermaid-wrapper">
-        <div class="mermaid">
-graph LR
-  P1["🚀<br/>Phase 1<br/>2026 Q2<br/>14 stable"]
-  P2["🔧<br/>Phase 2<br/>2026 Q3<br/>6 experimental"]
-  P3["✨<br/>Phase 3<br/>2026 Q4<br/>6 spec-only"]
-
-  P1 --> P2
-  P2 --> P3
-
-  style P1 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-  style P2 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-  style P3 fill:#f7f2ea,stroke:#b8864e,stroke-width:2px
-        </div>
-      </div>
-
-      <div class="roadmap" style="display: none;">
-        <div class="roadmap-phase">
-          <div class="phase-number">1</div>
-          <div class="phase-title">CURRENT</div>
-          <div class="phase-count">14 stable</div>
-          <div class="phase-items">
-            • exec_orch · exec_learning · exec_voice · exec_session_guard<br/>
-            • mcp_web · mcp_data · mcp_dev · mcp_docs · mcp_collab<br/>
-            • design_ppt · design_excel · design_word · design_web<br/>
-            • review_qa
-          </div>
-        </div>
-
-        <div class="roadmap-phase">
-          <div class="phase-title">PHASE 2</div>
-          <div class="phase-count">6 experimental</div>
-          <div class="phase-items">
-            • ai_rag — RAG · vector DB · 의미검색<br/>
-            • ai_fine-tune — LoRA · 커스텀 학습<br/>
-            • bundle_collab — Slack·Jira·Linear 통합<br/>
-            • bundle_analytics — GA · Mixpanel<br/>
-            • bundle_ml — scikit-learn · Hugging Face<br/>
-            • bundle_monitoring — Sentry · DataDog
-          </div>
-        </div>
-
-        <div class="roadmap-phase">
-          <div class="phase-title">PHASE 3</div>
-          <div class="phase-count">6 spec-only</div>
-          <div class="phase-items">
-            • ai_multimodal — 이미지·음성·영상 통합<br/>
-            • ai_graph — Neo4j · 지식그래프<br/>
-            • bundle_realtime — Websocket · 스트리밍<br/>
-            • bundle_edge — 엣지 배포 · 로컬 모델<br/>
-            • bundle_privacy — GDPR · PII 마스킹<br/>
-            • bundle_cost — 비용 최적화 · 할당량
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 플러그인 현황</h3>
+        <h3>◆ 우선순위 (가까운 순)</h3>
         <ul>
-          <li>14 stable (4/19)</li>
-          <li>6 experimental (Phase 2)</li>
-          <li>6 spec-only (Phase 3)</li>
+          <li>Folder (모듈)</li>
+          <li>Project (리포)</li>
+          <li>Global (개인)</li>
         </ul>
         <hr>
-        <div class="stat-display">
-          <div class="stat-number" style="font-size: 84px;">26</div>
-          <div class="stat-label">TOTAL PLANNED</div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          같은 레벨 .local.md<br>는 병합·gitignore
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">상세 로드맵: docs/2026-04-19/로드맵.md</span>
+      <span class="footnote">참조: .claude/rules/claude-md-design.md</span>
     </div>
   </div>
 </body>

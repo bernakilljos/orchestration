@@ -2,115 +2,100 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 25 - References & Thanks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn More</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .closing {
+      width: 1920px;
+      height: 1080px;
+      background: linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+      position: relative;
+      overflow: hidden;
+      padding: 100px 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .closing-title {
+      font-family: 'Fraunces', serif;
+      font-size: 160px;
+      font-weight: 600;
+      line-height: 0.92;
+      color: #1A1D24;
+      margin-bottom: 24px;
+    }
+    .closing-sub {
+      font-size: 32px;
+      color: #6E685C;
+      margin-bottom: 64px;
+    }
+    .links-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 64px;
+    }
+    .link-item {
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+    }
+    .link-item a {
+      font-size: 18px;
+      color: #B8864E;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .link-item a:hover {
+      text-decoration: underline;
+    }
+    .link-desc {
+      font-size: 14px;
+      color: #6E685C;
+      margin-top: 8px;
+    }
+    .closing-footer {
+      font-size: 14px;
+      color: #6E685C;
+      border-top: 0.5px solid var(--fog);
+      padding-top: 24px;
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-4">
-    <div class="slide-header">
-      <span class="eyebrow">참조 및 감사</span>
-      <span class="mono caption">25 / 25</span>
-    </div>
+  <div class="closing">
+    <div>
+      <h1 class="closing-title">Learn More</h1>
+      <p class="closing-sub">공식 문서 + 커뮤니티 리소스</p>
 
-    <div class="main-content">
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin-top: 32px;">
-        <!-- Documentation -->
-        <div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:book-open" class="icon-lg icon-accent"></iconify-icon>
-            <h3 style="font-size: 20px; font-weight: 700; color: var(--ink);">문서</h3>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">guide.txt</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">전체 사용자 가이드</div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">CLAUDE.md</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">AI 에이전트 규칙</div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">docs/*</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">아키텍처 · 로드맵</div>
-            </div>
-          </div>
+      <div class="links-grid">
+        <div class="link-item">
+          <a href="#">docs.claude.com/claude-code</a>
+          <div class="link-desc">공식 가이드</div>
         </div>
-
-        <!-- Source -->
-        <div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:github" class="icon-lg icon-accent"></iconify-icon>
-            <h3 style="font-size: 20px; font-weight: 700; color: var(--ink);">소스</h3>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">Repository</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">
-                <a href="https://github.com/bernakilljos/orchestration" style="color: #6B8E7F; text-decoration: none; border-bottom: 1px solid #6B8E7F;">github.com/bernakilljos</a>
-              </div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">Branch</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">main (v1.0 stable)</div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">License</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">MIT · Open Source</div>
-            </div>
-          </div>
+        <div class="link-item">
+          <a href="#">github.com/anthropics/claude-code</a>
+          <div class="link-desc">공식 리포</div>
         </div>
-
-        <!-- Tools -->
-        <div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:wrench" class="icon-lg icon-accent"></iconify-icon>
-            <h3 style="font-size: 20px; font-weight: 700; color: var(--ink);">도구</h3>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 16px;">
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">AI Models</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">Claude · Codex · Gemini</div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">Cloud</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">Claude Code · Claude API</div>
-            </div>
-            <div>
-              <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #B8864E; font-weight: 600;">Infra</div>
-              <div style="font-size: 15px; color: var(--stone); margin-top: 4px;">SQLite · Python · Bash</div>
-            </div>
-          </div>
+        <div class="link-item">
+          <a href="#">github.com/anthropics/skills</a>
+          <div class="link-desc">스킬 라이브러리</div>
         </div>
-      </div>
-
-      <div style="margin-top: 48px; padding: 24px; background: rgba(184, 134, 78, 0.08); border-radius: 12px; border-left: 4px solid #B8864E;">
-        <div style="font-size: 18px; color: var(--ink); line-height: 1.7;">
-          <strong>감사의 말</strong><br>
-          Brij Kishore Pandey 의 CLAUDE.md 설계 가이드와<br>
-          Anthropic 의 Claude Opus 4.7 Extended Thinking 으로<br>
-          이 프로젝트가 가능했습니다.
+        <div class="link-item">
+          <a href="#">DK.method by Brij Kishore Pandey</a>
+          <div class="link-desc">CLAUDE.md 설계 프레임</div>
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box">
-        <h3>🎉 다음 단계</h3>
-        <ul>
-          <li>Phase 3 플러그인 기획</li>
-          <li>오프라인 추론 프레임</li>
-          <li>고급 캐시 전략</li>
-          <li>팀 협업 도구</li>
-          <li>성능 최적화</li>
-        </ul>
-        <hr>
-        <div style="font-size: 14px; color: var(--stone); line-height: 1.5; background: rgba(184, 134, 78, 0.06); padding: 12px; border-radius: 8px;">
-          <strong>Date:</strong> 2026-04-24
-        </div>
-      </div>
+    <div class="closing-footer">
+      Created with Claude Code · Architecture Reference v1.0<br>
+      <span style="color: #B8864E; font-weight: 600;">감사: Brij Kishore Pandey 의 CLAUDE.md 설계 프레임</span>
     </div>
   </div>
 </body>

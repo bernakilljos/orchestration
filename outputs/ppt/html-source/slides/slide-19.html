@@ -2,107 +2,98 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 19 - metrics DB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>구체적으로 써라</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-4">
     <div class="slide-header">
-      <span class="eyebrow">실시간 메트릭 조회</span>
+      <span class="eyebrow">PART 04 · BE SPECIFIC</span>
       <span class="mono caption">19 / 25</span>
     </div>
 
     <div class="main-content">
-      <h2 class="heading-2" style="margin-bottom: 28px;">1일 비용 분석 쿼리</h2>
+      <h1 class="heading-1">구체적으로 써라</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">CLAUDE.md 모호성 ↔ 정확성</p>
+      <p class="body-lead" style="margin-top: 28px;">모호한 규칙은 AI가 기억 못 함. 구체적으로 써야 실행된다.</p>
+      <p class="body" style="margin-top: 24px;">❌ Vague: '깨끗한 코드' → ✅ Precise: 'camelCase 변수, PascalCase 컴포넌트'</p>
+      <p class="body" style="margin-top: 24px;">❌ Vague: '테스트 해' → ✅ Precise: 'npm test --watch, utils/ 커버리지 80%+'</p>
+      <p class="body" style="margin-top: 24px;">❌ Vague: '안전하게' → ✅ Precise: '에러는 try/catch, 로그에 PII 금지'</p>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-        <!-- SQL Query -->
-        <div>
-          <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 24px;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.8; color: #1A1D24;">
-              <span style="color: #8A6235;">SELECT</span> ai, <span style="color: #8A6235;">COUNT</span>(*) <span style="color: #8A6235;">as</span> calls,<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #8A6235;">ROUND</span>(<span style="color: #8A6235;">SUM</span>(cost_usd), 2)<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #8A6235;">as</span> cost,<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #8A6235;">ROUND</span>(<span style="color: #8A6235;">AVG</span>(latency_ms))<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #8A6235;">as</span> avg_ms<br>
-              <span style="color: #8A6235;">FROM</span> metrics<br>
-              <span style="color: #8A6235;">WHERE</span> recorded_at &gt;<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #8A6235;">unixepoch</span>('now', '-1 day')<br>
-              <span style="color: #8A6235;">GROUP BY</span> ai<br>
-              <span style="color: #8A6235;">ORDER BY</span> cost <span style="color: #8A6235;">DESC</span>;
-            </div>
-          </div>
-        </div>
+    </div>
 
-        <!-- Result Table -->
-        <div>
-          <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 24px;">
-            <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.8;">
-              <thead>
-                <tr style="border-bottom: 1.5px solid var(--gold);">
-                  <th style="text-align: left; padding: 8px 0; font-weight: 700; color: var(--gold);">AI</th>
-                  <th style="text-align: right; padding: 8px 0; font-weight: 700; color: var(--gold);">calls</th>
-                  <th style="text-align: right; padding: 8px 0; font-weight: 700; color: var(--gold);">cost ($)</th>
-                  <th style="text-align: right; padding: 8px 0; font-weight: 700; color: var(--gold);">avg ms</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="border-bottom: 0.5px solid var(--fog);">
-                  <td style="padding: 8px 0;">Opus 4.7</td>
-                  <td style="text-align: right; padding: 8px 0;">142</td>
-                  <td style="text-align: right; padding: 8px 0;">$34.56</td>
-                  <td style="text-align: right; padding: 8px 0;">1,204</td>
-                </tr>
-                <tr style="border-bottom: 0.5px solid var(--fog);">
-                  <td style="padding: 8px 0;">Gemini Flash</td>
-                  <td style="text-align: right; padding: 8px 0;">89</td>
-                  <td style="text-align: right; padding: 8px 0;">$7.82</td>
-                  <td style="text-align: right; padding: 8px 0;">832</td>
-                </tr>
-                <tr style="border-bottom: 0.5px solid var(--fog);">
-                  <td style="padding: 8px 0;">Codex</td>
-                  <td style="text-align: right; padding: 8px 0;">67</td>
-                  <td style="text-align: right; padding: 8px 0;">$6.19</td>
-                  <td style="text-align: right; padding: 8px 0;">1,456</td>
-                </tr>
-                <tr style="border-bottom: 0.5px solid var(--fog);">
-                  <td style="padding: 8px 0;">Haiku 4.5</td>
-                  <td style="text-align: right; padding: 8px 0;">234</td>
-                  <td style="text-align: right; padding: 8px 0;">$2.34</td>
-                  <td style="text-align: right; padding: 8px 0;">234</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top: 32px; padding: 20px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-        <div style="font-size: 16px; color: var(--ink); line-height: 1.6;">
-          <iconify-icon icon="mdi:check-circle" class="icon-md icon-success" style="vertical-align: -3px; margin-right: 8px;"></iconify-icon>
-          <strong>총 1일 비용:</strong> $50.91 · <strong>평균 지연:</strong> 932ms
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 구체화 체크리스트</h3>
+        <ul>
+          <li>수량 명시 (몇 %, 몇 줄)</li>
+          <li>도구명 명시 (npm, pytest)</li>
+          <li>파일/폴더 명시 (src/, utils/)</li>
+          <li>명령어 전체 기재</li>
+          <li>예외 케이스 명시</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          Precise = Followed
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>📊 메트릭 테이블</h3>
-        <ul>
-          <li><strong>ai:</strong> 모델명</li>
-          <li><strong>calls:</strong> 호출 수</li>
-          <li><strong>cost_usd:</strong> 누적 비용</li>
-          <li><strong>latency_ms:</strong> 응답 시간</li>
-          <li><strong>recorded_at:</strong> 기록 시간</li>
-        </ul>
-        <hr>
-        <div style="background: rgba(107, 142, 127, 0.08); padding: 12px; border-radius: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;">
-          <strong>위치:</strong> ~/.claude/metrics.db
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: best-practices.md</span>
     </div>
   </div>
 </body>

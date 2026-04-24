@@ -2,99 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>지수 Backoff 상세</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hooks/ 이벤트 훅</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .mermaid-wrapper { background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px; backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); margin-top: 32px; }
-    .backoff-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 32px; }
-    .backoff-card { background: white; padding: 18px; border-radius: 8px; text-align: center; border: 0.5px solid var(--fog); }
-    .backoff-label { font-weight: 700; color: var(--sage); margin-bottom: 10px; font-size: 14px; }
-    .backoff-time { font-size: 22px; font-weight: 800; color: var(--sage); margin-bottom: 6px; font-family: 'JetBrains Mono'; }
-    .backoff-desc { color: var(--stone); font-size: 12px; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · PLUGIN CATEGORIES
+      <span class="eyebrow">PART 02 · HOOKS</span>
       <span class="mono caption">13 / 25</span>
     </div>
+
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:arrow-path" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">지수 Backoff 상세</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">실패에서 회복하는 방법</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        API가 429(Rate Limit) 또는 503(Service Unavailable)을 반환할 때, 무작정 재시도하면 더 악화된다.
-        대신 <strong>지수적으로 대기 시간을 늘린다</strong>. 이는 시스템을 보호하고 복구 기회를 준다.
-      </p>
+      <h1 class="heading-1">hooks/ 이벤트 훅</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">자동 실행되는 스크립트</p>
+      <p class="body-lead" style="margin-top: 28px;">훅은 <strong>특정 이벤트</strong>에서 자동 실행. 메모리·프롬프트보다 강력 (100% 실행 보장). settings.json 에 등록, .sh/.py 스크립트 연결.</p>
+      <p class="body" style="margin-top: 24px;">주요 이벤트: PreToolUse (툴 실행 직전, 차단 가능) · PostToolUse (툴 실행 후) · Stop (세션 종료) · SessionStart (세션 시작) · PreCompact (컨텍스트 압축 전).</p>
+      <p class="body" style="margin-top: 24px;">예: Edit/Write 후 자동 prettier --write $FILE 실행. 또는 rm -rf 명령 차단. 또는 세션 시작 시 상태 DB 검증. 이 모든 게 settings.json 설정 1줄로 100% 강제됨.</p>
 
-      <div class="mermaid-wrapper">
-        <div class="mermaid">
-graph LR
-  A["❌ 429/503<br/>Rate Limited"] --> B["⏳ Wait 10m<br/>Attempt 1"]
-  B --> C{"Success?"}
-  C -->|No| D["⏳ Wait 20m<br/>Attempt 2"]
-  D --> C
-  C -->|No| E["⏳ Wait 40m<br/>Attempt 3"]
-  E --> C
-  C -->|No| F["⏳ Wait 2h<br/>Attempt 4"]
-  F --> C
-  C -->|Yes| G["✅ Success<br/>Resume"]
-
-  style A fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-  style B fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-  style D fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-  style E fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-  style F fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-  style G fill:#f7f2ea,stroke:#6b8e7f,stroke-width:2px
-        </div>
-      </div>
-
-      <div class="backoff-cards">
-        <div class="backoff-card">
-          <div class="backoff-label">시도 1</div>
-          <div class="backoff-time">10m</div>
-          <div class="backoff-desc">10분 대기</div>
-        </div>
-        <div class="backoff-card">
-          <div class="backoff-label">시도 2</div>
-          <div class="backoff-time">20m</div>
-          <div class="backoff-desc">20분 대기</div>
-        </div>
-        <div class="backoff-card">
-          <div class="backoff-label">시도 3</div>
-          <div class="backoff-time">40m</div>
-          <div class="backoff-desc">40분 대기</div>
-        </div>
-        <div class="backoff-card">
-          <div class="backoff-label">시도 4</div>
-          <div class="backoff-time">2h</div>
-          <div class="backoff-desc">2시간 (cap)</div>
-        </div>
-      </div>
-      <p class="body" style="margin-top: 40px;">
-        공식: <code style="background: var(--bone); padding: 3px 8px; border-radius: 3px; font-family: 'JetBrains Mono';">wait = min(max_wait, initial * 2^attempt) + jitter</code>
-        <br/>jitter는 ±10% 랜덤이므로 동시 재시도를 피한다.
-      </p>
     </div>
+
     <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>◆ 재시도 정책</h3>
-        <ul style="font-size: 13px;">
-          <li>초기 대기: 10분</li>
-          <li>배수: 2배</li>
-          <li>상한: 2시간</li>
-          <li>최대 시도: 4회</li>
-          <li>jitter: ±10%</li>
+      <div class="bullet-box">
+        <h3>◆ 훅 이벤트 8+</h3>
+        <ul>
+          <li>PreToolUse · PostToolUse</li>
+          <li>Stop · SessionStart</li>
+          <li>PreCompact · PostCompact</li>
+          <li>UserPromptSubmit</li>
+          <li>+ 커스텀 이벤트</li>
         </ul>
         <hr>
         <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
-          429/503 자동 감지<br/>→ orca.db 기록<br/>→ alert 발송
+          100% 실행 · 차단 가능<br>메모리보다 강력
         </div>
       </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: hooks/ 사례</span>
     </div>
   </div>
 </body>

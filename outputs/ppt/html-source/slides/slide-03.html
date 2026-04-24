@@ -3,146 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>14개의 기둥</title>
+  <title>/init 의 이유</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .plugin-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 24px; }
-    .plugin-card-mini { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); border: 0.5px solid var(--fog); display: flex; flex-direction: column; }
-    .plugin-icon { font-size: 28px; margin-bottom: 12px; }
-    .plugin-prefix { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-    .plugin-name { font-size: 15px; font-weight: 700; margin-top: 4px; color: var(--ink); }
-    .plugin-role { font-size: 12px; color: var(--stone); margin-top: 6px; line-height: 1.3; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow"><iconify-icon icon="heroicons:folder-open" class="icon-md" style="margin-right: 12px;"></iconify-icon>PART 01 · INSTALLED STRUCTURE</span>
+      <span class="eyebrow">PART 01 · WHY INIT</span>
       <span class="mono caption">03 / 25</span>
     </div>
 
     <div class="main-content">
-      <h1 class="heading-1">프로젝트 루트</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">최상위 디렉토리 + 핵심 파일</p>
+      <h1 class="heading-1">/init 의 이유</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">왜 매번 설명하지 말고, 한 번 세팅해서 영원히</p>
+      <p class="body-lead" style="margin-top: 28px;">매 대화마다 'Python 3.11 쓰고', 'snake_case 로', 'pytest 통과 후 커밋해야 돼' 를 다시 말하는 건 낭비. Claude가 <strong>항상 알고 있어야 할 규칙</strong>은 CLAUDE.md 에 한 번 쓰면 이후 자동 로드.</p>
+      <p class="body" style="margin-top: 24px;">/init 은 이걸 자동화한다. 실행 순간 Claude가 프로젝트를 스캔해서 언어·프레임워크·빌드 도구·테스트 방식·디렉토리 구조를 파악하고 초안 CLAUDE.md 를 생성. 유저는 <strong>큐레이션만</strong> 하면 됨.</p>
+      <p class="body" style="margin-top: 24px;">한번 세팅하면: (1) 새 세션 시작해도 맥락 유지, (2) 팀원이 같은 리포 쓰면 동일 규칙, (3) Claude 실수 줄어들고 품질 일관, (4) 반복 지시 불필요.</p>
 
-      <p class="body-lead" style="margin-top: 28px;">
-        프로젝트 루트 구조는 <strong>3개 폴더 + 1 AI 규칙</strong> 로 구성된다.
-        `.claude/` 은 Claude Code 런타임, `plugins/` 은 25개 플러그인 원본(SoT), `docs/` 은 가이드와 로드맵,
-        그리고 `CLAUDE.md` 는 AI 에이전트가 따를 지시서다. 모든 파일은 Git으로 관리되며 `.env` 는 로컬 보안.
-      </p>
-
-      <div class="plugin-grid-4">
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon></div>
-          <div class="plugin-prefix">EXEC_</div>
-          <div class="plugin-name">exec_orch</div>
-          <div class="plugin-role">멀티AI 오케스트레이션 엔진</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon></div>
-          <div class="plugin-prefix">EXEC_</div>
-          <div class="plugin-name">exec_learning</div>
-          <div class="plugin-role">세션 학습 · 패턴 메모리</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:speaker-wave"></iconify-icon></div>
-          <div class="plugin-prefix">EXEC_</div>
-          <div class="plugin-name">exec_voice</div>
-          <div class="plugin-role">STT · TTS · 오디오 편집</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:shield-exclamation"></iconify-icon></div>
-          <div class="plugin-prefix">EXEC_</div>
-          <div class="plugin-name">exec_session_guard</div>
-          <div class="plugin-role">토큰 부족 대비 스냅샷</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:globe-alt"></iconify-icon></div>
-          <div class="plugin-prefix">MCP_</div>
-          <div class="plugin-name">mcp_web</div>
-          <div class="plugin-role">웹 브라우징 · 스크린샷</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:server-stack"></iconify-icon></div>
-          <div class="plugin-prefix">MCP_</div>
-          <div class="plugin-name">mcp_data</div>
-          <div class="plugin-role">DB · SQL · BigQuery</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:code-bracket"></iconify-icon></div>
-          <div class="plugin-prefix">MCP_</div>
-          <div class="plugin-name">mcp_dev</div>
-          <div class="plugin-role">Git · 파일 탐색</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:document-text"></iconify-icon></div>
-          <div class="plugin-prefix">MCP_</div>
-          <div class="plugin-name">mcp_docs</div>
-          <div class="plugin-role">Slack · Notion API</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:link"></iconify-icon></div>
-          <div class="plugin-prefix">MCP_</div>
-          <div class="plugin-name">mcp_collab</div>
-          <div class="plugin-role">Figma · Canva · Gamma</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:presentation-chart-bar"></iconify-icon></div>
-          <div class="plugin-prefix">DESIGN_</div>
-          <div class="plugin-name">design_ppt</div>
-          <div class="plugin-role">Gamma PPT 생성</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:table-cells"></iconify-icon></div>
-          <div class="plugin-prefix">DESIGN_</div>
-          <div class="plugin-name">design_excel</div>
-          <div class="plugin-role">엑셀 템플릿 생성</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:document"></iconify-icon></div>
-          <div class="plugin-prefix">DESIGN_</div>
-          <div class="plugin-name">design_word</div>
-          <div class="plugin-role">Word 문서 생성</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:globe-alt"></iconify-icon></div>
-          <div class="plugin-prefix">DESIGN_</div>
-          <div class="plugin-name">design_web-*</div>
-          <div class="plugin-role">웹 랜딩 페이지</div>
-        </div>
-        <div class="plugin-card-mini">
-          <div class="plugin-icon"><iconify-icon icon="heroicons:shield-check"></iconify-icon></div>
-          <div class="plugin-prefix">REVIEW_</div>
-          <div class="plugin-name">review_qa</div>
-          <div class="plugin-role">코드 검증 · QA</div>
-        </div>
-      </div>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 카테고리 분포</h3>
+        <h3>◆ /init 이 해결하는 것</h3>
         <ul>
-          <li>코어: 1개 (exec_orch)</li>
-          <li>실행: 4개 (exec_*)</li>
-          <li>MCP: 5개 (mcp_*)</li>
-          <li>디자인: 3개 (design_*)</li>
-          <li>검증: 1개 (review_qa)</li>
+          <li>반복 지시 제거</li>
+          <li>팀원 간 규칙 통일</li>
+          <li>새 세션도 맥락 유지</li>
+          <li>품질 일관성</li>
+          <li>자동 스캔 → 초안 생성</li>
         </ul>
         <hr>
-        <div class="stat-display">
-          <div class="stat-number" style="font-size: 72px;">14</div>
-          <div class="stat-label">STABLE</div>
-          <div style="font-size: 10px; color: var(--stone); margin-top: 8px;">2026-04-19</div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          설정 한 번, 효과 영원
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">연관 문서: docs/2026-04-19/플러그인.txt</span>
+      <span class="footnote">참조: CLAUDE.md 설계 원칙</span>
     </div>
   </div>
 </body>

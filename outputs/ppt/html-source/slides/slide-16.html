@@ -2,63 +2,96 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 16 - Prompt Caching</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>플러그인 시스템</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-subtle part-3">
     <div class="slide-header">
-      <span class="eyebrow">Prompt Caching 비용 절감</span>
+      <span class="eyebrow">PART 03 · PLUGINS</span>
       <span class="mono caption">16 / 25</span>
     </div>
 
     <div class="main-content">
-      <h2 class="heading-2" style="margin-bottom: 32px;">캐시 공식</h2>
+      <h1 class="heading-1">플러그인 시스템</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">.claude-plugin/ + plugin.json</p>
+      <p class="body-lead" style="margin-top: 28px;"><strong>플러그인 = commands/skills/hooks/agents를 묶은 배포 단위.</strong> plugin.json 에 이름·버전·의존성. marketplace.json 으로 여러 플러그인 번들 공유. 설치: claude plugin install <name> 또는 git clone.</p>
+      <p class="body" style="margin-top: 24px;">필수 필드: name, display, version, status (stable/experimental/spec-only), commands.</p>
+      <p class="body" style="margin-top: 24px;">선택 필드: skills, agents, hooks, dependencies.plugins (의존성), entry_points.default_command.</p>
 
-      <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 40px; margin-bottom: 48px; text-align: center;">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 28px; color: var(--ink); line-height: 1.8;">
-          cost = tokens_in × (1 + 0.25 × write_ratio)<br>
-          <span style="color: #6B8E7F;">× (1 − 0.9 × hit_ratio)</span>
-        </div>
-        <div style="margin-top: 20px; font-size: 16px; color: var(--stone);">
-          write_ratio = 캐시 생성 요청 비율 · hit_ratio = 캐시 재사용 비율
-        </div>
-      </div>
+    </div>
 
-      <h3 class="heading-3" style="margin-bottom: 28px;">비용 비교 (100개 작업 기준)</h3>
-
-      <div class="mermaid-wrapper" style="padding: 32px;">
-        <div class="mermaid">
-xychart-beta
-    title "비용 단위"
-    x-axis ["캐시 없음", "5분 TTL", "1시간 TTL"]
-    y-axis "비용" 0 --> 110
-    bar [100, 33, 14.6]
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 플러그인 장점</h3>
+        <ul>
+          <li>공유·재사용</li>
+          <li>버전 관리</li>
+          <li>팀 표준 배포</li>
+          <li>공개 마켓플레이스</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          재사용 가능한<br>단위로 번들링
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>💰 절감률</h3>
-        <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 20px;">
-          <div style="background: rgba(107, 142, 127, 0.12); padding: 16px; border-radius: 8px;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; line-height: 1;">67%</div>
-            <div style="font-size: 14px; color: var(--stone); margin-top: 4px;">5분 TTL 절감</div>
-          </div>
-          <div style="background: rgba(107, 142, 127, 0.12); padding: 16px; border-radius: 8px;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; line-height: 1;">85%</div>
-            <div style="font-size: 14px; color: var(--stone); margin-top: 4px;">1시간 TTL 절감</div>
-          </div>
-        </div>
-        <hr style="margin-top: 24px; margin-bottom: 16px;">
-        <div style="font-size: 15px; color: var(--ink); line-height: 1.6; background: rgba(107, 142, 127, 0.06); padding: 12px; border-radius: 8px;">
-          <strong>핵심:</strong> 대부분의 요청이 캐시 히트하면 월별 수십 달러 절감 가능
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: .claude-plugin/ 구조</span>
     </div>
   </div>
 </body>

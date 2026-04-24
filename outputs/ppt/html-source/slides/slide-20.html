@@ -2,51 +2,105 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>당신의 유산</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3 스코프 · 같은 규칙 충돌 시</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-subtle part-3">
+  <div class="slide bg-tech part-4">
     <div class="slide-header">
-      <span class="eyebrow">PART 04 · EXECUTION FLOW
+      <span class="eyebrow">PART 04 · 3 SCOPES</span>
       <span class="mono caption">20 / 25</span>
     </div>
+
     <div class="main-content">
-      <h1 class="heading-1">당신의 유산</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">14일간의 설계가 남긴 것</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        이 킷은 단순한 도구가 아니다.
-        <strong>어떻게 여러 AI를 효율적으로 협업</strong>시키는지를 보여주는 패턴 모음이다.
-      </p>
-      <div style="margin-top: 40px; background: white; padding: 24px; border-radius: 8px; border: 0.5px solid var(--fog);">
-        <ul style="font-size: 14px; line-height: 1.8; color: var(--ink);">
-          <li><iconify-icon icon="heroicons:check-circle" class="icon-success icon-md" style="margin-right: 12px;"></iconify-icon><strong>CLAUDE.md</strong> WHAT/WHY/HOW 프레임</li>
-          <li><iconify-icon icon="heroicons:check-circle" class="icon-success icon-md" style="margin-right: 12px;"></iconify-icon><strong>exec_orch</strong> 엔진 구조</li>
-          <li><iconify-icon icon="heroicons:check-circle" class="icon-success icon-md" style="margin-right: 12px;"></iconify-icon><strong>orca.db</strong> 메트릭 수집 및 저장</li>
-          <li><iconify-icon icon="heroicons:check-circle" class="icon-success icon-md" style="margin-right: 12px;"></iconify-icon><strong>21개 플러그인</strong> (14 stable + 7 spec)</li>
-          <li><iconify-icon icon="heroicons:check-circle" class="icon-success icon-md" style="margin-right: 12px;"></iconify-icon><strong>설계 원칙 9가지</strong> (아키텍처 패턴)</li>
-        </ul>
-      </div>
+      <h1 class="heading-1">3 스코프 · 같은 규칙 충돌 시</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">Folder > Project > Global</p>
+      <p class="body-lead" style="margin-top: 28px;">세 단계 Memory 중 가장 가까운 곳의 규칙이 이김. Global CLAUDE.md 에 'tab 4 space', Project 에 'tab 2 space', Folder 에 'tab 8 space' 있으면 그 Folder 안에서는 8 space 적용.</p>
+      <p class="body" style="margin-top: 24px;">Global (~/.claude/CLAUDE.md): 모든 프로젝트 공통 (개인 선호)</p>
+      <p class="body" style="margin-top: 24px;">Project (./CLAUDE.md): 이 리포 규칙 (팀 컨벤션)</p>
+      <p class="body" style="margin-top: 24px;">Folder (./src/CLAUDE.md): 모듈 국소 규칙 (필요 시)</p>
+      <div class="mermaid-wrapper"><div class="mermaid">graph TD
+  G["Global<br>~/.claude/CLAUDE.md"] --> P
+  P["Project<br>./CLAUDE.md"] --> F
+  F["Folder<br>./src/CLAUDE.md"]
+  F --> W["워킹 디렉토리"]
+  style W fill:#fff9e6</div></div>
+
     </div>
+
     <div class="side-panel">
-      <div class="bullet-box part-4">
-        <h3>◆ 다음 단계</h3>
-        <ul style="font-size: 13px;">
-          <li><iconify-icon icon="heroicons:arrow-right" class="icon-accent icon-md" style="margin-right: 8px;"></iconify-icon>Phase 1: 기초 완성 ✓</li>
-          <li><iconify-icon icon="heroicons:arrow-right" class="icon-accent icon-md" style="margin-right: 8px;"></iconify-icon>Phase 2: 26개 플러그인</li>
-          <li><iconify-icon icon="heroicons:arrow-right" class="icon-accent icon-md" style="margin-right: 8px;"></iconify-icon>Phase 3: 업계 확산</li>
+      <div class="bullet-box">
+        <h3>◆ 우선순위</h3>
+        <ul>
+          <li>1. Folder (가장 가까움)</li>
+          <li>2. Project</li>
+          <li>3. Global (가장 멀음)</li>
+          <li>Last wins on conflicts</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--plum); margin-bottom: 8px;">영감</div>
-          <div class="body" style="font-size: 12px; line-height: 1.5; color: var(--stone);">
-            "좋은 설계는 설명을 필요로 하지 않는다. 규칙이 명확하고, 패턴이 일관되고, 문서가 정직할 때 모든 것이 따라온다."
-          </div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          가까운 규칙이<br>먼 규칙을 이김
         </div>
       </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: claude-md-design.md</span>
     </div>
   </div>
 </body>

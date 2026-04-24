@@ -3,90 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>exec_orch 엔진</title>
+  <title>init 실행 시 순서</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'base',
-      themeVariables: {
-        fontFamily: 'Pretendard Variable, sans-serif',
-        primaryColor: '#F7F2EA',
-        primaryTextColor: '#1A1D24',
-        primaryBorderColor: '#B8864E',
-        lineColor: '#6E685C',
-        secondaryColor: '#EDE4D3',
-        tertiaryColor: '#E5DDCA',
-        fontSize: '13px',
-        flowchart: { htmlLabels: true }
-      }
-    });
-  </script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
-    .mermaid-container { margin-top: 32px; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle part-1">
     <div class="slide-header">
-      <span class="eyebrow">PART 01 · THE ORCHESTRATION ENGINE</span>
+      <span class="eyebrow">PART 01 · WHAT INIT DOES</span>
       <span class="mono caption">04 / 25</span>
     </div>
 
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:cpu-chip" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">exec_orch 엔진</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 런타임 — 9개 하위 폴더</p>
+      <h1 class="heading-1">init 실행 시 순서</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">자동 스캔 + 초안 생성 + 큐레이션</p>
+      <p class="body-lead" style="margin-top: 28px;"><strong>Step 1: 코드베이스 분석</strong> — 패키지 매니저(package.json/requirements.txt/go.mod), 빌드 도구, 테스트 프레임워크, 디렉토리 구조, 주요 엔트리 포인트 식별.</p>
+      <p class="body" style="margin-top: 24px;"><strong>Step 2: CLAUDE.md 초안 작성</strong> — WHAT (프로젝트 소개) / WHY (원칙) / HOW (빌드·테스트·배포 명령) 구조로 자동 채움.</p>
+      <p class="body" style="margin-top: 24px;"><strong>Step 3: 유저 큐레이션</strong> — Claude가 놓친 팀 컨벤션, 안티패턴, 보안 주의사항을 유저가 직접 편집해서 최종본 만듦.</p>
+      <div class="mermaid-wrapper"><div class="mermaid">graph LR
+  I[/init 실행] --> S[코드베이스 스캔]
+  S --> G["CLAUDE.md 초안<br>생성"]
+  G --> C["유저<br>큐레이션"]
+  C --> R["✓ Ready"]</div></div>
 
-      <p class="body-lead" style="margin-top: 28px;">
-        멀티AI 협업의 핵심은 <strong>올바른 순간에 올바른 AI를 부른다</strong>는 것이다.
-        exec_orch는 작업의 특성(규모, 유형, 복잡도)을 읽어 Claude는 설계를,
-        Codex는 구현을, Gemini는 검증을 하도록 라우팅한다.
-      </p>
-
-      <div class="mermaid-wrapper mermaid-container">
-        <div class="mermaid">
-graph LR
-    U["📋 사용자 요청"] --> C["🧠 Claude Opus<br/>설계·판단"]
-    C -->|대규모 구현| CX["⚙️ Codex ×4<br/>500줄+ 코드"]
-    C -->|소규모 작업| CS["🎯 Claude Sonnet<br/>직접 구현"]
-    CX --> V["🔍 검증 필터"]
-    CS --> V
-    V -->|초장문| G["📚 Gemini Flash<br/>500k 토큰"]
-    V --> M["📊 orca.db<br/>메트릭 기록"]
-    G --> M
-    M --> DB["✓ 결과 저장"]
-        </div>
-      </div>
-
-      <p class="body" style="margin-top: 40px;">
-        라우팅 로직은 <strong>route_dispatch.md</strong> 스킬에 명시되어 있다.
-        작업 규모(줄 수), 복잡도(의존성), 시간(deadline)을 종합해 판단한다.
-      </p>
     </div>
 
     <div class="side-panel">
       <div class="bullet-box">
-        <h3>◆ 라우팅 기준</h3>
+        <h3>◆ 스캔 대상</h3>
         <ul>
-          <li>코드 <200줄: Claude</li>
-          <li>코드 200~500줄: Codex 1st</li>
-          <li>코드 >500줄: 병렬 Codex</li>
-          <li>검증 필요: Gemini</li>
-          <li>설계 판단: Claude 최종</li>
+          <li>package.json / requirements.txt</li>
+          <li>빌드·테스트 설정</li>
+          <li>디렉토리 구조</li>
+          <li>README.md</li>
+          <li>Git history (최근 커밋)</li>
         </ul>
         <hr>
-        <div style="margin-top: 20px;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 8px;">스킬 위치</div>
-          <div class="mono" style="font-size: 10px; color: var(--stone); line-height: 1.4;">plugins/exec_orch/<br/>skills/route_dispatch.md</div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          자동화 → 수동 검증<br>품질 담보
         </div>
       </div>
     </div>
 
     <div class="footer-border">
-      <span class="footnote">참고: docs/architecture-patterns.md § Pattern 2 "AI 역할 분담"</span>
+      <span class="footnote">참조: .claude/scripts/init.py</span>
     </div>
   </div>
 </body>

@@ -2,94 +2,104 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 22 - 현재 상태</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시작하기</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-subtle part-5">
     <div class="slide-header">
-      <span class="eyebrow">현재 라이브 수치</span>
+      <span class="eyebrow">PART 05 · IN PRACTICE</span>
       <span class="mono caption">22 / 25</span>
     </div>
 
     <div class="main-content">
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 32px;">
-        <!-- Plugins -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:puzzle" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">25</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Plugins</div>
-        </div>
+      <h1 class="heading-1">시작하기</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 새 프로젝트 10 분</p>
+      <div class="code-block">□ claude code CLI 설치
+□ cd project-root
+□ claude 실행
+□ /init — CLAUDE.md 초안 생성
+□ CLAUDE.md 큐레이션 (WHAT/WHY/HOW)
+□ .claude/rules/ 분리 (긴 규칙)
+□ .claude/commands/ 추가 (자주 쓰는 명령)
+□ settings.json 권한 설정
+□ hooks 등록 (자동화)
+□ .mcp.json 외부 서비스 연결
+□ git commit .claude/ CLAUDE.md</div>
 
-        <!-- State Tables -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:database" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">8</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">DB Tables</div>
-        </div>
+    </div>
 
-        <!-- Code Lines -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:code-braces" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">2.1k</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Code Lines</div>
-        </div>
-
-        <!-- Tests -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:check-circle" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">33</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Tests Pass</div>
-        </div>
-
-        <!-- Cache Hits -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:lightning-bolt" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">68%</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Cache Hit</div>
-        </div>
-
-        <!-- Workers -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:worker-threads" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">4</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Workers</div>
-        </div>
-
-        <!-- Daily Spend -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:currency-usd" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">$50.91</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Today Cost</div>
-        </div>
-
-        <!-- Uptime -->
-        <div style="background: rgba(107, 142, 127, 0.08); border: 0.5px solid #6B8E7F; border-radius: 12px; padding: 24px; text-align: center;">
-          <iconify-icon icon="mdi:shield-check" class="icon-xl icon-success"></iconify-icon>
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 800; color: #6B8E7F; margin: 16px 0; line-height: 1;">100%</div>
-          <div style="font-size: 14px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--stone); font-weight: 600;">Uptime</div>
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 첫 주 팁</h3>
+        <ul>
+          <li>작게 시작</li>
+          <li>반복 시 규칙화</li>
+          <li>주 1회 CLAUDE.md 갱신</li>
+          <li>팀 공유 후 피드백</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          설정 완성도<br>= 팀 생산성
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>🎯 상태 요약</h3>
-        <ul>
-          <li>모든 구성 요소: 정상</li>
-          <li>캐시 성능: 최적화</li>
-          <li>비용 관리: 효율</li>
-          <li>시스템 안정: 높음</li>
-          <li>자동화: 24/7</li>
-        </ul>
-        <hr>
-        <div style="background: rgba(107, 142, 127, 0.08); padding: 12px; border-radius: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;">
-          업데이트: 2026-04-24 09:00 KST
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: CLAUDE_SETUP_GUIDE.md</span>
     </div>
   </div>
 </body>

@@ -2,71 +2,96 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Watchdog 2분 주기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agents/ 서브에이전트</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'base',
-      themeVariables: {
-        fontFamily: 'Pretendard Variable, sans-serif',
-        primaryColor: '#F7F2EA',
-        primaryTextColor: '#1A1D24',
-        primaryBorderColor: '#6B8E7F',
-        lineColor: '#6E685C',
-        fontSize: '12px'
-      }
-    });
-  </script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · PLUGIN CATEGORIES
+      <span class="eyebrow">PART 02 · AGENTS</span>
       <span class="mono caption">12 / 25</span>
     </div>
+
     <div class="main-content">
-      <h1 class="heading-1">exec_ 실행 계열</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">자동 모니터링 및 자가 치유</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        24/7 자동으로 시스템 상태를 감시한다. 2분마다 체크하면서 문제가 있으면 자동으로 고친다.
-        <strong>인터벤션 없이 99.9% 가용성</strong>을 목표로 한다.
-      </p>
-      <div class="mermaid-wrapper" style="margin-top: 28px;">
-        <div class="mermaid">
-stateDiagram-v2
-    [*] --> Start: [0s]
-    Start --> Worker: [10s] heartbeat 체크
-    Worker --> Queue: [30s] 큐 깊이
-    Queue --> Metrics: [60s] 메트릭 기록
-    Metrics --> Heal: [90s] 자가 치유
-    Heal --> Ok: 이상 없음
-    Heal --> Fix: 이상 감지
-    Fix --> Ok: 자동 복구
-    Ok --> Report: [120s] 보고
-    Report --> [*]
+      <h1 class="heading-1">agents/ 서브에이전트</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">역할별 Claude 분리 실행</p>
+      <p class="body-lead" style="margin-top: 28px;">메인 Claude가 특정 작업을 서브에이전트에 위임. 각 agent.md 는 YAML frontmatter 로 model, tools, prompt 정의. 예: reviewer.md (코드 리뷰 전문), researcher.md (리서치 전문).</p>
+      <p class="body" style="margin-top: 24px;">토큰 격리: 메인 대화 토큰 절약 가능. 각 agent 는 독립 세션에서 실행.</p>
+      <p class="body" style="margin-top: 24px;">model 선택: 코드 리뷰 는 Opus, 빠른 사실 확인 은 Haiku 지정 가능. tools 제한으로 보안 확보 (예: reviewer 는 Read/Bash 만, 파일 쓰기 금지).</p>
+
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 서브에이전트 효과</h3>
+        <ul>
+          <li>토큰 격리 (메인 대화 절약)</li>
+          <li>역할별 model 선택 가능</li>
+          <li>도구 제한으로 안전성</li>
+          <li>병렬 실행 가능</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          메인 Claude + N개<br>전문 서브에이전트
         </div>
       </div>
     </div>
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>◆ Watchdog 기능</h3>
-        <ul style="font-size: 13px;">
-          <li>주기: 2분</li>
-          <li>단계: 6개</li>
-          <li>총시간: ~120초</li>
-          <li>오버헤드: <5%</li>
-          <li>가용성: 99.9%</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px;">
-          <div class="stat-number" style="font-size: 64px;">24</div>
-          <div class="stat-label">/7 AUTOMATIC</div>
-        </div>
-      </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: agents/ 사례</span>
     </div>
   </div>
 </body>

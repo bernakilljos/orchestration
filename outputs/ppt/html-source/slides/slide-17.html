@@ -2,68 +2,98 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 17 - 24/7 흐름</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>official plugins</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-subtle part-3">
     <div class="slide-header">
-      <span class="eyebrow">자동화된 협업 흐름</span>
+      <span class="eyebrow">PART 03 · OFFICIAL PLUGINS</span>
       <span class="mono caption">17 / 25</span>
     </div>
 
     <div class="main-content">
-      <div class="mermaid-wrapper" style="padding: 32px; margin-top: 0;">
-        <div class="mermaid">
-sequenceDiagram
-    participant U as 유저 실행
-    participant W as Watchdog
-    participant WK as Worker (N개)
-    participant R as Router
-    participant C as Claude API
-    participant M as metrics.db
+      <h1 class="heading-1">official plugins</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">바로 쓸 수 있는 공식 도구</p>
+      <p class="body-lead" style="margin-top: 28px;">Anthropic 에서 제공하는 공식 플러그인들. 설치: claude plugin install <name>@claude-plugins-official</p>
+      <p class="body" style="margin-top: 24px;">claude-md-management — CLAUDE.md 감사·개선</p>
+      <p class="body" style="margin-top: 24px;">code-review — PR 리뷰 자동화</p>
+      <p class="body" style="margin-top: 24px;">commit-commands — /commit, /commit-push-pr</p>
+      <p class="body" style="margin-top: 24px;">superpowers — 테스트·디버깅·플랜 스킬 번들</p>
 
-    U->>W: watchdog-start.bat 실행
-    W->>WK: N개 워커 프로세스 spawn
-    loop 2초마다 반복
-      WK->>R: 태스크 도착확인 (큐 폴링)
-      R-->>WK: OK / WAIT / FALLBACK
-      alt 태스크 준비 완료
-        WK->>C: API 호출 (캐시 활용)
-        C-->>WK: 응답 + 비용 메타
-        WK->>M: 실행 메트릭 기록
-      else 대기
-        WK-->>WK: backoff (지수 증가)
-      end
-    end
-    loop 2분마다 반복
-      W->>WK: heartbeat 체크
-      WK-->>W: alive / stale → restart
-    end
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 설치 명령</h3>
+        <ul>
+          <li>claude-md-management</li>
+          <li>code-review</li>
+          <li>commit-commands</li>
+          <li>superpowers</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          공식 표준 확장
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>⚙️ 시스템 특성</h3>
-        <ul>
-          <li><strong>워커:</strong> N개 병렬 프로세스</li>
-          <li><strong>큐:</strong> 디스크 큐 기반</li>
-          <li><strong>모니터:</strong> 2분마다 상태 체크</li>
-          <li><strong>복구:</strong> 자동 재시작</li>
-          <li><strong>메트릭:</strong> 실시간 기록</li>
-        </ul>
-        <hr>
-        <div class="stat-display" style="align-items: center;">
-          <div class="stat-number" style="font-size: 72px; text-align: center;">24/7</div>
-          <div class="stat-label" style="text-align: center;">가용성</div>
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: github.com/anthropics/plugins</span>
     </div>
   </div>
 </body>

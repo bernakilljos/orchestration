@@ -2,100 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>AI 모델 매트릭스</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP 서버 연결</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .model-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 32px; }
-    .model-card { background: white; padding: 20px; border-radius: 8px; border: 0.5px solid var(--fog); text-align: center; }
-    .model-icon { font-size: 36px; margin-bottom: 12px; }
-    .model-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; font-family: 'JetBrains Mono'; }
-    .model-spec { font-size: 12px; color: var(--stone); line-height: 1.4; }
-    .spec-row { margin-top: 10px; text-align: left; border-top: 0.5px solid var(--bone); padding-top: 8px; }
-    .spec-check { color: #5C8A5C; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-subtle part-3">
     <div class="slide-header">
-      <span class="eyebrow">PART 03 · PLUGIN CATEGORIES
+      <span class="eyebrow">PART 03 · MCP SERVERS</span>
       <span class="mono caption">15 / 25</span>
     </div>
-    <div class="main-content">
-      <h1 class="heading-1">review_qa + 기타</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">각 태스크에 맞는 AI 선택</p>
 
-      <div class="model-grid">
-        <div class="model-card">
-          <div class="model-icon"><iconify-icon icon="heroicons:academic-cap" style="color: var(--sage);"></iconify-icon></div>
-          <div class="model-name">Opus 4.7</div>
-          <div class="model-spec">설계, 판단, 복잡 분석</div>
-          <div class="spec-row">
-            <div style="font-size: 11px;">• 1M 토큰</div>
-            <div style="font-size: 11px;">• Thinking <iconify-icon icon="heroicons:check-circle" class="spec-check"></iconify-icon></div>
-            <div style="font-size: 11px;">• Caching <iconify-icon icon="heroicons:check-circle" class="spec-check"></iconify-icon></div>
-          </div>
-        </div>
-        <div class="model-card">
-          <div class="model-icon"><iconify-icon icon="heroicons:pencil" style="color: var(--sage);"></iconify-icon></div>
-          <div class="model-name">Sonnet 4.6</div>
-          <div class="model-spec">코드 작성, 보완</div>
-          <div class="spec-row">
-            <div style="font-size: 11px;">• 200K 토큰</div>
-            <div style="font-size: 11px;">• 빠른 응답</div>
-            <div style="font-size: 11px;">• 균형 설정</div>
-          </div>
-        </div>
-        <div class="model-card">
-          <div class="model-icon"><iconify-icon icon="heroicons:bolt" style="color: var(--sage);"></iconify-icon></div>
-          <div class="model-name">Haiku 4.5</div>
-          <div class="model-spec">검증, 분류</div>
-          <div class="spec-row">
-            <div style="font-size: 11px;">• 초고속</div>
-            <div style="font-size: 11px;">• 저가격</div>
-            <div style="font-size: 11px;">• 간단 작업</div>
-          </div>
-        </div>
-        <div class="model-card">
-          <div class="model-icon"><iconify-icon icon="heroicons:code-bracket" style="color: var(--sage);"></iconify-icon></div>
-          <div class="model-name">Codex</div>
-          <div class="model-spec">대규모 구현</div>
-          <div class="spec-row">
-            <div style="font-size: 11px;">• 병렬 4개</div>
-            <div style="font-size: 11px;">• 500줄+</div>
-            <div style="font-size: 11px;">• API 통합</div>
-          </div>
-        </div>
-        <div class="model-card">
-          <div class="model-icon"><iconify-icon icon="heroicons:sparkles" style="color: var(--sage);"></iconify-icon></div>
-          <div class="model-name">Gemini</div>
-          <div class="model-spec">문서, 검증</div>
-          <div class="spec-row">
-            <div style="font-size: 11px;">• 한국어</div>
-            <div style="font-size: 11px;">• 다중서식</div>
-            <div style="font-size: 11px;">• Google API</div>
-          </div>
+    <div class="main-content">
+      <h1 class="heading-1">MCP 서버 연결</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">외부 서비스 = Claude 의 도구</p>
+      <p class="body-lead" style="margin-top: 28px;"><strong>MCP (Model Context Protocol)</strong> — 외부 서비스를 Claude가 도구로 쓰게 하는 표준. 프로젝트 루트 .mcp.json 또는 유저 ~/.claude.json 에 정의. 서버 예: GitHub, Playwright, PostgreSQL, Slack 등.</p>
+      <p class="body" style="margin-top: 24px;">표준 프로토콜: stdio / http / sse 지원. 공식 서버 (Anthropic) + 커뮤니티 서버 다수 존재.</p>
+      <p class="body" style="margin-top: 24px;">Windows 주의: cmd /c 필수. 예: ['cmd', '/c', 'npx', '-y', '@modelcontextprotocol/server-github']</p>
+
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ MCP 특징</h3>
+        <ul>
+          <li>표준 프로토콜</li>
+          <li>stdio / http / sse</li>
+          <li>공식 + 커뮤니티 서버</li>
+          <li>Windows: cmd /c 필수</li>
+          <li>.mcp.json 또는 ~/.claude.json</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          외부 API 직접 접근
         </div>
       </div>
     </div>
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>◆ 라우팅 규칙</h3>
-        <ul style="font-size: 13px;">
-          <li>복잡도 높음 → Opus</li>
-          <li>코드 200~500줄 → Sonnet</li>
-          <li>검증·분류 → Haiku</li>
-          <li>대규모 구현 → Codex</li>
-          <li>문서·검토 → Gemini</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px;">
-          <div style="font-size: 14px; font-weight: 700; color: var(--ink);">최적 비용</div>
-          <div style="font-size: 13px; color: var(--stone); margin-top: 6px;">작업별 AI 배정</div>
-        </div>
-      </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: .mcp.json 스키마</span>
     </div>
   </div>
 </body>

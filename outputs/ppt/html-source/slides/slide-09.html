@@ -2,102 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Before vs After 비교</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>commands/ 슬래시 명령</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .before-after-item { display: flex; align-items: flex-start; margin-bottom: 16px; gap: 12px; }
-    .before-item-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
-  <div class="slide bg-accent part-2">
+  <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · CORE SYSTEMS
+      <span class="eyebrow">PART 02 · COMMANDS</span>
       <span class="mono caption">09 / 25</span>
     </div>
+
     <div class="main-content">
-      <h1 class="heading-1">감시자와 자동부활</h1>
-      <p class="heading-2 text-stone" style="font-weight: 400;">3일 만에 아키텍처가 진화하다</p>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
-        <div>
-          <h3 style="font-size: 20px; font-weight: 700; color: var(--stone); margin-bottom: 24px; display: flex; align-items: center; gap: 8px;"><iconify-icon icon="heroicons:x-circle"></iconify-icon>4월 20일</h3>
-          <div style="background: rgba(255,255,255,0.5); border-radius: 8px; padding: 24px; border-left: 4px solid var(--stone);">
-            <div style="font-size: 15px; line-height: 1.8;">
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:x-circle" style="color: #A85757;"></iconify-icon></div>
-                <div><strong>라우팅</strong><br/>작업 크기로 AI 판단 (간단)</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:x-circle" style="color: #A85757;"></iconify-icon></div>
-                <div><strong>컨텍스트</strong><br/>200K 제한 · 부분 로드</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:x-circle" style="color: #A85757;"></iconify-icon></div>
-                <div><strong>비용</strong><br/>매번 full request</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:x-circle" style="color: #A85757;"></iconify-icon></div>
-                <div><strong>검증</strong><br/>표면적 점검만 가능</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:x-circle" style="color: #A85757;"></iconify-icon></div>
-                <div><strong>속도</strong><br/>순차 처리 (느림)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <h3 style="font-size: 20px; font-weight: 700; color: var(--terracotta); margin-bottom: 24px; display: flex; align-items: center; gap: 8px;"><iconify-icon icon="heroicons:check-circle"></iconify-icon>4월 23일</h3>
-          <div style="background: rgba(255,255,255,0.6); border-radius: 8px; padding: 24px; border-left: 4px solid var(--terracotta);">
-            <div style="font-size: 15px; line-height: 1.8;">
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:check-circle" style="color: #6B8E7F;"></iconify-icon></div>
-                <div><strong>라우팅</strong><br/>전체 컨텍스트 기반 (정교)</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:check-circle" style="color: #6B8E7F;"></iconify-icon></div>
-                <div><strong>컨텍스트</strong><br/>1M 전체 · 프로젝트 한 번에</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:check-circle" style="color: #6B8E7F;"></iconify-icon></div>
-                <div><strong>비용</strong><br/>Caching으로 90% 절감</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:check-circle" style="color: #6B8E7F;"></iconify-icon></div>
-                <div><strong>검증</strong><br/>전체 맥락에서 검증</div>
-              </div>
-              <div class="before-after-item">
-                <div class="before-item-icon"><iconify-icon icon="heroicons:check-circle" style="color: #6B8E7F;"></iconify-icon></div>
-                <div><strong>속도</strong><br/>병렬 처리 (빠름)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <p class="body" style="margin-top: 40px;">
-        변화의 핵심: <strong>"부분 최적화"에서 "전체 최적화"로.</strong>
-        이전엔 각 AI가 자기 몫만 했다. 이제 전체 프로젝트를 보고 판단한다.
-      </p>
+      <h1 class="heading-1">commands/ 슬래시 명령</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">나만의 /report, /deploy 등 정의</p>
+      <p class="body-lead" style="margin-top: 28px;">파일명 = 명령어. <strong>report.md</strong> → <strong>/report</strong>. frontmatter 로 description, allowed-tools 등 명시. $ARGUMENTS 로 인자 받기. ! 접두 로 Bash 실행, @ 로 파일 참조.</p>
+      <p class="body" style="margin-top: 24px;">예시: report.md 에 '오늘 커밋 요약' 이라 쓰면 claude /report 하면 git log --since=yesterday 돌려서 결과 출력.</p>
+      <p class="body" style="margin-top: 24px;">명령은 description 을 읽고 트리거 → 본문 실행 → 결과 반환. 도구 제한 (allowed-tools) 으로 보안 확보. 팀 표준 명령을 여기에 모아두면 새 팀원도 쉽게 따라갈 수 있음.</p>
+
     </div>
+
     <div class="side-panel">
-      <div class="bullet-box part-2">
-        <h3>◆ 3일 사이의 변화</h3>
+      <div class="bullet-box">
+        <h3>◆ Command 구성</h3>
         <ul>
-          <li>라우팅 정확도 ↑</li>
-          <li>컨텍스트 깊이 ↑↑↑</li>
-          <li>비용 효율성 ↑↑</li>
-          <li>검증 수준 ↑</li>
-          <li>병렬화 가능 ↑</li>
+          <li>파일명 = 슬래시명</li>
+          <li>YAML frontmatter</li>
+          <li>Bash 실행: ! 접두</li>
+          <li>파일 참조: @<path></li>
+          <li>인자: $ARGUMENTS</li>
         </ul>
         <hr>
-        <div style="margin-top: 16px;">
-          <div class="stat-number" style="font-size: 72px;">3</div>
-          <div class="stat-label">DAYS TO PARADIGM SHIFT</div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          /mycommand --flag arg
         </div>
       </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: commands/ 사례</span>
     </div>
   </div>
 </body>

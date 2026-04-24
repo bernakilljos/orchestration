@@ -2,60 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 21 - 성장 곡선</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>메모리 말고 Hook 으로</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-4">
     <div class="slide-header">
-      <span class="eyebrow">14일 성장 곡선</span>
+      <span class="eyebrow">PART 04 · HOOKS ENFORCEMENT</span>
       <span class="mono caption">21 / 25</span>
     </div>
 
     <div class="main-content">
-      <h2 class="heading-2" style="margin-bottom: 28px;">플러그인 개수 추이</h2>
+      <h1 class="heading-1">메모리 말고 Hook 으로</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">70~80% 지킴 → 100% 실행</p>
+      <p class="body-lead" style="margin-top: 28px;">CLAUDE.md 의 규칙은 <strong>AI 가 '기억'</strong> 해야 적용 — 놓칠 수 있음. 훅은 <strong>시스템이 강제 실행</strong> — 100% 작동.</p>
+      <p class="body" style="margin-top: 24px;">예: '모든 Python 파일 저장 시 black 실행' → PostToolUse 훅으로 settings.json 에 등록. Edit/Write 이벤트마다 자동 실행 (메모리 전혀 안 쓰임).</p>
+      <p class="body" style="margin-top: 24px;">또는 '커밋 전 테스트 필수' → PreToolUse 훅으로 git commit 차단. hooks/pre-commit.sh 에서 npm test 돌려서 실패하면 차단. Claude 가 아무리 바빠도 강제됨.</p>
 
-      <div class="mermaid-wrapper" style="padding: 32px;">
-        <div class="mermaid">
-xychart-beta
-    title "4월 10일 → 4월 24일 플러그인 성장"
-    x-axis [Day-1, Day-5, Day-10, Day-13, Day-14]
-    y-axis "플러그인 수" 0 --> 30
-    line [1, 5, 10, 14, 25]
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ Hook 활용 사례</h3>
+        <ul>
+          <li>포매터 자동 실행</li>
+          <li>커밋 전 검증</li>
+          <li>위험 명령 차단</li>
+          <li>보안 스캔</li>
+          <li>자동 로깅</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          메모리: 70~80%<br>Hook: 100%
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>📈 주요 마일스톤</h3>
-        <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
-          <div style="padding: 12px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8A6235; font-weight: 700;">Day 1</div>
-            <div style="font-size: 15px; color: var(--ink); margin-top: 4px;">초기 뼈대 구성 (1개)</div>
-          </div>
-          <div style="padding: 12px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8A6235; font-weight: 700;">Day 5</div>
-            <div style="font-size: 15px; color: var(--ink); margin-top: 4px;">Phase 1 완성 (5개)</div>
-          </div>
-          <div style="padding: 12px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8A6235; font-weight: 700;">Day 10</div>
-            <div style="font-size: 15px; color: var(--ink); margin-top: 4px;">Phase 2 라우팅 (10개)</div>
-          </div>
-          <div style="padding: 12px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8A6235; font-weight: 700;">Day 13</div>
-            <div style="font-size: 15px; color: var(--ink); margin-top: 4px;">Codex 통합 (14개)</div>
-          </div>
-          <div style="padding: 12px; background: rgba(107, 142, 127, 0.08); border-radius: 8px; border-left: 3px solid #6B8E7F;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #8A6235; font-weight: 700;">Day 14</div>
-            <div style="font-size: 15px; color: var(--ink); margin-top: 4px;">완성 (25개)</div>
-          </div>
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: hooks/, settings.json hooks</span>
     </div>
   </div>
 </body>

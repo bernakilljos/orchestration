@@ -2,103 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 24 - Closing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다음 단계</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .closing {
-      width: 1920px;
-      height: 1080px;
-      background:
-        radial-gradient(ellipse 1200px 700px at 80% 40%, rgba(122, 78, 107, 0.10) 0%, transparent 60%),
-        radial-gradient(ellipse 900px 600px at 10% 70%, rgba(107, 142, 127, 0.08) 0%, transparent 60%),
-        linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
-      position: relative;
-      overflow: hidden;
-      padding: 120px;
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
       display: flex;
-      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      text-align: center;
     }
-
-    .closing::before {
-      content: '';
-      position: absolute;
-      bottom: -150px;
-      right: -150px;
-      width: 700px;
-      height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(122, 78, 107, 0.12) 0%, transparent 70%);
-      z-index: 0;
-    }
-
-    .closing::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(90deg, rgba(184, 134, 78, 0.03) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(184, 134, 78, 0.03) 1px, transparent 1px);
-      background-size: 100px 100px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .closing-content {
-      position: relative;
-      z-index: 2;
-      max-width: 1200px;
-    }
-
-    .closing-quote {
-      font-family: 'Fraunces', serif;
-      font-size: 140px;
-      font-weight: 600;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      color: #1A1D24;
-      margin-bottom: 48px;
-    }
-
-    .closing-quote .accent {
-      color: #7A4E6B;
-      font-style: italic;
-      font-weight: 500;
-    }
-
-    .closing-signature {
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: #6E685C;
-      font-weight: 600;
-      margin-top: 32px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
-
-    .decor-line {
-      width: 120px;
-      height: 2px;
-      background: linear-gradient(90deg, #B8864E 0%, transparent 100%);
-      margin: 0 auto 40px;
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
     }
   </style>
 </head>
 <body>
-  <div class="closing">
-    <div class="closing-content">
-      <div class="decor-line"></div>
-      <h1 class="closing-quote">
-        Built before<br>
-        <span class="accent">Opus 4.7</span>.<br>
-        Evolved after.
-      </h1>
-      <p class="closing-signature">— Orchestration Kit v1.0</p>
+  <div class="slide bg-subtle part-5">
+    <div class="slide-header">
+      <span class="eyebrow">PART 05 · EXPANSION</span>
+      <span class="mono caption">24 / 25</span>
+    </div>
+
+    <div class="main-content">
+      <h1 class="heading-1">다음 단계</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">팀 → 조직 → 커뮤니티</p>
+      <p class="body-lead" style="margin-top: 28px;">개인 프로젝트에서 시작한 Claude Code 설정을 팀, 조직, 공개 커뮤니티로 확장하는 방법:</p>
+      <p class="body" style="margin-top: 24px;">개인 → 팀: .claude/ 와 CLAUDE.md 를 git 으로 공유. 또는 .claude-plugin/ 으로 플러그인 패키지화.</p>
+      <p class="body" style="margin-top: 24px;">팀 → 조직: 플러그인 마켓플레이스 운영. 조직 표준 규칙을 plugin.json 에 등록 후 배포.</p>
+      <p class="body" style="margin-top: 24px;">조직 → 공개: github.com/anthropics/plugins 에 기여 또는 독립 marketplace 운영.</p>
+
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 배포 전략</h3>
+        <ul>
+          <li>개인: Git repo 공유</li>
+          <li>팀: .claude-plugin/ 패키지</li>
+          <li>조직: 마켓플레이스</li>
+          <li>공개: GitHub · NPM</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          표준화 → 재사용
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: marketplace.json</span>
     </div>
   </div>
 </body>

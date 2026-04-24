@@ -2,133 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>추가된 10 지표</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skills/ 자동 활성 스킬</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .metric-card { background: white; padding: 20px; border-radius: 8px; border: 0.5px solid var(--fog); display: flex; align-items: flex-start; gap: 16px; }
-    .metric-icon { font-size: 32px; flex-shrink: 0; margin-top: 2px; }
-    .metric-content { flex: 1; }
-    .metric-number { font-size: 13px; font-weight: 600; color: var(--stone); font-family: 'JetBrains Mono'; }
-    .metric-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-top: 4px; }
-    .metric-desc { font-size: 14px; color: var(--stone); margin-top: 4px; line-height: 1.4; }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
   </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-2">
     <div class="slide-header">
-      <span class="eyebrow">PART 02 · CORE SYSTEMS
+      <span class="eyebrow">PART 02 · SKILLS</span>
       <span class="mono caption">10 / 25</span>
     </div>
+
     <div class="main-content">
-      <div style="display: flex; align-items: center; gap: 12px;"><iconify-icon icon="heroicons:chart-bar-square" class="icon-lg"></iconify-icon><h1 class="heading-1" style="margin: 0;">추가된 10 지표</h1></div>
-      <p class="heading-2 text-stone" style="font-weight: 400;">2026-04-23 프로덕션 배포</p>
-      <p class="body-lead" style="margin-top: 28px;">
-        전체 프로젝트 컨텍스트를 갖추면서 우리는 이제 측정할 수 있게 됐다.
-        <strong>10개의 신규 지표</strong>를 orca.db에 추가했다.
-      </p>
-      <div class="metric-grid" style="margin-top: 32px;">
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:cpu-chip" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">①</div>
-            <div class="metric-title">Worker Efficiency</div>
-            <div class="metric-desc">실제 작업 시간 / 전체 시간</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:trash" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">②</div>
-            <div class="metric-title">Token Waste</div>
-            <div class="metric-desc">버려진 토큰 / 전체 사용량</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:bolt" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">③</div>
-            <div class="metric-title">Cache Hit Rate</div>
-            <div class="metric-desc">Prompt Caching 성공률</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:clock" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">④</div>
-            <div class="metric-title">Latency P95</div>
-            <div class="metric-desc">95분위 응답 시간</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:exclamation-triangle" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑤</div>
-            <div class="metric-title">Error Rate</div>
-            <div class="metric-desc">API 실패율 (목표: <0.1%)</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:banknotes" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑥</div>
-            <div class="metric-title">Cost/Task</div>
-            <div class="metric-desc">평균 작업당 비용 ($)</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:chart-bar" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑦</div>
-            <div class="metric-title">Model Accuracy</div>
-            <div class="metric-desc">Haiku vs Opus 정확도 차이</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:queue-list" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑧</div>
-            <div class="metric-title">Queue Depth</div>
-            <div class="metric-desc">대기 중인 작업 수</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:arrow-path" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑨</div>
-            <div class="metric-title">Retry Rate</div>
-            <div class="metric-desc">실패 후 재시도 비율</div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon"><iconify-icon icon="heroicons:heart" style="color: var(--sage);"></iconify-icon></div>
-          <div class="metric-content">
-            <div class="metric-number">⑩</div>
-            <div class="metric-title">User Satisfaction</div>
-            <div class="metric-desc">완료된 작업 만족도 (NPS)</div>
-          </div>
+      <h1 class="heading-1">skills/ 자동 활성 스킬</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">SKILL.md — YAML + 본문</p>
+      <p class="body-lead" style="margin-top: 28px;">스킬은 description 의 트리거 문구로 <strong>자동 활성</strong>. kebab-case 폴더명 필수, SKILL.md 정확히. 점진적 공개: 단계별 로드 (frontmatter → 본문 → scripts/references/assets).</p>
+      <p class="body" style="margin-top: 24px;">예시 description: '사용자가 PR 리뷰를 요청하면 자동 코드 리뷰 수행' — 이 문구를 보면 Claude 가 이 스킬을 자동으로 활성화.</p>
+      <p class="body" style="margin-top: 24px;">본문 5,000 단어 이하 권장. 더 크면 references/ 폴더에 세부 분리. Anthropic 공식 스킬 표준 따름 (Skill Design 규칙 참조).</p>
+
+    </div>
+
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ Skill 원칙</h3>
+        <ul>
+          <li>kebab-case 폴더명</li>
+          <li>SKILL.md 정확히</li>
+          <li>description ≤ 1024자</li>
+          <li>본문 ≤ 5,000단어</li>
+          <li>트리거 문구 구체적</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          자동화로 효율성
         </div>
       </div>
     </div>
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>◆ 지표 저장소</h3>
-        <ul style="font-size: 13px;">
-          <li>SQLite: orca.db</li>
-          <li>테이블: 8개</li>
-          <li>기록: 매초</li>
-          <li>보유: 7일</li>
-          <li>API: metrics 명령</li>
-        </ul>
-        <hr>
-        <div style="margin-top: 16px;">
-          <div class="stat-number" style="font-size: 64px;">10</div>
-          <div class="stat-label">NEW METRICS</div>
-        </div>
-      </div>
+
+    <div class="footer-border">
+      <span class="footnote">참조: skill-design.md (Anthropic 표준)</span>
     </div>
   </div>
 </body>

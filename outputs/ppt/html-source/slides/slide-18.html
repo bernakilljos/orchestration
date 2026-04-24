@@ -2,94 +2,97 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Slide 18 - CLI 도구</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLAUDE.md 프레임</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .code-block {
+      background: rgba(26, 29, 36, 0.05);
+      border: 0.5px solid var(--fog);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+      overflow-x: auto;
+      margin-top: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .table-wrapper {
+      width: 100%;
+      margin-top: 24px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 0.5px solid var(--fog);
+    }
+    th {
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.4);
+      color: var(--ink);
+    }
+    td {
+      color: var(--stone);
+    }
+  </style>
 </head>
 <body>
-  <div class="slide bg-tech part-3">
+  <div class="slide bg-tech part-4">
     <div class="slide-header">
-      <span class="eyebrow">CLI 도구 지도 · 4가지 영역</span>
+      <span class="eyebrow">PART 04 · PRINCIPLES</span>
       <span class="mono caption">18 / 25</span>
     </div>
 
     <div class="main-content">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 32px;">
-        <!-- Setup -->
-        <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:wrench" class="icon-lg icon-accent"></iconify-icon>
-            <h3 style="font-size: 22px; font-weight: 700; color: var(--ink);">Setup</h3>
-          </div>
-          <div style="background: rgba(184, 134, 78, 0.08); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; color: var(--ink); margin-bottom: 16px;">
-            bash .claude/scripts/install.sh<br>
-            bash .claude/scripts/sync-plugins.sh<br>
-            python .claude/scripts/validate.py
-          </div>
-          <div style="font-size: 16px; color: var(--stone); line-height: 1.5;">환경 초기화 · 플러그인 동기화 · 검증</div>
-        </div>
+      <h1 class="heading-1">CLAUDE.md 프레임</h1>
+      <p class="heading-2 text-stone" style="font-weight: 400;">WHAT + WHY + HOW</p>
+      <p class="body-lead" style="margin-top: 28px;"><strong>WHAT</strong> — 컨텍스트 제공 (프로젝트 이름, 기술 스택, 의존성, 환경변수). <strong>WHY</strong> — 원칙 세팅 (아키텍처, 코드 스타일, 안티패턴). <strong>HOW</strong> — 워크플로우 (build, test, commit, deploy).</p>
+      <p class="body" style="margin-top: 24px;">500줄 이하 유지. 길면 .claude/rules/ 로 분리.</p>
+      <p class="body" style="margin-top: 24px;">5 Rules (Brij Kishore Pandey): (1) /init 먼저 (2) 500줄 이하 (3) Hooks 활용 (4) 월간 업데이트 (5) 참조 중심 (중복 금지)</p>
 
-        <!-- Run -->
-        <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:play-circle" class="icon-lg icon-success"></iconify-icon>
-            <h3 style="font-size: 22px; font-weight: 700; color: var(--ink);">Run</h3>
-          </div>
-          <div style="background: rgba(107, 142, 127, 0.08); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; color: var(--ink); margin-bottom: 16px;">
-            bash .claude/watchdog-start.bat<br>
-            orca-dispatch task.md<br>
-            orcauto-start
-          </div>
-          <div style="font-size: 16px; color: var(--stone); line-height: 1.5;">워커 시작 · 작업 분배 · 자동화 활성화</div>
-        </div>
+    </div>
 
-        <!-- Monitor -->
-        <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:monitor-dashboard" class="icon-lg icon-accent"></iconify-icon>
-            <h3 style="font-size: 22px; font-weight: 700; color: var(--ink);">Monitor</h3>
-          </div>
-          <div style="background: rgba(184, 134, 78, 0.08); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; color: var(--ink); margin-bottom: 16px;">
-            bash .claude/scripts/worker-health.sh<br>
-            orca-status<br>
-            metrics-snapshot
-          </div>
-          <div style="font-size: 16px; color: var(--stone); line-height: 1.5;">상태 모니터링 · 메트릭 조회 · 성능 분석</div>
-        </div>
-
-        <!-- Emergency -->
-        <div style="background: rgba(255, 255, 255, 0.6); border: 0.5px solid var(--fog); border-radius: 12px; padding: 32px;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-            <iconify-icon icon="mdi:alert-circle" class="icon-lg icon-warn"></iconify-icon>
-            <h3 style="font-size: 22px; font-weight: 700; color: var(--ink);">Emergency</h3>
-          </div>
-          <div style="background: rgba(178, 90, 62, 0.08); padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; color: var(--ink); margin-bottom: 16px;">
-            orcauto-stop<br>
-            orca-reset-quota<br>
-            pkill -f watchdog
-          </div>
-          <div style="font-size: 16px; color: var(--stone); line-height: 1.5;">긴급 종료 · 할당량 재설정 · 프로세스 정지</div>
+    <div class="side-panel">
+      <div class="bullet-box">
+        <h3>◆ 5 Rules</h3>
+        <ul>
+          <li>/init 먼저</li>
+          <li>500 줄 이하</li>
+          <li>Hooks 활용</li>
+          <li>월간 업데이트</li>
+          <li>참조 중심 (중복 금지)</li>
+        </ul>
+        <hr>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--stone);">
+          WHAT/WHY/HOW<br>프레임 고수
         </div>
       </div>
     </div>
 
-    <div class="side-panel">
-      <div class="bullet-box part-3">
-        <h3>📋 요약</h3>
-        <ul>
-          <li>17개 공식 스크립트</li>
-          <li>모두 bash 또는 python</li>
-          <li>로그: ~/.claude/logs/</li>
-          <li>설정: .env 사용</li>
-          <li>복구 능력: 자동 재시작</li>
-        </ul>
-        <hr>
-        <div style="background: rgba(107, 142, 127, 0.08); padding: 12px; border-radius: 8px; font-size: 15px; color: var(--ink); line-height: 1.5;">
-          <strong>팁:</strong> --help 로 전체 옵션 확인 가능
-        </div>
-      </div>
+    <div class="footer-border">
+      <span class="footnote">참조: CLAUDE.md, guide.txt, docs/architecture-patterns.md</span>
     </div>
   </div>
 </body>
