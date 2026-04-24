@@ -42,7 +42,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent.parent
 HTML_DIR = ROOT / "outputs/ppt/html-source/slides"
 PNG_DIR = ROOT / "outputs/ppt/html-source/png-output"
-OUTPUT_PPTX = ROOT / "outputs/ppt/claude-code-architecture-reference-v1.0.pptx"
+OUTPUT_PPTX = ROOT / "outputs/ppt/orchestration-v1-FINAL.pptx"
 
 SLIDE_WIDTH = 1920
 SLIDE_HEIGHT = 1080

@@ -85,70 +85,70 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .display-xxl {
-  font-size: 180px;
+  font-size: 250px;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 
 .display-xl {
-  font-size: 120px;
+  font-size: 180px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .display-l {
-  font-size: 80px;
+  font-size: 130px;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
 .heading-1 {
-  font-size: 56px;
+  font-size: 76px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .heading-2 {
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .heading-3 {
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
 .eyebrow {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
 .body-lead {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 400;
   line-height: 1.55;
   letter-spacing: -0.005em;
 }
 
 .body {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.003em;
 }
 
 .caption {
-  font-size: 14px;
+  font-size: 19px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--stone);
@@ -158,7 +158,7 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-feature-settings: 'liga' 0;
   letter-spacing: 0;
-  font-size: 15px;
+  font-size: 22px;
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
@@ -278,7 +278,7 @@ body {
 }
 
 .bullet-box h3 {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -305,7 +305,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 16px;
+  font-size: 22px;
   line-height: 1.5;
 }
 
@@ -342,7 +342,7 @@ body {
 
 .stat-number {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 180px;
+  font-size: 240px;
   font-weight: 800;
   line-height: 0.9;
   color: var(--gold);
@@ -354,7 +354,7 @@ body {
 .part-4 .stat-number { color: var(--plum); }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -443,7 +443,7 @@ body {
   padding: 32px;
   border-radius: 12px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 15px;
+  font-size: 22px;
   line-height: 1.6;
   overflow-x: auto;
   max-height: 500px;
@@ -510,8 +510,10 @@ body {
   align-items: center;
   justify-content: center;
   max-width: 100%;
-  max-height: 600px;
+  min-height: 400px;
+  max-height: 700px;
   overflow: hidden;
+  flex: 1;
 }
 
 .mermaid {
@@ -602,13 +604,13 @@ iconify-icon {
   display: inline-block;
   vertical-align: -0.15em;
   color: var(--gold);
-  font-size: 1.8em;
+  font-size: 2em;
 }
 
-.icon-xl { font-size: 84px !important; }
-.icon-lg { font-size: 56px !important; }
-.icon-md { font-size: 36px !important; }
-.icon-sm { font-size: 28px !important; }
+.icon-xl { font-size: 96px !important; }
+.icon-lg { font-size: 68px !important; }
+.icon-md { font-size: 44px !important; }
+.icon-sm { font-size: 32px !important; }
 
 /* ──────────────────────────────────────────────────────────────────────── */
 /* FONTS — Additional Serif & Sans */
@@ -709,7 +711,170 @@ code {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .body, .body-lead {
-  max-width: 800px;
+  max-width: 1200px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* LAYOUT STRETCHING — 여백 제거 · 콘텐츠 확장 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide {
+  display: flex !important;
+  flex-direction: column;
+  padding: 70px 90px 60px 90px;
+  gap: 0;
+}
+
+.slide > .main-content,
+.slide .content {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 60px;
+  align-items: stretch;
+}
+
+.main-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  max-width: none !important;
+  grid-column: auto !important;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  grid-column: auto !important;
+}
+
+/* 빈 공간 자동 채움 — decorative element */
+.fill-decor {
+  flex: 1;
+  background:
+    radial-gradient(circle at 70% 30%, rgba(184, 134, 78, 0.08) 0%, transparent 60%);
+  border-radius: 24px;
+  position: relative;
+  min-height: 200px;
+}
+
+.fill-decor::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(184, 134, 78, 0.2);
+  border-radius: 50%;
+  right: 40px;
+  bottom: 40px;
+}
+
+/* 테이블·코드블록 확대 */
+.compare-table {
+  font-size: 18px;
+}
+
+.compare-table th {
+  font-size: 18px;
+  padding: 24px;
+}
+
+.compare-table td {
+  font-size: 20px;
+  padding: 28px;
+}
+
+/* 카드 그리드 확대 */
+.card {
+  padding: 40px;
+}
+
+.card h4 {
+  font-size: 22px;
+}
+
+.card p {
+  font-size: 18px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SVG DECORATIVE ELEMENTS — 여백 채우기 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.decor-circle {
+  width: 180px;
+  height: 180px;
+  opacity: 0.4;
+  position: absolute;
+}
+
+.decor-grid {
+  width: 200px;
+  height: 200px;
+  opacity: 0.3;
+  position: absolute;
+}
+
+.decor-arrow {
+  width: 120px;
+  height: 40px;
+  opacity: 0.35;
+  position: absolute;
+}
+
+.decor-dots {
+  width: 150px;
+  height: 150px;
+  opacity: 0.25;
+  position: absolute;
+}
+
+.decor-lines {
+  width: 200px;
+  height: 120px;
+  opacity: 0.3;
+  position: absolute;
+}
+
+/* 하단 우측 장식 */
+.slide-decor-corner {
+  position: absolute;
+  right: 60px;
+  bottom: 40px;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* 좌측 accent 라인 */
+.slide-accent-line {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+}
+
+/* 타이틀 옆 아이콘 크기 조정 */
+.title-icon {
+  font-size: 76px !important;
+  flex-shrink: 0;
+}
+
+/* Tree/Monospace 확대 */
+.tree-code {
+  font-size: 20px !important;
+  line-height: 1.7;
+}
+
+/* Compare columns 텍스트 확대 */
+.compare-col p {
+  font-size: 20px;
+}
+
+.compare-col h4 {
+  font-size: 22px;
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
