@@ -73,11 +73,17 @@
       <p class="body-lead" style="margin-top: 28px;"><strong>Step 1: 코드베이스 분석</strong> — 패키지 매니저(package.json/requirements.txt/go.mod), 빌드 도구, 테스트 프레임워크, 디렉토리 구조, 주요 엔트리 포인트 식별.</p>
       <p class="body" style="margin-top: 24px;"><strong>Step 2: CLAUDE.md 초안 작성</strong> — WHAT (프로젝트 소개) / WHY (원칙) / HOW (빌드·테스트·배포 명령) 구조로 자동 채움.</p>
       <p class="body" style="margin-top: 24px;"><strong>Step 3: 유저 큐레이션</strong> — Claude가 놓친 팀 컨벤션, 안티패턴, 보안 주의사항을 유저가 직접 편집해서 최종본 만듦.</p>
-      <div class="mermaid-wrapper"><div class="mermaid">graph LR
-  I[/init 실행] --> S[코드베이스 스캔]
-  S --> G["CLAUDE.md 초안<br>생성"]
-  G --> C["유저<br>큐레이션"]
-  C --> R["✓ Ready"]</div></div>
+      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
+    A["init 실행"] --> B["코드베이스 스캔"]
+    B --> C["CLAUDE.md 초안 생성"]
+    C --> D["유저 큐레이션"]
+    D --> E["✓ Ready"]
+
+    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style B fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style C fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style D fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style E fill:#6B8E7F,stroke:#1A1D24,stroke-width:2px,color:#FFF</div></div>
 
     </div>
 

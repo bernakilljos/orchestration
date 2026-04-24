@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
@@ -56,6 +58,16 @@
     td {
       color: var(--stone);
     }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
@@ -72,6 +84,16 @@
       <p class="body" style="margin-top: 24px;">개인 → 팀: .claude/ 와 CLAUDE.md 를 git 으로 공유. 또는 .claude-plugin/ 으로 플러그인 패키지화.</p>
       <p class="body" style="margin-top: 24px;">팀 → 조직: 플러그인 마켓플레이스 운영. 조직 표준 규칙을 plugin.json 에 등록 후 배포.</p>
       <p class="body" style="margin-top: 24px;">조직 → 공개: github.com/anthropics/plugins 에 기여 또는 독립 marketplace 운영.</p>
+
+      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
+    A["개인<br/>Git repo 공유"] --> B["팀<br/>plugin 패키지화"]
+    B --> C["조직<br/>마켓플레이스"]
+    C --> D["커뮤니티<br/>공개 기여"]
+
+    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style B fill:#E8D8B0,stroke:#8A6235,stroke-width:2px
+    style C fill:#D4A574,stroke:#6B6044,stroke-width:2px
+    style D fill:#6B8E7F,stroke:#1A1D24,stroke-width:3px,color:#FFF</div></div>
 
     </div>
 

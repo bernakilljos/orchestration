@@ -56,6 +56,38 @@
     td {
       color: var(--stone);
     }
+    .card-row {
+      display: flex;
+      gap: 32px;
+      margin-top: 32px;
+      justify-content: flex-start;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 16px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      width: 45%;
+      flex-shrink: 0;
+    }
+    .card h3 {
+      font-family: 'Pretendard Variable';
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 16px;
+    }
+    .card-code {
+      background: #1A1D24;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #39FF6C;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
   </style>
 </head>
 <body>
@@ -71,6 +103,28 @@
       <p class="body-lead" style="margin-top: 28px;"><strong>output-styles/</strong> — 응답 포맷 정의 (예: 한국어·영어 분기, 기술적/대화적 톤). <strong>status-line/</strong> — 터미널 하단에 커스텀 상태 표시 (세션 토큰·비용·브랜치 등). 팀 브랜딩·일관성에 도움.</p>
       <p class="body" style="margin-top: 24px;">output-style 예: 'technical-kr' (한글 본문 + 영어 코드 주석 + 3줄 이내 요약). 또는 'management-brief' (임원진 보고용 한 장 요약).</p>
       <p class="body" style="margin-top: 24px;">status-line 예: '[Session: 45K/100K · Branch: feat/xyz · Status: 🟢 Active]' 같은 정보를 터미널 하단에 계속 표시.</p>
+
+      <div class="card-row">
+        <div class="card">
+          <h3>◆ Output Style 예시</h3>
+          <div class="card-code">---
+name: technical-kr
+description: |
+  한글 본문
+  영어 코드 주석
+  3줄 이내 요약
+---</div>
+        </div>
+        <div class="card">
+          <h3>◆ Status Line 예시</h3>
+          <svg viewBox="0 0 350 60" width="100%" style="margin-top: 12px;">
+            <rect width="350" height="60" rx="8" fill="#1A1D24"/>
+            <text x="20" y="40" fill="#39FF6C" font-family="JetBrains Mono" font-size="16" font-weight="600">
+              [Session: 45K/100K · Branch: feat/xyz · 🟢]
+            </text>
+          </svg>
+        </div>
+      </div>
 
     </div>
 

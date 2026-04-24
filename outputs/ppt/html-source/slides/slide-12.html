@@ -20,18 +20,20 @@
       justify-content: center;
     }
     .code-block {
-      background: rgba(26, 29, 36, 0.05);
+      background: #1A1D24;
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 32px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #39FF6C;
       overflow-x: auto;
       margin-top: 24px;
       white-space: pre-wrap;
       word-break: break-word;
+      max-width: 1000px;
     }
     .table-wrapper {
       width: 100%;
@@ -71,6 +73,51 @@
       <p class="body-lead" style="margin-top: 28px;">메인 Claude가 특정 작업을 서브에이전트에 위임. 각 agent.md 는 YAML frontmatter 로 model, tools, prompt 정의. 예: reviewer.md (코드 리뷰 전문), researcher.md (리서치 전문).</p>
       <p class="body" style="margin-top: 24px;">토큰 격리: 메인 대화 토큰 절약 가능. 각 agent 는 독립 세션에서 실행.</p>
       <p class="body" style="margin-top: 24px;">model 선택: 코드 리뷰 는 Opus, 빠른 사실 확인 은 Haiku 지정 가능. tools 제한으로 보안 확보 (예: reviewer 는 Read/Bash 만, 파일 쓰기 금지).</p>
+
+      <pre class="code-block">---
+name: code-reviewer
+description: "코드 변경점 리뷰"
+model: claude-sonnet-4-6
+tools: Read, Grep, Bash(git:*)
+---
+
+당신은 엄격한 코드 리뷰어입니다.
+보안·가독성·성능 관점에서
+변경점을 평가하세요.</pre>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30%;">구분</th>
+              <th style="width: 35%;">Main Claude</th>
+              <th style="width: 35%;">Sub-Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>토큰</strong></td>
+              <td>공용</td>
+              <td>격리 (독립 세션)</td>
+            </tr>
+            <tr>
+              <td><strong>도구</strong></td>
+              <td>모두 사용 가능</td>
+              <td>제한 가능</td>
+            </tr>
+            <tr>
+              <td><strong>모델</strong></td>
+              <td>기본값</td>
+              <td>선택 가능</td>
+            </tr>
+            <tr>
+              <td><strong>병렬</strong></td>
+              <td>단일 흐름</td>
+              <td>N개 병렬 실행</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
     </div>
 

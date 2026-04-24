@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
@@ -20,18 +22,30 @@
       justify-content: center;
     }
     .code-block {
-      background: rgba(26, 29, 36, 0.05);
+      background: #1A1D24;
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 32px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #39FF6C;
       overflow-x: auto;
       margin-top: 24px;
       white-space: pre-wrap;
       word-break: break-word;
+      max-width: 900px;
+    }
+    .mermaid-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
     }
     .table-wrapper {
       width: 100%;
@@ -71,6 +85,26 @@
       <p class="body-lead" style="margin-top: 28px;"><strong>플러그인 = commands/skills/hooks/agents를 묶은 배포 단위.</strong> plugin.json 에 이름·버전·의존성. marketplace.json 으로 여러 플러그인 번들 공유. 설치: claude plugin install <name> 또는 git clone.</p>
       <p class="body" style="margin-top: 24px;">필수 필드: name, display, version, status (stable/experimental/spec-only), commands.</p>
       <p class="body" style="margin-top: 24px;">선택 필드: skills, agents, hooks, dependencies.plugins (의존성), entry_points.default_command.</p>
+
+      <pre class="code-block">{
+  "name": "my-team-kit",
+  "version": "1.0.0",
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/"
+}</pre>
+
+      <div class="mermaid-wrapper"><div class="mermaid">flowchart LR
+    A["작성"] --> B["git commit"]
+    B --> C["marketplace.json"]
+    C --> D["claude plugin install"]
+    D --> E["Ready"]
+
+    style A fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style B fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style C fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style D fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style E fill:#6B8E7F,stroke:#1A1D24,stroke-width:2px,color:#FFF</div></div>
 
     </div>
 

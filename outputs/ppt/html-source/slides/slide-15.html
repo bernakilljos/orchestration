@@ -20,18 +20,20 @@
       justify-content: center;
     }
     .code-block {
-      background: rgba(26, 29, 36, 0.05);
+      background: #1A1D24;
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 32px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #39FF6C;
       overflow-x: auto;
       margin-top: 24px;
       white-space: pre-wrap;
       word-break: break-word;
+      max-width: 900px;
     }
     .table-wrapper {
       width: 100%;
@@ -71,6 +73,21 @@
       <p class="body-lead" style="margin-top: 28px;"><strong>MCP (Model Context Protocol)</strong> — 외부 서비스를 Claude가 도구로 쓰게 하는 표준. 프로젝트 루트 .mcp.json 또는 유저 ~/.claude.json 에 정의. 서버 예: GitHub, Playwright, PostgreSQL, Slack 등.</p>
       <p class="body" style="margin-top: 24px;">표준 프로토콜: stdio / http / sse 지원. 공식 서버 (Anthropic) + 커뮤니티 서버 다수 존재.</p>
       <p class="body" style="margin-top: 24px;">Windows 주의: cmd /c 필수. 예: ['cmd', '/c', 'npx', '-y', '@modelcontextprotocol/server-github']</p>
+
+      <pre class="code-block">{
+  "mcpServers": {
+    "github": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_TOKEN":
+          "${env:GITHUB_TOKEN}"
+      }
+    }
+  }
+}</pre>
 
     </div>
 

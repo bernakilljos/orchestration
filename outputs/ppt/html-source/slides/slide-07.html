@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: "light" });</script>
   <style>
     .mermaid-wrapper {
       background: rgba(255, 255, 255, 0.6);
@@ -56,6 +58,18 @@
     td {
       color: var(--stone);
     }
+    .mermaid-mindmap {
+      background: rgba(255, 255, 255, 0.6);
+      border: 0.5px solid var(--fog);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      max-width: 800px;
+    }
   </style>
 </head>
 <body>
@@ -68,66 +82,21 @@
     <div class="main-content">
       <h1 class="heading-1">.claude/ 폴더</h1>
       <p class="heading-2 text-stone" style="font-weight: 400;">Claude Code 의 모든 설정이 여기에</p>
-      <div class="code-block">.claude/
-├── settings.json       ◆ 팀 공유 권한·훅       [commit]
-├── settings.local.json ◆ 개인 오버라이드        [gitignore]
-├── commands/           ◆ 슬래시 명령 (/<cmd>)
-├── skills/             ◆ 자동 활성 스킬
-├── rules/              ◆ 항상 적용 규칙
-├── agents/             ◆ 서브에이전트
-├── hooks/              ◆ 이벤트 훅 스크립트
-├── output-styles/      ◆ 응답 스타일 커스터마이징
-└── status-line/        ◆ 커스텀 상태바</div>
-
-      <svg viewBox="0 0 700 400" style="width: 100%; max-width: 700px; height: auto; margin-top: 24px;">
-        <!-- .claude 루트 -->
-        <circle cx="100" cy="50" r="35" fill="#B8864E" opacity="0.2" stroke="#B8864E" stroke-width="2"/>
-        <text x="100" y="55" text-anchor="middle" font-family="'JetBrains Mono'" font-size="20" font-weight="700" fill="#1A1D24">.claude</text>
-
-        <!-- 첫 번째 행 -->
-        <line x1="120" y1="85" x2="150" y2="120" stroke="#B8864E" stroke-width="1.5"/>
-        <line x1="100" y1="85" x2="100" y2="120" stroke="#B8864E" stroke-width="1.5"/>
-        <line x1="80" y1="85" x2="50" y2="120" stroke="#B8864E" stroke-width="1.5"/>
-
-        <rect x="60" y="120" width="80" height="50" rx="6" fill="rgba(184, 134, 78, 0.1)" stroke="#B8864E" stroke-width="1.5"/>
-        <text x="100" y="135" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">settings</text>
-        <text x="100" y="158" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">권한·훅</text>
-
-        <rect x="130" y="120" width="80" height="50" rx="6" fill="rgba(184, 134, 78, 0.1)" stroke="#B8864E" stroke-width="1.5"/>
-        <text x="170" y="135" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">commands</text>
-        <text x="170" y="158" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">슬래시 명령</text>
-
-        <rect x="200" y="120" width="80" height="50" rx="6" fill="rgba(184, 134, 78, 0.1)" stroke="#B8864E" stroke-width="1.5"/>
-        <text x="240" y="135" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">skills</text>
-        <text x="240" y="158" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">자동 활성</text>
-
-        <!-- 두 번째 행 -->
-        <line x1="85" y1="170" x2="60" y2="205" stroke="#B8864E" stroke-width="1.5"/>
-        <line x1="100" y1="170" x2="100" y2="205" stroke="#B8864E" stroke-width="1.5"/>
-        <line x1="115" y1="170" x2="140" y2="205" stroke="#B8864E" stroke-width="1.5"/>
-        <line x1="170" y1="170" x2="170" y2="205" stroke="#B8864E" stroke-width="1.5"/>
-
-        <rect x="20" y="205" width="80" height="50" rx="6" fill="rgba(107, 142, 127, 0.1)" stroke="#6B8E7F" stroke-width="1.5"/>
-        <text x="60" y="220" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">rules</text>
-        <text x="60" y="243" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">공유 규칙</text>
-
-        <rect x="90" y="205" width="80" height="50" rx="6" fill="rgba(107, 142, 127, 0.1)" stroke="#6B8E7F" stroke-width="1.5"/>
-        <text x="130" y="220" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">agents</text>
-        <text x="130" y="243" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">서브에이전트</text>
-
-        <rect x="160" y="205" width="80" height="50" rx="6" fill="rgba(107, 142, 127, 0.1)" stroke="#6B8E7F" stroke-width="1.5"/>
-        <text x="200" y="220" text-anchor="middle" font-family="'JetBrains Mono'" font-size="16" font-weight="600" fill="#1A1D24">hooks</text>
-        <text x="200" y="243" text-anchor="middle" font-family="'JetBrains Mono'" font-size="12" fill="#6E685C">이벤트 훅</text>
-
-        <!-- 자동 폴더들 -->
-        <rect x="20" y="290" width="100" height="50" rx="6" fill="rgba(178, 90, 62, 0.08)" stroke="#B25A3E" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="70" y="305" text-anchor="middle" font-family="'JetBrains Mono'" font-size="14" font-weight="600" fill="#1A1D24">state/</text>
-        <text x="70" y="330" text-anchor="middle" font-family="'JetBrains Mono'" font-size="11" fill="#6E685C">(자동)</text>
-
-        <rect x="130" y="290" width="100" height="50" rx="6" fill="rgba(178, 90, 62, 0.08)" stroke="#B25A3E" stroke-width="1" stroke-dasharray="2,2"/>
-        <text x="180" y="305" text-anchor="middle" font-family="'JetBrains Mono'" font-size="14" font-weight="600" fill="#1A1D24">scripts/</text>
-        <text x="180" y="330" text-anchor="middle" font-family="'JetBrains Mono'" font-size="11" fill="#6E685C">(자동)</text>
-      </svg>
+      <div class="mermaid-mindmap"><div class="mermaid">mindmap
+  root((.claude))
+    설정
+      settings.json
+      settings.local.json
+    작업
+      commands
+      skills
+      agents
+    규칙
+      rules
+      hooks
+    표시
+      output-styles
+      status-line</div></div>
 
     </div>
 

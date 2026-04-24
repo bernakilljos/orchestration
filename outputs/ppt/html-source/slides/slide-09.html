@@ -20,18 +20,20 @@
       justify-content: center;
     }
     .code-block {
-      background: rgba(26, 29, 36, 0.05);
+      background: #1A1D24;
       border: 0.5px solid var(--fog);
-      border-radius: 8px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 32px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #39FF6C;
       overflow-x: auto;
       margin-top: 24px;
       white-space: pre-wrap;
       word-break: break-word;
+      max-width: 1000px;
     }
     .table-wrapper {
       width: 100%;
@@ -71,6 +73,16 @@
       <p class="body-lead" style="margin-top: 28px;">파일명 = 명령어. <strong>report.md</strong> → <strong>/report</strong>. frontmatter 로 description, allowed-tools 등 명시. $ARGUMENTS 로 인자 받기. ! 접두 로 Bash 실행, @ 로 파일 참조.</p>
       <p class="body" style="margin-top: 24px;">예시: report.md 에 '오늘 커밋 요약' 이라 쓰면 claude /report 하면 git log --since=yesterday 돌려서 결과 출력.</p>
       <p class="body" style="margin-top: 24px;">명령은 description 을 읽고 트리거 → 본문 실행 → 결과 반환. 도구 제한 (allowed-tools) 으로 보안 확보. 팀 표준 명령을 여기에 모아두면 새 팀원도 쉽게 따라갈 수 있음.</p>
+
+      <pre class="code-block">---
+description: "일일 리포트 생성"
+allowed-tools: Bash(git:*), Read
+---
+
+# Daily Report
+
+오늘 커밋 요약:
+!`git log --oneline --since=yesterday`</pre>
 
     </div>
 

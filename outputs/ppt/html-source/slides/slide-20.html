@@ -74,12 +74,15 @@
       <p class="body" style="margin-top: 24px;">Global (~/.claude/CLAUDE.md): 모든 프로젝트 공통 (개인 선호)</p>
       <p class="body" style="margin-top: 24px;">Project (./CLAUDE.md): 이 리포 규칙 (팀 컨벤션)</p>
       <p class="body" style="margin-top: 24px;">Folder (./src/CLAUDE.md): 모듈 국소 규칙 (필요 시)</p>
-      <div class="mermaid-wrapper"><div class="mermaid">graph TD
-  G["Global<br>~/.claude/CLAUDE.md"] --> P
-  P["Project<br>./CLAUDE.md"] --> F
-  F["Folder<br>./src/CLAUDE.md"]
-  F --> W["워킹 디렉토리"]
-  style W fill:#fff9e6</div></div>
+      <div class="mermaid-wrapper"><div class="mermaid">flowchart TD
+    G["Global<br/>~/.claude/CLAUDE.md<br/>tab: 4 space"] --> P["Project<br/>./CLAUDE.md<br/>tab: 2 space"]
+    P --> F["Folder<br/>./src/CLAUDE.md<br/>tab: 8 space"]
+    F --> R["src/ 안에서<br/>8 space 적용!"]
+
+    style G fill:#F7F2EA,stroke:#B8864E,stroke-width:2px
+    style P fill:#E8D8B0,stroke:#8A6235,stroke-width:2px
+    style F fill:#B8864E,stroke:#1A1D24,stroke-width:3px,color:#FFF
+    style R fill:#6B8E7F,stroke:#1A1D24,stroke-width:3px,color:#FFF</div></div>
 
     </div>
 

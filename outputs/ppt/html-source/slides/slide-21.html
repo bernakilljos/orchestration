@@ -72,6 +72,23 @@
       <p class="body" style="margin-top: 24px;">예: '모든 Python 파일 저장 시 black 실행' → PostToolUse 훅으로 settings.json 에 등록. Edit/Write 이벤트마다 자동 실행 (메모리 전혀 안 쓰임).</p>
       <p class="body" style="margin-top: 24px;">또는 '커밋 전 테스트 필수' → PreToolUse 훅으로 git commit 차단. hooks/pre-commit.sh 에서 npm test 돌려서 실패하면 차단. Claude 가 아무리 바빠도 강제됨.</p>
 
+      <svg viewBox="0 0 700 200" style="width: 100%; max-width: 700px; height: auto; margin-top: 32px;">
+        <!-- 제목 -->
+        <text x="350" y="30" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="700" fill="#1A1D24">규칙 준수율 비교</text>
+
+        <!-- 메모리 바 -->
+        <text x="20" y="85" font-family="Pretendard Variable" font-size="20" font-weight="600" fill="#1A1D24">메모리</text>
+        <rect x="150" y="65" width="350" height="40" fill="#E5DDCA" stroke="#B25A3E" stroke-width="1"/>
+        <rect x="150" y="65" width="245" height="40" fill="#B25A3E"/>
+        <text x="405" y="92" text-anchor="start" font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#B25A3E">70%</text>
+
+        <!-- 훅 바 -->
+        <text x="20" y="155" font-family="Pretendard Variable" font-size="20" font-weight="600" fill="#1A1D24">Hook</text>
+        <rect x="150" y="135" width="350" height="40" fill="#E5DDCA" stroke="#6B8E7F" stroke-width="1"/>
+        <rect x="150" y="135" width="350" height="40" fill="#6B8E7F"/>
+        <text x="510" y="162" text-anchor="start" font-family="JetBrains Mono" font-size="22" font-weight="700" fill="#6B8E7F">100%</text>
+      </svg>
+
     </div>
 
     <div class="side-panel">
