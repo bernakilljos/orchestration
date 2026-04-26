@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>init 실행 시 순서 (2/2)</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-04b { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s04b-body { flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 28px; min-height: 0; }
+    .s04b-left { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+    .s04b-step-card { background: rgba(255, 255, 255, 0.75); border: 0.5px solid var(--fog); border-left: 6px solid var(--gold); border-radius: 12px; padding: 22px 28px; }
+    .s04b-step-card.s2 { border-left-color: var(--sage); }
+    .s04b-step-card.s3 { border-left-color: var(--terracotta); }
+    .s04b-step-card.s4 { border-left-color: #7A4E6B; }
+    .s04b-step-card h4 { font-size: 24px; margin: 0 0 8px 0; color: var(--ink); font-weight: 700; }
+    .s04b-step-card h4 .num { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--deep-gold); letter-spacing: 0.15em; margin-right: 12px; }
+    .s04b-step-card p { font-size: 18px; color: var(--stone); margin: 0; line-height: 1.55; }
+    .s04b-right { display: flex; flex-direction: column; gap: 18px; }
+    .s04b-box { background: rgba(255, 255, 255, 0.75); border: 0.5px solid var(--fog); border-radius: 12px; padding: 22px 28px; }
+    .s04b-box h3 { font-size: 16px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 12px 0; }
+    .s04b-box ul { list-style: none; padding: 0; margin: 0; }
+    .s04b-box li { font-size: 19px; line-height: 1.5; color: var(--ink); padding: 6px 0; display: flex; align-items: baseline; gap: 12px; }
+    .s04b-box li::before { content: ''; flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); position: relative; top: 8px; }
+    .s04b-box li code { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--deep-gold); }
+    .slide-04b .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-04b">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:play-circle" class="icon-sm"></iconify-icon>PART 01 · WHAT INIT DOES (2/2)</span>
+      <span class="mono caption">05 / 29</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-lg"></iconify-icon><h1 class="heading-1">init 단계 상세</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">스캔 · 초안 작성 · 유저 큐레이션 — 각 단계의 실제 작업</p>
+
+    <div class="s04b-body">
+      <div class="s04b-left">
+        <div class="s04b-step-card s2">
+          <h4><span class="num">STEP 02</span>코드베이스 분석</h4>
+          <p>패키지 매니저(<code>package.json</code>·<code>requirements.txt</code>·<code>go.mod</code>), 빌드 도구, 테스트 프레임워크, 디렉토리 구조, 엔트리 포인트를 자동 식별.</p>
+        </div>
+        <div class="s04b-step-card s3">
+          <h4><span class="num">STEP 03</span>CLAUDE.md 초안 작성</h4>
+          <p>WHAT(프로젝트 소개) · WHY(원칙) · HOW(빌드·테스트·배포) 구조로 자동 채움. 유저는 이후 큐레이션만 수행.</p>
+        </div>
+        <div class="s04b-step-card s4">
+          <h4><span class="num">STEP 04</span>유저 큐레이션</h4>
+          <p>Claude 가 놓친 팀 컨벤션, 안티패턴, 보안 주의사항을 직접 편집해 최종본을 만든다.</p>
+        </div>
+      </div>
+
+      <div class="s04b-right">
+        <div class="s04b-box">
+          <h3>◆ 스캔 대상</h3>
+          <ul>
+            <li><code>package.json</code></li>
+            <li><code>requirements.txt</code></li>
+            <li>빌드·테스트 설정</li>
+            <li>디렉토리 구조</li>
+            <li><code>README.md</code></li>
+          </ul>
+        </div>
+        <div class="s04b-box">
+          <h3>◆ 결과물</h3>
+          <ul>
+            <li><code>CLAUDE.md</code> 생성</li>
+            <li><code>.claude/</code> 스캐폴드</li>
+            <li>기본 permissions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: docs.claude.com/claude-code/init</span></div>
+  </div>
+</body>
+</html>

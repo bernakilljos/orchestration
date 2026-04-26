@@ -14,132 +14,106 @@
       display: flex !important;
       flex-direction: column !important;
       height: 1080px !important;
-      padding: 80px 100px 60px 100px !important;
+      padding: 60px 80px 40px 80px !important;
       box-sizing: border-box !important;
       overflow: hidden !important;
       background:
-        radial-gradient(ellipse 900px 600px at 85% 15%, rgba(184,134,78,0.2) 0%, transparent 60%),
-        radial-gradient(ellipse 700px 400px at 10% 80%, rgba(107,142,127,0.1) 0%, transparent 55%),
+        radial-gradient(ellipse 1000px 700px at 85% 12%, rgba(184,134,78,0.28) 0%, transparent 60%),
+        radial-gradient(ellipse 800px 500px at 8% 88%, rgba(107,142,127,0.16) 0%, transparent 55%),
         linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%) !important;
     }
-    .s25-title {
-      font-family: 'Fraunces', serif;
-      font-size: 140px;
-      font-weight: 600;
-      line-height: 0.95;
-      letter-spacing: -0.03em;
-      color: var(--ink);
-    }
-    .s25-title .accent {
-      color: var(--gold);
-      font-style: italic;
-      font-weight: 500;
-    }
-    .s25-sub {
-      font-size: 28px;
-      color: var(--stone);
-      margin-top: 16px;
-    }
-    .s25-grid {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      margin-top: 48px;
-      min-height: 0;
-    }
-    .s25-link {
-      background: rgba(255, 255, 255, 0.75);
-      border: 0.5px solid var(--fog);
-      border-radius: 14px;
-      padding: 28px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .s25-link .icon-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .s25-link iconify-icon { font-size: 40px; color: var(--gold); flex-shrink: 0; }
-    .s25-link .url {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--ink);
-      letter-spacing: -0.01em;
-    }
-    .s25-link .desc {
-      font-size: 18px;
-      color: var(--stone);
-      line-height: 1.4;
-      padding-left: 56px;
-    }
-    .s25-credit {
-      margin-top: auto;
-      padding-top: 24px;
-      border-top: 0.5px solid rgba(184,134,78,0.3);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 15px;
-      color: var(--stone);
-    }
-    .s25-credit .brand {
-      color: var(--deep-gold);
-      font-weight: 700;
-      letter-spacing: 0.15em;
-    }
+    .s25-decor-grid { position: absolute; inset: 0; pointer-events: none; opacity: 0.4; background-image: linear-gradient(90deg, rgba(184,134,78,0.08) 1px, transparent 1px), linear-gradient(0deg, rgba(184,134,78,0.08) 1px, transparent 1px); background-size: 80px 80px; mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%); }
+    .s25-head { position: relative; z-index: 2; }
+    .s25-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.3em; color: var(--deep-gold); text-transform: uppercase; font-weight: 600; }
+    .s25-title { font-family: 'Fraunces', serif; font-size: 180px; font-weight: 600; line-height: 0.92; letter-spacing: -0.04em; color: var(--ink); margin-top: 8px; }
+    .s25-title .accent { color: var(--gold); font-style: italic; font-weight: 500; }
+    .s25-sub { font-size: 32px; color: var(--stone); margin-top: 18px; font-weight: 400; }
+
+    .s25-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 22px; margin-top: 36px; min-height: 0; position: relative; z-index: 2; }
+    .s25-link { background: rgba(255, 255, 255, 0.82); border: 0.5px solid var(--fog); border-radius: 18px; padding: 28px 36px; display: flex; flex-direction: column; gap: 12px; min-height: 0; transition: transform 0.2s; box-shadow: 0 4px 18px rgba(184,134,78,0.06); }
+    .s25-link.gold { border-top: 6px solid var(--gold); }
+    .s25-link.sage { border-top: 6px solid var(--sage); }
+    .s25-link.plum { border-top: 6px solid #7A4E6B; }
+    .s25-link.terra { border-top: 6px solid var(--terracotta); }
+    .s25-link .icon-row { display: flex; align-items: center; gap: 18px; }
+    .s25-link iconify-icon { font-size: 64px; flex-shrink: 0; }
+    .s25-link.gold iconify-icon { color: var(--gold); }
+    .s25-link.sage iconify-icon { color: var(--sage); }
+    .s25-link.plum iconify-icon { color: #7A4E6B; }
+    .s25-link.terra iconify-icon { color: var(--terracotta); }
+    .s25-link .url { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.15; }
+    .s25-link .desc { font-size: 22px; color: var(--stone); line-height: 1.5; padding-left: 82px; margin: 0; }
+    .s25-link .tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; align-self: flex-start; margin-left: 82px; margin-top: -4px; }
+    .s25-link.gold .tag { background: rgba(184,134,78,0.15); color: var(--deep-gold); }
+    .s25-link.sage .tag { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .s25-link.plum .tag { background: rgba(122,78,107,0.18); color: #5A3850; }
+    .s25-link.terra .tag { background: rgba(178,90,62,0.16); color: #8A3E26; }
+
+    .s25-credit { position: relative; z-index: 2; padding-top: 24px; border-top: 0.5px solid rgba(184,134,78,0.4); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--stone); margin-top: 24px; }
+    .s25-credit .brand { color: var(--deep-gold); font-weight: 700; letter-spacing: 0.18em; }
+    .s25-credit .icons { display: flex; gap: 14px; }
+    .s25-credit .icons iconify-icon { font-size: 28px; color: var(--stone); opacity: 0.7; }
+
+    .s25-quote { position: absolute; left: 50%; top: 32%; transform: translate(-50%, -50%); font-family: 'Fraunces', serif; font-size: 200px; line-height: 1; color: var(--gold); opacity: 0.06; z-index: 1; font-weight: 700; pointer-events: none; }
   </style>
 </head>
 <body>
   <div class="slide slide-25">
-    <div style="display: flex; flex-direction: column;">
+    <div class="s25-decor-grid"></div>
+    <div class="s25-quote">"</div>
+
+    <div class="s25-head">
+      <div class="s25-eyebrow">PART 05 · REFERENCE · END</div>
       <h1 class="s25-title">Learn <span class="accent">More</span></h1>
       <p class="s25-sub">공식 문서 + 커뮤니티 리소스 · 더 깊이 가기</p>
     </div>
 
     <div class="s25-grid">
-      <div class="s25-link">
+      <div class="s25-link gold">
         <div class="icon-row">
           <iconify-icon icon="heroicons:book-open"></iconify-icon>
-          <span class="url">docs.claude.com/claude-code</span>
+          <div class="url">docs.claude.com<br>/claude-code</div>
         </div>
-        <p class="desc">공식 문서 · Claude Code CLI 전체 레퍼런스 · 설치·명령·API</p>
+        <span class="tag">◆ 공식 문서</span>
+        <p class="desc">Claude Code CLI 전체 레퍼런스 · 설치 · 명령 · API · 튜토리얼</p>
       </div>
 
-      <div class="s25-link">
+      <div class="s25-link sage">
         <div class="icon-row">
           <iconify-icon icon="simple-icons:github"></iconify-icon>
-          <span class="url">github.com/anthropics/claude-code</span>
+          <div class="url">github.com<br>/anthropics/claude-code</div>
         </div>
-        <p class="desc">공식 레포 · 이슈 제보 · 기능 요청 · 릴리즈 노트</p>
+        <span class="tag">★ 공식 레포</span>
+        <p class="desc">이슈 제보 · 기능 요청 · 릴리즈 노트 · 컨트리뷰션 가이드</p>
       </div>
 
-      <div class="s25-link">
+      <div class="s25-link plum">
         <div class="icon-row">
           <iconify-icon icon="heroicons:sparkles"></iconify-icon>
-          <span class="url">github.com/anthropics/skills</span>
+          <div class="url">github.com<br>/anthropics/skills</div>
         </div>
-        <p class="desc">공식 스킬 라이브러리 · 재사용 가능한 워크플로우</p>
+        <span class="tag">✦ 스킬 라이브러리</span>
+        <p class="desc">공식 스킬 모음 · 재사용 가능한 워크플로우 · skill-creator</p>
       </div>
 
-      <div class="s25-link">
+      <div class="s25-link terra">
         <div class="icon-row">
           <iconify-icon icon="heroicons:academic-cap"></iconify-icon>
-          <span class="url">DK.method by Brij K. Pandey</span>
+          <div class="url">DK.method<br>by Brij K. Pandey</div>
         </div>
-        <p class="desc">CLAUDE.md 설계 원칙 · 3 Scopes · 5 Rules · WHAT/WHY/HOW</p>
+        <span class="tag">▲ 설계 원칙</span>
+        <p class="desc">CLAUDE.md 설계 · 3 Scopes · 5 Rules · WHAT/WHY/HOW 프레임</p>
       </div>
     </div>
 
     <div class="s25-credit">
       <span class="brand">CLAUDE CODE · ARCHITECTURE · v1.0 · 2025.04</span>
-      <span>Opus 4.7 Baseline · 25 slides</span>
+      <div class="icons">
+        <iconify-icon icon="heroicons:heart"></iconify-icon>
+        <iconify-icon icon="heroicons:hand-thumb-up"></iconify-icon>
+        <iconify-icon icon="heroicons:share"></iconify-icon>
+      </div>
+      <span>Opus 4.7 Baseline · 29 slides</span>
     </div>
   </div>
 </body>

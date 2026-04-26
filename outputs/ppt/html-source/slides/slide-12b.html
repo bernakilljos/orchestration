@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agents · Main vs Sub (2/2)</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-12b { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s12b-body { flex: 1; display: flex; flex-direction: column; gap: 30px; margin-top: 30px; min-height: 0; }
+    .s12b-table { background: rgba(255, 255, 255, 0.75); border: 0.5px solid var(--fog); border-radius: 16px; padding: 32px 40px; flex: 1; min-height: 0; }
+    .s12b-table table { width: 100%; border-collapse: collapse; }
+    .s12b-table th { font-size: 14px; letter-spacing: 0.2em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 14px 18px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .s12b-table th.main { color: var(--terracotta); }
+    .s12b-table th.sub { color: var(--sage); }
+    .s12b-table td { padding: 18px; font-size: 22px; color: var(--ink); border-bottom: 0.5px solid var(--fog); }
+    .s12b-table td.label { font-weight: 700; color: var(--deep-gold); width: 22%; font-size: 24px; }
+    .s12b-table td.main { background: rgba(178,90,62,0.06); }
+    .s12b-table td.sub { background: rgba(107,142,127,0.08); }
+    .s12b-roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .s12b-role { background: rgba(255,255,255,0.75); border: 0.5px solid var(--fog); border-top: 5px solid var(--gold); border-radius: 12px; padding: 20px 24px; }
+    .s12b-role.b { border-top-color: var(--sage); }
+    .s12b-role.c { border-top-color: #7A4E6B; }
+    .s12b-role iconify-icon { font-size: 36px; color: var(--gold); }
+    .s12b-role.b iconify-icon { color: var(--sage); }
+    .s12b-role.c iconify-icon { color: #7A4E6B; }
+    .s12b-role .name { font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 8px; }
+    .s12b-role .desc { font-size: 16px; color: var(--stone); line-height: 1.4; margin-top: 4px; }
+    .slide-12b .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-12b">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:user-group" class="icon-sm"></iconify-icon>PART 02 · AGENTS (2/2)</span>
+      <span class="mono caption">14 / 29</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">Main vs Sub-Agent</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">메인 Claude 와 서브에이전트의 차이 · 언제 분리할지</p>
+
+    <div class="s12b-body">
+      <div class="s12b-table">
+        <table>
+          <thead>
+            <tr><th></th><th class="main">Main Claude</th><th class="sub">Sub-Agent</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="label">토큰</td><td class="main">공용 컨텍스트</td><td class="sub">격리된 세션</td></tr>
+            <tr><td class="label">도구</td><td class="main">전체 도구 접근</td><td class="sub">제한 가능 (Read·Bash 등)</td></tr>
+            <tr><td class="label">모델</td><td class="main">기본 (Opus 4.7)</td><td class="sub">선택 가능 (Sonnet·Haiku)</td></tr>
+            <tr><td class="label">병렬 실행</td><td class="main">불가</td><td class="sub">가능</td></tr>
+            <tr><td class="label">유스 케이스</td><td class="main">대화형 작업</td><td class="sub">검증·리서치·테스트</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="s12b-roles">
+        <div class="s12b-role">
+          <iconify-icon icon="heroicons:eye"></iconify-icon>
+          <div class="name">code-reviewer</div>
+          <div class="desc">변경점 검토 · 보안·성능</div>
+        </div>
+        <div class="s12b-role b">
+          <iconify-icon icon="heroicons:magnifying-glass"></iconify-icon>
+          <div class="name">researcher</div>
+          <div class="desc">문서·웹 리서치 · 비교</div>
+        </div>
+        <div class="s12b-role c">
+          <iconify-icon icon="heroicons:beaker"></iconify-icon>
+          <div class="name">test-runner</div>
+          <div class="desc">테스트 실행 · 결과 분석</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: agents/ 가이드 · Anthropic 공식</span></div>
+  </div>
+</body>
+</html>
