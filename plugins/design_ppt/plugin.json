@@ -20,6 +20,7 @@
   "entry_points": {
     "default_command": "make-ppt",
     "core_skills": [
+      "skill-ppt-pitfalls",
       "skill-08-design",
       "skill-14-auto-detail",
       "skill-15-theme-factory"
@@ -28,18 +29,22 @@
   "metadata": {
     "category": "디자인/PPT",
     "tags": [
-      "design"
+      "design",
+      "pptx",
+      "html2ppt",
+      "playwright"
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-04-19",
+    "updated": "2026-04-27",
     "precedence": 10,
-    "token_estimate": 4000,
+    "token_estimate": 5500,
     "triggers": [
       "PPT",
       "슬라이드",
       "프레젠테이션",
-      "Gamma"
+      "Gamma",
+      "발표자료"
     ]
   }
 }
