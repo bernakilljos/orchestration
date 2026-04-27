@@ -20,8 +20,8 @@
     .s15-body {
       flex: 1;
       display: grid;
-      grid-template-columns: 1.3fr 1fr;
-      gap: 40px;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 32px;
       margin-top: 24px;
       min-height: 0;
       overflow: hidden;
@@ -32,14 +32,18 @@
       background: #1A1D24;
       color: #39FF6C;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      line-height: 1.5;
-      padding: 22px 26px;
+      font-size: 14px;
+      line-height: 1.4;
+      padding: 16px 20px;
       border-radius: 12px;
       white-space: pre;
       overflow: hidden;
       flex: 0 0 auto;
     }
+    .s15-box { padding: 14px 20px !important; }
+    .s15-box h3 { font-size: 13px !important; margin: 0 0 6px 0 !important; }
+    .s15-box li { font-size: 14px !important; padding: 3px 0 !important; }
+    .s15-box li::before { width: 5px !important; height: 5px !important; top: 6px !important; }
     .s15-box {
       background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
@@ -116,9 +120,7 @@
       "command": "cmd",
       "args": ["/c", "npx", "-y",
         "@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
-      }
+      "env": { "GITHUB_TOKEN": "${env:GITHUB_TOKEN}" }
     }
   }
 }</pre>

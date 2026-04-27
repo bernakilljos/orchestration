@@ -14,10 +14,15 @@
     .s04-step { background: rgba(255, 255, 255, 0.75); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 24px; display: flex; flex-direction: column; gap: 14px; position: relative; min-height: 0; }
     .s04-step::after { content: '→'; position: absolute; right: -18px; top: 50%; transform: translateY(-50%); font-size: 36px; color: var(--gold); font-weight: 700; z-index: 2; }
     .s04-step:last-child::after { display: none; }
-    .s04-step iconify-icon { font-size: 56px; color: var(--gold); }
+    .s04-step iconify-icon.main-ico { font-size: 56px; color: var(--gold); }
     .s04-step .num { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); font-weight: 600; letter-spacing: 0.18em; }
     .s04-step .name { font-size: 28px; font-weight: 700; color: var(--ink); }
     .s04-step .desc { font-size: 17px; color: var(--stone); line-height: 1.45; }
+    .s04-step .out { margin-top: auto; padding-top: 14px; border-top: 0.5px dashed var(--fog); display: flex; flex-direction: column; gap: 6px; }
+    .s04-step .out .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--deep-gold); font-weight: 700; }
+    .s04-step .out .val { font-size: 14px; color: var(--ink); line-height: 1.4; }
+    .s04-step .out code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .s04-step .time { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--sage); font-weight: 600; }
     .slide-04 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -32,34 +37,59 @@
 
     <div class="s04-pipeline">
       <div class="s04-step">
-        <iconify-icon icon="heroicons:command-line"></iconify-icon>
+        <iconify-icon icon="heroicons:command-line" class="main-ico"></iconify-icon>
         <div class="num">STEP 01</div>
         <div class="name">실행</div>
         <div class="desc">유저가 <code>/init</code> 명령 입력</div>
+        <div class="out">
+          <div class="lbl">INPUT</div>
+          <div class="val"><code>claude</code> → <code>/init</code></div>
+          <div class="time">~ 1초</div>
+        </div>
       </div>
       <div class="s04-step">
-        <iconify-icon icon="heroicons:magnifying-glass"></iconify-icon>
+        <iconify-icon icon="heroicons:magnifying-glass" class="main-ico"></iconify-icon>
         <div class="num">STEP 02</div>
         <div class="name">스캔</div>
         <div class="desc">패키지·빌드·디렉토리 자동 분석</div>
+        <div class="out">
+          <div class="lbl">DETECT</div>
+          <div class="val"><code>package.json</code> · <code>tsconfig</code> · git</div>
+          <div class="time">~ 5초</div>
+        </div>
       </div>
       <div class="s04-step">
-        <iconify-icon icon="heroicons:document-plus"></iconify-icon>
+        <iconify-icon icon="heroicons:document-plus" class="main-ico"></iconify-icon>
         <div class="num">STEP 03</div>
         <div class="name">초안 생성</div>
         <div class="desc">CLAUDE.md WHAT/WHY/HOW 채움</div>
+        <div class="out">
+          <div class="lbl">OUTPUT</div>
+          <div class="val"><code>CLAUDE.md</code> 초안 + <code>.claude/</code></div>
+          <div class="time">~ 15초</div>
+        </div>
       </div>
       <div class="s04-step">
-        <iconify-icon icon="heroicons:pencil-square"></iconify-icon>
+        <iconify-icon icon="heroicons:pencil-square" class="main-ico"></iconify-icon>
         <div class="num">STEP 04</div>
         <div class="name">큐레이션</div>
         <div class="desc">팀 컨벤션 추가 편집</div>
+        <div class="out">
+          <div class="lbl">EDIT</div>
+          <div class="val">팀 규칙 · 안티패턴 · 비밀</div>
+          <div class="time">~ 5분</div>
+        </div>
       </div>
       <div class="s04-step">
-        <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+        <iconify-icon icon="heroicons:check-circle" class="main-ico"></iconify-icon>
         <div class="num">STEP 05</div>
         <div class="name">Ready</div>
         <div class="desc">git commit 후 팀 공유</div>
+        <div class="out">
+          <div class="lbl">SHARE</div>
+          <div class="val"><code>git push</code> → 팀 동기화</div>
+          <div class="time">∞ 영구</div>
+        </div>
       </div>
     </div>
 

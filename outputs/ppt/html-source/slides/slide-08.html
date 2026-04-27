@@ -32,15 +32,16 @@
       background: #1A1D24;
       color: #39FF6C;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 20px;
-      line-height: 1.5;
-      padding: 24px 28px;
+      font-size: 15px;
+      line-height: 1.4;
+      padding: 18px 22px;
       border-radius: 12px;
       overflow: hidden;
-      flex: 1;
+      flex: 0 0 auto;
       white-space: pre;
-      margin-top: 16px;
+      margin-top: 12px;
     }
+    .slide-08 .body { font-size: 18px; line-height: 1.5; }
     .s08-box {
       background: rgba(255, 255, 255, 0.7);
       border: 0.5px solid var(--fog);
@@ -116,19 +117,18 @@
     <div class="s08-body">
       <div class="s08-left">
         <p class="body">
-          <strong>defaultMode</strong> 로 전체 권한 수준을 정한다: <code>default</code> (매번 물음), <code>acceptEdits</code> (에디터 명령 자동 승인), <code>plan</code> (계획만), <code>bypassPermissions</code> (관리자).
+          <strong>defaultMode</strong> = <code>default</code> · <code>acceptEdits</code> · <code>plan</code> · <code>bypassPermissions</code>
         </p>
         <pre class="s08-code">{
   "permissions": {
     "allow": ["Bash(npm:*)", "Edit"],
-    "deny": ["Bash(rm -rf *)"],
+    "deny":  ["Bash(rm -rf *)"],
     "defaultMode": "acceptEdits"
   },
   "hooks": {
     "PostToolUse": [{
       "matcher": "Edit|Write",
-      "hooks": [{"type": "command",
-                 "command": "prettier --write $FILE"}]
+      "hooks": [{ "command": "prettier --write $FILE" }]
     }]
   },
   "enabledMcpjsonServers": ["github"]
