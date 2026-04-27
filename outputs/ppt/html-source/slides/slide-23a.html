@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Reference · 치트시트</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-23a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s23a-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; min-height: 0; }
+    .s23a-col { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
+    .s23a-col.cmd { border-top: 5px solid var(--gold); }
+    .s23a-col.short { border-top: 5px solid var(--sage); }
+    .s23a-col.tool { border-top: 5px solid #7A4E6B; }
+    .s23a-col h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .s23a-col.short h3 { color: #4A6F60; }
+    .s23a-col.tool h3 { color: #5A3850; }
+    .s23a-col iconify-icon.head { font-size: 32px; }
+    .s23a-col.cmd iconify-icon.head { color: var(--gold); }
+    .s23a-col.short iconify-icon.head { color: var(--sage); }
+    .s23a-col.tool iconify-icon.head { color: #7A4E6B; }
+    .s23a-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; border-bottom: 0.5px dashed rgba(184,134,78,0.25); }
+    .s23a-row:last-child { border-bottom: none; }
+    .s23a-row .k { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 3px 8px; border-radius: 4px; flex-shrink: 0; }
+    .s23a-row .v { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.4; }
+    .slide-23a .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-23a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:document-magnifying-glass" class="icon-sm"></iconify-icon>PART 05 · QUICK REFERENCE</span>
+      <span class="mono caption">37 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:document-magnifying-glass" class="icon-lg"></iconify-icon><h1 class="heading-1">Quick Reference · 치트시트</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">슬래시 명령 + 단축키 + 핵심 도구 한눈에</p>
+
+    <div class="s23a-grid">
+      <div class="s23a-col cmd">
+        <iconify-icon icon="heroicons:command-line" class="head"></iconify-icon>
+        <h3>슬래시 명령 12</h3>
+        <div class="s23a-row"><span class="k">/init</span><span class="v">CLAUDE.md 초안 + .claude/</span></div>
+        <div class="s23a-row"><span class="k">/clear</span><span class="v">컨텍스트 초기화</span></div>
+        <div class="s23a-row"><span class="k">/compact</span><span class="v">대화 요약 압축</span></div>
+        <div class="s23a-row"><span class="k">/resume</span><span class="v">이전 세션 복구</span></div>
+        <div class="s23a-row"><span class="k">/config</span><span class="v">간단 설정 변경</span></div>
+        <div class="s23a-row"><span class="k">/hooks</span><span class="v">훅 관리 UI</span></div>
+        <div class="s23a-row"><span class="k">/help</span><span class="v">도움말</span></div>
+        <div class="s23a-row"><span class="k">/cost</span><span class="v">현재 세션 토큰·비용</span></div>
+        <div class="s23a-row"><span class="k">/login</span><span class="v">계정 인증</span></div>
+        <div class="s23a-row"><span class="k">/logout</span><span class="v">로그아웃</span></div>
+        <div class="s23a-row"><span class="k">/upgrade</span><span class="v">CLI 업데이트</span></div>
+        <div class="s23a-row"><span class="k">/feedback</span><span class="v">피드백 제출</span></div>
+      </div>
+
+      <div class="s23a-col short">
+        <iconify-icon icon="heroicons:bolt" class="head"></iconify-icon>
+        <h3>단축키 + 접두</h3>
+        <div class="s23a-row"><span class="k">@파일</span><span class="v">파일 직접 참조 + 자동 로드</span></div>
+        <div class="s23a-row"><span class="k">!`cmd`</span><span class="v">Bash 즉시 실행</span></div>
+        <div class="s23a-row"><span class="k">#텍스트</span><span class="v">메모리에 영구 저장</span></div>
+        <div class="s23a-row"><span class="k">$ARG</span><span class="v">슬래시 명령 인자</span></div>
+        <div class="s23a-row"><span class="k">Esc</span><span class="v">현재 작업 취소</span></div>
+        <div class="s23a-row"><span class="k">Esc·Esc</span><span class="v">이전 메시지로 되돌리기</span></div>
+        <div class="s23a-row"><span class="k">Shift+Tab</span><span class="v">Plan/AcceptEdit 토글</span></div>
+        <div class="s23a-row"><span class="k">Ctrl+R</span><span class="v">출력 expand 토글</span></div>
+        <div class="s23a-row"><span class="k">Ctrl+C</span><span class="v">실행 중단</span></div>
+        <div class="s23a-row"><span class="k">Ctrl+D</span><span class="v">Claude 종료</span></div>
+        <div class="s23a-row"><span class="k">↑↓</span><span class="v">이전 입력 히스토리</span></div>
+        <div class="s23a-row"><span class="k">Tab</span><span class="v">파일·명령 자동완성</span></div>
+      </div>
+
+      <div class="s23a-col tool">
+        <iconify-icon icon="heroicons:wrench-screwdriver" class="head"></iconify-icon>
+        <h3>도구 + 권한</h3>
+        <div class="s23a-row"><span class="k">Read</span><span class="v">파일 읽기</span></div>
+        <div class="s23a-row"><span class="k">Write</span><span class="v">파일 쓰기 (새로)</span></div>
+        <div class="s23a-row"><span class="k">Edit</span><span class="v">파일 수정 (정밀)</span></div>
+        <div class="s23a-row"><span class="k">Bash</span><span class="v">셸 명령 실행</span></div>
+        <div class="s23a-row"><span class="k">Glob</span><span class="v">파일 패턴 검색</span></div>
+        <div class="s23a-row"><span class="k">Grep</span><span class="v">콘텐츠 검색 (rg)</span></div>
+        <div class="s23a-row"><span class="k">WebFetch</span><span class="v">URL 콘텐츠 가져오기</span></div>
+        <div class="s23a-row"><span class="k">WebSearch</span><span class="v">웹 검색</span></div>
+        <div class="s23a-row"><span class="k">TaskCreate</span><span class="v">Sub-Agent 위임</span></div>
+        <div class="s23a-row"><span class="k">TodoWrite</span><span class="v">진행 상황 추적</span></div>
+        <div class="s23a-row"><span class="k">NotebookEdit</span><span class="v">.ipynb 편집</span></div>
+        <div class="s23a-row"><span class="k">MCP</span><span class="v">외부 서버 도구</span></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: docs.claude.com/claude-code · CLI 전체 레퍼런스</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Best Practices · 5 원칙</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-22b { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s22b-body { flex: 1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 36px; margin-top: 24px; min-height: 0; }
+    .s22b-left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .s22b-card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 24px; display: flex; gap: 16px; align-items: flex-start; }
+    .s22b-card.r1 { border-left: 5px solid var(--gold); }
+    .s22b-card.r2 { border-left: 5px solid var(--sage); }
+    .s22b-card.r3 { border-left: 5px solid #7A4E6B; }
+    .s22b-card.r4 { border-left: 5px solid var(--terracotta); }
+    .s22b-card.r5 { border-left: 5px solid #8A6235; }
+    .s22b-card .num { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; flex-shrink: 0; }
+    .s22b-card.r2 .num { color: var(--sage); }
+    .s22b-card.r3 .num { color: #7A4E6B; }
+    .s22b-card.r4 .num { color: var(--terracotta); }
+    .s22b-card.r5 .num { color: #8A6235; }
+    .s22b-card .title { font-size: 20px; font-weight: 700; color: var(--ink); }
+    .s22b-card .desc { font-size: 14px; color: var(--stone); line-height: 1.5; margin-top: 4px; }
+    .s22b-right { display: flex; flex-direction: column; gap: 16px; }
+    .s22b-section { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 28px; }
+    .s22b-section h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+    .s22b-section .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .s22b-section .col h4 { font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; }
+    .s22b-section .col.do h4 { color: #4A6F60; }
+    .s22b-section .col.dont h4 { color: #8A3E26; }
+    .s22b-section ul { list-style: none; padding: 0; margin: 0; }
+    .s22b-section li { font-size: 14px; line-height: 1.5; padding: 4px 0; display: flex; align-items: baseline; gap: 8px; color: var(--ink); }
+    .s22b-section .col.do li::before { content: '✓'; color: var(--sage); font-weight: 700; flex-shrink: 0; }
+    .s22b-section .col.dont li::before { content: '✗'; color: var(--terracotta); font-weight: 700; flex-shrink: 0; }
+    .s22b-section li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 4px; border-radius: 3px; }
+    .slide-22b .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-22b">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:trophy" class="icon-sm"></iconify-icon>PART 05 · BEST PRACTICES</span>
+      <span class="mono caption">35 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">Best Practices · 5 원칙</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 무너지지 않는 5 가지 + DO / DON'T</p>
+
+    <div class="s22b-body">
+      <div class="s22b-left">
+        <div class="s22b-card r1">
+          <div class="num">01</div>
+          <div>
+            <div class="title">반복 개발</div>
+            <div class="desc">작게 시작 → 확인 → 확장. 빅뱅 금지. 드라이런 활용.</div>
+          </div>
+        </div>
+        <div class="s22b-card r2">
+          <div class="num">02</div>
+          <div>
+            <div class="title">명확한 Git 흐름</div>
+            <div class="desc">feat/fix/docs 접두사 · PR 단위 작게 · 커밋 전 검증.</div>
+          </div>
+        </div>
+        <div class="s22b-card r3">
+          <div class="num">03</div>
+          <div>
+            <div class="title">모듈식 설계</div>
+            <div class="desc">단일 책임 · 느슨한 결합 · 공통은 rules/ 로.</div>
+          </div>
+        </div>
+        <div class="s22b-card r4">
+          <div class="num">04</div>
+          <div>
+            <div class="title">정기 감사</div>
+            <div class="desc">주 1회 sync 점검 · 월 1회 CLAUDE.md 갱신 · 분기 1회 로드맵 리뷰.</div>
+          </div>
+        </div>
+        <div class="s22b-card r5">
+          <div class="num">05</div>
+          <div>
+            <div class="title">Extended Thinking</div>
+            <div class="desc">복잡 결정엔 긴 추론 모드 · 단순 작업엔 빠른 모드 (Sonnet).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s22b-right">
+        <div class="s22b-section">
+          <h3><iconify-icon icon="heroicons:document-text"></iconify-icon> CLAUDE.md 작성</h3>
+          <div class="row">
+            <div class="col do">
+              <h4>DO</h4>
+              <ul>
+                <li>500줄 이하</li>
+                <li>참조 중심 (rules/* 분리)</li>
+                <li>구체적 예시 포함</li>
+                <li>월간 업데이트</li>
+              </ul>
+            </div>
+            <div class="col dont">
+              <h4>DON'T</h4>
+              <ul>
+                <li>"clean code" 같은 모호함</li>
+                <li>전체 코드 복붙</li>
+                <li>중복 (rules/ 와 겹침)</li>
+                <li>설치 후 방치</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="s22b-section">
+          <h3><iconify-icon icon="heroicons:bolt"></iconify-icon> 자동화</h3>
+          <div class="row">
+            <div class="col do">
+              <h4>DO</h4>
+              <ul>
+                <li>hooks 로 강제 (포맷·테스트)</li>
+                <li><code>!</code>·<code>@</code>·<code>#</code> 단축</li>
+                <li>Sub-Agent 병렬</li>
+                <li>비밀은 <code>.env</code></li>
+              </ul>
+            </div>
+            <div class="col dont">
+              <h4>DON'T</h4>
+              <ul>
+                <li>메모리만 의존</li>
+                <li>매번 같은 지시 반복</li>
+                <li>큰 작업 한 세션</li>
+                <li>키 하드코딩</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: best-practices.md · Brij K. Pandey · Anthropic 가이드</span></div>
+  </div>
+</body>
+</html>

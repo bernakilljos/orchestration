@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP 서버 마켓 · 자주 쓰는 12 종</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-15a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s15a-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .s15a-card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; }
+    .s15a-card.dev { border-top: 4px solid var(--gold); }
+    .s15a-card.collab { border-top: 4px solid var(--sage); }
+    .s15a-card.data { border-top: 4px solid #7A4E6B; }
+    .s15a-card.web { border-top: 4px solid var(--terracotta); }
+    .s15a-card iconify-icon { font-size: 32px; flex-shrink: 0; }
+    .s15a-card.dev iconify-icon { color: var(--gold); }
+    .s15a-card.collab iconify-icon { color: var(--sage); }
+    .s15a-card.data iconify-icon { color: #7A4E6B; }
+    .s15a-card.web iconify-icon { color: var(--terracotta); }
+    .s15a-card .name { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: var(--ink); }
+    .s15a-card .desc { font-size: 13px; color: var(--stone); line-height: 1.4; }
+    .s15a-card .tag { position: absolute; top: 14px; right: 14px; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 7px; border-radius: 100px; letter-spacing: 0.1em; font-weight: 700; }
+    .s15a-card.dev .tag { background: rgba(184,134,78,0.15); color: var(--deep-gold); }
+    .s15a-card.collab .tag { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .s15a-card.data .tag { background: rgba(122,78,107,0.18); color: #5A3850; }
+    .s15a-card.web .tag { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .slide-15a .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-15a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:building-storefront" class="icon-sm"></iconify-icon>PART 03 · MCP MARKET</span>
+      <span class="mono caption">24 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:building-storefront" class="icon-lg"></iconify-icon><h1 class="heading-1">자주 쓰는 MCP 서버 12</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">개발 · 협업 · 데이터 · 웹 4 카테고리 · 공식 + 커뮤니티</p>
+
+    <div class="s15a-grid">
+      <div class="s15a-card dev"><span class="tag">DEV</span><iconify-icon icon="simple-icons:github"></iconify-icon><div class="name">github</div><div class="desc">레포 · 이슈 · PR · Actions</div></div>
+      <div class="s15a-card dev"><span class="tag">DEV</span><iconify-icon icon="simple-icons:gitlab"></iconify-icon><div class="name">gitlab</div><div class="desc">GitLab 셀프호스팅 통합</div></div>
+      <div class="s15a-card dev"><span class="tag">DEV</span><iconify-icon icon="heroicons:folder"></iconify-icon><div class="name">filesystem</div><div class="desc">로컬 디렉토리 안전 접근</div></div>
+      <div class="s15a-card dev"><span class="tag">DEV</span><iconify-icon icon="heroicons:archive-box"></iconify-icon><div class="name">memory</div><div class="desc">세션 간 영구 메모리</div></div>
+
+      <div class="s15a-card collab"><span class="tag">COLLAB</span><iconify-icon icon="simple-icons:slack"></iconify-icon><div class="name">slack</div><div class="desc">채널 · DM · 알림 자동화</div></div>
+      <div class="s15a-card collab"><span class="tag">COLLAB</span><iconify-icon icon="simple-icons:notion"></iconify-icon><div class="name">notion</div><div class="desc">페이지 · DB · 스프린트</div></div>
+      <div class="s15a-card collab"><span class="tag">COLLAB</span><iconify-icon icon="simple-icons:linear"></iconify-icon><div class="name">linear</div><div class="desc">이슈 · 트래커 · 사이클</div></div>
+      <div class="s15a-card collab"><span class="tag">COLLAB</span><iconify-icon icon="simple-icons:googledrive"></iconify-icon><div class="name">gdrive</div><div class="desc">Google Drive 검색·읽기</div></div>
+
+      <div class="s15a-card data"><span class="tag">DATA</span><iconify-icon icon="simple-icons:postgresql"></iconify-icon><div class="name">postgres</div><div class="desc">SQL 쿼리 · 스키마 검사</div></div>
+      <div class="s15a-card data"><span class="tag">DATA</span><iconify-icon icon="simple-icons:sqlite"></iconify-icon><div class="name">sqlite</div><div class="desc">로컬 DB 빠른 분석</div></div>
+      <div class="s15a-card web"><span class="tag">WEB</span><iconify-icon icon="simple-icons:playwright"></iconify-icon><div class="name">playwright</div><div class="desc">브라우저 자동화 · E2E</div></div>
+      <div class="s15a-card web"><span class="tag">WEB</span><iconify-icon icon="heroicons:globe-alt"></iconify-icon><div class="name">fetch</div><div class="desc">HTTP · API · 페이지 가져오기</div></div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: modelcontextprotocol.io · github.com/modelcontextprotocol/servers</span></div>
+  </div>
+</body>
+</html>

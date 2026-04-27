@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLAUDE.md 실제 예시</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-04c { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s4c-body { flex: 1; display: grid; grid-template-columns: 1.6fr 1fr; gap: 36px; margin-top: 24px; min-height: 0; overflow: hidden; }
+    .s4c-md { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.55; padding: 24px 28px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; min-height: 0; }
+    .s4c-md .h { color: #B8864E; font-weight: 700; }
+    .s4c-md .b { color: #6B8E7F; }
+    .s4c-md .c { color: #6E685C; font-style: italic; }
+    .s4c-right { display: flex; flex-direction: column; gap: 14px; }
+    .s4c-box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .s4c-box.what { border-left: 4px solid var(--gold); }
+    .s4c-box.why { border-left: 4px solid var(--terracotta); }
+    .s4c-box.how { border-left: 4px solid var(--sage); }
+    .s4c-box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; display: flex; align-items: center; gap: 8px; }
+    .s4c-box.why h3 { color: var(--terracotta); }
+    .s4c-box.how h3 { color: var(--sage); }
+    .s4c-box .lbl { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .s4c-box .desc { font-size: 14px; color: var(--stone); line-height: 1.45; }
+    .s4c-box code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .slide-04c .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-04c">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:document-text" class="icon-sm"></iconify-icon>PART 01 · CLAUDE.MD EXAMPLE</span>
+      <span class="mono caption">08 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:document-text" class="icon-lg"></iconify-icon><h1 class="heading-1">CLAUDE.md · 실제 예시</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Next.js 프로젝트 기준 · WHAT / WHY / HOW 3 섹션 표준 골격</p>
+
+    <div class="s4c-body">
+      <pre class="s4c-md"><span class="h"># my-shop · Next.js 15 SaaS</span>
+
+<span class="c">> 목적: 다AI 협업이 이해할 수 있는 단일 컨텍스트</span>
+
+<span class="h">## 1. WHAT</span>
+- Stack: <span class="b">Next.js 15 · TypeScript · Tailwind</span>
+- DB: <span class="b">PostgreSQL · Prisma</span>
+- Test: <span class="b">Vitest · Playwright</span>
+- 배포: <span class="b">Vercel</span> + Preview Branch
+
+<span class="h">## 2. WHY (원칙)</span>
+- 컴포넌트: <span class="b">PascalCase</span>, 변수: <span class="b">camelCase</span>
+- 폼: <span class="b">react-hook-form + zod</span> 만 사용
+- API 응답: <span class="b">{data, error}</span> 통일
+- <span class="c">// 금지: any 타입, console.log, 하드코딩 키</span>
+
+<span class="h">## 3. HOW</span>
+- Build: <span class="b">npm run build</span>
+- Test: <span class="b">npm test</span>
+- Lint: <span class="b">eslint --fix</span>
+- Commit: <span class="b">feat/fix/docs/refactor</span>
+- Deploy: PR 머지 시 자동 배포</pre>
+
+      <div class="s4c-right">
+        <div class="s4c-box what">
+          <h3><iconify-icon icon="heroicons:question-mark-circle"></iconify-icon> PART 1 · WHAT</h3>
+          <div class="lbl">컨텍스트 제공</div>
+          <div class="desc">기술 스택·핵심 의존성·환경 변수. AI 가 코드를 읽기 전에 알아야 할 사실들.</div>
+        </div>
+        <div class="s4c-box why">
+          <h3><iconify-icon icon="heroicons:light-bulb"></iconify-icon> PART 2 · WHY</h3>
+          <div class="lbl">원칙 + 안티패턴</div>
+          <div class="desc">코드 스타일·네이밍·금지 패턴. <code>// 금지:</code> 라벨로 하지 말아야 할 것 명시.</div>
+        </div>
+        <div class="s4c-box how">
+          <h3><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon> PART 3 · HOW</h3>
+          <div class="lbl">실행 명령</div>
+          <div class="desc">build·test·lint·commit·deploy 한 줄씩. AI 가 그대로 복사해 실행 가능해야.</div>
+        </div>
+        <div class="s4c-box" style="border-left: 4px solid #7A4E6B;">
+          <h3 style="color: #7A4E6B;"><iconify-icon icon="heroicons:scale"></iconify-icon> 분량</h3>
+          <div class="desc">총 <strong style="color: var(--ink);">~150줄</strong> · 500줄 한도. 길어지면 <code>.claude/rules/*.md</code> 로 분리.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: Brij K. Pandey · CLAUDE.md 설계 원칙</span></div>
+  </div>
+</body>
+</html>

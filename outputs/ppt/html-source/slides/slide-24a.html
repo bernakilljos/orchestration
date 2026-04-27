@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>팀 협업 케이스</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-24a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s24a-body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; min-height: 0; }
+    .s24a-case { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; min-height: 0; position: relative; overflow: hidden; }
+    .s24a-case.frontend { border-top: 6px solid var(--gold); }
+    .s24a-case.backend { border-top: 6px solid var(--sage); }
+    .s24a-case.data { border-top: 6px solid #7A4E6B; }
+    .s24a-case.devops { border-top: 6px solid var(--terracotta); }
+    .s24a-case .head { display: flex; align-items: center; gap: 14px; }
+    .s24a-case iconify-icon { font-size: 44px; flex-shrink: 0; }
+    .s24a-case.frontend iconify-icon { color: var(--gold); }
+    .s24a-case.backend iconify-icon { color: var(--sage); }
+    .s24a-case.data iconify-icon { color: #7A4E6B; }
+    .s24a-case.devops iconify-icon { color: var(--terracotta); }
+    .s24a-case .name { font-size: 24px; font-weight: 700; color: var(--ink); }
+    .s24a-case .team { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: var(--stone); margin-top: 2px; }
+    .s24a-case .scenario { font-size: 15px; color: var(--ink); line-height: 1.55; padding: 12px 16px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
+    .s24a-case.backend .scenario { border-left-color: var(--sage); background: rgba(107,142,127,0.06); }
+    .s24a-case.data .scenario { border-left-color: #7A4E6B; background: rgba(122,78,107,0.06); }
+    .s24a-case.devops .scenario { border-left-color: var(--terracotta); background: rgba(178,90,62,0.06); }
+    .s24a-case h4 { font-size: 12px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 6px 0 4px 0; }
+    .s24a-case ul { list-style: none; padding: 0; margin: 0; }
+    .s24a-case li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+    .s24a-case li::before { content: '▸'; color: var(--deep-gold); font-weight: 700; flex-shrink: 0; }
+    .s24a-case li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .s24a-case .result { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: var(--sage); color: white; border-radius: 100px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; align-self: flex-start; margin-top: auto; }
+    .slide-24a .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-24a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:user-group" class="icon-sm"></iconify-icon>PART 05 · TEAM CASES</span>
+      <span class="mono caption">39 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:user-group" class="icon-lg"></iconify-icon><h1 class="heading-1">팀 협업 케이스 · 4 시나리오</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 검증된 4 팀 도입 사례 · 핵심 설정과 효과</p>
+
+    <div class="s24a-body">
+      <div class="s24a-case frontend">
+        <div class="head">
+          <iconify-icon icon="heroicons:cube"></iconify-icon>
+          <div>
+            <div class="name">Frontend 팀</div>
+            <div class="team">5 명 · React · Next.js · Tailwind</div>
+          </div>
+        </div>
+        <div class="scenario">"PR 마다 prettier 형식 다른 거 — 리뷰 시간 30% 낭비됨"</div>
+        <h4>◆ 도입한 것</h4>
+        <ul>
+          <li><code>PostToolUse</code> 훅: 저장 직후 prettier 자동</li>
+          <li><code>commands/component.md</code>: 컴포넌트 스캐폴드</li>
+          <li><code>rules/naming.md</code>: kebab vs PascalCase 통일</li>
+        </ul>
+        <span class="result">▲ 리뷰 시간 −40%</span>
+      </div>
+
+      <div class="s24a-case backend">
+        <div class="head">
+          <iconify-icon icon="heroicons:server"></iconify-icon>
+          <div>
+            <div class="name">Backend 팀</div>
+            <div class="team">8 명 · Python · FastAPI · PostgreSQL</div>
+          </div>
+        </div>
+        <div class="scenario">"신입 온보딩 시 'API 응답 형식' 매번 설명 — 한 사람 2일 소비"</div>
+        <h4>◆ 도입한 것</h4>
+        <ul>
+          <li><code>CLAUDE.md</code>: <code>{data, error}</code> 응답 표준 명시</li>
+          <li><code>commands/api.md</code>: 새 API 엔드포인트 자동 생성</li>
+          <li><code>agents/code-reviewer</code>: 보안·성능 자동 검토</li>
+        </ul>
+        <span class="result">▲ 온보딩 1/3 으로 단축</span>
+      </div>
+
+      <div class="s24a-case data">
+        <div class="head">
+          <iconify-icon icon="heroicons:chart-bar"></iconify-icon>
+          <div>
+            <div class="name">Data 팀</div>
+            <div class="team">4 명 · Jupyter · Spark · Airflow</div>
+          </div>
+        </div>
+        <div class="scenario">"노트북마다 import·설정 다름 — 재현 안 됨, 분석 결과 신뢰 불가"</div>
+        <h4>◆ 도입한 것</h4>
+        <ul>
+          <li><code>CLAUDE.md</code>: 표준 import 블록 + seed 고정</li>
+          <li><code>postgres MCP</code>: SQL 쿼리 자동 검증</li>
+          <li><code>skills/notebook-template</code>: 일관 셀 구조</li>
+        </ul>
+        <span class="result">▲ 재현 가능 100%</span>
+      </div>
+
+      <div class="s24a-case devops">
+        <div class="head">
+          <iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon>
+          <div>
+            <div class="name">DevOps 팀</div>
+            <div class="team">3 명 · Terraform · K8s · GitHub Actions</div>
+          </div>
+        </div>
+        <div class="scenario">"인프라 변경시 '이거 prod 영향 있나?' 매번 confirm 필요 — 위험 + 느림"</div>
+        <h4>◆ 도입한 것</h4>
+        <ul>
+          <li><code>permissions.deny</code>: <code>terraform apply *prod*</code> 차단</li>
+          <li><code>PreToolUse</code> 훅: <code>kubectl delete</code> 차단</li>
+          <li><code>github MCP</code>: PR 자동 생성·머지</li>
+        </ul>
+        <span class="result">▲ 사고 0건 · 배포 2배</span>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: 커뮤니티 사례 모음 · 익명화된 실제 팀 데이터</span></div>
+  </div>
+</body>
+</html>

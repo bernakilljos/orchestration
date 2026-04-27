@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>settings.json · 훅 · MCP · 플러그인</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-08a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s8a-body { flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 24px; min-height: 0; overflow: hidden; }
+    .s8a-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .s8a-right { display: flex; flex-direction: column; min-width: 0; gap: 14px; }
+    .s8a-code { background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.5; padding: 22px 26px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
+    .s8a-box { background: rgba(255,255,255,0.75); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .s8a-box.mcp { border-left: 4px solid var(--sage); }
+    .s8a-box.plug { border-left: 4px solid #7A4E6B; }
+    .s8a-box h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .s8a-box ul { list-style: none; padding: 0; margin: 0; }
+    .s8a-box li { font-size: 16px; line-height: 1.4; color: var(--ink); padding: 4px 0; display: flex; align-items: baseline; gap: 8px; }
+    .s8a-box li code { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .s8a-box li::before { content: ''; flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); position: relative; top: 6px; }
+    .s8a-callout { background: rgba(184,134,78,0.1); border: 1px solid rgba(184,134,78,0.35); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+    .s8a-callout iconify-icon { font-size: 36px; color: var(--deep-gold); flex-shrink: 0; }
+    .s8a-callout .text { font-size: 16px; color: var(--ink); line-height: 1.5; }
+    .s8a-callout .text strong { color: var(--deep-gold); }
+    .slide-08a .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-08a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>PART 02 · SETTINGS (2/2)</span>
+      <span class="mono caption">14 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon><h1 class="heading-1">훅 · MCP · 플러그인</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">한 파일에서 자동화 + 외부 도구 + 확장을 모두 제어</p>
+
+    <div class="s8a-body">
+      <div class="s8a-left">
+        <pre class="s8a-code">{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{
+        "type": "command",
+        "command": "prettier --write $FILE"
+      }]
+    }]
+  },
+  "enabledMcpjsonServers": ["github", "playwright"],
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true
+  },
+  "env": { "DEBUG": "true" }
+}</pre>
+        <div class="s8a-callout">
+          <iconify-icon icon="heroicons:light-bulb"></iconify-icon>
+          <div class="text"><strong>핵심:</strong> 메모리·프롬프트는 70~80% 지킴, hooks 는 100% 강제 — 자동화에 절대적</div>
+        </div>
+      </div>
+
+      <div class="s8a-right">
+        <div class="s8a-box">
+          <h3>◆ 훅 이벤트 8</h3>
+          <ul>
+            <li><code>PreToolUse</code> · <code>PostToolUse</code></li>
+            <li><code>SessionStart</code> · <code>Stop</code></li>
+            <li><code>PreCompact</code> · <code>PostCompact</code></li>
+            <li><code>UserPromptSubmit</code></li>
+            <li><code>Notification</code></li>
+          </ul>
+        </div>
+        <div class="s8a-box mcp">
+          <h3>◆ MCP 활성화</h3>
+          <ul>
+            <li><code>enabledMcpjsonServers</code></li>
+            <li><code>disabledMcpjsonServers</code></li>
+            <li><code>enableAllProjectMcpServers</code></li>
+          </ul>
+        </div>
+        <div class="s8a-box plug">
+          <h3>◆ 플러그인</h3>
+          <ul>
+            <li><code>enabledPlugins</code> 토글</li>
+            <li><code>name@source</code> 형식</li>
+            <li>marketplace 또는 git</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: settings.json 스키마 · hooks · MCP · plugins</span></div>
+  </div>
+</body>
+</html>

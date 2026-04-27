@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PART 01 · WHY INIT</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .divider { width: 1920px; height: 1080px; padding: 100px 120px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: radial-gradient(ellipse 1100px 800px at 80% 20%, rgba(184,134,78,0.32) 0%, transparent 60%), radial-gradient(ellipse 800px 600px at 10% 90%, rgba(107,142,127,0.18) 0%, transparent 55%), linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%); }
+    .divider .top { display: flex; justify-content: space-between; align-items: center; }
+    .divider .brand { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.3em; color: #8A6235; font-weight: 600; }
+    .divider .pageno { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #6E685C; }
+    .divider .center { display: flex; flex-direction: column; gap: 32px; }
+    .divider .partlabel { font-family: 'JetBrains Mono', monospace; font-size: 24px; letter-spacing: 0.4em; color: var(--gold); font-weight: 700; text-transform: uppercase; }
+    .divider .bigicon { font-size: 220px; color: var(--gold); }
+    .divider .bigtitle { font-family: 'Fraunces', serif; font-size: 220px; line-height: 0.92; letter-spacing: -0.04em; color: #1A1D24; font-weight: 600; }
+    .divider .bigtitle .accent { color: var(--gold); font-style: italic; font-weight: 500; display: block; font-size: 280px; margin-top: -30px; }
+    .divider .lead { font-size: 36px; color: #6E685C; line-height: 1.4; max-width: 1100px; }
+    .divider .bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 30px; border-top: 0.5px solid rgba(184,134,78,0.4); font-family: 'JetBrains Mono', monospace; font-size: 16px; color: #6E685C; }
+    .divider .chapters { display: flex; gap: 24px; }
+    .divider .chapters .ch { padding: 6px 14px; background: rgba(255,255,255,0.7); border: 0.5px solid rgba(184,134,78,0.3); border-radius: 100px; }
+    .divider .chapters .ch.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 700; }
+    .divider .deco-grid { position: absolute; right: -100px; top: 30%; display: grid; grid-template-columns: repeat(8, 12px); gap: 22px; opacity: 0.25; }
+    .divider .deco-grid span { width: 12px; height: 12px; background: var(--gold); border-radius: 50%; }
+  </style>
+</head>
+<body>
+  <div class="divider">
+    <div class="top">
+      <span class="brand">CLAUDE CODE · ARCHITECTURE</span>
+      <span class="pageno">04 / 40</span>
+    </div>
+    <div class="center">
+      <div class="partlabel">▸ PART 01 · WHY</div>
+      <iconify-icon icon="heroicons:rocket-launch" class="bigicon"></iconify-icon>
+      <h1 class="bigtitle">왜<span class="accent">/init</span></h1>
+      <p class="lead">매번 같은 설명 반복은 낭비.<br>한 번 세팅으로 영원한 컨텍스트, 팀 전체 일관성.</p>
+    </div>
+    <div class="bottom">
+      <div class="chapters">
+        <span class="ch active">01 · WHY</span>
+        <span class="ch">02 · FOLDER</span>
+        <span class="ch">03 · ECOSYSTEM</span>
+        <span class="ch">04 · FRAMEWORK</span>
+        <span class="ch">05 · PRACTICE</span>
+      </div>
+      <span>다음 → /init 의 이유</span>
+    </div>
+    <div class="deco-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+</body>
+</html>

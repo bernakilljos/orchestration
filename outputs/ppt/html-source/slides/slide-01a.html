@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>목차 · Table of Contents</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-01a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .toc-body { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin-top: 32px; min-height: 0; }
+    .toc-part { background: rgba(255,255,255,0.75); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; }
+    .toc-part.p1 { border-top: 6px solid var(--gold); }
+    .toc-part.p2 { border-top: 6px solid var(--sage); }
+    .toc-part.p3 { border-top: 6px solid #7A4E6B; }
+    .toc-part.p4 { border-top: 6px solid var(--terracotta); }
+    .toc-part.p5 { border-top: 6px solid #8A6235; }
+    .toc-part .num { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); font-weight: 600; letter-spacing: 0.18em; }
+    .toc-part iconify-icon { font-size: 44px; }
+    .toc-part.p1 iconify-icon { color: var(--gold); }
+    .toc-part.p2 iconify-icon { color: var(--sage); }
+    .toc-part.p3 iconify-icon { color: #7A4E6B; }
+    .toc-part.p4 iconify-icon { color: var(--terracotta); }
+    .toc-part.p5 iconify-icon { color: #8A6235; }
+    .toc-part .name { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
+    .toc-part .sub { font-size: 14px; color: var(--stone); line-height: 1.4; }
+    .toc-part ul { list-style: none; padding: 0; margin: 14px 0 0 0; border-top: 0.5px dashed var(--fog); padding-top: 14px; flex: 1; }
+    .toc-part li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
+    .toc-part li .pn { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); font-weight: 700; min-width: 22px; }
+    .slide-01a .footer-border { margin-top: auto; padding-top: 14px; border-top: 0.5px solid var(--fog); display: flex; justify-content: space-between; align-items: center; }
+    .toc-meta { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); }
+    .toc-meta strong { color: var(--deep-gold); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-01a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:list-bullet" class="icon-sm"></iconify-icon>TABLE OF CONTENTS</span>
+      <span class="mono caption">02 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:book-open" class="icon-lg"></iconify-icon><h1 class="heading-1">목차 · 5 PART · 40 슬라이드</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Cover → 5 PART (Why · Folder · Ecosystem · Framework · Practice) → Learn More</p>
+
+    <div class="toc-body">
+      <div class="toc-part p1">
+        <div class="num">PART 01</div>
+        <iconify-icon icon="heroicons:rocket-launch"></iconify-icon>
+        <div class="name">WHY<br>INIT</div>
+        <div class="sub">왜 /init 이 필요한가 · 메모리</div>
+        <ul>
+          <li><span class="pn">05</span> /init 의 이유</li>
+          <li><span class="pn">06</span> 실행 순서 1/2</li>
+          <li><span class="pn">07</span> 단계 상세 2/2</li>
+          <li><span class="pn">08</span> CLAUDE.md 예시</li>
+          <li><span class="pn">09</span> 프로젝트 루트</li>
+          <li><span class="pn">10</span> 기억의 3 단계</li>
+        </ul>
+      </div>
+      <div class="toc-part p2">
+        <div class="num">PART 02</div>
+        <iconify-icon icon="heroicons:folder"></iconify-icon>
+        <div class="name">.CLAUDE<br>FOLDER</div>
+        <div class="sub">9 하위 요소 자세히</div>
+        <ul>
+          <li><span class="pn">12</span> .claude/ 9 요소</li>
+          <li><span class="pn">13</span> settings 권한</li>
+          <li><span class="pn">14</span> settings 훅</li>
+          <li><span class="pn">15</span> commands/</li>
+          <li><span class="pn">16</span> skills/</li>
+          <li><span class="pn">17</span> rules/</li>
+          <li><span class="pn">18-19</span> agents/</li>
+          <li><span class="pn">20</span> hooks/</li>
+        </ul>
+      </div>
+      <div class="toc-part p3">
+        <div class="num">PART 03</div>
+        <iconify-icon icon="heroicons:link"></iconify-icon>
+        <div class="name">ECO<br>SYSTEM</div>
+        <div class="sub">출력·MCP·플러그인 외부 연결</div>
+        <ul>
+          <li><span class="pn">22</span> 출력+상태바</li>
+          <li><span class="pn">23</span> MCP 서버 연결</li>
+          <li><span class="pn">24</span> MCP 마켓</li>
+          <li><span class="pn">25</span> 플러그인 시스템</li>
+          <li><span class="pn">26</span> official plugins</li>
+        </ul>
+      </div>
+      <div class="toc-part p4">
+        <div class="num">PART 04</div>
+        <iconify-icon icon="heroicons:document-text"></iconify-icon>
+        <div class="name">CLAUDE.md<br>FRAME</div>
+        <div class="sub">설계 원칙 · 5 Rules</div>
+        <ul>
+          <li><span class="pn">28</span> WHAT/WHY/HOW</li>
+          <li><span class="pn">29</span> 구체적으로</li>
+          <li><span class="pn">30</span> 3 스코프</li>
+          <li><span class="pn">31</span> Hook 으로</li>
+        </ul>
+      </div>
+      <div class="toc-part p5">
+        <div class="num">PART 05</div>
+        <iconify-icon icon="heroicons:check-badge"></iconify-icon>
+        <div class="name">IN<br>PRACTICE</div>
+        <div class="sub">실전 도입 · 케이스 · 다음 단계</div>
+        <ul>
+          <li><span class="pn">33</span> 시작하기 10분</li>
+          <li><span class="pn">34</span> Tips &amp; Tricks</li>
+          <li><span class="pn">35</span> Best Practices</li>
+          <li><span class="pn">36</span> 흔한 실수</li>
+          <li><span class="pn">37</span> Quick Reference</li>
+          <li><span class="pn">38</span> 다음 단계</li>
+          <li><span class="pn">39</span> 팀 협업 케이스</li>
+          <li><span class="pn">40</span> Learn More</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span class="toc-meta">5 PARTS · <strong>40 SLIDES</strong> · 약 25 분</span>
+      <span class="footnote">Opus 4.7 Baseline · 2025.04</span>
+    </div>
+  </div>
+</body>
+</html>

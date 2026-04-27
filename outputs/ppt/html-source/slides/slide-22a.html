@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tips & Tricks</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-22a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s22a-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .s22a-tip { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 28px; display: flex; gap: 20px; align-items: flex-start; min-height: 0; }
+    .s22a-tip iconify-icon { font-size: 48px; color: var(--gold); flex-shrink: 0; }
+    .s22a-tip:nth-child(1) { border-left: 5px solid var(--gold); }
+    .s22a-tip:nth-child(2) { border-left: 5px solid var(--sage); }
+    .s22a-tip:nth-child(3) { border-left: 5px solid #7A4E6B; }
+    .s22a-tip:nth-child(4) { border-left: 5px solid var(--terracotta); }
+    .s22a-tip:nth-child(5) { border-left: 5px solid #8A6235; }
+    .s22a-tip:nth-child(6) { border-left: 5px solid var(--gold); }
+    .s22a-tip:nth-child(2) iconify-icon { color: var(--sage); }
+    .s22a-tip:nth-child(3) iconify-icon { color: #7A4E6B; }
+    .s22a-tip:nth-child(4) iconify-icon { color: var(--terracotta); }
+    .s22a-tip:nth-child(5) iconify-icon { color: #8A6235; }
+    .s22a-tip .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; }
+    .s22a-tip .title { font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px; line-height: 1.2; }
+    .s22a-tip .desc { font-size: 15px; color: var(--stone); line-height: 1.5; margin-top: 8px; }
+    .s22a-tip code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .slide-22a .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-22a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>PART 05 · TIPS &amp; TRICKS</span>
+      <span class="mono caption">34 / 40</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">Tips &amp; Tricks · 6 가지 실전 노하우</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장 실사용에서 검증된 시간 절약 패턴들</p>
+
+    <div class="s22a-grid">
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:at-symbol"></iconify-icon>
+        <div>
+          <div class="num">TIP 01</div>
+          <div class="title"><code>@</code> 로 파일 직접 참조</div>
+          <div class="desc">"이 파일 읽어줘" 대신 <code>@src/auth.ts</code> 입력 → 자동 컨텍스트 로드. Read 도구 호출 안 거치고 바로 처리.</div>
+        </div>
+      </div>
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon>
+        <div>
+          <div class="num">TIP 02</div>
+          <div class="title"><code>!</code> 접두로 Bash 즉시 실행</div>
+          <div class="desc">슬래시 명령 본문에 <code>!`git log -5`</code> 식으로 작성하면 Claude 가 결과를 그대로 컨텍스트로 사용.</div>
+        </div>
+      </div>
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:bookmark"></iconify-icon>
+        <div>
+          <div class="num">TIP 03</div>
+          <div class="title"># 로 메모리 즉시 추가</div>
+          <div class="desc">대화 중 <code>#</code> 로 시작하면 해당 줄을 CLAUDE.md 또는 메모리에 영구 저장. 반복 지시 제거.</div>
+        </div>
+      </div>
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:arrow-path"></iconify-icon>
+        <div>
+          <div class="num">TIP 04</div>
+          <div class="title"><code>/clear</code> &amp; <code>/compact</code> 활용</div>
+          <div class="desc">긴 대화 후 <code>/compact</code> 로 핵심만 요약 보존, <code>/clear</code> 로 컨텍스트 완전 초기화. 토큰 80% 절약.</div>
+        </div>
+      </div>
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:cube-transparent"></iconify-icon>
+        <div>
+          <div class="num">TIP 05</div>
+          <div class="title">Plan Mode (<code>Shift+Tab</code>)</div>
+          <div class="desc">실행 전 계획만 보기. 큰 변경 시 안전장치. <code>defaultMode: "plan"</code> 으로 영구 설정 가능.</div>
+        </div>
+      </div>
+      <div class="s22a-tip">
+        <iconify-icon icon="heroicons:user-group"></iconify-icon>
+        <div>
+          <div class="num">TIP 06</div>
+          <div class="title">Sub-Agent 병렬 실행</div>
+          <div class="desc">검증·리서치는 Sub-Agent 에 위임 (Sonnet/Haiku 사용 가능). 토큰 격리 + 비용 절감 + 병렬 처리.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: docs.claude.com/claude-code/tips · 커뮤니티 모음</span></div>
+  </div>
+</body>
+</html>

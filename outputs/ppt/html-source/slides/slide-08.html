@@ -3,160 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>settings.json</title>
+  <title>settings.json · 권한</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-08 {
-      display: flex !important;
-      flex-direction: column !important;
-      height: 1080px !important;
-      padding: 60px 80px 50px 80px !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
-    }
-    .s08-body {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1.7fr 1fr;
-      gap: 48px;
-      margin-top: 24px;
-      min-height: 0;
-      overflow: hidden;
-    }
-    .s08-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-    .s08-right { display: flex; flex-direction: column; min-width: 0; }
-    .s08-code {
-      background: #1A1D24;
-      color: #39FF6C;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 15px;
-      line-height: 1.4;
-      padding: 18px 22px;
-      border-radius: 12px;
-      overflow: hidden;
-      flex: 0 0 auto;
-      white-space: pre;
-      margin-top: 12px;
-    }
-    .slide-08 .body { font-size: 18px; line-height: 1.5; }
-    .s08-box {
-      background: rgba(255, 255, 255, 0.7);
-      border: 0.5px solid var(--fog);
-      border-radius: 12px;
-      padding: 20px 24px;
-    }
-    .s08-box h3 {
-      font-size: 16px;
-      letter-spacing: 0.18em;
-      color: var(--gold);
-      text-transform: uppercase;
-      font-weight: 700;
-      margin: 0 0 12px 0;
-    }
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .s08-body { flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; margin-top: 24px; min-height: 0; overflow: hidden; }
+    .s08-left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .s08-right { display: flex; flex-direction: column; min-width: 0; gap: 14px; }
+    .s08-code { background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 18px; line-height: 1.5; padding: 22px 26px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
+    .s08-mode { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .s08-mode .m { background: rgba(255,255,255,0.75); border: 0.5px solid var(--fog); border-left: 4px solid var(--gold); border-radius: 10px; padding: 12px 16px; }
+    .s08-mode .m .k { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--deep-gold); }
+    .s08-mode .m .d { font-size: 14px; color: var(--stone); margin-top: 3px; }
+    .s08-box { background: rgba(255,255,255,0.75); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .s08-box h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
     .s08-box ul { list-style: none; padding: 0; margin: 0; }
-    .s08-box li {
-      font-size: 18px;
-      line-height: 1.4;
-      color: var(--ink);
-      padding: 6px 0;
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-    .s08-box li code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
-      color: var(--deep-gold);
-      background: rgba(184,134,78,0.08);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-    .s08-box li::before {
-      content: '';
-      flex-shrink: 0;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--gold);
-      position: relative;
-      top: 8px;
-    }
-    .s08-note {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 0.5px solid var(--fog);
-      font-size: 14px;
-      color: var(--stone);
-      line-height: 1.4;
-    }
-    .slide-08 .footer-border {
-      margin-top: auto;
-      padding-top: 12px;
-      border-top: 0.5px solid var(--fog);
-    }
+    .s08-box li { font-size: 16px; line-height: 1.4; color: var(--ink); padding: 4px 0; display: flex; align-items: baseline; gap: 8px; }
+    .s08-box li code { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .s08-box li::before { content: ''; flex-shrink: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); position: relative; top: 6px; }
+    .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
 <body>
   <div class="slide bg-tech slide-08">
     <div class="slide-header">
-      <span class="slide-eyebrow">
-        <iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>
-        PART 02 · SETTINGS
-      </span>
-      <span class="mono caption">09 / 27</span>
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>PART 02 · SETTINGS (1/2)</span>
+      <span class="mono caption">13 / 40</span>
     </div>
-
-    <div class="title-with-icon">
-      <iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon>
-      <h1 class="heading-1">settings.json</h1>
-    </div>
-    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">권한 · 훅 · MCP · 플러그인 · 한 곳에서 · 팀 공유 (git commit)</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">settings.json · 권한</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">allow / deny / ask · defaultMode 로 전체 수준 통제</p>
 
     <div class="s08-body">
       <div class="s08-left">
-        <p class="body">
-          <strong>defaultMode</strong> = <code>default</code> · <code>acceptEdits</code> · <code>plan</code> · <code>bypassPermissions</code>
-        </p>
         <pre class="s08-code">{
   "permissions": {
     "allow": ["Bash(npm:*)", "Edit"],
     "deny":  ["Bash(rm -rf *)"],
+    "ask":   ["Write(/etc/*)"],
     "defaultMode": "acceptEdits"
-  },
-  "hooks": {
-    "PostToolUse": [{
-      "matcher": "Edit|Write",
-      "hooks": [{ "command": "prettier --write $FILE" }]
-    }]
-  },
-  "enabledMcpjsonServers": ["github"]
+  }
 }</pre>
+        <div class="s08-mode">
+          <div class="m"><div class="k">default</div><div class="d">매번 물음 (안전)</div></div>
+          <div class="m"><div class="k">acceptEdits</div><div class="d">에디터 명령 자동 승인</div></div>
+          <div class="m"><div class="k">plan</div><div class="d">계획만, 실행 X</div></div>
+          <div class="m"><div class="k">bypassPermissions</div><div class="d">관리자 모드</div></div>
+        </div>
       </div>
 
       <div class="s08-right">
         <div class="s08-box">
-          <h3>◆ 주요 필드</h3>
+          <h3>◆ 권한 룰 문법</h3>
           <ul>
-            <li><code>permissions</code> allow/deny/ask</li>
-            <li><code>hooks</code> 이벤트 훅</li>
-            <li><code>defaultMode</code> 권한 수준</li>
-            <li><code>env</code> 환경변수</li>
-            <li><code>enabledMcpjsonServers</code></li>
-            <li><code>enabledPlugins</code></li>
+            <li><code>Bash(npm *)</code> 와일드카드</li>
+            <li><code>Edit(.claude)</code> 경로 한정</li>
+            <li><code>Read</code> 도구 전체</li>
+            <li><code>Write(/etc/*)</code> 차단/물음</li>
           </ul>
-          <div class="s08-note">
-            팀 설정 = settings.json (공유)<br>
-            개인 설정 = settings.local.json
-          </div>
+        </div>
+        <div class="s08-box">
+          <h3>◆ 우선순위</h3>
+          <ul>
+            <li>deny &gt; ask &gt; allow</li>
+            <li>local &gt; project &gt; user</li>
+            <li>구체 룰 &gt; 와일드카드</li>
+          </ul>
+        </div>
+        <div class="s08-box">
+          <h3>◆ 파일 분리</h3>
+          <ul>
+            <li><code>settings.json</code> 팀 공유 (commit)</li>
+            <li><code>settings.local.json</code> 개인 (ignore)</li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <div class="footer-border">
-      <span class="footnote">참조: settings.json 스키마</span>
-    </div>
+    <div class="footer-border"><span class="footnote">다음 페이지에서 hooks · MCP · 플러그인 →</span></div>
   </div>
 </body>
 </html>
