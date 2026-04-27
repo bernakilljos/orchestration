@@ -10,7 +10,8 @@ HTML/CSS → Playwright → PPTX 파이프라인으로 고품질 발표자료 �
 
 ## 📋 커맨드
 
-- `/make-ppt` ⭐ **기본** — HTML→PPTX 풀 파이프라인 (잘림 방지 워크플로우 내장)
+- `/design_ppt` ⭐ **기본** — HTML→PPTX 풀 파이프라인 (잘림 방지 워크플로우 내장)
+- `/make-ppt` — 호환 alias (`/design_ppt` 와 동일)
 - `/ai-system-stages` — AI 시스템 6단계 템플릿
 - `/arch-auto` — 아키텍처 다이어그램 자동
 - `/arch-mindmap` — 마인드맵
@@ -46,7 +47,7 @@ HTML/CSS → Playwright → PPTX 파이프라인으로 고품질 발표자료 �
 
 ### 예시 1: 주제 기반 생성
 ```
-/make-ppt "Claude Code 설계" 40
+/design_ppt "Claude Code 설계" 40
 ```
 - HTML 슬라이드 자동 생성 → Playwright 렌더 → PPTX 조립
 - 모든 PNG OCR 검증 → 잘림 0건까지 iterate

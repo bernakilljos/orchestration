@@ -18,7 +18,7 @@
     "env": []
   },
   "entry_points": {
-    "default_command": "make-ppt",
+    "default_command": "design_ppt",
     "core_skills": [
       "skill-ppt-pitfalls",
       "skill-08-design",

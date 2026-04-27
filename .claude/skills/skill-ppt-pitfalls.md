@@ -2,7 +2,7 @@
 name: ppt-pitfalls-checklist
 description: |
   PPT 생성 시 자주 마주치는 함정 13가지 체크리스트. 잘림(overflow)·파일명 정렬·페이지번호·OCR 검증·이미지 채움 관련 실수 방지.
-  사용자가 "PPT 만들어줘", "슬라이드 생성", "발표자료", "/make-ppt", "/design_ppt", "PPT 분할", "페이지 추가", "잘림", "여백" 등을 언급할 때 자동 활성화.
+  사용자가 "PPT 만들어줘", "슬라이드 생성", "발표자료", "/design_ppt", "/make-ppt", "PPT 분할", "페이지 추가", "잘림", "여백" 등을 언급할 때 자동 활성화.
   HTML→Playwright→PPTX 파이프라인 작업 (outputs/ppt/html-source/slides/) 시작 시 항상 적용.
 ---
 
