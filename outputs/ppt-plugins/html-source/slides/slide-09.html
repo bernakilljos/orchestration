@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시나리오 1 — 신규 프로젝트</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 24px; min-height: 0; align-items: stretch; }
+    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 22px; display: flex; flex-direction: column; gap: 12px; min-height: 0; position: relative; }
+    .step::after { content: '→'; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); font-size: 32px; color: var(--gold); font-weight: 700; z-index: 2; }
+    .step:last-child::after { display: none; }
+    .step.s1 { border-top: 5px solid var(--gold); }
+    .step.s2 { border-top: 5px solid var(--sage); }
+    .step.s3 { border-top: 5px solid #7A4E6B; }
+    .step.s4 { border-top: 5px solid var(--terracotta); }
+    .step.s5 { border-top: 5px solid #8A6235; }
+    .step iconify-icon { font-size: 40px; }
+    .step.s1 iconify-icon { color: var(--gold); }
+    .step.s2 iconify-icon { color: var(--sage); }
+    .step.s3 iconify-icon { color: #7A4E6B; }
+    .step.s4 iconify-icon { color: var(--terracotta); }
+    .step.s5 iconify-icon { color: #8A6235; }
+    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); font-weight: 600; letter-spacing: 0.2em; }
+    .step .title { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .step .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
+    .step .plug { margin-top: auto; padding-top: 12px; border-top: 0.5px dashed var(--fog); display: flex; flex-direction: column; gap: 4px; }
+    .step .plug .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--deep-gold); font-weight: 700; letter-spacing: 0.15em; }
+    .step .plug code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink); background: rgba(184,134,78,0.08); padding: 2px 5px; border-radius: 3px; align-self: flex-start; }
+    .slide-09 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-09">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>SCENARIO 01 · NEW PROJECT</span>
+      <span class="mono caption">09 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon><h1 class="heading-1">시나리오 1 · 신규 프로젝트 시작</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">새 저장소 생성 → 환경 세팅 → 협업 도구 연결 → 첫 코드 → 검증</p>
+
+    <div class="body">
+      <div class="step s1">
+        <iconify-icon icon="heroicons:folder-plus"></iconify-icon>
+        <div class="num">STEP 01</div>
+        <div class="title">프로젝트 생성</div>
+        <div class="desc">setup.bat 으로 새 폴더 + Claude 환경 + GitHub 저장소 (선택).</div>
+        <div class="plug">
+          <span class="lbl">USE</span>
+          <code>setup\setup.bat</code>
+        </div>
+      </div>
+      <div class="step s2">
+        <iconify-icon icon="heroicons:document-plus"></iconify-icon>
+        <div class="num">STEP 02</div>
+        <div class="title">CLAUDE.md 작성</div>
+        <div class="desc">/init 으로 자동 스캔·초안 → 팀 룰 추가·커밋.</div>
+        <div class="plug">
+          <span class="lbl">USE</span>
+          <code>/init</code>
+        </div>
+      </div>
+      <div class="step s3">
+        <iconify-icon icon="heroicons:link"></iconify-icon>
+        <div class="num">STEP 03</div>
+        <div class="title">개발 MCP 연결</div>
+        <div class="desc">GitHub·Docker·Vercel 등 필요한 MCP 일괄 설치.</div>
+        <div class="plug">
+          <span class="lbl">USE</span>
+          <code>/mcp_dev-install</code>
+        </div>
+      </div>
+      <div class="step s4">
+        <iconify-icon icon="heroicons:code-bracket"></iconify-icon>
+        <div class="num">STEP 04</div>
+        <div class="title">첫 코드 + 자동화</div>
+        <div class="desc">exec_orch 로 Claude 설계 → Codex 구현 → 자동 PR.</div>
+        <div class="plug">
+          <span class="lbl">USE</span>
+          <code>/exec_orch</code>
+        </div>
+      </div>
+      <div class="step s5">
+        <iconify-icon icon="heroicons:shield-check"></iconify-icon>
+        <div class="num">STEP 05</div>
+        <div class="title">리뷰·검증</div>
+        <div class="desc">코드 리뷰·보안 스캔·테스트·성능 측정 자동.</div>
+        <div class="plug">
+          <span class="lbl">USE</span>
+          <code>/validate</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">소요: 약 30분 (수동 설치 대비 80% 절감)</span></div>
+  </div>
+</body>
+</html>

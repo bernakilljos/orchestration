@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>본판 vs TEAM 비교</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-04 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: flex; flex-direction: column; gap: 18px; margin-top: 24px; min-height: 0; }
+    .table { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 36px; flex: 1; min-height: 0; }
+    .table table { width: 100%; border-collapse: collapse; }
+    .table th { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 12px 14px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .table th.lbl  { color: var(--deep-gold); }
+    .table th.tool { color: var(--gold); }
+    .table th.team { color: var(--sage); }
+    .table td { padding: 14px; font-size: 15px; color: var(--ink); border-bottom: 0.5px solid var(--fog); }
+    .table td.lbl { font-weight: 700; color: var(--deep-gold); width: 22%; }
+    .table td.tool { background: rgba(184,134,78,0.05); }
+    .table td.team { background: rgba(107,142,127,0.06); }
+    .table td iconify-icon { vertical-align: middle; margin-right: 6px; font-size: 16px; }
+    .table td .ok { color: var(--sage); }
+    .table td .x  { color: var(--terracotta); }
+    .table td .meh { color: var(--stone); }
+    .slide-04 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-04">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>PART 01 · COMPARISON</span>
+      <span class="mono caption">04 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">본판 vs TEAM · 9 항목 비교</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">코드는 동일 · 출고 상태만 다름 — 어느 쪽이 어디에 적합한지 한눈에</p>
+
+    <div class="body">
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th class="lbl">항목</th><th class="tool">orchestration_v1 (본판)</th><th class="team">orchestration_v1_team (TEAM)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="lbl">대상</td>
+              <td class="tool"><iconify-icon icon="heroicons:user" class="meh"></iconify-icon>킷 작성자·메인테이너</td>
+              <td class="team"><iconify-icon icon="heroicons:user-group" class="ok"></iconify-icon>팀원·신규 도입 회사</td>
+            </tr>
+            <tr><td class="lbl">GitHub PAT</td>
+              <td class="tool"><iconify-icon icon="heroicons:exclamation-triangle" class="x"></iconify-icon>하드코딩 fallback 포함 (작성자 PAT)</td>
+              <td class="team"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>제거됨 — 입력 시만 사용</td>
+            </tr>
+            <tr><td class="lbl">설치 시 토큰</td>
+              <td class="tool"><iconify-icon icon="heroicons:lock-closed" class="meh"></iconify-icon>fallback 으로 진행 (작성자 PAT)</td>
+              <td class="team"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>prompt + Enter SKIP 가능</td>
+            </tr>
+            <tr><td class="lbl">개인 상태 (state DB)</td>
+              <td class="tool"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>작업 흔적 포함</td>
+              <td class="team"><iconify-icon icon="heroicons:x-circle" class="x"></iconify-icon>제외 — 클린 시작</td>
+            </tr>
+            <tr><td class="lbl">outputs/</td>
+              <td class="tool"><iconify-icon icon="heroicons:document" class="meh"></iconify-icon>실 작업 결과물 포함</td>
+              <td class="team"><iconify-icon icon="heroicons:x-circle" class="x"></iconify-icon>제외 — 빈 상태</td>
+            </tr>
+            <tr><td class="lbl">.env / settings.local</td>
+              <td class="tool"><iconify-icon icon="heroicons:exclamation-triangle" class="x"></iconify-icon>작성자 시크릿 가능</td>
+              <td class="team"><iconify-icon icon="heroicons:x-circle" class="x"></iconify-icon>제외</td>
+            </tr>
+            <tr><td class="lbl">git history</td>
+              <td class="tool"><iconify-icon icon="heroicons:arrow-trending-up" class="meh"></iconify-icon>전체 commit 이력</td>
+              <td class="team"><iconify-icon icon="heroicons:arrow-path" class="ok"></iconify-icon>새로 init · Initial commit 1개</td>
+            </tr>
+            <tr><td class="lbl">플러그인</td>
+              <td class="tool"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>25개 동일</td>
+              <td class="team"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>25개 동일</td>
+            </tr>
+            <tr><td class="lbl">기능</td>
+              <td class="tool"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>전체 동일</td>
+              <td class="team"><iconify-icon icon="heroicons:check-circle" class="ok"></iconify-icon>전체 동일</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">결론: 코드·기능 동일 · TEAM 은 출고 안전성 + 깨끗한 시작점만 추가</span></div>
+  </div>
+</body>
+</html>

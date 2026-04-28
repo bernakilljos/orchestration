@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>메트릭 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; min-height: 0; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px; }
+    .stat { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 6px; }
+    .stat.cost { border-top: 5px solid var(--gold); }
+    .stat.task { border-top: 5px solid var(--sage); }
+    .stat.token { border-top: 5px solid #7A4E6B; }
+    .stat.fail { border-top: 5px solid var(--terracotta); }
+    .stat .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; }
+    .stat .val { font-family: 'Fraunces', serif; font-size: 44px; font-weight: 700; color: var(--ink); line-height: 1; margin-top: 4px; }
+    .stat.cost .val { color: var(--gold); }
+    .stat.task .val { color: var(--sage); }
+    .stat.token .val { color: #7A4E6B; }
+    .stat.fail .val { color: var(--terracotta); }
+    .stat .delta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--stone); margin-top: 4px; }
+    .stat .delta.up { color: #4A6F60; }
+    .stat .delta.down { color: #8A3E26; }
+    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 22px 26px; border-radius: 14px; white-space: pre; overflow: hidden; }
+    .terminal .h { color: #B8864E; font-weight: 700; }
+    .terminal .ok { color: #6B8E7F; }
+    .terminal .num { color: #E8B96B; }
+    .terminal .c { color: #6E685C; font-style: italic; }
+    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; border-left: 5px solid var(--gold); }
+    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; }
+    .box ul { list-style: none; padding: 0; margin: 0; }
+    .box li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 2px 0; display: flex; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .box li::before { content: '▸'; color: var(--deep-gold); }
+    .slide-09 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-09">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:chart-bar" class="icon-sm"></iconify-icon>PART 04 · METRICS</span>
+      <span class="mono caption">09 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:chart-bar" class="icon-lg"></iconify-icon><h1 class="heading-1">Metrics 대시보드 · 실시간 운영</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);"><code>metrics-report.py</code> · SQLite 집계 · 비용·태스크·토큰·실패율</p>
+
+    <div class="body">
+      <div class="stats">
+        <div class="stat cost">
+          <div class="lbl">오늘 비용</div>
+          <div class="val">$3.42</div>
+          <div class="delta up">↓ 어제 $4.10 (−16%)</div>
+        </div>
+        <div class="stat task">
+          <div class="lbl">완료 task</div>
+          <div class="val">147</div>
+          <div class="delta up">+ 진행 중 8</div>
+        </div>
+        <div class="stat token">
+          <div class="lbl">토큰 사용</div>
+          <div class="val">2.4M</div>
+          <div class="delta">cache hit 78%</div>
+        </div>
+        <div class="stat fail">
+          <div class="lbl">실패율</div>
+          <div class="val">2.1%</div>
+          <div class="delta up">↓ 지난주 3.4%</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <pre class="terminal"><span class="c"># python .claude/scripts/metrics-report.py</span>
+<span class="h">═══ 24h Summary ═══</span>
+  Total cost     <span class="num">$3.42</span> <span class="ok">(-16%)</span>
+  Tasks done     <span class="num">147</span>  in-progress: 8
+  Tokens         <span class="num">2.4M</span> cache: 78%
+  Failure rate   <span class="num">2.1%</span> <span class="ok">(-1.3pp)</span>
+
+<span class="h">═══ Top Models ═══</span>
+  opus-4-7       <span class="num">38%</span> $1.30
+  haiku-4-5      <span class="num">42%</span> $0.32
+  codex          <span class="num">20%</span> $1.80
+
+<span class="h">═══ Top Plugins ═══</span>
+  exec_orch      <span class="num">52</span> tasks
+  design_ppt     <span class="num">23</span> tasks
+  review_qa      <span class="num">19</span> tasks</pre>
+
+        <div class="box">
+          <h3>◆ 명령</h3>
+          <ul>
+            <li><code>/exec_status</code> — 워커·큐·heartbeat 한 번에</li>
+            <li><code>/token-stats</code> — 세션별 토큰 분포</li>
+            <li><code>route.py --status</code> — quota·budget 현황</li>
+            <li><code>metrics-report.py</code> — 24h/7d 집계</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">상세: docs/metrics-guide.md · 데이터: <code>.claude/state/orca.db</code></span></div>
+  </div>
+</body>
+</html>

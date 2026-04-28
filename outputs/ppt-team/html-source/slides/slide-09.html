@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>자주 쓰는 명령</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 24px; min-height: 0; }
+    .col { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: hidden; }
+    .col.c1 { border-top: 5px solid var(--sage); }
+    .col.c2 { border-top: 5px solid var(--gold); }
+    .col.c3 { border-top: 5px solid #7A4E6B; }
+    .col.c4 { border-top: 5px solid var(--terracotta); }
+    .col h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .col.c1 h3 { color: #4A6F60; }
+    .col.c3 h3 { color: #5A3850; }
+    .col.c4 h3 { color: #8A3E26; }
+    .col iconify-icon.head { font-size: 28px; }
+    .col.c1 iconify-icon.head { color: var(--sage); }
+    .col.c2 iconify-icon.head { color: var(--gold); }
+    .col.c3 iconify-icon.head { color: #7A4E6B; }
+    .col.c4 iconify-icon.head { color: var(--terracotta); }
+    .col .row { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 0.5px dashed rgba(184,134,78,0.2); }
+    .col .row:last-child { border-bottom: none; }
+    .col .row code { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+    .col .row span { font-size: 12px; color: var(--ink); line-height: 1.4; }
+    .slide-09 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-09">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:list-bullet" class="icon-sm"></iconify-icon>PART 03 · FREQUENT COMMANDS</span>
+      <span class="mono caption">09 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:list-bullet" class="icon-lg"></iconify-icon><h1 class="heading-1">자주 쓰는 명령 모음</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">카테고리별 핵심 슬래시 명령 — 일상에서 가장 많이 쓰는 것</p>
+
+    <div class="body">
+      <div class="col c1">
+        <iconify-icon icon="heroicons:cog-8-tooth" class="head"></iconify-icon>
+        <h3>실행 / 자동화</h3>
+        <div class="row"><code>/exec_orch</code><span>멀티AI 진입</span></div>
+        <div class="row"><code>/exec_status</code><span>통합 상태</span></div>
+        <div class="row"><code>/orcauto-start</code><span>워커 시작</span></div>
+        <div class="row"><code>/orcauto-stop</code><span>워커 중단</span></div>
+        <div class="row"><code>/check-agents</code><span>에이전트 가용</span></div>
+        <div class="row"><code>/godmode</code><span>최대 출력</span></div>
+        <div class="row"><code>/guard-save</code><span>스냅샷</span></div>
+      </div>
+      <div class="col c2">
+        <iconify-icon icon="heroicons:paint-brush" class="head"></iconify-icon>
+        <h3>콘텐츠 생성</h3>
+        <div class="row"><code>/design_ppt</code><span>PPT 자동</span></div>
+        <div class="row"><code>/excel-make</code><span>Excel</span></div>
+        <div class="row"><code>/word-make</code><span>Word</span></div>
+        <div class="row"><code>/pdf-generate</code><span>PDF</span></div>
+        <div class="row"><code>/arch-mindmap</code><span>마인드맵</span></div>
+        <div class="row"><code>/arch-auto</code><span>다이어그램</span></div>
+        <div class="row"><code>/ai-system-stages</code><span>6단계 PPT</span></div>
+      </div>
+      <div class="col c3">
+        <iconify-icon icon="heroicons:link" class="head"></iconify-icon>
+        <h3>MCP 설치</h3>
+        <div class="row"><code>/mcp_dev-install</code><span>개발</span></div>
+        <div class="row"><code>/mcp_data-install</code><span>데이터</span></div>
+        <div class="row"><code>/mcp_collab-install</code><span>협업</span></div>
+        <div class="row"><code>/mcp_web-install</code><span>웹</span></div>
+        <div class="row"><code>/mcp_docs-install</code><span>문서</span></div>
+        <div class="row"><code>/mcp_media-install</code><span>미디어</span></div>
+        <div class="row"><code>/plug_all</code><span>전체</span></div>
+      </div>
+      <div class="col c4">
+        <iconify-icon icon="heroicons:shield-check" class="head"></iconify-icon>
+        <h3>검증 / 운영</h3>
+        <div class="row"><code>/review_qa</code><span>코드 리뷰</span></div>
+        <div class="row"><code>/security</code><span>보안 스캔</span></div>
+        <div class="row"><code>/validate</code><span>전체 검증</span></div>
+        <div class="row"><code>/screenshot</code><span>스샷</span></div>
+        <div class="row"><code>/performance</code><span>성능</span></div>
+        <div class="row"><code>/token-stats</code><span>토큰</span></div>
+        <div class="row"><code>/check</code><span>종합 체크</span></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">전체 ~110개 명령. <code>/help</code> 또는 <code>.claude/commands/</code> 디렉토리 참조</span></div>
+  </div>
+</body>
+</html>

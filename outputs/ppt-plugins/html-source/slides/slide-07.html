@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>의존성 그래프</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-07 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 36px; margin-top: 24px; min-height: 0; }
+    .svg-box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 0; }
+    .svg-box svg { width: 100%; height: auto; max-width: 800px; }
+    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .box.core { border-left: 5px solid var(--gold); }
+    .box.tier { border-left: 5px solid var(--sage); }
+    .box.opt  { border-left: 5px solid #7A4E6B; }
+    .box h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; }
+    .box.tier h3 { color: #4A6F60; }
+    .box.opt h3  { color: #5A3850; }
+    .box ul { list-style: none; padding: 0; margin: 0; }
+    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .box li::before { content: '▸'; color: var(--deep-gold); font-weight: 700; }
+    .slide-07 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-07">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:share" class="icon-sm"></iconify-icon>DEPENDENCY GRAPH</span>
+      <span class="mono caption">07 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:share" class="icon-lg"></iconify-icon><h1 class="heading-1">의존성 · exec_orch 가 중심</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">대부분 플러그인이 exec_orch 에 의존 · 순환 의존 없음</p>
+
+    <div class="body">
+      <div class="svg-box">
+        <svg viewBox="0 0 720 480">
+          <!-- 중앙: exec_orch -->
+          <circle cx="360" cy="240" r="80" fill="#FAF5EA" stroke="#B8864E" stroke-width="3.5"/>
+          <text x="360" y="235" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="700" fill="#1A1D24">exec_orch</text>
+          <text x="360" y="262" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#8A6235">CORE</text>
+
+          <!-- 1차 위성 (직접 의존) -->
+          <g stroke="#B8864E" stroke-width="1.5" fill="none" opacity="0.5" stroke-dasharray="3,4">
+            <line x1="360" y1="240" x2="160" y2="100"/>
+            <line x1="360" y1="240" x2="560" y2="100"/>
+            <line x1="360" y1="240" x2="100" y2="240"/>
+            <line x1="360" y1="240" x2="620" y2="240"/>
+            <line x1="360" y1="240" x2="160" y2="380"/>
+            <line x1="360" y1="240" x2="560" y2="380"/>
+          </g>
+
+          <!-- 직속 plugins -->
+          <g font-family="JetBrains Mono" font-size="13" font-weight="600">
+            <circle cx="160" cy="100" r="44" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="160" y="98" text-anchor="middle" fill="#1A1D24">design_ppt</text>
+            <text x="160" y="114" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <circle cx="560" cy="100" r="44" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="560" y="98" text-anchor="middle" fill="#1A1D24">design_excel</text>
+            <text x="560" y="114" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <circle cx="100" cy="240" r="44" fill="white" stroke="#7A4E6B" stroke-width="2"/>
+            <text x="100" y="238" text-anchor="middle" fill="#1A1D24">mcp_dev</text>
+            <text x="100" y="254" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <circle cx="620" cy="240" r="44" fill="white" stroke="#7A4E6B" stroke-width="2"/>
+            <text x="620" y="238" text-anchor="middle" fill="#1A1D24">mcp_data</text>
+            <text x="620" y="254" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <circle cx="160" cy="380" r="44" fill="white" stroke="#B25A3E" stroke-width="2" stroke-dasharray="3,3"/>
+            <text x="160" y="378" text-anchor="middle" fill="#1A1D24">ai_rag</text>
+            <text x="160" y="394" text-anchor="middle" font-size="10" fill="#6E685C">spec</text>
+
+            <circle cx="560" cy="380" r="44" fill="white" stroke="#8A6235" stroke-width="2"/>
+            <text x="560" y="378" text-anchor="middle" fill="#1A1D24">review_qa</text>
+            <text x="560" y="394" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="right">
+        <div class="box core">
+          <h3><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon> 코어 (필수)</h3>
+          <ul>
+            <li><code>exec_orch</code> — 진입점</li>
+            <li>모든 자동화 플러그인의 의존 대상</li>
+            <li>워커·라우팅·세션 관리</li>
+          </ul>
+        </div>
+        <div class="box tier">
+          <h3><iconify-icon icon="heroicons:rectangle-stack"></iconify-icon> 1 차 (직속)</h3>
+          <ul>
+            <li>design_*  ← exec_orch</li>
+            <li>mcp_*  ← exec_orch</li>
+            <li>review_qa  ← exec_orch</li>
+          </ul>
+        </div>
+        <div class="box opt">
+          <h3><iconify-icon icon="heroicons:plus-circle"></iconify-icon> 독립 (의존 없음)</h3>
+          <ul>
+            <li><code>exec_session_guard</code> 단독 동작</li>
+            <li><code>music_studio</code> 단독 동작</li>
+            <li><code>cost_youtube</code> ← mcp_social</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">검증: resolve-plugin-order.py 위상정렬 통과 · 순환 의존 0건</span></div>
+  </div>
+</body>
+</html>

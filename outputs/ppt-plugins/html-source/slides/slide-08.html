@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>플러그인 구조</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 24px; min-height: 0; }
+    .tree { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 17px; line-height: 1.6; padding: 26px 32px; border-radius: 14px; white-space: pre; overflow: hidden; }
+    .tree .h { color: #B8864E; font-weight: 700; }
+    .tree .b { color: #6B8E7F; }
+    .tree .c { color: #6E685C; font-style: italic; }
+    .right { display: flex; flex-direction: column; gap: 14px; }
+    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 24px; }
+    .box.req  { border-left: 5px solid var(--gold); }
+    .box.opt  { border-left: 5px solid var(--sage); }
+    .box.scfd { border-left: 5px solid #7A4E6B; }
+    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .box.opt h3 { color: #4A6F60; }
+    .box.scfd h3 { color: #5A3850; }
+    .box ul { list-style: none; padding: 0; margin: 0; }
+    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .box li::before { content: '•'; color: var(--deep-gold); font-weight: 700; }
+    .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-08">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:folder" class="icon-sm"></iconify-icon>PLUGIN STRUCTURE</span>
+      <span class="mono caption">08 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:folder" class="icon-lg"></iconify-icon><h1 class="heading-1">플러그인 표준 구조</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">SoT 원칙 — plugins/ 가 원본 · .claude/ 는 sync 결과</p>
+
+    <div class="body">
+      <pre class="tree"><span class="h">plugins/&lt;name&gt;/</span>
+├── <span class="h">plugin.json</span>           <span class="c"># 필수 스키마 v1.2</span>
+├── <span class="h">README.md</span>             <span class="c"># 사용법·예시</span>
+├── <span class="b">commands/</span>             <span class="c"># /slash 명령</span>
+│   └── *.md
+├── <span class="b">skills/</span>               <span class="c"># 자동 활성 스킬</span>
+│   └── *.md
+├── <span class="b">agents/</span>               <span class="c"># 전문 에이전트</span>
+│   └── agent-*.md
+├── <span class="b">hooks/</span>                <span class="c"># 이벤트 훅 + 스크립트</span>
+│   ├── hook-*.md
+│   └── *.sh
+└── <span class="h">SPEC.md</span>               <span class="c"># spec-only 일 때만</span>
+
+<span class="c"># 편집 → sync 플로우</span>
+<span class="b">vim plugins/&lt;name&gt;/...</span>
+<span class="b">bash .claude/scripts/sync-plugins.sh</span>
+<span class="b">git commit -m "..."</span></pre>
+
+      <div class="right">
+        <div class="box req">
+          <h3>◆ 필수 (plugin.json v1.2)</h3>
+          <ul>
+            <li><code>name</code> — prefix_feature</li>
+            <li><code>display</code> — 한 줄 한글 설명</li>
+            <li><code>prefix</code> — 등록된 prefix</li>
+            <li><code>version</code> — 1.0 패턴</li>
+            <li><code>status</code> — stable / spec-only / experimental</li>
+            <li><code>phase</code> — 0 (현재 모두)</li>
+          </ul>
+        </div>
+        <div class="box opt">
+          <h3>◆ 권장 추가 필드</h3>
+          <ul>
+            <li><code>dependencies.plugins</code> — 의존 플러그인</li>
+            <li><code>entry_points.default_command</code></li>
+            <li><code>entry_points.core_skills</code></li>
+            <li><code>metadata.precedence</code> — 로드 순서</li>
+            <li><code>metadata.token_estimate</code> — 비용 예측</li>
+          </ul>
+        </div>
+        <div class="box scfd">
+          <h3>◆ 새 플러그인 만들기</h3>
+          <ul>
+            <li><code>cp -r plugins/_template plugins/&lt;new&gt;</code></li>
+            <li>plugin.json 의 name·prefix·display 수정</li>
+            <li>sync-plugins.sh 로 .claude/ 반영</li>
+            <li>validate-plugin-schema.py 로 검증</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: .claude/rules/plugin-structure.md · frontmatter.md · sync-workflow.md</span></div>
+  </div>
+</body>
+</html>

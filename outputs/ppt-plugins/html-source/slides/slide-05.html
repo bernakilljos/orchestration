@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>MCP — 8 플러그인</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-top: 5px solid #7A4E6B; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; overflow: hidden; }
+    .card iconify-icon { font-size: 32px; color: #7A4E6B; }
+    .card .name { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--ink); }
+    .card .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
+    .card .cmd { margin-top: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5A3850; background: rgba(122,78,107,0.12); padding: 5px 9px; border-radius: 6px; align-self: flex-start; }
+    .card .stat { position: absolute; top: 14px; right: 14px; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 7px; border-radius: 100px; letter-spacing: 0.1em; font-weight: 700; }
+    .card.stable .stat { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .card.spec .stat   { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .card.spec { opacity: 0.85; }
+    .slide-05 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-05">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:link" class="icon-sm"></iconify-icon>CATEGORY 03 · MCP SERVERS</span>
+      <span class="mono caption">05 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:link" class="icon-lg"></iconify-icon><h1 class="heading-1">mcp_* · 외부 서버 8</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">npm 검증된 MCP 서버 묶음 설치 — 카테고리별 install/status 명령</p>
+
+    <div class="grid">
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="simple-icons:github"></iconify-icon>
+        <div class="name">mcp_dev</div>
+        <div class="desc">개발 — GitHub·GitLab·Docker·K8s·AWS·Firebase·Vercel·Supabase</div>
+        <span class="cmd">/mcp_dev-install</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="simple-icons:postgresql"></iconify-icon>
+        <div class="name">mcp_data</div>
+        <div class="desc">데이터 — MySQL·PostgreSQL·MongoDB·BigQuery·Snowflake·Sheets</div>
+        <span class="cmd">/mcp_data-install</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="simple-icons:slack"></iconify-icon>
+        <div class="name">mcp_collab</div>
+        <div class="desc">협업 — Slack·Notion·Jira·Trello·Gmail·Google Calendar</div>
+        <span class="cmd">/mcp_collab-install</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="simple-icons:playwright"></iconify-icon>
+        <div class="name">mcp_web</div>
+        <div class="desc">웹자동화 — Playwright·Puppeteer·Apify·Fetch·PDF</div>
+        <span class="cmd">/mcp_web-install</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:document-magnifying-glass"></iconify-icon>
+        <div class="name">mcp_docs</div>
+        <div class="desc">문서처리 — PDF(MCP) · DOCX · OCR (Tesseract)</div>
+        <span class="cmd">/mcp_docs-install</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:musical-note"></iconify-icon>
+        <div class="name">mcp_media</div>
+        <div class="desc">미디어 — Whisper(STT) · edge-tts · FFmpeg</div>
+        <span class="cmd">/mcp_media-install</span>
+      </div>
+      <div class="card spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:queue-list"></iconify-icon>
+        <div class="name">mcp_queue</div>
+        <div class="desc">메시지 브로커 — Kafka·RabbitMQ·Redis Pub/Sub·AWS SQS</div>
+        <span class="cmd">/mcp_queue-install</span>
+      </div>
+      <div class="card spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:hashtag"></iconify-icon>
+        <div class="name">mcp_social</div>
+        <div class="desc">소셜 — YouTube·Instagram·TikTok·X·Naver·Tistory</div>
+        <span class="cmd">/mcp_social-install</span>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/mcp_*/plugin.json · plug_all 로 전체 일괄 설치 가능</span></div>
+  </div>
+</body>
+</html>

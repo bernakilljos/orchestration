@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>토큰 입력 흐름</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 24px; min-height: 0; }
+    .pane { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 28px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .pane.with { border-top: 6px solid var(--sage); }
+    .pane.skip { border-top: 6px solid var(--terracotta); }
+    .pane .head { display: flex; align-items: center; gap: 14px; }
+    .pane iconify-icon { font-size: 40px; flex-shrink: 0; }
+    .pane.with iconify-icon { color: var(--sage); }
+    .pane.skip iconify-icon { color: var(--terracotta); }
+    .pane .name { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: var(--ink); }
+    .pane .tagline { font-size: 13px; color: #4A6F60; font-weight: 600; }
+    .pane.skip .tagline { color: #8A3E26; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 16px 20px; border-radius: 10px; white-space: pre; overflow: hidden; }
+    .terminal .ok { color: #6B8E7F; }
+    .terminal .h { color: #B8864E; font-weight: 700; }
+    .terminal .c { color: #6E685C; font-style: italic; }
+    .terminal .skip { color: #B25A3E; font-weight: 700; }
+    .effect { background: rgba(184,134,78,0.06); border-left: 3px solid var(--gold); padding: 12px 16px; border-radius: 8px; }
+    .effect h4 { font-size: 12px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 6px 0; }
+    .effect ul { list-style: none; padding: 0; margin: 0; }
+    .effect li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 2px 0; display: flex; gap: 6px; }
+    .effect li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .effect li::before { content: '✓'; color: var(--sage); font-weight: 700; }
+    .pane.skip .effect li::before { content: '○'; color: var(--terracotta); }
+    .later { background: rgba(107,142,127,0.06); border: 0.5px dashed var(--sage); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+    .later strong { color: #4A6F60; }
+    .later code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .slide-06 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-06">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:key" class="icon-sm"></iconify-icon>PART 02 · TOKEN FLOW</span>
+      <span class="mono caption">06 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:key" class="icon-lg"></iconify-icon><h1 class="heading-1">토큰 입력 · 두 가지 흐름</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">토큰 있을 때 / 없을 때 — 어느 경우에도 설치 자체는 성공</p>
+
+    <div class="body">
+      <div class="pane with">
+        <div class="head">
+          <iconify-icon icon="heroicons:check-badge"></iconify-icon>
+          <div>
+            <div class="name">토큰 입력 시</div>
+            <div class="tagline">FULL — 자동 GitHub 연동</div>
+          </div>
+        </div>
+        <pre class="terminal">  Token (없으면 Enter): <span class="h">ghp_xxxxx...</span>
+  <span class="ok">[OK] Token 저장 (User 환경변수)</span>
+
+  Creating GitHub repo: my-project...
+  <span class="ok">[OK] https://github.com/.../my-project.git</span>
+  <span class="ok">[OK] git remote add origin</span>
+  <span class="ok">[OK] Initial commit done</span></pre>
+        <div class="effect">
+          <h4>◆ 효과</h4>
+          <ul>
+            <li>GitHub 저장소 자동 생성</li>
+            <li>remote origin 연결</li>
+            <li>Initial commit + push 가능</li>
+            <li><code>github MCP</code> 토큰 자동 사용</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pane skip">
+        <div class="head">
+          <iconify-icon icon="heroicons:forward"></iconify-icon>
+          <div>
+            <div class="name">Enter 만 (SKIP)</div>
+            <div class="tagline">LITE — 로컬 git 만, 설치 진행</div>
+          </div>
+        </div>
+        <pre class="terminal">  Token (없으면 Enter): <span class="h">[Enter]</span>
+  <span class="skip">[SKIP] GitHub 저장소 생성 단계
+         — 토큰 미입력</span>
+  <span class="ok">[OK] git init done (원격 없음)</span>
+
+  <span class="c"># 나중에 추가하려면:</span>
+  <span class="c"># 1. github.ini 에 GITHUB_PAT= 입력</span>
+  <span class="c"># 2. setx 환경변수 설정</span></pre>
+        <div class="effect">
+          <h4>◆ 효과</h4>
+          <ul>
+            <li>로컬 git 만 init (remote 없음)</li>
+            <li>GitHub 저장소 생성 X</li>
+            <li>나머지 모든 모듈은 정상 진행</li>
+            <li>나중에 토큰 추가 가능</li>
+          </ul>
+        </div>
+        <div class="later">
+          <strong>나중에 추가:</strong> <code>docs/ini/github.ini</code> 의 <code>GITHUB_PAT=</code> 에 토큰 붙여넣기 → 다음 setup·install 부터 자동 사용
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">PAT 발급: <code>https://github.com/settings/tokens</code> · scope: <code>repo</code> 권한 필요</span></div>
+  </div>
+</body>
+</html>

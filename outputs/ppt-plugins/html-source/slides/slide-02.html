@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TOC — 6 카테고리</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-02 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .toc-body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 18px; margin-top: 32px; min-height: 0; }
+    .toc-cat { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; }
+    .toc-cat.exec   { border-top: 6px solid var(--gold); }
+    .toc-cat.design { border-top: 6px solid var(--sage); }
+    .toc-cat.mcp    { border-top: 6px solid #7A4E6B; }
+    .toc-cat.ai     { border-top: 6px solid var(--terracotta); }
+    .toc-cat.review { border-top: 6px solid #8A6235; }
+    .toc-cat.media  { border-top: 6px solid #5A8C8A; }
+    .toc-cat .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); font-weight: 600; letter-spacing: 0.18em; }
+    .toc-cat iconify-icon { font-size: 36px; }
+    .toc-cat.exec iconify-icon { color: var(--gold); }
+    .toc-cat.design iconify-icon { color: var(--sage); }
+    .toc-cat.mcp iconify-icon { color: #7A4E6B; }
+    .toc-cat.ai iconify-icon { color: var(--terracotta); }
+    .toc-cat.review iconify-icon { color: #8A6235; }
+    .toc-cat.media iconify-icon { color: #5A8C8A; }
+    .toc-cat .name { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+    .toc-cat .desc { font-size: 14px; color: var(--stone); line-height: 1.4; }
+    .toc-cat .count { position: absolute; top: 18px; right: 22px; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; padding: 4px 10px; background: rgba(184,134,78,0.12); color: var(--deep-gold); border-radius: 100px; }
+    .toc-cat.exec .count { background: rgba(184,134,78,0.15); }
+    .toc-cat.design .count { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .toc-cat.mcp .count { background: rgba(122,78,107,0.18); color: #5A3850; }
+    .toc-cat.ai .count { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .toc-cat.review .count { background: rgba(138,98,53,0.16); color: #6B4D29; }
+    .toc-cat.media .count { background: rgba(90,140,138,0.16); color: #3F6663; }
+    .toc-cat ul { list-style: none; padding: 0; margin: 8px 0 0 0; border-top: 0.5px dashed var(--fog); padding-top: 10px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; align-content: start; }
+    .toc-cat li { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); padding: 2px 0; display: flex; align-items: center; gap: 6px; }
+    .toc-cat li::before { content: '◆'; color: var(--deep-gold); font-size: 9px; }
+    .slide-02 .footer-border { margin-top: auto; padding-top: 14px; border-top: 0.5px solid var(--fog); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-02">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:list-bullet" class="icon-sm"></iconify-icon>TABLE OF CONTENTS</span>
+      <span class="mono caption">02 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:squares-2x2" class="icon-lg"></iconify-icon><h1 class="heading-1">25 플러그인 · 6 카테고리</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">실행·생성·연결·지능·검증·미디어 — 6 그룹으로 묶음</p>
+
+    <div class="toc-body">
+      <div class="toc-cat exec">
+        <span class="count">7</span>
+        <iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon>
+        <div class="num">CATEGORY 01</div>
+        <div class="name">EXECUTION<br>오케스트레이션</div>
+        <div class="desc">워커·라우팅·세션 가드·스케줄러·학습·로컬 AI·음성</div>
+        <ul>
+          <li>exec_orch</li><li>exec_claude</li>
+          <li>exec_session_guard</li><li>exec_voice</li>
+          <li>exec_learning</li><li>exec_offline</li>
+          <li>exec_scheduler</li>
+        </ul>
+      </div>
+
+      <div class="toc-cat design">
+        <span class="count">6</span>
+        <iconify-icon icon="heroicons:paint-brush"></iconify-icon>
+        <div class="num">CATEGORY 02</div>
+        <div class="name">DESIGN<br>콘텐츠 생성</div>
+        <div class="desc">PPT·Excel·Word·PDF·Web·Video — 자동 생성 도구</div>
+        <ul>
+          <li>design_ppt</li><li>design_excel</li>
+          <li>design_word</li><li>design_pdf</li>
+          <li>design_web</li><li>design_video</li>
+        </ul>
+      </div>
+
+      <div class="toc-cat mcp">
+        <span class="count">8</span>
+        <iconify-icon icon="heroicons:link"></iconify-icon>
+        <div class="num">CATEGORY 03</div>
+        <div class="name">MCP<br>외부 서버</div>
+        <div class="desc">개발·데이터·협업·웹·문서·미디어·큐·소셜 MCP 설치</div>
+        <ul>
+          <li>mcp_dev</li><li>mcp_data</li>
+          <li>mcp_collab</li><li>mcp_web</li>
+          <li>mcp_docs</li><li>mcp_media</li>
+          <li>mcp_queue</li><li>mcp_social</li>
+        </ul>
+      </div>
+
+      <div class="toc-cat ai">
+        <span class="count">1</span>
+        <iconify-icon icon="heroicons:sparkles"></iconify-icon>
+        <div class="num">CATEGORY 04</div>
+        <div class="name">AI<br>지능 패턴</div>
+        <div class="desc">RAG 8가지 패턴 — Naive·HyDE·Corrective·Multimodal·Graph...</div>
+        <ul>
+          <li>ai_rag</li>
+        </ul>
+      </div>
+
+      <div class="toc-cat review">
+        <span class="count">1</span>
+        <iconify-icon icon="heroicons:shield-check"></iconify-icon>
+        <div class="num">CATEGORY 05</div>
+        <div class="name">REVIEW<br>품질 검증</div>
+        <div class="desc">코드 리뷰 · 보안 검사 · 품질 · 테스트 자동화</div>
+        <ul>
+          <li>review_qa</li>
+        </ul>
+      </div>
+
+      <div class="toc-cat media">
+        <span class="count">2</span>
+        <iconify-icon icon="heroicons:musical-note"></iconify-icon>
+        <div class="num">CATEGORY 06</div>
+        <div class="name">SPECIAL<br>특수 도메인</div>
+        <div class="desc">음악 스튜디오 + YouTube 수익화 — 도메인 특화</div>
+        <ul>
+          <li>music_studio</li><li>cost_youtube</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-border">
+      <span>STABLE <strong style="color: var(--sage);">14</strong> · SPEC-ONLY <strong style="color: var(--terracotta);">11</strong> · TOTAL <strong style="color: var(--deep-gold);">25</strong></span>
+      <span>Phase 0 (production-ready)</span>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>exec_orch 구조</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; margin-top: 24px; min-height: 0; }
+    .svg-box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 20px; display: flex; align-items: center; justify-content: center; }
+    .svg-box svg { width: 100%; max-width: 800px; }
+    .right { display: flex; flex-direction: column; gap: 14px; }
+    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .box.flow { border-left: 5px solid var(--gold); }
+    .box.work { border-left: 5px solid var(--sage); }
+    .box.dim  { border-left: 5px solid #7A4E6B; }
+    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .box.work h3 { color: #4A6F60; }
+    .box.dim h3  { color: #5A3850; }
+    .box ul { list-style: none; padding: 0; margin: 0; }
+    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .box li::before { content: '▸'; color: var(--deep-gold); }
+    .slide-03 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-03">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:command-line" class="icon-sm"></iconify-icon>PART 01 · ENTRY POINT</span>
+      <span class="mono caption">03 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon><h1 class="heading-1">exec_orch · 진입점 + 워커</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude (Lead) → task-instruction.md → Codex/Gemini 워커 (병렬)</p>
+
+    <div class="body">
+      <div class="svg-box">
+        <svg viewBox="0 0 720 480">
+          <!-- Claude 중앙 -->
+          <rect x="280" y="180" width="160" height="120" rx="14" fill="#FAF5EA" stroke="#B8864E" stroke-width="3"/>
+          <text x="360" y="225" text-anchor="middle" font-family="Pretendard Variable" font-size="22" font-weight="700" fill="#1A1D24">Claude Opus</text>
+          <text x="360" y="252" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#8A6235">4.7 (Lead)</text>
+          <text x="360" y="278" text-anchor="middle" font-family="Pretendard Variable" font-size="13" fill="#6E685C">설계·라우팅·검증</text>
+
+          <!-- task-instruction.md -->
+          <rect x="290" y="50" width="140" height="50" rx="8" fill="#E8DEC8" stroke="#8A6235" stroke-width="1.5"/>
+          <text x="360" y="73" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="700" fill="#1A1D24">task-instruction</text>
+          <text x="360" y="90" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#6E685C">.md</text>
+          <line x1="360" y1="100" x2="360" y2="180" stroke="#B8864E" stroke-width="2"/>
+
+          <!-- Codex 워커 4개 (좌측) -->
+          <g font-family="JetBrains Mono" font-size="13">
+            <rect x="40" y="120" width="120" height="60" rx="10" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="100" y="145" text-anchor="middle" font-weight="700" fill="#1A1D24">Codex #1</text>
+            <text x="100" y="163" text-anchor="middle" font-size="10" fill="#6E685C">구현</text>
+
+            <rect x="40" y="200" width="120" height="60" rx="10" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="100" y="225" text-anchor="middle" font-weight="700" fill="#1A1D24">Codex #2</text>
+            <text x="100" y="243" text-anchor="middle" font-size="10" fill="#6E685C">구현</text>
+
+            <rect x="40" y="280" width="120" height="60" rx="10" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="100" y="305" text-anchor="middle" font-weight="700" fill="#1A1D24">Codex #3</text>
+            <text x="100" y="323" text-anchor="middle" font-size="10" fill="#6E685C">구현</text>
+
+            <rect x="40" y="360" width="120" height="60" rx="10" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="100" y="385" text-anchor="middle" font-weight="700" fill="#1A1D24">Codex #4</text>
+            <text x="100" y="403" text-anchor="middle" font-size="10" fill="#6E685C">구현</text>
+          </g>
+
+          <!-- Haiku 검증 (우측) -->
+          <g font-family="JetBrains Mono" font-size="13">
+            <rect x="560" y="160" width="140" height="70" rx="10" fill="white" stroke="#7A4E6B" stroke-width="2"/>
+            <text x="630" y="188" text-anchor="middle" font-weight="700" fill="#1A1D24">Haiku 4.5 #1</text>
+            <text x="630" y="208" text-anchor="middle" font-size="10" fill="#6E685C">검증·리뷰</text>
+
+            <rect x="560" y="250" width="140" height="70" rx="10" fill="white" stroke="#7A4E6B" stroke-width="2"/>
+            <text x="630" y="278" text-anchor="middle" font-weight="700" fill="#1A1D24">Haiku 4.5 #2</text>
+            <text x="630" y="298" text-anchor="middle" font-size="10" fill="#6E685C">검증·리뷰</text>
+          </g>
+
+          <!-- 연결선 (claude → 워커들) -->
+          <g stroke="#B8864E" stroke-width="1.5" fill="none" opacity="0.5" stroke-dasharray="4,4">
+            <line x1="280" y1="240" x2="160" y2="150"/>
+            <line x1="280" y1="240" x2="160" y2="230"/>
+            <line x1="280" y1="240" x2="160" y2="310"/>
+            <line x1="280" y1="240" x2="160" y2="390"/>
+            <line x1="440" y1="240" x2="560" y2="195"/>
+            <line x1="440" y1="240" x2="560" y2="285"/>
+          </g>
+
+          <!-- 결과 통합 -->
+          <rect x="280" y="380" width="160" height="50" rx="8" fill="#F4EDDD" stroke="#8A6235" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <text x="360" y="403" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#1A1D24">PR · COMMIT · MERGE</text>
+          <text x="360" y="420" text-anchor="middle" font-family="Pretendard Variable" font-size="11" fill="#6E685C">통합 산출물</text>
+          <line x1="360" y1="300" x2="360" y2="380" stroke="#B8864E" stroke-width="2" stroke-dasharray="3,3"/>
+        </svg>
+      </div>
+
+      <div class="right">
+        <div class="box flow">
+          <h3>◆ 흐름</h3>
+          <ul>
+            <li>Claude 가 <code>task-instruction.md</code> 작성</li>
+            <li>Codex 4× 병렬로 구현 분배</li>
+            <li>Haiku 2× 검증 (병렬, prompt cache)</li>
+            <li>Claude 가 통합·승인 후 commit</li>
+          </ul>
+        </div>
+        <div class="box work">
+          <h3>◆ 워커</h3>
+          <ul>
+            <li><code>codex-auto.bat</code> — Codex 풀</li>
+            <li><code>gemini-auto.bat</code> — 대용량 검증</li>
+            <li><code>haiku-auto</code> — 기본 검증자</li>
+            <li><code>orcauto-start</code> — 일괄 시작</li>
+          </ul>
+        </div>
+        <div class="box dim">
+          <h3>◆ 핵심 룰</h3>
+          <ul>
+            <li>Writer = 1 (동시 수정 금지)</li>
+            <li>task-instruction 없이 호출 X</li>
+            <li>Gemini 자동 채택 X (Claude 결정)</li>
+            <li>빈 task done/ 이동 X (위장 완료)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/exec_orch · CLAUDE.md § 3.1 Session Start · § 7 금지사항</span></div>
+  </div>
+</body>
+</html>

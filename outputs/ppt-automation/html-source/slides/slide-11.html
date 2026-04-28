@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Best Practices</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-11 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .tip { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 20px 26px; display: flex; gap: 18px; align-items: flex-start; min-height: 0; }
+    .tip iconify-icon { font-size: 44px; flex-shrink: 0; }
+    .tip:nth-child(1) { border-left: 5px solid var(--gold); }
+    .tip:nth-child(2) { border-left: 5px solid var(--sage); }
+    .tip:nth-child(3) { border-left: 5px solid #7A4E6B; }
+    .tip:nth-child(4) { border-left: 5px solid var(--terracotta); }
+    .tip:nth-child(5) { border-left: 5px solid #8A6235; }
+    .tip:nth-child(6) { border-left: 5px solid var(--gold); }
+    .tip:nth-child(1) iconify-icon { color: var(--gold); }
+    .tip:nth-child(2) iconify-icon { color: var(--sage); }
+    .tip:nth-child(3) iconify-icon { color: #7A4E6B; }
+    .tip:nth-child(4) iconify-icon { color: var(--terracotta); }
+    .tip:nth-child(5) iconify-icon { color: #8A6235; }
+    .tip:nth-child(6) iconify-icon { color: var(--gold); }
+    .tip .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; }
+    .tip .title { font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 2px; line-height: 1.2; }
+    .tip .desc { font-size: 13px; color: var(--stone); line-height: 1.5; margin-top: 6px; }
+    .tip code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .slide-11 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-11">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:trophy" class="icon-sm"></iconify-icon>PART 04 · BEST PRACTICES</span>
+      <span class="mono caption">11 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화 운영 Best Practices 6</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 검증된 6가지 — 비용·안정성·관측 모두 잡기</p>
+
+    <div class="body">
+      <div class="tip">
+        <iconify-icon icon="heroicons:scale"></iconify-icon>
+        <div>
+          <div class="num">TIP 01</div>
+          <div class="title">예산 상한 무조건 설정</div>
+          <div class="desc">기본은 무제한. <code>--set-daily-limit</code> 으로 일일 예산 명시. 사고 비용 폭주 방지의 가장 큰 보험.</div>
+        </div>
+      </div>
+      <div class="tip">
+        <iconify-icon icon="heroicons:cpu-chip"></iconify-icon>
+        <div>
+          <div class="num">TIP 02</div>
+          <div class="title">검증은 Haiku 4.5 + Cache</div>
+          <div class="desc">Gemini Pro 보다 단가 70% 저렴 + Prompt cache 90% off. 결합시 월 $100+ 절감.</div>
+        </div>
+      </div>
+      <div class="tip">
+        <iconify-icon icon="heroicons:document-check"></iconify-icon>
+        <div>
+          <div class="num">TIP 03</div>
+          <div class="title">task-instruction.md 필수</div>
+          <div class="desc">Codex 호출 전 반드시. 누락하면 의도 파악 실패 + 재작업 비용. <strong>위장 완료 (빈 task done/) 절대 금지</strong>.</div>
+        </div>
+      </div>
+      <div class="tip">
+        <iconify-icon icon="heroicons:eye"></iconify-icon>
+        <div>
+          <div class="num">TIP 04</div>
+          <div class="title">메인 Claude 가 직접 검증</div>
+          <div class="desc">Sub-agent "PASS" 보고는 거짓 가능. 결과물은 메인이 Read/OCR 로 직접 확인. 위장 사고 회피.</div>
+        </div>
+      </div>
+      <div class="tip">
+        <iconify-icon icon="heroicons:chart-bar"></iconify-icon>
+        <div>
+          <div class="num">TIP 05</div>
+          <div class="title">매일 metrics-report 확인</div>
+          <div class="desc">실패율·cache hit·top model. 이상치 발견 → 즉시 조치. 비용 그래프 지속 추적.</div>
+        </div>
+      </div>
+      <div class="tip">
+        <iconify-icon icon="heroicons:lock-closed"></iconify-icon>
+        <div>
+          <div class="num">TIP 06</div>
+          <div class="title">Writer = 1 룰</div>
+          <div class="desc">동시 여러 워커가 같은 파일 쓰기 금지. <code>tasks/locks/</code> 가 자동 잠금. 충돌 시 후순위 backoff.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: .claude/rules/best-practices.md · CLAUDE.md § 7 금지사항</span></div>
+  </div>
+</body>
+</html>

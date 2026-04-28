@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Automation Tool — Cover</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <style>
+    .cover { width: 1920px; height: 1080px; padding: 100px 120px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+      background: radial-gradient(ellipse 1100px 800px at 80% 20%, rgba(184,134,78,0.30) 0%, transparent 60%),
+                  radial-gradient(ellipse 800px 600px at 10% 90%, rgba(107,142,127,0.18) 0%, transparent 55%),
+                  linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%); }
+    .cover::after { content: ''; position: absolute; inset: 0; background-image: linear-gradient(90deg, rgba(26,29,36,0.04) 1px, transparent 1px), linear-gradient(0deg, rgba(26,29,36,0.04) 1px, transparent 1px); background-size: 60px 60px; opacity: 0.6; mask-image: radial-gradient(ellipse at center, black, transparent 70%); pointer-events: none; }
+    .top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; }
+    .brand { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.3em; color: #8A6235; font-weight: 600; }
+    .tag { padding: 8px 16px; background: rgba(255,255,255,0.65); border: 0.5px solid rgba(184,134,78,0.3); border-radius: 100px; font-size: 13px; color: #6E685C; font-weight: 500; }
+    .center { position: relative; z-index: 2; }
+    .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.3em; color: #8A6235; font-weight: 600; margin-bottom: 28px; }
+    .title { font-family: 'Fraunces', serif; font-size: 200px; line-height: 0.92; letter-spacing: -0.04em; color: #1A1D24; font-weight: 300; }
+    .title .accent { color: #B8864E; font-style: italic; font-weight: 600; font-size: 240px; display: block; margin-top: -25px; }
+    .sub { font-size: 30px; color: #6E685C; line-height: 1.5; max-width: 1100px; margin-top: 24px; }
+    .footer { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(5, 1fr); gap: 30px; }
+    .stat .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: #6E685C; margin-bottom: 8px; text-transform: uppercase; }
+    .stat .value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 500; color: #1A1D24; }
+    .deco-dots { position: absolute; bottom: 100px; right: 120px; display: grid; grid-template-columns: repeat(6, 12px); gap: 16px; opacity: 0.35; }
+    .deco-dots span { width: 12px; height: 12px; background: #B8864E; border-radius: 50%; }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <div class="top">
+      <span class="brand">ORCHESTRATION KIT · AUTOMATION GUIDE · 2025.04</span>
+      <span class="tag">● MAINTAINER</span>
+    </div>
+    <div class="center">
+      <div class="eyebrow">▸ MULTI-AI · 24/7 · COST-AWARE</div>
+      <h1 class="title">Automation<span class="accent">도구</span></h1>
+      <p class="sub">Claude Opus 4.7 (설계) + Codex (구현) + Haiku 4.5 (검증).<br>SQLite 상태머신 · Watchdog · Quota Backoff · Budget Ceiling.</p>
+    </div>
+    <div class="footer">
+      <div class="stat"><div class="label">AI Models</div><div class="value">3</div></div>
+      <div class="stat"><div class="label">Workers</div><div class="value">4×</div></div>
+      <div class="stat"><div class="label">Uptime</div><div class="value">24/7</div></div>
+      <div class="stat"><div class="label">State Tables</div><div class="value">8</div></div>
+      <div class="stat"><div class="label">Cost Saving</div><div class="value">90%</div></div>
+    </div>
+    <div class="deco-dots"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+</body>
+</html>

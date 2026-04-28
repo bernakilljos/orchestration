@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Best Practices</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-14 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 24px; min-height: 0; }
+    .left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .tip { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 24px; display: flex; gap: 16px; align-items: flex-start; }
+    .tip iconify-icon { font-size: 36px; flex-shrink: 0; }
+    .tip.do { border-left: 5px solid var(--sage); }
+    .tip.dont { border-left: 5px solid var(--terracotta); }
+    .tip.do iconify-icon { color: var(--sage); }
+    .tip.dont iconify-icon { color: var(--terracotta); }
+    .tip .title { font-size: 16px; font-weight: 700; color: var(--ink); }
+    .tip .desc { font-size: 13px; color: var(--stone); line-height: 1.5; margin-top: 4px; }
+    .tip .desc code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .col-head { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.2em; padding: 6px 14px; border-radius: 100px; align-self: flex-start; font-weight: 700; }
+    .col-head.do { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .col-head.dont { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .slide-14 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-14">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:trophy" class="icon-sm"></iconify-icon>BEST PRACTICES</span>
+      <span class="mono caption">14 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">팀 도입 Best Practices</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 무너지지 않는 5 DO + 5 DON'T</p>
+
+    <div class="body">
+      <div class="left">
+        <span class="col-head do">✓ DO — 이렇게 해라</span>
+        <div class="tip do">
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          <div>
+            <div class="title">CLAUDE.md 먼저 작성</div>
+            <div class="desc"><code>/init</code> 으로 초안 → 팀 컨벤션 추가. 플러그인보다 메모리가 우선.</div>
+          </div>
+        </div>
+        <div class="tip do">
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          <div>
+            <div class="title">필요한 MCP 만 설치</div>
+            <div class="desc">전체 <code>plug_all</code> 보다 카테고리별 <code>plug_dev</code> 식으로. 토큰 절약.</div>
+          </div>
+        </div>
+        <div class="tip do">
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          <div>
+            <div class="title">hooks 로 자동화 강제</div>
+            <div class="desc">메모리는 70-80% 지킴, hooks 는 100%. 포맷·검증·로그는 hooks 에.</div>
+          </div>
+        </div>
+        <div class="tip do">
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          <div>
+            <div class="title">Sub-Agent 병렬 활용</div>
+            <div class="desc">검증·리서치는 Haiku/Sonnet Sub-Agent. 토큰 격리 + 비용 절감.</div>
+          </div>
+        </div>
+        <div class="tip do">
+          <iconify-icon icon="heroicons:check-circle"></iconify-icon>
+          <div>
+            <div class="title">월 1회 sync 점검</div>
+            <div class="desc"><code>sync-plugins.sh --check</code> 으로 drift·orphan 검사.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <span class="col-head dont">✗ DON'T — 절대 하지마</span>
+        <div class="tip dont">
+          <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+          <div>
+            <div class="title">.claude/ 직접 편집</div>
+            <div class="desc">자동 sync 결과물. 편집은 <code>plugins/</code> 원본에서. .claude/ 편집은 sync 가 덮어씀.</div>
+          </div>
+        </div>
+        <div class="tip dont">
+          <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+          <div>
+            <div class="title">비밀 하드코딩</div>
+            <div class="desc">API 키·토큰은 <code>.env</code> 또는 환경변수. <code>.gitignore</code> 필수.</div>
+          </div>
+        </div>
+        <div class="tip dont">
+          <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+          <div>
+            <div class="title">메모리만 의존</div>
+            <div class="desc">"매번 X 해줘" 반복 금지. <code>#</code> 로 메모리 추가 또는 hooks 로 자동화.</div>
+          </div>
+        </div>
+        <div class="tip dont">
+          <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+          <div>
+            <div class="title">Sub-Agent "PASS" 무조건 신뢰</div>
+            <div class="desc">위임 검증은 거짓말 가능. 메인 Claude 가 직접 결과 OCR/Read 로 확인.</div>
+          </div>
+        </div>
+        <div class="tip dont">
+          <iconify-icon icon="heroicons:x-circle"></iconify-icon>
+          <div>
+            <div class="title">전체 plug_all 무조건 실행</div>
+            <div class="desc">설치 시간 + npm 토큰 낭비. 필요한 카테고리만.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: .claude/rules/best-practices.md · CLAUDE.md § 7 금지사항</span></div>
+  </div>
+</body>
+</html>

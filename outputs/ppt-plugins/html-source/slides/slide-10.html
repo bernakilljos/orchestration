@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시나리오 2 — 콘텐츠 제작</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 24px; min-height: 0; }
+    .case { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 30px; display: flex; flex-direction: column; gap: 14px; min-height: 0; position: relative; }
+    .case.ppt { border-top: 6px solid var(--gold); }
+    .case.report { border-top: 6px solid var(--sage); }
+    .case.web { border-top: 6px solid #7A4E6B; }
+    .case.video { border-top: 6px solid var(--terracotta); }
+    .case .head { display: flex; align-items: center; gap: 14px; }
+    .case iconify-icon { font-size: 44px; flex-shrink: 0; }
+    .case.ppt iconify-icon { color: var(--gold); }
+    .case.report iconify-icon { color: var(--sage); }
+    .case.web iconify-icon { color: #7A4E6B; }
+    .case.video iconify-icon { color: var(--terracotta); }
+    .case .name { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .case .sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); margin-top: 2px; }
+    .case .scenario { font-size: 14px; color: var(--ink); line-height: 1.55; padding: 12px 16px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
+    .case.report .scenario { border-left-color: var(--sage); background: rgba(107,142,127,0.06); }
+    .case.web .scenario { border-left-color: #7A4E6B; background: rgba(122,78,107,0.06); }
+    .case.video .scenario { border-left-color: var(--terracotta); background: rgba(178,90,62,0.06); }
+    .case .pipe { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; }
+    .case .pipe code { background: rgba(184,134,78,0.08); color: var(--deep-gold); padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+    .case .pipe .arrow { color: var(--stone); font-weight: 700; }
+    .slide-10 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-10">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:paint-brush" class="icon-sm"></iconify-icon>SCENARIO 02 · CONTENT CREATION</span>
+      <span class="mono caption">10 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:paint-brush" class="icon-lg"></iconify-icon><h1 class="heading-1">시나리오 2 · 콘텐츠 제작 4 케이스</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">PPT · 보고서 · 랜딩 · 쇼츠 — 플러그인 조합 파이프라인</p>
+
+    <div class="body">
+      <div class="case ppt">
+        <div class="head"><iconify-icon icon="heroicons:presentation-chart-bar"></iconify-icon>
+          <div><div class="name">발표자료 PPT</div><div class="sub">디자인부터 PDF 출력까지</div></div>
+        </div>
+        <div class="scenario">"40장 짜리 클로드 코드 가이드 PPT 만들어줘"</div>
+        <div class="pipe">
+          <code>/design_ppt</code><span class="arrow">→</span>
+          <code>HTML/CSS</code><span class="arrow">→</span>
+          <code>Playwright</code><span class="arrow">→</span>
+          <code>PPTX</code><span class="arrow">→</span>
+          <code>/pdf-generate</code>
+        </div>
+      </div>
+
+      <div class="case report">
+        <div class="head"><iconify-icon icon="heroicons:document-text"></iconify-icon>
+          <div><div class="name">월간 보고서</div><div class="sub">데이터 분석 + Word 문서</div></div>
+        </div>
+        <div class="scenario">"10월 매출 데이터 분석해서 이사회 보고서 작성"</div>
+        <div class="pipe">
+          <code>mcp_data</code><span class="arrow">→</span>
+          <code>SQL 쿼리</code><span class="arrow">→</span>
+          <code>/excel-make</code><span class="arrow">→</span>
+          <code>차트</code><span class="arrow">→</span>
+          <code>/word-make</code>
+        </div>
+      </div>
+
+      <div class="case web">
+        <div class="head"><iconify-icon icon="heroicons:globe-alt"></iconify-icon>
+          <div><div class="name">랜딩페이지 + SEO</div><div class="sub">제품 출시 마케팅</div></div>
+        </div>
+        <div class="scenario">"제품 X 출시 랜딩 + SEO 메타 + 블로그 포스트"</div>
+        <div class="pipe">
+          <code>/design_web-landing</code><span class="arrow">→</span>
+          <code>SEO 메타</code><span class="arrow">→</span>
+          <code>/design_web-blog</code><span class="arrow">→</span>
+          <code>Vercel 배포</code>
+        </div>
+      </div>
+
+      <div class="case video">
+        <div class="head"><iconify-icon icon="heroicons:video-camera"></iconify-icon>
+          <div><div class="name">YouTube 쇼츠</div><div class="sub">롱폼 → 쇼츠 자동 추출</div></div>
+        </div>
+        <div class="scenario">"30분 강의 → 60초 쇼츠 5개 + 썸네일 + 자막"</div>
+        <div class="pipe">
+          <code>/transcribe</code><span class="arrow">→</span>
+          <code>/video-shorts</code><span class="arrow">→</span>
+          <code>/video-subtitle</code><span class="arrow">→</span>
+          <code>/yt-upload</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">예상 소요: 1-3 시간 (수동 작업 대비 70-80% 절감)</span></div>
+  </div>
+</body>
+</html>

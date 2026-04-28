@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>첫 명령 5선</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 24px; min-height: 0; }
+    .cmd { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 22px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .cmd.c1 { border-top: 5px solid var(--sage); }
+    .cmd.c2 { border-top: 5px solid var(--gold); }
+    .cmd.c3 { border-top: 5px solid #7A4E6B; }
+    .cmd.c4 { border-top: 5px solid var(--terracotta); }
+    .cmd.c5 { border-top: 5px solid #8A6235; }
+    .cmd iconify-icon { font-size: 40px; }
+    .cmd.c1 iconify-icon { color: var(--sage); }
+    .cmd.c2 iconify-icon { color: var(--gold); }
+    .cmd.c3 iconify-icon { color: #7A4E6B; }
+    .cmd.c4 iconify-icon { color: var(--terracotta); }
+    .cmd.c5 iconify-icon { color: #8A6235; }
+    .cmd .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; }
+    .cmd .name { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--ink); }
+    .cmd .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
+    .cmd .ex { margin-top: auto; padding: 8px 12px; background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 11px; border-radius: 6px; line-height: 1.5; }
+    .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-08">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>PART 03 · FIRST COMMANDS</span>
+      <span class="mono caption">08 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-lg"></iconify-icon><h1 class="heading-1">처음 써볼 명령 5선</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">설치 직후 5분 안에 결과 보는 5가지 — 핵심 흐름 체험</p>
+
+    <div class="body">
+      <div class="cmd c1">
+        <iconify-icon icon="heroicons:document-plus"></iconify-icon>
+        <div class="num">FIRST 01</div>
+        <div class="name">/init</div>
+        <div class="desc">CLAUDE.md 자동 초안. 프로젝트 스캔 + WHAT/WHY/HOW 골격.</div>
+        <pre class="ex">&gt; /init</pre>
+      </div>
+      <div class="cmd c2">
+        <iconify-icon icon="heroicons:presentation-chart-bar"></iconify-icon>
+        <div class="num">FIRST 02</div>
+        <div class="name">/design_ppt</div>
+        <div class="desc">PPT 자동 생성. HTML/CSS → Playwright → PPTX 풀 파이프라인.</div>
+        <pre class="ex">&gt; /design_ppt
+  "주제" 15</pre>
+      </div>
+      <div class="cmd c3">
+        <iconify-icon icon="heroicons:link"></iconify-icon>
+        <div class="num">FIRST 03</div>
+        <div class="name">/mcp_dev-install</div>
+        <div class="desc">개발 MCP 일괄 설치. GitHub·Docker·Vercel 등.</div>
+        <pre class="ex">&gt; /mcp_dev-install</pre>
+      </div>
+      <div class="cmd c4">
+        <iconify-icon icon="heroicons:command-line"></iconify-icon>
+        <div class="num">FIRST 04</div>
+        <div class="name">/exec_orch</div>
+        <div class="desc">멀티AI 진입점. Claude → Codex → Haiku 자동 분배.</div>
+        <pre class="ex">&gt; /exec_orch</pre>
+      </div>
+      <div class="cmd c5">
+        <iconify-icon icon="heroicons:chart-bar"></iconify-icon>
+        <div class="num">FIRST 05</div>
+        <div class="name">/exec_status</div>
+        <div class="desc">통합 상태 대시보드. 워커·큐·heartbeat·sync 한눈에.</div>
+        <pre class="ex">&gt; /exec_status</pre>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">전체 명령은 <code>/help</code> 또는 <code>plugins-guide.pptx</code> 참조</span></div>
+  </div>
+</body>
+</html>

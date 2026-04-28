@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>설치 후 검증</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-07 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; min-height: 0; }
+    .check { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .check.c1 { border-top: 5px solid var(--sage); }
+    .check.c2 { border-top: 5px solid var(--gold); }
+    .check.c3 { border-top: 5px solid #7A4E6B; }
+    .check iconify-icon { font-size: 36px; }
+    .check.c1 iconify-icon { color: var(--sage); }
+    .check.c2 iconify-icon { color: var(--gold); }
+    .check.c3 iconify-icon { color: #7A4E6B; }
+    .check .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; }
+    .check .title { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .check .cmd { background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 12px 16px; border-radius: 8px; line-height: 1.5; white-space: pre; overflow: hidden; }
+    .check .expect { font-size: 13px; color: var(--ink); line-height: 1.5; padding: 10px 14px; background: rgba(107,142,127,0.08); border-radius: 8px; border-left: 3px solid var(--sage); }
+    .check.c2 .expect { background: rgba(184,134,78,0.06); border-left-color: var(--gold); }
+    .check.c3 .expect { background: rgba(122,78,107,0.06); border-left-color: #7A4E6B; }
+    .check .expect strong { color: var(--ink); }
+    .check .expect code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 4px; border-radius: 3px; }
+    .slide-07 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-07">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:check-circle" class="icon-sm"></iconify-icon>PART 02 · POST-INSTALL CHECK</span>
+      <span class="mono caption">07 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:check-circle" class="icon-lg"></iconify-icon><h1 class="heading-1">설치 후 검증 · 3 항목</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">설치가 정상 동작하는지 빠르게 확인 · 1분 이내</p>
+
+    <div class="body">
+      <div class="check c1">
+        <iconify-icon icon="heroicons:command-line"></iconify-icon>
+        <div class="num">CHECK 01</div>
+        <div class="title">claude 명령 동작</div>
+        <pre class="cmd">$ claude --version
+$ claude /help</pre>
+        <div class="expect"><strong>OK 신호:</strong> 버전 표시 + <code>/help</code> 명령 목록 출력 (수십 개)</div>
+      </div>
+
+      <div class="check c2">
+        <iconify-icon icon="heroicons:puzzle-piece"></iconify-icon>
+        <div class="num">CHECK 02</div>
+        <div class="title">플러그인 + 명령</div>
+        <pre class="cmd">$ ls .claude/commands/
+$ ls .claude/skills/</pre>
+        <div class="expect"><strong>OK 신호:</strong> 100+ 개 명령 + skill 파일 표시. <code>/design_ppt</code>, <code>/exec_orch</code> 등 보임</div>
+      </div>
+
+      <div class="check c3">
+        <iconify-icon icon="heroicons:circle-stack"></iconify-icon>
+        <div class="num">CHECK 03</div>
+        <div class="title">SQLite state DB</div>
+        <pre class="cmd">$ python .claude/scripts/
+    init-state-db.py
+$ python .claude/scripts/
+    route.py --status</pre>
+        <div class="expect"><strong>OK 신호:</strong> <code>orca.db</code> 생성 + 8 테이블 + quota·budget 출력 (limit: unlimited)</div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">실패 시: <code>%TEMP%\orchestration-setup.log</code> 확인 · 트러블슈팅 페이지 참조</span></div>
+  </div>
+</body>
+</html>

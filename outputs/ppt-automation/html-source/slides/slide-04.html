@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 역할 매트릭스</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-04 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: flex; flex-direction: column; gap: 18px; margin-top: 24px; min-height: 0; }
+    .table { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 36px; flex: 1; min-height: 0; }
+    .table table { width: 100%; border-collapse: collapse; }
+    .table th { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 12px 14px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .table th.task { color: var(--deep-gold); }
+    .table th.opus { color: var(--gold); }
+    .table th.codex { color: var(--sage); }
+    .table th.haiku { color: #7A4E6B; }
+    .table th.gemini { color: var(--terracotta); }
+    .table td { padding: 14px; font-size: 16px; color: var(--ink); border-bottom: 0.5px solid var(--fog); }
+    .table td.lbl { font-weight: 700; color: var(--deep-gold); width: 22%; }
+    .table td .pill { display: inline-block; padding: 3px 10px; border-radius: 100px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
+    .table td .pill.opus { background: rgba(184,134,78,0.15); color: var(--deep-gold); }
+    .table td .pill.codex { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .table td .pill.haiku { background: rgba(122,78,107,0.18); color: #5A3850; }
+    .table td .pill.gemini { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .table td .pill.x { background: rgba(110,104,92,0.15); color: var(--stone); }
+    .note-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .note { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 14px 18px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+    .note.gold { border-left: 4px solid var(--gold); }
+    .note.sage { border-left: 4px solid var(--sage); }
+    .note.plum { border-left: 4px solid #7A4E6B; }
+    .note strong { color: var(--deep-gold); }
+    .slide-04 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-04">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>PART 01 · AI ROLE MATRIX</span>
+      <span class="mono caption">04 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">AI 역할 매트릭스 · 4.7 우선</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">태스크 규모·특성으로 자동 라우팅 · 최저 단가 + 최고 품질</p>
+
+    <div class="body">
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th class="task">태스크</th><th class="opus">Opus 4.7</th><th class="codex">Codex</th><th class="haiku">Haiku 4.5</th><th class="gemini">Gemini Flash</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="lbl">설계·복잡 추론</td>
+              <td><span class="pill opus">기본 (Extended Thinking)</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+            </tr>
+            <tr><td class="lbl">단순 구현 &lt;200줄</td>
+              <td><span class="pill x">Sonnet 4.6 권장</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+            </tr>
+            <tr><td class="lbl">코드 500줄+</td>
+              <td><span class="pill x">위임</span></td>
+              <td><span class="pill codex">기본 (×4 병렬)</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+            </tr>
+            <tr><td class="lbl">검증 (기본)</td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill haiku">기본 (×2, prompt cache 90%)</span></td>
+              <td><span class="pill x">—</span></td>
+            </tr>
+            <tr><td class="lbl">검증 (초장문 &gt;500k)</td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill gemini">Gemini Flash (1M context)</span></td>
+            </tr>
+            <tr><td class="lbl">PPT·디자인</td>
+              <td><span class="pill opus">기본 + MCP (Gamma·Canva·Figma)</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+              <td><span class="pill x">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note-row">
+        <div class="note gold"><strong>설계·검증·PPT</strong> = Opus 4.7 (Extended Thinking + 1M context)</div>
+        <div class="note sage"><strong>구현</strong> = Codex 4× 병렬 (속도 + 동시성)</div>
+        <div class="note plum"><strong>검증</strong> = Haiku 2× (prompt cache 90% 절감, Gemini 보다 저단가)</div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/exec_orch/skills/route_dispatch.md (라우팅 결정 트리)</span></div>
+  </div>
+</body>
+</html>

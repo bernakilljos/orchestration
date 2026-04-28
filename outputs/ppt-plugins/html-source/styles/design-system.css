@@ -1,0 +1,1021 @@
+/* ============================================================================
+   Claude Code 설계 — Design System CSS (v2 재구성)
+   레이아웃 우선 원칙 · 1920×1080 Slides
+   Opus 4.7 기준 · 2025-04
+   ============================================================================ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&display=swap');
+@import url('https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.css');
+
+/* Gmarket Sans — 모던 산세리프 */
+@font-face {
+  font-family: 'GmarketSans';
+  font-weight: 500;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.2/GmarketSansTTFMedium.woff') format('woff');
+}
+@font-face {
+  font-family: 'GmarketSans';
+  font-weight: 700;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.2/GmarketSansTTFBold.woff') format('woff');
+}
+
+/* Spoqa Han Sans Neo — 깔끔 산세리프 */
+@import url('https://cdn.jsdelivr.net/gh/spoqa/spoqa-han-sans@01ff0283e4f36a159dc5ac06ca6b1c58d6497bbd/css/SpoqaHanSansNeo.css');
+
+:root {
+  /* Ink & Paper Palette — Warm Editorial Tone */
+  --ink:          #1A1D24;
+  --cream:        #F7F2EA;
+  --bone:         #EDE4D3;
+  --fog:          #C9C1B0;
+
+  /* Accent Colors — Part-specific */
+  --gold:         #B8864E;
+  --deep-gold:    #8A6235;
+  --terracotta:   #B25A3E;
+  --sage:         #6B8E7F;
+  --plum:         #7A4E6B;
+
+  /* Neutral */
+  --stone:        #6E685C;
+  --sand:         #E5DDCA;
+  --smoke:        #9C958C;
+
+  /* Data Visualization */
+  --positive:     #5C8A5C;
+  --negative:     #A85757;
+  --neutral:      #8B7F6C;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+  font-feature-settings: 'ss01', 'ss02';
+  color: var(--ink);
+  background: var(--cream);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   한글 텍스트 렌더링 안정화
+   ════════════════════════════════════════════════════════════ */
+
+.slide {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.slide h1,
+.slide h2,
+.slide h3,
+.slide p,
+.slide li,
+.slide span:not(.mono) {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.main-content,
+.side-panel,
+.bullet-box,
+.slide > div {
+  min-width: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* TYPOGRAPHY SCALE — 대폭 확대 (PPT 13pt = 웹 ~34px) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.display-xxl {
+  font-size: 320px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.display-xl {
+  font-size: 240px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.display-l {
+  font-size: 160px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.heading-1 {
+  font-size: 108px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.heading-2 {
+  font-size: 64px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.heading-3 {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.eyebrow {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.body-lead {
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+}
+
+.body {
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.003em;
+}
+
+.caption {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--stone);
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: 'liga' 0;
+  letter-spacing: 0;
+  font-size: 28px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SLIDE BASE */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide {
+  width: 1920px;
+  height: 1080px;
+  background: var(--cream);
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px;
+  padding: 70px 100px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Left color stripe — Part-specific */
+.slide::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: var(--gold);
+}
+
+.slide.part-2::before { background: var(--terracotta); }
+.slide.part-3::before { background: var(--sage); }
+.slide.part-4::before { background: var(--plum); }
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SLIDE HEADER (Eyebrow + Page Number) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 0.5px solid var(--fog);
+  padding-bottom: 28px;
+  margin-bottom: 48px;
+}
+
+.slide-eyebrow {
+  flex: 1;
+  color: var(--stone);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slide-eyebrow iconify-icon {
+  font-size: 20px;
+}
+
+.slide-pagenumber {
+  color: var(--stone);
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* LAYOUT GRID */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.main-content {
+  grid-column: 1 / 9;
+  max-width: 1100px;
+}
+
+.side-panel {
+  grid-column: 9 / -1;
+  max-width: 380px;
+  min-width: 280px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* TITLE + ICON COMBO */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title-with-icon iconify-icon {
+  font-size: 56px;
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.title-with-icon h1 {
+  margin: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* BULLET BOX — Side Panel Essentials */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.bullet-box {
+  background: rgba(255, 255, 255, 0.6);
+  border: 0.5px solid var(--fog);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.bullet-box h3 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bullet-box.part-2 h3 { color: var(--terracotta); }
+.bullet-box.part-3 h3 { color: var(--sage); }
+.bullet-box.part-4 h3 { color: var(--plum); }
+
+.bullet-box ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bullet-box li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 30px;
+  line-height: 1.45;
+}
+
+.bullet-box li::before {
+  content: '';
+  flex-shrink: 0;
+  margin-top: 7px;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+
+.bullet-box.part-2 li::before { background: var(--terracotta); }
+.bullet-box.part-3 li::before { background: var(--sage); }
+.bullet-box.part-4 li::before { background: var(--plum); }
+
+/* Divider in bullet box */
+.bullet-box hr {
+  border: 0;
+  border-top: 0.5px solid var(--fog);
+  margin: 20px 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* STAT DISPLAY — Large Numbers */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.stat-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 320px;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--gold);
+  letter-spacing: -0.05em;
+}
+
+.part-2 .stat-number { color: var(--terracotta); }
+.part-3 .stat-number { color: var(--sage); }
+.part-4 .stat-number { color: var(--plum); }
+
+.stat-label {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* COMPARISON COLUMNS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.compare-col {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 32px;
+  border-left: 4px solid var(--terracotta);
+}
+
+.compare-col.sage { border-left-color: var(--sage); }
+.compare-col.plum { border-left-color: var(--plum); }
+
+.compare-col h4 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+
+.compare-col.sage h4 { color: var(--sage); }
+.compare-col.plum h4 { color: var(--plum); }
+
+.compare-col p {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* COMPARISON TABLE (T4) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 32px;
+}
+
+.compare-table th {
+  background: rgba(184, 134, 78, 0.08);
+  padding: 20px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 1px solid var(--fog);
+}
+
+.compare-table td {
+  padding: 24px;
+  font-size: 16px;
+  line-height: 1.6;
+  border-bottom: 0.5px solid var(--fog);
+  vertical-align: top;
+}
+
+.compare-table tr:last-child td {
+  border-bottom: none;
+}
+
+.compare-table td:first-child {
+  width: 40%;
+  font-weight: 600;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* CODE BLOCK (T5) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.code-block {
+  background: rgba(26, 29, 36, 0.94);
+  color: #E0E0E0;
+  padding: 32px;
+  border-radius: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  line-height: 1.5;
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.code-block code {
+  display: block;
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* CARD GRID (T6) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border: 0.5px solid var(--fog);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card iconify-icon {
+  font-size: 48px;
+  color: var(--gold);
+}
+
+.card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.card p {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--stone);
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* MERMAID DIAGRAM WRAPPER */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.mermaid-wrapper {
+  background: rgba(255, 255, 255, 0.6);
+  border: 0.5px solid var(--fog);
+  border-radius: 12px;
+  padding: 32px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-height: 400px;
+  max-height: 700px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.mermaid {
+  font-family: 'Pretendard Variable', sans-serif !important;
+}
+
+.mermaid svg {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  height: auto !important;
+}
+
+/* Mermaid 노드 색상 */
+.mermaid .node rect,
+.mermaid .node polygon,
+.mermaid .node circle {
+  fill: var(--cream) !important;
+  stroke: var(--gold) !important;
+  stroke-width: 1.5px !important;
+}
+
+.mermaid .edgePath path {
+  stroke: var(--stone) !important;
+  stroke-width: 1.5px !important;
+}
+
+.mermaid .label text {
+  font-size: 14px !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* TREE DIAGRAM */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.tree-wrapper {
+  background: rgba(255, 255, 255, 0.6);
+  border: 0.5px solid var(--fog);
+  border-radius: 12px;
+  padding: 32px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.tree-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* UTILITY CLASSES */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.mt-32 { margin-top: 32px; }
+.mt-48 { margin-top: 48px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-40 { margin-bottom: 40px; }
+.gap-16 { gap: 16px; }
+.gap-24 { gap: 24px; }
+
+.text-stone { color: var(--stone); }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.footer-border {
+  grid-column: 1 / -1;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 0.5px solid var(--fog);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.footnote {
+  font-size: 13px;
+  color: var(--stone);
+  font-weight: 500;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* ICONIFY ICON SIZING */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+iconify-icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  color: var(--gold);
+  font-size: 2.5em;
+}
+
+.icon-xl { font-size: 128px !important; }
+.icon-lg { font-size: 88px !important; }
+.icon-md { font-size: 56px !important; }
+.icon-sm { font-size: 40px !important; }
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FONTS — Additional Serif & Sans */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.font-serif {
+  font-family: 'Fraunces', serif;
+  font-feature-settings: 'ss01', 'ss02';
+}
+
+.font-sans-alt {
+  font-family: 'Inter', 'Pretendard Variable', sans-serif;
+}
+
+.display-serif {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 80px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* BACKGROUND PATTERNS — 4 가지 */
+/* ──────────────────────────────────════════════════════════════ */
+
+/* Pattern A — Cover/Closing */
+.bg-hero {
+  background:
+    radial-gradient(ellipse 900px 700px at 85% 15%, rgba(184, 134, 78, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 500px at 10% 85%, rgba(107, 142, 127, 0.15) 0%, transparent 55%),
+    linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%);
+  position: relative;
+}
+
+.bg-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(26, 29, 36, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(26, 29, 36, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.6;
+  mask-image: radial-gradient(ellipse at center, black, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pattern B — Content */
+.bg-subtle {
+  background:
+    radial-gradient(ellipse 1200px 800px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #F7F2EA 0%, #F2EBDE 100%);
+  position: relative;
+}
+
+/* Pattern C — Accent/Inflection */
+.bg-accent {
+  background:
+    radial-gradient(ellipse 1600px 1000px at 50% 100%, rgba(178, 90, 62, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+  position: relative;
+}
+
+/* Pattern D — Technical/Data */
+.bg-tech {
+  background:
+    radial-gradient(ellipse 1200px 700px at 0% 100%, rgba(107, 142, 127, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 800px 500px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #F7F2EA 0%, #F0E9DA 100%);
+  position: relative;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* EMPHASIS & TEXT STYLING */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+strong {
+  font-weight: 700;
+}
+
+em {
+  font-style: italic;
+  color: var(--stone);
+}
+
+code {
+  background: rgba(26, 29, 36, 0.06);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* CONTENT CONSTRAINTS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.body, .body-lead {
+  max-width: 1200px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* LAYOUT STRETCHING — 여백 제거 · 콘텐츠 확장 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide {
+  display: flex !important;
+  flex-direction: column;
+  padding: 70px 90px 60px 90px;
+  gap: 0;
+}
+
+.slide > .main-content,
+.slide .content {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 60px;
+  align-items: stretch;
+}
+
+.main-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  max-width: none !important;
+  grid-column: auto !important;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  grid-column: auto !important;
+}
+
+/* 빈 공간 자동 채움 — decorative element */
+.fill-decor {
+  flex: 1;
+  background:
+    radial-gradient(circle at 70% 30%, rgba(184, 134, 78, 0.08) 0%, transparent 60%);
+  border-radius: 24px;
+  position: relative;
+  min-height: 200px;
+}
+
+.fill-decor::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(184, 134, 78, 0.2);
+  border-radius: 50%;
+  right: 40px;
+  bottom: 40px;
+}
+
+/* 테이블·코드블록 확대 */
+.compare-table {
+  font-size: 18px;
+}
+
+.compare-table th {
+  font-size: 18px;
+  padding: 24px;
+}
+
+.compare-table td {
+  font-size: 20px;
+  padding: 28px;
+}
+
+/* 카드 그리드 확대 */
+.card {
+  padding: 40px;
+}
+
+.card h4 {
+  font-size: 22px;
+}
+
+.card p {
+  font-size: 18px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SVG DECORATIVE ELEMENTS — 여백 채우기 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.decor-circle {
+  width: 180px;
+  height: 180px;
+  opacity: 0.4;
+  position: absolute;
+}
+
+.decor-grid {
+  width: 200px;
+  height: 200px;
+  opacity: 0.3;
+  position: absolute;
+}
+
+.decor-arrow {
+  width: 120px;
+  height: 40px;
+  opacity: 0.35;
+  position: absolute;
+}
+
+.decor-dots {
+  width: 150px;
+  height: 150px;
+  opacity: 0.25;
+  position: absolute;
+}
+
+.decor-lines {
+  width: 200px;
+  height: 120px;
+  opacity: 0.3;
+  position: absolute;
+}
+
+/* 하단 우측 장식 */
+.slide-decor-corner {
+  position: absolute;
+  right: 60px;
+  bottom: 40px;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* 좌측 accent 라인 */
+.slide-accent-line {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+}
+
+/* 타이틀 옆 아이콘 크기 조정 */
+.title-icon {
+  font-size: 76px !important;
+  flex-shrink: 0;
+}
+
+/* Tree/Monospace 확대 */
+.tree-code {
+  font-size: 20px !important;
+  line-height: 1.7;
+}
+
+/* Compare columns 텍스트 확대 */
+.compare-col p {
+  font-size: 20px;
+}
+
+.compare-col h4 {
+  font-size: 22px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* END OF DESIGN SYSTEM CSS */
+/* ──────────────────────────────────════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* LINKS — 확대된 링크 스타일 (slide-25 필수) */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+a, .link-item a {
+  font-size: 36px !important;
+  font-weight: 600;
+  color: var(--gold);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+a:hover, .link-item a:hover {
+  color: var(--deep-gold);
+  text-decoration: underline;
+}
+
+.link-desc {
+  font-size: 22px !important;
+  color: var(--stone);
+  margin-top: 8px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FONT FAMILY OVERRIDES — 한글 폰트 적용 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.heading-1, .display-serif {
+  font-family: 'Fraunces', 'Noto Serif KR', serif;
+}
+
+.heading-2, .title-impact {
+  font-family: 'GmarketSans', 'Pretendard Variable', sans-serif;
+  font-weight: 700;
+}
+
+.body, .body-lead {
+  font-family: 'Pretendard Variable', 'Pretendard', sans-serif;
+}
+
+.quote, .impact {
+  font-family: 'Noto Serif KR', 'Fraunces', serif;
+  font-weight: 600;
+}
+
+.mono, pre, code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.brand-text {
+  font-family: 'GmarketSans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* TREE/CODE 최종 확대 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.tree-code {
+  font-size: 26px !important;
+  line-height: 1.7;
+}
+
+pre, code.block {
+  font-size: 28px !important;
+  line-height: 1.5;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* SLIDE PADDING 축소 — 폰트 커졌으므로 여백 적게 */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.slide {
+  padding: 60px 80px 50px 80px !important;
+}
+
+/* ═════════════════════════════════════════════════════════════
+   잘림 방지 전역 가드 (2026-04-24)
+   ════════════════════════════════════════════════════════════ */
+
+.slide {
+  overflow: hidden !important;
+  box-sizing: border-box;
+  max-height: 1080px !important;
+}
+
+/* 모든 슬라이드에 flex-column 강제 */
+.slide-02, .slide-03, .slide-04, .slide-05, .slide-07, .slide-08,
+.slide-09, .slide-10, .slide-11, .slide-12, .slide-13, .slide-14,
+.slide-15, .slide-16, .slide-17, .slide-18, .slide-19, .slide-20,
+.slide-21, .slide-22, .slide-23, .slide-24, .slide-25 {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 1080px !important;
+  max-height: 1080px !important;
+  padding: 60px 80px 50px 80px !important;
+  box-sizing: border-box !important;
+}
+
+/* 메인 영역은 flex: 1 로 남은 공간 채움 */
+.slide .main-content,
+.slide .content,
+.slide .scope-body,
+.slide .slide-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* side-panel 이 main 바깥에 있으면 안 됨 — grid 안으로 */
+.slide .side-panel {
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* footer 항상 하단 */
+.slide .footer-border {
+  margin-top: auto !important;
+  padding-top: 16px;
+  border-top: 0.5px solid var(--fog);
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Quota + Budget</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-07 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
+    .pane { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .pane.q { border-top: 6px solid var(--gold); }
+    .pane.b { border-top: 6px solid #7A4E6B; }
+    .pane .head { display: flex; align-items: center; gap: 14px; }
+    .pane iconify-icon { font-size: 44px; flex-shrink: 0; }
+    .pane.q iconify-icon { color: var(--gold); }
+    .pane.b iconify-icon { color: #7A4E6B; }
+    .pane .name { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: var(--ink); }
+    .pane .tagline { font-size: 14px; color: var(--deep-gold); font-weight: 600; }
+    .pane.b .tagline { color: #5A3850; }
+    .pane .desc { font-size: 14px; color: var(--ink); line-height: 1.6; padding: 14px 18px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
+    .pane.b .desc { background: rgba(122,78,107,0.06); border-left-color: #7A4E6B; }
+    .pane h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 8px 0 6px 0; }
+    .pane.b h3 { color: #5A3850; }
+    .pane .timeline { display: flex; gap: 4px; align-items: flex-end; height: 90px; padding: 6px 0; }
+    .pane .bar { flex: 1; background: var(--gold); border-radius: 4px 4px 0 0; opacity: 0.7; position: relative; }
+    .pane .bar.t1 { height: 25%; }
+    .pane .bar.t2 { height: 50%; }
+    .pane .bar.t3 { height: 75%; }
+    .pane .bar.t4 { height: 100%; opacity: 0.9; }
+    .pane .bar span { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--stone); white-space: nowrap; }
+    .pane ul { list-style: none; padding: 0; margin: 0; }
+    .pane li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
+    .pane li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .pane li::before { content: '▸'; color: var(--deep-gold); }
+    .slide-07 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-07">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>PART 03 · QUOTA + BUDGET</span>
+      <span class="mono caption">07 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">Quota Backoff + Budget Ceiling</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">API 한도와 일일 예산을 모두 관리 — 운영 비용 폭주 방지</p>
+
+    <div class="body">
+      <div class="pane q">
+        <div class="head">
+          <iconify-icon icon="heroicons:no-symbol"></iconify-icon>
+          <div>
+            <div class="name">Quota Backoff</div>
+            <div class="tagline">API 한도 도달 → 지수 backoff</div>
+          </div>
+        </div>
+        <div class="desc">"Codex 가 quota 한도 침"<br>→ 처음 10분 대기 → 다시 시도 → 또 침 → 20분 → 40분 → 2시간</div>
+        <h3>◆ Backoff 단계</h3>
+        <div class="timeline" style="margin-top: 28px; margin-bottom: 28px;">
+          <div class="bar t1"><span>10m</span></div>
+          <div class="bar t2"><span>20m</span></div>
+          <div class="bar t3"><span>40m</span></div>
+          <div class="bar t4"><span>2h</span></div>
+        </div>
+        <ul>
+          <li>state DB <code>quota.retry_at</code> 에 시간 저장</li>
+          <li>watchdog 가 시간 도래 시 자동 재시작</li>
+          <li>다른 워커는 영향 없음 (개별 격리)</li>
+          <li>성공 시 카운터 리셋 → 0회로 복귀</li>
+        </ul>
+      </div>
+
+      <div class="pane b">
+        <div class="head">
+          <iconify-icon icon="heroicons:wallet"></iconify-icon>
+          <div>
+            <div class="name">Budget Ceiling</div>
+            <div class="tagline">일일 비용 상한 → 자동 차단</div>
+          </div>
+        </div>
+        <div class="desc">"오늘 누적 $50 예산 도달"<br>→ 신규 task 모두 차단 → 진행 중인 task 만 완료 → 자정 리셋</div>
+        <h3>◆ 설정 + 작동</h3>
+        <ul>
+          <li>설정: <code>route.py --set-daily-limit 50</code></li>
+          <li>매 task 시작 전 <code>budget.spent vs limit</code> 체크</li>
+          <li>초과시 <code>BUDGET_EXCEEDED</code> exception</li>
+          <li>워커 자동 종료 + slack 알림 (선택)</li>
+          <li>자정 (KST) 에 <code>budget.spent = 0</code></li>
+          <li>기본값: 무제한 (limit 미설정)</li>
+        </ul>
+        <h3>◆ 모델별 단가 인지</h3>
+        <ul>
+          <li><code>pricing.py</code> 가 모델별 단가 보유</li>
+          <li>Opus 4.7 vs Haiku 4.5 단가 차이 자동 반영</li>
+          <li>prompt cache hit 시 90% 할인 자동 계산</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">상세: docs/routing-policy.md · plugins/exec_orch/skills/route_dispatch.md</span></div>
+  </div>
+</body>
+</html>

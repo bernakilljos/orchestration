@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>EXECUTION — 7 플러그인</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-top: 5px solid var(--gold); border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; overflow: hidden; }
+    .card iconify-icon { font-size: 32px; color: var(--gold); }
+    .card .name { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--ink); }
+    .card .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
+    .card .cmd { margin-top: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 5px 9px; border-radius: 6px; align-self: flex-start; }
+    .card .stat { position: absolute; top: 14px; right: 14px; font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 7px; border-radius: 100px; letter-spacing: 0.1em; font-weight: 700; }
+    .card.stable .stat { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .card.spec .stat   { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .card.spec { opacity: 0.85; }
+    .grid-7 { grid-template-rows: repeat(2, 1fr); }
+    .card.wide { grid-column: span 1; }
+    .slide-03 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-03">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-sm"></iconify-icon>CATEGORY 01 · EXECUTION</span>
+      <span class="mono caption">03 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:cog-8-tooth" class="icon-lg"></iconify-icon><h1 class="heading-1">exec_* · 오케스트레이션 7</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">멀티AI 워커·라우팅·세션·스케줄러·학습·로컬AI·음성</p>
+
+    <div class="grid grid-7">
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:command-line"></iconify-icon>
+        <div class="name">exec_orch</div>
+        <div class="desc">진입점. Codex/Gemini 워커 라우팅·파이프라인·역할 분배.</div>
+        <span class="cmd">/exec_orch</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:cpu-chip"></iconify-icon>
+        <div class="name">exec_claude</div>
+        <div class="desc">Claude 전용 심화 — 구조화 질문·아티팩트·확장 사고.</div>
+        <span class="cmd">/claude-status</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:lock-closed"></iconify-icon>
+        <div class="name">exec_session_guard</div>
+        <div class="desc">토큰 부족·강제 종료 대비 자동 스냅샷 저장·복구.</div>
+        <span class="cmd">/guard-save</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:microphone"></iconify-icon>
+        <div class="name">exec_voice</div>
+        <div class="desc">STT·TTS·회의록·음성 명령 — Whisper + edge-tts.</div>
+        <span class="cmd">/voice-task</span>
+      </div>
+      <div class="card stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:academic-cap"></iconify-icon>
+        <div class="name">exec_learning</div>
+        <div class="desc">세션 학습·실패 패턴·최적화 규칙 JSON 누적.</div>
+        <span class="cmd">/learn /recall</span>
+      </div>
+      <div class="card spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:cloud"></iconify-icon>
+        <div class="name">exec_offline</div>
+        <div class="desc">로컬 AI 스택 — Ollama + ChromaDB + Phoenix ($0 운영).</div>
+        <span class="cmd">/exec_offline-setup</span>
+      </div>
+      <div class="card spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:clock"></iconify-icon>
+        <div class="name">exec_scheduler</div>
+        <div class="desc">크론 잡·DAG 워크플로우 — YAML 선언형 스케줄러.</div>
+        <span class="cmd">/exec_scheduler-cron</span>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/exec_*/plugin.json · CLAUDE.md § 3.5 전역 오케스트레이션</span></div>
+  </div>
+</body>
+</html>

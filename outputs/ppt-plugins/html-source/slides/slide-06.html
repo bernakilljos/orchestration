@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SPECIAL — 4 플러그인</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 24px; min-height: 0; }
+    .card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 32px; display: flex; gap: 22px; align-items: flex-start; min-height: 0; position: relative; overflow: hidden; }
+    .card.ai     { border-top: 6px solid var(--terracotta); }
+    .card.review { border-top: 6px solid #8A6235; }
+    .card.music  { border-top: 6px solid #5A8C8A; }
+    .card.cost   { border-top: 6px solid var(--gold); }
+    .card iconify-icon { font-size: 56px; flex-shrink: 0; }
+    .card.ai iconify-icon { color: var(--terracotta); }
+    .card.review iconify-icon { color: #8A6235; }
+    .card.music iconify-icon { color: #5A8C8A; }
+    .card.cost iconify-icon { color: var(--gold); }
+    .card .body { flex: 1; min-width: 0; }
+    .card .name { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .card .tagline { font-size: 16px; color: var(--deep-gold); font-weight: 600; margin-bottom: 10px; }
+    .card .desc { font-size: 14px; color: var(--stone); line-height: 1.5; margin-bottom: 10px; }
+    .card .features { display: flex; flex-wrap: wrap; gap: 6px; }
+    .card .features span { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 100px; background: rgba(184,134,78,0.1); color: var(--deep-gold); }
+    .card .stat { position: absolute; top: 18px; right: 18px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 100px; letter-spacing: 0.1em; font-weight: 700; }
+    .card.stable .stat { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .card.spec .stat   { background: rgba(178,90,62,0.16); color: #8A3E26; }
+    .slide-06 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-06">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>CATEGORIES 04-06 · SPECIAL</span>
+      <span class="mono caption">06 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">AI · Review · Music · Cost — 특수 4</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">도메인 특화 플러그인 — RAG · 품질검증 · 음악 · 수익화</p>
+
+    <div class="grid">
+      <div class="card ai spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:cpu-chip"></iconify-icon>
+        <div class="body">
+          <div class="name">ai_rag</div>
+          <div class="tagline">RAG 8가지 패턴</div>
+          <div class="desc">Naive · Multimodal · HyDE · Corrective · Adaptive · Graph · Hybrid · Agentic. 검색·생성 결합 패턴 모음.</div>
+          <div class="features">
+            <span>/rag-naive</span><span>/rag-hyde</span><span>/rag-graph</span><span>/rag-agentic</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card review stable"><span class="stat">STABLE</span>
+        <iconify-icon icon="heroicons:shield-check"></iconify-icon>
+        <div class="body">
+          <div class="name">review_qa</div>
+          <div class="tagline">코드 리뷰 · 보안 · 품질</div>
+          <div class="desc">코드 리뷰 · OWASP 보안 검사 · 품질 검증 · 테스트 자동화 · 성능 측정 (Lighthouse).</div>
+          <div class="features">
+            <span>/review_qa</span><span>/security</span><span>/performance</span><span>/validate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card music spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="heroicons:musical-note"></iconify-icon>
+        <div class="body">
+          <div class="name">music_studio</div>
+          <div class="tagline">음악 스튜디오 풀 스택</div>
+          <div class="desc">녹음 · 작곡(Suno·Udio·MusicGen) · 믹싱 · 마스터링 · 편곡 · 가사 · MIDI · 스템 분리 · 커버.</div>
+          <div class="features">
+            <span>/music_studio-compose</span><span>/music_studio-mix</span><span>/music_studio-master</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card cost spec"><span class="stat">SPEC</span>
+        <iconify-icon icon="simple-icons:youtube"></iconify-icon>
+        <div class="body">
+          <div class="name">cost_youtube</div>
+          <div class="tagline">YouTube 수익화 풀 스택</div>
+          <div class="desc">트렌드 리서치 · 자동 업로드 · 수익·조회수·시청지속 분석 — Phase 1 (research → upload → analytics).</div>
+          <div class="features">
+            <span>/yt-research</span><span>/yt-upload</span><span>/yt-analytics</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/ai_rag · review_qa · music_studio · cost_youtube</span></div>
+  </div>
+</body>
+</html>

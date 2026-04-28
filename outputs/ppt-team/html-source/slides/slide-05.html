@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>5분 Quick Start</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.55; padding: 20px 24px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
+    .terminal .p { color: #B8864E; font-weight: 700; }
+    .terminal .o { color: #6B8E7F; }
+    .terminal .c { color: #6E685C; font-style: italic; }
+    .terminal .h { color: #39FF6C; }
+    .terminal .w { color: #E8B96B; }
+    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; display: flex; gap: 14px; align-items: flex-start; }
+    .step.s1 { border-left: 5px solid var(--sage); }
+    .step.s2 { border-left: 5px solid var(--gold); }
+    .step.s3 { border-left: 5px solid #7A4E6B; }
+    .step.s4 { border-left: 5px solid var(--terracotta); }
+    .step.s5 { border-left: 5px solid #8A6235; }
+    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1; flex-shrink: 0; min-width: 36px; }
+    .step.s1 .num { color: var(--sage); }
+    .step.s2 .num { color: var(--gold); }
+    .step.s3 .num { color: #7A4E6B; }
+    .step.s4 .num { color: var(--terracotta); }
+    .step.s5 .num { color: #8A6235; }
+    .step .title { font-size: 16px; font-weight: 700; color: var(--ink); }
+    .step .desc { font-size: 13px; color: var(--stone); line-height: 1.45; margin-top: 2px; }
+    .step .desc code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .slide-05 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-05">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>PART 02 · QUICK START · 5분</span>
+      <span class="mono caption">05 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon><h1 class="heading-1">설치 + 첫 명령 · 5분</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">압축 해제 → setup → 토큰 prompt → claude 실행 → /init</p>
+
+    <div class="body">
+      <div>
+        <pre class="terminal"><span class="c"># 1. zip 풀기</span>
+<span class="p">$</span> cd C:\work && unzip orchestration_v1_team.zip
+
+<span class="c"># 2. setup (관리자 자동 권한)</span>
+<span class="p">$</span> orchestration_v1_team\setup\setup.bat C:\work\my
+<span class="o">[Module 07] Git/GitHub setup...</span>
+  Token (없으면 Enter): <span class="h">[Enter]</span>
+  <span class="o">[SKIP] GitHub 단계 — 설치 계속</span>
+  <span class="o">[OK] git init done</span>
+
+<span class="c"># 3. Claude 실행 + 첫 명령</span>
+<span class="p">$</span> cd C:\work\my && claude
+<span class="o">&gt;</span> /init  /design_ppt "내 첫 PPT" 15</pre>
+      </div>
+
+      <div class="right">
+        <div class="step s1">
+          <span class="num">1</span>
+          <div>
+            <div class="title">압축 해제</div>
+            <div class="desc">TEAM zip 을 원하는 폴더에 풀기. 보통 <code>C:\work\</code> 추천</div>
+          </div>
+        </div>
+        <div class="step s2">
+          <span class="num">2</span>
+          <div>
+            <div class="title">setup 실행</div>
+            <div class="desc"><code>setup\setup.bat &lt;대상&gt;</code> · 관리자 권한 자동 요청 + 14개 모듈 순차 실행</div>
+          </div>
+        </div>
+        <div class="step s3">
+          <span class="num">3</span>
+          <div>
+            <div class="title">토큰 입력 (선택)</div>
+            <div class="desc">PAT 있으면 입력 → GitHub 자동 생성. 없으면 <strong>Enter</strong> → SKIP, 설치는 계속</div>
+          </div>
+        </div>
+        <div class="step s4">
+          <span class="num">4</span>
+          <div>
+            <div class="title"><code>claude</code> 실행</div>
+            <div class="desc">CLAUDE_SETUP_GUIDE.md 가 첫 환경 자동 구성 (MCP 등록 등)</div>
+          </div>
+        </div>
+        <div class="step s5">
+          <span class="num">5</span>
+          <div>
+            <div class="title">첫 명령</div>
+            <div class="desc"><code>/init</code> + 원하는 슬래시 명령 (<code>/design_ppt</code>, <code>/exec_orch</code>)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">소요: setup 약 3분 · 첫 명령 즉시</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Learn More — Automation</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-12 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important;
+      background: radial-gradient(ellipse 1000px 700px at 85% 12%, rgba(184,134,78,0.28), transparent 60%),
+                  radial-gradient(ellipse 800px 500px at 8% 88%, rgba(107,142,127,0.16), transparent 55%),
+                  linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%) !important; }
+    .head { position: relative; z-index: 2; }
+    .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.3em; color: var(--deep-gold); text-transform: uppercase; font-weight: 600; }
+    .title { font-family: 'Fraunces', serif; font-size: 180px; font-weight: 600; line-height: 0.92; letter-spacing: -0.04em; color: var(--ink); margin-top: 8px; }
+    .title .accent { color: var(--gold); font-style: italic; font-weight: 500; }
+    .sub { font-size: 30px; color: var(--stone); margin-top: 18px; }
+    .grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 22px; margin-top: 36px; min-height: 0; position: relative; z-index: 2; }
+    .link { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 18px; padding: 26px 34px; display: flex; flex-direction: column; gap: 12px; min-height: 0; box-shadow: 0 4px 18px rgba(184,134,78,0.06); }
+    .link.gold  { border-top: 6px solid var(--gold); }
+    .link.sage  { border-top: 6px solid var(--sage); }
+    .link.plum  { border-top: 6px solid #7A4E6B; }
+    .link.terra { border-top: 6px solid var(--terracotta); }
+    .link iconify-icon { font-size: 56px; flex-shrink: 0; }
+    .link.gold iconify-icon  { color: var(--gold); }
+    .link.sage iconify-icon  { color: var(--sage); }
+    .link.plum iconify-icon  { color: #7A4E6B; }
+    .link.terra iconify-icon { color: var(--terracotta); }
+    .link .row { display: flex; align-items: center; gap: 16px; }
+    .link .url { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.15; }
+    .link .desc { font-size: 16px; color: var(--stone); line-height: 1.5; padding-left: 72px; margin: 0; }
+    .credit { position: relative; z-index: 2; padding-top: 24px; border-top: 0.5px solid rgba(184,134,78,0.4); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--stone); margin-top: 24px; }
+    .credit .brand { color: var(--deep-gold); font-weight: 700; letter-spacing: 0.18em; }
+  </style>
+</head>
+<body>
+  <div class="slide slide-12">
+    <div class="head">
+      <div class="eyebrow">END · 자동화 도구 · 운영 가이드</div>
+      <h1 class="title">Learn <span class="accent">More</span></h1>
+      <p class="sub">코드·문서·플러그인·메트릭 — 깊이 보기</p>
+    </div>
+
+    <div class="grid">
+      <div class="link gold">
+        <div class="row">
+          <iconify-icon icon="heroicons:command-line"></iconify-icon>
+          <div class="url">plugins/exec_orch/<br>route_dispatch.md</div>
+        </div>
+        <p class="desc">라우팅 결정 트리 상세 — AI 단가·특성·quota 매트릭스</p>
+      </div>
+      <div class="link sage">
+        <div class="row">
+          <iconify-icon icon="heroicons:document-text"></iconify-icon>
+          <div class="url">docs/<br>routing-policy.md</div>
+        </div>
+        <p class="desc">4.7 라우팅 정책 + Quota Backoff + Budget Ceiling 상세</p>
+      </div>
+      <div class="link plum">
+        <div class="row">
+          <iconify-icon icon="heroicons:bolt"></iconify-icon>
+          <div class="url">docs/<br>caching-strategy.md</div>
+        </div>
+        <p class="desc">Prompt caching 전략 + cache write/read 비용 계산</p>
+      </div>
+      <div class="link terra">
+        <div class="row">
+          <iconify-icon icon="heroicons:chart-bar"></iconify-icon>
+          <div class="url">docs/<br>metrics-guide.md</div>
+        </div>
+        <p class="desc">SQLite 스키마·쿼리 + 대시보드 커스터마이징</p>
+      </div>
+    </div>
+
+    <div class="credit">
+      <span class="brand">ORCHESTRATION KIT · AUTOMATION · v1.0</span>
+      <span>Opus 4.7 + Codex + Haiku 4.5 · 24/7</span>
+    </div>
+  </div>
+</body>
+</html>

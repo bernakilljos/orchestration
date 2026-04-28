@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>FAQ</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-11 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
+    .qa { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 24px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+    .qa.q1 { border-left: 5px solid var(--sage); }
+    .qa.q2 { border-left: 5px solid var(--gold); }
+    .qa.q3 { border-left: 5px solid #7A4E6B; }
+    .qa.q4 { border-left: 5px solid var(--terracotta); }
+    .qa.q5 { border-left: 5px solid #8A6235; }
+    .qa.q6 { border-left: 5px solid var(--sage); }
+    .qa .q { display: flex; gap: 10px; align-items: flex-start; }
+    .qa .qmark { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; line-height: 0.9; flex-shrink: 0; }
+    .qa.q1 .qmark { color: var(--sage); }
+    .qa.q2 .qmark { color: var(--gold); }
+    .qa.q3 .qmark { color: #7A4E6B; }
+    .qa.q4 .qmark { color: var(--terracotta); }
+    .qa.q5 .qmark { color: #8A6235; }
+    .qa.q6 .qmark { color: var(--sage); }
+    .qa .qtext { font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+    .qa .a { font-size: 13px; color: var(--stone); line-height: 1.55; padding-left: 42px; }
+    .qa .a strong { color: var(--ink); }
+    .qa .a code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .slide-11 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-11">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:question-mark-circle" class="icon-sm"></iconify-icon>PART 04 · FAQ</span>
+      <span class="mono caption">11 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:question-mark-circle" class="icon-lg"></iconify-icon><h1 class="heading-1">FAQ · 자주 묻는 6</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">팀 도입 시 가장 많이 받는 질문들</p>
+
+    <div class="body">
+      <div class="qa q1">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">토큰 안 넣고 설치했는데 나중에 추가 가능?</span></div>
+        <div class="a"><strong>A.</strong> 가능. <code>docs/ini/github.ini</code> 의 <code>GITHUB_PAT=</code> 에 토큰 붙여넣기 → 다음 명령부터 자동 인식. 또는 <code>setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_..."</code> 환경변수로.</div>
+      </div>
+
+      <div class="qa q2">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">본판 (orchestration_v1) 도 같이 받아야 함?</span></div>
+        <div class="a"><strong>A.</strong> 아니요. TEAM 빌드만으로 모든 기능 동작. 본판은 작성자/메인테이너 working repo. 일반 팀 사용엔 TEAM 만 충분.</div>
+      </div>
+
+      <div class="qa q3">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">기존 Claude Code 와 충돌?</span></div>
+        <div class="a"><strong>A.</strong> 충돌 없음. setup 이 npm 설치된 구버전 자동 제거 + 새 버전 설치. 기존 <code>~/.claude/</code> 의 settings.json 은 보존.</div>
+      </div>
+
+      <div class="qa q4">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">3개 AI (Claude+Codex+Gemini) 다 필요?</span></div>
+        <div class="a"><strong>A.</strong> 아니요. 모드 선택 가능 — Full / Codex 단독 / Gemini 단독. setup 인자로 <code>setup.bat codex C:\path</code> 식 호출. API 키 없는 모델은 자동 SKIP.</div>
+      </div>
+
+      <div class="qa q5">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">업데이트는 어떻게?</span></div>
+        <div class="a"><strong>A.</strong> 새 TEAM zip 받아 같은 폴더에 풀기 (덮어쓰기). 사용자 데이터 (state DB · CLAUDE.md · outputs) 는 보존됨. 또는 <code>update-remote.bat</code> 스크립트.</div>
+      </div>
+
+      <div class="qa q6">
+        <div class="q"><span class="qmark">Q.</span><span class="qtext">팀원마다 같은 PAT 써도 됨?</span></div>
+        <div class="a"><strong>A.</strong> 비추천. 각자 발급 권장 (감사 추적 + 권한 관리). 공용 봇 PAT 도 가능하지만 팀 정책에 따라.</div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">추가 질문: 메인테이너 / GitHub Issues / Slack 채널</span></div>
+  </div>
+</body>
+</html>

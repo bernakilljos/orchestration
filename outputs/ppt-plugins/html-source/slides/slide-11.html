@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시나리오 3 — 데이터·자동화</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-11 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 24px; min-height: 0; }
+    .case { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 30px; display: flex; flex-direction: column; gap: 14px; min-height: 0; position: relative; }
+    .case.daily { border-top: 6px solid var(--gold); }
+    .case.deploy { border-top: 6px solid var(--sage); }
+    .case.research { border-top: 6px solid #7A4E6B; }
+    .case.alarm { border-top: 6px solid var(--terracotta); }
+    .case .head { display: flex; align-items: center; gap: 14px; }
+    .case iconify-icon { font-size: 44px; flex-shrink: 0; }
+    .case.daily iconify-icon { color: var(--gold); }
+    .case.deploy iconify-icon { color: var(--sage); }
+    .case.research iconify-icon { color: #7A4E6B; }
+    .case.alarm iconify-icon { color: var(--terracotta); }
+    .case .name { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .case .sub { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); margin-top: 2px; }
+    .case .scenario { font-size: 14px; color: var(--ink); line-height: 1.55; padding: 12px 16px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
+    .case.deploy .scenario { border-left-color: var(--sage); background: rgba(107,142,127,0.06); }
+    .case.research .scenario { border-left-color: #7A4E6B; background: rgba(122,78,107,0.06); }
+    .case.alarm .scenario { border-left-color: var(--terracotta); background: rgba(178,90,62,0.06); }
+    .case .pipe { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; }
+    .case .pipe code { background: rgba(184,134,78,0.08); color: var(--deep-gold); padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+    .case .pipe .arrow { color: var(--stone); font-weight: 700; }
+    .slide-11 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-11">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:bolt" class="icon-sm"></iconify-icon>SCENARIO 03 · DATA &amp; AUTOMATION</span>
+      <span class="mono caption">11 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon><h1 class="heading-1">시나리오 3 · 데이터·자동화 4 케이스</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">정기 보고 · 자동 배포 · 리서치 · 알림 — 스케줄러 + 협업 결합</p>
+
+    <div class="body">
+      <div class="case daily">
+        <div class="head"><iconify-icon icon="heroicons:calendar-days"></iconify-icon>
+          <div><div class="name">매일 자동 보고</div><div class="sub">크론 + Slack 알림</div></div>
+        </div>
+        <div class="scenario">"매일 9시 어제 PR 요약 + 이슈 현황을 슬랙에"</div>
+        <div class="pipe">
+          <code>/exec_scheduler-cron</code><span class="arrow">→</span>
+          <code>github MCP</code><span class="arrow">→</span>
+          <code>요약</code><span class="arrow">→</span>
+          <code>slack MCP</code>
+        </div>
+      </div>
+
+      <div class="case deploy">
+        <div class="head"><iconify-icon icon="heroicons:rocket-launch"></iconify-icon>
+          <div><div class="name">자동 배포 + 검증</div><div class="sub">PR 머지 → 배포 → 테스트</div></div>
+        </div>
+        <div class="scenario">"main 머지 시 Vercel 배포 + Playwright E2E 자동"</div>
+        <div class="pipe">
+          <code>github MCP</code><span class="arrow">→</span>
+          <code>Vercel MCP</code><span class="arrow">→</span>
+          <code>/screenshot</code><span class="arrow">→</span>
+          <code>/validate</code>
+        </div>
+      </div>
+
+      <div class="case research">
+        <div class="head"><iconify-icon icon="heroicons:magnifying-glass"></iconify-icon>
+          <div><div class="name">리서치 + 보고서</div><div class="sub">RAG + Knowledge Graph</div></div>
+        </div>
+        <div class="scenario">"AI 에이전트 시장 트렌드 조사 + 30p 보고서"</div>
+        <div class="pipe">
+          <code>/rag-graph</code><span class="arrow">→</span>
+          <code>웹 검색</code><span class="arrow">→</span>
+          <code>요약</code><span class="arrow">→</span>
+          <code>/word-make</code>
+        </div>
+      </div>
+
+      <div class="case alarm">
+        <div class="head"><iconify-icon icon="heroicons:bell-alert"></iconify-icon>
+          <div><div class="name">에러 알람·복구</div><div class="sub">Watchdog + 자동 재시도</div></div>
+        </div>
+        <div class="scenario">"워커 죽으면 자동 복구 + Slack 알림 + 로그 분석"</div>
+        <div class="pipe">
+          <code>watchdog</code><span class="arrow">→</span>
+          <code>state DB</code><span class="arrow">→</span>
+          <code>backoff</code><span class="arrow">→</span>
+          <code>slack MCP</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: exec_scheduler · exec_orch 24/7 자동화 · CLAUDE.md § 3.3</span></div>
+  </div>
+</body>
+</html>

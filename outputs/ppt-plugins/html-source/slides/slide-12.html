@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>자동화도구 vs TEAM</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-12 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
+    .pane { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; min-height: 0; position: relative; }
+    .pane.tool { border-top: 6px solid var(--gold); }
+    .pane.team { border-top: 6px solid var(--sage); }
+    .pane .head { display: flex; align-items: center; gap: 14px; }
+    .pane iconify-icon { font-size: 48px; flex-shrink: 0; }
+    .pane.tool iconify-icon { color: var(--gold); }
+    .pane.team iconify-icon { color: var(--sage); }
+    .pane .name { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: var(--ink); }
+    .pane .tagline { font-size: 16px; color: var(--deep-gold); font-weight: 600; margin-top: 2px; }
+    .pane.team .tagline { color: #4A6F60; }
+    .pane .badge { position: absolute; top: 22px; right: 22px; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 10px; border-radius: 100px; letter-spacing: 0.1em; font-weight: 700; }
+    .pane.tool .badge { background: rgba(184,134,78,0.15); color: var(--deep-gold); }
+    .pane.team .badge { background: rgba(107,142,127,0.18); color: #4A6F60; }
+    .row { display: flex; align-items: center; gap: 14px; padding: 8px 0; border-bottom: 0.5px dashed var(--fog); }
+    .row:last-child { border-bottom: none; }
+    .row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); font-weight: 600; min-width: 100px; }
+    .row .val { font-size: 14px; color: var(--ink); flex: 1; }
+    .row .ico { font-size: 18px; flex-shrink: 0; }
+    .row .ok { color: var(--sage); }
+    .row .x  { color: var(--terracotta); }
+    .row .meh { color: var(--stone); }
+    .slide-12 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-tech slide-12">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>3 RESULTS · 2 BUILDS</span>
+      <span class="mono caption">12 / 15</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화도구 vs TEAM 빌드</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">3 결과물 중 2개 — 같은 코드, 다른 출고 상태</p>
+
+    <div class="body">
+      <div class="pane tool">
+        <span class="badge">▸ 작성자용</span>
+        <div class="head">
+          <iconify-icon icon="heroicons:wrench-screwdriver"></iconify-icon>
+          <div>
+            <div class="name">자동화도구</div>
+            <div class="tagline">orchestration_v1 — 본판 (작성자 working repo)</div>
+          </div>
+        </div>
+        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">하드코딩 fallback 포함 (작성자 PAT)</span></div>
+        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">state DB · tasks · learning 모두 활성</span></div>
+        <div class="row"><span class="lbl">outputs/</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">실 작업 결과물 포함 (PPT·문서 등)</span></div>
+        <div class="row"><span class="lbl">git history</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">전체 commit 이력 + remote</span></div>
+        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user" class="ico meh"></iconify-icon><span class="val">킷 작성자·메인테이너</span></div>
+      </div>
+
+      <div class="pane team">
+        <span class="badge">▸ 배포용</span>
+        <div class="head">
+          <iconify-icon icon="heroicons:user-group"></iconify-icon>
+          <div>
+            <div class="name">TEAM</div>
+            <div class="tagline">orchestration_v1_team — 팀 배포 빌드 (클린)</div>
+          </div>
+        </div>
+        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제거됨 — install 시 prompt + skip 가능</span></div>
+        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">state · tasks · learning 모두 제외</span></div>
+        <div class="row"><span class="lbl">outputs/</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제외 — 빈 상태로 시작</span></div>
+        <div class="row"><span class="lbl">git history</span><iconify-icon icon="heroicons:arrow-path" class="ico meh"></iconify-icon><span class="val">새로 init — Initial commit 1개</span></div>
+        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user-group" class="ico ok"></iconify-icon><span class="val">팀원·신규 도입 회사</span></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">3번째 결과물: 이 PPT — 25개 플러그인 사용 가이드</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>트러블슈팅</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: flex; flex-direction: column; gap: 14px; margin-top: 24px; min-height: 0; }
+    .table { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px 30px; flex: 1; min-height: 0; overflow: hidden; }
+    .table table { width: 100%; border-collapse: collapse; }
+    .table th { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 10px 14px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .table th.symptom { color: var(--terracotta); }
+    .table th.cause { color: var(--gold); }
+    .table th.fix { color: var(--sage); }
+    .table td { padding: 11px 14px; font-size: 14px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.5; }
+    .table td:first-child { font-weight: 700; color: var(--terracotta); width: 28%; }
+    .table td:nth-child(2) { color: var(--stone); width: 32%; }
+    .table td:nth-child(3) { color: var(--ink); }
+    .table td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .slide-10 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-10">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-sm"></iconify-icon>PART 04 · TROUBLESHOOTING</span>
+      <span class="mono caption">10 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-lg"></iconify-icon><h1 class="heading-1">트러블슈팅 · 자주 마주치는 7</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">증상 → 원인 → 해결 — 처음 도입할 때 90% 이슈는 여기 있음</p>
+
+    <div class="body">
+      <div class="table">
+        <table>
+          <thead>
+            <tr><th class="symptom">증상</th><th class="cause">원인</th><th class="fix">해결</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>setup 가 관리자 권한 요청 후 멈춤</td><td>UAC 거부 / 정책 차단</td><td>관리자 명시 실행: 우클릭 → "관리자 권한으로 실행"</td></tr>
+            <tr><td>CLAUDE_SETUP_GUIDE.md 자동 처리 안 됨</td><td>Claude Code 첫 실행 아님</td><td><code>claude</code> 다시 실행 + 신규 세션 (자동 처리)</td></tr>
+            <tr><td>MCP 명령 hang (응답 없음)</td><td>npx 가 토큰 입력 대기</td><td><code>cmd /c npx</code> 형식 확인 + 환경변수 설정</td></tr>
+            <tr><td>워커가 "quota exceeded" 로 멈춤</td><td>API 한도 도달</td><td>watchdog 가 자동 backoff (10m→2h). 강제 재시작 X</td></tr>
+            <tr><td>SQLite "database is locked"</td><td>다른 프로세스가 DB 점유</td><td>WAL 모드 활성화 + <code>watchdog-restart.bat</code></td></tr>
+            <tr><td><code>/design_ppt</code> 잘림 (overflow)</td><td>코드 줄 수 초과</td><td>font-size 16→14px 또는 분할 (skill-ppt-pitfalls 참조)</td></tr>
+            <tr><td><code>setx</code> 환경변수가 적용 안 됨</td><td>새 셸 미반영</td><td>cmd 재시작 또는 시스템 재로그인</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">로그: <code>%TEMP%\orchestration-setup.log</code> · 추가 도움: GitHub Issues</span></div>
+  </div>
+</body>
+</html>

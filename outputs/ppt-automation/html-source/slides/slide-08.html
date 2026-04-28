@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Prompt Caching</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
+    .left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .compare { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px 28px; flex: 1; min-height: 0; }
+    .compare h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 16px 0; }
+    .compare .row { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 0.5px dashed var(--fog); }
+    .compare .row:last-child { border-bottom: none; }
+    .compare .row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--ink); font-weight: 600; }
+    .compare .row .before { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--terracotta); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .row .after { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--sage); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .head { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--fog); margin-bottom: 8px; }
+    .compare .head span { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.15em; color: var(--stone); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .head .lbl { text-align: left; }
+    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
+    .box.what { border-left: 5px solid var(--gold); }
+    .box.how  { border-left: 5px solid var(--sage); }
+    .box.tip  { border-left: 5px solid #7A4E6B; }
+    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .box.how h3 { color: #4A6F60; }
+    .box.tip h3 { color: #5A3850; }
+    .box ul { list-style: none; padding: 0; margin: 0; }
+    .box li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .box li::before { content: '▸'; color: var(--deep-gold); }
+    .savings { background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12)); border: 1px solid rgba(107,142,127,0.4); border-radius: 14px; padding: 22px 28px; }
+    .savings .big { font-family: 'Fraunces', serif; font-size: 60px; font-weight: 700; color: var(--sage); line-height: 1; }
+    .savings .sub { font-size: 14px; color: var(--ink); margin-top: 6px; line-height: 1.5; }
+    .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-08">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:bolt" class="icon-sm"></iconify-icon>PART 03 · PROMPT CACHING</span>
+      <span class="mono caption">08 / 12</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon><h1 class="heading-1">Prompt Caching · 90% 비용 절감</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">반복 컨텍스트는 캐시 → cache read 단가는 기본 input 의 10%</p>
+
+    <div class="body">
+      <div class="left">
+        <div class="compare">
+          <h3>◆ 검증 워커 일일 비용 비교</h3>
+          <div class="head"><span class="lbl">항목</span><span>BEFORE</span><span>AFTER</span></div>
+          <div class="row"><span class="lbl">검증 모델</span><span class="before">Gemini Pro</span><span class="after">Haiku 4.5</span></div>
+          <div class="row"><span class="lbl">평균 input 토큰</span><span class="before">120K</span><span class="after">120K</span></div>
+          <div class="row"><span class="lbl">cache hit ratio</span><span class="before">0%</span><span class="after">85%</span></div>
+          <div class="row"><span class="lbl">실효 input 단가</span><span class="before">$0.30/M</span><span class="after">$0.025/M</span></div>
+          <div class="row"><span class="lbl">일일 검증 100회</span><span class="before">$3.6</span><span class="after">$0.30</span></div>
+          <div class="row"><span class="lbl">월간 (30일)</span><span class="before">$108</span><span class="after">$9</span></div>
+        </div>
+        <div class="savings">
+          <div class="big">−92%</div>
+          <div class="sub"><strong>월간 $108 → $9</strong> (Gemini Pro → Haiku 4.5 + Prompt Caching 조합)</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="box what">
+          <h3>◆ 무엇</h3>
+          <ul>
+            <li>같은 prompt prefix 재사용 시 캐시</li>
+            <li>5분 TTL (cache hit 시 자동 연장)</li>
+            <li>cache write: 1.25× input 단가</li>
+            <li>cache read: 0.1× input 단가 (90% off)</li>
+          </ul>
+        </div>
+        <div class="box how">
+          <h3>◆ 어떻게</h3>
+          <ul>
+            <li>system prompt + 큰 컨텍스트는 prefix 로</li>
+            <li>변하는 부분 (변경 코드) 만 뒷부분</li>
+            <li><code>prompt_cache.py</code> 헬퍼가 자동 처리</li>
+            <li>2회+ 호출시 ROI 양수</li>
+          </ul>
+        </div>
+        <div class="box tip">
+          <h3>◆ 활용 패턴</h3>
+          <ul>
+            <li>리뷰: 코드 베이스 + 룰 (cache) + 변경 (no cache)</li>
+            <li>RAG: KB 청크 (cache) + 쿼리 (no cache)</li>
+            <li>긴 문서 분석: 문서 (cache) + 질문 (no cache)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">상세: docs/caching-strategy.md · .claude/scripts/lib/prompt_cache.py</span></div>
+  </div>
+</body>
+</html>
