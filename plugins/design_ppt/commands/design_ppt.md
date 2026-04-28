@@ -297,20 +297,37 @@ background:
 
 ---
 
-## 7. 검증 자동화 (선택)
+## 7. 검증 자동화 (HOOK-09 + verify-ppt-overflow.py)
 
-수동 OCR 외에 자동 잘림 탐지:
+**자동 트리거**: `generate-*-ppt.py` 실행 후 HOOK-09 가 자동 발화 → `verify-ppt-overflow.py` 호출.
 
 ```bash
+# 수동 실행도 가능
 python .claude/scripts/verify-ppt-overflow.py
+python .claude/scripts/verify-ppt-overflow.py --dir outputs/ppt-automation
+python .claude/scripts/verify-ppt-overflow.py --threshold 0.10
 ```
 
 이 스크립트가:
-- 모든 PNG 의 가장자리 픽셀 분석 → 텍스트가 1080 경계 가까이 있으면 경고
-- 코드 박스 영역의 픽셀 분포로 "박스 끝에 텍스트 있음 = 잘림 가능성" 탐지
-- 결과를 `outputs/ppt/overflow-report.md` 로 저장
+- 모든 `outputs/ppt*/html-source/png-output/slide-*.png` 의 하단·우측 가장자리 30px 픽셀 분석
+- RGB < 80 (다크) 픽셀 비율이 임계치 (default 10%) 초과 → 잘림 의심 마킹
+- 결과를 `outputs/<dir>/overflow-report.md` 자동 생성
+- 의심 발견 시 exit code 2 + system message 로 Claude 에게 알림
 
-> 100% 정확하지 않으므로 OCR 수동 검증과 병행.
+**HOOK-09 활성화** (settings.json 1회 등록):
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{ "type": "command", "command": "bash .claude/hooks/hook-09-ocr-verify.sh", "timeout": 60 }]
+    }]
+  }
+}
+```
+
+> 픽셀 분석은 false-positive 가능 (검은 terminal 박스 등) — **Claude OCR 이 최종 판정**.
+> 의심 슬라이드는 Claude 가 Read tool 로 직접 보고 의도된 디자인 vs 실제 잘림 판단.
 
 ---
 
