@@ -8,7 +8,9 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-08::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-08::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; min-height: 0; }
     .tree { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 19px; line-height: 1.7; padding: 28px 32px; border-radius: 18px; white-space: pre; overflow: hidden; box-shadow: 0 10px 32px rgba(0,0,0,0.18); }
     .tree .h { color: #B8864E; font-weight: 700; }

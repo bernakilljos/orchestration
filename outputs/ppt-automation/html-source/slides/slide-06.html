@@ -8,7 +8,9 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-06::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-06::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; min-height: 0; }
     .left, .right { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
     .flow { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 18px; padding: 26px 30px; box-shadow: 0 10px 32px rgba(138,98,53,0.10); flex: 1; }
