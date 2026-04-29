@@ -1114,6 +1114,26 @@ a:active {
   opacity: 0.85;
 }
 
+/* ──────────────────────────────────────────────────────────────────────── */
+/* COLOR UTILITY CLASSES */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.text-gold { color: var(--gold); }
+.text-terracotta { color: var(--terracotta); }
+.text-sage { color: var(--sage); }
+.text-plum { color: var(--plum); }
+.text-stone { color: var(--stone); }
+.text-ink { color: var(--ink); }
+
+.bg-cream { background: var(--cream); }
+.bg-bone { background: var(--bone); }
+.bg-fog { background: var(--fog); }
+
+.border-gold { border-color: var(--gold); }
+.border-sage { border-color: var(--sage); }
+.border-terracotta { border-color: var(--terracotta); }
+.border-plum { border-color: var(--plum); }
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
