@@ -477,11 +477,11 @@ body {
 }
 
 /* Syntax Highlighting */
-.code-keyword { color: #D48BE8; font-weight: 600; }
-.code-string { color: #7EC699; }
-.code-number { color: #D9B25A; }
-.code-comment { color: #6A7F7E; font-style: italic; }
-.code-function { color: #6BA1D5; }
+.code-keyword { color: #D48BE8; font-weight: 600; letter-spacing: 0.01em; }
+.code-string { color: #7EC699; font-weight: 500; }
+.code-number { color: #D9B25A; font-weight: 600; }
+.code-comment { color: #5A7078; font-style: italic; font-weight: 400; letter-spacing: -0.01em; opacity: 0.85; }
+.code-function { color: #6BA1D5; font-weight: 600; }
 
 /* ──────────────────────────────────────────────────────────────────────── */
 /* CARD GRID (T6) */
