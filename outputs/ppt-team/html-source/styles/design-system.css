@@ -387,6 +387,7 @@ body {
   border-radius: 12px;
   padding: 32px;
   border-left: 4px solid var(--terracotta);
+  box-shadow: 0 12px 32px rgba(138, 98, 53, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
 }
 
 .compare-col.sage { border-left-color: var(--sage); }
