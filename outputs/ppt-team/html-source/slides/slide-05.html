@@ -8,30 +8,33 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-05::before { content: ''; position: absolute; left: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(0deg, rgba(107,142,127,0.04) 0px, rgba(107,142,127,0.04) 4px, transparent 4px, transparent 12px); border-radius: 22px; pointer-events: none; }
+    .slide-05::after { content: ''; position: absolute; right: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.04) 0px, rgba(107,142,127,0.04) 2px, transparent 2px, transparent 8px); border-radius: 22px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
-    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.55; padding: 20px 24px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 19px; line-height: 1.55; padding: 20px 24px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
     .terminal .p { color: #B8864E; font-weight: 700; }
     .terminal .o { color: #6B8E7F; }
     .terminal .c { color: #6E685C; font-style: italic; }
     .terminal .h { color: #39FF6C; }
     .terminal .w { color: #E8B96B; }
     .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; display: flex; gap: 14px; align-items: flex-start; }
-    .step.s1 { border-left: 5px solid var(--sage); }
-    .step.s2 { border-left: 5px solid var(--gold); }
-    .step.s3 { border-left: 5px solid #7A4E6B; }
-    .step.s4 { border-left: 5px solid var(--terracotta); }
-    .step.s5 { border-left: 5px solid #8A6235; }
+    .step { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; display: flex; gap: 14px; align-items: flex-start; box-shadow: 0 4px 12px rgba(107,142,127,0.05); position: relative; }
+    .step::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 12px 0 0 12px; }
+    .step.s1::before { background: var(--sage); }
+    .step.s2::before { background: var(--gold); }
+    .step.s3::before { background: #7A4E6B; }
+    .step.s4::before { background: var(--terracotta); }
+    .step.s5::before { background: #8A6235; }
     .step .num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; line-height: 1; flex-shrink: 0; min-width: 36px; }
     .step.s1 .num { color: var(--sage); }
     .step.s2 .num { color: var(--gold); }
     .step.s3 .num { color: #7A4E6B; }
     .step.s4 .num { color: var(--terracotta); }
     .step.s5 .num { color: #8A6235; }
-    .step .title { font-size: 16px; font-weight: 700; color: var(--ink); }
-    .step .desc { font-size: 13px; color: var(--stone); line-height: 1.45; margin-top: 2px; }
-    .step .desc code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .step .title { font-size: 21px; font-weight: 700; color: var(--ink); }
+    .step .desc { font-size: 23px; color: var(--stone); line-height: 1.45; margin-top: 2px; }
+    .step .desc code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .slide-05 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>

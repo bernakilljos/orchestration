@@ -17,12 +17,12 @@
     .box.core { border-left: 5px solid var(--gold); }
     .box.tier { border-left: 5px solid var(--sage); }
     .box.opt  { border-left: 5px solid #7A4E6B; }
-    .box h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; }
+    .box h3 { font-size: 19px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px; }
     .box.tier h3 { color: #4A6F60; }
     .box.opt h3  { color: #5A3850; }
     .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
+    .box li { font-size: 19px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; align-items: baseline; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
     .box li::before { content: '▸'; color: var(--deep-gold); font-weight: 700; }
     .slide-07 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
@@ -31,7 +31,7 @@
   <div class="slide bg-tech slide-07">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:share" class="icon-sm"></iconify-icon>DEPENDENCY GRAPH</span>
-      <span class="mono caption">07 / 15</span>
+      <span class="mono caption">07 / 16</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:share" class="icon-lg"></iconify-icon><h1 class="heading-1">의존성 · exec_orch 가 중심</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">대부분 플러그인이 exec_orch 에 의존 · 순환 의존 없음</p>
@@ -52,6 +52,16 @@
             <line x1="360" y1="240" x2="620" y2="240"/>
             <line x1="360" y1="240" x2="160" y2="380"/>
             <line x1="360" y1="240" x2="560" y2="380"/>
+            <line x1="360" y1="240" x2="360" y2="80"/>
+            <line x1="360" y1="240" x2="360" y2="400"/>
+          </g>
+
+          <!-- 2차 위성 (1차에 의존) -->
+          <g stroke="#7A4E6B" stroke-width="1" fill="none" opacity="0.35" stroke-dasharray="2,3">
+            <line x1="100" y1="240" x2="40" y2="170"/>
+            <line x1="100" y1="240" x2="40" y2="310"/>
+            <line x1="620" y1="240" x2="680" y2="170"/>
+            <line x1="620" y1="240" x2="680" y2="310"/>
           </g>
 
           <!-- 직속 plugins -->
@@ -79,6 +89,38 @@
             <circle cx="560" cy="380" r="44" fill="white" stroke="#8A6235" stroke-width="2"/>
             <text x="560" y="378" text-anchor="middle" fill="#1A1D24">review_qa</text>
             <text x="560" y="394" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <!-- 추가: 상하 핵심 직속 -->
+            <circle cx="360" cy="60" r="34" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="360" y="58" text-anchor="middle" font-size="11" fill="#1A1D24">design_image</text>
+            <text x="360" y="73" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+
+            <circle cx="360" cy="430" r="34" fill="white" stroke="#8A6235" stroke-width="2"/>
+            <text x="360" y="428" text-anchor="middle" font-size="11" fill="#1A1D24">cost_admin</text>
+            <text x="360" y="443" text-anchor="middle" font-size="10" fill="#6E685C">stable</text>
+          </g>
+
+          <!-- 2차 위성: mcp_dev / mcp_data 의 자식 -->
+          <g font-family="JetBrains Mono" font-size="10" font-weight="600">
+            <circle cx="40" cy="170" r="22" fill="#F4EDDD" stroke="#7A4E6B" stroke-width="1.2"/>
+            <text x="40" y="173" text-anchor="middle" font-size="9" fill="#5A3850">cost_yt</text>
+
+            <circle cx="40" cy="310" r="22" fill="#F4EDDD" stroke="#7A4E6B" stroke-width="1.2"/>
+            <text x="40" y="313" text-anchor="middle" font-size="9" fill="#5A3850">mcp_collab</text>
+
+            <circle cx="680" cy="170" r="22" fill="#F4EDDD" stroke="#7A4E6B" stroke-width="1.2"/>
+            <text x="680" y="173" text-anchor="middle" font-size="9" fill="#5A3850">mcp_web</text>
+
+            <circle cx="680" cy="310" r="22" fill="#F4EDDD" stroke="#7A4E6B" stroke-width="1.2"/>
+            <text x="680" y="313" text-anchor="middle" font-size="9" fill="#5A3850">mcp_docs</text>
+          </g>
+
+          <!-- 범례 (좌하단) -->
+          <g font-family="JetBrains Mono" font-size="11">
+            <rect x="20" y="430" width="14" height="14" fill="white" stroke="#6B8E7F" stroke-width="2"/>
+            <text x="42" y="442" fill="#6E685C">stable (1차)</text>
+            <rect x="20" y="450" width="14" height="14" fill="#F4EDDD" stroke="#7A4E6B" stroke-width="1.2"/>
+            <text x="42" y="462" fill="#6E685C">2차 위성</text>
           </g>
         </svg>
       </div>

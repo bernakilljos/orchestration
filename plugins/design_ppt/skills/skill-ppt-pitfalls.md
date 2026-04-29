@@ -191,3 +191,105 @@ python .claude/scripts/update-ppt-page-numbers.py
 - 플러그인 구조: `plugins/design_ppt/`
 - 렌더링 스크립트: `.claude/scripts/generate-final-ppt.py`
 - 페이지번호 갱신: `.claude/scripts/update-ppt-page-numbers.py` (신규)
+
+---
+
+## 10. 우측 여백 함정 (2026-04-29 발견) ⚠️
+
+**증상**: 본문 슬라이드 (`class="body"` 사용) 가 우측 720px 빈 여백.
+Cover/TOC/Closing 은 정상.
+
+**원인**: `design-system.css` 에 `.body, .body-lead { max-width: 1200px }` 규칙 존재.
+`.body` (그리드 컨테이너) 가 1200px 로 잘리면 1920-1200=720px 여백.
+
+**Fix**: `.body` 만 빼고 `.body-lead` 만 max-width 유지
+```css
+.body-lead { max-width: 1200px; }   /* 소제목 가독성 OK */
+/* .body 는 max-width 제거 — 1920px 풀 사용 */
+```
+
+**검증** (PIL 픽셀 — OCR Read 보다 빠름):
+```python
+from PIL import Image
+def cream(r,g,b): return 240<r<252 and 235<g<250 and 225<b<245
+img = Image.open(png).convert('RGB')
+y = img.height // 2
+for x in range(img.width-1, 0, -1):
+    if not cream(*img.getpixel((x,y))):
+        print(f'right margin = {(img.width-x)*1920//img.width}px@1920')
+        break
+```
+
+**권장 padding**: 본문 슬라이드도 `60px 80px 40px 80px` (Cover/TOC 와 동일).
+Edge-to-edge (padding 0) 보다 80px 좌우 여백이 시각적으로 깔끔.
+
+---
+
+## 11. 본문 슬라이드 시각 보강 패턴 (2026-04-29)
+
+본문 슬라이드가 단조로워 보이면 다음 기법으로 Cover/TOC 수준 시각 풍요로움 달성:
+
+### A. 80px 여백 데코레이션 (subtle pattern)
+좌·우 80px padding 영역을 `::before`/`::after` 가상 요소 + repeating-linear-gradient 로 채움.
+```css
+.slide-NN::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 80px;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0 8px,
+    rgba(184,134,78,0.04) 8px 12px
+  );
+  pointer-events: none;
+}
+```
+- 핵심: opacity **0.03-0.05** (콘텐츠 가리지 X)
+- 슬라이드 PART 색상 활용 (gold/sage/plum/terracotta/deep-gold)
+
+### B. 카드 코너 그라디언트
+박스 우상단에 미세한 radial-gradient 로 입체감.
+```css
+.box::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 40px; height: 40px;
+  background: radial-gradient(circle at top right, rgba(184,134,78,0.08), transparent 50%);
+  pointer-events: none;
+}
+```
+
+### C. border-left → ::before 전환
+z-index 컨트롤이 자유로워짐.
+```css
+/* BEFORE */
+.box.rules { border-left: 5px solid #7A4E6B; }
+
+/* AFTER — z-index/포지셔닝 자유 */
+.box.rules { position: relative; }
+.box.rules::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: #7A4E6B;
+  border-radius: 14px 0 0 14px;
+}
+```
+
+### D. 박스 배경 opacity 미세조정
+- 기본 0.78 → **0.82~0.88** 로 올려 contrast 강화
+- box-shadow 도 미세하게 (`0 6-10px blur, opacity 0.05~0.10`)
+
+### E. 명령어 chip 스타일
+font-weight 600, padding 8px 7px, code bg opacity 0.08 → 0.10.
+
+### 결과 (sub-agent 1회 작업)
+14개 본문 슬라이드 보강 완료, 41장 전체 렌더 성공, 잘림/오버플로 없음.
+
+### 적용 시 주의
+- decoration 은 `pointer-events: none` 필수 (클릭 방해 X)
+- z-index 컨트롤 — 데코가 콘텐츠 위로 가지 않도록
+- 모든 데코는 opacity 0.10 이하 권장

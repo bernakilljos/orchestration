@@ -10,7 +10,7 @@
   <style>
     .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
     .body { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 24px; min-height: 0; align-items: stretch; }
-    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 22px; display: flex; flex-direction: column; gap: 12px; min-height: 0; position: relative; }
+    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; }
     .step::after { content: '→'; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); font-size: 32px; color: var(--gold); font-weight: 700; z-index: 2; }
     .step:last-child::after { display: none; }
     .step.s1 { border-top: 5px solid var(--gold); }
@@ -24,12 +24,12 @@
     .step.s3 iconify-icon { color: #7A4E6B; }
     .step.s4 iconify-icon { color: var(--terracotta); }
     .step.s5 iconify-icon { color: #8A6235; }
-    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); font-weight: 600; letter-spacing: 0.2em; }
-    .step .title { font-size: 22px; font-weight: 700; color: var(--ink); }
-    .step .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
-    .step .plug { margin-top: auto; padding-top: 12px; border-top: 0.5px dashed var(--fog); display: flex; flex-direction: column; gap: 4px; }
-    .step .plug .lbl { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--deep-gold); font-weight: 700; letter-spacing: 0.15em; }
-    .step .plug code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink); background: rgba(184,134,78,0.08); padding: 2px 5px; border-radius: 3px; align-self: flex-start; }
+    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--stone); font-weight: 700; letter-spacing: 0.2em; }
+    .step .title { font-size: 21px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .step .desc { font-size: 17px; color: var(--stone); line-height: 1.4; }
+    .step .plug { margin-top: auto; padding-top: 10px; border-top: 0.5px dashed var(--fog); display: flex; flex-direction: column; gap: 4px; }
+    .step .plug .lbl { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); font-weight: 700; letter-spacing: 0.15em; }
+    .step .plug code { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--ink); background: rgba(184,134,78,0.08); padding: 3px 7px; border-radius: 4px; align-self: flex-start; }
     .slide-09 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -37,7 +37,7 @@
   <div class="slide bg-subtle slide-09">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>SCENARIO 01 · NEW PROJECT</span>
-      <span class="mono caption">09 / 15</span>
+      <span class="mono caption">10 / 16</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon><h1 class="heading-1">시나리오 1 · 신규 프로젝트 시작</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">새 저장소 생성 → 환경 세팅 → 협업 도구 연결 → 첫 코드 → 검증</p>
@@ -51,6 +51,8 @@
         <div class="plug">
           <span class="lbl">USE</span>
           <code>setup\setup.bat</code>
+          <span class="lbl" style="margin-top:6px;">소요</span>
+          <span style="font-size:15px;color:var(--ink);">~5 분</span>
         </div>
       </div>
       <div class="step s2">
@@ -61,6 +63,8 @@
         <div class="plug">
           <span class="lbl">USE</span>
           <code>/init</code>
+          <span class="lbl" style="margin-top:6px;">소요</span>
+          <span style="font-size:15px;color:var(--ink);">~3 분</span>
         </div>
       </div>
       <div class="step s3">
@@ -71,6 +75,8 @@
         <div class="plug">
           <span class="lbl">USE</span>
           <code>/mcp_dev-install</code>
+          <span class="lbl" style="margin-top:6px;">소요</span>
+          <span style="font-size:15px;color:var(--ink);">~10 분</span>
         </div>
       </div>
       <div class="step s4">
@@ -81,6 +87,8 @@
         <div class="plug">
           <span class="lbl">USE</span>
           <code>/exec_orch</code>
+          <span class="lbl" style="margin-top:6px;">소요</span>
+          <span style="font-size:15px;color:var(--ink);">~10 분</span>
         </div>
       </div>
       <div class="step s5">
@@ -91,6 +99,10 @@
         <div class="plug">
           <span class="lbl">USE</span>
           <code>/validate</code>
+        </div>
+        <div class="plug" style="margin-top: 8px; background: rgba(107,142,127,0.12); padding: 8px 12px; border-radius: 8px;">
+          <span class="lbl" style="color: #4A6F60;">✓ DONE · ~30 분 총</span>
+          <div class="val" style="font-size: 16px; color: var(--ink); margin-top: 4px;">PR 자동 머지 + 배포</div>
         </div>
       </div>
     </div>

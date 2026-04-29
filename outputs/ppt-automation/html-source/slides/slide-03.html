@@ -8,30 +8,33 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
-    .body { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; margin-top: 24px; min-height: 0; }
-    .svg-box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 20px; display: flex; align-items: center; justify-content: center; }
-    .svg-box svg { width: 100%; max-width: 800px; }
-    .right { display: flex; flex-direction: column; gap: 14px; }
-    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
-    .box.flow { border-left: 5px solid var(--gold); }
-    .box.work { border-left: 5px solid var(--sage); }
-    .box.dim  { border-left: 5px solid #7A4E6B; }
-    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.7fr 1.4fr 0.85fr; grid-template-rows: 1fr 1fr; gap: 14px; margin-top: 22px; min-height: 0; }
+    .svg-box { grid-column: 1; grid-row: 1 / -1; background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 16px; padding: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 32px rgba(138,98,53,0.10); min-height: 0; min-width: 0; }
+    .svg-box svg { width: 100%; max-width: 100%; height: 100%; }
+    .box { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 14px; padding: 18px 22px; box-shadow: 0 8px 24px rgba(138,98,53,0.10); display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+    .box.rules { grid-column: 2; grid-row: 1; border-left: 6px solid #7A4E6B; }
+    .box.flow  { grid-column: 2; grid-row: 2; border-left: 6px solid var(--gold); }
+    .box.work  { grid-column: 3; grid-row: 1 / -1; border-left: 6px solid var(--sage); }
+    .box h3 { font-size: 19px; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 12px 0; }
+    .box.rules h3 { color: #5A3850; }
     .box.work h3 { color: #4A6F60; }
-    .box.dim h3  { color: #5A3850; }
-    .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 4px; }
-    .box li::before { content: '▸'; color: var(--deep-gold); }
-    .slide-03 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+    .box ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-around; }
+    .box li { font-size: 20px; line-height: 1.35; color: var(--ink); display: flex; align-items: baseline; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+    .box.work li { font-size: 21px; flex-direction: column; align-items: flex-start; gap: 2px; }
+    .box.work li code { font-size: 19px; }
+    .box.work li::before { display: none; }
+    .box.flow li::before, .box.work li::before { content: '▸'; color: var(--deep-gold); flex-shrink: 0; }
+    .box.rules li::before { content: '✗'; color: #B25A3E; font-weight: 700; flex-shrink: 0; }
+    .slide-03 .footer-border { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(184,134,78,0.18); }
   </style>
 </head>
 <body>
   <div class="slide bg-tech slide-03">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:command-line" class="icon-sm"></iconify-icon>PART 01 · ENTRY POINT</span>
-      <span class="mono caption">03 / 12</span>
+      <span class="mono caption">03 / 13</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon><h1 class="heading-1">exec_orch · 진입점 + 워커</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude (Lead) → task-instruction.md → Codex/Gemini 워커 (병렬)</p>
@@ -99,34 +102,34 @@
         </svg>
       </div>
 
-      <div class="right">
-        <div class="box flow">
-          <h3>◆ 흐름</h3>
-          <ul>
-            <li>Claude 가 <code>task-instruction.md</code> 작성</li>
-            <li>Codex 4× 병렬로 구현 분배</li>
-            <li>Haiku 2× 검증 (병렬, prompt cache)</li>
-            <li>Claude 가 통합·승인 후 commit</li>
-          </ul>
-        </div>
-        <div class="box work">
-          <h3>◆ 워커</h3>
-          <ul>
-            <li><code>codex-auto.bat</code> — Codex 풀</li>
-            <li><code>gemini-auto.bat</code> — 대용량 검증</li>
-            <li><code>haiku-auto</code> — 기본 검증자</li>
-            <li><code>orcauto-start</code> — 일괄 시작</li>
-          </ul>
-        </div>
-        <div class="box dim">
-          <h3>◆ 핵심 룰</h3>
-          <ul>
-            <li>Writer = 1 (동시 수정 금지)</li>
-            <li>task-instruction 없이 호출 X</li>
-            <li>Gemini 자동 채택 X (Claude 결정)</li>
-            <li>빈 task done/ 이동 X (위장 완료)</li>
-          </ul>
-        </div>
+      <div class="box rules">
+        <h3>◆ 핵심 룰 (절대 금지)</h3>
+        <ul>
+          <li><code>Writer = 1</code> 동시 수정 금지</li>
+          <li><code>task-instruction</code> 없이 호출 X</li>
+          <li><code>Gemini</code> 자동 채택 X (Claude 결정)</li>
+          <li>빈 task <code>done/</code> 이동 X (위장 완료)</li>
+        </ul>
+      </div>
+
+      <div class="box work">
+        <h3>◆ 워커</h3>
+        <ul>
+          <li><code>codex-auto.bat</code> — Codex 풀</li>
+          <li><code>gemini-auto.bat</code> — 대용량 검증</li>
+          <li><code>haiku-auto</code> — 기본 검증자</li>
+          <li><code>orcauto-start</code> — 일괄 시작</li>
+        </ul>
+      </div>
+
+      <div class="box flow">
+        <h3>◆ 흐름</h3>
+        <ul>
+          <li>Claude → <code>task-instruction.md</code> 작성</li>
+          <li>Codex 4× 병렬로 구현 분배</li>
+          <li>Haiku 2× 검증 (병렬, prompt cache)</li>
+          <li>Claude 통합·승인 후 commit</li>
+        </ul>
       </div>
     </div>
 

@@ -8,19 +8,19 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
-    .body { flex: 1; display: flex; flex-direction: column; gap: 14px; margin-top: 24px; min-height: 0; }
-    .table { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px 30px; flex: 1; min-height: 0; overflow: hidden; }
+    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .body { flex: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; min-height: 0; }
+    .table { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 14px; padding: 22px 32px; flex: 1; min-height: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(138,98,53,0.08); }
     .table table { width: 100%; border-collapse: collapse; }
-    .table th { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 10px 14px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .table th { font-family: 'JetBrains Mono', monospace; font-size: 19px; letter-spacing: 0.16em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 8px 12px; border-bottom: 2px solid var(--fog); text-align: left; }
     .table th.symptom { color: var(--terracotta); }
     .table th.cause { color: var(--gold); }
     .table th.fix { color: var(--sage); }
-    .table td { padding: 11px 14px; font-size: 14px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.5; }
+    .table td { padding: 8px 12px; font-size: 17px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.4; }
     .table td:first-child { font-weight: 700; color: var(--terracotta); width: 28%; }
     .table td:nth-child(2) { color: var(--stone); width: 32%; }
     .table td:nth-child(3) { color: var(--ink); }
-    .table td code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .table td code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .slide-10 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -47,6 +47,9 @@
             <tr><td>SQLite "database is locked"</td><td>다른 프로세스가 DB 점유</td><td>WAL 모드 활성화 + <code>watchdog-restart.bat</code></td></tr>
             <tr><td><code>/design_ppt</code> 잘림 (overflow)</td><td>코드 줄 수 초과</td><td>font-size 16→14px 또는 분할 (skill-ppt-pitfalls 참조)</td></tr>
             <tr><td><code>setx</code> 환경변수가 적용 안 됨</td><td>새 셸 미반영</td><td>cmd 재시작 또는 시스템 재로그인</td></tr>
+            <tr><td>플러그인 sync 후 .claude/ 변경 안 됨</td><td>plugins/ 원본 미수정</td><td><code>plugins/&lt;name&gt;/</code> 만 편집 → <code>sync-plugins.sh</code></td></tr>
+            <tr><td>워커 spawn 직후 즉시 종료</td><td>API 키 없음 / 모드 SKIP</td><td><code>.env</code> 키 확인 + <code>route.py --status</code></td></tr>
+            <tr><td>Sub-Agent "PASS" 인데 결과 잘림</td><td>위장 완료 / 거짓 보고</td><td>메인 Claude 가 직접 Read·OCR 재검증 (skill 룰)</td></tr>
           </tbody>
         </table>
       </div>

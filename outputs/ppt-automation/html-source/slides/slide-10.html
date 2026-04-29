@@ -8,26 +8,29 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
-    .body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 24px; min-height: 0; align-items: stretch; }
-    .step { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; min-height: 0; position: relative; }
+    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-10::before { content: ''; position: absolute; left: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.04) 0px, rgba(184,134,78,0.04) 3px, transparent 3px, transparent 9px); border-radius: 20px; pointer-events: none; }
+    .slide-10::after { content: ''; position: absolute; right: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(180deg, rgba(122,78,107,0.04) 0px, rgba(122,78,107,0.04) 3px, transparent 3px, transparent 9px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 18px; min-height: 0; align-items: stretch; }
+    .step { background: rgba(255,255,255,0.88); border: 1px solid rgba(184,134,78,0.18); border-radius: 16px; padding: 22px 26px; display: flex; flex-direction: column; gap: 12px; min-height: 0; position: relative; box-shadow: 0 8px 20px rgba(138,98,53,0.08); overflow: hidden; }
+    .step::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
     .step::after { content: '→'; position: absolute; right: -18px; top: 50%; transform: translateY(-50%); font-size: 36px; color: var(--gold); font-weight: 700; z-index: 2; }
     .step:last-child::after { display: none; }
-    .step.s1 { border-top: 6px solid var(--gold); }
-    .step.s2 { border-top: 6px solid var(--sage); }
-    .step.s3 { border-top: 6px solid #7A4E6B; }
+    .step.s1::before { background: var(--gold); }
+    .step.s2::before { background: var(--sage); }
+    .step.s3::before { background: #7A4E6B; }
     .step iconify-icon { font-size: 56px; }
     .step.s1 iconify-icon { color: var(--gold); }
     .step.s2 iconify-icon { color: var(--sage); }
     .step.s3 iconify-icon { color: #7A4E6B; }
-    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--stone); font-weight: 700; letter-spacing: 0.2em; }
-    .step .title { font-size: 28px; font-weight: 700; color: var(--ink); }
-    .step .desc { font-size: 14px; color: var(--stone); line-height: 1.6; }
-    .step .cmd { background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 14px 18px; border-radius: 10px; line-height: 1.6; white-space: pre; overflow: hidden; }
-    .step .out { margin-top: auto; padding-top: 14px; border-top: 0.5px dashed var(--fog); }
-    .step .out .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--deep-gold); font-weight: 700; }
-    .step .out .val { font-size: 14px; color: var(--ink); margin-top: 4px; line-height: 1.45; }
-    .step .out code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .step .num { font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--stone); font-weight: 700; letter-spacing: 0.18em; }
+    .step .title { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .step .desc { font-size: 15px; color: var(--stone); line-height: 1.45; }
+    .step .cmd { background: #1A1D24; color: #39FF6C; font-family: 'JetBrains Mono', monospace; font-size: 15px; padding: 10px 14px; border-radius: 10px; line-height: 1.4; white-space: pre; overflow: hidden; }
+    .step .out { margin-top: auto; padding-top: 10px; border-top: 0.5px dashed var(--fog); }
+    .step .out .lbl { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.16em; color: var(--deep-gold); font-weight: 700; }
+    .step .out .val { font-size: 15px; color: var(--ink); margin-top: 4px; line-height: 1.4; }
+    .step .out code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .slide-10 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -35,7 +38,7 @@
   <div class="slide bg-subtle slide-10">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>PART 04 · QUICK START</span>
-      <span class="mono caption">10 / 12</span>
+      <span class="mono caption">11 / 13</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon><h1 class="heading-1">24/7 자동화 시작 · 3 step</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">SQLite 초기화 → Watchdog 시작 → 예산 설정 (선택) → 자동 운영</p>
@@ -46,8 +49,7 @@
         <div class="num">STEP 01</div>
         <div class="title">SQLite 초기화</div>
         <div class="desc">상태 DB 생성. 8개 테이블 자동. 기존 DB 보존.</div>
-        <pre class="cmd">python .claude/scripts/
-  init-state-db.py</pre>
+        <pre class="cmd">init-state-db.py</pre>
         <div class="out">
           <span class="lbl">생성</span>
           <div class="val"><code>.claude/state/orca.db</code><br>workers · tasks · metrics · quota · budget</div>
@@ -59,8 +61,7 @@
         <div class="num">STEP 02</div>
         <div class="title">Watchdog 백그라운드</div>
         <div class="desc">heartbeat 체크 + 죽은 워커 자동 부활.</div>
-        <pre class="cmd">.claude/scripts/
-  watchdog-start.bat</pre>
+        <pre class="cmd">watchdog-start.bat</pre>
         <div class="out">
           <span class="lbl">동작</span>
           <div class="val">매 30초 체크 + quota backoff +<br>자동 재시작 (10m → 2h)</div>
@@ -72,11 +73,14 @@
         <div class="num">STEP 03</div>
         <div class="title">예산 설정 (선택)</div>
         <div class="desc">일일 비용 상한 설정. 기본은 무제한.</div>
-        <pre class="cmd">python .claude/scripts/
-  route.py --set-daily-limit 50</pre>
+        <pre class="cmd">route.py --limit 50</pre>
         <div class="out">
           <span class="lbl">효과</span>
           <div class="val">$50/day 도달 시 신규 차단<br>자정 (KST) 자동 리셋</div>
+        </div>
+        <div class="out" style="background: rgba(107,142,127,0.12); border-radius: 8px; padding: 10px 14px; margin-top: 10px; border-top: 0;">
+          <span class="lbl" style="color: #4A6F60;">✓ DONE</span>
+          <div class="val" style="font-size: 23px; color: var(--ink);">24/7 자동 운영 시작</div>
         </div>
       </div>
     </div>

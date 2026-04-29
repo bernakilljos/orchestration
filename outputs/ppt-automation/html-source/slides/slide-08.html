@@ -8,34 +8,37 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-08 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-08::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(107,142,127,0.04) 0px, rgba(107,142,127,0.04) 4px, transparent 4px, transparent 11px); border-radius: 20px; pointer-events: none; }
+    .slide-08::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 7px); border-radius: 20px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
     .left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .compare { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px 28px; flex: 1; min-height: 0; }
-    .compare h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 16px 0; }
+    .compare { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 14px; padding: 24px 28px; flex: 1; min-height: 0; box-shadow: 0 6px 16px rgba(107,142,127,0.05); }
+    .compare h3 { font-size: 19px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 16px 0; }
     .compare .row { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 0.5px dashed var(--fog); }
     .compare .row:last-child { border-bottom: none; }
-    .compare .row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--ink); font-weight: 600; }
-    .compare .row .before { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--terracotta); font-weight: 700; min-width: 90px; text-align: right; }
-    .compare .row .after { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--sage); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .row .lbl { font-family: 'JetBrains Mono', monospace; font-size: 19px; color: var(--ink); font-weight: 600; }
+    .compare .row .before { font-family: 'JetBrains Mono', monospace; font-size: 21px; color: var(--terracotta); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .row .after { font-family: 'JetBrains Mono', monospace; font-size: 21px; color: var(--sage); font-weight: 700; min-width: 90px; text-align: right; }
     .compare .head { display: grid; grid-template-columns: 1fr auto auto; gap: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--fog); margin-bottom: 8px; }
-    .compare .head span { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.15em; color: var(--stone); font-weight: 700; min-width: 90px; text-align: right; }
+    .compare .head span { font-family: 'JetBrains Mono', monospace; font-size: 22px; letter-spacing: 0.15em; color: var(--stone); font-weight: 700; min-width: 90px; text-align: right; }
     .compare .head .lbl { text-align: left; }
-    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
-    .box.what { border-left: 5px solid var(--gold); }
-    .box.how  { border-left: 5px solid var(--sage); }
-    .box.tip  { border-left: 5px solid #7A4E6B; }
-    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
+    .right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .box { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 12px; padding: 12px 18px; box-shadow: 0 4px 12px rgba(107,142,127,0.04); position: relative; }
+    .box::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 12px 0 0 12px; }
+    .box.what::before { background: var(--gold); }
+    .box.how::before { background: var(--sage); }
+    .box.tip::before { background: #7A4E6B; }
+    .box h3 { font-size: 17px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 6px 0; }
     .box.how h3 { color: #4A6F60; }
     .box.tip h3 { color: #5A3850; }
     .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .box li { font-size: 16px; line-height: 1.4; color: var(--ink); padding: 2px 0; display: flex; gap: 6px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .box li::before { content: '▸'; color: var(--deep-gold); }
     .savings { background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12)); border: 1px solid rgba(107,142,127,0.4); border-radius: 14px; padding: 22px 28px; }
     .savings .big { font-family: 'Fraunces', serif; font-size: 60px; font-weight: 700; color: var(--sage); line-height: 1; }
-    .savings .sub { font-size: 14px; color: var(--ink); margin-top: 6px; line-height: 1.5; }
+    .savings .sub { font-size: 19px; color: var(--ink); margin-top: 6px; line-height: 1.5; }
     .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -43,7 +46,7 @@
   <div class="slide bg-subtle slide-08">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:bolt" class="icon-sm"></iconify-icon>PART 03 · PROMPT CACHING</span>
-      <span class="mono caption">08 / 12</span>
+      <span class="mono caption">09 / 13</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:bolt" class="icon-lg"></iconify-icon><h1 class="heading-1">Prompt Caching · 90% 비용 절감</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">반복 컨텍스트는 캐시 → cache read 단가는 기본 input 의 10%</p>
@@ -91,6 +94,14 @@
             <li>리뷰: 코드 베이스 + 룰 (cache) + 변경 (no cache)</li>
             <li>RAG: KB 청크 (cache) + 쿼리 (no cache)</li>
             <li>긴 문서 분석: 문서 (cache) + 질문 (no cache)</li>
+          </ul>
+        </div>
+        <div class="box" style="border-left: 5px solid var(--terracotta);">
+          <h3 style="color: #8A3E26;">◆ 함정 · 주의</h3>
+          <ul>
+            <li>1회성 호출엔 손해 (write 1.25× 만 발생)</li>
+            <li>5분 TTL — 간격 길면 재 write</li>
+            <li>cache 키 변경시 (모델·버전) 전체 무효화</li>
           </ul>
         </div>
       </div>

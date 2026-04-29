@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Watchdog · 케이스 (2/2)</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-06a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-06a::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(107,142,127,0.04) 0px, rgba(107,142,127,0.04) 3px, transparent 3px, transparent 8px); border-radius: 20px; pointer-events: none; }
+    .slide-06a::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(178,90,62,0.04) 0px, rgba(178,90,62,0.04) 3px, transparent 3px, transparent 8px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; min-height: 0; }
+    .box { background: rgba(255,255,255,0.88); border: 1px solid rgba(184,134,78,0.18); border-radius: 18px; padding: 32px 36px; display: flex; flex-direction: column; gap: 18px; min-height: 0; box-shadow: 0 10px 28px rgba(138,98,53,0.09); position: relative; overflow: hidden; }
+    .box::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
+    .box.up::before { background: var(--sage); }
+    .box.down::before { background: var(--terracotta); }
+    .box .head { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 1px dashed rgba(184,134,78,0.22); position: relative; z-index: 1; }
+    .box iconify-icon { font-size: 48px; flex-shrink: 0; }
+    .box.up iconify-icon { color: var(--sage); }
+    .box.down iconify-icon { color: var(--terracotta); }
+    .box h3 { font-size: 26px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; margin: 0; }
+    .box.up h3 { color: #4A6F60; }
+    .box.down h3 { color: #8A3E26; }
+    .box ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+    .box li { font-size: 24px; line-height: 1.45; color: var(--ink); display: flex; align-items: flex-start; gap: 14px; }
+    .box li::before { content: '▸'; color: var(--deep-gold); font-weight: 700; flex-shrink: 0; font-size: 24px; }
+    .box.down li::before { color: #8A3E26; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 3px 9px; border-radius: 4px; font-weight: 600; }
+    .slide-06a .footer-border { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(184,134,78,0.18); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-06a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-check" class="icon-sm"></iconify-icon>PART 02 · WATCHDOG (2/2)</span>
+      <span class="mono caption">07 / 13</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">자동 복구 vs 의도된 정지</h1></div>
+    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">언제 자동으로 살아나고, 언제 의도적으로 멈추는가</p>
+
+    <div class="body">
+      <div class="box up">
+        <div class="head">
+          <iconify-icon icon="heroicons:arrow-path"></iconify-icon>
+          <h3>◆ 자동 복구 케이스</h3>
+        </div>
+        <ul>
+          <li>Codex API 일시 장애 → 자동 재시도 (10m backoff)</li>
+          <li>quota 한도 도달 → backoff 후 재개</li>
+          <li>heartbeat timeout → kill + revive</li>
+          <li>OS 재부팅 → boot-time 자동 시작</li>
+          <li>네트워크 일시 단절 → DNS 재시도 → 복구</li>
+        </ul>
+      </div>
+      <div class="box down">
+        <div class="head">
+          <iconify-icon icon="heroicons:hand-raised"></iconify-icon>
+          <h3>◆ 멈추는 경우 (의도)</h3>
+        </div>
+        <ul>
+          <li><code>.claude/orca-stopped</code> 파일 존재 → 영구 stop</li>
+          <li>budget ceiling 초과 (일일 상한) → 다음 날 재개</li>
+          <li>watchdog 자체 종료 (관리자 명령)</li>
+          <li>Claude Code 종료 후 5분 grace 후 stop</li>
+          <li><code>/orcauto-stop</code> 슬래시 명령</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">시작: <code>.claude/scripts/watchdog-start.bat</code> · 중단: <code>/orcauto-stop</code> · 상태: <code>/exec_status</code></span></div>
+  </div>
+</body>
+</html>

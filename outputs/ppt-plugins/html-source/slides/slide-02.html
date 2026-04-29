@@ -9,43 +9,54 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-02 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
-    .toc-body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 18px; margin-top: 32px; min-height: 0; }
-    .toc-cat { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; }
-    .toc-cat.exec   { border-top: 6px solid var(--gold); }
-    .toc-cat.design { border-top: 6px solid var(--sage); }
-    .toc-cat.mcp    { border-top: 6px solid #7A4E6B; }
-    .toc-cat.ai     { border-top: 6px solid var(--terracotta); }
-    .toc-cat.review { border-top: 6px solid #8A6235; }
-    .toc-cat.media  { border-top: 6px solid #5A8C8A; }
-    .toc-cat .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); font-weight: 600; letter-spacing: 0.18em; }
-    .toc-cat iconify-icon { font-size: 36px; }
-    .toc-cat.exec iconify-icon { color: var(--gold); }
-    .toc-cat.design iconify-icon { color: var(--sage); }
-    .toc-cat.mcp iconify-icon { color: #7A4E6B; }
-    .toc-cat.ai iconify-icon { color: var(--terracotta); }
-    .toc-cat.review iconify-icon { color: #8A6235; }
-    .toc-cat.media iconify-icon { color: #5A8C8A; }
-    .toc-cat .name { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1.1; }
-    .toc-cat .desc { font-size: 14px; color: var(--stone); line-height: 1.4; }
-    .toc-cat .count { position: absolute; top: 18px; right: 22px; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; padding: 4px 10px; background: rgba(184,134,78,0.12); color: var(--deep-gold); border-radius: 100px; }
-    .toc-cat.exec .count { background: rgba(184,134,78,0.15); }
-    .toc-cat.design .count { background: rgba(107,142,127,0.18); color: #4A6F60; }
-    .toc-cat.mcp .count { background: rgba(122,78,107,0.18); color: #5A3850; }
-    .toc-cat.ai .count { background: rgba(178,90,62,0.16); color: #8A3E26; }
-    .toc-cat.review .count { background: rgba(138,98,53,0.16); color: #6B4D29; }
-    .toc-cat.media .count { background: rgba(90,140,138,0.16); color: #3F6663; }
-    .toc-cat ul { list-style: none; padding: 0; margin: 8px 0 0 0; border-top: 0.5px dashed var(--fog); padding-top: 10px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; align-content: start; }
-    .toc-cat li { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); padding: 2px 0; display: flex; align-items: center; gap: 6px; }
-    .toc-cat li::before { content: '◆'; color: var(--deep-gold); font-size: 9px; }
-    .slide-02 .footer-border { margin-top: auto; padding-top: 14px; border-top: 0.5px solid var(--fog); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); }
+    .slide-02 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative !important;
+      background-image:
+        linear-gradient(135deg, rgba(15,18,24,0.82) 0%, rgba(60,42,22,0.66) 50%, rgba(138,98,53,0.48) 100%),
+        url('https://source.unsplash.com/featured/1920x1080/?abstract,oil,painting,amber,dark,moody,art') !important;
+      background-size: cover !important; background-position: center !important; color: #FAF5EA !important; }
+    .slide-02::before { content: ''; position: absolute; inset: 0; background:
+      radial-gradient(ellipse 1100px 800px at 80% 15%, rgba(184,134,78,0.30), transparent 60%),
+      radial-gradient(ellipse 800px 600px at 10% 90%, rgba(122,78,107,0.20), transparent 55%);
+      mix-blend-mode: screen; pointer-events: none; z-index: 0; }
+    .slide-02 > * { position: relative; z-index: 2; }
+    .slide-02 .slide-header { display: flex; justify-content: space-between; align-items: center; }
+    .slide-02 .slide-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 21px; letter-spacing: 0.32em; color: #FFD580; font-weight: 700; text-shadow: 0 2px 14px rgba(0,0,0,0.85); display: inline-flex; align-items: center; gap: 8px; text-transform: uppercase; }
+    .slide-02 .mono.caption { font-family: 'JetBrains Mono', monospace; font-size: 21px; color: #FFE9B8; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+    .slide-02 .title-with-icon { display: flex; align-items: center; gap: 18px; margin-top: 22px; }
+    .slide-02 .heading-1 { font-family: 'Fraunces', serif; font-size: 68px; font-weight: 600; line-height: 1.05; color: #FAF5EA !important; text-shadow: 0 3px 20px rgba(0,0,0,0.55); margin: 0; }
+    .slide-02 .icon-lg { font-size: 56px; color: #F0C97E; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
+    .slide-02 .icon-sm { font-size: 21px; color: #FFD580; }
+    .slide-02 .body-lead { font-size: 22px; color: rgba(250,245,234,0.88) !important; margin-top: 10px; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+    .toc-body { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 30px; min-height: 0; }
+    .toc-cat { background: rgba(15,18,24,0.42); backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; padding: 22px 26px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; box-shadow: 0 12px 40px rgba(0,0,0,0.28); }
+    .toc-cat.exec   { border-top: 4px solid #B8864E; }
+    .toc-cat.design { border-top: 4px solid #6B8E7F; }
+    .toc-cat.mcp    { border-top: 4px solid #7A4E6B; }
+    .toc-cat.ai     { border-top: 4px solid #B25A3E; }
+    .toc-cat.review { border-top: 4px solid #C49E5C; }
+    .toc-cat.media  { border-top: 4px solid #6FA8A6; }
+    .toc-cat .num { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #FFE9B8; font-weight: 700; letter-spacing: 0.18em; }
+    .toc-cat iconify-icon { font-size: 38px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
+    .toc-cat.exec iconify-icon { color: #F0C97E; }
+    .toc-cat.design iconify-icon { color: #B5D4BC; }
+    .toc-cat.mcp iconify-icon { color: #C49AB8; }
+    .toc-cat.ai iconify-icon { color: #E89878; }
+    .toc-cat.review iconify-icon { color: #DDB97A; }
+    .toc-cat.media iconify-icon { color: #9CCAC8; }
+    .toc-cat .name { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: #FAF5EA; line-height: 1.1; }
+    .toc-cat .desc { font-size: 23px; color: rgba(250,245,234,0.85); line-height: 1.4; }
+    .toc-cat .count { position: absolute; top: 18px; right: 22px; font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 700; padding: 4px 12px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); color: #FAF5EA; border-radius: 100px; border: 1px solid rgba(255,255,255,0.25); }
+    .toc-cat ul { list-style: none; padding: 0; margin: 8px 0 0 0; border-top: 1px dashed rgba(255,255,255,0.22); padding-top: 10px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; align-content: start; }
+    .toc-cat li { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: rgba(250,245,234,0.92); padding: 2px 0; display: flex; align-items: center; gap: 6px; }
+    .toc-cat li::before { content: '◆'; color: #FFD580; font-size: 9px; }
+    .slide-02 .footer-border { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.18); display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 19px; color: rgba(250,245,234,0.75); }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle slide-02">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:list-bullet" class="icon-sm"></iconify-icon>TABLE OF CONTENTS</span>
-      <span class="mono caption">02 / 15</span>
+      <span class="mono caption">02 / 16</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:squares-2x2" class="icon-lg"></iconify-icon><h1 class="heading-1">25 플러그인 · 6 카테고리</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">실행·생성·연결·지능·검증·미디어 — 6 그룹으로 묶음</p>

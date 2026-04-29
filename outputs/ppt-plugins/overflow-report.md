@@ -1,8 +1,8 @@
 # PPT Overflow Verification Report
 
 - Source: `C:\pjt\orchestration_v1\outputs\ppt-plugins\html-source\png-output`
-- Total slides: 15
-- Suspect (>10% edge dark): **1**
+- Total slides: 16
+- Suspect (>10% edge dark): **0**
 - Threshold: bottom + right band 30px, dark = RGB < 80
 
 ## All slides
@@ -21,16 +21,9 @@
 | slide-10.png | 0.000 | 0.000 | [OK] |
 | slide-11.png | 0.000 | 0.000 | [OK] |
 | slide-12.png | 0.000 | 0.000 | [OK] |
-| slide-13.png | 0.420 | 0.000 | [!] YES |
+| slide-13.png | 0.000 | 0.000 | [OK] |
 | slide-14.png | 0.000 | 0.000 | [OK] |
 | slide-15.png | 0.000 | 0.000 | [OK] |
+| slide-16.png | 0.000 | 0.000 | [OK] |
 
-## Suspect slides — Claude OCR 직접 확인 권장
-
-- **slide-13.png** — bottom 0.420, right 0.000
-
-**다음 액션:**
-```python
-# Claude 가 의심 slides를 Read tool 로 직접 OCR
-Read('C:\pjt\orchestration_v1\outputs\ppt-plugins\html-source\png-output/slide-13.png')
-```
+## ✅ 모든 slides 통과 — 잘림 의심 없음

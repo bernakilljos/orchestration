@@ -2,91 +2,66 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Watchdog + 자동 부활</title>
+  <title>Watchdog · 흐름 (1/2)</title>
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
     .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
-    .body { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
-    .left { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .flow { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; }
-    .flow h3 { font-size: 14px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 14px 0; }
-    .flow .step { display: flex; align-items: center; gap: 14px; padding: 7px 0; border-bottom: 0.5px dashed var(--fog); }
+    .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 28px; min-height: 0; }
+    .left, .right { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+    .flow { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 18px; padding: 26px 30px; box-shadow: 0 10px 32px rgba(138,98,53,0.10); flex: 1; }
+    .flow h3 { font-size: 24px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 18px 0; }
+    .flow .step { display: flex; align-items: center; gap: 18px; padding: 10px 0; border-bottom: 1px dashed rgba(184,134,78,0.22); }
     .flow .step:last-child { border-bottom: none; }
-    .flow .num { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--gold); min-width: 36px; }
-    .flow .text { font-size: 14px; color: var(--ink); line-height: 1.5; flex: 1; }
-    .flow .text code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
-    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5; padding: 16px 20px; border-radius: 12px; white-space: pre; overflow: hidden; flex: 0 0 auto; }
+    .flow .num { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; color: var(--gold); min-width: 40px; }
+    .flow .text { font-size: 24px; color: var(--ink); line-height: 1.4; flex: 1; }
+    .flow .text code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 2px 8px; border-radius: 4px; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 22px; line-height: 1.55; padding: 28px 32px; border-radius: 18px; white-space: pre; overflow: hidden; flex: 1; box-shadow: 0 10px 32px rgba(0,0,0,0.18); }
     .terminal .ok { color: #6B8E7F; }
     .terminal .warn { color: #E8B96B; }
     .terminal .err { color: #B25A3E; }
     .terminal .h { color: #B8864E; font-weight: 700; }
     .terminal .c { color: #6E685C; font-style: italic; }
-    .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 18px 22px; }
-    .box.up   { border-left: 5px solid var(--sage); }
-    .box.down { border-left: 5px solid var(--terracotta); }
-    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: #4A6F60; text-transform: uppercase; font-weight: 700; margin: 0 0 10px 0; }
-    .box.down h3 { color: #8A3E26; }
-    .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 14px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
-    .box li::before { content: '▸'; color: var(--deep-gold); }
-    .slide-06 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+    .terminal .label { font-size: 18px; color: #B8864E; letter-spacing: 0.2em; font-weight: 700; margin-bottom: 14px; display: block; }
+    .slide-06 .footer-border { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(184,134,78,0.18); }
   </style>
 </head>
 <body>
   <div class="slide bg-subtle slide-06">
     <div class="slide-header">
-      <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-check" class="icon-sm"></iconify-icon>PART 02 · WATCHDOG</span>
-      <span class="mono caption">06 / 12</span>
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-check" class="icon-sm"></iconify-icon>PART 02 · WATCHDOG (1/2)</span>
+      <span class="mono caption">06 / 13</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:shield-check" class="icon-lg"></iconify-icon><h1 class="heading-1">Watchdog · 죽은 워커 자동 부활</h1></div>
-    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">heartbeat 체크 → quota-aware 지수 backoff (10m → 20m → 40m → 2h) → 재시도</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:shield-check" class="icon-lg"></iconify-icon><h1 class="heading-1">Watchdog · 자동 부활 흐름</h1></div>
+    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">heartbeat 체크 → quota-aware 지수 backoff → 자동 재시도</p>
 
     <div class="body">
       <div class="left">
         <div class="flow">
-          <h3>◆ 자동 부활 흐름</h3>
+          <h3>◆ 자동 부활 5-Step</h3>
           <div class="step"><span class="num">1</span><span class="text">워커가 매 30초 <code>heartbeat</code> 갱신 → state DB</span></div>
           <div class="step"><span class="num">2</span><span class="text">watchdog 가 60초 stale 워커 감지 → <code>dead</code> 마킹</span></div>
           <div class="step"><span class="num">3</span><span class="text">실패 사유 분석: <code>quota</code> · <code>budget</code> · <code>crash</code></span></div>
-          <div class="step"><span class="num">4</span><span class="text">quota 초과면 <code>retry_at</code> 계산 (지수 backoff)</span></div>
+          <div class="step"><span class="num">4</span><span class="text">quota 초과면 <code>retry_at</code> 계산 (지수 backoff 10m→2h)</span></div>
           <div class="step"><span class="num">5</span><span class="text">예약 시간 도래 시 자동 재시작 → heartbeat 복구</span></div>
         </div>
-        <pre class="terminal"><span class="c"># watchdog 실시간 로그</span>
-<span class="ok">[OK]</span>   worker codex-1 heartbeat ✓ (30s ago)
-<span class="warn">[STALE]</span> worker codex-2 stale 65s — checking
-<span class="err">[DOWN]</span>  worker codex-2 → quota exceeded
-<span class="h">[BACKOFF]</span> retry in 10m (tier-1) … 20m … 40m … 2h
-<span class="ok">[REVIVE]</span> worker codex-2 restarted at 14:32</pre>
       </div>
 
       <div class="right">
-        <div class="box up">
-          <h3>◆ 자동 복구 케이스</h3>
-          <ul>
-            <li>Codex API 일시 장애 → 재시도</li>
-            <li>quota 한도 도달 → backoff 후 재개</li>
-            <li>heartbeat timeout → kill + revive</li>
-            <li>OS 재부팅 → boot-time 자동 시작</li>
-          </ul>
-        </div>
-        <div class="box down">
-          <h3>◆ 멈추는 경우 (의도적)</h3>
-          <ul>
-            <li><code>.claude/orca-stopped</code> 파일 존재</li>
-            <li>budget ceiling 초과 (일일 상한)</li>
-            <li>watchdog 자체 종료</li>
-            <li>Claude Code 종료 후 5분 grace</li>
-          </ul>
-        </div>
+        <pre class="terminal"><span class="label">◆ WATCHDOG 실시간 로그</span><span class="c"># 워커 상태 모니터링</span>
+<span class="ok">[OK]</span>    codex-1 heartbeat ✓ (30s ago)
+<span class="warn">[STALE]</span> codex-2 stale 65s
+        → quota detected
+<span class="err">[BACKOFF]</span> codex-2 retry in 10m
+        tier-1 → 20m → 40m → 2h
+<span class="ok">[REVIVE]</span> codex-2 restarted ✓
+        at 14:32 (after 10m wait)</pre>
       </div>
     </div>
 
-    <div class="footer-border"><span class="footnote">시작: <code>.claude/scripts/watchdog-start.bat</code> · 중단: <code>/orcauto-stop</code> · 상태: <code>/exec_status</code></span></div>
+    <div class="footer-border"><span class="footnote">다음 페이지 → 자동 복구 케이스 + 멈추는 경우 (의도적)</span></div>
   </div>
 </body>
 </html>

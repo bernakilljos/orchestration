@@ -8,21 +8,24 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-07 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-07 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-07::before { content: ''; position: absolute; left: 22px; top: 60px; bottom: 50px; width: 36px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 7px); border-radius: 18px; pointer-events: none; }
+    .slide-07::after { content: ''; position: absolute; right: 22px; top: 60px; bottom: 50px; width: 36px; background: repeating-linear-gradient(180deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 7px); border-radius: 18px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px; min-height: 0; }
-    .pane { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .pane.q { border-top: 6px solid var(--gold); }
-    .pane.b { border-top: 6px solid #7A4E6B; }
+    .pane { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px; min-height: 0; box-shadow: 0 8px 24px rgba(138,98,53,0.07); position: relative; overflow: hidden; }
+    .pane::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
+    .pane.q::before { background: var(--gold); }
+    .pane.b::before { background: #7A4E6B; }
     .pane .head { display: flex; align-items: center; gap: 14px; }
     .pane iconify-icon { font-size: 44px; flex-shrink: 0; }
     .pane.q iconify-icon { color: var(--gold); }
     .pane.b iconify-icon { color: #7A4E6B; }
     .pane .name { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: var(--ink); }
-    .pane .tagline { font-size: 14px; color: var(--deep-gold); font-weight: 600; }
+    .pane .tagline { font-size: 19px; color: var(--deep-gold); font-weight: 600; }
     .pane.b .tagline { color: #5A3850; }
-    .pane .desc { font-size: 14px; color: var(--ink); line-height: 1.6; padding: 14px 18px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
+    .pane .desc { font-size: 19px; color: var(--ink); line-height: 1.6; padding: 14px 18px; background: rgba(184,134,78,0.06); border-radius: 8px; border-left: 3px solid var(--gold); }
     .pane.b .desc { background: rgba(122,78,107,0.06); border-left-color: #7A4E6B; }
-    .pane h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 8px 0 6px 0; }
+    .pane h3 { font-size: 23px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 8px 0 6px 0; }
     .pane.b h3 { color: #5A3850; }
     .pane .timeline { display: flex; gap: 4px; align-items: flex-end; height: 90px; padding: 6px 0; }
     .pane .bar { flex: 1; background: var(--gold); border-radius: 4px 4px 0 0; opacity: 0.7; position: relative; }
@@ -30,10 +33,10 @@
     .pane .bar.t2 { height: 50%; }
     .pane .bar.t3 { height: 75%; }
     .pane .bar.t4 { height: 100%; opacity: 0.9; }
-    .pane .bar span { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--stone); white-space: nowrap; }
+    .pane .bar span { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 21px; color: var(--stone); white-space: nowrap; }
     .pane ul { list-style: none; padding: 0; margin: 0; }
-    .pane li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
-    .pane li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .pane li { font-size: 23px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
+    .pane li code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .pane li::before { content: '▸'; color: var(--deep-gold); }
     .slide-07 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
@@ -42,7 +45,7 @@
   <div class="slide bg-tech slide-07">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>PART 03 · QUOTA + BUDGET</span>
-      <span class="mono caption">07 / 12</span>
+      <span class="mono caption">08 / 13</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">Quota Backoff + Budget Ceiling</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">API 한도와 일일 예산을 모두 관리 — 운영 비용 폭주 방지</p>

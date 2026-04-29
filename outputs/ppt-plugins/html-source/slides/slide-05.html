@@ -8,17 +8,20 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-05 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-05::before { content: ''; position: absolute; left: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(0deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 3px, transparent 3px, transparent 11px); border-radius: 22px; pointer-events: none; }
+    .slide-05::after { content: ''; position: absolute; right: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(180deg, rgba(122,78,107,0.04) 0px, rgba(122,78,107,0.04) 2px, transparent 2px, transparent 8px); border-radius: 22px; pointer-events: none; }
     .grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 16px; margin-top: 24px; min-height: 0; }
-    .card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-top: 5px solid #7A4E6B; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; overflow: hidden; }
-    .card iconify-icon { font-size: 32px; color: #7A4E6B; }
-    .card .name { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--ink); }
-    .card .desc { font-size: 13px; color: var(--stone); line-height: 1.45; }
-    .card .cmd { margin-top: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #5A3850; background: rgba(122,78,107,0.12); padding: 5px 9px; border-radius: 6px; align-self: flex-start; }
-    .card .stat { position: absolute; top: 14px; right: 14px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.12em; font-weight: 700; }
+    .card { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-top: 5px solid #7A4E6B; border-radius: 14px; padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 6px 16px rgba(122,78,107,0.06); }
+    .card::after { content: ''; position: absolute; top: 0; right: 0; width: 50px; height: 50px; background: radial-gradient(circle at top right, rgba(122,78,107,0.04), transparent 70%); pointer-events: none; }
+    .card iconify-icon { font-size: 32px; color: #7A4E6B; position: relative; z-index: 1; }
+    .card .name { font-family: 'JetBrains Mono', monospace; font-size: 23px; font-weight: 700; color: var(--ink); }
+    .card .desc { font-size: 23px; color: var(--stone); line-height: 1.45; }
+    .card .cmd { margin-top: auto; font-family: 'JetBrains Mono', monospace; font-size: 22px; color: #5A3850; background: rgba(122,78,107,0.13); padding: 6px 10px; border-radius: 6px; align-self: flex-start; font-weight: 600; }
+    .card .stat { position: absolute; top: 14px; right: 14px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 100px; letter-spacing: 0.12em; font-weight: 700; z-index: 2; }
     .card.stable .stat { background: var(--sage); color: white; }
     .card.spec .stat   { background: var(--terracotta); color: white; }
-    .card.spec { opacity: 0.85; }
+    .card.spec { opacity: 0.88; }
     .slide-05 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -26,7 +29,7 @@
   <div class="slide bg-tech slide-05">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:link" class="icon-sm"></iconify-icon>CATEGORY 03 · MCP SERVERS</span>
-      <span class="mono caption">05 / 15</span>
+      <span class="mono caption">05 / 16</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:link" class="icon-lg"></iconify-icon><h1 class="heading-1">mcp_* · 외부 서버 8</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">npm 검증된 MCP 서버 묶음 설치 — 카테고리별 install/status 명령</p>

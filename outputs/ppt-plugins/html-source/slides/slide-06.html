@@ -8,24 +8,27 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-06 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-06::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(178,90,62,0.04) 0px, rgba(178,90,62,0.04) 3px, transparent 3px, transparent 10px); border-radius: 20px; pointer-events: none; }
+    .slide-06::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(178,90,62,0.04) 0px, rgba(178,90,62,0.04) 2px, transparent 2px, transparent 8px); border-radius: 20px; pointer-events: none; }
     .grid { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 24px; min-height: 0; }
-    .card { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 32px; display: flex; gap: 22px; align-items: flex-start; min-height: 0; position: relative; overflow: hidden; }
-    .card.ai     { border-top: 6px solid var(--terracotta); }
-    .card.review { border-top: 6px solid #8A6235; }
-    .card.music  { border-top: 6px solid #5A8C8A; }
-    .card.cost   { border-top: 6px solid var(--gold); }
-    .card iconify-icon { font-size: 56px; flex-shrink: 0; }
+    .card { background: rgba(255,255,255,0.84); border: 0.5px solid var(--fog); border-radius: 16px; padding: 26px 32px; display: flex; gap: 22px; align-items: flex-start; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(138,98,53,0.07); }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; }
+    .card.ai::before { background: var(--terracotta); }
+    .card.review::before { background: #8A6235; }
+    .card.music::before { background: #5A8C8A; }
+    .card.cost::before { background: var(--gold); }
+    .card iconify-icon { font-size: 56px; flex-shrink: 0; position: relative; z-index: 1; }
     .card.ai iconify-icon { color: var(--terracotta); }
     .card.review iconify-icon { color: #8A6235; }
     .card.music iconify-icon { color: #5A8C8A; }
     .card.cost iconify-icon { color: var(--gold); }
     .card .body { flex: 1; min-width: 0; }
     .card .name { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
-    .card .tagline { font-size: 16px; color: var(--deep-gold); font-weight: 600; margin-bottom: 10px; }
-    .card .desc { font-size: 14px; color: var(--stone); line-height: 1.5; margin-bottom: 10px; }
+    .card .tagline { font-size: 21px; color: var(--deep-gold); font-weight: 600; margin-bottom: 10px; }
+    .card .desc { font-size: 19px; color: var(--stone); line-height: 1.5; margin-bottom: 10px; }
     .card .features { display: flex; flex-wrap: wrap; gap: 6px; }
-    .card .features span { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px; border-radius: 100px; background: rgba(184,134,78,0.1); color: var(--deep-gold); }
+    .card .features span { font-family: 'JetBrains Mono', monospace; font-size: 21px; padding: 3px 8px; border-radius: 100px; background: rgba(184,134,78,0.1); color: var(--deep-gold); }
     .card .stat { position: absolute; top: 18px; right: 18px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 100px; letter-spacing: 0.12em; font-weight: 700; }
     .card.stable .stat { background: var(--sage); color: white; }
     .card.spec .stat   { background: var(--terracotta); color: white; }
@@ -36,7 +39,7 @@
   <div class="slide bg-subtle slide-06">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>CATEGORIES 04-06 · SPECIAL</span>
-      <span class="mono caption">06 / 15</span>
+      <span class="mono caption">06 / 16</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">AI · Review · Music · Cost — 특수 4</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">도메인 특화 플러그인 — RAG · 품질검증 · 음악 · 수익화</p>

@@ -8,24 +8,27 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-03 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-03::before { content: ''; position: absolute; left: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(90deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 8px); border-radius: 22px; pointer-events: none; }
+    .slide-03::after { content: ''; position: absolute; right: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(270deg, rgba(178,90,62,0.04) 0px, rgba(178,90,62,0.04) 3px, transparent 3px, transparent 9px); border-radius: 22px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 22px; margin-top: 24px; min-height: 0; }
-    .reason { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 30px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-    .reason.r1 { border-left: 6px solid var(--sage); }
-    .reason.r2 { border-left: 6px solid var(--terracotta); }
-    .reason.r3 { border-left: 6px solid var(--gold); }
-    .reason.r4 { border-left: 6px solid #7A4E6B; }
-    .reason .head { display: flex; align-items: center; gap: 14px; }
+    .reason { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 30px; display: flex; flex-direction: column; gap: 10px; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 8px 20px rgba(107,142,127,0.05); }
+    .reason::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 6px; }
+    .reason.r1::before { background: var(--sage); }
+    .reason.r2::before { background: var(--terracotta); }
+    .reason.r3::before { background: var(--gold); }
+    .reason.r4::before { background: #7A4E6B; }
+    .reason .head { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
     .reason iconify-icon { font-size: 44px; flex-shrink: 0; }
     .reason.r1 iconify-icon { color: var(--sage); }
     .reason.r2 iconify-icon { color: var(--terracotta); }
     .reason.r3 iconify-icon { color: var(--gold); }
     .reason.r4 iconify-icon { color: #7A4E6B; }
-    .reason .num { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; }
-    .reason .title { font-size: 24px; font-weight: 700; color: var(--ink); margin-top: 2px; line-height: 1.2; }
-    .reason .desc { font-size: 14px; color: var(--stone); line-height: 1.55; padding-top: 6px; }
-    .reason code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
-    .reason strong { color: var(--ink); }
+    .reason .num { font-family: 'JetBrains Mono', monospace; font-size: 22px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; }
+    .reason .title { font-size: 26px; font-weight: 700; color: var(--ink); margin-top: 2px; line-height: 1.2; }
+    .reason .desc { font-size: 22px; color: var(--ink); line-height: 1.55; padding-top: 6px; }
+    .reason code { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .reason strong { color: var(--ink); font-weight: 700; }
     .slide-03 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>

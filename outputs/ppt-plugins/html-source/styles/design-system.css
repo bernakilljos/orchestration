@@ -164,8 +164,8 @@ body {
 }
 
 .caption {
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 26px;
+  font-weight: 600;
   line-height: 1.4;
   color: var(--stone);
 }
@@ -285,12 +285,13 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .bullet-box {
-  background: rgba(255, 255, 255, 0.6);
-  border: 0.5px solid var(--fog);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(184, 134, 78, 0.18);
+  border-radius: 16px;
   padding: 28px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 28px rgba(138, 98, 53, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .bullet-box h3 {
@@ -484,11 +485,13 @@ body {
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  border: 0.5px solid var(--fog);
+  box-shadow: 0 10px 32px rgba(138, 98, 53, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(184, 134, 78, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -516,12 +519,13 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .mermaid-wrapper {
-  background: rgba(255, 255, 255, 0.6);
-  border: 0.5px solid var(--fog);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(184, 134, 78, 0.18);
+  border-radius: 16px;
   padding: 32px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 32px rgba(138, 98, 53, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -565,12 +569,13 @@ body {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 .tree-wrapper {
-  background: rgba(255, 255, 255, 0.6);
-  border: 0.5px solid var(--fog);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(184, 134, 78, 0.18);
+  border-radius: 16px;
   padding: 32px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 10px 32px rgba(138, 98, 53, 0.10), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .tree-code {
@@ -607,7 +612,7 @@ body {
 }
 
 .footnote {
-  font-size: 13px;
+  font-size: 19px;
   color: var(--stone);
   font-weight: 500;
 }
@@ -676,28 +681,30 @@ iconify-icon {
   z-index: 0;
 }
 
-/* Pattern B — Content */
+/* Pattern B — Content (DALL-E hint: warm painterly accents) */
 .bg-subtle {
   background:
-    radial-gradient(ellipse 1200px 800px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
-    linear-gradient(180deg, #F7F2EA 0%, #F2EBDE 100%);
+    radial-gradient(ellipse 1300px 900px at 95% 0%, rgba(184, 134, 78, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 900px 700px at 5% 100%, rgba(122, 78, 107, 0.10) 0%, transparent 50%),
+    linear-gradient(180deg, #F7F2EA 0%, #F0E5D0 100%);
   position: relative;
 }
 
 /* Pattern C — Accent/Inflection */
 .bg-accent {
   background:
-    radial-gradient(ellipse 1600px 1000px at 50% 100%, rgba(178, 90, 62, 0.12) 0%, transparent 60%),
-    linear-gradient(180deg, #F7F2EA 0%, #EDE4D3 100%);
+    radial-gradient(ellipse 1600px 1000px at 50% 100%, rgba(178, 90, 62, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 1000px 700px at 100% 0%, rgba(184, 134, 78, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #F7F2EA 0%, #EDE0C8 100%);
   position: relative;
 }
 
 /* Pattern D — Technical/Data */
 .bg-tech {
   background:
-    radial-gradient(ellipse 1200px 700px at 0% 100%, rgba(107, 142, 127, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 800px 500px at 100% 0%, rgba(184, 134, 78, 0.06) 0%, transparent 50%),
-    linear-gradient(180deg, #F7F2EA 0%, #F0E9DA 100%);
+    radial-gradient(ellipse 1200px 700px at 0% 100%, rgba(107, 142, 127, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 1000px 600px at 100% 0%, rgba(184, 134, 78, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #F7F2EA 0%, #ECE3D0 100%);
   position: relative;
 }
 
@@ -726,7 +733,7 @@ code {
 /* CONTENT CONSTRAINTS */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-.body, .body-lead {
+.body-lead {
   max-width: 1200px;
 }
 

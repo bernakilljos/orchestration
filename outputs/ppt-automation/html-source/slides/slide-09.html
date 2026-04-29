@@ -8,34 +8,38 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-09 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-09::before { content: ''; position: absolute; left: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.04) 0px, rgba(184,134,78,0.04) 3px, transparent 3px, transparent 10px); border-radius: 22px; pointer-events: none; }
+    .slide-09::after { content: ''; position: absolute; right: 18px; top: 60px; bottom: 50px; width: 44px; background: repeating-linear-gradient(180deg, rgba(122,78,107,0.04) 0px, rgba(122,78,107,0.04) 2px, transparent 2px, transparent 9px); border-radius: 22px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; min-height: 0; }
     .stats { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px; }
-    .stat { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 6px; }
-    .stat.cost { border-top: 5px solid var(--gold); }
-    .stat.task { border-top: 5px solid var(--sage); }
-    .stat.token { border-top: 5px solid #7A4E6B; }
-    .stat.fail { border-top: 5px solid var(--terracotta); }
-    .stat .lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; }
+    .stat { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 6px 14px rgba(138,98,53,0.06); position: relative; overflow: hidden; }
+    .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; }
+    .stat.cost::before { background: var(--gold); }
+    .stat.task::before { background: var(--sage); }
+    .stat.token::before { background: #7A4E6B; }
+    .stat.fail::before { background: var(--terracotta); }
+    .stat .lbl { font-family: 'JetBrains Mono', monospace; font-size: 21px; letter-spacing: 0.18em; color: var(--stone); text-transform: uppercase; font-weight: 700; }
     .stat .val { font-family: 'Fraunces', serif; font-size: 44px; font-weight: 700; color: var(--ink); line-height: 1; margin-top: 4px; }
     .stat.cost .val { color: var(--gold); }
     .stat.task .val { color: var(--sage); }
     .stat.token .val { color: #7A4E6B; }
     .stat.fail .val { color: var(--terracotta); }
-    .stat .delta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--stone); margin-top: 4px; }
+    .stat .delta { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: var(--stone); margin-top: 4px; }
     .stat .delta.up { color: #4A6F60; }
     .stat .delta.down { color: #8A3E26; }
     .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 22px 26px; border-radius: 14px; white-space: pre; overflow: hidden; }
+    .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 23px; line-height: 1.6; padding: 22px 26px; border-radius: 14px; white-space: pre; overflow: hidden; }
     .terminal .h { color: #B8864E; font-weight: 700; }
     .terminal .ok { color: #6B8E7F; }
     .terminal .num { color: #E8B96B; }
     .terminal .c { color: #6E685C; font-style: italic; }
-    .box { background: rgba(255,255,255,0.78); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; border-left: 5px solid var(--gold); }
-    .box h3 { font-size: 13px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; }
+    .box { background: rgba(255,255,255,0.82); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 22px; box-shadow: 0 4px 12px rgba(138,98,53,0.05); position: relative; }
+    .box::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--gold); border-radius: 12px 0 0 12px; }
+    .box h3 { font-size: 23px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; }
     .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 13px; line-height: 1.5; color: var(--ink); padding: 2px 0; display: flex; gap: 8px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .box li { font-size: 23px; line-height: 1.5; color: var(--ink); padding: 2px 0; display: flex; gap: 8px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .box li::before { content: '▸'; color: var(--deep-gold); }
     .slide-09 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
@@ -44,7 +48,7 @@
   <div class="slide bg-tech slide-09">
     <div class="slide-header">
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:chart-bar" class="icon-sm"></iconify-icon>PART 04 · METRICS</span>
-      <span class="mono caption">09 / 12</span>
+      <span class="mono caption">10 / 13</span>
     </div>
     <div class="title-with-icon"><iconify-icon icon="heroicons:chart-bar" class="icon-lg"></iconify-icon><h1 class="heading-1">Metrics 대시보드 · 실시간 운영</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);"><code>metrics-report.py</code> · SQLite 집계 · 비용·태스크·토큰·실패율</p>
@@ -59,12 +63,12 @@
         <div class="stat task">
           <div class="lbl">완료 task</div>
           <div class="val">147</div>
-          <div class="delta up">+ 진행 중 8</div>
+          <div class="delta up">↑ 어제 132 (+11%)</div>
         </div>
         <div class="stat token">
           <div class="lbl">토큰 사용</div>
           <div class="val">2.4M</div>
-          <div class="delta">cache hit 78%</div>
+          <div class="delta up">↑ cache 78% (+13pp)</div>
         </div>
         <div class="stat fail">
           <div class="lbl">실패율</div>
