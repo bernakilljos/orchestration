@@ -8,7 +8,9 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-10::before { content: ''; position: absolute; left: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(0deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-10::after { content: ''; position: absolute; right: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
     .body { flex: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; min-height: 0; }
     .table { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 14px; padding: 22px 32px; flex: 1; min-height: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(138,98,53,0.08); }
     .table table { width: 100%; border-collapse: collapse; }
