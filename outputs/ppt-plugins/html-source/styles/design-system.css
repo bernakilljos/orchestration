@@ -696,6 +696,10 @@ iconify-icon:hover {
 .icon-md { font-size: 56px !important; }
 .icon-sm { font-size: 40px !important; }
 
+.part-2 iconify-icon { color: var(--terracotta) !important; }
+.part-3 iconify-icon { color: var(--sage) !important; }
+.part-4 iconify-icon { color: var(--plum) !important; }
+
 /* ──────────────────────────────────────────────────────────────────────── */
 /* FONTS — Additional Serif & Sans */
 /* ──────────────────────────────────────────────────────────────────────── */
