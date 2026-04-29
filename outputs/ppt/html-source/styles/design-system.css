@@ -510,6 +510,17 @@ body {
   pointer-events: none;
 }
 
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle at 0% 100%, rgba(107, 142, 127, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
 .card iconify-icon {
   font-size: 48px;
   color: var(--gold);
