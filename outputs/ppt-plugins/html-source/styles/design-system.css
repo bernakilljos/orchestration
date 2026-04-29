@@ -898,8 +898,9 @@ code {
 .decor-circle {
   width: 180px;
   height: 180px;
-  opacity: 0.4;
+  opacity: 0.32;
   position: absolute;
+  filter: blur(0.5px);
 }
 
 .decor-grid {
