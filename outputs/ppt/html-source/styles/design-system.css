@@ -1168,6 +1168,35 @@ a:active {
 .gap-16 { gap: 16px; }
 .gap-24 { gap: 24px; }
 
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FLEX & LAYOUT UTILITIES */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-center { align-items: center; justify-content: center; }
+.flex-between { justify-content: space-between; }
+.flex-wrap { flex-wrap: wrap; }
+
+.grid { display: grid; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+.w-full { width: 100%; }
+.w-half { width: 50%; }
+.h-full { height: 100%; }
+.h-auto { height: auto; }
+
+.rounded { border-radius: 8px; }
+.rounded-lg { border-radius: 16px; }
+.rounded-full { border-radius: 50%; }
+
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-90 { opacity: 0.9; }
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
