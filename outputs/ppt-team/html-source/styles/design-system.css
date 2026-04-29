@@ -466,6 +466,8 @@ body {
   overflow-x: auto;
   max-height: 500px;
   overflow-y: auto;
+  border: 1px solid rgba(107, 142, 127, 0.20);
+  box-shadow: 0 8px 32px rgba(107, 142, 127, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .code-block code {
