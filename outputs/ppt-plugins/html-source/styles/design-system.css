@@ -511,8 +511,9 @@ body {
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  gap: 22px;
   margin-top: 32px;
+  row-gap: 26px;
 }
 
 .card {
