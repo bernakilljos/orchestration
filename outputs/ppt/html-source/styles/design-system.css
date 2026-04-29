@@ -476,6 +476,21 @@ body {
   tab-size: 2;
 }
 
+.code-line {
+  display: flex;
+  align-items: baseline;
+}
+
+.code-line-number {
+  display: inline-block;
+  width: 3em;
+  text-align: right;
+  margin-right: 1.5em;
+  color: #4A5859;
+  user-select: none;
+  font-weight: 400;
+}
+
 /* Syntax Highlighting */
 .code-keyword { color: #D48BE8; font-weight: 600; letter-spacing: 0.01em; }
 .code-string { color: #7EC699; font-weight: 500; }
