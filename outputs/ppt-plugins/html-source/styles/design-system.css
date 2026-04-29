@@ -1006,6 +1006,21 @@ hr {
   opacity: 0.8;
 }
 
+/* TEXT ACCENT COLORS */
+.accent-gold { color: var(--gold); font-weight: 600; }
+.accent-terracotta { color: var(--terracotta); font-weight: 600; }
+.accent-sage { color: var(--sage); font-weight: 600; }
+.accent-plum { color: var(--plum); font-weight: 600; }
+
+.highlight {
+  background: linear-gradient(120deg, rgba(184, 134, 78, 0.15), rgba(107, 142, 127, 0.15), rgba(122, 78, 107, 0.1));
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.highlight.gold { background: linear-gradient(120deg, rgba(184, 134, 78, 0.2) 0%, rgba(184, 134, 78, 0.08) 100%); }
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
