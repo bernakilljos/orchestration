@@ -8,7 +8,9 @@
   <link href="../styles/design-system.css" rel="stylesheet">
   <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
   <style>
-    .slide-14 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; }
+    .slide-14 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-14::before { content: ''; position: absolute; left: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(0deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-14::after { content: ''; position: absolute; right: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
     .body { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 16px; min-height: 0; }
     .left { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
     .right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
