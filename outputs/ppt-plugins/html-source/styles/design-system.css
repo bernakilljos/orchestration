@@ -495,6 +495,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle at 100% 0%, rgba(184, 134, 78, 0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .card iconify-icon {
