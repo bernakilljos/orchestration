@@ -1,7 +1,7 @@
 # PPT Overflow Verification Report
 
 - Source: `C:\pjt\orchestration_v1\outputs\ppt-automation\html-source\png-output`
-- Total slides: 16
+- Total slides: 14
 - Suspect (>10% edge dark): **0**
 - Threshold: bottom + right band 30px, dark = RGB < 80
 
@@ -11,13 +11,11 @@
 |-------|-------:|------:|:-------:|
 | slide-01.png | 0.000 | 0.000 | [OK] |
 | slide-02.png | 0.000 | 0.000 | [OK] |
-| slide-03-edited.png | 0.000 | 0.000 | [OK] |
-| slide-03-marked.png | 0.000 | 0.000 | [OK] |
 | slide-03.png | 0.000 | 0.000 | [OK] |
-| slide-04-edited.png | 0.000 | 0.000 | [OK] |
 | slide-04.png | 0.000 | 0.000 | [OK] |
 | slide-05.png | 0.000 | 0.000 | [OK] |
 | slide-06.png | 0.000 | 0.000 | [OK] |
+| slide-06a.png | 0.000 | 0.000 | [OK] |
 | slide-07.png | 0.000 | 0.000 | [OK] |
 | slide-08.png | 0.000 | 0.000 | [OK] |
 | slide-09.png | 0.000 | 0.000 | [OK] |
