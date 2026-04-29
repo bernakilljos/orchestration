@@ -232,7 +232,8 @@ body {
 }
 
 .slide-eyebrow iconify-icon {
-  font-size: 20px;
+  font-size: 18px;
+  color: var(--stone);
 }
 
 .slide-pagenumber {
@@ -552,8 +553,9 @@ body {
 }
 
 .card iconify-icon {
-  font-size: 48px;
+  font-size: 44px;
   color: var(--gold);
+  line-height: 1;
 }
 
 .card h4 {
