@@ -906,8 +906,9 @@ code {
 .decor-grid {
   width: 200px;
   height: 200px;
-  opacity: 0.3;
+  opacity: 0.25;
   position: absolute;
+  transform: rotate(15deg);
 }
 
 .decor-arrow {
