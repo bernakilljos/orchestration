@@ -957,6 +957,29 @@ code {
   flex-shrink: 0;
 }
 
+/* DIVIDERS & SEPARATORS */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184, 134, 78, 0.2), transparent);
+  margin: 24px 0;
+}
+
+.divider.subtle {
+  height: 0.5px;
+  background: linear-gradient(90deg, transparent, rgba(184, 134, 78, 0.12), transparent);
+}
+
+.divider.accent {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(184, 134, 78, 0.25), transparent);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184, 134, 78, 0.18), transparent);
+}
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
