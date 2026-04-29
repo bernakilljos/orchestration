@@ -474,6 +474,13 @@ body {
   tab-size: 2;
 }
 
+/* Syntax Highlighting */
+.code-keyword { color: #D48BE8; font-weight: 600; }
+.code-string { color: #7EC699; }
+.code-number { color: #D9B25A; }
+.code-comment { color: #6A7F7E; font-style: italic; }
+.code-function { color: #6BA1D5; }
+
 /* ──────────────────────────────────────────────────────────────────────── */
 /* CARD GRID (T6) */
 /* ──────────────────────────────────────────────────────────────────────── */
