@@ -1197,6 +1197,49 @@ a:active {
 .opacity-75 { opacity: 0.75; }
 .opacity-90 { opacity: 0.9; }
 
+/* ──────────────────────────────────────────────────────────────────────── */
+/* FINAL POLISH — Global Typography Consistency */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  text-rendering: optimizeLegibility;
+}
+
+/* Ensure consistent line-height across all elements */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  margin: 0;
+}
+
+/* Print styles for consistency */
+@media print {
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a, a:visited {
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* END OF DESIGN SYSTEM */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
