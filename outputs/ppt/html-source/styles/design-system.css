@@ -980,6 +980,32 @@ hr {
   background: linear-gradient(90deg, transparent, rgba(184, 134, 78, 0.18), transparent);
 }
 
+/* INTERACTIVE HOVER CUES */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(138, 98, 53, 0.15);
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 32px rgba(184, 134, 78, 0.25);
+}
+
+.hover-fade {
+  transition: opacity 0.3s ease;
+}
+
+.hover-fade:hover {
+  opacity: 0.8;
+}
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
