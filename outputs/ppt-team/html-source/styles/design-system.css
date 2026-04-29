@@ -680,6 +680,13 @@ iconify-icon {
   vertical-align: -0.15em;
   color: var(--gold);
   font-size: 2.5em;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  opacity: 1;
+}
+
+iconify-icon:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
 }
 
 .icon-xl { font-size: 128px !important; }
