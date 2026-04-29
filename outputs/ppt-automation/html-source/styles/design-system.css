@@ -921,8 +921,9 @@ code {
 .decor-dots {
   width: 150px;
   height: 150px;
-  opacity: 0.25;
+  opacity: 0.2;
   position: absolute;
+  mix-blend-mode: multiply;
 }
 
 .decor-lines {
