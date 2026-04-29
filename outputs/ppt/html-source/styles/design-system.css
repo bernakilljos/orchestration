@@ -238,6 +238,11 @@ body {
 .slide-pagenumber {
   color: var(--stone);
   flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-feature-settings: 'liga' 0;
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
