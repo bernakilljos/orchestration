@@ -1047,6 +1047,45 @@ hr {
   padding: 2px 8px;
 }
 
+/* ──────────────────────────────────────────────────────────────────────── */
+/* ANIMATIONS */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+@keyframes subtle-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in { animation: subtle-fade-in 0.6s ease-out; }
+.pulse { animation: gentle-pulse 2.5s ease-in-out infinite; }
+.slide-in { animation: slide-in-right 0.5s ease-out; }
+
 /* Tree/Monospace 확대 */
 .tree-code {
   font-size: 20px !important;
