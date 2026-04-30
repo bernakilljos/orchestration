@@ -47,8 +47,8 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-check" class="icon-sm"></iconify-icon>PART 02 · WATCHDOG (2/2)</span>
       <span class="mono caption">07 / 13</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">자동 복구 vs 의도된 정지</h1></div>
-    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">언제 자동으로 살아나고, 언제 의도적으로 멈추는가</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">자동 부활 vs 멈춤</h1></div>
+    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">어떨 때 살아나고, 어떨 때 의도적으로 멈추는가</p>
 
     <div class="body">
       <div class="decision-banner">
@@ -86,24 +86,24 @@
           <h3>◆ 자동 복구 케이스</h3>
         </div>
         <ul>
-          <li>Codex API 일시 장애 → 자동 재시도 (10m backoff)</li>
-          <li>quota 한도 도달 → backoff 후 재개</li>
-          <li>heartbeat timeout → kill + revive</li>
-          <li>OS 재부팅 → boot-time 자동 시작</li>
-          <li>네트워크 일시 단절 → DNS 재시도 → 복구</li>
+          <li>API 일시 장애 → 10분 후 자동 재시도</li>
+          <li>한도 도달 → 잠시 대기 후 재개</li>
+          <li>응답 없음 → 종료 후 부활</li>
+          <li>컴퓨터 재부팅 → 부팅 시 자동 시작</li>
+          <li>네트워크 끊김 → 복구되면 자동 재연결</li>
         </ul>
       </div>
       <div class="box down">
         <div class="head">
           <iconify-icon icon="heroicons:hand-raised"></iconify-icon>
-          <h3>◆ 멈추는 경우 (의도)</h3>
+          <h3>◆ 의도적 멈춤</h3>
         </div>
         <ul>
-          <li><code>.claude/orca-stopped</code> 파일 존재 → 영구 stop</li>
-          <li>budget ceiling 초과 (일일 상한) → 다음 날 재개</li>
-          <li>watchdog 자체 종료 (관리자 명령)</li>
-          <li>Claude Code 종료 후 5분 grace 후 stop</li>
-          <li><code>/orcauto-stop</code> 슬래시 명령</li>
+          <li>정지 파일 존재 → 영구 정지</li>
+          <li>일일 예산 초과 → 다음 날 재개</li>
+          <li>관리자가 직접 종료 명령</li>
+          <li>Claude 종료 5분 후 자동 정지</li>
+          <li><code>/orcauto-stop</code> 명령 입력</li>
         </ul>
       </div>
       </div>

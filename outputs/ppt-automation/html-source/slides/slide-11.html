@@ -27,10 +27,10 @@
     .tip:nth-child(4) iconify-icon { color: var(--terracotta); }
     .tip:nth-child(5) iconify-icon { color: #8A6235; }
     .tip:nth-child(6) iconify-icon { color: var(--gold); }
-    .tip .num { font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; }
-    .tip .title { font-size: 19px; font-weight: 700; color: var(--ink); margin-top: 2px; line-height: 1.2; }
-    .tip .desc { font-size: 16px; color: var(--stone); line-height: 1.4; margin-top: 4px; }
-    .tip code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .tip .num { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; }
+    .tip .title { font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 4px; line-height: 1.2; }
+    .tip .desc { font-size: 18px; color: var(--stone); line-height: 1.45; margin-top: 6px; }
+    .tip code { font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .tip .pri { position: absolute; top: 14px; right: 18px; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.12em; font-weight: 700; }
     .tip { position: relative; }
     .tip .pri.high { background: var(--terracotta); color: white; }
@@ -45,8 +45,8 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:trophy" class="icon-sm"></iconify-icon>PART 04 · BEST PRACTICES</span>
       <span class="mono caption">12 / 13</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화 운영 Best Practices 6</h1></div>
-    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 검증된 6가지 — 비용·안정성·관측 모두 잡기</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">운영 팁 6가지</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">현장에서 검증된 핵심 — 사고 막고 비용 줄이는 가장 중요한 6가지</p>
 
     <div class="body">
       <div class="tip">
@@ -81,8 +81,8 @@
         <iconify-icon icon="heroicons:eye"></iconify-icon>
         <div>
           <div class="num">TIP 04</div>
-          <div class="title">메인 Claude 가 직접 검증</div>
-          <div class="desc">Sub-agent "PASS" 보고는 거짓 가능. 결과물은 메인이 Read/OCR 로 직접 확인. 위장 사고 회피.</div>
+          <div class="title">결과는 메인 AI 가 직접 확인</div>
+          <div class="desc">보조 AI "통과" 보고는 거짓일 수 있음. 메인이 화면을 직접 봐야 위장 완료 사고를 막는다.</div>
         </div>
       </div>
       <div class="tip">
@@ -99,8 +99,8 @@
         <iconify-icon icon="heroicons:lock-closed"></iconify-icon>
         <div>
           <div class="num">TIP 06</div>
-          <div class="title">Writer = 1 룰</div>
-          <div class="desc">동시 여러 워커가 같은 파일 쓰기 금지. <code>tasks/locks/</code> 가 자동 잠금. 충돌 시 후순위 backoff.</div>
+          <div class="title">한 파일은 한 명만 쓰기</div>
+          <div class="desc">여러 워커가 같은 파일을 동시에 못 만지게 잠금. 충돌하면 뒤늦은 쪽이 잠시 대기.</div>
         </div>
       </div>
     </div>    <img src="https://api.iconify.design/heroicons/star.svg?color=%23B25A3E&width=380"

@@ -18,14 +18,14 @@
     .box.rules { grid-column: 2; grid-row: 1; border-left: 6px solid #7A4E6B; }
     .box.flow  { grid-column: 2; grid-row: 2; border-left: 6px solid var(--gold); }
     .box.work  { grid-column: 3; grid-row: 1 / -1; border-left: 6px solid var(--sage); }
-    .box h3 { font-size: 19px; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 12px 0; }
+    .box h3 { font-size: 22px; letter-spacing: 0.14em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 14px 0; }
     .box.rules h3 { color: #5A3850; }
     .box.work h3 { color: #4A6F60; }
-    .box ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: space-around; }
-    .box li { font-size: 20px; line-height: 1.35; color: var(--ink); display: flex; align-items: baseline; gap: 8px; font-weight: 700; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 17px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
-    .box.work li { font-size: 21px; flex-direction: column; align-items: flex-start; gap: 2px; }
-    .box.work li code { font-size: 19px; }
+    .box ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: space-around; }
+    .box li { font-size: 22px; line-height: 1.4; color: var(--ink); display: flex; align-items: baseline; gap: 10px; font-weight: 700; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 19px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+    .box.work li { font-size: 23px; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .box.work li code { font-size: 21px; }
     .box.work li::before { display: none; }
     .box.flow li::before, .box.work li::before { content: '▸'; color: var(--deep-gold); flex-shrink: 0; }
     .box.rules li::before { content: '✗'; color: #B25A3E; font-weight: 700; flex-shrink: 0; }
@@ -38,8 +38,8 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:command-line" class="icon-sm"></iconify-icon>PART 01 · ENTRY POINT</span>
       <span class="mono caption">03 / 13</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon><h1 class="heading-1">exec_orch · 진입점 + 워커</h1></div>
-    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude (Lead) → task-instruction.md → Codex/Gemini 워커 (병렬)</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon><h1 class="heading-1">진입점 · 어떻게 일이 분배되나</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">Claude 가 분배 → 보조 AI 가 병렬 실행 → 검증 후 통합</p>
 
     <div class="body">
       <div class="svg-box">
@@ -128,12 +128,12 @@
       </div>
 
       <div class="box rules">
-        <h3>◆ 핵심 룰 (절대 금지)</h3>
+        <h3>◆ 절대 금지 4 가지</h3>
         <ul>
-          <li><code>Writer = 1</code> 동시 수정 금지</li>
-          <li><code>task-instruction</code> 없이 호출 X</li>
-          <li><code>Gemini</code> 자동 채택 X (Claude 결정)</li>
-          <li>빈 task <code>done/</code> 이동 X (위장 완료)</li>
+          <li>한 파일 동시 수정 금지</li>
+          <li>지시서 없이 보조 AI 호출 금지</li>
+          <li>검증 자동 채택 금지 — Claude 결정</li>
+          <li>빈 결과 완료 처리 금지 (위장 완료)</li>
         </ul>
       </div>
 
@@ -148,12 +148,12 @@
       </div>
 
       <div class="box flow">
-        <h3>◆ 흐름</h3>
+        <h3>◆ 일 처리 흐름</h3>
         <ul>
-          <li>Claude → <code>task-instruction.md</code> 작성</li>
-          <li>Codex 4× 병렬로 구현 분배</li>
-          <li>Haiku 2× 검증 (병렬, prompt cache)</li>
-          <li>Claude 통합·승인 후 commit</li>
+          <li>Claude 가 지시서 작성</li>
+          <li>Codex 4 명에게 동시 분배</li>
+          <li>Haiku 2 명이 결과 검증</li>
+          <li>Claude 가 합쳐 한 번에 commit</li>
         </ul>
       </div>
     </div>    <img src="https://api.iconify.design/heroicons/shield-check.svg?color=%23B8864E&width=380"

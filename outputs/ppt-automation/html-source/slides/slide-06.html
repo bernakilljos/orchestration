@@ -36,18 +36,18 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-check" class="icon-sm"></iconify-icon>PART 02 · WATCHDOG (1/2)</span>
       <span class="mono caption">06 / 13</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:shield-check" class="icon-lg"></iconify-icon><h1 class="heading-1">Watchdog · 자동 부활 흐름</h1></div>
-    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">heartbeat 체크 → quota-aware 지수 backoff → 자동 재시도</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:shield-check" class="icon-lg"></iconify-icon><h1 class="heading-1">감시자 · 죽으면 자동 부활</h1></div>
+    <p class="body-lead" style="margin-top: 8px; color: var(--stone);">매 30초 살아있나 확인 → 죽었으면 잠시 대기 후 자동 재시작</p>
 
     <div class="body">
       <div class="left">
         <div class="flow">
-          <h3>◆ 자동 부활 5-Step</h3>
-          <div class="step"><span class="num">1</span><span class="text">워커가 매 30초 <code>heartbeat</code> 갱신 → state DB</span></div>
-          <div class="step"><span class="num">2</span><span class="text">watchdog 가 60초 stale 워커 감지 → <code>dead</code> 마킹</span></div>
-          <div class="step"><span class="num">3</span><span class="text">실패 사유 분석: <code>quota</code> · <code>budget</code> · <code>crash</code></span></div>
-          <div class="step"><span class="num">4</span><span class="text">quota 초과면 <code>retry_at</code> 계산 (지수 backoff 10m→2h)</span></div>
-          <div class="step"><span class="num">5</span><span class="text">예약 시간 도래 시 자동 재시작 → heartbeat 복구</span></div>
+          <h3>◆ 자동 부활 5 단계</h3>
+          <div class="step"><span class="num">1</span><span class="text">워커가 매 30초마다 "살아있다" 신호 보냄</span></div>
+          <div class="step"><span class="num">2</span><span class="text">감시자가 60초 무응답 워커를 죽었다고 판단</span></div>
+          <div class="step"><span class="num">3</span><span class="text">왜 죽었나 분석 — 한도 초과 · 예산 초과 · 오류</span></div>
+          <div class="step"><span class="num">4</span><span class="text">한도 초과면 10분 후 재시도 → 안되면 20분 → 40분 → 2시간</span></div>
+          <div class="step"><span class="num">5</span><span class="text">예약 시간 되면 자동 재시작 → 살아있다 신호 복구</span></div>
         </div>
       </div>
 
