@@ -61,7 +61,12 @@
       "PowerShell(playwright install *)",
       "PowerShell(python -m playwright install chromium 2>&1 | Select-Object -Last 10)",
       "PowerShell(Stop-Process *)",
-      "Skill(design_ppt)"
+      "Skill(design_ppt)",
+      "Bash(cp plugins/design_pdf/plugin.json ../orchestration_v1_team/plugins/design_pdf/plugin.json)",
+      "Bash(cp plugins/design_pdf/README.md ../orchestration_v1_team/plugins/design_pdf/README.md)",
+      "Bash(cp plugins/design_pdf/SPEC.md ../orchestration_v1_team/plugins/design_pdf/SPEC.md)",
+      "Bash(cp plugins/design_pdf/commands/pdf-generate.md ../orchestration_v1_team/plugins/design_pdf/commands/pdf-generate.md)",
+      "Bash(cp plugins/design_pdf/skills/skill-pdf-design-system.md ../orchestration_v1_team/plugins/design_pdf/skills/skill-pdf-design-system.md)"
     ],
     "deny": []
   },

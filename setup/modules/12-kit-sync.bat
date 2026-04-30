@@ -36,6 +36,11 @@ if exist ".claude\scripts\sync-plugins.sh" (
   echo                       /claude-connectors  /claude-thinking
   echo       [신규 다이어그램 커맨드]
   echo         /arch-mindmap /arch-layered /arch-cheatsheet /arch-auto
+  echo       [R51 디자인 도구 (2026-04-30)]
+  echo         /design_ppt   PPT 자동 생성 (HTML -^> Playwright -^> PPTX)
+  echo         /pdf-generate PDF 자동 생성 (A4/Letter/Digital 1920x1080)
+  echo         render-screens.py  단일 PNG (README 표지/마케팅 카드)
+  echo         차트 + SVG 다이어그램 + 카드 그리드 4 패턴 표준화
 ) else (
   echo       [WARN] sync-plugins.sh 없음
 )
