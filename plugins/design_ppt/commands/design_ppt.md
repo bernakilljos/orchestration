@@ -32,7 +32,7 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 ---
 
-## 0. TL;DR — 절대 잊지 말 것 (10 계명)
+## 0. TL;DR — 절대 잊지 말 것 (12 계명)
 
 1. **슬라이드는 1920×1080 고정** — `height: 1080px !important; overflow: hidden !important`
 2. **그리드 안 잘림 방지** — `min-height: 0` 을 모든 flex/grid 자식에 추가
@@ -44,6 +44,8 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 8. **"에이전트가 PASS" 거짓말에 속지 마라** — 직접 OCR 로 잘림 확인
 9. **PowerPoint 가 파일 잠금** — 재렌더 전 사용자에게 닫으라고 요청
 10. **DALL-E 직접 호출 안 됨** — Iconify + SVG + Unsplash + 그라디언트 조합으로 채움
+11. **`.body` 에 `max-width` 절대 금지** — design-system.css 의 `.body{max-width:1200px}` 가 우측 720px 빈 여백 만든 사례. `.body-lead` 만 max-width 적용.
+12. **design-system.css 변경 = 3 파일 sync 필수** — 멀티 PPT 시 automation/plugins/team 모두 동일 파일 동기화 (한 파일만 수정 시 시각 분기).
 
 ---
 

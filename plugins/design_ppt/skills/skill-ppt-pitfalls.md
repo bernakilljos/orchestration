@@ -293,3 +293,168 @@ font-weight 600, padding 8px 7px, code bg opacity 0.08 → 0.10.
 - decoration 은 `pointer-events: none` 필수 (클릭 방해 X)
 - z-index 컨트롤 — 데코가 콘텐츠 위로 가지 않도록
 - 모든 데코는 opacity 0.10 이하 권장
+
+---
+
+## 12. Design System v2 — Round 11~50 학습 (2026-04-30)
+
+automation/plugins/team 3 PPT (43장) 에 50 라운드 polish 적용 후 도출된 표준 패턴. 새 PPT 만들 때 design-system.css 시드로 사용.
+
+### A. SVG 여백 장식 (33/41 본문 슬라이드 적용)
+좌·우 40px 가상 컬럼 stripe — 80px 여백보다 한 단계 압축.
+```css
+.slide-NN::before {  /* 좌측 */
+  content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px;
+  width: 40px; border-radius: 20px;
+  background: repeating-linear-gradient(0deg,
+    rgba(184,134,78,0.05) 0 2px, transparent 2px 6px);
+  pointer-events: none; z-index: 0;
+}
+.slide-NN::after {   /* 우측 */
+  content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px;
+  width: 40px; border-radius: 20px;
+  background: repeating-linear-gradient(180deg,
+    rgba(107,142,127,0.05) 0 2px, transparent 2px 6px);
+  pointer-events: none; z-index: 0;
+}
+```
+**PART 별 색상 매핑**: gold (exec) · sage (design/team) · plum (mcp) · terracotta (ai)
+
+### B. 카드 다층 box-shadow (R17~R20)
+플랫 → 입체. 다층으로 깊이감.
+```css
+.card { box-shadow:
+  0 1px 2px rgba(26,29,36,0.04),
+  0 4px 12px rgba(184,134,78,0.06),
+  0 12px 32px rgba(26,29,36,0.04);
+}
+.bullet-box, .mermaid-wrapper, .compare-col { /* 동일 패턴 */ }
+```
+
+### C. 카드 코너 그라디언트 (R15~R16)
+우상단 + 좌하단 subtle radial-gradient → 매트릭스같은 입체감.
+```css
+.card::before { /* top-right 200px */
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle at top right,
+    rgba(184,134,78,0.06), transparent 60%);
+  pointer-events: none;
+}
+.card::after { /* bottom-left sage */
+  content: ''; position: absolute; bottom: 0; left: 0;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle at bottom left,
+    rgba(107,142,127,0.05), transparent 55%);
+  pointer-events: none;
+}
+```
+
+### D. 코드박스 신택스 컬러 (R21~R24)
+한글 주석 옅게 (`#6E685C` 50% opacity) + 키워드 진하게.
+```css
+.code-block .keyword { color: #B8864E; font-weight: 700; }
+.code-block .string  { color: #6B8E7F; }
+.code-block .number  { color: #B25A3E; }
+.code-block .comment { color: #6E685C; opacity: 0.7; font-style: italic; }
+.code-block .line-number { color: #C9C5BC; user-select: none;
+  display: inline-block; width: 28px; text-align: right; padding-right: 12px; }
+.code-block { border: 1px solid rgba(107,142,127,0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); /* sage glow */ }
+```
+
+### E. 페이지번호 통일 (R25)
+모든 슬라이드 동일 스펙.
+```css
+.mono.caption /* 페이지번호 */ {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.06em; color: var(--stone);
+}
+```
+
+### F. 아이콘 일관성 (R26~R28)
+- eyebrow 인라인: **18px**
+- 카드 큰 아이콘: **44px**
+- hover (PPT 정적이라 prefers-reduced-motion 고려):
+```css
+iconify-icon { transition: opacity 0.2s, transform 0.2s; }
+iconify-icon:hover { opacity: 0.85; transform: scale(1.04); }
+```
+
+### G. 자간·행간 (R31~R32)
+한글 가독성 핵심.
+```css
+.body-lead { line-height: 1.52; letter-spacing: -0.008em; }
+body, .body { line-height: 1.58; letter-spacing: -0.006em; }
+```
+
+### H. 데코 opacity 표준값 (R33~R36)
+| 요소 | opacity | blend |
+|:-|:-|:-|
+| fill-decor | 0.06 | normal |
+| decor-circle | 0.32 + blur(8px) | normal |
+| decor-grid | 0.25, rotate(15deg) | normal |
+| decor-dots | 0.20 | multiply |
+
+### I. 구분선·배지·하이라이트 (R37~R40)
+```css
+/* divider 3등급 */
+.divider-strong { height: 2px; background: var(--ink); opacity: 0.18; }
+.divider-medium { height: 1px; background: var(--ink); opacity: 0.10; }
+.divider-soft   { height: 1px; background: linear-gradient(90deg,
+  transparent, rgba(26,29,36,0.08), transparent); }
+
+/* 배지 3등급 (gold/sage/terracotta) */
+.badge-primary { background: var(--gold); color: white; padding: 3px 10px;
+  border-radius: 100px; font-size: 11px; font-weight: 700; }
+.badge-secondary { background: rgba(107,142,127,0.18); color: #4A6F60; }
+.badge-warning { background: rgba(178,90,62,0.16); color: #8A3E26; }
+
+/* 텍스트 강조 (4 accent) */
+.accent-gold { color: var(--gold); font-weight: 700; }
+.accent-sage { color: var(--sage); font-weight: 700; }
+.accent-plum { color: #7A4E6B; font-weight: 700; }
+.accent-terra { color: var(--terracotta); font-weight: 700; }
+```
+
+### J. Cover 미세조정 (R41~R44)
+- 측면 stripe opacity: **0.05** (이전 0.06)
+- radial overlay: 1100px → **1200px** 확산
+- grid overlay: opacity **0.035** (이전 0.04)
+- footer: backdrop-filter blur 24px + inset glow
+
+### K. 유틸리티 클래스 (R47~R49)
+디자인 시스템 v2 의 마지막 조각.
+```css
+/* 색상 */
+.text-gold, .text-sage, .text-plum, .text-terra, .text-stone, .text-ink
+.bg-gold-soft, .bg-sage-soft, .bg-plum-soft (모두 0.10 opacity)
+.border-gold, .border-sage, ...
+
+/* 간격 (4·8·12·16·24·32·48·64px) */
+.p-1 ~ .p-12, .px-N, .py-N, .m-N, .gap-N
+
+/* flex */
+.flex, .flex-col, .items-center, .justify-between, .gap-2 ~ .gap-12
+```
+
+### 검증 워크플로우 (필수)
+모든 polish 작업 후 다음 순서:
+1. **렌더**: `python .claude/scripts/generate-{which}-ppt.py`
+2. **PIL**: `python .claude/scripts/verify-ppt-overflow.py --dir outputs/ppt-{which}`
+3. **OCR (필요시)**: PNG 직접 Read 로 phantom 필터링
+4. **3 파일 sync**: design-system.css 변경시 automation/plugins/team 모두 동일
+
+### 50 라운드 결과 (2026-04-30)
+- 43/43 슬라이드 PIL PASS
+- 매 라운드 real fix (no-op 0)
+- HEAD: e43fddf (push 완료)
+- 40 commit 모두 "fix(ppt): Round NN — <요약>" 포맷
+
+### 안티패턴
+- 한 라운드에 여러 PPT 동시 수정 후 중간 commit 빠뜨림 → R56061a6 같은 잔존 발생
+- design-system.css 한 파일만 수정 → 3 PPT 시각 분기
+- PPT 락 (`~$*.pptx`) 무시하고 재렌더 시도 → PermissionError
+- 새 슬라이드 파일 생성 (slide-NN_new.html, slide-NN.bak) → orphan
+- PNG Read 만으로 fix 결정 → phantom (HTML 코드로 재확인 필수)
