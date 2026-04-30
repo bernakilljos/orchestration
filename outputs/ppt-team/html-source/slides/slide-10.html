@@ -11,18 +11,18 @@
     .slide-10 { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 50px 80px 40px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
     .slide-10::before { content: ''; position: absolute; left: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(0deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
     .slide-10::after { content: ''; position: absolute; right: 20px; top: 50px; bottom: 40px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
-    .body { flex: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 18px; min-height: 0; }
-    .table { background: rgba(255,255,255,0.85); border: 1px solid rgba(184,134,78,0.18); border-radius: 14px; padding: 22px 32px; flex: 1; min-height: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(138,98,53,0.08); }
-    .table table { width: 100%; border-collapse: collapse; }
-    .table th { font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 0.16em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 8px 12px; border-bottom: 2px solid var(--fog); text-align: left; }
-    .table th.symptom { color: var(--terracotta); }
-    .table th.cause { color: var(--gold); }
-    .table th.fix { color: var(--sage); }
-    .table td { padding: 10px 12px; font-size: 16px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.55; }
-    .table td:first-child { font-weight: 700; color: var(--terracotta); width: 28%; }
-    .table td:nth-child(2) { color: var(--stone); width: 32%; }
-    .table td:nth-child(3) { color: var(--ink); }
-    .table td code { font-family: 'JetBrains Mono', monospace; font-size: 19px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .body { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 1fr 1fr; gap: 16px; margin-top: 22px; min-height: 0; }
+    .card { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; box-shadow: 0 6px 16px rgba(138,98,53,0.06); position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--terracotta); }
+    .card .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; }
+    .card .symptom { display: flex; align-items: flex-start; gap: 8px; padding-bottom: 8px; border-bottom: 0.5px dashed rgba(178,90,62,0.3); }
+    .card .symptom iconify-icon { font-size: 22px; color: var(--terracotta); flex-shrink: 0; margin-top: 1px; }
+    .card .symptom .t { font-size: 16px; font-weight: 700; color: var(--terracotta); line-height: 1.3; }
+    .card .cause { font-size: 14px; color: var(--stone); line-height: 1.4; }
+    .card .cause::before { content: '원인 · '; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; font-weight: 700; color: var(--deep-gold); text-transform: uppercase; }
+    .card .fix { font-size: 14px; color: var(--ink); line-height: 1.45; margin-top: auto; padding-top: 8px; border-top: 0.5px dashed rgba(107,142,127,0.3); }
+    .card .fix::before { content: '✓ '; color: var(--sage); font-weight: 700; }
+    .card .fix code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); background: rgba(184,134,78,0.10); padding: 1px 5px; border-radius: 3px; }
     .slide-10 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -32,28 +32,57 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-sm"></iconify-icon>PART 04 · TROUBLESHOOTING</span>
       <span class="mono caption">10 / 12</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-lg"></iconify-icon><h1 class="heading-1">트러블슈팅 · 자주 마주치는 7</h1></div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-lg"></iconify-icon><h1 class="heading-1">트러블슈팅 · TOP 8 케이스</h1></div>
     <p class="body-lead" style="margin-top: 6px; color: var(--stone);">증상 → 원인 → 해결 — 처음 도입할 때 90% 이슈는 여기 있음</p>
 
     <div class="body">
-      <div class="table">
-        <table>
-          <thead>
-            <tr><th class="symptom">증상</th><th class="cause">원인</th><th class="fix">해결</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>setup 가 관리자 권한 요청 후 멈춤</td><td>UAC 거부 / 정책 차단</td><td>관리자 명시 실행: 우클릭 → "관리자 권한으로 실행"</td></tr>
-            <tr><td>CLAUDE_SETUP_GUIDE.md 자동 처리 안 됨</td><td>Claude Code 첫 실행 아님</td><td><code>claude</code> 다시 실행 + 신규 세션 (자동 처리)</td></tr>
-            <tr><td>MCP 명령 hang (응답 없음)</td><td>npx 가 토큰 입력 대기</td><td><code>cmd /c npx</code> 형식 확인 + 환경변수 설정</td></tr>
-            <tr><td>워커가 "quota exceeded" 로 멈춤</td><td>API 한도 도달</td><td>watchdog 가 자동 backoff (10m→2h). 강제 재시작 X</td></tr>
-            <tr><td>SQLite "database is locked"</td><td>다른 프로세스가 DB 점유</td><td>WAL 모드 활성화 + <code>watchdog-restart.bat</code></td></tr>
-            <tr><td><code>/design_ppt</code> 잘림 (overflow)</td><td>코드 줄 수 초과</td><td>font-size 16→14px 또는 분할 (skill-ppt-pitfalls 참조)</td></tr>
-            <tr><td><code>setx</code> 환경변수가 적용 안 됨</td><td>새 셸 미반영</td><td>cmd 재시작 또는 시스템 재로그인</td></tr>
-            <tr><td>플러그인 sync 후 .claude/ 변경 안 됨</td><td>plugins/ 원본 미수정</td><td><code>plugins/&lt;name&gt;/</code> 만 편집 → <code>sync-plugins.sh</code></td></tr>
-            <tr><td>워커 spawn 직후 즉시 종료</td><td>API 키 없음 / 모드 SKIP</td><td><code>.env</code> 키 확인 + <code>route.py --status</code></td></tr>
-            <tr><td>Sub-Agent "PASS" 인데 결과 잘림</td><td>위장 완료 / 거짓 보고</td><td>메인 Claude 가 직접 Read·OCR 재검증 (skill 룰)</td></tr>
-          </tbody>
-        </table>
+      <div class="card">
+        <div class="num">CASE 01</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">setup 관리자 권한 요청 후 멈춤</div></div>
+        <div class="cause">UAC 거부 또는 그룹 정책 차단</div>
+        <div class="fix">우클릭 → "관리자 권한으로 실행"</div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 02</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">MCP 명령 hang (응답 없음)</div></div>
+        <div class="cause">npx 가 토큰 입력 대기</div>
+        <div class="fix"><code>cmd /c npx</code> 형식 + 환경변수 사전 설정</div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 03</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">워커 "quota exceeded" 멈춤</div></div>
+        <div class="cause">API 한도 도달</div>
+        <div class="fix">watchdog 자동 backoff (10m→2h) — 강제 재시작 금지</div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 04</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">SQLite "database is locked"</div></div>
+        <div class="cause">다른 프로세스가 DB 점유</div>
+        <div class="fix">WAL 모드 + <code>watchdog-restart.bat</code></div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 05</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t"><code>/design_ppt</code> 잘림 (overflow)</div></div>
+        <div class="cause">코드 줄 수 초과 (12줄+)</div>
+        <div class="fix">font-size 16→14px 또는 슬라이드 분할</div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 06</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t"><code>setx</code> 환경변수 적용 안 됨</div></div>
+        <div class="cause">새 셸 미반영</div>
+        <div class="fix">cmd 재시작 또는 시스템 재로그인</div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 07</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">plugins sync 후 변경 안 됨</div></div>
+        <div class="cause">plugins/ 원본 미수정</div>
+        <div class="fix"><code>plugins/&lt;name&gt;/</code> 편집 → <code>sync-plugins.sh</code></div>
+      </div>
+      <div class="card">
+        <div class="num">CASE 08</div>
+        <div class="symptom"><iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon><div class="t">Sub-Agent "PASS" 거짓 보고</div></div>
+        <div class="cause">위장 완료 / 결과 잘림</div>
+        <div class="fix">메인 Claude 가 직접 Read·OCR 재검증</div>
       </div>
     </div>    <img src="https://api.iconify.design/heroicons/arrow-path.svg?color=%23B25A3E&width=380"
          alt=""

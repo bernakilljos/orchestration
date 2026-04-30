@@ -36,9 +36,19 @@
     .box li { font-size: 16px; line-height: 1.45; color: var(--ink); padding: 2px 0; display: flex; gap: 6px; }
     .box li code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .box li::before { content: '▸'; color: var(--deep-gold); }
-    .savings { background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12)); border: 1px solid rgba(107,142,127,0.4); border-radius: 14px; padding: 22px 28px; }
-    .savings .big { font-family: 'Fraunces', serif; font-size: 60px; font-weight: 700; color: var(--sage); line-height: 1; }
-    .savings .sub { font-size: 19px; color: var(--ink); margin-top: 6px; line-height: 1.5; }
+    .savings { background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12)); border: 1px solid rgba(107,142,127,0.4); border-radius: 14px; padding: 14px 22px; display: grid; grid-template-columns: auto 1fr; column-gap: 22px; row-gap: 4px; align-items: center; flex: 0 0 auto; }
+    .savings .big { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 700; color: var(--sage); line-height: 1; letter-spacing: -0.02em; grid-row: span 2; }
+    .savings .chart { display: flex; flex-direction: column; gap: 8px; }
+    .savings .barrow { display: grid; grid-template-columns: 64px 1fr 78px; gap: 10px; align-items: center; }
+    .savings .barrow .tag { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.12em; font-weight: 700; color: var(--stone); }
+    .savings .barrow .track { height: 18px; background: rgba(0,0,0,0.05); border-radius: 4px; overflow: hidden; position: relative; }
+    .savings .barrow .fill { height: 100%; border-radius: 4px; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.08); }
+    .savings .barrow.before .fill { width: 100%; background: linear-gradient(90deg, var(--terracotta), #D4724E); }
+    .savings .barrow.after .fill { width: 8.3%; background: linear-gradient(90deg, var(--sage), #8FAA9D); }
+    .savings .barrow .price { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--ink); text-align: right; }
+    .savings .barrow.before .price { color: var(--terracotta); }
+    .savings .barrow.after .price { color: var(--sage); }
+    .savings .sub { grid-column: 2 / -1; font-size: 13px; color: var(--stone); line-height: 1.4; padding-top: 4px; border-top: 0.5px dashed rgba(107,142,127,0.3); }
     .slide-08 .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
   </style>
 </head>
@@ -65,7 +75,11 @@
         </div>
         <div class="savings">
           <div class="big">−92%</div>
-          <div class="sub"><strong>월간 $108 → $9</strong> (Gemini Pro → Haiku 4.5 + Prompt Caching 조합)</div>
+          <div class="chart">
+            <div class="barrow before"><span class="tag">BEFORE</span><span class="track"><span class="fill"></span></span><span class="price">$108 / 월</span></div>
+            <div class="barrow after"><span class="tag">AFTER</span><span class="track"><span class="fill"></span></span><span class="price">$9 / 월</span></div>
+          </div>
+          <div class="sub"><strong>Gemini Pro → Haiku 4.5 + Prompt Caching</strong> · 12배 비용 차이가 한눈에</div>
         </div>
       </div>
 

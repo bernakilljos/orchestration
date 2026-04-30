@@ -60,7 +60,8 @@
       "PowerShell(python --version)",
       "PowerShell(playwright install *)",
       "PowerShell(python -m playwright install chromium 2>&1 | Select-Object -Last 10)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "Skill(design_ppt)"
     ],
     "deny": []
   },

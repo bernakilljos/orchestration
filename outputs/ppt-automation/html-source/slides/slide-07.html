@@ -27,13 +27,16 @@
     .pane.b .desc { background: rgba(122,78,107,0.06); border-left-color: #7A4E6B; }
     .pane h3 { font-size: 23px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 8px 0 6px 0; }
     .pane.b h3 { color: #5A3850; }
-    .pane .timeline { display: flex; gap: 4px; align-items: flex-end; height: 90px; padding: 6px 0; }
-    .pane .bar { flex: 1; background: var(--gold); border-radius: 4px 4px 0 0; opacity: 0.7; position: relative; }
-    .pane .bar.t1 { height: 25%; }
-    .pane .bar.t2 { height: 50%; }
-    .pane .bar.t3 { height: 75%; }
-    .pane .bar.t4 { height: 100%; opacity: 0.9; }
-    .pane .bar span { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 21px; color: var(--stone); white-space: nowrap; }
+    .pane .timeline { display: flex; gap: 12px; align-items: flex-end; height: 150px; padding: 8px 4px 0 4px; position: relative; }
+    .pane .timeline::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: rgba(184,134,78,0.25); }
+    .pane .bar { flex: 1; border-radius: 6px 6px 0 0; position: relative; display: flex; align-items: flex-start; justify-content: center; padding-top: 8px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.06); }
+    .pane .bar.t1 { height: 22%; background: linear-gradient(180deg, rgba(184,134,78,0.5), rgba(184,134,78,0.7)); }
+    .pane .bar.t2 { height: 44%; background: linear-gradient(180deg, rgba(184,134,78,0.6), rgba(184,134,78,0.8)); }
+    .pane .bar.t3 { height: 70%; background: linear-gradient(180deg, rgba(184,134,78,0.75), rgba(184,134,78,0.9)); }
+    .pane .bar.t4 { height: 100%; background: linear-gradient(180deg, var(--gold), var(--deep-gold)); }
+    .pane .bar .lab { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.95); text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+    .pane .bar.t1 .lab { color: var(--deep-gold); text-shadow: none; }
+    .pane .bar .step { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--stone); letter-spacing: 0.1em; white-space: nowrap; }
     .pane ul { list-style: none; padding: 0; margin: 0; }
     .pane li { font-size: 23px; line-height: 1.5; color: var(--ink); padding: 3px 0; display: flex; gap: 8px; }
     .pane li code { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
@@ -60,12 +63,12 @@
           </div>
         </div>
         <div class="desc">"Codex 가 quota 한도 침"<br>→ 처음 10분 대기 → 다시 시도 → 또 침 → 20분 → 40분 → 2시간</div>
-        <h3>◆ Backoff 단계</h3>
-        <div class="timeline" style="margin-top: 28px; margin-bottom: 28px;">
-          <div class="bar t1"><span>10m</span></div>
-          <div class="bar t2"><span>20m</span></div>
-          <div class="bar t3"><span>40m</span></div>
-          <div class="bar t4"><span>2h</span></div>
+        <h3>◆ Backoff 단계 — 지수적 대기</h3>
+        <div class="timeline" style="margin-top: 8px; margin-bottom: 36px;">
+          <div class="bar t1"><span class="lab">10m</span><span class="step">RETRY 1</span></div>
+          <div class="bar t2"><span class="lab">20m</span><span class="step">RETRY 2</span></div>
+          <div class="bar t3"><span class="lab">40m</span><span class="step">RETRY 3</span></div>
+          <div class="bar t4"><span class="lab">2h</span><span class="step">RETRY 4</span></div>
         </div>
         <ul>
           <li>state DB <code>quota.retry_at</code> 에 시간 저장</li>

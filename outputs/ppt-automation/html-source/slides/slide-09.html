@@ -25,9 +25,21 @@
     .stat.task .val { color: var(--sage); }
     .stat.token .val { color: #7A4E6B; }
     .stat.fail .val { color: var(--terracotta); }
-    .stat .delta { font-family: 'JetBrains Mono', monospace; font-size: 23px; color: var(--stone); margin-top: 4px; }
+    .stat .delta { font-family: 'JetBrains Mono', monospace; font-size: 21px; color: var(--stone); margin-top: 4px; }
     .stat .delta.up { color: #4A6F60; }
     .stat .delta.down { color: #8A3E26; }
+    .stat .spark { width: 100%; height: 36px; margin-top: 6px; opacity: 0.85; }
+    .stat .spark path.line { fill: none; stroke-width: 2.2; }
+    .stat .spark path.area { stroke: none; opacity: 0.18; }
+    .stat.cost .spark path.line { stroke: var(--gold); }
+    .stat.cost .spark path.area { fill: var(--gold); }
+    .stat.task .spark path.line { stroke: var(--sage); }
+    .stat.task .spark path.area { fill: var(--sage); }
+    .stat.token .spark path.line { stroke: #7A4E6B; }
+    .stat.token .spark path.area { fill: #7A4E6B; }
+    .stat.fail .spark path.line { stroke: var(--terracotta); }
+    .stat.fail .spark path.area { fill: var(--terracotta); }
+    .stat .spark text { font-family: 'JetBrains Mono', monospace; font-size: 9px; fill: var(--stone); opacity: 0.7; }
     .right { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
     .terminal { background: #1A1D24; color: #E8DEC8; font-family: 'JetBrains Mono', monospace; font-size: 23px; line-height: 1.6; padding: 22px 26px; border-radius: 14px; white-space: pre; overflow: hidden; }
     .terminal .h { color: #B8864E; font-weight: 700; }
@@ -59,21 +71,37 @@
           <div class="lbl">오늘 비용</div>
           <div class="val">$3.42</div>
           <div class="delta up">↓ 어제 $4.10 (−16%)</div>
+          <svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
+            <path class="area" d="M0,12 L17,8 L33,15 L50,20 L67,18 L83,22 L100,16 L117,24 L133,21 L150,26 L167,28 L183,30 L200,28 L200,36 L0,36 Z"/>
+            <path class="line" d="M0,12 L17,8 L33,15 L50,20 L67,18 L83,22 L100,16 L117,24 L133,21 L150,26 L167,28 L183,30 L200,28"/>
+          </svg>
         </div>
         <div class="stat task">
           <div class="lbl">완료 task</div>
           <div class="val">147</div>
           <div class="delta up">↑ 어제 132 (+11%)</div>
+          <svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
+            <path class="area" d="M0,28 L17,26 L33,22 L50,24 L67,18 L83,20 L100,15 L117,12 L133,14 L150,9 L167,11 L183,7 L200,5 L200,36 L0,36 Z"/>
+            <path class="line" d="M0,28 L17,26 L33,22 L50,24 L67,18 L83,20 L100,15 L117,12 L133,14 L150,9 L167,11 L183,7 L200,5"/>
+          </svg>
         </div>
         <div class="stat token">
           <div class="lbl">토큰 사용</div>
           <div class="val">2.4M</div>
           <div class="delta up">↑ cache 78% (+13pp)</div>
+          <svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
+            <path class="area" d="M0,30 L17,27 L33,29 L50,23 L67,25 L83,18 L100,21 L117,15 L133,12 L150,16 L167,10 L183,8 L200,6 L200,36 L0,36 Z"/>
+            <path class="line" d="M0,30 L17,27 L33,29 L50,23 L67,25 L83,18 L100,21 L117,15 L133,12 L150,16 L167,10 L183,8 L200,6"/>
+          </svg>
         </div>
         <div class="stat fail">
           <div class="lbl">실패율</div>
           <div class="val">2.1%</div>
           <div class="delta up">↓ 지난주 3.4%</div>
+          <svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
+            <path class="area" d="M0,8 L17,12 L33,10 L50,16 L67,14 L83,20 L100,17 L117,23 L133,21 L150,26 L167,24 L183,28 L200,30 L200,36 L0,36 Z"/>
+            <path class="line" d="M0,8 L17,12 L33,10 L50,16 L67,14 L83,20 L100,17 L117,23 L133,21 L150,26 L167,24 L183,28 L200,30"/>
+          </svg>
         </div>
       </div>
 
