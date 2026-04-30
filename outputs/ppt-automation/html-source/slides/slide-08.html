@@ -29,12 +29,12 @@
     .box.what::before { background: var(--gold); }
     .box.how::before { background: var(--sage); }
     .box.tip::before { background: #7A4E6B; }
-    .box h3 { font-size: 17px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 6px 0; }
+    .box h3 { font-size: 18px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; }
     .box.how h3 { color: #4A6F60; }
     .box.tip h3 { color: #5A3850; }
     .box ul { list-style: none; padding: 0; margin: 0; }
-    .box li { font-size: 16px; line-height: 1.45; color: var(--ink); padding: 2px 0; display: flex; gap: 6px; }
-    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 15px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
+    .box li { font-size: 17px; line-height: 1.45; color: var(--ink); padding: 3px 0; display: flex; gap: 6px; }
+    .box li code { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--deep-gold); background: rgba(184,134,78,0.08); padding: 1px 5px; border-radius: 3px; }
     .box li::before { content: '▸'; color: var(--deep-gold); }
     .savings { background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12)); border: 1px solid rgba(107,142,127,0.4); border-radius: 14px; padding: 14px 22px; display: grid; grid-template-columns: auto 1fr; column-gap: 22px; row-gap: 4px; align-items: center; flex: 0 0 auto; }
     .savings .big { font-family: 'Fraunces', serif; font-size: 56px; font-weight: 700; color: var(--sage); line-height: 1; letter-spacing: -0.02em; grid-row: span 2; }
@@ -85,37 +85,37 @@
 
       <div class="right">
         <div class="box what">
-          <h3>◆ 무엇</h3>
+          <h3>◆ 무엇인가</h3>
           <ul>
-            <li>같은 prompt prefix 재사용 시 캐시</li>
-            <li>5분 TTL (cache hit 시 자동 연장)</li>
-            <li>cache write: 1.25× input 단가</li>
-            <li>cache read: 0.1× input 단가 (90% off)</li>
+            <li>같은 입력은 한 번만 처리 후 재사용</li>
+            <li>5분 보관 (재사용 시 자동 연장)</li>
+            <li>저장 비용: 원래 단가의 1.25 배</li>
+            <li>재사용: 원래 단가의 10% (90% 할인)</li>
           </ul>
         </div>
         <div class="box how">
-          <h3>◆ 어떻게</h3>
+          <h3>◆ 어떻게 쓰나</h3>
           <ul>
-            <li>system prompt + 큰 컨텍스트는 prefix 로</li>
-            <li>변하는 부분 (변경 코드) 만 뒷부분</li>
-            <li><code>prompt_cache.py</code> 헬퍼가 자동 처리</li>
-            <li>2회+ 호출시 ROI 양수</li>
+            <li>긴 컨텍스트를 앞쪽에 고정 배치</li>
+            <li>변하는 부분만 뒤에 추가</li>
+            <li><code>prompt_cache.py</code> 가 자동 처리</li>
+            <li>2 회 이상 호출 시 무조건 이득</li>
           </ul>
         </div>
         <div class="box tip">
-          <h3>◆ 활용 패턴</h3>
+          <h3>◆ 활용 사례</h3>
           <ul>
-            <li>리뷰: 코드 베이스 + 룰 (cache) + 변경 (no cache)</li>
-            <li>RAG: KB 청크 (cache) + 쿼리 (no cache)</li>
-            <li>긴 문서 분석: 문서 (cache) + 질문 (no cache)</li>
+            <li>코드 리뷰: 코드 베이스 (캐시) + 변경 (새로)</li>
+            <li>문서 검색: 지식 (캐시) + 질문 (새로)</li>
+            <li>긴 문서 분석: 문서 (캐시) + 질문 (새로)</li>
           </ul>
         </div>
         <div class="box" style="border-left: 5px solid var(--terracotta);">
-          <h3 style="color: #8A3E26;">◆ 함정 · 주의</h3>
+          <h3 style="color: #8A3E26;">◆ 주의할 점</h3>
           <ul>
-            <li>1회성 호출엔 손해 (write 1.25× 만 발생)</li>
-            <li>5분 TTL — 간격 길면 재 write</li>
-            <li>cache 키 변경시 (모델·버전) 전체 무효화</li>
+            <li>1 회성 호출엔 손해 (저장 비용 1.25 배만 발생)</li>
+            <li>5 분 안에 재사용해야 — 길면 다시 저장</li>
+            <li>모델 · 버전 바뀌면 캐시 무효화</li>
           </ul>
         </div>
       </div>

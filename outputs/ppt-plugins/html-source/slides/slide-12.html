@@ -42,8 +42,8 @@
       <span class="slide-eyebrow"><iconify-icon icon="heroicons:scale" class="icon-sm"></iconify-icon>3 RESULTS · 2 BUILDS</span>
       <span class="mono caption">13 / 16</span>
     </div>
-    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화도구 vs TEAM 빌드</h1></div>
-    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">3 결과물 중 2개 — 같은 코드, 다른 출고 상태</p>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:scale" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화 도구 vs 팀 빌드</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">같은 코드 · 다른 상태 — 작성자용 vs 배포용</p>
 
     <div class="body">
       <div class="pane tool">
@@ -52,14 +52,14 @@
           <iconify-icon icon="heroicons:wrench-screwdriver"></iconify-icon>
           <div>
             <div class="name">자동화도구</div>
-            <div class="tagline">orchestration_v1 — 본판 (작성자 working repo)</div>
+            <div class="tagline">orchestration_v1 — 본판 (작성자 작업 저장소)</div>
           </div>
         </div>
-        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">하드코딩 fallback 포함 (작성자 PAT)</span></div>
-        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">state DB · tasks · learning 모두 활성</span></div>
-        <div class="row"><span class="lbl">outputs/</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">실 작업 결과물 포함 (PPT·문서 등)</span></div>
-        <div class="row"><span class="lbl">git history</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">전체 commit 이력 + remote</span></div>
-        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user" class="ico meh"></iconify-icon><span class="val">킷 작성자·메인테이너</span></div>
+        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">작성자 토큰 내장 (백업용)</span></div>
+        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">상태 DB · 작업 · 학습 모두 활성</span></div>
+        <div class="row"><span class="lbl">결과물</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">PPT · 문서 등 실제 작업 결과 포함</span></div>
+        <div class="row"><span class="lbl">git 이력</span><iconify-icon icon="heroicons:check-circle" class="ico ok"></iconify-icon><span class="val">전체 커밋 이력 + 원격 저장소</span></div>
+        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user" class="ico meh"></iconify-icon><span class="val">킷 작성자 · 유지보수 담당</span></div>
       </div>
 
       <div class="pane team">
@@ -67,15 +67,15 @@
         <div class="head">
           <iconify-icon icon="heroicons:user-group"></iconify-icon>
           <div>
-            <div class="name">TEAM</div>
-            <div class="tagline">orchestration_v1_team — 팀 배포 빌드 (클린)</div>
+            <div class="name">팀 빌드</div>
+            <div class="tagline">orchestration_v1_team — 팀 배포 (깨끗한 시작)</div>
           </div>
         </div>
-        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제거됨 — install 시 prompt + skip 가능</span></div>
-        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">state · tasks · learning 모두 제외</span></div>
-        <div class="row"><span class="lbl">outputs/</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제외 — 빈 상태로 시작</span></div>
-        <div class="row"><span class="lbl">git history</span><iconify-icon icon="heroicons:arrow-path" class="ico meh"></iconify-icon><span class="val">새로 init — Initial commit 1개</span></div>
-        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user-group" class="ico ok"></iconify-icon><span class="val">팀원·신규 도입 회사</span></div>
+        <div class="row"><span class="lbl">GitHub 토큰</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제거됨 — 설치 시 입력 또는 건너뛰기</span></div>
+        <div class="row"><span class="lbl">개인 상태</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">상태 · 작업 · 학습 모두 제외</span></div>
+        <div class="row"><span class="lbl">결과물</span><iconify-icon icon="heroicons:x-circle" class="ico x"></iconify-icon><span class="val">제외 — 빈 상태로 시작</span></div>
+        <div class="row"><span class="lbl">git 이력</span><iconify-icon icon="heroicons:arrow-path" class="ico meh"></iconify-icon><span class="val">새로 시작 — 첫 커밋 1 개</span></div>
+        <div class="row"><span class="lbl">대상</span><iconify-icon icon="heroicons:user-group" class="ico ok"></iconify-icon><span class="val">팀원 · 신규 도입 회사</span></div>
       </div>
     </div>    <img src="https://api.iconify.design/heroicons/check-circle.svg?color=%238A6235&width=380"
          alt=""
