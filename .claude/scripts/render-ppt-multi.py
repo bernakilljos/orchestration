@@ -21,17 +21,17 @@ DECKS = {
     "auto": {
         "html": ROOT / "outputs/ppt-automation/html-source/slides",
         "png": ROOT / "outputs/ppt-automation/html-source/png-output",
-        "pptx": ROOT / "outputs/ppt-automation/automation-guide_디자인적용.pptx",
+        "pptx": ROOT / "outputs/ppt-automation/automation-guide.pptx",
     },
     "plugins": {
         "html": ROOT / "outputs/ppt-plugins/html-source/slides",
         "png": ROOT / "outputs/ppt-plugins/html-source/png-output",
-        "pptx": ROOT / "outputs/ppt-plugins/plugins-guide_디자인적용.pptx",
+        "pptx": ROOT / "outputs/ppt-plugins/plugins-guide.pptx",
     },
     "team": {
         "html": ROOT / "outputs/ppt-team/html-source/slides",
         "png": ROOT / "outputs/ppt-team/html-source/png-output",
-        "pptx": ROOT / "outputs/ppt-team/team-guide_디자인적용.pptx",
+        "pptx": ROOT / "outputs/ppt-team/team-guide.pptx",
     },
 }
 

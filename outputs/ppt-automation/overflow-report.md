@@ -17,7 +17,7 @@
 | slide-06.png | 0.000 | 0.000 | [OK] |
 | slide-06a.png | 0.000 | 0.000 | [OK] |
 | slide-07.png | 0.000 | 0.000 | [OK] |
-| slide-08.png | 0.000 | 0.000 | [OK] |
+| slide-08.png | 0.015 | 0.000 | [OK] |
 | slide-09.png | 0.000 | 0.000 | [OK] |
 | slide-10.png | 0.000 | 0.000 | [OK] |
 | slide-11.png | 0.000 | 0.000 | [OK] |
