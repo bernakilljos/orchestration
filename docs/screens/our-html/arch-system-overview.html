@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>System Overview</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="_styles.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .stage {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1fr;
+      gap: 36px;
+      margin-top: 32px;
+      align-items: stretch;
+      min-height: 0;
+    }
+    .col {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(184,134,78,0.18);
+      border-radius: 22px;
+      padding: 26px 28px 30px;
+      box-shadow: 0 16px 40px rgba(138,98,53,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(2px);
+    }
+    .col .ctag { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.22em; color: var(--stone); font-weight: 700; text-transform: uppercase; }
+    .col .ctitle { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+    .col .csub { font-size: 17px; color: var(--stone); line-height: 1.5; }
+    .col.left { border-top: 6px solid var(--sage); }
+    .col.center { border-top: 6px solid var(--gold); transform: translateY(-12px); box-shadow: 0 24px 48px rgba(184,134,78,0.16); }
+    .col.right { border-top: 6px solid var(--plum); }
+    .col.left .ctag { color: #4A6F60; }
+    .col.center .ctag { color: var(--deep-gold); }
+    .col.right .ctag { color: #5A3850; }
+
+    .agents { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+    .agent { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: white; border-radius: 12px; border: 0.5px solid var(--fog); }
+    .agent iconify-icon { font-size: 28px; flex-shrink: 0; }
+    .agent .name { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: var(--ink); }
+    .agent .role { font-size: 14px; color: var(--stone); margin-left: auto; }
+
+    .col.left .agent iconify-icon { color: var(--sage); }
+    .col.right .agent iconify-icon { color: var(--plum); }
+
+    .lead-card {
+      background: linear-gradient(135deg, rgba(184,134,78,0.18), rgba(138,98,53,0.10));
+      border-radius: 16px;
+      padding: 22px 24px;
+      border: 1px solid rgba(184,134,78,0.35);
+      margin-top: 4px;
+    }
+    .lead-card .who { display: flex; align-items: center; gap: 14px; }
+    .lead-card iconify-icon { font-size: 56px; color: var(--gold); }
+    .lead-card .lname { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1; }
+    .lead-card .lmodel { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--deep-gold); margin-top: 4px; letter-spacing: 0.12em; font-weight: 700; }
+    .lead-card .ldesc { font-size: 15px; color: var(--ink); margin-top: 12px; line-height: 1.5; }
+
+    .state {
+      margin-top: auto;
+      background: #1A1D24;
+      border-radius: 14px;
+      padding: 14px 18px;
+      color: #E8DEC8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      border: 1px solid #3A3530;
+    }
+    .state .h { color: #B8864E; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
+    .state .row { display: flex; justify-content: space-between; }
+    .state .row span:last-child { color: #6B8E7F; }
+
+    .pipeline {
+      margin-top: 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 24px;
+      background: rgba(255,255,255,0.6);
+      border: 0.5px solid rgba(184,134,78,0.2);
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 20px rgba(138,98,53,0.06);
+      flex: 0 0 auto;
+    }
+    .pipeline .pstep { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink); font-weight: 700; }
+    .pipeline .pstep iconify-icon { font-size: 22px; color: var(--gold); }
+    .pipeline .arr { color: var(--deep-gold); font-size: 18px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="dot-grid"></div>
+    <div class="content">
+      <div class="eyebrow">◆ ORCHESTRATION KIT · v1.0 · SYSTEM OVERVIEW</div>
+      <h1 class="h1">Multi-AI <span class="accent">Orchestration</span></h1>
+      <p class="lead">Claude Lead 가 분배 → Codex 가 구현 → Haiku 가 검증. SQLite 가 모든 상태를 통합하고 Watchdog 이 24/7 살린다.</p>
+
+      <div class="stage">
+        <!-- 좌: Codex Pool (구현) -->
+        <div class="col left">
+          <span class="ctag">Implementation · ×4</span>
+          <div class="ctitle">Codex Pool</div>
+          <div class="csub">병렬 구현 · 500줄+ 단위 분배</div>
+          <div class="agents">
+            <div class="agent"><iconify-icon icon="heroicons:code-bracket-square"></iconify-icon><span class="name">Codex #1</span><span class="role">구현</span></div>
+            <div class="agent"><iconify-icon icon="heroicons:code-bracket-square"></iconify-icon><span class="name">Codex #2</span><span class="role">구현</span></div>
+            <div class="agent"><iconify-icon icon="heroicons:code-bracket-square"></iconify-icon><span class="name">Codex #3</span><span class="role">구현</span></div>
+            <div class="agent"><iconify-icon icon="heroicons:code-bracket-square"></iconify-icon><span class="name">Codex #4</span><span class="role">구현</span></div>
+          </div>
+        </div>
+
+        <!-- 중: Claude Lead (설계+라우팅) -->
+        <div class="col center">
+          <span class="ctag">Lead · Routing · Review</span>
+          <div class="ctitle">Claude Opus 4.7</div>
+          <div class="csub">설계 · 라우팅 결정 · 통합 승인 · 1M context</div>
+
+          <div class="lead-card">
+            <div class="who">
+              <iconify-icon icon="heroicons:command-line"></iconify-icon>
+              <div>
+                <div class="lname">Lead Agent</div>
+                <div class="lmodel">EXTENDED THINKING · 1M CTX</div>
+              </div>
+            </div>
+            <div class="ldesc">매 task → <code>task-instruction.md</code> → Codex/Haiku 분배. 검증 결과 통합 후 단일 commit.</div>
+          </div>
+
+          <div class="state">
+            <div class="h">// .claude/state/orca.db</div>
+            <div class="row"><span>workers</span><span>4 alive</span></div>
+            <div class="row"><span>tasks</span><span>147 done</span></div>
+            <div class="row"><span>quota</span><span>OK · no backoff</span></div>
+            <div class="row"><span>budget</span><span>$3.42 / unlimited</span></div>
+            <div class="row"><span>cache hit</span><span>78% (-92% cost)</span></div>
+          </div>
+        </div>
+
+        <!-- 우: Haiku Review -->
+        <div class="col right">
+          <span class="ctag">Review · ×2 · 90% cache</span>
+          <div class="ctitle">Haiku 4.5</div>
+          <div class="csub">검증 · prompt cache 90% off · 저단가</div>
+          <div class="agents">
+            <div class="agent"><iconify-icon icon="heroicons:eye"></iconify-icon><span class="name">Haiku #1</span><span class="role">verify</span></div>
+            <div class="agent"><iconify-icon icon="heroicons:eye"></iconify-icon><span class="name">Haiku #2</span><span class="role">verify</span></div>
+            <div class="agent" style="background: rgba(178,90,62,0.06); border-color: rgba(178,90,62,0.2);"><iconify-icon icon="heroicons:beaker" style="color: var(--terracotta) !important;"></iconify-icon><span class="name" style="color: var(--terracotta);">Gemini Flash</span><span class="role">>500K only</span></div>
+          </div>
+          <div class="state" style="background: rgba(255,255,255,0.7); color: var(--ink); border-color: var(--fog); margin-top: 14px;">
+            <div class="h" style="color: var(--plum);">// HAIKU 절감</div>
+            <div class="row"><span>BEFORE Gemini Pro</span><span style="color: var(--terracotta);">$108 / 월</span></div>
+            <div class="row"><span>AFTER Haiku + Cache</span><span style="color: var(--sage);">$9 / 월</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 파이프라인 -->
+      <div class="pipeline">
+        <span class="pstep"><iconify-icon icon="heroicons:document-text"></iconify-icon>task-instruction.md</span>
+        <span class="arr">→</span>
+        <span class="pstep"><iconify-icon icon="heroicons:share"></iconify-icon>route_dispatch</span>
+        <span class="arr">→</span>
+        <span class="pstep"><iconify-icon icon="heroicons:cpu-chip"></iconify-icon>워커 병렬 실행</span>
+        <span class="arr">→</span>
+        <span class="pstep"><iconify-icon icon="heroicons:shield-check"></iconify-icon>Haiku 검증</span>
+        <span class="arr">→</span>
+        <span class="pstep"><iconify-icon icon="heroicons:check-badge"></iconify-icon>Claude 통합·commit</span>
+        <span class="arr">→</span>
+        <span class="pstep"><iconify-icon icon="heroicons:circle-stack"></iconify-icon>SQLite 기록</span>
+      </div>
+
+      <div class="footer">
+        <span class="brand">ORCHESTRATION KIT</span>
+        <span>SYSTEM ARCHITECTURE · 2026.04</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,98 @@
+/* docs/screens — 공통 디자인 시스템 (PPT 와 동일) */
+
+:root {
+  --gold:       #B8864E;
+  --sage:       #6B8E7F;
+  --plum:       #7A4E6B;
+  --terracotta: #B25A3E;
+  --deep-gold:  #8A6235;
+  --ink:        #1A1D24;
+  --stone:      #6E685C;
+  --fog:        #D8D2C2;
+  --cream:      #FAF5EA;
+  --canvas:     #F4EDDD;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  font-family: 'Pretendard Variable', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.canvas {
+  width: 1920px;
+  height: 1080px;
+  padding: 80px 100px;
+  background:
+    radial-gradient(ellipse 1100px 800px at 80% 15%, rgba(184,134,78,0.16), transparent 60%),
+    radial-gradient(ellipse 800px 600px at 10% 90%, rgba(107,142,127,0.12), transparent 55%),
+    linear-gradient(180deg, #FAF5EA 0%, #E8DEC8 100%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  letter-spacing: 0.28em;
+  color: var(--deep-gold);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 88px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+.h1 .accent { color: var(--gold); font-style: italic; }
+
+.lead {
+  font-size: 26px;
+  color: var(--stone);
+  margin-top: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.footer {
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  bottom: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--stone);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.footer .brand {
+  color: var(--deep-gold);
+  font-weight: 700;
+}
+
+/* 도형 헬퍼 */
+.dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(184,134,78,0.08) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }

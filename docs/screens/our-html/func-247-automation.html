@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>24/7 Automation</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="_styles.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 60px;
+      margin-top: 40px;
+      align-items: center;
+    }
+    .clock-wrap {
+      position: relative;
+      background: rgba(255,255,255,0.4);
+      border: 1px solid rgba(184,134,78,0.18);
+      border-radius: 28px;
+      padding: 48px;
+      box-shadow: 0 20px 50px rgba(138,98,53,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .clock-wrap svg { width: 100%; height: 100%; max-width: 700px; max-height: 700px; }
+
+    .right { display: flex; flex-direction: column; gap: 22px; }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(184,134,78,0.18), rgba(107,142,127,0.10));
+      border: 1.5px solid rgba(184,134,78,0.35);
+      border-radius: 18px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .summary-card iconify-icon { font-size: 80px; color: var(--gold); flex-shrink: 0; }
+    .summary-card .big { font-family: 'Fraunces', serif; font-size: 76px; font-weight: 700; color: var(--ink); line-height: 0.95; }
+    .summary-card .big small { font-family: 'JetBrains Mono', monospace; font-size: 16px; color: var(--deep-gold); display: block; margin-top: 6px; letter-spacing: 0.18em; }
+
+    .stages { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .stage-c {
+      background: white;
+      border: 0.5px solid var(--fog);
+      border-radius: 14px;
+      padding: 18px 22px;
+      box-shadow: 0 6px 16px rgba(138,98,53,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stage-c::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+    .stage-c.s1::before { background: var(--gold); }
+    .stage-c.s2::before { background: var(--sage); }
+    .stage-c.s3::before { background: var(--plum); }
+    .stage-c.s4::before { background: var(--terracotta); }
+    .stage-c .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; }
+    .stage-c .name { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+    .stage-c .what { font-size: 13px; color: var(--stone); line-height: 1.45; }
+    .stage-c .meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--deep-gold); margin-top: 4px; letter-spacing: 0.06em; }
+
+    .pulse {
+      background: rgba(255,255,255,0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .pulse .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 6px rgba(107,142,127,0.18); }
+    .pulse .text { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--ink); font-weight: 700; letter-spacing: 0.06em; }
+    .pulse .text small { font-weight: 500; color: var(--stone); margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="dot-grid"></div>
+    <div class="content">
+      <div class="eyebrow">◆ ORCHESTRATION KIT · 24/7 AUTOMATION</div>
+      <h1 class="h1"><span class="accent">24/7</span> 자동화</h1>
+      <p class="lead">Watchdog 이 매 30초 heartbeat 체크 — 워커가 죽어도 자동 부활. 사용자 개입 0.</p>
+
+      <div class="body">
+        <div class="clock-wrap">
+          <svg viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="clk-bg" cx="50%" cy="50%" r="55%">
+                <stop offset="0%" stop-color="#FFF8E8"/>
+                <stop offset="100%" stop-color="#E8DEC8"/>
+              </radialGradient>
+              <radialGradient id="clk-center" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#B8864E"/>
+                <stop offset="100%" stop-color="#8A6235"/>
+              </radialGradient>
+              <linearGradient id="seg-quad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#B8864E" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#B8864E" stop-opacity="0.04"/>
+              </linearGradient>
+            </defs>
+
+            <!-- 외부 링 -->
+            <circle cx="350" cy="350" r="320" fill="url(#clk-bg)" stroke="#B8864E" stroke-width="3"/>
+
+            <!-- 4 사분면 라벨 (내부 호) -->
+            <circle cx="350" cy="350" r="280" fill="none" stroke="rgba(184,134,78,0.18)" stroke-width="1" stroke-dasharray="4,6"/>
+
+            <!-- 시간 마커 (12개) -->
+            <g font-family="JetBrains Mono" font-size="18" font-weight="700" fill="#8A6235">
+              <text x="350" y="55" text-anchor="middle">00</text>
+              <text x="500" y="100" text-anchor="middle">02</text>
+              <text x="615" y="200" text-anchor="middle">04</text>
+              <text x="660" y="358" text-anchor="middle">06</text>
+              <text x="615" y="510" text-anchor="middle">08</text>
+              <text x="500" y="618" text-anchor="middle">10</text>
+              <text x="350" y="660" text-anchor="middle">12</text>
+              <text x="200" y="618" text-anchor="middle">14</text>
+              <text x="85" y="510" text-anchor="middle">16</text>
+              <text x="40" y="358" text-anchor="middle">18</text>
+              <text x="85" y="200" text-anchor="middle">20</text>
+              <text x="200" y="100" text-anchor="middle">22</text>
+            </g>
+
+            <!-- 활동 도넛 (24h 활성 표시 — 색 그라디언트) -->
+            <g fill="none" stroke-width="20">
+              <circle cx="350" cy="350" r="220" stroke="rgba(184,134,78,0.10)"/>
+              <!-- 활성 호 (시계방향 0° → 360° 모두 활성) -->
+              <circle cx="350" cy="350" r="220" stroke="#B8864E" stroke-dasharray="345 1383" stroke-linecap="round" transform="rotate(-90 350 350)" opacity="0.7"/>
+              <circle cx="350" cy="350" r="220" stroke="#6B8E7F" stroke-dasharray="345 1383" stroke-linecap="round" transform="rotate(0 350 350)" opacity="0.7"/>
+              <circle cx="350" cy="350" r="220" stroke="#7A4E6B" stroke-dasharray="345 1383" stroke-linecap="round" transform="rotate(90 350 350)" opacity="0.7"/>
+              <circle cx="350" cy="350" r="220" stroke="#B25A3E" stroke-dasharray="345 1383" stroke-linecap="round" transform="rotate(180 350 350)" opacity="0.7"/>
+            </g>
+
+            <!-- 워커 아이콘 (8 위치) -->
+            <g>
+              <!-- pos1 (1시) -->
+              <circle cx="490" cy="180" r="26" fill="white" stroke="#B8864E" stroke-width="2.5"/>
+              <text x="490" y="186" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">C1</text>
+              <!-- pos2 (3시) -->
+              <circle cx="570" cy="350" r="26" fill="white" stroke="#6B8E7F" stroke-width="2.5"/>
+              <text x="570" y="356" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">H1</text>
+              <!-- pos3 (5시) -->
+              <circle cx="490" cy="520" r="26" fill="white" stroke="#7A4E6B" stroke-width="2.5"/>
+              <text x="490" y="526" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">G</text>
+              <!-- pos4 (7시) -->
+              <circle cx="350" cy="570" r="26" fill="white" stroke="#B25A3E" stroke-width="2.5"/>
+              <text x="350" y="576" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">C2</text>
+              <!-- pos5 (9시) -->
+              <circle cx="210" cy="520" r="26" fill="white" stroke="#B8864E" stroke-width="2.5"/>
+              <text x="210" y="526" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">C3</text>
+              <!-- pos6 (10시) -->
+              <circle cx="130" cy="350" r="26" fill="white" stroke="#6B8E7F" stroke-width="2.5"/>
+              <text x="130" y="356" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">H2</text>
+              <!-- pos7 (11시) -->
+              <circle cx="210" cy="180" r="26" fill="white" stroke="#B8864E" stroke-width="2.5"/>
+              <text x="210" y="186" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24">C4</text>
+              <!-- pos8 (12시) - watchdog -->
+              <circle cx="350" cy="130" r="32" fill="#1A1D24" stroke="#B8864E" stroke-width="3"/>
+              <text x="350" y="138" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#E8DEC8">WD</text>
+            </g>
+
+            <!-- 중앙 코어 -->
+            <circle cx="350" cy="350" r="92" fill="url(#clk-center)"/>
+            <circle cx="350" cy="350" r="92" fill="none" stroke="#FAF5EA" stroke-width="2" opacity="0.4"/>
+            <text x="350" y="332" text-anchor="middle" font-family="Fraunces" font-size="44" font-weight="700" fill="#FAF5EA">24/7</text>
+            <text x="350" y="362" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#E8DEC8" letter-spacing="3">UPTIME</text>
+            <text x="350" y="385" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#E8DEC8" opacity="0.7">heartbeat 30s</text>
+
+            <!-- watchdog → 코어 연결선 -->
+            <line x1="350" y1="162" x2="350" y2="258" stroke="#B8864E" stroke-width="2.5" stroke-dasharray="4,4" opacity="0.5"/>
+          </svg>
+        </div>
+
+        <div class="right">
+          <div class="summary-card">
+            <iconify-icon icon="heroicons:bolt"></iconify-icon>
+            <div>
+              <div class="big">100%<small>UPTIME · 사용자 개입 0</small></div>
+            </div>
+          </div>
+
+          <div class="stages">
+            <div class="stage-c s1">
+              <div class="num">PHASE 01 · DETECT</div>
+              <div class="name">Heartbeat 30s</div>
+              <div class="what">매 30초 워커 상태 + state DB 갱신</div>
+              <div class="meta">→ stale 65s 이상 = dead 판정</div>
+            </div>
+            <div class="stage-c s2">
+              <div class="num">PHASE 02 · DECIDE</div>
+              <div class="name">의도된 stop?</div>
+              <div class="what">orca-stopped 파일 + budget ceiling 체크</div>
+              <div class="meta">→ NO = 자동 복구 · YES = 정지 유지</div>
+            </div>
+            <div class="stage-c s3">
+              <div class="num">PHASE 03 · BACKOFF</div>
+              <div class="name">지수 대기</div>
+              <div class="what">10m → 20m → 40m → 2h 단계적 재시도</div>
+              <div class="meta">→ quota 한도 시 자동 적용</div>
+            </div>
+            <div class="stage-c s4">
+              <div class="num">PHASE 04 · REVIVE</div>
+              <div class="name">자동 재시작</div>
+              <div class="what">새 PID 부팅 + 이전 task 이어서</div>
+              <div class="meta">→ 성공 시 카운터 리셋</div>
+            </div>
+          </div>
+
+          <div class="pulse">
+            <div class="dot"></div>
+            <div class="text">LIVE · 4 codex · 2 haiku · 1 watchdog<small>last revive: 14:32 (codex-2)</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="brand">ORCHESTRATION KIT</span>
+        <span>24/7 · WATCHDOG-DRIVEN AUTO-RECOVERY</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

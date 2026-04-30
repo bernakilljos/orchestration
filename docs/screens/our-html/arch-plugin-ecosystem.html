@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Plugin Ecosystem</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="_styles.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 50px;
+      margin-top: 28px;
+      min-height: 0;
+      align-items: center;
+    }
+    .map-wrap {
+      background: rgba(255,255,255,0.5);
+      border: 1px solid rgba(184,134,78,0.18);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 16px 40px rgba(138,98,53,0.08);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .map-wrap svg { width: 100%; height: 100%; max-width: 980px; max-height: 720px; }
+
+    .legend { display: flex; flex-direction: column; gap: 16px; }
+    .legend .cat {
+      background: rgba(255,255,255,0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      gap: 16px;
+      align-items: center;
+      box-shadow: 0 8px 20px rgba(138,98,53,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .legend .cat::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+    .legend .cat.exec::before { background: var(--gold); }
+    .legend .cat.design::before { background: var(--sage); }
+    .legend .cat.mcp::before { background: var(--plum); }
+    .legend .cat.ai::before { background: var(--terracotta); }
+    .legend .cat.review::before { background: var(--deep-gold); }
+    .legend .cat.special::before { background: #5A3850; }
+
+    .legend .ico { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+    .legend .ico iconify-icon { font-size: 30px; color: white; }
+    .legend .cat.exec .ico { background: var(--gold); }
+    .legend .cat.design .ico { background: var(--sage); }
+    .legend .cat.mcp .ico { background: var(--plum); }
+    .legend .cat.ai .ico { background: var(--terracotta); }
+    .legend .cat.review .ico { background: var(--deep-gold); }
+    .legend .cat.special .ico { background: #5A3850; }
+
+    .legend .info .name { font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: 0.06em; }
+    .legend .info .desc { font-size: 14px; color: var(--stone); margin-top: 2px; line-height: 1.4; }
+
+    .legend .count { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: var(--ink); line-height: 1; }
+    .legend .count small { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--stone); display: block; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="dot-grid"></div>
+    <div class="content">
+      <div class="eyebrow">◆ ORCHESTRATION KIT · PLUGIN ECOSYSTEM · 25 PLUGINS</div>
+      <h1 class="h1">Plugin <span class="accent">Ecosystem</span></h1>
+      <p class="lead">25 플러그인 · 6 카테고리 · 단 하나의 코어 (exec_orch) — 순환 의존 0건</p>
+
+      <div class="body">
+        <div class="map-wrap">
+          <svg viewBox="0 0 980 720" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="g-core-eco" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#FFF8E8"/>
+                <stop offset="100%" stop-color="#E8DEC8"/>
+              </radialGradient>
+              <linearGradient id="g-design" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#E8F0EB"/>
+              </linearGradient>
+              <linearGradient id="g-mcp" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#EFE6ED"/>
+              </linearGradient>
+              <linearGradient id="g-ai" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#F2E5E0"/>
+              </linearGradient>
+              <linearGradient id="g-review" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#F0E9DA"/>
+              </linearGradient>
+              <linearGradient id="g-special" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#EAE0E7"/>
+              </linearGradient>
+            </defs>
+
+            <!-- 연결선 (CORE → 24 plugins) -->
+            <g stroke="#B8864E" stroke-width="1.5" opacity="0.35" fill="none">
+              <!-- design 6 -->
+              <line x1="490" y1="360" x2="170" y2="100"/><line x1="490" y1="360" x2="120" y2="220"/><line x1="490" y1="360" x2="120" y2="360"/>
+              <line x1="490" y1="360" x2="120" y2="500"/><line x1="490" y1="360" x2="170" y2="620"/><line x1="490" y1="360" x2="280" y2="660"/>
+              <!-- mcp 8 -->
+              <line x1="490" y1="360" x2="810" y2="100"/><line x1="490" y1="360" x2="860" y2="220"/><line x1="490" y1="360" x2="860" y2="360"/>
+              <line x1="490" y1="360" x2="860" y2="500"/><line x1="490" y1="360" x2="810" y2="620"/><line x1="490" y1="360" x2="700" y2="660"/>
+              <line x1="490" y1="360" x2="700" y2="60"/><line x1="490" y1="360" x2="280" y2="60"/>
+              <!-- exec extra 4 -->
+              <line x1="490" y1="360" x2="490" y2="60"/><line x1="490" y1="360" x2="490" y2="660"/>
+              <line x1="490" y1="360" x2="380" y2="50"/><line x1="490" y1="360" x2="600" y2="50"/>
+              <!-- ai 4 -->
+              <line x1="490" y1="360" x2="380" y2="680"/><line x1="490" y1="360" x2="600" y2="680"/>
+              <line x1="490" y1="360" x2="200" y2="640"/><line x1="490" y1="360" x2="780" y2="640"/>
+              <!-- review 1 -->
+              <line x1="490" y1="360" x2="490" y2="200"/>
+            </g>
+
+            <!-- 노드 helper: text + circle -->
+            <g font-family="JetBrains Mono" font-weight="700">
+              <!-- DESIGN 6 (좌측) sage -->
+              <g>
+                <circle cx="170" cy="100" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="170" y="98" text-anchor="middle" font-size="11" fill="#1A1D24">design_ppt</text>
+                <text x="170" y="113" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+              <g>
+                <circle cx="120" cy="220" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="120" y="218" text-anchor="middle" font-size="11" fill="#1A1D24">design_excel</text>
+                <text x="120" y="233" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+              <g>
+                <circle cx="120" cy="360" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="120" y="358" text-anchor="middle" font-size="11" fill="#1A1D24">design_word</text>
+                <text x="120" y="373" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+              <g>
+                <circle cx="120" cy="500" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="120" y="498" text-anchor="middle" font-size="11" fill="#1A1D24">design_pdf</text>
+                <text x="120" y="513" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+              <g>
+                <circle cx="170" cy="620" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="170" y="618" text-anchor="middle" font-size="11" fill="#1A1D24">design_web</text>
+                <text x="170" y="633" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+              <g>
+                <circle cx="280" cy="660" r="40" fill="url(#g-design)" stroke="#6B8E7F" stroke-width="2"/>
+                <text x="280" y="658" text-anchor="middle" font-size="11" fill="#1A1D24">design_video</text>
+                <text x="280" y="673" text-anchor="middle" font-size="9" fill="#4A6F60">DSGN</text>
+              </g>
+
+              <!-- MCP 8 (우측) plum -->
+              <g>
+                <circle cx="810" cy="100" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="810" y="98" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_dev</text>
+                <text x="810" y="113" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="860" cy="220" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="860" y="218" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_data</text>
+                <text x="860" y="233" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="860" cy="360" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="860" y="358" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_collab</text>
+                <text x="860" y="373" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="860" cy="500" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="860" y="498" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_web</text>
+                <text x="860" y="513" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="810" cy="620" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="810" y="618" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_docs</text>
+                <text x="810" y="633" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="700" cy="660" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="700" y="658" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_media</text>
+                <text x="700" y="673" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="700" cy="60" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="700" y="58" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_queue</text>
+                <text x="700" y="73" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+              <g>
+                <circle cx="280" cy="60" r="40" fill="url(#g-mcp)" stroke="#7A4E6B" stroke-width="2"/>
+                <text x="280" y="58" text-anchor="middle" font-size="11" fill="#1A1D24">mcp_social</text>
+                <text x="280" y="73" text-anchor="middle" font-size="9" fill="#5A3850">MCP</text>
+              </g>
+
+              <!-- EXEC 추가 4 (상하) gold -->
+              <g>
+                <circle cx="490" cy="60" r="42" fill="#F7EBD4" stroke="#B8864E" stroke-width="2.4"/>
+                <text x="490" y="58" text-anchor="middle" font-size="12" fill="#1A1D24">exec_session</text>
+                <text x="490" y="73" text-anchor="middle" font-size="9" fill="#8A6235">EXEC</text>
+              </g>
+              <g>
+                <circle cx="490" cy="660" r="42" fill="#F7EBD4" stroke="#B8864E" stroke-width="2.4"/>
+                <text x="490" y="658" text-anchor="middle" font-size="12" fill="#1A1D24">exec_voice</text>
+                <text x="490" y="673" text-anchor="middle" font-size="9" fill="#8A6235">EXEC</text>
+              </g>
+              <g>
+                <circle cx="380" cy="50" r="32" fill="#F7EBD4" stroke="#B8864E" stroke-width="2"/>
+                <text x="380" y="48" text-anchor="middle" font-size="10" fill="#1A1D24">exec_offline</text>
+                <text x="380" y="62" text-anchor="middle" font-size="8" fill="#8A6235">EXEC</text>
+              </g>
+              <g>
+                <circle cx="600" cy="50" r="32" fill="#F7EBD4" stroke="#B8864E" stroke-width="2"/>
+                <text x="600" y="48" text-anchor="middle" font-size="10" fill="#1A1D24">exec_sched</text>
+                <text x="600" y="62" text-anchor="middle" font-size="8" fill="#8A6235">EXEC</text>
+              </g>
+
+              <!-- AI 4 (하단) terracotta -->
+              <g>
+                <circle cx="380" cy="680" r="36" fill="url(#g-ai)" stroke="#B25A3E" stroke-width="2.2"/>
+                <text x="380" y="678" text-anchor="middle" font-size="10" fill="#1A1D24">ai_rag</text>
+                <text x="380" y="691" text-anchor="middle" font-size="8" fill="#8A3E26">AI</text>
+              </g>
+              <g>
+                <circle cx="600" cy="680" r="36" fill="url(#g-ai)" stroke="#B25A3E" stroke-width="2.2"/>
+                <text x="600" y="678" text-anchor="middle" font-size="10" fill="#1A1D24">ai_routing</text>
+                <text x="600" y="691" text-anchor="middle" font-size="8" fill="#8A3E26">AI</text>
+              </g>
+              <g>
+                <circle cx="200" cy="640" r="32" fill="url(#g-ai)" stroke="#B25A3E" stroke-width="2"/>
+                <text x="200" y="638" text-anchor="middle" font-size="10" fill="#1A1D24">ai_learn</text>
+                <text x="200" y="651" text-anchor="middle" font-size="8" fill="#8A3E26">AI</text>
+              </g>
+              <g>
+                <circle cx="780" cy="640" r="32" fill="url(#g-ai)" stroke="#B25A3E" stroke-width="2"/>
+                <text x="780" y="638" text-anchor="middle" font-size="10" fill="#1A1D24">ai_offline</text>
+                <text x="780" y="651" text-anchor="middle" font-size="8" fill="#8A3E26">AI</text>
+              </g>
+
+              <!-- REVIEW 1 + SPECIAL 1 (위아래 작게) -->
+              <g>
+                <circle cx="490" cy="200" r="40" fill="url(#g-review)" stroke="#8A6235" stroke-width="2.2"/>
+                <text x="490" y="198" text-anchor="middle" font-size="12" fill="#1A1D24">review_qa</text>
+                <text x="490" y="213" text-anchor="middle" font-size="9" fill="#8A6235">REVIEW</text>
+              </g>
+            </g>
+
+            <!-- 중앙 CORE: exec_orch -->
+            <circle cx="490" cy="360" r="100" fill="url(#g-core-eco)" stroke="#B8864E" stroke-width="4.5"/>
+            <circle cx="490" cy="360" r="100" fill="none" stroke="#B8864E" stroke-width="1" opacity="0.3" stroke-dasharray="3,5"/>
+            <text x="490" y="345" text-anchor="middle" font-family="Fraunces" font-size="30" font-weight="700" fill="#1A1D24">exec_orch</text>
+            <text x="490" y="372" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#8A6235" letter-spacing="3">CORE</text>
+            <text x="490" y="395" text-anchor="middle" font-family="Pretendard Variable" font-size="13" fill="#6E685C">진입점 · 라우팅 · 워커</text>
+          </svg>
+        </div>
+
+        <div class="legend">
+          <div class="cat exec">
+            <div class="ico"><iconify-icon icon="heroicons:cog-8-tooth"></iconify-icon></div>
+            <div class="info"><div class="name">exec_*</div><div class="desc">orch · sched · voice · offline · session</div></div>
+            <div class="count">5<small>EXECUTION</small></div>
+          </div>
+          <div class="cat design">
+            <div class="ico"><iconify-icon icon="heroicons:paint-brush"></iconify-icon></div>
+            <div class="info"><div class="name">design_*</div><div class="desc">ppt · excel · word · pdf · web · video</div></div>
+            <div class="count">6<small>CONTENT</small></div>
+          </div>
+          <div class="cat mcp">
+            <div class="ico"><iconify-icon icon="heroicons:link"></iconify-icon></div>
+            <div class="info"><div class="name">mcp_*</div><div class="desc">dev · data · collab · web · docs · media · queue · social</div></div>
+            <div class="count">8<small>MCP SERVERS</small></div>
+          </div>
+          <div class="cat ai">
+            <div class="ico"><iconify-icon icon="heroicons:sparkles"></iconify-icon></div>
+            <div class="info"><div class="name">ai_*</div><div class="desc">rag (8 패턴) · routing · learn · offline</div></div>
+            <div class="count">4<small>INTELLIGENCE</small></div>
+          </div>
+          <div class="cat review">
+            <div class="ico"><iconify-icon icon="heroicons:check-circle"></iconify-icon></div>
+            <div class="info"><div class="name">review_qa</div><div class="desc">코드 리뷰 · 보안 · 성능 · 검증</div></div>
+            <div class="count">1<small>QUALITY</small></div>
+          </div>
+          <div class="cat special">
+            <div class="ico"><iconify-icon icon="heroicons:star"></iconify-icon></div>
+            <div class="info"><div class="name">special</div><div class="desc">music_studio · cost_youtube — 도메인 특화</div></div>
+            <div class="count">1<small>SPECIAL</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="brand">ORCHESTRATION KIT</span>
+        <span>PLUGIN ECOSYSTEM · 25 PLUGINS · 6 CATEGORIES</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Cost Saving 90%</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="_styles.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 60px;
+      margin-top: 40px;
+      align-items: center;
+    }
+    .visual {
+      position: relative;
+      background: rgba(255,255,255,0.4);
+      border: 1px solid rgba(184,134,78,0.18);
+      border-radius: 28px;
+      padding: 50px 50px 60px;
+      box-shadow: 0 20px 50px rgba(138,98,53,0.10);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 36px;
+    }
+
+    .stack { display: flex; flex-direction: column; gap: 22px; }
+    .stack .row {
+      display: grid;
+      grid-template-columns: 130px 1fr 200px;
+      gap: 20px;
+      align-items: center;
+    }
+    .stack .row .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 0.2em;
+      font-weight: 700;
+      color: var(--stone);
+    }
+    .stack .row.before .label { color: var(--terracotta); }
+    .stack .row.after .label { color: var(--sage); }
+
+    .stack .bar {
+      height: 64px;
+      background: rgba(0,0,0,0.04);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.05);
+    }
+    .stack .bar .fill {
+      height: 100%;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      padding-left: 24px;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.10);
+      position: relative;
+    }
+    .stack .row.before .bar .fill {
+      width: 100%;
+      background: linear-gradient(135deg, var(--terracotta), #D4724E);
+    }
+    .stack .row.after .bar .fill {
+      width: 8.3%;
+      background: linear-gradient(135deg, var(--sage), #8FAA9D);
+    }
+    .stack .row.after .bar .fill::after {
+      content: '';
+      position: absolute;
+      left: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 12px; height: 12px;
+      background: var(--sage);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(107,142,127,0.25);
+    }
+    .stack .bar .iconlabel { display: flex; align-items: center; gap: 12px; color: white; font-family: 'JetBrains Mono', monospace; font-size: 17px; font-weight: 700; letter-spacing: 0.06em; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+    .stack .bar .iconlabel iconify-icon { font-size: 26px; }
+
+    .stack .price {
+      font-family: 'Fraunces', serif;
+      font-size: 44px;
+      font-weight: 700;
+      text-align: right;
+      line-height: 1;
+    }
+    .stack .row.before .price { color: var(--terracotta); }
+    .stack .row.after .price { color: var(--sage); }
+    .stack .price small { display: block; font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--stone); margin-top: 6px; letter-spacing: 0.1em; font-weight: 700; }
+
+    .saved {
+      background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.10));
+      border: 1.5px solid rgba(107,142,127,0.4);
+      border-radius: 18px;
+      padding: 24px 32px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 28px;
+      align-items: center;
+    }
+    .saved .icon { font-size: 64px; color: var(--sage); }
+    .saved .big { font-family: 'Fraunces', serif; font-size: 88px; font-weight: 700; color: var(--sage); line-height: 1; letter-spacing: -0.03em; }
+    .saved .desc {
+      font-size: 17px; color: var(--ink); line-height: 1.5;
+    }
+    .saved .desc strong { color: var(--deep-gold); font-weight: 700; }
+
+    .right-side { display: flex; flex-direction: column; gap: 22px; }
+    .reason {
+      background: rgba(255,255,255,0.7);
+      border: 0.5px solid var(--fog);
+      border-radius: 16px;
+      padding: 22px 26px;
+      box-shadow: 0 6px 16px rgba(138,98,53,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .reason::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--gold); }
+    .reason h3 { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.22em; color: var(--deep-gold); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+    .reason .what { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .reason .desc { font-size: 16px; color: var(--stone); margin-top: 10px; line-height: 1.5; }
+    .reason .formula {
+      margin-top: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      background: #1A1D24;
+      color: #E8DEC8;
+      padding: 12px 16px;
+      border-radius: 8px;
+      line-height: 1.6;
+    }
+    .reason .formula .ok { color: #6B8E7F; }
+    .reason .formula .num { color: #E8B96B; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .summary .kpi {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 20px;
+      border: 0.5px solid var(--fog);
+      text-align: center;
+    }
+    .summary .kpi .v { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: var(--gold); line-height: 1; }
+    .summary .kpi .l { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.16em; color: var(--stone); margin-top: 8px; text-transform: uppercase; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="dot-grid"></div>
+    <div class="content">
+      <div class="eyebrow">◆ ORCHESTRATION KIT · COST OPTIMIZATION</div>
+      <h1 class="h1">월 비용 <span class="accent">−92%</span></h1>
+      <p class="lead">Gemini Pro → Haiku 4.5 + Prompt Caching 조합 — 같은 검증 품질, 12배 저렴</p>
+
+      <div class="body">
+        <div class="visual">
+          <div class="stack">
+            <div class="row before">
+              <div class="label">BEFORE</div>
+              <div class="bar"><div class="fill"><div class="iconlabel"><iconify-icon icon="heroicons:fire"></iconify-icon>Gemini Pro · 캐시 없음</div></div></div>
+              <div class="price">$108<small>PER MONTH</small></div>
+            </div>
+            <div class="row after">
+              <div class="label">AFTER</div>
+              <div class="bar"><div class="fill"></div></div>
+              <div class="price">$9<small>PER MONTH</small></div>
+            </div>
+          </div>
+
+          <div class="saved">
+            <iconify-icon class="icon" icon="heroicons:banknotes"></iconify-icon>
+            <div>
+              <div class="big">−92%</div>
+              <div class="desc">월 <strong>$108 → $9</strong> · 연간 <strong>$1,188 절감</strong> · 검증 품질 동일</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-side">
+          <div class="reason">
+            <h3>◆ 핵심 메커니즘</h3>
+            <div class="what">Prompt Caching</div>
+            <div class="desc">반복되는 prompt prefix (system prompt + 컨텍스트) 를 캐시 → 두 번째 호출부터 입력 단가의 10% 만 지불.</div>
+            <div class="formula">
+cache write  <span class="num">1.25×</span> input
+cache read   <span class="num">0.10×</span> input  <span class="ok">(−90%)</span>
+TTL          <span class="num">5min</span> (hit 시 자동 연장)
+            </div>
+          </div>
+
+          <div class="summary">
+            <div class="kpi"><div class="v">85%</div><div class="l">cache hit</div></div>
+            <div class="kpi"><div class="v">12×</div><div class="l">저렴</div></div>
+            <div class="kpi"><div class="v">100회</div><div class="l">일일 검증</div></div>
+            <div class="kpi" style="background: linear-gradient(135deg, rgba(107,142,127,0.15), white);"><div class="v" style="color: var(--sage);">$1,188</div><div class="l">연간 절감</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span class="brand">ORCHESTRATION KIT</span>
+        <span>COST · −92% · CACHING-DRIVEN</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

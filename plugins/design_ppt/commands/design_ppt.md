@@ -5,10 +5,12 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 # /design_ppt — PPT 자동 생성 (HTML/CSS → PPTX) ⭐
 
+> **2026-04-30 업데이트** (R51): 차트·SVG 다이어그램·표→카드 그리드·결정 트리·Screens 워크플로우 4종 패턴 추가.
 > **2026-04-27 업데이트**: 27→40장 확장 작업에서 학습한 함정 13개를 워크플로우에 반영.
 > **핵심**: 잘림(overflow) 방지 + OCR 검증 + 파일명 정렬 + 페이지번호 일괄 갱신.
 
 > 이 명령이 **PPT 만들기 기본 액션**입니다. `/make-ppt` 는 호환용 alias.
+> 단일 이미지 (README hero · 마케팅 카드) 가 필요하면 → § 11 Screens 워크플로우.
 
 ---
 
@@ -32,7 +34,7 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 ---
 
-## 0. TL;DR — 절대 잊지 말 것 (12 계명)
+## 0. TL;DR — 절대 잊지 말 것 (15 계명)
 
 1. **슬라이드는 1920×1080 고정** — `height: 1080px !important; overflow: hidden !important`
 2. **그리드 안 잘림 방지** — `min-height: 0` 을 모든 flex/grid 자식에 추가
@@ -46,6 +48,9 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 10. **DALL-E 직접 호출 안 됨** — Iconify + SVG + Unsplash + 그라디언트 조합으로 채움
 11. **`.body` 에 `max-width` 절대 금지** — design-system.css 의 `.body{max-width:1200px}` 가 우측 720px 빈 여백 만든 사례. `.body-lead` 만 max-width 적용.
 12. **design-system.css 변경 = 3 파일 sync 필수** — 멀티 PPT 시 automation/plugins/team 모두 동일 파일 동기화 (한 파일만 수정 시 시각 분기).
+13. **표가 8행+ 또는 폰트 16px 이하면 카드 그리드** — 4×2 / 3×2 / 4×3 그리드로 변환 (skill § 13.E).
+14. **차트 막대 width 는 데이터 비율로 직접 계산** — `width: 8.3%` (= 9/108) 처럼 명시. AFTER 박스가 BEFORE 대비 시각 비례여야 임팩트.
+15. **SVG 다이어그램은 `<defs>` 에 gradient + marker 미리 정의** — 화살표 marker 없으면 방향성 약함, gradient 없으면 평면적.
 
 ---
 
@@ -362,10 +367,75 @@ python .claude/scripts/verify-ppt-overflow.py --threshold 0.10
 
 ---
 
-## 10. 출처
+## 10. R51 임팩트 시각화 패턴 (2026-04-30)
 
-- 워크플로우: 2026-04-27 27→40장 확장 작업 학습
+PPT 가 단조로워 보이면 다음 4 패턴 적용. 자세한 코드는 `skill-ppt-pitfalls.md § 13`.
+
+### A. 차트가 필요한 슬라이드
+- **BEFORE/AFTER 비교**: 비용·성능 절감 → 막대 차트 + `−92%` 큰 숫자 (§ 13.A)
+- **KPI 트렌드**: 4 KPI 카드 → 각각 sparkline SVG (§ 13.B)
+- **단계 시각화**: backoff·escalation → timeline 막대 (§ 13.C)
+
+### B. 다이어그램이 필요한 슬라이드
+- **시스템 구조도**: Lead + 워커 풀 → SVG + gradient + marker 화살표 (§ 13.D)
+- **의존성 그래프**: 중앙 hub + 카테고리 색상 + 그룹 박스 dashed border
+- **결정 트리**: 2 분기 결과 → diamond + sage(YES)/terra(NO) (§ 13.F)
+
+### C. 표가 너무 빽빽한 슬라이드
+- 8 행+ 또는 폰트 16px 이하 → **카드 그리드** (4×2 / 3×2 / 4×3) (§ 13.E)
+- 카드 안 3 영역: 증상 (header, terra) / 원인 (mid, stone) / 해결 (footer, ink + ✓ sage)
+
+### D. 적용 우선순위
+1. 가장 임팩트 큰 슬라이드 = "큰 숫자 한 개" 가 핵심인 슬라이드 → BEFORE/AFTER 막대
+2. KPI / 메트릭 슬라이드 → sparkline 추가
+3. 정보 빽빽 표 → 카드 그리드 변환
+4. 단순 텍스트 2 컬럼 → 결정 트리 배너 추가
+
+---
+
+## 11. Screens 워크플로우 — 단일 PNG 이미지 (2026-04-30)
+
+PPT 외에 **README · 블로그 · 깃 리포 표지** 용 단독 이미지가 필요할 때.
+
+### 폴더 구조
+```
+docs/screens/
+├── our-html/
+│   ├── _styles.css        ← 공통 (canvas / eyebrow / h1 / footer)
+│   ├── arch-*.html        시스템 / 흐름도 (→ our-arch/*.png)
+│   └── func-*.html        기능 / 혜택 (→ our-func/*.png)
+├── our-arch/              자동 생성 PNG
+└── our-func/              자동 생성 PNG
+```
+
+### 디자인 원칙 (PPT 와 다름)
+| 요소 | PPT | Screens |
+|------|-----|---------|
+| 페이지 번호 | 필수 | 없음 |
+| h1 폰트 | 56~64px | 80~96px (더 크게) |
+| 정보 밀도 | 7~10 박스 | 1 핵심 + 큰 visual |
+| 의도 | 페이지 = 컨셉 | 이미지 = 메시지 |
+
+### 명령
+```bash
+# 새 이미지 생성
+vim docs/screens/our-html/arch-myidea.html      # 1. _styles.css 임포트, .canvas 사용
+python .claude/scripts/render-screens.py        # 2. 전체 렌더 (또는 파일명만 인자로)
+# 3. Read 로 PNG 직접 확인
+```
+
+### 자세한 가이드
+`skill-ppt-pitfalls.md § 14` 참조 — 명명 규칙 / 디자인 시스템 / 활용 예시 / 안티패턴.
+
+---
+
+## 12. 출처
+
+- R51 차트 + Screens (2026-04-30): `11c4951` + R51-screens 작업
+- R11~R50 디자인 시스템 v2 (2026-04-30): `c300271` ~ `e43fddf`
+- 27→40 확장 워크플로우 (2026-04-27)
 - 디자인: DK.method (Brij K. Pandey)
 - 폰트: Pretendard · JetBrains Mono · Fraunces
 - 아이콘: heroicons · simple-icons (Iconify)
-- 출력: `outputs/ppt/orchestration-v1-FINAL.pptx`
+- PPT 출력: `outputs/ppt-{automation,plugins,team}/*-디자인적용.pptx`
+- Screens 출력: `docs/screens/our-{arch,func}/*.png`

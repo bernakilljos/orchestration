@@ -458,3 +458,307 @@ body, .body { line-height: 1.58; letter-spacing: -0.006em; }
 - PPT 락 (`~$*.pptx`) 무시하고 재렌더 시도 → PermissionError
 - 새 슬라이드 파일 생성 (slide-NN_new.html, slide-NN.bak) → orphan
 - PNG Read 만으로 fix 결정 → phantom (HTML 코드로 재확인 필수)
+
+---
+
+## 13. 차트·다이어그램·카드 그리드 패턴 (R51 — 2026-04-30)
+
+R50 까지 디자인 시스템 표준화 후, R51 에서 **임팩트 시각화 8장** 보강 작업으로 도출된 재사용 패턴.
+"표만 있는 슬라이드"·"단순 텍스트 2 컬럼"·"좁은 SVG" 가 발견되면 적용.
+
+### A. BEFORE / AFTER 막대 차트 (단일 비교 강조)
+사용처: 비용 절감 · 성능 향상 · 토큰 절약 등 한 번에 보여줄 때.
+
+```html
+<div class="savings">
+  <div class="big">−92%</div>
+  <div class="chart">
+    <div class="barrow before">
+      <span class="tag">BEFORE</span>
+      <span class="track"><span class="fill"></span></span>
+      <span class="price">$108 / 월</span>
+    </div>
+    <div class="barrow after">
+      <span class="tag">AFTER</span>
+      <span class="track"><span class="fill"></span></span>
+      <span class="price">$9 / 월</span>
+    </div>
+  </div>
+</div>
+```
+```css
+.savings { display: grid; grid-template-columns: auto 1fr;
+  background: linear-gradient(135deg, rgba(107,142,127,0.18), rgba(184,134,78,0.12));
+  border: 1px solid rgba(107,142,127,0.4); border-radius: 14px;
+  padding: 14px 22px; column-gap: 22px; align-items: center; flex: 0 0 auto; }
+.savings .big { font-family: 'Fraunces', serif; font-size: 56px;
+  font-weight: 700; color: var(--sage); grid-row: span 2; }
+.savings .barrow { display: grid; grid-template-columns: 64px 1fr 78px;
+  gap: 10px; align-items: center; }
+.savings .barrow .track { height: 18px; background: rgba(0,0,0,0.05);
+  border-radius: 4px; overflow: hidden; }
+.savings .barrow .fill { height: 100%; border-radius: 4px;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.08); }
+.savings .barrow.before .fill { width: 100%;
+  background: linear-gradient(90deg, var(--terracotta), #D4724E); }
+.savings .barrow.after .fill { width: 8.3%;       /* ← 비율 직접 계산 */
+  background: linear-gradient(90deg, var(--sage), #8FAA9D); }
+```
+
+**핵심**:
+- AFTER 막대 width 는 BEFORE 대비 비율로 직접 (예: 9/108 = 8.3%)
+- `.savings { flex: 0 0 auto }` — 부모 flex 안에서 압축 방지
+- 큰 숫자 (-92%) + 막대 + sub 라인 = 3 요소 grid 로 묶음
+
+### B. KPI Sparkline (4 KPI 트렌드 표시)
+사용처: 대시보드 슬라이드. 큰 숫자 + 24h 트렌드 미니 라인.
+
+```html
+<div class="stat cost">
+  <div class="lbl">오늘 비용</div>
+  <div class="val">$3.42</div>
+  <div class="delta up">↓ 어제 $4.10 (−16%)</div>
+  <svg class="spark" viewBox="0 0 200 36" preserveAspectRatio="none">
+    <path class="area" d="M0,12 L17,8 L33,15 ... L200,28 L200,36 L0,36 Z"/>
+    <path class="line" d="M0,12 L17,8 L33,15 ... L200,28"/>
+  </svg>
+</div>
+```
+```css
+.stat .spark { width: 100%; height: 36px; margin-top: 6px; opacity: 0.85; }
+.stat .spark path.line { fill: none; stroke-width: 2.2; }
+.stat .spark path.area { stroke: none; opacity: 0.18; }
+.stat.cost .spark path.line { stroke: var(--gold); }
+.stat.cost .spark path.area { fill: var(--gold); }
+/* task=sage, token=plum, fail=terracotta — KPI 카테고리 색상 매핑 */
+```
+
+**핵심**:
+- viewBox 200×36 + `preserveAspectRatio="none"` → 카드 폭에 맞춰 가변 stretch
+- area path 는 line 의 마지막 점에서 `L200,36 L0,36 Z` 로 닫음 (밑변)
+- 13 개 점 (`x: 0, 17, 33, ..., 200`) — 시간축 분포
+- y 좌표는 트렌드 의도대로 (상승=감소, 하락=증가, 0=상단)
+
+### C. Timeline 막대 + 그라디언트 + RETRY 라벨
+사용처: 단계적 backoff·escalation 시각화.
+
+```html
+<div class="timeline">
+  <div class="bar t1"><span class="lab">10m</span><span class="step">RETRY 1</span></div>
+  <div class="bar t2"><span class="lab">20m</span><span class="step">RETRY 2</span></div>
+  <div class="bar t3"><span class="lab">40m</span><span class="step">RETRY 3</span></div>
+  <div class="bar t4"><span class="lab">2h</span><span class="step">RETRY 4</span></div>
+</div>
+```
+```css
+.timeline { display: flex; gap: 12px; align-items: flex-end;
+  height: 150px; padding: 8px 4px 0 4px; position: relative; }
+.timeline::before { content: ''; position: absolute;
+  left: 0; right: 0; bottom: 0; height: 1px;
+  background: rgba(184,134,78,0.25); }   /* baseline */
+.bar { flex: 1; border-radius: 6px 6px 0 0;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 8px; box-shadow: inset 0 -3px 0 rgba(0,0,0,0.06); }
+.bar.t1 { height: 22%; background: linear-gradient(180deg,
+  rgba(184,134,78,0.5), rgba(184,134,78,0.7)); }
+.bar.t2 { height: 44%; background: linear-gradient(180deg, ..., 0.8); }
+.bar.t3 { height: 70%; background: linear-gradient(180deg, ..., 0.9); }
+.bar.t4 { height: 100%; background: linear-gradient(180deg,
+  var(--gold), var(--deep-gold)); }
+.bar .lab { font-size: 17px; font-weight: 700;
+  color: rgba(255,255,255,0.95); text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+.bar.t1 .lab { color: var(--deep-gold); text-shadow: none; }  /* 짧은 막대는 흰 배경 */
+.bar .step { position: absolute; bottom: -22px; ... font-size: 12px; }
+```
+
+**핵심**:
+- 짧은 막대는 라벨 색을 deep-gold (흰색이면 안 보임)
+- `box-shadow: inset 0 -3px 0` — 막대 베이스에 미세 강조
+- `.step` 라벨은 `position: absolute; bottom: -22px` 로 막대 밖으로 빼기
+
+### D. SVG 다이어그램 — 그라디언트 + 화살표 marker + 카테고리 색
+사용처: 시스템 구조도 · 의존성 그래프 · 흐름도.
+
+```html
+<svg viewBox="0 0 720 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g-claude" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F7EBD4"/>
+      <stop offset="100%" stop-color="#E8DEC8"/>
+    </linearGradient>
+    <marker id="arr-gold" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B8864E"/>
+    </marker>
+  </defs>
+
+  <!-- 노드: 카테고리별 색 + 그라디언트 fill -->
+  <rect x="270" y="195" width="180" height="125" rx="16"
+        fill="url(#g-claude)" stroke="#B8864E" stroke-width="3.5"/>
+  <text font-family="Fraunces" font-size="24" font-weight="700">Claude Opus</text>
+
+  <!-- 화살표: marker-end 로 자동 -->
+  <line x1="360" y1="116" x2="360" y2="190"
+        stroke="#B8864E" stroke-width="2.5" marker-end="url(#arr-gold)"/>
+
+  <!-- 그룹 박스 (점선 dashed border) — 카테고리 묶음 -->
+  <rect x="30" y="160" width="200" height="200" rx="14"
+        fill="rgba(107,142,127,0.08)" stroke="#6B8E7F"
+        stroke-width="1.5" stroke-dasharray="6,4"/>
+</svg>
+```
+
+**핵심**:
+- `<defs>` 에 gradient + marker 미리 정의 (재사용)
+- marker 의 `refX="9" refY="5"` — 화살표 끝점 정확히 노드 경계에
+- 카테고리 색: gold (lead) · sage (impl) · plum (review) · terra (warn) · deep-gold (hub)
+- 그룹 박스: `stroke-dasharray="6,4"` 로 시각적 묶음
+- Stage 라벨 (예: "CODEX POOL ×4") 박스 위에 16~18px font + letter-spacing 으로 카테고리 명시
+
+### E. 표 → 카드 그리드 변환 (10행+ 가독성 떨어질 때)
+**증상**: 8~10행 표 안 텍스트 너무 작음 (16px 이하).
+**해결**: 4×2 또는 3×2 카드 그리드로 변환.
+
+```html
+<div class="body">  <!-- grid-template-columns: repeat(4, 1fr); rows: 1fr 1fr -->
+  <div class="card">
+    <div class="num">CASE 01</div>
+    <div class="symptom">
+      <iconify-icon icon="heroicons:exclamation-triangle"></iconify-icon>
+      <div class="t">setup 관리자 권한 요청 후 멈춤</div>
+    </div>
+    <div class="cause">UAC 거부 또는 그룹 정책 차단</div>
+    <div class="fix">우클릭 → "관리자 권한으로 실행"</div>
+  </div>
+  <!-- ... 7 more cards -->
+</div>
+```
+```css
+.body { display: grid; grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr; gap: 16px; }
+.card { background: rgba(255,255,255,0.88); border-radius: 14px;
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+  position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; background: var(--terracotta); }   /* 좌측 컬러 바 */
+.card .num { font-size: 11px; letter-spacing: 0.18em; color: var(--stone); }
+.card .symptom { display: flex; gap: 8px;
+  padding-bottom: 8px; border-bottom: 0.5px dashed rgba(178,90,62,0.3); }
+.card .symptom .t { font-size: 16px; font-weight: 700; color: var(--terracotta); }
+.card .cause::before { content: '원인 · ';
+  font-size: 11px; letter-spacing: 0.1em; font-weight: 700;
+  color: var(--deep-gold); text-transform: uppercase; }
+.card .fix { margin-top: auto; padding-top: 8px;
+  border-top: 0.5px dashed rgba(107,142,127,0.3); }
+.card .fix::before { content: '✓ '; color: var(--sage); font-weight: 700; }
+```
+
+**핵심**:
+- 카드 안 3 영역: 증상 (header, 강조) / 원인 (mid, stone) / 해결 (footer, ink + ✓)
+- `margin-top: auto` 로 fix 섹션을 카드 하단에 push
+- 행 수 8 = 4×2, 6 = 3×2, 12 = 4×3 (더 많으면 슬라이드 분할 권장)
+
+### F. 결정 트리 배너 (분기 시각화)
+**사용처**: "단순 텍스트 2 컬럼" 위에 시각적 분기 다이어그램 추가.
+
+```html
+<div class="decision-banner">
+  <div class="tick">
+    <iconify-icon icon="heroicons:bolt"></iconify-icon>
+    <span>매 30s · HEARTBEAT TICK</span>
+  </div>
+  <svg viewBox="0 0 800 60" preserveAspectRatio="none">
+    <line x1="10" y1="30" x2="320" y2="30" stroke="#8A6235" stroke-width="2"/>
+    <polygon points="320,8 380,30 320,52 260,30"
+             fill="#FAF5EA" stroke="#8A6235" stroke-width="2"/>   <!-- diamond -->
+    <text x="320" y="35" text-anchor="middle">의도된 stop?</text>
+    <line x1="380" y1="30" x2="540" y2="14"
+          stroke="#6B8E7F" stroke-width="2" marker-end="url(#ar-sage)"/>
+    <text x="460" y="6">NO → 자동 복구</text>
+    <line x1="380" y1="30" x2="540" y2="46"
+          stroke="#B25A3E" stroke-width="2" marker-end="url(#ar-terra)"/>
+    <text x="460" y="59">YES → 정지 유지</text>
+  </svg>
+  <div class="legend">
+    <span class="chip alive">5 ALIVE</span>
+    <span class="chip stop">5 STOP</span>
+  </div>
+</div>
+```
+
+**핵심**:
+- diamond 점 4개로 그리기: `points="cx,top cx+w/2,cy cx,bottom cx-w/2,cy"`
+- NO 분기는 sage, YES 분기는 terracotta (의미 색)
+- 좌측 trigger icon + 우측 카테고리 chip 으로 양 끝 라벨링
+
+### G. 안티패턴 (R51 발견)
+- `.savings` grid 자식이 `flex: 1` 안에 들어가면 압축됨 → `flex: 0 0 auto`
+- AFTER 막대 `width: %` 를 데이터 비율로 계산 안 하면 임팩트 사라짐
+- SVG marker 의 `refX/refY` 안 맞추면 화살표가 노드 안으로 들어가거나 떨어져 보임
+- 카드 그리드 변환 시 행수 9 이면 3×3 또는 분할 — 4×2 짝수 그리드만 가능
+- decision diamond 텍스트 폰트 12~14px 권장 (작으면 안 보이고 크면 diamond 밖으로 나옴)
+
+---
+
+## 14. Screens 워크플로우 (docs/screens/our-html — 2026-04-30)
+
+PPT 외에 **README · 블로그 · 깃 리포 표지** 용 단일 PNG 이미지가 필요할 때.
+별도 워크플로우 — `docs/screens/` 에 카테고리별 이미지 모아둠.
+
+### 폴더 구조
+
+```
+docs/screens/
+├── arch/         외부 참고 자료 (Brij Pandey 등)
+├── func/         외부 참고 자료
+├── dashboard/    외부 참고 자료
+├── login/        외부 참고 자료
+├── our-html/     ← 우리 자체 HTML 소스
+│   ├── _styles.css           공통 디자인 시스템
+│   ├── arch-*.html           시스템 아키텍처 / 흐름도
+│   └── func-*.html           기능 / 혜택 일러
+├── our-arch/     렌더 결과 (arch-*.png)
+└── our-func/     렌더 결과 (func-*.png)
+```
+
+### 명명 규칙
+- `arch-<topic>.html` → `our-arch/arch-<topic>.png` (시스템 다이어그램)
+- `func-<topic>.html` → `our-func/func-<topic>.png` (기능 일러)
+- 다른 prefix (예: `dash-`, `flow-`) 가 필요하면 `render-screens.py` `out_path_for()` 확장
+
+### 디자인 원칙 (PPT 와 차별)
+| 요소 | PPT 슬라이드 | Screens (단일 이미지) |
+|------|--------------|----------------------|
+| 페이지 번호 | 필수 (NN/총수) | 없음 |
+| eyebrow | "PART NN · TOPIC" | "◆ ORCHESTRATION KIT · TOPIC" |
+| 제목 | h1 56~64px | h1 80~96px (더 크게) |
+| 본문 비중 | 7~10 박스/카드 | 1~2 핵심 + 큰 visual |
+| 하단 footer | 출처 표기 | 브랜드 + 카테고리 |
+| 배경 | 다양 (bg-tech 등) | `_styles.css .canvas` 통일 |
+| 의도 | 1 페이지 = 1 컨셉 | 1 이미지 = 1 메시지 |
+
+### `_styles.css` 공통 시스템
+- `.canvas { width: 1920px; height: 1080px; padding: 80px 100px }` 고정
+- `.eyebrow` `.h1` `.h1 .accent` `.lead` `.footer` `.dot-grid` `.content` 표준 클래스
+- 색상은 PPT 와 동일 (gold/sage/plum/terracotta/deep-gold/cream)
+
+### 렌더 명령
+```bash
+python .claude/scripts/render-screens.py                    # all
+python .claude/scripts/render-screens.py arch-system        # one (no .html)
+```
+
+### 검증
+- PIL overflow 체크 안 함 (단일 이미지라 잘림 정의가 다름)
+- OCR 직접 (Read tool) → 핵심 메시지 한 번에 잡히는지
+
+### 활용 예시
+- `our-arch/arch-system-overview.png` → README.md 상단 hero
+- `our-func/func-cost-saving.png` → 마케팅 페이지 / 트윗
+- `our-arch/arch-plugin-ecosystem.png` → 플러그인 카탈로그 표지
+
+### 안티패턴
+- screens 에 PPT 페이지 번호 (NN/총수) 추가 — 단일 이미지에 어색
+- `_styles.css` 안 쓰고 매 HTML 마다 padding/font 다르게 — 카탈로그 일관성 깨짐
+- prefix 없는 파일명 (예: `overview.html`) — 자동 분류 안 됨 → arch/func 결정 어려움
+- 공통 CSS `_styles.css` 를 sync 대상 plugins/ 에 넣지 않음 (PPT design-system.css 와 별개 유지)
