@@ -47,8 +47,8 @@
       <div class="step s1">
         <iconify-icon icon="heroicons:circle-stack"></iconify-icon>
         <div class="num">STEP 01</div>
-        <div class="title">SQLite 초기화</div>
-        <div class="desc">상태 DB 생성. 8개 테이블 자동. 기존 DB 보존.</div>
+        <div class="title">상태 DB 초기화</div>
+        <div class="desc">상태 DB 생성 — 8 가지 정보 자동 · 기존 DB 보존.</div>
         <pre class="cmd">init-state-db.py</pre>
         <div class="out">
           <span class="lbl">생성</span>
@@ -59,12 +59,12 @@
       <div class="step s2">
         <iconify-icon icon="heroicons:shield-check"></iconify-icon>
         <div class="num">STEP 02</div>
-        <div class="title">Watchdog 백그라운드</div>
-        <div class="desc">heartbeat 체크 + 죽은 워커 자동 부활.</div>
+        <div class="title">감시자 백그라운드</div>
+        <div class="desc">살아있나 신호 체크 + 죽은 워커 자동 부활.</div>
         <pre class="cmd">watchdog-start.bat</pre>
         <div class="out">
           <span class="lbl">동작</span>
-          <div class="val">매 30초 체크 + quota backoff +<br>자동 재시작 (10m → 2h)</div>
+          <div class="val">매 30 초 체크 + 한도 시 대기 +<br>자동 재시작 (10m → 2h)</div>
         </div>
       </div>
 
@@ -80,7 +80,7 @@
         </div>
         <div class="out" style="background: rgba(107,142,127,0.12); border-radius: 8px; padding: 10px 14px; margin-top: 10px; border-top: 0;">
           <span class="lbl" style="color: #4A6F60;">✓ DONE</span>
-          <div class="val" style="font-size: 23px; color: var(--ink);">24/7 자동 운영 시작</div>
+          <div class="val" style="font-size: 23px; color: var(--ink);">쉬는 시간 없이 자동 운영 시작</div>
         </div>
       </div>
     </div>    <img src="https://api.iconify.design/heroicons/rocket-launch.svg?color=%23B25A3E&width=380"
@@ -89,7 +89,7 @@
 
 
 
-    <div class="footer-border"><span class="footnote">소요: 약 1분 · 이후 24/7 자동 운영. /exec_status 로 모니터링.</span></div>
+    <div class="footer-border"><span class="footnote">소요: 약 1 분 · 이후 쉬는 시간 없이 자동 운영. /exec_status 로 모니터링.</span></div>
   </div>
 </body>
 </html>
