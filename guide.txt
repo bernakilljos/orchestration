@@ -1,6 +1,8 @@
 ============================================================
-  Orchestration Kit v1 — Complete Guide
+  Orchestration Kit v1.1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
+  Last updated: 2026-05-07
+  Highlights: exec_remote (4주차 VPS) · Telegram (3주차) · setup.iss v1.1
 ============================================================
 
 
@@ -54,6 +56,14 @@
     Full   →  cd <target>  →  claude
     Codex  →  cd <target>  →  codex-go "회원가입 페이지 만들어줘"
     Gemini →  cd <target>  →  gemini-go "이 코드 검증해줘"
+
+  [원격 24/7 운영 — 4주차 (신규 2026-05-07)]
+    PC 꺼져 있어도 클라우드에서 작동시키려면:
+      claude → /exec_remote-setup    Oracle Cloud Free Tier (4 OCPU·24GB 무료)
+      claude → /exec_remote-ssh      SSH 키 ED25519 + ~/.ssh/config 자동
+      claude → /exec_remote-deploy   bootstrap-vps.sh + 우리 킷 clone
+      claude → /exec_remote-mobile   Termius 등 스마트폰 원격 (iOS·Android)
+    상세: docs/2026-05-07/4주차-원격제어.md · plugins/exec_remote/README.md
 
   [서비스만 재시작]
     install.bat restart
@@ -192,21 +202,26 @@
   6. 설치되는 것 — 전체 목록
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [Setup 모듈 — 13단계]
+  [Setup 모듈 — 14단계 (현행 2026-05-07)]
     01 core             .claude 폴더 + CLAUDE.md 복사
     02 defender         Windows Defender 예외
     03 settings         Claude 글로벌 설정 + PS UTF-8
-    04 commands         codex-a, gemini-a 글로벌 설치
+    04 commands         글로벌 명령어 9개:
+                          codex-a / codex-auto / codex-auto-global
+                          gemini-a / gemini-auto / gemini-auto-global
+                          claude-auto / haiku-auto / gemini-verify
+                        ※ haiku-auto 는 CLAUDE.md §3.2 기본 검증자
+                        ※ *-global 은 멀티 프로젝트 전역 큐 (~/.claude/orca/)
     05 services         status-push, remote-agent 등록
     06 prereqs          Node.js, Claude Code, Cloudflared
-    07 github           Git 초기화 + GitHub repo 생성
-    08 plugins          외부 커뮤니티 플러그인 자동 설치
+    07 github           Git 초기화 + GitHub repo 생성 (v1/team 자동 분기)
+    08 plugins          외부 커뮤니티 플러그인 + superpowers 자동 설치
     09 finalize         init, npm install, Claude 실행
     10 video-restore    CodeFormer + Real-ESRGAN
     11 media-enhance    오디오/PDF/PPT 의존성
     12 kit-sync         plugins/ to .claude/ 자동 동기화 + 스키마 검증
-                        + R51 design 도구 (PPT/PDF/Screens) 안내
     13 init-state-db    SQLite state DB 초기화 (워커·태스크·quota·budget)
+    14 mcp-figma        ClaudeTalkToFigma MCP 등록
 
   [플러그인 — 8개]
     claude-md-management     CLAUDE.md 품질 관리
@@ -307,13 +322,21 @@
     -- protect-critical-files config.py/settings.json 수정 차단
     -- post-impl-verify      구현 후 문법/인코딩/보호파일 자동 검증
 
-  [슬래시 커맨드 — 19개 (프로젝트 6 + 모드 13)]
+  [슬래시 커맨드 — 25개 (프로젝트 12 + 모드 13)]
     /check-agents          codex-auto / gemini-auto 가용 여부 확인
     /check-services        status-push / remote-agent 상태 확인
     /vibe-loop             멀티에이전트 루프 시작
     /orcauto-start         워커 자동 시작 활성화
     /orcauto-stop          워커 자동 시작 비활성화
     /loop-stop             실행 중인 모든 루프 중단
+
+    [원격 운영 — exec_remote (4주차, 신규)]
+    /exec_remote-setup     Oracle Free Tier 가입 + VM 생성 가이드
+    /exec_remote-ssh       SSH 키 ED25519 + ~/.ssh/config 등록
+    /exec_remote-deploy    VPS 부트스트랩 + 우리 킷 배포
+    /exec_remote-mobile    스마트폰 (iOS·Android) 접속 가이드
+    /exec_remote-tmux      tmux 영속 세션 패턴
+    /exec_remote-status    VPS 상태 한 화면 (핑·CPU/RAM·heartbeat)
 
     [모드 커맨드 — 13개 (커뮤니티 제작, 글로벌 설치)]
     /godmode               제한 없이 공격적·강력하게 실행 (aggressive mode)
@@ -420,7 +443,7 @@
     /plug_dev        GitHub·Docker·AWS·Firebase
     /plug_data       PostgreSQL·SQLite·MongoDB (로컬 기반)
     /plug_web        Playwright·Puppeteer·Fetch API
-    /plug_collab     Slack·Notion·Gmail·Calendar
+    /plug_collab     Slack·Notion·Jira·Trello·Telegram·Gmail·Calendar (3주차 알림)
     /plug_docs       PDF·DOCX·OCR (로컬 CLI 기반)
     /plug_media      Whisper·TTS·FFmpeg (로컬 CLI 기반)
     /plug_all        위 7개 순차 실행
@@ -504,9 +527,11 @@
   [한글 깨짐]
     → install.bat 재실행 (UTF-8 자동 적용)
 
-  [codex-a / gemini-a 못 찾음]
-    → install.bat 재실행 또는
-    → .claude\scripts\codex-a.bat 직접 실행
+  [codex-a / gemini-a / haiku-auto / *-global 못 찾음]
+    → install.bat 또는 setup.exe 재실행 (모듈 04 가 %APPDATA%\npm 으로 복사)
+    → 임시: .claude\scripts\<이름>.bat 직접 실행
+    → 2026-05-07 이전 빌드는 haiku-auto / codex-auto-global / gemini-auto-global
+      누락 가능 — git pull 후 재설치 필요
 
   [MCP 서버 누락]
     → claude mcp list로 확인
@@ -542,20 +567,28 @@
   각 플러그인 = commands/ + skills/ + agents/ + hooks/ + codex/ + rules.md
   파이프라인: Hook → Planner → Executor → Validator → State → Retry
 
-  [현재 플러그인 목록 — 버전 1.0]
-    exec_orch      오케스트레이션 핵심 (pipeline.md 참조)
-    exec_voice     음성 STT·TTS·회의록·음성 명령
-    exec_learning  세션 학습·실패 패턴·최적화 규칙
-    design_ppt     PPT (Claude→Canva→Mermaid→Figma)
-    design_excel   Excel (Claude→openpyxl→차트→Sheets)
-    design_word    Word (Claude→python-docx→Mermaid→PDF)
-    review_qa      코드 리뷰·보안·품질·테스트
-    mcp_dev        개발 MCP 설치 (GitHub·Docker·AWS·Vercel)
-    mcp_data       데이터 MCP 설치 (MySQL·MongoDB·BigQuery)
-    mcp_collab     협업 MCP 설치 (Slack·Notion·Jira)
-    mcp_web        웹자동화 MCP 설치 (Playwright·Puppeteer)
-    mcp_docs       문서처리 MCP 설치 (PDF·DOCX·OCR)
-    mcp_media      미디어 설치 (Whisper·TTS·FFmpeg)
+  [현재 플러그인 목록 — 26개 (16 stable + 10 spec-only, _template 제외)]
+    [Stable — 즉시 사용 가능]
+    exec_orch          오케스트레이션 핵심 (pipeline.md 참조)
+    exec_remote        원격 24/7 운영 — VPS·SSH·tmux·모바일 (4주차 신규 ⭐)
+    exec_claude        Claude 전용 심화 (질문폼·아티팩트·확장사고)
+    exec_voice         음성 STT·TTS·회의록·음성 명령
+    exec_learning      세션 학습·실패 패턴·최적화 규칙
+    exec_session_guard 세션 끊김 대비 스냅샷 자동 저장
+    design_ppt         PPT (Claude→Canva→Mermaid→Figma)
+    design_excel       Excel (Claude→openpyxl→차트→Sheets)
+    design_word        Word (Claude→python-docx→Mermaid→PDF)
+    review_qa          코드 리뷰·보안·품질·테스트
+    mcp_dev            개발 MCP 설치 (GitHub·Docker·AWS·Vercel)
+    mcp_data           데이터 MCP 설치 (PostgreSQL·MongoDB·BigQuery)
+    mcp_collab         협업 MCP (Slack·Notion·Jira·Trello·Telegram·Gmail·Calendar)
+    mcp_web            웹자동화 MCP (Playwright·Puppeteer)
+    mcp_docs           문서처리 MCP (PDF·DOCX·OCR)
+    mcp_media          미디어 (Whisper·TTS·FFmpeg)
+
+    [Spec-only — 향후 구현]
+    exec_offline / exec_scheduler / ai_rag / cost_youtube
+    design_pdf / design_video / design_web / mcp_queue / mcp_social / music_studio
 
   [접두사 규칙]
     exec_    실행·부트스트랩
@@ -826,6 +859,19 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  2026-05-07 (v1.1):
+    ✓ exec_remote 신규 — 4주차 VPS 24/7 원격 운영 (Oracle Free Tier 우선)
+      · /exec_remote-{setup,ssh,deploy,mobile,tmux,status} 6 커맨드
+      · cloud-provider-select / ssh-hardening / tmux-workflow 3 스킬
+      · gen-ssh-key.sh / bootstrap-vps.sh / deploy-kit.sh 3 스크립트
+    ✓ mcp_collab 에 Telegram (telegram-bot-mcp-server) 추가 — 3주차 알림 자동화
+    ✓ setup.iss v1.0 → v1.1 — 헤더에 v1 vs team 분기 명문화
+    ✓ setup/modules/04-commands.bat — haiku-auto / *-global 3개 추가
+       (CLAUDE.md §3.2 검증자 정책 작동 안 한 갭 해결)
+    ✓ setup-info.rtf / setup/BUILD.md 현행화 (Edition 모드·14단계 모듈·체크리스트)
+    ✓ docs/2026-05-07/4주차-원격제어.md 신규
+    ✓ CLAUDE.md 카운트 보정 (21→26: 16 stable + 10 spec-only)
 
   2026-04-30 R51~R71 누적 (43 슬라이드 PPT × 3종):
     ✓ 차트·SVG·카드 그리드 4 패턴 표준화 (skill § 13)

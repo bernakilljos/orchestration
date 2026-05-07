@@ -12,7 +12,10 @@ echo.
 echo [+] Installing global commands...
 if not exist "%APPDATA%\npm" mkdir "%APPDATA%\npm" >nul 2>&1
 
-for %%F in (codex-a codex-auto gemini-a gemini-auto gemini-verify claude-auto) do (
+rem 2026-05-07: haiku-auto / codex-auto-global / gemini-auto-global 추가
+rem  - haiku-auto : CLAUDE.md §3.2 기본 검증자 (×2 병렬, prompt cache 90% 절감)
+rem  - *-global   : 멀티 프로젝트 전역 큐 (~/.claude/orca/) 워커
+for %%F in (codex-a codex-auto codex-auto-global gemini-a gemini-auto gemini-auto-global gemini-verify claude-auto haiku-auto) do (
   if exist "%TARGET%\.claude\scripts\%%F.bat" (
     if exist "%APPDATA%\npm\%%F.bat" attrib -r "%APPDATA%\npm\%%F.bat" >nul 2>&1
     copy /Y "%TARGET%\.claude\scripts\%%F.bat" "%APPDATA%\npm\%%F.bat" >nul 2>&1
@@ -25,7 +28,7 @@ for %%F in (codex-a codex-auto gemini-a gemini-auto gemini-verify claude-auto) d
 )
 
 echo [+] Normalizing CRLF line endings...
-powershell -NoProfile -Command "$enc=New-Object System.Text.UTF8Encoding($false); foreach($n in 'codex-a','codex-auto','gemini-a','gemini-auto','gemini-verify','claude-auto'){ $p=Join-Path '%APPDATA%\npm' ($n+'.bat'); if(Test-Path $p){$c=Get-Content $p -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($p,$c,$enc)} }" >nul 2>&1
+powershell -NoProfile -Command "$enc=New-Object System.Text.UTF8Encoding($false); foreach($n in 'codex-a','codex-auto','codex-auto-global','gemini-a','gemini-auto','gemini-auto-global','gemini-verify','claude-auto','haiku-auto'){ $p=Join-Path '%APPDATA%\npm' ($n+'.bat'); if(Test-Path $p){$c=Get-Content $p -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($p,$c,$enc)} }" >nul 2>&1
 
 rem Also fix scripts in .claude\scripts
 powershell -NoProfile -Command "$enc=New-Object System.Text.UTF8Encoding($false); Get-ChildItem '%TARGET%\.claude\scripts' -Filter '*.bat' -File -ErrorAction SilentlyContinue | ForEach-Object { $c=Get-Content $_.FullName -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($_.FullName,$c,$enc) }" >nul 2>&1
