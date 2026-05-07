@@ -144,6 +144,51 @@ if /i "!MODE!"=="gemini" (
 )
 
 rem ════════════════════════════════════════════════════════
+rem  GitHub PAT 결정 (install.bat 와 통일된 흐름)
+rem ════════════════════════════════════════════════════════
+echo.
+echo [+] GitHub PAT 확인 중...
+
+set "GITHUB_PAT="
+set "TEAM_MODE=0"
+echo %~dp0 | findstr /i "orchestration_v1_team" >nul && set "TEAM_MODE=1"
+
+if "!TEAM_MODE!"=="1" (
+  echo       [TEAM mode] env var skip - input own PAT
+  goto _SETUP_PAT_INPUT
+)
+
+rem 1) env var
+powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_setup_ghpat.txt" 2>nul
+set /p "GITHUB_PAT=" < "%TEMP%\_setup_ghpat.txt"
+del "%TEMP%\_setup_ghpat.txt" >nul 2>&1
+if not "!GITHUB_PAT!"=="" (
+  echo       GITHUB_PAT = configured [OK]
+  goto _SETUP_PAT_DONE
+)
+
+:_SETUP_PAT_INPUT
+echo.
+echo ============================================================
+echo   해결 방법 ^(셋 중 하나^)
+echo ============================================================
+echo   [방법 A] setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_..."
+echo   [방법 B] %~dp0..\docs\ini\github.ini 작성: GITHUB_PAT=ghp_...
+echo   [방법 C] 지금 직접 입력 ^(Enter = SKIP^)
+echo   PAT 발급: https://github.com/settings/tokens
+echo ============================================================
+set "MANUAL_PAT="
+set /p "MANUAL_PAT=  PAT 입력 (Enter = SKIP): "
+if not "!MANUAL_PAT!"=="" (
+  set "GITHUB_PAT=!MANUAL_PAT!"
+  if "!TEAM_MODE!"=="0" powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!MANUAL_PAT!','User')" >nul 2>&1
+  echo       GITHUB_PAT = saved [OK]
+) else (
+  echo       [SKIP] PAT 없이 계속 - GitHub 자동 push/repo 비활성
+)
+:_SETUP_PAT_DONE
+
+rem ════════════════════════════════════════════════════════
 rem  Full Mode (Claude+Codex+Gemini)
 rem ════════════════════════════════════════════════════════
 
