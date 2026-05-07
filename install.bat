@@ -40,7 +40,7 @@ echo  Install Log: %DATE% %TIME% >> "!LOGFILE!"
 echo ============================  >> "!LOGFILE!"
 
 rem --- 실제 로그인 사용자의 USERPROFILE 가져오기 (관리자 권한으로 올라가도 정확한 경로) ---
-echo (Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1).GetOwner().User > "%TEMP%\_orch_getuser.ps1"
+echo ^(Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1^).GetOwner^(^).User > "%TEMP%\_orch_getuser.ps1"
 for /f "tokens=*" %%N in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\_orch_getuser.ps1"') do set "REAL_USERNAME=%%N"
 del "%TEMP%\_orch_getuser.ps1" >nul 2>&1
 if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"
@@ -596,10 +596,17 @@ echo            GITHUB_PAT=ghp_YOUR_TOKEN_HERE
 echo.
 echo   PAT 발급: https://github.com/settings/tokens
 echo            ^(scope: repo + workflow^)
-echo.
-echo   [SKIP] PAT 없이 계속 진행 — GitHub 자동 push/repo 생성 비활성화
 echo ============================================================
 echo.
+set "MANUAL_PAT="
+set /p "MANUAL_PAT=  PAT 직접 입력 (Enter = SKIP): "
+if not "!MANUAL_PAT!"=="" (
+  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!MANUAL_PAT!','User')" >nul 2>&1
+  set "GITHUB_PAT=!MANUAL_PAT!"
+  echo       GITHUB_PAT = saved [OK]
+) else (
+  echo       [SKIP] PAT 없이 계속 — GitHub 자동 push/repo 비활성
+)
 
 :SKIP_GITHUB_PAT
 if "!GITHUB_PAT!"=="" (
@@ -682,9 +689,9 @@ rem --- MCP servers: CLAUDE_SETUP_GUIDE.md 가 Claude 첫 실행 시 자동 처�
 rem    install.bat에서는 MCP 설치 안 함 (claude mcp add가 TTY 대기로 hang 발생)
 rem
 rem    [Deferred Tools — MCP 토큰 최적화]
-rem    Claude Code 최신 버전은 MCP 스키마를 지연 로딩 [Lazy Load] 함.
-rem    세션 시작 시 도구 이름만 system-reminder에 나열 → 실제 호출 전
-rem    ToolSearch [select:도구이름] 로 스키마 fetch → 미사용 도구 토큰 0.
+rem    Claude Code lazy-loads MCP schemas.
+rem    Tool names appear in system-reminder, schema fetched on actual call.
+rem    Unused tools cost 0 tokens (ToolSearch fetches on-demand).
 rem    별도 설정 불필요, autoUpdatesChannel=latest 유지 시 자동 적용됨.
 echo [+] MCP servers: Claude 첫 실행 시 CLAUDE_SETUP_GUIDE.md 자동 처리
 echo     ^(Deferred Tools 자동 적용 — MCP 토큰 폭발 방지^)
@@ -980,7 +987,7 @@ echo ============================================================
 echo   Delete Mode — status-push / remote-agent 제거
 echo ============================================================
 
-echo (Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1).GetOwner().User > "%TEMP%\_orch_getuser.ps1"
+echo ^(Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1^).GetOwner^(^).User > "%TEMP%\_orch_getuser.ps1"
 for /f "tokens=*" %%N in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\_orch_getuser.ps1"') do set "REAL_USERNAME=%%N"
 del "%TEMP%\_orch_getuser.ps1" >nul 2>&1
 if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"
@@ -1028,7 +1035,7 @@ echo ============================================================
 echo   Restart Mode — 서비스 재시작만 수행
 echo ============================================================
 
-echo (Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1).GetOwner().User > "%TEMP%\_orch_getuser.ps1"
+echo ^(Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1^).GetOwner^(^).User > "%TEMP%\_orch_getuser.ps1"
 for /f "tokens=*" %%N in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\_orch_getuser.ps1"') do set "REAL_USERNAME=%%N"
 del "%TEMP%\_orch_getuser.ps1" >nul 2>&1
 if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"

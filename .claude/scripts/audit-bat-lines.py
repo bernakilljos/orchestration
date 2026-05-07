@@ -1,6 +1,12 @@
 """
-install.bat 와 모든 setup 모듈의 echo/rem 라인 전수 검사.
-각 라인을 단독 .bat 에 넣고 cmd 로 실행해 'is not recognized' 발생 여부 확인.
+.bat 파일의 cmd parsing 깨짐 전수 조사 (강화판).
+
+방식 1 (단독 라인): 각 echo/rem 라인을 별도 .bat 에서 실행
+방식 2 (컨텍스트):  한 .bat 의 모든 echo/rem 라인을 한 .bat 에 모아 실행
+                   → install.bat 자체의 chcp 65001 + 누적 컨텍스트 재현
+
+방식 1 만으로는 사용자가 본 install.bat:658 같은 누적 컨텍스트 깨짐을 못 잡음.
+방식 2 추가로 진짜 전수 검증.
 """
 import subprocess
 import re
@@ -8,7 +14,6 @@ import sys
 import io
 from pathlib import Path
 
-# stdout 을 UTF-8 로 강제 (Windows cp949 회피)
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 TARGETS = [
@@ -17,46 +22,83 @@ TARGETS = [
     'install_gemini.bat',
     'setup/setup.bat',
     'setup/install-from-git.bat',
-] + [str(p) for p in Path('setup/modules').glob('*.bat')]
+] + sorted(str(p) for p in Path('setup/modules').glob('*.bat'))
 
-TEST_BAT = Path('C:/Users/ja205/AppData/Local/Temp/_audit_test.bat')
+TMP_LINE = Path('C:/Users/ja205/AppData/Local/Temp/_audit_line.bat')
+TMP_CTX = Path('C:/Users/ja205/AppData/Local/Temp/_audit_ctx.bat')
 
 errors = []
+
+
+def run_cmd(bat_path, timeout=10):
+    return subprocess.run(
+        ['cmd', '/c', str(bat_path)],
+        capture_output=True, text=True, timeout=timeout,
+        encoding='utf-8', errors='replace'
+    )
+
+
+def collect_errors(combined, target, line_no_or_ctx):
+    out = []
+    for m in re.finditer(r"'([^']+)'\s+is not recognized", combined):
+        out.append((target, line_no_or_ctx, f"NOT_RECOGNIZED: '{m.group(1)}'"))
+    if 'unexpected at this time' in combined:
+        out.append((target, line_no_or_ctx, "UNEXPECTED_AT_THIS_TIME"))
+    return out
+
+
 for target in TARGETS:
     if not Path(target).exists():
         continue
     content = Path(target).read_text(encoding='utf-8', errors='replace')
     lines = content.splitlines()
+
+    # ---- 방식 1: 단독 라인 ----
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
         if not (stripped.startswith('echo ') or stripped.startswith('echo.') or
                 stripped.startswith('rem ') or stripped == 'echo.'):
             continue
-        # 한글 포함 라인만 (ASCII only 는 cmd 가 잘 처리)
-        if not re.search(r'[가-힯一-鿿]', stripped):
+        if not re.search(r'[가-힯]', stripped):
             continue
-        # 단독 .bat
-        test_content = f"@echo off\r\nchcp 65001 >nul\r\n{stripped}\r\n"
-        TEST_BAT.write_text(test_content, encoding='utf-8')
+        TMP_LINE.write_text(f"@echo off\r\nchcp 65001 >nul\r\n{stripped}\r\n", encoding='utf-8')
         try:
-            result = subprocess.run(
-                ['cmd', '/c', str(TEST_BAT)],
-                capture_output=True, text=True, timeout=5,
-                encoding='utf-8', errors='replace'
-            )
-            combined = (result.stdout or '') + (result.stderr or '')
-            if 'is not recognized' in combined or 'unexpected at this time' in combined:
-                errors.append((target, i, stripped[:120]))
+            r = run_cmd(TMP_LINE, timeout=5)
+            errors.extend(collect_errors((r.stdout or '') + (r.stderr or ''), target, str(i)))
         except Exception as e:
-            errors.append((target, i, f"[exec error: {e}] {stripped[:80]}"))
+            errors.append((target, str(i), f'EXEC_ERR: {e}'))
 
-TEST_BAT.unlink(missing_ok=True)
+    # ---- 방식 2: 컨텍스트 (모든 echo/rem 한 .bat) ----
+    bat_lines = ['@echo off', 'chcp 65001 >nul', 'setlocal enabledelayedexpansion']
+    has_korean = False
+    for line in lines:
+        stripped = line.strip()
+        if not (stripped.startswith('echo ') or stripped.startswith('echo.') or
+                stripped.startswith('rem ') or stripped == 'echo.'):
+            continue
+        if re.search(r'[가-힯]', stripped):
+            has_korean = True
+        bat_lines.append(stripped)
+    bat_lines.append('exit /b 0')
+
+    if has_korean:
+        TMP_CTX.write_text('\r\n'.join(bat_lines) + '\r\n', encoding='utf-8')
+        try:
+            r = run_cmd(TMP_CTX, timeout=15)
+            errors.extend(collect_errors((r.stdout or '') + (r.stderr or ''),
+                                          target, 'CONTEXT'))
+        except Exception as e:
+            errors.append((target, 'CONTEXT', f'EXEC_ERR: {e}'))
+
+
+TMP_LINE.unlink(missing_ok=True)
+TMP_CTX.unlink(missing_ok=True)
 
 if errors:
-    print(f"=== {len(errors)} broken lines ===")
-    for t, i, s in errors:
-        print(f"{t}:{i}: {s}")
+    print(f"=== {len(errors)} broken pattern(s) ===")
+    for t, loc, s in errors:
+        print(f"  {t}@{loc}: {s}")
     sys.exit(1)
 else:
-    print("=== ALL OK — 전수 검사 통과 ===")
+    print("=== ALL OK — 단독 + 컨텍스트 전수 검사 통과 ===")
     sys.exit(0)

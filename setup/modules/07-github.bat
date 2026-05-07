@@ -70,13 +70,22 @@ goto PAT_READY
 :PAT_GUIDE
 echo.
 echo ============================================================
-echo   해결 방법 ^(둘 중 하나^)
+echo   해결 방법 ^(셋 중 하나^)
 echo ============================================================
 echo   [방법 A] setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_..."
 echo   [방법 B] %INI_FILE% 작성: GITHUB_PAT=ghp_...
+echo   [방법 C] 지금 직접 입력 ^(Enter = SKIP^)
 echo   PAT 발급: https://github.com/settings/tokens
-echo   [SKIP] PAT 없이 계속 — GitHub 자동 repo 생성 비활성화
 echo ============================================================
+set "MANUAL_PAT="
+set /p "MANUAL_PAT=  PAT 입력 (Enter = SKIP): "
+if not "!MANUAL_PAT!"=="" (
+  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!MANUAL_PAT!','User')" >nul 2>&1
+  set "GITHUB_PAT=!MANUAL_PAT!"
+  echo       GITHUB_PAT = saved [OK]
+  goto PAT_READY
+)
+echo       [SKIP] PAT 없이 계속 — GitHub 자동 repo 생성 비활성화
 goto DONE
 
 :PAT_READY
