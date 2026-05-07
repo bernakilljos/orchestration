@@ -29,6 +29,8 @@ AppSupportURL={#MyAppURL}
 ;   setup.exe 가 ...\setup\Output\ 안이면 → 부모 폴더 (orchestration_v1 또는 team)
 ;   외부 (예: Downloads) 면 → 사용자 Documents\OrchestrationKit
 DefaultDirName={code:GetDefaultInstallDir}
+; 사용자가 Browse 로 선택한 폴더에 AppName 자동 추가 금지 — 선택한 폴더 그대로 사용
+AppendDefaultDirName=no
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 Compression=lzma2/max
