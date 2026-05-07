@@ -65,6 +65,7 @@
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/protect-critical-files.sh" },
           { "type": "command", "command": "bash .claude/hooks/check-mojibake.sh", "timeout": 3 },
+          { "type": "command", "command": "bash .claude/hooks/block-korean-removal.sh", "timeout": 3 },
           { "type": "command", "command": "bash plugins/exec_orch/hooks/hook-01-pre-task.sh", "timeout": 3 }
         ]
       },
@@ -106,7 +107,8 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/stop-snapshot.sh Stop" }
+          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/stop-snapshot.sh Stop" },
+          { "type": "command", "command": "python .claude/scripts/audit-bat-lines.py", "timeout": 60, "async": true }
         ]
       }
     ],
@@ -123,7 +125,8 @@
           { "type": "command", "command": "bash plugins/exec_session_guard/hooks/stop-snapshot.sh SessionEnd" },
           { "type": "command", "command": "bash plugins/exec_session_guard/hooks/cleanup-orphans.sh SessionEnd" },
           { "type": "command", "command": "bash plugins/exec_session_guard/hooks/hook-token-log.sh", "timeout": 5 },
-          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/hook-gemini-recap.sh", "timeout": 5, "async": true }
+          { "type": "command", "command": "bash plugins/exec_session_guard/hooks/hook-gemini-recap.sh", "timeout": 5, "async": true },
+          { "type": "command", "command": "python .claude/scripts/audit-all.py", "timeout": 180, "async": true }
         ]
       }
     ]
