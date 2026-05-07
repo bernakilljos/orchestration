@@ -1,7 +1,7 @@
 {
   "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_collab",
-  "display": "협업 MCP 설치 — Slack·Notion·Jira·Trello·Gmail·Google Calendar",
+  "display": "협업 MCP 설치 — Slack·Notion·Jira·Trello·Telegram·Gmail·Google Calendar",
   "prefix": "mcp_",
   "version": "1.0",
   "status": "stable",
@@ -31,26 +31,28 @@
       "notion",
       "jira",
       "trello",
+      "telegram",
       "gmail",
       "calendar",
       "oauth"
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-04-23",
+    "updated": "2026-05-07",
     "precedence": 10,
-    "token_estimate": 2800,
+    "token_estimate": 3000,
     "triggers": [
       "Slack MCP",
       "Notion MCP",
       "Jira MCP",
       "Trello MCP",
+      "Telegram 알림",
       "Gmail 자동화",
       "Google Calendar",
       "협업 도구 설치",
       "채팅 도구 연결",
       "프로젝트 관리 MCP"
     ],
-    "note": "2026-04-23: npm 검증 완료. @sigmacomputing/slack-mcp-server (공식 deprecated 대체), @notionhq/notion-mcp-server (공식), @rui.branco/jira-mcp (권장), trello-mcp (권장). Gmail/Calendar는 claude.ai 내장."
+    "note": "2026-05-07: Telegram(telegram-bot-mcp-server) 추가. 기존 검증 유지 — @sigmacomputing/slack-mcp-server, @notionhq/notion-mcp-server, @rui.branco/jira-mcp, trello-mcp. Gmail/Calendar는 claude.ai 내장."
   }
 }

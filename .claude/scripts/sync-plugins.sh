@@ -63,6 +63,12 @@ declare -A RENAME_MAP=(
   ["mcp_social/commands/status.md"]="mcp_social-status.md"
   ["mcp_social/commands/auth.md"]="mcp_social-auth.md"
   ["mcp_queue/commands/install.md"]="mcp_queue-install.md"
+  ["exec_remote/commands/setup.md"]="exec_remote-setup.md"
+  ["exec_remote/commands/ssh.md"]="exec_remote-ssh.md"
+  ["exec_remote/commands/deploy.md"]="exec_remote-deploy.md"
+  ["exec_remote/commands/mobile.md"]="exec_remote-mobile.md"
+  ["exec_remote/commands/tmux.md"]="exec_remote-tmux.md"
+  ["exec_remote/commands/status.md"]="exec_remote-status.md"
 )
 
 # target_name → plugins/ 원본 경로 역맵 (orphan 탐지용)

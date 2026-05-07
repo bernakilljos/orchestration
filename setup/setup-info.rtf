@@ -1,22 +1,42 @@
 {\rtf1\ansi\deff0
 {\fonttbl{\f0\fswiss\fcharset0 Segoe UI;}}
-{\colortbl;\red0\green0\blue0;\red0\green100\blue200;\red100\green100\blue100;}
-\viewkind4\uc1\pard\cf2\b\f0\fs28 Orchestration Kit v1\b0\cf1\fs20\par
+{\colortbl;\red0\green0\blue0;\red0\green100\blue200;\red100\green100\blue100;\red180\green0\blue0;}
+\viewkind4\uc1\pard\cf2\b\f0\fs28 Orchestration Kit v1.1\b0\cf1\fs20\par
 \par
-\b What gets installed:\b0\par
+\b 설치 모드 (Edition)\b0\par
+\pard\li360\bullet  \b v1 (main)\b0  - 개인 사용자 (PAT 가 docs/ini/github.ini 에 이미 있음 \endash  PAT 입력 페이지 자동 SKIP)\par
+\bullet  \b team\b0  - 팀 신규 멤버 (ini 없음 \endash  마법사가 PAT 직접 입력 받음)\par
+\pard\cf3\i 같은 setup.exe \endash  ini 존재 여부로 자동 분기 (HasExistingPat).\i0\cf1\par
 \par
-\pard\li360\bullet  \b .claude/\b0  - AI orchestration framework (agents, skills, hooks, scripts)\par
-\bullet  \b CLAUDE.md\b0  - Master instruction file for Claude\par
-\bullet  \b Global commands\b0  - codex-a, gemini-a, codex-auto, gemini-auto\par
-\bullet  \b Services\b0  - status-push, remote-agent (auto-start at login)\par
-\bullet  \b Prerequisites\b0  - Node.js, Claude Code, Cloudflared (if missing)\par
-\bullet  \b Git/GitHub\b0  - Repository initialization\par
-\bullet  \b Claude plugins\b0  - claude-md-management, code-review, commit-commands\par
+\b 설치 항목:\b0\par
+\par
+\pard\li360\bullet  \b .claude/\b0  - AI 오케스트레이션 프레임워크 (agents, skills, hooks, scripts)\par
+\bullet  \b CLAUDE.md\b0  - Claude 마스터 지시문\par
+\bullet  \b plugins/\b0  - 15개 stable + 7개 spec-only (exec_remote 신규 \endash  4주차 원격 운영)\par
+\bullet  \b 글로벌 명령어\b0  - codex-a, gemini-a, codex-auto, gemini-auto\par
+\bullet  \b 서비스\b0  - status-push, remote-agent (로그인 시 자동 시작)\par
+\bullet  \b 필수 도구\b0  - Node.js, Claude Code, Cloudflared (없으면 설치)\par
+\bullet  \b Git/GitHub\b0  - 저장소 초기화 + PAT 등록\par
+\bullet  \b Claude 플러그인\b0  - claude-md-management, code-review, commit-commands, superpowers\par
 \pard\par
-\b Requirements:\b0\par
+\b 컴포넌트 모드 (마법사 라디오 버튼):\b0\par
+\pard\li360\bullet  Full Orchestration \endash  Claude + Codex + Gemini (추천)\par
+\bullet  Codex 단독 \endash  Claude 없이\par
+\bullet  Gemini 단독 \endash  Claude 없이\par
+\bullet  사용자 지정 \endash  세부 컴포넌트 직접 선택\par
+\pard\par
+\b 요구 사항:\b0\par
 \pard\li360\bullet  Windows 10/11\par
-\bullet  Internet connection\par
-\bullet  API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY)\par
+\bullet  인터넷 연결\par
+\bullet  API 키 (ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY)\par
+\bullet  관리자 권한 (Defender 예외, 글로벌 명령어 등록)\par
 \pard\par
-\cf3\i Choose the installation directory = your project folder.\i0\cf1\par
+\b 설치 후 다음 단계:\b0\par
+\pard\li360\bullet  \b 4주차\b0  \endash  /exec_remote-setup (VPS 24/7 원격 운영, Oracle Free 우선)\par
+\bullet  \b 3주차 알림\b0  \endash  /mcp_collab-install (Telegram \endash  Bot Token 필요)\par
+\bullet  \b 1\endash 2주차\b0  \endash  CLAUDE.md \endash  자동 처리 (Gmail/Calendar 는 claude.ai 내장)\par
+\pard\par
+\cf4\i \b 보안:\b0  PAT \endash  팀 모드에서 마법사 입력 시 docs/ini/github.ini 에 저장됨 (gitignore). 절대 git commit 금지.\i0\cf1\par
+\par
+\cf3\i 설치 폴더 = 프로젝트 폴더 (기본: %USERPROFILE%\\pjt). Browse 로 변경 가능.\i0\cf1\par
 }

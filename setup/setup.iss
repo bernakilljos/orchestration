@@ -12,10 +12,19 @@
 ;   ○ Codex 단독 (Claude 없이)
 ;   ○ Gemini 단독 (Claude 없이)
 ;   ○ 사용자 지정
+;
+; ==== Edition 분기 (v1 vs team) ====
+;   v1 (main)  — docs/ini/github.ini 에 PAT 이미 있음 → PAT 입력 페이지 자동 SKIP
+;   team       — ini 없거나 placeholder        → 마법사 입력 받아 ini 생성
+;   분기 함수: HasExistingPat() (Pascal Script § Code)
+;
+; ==== Versioning ====
+;   1.0  — 초기 14 stable + 7 spec-only
+;   1.1  — exec_remote (4주차 VPS) 추가, mcp_collab 에 Telegram 통합 (2026-05-07)
 ; =====================================================
 
 #define MyAppName "Orchestration Kit"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "Multi-AI Orchestration"
 #define MyAppURL "https://github.com/bernakilljos/orchestration"
 

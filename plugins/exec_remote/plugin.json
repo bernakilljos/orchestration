@@ -1,0 +1,57 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "exec_remote",
+  "display": "원격 24/7 운영 — VPS·SSH·tmux·모바일 (Oracle Free 우선)",
+  "prefix": "exec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 0,
+  "commands": "commands/",
+  "skills": "skills/",
+  "agents": "agents/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": [
+      "VPS_HOST",
+      "VPS_USER",
+      "VPS_SSH_KEY"
+    ]
+  },
+  "entry_points": {
+    "default_command": "setup",
+    "core_skills": [
+      "cloud-provider-select",
+      "ssh-hardening",
+      "tmux-workflow"
+    ]
+  },
+  "metadata": {
+    "category": "실행/인프라",
+    "tags": [
+      "exec",
+      "vps",
+      "ssh",
+      "tmux",
+      "oracle-cloud",
+      "mobile"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-05-07",
+    "updated": "2026-05-07",
+    "precedence": 2,
+    "token_estimate": 4200,
+    "triggers": [
+      "VPS",
+      "원격",
+      "SSH",
+      "tmux",
+      "Oracle Cloud",
+      "스마트폰 제어",
+      "24시간"
+    ]
+  }
+}

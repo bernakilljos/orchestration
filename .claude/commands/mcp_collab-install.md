@@ -1,5 +1,5 @@
 ---
-description: "협업 MCP 설치 (Slack·Notion·Jira·Trello + 내장 Gmail·Calendar) — 2026-04 npm 검증"
+description: "협업 MCP 설치 (Slack·Notion·Jira·Trello·Telegram + 내장 Gmail·Calendar) — 2026-05 npm 검증"
 allowed-tools: Bash(claude:*), Bash(npm:*)
 ---
 
@@ -9,7 +9,7 @@ allowed-tools: Bash(claude:*), Bash(npm:*)
 
 ## Your task
 
-아래 4개 협업 MCP를 설치합니다. 각각 OAuth 토큰 필요.
+아래 5개 협업 MCP를 설치합니다. 각각 토큰 필요.
 
 ### 1. Slack — @sigmacomputing/slack-mcp-server (권장)
 
@@ -100,18 +100,56 @@ claude mcp add trello -s user \
   -- npx -y trello-mcp
 ```
 
+### 5. Telegram — telegram-bot-mcp-server v1.0.0 (Bot API · 알림용)
+
+**왜 Bot API?**: 알림·메시지 전송이 주 목적이면 Bot 이 가장 단순. MTProto(`mcp-telegram`·`telegram-mcp-server`)는 phone 인증·세션 키 필요 → 알림 자동화엔 과함.
+
+**준비**:
+```bash
+# 1. Telegram 앱에서 @BotFather 검색 → /newbot → 이름·username 입력
+# 2. 출력된 토큰 복사 (예: 7820123456:AAH...) → TELEGRAM_BOT_TOKEN 설정
+# 3. 봇과 1:1 채팅 시작 후 아무 메시지 → /start
+# 4. 다음 URL 로 chat_id 확인:
+#    https://api.telegram.org/bot<TOKEN>/getUpdates
+#    → "chat":{"id": 123456789, ...} 의 id 복사 → TELEGRAM_CHAT_ID
+```
+
+**설치 (Windows / 모든 OS 공통, npx 래퍼)**:
+```bash
+export TELEGRAM_BOT_TOKEN="7820123456:AAH..."
+export TELEGRAM_CHAT_ID="123456789"
+
+# Windows 는 cmd /c 래퍼 권장
+claude mcp add telegram -s user \
+  --env TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN \
+  --env TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID \
+  -- npx -y telegram-bot-mcp-server
+```
+
+**3주차 활용 예 — 작업 완료 알림**:
+```bash
+# Claude 가 task 끝날 때 자동 알림 (.claude/hooks/SessionEnd.sh 참조)
+# Hook 안에서 MCP 호출하거나, scripts/notify-telegram.sh 로 직접 curl 도 가능
+curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+  -d chat_id="${TELEGRAM_CHAT_ID}" \
+  -d text="✅ Claude task 완료: $(date)"
+```
+
+> **보안 주의**: 토큰이 채팅을 보낼 수 있는 모든 권한을 가짐 → `.env` (gitignore)에만 저장. `docs/ini/telegram.ini` 도 가능.
+
 ## 설치 확인
 
 ```bash
-claude mcp list | grep -E "slack|notion|jira|trello"
+claude mcp list | grep -E "slack|notion|jira|trello|telegram"
 ```
 
 기대 결과:
 ```
-slack   @sigmacomputing/slack-mcp-server
-notion  @notionhq/notion-mcp-server
-jira    @rui.branco/jira-mcp
-trello  trello-mcp
+slack    @sigmacomputing/slack-mcp-server
+notion   @notionhq/notion-mcp-server
+jira     @rui.branco/jira-mcp
+trello   trello-mcp
+telegram telegram-bot-mcp-server
 ```
 
 ## 미지원 (또는 대체 경로)
