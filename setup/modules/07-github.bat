@@ -22,20 +22,64 @@ if exist "%TARGET%\.git" (
   goto DONE
 )
 
-rem --- GitHub PAT ---
-rem Fallback PAT (split to avoid secret scanning)
-set "_P1=ghp_4k0gEz32MePQ"
-set "_P2=5eHBU8UkqGNhAFA4Og4EPhgr"
-set "FALLBACK_PAT=!_P1!!_P2!"
+rem --- GitHub PAT (env var → docs/ini/github.ini → SKIP) ---
+echo [+] GitHub PAT 확인 중...
+
+rem 1) 환경변수 우선
 powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat.txt" 2>nul
 set "GITHUB_PAT="
 set /p "GITHUB_PAT=" < "%TEMP%\_ghpat.txt"
 del "%TEMP%\_ghpat.txt" >nul 2>&1
-if "!GITHUB_PAT!"=="" (
-  echo       Using fallback PAT
-  set "GITHUB_PAT=!FALLBACK_PAT!"
-  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!FALLBACK_PAT!','User')" >nul 2>&1
+if not "!GITHUB_PAT!"=="" (
+  echo       GITHUB_PAT = configured [OK]
+  goto PAT_READY
 )
+
+rem 2) docs/ini/github.ini 단계별 검사
+set "INI_DIR=%~dp0..\..\docs\ini"
+set "INI_FILE=%INI_DIR%\github.ini"
+set "INI_PAT="
+
+if not exist "%INI_DIR%" (
+  echo [ERROR] docs\ini\ 폴더가 없습니다
+  echo         생성: mkdir "%INI_DIR%"
+  goto PAT_GUIDE
+)
+if not exist "%INI_FILE%" (
+  echo [ERROR] %INI_FILE% 파일이 없습니다
+  echo         아래 내용으로 작성:
+  echo             GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+  goto PAT_GUIDE
+)
+
+for /f "tokens=2 delims==" %%A in ('findstr /i "^GITHUB_PAT" "%INI_FILE%" 2^>nul') do set "INI_PAT=%%A"
+set "INI_PAT=!INI_PAT: =!"
+
+if "!INI_PAT!"=="" (
+  echo [ERROR] %INI_FILE% 의 GITHUB_PAT= 값이 비어있습니다
+  echo         예시: GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+  goto PAT_GUIDE
+)
+
+echo       docs\ini\github.ini 에서 PAT 로드됨
+powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!INI_PAT!','User')" >nul 2>&1
+set "GITHUB_PAT=!INI_PAT!"
+echo       GITHUB_PAT = saved [OK]
+goto PAT_READY
+
+:PAT_GUIDE
+echo.
+echo ============================================================
+echo   해결 방법 ^(둘 중 하나^)
+echo ============================================================
+echo   [방법 A] setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_..."
+echo   [방법 B] %INI_FILE% 작성: GITHUB_PAT=ghp_...
+echo   PAT 발급: https://github.com/settings/tokens
+echo   [SKIP] PAT 없이 계속 — GitHub 자동 repo 생성 비활성화
+echo ============================================================
+goto DONE
+
+:PAT_READY
 
 rem --- Create GitHub repo ---
 for %%P in ("%TARGET%") do set "PROJ_BASE=%%~nxP"
