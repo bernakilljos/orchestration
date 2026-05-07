@@ -25,10 +25,11 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
-; DefaultDirName 동적: setup.exe 위치 기반
-;   setup.exe 가 ...\setup\Output\ 안이면 → 부모 폴더 (orchestration_v1 또는 team)
-;   외부 (예: Downloads) 면 → 사용자 Documents\OrchestrationKit
-DefaultDirName={code:GetDefaultInstallDir}
+; 기본값: 현재 사용자의 프로필 아래 pjt 폴더 ({userprofile} 동적 — 하드코딩 X)
+;   예) ja205 PC → C:\Users\ja205\pjt
+;       다른 사용자 → C:\Users\<해당사용자>\pjt
+; Browse 로 다른 폴더 선택 시 그 폴더 그대로 사용 (AppendDefaultDirName=no)
+DefaultDirName={%USERPROFILE}\pjt
 ; 사용자가 Browse 로 선택한 폴더에 AppName 자동 추가 금지 — 선택한 폴더 그대로 사용
 AppendDefaultDirName=no
 DefaultGroupName={#MyAppName}
@@ -201,20 +202,6 @@ end;
 function NotClaudeOrch: Boolean;
 begin
   Result := not WizardIsComponentSelected('claude_orch');
-end;
-
-// DefaultDirName 동적 결정
-function GetDefaultInstallDir(Param: string): string;
-var
-  SrcPath: string;
-begin
-  SrcPath := ExpandConstant('{src}');
-  // setup.exe 가 ...\setup\Output\ 안에 있으면 부모 폴더 사용
-  if (Pos('\setup\Output', SrcPath) > 0) or (Pos('/setup/Output', SrcPath) > 0) then
-    Result := ExpandConstant('{src}\..\..')
-  else
-    // 외부 (예: Downloads) — 사용자 Documents 아래
-    Result := ExpandConstant('{userdocs}\OrchestrationKit');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
