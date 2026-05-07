@@ -209,25 +209,30 @@ set "INI_VALID=0"
 if exist "%TARGET%\docs\ini\github.ini" (
   for /f "tokens=2 delims==" %%A in ('findstr /i "^GITHUB_PAT" "%TARGET%\docs\ini\github.ini" 2^>nul') do (
     set "_PAT=%%A"
-    setlocal enabledelayedexpansion
-    if not "!_PAT: =!"=="" if not "!_PAT: =!"=="ghp_YOUR_TOKEN_HERE" set "INI_VALID=1"
-    endlocal
+    call :_check_pat
   )
 )
-if "!INI_VALID!"=="0" (
-  (
-    echo # GitHub Personal Access Token
-    echo # - install/setup 에서 git commit/push 시 사용
-    echo # - PAT 발급: https://github.com/settings/tokens ^(scope: repo + workflow^)
-    echo.
-    echo GITHUB_PAT=ghp_YOUR_TOKEN_HERE
-  ) > "%TARGET%\docs\ini\github.ini"
+if "!INI_VALID!"=="1" goto _INI_OK
+(
+  echo # GitHub Personal Access Token
+  echo # - install/setup 에서 git commit/push 시 사용
+  echo # - PAT 발급: https://github.com/settings/tokens ^(scope: repo + workflow^)
   echo.
-  echo       [!] docs\ini\github.ini 생성됨 — GITHUB_PAT 에 본인 토큰 입력하세요
-  echo           ^(파일 열어서 ghp_YOUR_TOKEN_HERE 부분 교체^)
-) else (
-  echo       [OK] docs\ini\github.ini PAT 설정됨
-)
+  echo GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+) > "%TARGET%\docs\ini\github.ini"
+echo.
+echo       [!] docs\ini\github.ini 생성됨 — GITHUB_PAT 에 본인 토큰 입력하세요
+echo           ^(파일 열어서 ghp_YOUR_TOKEN_HERE 부분 교체^)
+goto _INI_DONE
+:_check_pat
+set "_PAT_TRIM=!_PAT: =!"
+if "!_PAT_TRIM!"=="" exit /b
+if "!_PAT_TRIM!"=="ghp_YOUR_TOKEN_HERE" exit /b
+set "INI_VALID=1"
+exit /b
+:_INI_OK
+echo       [OK] docs\ini\github.ini PAT 설정됨
+:_INI_DONE
 
 echo       Done
 

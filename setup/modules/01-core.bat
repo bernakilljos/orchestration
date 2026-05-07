@@ -102,20 +102,21 @@ rem github.ini 없거나 비어있으면 placeholder + PAT 입력 안내
 set "INI_VALID=0"
 if exist "%TARGET%\docs\ini\github.ini" (
   for /f "tokens=2 delims==" %%A in ('findstr /i "^GITHUB_PAT" "%TARGET%\docs\ini\github.ini" 2^>nul') do (
-    set "_PAT=%%A"
-    if not "!_PAT: =!"=="" if not "!_PAT: =!"=="ghp_YOUR_TOKEN_HERE" set "INI_VALID=1"
+    set "_PAT_M01=%%A"
+    set "_PAT_TRIM=!_PAT_M01: =!"
+    if not "!_PAT_TRIM!"=="" if not "!_PAT_TRIM!"=="ghp_YOUR_TOKEN_HERE" set "INI_VALID=1"
   )
 )
-if "!INI_VALID!"=="0" (
-  (
-    echo # GitHub Personal Access Token
-    echo # - install/setup 에서 git commit/push 시 사용
-    echo # - PAT 발급: https://github.com/settings/tokens ^(scope: repo + workflow^)
-    echo.
-    echo GITHUB_PAT=ghp_YOUR_TOKEN_HERE
-  ) > "%TARGET%\docs\ini\github.ini"
-  echo       [!] docs\ini\github.ini 생성됨 — GITHUB_PAT 에 본인 토큰 입력하세요
-)
+if "!INI_VALID!"=="1" goto _INI_M01_DONE
+(
+  echo # GitHub Personal Access Token
+  echo # - install/setup 에서 git commit/push 시 사용
+  echo # - PAT 발급: https://github.com/settings/tokens ^(scope: repo + workflow^)
+  echo.
+  echo GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+) > "%TARGET%\docs\ini\github.ini"
+echo       [!] docs\ini\github.ini 생성됨 — GITHUB_PAT 에 본인 토큰 입력하세요
+:_INI_M01_DONE
 rem Copy sample files
 for %%P in (context\rules.md context\project.md templates\prd-template.md templates\api-template.md templates\screen-template.md outputs\result-sample.md) do (
   if exist "%SCRIPT_DIR%%%P" if not exist "%TARGET%\%%P" copy /Y "%SCRIPT_DIR%%%P" "%TARGET%\%%P" >nul 2>&1
