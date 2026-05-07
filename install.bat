@@ -493,10 +493,9 @@ echo       Done ^(MAX_THINKING=10000, AUTOCOMPACT=50%%, SUBAGENT=haiku^)
 echo [CHECKPOINT 1/3] %TIME% >> "!LOGFILE!"
 echo.
 echo ============================================================
-echo   [체크포인트 1/3] 기본 설치 완료
-echo   계속하려면 아무 키나 누르세요...
+echo   [체크포인트 1/3] 기본 설치 완료 — 3초 후 계속
 echo ============================================================
-pause >nul
+timeout /t 3 /nobreak >nul 2>&1
 
 rem --- Install Claude plugins ---
 echo [+] Installing Claude plugins...
@@ -659,10 +658,9 @@ if "!GITHUB_PAT!"=="" (
 echo [CHECKPOINT 2/3] %TIME% >> "!LOGFILE!"
 echo.
 echo ============================================================
-echo   [체크포인트 2/3] 플러그인/MCP/설정 완료
-echo   계속하려면 아무 키나 누르세요...
+echo   [체크포인트 2/3] 플러그인/MCP/설정 완료 — 3초 후 계속
 echo ============================================================
-pause >nul
+timeout /t 3 /nobreak >nul 2>&1
 
 rem -----------------------------------------
 rem GitHub 프로젝트 생성 + Git 초기화
@@ -753,8 +751,8 @@ echo ============================================================
 where npm >nul 2>&1
 if not errorlevel 1 goto CHECK_CODEX
 echo Node.js not found.
-set /p "INSTALL_NODE=Node.js 설치? [Y/N] (기본:Y, 엔터=Y): "
-if /i "!INSTALL_NODE!"=="N" goto SKIP_NPM
+choice /c YN /n /m "Node.js 설치? [Y/N] (5초 후 자동 Y): " /t 5 /d Y
+if errorlevel 2 goto SKIP_NPM
 where winget >nul 2>&1
 if errorlevel 1 (
   echo [WARN] winget not found - install manually: https://nodejs.org
@@ -780,8 +778,8 @@ if not errorlevel 1 (
   echo [OK] codex already installed
   goto CHECK_GEMINI
 )
-set /p "INSTALL_CODEX=@openai/codex 설치? [Y/N] (기본:Y, 엔터=Y): "
-if /i "!INSTALL_CODEX!"=="N" goto CHECK_GEMINI
+choice /c YN /n /m "@openai/codex 설치? [Y/N] (5초 후 자동 Y): " /t 5 /d Y
+if errorlevel 2 goto CHECK_GEMINI
 echo [+] Installing @openai/codex...
 call npm install -g @openai/codex
 
@@ -791,8 +789,8 @@ if not errorlevel 1 (
   echo [OK] gemini already installed
   goto SKIP_NPM
 )
-set /p "INSTALL_GEMINI=@google/gemini-cli 설치? [Y/N] (기본:Y, 엔터=Y): "
-if /i "!INSTALL_GEMINI!"=="N" goto SKIP_NPM
+choice /c YN /n /m "@google/gemini-cli 설치? [Y/N] (5초 후 자동 Y): " /t 5 /d Y
+if errorlevel 2 goto SKIP_NPM
 echo [+] Installing @google/gemini-cli...
 call npm install -g @google/gemini-cli
 
