@@ -570,6 +570,10 @@ echo [+] GitHub PAT 확인 중...
 set "FALLBACK_PAT="
 set "GITHUB_PAT="
 
+rem INI 경로 (PAT_GUIDE 메시지에서 사용 — TEAM mode 일 때도 표시)
+set "INI_DIR=%~dp0docs\ini"
+set "INI_FILE=%INI_DIR%\github.ini"
+
 rem TEAM mode auto-detect (orchestration_v1_team folder)
 rem In team mode, skip env var, force user to input own PAT
 set "TEAM_MODE=0"
@@ -600,8 +604,7 @@ rem TEAM 모드면 ini fallback skip — 무조건 PAT 입력 prompt
 if "!TEAM_MODE!"=="1" goto PAT_GUIDE
 
 rem 2) docs/ini/github.ini 에서 읽기 (로컬 전용, gitignore)
-set "INI_DIR=%~dp0docs\ini"
-set "INI_FILE=%INI_DIR%\github.ini"
+rem (INI_DIR/INI_FILE 은 위에서 이미 set)
 set "INI_PAT="
 
 if not exist "%INI_DIR%" (
