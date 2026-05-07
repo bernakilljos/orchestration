@@ -48,10 +48,13 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
     powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_SRC' -Recurse -Include '*.bat' -ErrorAction SilentlyContinue | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$n = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; if (\$c -ne \$n) { [IO.File]::WriteAllText(\$_.FullName, \$n, (New-Object System.Text.UTF8Encoding \$false)) } }" >/dev/null 2>&1 || true
   fi
 
-  # 2) robocopy /MIR /IS /IT — size/timestamp 같아도 강제 복사 (.claude / plugins 등)
+  # 2) robocopy /MIR /IS /IT — cmd 환경변수 전달 (backslash escape 안전)
   for sub in .claude .claude-plugin plugins; do
-    [ -d "$SOURCE/$sub" ] && \
-      "$ROBO" "$SOURCE/$sub" "$TARGET/$sub" /MIR /IS /IT /XD .git node_modules state tasks/locks tasks/done context-cache /XF "*.pptx" "*.png" /NFL /NDL /NJH /NJS /NP > /dev/null 2>&1 || true
+    if [ -d "$SOURCE/$sub" ]; then
+      SRC_WIN=$(cygpath -w "$SOURCE/$sub" 2>/dev/null || echo "$SOURCE/$sub")
+      DST_WIN=$(cygpath -w "$TARGET/$sub" 2>/dev/null || echo "$TARGET/$sub")
+      RC_SRC="$SRC_WIN" RC_DST="$DST_WIN" cmd //c "robocopy %RC_SRC% %RC_DST% /MIR /IS /IT /XD .git node_modules state context-cache locks done /XF *.pptx *.png /NFL /NDL /NJH /NJS /NP" > /dev/null 2>&1 || true
+    fi
   done
 
   # 2-1) setup 폴더는 robocopy 가 timestamp 비교로 skip 하는 경우 발생 → 개별 파일 강제 cp
