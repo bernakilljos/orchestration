@@ -65,7 +65,7 @@
         "hooks": [
           { "type": "command", "command": "bash .claude/hooks/protect-critical-files.sh" },
           { "type": "command", "command": "bash .claude/hooks/check-mojibake.sh", "timeout": 3 },
-          { "type": "command", "command": "bash .claude/hooks/block-korean-removal.sh", "timeout": 3 },
+          { "type": "command", "command": "bash .claude/hooks/block-tricks.sh", "timeout": 3 },
           { "type": "command", "command": "bash plugins/exec_orch/hooks/hook-01-pre-task.sh", "timeout": 3 }
         ]
       },
