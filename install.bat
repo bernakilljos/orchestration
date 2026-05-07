@@ -560,17 +560,28 @@ if not "!INI_PAT!"=="" (
   goto SKIP_GITHUB_PAT
 )
 
-rem 3) 수동 입력
-echo [INFO] GitHub PAT가 없습니다.
-echo        docs\ini\github.ini 의 GITHUB_PAT= 에 입력하거나 직접 입력하세요.
-set /p "MANUAL_PAT=  PAT 입력 (없으면 Enter): "
-if not "!MANUAL_PAT!"=="" (
-  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!MANUAL_PAT!','User')" >nul 2>&1
-  set "GITHUB_PAT=!MANUAL_PAT!"
-  echo       GITHUB_PAT = saved [OK]
-) else (
-  echo [WARN] PAT 없음 - GitHub 기능 제한됨
-)
+rem 3) PAT 없음 - 안내만 출력 (수동 입력 X)
+echo.
+echo ============================================================
+echo   [WARN] GitHub PAT 가 없습니다
+echo ============================================================
+echo.
+echo   다음 중 하나를 수행한 후 install.bat 재실행하세요:
+echo.
+echo   [방법 A] 환경변수 ^(권장 — 한 번만 설정^):
+echo       setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_YOUR_TOKEN_HERE"
+echo.
+echo   [방법 B] 파일 생성 ^(이 프로젝트 전용^):
+echo       1. %~dp0docs\ini\ 폴더 생성
+echo       2. %~dp0docs\ini\github.ini 파일 작성:
+echo            GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+echo.
+echo   PAT 발급: https://github.com/settings/tokens
+echo            ^(scope: repo + workflow^)
+echo.
+echo   [SKIP] PAT 없이 계속 진행 — GitHub 자동 push/repo 생성 비활성화
+echo ============================================================
+echo.
 
 :SKIP_GITHUB_PAT
 if "!GITHUB_PAT!"=="" (
