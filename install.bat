@@ -570,6 +570,15 @@ echo [+] GitHub PAT 확인 중...
 set "FALLBACK_PAT="
 set "GITHUB_PAT="
 
+rem TEAM mode auto-detect (orchestration_v1_team folder)
+rem In team mode, skip env var, force user to input own PAT
+set "TEAM_MODE=0"
+echo %~dp0 | findstr /i "orchestration_v1_team" >nul && set "TEAM_MODE=1"
+if "!TEAM_MODE!"=="1" (
+  echo       [TEAM mode] env var skip - input own PAT
+  goto _PAT_FROM_INI_OR_INPUT
+)
+
 rem 1) User 환경변수에 저장된 PAT 확인
 powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat_saved.txt" 2>nul
 set "SAVED_PAT="
@@ -585,6 +594,10 @@ if not "!SAVED_PAT!"=="" (
   )
   echo [WARN] 저장된 PAT 가 유효하지 않습니다.
 )
+
+:_PAT_FROM_INI_OR_INPUT
+rem TEAM 모드면 ini fallback skip — 무조건 PAT 입력 prompt
+if "!TEAM_MODE!"=="1" goto PAT_GUIDE
 
 rem 2) docs/ini/github.ini 에서 읽기 (로컬 전용, gitignore)
 set "INI_DIR=%~dp0docs\ini"
