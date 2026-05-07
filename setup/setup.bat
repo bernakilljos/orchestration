@@ -4,15 +4,35 @@ rem =====================================================
 rem setup.bat - Orchestration Kit Modular Installer
 rem
 rem Usage:
-rem   setup.bat [path]                     Full (Claude+Codex+Gemini, default)
-rem   setup.bat full   [path]              Same as above
-rem   setup.bat codex  [path]              Codex 단독 (Claude 없이)
-rem   setup.bat gemini [path]              Gemini 단독 (Claude 없이)
-rem   setup.bat anl    [path]              Full + 소스 분석
-rem   setup.bat full anl [path]            Full + 소스 분석 (명시)
+rem   setup.bat                             GUI 마법사 자동 실행 (있을 때)
+rem   setup.bat --console [path]            콘솔 모드 강제 (GUI 무시)
+rem   setup.bat full   [path]               Full 콘솔 (Claude+Codex+Gemini)
+rem   setup.bat codex  [path]               Codex 단독 (Claude 없이)
+rem   setup.bat gemini [path]               Gemini 단독 (Claude 없이)
+rem   setup.bat anl    [path]               Full + 소스 분석
 rem
 rem Can also be called from setup.exe (Inno Setup)
 rem =====================================================
+
+rem --- GUI 자동 호출: 빌드된 setup.exe 가 있고 --console 아니면 GUI 마법사 띄움 ---
+if /i "%~1"=="--console" (
+  shift
+  goto SKIP_GUI
+)
+if /i "%~1"=="full" goto SKIP_GUI
+if /i "%~1"=="codex" goto SKIP_GUI
+if /i "%~1"=="gemini" goto SKIP_GUI
+if /i "%~1"=="anl" goto SKIP_GUI
+
+if exist "%~dp0Output\OrchestrationKit-Setup.exe" (
+  echo.
+  echo [+] GUI 마법사 실행 중...
+  echo     ^(콘솔 모드 강제: setup --console^)
+  start "" "%~dp0Output\OrchestrationKit-Setup.exe"
+  exit /b 0
+)
+
+:SKIP_GUI
 
 rem --- Uninstall old npm Claude Code (only for full mode) ---
 where volta >nul 2>&1

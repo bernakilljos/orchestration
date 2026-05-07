@@ -81,3 +81,5 @@ claude-talk-to-figma-mcp/
 ~$*.pptx
 ~$*.docx
 ~$*.xlsx
+# Setup 자동 backup (Module 01 이 기존 .claude 백업할 때 생성)
+.claude_backup_*/
