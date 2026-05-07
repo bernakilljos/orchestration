@@ -225,14 +225,14 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
     if claude_md.exists():
         try:
             content = claude_md.read_text(encoding="utf-8")
-            sections.append(("CLAUDE.md", content, priority=1))
+            sections.append(("CLAUDE.md", content, 1))
         except Exception:
             pass
 
     # 2. README.md (축소)
     readme = root_path / "README.md"
     if readme.exists():
-        sections.append(("README.md", reduce_markdown(str(readme), max_chars=3000), priority=2))
+        sections.append(("README.md", reduce_markdown(str(readme), max_chars=3000), 2))
 
     # 3. .claude/rules/*.md (전체)
     rules_dir = root_path / ".claude" / "rules"
@@ -240,7 +240,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
         for rule_file in sorted(rules_dir.glob("*.md")):
             try:
                 content = rule_file.read_text(encoding="utf-8")
-                sections.append((f"rules/{rule_file.name}", content, priority=3))
+                sections.append((f"rules/{rule_file.name}", content, 3))
             except Exception:
                 pass
 
@@ -265,7 +265,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
                 except Exception:
                     pass
         if plugin_summary != "# Plugin Summary\n\n":
-            sections.append(("plugins/summary", plugin_summary, priority=4))
+            sections.append(("plugins/summary", plugin_summary, 4))
 
     # 5. docs/architecture-patterns.md (축소)
     arch_patterns = root_path / "docs" / "architecture-patterns.md"
@@ -274,7 +274,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
             (
                 "architecture-patterns.md",
                 reduce_markdown(str(arch_patterns), max_chars=4000),
-                priority=5,
+                5,
             )
         )
 
