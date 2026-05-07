@@ -62,8 +62,8 @@ Desktop.ini
 .DS_Store
 \!_TMPRUN!
 
-# 로컬 전용 설정 (사용자가 명시적으로 docs/ini/ 커밋 허용)
-# docs/ini/  ← 사용자 지시로 ignore 해제됨 (2026-05-07)
+# 로컬 전용 설정 (PAT 등 시크릿 — GitHub push protection 으로 commit 불가)
+docs/ini/
 
 # PC별 권한·경로 설정 (사용자명·작업폴더 차이로 다른 PC에서 안 맞음)
 .claude/settings.local.json
