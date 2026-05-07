@@ -25,7 +25,9 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
-DefaultDirName=C:\work\new_project
+; setup.exe 의 부모의 부모 폴더 = orchestration_v1 또는 orchestration_v1_team
+; (setup.exe 위치: {src}\setup\Output\setup.exe → {src}\..\.. 가 본체)
+DefaultDirName={src}\..\..
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 Compression=lzma2/max
@@ -39,7 +41,7 @@ WizardSizePercent=120
 Uninstallable=yes
 UninstallDisplayName={#MyAppName}
 AllowNoIcons=yes
-DisableDirPage=no
+DisableDirPage=auto
 InfoBeforeFile=setup-info.rtf
 
 [Languages]
