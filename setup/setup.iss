@@ -144,6 +144,7 @@ Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\06-prereqs.bat"""; Stat
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\07-github.bat"" ""{app}"""; StatusMsg: "Git / GitHub 설정..."; Components: github; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\08-plugins.bat"" ""{app}"" ""{app}\"""; StatusMsg: "Claude 플러그인 설치..."; Components: plugins; Flags: runhidden waituntilterminated
 Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\11-media-enhance.bat"" ""{app}"""; StatusMsg: "미디어 의존성 설치..."; Components: mediaenhance; Flags: runhidden waituntilterminated
+Filename: "{cmd}"; Parameters: "/c ""{tmp}\setup-modules\14-mcp-figma.bat"""; StatusMsg: "ClaudeTalkToFigma MCP 등록..."; Components: claude_orch; Flags: runhidden waituntilterminated
 
 ; --- Codex standalone (codex_env 선택 + claude_orch 미선택 시) ---
 Filename: "{cmd}"; Parameters: "/c ""{app}\install_codex.bat"" ""{app}"""; StatusMsg: "Codex Standalone 환경 구성..."; Components: codex_env; Check: NotClaudeOrch; Flags: runhidden waituntilterminated

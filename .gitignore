@@ -65,6 +65,15 @@ Desktop.ini
 # 로컬 전용 설정 (토큰 등 — 절대 커밋 금지)
 docs/ini/
 
+# PC별 권한·경로 설정 (사용자명·작업폴더 차이로 다른 PC에서 안 맞음)
+.claude/settings.local.json
+
+# 외부 MCP 런타임 (npx 자동 fetch — 로컬 clone 불필요)
+claude-talk-to-figma-mcp/
+
+# 스케줄러 런타임 락 (PID·세션ID — 재시작하면 무의미)
+.claude/scheduled_tasks.lock
+
 # Stale task locks
 .claude/tasks/locks/*.lock
 

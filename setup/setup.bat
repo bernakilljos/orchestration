@@ -163,9 +163,14 @@ echo [STEP] 09-finalize %TIME% >> "!LOGFILE!"
 call "%MOD%\09-finalize.bat" "%TARGET%" "%ANALYZE_MODE%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 11/11] Media Enhance Dependencies...
+echo [Step 11/12] Media Enhance Dependencies...
 echo [STEP] 11-media-enhance %TIME% >> "!LOGFILE!"
 call "%MOD%\11-media-enhance.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 12/12] ClaudeTalkToFigma MCP...
+echo [STEP] 14-mcp-figma %TIME% >> "!LOGFILE!"
+call "%MOD%\14-mcp-figma.bat"
 if errorlevel 1 set /a ERRORS+=1
 
 set "ERR=!ERRORS!"

@@ -59,10 +59,20 @@ rem --- Claude Code ---
 where claude >nul 2>&1
 if not errorlevel 1 (
   echo [OK] Claude Code
-  echo [+] Checking for updates...
-  powershell -NoProfile -Command ^
-    "$p=Start-Process 'winget' -ArgumentList @('upgrade','--id','Anthropic.ClaudeCode','--accept-source-agreements','--accept-package-agreements') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-     if($p){if(-not $p.WaitForExit(60000)){$p.Kill();Write-Host '[WARN] Update timeout'}else{Write-Host '[OK] Up to date'}}" 2>nul
+  rem --- claude.exe 가 실행 중이면 winget 이 .exe 를 교체할 수 없어 0x8a150003 발생 → skip ---
+  tasklist /FI "IMAGENAME eq claude.exe" 2>nul | findstr /I /B "claude.exe" >nul 2>&1
+  if errorlevel 1 (
+    echo [+] Checking for updates...
+    powershell -NoProfile -Command ^
+      "$p=Start-Process 'winget' -ArgumentList @('upgrade','--id','Anthropic.ClaudeCode','--accept-source-agreements','--accept-package-agreements') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
+       if($p){if(-not $p.WaitForExit(120000)){$p.Kill();Write-Host '[WARN] Update timeout'}else{ ^
+         $c=$p.ExitCode; ^
+         if($c -eq 0){Write-Host '[OK] Claude Code updated'} ^
+         elseif($c -eq -1978335189){Write-Host '[OK] Already up to date'} ^
+         else{Write-Host ('[WARN] Update failed (exit 0x{0:X8}) - skipping' -f $c)}}}" 2>nul
+  ) else (
+    echo       [SKIP] Update skipped — claude.exe is running. Close Claude Code first to update.
+  )
 ) else (
   echo [+] Installing Claude Code...
   where winget >nul 2>&1
