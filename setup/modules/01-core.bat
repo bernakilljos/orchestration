@@ -83,7 +83,7 @@ if exist "%SCRIPT_DIR%plugins" (
 echo       Done
 
 echo [3/4] Creating project folders...
-for %%D in (docs\adr docs\deploy-history docs\screens context templates outputs) do (
+for %%D in (docs\adr docs\deploy-history docs\screens docs\ini context templates outputs) do (
   if not exist "%TARGET%\%%D" mkdir "%TARGET%\%%D" >nul 2>&1
 )
 rem Copy design screens
@@ -91,6 +91,30 @@ if exist "%SCRIPT_DIR%docs\screens" (
   for %%F in ("%SCRIPT_DIR%docs\screens\*.*") do (
     if not exist "%TARGET%\docs\screens\%%~nxF" copy /Y "%%F" "%TARGET%\docs\screens\%%~nxF" >nul 2>&1
   )
+)
+rem Copy docs/ini/ — 내부 PC 전용 (PAT 등)
+if exist "%SCRIPT_DIR%docs\ini" (
+  for %%F in ("%SCRIPT_DIR%docs\ini\*.*") do (
+    if not exist "%TARGET%\docs\ini\%%~nxF" copy /Y "%%F" "%TARGET%\docs\ini\%%~nxF" >nul 2>&1
+  )
+)
+rem github.ini 없거나 비어있으면 placeholder + PAT 입력 안내
+set "INI_VALID=0"
+if exist "%TARGET%\docs\ini\github.ini" (
+  for /f "tokens=2 delims==" %%A in ('findstr /i "^GITHUB_PAT" "%TARGET%\docs\ini\github.ini" 2^>nul') do (
+    set "_PAT=%%A"
+    if not "!_PAT: =!"=="" if not "!_PAT: =!"=="ghp_YOUR_TOKEN_HERE" set "INI_VALID=1"
+  )
+)
+if "!INI_VALID!"=="0" (
+  (
+    echo # GitHub Personal Access Token
+    echo # - install/setup 에서 git commit/push 시 사용
+    echo # - PAT 발급: https://github.com/settings/tokens ^(scope: repo + workflow^)
+    echo.
+    echo GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+  ) > "%TARGET%\docs\ini\github.ini"
+  echo       [!] docs\ini\github.ini 생성됨 — GITHUB_PAT 에 본인 토큰 입력하세요
 )
 rem Copy sample files
 for %%P in (context\rules.md context\project.md templates\prd-template.md templates\api-template.md templates\screen-template.md outputs\result-sample.md) do (

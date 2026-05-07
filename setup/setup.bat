@@ -51,6 +51,7 @@ net session >nul 2>&1
 if %errorlevel% neq 0 (
   echo Requesting administrator privileges...
   echo @echo off > "%TEMP%\_setup_elevate.bat"
+  echo chcp 65001 ^>nul >> "%TEMP%\_setup_elevate.bat"
   echo cd /d "%~dp0" >> "%TEMP%\_setup_elevate.bat"
   echo call "%~f0" %* >> "%TEMP%\_setup_elevate.bat"
   echo pause >> "%TEMP%\_setup_elevate.bat"
