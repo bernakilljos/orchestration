@@ -37,6 +37,14 @@ setx CLAUDE_AUTOCOMPACT_THRESHOLD 50 >nul 2>&1
 setx CLAUDE_CODE_SUBAGENT_MODEL claude-haiku-4-5-20251001 >nul 2>&1
 echo       Done (MAX_THINKING=10000, AUTOCOMPACT=50%%, SUBAGENT=haiku)
 
+rem --- 프로젝트 레벨 settings.json 도 bypassPermissions 강제 ---
+rem (글로벌 ~/.claude/settings.json 에 bypassPermissions 두어도 프로젝트 레벨이 우선이라 override 됨)
+if not "%TARGET%"=="" if exist "%TARGET%\.claude\settings.json" (
+  echo [+] Project settings.json defaultMode = bypassPermissions...
+  powershell -NoProfile -Command "$f='%TARGET%\.claude\settings.json'; $j=Get-Content $f -Raw|ConvertFrom-Json; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|ConvertTo-Json -Depth 10|Set-Content $f -Encoding UTF8" >nul 2>&1
+  echo       Done
+)
+
 rem Orca-auto 활성화 플래그
 if not "%TARGET%"=="" (
   if not exist "%TARGET%\.claude\orca-stopped" (

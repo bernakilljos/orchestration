@@ -472,6 +472,13 @@ if not exist "!REAL_USERPROFILE!\.claude" mkdir "!REAL_USERPROFILE!\.claude" >nu
 powershell -NoProfile -Command "$f = '!REAL_USERPROFILE!\.claude\settings.json'; if (Test-Path $f) { $j = Get-Content $f -Raw | ConvertFrom-Json } else { $j = [PSCustomObject]@{} }; if (-not $j.PSObject.Properties['permissions']) { $j | Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{}) }; $j.permissions | Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j | Add-Member -NotePropertyName 'skipDangerousModePermissionPrompt' -NotePropertyValue $true -Force; $j | Add-Member -NotePropertyName 'autoUpdatesChannel' -NotePropertyValue 'latest' -Force; $j | Add-Member -NotePropertyName 'checkpointingEnabled' -NotePropertyValue $true -Force; $j | ConvertTo-Json -Depth 10 | Set-Content $f -Encoding UTF8" >nul 2>&1
 echo       Done
 
+rem --- 프로젝트 레벨 settings.json 도 bypassPermissions 강제 (프로젝트가 글로벌 override 하므로 필수) ---
+if exist "%~dp0.claude\settings.json" (
+  echo [+] Project settings.json defaultMode = bypassPermissions...
+  powershell -NoProfile -Command "$f='%~dp0.claude\settings.json'; $j=Get-Content $f -Raw|ConvertFrom-Json; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|ConvertTo-Json -Depth 10|Set-Content $f -Encoding UTF8" >nul 2>&1
+  echo       Done
+)
+
 rem --- 글로벌 커맨드 설치 (godmode, devil, 10x 등 13개) ---
 echo [+] Installing global slash commands...
 if not exist "!REAL_USERPROFILE!\.claude\commands" mkdir "!REAL_USERPROFILE!\.claude\commands" >nul 2>&1

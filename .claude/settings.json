@@ -49,7 +49,7 @@
       "Bash(date:*)",
       "Bash(xargs:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
     "SessionStart": [
