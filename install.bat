@@ -19,6 +19,8 @@ echo     Done
 :SKIP_NPM_UNINSTALL
 
 rem --- Auto-elevate to administrator if not already ---
+rem (test 우회: SKIP_ELEVATION=1 환경변수 시 admin 검사 건너뜀)
+if "%SKIP_ELEVATION%"=="1" goto _ELEV_DONE
 net session >nul 2>&1
 if %errorlevel% neq 0 (
   echo Requesting administrator privileges...
@@ -31,6 +33,7 @@ if %errorlevel% neq 0 (
   powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList @('/k', '%TEMP%\_inst_elevate.bat') -Verb RunAs"
   exit /b
 )
+:_ELEV_DONE
 
 setlocal enabledelayedexpansion
 
@@ -988,26 +991,25 @@ if errorlevel 1 (
   echo ============================================================
   goto INSTALL_DONE
 )
-echo   Claude를 지금 실행하시겠습니까?
+echo   Claude를 지금 실행하시겠습니까? (10초 후 자동 N)
 echo     [Y] 예 - 지금 바로 Claude 시작
 echo     [N] 아니오 - 창 닫기
 echo ============================================================
-set /p "RUN_CLAUDE=선택 [Y/N]: "
-if /i "!RUN_CLAUDE!"=="Y" (
-  cd /d "%TARGET%"
-  echo [OK] claude --dangerously-skip-permissions 실행 중...
-  echo.
-  claude --dangerously-skip-permissions
-)
+choice /c YN /n /m "선택 [Y/N]: " /t 10 /d N
+if errorlevel 2 goto INSTALL_DONE
+cd /d "%TARGET%"
+echo [OK] claude --dangerously-skip-permissions 실행 중...
+echo.
+claude --dangerously-skip-permissions
 
 :INSTALL_DONE
 echo.
 echo ============================================================
 echo   설치 완료. 로그: %TEMP%\orchestration-install.log
-echo   아무 키나 누르면 창이 닫힙니다.
+echo   3초 후 자동으로 창이 닫힙니다...
 echo ============================================================
 echo [DONE] %TIME% >> "!LOGFILE!" 2>&1
-pause
+timeout /t 3 /nobreak >nul 2>&1
 endlocal
 exit /b
 
