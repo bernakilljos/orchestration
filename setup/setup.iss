@@ -32,6 +32,8 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={%USERPROFILE}\pjt
 ; 사용자가 Browse 로 선택한 폴더에 AppName 자동 추가 금지 — 선택한 폴더 그대로 사용
 AppendDefaultDirName=no
+; 이전 install 경로 우선 사용 금지 — 항상 DefaultDirName 사용
+UsePreviousAppDir=no
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 Compression=lzma2/max
@@ -202,6 +204,41 @@ end;
 function NotClaudeOrch: Boolean;
 begin
   Result := not WizardIsComponentSelected('claude_orch');
+end;
+
+// 기존 PAT (docs/ini/github.ini) 가 이미 유효한 경우 PAT 입력 페이지 스킵
+// v1 (main) — 사용자 PAT 이미 ini 에 있음 → 묻지 않음
+// team — ini 없거나 placeholder → 입력 받음
+function HasExistingPat: Boolean;
+var
+  IniPath: string;
+  SrcPath: string;
+  IniContent: AnsiString;
+begin
+  Result := False;
+  SrcPath := ExpandConstant('{src}');
+  // setup.exe 가 ...\setup\Output\ 안일 때만 부모 폴더 ini 검사
+  if (Pos('\setup\Output', SrcPath) > 0) or (Pos('/setup/Output', SrcPath) > 0) then
+  begin
+    IniPath := SrcPath + '\..\..\docs\ini\github.ini';
+    if FileExists(IniPath) then
+    begin
+      if LoadStringFromFile(IniPath, IniContent) then
+      begin
+        // ghp_ 또는 github_pat_ 으로 시작하는 라인 존재하면 유효
+        if (Pos('GITHUB_PAT=ghp_', IniContent) > 0) or
+           (Pos('GITHUB_PAT=github_pat_', IniContent) > 0) then
+          Result := True;
+      end;
+    end;
+  end;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if (PatPage <> nil) and (PageID = PatPage.ID) then
+    Result := HasExistingPat;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
