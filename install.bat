@@ -547,33 +547,51 @@ if not "!SAVED_PAT!"=="" (
 )
 
 rem 2) docs/ini/github.ini 에서 읽기 (로컬 전용, gitignore)
+set "INI_DIR=%~dp0docs\ini"
+set "INI_FILE=%INI_DIR%\github.ini"
 set "INI_PAT="
-if exist "%~dp0docs\ini\github.ini" (
-  for /f "tokens=2 delims==" %%A in ('findstr /i "GITHUB_PAT" "%~dp0docs\ini\github.ini" 2^>nul') do set "INI_PAT=%%A"
-  set "INI_PAT=!INI_PAT: =!"
+
+if not exist "%INI_DIR%" (
+  echo [ERROR] docs\ini\ 폴더가 없습니다
+  echo         생성 명령: mkdir "%INI_DIR%"
+  goto PAT_GUIDE
 )
-if not "!INI_PAT!"=="" (
-  echo       docs\ini\github.ini 에서 PAT 로드됨
-  powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!INI_PAT!','User')" >nul 2>&1
-  set "GITHUB_PAT=!INI_PAT!"
-  echo       GITHUB_PAT = saved [OK]
-  goto SKIP_GITHUB_PAT
+if not exist "%INI_FILE%" (
+  echo [ERROR] %INI_FILE% 파일이 없습니다
+  echo         아래 내용으로 작성하세요:
+  echo             GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+  goto PAT_GUIDE
 )
+
+for /f "tokens=2 delims==" %%A in ('findstr /i "^GITHUB_PAT" "%INI_FILE%" 2^>nul') do set "INI_PAT=%%A"
+set "INI_PAT=!INI_PAT: =!"
+
+if "!INI_PAT!"=="" (
+  echo [ERROR] %INI_FILE% 에 GITHUB_PAT= 값이 비어있습니다
+  echo         예시: GITHUB_PAT=ghp_YOUR_TOKEN_HERE
+  goto PAT_GUIDE
+)
+
+echo       docs\ini\github.ini 에서 PAT 로드됨
+powershell -NoProfile -Command "[System.Environment]::SetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','!INI_PAT!','User')" >nul 2>&1
+set "GITHUB_PAT=!INI_PAT!"
+echo       GITHUB_PAT = saved [OK]
+goto SKIP_GITHUB_PAT
+
+:PAT_GUIDE
 
 rem 3) PAT 없음 - 안내만 출력 (수동 입력 X)
 echo.
 echo ============================================================
-echo   [WARN] GitHub PAT 가 없습니다
+echo   해결 방법 ^(둘 중 하나^)
 echo ============================================================
-echo.
-echo   다음 중 하나를 수행한 후 install.bat 재실행하세요:
 echo.
 echo   [방법 A] 환경변수 ^(권장 — 한 번만 설정^):
 echo       setx GITHUB_PERSONAL_ACCESS_TOKEN "ghp_YOUR_TOKEN_HERE"
 echo.
 echo   [방법 B] 파일 생성 ^(이 프로젝트 전용^):
-echo       1. %~dp0docs\ini\ 폴더 생성
-echo       2. %~dp0docs\ini\github.ini 파일 작성:
+echo       1. mkdir "%INI_DIR%"
+echo       2. "%INI_FILE%" 작성:
 echo            GITHUB_PAT=ghp_YOUR_TOKEN_HERE
 echo.
 echo   PAT 발급: https://github.com/settings/tokens
