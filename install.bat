@@ -196,6 +196,17 @@ if exist "%SCRIPT_DIR%templates\api-template.md"   if not exist "%TARGET%\templa
 if exist "%SCRIPT_DIR%templates\screen-template.md" if not exist "%TARGET%\templates\screen-template.md" copy /Y "%SCRIPT_DIR%templates\screen-template.md" "%TARGET%\templates\screen-template.md" >nul 2>&1
 if exist "%SCRIPT_DIR%outputs\result-sample.md"    if not exist "%TARGET%\outputs\result-sample.md"    copy /Y "%SCRIPT_DIR%outputs\result-sample.md"    "%TARGET%\outputs\result-sample.md"    >nul 2>&1
 
+rem Copy docs/ini/ (PAT etc - internal use only, gitignore)
+if exist "%SCRIPT_DIR%docs\ini" (
+  if not exist "%TARGET%\docs\ini" mkdir "%TARGET%\docs\ini" >nul 2>&1
+  for %%F in ("%SCRIPT_DIR%docs\ini\*.*") do (
+    if not exist "%TARGET%\docs\ini\%%~nxF" (
+      copy /Y "%%F" "%TARGET%\docs\ini\%%~nxF" >nul 2>&1
+    )
+  )
+  echo       docs\ini\ copied to target
+)
+
 echo       Done
 
 rem -----------------------------------------
@@ -642,11 +653,11 @@ if exist "%TARGET%\.git" (
   goto SKIP_GITHUB_INIT
 )
 
-rem 프로젝트 이름 추출 (폴더명, 공백→하이픈)
+rem Extract project name from folder name (replace spaces with hyphens)
 for %%P in ("%TARGET%") do set "PROJ_BASE=%%~nxP"
 set "PROJ_BASE=!PROJ_BASE: =-!"
 
-rem GitHub 저장소 생성 (같은 이름 있으면 -2, -3 ... 순서로)
+rem Create GitHub repo (suffix -2, -3 ... if name already exists)
 echo [+] GitHub 저장소 생성 중: !PROJ_BASE! ...
 set "GH_REPO_URL="
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$pat='!GITHUB_PAT!'; $base='!PROJ_BASE!'; $headers=@{Authorization=('token ' + $pat);Accept='application/vnd.github.v3+json'}; $url=''; for($i=0;$i-le10;$i++){$name=if($i-eq0){$base}else{$base+'-'+$i}; try{ $b=@{name=$name;private=$false;auto_init=$false}|ConvertTo-Json; $r=Invoke-RestMethod -Uri 'https://api.github.com/user/repos' -Method Post -Headers $headers -Body $b -ContentType 'application/json' -ErrorAction Stop -TimeoutSec 15; $url=$r.clone_url; break }catch{ if($_.Exception.Response.StatusCode.value__ -eq 422){continue}else{Write-Host ('[WARN] GitHub API: ' + $_.Exception.Message); break} }}; if($url){$url|Set-Content ('!TARGET!\.github-repo-url.txt') -Encoding UTF8; Write-Host ('[OK] 저장소: ' + $url)}else{Write-Host '[WARN] GitHub 저장소 생성 실패'}"
@@ -688,7 +699,7 @@ echo [STEP] GitHub init done %TIME% >> "!LOGFILE!"
 rem --- MCP servers: CLAUDE_SETUP_GUIDE.md 가 Claude 첫 실행 시 자동 처리 ---
 rem    install.bat에서는 MCP 설치 안 함 (claude mcp add가 TTY 대기로 hang 발생)
 rem
-rem    [Deferred Tools — MCP 토큰 최적화]
+rem    Deferred Tools - MCP token optimization
 rem    Claude Code lazy-loads MCP schemas.
 rem    Tool names appear in system-reminder, schema fetched on actual call.
 rem    Unused tools cost 0 tokens (ToolSearch fetches on-demand).
