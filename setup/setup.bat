@@ -74,6 +74,17 @@ for %%I in ("%SETUP_DIR%..") do set "SCRIPT_DIR=%%~fI\"
 if "!TARGET:~-1!"==" "  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
 if "!TARGET:~-1!"=="\"  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET
 
+rem --- Self-install 방지: TARGET 이 setup 폴더면 부모 (kit root) 로 자동 변경 ---
+for %%I in ("%TARGET%") do set "TARGET_FULL=%%~fI"
+set "SETUP_DIR_NOSLASH=%SETUP_DIR:~0,-1%"
+if /i "!TARGET_FULL!"=="!SETUP_DIR_NOSLASH!" (
+  for %%I in ("%SCRIPT_DIR%.") do set "TARGET=%%~fI"
+  echo.
+  echo [INFO] Setup 폴더가 target 으로 지정됨. Kit root 로 자동 변경:
+  echo        !SETUP_DIR_NOSLASH! ^=^> !TARGET!
+  echo.
+)
+
 if not exist "%TARGET%" mkdir "%TARGET%" >nul 2>&1
 
 echo.
