@@ -25,9 +25,10 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
-; setup.exe 의 부모의 부모 폴더 = orchestration_v1 또는 orchestration_v1_team
-; (setup.exe 위치: {src}\setup\Output\setup.exe → {src}\..\.. 가 본체)
-DefaultDirName={src}\..\..
+; DefaultDirName 동적: setup.exe 위치 기반
+;   setup.exe 가 ...\setup\Output\ 안이면 → 부모 폴더 (orchestration_v1 또는 team)
+;   외부 (예: Downloads) 면 → 사용자 Documents\OrchestrationKit
+DefaultDirName={code:GetDefaultInstallDir}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 Compression=lzma2/max
@@ -198,6 +199,20 @@ end;
 function NotClaudeOrch: Boolean;
 begin
   Result := not WizardIsComponentSelected('claude_orch');
+end;
+
+// DefaultDirName 동적 결정
+function GetDefaultInstallDir(Param: string): string;
+var
+  SrcPath: string;
+begin
+  SrcPath := ExpandConstant('{src}');
+  // setup.exe 가 ...\setup\Output\ 안에 있으면 부모 폴더 사용
+  if (Pos('\setup\Output', SrcPath) > 0) or (Pos('/setup/Output', SrcPath) > 0) then
+    Result := ExpandConstant('{src}\..\..')
+  else
+    // 외부 (예: Downloads) — 사용자 Documents 아래
+    Result := ExpandConstant('{userdocs}\OrchestrationKit');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
