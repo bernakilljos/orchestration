@@ -174,6 +174,21 @@ done
 # =========================================================================
 echo ""
 echo "=== Orphan 점검 ==="
+
+# 외부 plugin (marketplace 등) 파일은 .claude/orphan-allow.txt 에 등록
+# 한 줄에 한 파일 (파일명만, 예: 10x.md) — # 으로 시작하는 줄은 주석
+declare -A ORPHAN_ALLOW=()
+if [ -f ".claude/orphan-allow.txt" ]; then
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    line="${line## }"
+    line="${line%% }"
+    line="${line%$'\r'}"
+    [ -z "$line" ] && continue
+    ORPHAN_ALLOW["$line"]=1
+  done < ".claude/orphan-allow.txt"
+fi
+
 orphan_list=()
 for sub in commands skills; do
   [ -d ".claude/${sub}" ] || continue
@@ -185,6 +200,10 @@ for sub in commands skills; do
       case "$(basename "$f")" in
         skill-0[0-9]-*.md|skill-[1-3][0-9]-*.md|skill-4[0-5]-*.md) continue ;;
       esac
+      # 외부 plugin allow 리스트는 제외
+      if [ -n "${ORPHAN_ALLOW[$(basename "$f")]:-}" ]; then
+        continue
+      fi
       orphan_list+=("$f")
       orphan=$((orphan+1))
     fi
