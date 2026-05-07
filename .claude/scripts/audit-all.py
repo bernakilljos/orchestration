@@ -1,14 +1,17 @@
 """
-Full audit - all .bat / .sh / .md / .py / .json files.
+Full audit - 10 checks across all .bat / .sh / .md / .py / .json files.
 
-Checks per file type:
-  [.bat]  cmd parsing breakage (single-line, context, dryrun)
-          encoding (UTF-8/CRLF check)
-  [.sh]   bash syntax (bash -n)
-          shellcheck if available
-  [.md]   mojibake (U+FFFD char), frontmatter close, broken file refs
-  [.py]   syntax via ast.parse
-  [.json] valid JSON
+10 categories:
+  1. [.bat]  cmd parsing breakage (single-line + context mode)
+  2. [.bat]  encoding (UTF-8 + CRLF EOL)
+  3. [.sh]   bash syntax (bash -n)
+  4. [.sh]   shellcheck (if installed)
+  5. [.md]   mojibake (U+FFFD replacement char)
+  6. [.md]   frontmatter close check
+  7. [.py]   syntax via ast.parse
+  8. [.json] valid JSON parse
+  9. secret leak detection (PAT/AWS key/private key in repo)
+ 10. capture/OCR verification (.png screenshots + ocr hook ready)
 
 Progress shown as [N/total].
 """
@@ -163,6 +166,57 @@ for t in JSON_TARGETS:
         add('json_encoding', t, 'utf-8 err: ' + str(e))
 
 
+# ===== 6. Secret leak detection =====
+SECRET_PATTERNS = [
+    ('GitHub PAT', re.compile(r'ghp_[A-Za-z0-9]{30,}')),
+    ('GitHub PAT (fine)', re.compile(r'github_pat_[A-Za-z0-9_]{60,}')),
+    ('AWS Access Key', re.compile(r'AKIA[0-9A-Z]{16}')),
+    ('Private Key', re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----')),
+    ('Slack Webhook', re.compile(r'https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+')),
+    ('OpenAI Key', re.compile(r'sk-[A-Za-z0-9]{40,}')),
+]
+SECRET_SCAN_PATHS = list(Path('.').glob('*.bat')) + list(Path('.').glob('*.md')) + \
+                    list(Path('.').glob('*.json')) + \
+                    list(Path('plugins').rglob('*.md')) + list(Path('plugins').rglob('*.json')) + \
+                    list(Path('.claude').rglob('*.md')) + list(Path('.claude').rglob('*.json')) + \
+                    list(Path('.claude').rglob('*.sh')) + list(Path('setup').rglob('*.bat'))
+seen_secret_files = set()
+for p in SECRET_SCAN_PATHS:
+    if not p.is_file() or str(p) in seen_secret_files:
+        continue
+    seen_secret_files.add(str(p))
+    progress(str(p) + ' [secret scan]')
+    try:
+        text = p.read_text(encoding='utf-8', errors='replace')
+    except Exception:
+        continue
+    for label, pat in SECRET_PATTERNS:
+        if pat.search(text):
+            add('secret_leak', str(p), label + ' detected')
+
+
+# ===== 7. Capture/OCR verification =====
+CAPTURE_DIRS = ['docs/screens', '.claude/screens', 'docs/screenshots']
+total_captures = 0
+for d in CAPTURE_DIRS:
+    if Path(d).exists():
+        captures = list(Path(d).glob('*.png')) + list(Path(d).glob('*.jpg'))
+        total_captures += len(captures)
+        for c in captures:
+            progress(str(c) + ' [capture]')
+            if c.stat().st_size == 0:
+                add('capture_empty', str(c), 'empty file')
+            elif c.stat().st_size > 50_000_000:
+                add('capture_huge', str(c), str(c.stat().st_size) + ' bytes (>50MB)')
+
+# OCR hook readiness
+ocr_hook = Path('.claude/hooks/hook-09-ocr-verify.sh')
+if ocr_hook.exists():
+    pass
+else:
+    add('ocr_missing', str(ocr_hook), 'OCR verify hook not found')
+
+
 # ===== Output =====
 print()
 print('=' * 60)
@@ -187,7 +241,8 @@ print('Coverage: bat=' + str(len(BAT_TARGETS)) +
       ' md=' + str(len(MD_TARGETS)) +
       ' py=' + str(len(PY_TARGETS)) +
       ' json=' + str(len(JSON_TARGETS)) +
-      ' total=' + str(total))
+      ' captures=' + str(total_captures))
 print('Shellcheck: ' + ('available' if has_shellcheck else 'not installed'))
+print('OCR hook:   ' + ('present' if ocr_hook.exists() else 'missing'))
 
 sys.exit(1 if issues else 0)
