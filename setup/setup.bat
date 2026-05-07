@@ -47,6 +47,8 @@ call npm uninstall -g @anthropic-ai/claude-code >nul 2>&1
 :SKIP_NPM_UNINSTALL
 
 rem --- Auto-elevate ---
+rem (test 우회: SKIP_ELEVATION=1 환경변수 시 admin 검사 건너뜀)
+if "%SKIP_ELEVATION%"=="1" goto _SETUP_ELEV_DONE
 net session >nul 2>&1
 if %errorlevel% neq 0 (
   echo Requesting administrator privileges...
@@ -58,6 +60,7 @@ if %errorlevel% neq 0 (
   powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList @('/k','%TEMP%\_setup_elevate.bat') -Verb RunAs"
   exit /b
 )
+:_SETUP_ELEV_DONE
 
 setlocal enabledelayedexpansion
 
@@ -68,7 +71,7 @@ echo  Setup Log: %DATE% %TIME%   >> "!LOGFILE!"
 echo ============================ >> "!LOGFILE!"
 
 rem --- Real user profile ---
-echo (Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1).GetOwner().User > "%TEMP%\_getuser.ps1"
+echo ^(Get-WmiObject Win32_Process ^| Where-Object {$_.Name -eq 'explorer.exe'} ^| Select-Object -First 1^).GetOwner^(^).User > "%TEMP%\_getuser.ps1"
 for /f "tokens=*" %%N in ('powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\_getuser.ps1"') do set "REAL_USERNAME=%%N"
 del "%TEMP%\_getuser.ps1" >nul 2>&1
 if "!REAL_USERNAME!"=="" set "REAL_USERNAME=%USERNAME%"
@@ -89,7 +92,9 @@ if not "%~1"=="" (set "TARGET=%~1") else (set "TARGET=%CD%")
 
 rem SCRIPT_DIR = orchestration kit root (parent of setup/)
 set "SETUP_DIR=%~dp0"
-for %%I in ("%SETUP_DIR%..") do set "SCRIPT_DIR=%%~fI\"
+rem SETUP_DIR 끝 \ 제거 → 그 path 의 parent dir 추출
+set "SETUP_DIR_NS=%SETUP_DIR:~0,-1%"
+for %%P in ("%SETUP_DIR_NS%") do set "SCRIPT_DIR=%%~dpP"
 
 :TRIM_TARGET
 if "!TARGET:~-1!"==" "  set "TARGET=!TARGET:~0,-1!" & goto TRIM_TARGET

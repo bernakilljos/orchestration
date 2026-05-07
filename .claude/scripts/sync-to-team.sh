@@ -42,21 +42,39 @@ fi
 if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe" ]; then
   ROBO="/c/Windows/System32/Robocopy.exe"
   [ ! -f "$ROBO" ] && ROBO="robocopy"
-  for sub in .claude .claude-plugin plugins setup; do
+  # 1) source 의 .bat CRLF 강제 정규화 (robocopy 가 main → team 정확 복사)
+  if command -v powershell.exe >/dev/null 2>&1 || [ -f "/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]; then
+    PS_SRC=$(cygpath -w "$SOURCE" 2>/dev/null || echo "$SOURCE")
+    powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_SRC' -Recurse -Include '*.bat' -ErrorAction SilentlyContinue | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$n = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; if (\$c -ne \$n) { [IO.File]::WriteAllText(\$_.FullName, \$n, (New-Object System.Text.UTF8Encoding \$false)) } }" >/dev/null 2>&1 || true
+  fi
+
+  # 2) robocopy /MIR /IS /IT — size/timestamp 같아도 강제 복사 (.claude / plugins 등)
+  for sub in .claude .claude-plugin plugins; do
     [ -d "$SOURCE/$sub" ] && \
-      "$ROBO" "$SOURCE/$sub" "$TARGET/$sub" /MIR /XD .git node_modules state tasks/locks tasks/done context-cache /XF "*.pptx" "*.png" /NFL /NDL /NJH /NJS /NP > /dev/null 2>&1 || true
+      "$ROBO" "$SOURCE/$sub" "$TARGET/$sub" /MIR /IS /IT /XD .git node_modules state tasks/locks tasks/done context-cache /XF "*.pptx" "*.png" /NFL /NDL /NJH /NJS /NP > /dev/null 2>&1 || true
   done
+
+  # 2-1) setup 폴더는 robocopy 가 timestamp 비교로 skip 하는 경우 발생 → 개별 파일 강제 cp
+  mkdir -p "$TARGET/setup/modules" 2>/dev/null
+  for f in "$SOURCE"/setup/*.bat "$SOURCE"/setup/*.iss "$SOURCE"/setup/*.rtf; do
+    [ -f "$f" ] && cp -f "$f" "$TARGET/setup/$(basename "$f")"
+  done
+  for f in "$SOURCE"/setup/modules/*.bat; do
+    [ -f "$f" ] && cp -f "$f" "$TARGET/setup/modules/$(basename "$f")"
+  done
+
+  # 3) 루트 파일 강제 cp
   for f in AGENTS.md CLAUDE.md GEMINI.md guide.txt install.bat install_codex.bat install_codex.ps1 install_gemini.bat install_gemini.ps1; do
     [ -f "$SOURCE/$f" ] && cp -f "$SOURCE/$f" "$TARGET/$f"
   done
 
-  # CRLF 정규화 — robocopy 는 EOL 변환 안 함, .bat 가 LF 면 cmd 깨짐
-  if command -v powershell.exe >/dev/null 2>&1 || [ -f "/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]; then
-    PS_TARGET=$(cygpath -w "$TARGET" 2>/dev/null || echo "$TARGET")
-    powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_TARGET' -Recurse -Include '*.bat' | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$c = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; [IO.File]::WriteAllText(\$_.FullName, \$c, (New-Object System.Text.UTF8Encoding \$false)) }" >/dev/null 2>&1 || true
+  # 4) setup.exe (GUI 마법사 — 다음다음 클릭 인스톨러)
+  if [ -f "$SOURCE/setup/Output/OrchestrationKit-Setup.exe" ]; then
+    mkdir -p "$TARGET/setup/Output"
+    cp -f "$SOURCE/setup/Output/OrchestrationKit-Setup.exe" "$TARGET/setup/Output/OrchestrationKit-Setup.exe"
   fi
 
-  echo "[OK] robocopy 동기화 완료 (+ CRLF 정규화)"
+  echo "[OK] robocopy 동기화 완료 (CRLF 정규화 + 강제 복사)"
   exit 0
 fi
 
