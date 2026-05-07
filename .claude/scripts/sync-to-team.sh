@@ -49,7 +49,14 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
   for f in AGENTS.md CLAUDE.md GEMINI.md guide.txt install.bat install_codex.bat install_codex.ps1 install_gemini.bat install_gemini.ps1; do
     [ -f "$SOURCE/$f" ] && cp -f "$SOURCE/$f" "$TARGET/$f"
   done
-  echo "[OK] robocopy 동기화 완료"
+
+  # CRLF 정규화 — robocopy 는 EOL 변환 안 함, .bat 가 LF 면 cmd 깨짐
+  if command -v powershell.exe >/dev/null 2>&1 || [ -f "/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]; then
+    PS_TARGET=$(cygpath -w "$TARGET" 2>/dev/null || echo "$TARGET")
+    powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_TARGET' -Recurse -Include '*.bat' | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$c = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; [IO.File]::WriteAllText(\$_.FullName, \$c, (New-Object System.Text.UTF8Encoding \$false)) }" >/dev/null 2>&1 || true
+  fi
+
+  echo "[OK] robocopy 동기화 완료 (+ CRLF 정규화)"
   exit 0
 fi
 

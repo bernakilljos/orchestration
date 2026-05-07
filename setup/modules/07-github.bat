@@ -25,6 +25,19 @@ if exist "%TARGET%\.git" (
 rem --- GitHub PAT (env var → docs/ini/github.ini → SKIP) ---
 echo [+] GitHub PAT 확인 중...
 
+rem INI 경로
+set "INI_DIR=%~dp0..\..\docs\ini"
+set "INI_FILE=%INI_DIR%\github.ini"
+set "INI_PAT="
+
+rem TEAM mode auto-detect (orchestration_v1_team folder)
+set "TEAM_MODE=0"
+echo %~dp0 | findstr /i "orchestration_v1_team" >nul && set "TEAM_MODE=1"
+if "!TEAM_MODE!"=="1" (
+  echo       [TEAM mode] env var skip - input own PAT
+  goto _PAT_INI_OR_INPUT
+)
+
 rem 1) 환경변수 우선
 powershell -NoProfile -Command "[System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')" > "%TEMP%\_ghpat.txt" 2>nul
 set "GITHUB_PAT="
@@ -35,10 +48,10 @@ if not "!GITHUB_PAT!"=="" (
   goto PAT_READY
 )
 
+:_PAT_INI_OR_INPUT
+if "!TEAM_MODE!"=="1" goto PAT_GUIDE
+
 rem 2) docs/ini/github.ini 단계별 검사
-set "INI_DIR=%~dp0..\..\docs\ini"
-set "INI_FILE=%INI_DIR%\github.ini"
-set "INI_PAT="
 
 if not exist "%INI_DIR%" (
   echo [ERROR] docs\ini\ 폴더가 없습니다
