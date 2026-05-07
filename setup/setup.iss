@@ -41,7 +41,7 @@ WizardSizePercent=120
 Uninstallable=yes
 UninstallDisplayName={#MyAppName}
 AllowNoIcons=yes
-DisableDirPage=auto
+DisableDirPage=no
 InfoBeforeFile=setup-info.rtf
 
 [Languages]
