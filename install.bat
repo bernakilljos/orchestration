@@ -967,7 +967,7 @@ if errorlevel 1 (
   tasklist /FI "IMAGENAME eq claude.exe" 2>nul | findstr /I /B "claude.exe" >nul 2>&1
   if errorlevel 1 (
     echo [+] Checking for updates ^(120s timeout^)...
-    powershell -NoProfile -Command "$p=Start-Process 'winget' -ArgumentList @('upgrade','--id','Anthropic.ClaudeCode','--accept-source-agreements','--accept-package-agreements') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(120000)){$p.Kill();Write-Host '[WARN] winget upgrade timeout'}else{$c=$p.ExitCode; if($c -eq 0){Write-Host '[OK] Claude Code updated'}elseif($c -eq -1978335189){Write-Host '[OK] Already up to date'}else{Write-Host ('[WARN] Update failed (exit 0x{0:X8}) - close Claude Code and retry' -f $c)}}}" 2>nul
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0.claude\scripts\claude-winget-upgrade.ps1" 2>nul
   ) else (
     echo       [SKIP] Update skipped — claude.exe is running. Close Claude Code first to update.
   )
