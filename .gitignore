@@ -62,8 +62,8 @@ Desktop.ini
 .DS_Store
 \!_TMPRUN!
 
-# 로컬 전용 설정 (토큰 등 — 절대 커밋 금지)
-docs/ini/
+# 로컬 전용 설정 (사용자가 명시적으로 docs/ini/ 커밋 허용)
+# docs/ini/  ← 사용자 지시로 ignore 해제됨 (2026-05-07)
 
 # PC별 권한·경로 설정 (사용자명·작업폴더 차이로 다른 PC에서 안 맞음)
 .claude/settings.local.json

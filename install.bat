@@ -653,9 +653,9 @@ rem --- MCP servers: CLAUDE_SETUP_GUIDE.md 가 Claude 첫 실행 시 자동 처�
 rem    install.bat에서는 MCP 설치 안 함 (claude mcp add가 TTY 대기로 hang 발생)
 rem
 rem    [Deferred Tools — MCP 토큰 최적화]
-rem    Claude Code 최신 버전은 MCP 스키마를 지연 로딩(Lazy Load)함.
+rem    Claude Code 최신 버전은 MCP 스키마를 지연 로딩 [Lazy Load] 함.
 rem    세션 시작 시 도구 이름만 system-reminder에 나열 → 실제 호출 전
-rem    ToolSearch("select:도구이름")로 스키마 fetch → 미사용 도구 토큰 0.
+rem    ToolSearch [select:도구이름] 로 스키마 fetch → 미사용 도구 토큰 0.
 rem    별도 설정 불필요, autoUpdatesChannel=latest 유지 시 자동 적용됨.
 echo [+] MCP servers: Claude 첫 실행 시 CLAUDE_SETUP_GUIDE.md 자동 처리
 echo     ^(Deferred Tools 자동 적용 — MCP 토큰 폭발 방지^)
