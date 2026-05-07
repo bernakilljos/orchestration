@@ -35,16 +35,7 @@ if errorlevel 1 echo %TARGET%>> "!PROJ_CONFIG!"
 echo       Project registered: %TARGET%
 
 rem Cleanup duplicates
-powershell -NoProfile -Command ^
-  "$f='!PROJ_CONFIG!'; ^
-   $lines=Get-Content $f -Encoding UTF8 -ErrorAction SilentlyContinue|Where-Object{$_.Trim()-ne''}; ^
-   $clean=@();$seen=@{}; ^
-   foreach($l in $lines){$n=$l.Trim().Replace('/','\').TrimEnd('\'); ^
-     if(-not $n -or $n.Length -lt 3 -or $n -notmatch '^[A-Za-z]:\\'){continue} ^
-     if($seen[$n.ToLower()]){continue} ^
-     if(-not(Test-Path $n -PathType Container)){continue} ^
-     $seen[$n.ToLower()]=$true;$clean+=$n}; ^
-   Set-Content $f $clean -Encoding UTF8" >nul 2>&1
+powershell -NoProfile -Command "$f='!PROJ_CONFIG!'; $lines=Get-Content $f -Encoding UTF8 -ErrorAction SilentlyContinue|Where-Object{$_.Trim()-ne''}; $clean=@();$seen=@{}; foreach($l in $lines){$n=$l.Trim().Replace('/','\').TrimEnd('\'); if(-not $n -or $n.Length -lt 3 -or $n -notmatch '^[A-Za-z]:\\'){continue}; if($seen[$n.ToLower()]){continue}; if(-not(Test-Path $n -PathType Container)){continue}; $seen[$n.ToLower()]=$true;$clean+=$n}; Set-Content $f $clean -Encoding UTF8" >nul 2>&1
 
 rem --- Registry + Start ---
 set "VBS_PATH=!REAL_USERPROFILE!\.claude\status-push-silent.vbs"
@@ -69,9 +60,7 @@ if not errorlevel 1 (echo       Started) else (echo       [WARN] Start failed & 
 
 rem --- RDP 활성화 ---
 echo [+] Enabling Remote Desktop...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0 -Force; ^
-   Enable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue" >nul 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Value 0 -Force; Enable-NetFirewallRule -DisplayGroup 'Remote Desktop' -ErrorAction SilentlyContinue" >nul 2>&1
 if not errorlevel 1 (echo       RDP enabled) else (echo       [WARN] RDP failed)
 
 if "!SVC_FAIL!"=="1" (

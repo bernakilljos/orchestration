@@ -42,16 +42,7 @@ for %%P in ("%TARGET%") do set "PROJ_BASE=%%~nxP"
 set "PROJ_BASE=!PROJ_BASE: =-!"
 echo       Creating GitHub repo: !PROJ_BASE!...
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$pat='!GITHUB_PAT!';$base='!PROJ_BASE!'; ^
-   $headers=@{Authorization=('token '+$pat);Accept='application/vnd.github.v3+json'}; ^
-   $url=''; ^
-   for($i=0;$i-le10;$i++){$name=if($i-eq0){$base}else{$base+'-'+$i}; ^
-     try{$b=@{name=$name;private=$false;auto_init=$false}|ConvertTo-Json; ^
-       $r=Invoke-RestMethod -Uri 'https://api.github.com/user/repos' -Method Post -Headers $headers -Body $b -ContentType 'application/json' -ErrorAction Stop -TimeoutSec 15; ^
-       $url=$r.clone_url;break ^
-     }catch{if($_.Exception.Response.StatusCode.value__ -eq 422){continue}else{break}}}; ^
-   if($url){$url|Set-Content('%TARGET%\.github-repo-url.txt') -Encoding UTF8; Write-Host('[OK] '+$url)}else{Write-Host '[WARN] GitHub repo creation failed'}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$pat='!GITHUB_PAT!';$base='!PROJ_BASE!'; $headers=@{Authorization=('token '+$pat);Accept='application/vnd.github.v3+json'}; $url=''; for($i=0;$i-le10;$i++){$name=if($i-eq0){$base}else{$base+'-'+$i}; try{$b=@{name=$name;private=$false;auto_init=$false}|ConvertTo-Json; $r=Invoke-RestMethod -Uri 'https://api.github.com/user/repos' -Method Post -Headers $headers -Body $b -ContentType 'application/json' -ErrorAction Stop -TimeoutSec 15; $url=$r.clone_url;break }catch{if($_.Exception.Response.StatusCode.value__ -eq 422){continue}else{break}}}; if($url){$url|Set-Content('%TARGET%\.github-repo-url.txt') -Encoding UTF8; Write-Host('[OK] '+$url)}else{Write-Host '[WARN] GitHub repo creation failed'}"
 
 rem --- Git init ---
 cd /d "%TARGET%"

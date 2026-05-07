@@ -25,17 +25,10 @@ for %%F in (codex-a codex-auto gemini-a gemini-auto gemini-verify claude-auto) d
 )
 
 echo [+] Normalizing CRLF line endings...
-powershell -NoProfile -Command ^
-  "$enc=New-Object System.Text.UTF8Encoding($false); ^
-   foreach($n in 'codex-a','codex-auto','gemini-a','gemini-auto','gemini-verify','claude-auto'){ ^
-     $p=Join-Path '%APPDATA%\npm' ($n+'.bat'); ^
-     if(Test-Path $p){$c=Get-Content $p -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($p,$c,$enc)} }" >nul 2>&1
+powershell -NoProfile -Command "$enc=New-Object System.Text.UTF8Encoding($false); foreach($n in 'codex-a','codex-auto','gemini-a','gemini-auto','gemini-verify','claude-auto'){ $p=Join-Path '%APPDATA%\npm' ($n+'.bat'); if(Test-Path $p){$c=Get-Content $p -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($p,$c,$enc)} }" >nul 2>&1
 
 rem Also fix scripts in .claude\scripts
-powershell -NoProfile -Command ^
-  "$enc=New-Object System.Text.UTF8Encoding($false); ^
-   Get-ChildItem '%TARGET%\.claude\scripts' -Filter '*.bat' -File -ErrorAction SilentlyContinue | ^
-   ForEach-Object { $c=Get-Content $_.FullName -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($_.FullName,$c,$enc) }" >nul 2>&1
+powershell -NoProfile -Command "$enc=New-Object System.Text.UTF8Encoding($false); Get-ChildItem '%TARGET%\.claude\scripts' -Filter '*.bat' -File -ErrorAction SilentlyContinue | ForEach-Object { $c=Get-Content $_.FullName -Raw -Encoding UTF8; $c=$c -replace '\r?\n',([char]13+[char]10); [System.IO.File]::WriteAllText($_.FullName,$c,$enc) }" >nul 2>&1
 echo       Done
 
 echo [Module 04] Commands OK

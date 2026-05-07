@@ -75,8 +75,7 @@ if not "!LOCAL_LLM_TYPE!"=="null" (
   echo       로컬 LLM 워커를 활성화할까요? (워커 1개, 보조 역할)
   set /p "USE_LLM=  [Y/N]: "
   if /i "!USE_LLM!"=="Y" (
-    powershell -NoProfile -Command ^
-      "$cfg = Get-Content '%TARGET%\.claude\orca-workers-config.json' | ConvertFrom-Json; $cfg.local_llm.type = '!LOCAL_LLM_TYPE!'; $cfg | ConvertTo-Json -Depth 5 | Set-Content '%TARGET%\.claude\orca-workers-config.json'"
+    powershell -NoProfile -Command "$cfg = Get-Content '%TARGET%\.claude\orca-workers-config.json' | ConvertFrom-Json; $cfg.local_llm.type = '!LOCAL_LLM_TYPE!'; $cfg | ConvertTo-Json -Depth 5 | Set-Content '%TARGET%\.claude\orca-workers-config.json'"
     echo       [OK] orca-workers-config.json 업데이트됨
   ) else (
     echo       [SKIP] 로컬 LLM 비활성화

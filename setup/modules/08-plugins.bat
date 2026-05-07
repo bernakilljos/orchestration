@@ -25,9 +25,7 @@ if exist "%SCRIPT_DIR%install-plugins.ps1" (
   rem 폴백: 직접 설치
   echo [+] Fallback 플러그인 설치...
   for %%P in (claude-md-management code-review commit-commands) do (
-    powershell -NoProfile -Command ^
-      "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-       if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+    powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
     echo       %%P
   )
 )
@@ -37,13 +35,9 @@ echo [+] Superpowers + community plugins...
 echo "!PLUGIN_LIST!" | findstr /C:"superpowers" >nul 2>&1
 if errorlevel 1 (
   echo       Adding superpowers marketplace...
-  powershell -NoProfile -Command ^
-    "$p=Start-Process 'claude' -ArgumentList @('plugin','marketplace','add','obra/superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-     if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+  powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','marketplace','add','obra/superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
   echo       Installing superpowers...
-  powershell -NoProfile -Command ^
-    "$p=Start-Process 'claude' -ArgumentList @('plugin','install','superpowers@superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-     if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
+  powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','superpowers@superpowers-marketplace') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(60000)){$p.Kill()}}" >nul 2>&1
 ) else (
   echo       [OK] superpowers
 )
@@ -53,9 +47,7 @@ for %%P in (ui-ux-pro-max everything-claude-code awesome-claude-code get-shit-do
   echo "!PLUGIN_LIST!" | findstr /C:"%%P" >nul 2>&1
   if errorlevel 1 (
     echo       Installing %%P...
-    powershell -NoProfile -Command ^
-      "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-       if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
+    powershell -NoProfile -Command "$p=Start-Process 'claude' -ArgumentList @('plugin','install','%%P') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(30000)){$p.Kill()}}" >nul 2>&1
   ) else (
     echo       [OK] %%P
   )

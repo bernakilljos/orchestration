@@ -63,13 +63,7 @@ if not errorlevel 1 (
   tasklist /FI "IMAGENAME eq claude.exe" 2>nul | findstr /I /B "claude.exe" >nul 2>&1
   if errorlevel 1 (
     echo [+] Checking for updates...
-    powershell -NoProfile -Command ^
-      "$p=Start-Process 'winget' -ArgumentList @('upgrade','--id','Anthropic.ClaudeCode','--accept-source-agreements','--accept-package-agreements') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; ^
-       if($p){if(-not $p.WaitForExit(120000)){$p.Kill();Write-Host '[WARN] Update timeout'}else{ ^
-         $c=$p.ExitCode; ^
-         if($c -eq 0){Write-Host '[OK] Claude Code updated'} ^
-         elseif($c -eq -1978335189){Write-Host '[OK] Already up to date'} ^
-         else{Write-Host ('[WARN] Update failed (exit 0x{0:X8}) - skipping' -f $c)}}}" 2>nul
+    powershell -NoProfile -Command "$p=Start-Process 'winget' -ArgumentList @('upgrade','--id','Anthropic.ClaudeCode','--accept-source-agreements','--accept-package-agreements') -NoNewWindow -PassThru -ErrorAction SilentlyContinue; if($p){if(-not $p.WaitForExit(120000)){$p.Kill();Write-Host '[WARN] Update timeout'}else{$c=$p.ExitCode; if($c -eq 0){Write-Host '[OK] Claude Code updated'}elseif($c -eq -1978335189){Write-Host '[OK] Already up to date'}else{Write-Host ('[WARN] Update failed (exit 0x{0:X8}) - skipping' -f $c)}}}" 2>nul
   ) else (
     echo       [SKIP] Update skipped — claude.exe is running. Close Claude Code first to update.
   )
@@ -88,9 +82,7 @@ if not errorlevel 1 (
 rem --- Cloudflared ---
 set "WINGET_LINKS=!LOCALAPPDATA!\Microsoft\WinGet\Links"
 set "PATH=!PATH!;!WINGET_LINKS!"
-powershell -NoProfile -Command ^
-  "$p=[System.Environment]::GetEnvironmentVariable('Path','User'); ^
-   if($p -notmatch 'WinGet\\Links'){[System.Environment]::SetEnvironmentVariable('Path',$p+';!WINGET_LINKS!','User')}" >nul 2>&1
+powershell -NoProfile -Command "$p=[System.Environment]::GetEnvironmentVariable('Path','User'); if($p -notmatch 'WinGet\\Links'){[System.Environment]::SetEnvironmentVariable('Path',$p+';!WINGET_LINKS!','User')}" >nul 2>&1
 
 where cloudflared >nul 2>&1
 if not errorlevel 1 (
