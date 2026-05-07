@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>VPS 24/7 원격 운영 (4주차)</title>
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-09b { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-09b::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-09b::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-rows: auto 1fr auto; gap: 22px; margin-top: 22px; min-height: 0; }
+    .top-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .vps-card { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 20px; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(138,98,53,0.08); }
+    .vps-card.gold::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--gold); }
+    .vps-card.sage::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--sage); }
+    .vps-card.plum::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--plum); }
+    .vps-card.terra::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--terracotta); }
+    .vps-card .label { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.18em; color: var(--stone); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .vps-card .name { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .vps-card .spec { font-size: 15px; color: var(--ink); line-height: 1.4; margin-bottom: 8px; }
+    .vps-card .price { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700; }
+    .vps-card.gold .price { color: var(--deep-gold); }
+    .vps-card.sage .price { color: var(--sage); }
+    .vps-card.plum .price { color: var(--plum); }
+    .vps-card.terra .price { color: var(--terracotta); }
+    .vps-card .star { position: absolute; top: 14px; right: 18px; font-size: 22px; }
+    .pipeline { background: rgba(255,255,255,0.86); border: 0.5px solid var(--fog); border-radius: 16px; padding: 24px 32px; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 8px 22px rgba(138,98,53,0.08); display: flex; flex-direction: column; gap: 16px; }
+    .pipeline::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold) 0%, var(--sage) 35%, var(--plum) 70%, var(--terracotta) 100%); }
+    .pipeline-ttl { font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 0.2em; color: var(--deep-gold); font-weight: 700; text-transform: uppercase; }
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: stretch; }
+    .step { background: var(--cream); border: 0.5px solid var(--fog); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .step .cmd { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; word-break: break-all; }
+    .step .cmd.gold { color: var(--deep-gold); }
+    .step .cmd.sage { color: #4A6F60; }
+    .step .cmd.plum { color: #5A3850; }
+    .step .cmd.terra { color: #8A3E26; }
+    .step .desc { font-size: 13px; color: var(--ink); line-height: 1.4; }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stat { background: rgba(255,255,255,0.85); border: 0.5px solid var(--fog); border-radius: 12px; padding: 14px 18px; }
+    .stat .label { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .stat .value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: var(--deep-gold); }
+    .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-09b">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:cloud" class="icon-sm"></iconify-icon>PART 02 · WEEK 4 — REMOTE 24/7</span>
+      <span class="mono caption">12 / 17</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:cloud" class="icon-lg"></iconify-icon><h1 class="heading-1">VPS 24/7 원격 운영</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">4주차 강의 · 내 PC 꺼져 있어도 클라우드에서 Claude Code 가 24시간 작동 — Oracle Free Tier 압도</p>
+
+    <div class="body">
+      <div class="top-row">
+        <div class="vps-card gold"><span class="star">🥇</span><div class="label">1순위 추천</div><div class="name">Oracle Free</div><div class="spec">4 OCPU ARM · 24GB RAM · 200GB · Seoul 리전</div><div class="price">$0</div></div>
+        <div class="vps-card sage"><div class="label">2순위 폴백</div><div class="name">Vultr</div><div class="spec">1 vCPU · 1GB · 25GB · 5분 발급</div><div class="price">$3.50</div></div>
+        <div class="vps-card plum"><div class="label">3순위</div><div class="name">AWS Lightsail</div><div class="spec">1 vCPU · 1GB · 40GB · 2TB 트래픽</div><div class="price">$5</div></div>
+        <div class="vps-card terra"><div class="label">대안</div><div class="name">Hetzner CX22</div><div class="spec">2 vCPU · 4GB · 40GB · 20TB · EU</div><div class="price">€4.51</div></div>
+      </div>
+
+      <div class="pipeline">
+        <div class="pipeline-ttl">▸ /exec_remote — 4 단계 흐름</div>
+        <div class="steps">
+          <div class="step"><div class="cmd gold">/exec_remote-setup</div><div class="desc">Oracle 가입 + ARM A1 VM 생성 가이드 (Public IP 받기)</div></div>
+          <div class="step"><div class="cmd sage">/exec_remote-ssh</div><div class="desc">ED25519 키 생성 + ~/.ssh/config 자동 등록</div></div>
+          <div class="step"><div class="cmd plum">/exec_remote-deploy</div><div class="desc">bootstrap-vps.sh + 우리 킷 clone + tmux 3 세션</div></div>
+          <div class="step"><div class="cmd terra">/exec_remote-mobile</div><div class="desc">Termius / Blink Shell — 폰으로 어디서든 접속</div></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat"><div class="label">월 비용 (Oracle)</div><div class="value">$0</div></div>
+        <div class="stat"><div class="label">메모리</div><div class="value">24GB</div></div>
+        <div class="stat"><div class="label">OCPU</div><div class="value">4</div></div>
+        <div class="stat"><div class="label">상시 가동</div><div class="value">24h</div></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/exec_remote/README.md · docs/2026-05-07/4주차-원격제어.md</span></div>
+  </div>
+</body>
+</html>

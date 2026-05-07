@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>2026-05-07 갭 해결 — setup vs CLAUDE.md</title>
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-10a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-10a::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-10a::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-rows: auto auto auto; gap: 16px; margin-top: 18px; min-height: 0; }
+    .ba-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: stretch; }
+    .ba { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 12px; padding: 14px 18px; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(138,98,53,0.08); }
+    .ba.before::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--terracotta); }
+    .ba.after::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background: var(--sage); }
+    .ba .lbl { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.22em; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .ba.before .lbl { color: var(--terracotta); }
+    .ba.after .lbl { color: var(--sage); }
+    .ba code { display: block; background: #1A1D24; color: #C9C1B0; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; padding: 10px 14px; border-radius: 8px; margin-top: 4px; white-space: pre-wrap; }
+    .ba .miss { color: #ff6b6b; font-weight: 700; }
+    .ba .add { color: #5BC0BE; font-weight: 700; }
+    .ba .post-note { margin-top: 6px; font-size: 13px; line-height: 1.35; }
+    .arrow-mid { display: flex; align-items: center; justify-content: center; font-size: 50px; color: var(--gold); }
+    .table-block { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 14px; padding: 16px 22px; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(138,98,53,0.08); }
+    .table-block::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--terracotta) 0%, var(--gold) 50%, var(--sage) 100%); }
+    .tb-ttl { font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 0.2em; color: var(--deep-gold); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+    table.gap { width: 100%; border-collapse: collapse; }
+    table.gap th { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.14em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 6px 10px; border-bottom: 2px solid var(--fog); text-align: left; }
+    table.gap td { padding: 7px 10px; font-size: 15px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.35; }
+    table.gap td.lbl { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--deep-gold); width: 28%; font-size: 14px; }
+    table.gap .x { color: var(--terracotta); font-weight: 700; }
+    table.gap .v { color: var(--sage); font-weight: 700; }
+    .conclusion { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .concl { background: rgba(255,255,255,0.85); border: 0.5px solid var(--fog); border-radius: 10px; padding: 10px 14px; position: relative; overflow: hidden; }
+    .concl::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background: var(--gold); }
+    .concl.sage::before { background: var(--sage); }
+    .concl.plum::before { background: var(--plum); }
+    .concl .ttl { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.16em; color: var(--deep-gold); font-weight: 700; text-transform: uppercase; margin-bottom: 3px; }
+    .concl.sage .ttl { color: var(--sage); }
+    .concl.plum .ttl { color: var(--plum); }
+    .concl .desc { font-size: 14px; color: var(--ink); line-height: 1.4; }
+    .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-10a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-sm"></iconify-icon>PART 02 · 2026-05-07 GAP FIX</span>
+      <span class="mono caption">15 / 17</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:wrench-screwdriver" class="icon-lg"></iconify-icon><h1 class="heading-1">setup vs CLAUDE.md 갭 해결</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">CLAUDE.md 정책은 Haiku 검증 + 글로벌 큐 — 설치는 그걸 PATH 에 안 깔았던 갭 (1줄 수정으로 해결)</p>
+
+    <div class="body">
+      <div class="ba-row">
+        <div class="ba before">
+          <div class="lbl">❌ BEFORE — 6개만 등록</div>
+          <code>for %%F in (
+  codex-a codex-auto gemini-a
+  gemini-auto gemini-verify
+  claude-auto
+) do copy %%F.bat npm\</code>
+          <div class="post-note" style="color:var(--terracotta);"><span class="miss">▸ 누락 3개:</span> haiku-auto · codex-auto-global · gemini-auto-global</div>
+        </div>
+
+        <div class="arrow-mid"><iconify-icon icon="heroicons:arrow-right" style="color:var(--gold);"></iconify-icon></div>
+
+        <div class="ba after">
+          <div class="lbl">✅ AFTER — 9개 모두 등록</div>
+          <code>for %%F in (
+  codex-a codex-auto codex-auto-global
+  gemini-a gemini-auto gemini-auto-global
+  gemini-verify claude-auto haiku-auto
+) do copy %%F.bat npm\</code>
+          <div class="post-note" style="color:var(--sage);"><span class="add">▸ 추가 3개:</span> CLAUDE.md §3.2 검증자 정책 작동</div>
+        </div>
+      </div>
+
+      <div class="table-block">
+        <div class="tb-ttl">▸ 영향 — 작동/미작동 비교</div>
+        <table class="gap">
+          <thead><tr><th>기능</th><th>BEFORE</th><th>AFTER</th><th>이유</th></tr></thead>
+          <tbody>
+            <tr><td class="lbl">haiku-auto (검증자)</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>CLAUDE.md §3.2 기본 검증자, prompt cache 90% 절감</td></tr>
+            <tr><td class="lbl">codex-auto-global</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>멀티 프로젝트 전역 큐 (~/.claude/orca/)</td></tr>
+            <tr><td class="lbl">gemini-auto-global</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>전역 큐 검증 워커</td></tr>
+            <tr><td class="lbl">검증 비용 (Haiku vs Gemini)</td><td class="x">Gemini 폴백</td><td class="v">90% ↓</td><td>prompt caching + 더 싼 토큰 단가</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="conclusion">
+        <div class="concl"><div class="ttl">▸ 갭 패턴</div><div class="desc"><strong>"문서 vs 빌드 동기화"</strong> 갭 — 정책 갱신 후 모듈 안 따라간 케이스</div></div>
+        <div class="concl sage"><div class="ttl">▸ 해결 비용</div><div class="desc">코드 <strong>1줄 추가</strong>, 영향은 검증자 시스템 전체 정상화 — 비용 효율 극대</div></div>
+        <div class="concl plum"><div class="ttl">▸ 예방</div><div class="desc">CLAUDE.md 갱신 시 setup/modules/ 동기화 체크리스트 (BUILD.md § 8)</div></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">커밋: 7d955f0 fix(setup) · setup/modules/04-commands.bat · setup/BUILD.md § 8 체크리스트</span></div>
+  </div>
+</body>
+</html>

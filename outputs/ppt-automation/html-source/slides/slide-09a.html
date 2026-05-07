@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Telegram 자동 알림 (3주차)</title>
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-09a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-09a::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-09a::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; margin-top: 24px; min-height: 0; }
+    .left { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .right { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .code-box { background: #1A1D24; color: #C9C1B0; font-family: 'JetBrains Mono', monospace; font-size: 16px; line-height: 1.5; padding: 22px 28px; border-radius: 14px; white-space: pre; overflow: hidden; flex: 0 0 auto; box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .code-box .k { color: #5BC0BE; }
+    .code-box .s { color: #B8864E; }
+    .code-box .c { color: #6E685C; font-style: italic; }
+    .code-box .v { color: #6B8E7F; }
+    .pill-card { background: rgba(255,255,255,0.85); border: 0.5px solid var(--fog); border-radius: 12px; padding: 16px 20px; flex: 0 0 auto; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(138,98,53,0.08); }
+    .pill-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gold); }
+    .pill-card .ttl { font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 0.16em; color: var(--deep-gold); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; }
+    .pill-card .desc { font-size: 17px; color: var(--ink); line-height: 1.4; }
+    .flow { background: rgba(255,255,255,0.85); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 24px; flex: 1; min-height: 0; box-shadow: 0 4px 14px rgba(138,98,53,0.08); position: relative; overflow: hidden; }
+    .flow::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--sage) 0%, rgba(107,142,127,0) 100%); }
+    .flow-ttl { font-family: 'JetBrains Mono', monospace; font-size: 18px; letter-spacing: 0.18em; color: var(--sage); font-weight: 700; margin-bottom: 14px; text-transform: uppercase; }
+    .step { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 0.5px solid var(--fog); font-size: 18px; color: var(--ink); }
+    .step:last-child { border-bottom: none; }
+    .step .num { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--gold); font-size: 18px; min-width: 26px; }
+    .step .arrow { color: var(--gold); margin: 0 4px; }
+    .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-09a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="logos:telegram" class="icon-sm"></iconify-icon>PART 02 · WEEK 3 — TELEGRAM</span>
+      <span class="mono caption">11 / 17</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="logos:telegram" class="icon-lg"></iconify-icon><h1 class="heading-1">Telegram 자동 알림</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">3주차 강의 · Bot Token + Chat ID 만으로 작업 완료 시 폰으로 즉시 푸시</p>
+
+    <div class="body">
+      <div class="left">
+        <div class="code-box"><span class="c"># 1. BotFather → /newbot → 토큰 받기</span>
+<span class="c"># 2. 봇과 1:1 채팅 → /start</span>
+<span class="c"># 3. getUpdates 로 chat_id 확인</span>
+
+<span class="k">export</span> TELEGRAM_BOT_TOKEN=<span class="s">"7820123456:AAH..."</span>
+<span class="k">export</span> TELEGRAM_CHAT_ID=<span class="s">"123456789"</span>
+
+claude mcp add telegram <span class="v">-s user</span> \
+  <span class="v">--env</span> TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN \
+  <span class="v">--env</span> TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID \
+  <span class="v">-- npx -y</span> telegram-bot-mcp-server</div>
+
+        <div class="pill-card"><div class="ttl">패키지</div><div class="desc"><strong>telegram-bot-mcp-server v1.0.0</strong> · MIT · npm 검증 완료 (2026-05). Bot API 사용 — MTProto 보다 단순 (phone 인증 X)</div></div>
+      </div>
+
+      <div class="right">
+        <div class="flow">
+          <div class="flow-ttl">▸ 알림 자동화 흐름</div>
+          <div class="step"><span class="num">1</span><span>Claude 가 task 완료</span></div>
+          <div class="step"><span class="num">2</span><span class="arrow">→</span><span>SessionEnd hook 트리거</span></div>
+          <div class="step"><span class="num">3</span><span class="arrow">→</span><span>notify-telegram.sh 호출</span></div>
+          <div class="step"><span class="num">4</span><span class="arrow">→</span><span>curl Bot API sendMessage</span></div>
+          <div class="step"><span class="num">5</span><span class="arrow">→</span><span style="color:var(--sage);font-weight:700;">📱 폰에 푸시 도착</span></div>
+        </div>
+
+        <div class="pill-card" style="background:rgba(184,134,78,0.08);"><div class="ttl" style="color:var(--terracotta);">⚠ 보안</div><div class="desc">토큰은 <strong>채팅 전송 권한 모두 가짐</strong> — <code style="background:#1A1D24;color:#39FF6C;padding:2px 6px;border-radius:4px;font-size:15px;">.env</code> 또는 <code style="background:#1A1D24;color:#39FF6C;padding:2px 6px;border-radius:4px;font-size:15px;">docs/ini/telegram.ini</code> (gitignore) 에만 저장</div></div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">참조: plugins/mcp_collab/commands/install.md § 5 · /mcp_collab-install</span></div>
+  </div>
+</body>
+</html>

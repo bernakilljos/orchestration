@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>mcp_collab — Telegram (3주차)</title>
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-05a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-05a::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-05a::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-rows: auto 1fr; gap: 22px; margin-top: 22px; min-height: 0; }
+    .top-band { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    .svc { background: rgba(255,255,255,0.86); border: 0.5px solid var(--fog); border-radius: 10px; padding: 12px 14px; text-align: center; position: relative; overflow: hidden; }
+    .svc.new { background: linear-gradient(135deg, rgba(184,134,78,0.18) 0%, rgba(255,255,255,0.9) 70%); border-color: var(--gold); }
+    .svc.new::after { content:'⭐'; position: absolute; top: 6px; right: 8px; font-size: 12px; }
+    .svc .nm { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--deep-gold); margin-bottom: 4px; }
+    .svc .pkg { font-size: 11px; color: var(--stone); line-height: 1.3; word-break: break-all; }
+    .svc.builtin { background: rgba(107,142,127,0.08); }
+    .svc.builtin .nm { color: var(--sage); }
+
+    .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; min-height: 0; }
+    .col { display: flex; flex-direction: column; min-width: 0; min-height: 0; gap: 14px; }
+    .pane { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 14px; padding: 18px 22px; flex: 0 0 auto; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(138,98,53,0.08); }
+    .pane::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .pane.gold::before { background: var(--gold); }
+    .pane.plum::before { background: var(--plum); }
+    .pane-grow { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .pane-ttl { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.18em; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+    .pane.gold .pane-ttl { color: var(--deep-gold); }
+    .pane.plum .pane-ttl { color: var(--plum); }
+    .code-box { background: #1A1D24; color: #C9C1B0; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.5; padding: 16px 20px; border-radius: 10px; white-space: pre; overflow: hidden; flex: 1; min-height: 0; }
+    .code-box .k { color: #5BC0BE; }
+    .code-box .s { color: #B8864E; }
+    .code-box .c { color: #6E685C; font-style: italic; }
+    .code-box .v { color: #6B8E7F; }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table th { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.16em; color: var(--stone); text-transform: uppercase; font-weight: 700; padding: 7px 10px; border-bottom: 2px solid var(--fog); text-align: left; }
+    .compare-table td { padding: 8px 10px; font-size: 14px; color: var(--ink); border-bottom: 0.5px solid var(--fog); line-height: 1.4; }
+    .compare-table td.lbl { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--deep-gold); width: 35%; font-size: 13px; }
+    .compare-table .yes { color: var(--sage); font-weight: 700; }
+    .compare-table .no { color: var(--terracotta); font-weight: 700; }
+    .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-05a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="logos:telegram" class="icon-sm"></iconify-icon>PART 02 · MCP — mcp_collab</span>
+      <span class="mono caption">07 / 19</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="logos:telegram" class="icon-lg"></iconify-icon><h1 class="heading-1">mcp_collab — Telegram 추가</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">3주차 강의 · 협업 MCP 7개 통합 — Telegram (Bot API) 신규 + Gmail · Calendar 는 claude.ai 내장</p>
+
+    <div class="body">
+      <div class="top-band">
+        <div class="svc"><div class="nm">Slack</div><div class="pkg">@sigmacomputing/<br>slack-mcp-server</div></div>
+        <div class="svc"><div class="nm">Notion</div><div class="pkg">@notionhq/<br>notion-mcp-server</div></div>
+        <div class="svc"><div class="nm">Jira</div><div class="pkg">@rui.branco/<br>jira-mcp</div></div>
+        <div class="svc"><div class="nm">Trello</div><div class="pkg">trello-mcp</div></div>
+        <div class="svc new"><div class="nm">Telegram</div><div class="pkg">telegram-bot-<br>mcp-server</div></div>
+        <div class="svc builtin"><div class="nm">Gmail</div><div class="pkg" style="color:var(--sage);">claude.ai 내장</div></div>
+        <div class="svc builtin"><div class="nm">Calendar</div><div class="pkg" style="color:var(--sage);">claude.ai 내장</div></div>
+      </div>
+
+      <div class="grid">
+        <div class="col">
+          <div class="pane gold pane-grow">
+            <div class="pane-ttl">▸ Telegram 설치 (3 단계)</div>
+            <div class="code-box"><span class="c"># 1. BotFather 로 봇 생성</span>
+<span class="c">#    Telegram 앱 → @BotFather → /newbot</span>
+<span class="c">#    이름·username 입력 → 토큰 받기</span>
+
+<span class="c"># 2. 봇과 1:1 채팅 시작 후 chat_id 확인</span>
+<span class="c">#    https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</span>
+<span class="c">#    "chat":{"id": 123456789}</span>
+
+<span class="c"># 3. claude mcp add 등록</span>
+<span class="k">export</span> TELEGRAM_BOT_TOKEN=<span class="s">"7820..."</span>
+<span class="k">export</span> TELEGRAM_CHAT_ID=<span class="s">"123456789"</span>
+
+claude mcp add telegram <span class="v">-s user</span> \
+  <span class="v">--env</span> TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN \
+  <span class="v">--env</span> TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID \
+  <span class="v">-- npx -y</span> telegram-bot-mcp-server</div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="pane plum">
+            <div class="pane-ttl">▸ Bot API vs MTProto</div>
+            <table class="compare-table">
+              <thead><tr><th>비교</th><th>Bot API</th><th>MTProto</th></tr></thead>
+              <tbody>
+                <tr><td class="lbl">phone 인증</td><td class="yes">불필요</td><td class="no">필요</td></tr>
+                <tr><td class="lbl">설정 복잡도</td><td class="yes">단순</td><td class="no">복잡</td></tr>
+                <tr><td class="lbl">알림용</td><td class="yes">최적</td><td>오버킬</td></tr>
+                <tr><td class="lbl">메시지 읽기</td><td>제한적</td><td class="yes">전체</td></tr>
+                <tr><td class="lbl">권장</td><td class="yes">알림·자동화</td><td>분석·아카이브</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pane gold">
+            <div class="pane-ttl">▸ 활용 예 — 작업 완료 푸시</div>
+            <div class="code-box" style="font-size:13px;"><span class="c"># SessionEnd hook 안에서</span>
+curl <span class="v">-s</span> <span class="s">"https://api.telegram.org/bot$TOKEN/sendMessage"</span> \
+  <span class="v">-d</span> chat_id=<span class="s">"$CHAT"</span> \
+  <span class="v">-d</span> text=<span class="s">"✅ Claude task 완료"</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">/mcp_collab-install § 5 · /mcp_collab-status (TELEGRAM_BOT_TOKEN 점검) · 2026-05 npm 검증</span></div>
+  </div>
+</body>
+</html>

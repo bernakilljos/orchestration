@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>26개 플러그인 전체 카탈로그</title>
+  <link href="../styles/design-system.css" rel="stylesheet">
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    .slide-06a { display: flex !important; flex-direction: column !important; height: 1080px !important; padding: 60px 80px 50px 80px !important; box-sizing: border-box !important; overflow: hidden !important; position: relative; }
+    .slide-06a::before { content: ''; position: absolute; left: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .slide-06a::after { content: ''; position: absolute; right: 20px; top: 60px; bottom: 50px; width: 40px; background: repeating-linear-gradient(180deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius: 20px; pointer-events: none; }
+    .body { flex: 1; display: grid; grid-template-rows: auto 1fr; gap: 18px; margin-top: 22px; min-height: 0; }
+    .summary-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .sum { background: rgba(255,255,255,0.88); border: 0.5px solid var(--fog); border-radius: 12px; padding: 14px 18px; position: relative; overflow: hidden; }
+    .sum::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .sum.gold::before { background: var(--gold); }
+    .sum.sage::before { background: var(--sage); }
+    .sum.plum::before { background: var(--plum); }
+    .sum.terra::before { background: var(--terracotta); }
+    .sum.deep::before { background: var(--deep-gold); }
+    .sum .label { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.2em; color: var(--stone); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .sum .value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; }
+    .sum.gold .value { color: var(--deep-gold); }
+    .sum.sage .value { color: var(--sage); }
+    .sum.plum .value { color: var(--plum); }
+    .sum.terra .value { color: var(--terracotta); }
+    .sum.deep .value { color: var(--deep-gold); }
+    .sum .desc { font-size: 14px; color: var(--ink); margin-top: 4px; }
+
+    .grid { background: rgba(255,255,255,0.86); border: 0.5px solid var(--fog); border-radius: 14px; padding: 22px 26px; min-height: 0; position: relative; overflow: hidden; box-shadow: 0 8px 22px rgba(138,98,53,0.08); display: grid; grid-template-rows: auto 1fr; gap: 12px; }
+    .grid::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--deep-gold) 0%, var(--sage) 33%, var(--plum) 66%, var(--terracotta) 100%); }
+    .grid-ttl { font-family: 'JetBrains Mono', monospace; font-size: 16px; letter-spacing: 0.2em; color: var(--deep-gold); font-weight: 700; text-transform: uppercase; }
+    .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-content: start; }
+    .cat-block { display: flex; flex-direction: column; gap: 6px; }
+    .cat-hdr { font-family: 'JetBrains Mono', monospace; font-size: 14px; letter-spacing: 0.16em; font-weight: 700; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; color: white; }
+    .cat-hdr.gold { background: var(--gold); }
+    .cat-hdr.sage { background: var(--sage); }
+    .cat-hdr.plum { background: var(--plum); }
+    .cat-hdr.terra { background: var(--terracotta); }
+    .pl { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--cream); border: 0.5px solid var(--fog); border-radius: 6px; font-size: 13px; }
+    .pl.spec { opacity: 0.55; background: rgba(110,104,92,0.08); }
+    .pl .pn { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--deep-gold); font-size: 13px; }
+    .pl.spec .pn { color: var(--stone); }
+    .pl .pdesc { color: var(--ink); flex: 1; font-size: 12px; }
+    .pl.new { background: linear-gradient(90deg, rgba(184,134,78,0.18) 0%, rgba(255,255,255,0.85) 70%); border-color: var(--gold); }
+    .pl.new::after { content:'⭐'; margin-left:auto; font-size:11px; }
+
+    .footer-border { margin-top: auto; padding-top: 12px; border-top: 0.5px solid var(--fog); }
+  </style>
+</head>
+<body>
+  <div class="slide bg-subtle slide-06a">
+    <div class="slide-header">
+      <span class="slide-eyebrow"><iconify-icon icon="heroicons:squares-2x2" class="icon-sm"></iconify-icon>PART 02 · CATALOG (2026-05-07)</span>
+      <span class="mono caption">09 / 19</span>
+    </div>
+    <div class="title-with-icon"><iconify-icon icon="heroicons:squares-2x2" class="icon-lg"></iconify-icon><h1 class="heading-1">26개 플러그인 카탈로그</h1></div>
+    <p class="body-lead" style="margin-top: 6px; color: var(--stone);">16 stable + 10 spec-only · _template 제외 · exec_remote 신규 (4주차 · ⭐)</p>
+
+    <div class="body">
+      <div class="summary-row">
+        <div class="sum deep"><div class="label">합계</div><div class="value">26</div><div class="desc">_template 제외</div></div>
+        <div class="sum sage"><div class="label">Stable</div><div class="value">16</div><div class="desc">즉시 사용 가능</div></div>
+        <div class="sum plum"><div class="label">Spec-only</div><div class="value">10</div><div class="desc">향후 구현</div></div>
+        <div class="sum gold"><div class="label">신규 2026-05</div><div class="value">+1</div><div class="desc">exec_remote ⭐</div></div>
+        <div class="sum terra"><div class="label">접두사</div><div class="value">5</div><div class="desc">exec/design/mcp/review/etc</div></div>
+      </div>
+
+      <div class="grid">
+        <div class="grid-ttl">▸ 카테고리별 (Stable + Spec)</div>
+        <div class="cat-grid">
+          <div class="cat-block">
+            <div class="cat-hdr gold">EXECUTION (6)</div>
+            <div class="pl"><span class="pn">exec_orch</span><span class="pdesc">오케스트레이션 코어</span></div>
+            <div class="pl new"><span class="pn">exec_remote</span><span class="pdesc">VPS 24/7 4주차</span></div>
+            <div class="pl"><span class="pn">exec_claude</span><span class="pdesc">Claude 심화</span></div>
+            <div class="pl"><span class="pn">exec_voice</span><span class="pdesc">STT·TTS</span></div>
+            <div class="pl"><span class="pn">exec_learning</span><span class="pdesc">세션 학습</span></div>
+            <div class="pl"><span class="pn">exec_session_guard</span><span class="pdesc">스냅샷</span></div>
+            <div class="pl spec"><span class="pn">exec_offline</span><span class="pdesc">로컬 모델</span></div>
+            <div class="pl spec"><span class="pn">exec_scheduler</span><span class="pdesc">크론·DAG</span></div>
+          </div>
+
+          <div class="cat-block">
+            <div class="cat-hdr sage">DESIGN (4)</div>
+            <div class="pl"><span class="pn">design_ppt</span><span class="pdesc">PPT 자동 생성</span></div>
+            <div class="pl"><span class="pn">design_excel</span><span class="pdesc">Excel + 차트</span></div>
+            <div class="pl"><span class="pn">design_word</span><span class="pdesc">Word + Mermaid</span></div>
+            <div class="pl spec"><span class="pn">design_pdf</span><span class="pdesc">PDF 생성</span></div>
+            <div class="pl spec"><span class="pn">design_video</span><span class="pdesc">영상 편집</span></div>
+            <div class="pl spec"><span class="pn">design_web</span><span class="pdesc">랜딩·블로그</span></div>
+          </div>
+
+          <div class="cat-block">
+            <div class="cat-hdr plum">MCP (8)</div>
+            <div class="pl"><span class="pn">mcp_dev</span><span class="pdesc">GitHub·Docker·AWS</span></div>
+            <div class="pl"><span class="pn">mcp_data</span><span class="pdesc">PostgreSQL·Mongo</span></div>
+            <div class="pl new"><span class="pn">mcp_collab</span><span class="pdesc">+Telegram (3주차)</span></div>
+            <div class="pl"><span class="pn">mcp_web</span><span class="pdesc">Playwright</span></div>
+            <div class="pl"><span class="pn">mcp_docs</span><span class="pdesc">PDF·DOCX·OCR</span></div>
+            <div class="pl"><span class="pn">mcp_media</span><span class="pdesc">Whisper·TTS</span></div>
+            <div class="pl spec"><span class="pn">mcp_queue</span><span class="pdesc">Kafka·SQS</span></div>
+            <div class="pl spec"><span class="pn">mcp_social</span><span class="pdesc">YouTube</span></div>
+          </div>
+
+          <div class="cat-block">
+            <div class="cat-hdr terra">REVIEW + SPEC (8)</div>
+            <div class="pl"><span class="pn">review_qa</span><span class="pdesc">코드 리뷰·보안</span></div>
+            <div class="pl spec"><span class="pn">ai_rag</span><span class="pdesc">8 RAG 패턴</span></div>
+            <div class="pl spec"><span class="pn">cost_youtube</span><span class="pdesc">수익·트렌드</span></div>
+            <div class="pl spec"><span class="pn">music_studio</span><span class="pdesc">작곡·믹싱</span></div>
+            <div class="pl"><span class="pn">_template</span><span class="pdesc" style="color:var(--stone);font-style:italic;">— 제외</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-border"><span class="footnote">검증: python .claude/scripts/validate-plugin-schema.py · CLAUDE.md § 1 · plug_all 일괄 설치</span></div>
+  </div>
+</body>
+</html>
