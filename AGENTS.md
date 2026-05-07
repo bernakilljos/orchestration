@@ -2,7 +2,7 @@
 
 > Claude용: `CLAUDE.md` | Codex용: 이 파일 | Gemini용: `GEMINI.md`
 > MCP 설정: `.codex/config.toml`
-> 버전: v1.0.1 · 2026-04-24
+> 버전: v1
 
 ---
 

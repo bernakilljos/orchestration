@@ -38,7 +38,7 @@
     OrchestrationKit-Setup.exe /VERYSILENT /TYPE="codex_only"  /DIR="..."
     OrchestrationKit-Setup.exe /VERYSILENT /TYPE="gemini_only" /DIR="..."
 
-  [방법 D] 독립형 설치 스크립트 (v1.0.1+) — git 저장소에서 직접
+  [방법 D] 독립형 설치 스크립트 (v1) — git 저장소에서 직접
     Codex 단독:  install_codex.bat C:\work\myproject
     Gemini 단독: install_gemini.bat C:\work\myproject
     → .env.example 자동 생성, 토큰 로그 기능, 상세 가이드 포함

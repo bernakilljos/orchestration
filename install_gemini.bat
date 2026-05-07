@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 
 rem =====================================================
 rem install_gemini.bat — Gemini 단독 환경 셋업 (standalone)
-rem 버전: v1.0.1 · 2026-04-24
+rem 버전: v1
 rem
 rem 용도: Claude 없이 Gemini 만으로 작업할 수 있는 환경.
 rem        검증 뿐 아니라 일반 작업 (구현·요약·문서화) 도 단독 수행.
@@ -24,10 +24,10 @@ rem   6. tasks/README.md (배치 사용 시 참고)
 rem   7. .gemini/usage-log.py 복사 (토큰 사용량 기록)
 rem
 rem 설치 후 사용:
-rem   gemini-go "이 코드 보안 검증해줘"        ← 자연어 한 줄, 끝
-rem   gemini-go "로그 100MB 요약해줘"          ← 1M 컨텍스트 활용
-rem   gemini-go                              ← 인자 없으면 대화 모드
-rem   gemini-a --auto                        ← tasks/ 의 task 파일 일괄 처리
+rem   gemini-go "이 코드 보안 검증해줘"        <- 자연어 한 줄, 끝
+rem   gemini-go "로그 100MB 요약해줘"          <- 1M 컨텍스트 활용
+rem   gemini-go                              <- 인자 없으면 대화 모드
+rem   gemini-a --auto                        <- tasks/ 의 task 파일 일괄 처리
 rem
 rem 다음 단계:
 rem   - API 키 설정: setx GOOGLE_API_KEY "..."
@@ -52,8 +52,8 @@ echo.
 echo ============================================================
 echo   Gemini Standalone 환경 설치: %TARGET%
 echo ============================================================
-echo   ※ Claude 없이 Gemini 단독으로 작업 가능
-echo   ※ 풀 orchestration 원하면 install.bat 사용
+echo   * Claude 없이 Gemini 단독으로 작업 가능
+echo   * 풀 orchestration 원하면 install.bat 사용
 echo.
 
 rem --- 폴더 ---
@@ -85,18 +85,18 @@ rem --- .env.example ---
 echo [3/6] .env.example (API 키 및 설정 템플릿)...
 if not exist "%TARGET%\.env.example" (
   (
-    echo # Gemini Standalone 환경변수
-    echo # 필수: GOOGLE_API_KEY 설정
+    echo [#] Gemini Standalone 환경변수
+    echo [#] 필수: GOOGLE_API_KEY 설정
     echo.
     echo GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
     echo.
-    echo # 선택: Gemini 모델 선택 ^(기본값: gemini-2.0-flash^)
-    echo # gemini-2.0-flash     — 최신, 빠르고 저단가
-    echo # gemini-1.5-pro       — 고성능, 1M 컨텍스트
-    echo # GEMINI_MODEL=gemini-2.0-flash
+    echo [#] 선택: Gemini 모델 선택 ^(기본값: gemini-2.0-flash^)
+    echo [#] gemini-2.0-flash     — 최신, 빠르고 저단가
+    echo [#] gemini-1.5-pro       — 고성능, 1M 컨텍스트
+    echo [#] GEMINI_MODEL=gemini-2.0-flash
     echo.
-    echo # 선택: 일일 토큰 한도 ^(초과 시 경고, 기본값: 무제한^)
-    echo # GEMINI_DAILY_LIMIT_USD=20
+    echo [#] 선택: 일일 토큰 한도 ^(초과 시 경고, 기본값: 무제한^)
+    echo [#] GEMINI_DAILY_LIMIT_USD=20
   ) > "%TARGET%\.env.example"
   echo       [OK] .env.example
 ) else (
@@ -113,7 +113,7 @@ if exist "%SCRIPT_DIR%\.gemini\config.toml" (
 )
 
 rem --- gemini-go.bat (자연어 한 줄 처리) ---
-echo [5/6] gemini-go.bat (자연어 → 즉시 작업)...
+echo [5/6] gemini-go.bat ^(자연어 -^> 즉시 작업^)...
 (
   echo @echo off
   echo chcp 65001 ^>nul
@@ -173,7 +173,7 @@ rem --- tasks/README.md (배치 사용 안내) ---
 echo [6/6] tasks\README.md (배치 처리 안내)...
 if not exist "%TARGET%\tasks\README.md" (
   (
-    echo # tasks/ — 배치 작업 폴더 ^(선택^)
+    echo [#] tasks/ — 배치 작업 폴더 ^(선택^)
     echo.
     echo ## 일반 사용 — 자연어 한 줄
     echo 그냥 이렇게 하면 됨, task 파일 만들 필요 없음:
@@ -214,7 +214,7 @@ if not exist "%TARGET%\tasks\README.md" (
 
 echo.
 echo ============================================================
-echo   [OK] Gemini Standalone v1.0.1 설치 완료
+echo   [OK] Gemini Standalone v1 설치 완료
 echo ============================================================
 echo.
 echo   대상: %TARGET%
@@ -284,8 +284,8 @@ echo.
 echo   언제든 아래 명령으로 Full orchestration 추가 가능:
 echo     install.bat "%TARGET%"
 echo.
-echo   → 기존 .gemini\ 유지 + .claude\ 레이어 추가
-echo   → Claude 설계 → Codex 구현 → Gemini 검증 자동화
+echo   -> 기존 .gemini\ 유지 + .claude\ 레이어 추가
+echo   -> Claude 설계 -> Codex 구현 -> Gemini 검증 자동화
 echo.
 echo ============================================================
 echo.

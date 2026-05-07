@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 
 rem =====================================================
 rem install_codex.bat — Codex 단독 환경 셋업 (standalone)
-rem 버전: v1.0.1 · 2026-04-24
+rem 버전: v1
 rem
 rem 용도: Claude 없이 Codex 만으로 작업할 수 있는 환경.
 rem        풀 orchestration 은 install.bat (Claude+Codex+Gemini)
@@ -24,9 +24,9 @@ rem   6. tasks/README.md (배치 사용 시 참고)
 rem   7. .codex/usage-log.py 복사 (토큰 사용량 기록)
 rem
 rem 설치 후 사용:
-rem   codex-go "회원가입 페이지 만들어줘"      ← 자연어 한 줄, 끝
-rem   codex-go                                ← 인자 없으면 대화 모드
-rem   codex-a --auto                          ← tasks/ 의 task 파일 일괄 처리
+rem   codex-go "회원가입 페이지 만들어줘"      <- 자연어 한 줄, 끝
+rem   codex-go                                <- 인자 없으면 대화 모드
+rem   codex-a --auto                          <- tasks/ 의 task 파일 일괄 처리
 rem
 rem 다음 단계:
 rem   - API 키 설정: setx OPENAI_API_KEY "sk-..."
@@ -50,8 +50,8 @@ echo.
 echo ============================================================
 echo   Codex Standalone 환경 설치: %TARGET%
 echo ============================================================
-echo   ※ Claude 없이 Codex 단독으로 작업 가능
-echo   ※ 풀 orchestration 원하면 install.bat 사용
+echo   * Claude 없이 Codex 단독으로 작업 가능
+echo   * 풀 orchestration 원하면 install.bat 사용
 echo.
 
 rem --- 폴더 ---
@@ -83,16 +83,16 @@ rem --- .env.example ---
 echo [3/6] .env.example (API 키 및 설정 템플릿)...
 if not exist "%TARGET%\.env.example" (
   (
-    echo # Codex Standalone 환경변수
-    echo # 필수: OPENAI_API_KEY 설정
+    echo [#] Codex Standalone 환경변수
+    echo [#] 필수: OPENAI_API_KEY 설정
     echo.
     echo OPENAI_API_KEY=sk-YOUR_API_KEY_HERE
     echo.
-    echo # 선택: 일일 토큰 한도 ^(초과 시 경고, 기본값: 무제한^)
-    echo # CODEX_DAILY_LIMIT_USD=10
+    echo [#] 선택: 일일 토큰 한도 ^(초과 시 경고, 기본값: 무제한^)
+    echo [#] CODEX_DAILY_LIMIT_USD=10
     echo.
-    echo # 선택: Codex 모델 선택 ^(기본값: gpt-4^)
-    echo # CODEX_MODEL=gpt-4
+    echo [#] 선택: Codex 모델 선택 ^(기본값: gpt-4^)
+    echo [#] CODEX_MODEL=gpt-4
   ) > "%TARGET%\.env.example"
   echo       [OK] .env.example
 ) else (
@@ -109,7 +109,7 @@ if exist "%SCRIPT_DIR%\.codex\config.toml" (
 )
 
 rem --- codex-go.bat (자연어 한 줄 처리) ---
-echo [5/6] codex-go.bat (자연어 → 즉시 작업)...
+echo [5/6] codex-go.bat ^(자연어 -^> 즉시 작업^)...
 (
   echo @echo off
   echo chcp 65001 ^>nul
@@ -165,7 +165,7 @@ rem --- tasks/README.md (배치 사용 안내) ---
 echo [6/6] tasks\README.md (배치 처리 안내)...
 if not exist "%TARGET%\tasks\README.md" (
   (
-    echo # tasks/ — 배치 작업 폴더 ^(선택^)
+    echo [#] tasks/ — 배치 작업 폴더 ^(선택^)
     echo.
     echo ## 일반 사용 — 자연어 한 줄
     echo 그냥 이렇게 하면 됨, task 파일 만들 필요 없음:
@@ -200,7 +200,7 @@ if not exist "%TARGET%\tasks\README.md" (
 
 echo.
 echo ============================================================
-echo   [OK] Codex Standalone v1.0.1 설치 완료
+echo   [OK] Codex Standalone v1 설치 완료
 echo ============================================================
 echo.
 echo   대상: %TARGET%
@@ -260,8 +260,8 @@ echo.
 echo   언제든 아래 명령으로 Full orchestration 추가 가능:
 echo     install.bat "%TARGET%"
 echo.
-echo   → 기존 .codex\ 유지 + .claude\ 레이어 추가
-echo   → Claude 설계 → Codex 구현 → Gemini 검증 자동화
+echo   -> 기존 .codex\ 유지 + .claude\ 레이어 추가
+echo   -> Claude 설계 -> Codex 구현 -> Gemini 검증 자동화
 echo.
 echo ============================================================
 echo.
