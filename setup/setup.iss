@@ -178,6 +178,20 @@ Type: filesandordirs; Name: "{app}\tools"
 // Pascal Script
 // =====================================================
 
+// GitHub PAT 입력 페이지 (마법사 안에서 PAT 받기)
+var
+  PatPage: TInputQueryWizardPage;
+
+procedure InitializeWizard();
+begin
+  PatPage := CreateInputQueryPage(wpSelectComponents,
+    'GitHub Personal Access Token',
+    'GitHub 자동 push / repo 생성을 위해 PAT 가 필요합니다.',
+    '비워두면 SKIP — 설치는 진행되며 GitHub 자동 기능만 비활성됩니다.' + #13#10 +
+    'PAT 발급: https://github.com/settings/tokens (scope: repo + workflow)');
+  PatPage.Add('GitHub PAT (ghp_... 형식, 비우면 SKIP):', False);
+end;
+
 // codex/gemini standalone 모드 — Claude orchestration 미선택일 때만 install_*.bat 실행
 function NotClaudeOrch: Boolean;
 begin
@@ -188,7 +202,26 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   GitIgnorePath: string;
   Content: string;
+  IniPath: string;
+  IniDir: string;
+  PatValue: string;
 begin
+  if CurStep = ssInstall then
+  begin
+    // PAT 입력값을 docs/ini/github.ini 에 저장 (install/setup 흐름이 읽음)
+    PatValue := PatPage.Values[0];
+    if PatValue <> '' then
+    begin
+      IniDir := ExpandConstant('{app}\docs\ini');
+      IniPath := IniDir + '\github.ini';
+      ForceDirectories(IniDir);
+      Content := '# GitHub PAT (Inno Setup 마법사 입력 — ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':') + ')' + #13#10 +
+                 '# 절대 git commit 금지 (.gitignore 됨)' + #13#10 +
+                 'GITHUB_PAT=' + PatValue + #13#10;
+      SaveStringToFile(IniPath, Content, False);
+    end;
+  end;
+
   if CurStep = ssPostInstall then
   begin
     // 모든 모드에서 .gitignore 생성
