@@ -42,6 +42,13 @@
     Codex 단독:  install_codex.bat C:\work\myproject
     Gemini 단독: install_gemini.bat C:\work\myproject
     → .env.example 자동 생성, 토큰 로그 기능, 상세 가이드 포함
+    → install_codex/gemini.bat 는 PowerShell wrapper (한글 깨짐 방지)
+
+  [방법 E] Team 동기화 (인프라 본체 → 팀 폴더)
+    bash .claude/scripts/sync-to-team.sh
+    또는 슬래시: /sync-team
+    → orchestration_v1 → ../orchestration_v1_team 자동 복사
+    → 시크릿 (docs/ini/), 상태 (.claude/state/), 락 제외
 
   [모드별 사용 흐름]
     Full   →  cd <target>  →  claude
@@ -50,6 +57,22 @@
 
   [서비스만 재시작]
     install.bat restart
+
+  [무인 진행 — 사용자 입력 0번]
+    install.bat 의 모든 prompt 자동화 (timeout default):
+      - 체크포인트 1/3, 2/3: 3초 후 자동 진행
+      - Node.js / codex / gemini 설치: 5초 후 자동 Y
+      - Claude 실행: 10초 후 자동 N
+      - 종료 pause: 3초 후 자동 닫기
+    test 우회: SKIP_ELEVATION=1 환경변수 (admin 검사 건너뜀)
+
+  [PAT 자동 처리 — install/setup 양쪽]
+    우선순위:
+      1. 환경변수 GITHUB_PERSONAL_ACCESS_TOKEN
+      2. docs/ini/github.ini 의 GITHUB_PAT=
+      3. 둘 다 없으면 docs/ini/ 폴더 + placeholder 자동 생성 + 안내
+    PAT 발급: https://github.com/settings/tokens (scope: repo + workflow)
+    docs/ini/ 는 .gitignore (시크릿 보호)
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

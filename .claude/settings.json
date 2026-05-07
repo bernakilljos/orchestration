@@ -109,7 +109,8 @@
         "hooks": [
           { "type": "command", "command": "bash plugins/exec_session_guard/hooks/stop-snapshot.sh Stop" },
           { "type": "command", "command": "python .claude/scripts/audit-bat-lines.py", "timeout": 60, "async": true },
-          { "type": "command", "command": "python .claude/scripts/audit-install-dryrun.py", "timeout": 90, "async": true }
+          { "type": "command", "command": "python .claude/scripts/audit-install-dryrun.py", "timeout": 90, "async": true },
+          { "type": "command", "command": "bash .claude/scripts/sync-to-team.sh", "timeout": 30, "async": true }
         ]
       }
     ],
