@@ -1,8 +1,6 @@
 ============================================================
-  Orchestration Kit v1.1 — Complete Guide
+  Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Last updated: 2026-05-07
-  Highlights: exec_remote (4주차 VPS) · Telegram (3주차) · setup.iss v1.1
 ============================================================
 
 
@@ -859,19 +857,6 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  2026-05-07 (v1.1):
-    ✓ exec_remote 신규 — 4주차 VPS 24/7 원격 운영 (Oracle Free Tier 우선)
-      · /exec_remote-{setup,ssh,deploy,mobile,tmux,status} 6 커맨드
-      · cloud-provider-select / ssh-hardening / tmux-workflow 3 스킬
-      · gen-ssh-key.sh / bootstrap-vps.sh / deploy-kit.sh 3 스크립트
-    ✓ mcp_collab 에 Telegram (telegram-bot-mcp-server) 추가 — 3주차 알림 자동화
-    ✓ setup.iss v1.0 → v1.1 — 헤더에 v1 vs team 분기 명문화
-    ✓ setup/modules/04-commands.bat — haiku-auto / *-global 3개 추가
-       (CLAUDE.md §3.2 검증자 정책 작동 안 한 갭 해결)
-    ✓ setup-info.rtf / setup/BUILD.md 현행화 (Edition 모드·14단계 모듈·체크리스트)
-    ✓ docs/2026-05-07/4주차-원격제어.md 신규
-    ✓ CLAUDE.md 카운트 보정 (21→26: 16 stable + 10 spec-only)
 
   2026-04-30 R51~R71 누적 (43 슬라이드 PPT × 3종):
     ✓ 차트·SVG·카드 그리드 4 패턴 표준화 (skill § 13)
