@@ -3,29 +3,15 @@
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1fr 1.4fr; gap:24px; margin-top:20px; min-height:0; }
-.left { display:flex; flex-direction:column; gap:14px; min-height:0; }
-.right { display:flex; flex-direction:column; gap:14px; min-height:0; }
-.note-card { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:18px 22px; flex:0 0 auto; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); }
-.note-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
-.note-card.gold::before { background:var(--gold); }
-.note-card.sage::before { background:var(--sage); }
-.note-card.plum::before { background:var(--plum); }
-.note-card .lbl { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; margin-bottom:6px; }
-.note-card.gold .lbl { color:var(--deep-gold); }
-.note-card.sage .lbl { color:var(--sage); }
-.note-card.plum .lbl { color:var(--plum); }
-.note-card .desc { font-size:15px; color:var(--ink); line-height:1.5; }
-.note-card .desc strong { color:var(--deep-gold); font-weight:700; }
-.note-card .desc code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:13px; font-family:'JetBrains Mono', monospace; }
-.arch-wrap { background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:14px; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:14px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.arch-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--plum) 0%, var(--gold) 100%); }
-.arch-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
-.arch-cap { position:absolute; bottom:8px; right:14px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--stone); letter-spacing:0.1em; background:rgba(255,255,255,0.7); padding:2px 8px; border-radius:4px; }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
+.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
+.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
   <div class="slide-header">
@@ -33,42 +19,15 @@
     <span class="mono caption">11 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:folder" class="icon-lg"></iconify-icon><h1 class="heading-1">.claude/ 전체 구조</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">킷이 따르는 표준 — Brij Pandey (DK 메소드) 의 표준 Claude 폴더 레이아웃</p>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">킷이 따르는 표준 — Brij Pandey (DK 메소드) 의 표준 Claude 폴더 레이아웃 · 5 핵심 폴더 (commands · skills · hooks · scripts · state)</p>
 
   <div class="body">
-    <div class="left">
-      <div class="note-card gold">
-        <div class="lbl">▸ 5 핵심 폴더</div>
-        <div class="desc"><strong>commands/</strong> — 슬래시 명령<br>
-        <strong>skills/</strong> — 자동 활성 추론 로직<br>
-        <strong>hooks/</strong> — Pre/Post 자동 실행 훅<br>
-        <strong>scripts/</strong> — sync · validate · route 등<br>
-        <strong>state/</strong> — SQLite (워커·태스크·quota)</div>
-      </div>
-
-      <div class="note-card sage">
-        <div class="lbl">▸ 우리 팀 적용</div>
-        <div class="desc">Pandey 표준 + 우리 확장:<br>
-        — <strong>plugins/</strong> 가 SoT (Source of Truth)<br>
-        — <strong>.claude/</strong> 는 sync 결과물 (자동 생성)<br>
-        — <strong>state/orca.db</strong> 통합 (8 테이블)<br>
-        — 모든 도구 즉시 사용 가능</div>
-      </div>
-
-      <div class="note-card plum">
-        <div class="lbl">▸ 왜 이 표준?</div>
-        <div class="desc">Pandey 가 <strong>5 Rules</strong> 정립 (CLAUDE.md 500줄·Hooks·월간 갱신·참조 중심·init 먼저). 우리 팀도 같은 표준 → 다른 Claude 사용자와 호환.</div>
-      </div>
-    </div>
-
-    <div class="right">
-      <div class="arch-wrap">
-        <img src="../../../../docs/screens/arch/클로드폴더-전체구조-DK메소드.jpg" alt="Claude 폴더 전체 구조 - DK 메소드 (Brij Pandey)">
-        <div class="arch-cap">▸ Claude 폴더 전체 구조 / DK.method · Brij Pandey</div>
-      </div>
+    <div class="arch-wrap">
+      <img src="../../../../docs/screens/arch/클로드폴더-전체구조-DK메소드.jpg" alt="Claude 폴더 전체 구조 - DK 메소드 (Brij Pandey)">
+      <div class="arch-cap">▸ Claude 폴더 전체 구조 / DK.method · Brij Pandey</div>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">CLAUDE.md § 3.5 + § 4 핵심 경로 · .claude/rules/claude-md-design.md · Brij K. Pandey</span></div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 3.5 + § 4 핵심 경로 · plugins/ = SoT, .claude/ = sync 결과물 · 모든 도구 즉시 사용 가능</span></div>
 </div>
 </body></html>

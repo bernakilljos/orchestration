@@ -3,27 +3,15 @@
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1fr 1.4fr; gap:24px; margin-top:20px; min-height:0; }
-.left { display:flex; flex-direction:column; gap:14px; min-height:0; }
-.note-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:12px; padding:14px 18px; flex:0 0 auto; position:relative; overflow:hidden; box-shadow:0 4px 14px rgba(138,98,53,0.08); }
-.note-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--sage); }
-.note-card.gold::before { background:var(--gold); }
-.note-card.plum::before { background:var(--plum); }
-.note-card .lbl { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; margin-bottom:4px; color:var(--sage); }
-.note-card.gold .lbl { color:var(--deep-gold); }
-.note-card.plum .lbl { color:var(--plum); }
-.note-card .ttl { font-family:'Fraunces', serif; font-size:18px; font-weight:700; color:var(--ink); margin-bottom:2px; }
-.note-card .desc { font-size:15px; color:var(--ink); line-height:1.4; }
-.note-card .desc strong { color:var(--deep-gold); }
-.note-card .stat { font-family:'JetBrains Mono', monospace; font-size:24px; font-weight:700; margin-top:4px; color:var(--sage); }
-.arch-wrap { background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:14px; min-height:0; display:flex; align-items:center; justify-content:center; padding:14px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.arch-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--sage) 0%, var(--gold) 100%); }
-.arch-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
-.arch-cap { position:absolute; bottom:8px; right:14px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--stone); letter-spacing:0.1em; background:rgba(255,255,255,0.7); padding:2px 8px; border-radius:4px; }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
+.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--terracotta) 0%,var(--gold) 100%)}
+.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
   <div class="slide-header">
@@ -34,39 +22,12 @@
   <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 "$0 AI 스택" — Oracle Free + Haiku Caching + 로컬 모델 = 월 ~$3</p>
 
   <div class="body">
-    <div class="left">
-      <div class="note-card gold">
-        <div class="lbl">▸ 인프라</div>
-        <div class="ttl">Oracle Free Tier</div>
-        <div class="desc">4 OCPU ARM · 24GB · 200GB · 10TB/월 트래픽</div>
-        <div class="stat">$0/월</div>
-      </div>
-      <div class="note-card">
-        <div class="lbl">▸ 검증 모델</div>
-        <div class="ttl">Haiku 4.5 + Caching</div>
-        <div class="desc">Prompt Caching 5분/1h TTL — 같은 프롬프트 90% 절감</div>
-        <div class="stat">−90%</div>
-      </div>
-      <div class="note-card plum">
-        <div class="lbl">▸ 로컬 옵션</div>
-        <div class="ttl">Ollama (exec_offline)</div>
-        <div class="desc">Llama · Gemma · Mistral 자체 호스트 — 단순 작업은 로컬</div>
-        <div class="stat">$0</div>
-      </div>
-      <div class="note-card gold">
-        <div class="lbl">▸ 합계</div>
-        <div class="ttl">실질 운영 비용</div>
-        <div class="desc">VPS $0 + Claude API $3~10/월 (사용량) + 도메인 $1/월</div>
-        <div class="stat">~$5/월</div>
-      </div>
-    </div>
-
     <div class="arch-wrap">
       <img src="../../../../docs/screens/arch/제로비용-AI아키텍처-2026-판데이.jpg" alt="Zero Cost AI Architecture 2026 - Pandey">
       <div class="arch-cap">▸ Zero-Cost AI Architecture 2026 / Pandey</div>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">arch 출처: Pandey · plugins/exec_offline (spec) · docs/caching-strategy.md</span></div>
+  <div class="footer-border"><span class="footnote">arch 출처: Pandey · plugins/exec_offline (spec) · docs/caching-strategy.md · Oracle Free + Haiku Caching 90% 절감 + Ollama 로컬 = 월 ~$3</span></div>
 </div>
 </body></html>

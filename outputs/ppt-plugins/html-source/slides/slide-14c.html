@@ -1,27 +1,30 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>아키텍처 레퍼런스</title>
-<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<html lang="ko"><head><meta charset="UTF-8"><title>Claude Code 아키텍처 (풀페이지)</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
-.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;align-items:stretch;margin-top:24px;min-height:0}
-.arch-wrap{background:rgba(255,255,255,0.7);border:1px solid var(--fog);border-radius:14px;flex:1;display:flex;align-items:center;justify-content:center;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg, var(--sage) 0%, var(--gold) 100%)}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
+.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--plum) 100%)}
 .arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.cap{position:absolute;bottom:14px;right:20px;font-family:'JetBrains Mono', monospace;font-size:13px;color:var(--stone);background:rgba(255,255,255,0.9);padding:4px 12px;border-radius:6px;letter-spacing:0.1em}
+.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
-  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:server-stack" class="icon-sm"></iconify-icon>PART 05 · 아키텍처 레퍼런스</span><span class="mono caption">35 / 40</span></div>
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:server-stack" class="icon-sm"></iconify-icon>PART 05 · ARCHITECTURE (풀페이지)</span><span class="mono caption">35 / 40</span></div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:server-stack" class="icon-lg"></iconify-icon><h1 class="heading-1">Claude Code 아키텍처 (풀페이지)</h1></div>
   <p class="body-lead" style="margin-top:8px; color:var(--stone);">Pandey 의 표준 — 우리 26 플러그인이 이 5 영역에 어떻게 매핑되는지</p>
+
   <div class="body">
     <div class="arch-wrap">
       <img src="../../../../docs/screens/arch/클로드코드-아키텍처-레퍼런스-판데이.jpg" alt="Claude Code Architecture Reference - Pandey">
-      <div class="cap">▸ Claude Code Architecture Reference · Brij Kishore Pandey</div>
+      <div class="arch-cap">▸ Claude Code Architecture Reference · Brij Kishore Pandey</div>
     </div>
   </div>
+
   <div class="footer-border"><span class="footnote">▸ Brij Pandey · plugin schema v1.2 · Commands · Skills · Hooks · Agents · Plugins (5 영역)</span></div>
 </div>
 </body></html>

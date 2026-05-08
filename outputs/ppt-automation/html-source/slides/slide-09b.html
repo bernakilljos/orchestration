@@ -3,34 +3,19 @@
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; margin-top:20px; min-height:0; }
-.arch-wrap { background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:14px; min-height:0; display:flex; align-items:center; justify-content:center; padding:14px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.arch-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 100%); }
-.arch-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
-.arch-cap { position:absolute; bottom:8px; right:14px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--stone); letter-spacing:0.1em; background:rgba(255,255,255,0.7); padding:2px 8px; border-radius:4px; }
-.right { display:flex; flex-direction:column; gap:12px; min-height:0; }
-.rule { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:10px; padding:12px 16px; flex:0 0 auto; position:relative; overflow:hidden; }
-.rule::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; }
-.rule.gold::before { background:var(--gold); }
-.rule.sage::before { background:var(--sage); }
-.rule.plum::before { background:var(--plum); }
-.rule.terra::before { background:var(--terracotta); }
-.rule .num { font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; }
-.rule.gold .num { color:var(--deep-gold); }
-.rule.sage .num { color:var(--sage); }
-.rule.plum .num { color:var(--plum); }
-.rule.terra .num { color:var(--terracotta); }
-.rule .ttl { font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--ink); margin-bottom:2px; }
-.rule .desc { font-size:14px; color:var(--ink); line-height:1.4; }
-.rule .desc strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
+.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
+.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
   <div class="slide-header">
-    <span class="slide-eyebrow"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-sm"></iconify-icon>PART 02 · ROUTING DECISION TREE</span>
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-sm"></iconify-icon>PART 03 · ROUTING DECISION TREE</span>
     <span class="mono caption">24 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">라우팅 결정 트리 — 어떤 AI?</h1></div>
@@ -41,17 +26,8 @@
       <img src="../../../../docs/screens/arch/클로드코드-아키텍처-결정트리-판데이.jpg" alt="Claude Code Architecture Decision Tree - Pandey">
       <div class="arch-cap">▸ Claude Code Architecture Decision Tree / Pandey</div>
     </div>
-
-    <div class="right">
-      <div class="rule gold"><div class="num">▸ 분기 1</div><div class="ttl">설계·복잡 추론</div><div class="desc"><strong>Claude Opus 4.7</strong> + Extended Thinking (1M context)</div></div>
-      <div class="rule sage"><div class="num">▸ 분기 2</div><div class="ttl">단순 구현 &lt;200줄</div><div class="desc"><strong>Sonnet 4.6</strong> 직접 (저비용)</div></div>
-      <div class="rule plum"><div class="num">▸ 분기 3</div><div class="ttl">대량 구현 500줄+</div><div class="desc"><strong>Codex × 4</strong> 병렬 (codex-auto)</div></div>
-      <div class="rule terra"><div class="num">▸ 분기 4</div><div class="ttl">검증 (기본)</div><div class="desc"><strong>Haiku 4.5 × 2</strong> + Prompt Caching 90%</div></div>
-      <div class="rule gold"><div class="num">▸ 분기 5</div><div class="ttl">검증 (초장문 &gt;500k)</div><div class="desc"><strong>Gemini Flash</strong> 1M 토큰 (멀티모달도)</div></div>
-      <div class="rule sage"><div class="num">▸ 분기 6 (Fallback)</div><div class="ttl">Quota 소진 시</div><div class="desc">지수 backoff (10m → 20m → 40m → 2h) + 다른 AI 자동 대체</div></div>
-    </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">plugins/exec_orch/skills/route_dispatch.md · arch 출처 Pandey · docs/routing-policy.md</span></div>
+  <div class="footer-border"><span class="footnote">▸ Brij Pandey · plugins/exec_orch/skills/route_dispatch.md · 복잡추론 → Opus 4.7 · 단순구현 → Sonnet 4.6 · 코드 500줄+ → Codex × 4 · 검증 → Haiku × 2 · 초장문 → Gemini Flash</span></div>
 </div>
 </body></html>

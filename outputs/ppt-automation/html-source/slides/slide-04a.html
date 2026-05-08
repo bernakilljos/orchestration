@@ -3,30 +3,15 @@
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; margin-top:20px; min-height:0; }
-.arch-wrap { background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:14px; min-height:0; display:flex; align-items:center; justify-content:center; padding:14px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.arch-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 100%); }
-.arch-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
-.arch-cap { position:absolute; bottom:8px; right:14px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--stone); letter-spacing:0.1em; background:rgba(255,255,255,0.7); padding:2px 8px; border-radius:4px; }
-.right { display:flex; flex-direction:column; gap:14px; min-height:0; }
-.lvl-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:12px; padding:14px 18px; flex:1; position:relative; overflow:hidden; box-shadow:0 4px 14px rgba(138,98,53,0.08); }
-.lvl-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold); }
-.lvl-card.sage::before { background:var(--sage); }
-.lvl-card.plum::before { background:var(--plum); }
-.lvl-card.terra::before { background:var(--terracotta); }
-.lvl-card.deep::before { background:var(--deep-gold); }
-.lvl-card .num { font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; }
-.lvl-card.gold .num, .lvl-card .num { color:var(--deep-gold); }
-.lvl-card.sage .num { color:var(--sage); }
-.lvl-card.plum .num { color:var(--plum); }
-.lvl-card.terra .num { color:var(--terracotta); }
-.lvl-card .ttl { font-family:'Fraunces', serif; font-size:18px; font-weight:700; color:var(--ink); margin-bottom:2px; }
-.lvl-card .desc { font-size:15px; color:var(--ink); line-height:1.4; }
-.lvl-card .desc strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
+.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--sage) 100%)}
+.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
   <div class="slide-header">
@@ -39,18 +24,10 @@
   <div class="body">
     <div class="arch-wrap">
       <img src="../../../../docs/screens/arch/AI스택-5단계-인프라부터인터페이스.jpg" alt="AI Stack 5 Layers - Infrastructure to Interface">
-      <div class="arch-cap">▸ AI 스택 5단계 — 인프라부터 인터페이스 / Pandey</div>
-    </div>
-
-    <div class="right">
-      <div class="lvl-card deep"><div class="num">▸ L1 INFRASTRUCTURE</div><div class="ttl">인프라</div><div class="desc">VPS · Cloud · Local — 우리 = <strong>Oracle Free + 로컬 PC</strong></div></div>
-      <div class="lvl-card terra"><div class="num">▸ L2 MODELS</div><div class="ttl">모델</div><div class="desc">Claude 4.7 · Codex · Haiku 4.5 · Gemini Flash</div></div>
-      <div class="lvl-card gold"><div class="num">▸ L3 ORCHESTRATION</div><div class="ttl">오케스트레이션</div><div class="desc"><strong>exec_orch</strong> · 워커 풀 · SQLite state · watchdog</div></div>
-      <div class="lvl-card sage"><div class="num">▸ L4 TOOLS</div><div class="ttl">도구·MCP</div><div class="desc">26개 플러그인 · 7 MCP 카테고리 · slash 110+</div></div>
-      <div class="lvl-card plum"><div class="num">▸ L5 INTERFACE</div><div class="ttl">인터페이스</div><div class="desc">Claude Code · 슬래시 · Termius (모바일) · 대시보드</div></div>
+      <div class="arch-cap">▸ AI 스택 5단계 · Pandey</div>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">arch 출처: Brij Kishore Pandey · CLAUDE.md § 4 핵심 경로 · plugins/exec_orch</span></div>
+  <div class="footer-border"><span class="footnote">arch 출처: Brij Kishore Pandey · L1 인프라 (Oracle Free + 로컬 PC) · L2 모델 (Claude·Codex·Haiku·Gemini) · L3 오케스트레이션 (exec_orch) · L4 도구 (26 플러그인 · 110+ slash) · L5 인터페이스 (Claude Code)</span></div>
 </div>
 </body></html>
