@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Stage 3 — Orchestration</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.stage-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--sage);line-height:0.85}
+.stage-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.stage-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--sage);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--sage)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.next{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:squares-plus" class="icon-sm"></iconify-icon>PART 01 · STAGE 3</span><span class="mono caption">08 / 31</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:squares-plus" class="icon-lg"></iconify-icon><h1 class="heading-1">Stage 3 — Orchestration</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">여러 AI 가 협업 시작 — Claude 설계 + Codex 구현 + Haiku 검증</p>
+  <div class="body">
+    <div class="left"><span class="stage-band">▸ Stage 3 / 6</span><div class="stage-num"><span class="pre">STAGE</span>3</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">멀티 AI 협업</div><div class="desc">각 AI 가 잘하는 일만. <strong>Claude 설계 → Codex 구현 → Haiku 검증</strong>. exec_orch 가 라우팅.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 예시</div><div class="what">/exec_orch</div></div>
+        <div class="pt"><div class="lbl">▸ AI 수</div><div class="what">3~7 개 동시</div></div>
+        <div class="pt"><div class="lbl">▸ 핸드오프</div><div class="what">hook-08 강제</div></div>
+        <div class="pt"><div class="lbl">▸ 라우팅</div><div class="what">규모별 자동</div></div>
+      </div>
+      <div class="next">▸ <strong>다음 Stage 4 = 우리 위치</strong> — Automation. PC 꺼져도 24h 가동.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ AI 시스템 6단계 · plugins/exec_orch · /ai-system-stages</span></div>
+</div>
+</body></html>

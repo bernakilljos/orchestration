@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Stage 1 — Prompt</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.stage-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--gold);line-height:0.85}
+.stage-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.stage-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--gold);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--gold)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--deep-gold);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.next{background:linear-gradient(135deg,rgba(107,142,127,0.15) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--sage)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:chat-bubble-left" class="icon-sm"></iconify-icon>PART 01 · STAGE 1</span><span class="mono caption">06 / 31</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:chat-bubble-left" class="icon-lg"></iconify-icon><h1 class="heading-1">Stage 1 — Prompt</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">AI 발전의 첫 단계 — 사람이 한 번 묻고 AI 가 한 번 답</p>
+  <div class="body">
+    <div class="left"><span class="stage-band">▸ Stage 1 / 6</span><div class="stage-num"><span class="pre">STAGE</span>1</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">한 번 묻고 답</div><div class="desc">ChatGPT 기본 사용 패턴. <strong>한 turn</strong> 안에서 끝. 도구 사용 X · 자율성 X · 외부 시스템 X.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 예시</div><div class="what">"파이썬 코드 짜줘"</div></div>
+        <div class="pt"><div class="lbl">▸ 한계</div><div class="what">파일 못 만짐 · 한 번 답</div></div>
+        <div class="pt"><div class="lbl">▸ 사용자</div><div class="what">대부분 일반 사용자</div></div>
+        <div class="pt"><div class="lbl">▸ 도구</div><div class="what">웹 채팅 UI</div></div>
+      </div>
+      <div class="next">▸ <strong>다음 Stage 2</strong> — Agent. 단일 AI 가 도구 (파일·웹·터미널) 사용 시작.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ AI 시스템 6단계 · /ai-system-stages · 우리는 단계 4 = Automation</span></div>
+</div>
+</body></html>
