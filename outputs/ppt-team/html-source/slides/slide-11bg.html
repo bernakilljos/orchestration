@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>L7 — 플러그인 사용</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lvl-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--sage);line-height:0.85}
+.lvl-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.lvl-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--sage);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--sage)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.pt .what code{background:#1A1D24;color:#39FF6C;padding:2px 8px;border-radius:4px;font-size:15px;font-family:'JetBrains Mono', monospace}
+.next{background:linear-gradient(135deg,rgba(122,78,107,0.15) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--plum);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--plum)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:puzzle-piece" class="icon-sm"></iconify-icon>PART 04 · LEVEL 7</span><span class="mono caption">31 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:puzzle-piece" class="icon-lg"></iconify-icon><h1 class="heading-1">L7 — 플러그인 사용</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">26 개 우리 + 8 개 커뮤니티 = 34 플러그인 활용. 슬래시 한 번에 강력한 작업</p>
+  <div class="body">
+    <div class="left"><span class="lvl-band">▸ Intermediate</span><div class="lvl-num"><span class="pre">LEVEL</span>7</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">26 + 8 = 34 도구</div><div class="desc">우리 26 (exec_·design_·mcp_·review_) + 커뮤니티 8 (claude-md-management · code-review · superpowers 등). 슬래시 25+ 명령.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ PPT 자동</div><div class="what"><code>/design_ppt</code></div></div>
+        <div class="pt"><div class="lbl">▸ 코드 리뷰</div><div class="what"><code>/review_qa</code></div></div>
+        <div class="pt"><div class="lbl">▸ 음성</div><div class="what"><code>/exec_voice</code></div></div>
+        <div class="pt"><div class="lbl">▸ 학습</div><div class="what"><code>/exec_learning</code></div></div>
+      </div>
+      <div class="next">▸ <strong>다음 L8</strong> — 멀티턴 추론. 복잡한 문제도 단계별 분해해서 자동 해결.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Ruben Hassid · L7 / 14 · plugins/ 26 개 + setup/modules/08-plugins.bat 가 커뮤니티 8 개</span></div>
+</div>
+</body></html>

@@ -1,71 +1,72 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>왜 이 PPT — 우리 팀의 의도</title>
-<link href="../styles/design-system.css" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<html lang="ko"><head><meta charset="UTF-8"><title>이 도구로 무엇을 얻나</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:24px; margin-top:20px; min-height:0; }
-.hero-quote { background:linear-gradient(135deg, rgba(184,134,78,0.18) 0%, rgba(255,255,255,0.92) 70%); border:0.5px solid var(--gold); border-radius:14px; padding:28px 36px; box-shadow:0 8px 22px rgba(138,98,53,0.12); }
-.hero-quote .q { font-family:'Fraunces', serif; font-size:42px; font-weight:600; color:var(--deep-gold); line-height:1.3; margin-bottom:14px; font-style:italic; }
-.hero-quote .by { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.2em; color:var(--stone); text-transform:uppercase; }
-
-.three-col { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; min-height:0; }
-.intent { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:24px 28px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:10px; }
-.intent::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
-.intent.gold::before { background:var(--gold); }
-.intent.sage::before { background:var(--sage); }
-.intent.plum::before { background:var(--plum); }
-.intent .ic-big { font-size:54px; }
-.intent.gold .ic-big { color:var(--gold); }
-.intent.sage .ic-big { color:var(--sage); }
-.intent.plum .ic-big { color:var(--plum); }
-.intent .num { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; }
-.intent.gold .num { color:var(--deep-gold); }
-.intent.sage .num { color:var(--sage); }
-.intent.plum .num { color:var(--plum); }
-.intent .ttl { font-family:'Fraunces', serif; font-size:22px; font-weight:700; color:var(--ink); }
-.intent .desc { font-size:15px; color:var(--ink); line-height:1.5; }
-.intent .desc strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.hero{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(178,90,62,0.12) 100%);border:1.5px solid var(--gold);border-radius:14px;padding:32px 40px;box-shadow:0 8px 22px rgba(138,98,53,0.15)}
+.hero .q{font-family:'Fraunces',serif;font-size:46px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:14px;font-style:italic;text-align:center}
+.hero .by{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.22em;color:var(--deep-gold);text-transform:uppercase;font-weight:700;text-align:center}
+.gain-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:18px;min-height:0}
+.gain{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 24px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:10px}
+.gain::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.gain.gold::before{background:var(--gold)}
+.gain.sage::before{background:var(--sage)}
+.gain.plum::before{background:var(--plum)}
+.gain.terra::before{background:var(--terracotta)}
+.gain .ic-big{font-size:48px}
+.gain.gold .ic-big{color:var(--gold)}
+.gain.sage .ic-big{color:var(--sage)}
+.gain.plum .ic-big{color:var(--plum)}
+.gain.terra .ic-big{color:var(--terracotta)}
+.gain .stat{font-family:'JetBrains Mono',monospace;font-size:38px;font-weight:700;line-height:0.9}
+.gain.gold .stat{color:var(--deep-gold)}
+.gain.sage .stat{color:var(--sage)}
+.gain.plum .stat{color:var(--plum)}
+.gain.terra .stat{color:var(--terracotta)}
+.gain .ttl{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink);line-height:1.2}
+.gain .desc{font-size:16px;color:var(--ink);line-height:1.55}
+.gain .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
-  <div class="slide-header">
-    <span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>PART 05 · 의도 정리</span>
-    <span class="mono caption">24 / 25</span>
-  </div>
-  <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">왜 이 가이드를 만들었나</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">3개 PPT 의도 — team-guide / automation-guide / plugins-guide 이 함께 답하는 한 가지 질문</p>
-
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>PART 05 · 의도 정리</span><span class="mono caption">39 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">이 도구로 무엇을 얻나</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">팀 N 명이 같은 도구로 — 시간 −90% · 비용 −90% · 검증 100% · 24h 가동</p>
   <div class="body">
-    <div class="hero-quote">
-      <div class="q">"한 명의 인프라를 N명이 쓰는 가장 빠른 길<br>— 시크릿은 분리, 도구는 공유, 갱신은 자동."</div>
-      <div class="by">▸ team-guide · /sync-team · 본판 메인테이너 의도</div>
+    <div class="hero">
+      <div class="q">"5 분 설치 + 첫 명령 한 줄 = 26 도구 + 4-AI 즉시"</div>
+      <div class="by">▸ team 도구의 본질</div>
     </div>
-
-    <div class="three-col">
-      <div class="intent gold">
-        <iconify-icon icon="heroicons:user-group" class="ic-big"></iconify-icon>
-        <div class="num">▸ THIS PPT — TEAM</div>
-        <div class="ttl">팀이 어떻게 쓰는가</div>
-        <div class="desc"><strong>왜 team 폴더?</strong> — 시크릿 분리·5분 onboarding·변경 자동 전파.<br><strong>어떻게 쓰는가?</strong> — 24장 흐름으로 단계별 안내.</div>
+    <div class="gain-grid">
+      <div class="gain gold">
+        <iconify-icon icon="heroicons:clock" class="ic-big"></iconify-icon>
+        <div class="stat">−90%</div>
+        <div class="ttl">시간 단축</div>
+        <div class="desc">4 시간 작업이 <strong>25 분</strong>. 4-AI 병렬 + 검증 자동.</div>
       </div>
-      <div class="intent sage">
-        <iconify-icon icon="heroicons:cpu-chip" class="ic-big"></iconify-icon>
-        <div class="num">▸ NEXT — AUTOMATION</div>
-        <div class="ttl">왜 자동화 하는가</div>
-        <div class="desc"><strong>AI 6단계 중 4단계 = Automation.</strong> PC 꺼져도 24h 가동·검증 자동·비용 90% 절감 — 자동화 = 팀의 동시 능력 증폭.</div>
+      <div class="gain sage">
+        <iconify-icon icon="heroicons:currency-dollar" class="ic-big"></iconify-icon>
+        <div class="stat">−90%</div>
+        <div class="ttl">비용 절감</div>
+        <div class="desc">Haiku Caching 90%. <strong>$25 → $2.50</strong>. 일일 한도 자동.</div>
       </div>
-      <div class="intent plum">
-        <iconify-icon icon="heroicons:puzzle-piece" class="ic-big"></iconify-icon>
-        <div class="num">▸ NEXT — PLUGINS</div>
-        <div class="ttl">편의성 + 확장</div>
-        <div class="desc"><strong>26개 플러그인</strong> 으로 즉시 시작.<br>필요한 도구 없으면 <strong>plugins/_template</strong> 으로 직접 만들고 팀에 추가.</div>
+      <div class="gain plum">
+        <iconify-icon icon="heroicons:check-badge" class="ic-big"></iconify-icon>
+        <div class="stat">100%</div>
+        <div class="ttl">검증율</div>
+        <div class="desc">Hook-08 자동 차단. <strong>실수율 &lt;1%</strong>. 사람 손 안 가게.</div>
+      </div>
+      <div class="gain terra">
+        <iconify-icon icon="heroicons:cloud" class="ic-big"></iconify-icon>
+        <div class="stat">24h</div>
+        <div class="ttl">가동 시간</div>
+        <div class="desc">VPS + Watchdog. <strong>잠자는 동안</strong> 작업 진행.</div>
       </div>
     </div>
   </div>
-
-  <div class="footer-border"><span class="footnote">3 PPT · 75 슬라이드 · 한 가지 메시지: 우리 팀의 인프라는 한 명이 만들고 모두가 쓴다</span></div>
+  <div class="footer-border"><span class="footnote">▸ team-guide 40 슬라이드 · 더 자세히 = automation-guide / plugins-guide</span></div>
 </div>
 </body></html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>CLAUDE.md § 4 핵심 경로</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.summary{background:linear-gradient(135deg,rgba(178,90,62,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--terracotta);border-radius:14px;padding:24px 32px;display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center}
+.summary .big-num{font-family:'Fraunces',serif;font-size:140px;font-weight:700;color:var(--terracotta);line-height:0.85}
+.summary .big-num .pre{font-size:50px;color:var(--stone);display:block;margin-bottom:6px}
+.summary .text .lbl{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.2em;color:var(--terracotta);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.summary .text .desc{font-size:26px;color:var(--ink);line-height:1.4;font-weight:600}
+.path-table{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 28px;min-height:0;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.08)}
+table.paths{width:100%;border-collapse:collapse}
+table.paths th{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:0.18em;color:var(--stone);text-transform:uppercase;font-weight:700;padding:10px 14px;border-bottom:2px solid var(--fog);text-align:left}
+table.paths td{padding:10px 14px;font-size:18px;color:var(--ink);border-bottom:0.5px solid var(--fog);line-height:1.4}
+table.paths td.path{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--deep-gold);width:38%;font-size:17px}
+table.paths td.edit{text-align:center;width:14%;font-weight:700;font-size:20px}
+table.paths td.edit.yes{color:var(--sage)}
+table.paths td.edit.no{color:var(--terracotta)}
+table.paths td.edit.auto{color:var(--gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:folder-open" class="icon-sm"></iconify-icon>PART 02 · CLAUDE.md § 4</span>
+    <span class="mono caption">17 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:folder-open" class="icon-lg"></iconify-icon><h1 class="heading-1">§ 4 핵심 경로 — 어디서 무엇을</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">10 핵심 경로 + 편집 권한 — 어디는 직접 편집 OK, 어디는 자동 생성 (편집 X)</p>
+  <div class="body">
+    <div class="summary">
+      <div class="big-num"><span class="pre">§</span>4</div>
+      <div class="text">
+        <div class="lbl">▸ 한 줄 요약</div>
+        <div class="desc">plugins/ ✅ 편집 · .claude/ ❌ 자동 sync · CLAUDE.md ✅ 큐레이션</div>
+      </div>
+    </div>
+    <div class="path-table">
+      <table class="paths">
+        <thead><tr><th>경로</th><th>용도</th><th>편집</th></tr></thead>
+        <tbody>
+          <tr><td class="path">plugins/</td><td>26 플러그인 원본 (SoT)</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">.claude/commands · skills/</td><td>sync 결과물 (자동 생성)</td><td class="edit no">❌</td></tr>
+          <tr><td class="path">.claude/rules/*.md</td><td>공유 규칙 (frontmatter·sync 등)</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">.claude/scripts/</td><td>sync·validate·route·watchdog</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">.claude/hooks/</td><td>PreToolUse·PostToolUse 훅</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">.claude/state/orca.db</td><td>SQLite 통합 상태 (8 테이블)</td><td class="edit auto">자동</td></tr>
+          <tr><td class="path">.claude/tasks/</td><td>task-instruction · locks · done</td><td class="edit auto">자동</td></tr>
+          <tr><td class="path">CLAUDE.md</td><td>프로젝트 마스터 지시문</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">guide.txt</td><td>사람용 가이드 17 섹션</td><td class="edit yes">✅</td></tr>
+          <tr><td class="path">.env / docs/ini/</td><td>API 키 · PAT (gitignore)</td><td class="edit yes">✅</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 4 · 편집 ✅ = 직접 편집 가능 · ❌ = sync 가 덮어씀 · 자동 = 시스템이 갱신</span></div>
+</div>
+</body></html>

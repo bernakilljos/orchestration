@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>CLAUDE.md § 2 WHY</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.3fr;gap:30px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:20px}
+.big-num{font-family:'Fraunces',serif;font-size:240px;font-weight:700;color:var(--sage);line-height:0.85}
+.big-num .pre{font-size:90px;color:var(--stone);display:block;margin-bottom:10px}
+.summary{background:linear-gradient(135deg,rgba(107,142,127,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:14px;padding:22px 26px}
+.summary .lbl{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.2em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.summary .desc{font-size:24px;color:var(--ink);line-height:1.5;font-weight:600}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0}
+.point{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 26px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.08);flex:1}
+.point::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--sage)}
+.point.gold::before{background:var(--gold)}
+.point.plum::before{background:var(--plum)}
+.point.terra::before{background:var(--terracotta)}
+.point .lbl{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.18em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.point.gold .lbl{color:var(--deep-gold)}
+.point.plum .lbl{color:var(--plum)}
+.point.terra .lbl{color:var(--terracotta)}
+.point .ttl{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink);margin-bottom:6px;line-height:1.2}
+.point .desc{font-size:18px;color:var(--ink);line-height:1.55}
+.point .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:document-text" class="icon-sm"></iconify-icon>PART 02 · CLAUDE.md § 2</span>
+    <span class="mono caption">15 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:document-text" class="icon-lg"></iconify-icon><h1 class="heading-1">§ 2 WHY — 왜 이 구조</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">"왜 이렇게 만들어졌는가" — 4 가지 설계 원칙이 모든 결정의 근거</p>
+  <div class="body">
+    <div class="left">
+      <div class="big-num"><span class="pre">§</span>2</div>
+      <div class="summary">
+        <div class="lbl">▸ 한 줄 정의</div>
+        <div class="desc">단일 AI 한계 극복 + 비용 관측 + 스코프 분리</div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="point gold"><div class="lbl">▸ 다AI 협업</div><div class="ttl">설계·구현·검증 분리</div><div class="desc"><strong>Claude 4.7</strong> 설계 → <strong>Codex × 4</strong> 구현 → <strong>Haiku × 2</strong> 검증. 각자 잘하는 일만.</div></div>
+      <div class="point"><div class="lbl">▸ SoT 규칙</div><div class="ttl">plugins/ 가 원본</div><div class="desc"><strong>plugins/</strong> 만 편집. <strong>.claude/</strong> 는 sync 결과물. 드리프트 방지.</div></div>
+      <div class="point plum"><div class="lbl">▸ 스코프 분리</div><div class="ttl">킷은 인프라만</div><div class="desc">실제 비즈니스 (회원가입 등) 는 각 프로젝트. <strong>킷은 도구·자동화만</strong>.</div></div>
+      <div class="point terra"><div class="lbl">▸ 비용 관측</div><div class="ttl">precedence + 토큰 추정</div><div class="desc">plugin.json 의 precedence·token_estimate 로 <strong>세션 로드 우선순위</strong> 자동.</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 2 · docs/architecture-patterns.md (9 원칙 상세)</span></div>
+</div>
+</body></html>

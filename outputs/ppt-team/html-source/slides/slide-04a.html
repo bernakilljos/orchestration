@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>어디 서버에 어떻게 배포</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 1fr auto; gap:22px; margin-top:24px; min-height:0; }
+.intro { background:rgba(255,255,255,0.92); border:1px solid var(--fog); border-radius:14px; padding:22px 28px; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
+.intro::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 100%); }
+.intro .ttl { font-family:'Fraunces', serif; font-size:28px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+.intro .desc { font-size:20px; color:var(--stone); line-height:1.5; }
+.intro .desc strong { color:var(--deep-gold); }
+.options { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; min-height:0; }
+.opt { background:rgba(255,255,255,0.92); border:1px solid var(--fog); border-radius:16px; padding:24px 26px; position:relative; overflow:hidden; box-shadow:0 8px 22px rgba(138,98,53,0.10); display:flex; flex-direction:column; gap:12px; }
+.opt::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; }
+.opt.local::before { background:var(--gold); }
+.opt.cloud::before { background:var(--sage); }
+.opt.team::before { background:var(--plum); }
+.opt .badge { display:inline-block; font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:700; padding:5px 14px; border-radius:8px; letter-spacing:0.2em; color:white; align-self:flex-start; }
+.opt.local .badge { background:var(--gold); }
+.opt.cloud .badge { background:var(--sage); }
+.opt.team .badge { background:var(--plum); }
+.opt .ttl { font-family:'Fraunces', serif; font-size:28px; font-weight:700; color:var(--ink); line-height:1.2; }
+.opt .when { font-size:17px; color:var(--stone); line-height:1.45; }
+.opt ul { list-style:none; padding:0; margin:0; }
+.opt li { display:flex; gap:8px; align-items:flex-start; padding:7px 0; font-size:16px; color:var(--ink); line-height:1.5; border-bottom:0.5px solid var(--fog); }
+.opt li:last-child { border-bottom:none; }
+.opt li::before { content:'▸'; flex-shrink:0; font-weight:700; }
+.opt.local li::before { color:var(--deep-gold); }
+.opt.cloud li::before { color:var(--sage); }
+.opt.team li::before { color:var(--plum); }
+.opt li code { background:#1A1D24; color:#39FF6C; padding:2px 7px; border-radius:4px; font-size:14px; font-family:'JetBrains Mono', monospace; }
+.opt li strong { color:var(--deep-gold); }
+.opt .cost { font-family:'JetBrains Mono', monospace; font-size:30px; font-weight:700; margin-top:auto; }
+.opt.local .cost { color:var(--deep-gold); }
+.opt.cloud .cost { color:var(--sage); }
+.opt.team .cost { color:var(--plum); }
+.bottom-tip { background:linear-gradient(135deg, rgba(107,142,127,0.12) 0%, rgba(184,134,78,0.10) 100%); border:1px solid var(--sage); border-radius:14px; padding:20px 28px; }
+.bottom-tip .lbl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.2em; color:var(--sage); font-weight:700; text-transform:uppercase; margin-bottom:6px; }
+.bottom-tip .desc { font-size:18px; color:var(--ink); line-height:1.5; }
+.bottom-tip .desc strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:14px; border-top:1px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:server" class="icon-sm"></iconify-icon>PART 01 · 어디 서버에 어떻게</span>
+    <span class="mono caption">06 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:server" class="icon-lg"></iconify-icon><h1 class="heading-1">어디에 어떻게 배포할까</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">개인 PC · 클라우드 VPS · 팀 공유 — 3 가지 옵션 + 권장 시나리오</p>
+
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">기본 = 본인 Windows PC. 클라우드는 24h 가동 필요할 때.</div>
+      <div class="desc">대부분 <strong>로컬 PC</strong> 면 충분. 자동화 작업 (잠자는 동안 24시간 가동) 또는 모바일 접속이 필요하면 <strong>클라우드 VPS</strong>. 팀이 같은 도구 쓰려면 <strong>본판 → 팀 폴더 동기화</strong>.</div>
+    </div>
+
+    <div class="options">
+      <div class="opt local">
+        <span class="badge">옵션 1 ⭐</span>
+        <div class="ttl">로컬 PC · Windows</div>
+        <div class="when">평소 작업용 · 가장 빠른 시작 · 별도 비용 없음</div>
+        <ul>
+          <li><strong>setup.exe</strong> 더블클릭 → 5분</li>
+          <li>경로: <code>%USERPROFILE%\pjt</code></li>
+          <li>Windows 10/11 · RAM 8GB+</li>
+          <li>장점: 즉시 사용 · 시크릿 본인 PC 안</li>
+          <li>단점: PC 끄면 작업 정지</li>
+        </ul>
+        <div class="cost">$0</div>
+      </div>
+
+      <div class="opt cloud">
+        <span class="badge">옵션 2</span>
+        <div class="ttl">클라우드 VPS · Linux</div>
+        <div class="when">PC 꺼져도 24h 가동 · 모바일 원격 접속 · 자동화 강력</div>
+        <ul>
+          <li><strong>Oracle Free</strong> 4 OCPU · 24GB · 무료</li>
+          <li>Vultr · Lightsail $3~5/월 (대안)</li>
+          <li>SSH 키 한 번 + Termius 폰 앱</li>
+          <li>장점: 24h 가동 · 어디서든 접속</li>
+          <li>단점: 가입·SSH 셋업 1시간</li>
+        </ul>
+        <div class="cost">$0~5/월</div>
+      </div>
+
+      <div class="opt team">
+        <span class="badge">옵션 3</span>
+        <div class="ttl">팀 공유</div>
+        <div class="when">여러 명이 같은 도구 사용 · 인프라 공유 · 시크릿 분리</div>
+        <ul>
+          <li>각 멤버: <strong>setup.exe</strong> 본인 PC</li>
+          <li>본인 PAT/API 키만 입력 (자동 분리)</li>
+          <li>같은 26 플러그인 + 25 슬래시</li>
+          <li>장점: 일관성 · 5분 onboarding</li>
+          <li>단점: Maintainer 1명 필요</li>
+        </ul>
+        <div class="cost">멤버당 $0</div>
+      </div>
+    </div>
+
+    <div class="bottom-tip">
+      <div class="lbl">▸ 우리 팀 권장 = 옵션 1 + 옵션 3</div>
+      <div class="desc">처음엔 <strong>각자 로컬 PC</strong> 에서 (옵션 1), 익숙해지면 <strong>팀 공유</strong> 로 (옵션 3). 24h 가동 필요한 사람만 <strong>옵션 2 추가</strong>. 옵션 모두 같은 setup.exe + 같은 명령으로 시작.</div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">setup.iss · setup/BUILD.md · 경로는 사용자별 동적 (%USERPROFILE%)</span></div>
+</div>
+</body></html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>L12 — Watchdog 자동 복구</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lvl-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--plum);line-height:0.85}
+.lvl-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.lvl-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--plum);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--plum)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--plum);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.pt .what code{background:#1A1D24;color:#39FF6C;padding:2px 8px;border-radius:4px;font-size:15px;font-family:'JetBrains Mono', monospace}
+.next{background:linear-gradient(135deg,rgba(178,90,62,0.15) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--terracotta);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--terracotta)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:arrow-path" class="icon-sm"></iconify-icon>PART 04 · LEVEL 12</span><span class="mono caption">36 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:arrow-path" class="icon-lg"></iconify-icon><h1 class="heading-1">L12 — Watchdog 자동 복구</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">워커 2 분마다 점검 → 죽었으면 자동 부활 → quota 소진 시 지수 backoff</p>
+  <div class="body">
+    <div class="left"><span class="lvl-band">▸ Advanced</span><div class="lvl-num"><span class="pre">LEVEL</span>12</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">사람 손 안 가게</div><div class="desc">Watchdog 백그라운드 → <strong>2 분마다 heartbeat 점검</strong>. 워커 죽으면 자동 부활. API 한도 소진 시 <strong>10m → 20m → 40m → 2h</strong> backoff.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 시작</div><div class="what"><code>watchdog-start.sh</code></div></div>
+        <div class="pt"><div class="lbl">▸ 점검 주기</div><div class="what">2 분</div></div>
+        <div class="pt"><div class="lbl">▸ Backoff</div><div class="what">10m → 2h</div></div>
+        <div class="pt"><div class="lbl">▸ 상태 DB</div><div class="what">.claude/state/orca.db</div></div>
+      </div>
+      <div class="next">▸ <strong>다음 L13</strong> — 마스터 진입. 자체 플러그인 만들기. plugins/_template 복사로 시작.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Ruben Hassid · L12 / 14 · .claude/scripts/watchdog-start.sh · CLAUDE.md § 3.7</span></div>
+</div>
+</body></html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>CLAUDE.md § 6 3 Scopes</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr auto;gap:24px;margin-top:24px;min-height:0}
+.summary{background:linear-gradient(135deg,rgba(107,142,127,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:14px;padding:22px 32px;display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center}
+.summary .big-num{font-family:'Fraunces',serif;font-size:140px;font-weight:700;color:var(--sage);line-height:0.85}
+.summary .big-num .pre{font-size:50px;color:var(--stone);display:block;margin-bottom:6px}
+.summary .text .lbl{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.2em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.summary .text .desc{font-size:26px;color:var(--ink);line-height:1.4;font-weight:600}
+.scopes{display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;min-height:0}
+.scope{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:26px 28px;position:relative;overflow:hidden;box-shadow:0 8px 22px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:12px}
+.scope::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.scope.global::before{background:var(--smoke)}
+.scope.proj::before{background:var(--gold)}
+.scope.folder::before{background:var(--sage)}
+.scope .level{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.2em;font-weight:700;text-transform:uppercase;color:var(--stone)}
+.scope .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);line-height:1.15}
+.scope .path{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:16px;padding:10px 14px;border-radius:8px}
+.scope .desc{font-size:18px;color:var(--ink);line-height:1.55}
+.scope .desc strong{color:var(--deep-gold)}
+.tip-bar{background:linear-gradient(135deg,rgba(184,134,78,0.10) 0%,rgba(178,90,62,0.10) 100%);border:1px solid var(--gold);border-radius:14px;padding:20px 28px}
+.tip-bar .lbl{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.2em;color:var(--deep-gold);font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.tip-bar .desc{font-size:20px;color:var(--ink);line-height:1.5}
+.tip-bar .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-sm"></iconify-icon>PART 02 · CLAUDE.md § 6</span>
+    <span class="mono caption">19 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">§ 6 — 3 Scopes (Last wins)</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">CLAUDE.md 가 3 곳에서 작동 — 충돌 시 가까운 곳이 이긴다 (Folder &gt; Project &gt; Global)</p>
+  <div class="body">
+    <div class="summary">
+      <div class="big-num"><span class="pre">§</span>6</div>
+      <div class="text">
+        <div class="lbl">▸ 한 줄 요약</div>
+        <div class="desc">Folder &gt; Project &gt; Global — 가까운 게 이긴다</div>
+      </div>
+    </div>
+    <div class="scopes">
+      <div class="scope global">
+        <div class="level">▸ LEVEL 3 — GLOBAL</div>
+        <div class="ttl">전역 (개인)</div>
+        <div class="path">~/.claude/CLAUDE.md</div>
+        <div class="desc">모든 프로젝트 공통. <strong>코딩 스타일 · 개인 선호</strong> 만 적기. (예: "한국어 응답 우선")</div>
+      </div>
+      <div class="scope proj">
+        <div class="level">▸ LEVEL 2 — PROJECT</div>
+        <div class="ttl">프로젝트 (본판)</div>
+        <div class="path">./CLAUDE.md</div>
+        <div class="desc">이 프로젝트 규칙. <strong>WHAT/WHY/HOW · 5 Rules · 금지</strong>. 우리 본판 = 이 자리.</div>
+      </div>
+      <div class="scope folder">
+        <div class="level">▸ LEVEL 1 — FOLDER</div>
+        <div class="ttl">폴더 (모듈)</div>
+        <div class="path">./src/CLAUDE.md</div>
+        <div class="desc">모듈 국소 규칙 (필요 시). <strong>API · 컴포넌트 · utils</strong> 등 좁은 범위.</div>
+      </div>
+    </div>
+    <div class="tip-bar">
+      <div class="lbl">▸ 충돌 해결 — Last wins</div>
+      <div class="desc">같은 규칙 충돌 시 <strong>Folder 가 이긴다</strong>. Project 가 그다음. Global 이 가장 약함. 즉 좁은 범위가 우선.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 6 · .claude/rules/claude-md-design.md (3 Scopes 상세)</span></div>
+</div>
+</body></html>

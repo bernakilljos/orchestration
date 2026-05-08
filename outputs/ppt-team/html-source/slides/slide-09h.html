@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>CLAUDE.md § 7 금지 사항</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.summary{background:linear-gradient(135deg,rgba(178,90,62,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--terracotta);border-radius:14px;padding:22px 32px;display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center}
+.summary .big-num{font-family:'Fraunces',serif;font-size:140px;font-weight:700;color:var(--terracotta);line-height:0.85}
+.summary .big-num .pre{font-size:50px;color:var(--stone);display:block;margin-bottom:6px}
+.summary .text .lbl{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.2em;color:var(--terracotta);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+.summary .text .desc{font-size:26px;color:var(--ink);line-height:1.4;font-weight:600}
+.dont-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:18px;min-height:0}
+.dont{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.08);display:flex;flex-direction:column;gap:8px}
+.dont::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--terracotta)}
+.dont .x{font-family:'Fraunces',serif;font-size:42px;color:var(--terracotta);font-weight:700;line-height:0.9}
+.dont .ttl{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.dont .desc{font-size:16px;color:var(--ink);line-height:1.55}
+.dont .desc strong{color:var(--deep-gold)}
+.dont .desc code{background:#1A1D24;color:#39FF6C;padding:2px 6px;border-radius:4px;font-size:14px;font-family:'JetBrains Mono', monospace}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:no-symbol" class="icon-sm"></iconify-icon>PART 02 · CLAUDE.md § 7</span>
+    <span class="mono caption">20 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:no-symbol" class="icon-lg"></iconify-icon><h1 class="heading-1">§ 7 금지 사항 — 9 가지</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">Claude 가 절대 하지 않는 9 가지 — 위반 시 Hook 이 자동 차단</p>
+  <div class="body">
+    <div class="summary">
+      <div class="big-num"><span class="pre">§</span>7</div>
+      <div class="text">
+        <div class="lbl">▸ 한 줄 요약</div>
+        <div class="desc">절대 금지 9 — 위반 시 hook-08 자동 차단</div>
+      </div>
+    </div>
+    <div class="dont-grid">
+      <div class="dont"><div class="x">✗</div><div class="ttl">하드코딩</div><div class="desc">API 키 · 경로 · 시크릿 코드 안에. → <strong><code>.env</code> 사용</strong></div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">optional chaining</div><div class="desc">JS <code>?.</code> 금지. → 명시적 if 체크</div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">.claude/ 직접 편집</div><div class="desc">sync 가 덮어씀. → <strong>plugins/ 에서 편집</strong></div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">시크릿 commit</div><div class="desc">PAT · API 키 git push X. → gitignore 자동 보호</div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">빈 task 위장 완료</div><div class="desc">처리 안 한 task 를 done/ 이동 X</div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">"주인" 단어</div><div class="desc">코드 주석에 owner/주인 사용 금지</div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">Gemini 자동 채택</div><div class="desc">검증 결과 그대로 X. → <strong>Claude 가 최종 결정</strong></div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">동시 같은 파일 수정</div><div class="desc">Writer = 1. 락 없으면 차단</div></div>
+      <div class="dont"><div class="x">✗</div><div class="ttl">거짓 npm 패키지</div><div class="desc">실측 없이 mcp add X. → <code>npm view</code> 검증 필수</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 7 · hook-08 핸드오프 검증 · .claude/hooks/protect-critical-files.sh</span></div>
+</div>
+</body></html>

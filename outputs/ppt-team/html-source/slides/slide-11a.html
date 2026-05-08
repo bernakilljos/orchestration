@@ -1,69 +1,56 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>보안 체크리스트 — 팀 운영</title>
-<link href="../styles/design-system.css" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<html lang="ko"><head><meta charset="UTF-8"><title>실전 시나리오 1 — PPT 만들기</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:20px; min-height:0; }
-.col { display:flex; flex-direction:column; gap:12px; min-height:0; }
-.section { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:18px 22px; flex:1; min-height:0; overflow:hidden; position:relative; box-shadow:0 6px 18px rgba(138,98,53,0.08); }
-.section::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
-.section.terra::before { background:var(--terracotta); }
-.section.sage::before { background:var(--sage); }
-.section .lbl { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.2em; font-weight:700; text-transform:uppercase; margin-bottom:10px; }
-.section.terra .lbl { color:var(--terracotta); }
-.section.sage .lbl { color:var(--sage); }
-.checklist { display:flex; flex-direction:column; gap:8px; }
-.item { display:flex; gap:10px; align-items:flex-start; padding:9px 12px; background:var(--cream); border-radius:8px; font-size:14px; line-height:1.4; border:0.5px solid var(--fog); }
-.item .ic { flex-shrink:0; font-size:16px; font-weight:700; }
-.item.must .ic { color:var(--terracotta); }
-.item.do .ic { color:var(--sage); }
-.item code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:12px; font-family:'JetBrains Mono', monospace; }
-.item strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.req{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;box-shadow:0 8px 22px rgba(138,98,53,0.12)}
+.req .ic{font-size:64px;color:var(--gold)}
+.req .text .lbl{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.22em;color:var(--deep-gold);font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.req .text .q{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:6px}
+.req .text .desc{font-size:18px;color:var(--stone);line-height:1.5}
+.flow{display:grid;grid-template-columns:repeat(5, 1fr);gap:14px;align-items:stretch;min-height:0}
+.step{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:12px;padding:20px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.step.s1::before{background:var(--gold)}
+.step.s2::before{background:var(--sage)}
+.step.s3::before{background:var(--plum)}
+.step.s4::before{background:var(--terracotta)}
+.step.s5::before{background:var(--deep-gold)}
+.step .num{font-family:'Fraunces',serif;font-size:54px;font-weight:700;line-height:0.9}
+.step.s1 .num{color:var(--gold)}
+.step.s2 .num{color:var(--sage)}
+.step.s3 .num{color:var(--plum)}
+.step.s4 .num{color:var(--terracotta)}
+.step.s5 .num{color:var(--deep-gold)}
+.step .ttl{font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--ink);line-height:1.2}
+.step .desc{font-size:14px;color:var(--ink);line-height:1.45}
+.step .cmd{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 12px;border-radius:6px;margin-top:auto}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
-  <div class="slide-header">
-    <span class="slide-eyebrow"><iconify-icon icon="heroicons:shield-exclamation" class="icon-sm"></iconify-icon>PART 04 · 팀 보안</span>
-    <span class="mono caption">22 / 25</span>
-  </div>
-  <div class="title-with-icon"><iconify-icon icon="heroicons:shield-exclamation" class="icon-lg"></iconify-icon><h1 class="heading-1">팀 운영 보안 체크리스트</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">시크릿 분리 + 토큰 관리 + 동기화 보안 — 모든 멤버가 지킬 것 (체크리스트)</p>
-
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:presentation-chart-bar" class="icon-sm"></iconify-icon>PART 04 · 실전 시나리오 1</span><span class="mono caption">23 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:presentation-chart-bar" class="icon-lg"></iconify-icon><h1 class="heading-1">시나리오 1 — PPT 자동 생성</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">"이번 주 회의용 PPT 25 장 만들어 줘" — 1 시간이면 완성</p>
   <div class="body">
-    <div class="col">
-      <div class="section terra">
-        <div class="lbl">⚠ 절대 금지 (DO NOT)</div>
-        <div class="checklist">
-          <div class="item must"><span class="ic">✗</span><span><strong>git add</strong> 시 <code>docs/ini/</code> · <code>.env</code> 포함 금지 — gitignore 자동 차단됨</span></div>
-          <div class="item must"><span class="ic">✗</span><span>PAT (ghp_...) 또는 API 키를 코드 주석에 남기지 마세요</span></div>
-          <div class="item must"><span class="ic">✗</span><span>다른 멤버 토큰을 폰·이메일·카톡으로 전달 금지 — 본인이 직접 발급</span></div>
-          <div class="item must"><span class="ic">✗</span><span><code>--no-verify</code> · <code>--no-gpg-sign</code> 절대 사용 금지 (CLAUDE.md § 7)</span></div>
-          <div class="item must"><span class="ic">✗</span><span><strong>.claude/state/orca.db</strong> 공유 금지 — 본인 작업·비용 정보 포함</span></div>
-          <div class="item must"><span class="ic">✗</span><span>팀 폴더의 <strong>plugins/</strong> 직접 편집 금지 — 본판에 PR 제출</span></div>
-        </div>
+    <div class="req">
+      <iconify-icon icon="heroicons:light-bulb" class="ic"></iconify-icon>
+      <div class="text">
+        <div class="lbl">▸ 사용자 요청</div>
+        <div class="q">"2026 Q2 보고용 PPT 25 장 만들어 줘. 톤은 차분하게."</div>
+        <div class="desc">자연어 한 줄. Claude 가 알아서 outline · HTML · PPTX 모두 자동 생성.</div>
       </div>
     </div>
-
-    <div class="col">
-      <div class="section sage">
-        <div class="lbl">✓ 반드시 (DO)</div>
-        <div class="checklist">
-          <div class="item do"><span class="ic">✓</span><span>본인 PAT 은 <strong>setup.exe 마법사 안에서 입력</strong> → ini 자동 생성</span></div>
-          <div class="item do"><span class="ic">✓</span><span>의심 스러운 토큰 노출 시 <strong>즉시 GitHub Settings → Tokens → Revoke</strong></span></div>
-          <div class="item do"><span class="ic">✓</span><span>주 1회 <code>/sync-team</code> 으로 본판 변경 받기</span></div>
-          <div class="item do"><span class="ic">✓</span><span><code>git status</code> 전 <strong>항상 .env · ini 누설 확인</strong></span></div>
-          <div class="item do"><span class="ic">✓</span><span>Telegram bot token 분실 시 <strong>@BotFather → /revoke</strong></span></div>
-          <div class="item do"><span class="ic">✓</span><span>Claude Code 인증 만료 시 <code>claude login</code> 재실행</span></div>
-          <div class="item do"><span class="ic">✓</span><span>코드 변경은 본판에 PR — 직접 commit 금지 (Maintainer 만)</span></div>
-          <div class="item do"><span class="ic">✓</span><span>2주마다 <strong>token-stats</strong> 로 비용 점검</span></div>
-        </div>
-      </div>
+    <div class="flow">
+      <div class="step s1"><div class="num">1</div><div class="ttl">설계</div><div class="desc">목차 + 흐름 설계 (Claude 4.7 Extended Thinking)</div><div class="cmd">/design_ppt "Q2 보고" 25</div></div>
+      <div class="step s2"><div class="num">2</div><div class="ttl">생성</div><div class="desc">HTML 25 장 자동 작성 + design-system.css 적용</div><div class="cmd">자동</div></div>
+      <div class="step s3"><div class="num">3</div><div class="ttl">렌더</div><div class="desc">Playwright 1920×1080 PNG → python-pptx 조립</div><div class="cmd">render-ppt-multi.py</div></div>
+      <div class="step s4"><div class="num">4</div><div class="ttl">검증</div><div class="desc">Haiku × 2 자동 OCR — 잘림 발견 시 재렌더</div><div class="cmd">verify-ppt-overflow.py</div></div>
+      <div class="step s5"><div class="num">5</div><div class="ttl">완성</div><div class="desc">outputs/ppt/*.pptx — Slack/Notion 공유</div><div class="cmd">git push</div></div>
     </div>
   </div>
-
-  <div class="footer-border"><span class="footnote">CLAUDE.md § 7 금지 사항 · .claude/rules/best-practices.md § 시크릿 관리 · gitignore 자동 보호</span></div>
+  <div class="footer-border"><span class="footnote">▸ /design_ppt · plugins/design_ppt · 1 시간 = 5 단계 모두 자동 · 사람 손 5 분 (검토 only)</span></div>
 </div>
 </body></html>

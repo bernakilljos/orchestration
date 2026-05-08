@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>L1 — 설치</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lvl-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--gold);line-height:0.85}
+.lvl-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.lvl-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--gold);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--gold)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--deep-gold);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.pt .what code{background:#1A1D24;color:#39FF6C;padding:2px 8px;border-radius:4px;font-size:15px;font-family:'JetBrains Mono', monospace}
+.next{background:linear-gradient(135deg,rgba(107,142,127,0.15) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--sage)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:rocket-launch" class="icon-sm"></iconify-icon>PART 04 · LEVEL 1</span>
+    <span class="mono caption">25 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:rocket-launch" class="icon-lg"></iconify-icon><h1 class="heading-1">L1 — 설치 (Setup)</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">14 레벨의 첫 발 — Claude Code 가 PC 에 깔리고 첫 채팅 가능한 상태</p>
+  <div class="body">
+    <div class="left">
+      <span class="lvl-band">▸ Beginner</span>
+      <div class="lvl-num"><span class="pre">LEVEL</span>1</div>
+    </div>
+    <div class="right">
+      <div class="title-card">
+        <div class="ttl">설치 = 한 번만</div>
+        <div class="desc"><strong>setup.exe</strong> 더블클릭 → 14 단계 자동 → Claude Code · MCP · 플러그인 모두 설치 완료</div>
+      </div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 도구</div><div class="what">setup.exe (관리자)</div></div>
+        <div class="pt"><div class="lbl">▸ 시간</div><div class="what">5~10 분</div></div>
+        <div class="pt"><div class="lbl">▸ 결과</div><div class="what"><code>claude</code> 명령 사용 가능</div></div>
+        <div class="pt"><div class="lbl">▸ 검증</div><div class="what"><code>claude --version</code></div></div>
+      </div>
+      <div class="next">▸ <strong>다음 L2</strong> — Claude 와 첫 대화. "안녕" 한 마디부터 시작.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Ruben Hassid · Claude Master Roadmap · L1 / 14 · setup.iss · setup/BUILD.md</span></div>
+</div>
+</body></html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>L6 — MCP 외부 도구</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lvl-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--sage);line-height:0.85}
+.lvl-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.lvl-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--sage);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--sage)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--sage);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.pt .what code{background:#1A1D24;color:#39FF6C;padding:2px 8px;border-radius:4px;font-size:15px;font-family:'JetBrains Mono', monospace}
+.next{background:linear-gradient(135deg,rgba(122,78,107,0.15) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--plum);border-radius:12px;padding:16px 22px;font-size:18px;color:var(--ink)}
+.next strong{color:var(--plum)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:link" class="icon-sm"></iconify-icon>PART 04 · LEVEL 6</span><span class="mono caption">30 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:link" class="icon-lg"></iconify-icon><h1 class="heading-1">L6 — MCP 외부 도구</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">Slack · Notion · GitHub · Telegram 등 외부 서비스 자동 사용</p>
+  <div class="body">
+    <div class="left"><span class="lvl-band">▸ Intermediate</span><div class="lvl-num"><span class="pre">LEVEL</span>6</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">외부 도구 한 번 연결</div><div class="desc">MCP = <strong>Model Context Protocol</strong>. 한 번 연결하면 Claude 가 자동 사용. "슬랙에 알려줘" 한 마디로 메시지 전송.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 설치</div><div class="what"><code>/mcp_collab-install</code></div></div>
+        <div class="pt"><div class="lbl">▸ 협업</div><div class="what">Slack · Notion · Jira · Telegram</div></div>
+        <div class="pt"><div class="lbl">▸ 개발</div><div class="what">GitHub · Docker · AWS</div></div>
+        <div class="pt"><div class="lbl">▸ 자동 인증</div><div class="what">claude.ai 내장 (Gmail 등)</div></div>
+      </div>
+      <div class="next">▸ <strong>다음 L7</strong> — 플러그인 사용. 우리 26 개 + 커뮤니티 8 개 = 34 도구 묶음.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Ruben Hassid · L6 / 14 · plugins/mcp_*/commands/install.md · MCP 7 카테고리</span></div>
+</div>
+</body></html>

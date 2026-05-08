@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>L14 — 마스터</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.5fr;gap:36px;margin-top:24px;min-height:0}
+.left{display:flex;flex-direction:column;justify-content:center;gap:18px}
+.lvl-num{font-family:'Fraunces',serif;font-size:280px;font-weight:700;color:var(--terracotta);line-height:0.85}
+.lvl-num .pre{font-size:80px;color:var(--stone);display:block;margin-bottom:6px}
+.lvl-band{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;font-weight:700;padding:8px 18px;border-radius:8px;background:var(--terracotta);color:white;align-self:flex-start;text-transform:uppercase}
+.right{display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:center}
+.title-card{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:16px;padding:28px 34px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
+.title-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:var(--terracotta)}
+.title-card .ttl{font-family:'Fraunces',serif;font-size:52px;font-weight:700;color:var(--ink);line-height:1.1;margin-bottom:10px}
+.title-card .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.points{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt{background:var(--cream);border:1px solid var(--fog);border-radius:12px;padding:16px 20px}
+.pt .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--terracotta);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.pt .what{font-size:18px;color:var(--ink);font-weight:600;line-height:1.4}
+.pt .what code{background:#1A1D24;color:#39FF6C;padding:2px 8px;border-radius:4px;font-size:15px;font-family:'JetBrains Mono', monospace}
+.final{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(178,90,62,0.18) 100%);border:1.5px solid var(--terracotta);border-radius:14px;padding:18px 24px;font-size:20px;color:var(--ink);font-weight:600}
+.final strong{color:var(--terracotta)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:trophy" class="icon-sm"></iconify-icon>PART 04 · LEVEL 14 — FINAL</span><span class="mono caption">38 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:trophy" class="icon-lg"></iconify-icon><h1 class="heading-1">L14 — 마스터 (Architect)</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">최고 단계 — 팀 전체 인프라 설계자. 본판 메인테이너로서 커뮤니티에 공유</p>
+  <div class="body">
+    <div class="left"><span class="lvl-band">▸ Master</span><div class="lvl-num"><span class="pre">LEVEL</span>14</div></div>
+    <div class="right">
+      <div class="title-card"><div class="ttl">팀 인프라 설계자</div><div class="desc">CLAUDE.md · 26 플러그인 · 11 hooks · 38 스킬 모두 직접 큐레이션. <strong>본판 메인테이너 역할</strong>. Anthropic 공식 표준 준수해 외부 공유 가능.</div></div>
+      <div class="points">
+        <div class="pt"><div class="lbl">▸ 책임</div><div class="what">CLAUDE.md 큐레이션</div></div>
+        <div class="pt"><div class="lbl">▸ 도구</div><div class="what">SoT plugins/ 관리</div></div>
+        <div class="pt"><div class="lbl">▸ 표준</div><div class="what">v1.2 schema 준수</div></div>
+        <div class="pt"><div class="lbl">▸ 공유</div><div class="what">marketplace 등록</div></div>
+      </div>
+      <div class="final">▸ <strong>축하합니다 — L14 도달.</strong> 이제 우리 팀 도구 직접 설계 + 다른 팀에 공유 가능. 끝없는 확장.</div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Ruben Hassid · L14 / 14 — FINAL · 본판 메인테이너 = L14 · marketplace.json 공유</span></div>
+</div>
+</body></html>

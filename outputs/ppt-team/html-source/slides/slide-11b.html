@@ -1,68 +1,66 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>Claude 마스터 로드맵 14레벨</title>
+<html lang="ko"><head><meta charset="UTF-8"><title>14 레벨 개요</title>
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; margin-top:20px; min-height:0; }
-.arch-wrap { background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:14px; min-height:0; display:flex; align-items:center; justify-content:center; padding:14px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.arch-wrap::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--plum) 100%); }
-.arch-wrap img { max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
-.arch-cap { position:absolute; bottom:8px; right:14px; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--stone); letter-spacing:0.1em; background:rgba(255,255,255,0.7); padding:2px 8px; border-radius:4px; }
-.right { display:flex; flex-direction:column; gap:14px; min-height:0; }
-.lvl-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:12px; padding:14px 18px; flex:0 0 auto; position:relative; overflow:hidden; }
-.lvl-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold); }
-.lvl-card.sage::before { background:var(--sage); }
-.lvl-card.plum::before { background:var(--plum); }
-.lvl-card .badge { display:inline-block; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.1em; color:white; margin-bottom:6px; }
-.lvl-card .badge.gold { background:var(--gold); }
-.lvl-card .badge.sage { background:var(--sage); }
-.lvl-card .badge.plum { background:var(--plum); }
-.lvl-card .ttl { font-family:'Fraunces', serif; font-size:18px; font-weight:700; color:var(--ink); margin-bottom:4px; }
-.lvl-card .desc { font-size:13px; color:var(--ink); line-height:1.4; }
-.lvl-card .desc strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.intro .desc strong{color:var(--deep-gold)}
+.lvls{display:grid;grid-template-columns:repeat(7, 1fr);gap:14px;min-height:0}
+.lvl{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:12px;padding:16px 12px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px;text-align:center}
+.lvl::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.lvl.beg::before{background:var(--gold)}
+.lvl.int::before{background:var(--sage)}
+.lvl.adv::before{background:var(--plum)}
+.lvl.mst::before{background:var(--terracotta)}
+.lvl .ln{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;font-weight:700;text-transform:uppercase;color:var(--stone)}
+.lvl .nm{font-family:'Fraunces',serif;font-size:36px;font-weight:700;line-height:0.9}
+.lvl.beg .nm{color:var(--gold)}
+.lvl.int .nm{color:var(--sage)}
+.lvl.adv .nm{color:var(--plum)}
+.lvl.mst .nm{color:var(--terracotta)}
+.lvl .desc{font-size:14px;color:var(--ink);line-height:1.4;font-weight:500}
+.row2{margin-top:14px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
   <div class="slide-header">
-    <span class="slide-eyebrow"><iconify-icon icon="heroicons:academic-cap" class="icon-sm"></iconify-icon>PART 05 · 학습 로드맵</span>
-    <span class="mono caption">23 / 25</span>
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:academic-cap" class="icon-sm"></iconify-icon>PART 04 · 14 LEVELS — Hassid</span>
+    <span class="mono caption">24 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:academic-cap" class="icon-lg"></iconify-icon><h1 class="heading-1">Claude 마스터 — 14 레벨</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">팀 멤버 성장 경로 — Ruben Hassid 의 "Claude Master Roadmap 14 Levels" 기준 + 우리 팀 매핑</p>
-
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">Ruben Hassid 의 학습 로드맵 — 다음 14 슬라이드에서 각 레벨 한 장씩 상세</p>
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/클로드마스터-로드맵-14레벨-RubenHassid.jpg" alt="Claude Master Roadmap 14 Levels - Ruben Hassid">
-      <div class="arch-cap">▸ Claude Master Roadmap 14 Levels / Ruben Hassid</div>
+    <div class="intro">
+      <div class="ttl">초보부터 마스터까지 — 우리 팀이 어디 있고 어디로 가는가</div>
+      <div class="desc">팀 멤버는 본판 인프라 덕에 <strong>L 5~8 까지 자동 도달</strong>. 여기서부터 자체 플러그인 만들기 시작 = L 13~14 마스터로.</div>
     </div>
-
-    <div class="right">
-      <div class="lvl-card">
-        <span class="badge gold">L 1~4</span>
-        <div class="ttl">기초 — Beginner</div>
-        <div class="desc">설치 · 기본 채팅 · 슬래시 명령 · 파일 읽기. <strong>우리 팀 = setup.exe + Quick Start</strong></div>
+    <div>
+      <div class="lvls">
+        <div class="lvl beg"><div class="ln">▸ BEGINNER</div><div class="nm">L1</div><div class="desc">설치<br>Setup</div></div>
+        <div class="lvl beg"><div class="ln">▸ BEGINNER</div><div class="nm">L2</div><div class="desc">첫 채팅<br>Hello</div></div>
+        <div class="lvl beg"><div class="ln">▸ BEGINNER</div><div class="nm">L3</div><div class="desc">파일 읽기<br>Files</div></div>
+        <div class="lvl beg"><div class="ln">▸ BEGINNER</div><div class="nm">L4</div><div class="desc">슬래시<br>Slash</div></div>
+        <div class="lvl int"><div class="ln">▸ INTERMEDIATE</div><div class="nm">L5</div><div class="desc">CLAUDE.md<br>Master</div></div>
+        <div class="lvl int"><div class="ln">▸ INTERMEDIATE</div><div class="nm">L6</div><div class="desc">MCP 도구<br>External</div></div>
+        <div class="lvl int"><div class="ln">▸ INTERMEDIATE</div><div class="nm">L7</div><div class="desc">플러그인<br>Plugins</div></div>
       </div>
-      <div class="lvl-card sage">
-        <span class="badge sage">L 5~8</span>
-        <div class="ttl">중급 — Intermediate</div>
-        <div class="desc">CLAUDE.md 작성 · MCP 추가 · 플러그인 사용 · 멀티 turn 추론. <strong>우리 팀 = 26개 플러그인 활용</strong></div>
-      </div>
-      <div class="lvl-card plum">
-        <span class="badge plum">L 9~12</span>
-        <div class="ttl">고급 — Advanced</div>
-        <div class="desc">Hook 자동화 · 멀티 AI 핸드오프 · 검증 자동 · Watchdog. <strong>우리 팀 = exec_orch + Haiku 검증</strong></div>
-      </div>
-      <div class="lvl-card">
-        <span class="badge gold">L 13~14</span>
-        <div class="ttl">마스터 — Master</div>
-        <div class="desc">자체 플러그인 제작 · skill 큐레이션 · 팀 인프라 설계. <strong>우리 팀 = Maintainer 역할</strong></div>
+      <div class="lvls row2">
+        <div class="lvl int"><div class="ln">▸ INTERMEDIATE</div><div class="nm">L8</div><div class="desc">멀티턴<br>Reasoning</div></div>
+        <div class="lvl adv"><div class="ln">▸ ADVANCED</div><div class="nm">L9</div><div class="desc">Hooks<br>자동화</div></div>
+        <div class="lvl adv"><div class="ln">▸ ADVANCED</div><div class="nm">L10</div><div class="desc">멀티AI<br>Codex+Haiku</div></div>
+        <div class="lvl adv"><div class="ln">▸ ADVANCED</div><div class="nm">L11</div><div class="desc">자동 검증<br>Validate</div></div>
+        <div class="lvl adv"><div class="ln">▸ ADVANCED</div><div class="nm">L12</div><div class="desc">Watchdog<br>자동 복구</div></div>
+        <div class="lvl mst"><div class="ln">▸ MASTER</div><div class="nm">L13</div><div class="desc">자체 플러그인<br>Custom</div></div>
+        <div class="lvl mst"><div class="ln">▸ MASTER</div><div class="nm">L14</div><div class="desc">팀 인프라<br>Architect</div></div>
       </div>
     </div>
   </div>
-
-  <div class="footer-border"><span class="footnote">Ruben Hassid · 2026 · 팀 멤버는 L 5~8 까지 자동 도달 (본판 인프라 활용)</span></div>
+  <div class="footer-border"><span class="footnote">Ruben Hassid · 2026 · 다음 14 슬라이드 = L1~L14 각 레벨 상세</span></div>
 </div>
 </body></html>

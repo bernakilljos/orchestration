@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>CLAUDE.md 9 핵심 섹션</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:24px; margin-top:24px; min-height:0; }
+.intro { background:rgba(255,255,255,0.92); border:1px solid var(--fog); border-radius:14px; padding:22px 28px; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
+.intro::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, var(--gold) 0%, var(--plum) 100%); }
+.intro .ttl { font-family:'Fraunces', serif; font-size:30px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+.intro .desc { font-size:20px; color:var(--stone); line-height:1.5; }
+.intro .desc strong { color:var(--deep-gold); }
+.sec-grid { display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(3, 1fr); gap:16px; min-height:0; }
+.sec { background:rgba(255,255,255,0.92); border:1px solid var(--fog); border-radius:14px; padding:18px 22px; position:relative; overflow:hidden; box-shadow:0 4px 14px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:6px; }
+.sec::before { content:''; position:absolute; left:0; top:0; bottom:0; width:5px; }
+.sec.s1::before { background:var(--gold); }
+.sec.s2::before { background:var(--sage); }
+.sec.s3::before { background:var(--plum); }
+.sec.s4::before { background:var(--terracotta); }
+.sec.s5::before { background:var(--deep-gold); }
+.sec.s6::before { background:var(--gold); }
+.sec.s7::before { background:var(--sage); }
+.sec.s8::before { background:var(--plum); }
+.sec.s9::before { background:var(--terracotta); }
+.sec .num { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.2em; font-weight:700; text-transform:uppercase; color:var(--stone); }
+.sec .ttl { font-family:'Fraunces', serif; font-size:24px; font-weight:700; color:var(--ink); line-height:1.15; }
+.sec .desc { font-size:16px; color:var(--ink); line-height:1.45; }
+.sec .desc strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:14px; border-top:1px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:document-text" class="icon-sm"></iconify-icon>PART 02 · CLAUDE.md 핵심</span>
+    <span class="mono caption">13 / 40</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:document-text" class="icon-lg"></iconify-icon><h1 class="heading-1">CLAUDE.md — 9 핵심 섹션</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">Claude 가 모든 작업의 기준으로 삼는 마스터 지시문 — 9 개 섹션 한 화면 요약</p>
+
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">"setup 했으니 CLAUDE.md 읽고 반영해줘" 가 무엇을 시키는가</div>
+      <div class="desc">Claude 가 이 9 섹션을 모두 숙지 → 모든 작업이 <strong>WHAT/WHY/HOW + 핵심 경로 + 5 Rules + 3 Scopes + 금지</strong> 규칙대로 자동 작동. 다음 슬라이드 9장이 각 섹션 상세.</div>
+    </div>
+
+    <div class="sec-grid">
+      <div class="sec s1"><div class="num">▸ § 1</div><div class="ttl">WHAT</div><div class="desc">프로젝트는 무엇 — 이름·목적·범위·핵심 의존성</div></div>
+      <div class="sec s2"><div class="num">▸ § 2</div><div class="ttl">WHY</div><div class="desc">왜 이 구조 — 다AI 협업·SoT 규칙·스코프 분리·비용 관측</div></div>
+      <div class="sec s3"><div class="num">▸ § 3</div><div class="ttl">HOW</div><div class="desc">어떻게 — Session Start·AI 역할·API 한도·자동화 설정</div></div>
+      <div class="sec s4"><div class="num">▸ § 4</div><div class="ttl">핵심 경로</div><div class="desc">plugins/ · .claude/ · CLAUDE.md · guide.txt — 위치·편집 권한</div></div>
+      <div class="sec s5"><div class="num">▸ § 5</div><div class="ttl">5 Rules</div><div class="desc">/init 먼저 · 500줄 이하 · Hooks · 월간 갱신 · 참조 중심</div></div>
+      <div class="sec s6"><div class="num">▸ § 6</div><div class="ttl">3 Scopes</div><div class="desc">Folder &gt; Project &gt; Global — 충돌 시 가까운 게 이긴다</div></div>
+      <div class="sec s7"><div class="num">▸ § 7</div><div class="ttl">금지 사항</div><div class="desc">하드코딩·optional chaining·시크릿 commit·.claude 직접 편집</div></div>
+      <div class="sec s8"><div class="num">▸ § 8</div><div class="ttl">편집 플로우</div><div class="desc">plugins/ 편집 → sync → validate → commit (5 단계)</div></div>
+      <div class="sec s9"><div class="num">▸ § 9</div><div class="ttl">참조</div><div class="desc">guide.txt · architecture-patterns.md · rules/*.md 가리킴</div></div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">CLAUDE.md (프로젝트 루트) · 약 180 줄 · 한 번 읽으면 평생 따라감 · 다음 9 슬라이드 = 각 섹션 상세</span></div>
+</div>
+</body></html>

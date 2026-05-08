@@ -1,76 +1,56 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>왜 team 폴더를 만들었나</title>
-<link href="../styles/design-system.css" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<html lang="ko"><head><meta charset="UTF-8"><title>왜 이 팀 도구</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
-.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
-.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:24px; margin-top:24px; min-height:0; }
-.hero { display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
-.hero-card { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:24px 30px; box-shadow:0 8px 22px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
-.hero-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 100%); }
-.hero-card .lbl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.22em; color:var(--deep-gold); font-weight:700; text-transform:uppercase; margin-bottom:10px; }
-.hero-card .big { font-family:'Fraunces', serif; font-size:46px; font-weight:700; color:var(--ink); line-height:1.2; margin-bottom:10px; }
-.hero-card .sub { font-size:18px; color:var(--stone); line-height:1.5; }
-.hero-quote { background:linear-gradient(135deg, rgba(184,134,78,0.15) 0%, rgba(255,255,255,0.9) 70%); border:0.5px solid var(--gold); border-radius:14px; padding:24px 28px; display:flex; flex-direction:column; justify-content:center; }
-.hero-quote .q { font-family:'Fraunces', serif; font-size:24px; font-weight:600; color:var(--deep-gold); line-height:1.4; margin-bottom:12px; font-style:italic; }
-.hero-quote .src { font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--stone); letter-spacing:0.16em; }
-.reasons { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; }
-.r { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:14px; padding:22px 24px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); }
-.r::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
-.r.gold::before { background:var(--gold); }
-.r.sage::before { background:var(--sage); }
-.r.plum::before { background:var(--plum); }
-.r .ic-big { font-size:50px; margin-bottom:10px; }
-.r.gold .ic-big { color:var(--gold); }
-.r.sage .ic-big { color:var(--sage); }
-.r.plum .ic-big { color:var(--plum); }
-.r .ttl { font-family:'Fraunces', serif; font-size:24px; font-weight:700; color:var(--ink); margin-bottom:8px; }
-.r .desc { font-size:16px; color:var(--ink); line-height:1.5; }
-.r .desc strong { color:var(--deep-gold); }
-.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.hero-quote{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:30px 40px;box-shadow:0 8px 22px rgba(138,98,53,0.12)}
+.hero-quote .q{font-family:'Fraunces',serif;font-size:42px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:12px;font-style:italic}
+.hero-quote .by{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.22em;color:var(--deep-gold);text-transform:uppercase;font-weight:700}
+.reasons{display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;min-height:0}
+.r{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:24px 28px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:12px}
+.r::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.r.gold::before{background:var(--gold)}
+.r.sage::before{background:var(--sage)}
+.r.plum::before{background:var(--plum)}
+.r .ic-big{font-size:54px}
+.r.gold .ic-big{color:var(--gold)}
+.r.sage .ic-big{color:var(--sage)}
+.r.plum .ic-big{color:var(--plum)}
+.r .ttl{font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:var(--ink);line-height:1.2}
+.r .desc{font-size:19px;color:var(--ink);line-height:1.55}
+.r .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
-  <div class="slide-header">
-    <span class="slide-eyebrow"><iconify-icon icon="heroicons:user-group" class="icon-sm"></iconify-icon>PART 01 · WHY TEAM</span>
-    <span class="mono caption">03 / 25</span>
-  </div>
-  <div class="title-with-icon"><iconify-icon icon="heroicons:user-group" class="icon-lg"></iconify-icon><h1 class="heading-1">왜 team 폴더를 만들었나</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">본판은 메인테이너 작업장 · team 은 팀 멤버 onboarding 폴더 — 시크릿·로컬 상태 분리 + 인프라 동기화</p>
-
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:user-group" class="icon-sm"></iconify-icon>PART 01 · WHY THIS</span><span class="mono caption">03 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:user-group" class="icon-lg"></iconify-icon><h1 class="heading-1">왜 이 팀 도구</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">팀이 같은 도구로 4 배 빠르게 — Claude · Codex · Haiku 26 플러그인 통합</p>
   <div class="body">
-    <div class="hero">
-      <div class="hero-card">
-        <div class="lbl">▸ 한 줄 요약</div>
-        <div class="big">팀이 같은 인프라 쓰지만<br>시크릿은 분리한다</div>
-        <div class="sub">orchestration_v1 (본판) = 메인테이너 작업장.<br>orchestration_v1_team = 팀 멤버 폴더 — 같은 plugins/scripts/CLAUDE.md 받지만, docs/ini/PAT · .env · .claude/state/ 같은 개인 자료는 자동 제외.</div>
-      </div>
-      <div class="hero-quote">
-        <div class="q">"한 사람이 만든 것을<br>여러 명이 쓸 때, 시크릿은<br>각자 가져야 한다."</div>
-        <div class="src">▸ 분리 원칙 · /sync-team 설계 의도</div>
-      </div>
+    <div class="hero-quote">
+      <div class="q">"한 명이 4-AI 동시 부려 24h 가동 + 검증 자동.<br>이것을 팀 N 명이 모두 쓰게."</div>
+      <div class="by">▸ 팀 도구의 의도</div>
     </div>
-
     <div class="reasons">
       <div class="r gold">
-        <iconify-icon icon="heroicons:shield-check" class="ic-big"></iconify-icon>
-        <div class="ttl">시크릿 보호</div>
-        <div class="desc"><strong>PAT · API 키 · 토큰</strong> 이 본판에 있어도 팀에는 자동 제외. 각 멤버가 자기 토큰만 입력 → 권한 분리 + 사고 차단.</div>
+        <iconify-icon icon="heroicons:rocket-launch" class="ic-big"></iconify-icon>
+        <div class="ttl">5 분 시작</div>
+        <div class="desc">setup.exe 더블클릭 → 14 단계 자동 → "CLAUDE.md 읽고 반영해줘" 한 줄. <strong>5 분 후 즉시 작업 가능</strong>.</div>
       </div>
       <div class="r sage">
         <iconify-icon icon="heroicons:bolt" class="ic-big"></iconify-icon>
-        <div class="ttl">5분 onboarding</div>
-        <div class="desc">신규 멤버는 setup.exe 실행 + PAT 입력 한 번으로 끝. 본판의 26개 플러그인·skill·스크립트 모두 그대로 받음.</div>
+        <div class="ttl">26 도구 즉시</div>
+        <div class="desc">PPT 자동 · 26 플러그인 카탈로그 · 4-AI 라우팅 · Watchdog 자동 복구. <strong>기본 Claude 의 4 배 능력</strong>.</div>
       </div>
       <div class="r plum">
-        <iconify-icon icon="heroicons:arrow-path" class="ic-big"></iconify-icon>
-        <div class="ttl">변경 자동 전파</div>
-        <div class="desc">본판 갱신 → <strong>/sync-team</strong> 한 번 → 팀 전체에 인프라만 동기화. 각자 작업물·시크릿은 안 건드림.</div>
+        <iconify-icon icon="heroicons:shield-check" class="ic-big"></iconify-icon>
+        <div class="ttl">시크릿 본인 PC 에만</div>
+        <div class="desc">PAT · API 키 · 작업 산출물 모두 <strong>본인 PC 에만</strong>. gitignore 자동 보호. 팀 동료도 못 봄.</div>
       </div>
     </div>
   </div>
-
-  <div class="footer-border"><span class="footnote">/sync-team · setup.iss § HasExistingPat · CLAUDE.md § 3.5</span></div>
+  <div class="footer-border"><span class="footnote">CLAUDE.md · 26 플러그인 · 25+ 슬래시 · 4-AI 라우팅 (Claude · Codex · Haiku · Gemini)</span></div>
 </div>
 </body></html>
