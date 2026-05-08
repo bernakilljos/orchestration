@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>AI 시스템 6단계 — 우리는 어디에</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:1fr auto; gap:24px; margin-top:24px; min-height:0; }
+.stages { display:grid; grid-template-columns:repeat(6, 1fr); gap:14px; align-items:stretch; }
+.st { background:rgba(255,255,255,0.85); border:0.5px solid var(--fog); border-radius:14px; padding:22px 18px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:10px; }
+.st::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.st.s1::before { background:var(--fog); }
+.st.s2::before { background:var(--smoke); }
+.st.s3::before { background:var(--stone); }
+.st.s4 { background:linear-gradient(135deg, rgba(184,134,78,0.18) 0%, rgba(255,255,255,0.95) 70%); border:1.5px solid var(--gold); transform:scale(1.04); z-index:5; box-shadow:0 14px 40px rgba(184,134,78,0.25); }
+.st.s4::before { background:var(--gold); height:6px; }
+.st.s5::before { background:var(--smoke); }
+.st.s6::before { background:var(--stone); }
+.st .num { font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.2em; font-weight:700; color:var(--stone); text-transform:uppercase; }
+.st.s4 .num { color:var(--deep-gold); }
+.st .ic { font-size:36px; color:var(--stone); }
+.st.s4 .ic { color:var(--gold); font-size:42px; }
+.st .ttl { font-family:'Fraunces', serif; font-size:18px; font-weight:700; color:var(--ink); line-height:1.2; }
+.st.s4 .ttl { font-size:22px; color:var(--deep-gold); }
+.st .desc { font-size:12px; color:var(--ink); line-height:1.4; opacity:0.85; }
+.st.s4 .desc { font-size:13px; opacity:1; }
+.st .badge-here { position:absolute; top:-8px; right:-8px; background:var(--terracotta); color:white; font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; letter-spacing:0.16em; box-shadow:0 4px 12px rgba(178,90,62,0.4); }
+.note-row { display:grid; grid-template-columns:1.5fr 1fr; gap:18px; }
+.note-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:12px; padding:14px 18px; position:relative; overflow:hidden; box-shadow:0 4px 14px rgba(138,98,53,0.08); }
+.note-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--gold); }
+.note-card.sage::before { background:var(--sage); }
+.note-card .lbl { font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; color:var(--deep-gold); margin-bottom:4px; }
+.note-card.sage .lbl { color:var(--sage); }
+.note-card .desc { font-size:14px; color:var(--ink); line-height:1.5; }
+.note-card .desc strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:cpu-chip" class="icon-sm"></iconify-icon>PART 01 · WHERE WE ARE</span>
+    <span class="mono caption">04 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:cpu-chip" class="icon-lg"></iconify-icon><h1 class="heading-1">AI 시스템 6단계 — 우리는 4단계</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">Prompt → Agent → Orchestration → <strong style="color:var(--deep-gold);">Automation (우리)</strong> → Autonomous → Platform — 1~3단계 위에 자동화 레이어 추가</p>
+
+  <div class="body">
+    <div class="stages">
+      <div class="st s1">
+        <div class="num">▸ 단계 1</div>
+        <iconify-icon icon="heroicons:chat-bubble-left" class="ic"></iconify-icon>
+        <div class="ttl">Prompt</div>
+        <div class="desc">사람이 하나씩 묻고 답 받기. ChatGPT 일반 사용 패턴.</div>
+      </div>
+      <div class="st s2">
+        <div class="num">▸ 단계 2</div>
+        <iconify-icon icon="heroicons:cube" class="ic"></iconify-icon>
+        <div class="ttl">Agent</div>
+        <div class="desc">단일 AI 가 도구 사용. Claude Code 가 파일 읽고 코드 작성.</div>
+      </div>
+      <div class="st s3">
+        <div class="num">▸ 단계 3</div>
+        <iconify-icon icon="heroicons:squares-plus" class="ic"></iconify-icon>
+        <div class="ttl">Orchestration</div>
+        <div class="desc">여러 AI 가 협업. Claude 설계 + Codex 구현 + Haiku 검증.</div>
+      </div>
+      <div class="st s4">
+        <span class="badge-here">▸ 우리 위치</span>
+        <div class="num">▸ 단계 4</div>
+        <iconify-icon icon="heroicons:bolt" class="ic"></iconify-icon>
+        <div class="ttl">Automation</div>
+        <div class="desc">PC 꺼져도 24h 가동. Watchdog · Quota · Caching · Metrics 자동 운영.</div>
+      </div>
+      <div class="st s5">
+        <div class="num">▸ 단계 5</div>
+        <iconify-icon icon="heroicons:user" class="ic"></iconify-icon>
+        <div class="ttl">Autonomous</div>
+        <div class="desc">사람 개입 최소화. AI 가 목표 받고 스스로 분해·실행·검증.</div>
+      </div>
+      <div class="st s6">
+        <div class="num">▸ 단계 6</div>
+        <iconify-icon icon="heroicons:globe-alt" class="ic"></iconify-icon>
+        <div class="ttl">Platform</div>
+        <div class="desc">N개 팀 · N개 프로젝트 동시 운영. 글로벌 큐 · 멀티 테넌트.</div>
+      </div>
+    </div>
+
+    <div class="note-row">
+      <div class="note-card">
+        <div class="lbl">▸ 우리가 4단계인 이유</div>
+        <div class="desc">3단계 (멀티AI) 완성 → <strong>인프라 자동화 추가</strong> (SQLite state · watchdog · quota·budget · prompt caching · metrics dashboard). 5단계는 codex-auto-global · ~/.claude/orca/ 글로벌 큐로 점진 진입.</div>
+      </div>
+      <div class="note-card sage">
+        <div class="lbl">▸ 다음 도약</div>
+        <div class="desc"><strong>5단계 = exec_offline + 자체 RAG</strong> (ai_rag spec-only). <strong>6단계 = N팀 멀티 테넌트</strong> (cost_youtube · /sync-team N×).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">/ai-system-stages skill · 6단계 PPT 템플릿 · CLAUDE.md § 3.5 글로벌 오케스트레이션</span></div>
+</div>
+</body></html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>왜 이 가이드를 만들었나 (automation)</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:24px; margin-top:20px; min-height:0; }
+.hero-quote { background:linear-gradient(135deg, rgba(107,142,127,0.18) 0%, rgba(255,255,255,0.92) 70%); border:0.5px solid var(--sage); border-radius:14px; padding:28px 36px; box-shadow:0 8px 22px rgba(138,98,53,0.12); }
+.hero-quote .q { font-family:'Fraunces', serif; font-size:38px; font-weight:600; color:var(--sage); line-height:1.3; margin-bottom:14px; font-style:italic; }
+.hero-quote .by { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.2em; color:var(--stone); text-transform:uppercase; }
+.three-col { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; min-height:0; }
+.intent { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:24px 28px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:10px; }
+.intent::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.intent.gold::before { background:var(--gold); }
+.intent.sage::before { background:var(--sage); }
+.intent.plum::before { background:var(--plum); }
+.intent .ic-big { font-size:54px; }
+.intent.gold .ic-big { color:var(--gold); }
+.intent.sage .ic-big { color:var(--sage); }
+.intent.plum .ic-big { color:var(--plum); }
+.intent .num { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; }
+.intent.gold .num { color:var(--deep-gold); }
+.intent.sage .num { color:var(--sage); }
+.intent.plum .num { color:var(--plum); }
+.intent .ttl { font-family:'Fraunces', serif; font-size:22px; font-weight:700; color:var(--ink); }
+.intent .desc { font-size:15px; color:var(--ink); line-height:1.5; }
+.intent .desc strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>PART 05 · 의도 정리</span>
+    <span class="mono caption">24 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">왜 자동화를 한 가이드로</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">3개 PPT 의도 — automation 은 "Why · Where · How" 한 번에 답하는 자료</p>
+
+  <div class="body">
+    <div class="hero-quote">
+      <div class="q">"AI 6단계 중 4단계 = Automation.<br>1명이 4-AI 를 24h 부려 비용 90% ↓ — 그게 우리 위치."</div>
+      <div class="by">▸ automation-guide · exec_orch · 2026-05-08</div>
+    </div>
+
+    <div class="three-col">
+      <div class="intent gold">
+        <iconify-icon icon="heroicons:question-mark-circle" class="ic-big"></iconify-icon>
+        <div class="num">▸ WHY (왜)</div>
+        <div class="ttl">PC 꺼져도 24h</div>
+        <div class="desc">검증 자동 (Haiku ×2) · 비용 90% 절감 · 자동 복구 (2분 heartbeat) · <strong>일일 예산 한도 자동 차단</strong></div>
+      </div>
+      <div class="intent sage">
+        <iconify-icon icon="heroicons:cpu-chip" class="ic-big"></iconify-icon>
+        <div class="num">▸ WHERE (단계)</div>
+        <div class="ttl">AI 6단계 중 4단계</div>
+        <div class="desc">Prompt → Agent → Orchestration → <strong>Automation (우리)</strong> → Autonomous → Platform. 1~3단계 위에 자동화 레이어 추가.</div>
+      </div>
+      <div class="intent plum">
+        <iconify-icon icon="heroicons:wrench-screwdriver" class="ic-big"></iconify-icon>
+        <div class="num">▸ HOW (방법)</div>
+        <div class="ttl">5 레이어 + Watchdog</div>
+        <div class="desc">Skills · Tools · Memory · Planning · <strong>Orchestrator</strong> + SQLite state · Quota · Caching · Metrics 통합 운영</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">3 PPT · 75 슬라이드 · automation 25 / plugins 25 / team 25 · 2026-05-08 v1.1</span></div>
+</div>
+</body></html>

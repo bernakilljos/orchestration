@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>BEFORE / AFTER — 수동 vs 자동</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(178,90,62,0.05) 0px, rgba(178,90,62,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:18px; margin-top:20px; min-height:0; }
+.compare-row { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+.side { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:22px 26px; position:relative; overflow:hidden; box-shadow:0 8px 22px rgba(138,98,53,0.08); }
+.side.before::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--terracotta); }
+.side.after::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--sage); }
+.side .badge { display:inline-block; font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:700; padding:5px 12px; border-radius:6px; letter-spacing:0.18em; color:white; margin-bottom:10px; }
+.side.before .badge { background:var(--terracotta); }
+.side.after .badge { background:var(--sage); }
+.side .ttl { font-family:'Fraunces', serif; font-size:26px; font-weight:700; color:var(--ink); margin-bottom:14px; }
+.metric-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:14px; }
+.metric { background:var(--cream); border:0.5px solid var(--fog); border-radius:10px; padding:12px 14px; }
+.metric .lbl { font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.18em; color:var(--stone); font-weight:700; text-transform:uppercase; margin-bottom:3px; }
+.metric .val { font-family:'Fraunces', serif; font-size:24px; font-weight:700; }
+.side.before .metric .val { color:var(--terracotta); }
+.side.after .metric .val { color:var(--sage); }
+.steps-list { list-style:none; padding:0; margin:0; }
+.steps-list li { display:flex; gap:8px; align-items:flex-start; padding:6px 0; font-size:13px; color:var(--ink); line-height:1.4; border-bottom:0.5px solid var(--fog); }
+.steps-list li:last-child { border-bottom:none; }
+.side.before .steps-list li::before { content:'✗'; color:var(--terracotta); font-weight:700; flex-shrink:0; }
+.side.after .steps-list li::before { content:'✓'; color:var(--sage); font-weight:700; flex-shrink:0; }
+.steps-list li code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono', monospace; }
+.bottom-stats { background:linear-gradient(135deg, rgba(107,142,127,0.15) 0%, rgba(184,134,78,0.10) 100%); border:0.5px solid var(--sage); border-radius:14px; padding:20px 26px; display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; }
+.bs { display:flex; flex-direction:column; gap:4px; }
+.bs .lbl { font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.18em; color:var(--stone); font-weight:700; text-transform:uppercase; }
+.bs .delta { font-family:'Fraunces', serif; font-size:32px; font-weight:700; color:var(--sage); }
+.bs .delta.warn { color:var(--terracotta); }
+.bs .desc { font-size:13px; color:var(--ink); line-height:1.4; }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:arrows-right-left" class="icon-sm"></iconify-icon>PART 01 · BEFORE / AFTER</span>
+    <span class="mono caption">05 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:arrows-right-left" class="icon-lg"></iconify-icon><h1 class="heading-1">수동 vs 자동 — 같은 작업 비교</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">"회원가입 폼 만들고 검증" 한 작업을 수동/자동으로 했을 때 — 시간·비용·실수율 모두 달라짐</p>
+
+  <div class="body">
+    <div class="compare-row">
+      <div class="side before">
+        <span class="badge">❌ BEFORE — 수동</span>
+        <div class="ttl">사람 손으로 다 함</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="lbl">시간</div><div class="val">4h</div></div>
+          <div class="metric"><div class="lbl">비용</div><div class="val">$25</div></div>
+          <div class="metric"><div class="lbl">검증</div><div class="val">90%</div></div>
+          <div class="metric"><div class="lbl">실수율</div><div class="val">8%</div></div>
+        </div>
+        <ul class="steps-list">
+          <li><span>설계 — 사람이 task 정의 (30분)</span></li>
+          <li><span>구현 — 사람이 직접 코드 (3시간)</span></li>
+          <li><span>리뷰 — 동료에게 부탁 (대기 1일)</span></li>
+          <li><span>검증 — 빠뜨리는 케이스 다수</span></li>
+          <li><span>비용 추적 — 안 함 (월 정산 시 깜짝)</span></li>
+          <li><span>PC 꺼지면 모든 작업 정지</span></li>
+        </ul>
+      </div>
+
+      <div class="side after">
+        <span class="badge">✓ AFTER — 자동</span>
+        <div class="ttl">orchestration_v1 으로</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="lbl">시간</div><div class="val">25min</div></div>
+          <div class="metric"><div class="lbl">비용</div><div class="val">$2.50</div></div>
+          <div class="metric"><div class="lbl">검증</div><div class="val">100%</div></div>
+          <div class="metric"><div class="lbl">실수율</div><div class="val">&lt;1%</div></div>
+        </div>
+        <ul class="steps-list">
+          <li><span>설계 — Claude 4.7 가 <code>task-instruction.md</code> (3분)</span></li>
+          <li><span>구현 — <code>codex-auto 4</code> 병렬 (15분)</span></li>
+          <li><span>검증 — <code>haiku-auto 2</code> 캐시 90% (5분)</span></li>
+          <li><span>실수 — Hook-08 핸드오프 강제 검사</span></li>
+          <li><span>비용 — SQLite 실시간 추적 + 일일 한도 자동 차단</span></li>
+          <li><span>PC 꺼져도 — VPS·Watchdog 으로 24h 가동</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bottom-stats">
+      <div class="bs"><div class="lbl">▸ 시간 단축</div><div class="delta">−90%</div><div class="desc">4시간 → 25분 (10배 빠름)</div></div>
+      <div class="bs"><div class="lbl">▸ 비용 절감</div><div class="delta">−90%</div><div class="desc">$25 → $2.50 (Haiku 캐시)</div></div>
+      <div class="bs"><div class="lbl">▸ 검증율</div><div class="delta">+10%</div><div class="desc">90 → 100% (자동 강제)</div></div>
+      <div class="bs"><div class="lbl">▸ 실수율</div><div class="delta warn">−87%</div><div class="desc">8% → &lt;1% (Hook 차단)</div></div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 3.2 + § 3.3 · plugins/exec_orch · prompt caching · 실측 2026-05</span></div>
+</div>
+</body></html>
