@@ -6,7 +6,7 @@
 .s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
 .s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
 .s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
-.body { flex:1; display:grid; grid-template-rows:auto 340px 200px; gap:14px; margin-top:18px; min-height:0; }
+.body { flex:1; display:grid; grid-template-rows:auto 1.2fr 1fr; gap:12px; margin-top:14px; min-height:0; }
 .intro { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:16px 22px; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
 .intro::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 33%, var(--plum) 66%, var(--terracotta) 100%); }
 .intro-row { display:grid; grid-template-columns:repeat(3, 1fr) auto; gap:14px; align-items:center; }
@@ -25,7 +25,7 @@
 .flow-card.sage::before { background:var(--sage); }
 .flow-card .lbl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.18em; color:var(--plum); font-weight:700; text-transform:uppercase; }
 .flow-card.sage .lbl { color:var(--sage); }
-.flow-code { background:#1A1D24; color:#C9C1B0; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.4; padding:12px 16px; border-radius:10px; white-space:pre; flex:1; min-height:0; overflow:hidden; }
+.flow-code { background:#1A1D24; color:#C9C1B0; font-family:'JetBrains Mono', monospace; font-size:13px; line-height:1.45; padding:12px 16px; border-radius:10px; white-space:pre; flex:1; min-height:0; overflow:hidden; }
 .flow-code .k { color:#5BC0BE; }
 .flow-code .s { color:#B8864E; }
 .flow-code .c { color:#6E685C; font-style:italic; }
@@ -37,7 +37,7 @@
 .checklist { background:linear-gradient(135deg, rgba(107,142,127,0.12) 0%, rgba(184,134,78,0.08) 100%); border:0.5px solid var(--sage); border-radius:14px; padding:18px 26px; }
 .checklist .lbl { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; color:var(--sage); font-weight:700; text-transform:uppercase; margin-bottom:10px; }
 .check-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
-.ck { display:flex; gap:8px; align-items:flex-start; padding:8px 12px; background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:8px; font-size:13px; line-height:1.4; }
+.ck { display:flex; gap:8px; align-items:flex-start; padding:8px 12px; background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:8px; font-size:14px; line-height:1.4; }
 .ck .ic { color:var(--sage); font-weight:700; flex-shrink:0; }
 .ck code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono', monospace; }
 .ck strong { color:var(--deep-gold); }
@@ -95,7 +95,7 @@ git commit -m <span class="s">"feat(my_feature): 새 플러그인"</span>
 git push origin main
 
 <span class="c"># 4. 팀 배포 (Maintainer)</span>
-/sync-team   <span class="c"># 본판 → 팀 자동 동기화</span>
+git push     <span class="c"># 팀 zip 재패키징 후 배포</span>
 
 <span class="c"># 5. 즉시 사용</span>
 /my_feature-cmd   <span class="ok">✓ 슬래시 등록됨</span></div>
