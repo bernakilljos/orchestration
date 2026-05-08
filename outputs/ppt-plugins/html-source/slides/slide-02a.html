@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Why plugins — 왜 외부 플러그인을 만들었나</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 1fr; gap:24px; margin-top:24px; min-height:0; }
+.hero-quote { background:linear-gradient(135deg, rgba(122,78,107,0.15) 0%, rgba(255,255,255,0.92) 70%); border:0.5px solid var(--plum); border-radius:14px; padding:26px 36px; box-shadow:0 8px 22px rgba(138,98,53,0.12); }
+.hero-quote .q { font-family:'Fraunces', serif; font-size:34px; font-weight:600; color:var(--plum); line-height:1.3; margin-bottom:10px; font-style:italic; }
+.hero-quote .by { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.2em; color:var(--stone); text-transform:uppercase; }
+.reasons { display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; min-height:0; }
+.r { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:22px 24px; position:relative; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:10px; }
+.r::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; }
+.r.gold::before { background:var(--gold); }
+.r.sage::before { background:var(--sage); }
+.r.plum::before { background:var(--plum); }
+.r.terra::before { background:var(--terracotta); }
+.r .ic-big { font-size:46px; }
+.r.gold .ic-big { color:var(--gold); }
+.r.sage .ic-big { color:var(--sage); }
+.r.plum .ic-big { color:var(--plum); }
+.r.terra .ic-big { color:var(--terracotta); }
+.r .num { font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.18em; font-weight:700; text-transform:uppercase; color:var(--stone); }
+.r .ttl { font-family:'Fraunces', serif; font-size:22px; font-weight:700; color:var(--ink); line-height:1.2; }
+.r .desc { font-size:14px; color:var(--ink); line-height:1.5; }
+.r .desc strong { color:var(--deep-gold); }
+.r .stat { font-family:'JetBrains Mono', monospace; font-size:30px; font-weight:700; margin-top:auto; }
+.r.gold .stat { color:var(--deep-gold); }
+.r.sage .stat { color:#4A6F60; }
+.r.plum .stat { color:#5A3850; }
+.r.terra .stat { color:#8A3E26; }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:puzzle-piece" class="icon-sm"></iconify-icon>PART 01 · WHY PLUGINS</span>
+    <span class="mono caption">03 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:puzzle-piece" class="icon-lg"></iconify-icon><h1 class="heading-1">왜 외부 플러그인을 만들었나</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">기본 Claude 만으로는 부족한 26개 도구 — 편의성 제공 + 필요시 직접 추가하는 확장성</p>
+
+  <div class="body">
+    <div class="hero-quote">
+      <div class="q">"기본 Claude = 4 도구. 우리 + 26 = 30 도구.<br>없으면 plugins/_template 으로 직접 만들어 추가."</div>
+      <div class="by">▸ plugins-guide · plugins/_template · 2026-05-08</div>
+    </div>
+
+    <div class="reasons">
+      <div class="r gold">
+        <iconify-icon icon="heroicons:rocket-launch" class="ic-big"></iconify-icon>
+        <div class="num">▸ REASON 01</div>
+        <div class="ttl">즉시 사용</div>
+        <div class="desc">설치 후 바로 26 슬래시 명령. <strong>기본 Claude 가 못 하는</strong> PPT 자동 생성 · 배포 · 검증 · 라우팅 다 됨.</div>
+        <div class="stat">26 ⚡</div>
+      </div>
+      <div class="r sage">
+        <iconify-icon icon="heroicons:wrench-screwdriver" class="ic-big"></iconify-icon>
+        <div class="num">▸ REASON 02</div>
+        <div class="ttl">확장 가능</div>
+        <div class="desc"><strong>plugins/_template/</strong> 복사 → plugin.json 수정 → sync → 즉시 슬래시 명령. 새 도구 만드는 데 30분.</div>
+        <div class="stat">+ ∞</div>
+      </div>
+      <div class="r plum">
+        <iconify-icon icon="heroicons:share" class="ic-big"></iconify-icon>
+        <div class="num">▸ REASON 03</div>
+        <div class="ttl">팀 공유</div>
+        <div class="desc">한 명이 만든 플러그인 → <strong>/sync-team</strong> 한 번 → 팀 전체 즉시 사용. 본판이 SoT.</div>
+        <div class="stat">1 → N</div>
+      </div>
+      <div class="r terra">
+        <iconify-icon icon="heroicons:globe-alt" class="ic-big"></iconify-icon>
+        <div class="num">▸ REASON 04</div>
+        <div class="ttl">표준 준수</div>
+        <div class="desc">Anthropic 공식 plugin schema v1.2 + DK.method 호환. <strong>다른 Claude 사용자와 공유</strong> 가능.</div>
+        <div class="stat">v1.2</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">CLAUDE.md § 4 plugins/ · .claude-plugin/plugin-schema.json · DK.method · Anthropic 공식 표준</span></div>
+</div>
+</body></html>

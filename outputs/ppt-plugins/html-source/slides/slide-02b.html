@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>외부 vs 내부 플러그인 — 어떤 걸 만들까</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:1fr auto; gap:18px; margin-top:20px; min-height:0; }
+.compare-row { display:grid; grid-template-columns:1fr 1fr; gap:22px; min-height:0; }
+.side { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:22px 26px; position:relative; overflow:hidden; box-shadow:0 8px 22px rgba(138,98,53,0.08); display:flex; flex-direction:column; gap:12px; }
+.side.ext::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--gold); }
+.side.com::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:var(--sage); }
+.side .badge { display:inline-block; font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:700; padding:5px 12px; border-radius:6px; letter-spacing:0.18em; color:white; align-self:flex-start; }
+.side.ext .badge { background:var(--gold); }
+.side.com .badge { background:var(--sage); }
+.side .ttl { font-family:'Fraunces', serif; font-size:24px; font-weight:700; color:var(--ink); }
+.side .who { font-size:14px; color:var(--stone); line-height:1.4; margin-bottom:6px; }
+.side .nums { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+.side .num-card { background:var(--cream); border:0.5px solid var(--fog); border-radius:8px; padding:10px 14px; }
+.side .num-card .lbl { font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.18em; color:var(--stone); font-weight:700; text-transform:uppercase; margin-bottom:2px; }
+.side .num-card .val { font-family:'Fraunces', serif; font-size:22px; font-weight:700; }
+.side.ext .num-card .val { color:var(--deep-gold); }
+.side.com .num-card .val { color:#4A6F60; }
+.side ul { list-style:none; padding:0; margin:0; }
+.side li { display:flex; gap:8px; align-items:flex-start; padding:6px 0; font-size:13px; color:var(--ink); line-height:1.4; border-bottom:0.5px solid var(--fog); }
+.side li:last-child { border-bottom:none; }
+.side.ext li::before { content:'▸'; color:var(--deep-gold); flex-shrink:0; font-weight:700; }
+.side.com li::before { content:'▸'; color:var(--sage); flex-shrink:0; font-weight:700; }
+.side li code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono', monospace; }
+.bottom-rule { background:linear-gradient(135deg, rgba(184,134,78,0.10) 0%, rgba(107,142,127,0.10) 100%); border:0.5px solid var(--gold); border-radius:12px; padding:14px 22px; }
+.bottom-rule .lbl { font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:0.2em; color:var(--deep-gold); font-weight:700; text-transform:uppercase; margin-bottom:4px; }
+.bottom-rule .desc { font-size:15px; color:var(--ink); line-height:1.5; }
+.bottom-rule .desc strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:arrows-right-left" class="icon-sm"></iconify-icon>PART 01 · 외부 vs 내부</span>
+    <span class="mono caption">04 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:arrows-right-left" class="icon-lg"></iconify-icon><h1 class="heading-1">외부 (우리) vs 내부 (Anthropic)</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">우리가 만든 26 + 커뮤니티 8 + Anthropic 내장 = 34 플러그인 — 어떤 걸 어디서 받나</p>
+
+  <div class="body">
+    <div class="compare-row">
+      <div class="side ext">
+        <span class="badge">우리 (외부)</span>
+        <div class="ttl">orchestration_v1 자체 제작</div>
+        <div class="who">본판 메인테이너가 만든 26 플러그인 + sync 으로 팀에 배포</div>
+        <div class="nums">
+          <div class="num-card"><div class="lbl">갯수</div><div class="val">26</div></div>
+          <div class="num-card"><div class="lbl">접두사</div><div class="val">5</div></div>
+          <div class="num-card"><div class="lbl">슬래시</div><div class="val">25+</div></div>
+          <div class="num-card"><div class="lbl">스킬</div><div class="val">38+</div></div>
+        </div>
+        <ul>
+          <li><strong>exec_*</strong> — orchestration 코어 (orch · remote · voice · learning)</li>
+          <li><strong>design_*</strong> — PPT · Excel · Word 자동 생성</li>
+          <li><strong>mcp_*</strong> — Slack · Notion · Telegram · Gmail 7 카테고리</li>
+          <li><strong>review_qa</strong> — 코드 리뷰 · 보안 · 품질</li>
+          <li>전부 <code>plugins/</code> 에 SoT · 팀에 /sync-team 배포</li>
+        </ul>
+      </div>
+
+      <div class="side com">
+        <span class="badge">Anthropic + 커뮤니티</span>
+        <div class="ttl">setup 시 자동 설치</div>
+        <div class="who">setup/modules/08-plugins.bat 가 자동으로 등록</div>
+        <div class="nums">
+          <div class="num-card"><div class="lbl">공식</div><div class="val">3</div></div>
+          <div class="num-card"><div class="lbl">커뮤니티</div><div class="val">5</div></div>
+          <div class="num-card"><div class="lbl">슈퍼파워</div><div class="val">15+</div></div>
+          <div class="num-card"><div class="lbl">합계</div><div class="val">23+</div></div>
+        </div>
+        <ul>
+          <li><strong>claude-md-management</strong> · Anthropic 공식 (CLAUDE.md 관리)</li>
+          <li><strong>code-review</strong> · Anthropic 공식 (PR 리뷰)</li>
+          <li><strong>commit-commands</strong> · Anthropic 공식 (commit · push · PR)</li>
+          <li><strong>superpowers</strong> · 커뮤니티 (TDD · 계획 · 리뷰 자동화)</li>
+          <li><strong>ui-ux-pro-max · everything-claude · awesome-claude</strong> 등</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bottom-rule">
+      <div class="lbl">▸ 적용 우선순위</div>
+      <div class="desc"><strong>1차 = Anthropic 공식</strong> (안정성). <strong>2차 = 커뮤니티 인기</strong> (superpowers · 슈퍼파워). <strong>3차 = 우리 외부 26</strong> (특화·자동화). 셋이 충돌하면 우리 것이 마지막에 오버라이드 (folder &gt; project &gt; global).</div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">setup/modules/08-plugins.bat · plugins/ 26개 · .claude-plugin/marketplace.json</span></div>
+</div>
+</body></html>

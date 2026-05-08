@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>직접 만들기 2/3 — sync + RENAME_MAP</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(107,142,127,0.05) 0px, rgba(107,142,127,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 340px 250px; gap:14px; margin-top:18px; min-height:0; }
+.intro { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:16px 22px; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
+.intro::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 33%, var(--plum) 66%, var(--terracotta) 100%); }
+.intro-row { display:grid; grid-template-columns:repeat(3, 1fr) auto; gap:14px; align-items:center; }
+.step-box { background:var(--cream); border:0.5px solid var(--fog); border-radius:10px; padding:10px 14px; }
+.step-box.now { background:linear-gradient(135deg, rgba(107,142,127,0.18) 0%, rgba(255,255,255,0.95) 70%); border-color:var(--sage); }
+.step-box.done { background:linear-gradient(135deg, rgba(184,134,78,0.10) 0%, rgba(255,255,255,0.85) 70%); opacity:0.7; }
+.step-box .num { font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; letter-spacing:0.18em; color:var(--stone); text-transform:uppercase; }
+.step-box.now .num { color:var(--sage); }
+.step-box.done .num { color:var(--deep-gold); }
+.step-box .ttl { font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--ink); margin-top:2px; }
+.intro-icon { font-size:36px; color:var(--sage); }
+
+.flow-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; min-height:0; }
+.flow-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:14px; padding:18px 22px; min-height:0; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; display:flex; flex-direction:column; gap:10px; }
+.flow-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--sage); }
+.flow-card.gold::before { background:var(--gold); }
+.flow-card .lbl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.18em; color:var(--sage); font-weight:700; text-transform:uppercase; }
+.flow-card.gold .lbl { color:var(--deep-gold); }
+.flow-code { background:#1A1D24; color:#C9C1B0; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.4; padding:12px 16px; border-radius:10px; white-space:pre; flex:1; min-height:0; overflow:hidden; }
+.flow-code .k { color:#5BC0BE; }
+.flow-code .s { color:#B8864E; }
+.flow-code .c { color:#6E685C; font-style:italic; }
+.flow-code .v { color:#6B8E7F; }
+.flow-code .ok { color:#87ff87; }
+.flow-code .h { color:#FFD580; font-weight:700; }
+
+.code-block { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:14px; padding:14px 22px; min-height:0; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; display:flex; flex-direction:column; gap:8px; }
+.code-block::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--terracotta); }
+.code-block-ttl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.18em; color:var(--terracotta); font-weight:700; text-transform:uppercase; }
+.cb { background:#1A1D24; color:#C9C1B0; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.4; padding:12px 16px; border-radius:10px; white-space:pre; flex:1; min-height:0; overflow:hidden; }
+.cb .k { color:#5BC0BE; }
+.cb .s { color:#B8864E; }
+.cb .c { color:#6E685C; font-style:italic; }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:arrow-path" class="icon-sm"></iconify-icon>PART 04 · 직접 만들기 2/3</span>
+    <span class="mono caption">20 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:arrow-path" class="icon-lg"></iconify-icon><h1 class="heading-1">sync + RENAME_MAP 충돌 회피</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">plugins/ 작성 후 .claude/ 로 sync — 동명 파일 충돌 시 자동 prefix 부여</p>
+
+  <div class="body">
+    <div class="intro">
+      <div class="intro-row">
+        <div class="step-box done"><div class="num">▸ 1/3 — 완료</div><div class="ttl">_template 복사</div></div>
+        <div class="step-box now"><div class="num">▸ 2/3 — 지금</div><div class="ttl">sync · RENAME_MAP</div></div>
+        <div class="step-box"><div class="num">▸ 3/3</div><div class="ttl">validate · 슬래시 등록</div></div>
+        <iconify-icon icon="heroicons:arrow-right-circle" class="intro-icon"></iconify-icon>
+      </div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-card">
+        <div class="lbl">▸ sync 명령</div>
+        <div class="flow-code"><span class="c"># 1. 미리보기 (변경 없음)</span>
+bash .claude/scripts/sync-plugins.sh <span class="v">--dry</span>
+
+<span class="c"># 2. 실제 동기화</span>
+bash .claude/scripts/sync-plugins.sh
+
+<span class="c"># 3. drift·orphan 점검만</span>
+bash .claude/scripts/sync-plugins.sh <span class="v">--check</span>
+
+<span class="c"># 결과</span>
+<span class="ok">[OK]</span> plugins/my_feature/commands/cmd.md
+     -&gt; <span class="h">.claude/commands/cmd.md</span>
+✓ Orphan 없음
+✓ Drift 0</div>
+      </div>
+
+      <div class="flow-card gold">
+        <div class="lbl">▸ 충돌 회피 — RENAME_MAP</div>
+        <div class="flow-code"><span class="c"># sync-plugins.sh § RENAME_MAP</span>
+declare <span class="v">-A</span> RENAME_MAP=(
+  [<span class="s">"my_feature/commands/install.md"</span>]=
+    <span class="s">"my_feature-install.md"</span>
+  [<span class="s">"my_feature/commands/status.md"</span>]=
+    <span class="s">"my_feature-status.md"</span>
+)
+
+<span class="c"># 효과</span>
+<span class="c"># my_feature/install.md</span>
+<span class="c">#   → .claude/commands/my_feature-install.md</span>
+<span class="c"># 다른 plugin 도 install.md 가지면 충돌 안 남</span></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-ttl">▸ commands/&lt;cmd&gt;.md frontmatter + Context 주입 패턴</div>
+      <div class="cb"><span class="c">---</span>
+description: <span class="s">"한 줄 한글 설명 (슬래시 메뉴에 표시됨)"</span>
+allowed-tools: Bash(git:*), Read, Edit
+<span class="c">---</span>
+
+<span class="c">## Context</span>
+- 현재 브랜치: !`git branch --show-current`
+- 변경 파일: !`git status --short | wc -l`
+
+<span class="c">## Your task</span>
+
+Claude 에게 시킬 내용을 한국어로 세세하게 작성. <span class="c"># Context 결과 가 자동 주입됨</span></div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">.claude/scripts/sync-plugins.sh · .claude/rules/sync-workflow.md · 충돌 시 RENAME_MAP 추가</span></div>
+</div>
+</body></html>

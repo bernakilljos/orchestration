@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>직접 만들기 3/3 — validate + 슬래시 등록</title>
+<link href="../styles/design-system.css" rel="stylesheet">
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s { display:flex !important; flex-direction:column !important; height:1080px !important; padding:60px 80px 50px 80px !important; box-sizing:border-box !important; overflow:hidden !important; position:relative; }
+.s::before { content:''; position:absolute; left:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(0deg, rgba(122,78,107,0.05) 0px, rgba(122,78,107,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.s::after { content:''; position:absolute; right:20px; top:60px; bottom:50px; width:40px; background:repeating-linear-gradient(180deg, rgba(184,134,78,0.05) 0px, rgba(184,134,78,0.05) 2px, transparent 2px, transparent 6px); border-radius:20px; }
+.body { flex:1; display:grid; grid-template-rows:auto 340px 200px; gap:14px; margin-top:18px; min-height:0; }
+.intro { background:rgba(255,255,255,0.88); border:0.5px solid var(--fog); border-radius:14px; padding:16px 22px; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; overflow:hidden; }
+.intro::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--gold) 0%, var(--sage) 33%, var(--plum) 66%, var(--terracotta) 100%); }
+.intro-row { display:grid; grid-template-columns:repeat(3, 1fr) auto; gap:14px; align-items:center; }
+.step-box { background:var(--cream); border:0.5px solid var(--fog); border-radius:10px; padding:10px 14px; }
+.step-box.now { background:linear-gradient(135deg, rgba(122,78,107,0.18) 0%, rgba(255,255,255,0.95) 70%); border-color:var(--plum); }
+.step-box.done { opacity:0.7; }
+.step-box .num { font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:700; letter-spacing:0.18em; color:var(--stone); text-transform:uppercase; }
+.step-box.now .num { color:var(--plum); }
+.step-box.done .num { color:var(--sage); }
+.step-box .ttl { font-family:'Fraunces', serif; font-size:16px; font-weight:700; color:var(--ink); margin-top:2px; }
+.intro-icon { font-size:36px; color:var(--plum); }
+
+.flow-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; min-height:0; }
+.flow-card { background:rgba(255,255,255,0.86); border:0.5px solid var(--fog); border-radius:14px; padding:18px 22px; min-height:0; overflow:hidden; box-shadow:0 6px 18px rgba(138,98,53,0.08); position:relative; display:flex; flex-direction:column; gap:10px; }
+.flow-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--plum); }
+.flow-card.sage::before { background:var(--sage); }
+.flow-card .lbl { font-family:'JetBrains Mono', monospace; font-size:14px; letter-spacing:0.18em; color:var(--plum); font-weight:700; text-transform:uppercase; }
+.flow-card.sage .lbl { color:var(--sage); }
+.flow-code { background:#1A1D24; color:#C9C1B0; font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.4; padding:12px 16px; border-radius:10px; white-space:pre; flex:1; min-height:0; overflow:hidden; }
+.flow-code .k { color:#5BC0BE; }
+.flow-code .s { color:#B8864E; }
+.flow-code .c { color:#6E685C; font-style:italic; }
+.flow-code .v { color:#6B8E7F; }
+.flow-code .ok { color:#87ff87; }
+.flow-code .err { color:#ff6b6b; }
+.flow-code .h { color:#FFD580; font-weight:700; }
+
+.checklist { background:linear-gradient(135deg, rgba(107,142,127,0.12) 0%, rgba(184,134,78,0.08) 100%); border:0.5px solid var(--sage); border-radius:14px; padding:18px 26px; }
+.checklist .lbl { font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:0.18em; color:var(--sage); font-weight:700; text-transform:uppercase; margin-bottom:10px; }
+.check-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+.ck { display:flex; gap:8px; align-items:flex-start; padding:8px 12px; background:rgba(255,255,255,0.7); border:0.5px solid var(--fog); border-radius:8px; font-size:13px; line-height:1.4; }
+.ck .ic { color:var(--sage); font-weight:700; flex-shrink:0; }
+.ck code { background:#1A1D24; color:#39FF6C; padding:2px 6px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono', monospace; }
+.ck strong { color:var(--deep-gold); }
+.footer-border { margin-top:auto; padding-top:12px; border-top:0.5px solid var(--fog); }
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header">
+    <span class="slide-eyebrow"><iconify-icon icon="heroicons:check-badge" class="icon-sm"></iconify-icon>PART 04 · 직접 만들기 3/3</span>
+    <span class="mono caption">21 / 25</span>
+  </div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:check-badge" class="icon-lg"></iconify-icon><h1 class="heading-1">validate + 슬래시 등록 + git push</h1></div>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">스키마 검증 → drift 0 확인 → commit + push → /sync-team 으로 팀 자동 배포</p>
+
+  <div class="body">
+    <div class="intro">
+      <div class="intro-row">
+        <div class="step-box done"><div class="num">▸ 1/3 — 완료</div><div class="ttl">_template 복사</div></div>
+        <div class="step-box done"><div class="num">▸ 2/3 — 완료</div><div class="ttl">sync · RENAME_MAP</div></div>
+        <div class="step-box now"><div class="num">▸ 3/3 — 지금</div><div class="ttl">validate · 등록</div></div>
+        <iconify-icon icon="heroicons:check-circle" class="intro-icon"></iconify-icon>
+      </div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-card">
+        <div class="lbl">▸ 스키마 검증</div>
+        <div class="flow-code">python .claude/scripts/<span class="h">validate-plugin-schema.py</span>
+
+<span class="c"># 단일 플러그인만</span>
+python .claude/scripts/validate-plugin-schema.py my_feature
+
+<span class="c"># 결과</span>
+<span class="ok">✅ 전부 통과</span> (27개)
+<span class="ok">[OK]</span> my_feature/plugin.json
+<span class="ok">[OK]</span> name 형식 (prefix 일치)
+<span class="ok">[OK]</span> description 한글 (영문 혼용 X)
+
+<span class="c"># 실패 시</span>
+<span class="err">❌ FAIL</span> my_feature/plugin.json
+   description 에 plugin 이름 반복
+   → 한 줄 한글 설명으로 수정</div>
+      </div>
+
+      <div class="flow-card sage">
+        <div class="lbl">▸ git + 슬래시 등록</div>
+        <div class="flow-code"><span class="c"># 1. 변경 검토</span>
+git status --short
+git diff plugins/my_feature/
+
+<span class="c"># 2. 커밋 (plugins/ + .claude/ 둘 다)</span>
+git add plugins/my_feature/ .claude/commands/
+git commit -m <span class="s">"feat(my_feature): 새 플러그인"</span>
+
+<span class="c"># 3. 푸시</span>
+git push origin main
+
+<span class="c"># 4. 팀 배포 (Maintainer)</span>
+/sync-team   <span class="c"># 본판 → 팀 자동 동기화</span>
+
+<span class="c"># 5. 즉시 사용</span>
+/my_feature-cmd   <span class="ok">✓ 슬래시 등록됨</span></div>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="lbl">▸ 배포 전 체크리스트</div>
+      <div class="check-grid">
+        <div class="ck"><span class="ic">✓</span><span><strong>plugin.json</strong> 7 필수 필드 모두 채움</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>description</strong> 한글 + 이름 반복 X</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>commands/</strong> frontmatter 형식 OK</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>RENAME_MAP</strong> 충돌 없음 (--dry 확인)</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>validate-plugin-schema.py</strong> 통과</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>README.md</strong> 사용법·예시 작성</span></div>
+        <div class="ck"><span class="ic">✓</span><span><strong>git status</strong> drift / orphan 0</span></div>
+        <div class="ck"><span class="ic">✓</span><span>슬래시 명령 <code>/my_feature-cmd</code> 호출 테스트</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-border"><span class="footnote">.claude/scripts/validate-plugin-schema.py · .claude-plugin/plugin-schema.json · /sync-team 후 팀 배포</span></div>
+</div>
+</body></html>
