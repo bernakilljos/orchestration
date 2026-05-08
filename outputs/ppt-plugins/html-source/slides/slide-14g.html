@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>실전 사례 모음</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(122,78,107,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--plum);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.cases{display:grid;grid-template-columns:repeat(2, 1fr);grid-template-rows:repeat(2, 1fr);gap:18px;min-height:0}
+.c{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 26px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 18px rgba(138,98,53,0.10)}
+.c::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.c.c1::before{background:var(--gold)}
+.c.c2::before{background:var(--sage)}
+.c.c3::before{background:var(--plum)}
+.c.c4::before{background:var(--terracotta)}
+.c .role{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.18em;color:var(--stone);font-weight:700;text-transform:uppercase}
+.c .ttl{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink);line-height:1.2}
+.c .desc{font-size:17px;color:var(--ink);line-height:1.55}
+.c .desc strong{color:var(--deep-gold)}
+.c .stat{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--sage);font-weight:700;margin-top:auto;background:rgba(107,142,127,0.12);padding:6px 12px;border-radius:6px;display:inline-block;align-self:flex-start}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:sparkles" class="icon-sm"></iconify-icon>PART 05 · 실전 사례</span><span class="mono caption">39 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:sparkles" class="icon-lg"></iconify-icon><h1 class="heading-1">실전 사례 — 4 명 활용</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">우리 팀 실제 사용 패턴 — 역할별 시그니처 플러그인</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">같은 26 플러그인 — 사람마다 쓰는 패턴 다름</div>
+      <div class="desc">기획·개발·디자인·QA — 각자 자주 쓰는 슬래시 명령 5~6 개로 정착.</div>
+    </div>
+    <div class="cases">
+      <div class="c c1"><div class="role">▸ 기획자</div><div class="ttl">PPT + 시장 조사</div><div class="desc"><strong>/scout</strong> (리서치) → <strong>/design_ppt</strong> (보고서) → <strong>/critique</strong> (반박 검증) → Slack 공유</div><div class="stat">▸ 일평균 3 PPT</div></div>
+      <div class="c c2"><div class="role">▸ 개발자</div><div class="ttl">코드 + 리뷰</div><div class="desc"><strong>/exec_orch</strong> (4-AI 협업) → <strong>/review_qa</strong> (자동 검증) → <strong>/commit-push-pr</strong> 자동</div><div class="stat">▸ 평소 대비 8× 빠름</div></div>
+      <div class="c c3"><div class="role">▸ 디자이너</div><div class="ttl">자료 + 다이어그램</div><div class="desc"><strong>/arch-auto</strong> (자동 선택) → <strong>/screenshot</strong> (확인) → <strong>/design_pdf</strong> 변환</div><div class="stat">▸ Iconify 200K + Mermaid</div></div>
+      <div class="c c4"><div class="role">▸ QA</div><div class="ttl">검증 + 보안</div><div class="desc"><strong>/security</strong> (OWASP) → <strong>/performance</strong> (Lighthouse) → <strong>/validate</strong> (전체)</div><div class="stat">▸ 자동 검증 100%</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 4 명 = 4 패턴 · 각자 5~6 슬래시 익숙 · 나머지는 / 입력하면 보임</span></div>
+</div>
+</body></html>

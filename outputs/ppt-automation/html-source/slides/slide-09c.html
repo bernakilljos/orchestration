@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>비용 시뮬레이션</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(107,142,127,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.bars{display:grid;grid-template-columns:repeat(4, 1fr);gap:18px;align-items:end;min-height:0}
+.bar{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:8px}
+.bar .lbl{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.18em;color:var(--stone);font-weight:700;text-transform:uppercase}
+.bar .name{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink)}
+.bar-graph{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;flex:1;min-height:200px}
+.bar-fill{width:80%;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:14px;color:white;font-family:'Fraunces',serif;font-weight:700;font-size:32px}
+.bar.b1 .bar-fill{background:linear-gradient(180deg, var(--terracotta) 0%, #8a3e26 100%);height:90%}
+.bar.b2 .bar-fill{background:linear-gradient(180deg, var(--gold) 0%, var(--deep-gold) 100%);height:30%}
+.bar.b3 .bar-fill{background:linear-gradient(180deg, var(--sage) 0%, #4A6F60 100%);height:10%}
+.bar.b4 .bar-fill{background:linear-gradient(180deg, var(--plum) 0%, #5A3850 100%);height:5%}
+.bar .stat{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--ink);font-weight:600;text-align:center}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:currency-dollar" class="icon-sm"></iconify-icon>PART 02 · 비용 시뮬레이션</span><span class="mono caption">25 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:currency-dollar" class="icon-lg"></iconify-icon><h1 class="heading-1">월 비용 시뮬레이션</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">같은 작업량 (월 100 task) — 4 가지 시나리오별 실측 비용</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">사람 손 vs Opus 직통 vs 라우팅 vs Caching</div>
+      <div class="desc">월 100 task (회원가입·검증·리팩토링) 기준. 같은 결과물 — 비용은 90% 차이.</div>
+    </div>
+    <div class="bars">
+      <div class="bar b1">
+        <div class="lbl">▸ S1 — 인건비 환산</div>
+        <div class="name">사람 손</div>
+        <div class="bar-graph"><div class="bar-fill">$900</div></div>
+        <div class="stat">개발자 4시간 × 100 task × $2.25/h</div>
+      </div>
+      <div class="bar b2">
+        <div class="lbl">▸ S2 — Opus 직통</div>
+        <div class="name">Claude Only</div>
+        <div class="bar-graph"><div class="bar-fill">$300</div></div>
+        <div class="stat">Opus 4.7 모든 작업 처리</div>
+      </div>
+      <div class="bar b3">
+        <div class="lbl">▸ S3 — 라우팅</div>
+        <div class="name">멀티 AI</div>
+        <div class="bar-graph"><div class="bar-fill">$100</div></div>
+        <div class="stat">Codex + Haiku 분담 (-67%)</div>
+      </div>
+      <div class="bar b4">
+        <div class="lbl">▸ S4 — Caching</div>
+        <div class="name">우리 (full)</div>
+        <div class="bar-graph"><div class="bar-fill">$50</div></div>
+        <div class="stat">Caching 90% + 한도 차단 (-95%)</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ docs/caching-strategy.md · 실측 2026-05 · 일일 한도 자동 차단으로 폭주 방지</span></div>
+</div>
+</body></html>

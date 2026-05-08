@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>학습 데이터 흐름</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(122,78,107,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--plum);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.flow{display:grid;grid-template-columns:repeat(4, 1fr);gap:18px;align-items:stretch;min-height:0}
+.f{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 24px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;box-shadow:0 6px 18px rgba(138,98,53,0.10)}
+.f::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--plum)}
+.f::after{content:'→';position:absolute;top:50%;right:-12px;font-size:24px;color:var(--plum);font-weight:700;z-index:2}
+.f:last-child::after{display:none}
+.f .num{font-family:'Fraunces',serif;font-size:54px;font-weight:700;color:var(--plum);line-height:0.9}
+.f .ttl{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.f .desc{font-size:16px;color:var(--ink);line-height:1.5}
+.f .cmd{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 12px;border-radius:6px;margin-top:auto}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:academic-cap" class="icon-sm"></iconify-icon>PART 04 · 학습 누적</span><span class="mono caption">38 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:academic-cap" class="icon-lg"></iconify-icon><h1 class="heading-1">학습 데이터 흐름 — 실패도 자산</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">실패 패턴 자동 누적 → 다음 작업 자동 회피 = exec_learning 핵심</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">매 작업이 다음 작업을 더 빠르게 만든다</div>
+      <div class="desc">실패·성공 패턴 모두 SQLite 에 누적 → 같은 실수 안 반복 → 시간 갈수록 빨라짐.</div>
+    </div>
+    <div class="flow">
+      <div class="f"><div class="num">1</div><div class="ttl">기록</div><div class="desc">작업 끝나면 자동 저장 — 성공/실패 패턴 + 비용 + 시간</div><div class="cmd">/learn 자동</div></div>
+      <div class="f"><div class="num">2</div><div class="ttl">분석</div><div class="desc">패턴 분류 — 자주 실패한 케이스 + 효율 좋았던 콤보</div><div class="cmd">.claude/state/orca.db</div></div>
+      <div class="f"><div class="num">3</div><div class="ttl">조회</div><div class="desc">새 작업 시작 시 자동 — "이전에 비슷한 작업 했음" 표시</div><div class="cmd">/recall 자동</div></div>
+      <div class="f"><div class="num">4</div><div class="ttl">활용</div><div class="desc">Claude 가 과거 패턴 보고 자동 회피 + 검증된 콤보 우선</div><div class="cmd">자동 적용</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ plugins/exec_learning · 매 세션마다 누적 · 시간 갈수록 더 빠름 (Claude 도 학습)</span></div>
+</div>
+</body></html>

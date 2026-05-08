@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>슬래시 분류</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.cats{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, 1fr);gap:18px;min-height:0}
+.cat{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:20px 24px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.cat::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.cat.gold::before{background:var(--gold)}
+.cat.sage::before{background:var(--sage)}
+.cat.plum::before{background:var(--plum)}
+.cat.terra::before{background:var(--terracotta)}
+.cat.deep::before{background:var(--deep-gold)}
+.cat .ttl{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.cat .ic{font-size:32px}
+.cat.gold .ic{color:var(--gold)}
+.cat.sage .ic{color:var(--sage)}
+.cat.plum .ic{color:var(--plum)}
+.cat.terra .ic{color:var(--terracotta)}
+.cat.deep .ic{color:var(--deep-gold)}
+.cat ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.cat li{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);padding:3px 0;font-weight:600}
+.cat li::before{content:'/';color:var(--deep-gold);margin-right:4px}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:command-line" class="icon-sm"></iconify-icon>PART 04 · 슬래시 분류</span><span class="mono caption">31 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:command-line" class="icon-lg"></iconify-icon><h1 class="heading-1">슬래시 명령 — 6 그룹</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">25+ 슬래시 명령을 6 그룹으로 — 어디서 시작할지 한눈에</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">25+ 슬래시 = 6 그룹</div>
+      <div class="desc">제작 / 실행 / 검증 / 모드 / 분석 / 학습 — 그룹별 핵심 명령. 외울 필요 없음, 기억만.</div>
+    </div>
+    <div class="cats">
+      <div class="cat gold"><iconify-icon icon="heroicons:document-plus" class="ic"></iconify-icon><div class="ttl">제작 (Design)</div><ul><li>design_ppt</li><li>excel-make</li><li>word-make</li><li>pdf-generate</li><li>arch-auto</li><li>arch-mindmap</li></ul></div>
+      <div class="cat sage"><iconify-icon icon="heroicons:bolt" class="ic"></iconify-icon><div class="ttl">실행 (Execute)</div><ul><li>exec_orch</li><li>godmode</li><li>vibe-loop</li><li>orcauto-start</li><li>check-agents</li><li>loop-stop</li></ul></div>
+      <div class="cat plum"><iconify-icon icon="heroicons:check-badge" class="ic"></iconify-icon><div class="ttl">검증 (Review)</div><ul><li>review_qa</li><li>gemini-verify</li><li>security</li><li>performance</li><li>validate</li><li>screenshot</li></ul></div>
+      <div class="cat terra"><iconify-icon icon="heroicons:adjustments-horizontal" class="ic"></iconify-icon><div class="ttl">모드 (Mode)</div><ul><li>10x</li><li>devil</li><li>critique</li><li>brief</li><li>teacher</li><li>ghost</li></ul></div>
+      <div class="cat deep"><iconify-icon icon="heroicons:chart-bar-square" class="ic"></iconify-icon><div class="ttl">분석 (Analyze)</div><ul><li>scout</li><li>compare</li><li>ooda</li><li>pitch</li><li>token-stats</li><li>exec_status</li></ul></div>
+      <div class="cat gold"><iconify-icon icon="heroicons:academic-cap" class="ic"></iconify-icon><div class="ttl">학습 (Learn)</div><ul><li>learn</li><li>recall</li><li>summarize</li><li>guard-save</li><li>help</li><li>example</li></ul></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 6 그룹 × 6 = 36 핵심 슬래시 / 외울 필요 없이 / 입력하면 메뉴 자동</span></div>
+</div>
+</body></html>

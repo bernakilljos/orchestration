@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>4 AI 협업 한눈에</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:18px;margin-top:20px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.16) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:16px 28px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.intro .desc{font-size:17px;color:var(--stone);line-height:1.45}
+.svg-wrap{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:20px 30px;box-shadow:0 6px 18px rgba(138,98,53,0.10);overflow:hidden;min-height:0;box-sizing:border-box}
+.svg-wrap svg{width:100%;height:100%;display:block}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:cube-transparent" class="icon-sm"></iconify-icon>PART 04 · 정리</span><span class="mono caption">39 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:cube-transparent" class="icon-lg"></iconify-icon><h1 class="heading-1">4 AI 협업 한눈에 — 전체 흐름</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">Claude 가 지휘 · Codex 병렬구현 · Haiku 검증 · Gemini 멀티모달 — 역할분담 명확</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">4명의 AI 가 한 팀처럼 작동한다</div>
+      <div class="desc">사용자는 Claude 한 명만 본다 — 뒤에서 Codex·Haiku·Gemini 가 자동 분배·병렬 실행·검증.</div>
+    </div>
+
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1400 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="goldG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#8A6235"/></linearGradient>
+          <linearGradient id="plumG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#5A3B50"/></linearGradient>
+          <linearGradient id="sageG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#52735F"/></linearGradient>
+          <linearGradient id="terraG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#8A4030"/></linearGradient>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A4E6B"/></marker>
+          <marker id="arrSage" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6B8E7F"/></marker>
+        </defs>
+
+        <!-- User -->
+        <rect x="40" y="220" width="180" height="100" rx="14" fill="#FAF5EA" stroke="#1A1D24" stroke-width="2"/>
+        <text x="130" y="252" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">사용자</text>
+        <text x="130" y="280" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#6E685C">/godmode</text>
+        <text x="130" y="302" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#6E685C">/exec_orch</text>
+
+        <!-- Claude (center, leader) -->
+        <circle cx="500" cy="270" r="110" fill="url(#goldG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="500" y="248" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">Claude</text>
+        <text x="500" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.9">Opus 4.7</text>
+        <text x="500" y="300" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">설계·지휘·라우팅</text>
+
+        <!-- Arrow user -> claude -->
+        <path d="M 220 270 L 388 270" stroke="#7A4E6B" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+
+        <!-- Codex (top right) -->
+        <rect x="820" y="50" width="240" height="140" rx="14" fill="url(#plumG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="940" y="90" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Codex × 4</text>
+        <text x="940" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.9">병렬 구현 · 500줄+</text>
+        <text x="940" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">codex-auto</text>
+        <text x="940" y="168" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.7">8× 빠름</text>
+
+        <!-- Haiku (middle right) -->
+        <rect x="820" y="210" width="240" height="120" rx="14" fill="url(#sageG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="940" y="248" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Haiku × 2</text>
+        <text x="940" y="276" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.9">검증 · Lint · QA</text>
+        <text x="940" y="300" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">haiku-auto · 캐시 90%</text>
+
+        <!-- Gemini (bottom right) -->
+        <rect x="820" y="350" width="240" height="120" rx="14" fill="url(#terraG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="940" y="388" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Gemini Flash</text>
+        <text x="940" y="416" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.9">멀티모달 · 500k+</text>
+        <text x="940" y="440" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">gemini-auto</text>
+
+        <!-- Arrows from Claude to workers -->
+        <path d="M 600 220 Q 720 130 818 120" stroke="#7A4E6B" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+        <path d="M 612 270 L 818 270" stroke="#7A4E6B" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+        <path d="M 600 320 Q 720 410 818 410" stroke="#7A4E6B" stroke-width="3" fill="none" marker-end="url(#arr)"/>
+
+        <!-- Return arrows -->
+        <path d="M 818 150 Q 700 200 612 240" stroke="#6B8E7F" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#arrSage)"/>
+        <path d="M 818 290 L 612 290" stroke="#6B8E7F" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#arrSage)"/>
+        <path d="M 818 380 Q 700 340 612 310" stroke="#6B8E7F" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#arrSage)"/>
+
+        <!-- Storage -->
+        <rect x="1140" y="180" width="220" height="180" rx="14" fill="#FAF5EA" stroke="#1A1D24" stroke-width="2" stroke-dasharray="5 3"/>
+        <text x="1250" y="218" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">SQLite</text>
+        <text x="1250" y="246" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">orca.db (8 tables)</text>
+        <text x="1250" y="272" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">workers · tasks</text>
+        <text x="1250" y="294" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">metrics · quota</text>
+        <text x="1250" y="316" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">budget · session</text>
+        <text x="1250" y="342" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8A6235">학습 누적</text>
+
+        <!-- Storage links -->
+        <path d="M 1060 270 L 1138 270" stroke="#8A6235" stroke-width="2" fill="none" stroke-dasharray="3 3"/>
+
+        <!-- Labels -->
+        <text x="708" y="160" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#7A4E6B">dispatch</text>
+        <text x="710" y="260" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#7A4E6B">dispatch</text>
+        <text x="708" y="380" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#7A4E6B">dispatch</text>
+        <text x="710" y="220" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#6B8E7F">result</text>
+        <text x="710" y="305" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#6B8E7F">result</text>
+        <text x="710" y="345" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#6B8E7F">result</text>
+      </svg>
+    </div>
+
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 4 AI 가 한 팀 · 사용자는 Claude 한 명만 봄 · 뒤에서 자동 분배·병렬·검증 · SQLite 누적</span></div>
+</div>
+</body></html>

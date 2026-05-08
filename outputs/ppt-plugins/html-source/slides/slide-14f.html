@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Best Practices for plugins</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.bp{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, 1fr);gap:18px;min-height:0}
+.b{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 26px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.b::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.b.b1::before{background:var(--gold)}
+.b.b2::before{background:var(--sage)}
+.b.b3::before{background:var(--plum)}
+.b.b4::before{background:var(--terracotta)}
+.b.b5::before{background:var(--deep-gold)}
+.b.b6::before{background:var(--gold)}
+.b .ic-big{font-size:42px}
+.b.b1 .ic-big, .b.b6 .ic-big{color:var(--gold)}
+.b.b2 .ic-big{color:var(--sage)}
+.b.b3 .ic-big{color:var(--plum)}
+.b.b4 .ic-big{color:var(--terracotta)}
+.b.b5 .ic-big{color:var(--deep-gold)}
+.b .ttl{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.b .desc{font-size:16px;color:var(--ink);line-height:1.5}
+.b .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:0.5px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:check-circle" class="icon-sm"></iconify-icon>PART 05 · BEST PRACTICES</span><span class="mono caption">38 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:check-circle" class="icon-lg"></iconify-icon><h1 class="heading-1">플러그인 잘 쓰는 6 팁</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">26 플러그인을 효율적으로 — 실측 6 가지 권장</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">"많이 깐다고 좋은 게 아니다 — 잘 쓰는 게 중요"</div>
+      <div class="desc">26 플러그인 다 알 필요 없음. 자주 쓰는 5~6 개만 익숙하면 끝.</div>
+    </div>
+    <div class="bp">
+      <div class="b b1"><iconify-icon icon="heroicons:command-line" class="ic-big"></iconify-icon><div class="ttl">슬래시 / 입력</div><div class="desc">외울 필요 없음. <strong>채팅창에 / 입력</strong>하면 메뉴 자동 표시.</div></div>
+      <div class="b b2"><iconify-icon icon="heroicons:cube-transparent" class="ic-big"></iconify-icon><div class="ttl">자연어로 시키기</div><div class="desc">"PPT 만들어" → Claude 가 <strong>알아서 /design_ppt</strong> 호출.</div></div>
+      <div class="b b3"><iconify-icon icon="heroicons:bolt" class="ic-big"></iconify-icon><div class="ttl">콤보 활용</div><div class="desc"><strong>/design_ppt + /arch-auto + /scout</strong> 조합 = PPT 한 권 자동.</div></div>
+      <div class="b b4"><iconify-icon icon="heroicons:adjustments-horizontal" class="ic-big"></iconify-icon><div class="ttl">모드 전환</div><div class="desc">/godmode (강력) · <strong>/devil (반박)</strong> · /brief (3줄) · /teacher (설명)</div></div>
+      <div class="b b5"><iconify-icon icon="heroicons:academic-cap" class="ic-big"></iconify-icon><div class="ttl">학습 누적</div><div class="desc">/learn (실패 저장) → <strong>/recall</strong> (다음 작업 자동 회피)</div></div>
+      <div class="b b6"><iconify-icon icon="heroicons:wrench-screwdriver" class="ic-big"></iconify-icon><div class="ttl">없으면 만들기</div><div class="desc">필요한 도구 없으면 <strong>plugins/_template</strong> 30분 → 자체 플러그인</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 자주 쓰는 5~6 개만 익숙하면 충분 · 나머지는 필요할 때 / 입력하면 보임</span></div>
+</div>
+</body></html>

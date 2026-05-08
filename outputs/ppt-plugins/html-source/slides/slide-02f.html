@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>활용 팁 — 어떤 플러그인 언제</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.cheat{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px 24px;min-height:0;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10)}
+table.use{width:100%;border-collapse:collapse}
+table.use th{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.18em;color:var(--stone);text-transform:uppercase;font-weight:700;padding:10px 12px;border-bottom:2px solid var(--fog);text-align:left}
+table.use td{padding:10px 12px;font-size:17px;color:var(--ink);border-bottom:0.5px solid var(--fog);line-height:1.4}
+table.use td.when{font-weight:600;color:var(--ink);width:30%}
+table.use td.cmd{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--deep-gold);width:30%}
+table.use td.tip{font-size:15px;color:var(--stone)}
+table.use tr:hover{background:rgba(184,134,78,0.05)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:light-bulb" class="icon-sm"></iconify-icon>PART 01 · 활용 cheatsheet</span><span class="mono caption">08 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:light-bulb" class="icon-lg"></iconify-icon><h1 class="heading-1">언제 어떤 플러그인을 쓰나</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">상황별 추천 — "이럴 때 이 명령" cheatsheet (외울 필요 없이 / 입력하면 메뉴)</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">26 플러그인 시그니처 시나리오</div>
+      <div class="desc">자주 쓰는 12가지 상황 → 어떤 슬래시 명령으로 시작할지 한눈에.</div>
+    </div>
+    <div class="cheat">
+      <table class="use">
+        <thead><tr><th>상황 (이럴 때)</th><th>명령</th><th>한줄 팁</th></tr></thead>
+        <tbody>
+          <tr><td class="when">📊 PPT 만들고 싶다</td><td class="cmd">/design_ppt 25</td><td class="tip">25 = 분량. 자동 OCR 검증.</td></tr>
+          <tr><td class="when">📈 Excel 만들고 싶다</td><td class="cmd">/excel-make</td><td class="tip">차트 자동 + Google Sheets 연동.</td></tr>
+          <tr><td class="when">📝 Word 보고서 만들기</td><td class="cmd">/word-make</td><td class="tip">Mermaid 다이어그램 임베드 OK.</td></tr>
+          <tr><td class="when">💻 코드 작성·검증</td><td class="cmd">/exec_orch</td><td class="tip">4-AI 자동 협업 진입.</td></tr>
+          <tr><td class="when">🐛 코드 리뷰·보안</td><td class="cmd">/review_qa</td><td class="tip">OWASP + 품질 + 테스트 한 번에.</td></tr>
+          <tr><td class="when">🎙 음성 회의록</td><td class="cmd">/meeting</td><td class="tip">녹음 → STT → 요약 자동.</td></tr>
+          <tr><td class="when">🔗 GitHub 자동화</td><td class="cmd">/mcp_dev-install</td><td class="tip">PR · Issue · Actions 자동.</td></tr>
+          <tr><td class="when">💬 Slack·Telegram 알림</td><td class="cmd">/mcp_collab-install</td><td class="tip">3주차 자동 알림 흐름.</td></tr>
+          <tr><td class="when">📄 PDF 자동 생성</td><td class="cmd">/pdf-generate</td><td class="tip">A4·Letter·Digital 모두 OK.</td></tr>
+          <tr><td class="when">🔍 빠른 정찰·리서치</td><td class="cmd">/scout</td><td class="tip">정보 폭넓게 빠르게 수집.</td></tr>
+          <tr><td class="when">🎨 디자인 자료 생성</td><td class="cmd">/arch-auto</td><td class="tip">마인드맵·레이어·치트시트 자동 선택.</td></tr>
+          <tr><td class="when">✓ 모드 전환 · 강력 작업</td><td class="cmd">/godmode</td><td class="tip">최대 워커 + 직통 라우팅.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 외울 필요 없음 — 채팅창에 / 입력하면 메뉴 자동 / 25+ 슬래시 / plugins/*/commands/*.md</span></div>
+</div>
+</body></html>

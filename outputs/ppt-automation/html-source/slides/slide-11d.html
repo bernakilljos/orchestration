@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>Best Practices 6</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.bp{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, 1fr);gap:18px;min-height:0}
+.b{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 26px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:8px}
+.b::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px}
+.b.b1::before{background:var(--gold)}
+.b.b2::before{background:var(--sage)}
+.b.b3::before{background:var(--plum)}
+.b.b4::before{background:var(--terracotta)}
+.b.b5::before{background:var(--deep-gold)}
+.b.b6::before{background:var(--gold)}
+.b .ic-big{font-size:42px}
+.b.b1 .ic-big, .b.b6 .ic-big{color:var(--gold)}
+.b.b2 .ic-big{color:var(--sage)}
+.b.b3 .ic-big{color:var(--plum)}
+.b.b4 .ic-big{color:var(--terracotta)}
+.b.b5 .ic-big{color:var(--deep-gold)}
+.b .ttl{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--ink);line-height:1.2}
+.b .desc{font-size:17px;color:var(--ink);line-height:1.5}
+.b .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:check-circle" class="icon-sm"></iconify-icon>PART 04 · BEST PRACTICES</span><span class="mono caption">37 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:check-circle" class="icon-lg"></iconify-icon><h1 class="heading-1">자동화 운영 팁 6 가지</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">실측 6 가지 권장 — 하루 1시간 점검 + 주 1회 백업 + 월 1회 갱신</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">자동화 잘 굴리는 6 원칙</div>
+      <div class="desc">설치만 하면 끝이 아님 — 매일 1분 점검, 주간 백업, 월간 갱신, 이상 시 즉시 대응.</div>
+    </div>
+    <div class="bp">
+      <div class="b b1"><iconify-icon icon="heroicons:eye" class="ic-big"></iconify-icon><div class="ttl">매일 점검</div><div class="desc"><strong>/check-agents</strong> 한 번. 워커 9 / 9 + heartbeat fresh 확인. 1 분 작업.</div></div>
+      <div class="b b2"><iconify-icon icon="heroicons:circle-stack" class="ic-big"></iconify-icon><div class="ttl">주간 백업</div><div class="desc"><strong>orca.db</strong> 백업. SQLite 통합 → 단일 파일. 5 MB 이하.</div></div>
+      <div class="b b3"><iconify-icon icon="heroicons:arrow-path" class="ic-big"></iconify-icon><div class="ttl">월간 갱신</div><div class="desc"><strong>git pull</strong> + <strong>setup.exe 재실행</strong>. 새 플러그인 자동 반영.</div></div>
+      <div class="b b4"><iconify-icon icon="heroicons:bell-alert" class="ic-big"></iconify-icon><div class="ttl">이상 알림</div><div class="desc">Telegram bot 등록 → <strong>워커 다운 시 자동 푸시</strong>. 폰으로 즉시.</div></div>
+      <div class="b b5"><iconify-icon icon="heroicons:currency-dollar" class="ic-big"></iconify-icon><div class="ttl">예산 한도</div><div class="desc"><strong>route.py --set-daily-limit 50</strong>. 폭주 방지. 자동 차단.</div></div>
+      <div class="b b6"><iconify-icon icon="heroicons:academic-cap" class="ic-big"></iconify-icon><div class="ttl">학습 기록</div><div class="desc"><strong>/learn</strong> + <strong>/recall</strong>. 실패 패턴 자동 누적 → 다음 작업 자동 회피.</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ best-practices.md · CLAUDE.md § 3.7 · /check-agents · /learn · token-stats</span></div>
+</div>
+</body></html>

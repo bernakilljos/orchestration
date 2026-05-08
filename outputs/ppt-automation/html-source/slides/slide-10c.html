@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>실시간 데이터 흐름</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0;align-items:stretch}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.svg-wrap{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:26px;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;align-items:center;justify-content:center;min-height:0}
+.svg-wrap svg{max-width:100%;max-height:100%}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:cube-transparent" class="icon-sm"></iconify-icon>PART 03 · DATA FLOW</span><span class="mono caption">32 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:cube-transparent" class="icon-lg"></iconify-icon><h1 class="heading-1">실시간 데이터 흐름</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">사용자 요청 → 4-AI 라우팅 → 검증 → 산출물 — 한 그림으로</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">한 요청이 어떻게 흐르는가</div>
+      <div class="desc">자연어 → Claude 라우팅 → Codex 병렬 → Haiku 검증 → SQLite 기록 → Slack 알림. 모두 자동.</div>
+    </div>
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1200 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B8864E"/><stop offset="100%" stop-color="#8A6235"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#6B8E7F"/><stop offset="100%" stop-color="#4A6F60"/>
+          </linearGradient>
+          <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7A4E6B"/><stop offset="100%" stop-color="#5A3850"/>
+          </linearGradient>
+          <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#B25A3E"/><stop offset="100%" stop-color="#8A3E26"/>
+          </linearGradient>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#8A6235"/>
+          </marker>
+        </defs>
+        <!-- User -->
+        <rect x="20" y="200" width="160" height="80" rx="12" fill="url(#g1)" />
+        <text x="100" y="235" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="22" font-weight="700">User</text>
+        <text x="100" y="262" text-anchor="middle" fill="white" font-size="14">"기능 만들어"</text>
+        <line x1="180" y1="240" x2="240" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <!-- Claude -->
+        <rect x="240" y="180" width="180" height="120" rx="12" fill="url(#g1)" />
+        <text x="330" y="220" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="24" font-weight="700">Claude 4.7</text>
+        <text x="330" y="248" text-anchor="middle" fill="white" font-size="14">설계 + 라우팅</text>
+        <text x="330" y="270" text-anchor="middle" fill="white" font-size="13" opacity="0.9">task-instruction.md</text>
+        <line x1="420" y1="200" x2="490" y2="100" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <line x1="420" y1="240" x2="490" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <line x1="420" y1="280" x2="490" y2="380" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <!-- Workers -->
+        <rect x="490" y="60" width="200" height="80" rx="12" fill="url(#g2)" />
+        <text x="590" y="95" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="20" font-weight="700">Codex × 4</text>
+        <text x="590" y="120" text-anchor="middle" fill="white" font-size="14">병렬 구현</text>
+        <rect x="490" y="200" width="200" height="80" rx="12" fill="url(#g3)" />
+        <text x="590" y="235" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="20" font-weight="700">Haiku × 2</text>
+        <text x="590" y="260" text-anchor="middle" fill="white" font-size="14">검증 (캐시 90%)</text>
+        <rect x="490" y="340" width="200" height="80" rx="12" fill="url(#g4)" />
+        <text x="590" y="375" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="20" font-weight="700">Gemini Flash</text>
+        <text x="590" y="400" text-anchor="middle" fill="white" font-size="14">초장문 fallback</text>
+        <line x1="690" y1="100" x2="780" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <line x1="690" y1="240" x2="780" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <line x1="690" y1="380" x2="780" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <!-- SQLite -->
+        <rect x="780" y="200" width="180" height="80" rx="12" fill="#1A1D24" />
+        <text x="870" y="235" text-anchor="middle" fill="#FFD580" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">SQLite</text>
+        <text x="870" y="260" text-anchor="middle" fill="white" font-size="13">orca.db (8 tables)</text>
+        <line x1="960" y1="240" x2="1020" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#arr)"/>
+        <!-- Output -->
+        <rect x="1020" y="200" width="160" height="80" rx="12" fill="url(#g2)" />
+        <text x="1100" y="235" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="20" font-weight="700">Output</text>
+        <text x="1100" y="260" text-anchor="middle" fill="white" font-size="13">파일 + Slack 알림</text>
+      </svg>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ exec_orch 데이터 흐름 · CLAUDE.md § 3.2 + § 3.3 · SQLite state DB 통합</span></div>
+</div>
+</body></html>

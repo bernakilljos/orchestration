@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>일과 1 — PPT 만드는 날</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.timeline{display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;align-items:stretch;min-height:0}
+.t{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:12px;padding:18px 14px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.t::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--gold)}
+.t .time{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.16em;font-weight:700;color:var(--deep-gold);text-transform:uppercase}
+.t .ttl{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--ink);line-height:1.2}
+.t .desc{font-size:13px;color:var(--ink);line-height:1.4}
+.t .cmd{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 10px;border-radius:6px;margin-top:auto;word-break:break-all}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:calendar-days" class="icon-sm"></iconify-icon>PART 02 · 일과 1 — PPT 데이</span><span class="mono caption">10 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:calendar-days" class="icon-lg"></iconify-icon><h1 class="heading-1">일과 1 — PPT 만드는 날</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">PPT 한 권 만드는 하루 흐름 — design_ppt 중심 + 보조 플러그인 6개</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">"PPT 25 장 만드는 하루 시간표"</div>
+      <div class="desc">9시 시작 → 15시 완료. 각 시간마다 어떤 슬래시 명령 쓰는지 시간표.</div>
+    </div>
+    <div class="timeline">
+      <div class="t"><div class="time">▸ 09:00</div><div class="ttl">자료 정찰</div><div class="desc">웹·문서 빠른 리서치 (참고 자료 수집)</div><div class="cmd">/scout</div></div>
+      <div class="t"><div class="time">▸ 10:00</div><div class="ttl">목차 설계</div><div class="desc">25장 outline + PART 분리 + 톤 설정</div><div class="cmd">/design_ppt 25</div></div>
+      <div class="t"><div class="time">▸ 11:00</div><div class="ttl">자동 빌드</div><div class="desc">HTML 25 → PNG → PPTX 자동 + OCR</div><div class="cmd">render-ppt-multi</div></div>
+      <div class="t"><div class="time">▸ 13:00</div><div class="ttl">검수·수정</div><div class="desc">잘림·오타 점검 → 부분 재렌더</div><div class="cmd">--slides 09b</div></div>
+      <div class="t"><div class="time">▸ 14:00</div><div class="ttl">아키 다이어그램</div><div class="desc">마인드맵 1장 추가 (arch 자동 선택)</div><div class="cmd">/arch-auto</div></div>
+      <div class="t"><div class="time">▸ 15:00</div><div class="ttl">공유</div><div class="desc">git push + Slack/Telegram 자동 알림</div><div class="cmd">/commit-push-pr</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 평소 8h → 6h (사람 손 5분만 검토) · /design_ppt + /arch-auto + /scout 콤보</span></div>
+</div>
+</body></html>

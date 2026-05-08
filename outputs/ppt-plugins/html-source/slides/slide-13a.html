@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>활용 흐름도 (Mermaid)</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;align-items:stretch;margin-top:24px;min-height:0}
+.svg-wrap{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:24px;box-shadow:0 6px 18px rgba(138,98,53,0.10);flex:1;display:flex;align-items:center;justify-content:center}
+.svg-wrap svg{max-width:100%;max-height:100%}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:share" class="icon-sm"></iconify-icon>PART 04 · 활용 흐름도</span><span class="mono caption">30 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:share" class="icon-lg"></iconify-icon><h1 class="heading-1">자연어 → 슬래시 → 결과</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">사용자 의도 한 줄 → Claude 가 알맞는 플러그인 자동 선택 → 자동 실행</p>
+  <div class="body">
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8A6235"/></marker>
+        </defs>
+
+        <!-- Input -->
+        <rect x="20" y="220" width="220" height="100" rx="14" fill="#1A1D24" stroke="#FFD580" stroke-width="2"/>
+        <text x="130" y="260" text-anchor="middle" fill="#FFD580" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">자연어 입력</text>
+        <text x="130" y="290" text-anchor="middle" fill="white" font-size="14">"PPT 만들어"</text>
+        <line x1="240" y1="270" x2="300" y2="270" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+
+        <!-- Claude router -->
+        <circle cx="380" cy="270" r="80" fill="#B8864E" stroke="#8A6235" stroke-width="3"/>
+        <text x="380" y="265" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="18" font-weight="700">Claude</text>
+        <text x="380" y="290" text-anchor="middle" fill="white" font-size="13">의도 분석</text>
+        <line x1="460" y1="220" x2="540" y2="120" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="460" y1="250" x2="540" y2="220" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="460" y1="290" x2="540" y2="320" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="460" y1="320" x2="540" y2="420" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+
+        <!-- Plugins -->
+        <rect x="540" y="80" width="200" height="80" rx="12" fill="#6B8E7F"/>
+        <text x="640" y="115" text-anchor="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">/design_ppt</text>
+        <text x="640" y="138" text-anchor="middle" fill="white" font-size="13">PPT 자동</text>
+
+        <rect x="540" y="180" width="200" height="80" rx="12" fill="#7A4E6B"/>
+        <text x="640" y="215" text-anchor="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">/exec_orch</text>
+        <text x="640" y="238" text-anchor="middle" fill="white" font-size="13">멀티AI 협업</text>
+
+        <rect x="540" y="280" width="200" height="80" rx="12" fill="#B25A3E"/>
+        <text x="640" y="315" text-anchor="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">/review_qa</text>
+        <text x="640" y="338" text-anchor="middle" fill="white" font-size="13">코드 리뷰</text>
+
+        <rect x="540" y="380" width="200" height="80" rx="12" fill="#8A6235"/>
+        <text x="640" y="415" text-anchor="middle" fill="white" font-family="JetBrains Mono, monospace" font-size="16" font-weight="700">/mcp_collab</text>
+        <text x="640" y="438" text-anchor="middle" fill="white" font-size="13">협업 도구</text>
+
+        <!-- Tools combined -->
+        <line x1="740" y1="120" x2="850" y2="240" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="740" y1="220" x2="850" y2="270" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="740" y1="320" x2="850" y2="290" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+        <line x1="740" y1="420" x2="850" y2="320" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+
+        <!-- Tools used -->
+        <rect x="850" y="220" width="180" height="100" rx="12" fill="#FFE9B8" stroke="#8A6235" stroke-width="2"/>
+        <text x="940" y="252" text-anchor="middle" fill="#8A6235" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">Read · Edit · Write</text>
+        <text x="940" y="275" text-anchor="middle" fill="#8A6235" font-size="13">Bash · Glob · Grep</text>
+        <text x="940" y="298" text-anchor="middle" fill="#8A6235" font-size="13">Playwright · MCP</text>
+        <line x1="1030" y1="270" x2="1100" y2="270" stroke="#8A6235" stroke-width="3" marker-end="url(#ar)"/>
+
+        <!-- Output -->
+        <rect x="1100" y="220" width="100" height="100" rx="14" fill="#5C8A5C"/>
+        <text x="1150" y="262" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="16" font-weight="700">결과</text>
+        <text x="1150" y="290" text-anchor="middle" fill="white" font-size="13">파일+알림</text>
+      </svg>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 사용자 자연어 한 줄 → Claude 라우팅 → 알맞은 플러그인 → 도구 사용 → 결과 자동 / Hook-08 강제</span></div>
+</div>
+</body></html>

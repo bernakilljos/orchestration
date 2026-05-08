@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>워커 풀 시각화</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.workers{display:grid;grid-template-columns:repeat(3, 1fr);gap:22px;min-height:0}
+.wk{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:24px 26px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:10px}
+.wk::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.wk.codex::before{background:var(--sage)}
+.wk.haiku::before{background:var(--plum)}
+.wk.claude::before{background:var(--gold)}
+.wk .ic{font-size:54px}
+.wk.codex .ic{color:var(--sage)}
+.wk.haiku .ic{color:var(--plum)}
+.wk.claude .ic{color:var(--gold)}
+.wk .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);line-height:1.2}
+.wk .count{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;line-height:0.9}
+.wk.codex .count{color:var(--sage)}
+.wk.haiku .count{color:var(--plum)}
+.wk.claude .count{color:var(--deep-gold)}
+.wk .role{font-size:18px;color:var(--ink);line-height:1.5}
+.wk .role strong{color:var(--deep-gold)}
+.wk .pool{display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;margin-top:auto}
+.wk .ws{background:var(--cream);border-radius:6px;padding:8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.wk.codex .ws{color:var(--sage);border:1px solid var(--sage)}
+.wk.haiku .ws{color:var(--plum);border:1px solid var(--plum)}
+.wk.claude .ws{color:var(--deep-gold);border:1px solid var(--gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:cube-transparent" class="icon-sm"></iconify-icon>PART 02 · WORKER POOL</span><span class="mono caption">16 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:cube-transparent" class="icon-lg"></iconify-icon><h1 class="heading-1">워커 풀 시각화 — 4+2+3 = 9</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">3 종 워커 동시 가동 — Codex × 4 구현 + Haiku × 2 검증 + Claude × 3 보조</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">병렬 워커 9 개 = 작업 시간 ÷ 9</div>
+      <div class="desc">codex-auto / haiku-auto / claude-auto 동시 가동. 각 워커가 별도 task 처리 → 1 명이 9 개 작업 동시.</div>
+    </div>
+    <div class="workers">
+      <div class="wk codex">
+        <iconify-icon icon="heroicons:code-bracket" class="ic"></iconify-icon>
+        <div class="ttl">Codex</div>
+        <div class="count">× 4</div>
+        <div class="role"><strong>구현 워커</strong>. 500 줄+ 코드 병렬 처리. codex-auto 4.</div>
+        <div class="pool"><div class="ws">W1</div><div class="ws">W2</div><div class="ws">W3</div><div class="ws">W4</div></div>
+      </div>
+      <div class="wk haiku">
+        <iconify-icon icon="heroicons:check-badge" class="ic"></iconify-icon>
+        <div class="ttl">Haiku</div>
+        <div class="count">× 2</div>
+        <div class="role"><strong>검증 워커</strong>. Caching 90% 절감. haiku-auto 2.</div>
+        <div class="pool"><div class="ws">V1</div><div class="ws">V2</div><div class="ws">·</div><div class="ws">·</div></div>
+      </div>
+      <div class="wk claude">
+        <iconify-icon icon="heroicons:user-circle" class="ic"></iconify-icon>
+        <div class="ttl">Claude</div>
+        <div class="count">× 3</div>
+        <div class="role"><strong>설계·보조</strong>. claude-auto 3 + Sonnet/Opus 자동.</div>
+        <div class="pool"><div class="ws">C1</div><div class="ws">C2</div><div class="ws">C3</div><div class="ws">·</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ exec_orch 워커 풀 · CLAUDE.md § 3.2 · codex-auto 4 / haiku-auto 2 / claude-auto 3</span></div>
+</div>
+</body></html>

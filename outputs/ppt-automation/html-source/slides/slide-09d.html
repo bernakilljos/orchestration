@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>메트릭 대시보드 상세</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(122,78,107,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--plum);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.kpi{display:grid;grid-template-columns:repeat(4, 1fr);gap:18px}
+.k{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 24px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:8px}
+.k::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.k.gold::before{background:var(--gold)}
+.k.sage::before{background:var(--sage)}
+.k.plum::before{background:var(--plum)}
+.k.terra::before{background:var(--terracotta)}
+.k .lbl{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:0.2em;color:var(--stone);font-weight:700;text-transform:uppercase}
+.k .val{font-family:'Fraunces',serif;font-size:48px;font-weight:700;line-height:0.95}
+.k.gold .val{color:var(--deep-gold)}
+.k.sage .val{color:var(--sage)}
+.k.plum .val{color:var(--plum)}
+.k.terra .val{color:var(--terracotta)}
+.k .desc{font-size:16px;color:var(--ink);line-height:1.4}
+.k .desc strong{color:var(--deep-gold)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:chart-bar-square" class="icon-sm"></iconify-icon>PART 03 · METRICS DASHBOARD</span><span class="mono caption">26 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:chart-bar-square" class="icon-lg"></iconify-icon><h1 class="heading-1">메트릭 대시보드 — 8 KPI</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">SQLite 통합 → 실시간 8 KPI — http://localhost:8787 30초 자동 갱신</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">8 KPI 한 화면 — 24h 모니터링</div>
+      <div class="desc">AI별 호출수·성공률·토큰·비용·레이턴시·캐시 히트·워커 가동률·에러율 모두 한 곳에.</div>
+    </div>
+    <div class="kpi">
+      <div class="k gold"><div class="lbl">▸ 호출수</div><div class="val">1,247</div><div class="desc">오늘 누적 API 호출</div></div>
+      <div class="k sage"><div class="lbl">▸ 성공률</div><div class="val">99.2%</div><div class="desc">검증 통과 비율</div></div>
+      <div class="k plum"><div class="lbl">▸ 토큰</div><div class="val">2.3M</div><div class="desc">오늘 입력+출력</div></div>
+      <div class="k terra"><div class="lbl">▸ 비용</div><div class="val">$2.10</div><div class="desc">오늘 / 한도 $50</div></div>
+      <div class="k sage"><div class="lbl">▸ 레이턴시</div><div class="val">340ms</div><div class="desc">평균 응답</div></div>
+      <div class="k gold"><div class="lbl">▸ 캐시</div><div class="val">87%</div><div class="desc">Caching 히트율</div></div>
+      <div class="k plum"><div class="lbl">▸ 워커</div><div class="val">9/9</div><div class="desc">활성 워커</div></div>
+      <div class="k terra"><div class="lbl">▸ 에러</div><div class="val">3</div><div class="desc">오늘 (자동 복구)</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ http://localhost:8787 · metrics-report.py · docs/metrics-guide.md · 30초 자동 갱신</span></div>
+</div>
+</body></html>

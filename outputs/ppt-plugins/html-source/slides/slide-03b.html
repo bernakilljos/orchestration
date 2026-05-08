@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>일과 2 — 코드 작업 날</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(107,142,127,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:14px;padding:24px 32px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:30px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:20px;color:var(--stone);line-height:1.5}
+.timeline{display:grid;grid-template-columns:repeat(6, 1fr);gap:14px;align-items:stretch;min-height:0}
+.t{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:12px;padding:18px 14px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px}
+.t::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--sage)}
+.t .time{font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:0.16em;font-weight:700;color:var(--sage);text-transform:uppercase}
+.t .ttl{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--ink);line-height:1.2}
+.t .desc{font-size:13px;color:var(--ink);line-height:1.4}
+.t .cmd{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 10px;border-radius:6px;margin-top:auto;word-break:break-all}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:code-bracket" class="icon-sm"></iconify-icon>PART 02 · 일과 2 — 코드 데이</span><span class="mono caption">11 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:code-bracket" class="icon-lg"></iconify-icon><h1 class="heading-1">일과 2 — 코드 작업 하루</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">기능 구현 + 리뷰 + 배포 — exec_orch + review_qa + commit-commands 콤보</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">"새 기능 + PR + 배포까지 하루 흐름"</div>
+      <div class="desc">9시 설계 → 16시 배포. 4-AI 자동 협업으로 사람 손 1시간만.</div>
+    </div>
+    <div class="timeline">
+      <div class="t"><div class="time">▸ 09:00</div><div class="ttl">설계</div><div class="desc">Claude 4.7 가 task-instruction.md 작성</div><div class="cmd">/exec_orch</div></div>
+      <div class="t"><div class="time">▸ 10:00</div><div class="ttl">병렬 구현</div><div class="desc">Codex × 4 동시 코드 생성</div><div class="cmd">codex-auto 4</div></div>
+      <div class="t"><div class="time">▸ 12:00</div><div class="ttl">자동 검증</div><div class="desc">Haiku × 2 + 캐시 90% + OWASP</div><div class="cmd">/review_qa</div></div>
+      <div class="t"><div class="time">▸ 14:00</div><div class="ttl">통합 보완</div><div class="desc">Claude 가 충돌 해결 + 통합 테스트</div><div class="cmd">/godmode</div></div>
+      <div class="t"><div class="time">▸ 15:00</div><div class="ttl">PR 생성</div><div class="desc">git commit + GitHub PR 자동 작성</div><div class="cmd">/commit-push-pr</div></div>
+      <div class="t"><div class="time">▸ 16:00</div><div class="ttl">알림</div><div class="desc">Slack/Telegram 자동 푸시 + 리뷰어 멘션</div><div class="cmd">자동</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 평소 2일 → 1일 · 수동 검증 0 (자동) · 사람 손 = 1h (검토만)</span></div>
+</div>
+</body></html>

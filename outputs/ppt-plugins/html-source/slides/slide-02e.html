@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>플러그인 연결도 (그림)</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:flex;align-items:stretch;margin-top:24px;min-height:0}
+.svg-wrap{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:24px;box-shadow:0 6px 18px rgba(138,98,53,0.10);flex:1;display:flex;align-items:center;justify-content:center}
+.svg-wrap svg{max-width:100%;max-height:100%}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:share" class="icon-sm"></iconify-icon>PART 01 · 연결도</span><span class="mono caption">07 / 40</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:share" class="icon-lg"></iconify-icon><h1 class="heading-1">26 플러그인 연결도</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">한 그림으로 — 코어(exec_orch) 중심으로 4 카테고리 연결</p>
+  <div class="body">
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="core" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#FFD580"/><stop offset="100%" stop-color="#B8864E"/>
+          </radialGradient>
+          <linearGradient id="exe" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#F0C97E"/><stop offset="100%" stop-color="#B8864E"/></linearGradient>
+          <linearGradient id="dsg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#9CCAC8"/><stop offset="100%" stop-color="#6B8E7F"/></linearGradient>
+          <linearGradient id="mcp" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#C49AB8"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <linearGradient id="rev" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#E89878"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+        </defs>
+
+        <!-- 연결선 -->
+        <line x1="600" y1="300" x2="280" y2="160" stroke="#B8864E" stroke-width="2" opacity="0.5"/>
+        <line x1="600" y1="300" x2="920" y2="160" stroke="#6B8E7F" stroke-width="2" opacity="0.5"/>
+        <line x1="600" y1="300" x2="280" y2="450" stroke="#7A4E6B" stroke-width="2" opacity="0.5"/>
+        <line x1="600" y1="300" x2="920" y2="450" stroke="#B25A3E" stroke-width="2" opacity="0.5"/>
+
+        <!-- 코어 -->
+        <circle cx="600" cy="300" r="100" fill="url(#core)" stroke="#8A6235" stroke-width="3"/>
+        <text x="600" y="290" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="28" font-weight="700">exec_orch</text>
+        <text x="600" y="320" text-anchor="middle" fill="white" font-size="16">코어 엔진</text>
+
+        <!-- EXEC -->
+        <rect x="120" y="80" width="320" height="160" rx="14" fill="url(#exe)" stroke="#8A6235" stroke-width="2"/>
+        <text x="280" y="115" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="22" font-weight="700">EXECUTION (8)</text>
+        <text x="140" y="145" fill="white" font-size="13" font-family="JetBrains Mono">exec_orch · exec_remote</text>
+        <text x="140" y="167" fill="white" font-size="13" font-family="JetBrains Mono">exec_claude · exec_voice</text>
+        <text x="140" y="189" fill="white" font-size="13" font-family="JetBrains Mono">exec_learning · exec_session_guard</text>
+        <text x="140" y="211" fill="white" font-size="13" font-family="JetBrains Mono">exec_offline · exec_scheduler</text>
+
+        <!-- DESIGN -->
+        <rect x="760" y="80" width="320" height="160" rx="14" fill="url(#dsg)" stroke="#4A6F60" stroke-width="2"/>
+        <text x="920" y="115" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="22" font-weight="700">DESIGN (6)</text>
+        <text x="780" y="145" fill="white" font-size="13" font-family="JetBrains Mono">design_ppt · design_excel</text>
+        <text x="780" y="167" fill="white" font-size="13" font-family="JetBrains Mono">design_word · design_pdf</text>
+        <text x="780" y="189" fill="white" font-size="13" font-family="JetBrains Mono">design_web · design_video</text>
+
+        <!-- MCP -->
+        <rect x="120" y="370" width="320" height="160" rx="14" fill="url(#mcp)" stroke="#5A3850" stroke-width="2"/>
+        <text x="280" y="405" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="22" font-weight="700">MCP (8)</text>
+        <text x="140" y="435" fill="white" font-size="13" font-family="JetBrains Mono">mcp_dev · mcp_data</text>
+        <text x="140" y="457" fill="white" font-size="13" font-family="JetBrains Mono">mcp_collab · mcp_web</text>
+        <text x="140" y="479" fill="white" font-size="13" font-family="JetBrains Mono">mcp_docs · mcp_media</text>
+        <text x="140" y="501" fill="white" font-size="13" font-family="JetBrains Mono">mcp_queue · mcp_social</text>
+
+        <!-- REVIEW -->
+        <rect x="760" y="370" width="320" height="160" rx="14" fill="url(#rev)" stroke="#8A3E26" stroke-width="2"/>
+        <text x="920" y="405" text-anchor="middle" fill="white" font-family="Fraunces, serif" font-size="22" font-weight="700">REVIEW + 기타 (4)</text>
+        <text x="780" y="435" fill="white" font-size="13" font-family="JetBrains Mono">review_qa · ai_rag</text>
+        <text x="780" y="457" fill="white" font-size="13" font-family="JetBrains Mono">cost_youtube · music_studio</text>
+      </svg>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ 26 플러그인 = 4 카테고리 / exec_orch 가 모든 흐름 라우팅 / plugins/ 가 SoT</span></div>
+</div>
+</body></html>
