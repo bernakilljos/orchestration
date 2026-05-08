@@ -6,11 +6,13 @@
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
 .s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
 .s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
-.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
-.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.title-with-icon{margin-top:-4px}
+.title-with-icon .heading-1{font-size:48px !important;line-height:1.05}
+.body-lead{font-size:16px !important;margin-top:4px !important}
+.body{flex:1;display:flex;flex-direction:column;margin-top:10px;min-height:0}
+.diagram{flex:1;min-height:0;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.diagram::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
+.diagram svg{width:100%;height:100%;display:block}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
@@ -19,9 +21,143 @@
   <p class="body-lead" style="margin-top:8px; color:var(--stone);">Ruben Hassid 의 14 단계 학습 로드맵 — 우리 팀은 킷 인프라로 L 5~8 자동 도달</p>
 
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/클로드마스터-로드맵-14레벨-RubenHassid.jpg" alt="Claude Master Roadmap 14 Levels - Ruben Hassid">
-      <div class="arch-cap">▸ Claude Master Roadmap · Ruben Hassid · 2026</div>
+    <div class="diagram">
+      <svg viewBox="0 0 1700 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="begG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#B8864E"/></linearGradient>
+          <linearGradient id="intG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#6B8E7F"/></linearGradient>
+          <linearGradient id="advG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <linearGradient id="masG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+        </defs>
+
+        <text x="850" y="40" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#1A1D24">Ruben Hassid · Roadmap to MASTER CLAUDE · 14 Levels</text>
+
+        <!-- Section labels -->
+        <text x="200" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#8A6235" letter-spacing="3">▸ BEGINNER (L1~4)</text>
+        <text x="650" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#52735F" letter-spacing="3">▸ INTERMEDIATE (L5~8)</text>
+        <text x="1100" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#5A3B50" letter-spacing="3">▸ ADVANCED (L9~12)</text>
+        <text x="1500" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#8A4030" letter-spacing="3">▸ MASTER (L13~14)</text>
+
+        <!-- Path lines connecting levels (zigzag road) -->
+        <path d="M 60 250 L 1640 250 L 1640 350 L 60 350 L 60 450 L 1640 450 L 1640 550 L 60 550" stroke="#1A1D24" stroke-width="2" fill="none" stroke-dasharray="4 4" opacity="0.3"/>
+
+        <!-- Row 1: L1-L4 BEGINNER -->
+        <g>
+          <rect x="60" y="120" width="190" height="160" rx="14" fill="url(#begG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="155" y="155" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L1</text>
+          <text x="155" y="185" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">설치</text>
+          <text x="155" y="208" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Setup</text>
+          <text x="155" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">setup.exe 더블클릭</text>
+          <text x="155" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">5분 후 첫 채팅</text>
+
+          <rect x="270" y="120" width="190" height="160" rx="14" fill="url(#begG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="365" y="155" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L2</text>
+          <text x="365" y="185" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">첫 대화</text>
+          <text x="365" y="208" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Hello</text>
+          <text x="365" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">한국어 자연어</text>
+          <text x="365" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">"안녕" 부터 시작</text>
+
+          <rect x="480" y="120" width="190" height="160" rx="14" fill="url(#begG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="575" y="155" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L3</text>
+          <text x="575" y="185" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">파일 다루기</text>
+          <text x="575" y="208" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Files</text>
+          <text x="575" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">Read · Edit · Write</text>
+          <text x="575" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">"이 파일 요약"</text>
+
+          <rect x="690" y="120" width="190" height="160" rx="14" fill="url(#begG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="785" y="155" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L4</text>
+          <text x="785" y="185" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">슬래시</text>
+          <text x="785" y="208" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Slash</text>
+          <text x="785" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">/ 입력 → 메뉴</text>
+          <text x="785" y="255" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">110+ 명령</text>
+        </g>
+
+        <!-- Row 2: L5-L8 INTERMEDIATE (★ 우리 팀 자동 도달) -->
+        <g>
+          <rect x="60" y="300" width="190" height="160" rx="14" fill="url(#intG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="155" y="335" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L5 ★</text>
+          <text x="155" y="365" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">CLAUDE.md</text>
+          <text x="155" y="388" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Master</text>
+          <text x="155" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">9 섹션 · 5 Rules</text>
+          <text x="155" y="435" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FFD580" opacity="0.92">우리 팀 자동 도달</text>
+
+          <rect x="270" y="300" width="190" height="160" rx="14" fill="url(#intG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="365" y="335" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L6 ★</text>
+          <text x="365" y="365" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">MCP</text>
+          <text x="365" y="388" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">External</text>
+          <text x="365" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">Slack·Notion·GitHub</text>
+          <text x="365" y="435" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FFD580" opacity="0.92">우리 팀 자동 도달</text>
+
+          <rect x="480" y="300" width="190" height="160" rx="14" fill="url(#intG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="575" y="335" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L7 ★</text>
+          <text x="575" y="365" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Plugins</text>
+          <text x="575" y="388" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">26+8</text>
+          <text x="575" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">우리 26 + 커뮤니티 8</text>
+          <text x="575" y="435" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FFD580" opacity="0.92">우리 팀 자동 도달</text>
+
+          <rect x="690" y="300" width="190" height="160" rx="14" fill="url(#intG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="785" y="335" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L8 ★</text>
+          <text x="785" y="365" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Reasoning</text>
+          <text x="785" y="388" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Multi-turn</text>
+          <text x="785" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">Extended Thinking</text>
+          <text x="785" y="435" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FFD580" opacity="0.92">우리 팀 자동 도달</text>
+        </g>
+
+        <!-- Row 3: L9-L12 ADVANCED -->
+        <g>
+          <rect x="60" y="480" width="190" height="160" rx="14" fill="url(#advG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="155" y="515" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L9</text>
+          <text x="155" y="545" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Hooks</text>
+          <text x="155" y="568" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">자동화</text>
+          <text x="155" y="592" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">Pre/Post · Session</text>
+          <text x="155" y="615" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">100% 강제</text>
+
+          <rect x="270" y="480" width="190" height="160" rx="14" fill="url(#advG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="365" y="515" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L10</text>
+          <text x="365" y="545" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Multi-AI</text>
+          <text x="365" y="568" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">Codex+Haiku</text>
+          <text x="365" y="592" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">7 AI 동시 운용</text>
+          <text x="365" y="615" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">10× 처리량</text>
+
+          <rect x="480" y="480" width="190" height="160" rx="14" fill="url(#advG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="575" y="515" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L11</text>
+          <text x="575" y="545" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Validate</text>
+          <text x="575" y="568" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">자동 검증</text>
+          <text x="575" y="592" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">verify-* 자동</text>
+          <text x="575" y="615" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">검증율 100%</text>
+
+          <rect x="690" y="480" width="190" height="160" rx="14" fill="url(#advG)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="785" y="515" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">L12</text>
+          <text x="785" y="545" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#FAF5EA">Watchdog</text>
+          <text x="785" y="568" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.92">자동 복구</text>
+          <text x="785" y="592" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">2분 heartbeat</text>
+          <text x="785" y="615" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.78">10m → 2h backoff</text>
+        </g>
+
+        <!-- Right Column: L13-L14 MASTER (large) -->
+        <g>
+          <rect x="950" y="120" width="700" height="280" rx="20" fill="url(#masG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="1300" y="170" text-anchor="middle" font-family="Fraunces" font-size="48" font-weight="700" fill="#FAF5EA">L13</text>
+          <text x="1300" y="210" text-anchor="middle" font-family="Fraunces" font-size="26" font-weight="700" fill="#FAF5EA">자체 플러그인 (Custom)</text>
+          <text x="1300" y="245" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">필요한 도구가 없을 때 — 30분이면 자체 플러그인 완성</text>
+          <text x="1300" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">_template/ 복사 → plugin.json 수정 → sync → 즉시 사용</text>
+          <text x="1300" y="312" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">팀 전체 공유 → marketplace 등록 가능</text>
+          <text x="1300" y="350" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FFD580">▸ 직접 만들기 시작</text>
+          <text x="1300" y="378" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">cp _template my_feature → validate → /my_feature</text>
+
+          <rect x="950" y="420" width="700" height="280" rx="20" fill="url(#masG)" stroke="#1A1D24" stroke-width="2.5"/>
+          <text x="1300" y="470" text-anchor="middle" font-family="Fraunces" font-size="48" font-weight="700" fill="#FAF5EA">L14</text>
+          <text x="1300" y="510" text-anchor="middle" font-family="Fraunces" font-size="26" font-weight="700" fill="#FAF5EA">마스터 (Architect)</text>
+          <text x="1300" y="545" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">팀 전체 인프라 설계자 — 메인테이너 역할</text>
+          <text x="1300" y="578" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">CLAUDE.md · 26 플러그인 · 11 hooks · 38 스킬 직접 큐레이션</text>
+          <text x="1300" y="612" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">Anthropic 표준 준수 → 외부 공유 가능</text>
+          <text x="1300" y="650" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FFD580">▸ 끝없는 확장 — FINAL</text>
+          <text x="1300" y="678" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">marketplace.json 공유 + 다른 팀에 배포</text>
+        </g>
+
+        <!-- Bottom: arrow indicating progression direction -->
+        <text x="850" y="730" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24" opacity="0.6">▸ 우리 팀 = L 5~8 자동 도달 (킷 인프라 덕) · 여기서부터 자체 플러그인 만들기 → L 13~14 마스터로</text>
+      </svg>
     </div>
   </div>
 

@@ -6,11 +6,13 @@
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
 .s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
 .s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
-.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
-.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.title-with-icon{margin-top:-4px}
+.title-with-icon .heading-1{font-size:48px !important;line-height:1.05}
+.body-lead{font-size:16px !important;margin-top:4px !important}
+.body{flex:1;display:flex;flex-direction:column;margin-top:10px;min-height:0}
+.diagram{flex:1;min-height:0;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.diagram::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--plum) 0%,var(--gold) 100%)}
+.diagram svg{width:100%;height:100%;display:block}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
@@ -19,15 +21,109 @@
     <span class="mono caption">24 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:adjustments-horizontal" class="icon-lg"></iconify-icon><h1 class="heading-1">라우팅 결정 트리 — 어떤 AI?</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 Claude Code 아키텍처 결정 트리 — 우리 route_dispatch.md 가 같은 흐름</p>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 결정 트리 — 작업 종류·크기·특성으로 자동 분배 (route_dispatch.md)</p>
 
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/클로드코드-아키텍처-결정트리-판데이.jpg" alt="Claude Code Architecture Decision Tree - Pandey">
-      <div class="arch-cap">▸ Claude Code Architecture Decision Tree / Pandey</div>
+    <div class="diagram">
+      <svg viewBox="0 0 1700 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="opusG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#8A6235"/></linearGradient>
+          <linearGradient id="sonnetG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#C9985F"/><stop offset="100%" stop-color="#B8864E"/></linearGradient>
+          <linearGradient id="codexG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <linearGradient id="haikuG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#6B8E7F"/></linearGradient>
+          <linearGradient id="geminiG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1A1D24"/></marker>
+        </defs>
+
+        <!-- Root: 사용자 요청 -->
+        <ellipse cx="850" cy="60" rx="220" ry="40" fill="#1A1D24" stroke="#1A1D24" stroke-width="2"/>
+        <text x="850" y="55" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">사용자 요청</text>
+        <text x="850" y="80" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">"X 만들어줘"</text>
+
+        <!-- Level 1: 어떤 작업인가? (decision diamond) -->
+        <path d="M 850 130 L 1050 215 L 850 300 L 650 215 z" fill="rgba(122,78,107,0.18)" stroke="#7A4E6B" stroke-width="2"/>
+        <text x="850" y="200" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">어떤 작업?</text>
+        <text x="850" y="225" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#5A3B50">설계 vs 구현 vs 검증 vs 멀티모달</text>
+
+        <!-- Vertical line from root to diamond -->
+        <path d="M 850 100 L 850 130" stroke="#1A1D24" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+
+        <!-- 5 branches -->
+        <!-- Left branch: 설계 → Opus -->
+        <path d="M 720 250 L 270 380" stroke="#8A6235" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+        <text x="445" y="305" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#8A6235" font-weight="700">설계·복잡추론</text>
+
+        <path d="M 800 290 L 720 380" stroke="#B8864E" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+        <text x="685" y="345" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B8864E" font-weight="700">단순구현<200줄</text>
+
+        <path d="M 850 300 L 850 380" stroke="#7A4E6B" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+        <text x="900" y="345" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#7A4E6B" font-weight="700">코드 500줄+</text>
+
+        <path d="M 900 290 L 1180 380" stroke="#6B8E7F" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+        <text x="1075" y="335" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#6B8E7F" font-weight="700">검증·QA</text>
+
+        <path d="M 980 250 L 1430 380" stroke="#B25A3E" stroke-width="2.5" fill="none" marker-end="url(#arr)"/>
+        <text x="1265" y="305" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B25A3E" font-weight="700">초장문>500k</text>
+
+        <!-- Level 2: AI 5종 -->
+        <!-- Opus 4.7 -->
+        <rect x="80" y="380" width="380" height="170" rx="16" fill="url(#opusG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="270" y="420" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">Claude Opus 4.7</text>
+        <text x="270" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.92">설계·복잡추론</text>
+        <text x="270" y="480" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">Extended Thinking · 1M context</text>
+        <text x="270" y="505" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">$15/$75 per 1M tokens</text>
+        <text x="270" y="535" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.7">▸ task-instruction.md 작성</text>
+
+        <!-- Sonnet 4.6 -->
+        <rect x="490" y="380" width="220" height="170" rx="16" fill="url(#sonnetG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="600" y="420" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Sonnet 4.6</text>
+        <text x="600" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.92">단순구현</text>
+        <text x="600" y="478" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">&lt;200줄</text>
+        <text x="600" y="505" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">$3/$15</text>
+        <text x="600" y="530" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.7">저비용</text>
+
+        <!-- Codex × 4 -->
+        <rect x="740" y="380" width="220" height="170" rx="16" fill="url(#codexG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="850" y="420" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Codex × 4</text>
+        <text x="850" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.92">병렬 구현</text>
+        <text x="850" y="478" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">코드 500줄+</text>
+        <text x="850" y="505" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">codex-auto</text>
+        <text x="850" y="530" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.7">8× 빠름</text>
+
+        <!-- Haiku × 2 -->
+        <rect x="990" y="380" width="220" height="170" rx="16" fill="url(#haikuG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="1100" y="420" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#FAF5EA">Haiku × 2</text>
+        <text x="1100" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.92">검증·QA</text>
+        <text x="1100" y="478" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">캐시 90% 절감</text>
+        <text x="1100" y="505" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.85">haiku-auto</text>
+        <text x="1100" y="530" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#FAF5EA" opacity="0.7">$0.80/$4</text>
+
+        <!-- Gemini Flash -->
+        <rect x="1240" y="380" width="380" height="170" rx="16" fill="url(#geminiG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="1430" y="420" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">Gemini Flash</text>
+        <text x="1430" y="450" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.92">멀티모달·초장문</text>
+        <text x="1430" y="480" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">500k+ 토큰 · 이미지·PDF</text>
+        <text x="1430" y="505" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.85">$0.075/$0.30 (저비용)</text>
+        <text x="1430" y="535" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#FAF5EA" opacity="0.7">▸ gemini-auto</text>
+
+        <!-- Bottom: 4 quota fallback rule -->
+        <rect x="80" y="600" width="1540" height="130" rx="14" fill="rgba(184,134,78,0.10)" stroke="#B8864E" stroke-width="1.5"/>
+        <text x="850" y="638" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#8A6235">▸ Quota 소진 시 → 자동 backoff (10m → 20m → 40m → 2h)</text>
+        <text x="280" y="678" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#5A3B50">10분 대기</text>
+        <text x="280" y="703" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">1차 retry</text>
+
+        <text x="660" y="678" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#5A3B50">20분 대기</text>
+        <text x="660" y="703" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">2차 retry</text>
+
+        <text x="1040" y="678" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#5A3B50">40분 대기</text>
+        <text x="1040" y="703" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">3차 retry</text>
+
+        <text x="1420" y="678" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#5A3B50">2시간 대기</text>
+        <text x="1420" y="703" text-anchor="middle" font-family="JetBrains Mono" font-size="12" fill="#6E685C">최대 backoff</text>
+      </svg>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">▸ Brij Pandey · plugins/exec_orch/skills/route_dispatch.md · 복잡추론 → Opus 4.7 · 단순구현 → Sonnet 4.6 · 코드 500줄+ → Codex × 4 · 검증 → Haiku × 2 · 초장문 → Gemini Flash</span></div>
+  <div class="footer-border"><span class="footnote">▸ Brij Pandey · plugins/exec_orch/skills/route_dispatch.md · 자동 분배 결정 + Quota fallback (지수 backoff)</span></div>
 </div>
 </body></html>

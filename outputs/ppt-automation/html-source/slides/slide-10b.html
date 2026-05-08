@@ -6,11 +6,13 @@
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
 .s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(178,90,62,0.05) 0px,rgba(178,90,62,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
 .s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
-.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--terracotta) 0%,var(--gold) 100%)}
-.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.title-with-icon{margin-top:-4px}
+.title-with-icon .heading-1{font-size:48px !important;line-height:1.05}
+.body-lead{font-size:16px !important;margin-top:4px !important}
+.body{flex:1;display:flex;flex-direction:column;margin-top:10px;min-height:0}
+.diagram{flex:1;min-height:0;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.diagram::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--terracotta) 0%,var(--gold) 100%)}
+.diagram svg{width:100%;height:100%;display:block}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
@@ -22,12 +24,108 @@
   <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 "$0 AI 스택" — Oracle Free + Haiku Caching + 로컬 모델 = 월 ~$3</p>
 
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/제로비용-AI아키텍처-2026-판데이.jpg" alt="Zero Cost AI Architecture 2026 - Pandey">
-      <div class="arch-cap">▸ Zero-Cost AI Architecture 2026 / Pandey</div>
+    <div class="diagram">
+      <svg viewBox="0 0 1700 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="freeG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#52735F"/></linearGradient>
+          <linearGradient id="lowG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#B8864E"/></linearGradient>
+          <linearGradient id="zeroG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <linearGradient id="warnG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+        </defs>
+
+        <text x="850" y="40" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#1A1D24">$0 AI Stack — 완전 무료 부터 월 ~$3 까지</text>
+
+        <!-- Big numbers row at top -->
+        <g>
+          <rect x="60" y="80" width="380" height="170" rx="20" fill="url(#freeG)" stroke="#1A1D24" stroke-width="2"/>
+          <text x="250" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ 인프라</text>
+          <text x="250" y="180" text-anchor="middle" font-family="Fraunces" font-size="56" font-weight="700" fill="#FAF5EA">$0/월</text>
+          <text x="250" y="218" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.92">Oracle Free Tier</text>
+          <text x="250" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">4 OCPU · 24GB · 200GB</text>
+
+          <rect x="475" y="80" width="380" height="170" rx="20" fill="url(#lowG)" stroke="#1A1D24" stroke-width="2"/>
+          <text x="665" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ 검증·QA</text>
+          <text x="665" y="180" text-anchor="middle" font-family="Fraunces" font-size="56" font-weight="700" fill="#FAF5EA">−90%</text>
+          <text x="665" y="218" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.92">Haiku 4.5 + Caching</text>
+          <text x="665" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">5분 TTL · 1시간 TTL</text>
+
+          <rect x="890" y="80" width="380" height="170" rx="20" fill="url(#zeroG)" stroke="#1A1D24" stroke-width="2"/>
+          <text x="1080" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ 로컬 추론</text>
+          <text x="1080" y="180" text-anchor="middle" font-family="Fraunces" font-size="56" font-weight="700" fill="#FAF5EA">$0</text>
+          <text x="1080" y="218" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.92">Ollama · llama.cpp</text>
+          <text x="1080" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">exec_offline (spec)</text>
+
+          <rect x="1305" y="80" width="335" height="170" rx="20" fill="url(#warnG)" stroke="#1A1D24" stroke-width="2"/>
+          <text x="1472" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ 합산 비용</text>
+          <text x="1472" y="180" text-anchor="middle" font-family="Fraunces" font-size="56" font-weight="700" fill="#FAF5EA">$3/월</text>
+          <text x="1472" y="218" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.92">Opus 보조 사용 시</text>
+          <text x="1472" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.78">중요 작업만 Opus</text>
+        </g>
+
+        <!-- Middle: cost flow comparison -->
+        <g>
+          <rect x="60" y="290" width="1580" height="180" rx="14" fill="rgba(255,255,255,0.5)" stroke="#1A1D24" stroke-width="1.5"/>
+          <text x="850" y="325" text-anchor="middle" font-family="Fraunces" font-size="22" font-weight="700" fill="#1A1D24">▸ 같은 작업 — 4 시나리오 월 비용 비교 (월 100 task 기준)</text>
+
+          <!-- Bar 1: 사람 손 -->
+          <text x="100" y="370" font-family="JetBrains Mono" font-size="14" fill="#5A3B50" font-weight="700">사람 손</text>
+          <rect x="240" y="355" width="900" height="32" rx="6" fill="#B25A3E" stroke="#1A1D24" stroke-width="1"/>
+          <text x="250" y="377" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" font-weight="700">$900 — 개발자 6시간 · 100 task · $2.25/h</text>
+
+          <!-- Bar 2: Opus only -->
+          <text x="100" y="408" font-family="JetBrains Mono" font-size="14" fill="#5A3B50" font-weight="700">Opus only</text>
+          <rect x="240" y="393" width="500" height="32" rx="6" fill="#8A6235" stroke="#1A1D24" stroke-width="1"/>
+          <text x="250" y="415" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" font-weight="700">$500 — Opus 4.7 모든 작업 처리</text>
+
+          <!-- Bar 3: 멀티 AI -->
+          <text x="100" y="446" font-family="JetBrains Mono" font-size="14" fill="#5A3B50" font-weight="700">멀티 AI</text>
+          <rect x="240" y="431" width="100" height="32" rx="6" fill="#52735F" stroke="#1A1D24" stroke-width="1"/>
+          <text x="250" y="453" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" font-weight="700">$100 — Codex+Haiku</text>
+
+          <!-- Bar 4: 우리 (zero-cost) -->
+          <text x="100" y="484" font-family="JetBrains Mono" font-size="14" fill="#5A3B50" font-weight="700">우리</text>
+          <rect x="240" y="469" width="50" height="32" rx="6" fill="url(#zeroG)" stroke="#1A1D24" stroke-width="1"/>
+          <text x="300" y="491" font-family="JetBrains Mono" font-size="13" fill="#1A1D24" font-weight="700">$3 — Caching 90% + 한도 차단</text>
+        </g>
+
+        <!-- Bottom: 4 stack pieces -->
+        <g>
+          <rect x="60" y="510" width="380" height="220" rx="14" fill="rgba(143,174,160,0.18)" stroke="#52735F" stroke-width="1.5"/>
+          <text x="250" y="545" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">▸ Oracle Free Tier</text>
+          <text x="250" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">4 ARM cores · 24GB RAM</text>
+          <text x="250" y="600" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">200GB storage · always free</text>
+          <text x="250" y="630" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#52735F">▸ 24h Watchdog 가동</text>
+          <text x="250" y="655" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#52735F">▸ codex-auto-global 큐</text>
+          <text x="250" y="685" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#52735F">$0/월 영구</text>
+
+          <rect x="475" y="510" width="380" height="220" rx="14" fill="rgba(212,165,116,0.18)" stroke="#B8864E" stroke-width="1.5"/>
+          <text x="665" y="545" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">▸ Haiku 4.5 + Caching</text>
+          <text x="665" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">$0.80/$4 per 1M tokens</text>
+          <text x="665" y="600" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">Prompt Cache 90% 절감</text>
+          <text x="665" y="630" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B8864E">▸ 5min TTL · 1h TTL</text>
+          <text x="665" y="655" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B8864E">▸ 검증 매번 재사용</text>
+          <text x="665" y="685" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#B8864E">$0.025/M effective</text>
+
+          <rect x="890" y="510" width="380" height="220" rx="14" fill="rgba(159,110,142,0.18)" stroke="#7A4E6B" stroke-width="1.5"/>
+          <text x="1080" y="545" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">▸ Ollama (로컬)</text>
+          <text x="1080" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">llama3 · qwen · mistral</text>
+          <text x="1080" y="600" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">단순 질의 → 로컬</text>
+          <text x="1080" y="630" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#7A4E6B">▸ exec_offline (spec)</text>
+          <text x="1080" y="655" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#7A4E6B">▸ Phoenix 폴백</text>
+          <text x="1080" y="685" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#7A4E6B">$0 (인프라 비용 만)</text>
+
+          <rect x="1305" y="510" width="335" height="220" rx="14" fill="rgba(209,123,92,0.18)" stroke="#B25A3E" stroke-width="1.5"/>
+          <text x="1472" y="545" text-anchor="middle" font-family="Fraunces" font-size="20" font-weight="700" fill="#1A1D24">▸ Opus 보조</text>
+          <text x="1472" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">설계 · 복잡추론만</text>
+          <text x="1472" y="600" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#5A3B50">$15/$75 per 1M</text>
+          <text x="1472" y="630" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B25A3E">▸ 일일 한도 차단</text>
+          <text x="1472" y="655" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#B25A3E">▸ 한도 초과 → backoff</text>
+          <text x="1472" y="685" text-anchor="middle" font-family="Fraunces" font-size="18" font-weight="700" fill="#B25A3E">월 ~$3</text>
+        </g>
+      </svg>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">arch 출처: Pandey · plugins/exec_offline (spec) · docs/caching-strategy.md · Oracle Free + Haiku Caching 90% 절감 + Ollama 로컬 = 월 ~$3</span></div>
+  <div class="footer-border"><span class="footnote">arch 출처: Pandey · plugins/exec_offline (spec) · docs/caching-strategy.md · Oracle Free + Haiku Caching 90% + Ollama 로컬 = 월 ~$3</span></div>
 </div>
 </body></html>

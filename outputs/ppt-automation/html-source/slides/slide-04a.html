@@ -1,16 +1,18 @@
 <!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>AI 스택 5단계 — 인프라부터 인터페이스</title>
+<html lang="ko"><head><meta charset="UTF-8"><title>AI 스택 5단계</title>
 <link href="../styles/design-system.css" rel="stylesheet">
 <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
 <style>
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
 .s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
 .s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
-.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--sage) 100%)}
-.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.title-with-icon{margin-top:-4px}
+.title-with-icon .heading-1{font-size:48px !important;line-height:1.05}
+.body-lead{font-size:16px !important;margin-top:4px !important}
+.body{flex:1;display:flex;flex-direction:column;margin-top:10px;min-height:0}
+.diagram{flex:1;min-height:0;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.diagram::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--sage) 100%)}
+.diagram svg{width:100%;height:100%;display:block}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
@@ -19,15 +21,70 @@
     <span class="mono caption">14 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:server-stack" class="icon-lg"></iconify-icon><h1 class="heading-1">AI 스택 — 인프라부터 인터페이스</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">우리 자동화는 5 레이어 위에 구축 — 인프라(VPS) → 모델 → 오케스트레이션 → 도구 → 인터페이스</p>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">5 레이어 위에 구축 — 인프라(VPS) → 모델 → 오케스트레이션 → 도구 → 인터페이스</p>
 
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/AI스택-5단계-인프라부터인터페이스.jpg" alt="AI Stack 5 Layers - Infrastructure to Interface">
-      <div class="arch-cap">▸ AI 스택 5단계 · Pandey</div>
+    <div class="diagram">
+      <svg viewBox="0 0 1700 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="L1G" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#C9985F"/><stop offset="100%" stop-color="#8A6235"/></linearGradient>
+          <linearGradient id="L2G" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+          <linearGradient id="L3G" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#B8864E"/></linearGradient>
+          <linearGradient id="L4G" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#6B8E7F"/></linearGradient>
+          <linearGradient id="L5G" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <marker id="upArr" viewBox="0 0 10 10" refX="5" refY="0" markerWidth="14" markerHeight="14" orient="auto"><path d="M 0 10 L 5 0 L 10 10 z" fill="#1A1D24"/></marker>
+        </defs>
+
+        <!-- Title strip -->
+        <text x="850" y="40" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#1A1D24">5-Layer AI Stack — 아래부터 위로 쌓아 올라감</text>
+
+        <!-- Layer 5: INTERFACE (top, plum) -->
+        <rect x="60" y="80" width="1580" height="110" rx="14" fill="url(#L5G)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="160" y="120" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ L5</text>
+        <text x="160" y="148" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">INTERFACE</text>
+        <text x="160" y="178" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">인터페이스</text>
+        <text x="850" y="135" text-anchor="middle" font-family="JetBrains Mono" font-size="22" fill="#FAF5EA" font-weight="600">Claude Code · 슬래시 · Termius (모바일) · 대시보드</text>
+        <text x="850" y="170" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">사용자가 직접 만지는 입력·출력 표면</text>
+
+        <!-- Layer 4: TOOLS (sage) -->
+        <rect x="60" y="210" width="1580" height="110" rx="14" fill="url(#L4G)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="160" y="250" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ L4</text>
+        <text x="160" y="278" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">TOOLS · MCP</text>
+        <text x="160" y="308" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">도구·외부 연결</text>
+        <text x="850" y="265" text-anchor="middle" font-family="JetBrains Mono" font-size="22" fill="#FAF5EA" font-weight="600">26 플러그인 · 7 MCP 카테고리 · 110+ 슬래시</text>
+        <text x="850" y="300" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">exec_ · design_ · mcp_ · review_ · ai_</text>
+
+        <!-- Layer 3: ORCHESTRATION (gold) -->
+        <rect x="60" y="340" width="1580" height="110" rx="14" fill="url(#L3G)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="160" y="380" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ L3</text>
+        <text x="160" y="408" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">ORCHESTRATION</text>
+        <text x="160" y="438" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">오케스트레이션</text>
+        <text x="850" y="395" text-anchor="middle" font-family="JetBrains Mono" font-size="22" fill="#FAF5EA" font-weight="600">exec_orch · 워커 풀 · SQLite state · watchdog</text>
+        <text x="850" y="430" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">여러 AI 한 번에 협업 — Claude 가 라우팅 결정</text>
+
+        <!-- Layer 2: MODELS (terracotta) -->
+        <rect x="60" y="470" width="1580" height="110" rx="14" fill="url(#L2G)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="160" y="510" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ L2</text>
+        <text x="160" y="538" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">MODELS</text>
+        <text x="160" y="568" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">AI 모델</text>
+        <text x="850" y="525" text-anchor="middle" font-family="JetBrains Mono" font-size="22" fill="#FAF5EA" font-weight="600">Claude Opus 4.7 · Codex × 4 · Haiku × 2 · Gemini Flash</text>
+        <text x="850" y="560" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">설계 · 구현 · 검증 · 멀티모달 — 4명의 AI 가 한 팀</text>
+
+        <!-- Layer 1: INFRASTRUCTURE (deep gold, foundation) -->
+        <rect x="60" y="600" width="1580" height="110" rx="14" fill="url(#L1G)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="160" y="640" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="#FAF5EA" letter-spacing="3" opacity="0.85">▸ L1</text>
+        <text x="160" y="668" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">INFRASTRUCTURE</text>
+        <text x="160" y="698" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">인프라 · 기반</text>
+        <text x="850" y="655" text-anchor="middle" font-family="JetBrains Mono" font-size="22" fill="#FAF5EA" font-weight="600">로컬 PC · Oracle Free VPS · Cloud (AWS/GCP)</text>
+        <text x="850" y="690" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">하드웨어·네트워크·OS — 모든 것이 그 위에서 돌아감</text>
+
+        <!-- Right side: arrow showing build-up direction -->
+        <path d="M 1500 700 L 1500 100" stroke="#1A1D24" stroke-width="3" fill="none" marker-end="url(#upArr)"/>
+        <text x="1530" y="400" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#1A1D24" transform="rotate(-90 1530 400)">build-up direction</text>
+      </svg>
     </div>
   </div>
 
-  <div class="footer-border"><span class="footnote">arch 출처: Brij Kishore Pandey · L1 인프라 (Oracle Free + 로컬 PC) · L2 모델 (Claude·Codex·Haiku·Gemini) · L3 오케스트레이션 (exec_orch) · L4 도구 (26 플러그인 · 110+ slash) · L5 인터페이스 (Claude Code)</span></div>
+  <div class="footer-border"><span class="footnote">arch 출처: Brij Kishore Pandey · CLAUDE.md § 4 핵심 경로 · plugins/exec_orch · 우리 자동화는 5 레이어 모두 활용</span></div>
 </div>
 </body></html>

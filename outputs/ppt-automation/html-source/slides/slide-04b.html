@@ -5,12 +5,14 @@
 <style>
 .s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
 .s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
-.body{flex:1;display:flex;flex-direction:column;margin-top:14px;min-height:0}
-.arch-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden}
-.arch-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--plum) 100%)}
-.arch-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
-.arch-cap{position:absolute;bottom:10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--stone);letter-spacing:0.1em;background:rgba(255,255,255,0.85);padding:4px 10px;border-radius:6px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.title-with-icon{margin-top:-4px}
+.title-with-icon .heading-1{font-size:48px !important;line-height:1.05}
+.body-lead{font-size:16px !important;margin-top:4px !important}
+.body{flex:1;display:flex;flex-direction:column;margin-top:10px;min-height:0}
+.diagram{flex:1;min-height:0;background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:18px;box-shadow:0 8px 22px rgba(138,98,53,0.10);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.diagram::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--gold) 0%,var(--plum) 100%)}
+.diagram svg{width:100%;height:100%;display:block}
 .footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
 </style></head><body>
 <div class="slide bg-subtle s">
@@ -19,12 +21,72 @@
     <span class="mono caption">15 / 40</span>
   </div>
   <div class="title-with-icon"><iconify-icon icon="heroicons:cube-transparent" class="icon-lg"></iconify-icon><h1 class="heading-1">에이전트 개발 킷 5 레이어</h1></div>
-  <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 Agent Dev Kit 5 레이어 — 우리 exec_orch 도 같은 구조 (Skills · Tools · Memory · Planning · Orchestrator)</p>
+  <p class="body-lead" style="margin-top:6px; color:var(--stone);">Pandey 의 Agent Dev Kit — 우리 exec_orch 도 같은 구조 (Skills · Tools · Memory · Planning · Orchestrator)</p>
 
   <div class="body">
-    <div class="arch-wrap">
-      <img src="../../../../docs/screens/arch/에이전트개발킷-5레이어구조-판데이.jpg" alt="Agent Dev Kit 5 Layers - Pandey">
-      <div class="arch-cap">▸ Agent Dev Kit 5 Layer Structure / Pandey</div>
+    <div class="diagram">
+      <svg viewBox="0 0 1700 760" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="orchG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4A574"/><stop offset="100%" stop-color="#8A6235"/></linearGradient>
+          <linearGradient id="planG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9F6E8E"/><stop offset="100%" stop-color="#7A4E6B"/></linearGradient>
+          <linearGradient id="memG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D17B5C"/><stop offset="100%" stop-color="#B25A3E"/></linearGradient>
+          <linearGradient id="skG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8FAEA0"/><stop offset="100%" stop-color="#6B8E7F"/></linearGradient>
+          <linearGradient id="tlG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#C9985F"/><stop offset="100%" stop-color="#8A6235"/></linearGradient>
+        </defs>
+
+        <text x="850" y="40" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#1A1D24">Agent Dev Kit — 5 핵심 레이어 (Pandey)</text>
+
+        <!-- Center: ORCHESTRATOR (top, controls all) -->
+        <rect x="600" y="80" width="500" height="130" rx="20" fill="url(#orchG)" stroke="#1A1D24" stroke-width="3"/>
+        <text x="850" y="125" text-anchor="middle" font-family="Fraunces" font-size="32" font-weight="700" fill="#FAF5EA">ORCHESTRATOR</text>
+        <text x="850" y="155" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.92">오케스트레이터 — 모든 것을 지휘</text>
+        <text x="850" y="182" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.85">우리 = exec_orch + route_dispatch.md</text>
+
+        <!-- Lines from orchestrator to 4 corner cards -->
+        <g stroke="#8A6235" stroke-width="3" fill="none" opacity="0.6">
+          <path d="M 700 210 L 380 320"/>
+          <path d="M 1000 210 L 1320 320"/>
+          <path d="M 700 210 L 380 540"/>
+          <path d="M 1000 210 L 1320 540"/>
+        </g>
+
+        <!-- 4 corner cards: Skills (top-left), Tools (top-right), Memory (bottom-left), Planning (bottom-right) -->
+        <!-- Skills: top-left -->
+        <rect x="80" y="280" width="600" height="170" rx="16" fill="url(#skG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="380" y="320" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">SKILLS</text>
+        <text x="380" y="355" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">자동 활성 추론 로직</text>
+        <text x="380" y="385" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">대화 맥락에서 자동 트리거</text>
+        <text x="380" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.78">우리 = 38+ 스킬</text>
+        <text x="380" y="436" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.7">route_dispatch · ai-handoff · arch-auto</text>
+
+        <!-- Tools: top-right -->
+        <rect x="1020" y="280" width="600" height="170" rx="16" fill="url(#tlG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="1320" y="320" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">TOOLS</text>
+        <text x="1320" y="355" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">외부 시스템 호출</text>
+        <text x="1320" y="385" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">Read · Write · Bash · MCP</text>
+        <text x="1320" y="412" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.78">우리 = 7 MCP 카테고리 + 110+ 슬래시</text>
+        <text x="1320" y="436" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.7">mcp_dev · mcp_data · mcp_collab</text>
+
+        <!-- Memory: bottom-left -->
+        <rect x="80" y="500" width="600" height="170" rx="16" fill="url(#memG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="380" y="540" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">MEMORY</text>
+        <text x="380" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">상태 저장 · 학습 누적</text>
+        <text x="380" y="605" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">SQLite · Cache · Session</text>
+        <text x="380" y="632" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.78">우리 = orca.db (8 tables)</text>
+        <text x="380" y="656" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.7">workers · tasks · metrics · quota · budget</text>
+
+        <!-- Planning: bottom-right -->
+        <rect x="1020" y="500" width="600" height="170" rx="16" fill="url(#planG)" stroke="#1A1D24" stroke-width="2"/>
+        <text x="1320" y="540" text-anchor="middle" font-family="Fraunces" font-size="28" font-weight="700" fill="#FAF5EA">PLANNING</text>
+        <text x="1320" y="575" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#FAF5EA" opacity="0.92">작업 분해 · 의존성 관리</text>
+        <text x="1320" y="605" text-anchor="middle" font-family="JetBrains Mono" font-size="15" fill="#FAF5EA" opacity="0.85">Claude 4.7 Extended Thinking</text>
+        <text x="1320" y="632" text-anchor="middle" font-family="JetBrains Mono" font-size="14" fill="#FAF5EA" opacity="0.78">우리 = task-instruction.md + locks/</text>
+        <text x="1320" y="656" text-anchor="middle" font-family="JetBrains Mono" font-size="13" fill="#FAF5EA" opacity="0.7">병렬 분배 · 사이클 검증</text>
+
+        <!-- Bottom strip: 우리 매핑 -->
+        <rect x="80" y="700" width="1540" height="50" rx="10" fill="rgba(122,78,107,0.10)" stroke="#7A4E6B" stroke-width="1"/>
+        <text x="850" y="732" text-anchor="middle" font-family="JetBrains Mono" font-size="16" fill="#5A3B50" font-weight="700">▸ 5 layers 모두 plugins/exec_orch 안에 통합 — Pandey 표준 100% 준수</text>
+      </svg>
     </div>
   </div>
 
