@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>플러그인 = 4 요소 묶음</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(122,78,107,0.05) 0px,rgba(122,78,107,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(184,134,78,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--gold);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.elements{display:grid;grid-template-columns:repeat(4, 1fr);gap:18px;min-height:0}
+.el{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:24px 26px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(138,98,53,0.10);display:flex;flex-direction:column;gap:10px}
+.el::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.el.gold::before{background:var(--gold)}
+.el.sage::before{background:var(--sage)}
+.el.plum::before{background:var(--plum)}
+.el.terra::before{background:var(--terracotta)}
+.el .ic{font-size:48px}
+.el.gold .ic{color:var(--gold)}
+.el.sage .ic{color:var(--sage)}
+.el.plum .ic{color:var(--plum)}
+.el.terra .ic{color:var(--terracotta)}
+.el .ttl{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1.2}
+.el .desc{font-size:17px;color:var(--ink);line-height:1.5}
+.el .desc strong{color:var(--deep-gold)}
+.el .num{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;margin-top:auto}
+.el.gold .num{color:var(--deep-gold)}
+.el.sage .num{color:var(--sage)}
+.el.plum .num{color:var(--plum)}
+.el.terra .num{color:var(--terracotta)}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:puzzle-piece" class="icon-sm"></iconify-icon>PART 01 · 플러그인 구조</span><span class="mono caption">05 / 27</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:puzzle-piece" class="icon-lg"></iconify-icon><h1 class="heading-1">플러그인 = 4 요소 묶음</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">플러그인 한 개 안에 4 종 도구가 들어있다 — Commands · Skills · Hooks · Agents</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">플러그인 = Commands + Skills + Hooks + Agents 한 단위</div>
+      <div class="desc">Anthropic 공식 표준. 우리 본판 26 개 플러그인 모두 이 구조. 슬래시 한 번에 4 종 도구가 함께 작동.</div>
+    </div>
+    <div class="elements">
+      <div class="el gold"><iconify-icon icon="heroicons:command-line" class="ic"></iconify-icon><div class="ttl">Commands</div><div class="desc"><strong>슬래시 명령</strong>. 사용자가 명시 호출. /design_ppt · /check 등.</div><div class="num">25+</div></div>
+      <div class="el sage"><iconify-icon icon="heroicons:bolt" class="ic"></iconify-icon><div class="ttl">Skills</div><div class="desc"><strong>자동 활성</strong>. 대화 맥락에서 자동 트리거. route_dispatch · arch-auto 등.</div><div class="num">38+</div></div>
+      <div class="el plum"><iconify-icon icon="heroicons:link" class="ic"></iconify-icon><div class="ttl">Hooks</div><div class="desc"><strong>이벤트 자동 실행</strong>. Pre/Post Tool Use · Session Start/End. 우리 = 11개.</div><div class="num">11</div></div>
+      <div class="el terra"><iconify-icon icon="heroicons:user" class="ic"></iconify-icon><div class="ttl">Agents</div><div class="desc"><strong>전문 역할</strong>. team-lead · implementer · reviewer · architect 등.</div><div class="num">6</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ Anthropic plugin schema v1.2 · plugins/_template/ 표준 · CLAUDE.md § 4</span></div>
+</div>
+</body></html>

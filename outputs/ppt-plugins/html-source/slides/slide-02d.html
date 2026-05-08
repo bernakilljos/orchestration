@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>플러그인 라이프사이클</title>
+<link href="../styles/design-system.css" rel="stylesheet"><script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+<style>
+.s{display:flex !important;flex-direction:column !important;height:1080px !important;padding:60px 80px 50px 80px !important;box-sizing:border-box !important;overflow:hidden !important;position:relative}
+.s::before{content:'';position:absolute;left:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(0deg,rgba(107,142,127,0.05) 0px,rgba(107,142,127,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.s::after{content:'';position:absolute;right:20px;top:60px;bottom:50px;width:40px;background:repeating-linear-gradient(180deg,rgba(184,134,78,0.05) 0px,rgba(184,134,78,0.05) 2px,transparent 2px,transparent 6px);border-radius:20px}
+.body{flex:1;display:grid;grid-template-rows:auto 1fr;gap:24px;margin-top:24px;min-height:0}
+.intro{background:linear-gradient(135deg,rgba(107,142,127,0.18) 0%,rgba(255,255,255,0.92) 70%);border:1px solid var(--sage);border-radius:14px;padding:26px 36px}
+.intro .ttl{font-family:'Fraunces',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.intro .desc{font-size:22px;color:var(--stone);line-height:1.5}
+.cycle{display:grid;grid-template-columns:repeat(5, 1fr);gap:14px;align-items:stretch;min-height:0}
+.step{background:rgba(255,255,255,0.92);border:1px solid var(--fog);border-radius:14px;padding:22px 18px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:5px}
+.step.s1::before{background:var(--gold)}
+.step.s2::before{background:var(--sage)}
+.step.s3::before{background:var(--plum)}
+.step.s4::before{background:var(--terracotta)}
+.step.s5::before{background:var(--deep-gold)}
+.step::after{content:'→';position:absolute;top:50%;right:-12px;font-size:24px;color:var(--gold);font-weight:700;z-index:2}
+.step:last-child::after{display:none}
+.step .num{font-family:'Fraunces',serif;font-size:54px;font-weight:700;line-height:0.9}
+.step.s1 .num{color:var(--gold)}
+.step.s2 .num{color:var(--sage)}
+.step.s3 .num{color:var(--plum)}
+.step.s4 .num{color:var(--terracotta)}
+.step.s5 .num{color:var(--deep-gold)}
+.step .ttl{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.step .desc{font-size:15px;color:var(--ink);line-height:1.5}
+.step .cmd{background:#1A1D24;color:#39FF6C;font-family:'JetBrains Mono',monospace;font-size:13px;padding:8px 12px;border-radius:6px;margin-top:auto}
+.footer-border{margin-top:auto;padding-top:14px;border-top:1px solid var(--fog)}
+</style></head><body>
+<div class="slide bg-subtle s">
+  <div class="slide-header"><span class="slide-eyebrow"><iconify-icon icon="heroicons:arrow-path" class="icon-sm"></iconify-icon>PART 01 · 라이프사이클</span><span class="mono caption">06 / 27</span></div>
+  <div class="title-with-icon"><iconify-icon icon="heroicons:arrow-path" class="icon-lg"></iconify-icon><h1 class="heading-1">플러그인 라이프사이클</h1></div>
+  <p class="body-lead" style="margin-top:8px; color:var(--stone);">작성 → 검증 → 배포 → 사용 → 갱신 — 5 단계 순환</p>
+  <div class="body">
+    <div class="intro">
+      <div class="ttl">한 플러그인이 만들어져 사용되는 5 단계</div>
+      <div class="desc">_template 복사 시작 → validate → sync → 사용 → 필요 시 갱신. 30분이면 첫 사이클 완료.</div>
+    </div>
+    <div class="cycle">
+      <div class="step s1"><div class="num">1</div><div class="ttl">작성</div><div class="desc">_template 복사 + plugin.json 수정 + commands/.md 작성</div><div class="cmd">cp -r _template my</div></div>
+      <div class="step s2"><div class="num">2</div><div class="ttl">검증</div><div class="desc">스키마 검증 + frontmatter 점검 + description 한글 확인</div><div class="cmd">validate-schema.py</div></div>
+      <div class="step s3"><div class="num">3</div><div class="ttl">배포</div><div class="desc">sync-plugins.sh → .claude/ 자동 생성 + RENAME_MAP 충돌 회피</div><div class="cmd">sync-plugins.sh</div></div>
+      <div class="step s4"><div class="num">4</div><div class="ttl">사용</div><div class="desc">즉시 슬래시 명령 등록 → /my-cmd 호출 가능</div><div class="cmd">/my-cmd</div></div>
+      <div class="step s5"><div class="num">5</div><div class="ttl">갱신</div><div class="desc">기능 추가 시 plugins/ 편집 → sync 재실행 → 반영</div><div class="cmd">git push</div></div>
+    </div>
+  </div>
+  <div class="footer-border"><span class="footnote">▸ plugins/_template/ · .claude/scripts/sync-plugins.sh · validate-plugin-schema.py</span></div>
+</div>
+</body></html>
