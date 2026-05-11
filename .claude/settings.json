@@ -56,7 +56,8 @@
       {
         "hooks": [
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"", "timeout": 5 },
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"", "timeout": 10 }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"", "timeout": 10 },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"", "timeout": 5 }
         ]
       }
     ],
@@ -105,7 +106,8 @@
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_learning/hooks/hook-worker-failure.sh\"", "timeout": 5 }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_learning/hooks/hook-worker-failure.sh\"", "timeout": 5 },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" PostToolUseFailure", "timeout": 5 }
         ]
       }
     ],
@@ -113,6 +115,7 @@
       {
         "hooks": [
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop" },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop", "timeout": 5 },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"", "timeout": 5 },
           { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-bat-lines.py\"", "timeout": 60, "async": true },
           { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-install-dryrun.py\"", "timeout": 90, "async": true },
@@ -131,6 +134,7 @@
       {
         "hooks": [
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" SessionEnd" },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" SessionEnd", "timeout": 5 },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd" },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-token-log.sh\"", "timeout": 5 },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-gemini-recap.sh\"", "timeout": 5, "async": true },
