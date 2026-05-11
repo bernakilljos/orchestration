@@ -3,15 +3,27 @@
 Provides database queries and worker spawning logic for the watchdog monitoring process.
 """
 
+import csv
+import io
+import os
+import platform
 import subprocess
+import sys
 import time
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from state_db import (
     tx, get_all_registered_workers_raw, get_workers_by_status,
     register_worker, update_heartbeat
 )
 from backoff import compute_backoff
+
+# Optional psutil — fallback to OS tools if missing
+try:
+    import psutil  # type: ignore
+    _HAS_PSUTIL = True
+except ImportError:
+    _HAS_PSUTIL = False
 
 
 def get_all_registered_workers() -> List[Dict[str, Any]]:
@@ -161,4 +173,191 @@ def mark_worker_as_revived(worker_id: str) -> None:
         conn.execute(
             "UPDATE workers SET status = 'idle', quota_backoff_until = NULL WHERE worker_id = ?",
             (worker_id,)
+        )
+
+
+# --- Memory / lifetime monitoring ---------------------------------
+
+def _get_rss_via_psutil(pid: int) -> Optional[int]:
+    """Return RSS in MB via psutil, None if pid dead/inaccessible."""
+    try:
+        p = psutil.Process(pid)
+        rss_bytes = p.memory_info().rss
+        # Add child processes (Claude/Codex CLI spawns Node/Python children)
+        try:
+            for child in p.children(recursive=True):
+                rss_bytes += child.memory_info().rss
+        except psutil.Error:
+            pass
+        return rss_bytes // (1024 * 1024)
+    except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
+        return None
+
+
+def _get_rss_via_tasklist(pid: int) -> Optional[int]:
+    """Windows fallback: parse `tasklist /FI` output for RSS in MB."""
+    if platform.system() != "Windows":
+        return None
+    try:
+        # /NH = no header, /FO CSV for stable parsing
+        out = subprocess.check_output(
+            ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"],
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        ).decode("utf-8", errors="ignore").strip()
+        if not out or "No tasks" in out:
+            return None
+        # Use csv.reader — mem column "14,516 K" contains a comma inside quotes
+        row = next(csv.reader(io.StringIO(out)), None)
+        if not row or len(row) < 5:
+            return None
+        mem_str = row[4].replace(" K", "").replace(",", "").strip()
+        if not mem_str.isdigit():
+            return None
+        return int(mem_str) // 1024
+    except (subprocess.SubprocessError, OSError, ValueError):
+        return None
+
+
+def _get_rss_via_ps(pid: int) -> Optional[int]:
+    """Unix fallback: `ps -o rss=` returns KB."""
+    if platform.system() == "Windows":
+        return None
+    try:
+        out = subprocess.check_output(
+            ["ps", "-o", "rss=", "-p", str(pid)],
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        ).decode("utf-8", errors="ignore").strip()
+        if not out.isdigit():
+            return None
+        return int(out) // 1024
+    except (subprocess.SubprocessError, OSError, ValueError):
+        return None
+
+
+def get_worker_rss_mb(pid: int) -> Optional[int]:
+    """Return resident memory (MB) of pid + descendants. None if pid dead.
+
+    Order: psutil → tasklist (Windows) → ps (Unix).
+    """
+    if not pid or pid <= 0:
+        return None
+    if _HAS_PSUTIL:
+        rss = _get_rss_via_psutil(pid)
+        if rss is not None:
+            return rss
+    return _get_rss_via_tasklist(pid) or _get_rss_via_ps(pid)
+
+
+def get_worker_uptime_sec(worker: Dict[str, Any]) -> int:
+    """Uptime in seconds since started_at."""
+    return int(time.time()) - int(worker.get("started_at") or 0)
+
+
+def should_restart_worker(
+    worker: Dict[str, Any],
+    max_rss_mb: int,
+    max_uptime_sec: int,
+) -> Optional[str]:
+    """Return reason string if worker should be restarted, else None.
+
+    Only restarts workers in idle/running status (not dead, not quota_wait).
+    """
+    if worker.get("status") not in ("idle", "running"):
+        return None
+
+    pid = worker.get("pid")
+    if not pid:
+        return None
+
+    uptime = get_worker_uptime_sec(worker)
+    if uptime >= max_uptime_sec:
+        return f"max_uptime exceeded ({uptime}s >= {max_uptime_sec}s)"
+
+    rss = get_worker_rss_mb(pid)
+    if rss is None:
+        # Pid is dead but DB says alive → let detect_dead_workers handle via heartbeat
+        return None
+    if rss >= max_rss_mb:
+        return f"max_rss exceeded ({rss}MB >= {max_rss_mb}MB)"
+
+    return None
+
+
+def kill_worker_tree(pid: int, dry_run: bool = False) -> bool:
+    """Kill pid + all descendants. Returns True on success."""
+    if not pid or pid <= 0:
+        return False
+    if dry_run:
+        return True
+
+    if _HAS_PSUTIL:
+        try:
+            p = psutil.Process(pid)
+            children = []
+            try:
+                children = p.children(recursive=True)
+            except psutil.Error:
+                pass
+            for child in children:
+                try:
+                    child.terminate()
+                except psutil.Error:
+                    pass
+            try:
+                p.terminate()
+            except psutil.Error:
+                pass
+            # Wait briefly then force-kill stragglers
+            gone, alive = psutil.wait_procs([p] + children, timeout=3)
+            for proc in alive:
+                try:
+                    proc.kill()
+                except psutil.Error:
+                    pass
+            return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return False
+
+    # No psutil: OS-level tree kill
+    try:
+        if platform.system() == "Windows":
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+            )
+        else:
+            # Send SIGTERM to process group, then SIGKILL after grace
+            try:
+                os.killpg(os.getpgid(pid), 15)  # SIGTERM
+                time.sleep(2)
+                os.killpg(os.getpgid(pid), 9)   # SIGKILL
+            except (ProcessLookupError, PermissionError):
+                pass
+        return True
+    except (subprocess.SubprocessError, OSError):
+        return False
+
+
+def get_running_workers() -> List[Dict[str, Any]]:
+    """All workers with pid set and status in (idle, running)."""
+    with tx() as conn:
+        rows = conn.execute(
+            "SELECT worker_id, ai_type, pid, status, started_at, last_heartbeat "
+            "FROM workers WHERE pid IS NOT NULL AND status IN ('idle','running') "
+            "ORDER BY worker_id"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def mark_worker_restart(worker_id: str, reason: str) -> None:
+    """Set worker status to 'restarting' with reason note in DB."""
+    now = int(time.time())
+    with tx() as conn:
+        conn.execute(
+            "UPDATE workers SET status = 'dead', last_heartbeat = ? WHERE worker_id = ?",
+            (now, worker_id),
         )

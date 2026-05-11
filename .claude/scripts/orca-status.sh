@@ -18,11 +18,11 @@ now=$(date +%s)
 echo "=== Orca 상태 ==="
 echo ""
 
-# 로컬 태스크
+# 로컬 태스크 (task-instruction.md 는 템플릿이므로 제외)
 echo "[로컬 태스크]"
-local_tasks=$(ls .claude/tasks/task-*.md 2>/dev/null | wc -l)
+local_tasks=$(find .claude/tasks/ -maxdepth 1 -name 'task-*.md' ! -name 'task-instruction.md' 2>/dev/null | wc -l)
 local_locks=$(ls .claude/tasks/locks/*.lock 2>/dev/null | wc -l)
-local_done=$(ls .claude/tasks/done/*.md 2>/dev/null | wc -l)
+local_done=$(find .claude/tasks/done/ -maxdepth 1 -name 'task-*.md' ! -name 'task-instruction.md' 2>/dev/null | wc -l)
 echo "  활성: $local_tasks  락: $local_locks  완료: $local_done"
 echo ""
 
@@ -66,10 +66,10 @@ echo "[워커 설정]"
 GLOBAL_CFG="$HOME/.claude/orca/workers-config.json"
 LOCAL_CFG=".claude/orca-workers-config.json"
 if [ -f "$GLOBAL_CFG" ]; then
-  python -c "import json,sys; c=json.load(open(sys.argv[1])); print('  전역 상한:', c.get('max_workers', {}))" "$GLOBAL_CFG" 2>/dev/null || echo "  전역: (파싱 실패)"
+  PYTHONIOENCODING=utf-8 python -c "import json,sys; c=json.load(open(sys.argv[1],encoding='utf-8')); print('  전역 상한:', c.get('max_workers', {}))" "$GLOBAL_CFG" 2>/dev/null || echo "  전역: (파싱 실패)"
 fi
 if [ -f "$LOCAL_CFG" ]; then
-  python -c "import json,sys; c=json.load(open(sys.argv[1])); print('  로컬 상한:', c)" "$LOCAL_CFG" 2>/dev/null || echo "  로컬: (파싱 실패)"
+  PYTHONIOENCODING=utf-8 python -c "import json,sys; c=json.load(open(sys.argv[1],encoding='utf-8')); w=c.get('workers',c); print('  로컬 상한:', w)" "$LOCAL_CFG" 2>/dev/null || echo "  로컬: (파싱 실패)"
 fi
 echo ""
 

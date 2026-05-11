@@ -33,9 +33,17 @@ from state_db import (
 from watchdog_helpers import (
     get_all_registered_workers, get_workers_ready_to_revive,
     get_dead_workers_to_retry, spawn_worker, extend_quota_backoff,
-    update_worker_status, mark_worker_as_revived
+    update_worker_status, mark_worker_as_revived,
+    get_running_workers, should_restart_worker, kill_worker_tree,
+    mark_worker_restart, get_worker_rss_mb,
 )
 from backoff import format_duration
+
+
+# Default policy — overridable via CLI flags or env vars
+DEFAULT_MAX_RSS_MB = int(os.environ.get("WATCHDOG_MAX_RSS_MB", "2048"))
+DEFAULT_MAX_UPTIME_HOURS = int(os.environ.get("WATCHDOG_MAX_UPTIME_HOURS", "6"))
+LOG_BACKUP_COUNT = 5
 
 
 class WatchdogLogger:
@@ -68,14 +76,30 @@ class WatchdogLogger:
         except Exception:
             pass
 
-    def rotate_if_needed(self, max_size_mb: int = 10) -> None:
-        """Rotate log if larger than max_size_mb."""
+    def rotate_if_needed(self, max_size_mb: int = 10, backup_count: int = LOG_BACKUP_COUNT) -> None:
+        """Rotate log if > max_size_mb, keeping `backup_count` historical backups.
+
+        Naming: watchdog.log.1 (newest) ... watchdog.log.N (oldest, deleted on next rotate).
+        """
         try:
-            if self.log_path.exists():
-                size_mb = self.log_path.stat().st_size / (1024 * 1024)
-                if size_mb > max_size_mb:
-                    backup = self.log_path.parent / f"{self.log_path.name}.1"
-                    self.log_path.rename(backup)
+            if not self.log_path.exists():
+                return
+            size_mb = self.log_path.stat().st_size / (1024 * 1024)
+            if size_mb <= max_size_mb:
+                return
+
+            base = self.log_path
+            # Shift .N → .(N+1), dropping the oldest
+            for i in range(backup_count, 0, -1):
+                src = base.parent / f"{base.name}.{i}"
+                if not src.exists():
+                    continue
+                if i == backup_count:
+                    src.unlink()
+                else:
+                    dst = base.parent / f"{base.name}.{i+1}"
+                    src.rename(dst)
+            base.rename(base.parent / f"{base.name}.1")
         except Exception:
             pass
 
@@ -177,6 +201,54 @@ def revive_quota_blocked_workers(logger: WatchdogLogger, dry_run: bool = False) 
                 )
 
 
+def enforce_worker_limits(
+    logger: WatchdogLogger,
+    max_rss_mb: int,
+    max_uptime_sec: int,
+    dry_run: bool = False,
+) -> None:
+    """Restart workers exceeding memory or lifetime limits.
+
+    For each running worker:
+    - RSS (incl. child processes) >= max_rss_mb → kill tree + respawn
+    - Uptime >= max_uptime_sec → kill tree + respawn (preempts memory leak)
+    """
+    for w in get_running_workers():
+        reason = should_restart_worker(w, max_rss_mb, max_uptime_sec)
+        if not reason:
+            continue
+
+        worker_id = w["worker_id"]
+        ai_type = w["ai_type"]
+        pid = w.get("pid")
+        rss = get_worker_rss_mb(pid) if pid else None
+
+        if dry_run:
+            logger.log(
+                "info",
+                f"[DRY-RUN] Would restart {worker_id}: {reason}",
+                {"ai_type": ai_type, "pid": pid, "rss_mb": rss},
+            )
+            continue
+
+        killed = kill_worker_tree(pid) if pid else False
+        mark_worker_restart(worker_id, reason)
+        spawned = spawn_worker(ai_type, worker_id, dry_run=False)
+        if spawned:
+            mark_worker_as_revived(worker_id)
+        logger.log(
+            "warn",
+            f"Restarted {worker_id} ({reason})",
+            {
+                "ai_type": ai_type,
+                "pid_killed": pid,
+                "rss_mb_before": rss,
+                "kill_success": killed,
+                "respawn_success": spawned,
+            },
+        )
+
+
 def revive_dead_workers(logger: WatchdogLogger, dry_run: bool = False) -> None:
     """Restart dead workers that haven't exceeded retry limit.
 
@@ -209,25 +281,32 @@ def revive_dead_workers(logger: WatchdogLogger, dry_run: bool = False) -> None:
             )
 
 
-def run_once(project_root: Path, logger: WatchdogLogger, dry_run: bool = False) -> None:
+def run_once(
+    project_root: Path,
+    logger: WatchdogLogger,
+    dry_run: bool = False,
+    max_rss_mb: int = DEFAULT_MAX_RSS_MB,
+    max_uptime_sec: int = DEFAULT_MAX_UPTIME_HOURS * 3600,
+) -> None:
     """Run watchdog checks once.
 
     Args:
         project_root: Root of orchestration_v1 project
         logger: WatchdogLogger instance
         dry_run: If True, don't spawn workers
+        max_rss_mb: RSS threshold per worker (incl. children)
+        max_uptime_sec: Worker max uptime before forced restart
     """
-    # 1. Check Claude Code alive
+    # 1. Claude session liveness — log only, never auto-shutdown watchdog.
+    #    Workers must outlive the IDE session; explicit stop is via /orcauto-stop.
     if not is_claude_alive(max_age_sec=300):
-        logger.log("info", "Claude Code session dead. Shutting down watchdog.")
-        set_orca_enabled(False, reason="claude session dead")
-        return
+        logger.log("info", "Claude session heartbeat stale (>5min) — keeping workers alive")
 
-    # 2. Check orca enabled
+    # 2. Check orca enabled (explicit stop flag honored)
     if not check_orca_enabled(project_root):
         return  # Silently idle if disabled
 
-    # 3. Detect dead workers
+    # 3. Detect dead workers (stale heartbeat)
     detect_dead_workers(logger)
 
     # 4. Revive quota-blocked workers
@@ -236,25 +315,41 @@ def run_once(project_root: Path, logger: WatchdogLogger, dry_run: bool = False) 
     # 5. Revive other dead workers
     revive_dead_workers(logger, dry_run=dry_run)
 
+    # 6. Enforce RSS / uptime limits (memory-leak guard)
+    enforce_worker_limits(
+        logger,
+        max_rss_mb=max_rss_mb,
+        max_uptime_sec=max_uptime_sec,
+        dry_run=dry_run,
+    )
+
     logger.log("info", "Watchdog cycle complete")
 
 
-def run_loop(project_root: Path, logger: WatchdogLogger, check_interval_sec: int = 120) -> None:
+def run_loop(
+    project_root: Path,
+    logger: WatchdogLogger,
+    check_interval_sec: int = 120,
+    max_rss_mb: int = DEFAULT_MAX_RSS_MB,
+    max_uptime_sec: int = DEFAULT_MAX_UPTIME_HOURS * 3600,
+) -> None:
     """Run infinite watchdog loop.
 
     Sleeps check_interval_sec between iterations.
-
-    Args:
-        project_root: Root of orchestration_v1 project
-        logger: WatchdogLogger instance
-        check_interval_sec: Sleep duration between checks (default 2 min)
     """
-    logger.log("info", "Watchdog started")
+    logger.log(
+        "info",
+        "Watchdog started",
+        {"max_rss_mb": max_rss_mb, "max_uptime_sec": max_uptime_sec, "interval": check_interval_sec},
+    )
 
     try:
         while True:
             logger.rotate_if_needed(max_size_mb=10)
-            run_once(project_root, logger, dry_run=False)
+            run_once(
+                project_root, logger, dry_run=False,
+                max_rss_mb=max_rss_mb, max_uptime_sec=max_uptime_sec,
+            )
             time.sleep(check_interval_sec)
     except KeyboardInterrupt:
         logger.log("info", "Watchdog interrupted by user")
@@ -277,8 +372,17 @@ def main():
     parser.add_argument(
         "--interval", type=int, default=120, help="Check interval in seconds"
     )
+    parser.add_argument(
+        "--max-rss-mb", type=int, default=DEFAULT_MAX_RSS_MB,
+        help=f"Worker RSS+children threshold in MB (default {DEFAULT_MAX_RSS_MB})",
+    )
+    parser.add_argument(
+        "--max-uptime-hours", type=int, default=DEFAULT_MAX_UPTIME_HOURS,
+        help=f"Worker max uptime in hours (default {DEFAULT_MAX_UPTIME_HOURS})",
+    )
 
     args = parser.parse_args()
+    max_uptime_sec = args.max_uptime_hours * 3600
 
     # Initialize
     project_root = get_project_root()
@@ -294,11 +398,17 @@ def main():
 
     # Run test mode or loop
     if args.test:
-        run_once(project_root, logger, dry_run=args.dry_run)
+        run_once(
+            project_root, logger, dry_run=args.dry_run,
+            max_rss_mb=args.max_rss_mb, max_uptime_sec=max_uptime_sec,
+        )
         print("[OK] Test run complete")
         return 0
     else:
-        run_loop(project_root, logger, check_interval_sec=args.interval)
+        run_loop(
+            project_root, logger, check_interval_sec=args.interval,
+            max_rss_mb=args.max_rss_mb, max_uptime_sec=max_uptime_sec,
+        )
         return 0
 
 
