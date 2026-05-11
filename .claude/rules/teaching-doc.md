@@ -1,6 +1,6 @@
 # 강의·교재·가이드 문서 작성 규칙
 
-> **출처**: 2026-05-11 사용자 깐깐 검토 — "그림 풀이만 하고 우리 시스템 매핑·강점/약점·강추 빠짐 = 농땡이"
+> **출처**: 2026-05-11 사용자 깐깐 검토 — "그림 풀이만 하고 우리 시스템 매핑·강점/약점·강추 빠짐 = 전수조사 위반"
 
 ## 적용 범위
 
@@ -16,12 +16,12 @@
 | # | 섹션 | 빠지면 |
 |---|---|---|
 | 1 | 📚 핵심 한 줄 | 챕터 의미 모호 → 위반 |
-| 2 | 📊 표 (비교·구조) | 글로만 풀면 농땡이 |
-| 3 | 🌊 흐름도 / 단계 | 인과·순서 없음 → 농땡이 |
+| 2 | 📊 표 (비교·구조) | 글로만 풀면 전수조사 위반 |
+| 3 | 🌊 흐름도 / 단계 | 인과·순서 없음 → 전수조사 위반 |
 | 4 | 💪 강점 | 왜 좋은지 모름 → 위반 |
 | 5 | ⚠️ 약점·주의 | 함정 못 피함 → 위반 |
 | 6 | ⭐ 강추 시점 | 언제 써야 할지 모름 → 위반 |
-| 7 | 🎯 우리 시스템 매핑 | 외부 개념만 정리 → 농땡이 (orchestration_v1 안 봤다) |
+| 7 | 🎯 우리 시스템 매핑 | 외부 개념만 정리 → 전수조사 위반 (orchestration_v1 안 봤다) |
 | 8 | 🧪 점검 1줄 | 자가 검증 없음 → 위반 |
 
 ## 톤 규칙
@@ -153,9 +153,37 @@ if diff > 0.05: FAIL — 짤림 또는 빈 공간
 - `PIL` 로 비율 확인 후 `width` 또는 `height` 자동 선택
 - `max_height` 파라미터로 페이지 한계 자동 적용
 
-### 농땡이 안티 패턴
+### 전수조사 위반 안티 패턴
 - 비율 검증 없이 빌드 → 사용자가 짤린다 알림 → fix = **사용자 노동 ↑, 위반**
 - PIL 한 줄로 측정 가능. 빌드 전 하라.
+
+## 산출물 종류별 visual 검증 의무 (PNG OCR ≠ 산출물 안)
+
+원본 PNG 의 OCR 통과 ≠ docx/pptx/pdf 안 실제 출력 OK. **산출물 종류별로 그 산출물을 직접 봐야**.
+
+| 산출물 | visual 검증 방법 | 도구 |
+|---|---|---|
+| docx | docx → PDF → 페이지 PNG → Read tool | `verify-docx-visual.py` (Word COM + PyMuPDF) |
+| pptx | pptx → 슬라이드 PNG → Read tool | `verify-ppt-overflow.py` + python-pptx export |
+| pdf | pdf 페이지 PNG → Read tool | PyMuPDF |
+| html | Playwright headless 캡쳐 PNG → Read tool | `build-*-html-diagrams.py` 자체 |
+| 원본 PNG | OCR/visual | `verify-image-fit.py` + Read tool |
+
+### 의무 흐름 (산출물 빌드 시)
+1. 빌드 (`build-*-doc.py` / `build-*-ppt.py` 등)
+2. **1차 검증**: paragraph/slide 구조 (`verify-docx-pages.py` / `verify-ppt-overflow.py`)
+3. **2차 visual 검증**: 산출물 → PNG export → Read tool 로 시각 확인 (필수)
+4. PASS 후 보고. FAIL → 자동 재수정 (max 3) → 보고
+
+### 금기
+- PNG OCR 만 보고 "통과" 보고 = 위반 (산출물 안에서는 다를 수 있음)
+- 빌드 후 visual 확인 안 하고 "수정했습니다" = 전수조사 위반
+- docx 작업 중인데 PNG 만 봄 = 위반 (docx 봐야)
+- ppt 작업 중인데 pptx 안 봄 = 위반
+
+### 자동 발동 (hook-09)
+- `build-*-doc.py` PostToolUse → `verify-docx-visual.py` 자동 export → systemMessage 로 Read 의무 알림
+- `build-*-(ppt|pptx).py` PostToolUse → `verify-ppt-overflow.py` + 슬라이드 PNG export → Read 의무 알림
 
 ## 산출물 명명 — 버전 접미사 금지
 
@@ -184,5 +212,5 @@ if diff > 0.05: FAIL — 짤림 또는 빈 공간
 
 ## 참조
 
-- `.claude/rules/failure-mode.md` § 농땡이 안티패턴
-- `.claude/rules/best-practices.md` § 농땡이 회피 5단계
+- `.claude/rules/failure-mode.md` § 전수조사 위반 안티패턴
+- `.claude/rules/best-practices.md` § 전수조사 의무 (5단계 완주) 5단계

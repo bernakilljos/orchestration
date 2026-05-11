@@ -204,23 +204,28 @@ def _kor_image_for(title):
     return None
 
 
-def render_chapter(doc, ch):
-    """8 섹션 표준 챕터 렌더링 — PageLayoutTracker + 빈 페이지 방지."""
+def render_chapter(doc, ch, idx=0):
+    """8 섹션 표준 챕터 렌더링 — PageLayoutTracker + 빈 페이지 방지.
+
+    빈 페이지 방지 패턴: H1 paragraph 의 page_break_before 속성 사용.
+    명시적 PB(doc) 는 Word 자동 분할과 충돌해 빈 페이지 생성 → 사용 금지.
+    page_break_before 는 Word 가 H1 위치에서 직접 새 페이지 시작 → 빈 페이지 0.
+    """
     tracker = PageLayoutTracker("docx-landscape")
 
-    H(doc, ch["title"], level=1); tracker.add("h1")
+    h1_para = H(doc, ch["title"], level=1)
+    if idx > 0:
+        h1_para.paragraph_format.page_break_before = True  # 두 번째 챕터부터 새 페이지
+    tracker.add("h1")
     callout(doc, "📚 핵심 한 줄", ch["핵심"]); tracker.add("callout")
 
-    # 자동 max_height 계산 — H1 + callout 자리 차지 후 남은 공간
-    max_h = tracker.image_max_height()  # 약 5.98 inch
-    # PNG 비율 기반 width 자동 (max_height 기준)
+    # 중간값 — width 9.3 inch · max_height 5.8 inch (페이지 70% 차지)
+    # viewport 1100×760 + width 9.3 → DPI 118 → 21px = 12.8pt 가독성 + 페이지 fit
     kor_png = _kor_image_for(ch["title"])
     if kor_png:
-        IMG(doc, ARCH_KOR, kor_png, width=10.0, max_height=max_h, caption=None)
-        PB(doc)
+        IMG(doc, ARCH_KOR, kor_png, width=9.3, max_height=5.8, caption=None)
     elif ch.get("image_kor"):
-        IMG(doc, ARCH_KOR, ch["image_kor"], width=10.0, max_height=max_h, caption=None)
-        PB(doc)
+        IMG(doc, ARCH_KOR, ch["image_kor"], width=9.3, max_height=5.8, caption=None)
 
     # 2. 표
     if ch.get("표"):
@@ -276,7 +281,7 @@ def render_chapter(doc, ch):
         P(doc, "Q. " + q)
         P(doc, "A. " + a, color=(100, 100, 100))
 
-    PB(doc)  # 챕터 끝 — 다음 챕터 분리 (시작 PB 와 중복 안 됨)
+    # 챕터 끝 PB 제거 — 다음 챕터의 시작 PB 가 처리 (빈 페이지 방지)
 
 
 # ============================================================
@@ -344,16 +349,16 @@ CHAPTERS = [
         "image_kor": None,
         "핵심": "AI 뇌는 한 종류가 아닙니다. 작업에 맞는 뇌를 골라 써야 비용·품질이 최적.",
         "표": {
-            "header": ["뇌 유형", "장점", "약점", "예시 모델"],
+            "header": ["뇌 유형", "장점", "약점", "예시", "★ 우리시스템"],
             "rows": [
-                ["GPT (Transformer)", "글 일반·범용", "추론 약함", "GPT-4, Claude"],
-                ["MoE (전문가 모음)", "효율·전문성", "라우팅 복잡", "Qwen 2"],
-                ["LRM (긴 추론)", "복잡 문제 강함", "느림·비쌈", "Gemini 1.5 Flash"],
-                ["VLM (이미지+글)", "그림 보고 답함", "텍스트만보다 무거움", "Claude 4.x, GPT-4V"],
-                ["SLM (작은)", "빠르고 쌈·로컬", "복잡 작업 약함", "Gemma 2, Phi"],
-                ["LAM (행동)", "API 호출 결정 잘함", "콘텐츠 생성은 약함", "Salesforce X-LAM"],
-                ["HRM (계획→실행)", "복잡 문제 분해", "단순 작업엔 과함", "Sapient Planner"],
-                ["mHC (다층)", "실험적·잠재력↑", "표준화 미약", "Deepseek mHC"],
+                ["GPT (Transformer)", "글 범용", "추론 약", "Claude", "Claude Opus 4.7"],
+                ["MoE (전문가)", "효율·전문성", "라우팅 복잡", "Qwen 2", "route_dispatch.md"],
+                ["LRM (긴 추론)", "복잡 문제 강", "느림", "Gemini Flash", "Extended Thinking"],
+                ["VLM (이미지+글)", "그림 봄", "무거움", "GPT-4V", "Claude 멀티모달"],
+                ["SLM (작은)", "빠름·쌈", "복잡 약", "Gemma", "Haiku 4.5"],
+                ["LAM (행동)", "API 호출", "생성 약", "X-LAM", "MCP + tool use"],
+                ["HRM (계획→실행)", "분해 강", "단순엔 과함", "Sapient", "auto-planner.md"],
+                ["mHC (다층)", "잠재력↑", "표준 미약", "Deepseek", "킷 전체 구조"],
             ],
         },
         "흐름": [
@@ -385,16 +390,17 @@ CHAPTERS = [
             "사용자 요청 분류기 (route_dispatch) 만들어 자동 라우팅 — 우리 시스템 본보기.",
         ],
         "우리시스템": {
-            "GPT": "Claude Opus 4.7 / Sonnet 4.6 (설계·구현)",
-            "MoE": "모델 안에는 없음 — 시스템 라우팅으로 흉내 (route_dispatch.md)",
-            "LRM": "Extended Thinking (Opus 4.x 의 thinking 모드)",
-            "VLM": "Claude 4.x — 이번 세션도 이미지 24장 분석",
-            "SLM": "Haiku 4.5, 로컬 Ollama/Gemma (저비용 검증)",
-            "LAM": "MCP tool use, codex-auto (codex CLI 가 행동)",
-            "HRM": "task-instruction (계획) → codex (실행) 분리",
-            "mHC": "안 씀 (실험 단계)",
+            "결론": "★ 8개 모델 우리가 구현 X — Claude·Codex·Gemini·Haiku 가 이미 제공. 우리는 '언제 어느 뇌 쓸지' 라우팅만.",
+            "GPT": "Claude Opus 4.7 / Sonnet 4.6 (이미 Transformer 기반)",
+            "MoE": "시스템 레벨 MoE — route_dispatch.md 가 AI 단가·특성·quota 매트릭스로 자동 분배",
+            "LRM": "Claude 4.7 Extended Thinking 이 LRM 역할",
+            "VLM": "Claude 멀티모달 (이번 세션도 이미지 24장 OCR·분석)",
+            "SLM": "Haiku 4.5 (`haiku-auto` 가 검증 담당, prompt cache 90% 절감)",
+            "LAM": "MCP tool use + Bash/Edit/Write tool (codex CLI 가 LAM 강화)",
+            "HRM": "auto-planner.md skill — 5단계 계층 추론 (전수조사·분석·실행·확인·보고)",
+            "mHC": "킷 전체 구조 = mHC — Claude 설계 → Codex 구현 → Gemini 검증 → Haiku 빠른 검증",
         },
-        "점검": ("이미지 분석이 필요한데 어느 뇌 유형?", "VLM. 텍스트 전용 모델로는 이미지 못 봄."),
+        "점검": ("8개 모델 중 우리가 코드로 구현하는 건 몇 개?", "0개. 모두 외부 모델 제공 — 우리는 라우팅·조율만."),
     },
     # ---- 3. 5 cores ----
     {
@@ -978,7 +984,7 @@ CHAPTERS = [
             "현재 사용자 위치": "Lv 9-10 추정 (Skills + 프로젝트 활용 중)",
             "Lv 11 추가도구": "Excel/Design/Code 다양 사용",
             "Lv 13 팀 배포": "orchestration_v1 의 install/setup 으로 팀 배포 가능 (template kit)",
-            "Lv 14 본인 안목": "여전히 사람의 영역 — 농땡이 검수도 사람이",
+            "Lv 14 본인 안목": "여전히 사람의 영역 — 깐깐 검수도 사람이",
         },
         "점검": ("Lv 14 (본인 안목) 가 가장 중요한 이유?", "AI 가 10개 만들면 어느 걸 선택할지는 사람의 가치판단. 대체 불가."),
     },
@@ -1386,24 +1392,21 @@ B(doc, "부록 C. 고퀄리티 다이어그램 도구 (Canva·Figma·Mermaid)")
 PB(doc)
 
 
-# ---- 0. 들어가며 ----
+# ---- 0. 들어가며 (1 페이지 fit — 자투리 방지) ----
 H(doc, "0. 들어가며 — 왜 지금 AI 를 배워야 하나요?", level=1)
 callout(doc, "📚 핵심 한 줄",
-        "AI 는 '도구' 가 아니라 '같이 일하는 동료'. 동료의 말투·약점·사용법을 익히지 않으면 시간 ↓.")
-P(doc, "안녕하세요. 강사 Claude 입니다. 이 책은 사전 지식 0 으로 시작합니다. "
-       "각 챕터에 표·흐름·강점·약점·강추·우리 시스템 매핑·점검 8 섹션이 모두 있어, "
-       "어디부터 읽어도 막히지 않습니다.", size=11, after=10)
-H(doc, "이 강의를 듣고 나면", level=3)
+        "AI 는 '도구' 가 아니라 '같이 일하는 동료'. 우리 orchestration_v1 은 4단계 Multi-Agent (가장 진화된 형태).")
+IMG(doc, ARCH_KOR, "00-ai-evolution.png", width=9.8, max_height=5.5, caption=None)
+H(doc, "이 강의를 듣고 나면 (5살 청자 톤·외국어 그림 한글 대체)", level=3)
 B(doc, "AI 글쓰기 (Generative) 와 일시키기 (Agent) 가 어떻게 다른지 압니다.")
-B(doc, "RAG / MCP / A2A 같은 단어를 친구가 던져도 무서워하지 않습니다.")
-B(doc, "Claude Code 를 켜서 '내 폴더 정리해 줘' 같은 부탁을 부담 없이 할 수 있습니다.")
-B(doc, "내 직업이 AI 에 대체되는지·보완되는지 감을 잡습니다.")
+B(doc, "RAG / MCP / A2A 같은 단어를 친구가 던져도 무서워하지 않습니다. Claude Code 부담 없이 사용.")
+B(doc, "내 직업이 AI 에 대체되는지·보완되는지 감을 잡고, 우리 시스템 어디·어떻게 동작하는지 매핑.")
 PB(doc)
 
 
 # ---- 19 챕터 자동 렌더링 ----
-for ch in CHAPTERS:
-    render_chapter(doc, ch)
+for idx, ch in enumerate(CHAPTERS):
+    render_chapter(doc, ch, idx=idx)
 
 
 # ---- 부록 A — 미래 직업 ----

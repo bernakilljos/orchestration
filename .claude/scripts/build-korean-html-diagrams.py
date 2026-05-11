@@ -17,7 +17,7 @@ body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
        background:radial-gradient(ellipse at top,#F8FAFC 0%,#E8EFF8 100%); }
 .title { font-size:46px; font-weight:900; background:linear-gradient(135deg,#1F3864,#3F6FB5); -webkit-background-clip:text;
          -webkit-text-fill-color:transparent; text-align:center; margin-bottom:6px; }
-.subtitle { font-size:20px; color:#637488; text-align:center; margin-bottom:20px; font-style:italic; }
+.subtitle { font-size:30px; color:#637488; text-align:center; margin-bottom:20px; font-style:italic; }
 
 .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
 .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:24px; }
@@ -27,28 +27,28 @@ body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
 .card { padding:18px; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,0.08);
         background:linear-gradient(135deg,#fff,#f7f9fc); border:2px solid #4472C4; position:relative; }
 .card-icon { font-size:42px; margin-bottom:8px; display:block; }
-.card-title { font-size:22px; font-weight:800; color:#1F3864; margin-bottom:8px; }
-.card-desc { font-size:14px; color:#333; line-height:1.55; }
+.card-title { font-size:33px; font-weight:800; color:#1F3864; margin-bottom:8px; }
+.card-desc { font-size:21px; color:#333; line-height:1.55; }
 .card-num { position:absolute; top:10px; right:14px; font-size:48px; font-weight:900;
             opacity:0.12; color:#1F3864; }
 
 .chip { display:inline-block; padding:5px 14px; background:rgba(31,56,100,0.08); color:#1F3864;
-        border-radius:14px; font-size:15px; font-weight:600; margin:3px; }
+        border-radius:14px; font-size:22px; font-weight:600; margin:3px; }
 
 .banner { margin-top:18px; padding:16px 22px; background:linear-gradient(135deg,#1F3864,#3F6FB5);
           color:white; border-radius:14px; box-shadow:0 8px 24px rgba(31,56,100,0.25); }
-.banner-title { font-size:18px; font-weight:800; margin-bottom:8px; opacity:0.95; }
-.banner-content { font-size:14px; line-height:1.7; opacity:0.94; }
+.banner-title { font-size:27px; font-weight:800; margin-bottom:8px; opacity:0.95; }
+.banner-content { font-size:21px; line-height:1.7; opacity:0.94; }
 .banner b { color:#FFE699; }
 
 .flow-step { display:flex; align-items:center; gap:16px; padding:14px 18px; border-radius:12px;
              box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:6px; position:relative; }
 .flow-icon-box { width:60px; height:60px; border-radius:14px; display:flex; align-items:center;
                  justify-content:center; flex-shrink:0; font-size:30px; }
-.flow-title { font-size:20px; font-weight:800; color:#1F3864; margin-bottom:4px; }
-.flow-desc { font-size:14px; color:#444; line-height:1.5; }
+.flow-title { font-size:30px; font-weight:800; color:#1F3864; margin-bottom:4px; }
+.flow-desc { font-size:21px; color:#444; line-height:1.5; }
 .flow-num { font-size:40px; font-weight:900; opacity:0.15; color:#1F3864; margin-left:auto; }
-.context-arrow { text-align:center; font-size:13px; color:#999; padding:2px; font-style:italic; letter-spacing:2px; }
+.context-arrow { text-align:center; font-size:19px; color:#999; padding:2px; font-style:italic; letter-spacing:2px; }
 
 .l1 { background:linear-gradient(135deg,#FFF5F5,#FFEBEB); border-left:6px solid #E53E3E; }
 .l1 .flow-icon-box { background:linear-gradient(135deg,#FC8181,#E53E3E); color:white; font-size:32px; }
@@ -72,9 +72,9 @@ body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
 
 .compare-tbl { width:100%; border-collapse:separate; border-spacing:5px; margin-top:12px; }
 .compare-tbl th { background:linear-gradient(135deg,#1F3864,#3F6FB5); color:white; padding:10px 12px; text-align:left;
-                  border-radius:8px; font-weight:700; font-size:14px; }
+                  border-radius:8px; font-weight:700; font-size:21px; }
 .compare-tbl td { padding:9px 12px; background:linear-gradient(135deg,#fff,#f8fafc); border-radius:8px;
-                  vertical-align:top; font-size:13px; border:1px solid #e2e8f0; line-height:1.5; }
+                  vertical-align:top; font-size:19px; border:1px solid #e2e8f0; line-height:1.5; }
 """
 
 PAGES = {}
@@ -102,8 +102,8 @@ PAGES["01-gen-vs-agentic-vs-agent.png"] = page(
 .big-icon { font-size:90px; margin-bottom:18px; }
 .big-title { font-size:42px; font-weight:900; color:#1F3864; margin-bottom:16px; }
 .big-tag { display:inline-block; padding:8px 18px; background:rgba(31,56,100,0.12); color:#1F3864;
-           border-radius:20px; font-size:18px; font-weight:700; margin:4px; }
-.big-line { font-size:22px; color:#333; line-height:1.7; text-align:left; margin-top:16px; padding:0 8px; }
+           border-radius:20px; font-size:27px; font-weight:700; margin:4px; }
+.big-line { font-size:33px; color:#333; line-height:1.7; text-align:left; margin-top:16px; padding:0 8px; }
 .big-line b { color:#1F3864; }
 .big-num { position:absolute; top:18px; right:22px; font-size:80px; font-weight:900; opacity:0.1; color:#1F3864; }
 .arrow-big { font-size:60px; color:#666; align-self:center; }
@@ -151,8 +151,8 @@ PAGES["01-gen-vs-agentic-vs-agent.png"] = page(
 </div>
 
 <div class="banner" style="margin-top:34px;">
-  <div class="banner-title" style="font-size:22px;">🇰🇷 우리 orchestration_v1 = AI Agent + Multi-Agent System</div>
-  <div class="banner-content" style="font-size:18px;">
+  <div class="banner-title" style="font-size:33px;">🇰🇷 우리 orchestration_v1 = AI Agent + Multi-Agent System</div>
+  <div class="banner-content" style="font-size:27px;">
     여러 에이전트가 협력 — <b>Claude(설계) → Codex×4(구현) → Gemini×2(검증) → Haiku×2(판정)</b>
   </div>
 </div>
@@ -405,12 +405,12 @@ PAGES["10-zero-cost.png"] = page(
 <div style="display:grid;grid-template-columns:120px 1fr 80px;gap:14px;">""" + "".join(f"""
   <div class="card {gc}" style="text-align:center;display:flex;flex-direction:column;justify-content:center">
     <span style="font-size:36px">{ico}</span>
-    <div style="font-size:12px;font-weight:800;margin-top:4px">{layer}</div>
+    <div style="font-size:18px;font-weight:800;margin-top:4px">{layer}</div>
   </div>
   <div class="card" style="background:white">
-    <div style="font-size:14px;color:#444;line-height:1.7"><b>{tools}</b><br>{note}</div>
+    <div style="font-size:21px;color:#444;line-height:1.7"><b>{tools}</b><br>{note}</div>
   </div>
-  <div class="card" style="background:linear-gradient(135deg,#28A745,#1A7F3A);color:white;text-align:center;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900">
+  <div class="card" style="background:linear-gradient(135deg,#28A745,#1A7F3A);color:white;text-align:center;display:flex;align-items:center;justify-content:center;font-size:33px;font-weight:900">
     $0
   </div>""" for ico, gc, layer, tools, note in [
     ("🖥️", "gradient-5", "Frontend", "Next.js · Streamlit · Vercel", "Free tier 만으로 가능"),
@@ -445,13 +445,13 @@ PAGES["05-ai-builder-6cat.png"] = page(
 <div style="display:flex;flex-direction:column;gap:10px">""" + "".join(f"""
   <div style="display:grid;grid-template-columns:200px repeat(5,1fr);gap:8px;align-items:stretch">
     <div class="card" style="background:linear-gradient(135deg,{bg1},{bg2});color:white;text-align:center;display:flex;flex-direction:column;justify-content:center;padding:14px">
-      <div style="font-size:11px;font-weight:600;opacity:0.85">{num}</div>
-      <div style="font-size:16px;font-weight:800;margin-top:2px">{name}</div>
-      <div style="font-size:10px;opacity:0.8;margin-top:4px">{intro}</div>
+      <div style="font-size:16px;font-weight:600;opacity:0.85">{num}</div>
+      <div style="font-size:24px;font-weight:800;margin-top:2px">{name}</div>
+      <div style="font-size:16px;opacity:0.8;margin-top:4px">{intro}</div>
     </div>""" + "".join(f"""
     <div class="card" style="background:white;border-color:{bg1};padding:14px;text-align:center;display:flex;flex-direction:column;justify-content:center">
-      <div style="font-size:14px;font-weight:800;color:#1F3864">{t}</div>
-      <div style="font-size:10px;color:#666;margin-top:4px">{d}</div>
+      <div style="font-size:21px;font-weight:800;color:#1F3864">{t}</div>
+      <div style="font-size:16px;color:#666;margin-top:4px">{d}</div>
     </div>""" for t, d in tools) + """
   </div>""" for num, name, intro, bg1, bg2, tools in [
     ("01", "모델·검색", "더 나은 답·인사이트", "#1F3864", "#2E75B6", [
@@ -650,8 +650,8 @@ PAGES["07-14-levels.png"] = page(
     """
 <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px">""" + "".join(f"""
   <div class="card" style="background:linear-gradient(135deg,#CFE2F3,#9FC5E8);border-color:#0B5394;text-align:center;padding:14px">
-    <div style="font-size:11px;color:#666">Lv {num}</div>
-    <div style="font-size:14px;font-weight:800;color:#1F3864;margin-top:4px">{ico} {name}</div>
+    <div style="font-size:16px;color:#666">Lv {num}</div>
+    <div style="font-size:21px;font-weight:800;color:#1F3864;margin-top:4px">{ico} {name}</div>
   </div>""" for num, ico, name in [
     ("1", "📝", "가입"), ("2", "🧠", "모델 선택"), ("3", "✨", "프롬프트"),
     ("4", "🔌", "도구 연결"), ("5", "💼", "Cowork"), ("6", "📁", "컨텍스트"),
@@ -660,8 +660,8 @@ PAGES["07-14-levels.png"] = page(
 </div>
 <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px">""" + "".join(f"""
   <div class="card" style="background:linear-gradient(135deg,{bg1},{bg2});border-color:{ec};text-align:center;padding:14px">
-    <div style="font-size:11px;color:{tc}">Lv {num}</div>
-    <div style="font-size:14px;font-weight:800;color:{tc};margin-top:4px">{ico} {name}</div>
+    <div style="font-size:16px;color:{tc}">Lv {num}</div>
+    <div style="font-size:21px;font-weight:800;color:{tc};margin-top:4px">{ico} {name}</div>
   </div>""" for num, ico, name, bg1, bg2, ec, tc in [
     ("8", "🌐", "Obsidian", "#CFE2F3", "#9FC5E8", "#0B5394", "#1F3864"),
     ("9", "⚙️", "Skills", "#CFE2F3", "#9FC5E8", "#0B5394", "#1F3864"),
@@ -690,7 +690,7 @@ PAGES["14-decision-tree.png"] = page(
     "Skills · Subagents · MCP · Hooks 자동 선택",
     """
 <div style="text-align:center;margin-bottom:24px">
-  <div style="display:inline-block;padding:18px 32px;background:linear-gradient(135deg,#FFE699,#FFC700);border-radius:14px;border:2px solid #BF9000;font-size:18px;font-weight:800;color:#1F3864">
+  <div style="display:inline-block;padding:18px 32px;background:linear-gradient(135deg,#FFE699,#FFC700);border-radius:14px;border:2px solid #BF9000;font-size:27px;font-weight:800;color:#1F3864">
     Q1. 에이전트가 무엇이 필요?
   </div>
 </div>
@@ -700,12 +700,12 @@ PAGES["14-decision-tree.png"] = page(
     <div class="card-title" style="text-align:center">📚 지식 (Knowledge)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
       <div style="text-align:center;padding:12px;background:#fff;border-radius:10px;border:2px solid #0B5394">
-        <div style="font-size:11px;color:#666">항상 로드</div>
-        <div style="font-size:16px;font-weight:800;color:#1F3864;margin-top:6px">📄 CLAUDE.md</div>
+        <div style="font-size:16px;color:#666">항상 로드</div>
+        <div style="font-size:24px;font-weight:800;color:#1F3864;margin-top:6px">📄 CLAUDE.md</div>
       </div>
       <div style="text-align:center;padding:12px;background:#fff;border-radius:10px;border:2px solid #0B5394">
-        <div style="font-size:11px;color:#666">작업별 로드</div>
-        <div style="font-size:16px;font-weight:800;color:#1F3864;margin-top:6px">⚙️ SKILL</div>
+        <div style="font-size:16px;color:#666">작업별 로드</div>
+        <div style="font-size:24px;font-weight:800;color:#1F3864;margin-top:6px">⚙️ SKILL</div>
       </div>
     </div>
   </div>
@@ -714,16 +714,16 @@ PAGES["14-decision-tree.png"] = page(
     <div class="card-title" style="text-align:center">⚡ 행동 (Action)</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:14px">
       <div style="text-align:center;padding:10px;background:#fff;border-radius:10px;border:2px solid #C00000">
-        <div style="font-size:10px;color:#666">내부 격리</div>
-        <div style="font-size:14px;font-weight:800;color:#C00000;margin-top:4px">🎭 SUBAGENT</div>
+        <div style="font-size:16px;color:#666">내부 격리</div>
+        <div style="font-size:21px;font-weight:800;color:#C00000;margin-top:4px">🎭 SUBAGENT</div>
       </div>
       <div style="text-align:center;padding:10px;background:#fff;border-radius:10px;border:2px solid #C00000">
-        <div style="font-size:10px;color:#666">외부·모델결정</div>
-        <div style="font-size:14px;font-weight:800;color:#C00000;margin-top:4px">🔌 MCP</div>
+        <div style="font-size:16px;color:#666">외부·모델결정</div>
+        <div style="font-size:21px;font-weight:800;color:#C00000;margin-top:4px">🔌 MCP</div>
       </div>
       <div style="text-align:center;padding:10px;background:#fff;border-radius:10px;border:2px solid #C00000">
-        <div style="font-size:10px;color:#666">외부·강제</div>
-        <div style="font-size:14px;font-weight:800;color:#C00000;margin-top:4px">⚙️ HOOK</div>
+        <div style="font-size:16px;color:#666">외부·강제</div>
+        <div style="font-size:21px;font-weight:800;color:#C00000;margin-top:4px">⚙️ HOOK</div>
       </div>
     </div>
   </div>
@@ -757,11 +757,11 @@ PAGES["15-complete-guide.png"] = page(
 <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:30px;flex-wrap:wrap">""" + "".join(f"""
   <div class="card {gc}" style="text-align:center;padding:18px 22px;min-width:160px">
     <span class="card-icon">{ico}</span>
-    <div style="font-size:11px;color:#666">Step {num}</div>
-    <div style="font-size:16px;font-weight:800;color:#1F3864;margin-top:4px">{name}</div>
-    <div style="font-size:11px;color:#666;margin-top:6px">{desc}</div>
+    <div style="font-size:16px;color:#666">Step {num}</div>
+    <div style="font-size:24px;font-weight:800;color:#1F3864;margin-top:4px">{name}</div>
+    <div style="font-size:16px;color:#666;margin-top:6px">{desc}</div>
   </div>""" + ("" if num == "6" else """
-  <div style="font-size:24px;color:#999">→</div>""") for ico, gc, num, name, desc in [
+  <div style="font-size:36px;color:#999">→</div>""") for ico, gc, num, name, desc in [
     ("📥", "gradient-5", "1", "Install", "claude CLI 설치"),
     ("⚙️", "gradient-3", "2", "Configure", "CLAUDE.md·hooks·skills"),
     ("✨", "gradient-1", "3", "Prompt", "구체적 요청"),
@@ -771,7 +771,7 @@ PAGES["15-complete-guide.png"] = page(
 ]) + """
 </div>
 
-<div style="text-align:center;color:#666;font-size:13px;font-style:italic;margin-top:-10px;margin-bottom:30px">
+<div style="text-align:center;color:#666;font-size:19px;font-style:italic;margin-top:-10px;margin-bottom:30px">
   필요시 Step 6 → Step 3 으로 루프 ↺
 </div>
 
@@ -855,7 +855,7 @@ PAGES["17-project-structure.png"] = page(
     "Claude Code 프로젝트 구조",
     "어디에 무엇을 두는가 표준 — 90점 시작",
     """
-<div style="font-family:Consolas,'Courier New',monospace;background:#1E1E1E;color:#D4D4D4;padding:24px;border-radius:14px;font-size:14px;line-height:1.8;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
+<div style="font-family:Consolas,'Courier New',monospace;background:#1E1E1E;color:#D4D4D4;padding:24px;border-radius:14px;font-size:21px;line-height:1.8;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
 <span style="color:#569CD6;font-weight:700">my_project/</span><br>
 &nbsp;&nbsp;<span style="color:#CE9178">📄 CLAUDE.md</span> <span style="color:#6A9955">— 팀 공유 규칙 (git commit)</span><br>
 &nbsp;&nbsp;<span style="color:#CE9178">📄 settings.json</span> <span style="color:#6A9955">— 권한 + hook 등록</span><br>
@@ -942,7 +942,7 @@ PAGES["19-claude-md-design.png"] = page(
     "CLAUDE.md 설계 가이드 — 3 Scopes + WHAT/WHY/HOW + 5 Rules",
     "사람용 README 아닌 AI 팀원 온보딩 문서",
     """
-<div style="text-align:center;margin-bottom:18px;font-size:18px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin-bottom:18px;font-size:27px;color:#1F3864;font-weight:800">
   ① 3 SCOPES (가까운 게 이김)
 </div>
 <div class="grid3">
@@ -958,7 +958,7 @@ PAGES["19-claude-md-design.png"] = page(
 </div>
 <div style="text-align:center;color:#666;font-style:italic;margin:10px 0">→ Folder > Project > Global (가까운 게 이김)</div>
 
-<div style="text-align:center;margin:24px 0 18px;font-size:18px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin:24px 0 18px;font-size:27px;color:#1F3864;font-weight:800">
   ② WHAT / WHY / HOW 프레임워크
 </div>
 <div class="grid3">
@@ -973,13 +973,13 @@ PAGES["19-claude-md-design.png"] = page(
     <div class="card-desc">build · test · lint · commit</div></div>
 </div>
 
-<div style="text-align:center;margin:24px 0 18px;font-size:18px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin:24px 0 18px;font-size:27px;color:#1F3864;font-weight:800">
   ③ 5 RULES (실제로 작동하려면)
 </div>
 <div class="row5">""" + "".join(f"""
   <div class="card gradient-2" style="text-align:center;padding:14px">
     <div style="font-size:32px;font-weight:900;color:#7B5BA6">{n}</div>
-    <div style="font-size:13px;font-weight:700;color:#1F3864;margin-top:6px">{r}</div>
+    <div style="font-size:19px;font-weight:700;color:#1F3864;margin-top:6px">{r}</div>
   </div>""" for n, r in [
     ("1", "/init 먼저"),
     ("2", "500줄 이하"),

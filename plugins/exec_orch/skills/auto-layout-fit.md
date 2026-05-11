@@ -75,7 +75,7 @@ tracker.add_image(max_h)
 
 ## 강화 (5중 박기)
 
-teaching-doc.md § 페이지 콘텐츠 fit / failure-mode.md § 농땡이 안티패턴 / hook-00-init.sh / global-CLAUDE.md / memory feedback_full_page_content_fit.md
+teaching-doc.md § 페이지 콘텐츠 fit / failure-mode.md § 전수조사 위반 안티패턴 / hook-00-init.sh / global-CLAUDE.md / memory feedback_full_page_content_fit.md
 
 ## 트리거
 

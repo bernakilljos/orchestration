@@ -143,17 +143,17 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 7. `.claude/` 직접 편집 (sync가 덮어씀)
 8. 빈 task `done/` 이동 (위장 완료)
 9. 거짓 npm 패키지명 커맨드 (실측 없이) — `npm view` 검증 필수
-10. **농땡이 (=일부 샘플로 단정)** — 사용자 지시는 무조건 전수조사. 파일명만 보고 중복/필요없다 판정 X, spec md 만 보고 .sh/.py 안 본 채 판정 X. 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
+10. **전수조사 위반 (=일부 샘플로 단정)** — 사용자 지시는 무조건 전수조사. 파일명만 보고 중복/필요없다 판정 X, spec md 만 보고 .sh/.py 안 본 채 판정 X. 상세: `.claude/rules/failure-mode.md` § 전수조사 위반 안티패턴
 11. **사용자 액션 요구** — "이 .bat 한 번만 실행해주세요" 류 금지. 셋업·등록·시작은 SessionStart hook 으로 자동. 알림은 크리티컬 5가지(시크릿 노출/데이터 손실/보안 위협/비용 폭증/시스템 손상) 만. 상세: `.claude/rules/best-practices.md` § Zero-touch 자동화
 12. **`~/.claude/` 직접 수정 / 다른 프로젝트 폴더 직접 수정** — orchestration_v1 은 **install/setup 으로 다른 폴더에 배포되는 공통 kit**. 글로벌·다른 프로젝트는 `setup/templates/` + `setup/modules/` 거쳐 자동 배포. 상세: `.claude/rules/best-practices.md` § Template kit 원칙
 13. **교재/강의 doc 작성 시 8섹션 누락 + 다이어그램 품질 위반** — 8섹션 필수 (핵심·표·흐름·강점·약점·강추·우리매핑·점검). 외국어 이미지는 한글로 **대체** (영어+한글 같이 X). 다이어그램 = SVG/HTML + 화살표 + 흐름 필수, 단순 박스/표는 위반. 도구 우선순위: HTML/CSS+SVG (Playwright) > Mermaid > matplotlib. 5살 청자 톤. 상세: `.claude/rules/teaching-doc.md`
 14. **산출물 자동 -v2/-v3 폴백 금지** — docx·pptx·pdf 빌드 시 잠금 폴백으로 버전 접미사 X. `.bak` 백업 후 원본 자리에 덮어쓰기. 원본 잠겨있으면 사용자에게 알림 (자동 -v2 X). 버전은 사용자 명시 요청 시만. 상세: `.claude/rules/teaching-doc.md` § 산출물 명명
-15. **산출물 페이지 fit 사전검증 (docx · pptx · pdf 전체)** — 이미지 임베드 전 PIL 로 PNG 비율 측정 → 산출물별 페이지 비율 (docx portrait 1.46 / docx landscape 0.69 / pptx 16:9 0.54 / pptx 4:3 0.71 / pdf portrait 1.41 / pdf landscape 0.71) 과 비교 → 잘림·빈공간 자동 조정. PNG 빌드 시 viewport 비율 = 페이지 비율 강제 (full_page=False + clip). 사용자가 "짤린다" 한 후에야 fix = 농땡이. 자동 검증: `verify-image-fit.py` + hook-09 (build/generate/render-*-(ppt/doc/diagrams/pdf/html).py 트리거). 상세: `.claude/rules/teaching-doc.md` § 페이지 fit 검증
+15. **산출물 페이지 fit 사전검증 (docx · pptx · pdf 전체)** — 이미지 임베드 전 PIL 로 PNG 비율 측정 → 산출물별 페이지 비율 (docx portrait 1.46 / docx landscape 0.69 / pptx 16:9 0.54 / pptx 4:3 0.71 / pdf portrait 1.41 / pdf landscape 0.71) 과 비교 → 잘림·빈공간 자동 조정. PNG 빌드 시 viewport 비율 = 페이지 비율 강제 (full_page=False + clip). 사용자가 "짤린다" 한 후에야 fix = 전수조사 위반. 자동 검증: `verify-image-fit.py` + hook-09 (build/generate/render-*-(ppt/doc/diagrams/pdf/html).py 트리거). 상세: `.claude/rules/teaching-doc.md` § 페이지 fit 검증
 16. **멈춤 방지 — 사용자 액션 요구 X** — 파일 잠금·네트워크·권한 fail 시 즉시 sys.exit X. 60초 폴링·지수 backoff·대안 도구 자동 시도. "Word 닫고 재시도" 같은 노동 떠넘김 = 위반. 폴링 시작·완료는 stdout 만, 사용자 호출은 크리티컬 5가지 (시크릿/데이터손실/보안/비용/시스템손상) 만. 상세: `.claude/rules/best-practices.md` § 멈춤 방지
 17. **페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)** — 이미지 비율 검증만 X. H1·callout·캡션·이미지·표 모든 요소 height 합산 후 페이지 한계 내. 빈 여백·짤림·글씨 작음 = 같은 문제 다른 증상. PageLayoutTracker 의무 (skill: `auto-layout-fit`). 빌더 IMG 호출 시 자동 max_height 계산. 상세: `.claude/rules/teaching-doc.md` § 페이지 콘텐츠 fit
 18. **사용자 요청 받으면 auto-planner skill 자동 활성** — "X 해줘"·"X 고쳐줘"·결함 지적 받자마자 5단계 plan (전수조사·분석·실행·확인·보고) + 30+ rule 자가 점검 + 막히면 codex/gemini 위임. 매번 사용자가 지시 기다림 X = Generative→Agentic 약점 보완. skill: `plugins/exec_orch/skills/auto-planner.md`
 19. **회피·딴말 금지** — 사용자 질문 빙빙 돌리거나 다른 주제 전환 X. 직접 답 (yes/no/숫자/방법) → 부연 → 행동. "그건 그렇지만"·"여러 옵션이 있는데"·"중요한 게 아니라" = 회피. 사용자가 결함 지적했는데 시스템 자랑 = 위반. 상세: `.claude/rules/failure-mode.md` § 회피 안티패턴
-20. **docx 구조 검증 의무** — build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09 통합). 빈 paragraph 5개+ 연속·중복 page_break 자동 감지. 사용자가 "빈 페이지 있네" 한 후에야 fix = 농땡이. 상세: `.claude/scripts/verify-docx-structure.py`
+20. **docx 구조 검증 의무** — build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09 통합). 빈 paragraph 5개+ 연속·중복 page_break 자동 감지. 사용자가 "빈 페이지 있네" 한 후에야 fix = 전수조사 위반. 상세: `.claude/scripts/verify-docx-structure.py`
 21. **수정·빌드 후 자동 검증 후 보고** — "수정했습니다" 만 보고 X. 검증 도구 자동 실행 → PASS 확인 → 보고 순서. FAIL 이면 사용자에게 알리지 않고 자동 재시도 (max 3회). 3회 후에도 FAIL = 솔직히 보고 + 사용자 결정. 검증 매트릭스: PNG/docx/pptx/코드. 상세: `.claude/rules/best-practices.md` § 검증 후 보고
 
 ---

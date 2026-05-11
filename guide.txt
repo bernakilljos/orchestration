@@ -883,7 +883,7 @@
        - WATCHDOG_AUTO_RESTART=1 옵션 (강제 재시작, 디폴트 off)
        - WATCHDOG_NOTIFY=1 옵션 (BurntToast 알림)
     ✓ 협업 원칙 5중 박기 (247b3e9, fef1338, 330187e)
-       - 농땡이 금지 (전수조사·분석·실행·확인·보고 5단계)
+       - 전수조사 의무 (전수조사·분석·실행·확인·보고 5단계)
        - Zero-touch 자동화 (사용자 액션 요구 X, 알림은 크리티컬 5가지만)
        - 하드 경로 금지 (사용자명·Python 버전·OS 절대경로 X, 동적 검색)
        - Template kit 원칙 (orchestration_v1 = 공통 배포 kit, ~/.claude/ 직접 X)

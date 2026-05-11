@@ -34,11 +34,11 @@ if [ -f "$PROJECT/package.json" ]; then
 fi
 [ -f "$PROJECT/pom.xml" ] && echo "[HOOK-00] Detected: Spring Boot"
 
-# === 농땡이 방지 reminder (매 세션 강제 노출 — 5중 박기 중 1) ===
+# === 전수조사 위반 방지 reminder (매 세션 강제 노출 — 5중 박기 중 1) ===
 cat <<'REMINDER'
 
 ==============================
- ⚠ 농땡이 방지 5단계 (사용자 지시 처리)
+ ⚠ 전수조사 5단계 의무 (사용자 지시 처리)
 ==============================
 1. 전수조사  — 인접 시스템·전역까지 모든 위치 훑기
 2. 분석      — md5sum/diff/본문으로 내용 검증 (파일명만 보고 단정 X)
@@ -46,7 +46,7 @@ cat <<'REMINDER'
 4. 확인      — smoke test/dry-run/로그 점검
 5. 보고      — 표·목록으로 결과 + 남은 결정사항
 
-상세: .claude/rules/failure-mode.md § 농땡이 안티패턴
+상세: .claude/rules/failure-mode.md § 전수조사 위반 안티패턴
 
 ==============================
  ⚠ Zero-touch 자동화 원칙
@@ -111,7 +111,7 @@ cat <<'REMINDER'
 ==============================
 - build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09)
 - 빈 paragraph 5개+ 연속·중복 page_break 감지
-- "빈 페이지 있네" 사용자 지적 후 fix = 농땡이
+- "빈 페이지 있네" 사용자 지적 후 fix = 전수조사 위반
 
 ==============================
  ⚠ Auto-Planner 자동 활성 (사용자 요청 받자마자)
@@ -130,7 +130,7 @@ skill: plugins/exec_orch/skills/auto-planner.md
 - 이미지 비율만 X — 페이지의 모든 요소 height 합산
 - 빈 여백·짤림·글씨 작음 = 같은 문제
 - 빌더에 PageLayoutTracker (skill auto-layout-fit) 의무
-- 사용자가 "여백 큰데"·"짤려" 한 후 fix = 농땡이
+- 사용자가 "여백 큰데"·"짤려" 한 후 fix = 전수조사 위반
 
 상세: .claude/rules/teaching-doc.md § 페이지 콘텐츠 fit
        skill: plugins/exec_orch/skills/auto-layout-fit.md
