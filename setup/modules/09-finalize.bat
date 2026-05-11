@@ -22,6 +22,19 @@ if exist "%TARGET%\.claude\scripts\init.bat" (
   echo       init.bat not found - skipped
 )
 
+rem --- External watchdog Task Scheduler 자동 등록 (zero-touch) ---
+rem  - VBS wrapper + Hidden 속성으로 cmd 창 없이 1분 간격 모니터링
+rem  - SessionStart hook 도 같은 등록을 수행 (이중 안전망)
+if exist "%TARGET%\.claude\scripts\external-watchdog-register.bat" (
+  echo [+] Registering external watchdog Task Scheduler...
+  call "%TARGET%\.claude\scripts\external-watchdog-register.bat" >nul 2>&1
+  if errorlevel 1 (
+    echo       [WARN] Task Scheduler 등록 실패 - SessionStart hook 에서 재시도됨
+  ) else (
+    echo       Done (1분 간격, Hidden, VSCode hang 감지)
+  )
+)
+
 rem --- Source analysis (optional) ---
 if /i "%ANALYZE_MODE%"=="true" (
   if exist "%TARGET%\.claude\scripts\analyze.bat" (

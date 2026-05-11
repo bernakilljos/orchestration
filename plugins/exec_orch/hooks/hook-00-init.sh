@@ -60,6 +60,18 @@ cat <<'REMINDER'
 상세: .claude/rules/best-practices.md § Zero-touch 자동화
 
 ==============================
+ ⚠ Template Kit 원칙 (공통 폴더 적용)
+==============================
+- orchestration_v1 은 다른 폴더에 install 로 배포되는 공통 kit
+- ~/.claude/ 직접 수정 X → setup/templates/ + setup/modules/03-settings.bat
+- 다른 프로젝트 폴더 (ICM/IFRS/calc 등) 직접 수정 X → install 재배포
+- 새 파일·기능마다 자문: "다른 머신·다른 사용자에서도 동작?"
+                          "install 로 자동 배포?"
+                          "사용자 액션 0개?"
+
+상세: .claude/rules/best-practices.md § Template kit 원칙
+
+==============================
  ⚠ 하드 경로 금지 (cross-machine)
 ==============================
 - 사용자명/Python버전/OS절대경로 박지 말 것

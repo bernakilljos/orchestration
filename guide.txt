@@ -858,6 +858,46 @@
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  2026-05-11 안정성 + zero-touch 자동화 누적 (commit 11건):
+    ✓ Watchdog 메모리 누수·자살 로직 보강 (24371f0)
+       - Claude 세션 stale 시 watchdog 가 자살하던 로직 제거 (워커 유지)
+       - RSS+자식 합산 임계 모니터링 (default 2GB, --max-rss-mb)
+       - max-uptime 정책 (default 6h)
+       - psutil → tasklist → ps fallback
+       - kill_worker_tree (taskkill /T /F + killpg)
+       - 로그 백업 5개 회전 유지
+       - orca-status.sh task-instruction.md 템플릿 제외 카운팅
+    ✓ Hook 4개 추가 등록 (67664ff, b127d2b)
+       - PreToolUse Bash: block_dangerous_bash.py, log_bash_command.py
+       - PostToolUse Edit|Write: post_write_pycheck.py, markdown_formatter.py
+       - OS 인식 + 따옴표 안 자연어 무시 (commit msg false positive 해결)
+       - Windows cp949 인코딩 자동 회피 (UTF-8 강제)
+    ✓ Agents sync 추가 (aebdffe)
+       - sync-plugins.sh 가 commands/skills 만 처리하던 것 → agents 포함
+       - 누락 4개 복구: agent-01-judge, agent-07-code-reviewer, 08-test-runner, 09-explorer
+       - 동명 6 그룹 (총 27 인스턴스) md5 동일 — idempotent 덮어쓰기
+    ✓ External Watchdog (OS-level, Task Scheduler 1분 간격) (247b3e9, c22ab03, 72bc1cc)
+       - VSCode hang 외부 감지 (heartbeat 5분 정지 + VSCode 살아있음)
+       - SessionStart hook 으로 idempotent 자동 등록 (사용자 액션 0)
+       - VBS wrapper + Task Hidden 속성 → cmd 창 깜빡임 제거
+       - WATCHDOG_AUTO_RESTART=1 옵션 (강제 재시작, 디폴트 off)
+       - WATCHDOG_NOTIFY=1 옵션 (BurntToast 알림)
+    ✓ 협업 원칙 5중 박기 (247b3e9, fef1338, 330187e)
+       - 농땡이 금지 (전수조사·분석·실행·확인·보고 5단계)
+       - Zero-touch 자동화 (사용자 액션 요구 X, 알림은 크리티컬 5가지만)
+       - 하드 경로 금지 (사용자명·Python 버전·OS 절대경로 X, 동적 검색)
+       - Template kit 원칙 (orchestration_v1 = 공통 배포 kit, ~/.claude/ 직접 X)
+       - 박힌 위치: memory + CLAUDE.md + rules/{failure-mode,best-practices} + hook-00-init.sh
+    ✓ Global CLAUDE.md template + install 배포 (506216b)
+       - setup/templates/global-CLAUDE.md (3원칙 + 4번째 template kit 원칙)
+       - setup/modules/03-settings.bat 가 ~/.claude/CLAUDE.md 로 배포
+       - 기존 파일 .bak 백업 후 덮어쓰기
+    ✓ 하드 경로 wrapper 패턴 (330187e)
+       - audit-*.py 3개: C:/Users/ja205/AppData/Local/Temp/ → tempfile.gettempdir()
+       - external-watchdog Task Scheduler: python 풀패스 박는 대신 wrapper.bat
+         wrapper 가 매번 where python / py launcher / registry 순 동적 검색
+       - setup.iss 주석 placeholder 화
+
   2026-04-30 R51~R71 누적 (43 슬라이드 PPT × 3종):
     ✓ 차트·SVG·카드 그리드 4 패턴 표준화 (skill § 13)
     ✓ Screens 워크플로우 신규 (docs/screens/our-html → PNG)

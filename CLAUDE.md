@@ -145,6 +145,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 9. 거짓 npm 패키지명 커맨드 (실측 없이) — `npm view` 검증 필수
 10. **농땡이 (=일부 샘플로 단정)** — 사용자 지시는 무조건 전수조사. 파일명만 보고 중복/필요없다 판정 X, spec md 만 보고 .sh/.py 안 본 채 판정 X. 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 11. **사용자 액션 요구** — "이 .bat 한 번만 실행해주세요" 류 금지. 셋업·등록·시작은 SessionStart hook 으로 자동. 알림은 크리티컬 5가지(시크릿 노출/데이터 손실/보안 위협/비용 폭증/시스템 손상) 만. 상세: `.claude/rules/best-practices.md` § Zero-touch 자동화
+12. **`~/.claude/` 직접 수정 / 다른 프로젝트 폴더 직접 수정** — orchestration_v1 은 **install/setup 으로 다른 폴더에 배포되는 공통 kit**. 글로벌·다른 프로젝트는 `setup/templates/` + `setup/modules/` 거쳐 자동 배포. 상세: `.claude/rules/best-practices.md` § Template kit 원칙
 
 ---
 
