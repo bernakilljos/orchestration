@@ -2,8 +2,8 @@
 # sync-plugins.sh v2 — plugins/ → .claude/ 단방향 동기화 + 고도화 검사
 #
 # 기능:
-#   1. 단방향 sync: plugins/<name>/{commands,skills}/*.md → .claude/{commands,skills}/
-#   2. 충돌 룰(rename map) 적용
+#   1. 단방향 sync: plugins/<name>/{commands,skills,agents}/*.md → .claude/{commands,skills,agents}/
+#   2. 충돌 룰(rename map) 적용 — 동명 파일 md5 동일이면 마지막 plugin 으로 idempotent 덮어쓰기
 #   3. Orphan 탐지: .claude/ 에만 있는 파일 경고
 #   4. Diff 상세: dry-run 시 내용 차이 표시
 #   5. 역방향 드리프트 감지: .claude/ 파일이 plugins/ 와 다르면 경고
@@ -165,10 +165,14 @@ for plugin in $ORDER; do
   plugin_dir="plugins/${plugin}/"
   [ -d "$plugin_dir" ] || continue
 
-  for sub in commands skills; do
+  for sub in commands skills agents; do
     if [ -d "${plugin_dir}${sub}" ]; then
       for f in "${plugin_dir}${sub}"/*.md; do
         [ -f "$f" ] || continue
+        # agents/README.md 같은 부속 문서는 skip (agent 정의가 아님)
+        case "$(basename "$f")" in
+          README.md|readme.md) continue ;;
+        esac
         sync_file "$f" "$sub"
       done
     fi
@@ -196,7 +200,7 @@ if [ -f ".claude/orphan-allow.txt" ]; then
 fi
 
 orphan_list=()
-for sub in commands skills; do
+for sub in commands skills agents; do
   [ -d ".claude/${sub}" ] || continue
   for f in ".claude/${sub}"/*.md; do
     [ -f "$f" ] || continue

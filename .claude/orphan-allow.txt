@@ -23,3 +23,4 @@ teacher.md
 # --- _template 예시 (skill-creator 패턴 참고용) ---
 example.md
 skill-example.md
+agent-example.md
