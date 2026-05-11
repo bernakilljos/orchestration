@@ -205,7 +205,7 @@ def _kor_image_for(title):
 
 
 def render_chapter(doc, ch):
-    """8 섹션 표준 챕터 렌더링 — PageLayoutTracker 로 자동 fit."""
+    """8 섹션 표준 챕터 렌더링 — PageLayoutTracker + 빈 페이지 방지."""
     tracker = PageLayoutTracker("docx-landscape")
 
     H(doc, ch["title"], level=1); tracker.add("h1")
@@ -276,7 +276,7 @@ def render_chapter(doc, ch):
         P(doc, "Q. " + q)
         P(doc, "A. " + a, color=(100, 100, 100))
 
-    PB(doc)
+    PB(doc)  # 챕터 끝 — 다음 챕터 분리 (시작 PB 와 중복 안 됨)
 
 
 # ============================================================

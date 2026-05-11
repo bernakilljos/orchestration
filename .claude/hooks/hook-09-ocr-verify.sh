@@ -38,6 +38,17 @@ EOF
   fi
 fi
 
+# docx 구조 검증 (빈 페이지·중복 break) — build-*-doc.py 호출 시
+VERIFY_DOCX="$PROJECT_ROOT/.claude/scripts/verify-docx-structure.py"
+if [ -f "$VERIFY_DOCX" ] && echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then
+  DOCX_RESULT="$(python "$VERIFY_DOCX" 2>&1 || true)"
+  if echo "$DOCX_RESULT" | grep -q 'FAIL'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 docx] 구조 검증 실패 (빈 페이지·중복 break):\n$DOCX_RESULT"}
+EOF
+  fi
+fi
+
 if [ ! -f "$VERIFY_PPT" ]; then
   exit 0
 fi

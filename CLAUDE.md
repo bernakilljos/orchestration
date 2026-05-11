@@ -152,6 +152,8 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 16. **멈춤 방지 — 사용자 액션 요구 X** — 파일 잠금·네트워크·권한 fail 시 즉시 sys.exit X. 60초 폴링·지수 backoff·대안 도구 자동 시도. "Word 닫고 재시도" 같은 노동 떠넘김 = 위반. 폴링 시작·완료는 stdout 만, 사용자 호출은 크리티컬 5가지 (시크릿/데이터손실/보안/비용/시스템손상) 만. 상세: `.claude/rules/best-practices.md` § 멈춤 방지
 17. **페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)** — 이미지 비율 검증만 X. H1·callout·캡션·이미지·표 모든 요소 height 합산 후 페이지 한계 내. 빈 여백·짤림·글씨 작음 = 같은 문제 다른 증상. PageLayoutTracker 의무 (skill: `auto-layout-fit`). 빌더 IMG 호출 시 자동 max_height 계산. 상세: `.claude/rules/teaching-doc.md` § 페이지 콘텐츠 fit
 18. **사용자 요청 받으면 auto-planner skill 자동 활성** — "X 해줘"·"X 고쳐줘"·결함 지적 받자마자 5단계 plan (전수조사·분석·실행·확인·보고) + 30+ rule 자가 점검 + 막히면 codex/gemini 위임. 매번 사용자가 지시 기다림 X = Generative→Agentic 약점 보완. skill: `plugins/exec_orch/skills/auto-planner.md`
+19. **회피·딴말 금지** — 사용자 질문 빙빙 돌리거나 다른 주제 전환 X. 직접 답 (yes/no/숫자/방법) → 부연 → 행동. "그건 그렇지만"·"여러 옵션이 있는데"·"중요한 게 아니라" = 회피. 사용자가 결함 지적했는데 시스템 자랑 = 위반. 상세: `.claude/rules/failure-mode.md` § 회피 안티패턴
+20. **docx 구조 검증 의무** — build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09 통합). 빈 paragraph 5개+ 연속·중복 page_break 자동 감지. 사용자가 "빈 페이지 있네" 한 후에야 fix = 농땡이. 상세: `.claude/scripts/verify-docx-structure.py`
 
 ---
 
