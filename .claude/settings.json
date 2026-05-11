@@ -55,7 +55,8 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"", "timeout": 5 }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"", "timeout": 5 },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"", "timeout": 10 }
         ]
       }
     ],
