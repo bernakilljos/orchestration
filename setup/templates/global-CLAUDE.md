@@ -124,6 +124,13 @@ grep -rn 'Python3(10|11|12|13|14)\\python\\.exe' .  # Python 버전
 - 의존성 충돌: 대안 도구 자동 사용
 - 사용자에게 "Word 닫고 재시도" = 위반
 
+### 자율 Plan — Auto-Planner 자동 활성
+- 사용자 요청 받자마자 5단계 plan (전수조사·분석·실행·확인·보고)
+- 작업 시작 전 30+ rule 자가 점검
+- 큰 작업·반복 패턴 = codex/gemini 위임 (task-instruction.md)
+- Generative→Agentic 단계 약점 보완 핵심
+- skill: plugins/exec_orch/skills/auto-planner.md
+
 ### 페이지 콘텐츠 전체 fit (H1+callout+이미지+표 합산)
 - 이미지 비율만 검증 X — 모든 요소 height 누적 계산
 - 빈 여백·짤림·글씨 작음 = 같은 문제의 다른 증상

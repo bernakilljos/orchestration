@@ -91,6 +91,17 @@ cat <<'REMINDER'
 상세: .claude/rules/teaching-doc.md § 산출물 명명
 
 ==============================
+ ⚠ Auto-Planner 자동 활성 (사용자 요청 받자마자)
+==============================
+- "해줘"·"고쳐줘"·결함 지적 받자마자 5단계 plan 생성
+  1) 전수조사  2) 분석  3) 실행  4) 확인  5) 보고
+- 작업 전 30+ rule 자가 점검
+- 큰 작업·반복 패턴 = codex/gemini 위임
+- 사용자가 매번 지시 기다림 X (Generative→Agentic 약점 보완)
+
+skill: plugins/exec_orch/skills/auto-planner.md
+
+==============================
  ⚠ 페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)
 ==============================
 - 이미지 비율만 X — 페이지의 모든 요소 height 합산

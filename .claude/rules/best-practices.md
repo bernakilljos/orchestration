@@ -97,6 +97,26 @@ orchestration_v1 은 **여러 머신·여러 사용자에서 동작**해야 함.
 
 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 
+## 자율 Plan — Auto-Planner 의무
+
+사용자 요청 받으면 **auto-planner skill 즉시 활성** (description 매칭).
+
+### 5단계 자율 진행
+1. **전수조사** — 범위 + 인접 시스템 모두
+2. **분석** — 누락·위험·rule 매핑
+3. **실행** — 큰 작업 = codex/gemini 위임
+4. **확인** — 자동 검증 hook
+5. **보고** — 표·목록 + 남은 결정사항
+
+### 자가 점검 의무
+작업 시작 전 30+ rule (CLAUDE.md § 7 + .claude/rules/) 자동 체크.
+
+### Claude → 외부 위임 기준
+- **위임**: 코드 500줄+ / 반복 패턴 / 자동화 스크립트
+- **직접**: 시스템 매핑 / rule 설계 / 디자인 결정
+
+상세: `plugins/exec_orch/skills/auto-planner.md`
+
 ## 멈춤 방지 — 외부 의존 fail 시 자동 우회
 
 빌드·실행 중 외부 의존 (파일 잠금·네트워크·권한·도구 누락) fail 시 **즉시 멈추지 말고 자동 우회**.

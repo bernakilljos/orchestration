@@ -151,6 +151,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 15. **산출물 페이지 fit 사전검증 (docx · pptx · pdf 전체)** — 이미지 임베드 전 PIL 로 PNG 비율 측정 → 산출물별 페이지 비율 (docx portrait 1.46 / docx landscape 0.69 / pptx 16:9 0.54 / pptx 4:3 0.71 / pdf portrait 1.41 / pdf landscape 0.71) 과 비교 → 잘림·빈공간 자동 조정. PNG 빌드 시 viewport 비율 = 페이지 비율 강제 (full_page=False + clip). 사용자가 "짤린다" 한 후에야 fix = 농땡이. 자동 검증: `verify-image-fit.py` + hook-09 (build/generate/render-*-(ppt/doc/diagrams/pdf/html).py 트리거). 상세: `.claude/rules/teaching-doc.md` § 페이지 fit 검증
 16. **멈춤 방지 — 사용자 액션 요구 X** — 파일 잠금·네트워크·권한 fail 시 즉시 sys.exit X. 60초 폴링·지수 backoff·대안 도구 자동 시도. "Word 닫고 재시도" 같은 노동 떠넘김 = 위반. 폴링 시작·완료는 stdout 만, 사용자 호출은 크리티컬 5가지 (시크릿/데이터손실/보안/비용/시스템손상) 만. 상세: `.claude/rules/best-practices.md` § 멈춤 방지
 17. **페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)** — 이미지 비율 검증만 X. H1·callout·캡션·이미지·표 모든 요소 height 합산 후 페이지 한계 내. 빈 여백·짤림·글씨 작음 = 같은 문제 다른 증상. PageLayoutTracker 의무 (skill: `auto-layout-fit`). 빌더 IMG 호출 시 자동 max_height 계산. 상세: `.claude/rules/teaching-doc.md` § 페이지 콘텐츠 fit
+18. **사용자 요청 받으면 auto-planner skill 자동 활성** — "X 해줘"·"X 고쳐줘"·결함 지적 받자마자 5단계 plan (전수조사·분석·실행·확인·보고) + 30+ rule 자가 점검 + 막히면 codex/gemini 위임. 매번 사용자가 지시 기다림 X = Generative→Agentic 약점 보완. skill: `plugins/exec_orch/skills/auto-planner.md`
 
 ---
 
