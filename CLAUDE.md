@@ -154,6 +154,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 18. **사용자 요청 받으면 auto-planner skill 자동 활성** — "X 해줘"·"X 고쳐줘"·결함 지적 받자마자 5단계 plan (전수조사·분석·실행·확인·보고) + 30+ rule 자가 점검 + 막히면 codex/gemini 위임. 매번 사용자가 지시 기다림 X = Generative→Agentic 약점 보완. skill: `plugins/exec_orch/skills/auto-planner.md`
 19. **회피·딴말 금지** — 사용자 질문 빙빙 돌리거나 다른 주제 전환 X. 직접 답 (yes/no/숫자/방법) → 부연 → 행동. "그건 그렇지만"·"여러 옵션이 있는데"·"중요한 게 아니라" = 회피. 사용자가 결함 지적했는데 시스템 자랑 = 위반. 상세: `.claude/rules/failure-mode.md` § 회피 안티패턴
 20. **docx 구조 검증 의무** — build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09 통합). 빈 paragraph 5개+ 연속·중복 page_break 자동 감지. 사용자가 "빈 페이지 있네" 한 후에야 fix = 농땡이. 상세: `.claude/scripts/verify-docx-structure.py`
+21. **수정·빌드 후 자동 검증 후 보고** — "수정했습니다" 만 보고 X. 검증 도구 자동 실행 → PASS 확인 → 보고 순서. FAIL 이면 사용자에게 알리지 않고 자동 재시도 (max 3회). 3회 후에도 FAIL = 솔직히 보고 + 사용자 결정. 검증 매트릭스: PNG/docx/pptx/코드. 상세: `.claude/rules/best-practices.md` § 검증 후 보고
 
 ---
 

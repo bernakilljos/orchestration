@@ -97,6 +97,25 @@ orchestration_v1 은 **여러 머신·여러 사용자에서 동작**해야 함.
 
 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 
+## 검증 후 보고 — "수정했습니다" 만 X
+
+수정·빌드 후 반드시 검증 도구 실행·PASS 확인 후 보고.
+
+### 의무 흐름
+1. 수정·빌드
+2. 검증 도구 자동 발동 (PNG=verify-image-fit, docx=verify-docx-structure, pptx=verify-ppt-overflow)
+3. PASS 확인
+4. 보고
+5. FAIL → 사용자 알리지 않고 즉시 재수정 (max 3회)
+6. 3회 후에도 FAIL → 솔직히 보고 + 사용자 결정
+
+### 금지
+- 검증 X 하고 "완료" 보고 = 위반
+- 사용자가 결과 보고 짚어줘야 알게 됨 = 농땡이
+- 검증 FAIL 무시하고 다음 작업 = 위반
+
+상세 매트릭스: `feedback_verify_before_report.md`
+
 ## 자율 Plan — Auto-Planner 의무
 
 사용자 요청 받으면 **auto-planner skill 즉시 활성** (description 매칭).
