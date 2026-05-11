@@ -95,10 +95,20 @@ grep -rn 'Python3(10|11|12|13|14)\\python\\.exe' .  # Python 버전
 
 ---
 
+## ④ Template kit 원칙 (orchestration_v1 발 배포)
+
+이 글로벌 CLAUDE.md 는 `orchestration_v1/setup/templates/global-CLAUDE.md` 에서 `install.bat` 실행 시 자동 배포된 결과물.
+
+- **이 파일 직접 수정 X** — 다음 install 때 덮어쓰여짐 (`.bak` 백업 자동 생성)
+- 수정하려면 `orchestration_v1/setup/templates/global-CLAUDE.md` 편집 → `install.bat` 재실행
+- 다른 프로젝트 폴더 (ICM·IFRS·calc 등) 도 동일 — orchestration_v1 발 install/setup 으로 재배포
+
+---
+
 ## 출처·강화
 
 이 원칙은 다음 프로젝트에서 반복 실수로 학습됨 → 모든 프로젝트로 일반화:
-- `C:\pjt\orchestration_v1` — 2026-05-11 사용자가 농땡이·하드경로 반복 지적
+- `C:\pjt\orchestration_v1` — 2026-05-11 사용자가 농땡이·하드경로·template kit 원칙 반복 지적
 
 추가 강화 위치 (프로젝트별):
 - `<proj>/CLAUDE.md` § 7 금지 사항
