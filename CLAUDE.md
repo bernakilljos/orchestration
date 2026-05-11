@@ -143,6 +143,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 7. `.claude/` 직접 편집 (sync가 덮어씀)
 8. 빈 task `done/` 이동 (위장 완료)
 9. 거짓 npm 패키지명 커맨드 (실측 없이) — `npm view` 검증 필수
+10. **농땡이 (=일부 샘플로 단정)** — 사용자 지시는 무조건 전수조사. 파일명만 보고 중복/필요없다 판정 X, spec md 만 보고 .sh/.py 안 본 채 판정 X. 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 
 ---
 

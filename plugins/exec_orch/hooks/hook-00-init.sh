@@ -34,4 +34,19 @@ if [ -f "$PROJECT/package.json" ]; then
 fi
 [ -f "$PROJECT/pom.xml" ] && echo "[HOOK-00] Detected: Spring Boot"
 
+# === 농땡이 방지 reminder (매 세션 강제 노출 — 5중 박기 중 1) ===
+cat <<'REMINDER'
+
+==============================
+ ⚠ 농땡이 방지 5단계 (사용자 지시 처리)
+==============================
+1. 전수조사  — 인접 시스템·전역까지 모든 위치 훑기
+2. 분석      — md5sum/diff/본문으로 내용 검증 (파일명만 보고 단정 X)
+3. 실행      — 발견한 문제를 코드로 수정
+4. 확인      — smoke test/dry-run/로그 점검
+5. 보고      — 표·목록으로 결과 + 남은 결정사항
+
+상세: .claude/rules/failure-mode.md § 농땡이 안티패턴
+REMINDER
+
 exit 0
