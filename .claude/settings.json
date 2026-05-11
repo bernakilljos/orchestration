@@ -76,7 +76,8 @@
         "hooks": [
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-visible-windows.sh\"" },
           { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_dangerous_bash.py\"", "timeout": 3 },
-          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_bash_command.py\"", "timeout": 3 }
+          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_bash_command.py\"", "timeout": 3 },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/pre-build-reminder.sh\"", "timeout": 3 }
         ]
       }
     ],

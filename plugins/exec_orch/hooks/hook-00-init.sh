@@ -72,6 +72,49 @@ cat <<'REMINDER'
 상세: .claude/rules/best-practices.md § Template kit 원칙
 
 ==============================
+ ⚠ 교재·강의 doc 작성 시 8섹션 + 다이어그램 품질 의무
+==============================
+- 각 챕터: 핵심 / 표 / 흐름 / 강점 / 약점 / 강추 / 우리시스템 매핑 / 점검
+- 외국어 이미지 → 한글 다이어그램으로 "대체" (영어+한글 X, 한글만)
+- 다이어그램 = SVG/HTML 기반 + 화살표 + 흐름 (단순 박스/표 = 위반)
+- 도구 우선순위: HTML/CSS+SVG (Playwright) > Mermaid > matplotlib
+- 5살 청자 톤. 비유·일상 예시
+
+==============================
+ ⚠ 산출물 버전 접미사 금지 (-v2, -v3)
+==============================
+- docx/pptx/pdf 빌드 시 잠금 폴백으로 -v2 만들기 X
+- 백업 + 덮어쓰기: original.docx.bak 만들고 original.docx 덮어쓰기
+- 원본 잠겨있으면 사용자에게 알림 ("원본 닫아주세요")
+- 버전은 사용자 명시 요청 시만
+
+상세: .claude/rules/teaching-doc.md § 산출물 명명
+
+==============================
+ ⚠ 페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)
+==============================
+- 이미지 비율만 X — 페이지의 모든 요소 height 합산
+- 빈 여백·짤림·글씨 작음 = 같은 문제
+- 빌더에 PageLayoutTracker (skill auto-layout-fit) 의무
+- 사용자가 "여백 큰데"·"짤려" 한 후 fix = 농땡이
+
+상세: .claude/rules/teaching-doc.md § 페이지 콘텐츠 fit
+       skill: plugins/exec_orch/skills/auto-layout-fit.md
+
+==============================
+ ⚠ 페이지 fit 검증 (docx · pptx · pdf 전체)
+==============================
+- 모든 산출물 (docx · pptx · pdf · html) 페이지 비율 측정 의무
+- 산출물별 비율 (h/w):
+    docx portrait 1.46 · landscape 0.69
+    pptx 16:9 0.54 · 4:3 0.71
+    pdf portrait 1.41 · landscape 0.71
+- PNG viewport 비율 = 페이지 비율 (full_page=False + clip)
+- 자동 검증: verify-image-fit.py + hook-09 (build/generate/render-* 트리거)
+
+상세: .claude/rules/teaching-doc.md § 페이지 fit 검증
+
+==============================
  ⚠ 하드 경로 금지 (cross-machine)
 ==============================
 - 사용자명/Python버전/OS절대경로 박지 말 것

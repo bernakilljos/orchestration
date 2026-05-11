@@ -16,20 +16,32 @@ else
   CMD="$(echo "$INPUT" | grep -oE '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/')"
 fi
 
-# generate-*-ppt.py 패턴 매칭 (자동화·team·plugins·final 모두)
-if ! echo "$CMD" | grep -qE 'generate-([a-z]+-)?ppt\.py'; then
+# 산출물 빌드 패턴 매칭 (확장: build-*-doc / build-*-diagrams / generate-*-ppt / render-* / pdf)
+if ! echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(ppt|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py'; then
   exit 0
 fi
 
-# 프로젝트 루트 (.claude/hooks/ 의 부모의 부모)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-VERIFY_SCRIPT="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
 
-if [ ! -f "$VERIFY_SCRIPT" ]; then
-  echo '{"systemMessage": "[hook-09] verify-ppt-overflow.py not found — skipping OCR verify"}' >&2
+# PPT 검증
+VERIFY_PPT="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
+# 일반 이미지 fit 검증 (PNG 비율 vs 페이지 비율)
+VERIFY_FIT="$PROJECT_ROOT/.claude/scripts/verify-image-fit.py"
+
+if [ -f "$VERIFY_FIT" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py'; then
+  FIT_RESULT="$(python "$VERIFY_FIT" 2>&1 || true)"
+  if echo "$FIT_RESULT" | grep -q 'FAIL'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 fit] 이미지 fit 검증 실패:\n$FIT_RESULT"}
+EOF
+  fi
+fi
+
+if [ ! -f "$VERIFY_PPT" ]; then
   exit 0
 fi
+VERIFY_SCRIPT="$VERIFY_PPT"
 
 # 검증 실행
 RESULT="$(python "$VERIFY_SCRIPT" 2>&1 || true)"

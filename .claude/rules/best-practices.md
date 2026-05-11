@@ -97,6 +97,42 @@ orchestration_v1 은 **여러 머신·여러 사용자에서 동작**해야 함.
 
 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 
+## 멈춤 방지 — 외부 의존 fail 시 자동 우회
+
+빌드·실행 중 외부 의존 (파일 잠금·네트워크·권한·도구 누락) fail 시 **즉시 멈추지 말고 자동 우회**.
+
+### 자동 우회 매트릭스
+
+| Fail 원인 | 자동 대응 |
+|---|---|
+| 파일 잠금 (PermissionError) | 60초 폴링 (`_wait_unlock`) + 1회 알림 |
+| 네트워크 fail | 지수 backoff (10s/30s/60s/2m) |
+| 도구 미설치 | `pip`/`npm` 자동 install + retry |
+| 의존성 충돌 | 대안 도구 자동 사용 (tesseract → easyocr → PIL) |
+| 권한 부족 | elevation 시도, 안 되면 alternate path |
+
+### 금기
+
+- `sys.exit(1)` + "사용자가 X 해주세요" 노동 떠넘김 = 위반
+- 사용자가 같은 명령 반복 입력 = 시스템 결함
+
+### 강추 패턴
+
+```python
+def _wait_unlock(path, max_sec=60, interval=2):
+    elapsed = 0
+    while elapsed < max_sec:
+        try:
+            test = path.with_suffix(path.suffix + ".lock-test")
+            path.rename(test); test.rename(path)
+            return True
+        except (PermissionError, OSError):
+            if elapsed == 0:
+                print(f"[WAIT] {path.name} 잠김 — {max_sec}초 폴링")
+            time.sleep(interval); elapsed += interval
+    return False
+```
+
 ## Zero-touch 자동화 (사용자 액션 요구 금지)
 
 새 기능·셋업·설치는 **사용자 명령 없이** 동작해야 함.

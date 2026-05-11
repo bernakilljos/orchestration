@@ -95,6 +95,52 @@ grep -rn 'Python3(10|11|12|13|14)\\python\\.exe' .  # Python 버전
 
 ---
 
+## ⑤ 교재·강의 doc 작성 8섹션 + 다이어그램 품질 의무 (v2)
+
+사용자에게 가르치는 문서 만들 때 각 챕터에 반드시 8 섹션:
+1. 📚 핵심 한 줄
+2. 📊 표 (비교·구조)
+3. 🌊 흐름도·단계
+4. 💪 강점
+5. ⚠️ 약점·주의
+6. ⭐ 강추 시점
+7. 🎯 우리 시스템 매핑 (orchestration_v1 의 어디·어떻게)
+8. 🧪 점검 1줄
+
+### 이미지·다이어그램 규칙
+- 외국어 이미지는 한글로 **대체** (영어+한글 같이 X)
+- 다이어그램 = **SVG/HTML 기반 + 화살표 + 흐름** 필수
+- 단순 박스/표만 = "다이어그램 아닌 표" — 위반
+- 도구 우선순위: HTML/CSS+SVG (Playwright) > Mermaid > matplotlib
+
+### 산출물 명명
+- 자동 -v2/-v3 버전 접미사 X. .bak 백업 후 원본 덮어쓰기.
+- 버전은 사용자 명시 요청 시만 ("v2 저장해", "스냅샷")
+
+### 멈춤 방지 — 외부 의존 fail 자동 우회
+- 파일 잠금: 60초 폴링 (즉시 sys.exit X)
+- 네트워크 fail: 지수 backoff
+- 도구 미설치: pip/npm 자동 install + retry
+- 의존성 충돌: 대안 도구 자동 사용
+- 사용자에게 "Word 닫고 재시도" = 위반
+
+### 페이지 콘텐츠 전체 fit (H1+callout+이미지+표 합산)
+- 이미지 비율만 검증 X — 모든 요소 height 누적 계산
+- 빈 여백·짤림·글씨 작음 = 같은 문제의 다른 증상
+- 빌더 script IMG 호출 전 누적 height tracker 의무
+- skill: auto-layout-fit (PageLayoutTracker 사용)
+
+### 페이지 fit 사전검증 (docx · pptx · pdf 전체)
+- 이미지 임베드 전 PIL 로 PNG 비율 측정
+- 산출물별 페이지 비율:
+  - docx portrait/landscape: 1.46 / 0.69
+  - pptx 16:9 / 4:3: 0.54 / 0.71
+  - pdf portrait/landscape: 1.41 / 0.71
+- PNG 빌드 시 viewport 비율 = 페이지 비율 강제 (full_page=False + clip)
+- 사용자가 "짤린다" 한 후에야 fix = 위반
+
+톤은 **5살 청자 가정**. "그림 풀이만" = 농땡이. 우리 매핑 빠지면 = 위반.
+
 ## ④ Template kit 원칙 (orchestration_v1 발 배포)
 
 이 글로벌 CLAUDE.md 는 `orchestration_v1/setup/templates/global-CLAUDE.md` 에서 `install.bat` 실행 시 자동 배포된 결과물.
