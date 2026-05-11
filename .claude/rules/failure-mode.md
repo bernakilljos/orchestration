@@ -82,6 +82,22 @@ failure-mode 의 "확신 없으면 거절" 룰을 **회피 수단으로 오용**
 4. `.claude/rules/best-practices.md` § 농땡이 회피
 5. `plugins/exec_orch/hooks/hook-00-init.sh` (매 세션 강제 노출)
 
+## 알림 허용 — 크리티컬 5가지만 (Zero-touch 자동화)
+
+사용자에게 진행 상황을 알리는 것은 **다음 5가지 위험 상황에서만**.
+그 외엔 침묵 + 로그 파일 기록 (.claude/logs/, .claude/state/).
+
+| # | 상황 | 예시 |
+|---|---|---|
+| 1 | 시크릿 노출 | PAT/API 키가 commit·push 직전 감지 |
+| 2 | 데이터 손실 | 대량 파일 삭제, force push, 비가역 DB 작업 |
+| 3 | 보안 위협 | 외부 유출, 권한 상승, 신뢰 못한 소스 실행 |
+| 4 | 비용 폭증 | 일일 budget 80% 초과 또는 단발 $10+ |
+| 5 | 시스템 손상 | OS 설정·레지스트리·계정 권한 변경 |
+
+5가지 이외 진행 상황 (설치, 등록, sync, spawn, 정리 등) 은 **자동 실행 + 로그만**.
+"사용자가 ~ 해주세요" 류 안내 금지. 상세: `.claude/rules/best-practices.md` § Zero-touch 자동화
+
 ## 참조
 
 - 이미지: `docs/screens/arch/AI에이전트-9가지숨은킬러-판데이.jpg` § #9

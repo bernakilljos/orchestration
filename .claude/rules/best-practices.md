@@ -58,6 +58,27 @@
 
 상세: `.claude/rules/failure-mode.md` § 농땡이 안티패턴
 
+## Zero-touch 자동화 (사용자 액션 요구 금지)
+
+새 기능·셋업·설치는 **사용자 명령 없이** 동작해야 함.
+
+### 자동화 대상
+- 패키지/MCP 설치, Task Scheduler 등록, 워커 spawn, sync, 마이그레이션
+- "사용자가 .bat 한 번만 실행" 같은 안내는 SessionStart hook 으로 흡수
+
+### 알림 허용 — 크리티컬 5가지만
+1. 시크릿 노출 (PAT/키 commit·push 직전)
+2. 데이터 손실 (대량 삭제·force push 등 비가역)
+3. 보안 위협 (외부 유출, 권한 상승)
+4. 비용 폭증 (일일 budget 80% 초과 또는 단발 $10+)
+5. 시스템 손상 (OS 설정·레지스트리·계정 권한)
+
+위 외 모든 진행은 **로그 파일에만** (.claude/logs/, .claude/state/).
+
+### 금기
+- "사용자 결정 필요" 빈발 — 가장 합리적 옵션 자동 선택 후 결과 보고
+- "한 번만 실행해 주세요" — hook 으로 자동화 후 idempotent 보장
+
 ## 참조
 
 - `.claude/rules/plugin-structure.md` — 플러그인 구조

@@ -47,6 +47,17 @@ cat <<'REMINDER'
 5. 보고      — 표·목록으로 결과 + 남은 결정사항
 
 상세: .claude/rules/failure-mode.md § 농땡이 안티패턴
+
+==============================
+ ⚠ Zero-touch 자동화 원칙
+==============================
+- 사용자 액션 요구 금지 — 모든 셋업은 SessionStart hook 으로 자동
+- 알림은 크리티컬 5가지만:
+    1) 시크릿 노출  2) 데이터 손실  3) 보안 위협
+    4) 비용 폭증    5) 시스템 손상
+- 그 외 진행 상황은 침묵 + 로그 (.claude/logs/, .claude/state/)
+
+상세: .claude/rules/best-practices.md § Zero-touch 자동화
 REMINDER
 
 exit 0
