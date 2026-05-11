@@ -19,10 +19,15 @@ set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%..\.."
 set "TASK_NAME=ClaudeOrcaExternalWatchdog"
 
-rem 정규화된 경로 — wrapper .bat 만 schtasks 에 등록 (하드 경로 금지)
+rem 정규화된 경로 — VBS wrapper 만 schtasks 에 등록 (cmd 창 hidden + 하드 경로 금지)
 for %%I in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fI"
+set "WRAPPER_VBS=%PROJECT_ROOT%\.claude\scripts\run-external-watchdog.vbs"
 set "WRAPPER_BAT=%PROJECT_ROOT%\.claude\scripts\run-external-watchdog.bat"
 
+if not exist "%WRAPPER_VBS%" (
+    echo [ERROR] %WRAPPER_VBS% 없음
+    exit /b 1
+)
 if not exist "%WRAPPER_BAT%" (
     echo [ERROR] %WRAPPER_BAT% 없음
     exit /b 1
@@ -31,11 +36,12 @@ if not exist "%WRAPPER_BAT%" (
 rem 기존 작업 있으면 삭제 (idempotent)
 schtasks /Delete /TN "%TASK_NAME%" /F >nul 2>&1
 
-rem 1분 간격 등록 — wrapper.bat 만 등록, python 위치는 wrapper 가 매번 동적 검색
+rem 1분 간격 등록 — wscript 로 .vbs 호출, .vbs 가 .bat 을 hidden(SW_HIDE) 실행
+rem python 위치는 wrapper.bat 가 매번 동적 검색 (하드코딩 X)
 schtasks /Create ^
     /SC MINUTE /MO 1 ^
     /TN "%TASK_NAME%" ^
-    /TR "\"%WRAPPER_BAT%\"" ^
+    /TR "wscript.exe \"%WRAPPER_VBS%\"" ^
     /F ^
     /RU "%USERNAME%"
 
@@ -43,6 +49,10 @@ if errorlevel 1 (
     echo [FAIL] Task Scheduler 등록 실패
     exit /b 1
 )
+
+rem --- Hidden 속성 강제 (Task Scheduler GUI 'Hidden' 체크박스 = true) ---
+rem schtasks /Create 에는 Hidden 옵션이 없어 PowerShell 로 추가 설정.
+powershell -NoProfile -Command "$t=Get-ScheduledTask -TaskName '%TASK_NAME%' -ErrorAction SilentlyContinue; if($t){$t.Settings.Hidden=$true; $t.Settings.DisallowStartIfOnBatteries=$false; $t.Settings.StopIfGoingOnBatteries=$false; Set-ScheduledTask -InputObject $t | Out-Null}" >nul 2>&1
 
 echo [OK] %TASK_NAME% 등록 완료
 echo      간격: 1분
