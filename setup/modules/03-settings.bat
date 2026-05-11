@@ -30,6 +30,18 @@ if exist "!CMD_SRC!" (
   echo       [SKIP] commands source not found: !CMD_SRC!
 )
 
+rem --- 글로벌 CLAUDE.md 배포 (협업 원칙: 농땡이 금지 + Zero-touch + 하드경로 금지) ---
+echo [+] Installing global CLAUDE.md...
+set "GCLAUDE_SRC=%~dp0..\templates\global-CLAUDE.md"
+set "GCLAUDE_DST=!REAL_USERPROFILE!\.claude\CLAUDE.md"
+if exist "!GCLAUDE_SRC!" (
+  if exist "!GCLAUDE_DST!" copy /Y "!GCLAUDE_DST!" "!GCLAUDE_DST!.bak" >nul 2>&1
+  copy /Y "!GCLAUDE_SRC!" "!GCLAUDE_DST!" >nul 2>&1
+  echo       Done ^(농땡이 금지 + Zero-touch + 하드경로 금지^)
+) else (
+  echo       [SKIP] global CLAUDE.md template not found: !GCLAUDE_SRC!
+)
+
 rem --- 토큰 최적화 환경변수 설정 ---
 echo [+] Setting token optimization env vars...
 setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000 >nul 2>&1
