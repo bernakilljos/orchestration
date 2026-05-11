@@ -13,6 +13,14 @@ import subprocess
 import sys
 from datetime import datetime
 
+# Windows 콘솔 cp949 회피 — UTF-8 강제 (ASCII 출력 사용 + 이중 안전망)
+try:
+    if sys.platform == "win32":
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, Exception):
+    pass
+
 def _run(cmd, cwd):
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, shell=False)
     return p.returncode, p.stdout.strip(), p.stderr.strip()
@@ -42,9 +50,9 @@ def main():
 
     msg_lines = []
     if rc == 0:
-        msg_lines.append(f"✓ py_compile OK: {file_path}")
+        msg_lines.append(f"[OK] py_compile OK: {file_path}")
     else:
-        msg_lines.append(f"✗ py_compile FAIL: {file_path}")
+        msg_lines.append(f"[FAIL] py_compile FAIL: {file_path}")
         if err:
             msg_lines.append(err)
 
@@ -56,9 +64,9 @@ def main():
         if os.path.exists(qt):
             rc2, out2, err2 = _run([sys.executable, qt], cwd=project_dir)
             if rc2 == 0:
-                msg_lines.append("✓ quick_tests OK")
+                msg_lines.append("[OK] quick_tests OK")
             else:
-                msg_lines.append("✗ quick_tests FAIL")
+                msg_lines.append("[FAIL] quick_tests FAIL")
                 if out2:
                     msg_lines.append(out2[-1200:])
                 if err2:
