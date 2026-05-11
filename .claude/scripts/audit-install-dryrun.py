@@ -15,7 +15,10 @@ import re
 import sys
 import io
 import shutil
+import tempfile
 from pathlib import Path
+
+_TMP_DIR = Path(tempfile.gettempdir())
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
@@ -95,7 +98,7 @@ for target in TARGETS:
         continue
     content = Path(target).read_text(encoding='utf-8', errors='replace')
     transformed = transform(content)
-    tmp = Path(f'C:/Users/ja205/AppData/Local/Temp/_dryrun_{Path(target).name}')
+    tmp = _TMP_DIR / f'_dryrun_{Path(target).name}'
     tmp.write_text(transformed, encoding='utf-8')
 
     try:

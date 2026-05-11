@@ -137,7 +137,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 1. task-instruction.md 없이 Codex 호출
 2. Gemini 리뷰 자동 채택 (Claude가 결정)
 3. 같은 파일 동시 수정 (Writer=1)
-4. 하드코딩 (API 키·경로·시크릿) — `.env` 사용
+4. 하드코딩 (API 키·경로·시크릿·사용자명·OS 절대경로·Python 버전) — `.env` + 런타임 동적 검색 (`where`/`tempfile`/`%USERPROFILE%`). Task Scheduler 같은 곳도 wrapper 거쳐 동적화. 상세: `.claude/rules/best-practices.md` § 하드 경로 금지
 5. optional chaining (`?.`) 사용
 6. 코드 주석에 "owner(주인)" 사용
 7. `.claude/` 직접 편집 (sync가 덮어씀)

@@ -22,6 +22,7 @@ import io
 import ast
 import json
 import shutil
+import tempfile
 from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -75,7 +76,7 @@ def progress(label):
 
 
 # ===== 1. BAT - cmd parsing context mode =====
-TMP = Path('C:/Users/ja205/AppData/Local/Temp/_audit_all.bat')
+TMP = Path(tempfile.gettempdir()) / '_audit_all.bat'
 for t in BAT_TARGETS:
     progress(t + ' [bat parsing]')
     content = Path(t).read_text(encoding='utf-8', errors='replace')

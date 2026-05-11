@@ -98,6 +98,18 @@ failure-mode 의 "확신 없으면 거절" 룰을 **회피 수단으로 오용**
 5가지 이외 진행 상황 (설치, 등록, sync, spawn, 정리 등) 은 **자동 실행 + 로그만**.
 "사용자가 ~ 해주세요" 류 안내 금지. 상세: `.claude/rules/best-practices.md` § Zero-touch 자동화
 
+## 하드 경로 검증 게이트
+
+PR/commit 전 다음 패턴 grep 으로 검증 — 매치되면 REJECT:
+- `C:\\Users\\[a-z0-9_]+` (사용자명 박힘)
+- `/home/[a-z0-9_]+` / `/Users/[a-z0-9_]+`
+- `Python3(10|11|12|13|14)\\python\.exe` (Python 버전 박힘)
+- `DESKTOP-[A-Z0-9]+` / 특정 호스트명
+- 특정 IP `192\.168\.\d+\.\d+` 등 (test fixture 외)
+
+허용: 주석 안의 예시 텍스트는 `%USERNAME%` / `<username>` 같은 placeholder.
+상세: `.claude/rules/best-practices.md` § 하드 경로 금지
+
 ## 참조
 
 - 이미지: `docs/screens/arch/AI에이전트-9가지숨은킬러-판데이.jpg` § #9

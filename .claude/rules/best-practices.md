@@ -47,6 +47,27 @@
 - 절대 하드코딩 금지
 - `.env` 는 gitignore
 
+## 하드 경로 금지 (cross-machine 배포 필수)
+
+orchestration_v1 은 **여러 머신·여러 사용자에서 동작**해야 함. 사용자명·Python 버전·OS 절대경로 박지 말 것.
+
+### 금지 예시 → 대체
+
+| 금지 | 대체 |
+|---|---|
+| `C:\Users\ja205\AppData\...` | `os.environ['TEMP']` 또는 `tempfile.gettempdir()` |
+| `/home/ja205/...` | `Path.home()` 또는 `$HOME` |
+| `C:\...\Python314\python.exe` | `shutil.which('python')` / `where python` 동적 검색 |
+| `DESKTOP-AR8DB38` | `socket.gethostname()` / `%COMPUTERNAME%` |
+
+### Task Scheduler / cron 패턴
+스케줄러는 사용자 PATH 못 받으므로 절대 경로 필요 → **wrapper .bat / .sh 도입**.
+- 스케줄러에는 wrapper 경로만 (프로젝트 내) 박음
+- wrapper 내부에서 `where python` 등으로 런타임 검색
+- 도구 위치 바뀌어도 wrapper 가 흡수 — 재등록 불필요
+
+예: `.claude/scripts/run-external-watchdog.bat` 가 wrapper. schtasks 에는 이것만 등록.
+
 ## 농땡이 회피 (사용자 지시 처리 5단계)
 사용자가 작업 지시 시 다음 5단계 완주 — 임의 축소 금지.
 

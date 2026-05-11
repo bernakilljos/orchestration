@@ -12,6 +12,7 @@ import subprocess
 import re
 import sys
 import io
+import tempfile
 from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -24,8 +25,10 @@ TARGETS = [
     'setup/install-from-git.bat',
 ] + sorted(str(p) for p in Path('setup/modules').glob('*.bat'))
 
-TMP_LINE = Path('C:/Users/ja205/AppData/Local/Temp/_audit_line.bat')
-TMP_CTX = Path('C:/Users/ja205/AppData/Local/Temp/_audit_ctx.bat')
+# OS-agnostic 임시 디렉토리 (Windows TEMP / Unix /tmp 자동)
+_TMP = Path(tempfile.gettempdir())
+TMP_LINE = _TMP / '_audit_line.bat'
+TMP_CTX = _TMP / '_audit_ctx.bat'
 
 errors = []
 

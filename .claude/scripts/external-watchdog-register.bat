@@ -19,33 +19,23 @@ set "SCRIPT_DIR=%~dp0"
 set "PROJECT_ROOT=%SCRIPT_DIR%..\.."
 set "TASK_NAME=ClaudeOrcaExternalWatchdog"
 
-rem Python 절대 경로 자동 감지 (Task Scheduler 는 user PATH 못 받으므로 풀패스 필수)
-set "PY_PATH="
-for /f "tokens=*" %%P in ('where python 2^>nul') do (
-    if not defined PY_PATH set "PY_PATH=%%P"
-)
-if not defined PY_PATH (
-    echo [ERROR] python 명령을 찾을 수 없음. PATH 확인 필요.
-    exit /b 1
-)
-
-rem 정규화된 경로
+rem 정규화된 경로 — wrapper .bat 만 schtasks 에 등록 (하드 경로 금지)
 for %%I in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fI"
-set "WATCHDOG_PY=%PROJECT_ROOT%\.claude\scripts\external-watchdog.py"
+set "WRAPPER_BAT=%PROJECT_ROOT%\.claude\scripts\run-external-watchdog.bat"
 
-if not exist "%WATCHDOG_PY%" (
-    echo [ERROR] %WATCHDOG_PY% 없음
+if not exist "%WRAPPER_BAT%" (
+    echo [ERROR] %WRAPPER_BAT% 없음
     exit /b 1
 )
 
 rem 기존 작업 있으면 삭제 (idempotent)
 schtasks /Delete /TN "%TASK_NAME%" /F >nul 2>&1
 
-rem 1분 간격 등록 — python 절대 경로 사용 (Task Scheduler PATH 한계 우회)
+rem 1분 간격 등록 — wrapper.bat 만 등록, python 위치는 wrapper 가 매번 동적 검색
 schtasks /Create ^
     /SC MINUTE /MO 1 ^
     /TN "%TASK_NAME%" ^
-    /TR "\"%PY_PATH%\" \"%WATCHDOG_PY%\" --once" ^
+    /TR "\"%WRAPPER_BAT%\"" ^
     /F ^
     /RU "%USERNAME%"
 

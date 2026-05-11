@@ -58,6 +58,16 @@ cat <<'REMINDER'
 - 그 외 진행 상황은 침묵 + 로그 (.claude/logs/, .claude/state/)
 
 상세: .claude/rules/best-practices.md § Zero-touch 자동화
+
+==============================
+ ⚠ 하드 경로 금지 (cross-machine)
+==============================
+- 사용자명/Python버전/OS절대경로 박지 말 것
+- 동적 검색: where python | tempfile.gettempdir() | %USERPROFILE%
+- Task Scheduler 는 wrapper.bat 거쳐 동적 검색
+- 검증 grep: C:\\Users\\[a-z]+ / /home/[a-z]+ / Python3[0-9]+
+
+상세: .claude/rules/best-practices.md § 하드 경로 금지
 REMINDER
 
 exit 0

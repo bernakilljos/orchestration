@@ -35,8 +35,7 @@ AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppSupportURL={#MyAppURL}
 ; 기본값: 현재 사용자의 프로필 아래 pjt 폴더 ({userprofile} 동적 — 하드코딩 X)
-;   예) ja205 PC → C:\Users\ja205\pjt
-;       다른 사용자 → C:\Users\<해당사용자>\pjt
+;   예) %USERNAME% PC → %USERPROFILE%\pjt (런타임 자동 치환)
 ; Browse 로 다른 폴더 선택 시 그 폴더 그대로 사용 (AppendDefaultDirName=no)
 DefaultDirName={%USERPROFILE}\pjt
 ; 사용자가 Browse 로 선택한 폴더에 AppName 자동 추가 금지 — 선택한 폴더 그대로 사용
