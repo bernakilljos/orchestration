@@ -36,6 +36,20 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
     *)       GUIDE="[MoE 자동] Claude 직접 처리 ($REASON)" ;;
   esac
 
+  # Subagent 자동 가이드 — 큰 탐색/리뷰 키워드 감지 → Task tool 권장
+  SUBAGENT_GUIDE=""
+  if echo "$PROMPT" | grep -qE '전수조사|전체.*탐색|전체.*검색|모든.*파일|모든.*폴더|코드베이스|whole.?code|grep.*all'; then
+    SUBAGENT_GUIDE="\n\n[Subagent 자동] '큰 코드베이스 탐색' 감지 → Task tool 로 Explore subagent 자동 호출 권장 (메인 컨텍스트 격리)"
+  elif echo "$PROMPT" | grep -qE '리뷰|review|코드 검토|PR 검토'; then
+    SUBAGENT_GUIDE="\n\n[Subagent 자동] '코드 리뷰' 감지 → Task tool 로 code-reviewer subagent 자동 호출 권장"
+  fi
+
+  # Activation 로그 (background)
+  LOG_ACT="$PROJECT_ROOT/.claude/scripts/log-activation.py"
+  if [ -f "$LOG_ACT" ]; then
+    (PYTHONIOENCODING=utf-8 python "$LOG_ACT" hook user-prompt-auto-planner "$PROMPT" --result success >/dev/null 2>&1) &
+  fi
+
   # Memory 자동 recall — 키워드 (3-tier) + RAG 의미 검색 둘 다
   RECALL_SCRIPT="$PROJECT_ROOT/.claude/scripts/recall-memory.py"
   RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
@@ -65,7 +79,7 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   fi
 
   cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[auto-planner ENFORCED]\n사용자 메시지에 작업 지시·결함 지적·점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템·전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동·PASS 확인\n5) 보고 — 표·목록으로 결과 + 남은 결정사항\n\n금기:\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피·딴말 (직접 답 → 부연 → 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}"}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[auto-planner ENFORCED]\n사용자 메시지에 작업 지시·결함 지적·점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템·전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동·PASS 확인\n5) 보고 — 표·목록으로 결과 + 남은 결정사항\n\n금기:\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피·딴말 (직접 답 → 부연 → 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}"}}
 EOF
 fi
 
