@@ -239,6 +239,12 @@ def _max_height_for(title):
     return None
 
 
+# cwd 기반 PROJECT_NAME 동적 — team 폴더에서 빌드하면 v2_team
+import os
+_cwd = Path(os.getcwd()).name
+SYSTEM_NAME = "orchestration_v2_team" if "team" in _cwd.lower() else "orchestration_v1"
+
+
 def render_chapter(doc, ch, idx=0):
     """8 섹션 표준 챕터 렌더링 — PageLayoutTracker + 빈 페이지 방지.
 
@@ -309,7 +315,7 @@ def render_chapter(doc, ch, idx=0):
 
     # 7. 우리 시스템 매핑 (가장 중요)
     if ch.get("우리시스템"):
-        H(doc, "🎯 우리 시스템 매핑 — orchestration_v1 의 어디·어떻게", level=3)
+        H(doc, f"🎯 우리 시스템 매핑 — {SYSTEM_NAME} 의 어디·어떻게", level=3)
         if isinstance(ch["우리시스템"], dict):
             table(doc, ["개념", "우리 시스템 위치 / 동작"], list(ch["우리시스템"].items()),
                   header_fill="C00000")
@@ -322,12 +328,11 @@ def render_chapter(doc, ch, idx=0):
         H(doc, "🎯 비유 (5살에게 설명한다면)", level=3)
         P(doc, ch["비유"])
 
-    # 8. 점검
+    # 8. 강사 결론 (이전 "점검" Q/A 대체)
     if ch.get("점검"):
-        H(doc, "🧪 점검 — 한 줄 시험", level=3)
-        q, a = ch["점검"]
-        P(doc, "Q. " + q)
-        P(doc, "A. " + a, color=(100, 100, 100))
+        H(doc, "🎯 강사 결론 — 한 마디", level=3)
+        _, a = ch["점검"]
+        P(doc, a, size=12, bold=True, color=(192, 0, 0))
 
     # 챕터 끝 PB 제거 — 다음 챕터의 시작 PB 가 처리 (빈 페이지 방지)
 
@@ -342,7 +347,7 @@ CHAPTERS = [
         "image_eng": "GenerativeAI-vs-AgenticAI-vs-AIAgents.jpg",
         "image_kor": "01-gen-vs-agentic-vs-agent.png",
         "핵심": "Generative = 글·그림을 한 번에 만들어 주는 AI. Agentic = 스스로 단계를 짜고 계획하는 AI. AI Agent = 외부 도구·API 까지 직접 호출하며 결과 평가하는 AI. 셋은 진화 단계이자, 한 시스템에 같이 들어갈 수도 있습니다.",
-        "강사": ["여러분, AI 라고 하면 보통 ChatGPT 만 떠올리시죠? 근데 AI 가 사실 진화 단계가 있어요.", "Generative 는 '글만 쓰는 카피라이터'. 시키는 대로 한 번 답하고 끝.", "Agentic 는 '신입 매니저' — 목표 주면 단계를 짜요. 단 실행은 사람이.", "AI Agent 는 '경력 매니저' — 외부 API 까지 직접 호출하고 24/7 돌아갑니다.", "**우리 orchestration_v1 = Multi-Agent (가장 진화)** — Claude+Codex+Gemini+Haiku 가 회사처럼 협업."],
+        "강사": ["여러분, AI 라고 하면 보통 ChatGPT 만 떠올리시죠? 근데 AI 가 사실 진화 단계가 있어요.", "Generative 는 '글만 쓰는 카피라이터'. 시키는 대로 한 번 답하고 끝.", "Agentic 는 '신입 매니저' — 목표 주면 단계를 짜요. 단 실행은 사람이.", "AI Agent 는 '경력 매니저' — 외부 API 까지 직접 호출하고 24/7 돌아갑니다.", "**우리 시스템 = Multi-Agent (가장 진화)** — Claude+Codex+Gemini+Haiku 가 회사처럼 협업."],
         "표": {
             "header": ["구분", "Generative", "Agentic", "AI Agent"],
             "rows": [
