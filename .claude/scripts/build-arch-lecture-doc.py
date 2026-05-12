@@ -201,6 +201,41 @@ def _kor_image_for(title):
     for prefix, png in CHAPTER_TO_KOR.items():
         if title.startswith(prefix):
             return png
+
+
+# 사용자 전수조사 (2026-05-11) — 챕터별 이미지 max_height (inch)
+# A4 landscape inside 7.33 - H1(0.55) - safety(0.3) = 6.48 한계 → max 6.4 clamp
+# base = 6.0 → 사용자 ratio 그대로 적용 + 빈 페이지 방지
+CHAPTER_MAX_HEIGHT = {
+    "1. AI 3종 세트": 5.40,                    # -10%
+    "2. AI 에이전트의 8가지": 6.00,            # 그대로
+    "3. 에이전트의 5가지": 6.00,              # 그대로
+    "4. 9가지 숨은 함정": 5.40,                # -10%
+    "5. AI 스택 5층": 5.40,                   # -10%
+    "6. 에이전트 개발킷": 5.40,                # -10%
+    "7. 제로비용 AI": 5.40,                   # -10%
+    "8. AI 빌더 도구": 5.40,                   # -10%
+    "9. RAG 입문": 6.30,                       # +5%
+    "10. RAG 8가지": 6.18,                     # +3%
+    "11. API 프로토콜": 5.40,                  # -10%
+    "12. MCP vs A2A": 6.06,                    # +1%
+    "13. Claude 마스터": 6.00,                 # 재배치 (그대로)
+    "14. Claude Code 결정트리": 6.00,          # 그대로 (좋아)
+    "15. Claude Code 완전 가이드": 5.40,       # -10%
+    "16. Claude Code 아키텍처 레퍼런스": 5.40, # -10%
+    "17. Claude Code 프로젝트 구조": 5.40,     # -10%
+    "18. .claude 폴더": 6.00,                  # 그대로 (좋아)
+    "19. CLAUDE.md 설계": 5.40,                # -10%
+    "20. 8가지 프롬프트": 5.40,                # -10%
+}
+DEFAULT_MAX_HEIGHT = 6.0
+
+
+def _max_height_for(title):
+    for prefix, mh in CHAPTER_MAX_HEIGHT.items():
+        if title.startswith(prefix):
+            return mh
+    return DEFAULT_MAX_HEIGHT
     return None
 
 
@@ -216,16 +251,23 @@ def render_chapter(doc, ch, idx=0):
     h1_para = H(doc, ch["title"], level=1)
     if idx > 0:
         h1_para.paragraph_format.page_break_before = True  # 두 번째 챕터부터 새 페이지
+    # H1 + IMG 같은 페이지 보장 — keep_with_next + space_after 축소
+    h1_para.paragraph_format.keep_with_next = True
+    h1_para.paragraph_format.space_after = Pt(2)
     tracker.add("h1")
-    callout(doc, "📚 핵심 한 줄", ch["핵심"]); tracker.add("callout")
 
-    # 중간값 — width 9.3 inch · max_height 5.8 inch (페이지 70% 차지)
-    # viewport 1100×760 + width 9.3 → DPI 118 → 21px = 12.8pt 가독성 + 페이지 fit
+    # 사용자 전수조사 (2026-05-11) 챕터별 max_height 적용
+    # H1 + IMG 한 페이지 + PB → callout/본문 별도 페이지 (잘림 방지)
+    max_h = _max_height_for(ch["title"])
     kor_png = _kor_image_for(ch["title"])
     if kor_png:
-        IMG(doc, ARCH_KOR, kor_png, width=9.3, max_height=5.8, caption=None)
+        IMG(doc, ARCH_KOR, kor_png, width=10.5, max_height=max_h, caption=None)
     elif ch.get("image_kor"):
-        IMG(doc, ARCH_KOR, ch["image_kor"], width=9.3, max_height=5.8, caption=None)
+        IMG(doc, ARCH_KOR, ch["image_kor"], width=10.5, max_height=max_h, caption=None)
+
+    # IMG 후 강제 PB — 본문 (callout + 표 + ...) 별도 페이지 → 잘림 방지
+    PB(doc)
+    callout(doc, "📚 핵심 한 줄", ch["핵심"]); tracker.reset(); tracker.add("callout")
 
     # 2. 표
     if ch.get("표"):
@@ -349,16 +391,16 @@ CHAPTERS = [
         "image_kor": None,
         "핵심": "AI 뇌는 한 종류가 아닙니다. 작업에 맞는 뇌를 골라 써야 비용·품질이 최적.",
         "표": {
-            "header": ["뇌 유형", "장점", "약점", "예시", "★ 우리시스템"],
+            "header": ["뇌 유형", "예시", "★ 우리시스템 (현재)", "🔧 보완 (TODO)"],
             "rows": [
-                ["GPT (Transformer)", "글 범용", "추론 약", "Claude", "Claude Opus 4.7"],
-                ["MoE (전문가)", "효율·전문성", "라우팅 복잡", "Qwen 2", "route_dispatch.md"],
-                ["LRM (긴 추론)", "복잡 문제 강", "느림", "Gemini Flash", "Extended Thinking"],
-                ["VLM (이미지+글)", "그림 봄", "무거움", "GPT-4V", "Claude 멀티모달"],
-                ["SLM (작은)", "빠름·쌈", "복잡 약", "Gemma", "Haiku 4.5"],
-                ["LAM (행동)", "API 호출", "생성 약", "X-LAM", "MCP + tool use"],
-                ["HRM (계획→실행)", "분해 강", "단순엔 과함", "Sapient", "auto-planner.md"],
-                ["mHC (다층)", "잠재력↑", "표준 미약", "Deepseek", "킷 전체 구조"],
+                ["GPT (Transformer)", "Claude", "Claude Opus 4.7 ✅", "—"],
+                ["MoE (전문가 분배)", "Qwen 2", "route_dispatch.md (룰)", "★ 입력 자동 분류기 (1-2h)"],
+                ["LRM (긴 추론)", "Gemini Flash", "Extended Thinking ✅", "Gemini quota 통합 (30m)"],
+                ["VLM (이미지+글)", "GPT-4V", "Claude 멀티모달 ✅", "자동 OCR pipeline (1-2h)"],
+                ["SLM (작은·빠름)", "Gemma", "Haiku 4.5 + cache 90%↓ ✅", "—"],
+                ["LAM (행동)", "X-LAM", "MCP + Codex CLI ✅", "—"],
+                ["HRM (계획→실행)", "Sapient", "auto-planner.md (skill)", "★ 자동 발동 강화 (30m)"],
+                ["mHC (다층 협업)", "Deepseek", "킷 전체 구조 (수동 chain)", "자동 인수인계 chain (4-6h)"],
             ],
         },
         "흐름": [
@@ -391,14 +433,11 @@ CHAPTERS = [
         ],
         "우리시스템": {
             "결론": "★ 8개 모델 우리가 구현 X — Claude·Codex·Gemini·Haiku 가 이미 제공. 우리는 '언제 어느 뇌 쓸지' 라우팅만.",
-            "GPT": "Claude Opus 4.7 / Sonnet 4.6 (이미 Transformer 기반)",
-            "MoE": "시스템 레벨 MoE — route_dispatch.md 가 AI 단가·특성·quota 매트릭스로 자동 분배",
-            "LRM": "Claude 4.7 Extended Thinking 이 LRM 역할",
-            "VLM": "Claude 멀티모달 (이번 세션도 이미지 24장 OCR·분석)",
-            "SLM": "Haiku 4.5 (`haiku-auto` 가 검증 담당, prompt cache 90% 절감)",
-            "LAM": "MCP tool use + Bash/Edit/Write tool (codex CLI 가 LAM 강화)",
-            "HRM": "auto-planner.md skill — 5단계 계층 추론 (전수조사·분석·실행·확인·보고)",
-            "mHC": "킷 전체 구조 = mHC — Claude 설계 → Codex 구현 → Gemini 검증 → Haiku 빠른 검증",
+            "✅ 잘하는 3개": "GPT (Claude Opus 4.7), SLM (Haiku 4.5 + prompt cache 90%↓), LAM (MCP + Codex CLI)",
+            "🔧 보완 필요 5개": "★ MoE 자동 분류기 (1-2h) · ★ HRM 자동 발동 (30m) · mHC 자동 인수인계 (4-6h) · LRM Gemini 통합 (30m) · VLM 자동 OCR (1-2h)",
+            "🎯 가장 중요한 보완": "HRM 자동 발동 — 사용자가 매번 '5단계 해줘' 명시 X. Claude 가 자가 발동 (auto-planner skill description 매칭). 이번 세션 6시간 사용자 매번 지시받은 근본 원인.",
+            "왜 보완?": "Generative→Agentic→Agent→Multi-Agent 진화 중 Agent 단계 약점. 자가 발동·자가 분배·자가 인수인계 부족 → 사용자 매번 지시.",
+            "총 보완 시간": "1+2 우선 = 2시간 (즉시 큰 효과). 전부 = 8-10시간 (Phase 작업).",
         },
         "점검": ("8개 모델 중 우리가 코드로 구현하는 건 몇 개?", "0개. 모두 외부 모델 제공 — 우리는 라우팅·조율만."),
     },
@@ -1349,15 +1388,31 @@ doc = Document()
 
 # 페이지: landscape (가로) — 이미지 글씨 최대 가독성
 from docx.enum.section import WD_ORIENT
+from docx.shared import Mm
 for section in doc.sections:
     section.orientation = WD_ORIENT.LANDSCAPE
-    new_w, new_h = section.page_height, section.page_width
-    section.page_width = new_w
-    section.page_height = new_h
-    section.top_margin = Cm(1.2)
-    section.bottom_margin = Cm(1.2)
-    section.left_margin = Cm(1.5)
-    section.right_margin = Cm(1.5)
+    # A4 landscape (297×210mm = 11.69×8.27 inch) — PNG 비율 0.69 와 inside 비율 0.70 일치
+    section.page_width = Mm(297)
+    section.page_height = Mm(210)
+    section.top_margin = Cm(0.3)
+    section.bottom_margin = Cm(0.3)
+    section.left_margin = Cm(0.3)
+    section.right_margin = Cm(0.3)
+
+# default view zoom 100% + 인쇄 레이아웃 강제 (Word 가 페이지 가득 표시)
+# w:val="none" 강제 — "bestFit"이면 percent 무시되고 창에 맞춤 (작아 보임)
+_settings = doc.settings.element
+_zoom = _settings.find(qn("w:zoom"))
+if _zoom is None:
+    _zoom = OxmlElement("w:zoom")
+    _settings.insert(0, _zoom)
+_zoom.set(qn("w:val"), "none")
+_zoom.set(qn("w:percent"), "100")
+_view = _settings.find(qn("w:view"))
+if _view is None:
+    _view = OxmlElement("w:view")
+    _settings.insert(0, _view)
+_view.set(qn("w:val"), "print")
 
 
 # ---- 표지 ----
@@ -1389,19 +1444,22 @@ for i, ch in enumerate(CHAPTERS, 1):
 B(doc, "부록 A. AI 가 대체 못 하는 미래 직업 TOP20")
 B(doc, "부록 B. 한 줄 정리")
 B(doc, "부록 C. 고퀄리티 다이어그램 도구 (Canva·Figma·Mermaid)")
-PB(doc)
 
 
-# ---- 0. 들어가며 (1 페이지 fit — 자투리 방지) ----
-H(doc, "0. 들어가며 — 왜 지금 AI 를 배워야 하나요?", level=1)
-callout(doc, "📚 핵심 한 줄",
-        "AI 는 '도구' 가 아니라 '같이 일하는 동료'. 우리 orchestration_v1 은 4단계 Multi-Agent (가장 진화된 형태).")
-IMG(doc, ARCH_KOR, "00-ai-evolution.png", width=9.8, max_height=5.5, caption=None)
-H(doc, "이 강의를 듣고 나면 (5살 청자 톤·외국어 그림 한글 대체)", level=3)
-B(doc, "AI 글쓰기 (Generative) 와 일시키기 (Agent) 가 어떻게 다른지 압니다.")
-B(doc, "RAG / MCP / A2A 같은 단어를 친구가 던져도 무서워하지 않습니다. Claude Code 부담 없이 사용.")
-B(doc, "내 직업이 AI 에 대체되는지·보완되는지 감을 잡고, 우리 시스템 어디·어떻게 동작하는지 매핑.")
-PB(doc)
+# ---- 0. 들어가며 (IMG paragraph 자체에 page_break_before — 빈 PB 페이지 방지) ----
+_intro_para = doc.add_paragraph()
+_intro_para.paragraph_format.page_break_before = True
+_intro_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+_intro_para.paragraph_format.space_after = Pt(0)
+from PIL import Image as _PILImage
+_img_path = ARCH_KOR / "00-ai-evolution.png"
+with _PILImage.open(str(_img_path)) as _pim:
+    _iw, _ih = _pim.size
+_w_in, _h_in = 11.46, 11.46 * (_ih / _iw)
+if _h_in > 8.0:
+    _h_in = 8.0
+    _w_in = 8.0 * (_iw / _ih)
+_intro_para.add_run().add_picture(str(_img_path), width=Inches(_w_in), height=Inches(_h_in))
 
 
 # ---- 19 챕터 자동 렌더링 ----

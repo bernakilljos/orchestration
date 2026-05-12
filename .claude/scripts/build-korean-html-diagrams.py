@@ -13,7 +13,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 CSS = """
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Malgun Gothic','맑은 고딕','Pretendard',sans-serif; }
-body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
+body { width:1300px; height:900px; padding:8px 12px; overflow:hidden;
+       display:flex; flex-direction:column; justify-content:space-between;
        background:radial-gradient(ellipse at top,#F8FAFC 0%,#E8EFF8 100%); }
 .title { font-size:46px; font-weight:900; background:linear-gradient(135deg,#1F3864,#3F6FB5); -webkit-background-clip:text;
          -webkit-text-fill-color:transparent; text-align:center; margin-bottom:6px; }
@@ -24,7 +25,7 @@ body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
 .grid4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-bottom:24px; }
 .row5 { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:24px; }
 
-.card { padding:18px; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,0.08);
+.card { padding:13px 14px; border-radius:13px; box-shadow:0 5px 14px rgba(0,0,0,0.08);
         background:linear-gradient(135deg,#fff,#f7f9fc); border:2px solid #4472C4; position:relative; }
 .card-icon { font-size:42px; margin-bottom:8px; display:block; }
 .card-title { font-size:33px; font-weight:800; color:#1F3864; margin-bottom:8px; }
@@ -35,20 +36,20 @@ body { width:1300px; height:900px; padding:24px 32px; overflow:hidden;
 .chip { display:inline-block; padding:5px 14px; background:rgba(31,56,100,0.08); color:#1F3864;
         border-radius:14px; font-size:22px; font-weight:600; margin:3px; }
 
-.banner { margin-top:18px; padding:16px 22px; background:linear-gradient(135deg,#1F3864,#3F6FB5);
-          color:white; border-radius:14px; box-shadow:0 8px 24px rgba(31,56,100,0.25); }
-.banner-title { font-size:27px; font-weight:800; margin-bottom:8px; opacity:0.95; }
-.banner-content { font-size:21px; line-height:1.7; opacity:0.94; }
+.banner { margin-top:10px; padding:10px 16px; background:linear-gradient(135deg,#1F3864,#3F6FB5);
+          color:white; border-radius:12px; box-shadow:0 6px 18px rgba(31,56,100,0.25); }
+.banner-title { font-size:20px; font-weight:800; margin-bottom:4px; opacity:0.95; }
+.banner-content { font-size:15px; line-height:1.5; opacity:0.94; }
 .banner b { color:#FFE699; }
 
-.flow-step { display:flex; align-items:center; gap:16px; padding:14px 18px; border-radius:12px;
-             box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:6px; position:relative; }
-.flow-icon-box { width:60px; height:60px; border-radius:14px; display:flex; align-items:center;
+.flow-step { display:flex; align-items:center; gap:12px; padding:6px 12px; border-radius:10px;
+             box-shadow:0 3px 10px rgba(0,0,0,0.07); margin-bottom:4px; position:relative; }
+.flow-icon-box { width:42px; height:42px; border-radius:10px; display:flex; align-items:center;
                  justify-content:center; flex-shrink:0; font-size:30px; }
-.flow-title { font-size:30px; font-weight:800; color:#1F3864; margin-bottom:4px; }
-.flow-desc { font-size:21px; color:#444; line-height:1.5; }
-.flow-num { font-size:40px; font-weight:900; opacity:0.15; color:#1F3864; margin-left:auto; }
-.context-arrow { text-align:center; font-size:19px; color:#999; padding:2px; font-style:italic; letter-spacing:2px; }
+.flow-title { font-size:18px; font-weight:800; color:#1F3864; margin-bottom:2px; }
+.flow-desc { font-size:13px; color:#444; line-height:1.35; }
+.flow-num { font-size:34px; font-weight:900; opacity:0.15; color:#1F3864; margin-left:auto; }
+.context-arrow { display:none }
 
 .l1 { background:linear-gradient(135deg,#FFF5F5,#FFEBEB); border-left:6px solid #E53E3E; }
 .l1 .flow-icon-box { background:linear-gradient(135deg,#FC8181,#E53E3E); color:white; font-size:32px; }
@@ -81,8 +82,9 @@ PAGES = {}
 
 
 def page(title, subtitle, body, w=1400, h=900):
+    # h>900 무시 — viewport 1300×900 강제. 콘텐츠 자연 fit (body flex space-between).
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>{CSS}
-body {{ min-height:{h}px; }}</style></head><body>
+body {{ height:900px; }}</style></head><body>
 <div class="title">{title}</div>
 <div class="subtitle">{subtitle}</div>
 {body}
@@ -97,19 +99,18 @@ PAGES["01-gen-vs-agentic-vs-agent.png"] = page(
     "글만 쓰는 AI → 단계까지 짜는 AI → 손까지 움직이는 AI",
     """
 <style>
-.big-card { padding:36px 28px; border-radius:22px; box-shadow:0 10px 30px rgba(0,0,0,0.12);
-            text-align:center; position:relative; min-height:560px; }
-.big-icon { font-size:90px; margin-bottom:18px; }
-.big-title { font-size:42px; font-weight:900; color:#1F3864; margin-bottom:16px; }
-.big-tag { display:inline-block; padding:8px 18px; background:rgba(31,56,100,0.12); color:#1F3864;
-           border-radius:20px; font-size:27px; font-weight:700; margin:4px; }
-.big-line { font-size:33px; color:#333; line-height:1.7; text-align:left; margin-top:16px; padding:0 8px; }
+.big-card { padding:22px 18px; border-radius:18px; box-shadow:0 8px 22px rgba(0,0,0,0.10);
+            text-align:center; position:relative; min-height:450px; }
+.big-icon { font-size:62px; margin-bottom:10px; }
+.big-title { font-size:30px; font-weight:900; color:#1F3864; margin-bottom:10px; }
+.big-tag { display:inline-block; padding:5px 14px; background:rgba(31,56,100,0.12); color:#1F3864;
+           border-radius:16px; font-size:20px; font-weight:700; margin:4px; }
+.big-line { font-size:22px; color:#333; line-height:1.55; text-align:left; margin-top:12px; padding:0 8px; }
 .big-line b { color:#1F3864; }
-.big-num { position:absolute; top:18px; right:22px; font-size:80px; font-weight:900; opacity:0.1; color:#1F3864; }
-.arrow-big { font-size:60px; color:#666; align-self:center; }
+.big-num { position:absolute; top:12px; right:16px; font-size:60px; font-weight:900; opacity:0.1; color:#1F3864; }
 </style>
 
-<div class="grid3" style="margin-top:30px;">
+<div class="grid3" style="margin-top:14px;">
   <div class="big-card gradient-1">
     <span class="big-num">①</span>
     <div class="big-icon">✏️</div>
@@ -150,13 +151,13 @@ PAGES["01-gen-vs-agentic-vs-agent.png"] = page(
   </div>
 </div>
 
-<div class="banner" style="margin-top:34px;">
-  <div class="banner-title" style="font-size:33px;">🇰🇷 우리 orchestration_v1 = AI Agent + Multi-Agent System</div>
-  <div class="banner-content" style="font-size:27px;">
-    여러 에이전트가 협력 — <b>Claude(설계) → Codex×4(구현) → Gemini×2(검증) → Haiku×2(판정)</b>
+<div class="banner" style="margin-top:14px;">
+  <div class="banner-title" style="font-size:22px;">🇰🇷 우리 orchestration_v1 = AI Agent + Multi-Agent System</div>
+  <div class="banner-content" style="font-size:17px;">
+    여러 에이전트 협력 — <b>Claude(설계) → Codex×4(구현) → Gemini×2(검증) → Haiku×2(판정)</b>
   </div>
 </div>
-""", h=1100)
+""")
 
 
 # ============================================================
@@ -214,20 +215,16 @@ PAGES["02-5-cores.png"] = page(
   <div class="flow-icon-box">📊</div>
   <div>
     <div class="flow-title">Observability — CCTV</div>
-    <div class="flow-desc">왜 그렇게 답했는지 추적</div>
-    <div style="margin-top:6px"><span class="chip">Tracing</span><span class="chip">Token Metrics</span><span class="chip">Decision Logs</span><span class="chip">Alerting</span></div>
+    <div class="flow-desc">왜 그렇게 답했는지 추적. Tracing · Token Metrics · Decision Logs · Alerting</div>
   </div>
   <div class="flow-num">05</div>
 </div>
 
 <div class="banner">
   <div class="banner-title">🇰🇷 우리 orchestration_v1 의 5 핵심</div>
-  <div class="banner-content">
-    <b>①</b> Hook (block_dangerous_bash 등) · <b>②</b> exec_orch (route_dispatch) ·
-    <b>③</b> MCP 다수 · <b>④</b> orca.db + memory/ · <b>⑤</b> watchdog.log + external-watchdog
-  </div>
+  <div class="banner-content"><b>①</b> Hook · <b>②</b> exec_orch · <b>③</b> MCP · <b>④</b> orca.db + memory · <b>⑤</b> watchdog</div>
 </div>
-""", h=1200)
+""")
 
 
 # ============================================================
@@ -274,33 +271,31 @@ PAGES["09-9-killers.png"] = page(
     "9가지 숨은 함정 — 에이전트가 망하는 패턴",
     "이 9가지만 피하면 프로덕션 사고 80% 감소",
     """
-<div class="grid3">""" + "".join(f"""
-  <div class="card danger">
-    <span class="card-icon">{ico}</span>
-    <div class="card-title">{num} {name}</div>
-    <div class="card-desc">{desc}<br><br><b>✓ 고치는 법</b>: {fix}</div>
+<div class="grid3" style="margin-bottom:14px">""" + "".join(f"""
+  <div class="card danger" style="padding:12px 14px">
+    <span class="card-icon" style="font-size:32px;margin-bottom:4px">{ico}</span>
+    <div class="card-title" style="font-size:17px">{num} {name}</div>
+    <div class="card-desc" style="font-size:13px;line-height:1.45">{desc}<br><b style="color:#0F766E">✓</b> {fix}</div>
   </div>""" for ico, num, name, desc, fix in [
-    ("🔧", "01", "Tool Bloat", "도구 많아 모델 헷갈림", "적게·날카롭게"),
+    ("🔧", "01", "Tool Bloat", "도구 많음→모델 헷갈림", "적게·날카롭게"),
     ("📜", "02", "Context Decay", "대화 길어지면 규칙 묻힘", "핵심 규칙 다시 박기"),
-    ("☠️", "03", "Retrieval Poisoning", "잘못 문서 → 자신만만 틀림", "필터·랭킹·검증"),
-    ("🔄", "04", "Runaway Loop", "재시도 847번", "예산·중지·루프 가드"),
+    ("☠️", "03", "Retrieval Poison", "잘못 문서→틀림", "필터·랭킹·검증"),
+    ("🔄", "04", "Runaway Loop", "재시도 847번", "예산·중지 가드"),
     ("📝", "05", "Schema Drift", "v1→v2 못 봄", "스키마 버전·검증"),
     ("👀", "06", "Eval Blindness", "10 예시로만 검증", "실 트래픽 슬라이스"),
     ("🎲", "07", "Non-Determinism", "같은 입력 다른 답", "랜덤 제어·추적"),
-    ("💰", "08", "Cost Blind", "어느날 $48,200 청구", "작업당 비용 추적"),
-    ("🚪", "09", "No Failure Mode", "모르면 거짓말", "거절·헤지 정책"),
+    ("💰", "08", "Cost Blind", "$48,200 청구", "작업당 비용 추적"),
+    ("🚪", "09", "No Failure", "모르면 거짓말", "거절·헤지 정책"),
 ]) + """
 </div>
 
 <div class="banner">
   <div class="banner-title">🇰🇷 우리 시스템 — 9 함정 대응</div>
   <div class="banner-content">
-    <b>#1</b> plugin 분리 · <b>#2</b> 5중박기 + hook 출력 ·
-    <b>#4</b> watchdog backoff + kill_tree · <b>#6</b> eval_quality + score-task ·
-    <b>#8</b> orca.db budget + breaker · <b>#9</b> failure-mode.md 5중박기
+    <b>#1</b> plugin 분리 · <b>#4</b> watchdog backoff · <b>#6</b> eval_quality · <b>#8</b> orca.db budget · <b>#9</b> failure-mode.md
   </div>
 </div>
-""", h=1100)
+""")
 
 
 # ============================================================
@@ -402,15 +397,15 @@ PAGES["10-zero-cost.png"] = page(
     "제로비용 AI 아키텍처 2026",
     "회사 카드 없어도 AI 띄움 — 무료 도구 묶음",
     """
-<div style="display:grid;grid-template-columns:120px 1fr 80px;gap:14px;">""" + "".join(f"""
-  <div class="card {gc}" style="text-align:center;display:flex;flex-direction:column;justify-content:center">
-    <span style="font-size:36px">{ico}</span>
-    <div style="font-size:18px;font-weight:800;margin-top:4px">{layer}</div>
+<div style="display:grid;grid-template-columns:100px 1fr 60px;gap:8px;">""" + "".join(f"""
+  <div class="card {gc}" style="text-align:center;display:flex;flex-direction:column;justify-content:center;padding:6px 8px">
+    <span style="font-size:22px">{ico}</span>
+    <div style="font-size:12px;font-weight:800;margin-top:2px">{layer}</div>
   </div>
-  <div class="card" style="background:white">
-    <div style="font-size:21px;color:#444;line-height:1.7"><b>{tools}</b><br>{note}</div>
+  <div class="card" style="background:white;padding:6px 12px">
+    <div style="font-size:14px;color:#444;line-height:1.4"><b>{tools}</b><br>{note}</div>
   </div>
-  <div class="card" style="background:linear-gradient(135deg,#28A745,#1A7F3A);color:white;text-align:center;display:flex;align-items:center;justify-content:center;font-size:33px;font-weight:900">
+  <div class="card" style="background:linear-gradient(135deg,#28A745,#1A7F3A);color:white;text-align:center;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;padding:6px">
     $0
   </div>""" for ico, gc, layer, tools, note in [
     ("🖥️", "gradient-5", "Frontend", "Next.js · Streamlit · Vercel", "Free tier 만으로 가능"),
@@ -427,12 +422,9 @@ PAGES["10-zero-cost.png"] = page(
 
 <div class="banner">
   <div class="banner-title">🇰🇷 우리 = 거의 제로비용 스택 본보기</div>
-  <div class="banner-content">
-    Claude Code CLI(무료) + exec_orch(자체) + SQLite + 옵션 Ollama.
-    유료는 Claude API 만 (Pro $20/월).
-  </div>
+  <div class="banner-content">Claude Code CLI + exec_orch + SQLite + 옵션 Ollama. 유료는 Claude API 만 (Pro $20/월).</div>
 </div>
-""", h=1200)
+""")
 
 
 # ============================================================
@@ -442,16 +434,15 @@ PAGES["05-ai-builder-6cat.png"] = page(
     "AI 빌더 6 카테고리 매트릭스",
     "각 카테고리 × 5 도구 = 30 도구. 본인 필요만 골라쓰기",
     """
-<div style="display:flex;flex-direction:column;gap:10px">""" + "".join(f"""
-  <div style="display:grid;grid-template-columns:200px repeat(5,1fr);gap:8px;align-items:stretch">
-    <div class="card" style="background:linear-gradient(135deg,{bg1},{bg2});color:white;text-align:center;display:flex;flex-direction:column;justify-content:center;padding:14px">
-      <div style="font-size:16px;font-weight:600;opacity:0.85">{num}</div>
-      <div style="font-size:24px;font-weight:800;margin-top:2px">{name}</div>
-      <div style="font-size:16px;opacity:0.8;margin-top:4px">{intro}</div>
+<div style="display:flex;flex-direction:column;gap:6px">""" + "".join(f"""
+  <div style="display:grid;grid-template-columns:160px repeat(5,1fr);gap:6px;align-items:stretch">
+    <div class="card" style="background:linear-gradient(135deg,{bg1},{bg2});color:white;text-align:center;display:flex;flex-direction:column;justify-content:center;padding:6px 10px">
+      <div style="font-size:12px;font-weight:600;opacity:0.85">{num}</div>
+      <div style="font-size:17px;font-weight:800;margin-top:1px">{name}</div>
     </div>""" + "".join(f"""
-    <div class="card" style="background:white;border-color:{bg1};padding:14px;text-align:center;display:flex;flex-direction:column;justify-content:center">
-      <div style="font-size:21px;font-weight:800;color:#1F3864">{t}</div>
-      <div style="font-size:16px;color:#666;margin-top:4px">{d}</div>
+    <div class="card" style="background:white;border-color:{bg1};padding:6px 10px;text-align:center;display:flex;flex-direction:column;justify-content:center">
+      <div style="font-size:14px;font-weight:800;color:#1F3864">{t}</div>
+      <div style="font-size:11px;color:#666;margin-top:2px">{d}</div>
     </div>""" for t, d in tools) + """
   </div>""" for num, name, intro, bg1, bg2, tools in [
     ("01", "모델·검색", "더 나은 답·인사이트", "#1F3864", "#2E75B6", [
@@ -477,12 +468,9 @@ PAGES["05-ai-builder-6cat.png"] = page(
 
 <div class="banner">
   <div class="banner-title">🇰🇷 사용자 단계별 추천</div>
-  <div class="banner-content">
-    초보 = <b>1+2</b> (Claude + Claude Code) 만으로 80% · MVP = <b>+3</b> (Lovable·v0) ·
-    회사 배포 = <b>+4·5</b> · 콘텐츠 = <b>6</b>
-  </div>
+  <div class="banner-content">초보 = <b>1+2</b> · MVP = <b>+3</b> · 회사 배포 = <b>+4·5</b> · 콘텐츠 = <b>6</b></div>
 </div>
-""", h=1200)
+""")
 
 
 # ============================================================
@@ -585,13 +573,9 @@ PAGES["13-api-protocols.png"] = page(
 </div>
 
 <div class="banner">
-  <div class="banner-title">🇰🇷 우리 시스템</div>
-  <div class="banner-content">
-    MCP 서버들이 내부적으로 <b>REST</b> 사용. GitHub·Slack MCP 가 <b>Webhooks</b> 콜백 받음.
-    AI 작업 범위에서 다른 프로토콜 거의 불필요.
-  </div>
+  <div class="banner-title">🇰🇷 우리 시스템 — REST + Webhooks 만 사용 · MCP=REST · 다른 프로토콜 불필요</div>
 </div>
-""", h=1100)
+""")
 
 
 # ============================================================
@@ -754,14 +738,14 @@ PAGES["15-complete-guide.png"] = page(
     "Claude Code 완전 가이드 — 6 단계 사이클",
     "Install → Configure → Prompt → Review → Iterate → Ship",
     """
-<div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:30px;flex-wrap:wrap">""" + "".join(f"""
-  <div class="card {gc}" style="text-align:center;padding:18px 22px;min-width:160px">
-    <span class="card-icon">{ico}</span>
-    <div style="font-size:16px;color:#666">Step {num}</div>
-    <div style="font-size:24px;font-weight:800;color:#1F3864;margin-top:4px">{name}</div>
-    <div style="font-size:16px;color:#666;margin-top:6px">{desc}</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:10px;flex-wrap:nowrap">""" + "".join(f"""
+  <div class="card {gc}" style="text-align:center;padding:8px 10px;flex:1;min-width:0">
+    <span style="font-size:24px">{ico}</span>
+    <div style="font-size:11px;color:#666">Step {num}</div>
+    <div style="font-size:15px;font-weight:800;color:#1F3864;margin-top:1px">{name}</div>
+    <div style="font-size:11px;color:#666;margin-top:2px">{desc}</div>
   </div>""" + ("" if num == "6" else """
-  <div style="font-size:36px;color:#999">→</div>""") for ico, gc, num, name, desc in [
+  <div style="font-size:18px;color:#999">→</div>""") for ico, gc, num, name, desc in [
     ("📥", "gradient-5", "1", "Install", "claude CLI 설치"),
     ("⚙️", "gradient-3", "2", "Configure", "CLAUDE.md·hooks·skills"),
     ("✨", "gradient-1", "3", "Prompt", "구체적 요청"),
@@ -771,11 +755,11 @@ PAGES["15-complete-guide.png"] = page(
 ]) + """
 </div>
 
-<div style="text-align:center;color:#666;font-size:19px;font-style:italic;margin-top:-10px;margin-bottom:30px">
+<div style="text-align:center;color:#666;font-size:12px;font-style:italic;margin-bottom:8px">
   필요시 Step 6 → Step 3 으로 루프 ↺
 </div>
 
-<table class="compare-tbl">
+<table class="compare-tbl" style="font-size:11px">
 <tr><th>단계</th><th>할 일</th><th>산출물</th></tr>
 <tr><td><b>1 Install</b></td><td>Claude Code CLI 설치</td><td>claude 명령</td></tr>
 <tr><td><b>2 Configure</b></td><td>CLAUDE.md · hooks · skills</td><td>.claude/ 폴더</td></tr>
@@ -787,12 +771,9 @@ PAGES["15-complete-guide.png"] = page(
 
 <div class="banner">
   <div class="banner-title">🇰🇷 우리 시스템 — 6 단계 다 자동화 중</div>
-  <div class="banner-content">
-    <b>1</b> install.bat · <b>2</b> 이미 169줄 + 24 hooks · <b>3</b> task-instruction.md ·
-    <b>4</b> eval_quality + Haiku 자동 채점 · <b>5</b> watchdog 자동 부활 · <b>6</b> git + gh pr
-  </div>
+  <div class="banner-content"><b>1</b> install.bat · <b>2</b> 169줄+24 hooks · <b>3</b> task-instruction · <b>4</b> eval_quality · <b>5</b> watchdog · <b>6</b> git+gh pr</div>
 </div>
-""", h=1000)
+""")
 
 
 # ============================================================
@@ -855,7 +836,7 @@ PAGES["17-project-structure.png"] = page(
     "Claude Code 프로젝트 구조",
     "어디에 무엇을 두는가 표준 — 90점 시작",
     """
-<div style="font-family:Consolas,'Courier New',monospace;background:#1E1E1E;color:#D4D4D4;padding:24px;border-radius:14px;font-size:21px;line-height:1.8;box-shadow:0 8px 24px rgba(0,0,0,0.15)">
+<div style="font-family:Consolas,'Courier New',monospace;background:#1E1E1E;color:#D4D4D4;padding:12px 16px;border-radius:11px;font-size:13px;line-height:1.4;box-shadow:0 5px 16px rgba(0,0,0,0.15);margin-bottom:10px">
 <span style="color:#569CD6;font-weight:700">my_project/</span><br>
 &nbsp;&nbsp;<span style="color:#CE9178">📄 CLAUDE.md</span> <span style="color:#6A9955">— 팀 공유 규칙 (git commit)</span><br>
 &nbsp;&nbsp;<span style="color:#CE9178">📄 settings.json</span> <span style="color:#6A9955">— 권한 + hook 등록</span><br>
@@ -881,12 +862,9 @@ PAGES["17-project-structure.png"] = page(
 </table>
 
 <div class="banner">
-  <div class="banner-title">🇰🇷 우리 구조 — 표준 + 확장</div>
-  <div class="banner-content">
-    .claude/commands 152 · skills 77 · agents 11 · hooks 21 + plugins/ 25개 (SoT).
-  </div>
+  <div class="banner-title">🇰🇷 우리 구조 — commands 152 · skills 77 · agents 11 · hooks 21 + plugins 25 (SoT)</div>
 </div>
-""", h=1200)
+""")
 
 
 # ============================================================
@@ -942,44 +920,44 @@ PAGES["19-claude-md-design.png"] = page(
     "CLAUDE.md 설계 가이드 — 3 Scopes + WHAT/WHY/HOW + 5 Rules",
     "사람용 README 아닌 AI 팀원 온보딩 문서",
     """
-<div style="text-align:center;margin-bottom:18px;font-size:27px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin-bottom:6px;font-size:16px;color:#1F3864;font-weight:800">
   ① 3 SCOPES (가까운 게 이김)
 </div>
 <div class="grid3">
-  <div class="card gradient-5"><span class="card-icon">🌍</span>
-    <div class="card-title">GLOBAL</div>
-    <div class="card-desc"><b>위치</b>: ~/.claude/CLAUDE.md<br><b>용도</b>: 모든 프로젝트 공통</div></div>
-  <div class="card gradient-3"><span class="card-icon">📁</span>
-    <div class="card-title">PROJECT</div>
-    <div class="card-desc"><b>위치</b>: ./CLAUDE.md<br><b>용도</b>: 이 프로젝트 규칙</div></div>
-  <div class="card gradient-1"><span class="card-icon">📂</span>
-    <div class="card-title">FOLDER</div>
-    <div class="card-desc"><b>위치</b>: ./src/CLAUDE.md<br><b>용도</b>: 모듈별 오버라이드</div></div>
+  <div class="card gradient-5" style="padding:8px 12px"><span style="font-size:22px">🌍</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">GLOBAL</div>
+    <div style="font-size:11px;color:#444"><b>위치</b>: ~/.claude/CLAUDE.md · 모든 프로젝트</div></div>
+  <div class="card gradient-3" style="padding:8px 12px"><span style="font-size:22px">📁</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">PROJECT</div>
+    <div style="font-size:11px;color:#444"><b>위치</b>: ./CLAUDE.md · 이 프로젝트</div></div>
+  <div class="card gradient-1" style="padding:8px 12px"><span style="font-size:22px">📂</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">FOLDER</div>
+    <div style="font-size:11px;color:#444"><b>위치</b>: ./src/CLAUDE.md · 모듈별</div></div>
 </div>
-<div style="text-align:center;color:#666;font-style:italic;margin:10px 0">→ Folder > Project > Global (가까운 게 이김)</div>
+<div style="text-align:center;color:#666;font-style:italic;margin:4px 0;font-size:11px">→ Folder > Project > Global</div>
 
-<div style="text-align:center;margin:24px 0 18px;font-size:27px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin:8px 0 6px;font-size:16px;color:#1F3864;font-weight:800">
   ② WHAT / WHY / HOW 프레임워크
 </div>
 <div class="grid3">
-  <div class="card gradient-1"><span class="card-icon">📋</span>
-    <div class="card-title">WHAT</div>
-    <div class="card-desc">목적·기술스택·구조·의존성</div></div>
-  <div class="card danger"><span class="card-icon">⚡</span>
-    <div class="card-title">WHY</div>
-    <div class="card-desc">아키텍처 결정·스타일·금기</div></div>
-  <div class="card gradient-3"><span class="card-icon">⚙️</span>
-    <div class="card-title">HOW</div>
-    <div class="card-desc">build · test · lint · commit</div></div>
+  <div class="card gradient-1" style="padding:8px 12px"><span style="font-size:22px">📋</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">WHAT</div>
+    <div style="font-size:11px;color:#444">목적·스택·구조</div></div>
+  <div class="card danger" style="padding:8px 12px"><span style="font-size:22px">⚡</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">WHY</div>
+    <div style="font-size:11px;color:#444">결정·스타일·금기</div></div>
+  <div class="card gradient-3" style="padding:8px 12px"><span style="font-size:22px">⚙️</span>
+    <div style="font-size:14px;font-weight:800;color:#1F3864">HOW</div>
+    <div style="font-size:11px;color:#444">build·test·lint·commit</div></div>
 </div>
 
-<div style="text-align:center;margin:24px 0 18px;font-size:27px;color:#1F3864;font-weight:800">
+<div style="text-align:center;margin:8px 0 6px;font-size:16px;color:#1F3864;font-weight:800">
   ③ 5 RULES (실제로 작동하려면)
 </div>
 <div class="row5">""" + "".join(f"""
-  <div class="card gradient-2" style="text-align:center;padding:14px">
-    <div style="font-size:32px;font-weight:900;color:#7B5BA6">{n}</div>
-    <div style="font-size:19px;font-weight:700;color:#1F3864;margin-top:6px">{r}</div>
+  <div class="card gradient-2" style="text-align:center;padding:8px 10px">
+    <div style="font-size:22px;font-weight:900;color:#7B5BA6">{n}</div>
+    <div style="font-size:12px;font-weight:700;color:#1F3864;margin-top:2px">{r}</div>
   </div>""" for n, r in [
     ("1", "/init 먼저"),
     ("2", "500줄 이하"),
@@ -991,12 +969,9 @@ PAGES["19-claude-md-design.png"] = page(
 
 <div class="banner">
   <div class="banner-title">🇰🇷 우리 시스템</div>
-  <div class="banner-content">
-    Global (~/.claude/CLAUDE.md) ✓ install 자동 배포 · Project (./CLAUDE.md) 169줄 ·
-    5 Rules 다 준수 · 13개 금지 항목 명시.
-  </div>
+  <div class="banner-content">Global ✓ install 자동 · Project ./CLAUDE.md 169줄 · 5 Rules 다 준수 · 13개 금지 명시</div>
 </div>
-""", h=1200)
+""")
 
 
 # ============================================================

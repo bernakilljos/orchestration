@@ -11,7 +11,7 @@ else
 fi
 
 # trigger 키워드 — 작업 지시·결함 지적·점검 요청 (한글 트리거 포함)
-TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|잘되|잘됨|잘하|부족|틀렸|틀린|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|여전|놓쳤|놓쳤|fix|build|verify|check|review|test|update|add|change|fix|왜이리'
+TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|짤린|짤림|잘림|여백|여전|넘쳐|안보|글씨|보여야|잘되|잘됨|잘하|부족|틀렸|틀린|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|놓쳤|놓쳤|fix|build|verify|check|review|test|update|add|change|fix|왜이리'
 
 if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   cat <<'EOF'

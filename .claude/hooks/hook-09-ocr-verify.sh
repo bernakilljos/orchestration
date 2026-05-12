@@ -38,6 +38,17 @@ EOF
   fi
 fi
 
+# PNG 흰 여백 자동 검출 — build-*-diagrams 또는 build-*-doc 호출 시
+VERIFY_WS="$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py"
+if [ -f "$VERIFY_WS" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py'; then
+  WS_RESULT="$(python "$VERIFY_WS" "$PROJECT_ROOT/docs/screens/arch-kor" 2>&1 || true)"
+  if echo "$WS_RESULT" | grep -q 'WARN'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 whitespace] PNG 흰 여백 감지 (≥5%) — 사용자 'docx 안 이미지 여백' 호소 방지:\n$WS_RESULT"}
+EOF
+  fi
+fi
+
 # docx 구조 검증 (paragraph 기반 — 빠른 1차) — build-*-doc.py 호출 시
 VERIFY_DOCX="$PROJECT_ROOT/.claude/scripts/verify-docx-structure.py"
 if [ -f "$VERIFY_DOCX" ] && echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then

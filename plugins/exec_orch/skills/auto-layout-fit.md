@@ -73,6 +73,70 @@ tracker.add_image(max_h)
 - 이미지 짤림 없음
 - 글씨 비율 적정 (PNG viewport 작을수록 화면 표시 ↑)
 
+## PNG 빌더 공통 원칙 — 산출물 무관 보편 적용
+
+PNG 콘텐츠가 viewport 안에 **정확히 fit**. viewport 비율 = 산출물 inside 비율 일치 시 잘림·여백 0.
+
+### 산출물 비율 표 (보편 — 추가 시 확장)
+
+| 산출물 | inside 비율 (h/w) | 권장 viewport |
+|---|---|---|
+| docx A4 landscape | 0.70 | 1300×910 |
+| docx A4 portrait | 1.46 | 1100×1600 |
+| pdf A4 landscape | 0.71 | 1300×920 |
+| pptx 16:9 | 0.54 | 1920×1040 |
+| pptx 4:3 | 0.71 | 1440×1020 |
+| 영상 16:9 | 0.56 | 1920×1080 |
+| 인스타 1:1 | 1.0 | 1080×1080 |
+
+### 공통 한계 (viewport size 무관 — 비율 기반)
+
+| 항목 | 한계 비율 | 1300×900 예시 |
+|---|---|---|
+| body padding (위/좌·우) | ≤2% viewport size | 24 / 24 px |
+| body padding (아래) | ≤1.5% | 14 px |
+| banner content | **한 줄 이내** (`<br>` 금지) | — |
+| banner padding (위·아래) | ≤1% viewport height | 10 px |
+| banner font (content) | ≤1.8% viewport height | 16 px |
+| table row 개수 | ≤(viewport_h - title - banner) / 25px | 7 row |
+| grid 카드 | ≤viewport / (card_min + gap) | 3×3 = 9 |
+| flow-step | ≤(viewport_h - title - banner) / step_height | 6 |
+| 콘텐츠 margin | ≤1.5% viewport size | 14 px |
+
+### 공통 패턴 (모든 빌더 — 산출물 무관)
+
+```css
+body {
+  width:{W}px; height:{H}px;            /* 산출물 비율 일치 */
+  padding:{H*0.02}px {W*0.018}px;       /* 비율 기반 */
+  display:flex; flex-direction:column;
+  justify-content:space-between;         /* 콘텐츠 자연 분배 */
+  overflow:hidden;
+}
+.banner { padding:{H*0.012}px {W*0.012}px; margin-top:auto; }
+.banner-content { font-size:{H*0.018}px; /* 한 줄만 */ }
+```
+
+### 공통 금기 (보편)
+
+- viewport 비율 ≠ 산출물 inside 비율 → 잘림 or 여백
+- banner content 두 줄 → 마지막 줄 잘림
+- body min-height > viewport height → overflow 잘림
+- table row > 한계 → 마지막 안 보임
+- body padding > 2% → 흰 여백 자투리
+- 콘텐츠 stretch X → 박스 위로 몰림 + 아래 여백
+
+### 학습 사례 (참고 — 원칙 적용 예시)
+
+| 사건 | 위반 원칙 | Fix |
+|---|---|---|
+| 13 banner 잘림 | banner 1줄 한계 위반 | 한 줄로 |
+| 17 트리 잘림 | font 크기 비율 무시 | 비율 기반 |
+| 19 5 RULES 안 보임 | section title 4% 초과 | 비율 기반 |
+| 02 banner 안 보임 | 콘텐츠 분배 X | display:none + flex |
+| 09 box 잘림 | h > viewport | height 강제 |
+| 10 9 row 중 6 만 | padding > 2% | 비율 기반 |
+
 ## 강화 (5중 박기)
 
 teaching-doc.md § 페이지 콘텐츠 fit / failure-mode.md § 전수조사 위반 안티패턴 / hook-00-init.sh / global-CLAUDE.md / memory feedback_full_page_content_fit.md

@@ -184,6 +184,133 @@ if diff > 0.05: FAIL — 짤림 또는 빈 공간
 ### 자동 발동 (hook-09)
 - `build-*-doc.py` PostToolUse → `verify-docx-visual.py` 자동 export → systemMessage 로 Read 의무 알림
 - `build-*-(ppt|pptx).py` PostToolUse → `verify-ppt-overflow.py` + 슬라이드 PNG export → Read 의무 알림
+- `build-*-(diagrams|doc|html).py` PostToolUse → `verify-image-whitespace.py` (PNG 흰 여백 ≥5% 검출)
+
+## PNG 빌더 작성 공통 원칙 — 짤림·여백 동시 방지 (산출물 비율별)
+
+PNG 콘텐츠가 viewport 안에 **정확히 fit**. 초과 = 잘림. 부족 = 흰 여백.
+**산출물 비율 일치 우선** — viewport 비율 ≠ 산출물 inside 비율이면 둘 중 하나 발생.
+
+### 산출물별 viewport 비율 (height/width)
+
+| 산출물 | inside 비율 | 권장 viewport |
+|---|---|---|
+| docx A4 landscape | 0.70 | 1300×910 또는 1300×900 |
+| docx A4 portrait | 1.46 | 1100×1600 |
+| pdf A4 landscape | 0.71 | 1300×920 |
+| pptx 16:9 | 0.54 | 1920×1040 |
+| pptx 4:3 | 0.71 | 1440×1020 |
+| 영상 16:9 | 0.56 | 1920×1080 |
+| 인스타 square | 1.0 | 1080×1080 |
+| 카카오 카드뉴스 | 1.0 | 1080×1080 |
+
+→ 산출물 비율과 PNG viewport 비율 일치 = 흰 여백 0 + 잘림 0
+
+### 공통 한계 (viewport size 무관)
+
+| 항목 | 한계 | 비율 기준 |
+|---|---|---|
+| **body padding** (위/좌·우/아래) | ≤2% / ≤2% / ≤1.5% viewport size | viewport 1300×900 = 24/24/14px |
+| **banner content** | **한 줄 이내** — `<br>` 금지 | content ≥2 줄 = 잘림 트리거 |
+| **banner padding** (위·아래) | ≤1% viewport height | 1300×900 = 10px |
+| **table row 개수** | viewport height / row height (안전 25px) | 1300×900 = 25 row 이론, 안전 **7 row** |
+| **grid 카드 (1 column)** | row × col ≤ viewport / (card_min+gap) | 1300×900 + 카드 300×300 = 3×3 = 9 |
+| **flow-step (수직 흐름)** | (viewport - title - banner) / step_height | 1300×900 + step 80px = 6 step |
+| **콘텐츠 margin** | ≤1.5% viewport size | 1300×900 = 14px |
+| **page() h param 우선순위** | viewport 강제 (height:fixed) | h>viewport_height = overflow:hidden 잘림 |
+
+### 빌더 작성 공통 패턴 (모든 산출물 공통)
+
+```css
+/* 산출물 비율 = viewport 비율 (필수) */
+body {
+  width:{W}px; height:{H}px;              /* 산출물 비율 일치 */
+  padding:{H*0.02}px {W*0.018}px;         /* 비율 기반 */
+  display:flex; flex-direction:column;
+  justify-content:space-between;           /* 콘텐츠 자연 분배 — 흰 여백 0 */
+  overflow:hidden;                         /* 초과 잘림 명시 */
+}
+.banner {
+  padding:{H*0.012}px {W*0.012}px;
+  margin-top:auto;                         /* 페이지 끝 fixed */
+}
+.banner-title { font-size:{H*0.024}px; }   /* 비율 기반 폰트 */
+.banner-content { font-size:{H*0.018}px; } /* 한 줄만! */
+```
+
+### 사후 검증 (산출물 무관 자동 발동)
+
+| 단계 | 도구 | hook |
+|---|---|---|
+| PNG 생성 후 | `verify-image-whitespace.py` (흰 여백 ≥5% WARN) | hook-09 |
+| 산출물 임베드 후 | `verify-docx-visual.py` / `verify-ppt-overflow.py` 등 산출물별 | hook-09 |
+| 진짜 잘림 검출 | OCR (easyocr/tesseract) | 미설치 시 Read tool |
+
+### 공통 금기
+
+- viewport 비율 ≠ 산출물 inside 비율 → 잘림 또는 흰 여백 (둘 중 하나)
+- banner content `<br>` 또는 두 줄 → 마지막 줄 잘림
+- body padding > 2% viewport → 흰 여백 자투리
+- table row > 안전한계 → 마지막 row 안 보임
+- body height < 콘텐츠 + min-height 큼 → overflow:hidden 잘림
+- 콘텐츠 stretch X (flex-grow 없음) → 박스 위로 몰림 + 아래 여백
+
+### 학습 사례 (참고 — 보편 원칙 적용)
+
+| 사건 | 위반 원칙 | Fix |
+|---|---|---|
+| 13 banner 잘림 | banner content 2 줄 (1줄 한계 위반) | 한 줄로 |
+| 17 트리 잘림 | font 큼 (viewport size 무시) | 비율 기반 축소 |
+| 19 5 RULES 안 보임 | section title 32px (viewport 4% 위반) | 비율 기반 |
+| 02 banner 안 보임 | context-arrow height 누적 (콘텐츠 분배 X) | display:none |
+| 09 box 잘림 | h param > viewport (overflow 위반) | height 강제 |
+| 10 9 row 중 6 만 | card padding > 2% (한계 위반) | 비율 기반 |
+
+## 듀얼 모니터 환경 — visual 검증 도구 선택
+
+사용자 환경 = **듀얼 모니터**. screenshot 도구는 모니터 영향 받음. headless visual 우선.
+
+| 도구 | 모니터 영향 | 권장 |
+|---|---|---|
+| `verify-docx-visual.py` (Word COM → PDF → PyMuPDF PNG) | ❌ 없음 (headless) | ✅ 1순위 |
+| `build-*-html-diagrams.py` (Playwright headless) | ❌ 없음 | ✅ |
+| Read tool (PNG 직접) | ❌ 없음 (파일 기반) | ✅ |
+| pyautogui / mss screenshot | ⚠️ 메인 모니터 또는 듀얼 합산 | ❌ 금지 (모니터 의존) |
+
+### 금기
+- 듀얼 모니터에서 `pyautogui.screenshot()` / `mss.grab()` 으로 캡처 → 잘못된 모니터 캡처 위험
+- 사용자에게 "스크린샷 보내주세요" 노동 떠넘김 — verify-docx-visual.py 로 헤드리스 자동
+
+### 강추 패턴
+- docx 안 visual 확인 → `verify-docx-visual.py docx_path "pages"` → `_visual/page-NNN.png` Read
+- PNG OCR 확인 → `Read` tool 로 직접 (모니터 무관)
+
+## PNG 흰 여백 자동 검증 의무 (banner 아래 흰 공간 등)
+
+PNG 자체 안 콘텐츠 끝 ~ PNG 끝 사이 흰 공간 (banner 아래 등) **5% 초과 = 위반**.
+사용자가 docx 열어보면 "이미지 아래 여백 많네" 호소 → 미리 방지.
+
+### 검출 패턴
+
+| 위치 | 측정 | 한계 |
+|---|---|---|
+| 상하 흰 띠 | row 별 콘텐츠 픽셀 분석 | ≥5% PNG 높이 = WARN |
+| 좌우 흰 띠 | col 별 콘텐츠 픽셀 분석 | ≥5% PNG 폭 = WARN |
+
+### 자동 도구
+- `.claude/scripts/verify-image-whitespace.py` — PIL bbox 측정
+- hook-09 가 build/generate/render-*-(diagrams|doc|html).py PostToolUse 자동 발동
+
+### 금기
+- PNG 빌더에서 콘텐츠 컨테이너 height < viewport height = WARN
+- body padding 큼 + 콘텐츠 끝까지 안 감 = WARN
+- viewport 비율 ≠ 산출물 inside 비율 = 사용자 "여백" 호소 트리거
+
+### 강추 패턴
+- viewport height = docx inside height × (PNG width / docx inside width) — 비율 일치
+- body padding ≤ 24px
+- 마지막 콘텐츠 (banner) margin-bottom 0
+- 콘텐츠 부족 시 flex-grow + 자연 stretch, 보기 어색하면 콘텐츠 추가
 
 ## 산출물 명명 — 버전 접미사 금지
 
