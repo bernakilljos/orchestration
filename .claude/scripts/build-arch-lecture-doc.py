@@ -862,10 +862,17 @@ CHAPTERS = [
             "복잡 추론 (Multi-hop) = Agentic — Self-Eval 포함.",
         ],
         "우리시스템": {
-            "현재": "RAG 미구현. 메모리 시스템이 사실상 단순 RAG",
-            "향후 1순위": "Agentic RAG (우리 시스템과 자연스럽게 맞음 — Multi-Agent 이미 있음)",
+            "결론": "★ 8/8 모두 구현 완료 (2026-05-12 세션)",
+            "Naive": ".claude/scripts/rag-recall.py — ChromaDB 기본 벡터 검색",
+            "Multimodal": "rag-multimodal.py — 이미지 캡션 + 텍스트 통합 검색",
+            "HyDE": "rag-hyde.py — 가상 답 4개 생성 후 검색",
+            "Corrective": "rag-corrective.py — distance > 0.7 약함 → query 변형 재검색",
+            "Graph": "rag-graph.py — entity 추출 + co-occurrence graph (orca.db graph_edges 1059 edges)",
+            "Hybrid": "user-prompt-auto-planner.sh hook 안 kw+rag 동시 (keyword + 의미)",
+            "Adaptive": "rag-adaptive.py — factual/complex/vague/multi_hop 자동 분류 → 적합 RAG 분기",
+            "Agentic": "rag-agentic.py — Corrective + 자가 평가 (confidence) + HyDE fallback",
         },
-        "점검": ("회사 정책 + 외부 법규 같이 검색하려면?", "Hybrid 또는 Agentic. 단일 출처로 부족."),
+        "점검": ("회사 정책 + 외부 법규 같이 검색하려면?", "Hybrid 또는 Agentic. 우리 시스템 = 둘 다 구현됨."),
     },
     # ---- 11. API Protocols ----
     {
