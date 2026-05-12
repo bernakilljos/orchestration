@@ -33,6 +33,10 @@ STAGED="$(cd "$PROJECT_ROOT" && git diff --cached --name-only 2>/dev/null || ech
 FOUND=""
 for f in $STAGED; do
   [ -f "$PROJECT_ROOT/$f" ] || continue
+  # 사용자 명시 화이트리스트 (내부 use OK)
+  case "$f" in
+    docs/ini/*) continue ;;  # 내부 ini 허용
+  esac
   case "$f" in
     *.env|*.env.local|.env*|*secret*|*credentials*) FOUND="${FOUND}\\n- $f (위험 파일명)" ;;
   esac

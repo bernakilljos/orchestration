@@ -935,3 +935,52 @@
   GitHub: https://github.com/bernakilljos/orchestration
   Release: https://github.com/bernakilljos/orchestration/releases
 ============================================================
+
+
+============================================================
+  2026-05-12 세션 — Multi-Agent System 완성
+============================================================
+
+신규 .claude/scripts/ 도구 (13):
+  classify-task.py        — MoE 자동 분류 (codex/gemini/haiku/claude)
+  auto-dispatch.py        — A2A chain (task file 자동 enqueue)
+  recall-memory.py        — Memory 3-tier (단기/중기/장기)
+  rag-recall.py           — ChromaDB 의미 검색 + 한글 임베딩
+  rag-corrective.py       — distance>0.7 약함 → 재검색
+  rag-hyde.py             — 가상 답 4개 → 검색
+  rag-adaptive.py         — 질문 분류 → 분기
+  rag-agentic.py          — Corrective + 자가 평가 + HyDE fallback
+  rag-graph.py            — entity + co-occurrence (1059 edges)
+  rag-multimodal.py       — 이미지 캡션 + 텍스트
+  log-decision.py         — orca.db decisions table + 패턴 alarm
+  log-activation.py       — skill/hook/subagent 측정
+  track-determinism.py    — Non-Determinism 추적
+  detect-system.py        — GPU tier 자동 감지
+  cost-dashboard.py       — HTML 시각화
+  verify-image-whitespace.py — PNG 흰 여백 검출
+  verify-docx-visual.py   — docx → PDF → PNG export
+  verify-docx-pages.py    — Word COM 실제 페이지 검증
+  smoke-test.sh           — 12 도구 자동 점검
+  install-tools.sh        — tier 별 외부 도구 안내
+  update-claude-md.py     — AUTO-STATS 자동 갱신
+
+신규 .claude/hooks/ (4):
+  user-prompt-auto-planner.sh — 5단계 + MoE + Memory recall (kw+rag) 자동
+  check-workers.sh        — SessionStart 워커 health
+  secret-scan.sh          — git commit 직전 secret 차단
+  hook-09 강화            — RAG auto-rebuild + Decision alarm
+
+신규 plugins/ (10 spec-only → stable):
+  ai_rag · exec_offline · exec_scheduler · design_web · design_pdf
+  cost_youtube · mcp_social · design_video · mcp_queue · music_studio
+
+신규 CI/CD:
+  .github/workflows/auto-review.yml — PR open/sync 시 자동 검증
+
+신규 Memory:
+  feedback_png_builder_universal.md — PNG 빌더 공통 원칙
+
+8 RAG 아키텍처 — 8/8 모두 작동
+26 commits push 완료
+
+============================================================
