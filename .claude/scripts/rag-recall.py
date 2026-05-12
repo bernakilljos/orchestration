@@ -23,6 +23,21 @@ def _get_client():
     return chromadb.PersistentClient(path=str(INDEX_DIR))
 
 
+def _get_embedding_fn():
+    """한글 지원 embedding 함수 — bge-m3 (한·영 둘 다 강함) 사용 가능 시.
+    fallback: chromadb 기본 (all-MiniLM-L6-v2 — 영어 위주).
+    """
+    try:
+        from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+        # BAAI/bge-m3 — 한글 + 영어 모두 최강. 약 2.3GB
+        # 또는 paraphrase-multilingual-MiniLM-L12-v2 — 작고 빠름 (한글 지원)
+        return SentenceTransformerEmbeddingFunction(
+            model_name="paraphrase-multilingual-MiniLM-L12-v2"
+        )
+    except Exception:
+        return None  # chromadb 기본 사용
+
+
 def _docs_to_index() -> list:
     """index 대상 파일 자동 수집."""
     docs = []
@@ -54,7 +69,11 @@ def index_build():
         client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
-    coll = client.create_collection(COLLECTION_NAME)
+    emb_fn = _get_embedding_fn()
+    if emb_fn:
+        coll = client.create_collection(COLLECTION_NAME, embedding_function=emb_fn)
+    else:
+        coll = client.create_collection(COLLECTION_NAME)
 
     docs = _docs_to_index()
     if not docs:
@@ -63,10 +82,11 @@ def index_build():
     ids = []
     contents = []
     metas = []
+    # 청크 크기 — 환경변수 또는 default 800 (한글 문서에 적합, 영어는 500)
+    chunk_size = int(os.environ.get("RAG_CHUNK_SIZE", "800"))
+    chunk_overlap = int(os.environ.get("RAG_CHUNK_OVERLAP", "100"))
     for path, content in docs:
-        # 큰 문서 chunk (500자 단위 — embedding 한계)
-        chunk_size = 500
-        for i in range(0, len(content), chunk_size):
+        for i in range(0, len(content), chunk_size - chunk_overlap):
             chunk = content[i:i + chunk_size]
             cid = hashlib.md5(f"{path}#{i}".encode()).hexdigest()
             ids.append(cid)
@@ -81,8 +101,12 @@ def index_build():
 def search(query: str, top_n: int = 5) -> list:
     """의미 유사 검색."""
     client = _get_client()
+    emb_fn = _get_embedding_fn()
     try:
-        coll = client.get_collection(COLLECTION_NAME)
+        if emb_fn:
+            coll = client.get_collection(COLLECTION_NAME, embedding_function=emb_fn)
+        else:
+            coll = client.get_collection(COLLECTION_NAME)
     except Exception:
         return [{"error": "index not built. run: rag-recall.py --build"}]
 
