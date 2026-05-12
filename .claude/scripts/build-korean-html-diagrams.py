@@ -13,12 +13,13 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 CSS = """
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Malgun Gothic','맑은 고딕','Pretendard',sans-serif; }
-body { width:1300px; height:900px; padding:8px 12px; overflow:hidden;
+body { width:1300px; height:900px; padding:14px 22px; overflow:hidden;
        display:flex; flex-direction:column; justify-content:space-between;
-       background:radial-gradient(ellipse at top,#F8FAFC 0%,#E8EFF8 100%); }
-.title { font-size:46px; font-weight:900; background:linear-gradient(135deg,#1F3864,#3F6FB5); -webkit-background-clip:text;
-         -webkit-text-fill-color:transparent; text-align:center; margin-bottom:6px; }
-.subtitle { font-size:30px; color:#637488; text-align:center; margin-bottom:20px; font-style:italic; }
+       background:linear-gradient(135deg,#FAF6FF 0%,#F0F4FF 35%,#FFF8FA 70%,#FFFAF0 100%); }
+.title { font-size:42px; font-weight:900; letter-spacing:-0.5px;
+         background:linear-gradient(135deg,#3B1B5C 0%,#1F3864 35%,#3F6FB5 70%,#C00050 100%);
+         -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-align:center; margin-bottom:4px; }
+.subtitle { font-size:18px; color:#5C6B84; text-align:center; margin-bottom:14px; font-weight:500; }
 
 .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
 .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:24px; }

@@ -1451,9 +1451,8 @@ H(doc, "목차", level=1)
 B(doc, "0. 들어가며")
 for i, ch in enumerate(CHAPTERS, 1):
     B(doc, ch["title"])
-B(doc, "부록 A. AI 가 대체 못 하는 미래 직업 TOP20")
-B(doc, "부록 B. 한 줄 정리")
-B(doc, "부록 C. 고퀄리티 다이어그램 도구 (Canva·Figma·Mermaid)")
+B(doc, "부록 A. 한 줄 정리")
+B(doc, "부록 B. 고퀄리티 다이어그램 도구 (Canva·Figma·Mermaid)")
 
 
 # ---- 0. 들어가며 (IMG paragraph 자체에 page_break_before — 빈 PB 페이지 방지) ----
@@ -1477,24 +1476,8 @@ for idx, ch in enumerate(CHAPTERS):
     render_chapter(doc, ch, idx=idx)
 
 
-# ---- 부록 A — 미래 직업 ----
-H(doc, "부록 A. AI 가 대체 못 하는 미래 직업 TOP20", level=1)
-callout(doc, "📚 핵심 한 줄",
-        "AI 가 손이 없거나 현장 판단이 필요한 직업들. 이 일들도 AI 와 협업하면 슈퍼파워가 됩니다.")
-IMG(doc, ARCH, "AI가-대체못하는-미래직업-TOP20.jpg", width=4.2,
-    caption="미래 유망 직업 TOP 20 (한글)")
-B(doc, "전기기사 / 배관공 / HVAC / 목수")
-B(doc, "자동차·로봇 정비 / 용접 / 조경 / 외과의 / 간호사 / 물리치료사")
-B(doc, "정신건강 상담 / 노인·장애인 돌봄 / 요리·제과 / 헤어·뷰티")
-B(doc, "조각·복원 / 크리에이티브 디렉터 / 소방·응급 / 특수교사")
-B(doc, "사회복지사 / 럭셔리 호스피탈리티")
-P(doc, "강사 한 줄: 이 목록은 '안전한 직업' 이 아니라 'AI 와 함께하면 무서운 직업'. "
-       "기술은 사람의 손·마음을 대체 못 함. 보완할 뿐.", size=11)
-PB(doc)
-
-
-# ---- 부록 B — 한 줄 정리 ----
-H(doc, "부록 B. 한 줄 정리 — 5분 안에 전체 복습", level=1)
+# ---- 부록 A — 한 줄 정리 (이전 부록 B) ----
+H(doc, "부록 A. 한 줄 정리 — 5분 안에 전체 복습", level=1)
 cheats = [
     ("Generative vs Agentic vs Agent", "글 → 단계 → 손까지. 셋이 같은 AI 아님."),
     ("AI 8가지 모델", "GPT 만 있지 않음. 작업에 맞는 뇌 골라쓰기."),
@@ -1525,8 +1508,8 @@ for k, v in cheats:
 PB(doc)
 
 
-# ---- 부록 C — 고퀄리티 도구 ----
-H(doc, "부록 C. 고퀄리티 다이어그램 도구 (가입 + MCP 등록)", level=1)
+# ---- 부록 B — 고퀄리티 도구 (이전 부록 C) ----
+H(doc, "부록 B. 고퀄리티 다이어그램 도구 (가입 + MCP 등록)", level=1)
 callout(doc, "📚 핵심 한 줄",
         "이 책 한글 다이어그램은 matplotlib 무료. 더 예쁘게 = 아래 도구 가입 + MCP 등록.")
 quality_tools = [
