@@ -1,11 +1,24 @@
 #!/bin/bash
-# HOOK-08 — AI Handoff: 멀티AI 인수인계 강제 검증
-# 사용: hook-08-ai-handoff.sh claude-to-codex|codex-to-claude|gemini-to-claude
-set -e
+# HOOK-08 — AI Handoff: 멀티AI 인수인계 강제 검증 + auto chain
+# 사용: hook-08-ai-handoff.sh claude-to-codex|codex-to-claude|gemini-to-claude|auto
+set +e
 
 PHASE="${1:-claude-to-codex}"
 PROJECT="${2:-$(pwd)}"
-cd "$PROJECT"
+cd "$PROJECT" 2>/dev/null || true
+
+# A2A 자율 — Stop hook 자동 호출 시 task 감지 + handoff-log
+if [ "$PHASE" = "auto" ]; then
+  TASK_DIR="$PROJECT/.claude/tasks"
+  if [ -d "$TASK_DIR" ] && ls "$TASK_DIR"/task-*.md >/dev/null 2>&1; then
+    HANDOFF_LOG="$TASK_DIR/handoff-log.md"
+    LATEST="$(ls -t "$TASK_DIR"/task-*.md 2>/dev/null | head -1)"
+    [ -n "$LATEST" ] && echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] [HANDOFF auto] task: $(basename "$LATEST")" >> "$HANDOFF_LOG"
+  fi
+  exit 0
+fi
+
+set -e
 
 TASK_INSTR=".claude/tasks/task-instruction.md"
 HANDOFF_LOG=".claude/tasks/handoff-log.md"

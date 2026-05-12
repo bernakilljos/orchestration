@@ -69,6 +69,13 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto", "timeout": 5 }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
