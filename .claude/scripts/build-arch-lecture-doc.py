@@ -269,6 +269,12 @@ def render_chapter(doc, ch, idx=0):
     PB(doc)
     callout(doc, "📚 핵심 한 줄", ch["핵심"]); tracker.reset(); tracker.add("callout")
 
+    # 1.5 강사 한 마디 — 강사 톤 인트로 (친근·예시·학습자 가정)
+    if ch.get("강사"):
+        H(doc, "📢 강사 한 마디 (5살 청자에게 설명한다면)", level=3)
+        for line in ch["강사"] if isinstance(ch["강사"], list) else [ch["강사"]]:
+            P(doc, line, size=11, after=4)
+
     # 2. 표
     if ch.get("표"):
         H(doc, "📊 표 — 한눈에 비교", level=3)
@@ -336,6 +342,7 @@ CHAPTERS = [
         "image_eng": "GenerativeAI-vs-AgenticAI-vs-AIAgents.jpg",
         "image_kor": "01-gen-vs-agentic-vs-agent.png",
         "핵심": "Generative = 글·그림을 한 번에 만들어 주는 AI. Agentic = 스스로 단계를 짜고 계획하는 AI. AI Agent = 외부 도구·API 까지 직접 호출하며 결과 평가하는 AI. 셋은 진화 단계이자, 한 시스템에 같이 들어갈 수도 있습니다.",
+        "강사": ["여러분, AI 라고 하면 보통 ChatGPT 만 떠올리시죠? 근데 AI 가 사실 진화 단계가 있어요.", "Generative 는 '글만 쓰는 카피라이터'. 시키는 대로 한 번 답하고 끝.", "Agentic 는 '신입 매니저' — 목표 주면 단계를 짜요. 단 실행은 사람이.", "AI Agent 는 '경력 매니저' — 외부 API 까지 직접 호출하고 24/7 돌아갑니다.", "**우리 orchestration_v1 = Multi-Agent (가장 진화)** — Claude+Codex+Gemini+Haiku 가 회사처럼 협업."],
         "표": {
             "header": ["구분", "Generative", "Agentic", "AI Agent"],
             "rows": [
@@ -390,6 +397,7 @@ CHAPTERS = [
         "image_eng": "AI에이전트-8가지모델유형-jaiinfoway.jpg",
         "image_kor": None,
         "핵심": "AI 뇌는 한 종류가 아닙니다. 작업에 맞는 뇌를 골라 써야 비용·품질이 최적.",
+        "강사": ["AI 뇌는 한 종류가 아니에요. 작업에 맞는 뇌를 골라써야 비용·품질이 최적이죠.", "비싼 모델 (Claude Opus) 만 쓰면 비용 폭증. 작은 모델 (Haiku) 로 80% 처리하고 큰 모델은 어려운 20% 만.", "**8개 모델 우리가 코드로 만드는 건 0개** — Claude·Codex·Gemini·Haiku 가 다 제공. 우리는 라우팅만 합니다.", "초보자 추천: GPT 계열 1개 (Claude or GPT-4) 로 시작 — 단순함 우선."],
         "표": {
             "header": ["뇌 유형", "예시", "★ 우리시스템 (현재)", "🔧 보완 (TODO)"],
             "rows": [
@@ -447,6 +455,7 @@ CHAPTERS = [
         "image_eng": "에이전틱AI-5가지핵심개념.jpg",
         "image_kor": "02-5-cores.png",
         "핵심": "안전한 에이전트는 5부품 모두 필요: 가드레일 / 오케스트레이션 / 도구(MCP) / 메모리 / 관측.",
+        "강사": ["안전한 에이전트는 5부품 모두 필요해요. 회사로 비유하면:", "1) 입구 경비실 (Guardrails) — 잘못된 입력·민감정보 차단", "2) 부장님 (Orchestration) — 작업 분해·라우팅", "3) 도구함 (Tools/MCP) — GitHub·DB·API 안전 연결", "4) 서류 캐비넷 (Memory) — 단기/중기/장기 기억", "5) CCTV+회의록 (Observability) — 추적·비용 로그", "우리 시스템 = 5부품 모두 풍부. 24 hooks + 11 MCP + orca.db + recall-memory."],
         "표": {
             "header": ["부품", "역할", "회사 비유", "안 갖추면"],
             "rows": [
@@ -500,6 +509,7 @@ CHAPTERS = [
         "image_eng": "AI에이전트-9가지숨은킬러-판데이.jpg",
         "image_kor": None,
         "핵심": "성공한 에이전트는 다양하지만 망한 에이전트는 9가지 패턴 중 하나. 이걸 피하면 사고 80% ↓.",
+        "강사": ["성공한 에이전트는 다양하지만 망한 에이전트는 9가지 패턴 중 하나. 이거 피하면 사고 80% ↓.", "가장 무서운 3개: **#4 Runaway Loop** (재시도 847번), **#8 Cost Blind** ($48,200 청구), **#9 No Failure Mode** (모르면 거짓말).", "우리 시스템 대응: watchdog backoff + orca.db budget + failure-mode.md 5중박기.", "9 중 8 ✅ 대응 — 본보기 수준입니다."],
         "표": {
             "header": ["#", "함정", "현상", "고치는 법"],
             "rows": [
@@ -559,6 +569,7 @@ CHAPTERS = [
         "image_eng": "AI스택-5단계-인프라부터인터페이스.jpg",
         "image_kor": "03-ai-stack-5layers.png",
         "핵심": "AI 시스템은 5층 빌딩. 아래 → 위: 인프라 → 데이터 → LLM → 오케스트레이션 → 인터페이스.",
+        "강사": ["AI 시스템은 빌딩 같아요. 아래부터 5층 올리세요:", "1 Infra (실행) → 2 Data (RAG) → 3 LLM (추론) → 4 Orchestration (워크플로우) → 5 Interface (UI)", "**GPU 0 으로도 5층 다 작동** — LLM 만 외부 API (Claude) 쓰면 GPU 부담 0.", "우리 = 5/5 작동. Data 층 = ChromaDB 로컬 RAG 추가 (이번 세션)."],
         "표": {
             "header": ["층", "역할", "도구 예시"],
             "rows": [
@@ -610,6 +621,7 @@ CHAPTERS = [
         "image_eng": "에이전트개발킷-5레이어구조-판데이.jpg",
         "image_kor": "04-dev-kit-5layers.png",
         "핵심": "Claude Code 의 5 부품. 이 5개를 잘 짜면 '확장·안전·팀배포' 다 됨.",
+        "강사": ["Claude Code 의 5 레이어 = CLAUDE.md + Skills + Hooks + Subagents + Plugins.", "각 레이어 책임 분명 — 어디서 결정됐는지 명확.", "**Hooks 가 결정론적 강제** — AI 신뢰 X. 위험 명령 차단은 무조건 Hook.", "우리 = **34 hooks + 145 skills + 44 subagents + 26 plugins** — 본보기 수준."],
         "표": {
             "header": ["Layer", "이름", "역할", "비유"],
             "rows": [
@@ -663,6 +675,7 @@ CHAPTERS = [
         "image_eng": "제로비용-AI아키텍처-2026-판데이.jpg",
         "image_kor": None,
         "핵심": "회사 카드 없어도 AI 서비스 띄울 수 있음. 무료 티어 + 로컬 LLM 조합.",
+        "강사": ["회사 카드 없어도 AI 띄울 수 있어요. 무료 도구만으로:", "Frontend (Next.js/Streamlit) · Orchestrator (LangGraph) · LLM (Ollama+Gemma 로컬) · RAG (ChromaDB) · Tool (MCP) · Deploy (Cloudflare)", "**우리 = 거의 제로비용 본보기** — Claude Code CLI + exec_orch + SQLite + 선택 Ollama. 유료는 Claude API ($20/월) 만.", "초보자: 1+2 만으로 80% 작업. 작은 모델 + 작은 폴더로 시작하세요."],
         "표": {
             "header": ["층", "무료 도구", "유료 대체"],
             "rows": [
@@ -718,6 +731,7 @@ CHAPTERS = [
         "image_eng": "AI빌더도구-6카테고리매트릭스.jpg",
         "image_kor": "05-ai-builder-6cat.png",
         "핵심": "AI 도구 백화점. 본인 필요 카테고리만 골라 둘러보기.",
+        "강사": ["AI 도구 백화점. 6 카테고리 × 5 도구 = 30 개 중 본인 필요한 거만 골라쓰세요.", "초보 = 1+2 (Claude + Claude Code) 만으로 80% 작업.", "MVP 만들기 = 3 (Lovable·v0) 추가.", "회사 배포 = 4·5 (HuggingFace·LangChain).", "콘텐츠 = 6 (Mirra·Midjourney·Runway).", "우리 = 5/6 활용 + 1개 의도적 미사용 (앱·프로토타입은 우리 작업 외)."],
         "표": {
             "header": ["#", "카테고리", "베스트 도구"],
             "rows": [
@@ -770,6 +784,7 @@ CHAPTERS = [
         "image_eng": "RAG-고전vs그래프vs에이전틱-판데이.jpg",
         "image_kor": None,
         "핵심": "RAG = 검색(Retrieval) + 생성(Generation). LLM 이 모르는 내용을 외부 문서에서 찾아 답하게 함.",
+        "강사": ["RAG = 검색(Retrieval) + 생성(Generation). LLM 이 모르는 내용을 외부 문서에서 찾아 답하게 합니다.", "장점: 출처 표시 가능 (감사·검증 강함) + Hallucination ↓.", "**우리 = ChromaDB + 한글 임베딩 (paraphrase-multilingual)** + 36 docs indexed.", "Hook 자동 통합 — 사용자 메시지 시 관련 memory 자동 recall."],
         "표": {
             "header": ["방식", "흐름", "정확도", "복잡도"],
             "rows": [
@@ -821,6 +836,7 @@ CHAPTERS = [
         "image_eng": "RAG-8가지아키텍처-dailydoseofds.jpg",
         "image_kor": None,
         "핵심": "내 데이터 특성·정확도 요구에 따라 RAG 도 8가지 중 골라야.",
+        "강사": ["데이터 특성·정확도 요구에 따라 RAG 도 8가지 중 골라야:", "Naive (PoC) → Corrective (정확도) → HyDE (모호) → Graph (관계) → Adaptive (다양) → Agentic (최고).", "**우리 = 8/8 모두 구현** (rag-naive·corrective·hyde·adaptive·agentic·graph·multimodal·hybrid). 학계 표준 다 작동."],
         "표": {
             "header": ["RAG 종류", "특징", "강추 상황"],
             "rows": [
@@ -880,6 +896,7 @@ CHAPTERS = [
         "image_eng": "API프로토콜-한눈에.jpg",
         "image_kor": None,
         "핵심": "외부 시스템 연결 약속 11가지. AI 작업엔 거의 REST + Webhooks 만 알면 됨.",
+        "강사": ["프로토콜 11가지 중 AI 작업엔 **REST + Webhooks 만 알면 80%** 커버.", "REST = HTTP+JSON 표준. 거의 모든 API.", "Webhooks = 이벤트 콜백. GitHub·Slack 알림.", "토큰 스트리밍 = SSE (Claude API 자동).", "우리 = REST 11+ MCP + Webhooks (GitHub/Slack) + EDA (auto-dispatch)."],
         "표": {
             "header": ["프로토콜", "쓰는 곳", "한 줄"],
             "rows": [
@@ -934,6 +951,7 @@ CHAPTERS = [
         "image_eng": "MCP-vs-A2A-프로토콜비교-datasciencedojo.jpg",
         "image_kor": "06-mcp-vs-a2a.png",
         "핵심": "MCP = LLM이 도구를 직접 부름. A2A = 매니저가 부서장(에이전트)에게 위임.",
+        "강사": ["MCP = LLM 한 명이 도구 호출. A2A = 여러 Agent 가 자율 협력.", "보통 = MCP (단순·디버깅 쉬움). 멀티 도메인 = A2A.", "**우리 = MCP 11 서버 + A2A-lite chain** (Claude 통제 + auto-dispatch). 둘 다 본보기."],
         "표": {
             "header": ["구분", "MCP", "A2A"],
             "rows": [
@@ -984,6 +1002,7 @@ CHAPTERS = [
         "image_eng": "클로드마스터-로드맵-14레벨-RubenHassid.jpg",
         "image_kor": "07-14-levels.png",
         "핵심": "Claude 를 0에서 마스터까지 14 단계. Lv5 까지만 가도 일상 작업 80% 자동화.",
+        "강사": ["Claude Code 사용 능력 = 14 레벨로 나눌 수 있어요.", "Lv 1-5 (입문): 단일 명령·기본 hook.", "Lv 6-10 (중급): MCP·Skills·Subagents 활용.", "Lv 11-14 (마스터): plugin 개발·multi-agent chain·CI/CD 통합.", "우리 시스템 사용자 = Lv 9-10 추정. 본 강의 끝나면 Lv 11+ 가능."],
         "표": {
             "header": ["Lv", "단계", "핵심 결과"],
             "rows": [
@@ -1043,6 +1062,7 @@ CHAPTERS = [
         "image_eng": "클로드코드-아키텍처-결정트리-판데이.jpg",
         "image_kor": None,
         "핵심": "4 가지 도구 (Skills/Subagents/MCP/Hooks) 중 무엇을 쓸지 한 그림에 결정.",
+        "강사": ["4 도구 (Skills/Subagents/MCP/Hooks) 중 무엇을 쓸지 결정:", "지식 = Skills/CLAUDE.md. 외부 호출 = MCP. 강제 = Hooks. 격리 추론 = Subagent.", "**위험 차단 = 반드시 Hook** (AI 신뢰 X). rm -rf 차단은 PreToolUse hook 강제.", "우리 = 4/4 다 활용."],
         "표": {
             "header": ["도구", "트리거", "특징", "예"],
             "rows": [
@@ -1091,6 +1111,7 @@ CHAPTERS = [
         "image_eng": "클로드코드-완전가이드-판데이.jpg",
         "image_kor": None,
         "핵심": "Install → Configure → Prompt → Review → Iterate → Ship. 6 단계 사이클이 끝까지 반복.",
+        "강사": ["6 단계 사이클: Install → Configure → Prompt → Review → Iterate → Ship.", "각 단계 산출물 명확. 작은 PR 단위로 사이클 돌리세요.", "Review·Iterate 가 핵심 — 한 번에 완벽 X.", "우리 = 6/6 다 작동. install.bat (Zero-touch) + eval_quality + watchdog + auto-review CI."],
         "표": {
             "header": ["단계", "할 일", "산출물"],
             "rows": [
@@ -1144,6 +1165,7 @@ CHAPTERS = [
         "image_eng": "클로드코드-아키텍처-레퍼런스-판데이.jpg",
         "image_kor": None,
         "핵심": "한 장에 5 레이어 + 60초 셋업 + 키 단축키. 두고두고 보는 치트시트.",
+        "강사": ["한 장에 5 레이어 + 60초 셋업 + 키 단축키 정리한 치트시트.", "60초 셋업: npm install -g claude-code → claude → /init → 끝.", "/compact (컨텍스트 압축), /clear (초기화) 외우면 비용 ↓.", "주 1회 봐주세요 — 새 단축키 발견 = 시간 절약."],
         "표": {
             "header": ["Layer", "이름", "위치"],
             "rows": [
@@ -1192,6 +1214,7 @@ CHAPTERS = [
         "image_eng": "클로드코드-프로젝트구조-판데이.jpg",
         "image_kor": None,
         "핵심": "어디에 무엇을 두는가 표준. 처음부터 이 구조면 90점.",
+        "강사": ["어디에 무엇을 두는가 표준 — 90점 시작.", "CLAUDE.md (팀 규칙) · settings.json (권한+hook) · .claude/ (commands/skills/agents/hooks) · plugins/ (원본 SoT).", "이 구조만 따르면 90점. 나머지 10점 = 팀 합의로 보완."],
         "표": {
             "header": ["폴더", "역할", "예"],
             "rows": [
@@ -1242,6 +1265,7 @@ CHAPTERS = [
         "image_eng": "클로드폴더-전체구조-DK메소드.jpg",
         "image_kor": None,
         "핵심": "한글로 가장 친절하게 정리된 .claude/ 트리.",
+        "강사": [".claude 폴더 = AI 팀원의 사무실.", "commit (팀 공유): CLAUDE.md · settings.json · commands/ · rules/ · skills/ · agents/", "gitignore (개인): CLAUDE.local.md · settings.local · .env", "시크릿은 절대 commit X — 우리 secret-scan hook 자동 차단."],
         "표": {
             "header": ["파일/폴더", "용도", "git"],
             "rows": [
@@ -1293,6 +1317,7 @@ CHAPTERS = [
         "image_eng": "클로드MD-설계가이드-판데이.jpg",
         "image_kor": None,
         "핵심": "CLAUDE.md 는 사람용 README 가 아니라 AI 팀원 온보딩 문서.",
+        "강사": ["CLAUDE.md 는 사람용 README 가 아니라 **AI 팀원 온보딩 문서**.", "3 Scope: Global (~/.claude/) · Project (./CLAUDE.md) · Folder (./src/CLAUDE.md). 가까운 게 이김.", "5 Rules: /init 먼저 · 500줄 이하 · Hooks 사용 · 월간 갱신 · 참조 중심.", "우리 = 169줄 (한계의 33%, 충분히 짧음) + 5중박기 + 13 금지."],
         "표": {
             "header": ["Scope", "위치", "용도"],
             "rows": [
@@ -1341,6 +1366,7 @@ CHAPTERS = [
         "image_eng": "클로드프롬프트-8가지프레임워크-natanmohart.jpg",
         "image_kor": None,
         "핵심": "프롬프트는 '대충 쓰기' 가 아니라 '템플릿'. 8 중 한 개만 외워도 80% 커버.",
+        "강사": ["프롬프트는 '대충 쓰기' 아니라 '템플릿'. 8 중 1개 (CLARITY) 만 외워도 80%.", "CLARITY = Context+Look+Ask+Rules+Input+Target+Yardstick.", "복잡 작업 = TRUST. 데이터 분석 = RIPPLE.", "우리 task-instruction.md = CLARITY 구조와 일치. 다 활용."],
         "표": {
             "header": ["#", "프레임워크", "쓰는 곳"],
             "rows": [
