@@ -13,7 +13,7 @@ else
 fi
 
 # trigger 키워드 — 작업 지시·결함 지적·점검 요청 (한글 트리거 포함)
-TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|짤린|짤림|잘림|여백|여전|넘쳐|안보|글씨|보여야|잘되|잘됨|잘하|부족|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|놓쳤|fix|build|verify|check|review|test|update|add|change|왜이리'
+TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|짤린|짤림|잘림|잘리|짤리|여백|여전|넘쳐|안보|글씨|보여야|잘되|잘됨|잘하|부족|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|놓쳤|fix|build|verify|check|review|test|update|add|change|왜이리|방지|보완|이미지|메모리|성능'
 
 if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   # MoE 자동 분류 — 사용자 메시지 → 최적 AI 결정
@@ -36,16 +36,23 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
     *)       GUIDE="[MoE 자동] Claude 직접 처리 ($REASON)" ;;
   esac
 
-  # Memory 자동 recall — 사용자 메시지 관련 feedback memory top 3 주입
+  # Memory 자동 recall — 키워드 (3-tier) + RAG 의미 검색 둘 다
   RECALL_SCRIPT="$PROJECT_ROOT/.claude/scripts/recall-memory.py"
+  RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
   MEMORY_GUIDE=""
   if [ -f "$RECALL_SCRIPT" ]; then
     RECALL_JSON="$(PYTHONIOENCODING=utf-8 echo "$PROMPT" | PYTHONIOENCODING=utf-8 python "$RECALL_SCRIPT" 2>/dev/null || echo '[]')"
-    # 매칭 description 추출
-    MEM_LINES="$(echo "$RECALL_JSON" | grep -oE '"description"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- \1/' | head -3)"
-    if [ -n "$MEM_LINES" ]; then
-      MEMORY_GUIDE="\n\n[Memory 자동 recall] 관련 학습 메모리 (재발 방지):\n$(echo "$MEM_LINES" | sed 's/$/\\n/' | tr -d '\n')"
-    fi
+    MEM_LINES="$(echo "$RECALL_JSON" | grep -oE '"description"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (kw) \1/' | head -3)"
+  fi
+  RAG_LINES=""
+  if [ -f "$RAG_SCRIPT" ] && command -v timeout >/dev/null 2>&1; then
+    # 5초 timeout — chromadb 첫 호출 시 embedding 다운로드 시간 cap
+    RAG_JSON="$(timeout 5 bash -c "echo '$PROMPT' | PYTHONIOENCODING=utf-8 python '$RAG_SCRIPT' --top 3" 2>/dev/null || echo '[]')"
+    RAG_LINES="$(echo "$RAG_JSON" | grep -oE '"preview"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (rag) \1/' | head -2)"
+  fi
+  COMBINED="$(printf '%s\n%s' "$MEM_LINES" "$RAG_LINES" | sed '/^$/d')"
+  if [ -n "$COMBINED" ]; then
+    MEMORY_GUIDE="\n\n[Memory 자동 recall — kw=키워드 / rag=의미] 관련 학습 (재발 방지):\n$(echo "$COMBINED" | sed 's/$/\\n/' | tr -d '\n')"
   fi
 
   # Observability — decision log (alarm 은 별도 systemMessage 로 분리 가능. 일단 log만)
