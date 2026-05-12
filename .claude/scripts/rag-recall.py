@@ -1,0 +1,120 @@
+"""RAG 의미 검색 — ChromaDB + sentence-transformers (로컬, GPU 0).
+
+vs recall-memory.py (키워드 grep):
+- 의미 유사 검색 (synonym·paraphrase OK)
+- index = CLAUDE.md + .claude/rules/ + memory/feedback + plugins/exec_orch/skills/
+
+5 핵심 부품 #2 Data layer (RAG) — 사용자 GPU 부족 시 외부 LLM + 로컬 vector DB.
+"""
+import sys
+import os
+import json
+import hashlib
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+INDEX_DIR = PROJECT_ROOT / ".claude" / "state" / "chromadb"
+COLLECTION_NAME = "project_knowledge"
+
+
+def _get_client():
+    import chromadb
+    INDEX_DIR.mkdir(parents=True, exist_ok=True)
+    return chromadb.PersistentClient(path=str(INDEX_DIR))
+
+
+def _docs_to_index() -> list:
+    """index 대상 파일 자동 수집."""
+    docs = []
+    # 1. CLAUDE.md (project + global)
+    for p in [PROJECT_ROOT / "CLAUDE.md", Path.home() / ".claude" / "CLAUDE.md"]:
+        if p.exists():
+            docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
+    # 2. .claude/rules/
+    for p in (PROJECT_ROOT / ".claude" / "rules").glob("*.md"):
+        docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
+    # 3. feedback memory
+    proj_normalized = PROJECT_ROOT.name.replace("_", "-")
+    mem_base = Path.home() / ".claude" / "projects"
+    if mem_base.exists():
+        for sub in mem_base.iterdir():
+            if proj_normalized in sub.name:
+                for p in (sub / "memory").glob("feedback_*.md") if (sub / "memory").exists() else []:
+                    docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
+    # 4. skills
+    for p in (PROJECT_ROOT / "plugins" / "exec_orch" / "skills").glob("*.md"):
+        docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
+    return docs
+
+
+def index_build():
+    """ChromaDB 컬렉션 빌드 — 모든 문서 자동 index."""
+    client = _get_client()
+    try:
+        client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
+    coll = client.create_collection(COLLECTION_NAME)
+
+    docs = _docs_to_index()
+    if not docs:
+        return {"indexed": 0, "error": "no docs"}
+
+    ids = []
+    contents = []
+    metas = []
+    for path, content in docs:
+        # 큰 문서 chunk (500자 단위 — embedding 한계)
+        chunk_size = 500
+        for i in range(0, len(content), chunk_size):
+            chunk = content[i:i + chunk_size]
+            cid = hashlib.md5(f"{path}#{i}".encode()).hexdigest()
+            ids.append(cid)
+            contents.append(chunk)
+            metas.append({"path": path, "chunk": i})
+
+    # ChromaDB 기본 embedding (all-MiniLM-L6-v2 — 로컬, GPU 0)
+    coll.add(ids=ids, documents=contents, metadatas=metas)
+    return {"indexed": len(ids), "docs": len(docs), "collection": COLLECTION_NAME}
+
+
+def search(query: str, top_n: int = 5) -> list:
+    """의미 유사 검색."""
+    client = _get_client()
+    try:
+        coll = client.get_collection(COLLECTION_NAME)
+    except Exception:
+        return [{"error": "index not built. run: rag-recall.py --build"}]
+
+    results = coll.query(query_texts=[query], n_results=top_n)
+    out = []
+    for i in range(len(results["ids"][0])):
+        out.append({
+            "path": results["metadatas"][0][i].get("path", ""),
+            "chunk": results["metadatas"][0][i].get("chunk", 0),
+            "distance": round(results["distances"][0][i], 3) if results["distances"] else None,
+            "preview": results["documents"][0][i][:200],
+        })
+    return out
+
+
+if __name__ == "__main__":
+    if "--build" in sys.argv:
+        result = index_build()
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        sys.exit(0)
+    if len(sys.argv) < 2:
+        if not sys.stdin.isatty():
+            query = sys.stdin.read().strip()
+        else:
+            print("usage: rag-recall.py '<query>' [--build] [--top N]")
+            sys.exit(2)
+    else:
+        query = sys.argv[1]
+    top = 5
+    if "--top" in sys.argv:
+        i = sys.argv.index("--top")
+        if i + 1 < len(sys.argv):
+            top = int(sys.argv[i + 1])
+    results = search(query, top)
+    print(json.dumps(results, ensure_ascii=False, indent=2))
