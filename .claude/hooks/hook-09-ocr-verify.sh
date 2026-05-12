@@ -117,4 +117,38 @@ if echo "$RESULT" | grep -q '\[!\]'; then
 EOF
 fi
 
+# ★1 RAG index 자동 재빌드 — feedback/rule/skill md 변경 시
+if echo "$CMD" | grep -qE '(Write|Edit).*(memory/feedback_|\.claude/rules/|plugins/.*/skills/|CLAUDE\.md)'; then
+  RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
+  if [ -f "$RAG_SCRIPT" ]; then
+    (PYTHONIOENCODING=utf-8 python "$RAG_SCRIPT" --build >/dev/null 2>&1) &
+  fi
+fi
+
+# ★2 Decision pattern alarm — 같은 키워드 1h 내 3회+ → systemMessage
+ALARM_DB="$PROJECT_ROOT/.claude/state/orca.db"
+if [ -f "$ALARM_DB" ]; then
+  ALARMS="$(PYTHONIOENCODING=utf-8 python -c "
+import sqlite3
+from pathlib import Path
+from datetime import datetime, timedelta
+db = Path(r'$ALARM_DB')
+conn = sqlite3.connect(str(db))
+try:
+    cutoff = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+    cur = conn.execute(\"SELECT keywords, COUNT(*) FROM decisions WHERE ts >= ? AND keywords != '' GROUP BY keywords HAVING COUNT(*) >= 3 LIMIT 3\", (cutoff,))
+    for row in cur.fetchall():
+        print(f'{row[0]}={row[1]}회')
+except Exception:
+    pass
+conn.close()
+" 2>/dev/null)"
+  if [ -n "$ALARMS" ]; then
+    ALARMS_FMT="$(echo "$ALARMS" | tr '\n' ' ')"
+    cat <<EOF
+{"systemMessage": "⚠ [Decision Alarm] 같은 패턴 1시간 내 3회+: ${ALARMS_FMT}— 근본 원인 점검 필요"}
+EOF
+  fi
+fi
+
 exit 0
