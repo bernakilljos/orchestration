@@ -17,6 +17,11 @@
 
 ---
 
+
+<!-- AUTO-STATS -->
+> **현재 상태** (2026-05-12): plugins 26 stable + 0 spec-only · rules 10 · hooks 24 · scripts 63
+<!-- AUTO-STATS -->
+
 ## 2. WHY — 왜 이 구조인가
 
 - **다AI 협업**: 단일 모델 한계 극복 (Claude 설계 → Codex 구현 → Gemini 검증)

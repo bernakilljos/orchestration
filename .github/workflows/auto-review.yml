@@ -1,0 +1,22 @@
+name: Auto Review PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: pip install psutil chromadb python-docx PyMuPDF pillow pywin32 || true
+      - name: Validate plugin schemas
+        run: python .claude/scripts/validate-plugin-schema.py
+      - name: Verify image fit
+        run: python .claude/scripts/verify-image-fit.py docs/screens/arch-kor || true
+      - name: Smoke test
+        run: bash .claude/scripts/smoke-test.sh || true
