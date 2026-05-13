@@ -1,0 +1,45 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "mcp_image",
+  "display": "이미지 생성 — Pollinations.ai (무료·인증X·flux 모델) + 빌더 자동 통합",
+  "prefix": "mcp_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": [],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "image-generate",
+    "core_skills": [
+      "skill-image-gen"
+    ]
+  },
+  "metadata": {
+    "category": "media",
+    "tags": [
+      "image",
+      "ai",
+      "generation",
+      "pollinations",
+      "flux"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-05-13",
+    "updated": "2026-05-13",
+    "precedence": 5,
+    "token_estimate": 2500,
+    "triggers": [
+      "image generation",
+      "이미지 생성",
+      "일러스트",
+      "그림",
+      "dall-e",
+      "pollinations"
+    ]
+  }
+}

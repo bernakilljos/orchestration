@@ -160,6 +160,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 20. **docx 구조 검증 의무** — build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09 통합). 빈 paragraph 5개+ 연속·중복 page_break 자동 감지. 사용자가 "빈 페이지 있네" 한 후에야 fix = 전수조사 위반. 상세: `.claude/scripts/verify-docx-structure.py`
 21. **수정·빌드 후 자동 검증 후 보고** — "수정했습니다" 만 보고 X. 검증 도구 자동 실행 → PASS 확인 → 보고 순서. FAIL 이면 사용자에게 알리지 않고 자동 재시도 (max 3회). 3회 후에도 FAIL = 솔직히 보고 + 사용자 결정. 검증 매트릭스: PNG/docx/pptx/코드. 상세: `.claude/rules/best-practices.md` § 검증 후 보고
 22. **오염 파일 자동 정리** — `nul`/`NUL` (Windows redirect 잔재) · nested `.claude/.claude/` · 3일+ `*.bak`/`*.tmp`/`*.orig` · 14일+ `.claude/logs/*.log` · 30일+ `.claude/tasks/done/*` 자동 정리. SessionStart hook 으로 매 세션 실행. `2>nul` (cmd 스타일) bash 사용 금지 — `2>/dev/null` 사용. `PROJECT_ROOT` 계산 시 위치별 `../..` 깊이 주의 (안 그러면 nested 폴더 생성). 상세: `.claude/rules/cleanup-policy.md` · 스크립트 `.claude/scripts/cleanup-pollution.sh`
+23. **위험 작업 승인 없이 실행 금지 (HITL Approval Gate)** — `DROP TABLE` / `rm -rf` / `git push --force` / `sudo` / `curl|bash` / `npm publish` / `docker push prod` / `terraform apply -auto-approve` / Batch API 1000+ 등 위험 명령 감지 시 `approval-gate.py detect` 로 사전 점검 → 매치 시 `request` 로 `waiting_approval` 등록 → 사용자 `/approve <task_id>` 받은 후만 실행. 5 위험 카테고리 (data_loss/security/cost/system/irreversible) · CLAUDE.md § 7-11 알림 5가지와 정합. skill: `plugins/exec_orch/skills/skill-approval-gate.md` · handler: `.claude/scripts/approval-gate.py` · DB schema v2: `.claude/scripts/migrate-approval-gate.py`
 
 ---
 
