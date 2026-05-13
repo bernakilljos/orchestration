@@ -209,9 +209,10 @@ def _kor_image_for(title):
 # A4 landscape inside 7.33 - H1(0.55) - safety(0.3) = 6.48 한계 → max 6.4 clamp
 # base = 6.0 → 사용자 ratio 그대로 적용 + 빈 페이지 방지
 # 모든 PNG ratio 0.692 (1300×900) — 페이지 inside 11.46×8.03
-# H1 + space + safety = 0.9, max_h = 7.10 → IMG 다음 페이지 밀림 방지 + 페이지 폭 89% 채움
+# H1 한 줄: H1 0.58 + IMG 7.10 = 7.68 fit
+# H1 두 줄 (Ch 4 — title 너무 김): H1 1.16 + IMG 7.10 = 8.26 OVER → max_h 6.40 override
 CHAPTER_MAX_HEIGHT = {
-    "_default": 7.10,
+    "4. 에이전트 개발킷": 6.40,  # H1 두 줄 → IMG 축소 필요
 }
 DEFAULT_MAX_HEIGHT = 7.10
 

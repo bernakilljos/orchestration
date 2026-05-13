@@ -875,43 +875,46 @@ PAGES["18-dk-folder.png"] = page(
     ".claude 폴더 전체 구조 (DK 메소드)",
     "한글로 가장 친절한 폴더 트리",
     """
-<table class="compare-tbl">
+<style>
+.dk-tbl { width:100%; border-collapse:separate; border-spacing:4px; margin-top:6px; }
+.dk-tbl th { background:linear-gradient(135deg,#1F3864,#3F6FB5); color:white; padding:6px 10px;
+             text-align:left; border-radius:6px; font-size:14px; }
+.dk-tbl td { padding:5px 10px; background:linear-gradient(135deg,#fff,#f8fafc); border-radius:6px;
+             box-shadow:0 2px 6px rgba(0,0,0,0.05); font-size:13px; }
+.dk-card { padding:8px 12px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.08); }
+.dk-card .ct { font-size:15px; font-weight:800; color:#1F3864; margin-bottom:2px; }
+.dk-card .cd { font-size:12px; color:#444; line-height:1.4; }
+</style>
+<table class="dk-tbl">
 <tr><th>파일·폴더</th><th>용도</th><th>git</th></tr>
 <tr><td>📄 <b>CLAUDE.md</b></td><td>팀 공유 기억</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
 <tr><td>📄 <b>CLAUDE.local.md</b></td><td>나만의 기억</td><td style="color:#C00000;font-weight:700">gitignore</td></tr>
 <tr><td>📄 <b>.claude/settings.json</b></td><td>권한 설정 (공유)</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
 <tr><td>📄 <b>.claude/settings.local</b></td><td>개인 권한</td><td style="color:#C00000;font-weight:700">gitignore</td></tr>
 <tr><td>📁 <b>.claude/commands/</b></td><td>나만의 / 명령어</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
-<tr><td>📁 <b>.claude/rules/</b></td><td>항상 적용 규칙 (code-style.md 등)</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
-<tr><td>📁 <b>.claude/skills/</b></td><td>자동 워크플로우 (SKILL.md)</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
-<tr><td>📁 <b>.claude/agents/</b></td><td>서브에이전트 (reviewer.md 등)</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
+<tr><td>📁 <b>.claude/rules/</b></td><td>항상 적용 규칙</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
+<tr><td>📁 <b>.claude/skills/</b></td><td>자동 워크플로우</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
+<tr><td>📁 <b>.claude/agents/</b></td><td>서브에이전트</td><td style="color:#0B5394;font-weight:700">commit</td></tr>
 </table>
 
-<div class="grid2" style="margin-top:24px">
-  <div class="card gradient-3">
-    <div class="card-title">✅ commit (팀 공유)</div>
-    <div class="card-desc">
-      CLAUDE.md · settings.json · commands/ · rules/ · skills/ · agents/<br><br>
-      <b>이유</b>: 모든 팀원이 동일한 규칙·도구 사용
-    </div>
+<div class="grid2" style="margin-top:8px;margin-bottom:6px;gap:14px;">
+  <div class="dk-card gradient-3">
+    <div class="ct">✅ commit (팀 공유)</div>
+    <div class="cd">CLAUDE.md · settings.json · commands/ · rules/ · skills/ · agents/ — 팀 규칙·도구 일관</div>
   </div>
-  <div class="card danger">
-    <div class="card-title">🚫 gitignore (개인)</div>
-    <div class="card-desc">
-      CLAUDE.local.md · settings.local · .env<br><br>
-      <b>이유</b>: 시크릿·개인 환경·실험 메모는 공유 X
-    </div>
+  <div class="dk-card danger">
+    <div class="ct">🚫 gitignore (개인)</div>
+    <div class="cd">CLAUDE.local.md · settings.local · .env — 시크릿·개인 환경 보호</div>
   </div>
 </div>
 
-<div class="banner">
-  <div class="banner-title">🇰🇷 우리 시스템</div>
-  <div class="banner-content">
-    CLAUDE.md ✓ (169줄) · settings.json ✓ (24 hooks) · CLAUDE.local.md 미사용 (전부 5중박기로 분산).
-    시크릿은 .env (gitignore).
+<div class="banner" style="margin-top:4px;padding:6px 14px;">
+  <div class="banner-title" style="font-size:16px;margin-bottom:1px;">🇰🇷 우리 시스템</div>
+  <div class="banner-content" style="font-size:13px;line-height:1.3;">
+    CLAUDE.md ✓ 169줄 · settings.json ✓ 24 hooks · CLAUDE.local.md 미사용 · 시크릿 .env (gitignore)
   </div>
 </div>
-""", h=1100)
+""")
 
 
 # ============================================================
