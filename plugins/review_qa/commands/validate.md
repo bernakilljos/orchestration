@@ -7,7 +7,7 @@ allowed-tools: Bash(npm:*), Bash(python:*), Bash(pytest:*), Bash(mvn:*), Bash(po
 - 프로젝트 타입: !`if exist package.json (echo nodejs) else if exist pom.xml (echo java) else if exist requirements.txt (echo python) else (echo unknown)`
 - Playwright MCP: !`claude mcp list 2>/dev/null | grep -i playwright && echo OK || echo 없음`
 - 테스트 파일 수: !`find . -name "*.test.*" -o -name "*_test.*" -o -name "test_*" 2>/dev/null | grep -v node_modules | grep -v .git | wc -l`
-- 오늘 날짜: !`date /t 2>nul || date +%Y-%m-%d`
+- 오늘 날짜: !`date '+%Y-%m-%d' 2>/dev/null`
 
 ## Your task
 
@@ -18,17 +18,17 @@ allowed-tools: Bash(npm:*), Bash(python:*), Bash(pytest:*), Bash(mvn:*), Bash(po
 ### Step 1 — 테스트 실행 (직접 실행)
 
 **Node.js:**
-```
+```text
 npm test 2>&1
 ```
 
 **Python:**
-```
+```text
 pytest -v --tb=short 2>&1
 ```
 
 **Java:**
-```
+```text
 mvn test -q 2>&1
 ```
 
@@ -40,7 +40,7 @@ mvn test -q 2>&1
 
 Playwright MCP OK → 실행 중인 로컬 서버 스크린샷:
 
-```
+```text
 mcp__playwright 또는 playwright MCP 호출:
   1. http://localhost:3000 (또는 감지된 포트)
   2. 주요 페이지 순서대로 캡처:
@@ -51,7 +51,7 @@ mcp__playwright 또는 playwright MCP 호출:
 ```
 
 Playwright 없으면:
-```
+```text
 powershell -NoProfile -Command "
   Add-Type -AssemblyName System.Windows.Forms
   Add-Type -AssemblyName System.Drawing
@@ -68,13 +68,13 @@ powershell -NoProfile -Command "
 ### Step 3 — 코드 정적 분석
 
 **보안 취약점:**
-```
+```text
 npm audit 2>&1 | tail -5     (Node.js)
 pip-audit 2>&1 | tail -5     (Python)
 ```
 
 **Lint:**
-```
+```text
 npm run lint 2>&1 | tail -20   (Node.js)
 flake8 . --count 2>&1          (Python)
 ```

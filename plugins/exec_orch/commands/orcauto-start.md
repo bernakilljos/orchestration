@@ -5,20 +5,20 @@ allowed-tools: Bash(where:*), Bash(echo:*), Bash(del:*), Bash(powershell:*), Bas
 
 ## Context
 
-- codex-auto 가용: !`where codex-auto 2>nul && echo YES || echo NO`
-- gemini-auto 가용: !`where gemini-auto 2>nul && echo YES || echo NO`
+- codex-auto 가용: !`command -v codex-auto >/dev/null 2>&1 && echo YES || echo NO`
+- gemini-auto 가용: !`command -v gemini-auto >/dev/null 2>&1 && echo YES || echo NO`
 - orca-stopped 플래그: !`if exist .claude\orca-stopped (echo STOPPED) else (echo OK)`
 - 워커 수 설정: !`if exist .claude\orca-workers (type .claude\orca-workers) else (echo 1)`
 
 ## Your task
 
 1. `.claude/orca-stopped` 삭제:
-   ```
+   ```text
    del .claude\orca-stopped 2>nul
    ```
 
 2. `.claude/orca-enabled` 생성:
-   ```
+   ```text
    echo enabled > .claude\orca-enabled
    ```
 

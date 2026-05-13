@@ -1,0 +1,30 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "eval_quality",
+  "display": "결과 품질 자동 평가 — Haiku LLM-as-judge 0~10점",
+  "prefix": "eval_",
+  "version": "0.1",
+  "status": "experimental",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "agents": "agents/",
+  "dependencies": {
+    "plugins": ["exec_orch"],
+    "mcp": [],
+    "env": ["ANTHROPIC_API_KEY"]
+  },
+  "entry_points": {
+    "default_command": "score-task",
+    "core_skills": ["llm-as-judge"]
+  },
+  "metadata": {
+    "category": "review",
+    "tags": ["eval", "quality", "haiku", "judge", "metrics"],
+    "author": "bernakilljos",
+    "created": "2026-05-07",
+    "updated": "2026-05-07",
+    "precedence": 10,
+    "token_estimate": 3000
+  }
+}

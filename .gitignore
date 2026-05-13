@@ -83,3 +83,43 @@ claude-talk-to-figma-mcp/
 ~$*.xlsx
 # Setup 자동 backup (Module 01 이 기존 .claude 백업할 때 생성)
 .claude_backup_*/
+
+# 디자인 ref 대량 binary (1.5GB+ — git push 부적합, 로컬만 보존)
+docs/screens/illustration/**/*.jpg
+docs/screens/illustration/**/*.png
+docs/screens/illustration/**/*.webp
+docs/screens/template/*.jpg
+docs/screens/signup/*.jpg
+docs/screens/checkout/*.jpg
+docs/screens/onboarding/*.jpg
+docs/screens/pricing/*.jpg
+docs/screens/form/*.jpg
+docs/screens/search/*.jpg
+docs/screens/settings/*.jpg
+docs/screens/profile/*.jpg
+docs/screens/notification/*.jpg
+docs/screens/menu/*.jpg
+docs/screens/dashboard/*.jpg
+docs/screens/404/*.jpg
+docs/screens/color-typo/*.jpg
+docs/screens/_brand-preview/*.jpg
+# 카테고리 sub 폴더 (dark/light/mobile/minimalist/illustrative/colorful)
+docs/screens/*/dark/
+docs/screens/*/light/
+docs/screens/*/mobile/
+docs/screens/*/minimalist/
+docs/screens/*/illustrative/
+docs/screens/*/colorful/
+
+# 작업 log (자동 정리되지만 commit 방지)
+docs/screens/_*.log
+
+# nul (Windows redirect 잔재)
+/nul
+/NUL
+
+# Tool result cache (Claude Code)
+.claude/projects/*/tool-results/
+
+# 시스템 log (자동 생성)
+.claude/logs/

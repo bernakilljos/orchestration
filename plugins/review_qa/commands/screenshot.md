@@ -6,21 +6,21 @@ allowed-tools: Bash(powershell:*), Bash(npm:*), Bash(where:*)
 ## Context
 - Playwright MCP: !`claude mcp list 2>/dev/null | grep -i playwright && echo OK || echo 없음`
 - 로컬 서버 포트: !`powershell -NoProfile -Command "netstat -ano | Select-String ':300[0-9]\s' | Select-Object -First 3"`
-- 오늘 날짜: !`date /t 2>nul`
+- 오늘 날짜: !`date '+%Y-%m-%d' 2>/dev/null`
 
 ## Your task
 
 입력: `$ARGUMENTS` (URL 또는 포트번호. 없으면 localhost:3000)
 
 ### Step 1 — 출력 폴더 생성
-```
+```text
 docs/YYYY-MM-DD/validation/screenshots/
 ```
 
 ### Step 2 — Playwright MCP로 캡처
 
 Playwright OK →
-```
+```text
 playwright MCP 호출:
   url: $ARGUMENTS 또는 http://localhost:3000
   

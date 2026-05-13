@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SessionStart hook — mHC 워커 활성 검증 (codex-auto · gemini-auto · haiku-auto)
 set -e
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG_DIR="$PROJECT_ROOT/.claude/logs"
 mkdir -p "$LOG_DIR"
 

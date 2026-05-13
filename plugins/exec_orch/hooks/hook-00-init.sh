@@ -157,6 +157,23 @@ skill: plugins/exec_orch/skills/auto-planner.md
 - 검증 grep: C:\\Users\\[a-z]+ / /home/[a-z]+ / Python3[0-9]+
 
 상세: .claude/rules/best-practices.md § 하드 경로 금지
+
+==============================
+ ⚠ 오염 파일 자동 정리 (SessionStart hook)
+==============================
+- nul / NUL (Windows redirect 잔재) — 즉시
+- nested .claude/.claude/ — 즉시
+- 3일+ *.bak / *.tmp / *.orig / *.swp / *~
+- 14일+ .claude/logs/*.log
+- 30일+ .claude/tasks/done/*
+- 7일+ ~/.claude/projects/*/tool-results/*
+- 빈 .claude/tasks/{done,locks} 디렉토리
+
+스크립트: .claude/scripts/cleanup-pollution.sh (매 세션 자동 실행)
+금기: bash 환경에 `2>nul` 사용 X → `2>/dev/null` 사용
+PROJECT_ROOT 계산: 위치별 ../.. 깊이 주의
+
+상세: .claude/rules/cleanup-policy.md
 REMINDER
 
 exit 0

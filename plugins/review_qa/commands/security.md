@@ -7,22 +7,24 @@ allowed-tools: Bash(npm:*), Bash(python:*), Bash(powershell:*), Bash(where:*)
 - 프로젝트 타입: !`if exist package.json (echo nodejs) else if exist requirements.txt (echo python) else (echo unknown)`
 - node_modules: !`if exist node_modules (echo 있음) else (echo 없음)`
 - git 상태: !`git status --short 2>/dev/null | wc -l`
-- 오늘 날짜: !`date /t 2>nul`
+- 오늘 날짜: !`date '+%Y-%m-%d' 2>/dev/null`
 
 ## Your task
 
 ### Step 1 — 의존성 보안 감사 (직접 실행)
 
 **Node.js:**
-```
+```text
 npm audit --json 2>&1
 ```
+
 결과에서 critical/high 취약점만 추출.
 
 **Python:**
-```
+```text
 pip-audit --format json 2>&1
 ```
+
 pip-audit 없으면: `pip install pip-audit` 후 재실행.
 
 ### Step 2 — 시크릿 노출 체크 (코드베이스 검색)
@@ -52,7 +54,7 @@ Get-ChildItem -Recurse -Include *.js,*.ts,*.py,*.env,*.config.* |
 
 ### Step 3 — .env 파일 체크
 
-```
+```text
 .env 파일이 .gitignore에 있는지 확인
 .env가 git에 커밋됐는지 확인: git log --all -- .env
 ```

@@ -54,7 +54,8 @@
     "design_video":      "plugins/design_video/",
     "ai_rag":            "plugins/ai_rag/",
     "exec_offline":      "plugins/exec_offline/",
-    "music_studio":      "plugins/music_studio/"
+    "music_studio":      "plugins/music_studio/",
+    "eval_quality":      "plugins/eval_quality/"
   },
 
   "prefix_convention": {
@@ -79,7 +80,8 @@
     "life_":   "개인·취미 계열 (로드맵 Phase 3)",
     "biz_":    "창업·비즈니스 계열 (로드맵 Phase 3)",
     "i18n_":   "국제화 계열 (로드맵 Phase 3)",
-    "music_":  "음악 스튜디오 계열 — 녹음·작곡·믹싱·MIDI"
+    "music_":  "음악 스튜디오 계열 — 녹음·작곡·믹싱·MIDI",
+    "eval_":   "평가·채점 계열 — LLM-as-judge·regression·품질 메트릭"
   },
   "phase": {
     "0": "현재 완성 (14개 플러그인)",

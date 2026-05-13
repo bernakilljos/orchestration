@@ -58,7 +58,8 @@
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"", "timeout": 5 },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"", "timeout": 10 },
           { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"", "timeout": 5 },
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-workers.sh\"", "timeout": 3 }
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-workers.sh\"", "timeout": 3 },
+          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-pollution.sh\"", "timeout": 5 }
         ]
       }
     ],
