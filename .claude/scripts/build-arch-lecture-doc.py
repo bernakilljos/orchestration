@@ -208,31 +208,12 @@ def _kor_image_for(title):
 # 사용자 전수조사 (2026-05-11) — 챕터별 이미지 max_height (inch)
 # A4 landscape inside 7.33 - H1(0.55) - safety(0.3) = 6.48 한계 → max 6.4 clamp
 # base = 6.0 → 사용자 ratio 그대로 적용 + 빈 페이지 방지
+# 모든 PNG ratio 0.692 (1300×900) — 페이지 inside 11.46×8.03
+# H1 + space + safety = 0.9, max_h = 7.10 → IMG 다음 페이지 밀림 방지 + 페이지 폭 89% 채움
 CHAPTER_MAX_HEIGHT = {
-    # A 부 — Claude Code 도구 (1~9)
-    "1. .claude 폴더": 6.00,
-    "2. CLAUDE.md 설계": 5.40,
-    "3. Claude Code 프로젝트": 5.40,
-    "4. 에이전트 개발킷": 5.40,
-    "5. Claude Code 결정트리": 6.00,
-    "6. Claude Code 완전 가이드": 5.40,
-    "7. Claude Code 아키텍처": 5.40,
-    "8. 8가지 프롬프트": 5.40,
-    "9. Claude 마스터": 6.00,
-    # B 부 — AI 기초·RAG·프로토콜 (10~20)
-    "10. AI 3종 세트": 5.40,
-    "11. AI 에이전트의 8가지": 6.00,
-    "12. 에이전트의 5가지": 6.00,
-    "13. 9가지 숨은 함정": 5.40,
-    "14. AI 스택 5층": 5.40,
-    "15. 제로비용 AI": 5.40,
-    "16. AI 빌더 도구": 5.40,
-    "17. RAG 입문": 6.30,
-    "18. RAG 8가지": 6.18,
-    "19. API 프로토콜": 5.40,
-    "20. MCP vs A2A": 6.06,
+    "_default": 7.10,
 }
-DEFAULT_MAX_HEIGHT = 6.0
+DEFAULT_MAX_HEIGHT = 7.10
 
 
 def _max_height_for(title):
@@ -271,9 +252,9 @@ def render_chapter(doc, ch, idx=0):
     max_h = _max_height_for(ch["title"])
     kor_png = _kor_image_for(ch["title"])
     if kor_png:
-        IMG(doc, ARCH_KOR, kor_png, width=10.5, max_height=max_h, caption=None)
+        IMG(doc, ARCH_KOR, kor_png, width=11.0, max_height=max_h, caption=None)
     elif ch.get("image_kor"):
-        IMG(doc, ARCH_KOR, ch["image_kor"], width=10.5, max_height=max_h, caption=None)
+        IMG(doc, ARCH_KOR, ch["image_kor"], width=11.0, max_height=max_h, caption=None)
 
     # IMG 후 강제 PB — 본문 (callout + 표 + ...) 별도 페이지 → 잘림 방지
     PB(doc)
