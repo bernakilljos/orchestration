@@ -174,10 +174,15 @@ set "IDLE_COUNT=0"
 echo [Worker-%CHILD_ID%] Picked: %PICKED_NAME%
 
 rem --- HITL Approval Gate (CLAUDE.md §7-23) — 위험 패턴 task 차단 ---
+rem 글로벌 큐: project 한정 못해 task 를 quarantine/ 으로 이동 (다음 LOOP 재pick 차단)
+rem 각 project 가 quarantine 검토 후 승인 시 .claude/tasks/ 로 다시 enqueue
 findstr /R /I /C:"DROP[ ]*TABLE" /C:"rm -rf" /C:"git push --force" /C:"sudo " /C:"curl .* | .*bash" /C:"--auto-approve" /C:"npm publish" /C:"docker push" "%PICKED_TASK%" >nul 2>&1
 if not errorlevel 1 (
-  echo [Worker-%CHILD_ID%] [HITL BLOCK] 위험 패턴 감지 — approval-gate 통과 후 재시도
+  echo [Worker-%CHILD_ID%] [HITL BLOCK] 위험 패턴 감지 — quarantine 으로 이동
+  if not exist "%ORCA_ROOT%\quarantine" mkdir "%ORCA_ROOT%\quarantine" >nul 2>&1
+  move /Y "%PICKED_TASK%" "%ORCA_ROOT%\quarantine\%PICKED_NAME%.md" >nul 2>&1
   del "%ORCA_ROOT%\locks\%PICKED_NAME%.lock" 2>nul
+  echo [Worker-%CHILD_ID%] [HITL] Quarantined: %ORCA_ROOT%\quarantine\%PICKED_NAME%.md
   timeout /t 30 /nobreak >nul
   goto LOOP
 )

@@ -107,6 +107,18 @@ for /f "tokens=*" %%L in ('type "%TASK_FILE%"') do (
 echo ------------------------------------
 echo.
 
+rem --- HITL Approval Gate (CLAUDE.md §7-23) — 단발 호출도 위험 패턴 차단 ---
+findstr /R /I /C:"DROP[ ]*TABLE" /C:"rm -rf" /C:"git push --force" /C:"sudo " /C:"curl .* | .*bash" /C:"--auto-approve" /C:"npm publish" /C:"docker push" "%TASK_FILE%" >nul 2>&1
+if not errorlevel 1 (
+  echo [HITL BLOCK] 위험 패턴 감지 — approval-gate 통과 후 재시도
+  for %%F in ("%TASK_FILE%") do (
+    python "%ROOT%\.claude\scripts\approval-gate.py" request "%%~nF" "%%~nxF" "auto-detected" "codex.bat 단발 task 본문 위험 패턴" 2>nul
+  )
+  echo         Run: /approve ^<task_id^>  ^(or /reject ^<task_id^>^)
+  exit /b 3
+)
+
+
 rem Safety confirmation prompt for full-auto
 if "%CONFIRM_MODIFY%"=="true" (
   echo [SAFETY] Codex will ask for confirmation before modifying
