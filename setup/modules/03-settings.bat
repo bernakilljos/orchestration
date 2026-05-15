@@ -12,7 +12,7 @@ if "%REAL_USERPROFILE%"=="" set "REAL_USERPROFILE=%USERPROFILE%"
 echo.
 echo [+] Configuring Claude global settings...
 if not exist "!REAL_USERPROFILE!\.claude" mkdir "!REAL_USERPROFILE!\.claude" >nul 2>&1
-powershell -NoProfile -Command "$f='!REAL_USERPROFILE!\.claude\settings.json'; if(Test-Path $f){$j=Get-Content $f -Raw|ConvertFrom-Json}else{$j=[PSCustomObject]@{}}; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|Add-Member -NotePropertyName 'skipDangerousModePermissionPrompt' -NotePropertyValue $true -Force; $j|Add-Member -NotePropertyName 'autoUpdatesChannel' -NotePropertyValue 'latest' -Force; $j|Add-Member -NotePropertyName 'checkpointingEnabled' -NotePropertyValue $true -Force; $j|ConvertTo-Json -Depth 10|Set-Content $f -Encoding UTF8" >nul 2>&1
+powershell -NoProfile -Command "$f='!REAL_USERPROFILE!\.claude\settings.json'; if(Test-Path $f){$j=Get-Content $f -Raw|ConvertFrom-Json}else{$j=[PSCustomObject]@{}}; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|Add-Member -NotePropertyName 'skipDangerousModePermissionPrompt' -NotePropertyValue $true -Force; $j|Add-Member -NotePropertyName 'autoUpdatesChannel' -NotePropertyValue 'latest' -Force; $j|Add-Member -NotePropertyName 'checkpointingEnabled' -NotePropertyValue $true -Force; $j|ConvertTo-Json -Depth 10; [System.IO.File]::WriteAllText($f, ($j|ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding $false))" >nul 2>&1
 echo       Done
 
 echo [+] Setting PowerShell UTF-8 encoding...
@@ -53,7 +53,7 @@ rem --- 프로젝트 레벨 settings.json 도 bypassPermissions 강제 ---
 rem (글로벌 ~/.claude/settings.json 에 bypassPermissions 두어도 프로젝트 레벨이 우선이라 override 됨)
 if not "%TARGET%"=="" if exist "%TARGET%\.claude\settings.json" (
   echo [+] Project settings.json defaultMode = bypassPermissions...
-  powershell -NoProfile -Command "$f='%TARGET%\.claude\settings.json'; $j=Get-Content $f -Raw|ConvertFrom-Json; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|ConvertTo-Json -Depth 10|Set-Content $f -Encoding UTF8" >nul 2>&1
+  powershell -NoProfile -Command "$f='%TARGET%\.claude\settings.json'; $j=Get-Content $f -Raw|ConvertFrom-Json; if(-not $j.PSObject.Properties['permissions']){$j|Add-Member -NotePropertyName 'permissions' -NotePropertyValue ([PSCustomObject]@{})}; $j.permissions|Add-Member -NotePropertyName 'defaultMode' -NotePropertyValue 'bypassPermissions' -Force; $j|ConvertTo-Json -Depth 10; [System.IO.File]::WriteAllText($f, ($j|ConvertTo-Json -Depth 10), (New-Object System.Text.UTF8Encoding $false))" >nul 2>&1
   echo       Done
 )
 
