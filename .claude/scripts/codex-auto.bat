@@ -195,6 +195,20 @@ goto LOOP
 set "IDLE_COUNT=0"
 echo [Worker-%CHILD_ID%] Picked: %PICKED_TASK%
 
+rem --- HITL Approval Gate (CLAUDE.md §7-23) — 위험 패턴 task 차단 ---
+rem 매치 시 lock 해제 + LOOP — 사용자가 /approve <task_id> 후 재처리
+findstr /R /I /C:"DROP[ ]*TABLE" /C:"rm -rf" /C:"git push --force" /C:"sudo " /C:"curl .* | .*bash" /C:"--auto-approve" /C:"npm publish" /C:"docker push" "%PICKED_TASK%" >nul 2>&1
+if not errorlevel 1 (
+  echo [Worker-%CHILD_ID%] [HITL BLOCK] 위험 패턴 감지 — approval-gate 통과 후 재시도
+  for %%F in ("%PICKED_TASK%") do (
+    python "%PROJECT_ROOT%\.claude\scripts\approval-gate.py" request "%%~nF" "%%~nxF" "auto-detected" "task 본문에 위험 패턴 매치" 2>nul
+    del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
+  )
+  popd
+  timeout /t 30 /nobreak >nul
+  goto LOOP
+)
+
 rem --- 지시서 원본 보호: 읽기 전용 + 백업 ---
 for %%F in ("%PICKED_TASK%") do (
   attrib +r "%%F" >nul 2>&1

@@ -198,6 +198,17 @@ if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
   if errorlevel 1 set "VERIFY_PASS=false"
 )
 
+rem --- Metrics 기록 (route_dispatch.md §5 Step 5) — claude-auto 도 메트릭 일관성 ---
+for %%F in ("%PICKED_TASK%") do (
+  set /a TOKENS_IN=(%%~zF)/4
+  if "!VERIFY_PASS!"=="true" ( set "SUCCESS=1" ) else ( set "SUCCESS=0" )
+  python "%PROJECT_ROOT%\.claude\scripts\lib\record_call.py" ^
+    --ai claude --model claude-sonnet-4-6 ^
+    --tokens-in !TOKENS_IN! --tokens-out 0 ^
+    --latency-ms 0 --success !SUCCESS! ^
+    --task-id "%%~nF" 2>nul
+)
+
 rem --- Move to done + clean lock ---
 for %%F in ("%PICKED_TASK%") do (
   if %CLAUDE_EXIT% EQU 0 if "!VERIFY_PASS!"=="true" (

@@ -173,6 +173,15 @@ goto LOOP
 set "IDLE_COUNT=0"
 echo [Worker-%CHILD_ID%] Picked: %PICKED_NAME%
 
+rem --- HITL Approval Gate (CLAUDE.md §7-23) — 위험 패턴 task 차단 ---
+findstr /R /I /C:"DROP[ ]*TABLE" /C:"rm -rf" /C:"git push --force" /C:"sudo " /C:"curl .* | .*bash" /C:"--auto-approve" /C:"npm publish" /C:"docker push" "%PICKED_TASK%" >nul 2>&1
+if not errorlevel 1 (
+  echo [Worker-%CHILD_ID%] [HITL BLOCK] 위험 패턴 감지 — approval-gate 통과 후 재시도
+  del "%ORCA_ROOT%\locks\%PICKED_NAME%.lock" 2>nul
+  timeout /t 30 /nobreak >nul
+  goto LOOP
+)
+
 rem --- Extract project_root ---
 set "_PR_TMP=%TEMP%\_orca_pr_%CHILD_ID%_%RANDOM%.txt"
 powershell -NoProfile -Command "$c=Get-Content '%PICKED_TASK%' -Raw; if($c -match '(?ms)^---\s*\r?\n(.*?)\r?\n---'){ $fm=$matches[1]; if($fm -match '(?m)^project_root:\s*(.+)$'){ $matches[1].Trim() } }" > "%_PR_TMP%" 2>nul
