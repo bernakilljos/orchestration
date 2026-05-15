@@ -23,7 +23,8 @@ if exist "%TARGET%\.claude" (
 
 echo [2/4] Installing .claude folder + plugin manifest + local plugins...
 if not exist "%TARGET%\.claude" mkdir "%TARGET%\.claude"
-robocopy "%SCRIPT_DIR%.claude" "%TARGET%\.claude" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
+rem 강화: /R:3 /W:5 재시도 + log
+robocopy "%SCRIPT_DIR%.claude" "%TARGET%\.claude" /E /R:3 /W:5 /NFL /NDL /NJH /NJS /NP /LOG:"%TEMP%\install-claude.log" >nul 2>&1
 if exist "%SCRIPT_DIR%CLAUDE.md" copy /Y "%SCRIPT_DIR%CLAUDE.md" "%TARGET%\CLAUDE.md" >nul
 
 rem --- Plugin manifest (.claude-plugin/) ---
@@ -34,10 +35,30 @@ if exist "%SCRIPT_DIR%.claude-plugin" (
 )
 
 rem --- Local plugins (exec_*, design_*, mcp_*, review_*, exec_session_guard 등) ---
+rem 강화: /R:3 /W:5 (locked file 재시도) + log + 사후 검증 + 누락 시 재시도
 if exist "%SCRIPT_DIR%plugins" (
   if not exist "%TARGET%\plugins" mkdir "%TARGET%\plugins"
-  robocopy "%SCRIPT_DIR%plugins" "%TARGET%\plugins" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
-  echo       plugins/ copied
+  set "ROBOCOPY_LOG=%TEMP%\install-plugins.log"
+  robocopy "%SCRIPT_DIR%plugins" "%TARGET%\plugins" /E /R:3 /W:5 /NFL /NDL /NJH /NJS /NP /LOG:"!ROBOCOPY_LOG!" >nul 2>&1
+
+  rem --- 사후 검증: orch 와 target 파일 갯수 비교 ---
+  set "SRC_COUNT=0"
+  set "DST_COUNT=0"
+  for /f %%C in ('dir "%SCRIPT_DIR%plugins" /S /B /A:-D 2^>nul ^| find /C /V ""') do set "SRC_COUNT=%%C"
+  for /f %%C in ('dir "%TARGET%\plugins" /S /B /A:-D 2^>nul ^| find /C /V ""') do set "DST_COUNT=%%C"
+
+  if !DST_COUNT! LSS !SRC_COUNT! (
+    echo       [WARN] plugins/ 일부 누락 ^(src=!SRC_COUNT! dst=!DST_COUNT!^) - 재시도
+    robocopy "%SCRIPT_DIR%plugins" "%TARGET%\plugins" /E /R:5 /W:10 /NFL /NDL /NJH /NJS /NP /LOG+:"!ROBOCOPY_LOG!" >nul 2>&1
+    for /f %%C in ('dir "%TARGET%\plugins" /S /B /A:-D 2^>nul ^| find /C /V ""') do set "DST_COUNT=%%C"
+    if !DST_COUNT! LSS !SRC_COUNT! (
+      echo       [WARN] 재시도 후에도 부족 ^(src=!SRC_COUNT! dst=!DST_COUNT!^) - 로그: !ROBOCOPY_LOG!
+    ) else (
+      echo       plugins/ copied ^(재시도 OK, src=!SRC_COUNT! dst=!DST_COUNT!^)
+    )
+  ) else (
+    echo       plugins/ copied ^(src=!SRC_COUNT! dst=!DST_COUNT!^)
+  )
 
   rem --- Fanout: plugins/*/commands|skills|agents|hooks → .claude/{commands,skills,agents,hooks} ---
   rem Claude Code는 .claude/ 하위만 읽으므로 plugin 자산을 중복 복사 (plugins/ 는 마스터 보관)
@@ -136,6 +157,47 @@ findstr /C:".claude/deploy-config.env" "%TARGET%\.gitignore" >nul 2>&1 || (
   echo .claude/context-cache/>> "%TARGET%\.gitignore"
   echo docs/secret-scan.txt>> "%TARGET%\.gitignore"
   echo docs/build-result.txt>> "%TARGET%\.gitignore"
+)
+
+rem --- Sanity check: 핵심 hook 파일 누락 검출 + 개별 재시도 ---
+rem 사용자가 settings.json 의 hook 경로 No such file 에러 보지 않도록 사전 검증
+echo [Sanity] 핵심 hook 파일 검증...
+set "MISSING_COUNT=0"
+for %%H in (
+  "plugins\exec_session_guard\hooks\auto-compact-check.sh"
+  "plugins\exec_session_guard\hooks\outbox-write.sh"
+  "plugins\exec_session_guard\hooks\stop-snapshot.sh"
+  "plugins\exec_session_guard\hooks\process-outbox.sh"
+  "plugins\exec_session_guard\hooks\cleanup-orphans.sh"
+  "plugins\exec_session_guard\hooks\hook-token-log.sh"
+  "plugins\exec_session_guard\hooks\hook-gemini-recap.sh"
+  "plugins\exec_orch\hooks\hook-00-init.sh"
+  "plugins\exec_orch\hooks\hook-08-ai-handoff.sh"
+  "plugins\exec_orch\hooks\hook-01-pre-task.sh"
+  "plugins\exec_orch\hooks\install-external-watchdog.sh"
+  "plugins\exec_orch\hooks\pre-build-reminder.sh"
+  "plugins\exec_learning\hooks\hook-worker-failure.sh"
+) do (
+  if not exist "%TARGET%\%%~H" (
+    if exist "%SCRIPT_DIR%%%~H" (
+      for %%D in ("%TARGET%\%%~H") do if not exist "%%~dpD" mkdir "%%~dpD" >nul 2>&1
+      copy /Y "%SCRIPT_DIR%%%~H" "%TARGET%\%%~H" >nul 2>&1
+      if exist "%TARGET%\%%~H" (
+        echo       [복원] %%~H
+      ) else (
+        echo       [실패] %%~H
+        set /a MISSING_COUNT+=1
+      )
+    ) else (
+      echo       [원본없음] %%~H
+      set /a MISSING_COUNT+=1
+    )
+  )
+)
+if !MISSING_COUNT! GTR 0 (
+  echo       [WARN] !MISSING_COUNT! 개 hook 파일 복원 실패 - settings.json No such file 에러 가능
+) else (
+  echo       [OK] 핵심 hook 13개 모두 존재
 )
 echo       Done
 
