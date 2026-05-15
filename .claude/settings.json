@@ -165,6 +165,11 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-01-pre-task.sh\"",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-claude-md-size.sh\"",
+            "timeout": 3
           }
         ]
       },
@@ -215,6 +220,11 @@
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_formatter.py\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
+            "timeout": 3
           }
         ]
       },
