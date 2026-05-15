@@ -210,6 +210,54 @@ if !CODEX_EXIT! NEQ 0 (
 )
 
 attrib -r "%PICKED_TASK%" >nul 2>&1
+
+rem --- 필수 검증 (post-impl-verify.sh) — codex-auto.bat 와 정합 ---
+echo [Worker-%CHILD_ID%] Running mandatory verification...
+if exist "%TASK_PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
+  set "PROJECT_ROOT=%TASK_PROJECT_ROOT%"
+  bash "%TASK_PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
+  if errorlevel 1 (
+    echo [Worker-%CHILD_ID%] [VERIFY FAIL] Errors — task NOT marked done
+    del "%ORCA_ROOT%\locks\%PICKED_NAME%.lock" 2>nul
+    popd
+    goto LOOP
+  )
+  echo [Worker-%CHILD_ID%] [VERIFY OK]
+)
+
+rem --- Metrics 기록 (route_dispatch.md §5 Step 5) ---
+for %%F in ("%PICKED_TASK%") do set /a TOKENS_IN=(%%~zF)/4
+python "%TASK_PROJECT_ROOT%\.claude\scripts\lib\record_call.py" ^
+  --ai codex --model codex ^
+  --tokens-in !TOKENS_IN! --tokens-out 0 ^
+  --latency-ms 0 --success 1 ^
+  --task-id "%PICKED_NAME%" 2>nul
+
+rem --- Haiku/Claude 샌드위치 — review task 자동 생성 (route_dispatch.md §7) ---
+echo !PICKED_NAME! | findstr /i "task-review task-escalate" >nul 2>&1
+if errorlevel 1 (
+  set "REVIEW_TASK=%TASK_PROJECT_ROOT%\.claude\tasks\task-review-%PICKED_NAME%.md"
+  if not exist "!REVIEW_TASK!" (
+    (
+      echo # Review: %PICKED_NAME%
+      echo.
+      echo ## Goal
+      echo Global codex worker completed %PICKED_NAME%. Haiku/Claude review the result.
+      echo.
+      echo ## Steps
+      echo 1. Read original task: `.claude\tasks\done\%PICKED_NAME%.bak`
+      echo 2. Verify implementation matches task requirements
+      echo 3. Fix minor issues directly
+      echo 4. Write review to `docs\claude-review-%PICKED_NAME%.md`
+      echo.
+      echo ## Rules
+      echo - Relative paths only
+      echo - Follow all rules in CLAUDE.md
+    ) > "!REVIEW_TASK!"
+    echo [Worker-%CHILD_ID%] Sandwich review task created
+  )
+)
+
 move /Y "%PICKED_TASK%" "%ORCA_ROOT%\done\%PICKED_NAME%.md" >nul 2>&1
 del "%ORCA_ROOT%\locks\%PICKED_NAME%.lock" 2>nul
 popd
