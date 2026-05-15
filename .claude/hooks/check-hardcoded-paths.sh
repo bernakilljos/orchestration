@@ -11,8 +11,9 @@ if command -v jq >/dev/null 2>&1; then
   FILE_PATH="$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')"
   CONTENT="$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // ""')"
 else
-  FILE_PATH="$(echo "$INPUT" | grep -oE '"file_path"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/')"
-  CONTENT=""
+  # jq 미설치 fallback — INPUT 전체에서 grep (JSON escape 상태라 백슬래시 1+ 패턴이 매치 가능)
+  FILE_PATH="$(echo "$INPUT" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]+' | head -1 | sed 's/.*"\([^"]*\)$/\1/')"
+  CONTENT="$INPUT"
 fi
 
 # 검사 대상: code/script/config 파일만 (md 문서·rule 예시는 제외)

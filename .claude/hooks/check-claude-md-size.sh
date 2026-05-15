@@ -10,7 +10,8 @@ if command -v jq >/dev/null 2>&1; then
   FILE_PATH="$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')"
   CONTENT="$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string // ""')"
 else
-  FILE_PATH="$(echo "$INPUT" | grep -oE '"file_path"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/')"
+  # jq 미설치 fallback — file_path 만 추출, content 는 파일 자체 wc 로 검사
+  FILE_PATH="$(echo "$INPUT" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]+' | head -1 | sed 's/.*"\([^"]*\)$/\1/')"
   CONTENT=""
 fi
 
