@@ -98,6 +98,14 @@ if echo "$CMD" | grep -qE 'build-[a-z-]+-(ppt|pptx)\.py|generate-[a-z-]+-ppt\.py
 EOF
 fi
 
+# Frontend 회귀 검증 — build-*-html / build-*-frontend / npm.*run.*(build|dev)
+VERIFY_FRONTEND="$PROJECT_ROOT/.claude/scripts/verify-frontend.py"
+if [ -f "$VERIFY_FRONTEND" ] && echo "$CMD" | grep -qE 'build-[a-z-]+-(html|frontend)\.py|npm[[:space:]]+run[[:space:]]+(build|dev)'; then
+  cat <<EOF
+{"systemMessage": "[hook-09 frontend] frontend 빌드 감지. verify-frontend.py 로 console error / pageerror / 4xx-5xx 자동 검증 권장:\n  python .claude/scripts/verify-frontend.py --dir <html-root>\n  python .claude/scripts/verify-frontend.py http://localhost:3000"}
+EOF
+fi
+
 if [ ! -f "$VERIFY_PPT" ]; then
   exit 0
 fi

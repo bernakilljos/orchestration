@@ -232,6 +232,17 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
             "timeout": 3,
             "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-js-syntax.sh\"",
+            "timeout": 5,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-html-balance.sh\"",
+            "timeout": 5
           }
         ]
       },
