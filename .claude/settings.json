@@ -219,7 +219,8 @@
           {
             "type": "command",
             "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_pycheck.py\"",
-            "timeout": 30
+            "timeout": 30,
+            "continueOnBlock": true
           },
           {
             "type": "command",
@@ -229,7 +230,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
-            "timeout": 3
+            "timeout": 3,
+            "continueOnBlock": true
           }
         ]
       },
@@ -315,6 +317,33 @@
           }
         ]
       }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PostCompact",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "autoMode": {
+    "hard_deny": [
+      "Bash(rm:*-rf*/*)",
+      "Bash(curl:*|*bash*)",
+      "Bash(curl:*|*sh*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard origin/*)",
+      "Bash(npm publish*)",
+      "Bash(docker push *:prod*)",
+      "Bash(docker push *:latest*)",
+      "Bash(terraform apply*-auto-approve*)",
+      "Edit(.env)",
+      "Edit(*.env)",
+      "Write(.env)"
     ]
   }
 }
