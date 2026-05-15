@@ -56,6 +56,52 @@ for protected in config.py .claude/settings.json .env; do
   fi
 done
 
+# 5. 빌드 산출물 visual 검증 (codex 자식 프로세스 안 빌드 명령은 hook-09 우회 — 여기서 보강)
+CHANGED_DOCX=$(git diff --name-only HEAD~1 2>/dev/null | grep -E '\.docx$' || true)
+CHANGED_PPTX=$(git diff --name-only HEAD~1 2>/dev/null | grep -E '\.pptx$' || true)
+CHANGED_PNG=$(git diff --name-only HEAD~1 2>/dev/null | grep -E '^docs/.*\.png$' || true)
+
+for docx in $CHANGED_DOCX; do
+  [ -f "$PROJECT_ROOT/$docx" ] || continue
+  if [ -f "$PROJECT_ROOT/.claude/scripts/verify-docx-structure.py" ]; then
+    RESULT=$(python "$PROJECT_ROOT/.claude/scripts/verify-docx-structure.py" "$PROJECT_ROOT/$docx" 2>&1 || true)
+    if echo "$RESULT" | grep -q 'FAIL'; then
+      echo "[VERIFY FAIL] docx structure: $docx"
+      echo "$RESULT" | head -5
+      ERRORS=$((ERRORS+1))
+    fi
+  fi
+  if [ -f "$PROJECT_ROOT/.claude/scripts/verify-docx-pages.py" ]; then
+    RESULT=$(python "$PROJECT_ROOT/.claude/scripts/verify-docx-pages.py" "$PROJECT_ROOT/$docx" 2>&1 || true)
+    if echo "$RESULT" | grep -q 'FAIL'; then
+      echo "[VERIFY FAIL] docx pages: $docx"
+      echo "$RESULT" | head -5
+      ERRORS=$((ERRORS+1))
+    fi
+  fi
+done
+
+for pptx in $CHANGED_PPTX; do
+  [ -f "$PROJECT_ROOT/$pptx" ] || continue
+  if [ -f "$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py" ]; then
+    RESULT=$(python "$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py" 2>&1 || true)
+    if echo "$RESULT" | grep -q '\[!\]'; then
+      echo "[VERIFY WARN] pptx overflow suspects: $pptx (manual Read tool 검증 권장)"
+    fi
+  fi
+done
+
+if [ -n "$CHANGED_PNG" ] && [ -f "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" ]; then
+  PNG_DIRS=$(echo "$CHANGED_PNG" | xargs -I{} dirname {} 2>/dev/null | sort -u)
+  for dir in $PNG_DIRS; do
+    [ -d "$PROJECT_ROOT/$dir" ] || continue
+    RESULT=$(python "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" "$PROJECT_ROOT/$dir" 2>&1 || true)
+    if echo "$RESULT" | grep -q 'WARN'; then
+      echo "[VERIFY WARN] PNG whitespace in $dir (≥5% blank)"
+    fi
+  done
+fi
+
 if [ $ERRORS -gt 0 ]; then
   echo "[VERIFY] $ERRORS errors found — task NOT complete"
   exit 2
