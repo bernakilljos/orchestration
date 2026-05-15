@@ -74,9 +74,20 @@ install.bat <현재 폴더>
 | 플러그인 | Codex 지시서 경로 |
 |---------|----------------|
 | exec_orch | `plugins/exec_orch/codex/instructions.md` |
-| exec_persona | `plugins/exec_persona/codex/instructions.md` |
 | design_ppt | `plugins/design_ppt/codex/instructions.md` |
 | review_qa | `plugins/review_qa/codex/instructions.md` |
+| exec_learning | `plugins/exec_learning/codex/instructions.md` |
+
+> 주의: 실제 저장소 기준으로 존재하는 경로만 유지한다. 문서 경로와 실제 폴더가 다르면 실제 폴더를 기준으로 즉시 수정한다.
+
+## 규칙 우선순위
+
+충돌 시 아래 순서로 우선 적용:
+
+1. 사용자 직접 지시
+2. 현재 작업의 `task-*.md` 규칙
+3. 루트 `AGENTS.md`
+4. 플러그인별 `codex/instructions.md`
 
 ---
 
