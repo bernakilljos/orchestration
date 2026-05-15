@@ -99,7 +99,8 @@
                                    "hooks":  [
                                                  {
                                                      "type":  "command",
-                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop"
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop",
+                                                     "timeout":  5
                                                  },
                                                  {
                                                      "type":  "command",
