@@ -249,6 +249,27 @@
     CLAUDE_AUTOCOMPACT_THRESHOLD=50         컨텍스트 50%% 시 자동 압축
     CLAUDE_CODE_SUBAGENT_MODEL=haiku        서브에이전트 저비용 모델 사용
 
+  [자체 토큰 감사 — audit-tokens.py (2026-05-15)]
+    PYTHONIOENCODING=utf-8 python .claude/scripts/audit-tokens.py
+    PYTHONIOENCODING=utf-8 python .claude/scripts/audit-tokens.py --json
+    PYTHONIOENCODING=utf-8 python .claude/scripts/audit-tokens.py --rules R1,R5
+
+    5개 룰 (한글·plugins/ 구조 대응):
+      R1 Opus 비율 ≥ 80%        모델 분기 anti-pattern 검출
+      R2 HD-003                 결정 작업을 LLM에 위임 (verify-*.py 분리 검증)
+      R4 비대                   CLAUDE.md/SKILL.md 300줄+/12K자+ (한글 보정)
+      R5 Prompt Caching         cache_control 명시 카운트
+      R8 Writer Cap             writer/drafter agent per-call cap
+
+    실행: 5초, LLM 0회, 외부 의존 0. plugins/*/{agents,skills}/*.md 전수 스캔.
+
+  [HITL Approval Gate × Codex 통합 (CLAUDE.md §7-23)]
+    codex-auto.bat / codex-auto-global.bat / codex.bat 모두 위험 패턴 grep 자동 차단:
+      DROP TABLE / rm -rf / git push --force / sudo / curl|bash
+      --auto-approve / npm publish / docker push
+    → 매치 시 approval-gate.py request 호출 + lock 해제 + LOOP 재진입
+    → 사용자가 /approve <task_id> 후 재처리
+
   [MCP 토큰 최적화 — Deferred Tools (자동 적용)]
     Claude Code 최신 버전부터 MCP 도구 스키마를 지연 로딩(Lazy Load)함.
 
@@ -307,7 +328,7 @@
     37 error-tracker        에러 수집/분류/분석 (Sentry 대체)
     38 token-watchdog       토큰 감시 + 자동 재가동
 
-  [훅 — 11개]
+  [훅 — 15개 (2026-05-15 +4)]
     00 init                  스택 감지, 폴더 생성
     01 pre-task              태스크 등록, 파일 잠금
     02 post-impl             구현 후 품질 게이트
@@ -317,8 +338,13 @@
     06 notify                알림 (성공/실패)
     07 layout-lock           레이아웃 파일 보호
     08 ai-handoff            인수인계 산출물 강제 검증
+    09 ocr-verify            PPT/docx/PNG 빌드 후 OCR·visual 검증
     -- protect-critical-files config.py/settings.json 수정 차단
-    -- post-impl-verify      구현 후 문법/인코딩/보호파일 자동 검증
+    -- post-impl-verify      구현 후 문법/인코딩/보호파일 + docx/pptx/PNG 빌드 검증
+    -- check-sync-drift      plugins/ ↔ .claude/ drift·orphan 자동 점검 (SessionStart)
+    -- check-claude-md-size  CLAUDE.md/AGENTS.md/GEMINI.md 500줄+ 경고 (PreToolUse)
+    -- check-indentation     md/json/yaml/sh 탭+스페이스 혼용 검출 (PostToolUse)
+    -- check-hardcoded-paths C:\Users / /home / Python3XX / DESKTOP-XXX 검출 (PreToolUse)
 
   [슬래시 커맨드 — 25개 (프로젝트 12 + 모드 13)]
     /check-agents          codex-auto / gemini-auto 가용 여부 확인
