@@ -63,13 +63,20 @@ TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "turns=$TURNS guard_lines=$LINES reason=$TRIGGER ts=$TS" > "$MARKER"
 echo "$TURNS" > "$COOLDOWN_FILE"
 
-# 6. stdout 알림 (Claude Code 가 transcript 로 픽업)
+# 6. stdout — Claude 강제 의무 메시지 (다음 turn 첫 동작으로 /compact 자동 실행)
 cat <<EOF
-[auto-compact] 컨텍스트 임계치 도달 — /compact 권장
-  - $TRIGGER
-  - 토큰 절감(LV12): 지금 /compact 입력하면 다음 턴부터 90% 가벼워짐
-  - 마커: .claude/context-cache/auto-compact-recommended
-  - 다음 알림은 $COOLDOWN 턴 후
+[auto-compact ENFORCED — 컨텍스트 임계치 도달]
+트리거: $TRIGGER
+
+★ Claude 의무 (NEXT TURN 첫 동작):
+  1) 사용자 다음 prompt 받자마자 **가장 먼저 /compact 자체 실행**
+     (도구 호출·답변 전, 모든 작업의 0순위)
+  2) compact 완료 후 사용자 원래 요청 처리
+  3) 한국어 한 줄 통지: "[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행"
+
+★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐
+★ 마커: .claude/context-cache/auto-compact-recommended
+★ Cooldown: 다음 알림은 $COOLDOWN 턴 후
 EOF
 
 exit 0
