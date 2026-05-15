@@ -30,28 +30,29 @@ esac
 
 VIOLATIONS=""
 
-# 1. C:\Users\<사용자명> 박힘 (placeholder %USERNAME% 제외)
-if echo "$CONTENT" | grep -qE 'C:[\\/]Users[\\/][a-z][a-z0-9_]+' 2>/dev/null; then
-  MATCH="$(echo "$CONTENT" | grep -oE 'C:[\\/]Users[\\/][a-z][a-z0-9_]+' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - 사용자명: $MATCH → \$env:USERPROFILE / %USERPROFILE% / Path.home()"
+# 백슬래시 처리: JSON escape 된 \\ 또는 raw \ 둘 다 매치 ([\\]+ = 백슬래시 1+)
+# 1. C:\Users\<사용자명> 또는 C:/Users/<사용자명>
+if echo "$CONTENT" | grep -qE 'C:[\\/]+[Uu]sers[\\/]+[a-z][a-z0-9_]+'; then
+  MATCH="$(echo "$CONTENT" | grep -oE 'C:[\\/]+[Uu]sers[\\/]+[a-z][a-z0-9_]+' | head -1)"
+  VIOLATIONS="$VIOLATIONS\n  - 사용자명: $MATCH → %USERPROFILE% / Path.home()"
 fi
 
 # 2. /home/<사용자명>
-if echo "$CONTENT" | grep -qE '/home/[a-z][a-z0-9_]+(/|$| )'; then
+if echo "$CONTENT" | grep -qE '/home/[a-z][a-z0-9_]+'; then
   MATCH="$(echo "$CONTENT" | grep -oE '/home/[a-z][a-z0-9_]+' | head -1)"
   VIOLATIONS="$VIOLATIONS\n  - Linux 사용자: $MATCH → \$HOME / Path.home()"
 fi
 
-# 3. Python3<버전> 박힘
-if echo "$CONTENT" | grep -qE 'Python3(10|11|12|13|14)\\python\.exe'; then
-  MATCH="$(echo "$CONTENT" | grep -oE 'Python3(10|11|12|13|14)\\python\.exe' | head -1)"
+# 3. Python3<버전> — Python310 ~ Python399 매치 (현재 + 미래 버전)
+if echo "$CONTENT" | grep -qE 'Python3[0-9]{2}'; then
+  MATCH="$(echo "$CONTENT" | grep -oE 'Python3[0-9]{2}' | head -1)"
   VIOLATIONS="$VIOLATIONS\n  - Python 버전: $MATCH → where python / shutil.which('python')"
 fi
 
 # 4. DESKTOP-XXX 호스트명
 if echo "$CONTENT" | grep -qE 'DESKTOP-[A-Z0-9]{5,}'; then
   MATCH="$(echo "$CONTENT" | grep -oE 'DESKTOP-[A-Z0-9]{5,}' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - 호스트명: $MATCH → \$env:COMPUTERNAME / socket.gethostname()"
+  VIOLATIONS="$VIOLATIONS\n  - 호스트명: $MATCH → %COMPUTERNAME% / socket.gethostname()"
 fi
 
 if [ -n "$VIOLATIONS" ]; then
