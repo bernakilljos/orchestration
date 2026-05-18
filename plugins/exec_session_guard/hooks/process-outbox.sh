@@ -3,6 +3,8 @@
 #
 # Stop/SessionEnd 의 outbox-write.sh 가 쌓아둔 메시지를 처리:
 #   - notion-outbox/*.md → stdout 출력 → Claude 가 보고 다음 turn 에 Notion MCP push
+# Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
+[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 #   - slack-outbox/*.json → stdout 출력 → Claude 가 Slack MCP push (또는 curl)
 #
 # Claude 에게 "큐에 N 개 메시지 있음. MCP 로 처리해줘" 라는 reminder 출력.

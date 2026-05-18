@@ -1,6 +1,8 @@
 #!/bin/bash
 # HOOK-08 — AI Handoff: 멀티AI 인수인계 강제 검증 + auto chain
 # 사용: hook-08-ai-handoff.sh claude-to-codex|codex-to-claude|gemini-to-claude|auto
+# Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
+[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 set +e
 
 PHASE="${1:-claude-to-codex}"

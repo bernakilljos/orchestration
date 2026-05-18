@@ -2,6 +2,8 @@
 # auto-compact-check.sh — LV12 토큰 절약 자동 트리거
 # 트리거: Stop hook (매 턴 종료마다)
 # 동작: 턴 카운트 증가 → 임계치 도달 시 /compact 권장 메시지 + 마커 파일 생성
+# Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
+[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 #
 # 임계치 (env 로 override 가능):
 #   COMPACT_TURN_THRESHOLD     기본 25 (턴 수)

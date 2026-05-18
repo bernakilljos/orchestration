@@ -3,6 +3,8 @@
 #
 # 세션 종료 시 요약을 outbox 큐에 저장. 두 가지 채널:
 #   .claude/state/notion-outbox/  → 다음 세션에 Notion MCP 로 push
+# Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
+[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 #   .claude/state/slack-outbox/   → SLACK_WEBHOOK_URL 있으면 즉시 curl, 없으면 큐
 #
 # 5핵심 #4 Memory 의 장기 기억 + #5 Observability 의 외부 알림 보완.
