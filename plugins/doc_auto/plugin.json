@@ -1,0 +1,36 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "doc_auto",
+  "display": "README/CHANGELOG/API doc 자동 갱신 (AI-Native 3단계)",
+  "prefix": "doc_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": ["exec_orch", "sec_scan"],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "doc-update",
+    "core_skills": ["skill-doc-automation"]
+  },
+  "metadata": {
+    "category": "문서 자동화",
+    "tags": ["readme", "changelog", "api-doc", "ai-native"],
+    "author": "bernakilljos",
+    "created": "2026-05-19",
+    "updated": "2026-05-19",
+    "precedence": 32,
+    "token_estimate": 3500
+  },
+  "pipeline_position": {
+    "stage": 3,
+    "prev": "sec_scan",
+    "next": null,
+    "trigger": "sec_scan PASS 또는 수동 /doc-update"
+  }
+}

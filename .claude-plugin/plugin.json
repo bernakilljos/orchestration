@@ -55,7 +55,22 @@
     "ai_rag":            "plugins/ai_rag/",
     "exec_offline":      "plugins/exec_offline/",
     "music_studio":      "plugins/music_studio/",
-    "eval_quality":      "plugins/eval_quality/"
+    "eval_quality":      "plugins/eval_quality/",
+    "test_gen":          "plugins/test_gen/",
+    "sec_scan":          "plugins/sec_scan/",
+    "doc_auto":          "plugins/doc_auto/"
+  },
+
+  "ai_native_pipeline": {
+    "trigger": "코드 파일 PostToolUse (Edit/Write)",
+    "chain": [
+      "test_gen   → Codex 가 코드 보고 pytest/jest 생성",
+      "test_runner → 기존 review_qa/eval_quality 가 실행",
+      "sec_scan   → semgrep + gitleaks + bandit (PASS 시 다음)",
+      "doc_auto   → README/CHANGELOG diff 자동 append"
+    ],
+    "fail_policy": "단계 fail = 다음 단계 skip + 사용자 알림",
+    "skip_extensions": [".md", ".json", ".yaml", ".png", ".pptx"]
   },
 
   "prefix_convention": {
@@ -75,7 +90,8 @@
     "infra_":  "인프라 계열 — AWS·Terraform·백업·IAM (로드맵 Phase 3)",
     "data_":   "데이터 파이프라인 계열 — ETL·레이크·크롤링 (로드맵 Phase 3)",
     "edu_":    "교육·강의 계열 (로드맵 Phase 3)",
-    "test_":   "테스트 자동화 계열 (로드맵 Phase 3)",
+    "test_":   "테스트 자동화 계열 — pytest/jest 생성·실행",
+    "doc_":    "문서 자동화 계열 — README/CHANGELOG/API doc 자동 갱신",
     "db_":     "DB 운영 계열 — MSSQL·MySQL·Oracle (로드맵 Phase 3)",
     "life_":   "개인·취미 계열 (로드맵 Phase 3)",
     "biz_":    "창업·비즈니스 계열 (로드맵 Phase 3)",

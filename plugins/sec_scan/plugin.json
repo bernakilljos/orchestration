@@ -1,0 +1,36 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "sec_scan",
+  "display": "코드 보안 스캔 — semgrep + gitleaks + bandit (AI-Native 2단계)",
+  "prefix": "sec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": ["exec_orch", "test_gen"],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "sec-scan",
+    "core_skills": ["skill-security-scanning"]
+  },
+  "metadata": {
+    "category": "보안·컴플라이언스",
+    "tags": ["semgrep", "gitleaks", "bandit", "owasp", "ai-native"],
+    "author": "bernakilljos",
+    "created": "2026-05-19",
+    "updated": "2026-05-19",
+    "precedence": 31,
+    "token_estimate": 4000
+  },
+  "pipeline_position": {
+    "stage": 2,
+    "prev": "test_gen",
+    "next": "doc_auto",
+    "trigger": "test_gen PASS 또는 수동 /sec-scan"
+  }
+}

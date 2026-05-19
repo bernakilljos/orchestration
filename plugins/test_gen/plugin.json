@@ -1,0 +1,35 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "test_gen",
+  "display": "코드 → pytest/jest 테스트 자동 생성 (AI-Native 1단계)",
+  "prefix": "test_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": ["exec_orch"],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "test-gen",
+    "core_skills": ["skill-test-generation"]
+  },
+  "metadata": {
+    "category": "테스트 자동화",
+    "tags": ["pytest", "jest", "ai-native", "codex"],
+    "author": "bernakilljos",
+    "created": "2026-05-19",
+    "updated": "2026-05-19",
+    "precedence": 30,
+    "token_estimate": 4500
+  },
+  "pipeline_position": {
+    "stage": 1,
+    "next": "review_qa or eval_quality (test_runner)",
+    "trigger": "PostToolUse Edit/Write on .py/.js/.ts files"
+  }
+}
