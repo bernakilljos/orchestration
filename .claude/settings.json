@@ -84,6 +84,12 @@
                                                              "type":  "command",
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-sync-drift.sh\"",
                                                              "timeout":  5
+                                                         },
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
+                                                             "timeout":  120,
+                                                             "async":  true
                                                          }
                                                      ]
                                        }

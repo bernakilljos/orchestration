@@ -17,28 +17,38 @@ FILE_PATH="${1:-}"
 
 echo "[$(date +%F_%T)] sec_scan start: $FILE_PATH" >> "$LOG"
 
-# 도구 자동 설치 (한 번만)
-INSTALL_FLAG="${PROJECT_ROOT}/.claude/state/.sec-tools-installed"
-if [ ! -f "$INSTALL_FLAG" ]; then
-  pip install semgrep bandit 2>>"$LOG" >/dev/null || true
-  touch "$INSTALL_FLAG"
-fi
+# 도구 자동 설치 (통합 스크립트 — 멱등)
+INSTALL_SCRIPT="${PROJECT_ROOT}/.claude/scripts/install-sec-tools.sh"
+[ -x "$INSTALL_SCRIPT" ] && bash "$INSTALL_SCRIPT" >/dev/null 2>&1 || true
 
 ISSUES=0
 RESULT_DIR="${PROJECT_ROOT}/.claude/state"
+TOOLS_DIR="${RESULT_DIR}/tools"
 mkdir -p "$RESULT_DIR"
 
-# semgrep (모든 언어)
+# semgrep — CLI 호출 (Windows: python -m semgrep, 다른 OS: semgrep)
+SEMGREP_CMD=""
 if command -v semgrep >/dev/null 2>&1; then
-  semgrep --config=auto --json --output="${RESULT_DIR}/semgrep-${FILE_PATH//\//_}.json" \
+  SEMGREP_CMD="semgrep"
+elif python -m semgrep --version >/dev/null 2>&1; then
+  SEMGREP_CMD="python -m semgrep"
+fi
+if [ -n "$SEMGREP_CMD" ]; then
+  $SEMGREP_CMD --config=auto --json --output="${RESULT_DIR}/semgrep-${FILE_PATH//\//_}.json" \
     "$PROJECT_ROOT/$FILE_PATH" >>"$LOG" 2>&1 || ISSUES=$((ISSUES+1))
 fi
 
-# bandit (Python only)
+# bandit — Python only (CLI 또는 module)
 case "$FILE_PATH" in
   *.py)
+    BANDIT_CMD=""
     if command -v bandit >/dev/null 2>&1; then
-      bandit -f json -o "${RESULT_DIR}/bandit-${FILE_PATH//\//_}.json" -ll \
+      BANDIT_CMD="bandit"
+    elif python -m bandit --version >/dev/null 2>&1; then
+      BANDIT_CMD="python -m bandit"
+    fi
+    if [ -n "$BANDIT_CMD" ]; then
+      $BANDIT_CMD -f json -o "${RESULT_DIR}/bandit-${FILE_PATH//\//_}.json" -ll \
         "$PROJECT_ROOT/$FILE_PATH" >>"$LOG" 2>&1 || ISSUES=$((ISSUES+1))
     fi
     ;;

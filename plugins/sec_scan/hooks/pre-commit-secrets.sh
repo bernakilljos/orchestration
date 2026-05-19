@@ -28,15 +28,29 @@ case "$CMD" in
   *) exit 0 ;;
 esac
 
-# gitleaks 실행 (없으면 fallback grep)
+# 자동 설치 (한 번만, async X — 즉시 실행 필요)
+INSTALL_SCRIPT="${PROJECT_ROOT}/.claude/scripts/install-sec-tools.sh"
+[ -x "$INSTALL_SCRIPT" ] && bash "$INSTALL_SCRIPT" >/dev/null 2>&1 || true
+
+# gitleaks 경로 결정 (PATH > TOOLS_DIR/.exe > TOOLS_DIR/)
+TOOLS_DIR="${PROJECT_ROOT}/.claude/state/tools"
+GITLEAKS_BIN=""
+if command -v gitleaks >/dev/null 2>&1; then
+  GITLEAKS_BIN="gitleaks"
+elif [ -x "$TOOLS_DIR/gitleaks.exe" ]; then
+  GITLEAKS_BIN="$TOOLS_DIR/gitleaks.exe"
+elif [ -x "$TOOLS_DIR/gitleaks" ]; then
+  GITLEAKS_BIN="$TOOLS_DIR/gitleaks"
+fi
+
 RESULT_FILE="${PROJECT_ROOT}/.claude/state/gitleaks-staged.json"
 mkdir -p "$(dirname "$RESULT_FILE")"
 
-if command -v gitleaks >/dev/null 2>&1; then
+if [ -n "$GITLEAKS_BIN" ]; then
   cd "$PROJECT_ROOT"
-  gitleaks protect --staged --report-format json --report-path "$RESULT_FILE" 2>>"$LOG" || GITLEAKS_FAIL=1
+  "$GITLEAKS_BIN" protect --staged --report-format json --report-path "$RESULT_FILE" 2>>"$LOG" || GITLEAKS_FAIL=1
 else
-  # fallback: 자체 패턴
+  # fallback: 자체 패턴 (gitleaks 미설치 환경)
   STAGED=$(cd "$PROJECT_ROOT" && git diff --cached --name-only 2>/dev/null)
   for f in $STAGED; do
     [ -f "$PROJECT_ROOT/$f" ] || continue
