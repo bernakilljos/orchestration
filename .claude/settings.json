@@ -141,6 +141,11 @@
                                                  },
                                                  {
                                                      "type":  "command",
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
+                                                     "timeout":  5
+                                                 },
+                                                 {
+                                                     "type":  "command",
                                                      "command":  "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-bat-lines.py\"",
                                                      "timeout":  60,
                                                      "async":  true
@@ -275,6 +280,20 @@
                                                             "type":  "command",
                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
                                                             "timeout":  60,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
+                                                            "timeout":  30,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
+                                                            "timeout":  120,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         },

@@ -171,12 +171,15 @@ for %%H in (
   "plugins\exec_session_guard\hooks\cleanup-orphans.sh"
   "plugins\exec_session_guard\hooks\hook-token-log.sh"
   "plugins\exec_session_guard\hooks\hook-gemini-recap.sh"
+  "plugins\exec_session_guard\hooks\periodic-snapshot.sh"
   "plugins\exec_orch\hooks\hook-00-init.sh"
   "plugins\exec_orch\hooks\hook-08-ai-handoff.sh"
   "plugins\exec_orch\hooks\hook-01-pre-task.sh"
   "plugins\exec_orch\hooks\install-external-watchdog.sh"
   "plugins\exec_orch\hooks\pre-build-reminder.sh"
   "plugins\exec_learning\hooks\hook-worker-failure.sh"
+  "plugins\sec_scan\hooks\pre-commit-secrets.sh"
+  "plugins\test_gen\hooks\post-edit-test-gen.sh"
 ) do (
   if not exist "%TARGET%\%%~H" (
     if exist "%SCRIPT_DIR%%%~H" (
@@ -197,7 +200,7 @@ for %%H in (
 if !MISSING_COUNT! GTR 0 (
   echo       [WARN] !MISSING_COUNT! 개 hook 파일 복원 실패 - settings.json No such file 에러 가능
 ) else (
-  echo       [OK] 핵심 hook 13개 모두 존재
+  echo       [OK] 핵심 hook 16개 모두 존재
 )
 echo       Done
 
