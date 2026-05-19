@@ -1095,6 +1095,9 @@
        - Notion 체크리스트 페이지 생성
        - pre-compact-rules-reminder.sh: compact 직전 핵심 규칙 7개 systemMessage 주입 (잊지 방지)
     ✓ 매시간 디자인 레퍼런스 자동 수집 (collect-design-refs.py)
+    ✓ /analyze-improve 커맨드 — 프로젝트 소스 분석 → 적용 가능 기술 추천
+       - RMS·ERP·ISMS-P·준법경영 등 도메인별 특화 분석
+       - 19개 공통 레퍼런스 기반 개선점 우선순위 매기기
        - 25개 카테고리 Playwright 캡처, 해시 중복 방지, Task Scheduler 자동
     ✓ RMS 엔터프라이즈 기술 10대 (rms-enterprise-tech-toolkit.md)
        - XAI (SHAP·LIME·Captum) — 위험도 판단 근거 설명
