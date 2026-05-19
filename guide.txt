@@ -1109,6 +1109,9 @@
          금융(yfinance·backtrader)·과학(scipy·pybullet)·의료(pydicom·monai)
          법률(spacy·konlpy)·회계(xlsxwriter·num2words)·출판(ebooklib·weasyprint)
          영화(colour-science·VFX·자막)
+    ✓ 사용자 관심 800개 카테고리 (docs/user-categories-800.json)
+       - 60개 그룹 구조화 (운동·음악·투자·AI·개발·농업·제조·물류·건설·HR 등)
+       - 수익화·서비스 기획 우선순위 활용 데이터
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
