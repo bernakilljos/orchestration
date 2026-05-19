@@ -19,7 +19,7 @@
 
 ## 1. Inno Setup 설치
 
-```
+```text
 winget install JRSoftware.InnoSetup
 ```
 
@@ -44,7 +44,7 @@ iscc setup.iss
 
 ## 3. 결과물
 
-```
+```text
 setup\Output\OrchestrationKit-Setup.exe
 ```
 
@@ -97,12 +97,13 @@ setup.bat C:\work\myproject
 | 12 | kit-sync.bat | sync-plugins.sh 실행 |
 | 13 | init-state-db.bat | SQLite 통합 상태 DB 초기화 |
 | 14 | mcp-figma.bat | ClaudeTalkToFigma MCP 등록 |
+| 15 | auto-dev.bat | 24/7 자동 개발 에이전트 (Task Scheduler 4h + auto-dev flag) |
 
 ## 7. 설치 후 4주차로 가는 길
 
 setup 끝나면 사용자에게 Claude 가 안내해야 할 다음 단계:
 
-```
+```text
 1주차 완료 (MCP 기초)        → /plug_all 로 추가 카테고리
 2주차 완료 (CLAUDE.md)        → 자동
 3주차 (Telegram 알림)         → /mcp_collab-install

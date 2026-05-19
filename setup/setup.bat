@@ -250,9 +250,14 @@ echo [STEP] 11-media-enhance %TIME% >> "!LOGFILE!"
 call "%MOD%\11-media-enhance.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 12/12] ClaudeTalkToFigma MCP...
+echo [Step 12/13] ClaudeTalkToFigma MCP...
 echo [STEP] 14-mcp-figma %TIME% >> "!LOGFILE!"
 call "%MOD%\14-mcp-figma.bat"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 13/13] 24/7 Auto-Dev Agent...
+echo [STEP] 15-auto-dev %TIME% >> "!LOGFILE!"
+call "%MOD%\15-auto-dev.bat" "!TARGET!" "%~dp0" "!REAL_USERPROFILE!"
 if errorlevel 1 set /a ERRORS+=1
 
 set "ERR=!ERRORS!"
