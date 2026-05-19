@@ -1054,6 +1054,11 @@
        - SessionStart 시 실패 MCP 자동 감지 → 재등록 (filesystem·powerpoint·dom-to-pptx·figma)
     ✓ 17장 카카오톡 이미지 한글 명명 (uiux.build 11장 + Claude Skills 6장)
     ✓ 실패 MCP 4개 재등록 (filesystem·powerpoint·dom-to-pptx·figma)
+    ✓ AI 에이전트 4대 프로토콜 (agent-protocols-toolkit.md)
+       - MCP (Anthropic) — LLM↔도구 연결 (14개 서버)
+       - A2A (Google) — 에이전트↔에이전트 태스크 위임
+       - ACP (IBM/LF) — 프레임워크 독립 에이전트 협업
+       - AG-UI (CopilotKit) — 에이전트→프론트엔드 UI 렌더링
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
