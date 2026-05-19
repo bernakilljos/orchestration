@@ -1105,6 +1105,10 @@
     ✓ 공통 툴킷 보강 (도메인 전용 X → 공통 도구 추가)
        - python-toolkit-pip: XAI(SHAP·LIME)·AI거버넌스·합성데이터·PETs·Green AI·대화형BI
        - app-development-toolkit: Zero Trust (OPA·Casbin·SPIFFE·Keycloak)
+       - python-toolkit-pip: 7개 도메인 공통 도구 추가
+         금융(yfinance·backtrader)·과학(scipy·pybullet)·의료(pydicom·monai)
+         법률(spacy·konlpy)·회계(xlsxwriter·num2words)·출판(ebooklib·weasyprint)
+         영화(colour-science·VFX·자막)
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)

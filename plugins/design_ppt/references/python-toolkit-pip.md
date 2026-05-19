@@ -149,6 +149,85 @@ pip install bokeh             # 대시보드용 인터랙티브 차트
 pip install pygwalker         # 판다스 → Tableau 스타일 탐색
 ```
 
+### 금융 / 주식 / 시뮬레이션
+```bash
+pip install yfinance          # 주식·ETF 시세 (Yahoo Finance)
+pip install backtrader        # 주식 백테스팅 프레임워크
+pip install zipline-reloaded  # 알고리즘 트레이딩 백테스트 (Quantopian)
+pip install ta                # 기술 지표 (RSI, MACD, 볼린저밴드)
+pip install ta-lib            # 기술 지표 (C 기반, 빠름)
+pip install quantlib          # 금융 공학 (옵션·채권·금리)
+pip install empyrical         # 포트폴리오 성과 분석
+pip install pyfolio           # 포트폴리오 시각화
+pip install simpy             # 이산 이벤트 시뮬레이션
+pip install mesa              # 에이전트 기반 시뮬레이션 (ABM)
+pip install gym               # 강화학습 환경 (시뮬레이션)
+```
+
+### 과학 / 공학 / 물리 시뮬레이션
+```bash
+pip install scipy             # 과학 계산 (미분·적분·최적화)
+pip install sympy             # 기호 수학 (수식 계산)
+pip install pybullet          # 3D 물리 시뮬레이션
+pip install pymunk            # 2D 물리 (Chipmunk)
+pip install fenics            # 유한요소법 (FEM)
+pip install openmdao          # 다학제 최적화
+pip install astropy           # 천문학 계산
+```
+
+### 의료 / 바이오
+```bash
+pip install biopython         # 생물정보학 (DNA·단백질)
+pip install nibabel           # 의료 영상 (NIfTI, DICOM)
+pip install pydicom           # DICOM 의료 이미지
+pip install monai             # 의료 AI (PyTorch 기반)
+pip install lifelines         # 생존 분석
+pip install mne               # 뇌파(EEG) 분석
+```
+
+### 법률 / 문서 분석
+```bash
+pip install spacy             # NLP (개체명 인식, 구문 분석)
+pip install konlpy            # 한국어 NLP (형태소 분석)
+pip install kiwipiepy         # Kiwi 한국어 형태소 (빠름)
+pip install sentence-transformers  # 문장 임베딩 (유사도 검색)
+pip install docx2txt          # Word 텍스트 추출
+pip install pdfplumber        # PDF 텍스트·표 추출
+pip install camelot-py        # PDF 표 추출 (정밀)
+```
+
+### 회계 / ERP
+```bash
+pip install openpyxl          # Excel 읽기/쓰기 (이미 설치)
+pip install xlsxwriter        # Excel 쓰기 (차트·서식 강력)
+pip install python-barcode    # 바코드 생성
+pip install qrcode            # QR 코드 생성
+pip install num2words         # 숫자→한글 (금삼천만원)
+pip install babel             # 통화·날짜 로케일 포맷
+```
+
+### 글쓰기 / 출판
+```bash
+pip install markdown          # Markdown → HTML
+pip install python-docx       # Word 생성 (이미 설치)
+pip install ebooklib          # EPUB 전자책 생성
+pip install weasyprint        # HTML → PDF (CSS 지원)
+pip install reportlab         # PDF 프로그래밍 생성
+pip install fpdf2             # 경량 PDF 생성
+pip install python-pptx       # PPT 생성 (이미 설치)
+```
+
+### 영화 / 영상 제작
+```bash
+pip install moviepy           # 영상 편집 (자르기·합치기·효과) (이미 설치)
+pip install colour-science    # 컬러 그레이딩 (DCI-P3, ACES)
+pip install nuke              # 합성 (Foundry — 상용)
+pip install opencv-python     # VFX 기본 (크로마키·트래킹)
+pip install subtitle-parser   # SRT/ASS 자막 파싱
+pip install ass               # ASS 자막 (스타일링)
+pip install ffmpeg-python     # FFmpeg 바인딩 (인코딩·변환)
+```
+
 ### 크롤링·스크래핑
 ```bash
 pip install requests          # HTTP 클라이언트
