@@ -204,6 +204,11 @@
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret-scan.sh\"",
                                                            "timeout":  3
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/pre-commit-secrets.sh\"",
+                                                           "timeout":  30
                                                        }
                                                    ]
                                      }
@@ -243,6 +248,13 @@
                                                             "type":  "command",
                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-html-balance.sh\"",
                                                             "timeout":  5
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
+                                                            "timeout":  60,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true
                                                         }
                                                     ]
                                       },
