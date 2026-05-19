@@ -220,6 +220,7 @@
     12 kit-sync         plugins/ to .claude/ 자동 동기화 + 스키마 검증
     13 init-state-db    SQLite state DB 초기화 (워커·태스크·quota·budget)
     14 mcp-figma        ClaudeTalkToFigma MCP 등록
+    15 auto-dev         24/7 자동 개발 에이전트 (Task Scheduler 4h + auto-dev flag)
 
   [플러그인 — 외부 커뮤니티 8개 (자동 설치)]
     claude-md-management     CLAUDE.md 품질 관리
@@ -967,6 +968,20 @@
        - CLAUDE.md § 19 회피·딴말 금지
        - CLAUDE.md § 20 수정 후 자동 검증
        - CLAUDE.md § 21~22 오염 파일 정리
+
+  2026-05-19 배포 갭 fix + 24/7 자동 개발 (commit 587ff07, a37a7b5):
+    ✓ 24/7 자동 개발 에이전트 (Module 15)
+       - 15-auto-dev.bat              Task Scheduler 4시간 간격 자동 등록
+       - auto-dev-wrapper.bat         Claude CLI 동적 탐색 + lock + 자동 개발 프롬프트
+       - .claude/auto-dev-enabled     플래그 (rm 으로 비활성화)
+    ✓ 배포 갭 6개 fix
+       - setup.bat: Module 13 (init-state-db) 호출 누락 → 추가 (orca.db 자동 생성)
+       - setup.bat: pip install playwright·pillow·matplotlib 자동 설치
+       - 01-core.bat: .env.example → .env 자동 복사
+       - check-infra-sync.sh          Stop hook — plugins 변경 시 guide.txt 미갱신 경고
+       - find-python.sh               Windows Store python.exe 스텁 회피 헬퍼
+       - periodic-snapshot.sh          PostToolUse 5분 주기 자동 스냅샷 (크래시 방어)
+    ✓ setup 모듈 15개 체계 (01-core ~ 15-auto-dev)
 
   2026-05-11 안정성 + zero-touch 자동화 누적 (commit 11건):
     ✓ Watchdog 메모리 누수·자살 로직 보강 (24371f0)
