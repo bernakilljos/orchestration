@@ -962,6 +962,17 @@
        - design-toolkit-cdn.md        30개 카테고리 (banner, button, card, chart 등)
        - skill-design-toolkit.md      패턴 빠르게 찾기 + 맞춤 CDN 추천
        - Figma/Canva/HTML 통합
+    ✓ Python 패키지 카탈로그 200+ (python-toolkit-pip.md)
+       - 이미지 처리 (PIL, OpenCV, rembg, Real-ESRGAN, easyocr)
+       - 데이터 (pandas, polars, plotly, seaborn)
+       - 웹 (FastAPI, Streamlit, Gradio)
+       - AI/ML (anthropic, langchain, chromadb, transformers)
+       - 테스트 (pytest, hypothesis, faker)
+    ✓ 미디어 복원 전문 (media-restoration-toolkit.md)
+       - 이미지: 초해상도(Real-ESRGAN), 얼굴복원(CodeFormer), 컬러화(DeOldify), 배경제거(rembg)
+       - 영상: 업스케일(BasicVSR++), 프레임보간(RIFE 15→60fps), 안정화, 디노이징
+       - 오디오: 노이즈제거(noisereduce), 대역확장(VoiceFixer), 스템분리(Demucs)
+       - 음악: AI작곡(MusicGen/Suno), MIDI추출(Basic Pitch), 보이스클로닝(RVC/GPT-SoVITS)
     ✓ 세션 크래시 방어
        - periodic-snapshot.sh         PostToolUse 5분 주기 세션 자동 저장
        - SessionStart hook 복구 자동 제안
