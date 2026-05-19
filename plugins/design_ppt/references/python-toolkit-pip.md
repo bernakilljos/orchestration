@@ -265,11 +265,38 @@ pip install anthropic         # Claude API
 pip install openai            # OpenAI API
 pip install google-generativeai  # Gemini API
 pip install langchain         # LLM 오케스트레이션
+pip install langchain-anthropic   # LangChain + Claude
+pip install langchain-openai     # LangChain + OpenAI
+pip install langgraph         # 그래프 기반 에이전트 워크플로우
+pip install langserve         # LangChain 모델 서빙 (API 배포)
+pip install langsmith         # LLM 트레이싱+평가+디버깅
 pip install llama-index       # RAG 프레임워크
 pip install chromadb          # 벡터 DB (이미 설치 가능)
 pip install sentence-transformers  # 임베딩 모델
 pip install tiktoken          # OpenAI 토크나이저
 pip install tokenizers        # Hugging Face 토크나이저
+pip install litellm           # 100+ LLM 통합 프록시 (비용 추적)
+pip install instructor        # 구조화 LLM 출력 (Pydantic 강제)
+pip install outlines          # LLM 출력 제약 (JSON/정규식 강제)
+pip install mirascope         # LLM 추상화 (다중 모델)
+pip install magentic          # 데코레이터 기반 LLM 호출
+pip install dspy-ai           # 프로그래밍 방식 프롬프트 최적화
+pip install haystack-ai       # RAG+에이전트 (deepset)
+pip install smolagents        # 코드 에이전트 (Hugging Face)
+pip install crewai            # 멀티에이전트 팀 (역할 기반)
+pip install autogen           # 대화형 멀티에이전트 (MS)
+```
+
+### AI 서빙 / 배포
+```bash
+pip install vllm              # 고속 LLM 서빙 (PagedAttention)
+pip install bentoml           # ML 모델 패키징+배포
+pip install ray[serve]        # 분산 서빙 (Ray Serve)
+pip install modal             # 서버리스 GPU (클라우드)
+pip install replicate         # AI 모델 원클릭 배포 (API)
+pip install runpod            # GPU 클라우드 (저렴)
+pip install together          # 오픈소스 모델 호스팅
+pip install groq              # 초고속 추론 API
 ```
 
 ### ML 학습
