@@ -422,6 +422,10 @@
                                                        {
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PreCompact"
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
                                                        }
                                                    ]
                                      }
