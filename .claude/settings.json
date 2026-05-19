@@ -90,6 +90,12 @@
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
                                                              "timeout":  120,
                                                              "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-official-features.sh\"",
+                                                             "timeout":  30,
+                                                             "async":  true
                                                          }
                                                      ]
                                        }
@@ -100,6 +106,11 @@
                                                              {
                                                                  "type":  "command",
                                                                  "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-auto-planner.sh\"",
+                                                                 "timeout":  3
+                                                             },
+                                                             {
+                                                                 "type":  "command",
+                                                                 "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
                                                                  "timeout":  3
                                                              }
                                                          ]
@@ -215,6 +226,11 @@
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/pre-commit-secrets.sh\"",
                                                            "timeout":  30
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/approval-gate-detect.sh\"",
+                                                           "timeout":  5
                                                        }
                                                    ]
                                      }
@@ -259,6 +275,13 @@
                                                             "type":  "command",
                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
                                                             "timeout":  60,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
+                                                            "timeout":  10,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         }
@@ -375,6 +398,11 @@
                                                          {
                                                              "type":  "command",
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
+                                                             "timeout":  5
+                                                         },
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-subagent-confidence.sh\"",
                                                              "timeout":  5
                                                          }
                                                      ]

@@ -211,6 +211,11 @@ def status(task_id: str) -> dict:
 
 
 def main():
+    # Windows cp949 회피 — stdout UTF-8 강제
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except (AttributeError, Exception):
+        pass
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(2)
