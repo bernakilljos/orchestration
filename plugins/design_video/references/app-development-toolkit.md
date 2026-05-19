@@ -298,6 +298,16 @@ pip install safety            # 의존성 취약점
 pip install pwntools          # CTF/익스플로잇 개발
 ```
 
+### Zero Trust / 접근 제어
+| 도구 | 특장 | 설치 |
+|------|------|------|
+| **OPA (Open Policy Agent)** | 정책 기반 접근 제어 엔진 | Docker |
+| **Casbin** | RBAC/ABAC 라이브러리 (Python/Go/JS) | `pip install casbin` |
+| **SPIFFE/SPIRE** | 서비스 ID 관리 (mTLS 자동) | Docker |
+| **Keycloak** | IAM 오픈소스 (SSO, OAuth2) | Docker |
+| **Teleport** | 제로 트러스트 접근 프록시 | Docker |
+| **Boundary** | HashiCorp 접근 관리 | Docker |
+
 ---
 
 ## 9. 교육 / 학습 리소스

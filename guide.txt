@@ -1102,6 +1102,9 @@
        - Data Fabric (Airbyte·dbt·Trino) — 분산 데이터 통합
        - Green AI (CodeCarbon) — ESG 탄소 배출 측정
        - AI Governance (Fairness 360·Giskard·Evidently) — 공정성·투명성
+    ✓ 공통 툴킷 보강 (도메인 전용 X → 공통 도구 추가)
+       - python-toolkit-pip: XAI(SHAP·LIME)·AI거버넌스·합성데이터·PETs·Green AI·대화형BI
+       - app-development-toolkit: Zero Trust (OPA·Casbin·SPIFFE·Keycloak)
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)

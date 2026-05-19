@@ -210,6 +210,60 @@ pip install peft              # LoRA/QLoRA 파인튜닝
 pip install bitsandbytes      # 양자화 (4bit/8bit)
 ```
 
+### XAI (설명 가능한 AI)
+```bash
+pip install shap              # Shapley 값 기반 특성 중요도 (표준)
+pip install lime              # 로컬 해석 (개별 예측 설명)
+pip install captum            # PyTorch 모델 해석 (Meta)
+pip install interpret         # InterpretML (Microsoft XAI 통합)
+pip install alibi             # 반사실적 설명 (Counterfactual)
+pip install omnixai           # 표/이미지/텍스트 통합 XAI
+```
+
+### AI 거버넌스 / 공정성 / 모니터링
+```bash
+pip install aif360            # AI 공정성 검사 (IBM)
+pip install raiwidgets        # Responsible AI Toolbox (Microsoft)
+pip install giskard           # ML 모델 검증 + 취약점 탐지
+pip install evidently         # ML 모니터링 (데이터 드리프트 감지)
+pip install whylogs           # 데이터+모델 관측
+pip install guardrails-ai     # LLM 출력 검증
+pip install nemoguardrails    # 대화 안전 (NVIDIA)
+```
+
+### 합성데이터 (Synthetic Data)
+```bash
+pip install sdv               # 테이블·시계열·관계형 합성 (MIT)
+pip install ctgan             # GAN 기반 테이블 합성
+pip install gretel-client     # Gretel 합성데이터 (SaaS)
+pip install mimesis           # 고속 가짜 데이터 (100x Faker)
+pip install DataSynthesizer   # 차등 프라이버시 합성
+pip install ydata-synthetic   # 시계열 합성
+```
+
+### 자연어→SQL / 대화형 BI
+```bash
+pip install vanna             # 자연어→SQL (DB 연동)
+pip install chainlit          # LLM 챗 UI
+pip install faststream        # Python 이벤트 프레임워크 (Kafka/Redis)
+```
+
+### 프라이버시 보호 (PETs)
+```bash
+pip install opacus            # 차등 프라이버시 (PyTorch)
+pip install flwr              # 연합학습 (Flower)
+pip install tenseal           # 동형암호 ML
+pip install mpyc              # 안전한 다자간 연산 (MPC)
+pip install pysyft            # PySyft 프라이버시 보존 ML
+```
+
+### 탄소 배출 / Green AI
+```bash
+pip install codecarbon        # ML 학습 탄소 배출 측정
+pip install carbontracker     # GPU 에너지 추적
+pip install eco2ai            # 에코 AI 추적
+```
+
 ---
 
 ## 7. Testing (테스트)
