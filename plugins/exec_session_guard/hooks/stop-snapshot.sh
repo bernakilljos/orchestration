@@ -67,23 +67,8 @@ EOF
 else
   # 기존 파일의 "Last Hook Record" 섹션만 갱신 (없으면 append)
   if grep -q "^### Last Hook Record" "$SNAP"; then
-    # sed로 섹션 이후 첫 줄만 교체 (Windows Git Bash 호환 위해 단순 append 방식으로)
-    python - "$SNAP" "$TS" "$EVENT" "$BRANCH" <<'PYEOF' 2>/dev/null || true
-import sys, re, pathlib
-p = pathlib.Path(sys.argv[1])
-ts, event, branch = sys.argv[2], sys.argv[3], sys.argv[4]
-text = p.read_text(encoding='utf-8', errors='ignore')
-line = f"[{ts}] event={event} branch={branch}"
-# Last Hook Record 섹션 교체
-new = re.sub(
-    r"(### Last Hook Record\n)(.*?)(\Z|\n### )",
-    lambda m: f"{m.group(1)}{line}\n{m.group(3)}" if m.group(3).startswith("\n###") else f"{m.group(1)}{line}\n",
-    text,
-    count=1,
-    flags=re.DOTALL,
-)
-p.write_text(new, encoding='utf-8')
-PYEOF
+    LINE="[$TS] event=$EVENT branch=$BRANCH"
+    sed -i "/^### Last Hook Record$/{ n; s/.*/$LINE/ }" "$SNAP" 2>/dev/null || true
   else
     printf "\n### Last Hook Record\n[%s] event=%s branch=%s\n" "$TS" "$EVENT" "$BRANCH" >> "$SNAP"
   fi

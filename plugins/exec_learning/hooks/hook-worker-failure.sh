@@ -7,6 +7,10 @@
 
 set -euo pipefail
 
+# Windows Store python.exe 스텁 회피
+SCRIPT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+source "$SCRIPT_DIR/.claude/hooks/find-python.sh" 2>/dev/null || PYTHON=""
+
 REPO_ROOT="${CLAUDE_PROJECT_ROOT:-$(pwd)}"
 LEARNING_DIR="$REPO_ROOT/.claude/learning"
 PATTERNS_FILE="$LEARNING_DIR/failure-patterns.json"
@@ -74,7 +78,7 @@ fi
     echo '{"failures": []}' > "$PATTERNS_FILE"
   fi
 
-  python - "$PATTERNS_FILE" "$fail_data" <<'PYEOF'
+  ${PYTHON:-python} - "$PATTERNS_FILE" "$fail_data" <<'PYEOF'
 import json, sys
 path = sys.argv[1]
 entry = json.loads(sys.argv[2])

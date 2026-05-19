@@ -303,6 +303,11 @@
                                                         {
                                                             "type":  "command",
                                                             "command":  "bash -c \u0027test -d \"$CLAUDE_PROJECT_DIR/.claude\" \u0026\u0026 date +%Y-%m-%dT%H:%M:%S \u003e \"$CLAUDE_PROJECT_DIR/.claude/orca-heartbeat\"\u0027"
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/periodic-snapshot.sh\"",
+                                                            "timeout":  5
                                                         }
                                                     ]
                                       }
