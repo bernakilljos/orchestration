@@ -1030,6 +1030,22 @@
     ✓ /install-to 커맨드 (Claude가 직접 다른 프로젝트에 install)
     ✓ hook 미등록 6개 fix (install-on-session-start·hook-04~06·memory_guard·post-impl-verify)
     ✓ skill-media-restore.md 누락 생성
+    ✓ 비즈니스 로직 템플릿 (business-logic-templates.md)
+       - 인증 (JWT·OAuth2·소셜), 결제 (Stripe·토스), 예약 (동시성 제어)
+       - 알림 (apprise 70+ 채널), 피드 (Fan-out), 검색 (Meilisearch)
+       - 파일 스토리지 (S3/R2), 리뷰/평점, 추천 엔진, 이메일
+    ✓ 미래 기술 (future-tech-toolkit.md)
+       - 양자 컴퓨팅 (Qiskit·Cirq·PennyLane), 양자 ML
+       - 피지컬 AI (ROS2·Isaac Sim·PyBullet·자율주행)
+       - 뉴로모픽 (Loihi·SpiNNaker), BCI (OpenBCI·brainflow)
+       - 공간 컴퓨팅 (WebXR·NeRF·3D Gaussian Splatting)
+       - Web3 (ethers.js·web3.py), 포스트-양자 암호
+    ✓ 수익화 (monetization-toolkit.md)
+       - SaaS (구독·프리미엄·사용량 과금), API 수익화 (RapidAPI·Stripe)
+       - 디지털 상품 (Gumroad·itch.io·Creative Market)
+       - 광고 (AdSense·Mediavine), 마켓플레이스 (Stripe Connect)
+       - 어필리에이트, 프리랜서/컨설팅, 오픈소스 수익화
+       - 우리 킷으로 바로 돈 되는 것 9가지
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
