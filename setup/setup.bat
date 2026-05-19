@@ -240,22 +240,35 @@ echo [STEP] 12-kit-sync %TIME% >> "!LOGFILE!"
 call "%MOD%\12-kit-sync.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 10/11] Finalize...
+echo [Step 10/15] Finalize...
 echo [STEP] 09-finalize %TIME% >> "!LOGFILE!"
 call "%MOD%\09-finalize.bat" "%TARGET%" "%ANALYZE_MODE%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 11/12] Media Enhance Dependencies...
+echo [Step 11/15] SQLite State DB Init...
+echo [STEP] 13-init-state-db %TIME% >> "!LOGFILE!"
+call "%MOD%\13-init-state-db.bat" "%TARGET%"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 12/15] Media Enhance Dependencies...
 echo [STEP] 11-media-enhance %TIME% >> "!LOGFILE!"
 call "%MOD%\11-media-enhance.bat" "%TARGET%"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 12/13] ClaudeTalkToFigma MCP...
+echo [Step 13/15] Core Python Packages...
+echo [STEP] pip-core %TIME% >> "!LOGFILE!"
+where python >nul 2>&1 && (
+  python -m pip install --quiet --upgrade playwright pillow matplotlib 2>nul
+  python -m playwright install chromium 2>nul
+  echo       Core packages installed
+) || echo       [WARN] Python not found - pip skipped
+
+echo [Step 14/15] ClaudeTalkToFigma MCP...
 echo [STEP] 14-mcp-figma %TIME% >> "!LOGFILE!"
 call "%MOD%\14-mcp-figma.bat"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 13/13] 24/7 Auto-Dev Agent...
+echo [Step 15/15] 24/7 Auto-Dev Agent...
 echo [STEP] 15-auto-dev %TIME% >> "!LOGFILE!"
 call "%MOD%\15-auto-dev.bat" "!TARGET!" "%~dp0" "!REAL_USERPROFILE!"
 if errorlevel 1 set /a ERRORS+=1

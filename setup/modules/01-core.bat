@@ -151,6 +151,13 @@ if not exist "%TARGET%\.claude\deploy-config.env" (
     echo       deploy-config.env created
   )
 )
+rem .env.example → .env 자동 복사 (API 키 placeholder)
+if not exist "%TARGET%\.env" (
+  if exist "%TARGET%\.env.example" (
+    copy /Y "%TARGET%\.env.example" "%TARGET%\.env" >nul 2>&1
+    echo       .env created from .env.example
+  )
+)
 if not exist "%TARGET%\.gitignore" echo.> "%TARGET%\.gitignore"
 findstr /C:".claude/deploy-config.env" "%TARGET%\.gitignore" >nul 2>&1 || (
   echo .claude/deploy-config.env>> "%TARGET%\.gitignore"
