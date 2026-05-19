@@ -1091,6 +1091,17 @@
        - auto-update-stats.sh: CLAUDE.md AUTO-STATS 자동 갱신 (Stop hook)
        - weekly-audit.sh: 매주 미등록 hook·빈 README·sync drift·하드코딩 경로 감사
        - Notion 체크리스트 페이지 생성
+    ✓ RMS 엔터프라이즈 기술 10대 (rms-enterprise-tech-toolkit.md)
+       - XAI (SHAP·LIME·Captum) — 위험도 판단 근거 설명
+       - PETs (차등프라이버시·연합학습·동형암호·합성데이터)
+       - Zero Trust (OPA·Casbin·SPIFFE) — 매번 권한·상황 검증
+       - Conversational BI (Vanna·Chainlit) — 자연어 리스크 질의
+       - Synthetic Data (SDV·CTGAN·Gretel) — AI 학습용 합성 거래
+       - Knowledge Graph (Neo4j·LlamaIndex) — 의미 기반 관계 분석
+       - Event-Driven (Kafka·Flink·FastStream) — 실시간 리스크 파이프라인
+       - Data Fabric (Airbyte·dbt·Trino) — 분산 데이터 통합
+       - Green AI (CodeCarbon) — ESG 탄소 배출 측정
+       - AI Governance (Fairness 360·Giskard·Evidently) — 공정성·투명성
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
