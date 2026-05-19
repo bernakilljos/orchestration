@@ -344,6 +344,12 @@
       file_lock_poller.py           파일 잠금 대기 + 자동 폴링 (60초, interval 2초)
       check-official-features.sh    공식 신기능 날짜별 auto-check (SessionStart)
 
+    ◆ 차단(block) 훅 — 규칙 위반 시 commit/write 거부 (2026-05-19)
+      block-version-suffix           산출물 -v2/-v3/_v2 파일명 차단 (Write/Edit)
+      block-file-deletion            plugins/·scripts/ 삭제 차단 (Bash rm)
+      pre-commit-infra-check         git commit 시 guide.txt 미포함 차단
+      check-infra-sync               Stop 시 guide.txt 갱신 누락 경고
+
     ◆ 검증 & 기본 (다른 훅들)
       protect-critical-files        config.py/settings.json 수정 차단
       post-impl-verify              구현 후 문법/인코딩 + 보호파일 검증
