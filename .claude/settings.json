@@ -130,6 +130,11 @@
                                                                  "type":  "command",
                                                                  "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
                                                                  "timeout":  3
+                                                             },
+                                                             {
+                                                                 "type":  "command",
+                                                                 "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
+                                                                 "timeout":  3
                                                              }
                                                          ]
                                            }
@@ -473,6 +478,10 @@
                                                             "type":  "command",
                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PostCompact",
                                                             "timeout":  5
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
                                                         }
                                                     ]
                                       }
@@ -484,6 +493,10 @@
                                                               "type":  "command",
                                                               "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
                                                               "timeout":  5
+                                                          },
+                                                          {
+                                                              "type":  "command",
+                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
                                                           }
                                                       ]
                                         }
