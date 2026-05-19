@@ -1004,6 +1004,16 @@
        - 평가/안전: RAGAS·DeepEval·Guardrails·NeMo·LangFuse
        - 멀티모달: LLaVA·Florence-2·Moondream·Qwen-VL
        - 코드 AI: Cursor·Aider·SWE-agent·Bolt.new·v0.dev
+    ✓ Phase 6: 엣지/온디바이스 AI (edge-ondevice-ai-toolkit.md)
+       - 브라우저 AI: Transformers.js·ONNX Runtime Web·TensorFlow.js·WebLLM
+       - 모바일: CoreML·TF Lite·MediaPipe·ML Kit·Executorch
+       - 로컬 LLM: Ollama·llama.cpp·vLLM·MLX·LM Studio (Phi-3/Gemma/Llama 3.2)
+       - TinyML: Edge Impulse·TFLite Micro (ESP32·Arduino·Jetson)
+       - WASM: Pyodide (브라우저 Python)·ONNX WASM
+       - 오프라인 음성: Vosk·Piper·Whisper.cpp·sherpa-onnx
+       - 프라이버시: PrivateGPT·LocalAI·AnythingLLM
+       - 모델 최적화: 양자화·프루닝·증류·스파시티
+       - 연합 학습: Flower·PySyft·Opacus·동형암호
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
