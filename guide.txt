@@ -1059,6 +1059,9 @@
        - A2A (Google) — 에이전트↔에이전트 태스크 위임
        - ACP (IBM/LF) — 프레임워크 독립 에이전트 협업
        - AG-UI (CopilotKit) — 에이전트→프론트엔드 UI 렌더링
+    ✓ 무료 공개 API 카탈로그 (public-api-toolkit.md)
+       - 18 카테고리: 영화·레시피·URL·IP위치·명언·환율·뉴스·날씨·AI·이미지
+       - 번역·소셜·이메일·인증·검색·QR·한국API(카카오·네이버·공공데이터)
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
