@@ -1085,6 +1085,12 @@
        - 사이버보안 (Burp·ZAP·Nmap·Wireshark·Snyk·Trivy)
        - 교육 (freeCodeCamp·roadmap.sh·LeetCode·백준·인프런)
        - 하드웨어 (RPi·Arduino·ESP32·Jetson·FPGA)
+    ✓ 자동화 100% 달성 인프라
+       - automation-checklist.md: 46개 의무 항목 (매커밋·매세션·매일·매주·매월)
+       - pre-commit-full-check.sh: git commit 시 guide.txt+CLAUDE.md+settings.json+BUILD.md 전부 확인
+       - auto-update-stats.sh: CLAUDE.md AUTO-STATS 자동 갱신 (Stop hook)
+       - weekly-audit.sh: 매주 미등록 hook·빈 README·sync drift·하드코딩 경로 감사
+       - Notion 체크리스트 페이지 생성
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)

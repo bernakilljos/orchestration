@@ -169,6 +169,11 @@
                                                  },
                                                  {
                                                      "type":  "command",
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
+                                                     "timeout":  5
+                                                 },
+                                                 {
+                                                     "type":  "command",
                                                      "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-04-pre-deploy.sh\"",
                                                      "timeout":  10,
                                                      "async":  true
@@ -286,6 +291,11 @@
                                                        {
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/approval-gate-detect.sh\"",
+                                                           "timeout":  5
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-full-check.sh\"",
                                                            "timeout":  5
                                                        }
                                                    ]
