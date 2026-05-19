@@ -979,6 +979,11 @@
     ✓ Python Store 스텁 회피
        - find-python.sh               where python / py launcher / registry 동적 검색
        - wrapper-py.bat → python 호출 표준화
+    ✓ Phase 3+4: design_video 플러그인 v2.0 확장
+       - /video-restore              90년대 VHS/Hi8 → 고화질 복원 (6-step 파이프라인)
+       - /image-restore              초해상도·얼굴복원·컬러화·배경제거·스크래치제거
+       - /audio-restore              노이즈제거·대역확장·스템분리·AI작곡·보이스클로닝
+       - realtime-streaming-toolkit  WebSocket·SSE·WebRTC·대시보드·메시지큐·IoT·게임
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
