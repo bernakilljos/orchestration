@@ -99,6 +99,12 @@
                                                          },
                                                          {
                                                              "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mcp-health.sh\"",
+                                                             "timeout":  30,
+                                                             "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_offline/hooks/install-on-session-start.sh\"",
                                                              "timeout":  10,
                                                              "async":  true

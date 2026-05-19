@@ -837,6 +837,307 @@ Swal.fire({ title: '완료!', text: '저장됨', icon: 'success' });
 
 ---
 
+## 31. Design Inspiration (디자인 영감 사이트)
+
+### Behance — Adobe 창작자 포트폴리오
+https://www.behance.net
+
+### Dribbble — 디자이너 커뮤니티
+https://dribbble.com
+
+### Awwwards — 웹 디자인 어워드
+https://www.awwwards.com
+
+### SiteInspire — 웹사이트 설계 영감
+https://www.siteinspire.com
+
+### Land-book — 랜딩페이지 카탈로그
+https://land-book.com
+
+### Mobbin — 앱 UI 스크린샷 모음
+https://mobbin.com
+
+### UI Movement — 인터랙션 영감
+https://uimovement.com
+
+### Godly — 디자인 패턴 영감
+https://godly.website
+
+### Collect UI — UI/UX 스크린샷
+https://www.collectui.com
+
+### Lapa Ninja — 랜딩페이지 영감
+https://www.lapa.ninja
+
+---
+
+## 32. Color Palette (컬러 팔레트 도구)
+
+### Coolors — AI 컬러 팔레트 생성
+https://coolors.co
+
+### Color Hunt — 큐레이션 팔레트
+https://colorhunt.co
+
+### Khroma — AI 컬러 학습기
+https://www.khroma.co
+
+### Happy Hues — 색상 조합 보기
+https://www.happyhues.co
+
+### Muzli Colors — 색상 검색
+https://colors.muz.li
+
+### Colormind — 딥러닝 컬러 팔레트
+http://colormind.io
+
+### BrandColors — 브랜드 컬러 모음
+https://brandcolors.net
+
+### Eva Colors — 접근성 컬러 시스템
+https://colors.eva.design
+
+### UI Colors — UI 컬러 팔레트
+https://uicolors.app
+
+### ColorSpace — 색상 그라디언트 생성
+https://www.colorspace.com
+
+---
+
+## 33. Free Illustrations (무료 일러스트)
+
+### Storyset — 편집 가능 일러스트
+https://storyset.com
+
+### unDraw — 오픈소스 일러스트
+https://undraw.co
+
+### DrawKit — SVG 일러스트 라이브러리
+https://www.drawkit.io
+
+### ManyPixels — 추상 일러스트
+https://www.manypixels.co/gallery
+
+### Icons8 Ouch — 일러스트 팩
+https://icons8.com/illustrations
+
+### IRA Design — 그래디언트 일러스트
+https://iradesign.io
+
+### Humaaans — 캐릭터 조합기
+https://www.humaaans.com
+
+### Open Doodles — 손그림 스타일
+https://www.opendoodles.com
+
+### Blush — 맞춤형 일러스트
+https://blush.design
+
+### Lukasz Adam — 3D 일러스트
+https://lukaszadam.com/illustrations
+
+---
+
+## 34. Mockups & Devices (목업)
+
+### Mockup World — 무료 목업 모음
+https://www.mockupworld.co
+
+### LS Graphics — PSD 목업 템플릿
+https://www.ls.graphics
+
+### Angle.sh — 기기 목업 생성
+https://www.angle.sh
+
+### Artboard Studio — 온라인 목업 도구
+https://artboard.studio
+
+### Previewed — 자동 목업 생성
+https://previewed.app
+
+### Shots.so — 웹사이트 스크린샷
+https://shots.so
+
+### Smartmockups — 클라우드 목업 제작
+https://smartmockups.com
+
+### Rotato — 3D 기기 뷰
+https://www.rotato.app
+
+### Mockuuups Studio — 온라인 목업 생성
+https://www.mockuuups.studio
+
+### Screely — 웹사이트 프리젠테이션
+https://www.screely.com
+
+---
+
+## 35. Stock Images & Videos (스톡 이미지/영상)
+
+### Pexels — 무료 사진
+https://www.pexels.com
+
+### Unsplash — 고품질 무료 사진
+https://unsplash.com
+
+### Pixabay — 무료 이미지/영상
+https://pixabay.com
+
+### Mixkit — 무료 영상 & 오디오
+https://mixkit.co
+
+### Coverr — 무료 비디오 클립
+https://coverr.co
+
+### Freepik — 벡터 & 사진
+https://www.freepik.com
+
+### Videvo — 무료 비디오 소스
+https://www.videvo.net
+
+### Life of Vids — 라이프스타일 영상
+https://www.lifeofvids.com
+
+### Burst — 고품질 스톡 사진
+https://burst.shopify.com
+
+### Mazwai — 영상 클립 모음
+https://www.mazwai.com
+
+---
+
+## 36. Fonts & Typography (폰트 사이트)
+
+### Fontshare — 무료 폰트 라이브러리
+https://www.fontshare.com
+
+### DaFont — 창의적 폰트 다운로드
+https://www.dafont.com
+
+### Typewolf — 폰트 추천
+https://www.typewolf.com
+
+### Fontpair — Google Fonts 조합
+https://www.fontpair.co
+
+### Pangram Pangram — 고급 폰트
+https://pangrampangram.com
+
+### Velvetyne — 독립 폰트 파운드리
+https://www.velvetyne.fr
+
+### WhatFont — 웹 폰트 검사 도구 (Chrome Extension)
+https://www.whatfontis.com
+
+### Fontjoy — AI 폰트 쌍 생성
+https://fontjoy.com
+
+---
+
+## 37. Animation Tools (서비스형)
+
+### Rive — 인터랙티브 애니메이션 플랫폼
+https://rive.app
+
+### Jitter — 애니메이션 설계 도구
+https://jitter.video
+
+### Haiku Animator — 모션 디자인
+https://www.haikuapp.com
+
+### Principle — 인터랙션 설계
+https://principle.app
+
+### Motionity — 웹 애니메이션 빌더
+https://www.motionity.app
+
+### Animista — CSS 애니메이션 라이브러리
+https://animista.net
+
+### Loading.io — 로딩 애니메이션 생성
+https://loading.io
+
+### Keyshape — SVG 애니메이션 도구
+https://www.keyshapeapp.com
+
+---
+
+## 38. 3D Design Resources (3D 디자인)
+
+### Spline — 온라인 3D 편집기 (export to web)
+https://spline.design
+
+### Blender — 오픈소스 3D 모델링
+https://www.blender.org
+
+### Sketchfab — 3D 모델 마켓플레이스
+https://sketchfab.com
+
+### Vectary — 온라인 3D 디자인 (Spline 전신)
+https://www.vectary.com
+
+### Poly Pizza — 로우폴리 3D 생성기
+https://poly.pizza
+
+### CGTrader — 3D 모델 판매
+https://www.cgtrader.com
+
+### Clara.io — 온라인 3D 편집
+https://clara.io
+
+### Adobe Substance 3D — 3D 텍스처링 & 렌더링
+https://www.adobe.com/products/substance3d.html
+
+### Thangs — 3D 모델 공유
+https://www.thangs.com
+
+### Dimensions — 3D 모델 검색
+https://www.dimensions.com
+
+---
+
+## 39. Icons 추가 (아이콘 라이브러리)
+
+### Remix Icon — 2000+ SVG 아이콘
+https://remixicon.com
+
+### Iconoir — 오픈소스 SVG 아이콘
+https://iconoir.com
+
+### SVG Repo — SVG 아이콘 저장소
+https://www.svgrepo.com
+
+---
+
+## 40. UI/UX Design Tools (서비스형)
+
+### Penpot — 오픈소스 Figma 대안
+https://penpot.app
+
+### ProtoPie — 프로토타입 도구
+https://www.protopie.io
+
+### UXPin — 디자인 시스템 도구
+https://www.uxpin.com
+
+### MockFlow — 와이어프레임 & UI 디자인
+https://www.mockflow.com
+
+### Balsamiq — 빠른 와이어프레임
+https://balsamiq.com
+
+### Lunacy — 무료 벡터 설계 (Sketch 호환)
+https://www.lunacy.dev
+
+### Framer — 프로토타입 & 배포
+https://www.framer.com
+
+### Adobe Express — 온라인 디자인 (Adobe 단순 도구)
+https://www.adobe.com/express
+
+---
+
 ## 카테고리별 추천 조합
 
 ### PPT 슬라이드 (정적 캡처)

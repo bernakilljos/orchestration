@@ -1046,6 +1046,14 @@
        - 광고 (AdSense·Mediavine), 마켓플레이스 (Stripe Connect)
        - 어필리에이트, 프리랜서/컨설팅, 오픈소스 수익화
        - 우리 킷으로 바로 돈 되는 것 9가지
+    ✓ design-toolkit-cdn.md 40개 카테고리로 확장 (기존 30 + 10 추가)
+       - 31.디자인영감 32.컬러팔레트 33.무료일러스트 34.목업
+       - 35.스톡이미지/영상 36.폰트사이트 37.서비스형애니메이션
+       - 38.3D리소스 39.아이콘추가 40.UI/UX디자인도구
+    ✓ MCP 자동 점검 hook (check-mcp-health.sh)
+       - SessionStart 시 실패 MCP 자동 감지 → 재등록 (filesystem·powerpoint·dom-to-pptx·figma)
+    ✓ 17장 카카오톡 이미지 한글 명명 (uiux.build 11장 + Claude Skills 6장)
+    ✓ 실패 MCP 4개 재등록 (filesystem·powerpoint·dom-to-pptx·figma)
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
