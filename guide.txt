@@ -984,6 +984,26 @@
        - /image-restore              초해상도·얼굴복원·컬러화·배경제거·스크래치제거
        - /audio-restore              노이즈제거·대역확장·스템분리·AI작곡·보이스클로닝
        - realtime-streaming-toolkit  WebSocket·SSE·WebRTC·대시보드·메시지큐·IoT·게임
+    ✓ 게임 에셋 (game-asset-toolkit.md)
+       - 무료 에셋 사이트 7+ (kenney·opengameart·itch.io·craftpix)
+       - 아이콘: game-icons.net 4000+ SVG (검/방패/물약/스킬)
+       - 스프라이트/픽셀아트 도구 (Aseprite·Piskel·LibreSprite)
+       - 타일맵 (Tiled·LDtk), 프로시저럴 맵 (Perlin·WFC)
+       - 게임 UI 키트 + CSS 패턴 (HP바·인벤토리·픽셀 버튼)
+       - 웹 게임 엔진 CDN (Phaser·Kaboom·PixiJS·Babylon·Three)
+       - AI 에셋 생성 (SD 프롬프트 템플릿·스프라이트시트 자동 패킹)
+       - 효과음 생성 (jsfxr·pyfxr), 파티클 VFX (tsParticles·Proton)
+    ✓ 생성형 AI 전체 카탈로그 (generative-ai-toolkit.md)
+       - 영상 생성: Runway·Pika·Kling·Luma·CogVideo·AnimateDiff
+       - 3D 생성: TripoSR·InstantMesh·Shap-E·Meshy·DreamGaussian
+       - 디지털 휴먼: HeyGen·D-ID·SadTalker·MuseTalk·LivePortrait
+       - 이미지 고급: ControlNet·IP-Adapter·InstantID·Flux·Scenario
+       - 에이전트: CrewAI·AutoGen·LangGraph·Claude Agent SDK·DSPy
+       - 파인튜닝: LoRA·QLoRA·PEFT·Unsloth·Axolotl
+       - 프롬프트: CoT·ToT·ReAct·Reflection·Self-Consistency
+       - 평가/안전: RAGAS·DeepEval·Guardrails·NeMo·LangFuse
+       - 멀티모달: LLaVA·Florence-2·Moondream·Qwen-VL
+       - 코드 AI: Cursor·Aider·SWE-agent·Bolt.new·v0.dev
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
