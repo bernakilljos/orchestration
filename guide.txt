@@ -1014,6 +1014,19 @@
        - 프라이버시: PrivateGPT·LocalAI·AnythingLLM
        - 모델 최적화: 양자화·프루닝·증류·스파시티
        - 연합 학습: Flower·PySyft·Opacus·동형암호
+    ✓ DB·캐시·검색 인프라 (database-cache-toolkit.md)
+       - RDBMS (PostgreSQL·MySQL·SQLite), NoSQL (MongoDB·Redis·Cassandra·Neo4j)
+       - 검색 (Elasticsearch·Meilisearch), 벡터 DB (ChromaDB·Pinecone·pgvector)
+       - 메시지 큐 (Redis·RabbitMQ·Kafka·NATS·Celery)
+       - 캐시 패턴 (Cache-Aside·Write-Through·CQRS)
+       - 스케일링 (Read Replica·Sharding·docker-compose 통합)
+    ✓ 배포·CI/CD·모니터링 (deployment-infra-toolkit.md)
+       - Docker (Dockerfile·Compose 패턴)
+       - CI/CD (GitHub Actions·Jenkins·Dagger)
+       - 클라우드 (Vercel·Railway·Oracle Free·AWS·GCP)
+       - 리버스 프록시 (Nginx·Caddy·Traefik)
+       - 모니터링 (Prometheus·Grafana·Loki·Sentry·LangFuse)
+       - IaC (Terraform·Pulumi·Ansible), K8s (EKS·GKE·K3s)
     ✓ /install-to 커맨드 (Claude가 직접 다른 프로젝트에 install)
     ✓ hook 미등록 6개 fix (install-on-session-start·hook-04~06·memory_guard·post-impl-verify)
     ✓ skill-media-restore.md 누락 생성
