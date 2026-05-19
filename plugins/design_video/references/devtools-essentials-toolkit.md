@@ -285,3 +285,101 @@ MLflow + W&B + FastAPI + Supabase + Sentry + DVC + Claude API
 ```text
 Docusaurus + Mintlify + Swagger + Storybook + GitHub Pages
 ```
+
+---
+
+## 16. Dev Containers (개발 환경 재현)
+
+| 도구 | 특장 | 설치 |
+|------|------|------|
+| **Dev Containers** | Docker 기반 개발 환경 (VS Code 통합) | `.devcontainer/devcontainer.json` |
+| **Gitpod** | 클라우드 개발 환경 | gitpod.io |
+| **GitHub Codespaces** | GitHub 클라우드 IDE | github.com |
+| **Coder** | 셀프호스팅 개발 환경 | Docker |
+| **Nix** | 재현 가능한 빌드 + 개발 환경 | nixos.org |
+| **devenv** | Nix 기반 개발 환경 (간편) | devenv.sh |
+| **mise** | 다국어 런타임 매니저 (asdf 대체) | mise.jdx.dev |
+
+```json
+// .devcontainer/devcontainer.json
+{
+  "name": "Python Dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "customizations": { "vscode": { "extensions": ["ms-python.python"] } }
+}
+```
+
+---
+
+## 17. Feature Flags / 점진 배포
+
+| 도구 | 특장 | 무료 |
+|------|------|------|
+| **Unleash** | 오픈소스 피처 플래그 | ✅ (셀프호스팅) |
+| **GrowthBook** | 오픈소스 A/B 테스트 + 피처 플래그 | ✅ |
+| **LaunchDarkly** | 엔터프라이즈 피처 플래그 | 유료 |
+| **Flipt** | 오픈소스 (Go, 경량) | ✅ |
+| **PostHog** | 분석 + 피처 플래그 + 세션 리플레이 | ✅ (무료 티어) |
+| **Flagsmith** | 오픈소스 피처 플래그 | ✅ |
+
+---
+
+## 18. Workflow / Orchestration
+
+| 도구 | 특장 | 설치 |
+|------|------|------|
+| **Temporal** | 내구성 워크플로우 엔진 (마이크로서비스) | Docker |
+| **Inngest** | 이벤트 기반 함수 (서버리스) | `npm install inngest` |
+| **Trigger.dev** | 백그라운드 작업 (서버리스) | `npm install @trigger.dev/sdk` |
+| **Hatchet** | 분산 태스크 큐 (Go) | Docker |
+| **Windmill** | 오픈소스 워크플로우 (Retool+Temporal) | Docker |
+
+---
+
+## 19. Cost / Budget Monitoring
+
+| 도구 | 특장 | 무료 |
+|------|------|------|
+| **Infracost** | Terraform 비용 예측 | ✅ |
+| **Vantage** | 클라우드 비용 분석 | ✅ (무료 티어) |
+| **OpenCost** | K8s 비용 모니터링 (오픈소스) | ✅ |
+| **Helicone** | LLM API 비용 추적 | ✅ (무료 티어) |
+| **LiteLLM** | LLM 프록시 + 비용 추적 | `pip install litellm` |
+| **portkey** | AI Gateway (비용+캐싱+로깅) | ✅ (무료 티어) |
+
+---
+
+## 20. Chaos Engineering / 안정성
+
+| 도구 | 특장 | 설치 |
+|------|------|------|
+| **Chaos Monkey** | Netflix 카오스 엔진 | GitHub |
+| **Litmus** | K8s 카오스 테스트 | Docker |
+| **Gremlin** | 카오스 SaaS | 유료 |
+| **Toxiproxy** | 네트워크 장애 시뮬레이션 | `go install` |
+| **k6** | 부하 테스트 (Grafana) | ✅ |
+| **Grafana k6** | 분산 부하 테스트 | ✅ |
+
+---
+
+## 21. Observability (관측성 심화)
+
+| 도구 | 특장 | 설치 |
+|------|------|------|
+| **OpenTelemetry** | 메트릭+로그+트레이스 통합 표준 | `pip install opentelemetry-api` |
+| **SigNoz** | 오픈소스 Datadog 대안 | Docker |
+| **Grafana Stack** | Prometheus+Loki+Tempo+Grafana | Docker |
+| **Axiom** | 서버리스 로그+트레이스 | ✅ (무료 티어) |
+| **Baselime** | 서버리스 관측 | ✅ |
+
+```python
+# OpenTelemetry — Python 자동 계측
+pip install opentelemetry-distro opentelemetry-exporter-otlp
+opentelemetry-bootstrap -a install
+opentelemetry-instrument python app.py
+```

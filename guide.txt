@@ -1071,6 +1071,8 @@
        - 패키지 (pnpm·Bun·uv), 린터 (Biome·Ruff·ESLint)
        - 시크릿 (Doppler·Infisical), API도구 (Bruno·Hoppscotch)
        - BaaS (Supabase·PocketBase·Neon·Turso)
+       - Dev Containers·Feature Flags(Unleash·GrowthBook)·Workflow(Temporal·Inngest)
+       - Cost Monitoring(Infracost·Helicone)·Chaos(k6)·Observability(OpenTelemetry·SigNoz)
     ✓ XR/AR/VR (xr-ar-vr-toolkit.md)
        - WebXR (A-Frame·Three.js·Babylon·Model Viewer)
        - AR (ARKit·ARCore·Vuforia·AR.js), VR (Quest·SteamVR·visionOS)
