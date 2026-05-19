@@ -1138,6 +1138,86 @@ https://www.adobe.com/express
 
 ---
 
+## 41. Frontend Frameworks (프론트엔드 프레임워크)
+
+### React 생태계
+```bash
+npx create-next-app@latest        # Next.js (SSR + App Router)
+npx create-react-app my-app       # CRA (레거시 — Vite 권장)
+npm create vite@latest -- --template react-ts  # Vite + React
+npm install @tanstack/react-query  # 서버 상태 관리
+npm install zustand                # 경량 상태 관리
+npm install jotai                  # 원자 상태 관리
+npm install react-hook-form        # 폼 관리
+npm install zod                    # 스키마 검증
+npm install framer-motion          # 애니메이션
+npm install @radix-ui/react-*      # 무스타일 UI 컴포넌트
+npm install shadcn-ui              # Radix + Tailwind 컴포넌트
+```
+
+### Vue 생태계
+```bash
+npm create vue@latest              # Vue 3 (Composition API)
+npx nuxi@latest init my-app       # Nuxt 3 (SSR)
+npm install pinia                  # 상태 관리
+npm install vueuse                 # 유틸리티 Composables
+npm install primevue               # UI 컴포넌트
+```
+
+### Svelte 생태계
+```bash
+npx sv create my-app              # SvelteKit (SSR)
+npm install svelte                 # Svelte 5 (Runes)
+```
+
+### 기타 프레임워크
+```bash
+npm create astro@latest            # Astro (정적 + 아일랜드)
+npx create-remix@latest            # Remix (풀스택 React)
+npx @angular/cli new my-app        # Angular
+npm create solid@latest             # SolidJS (React 대안, 빠름)
+npm create qwik@latest              # Qwik (Resumability)
+npm install htmx.org                # HTMX (HTML 기반 인터랙션)
+npm install alpinejs                # Alpine.js (경량 인터랙션)
+npm install hono                    # Hono (초경량 웹 프레임워크)
+```
+
+### 메타 프레임워크 비교 (2026)
+| 프레임워크 | 언어 | SSR | 특장 |
+|-----------|------|-----|------|
+| **Next.js** | React | ✅ | 가장 큰 생태계, App Router, Vercel |
+| **Nuxt** | Vue | ✅ | Vue 풀스택, 자동 import |
+| **SvelteKit** | Svelte | ✅ | 가장 빠름, 컴파일러 |
+| **Astro** | 다국어 | ✅ | 콘텐츠 사이트 최적 (0 JS 기본) |
+| **Remix** | React | ✅ | 웹 표준, 데이터 로딩 |
+| **Qwik** | TS | ✅ | Resumability (즉시 인터랙티브) |
+| **Hono** | TS | ✅ | 엣지 최적, 초경량 |
+
+### 상태 관리 (2026)
+| 도구 | 특장 | 프레임워크 |
+|------|------|----------|
+| **Zustand** | 최소 보일러플레이트 | React |
+| **Jotai** | 원자 상태 (Recoil 대체) | React |
+| **TanStack Query** | 서버 상태 캐싱 | React/Vue/Svelte |
+| **Pinia** | Vue 공식 상태 관리 | Vue |
+| **Nanostores** | 크로스프레임워크 (1KB) | 전체 |
+| **XState** | 상태 머신 | 전체 |
+
+### UI 컴포넌트 라이브러리 (2026)
+| 도구 | 특장 | 프레임워크 |
+|------|------|----------|
+| **shadcn/ui** | Radix + Tailwind (복사 방식) | React |
+| **Radix UI** | 무스타일 접근성 컴포넌트 | React |
+| **Headless UI** | Tailwind Labs (무스타일) | React/Vue |
+| **Ark UI** | 무스타일 (Chakra 팀) | React/Vue/Solid |
+| **Mantine** | 풀 컴포넌트 (100+) | React |
+| **NextUI** | 아름다운 React UI | React |
+| **Vuetify** | Material Design (Vue) | Vue |
+| **Element Plus** | 기업용 UI (Vue) | Vue |
+| **Skeleton** | Svelte UI | Svelte |
+
+---
+
 ## 카테고리별 추천 조합
 
 ### PPT 슬라이드 (정적 캡처)
