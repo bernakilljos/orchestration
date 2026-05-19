@@ -1014,6 +1014,9 @@
        - 프라이버시: PrivateGPT·LocalAI·AnythingLLM
        - 모델 최적화: 양자화·프루닝·증류·스파시티
        - 연합 학습: Flower·PySyft·Opacus·동형암호
+    ✓ /install-to 커맨드 (Claude가 직접 다른 프로젝트에 install)
+    ✓ hook 미등록 6개 fix (install-on-session-start·hook-04~06·memory_guard·post-impl-verify)
+    ✓ skill-media-restore.md 누락 생성
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)

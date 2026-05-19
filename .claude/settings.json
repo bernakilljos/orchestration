@@ -96,6 +96,18 @@
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-official-features.sh\"",
                                                              "timeout":  30,
                                                              "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_offline/hooks/install-on-session-start.sh\"",
+                                                             "timeout":  10,
+                                                             "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+                                                             "timeout":  5,
+                                                             "async":  true
                                                          }
                                                      ]
                                        }
@@ -148,6 +160,24 @@
                                                      "type":  "command",
                                                      "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
                                                      "timeout":  5
+                                                 },
+                                                 {
+                                                     "type":  "command",
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-04-pre-deploy.sh\"",
+                                                     "timeout":  10,
+                                                     "async":  true
+                                                 },
+                                                 {
+                                                     "type":  "command",
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-05-post-deploy.sh\"",
+                                                     "timeout":  10,
+                                                     "async":  true
+                                                 },
+                                                 {
+                                                     "type":  "command",
+                                                     "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-06-notify.sh\"",
+                                                     "timeout":  10,
+                                                     "async":  true
                                                  },
                                                  {
                                                      "type":  "command",
@@ -309,6 +339,13 @@
                                                             "type":  "command",
                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
                                                             "timeout":  120,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
+                                                            "timeout":  30,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         },
