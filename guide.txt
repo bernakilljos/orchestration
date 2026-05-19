@@ -1094,6 +1094,8 @@
        - weekly-audit.sh: 매주 미등록 hook·빈 README·sync drift·하드코딩 경로 감사
        - Notion 체크리스트 페이지 생성
        - pre-compact-rules-reminder.sh: compact 직전 핵심 규칙 7개 systemMessage 주입 (잊지 방지)
+    ✓ 매시간 디자인 레퍼런스 자동 수집 (collect-design-refs.py)
+       - 25개 카테고리 Playwright 캡처, 해시 중복 방지, Task Scheduler 자동
     ✓ RMS 엔터프라이즈 기술 10대 (rms-enterprise-tech-toolkit.md)
        - XAI (SHAP·LIME·Captum) — 위험도 판단 근거 설명
        - PETs (차등프라이버시·연합학습·동형암호·합성데이터)
