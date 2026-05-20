@@ -259,6 +259,11 @@
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-hardcoded-paths.sh\"",
                                                            "timeout":  3
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-korean-removal.sh\"",
+                                                           "timeout":  3
                                                        }
                                                    ]
                                      },
@@ -307,6 +312,11 @@
                                                        {
                                                            "type":  "command",
                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-full-check.sh\"",
+                                                           "timeout":  5
+                                                       },
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-infra-check.sh\"",
                                                            "timeout":  5
                                                        }
                                                    ]
@@ -422,6 +432,11 @@
                                                                {
                                                                    "type":  "command",
                                                                    "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" PostToolUseFailure",
+                                                                   "timeout":  5
+                                                               },
+                                                               {
+                                                                   "type":  "command",
+                                                                   "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on_error.sh\"",
                                                                    "timeout":  5
                                                                }
                                                            ]

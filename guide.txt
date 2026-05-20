@@ -1125,7 +1125,7 @@
     ✓ HTML→Video 프레임워크 (design-toolkit-cdn § 42)
        - HyperFrames (HeyGen) — HTML+GSAP→MP4 (AI 에이전트 1등급)
        - Remotion — React→MP4 (Lambda 분산 렌더링)
-    ✓ 16개 신규 공통 레퍼런스 (2026-05-20, 총 35개 16,105줄)
+    ✓ 30개 신규 공통 레퍼런스 (2026-05-20, 총 49개 23,203줄)
        - testing-qa-toolkit: pytest/Jest/Playwright/E2E/성능/보안/뮤테이션 230+ 도구
        - data-science-toolkit: pandas/PyTorch/MLOps/벡터DB/AutoML 145+ 도구
        - observability-monitoring-toolkit: APM/메트릭/로깅/추적/AI관측 131 도구
@@ -1142,6 +1142,20 @@
        - music-production-toolkit: DAW/AI작곡/MIDI/믹싱/배포/저작권 150+ 도구
        - spreadsheet-data-viz-toolkit: Excel/차트/대시보드/BI/인포그래픽 190+ 도구
        - social-platform-toolkit: YouTube/Instagram/TikTok/X/네이버 API 180+ 도구
+       - ecommerce-toolkit: 결제/장바구니/배송/구독/마켓플레이스 100+ 도구
+       - cms-content-toolkit: Headless CMS/Static Site/위키/편집기 100+ 도구
+       - communication-messaging-toolkit: 이메일/SMS/푸시/채팅/봇/영상통화 100+ 도구
+       - lms-elearning-toolkit: LMS/SCORM/코딩교육/AI튜터/한국교육 80+ 도구
+       - legal-compliance-toolkit: 계약/GDPR/규정준수/법률AI/한국법률 80+ 도구
+       - healthcare-medical-toolkit: FHIR/EHR/의료영상/AI의료/한국의료 80+ 도구
+       - gis-mapping-toolkit: 지도/공간DB/위성/라우팅/한국공간데이터 80+ 도구
+       - i18n-localization-toolkit: 번역/i18n프레임워크/로케일/한국어NLP 70+ 도구
+       - iot-embedded-toolkit: Arduino/MQTT/IoT플랫폼/엣지AI/스마트홈 80+ 도구
+       - accessibility-toolkit: axe-core/WCAG/스크린리더/색상접근성 60+ 도구
+       - print-publishing-toolkit: 레이아웃/전자책/QR/3D프린팅 60+ 도구
+       - api-gateway-toolkit: Kong/gRPC/GraphQL/서비스디스커버리 80+ 도구
+       - caching-performance-toolkit: Redis/CDN/프로파일링/번들최적화 80+ 도구
+       - message-queue-advanced-toolkit: Kafka심화/이벤트소싱/CQRS/Saga 80+ 도구
     ✓ P0 수정: allowed-tools 25개 커맨드 추가 + ai_rag description 한글화
     ✓ P1 수정: SPEC.md 11개 stable 플러그인에서 README 흡수 후 삭제
     ✓ mcp_social 스킬 추가 (skill-social-platform.md)

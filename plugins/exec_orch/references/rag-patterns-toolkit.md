@@ -725,7 +725,7 @@ result = pipeline.run({"retriever": {"query": "질문?"}})
 ```python
 # Cohere Reranker (가장 높은 품질)
 from cohere import Client
-co = Client(api_key="YOUR_API_KEY")
+co = Client(api_key="$API_KEY")
 
 # 초기 검색
 docs = retriever.get_relevant_documents("질문?")
