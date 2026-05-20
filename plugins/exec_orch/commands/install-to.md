@@ -64,6 +64,9 @@ python .claude/scripts/init-state-db.py 2>/dev/null
 echo "enabled" > "$TARGET/.claude/orca-enabled"
 echo "enabled" > "$TARGET/.claude/auto-dev-enabled"
 
+# git hook 설치 (guide.txt 누락 방지)
+bash "$TARGET/.claude/scripts/install-git-hooks.sh" 2>/dev/null
+
 # 검증
 echo "=== Install 검증 ==="
 echo "plugins: $(ls "$TARGET/plugins/" | wc -l)"
