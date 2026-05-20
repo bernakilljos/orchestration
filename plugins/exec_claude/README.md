@@ -39,6 +39,39 @@ Claude 전용 기능 중 우리 킷에 부족했던 부분(AskUserQuestion·Arti
 ## 의존
 - `exec_orch` (라우팅 결정 시 참조)
 
+## 상세 스펙
+
+### 컴포넌트
+
+#### Commands
+- `claude-status` — 가용성 점검·시나리오
+- `claude-ask` — AskUserQuestion 패턴
+- `claude-artifact` — 인터랙티브 HTML 출력
+- `claude-connectors` — 외부 SaaS 통합 흐름
+- `claude-thinking` — Extended Thinking 적용 가이드
+
+#### Skills (auto-activate)
+- `skill-claude-ask` — 구조화 질문 메소드론
+- `skill-claude-artifact` — 인터랙티브 산출물 디자인 규칙
+- `skill-claude-thinking` — 추론 단계 분해 패턴
+
+#### Scripts
+- `scripts/common.sh` — 공유 유틸 (확장용 자리)
+
+### 의존
+- `exec_orch` (선행) — 라우팅 결정 컨텍스트 사용
+
+### 출력 경로
+- `outputs/artifacts/<type>-<slug>-<date>.html`
+- `outputs/asks/<topic>-<date>.json`
+
+### 수용 기준 (Acceptance)
+- [ ] 5개 커맨드 모두 sync 후 `/help exec_claude` 에서 보임
+- [ ] 3개 스킬 description 에 한국어 트리거 포함
+- [ ] `/claude-status` 가 Claude vs Other AI 가용성 비교표 출력
+- [ ] `/claude-artifact dashboard <topic>` 가 단일 HTML 파일 생성
+- [ ] guide.txt 에 exec_claude 섹션 존재
+
 ## 참고
 - 분석 근거: `docs/2026-04-23/claude-vs-orchestration-comparison.md`
 - 관련 다이어그램: `docs/screens/arch/claude-mindmap-eating-everything-hassid.png`

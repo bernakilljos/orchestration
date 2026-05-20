@@ -1125,7 +1125,7 @@
     ✓ HTML→Video 프레임워크 (design-toolkit-cdn § 42)
        - HyperFrames (HeyGen) — HTML+GSAP→MP4 (AI 에이전트 1등급)
        - Remotion — React→MP4 (Lambda 분산 렌더링)
-    ✓ 10개 신규 공통 레퍼런스 (2026-05-20, 총 29개 13,325줄)
+    ✓ 16개 신규 공통 레퍼런스 (2026-05-20, 총 35개 16,105줄)
        - testing-qa-toolkit: pytest/Jest/Playwright/E2E/성능/보안/뮤테이션 230+ 도구
        - data-science-toolkit: pandas/PyTorch/MLOps/벡터DB/AutoML 145+ 도구
        - observability-monitoring-toolkit: APM/메트릭/로깅/추적/AI관측 131 도구
@@ -1136,6 +1136,14 @@
        - finance-trading-toolkit: yfinance/QuantLib/pykrx/결제/리스크 145 도구
        - cloud-infrastructure-toolkit: Terraform/AWS/Azure/GCP/K8s/서버리스 181 도구
        - academic-research-toolkit: 논문검색/LaTeX/통계/AI연구/한국학술 121 도구
+       - document-processing-toolkit: PDF/DOCX/OCR/템플릿/전자서명 196 도구
+       - rag-patterns-toolkit: 8가지 RAG패턴/벡터DB/리랭킹/평가 도구
+       - audio-speech-toolkit: STT/TTS/음성명령/노이즈제거/클로닝 130 도구
+       - music-production-toolkit: DAW/AI작곡/MIDI/믹싱/배포/저작권 150+ 도구
+       - spreadsheet-data-viz-toolkit: Excel/차트/대시보드/BI/인포그래픽 190+ 도구
+       - social-platform-toolkit: YouTube/Instagram/TikTok/X/네이버 API 180+ 도구
+    ✓ P0 수정: allowed-tools 25개 커맨드 추가 + ai_rag description 한글화
+    ✓ P1 수정: SPEC.md 11개 stable 플러그인에서 README 흡수 후 삭제
     ✓ mcp_social 스킬 추가 (skill-social-platform.md)
        - YouTube/Instagram/TikTok/X/Naver/Tistory 멀티플랫폼 통합
        - claude-code-video-toolkit — Claude Code 영상 워크스페이스

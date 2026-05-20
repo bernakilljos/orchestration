@@ -1,5 +1,6 @@
 ---
 description: "실행 이력·성공률"
+allowed-tools: Bash, Read
 ---
 
 # /history
@@ -12,7 +13,7 @@ description: "실행 이력·성공률"
 
 ## 사용법 (예정)
 
-```
+```text
 /history [args]
 ```
 

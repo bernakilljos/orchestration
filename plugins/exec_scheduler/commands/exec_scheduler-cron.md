@@ -1,5 +1,6 @@
 ---
 description: "크론 잡 등록 (YAML 선언형)"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /cron
@@ -12,7 +13,7 @@ description: "크론 잡 등록 (YAML 선언형)"
 
 ## 사용법 (예정)
 
-```
+```text
 /cron [args]
 ```
 

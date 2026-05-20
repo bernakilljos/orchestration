@@ -1,0 +1,9 @@
+[2026-05-20 11:32:55] Failed MCP servers detected:
+filesystem:
+powerpoint:
+dom-to-pptx:
+figma:
+  → filesystem:: unknown, manual fix needed
+  → powerpoint:: unknown, manual fix needed
+  → dom-to-pptx:: unknown, manual fix needed
+  → figma:: unknown, manual fix needed

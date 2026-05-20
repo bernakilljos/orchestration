@@ -1,5 +1,6 @@
 ---
 description: "DAG 워크플로우 정의"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /workflow
@@ -12,7 +13,7 @@ DAG 워크플로우 정의
 
 ## 사용법 (예정)
 
-```
+```text
 /workflow [args]
 ```
 

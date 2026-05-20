@@ -1,5 +1,6 @@
 ---
 description: "수익·조회수·시청지속시간 리포트"
+allowed-tools: Bash, Read, WebFetch
 ---
 
 # /yt-analytics
@@ -12,7 +13,7 @@ description: "수익·조회수·시청지속시간 리포트"
 
 ## 사용법 (예정)
 
-```
+```text
 /yt-analytics [args]
 ```
 

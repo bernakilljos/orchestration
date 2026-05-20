@@ -1,5 +1,6 @@
 ---
 description: "즉시 실행"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /run-now
@@ -12,7 +13,7 @@ description: "즉시 실행"
 
 ## 사용법 (예정)
 
-```
+```text
 /run-now [args]
 ```
 

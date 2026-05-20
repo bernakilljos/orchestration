@@ -31,7 +31,40 @@
 - **MCP 권장**: FFmpeg·Whisper (mcp_media)
 - **선택 API**: Suno·Udio·MusicGen (env: SUNO_API_KEY 등)
 
+## 상세 스펙
+
+### 기술 스택 (플랫폼 구현 시)
+
+| 영역 | 도구 |
+|---|---|
+| 오디오 처리 | FFmpeg · sox · librosa |
+| AI 작곡 | Suno API · Udio · MusicGen · Stable Audio |
+| 스템 분리 | Demucs · Spleeter |
+| MIDI | mido · pretty_midi · music21 |
+| 믹싱 | pedalboard (Spotify) · pyo |
+| 마스터링 | LUFS 측정 (pyloudnorm) |
+
+### 구현 체크리스트 (플랫폼)
+
+- [ ] 멱등성 (같은 시드·입력 = 같은 출력)
+- [ ] `--dry-run` 실동작
+- [ ] 저작권 경고 자동 출력 (AI 생성물)
+- [ ] LUFS 자동 정규화 (-14 LUFS 기본)
+- [ ] WAV/MP3/FLAC 다중 출력
+- [ ] 시크릿 `.env` (Suno·Udio API)
+- [ ] JSON 로그
+
+### 트러블슈팅
+
+| 증상 | 원인 | 해결 |
+|---|---|---|
+| ffmpeg 없음 | 미설치 | `/mcp_media-install` |
+| Suno API 실패 | 쿼터·인증 | `.env` SUNO_API_KEY 확인 |
+| LUFS 과다 | 마스터 과압 | `-14 LUFS` 목표 재조정 |
+| 스템 분리 실패 | Demucs 모델 미다운 | 초회 실행 시 자동 다운로드 대기 |
+
 ## 📝 참조
 
-- 스펙: `SPEC.md`
 - 아키텍처: `docs/architecture-patterns.md`
+- `plugins/exec_voice/` (STT·TTS 연계)
+- `plugins/mcp_media/` (FFmpeg 설치)
