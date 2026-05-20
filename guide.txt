@@ -1120,6 +1120,11 @@
     ✓ 사용자 관심 800개 카테고리 (docs/user-categories-800.json)
        - 60개 그룹 구조화 (운동·음악·투자·AI·개발·농업·제조·물류·건설·HR 등)
        - 수익화·서비스 기획 우선순위 활용 데이터
+    ✓ HTML→Video 프레임워크 (design-toolkit-cdn § 42)
+       - HyperFrames (HeyGen) — HTML+GSAP→MP4 (AI 에이전트 1등급)
+       - Remotion — React→MP4 (Lambda 분산 렌더링)
+       - claude-code-video-toolkit — Claude Code 영상 워크스페이스
+       - browser-use — AI 자율 브라우저 에이전트 (LLM 웹 탐색)
     ✓ 설정 강화
        - .claude/settings.json 23개 hook 자동 등록
        - CLAUDE.md § 7 금지사항 23개 (9→23 강화)
