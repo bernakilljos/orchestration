@@ -239,6 +239,7 @@ pip install playwright        # 브라우저 자동화 (Playwright) (이미 설�
 pip install scrapy            # 크롤링 프레임워크
 pip install newspaper3k       # 뉴스 기사 추출
 pip install trafilatura       # 웹페이지 본문 추출
+pip install browser-use       # AI 자율 브라우저 에이전트 (LLM이 웹 탐색·클릭·입력)
 ```
 
 ---

@@ -1218,6 +1218,74 @@ npm install hono                    # Hono (초경량 웹 프레임워크)
 
 ---
 
+## 42. HTML→Video 프레임워크 (프로그래밍 영상 제작)
+
+### HyperFrames (HeyGen) — HTML→MP4 렌더링 (AI 에이전트용)
+```bash
+npx hyperframes init my-video       # 프로젝트 생성
+npx hyperframes preview             # 브라우저 미리보기
+npx hyperframes render              # MP4 렌더링
+npx skills add heygen-com/hyperframes  # AI 에이전트 스킬 설치
+```
+- HTML + CSS + GSAP 타임라인 → 결정적 비디오 렌더링
+- 50+ 카탈로그 블록 (소셜 오버레이, 셰이더 트랜지션, 데이터 차트)
+- Frame Adapter: GSAP, Lottie, CSS, Three.js, Anime.js, WAAPI
+- Apache 2.0 (완전 오픈소스, 상용 무료)
+
+### Remotion — React→MP4 렌더링
+```bash
+npx create-video@latest             # 프로젝트 생성
+npm run studio                      # 미리보기
+npm run render                      # MP4 렌더링
+```
+- React 컴포넌트로 영상 제작
+- Lambda 분산 렌더링 (프로덕션)
+- 소스 가용 (상용 라이선스 별도)
+
+### 비교
+| | HyperFrames | Remotion |
+|---|---|---|
+| 작성 | HTML+CSS+GSAP | React TSX |
+| 빌드 | 없음 (HTML 그대로) | 필요 (번들러) |
+| 라이선스 | Apache 2.0 (무료) | 소스 가용 (상용 유료) |
+| AI 에이전트 | 1등급 지원 | 간접 지원 |
+| 분산 렌더링 | 미지원 (단일머신) | Lambda (프로덕션) |
+
+### claude-code-video-toolkit — Claude Code 영상 제작 워크스페이스
+```bash
+git clone https://github.com/digitalsamba/claude-code-video-toolkit.git
+cd claude-code-video-toolkit && claude
+/setup    # 클라우드 GPU 설정
+/video    # 영상 제작 시작
+```
+- Remotion 기반 + AI TTS (Qwen3/ElevenLabs) + AI 음악 (ACE-Step)
+- 클라우드 GPU (Modal $30/월 무료) — 이미지 생성, 영상 생성, 업스케일
+- 브랜드 프로파일, 프로젝트 관리, 씬 리뷰
+
+### browser-use — AI 자율 브라우저 에이전트
+```bash
+pip install browser-use
+```
+```python
+from browser_use import Agent, Browser, ChatBrowserUse
+import asyncio
+
+async def main():
+    agent = Agent(
+        task="Find the best laptop under $1000",
+        llm=ChatBrowserUse(),
+        browser=Browser(),
+    )
+    await agent.run()
+
+asyncio.run(main())
+```
+- LLM이 웹 자율 탐색 (클릭·입력·스크린샷·판단)
+- Claude·GPT·Gemini 지원
+- 폼 자동 채우기, 쇼핑, 데이터 수집
+
+---
+
 ## 카테고리별 추천 조합
 
 ### PPT 슬라이드 (정적 캡처)

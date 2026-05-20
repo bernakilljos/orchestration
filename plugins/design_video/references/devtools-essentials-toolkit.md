@@ -383,3 +383,111 @@ pip install opentelemetry-distro opentelemetry-exporter-otlp
 opentelemetry-bootstrap -a install
 opentelemetry-instrument python app.py
 ```
+
+---
+
+## 22. Code Snippet 이미지 (코드 스크린샷)
+
+| 도구 | 특장 | URL |
+|------|------|-----|
+| **Carbon** | 가장 인기 코드 이미지 | carbon.now.sh |
+| **Ray.so** | Raycast 코드 이미지 (아름다움) | ray.so |
+| **Codeimg.io** | 코드 스크린샷 | codeimg.io |
+| **CodeSnap** | VS Code 확장 (선택→이미지) | VS Code Marketplace |
+| **InstaCode** | 코드 이미지 생성 | instacode.app |
+| **SnippetShot** | 코드 스크린샷 | snippetshot.com |
+| **CodeZen** | 코드 가독성 분석 | codezen.io |
+
+---
+
+## 23. CSS 생성기 / 유틸
+
+| 도구 | 특장 | URL |
+|------|------|-----|
+| **CSS Tricks** | CSS 레퍼런스 표준 | css-tricks.com |
+| **Keyframes.app** | 애니메이션 키프레임 생성 | keyframes.app |
+| **Easing Gradients** | 부드러운 그라디언트 | larsenwork.com/easing-gradients |
+| **Fancy Border Radius** | 비정형 border-radius | 9elements.github.io/fancy-border-radius |
+| **CSS3 Generator** | 그림자/그라디언트/변환 | css3generator.com |
+| **Enjoy CSS** | 시각적 CSS 에디터 | enjoycss.com |
+| **Flexy Boxes** | Flexbox 플레이그라운드 | the-echoplex.net/flexyboxes |
+| **SmoothShadow** | 부드러운 box-shadow | shadows.brumm.af |
+| **Animista** | CSS 애니메이션 라이브러리 | animista.net |
+| **Can I Use** | 브라우저 호환성 체크 | caniuse.com |
+
+---
+
+## 24. 코딩 게임 / 챌린지
+
+| 도구 | 특장 |
+|------|------|
+| **CodinGame** | 게임으로 코딩 학습 |
+| **CSS Battle** | CSS 그림 맞추기 |
+| **Flexbox Froggy** | Flexbox 학습 게임 |
+| **CSS Diner** | CSS 셀렉터 학습 |
+| **CodeCombat** | RPG 코딩 게임 |
+| **Frontend Mentor** | 실전 UI 챌린지 |
+| **Exercism** | 멘토링 기반 코딩 |
+| **Codewars** | 카타 (난이도별) |
+| **TopCoder** | 알고리즘 대회 |
+| **CodeForces** | 프로그래밍 대회 |
+
+---
+
+## 25. HTML/CSS 템플릿 (무료)
+
+| 사이트 | 특장 |
+|--------|------|
+| **HTML5up** | 반응형 HTML5 템플릿 (인기) |
+| **Nicepage** | 드래그앤드롭 웹 빌더 |
+| **Templatemo** | 무료 HTML 템플릿 |
+| **Free-CSS** | CSS 템플릿 모음 |
+| **Mobirise** | 오프라인 웹 빌더 |
+| **W3layouts** | 부트스트랩 템플릿 |
+| **Creative-Tim** | 프리미엄 UI 킷 |
+| **HTML5 Boilerplate** | HTML5 시작 템플릿 |
+
+---
+
+## 26. 리모트 잡 / 채용
+
+| 사이트 | 특장 |
+|--------|------|
+| **Remote.co** | 리모트 전문 |
+| **Arc** | 개발자 리모트 잡 |
+| **Working Nomads** | 디지털 노마드 |
+| **GitHub Jobs** | 오픈소스 채용 |
+| **Dice** | 미국 IT 채용 |
+| **원티드** | 한국 IT 채용 |
+| **프로그래머스** | 한국 개발자 채용 |
+| **로켓펀치** | 한국 스타트업 |
+
+---
+
+## 27. VS Code / Chrome 확장
+
+### VS Code
+| 확장 | 특장 |
+|------|------|
+| **ESLint** | JS/TS 린트 |
+| **Prettier** | 코드 포맷 |
+| **Live Server** | 로컬 서버 실시간 미리보기 |
+| **Quokka.js** | JS/TS 인라인 실행 |
+| **REST Client** | HTTP 요청 (Postman 대안) |
+| **GitLens** | Git 상세 (blame, 히스토리) |
+| **Thunder Client** | API 클라이언트 |
+| **Live Share** | 실시간 협업 코딩 |
+| **CodeSnap** | 코드 → 이미지 |
+| **Error Lens** | 인라인 에러 표시 |
+
+### Chrome
+| 확장 | 특장 |
+|------|------|
+| **Wappalyzer** | 웹사이트 기술 스택 감지 |
+| **JSON View** | JSON 예쁘게 포맷 |
+| **React Developer Tools** | React 컴포넌트 디버깅 |
+| **Vue.js devtools** | Vue 디버깅 |
+| **Lighthouse** | 성능·접근성·SEO 감사 |
+| **ColorZilla** | 색상 피커 |
+| **WhatFont** | 웹 폰트 감지 |
+| **Ghostery** | 트래커 차단 |
