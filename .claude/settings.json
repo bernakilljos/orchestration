@@ -111,6 +111,12 @@
                                                          },
                                                          {
                                                              "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-git-hooks.sh\"",
+                                                             "timeout":  5,
+                                                             "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
                                                              "timeout":  5,
                                                              "async":  true
