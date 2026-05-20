@@ -1099,7 +1099,7 @@
     ✓ 매시간 디자인 레퍼런스 자동 수집 (collect-design-refs.py)
     ✓ /analyze-improve 커맨드 — 프로젝트 소스 분석 → 적용 가능 기술 추천
        - RMS·ERP·ISMS-P·준법경영 등 도메인별 특화 분석
-       - 19개 공통 레퍼런스 기반 개선점 우선순위 매기기
+       - 26개 공통 레퍼런스 기반 개선점 우선순위 매기기
        - 25개 카테고리 Playwright 캡처, 해시 중복 방지, Task Scheduler 자동
     ✓ RMS 엔터프라이즈 기술 10대 (rms-enterprise-tech-toolkit.md)
        - XAI (SHAP·LIME·Captum) — 위험도 판단 근거 설명
@@ -1125,6 +1125,16 @@
     ✓ HTML→Video 프레임워크 (design-toolkit-cdn § 42)
        - HyperFrames (HeyGen) — HTML+GSAP→MP4 (AI 에이전트 1등급)
        - Remotion — React→MP4 (Lambda 분산 렌더링)
+    ✓ 7개 신규 공통 레퍼런스 (2026-05-20, 총 26개 12,195줄)
+       - testing-qa-toolkit: pytest/Jest/Playwright/E2E/성능/보안/뮤테이션 230+ 도구
+       - data-science-toolkit: pandas/PyTorch/MLOps/벡터DB/AutoML 145+ 도구
+       - observability-monitoring-toolkit: APM/메트릭/로깅/추적/AI관측 131 도구
+       - cybersecurity-devsecops-toolkit: SAST/DAST/SCA/시크릿/K8s보안 235 도구
+       - marketing-seo-toolkit: SEO/GEO-AEO/이메일/CRM/인플루언서 200+ 도구
+       - workflow-automation-toolkit: n8n/Zapier/Temporal/RPA/노코드 163 도구
+       - blockchain-web3-toolkit: Solidity/DeFi/NFT/L2/DAO 168 도구
+    ✓ mcp_social 스킬 추가 (skill-social-platform.md)
+       - YouTube/Instagram/TikTok/X/Naver/Tistory 멀티플랫폼 통합
        - claude-code-video-toolkit — Claude Code 영상 워크스페이스
        - browser-use — AI 자율 브라우저 에이전트 (LLM 웹 탐색)
     ✓ 설정 강화
