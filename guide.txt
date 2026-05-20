@@ -1125,7 +1125,7 @@
     ✓ HTML→Video 프레임워크 (design-toolkit-cdn § 42)
        - HyperFrames (HeyGen) — HTML+GSAP→MP4 (AI 에이전트 1등급)
        - Remotion — React→MP4 (Lambda 분산 렌더링)
-    ✓ 7개 신규 공통 레퍼런스 (2026-05-20, 총 26개 12,195줄)
+    ✓ 10개 신규 공통 레퍼런스 (2026-05-20, 총 29개 13,325줄)
        - testing-qa-toolkit: pytest/Jest/Playwright/E2E/성능/보안/뮤테이션 230+ 도구
        - data-science-toolkit: pandas/PyTorch/MLOps/벡터DB/AutoML 145+ 도구
        - observability-monitoring-toolkit: APM/메트릭/로깅/추적/AI관측 131 도구
@@ -1133,6 +1133,9 @@
        - marketing-seo-toolkit: SEO/GEO-AEO/이메일/CRM/인플루언서 200+ 도구
        - workflow-automation-toolkit: n8n/Zapier/Temporal/RPA/노코드 163 도구
        - blockchain-web3-toolkit: Solidity/DeFi/NFT/L2/DAO 168 도구
+       - finance-trading-toolkit: yfinance/QuantLib/pykrx/결제/리스크 145 도구
+       - cloud-infrastructure-toolkit: Terraform/AWS/Azure/GCP/K8s/서버리스 181 도구
+       - academic-research-toolkit: 논문검색/LaTeX/통계/AI연구/한국학술 121 도구
     ✓ mcp_social 스킬 추가 (skill-social-platform.md)
        - YouTube/Instagram/TikTok/X/Naver/Tistory 멀티플랫폼 통합
        - claude-code-video-toolkit — Claude Code 영상 워크스페이스
