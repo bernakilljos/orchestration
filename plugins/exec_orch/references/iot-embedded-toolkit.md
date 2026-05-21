@@ -221,7 +221,6 @@ docker run -d -p 3000:3000 grafana/grafana
 
 # 데이터소스 추가 (InfluxDB)
 curl -X POST http://localhost:3000/api/datasources \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"name":"InfluxDB","type":"influxdb","url":"http://influxdb:8086"}'
 ```
 

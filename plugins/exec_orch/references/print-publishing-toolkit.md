@@ -255,7 +255,6 @@
 - **사용**:
   ```bash
   curl https://api.tinify.com/output \
-    # --user "api:$TINIFY_KEY" \
     -d @input.png -o output.png
   ```
 

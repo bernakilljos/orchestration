@@ -22,7 +22,6 @@
 ```bash
 npm install docusign-esign       # 공식 SDK
 curl https://api.docusign.com/v2.1/accounts/{accountId}/envelopes \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### PandaDoc 템플릿 자동화
@@ -30,7 +29,6 @@ curl https://api.docusign.com/v2.1/accounts/{accountId}/envelopes \
 pip install pandadoc            # Python 비공식 라이브러리
 curl https://api.pandadoc.com/v1/documents \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"template_id": "xxx", "recipients": [{"email": "user@example.com"}]}'
 ```
 
@@ -54,7 +52,6 @@ curl https://api.pandadoc.com/v1/documents \
 npm install docusign-esign
 curl https://demo.docusign.net/restapi/v2.1/accounts/{accountId}/envelopes \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "documents": [{"documentBase64": "..."}],
     "recipients": [{"email": "signer@example.com", "name": "John Doe"}],
@@ -66,7 +63,6 @@ curl https://demo.docusign.net/restapi/v2.1/accounts/{accountId}/envelopes \
 ```bash
 curl https://api.na1.adobesign.com/api/rest/v6/transientDocuments \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -F "File=@contract.pdf"
 ```
 
@@ -94,7 +90,6 @@ curl https://api.na1.adobesign.com/api/rest/v6/transientDocuments \
 ### OneTrust API
 ```bash
 curl https://api.onetrust.com/api/v1/audit \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### iubenda 약관 생성 (REST)
@@ -124,7 +119,6 @@ curl https://www.iubenda.com/api/privacypolicy \
 ```bash
 curl https://www.termsfeed.com/api/v1/generate \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "policy": "privacy",
     "language": "ko",
@@ -156,7 +150,6 @@ curl https://www.termsfeed.com/api/v1/generate \
 ```bash
 pip install vanta-api           # 비공식
 curl https://api.vanta.com/v1/monitoring \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### Drata 자동 감사 설정
@@ -164,7 +157,6 @@ curl https://api.vanta.com/v1/monitoring \
 # AWS 역할 자동 연결 (SOC2 증거)
 curl https://api.drata.com/v1/connections/aws \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"aws_account_id": "123456789", "external_id": "drata"}'
 ```
 
@@ -185,7 +177,6 @@ curl https://api.drata.com/v1/connections/aws \
 ```bash
 curl https://api.cocounsel.com/v1/analyze \
   -X POST \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "document_url": "https://example.com/contract.pdf",
     "analysis_type": "contract_review",
@@ -197,7 +188,6 @@ curl https://api.cocounsel.com/v1/analyze \
 ```bash
 pip install casetext-api
 curl https://api.casetext.com/v1/search \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"query": "소유권 이전", "jurisdiction": "한국"}'
 ```
 
@@ -247,7 +237,6 @@ driver.get("https://patents.google.com/?q=python&country=KR")
 ### PatSnap API
 ```bash
 curl https://api.patsnap.com/patent/search \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{"keywords": "quantum computing", "country": "US"}'
 ```
 
@@ -303,7 +292,6 @@ curl "https://www.data.go.kr/api/15042959/execute-layer" \
 ### AuditBoard API
 ```bash
 curl https://api.auditboard.com/v1/audit-tasks \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### Splunk 로그 수집
@@ -317,7 +305,6 @@ tar xzvf splunkforwarder.tgz
 ### ServiceNow GRC (REST)
 ```bash
 curl https://$INSTANCE.service-now.com/api/now/v1/risk \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ---

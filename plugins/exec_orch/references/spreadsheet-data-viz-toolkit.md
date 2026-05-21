@@ -38,31 +38,117 @@
 
 ---
 
-## 3. 차트 & 그래프 생성 라이브러리
+## 3. 차트 & 그래프 생성 라이브러리 (공통 + 심화)
 
-| 라이브러리/도구 | 유형 | 설명 | 설치 |
+### 3.1 Python 라이브러리
+
+| 라이브러리/도구 | 유형 | 주요 차트 | 설치 |
 |---|---|---|---|
-| **matplotlib** | Python 라이브러리 | 기본 차트 (선, 막대, 산점도, 히스토그램) | `pip install matplotlib` |
-| **plotly** | Python/JavaScript | 인터랙티브 차트 (특히 웹) | `pip install plotly` |
+| **matplotlib** | Python 라이브러리 | Line, Bar, Scatter, Histogram, Pie, 3D | `pip install matplotlib` |
+| **seaborn** | Python | 통계 (Heatmap, Violin, KDE, Regression) | `pip install seaborn` |
+| **plotly** | Python/JS | 인터랙티브 (Line, Bar, Scatter, Box, Sunburst, Sankey) | `pip install plotly` |
 | **plotly Express** | Python (high-level) | plotly 간편 API | `pip install plotly` |
-| **bokeh** | Python | 웹 기반 인터랙티브 차트 | `pip install bokeh` |
-| **altair** | Python | Vega-Lite 기반 선언형 차트 | `pip install altair` |
-| **seaborn** | Python | matplotlib 기반 통계 차트 | `pip install seaborn` |
-| **ggplot2** | R | ggplot 기반 R 차트 (Python은 plotnine) | `install.packages("ggplot2")` |
-| **plotnine** | Python | R ggplot2 포트 | `pip install plotnine` |
-| **folium** | Python | Leaflet 지도 시각화 | `pip install folium` |
-| **geopandas** | Python | 지리 데이터 시각화 | `pip install geopandas` |
-| **pydeck** | Python | Deck.gl 3D 맵 | `pip install pydeck` |
-| **graphviz** | C/Python | 네트워크/트리 그래프 | `pip install graphviz` 및 Graphviz 설치 |
-| **plotly.graph_objects** | Python | 저수준 plotly API | `pip install plotly` |
-| **echarts** | JavaScript | Baidu 기반 인터랙티브 차트 | `npm install echarts` |
-| **Chart.js** | JavaScript | 경량 웹 차트 | `npm install chart.js` |
-| **D3.js** | JavaScript | 강력한 데이터 시각화 라이브러리 | `npm install d3` |
-| **Recharts** | JavaScript/React | React 차트 컴포넌트 | `npm install recharts` |
-| **Nivo** | JavaScript/React | React 기반 고급 차트 | `npm install @nivo/core @nivo/bar` 등 |
-| **Apache ECharts** | JavaScript | 대용량 데이터 차트 (특히 중국) | `npm install echarts` |
-| **vis.js** | JavaScript | 네트워크 + 타임라인 | `npm install vis` |
-| **Mermaid** | JavaScript | 다이어그램 (Markdown 호환) | `npm install mermaid` |
+| **bokeh** | Python | 대용량 인터랙티브 (Scatter, Line, Bar, HoverTool) | `pip install bokeh` |
+| **altair** | Python | 선언형 Vega-Lite (Interactive, Linked) | `pip install altair` |
+| **plotnine** | Python | R ggplot2 포트 (Grammar of Graphics) | `pip install plotnine` |
+| **pygal** | Python | SVG 차트 (Line, Bar, Pie, Gauge, Radar) | `pip install pygal` |
+| **mplfinance** | Python | 금융 차트 (Candlestick, OHLC, Volume) | `pip install mplfinance` |
+| **folium** | Python | Leaflet 지도 시각화 (Geographic) | `pip install folium` |
+| **geopandas** | Python | 지리 데이터 (Choropleth, Shape) | `pip install geopandas` |
+| **pydeck** | Python | Deck.gl 3D 맵 (Heatmap, Scatter, Arc) | `pip install pydeck` |
+| **graphviz** | C/Python | 네트워크/트리 그래프 (Directed/Undirected) | `pip install graphviz` + Graphviz 설치 |
+| **pyvis** | Python | Interactive Network Graph (vis.js 래퍼) | `pip install pyvis` |
+
+### 3.2 JavaScript 라이브러리
+
+| 라이브러리/도구 | 특징 | 주요 차트 | 설치 |
+|---|---|---|---|
+| **Chart.js** | 경량, 초보자 친화 | Bar, Line, Pie, Doughnut, Radar, Bubble, Scatter | `npm install chart.js` |
+| **D3.js** | 강력, 저수준 제어 | 모든 차트 가능 (Custom 최강) | `npm install d3` |
+| **Plotly.js** | 인터랙티브, 금융 | Scatter, Line, Bar, Candlestick, Waterfall, Funnel | `npm install plotly.js` |
+| **ECharts** | 대규모 데이터, 3D | 3D, Sankey, Sunburst, Treemap, Heatmap, Gauge | `npm install echarts` |
+| **Recharts** | React 네이티브 | Line, Bar, Pie, Area, Scatter, Treemap, Funnel | `npm install recharts` |
+| **Nivo** | React 고급, D3 기반 | Bar, Line, Area, Scatter, Sunburst, Sankey, Calendar | `npm install @nivo/core @nivo/bar` 등 |
+| **ApexCharts** | 반응형, 모던 | Line, Bar, Area, Scatter, Candlestick, Radar, Heatmap | `npm install apexcharts` |
+| **Highcharts** | 엔터프라이즈 | 50+ 차트 (Candlestick, Bubble, Heatmap, Gauge) | `npm install highcharts` (상용) |
+| **Lightweight Charts** (TradingView) | 금융 전문 | Candlestick, Bar, Area, Line (초고속) | `npm install lightweight-charts` |
+| **uPlot** | 초경량 (14KB) | Line, Area, Bar, Scatter (극한 성능) | `npm install uplot` |
+| **C3.js** | D3 기반 재사용 | Line, Bar, Pie, Area, Scatter, Gauge | `npm install c3` |
+| **Billboard.js** | C3 후속 (TypeScript) | 50+ 차트 | `npm install billboard.js` |
+| **Frappe Charts** | 심플 (4KB) | Line, Bar, Pie, Percentage | `npm install frappe-charts` |
+| **Victory** | React 라이브러리 | Bar, Line, Scatter, Pie, Area, Candlestick | `npm install victory` |
+| **Visx** | React Primitives (로우레벨) | 모든 차트 가능 (D3 조합) | `npm install @visx/visx` |
+| **vis.js** | 네트워크 + 타임라인 | Network Graph, Timeline, Gantt (데이터 시각화) | `npm install vis` |
+| **Mermaid** | 다이어그램 & 플로우 | Flowchart, Sequence, Gantt, ER, Timeline, Sankey | `npm install mermaid` |
+
+### 3.3 React 전용
+
+| 라이브러리 | 특징 | 설치 |
+|---|---|---|
+| **React-Chartjs-2** | Chart.js + React 래퍼 | `npm install react-chartjs-2 chart.js` |
+| **Tremor** | React + Tailwind UI 컴포넌트 | `npm install @tremor/react` |
+| **Recharts** (위 참조) | React 네이티브 | `npm install recharts` |
+| **Nivo** (위 참조) | React D3 라이브러리 | `npm install @nivo/core` |
+| **Victory** (위 참조) | React 라이브러리 | `npm install victory` |
+
+### 3.4 Vue 전용
+
+| 라이브러리 | 특징 | 설치 |
+|---|---|---|
+| **Vue-ChartJS** | Chart.js + Vue 래퍼 | `npm install vue-chartjs chart.js` |
+| **Vue-ECharts** | ECharts + Vue 래퍼 | `npm install echarts @vue-echarts/core` |
+| **Vue3-Charts** | Vue 3 네이티브 | `npm install @vue-charts/vue3-charts` |
+
+### 3.5 고급 차트 타입 (특화 라이브러리)
+
+| 차트 타입 | 추천 라이브러리 | 언어 |
+|---|---|---|
+| **Candlestick** (금융) | mplfinance, Lightweight Charts, ApexCharts, Plotly | Python, JS |
+| **Sankey** (흐름) | Plotly, ECharts, D3.js, Nivo | Python, JS |
+| **Sunburst** (계층) | ECharts, Plotly, D3.js, Nivo | Python, JS |
+| **Treemap** (계층) | ECharts, Plotly, D3.js, Recharts, Nivo | Python, JS |
+| **Heatmap** (다차원) | seaborn, Plotly, ECharts, ApexCharts | Python, JS |
+| **Gantt** (프로젝트) | Mermaid, vis.js, Apache ECharts, Frappe Charts | JS |
+| **Timeline** | vis.js, Mermaid, D3.js | JS |
+| **Waterfall** (단계) | Plotly, ApexCharts, ECharts | Python, JS |
+| **Funnel** (전환) | Plotly, ECharts, ApexCharts | Python, JS |
+| **Radar/Spider** (다각형) | Plotly, ECharts, Chart.js, ApexCharts | Python, JS |
+| **Gauge** (게이지) | ECharts, Plotly, ApexCharts, Mermaid | Python, JS |
+| **Box Plot** (통계) | seaborn, Plotly, matplotlib | Python |
+| **Violin Plot** (분포) | seaborn, Plotly, matplotlib | Python |
+| **Network Graph** | pyvis, networkx, vis.js, D3.js, Cytoscape.js | Python, JS |
+| **3D Chart** | matplotlib, plotly, ECharts, Three.js | Python, JS |
+| **Sparklines** (미니) | Chart.js (1 value), Plotly Sparklines, D3.js | JS |
+| **Waffle Chart** (격자) | matplotlib, plotly | Python |
+| **Bullet Chart** (목표) | D3.js, ECharts, Nivo | JS |
+| **Lollipop Chart** (스탠드) | D3.js, Plotly, matplotlib | Python, JS |
+| **Geospatial/Choropleth** | folium, geopandas, Plotly, Leaflet | Python, JS |
+
+### 3.6 실시간 & 스트리밍 차트
+
+| 라이브러리 | 특징 | 설치 |
+|---|---|---|
+| **bokeh** | 실시간 업데이트 (ColumnDataSource) | `pip install bokeh` |
+| **plotly Streaming** | 웹소켓 실시간 | `pip install plotly` |
+| **Lightweight Charts** | 초고속 실시간 (금융) | `npm install lightweight-charts` |
+| **uPlot** | 극한 성능 실시간 | `npm install uplot` |
+| **Grafana** | 실시간 모니터링 대시보드 | `docker run grafana/grafana` |
+
+### 3.7 차트 선택 가이드
+
+| 상황 | 추천 라이브러리 |
+|---|---|
+| **초보자 (Python)** | matplotlib + seaborn |
+| **인터랙티브 (Python)** | plotly |
+| **대용량 데이터 (Python)** | bokeh |
+| **초보자 (JS)** | Chart.js |
+| **전문 (JS)** | D3.js or ECharts |
+| **React 앱** | Recharts or Nivo |
+| **금융 차트** | mplfinance (Python) / Lightweight Charts (JS) |
+| **지리 데이터** | folium (Python) / Leaflet (JS) |
+| **네트워크 그래프** | pyvis (Python) / vis.js (JS) |
+| **실시간 대시보드** | Grafana / Kibana / Dash |
+| **엔터프라이즈** | Highcharts / Tableau / PowerBI |
 
 ---
 

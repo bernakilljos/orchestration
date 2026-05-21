@@ -345,7 +345,6 @@ curl "https://www.data.go.kr/api/15042959/execute-layer" \
 ```bash
 # 공공데이터포털
 curl "https://www.data.go.kr/api/..." \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "query": "약품명",
     "searchType": "약품명",
@@ -466,7 +465,6 @@ console.log(token.toJwt());
 ### Doxy.me 통합
 ```bash
 curl https://api.doxy.me/api/patient/intake \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "patient_name": "John Doe",
     "visit_reason": "Follow-up",
@@ -493,7 +491,6 @@ curl https://api.doxy.me/api/patient/intake \
 ```bash
 # 진료 청구 데이터 (개별 가입자 요청)
 curl "https://www.data.go.kr/api/15058087/execute-layer" \
-  # -H "Authorization: Bearer $AUTH_TOKEN" \
   -d '{
     "member_id": "XXXXXXXXXXXXX",
     "year_month": "202405"

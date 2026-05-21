@@ -116,7 +116,6 @@ curl https://api.vimeo.com/videos/{video_id}?access_token=$TOKEN
 ```bash
 # 비디오 생성 및 메타데이터 조회
 curl https://api.loom.com/api/user \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ---
@@ -146,7 +145,6 @@ npm install excalidraw-cli
 ```bash
 npm install @mirohq/miro-api   # 보드, 위젯 관리
 curl https://api.miro.com/v2/boards \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ---
@@ -168,7 +166,6 @@ curl https://api.miro.com/v2/boards \
 ```bash
 pip install replit             # Python SDK
 curl https://replit.com/api/teams/{teamId}/members \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### Judge0 설치 및 사용
@@ -223,7 +220,6 @@ EOF
 ```bash
 pip install khan-api           # 비공식 라이브러리
 curl https://www.khanacademy.org/api/internal/user \
-  # -H "Authorization: $AUTH_TOKEN"
 ```
 
 ### Duolingo API
@@ -266,7 +262,6 @@ docker run -d \
 ### Credly API
 ```bash
 curl https://api.credly.com/v1/organizations/{orgId}/badges \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ---
@@ -295,7 +290,6 @@ curl "http://www.ebslang.co.kr/api/search?apiKey=$API_KEY&query=영어" \
 ```bash
 # 국가평생교육진흥원 API (한국평생교육진흥원)
 curl "https://api.nile.or.kr/credit/course?searchType=subjectName&subjectName=파이썬" \
-  # -H "Authorization: Bearer $AUTH_TOKEN"
 ```
 
 ### KERIS 교육통계

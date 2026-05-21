@@ -365,7 +365,6 @@ curl -X POST "https://openapi.naver.com/v1/papago/n2mt" \
 
 # Kakao i Translator
 curl -X POST "https://kapi.kakao.com/v1/translate/translate" \
-  # -H "Authorization: KakaoAK $APP_KEY" \
   -d "query=Hello&src_lang=en&target_lang=ko"
 ```
 
@@ -393,7 +392,6 @@ for file in translations/*.json; do
   curl -X POST https://api-free.deepl.com/v1/document \
     -F "file=@$file" \
     -F "target_lang=KO" \
-    # -H "Authorization: DeepL-Auth-Key $KEY"
 done
 ```
 
