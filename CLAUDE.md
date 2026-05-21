@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-05-20): plugins 31 stable + 0 spec-only · rules 11 · hooks 27 · scripts 92
+> **현재 상태** (2026-05-21): plugins 31 stable + 0 spec-only · rules 11 · hooks 27 · scripts 92
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
