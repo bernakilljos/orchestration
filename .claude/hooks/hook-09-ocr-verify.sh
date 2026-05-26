@@ -17,7 +17,8 @@ else
 fi
 
 # 산출물 빌드 패턴 매칭 (확장: build-*-doc / build-*-diagrams / generate-*-ppt / render-* / pdf)
-if ! echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(ppt|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py'; then
+# render-ssj.py 같은 직접 렌더 스크립트도 포함
+if ! echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(ppt|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py|render-[a-z-]+\.py'; then
   exit 0
 fi
 
@@ -40,8 +41,11 @@ fi
 
 # PNG 흰 여백 자동 검출 — build-*-diagrams 또는 build-*-doc 호출 시
 VERIFY_WS="$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py"
-if [ -f "$VERIFY_WS" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py'; then
-  WS_RESULT="$(python "$VERIFY_WS" "$PROJECT_ROOT/docs/screens/arch-kor" 2>&1 || true)"
+if [ -f "$VERIFY_WS" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py|render-[a-z-]+\.py'; then
+  # render-*.py 는 출력 디렉토리 자동 감지 (스크립트와 같은 폴더의 *.jpg/*.png)
+  RENDER_DIR="$(echo "$CMD" | grep -oE '[^ ]*render-[a-z-]+\.py' | head -1 | xargs dirname 2>/dev/null || echo '')"
+  [ -z "$RENDER_DIR" ] && RENDER_DIR="$PROJECT_ROOT/docs/screens/arch-kor"
+  WS_RESULT="$(python "$VERIFY_WS" "$RENDER_DIR" 2>&1 || true)"
   if echo "$WS_RESULT" | grep -q 'WARN'; then
     cat <<EOF
 {"systemMessage": "[hook-09 whitespace] PNG 흰 여백 감지 (≥5%) — 사용자 'docx 안 이미지 여백' 호소 방지:\n$WS_RESULT"}
@@ -88,6 +92,17 @@ EOF
       fi
     fi
   done
+fi
+
+# render-*.py 전수검사 의무 알림 — 렌더링 후 모든 출력 이미지 시각 검사 의무
+if echo "$CMD" | grep -qE 'render-[a-z-]+\.py'; then
+  RENDER_SCRIPT_DIR="$(echo "$CMD" | grep -oE '[^ ]*render-[a-z-]+\.py' | head -1 | xargs dirname 2>/dev/null || echo '.')"
+  RENDER_JPGS="$(ls "$RENDER_SCRIPT_DIR"/*.jpg "$RENDER_SCRIPT_DIR"/*.png 2>/dev/null | grep -v '^_' | head -10 | sed 's|.*|  - &|')"
+  if [ -n "$RENDER_JPGS" ]; then
+    cat <<EOF
+{"systemMessage": "[hook-09 render] 렌더링 완료 — 전수검사 의무:\n1. Read tool 로 모든 출력 이미지 시각 검사\n2. 여백/빈공간/밀도부족/치우침 탐지\n3. 발견 시 콘텐츠 추가 (미니카드·태그·아이콘·메모·체크리스트)\n4. 재렌더링 → 재검사 사이클 반복\n\n검사 대상:\n$RENDER_JPGS"}
+EOF
+  fi
 fi
 
 # pptx visual 검증 — build-*-ppt.py / build-*-pptx.py
