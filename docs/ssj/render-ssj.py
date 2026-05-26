@@ -10,6 +10,9 @@ char_b64 = base64.b64encode((DIR / "내캐릭터.png").read_bytes()).decode()
 _laptop = DIR / "character-laptop.png"
 laptop_b64 = base64.b64encode(_laptop.read_bytes()).decode() if _laptop.exists() and _laptop.stat().st_size > 10000 else char_b64
 photo_b64 = base64.b64encode((DIR / "\ub0b4\uc0ac\uc9c4.jpg").read_bytes()).decode()
+# 멀티AI 오케스트레이션 캐릭터 (orch-promo 전용)
+_orch = DIR / "orch-character.png"
+orch_b64 = base64.b64encode(_orch.read_bytes()).decode() if _orch.exists() and _orch.stat().st_size > 10000 else laptop_b64
 
 # --- SVG icons ---
 I = {
@@ -134,8 +137,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
 
   <div class="center">
     <div style="position:relative">
-      <img class="photo" src="data:image/png;base64,{laptop_b64}" />
-      <div style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.8);border-radius:4px;padding:2px 6px;font-size:8px;color:#8b4513;font-family:'Gaegu',cursive">AI Orchestrator</div>
+      <img class="photo" src="data:image/png;base64,{orch_b64}" />
+      <div style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.8);border-radius:4px;padding:2px 6px;font-size:8px;color:#8b4513;font-family:'Gaegu',cursive">Multi-AI Orchestration</div>
     </div>
     <div class="name-area">
       <div class="nm">\uc11c \uc131 \uc885</div>
@@ -340,6 +343,46 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['star']} <b>존중</b> — 다름을 인정하고 배우는 자세</li>
         <li>{I['bulb']} <b>솔직</b> — 불편해도 진실을 말하는 용기</li>
       </ul>
+    </div>
+    <div class="card">
+      <h3>{I['book']} 멘토로서의 다짐</h3>
+      <ul>
+        <li>{I['candle']} 내가 먼저 빛나면 주변도 밝아진다</li>
+        <li>{I['heart']} 가르치는 것이 아니라 함께 걷는다</li>
+        <li>{I['plant']} 씨앗을 심고 기다릴 줄 아는 사람</li>
+        <li>{I['star']} 실패도 성장의 한 조각이다</li>
+        <li>{I['shield']} 흔들려도 방향은 잃지 않는다</li>
+      </ul>
+    </div>
+    <div style="text-align:center;padding:4px 0 2px">
+      <svg width="210" height="60" viewBox="0 0 210 60">
+        <!-- 촛불 중앙 -->
+        <ellipse cx="105" cy="50" rx="30" ry="5" fill="rgba(196,145,90,.15)"/>
+        <rect x="101" y="30" width="8" height="20" rx="2" fill="#c4915a"/>
+        <ellipse cx="105" cy="24" rx="6" ry="9" fill="#e8a836" opacity=".6"/>
+        <ellipse cx="105" cy="22" rx="3.5" ry="6" fill="#f0c040"/>
+        <!-- 빛줄기 좌 -->
+        <line x1="85" y1="20" x2="30" y2="10" stroke="#e8c36a" stroke-width=".8" opacity=".4"/>
+        <line x1="85" y1="26" x2="20" y2="35" stroke="#e8c36a" stroke-width=".8" opacity=".3"/>
+        <line x1="85" y1="32" x2="25" y2="50" stroke="#e8c36a" stroke-width=".8" opacity=".25"/>
+        <!-- 빛줄기 우 -->
+        <line x1="125" y1="20" x2="180" y2="10" stroke="#e8c36a" stroke-width=".8" opacity=".4"/>
+        <line x1="125" y1="26" x2="190" y2="35" stroke="#e8c36a" stroke-width=".8" opacity=".3"/>
+        <line x1="125" y1="32" x2="185" y2="50" stroke="#e8c36a" stroke-width=".8" opacity=".25"/>
+        <!-- 좌측 아이콘: 사람 -->
+        <circle cx="20" cy="12" r="4" fill="none" stroke="#8b7355" stroke-width="1"/>
+        <path d="M14 22c0-3 3-5 6-5s6 2 6 5" fill="none" stroke="#8b7355" stroke-width="1"/>
+        <!-- 우측 아이콘: 별 -->
+        <polygon points="190,8 192,14 198,14 193,18 195,24 190,20 185,24 187,18 182,14 188,14" fill="#e8c36a" opacity=".6"/>
+        <!-- 좌측 텍스트 -->
+        <text x="10" y="42" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive">탐구</text>
+        <text x="35" y="55" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive">분석</text>
+        <!-- 우측 텍스트 -->
+        <text x="170" y="42" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive">설계</text>
+        <text x="178" y="55" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive">실행</text>
+        <!-- 경로 점선 -->
+        <path d="M15 48 Q60 30 105 50 Q150 30 195 48" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,3" opacity=".5"/>
+      </svg>
     </div>
   </div>
 
