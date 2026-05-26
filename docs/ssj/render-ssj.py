@@ -258,8 +258,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .mid{{display:grid;grid-template-columns:225px 1fr 218px;gap:3px}}
 .mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px}}
 .mid-left .card,.mid-right .card{{flex:1}}
-.center{{display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:space-between}}
-.char-img{{width:240px;height:280px;border-radius:8px;object-fit:cover;border:2px solid #c4b49a;box-shadow:2px 2px 8px rgba(0,0,0,.1)}}
+.center{{display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:flex-start}}
+.char-img{{width:240px;height:230px;border-radius:8px;object-fit:cover;border:2px solid #c4b49a;box-shadow:2px 2px 8px rgba(0,0,0,.1)}}
 .name-area{{text-align:center}}
 .name-area .nm{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#2c2418}}
 .name-area .inf{{font-size:9px;color:#8a7a68}}
@@ -325,6 +325,9 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; 꾸준히 지켜보며 기다려주는 멘토링</li>
         <li>&middot; 복잡한 것을 쉽게 풀어주는 능력</li>
         <li>&middot; 성장하는 기쁨을 가까이에서 지켜봄</li>
+        <li>&middot; 작은 변화가 큰 결과로 이어지는 순간</li>
+        <li>&middot; 배움의 불꽃이 옮겨붙는 경험</li>
+        <li>&middot; 함께 고민하고 함께 해결하는 과정</li>
       </ul>
     </div>
     <div class="card">
@@ -334,6 +337,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['gear']} <b>구조화</b> — 복잡한 이야기도 정리해주는 힘</li>
         <li>{I['candle']} <b>진심</b> — 표면이 아닌 근본을 다루는 대화</li>
         <li>{I['shield']} <b>인내</b> — 끝까지 들어주는 자세</li>
+        <li>{I['star']} <b>존중</b> — 다름을 인정하고 배우는 자세</li>
+        <li>{I['bulb']} <b>솔직</b> — 불편해도 진실을 말하는 용기</li>
       </ul>
     </div>
   </div>
@@ -389,6 +394,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; 높은 책임감과 신뢰 구축력</li>
         <li>&middot; 다재다능 — 기술·관리·소통 걸침</li>
         <li>&middot; 복잡한 것을 단순하게 구조화하는 힘</li>
+        <li>&middot; 위기에서 냉정한 판단력</li>
+        <li>&middot; 배움을 즉시 실무에 적용하는 속도</li>
       </ul>
     </div>
     <div class="card">
