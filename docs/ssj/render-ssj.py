@@ -5,7 +5,10 @@ import base64, pathlib
 from playwright.sync_api import sync_playwright
 
 DIR = pathlib.Path(__file__).parent
-char_b64 = base64.b64encode((DIR / "caricature-candle.png").read_bytes()).decode()
+char_b64 = base64.b64encode((DIR / "내캐릭터.png").read_bytes()).decode()
+# 서재+촛불+맥북 캐릭터 (있으면 사용)
+_laptop = DIR / "character-laptop.png"
+laptop_b64 = base64.b64encode(_laptop.read_bytes()).decode() if _laptop.exists() and _laptop.stat().st_size > 10000 else char_b64
 photo_b64 = base64.b64encode((DIR / "\ub0b4\uc0ac\uc9c4.jpg").read_bytes()).decode()
 
 # --- SVG icons ---
@@ -21,6 +24,10 @@ I = {
  'code':'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b7b8e" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>',
  'cpu':'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#7a6b8e" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>',
  'plant':'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22V8M8 12c-3 0-5-2-5-5 3 0 5 2 5 5M16 10c3 0 5-2 5-5-3 0-5 2-5 5"/></svg>',
+ 'candle':'<svg viewBox="0 0 24 24" width="14" height="14"><rect x="10" y="12" width="4" height="9" rx="1" fill="#c4915a"/><ellipse cx="12" cy="9" rx="3" ry="4" fill="#e8a836" opacity=".7"/><ellipse cx="12" cy="8" rx="1.5" ry="2.5" fill="#f0c040"/></svg>',
+ 'person':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#8b7355" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-3.5 3-6.5 6.5-6.5s6.5 3 6.5 6.5"/></svg>',
+ 'shield':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+ 'book':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14H6a2 2 0 0 0 0 4h14"/></svg>',
 }
 
 COMMON_CSS = """
@@ -114,11 +121,20 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; <b>4. \uc2e4\ud589</b> \u2014 \uc790\ub3d9\ud654\ub85c \uacb0\uacfc\ub97c \ub9cc\ub4e0\ub2e4</li>
       </ul>
     </div>
+    <div class="card">
+      <h3>{I['shield']} \uc790\ub3d9\ud654 \ucca0\ud559</h3>
+      <ul>
+        <li>&middot; \uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c</li>
+        <li>&middot; \ud55c \ubc88\ub9cc \ud558\uba74 \ub05d\ub098\ub294 \uc2dc\uc2a4\ud15c</li>
+        <li>&middot; Zero-touch = \uc0ac\uc6a9\uc790 \uc561\uc158 0</li>
+        <li>&middot; \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 \uae08\uc9c0</li>
+      </ul>
+    </div>
   </div>
 
   <div class="center">
     <div style="position:relative">
-      <img class="photo" src="data:image/jpeg;base64,{photo_b64}" />
+      <img class="photo" src="data:image/png;base64,{laptop_b64}" />
       <div style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.8);border-radius:4px;padding:2px 6px;font-size:8px;color:#8b4513;font-family:'Gaegu',cursive">AI Orchestrator</div>
     </div>
     <div class="name-area">
@@ -168,6 +184,14 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; SQLite + watchdog 24/7</li>
       </ul>
     </div>
+    <div class="card">
+      <h3>{I['code']} \ub3c4\uad6c \uc2a4\ud0dd</h3>
+      <div class="tags">
+        <span class="tag">Python</span><span class="tag">Playwright</span><span class="tag">SQLite</span>
+        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">Git</span>
+        <span class="tag">Bash</span><span class="tag">Node.js</span><span class="tag">Docker</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -179,6 +203,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <li>&middot; AI\uc640 \ud611\uc5c5\ud558\uc5ec \ub354 \ub098\uc740 \uacb0\uacfc</li>
       <li>&middot; \ub204\uad70\uac00\uc5d0\uac8c \ub3c4\uc6c0\ub418\ub294 \ub3c4\uad6c</li>
       <li>&middot; \uc9c0\uc18d\uc801\uc73c\ub85c \uc131\uc7a5\ud558\ub294 \uac83</li>
+      <li>&middot; \ub9e4\uc77c \uc870\uae08\uc529 \ub354 \ub098\uc544\uc9c0\ub294 \uac83</li>
+      <li>&middot; \uc0c8\ub85c\uc6b4 \uae30\uc220\uc744 \ud0d0\uad6c\ud558\ub294 \ud765\ubd84</li>
     </ul>
   </div>
   <div class="btm-card">
@@ -187,6 +213,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <li>&middot; \uc138\uacc4\uc801 AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158 \ud50c\ub7ab\ud3fc</li>
       <li>&middot; \ub204\uad6c\ub098 \uc0ac\uc6a9\ud560 \uc218 \uc788\ub294 \uc790\ub3d9\ud654 \ud0b7</li>
       <li>&middot; AI \uc2dc\ub300\uc758 \uba58\ud1a0\uc774\uc790 \uc120\uad6c\uc790</li>
+      <li>&middot; \uae30\uc220\ub85c \uc0ac\ud68c\uc801 \uac00\uce58\ub97c \ub9cc\ub4dc\ub294 \uc77c</li>
+      <li>&middot; \ub2e4\uc74c \uc138\ub300\ub97c \uc704\ud55c \uad50\uc721 \ucee8\ud150\uce20</li>
     </ul>
   </div>
   <div class="btm-card">
@@ -195,6 +223,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <li>&middot; \uae30\uc220\uacfc \uac10\uc131\uc744 \uc5f0\uacb0\ud558\ub294 \uc735\ud569\ub825</li>
       <li>&middot; \ubcf5\uc7a1\ud55c \uc2dc\uc2a4\ud15c\uc744 \ub2e8\uc21c\ud654\ud558\ub294 \uc124\uacc4\ub825</li>
       <li>&middot; \uba58\ud1a0\ub85c\uc11c \uc0ac\ub78c\uc744 \uc131\uc7a5\uc2dc\ud0a4\ub294 \ud798</li>
+      <li>&middot; \ub370\uc774\ud130\ub85c \uc758\uc0ac\uacb0\uc815\ud558\ub294 \ub2a5\ub825</li>
+      <li>&middot; \uc804\uccb4 \uc2dc\uc2a4\ud15c\uc744 \ubcf4\ub294 \ub208</li>
     </ul>
   </div>
   <div class="btm-card">
@@ -213,58 +243,63 @@ body{{width:850px;height:1100px;background:#f5efe6;
 </body></html>'''
 
 
-# ===================== SSJ-SUMMARY =====================
+# ===================== SSJ-SUMMARY (타겟.jpg 손그림 + 고밀도 하이브리드) =====================
 def build_ssj_summary():
     return f'''<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 {COMMON_CSS}
 body{{width:850px;height:1100px;background:#f5efe6;
-  background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.12) 0%,transparent 50%),
-  radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.08) 0%,transparent 40%);
-  padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between}}
+  background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.10) 0%,transparent 50%),
+  radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.06) 0%,transparent 40%);
+  padding:4px;display:grid;grid-template-rows:auto 1fr auto;gap:3px;overflow:hidden}}
 .header{{display:flex;justify-content:space-between;align-items:flex-start}}
-.header-left h1{{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}}
-.header-left .sub{{font-size:11px;color:#7a6b5a;margin-top:3px}}
-.header-right{{display:flex;gap:6px}}
-.mid{{display:grid;grid-template-columns:228px 1fr 228px;gap:8px;flex:1;margin:6px 0}}
-.mid-left,.mid-right{{display:flex;flex-direction:column;gap:5px}}
-.center{{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}}
-.char-img{{width:280px;height:250px;border-radius:8px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}}
+.header-left h1{{font-family:'Gaegu',cursive;font-size:26px;font-weight:700;color:#2c2418;line-height:1.15}}
+.header-left .sub{{font-size:10px;color:#7a6b5a;margin-top:2px;display:flex;align-items:center;gap:3px}}
+.header-right{{display:flex;gap:3px}}
+.mid{{display:grid;grid-template-columns:225px 1fr 218px;gap:3px}}
+.mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px}}
+.mid-left .card,.mid-right .card{{flex:1}}
+.center{{display:flex;flex-direction:column;align-items:center;gap:3px;justify-content:space-between}}
+.char-img{{width:240px;height:280px;border-radius:8px;object-fit:cover;border:2px solid #c4b49a;box-shadow:2px 2px 8px rgba(0,0,0,.1)}}
 .name-area{{text-align:center}}
-.name-area .nm{{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}}
-.name-area .inf{{font-size:9px;color:#8a7a68;margin-top:1px}}
-.goal-review{{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%}}
-.goal-box{{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:5px 7px;text-align:center}}
-.goal-box h4{{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:2px}}
-.goal-box p{{font-size:9px;color:#5a4f42;line-height:1.4}}
-.bottom{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}}
-.btm-card{{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:7px 9px}}
-.btm-card h4{{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}}
-.btm-card li{{font-size:9px;line-height:1.45;color:#5a4f42}}
+.name-area .nm{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#2c2418}}
+.name-area .inf{{font-size:9px;color:#8a7a68}}
+.quote{{background:rgba(196,145,90,.06);border:1px dashed rgba(196,145,90,.3);border-radius:4px;padding:3px 6px;text-align:center;width:100%}}
+.quote p{{font-family:'Gaegu',cursive;font-size:10px;color:#8b4513;line-height:1.2}}
+.goal-review{{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%}}
+.goal-box{{background:rgba(255,255,255,.45);border:1px solid #d4c4a8;border-radius:4px;padding:3px 5px;text-align:center}}
+.goal-box h4{{font-family:'Gaegu',cursive;font-size:10px;color:#8b4513;margin-bottom:1px;display:flex;align-items:center;justify-content:center;gap:2px}}
+.goal-box p{{font-size:8.5px;color:#5a4f42;line-height:1.25}}
+.step{{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#c4915a;color:#fff;font-size:8px;font-weight:700;flex-shrink:0}}
+.bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}}
+.btm-card{{background:rgba(255,255,255,.4);border:1.5px solid #d4c4a8;border-radius:4px;padding:4px 6px}}
+.btm-card h4{{font-family:'Gaegu',cursive;font-size:10px;color:#8b4513;margin-bottom:2px;display:flex;align-items:center;gap:2px}}
+.btm-card li{{font-size:9px;line-height:1.35;color:#5a4f42;display:flex;align-items:flex-start;gap:2px}}
+.btm-card li svg{{flex-shrink:0;margin-top:1px}}
 .btm-card ul{{list-style:none;padding:0}}
 </style></head><body>
 
 <div class="header">
   <div class="header-left">
-    <h1>\ucd1b\ubd88\ucc98\ub7fc \ubc1d\ud788\uace0,<br>\ubc14\ub2e4\ucc98\ub7fc \ud488\uc73c\uba70,<br>\ud568\uaed8 \uc131\uc7a5\ud558\ub294 \uc0ac\ub78c</h1>
-    <div class="sub">{I['fire']} \u4e01\u706b(\ucd1b\ubd88) + {I['water']} \u4ea5\u6c34(\ubc14\ub2e4) = \ub9cc\ub2a5 \uba58\ud1a0\uc758 \uc0ac\uc8fc</div>
+    <h1>생각을 구조화하고,<br>변화를 만들며,<br>함께 성장하는 사람</h1>
+    <div class="sub">{I['bulb']} 지혜 + {I['water']} 포용 + {I['gear']} 실행 = 만능 멘토 기질</div>
   </div>
   <div class="header-right">
-    <div class="card" style="width:155px">
-      <h3>{I['heart']} \ud589\ub3d9 \uc6d0\uce59</h3>
+    <div class="card" style="width:148px">
+      <h3>{I['heart']} 행동 원칙</h3>
       <ul>
-        <li>&middot; \uc740\uc740\ud558\uac8c \ube44\ucd94\ub418 \uaebc\uc9c0\uc9c0 \uc54a\ub294\ub2e4</li>
-        <li>&middot; \uae4a\uc774 \ud488\ub418 \ud718\uc4f8\ub9ac\uc9c0 \uc54a\ub294\ub2e4</li>
-        <li>&middot; \ud568\uaed8 \uc131\uc7a5\ud558\ub418 \uc911\uc2ec\uc744 \uc783\uc9c0 \uc54a\ub294\ub2e4</li>
+        <li>&middot; 생각을 구조화한다</li>
+        <li>&middot; 깊이 품되 휘쓸리지 않는다</li>
+        <li>&middot; 함께 성장한다</li>
       </ul>
-      <p style="font-size:8px;color:#8a7a68;margin-top:2px">\u4e01\u706b+\u4ea5\u6c34+\u8f9b\u9149=\ub098\ub9cc\uc758 \uacbd\uc7c1\ub825</p>
+      <p style="font-size:8px;color:#8a7a68;margin-top:2px">지혜+포용+실행력=나만의 경쟁력</p>
     </div>
-    <div class="card" style="width:175px">
-      <h3>{I['star']} \uc0ac\uc8fc \uac15\uc810 \ud0a4\uc6cc\ub4dc</h3>
+    <div class="card" style="width:170px">
+      <h3>{I['star']} 한눈에 보는 강점 키워드</h3>
       <div class="tags">
-        <span class="tag">\ucd1b\ubd88 \uc9c0\ud61c</span><span class="tag">\ubc14\ub2e4 \ud3ec\uc6a9</span><span class="tag">\uba58\ud1a0\uc2ed</span>
-        <span class="tag">\uc9c1\uad00\ub825</span><span class="tag">\ubd84\uc11d\ub825</span><span class="tag">\ub044\uae30</span>
-        <span class="tag">\uc12c\uc138\ud568</span><span class="tag">\ucc3d\uc758\uc735\ud569</span><span class="tag">\uc2e4\ud589\ub825</span>
-        <span class="tag">\uacf5\uac10\ub825</span><span class="tag">\ud559\uc2b5\ub825</span><span class="tag">\ub9ac\ub354\uc2ed</span>
+        <span class="tag">목표지향</span><span class="tag">분석력</span><span class="tag">멘토십</span>
+        <span class="tag">직관력</span><span class="tag">공감력</span><span class="tag">실행력</span>
+        <span class="tag">섬세함</span><span class="tag">창의융합</span><span class="tag">문제해결</span>
+        <span class="tag">구조화력</span><span class="tag">신뢰감</span><span class="tag">리더십</span>
       </div>
     </div>
   </div>
@@ -272,125 +307,167 @@ body{{width:850px;height:1100px;background:#f5efe6;
 
 <div class="mid">
   <div class="mid-left">
-    <div class="card" style="flex:1">
-      <h3>{I['bulb']} \u4e01\u4ea5 \uc77c\uc8fc \ud575\uc2ec \ud2b9\uc131</h3>
+    <div class="card">
+      <h3>{I['bulb']} 핵심 행동 특성</h3>
       <ul>
-        <li>&middot; <b>\ucd1b\ubd88\uc758 \uc9d1\uc911\ub825</b> (\u4e01\u706b)<br><span style="font-size:9px;color:#8a7a68">\uc740\uc740\ud558\uc9c0\ub9cc \uaebc\uc9c0\uc9c0 \uc54a\ub294 \ubd88. \ud55c \uac00\uc9c0\uc5d0 \uae4a\uc774 \ubab0\uc785\ud558\uace0 \ubcf8\uc9c8\uc744 \uafe0\ub6ab\ub294 \ud1b5\ucc30\ub825.</span></li>
-        <li>&middot; <b>\ubc14\ub2e4\uc758 \ud3ec\uc6a9\ub825</b> (\u4ea5\u6c34)<br><span style="font-size:9px;color:#8a7a68">\ubaa8\ub4e0 \uac83\uc744 \ubc1b\uc544\ub4e4\uc774\ub294 \uae4a\uc740 \ubb3c. \uc0ac\ub78c\uc758 \ub9c8\uc74c\uc744 \uc77d\uace0 \uac10\uc2f8\uc8fc\ub294 \ub2a5\ub825.</span></li>
-        <li>&middot; <b>\ub9cc\ub2a5 \uba58\ud1a0 \uae30\uc9c8</b><br><span style="font-size:9px;color:#8a7a68">\uac00\ub974\uce58\uace0 \uc774\ub044\ub294 \uc7ac\ub2a5\uc774 \ud0c0\uace0\ub0a8. \ubcf5\uc7a1\ud55c \uac83\uc744 \uc27d\uac8c \ud480\uc5b4\uc8fc\ub294 \ub2a5\ub825.</span></li>
-        <li>&middot; <b>\uc544\uc774\ub514\uc5b4 \uc5f0\uacb0\uc0ac</b><br><span style="font-size:9px;color:#8a7a68">\u6c34\u751f\u6728\uc758 \uae30\uc6b4\uc73c\ub85c \uc0c8\ub85c\uc6b4 \uac83\uc744 \uc2f9\ud2f0\uc6b0\uace0, \u706b\uc758 \uc5f4\uc815\uc73c\ub85c \uc2e4\ud589.</span></li>
-        <li>&middot; <b>\uc9c1\uad00\uacfc \ub17c\ub9ac\uc758 \uade0\ud615</b><br><span style="font-size:9px;color:#8a7a68">\u4e01\uc758 \uc9c1\uad00 + \u4ea5\uc758 \uc9c0\ud61c = \uac10\uac01\uc801\uc774\uba74\uc11c\ub3c4 \ub17c\ub9ac\uc801\uc778 \ud310\ub2e8\ub825.</span></li>
-        <li>&middot; <b>\uc2e4\ud589 \uc911\uc2ec (\u5b98\u661f \ud65c\uc6a9)</b><br><span style="font-size:9px;color:#8a7a68">\uacc4\ud68d\uc5d0 \uba38\ubb34\ub974\uc9c0 \uc54a\uace0 \ud589\ub3d9\uc73c\ub85c \uc62e\uae30\uba70, \uc791\uc740 \uc131\uacfc\ub97c \uc313\uc544 \ud070 \ubcc0\ud654\ub97c.</span></li>
+        <li>{I['fire']} <span><b>깊이 있는 탐구형 실무자</b><br><span style="font-size:9px;color:#8a7a68">호기심이 많고, 문제의 본질을 끝까지 파고듦. 현상이 아닌 원인과 구조를 이해하려는 노력.</span></span></li>
+        <li>{I['cpu']} <span><b>AI &amp; 도구 활용 중심 학습자</b><br><span style="font-size:9px;color:#8a7a68">AI를 활용해 새로운 것을 배우고, 질문과 피드백을 통해 사고의 깊이를 높여감.</span></span></li>
+        <li>{I['bulb']} <span><b>아이디어 연결형 사고자</b><br><span style="font-size:9px;color:#8a7a68">다양한 관점을 연결해 새로운 관점과 가치를 만들어냄.</span></span></li>
+        <li>{I['gear']} <span><b>분석적 · 논리적 문제 해결자</b><br><span style="font-size:9px;color:#8a7a68">복잡한 문제를 구조화하고, 데이터 기반으로 명쾌하게 정리.</span></span></li>
+        <li>{I['person']} <span><b>협업 중심 실무자</b><br><span style="font-size:9px;color:#8a7a68">다양한 관점을 존중하며, 사람과 AI 모두와 열린 실무 태도.</span></span></li>
+        <li>{I['rocket']} <span><b>실행 중심 (Bias for Action)</b><br><span style="font-size:9px;color:#8a7a68">계획에 머무르지 않고 실행으로 옮기며, 작은 성과를 반복해 큰 변화를 만든다.</span></span></li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['rocket']} \uc77c\uc744 \ub300\ud558\ub294 \ubc29\uc2dd</h3>
-      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">\ud0d0\uad6c &#8594; \ubd84\uc11d &#8594; \uc124\uacc4 &#8594; \uc2e4\ud589</p>
+      <h3>{I['heart']} 사람을 키우는 즐거움</h3>
       <ul>
-        <li>&middot; <b>1. \ud0d0\uad6c</b> \u2014 \ucd1b\ubd88\ucc98\ub7fc \uc5b4\ub460 \uc18d \ud575\uc2ec\uc744 \ube44\ucd98\ub2e4</li>
-        <li>&middot; <b>2. \ubd84\uc11d</b> \u2014 \ubc14\ub2e4\ucc98\ub7fc \uae4a\uc774 \ud30c\uace0\ub4e0\ub2e4</li>
-        <li>&middot; <b>3. \uc124\uacc4</b> \u2014 \uae08(\u8f9b) \uae30\uc6b4\uc73c\ub85c \ub0a0\uce74\ub86d\uac8c \uad6c\uc870\ud654</li>
-        <li>&middot; <b>4. \uc2e4\ud589</b> \u2014 \uacb0\uacfc\ub97c \ub9cc\ub4e4\uc5b4 \uc99d\uba85\ud55c\ub2e4</li>
+        <li>&middot; 누군가의 성장을 돕는 것에서 가장 큰 기쁨</li>
+        <li>&middot; 꾸준히 지켜보며 기다려주는 멘토링</li>
+        <li>&middot; 복잡한 것을 쉽게 풀어주는 능력</li>
+        <li>&middot; 성장하는 기쁨을 가까이에서 지켜봄</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['water']} 대인 관계 스타일</h3>
+      <ul>
+        <li>{I['heart']} <b>경청</b> — 말보다 듣기를 먼저</li>
+        <li>{I['gear']} <b>구조화</b> — 복잡한 이야기도 정리해주는 힘</li>
+        <li>{I['candle']} <b>진심</b> — 표면이 아닌 근본을 다루는 대화</li>
+        <li>{I['shield']} <b>인내</b> — 끝까지 들어주는 자세</li>
       </ul>
     </div>
   </div>
 
   <div class="center">
-    <div style="position:relative">
-      <img class="char-img" src="data:image/png;base64,{char_b64}" />
-      <div style="position:absolute;top:5px;left:7px;background:rgba(255,255,255,.75);border-radius:4px;padding:2px 5px;font-size:8px;color:#8b4513;font-family:'Gaegu',cursive">\u4e01\u4ea5 \u00b7 \ucd1b\ubd88+\ubc14\ub2e4</div>
-    </div>
+    <img class="char-img" src="data:image/png;base64,{laptop_b64}" />
     <div class="name-area">
-      <div class="nm">\uc11c \uc131 \uc885</div>
-      <div style="font-size:11px;color:#8b4513;font-family:serif">\u5f90\u8056\u9418</div>
-      <div class="inf">\uc815\ud574(\u4e01\u4ea5) \uc77c\uc8fc \u00b7 \uc2e0\uc720(\u8f9b\u9149) \ub300\uc6b4 \u00b7 \ub9cc\ub2a5 \uba58\ud1a0 \uc0ac\uc8fc</div>
+      <div class="nm">서 성 종</div>
+      <div style="font-size:10px;color:#8b4513;font-family:serif">\u5f90\u8056\u9418</div>
+      <div class="inf">만능 멘토 기질 · 탐구 · 분석 · 실행의 사람</div>
+    </div>
+    <div class="quote">
+      <p>\u201c작은 촛불 하나가 어둠을 밝히듯,<br>나의 한 걸음이 누군가의 방향이 된다\u201d</p>
+    </div>
+    <div class="card" style="width:100%;text-align:left">
+      <h3>{I['gear']} 독립적이고 주도적인 전문가</h3>
+      <ul>
+        <li>&middot; 스스로 판단하고 책임진다</li>
+        <li>&middot; 끝까지 결과를 만들어낸다</li>
+        <li>&middot; 관계 중심이되 흔들리지 않는다</li>
+        <li>&middot; 묵묵히 빛을 내는 등대</li>
+      </ul>
     </div>
     <div class="goal-review">
       <div class="goal-box">
-        <h4>{I['fire']} \uc624\ub298\uc758 \ubaa9\ud45c</h4>
-        <p>\ub9e4\uc77c \ucd1b\ubd88\ucc98\ub7fc \ud55c \uac00\uc9c0\uc5d0 \uc9d1\uc911<br>\ubc29\ud5a5 \ubc1c\uacac \u2192 \uae4a\uc774 \ud30c\uace0 \u2192 \uc2e4\ud589</p>
-        <p style="font-size:8px;color:#aaa;margin-top:1px">\uc791\uc740 \ubd88\ube5b\uc774 \ubaa8\uc5ec \ud070 \ubc29\ud5a5\uc744 \ubc1d\ud78c\ub2e4</p>
+        <h4>{I['fire']} 오늘의 목표</h4>
+        <p>매일 한 가지에 집중<br>방향 발견 → 깊이 파고 → 실행<br>작은 불빛이 모여 큰 방향을 밝힌다</p>
       </div>
       <div class="goal-box">
-        <h4>{I['water']} \ub9ac\ubdf0 (\ud558\ub8e8 \ub05d)</h4>
-        <p>\u2192 \ubc1c\uacac \ub9e4\ub2ec\uc74c \uc815\ub9ac<br>\u2192 \ubabb\ud55c \uc810 \uc815\uc9c1\ud558\uac8c<br>\u2192 \ub2e4\uc74c \uc2e4\ud589 \uccb4\ud06c</p>
-        <p style="font-size:8px;color:#8b4513;margin-top:1px;font-family:'Gaegu',cursive">\uc791\uc740 \uac1c\uc120\uc758 \uc624\ub298, \ud559\uc2b5\uc740 \ub0b4\uc77c!</p>
+        <h4>{I['water']} 하루정리 (하루 끝)</h4>
+        <p>→ 발견한 것 매달음 정리<br>→ 못한 점 정직하게<br>→ 다음 실행 체크<br>작은 개선의 오늘, 성과는 내일!</p>
       </div>
+    </div>
+    <div class="card" style="width:100%;text-align:left">
+      <h3>{I['fire']} 성격 요약</h3>
+      <ul>
+        <li>{I['candle']} 따뜻함과 날카로움 공존</li>
+        <li>{I['star']} 분석·공감·실행 3박자</li>
+        <li>{I['heart']} 관계 중심 + 결과 중심</li>
+        <li>{I['bulb']} 만능형 융합 인재</li>
+      </ul>
     </div>
   </div>
 
   <div class="mid-right">
     <div class="card">
-      <h3>{I['star']} \uc8fc\uc694 \uac15\uc810 (\uc0ac\uc8fc \uae30\ubc18)</h3>
+      <h3>{I['star']} 주요 강점</h3>
       <ul>
-        <li>&middot; \uc740\uc740\ud55c \ube5b\uc73c\ub85c \ubc29\ud5a5\uc744 \uc81c\uc2dc (\u4e01\ud654)</li>
-        <li>&middot; \uae4a\uc740 \uc9c0\ud61c\uc640 \ud3ec\uc6a9\ub825 (\u4ea5\uc218)</li>
-        <li>&middot; \uafc0\uc900\ud55c \uc2e4\ud589\ub825\uacfc \uacb0\uc2e4 (\u8f9b\u9149 \ub300\uc6b4)</li>
-        <li>&middot; \uacf5\uac10 \uae30\ubc18 \uba58\ud1a0\ud615 \ub9ac\ub354\uc2ed</li>
-        <li>&middot; \ub192\uc740 \ucc45\uc784\uac10\uacfc \uc2e0\ub8b0 \uad6c\ucd95\ub825</li>
-        <li>&middot; \ub2e4\uc7ac\ub2e4\ub2a5 \u2014 \uae30\uc220\u00b7\uad00\ub9ac\u00b7\uc18c\ud1b5 \uac78\uce68</li>
+        <li>&middot; 깊이 있는 사고와 구조화 능력</li>
+        <li>&middot; 빠른 학습력과 AI 활용 능력</li>
+        <li>&middot; 꾸준한 실행력과 결실 중심 사고</li>
+        <li>&middot; 공감 기반 멘토형 리더십</li>
+        <li>&middot; 높은 책임감과 신뢰 구축력</li>
+        <li>&middot; 다재다능 — 기술·관리·소통 걸침</li>
+        <li>&middot; 복잡한 것을 단순하게 구조화하는 힘</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['heart']} \uac00\uce58\uad00 (\u4e01\ud654\uc758 \ub530\ub73b\ud568)</h3>
+      <h3>{I['heart']} 가치관</h3>
       <ul>
-        <li>&middot; \uc0ac\ub78c\uc744 \uba3c\uc800 \uc0dd\uac01\ud55c\ub2e4 (\u4e01\ud654\uc758 \ube5b)</li>
-        <li>&middot; \uc9c0\uc18d\uc801\uc778 \uc131\uc7a5\uc744 \ucd94\uad6c (\u4ea5\uc218\uc758 \ud750\ub984)</li>
-        <li>&middot; \uc2e0\uc2e4\uacfc \uc815\uc9c1\uc744 \uc911\uc694\uc2dc (\u8f9b\uae08\uc758 \uacb0\ub2e8)</li>
-        <li>&middot; \uc758\ubbf8 \uc788\ub294 \uacb0\uacfc\ub97c \ub9cc\ub4e0\ub2e4</li>
-        <li>&middot; \uac00\uc871\uacfc \uc0b6\uc758 \uade0\ud615\uc744 \uc18c\uc911\ud788</li>
+        <li>&middot; 사람을 먼저 생각한다</li>
+        <li>&middot; 지속적인 성장을 추구한다</li>
+        <li>&middot; 신실과 정직을 중요시</li>
+        <li>&middot; 의미 있는 결과를 만든다</li>
+        <li>&middot; 가족과 삶의 균형을 소중히</li>
+        <li>&middot; 배움의 즐거움을 나눈다</li>
+        <li>&middot; 과정을 즐기며 결과를 만든다</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['fire']}{I['water']} \uc0ac\uc8fc \uc5d0\ub108\uc9c0 \uc694\uc57d</h3>
+      <h3>{I['rocket']} 일을 대하는 방식</h3>
+      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:2px">탐구 &#8594; 분석 &#8594; 설계 &#8594; 실행</p>
       <ul>
-        <li>&middot; <b>\u4e01\ud654(\uc815\ud654)</b> \u2014 \ucd1b\ubd88\uc758 \uc9d1\uc911\uacfc \ub530\ub73b\ud568</li>
-        <li>&middot; <b>\u4ea5\uc218(\ud574\uc218)</b> \u2014 \uae4a\uc740 \ubc14\ub2e4\uc758 \uc9c0\ud61c\uc640 \ud3ec\uc6a9</li>
-        <li>&middot; <b>\uc2e0\uc720 \ub300\uc6b4</b> \u2014 \uae08(\u91d1) \uae30\uc6b4, \uacb0\uc2e4\uacfc \uc815\ub9ac</li>
-        <li>&middot; <b>\ub9cc\ub2a5 \uba58\ud1a0</b> \u2014 \ub2e4\uc7ac\ub2e4\ub2a5, \uac00\ub974\uce68\uc758 \uc7ac\ub2a5</li>
+        <li><span class="step">1</span> <b>탐구</b> — 더 나은 질문을 던진다</li>
+        <li><span class="step">2</span> <b>분석</b> — 근본 원인과 패턴 발견</li>
+        <li><span class="step">3</span> <b>설계</b> — 최적의 해결 방법 구조화</li>
+        <li><span class="step">4</span> <b>실행</b> — 결과를 만들어 증명한다</li>
       </ul>
-      <p style="font-size:8px;color:#8a7a68;margin-top:2px">\ucd1b\ubd88\uc774 \uae4a\uc740 \ubc14\ub2e4 \uc704\uc5d0 \ub5a0 \uc788\ub294 \ud615\uc0c1 \u2014<br>\uc5b4\ub460 \uc18d\uc5d0\uc11c\ub3c4 \ubc29\ud5a5\uc744 \uc81c\uc2dc\ud558\ub294 \ub4f1\ub300</p>
+    </div>
+    <div class="card">
+      <h3>{I['plant']} 성장 엔진</h3>
+      <ul>
+        <li>{I['bulb']} <b>호기심</b> — 새로운 것을 배우는 즐거움</li>
+        <li>{I['shield']} <b>책임감</b> — 맡은 일은 끝까지</li>
+        <li>{I['heart']} <b>공감력</b> — 사람의 마음을 읽는 힘</li>
+        <li>{I['code']} <b>연결력</b> — 서로 다른 것을 잇는 능력</li>
+        <li>{I['star']} <b>끈기</b> — 흔들려도 다시 일어서는 회복력</li>
+      </ul>
     </div>
   </div>
 </div>
 
 <div class="bottom">
   <div class="btm-card">
-    <h4>{I['rocket']} \ub098\ub97c \uc6c0\uc9c1\uc774\uac8c \ud558\ub294 \uac83</h4>
+    <h4>{I['rocket']} 나를 움직이게 하는 것</h4>
     <ul>
-      <li>&middot; \ubcf5\uc7a1\ud55c \ubb38\uc81c\ub97c \ucd1b\ubd88\ucc98\ub7fc \ubc1d\ud788\ub294 \ucfe0\uac10</li>
-      <li>&middot; \ubc30\uc6c0\uc744 \uc2e4\uc81c \uacb0\uacfc\ub85c \uc5f0\uacb0\ud558\ub294 \uac83</li>
-      <li>&middot; AI\uc640 \ud611\uc5c5\ud558\uc5ec \ub354 \ub098\uc740 \uacb0\uacfc</li>
-      <li>&middot; \uc9c0\uc18d\uc801\uc73c\ub85c \uc131\uc7a5\ud558\uba70 \uae30\uc5ec\ud558\ub294 \uac83</li>
+      <li>&middot; 복잡한 문제를 해결하는 쾌감</li>
+      <li>&middot; 배움을 실제 결과로 연결</li>
+      <li>&middot; AI와 협업으로 더 나은 결과</li>
+      <li>&middot; 지속적으로 성장하며 기여하는 것</li>
+      <li>&middot; 매일 한 뼘씩 앞으로 나아가는 것</li>
+      <li>&middot; 새로운 도전에서 배우는 기쁨</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['heart']} \ubbf8\ub798\uc5d0 \uc774\ub8e8\uace0 \uc2f6\uc740 \uac83</h4>
+    <h4>{I['heart']} 미래에 이루고 싶은 것</h4>
     <ul>
-      <li>&middot; \ub3c5\ub9bd\uc801\uc774\uace0 \uc8fc\ub3c4\uc801\uc778 \uc804\ubb38\uac00</li>
-      <li>&middot; \uc2a4\uc2a4\ub85c \ud310\ub2e8\ud558\uace0 \ucc45\uc784\uc9c0\uba70</li>
-      <li>&middot; \ub05d\uae4c\uc9c0 \uacb0\uacfc\ub97c \ub9cc\ub4e4\uc5b4\ub0b8\ub2e4</li>
+      <li>&middot; 독립적이고 주도적인 전문가</li>
+      <li>&middot; 스스로 판단하고 책임지며</li>
+      <li>&middot; 끝까지 결과를 만들어낸다</li>
+      <li>&middot; 사람을 소중히 여기는 관계 중심</li>
+      <li>&middot; 다음 세대를 위한 교육 멘토</li>
     </ul>
-    <p style="font-size:8px;color:#8a7a68;margin-top:2px">\uc0ac\ub78c\uc744 \uc18c\uc911\ud788 \uc5ec\uae30\ub294 \uad00\uacc4 \uc911\uc2ec<br>\uc9c4\uc2e4\uacfc \uc2e0\ub8b0\ub97c \ud1b5\ud574 \uc131\uc7a5</p>
   </div>
   <div class="btm-card">
-    <h4>{I['plant']} \ub098\uc758 \uac00\ub2a5\uc131</h4>
+    <h4>{I['plant']} 나의 가능성</h4>
     <ul>
-      <li>&middot; \ucd1b\ubd88\ucc98\ub7fc \uc5b4\ub460\uc744 \ubc1d\ud788\ub294 \uc9c0\ud61c</li>
-      <li>&middot; \ubd84\uc11d\ub825\uacfc \uc2e4\ud589\ub825\uc744 \uac96\ucd98 \uc804\ubb38\uac00</li>
-      <li>&middot; \uae30\uc220\uacfc \uac10\uc131\uc744 \uc5f0\uacb0\ud558\ub294 \uc735\ud569\ub825</li>
+      <li>&middot; 어둠을 밝히는 지혜</li>
+      <li>&middot; 분석력+실행력 전문가</li>
+      <li>&middot; 기술과 감성의 융합력</li>
+      <li>&middot; 멘토로 사람을 성장시키는 힘</li>
+      <li>&middot; 데이터 기반 의사결정의 힘</li>
+      <li>&middot; 전체 시스템을 조율하는 능력</li>
     </ul>
-    <p style="font-size:8px;color:#8a7a68;margin-top:2px">\uba58\ud1a0\ub85c\uc11c \uc0ac\ub78c\uc744 \uc131\uc7a5\uc2dc\ud0a4\ub294 \ud798\uc744<br>\ub9cc\ub4e4\uc5b4\ub0bc \uc218 \uc788\ub2e4!</p>
   </div>
   <div class="btm-card">
-    <h4>{I['check']} \uc778\uc0dd \uccb4\ud06c\ub9ac\uc2a4\ud2b8</h4>
+    <h4>{I['check']} 인생 체크리스트</h4>
     <ul>
-      <li>\u25a1 \uc804\ubb38\uc131 \uac15\ud654</li>
-      <li>\u25a1 \uac74\uac15 \uad00\ub9ac</li>
-      <li>\u25a1 \uc601\ud5a5\ub825 \ud655\uc7a5</li>
-      <li>\u25a1 \uc5ed\ud560 \uc218\ud589</li>
-      <li>\u25a1 \uac00\uc871\uacfc \uc2dc\uac04</li>
-      <li>\u25a1 \uc7ac\ud14c\ud06c \uc548\uc815</li>
+      <li>&middot; 전문성 강화</li>
+      <li>&middot; 건강 관리</li>
+      <li>&middot; 영향력 확장</li>
+      <li>&middot; 역할 수행</li>
+      <li>&middot; 가족과 시간</li>
+      <li>&middot; 겸손하되 꾸준히</li>
     </ul>
   </div>
 </div>
