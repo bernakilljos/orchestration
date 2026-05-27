@@ -345,50 +345,26 @@ body{{width:850px;height:1100px;background:#f5efe6;
       </ul>
     </div>
     <div class="card">
-      <h3>{I['book']} 멘토로서의 다짐</h3>
+      <h3>{I['fire']} 내면의 기질 (金+火)</h3>
       <ul>
-        <li>{I['candle']} 내가 먼저 빛나면 주변도 밝아진다</li>
-        <li>{I['heart']} 가르치는 것이 아니라 함께 걷는다</li>
-        <li>{I['plant']} 씨앗을 심고 기다릴 줄 아는 사람</li>
-        <li>{I['star']} 실패도 성장의 한 조각이다</li>
-        <li>{I['shield']} 흔들려도 방향은 잃지 않는다</li>
+        <li>{I['gear']} <b>金</b> — 구조·분석·디테일 민감, 정리 욕구</li>
+        <li>{I['fire']} <b>火</b> — 좋아하면 에너지 급상승, 몰입형</li>
+        <li>{I['bulb']} 생각 회전수 빠름, 여러 가능성 동시 조망</li>
+        <li>{I['heart']} 감정을 깊게 쓰는 타입, 표현이 살아 있음</li>
+        <li>{I['water']} 겉은 부드럽고 편안, 속은 날카로운 분석</li>
+        <li>{I['shield']} 기준치와 자기검열 성향, 혼자 의미 분석</li>
       </ul>
     </div>
-    <div style="text-align:center;padding:4px 0 2px">
-      <svg width="215" height="85" viewBox="0 0 215 85">
-        <!-- 촛불 중앙 -->
-        <ellipse cx="108" cy="58" rx="35" ry="6" fill="rgba(196,145,90,.15)"/>
-        <rect x="103" y="34" width="10" height="24" rx="2" fill="#c4915a"/>
-        <ellipse cx="108" cy="26" rx="8" ry="12" fill="#e8a836" opacity=".6"/>
-        <ellipse cx="108" cy="24" rx="4.5" ry="8" fill="#f0c040"/>
-        <!-- 빛줄기 좌 -->
-        <line x1="86" y1="22" x2="25" y2="10" stroke="#e8c36a" stroke-width="1" opacity=".45"/>
-        <line x1="86" y1="28" x2="15" y2="38" stroke="#e8c36a" stroke-width="1" opacity=".35"/>
-        <line x1="86" y1="36" x2="20" y2="58" stroke="#e8c36a" stroke-width="1" opacity=".3"/>
-        <line x1="90" y1="42" x2="35" y2="72" stroke="#e8c36a" stroke-width=".8" opacity=".2"/>
-        <!-- 빛줄기 우 -->
-        <line x1="130" y1="22" x2="190" y2="10" stroke="#e8c36a" stroke-width="1" opacity=".45"/>
-        <line x1="130" y1="28" x2="200" y2="38" stroke="#e8c36a" stroke-width="1" opacity=".35"/>
-        <line x1="130" y1="36" x2="195" y2="58" stroke="#e8c36a" stroke-width="1" opacity=".3"/>
-        <line x1="126" y1="42" x2="180" y2="72" stroke="#e8c36a" stroke-width=".8" opacity=".2"/>
-        <!-- 좌측 아이콘: 사람 -->
-        <circle cx="18" cy="12" r="5" fill="none" stroke="#8b7355" stroke-width="1.2"/>
-        <path d="M11 24c0-4 3.5-6 7-6s7 2 7 6" fill="none" stroke="#8b7355" stroke-width="1.2"/>
-        <!-- 우측 아이콘: 별 -->
-        <polygon points="195,6 197.5,13 204,13 199,18 201,25 195,21 189,25 191,18 186,13 192.5,13" fill="#e8c36a" opacity=".65"/>
-        <!-- 좌측 텍스트 -->
-        <text x="5" y="48" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">멘토</text>
-        <text x="5" y="62" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">지혜</text>
-        <text x="5" y="76" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">포용</text>
-        <!-- 우측 텍스트 -->
-        <text x="180" y="48" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">등대</text>
-        <text x="180" y="62" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">방향</text>
-        <text x="180" y="76" font-size="9" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">빛</text>
-        <!-- 경로 점선 -->
-        <path d="M12 44 Q60 30 108 55 Q155 30 200 44" fill="none" stroke="#c4b49a" stroke-width="1.2" stroke-dasharray="3,3" opacity=".45"/>
-        <!-- 하단 명언 -->
-        <text x="42" y="83" font-size="8" fill="#8a7a68" font-family="'Gaegu',cursive" opacity=".6">작은 촛불이 어둠을 밝히듯</text>
-      </svg>
+    <div class="card">
+      <h3>{I['plant']} 에너지 흐름</h3>
+      <ul>
+        <li>&middot; 축적형 성장 — 꾸준한 시스템이 맞음</li>
+        <li>&middot; 과열 후 급소모 패턴 주의</li>
+        <li>&middot; 수면 상태가 전체 컨디션 좌우</li>
+        <li>&middot; 걷기·근력운동 시 생각 정리 효과 큼</li>
+        <li>&middot; 나이 들수록 신뢰감과 안정감 상승</li>
+        <li>&middot; 사람·정보·아이디어 연결이 핵심 장점</li>
+      </ul>
     </div>
   </div>
 
@@ -401,9 +377,9 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <div style="margin-top:2px;display:flex;gap:3px;justify-content:center">
         <span class="tag" style="background:rgba(90,158,196,.12);border-color:rgba(90,158,196,.3);color:#3a6a8a">ENFP</span>
         <span class="tag" style="background:rgba(196,90,90,.10);border-color:rgba(196,90,90,.25);color:#8a3a3a">O형</span>
-        <span class="tag">46세</span>
         <span class="tag">丁火</span>
-        <span class="tag">멘토형</span>
+        <span class="tag">연결형</span>
+        <span class="tag">金+火</span>
       </div>
     </div>
     <div class="quote">
@@ -435,58 +411,22 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['star']} 분석·공감·실행 3박자</li>
         <li>{I['heart']} 관계 중심 + 결과 중심</li>
         <li>{I['bulb']} 만능형 융합 인재</li>
+        <li>{I['gear']} 감정+이성 동시 구동, 직감과 분석 병행</li>
+        <li>{I['water']} 동안 유지형, 나이 들수록 신뢰감 상승</li>
       </ul>
     </div>
-    <div style="width:100%;text-align:center;padding:2px 0">
-      <svg width="290" height="110" viewBox="0 0 290 110">
-        <!-- 성장 나무 중앙 -->
-        <line x1="145" y1="95" x2="145" y2="38" stroke="#8b7355" stroke-width="3"/>
-        <circle cx="145" cy="30" r="18" fill="rgba(107,142,90,.2)" stroke="#6b8e5a" stroke-width="1.5"/>
-        <circle cx="145" cy="30" r="9" fill="rgba(107,142,90,.35)"/>
-        <text x="137" y="34" font-size="9" fill="#3a5a2a" font-weight="700" font-family="'Gaegu',cursive">나</text>
-        <!-- 좌측 가지 -->
-        <line x1="145" y1="60" x2="100" y2="38" stroke="#8b7355" stroke-width="1.8"/>
-        <circle cx="94" cy="35" r="12" fill="rgba(196,145,90,.15)" stroke="#c4915a" stroke-width="1.2"/>
-        <text x="83" y="39" font-size="9" fill="#8b4513" font-family="'Gaegu',cursive">탐구</text>
-        <!-- 우측 가지 -->
-        <line x1="145" y1="60" x2="190" y2="38" stroke="#8b7355" stroke-width="1.8"/>
-        <circle cx="196" cy="35" r="12" fill="rgba(196,145,90,.15)" stroke="#c4915a" stroke-width="1.2"/>
-        <text x="186" y="39" font-size="9" fill="#8b4513" font-family="'Gaegu',cursive">실행</text>
-        <!-- 맨좌 가지 -->
-        <line x1="94" y1="38" x2="55" y2="20" stroke="#8b7355" stroke-width="1.2"/>
-        <circle cx="48" cy="17" r="11" fill="rgba(90,158,196,.1)" stroke="#5a9ec4" stroke-width="1"/>
-        <text x="38" y="21" font-size="8.5" fill="#3a6a8a" font-family="'Gaegu',cursive">분석</text>
-        <!-- 맨우 가지 -->
-        <line x1="196" y1="38" x2="235" y2="20" stroke="#8b7355" stroke-width="1.2"/>
-        <circle cx="242" cy="17" r="11" fill="rgba(232,163,54,.1)" stroke="#e8a836" stroke-width="1"/>
-        <text x="232" y="21" font-size="8.5" fill="#8b6a13" font-family="'Gaegu',cursive">설계</text>
-        <!-- 좌측 키워드 세로 -->
-        <text x="5" y="18" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">호기심</text>
-        <text x="5" y="38" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">공감</text>
-        <text x="5" y="58" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">성장</text>
-        <text x="5" y="78" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">배움</text>
-        <text x="5" y="98" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">겸손</text>
-        <!-- 연결선 좌 -->
-        <path d="M38 14 Q60 28 82 27" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".5"/>
-        <path d="M36 34 Q60 42 82 35" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".4"/>
-        <path d="M36 54 Q80 65 140 62" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".3"/>
-        <path d="M36 74 Q80 85 140 80" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".25"/>
-        <!-- 우측 키워드 세로 -->
-        <text x="258" y="18" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">책임</text>
-        <text x="258" y="38" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">신뢰</text>
-        <text x="258" y="58" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">결실</text>
-        <text x="258" y="78" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">나눔</text>
-        <text x="258" y="98" font-size="10" fill="#7a6b5a" font-family="'Gaegu',cursive" font-weight="700">끈기</text>
-        <!-- 연결선 우 -->
-        <path d="M256 14 Q235 28 208 27" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".5"/>
-        <path d="M256 34 Q235 42 208 35" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".4"/>
-        <path d="M256 54 Q210 65 150 62" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".3"/>
-        <path d="M256 74 Q210 85 150 80" fill="none" stroke="#c4b49a" stroke-width="1" stroke-dasharray="3,2" opacity=".25"/>
-        <!-- 뿌리 -->
-        <path d="M138 95 Q115 103 100 100" fill="none" stroke="#8b7355" stroke-width="1.2" opacity=".5"/>
-        <path d="M152 95 Q175 103 190 100" fill="none" stroke="#8b7355" stroke-width="1.2" opacity=".5"/>
-        <text x="110" y="108" font-size="7.5" fill="#8a7a68" font-family="'Gaegu',cursive" opacity=".6">뿌리 깊은 나무는 바람에 흔들리지 않는다</text>
-      </svg>
+    <div class="card" style="width:100%;text-align:left">
+      <h3>{I['person']} 관계 패턴</h3>
+      <ul>
+        <li>&middot; 첫인상 부드럽고 편안, 압박감 없음</li>
+        <li>&middot; 웃을 때 분위기 밝아지는 타입</li>
+        <li>&middot; 감정 몰입 빠르지만 에너지 소모도 큼</li>
+        <li>&middot; 편안한 관계에서 최고 퍼포먼스</li>
+        <li>&middot; 사람·정보·아이디어 연결이 장기</li>
+      </ul>
+    </div>
+    <div class="quote" style="width:100%">
+      <p style="font-size:9px">{I['candle']} 뿌리 깊은 나무는 바람에 흔들리지 않는다 {I['plant']}</p>
     </div>
   </div>
 
