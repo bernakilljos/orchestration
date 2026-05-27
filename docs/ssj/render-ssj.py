@@ -34,15 +34,49 @@ I = {
 }
 
 COMMON_CSS = """
+/* === DESIGN TOKENS === */
+:root{
+  --font-title:'Gaegu',cursive;
+  --font-body:'Noto Sans KR',sans-serif;
+  --color-bg:#f5efe6;
+  --color-text:#3a3226;
+  --color-text-sub:#4a3f33;
+  --color-text-muted:#8a7a68;
+  --color-accent:#8b4513;
+  --color-accent-warm:#c4915a;
+  --color-border:#c4b49a;
+  --color-border-light:#d4c4a8;
+  --color-card:rgba(255,255,255,.6);
+  --color-card-dim:rgba(255,255,255,.45);
+  --color-tag-bg:rgba(196,145,90,.12);
+  --color-tag-border:rgba(196,145,90,.3);
+  --color-tag-text:#7a5a3a;
+  --gap-section:3px;
+  --gap-card:3px;
+  --gap-tag:3px;
+  --pad-card:8px 10px;
+  --pad-btm:4px 6px;
+  --radius-card:5px;
+  --radius-tag:8px;
+  --font-h3:13px;
+  --font-body-size:10px;
+  --font-small:9px;
+  --font-tag:9px;
+  --line-height:1.55;
+  --shadow-card:1px 2px 6px rgba(0,0,0,.05)
+}
+/* === BASE === */
 *{margin:0;padding:0;box-sizing:border-box}
 @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-body{font-family:'Noto Sans KR',sans-serif;overflow:hidden;color:#3a3226}
-.card{background:rgba(255,255,255,.6);border:1.5px solid #c4b49a;border-radius:5px;padding:8px 10px;box-shadow:1px 2px 6px rgba(0,0,0,.05)}
-.card h3{font-family:'Gaegu',cursive;font-size:13px;font-weight:700;color:#8b4513;margin-bottom:4px;border-bottom:1px solid rgba(180,150,120,.25);padding-bottom:2px;display:flex;align-items:center;gap:3px}
-.card li,.card p{font-size:10px;line-height:1.55;color:#4a3f33}
+body{font-family:var(--font-body);overflow:hidden;color:var(--color-text)}
+/* === CARD SYSTEM === */
+.card{background:var(--color-card);border:1.5px solid var(--color-border);border-radius:var(--radius-card);padding:var(--pad-card);box-shadow:var(--shadow-card)}
+.card h3{font-family:var(--font-title);font-size:var(--font-h3);font-weight:700;color:var(--color-accent);margin-bottom:4px;border-bottom:1px solid rgba(180,150,120,.25);padding-bottom:2px;display:flex;align-items:center;gap:var(--gap-tag)}
+.card li,.card p{font-size:var(--font-body-size);line-height:var(--line-height);color:var(--color-text-sub)}
 .card ul{list-style:none;padding:0}
-.tags{display:flex;flex-wrap:wrap;gap:3px}
-.tag{background:rgba(196,145,90,.12);border:1px solid rgba(196,145,90,.3);color:#7a5a3a;font-size:9px;padding:1px 5px;border-radius:8px;font-family:'Gaegu',cursive;font-weight:700}
+/* === TAG SYSTEM === */
+.tags{display:flex;flex-wrap:wrap;gap:var(--gap-tag)}
+.tag{background:var(--color-tag-bg);border:1px solid var(--color-tag-border);color:var(--color-tag-text);font-size:var(--font-tag);padding:1px 5px;border-radius:var(--radius-tag);font-family:var(--font-title);font-weight:700}
 """
 
 # ===================== ORCH-PROMO =====================

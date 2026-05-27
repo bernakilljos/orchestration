@@ -378,6 +378,38 @@ CSS 코드만 보고 "여백 없다" 판단 = 전수조사 위반.
 - CSS 코드만 보고 "여백 없다" 보고 = 전수조사 위반
 - 1회 렌더링만 하고 "완료" = 전수조사 위반 (최소 2회 사이클)
 - 사용자가 여백 지적한 후에야 fix = 전수조사 위반
+- 페이지별 하드코딩 = 최후 수단 (전역 Rule/Token 우선)
+- 샘플링 검사 = 전수조사 위반 (1페이지부터 마지막까지 전부)
+
+## 디자인 시스템 토큰 (멀티페이지 일관성)
+
+멀티페이지 HTML 렌더링 산출물은 **CSS 변수 토큰** 기반으로 통일.
+페이지별 다른 스타일 = 시스템 결함.
+
+### 필수 토큰 카테고리
+
+| 카테고리 | 토큰 예시 | 규칙 |
+|---|---|---|
+| **Spacing** | `--gap-section`, `--gap-card`, `--pad-card` | 전 페이지 동일 |
+| **Typography** | `--font-h3`, `--font-body-size`, `--line-height` | 계층 고정 |
+| **Color** | `--color-accent`, `--color-border`, `--color-card` | 팔레트 통일 |
+| **Radius** | `--radius-card`, `--radius-tag` | 곡률 통일 |
+| **Shadow** | `--shadow-card` | 깊이 통일 |
+
+### 컴포넌트 일관성 규칙
+
+- `.card` — 모든 카드 동일 padding/border/shadow
+- `.tag` — 모든 태그 동일 font/padding/radius
+- `.btm-card` — 하단 카드 동일 구조
+- `h3` — 모든 카드 제목 동일 font-size/color/border
+
+### 전역 Rule 승격 기준
+
+동일 문제가 **2페이지 이상**에서 발견되면:
+1. 개별 수정 X
+2. CSS 변수 토큰으로 승격
+3. COMMON_CSS 에 반영
+4. 전 페이지 자동 적용
 
 ## 강화 (5중 박기)
 
