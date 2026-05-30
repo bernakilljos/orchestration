@@ -1,5 +1,6 @@
 ---
 description: "실행 중 + 다음 예약"
+allowed-tools: Bash, Read
 ---
 
 # /status
@@ -12,7 +13,7 @@ description: "실행 중 + 다음 예약"
 
 ## 사용법 (예정)
 
-```
+```text
 /status [args]
 ```
 

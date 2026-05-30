@@ -1,5 +1,6 @@
 ---
 description: "세션 학습·실패 패턴·최적화 규칙 축적"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /exec_learning — 학습 메모리 허브

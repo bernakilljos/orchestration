@@ -1,5 +1,6 @@
 ---
 description: "Word 생성 (python-docx + Mermaid + PDF)"
+allowed-tools: Bash, Read, Write, Edit
 ---
 
 # /design_word — Word 생성 허브

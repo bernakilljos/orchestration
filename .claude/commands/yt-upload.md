@@ -1,5 +1,6 @@
 ---
 description: "YouTube Data API 업로드 (--dry-run 지원)"
+allowed-tools: Bash, Read, WebFetch
 ---
 
 # /yt-upload
@@ -12,7 +13,7 @@ YouTube Data API 업로드 (--dry-run 지원)
 
 ## 사용법 (예정)
 
-```
+```text
 /yt-upload [args]
 ```
 

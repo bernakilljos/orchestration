@@ -5,7 +5,7 @@
 
 set -uo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+PROJECT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$PROJECT_DIR"
 
 SM="$PROJECT_DIR/data/strategy_memory.json"

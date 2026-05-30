@@ -152,6 +152,48 @@
       "source": "./plugins/music_studio",
       "description": "음악 스튜디오 — 녹음·작곡·믹싱·편곡·MIDI·커버 (Phase 2 spec)",
       "version": "0.1"
+    },
+    {
+      "name": "exec_claude",
+      "source": "./plugins/exec_claude",
+      "description": "Claude 전용 심화 — 구조화 질문·아티팩트·커넥터·확장 사고",
+      "version": "1.0"
+    },
+    {
+      "name": "exec_remote",
+      "source": "./plugins/exec_remote",
+      "description": "원격 24/7 운영 — VPS·SSH·tmux·모바일 (Oracle Free 우선)",
+      "version": "1.0"
+    },
+    {
+      "name": "mcp_image",
+      "source": "./plugins/mcp_image",
+      "description": "이미지 생성 — Pollinations.ai (무료·인증X·flux 모델) + 빌더 자동 통합",
+      "version": "1.0"
+    },
+    {
+      "name": "doc_auto",
+      "source": "./plugins/doc_auto",
+      "description": "README/CHANGELOG/API doc 자동 갱신 (AI-Native 3단계)",
+      "version": "1.0"
+    },
+    {
+      "name": "test_gen",
+      "source": "./plugins/test_gen",
+      "description": "코드 → pytest/jest 테스트 자동 생성 (AI-Native 1단계)",
+      "version": "1.0"
+    },
+    {
+      "name": "sec_scan",
+      "source": "./plugins/sec_scan",
+      "description": "코드 보안 스캔 — semgrep + gitleaks + bandit (AI-Native 2단계)",
+      "version": "1.0"
+    },
+    {
+      "name": "eval_quality",
+      "source": "./plugins/eval_quality",
+      "description": "결과 품질 자동 평가 — Haiku LLM-as-judge 0~10점 (실험)",
+      "version": "0.1"
     }
   ]
 }

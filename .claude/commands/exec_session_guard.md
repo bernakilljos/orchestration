@@ -1,5 +1,6 @@
 ---
 description: "토큰 소진·세션 종료 대비 자동 스냅샷"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /exec_session_guard — 세션 가드 허브

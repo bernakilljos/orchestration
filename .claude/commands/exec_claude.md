@@ -1,5 +1,6 @@
 ---
 description: "Claude 전용 심화 — 구조화 질문·아티팩트·커넥터·확장 사고"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /exec_claude — Claude 깊이 활용 허브

@@ -1,5 +1,6 @@
 ---
 description: "Excel 생성 (openpyxl + 차트 + Google Sheets)"
+allowed-tools: Bash, Read, Write, Edit
 ---
 
 # /design_excel — Excel 생성 허브

@@ -1,5 +1,6 @@
 ---
 description: "재시도 정책 (exponential backoff)"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /retry-policy
@@ -12,7 +13,7 @@ description: "재시도 정책 (exponential backoff)"
 
 ## 사용법 (예정)
 
-```
+```text
 /retry-policy [args]
 ```
 
