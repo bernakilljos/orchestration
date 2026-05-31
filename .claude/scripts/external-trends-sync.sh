@@ -48,7 +48,20 @@ for key in "${!SOURCES[@]}"; do
     continue
   fi
 
-  new_sha=$(echo "$body" | sha256sum | awk '{print $1}')
+  # Noise 필터 — sha 계산 전에 변동성 큰 fragment 제거
+  # 1) Next.js bundle hash + nonce + CSS chunk (HTML)
+  # 2) RSS pubDate/lastBuildDate timestamp
+  # 3) <script>·<style> 내부 (대부분 noise)
+  clean=$(echo "$body" \
+    | sed -E 's|<script[^>]*>.*</script>||gI; s|<style[^>]*>.*</style>||gI' \
+    | sed -E 's|/_next/static/[^"]*||g' \
+    | sed -E 's|nonce="[^"]*"||g; s|integrity="[^"]*"||g' \
+    | sed -E 's|<pubDate>[^<]*</pubDate>||g' \
+    | sed -E 's|<lastBuildDate>[^<]*</lastBuildDate>||g' \
+    | sed -E 's|<updated>[^<]*</updated>||g' \
+    | sed -E 's|<dc:date[^>]*>[^<]*</dc:date>||g' \
+    | sed -E 's|csrf=[A-Za-z0-9_-]+||g' )
+  new_sha=$(echo "$clean" | sha256sum | awk '{print $1}')
   old_sha=$(cat "$cache_file" 2>/dev/null || echo "")
 
   # 첫 실행 (cache 없음): baseline 만 저장하고 silent
