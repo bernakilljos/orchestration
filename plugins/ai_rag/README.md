@@ -1,9 +1,27 @@
 # ai_rag — RAG 파이프라인 (8 패턴)
 
-> **Prefix**: `ai_` | **버전**: 0.1 | **Status**: spec-only | **Phase**: 2
+> **Prefix**: `ai_` | **버전**: 1.0 | **Status**: stable (Naive) · spec-only (Multimodal·HyDE·Corrective·Graph·Hybrid·Adaptive·Agentic) | **Phase**: 2
 
-## ⚠️ 현재 상태
-**spec-only** — 스펙 + 공통 헬퍼만. 실구현은 install 후 플랫폼에서.
+## ✅ 현재 상태 (2026-05-31 갱신)
+
+| 패턴 | 상태 | 동작 방식 |
+|---|---|---|
+| **Naive RAG (`/rag-naive`)** | ✅ **stable — 즉시 동작** | `.claude/scripts/rag-recall.py` (ChromaDB PersistentClient + multilingual MiniLM 임베딩, 한·영 OK). 첫 호출 시 chromadb 자동 install (zero-touch). |
+| Multimodal·HyDE·Corrective·Graph·Hybrid·Adaptive·Agentic | 📋 spec-only | 스크립트 stub 존재, 실구현 install 후 플랫폼에서 |
+
+## 🚀 즉시 사용 (Naive RAG)
+
+```bash
+# 1) 인덱스 빌드 (CLAUDE.md + rules + memory + skills + references + commands + docs 자동 수집)
+bash plugins/ai_rag/scripts/rag-build.sh
+# Output: {"indexed": 1247, "docs": 130, "collection": "project_knowledge"}
+
+# 2) 의미 검색
+bash plugins/ai_rag/scripts/rag-search.sh "RAG 패턴 비교" --top 5
+# Output: top-5 chunk + path + distance (의미 유사도)
+```
+
+ChromaDB 자동 install (없으면) — `chromadb` + `sentence-transformers` 패키지.
 
 ## 📋 커맨드 (8 RAG 패턴)
 

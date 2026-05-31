@@ -1,5 +1,6 @@
 ---
 description: "협업 MCP 설치 (Slack·Notion·Jira·Gmail)"
+allowed-tools: Read
 ---
 
 # /mcp_collab — 협업 MCP 허브

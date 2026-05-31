@@ -1,5 +1,6 @@
 ---
 description: "데이터 MCP 설치 (MySQL·MongoDB·BigQuery·Sheets)"
+allowed-tools: Read
 ---
 
 # /mcp_data — 데이터 MCP 허브

@@ -1,6 +1,6 @@
 ---
 name: auto-planner
-description: 사용자가 한 줄 요청 (예 "문서 만들어줘", "버그 고쳐줘", "이미지 짤려", "왜", "안돼", "확인해", "고쳐", "전수조사") 받으면 즉시 자동 활성화. 5단계 plan (전수조사·분석·실행·확인·보고) 자가 발동 + rule 위반 자가점검 + MoE 분류기로 codex/gemini/haiku 자동 위임. Claude 가 사용자 지시 기다리지 않고 첫 응답부터 5단계 의무 명시. HRM 자동 발동 강화 + Generative→Agentic 약점 보완 핵심.
+description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5단계 plan (전수조사·분석·실행·확인·보고) 자가 발동, 30+ rule 자가점검, 큰 작업·반복 패턴은 codex/gemini 위임. Generative→Agentic 약점 보완.
 ---
 
 # Auto Planner — 자율 5단계 계획 skill

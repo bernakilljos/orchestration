@@ -1,9 +1,6 @@
 ---
 name: haiku-validator
-description: |
-  Claude Haiku 4.5로 태스크 결과를 빠르고 저비용으로 검증.
-  Gemini-Auto 대비: 2x 빠른 latency, prompt caching 지원, 더 저렴.
-  task-review-*.md 파일을 우선 처리. 범용 task-*.md도 가능.
+description: Claude Haiku 4.5 격리 검증 워커. Gemini 대비 2x 빠름·11x 저렴, prompt caching 90% 절감. task-review-*.md 우선, 범용 task-*.md 가능.
 ---
 
 # Haiku 4.5 Validator Worker
@@ -60,7 +57,7 @@ haiku-auto --child 1
 
 검증 완료 후 다음 위치에 저장:
 
-```
+```text
 docs/YYYY-MM-DD/
   └─ haiku-review-{task_name}.md
 ```

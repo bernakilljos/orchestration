@@ -1,5 +1,6 @@
 ---
 description: "미디어/AI 처리 설치 (Whisper·TTS·FFmpeg)"
+allowed-tools: Read
 ---
 
 # /mcp_media — 미디어 MCP 허브

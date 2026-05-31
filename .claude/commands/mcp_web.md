@@ -1,5 +1,6 @@
 ---
 description: "웹 자동화 MCP 설치 (Playwright·Puppeteer·Apify)"
+allowed-tools: Read
 ---
 
 # /mcp_web — 웹 자동화 MCP 허브

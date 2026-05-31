@@ -30,6 +30,18 @@ if [ -f "$TASK_INSTR" ]; then
       done <<< "$TARGET_FILES"
     fi
   fi
+
+  # 12 프롬프팅 기법 template 검증 (Role + Negative + Context + Few-shot + CoT 최소 4개)
+  MISSING_TECH=""
+  grep -qE "^## 1\) Role|^## Role" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH role"
+  grep -qE "^## .*Negative|DO NOT:" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH negative"
+  grep -qE "^## .*Context|Project root:" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH context"
+  grep -qE "Acceptance|Few-shot|INPUT:.*OUTPUT:" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH few-shot"
+  if [ -n "$MISSING_TECH" ]; then
+    echo "[HOOK-01] ⚠ task-instruction.md 12 기법 누락:$MISSING_TECH"
+    echo "[HOOK-01]   → plugins/exec_orch/codex/task-instruction-template.md 참고"
+    echo "[HOOK-01]   → skill: plugins/exec_orch/skills/prompt-techniques.md"
+  fi
 fi
 
 echo "[HOOK-01] OK"

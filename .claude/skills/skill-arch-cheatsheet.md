@@ -1,11 +1,6 @@
 ---
 name: skill-arch-cheatsheet
-description: |
-  A4 1페이지에 핵심 정보를 압축한 치트시트(컨닝페이퍼) 형식 다이어그램을 생성한다.
-  좌측 폴더 트리 + 중앙 컨셉 블록 + 우측 코드 스니펫 3컬럼 구조.
-  사용자가 "치트시트", "컨닝페이퍼", "한 장 요약 PDF", "레퍼런스 카드", "한 장에 정리" 같은 표현을 쓸 때 활성화.
-  주제 성격이 "정보 밀도가 높고 빠른 참조용"일 때 자동 선택.
-  Brij Pandey 의 "Claude Code Project Structure" 스타일.
+description: A4 1페이지 치트시트 다이어그램. 좌측 폴더 트리 + 중앙 컨셉 블록 + 우측 코드 스니펫 3컬럼. "치트시트", "컨닝페이퍼", "한 장 요약", "cheatsheet", "reference card" 키워드 활성. Brij Pandey 스타일.
 ---
 
 # Skill: Architecture Cheatsheet
@@ -21,7 +16,7 @@ description: |
 ## 디자인 규칙 (Brij Pandey 스타일)
 
 ### 레이아웃 (3컬럼)
-```
+```text
 ┌──────────────────────────────────────────────┐
 │  Title (큰 검정 굵은 글씨)                     │
 │  By: <author>                                  │
@@ -58,7 +53,7 @@ description: |
 - 각 30줄 이하
 
 ### 색상 팔레트
-```
+```text
 배경:           라벤더/연파랑 (#F0F0FA)
 블록 헤더:       각 다른 파스텔
 블록 본문:       흰색 (#FFFFFF)

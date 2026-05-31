@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-05-30): plugins 31 stable + 0 spec-only · rules 11 · hooks 27 · scripts 92
+> **현재 상태** (2026-05-31): plugins 31 stable + 0 spec-only · rules 12 · hooks 28 · scripts 92
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -50,6 +50,7 @@
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
 라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성·quota 매트릭스)
+프롬프트 강화 (12 기법): `plugins/exec_orch/skills/prompt-techniques.md` + template `plugins/exec_orch/codex/task-instruction-template.md` (Role·Negative·Context·Few-shot·CoT·Prompt-chain·Meta·Self-consistency·ToT·ReAct·Zero-shot-CoT·RAG)
 
 ### 3.3 API 한도 + Budget Fallback
 SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.

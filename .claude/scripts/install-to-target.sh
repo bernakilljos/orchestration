@@ -88,7 +88,14 @@ fi
 mkdir -p "$TARGET/.claude/scripts"
 cp -f "$SRC/.claude/scripts/"*.sh "$TARGET/.claude/scripts/" 2>/dev/null || true
 cp -f "$SRC/.claude/scripts/"*.py "$TARGET/.claude/scripts/" 2>/dev/null || true
-echo "  ✓ sync·validate·install·worker-health 등"
+cp -f "$SRC/.claude/scripts/"*.bat "$TARGET/.claude/scripts/" 2>/dev/null || true
+cp -f "$SRC/.claude/scripts/"*.ps1 "$TARGET/.claude/scripts/" 2>/dev/null || true
+# scripts/lib/ 도 동기화 (state_db·router·pricing·prompt_cache 등)
+if [ -d "$SRC/.claude/scripts/lib" ]; then
+  mkdir -p "$TARGET/.claude/scripts/lib"
+  cp -f "$SRC/.claude/scripts/lib/"*.py "$TARGET/.claude/scripts/lib/" 2>/dev/null || true
+fi
+echo "  ✓ sync·validate·install·worker-health·rag·trends·cleanup 등 (.sh/.py/.bat/.ps1 + lib/)"
 
 # ─────────────────────────────────────────────
 # 5. .claude/hooks/ 신규 훅만 추가 (기존 .sh 건드리지 않음)

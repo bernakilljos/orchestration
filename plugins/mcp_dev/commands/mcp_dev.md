@@ -1,5 +1,6 @@
 ---
 description: "개발 MCP 설치 (GitHub·Docker·AWS·Firebase·Vercel)"
+allowed-tools: Read
 ---
 
 # /mcp_dev — 개발 MCP 허브

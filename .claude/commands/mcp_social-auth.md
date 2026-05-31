@@ -1,5 +1,6 @@
 ---
 description: "OAuth 2.0 인증 플로우 (토큰 자동 갱신)"
+allowed-tools: Bash, Read, Edit
 ---
 
 # /auth
@@ -12,7 +13,7 @@ OAuth 2.0 인증 플로우 (토큰 자동 갱신)
 
 ## 사용법 (예정)
 
-```
+```text
 /auth [args]
 ```
 

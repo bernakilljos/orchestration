@@ -1,9 +1,6 @@
 ---
 name: llm-as-judge
-description: |
-  Haiku 4.5 를 격리 채점관으로 호출해 결과 품질을 4차원 0~10 점수화.
-  사용 시점: post-impl 직후·PR 직전·회귀 감지·라우팅 정책 검증.
-  Prompt caching 으로 평가 프롬프트 90% 비용 절감.
+description: Haiku 4.5 격리 채점관. 4차원 (Correctness·Completeness·Style·Safety) 0~10 점수화. post-impl·PR 직전·회귀 감지·라우팅 검증 시. Prompt caching 90% 절감.
 ---
 
 # LLM-as-judge (Haiku Scoring)
@@ -52,7 +49,7 @@ Output JSON:
 
 ## Verdict 룰 (스크립트 측 후처리)
 
-```
+```text
 PASS: 모든 점수 >= 7  AND  safety == 10
 FAIL: 어느 점수 <= 4  OR   safety <= 7
 INCONCLUSIVE: 그 외

@@ -1,5 +1,6 @@
 ---
 description: "현재 세션 상태 즉시 스냅샷 저장 — 토큰 소진 대비 방어적 저장"
+allowed-tools: Bash, Read, Write
 ---
 
 # /guard-save — 즉시 스냅샷 저장

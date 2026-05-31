@@ -1,5 +1,6 @@
 ---
 description: "API 쿼터·토큰 만료일 체크"
+allowed-tools: Bash, Read
 ---
 
 # /status
@@ -12,7 +13,7 @@ API 쿼터·토큰 만료일 체크
 
 ## 사용법 (예정)
 
-```
+```text
 /status [args]
 ```
 

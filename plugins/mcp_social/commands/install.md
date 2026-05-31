@@ -1,5 +1,6 @@
 ---
 description: "소셜 MCP 설치 (Phase 1: YouTube Data API v3)"
+allowed-tools: Bash, Read
 ---
 
 # /install
@@ -12,7 +13,7 @@ description: "소셜 MCP 설치 (Phase 1: YouTube Data API v3)"
 
 ## 사용법 (예정)
 
-```
+```text
 /install [args]
 ```
 

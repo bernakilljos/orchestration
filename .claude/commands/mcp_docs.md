@@ -1,5 +1,6 @@
 ---
 description: "문서처리 MCP 설치 (PDF·DOCX·OCR)"
+allowed-tools: Read
 ---
 
 # /mcp_docs — 문서처리 MCP 허브

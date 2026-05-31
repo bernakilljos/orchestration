@@ -14,7 +14,7 @@
 ## 스킬
 두 가지 네이밍 혼재 (점진 통일):
 - 번호형 (레거시): `skill-XX-<topic>.md` (skill-01 ~ skill-38)
-- 의미형 (권장): `<feature>-<purpose>.md` (예: `route_dispatch.md`, `exec_orca-auto.md`)
+- 의미형 (권장): `<feature>-<purpose>.md` — kebab-case 우선, underscore 호환 허용 (예: `route_dispatch.md` legacy / `auto-planner.md` 권장)
 
 ## 훅
 - 스펙: `hooks/hook-XX-<event>.md`

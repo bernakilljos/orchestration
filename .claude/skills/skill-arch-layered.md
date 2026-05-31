@@ -1,10 +1,6 @@
 ---
 name: skill-arch-layered
-description: |
-  위에서 아래로 층층이 쌓인 레이어 케이크 다이어그램을 A4 1페이지에 생성한다.
-  사용자가 "레이어 케이크", "층층이", "스택 그림", "단계별 다이어그램", "위에서 아래로", "계층 구조" 같은 표현을 쓸 때 활성화.
-  주제 성격이 "위→아래 순서·계층·스택"일 때 자동 선택.
-  Brij Pandey 의 "Claude Code Complete Architecture Reference" 스타일.
+description: A4 1페이지 레이어 케이크 다이어그램. 좌측 아이콘 컬럼 + 레이어별 다른 배경색 + 코드 임베드. "레이어", "층층이", "스택", "계층", "layer cake", "tier" 키워드 활성. Brij Pandey 스타일.
 ---
 
 # Skill: Architecture Layered Cake
@@ -20,7 +16,7 @@ description: |
 ## 디자인 규칙 (Brij Pandey 스타일)
 
 ### 레이아웃
-```
+```text
 ┌──────────────────────────────────────┐
 │  Title (큰 검정 굵은 글씨)             │
 ├──────────────────────────────────────┤
@@ -43,7 +39,7 @@ description: |
 ```
 
 ### 색상 팔레트 (레이어별 파스텔)
-```
+```text
 TOP:        살구  (#F4D5C2)
 LAYER 5:    라일락 (#D5C7E8)
 LAYER 4:    블루   (#C2D5E8)

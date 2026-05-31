@@ -1,5 +1,6 @@
 ---
 description: "음성 STT·TTS·회의록·음성 명령"
+allowed-tools: Read
 ---
 
 # /exec_voice — 음성 처리 허브

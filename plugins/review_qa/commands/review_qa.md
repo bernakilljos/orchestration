@@ -1,5 +1,6 @@
 ---
 description: "코드 리뷰·보안·품질·테스트 검증"
+allowed-tools: Read, Bash
 ---
 
 # /review_qa — 리뷰·품질 허브
