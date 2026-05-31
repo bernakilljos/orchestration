@@ -21,9 +21,9 @@ description: |
 | 4 | **Few-shot prompting** | 2~5개 입/출력 예시 | 출력 포맷 강제 | "Example1: ... → ...\nExample2: ... → ..." |
 | 5 | **Chain of Thought (CoT)** | 단계별 추론 강요 | 다단계 논리·수학 | "Show your reasoning step by step before the final answer." |
 | 6 | **Prompt chaining** | 단계별 prompt 직렬 연결 | 큰 task 분해 | step1 output → step2 input → step3 input |
-| 7 | **Meta prompting** | LLM 이 자기 prompt 개선 | prompt 자체 모호할 때 | "Rewrite this prompt to be more specific, then answer." |
+| 7 | **Meta prompting** ([[meta-prompting]]) | LLM 이 자기 prompt 개선 | prompt 자체 모호할 때 / 결과 품질 지속 낮음 | Critique → Rewrite → Verify 3 단계 (max 3 반복). 자동 트리거: hook-01-pre-task 4 기법 누락 감지 시 |
 | 8 | **Self-consistency** | N회 샘플 후 다수결 | 정답 검증 (factual·math) | "Generate 3 answers (temp=0.7), pick majority." |
-| 9 | **Tree of Thoughts (ToT)** | 여러 경로 탐색 + backtrack | 탐색 공간 큰 문제 | "Generate 3 branches → evaluate → expand best → repeat." |
+| 9 | **Tree of Thoughts (ToT)** ([[tot-prompting]]) | 여러 경로 탐색 + backtrack | 탐색 공간 큰 문제 (아키텍처·알고리즘·디버깅 가설 분기) | Branch N=3~5 → Evaluate (Feasibility·Cost·Risk) → Prune top50% → Expand depth≤3. route_dispatch DESIGN/DECISION 자동 트리거. |
 | 10 | **ReAct prompting** | Thought→Action→Observation 루프 | 도구 사용 task (search·exec) | "Thought: ...\nAction: search(\"X\")\nObservation: ...\nThought: ..." |
 | 11 | **Zero-shot CoT** | 예시 없이 CoT 트리거 | 빠른 추론 (예시 비용 절감) | "Let's think step by step." 한 줄만 |
 | 12 | **RAG prompting** | 외부 지식 검색 후 prompt 주입 | 최신·사실 기반 출력 필요 | "Retrieve top-5 docs → cite → answer with [source: ...]" |

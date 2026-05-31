@@ -34,6 +34,7 @@ declare -A SOURCES=(
 )
 
 DETECTED_CHANGES=()
+BASELINE_SET=()
 
 for key in "${!SOURCES[@]}"; do
   url="${SOURCES[$key]}"
@@ -49,6 +50,15 @@ for key in "${!SOURCES[@]}"; do
 
   new_sha=$(echo "$body" | sha256sum | awk '{print $1}')
   old_sha=$(cat "$cache_file" 2>/dev/null || echo "")
+
+  # 첫 실행 (cache 없음): baseline 만 저장하고 silent
+  if [ -z "$old_sha" ]; then
+    echo "$new_sha" > "$cache_file"
+    echo "$body" > "$raw_cache"
+    BASELINE_SET+=("$key")
+    echo "[$TS_HUMAN] [baseline] $key (sha $new_sha)" >> "$LOG"
+    continue
+  fi
 
   if [ "$new_sha" != "$old_sha" ]; then
     # diff 추출 (기존 raw 있으면)
