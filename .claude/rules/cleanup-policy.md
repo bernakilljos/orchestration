@@ -41,6 +41,30 @@ grep -rn ">nul\|2>nul" plugins/ .claude/
 
 ---
 
+## 사용자 명시 지시 정리 (`/cleanup`)
+
+자동 (SessionStart hook) 외에 사용자 지시 시만 발동.
+
+```bash
+/cleanup outputs              # 30일+ 빌드 산출물 → archive (dry-run)
+/cleanup outputs --apply      # 실제 archive 이동
+/cleanup docs                 # 90일+ docs/YYYY-MM-DD/ → archive
+/cleanup screens              # 14일+ 분석 이미지
+/cleanup state                # 30일+ state 캐시
+/cleanup logs                 # 14일+ logs
+/cleanup tasks                # 30일+ done tasks
+/cleanup plugins              # spec-only 휴면 90일+ deprecated 후보
+/cleanup all [--apply]        # 전체
+```
+
+- 자동 X (사용자 지시) — Zero-touch 5 알림 예외 우회
+- archive 우선 (outputs·docs), 직접 삭제는 screens/state/logs/tasks
+- 보호: `.claude/state/orca.db` · `.env` · `.git/` · `.claude-plugin/`
+- 핸들러: `.claude/scripts/cleanup-on-demand.sh`
+- 커맨드: `plugins/exec_orch/commands/cleanup.md`
+
+---
+
 ## `PROJECT_ROOT` 계산 패턴
 
 hook 스크립트는 `.claude/hooks/` 또는 `plugins/<name>/hooks/` 위치. PROJECT_ROOT 계산 시 깊이 주의.
