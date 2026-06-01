@@ -141,7 +141,54 @@ body {
 
 teaching-doc.md § 페이지 콘텐츠 fit / failure-mode.md § 전수조사 위반 안티패턴 / hook-00-init.sh / global-CLAUDE.md / memory feedback_full_page_content_fit.md
 
+## flex 박스 안 SVG / 이미지 — 빈 영역 방지 (svg-deco 패턴)
+
+`flex:1 1 0` 으로 grow 하는 박스 안에 max-width/max-height 제한된 SVG 를 두면
+**박스는 큰데 SVG 는 작은 빈 영역** 발생. 사용자 "여백 있네" 호소의 대표 원인.
+
+### 진단
+
+```css
+/* ❌ 빈 영역 트리거 */
+.svg-deco { flex:1 1 0; min-height:60px; }
+.svg-deco svg { max-width:200px; max-height:280px; }  /* 박스 > SVG → 여백 */
+
+/* ✅ 빈 영역 0 */
+.svg-deco { flex:1 1 0; min-height:60px; padding:4px; }
+.svg-deco svg { width:100%; height:100%; display:block; }
+/* viewBox 비율 = 컨테이너 비율 + preserveAspectRatio="xMidYMid meet" */
+```
+
+### 정량 임계치
+
+| 항목 | 한계 | 위반 시 |
+|---|---|---|
+| `flex:1` 박스 내 SVG `max-width` | **금지** (또는 컨테이너 100%) | 좌우 여백 |
+| `flex:1` 박스 내 SVG `max-height` | **금지** (또는 컨테이너 100%) | 상하 여백 |
+| SVG viewBox 비율 (h/w) | 컨테이너 비율 ±20% 이내 | preserveAspectRatio 로 letterbox 발생 |
+| SVG 요소 분포 | **viewBox 모서리 4구역에 각 1개+** | 중앙만 채워서 여백 |
+| svg 안 텍스트만 / 단일 도형만 | 금지 | 빈 영역 |
+
+### svg-deco 작성 체크리스트 (산출물 무관 보편)
+
+- [ ] `width:100%; height:100%; display:block` (max-width/height 제거)
+- [ ] viewBox 비율을 컨테이너에 맞춰 설정 (예: 240×290 ≈ 0.83)
+- [ ] `preserveAspectRatio="xMidYMid meet"` 명시
+- [ ] 요소를 viewBox 4 모서리에 분산 (별·잎·식물·텍스트)
+- [ ] 배경 halo / 그라데이션으로 cream 단색 영역 < 30%
+- [ ] 본문 텍스트 1줄 (다른 요소와 겹치지 않게)
+
+### 사후 검증 (verify-render-coverage.py)
+
+```bash
+python .claude/scripts/verify-render-coverage.py <png-or-dir>
+# 그리드 셀별 콘텐츠 밀도 (edge+color variance) 측정 → 20% 미만 셀 클러스터 = WARN
+# crop PNG 자동 생성 → Read tool 로 시각 확인 의무
+```
+
+hook-09 가 `render-*.py` / `build-*.py` / `generate-*.py` PostToolUse 자동 발동.
+
 ## 트리거
 
-- "이미지 짤려", "여백 큰데", "글씨 안 보여" 같은 사용자 피드백
-- 또는 새 빌더 script 작성 시 PageLayoutTracker 사용 의무
+- "이미지 짤려", "여백 큰데", "글씨 안 보여", "공백 있네" 같은 사용자 피드백
+- 또는 새 빌더 script 작성 시 PageLayoutTracker + svg-deco 패턴 사용 의무

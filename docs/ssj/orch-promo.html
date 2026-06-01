@@ -20,8 +20,8 @@
   --gap-section:3px;
   --gap-card:3px;
   --gap-tag:3px;
-  --pad-card:8px 10px;
-  --pad-btm:4px 6px;
+  --pad-card:5px 7px;
+  --pad-btm:3px 5px;
   --radius-card:5px;
   --radius-tag:8px;
   --font-h3:13px;
@@ -47,14 +47,14 @@ body{font-family:var(--font-body);overflow:hidden;color:var(--color-text)}
 body{width:850px;height:1100px;background:#f5efe6;
   background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.1) 0%,transparent 50%),
   radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.06) 0%,transparent 40%);
-  padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between}
+  padding:6px 8px;display:flex;flex-direction:column;justify-content:space-between}
 .header{display:flex;justify-content:space-between;align-items:flex-start}
 .header-left h1{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}
 .header-left .sub{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}
 .header-right{display:flex;gap:6px;max-width:360px}
-.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:8px;flex:1;margin:8px 0}
-.mid-left,.mid-right{display:flex;flex-direction:column;gap:6px}
-.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:4px;flex:1;margin:4px 0}
+.mid-left,.mid-right{display:flex;flex-direction:column;gap:3px}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .photo{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}
 .name-area{text-align:center}
 .name-area .nm{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}
@@ -63,8 +63,8 @@ body{width:850px;height:1100px;background:#f5efe6;
 .stat{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}
 .stat .n{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}
 .stat .l{font-size:8px;color:#7a6b5a}
-.bottom{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}
-.btm-card{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:7px 9px}
+.bottom{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}
+.btm-card{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px}
 .btm-card h4{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}
 .btm-card li{font-size:9px;line-height:1.5;color:#5a4f42}
 .btm-card ul{list-style:none;padding:0}
@@ -105,27 +105,41 @@ body{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; <b>Zero-touch 자동화</b><br><span style="font-size:9px;color:#8a7a68">사용자 액션 0개. SessionStart부터 MCP 연결, 워커 관리까지 완전 자동.</span></li>
         <li>&middot; <b>풀스택 시스템 설계</b><br><span style="font-size:9px;color:#8a7a68">프론트(HTML/CSS) · 백엔드(Python) · 인프라(스크립트) · AI(프롬프트).</span></li>
         <li>&middot; <b>49개 산업별 공통 레퍼런스</b><br><span style="font-size:9px;color:#8a7a68">금융·의료·교육·보안·IoT 등 모든 산업의 공통 도구 정리.</span></li>
-        <li>&middot; <b>품질 자동 검증</b><br><span style="font-size:9px;color:#8a7a68">빌드→검증→보고 자동 파이프라인. 사람 확인 없이도 품질 보장.</span></li>
+        <li>&middot; <b>품질 자동 검증</b><br><span style="font-size:9px;color:#8a7a68">빌드→검증→보고 자동 파이프라인. Self-Critique 다중 AI 합의.</span></li>
         <li>&middot; <b>실행 중심 (Bias for Action)</b><br><span style="font-size:9px;color:#8a7a68">계획에 머무르지 않고 즉시 구현. 작은 변화를 빠르게 반복.</span></li>
+        <li>&middot; <b>도메인 통찰력</b><br><span style="font-size:9px;color:#8a7a68">금융·보안·교육·헬스 각 산업의 핵심 워크플로우 이해.</span></li>
       </ul>
     </div>
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#c4915a" stroke-width="1.5"><path d="M12 2C6 8 6 16 12 22c6-6 6-14 0-20zM5 16l-2 4 4-2M19 16l2 4-4-2"/></svg> 일을 대하는 방식</h3>
-      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">탐구 &#8594; 분석 &#8594; 설계 &#8594; 실행</p>
+      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">탐구 &#8594; 분석 &#8594; 설계 &#8594; 실행 &#8594; 검증</p>
       <ul>
-        <li>&middot; <b>1. 탐구</b> — 문제의 본질을 파악</li>
-        <li>&middot; <b>2. 분석</b> — 데이터로 깊이 검증</li>
-        <li>&middot; <b>3. 설계</b> — AI와 함께 최적 구조</li>
+        <li>&middot; <b>1. 탐구</b> — 문제의 본질·맥락·이해관계자 파악</li>
+        <li>&middot; <b>2. 분석</b> — 데이터로 가설 검증, 정량 측정</li>
+        <li>&middot; <b>3. 설계</b> — AI와 함께 최적 아키텍처 도출</li>
         <li>&middot; <b>4. 실행</b> — 자동화로 결과를 만든다</li>
+        <li>&middot; <b>5. 검증</b> — Self-Critique·다중 AI 합의로 품질 보장</li>
       </ul>
     </div>
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 자동화 철학</h3>
       <ul>
         <li>&middot; 사람은 판단만, 반복은 기계에게</li>
-        <li>&middot; 한 번만 하면 끝나는 시스템</li>
+        <li>&middot; 한 번만 하면 끝나는 시스템 (idempotent)</li>
         <li>&middot; Zero-touch = 사용자 액션 0</li>
         <li>&middot; 검증 없이 완료 보고 금지</li>
+        <li>&middot; 5단계 자가 점검 (전수·분석·실행·확인·보고)</li>
+        <li>&middot; Hook 으로 100% 강제, 메모리는 보조</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill="rgba(196,145,90,.2)"/></svg> 협업·소통 원칙</h3>
+      <ul>
+        <li>&middot; <b>직접 답</b> — 회피·딴말 X, 직답 → 부연 → 행동</li>
+        <li>&middot; <b>전수조사</b> — 부분 처리 X, 같은 패턴 전 영역 점검</li>
+        <li>&middot; <b>증거 기반</b> — "확인 안 됨" 솔직, 추측 단정 X</li>
+        <li>&middot; <b>회고·학습</b> — 실패 패턴 기록, 같은 실수 반복 X</li>
+        <li>&middot; <b>승인 게이트</b> — 위험 명령 사전 승인 (HITL)</li>
       </ul>
     </div>
   </div>
@@ -141,12 +155,16 @@ body{width:850px;height:1100px;background:#f5efe6;
       <div class="inf">Claude + Codex + Gemini · 설계→구현→검증 자동화</div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n">31</div><div class="l">플러그인</div></div>
-      <div class="stat"><div class="n">49</div><div class="l">레퍼런스</div></div>
-      <div class="stat"><div class="n">165</div><div class="l">커맨드</div></div>
-      <div class="stat"><div class="n">87</div><div class="l">스킬</div></div>
-      <div class="stat"><div class="n">92</div><div class="l">스크립트</div></div>
-      <div class="stat"><div class="n">27</div><div class="l">훅</div></div>
+      <div class="stat"><div class="n">31</div><div class="l">플러그인<br><span style="font-size:7px">stable</span></div></div>
+      <div class="stat"><div class="n">49</div><div class="l">산업별<br><span style="font-size:7px">레퍼런스</span></div></div>
+      <div class="stat"><div class="n">165</div><div class="l">커맨드<br><span style="font-size:7px">/slash</span></div></div>
+      <div class="stat"><div class="n">87</div><div class="l">스킬<br><span style="font-size:7px">자동 활성</span></div></div>
+      <div class="stat"><div class="n">92</div><div class="l">스크립트<br><span style="font-size:7px">자동화</span></div></div>
+      <div class="stat"><div class="n">28</div><div class="l">훅<br><span style="font-size:7px">Pre/Post</span></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:100%;margin-top:3px">
+      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">23K+</div><div class="l">코드 라인</div></div>
+      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">4 AI</div><div class="l">Claude·Codex·Gemini·Haiku</div></div>
     </div>
   </div>
 
@@ -186,9 +204,24 @@ body{width:850px;height:1100px;background:#f5efe6;
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b7b8e" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> 도구 스택</h3>
       <div class="tags">
         <span class="tag">Python</span><span class="tag">Playwright</span><span class="tag">SQLite</span>
-        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">Git</span>
-        <span class="tag">Bash</span><span class="tag">Node.js</span><span class="tag">Docker</span>
+        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">SVG</span>
+        <span class="tag">Git</span><span class="tag">Bash</span><span class="tag">Node.js</span>
+        <span class="tag">PowerShell</span><span class="tag">Docker</span><span class="tag">openpyxl</span>
+        <span class="tag">python-docx</span><span class="tag">PyMuPDF</span>
       </div>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill="rgba(196,145,90,.2)"/></svg> AI 라우팅 정책</h3>
+      <ul>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 복잡추론·1M ctx → Claude Opus 4.7</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b7b8e" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> 코드 500줄+ → Codex ×4 병렬</li>
+        <li><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6b8e5a" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#5a9ec4" stroke="none"><path d="M12 2C8 8 5 12 5 16a7 7 0 0 0 14 0c0-4-3-8-7-14z"/></svg> 초장문 500k+ → Gemini Flash</li>
+        <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 예산 80% → 자동 fallback</li>
+        <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e07a2f" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="#e07a2f"/></svg> Quota 초과 → 10m→20m→2h backoff</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Prompt caching → 비용 90% 절감</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 단가·특성·quota 3축 최적화</li>
+      </ul>
     </div>
   </div>
 </div>
