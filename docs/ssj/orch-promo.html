@@ -173,11 +173,14 @@ body{width:850px;height:1100px;background:#f5efe6;
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 프로젝트 주요 성과</h3>
       <ul>
         <li>&middot; 세계 최초 멀티AI 동시 오케스트레이션</li>
-        <li>&middot; 23,203줄 공통 도구 코드</li>
-        <li>&middot; 92개 자동화 스크립트</li>
-        <li>&middot; 27개 훅 (Pre/Post ToolUse)</li>
-        <li>&middot; SQLite 기반 통합 상태 관리</li>
-        <li>&middot; 11개 품질 규칙 자동 강제</li>
+        <li>&middot; 23,203줄 공통 도구 코드 (Python 80%)</li>
+        <li>&middot; 92개 자동화 스크립트 (Zero-touch)</li>
+        <li>&middot; 28개 훅 (Pre/Post ToolUse · SessionStart)</li>
+        <li>&middot; SQLite 기반 통합 상태 (orca.db)</li>
+        <li>&middot; 11개 품질 규칙 자동 강제 (Hook 차단)</li>
+        <li>&middot; 31 stable 플러그인 + 17 spec-only</li>
+        <li>&middot; 24/7 watchdog + 비용·쿼터 자동 fallback</li>
+        <li>&middot; 5단계 자가점검 (전수·분석·실행·확인·보고)</li>
       </ul>
     </div>
     <div class="card">
@@ -187,17 +190,22 @@ body{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; 품질 = 신뢰 — 검증 없이 완료 보고 X</li>
         <li>&middot; 공유와 성장 — 킷은 모두를 위한 것</li>
         <li>&middot; 단순함의 힘 — 복잡함은 적</li>
+        <li>&middot; 데이터 기반 — 추측·헤지 금지</li>
+        <li>&middot; 전수조사 — 부분 처리는 위반</li>
+        <li>&middot; Self-Critique — 다중 AI 합의</li>
       </ul>
     </div>
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 기술 아키텍처</h3>
       <ul>
-        <li>&middot; Claude Opus 4.6 (설계·추론)</li>
-        <li>&middot; Codex ×4 병렬 (구현)</li>
-        <li>&middot; Haiku ×2 병렬 (검증)</li>
-        <li>&middot; Gemini Flash (초장문)</li>
-        <li>&middot; 자동 라우팅 + 비용 최적화</li>
-        <li>&middot; SQLite + watchdog 24/7</li>
+        <li>&middot; Claude Opus 4.7 (설계·복잡추론·1M ctx)</li>
+        <li>&middot; Claude Sonnet 4.6 (단순구현 200줄-)</li>
+        <li>&middot; Codex ×4 병렬 (코드 500줄+)</li>
+        <li>&middot; Haiku 4.5 ×2 (검증 90% 절감)</li>
+        <li>&middot; Gemini Flash (500k+ 초장문)</li>
+        <li>&middot; 자동 라우팅 + budget·quota 관리</li>
+        <li>&middot; SQLite + watchdog 24/7 무중단</li>
+        <li>&middot; HITL approval gate (위험 승인)</li>
       </ul>
     </div>
     <div class="card">

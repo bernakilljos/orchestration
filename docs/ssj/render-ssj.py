@@ -218,11 +218,14 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <h3>{I['star']} \ud504\ub85c\uc81d\ud2b8 \uc8fc\uc694 \uc131\uacfc</h3>
       <ul>
         <li>&middot; \uc138\uacc4 \ucd5c\ucd08 \uba40\ud2f0AI \ub3d9\uc2dc \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</li>
-        <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc</li>
-        <li>&middot; 92\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8</li>
-        <li>&middot; 27\uac1c \ud6c5 (Pre/Post ToolUse)</li>
-        <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc \uad00\ub9ac</li>
-        <li>&middot; 11\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c</li>
+        <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc (Python 80%)</li>
+        <li>&middot; 92\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 (Zero-touch)</li>
+        <li>&middot; 28\uac1c \ud6c5 (Pre/Post ToolUse \u00b7 SessionStart)</li>
+        <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc (orca.db)</li>
+        <li>&middot; 11\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c (Hook \ucc28\ub2e8)</li>
+        <li>&middot; 31 stable \ud50c\ub7ec\uadf8\uc778 + 17 spec-only</li>
+        <li>&middot; 24/7 watchdog + \ube44\uc6a9\u00b7\ucffc\ud130 \uc790\ub3d9 fallback</li>
+        <li>&middot; 5\ub2e8\uacc4 \uc790\uac00\uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
       </ul>
     </div>
     <div class="card">
@@ -232,17 +235,22 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; \ud488\uc9c8 = \uc2e0\ub8b0 \u2014 \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 X</li>
         <li>&middot; \uacf5\uc720\uc640 \uc131\uc7a5 \u2014 \ud0b7\uc740 \ubaa8\ub450\ub97c \uc704\ud55c \uac83</li>
         <li>&middot; \ub2e8\uc21c\ud568\uc758 \ud798 \u2014 \ubcf5\uc7a1\ud568\uc740 \uc801</li>
+        <li>&middot; \ub370\uc774\ud130 \uae30\ubc18 \u2014 \ucd94\uce21\u00b7\ud5e4\uc9c0 \uae08\uc9c0</li>
+        <li>&middot; \uc804\uc218\uc870\uc0ac \u2014 \ubd80\ubd84 \ucc98\ub9ac\ub294 \uc704\ubc18</li>
+        <li>&middot; Self-Critique \u2014 \ub2e4\uc911 AI \ud569\uc758</li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['gear']} \uae30\uc220 \uc544\ud0a4\ud14d\ucc98</h3>
       <ul>
-        <li>&middot; Claude Opus 4.6 (\uc124\uacc4\u00b7\ucd94\ub860)</li>
-        <li>&middot; Codex \u00d74 \ubcd1\ub82c (\uad6c\ud604)</li>
-        <li>&middot; Haiku \u00d72 \ubcd1\ub82c (\uac80\uc99d)</li>
-        <li>&middot; Gemini Flash (\ucd08\uc7a5\ubb38)</li>
-        <li>&middot; \uc790\ub3d9 \ub77c\uc6b0\ud305 + \ube44\uc6a9 \ucd5c\uc801\ud654</li>
-        <li>&middot; SQLite + watchdog 24/7</li>
+        <li>&middot; Claude Opus 4.7 (\uc124\uacc4\u00b7\ubcf5\uc7a1\ucd94\ub860\u00b71M ctx)</li>
+        <li>&middot; Claude Sonnet 4.6 (\ub2e8\uc21c\uad6c\ud604 200\uc904-)</li>
+        <li>&middot; Codex \u00d74 \ubcd1\ub82c (\ucf54\ub4dc 500\uc904+)</li>
+        <li>&middot; Haiku 4.5 \u00d72 (\uac80\uc99d 90% \uc808\uac10)</li>
+        <li>&middot; Gemini Flash (500k+ \ucd08\uc7a5\ubb38)</li>
+        <li>&middot; \uc790\ub3d9 \ub77c\uc6b0\ud305 + budget\u00b7quota \uad00\ub9ac</li>
+        <li>&middot; SQLite + watchdog 24/7 \ubb34\uc911\ub2e8</li>
+        <li>&middot; HITL approval gate (\uc704\ud5d8 \uc2b9\uc778)</li>
       </ul>
     </div>
     <div class="card">
