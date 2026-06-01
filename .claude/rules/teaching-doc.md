@@ -370,8 +370,16 @@ CSS 코드만 보고 "여백 없다" 판단 = 전수조사 위반.
 
 ### 자동화
 
-- hook-09 가 `render-*.py` 실행 감지 → systemMessage 로 전수검사 의무 알림
-- `verify-image-whitespace.py` 가 렌더 출력 폴더 자동 스캔
+- hook-09 가 `(render|build|generate)-*.py` 실행 감지 → systemMessage 로 전수검사 의무 알림
+- `verify-image-whitespace.py` — 외곽 흰 띠 검출 (PNG 가장자리)
+- `verify-render-coverage.py` — **내부 빈 박스** 검출 (그리드 N×M 콘텐츠 밀도). flex:1 박스 안 SVG 가 작아 생긴 빈 영역 같은 사용자 호소 케이스 자동 잡음. WARN 시 crop PNG 자동 생성 → Read tool 시각 확인 강제
+
+### flex 박스 안 SVG (svg-deco) 패턴
+
+- `.svg-deco svg { max-width / max-height }` 금지 → `width:100%; height:100%`
+- viewBox 비율 = 컨테이너 비율 (±20%), `preserveAspectRatio="xMidYMid meet"`
+- SVG 요소를 viewBox 4 모서리에 분산 — 중앙만 채우면 여백 잔존
+- 상세: `plugins/exec_orch/skills/auto-layout-fit.md § flex 박스 안 SVG`
 
 ### 금기
 

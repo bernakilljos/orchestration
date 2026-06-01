@@ -94,13 +94,34 @@ EOF
   done
 fi
 
-# render-*.py 전수검사 의무 알림 — 렌더링 후 모든 출력 이미지 시각 검사 의무
-if echo "$CMD" | grep -qE 'render-[a-z-]+\.py'; then
-  RENDER_SCRIPT_DIR="$(echo "$CMD" | grep -oE '[^ ]*render-[a-z-]+\.py' | head -1 | xargs dirname 2>/dev/null || echo '.')"
-  RENDER_JPGS="$(ls "$RENDER_SCRIPT_DIR"/*.jpg "$RENDER_SCRIPT_DIR"/*.png 2>/dev/null | grep -v '^_' | head -10 | sed 's|.*|  - &|')"
-  if [ -n "$RENDER_JPGS" ]; then
+# render-*.py / build-*.py / generate-*.py 전수검사 의무 알림 + 자동 coverage 검출
+VERIFY_COVERAGE="$PROJECT_ROOT/.claude/scripts/verify-render-coverage.py"
+if echo "$CMD" | grep -qE '(render|build|generate)-[a-z-]+\.py'; then
+  # 스크립트 경로 추출 (render/build/generate 어느 패턴이든)
+  SCRIPT_PATH="$(echo "$CMD" | grep -oE '[^ ]*(render|build|generate)-[a-z-]+\.py' | head -1)"
+  RENDER_SCRIPT_DIR="$(dirname "$SCRIPT_PATH" 2>/dev/null || echo '.')"
+  # 절대 경로 변환
+  if [ -d "$RENDER_SCRIPT_DIR" ]; then
+    RENDER_SCRIPT_DIR="$(cd "$RENDER_SCRIPT_DIR" && pwd)"
+  fi
+
+  # 자동 coverage 실행 — 빈 박스 검출
+  if [ -f "$VERIFY_COVERAGE" ] && [ -d "$RENDER_SCRIPT_DIR" ]; then
+    COV_RESULT="$(PYTHONIOENCODING=utf-8 python "$VERIFY_COVERAGE" "$RENDER_SCRIPT_DIR" 2>&1 || true)"
+    if echo "$COV_RESULT" | grep -q '\[WARN\]'; then
+      # 자동 생성된 crop PNG 경로 추출
+      CROP_PATHS="$(echo "$COV_RESULT" | grep -oE 'crop → [^[:space:]]+' | sed 's|crop → ||' | sed 's|.*|  - &|' | head -10)"
+      cat <<EOF
+{"systemMessage": "[hook-09 coverage] 렌더링 후 **콘텐츠 밀도 부족 영역** 자동 검출 (verify-render-coverage.py):\n\n$COV_RESULT\n\n→ 위 crop PNG 들을 Read tool 로 **반드시 시각 확인**.\n→ 진짜 빈 영역이면 콘텐츠 추가 (SVG·미니카드·아이콘·키워드).\n→ Read 안 하고 보고 = 전수조사 위반.\n\ncrop 파일:\n$CROP_PATHS"}
+EOF
+    fi
+  fi
+
+  # 전체 렌더링 결과물 목록 (검수 의무 알림)
+  RENDER_JPGS="$(ls "$RENDER_SCRIPT_DIR"/*.jpg "$RENDER_SCRIPT_DIR"/*.png 2>/dev/null | grep -v '/_' | head -10 | sed 's|.*|  - &|')"
+  if [ -n "$RENDER_JPGS" ] && ! echo "$COV_RESULT" | grep -q '\[WARN\]'; then
     cat <<EOF
-{"systemMessage": "[hook-09 render] 렌더링 완료 — 전수검사 의무:\n1. Read tool 로 모든 출력 이미지 시각 검사\n2. 여백/빈공간/밀도부족/치우침 탐지\n3. 발견 시 콘텐츠 추가 (미니카드·태그·아이콘·메모·체크리스트)\n4. 재렌더링 → 재검사 사이클 반복\n\n검사 대상:\n$RENDER_JPGS"}
+{"systemMessage": "[hook-09 render] coverage PASS — 전수검사 의무:\n1. Read tool 로 출력 이미지 시각 검사\n2. crop 검증된 빈 영역 외 추가 점검\n3. 발견 시 콘텐츠 추가\n\n검사 대상:\n$RENDER_JPGS"}
 EOF
   fi
 fi

@@ -31,6 +31,12 @@ I = {
  'person':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#8b7355" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-3.5 3-6.5 6.5-6.5s6.5 3 6.5 6.5"/></svg>',
  'shield':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
  'book':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14H6a2 2 0 0 0 0 4h14"/></svg>',
+ 'compass':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill="rgba(196,145,90,.2)"/></svg>',
+ 'target':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e07a2f" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="#e07a2f"/></svg>',
+ 'clock':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#8b7355" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+ 'medal':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e8c36a" stroke-width="1.5"><circle cx="12" cy="8" r="5" fill="rgba(232,195,106,.12)"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg>',
+ 'mountain':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M4 20l4-10 3 4 5-8 4 14z" fill="rgba(107,142,90,.08)"/></svg>',
+ 'lamp':'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><path d="M9 18h6M10 22h4"/><circle cx="12" cy="9" r="5" fill="rgba(240,192,64,.12)"/><path d="M12 2v2"/></svg>',
 }
 
 COMMON_CSS = """
@@ -54,8 +60,8 @@ COMMON_CSS = """
   --gap-section:3px;
   --gap-card:3px;
   --gap-tag:3px;
-  --pad-card:8px 10px;
-  --pad-btm:4px 6px;
+  --pad-card:5px 7px;
+  --pad-btm:3px 5px;
   --radius-card:5px;
   --radius-tag:8px;
   --font-h3:13px;
@@ -86,14 +92,14 @@ def build_orch_promo():
 body{{width:850px;height:1100px;background:#f5efe6;
   background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.1) 0%,transparent 50%),
   radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.06) 0%,transparent 40%);
-  padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between}}
+  padding:6px 8px;display:flex;flex-direction:column;justify-content:space-between}}
 .header{{display:flex;justify-content:space-between;align-items:flex-start}}
 .header-left h1{{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}}
 .header-left .sub{{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}}
 .header-right{{display:flex;gap:6px;max-width:360px}}
-.mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:8px;flex:1;margin:8px 0}}
-.mid-left,.mid-right{{display:flex;flex-direction:column;gap:6px}}
-.center{{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}}
+.mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:4px;flex:1;margin:4px 0}}
+.mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px}}
+.center{{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}}
 .photo{{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}}
 .name-area{{text-align:center}}
 .name-area .nm{{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}}
@@ -102,8 +108,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .stat{{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
 .stat .n{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}}
 .stat .l{{font-size:8px;color:#7a6b5a}}
-.bottom{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px}}
-.btm-card{{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:7px 9px}}
+.bottom{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}}
+.btm-card{{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px}}
 .btm-card h4{{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}}
 .btm-card li{{font-size:9px;line-height:1.5;color:#5a4f42}}
 .btm-card ul{{list-style:none;padding:0}}
@@ -144,27 +150,41 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; <b>Zero-touch \uc790\ub3d9\ud654</b><br><span style="font-size:9px;color:#8a7a68">\uc0ac\uc6a9\uc790 \uc561\uc158 0\uac1c. SessionStart\ubd80\ud130 MCP \uc5f0\uacb0, \uc6cc\ucee4 \uad00\ub9ac\uae4c\uc9c0 \uc644\uc804 \uc790\ub3d9.</span></li>
         <li>&middot; <b>\ud480\uc2a4\ud0dd \uc2dc\uc2a4\ud15c \uc124\uacc4</b><br><span style="font-size:9px;color:#8a7a68">\ud504\ub860\ud2b8(HTML/CSS) \u00b7 \ubc31\uc5d4\ub4dc(Python) \u00b7 \uc778\ud504\ub77c(\uc2a4\ud06c\ub9bd\ud2b8) \u00b7 AI(\ud504\ub86c\ud504\ud2b8).</span></li>
         <li>&middot; <b>49\uac1c \uc0b0\uc5c5\ubcc4 \uacf5\ud1b5 \ub808\ud37c\ub7f0\uc2a4</b><br><span style="font-size:9px;color:#8a7a68">\uae08\uc735\u00b7\uc758\ub8cc\u00b7\uad50\uc721\u00b7\ubcf4\uc548\u00b7IoT \ub4f1 \ubaa8\ub4e0 \uc0b0\uc5c5\uc758 \uacf5\ud1b5 \ub3c4\uad6c \uc815\ub9ac.</span></li>
-        <li>&middot; <b>\ud488\uc9c8 \uc790\ub3d9 \uac80\uc99d</b><br><span style="font-size:9px;color:#8a7a68">\ube4c\ub4dc\u2192\uac80\uc99d\u2192\ubcf4\uace0 \uc790\ub3d9 \ud30c\uc774\ud504\ub77c\uc778. \uc0ac\ub78c \ud655\uc778 \uc5c6\uc774\ub3c4 \ud488\uc9c8 \ubcf4\uc7a5.</span></li>
+        <li>&middot; <b>\ud488\uc9c8 \uc790\ub3d9 \uac80\uc99d</b><br><span style="font-size:9px;color:#8a7a68">\ube4c\ub4dc\u2192\uac80\uc99d\u2192\ubcf4\uace0 \uc790\ub3d9 \ud30c\uc774\ud504\ub77c\uc778. Self-Critique \ub2e4\uc911 AI \ud569\uc758.</span></li>
         <li>&middot; <b>\uc2e4\ud589 \uc911\uc2ec (Bias for Action)</b><br><span style="font-size:9px;color:#8a7a68">\uacc4\ud68d\uc5d0 \uba38\ubb34\ub974\uc9c0 \uc54a\uace0 \uc989\uc2dc \uad6c\ud604. \uc791\uc740 \ubcc0\ud654\ub97c \ube60\ub974\uac8c \ubc18\ubcf5.</span></li>
+        <li>&middot; <b>\ub3c4\uba54\uc778 \ud1b5\ucc30\ub825</b><br><span style="font-size:9px;color:#8a7a68">\uae08\uc735\u00b7\ubcf4\uc548\u00b7\uad50\uc721\u00b7\ud5ec\uc2a4 \uac01 \uc0b0\uc5c5\uc758 \ud575\uc2ec \uc6cc\ud06c\ud50c\ub85c\uc6b0 \uc774\ud574.</span></li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['rocket']} \uc77c\uc744 \ub300\ud558\ub294 \ubc29\uc2dd</h3>
-      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">\ud0d0\uad6c &#8594; \ubd84\uc11d &#8594; \uc124\uacc4 &#8594; \uc2e4\ud589</p>
+      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">\ud0d0\uad6c &#8594; \ubd84\uc11d &#8594; \uc124\uacc4 &#8594; \uc2e4\ud589 &#8594; \uac80\uc99d</p>
       <ul>
-        <li>&middot; <b>1. \ud0d0\uad6c</b> \u2014 \ubb38\uc81c\uc758 \ubcf8\uc9c8\uc744 \ud30c\uc545</li>
-        <li>&middot; <b>2. \ubd84\uc11d</b> \u2014 \ub370\uc774\ud130\ub85c \uae4a\uc774 \uac80\uc99d</li>
-        <li>&middot; <b>3. \uc124\uacc4</b> \u2014 AI\uc640 \ud568\uaed8 \ucd5c\uc801 \uad6c\uc870</li>
+        <li>&middot; <b>1. \ud0d0\uad6c</b> \u2014 \ubb38\uc81c\uc758 \ubcf8\uc9c8\u00b7\ub9e5\ub77d\u00b7\uc774\ud574\uad00\uacc4\uc790 \ud30c\uc545</li>
+        <li>&middot; <b>2. \ubd84\uc11d</b> \u2014 \ub370\uc774\ud130\ub85c \uac00\uc124 \uac80\uc99d, \uc815\ub7c9 \uce21\uc815</li>
+        <li>&middot; <b>3. \uc124\uacc4</b> \u2014 AI\uc640 \ud568\uaed8 \ucd5c\uc801 \uc544\ud0a4\ud14d\ucc98 \ub3c4\ucd9c</li>
         <li>&middot; <b>4. \uc2e4\ud589</b> \u2014 \uc790\ub3d9\ud654\ub85c \uacb0\uacfc\ub97c \ub9cc\ub4e0\ub2e4</li>
+        <li>&middot; <b>5. \uac80\uc99d</b> \u2014 Self-Critique\u00b7\ub2e4\uc911 AI \ud569\uc758\ub85c \ud488\uc9c8 \ubcf4\uc7a5</li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['shield']} \uc790\ub3d9\ud654 \ucca0\ud559</h3>
       <ul>
         <li>&middot; \uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c</li>
-        <li>&middot; \ud55c \ubc88\ub9cc \ud558\uba74 \ub05d\ub098\ub294 \uc2dc\uc2a4\ud15c</li>
+        <li>&middot; \ud55c \ubc88\ub9cc \ud558\uba74 \ub05d\ub098\ub294 \uc2dc\uc2a4\ud15c (idempotent)</li>
         <li>&middot; Zero-touch = \uc0ac\uc6a9\uc790 \uc561\uc158 0</li>
         <li>&middot; \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 \uae08\uc9c0</li>
+        <li>&middot; 5\ub2e8\uacc4 \uc790\uac00 \uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
+        <li>&middot; Hook \uc73c\ub85c 100% \uac15\uc81c, \uba54\ubaa8\ub9ac\ub294 \ubcf4\uc870</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['compass']} \ud611\uc5c5\u00b7\uc18c\ud1b5 \uc6d0\uce59</h3>
+      <ul>
+        <li>&middot; <b>\uc9c1\uc811 \ub2f5</b> \u2014 \ud68c\ud53c\u00b7\ub534\ub9d0 X, \uc9c1\ub2f5 \u2192 \ubd80\uc5f0 \u2192 \ud589\ub3d9</li>
+        <li>&middot; <b>\uc804\uc218\uc870\uc0ac</b> \u2014 \ubd80\ubd84 \ucc98\ub9ac X, \uac19\uc740 \ud328\ud134 \uc804 \uc601\uc5ed \uc810\uac80</li>
+        <li>&middot; <b>\uc99d\uac70 \uae30\ubc18</b> \u2014 "\ud655\uc778 \uc548 \ub428" \uc194\uc9c1, \ucd94\uce21 \ub2e8\uc815 X</li>
+        <li>&middot; <b>\ud68c\uace0\u00b7\ud559\uc2b5</b> \u2014 \uc2e4\ud328 \ud328\ud134 \uae30\ub85d, \uac19\uc740 \uc2e4\uc218 \ubc18\ubcf5 X</li>
+        <li>&middot; <b>\uc2b9\uc778 \uac8c\uc774\ud2b8</b> \u2014 \uc704\ud5d8 \uba85\ub839 \uc0ac\uc804 \uc2b9\uc778 (HITL)</li>
       </ul>
     </div>
   </div>
@@ -180,12 +200,16 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <div class="inf">Claude + Codex + Gemini \u00b7 \uc124\uacc4\u2192\uad6c\ud604\u2192\uac80\uc99d \uc790\ub3d9\ud654</div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n">31</div><div class="l">\ud50c\ub7ec\uadf8\uc778</div></div>
-      <div class="stat"><div class="n">49</div><div class="l">\ub808\ud37c\ub7f0\uc2a4</div></div>
-      <div class="stat"><div class="n">165</div><div class="l">\ucee4\ub9e8\ub4dc</div></div>
-      <div class="stat"><div class="n">87</div><div class="l">\uc2a4\ud0ac</div></div>
-      <div class="stat"><div class="n">92</div><div class="l">\uc2a4\ud06c\ub9bd\ud2b8</div></div>
-      <div class="stat"><div class="n">27</div><div class="l">\ud6c5</div></div>
+      <div class="stat"><div class="n">31</div><div class="l">\ud50c\ub7ec\uadf8\uc778<br><span style="font-size:7px">stable</span></div></div>
+      <div class="stat"><div class="n">49</div><div class="l">\uc0b0\uc5c5\ubcc4<br><span style="font-size:7px">\ub808\ud37c\ub7f0\uc2a4</span></div></div>
+      <div class="stat"><div class="n">165</div><div class="l">\ucee4\ub9e8\ub4dc<br><span style="font-size:7px">/slash</span></div></div>
+      <div class="stat"><div class="n">87</div><div class="l">\uc2a4\ud0ac<br><span style="font-size:7px">\uc790\ub3d9 \ud65c\uc131</span></div></div>
+      <div class="stat"><div class="n">92</div><div class="l">\uc2a4\ud06c\ub9bd\ud2b8<br><span style="font-size:7px">\uc790\ub3d9\ud654</span></div></div>
+      <div class="stat"><div class="n">28</div><div class="l">\ud6c5<br><span style="font-size:7px">Pre/Post</span></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:100%;margin-top:3px">
+      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">23K+</div><div class="l">\ucf54\ub4dc \ub77c\uc778</div></div>
+      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">4 AI</div><div class="l">Claude\u00b7Codex\u00b7Gemini\u00b7Haiku</div></div>
     </div>
   </div>
 
@@ -194,11 +218,14 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <h3>{I['star']} \ud504\ub85c\uc81d\ud2b8 \uc8fc\uc694 \uc131\uacfc</h3>
       <ul>
         <li>&middot; \uc138\uacc4 \ucd5c\ucd08 \uba40\ud2f0AI \ub3d9\uc2dc \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</li>
-        <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc</li>
-        <li>&middot; 92\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8</li>
-        <li>&middot; 27\uac1c \ud6c5 (Pre/Post ToolUse)</li>
-        <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc \uad00\ub9ac</li>
-        <li>&middot; 11\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c</li>
+        <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc (Python 80%)</li>
+        <li>&middot; 92\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 (Zero-touch)</li>
+        <li>&middot; 28\uac1c \ud6c5 (Pre/Post ToolUse \u00b7 SessionStart)</li>
+        <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc (orca.db)</li>
+        <li>&middot; 11\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c (Hook \ucc28\ub2e8)</li>
+        <li>&middot; 31 stable \ud50c\ub7ec\uadf8\uc778 + 17 spec-only</li>
+        <li>&middot; 24/7 watchdog + \ube44\uc6a9\u00b7\ucffc\ud130 \uc790\ub3d9 fallback</li>
+        <li>&middot; 5\ub2e8\uacc4 \uc790\uac00\uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
       </ul>
     </div>
     <div class="card">
@@ -208,26 +235,46 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; \ud488\uc9c8 = \uc2e0\ub8b0 \u2014 \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 X</li>
         <li>&middot; \uacf5\uc720\uc640 \uc131\uc7a5 \u2014 \ud0b7\uc740 \ubaa8\ub450\ub97c \uc704\ud55c \uac83</li>
         <li>&middot; \ub2e8\uc21c\ud568\uc758 \ud798 \u2014 \ubcf5\uc7a1\ud568\uc740 \uc801</li>
+        <li>&middot; \ub370\uc774\ud130 \uae30\ubc18 \u2014 \ucd94\uce21\u00b7\ud5e4\uc9c0 \uae08\uc9c0</li>
+        <li>&middot; \uc804\uc218\uc870\uc0ac \u2014 \ubd80\ubd84 \ucc98\ub9ac\ub294 \uc704\ubc18</li>
+        <li>&middot; Self-Critique \u2014 \ub2e4\uc911 AI \ud569\uc758</li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['gear']} \uae30\uc220 \uc544\ud0a4\ud14d\ucc98</h3>
       <ul>
-        <li>&middot; Claude Opus 4.6 (\uc124\uacc4\u00b7\ucd94\ub860)</li>
-        <li>&middot; Codex \u00d74 \ubcd1\ub82c (\uad6c\ud604)</li>
-        <li>&middot; Haiku \u00d72 \ubcd1\ub82c (\uac80\uc99d)</li>
-        <li>&middot; Gemini Flash (\ucd08\uc7a5\ubb38)</li>
-        <li>&middot; \uc790\ub3d9 \ub77c\uc6b0\ud305 + \ube44\uc6a9 \ucd5c\uc801\ud654</li>
-        <li>&middot; SQLite + watchdog 24/7</li>
+        <li>&middot; Claude Opus 4.7 (\uc124\uacc4\u00b7\ubcf5\uc7a1\ucd94\ub860\u00b71M ctx)</li>
+        <li>&middot; Claude Sonnet 4.6 (\ub2e8\uc21c\uad6c\ud604 200\uc904-)</li>
+        <li>&middot; Codex \u00d74 \ubcd1\ub82c (\ucf54\ub4dc 500\uc904+)</li>
+        <li>&middot; Haiku 4.5 \u00d72 (\uac80\uc99d 90% \uc808\uac10)</li>
+        <li>&middot; Gemini Flash (500k+ \ucd08\uc7a5\ubb38)</li>
+        <li>&middot; \uc790\ub3d9 \ub77c\uc6b0\ud305 + budget\u00b7quota \uad00\ub9ac</li>
+        <li>&middot; SQLite + watchdog 24/7 \ubb34\uc911\ub2e8</li>
+        <li>&middot; HITL approval gate (\uc704\ud5d8 \uc2b9\uc778)</li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['code']} \ub3c4\uad6c \uc2a4\ud0dd</h3>
       <div class="tags">
         <span class="tag">Python</span><span class="tag">Playwright</span><span class="tag">SQLite</span>
-        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">Git</span>
-        <span class="tag">Bash</span><span class="tag">Node.js</span><span class="tag">Docker</span>
+        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">SVG</span>
+        <span class="tag">Git</span><span class="tag">Bash</span><span class="tag">Node.js</span>
+        <span class="tag">PowerShell</span><span class="tag">Docker</span><span class="tag">openpyxl</span>
+        <span class="tag">python-docx</span><span class="tag">PyMuPDF</span>
       </div>
+    </div>
+    <div class="card">
+      <h3>{I['compass']} AI 라우팅 정책</h3>
+      <ul>
+        <li>{I['gear']} 복잡추론·1M ctx → Claude Opus 4.7</li>
+        <li>{I['code']} 코드 500줄+ → Codex ×4 병렬</li>
+        <li>{I['check']} 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
+        <li>{I['water']} 초장문 500k+ → Gemini Flash</li>
+        <li>{I['shield']} 예산 80% → 자동 fallback</li>
+        <li>{I['target']} Quota 초과 → 10m→20m→2h backoff</li>
+        <li>{I['gear']} Prompt caching → 비용 90% 절감</li>
+        <li>{I['star']} 단가·특성·quota 3축 최적화</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -284,18 +331,21 @@ body{{width:850px;height:1100px;background:#f5efe6;
 def build_ssj_summary():
     return f'''<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 {COMMON_CSS}
-body{{width:850px;height:1100px;background:#f5efe6;
+body{{width:990px;height:1320px;background:#f5efe6;
   background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.10) 0%,transparent 50%),
   radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.06) 0%,transparent 40%);
-  padding:4px;display:grid;grid-template-rows:auto 1fr auto;gap:3px;overflow:hidden}}
+  padding:5px;display:flex;flex-direction:column;gap:4px;overflow:hidden}}
 .header{{display:flex;justify-content:space-between;align-items:flex-start}}
 .header-left h1{{font-family:'Gaegu',cursive;font-size:26px;font-weight:700;color:#2c2418;line-height:1.15}}
 .header-left .sub{{font-size:10px;color:#7a6b5a;margin-top:2px;display:flex;align-items:center;gap:3px}}
 .header-right{{display:flex;gap:3px}}
-.mid{{display:grid;grid-template-columns:225px 1fr 218px;gap:3px}}
-.mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px}}
-.mid-left .card,.mid-right .card{{flex:1}}
-.center{{display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:flex-start}}
+.mid{{display:grid;grid-template-columns:240px 1fr 235px;gap:3px;flex:1 1 0;min-height:0;overflow:hidden}}
+.mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}}
+.center{{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:0;overflow:hidden}}
+.mid-right>.card{{flex:1 1 0;min-height:0}}
+.svg-deco{{flex:1 1 0;min-height:60px;background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px;display:flex;align-items:stretch;justify-content:center;box-shadow:1px 2px 6px rgba(0,0,0,.05);overflow:hidden}}
+.svg-deco svg{{width:100%;height:100%;display:block}}
+.center .quote:last-child{{margin-top:auto}}
 .char-img{{width:240px;height:230px;border-radius:8px;object-fit:cover;border:2px solid #c4b49a;box-shadow:2px 2px 8px rgba(0,0,0,.1)}}
 .name-area{{text-align:center}}
 .name-area .nm{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#2c2418}}
@@ -307,12 +357,12 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .goal-box h4{{font-family:'Gaegu',cursive;font-size:10px;color:#8b4513;margin-bottom:1px;display:flex;align-items:center;justify-content:center;gap:2px}}
 .goal-box p{{font-size:8.5px;color:#5a4f42;line-height:1.25}}
 .step{{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#c4915a;color:#fff;font-size:8px;font-weight:700;flex-shrink:0}}
-.bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}}
-.btm-card{{background:rgba(255,255,255,.4);border:1.5px solid #d4c4a8;border-radius:4px;padding:4px 6px}}
+.bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;align-items:stretch}}
+.btm-card{{background:rgba(255,255,255,.4);border:1.5px solid #d4c4a8;border-radius:4px;padding:3px 5px 4px;display:flex;flex-direction:column}}
 .btm-card h4{{font-family:'Gaegu',cursive;font-size:10px;color:#8b4513;margin-bottom:2px;display:flex;align-items:center;gap:2px}}
-.btm-card li{{font-size:9px;line-height:1.35;color:#5a4f42;display:flex;align-items:flex-start;gap:2px}}
-.btm-card li svg{{flex-shrink:0;margin-top:1px}}
-.btm-card ul{{list-style:none;padding:0}}
+.btm-card li{{font-size:8.5px;line-height:1.3;color:#5a4f42;display:flex;align-items:flex-start;gap:3px;margin-bottom:0}}
+.btm-card li svg{{flex-shrink:0;margin-top:1px;width:11px;height:11px}}
+.btm-card ul{{list-style:none;padding:0;margin:0}}
 </style></head><body>
 
 <div class="header">
@@ -400,6 +450,77 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; 사람·정보·아이디어 연결이 핵심 장점</li>
       </ul>
     </div>
+    <div class="svg-deco">
+      <svg viewBox="0 0 240 290" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="38%">
+            <stop offset="0%" stop-color="#f0c040" stop-opacity=".65"/>
+            <stop offset="60%" stop-color="#f0c040" stop-opacity=".15"/>
+            <stop offset="100%" stop-color="#f0c040" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="halo" cx="50%" cy="35%">
+            <stop offset="0%" stop-color="#fff4d4" stop-opacity=".5"/>
+            <stop offset="100%" stop-color="#fff4d4" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="candle-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d4a570"/>
+            <stop offset="100%" stop-color="#a87a48"/>
+          </linearGradient>
+          <linearGradient id="ground-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c4915a" stop-opacity=".25"/>
+            <stop offset="100%" stop-color="#c4915a" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- 배경 halo + glow -->
+        <ellipse cx="120" cy="105" rx="130" ry="110" fill="url(#halo)"/>
+        <circle cx="120" cy="115" r="92" fill="url(#glow)"/>
+        <!-- 좌측 식물 (3개 줄기) -->
+        <path d="M28 230 Q26 165 22 105" stroke="#6b8e5a" stroke-width="2.5" fill="none" opacity=".7"/>
+        <ellipse cx="14" cy="125" rx="14" ry="5" fill="#6b8e5a" opacity=".55" transform="rotate(-35 14 125)"/>
+        <ellipse cx="32" cy="160" rx="13" ry="4.5" fill="#6b8e5a" opacity=".55" transform="rotate(25 32 160)"/>
+        <ellipse cx="10" cy="175" rx="11" ry="4" fill="#6b8e5a" opacity=".45" transform="rotate(-45 10 175)"/>
+        <ellipse cx="34" cy="200" rx="10" ry="4" fill="#6b8e5a" opacity=".5" transform="rotate(15 34 200)"/>
+        <path d="M50 230 Q48 190 50 165" stroke="#6b8e5a" stroke-width="2" fill="none" opacity=".55"/>
+        <ellipse cx="44" cy="190" rx="8" ry="3" fill="#6b8e5a" opacity=".45" transform="rotate(-25 44 190)"/>
+        <ellipse cx="56" cy="175" rx="7" ry="3" fill="#6b8e5a" opacity=".4" transform="rotate(30 56 175)"/>
+        <!-- 우측 식물 -->
+        <path d="M212 230 Q214 165 218 105" stroke="#6b8e5a" stroke-width="2.5" fill="none" opacity=".7"/>
+        <ellipse cx="226" cy="125" rx="14" ry="5" fill="#6b8e5a" opacity=".55" transform="rotate(35 226 125)"/>
+        <ellipse cx="208" cy="160" rx="13" ry="4.5" fill="#6b8e5a" opacity=".55" transform="rotate(-25 208 160)"/>
+        <ellipse cx="230" cy="175" rx="11" ry="4" fill="#6b8e5a" opacity=".45" transform="rotate(45 230 175)"/>
+        <ellipse cx="206" cy="200" rx="10" ry="4" fill="#6b8e5a" opacity=".5" transform="rotate(-15 206 200)"/>
+        <path d="M190 230 Q192 190 190 165" stroke="#6b8e5a" stroke-width="2" fill="none" opacity=".55"/>
+        <ellipse cx="196" cy="190" rx="8" ry="3" fill="#6b8e5a" opacity=".45" transform="rotate(25 196 190)"/>
+        <ellipse cx="184" cy="175" rx="7" ry="3" fill="#6b8e5a" opacity=".4" transform="rotate(-30 184 175)"/>
+        <!-- 바닥 그라데이션 -->
+        <rect x="0" y="218" width="240" height="20" fill="url(#ground-grad)"/>
+        <ellipse cx="120" cy="218" rx="46" ry="7" fill="#8b7355" opacity=".4"/>
+        <!-- 촛불 받침 + 본체 + 심지 + 불꽃 -->
+        <ellipse cx="120" cy="222" rx="34" ry="4" fill="#a87a48" opacity=".7"/>
+        <rect x="96" y="140" width="48" height="82" rx="4" fill="url(#candle-grad)"/>
+        <rect x="96" y="140" width="48" height="7" fill="#8b6035" opacity=".6"/>
+        <path d="M96 150 Q120 156 144 150" stroke="#8b6035" stroke-width="1" fill="none" opacity=".4"/>
+        <rect x="118" y="126" width="4" height="16" fill="#3a3226"/>
+        <ellipse cx="120" cy="105" rx="15" ry="24" fill="#e8a836" opacity=".75"/>
+        <ellipse cx="120" cy="99" rx="9" ry="15" fill="#f0c040"/>
+        <ellipse cx="120" cy="96" rx="4" ry="8" fill="#fff" opacity=".8"/>
+        <!-- 별 / 반짝이 분포 -->
+        <path d="M60 50 l3 6 6 1 -4.5 4 1 6 -5.5 -3 -5.5 3 1 -6 -4.5 -4 6 -1z" fill="#e8c36a" opacity=".65"/>
+        <path d="M180 60 l2.5 5 5 .7 -3.7 3.5 1 5 -4.8 -2.5 -4.8 2.5 1 -5 -3.7 -3.5 5 -.7z" fill="#e8c36a" opacity=".55"/>
+        <path d="M50 95 l2 3 3 .5 -2.5 2.5 .5 3 -3 -1.5 -3 1.5 .5 -3 -2.5 -2.5 3 -.5z" fill="#e8c36a" opacity=".5"/>
+        <path d="M190 90 l1.8 3 3 .4 -2.4 2.4 .6 3 -3 -1.5 -3 1.5 .6 -3 -2.4 -2.4 3 -.4z" fill="#e8c36a" opacity=".45"/>
+        <path d="M30 70 l1.5 2.5 2.5 .4 -2 2 .4 2.5 -2.4 -1.2 -2.4 1.2 .4 -2.5 -2 -2 2.5 -.4z" fill="#e8c36a" opacity=".45"/>
+        <path d="M210 35 l1.5 2.5 2.5 .4 -2 2 .4 2.5 -2.4 -1.2 -2.4 1.2 .4 -2.5 -2 -2 2.5 -.4z" fill="#e8c36a" opacity=".4"/>
+        <circle cx="85" cy="35" r="1.6" fill="#e8c36a" opacity=".6"/>
+        <circle cx="155" cy="40" r="1.4" fill="#e8c36a" opacity=".55"/>
+        <circle cx="120" cy="28" r="1.8" fill="#e8c36a" opacity=".7"/>
+        <circle cx="200" cy="120" r="1.4" fill="#e8c36a" opacity=".5"/>
+        <circle cx="40" cy="115" r="1.4" fill="#e8c36a" opacity=".5"/>
+        <!-- 메인 텍스트 -->
+        <text x="120" y="255" text-anchor="middle" font-family="Gaegu,cursive" font-size="18" font-weight="700" fill="#8b4513">빛을 밝히는 사람</text>
+        <text x="120" y="275" text-anchor="middle" font-family="'Noto Sans KR',sans-serif" font-size="10" fill="#7a6b5a">묵묵히 자기 길을 걷는다</text>
+      </svg>
+    </div>
   </div>
 
   <div class="center">
@@ -427,6 +548,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; 관계 중심이되 흔들리지 않는다</li>
         <li>&middot; 묵묵히 빛을 내는 등대</li>
         <li>&middot; 위기 속에서도 냉정하게 구조화</li>
+        <li>&middot; 약속한 것은 반드시 지킨다</li>
+        <li>&middot; 성장의 씨앗을 심고 기다린다</li>
       </ul>
     </div>
     <div class="goal-review">
@@ -446,8 +569,10 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['star']} 분석·공감·실행 3박자</li>
         <li>{I['heart']} 관계 중심 + 결과 중심</li>
         <li>{I['bulb']} 만능형 융합 인재</li>
-        <li>{I['gear']} 감정+이성 동시 구동, 직감과 분석 병행</li>
-        <li>{I['water']} 동안 유지형, 나이 들수록 신뢰감 상승</li>
+        <li>{I['gear']} 감정+이성 동시 구동, 직감과 분석</li>
+        <li>{I['water']} 동안 유지, 나이 들수록 신뢰감 ↑</li>
+        <li>{I['shield']} 원칙이 있되 유연하게 적용</li>
+        <li>{I['fire']} 불꽃 같은 열정, 바다 같은 포용</li>
       </ul>
     </div>
     <div class="card" style="width:100%;text-align:left">
@@ -455,11 +580,85 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <ul>
         <li>&middot; 첫인상 부드럽고 편안, 압박감 없음</li>
         <li>&middot; 웃을 때 분위기 밝아지는 타입</li>
-        <li>&middot; 감정 몰입 빠르지만 에너지 소모도 큼</li>
+        <li>&middot; 감정 몰입 빠르지만 에너지 소모 큼</li>
         <li>&middot; 편안한 관계에서 최고 퍼포먼스</li>
         <li>&middot; 사람·정보·아이디어 연결이 장기</li>
-        <li>&middot; 눈빛 변화와 감정 흐름이 살아 있음</li>
+        <li>&middot; 눈빛 변화와 감정 흐름이 살아있음</li>
+        <li>&middot; 진심이 통하면 강한 유대감 형성</li>
+        <li>&middot; 갈등은 회피 X, 대화로 해결 추구</li>
       </ul>
+    </div>
+    <div class="svg-deco">
+      <svg viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="tree-glow" cx="50%" cy="35%">
+            <stop offset="0%" stop-color="#fff4d4" stop-opacity=".45"/>
+            <stop offset="100%" stop-color="#fff4d4" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="trunk-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a87a48"/>
+            <stop offset="100%" stop-color="#6b4a28"/>
+          </linearGradient>
+          <radialGradient id="canopy-grad" cx="50%" cy="40%">
+            <stop offset="0%" stop-color="#8fb478"/>
+            <stop offset="100%" stop-color="#5a7a48"/>
+          </radialGradient>
+          <linearGradient id="ground-tree" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c4915a" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#c4915a" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- 배경 halo -->
+        <ellipse cx="160" cy="80" rx="150" ry="70" fill="url(#tree-glow)"/>
+        <!-- 바람 라인 (왼쪽에서) -->
+        <path d="M10 50 Q40 48 70 52" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".55" stroke-dasharray="3 3"/>
+        <path d="M10 70 Q45 68 80 72" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".5" stroke-dasharray="3 3"/>
+        <path d="M5 95 Q40 93 75 96" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".45" stroke-dasharray="3 3"/>
+        <path d="M15 115 Q50 113 85 116" stroke="#b8a890" stroke-width="1" fill="none" opacity=".4" stroke-dasharray="2 3"/>
+        <!-- 바람 라인 (오른쪽으로) -->
+        <path d="M250 55 Q280 53 310 57" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".55" stroke-dasharray="3 3"/>
+        <path d="M245 75 Q280 73 315 77" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".5" stroke-dasharray="3 3"/>
+        <path d="M250 100 Q285 98 315 101" stroke="#b8a890" stroke-width="1.2" fill="none" opacity=".45" stroke-dasharray="3 3"/>
+        <!-- 별/반짝이 (하늘) -->
+        <circle cx="40" cy="25" r="1.6" fill="#e8c36a" opacity=".7"/>
+        <circle cx="280" cy="30" r="1.8" fill="#e8c36a" opacity=".7"/>
+        <circle cx="100" cy="15" r="1.4" fill="#e8c36a" opacity=".6"/>
+        <circle cx="220" cy="20" r="1.5" fill="#e8c36a" opacity=".65"/>
+        <path d="M160 18 l1.8 3 3 .4 -2.4 2.4 .6 3 -3 -1.5 -3 1.5 .6 -3 -2.4 -2.4 3 -.4z" fill="#e8c36a" opacity=".55"/>
+        <!-- 바닥 그라데이션 (지면) -->
+        <rect x="0" y="155" width="320" height="20" fill="url(#ground-tree)"/>
+        <ellipse cx="160" cy="158" rx="90" ry="6" fill="#8b7355" opacity=".35"/>
+        <!-- 나무 뿌리 (깊고 넓게 뻗은) -->
+        <path d="M160 155 Q140 170 115 180 Q95 188 75 200" stroke="#6b4a28" stroke-width="3" fill="none" opacity=".75"/>
+        <path d="M160 155 Q145 172 130 185 Q120 195 105 210" stroke="#6b4a28" stroke-width="2.4" fill="none" opacity=".65"/>
+        <path d="M160 155 Q155 175 150 195 Q148 205 145 215" stroke="#6b4a28" stroke-width="2" fill="none" opacity=".6"/>
+        <path d="M160 155 Q180 170 205 180 Q225 188 245 200" stroke="#6b4a28" stroke-width="3" fill="none" opacity=".75"/>
+        <path d="M160 155 Q175 172 190 185 Q200 195 215 210" stroke="#6b4a28" stroke-width="2.4" fill="none" opacity=".65"/>
+        <path d="M160 155 Q165 175 170 195 Q172 205 175 215" stroke="#6b4a28" stroke-width="2" fill="none" opacity=".6"/>
+        <path d="M160 155 Q120 175 85 190" stroke="#6b4a28" stroke-width="2" fill="none" opacity=".55"/>
+        <path d="M160 155 Q200 175 235 190" stroke="#6b4a28" stroke-width="2" fill="none" opacity=".55"/>
+        <!-- 줄기 (튼튼한 본체) -->
+        <path d="M150 155 Q148 110 152 80 L168 80 Q172 110 170 155 Z" fill="url(#trunk-grad)"/>
+        <path d="M155 145 Q156 120 158 95" stroke="#3a2818" stroke-width=".8" fill="none" opacity=".4"/>
+        <path d="M163 145 Q162 120 161 95" stroke="#3a2818" stroke-width=".6" fill="none" opacity=".3"/>
+        <!-- 가지 -->
+        <path d="M152 100 Q138 90 122 85" stroke="#6b4a28" stroke-width="2.2" fill="none" opacity=".7"/>
+        <path d="M168 100 Q182 90 198 85" stroke="#6b4a28" stroke-width="2.2" fill="none" opacity=".7"/>
+        <path d="M155 88 Q145 78 132 70" stroke="#6b4a28" stroke-width="1.8" fill="none" opacity=".6"/>
+        <path d="M165 88 Q175 78 188 70" stroke="#6b4a28" stroke-width="1.8" fill="none" opacity=".6"/>
+        <!-- 캐노피 (넓은 잎 덮개) -->
+        <ellipse cx="160" cy="65" rx="68" ry="42" fill="url(#canopy-grad)" opacity=".85"/>
+        <ellipse cx="120" cy="72" rx="32" ry="26" fill="#7aa066" opacity=".75"/>
+        <ellipse cx="200" cy="72" rx="32" ry="26" fill="#7aa066" opacity=".75"/>
+        <ellipse cx="140" cy="50" rx="28" ry="22" fill="#8fb478" opacity=".8"/>
+        <ellipse cx="180" cy="50" rx="28" ry="22" fill="#8fb478" opacity=".8"/>
+        <ellipse cx="160" cy="42" rx="32" ry="22" fill="#a0c088" opacity=".7"/>
+        <!-- 떨어지는 잎 (몇 개) -->
+        <ellipse cx="100" cy="120" rx="5" ry="2.5" fill="#8fb478" opacity=".55" transform="rotate(-30 100 120)"/>
+        <ellipse cx="220" cy="125" rx="5" ry="2.5" fill="#8fb478" opacity=".5" transform="rotate(35 220 125)"/>
+        <ellipse cx="85" cy="145" rx="4" ry="2" fill="#7aa066" opacity=".45" transform="rotate(-45 85 145)"/>
+        <ellipse cx="240" cy="140" rx="4" ry="2" fill="#7aa066" opacity=".45" transform="rotate(40 240 140)"/>
+      </svg>
     </div>
     <div class="quote" style="width:100%">
       <p style="font-size:9px">{I['candle']} 뿌리 깊은 나무는 바람에 흔들리지 않는다 {I['plant']}</p>
@@ -517,95 +716,76 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['fire']} <b>몰입</b> — 좋아하면 에너지 급상승</li>
       </ul>
     </div>
+    <div class="card">
+      <h3>{I['clock']} 핵심 습관</h3>
+      <ul>
+        <li>{I['lamp']} 매일 아침 감사 · 목표 정리</li>
+        <li>{I['book']} AI와 대화하며 생각 구조화</li>
+        <li>{I['plant']} 걷기 · 운동으로 에너지 전환</li>
+        <li>{I['candle']} 하루 끝 3가지 성찰 기록</li>
+        <li>{I['bulb']} 새로운 것 하나는 꼭 배우기</li>
+        <li>{I['target']} 주간 점검으로 방향 재조정</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['compass']} 의사결정 스타일</h3>
+      <ul>
+        <li>{I['gear']} 데이터 + 직감 하이브리드</li>
+        <li>{I['bulb']} 핵심 질문으로 본질 파악</li>
+        <li>{I['rocket']} 작은 실험 → 빠른 피드백</li>
+        <li>{I['person']} 관계자 의견 충분히 청취</li>
+        <li>{I['shield']} 결정 후엔 끝까지 밀고 나감</li>
+        <li>{I['water']} 불확실할 때 멈추고 관찰</li>
+      </ul>
+    </div>
   </div>
-</div>
-
-<!-- 촛불 · 해바라기 · 무지개 SVG 트리오 -->
-<div style="display:flex;justify-content:center;gap:20px;padding:2px 0;align-items:center">
-  <!-- 촛불 -->
-  <svg width="60" height="40" viewBox="0 0 60 40">
-    <ellipse cx="30" cy="36" rx="18" ry="3" fill="rgba(196,145,90,.12)"/>
-    <rect x="27" y="20" width="6" height="16" rx="1.5" fill="#c4915a"/>
-    <ellipse cx="30" cy="15" rx="5" ry="8" fill="#e8a836" opacity=".6"/>
-    <ellipse cx="30" cy="13" rx="3" ry="5" fill="#f0c040"/>
-    <line x1="20" y1="12" x2="8" y2="6" stroke="#e8c36a" stroke-width=".6" opacity=".3"/>
-    <line x1="40" y1="12" x2="52" y2="6" stroke="#e8c36a" stroke-width=".6" opacity=".3"/>
-    <line x1="20" y1="18" x2="5" y2="22" stroke="#e8c36a" stroke-width=".5" opacity=".2"/>
-    <line x1="40" y1="18" x2="55" y2="22" stroke="#e8c36a" stroke-width=".5" opacity=".2"/>
-    <text x="14" y="38" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">丁火</text>
-  </svg>
-  <!-- 해바라기 -->
-  <svg width="60" height="40" viewBox="0 0 60 40">
-    <line x1="30" y1="40" x2="30" y2="22" stroke="#6b8e5a" stroke-width="2"/>
-    <line x1="30" y1="30" x2="20" y2="34" stroke="#6b8e5a" stroke-width="1.2"/>
-    <ellipse cx="20" cy="34" rx="4" ry="2" fill="#6b8e5a" opacity=".5"/>
-    <circle cx="30" cy="15" r="5" fill="#8b6a13"/>
-    <ellipse cx="30" cy="8" rx="3" ry="5" fill="#e8c36a" transform="rotate(0,30,15)"/>
-    <ellipse cx="37" cy="11" rx="3" ry="5" fill="#e8c36a" transform="rotate(50,37,11)"/>
-    <ellipse cx="37" cy="19" rx="3" ry="5" fill="#e8c36a" transform="rotate(100,37,19)"/>
-    <ellipse cx="30" cy="22" rx="3" ry="5" fill="#e8c36a" transform="rotate(0,30,22)"/>
-    <ellipse cx="23" cy="19" rx="3" ry="5" fill="#e8c36a" transform="rotate(-100,23,19)"/>
-    <ellipse cx="23" cy="11" rx="3" ry="5" fill="#e8c36a" transform="rotate(-50,23,11)"/>
-    <text x="14" y="38" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">성장</text>
-  </svg>
-  <!-- 무지개 -->
-  <svg width="80" height="40" viewBox="0 0 80 40">
-    <path d="M5 38 Q40 -5 75 38" fill="none" stroke="#e07a2f" stroke-width="2.5" opacity=".5"/>
-    <path d="M10 38 Q40 0 70 38" fill="none" stroke="#e8c36a" stroke-width="2.5" opacity=".5"/>
-    <path d="M15 38 Q40 5 65 38" fill="none" stroke="#6b8e5a" stroke-width="2.5" opacity=".5"/>
-    <path d="M20 38 Q40 10 60 38" fill="none" stroke="#5a9ec4" stroke-width="2.5" opacity=".5"/>
-    <path d="M25 38 Q40 15 55 38" fill="none" stroke="#7a6b8e" stroke-width="2.5" opacity=".5"/>
-    <circle cx="8" cy="36" r="3" fill="#e8c36a" opacity=".3"/>
-    <circle cx="72" cy="36" r="3" fill="#e8c36a" opacity=".3"/>
-    <text x="22" y="38" font-size="7" fill="#8a7a68" font-family="'Gaegu',cursive" font-weight="700">가능성</text>
-  </svg>
 </div>
 
 <div class="bottom">
   <div class="btm-card">
     <h4>{I['rocket']} 나를 움직이게 하는 것</h4>
     <ul>
-      <li>&middot; 복잡한 문제를 해결하는 쾌감</li>
-      <li>&middot; 배움을 실제 결과로 연결</li>
-      <li>&middot; AI와 협업으로 더 나은 결과</li>
-      <li>&middot; 지속적으로 성장하며 기여하는 것</li>
-      <li>&middot; 매일 한 뼘씩 앞으로 나아가는 것</li>
-      <li>&middot; 새로운 도전에서 배우는 기쁨</li>
+      <li>{I['bulb']} 복잡한 문제를 해결하는 쾌감</li>
+      <li>{I['star']} 배움을 실제 결과로 연결</li>
+      <li>{I['cpu']} AI와 협업으로 더 나은 결과</li>
+      <li>{I['heart']} 누군가에게 도움되는 도구</li>
+      <li>{I['fire']} 새로운 도전에서 오는 기쁨</li>
     </ul>
   </div>
   <div class="btm-card">
     <h4>{I['heart']} 미래에 이루고 싶은 것</h4>
     <ul>
-      <li>&middot; 독립적이고 주도적인 전문가</li>
-      <li>&middot; 스스로 판단하고 책임지며</li>
-      <li>&middot; 끝까지 결과를 만들어낸다</li>
-      <li>&middot; 사람을 소중히 여기는 관계 중심</li>
-      <li>&middot; 다음 세대를 위한 교육 멘토</li>
+      <li>{I['target']} 독립적·주도적 전문가</li>
+      <li>{I['shield']} 스스로 판단하고 책임짐</li>
+      <li>{I['book']} 다음 세대 위한 교육 멘토</li>
+      <li>{I['compass']} AI 시대 방향 제시자</li>
+      <li>{I['star']} 선한 영향력 확장</li>
     </ul>
   </div>
   <div class="btm-card">
     <h4>{I['plant']} 나의 가능성</h4>
     <ul>
-      <li>&middot; 어둠을 밝히는 지혜</li>
-      <li>&middot; 분석력+실행력 전문가</li>
-      <li>&middot; 기술과 감성의 융합력</li>
-      <li>&middot; 멘토로 사람을 성장시키는 힘</li>
-      <li>&middot; 데이터 기반 의사결정의 힘</li>
-      <li>&middot; 전체 시스템을 조율하는 능력</li>
+      <li>{I['candle']} 어둠을 밝히는 지혜</li>
+      <li>{I['gear']} 분석력+실행력 전문가</li>
+      <li>{I['heart']} 기술과 감성의 융합력</li>
+      <li>{I['person']} 멘토로 사람을 성장시킴</li>
+      <li>{I['mountain']} 위기에서 더 강해지는 힘</li>
     </ul>
   </div>
   <div class="btm-card">
     <h4>{I['check']} 인생 체크리스트</h4>
     <ul>
-      <li>&middot; 전문성 강화</li>
-      <li>&middot; 건강 관리</li>
-      <li>&middot; 영향력 확장</li>
-      <li>&middot; 역할 수행</li>
-      <li>&middot; 가족과 시간</li>
-      <li>&middot; 겸손하되 꾸준히</li>
+      <li>{I['target']} 전문성 강화 — 매일 깊이</li>
+      <li>{I['heart']} 건강 관리 — 몸과 마음</li>
+      <li>{I['rocket']} 영향력 확장 — 더 넓게</li>
+      <li>{I['person']} 가족과 시간 — 소중히</li>
+      <li>{I['lamp']} 배움의 불꽃을 나누기</li>
     </ul>
   </div>
 </div>
+<!-- 코너 데코 SVG (식물·촛불·별) -->
+<svg style="position:fixed;bottom:2px;left:4px;opacity:.4" width="40" height="35" viewBox="0 0 40 35"><rect x="14" y="22" width="12" height="12" rx="2" fill="#c4915a" opacity=".3"/><path d="M20 22c-3-8 0-18 0-18s3 10 0 18" fill="#6b8e5a" opacity=".6"/><ellipse cx="14" cy="16" rx="6" ry="4" fill="#6b8e5a" opacity=".3" transform="rotate(-30,14,16)"/><ellipse cx="26" cy="14" rx="6" ry="4" fill="#6b8e5a" opacity=".3" transform="rotate(30,26,14)"/></svg>
+<svg style="position:fixed;bottom:2px;right:4px;opacity:.4" width="40" height="35" viewBox="0 0 40 35"><rect x="14" y="22" width="12" height="12" rx="2" fill="#8b7355" opacity=".3"/><path d="M20 22c-3-8 0-18 0-18s3 10 0 18" fill="#6b8e5a" opacity=".5"/><circle cx="20" cy="5" r="3" fill="#e8c36a" opacity=".4"/><ellipse cx="12" cy="18" rx="5" ry="3" fill="#6b8e5a" opacity=".3" transform="rotate(-40,12,18)"/><ellipse cx="28" cy="16" rx="5" ry="3" fill="#6b8e5a" opacity=".3" transform="rotate(40,28,16)"/></svg>
 
 </body></html>'''
 
@@ -621,16 +801,16 @@ print("Rendering with Playwright...")
 with sync_playwright() as pw:
     br = pw.chromium.launch()
 
-    # orch-promo
-    pg = br.new_page(viewport={"width":850,"height":1100})
+    # orch-promo — viewport = body (850x1100), scale=4 → output 3400x4400 (sharp, no padding)
+    pg = br.new_page(viewport={"width":850,"height":1100}, device_scale_factor=4)
     pg.goto((DIR / "orch-promo.html").as_uri())
     pg.wait_for_timeout(3000)
     pg.screenshot(path=str(DIR / "orch-promo.jpg"), full_page=False, type="jpeg", quality=95)
     print("  orch-promo.jpg OK")
     pg.close()
 
-    # ssj-summary
-    pg = br.new_page(viewport={"width":850,"height":1100})
+    # ssj-summary (body 990×1320 ratio 1.333 = target 1.332, exact fit no pad)
+    pg = br.new_page(viewport={"width":990,"height":1320}, device_scale_factor=2)
     pg.goto((DIR / "ssj-infographic.html").as_uri())
     pg.wait_for_timeout(3000)
     pg.screenshot(path=str(DIR / "ssj-summary.jpg"), full_page=False, type="jpeg", quality=95)
@@ -638,5 +818,29 @@ with sync_playwright() as pw:
     pg.close()
 
     br.close()
+
+# Post-process: resize ssj-summary.jpg to target 1320×1758 preserving aspect (pad with bg)
+from PIL import Image
+ssj_path = DIR / "ssj-summary.jpg"
+img = Image.open(ssj_path)
+print(f"  pre-resize: {img.size}  ratio={img.size[1]/img.size[0]:.3f}")
+TGT_W, TGT_H = 1320, 1758
+src_ratio = img.size[1] / img.size[0]
+tgt_ratio = TGT_H / TGT_W  # 1.332
+if abs(src_ratio - tgt_ratio) < 0.01:
+    img2 = img.resize((TGT_W, TGT_H), Image.LANCZOS)
+else:
+    # aspect-preserving fit + pad with bg color
+    src_w, src_h = img.size
+    if src_ratio > tgt_ratio:  # source taller than target -> fit by height
+        new_h = TGT_H; new_w = int(src_w * TGT_H / src_h)
+    else:  # source wider/shorter -> fit by width
+        new_w = TGT_W; new_h = int(src_h * TGT_W / src_w)
+    resized = img.resize((new_w, new_h), Image.LANCZOS)
+    canvas = Image.new('RGB', (TGT_W, TGT_H), (245, 239, 230))
+    canvas.paste(resized, ((TGT_W - new_w) // 2, (TGT_H - new_h) // 2))
+    img2 = canvas
+img2.save(ssj_path, "JPEG", quality=95)
+print(f"  post-resize: {img2.size} -> target 1320x1758 OK")
 
 print("Done: orch-promo.jpg + ssj-summary.jpg")

@@ -16,20 +16,136 @@ else
   CMD="$(echo "$INPUT" | grep -oE '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/')"
 fi
 
-# generate-*-ppt.py 패턴 매칭 (자동화·team·plugins·final 모두)
-if ! echo "$CMD" | grep -qE 'generate-([a-z]+-)?ppt\.py'; then
+# 산출물 빌드 패턴 매칭 (확장: build-*-doc / build-*-diagrams / generate-*-ppt / render-* / pdf)
+# render-ssj.py 같은 직접 렌더 스크립트도 포함
+if ! echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(ppt|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py|render-[a-z-]+\.py'; then
   exit 0
 fi
 
-# 프로젝트 루트 (.claude/hooks/ 의 부모의 부모)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-VERIFY_SCRIPT="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
 
-if [ ! -f "$VERIFY_SCRIPT" ]; then
-  echo '{"systemMessage": "[hook-09] verify-ppt-overflow.py not found — skipping OCR verify"}' >&2
+# PPT 검증
+VERIFY_PPT="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
+# 일반 이미지 fit 검증 (PNG 비율 vs 페이지 비율)
+VERIFY_FIT="$PROJECT_ROOT/.claude/scripts/verify-image-fit.py"
+
+if [ -f "$VERIFY_FIT" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py'; then
+  FIT_RESULT="$(python "$VERIFY_FIT" 2>&1 || true)"
+  if echo "$FIT_RESULT" | grep -q 'FAIL'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 fit] 이미지 fit 검증 실패:\n$FIT_RESULT"}
+EOF
+  fi
+fi
+
+# PNG 흰 여백 자동 검출 — build-*-diagrams 또는 build-*-doc 호출 시
+VERIFY_WS="$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py"
+if [ -f "$VERIFY_WS" ] && echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(diagrams|doc|html)\.py|render-[a-z-]+\.py'; then
+  # render-*.py 는 출력 디렉토리 자동 감지 (스크립트와 같은 폴더의 *.jpg/*.png)
+  RENDER_DIR="$(echo "$CMD" | grep -oE '[^ ]*render-[a-z-]+\.py' | head -1 | xargs dirname 2>/dev/null || echo '')"
+  [ -z "$RENDER_DIR" ] && RENDER_DIR="$PROJECT_ROOT/docs/screens/arch-kor"
+  WS_RESULT="$(python "$VERIFY_WS" "$RENDER_DIR" 2>&1 || true)"
+  if echo "$WS_RESULT" | grep -q 'WARN'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 whitespace] PNG 흰 여백 감지 (≥5%) — 사용자 'docx 안 이미지 여백' 호소 방지:\n$WS_RESULT"}
+EOF
+  fi
+fi
+
+# docx 구조 검증 (paragraph 기반 — 빠른 1차) — build-*-doc.py 호출 시
+VERIFY_DOCX="$PROJECT_ROOT/.claude/scripts/verify-docx-structure.py"
+if [ -f "$VERIFY_DOCX" ] && echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then
+  DOCX_RESULT="$(python "$VERIFY_DOCX" 2>&1 || true)"
+  if echo "$DOCX_RESULT" | grep -q 'FAIL'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 docx-structure] paragraph 구조 검증 실패:\n$DOCX_RESULT"}
+EOF
+  fi
+fi
+
+# docx 실제 페이지 검증 (Word COM — 진짜 빈 페이지·자투리 검출) — build-*-doc.py 호출 시
+VERIFY_DOCX_PAGES="$PROJECT_ROOT/.claude/scripts/verify-docx-pages.py"
+VERIFY_DOCX_VISUAL="$PROJECT_ROOT/.claude/scripts/verify-docx-visual.py"
+if echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then
+  for docx in "$PROJECT_ROOT"/docs/*.docx "$PROJECT_ROOT"/docs/lecture/*.docx; do
+    [ -f "$docx" ] || continue
+    DOCX_BASE="$(basename "$docx")"
+    # 1차: paragraph 페이지 검증
+    if [ -f "$VERIFY_DOCX_PAGES" ]; then
+      PAGES_RESULT="$(python "$VERIFY_DOCX_PAGES" "$docx" 2>&1 || true)"
+      if echo "$PAGES_RESULT" | grep -q 'FAIL'; then
+        cat <<EOF
+{"systemMessage": "[hook-09 docx-pages] 빈 페이지 검출:\n$PAGES_RESULT"}
+EOF
+      fi
+    fi
+    # 2차: docx → PDF → PNG visual export — Claude 가 Read tool 로 시각 확인 의무
+    if [ -f "$VERIFY_DOCX_VISUAL" ]; then
+      python "$VERIFY_DOCX_VISUAL" "$docx" "1,4,6,10,15,20" >/dev/null 2>&1 || true
+      VISUAL_DIR="$(dirname "$docx")/_visual"
+      if [ -d "$VISUAL_DIR" ]; then
+        VISUAL_PNGS="$(ls "$VISUAL_DIR"/page-*.png 2>/dev/null | head -6 | sed 's|.*|  - &|')"
+        cat <<EOF
+{"systemMessage": "[hook-09 docx-visual] docx 빌드 완료. 산출물 실제 출력 확인 의무 — Read tool 로 다음 PNG 시각 확인:\n$VISUAL_PNGS\n\n검증 항목: 이미지 잘림 / 글씨 가독성 (>=11pt) / 빈 공간 / 페이지 fit. PNG OCR 만 보지 말고 docx 안 실제 출력 봐야 함."}
+EOF
+      fi
+    fi
+  done
+fi
+
+# render-*.py / build-*.py / generate-*.py 전수검사 의무 알림 + 자동 coverage 검출
+VERIFY_COVERAGE="$PROJECT_ROOT/.claude/scripts/verify-render-coverage.py"
+if echo "$CMD" | grep -qE '(render|build|generate)-[a-z-]+\.py'; then
+  # 스크립트 경로 추출 (render/build/generate 어느 패턴이든)
+  SCRIPT_PATH="$(echo "$CMD" | grep -oE '[^ ]*(render|build|generate)-[a-z-]+\.py' | head -1)"
+  RENDER_SCRIPT_DIR="$(dirname "$SCRIPT_PATH" 2>/dev/null || echo '.')"
+  # 절대 경로 변환
+  if [ -d "$RENDER_SCRIPT_DIR" ]; then
+    RENDER_SCRIPT_DIR="$(cd "$RENDER_SCRIPT_DIR" && pwd)"
+  fi
+
+  # 자동 coverage 실행 — 빈 박스 검출
+  if [ -f "$VERIFY_COVERAGE" ] && [ -d "$RENDER_SCRIPT_DIR" ]; then
+    COV_RESULT="$(PYTHONIOENCODING=utf-8 python "$VERIFY_COVERAGE" "$RENDER_SCRIPT_DIR" 2>&1 || true)"
+    if echo "$COV_RESULT" | grep -q '\[WARN\]'; then
+      # 자동 생성된 crop PNG 경로 추출
+      CROP_PATHS="$(echo "$COV_RESULT" | grep -oE 'crop → [^[:space:]]+' | sed 's|crop → ||' | sed 's|.*|  - &|' | head -10)"
+      cat <<EOF
+{"systemMessage": "[hook-09 coverage] 렌더링 후 **콘텐츠 밀도 부족 영역** 자동 검출 (verify-render-coverage.py):\n\n$COV_RESULT\n\n→ 위 crop PNG 들을 Read tool 로 **반드시 시각 확인**.\n→ 진짜 빈 영역이면 콘텐츠 추가 (SVG·미니카드·아이콘·키워드).\n→ Read 안 하고 보고 = 전수조사 위반.\n\ncrop 파일:\n$CROP_PATHS"}
+EOF
+    fi
+  fi
+
+  # 전체 렌더링 결과물 목록 (검수 의무 알림)
+  RENDER_JPGS="$(ls "$RENDER_SCRIPT_DIR"/*.jpg "$RENDER_SCRIPT_DIR"/*.png 2>/dev/null | grep -v '/_' | head -10 | sed 's|.*|  - &|')"
+  if [ -n "$RENDER_JPGS" ] && ! echo "$COV_RESULT" | grep -q '\[WARN\]'; then
+    cat <<EOF
+{"systemMessage": "[hook-09 render] coverage PASS — 전수검사 의무:\n1. Read tool 로 출력 이미지 시각 검사\n2. crop 검증된 빈 영역 외 추가 점검\n3. 발견 시 콘텐츠 추가\n\n검사 대상:\n$RENDER_JPGS"}
+EOF
+  fi
+fi
+
+# pptx visual 검증 — build-*-ppt.py / build-*-pptx.py
+VERIFY_PPT_VISUAL="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
+if echo "$CMD" | grep -qE 'build-[a-z-]+-(ppt|pptx)\.py|generate-[a-z-]+-ppt\.py'; then
+  cat <<EOF
+{"systemMessage": "[hook-09 pptx] pptx 빌드 감지. 산출물 실제 출력 확인 의무 — verify-ppt-overflow.py 결과 + 슬라이드 PNG export → Read tool 로 시각 확인. PNG OCR ≠ pptx 안 실제 출력."}
+EOF
+fi
+
+# Frontend 회귀 검증 — build-*-html / build-*-frontend / npm.*run.*(build|dev)
+VERIFY_FRONTEND="$PROJECT_ROOT/.claude/scripts/verify-frontend.py"
+if [ -f "$VERIFY_FRONTEND" ] && echo "$CMD" | grep -qE 'build-[a-z-]+-(html|frontend)\.py|npm[[:space:]]+run[[:space:]]+(build|dev)'; then
+  cat <<EOF
+{"systemMessage": "[hook-09 frontend] frontend 빌드 감지. verify-frontend.py 로 console error / pageerror / 4xx-5xx 자동 검증 권장:\n  python .claude/scripts/verify-frontend.py --dir <html-root>\n  python .claude/scripts/verify-frontend.py http://localhost:3000"}
+EOF
+fi
+
+if [ ! -f "$VERIFY_PPT" ]; then
   exit 0
 fi
+VERIFY_SCRIPT="$VERIFY_PPT"
 
 # 검증 실행
 RESULT="$(python "$VERIFY_SCRIPT" 2>&1 || true)"
@@ -43,6 +159,40 @@ if echo "$RESULT" | grep -q '\[!\]'; then
   "systemMessage": "[hook-09 OCR Verify] PPT 렌더 후 잘림 의심 슬라이드 발견 — Read tool 로 직접 OCR 검증 권장:\n${SUSPECTS}\n\noverflow-report.md 참조"
 }
 EOF
+fi
+
+# ★1 RAG index 자동 재빌드 — feedback/rule/skill md 변경 시
+if echo "$CMD" | grep -qE '(Write|Edit).*(memory/feedback_|\.claude/rules/|plugins/.*/skills/|CLAUDE\.md)'; then
+  RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
+  if [ -f "$RAG_SCRIPT" ]; then
+    (PYTHONIOENCODING=utf-8 python "$RAG_SCRIPT" --build >/dev/null 2>&1) &
+  fi
+fi
+
+# ★2 Decision pattern alarm — 같은 키워드 1h 내 3회+ → systemMessage
+ALARM_DB="$PROJECT_ROOT/.claude/state/orca.db"
+if [ -f "$ALARM_DB" ]; then
+  ALARMS="$(PYTHONIOENCODING=utf-8 python -c "
+import sqlite3
+from pathlib import Path
+from datetime import datetime, timedelta
+db = Path(r'$ALARM_DB')
+conn = sqlite3.connect(str(db))
+try:
+    cutoff = (datetime.utcnow() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
+    cur = conn.execute(\"SELECT keywords, COUNT(*) FROM decisions WHERE ts >= ? AND keywords != '' GROUP BY keywords HAVING COUNT(*) >= 3 LIMIT 3\", (cutoff,))
+    for row in cur.fetchall():
+        print(f'{row[0]}={row[1]}회')
+except Exception:
+    pass
+conn.close()
+" 2>/dev/null)"
+  if [ -n "$ALARMS" ]; then
+    ALARMS_FMT="$(echo "$ALARMS" | tr '\n' ' ')"
+    cat <<EOF
+{"systemMessage": "⚠ [Decision Alarm] 같은 패턴 1시간 내 3회+: ${ALARMS_FMT}— 근본 원인 점검 필요"}
+EOF
+  fi
 fi
 
 exit 0
