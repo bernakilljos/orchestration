@@ -219,17 +219,18 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <div style="font-size:11px;color:#8b4513;font-family:serif">Multi-AI Orchestration Kit</div>
       <div class="inf">Claude + Codex + Gemini \u00b7 \uc124\uacc4\u2192\uad6c\ud604\u2192\uac80\uc99d \uc790\ub3d9\ud654</div>
     </div>
-    <div class="stats">
-      <div class="stat"><div class="n">31</div><div class="l">\ud50c\ub7ec\uadf8\uc778<br><span style="font-size:7px">stable</span></div></div>
-      <div class="stat"><div class="n">49</div><div class="l">\uc0b0\uc5c5\ubcc4<br><span style="font-size:7px">\ub808\ud37c\ub7f0\uc2a4</span></div></div>
-      <div class="stat"><div class="n">165</div><div class="l">\ucee4\ub9e8\ub4dc<br><span style="font-size:7px">/slash</span></div></div>
-      <div class="stat"><div class="n">87</div><div class="l">\uc2a4\ud0ac<br><span style="font-size:7px">\uc790\ub3d9 \ud65c\uc131</span></div></div>
-      <div class="stat"><div class="n">92</div><div class="l">\uc2a4\ud06c\ub9bd\ud2b8<br><span style="font-size:7px">\uc790\ub3d9\ud654</span></div></div>
-      <div class="stat"><div class="n">28</div><div class="l">\ud6c5<br><span style="font-size:7px">Pre/Post</span></div></div>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+      <div class="stat"><div class="l" style="font-size:9px;font-weight:700;color:#8b4513">\ub098\uc758 \ud3c9\uc810</div><div style="font-size:10px;color:#8b4513;line-height:1.4">\uc124\uacc4 5/5<br>\uad6c\ud604 4/5<br>\ud488\uc9c8 5/5</div></div>
+      <div class="stat"><div class="l" style="font-size:9px;font-weight:700;color:#8b4513">\uc790\uac00 \uac00\uce58</div><div style="font-size:9px;color:#5a4f42;line-height:1.4">\uc790\ub3d9\ud654\ub85c<br>\ubaa8\ub450\uc758 \uc2dc\uac04<br>\ub418\ucc3e\uae30</div></div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:3px;width:100%;margin-top:3px">
-      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">23K+</div><div class="l">\ucf54\ub4dc \ub77c\uc778</div></div>
-      <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">4 AI</div><div class="l">Claude\u00b7Codex\u00b7Gemini\u00b7Haiku</div></div>
+    <div class="card" style="padding:6px 8px;margin-top:3px">
+      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['bulb']} \ub0b4\uac00 \uc798\ud558\ub294 \uac83</h3>
+      <div style="font-size:9px;color:#5a4f42;line-height:1.5">
+        \u00b7 \ubcf5\uc7a1\ud55c \ubb38\uc81c\ub97c \ub2e8\uc21c\ud558\uac8c \uad6c\uc870\ud654<br>
+        \u00b7 AI \uc640 \ud611\uc5c5\ud574 \ub354 \ub098\uc740 \uacb0\uacfc<br>
+        \u00b7 \ub3c4\uba54\uc778 \ud1b5\ucc30\uacfc \uae30\uc220 \uacb0\ud569<br>
+        \u00b7 \ub05d\uae4c\uc9c0 \uac80\uc99d\ud558\ub294 \ucc45\uc784\uac10
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:4px">
       <div class="card" style="padding:3px 4px">
