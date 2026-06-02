@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>ITCEN CORE × Llama 4 — 300 신상품 카탈로그</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'맑은 고딕','Malgun Gothic',-apple-system,sans-serif;background:#F5F5F0;padding:24px;line-height:1.6;font-size:13px}
+  .hero{background:linear-gradient(135deg,#0D2A4D,#1565C0);color:#fff;padding:28px 36px;border-radius:14px;margin-bottom:24px;box-shadow:0 6px 18px rgba(13,42,77,.2)}
+  .hero h1{font-size:28px;margin-bottom:6px}
+  .hero h2{font-size:15px;opacity:.92;margin-bottom:12px}
+  .hero .msg{background:rgba(255,255,255,.15);padding:12px 16px;border-radius:8px;font-size:13.5px;line-height:1.7}
+  .hero .msg strong{color:#FFC107}
+
+  .nav{position:fixed;top:20px;right:20px;background:#fff;border-radius:10px;padding:12px;box-shadow:0 3px 10px rgba(0,0,0,.15);font-size:11px;max-height:85vh;overflow-y:auto;border:1px solid #DDD;z-index:100;width:220px}
+  .nav strong{display:block;margin-bottom:6px;color:#0D47A1}
+  .nav a:hover{background:#E3F2FD}
+
+  .area{background:#fff;border-radius:12px;padding:22px 26px;margin-bottom:22px;box-shadow:0 3px 10px rgba(0,0,0,.06);border-left:8px solid #0D47A1}
+  .area-head{padding:14px 20px;border-radius:10px;margin:-22px -26px 16px;color:#fff;display:flex;align-items:center;gap:14px}
+  .area-emoji{font-size:36px;flex-shrink:0;background:#fff;width:60px;height:60px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+  .area-name{font-size:20px;font-weight:700}
+  .area-old{font-size:12px;opacity:.95;margin-top:2px}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .card{background:#FAFBFC;border:1px solid #E0E0E0;border-left:4px solid #0D47A1;border-radius:8px;padding:12px 14px}
+  .card-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .card-num{background:#0D47A1;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-weight:700;font-size:12px;flex-shrink:0}
+  .card-name{font-weight:700;color:#0D47A1;font-size:13.5px}
+  .card-tech{font-size:11px;color:#7B1FA2;margin-bottom:4px;font-weight:600}
+  .card-what{font-size:11.5px;color:#444;line-height:1.65;margin-bottom:5px}
+  .card-how{background:#FFF8E1;border-left:3px solid #FFA000;padding:5px 9px;border-radius:4px;font-size:10.5px;color:#5D4037;line-height:1.55;margin-bottom:5px}
+  .card-how strong{color:#E65100}
+  .card-infra{background:#E3F2FD;border-left:3px solid #1976D2;padding:5px 9px;border-radius:4px;font-size:10.5px;color:#0D47A1;margin-bottom:5px}
+  .card-infra strong{color:#0D47A1}
+  .card-meta{font-size:10.5px;color:#666;display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;padding-top:5px;border-top:1px dashed #E0E0E0}
+  .card-meta .lbl{font-weight:700;color:#1565C0}
+  .card-meta .rev{background:#E8F5E9;color:#1B5E20;padding:1px 8px;border-radius:6px;font-weight:700}
+
+  .footer{text-align:center;margin-top:30px;padding:20px;color:#888;font-size:11.5px;border-top:1px solid #DDD;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <strong>📋 300 신상품 목차 (30 영역)</strong>
+  <a href="#area1" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">📒 1. 내부회계 (MicroICM-C 1위)</a>
+  <a href="#area2" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">⚖️ 2. CCP 준법경영 (EPM·Compliance 1위)</a>
+  <a href="#area3" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🏗️ 3. 건설 ERP (국내 1위)</a>
+  <a href="#area4" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🎰 4. 카지노 VMS (9社 독점)</a>
+  <a href="#area5" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🏦 5. 금융 VMS</a>
+  <a href="#area6" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">📹 6. AI 지능형 CCTV</a>
+  <a href="#area7" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🌐 7. 디지털 트윈</a>
+  <a href="#area8" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">⚙️ 8. ITO (IT 아웃소싱)</a>
+  <a href="#area9" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🌱 9. ESG·GRC</a>
+  <a href="#area10" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🚨 10. 부서 IP (신규 한국 표준)</a>
+  <a href="#area11" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🏛️ 11. 공공·전자정부 (ENTEC 협업)</a>
+  <a href="#area12" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">☁️ 12. 클라우드 네이티브 (CTS·CLOIT 협업)</a>
+  <a href="#area13" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🛡️ 13. 사이버보안 (PNS 협업)</a>
+  <a href="#area14" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">📊 14. 데이터·AI 거버넌스</a>
+  <a href="#area15" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🏥 15. 의료·헬스케어</a>
+  <a href="#area16" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">📚 16. 교육·이러닝</a>
+  <a href="#area17" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🛒 17. 유통·이커머스</a>
+  <a href="#area18" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🏭 18. 제조 SI</a>
+  <a href="#area19" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🚛 19. 물류·SCM</a>
+  <a href="#area20" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🎬 20. 미디어·콘텐츠</a>
+  <a href="#area21" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🌾 21. 농업·스마트팜</a>
+  <a href="#area22" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">⚡ 22. 에너지·SMR</a>
+  <a href="#area23" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🚗 23. 자율주행·모빌리티</a>
+  <a href="#area24" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🚀 24. 우주·항공</a>
+  <a href="#area25" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🧪 25. 신소재·반도체</a>
+  <a href="#area26" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🧬 26. 바이오·신약</a>
+  <a href="#area27" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🛡️ 27. K-방산</a>
+  <a href="#area28" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">⚛️ 28. 양자컴퓨팅 응용</a>
+  <a href="#area29" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🤖 29. 휴머노이드·로봇</a>
+  <a href="#area30" style="display:block;color:#0D47A1;padding:2px 6px;font-size:10.5px">🌟 30. 합성데이터·신영역</a>
+</div>
+
+<div class="hero">
+  <h1>🎯 ITCEN CORE × Llama 4 — 300 신상품 카탈로그</h1>
+  <h2>30 영역 × 각 10 신상품 = 300 사업 아이디어 · 모든 LLM 부분 Llama 4 자체 운영</h2>
+  <div class="msg">
+    <strong>📌 형식:</strong> 각 신상품 = 신기술 + 무엇 + <strong>어떻게</strong> + <strong>인프라</strong> + 대상 + 매출<br>
+    <strong style="color:#FFC107">⭐ LLM 모두 Llama 4 (오픈소스·자체 운영)</strong> — API 비용 0·데이터 유출 X·한국 도메인 LoRA 자유<br>
+    <strong style="color:#FFC107">💻 자체 인프라:</strong> Mac Studio M3 Ultra 512GB Unified Memory (약 1,500만원/대) — Llama 4 70B 양자화 운영. 작은 PoC=1대, 중간=2-3대, 대규모=5대+ NVIDIA Cluster 보조<br>
+    행동위험분석 외 ITCEN CORE 사업 영역 + 신영역 30개 모두 cover. 총 300 신상품.
+  </div>
+</div>
+
+
+<div class="area" id="area1" style="border-left-color:#1976D2">
+  <div class="area-head" style="background:linear-gradient(90deg,#1976D2,#1976D2AA)">
+    <div class="area-emoji">📒</div>
+    <div class="area-info"><div class="area-name">1. 내부회계 (MicroICM-C 1위)</div><div class="area-old">국내 1위 · 156 RCM · 현대·LX·하림 등 보유</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">1</div><div class="card-name">MicroICM-Reasoning</div></div>
+      <div class="card-tech">🦙 Llama 4 + Reasoning</div>
+      <div class="card-what">📋 분식·횡령 사고 과정 자동 추론·감사보고서 생성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + RCM 매핑 LoRA · 보고서 템플릿</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 (1.5천만)</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대 계열사 1000+</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">2</div><div class="card-name">MicroICM-Causal</div></div>
+      <div class="card-tech">🦙 DoWhy 인과 추론</div>
+      <div class="card-what">📋 분식의 진짜 원인 (감독·시스템·의도) 자동 식별</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> DoWhy OSS + 인과 그래프 자체 구축</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공 GRC</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">3</div><div class="card-name">MicroICM-Critique</div></div>
+      <div class="card-tech">🦙 Llama 4 ×2 검증</div>
+      <div class="card-what">📋 156 통제 1차→2차 검토 합의·거짓양성 50%↓</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 ×2 hook·confidence < 0.7 재시도</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 기존 고객</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">4</div><div class="card-name">MicroICM-Graph</div></div>
+      <div class="card-tech">🦙 GraphRAG (Neo4j)</div>
+      <div class="card-what">📋 결재-거래-회계 그래프 다중 hop 횡령 추적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j 무료 + Llama 4 entity 추출</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·금융</span><span class="rev">1社 3-7억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">5</div><div class="card-name">MicroICM-Quantum</div></div>
+      <div class="card-tech">🦙 IBM Quantum ML</div>
+      <div class="card-what">📋 거래 양자 최적화 부정탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum Network 무료 + Qiskit</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum (Cloud)</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융권</span><span class="rev">1社 5억+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">6</div><div class="card-name">MicroICM-Synthetic</div></div>
+      <div class="card-tech">🦙 Gretel 합성데이터</div>
+      <div class="card-what">📋 부정 사례 합성 100만건·개인정보 0</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Gretel 무료 tier + 자체 generator</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금감원 의무사</span><span class="rev">컨설팅</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">7</div><div class="card-name">MicroICM-Voice</div></div>
+      <div class="card-tech">🦙 Llama 4 Voice</div>
+      <div class="card-what">📋 "분식 의심 보여줘" 음성 질의·답변</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Whisper STT + TTS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>경영진·임원</span><span class="rev">월 50만/사용자</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">8</div><div class="card-name">MicroICM-Vision</div></div>
+      <div class="card-tech">🦙 Llama 4 Vision</div>
+      <div class="card-what">📋 영수증·송장 OCR + 자동 회계 입력</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Multimodal + 회계 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>중견기업</span><span class="rev">1社 1-2억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">9</div><div class="card-name">MicroICM-Federated</div></div>
+      <div class="card-tech">🦙 Flower OSS</div>
+      <div class="card-what">📋 여러 그룹사 데이터 안 모으고 학습</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Flower 무료 + 각 사 자체 서버</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 각 사 1대씩</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>그룹사·컨소시엄</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">10</div><div class="card-name">MicroICM-Agent</div></div>
+      <div class="card-tech">🦙 Llama 4 + Agentic</div>
+      <div class="card-what">📋 AI 자율 감사 봇·24/7 모니터·보고</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + LangGraph + MicroICM 통합</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 그룹</span><span class="rev">월 1000-3000만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area2" style="border-left-color:#7B1FA2">
+  <div class="area-head" style="background:linear-gradient(90deg,#7B1FA2,#7B1FA2AA)">
+    <div class="area-emoji">⚖️</div>
+    <div class="area-info"><div class="area-name">2. CCP 준법경영 (EPM·Compliance 1위)</div><div class="area-old">EPM·Compliance 1위 · ISO 42001 base</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">11</div><div class="card-name">MicroCCP-LLM</div></div>
+      <div class="card-tech">🦙 Llama 4 + 도메인 LoRA</div>
+      <div class="card-what">📋 한국 법규·사규 특화 LLM·회사별 fine-tune</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 법규 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>1000+ CCP 사</span><span class="rev">1社 5천만-2억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">12</div><div class="card-name">MicroCCP-GraphRAG</div></div>
+      <div class="card-tech">🦙 GraphRAG</div>
+      <div class="card-what">📋 사규·법규·판례·위반사례 그래프</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Microsoft GraphRAG OSS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 3-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">13</div><div class="card-name">MicroCCP-Constitutional</div></div>
+      <div class="card-tech">🦙 Constitutional AI</div>
+      <div class="card-what">📋 사규를 헌법으로 박고 AI 자동 준수</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> failure-mode.md 패턴 + PreToolUse hook</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">1社 2-4억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">14</div><div class="card-name">MicroCCP-Watcher</div></div>
+      <div class="card-tech">🦙 AI Search</div>
+      <div class="card-what">📋 법규 변경 24/7 자동 추적·영향 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 RSS + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·금융</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">15</div><div class="card-name">MicroCCP-Contract</div></div>
+      <div class="card-tech">🦙 Llama 4 Scout (1M)</div>
+      <div class="card-what">📋 계약서 전문 단일 분석·위험 조항 발견</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout 1M context</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>법무팀·임원실</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">16</div><div class="card-name">MicroCCP-Whistle</div></div>
+      <div class="card-tech">🦙 Multi-Agent + Privacy</div>
+      <div class="card-what">📋 제보 익명화·다중 AI 검토</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 ×3 + 차등프라이버시</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">17</div><div class="card-name">MicroCCP-AML</div></div>
+      <div class="card-tech">🦙 GraphRAG + Causal</div>
+      <div class="card-what">📋 자금세탁 다중 hop 자동 추적·금감원 보고</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + DoWhy + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융 의무</span><span class="rev">1社 5-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">18</div><div class="card-name">MicroCCP-Sanction</div></div>
+      <div class="card-tech">🦙 Generative AI</div>
+      <div class="card-what">📋 OFAC·UN 제재 자동 스크리닝·보고서</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 제재 DB 통합</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행·증권·카드</span><span class="rev">월 500만~</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">19</div><div class="card-name">MicroCCP-EU</div></div>
+      <div class="card-tech">🦙 Mech Interpretability</div>
+      <div class="card-what">📋 EU AI Act 의무 — AI 결정 설명·인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> SAE 도구 + Captum (PyTorch)</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>EU 수출 기업</span><span class="rev">1社 3-8억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">20</div><div class="card-name">MicroCCP-Audit</div></div>
+      <div class="card-tech">🦙 Llama 4 + Computer Use</div>
+      <div class="card-what">📋 자율 컴플라이언스 점검·증거 수집</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Computer Use + RPA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·공공</span><span class="rev">월 500-1500만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area3" style="border-left-color:#E64A19">
+  <div class="area-head" style="background:linear-gradient(90deg,#E64A19,#E64A19AA)">
+    <div class="area-emoji">🏗️</div>
+    <div class="area-info"><div class="area-name">3. 건설 ERP (국내 1위)</div><div class="area-old">건설업 표준 · 중대재해법 의무</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">21</div><div class="card-name">SmartConstruct-Cosmos</div></div>
+      <div class="card-tech">🦙 NVIDIA Cosmos</div>
+      <div class="card-what">📋 가상 시공 시뮬·사고·붕괴 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA Cosmos Free Research</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + NVIDIA GPU 1</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>50인+ 건설사</span><span class="rev">1社 5천만-2억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">22</div><div class="card-name">SmartConstruct-VLA</div></div>
+      <div class="card-tech">🦙 OpenVLA + AI CCTV</div>
+      <div class="card-what">📋 작업자 자세·위험행동·PPE 미착용 감지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + Edge AI</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Edge</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>1만+ 건설사</span><span class="rev">월 50-200만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">23</div><div class="card-name">SmartConstruct-AR</div></div>
+      <div class="card-tech">🦙 AR 디지털트윈</div>
+      <div class="card-what">📋 스마트글래스 현장 가이드</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Vision Pro + Unity</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Vision Pro 10대 (5천만)</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>중대형 건설사</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">24</div><div class="card-name">SmartConstruct-Drone</div></div>
+      <div class="card-tech">🦙 AI 보안 드론</div>
+      <div class="card-what">📋 대형 현장 자율 순찰</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Skydio + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Skydio</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대규모 현장</span><span class="rev">1현장 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">25</div><div class="card-name">SmartConstruct-LiDAR</div></div>
+      <div class="card-tech">🦙 LiDAR 3D</div>
+      <div class="card-what">📋 주간 3D 스캔·BIM 자동 업데이트</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Velodyne + Open3D</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + LiDAR</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대형 건설사</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">26</div><div class="card-name">SmartConstruct-Causal</div></div>
+      <div class="card-tech">🦙 DoWhy 인과</div>
+      <div class="card-what">📋 중대재해 인과 분석·예방 권고</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> DoWhy + 사고 사례 DB</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>의무사</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">27</div><div class="card-name">SmartConstruct-Predict</div></div>
+      <div class="card-tech">🦙 Llama 4 Scout (1M)</div>
+      <div class="card-what">📋 1년 공정 데이터 분석·예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout 1M</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 시공사</span><span class="rev">1프로젝트 3-7억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">28</div><div class="card-name">SmartConstruct-Weather</div></div>
+      <div class="card-tech">🦙 Climate AI</div>
+      <div class="card-what">📋 날씨 자동 통합·공정 조정</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + 기상청 API</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>옥외 시공</span><span class="rev">월 50-200만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">29</div><div class="card-name">SmartConstruct-Material</div></div>
+      <div class="card-tech">🦙 MatterGen</div>
+      <div class="card-what">📋 신소재 추천·최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Microsoft MatterGen API</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>건설사 R&D</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">30</div><div class="card-name">SmartConstruct-Robot</div></div>
+      <div class="card-tech">🦙 Humanoid·Quadruped</div>
+      <div class="card-what">📋 현장 자율 순찰·검사 로봇</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Boston Dynamics Spot + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Spot</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대규모 현장</span><span class="rev">1대 1-3억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area4" style="border-left-color:#388E3C">
+  <div class="area-head" style="background:linear-gradient(90deg,#388E3C,#388E3CAA)">
+    <div class="area-emoji">🎰</div>
+    <div class="area-info"><div class="area-name">4. 카지노 VMS (9社 독점)</div><div class="area-old">강원랜드 + 외국인전용 9社</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">31</div><div class="card-name">CasinoVMS-Emotion</div></div>
+      <div class="card-tech">🦙 Llama 4 + 감정 LoRA</div>
+      <div class="card-what">📋 딜러·플레이어 감정·중독 감지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 감정 인식 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>9社 + 글로벌</span><span class="rev">1社 5억+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">32</div><div class="card-name">CasinoVMS-VLA</div></div>
+      <div class="card-tech">🦙 OpenVLA 의도 추론</div>
+      <div class="card-what">📋 딜러-플레이어 공모·이상 행동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + CCTV</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Edge</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 카지노</span><span class="rev">1社 3-7억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">33</div><div class="card-name">CasinoVMS-Quantum</div></div>
+      <div class="card-tech">🦙 IBM Quantum</div>
+      <div class="card-what">📋 게임 결과 통계 양자 검증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + Qiskit</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>고급 카지노</span><span class="rev">1社 5-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">34</div><div class="card-name">CasinoVMS-Biometric</div></div>
+      <div class="card-tech">🦙 Multi-modal Biometric</div>
+      <div class="card-what">📋 정맥·홍채·걸음 다중 인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Idemia·Suprema SDK</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 생체장비</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>외국인 카지노</span><span class="rev">1社 3-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">35</div><div class="card-name">CasinoVMS-AML</div></div>
+      <div class="card-tech">🦙 GraphRAG + Causal</div>
+      <div class="card-what">📋 자금세탁 다중 hop 추적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + DoWhy + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금감원 의무</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">36</div><div class="card-name">CasinoVMS-Mobile</div></div>
+      <div class="card-tech">🦙 Mobile Agent</div>
+      <div class="card-what">📋 VIP 호스트 실시간 가이드</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 모바일 앱</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 클라우드 + Mac Studio</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>VIP룸</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">37</div><div class="card-name">CasinoVMS-Stream</div></div>
+      <div class="card-tech">🦙 Llama 4 Multimodal</div>
+      <div class="card-what">📋 온라인 카지노 실시간 통합 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + Audio</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>온라인 카지노</span><span class="rev">월 1000만+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">38</div><div class="card-name">CasinoVMS-Addict</div></div>
+      <div class="card-tech">🦙 Behavioral + Emotion</div>
+      <div class="card-what">📋 도박중독 조기 경보</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 임상 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>강원랜드·정부</span><span class="rev">B2G 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">39</div><div class="card-name">CasinoVMS-Predict</div></div>
+      <div class="card-tech">🦙 Llama 4 Scout (1M)</div>
+      <div class="card-what">📋 1년 게임 데이터 예측·운영 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout 1M</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>경영진</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">40</div><div class="card-name">CasinoVMS-Global</div></div>
+      <div class="card-tech">🦙 OEM 통합</div>
+      <div class="card-what">📋 한국 9社 검증 → 글로벌 진출</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 영업·OEM 채널 구축</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 각 국가 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>아시아 100+</span><span class="rev">1社 5-15억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area5" style="border-left-color:#0288D1">
+  <div class="area-head" style="background:linear-gradient(90deg,#0288D1,#0288D1AA)">
+    <div class="area-emoji">🏦</div>
+    <div class="area-info"><div class="area-name">5. 금융 VMS</div><div class="area-old">은행·증권·카드사 30+</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">41</div><div class="card-name">FinVMS-Behavioral</div></div>
+      <div class="card-tech">🦙 Behavioral Biometrics</div>
+      <div class="card-what">📋 타이핑·마우스·걸음 상시 인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> BioCatch SDK 또는 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행·증권</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">42</div><div class="card-name">FinVMS-Deepfake</div></div>
+      <div class="card-tech">🦙 Deepfake Detection</div>
+      <div class="card-what">📋 보이스피싱·AI 합성 위조 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Reality Defender API</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 금융사</span><span class="rev">1社 3-7억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">43</div><div class="card-name">FinVMS-PQC</div></div>
+      <div class="card-tech">🦙 PQC 마이그레이션</div>
+      <div class="card-what">📋 NIST 의무 양자내성암호 전환</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + KISA 가이드</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅 인력만</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 대기업</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">44</div><div class="card-name">FinVMS-FDS</div></div>
+      <div class="card-tech">🦙 Llama 4 ×3 합의</div>
+      <div class="card-what">📋 다중 AI 부정거래·거짓양성 50%↓</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 ×3 hook</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행·카드사</span><span class="rev">1社 5-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">45</div><div class="card-name">FinVMS-Voice</div></div>
+      <div class="card-tech">🦙 Llama 4 + Voice</div>
+      <div class="card-what">📋 콜센터 음성 위조·이상 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Pindrop OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행 콜센터</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">46</div><div class="card-name">FinVMS-Insider</div></div>
+      <div class="card-tech">🦙 UEBA + Continuous Auth</div>
+      <div class="card-what">📋 내부자 위협 차세대</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 행동 패턴 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·보험</span><span class="rev">1社 3-7억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">47</div><div class="card-name">FinVMS-Credit</div></div>
+      <div class="card-tech">🦙 Llama 4 + 금융 LoRA</div>
+      <div class="card-what">📋 한국형 BloombergGPT·대안 데이터</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 금융 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행·핀테크</span><span class="rev">월 500만~</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">48</div><div class="card-name">FinVMS-CBDC</div></div>
+      <div class="card-tech">🦙 CBDC + AI 결제</div>
+      <div class="card-what">📋 한국은행 디지털화폐 인프라 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 한은 SDK + 자체 운영</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대 클러스터</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행·결제</span><span class="rev">1社 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">49</div><div class="card-name">FinVMS-Regtech</div></div>
+      <div class="card-tech">🦙 Constitutional AI</div>
+      <div class="card-what">📋 금감원 규제 자동 추적·헌법화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> failure-mode 패턴</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 금융사</span><span class="rev">월 300-700만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">50</div><div class="card-name">FinVMS-Bureau</div></div>
+      <div class="card-tech">🦙 UEBA + Multi-Agent</div>
+      <div class="card-what">📋 한국 행동신용평가소</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 점수 모델 IP + 라이선스</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험·HR·IAM</span><span class="rev">영구 라이선스</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area6" style="border-left-color:#9C27B0">
+  <div class="area-head" style="background:linear-gradient(90deg,#9C27B0,#9C27B0AA)">
+    <div class="area-emoji">📹</div>
+    <div class="area-info"><div class="area-name">6. AI 지능형 CCTV</div><div class="area-old">영상 분석</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">51</div><div class="card-name">SmartCCTV-World</div></div>
+      <div class="card-tech">🦙 NVIDIA Cosmos</div>
+      <div class="card-what">📋 물리법칙 학습·미래 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Cosmos Free Research</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>기존+신규</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">52</div><div class="card-name">SmartCCTV-VLA</div></div>
+      <div class="card-tech">🦙 OpenVLA</div>
+      <div class="card-what">📋 자율 추론·자연어 알람</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Edge</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>공공·금융</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">53</div><div class="card-name">SmartCCTV-Search</div></div>
+      <div class="card-tech">🦙 Llama 4 Multimodal</div>
+      <div class="card-what">📋 자연어 영상 검색</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대형 시설</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">54</div><div class="card-name">SmartCCTV-Crowd</div></div>
+      <div class="card-tech">🦙 Crowd Analytics</div>
+      <div class="card-what">📋 밀집도·이상 행동·조기 경보</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 SDK + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>행안부·지자체</span><span class="rev">B2G 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">55</div><div class="card-name">SmartCCTV-Fire</div></div>
+      <div class="card-tech">🦙 Multimodal + 열화상</div>
+      <div class="card-what">📋 화재·연기 조기 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 열화상 카메라</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 열화상</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>소방청·산림청</span><span class="rev">B2G 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">56</div><div class="card-name">SmartCCTV-Safety</div></div>
+      <div class="card-tech">🦙 VLA + PPE</div>
+      <div class="card-what">📋 산업현장 안전 모니터링</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + Edge AI</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Edge</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조·건설</span><span class="rev">1社 3-8억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">57</div><div class="card-name">SmartCCTV-Mood</div></div>
+      <div class="card-tech">🦙 Llama 4 + 감정</div>
+      <div class="card-what">📋 매장 고객 만족도·VOC 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 감정 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>유통·매장</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">58</div><div class="card-name">SmartCCTV-Privacy</div></div>
+      <div class="card-tech">🦙 Privacy ML</div>
+      <div class="card-what">📋 얼굴·번호판 자동 마스킹</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 마스킹 모델</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>공공·기업</span><span class="rev">월 50-200만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">59</div><div class="card-name">SmartCCTV-Edge</div></div>
+      <div class="card-tech">🦙 Edge AI Chip</div>
+      <div class="card-what">📋 CCTV 자체 추론·저전력</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Hailo + Jetson</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Edge 칩 (대당 100만)</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>분산 시설</span><span class="rev">대당 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">60</div><div class="card-name">SmartCCTV-Drone</div></div>
+      <div class="card-tech">🦙 Drone Detection</div>
+      <div class="card-what">📋 CCTV + 안티드론 통합</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Dedrone + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 드론센서</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방·국가시설</span><span class="rev">B2G 10-30억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area7" style="border-left-color:#455A64">
+  <div class="area-head" style="background:linear-gradient(90deg,#455A64,#455A64AA)">
+    <div class="area-emoji">🌐</div>
+    <div class="area-info"><div class="area-name">7. 디지털 트윈</div><div class="area-old">제조·건설·인프라</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">61</div><div class="card-name">DigitalTwin-Cosmos</div></div>
+      <div class="card-tech">🦙 NVIDIA Cosmos</div>
+      <div class="card-what">📋 물리법칙 자동 학습·시나리오 생성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Cosmos World Foundation</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster (1억)</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·기아·삼성·SK</span><span class="rev">1社 50-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">62</div><div class="card-name">DigitalTwin-Sim2Real</div></div>
+      <div class="card-tech">🦙 NVIDIA Isaac</div>
+      <div class="card-what">📋 시뮬→실제 transfer·학습비 1/100</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Isaac Sim</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>로봇·자율시스템 사</span><span class="rev">1프로젝트 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">63</div><div class="card-name">DigitalTwin-Humanoid</div></div>
+      <div class="card-tech">🦙 NVIDIA GR00T</div>
+      <div class="card-what">📋 휴머노이드 가상 학습</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GR00T + 디지털트윈</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·삼성</span><span class="rev">1社 20-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">64</div><div class="card-name">DigitalTwin-City</div></div>
+      <div class="card-tech">🦙 도시 디지털트윈</div>
+      <div class="card-what">📋 서울·부산 등 도시 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Bentley iTwin + LH 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대 + NVIDIA</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>지자체·LH</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">65</div><div class="card-name">DigitalTwin-Energy</div></div>
+      <div class="card-tech">🦙 SMR + 디지털트윈</div>
+      <div class="card-what">📋 소형 원전 AI 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 두산·SK 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>원전·에너지</span><span class="rev">50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">66</div><div class="card-name">DigitalTwin-Factory</div></div>
+      <div class="card-tech">🦙 Industrial Metaverse</div>
+      <div class="card-what">📋 스마트팩토리 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Siemens + Omniverse</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + NVIDIA</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조 대기업</span><span class="rev">1공장 10-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">67</div><div class="card-name">DigitalTwin-VR</div></div>
+      <div class="card-tech">🦙 Spatial Computing</div>
+      <div class="card-what">📋 VR 가상 관제실</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Vision Pro + Unity</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Vision Pro 10대 + Mac Studio</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>관제·교육</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">68</div><div class="card-name">DigitalTwin-Train</div></div>
+      <div class="card-tech">🦙 Synthetic Data</div>
+      <div class="card-what">📋 학습데이터 라이선싱</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 디지털트윈 → 데이터 마켓</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 AI 회사</span><span class="rev">데이터 라이선스</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">69</div><div class="card-name">DigitalTwin-Climate</div></div>
+      <div class="card-tech">🦙 Climate AI</div>
+      <div class="card-what">📋 탄소 디지털트윈</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 ESG</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">70</div><div class="card-name">DigitalTwin-Defense</div></div>
+      <div class="card-tech">🦙 국방 시뮬레이션</div>
+      <div class="card-what">📋 K-방산 무기·전장 시뮬</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 한화·LIG 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>방위사업청</span><span class="rev">50-150억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area8" style="border-left-color:#9E9D24">
+  <div class="area-head" style="background:linear-gradient(90deg,#9E9D24,#9E9D24AA)">
+    <div class="area-emoji">⚙️</div>
+    <div class="area-info"><div class="area-name">8. ITO (IT 아웃소싱)</div><div class="area-old">IT 운영 위탁</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">71</div><div class="card-name">ITO-Agentic</div></div>
+      <div class="card-tech">🦙 Llama 4 + Agentic</div>
+      <div class="card-what">📋 24/7 자율 운영·사람 1명 = 100배</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + LangGraph + MCP</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>기존 ITO 고객</span><span class="rev">월 1000-3000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">72</div><div class="card-name">ITO-Workload</div></div>
+      <div class="card-tech">🦙 AI Workload Protection</div>
+      <div class="card-what">📋 AI 모델·데이터 보호 MSP</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Palo Alto·Wiz OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 클라우드</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">73</div><div class="card-name">ITO-NHI</div></div>
+      <div class="card-tech">🦙 NHI</div>
+      <div class="card-what">📋 AI 에이전트·서비스계정 신원</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Astrix·Oasis OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">74</div><div class="card-name">ITO-eBPF</div></div>
+      <div class="card-tech">🦙 eBPF Cilium</div>
+      <div class="card-what">📋 커널 레벨 관측·보안</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Cilium·Falco OSS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 IT</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">75</div><div class="card-name">ITO-CSMA</div></div>
+      <div class="card-tech">🦙 Cybersecurity Mesh</div>
+      <div class="card-what">📋 분산 보안 표준 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Fortinet·Cisco OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>멀티클라우드</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">76</div><div class="card-name">ITO-DSPM</div></div>
+      <div class="card-tech">🦙 DSPM</div>
+      <div class="card-what">📋 데이터 위치·민감도 추적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Cyera·Sentra OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>개인정보 의무</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">77</div><div class="card-name">ITO-FinOps</div></div>
+      <div class="card-tech">🦙 AI Cloud Cost</div>
+      <div class="card-what">📋 클라우드 비용 자동 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> CloudHealth + 자체 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>클라우드 사용사</span><span class="rev">절감액 20%</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">78</div><div class="card-name">ITO-DR</div></div>
+      <div class="card-tech">🦙 AI DR</div>
+      <div class="card-what">📋 장애 자동 진단·복구</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 ML + AIOps</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">79</div><div class="card-name">ITO-Compliance</div></div>
+      <div class="card-tech">🦙 자동 규제</div>
+      <div class="card-what">📋 ISMS-P·금감원 자동 준수</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 규제 매핑</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">80</div><div class="card-name">ITO-Green</div></div>
+      <div class="card-tech">🦙 탄소 측정</div>
+      <div class="card-what">📋 DC 탄소 측정·EU CBAM</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 측정 SaaS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 IT</span><span class="rev">월 100-300만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area9" style="border-left-color:#558B2F">
+  <div class="area-head" style="background:linear-gradient(90deg,#558B2F,#558B2FAA)">
+    <div class="area-emoji">🌱</div>
+    <div class="area-info"><div class="area-name">9. ESG·GRC</div><div class="area-old">ESG·거버넌스</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">81</div><div class="card-name">ESG-GRC-Climate</div></div>
+      <div class="card-tech">🦙 Climate AI</div>
+      <div class="card-what">📋 탄소 디지털트윈·CCUS 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 ESG</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">82</div><div class="card-name">ESG-GRC-Report</div></div>
+      <div class="card-tech">🦙 Llama 4 + 생성형</div>
+      <div class="card-what">📋 보고서 자동 작성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + ESG 템플릿</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>상장사</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">83</div><div class="card-name">ESG-GRC-ISO42001</div></div>
+      <div class="card-tech">🦙 ISO 42001</div>
+      <div class="card-what">📋 AI 라이프사이클 audit</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 audit 도구</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 1000+</span><span class="rev">1社 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">84</div><div class="card-name">ESG-GRC-Bias</div></div>
+      <div class="card-tech">🦙 Fairlearn</div>
+      <div class="card-what">📋 AI 편향 자동 감사</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Fairlearn OSS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·HR·AI</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">85</div><div class="card-name">ESG-GRC-Explain</div></div>
+      <div class="card-tech">🦙 SHAP·LIME</div>
+      <div class="card-what">📋 AI 결정 설명 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> SHAP + Captum</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>고위험 AI 사용</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">86</div><div class="card-name">ESG-GRC-Supply</div></div>
+      <div class="card-tech">🦙 LangChain + 공급망</div>
+      <div class="card-what">📋 협력사 ESG 평가</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 공급망 DB</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">87</div><div class="card-name">ESG-GRC-Scope3</div></div>
+      <div class="card-tech">🦙 탄소 자동 산정</div>
+      <div class="card-what">📋 Scope 1·2·3 자동·정규 의무</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + IPCC 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>상장사</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">88</div><div class="card-name">ESG-GRC-Water</div></div>
+      <div class="card-tech">🦙 IoT + Water AI</div>
+      <div class="card-what">📋 물·자원 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IoT 센서 + 자체 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조 대기업</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">89</div><div class="card-name">ESG-GRC-Carbon</div></div>
+      <div class="card-tech">🦙 K-ETS + AI</div>
+      <div class="card-what">📋 탄소권 거래 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 거래 예측 모델</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>탄소 배출사</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">90</div><div class="card-name">ESG-GRC-Risk</div></div>
+      <div class="card-tech">🦙 Cyber Resilience</div>
+      <div class="card-what">📋 회복력 점수화·정기 audit</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·보험사</span><span class="rev">월 500-1500만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area10" style="border-left-color:#FFA000">
+  <div class="area-head" style="background:linear-gradient(90deg,#FFA000,#FFA000AA)">
+    <div class="area-emoji">🚨</div>
+    <div class="area-info"><div class="area-name">10. 부서 IP (신규 한국 표준)</div><div class="area-old">행동위험 외 신영역 K-Standard</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">91</div><div class="card-name">AI Risk Lighthouse</div></div>
+      <div class="card-tech">🦙 8 카테고리 audit</div>
+      <div class="card-what">📋 한국 K-Standard 후보</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 8 카테고리 도구</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>5,000 대기업</span><span class="rev">영구 5,000억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">92</div><div class="card-name">K-Quantum Standard</div></div>
+      <div class="card-tech">🦙 PQC + 양자보안 표준</div>
+      <div class="card-what">📋 한국 양자보안 표준 인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> KISA 협력 + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·국방·공공</span><span class="rev">영구 인증료</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">93</div><div class="card-name">AI 거버넌스 컨설팅</div></div>
+      <div class="card-tech">🦙 ISO 42001 + EU AI Act</div>
+      <div class="card-what">📋 한국 1호 인증 사업자</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 인증 + 컨설팅</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 모든</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">94</div><div class="card-name">행동신용평가소</div></div>
+      <div class="card-tech">🦙 UEBA + Multi-Agent</div>
+      <div class="card-what">📋 KCB식 행동신용평가소</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 점수 모델·라이선스</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험·HR·IAM</span><span class="rev">영구 라이선스</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">95</div><div class="card-name">한국형 BloombergGPT</div></div>
+      <div class="card-tech">🦙 Llama 4 + 금융 LoRA</div>
+      <div class="card-what">📋 자체 도메인 LLM</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 금융 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·회계</span><span class="rev">월 500만~</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">96</div><div class="card-name">Synthetic Data 마켓</div></div>
+      <div class="card-tech">🦙 합성데이터 라이선싱</div>
+      <div class="card-what">📋 한국 산업 데이터 마켓</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + Gretel 패턴</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 AI 회사</span><span class="rev">데이터 라이선스</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">97</div><div class="card-name">Federated Consortium</div></div>
+      <div class="card-tech">🦙 Flower 컨소시엄</div>
+      <div class="card-what">📋 금융 공동 부정탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Flower OSS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 각 은행 1대씩</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행연합회</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">98</div><div class="card-name">휴머노이드 보안 인증</div></div>
+      <div class="card-tech">🦙 디지털트윈 + 보안</div>
+      <div class="card-what">📋 한국 휴머노이드 보안 표준</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·삼성</span><span class="rev">인증 5천만-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">99</div><div class="card-name">AGI 거버넌스 자문</div></div>
+      <div class="card-tech">🦙 Mech Interp + 안전</div>
+      <div class="card-what">📋 한국 AGI 안전 자문</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 연구 + Anthropic 협력</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 연구 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·정부</span><span class="rev">시간당 자문료</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">100</div><div class="card-name">K-AI Academy</div></div>
+      <div class="card-tech">🦙 AI 교육·자격증</div>
+      <div class="card-what">📋 KISA 등록 정식 과정</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 교육 콘텐츠 + LMS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 한국 기업</span><span class="rev">수강료+자격증</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area11" style="border-left-color:#00838F">
+  <div class="area-head" style="background:linear-gradient(90deg,#00838F,#00838FAA)">
+    <div class="area-emoji">🏛️</div>
+    <div class="area-info"><div class="area-name">11. 공공·전자정부 (ENTEC 협업)</div><div class="area-old">전자정부 1위</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">101</div><div class="card-name">Gov-LLM</div></div>
+      <div class="card-tech">🦙 Llama 4 + 행정 LoRA</div>
+      <div class="card-what">📋 공공기관 행정 특화 LLM</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 행정 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>중앙·지방 정부</span><span class="rev">B2G 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">102</div><div class="card-name">Gov-Chatbot</div></div>
+      <div class="card-tech">🦙 Llama 4 + 민원</div>
+      <div class="card-what">📋 24/7 민원 응대 자동화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + RAG</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>지자체·공공</span><span class="rev">1기관 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">103</div><div class="card-name">Gov-Doc</div></div>
+      <div class="card-tech">🦙 Llama 4 + Vision</div>
+      <div class="card-what">📋 공문·법령 OCR·자동 분류</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Multimodal</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>중앙부처</span><span class="rev">1기관 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">104</div><div class="card-name">Gov-Voice</div></div>
+      <div class="card-tech">🦙 Llama 4 Voice</div>
+      <div class="card-what">📋 음성 민원 자동 처리</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + STT/TTS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>120 다산콜·129 보건</span><span class="rev">B2G 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">105</div><div class="card-name">Gov-Predict</div></div>
+      <div class="card-tech">🦙 Llama 4 Scout (1M)</div>
+      <div class="card-what">📋 정책 영향 분석·예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>정책기획·국회</span><span class="rev">B2G 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">106</div><div class="card-name">Gov-Audit</div></div>
+      <div class="card-tech">🦙 Constitutional AI</div>
+      <div class="card-what">📋 공직 감사 자동화·청렴 검증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 헌법화</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>감사원·국정원</span><span class="rev">B2G 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">107</div><div class="card-name">Gov-Disaster</div></div>
+      <div class="card-tech">🦙 Multimodal + Climate</div>
+      <div class="card-what">📋 재난 자동 모니터·대응</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + Llama 4 Vision</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>행안부·소방청</span><span class="rev">B2G 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">108</div><div class="card-name">Gov-Welfare</div></div>
+      <div class="card-tech">🦙 Llama 4 + 복지</div>
+      <div class="card-what">📋 복지 사각지대 자동 발굴</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 복지 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보건복지부</span><span class="rev">B2G 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">109</div><div class="card-name">Gov-Tax</div></div>
+      <div class="card-tech">🦙 GraphRAG + 세무</div>
+      <div class="card-what">📋 세무·탈세 자동 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국세청·관세청</span><span class="rev">B2G 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">110</div><div class="card-name">Gov-Identity</div></div>
+      <div class="card-tech">🦙 Behavioral Biometrics</div>
+      <div class="card-what">📋 공공 디지털 신원</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> BioCatch + FIDO2</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>행안부·KISA</span><span class="rev">B2G 5-15억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area12" style="border-left-color:#5D4037">
+  <div class="area-head" style="background:linear-gradient(90deg,#5D4037,#5D4037AA)">
+    <div class="area-emoji">☁️</div>
+    <div class="area-info"><div class="area-name">12. 클라우드 네이티브 (CTS·CLOIT 협업)</div><div class="area-old">Google Cloud Partner</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">111</div><div class="card-name">Cloud-AI-Native</div></div>
+      <div class="card-tech">🦙 Llama 4 + K8s</div>
+      <div class="card-what">📋 AI 네이티브 컨테이너 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Kubernetes</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + K8s</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 IT</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">112</div><div class="card-name">Cloud-Migration</div></div>
+      <div class="card-tech">🦙 AI 마이그레이션</div>
+      <div class="card-what">📋 온프레→클라우드 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 마이그레이션 도구</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">1社 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">113</div><div class="card-name">Cloud-Multi</div></div>
+      <div class="card-tech">🦙 Llama 4 + Multi-cloud</div>
+      <div class="card-what">📋 AWS·Azure·GCP 통합</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 추상화</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 기업</span><span class="rev">월 1000만+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">114</div><div class="card-name">Cloud-Cost</div></div>
+      <div class="card-tech">🦙 AI FinOps</div>
+      <div class="card-what">📋 비용 자동 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> CloudHealth + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>클라우드 사용사</span><span class="rev">절감액 20%</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">115</div><div class="card-name">Cloud-Sec</div></div>
+      <div class="card-tech">🦙 CSPM/CIEM</div>
+      <div class="card-what">📋 클라우드 보안 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Wiz·Lacework OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>클라우드 사용사</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">116</div><div class="card-name">Cloud-DR</div></div>
+      <div class="card-tech">🦙 AI Disaster Recovery</div>
+      <div class="card-what">📋 클라우드 장애 자동 복구</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + AIOps</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">117</div><div class="card-name">Cloud-Edge</div></div>
+      <div class="card-tech">🦙 Edge Computing</div>
+      <div class="card-what">📋 엣지·CDN 자동 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Cloudflare·Fastly + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 기업</span><span class="rev">월 500만+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">118</div><div class="card-name">Cloud-Serverless</div></div>
+      <div class="card-tech">🦙 Llama 4 + Serverless</div>
+      <div class="card-what">📋 AI 서버리스 자동화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Lambda·Cloud Run + Llama</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>SW 회사</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">119</div><div class="card-name">Cloud-K8s-AI</div></div>
+      <div class="card-tech">🦙 AIOps Kubernetes</div>
+      <div class="card-what">📋 K8s AI 자율 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + K8s 운영</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 IT</span><span class="rev">월 500-1500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">120</div><div class="card-name">Cloud-SovEU</div></div>
+      <div class="card-tech">🦙 Sovereign Cloud</div>
+      <div class="card-what">📋 국가 데이터 주권 클라우드</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + 정부 협력</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국가·금융</span><span class="rev">B2G 30-100억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area13" style="border-left-color:#827717">
+  <div class="area-head" style="background:linear-gradient(90deg,#827717,#827717AA)">
+    <div class="area-emoji">🛡️</div>
+    <div class="area-info"><div class="area-name">13. 사이버보안 (PNS 협업)</div><div class="area-old">사이버보안 전문</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">121</div><div class="card-name">Sec-SOC</div></div>
+      <div class="card-tech">🦙 Llama 4 + Multi-Agent</div>
+      <div class="card-what">📋 24/7 자율 SOC 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 ×3 + SOAR</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·대기업</span><span class="rev">1社 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">122</div><div class="card-name">Sec-XDR</div></div>
+      <div class="card-tech">🦙 XDR + AI</div>
+      <div class="card-what">📋 통합 탐지·대응</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> CrowdStrike·SentinelOne OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">월 1000-3000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">123</div><div class="card-name">Sec-ZeroTrust</div></div>
+      <div class="card-tech">🦙 Zero Trust</div>
+      <div class="card-what">📋 ZTNA 자동 정책</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Zscaler·Cato OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">124</div><div class="card-name">Sec-Adv-ML</div></div>
+      <div class="card-tech">🦙 Adversarial ML Defense</div>
+      <div class="card-what">📋 AI 모델 공격 방어</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Robust Intelligence OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 사용 기업</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">125</div><div class="card-name">Sec-Prompt</div></div>
+      <div class="card-tech">🦙 Prompt Injection Defense</div>
+      <div class="card-what">📋 직원 LLM 보호</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Lakera·Aim OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">126</div><div class="card-name">Sec-Threat</div></div>
+      <div class="card-tech">🦙 Threat Intelligence</div>
+      <div class="card-what">📋 위협 인텔리전스 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> CrowdStrike + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">127</div><div class="card-name">Sec-Hunt</div></div>
+      <div class="card-tech">🦙 Threat Hunting AI</div>
+      <div class="card-what">📋 자율 위협 사냥</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + SIEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">월 500-1500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">128</div><div class="card-name">Sec-IR</div></div>
+      <div class="card-tech">🦙 Incident Response AI</div>
+      <div class="card-what">📋 침해 자동 분석·대응</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + SOAR</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">129</div><div class="card-name">Sec-Anti-Drone</div></div>
+      <div class="card-tech">🦙 Drone Detection</div>
+      <div class="card-what">📋 드론 탐지·요격</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Dedrone·DroneShield</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 센서</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방·공항</span><span class="rev">B2G 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">130</div><div class="card-name">Sec-OT</div></div>
+      <div class="card-tech">🦙 OT/ICS Security</div>
+      <div class="card-what">📋 산업제어망 보안</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Claroty·Nozomi OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조·에너지</span><span class="rev">1社 5-15억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area14" style="border-left-color:#6A1B9A">
+  <div class="area-head" style="background:linear-gradient(90deg,#6A1B9A,#6A1B9AAA)">
+    <div class="area-emoji">📊</div>
+    <div class="area-info"><div class="area-name">14. 데이터·AI 거버넌스</div><div class="area-old">데이터 관리·AI 라이프사이클</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">131</div><div class="card-name">Data-Catalog</div></div>
+      <div class="card-tech">🦙 Llama 4 + Catalog</div>
+      <div class="card-what">📋 AI 자동 데이터 카탈로그</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Collibra OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">132</div><div class="card-name">Data-Lineage</div></div>
+      <div class="card-tech">🦙 Graph DB</div>
+      <div class="card-what">📋 데이터 흐름 자동 추적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·공공</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">133</div><div class="card-name">Data-Quality</div></div>
+      <div class="card-tech">🦙 AI Data Quality</div>
+      <div class="card-what">📋 데이터 품질 자동 점검</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Great Expectations + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>DW 사용사</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">134</div><div class="card-name">Data-Privacy</div></div>
+      <div class="card-tech">🦙 PET 통합</div>
+      <div class="card-what">📋 개인정보 자동 보호</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Differential Privacy + Confidential</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>개인정보 의무</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">135</div><div class="card-name">Data-Mesh</div></div>
+      <div class="card-tech">🦙 Data Mesh AI</div>
+      <div class="card-what">📋 분산 데이터 거버넌스</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Databricks + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">136</div><div class="card-name">Data-Vector</div></div>
+      <div class="card-tech">🦙 Vector DB</div>
+      <div class="card-what">📋 임베딩 검색 인프라</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> ChromaDB·Pinecone</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">137</div><div class="card-name">Data-Anonymize</div></div>
+      <div class="card-tech">🦙 익명화 자동</div>
+      <div class="card-what">📋 자동 익명화·가명화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 마스킹 + Privacy ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>의무 기업</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">138</div><div class="card-name">Data-Sovereignty</div></div>
+      <div class="card-tech">🦙 데이터 주권</div>
+      <div class="card-what">📋 국가 데이터 주권 관리</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + 정부 협력</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>공공·금융</span><span class="rev">B2G 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">139</div><div class="card-name">Data-Marketplace</div></div>
+      <div class="card-tech">🦙 데이터 마켓플레이스</div>
+      <div class="card-what">📋 한국 산업 데이터 거래</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Snowflake·Databricks + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>데이터 사용·공급</span><span class="rev">거래 수수료</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">140</div><div class="card-name">Data-Synthetic</div></div>
+      <div class="card-tech">🦙 Synthetic Data</div>
+      <div class="card-what">📋 합성 데이터 자동 생성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Gretel + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>개인정보 의무</span><span class="rev">1社 1-3억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area15" style="border-left-color:#C2185B">
+  <div class="area-head" style="background:linear-gradient(90deg,#C2185B,#C2185BAA)">
+    <div class="area-emoji">🏥</div>
+    <div class="area-info"><div class="area-name">15. 의료·헬스케어</div><div class="area-old">AI 진료·진단</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">141</div><div class="card-name">Med-Scribe</div></div>
+      <div class="card-tech">🦙 Llama 4 Voice</div>
+      <div class="card-what">📋 EHR 자동 작성·녹음 → 진료기록</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Whisper</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>병원·의원</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">142</div><div class="card-name">Med-Image</div></div>
+      <div class="card-tech">🦙 Llama 4 Vision</div>
+      <div class="card-what">📋 영상 판독 보조</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + 의료 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>영상의학과</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">143</div><div class="card-name">Med-Triage</div></div>
+      <div class="card-tech">🦙 Llama 4 + 응급</div>
+      <div class="card-what">📋 응급 환자 분류 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + ESI 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>응급실</span><span class="rev">1병원 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">144</div><div class="card-name">Med-Pathology</div></div>
+      <div class="card-tech">🦙 Llama 4 + 병리</div>
+      <div class="card-what">📋 병리 영상 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + 병리 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학병원</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">145</div><div class="card-name">Med-Genome</div></div>
+      <div class="card-tech">🦙 Genomic AI</div>
+      <div class="card-what">📋 유전체 분석 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> AlphaFold 3 + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학·제약</span><span class="rev">1프로젝트 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">146</div><div class="card-name">Med-Wearable</div></div>
+      <div class="card-tech">🦙 Wearable Monitor</div>
+      <div class="card-what">📋 24/7 건강 모니터</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Apple Watch SDK</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + iOS</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>환자·보험</span><span class="rev">월 1-5만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">147</div><div class="card-name">Med-Chatbot</div></div>
+      <div class="card-tech">🦙 Llama 4 + 의학 LoRA</div>
+      <div class="card-what">📋 의학 챗봇 (의사 보조)</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 의학 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>병원·의원</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">148</div><div class="card-name">Med-Mental</div></div>
+      <div class="card-tech">🦙 Affective Computing</div>
+      <div class="card-what">📋 정신건강 자동 진단·코칭</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 감정 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>정신건강·보험</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">149</div><div class="card-name">Med-Drug-Inter</div></div>
+      <div class="card-tech">🦙 GraphRAG + 약물</div>
+      <div class="card-what">📋 약물 상호작용 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + 약물 DB</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>병원·약국</span><span class="rev">월 200-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">150</div><div class="card-name">Med-Compliance</div></div>
+      <div class="card-tech">🦙 GRC 의료</div>
+      <div class="card-what">📋 의료기관 규정 준수</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Constitutional AI + 의료법</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>병원·요양원</span><span class="rev">월 300-1000만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area16" style="border-left-color:#283593">
+  <div class="area-head" style="background:linear-gradient(90deg,#283593,#283593AA)">
+    <div class="area-emoji">📚</div>
+    <div class="area-info"><div class="area-name">16. 교육·이러닝</div><div class="area-old">AI 튜터·학습 분석</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">151</div><div class="card-name">Edu-Tutor</div></div>
+      <div class="card-tech">🦙 Llama 4 + 교육 LoRA</div>
+      <div class="card-what">📋 개인 맞춤 AI 튜터</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 교과 데이터 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>학원·온라인 교육</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">152</div><div class="card-name">Edu-Grading</div></div>
+      <div class="card-tech">🦙 Llama 4 + 채점</div>
+      <div class="card-what">📋 주관식 자동 채점</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 평가 모델</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>EBS·메가스터디</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">153</div><div class="card-name">Edu-Analytics</div></div>
+      <div class="card-tech">🦙 Learning Analytics</div>
+      <div class="card-what">📋 학습 분석·예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + LMS 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학·기업교육</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">154</div><div class="card-name">Edu-Voice</div></div>
+      <div class="card-tech">🦙 Llama 4 Voice</div>
+      <div class="card-what">📋 음성 인터랙티브 학습</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + STT/TTS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>어학·국어</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">155</div><div class="card-name">Edu-Vision</div></div>
+      <div class="card-tech">🦙 Llama 4 Vision</div>
+      <div class="card-what">📋 필기·교재 OCR·자동 채점</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Multimodal</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>학교·학원</span><span class="rev">월 50-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">156</div><div class="card-name">Edu-Knowledge</div></div>
+      <div class="card-tech">🦙 GraphRAG</div>
+      <div class="card-what">📋 지식 그래프 학습</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Neo4j + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학·MOOC</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">157</div><div class="card-name">Edu-Coding</div></div>
+      <div class="card-tech">🦙 Code Agent</div>
+      <div class="card-what">📋 코딩 학습 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 코드 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>코딩 학원</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">158</div><div class="card-name">Edu-VR</div></div>
+      <div class="card-tech">🦙 Spatial Computing</div>
+      <div class="card-what">📋 VR 교육 환경</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Vision Pro + Unity</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Vision Pro + Mac Studio</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학·실습교육</span><span class="rev">1대 5천만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">159</div><div class="card-name">Edu-Adaptive</div></div>
+      <div class="card-tech">🦙 Adaptive Learning</div>
+      <div class="card-what">📋 적응형 학습 경로</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 강화학습</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>EBS·메가</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">160</div><div class="card-name">Edu-Compliance</div></div>
+      <div class="card-tech">🦙 AI 교육 컴플라이언스</div>
+      <div class="card-what">📋 AI 교육 윤리·인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> ISO 42001 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 교육 기업</span><span class="rev">1社 1-3억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area17" style="border-left-color:#00695C">
+  <div class="area-head" style="background:linear-gradient(90deg,#00695C,#00695CAA)">
+    <div class="area-emoji">🛒</div>
+    <div class="area-info"><div class="area-name">17. 유통·이커머스</div><div class="area-old">AI 추천·결제·매장</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">161</div><div class="card-name">Retail-Reco</div></div>
+      <div class="card-tech">🦙 Llama 4 + 추천</div>
+      <div class="card-what">📋 개인 맞춤 추천</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 행동 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>쿠팡·11번가·G마켓</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">162</div><div class="card-name">Retail-Agent</div></div>
+      <div class="card-tech">🦙 Llama 4 + Agentic</div>
+      <div class="card-what">📋 AI 쇼핑 에이전트</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Browser-Use</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>이커머스</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">163</div><div class="card-name">Retail-Voice</div></div>
+      <div class="card-tech">🦙 Llama 4 Voice</div>
+      <div class="card-what">📋 음성 쇼핑</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + STT/TTS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 스피커</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">164</div><div class="card-name">Retail-Inventory</div></div>
+      <div class="card-tech">🦙 Demand Forecast</div>
+      <div class="card-what">📋 재고 자동 예측·발주</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout (1M)</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대형마트·도매</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">165</div><div class="card-name">Retail-Store</div></div>
+      <div class="card-tech">🦙 Vision + IoT</div>
+      <div class="card-what">📋 무인 매장 (Amazon Go 식)</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + 센서</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + 센서</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>편의점·매장</span><span class="rev">1매장 5천만~</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">166</div><div class="card-name">Retail-Mood</div></div>
+      <div class="card-tech">🦙 Affective + CCTV</div>
+      <div class="card-what">📋 고객 만족도·VOC</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 감정 LoRA + CCTV</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + CCTV</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>백화점·매장</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">167</div><div class="card-name">Retail-Pricing</div></div>
+      <div class="card-tech">🦙 Dynamic Pricing</div>
+      <div class="card-what">📋 동적 가격 자동 조정</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 가격 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대형 유통</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">168</div><div class="card-name">Retail-Marketing</div></div>
+      <div class="card-tech">🦙 Generative Marketing</div>
+      <div class="card-what">📋 AI 마케팅 자동화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Generative</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>마케팅·광고</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">169</div><div class="card-name">Retail-Fraud</div></div>
+      <div class="card-tech">🦙 Multi-Agent FDS</div>
+      <div class="card-what">📋 결제 사기 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 ×3</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>결제·이커머스</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">170</div><div class="card-name">Retail-Logistics</div></div>
+      <div class="card-tech">🦙 AI Logistics</div>
+      <div class="card-what">📋 배송·물류 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 라우팅 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>쿠팡·이마트</span><span class="rev">1社 3-10억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area18" style="border-left-color:#EF6C00">
+  <div class="area-head" style="background:linear-gradient(90deg,#EF6C00,#EF6C00AA)">
+    <div class="area-emoji">🏭</div>
+    <div class="area-info"><div class="area-name">18. 제조 SI</div><div class="area-old">스마트 팩토리</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">171</div><div class="card-name">Mfg-Predict</div></div>
+      <div class="card-tech">🦙 Predictive Maintenance</div>
+      <div class="card-what">📋 설비 예지보전</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 시계열 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조 대기업</span><span class="rev">1공장 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">172</div><div class="card-name">Mfg-Quality</div></div>
+      <div class="card-tech">🦙 Vision + Quality</div>
+      <div class="card-what">📋 품질 검사 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 카메라</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>반도체·디스플레이</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">173</div><div class="card-name">Mfg-Twin</div></div>
+      <div class="card-tech">🦙 Industrial Metaverse</div>
+      <div class="card-what">📋 공장 디지털트윈</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Siemens + Omniverse</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + NVIDIA</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조 대기업</span><span class="rev">1공장 10-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">174</div><div class="card-name">Mfg-Robot</div></div>
+      <div class="card-tech">🦙 Humanoid + 공장</div>
+      <div class="card-what">📋 휴머노이드 + 공장 통합 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA GR00T + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·삼성·LG</span><span class="rev">50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">175</div><div class="card-name">Mfg-Safety</div></div>
+      <div class="card-tech">🦙 VLA + PPE</div>
+      <div class="card-what">📋 산업안전 모니터링</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + CCTV</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + Edge</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조·건설</span><span class="rev">1社 3-8억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">176</div><div class="card-name">Mfg-OEE</div></div>
+      <div class="card-tech">🦙 OEE Analytics</div>
+      <div class="card-what">📋 설비 효율 (OEE) 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + IoT</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조사</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">177</div><div class="card-name">Mfg-Energy</div></div>
+      <div class="card-tech">🦙 Energy AI</div>
+      <div class="card-what">📋 공장 에너지 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Energy ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대규모 공장</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">178</div><div class="card-name">Mfg-Supply</div></div>
+      <div class="card-tech">🦙 Supply Chain AI</div>
+      <div class="card-what">📋 공급망 위험 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphRAG + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + Neo4j</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업 제조</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">179</div><div class="card-name">Mfg-Material</div></div>
+      <div class="card-tech">🦙 MatterGen + R&D</div>
+      <div class="card-what">📋 신소재 자동 발견</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Microsoft MatterGen</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>소재 R&D</span><span class="rev">1프로젝트 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">180</div><div class="card-name">Mfg-Sustain</div></div>
+      <div class="card-tech">🦙 Carbon AI</div>
+      <div class="card-what">📋 탄소 자동 측정·EU CBAM</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 측정 + IPCC</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>EU 수출 제조사</span><span class="rev">월 300-1000만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area19" style="border-left-color:#BF360C">
+  <div class="area-head" style="background:linear-gradient(90deg,#BF360C,#BF360CAA)">
+    <div class="area-emoji">🚛</div>
+    <div class="area-info"><div class="area-name">19. 물류·SCM</div><div class="area-old">공급망·운송 AI</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">181</div><div class="card-name">Logistics-Route</div></div>
+      <div class="card-tech">🦙 Route Optimization</div>
+      <div class="card-what">📋 최적 배송 경로</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Routing ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>쿠팡·CJ대한통운</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">182</div><div class="card-name">Logistics-Warehouse</div></div>
+      <div class="card-tech">🦙 Warehouse AI</div>
+      <div class="card-what">📋 창고 자동화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Symbotic + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대형 물류</span><span class="rev">1社 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">183</div><div class="card-name">Logistics-Forecast</div></div>
+      <div class="card-tech">🦙 Demand Forecast</div>
+      <div class="card-what">📋 수요 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Scout</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>유통·물류</span><span class="rev">1社 2-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">184</div><div class="card-name">Logistics-Tracking</div></div>
+      <div class="card-tech">🦙 IoT + Tracking</div>
+      <div class="card-what">📋 실시간 화물 추적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IoT + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>운송사·고객</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">185</div><div class="card-name">Logistics-Last</div></div>
+      <div class="card-tech">🦙 Last-mile</div>
+      <div class="card-what">📋 라스트마일 로봇·드론</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Drone + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 드론</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>택배사</span><span class="rev">대당 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">186</div><div class="card-name">Logistics-Port</div></div>
+      <div class="card-tech">🦙 항만·항공 AI</div>
+      <div class="card-what">📋 항만·항공 자동화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 항만 시스템</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>인천공항·부산항</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">187</div><div class="card-name">Logistics-Cold</div></div>
+      <div class="card-tech">🦙 Cold Chain AI</div>
+      <div class="card-what">📋 저온 유통 자동 모니터</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IoT + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>식품·의약품</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">188</div><div class="card-name">Logistics-Customs</div></div>
+      <div class="card-tech">🦙 관세·통관 AI</div>
+      <div class="card-what">📋 자동 통관·관세 분류</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 관세법 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>수출입·물류</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">189</div><div class="card-name">Logistics-Insurance</div></div>
+      <div class="card-tech">🦙 Cargo Insurance AI</div>
+      <div class="card-what">📋 화물 보험 자동 평가</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 보험 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험사·물류</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">190</div><div class="card-name">Logistics-Reverse</div></div>
+      <div class="card-tech">🦙 Reverse Logistics</div>
+      <div class="card-what">📋 반품 자동 처리</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 반품 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>이커머스</span><span class="rev">월 200-1000만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area20" style="border-left-color:#37474F">
+  <div class="area-head" style="background:linear-gradient(90deg,#37474F,#37474FAA)">
+    <div class="area-emoji">🎬</div>
+    <div class="area-info"><div class="area-name">20. 미디어·콘텐츠</div><div class="area-old">영상·음악·생성형</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">191</div><div class="card-name">Media-Video</div></div>
+      <div class="card-tech">🦙 Text-to-Video</div>
+      <div class="card-what">📋 광고·교육 영상 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Sora·Veo·Kling 활용</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 클라우드 API</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>기업 마케팅</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">192</div><div class="card-name">Media-Music</div></div>
+      <div class="card-tech">🦙 Suno·Udio</div>
+      <div class="card-what">📋 AI 작곡·K-팝 라이선스</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Suno API + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>엔터·광고</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">193</div><div class="card-name">Media-Voice</div></div>
+      <div class="card-tech">🦙 Voice Cloning</div>
+      <div class="card-what">📋 성우 복제·다국어 더빙</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> ElevenLabs + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>콘텐츠 회사</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">194</div><div class="card-name">Media-Avatar</div></div>
+      <div class="card-tech">🦙 Digital Human</div>
+      <div class="card-what">📋 AI 아바타 (가상 진행자)</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> HeyGen·Synthesia OEM</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 클라우드</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>방송·교육</span><span class="rev">월 500-2000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">195</div><div class="card-name">Media-Subtitle</div></div>
+      <div class="card-tech">🦙 Llama 4 + 자막</div>
+      <div class="card-what">📋 자막 자동 + 번역</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Whisper</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>유튜브·OTT</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">196</div><div class="card-name">Media-Shorts</div></div>
+      <div class="card-tech">🦙 Llama 4 + Shorts</div>
+      <div class="card-what">📋 롱폼 → 쇼츠 자동</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + Edit</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>크리에이터</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">197</div><div class="card-name">Media-Thumb</div></div>
+      <div class="card-tech">🦙 Llama 4 + 썸네일</div>
+      <div class="card-what">📋 썸네일 A/B 자동 생성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + Imagen</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>유튜버</span><span class="rev">월 50-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">198</div><div class="card-name">Media-Watermark</div></div>
+      <div class="card-tech">🦙 C2PA + Deepfake</div>
+      <div class="card-what">📋 AI 생성물 표식 + 위조 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Reality Defender + C2PA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>미디어·법무</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">199</div><div class="card-name">Media-Live</div></div>
+      <div class="card-tech">🦙 Real-time Multimodal</div>
+      <div class="card-what">📋 실시간 라이브 분석·자막</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Live API</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>방송·이벤트</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">200</div><div class="card-name">Media-VR</div></div>
+      <div class="card-tech">🦙 8K/VR 콘텐츠</div>
+      <div class="card-what">📋 VR 콘텐츠 자동 생성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Vision Pro + Unity</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + Vision Pro</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>VR 콘텐츠 회사</span><span class="rev">1프로젝트 3-15억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area21" style="border-left-color:#1A237E">
+  <div class="area-head" style="background:linear-gradient(90deg,#1A237E,#1A237EAA)">
+    <div class="area-emoji">🌾</div>
+    <div class="area-info"><div class="area-name">21. 농업·스마트팜</div><div class="area-old">농업 AI</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">201</div><div class="card-name">Agri-Pest</div></div>
+      <div class="card-tech">🦙 Vision + 병해충</div>
+      <div class="card-what">📋 병해충 자동 진단</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농가·농협</span><span class="rev">월 50-200만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">202</div><div class="card-name">Agri-Yield</div></div>
+      <div class="card-tech">🦙 Yield Predict</div>
+      <div class="card-what">📋 수확량 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 농업 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대농·농협</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">203</div><div class="card-name">Agri-Auto</div></div>
+      <div class="card-tech">🦙 Autonomous Farming</div>
+      <div class="card-what">📋 자율 농기계</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> John Deere + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 농기계</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대농</span><span class="rev">대당 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">204</div><div class="card-name">Agri-Greenhouse</div></div>
+      <div class="card-tech">🦙 Smart Greenhouse</div>
+      <div class="card-what">📋 스마트팜 자동 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IoT + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>스마트팜 농가</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">205</div><div class="card-name">Agri-Soil</div></div>
+      <div class="card-tech">🦙 Soil AI</div>
+      <div class="card-what">📋 토양 분석·비료 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 토양 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농가·농진청</span><span class="rev">1社 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">206</div><div class="card-name">Agri-Water</div></div>
+      <div class="card-tech">🦙 Irrigation AI</div>
+      <div class="card-what">📋 관개 자동 최적화</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + IoT</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농가</span><span class="rev">월 50-200만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">207</div><div class="card-name">Agri-Drone</div></div>
+      <div class="card-tech">🦙 Drone + Crop</div>
+      <div class="card-what">📋 드론 작물 모니터링</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Drone + Llama 4 Vision</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + 드론</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대농</span><span class="rev">대당 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">208</div><div class="card-name">Agri-Weather</div></div>
+      <div class="card-tech">🦙 Climate AI 농업</div>
+      <div class="card-what">📋 날씨 + 작물 영향</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농가·농협</span><span class="rev">월 100-300만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">209</div><div class="card-name">Agri-Vertical</div></div>
+      <div class="card-tech">🦙 수직농업 AI</div>
+      <div class="card-what">📋 수직농업 자동 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IoT + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대 + IoT</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>수직농업 회사</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">210</div><div class="card-name">Agri-Genome</div></div>
+      <div class="card-tech">🦙 Plant Genomics</div>
+      <div class="card-what">📋 식물 유전체 신품종</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> AlphaFold + 농업 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농진청·종자회사</span><span class="rev">1프로젝트 5-30억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area22" style="border-left-color:#004D40">
+  <div class="area-head" style="background:linear-gradient(90deg,#004D40,#004D40AA)">
+    <div class="area-emoji">⚡</div>
+    <div class="area-info"><div class="area-name">22. 에너지·SMR</div><div class="area-old">발전·전력망</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">211</div><div class="card-name">Energy-SMR</div></div>
+      <div class="card-tech">🦙 SMR + AI</div>
+      <div class="card-what">📋 소형 원전 AI 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 두산·SK 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>원전·에너지사</span><span class="rev">50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">212</div><div class="card-name">Energy-Grid</div></div>
+      <div class="card-tech">🦙 Smart Grid AI</div>
+      <div class="card-what">📋 전력망 자동 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 전력 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>한전·발전사</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">213</div><div class="card-name">Energy-Battery</div></div>
+      <div class="card-tech">🦙 Battery AI</div>
+      <div class="card-what">📋 배터리 운영 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 배터리 데이터</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>에너지 저장사</span><span class="rev">1社 3-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">214</div><div class="card-name">Energy-Solar</div></div>
+      <div class="card-tech">🦙 Solar AI</div>
+      <div class="card-what">📋 태양광 발전 예측·최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 기상 + 발전</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>태양광 사업자</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">215</div><div class="card-name">Energy-Wind</div></div>
+      <div class="card-tech">🦙 Wind AI</div>
+      <div class="card-what">📋 풍력 발전 예측·최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 기상</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>풍력 사업자</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">216</div><div class="card-name">Energy-Cooling</div></div>
+      <div class="card-tech">🦙 DC Cooling AI</div>
+      <div class="card-what">📋 데이터센터 냉각 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> DeepMind cooling + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>DC 사업자</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">217</div><div class="card-name">Energy-Trade</div></div>
+      <div class="card-tech">🦙 Energy Trading</div>
+      <div class="card-what">📋 AI 에너지 거래</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 거래 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>에너지 거래사</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">218</div><div class="card-name">Energy-DERMS</div></div>
+      <div class="card-tech">🦙 DERMS AI</div>
+      <div class="card-what">📋 분산 에너지 관리</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + DER</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>분산 발전사</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">219</div><div class="card-name">Energy-EV</div></div>
+      <div class="card-tech">🦙 EV Charging AI</div>
+      <div class="card-what">📋 전기차 충전 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 충전망</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>EV 충전 사업</span><span class="rev">월 300-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">220</div><div class="card-name">Energy-H2</div></div>
+      <div class="card-tech">🦙 Hydrogen AI</div>
+      <div class="card-what">📋 수소 생산·운영 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 수소 ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>수소 사업자</span><span class="rev">1社 3-10억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area23" style="border-left-color:#3E2723">
+  <div class="area-head" style="background:linear-gradient(90deg,#3E2723,#3E2723AA)">
+    <div class="area-emoji">🚗</div>
+    <div class="area-info"><div class="area-name">23. 자율주행·모빌리티</div><div class="area-old">자율주행 시스템</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">221</div><div class="card-name">Auto-Safety</div></div>
+      <div class="card-tech">🦙 AI 안전 인증</div>
+      <div class="card-what">📋 자율주행 안전 평가·인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + KISA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·기아</span><span class="rev">1회 5천만-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">222</div><div class="card-name">Auto-Sim</div></div>
+      <div class="card-tech">🦙 Simulation</div>
+      <div class="card-what">📋 자율주행 시뮬레이션</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA Cosmos + Isaac</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·기아·SK</span><span class="rev">1社 10-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">223</div><div class="card-name">Auto-V2X</div></div>
+      <div class="card-tech">🦙 V2X Security</div>
+      <div class="card-what">📋 차량-인프라 보안</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>자동차·통신</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">224</div><div class="card-name">Auto-Behavior</div></div>
+      <div class="card-tech">🦙 Driver Behavior</div>
+      <div class="card-what">📋 운전자 행동 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 행동 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험사·자동차</span><span class="rev">월 200-1000만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">225</div><div class="card-name">Auto-Predict</div></div>
+      <div class="card-tech">🦙 Pedestrian Predict</div>
+      <div class="card-what">📋 보행자 행동 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> OpenVLA + 자율주행</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>자동차사</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">226</div><div class="card-name">Auto-Robotaxi</div></div>
+      <div class="card-tech">🦙 Robotaxi 운영</div>
+      <div class="card-what">📋 AI 로보택시 SI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Waymo·Tesla + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 클라우드</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>카카오·SK</span><span class="rev">B2C SI</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">227</div><div class="card-name">Auto-Logistics</div></div>
+      <div class="card-tech">🦙 자율 화물</div>
+      <div class="card-what">📋 자율 화물 트럭</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Embotech·Embark</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>물류·운송</span><span class="rev">대당 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">228</div><div class="card-name">Auto-Drone</div></div>
+      <div class="card-tech">🦙 UAM 관제</div>
+      <div class="card-what">📋 도시항공교통 관제</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 항공</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>한국공항공사·KAI</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">229</div><div class="card-name">Auto-MaaS</div></div>
+      <div class="card-tech">🦙 Mobility-as-a-Service</div>
+      <div class="card-what">📋 통합 모빌리티 플랫폼</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 모빌리티</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>카카오·티맵</span><span class="rev">월 1000만+</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">230</div><div class="card-name">Auto-Insurance</div></div>
+      <div class="card-tech">🦙 자율주행 보험</div>
+      <div class="card-what">📋 UBI·자율주행 보험 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 보험 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>손해보험사</span><span class="rev">1社 3-10억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area24" style="border-left-color:#311B92">
+  <div class="area-head" style="background:linear-gradient(90deg,#311B92,#311B92AA)">
+    <div class="area-emoji">🚀</div>
+    <div class="area-info"><div class="area-name">24. 우주·항공</div><div class="area-old">위성·우주선·발사</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">231</div><div class="card-name">Space-Satellite</div></div>
+      <div class="card-tech">🦙 위성 자율 운영</div>
+      <div class="card-what">📋 Llama 4 + 위성 운영</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 위성 SDK</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>KARI·한화·LIG</span><span class="rev">B2G 50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">232</div><div class="card-name">Space-Comms</div></div>
+      <div class="card-tech">🦙 Starlink + AI</div>
+      <div class="card-what">📋 위성 통신 자율</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Starlink SDK + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌·국방</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">233</div><div class="card-name">Space-Earth</div></div>
+      <div class="card-tech">🦙 Earth Observation</div>
+      <div class="card-what">📋 위성 영상 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 Vision + 위성</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>환경부·국토부</span><span class="rev">B2G 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">234</div><div class="card-name">Space-Launch</div></div>
+      <div class="card-tech">🦙 Launch AI</div>
+      <div class="card-what">📋 발사 운영 자율</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> SpaceX 식 + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>KARI·누리호</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">235</div><div class="card-name">Space-Defense</div></div>
+      <div class="card-tech">🦙 국방 우주</div>
+      <div class="card-what">📋 국방 우주 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + 한화 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방부·합참</span><span class="rev">B2G 50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">236</div><div class="card-name">Space-Mining</div></div>
+      <div class="card-tech">🦙 우주 채굴 시뮬</div>
+      <div class="card-what">📋 소행성·달 채굴 시뮬</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA Cosmos</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>연구·미래</span><span class="rev">미래 R&D</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">237</div><div class="card-name">Space-HAPS</div></div>
+      <div class="card-tech">🦙 HAPS 통신</div>
+      <div class="card-what">📋 성층권 통신 + AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + 한국 군</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방·통신</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">238</div><div class="card-name">Space-NaaS</div></div>
+      <div class="card-tech">🦙 Network-as-a-Service</div>
+      <div class="card-what">📋 위성 군집 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 군집 운영</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 IoT</span><span class="rev">B2C SI</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">239</div><div class="card-name">Space-Tourism</div></div>
+      <div class="card-tech">🦙 우주 관광 AI</div>
+      <div class="card-what">📋 AR/VR 우주 관광</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Vision Pro + Unity</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + Vision Pro</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>관광·교육</span><span class="rev">1프로젝트 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">240</div><div class="card-name">Space-Insurance</div></div>
+      <div class="card-tech">🦙 우주 보험</div>
+      <div class="card-what">📋 위성·발사 보험</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 보험 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험사</span><span class="rev">월 200-1000만</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area25" style="border-left-color:#880E4F">
+  <div class="area-head" style="background:linear-gradient(90deg,#880E4F,#880E4FAA)">
+    <div class="area-emoji">🧪</div>
+    <div class="area-info"><div class="area-name">25. 신소재·반도체</div><div class="area-old">AI 신소재 발견</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">241</div><div class="card-name">Mat-MatterGen</div></div>
+      <div class="card-tech">🦙 MatterGen</div>
+      <div class="card-what">📋 신소재 자동 발견</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Microsoft MatterGen</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>소재 R&D</span><span class="rev">1프로젝트 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">242</div><div class="card-name">Mat-Battery</div></div>
+      <div class="card-tech">🦙 Battery Material</div>
+      <div class="card-what">📋 배터리 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 배터리 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>LG·삼성SDI·SK</span><span class="rev">1프로젝트 10-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">243</div><div class="card-name">Mat-Semi</div></div>
+      <div class="card-tech">🦙 반도체 신소재</div>
+      <div class="card-what">📋 반도체 신소재·EUV</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 반도체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>삼성·SK하이닉스</span><span class="rev">1프로젝트 10-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">244</div><div class="card-name">Mat-Solar</div></div>
+      <div class="card-tech">🦙 태양광 신소재</div>
+      <div class="card-what">📋 태양광 효율 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 태양광</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>태양광 회사</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">245</div><div class="card-name">Mat-Polymer</div></div>
+      <div class="card-tech">🦙 고분자 신소재</div>
+      <div class="card-what">📋 플라스틱·고무 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 고분자</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>석유화학·제약</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">246</div><div class="card-name">Mat-Quantum</div></div>
+      <div class="card-tech">🦙 양자 신소재</div>
+      <div class="card-what">📋 양자 컴퓨팅 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 양자 + MatterGen</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum + Mac</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>연구·미래</span><span class="rev">미래 R&D</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">247</div><div class="card-name">Mat-Catalyst</div></div>
+      <div class="card-tech">🦙 촉매 AI</div>
+      <div class="card-what">📋 산업 촉매 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 촉매</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>석유화학</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">248</div><div class="card-name">Mat-Bio</div></div>
+      <div class="card-tech">🦙 바이오 소재</div>
+      <div class="card-what">📋 의료 임플란트 소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 의료</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>의료기기</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">249</div><div class="card-name">Mat-Build</div></div>
+      <div class="card-tech">🦙 건설 소재</div>
+      <div class="card-what">📋 시멘트·강재 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 건설</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>건설사·소재사</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">250</div><div class="card-name">Mat-Aero</div></div>
+      <div class="card-tech">🦙 항공우주 소재</div>
+      <div class="card-what">📋 경량·내열 신소재</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> MatterGen + 항공우주</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>KAI·한화</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area26" style="border-left-color:#01579B">
+  <div class="area-head" style="background:linear-gradient(90deg,#01579B,#01579BAA)">
+    <div class="area-emoji">🧬</div>
+    <div class="area-info"><div class="area-name">26. 바이오·신약</div><div class="area-old">AI 신약 개발</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">251</div><div class="card-name">Bio-AlphaFold</div></div>
+      <div class="card-tech">🦙 AlphaFold 3</div>
+      <div class="card-what">📋 단백질 구조 예측</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> AlphaFold 3 API</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제약·바이오</span><span class="rev">1프로젝트 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">252</div><div class="card-name">Bio-Drug-Design</div></div>
+      <div class="card-tech">🦙 Generative Drug</div>
+      <div class="card-what">📋 AI 신약 설계</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Inceptive + Cradle</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + GPU</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>한미·셀트리온</span><span class="rev">1프로젝트 10-50억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">253</div><div class="card-name">Bio-Repurpose</div></div>
+      <div class="card-tech">🦙 약물 재창출</div>
+      <div class="card-what">📋 기존 약물 새 용도</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Recursion + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제약사</span><span class="rev">1프로젝트 3-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">254</div><div class="card-name">Bio-Clinical</div></div>
+      <div class="card-tech">🦙 Clinical Trial</div>
+      <div class="card-what">📋 임상시험 AI 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 임상 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제약·CRO</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">255</div><div class="card-name">Bio-Genome</div></div>
+      <div class="card-tech">🦙 Genomic Privacy</div>
+      <div class="card-what">📋 유전체 보호 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> PET + 유전체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>유전체 회사</span><span class="rev">1社 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">256</div><div class="card-name">Bio-Diagnostics</div></div>
+      <div class="card-tech">🦙 AI Diagnostics</div>
+      <div class="card-what">📋 진단 키트 + AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 진단</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>진단·바이오</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">257</div><div class="card-name">Bio-Vaccine</div></div>
+      <div class="card-tech">🦙 Vaccine Design</div>
+      <div class="card-what">📋 백신 설계 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> AlphaFold + 면역</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>백신 회사</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">258</div><div class="card-name">Bio-Animal</div></div>
+      <div class="card-tech">🦙 Veterinary AI</div>
+      <div class="card-what">📋 동물 의약·진단</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 수의</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>동물병원·축산</span><span class="rev">월 100-500만</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">259</div><div class="card-name">Bio-Microbiome</div></div>
+      <div class="card-tech">🦙 Microbiome AI</div>
+      <div class="card-what">📋 장내 미생물 분석</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 미생물</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>바이오·식품</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">260</div><div class="card-name">Bio-Synth</div></div>
+      <div class="card-tech">🦙 합성생물학 AI</div>
+      <div class="card-what">📋 DNA 합성·디자인</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Ginkgo + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>합성생물 회사</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area27" style="border-left-color:#BF360C">
+  <div class="area-head" style="background:linear-gradient(90deg,#BF360C,#BF360CAA)">
+    <div class="area-emoji">🛡️</div>
+    <div class="area-info"><div class="area-name">27. K-방산</div><div class="area-old">국방·무기 시스템</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">261</div><div class="card-name">Def-AntiDrone</div></div>
+      <div class="card-tech">🦙 Anti-Drone AI</div>
+      <div class="card-what">📋 드론 탐지·요격</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Dedrone + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + 센서</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방·공항·발전소</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">262</div><div class="card-name">Def-Swarm</div></div>
+      <div class="card-tech">🦙 Drone Swarm</div>
+      <div class="card-what">📋 드론 군집·자율 협업</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + Swarm</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 드론</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방부</span><span class="rev">B2G 50-200억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">263</div><div class="card-name">Def-Sim</div></div>
+      <div class="card-tech">🦙 전장 시뮬레이션</div>
+      <div class="card-what">📋 전쟁 게임·작전 시뮬</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA Cosmos</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>합참·국방부</span><span class="rev">B2G 50-150억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">264</div><div class="card-name">Def-CBR</div></div>
+      <div class="card-tech">🦙 CBRN AI</div>
+      <div class="card-what">📋 화학·생물·방사능 탐지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 센서</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대 + 센서</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>군·소방</span><span class="rev">B2G 30-80억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">265</div><div class="card-name">Def-Cyber</div></div>
+      <div class="card-tech">🦙 사이버 방어</div>
+      <div class="card-what">📋 국방 사이버 자율 방어</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + SOC</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방부·국정원</span><span class="rev">B2G 50-150억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">266</div><div class="card-name">Def-Intel</div></div>
+      <div class="card-tech">🦙 정보 인텔리전스</div>
+      <div class="card-what">📋 OSINT·HUMINT AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 정보</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국정원·국방정보</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">267</div><div class="card-name">Def-Unmanned</div></div>
+      <div class="card-tech">🦙 무인 시스템</div>
+      <div class="card-what">📋 무인 함정·UAV</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 무인기</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대 + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>한화·LIG·KAI</span><span class="rev">B2G 100-500억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">268</div><div class="card-name">Def-Quantum</div></div>
+      <div class="card-tech">🦙 양자 통신·암호</div>
+      <div class="card-what">📋 국방 양자 통신</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 양자</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국정원·국방부</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">269</div><div class="card-name">Def-PQC</div></div>
+      <div class="card-tech">🦙 PQC 마이그레이션</div>
+      <div class="card-what">📋 국방 양자내성암호</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NIST PQC + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방부·국정원</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">270</div><div class="card-name">Def-Export</div></div>
+      <div class="card-tech">🦙 K-방산 수출 AI</div>
+      <div class="card-what">📋 수출 위험 평가·관리</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 수출</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>K-방산 빅3</span><span class="rev">1社 3-10억</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area28" style="border-left-color:#0D47A1">
+  <div class="area-head" style="background:linear-gradient(90deg,#0D47A1,#0D47A1AA)">
+    <div class="area-emoji">⚛️</div>
+    <div class="area-info"><div class="area-name">28. 양자컴퓨팅 응용</div><div class="area-old">IBM Quantum 기반</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">271</div><div class="card-name">Q-Finance</div></div>
+      <div class="card-tech">🦙 금융 양자 최적화</div>
+      <div class="card-what">📋 거래 양자 최적·신용평가</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + 금융</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융사</span><span class="rev">1社 5-15억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">272</div><div class="card-name">Q-Supply</div></div>
+      <div class="card-tech">🦙 공급망 양자</div>
+      <div class="card-what">📋 공급망 NP-hard 최적</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + 물류</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제조·물류</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">273</div><div class="card-name">Q-Material</div></div>
+      <div class="card-tech">🦙 신소재 양자 시뮬</div>
+      <div class="card-what">📋 신소재 양자 화학</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + 화학</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>소재 R&D</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">274</div><div class="card-name">Q-Drug</div></div>
+      <div class="card-tech">🦙 신약 양자</div>
+      <div class="card-what">📋 신약 양자 도킹</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum + 신약</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>제약 R&D</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">275</div><div class="card-name">Q-Crypto</div></div>
+      <div class="card-tech">🦙 양자 암호</div>
+      <div class="card-what">📋 양자 키 분배 (QKD)</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM + KT·SKT 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 양자</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>금융·국방</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">276</div><div class="card-name">Q-PQC</div></div>
+      <div class="card-tech">🦙 PQC 인벤토리</div>
+      <div class="card-what">📋 양자내성암호 전환</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NIST PQC + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 대기업</span><span class="rev">1社 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">277</div><div class="card-name">Q-Sensing</div></div>
+      <div class="card-tech">🦙 양자 센싱</div>
+      <div class="card-what">📋 자기장·중력 양자 센서</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 연구 + 한국 군·국정원</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 연구 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방·과학</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">278</div><div class="card-name">Q-Sim</div></div>
+      <div class="card-tech">🦙 양자 시뮬</div>
+      <div class="card-what">📋 복잡계 양자 시뮬</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Quantum</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>연구·기업 R&D</span><span class="rev">1프로젝트 5-20억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">279</div><div class="card-name">Q-ML</div></div>
+      <div class="card-tech">🦙 Quantum ML</div>
+      <div class="card-what">📋 양자 ML 알고리즘</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Qiskit ML</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> IBM Quantum Cloud</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI·금융</span><span class="rev">1프로젝트 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">280</div><div class="card-name">Q-Edu</div></div>
+      <div class="card-tech">🦙 양자 교육·인력</div>
+      <div class="card-what">📋 양자 인력 양성</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> IBM Q Network 교육</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 교육 인프라</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대학·기업</span><span class="rev">교육 패키지</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area29" style="border-left-color:#4A148C">
+  <div class="area-head" style="background:linear-gradient(90deg,#4A148C,#4A148CAA)">
+    <div class="area-emoji">🤖</div>
+    <div class="area-info"><div class="area-name">29. 휴머노이드·로봇</div><div class="area-old">로봇 + AI</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">281</div><div class="card-name">Robot-Patrol</div></div>
+      <div class="card-tech">🦙 보안 순찰 로봇</div>
+      <div class="card-what">📋 시설 자율 순찰</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Boston Dynamics + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>데이터센터·발전소</span><span class="rev">대당 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">282</div><div class="card-name">Robot-Factory</div></div>
+      <div class="card-tech">🦙 공장 휴머노이드</div>
+      <div class="card-what">📋 공장 작업 로봇</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA GR00T + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>현대·삼성</span><span class="rev">대당 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">283</div><div class="card-name">Robot-Logistics</div></div>
+      <div class="card-tech">🦙 물류 로봇</div>
+      <div class="card-what">📋 창고·물류 로봇</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Symbotic + Llama 4</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>쿠팡·CJ</span><span class="rev">대당 1-5억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">284</div><div class="card-name">Robot-Care</div></div>
+      <div class="card-tech">🦙 의료·돌봄 로봇</div>
+      <div class="card-what">📋 환자·노인 돌봄</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 의료 LoRA + 로봇</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>병원·요양원</span><span class="rev">대당 3-10억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">285</div><div class="card-name">Robot-Home</div></div>
+      <div class="card-tech">🦙 가정 휴머노이드</div>
+      <div class="card-what">📋 가정 보조 로봇</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 1X·Figure + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>고소득 가정</span><span class="rev">대당 5천만~</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">286</div><div class="card-name">Robot-Construction</div></div>
+      <div class="card-tech">🦙 건설 로봇</div>
+      <div class="card-what">📋 건설현장 자율 검사</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Spot + 자체</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + Spot</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>건설사</span><span class="rev">대당 1-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">287</div><div class="card-name">Robot-Police</div></div>
+      <div class="card-tech">🦙 경찰 로봇</div>
+      <div class="card-what">📋 경찰 순찰·치안</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Spot + 한국 경찰 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio + 로봇</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>경찰청</span><span class="rev">B2G 5-30억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">288</div><div class="card-name">Robot-Defense</div></div>
+      <div class="card-tech">🦙 국방 로봇</div>
+      <div class="card-what">📋 국방 무인 시스템</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> NVIDIA GR00T + 한화</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA + 보안</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국방부</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">289</div><div class="card-name">Robot-Safety</div></div>
+      <div class="card-tech">🦙 휴머노이드 보안 인증</div>
+      <div class="card-what">📋 휴머노이드 보안·인증</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>도입 기업</span><span class="rev">인증료 5천만-3억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">290</div><div class="card-name">Robot-Train</div></div>
+      <div class="card-tech">🦙 로봇 학습 데이터</div>
+      <div class="card-what">📋 로봇 학습 데이터 마켓</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 디지털트윈 + Sim2Real</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> NVIDIA Cluster</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>로봇 회사</span><span class="rev">데이터 라이선스</span></div>
+    </div>  </div>
+</div>
+<div class="area" id="area30" style="border-left-color:#E65100">
+  <div class="area-head" style="background:linear-gradient(90deg,#E65100,#E65100AA)">
+    <div class="area-emoji">🌟</div>
+    <div class="area-info"><div class="area-name">30. 합성데이터·신영역</div><div class="area-old">미래 사업</div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-head"><div class="card-num">291</div><div class="card-name">Synth-Korea</div></div>
+      <div class="card-tech">🦙 한국 합성 데이터</div>
+      <div class="card-what">📋 한국 산업 데이터 마켓</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + Gretel 패턴</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 3대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>글로벌 AI 회사</span><span class="rev">데이터 라이선스</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">292</div><div class="card-name">AGI-Adv</div></div>
+      <div class="card-tech">🦙 AGI 거버넌스</div>
+      <div class="card-what">📋 AGI 안전·자문</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Anthropic 협력</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 연구 인력</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>대기업·정부</span><span class="rev">시간당 자문료</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">293</div><div class="card-name">K-Edu</div></div>
+      <div class="card-tech">🦙 K-AI 교육·자격</div>
+      <div class="card-what">📋 KISA 등록 정식 과정</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 교육 + 자격증</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 교육 인프라</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>전 한국 기업</span><span class="rev">수강료+자격증</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">294</div><div class="card-name">Federated-Bank</div></div>
+      <div class="card-tech">🦙 은행 컨소시엄</div>
+      <div class="card-what">📋 Flower 금융 컨소시엄</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Flower OSS</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 각 은행 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>은행연합회</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">295</div><div class="card-name">NHI-Korea</div></div>
+      <div class="card-tech">🦙 AI 신원 관리 표준</div>
+      <div class="card-what">📋 AI 에이전트 신원 표준</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + Astrix</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>AI 도입 기업</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">296</div><div class="card-name">Sov-Cloud</div></div>
+      <div class="card-tech">🦙 Sovereign Cloud</div>
+      <div class="card-what">📋 국가 데이터 주권</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 + 정부 협업</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 5대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>국가·금융</span><span class="rev">B2G 30-100억</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">297</div><div class="card-name">OSS-Korea</div></div>
+      <div class="card-tech">🦙 한국형 오픈소스 AI</div>
+      <div class="card-what">📋 Llama 4 한국 패키지</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 한국 LoRA</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>한국 AI 사용사</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">298</div><div class="card-name">Climate-K</div></div>
+      <div class="card-tech">🦙 한국 기후 적응</div>
+      <div class="card-what">📋 한국 기후 AI</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> GraphCast + 한국 기상</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 2대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>농업·보험·건설</span><span class="rev">월구독</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">299</div><div class="card-name">Brain-K</div></div>
+      <div class="card-tech">🦙 K-BCI 인증</div>
+      <div class="card-what">📋 한국 BCI 보안 표준</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> 자체 표준</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> 컨설팅</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>의료·연구</span><span class="rev">인증료</span></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-num">300</div><div class="card-name">AI-Liability</div></div>
+      <div class="card-tech">🦙 AI 책임보험</div>
+      <div class="card-what">📋 AI 사고 책임 평가</div>
+      <div class="card-how"><strong>🔧 어떻게:</strong> Llama 4 + 보험</div>
+      <div class="card-infra"><strong>💻 인프라:</strong> Mac Studio 1대</div>
+      <div class="card-meta"><span class="lbl">대상:</span><span>보험사</span><span class="rev">월구독</span></div>
+    </div>  </div>
+</div>
+
+<div class="footer">
+  ITCEN CORE × Llama 4 — 300 신상품 (30 영역 × 10) · 자체 운영 인프라 명시<br>
+  작성: 2026-06-02 · 행동위험분석 외 ITCEN 자사 솔루션 + 신영역 확장<br>
+  모든 신상품: Llama 4 자체 운영 (API 비용 0) + Mac Studio 인프라 (1,500만원/대) 명시
+</div>
+
+</body>
+</html>
