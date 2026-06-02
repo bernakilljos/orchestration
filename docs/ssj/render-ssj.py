@@ -97,8 +97,8 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .header-left h1{{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}}
 .header-left .sub{{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}}
 .header-right{{display:flex;gap:6px;max-width:360px}}
-.mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:4px;flex:1;margin:4px 0}}
-.mid-left,.mid-right{{display:flex;flex-direction:column;gap:3px}}
+.mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:3px;flex:1;margin:3px 0}}
+.mid-left,.mid-right{{display:flex;flex-direction:column;gap:2px}}
 .center{{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}}
 .photo{{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}}
 .name-area{{text-align:center}}
@@ -108,7 +108,7 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .stat{{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
 .stat .n{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}}
 .stat .l{{font-size:8px;color:#7a6b5a}}
-.bottom{{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}}
+.bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}}
 .btm-card{{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px}}
 .btm-card h4{{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}}
 .btm-card li{{font-size:9px;line-height:1.5;color:#5a4f42}}
@@ -185,6 +185,26 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; <b>\uc99d\uac70 \uae30\ubc18</b> \u2014 "\ud655\uc778 \uc548 \ub428" \uc194\uc9c1, \ucd94\uce21 \ub2e8\uc815 X</li>
         <li>&middot; <b>\ud68c\uace0\u00b7\ud559\uc2b5</b> \u2014 \uc2e4\ud328 \ud328\ud134 \uae30\ub85d, \uac19\uc740 \uc2e4\uc218 \ubc18\ubcf5 X</li>
         <li>&middot; <b>\uc2b9\uc778 \uac8c\uc774\ud2b8</b> \u2014 \uc704\ud5d8 \uba85\ub839 \uc0ac\uc804 \uc2b9\uc778 (HITL)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['plant']} \uc131\uc7a5 \ub9c8\uc778\ub4dc\uc14b</h3>
+      <ul>
+        <li>&middot; \ub9e4\uc77c 1% \ub354 \ub098\uc740 \uacb0\uacfc \ucd94\uad6c</li>
+        <li>&middot; \uc2e4\ud328 = \ud559\uc2b5 \ub370\uc774\ud130, \ud68c\ud53c X</li>
+        <li>&middot; \ub3c4\uba54\uc778 + AI \uc735\ud569 \ucd94\uad6c</li>
+        <li>&middot; \uae00\ub85c\ubc8c \ud2b8\ub80c\ub4dc \ub9e4\uc8fc \uc810\uac80</li>
+        <li>&middot; \ub3d9\ub8cc\uc5d0\uac8c \ubc30\uc6b0\uace0 \uac00\ub974\uce58\uae30</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['bulb']} \ud575\uc2ec \ub3c4\uad6c\u00b7\uae30\uc220</h3>
+      <ul>
+        <li>&middot; LLM: Claude\u00b7GPT\u00b7Gemini\u00b7HyperCLOVA</li>
+        <li>&middot; \uc5d0\uc774\uc804\ud2b8: MCP\u00b7Agentic\u00b7Multi-Agent</li>
+        <li>&middot; RAG: GraphRAG\u00b7Vector DB\u00b7HyDE</li>
+        <li>&middot; \ubcf4\uc548: UEBA\u00b7Confidential\u00b7PET</li>
+        <li>&middot; \uac80\uc99d: Reflexion\u00b7Self-Critique</li>
       </ul>
     </div>
   </div>
@@ -276,6 +296,29 @@ body{{width:850px;height:1100px;background:#f5efe6;
         <li>{I['star']} 단가·특성·quota 3축 최적화</li>
       </ul>
     </div>
+    <div class="card">
+      <h3>{I['fire']} 최근 학습 영역</h3>
+      <ul>
+        <li>&middot; Agentic AI · MCP · Computer-Use</li>
+        <li>&middot; World Models · VLA (피지컬 AI)</li>
+        <li>&middot; Self-Critique · Reflexion 루프</li>
+        <li>&middot; Causal AI · DoWhy · 인과그래프</li>
+        <li>&middot; Affective Computing · 감정 인식</li>
+        <li>&middot; Quantum ML · IBM Quantum 가입</li>
+        <li>&middot; Mechanistic Interpretability</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['heart']} 협력 가능 영역</h3>
+      <ul>
+        <li>&middot; ITCEN PNS — 사이버보안 통합</li>
+        <li>&middot; ITCEN CTS — 클라우드·NI 시너지</li>
+        <li>&middot; ITCEN ENTEC — 공공·금융 SI</li>
+        <li>&middot; ITCEN CLOIT — Google Cloud</li>
+        <li>&middot; KISA·금감원·개인정보위 표준화</li>
+        <li>&middot; NVIDIA·MS·Anthropic 파트너십</li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -320,6 +363,39 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <li>\u25a1 \uc624\ud508\uc18c\uc2a4 \ubc30\ud3ec</li>
       <li>\u25a1 1000 \uc0ac\uc6a9\uc790</li>
       <li>\u25a1 AI \uba58\ud1a0\ub9c1 \ud50c\ub7ab\ud3fc</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4>{I['gear']} \uc8fc\uc694 \uc5ed\ub7c9\u00b7\uacbd\ud5d8</h4>
+    <ul>
+      <li>&middot; \uba40\ud2f0AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158 \uc124\uacc4</li>
+      <li>&middot; \ud589\ub3d9\uc704\ud5d8\ubd84\uc11d\u00b7UEBA \ub3c4\uba54\uc778</li>
+      <li>&middot; \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 \uc124\uacc4</li>
+      <li>&middot; \ub300\uaddc\ubaa8 SI \uc544\ud0a4\ud14d\ucc98 \uc2a4\ud0a4\ub9bc</li>
+      <li>&middot; Cross-functional \ud611\uc5c5</li>
+      <li>&middot; KPI \uc124\uacc4\u00b7\ub370\uc774\ud130 \uc758\uc0ac\uacb0\uc815</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4>{I['water']} \ud559\uc2b5\u00b7\uc790\uaca9</h4>
+    <ul>
+      <li>&middot; Anthropic Claude Code \uc2a4\ud0ac \uc774\uc218</li>
+      <li>&middot; NVIDIA Cosmos \ud30c\ud2b8\ub108 \uad50\uc721</li>
+      <li>&middot; AWS\u00b7Azure AI \uc778\uc99d</li>
+      <li>&middot; ISO 42001 AI \uad00\ub9ac \uc790\uaca9</li>
+      <li>&middot; KISA \ubcf4\uc548 \uc778\uc99d</li>
+      <li>&middot; PMP\u00b7CISSP \u00b7 CIA \uc900\ube44</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4>{I['star']} \uc678\ubd80 \ud65c\ub3d9</h4>
+    <ul>
+      <li>&middot; \uae00\ub85c\ubc8c AI \uceec\ud37c\ub7f0\uc2a4 \ub9e4\ub144 \ucc38\uc11d</li>
+      <li>&middot; Anthropic\u00b7OpenAI \uad6c\uc870 \ucee4\ubba4\ub2c8\ud2f0</li>
+      <li>&middot; \uacf5\uacf5 AI \uac70\ubc84\ub10c\uc2a4 \uc790\ubb38</li>
+      <li>&middot; KISA\u00b7\uae08\uac10\uc6d0 \ud45c\uc900\ud654 \uc704\uc6d0\ud68c</li>
+      <li>&middot; \uba58\ud1a0\ub9c1 \uad50\uc721 \uc9c4\ud589</li>
+      <li>&middot; \uacf5\uc720 \uc138\ubbf8\ub098 \uc8fc\uad00</li>
     </ul>
   </div>
 </div>

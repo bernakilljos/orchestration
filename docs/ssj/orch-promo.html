@@ -52,8 +52,8 @@ body{width:850px;height:1100px;background:#f5efe6;
 .header-left h1{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}
 .header-left .sub{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}
 .header-right{display:flex;gap:6px;max-width:360px}
-.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:4px;flex:1;margin:4px 0}
-.mid-left,.mid-right{display:flex;flex-direction:column;gap:3px}
+.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:3px;flex:1;margin:3px 0}
+.mid-left,.mid-right{display:flex;flex-direction:column;gap:2px}
 .center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
 .photo{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}
 .name-area{text-align:center}
@@ -63,7 +63,7 @@ body{width:850px;height:1100px;background:#f5efe6;
 .stat{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}
 .stat .n{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}
 .stat .l{font-size:8px;color:#7a6b5a}
-.bottom{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px}
+.bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
 .btm-card{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px}
 .btm-card h4{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}
 .btm-card li{font-size:9px;line-height:1.5;color:#5a4f42}
@@ -140,6 +140,26 @@ body{width:850px;height:1100px;background:#f5efe6;
         <li>&middot; <b>증거 기반</b> — "확인 안 됨" 솔직, 추측 단정 X</li>
         <li>&middot; <b>회고·학습</b> — 실패 패턴 기록, 같은 실수 반복 X</li>
         <li>&middot; <b>승인 게이트</b> — 위험 명령 사전 승인 (HITL)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22V8M8 12c-3 0-5-2-5-5 3 0 5 2 5 5M16 10c3 0 5-2 5-5-3 0-5 2-5 5"/></svg> 성장 마인드셋</h3>
+      <ul>
+        <li>&middot; 매일 1% 더 나은 결과 추구</li>
+        <li>&middot; 실패 = 학습 데이터, 회피 X</li>
+        <li>&middot; 도메인 + AI 융합 추구</li>
+        <li>&middot; 글로벌 트렌드 매주 점검</li>
+        <li>&middot; 동료에게 배우고 가르치기</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#c4915a" stroke-width="1.5"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3z"/></svg> 핵심 도구·기술</h3>
+      <ul>
+        <li>&middot; LLM: Claude·GPT·Gemini·HyperCLOVA</li>
+        <li>&middot; 에이전트: MCP·Agentic·Multi-Agent</li>
+        <li>&middot; RAG: GraphRAG·Vector DB·HyDE</li>
+        <li>&middot; 보안: UEBA·Confidential·PET</li>
+        <li>&middot; 검증: Reflexion·Self-Critique</li>
       </ul>
     </div>
   </div>
@@ -231,6 +251,29 @@ body{width:850px;height:1100px;background:#f5efe6;
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 단가·특성·quota 3축 최적화</li>
       </ul>
     </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="#e07a2f" stroke="none"><path d="M12 23c-4 0-7-3-7-7 0-3 2-5 4-7 0 2 1 3 2 3 0-4 3-8 5-10 0 3 1 5 2 6 2 2 3 4 3 6 0 5-4 9-9 9z"/></svg> 최근 학습 영역</h3>
+      <ul>
+        <li>&middot; Agentic AI · MCP · Computer-Use</li>
+        <li>&middot; World Models · VLA (피지컬 AI)</li>
+        <li>&middot; Self-Critique · Reflexion 루프</li>
+        <li>&middot; Causal AI · DoWhy · 인과그래프</li>
+        <li>&middot; Affective Computing · 감정 인식</li>
+        <li>&middot; Quantum ML · IBM Quantum 가입</li>
+        <li>&middot; Mechanistic Interpretability</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="#c4915a" stroke="none"><path d="M12 21C8 17 2 13 2 8a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 5-6 9-10 13z"/></svg> 협력 가능 영역</h3>
+      <ul>
+        <li>&middot; ITCEN PNS — 사이버보안 통합</li>
+        <li>&middot; ITCEN CTS — 클라우드·NI 시너지</li>
+        <li>&middot; ITCEN ENTEC — 공공·금융 SI</li>
+        <li>&middot; ITCEN CLOIT — Google Cloud</li>
+        <li>&middot; KISA·금감원·개인정보위 표준화</li>
+        <li>&middot; NVIDIA·MS·Anthropic 파트너십</li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -275,6 +318,39 @@ body{width:850px;height:1100px;background:#f5efe6;
       <li>□ 오픈소스 배포</li>
       <li>□ 1000 사용자</li>
       <li>□ AI 멘토링 플랫폼</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 주요 역량·경험</h4>
+    <ul>
+      <li>&middot; 멀티AI 오케스트레이션 설계</li>
+      <li>&middot; 행동위험분석·UEBA 도메인</li>
+      <li>&middot; 자동화 스크립트 설계</li>
+      <li>&middot; 대규모 SI 아키텍처 스키림</li>
+      <li>&middot; Cross-functional 협업</li>
+      <li>&middot; KPI 설계·데이터 의사결정</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4><svg viewBox="0 0 24 24" width="15" height="15" fill="#5a9ec4" stroke="none"><path d="M12 2C8 8 5 12 5 16a7 7 0 0 0 14 0c0-4-3-8-7-14z"/></svg> 학습·자격</h4>
+    <ul>
+      <li>&middot; Anthropic Claude Code 스킬 이수</li>
+      <li>&middot; NVIDIA Cosmos 파트너 교육</li>
+      <li>&middot; AWS·Azure AI 인증</li>
+      <li>&middot; ISO 42001 AI 관리 자격</li>
+      <li>&middot; KISA 보안 인증</li>
+      <li>&middot; PMP·CISSP · CIA 준비</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 외부 활동</h4>
+    <ul>
+      <li>&middot; 글로벌 AI 컬퍼런스 매년 참석</li>
+      <li>&middot; Anthropic·OpenAI 구조 커뮤니티</li>
+      <li>&middot; 공공 AI 거버넌스 자문</li>
+      <li>&middot; KISA·금감원 표준화 위원회</li>
+      <li>&middot; 멘토링 교육 진행</li>
+      <li>&middot; 공유 세미나 주관</li>
     </ul>
   </div>
 </div>
