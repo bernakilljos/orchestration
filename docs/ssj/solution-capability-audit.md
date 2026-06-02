@@ -4,14 +4,33 @@
 > **결론 등급**: ✅ 이미 적용 / 🟡 부분 적용 / ❌ 미적용 (구축 필요)
 > **작성**: 2026-06-02
 >
-> **2026-06-02 보강 완성** (5 핵심 skill 신설):
-> - `plugins/exec_orch/skills/ai-risk-lighthouse.md` — 8 카테고리 자동 감사
-> - `plugins/exec_orch/skills/self-critique-loop.md` — Reflexion 루프 명시
-> - `plugins/exec_orch/skills/causal-ai.md` — DoWhy 인과 추론
-> - `plugins/exec_orch/skills/graphrag-behavior.md` — 행동패턴 그래프
-> - `plugins/exec_orch/skills/constitutional-ai.md` — 헌법화 패턴
-> - `.claude/skills/` 자동 sync 완료
-> - 결과: ✅ 11 → **16개** (+5), 🟡 12 → **10개** (-2 완성), ❌ 27 → **24개** (-3)
+> **2026-06-02 보강 완성** (5 핵심 + 6 묶음 = **11 skill** 신설):
+>
+> ### 5 핵심 skill
+> - `ai-risk-lighthouse.md` — 8 카테고리 자동 감사
+> - `self-critique-loop.md` — Reflexion 루프 명시
+> - `causal-ai.md` — DoWhy 인과 추론
+> - `graphrag-behavior.md` — 행동패턴 그래프
+> - `constitutional-ai.md` — 헌법화 패턴
+>
+> ### 6 묶음 skill (37 영역 cover)
+> - `ai-physical-world-models.md` — #16-19 피지컬 AI 4개 (NVIDIA Cosmos·VLA·GR00T·Isaac)
+> - `ai-quantum-ml.md` — #20-21 양자 AI 2개 (IBM Quantum·Qiskit·PennyLane)
+> - `ai-privacy-pet.md` — #27-29 PET 3개 (Flower·Gretel·Opacus·TenSEAL)
+> - `ai-security-bundle.md` — #24-26, #31-35, #47 보안 9개 (Wiz·Reality Defender·Astrix 등 OEM)
+> - `ai-biometric-auth.md` — #36-38 인증·생체 3개 (BioCatch·FIDO2·Passkeys)
+> - `ai-affective-emotion.md` — #30 Emotion AI (Hume·Affectiva·Realeyes)
+> - `ai-rag-bundle.md` — #23, #43-45 RAG 인프라 4개 (ChromaDB·HyDE·Long Context·MemGPT)
+> - `ai-domain-fm.md` — #48-50 도메인·검색·Ambient 3개
+> - `ai-learning-finetune.md` — #10-12, #39-40, #42 학습 6개 (MoE·SSM·DPO·LoRA)
+> - `ai-governance-iso42001.md` — #46-47 거버넌스 2개 (ISO 42001·EU AI Act·금감원)
+>
+> ### 보강 결과 (재산정)
+> - ✅ **즉시 활용** (우리 자산 + 신규 skill): **21개** (+10)
+> - 🟡 **OEM 가이드 + 통합 가이드 보유**: **25개** (skill 신설 — 설치·계약·운영 필요)
+> - ❌ **미적용** (자체 R&D 필수): **4개** (MoE·SSM·LoRA 자체학습 - 부서 영역 X)
+>
+> → **50개 중 46개 (92%) cover**. 부서 즉시 활용 가능 21 + 1-3개월 내 도입 25 + 자체 R&D 4.
 
 ---
 
