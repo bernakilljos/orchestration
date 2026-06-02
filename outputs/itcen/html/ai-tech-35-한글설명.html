@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AI 기술 35가지 — 쉬운 한글 설명 (2025-2030)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'맑은 고딕','Malgun Gothic',-apple-system,sans-serif;background:#FAF7F2;color:#2c2418;padding:20px;line-height:1.65}
+  .header{background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 100%);color:#fff;padding:28px 36px;border-radius:14px;margin-bottom:24px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+  .header h1{font-size:30px;font-weight:700;margin-bottom:8px}
+  .header .sub{font-size:15px;opacity:.92;line-height:1.6}
+  .header .tag{display:inline-block;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:14px;font-size:12px;margin-right:6px;margin-top:10px}
+
+  /* 그룹 헤더 */
+  .group{margin-bottom:30px}
+  .group-title{font-size:22px;font-weight:700;margin:30px 0 16px;padding:12px 20px;border-radius:10px;display:flex;align-items:center;gap:10px}
+  .group-core{background:#E3F2FD;color:#0D47A1;border-left:6px solid #1976D2}
+  .group-multi{background:#F3E5F5;color:#4A148C;border-left:6px solid #7B1FA2}
+  .group-industry{background:#FFEBEE;color:#B71C1C;border-left:6px solid #C62828}
+  .group-infra{background:#E8F5E9;color:#1B5E20;border-left:6px solid #2E7D32}
+
+  /* 카테고리 카드 */
+  .tech-card{background:#fff;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.06);overflow:hidden;border:1px solid #EEE}
+  .tech-card-head{padding:14px 20px;background:#F5F0E6;display:flex;align-items:center;gap:12px;border-bottom:2px solid #E5D9C0}
+  .tech-num{width:34px;height:34px;border-radius:50%;background:#1F4E79;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .tech-name{font-size:17px;font-weight:700;color:#1F4E79}
+  .tech-name-en{font-size:12px;color:#888;font-weight:400;margin-left:6px}
+
+  .tech-body{padding:16px 20px}
+  .easy-desc{background:#FFF8E1;border-left:4px solid #FFB300;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13.5px;line-height:1.7}
+  .easy-desc strong{color:#E65100}
+  .why-imp{background:#E0F2F1;border-left:4px solid #00897B;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;color:#004D40}
+  .why-imp strong{color:#004D40}
+  .analogy{background:#F1F8E9;border-left:4px solid #689F38;padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;color:#33691E;font-style:italic}
+  .analogy strong{color:#33691E;font-style:normal}
+
+  /* 연도 timeline */
+  .timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:10px}
+  .year-cell{background:#FAFAFA;border:1px solid #E0E0E0;border-radius:6px;padding:8px 10px;font-size:11.5px;min-height:60px}
+  .year-cell .yr{font-weight:700;color:#1F4E79;font-size:12px;margin-bottom:4px;display:block}
+  .year-cell.warn{background:#FFF3E0;border-color:#FFB74D}
+  .year-cell.good{background:#E8F5E9;border-color:#81C784}
+  .year-cell.star{background:#FCE4EC;border-color:#F06292}
+
+  /* 분기점·한국·Top 10 */
+  .section-box{background:#fff;border-radius:10px;padding:20px 24px;margin:24px 0;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+  .section-box h2{font-size:20px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:2px solid #EEE}
+  .inflection{border-left:6px solid #FF6F00}
+  .inflection h2{color:#E65100}
+  .korea{border-left:6px solid #2E7D32}
+  .korea h2{color:#1B5E20}
+  .top10{border-left:6px solid #7B1FA2}
+  .top10 h2{color:#4A148C}
+
+  .infl-row{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:10px 0;border-bottom:1px dashed #E0E0E0;font-size:13.5px}
+  .infl-row:last-child{border:none}
+  .infl-row .yr{font-weight:700;color:#E65100;font-size:14px}
+  .infl-event strong{display:block;color:#333;margin-bottom:3px}
+  .infl-event .meaning{color:#666;font-size:12.5px}
+
+  .top10-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .top10-item{background:#FAFAFA;padding:14px;border-radius:8px;border:1px solid #E0E0E0}
+  .top10-item .num{display:inline-block;width:28px;height:28px;border-radius:50%;background:#7B1FA2;color:#fff;font-weight:700;text-align:center;line-height:28px;font-size:13px;margin-right:8px}
+  .top10-item .name{font-weight:700;color:#4A148C;font-size:14px}
+  .top10-item .why{color:#666;font-size:12px;margin-top:6px;line-height:1.6}
+
+  .footer{text-align:center;margin-top:40px;padding:20px;color:#888;font-size:11.5px;border-top:1px solid #E5E5E5}
+  .tag-en{display:inline-block;background:#F0F0F0;color:#666;padding:1px 7px;border-radius:8px;font-size:10.5px;margin-left:4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎯 AI 기술 35가지 — 쉬운 한글 설명</h1>
+  <div class="sub">2025년부터 2030년까지 6년 진화 로드맵 · 어려운 용어 다 풀어서 설명</div>
+  <span class="tag">35 카테고리</span>
+  <span class="tag">6년 진화</span>
+  <span class="tag">한글 풀이</span>
+  <span class="tag">비유로 설명</span>
+  <span class="tag">2026-06-02 현행화</span>
+</div>
+
+<!-- ═════════════════ 🧠 코어 AI 기술 ═════════════════ -->
+<div class="group-title group-core">🧠 핵심 AI 기술 (10가지)</div>
+
+<!-- 1. Foundation Models -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">1</div><div><div class="tech-name">기반 모델 <span class="tech-name-en">Foundation Models</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 챗GPT, 클로드, 제미나이 같은 <strong>기본 AI 모델</strong>입니다. 글·그림·소리 다 이해하는 똑똑한 AI 의 본체. 다른 모든 AI 기술이 이걸 기반으로 만들어집니다.</div>
+    <div class="analogy"><strong>비유:</strong> 자동차의 <em>엔진</em>처럼, 모든 AI 서비스가 이 모델 위에서 돌아갑니다.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 이게 좋아질수록 모든 AI 서비스 (챗봇·번역·코드·디자인) 가 다 좋아집니다.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>GPT-5·클로드 4·딥시크 R1·라마 4·그록 4</div>
+      <div class="year-cell"><span class="yr">2026</span>500만자 한 번에 이해 가능</div>
+      <div class="year-cell"><span class="yr">2027</span>스스로 학습해서 발전</div>
+      <div class="year-cell"><span class="yr">2028</span>현실 세계 이해까지 통합</div>
+      <div class="year-cell star"><span class="yr">2029</span>일반 인공지능 (AGI) 후보 등장</div>
+      <div class="year-cell warn"><span class="yr">2030</span>AGI 이후 단계 진입 (논쟁)</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Reasoning Models -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">2</div><div><div class="tech-name">추론 모델 <span class="tech-name-en">Reasoning Models</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 <strong>"생각하는 시간"</strong> 을 길게 가져서 더 정확한 답을 내는 모델. 단번에 답하지 않고 "어디 보자... 1단계는... 2단계는..." 사고 과정을 거칩니다.</div>
+    <div class="analogy"><strong>비유:</strong> 시험 볼 때 <em>오래 풀이 과정 쓰는 학생</em>이 더 잘 맞추는 것처럼, AI 도 오래 생각하면 정답률이 올라갑니다.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 고난도 수학·코딩·복잡한 판단에서 일반 AI 보다 훨씬 정확합니다 (수학올림피아드 96% 정답).</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>o3·딥시크 R1 — 수학경시 96%</div>
+      <div class="year-cell"><span class="yr">2026</span>o4·o5 — 과정별 평가 표준화</div>
+      <div class="year-cell"><span class="yr">2027</span>수학 정리 자동 증명</div>
+      <div class="year-cell"><span class="yr">2028</span>자율 과학 연구</div>
+      <div class="year-cell"><span class="yr">2029</span>인간 표준 시험 99% 통과</div>
+      <div class="year-cell star"><span class="yr">2030</span>AGI 후보</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Agentic AI -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">3</div><div><div class="tech-name">자율 AI 에이전트 <span class="tech-name-en">Agentic AI</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 사용자가 일일이 명령 안 내려도 <strong>AI 스스로 목표를 잡고 일하는 시스템</strong>. "이메일 정리해줘" 한 번 말하면 알아서 메일함 열고·읽고·답장하고·기록까지.</div>
+    <div class="analogy"><strong>비유:</strong> <em>유능한 비서</em>처럼 큰 그림만 알려주면 알아서 모든 단계를 처리합니다.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 사람이 매번 지시 안 해도 되니까 업무 자동화의 진짜 시작. 화이트칼라 일의 95% 보조 예상 (2028).</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>OpenAI 오퍼레이터·데빈·매너스·클로드 컴퓨터 사용</div>
+      <div class="year-cell"><span class="yr">2026</span>여러 AI 가 협력하는 OS 등장</div>
+      <div class="year-cell"><span class="yr">2027</span>회사에서 24시간 자율 업무</div>
+      <div class="year-cell star"><span class="yr">2028</span>500조 원 시장</div>
+      <div class="year-cell"><span class="yr">2029</span>AI 가 AI 한테 일 시킴</div>
+      <div class="year-cell"><span class="yr">2030</span>AI 가 사업 자율 운영</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Multi-Agent Systems -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">4</div><div><div class="tech-name">여러 AI 협업 <span class="tech-name-en">Multi-Agent Systems</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 한 명의 AI 가 아닌 <strong>여러 AI 가 팀처럼 협업</strong>해서 일을 처리. 한 AI 는 자료 조사, 다른 AI 는 글쓰기, 또 다른 AI 는 검토.</div>
+    <div class="analogy"><strong>비유:</strong> <em>회사 팀</em>처럼 PM·개발자·디자이너·QA AI 가 각자 역할 맡고 협업합니다.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 혼자보다 여러 AI 가 토론하면 답이 더 정확하고, 복잡한 일도 처리 가능합니다.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>오토젠·크루AI·랭그래프</div>
+      <div class="year-cell"><span class="yr">2026</span>구글 A2A·IBM ACP 표준 경쟁</div>
+      <div class="year-cell"><span class="yr">2027</span>1만 AI 가 한 클러스터에서 협업</div>
+      <div class="year-cell"><span class="yr">2028</span>모든 직원이 AI 인 회사 등장</div>
+      <div class="year-cell"><span class="yr">2029</span>다국가 AI 협업 표준</div>
+      <div class="year-cell"><span class="yr">2030</span>AI 시장경제 (AI 끼리 거래)</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. World Models -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">5</div><div><div class="tech-name">세계 모델 <span class="tech-name-en">World Models</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 <strong>영상·이미지를 보고 "현실 세계가 어떻게 작동하는지" 학습</strong>. 공이 떨어지면 어떻게 굴러갈지, 사람이 손 뻗으면 무엇이 닿을지 등.</div>
+    <div class="analogy"><strong>비유:</strong> <em>아기가 장난감 던지면서 중력·물체 이해하듯</em>, AI 가 영상 보며 물리 법칙 배웁니다.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 로봇·자율주행·디지털 트윈에 필수. AI 가 가상에서 실험·학습한 걸 현실에 적용할 수 있게 됩니다.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>NVIDIA 코스모스·소라·제니 2</div>
+      <div class="year-cell"><span class="yr">2026</span>제니 3 (조작 가능 게임)</div>
+      <div class="year-cell"><span class="yr">2027</span>자율주행·로봇 학습 표준</div>
+      <div class="year-cell star"><span class="yr">2028</span>산업 메타버스 폭발</div>
+      <div class="year-cell"><span class="yr">2029</span>일반인공지능의 기초</div>
+      <div class="year-cell"><span class="yr">2030</span>가상 시뮬로 신약 발견</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. VLA -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">6</div><div><div class="tech-name">비전-언어-행동 모델 <span class="tech-name-en">VLA (Vision-Language-Action)</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 로봇이 <strong>"보고(비전) + 듣고(언어) + 움직이는(행동)"</strong> 통합 AI. "주방에서 컵 가져와" 말하면 진짜 가져옵니다.</div>
+    <div class="analogy"><strong>비유:</strong> <em>5살 어린이</em>가 엄마 말 듣고·보고·행동하는 능력을 로봇에 부여한 것.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 휴머노이드 (인간형 로봇) 가 진짜 일하려면 이게 필수. 2028 양산 시작.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>RT-2·Pi0.5·GR00T N1·헬릭스</div>
+      <div class="year-cell"><span class="yr">2026</span>GR00T N2·1000 시연으로 자율 학습</div>
+      <div class="year-cell"><span class="yr">2027</span>가정 휴머노이드 베타</div>
+      <div class="year-cell star"><span class="yr">2028</span>양산 시작 (3천만원 목표)</div>
+      <div class="year-cell"><span class="yr">2029</span>산업 휴머노이드 표준</div>
+      <div class="year-cell star"><span class="yr">2030</span>1억대 출하 (머스크 목표)</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Embodied AI / Robotics -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">7</div><div><div class="tech-name">휴머노이드·로봇 AI <span class="tech-name-en">Embodied AI / Robotics</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> <strong>몸을 가진 AI</strong>. 진짜 손·발·눈 있는 로봇이 AI 두뇌로 움직임. 테슬라 옵티머스, 휴먼노이드 피규어, 보스턴 다이내믹스 아틀라스.</div>
+    <div class="analogy"><strong>비유:</strong> <em>"AI 가 몸을 가진 것"</em> — 챗봇 (몸 없음) vs 로봇 (몸 있음) 의 차이.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 공장·가정에서 사람 대신 일하는 로봇 시대. 한국 산업 (현대·삼성) 2027 도입 시작.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>아틀라스 전기형·옵티머스 Gen3·피규어 03</div>
+      <div class="year-cell"><span class="yr">2026</span>벤츠·BMW·아마존 공장 배치</div>
+      <div class="year-cell"><span class="yr">2027</span>한국 도입 (현대·삼성)</div>
+      <div class="year-cell"><span class="yr">2028</span>가정용 베타 시작</div>
+      <div class="year-cell"><span class="yr">2029</span>가정용 5천만원</div>
+      <div class="year-cell star"><span class="yr">2030</span>1억대 양산</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. Quantum ML -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">8</div><div><div class="tech-name">양자 머신러닝 <span class="tech-name-en">Quantum ML</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> <strong>양자 컴퓨터로 AI 를 학습</strong>. 기존 컴퓨터로는 못 푸는 문제를 양자의 특성 (중첩·얽힘) 으로 풀이.</div>
+    <div class="analogy"><strong>비유:</strong> <em>일반 컴퓨터는 한 번에 하나의 길</em>만 가는데 양자 컴퓨터는 <em>여러 길을 동시에</em> 갑니다 (중첩). 그래서 어떤 문제는 1조 배 빠름.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 2024 12월 구글 윌로우가 "양자 오류 정정" 처음 성공 → 양자 시대 진짜 시작. 금융 부정거래·신약 설계에 양자 우위 가능.</div>
+    <div class="timeline">
+      <div class="year-cell star"><span class="yr">2025</span>구글 윌로우 양자정정·MS 마요라나 1</div>
+      <div class="year-cell"><span class="yr">2026</span>IBM 콘도르 1121 큐비트</div>
+      <div class="year-cell"><span class="yr">2027</span>금융 실용 단계</div>
+      <div class="year-cell warn"><span class="yr">2028</span>NIST 양자내성암호 의무</div>
+      <div class="year-cell"><span class="yr">2029</span>양자 우위 영역 명확</div>
+      <div class="year-cell"><span class="yr">2030</span>완전 오류보정 양자컴퓨터 진입</div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. Mechanistic Interpretability -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">9</div><div><div class="tech-name">AI 내부 해석 <span class="tech-name-en">Mechanistic Interpretability</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 답을 낼 때 <strong>"머릿속에서 무슨 일이 일어났는지" 분해해서 보는</strong> 기술. "왜 이 답을 했어?" 를 신경회로 단위로 추적.</div>
+    <div class="analogy"><strong>비유:</strong> <em>의사가 뇌 MRI 찍어서 어디서 어떤 생각이 일어났는지 보는 것</em>처럼, AI 내부를 보는 도구.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> EU AI 법 2027 에 "고위험 AI 는 결정 이유 설명 의무". 안 그러면 한국 회사도 EU 수출 못 함.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>앤스로픽 SAE·굿파이어 엠버</div>
+      <div class="year-cell"><span class="yr">2026</span>1백만+ 특징 분해, 700억 모델 해석</div>
+      <div class="year-cell warn"><span class="yr">2027</span>EU AI 법 의무 도구</div>
+      <div class="year-cell"><span class="yr">2028</span>"AI 정신감정" 표준</div>
+      <div class="year-cell"><span class="yr">2029</span>AGI 정렬 검증 핵심</div>
+      <div class="year-cell"><span class="yr">2030</span>법적 감사 의무화</div>
+    </div>
+  </div>
+</div>
+
+<!-- 10. Self-Improving AI -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">10</div><div><div class="tech-name">자기 개선 AI <span class="tech-name-en">Self-Improving AI</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 <strong>스스로 학습 데이터를 만들고·자기 잘못을 고치며·점점 똑똑해지는</strong> 시스템. 사람 도움 없이.</div>
+    <div class="analogy"><strong>비유:</strong> <em>혼자 공부하면서 점점 잘하는 학생</em>처럼, AI 가 스스로 문제 풀고·답안 만들고·평가하면서 발전.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 2025-05 알파에볼브가 56년만에 행렬곱 알고리즘 개선 — AI 가 진짜 새 수학 발견 시대 진입.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>R1-Zero·rStar·<strong>알파에볼브</strong></div>
+      <div class="year-cell"><span class="yr">2026</span>AI 공동 과학자 양산</div>
+      <div class="year-cell"><span class="yr">2027</span>AI 가 학습 데이터 자체 생성</div>
+      <div class="year-cell"><span class="yr">2028</span>재귀적 자기 개선 베타</div>
+      <div class="year-cell warn"><span class="yr">2029</span>AGI 가능성</div>
+      <div class="year-cell warn"><span class="yr">2030</span>AGI 이후 통제 이슈</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════ 🎨 멀티모달·생성 ═════════════════ -->
+<div class="group-title group-multi">🎨 멀티모달·생성 AI (5가지)</div>
+
+<!-- 11. Generative Video -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">11</div><div><div class="tech-name">영상 생성 AI <span class="tech-name-en">Generative Video</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 글로 설명하면 <strong>AI 가 진짜 영상으로 만들어주는</strong> 기술. "고양이가 하늘을 날아" 입력 → 실제 영상 생성.</div>
+    <div class="analogy"><strong>비유:</strong> <em>상상력만 있으면 누구나 영화 감독</em> 가능.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 영상 제작 비용 1/100 로 감소. 2028 부터 진짜 AI 영화 등장.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>소라 2·비오 3·클링·러너웨이 Gen-4</div>
+      <div class="year-cell"><span class="yr">2026</span>소라 3 — 30분+ 일관성</div>
+      <div class="year-cell"><span class="yr">2027</span>영상+음성+자막 한 번에</div>
+      <div class="year-cell"><span class="yr">2028</span>"AI 영화" 헐리우드 진입</div>
+      <div class="year-cell"><span class="yr">2029</span>게임 영상 실시간 생성</div>
+      <div class="year-cell"><span class="yr">2030</span>시청자 맞춤 영화</div>
+    </div>
+  </div>
+</div>
+
+<!-- 12. Audio·Music·Voice -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">12</div><div><div class="tech-name">음악·음성 생성 AI <span class="tech-name-en">Audio·Music·Voice</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 <strong>음악 작곡·가사·노래·음성 복제</strong> 다 해줌. 수노로 곡 만들고, 일레븐랩스로 목소리 복제하고, 흄으로 감정 담은 대화.</div>
+    <div class="analogy"><strong>비유:</strong> <em>전속 작곡가 + 성우 + 가수</em> 가 항상 옆에 있는 셈.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 음악 산업·콘텐츠·고객서비스 완전 자동화. 보이스피싱 같은 위협도 새 영역.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>수노 V5·일레븐랩스 V3·흄 EVI 3·모시 2</div>
+      <div class="year-cell"><span class="yr">2026</span>30분 곡 일관성</div>
+      <div class="year-cell"><span class="yr">2027</span>AI 작곡가 그래미 가능성</div>
+      <div class="year-cell"><span class="yr">2028</span>실시간 대화 사람 구분 불가</div>
+      <div class="year-cell"><span class="yr">2029</span>AI 라이브 콘서트</div>
+      <div class="year-cell"><span class="yr">2030</span>모든 미디어 AI 음악</div>
+    </div>
+  </div>
+</div>
+
+<!-- 13. 3D Generation -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">13</div><div><div class="tech-name">3D 생성 AI <span class="tech-name-en">3D Generation</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 글·사진 한 장으로 <strong>3D 모델·게임 자산·메타버스 환경</strong> 자동 생성. 메시·트라이포·루마 같은 도구.</div>
+    <div class="analogy"><strong>비유:</strong> <em>레고 조각</em> 만들기 — 글 입력 → 즉시 3D 조립.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 게임·VR·메타버스·디지털트윈 콘텐츠 99% AI 가 생성 (2027).</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>메시·트라이포·루마·3D 가우시안 스플래팅 2</div>
+      <div class="year-cell"><span class="yr">2026</span>실시간 3D 생성</div>
+      <div class="year-cell"><span class="yr">2027</span>메타버스 콘텐츠 99% AI</div>
+      <div class="year-cell"><span class="yr">2028</span>VR 환경 자율 생성</div>
+      <div class="year-cell"><span class="yr">2029</span>산업 디지털트윈 자동 구축</div>
+      <div class="year-cell"><span class="yr">2030</span>도시 단위 3D 시뮬</div>
+    </div>
+  </div>
+</div>
+
+<!-- 14. Any-to-Any -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">14</div><div><div class="tech-name">전방위 멀티모달 <span class="tech-name-en">Any-to-Any Multimodal</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> 한 AI 가 <strong>글·이미지·영상·음성·3D 다 처리</strong>. 그림 그려달라고 말하면 이미지 만들고, 그림 보여주면 글로 설명.</div>
+    <div class="analogy"><strong>비유:</strong> <em>5감 다 갖춘 AI</em> — 보고 듣고 말하고 그리고 만지고 다 가능.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 진짜 사람처럼 자연스러운 대화·작업 가능. 2027부터 촉각·후각까지 통합.</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>GPT-4o·제미나이 2.5·카멜레온</div>
+      <div class="year-cell"><span class="yr">2026</span>5감 (글·이미지·영상·음성·3D)</div>
+      <div class="year-cell"><span class="yr">2027</span>촉각·후각 추가</div>
+      <div class="year-cell"><span class="yr">2028</span>뇌신호 (BCI) 통합</div>
+      <div class="year-cell"><span class="yr">2029</span>6감 통합</div>
+      <div class="year-cell"><span class="yr">2030</span>사람 인지 수준</div>
+    </div>
+  </div>
+</div>
+
+<!-- 15. Affective Computing -->
+<div class="tech-card">
+  <div class="tech-card-head"><div class="tech-num">15</div><div><div class="tech-name">감정 AI <span class="tech-name-en">Affective Computing</span></div></div></div>
+  <div class="tech-body">
+    <div class="easy-desc"><strong>이게 뭐냐면?</strong> AI 가 <strong>사람의 표정·목소리·심박수·타이핑 패턴으로 감정·스트레스 인식</strong>. 화났는지·긴장했는지·졸린지 알아냄.</div>
+    <div class="analogy"><strong>비유:</strong> <em>마음을 읽는 친구</em>처럼, 말 안 해도 상태를 알아챔.</div>
+    <div class="why-imp"><strong>왜 중요해?</strong> 카지노 딜러 스트레스·금융직원 부정 사전 예방·우울증 조기 발견. 단 EU 는 직장 감정 인식 금지 (윤리).</div>
+    <div class="timeline">
+      <div class="year-cell"><span class="yr">2025</span>흄 EVI 3·어펙티바·리얼아이즈</div>
+      <div class="year-cell"><span class="yr">2026</span>실시간 미세표정 분석</div>
+      <div class="year-cell warn"><span class="yr">2027</span>EU 직장·교육 금지</div>
+      <div class="year-cell"><span class="yr">2028</span>의료·정신건강 진단</div>
+      <div class="year-cell"><span class="yr">2029</span>자율주행·고객서비스 표준</div>
+      <div class="year-cell"><span class="yr">2030</span>뇌 + 감정 (BCI 결합)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════ 🏥 산업 AI 15가지 ═════════════════ -->
+<div class="group-title group-industry">🏥 산업별 AI (15가지)</div>
+
+<!-- 16~30 각 카테고리 간략 -->
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">16</div><div><div class="tech-name">의료·헬스케어 AI <span class="tech-name-en">Healthcare</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 의사 보조 — 진료 기록 작성·진단 보조·약물 추천.</div>
+  <div class="analogy"><strong>비유:</strong> 모든 의사 옆의 <em>똑똑한 인턴</em>.</div>
+  <div class="why-imp"><strong>왜?</strong> 의사 부족·진단 오류 감소. 2027 FDA 승인 100+개.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>구글 메드-팜·히포크라틱 폴라리스·글래스·아브리지</div>
+    <div class="year-cell"><span class="yr">2026</span>전자의무기록 AI 보편화</div>
+    <div class="year-cell"><span class="yr">2027</span>FDA 승인 진단 100+</div>
+    <div class="year-cell"><span class="yr">2028</span>유전자 맞춤 약물</div>
+    <div class="year-cell"><span class="yr">2029</span>AI 1차 진단 일반화</div>
+    <div class="year-cell"><span class="yr">2030</span>휴머노이드 간호</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">17</div><div><div class="tech-name">신약 개발 AI <span class="tech-name-en">Drug Discovery</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 새 약을 설계 — 단백질 구조 예측 + 약물 후보 자동 생성.</div>
+  <div class="analogy"><strong>비유:</strong> <em>요리 레시피를 AI 가 만들어주는</em> 셈. 단 그 레시피가 진짜 약이 됨.</div>
+  <div class="why-imp"><strong>왜?</strong> 신약 개발이 보통 10년·1조원 — AI 가 1/3 로 단축.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>알파폴드 3·볼츠·인셉티브·크레이들</div>
+    <div class="year-cell"><span class="yr">2026</span>신약 후보 100+개</div>
+    <div class="year-cell"><span class="yr">2027</span>알파폴드 4</div>
+    <div class="year-cell star"><span class="yr">2028</span>첫 AI 신약 FDA 승인</div>
+    <div class="year-cell"><span class="yr">2029</span>개발기간 10년→3년</div>
+    <div class="year-cell"><span class="yr">2030</span>개인 유전체 의약 보편</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">18</div><div><div class="tech-name">신소재 발견 AI <span class="tech-name-en">Material AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 새 물질·합금·배터리 소재를 발견. 사람이 1년 걸릴 일을 1주.</div>
+  <div class="analogy"><strong>비유:</strong> <em>가상 실험실</em> — 실제 실험 전에 AI 가 미리 시뮬.</div>
+  <div class="why-imp"><strong>왜?</strong> 배터리·반도체·태양광 효율 신소재 = 한국 산업 경쟁력 직결.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>매터젠·G노미 220만 신물질</div>
+    <div class="year-cell"><span class="yr">2026</span>실험 합성 100건+</div>
+    <div class="year-cell"><span class="yr">2027</span>배터리·태양광 신소재</div>
+    <div class="year-cell"><span class="yr">2028</span>상온 초전도체 시도</div>
+    <div class="year-cell"><span class="yr">2029</span>신소재 설계 표준</div>
+    <div class="year-cell"><span class="yr">2030</span>반도체 산업화</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">19</div><div><div class="tech-name">기후·날씨 AI <span class="tech-name-en">Climate AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 날씨·태풍·홍수 예측. 기존 기상청 슈퍼컴보다 100배 빠름.</div>
+  <div class="analogy"><strong>비유:</strong> <em>"내일 비 와?" 친구</em>가 정답률 95%로 답해주는 느낌.</div>
+  <div class="why-imp"><strong>왜?</strong> 태풍·홍수 사전 대비·농업·재난 관리. 2026 한국 기상청 도입 예정.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>그래프캐스트·젠캐스트·뉴럴GCM</div>
+    <div class="year-cell"><span class="yr">2026</span>7일 예측 슈퍼컴 추월</div>
+    <div class="year-cell"><span class="yr">2027</span>한국 기상청 도입</div>
+    <div class="year-cell"><span class="yr">2028</span>기후 적응 AI (도시·농업)</div>
+    <div class="year-cell"><span class="yr">2029</span>탄소포집 AI 최적화</div>
+    <div class="year-cell"><span class="yr">2030</span>지구공학 시뮬</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">20</div><div><div class="tech-name">금융·트레이딩 AI <span class="tech-name-en">Finance AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 주식·채권·외환을 분석·거래. 부정거래·사기 자동 탐지.</div>
+  <div class="analogy"><strong>비유:</strong> <em>24시간 안 자는 펀드매니저</em>.</div>
+  <div class="why-imp"><strong>왜?</strong> 2026 한국 금감원 AI 거버넌스 발효 — 모든 금융사 영향.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>블룸버그GPT·알라딘·르네상스</div>
+    <div class="year-cell good"><span class="yr">2026</span>한국 금감원 AI 거버넌스 발효</div>
+    <div class="year-cell"><span class="yr">2027</span>AI 트레이더 점유 60%+</div>
+    <div class="year-cell"><span class="yr">2028</span>AI 자산운용 펀드</div>
+    <div class="year-cell"><span class="yr">2029</span>탈중앙금융 통합</div>
+    <div class="year-cell"><span class="yr">2030</span>중앙은행 디지털화폐 + AI</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">21</div><div><div class="tech-name">법무·컴플라이언스 AI <span class="tech-name-en">Legal AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 계약서·판례·법규 분석. 변호사가 일주일 걸릴 일을 1시간.</div>
+  <div class="analogy"><strong>비유:</strong> <em>법률 박사 친구</em>가 24시간 옆에 있음.</div>
+  <div class="why-imp"><strong>왜?</strong> 2026 EU AI 법 컴플라이언스 자동화 필수. 한국 법무법인 2027 90% 도입.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>하비·코카운슬·스펠북·렉시스+AI</div>
+    <div class="year-cell"><span class="yr">2026</span>EU AI 법 자동화</div>
+    <div class="year-cell"><span class="yr">2027</span>법무법인 90%+ 도입</div>
+    <div class="year-cell"><span class="yr">2028</span>AI 변호사 1차 검토</div>
+    <div class="year-cell"><span class="yr">2029</span>법원·검찰 보조</div>
+    <div class="year-cell"><span class="yr">2030</span>"AI 판결" 논쟁</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">22</div><div><div class="tech-name">국방·군사 AI <span class="tech-name-en">Defense AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 자율 드론·무인 함정·사이버 방어 AI. 사람 없는 전쟁 시대.</div>
+  <div class="analogy"><strong>비유:</strong> <em>SF 영화 (터미네이터·드론 부대)</em> 가 현실로.</div>
+  <div class="why-imp"><strong>왜?</strong> 한국 K-방산 (한화·LIG·KAI) 2027-2028 글로벌 진출.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>안두릴·실드AI·팔란티어·헬싱</div>
+    <div class="year-cell"><span class="yr">2026</span>드론 군집 배치</div>
+    <div class="year-cell"><span class="yr">2027</span>리플리케이터 표준</div>
+    <div class="year-cell"><span class="yr">2028</span>무인 함정 양산</div>
+    <div class="year-cell"><span class="yr">2029</span>자율 사이버 공방</div>
+    <div class="year-cell"><span class="yr">2030</span>AI 군비 통제 협약</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">23</div><div><div class="tech-name">자율주행 <span class="tech-name-en">Autonomous Driving</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 사람 없이 차가 운전. 테슬라 FSD·웨이모·웨이브.</div>
+  <div class="analogy"><strong>비유:</strong> <em>운전기사 없이 가는 택시</em>.</div>
+  <div class="why-imp"><strong>왜?</strong> 한국 로보택시 2028 본격. 현대·기아·SK 주도.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>테슬라 FSD V13·웨이모·웨이브</div>
+    <div class="year-cell"><span class="yr">2026</span>웨이모 다도시·로보택시</div>
+    <div class="year-cell"><span class="yr">2027</span>레벨 4 보편 (제한도로)</div>
+    <div class="year-cell"><span class="yr">2028</span>한국 로보택시 본격</div>
+    <div class="year-cell"><span class="yr">2029</span>레벨 5 시범</div>
+    <div class="year-cell"><span class="yr">2030</span>도시 자율 표준</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">24</div><div><div class="tech-name">건설·디지털 시공 AI <span class="tech-name-en">Construction AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 건설현장 안전·시공·BIM (건물 정보 모델링) AI. 디지털 트윈으로 사고 미리 예측.</div>
+  <div class="analogy"><strong>비유:</strong> <em>게임 심시티</em>로 미리 짓고 → 진짜 짓기.</div>
+  <div class="why-imp"><strong>왜?</strong> 한국 중대재해법 → 모든 건설사 의무 도입.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>오토데스크 포마·벤틀리·다쏘·NVIDIA 옴니버스</div>
+    <div class="year-cell"><span class="yr">2026</span>건설 ERP 통합</div>
+    <div class="year-cell good"><span class="yr">2027</span>중대재해법 의무</div>
+    <div class="year-cell"><span class="yr">2028</span>모듈러 + AI 설계</div>
+    <div class="year-cell"><span class="yr">2029</span>자율 건설 로봇</div>
+    <div class="year-cell"><span class="yr">2030</span>디지털트윈 표준</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">25</div><div><div class="tech-name">농업 AI <span class="tech-name-en">Agriculture AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 농작물 병해충·수확량·날씨 예측. 자율 트랙터·드론.</div>
+  <div class="analogy"><strong>비유:</strong> <em>식물 의사 + 농부 비서</em> 가 365일 농장 관리.</div>
+  <div class="why-imp"><strong>왜?</strong> 식량 안보·기후 적응. 수직농업 + AI 표준.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>클라이밋AI·팜와이즈·존디어</div>
+    <div class="year-cell"><span class="yr">2026</span>AI 농업 표준</div>
+    <div class="year-cell"><span class="yr">2027</span>자율 농기계 양산</div>
+    <div class="year-cell"><span class="yr">2028</span>정밀 농업 보편</div>
+    <div class="year-cell"><span class="yr">2029</span>식량+기후 적응</div>
+    <div class="year-cell"><span class="yr">2030</span>수직농업 표준</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">26</div><div><div class="tech-name">에너지·전력망 AI <span class="tech-name-en">Energy AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 발전소·전력망·배터리 운영 최적화. 소형 원전 (SMR) + AI.</div>
+  <div class="analogy"><strong>비유:</strong> <em>전기 흐름의 교통경찰</em>.</div>
+  <div class="why-imp"><strong>왜?</strong> AI 데이터센터 전력 폭증 → 원전 재가동 + AI 운영.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>딥마인드 쿨링·메가팩 AI</div>
+    <div class="year-cell"><span class="yr">2026</span>소형 원전 (SMR) AI 운영</div>
+    <div class="year-cell"><span class="yr">2027</span>스마트 그리드 표준</div>
+    <div class="year-cell"><span class="yr">2028</span>분산 에너지 AI</div>
+    <div class="year-cell"><span class="yr">2029</span>재생에너지 최적화</div>
+    <div class="year-cell"><span class="yr">2030</span>핵융합 + AI 제어</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">27</div><div><div class="tech-name">교육 AI <span class="tech-name-en">Education AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 학생 개인별 맞춤 교사. 칸미고·듀오링고 맥스·뤼이드.</div>
+  <div class="analogy"><strong>비유:</strong> <em>1인 1 과외선생님</em> 무료로.</div>
+  <div class="why-imp"><strong>왜?</strong> 사교육 비용 감소·학습 격차 완화. 한국 EBS·교육부 2027 도입.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>칸미고·듀오링고 맥스·매직스쿨·뤼이드</div>
+    <div class="year-cell"><span class="yr">2026</span>개인 튜터 표준 (칸미고 식)</div>
+    <div class="year-cell"><span class="yr">2027</span>한국 EBS·교육부 도입</div>
+    <div class="year-cell"><span class="yr">2028</span>AI 입시 보조 일반</div>
+    <div class="year-cell"><span class="yr">2029</span>평생 학습 AI 표준</div>
+    <div class="year-cell"><span class="yr">2030</span>"AI 박사" 자격 논쟁</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">28</div><div><div class="tech-name">유통·이커머스 AI <span class="tech-name-en">Retail AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 쇼핑 추천·주문·배송·고객 응대. 무인 매장 보편.</div>
+  <div class="analogy"><strong>비유:</strong> <em>나만의 쇼핑 비서</em>가 알아서 주문.</div>
+  <div class="why-imp"><strong>왜?</strong> 2026 AI 쇼핑 에이전트 (오퍼레이터 식) 가 알아서 주문 시작.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>쇼피파이 AI·아마존 루퍼스·클라르나</div>
+    <div class="year-cell"><span class="yr">2026</span>AI 쇼핑 에이전트</div>
+    <div class="year-cell"><span class="yr">2027</span>맞춤 커머스 표준</div>
+    <div class="year-cell"><span class="yr">2028</span>AI ↔ AI 마케팅</div>
+    <div class="year-cell"><span class="yr">2029</span>무인 매장 보편</div>
+    <div class="year-cell"><span class="yr">2030</span>가정 자동 보충 주문</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">29</div><div><div class="tech-name">제조·산업 AI <span class="tech-name-en">Manufacturing AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 공장 AI 운영·품질 검사·예지보전. 무인 공장 (다크 팩토리).</div>
+  <div class="analogy"><strong>비유:</strong> <em>로봇만 있는 공장</em> — 사람은 모니터만 봄.</div>
+  <div class="why-imp"><strong>왜?</strong> 한국 리쇼어링 (제조업 부활) 핵심. 2029 휴머노이드 + 공장 통합.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>지멘스 인더스트리얼 코파일럿·록웰·NVIDIA 메트로폴리스</div>
+    <div class="year-cell"><span class="yr">2026</span>스마트 팩토리 AI 표준</div>
+    <div class="year-cell"><span class="yr">2027</span>무인 공장 (폭스콘·테슬라)</div>
+    <div class="year-cell"><span class="yr">2028</span>휴머노이드 통합</div>
+    <div class="year-cell"><span class="yr">2029</span>한국 리쇼어링</div>
+    <div class="year-cell"><span class="yr">2030</span>미니 팩토리 분산</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">30</div><div><div class="tech-name">우주·항공 AI <span class="tech-name-en">Space AI</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 가 위성·우주선·발사 운영. 스타링크 + AI 자율 운영.</div>
+  <div class="analogy"><strong>비유:</strong> <em>우주판 자율주행</em>.</div>
+  <div class="why-imp"><strong>왜?</strong> 우주 자원 채굴·화성 미션·우주 데이터센터.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>스페이스X AI·NASA 플레이아데스·록히드</div>
+    <div class="year-cell"><span class="yr">2026</span>스타링크 + AI 자율</div>
+    <div class="year-cell"><span class="yr">2027</span>우주 채굴 시뮬</div>
+    <div class="year-cell"><span class="yr">2028</span>아르테미스 미션 보조</div>
+    <div class="year-cell"><span class="yr">2029</span>위성 군집 AI 표준</div>
+    <div class="year-cell"><span class="yr">2030</span>우주 데이터센터 시도</div>
+  </div>
+</div></div>
+
+<!-- ═════════════════ ⚙️ 인프라·시스템 5가지 ═════════════════ -->
+<div class="group-title group-infra">⚙️ 인프라·시스템 (5가지)</div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">31</div><div><div class="tech-name">AI 반도체·하드웨어 <span class="tech-name-en">AI Hardware</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 학습·추론 전용 칩. NVIDIA 블랙웰·구글 TPU·AMD MI300·세레브라스.</div>
+  <div class="analogy"><strong>비유:</strong> AI 두뇌의 <em>전용 엔진</em>. 일반 CPU 보다 1000배 빠름.</div>
+  <div class="why-imp"><strong>왜?</strong> AI 칩 = 21세기 석유. 2030 까지 NVIDIA·삼성·하이닉스 핵심.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>NVIDIA 블랙웰 B200·GB200·TPU v6·MI300X</div>
+    <div class="year-cell"><span class="yr">2026</span>루빈 울트라·TPU v7·MI355X·이쳇드</div>
+    <div class="year-cell"><span class="yr">2027</span>1나노·광 통합 시작</div>
+    <div class="year-cell"><span class="yr">2028</span>뉴로모픽 양산</div>
+    <div class="year-cell"><span class="yr">2029</span>양자-고전 하이브리드</div>
+    <div class="year-cell"><span class="yr">2030</span>실리콘 이후 후보</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">32</div><div><div class="tech-name">AI 네트워크·연산 <span class="tech-name-en">AI Networking</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 수만 개 GPU 를 한 클러스터로 묶는 네트워크 + 분산 학습.</div>
+  <div class="analogy"><strong>비유:</strong> <em>큰 회사 협업</em> — 1만명이 한 프로젝트 하려면 메신저·전화 시스템 필수.</div>
+  <div class="why-imp"><strong>왜?</strong> 큰 AI 학습은 단일 GPU 로 불가능. 10만+ GPU 분산 학습 필요.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>스펙트럼-X·울트라이더넷·CXL 3·NV링크 5</div>
+    <div class="year-cell"><span class="yr">2026</span>1Tbps 패브릭 표준</div>
+    <div class="year-cell"><span class="yr">2027</span>10만+ GPU 분산</div>
+    <div class="year-cell"><span class="yr">2028</span>광 연결 보편</div>
+    <div class="year-cell"><span class="yr">2029</span>글로벌 GPU 메시</div>
+    <div class="year-cell"><span class="yr">2030</span>뇌 규모 (1조+) 학습</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">33</div><div><div class="tech-name">AI 보안 <span class="tech-name-en">AI Security</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 모델·데이터 보호 + 적대적 공격 방어 + 양자내성암호. AI 가 새 공격면.</div>
+  <div class="analogy"><strong>비유:</strong> <em>금고에 AI 가 살고 있는</em> 셈 — 금고도 지켜야 함.</div>
+  <div class="why-imp"><strong>왜?</strong> 2027 EU 고위험 의무·2028 NIST 양자내성암호 의무. 한국 기업 다 대응 필요.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>MCP·A2A·OWASP LLM/에이전트 Top 10</div>
+    <div class="year-cell good"><span class="yr">2026</span>EU 범용 AI·AI BOM 표준</div>
+    <div class="year-cell warn"><span class="yr">2027</span>EU 고위험 의무</div>
+    <div class="year-cell warn"><span class="yr">2028</span>NIST 양자내성암호 의무</div>
+    <div class="year-cell"><span class="yr">2029</span>슬리퍼 에이전트 검증</div>
+    <div class="year-cell"><span class="yr">2030</span>자율 공격·방어 AI</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">34</div><div><div class="tech-name">AI 거버넌스·규제 <span class="tech-name-en">AI Governance</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> AI 관리시스템·법규 준수·인증 (ISO 42001·EU AI 법·금감원).</div>
+  <div class="analogy"><strong>비유:</strong> <em>운전면허·자동차 검사</em> 처럼, AI 도 면허·검사 의무화.</div>
+  <div class="why-imp"><strong>왜?</strong> 2026 한국 금감원 AI 거버넌스 발효 → 모든 금융사 영향.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>EU AI 법 발효·NIST AI RMF 2.0</div>
+    <div class="year-cell good"><span class="yr">2026</span>범용 AI·금감원·ISO 42001</div>
+    <div class="year-cell warn"><span class="yr">2027</span>고위험 의무·G20 표준</div>
+    <div class="year-cell"><span class="yr">2028</span>UN AI 협약 논쟁</div>
+    <div class="year-cell"><span class="yr">2029</span>글로벌 협약 가능</div>
+    <div class="year-cell"><span class="yr">2030</span>AGI 거버넌스 핵심</div>
+  </div>
+</div></div>
+
+<div class="tech-card"><div class="tech-card-head"><div class="tech-num">35</div><div><div class="tech-name">뇌-기계 인터페이스 (BCI) <span class="tech-name-en">Brain-Computer Interface</span></div></div></div>
+<div class="tech-body">
+  <div class="easy-desc"><strong>뭐?</strong> 뇌 신호를 직접 컴퓨터에 연결. 마비 환자가 생각만으로 컴퓨터 조작.</div>
+  <div class="analogy"><strong>비유:</strong> <em>SF 영화 매트릭스</em>의 실제 기술 — 뇌 ↔ 컴퓨터 직접.</div>
+  <div class="why-imp"><strong>왜?</strong> 의료 (마비·시각장애) → 게임·AR 확장. 2030 일반인 BCI 논쟁.</div>
+  <div class="timeline">
+    <div class="year-cell"><span class="yr">2025</span>뉴럴링크·신크론·프리시전·파라드로믹스</div>
+    <div class="year-cell"><span class="yr">2026</span>마비 환자 양산 (FDA 승인)</div>
+    <div class="year-cell"><span class="yr">2027</span>의료 표준화</div>
+    <div class="year-cell"><span class="yr">2028</span>비의료 (게임·AR) 시도</div>
+    <div class="year-cell"><span class="yr">2029</span>1000+ 채널</div>
+    <div class="year-cell warn"><span class="yr">2030</span>일반인 BCI 논쟁</div>
+  </div>
+</div></div>
+
+<!-- ═════════════════ 분기점 ═════════════════ -->
+<div class="section-box inflection">
+  <h2>🔥 6년 안의 진짜 분기점 8가지</h2>
+  <div class="infl-row"><span class="yr">2025</span><div class="infl-event"><strong>구글 윌로우 양자컴퓨터 — 오류 정정 처음 성공</strong><span class="meaning">양자 시대 진짜 시작 신호. 1조 배 빠른 계산 가능성 입증.</span></div></div>
+  <div class="infl-row"><span class="yr">2025</span><div class="infl-event"><strong>딥시크 R1 (중국 오픈소스) — o1 추월</strong><span class="meaning">미국 vs 중국 AI 전쟁. 오픈소스가 비공개 모델 따라잡음.</span></div></div>
+  <div class="infl-row"><span class="yr">2025</span><div class="infl-event"><strong>NVIDIA 코스모스 — 피지컬 AI 시대 시작</strong><span class="meaning">로봇이 진짜로 일할 수 있게 됨. 휴머노이드 시대 신호.</span></div></div>
+  <div class="infl-row"><span class="yr">2026</span><div class="infl-event"><strong>EU AI 법 범용 AI 의무 시작</strong><span class="meaning">전 세계 AI 회사 컴플라이언스 압박. 한국 수출기업도 영향.</span></div></div>
+  <div class="infl-row"><span class="yr">2027</span><div class="infl-event"><strong>EU AI 법 고위험 AI 의무</strong><span class="meaning">의료·금융·채용·신용평가 AI 다 EU 인증 필수. 한국 회사 대거 영향.</span></div></div>
+  <div class="infl-row"><span class="yr">2028</span><div class="infl-event"><strong>NIST 양자내성암호 의무 + 첫 AI 신약 FDA 승인</strong><span class="meaning">기존 암호 다 바꿔야 + AI 가 만든 약이 처음 인증.</span></div></div>
+  <div class="infl-row"><span class="yr">2029</span><div class="infl-event"><strong>1만 AI 에이전트 클러스터 · "AI 학사 자격" 논쟁</strong><span class="meaning">AI 가 사람만큼 일하기 시작. 사무직 일자리 변화.</span></div></div>
+  <div class="infl-row"><span class="yr">2030</span><div class="infl-event"><strong>AGI (일반인공지능) 논쟁 정점 · 휴머노이드 1억 대 (머스크 목표)</strong><span class="meaning">인류 변곡점. AI 가 사람 같은 일반 지능 갖는가? 가정에 로봇 등장.</span></div></div>
+</div>
+
+<!-- ═════════════════ 한국 일정 ═════════════════ -->
+<div class="section-box korea">
+  <h2>🇰🇷 한국 특수 일정 (꼭 챙겨야)</h2>
+  <div class="infl-row"><span class="yr">2025</span><div class="infl-event"><strong>KISA 양자내성암호 가이드 · 금감원 AI 거버넌스 초안</strong></div></div>
+  <div class="infl-row"><span class="yr">2026</span><div class="infl-event"><strong>금감원 AI 거버넌스 발효 · ISO 42001 도입 · 개인정보 AI 영향평가 의무</strong><span class="meaning">모든 금융·AI 사용 기업 영향. 부서 즉시 대응 필요.</span></div></div>
+  <div class="infl-row"><span class="yr">2027</span><div class="infl-event"><strong>EU AI 법 한국 수출기업 의무 · 중대재해법 강화</strong><span class="meaning">EU 진출 기업 · 50인 이상 모든 기업 영향.</span></div></div>
+  <div class="infl-row"><span class="yr">2028</span><div class="infl-event">NIST 양자내성암호 후속 · 휴머노이드 산업 도입 (현대·삼성)</div></div>
+  <div class="infl-row"><span class="yr">2029</span><div class="infl-event">한국 K-AI 표준 · K-방산 AI 글로벌 진출</div></div>
+  <div class="infl-row"><span class="yr">2030</span><div class="infl-event">전면 의무화 + 글로벌 진입</div></div>
+</div>
+
+<!-- ═════════════════ Top 10 ═════════════════ -->
+<div class="section-box top10">
+  <h2>💡 부서가 진짜 챙겨야 할 Top 10</h2>
+  <div class="top10-grid">
+    <div class="top10-item"><span class="num">1</span><span class="name">추론 모델 (Reasoning)</span><div class="why">o3 → o5+, 100배 더 똑똑해짐. 위험 분석의 기본</div></div>
+    <div class="top10-item"><span class="num">2</span><span class="name">자율 AI 에이전트 (Agentic)</span><div class="why">24시간 자율 위험 분석. 2026 표준화</div></div>
+    <div class="top10-item"><span class="num">3</span><span class="name">세계 모델 + VLA</span><div class="why">디지털 트윈 시대. 2027-2028 폭발</div></div>
+    <div class="top10-item"><span class="num">4</span><span class="name">감정 AI (Affective)</span><div class="why">행동 + 감정 = 새 차원. 2025 OEM 가능</div></div>
+    <div class="top10-item"><span class="num">5</span><span class="name">그래프 검색 (GraphRAG)</span><div class="why">행동 관계 분석. 2026 표준</div></div>
+    <div class="top10-item"><span class="num">6</span><span class="name">양자 머신러닝</span><div class="why">금융 부정 분석. 2027 실용</div></div>
+    <div class="top10-item"><span class="num">7</span><span class="name">AI 거버넌스 (ISO 42001)</span><div class="why">한국 의무화 2026-2027</div></div>
+    <div class="top10-item"><span class="num">8</span><span class="name">AI 보안 (MCP·A2A)</span><div class="why">도구 연결 표준. 2026 정착</div></div>
+    <div class="top10-item"><span class="num">9</span><span class="name">AI 내부 해석 (MechInterp)</span><div class="why">EU 의무. 2027</div></div>
+    <div class="top10-item"><span class="num">10</span><span class="name">자기 개선 AI</span><div class="why">2027-2030 폭발. 부서 차별화 IP</div></div>
+  </div>
+</div>
+
+<div class="footer">
+  AI 35 카테고리 × 2025-2030 6년 한글 풀이 · 아이티센코어 리스크모니터링·행동위험분석 부서 · 작성 2026-06-02<br>
+  영문 원본: ai-tech-35categories-2025-2030.html · 학습 자료 4종 (총 235+ 기술)<br>
+  궁금한 카테고리 · 비유 · 사례 더 알고 싶으면 알려주세요.
+</div>
+
+</body>
+</html>
