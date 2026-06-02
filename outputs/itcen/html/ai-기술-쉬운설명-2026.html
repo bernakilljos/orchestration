@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AI 기술 35가지 — 진짜 쉬운 설명 + 새 사업 아이디어</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'맑은 고딕','Malgun Gothic',-apple-system,sans-serif;background:#FFF8F0;color:#2c2418;padding:20px;line-height:1.8;font-size:14px}
+  .header{background:linear-gradient(135deg,#FF6F00 0%,#FFA000 100%);color:#fff;padding:28px 32px;border-radius:16px;margin-bottom:24px;box-shadow:0 6px 20px rgba(255,111,0,.25)}
+  .header h1{font-size:28px;font-weight:700;margin-bottom:6px}
+  .header .sub{font-size:14px;opacity:.95}
+
+  .intro{background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:24px;border-left:6px solid #FF6F00;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .intro h2{font-size:18px;color:#E65100;margin-bottom:10px}
+  .intro p{font-size:14px;color:#555;line-height:1.8}
+  .intro .skip{background:#FFF3E0;padding:10px 14px;border-radius:8px;margin-top:10px;font-size:13px;color:#5D4037}
+  .intro .skip strong{color:#E65100}
+
+  /* 4 그룹 색 */
+  .grp{margin-bottom:36px}
+  .grp-title{font-size:22px;font-weight:700;padding:14px 20px;border-radius:10px;margin-bottom:14px;display:flex;align-items:center;gap:10px;color:#fff}
+  .grp-1{background:linear-gradient(90deg,#1976D2,#42A5F5)}
+  .grp-2{background:linear-gradient(90deg,#7B1FA2,#AB47BC)}
+  .grp-3{background:linear-gradient(90deg,#C62828,#EF5350)}
+  .grp-4{background:linear-gradient(90deg,#2E7D32,#66BB6A)}
+
+  /* 기술 카드 — 더 큰 이모지·짧은 한 줄 */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .card{background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 3px 10px rgba(0,0,0,.07);border:1px solid #F5E6D3;transition:transform .2s}
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+  .card-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px dashed #FFE0B2}
+  .emoji{font-size:36px;flex-shrink:0}
+  .card-name{font-size:17px;font-weight:700;color:#E65100}
+  .card-num{display:inline-block;background:#FF6F00;color:#fff;border-radius:50%;width:28px;height:28px;font-size:13px;text-align:center;line-height:28px;font-weight:700;margin-right:8px}
+
+  .one-liner{font-size:14.5px;color:#333;font-weight:600;margin-bottom:10px;line-height:1.7}
+  .analogy{background:#E8F5E9;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;color:#1B5E20}
+  .analogy strong{color:#1B5E20}
+  .impact{background:#E3F2FD;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;color:#0D47A1}
+  .impact strong{color:#0D47A1}
+  .new-idea{background:#FFF3E0;padding:10px 14px;border-radius:8px;font-size:13px;color:#E65100;border-left:4px solid #FF6F00}
+  .new-idea strong{color:#BF360C}
+
+  .when{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .when-tag{background:#F5F5F5;border:1px solid #DDD;padding:3px 10px;border-radius:12px;font-size:11px;color:#666}
+  .when-tag.now{background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7;font-weight:700}
+  .when-tag.soon{background:#FFF8E1;color:#E65100;border-color:#FFD54F}
+  .when-tag.future{background:#F3E5F5;color:#7B1FA2;border-color:#CE93D8}
+
+  .summary{background:linear-gradient(135deg,#E3F2FD,#FFF);border-left:6px solid #1976D2;border-radius:12px;padding:24px 28px;margin-top:30px}
+  .summary h2{font-size:22px;color:#0D47A1;margin-bottom:14px}
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+  .summary-item{background:#fff;padding:16px;border-radius:10px;border:1px solid #BBDEFB}
+  .summary-item .lbl{font-weight:700;color:#0D47A1;font-size:14px;margin-bottom:6px}
+  .summary-item .val{font-size:12.5px;color:#555;line-height:1.7}
+
+  .footer{text-align:center;margin-top:30px;padding:20px;color:#888;font-size:11.5px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎨 AI 기술 35가지 — 진짜 쉬운 그림책 버전</h1>
+  <div class="sub">한 카드에 한 기술 · 큰 이모지 + 한 줄 설명 + 비유 + 새 사업 아이디어</div>
+</div>
+
+<div class="intro">
+  <h2>📌 읽기 전에</h2>
+  <p>이 자료는 5살도 이해할 만큼 쉽게 풀이했습니다. 각 카드 (35개) 마다:</p>
+  <p style="margin:8px 0">
+    🟢 <strong>한 줄로 뭐냐?</strong> · 🔵 <strong>비유로 말하면?</strong> · 🟡 <strong>새 사업 아이디어</strong>
+  </p>
+  <div class="skip">
+    <strong>👀 참고:</strong> 행동위험분석·UEBA·리스크모니터링은 이미 자네가 한 거라 — <strong>새 사업 아이디어 박스</strong>는 그 외 영역으로 채웠음. 부서가 새로 시작할 만한 영역 위주.
+  </div>
+</div>
+
+<!-- ═══════════════ 그룹 1 — 핵심 AI ═══════════════ -->
+<div class="grp">
+<div class="grp-title grp-1">🧠 그룹 1 — 핵심 AI 기술 (10가지)</div>
+<div class="grid">
+
+<!-- 1 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🤖</span><div><span class="card-num">1</span><span class="card-name">기반 AI 모델</span></div></div>
+  <div class="one-liner">챗GPT·클로드·제미나이 같은 <strong>기본 AI</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 자동차 엔진 — 모든 AI 서비스의 본체</div>
+  <div class="impact">🔵 <strong>왜?</strong> 이게 좋아지면 모든 AI 가 좋아짐</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> 회계·카지노·건설용 <strong>도메인 특화 한국형 LLM</strong> 자체 개발 (LoRA 저비용)</div>
+  <div class="when"><span class="when-tag now">2025 ✅</span><span class="when-tag soon">2026-2027 진화</span><span class="when-tag future">2029 AGI 후보</span></div>
+</div>
+
+<!-- 2 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🧠</span><div><span class="card-num">2</span><span class="card-name">추론 모델</span></div></div>
+  <div class="one-liner">AI 가 <strong>오래 생각하고</strong> 답하는 모델 (o3·R1)</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 시험에서 풀이과정 길게 쓰는 학생 — 더 잘 맞춤</div>
+  <div class="impact">🔵 <strong>왜?</strong> 수학·코딩·법률 같은 복잡한 일에 정확도 ↑</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>법률·회계 자동 검토 SaaS</strong> — 어려운 판례·조세법 자동 분석. ITCEN CORE 컴플라이언스 1위 채널 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ o3</span><span class="when-tag soon">2026 o5</span><span class="when-tag future">2030 AGI</span></div>
+</div>
+
+<!-- 3 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🦾</span><div><span class="card-num">3</span><span class="card-name">자율 AI 에이전트</span></div></div>
+  <div class="one-liner">사용자 없어도 <strong>스스로 일하는</strong> AI</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 유능한 비서 — 큰 그림만 알려주면 알아서 다 함</div>
+  <div class="impact">🔵 <strong>왜?</strong> 24시간 회사 업무 자동 처리</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>내부감사 자율 에이전트</strong> — ITCEN CORE 내부회계 위에 24/7 자율 감사 봇. MicroAudit-AI 패키지화</div>
+  <div class="when"><span class="when-tag now">2025 ✅</span><span class="when-tag soon">2026 표준화</span><span class="when-tag future">2028 $500B 시장</span></div>
+</div>
+
+<!-- 4 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">👥</span><div><span class="card-num">4</span><span class="card-name">여러 AI 협업</span></div></div>
+  <div class="one-liner">여러 AI 가 <strong>팀처럼</strong> 협력</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 회사 팀 — PM·개발자·디자이너·QA 가 협업</div>
+  <div class="impact">🔵 <strong>왜?</strong> 혼자보다 토론·합의가 정확함</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>다중 AI 회계 자동 검토</strong> — 분식 의심 시 3 AI 가 토론·합의. 거짓양성 50% 감소</div>
+  <div class="when"><span class="when-tag now">2025 ✅</span><span class="when-tag soon">2026 A2A 표준</span><span class="when-tag future">2029 다국가 협업</span></div>
+</div>
+
+<!-- 5 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🌍</span><div><span class="card-num">5</span><span class="card-name">세계 모델 (Physical AI #1)</span></div></div>
+  <div class="one-liner">AI 가 영상 보고 <strong>물리법칙 학습</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 아기가 장난감 떨어뜨리며 중력 배우는 것</div>
+  <div class="impact">🔵 <strong>왜?</strong> 로봇·자율주행·디지털트윈 필수</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>건설현장 사고 시뮬레이터</strong> — NVIDIA 코스모스 + ITCEN 건설 ERP. 실제 사고 전 가상 학습. 산안법 의무 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ 코스모스</span><span class="when-tag soon">2026 Genie 3</span><span class="when-tag future">2028 산업메타버스 폭발</span></div>
+</div>
+
+<!-- 6 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">👁️🗣️🦾</span><div><span class="card-num">6</span><span class="card-name">VLA (Physical AI #2)</span></div></div>
+  <div class="one-liner">로봇이 <strong>보고·듣고·움직임</strong> 통합</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 5살 아이 — 엄마 말 듣고·보고 시키는 거 함</div>
+  <div class="impact">🔵 <strong>왜?</strong> 휴머노이드 핵심 두뇌</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>공장 자율 안전 로봇</strong> — VLA + 산업 ERP 통합. 현장 작업자 위험행동 즉시 차단. 현대·삼성 발주 가능</div>
+  <div class="when"><span class="when-tag now">2025 ✅ GR00T</span><span class="when-tag soon">2027 가정 베타</span><span class="when-tag future">2030 1억대 (머스크)</span></div>
+</div>
+
+<!-- 7 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🤖</span><div><span class="card-num">7</span><span class="card-name">휴머노이드 로봇 (Physical AI #3)</span></div></div>
+  <div class="one-liner">진짜 <strong>몸을 가진 AI</strong> (Optimus·Figure)</div>
+  <div class="analogy">🟢 <strong>비유:</strong> AI 가 손·발·눈을 가짐</div>
+  <div class="impact">🔵 <strong>왜?</strong> 공장·가정에서 사람 대신 일함</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>휴머노이드 보안 진단 서비스</strong> — 도입 기업 행동 위험 평가·인증. ITCEN CORE 가 한국 휴머노이드 보안 표준</div>
+  <div class="when"><span class="when-tag now">2025 ✅ Optimus·Figure 03</span><span class="when-tag soon">2027 한국 도입</span><span class="when-tag future">2030 1억대</span></div>
+</div>
+
+<!-- 8 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">⚛️</span><div><span class="card-num">8</span><span class="card-name">양자 머신러닝</span></div></div>
+  <div class="one-liner">양자 컴퓨터로 <strong>1조배 빠른</strong> AI 학습</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 일반 컴퓨터 = 한 길 / 양자 = 여러 길 동시</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2024 12월 구글 윌로우 오류 정정 성공 — 양자 시대 시작</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>양자 신용평가 SaaS</strong> — 기존 KCB·NICE 못 푸는 패턴을 양자로. IBM Quantum Network 무료. 금융권 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ 윌로우</span><span class="when-tag soon">2027 실용 단계</span><span class="when-tag future">2030 완전 양자컴</span></div>
+</div>
+
+<!-- 9 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🔬</span><div><span class="card-num">9</span><span class="card-name">AI 내부 해석</span></div></div>
+  <div class="one-liner">AI 머릿속에서 <strong>무슨 생각 했는지</strong> 분해</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 의사가 뇌 MRI 보는 것</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2027 EU AI 법 "AI 결정 이유 설명" 의무</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>AI 결정 설명 인증 서비스</strong> — EU 수출 기업이 한국 ITCEN 인증 받음. 컨설팅 base · 1社 5천만~3억</div>
+  <div class="when"><span class="when-tag now">2025 ✅</span><span class="when-tag soon">2027 EU 의무</span><span class="when-tag future">2029 AGI 검증</span></div>
+</div>
+
+<!-- 10 -->
+<div class="card">
+  <div class="card-head"><span class="emoji">🧬</span><div><span class="card-num">10</span><span class="card-name">자기 개선 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>스스로 학습</strong>·점점 똑똑해짐</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 혼자 공부하면서 점점 잘하는 학생</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2025-05 알파에볼브가 56년만에 행렬곱 알고리즘 발견</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>AI 자율 신소재 설계 SI</strong> — 한국 배터리·반도체 회사에 NVIDIA·DeepMind 모델 한국 SI</div>
+  <div class="when"><span class="when-tag now">2025 ✅ AlphaEvolve</span><span class="when-tag soon">2026 Co-Scientist</span><span class="when-tag future">2030 AGI takeoff</span></div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════ 그룹 2 — 멀티모달·생성 ═══════════════ -->
+<div class="grp">
+<div class="grp-title grp-2">🎨 그룹 2 — 멀티모달·생성 AI (5가지)</div>
+<div class="grid">
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🎬</span><div><span class="card-num">11</span><span class="card-name">영상 생성 AI</span></div></div>
+  <div class="one-liner">글로 설명하면 <strong>영상 자동 생성</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 누구나 영화감독 가능 (소라·비오·클링)</div>
+  <div class="impact">🔵 <strong>왜?</strong> 영상 제작 비용 1/100</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>기업 교육·홍보 영상 자동화 SaaS</strong> — 1년 광고비 1억 → 100만원. B2B 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ Sora 2·Veo 3</span><span class="when-tag soon">2026 30분+ 일관성</span><span class="when-tag future">2028 AI 영화</span></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🎵</span><div><span class="card-num">12</span><span class="card-name">음악·음성 생성</span></div></div>
+  <div class="one-liner">AI 가 <strong>작곡·노래·목소리 복제</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 전속 작곡가·성우·가수가 옆에</div>
+  <div class="impact">🔵 <strong>왜?</strong> 음악 산업·고객서비스 완전 자동화</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>K-팝 AI 작곡 라이선스</strong> — 엔터사 (SM·YG·하이브) 협업. 자사 카지노·VMS 안내 음성도 AI</div>
+  <div class="when"><span class="when-tag now">2025 ✅ Suno V5</span><span class="when-tag soon">2027 그래미 가능성</span><span class="when-tag future">2030 모든 미디어 AI</span></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🧊</span><div><span class="card-num">13</span><span class="card-name">3D 생성 AI</span></div></div>
+  <div class="one-liner">글 하나로 <strong>3D 모델·게임 자산</strong> 만들기</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 레고 조각을 글로 주문</div>
+  <div class="impact">🔵 <strong>왜?</strong> 게임·VR·메타버스 99% AI 가 생성</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>건설 BIM·디지털트윈 자동 생성</strong> — 평면도 그리면 3D 자동. ITCEN 건설 ERP 추가판매</div>
+  <div class="when"><span class="when-tag now">2025 ✅ Meshy·Luma</span><span class="when-tag soon">2027 메타버스 99% AI</span><span class="when-tag future">2030 도시 3D</span></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🌐</span><div><span class="card-num">14</span><span class="card-name">전방위 멀티모달</span></div></div>
+  <div class="one-liner">한 AI 가 <strong>글·이미지·영상·음성</strong> 다</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 5감 다 갖춘 AI (GPT-4o·Gemini)</div>
+  <div class="impact">🔵 <strong>왜?</strong> 진짜 사람처럼 자연스러운 대화</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>회의록·발표자료 자동 생성</strong> — 회의 영상·음성·자료 통합 분석·요약. 기업 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ GPT-4o</span><span class="when-tag soon">2027 5감 통합</span><span class="when-tag future">2030 인간 perception</span></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">😊</span><div><span class="card-num">15</span><span class="card-name">감정 인식 AI</span></div></div>
+  <div class="one-liner">사람 <strong>표정·목소리로 감정 인식</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 마음 읽는 친구</div>
+  <div class="impact">🔵 <strong>왜?</strong> 직원 스트레스·고객 감정 사전 감지</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>콜센터·매장 고객 만족 AI</strong> — 실시간 감정 분석·대응 가이드. 금융·유통 직판</div>
+  <div class="when"><span class="when-tag now">2025 ✅ Hume EVI 3</span><span class="when-tag soon">2027 EU 직장 금지</span><span class="when-tag future">2030 BCI 결합</span></div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════ 그룹 3 — 산업 AI ═══════════════ -->
+<div class="grp">
+<div class="grp-title grp-3">🏥 그룹 3 — 산업별 AI (15가지)</div>
+<div class="grid">
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🏥</span><div><span class="card-num">16</span><span class="card-name">의료·헬스케어</span></div></div>
+  <div class="one-liner">AI 가 <strong>의사 보조</strong>·진료·진단</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 모든 의사 옆 똑똑한 인턴</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2027 FDA 승인 진단 100+개</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>병원 GRC + AI 진단 통합</strong> — 의료기관 내부통제 + AI 진단 통합 SaaS. 한국 1000+ 병원</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">💊</span><div><span class="card-num">17</span><span class="card-name">신약 개발 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>새 약을 설계</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> AI 요리 레시피 — 단 그게 진짜 약이 됨</div>
+  <div class="impact">🔵 <strong>왜?</strong> 신약 10년·1조 → 3년으로 단축</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>제약사 IT 솔루션 SI</strong> — 한미약품·셀트리온 등에 AI 신약 인프라 통합</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">⚗️</span><div><span class="card-num">18</span><span class="card-name">신소재 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>새 배터리·반도체 소재</strong> 발견</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 가상 실험실 — 사람 1년 → AI 1주</div>
+  <div class="impact">🔵 <strong>왜?</strong> 한국 배터리·반도체 경쟁력</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>삼성·LG·SK 신소재 R&D 통합 플랫폼</strong> — MatterGen + ITCEN 데이터 관리. 사업화</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🌦️</span><div><span class="card-num">19</span><span class="card-name">기후·날씨 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>슈퍼컴보다 100배 빠른 예측</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 정답률 95% 일기예보 친구</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2026 한국 기상청 도입</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국형 기후 적응 솔루션</strong> — 농업·건설·물류·보험에 날씨 AI 통합. 보험사 협업</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">💰</span><div><span class="card-num">20</span><span class="card-name">금융·트레이딩</span></div></div>
+  <div class="one-liner">AI 가 <strong>주식·거래·사기 탐지</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 24시간 안 자는 펀드매니저</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2026 한국 금감원 AI 거버넌스 발효</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>증권사 AI 거버넌스 SaaS</strong> — 30개 증권사·은행 직판. ITCEN 1위 채널</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">⚖️</span><div><span class="card-num">21</span><span class="card-name">법무·컴플라이언스</span></div></div>
+  <div class="one-liner">AI 가 <strong>계약서·판례·법규</strong> 분석</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 법률 박사 친구 24/7</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2026 EU AI 법 컴플라이언스 필수</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국형 Harvey</strong> — 김앤장·세종 등 대형로펌 협업. 법률 LLM 자체 개발 (LoRA)</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🛡️</span><div><span class="card-num">22</span><span class="card-name">국방·군사 AI</span></div></div>
+  <div class="one-liner"><strong>자율 드론·무인 함정·사이버 방어</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> SF 영화가 현실로 (드론 부대)</div>
+  <div class="impact">🔵 <strong>왜?</strong> K-방산 글로벌 진출</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>K-방산 + AI SI</strong> — 한화·LIG·KAI 와 무인 시스템 SI. 방위사업청 발주 공동</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🚗</span><div><span class="card-num">23</span><span class="card-name">자율주행</span></div></div>
+  <div class="one-liner"><strong>사람 없이 차가 운전</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 운전기사 없는 택시</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2028 한국 로보택시 본격</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>현대·기아 자율주행 안전 인증</strong> — ITCEN CORE 가 안전 평가·인증</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🏗️</span><div><span class="card-num">24</span><span class="card-name">건설·디지털 시공</span></div></div>
+  <div class="one-liner">건설현장 <strong>안전·시공·BIM</strong> AI</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 게임 심시티로 미리 짓고 → 진짜 짓기</div>
+  <div class="impact">🔵 <strong>왜?</strong> 중대재해법 → 의무</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>SmartConstruct-AI 패키지</strong> — 건설 ERP 1위 + AR 작업안전 + 디지털트윈. 1만 건설사 직판</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🌾</span><div><span class="card-num">25</span><span class="card-name">농업 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>병해충·수확량·자율 농기계</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 식물 의사 + 농부 비서</div>
+  <div class="impact">🔵 <strong>왜?</strong> 식량 안보·기후 적응</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>스마트팜 통합 ERP</strong> — 한국 스마트팜 1000+곳에 농업 AI 통합 패키지</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">⚡</span><div><span class="card-num">26</span><span class="card-name">에너지·전력망 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>발전소·전력망·배터리</strong> 최적화</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 전기 흐름 교통경찰</div>
+  <div class="impact">🔵 <strong>왜?</strong> AI 데이터센터 전력 폭증 → SMR 재가동</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 SMR + AI 운영 SI</strong> — 두산에너빌리티·SK 협업. 원전 + AI 통합 1호</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">📚</span><div><span class="card-num">27</span><span class="card-name">교육 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>1인 1 과외선생님</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 무료 과외선생님</div>
+  <div class="impact">🔵 <strong>왜?</strong> 사교육 비용 ↓</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>학교·학원 AI 거버넌스 SaaS</strong> — EBS·메가스터디 협업. AI 교육 인증</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🛒</span><div><span class="card-num">28</span><span class="card-name">유통·이커머스</span></div></div>
+  <div class="one-liner">AI 가 <strong>쇼핑 추천·주문·배송</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 나만의 쇼핑 비서</div>
+  <div class="impact">🔵 <strong>왜?</strong> AI 쇼핑 에이전트 시작</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>대형마트·이마트·쿠팡 보안·결제 AI</strong> — 무인 매장·AI 결제 보안 표준</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🏭</span><div><span class="card-num">29</span><span class="card-name">제조·산업 AI</span></div></div>
+  <div class="one-liner">공장 <strong>AI 운영·품질 검사·예지보전</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 로봇만 있는 다크 팩토리</div>
+  <div class="impact">🔵 <strong>왜?</strong> 한국 리쇼어링·휴머노이드 통합</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>현대·기아 AI 제조 보안</strong> — 자동차 공장 AI 사이버보안 SI. ITCEN PNS 협업</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🚀</span><div><span class="card-num">30</span><span class="card-name">우주·항공 AI</span></div></div>
+  <div class="one-liner">AI 가 <strong>위성·우주선·발사 운영</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 우주판 자율주행</div>
+  <div class="impact">🔵 <strong>왜?</strong> 한국 KARI·한화·HD현대 우주 진출</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 위성 자율 운영 SI</strong> — 누리호·차세대 발사체 보안·운영</div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════ 그룹 4 — 인프라·시스템 ═══════════════ -->
+<div class="grp">
+<div class="grp-title grp-4">⚙️ 그룹 4 — 인프라·시스템 (5가지)</div>
+<div class="grid">
+
+<div class="card">
+  <div class="card-head"><span class="emoji">💎</span><div><span class="card-num">31</span><span class="card-name">AI 반도체</span></div></div>
+  <div class="one-liner">AI 전용 <strong>고성능 칩</strong> (NVIDIA·삼성·하이닉스)</div>
+  <div class="analogy">🟢 <strong>비유:</strong> AI 두뇌의 전용 엔진. 일반 CPU 보다 1000배 빠름</div>
+  <div class="impact">🔵 <strong>왜?</strong> 21세기 석유 — 삼성·하이닉스 핵심</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 데이터센터 AI 칩 운영 SI</strong> — NVIDIA Blackwell 한국 1호 운영 파트너</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🌐</span><div><span class="card-num">32</span><span class="card-name">AI 네트워크·연산</span></div></div>
+  <div class="one-liner">수만 GPU 한 클러스터 <strong>네트워크</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 큰 회사 1만명 메신저·전화 시스템</div>
+  <div class="impact">🔵 <strong>왜?</strong> 큰 AI 학습 = 10만+ GPU 필요</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 AI 데이터센터 운영 MSP</strong> — KT·SKT·LG U+ 협업. 한국 AI 인프라 운영 표준</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🛡️</span><div><span class="card-num">33</span><span class="card-name">AI 보안</span></div></div>
+  <div class="one-liner">AI 모델·데이터 <strong>보호 + 양자내성암호</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 금고 자체를 지키기</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2027 EU 고위험·2028 PQC 의무</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 PQC 마이그레이션 컨설팅</strong> — 한국 5천 대기업이 2028 까지 전환. 1社 1억 × 5천 = 5천억</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">📋</span><div><span class="card-num">34</span><span class="card-name">AI 거버넌스·규제</span></div></div>
+  <div class="one-liner">AI <strong>관리시스템·법규 준수·인증</strong></div>
+  <div class="analogy">🟢 <strong>비유:</strong> 운전면허·자동차 검사 — AI 도 면허·검사</div>
+  <div class="impact">🔵 <strong>왜?</strong> 2026 금감원·ISO 42001 한국 의무</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>ITCEN AI 거버넌스 1위 패키지</strong> — EPM·Compliance 1위 base + ISO 42001 자동화. 1000+ 기업 직판</div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="emoji">🧠</span><div><span class="card-num">35</span><span class="card-name">뇌-기계 인터페이스</span></div></div>
+  <div class="one-liner">뇌신호 <strong>직접 컴퓨터 연결</strong> (Neuralink)</div>
+  <div class="analogy">🟢 <strong>비유:</strong> 매트릭스 영화의 실제 기술</div>
+  <div class="impact">🔵 <strong>왜?</strong> 마비 환자 → 일반인 (논쟁)</div>
+  <div class="new-idea">🟡 <strong>새 아이디어:</strong> <strong>한국 BCI 인증·보안 SI</strong> — 마비 환자용 BCI 한국 도입 시 보안·인증 표준</div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════ 종합 요약 ═══════════════ -->
+<div class="summary">
+  <h2>💡 종합 — 자네가 새로 시작할 만한 신사업 Top 6</h2>
+  <p style="font-size:13.5px;color:#555">행동위험분석 외 영역 위주. ITCEN CORE 자산 활용.</p>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="lbl">1. 도메인 LLM 시리즈</div>
+      <div class="val">회계·카지노·건설용 자체 LLM (LoRA 저비용). MicroICM-AI 패키지 시리즈</div>
+    </div>
+    <div class="summary-item">
+      <div class="lbl">2. 건설안전 디지털트윈</div>
+      <div class="val">SmartConstruct-AI + 코스모스 + 산안법 의무. 1만 건설사 직판</div>
+    </div>
+    <div class="summary-item">
+      <div class="lbl">3. K-방산 AI SI</div>
+      <div class="val">한화·LIG·KAI 와 무인 시스템 SI 협업</div>
+    </div>
+    <div class="summary-item">
+      <div class="lbl">4. PQC 마이그레이션</div>
+      <div class="val">2028 의무 — 한국 5천 대기업 양자내성암호 전환. 5천억 시장</div>
+    </div>
+    <div class="summary-item">
+      <div class="lbl">5. AI 거버넌스 SaaS</div>
+      <div class="val">EPM·Compliance 1위 base + ISO 42001 자동화. 1000+ 기업</div>
+    </div>
+    <div class="summary-item">
+      <div class="lbl">6. 휴머노이드 보안 표준</div>
+      <div class="val">한국 휴머노이드 도입 (현대·삼성) 보안·인증 표준 사업</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  AI 35가지 쉬운 그림책 버전 + 새 사업 아이디어 · 2026-06-02<br>
+  행동위험분석은 자네가 이미 한 영역 → 그 외 새 사업 영역 위주<br>
+  더 깊이 보고 싶은 카테고리 있으면 알려줘
+</div>
+
+</body>
+</html>
