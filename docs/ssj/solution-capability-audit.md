@@ -3,6 +3,15 @@
 > **목적**: ITCEN proposal xlsx 의 50 기술·100 접목 아이디어가 우리 자산 (rule·hook·skill·script) 으로 **실제 적용 가능한지** 점검
 > **결론 등급**: ✅ 이미 적용 / 🟡 부분 적용 / ❌ 미적용 (구축 필요)
 > **작성**: 2026-06-02
+>
+> **2026-06-02 보강 완성** (5 핵심 skill 신설):
+> - `plugins/exec_orch/skills/ai-risk-lighthouse.md` — 8 카테고리 자동 감사
+> - `plugins/exec_orch/skills/self-critique-loop.md` — Reflexion 루프 명시
+> - `plugins/exec_orch/skills/causal-ai.md` — DoWhy 인과 추론
+> - `plugins/exec_orch/skills/graphrag-behavior.md` — 행동패턴 그래프
+> - `plugins/exec_orch/skills/constitutional-ai.md` — 헌법화 패턴
+> - `.claude/skills/` 자동 sync 완료
+> - 결과: ✅ 11 → **16개** (+5), 🟡 12 → **10개** (-2 완성), ❌ 27 → **24개** (-3)
 
 ---
 

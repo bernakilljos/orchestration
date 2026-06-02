@@ -231,6 +231,24 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">23K+</div><div class="l">\ucf54\ub4dc \ub77c\uc778</div></div>
       <div class="stat" style="background:rgba(212,148,82,.18)"><div class="n" style="font-size:14px">4 AI</div><div class="l">Claude\u00b7Codex\u00b7Gemini\u00b7Haiku</div></div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:4px">
+      <div class="card" style="padding:3px 4px">
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['medal']} \uac15\uc810</h3>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.4">\uc124\uacc4\u00b7\uad6c\ud604\u00b7\uac80\uc99d<br>3\ub2e8\uacc4 \uc790\ub3d9\ud654</div>
+      </div>
+      <div class="card" style="padding:3px 4px">
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['target']} \ub3c4\uc804</h3>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.4">100\u793e PoC<br>K-Standard \ub4f1\ub85d</div>
+      </div>
+      <div class="card" style="padding:3px 4px">
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['heart']} \uac00\uce58</h3>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.4">\uc2e0\ub8b0\u00b7\uc790\ub3d9\ud654<br>\ud488\uc9c8 = \uc2e0\ub8b0</div>
+      </div>
+    </div>
+    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:4px;text-align:center">
+      <div style="font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;font-weight:700">\ud55c \uc904 \ub2e4\uc9d0</div>
+      <div style="font-size:9px;color:#5a4f42;margin-top:2px">"\uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c"</div>
+    </div>
   </div>
 
   <div class="mid-right">
