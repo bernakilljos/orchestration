@@ -58,7 +58,7 @@ body{width:850px;height:1100px;background:#f5efe6;
 .mid-left .card ul,.mid-right .card ul,.mid-left .card .tags,.mid-right .card .tags{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}
 .mid-left .card .tags,.mid-right .card .tags{flex-direction:row;flex-wrap:wrap;align-content:space-around}
 .center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;min-height:0}
-.photo{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}
+.photo{width:100%;max-width:300px;height:200px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}
 .name-area{text-align:center;flex-shrink:0}
 .name-area .nm{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}
 .name-area .inf{font-size:9px;color:#8a7a68;margin-top:1px}
@@ -186,28 +186,59 @@ body{width:850px;height:1100px;background:#f5efe6;
       <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#c4915a" stroke-width="1.5"><path d="M9 21h6M12 3a6 6 0 0 0-4 10.5V17h8v-3.5A6 6 0 0 0 12 3z"/></svg> 내가 잘하는 것</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
         · 복잡한 문제를 단순하게 구조화<br>
-        · AI 와 협업해 더 나은 결과<br>
-        · 도메인 통찰과 기술 결합<br>
-        · 끝까지 검증하는 책임감
+        · AI 와 협업해 더 나은 결과 도출<br>
+        · 도메인 통찰과 기술 결합 (금융·보안·교육)<br>
+        · 끝까지 검증하는 책임감 (Self-Critique)<br>
+        · Zero-touch 자동화로 반복 제거<br>
+        · 전수조사 5단계 (분석·실행·확인·보고)
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:4px">
-      <div class="card" style="padding:3px 4px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:3px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e8c36a" stroke-width="1.5"><circle cx="12" cy="8" r="5" fill="rgba(232,195,106,.12)"/><path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12"/></svg> 강점</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">설계·구현·검증<br>3단계 자동화</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          · 설계·구현·검증<br>
+          · 3단계 자동화<br>
+          · 1M ctx 활용<br>
+          · 도메인 멀티
+        </div>
       </div>
-      <div class="card" style="padding:3px 4px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e07a2f" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="#e07a2f"/></svg> 도전</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">100社 PoC<br>K-Standard 등록</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          · 100사 PoC<br>
+          · K-Standard 등록<br>
+          · 오픈소스 배포<br>
+          · AI 플랫폼
+        </div>
       </div>
-      <div class="card" style="padding:3px 4px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0"><svg viewBox="0 0 24 24" width="14" height="14" fill="#c4915a" stroke="none"><path d="M12 21C8 17 2 13 2 8a5 5 0 0 1 10 0 5 5 0 0 1 10 0c0 5-6 9-10 13z"/></svg> 가치</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">신뢰·자동화<br>품질 = 신뢰</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          · 신뢰·자동화<br>
+          · 품질 = 신뢰<br>
+          · 모두의 시간<br>
+          · 지속 성장
+        </div>
       </div>
     </div>
-    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:4px;text-align:center">
+    <div class="card" style="padding:5px 7px;margin-top:3px">
+      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#c4915a" stroke-width="1.5"><path d="M12 2C6 8 6 16 12 22c6-6 6-14 0-20zM5 16l-2 4 4-2M19 16l2 4-4-2"/></svg> 다음 단계</h3>
+      <div style="font-size:9px;color:#5a4f42;line-height:1.5">
+        · 50 플러그인 돌파 (현재 32)<br>
+        · sec_guidance + ultracode 표준화<br>
+        · Instagram v22 + YT Shorts 실구현<br>
+        · VPS 24/7 운영 (Oracle Free Tier)<br>
+        · 100 레퍼런스 도달
+      </div>
+    </div>
+    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:3px;text-align:center">
       <div style="font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;font-weight:700">한 줄 다짐</div>
-      <div style="font-size:9px;color:#5a4f42;margin-top:2px">"사람은 판단만, 반복은 기계에게"</div>
+      <div style="font-size:9px;color:#5a4f42;margin-top:2px;line-height:1.5">
+        "사람은 판단만, 반복은 기계에게"<br>
+        "단순함이 궁극의 정교함"<br>
+        "증거 없으면 아무것도 아니다"
+      </div>
     </div>
   </div>
 

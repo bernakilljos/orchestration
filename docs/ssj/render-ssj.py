@@ -103,7 +103,7 @@ body{{width:850px;height:1100px;background:#f5efe6;
 .mid-left .card ul,.mid-right .card ul,.mid-left .card .tags,.mid-right .card .tags{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}}
 .mid-left .card .tags,.mid-right .card .tags{{flex-direction:row;flex-wrap:wrap;align-content:space-around}}
 .center{{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;min-height:0}}
-.photo{{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}}
+.photo{{width:100%;max-width:300px;height:200px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}}
 .name-area{{text-align:center;flex-shrink:0}}
 .name-area .nm{{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}}
 .name-area .inf{{font-size:9px;color:#8a7a68;margin-top:1px}}
@@ -231,28 +231,59 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['bulb']} \ub0b4\uac00 \uc798\ud558\ub294 \uac83</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
         \u00b7 \ubcf5\uc7a1\ud55c \ubb38\uc81c\ub97c \ub2e8\uc21c\ud558\uac8c \uad6c\uc870\ud654<br>
-        \u00b7 AI \uc640 \ud611\uc5c5\ud574 \ub354 \ub098\uc740 \uacb0\uacfc<br>
-        \u00b7 \ub3c4\uba54\uc778 \ud1b5\ucc30\uacfc \uae30\uc220 \uacb0\ud569<br>
-        \u00b7 \ub05d\uae4c\uc9c0 \uac80\uc99d\ud558\ub294 \ucc45\uc784\uac10
+        \u00b7 AI \uc640 \ud611\uc5c5\ud574 \ub354 \ub098\uc740 \uacb0\uacfc \ub3c4\ucd9c<br>
+        \u00b7 \ub3c4\uba54\uc778 \ud1b5\ucc30\uacfc \uae30\uc220 \uacb0\ud569 (\uae08\uc735\u00b7\ubcf4\uc548\u00b7\uad50\uc721)<br>
+        \u00b7 \ub05d\uae4c\uc9c0 \uac80\uc99d\ud558\ub294 \ucc45\uc784\uac10 (Self-Critique)<br>
+        \u00b7 Zero-touch \uc790\ub3d9\ud654\ub85c \ubc18\ubcf5 \uc81c\uac70<br>
+        \u00b7 \uc804\uc218\uc870\uc0ac 5\ub2e8\uacc4 (\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:4px">
-      <div class="card" style="padding:3px 4px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:3px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['medal']} \uac15\uc810</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">\uc124\uacc4\u00b7\uad6c\ud604\u00b7\uac80\uc99d<br>3\ub2e8\uacc4 \uc790\ub3d9\ud654</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          \u00b7 \uc124\uacc4\u00b7\uad6c\ud604\u00b7\uac80\uc99d<br>
+          \u00b7 3\ub2e8\uacc4 \uc790\ub3d9\ud654<br>
+          \u00b7 1M ctx \ud65c\uc6a9<br>
+          \u00b7 \ub3c4\uba54\uc778 \uba40\ud2f0
+        </div>
       </div>
-      <div class="card" style="padding:3px 4px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['target']} \ub3c4\uc804</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">100\u793e PoC<br>K-Standard \ub4f1\ub85d</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          \u00b7 100\uc0ac PoC<br>
+          \u00b7 K-Standard \ub4f1\ub85d<br>
+          \u00b7 \uc624\ud508\uc18c\uc2a4 \ubc30\ud3ec<br>
+          \u00b7 AI \ud50c\ub7ab\ud3fc
+        </div>
       </div>
-      <div class="card" style="padding:3px 4px">
+      <div class="card" style="padding:4px 5px">
         <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['heart']} \uac00\uce58</h3>
-        <div style="font-size:8px;color:#5a4f42;line-height:1.4">\uc2e0\ub8b0\u00b7\uc790\ub3d9\ud654<br>\ud488\uc9c8 = \uc2e0\ub8b0</div>
+        <div style="font-size:8px;color:#5a4f42;line-height:1.45">
+          \u00b7 \uc2e0\ub8b0\u00b7\uc790\ub3d9\ud654<br>
+          \u00b7 \ud488\uc9c8 = \uc2e0\ub8b0<br>
+          \u00b7 \ubaa8\ub450\uc758 \uc2dc\uac04<br>
+          \u00b7 \uc9c0\uc18d \uc131\uc7a5
+        </div>
       </div>
     </div>
-    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:4px;text-align:center">
+    <div class="card" style="padding:5px 7px;margin-top:3px">
+      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['rocket']} \ub2e4\uc74c \ub2e8\uacc4</h3>
+      <div style="font-size:9px;color:#5a4f42;line-height:1.5">
+        \u00b7 50 \ud50c\ub7ec\uadf8\uc778 \ub3cc\ud30c (\ud604\uc7ac 32)<br>
+        \u00b7 sec_guidance + ultracode \ud45c\uc900\ud654<br>
+        \u00b7 Instagram v22 + YT Shorts \uc2e4\uad6c\ud604<br>
+        \u00b7 VPS 24/7 \uc6b4\uc601 (Oracle Free Tier)<br>
+        \u00b7 100 \ub808\ud37c\ub7f0\uc2a4 \ub3c4\ub2ec
+      </div>
+    </div>
+    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:3px;text-align:center">
       <div style="font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;font-weight:700">\ud55c \uc904 \ub2e4\uc9d0</div>
-      <div style="font-size:9px;color:#5a4f42;margin-top:2px">"\uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c"</div>
+      <div style="font-size:9px;color:#5a4f42;margin-top:2px;line-height:1.5">
+        "\uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c"<br>
+        "\ub2e8\uc21c\ud568\uc774 \uad81\uadf9\uc758 \uc815\uad50\ud568"<br>
+        "\uc99d\uac70 \uc5c6\uc73c\uba74 \uc544\ubb34\uac83\ub3c4 \uc544\ub2c8\ub2e4"
+      </div>
     </div>
   </div>
 
