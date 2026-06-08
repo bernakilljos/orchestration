@@ -78,6 +78,7 @@ body{font-family:var(--font-body);overflow:hidden;color:var(--color-text)}
 /* === CARD SYSTEM === */
 .card{background:var(--color-card);border:1.2px solid var(--color-border);border-radius:var(--radius-card);padding:var(--pad-card);box-shadow:none;overflow:hidden}
 .card h3{font-family:var(--font-title);font-size:var(--font-h3);font-weight:700;color:var(--color-accent);margin-bottom:2px;border-bottom:1px solid rgba(180,150,120,.25);padding-bottom:1px;display:flex;align-items:center;gap:var(--gap-tag)}
+.auto-badge{font-family:'Gaegu',cursive;font-size:9px;font-weight:700;color:#fff;background:#c4915a;padding:0 5px;border-radius:8px;margin-left:auto}
 .card li,.card p{font-size:var(--font-body-size);line-height:var(--line-height);color:var(--color-text-sub)}
 .card ul{list-style:none;padding:0}
 /* === TAG SYSTEM === */
@@ -148,36 +149,46 @@ body{{width:850px;height:1100px;background:#efe7d6;
 <div class="mid">
   <div class="mid-left">
     <div class="card">
-      <h3>{I['star']} PPT 자동 생성</h3>
+      <h3>{I['star']} PPT 자동 생성 <span class="auto-badge">자동</span></h3>
       <ul>
-        <li>&middot; 주제 던지면 30 슬라이드</li>
+        <li>&middot; 주제 던지면 30 슬라이드 (1분)</li>
         <li>&middot; HTML/CSS → Playwright → pptx</li>
-        <li>&middot; 잘림 방지 자동 (OCR 점검)</li>
-        <li>&middot; 다이어그램·차트 자동 삽입</li>
+        <li>&middot; 잘림 방지 OCR 점검</li>
+        <li>&middot; 다이어그램·차트 자동</li>
         <li>&middot; Gamma·Canva·Figma 연동</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['book']} 문서 (Word·PDF)</h3>
+      <h3>{I['book']} 문서 Word·PDF <span class="auto-badge">자동</span></h3>
       <ul>
-        <li>&middot; python-docx + Mermaid 다이어그램</li>
+        <li>&middot; python-docx + Mermaid 그림</li>
         <li>&middot; PDF A4·Letter·Digital 전부</li>
-        <li>&middot; 양식 자동 채우기 (form fill)</li>
+        <li>&middot; 양식 자동 채움 (form fill)</li>
         <li>&middot; 전자서명·암호화·워터마크</li>
-        <li>&middot; 본문 점검 (빈 페이지 차단)</li>
+        <li>&middot; 빈 페이지 자동 차단</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['gear']} Excel·스프레드시트</h3>
+      <h3>{I['code']} 개발·코드 <span class="auto-badge">자동</span></h3>
+      <ul>
+        <li>&middot; 코드 500줄+ Codex ×4 병렬</li>
+        <li>&middot; 테스트 자동 생성 (pytest·jest)</li>
+        <li>&middot; README·CHANGELOG 자동</li>
+        <li>&middot; 보안 25 패턴 사전 차단</li>
+        <li>&middot; PR 자동 리뷰·코멘트</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['gear']} Excel·시트 <span class="auto-badge">자동</span></h3>
       <ul>
         <li>&middot; openpyxl + 차트 자동</li>
-        <li>&middot; Google Sheets 직접 연동</li>
-        <li>&middot; 데이터 시각화 (피벗·차트)</li>
-        <li>&middot; raw data → 분석 보고</li>
+        <li>&middot; Google Sheets 연동</li>
+        <li>&middot; 피벗·차트·조건부 서식</li>
+        <li>&middot; raw data → 분석 보고서</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['water']} 웹사이트·랜딩</h3>
+      <h3>{I['water']} 웹사이트·랜딩 <span class="auto-badge">자동</span></h3>
       <ul>
         <li>&middot; 랜딩페이지 (헤드라인·CTA)</li>
         <li>&middot; 포트폴리오 사이트</li>
@@ -186,30 +197,30 @@ body{{width:850px;height:1100px;background:#efe7d6;
       </ul>
     </div>
     <div class="card">
-      <h3>{I['fire']} 디자인·이미지</h3>
+      <h3>{I['fire']} 디자인·이미지 <span class="auto-badge">자동</span></h3>
       <ul>
-        <li>&middot; Pollinations 무료 이미지 생성</li>
-        <li>&middot; 인포그래픽·치트시트·마인드맵</li>
-        <li>&middot; 이미지 복원 (초해상도·얼굴)</li>
-        <li>&middot; 배경 제거·컬러화·스크래치 제거</li>
+        <li>&middot; Pollinations 무료 이미지</li>
+        <li>&middot; 인포그래픽·마인드맵·치트시트</li>
+        <li>&middot; 이미지 복원 (4K·얼굴)</li>
+        <li>&middot; 배경 제거·컬러화·스크래치</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['rocket']} 영상·쇼츠</h3>
+      <h3>{I['rocket']} 영상·쇼츠 <span class="auto-badge">자동</span></h3>
       <ul>
         <li>&middot; 롱폼 → 쇼츠 자동 추출</li>
-        <li>&middot; 자막 (Whisper + 다국어 번역)</li>
-        <li>&middot; 썸네일 A/B 3안 자동</li>
+        <li>&middot; 자막 (Whisper + 다국어)</li>
+        <li>&middot; 썸네일 A/B 3안</li>
         <li>&middot; 90~00년대 영상 고화질 복원</li>
         <li>&middot; YouTube API 자동 업로드</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['lamp']} 음악·오디오</h3>
+      <h3>{I['lamp']} 음악·오디오 <span class="auto-badge">자동</span></h3>
       <ul>
         <li>&middot; AI 작곡 (Suno·Udio·MusicGen)</li>
         <li>&middot; 가사·편곡·믹스·마스터</li>
-        <li>&middot; 스템 분리 (보컬/드럼/베이스)</li>
+        <li>&middot; 스템 분리 (보컬/드럼)</li>
         <li>&middot; 노이즈 제거·보이스 클로닝</li>
       </ul>
     </div>
@@ -281,9 +292,9 @@ body{{width:850px;height:1100px;background:#efe7d6;
     </div>
     <div style="background:rgba(196,145,90,.18);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:2px;text-align:center">
       <div style="font-family:'Gaegu',cursive;font-size:14px;color:#8b4513;font-weight:700">"주제만 던져라"</div>
-      <div style="font-size:9px;color:#5a4f42;margin-top:2px;line-height:1.5">
-        세부 지시 없이도 알아서 만든다<br>
-        오픈소스·무료·24/7 자동
+      <div style="font-size:10px;color:#5a4f42;margin-top:2px;line-height:1.5;font-weight:700">
+        세부 지시 없이도 알아서 자동으로<br>
+        무료·오픈소스·24/7 무인 운영
       </div>
     </div>
   </div>
