@@ -47,24 +47,28 @@ body{font-family:var(--font-body);overflow:hidden;color:var(--color-text)}
 body{width:850px;height:1100px;background:#f5efe6;
   background-image:radial-gradient(ellipse at 15% 85%,rgba(210,180,140,.1) 0%,transparent 50%),
   radial-gradient(ellipse at 85% 15%,rgba(180,160,130,.06) 0%,transparent 40%);
-  padding:6px 8px;display:flex;flex-direction:column;justify-content:space-between}
-.header{display:flex;justify-content:space-between;align-items:flex-start}
+  padding:6px 8px;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;overflow:hidden}
+.header{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}
 .header-left h1{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}
 .header-left .sub{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}
 .header-right{display:flex;gap:6px;max-width:360px}
-.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:3px;flex:1;margin:3px 0}
-.mid-left,.mid-right{display:flex;flex-direction:column;gap:2px}
-.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
-.photo{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1)}
-.name-area{text-align:center}
+.mid{display:grid;grid-template-columns:230px 1fr 230px;gap:3px;flex:1 1 auto;margin:3px 0;min-height:0}
+.mid-left,.mid-right{display:flex;flex-direction:column;gap:3px;justify-content:space-between;min-height:0}
+.mid-left .card,.mid-right .card{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}
+.mid-left .card ul,.mid-right .card ul,.mid-left .card .tags,.mid-right .card .tags{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}
+.mid-left .card .tags,.mid-right .card .tags{flex-direction:row;flex-wrap:wrap;align-content:space-around}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;min-height:0}
+.photo{width:200px;height:240px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}
+.name-area{text-align:center;flex-shrink:0}
 .name-area .nm{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}
 .name-area .inf{font-size:9px;color:#8a7a68;margin-top:1px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;flex-shrink:0}
 .stat{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}
 .stat .n{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}
 .stat .l{font-size:8px;color:#7a6b5a}
-.bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
-.btm-card{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px}
+.bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;flex-shrink:0}
+.btm-card{background:rgba(255,255,255,.45);border:1.5px solid #d4c4a8;border-radius:5px;padding:4px 6px;display:flex;flex-direction:column}
+.btm-card ul{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}
 .btm-card h4{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}
 .btm-card li{font-size:9px;line-height:1.5;color:#5a4f42}
 .btm-card ul{list-style:none;padding:0}
@@ -237,7 +241,7 @@ body{width:850px;height:1100px;background:#f5efe6;
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 기술 아키텍처</h3>
       <ul>
-        <li>&middot; Claude Opus 4.7 (설계·복잡추론·1M ctx)</li>
+        <li>&middot; Claude Opus 4.8 (설계·복잡추론·1M ctx)</li>
         <li>&middot; Claude Sonnet 4.6 (단순구현 200줄-)</li>
         <li>&middot; Codex ×4 병렬 (코드 500줄+)</li>
         <li>&middot; Haiku 4.5 ×2 (검증 90% 절감)</li>
@@ -260,7 +264,7 @@ body{width:850px;height:1100px;background:#f5efe6;
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill="rgba(196,145,90,.2)"/></svg> AI 라우팅 정책</h3>
       <ul>
-        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 복잡추론·1M ctx → Claude Opus 4.7</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 복잡추론·1M ctx → Claude Opus 4.8</li>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b7b8e" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> 코드 500줄+ → Codex ×4 병렬</li>
         <li><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6b8e5a" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#5a9ec4" stroke="none"><path d="M12 2C8 8 5 12 5 16a7 7 0 0 0 14 0c0-4-3-8-7-14z"/></svg> 초장문 500k+ → Gemini Flash</li>
