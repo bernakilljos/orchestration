@@ -95,7 +95,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
   radial-gradient(circle at 50% 50%,rgba(180,160,130,.08) 0%,transparent 70%);
   padding:4px 5px;display:flex;flex-direction:column;justify-content:flex-start;gap:2px;overflow:hidden}}
 .header{{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}}
-.header-left h1{{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418;line-height:1.25}}
+.header-left h1{{font-family:'Gaegu',cursive;font-size:26px;font-weight:700;color:#2c2418;line-height:1.22}}
 .header-left .sub{{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}}
 .header-right{{display:flex;gap:6px;max-width:360px}}
 .mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:2px;flex:1 1 auto;margin:2px 0;min-height:0}}
@@ -103,44 +103,43 @@ body{{width:850px;height:1100px;background:#efe7d6;
 .mid-left .card,.mid-right .card{{flex:1 1 auto;display:flex;flex-direction:column;min-height:0}}
 .mid-left .card ul,.mid-right .card ul,.mid-left .card .tags,.mid-right .card .tags{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}}
 .mid-left .card .tags,.mid-right .card .tags{{flex-direction:row;flex-wrap:wrap;align-content:space-around}}
-.center{{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;min-height:0}}
-.photo{{width:100%;max-width:300px;height:200px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;box-shadow:3px 3px 10px rgba(0,0,0,.1);flex-shrink:0}}
+.center{{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;padding:3px 0;min-height:0}}
+.photo{{width:100%;max-width:300px;height:180px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;flex-shrink:0}}
 .name-area{{text-align:center;flex-shrink:0}}
-.name-area .nm{{font-family:'Gaegu',cursive;font-size:20px;font-weight:700;color:#2c2418}}
+.name-area .nm{{font-family:'Gaegu',cursive;font-size:22px;font-weight:700;color:#2c2418}}
 .name-area .inf{{font-size:9px;color:#8a7a68;margin-top:1px}}
-.stats{{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;flex-shrink:0}}
-.stat{{background:rgba(255,255,255,.5);border:1px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
-.stat .n{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513}}
-.stat .l{{font-size:8px;color:#7a6b5a}}
+.stats{{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;flex-shrink:0}}
+.stat{{background:rgba(252,244,228,.55);border:1.2px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
+.stat .n{{font-family:'Gaegu',cursive;font-size:22px;font-weight:700;color:#8b4513;line-height:1}}
+.stat .l{{font-size:8px;color:#7a6b5a;line-height:1.3;margin-top:2px}}
 .bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;flex-shrink:0}}
 .btm-card{{background:rgba(252,244,228,.4);border:1.2px solid #d4c4a8;border-radius:5px;padding:4px 6px;display:flex;flex-direction:column}}
-.btm-card ul{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}}
+.btm-card ul{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around;list-style:none;padding:0}}
 .btm-card h4{{font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;margin-bottom:3px;display:flex;align-items:center;gap:3px}}
 .btm-card li{{font-size:9px;line-height:1.5;color:#5a4f42}}
-.btm-card ul{{list-style:none;padding:0}}
 </style></head><body>
 
 <div class="header">
   <div class="header-left">
-    <h1>AI\ub97c \uc124\uacc4\ud558\uace0,<br>\ucf54\ub4dc\ub97c \ub9cc\ub4e4\uba70,<br>\ud568\uaed8 \uc131\uc7a5\ud558\ub294 \uac1c\ubc1c\uc790</h1>
-    <div class="sub">{I['cpu']} Claude + Codex + Gemini = \uba40\ud2f0AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</div>
+    <h1>주제만 던져,<br>PPT·문서·영상·코드·디자인<br>한 번에 자동으로</h1>
+    <div class="sub">{I['cpu']} orchestration_v1 — Claude + Codex + Gemini 멀티AI 킷</div>
   </div>
   <div class="header-right">
     <div class="card" style="width:160px">
-      <h3>{I['heart']} \ud589\ub3d9 \uc6d0\uce59</h3>
+      <h3>{I['clock']} 시간 절감</h3>
       <ul>
-        <li>&middot; \ubcf5\uc7a1\ud55c \uac83\uc744 \ub2e8\uc21c\ud558\uac8c \uad6c\uc870\ud654</li>
-        <li>&middot; \uc790\ub3d9\ud654\ud560 \uc218 \uc788\uc73c\uba74 \uc790\ub3d9\ud654</li>
-        <li>&middot; \ub370\uc774\ud130\ub85c \uac80\uc99d, \uacb0\uacfc\ub85c \uc99d\uba85</li>
+        <li>&middot; PPT 30장 → 1분</li>
+        <li>&middot; 회의 녹음 → 30초</li>
+        <li>&middot; 영상 1시간 → 쇼츠 5개</li>
       </ul>
     </div>
     <div class="card" style="width:185px">
-      <h3>{I['star']} \ud575\uc2ec \ud0a4\uc6cc\ub4dc</h3>
+      <h3>{I['star']} 만들 수 있는 것</h3>
       <div class="tags">
-        <span class="tag">Opus 4.8</span><span class="tag">ultracode</span><span class="tag">Multi-AI</span>
-        <span class="tag">Python</span><span class="tag">Zero-touch</span><span class="tag">\uc790\ub3d9\ud654</span>
-        <span class="tag">MCP</span><span class="tag">\ud480\uc2a4\ud0dd</span><span class="tag">RAG</span>
-        <span class="tag">\uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</span><span class="tag">\ud488\uc9c8\uac80\uc99d</span><span class="tag">security-guidance</span>
+        <span class="tag">PPT</span><span class="tag">Word</span><span class="tag">Excel</span>
+        <span class="tag">PDF</span><span class="tag">웹사이트</span><span class="tag">랜딩</span>
+        <span class="tag">이미지</span><span class="tag">영상</span><span class="tag">쇼츠</span>
+        <span class="tag">음악</span><span class="tag">자막</span><span class="tag">번역</span>
       </div>
     </div>
   </div>
@@ -148,68 +147,70 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
 <div class="mid">
   <div class="mid-left">
-    <div class="card" style="flex:1">
-      <h3>{I['bulb']} \ud575\uc2ec \uc5ed\ub7c9</h3>
+    <div class="card">
+      <h3>{I['star']} PPT 자동 생성</h3>
       <ul>
-        <li>&middot; <b>\uba40\ud2f0AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</b><br><span style="font-size:9px;color:#8a7a68">Claude \uc124\uacc4 \u2192 Codex \uad6c\ud604 \u2192 Gemini \uac80\uc99d. \uac01 AI\uc758 \uac15\uc810\uc744 \uadf9\ub300\ud654\ud558\ub294 \ub77c\uc6b0\ud305.</span></li>
-        <li>&middot; <b>Zero-touch \uc790\ub3d9\ud654</b><br><span style="font-size:9px;color:#8a7a68">\uc0ac\uc6a9\uc790 \uc561\uc158 0\uac1c. SessionStart\ubd80\ud130 MCP \uc5f0\uacb0, \uc6cc\ucee4 \uad00\ub9ac\uae4c\uc9c0 \uc644\uc804 \uc790\ub3d9.</span></li>
-        <li>&middot; <b>\ud480\uc2a4\ud0dd \uc2dc\uc2a4\ud15c \uc124\uacc4</b><br><span style="font-size:9px;color:#8a7a68">\ud504\ub860\ud2b8(HTML/CSS) \u00b7 \ubc31\uc5d4\ub4dc(Python) \u00b7 \uc778\ud504\ub77c(\uc2a4\ud06c\ub9bd\ud2b8) \u00b7 AI(\ud504\ub86c\ud504\ud2b8).</span></li>
-        <li>&middot; <b>49\uac1c \uc0b0\uc5c5\ubcc4 \uacf5\ud1b5 \ub808\ud37c\ub7f0\uc2a4</b><br><span style="font-size:9px;color:#8a7a68">\uae08\uc735\u00b7\uc758\ub8cc\u00b7\uad50\uc721\u00b7\ubcf4\uc548\u00b7IoT \ub4f1 \ubaa8\ub4e0 \uc0b0\uc5c5\uc758 \uacf5\ud1b5 \ub3c4\uad6c \uc815\ub9ac.</span></li>
-        <li>&middot; <b>\ud488\uc9c8 \uc790\ub3d9 \uac80\uc99d</b><br><span style="font-size:9px;color:#8a7a68">\ube4c\ub4dc\u2192\uac80\uc99d\u2192\ubcf4\uace0 \uc790\ub3d9 \ud30c\uc774\ud504\ub77c\uc778. Self-Critique \ub2e4\uc911 AI \ud569\uc758.</span></li>
-        <li>&middot; <b>\uc2e4\ud589 \uc911\uc2ec (Bias for Action)</b><br><span style="font-size:9px;color:#8a7a68">\uacc4\ud68d\uc5d0 \uba38\ubb34\ub974\uc9c0 \uc54a\uace0 \uc989\uc2dc \uad6c\ud604. \uc791\uc740 \ubcc0\ud654\ub97c \ube60\ub974\uac8c \ubc18\ubcf5.</span></li>
-        <li>&middot; <b>\ub3c4\uba54\uc778 \ud1b5\ucc30\ub825</b><br><span style="font-size:9px;color:#8a7a68">\uae08\uc735\u00b7\ubcf4\uc548\u00b7\uad50\uc721\u00b7\ud5ec\uc2a4 \uac01 \uc0b0\uc5c5\uc758 \ud575\uc2ec \uc6cc\ud06c\ud50c\ub85c\uc6b0 \uc774\ud574.</span></li>
+        <li>&middot; 주제 던지면 30 슬라이드</li>
+        <li>&middot; HTML/CSS → Playwright → pptx</li>
+        <li>&middot; 잘림 방지 자동 (OCR 점검)</li>
+        <li>&middot; 다이어그램·차트 자동 삽입</li>
+        <li>&middot; Gamma·Canva·Figma 연동</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['rocket']} \uc77c\uc744 \ub300\ud558\ub294 \ubc29\uc2dd</h3>
-      <p style="font-size:10px;color:#8b4513;font-family:'Gaegu',cursive;margin-bottom:3px">\ud0d0\uad6c &#8594; \ubd84\uc11d &#8594; \uc124\uacc4 &#8594; \uc2e4\ud589 &#8594; \uac80\uc99d</p>
+      <h3>{I['book']} 문서 (Word·PDF)</h3>
       <ul>
-        <li>&middot; <b>1. \ud0d0\uad6c</b> \u2014 \ubb38\uc81c\uc758 \ubcf8\uc9c8\u00b7\ub9e5\ub77d\u00b7\uc774\ud574\uad00\uacc4\uc790 \ud30c\uc545</li>
-        <li>&middot; <b>2. \ubd84\uc11d</b> \u2014 \ub370\uc774\ud130\ub85c \uac00\uc124 \uac80\uc99d, \uc815\ub7c9 \uce21\uc815</li>
-        <li>&middot; <b>3. \uc124\uacc4</b> \u2014 AI\uc640 \ud568\uaed8 \ucd5c\uc801 \uc544\ud0a4\ud14d\ucc98 \ub3c4\ucd9c</li>
-        <li>&middot; <b>4. \uc2e4\ud589</b> \u2014 \uc790\ub3d9\ud654\ub85c \uacb0\uacfc\ub97c \ub9cc\ub4e0\ub2e4</li>
-        <li>&middot; <b>5. \uac80\uc99d</b> \u2014 Self-Critique\u00b7\ub2e4\uc911 AI \ud569\uc758\ub85c \ud488\uc9c8 \ubcf4\uc7a5</li>
+        <li>&middot; python-docx + Mermaid 다이어그램</li>
+        <li>&middot; PDF A4·Letter·Digital 전부</li>
+        <li>&middot; 양식 자동 채우기 (form fill)</li>
+        <li>&middot; 전자서명·암호화·워터마크</li>
+        <li>&middot; 본문 점검 (빈 페이지 차단)</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['shield']} \uc790\ub3d9\ud654 \ucca0\ud559</h3>
+      <h3>{I['gear']} Excel·스프레드시트</h3>
       <ul>
-        <li>&middot; \uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c</li>
-        <li>&middot; \ud55c \ubc88\ub9cc \ud558\uba74 \ub05d\ub098\ub294 \uc2dc\uc2a4\ud15c (idempotent)</li>
-        <li>&middot; Zero-touch = \uc0ac\uc6a9\uc790 \uc561\uc158 0</li>
-        <li>&middot; \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 \uae08\uc9c0</li>
-        <li>&middot; 5\ub2e8\uacc4 \uc790\uac00 \uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
-        <li>&middot; Hook \uc73c\ub85c 100% \uac15\uc81c, \uba54\ubaa8\ub9ac\ub294 \ubcf4\uc870</li>
+        <li>&middot; openpyxl + 차트 자동</li>
+        <li>&middot; Google Sheets 직접 연동</li>
+        <li>&middot; 데이터 시각화 (피벗·차트)</li>
+        <li>&middot; raw data → 분석 보고</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['compass']} \ud611\uc5c5\u00b7\uc18c\ud1b5 \uc6d0\uce59</h3>
+      <h3>{I['water']} 웹사이트·랜딩</h3>
       <ul>
-        <li>&middot; <b>\uc9c1\uc811 \ub2f5</b> \u2014 \ud68c\ud53c\u00b7\ub534\ub9d0 X, \uc9c1\ub2f5 \u2192 \ubd80\uc5f0 \u2192 \ud589\ub3d9</li>
-        <li>&middot; <b>\uc804\uc218\uc870\uc0ac</b> \u2014 \ubd80\ubd84 \ucc98\ub9ac X, \uac19\uc740 \ud328\ud134 \uc804 \uc601\uc5ed \uc810\uac80</li>
-        <li>&middot; <b>\uc99d\uac70 \uae30\ubc18</b> \u2014 "\ud655\uc778 \uc548 \ub428" \uc194\uc9c1, \ucd94\uce21 \ub2e8\uc815 X</li>
-        <li>&middot; <b>\ud68c\uace0\u00b7\ud559\uc2b5</b> \u2014 \uc2e4\ud328 \ud328\ud134 \uae30\ub85d, \uac19\uc740 \uc2e4\uc218 \ubc18\ubcf5 X</li>
-        <li>&middot; <b>\uc2b9\uc778 \uac8c\uc774\ud2b8</b> \u2014 \uc704\ud5d8 \uba85\ub839 \uc0ac\uc804 \uc2b9\uc778 (HITL)</li>
+        <li>&middot; 랜딩페이지 (헤드라인·CTA)</li>
+        <li>&middot; 포트폴리오 사이트</li>
+        <li>&middot; 블로그 (Tistory·Ghost·Jekyll)</li>
+        <li>&middot; SEO 메타·OG·JSON-LD 자동</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['plant']} \uc131\uc7a5 \ub9c8\uc778\ub4dc\uc14b</h3>
+      <h3>{I['fire']} 디자인·이미지</h3>
       <ul>
-        <li>&middot; \ub9e4\uc77c 1% \ub354 \ub098\uc740 \uacb0\uacfc \ucd94\uad6c</li>
-        <li>&middot; \uc2e4\ud328 = \ud559\uc2b5 \ub370\uc774\ud130, \ud68c\ud53c X</li>
-        <li>&middot; \ub3c4\uba54\uc778 + AI \uc735\ud569 \ucd94\uad6c</li>
-        <li>&middot; \uae00\ub85c\ubc8c \ud2b8\ub80c\ub4dc \ub9e4\uc8fc \uc810\uac80</li>
-        <li>&middot; \ub3d9\ub8cc\uc5d0\uac8c \ubc30\uc6b0\uace0 \uac00\ub974\uce58\uae30</li>
+        <li>&middot; Pollinations 무료 이미지 생성</li>
+        <li>&middot; 인포그래픽·치트시트·마인드맵</li>
+        <li>&middot; 이미지 복원 (초해상도·얼굴)</li>
+        <li>&middot; 배경 제거·컬러화·스크래치 제거</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['bulb']} \ud575\uc2ec \ub3c4\uad6c\u00b7\uae30\uc220</h3>
+      <h3>{I['rocket']} 영상·쇼츠</h3>
       <ul>
-        <li>&middot; LLM: Claude\u00b7GPT\u00b7Gemini\u00b7HyperCLOVA</li>
-        <li>&middot; \uc5d0\uc774\uc804\ud2b8: MCP\u00b7Agentic\u00b7Multi-Agent</li>
-        <li>&middot; RAG: GraphRAG\u00b7Vector DB\u00b7HyDE</li>
-        <li>&middot; \ubcf4\uc548: UEBA\u00b7Confidential\u00b7PET</li>
-        <li>&middot; \uac80\uc99d: Reflexion\u00b7Self-Critique</li>
+        <li>&middot; 롱폼 → 쇼츠 자동 추출</li>
+        <li>&middot; 자막 (Whisper + 다국어 번역)</li>
+        <li>&middot; 썸네일 A/B 3안 자동</li>
+        <li>&middot; 90~00년대 영상 고화질 복원</li>
+        <li>&middot; YouTube API 자동 업로드</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['lamp']} 음악·오디오</h3>
+      <ul>
+        <li>&middot; AI 작곡 (Suno·Udio·MusicGen)</li>
+        <li>&middot; 가사·편곡·믹스·마스터</li>
+        <li>&middot; 스템 분리 (보컬/드럼/베이스)</li>
+        <li>&middot; 노이즈 제거·보이스 클로닝</li>
       </ul>
     </div>
   </div>
@@ -217,162 +218,147 @@ body{{width:850px;height:1100px;background:#efe7d6;
   <div class="center">
     <div style="position:relative">
       <img class="photo" src="data:image/png;base64,{orch_b64}" />
-      <div style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.8);border-radius:4px;padding:2px 6px;font-size:8px;color:#8b4513;font-family:'Gaegu',cursive">Multi-AI Orchestration</div>
+      <div style="position:absolute;top:6px;left:8px;background:rgba(255,255,255,.85);border-radius:4px;padding:2px 6px;font-size:9px;color:#8b4513;font-family:'Gaegu',cursive">주제 → AI → 산출물</div>
     </div>
     <div class="name-area">
       <div class="nm">orchestration_v1</div>
-      <div style="font-size:11px;color:#8b4513;font-family:serif">Multi-AI Orchestration Kit</div>
-      <div class="inf">Claude + Codex + Gemini \u00b7 \uc124\uacc4\u2192\uad6c\ud604\u2192\uac80\uc99d \uc790\ub3d9\ud654</div>
+      <div style="font-size:11px;color:#8b4513;font-family:serif">"주제만 던지면 만들어 준다"</div>
+      <div class="inf">음성·텍스트·이미지·PDF 어떤 입력도 OK</div>
     </div>
-    <div class="stats" style="grid-template-columns:repeat(2,1fr)">
-      <div class="stat"><div class="l" style="font-size:9px;font-weight:700;color:#8b4513">\ub098\uc758 \ud3c9\uc810</div><div style="font-size:10px;color:#8b4513;line-height:1.4">\uc124\uacc4 5/5<br>\uad6c\ud604 4/5<br>\ud488\uc9c8 5/5</div></div>
-      <div class="stat"><div class="l" style="font-size:9px;font-weight:700;color:#8b4513">\uc790\uac00 \uac00\uce58</div><div style="font-size:9px;color:#5a4f42;line-height:1.4">\uc790\ub3d9\ud654\ub85c<br>\ubaa8\ub450\uc758 \uc2dc\uac04<br>\ub418\ucc3e\uae30</div></div>
+    <div class="stats">
+      <div class="stat"><div class="n">8h→1분</div><div class="l">PPT 30장<br>자동 생성</div></div>
+      <div class="stat"><div class="n">2h→30초</div><div class="l">회의 녹음<br>→ 회의록</div></div>
+      <div class="stat"><div class="n">1h→1분</div><div class="l">영상에서<br>쇼츠 5개</div></div>
     </div>
-    <div class="card" style="padding:6px 8px;margin-top:3px">
-      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['bulb']} \ub0b4\uac00 \uc798\ud558\ub294 \uac83</h3>
+    <div class="card" style="padding:5px 7px;margin-top:2px">
+      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['rocket']} 어떻게 쓰나</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
-        \u00b7 \ubcf5\uc7a1\ud55c \ubb38\uc81c\ub97c \ub2e8\uc21c\ud558\uac8c \uad6c\uc870\ud654<br>
-        \u00b7 AI \uc640 \ud611\uc5c5\ud574 \ub354 \ub098\uc740 \uacb0\uacfc \ub3c4\ucd9c<br>
-        \u00b7 \ub3c4\uba54\uc778 \ud1b5\ucc30\uacfc \uae30\uc220 \uacb0\ud569 (\uae08\uc735\u00b7\ubcf4\uc548\u00b7\uad50\uc721)<br>
-        \u00b7 \ub05d\uae4c\uc9c0 \uac80\uc99d\ud558\ub294 \ucc45\uc784\uac10 (Self-Critique)<br>
-        \u00b7 Zero-touch \uc790\ub3d9\ud654\ub85c \ubc18\ubcf5 \uc81c\uac70<br>
-        \u00b7 \uc804\uc218\uc870\uc0ac 5\ub2e8\uacc4 (\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)
+        · <b>1. 던지기</b> — "주제 X 로 PPT 30장 만들어줘"<br>
+        · <b>2. AI 처리</b> — Claude 설계 → Codex 구현 → Haiku 점검<br>
+        · <b>3. 받기</b> — pptx·docx·mp4·jpg 산출물 즉시<br>
+        · <b>4. 자가 점검</b> — 잘림·여백·오타 자동 잡음<br>
+        · <b>5. 다듬어진 결과</b> — 사용자는 그냥 받기만
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;margin-top:3px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:100%;margin-top:2px">
       <div class="card" style="padding:4px 5px">
-        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['medal']} \uac15\uc810</h3>
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['cpu']} 입력</h3>
         <div style="font-size:8px;color:#5a4f42;line-height:1.45">
-          \u00b7 \uc124\uacc4\u00b7\uad6c\ud604\u00b7\uac80\uc99d<br>
-          \u00b7 3\ub2e8\uacc4 \uc790\ub3d9\ud654<br>
-          \u00b7 1M ctx \ud65c\uc6a9<br>
-          \u00b7 \ub3c4\uba54\uc778 \uba40\ud2f0
+          · 음성 (mp3/wav)<br>
+          · 텍스트 한 줄<br>
+          · 이미지·PDF<br>
+          · 영상·폴더
         </div>
       </div>
       <div class="card" style="padding:4px 5px">
-        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['target']} \ub3c4\uc804</h3>
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['gear']} 처리</h3>
         <div style="font-size:8px;color:#5a4f42;line-height:1.45">
-          \u00b7 100\uc0ac PoC<br>
-          \u00b7 K-Standard \ub4f1\ub85d<br>
-          \u00b7 \uc624\ud508\uc18c\uc2a4 \ubc30\ud3ec<br>
-          \u00b7 AI \ud50c\ub7ab\ud3fc
+          · Claude (설계)<br>
+          · Codex (구현)<br>
+          · Haiku (점검)<br>
+          · Gemini (장문)
         </div>
       </div>
       <div class="card" style="padding:4px 5px">
-        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['heart']} \uac00\uce58</h3>
+        <h3 style="font-size:9px;margin-bottom:2px;border:none;padding:0">{I['star']} 출력</h3>
         <div style="font-size:8px;color:#5a4f42;line-height:1.45">
-          \u00b7 \uc2e0\ub8b0\u00b7\uc790\ub3d9\ud654<br>
-          \u00b7 \ud488\uc9c8 = \uc2e0\ub8b0<br>
-          \u00b7 \ubaa8\ub450\uc758 \uc2dc\uac04<br>
-          \u00b7 \uc9c0\uc18d \uc131\uc7a5
+          · pptx·docx·pdf<br>
+          · mp4·mp3·jpg<br>
+          · html·xlsx<br>
+          · 코드·테스트
         </div>
       </div>
     </div>
-    <div class="card" style="padding:5px 7px;margin-top:3px">
-      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['rocket']} \ub2e4\uc74c \ub2e8\uacc4</h3>
+    <div class="card" style="padding:5px 7px;margin-top:2px">
+      <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['bulb']} 실제 사용 예</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
-        \u00b7 50 \ud50c\ub7ec\uadf8\uc778 \ub3cc\ud30c (\ud604\uc7ac 32)<br>
-        \u00b7 sec_guidance + ultracode \ud45c\uc900\ud654<br>
-        \u00b7 Instagram v22 + YT Shorts \uc2e4\uad6c\ud604<br>
-        \u00b7 VPS 24/7 \uc6b4\uc601 (Oracle Free Tier)<br>
-        \u00b7 100 \ub808\ud37c\ub7f0\uc2a4 \ub3c4\ub2ec
+        · "회의 녹음 mp3 보내" → 회의록·요약·할 일<br>
+        · "1시간 영상" → 쇼츠 5개 + 자막 + 썸네일<br>
+        · "RFP PDF 보내" → 제안서 PPT 30장<br>
+        · "이 사진 흐려" → 4K 초해상도 복원<br>
+        · "월간 매출 csv" → Excel·차트·분석 보고
       </div>
     </div>
-    <div style="background:rgba(196,145,90,.12);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:3px;text-align:center">
-      <div style="font-family:'Gaegu',cursive;font-size:11px;color:#8b4513;font-weight:700">\ud55c \uc904 \ub2e4\uc9d0</div>
+    <div style="background:rgba(196,145,90,.18);border:1px dashed #c4915a;border-radius:5px;padding:5px 7px;margin-top:2px;text-align:center">
+      <div style="font-family:'Gaegu',cursive;font-size:14px;color:#8b4513;font-weight:700">"주제만 던져라"</div>
       <div style="font-size:9px;color:#5a4f42;margin-top:2px;line-height:1.5">
-        "\uc0ac\ub78c\uc740 \ud310\ub2e8\ub9cc, \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c"<br>
-        "\ub2e8\uc21c\ud568\uc774 \uad81\uadf9\uc758 \uc815\uad50\ud568"<br>
-        "\uc99d\uac70 \uc5c6\uc73c\uba74 \uc544\ubb34\uac83\ub3c4 \uc544\ub2c8\ub2e4"
+        세부 지시 없이도 알아서 만든다<br>
+        오픈소스·무료·24/7 자동
       </div>
     </div>
   </div>
 
   <div class="mid-right">
     <div class="card">
-      <h3>{I['star']} \ud504\ub85c\uc81d\ud2b8 \uc8fc\uc694 \uc131\uacfc</h3>
+      <h3>{I['rocket']} 회의·강의 사례</h3>
       <ul>
-        <li>&middot; \uc138\uacc4 \ucd5c\ucd08 \uba40\ud2f0AI \ub3d9\uc2dc \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</li>
-        <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc (Python 80%)</li>
-        <li>&middot; 112\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 (Zero-touch)</li>
-        <li>&middot; 28\uac1c \ud6c5 (Pre/Post ToolUse \u00b7 SessionStart)</li>
-        <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc (orca.db)</li>
-        <li>&middot; 17\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c (Hook \ucc28\ub2e8)</li>
-        <li>&middot; 32 stable \ud50c\ub7ec\uadf8\uc778 (sec_guidance \ud3ec\ud568)</li>
-        <li>&middot; 24/7 watchdog + \ube44\uc6a9\u00b7\ucffc\ud130 \uc790\ub3d9 fallback</li>
-        <li>&middot; 5\ub2e8\uacc4 \uc790\uac00\uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
+        <li>&middot; 회의 mp3 → 회의록·요약·할 일</li>
+        <li>&middot; 강의 영상 → 5살 톤 교재 (8섹션)</li>
+        <li>&middot; 발표 자료 → 자막·번역·쇼츠</li>
+        <li>&middot; 듀얼 마이크 멀티트랙 분리</li>
+        <li>&middot; 다국어 (한·영·일·중) 번역</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['heart']} \ud575\uc2ec \uac00\uce58</h3>
+      <h3>{I['book']} 사업·기획 사례</h3>
       <ul>
-        <li>&middot; \uc790\ub3d9\ud654 \uc6b0\uc120 \u2014 \ubc18\ubcf5\uc740 \uae30\uacc4\uc5d0\uac8c</li>
-        <li>&middot; \ud488\uc9c8 = \uc2e0\ub8b0 \u2014 \uac80\uc99d \uc5c6\uc774 \uc644\ub8cc \ubcf4\uace0 X</li>
-        <li>&middot; \uacf5\uc720\uc640 \uc131\uc7a5 \u2014 \ud0b7\uc740 \ubaa8\ub450\ub97c \uc704\ud55c \uac83</li>
-        <li>&middot; \ub2e8\uc21c\ud568\uc758 \ud798 \u2014 \ubcf5\uc7a1\ud568\uc740 \uc801</li>
-        <li>&middot; \ub370\uc774\ud130 \uae30\ubc18 \u2014 \ucd94\uce21\u00b7\ud5e4\uc9c0 \uae08\uc9c0</li>
-        <li>&middot; \uc804\uc218\uc870\uc0ac \u2014 \ubd80\ubd84 \ucc98\ub9ac\ub294 \uc704\ubc18</li>
-        <li>&middot; Self-Critique \u2014 \ub2e4\uc911 AI \ud569\uc758</li>
+        <li>&middot; RFP PDF → 제안서 PPT 30장</li>
+        <li>&middot; 트렌드 키워드 → 인포그래픽</li>
+        <li>&middot; raw 매출 → Excel·피벗·분석</li>
+        <li>&middot; 사업계획서 → 임원용 1-pager</li>
+        <li>&middot; 회사 자료 → 직무 교육 콘텐츠</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['gear']} \uae30\uc220 \uc544\ud0a4\ud14d\ucc98</h3>
+      <h3>{I['shield']} 보안·품질 사례</h3>
       <ul>
-        <li>&middot; Claude Opus 4.8 (\uc124\uacc4\u00b7\ubcf5\uc7a1\ucd94\ub860\u00b71M ctx)</li>
-        <li>&middot; <b>ultracode</b> (Dynamic Workflows, \uc218\uc2ed subagent)</li>
-        <li>&middot; Claude Sonnet 4.6 (\ub2e8\uc21c\uad6c\ud604 200\uc904-)</li>
-        <li>&middot; Codex \u00d74 \ubcd1\ub82c (\ucf54\ub4dc 500\uc904+)</li>
-        <li>&middot; Haiku 4.5 \u00d72 (\uac80\uc99d 90% \uc808\uac10)</li>
-        <li>&middot; Gemini Flash (500k+ \ucd08\uc7a5\ubb38)</li>
-        <li>&middot; <b>security-guidance</b> pre-hook (\ubcf4\uc548 0\ube44\uc6a9)</li>
-        <li>&middot; SQLite + watchdog 24/7 \ubb34\uc911\ub2e8</li>
-        <li>&middot; HITL approval gate (\uc704\ud5d8 \uc2b9\uc778)</li>
+        <li>&middot; 코드 보안 스캔 (semgrep·gitleaks)</li>
+        <li>&middot; Write/Edit 직전 25 위험 패턴 차단</li>
+        <li>&middot; 빌드 후 자동 자가 점검 (max 3 재시도)</li>
+        <li>&middot; PNG/docx/pptx 잘림·여백 자동 잡음</li>
+        <li>&middot; 위험 명령 사전 승인 (HITL)</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['code']} \ub3c4\uad6c \uc2a4\ud0dd</h3>
-      <div class="tags">
-        <span class="tag">Python</span><span class="tag">Playwright</span><span class="tag">SQLite</span>
-        <span class="tag">MCP</span><span class="tag">HTML/CSS</span><span class="tag">SVG</span>
-        <span class="tag">Git</span><span class="tag">Bash</span><span class="tag">Node.js</span>
-        <span class="tag">PowerShell</span><span class="tag">Docker</span><span class="tag">openpyxl</span>
-        <span class="tag">python-docx</span><span class="tag">PyMuPDF</span>
-      </div>
-    </div>
-    <div class="card">
-      <h3>{I['compass']} AI 라우팅 정책</h3>
+      <h3>{I['water']} 콘텐츠 사례</h3>
       <ul>
-        <li>{I['gear']} 복잡추론·1M ctx → Claude Opus 4.8</li>
-        <li>{I['fire']} 초난도 다각검증 → /effort ultracode</li>
-        <li>{I['code']} 코드 500줄+ → Codex ×4 병렬</li>
-        <li>{I['check']} 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
-        <li>{I['water']} 초장문 500k+ → Gemini Flash</li>
-        <li>{I['shield']} 보안 검사 → security-guidance (0비용)</li>
-        <li>{I['target']} Quota 초과 → 10m→20m→2h backoff</li>
-        <li>{I['star']} 단가·특성·quota 3축 최적화</li>
+        <li>&middot; 롱폼 영상 → 쇼츠 + 썸네일 자동</li>
+        <li>&middot; 흐린 사진 → 4K 초해상도</li>
+        <li>&middot; 90~00년대 영상 → 고화질 리마스터</li>
+        <li>&middot; 음악 작곡 (장르·BPM·키 지정)</li>
+        <li>&middot; 노래 스템 분리 (보컬·드럼·기타)</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['fire']} 최근 학습 영역</h3>
+      <h3>{I['compass']} 산업별 사용</h3>
       <ul>
-        <li>&middot; Dynamic Workflows · ultracode (Week 22)</li>
-        <li>&middot; Agentic AI · MCP · Computer-Use</li>
-        <li>&middot; security-guidance · 보안 pre-hook</li>
-        <li>&middot; Instagram Graph v22 · YouTube Shorts API</li>
-        <li>&middot; World Models · VLA (피지컬 AI)</li>
-        <li>&middot; Self-Critique · Reflexion 루프</li>
-        <li>&middot; Causal AI · Affective Computing · Quantum ML</li>
+        <li>&middot; <b>금융</b> — IFRS·내부회계·리스크</li>
+        <li>&middot; <b>의료</b> — 환자 차트 정리·요약</li>
+        <li>&middot; <b>교육</b> — 교재·강의·평가 문항</li>
+        <li>&middot; <b>제조</b> — 매뉴얼·SOP·기술 문서</li>
+        <li>&middot; <b>마케팅</b> — 랜딩·블로그·SNS·SEO</li>
+        <li>&middot; <b>법무·HR</b> — 양식 자동 채움</li>
+        <li>&middot; <b>크리에이터</b> — YT·IG·블로그</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['heart']} 협력 가능 영역</h3>
+      <h3>{I['code']} 코드 자동화 사례</h3>
       <ul>
-        <li>&middot; ITCEN PNS — 사이버보안 통합</li>
-        <li>&middot; ITCEN CTS — 클라우드·NI 시너지</li>
-        <li>&middot; ITCEN ENTEC — 공공·금융 SI</li>
-        <li>&middot; ITCEN CLOIT — Google Cloud</li>
-        <li>&middot; KISA·금감원·개인정보위 표준화</li>
-        <li>&middot; NVIDIA·MS·Anthropic 파트너십</li>
+        <li>&middot; 코드 500줄+ Codex 4 병렬 구현</li>
+        <li>&middot; 테스트 자동 생성 (pytest·jest)</li>
+        <li>&middot; README·CHANGELOG 자동 갱신</li>
+        <li>&middot; 디자인 → 코드 변환 (Figma 연동)</li>
+        <li>&middot; GitHub PR 자동 리뷰·코멘트</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['target']} 운영·연결 사례</h3>
+      <ul>
+        <li>&middot; 24/7 무인 운영 (VPS·tmux·watchdog)</li>
+        <li>&middot; Slack·Notion·Jira 연결 (MCP)</li>
+        <li>&middot; YouTube Data API 자동 업로드</li>
+        <li>&middot; Instagram Graph v22 (Reels·피드)</li>
+        <li>&middot; Sheets·Airtable·BigQuery 연동</li>
       </ul>
     </div>
   </div>
@@ -380,78 +366,93 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
 <div class="bottom">
   <div class="btm-card">
-    <h4>{I['rocket']} \ub098\ub97c \uc6c0\uc9c1\uc774\uac8c \ud558\ub294 \uac83</h4>
+    <h4>{I['cpu']} 받는 입력</h4>
     <ul>
-      <li>&middot; \ubcf5\uc7a1\ud55c \ubb38\uc81c\ub97c \uad6c\uc870\ud654\ud558\ub294 \ucfe0\uac10</li>
-      <li>&middot; AI\uc640 \ud611\uc5c5\ud558\uc5ec \ub354 \ub098\uc740 \uacb0\uacfc</li>
-      <li>&middot; \ub204\uad70\uac00\uc5d0\uac8c \ub3c4\uc6c0\ub418\ub294 \ub3c4\uad6c</li>
-      <li>&middot; \uc9c0\uc18d\uc801\uc73c\ub85c \uc131\uc7a5\ud558\ub294 \uac83</li>
-      <li>&middot; \ub9e4\uc77c \uc870\uae08\uc529 \ub354 \ub098\uc544\uc9c0\ub294 \uac83</li>
-      <li>&middot; \uc0c8\ub85c\uc6b4 \uae30\uc220\uc744 \ud0d0\uad6c\ud558\ub294 \ud765\ubd84</li>
+      <li>&middot; 음성 (mp3·wav·m4a)</li>
+      <li>&middot; 텍스트 한 줄 ("주제 X")</li>
+      <li>&middot; 이미지·스크린샷</li>
+      <li>&middot; PDF·docx·xlsx</li>
+      <li>&middot; 영상 파일·YT 링크</li>
+      <li>&middot; 회사 자료 폴더</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['heart']} \ubbf8\ub798\uc5d0 \uc774\ub8e8\uace0 \uc2f6\uc740 \uac83</h4>
+    <h4>{I['star']} 내보내는 출력</h4>
     <ul>
-      <li>&middot; \uc138\uacc4\uc801 AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158 \ud50c\ub7ab\ud3fc</li>
-      <li>&middot; \ub204\uad6c\ub098 \uc0ac\uc6a9\ud560 \uc218 \uc788\ub294 \uc790\ub3d9\ud654 \ud0b7</li>
-      <li>&middot; AI \uc2dc\ub300\uc758 \uba58\ud1a0\uc774\uc790 \uc120\uad6c\uc790</li>
-      <li>&middot; \uae30\uc220\ub85c \uc0ac\ud68c\uc801 \uac00\uce58\ub97c \ub9cc\ub4dc\ub294 \uc77c</li>
-      <li>&middot; \ub2e4\uc74c \uc138\ub300\ub97c \uc704\ud55c \uad50\uc721 \ucee8\ud150\uce20</li>
+      <li>&middot; PPT (pptx)·Google Slides</li>
+      <li>&middot; Word (docx)·PDF</li>
+      <li>&middot; Excel (xlsx)·Sheets</li>
+      <li>&middot; 영상 (mp4)·쇼츠·자막</li>
+      <li>&middot; 이미지 (jpg·png·SVG)</li>
+      <li>&middot; 음악·오디오 (mp3·wav)</li>
+      <li>&middot; 웹사이트 (HTML)</li>
+      <li>&middot; 코드·테스트·문서</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['plant']} \ub098\uc758 \uac00\ub2a5\uc131</h4>
+    <h4>{I['gear']} 작동 환경</h4>
     <ul>
-      <li>&middot; \uae30\uc220\uacfc \uac10\uc131\uc744 \uc5f0\uacb0\ud558\ub294 \uc735\ud569\ub825</li>
-      <li>&middot; \ubcf5\uc7a1\ud55c \uc2dc\uc2a4\ud15c\uc744 \ub2e8\uc21c\ud654\ud558\ub294 \uc124\uacc4\ub825</li>
-      <li>&middot; \uba58\ud1a0\ub85c\uc11c \uc0ac\ub78c\uc744 \uc131\uc7a5\uc2dc\ud0a4\ub294 \ud798</li>
-      <li>&middot; \ub370\uc774\ud130\ub85c \uc758\uc0ac\uacb0\uc815\ud558\ub294 \ub2a5\ub825</li>
-      <li>&middot; \uc804\uccb4 \uc2dc\uc2a4\ud15c\uc744 \ubcf4\ub294 \ub208</li>
+      <li>&middot; Windows·macOS·Linux</li>
+      <li>&middot; 로컬 PC 한 줄 install</li>
+      <li>&middot; VPS 24/7 무인 운영</li>
+      <li>&middot; Oracle Free Tier 가능</li>
+      <li>&middot; 스마트폰 SSH 접속</li>
+      <li>&middot; 오프라인 모드 (Ollama)</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['check']} \uac1c\ubc1c \uccb4\ud06c\ub9ac\uc2a4\ud2b8</h4>
+    <h4>{I['water']} 연결되는 도구</h4>
     <ul>
-      <li>\u25a1 \ud50c\ub7ec\uadf8\uc778 50\uac1c \ub2ec\uc131</li>
-      <li>\u25a1 \ub808\ud37c\ub7f0\uc2a4 100\uac1c</li>
-      <li>\u25a1 24/7 \uc790\ub3d9 \uc6b4\uc601</li>
-      <li>\u25a1 \uc624\ud508\uc18c\uc2a4 \ubc30\ud3ec</li>
-      <li>\u25a1 1000 \uc0ac\uc6a9\uc790</li>
-      <li>\u25a1 AI \uba58\ud1a0\ub9c1 \ud50c\ub7ab\ud3fc</li>
+      <li>&middot; Slack·Notion·Jira·Trello</li>
+      <li>&middot; Gmail·Google Calendar</li>
+      <li>&middot; YouTube·Instagram</li>
+      <li>&middot; Figma·Canva·Gamma</li>
+      <li>&middot; GitHub·Vercel·Firebase</li>
+      <li>&middot; MySQL·BigQuery·MongoDB</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['gear']} \uc8fc\uc694 \uc5ed\ub7c9\u00b7\uacbd\ud5d8</h4>
+    <h4>{I['compass']} 자동 안전장치</h4>
     <ul>
-      <li>&middot; \uba40\ud2f0AI \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158 \uc124\uacc4</li>
-      <li>&middot; \ud589\ub3d9\uc704\ud5d8\ubd84\uc11d\u00b7UEBA \ub3c4\uba54\uc778</li>
-      <li>&middot; \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 \uc124\uacc4</li>
-      <li>&middot; \ub300\uaddc\ubaa8 SI \uc544\ud0a4\ud14d\ucc98 \uc2a4\ud0a4\ub9bc</li>
-      <li>&middot; Cross-functional \ud611\uc5c5</li>
-      <li>&middot; KPI \uc124\uacc4\u00b7\ub370\uc774\ud130 \uc758\uc0ac\uacb0\uc815</li>
+      <li>&middot; 위험 명령 사전 승인 (HITL)</li>
+      <li>&middot; 보안 25 패턴 자동 차단</li>
+      <li>&middot; 일일 비용 상한 자동 fallback</li>
+      <li>&middot; Quota 초과 지수 backoff</li>
+      <li>&middot; 빌드 후 자동 자가 점검</li>
+      <li>&middot; 시크릿 commit 차단</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['water']} \ud559\uc2b5\u00b7\uc790\uaca9</h4>
+    <h4>{I['rocket']} 시작하기</h4>
     <ul>
-      <li>&middot; Anthropic Claude Code \uc2a4\ud0ac \uc774\uc218</li>
-      <li>&middot; NVIDIA Cosmos \ud30c\ud2b8\ub108 \uad50\uc721</li>
-      <li>&middot; AWS\u00b7Azure AI \uc778\uc99d</li>
-      <li>&middot; ISO 42001 AI \uad00\ub9ac \uc790\uaca9</li>
-      <li>&middot; KISA \ubcf4\uc548 \uc778\uc99d</li>
-      <li>&middot; PMP\u00b7CISSP \u00b7 CIA \uc900\ube44</li>
+      <li>&middot; <b>1.</b> 깃 클론 한 줄</li>
+      <li>&middot; <b>2.</b> install.sh 실행</li>
+      <li>&middot; <b>3.</b> Claude Code 켜기</li>
+      <li>&middot; <b>4.</b> "주제 X" 던지기</li>
+      <li>&middot; 사용자 액션 0 (Zero-touch)</li>
+      <li>&middot; 무료·오픈소스</li>
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['star']} \uc678\ubd80 \ud65c\ub3d9</h4>
+    <h4>{I['fire']} AI 엔진</h4>
     <ul>
-      <li>&middot; \uae00\ub85c\ubc8c AI \uceec\ud37c\ub7f0\uc2a4 \ub9e4\ub144 \ucc38\uc11d</li>
-      <li>&middot; Anthropic\u00b7OpenAI \uad6c\uc870 \ucee4\ubba4\ub2c8\ud2f0</li>
-      <li>&middot; \uacf5\uacf5 AI \uac70\ubc84\ub10c\uc2a4 \uc790\ubb38</li>
-      <li>&middot; KISA\u00b7\uae08\uac10\uc6d0 \ud45c\uc900\ud654 \uc704\uc6d0\ud68c</li>
-      <li>&middot; \uba58\ud1a0\ub9c1 \uad50\uc721 \uc9c4\ud589</li>
-      <li>&middot; \uacf5\uc720 \uc138\ubbf8\ub098 \uc8fc\uad00</li>
+      <li>&middot; Claude Opus 4.8 (설계)</li>
+      <li>&middot; Claude Sonnet 4.6 (구현)</li>
+      <li>&middot; Codex (코드 500줄+)</li>
+      <li>&middot; Haiku 4.5 (점검)</li>
+      <li>&middot; Gemini Flash (장문)</li>
+      <li>&middot; Whisper (음성→텍스트)</li>
+    </ul>
+  </div>
+  <div class="btm-card">
+    <h4>{I['plant']} 32 플러그인 카테고리</h4>
+    <ul>
+      <li>&middot; <b>디자인</b> — PPT·Word·Excel·웹</li>
+      <li>&middot; <b>미디어</b> — 영상·음악·이미지</li>
+      <li>&middot; <b>개발</b> — 코드·테스트·보안</li>
+      <li>&middot; <b>협업</b> — Slack·Notion·Jira</li>
+      <li>&middot; <b>데이터</b> — DB·Sheets·BigQuery</li>
+      <li>&middot; <b>RAG</b> — 8 종 패턴 (HyDE 등)</li>
     </ul>
   </div>
 </div>
