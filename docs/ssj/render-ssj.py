@@ -121,7 +121,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
 <div class="header">
   <div class="header-left">
-    <h1>주제만 던져,<br>PPT·문서·영상·코드·디자인<br>한 번에 자동으로</h1>
+    <h1>주제만 던져,<br>PPT·문서·영상·개발·디자인<br>한 번에 자동으로</h1>
     <div class="sub">{I['cpu']} orchestration_v1 — Claude + Codex + Gemini 멀티AI 킷</div>
   </div>
   <div class="header-right">
