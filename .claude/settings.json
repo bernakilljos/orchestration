@@ -87,8 +87,10 @@
                                                          },
                                                          {
                                                              "type":  "command",
-                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
-                                                             "timeout":  120,
+                                                             "command":  "true",
+                                                             "_disabled_command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
+                                                             "_disabled_reason":  "2026-06-08 leak (auto re-install spawn pile-up)",
+                                                             "timeout":  5,
                                                              "async":  true
                                                          },
                                                          {
@@ -360,22 +362,28 @@
                                                         },
                                                         {
                                                             "type":  "command",
-                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
-                                                            "timeout":  60,
+                                                            "command":  "true",
+                                                            "_disabled_command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
+                                                            "_disabled_reason":  "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
+                                                            "timeout":  5,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         },
                                                         {
                                                             "type":  "command",
-                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
-                                                            "timeout":  30,
+                                                            "command":  "true",
+                                                            "_disabled_command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
+                                                            "_disabled_reason":  "2026-06-08 leak chain step",
+                                                            "timeout":  5,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         },
                                                         {
                                                             "type":  "command",
-                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
-                                                            "timeout":  120,
+                                                            "command":  "true",
+                                                            "_disabled_command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
+                                                            "_disabled_reason":  "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
+                                                            "timeout":  5,
                                                             "continueOnBlock":  true,
                                                             "async":  true
                                                         },

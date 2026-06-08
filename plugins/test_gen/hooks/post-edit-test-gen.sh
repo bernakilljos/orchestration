@@ -3,6 +3,19 @@
 # AI-Native 파이프라인 1단계
 set -e
 
+# === KILL SWITCH (leak 방지) ===
+PROJECT_ROOT_GUARD="${CLAUDE_PROJECT_DIR:-$PWD}"
+if [ -f "${PROJECT_ROOT_GUARD}/.claude/state/ai-native-chain.disabled" ]; then
+  exit 0
+fi
+
+# === RECURSION GUARD ===
+# ai-native-chain.sh 가 set 한 env var 가 있으면 = 체인 내부 호출 → 즉시 종료
+# (PostToolUse 가 chain 내부 file write 에 재귀하지 않도록)
+if [ -n "${AI_NATIVE_CHAIN_ACTIVE:-}" ]; then
+  exit 0
+fi
+
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG_DIR="${PROJECT_ROOT}/.claude/logs"
 mkdir -p "$LOG_DIR"

@@ -12,6 +12,12 @@
 # Idempotent: .claude/state/.sec-tools-installed flag 로 추적
 set -e
 
+# === KILL SWITCH (leak 방지) ===
+PROJECT_ROOT_GUARD="${CLAUDE_PROJECT_DIR:-$PWD}"
+if [ -f "${PROJECT_ROOT_GUARD}/.claude/state/ai-native-chain.disabled" ]; then
+  exit 0
+fi
+
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG_DIR="${PROJECT_ROOT}/.claude/logs"
 STATE_DIR="${PROJECT_ROOT}/.claude/state"

@@ -19,8 +19,7 @@ STAGED=$(git diff --cached --name-only 2>/dev/null)
 MISSING=""
 
 # 1. plugins/hooks/scripts 변경 → guide.txt 필수
-INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)' || echo "0")
-if [ "$INFRA" -gt 0 ]; then
+if echo "$STAGED" | grep -qE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)'; then
   echo "$STAGED" | grep -q "^guide.txt" || MISSING="$MISSING\n  - guide.txt (§6·§12·§17)"
   echo "$STAGED" | grep -q "^CLAUDE.md" || MISSING="$MISSING\n  - CLAUDE.md (AUTO-STATS 라인)"
 fi
@@ -38,17 +37,12 @@ if [ -n "$NEW_HOOK" ]; then
 fi
 
 # 4. setup 모듈 변경 → BUILD.md
-SETUP_MOD=$(echo "$STAGED" | grep -cE '^setup/modules/' || echo "0")
-if [ "$SETUP_MOD" -gt 0 ]; then
+if echo "$STAGED" | grep -qE '^setup/modules/'; then
   echo "$STAGED" | grep -q "BUILD.md" || MISSING="$MISSING\n  - setup/BUILD.md (모듈 설명)"
 fi
 
-# 5. 레퍼런스 추가 → sync 실행 확인
-NEW_REF=$(echo "$STAGED" | grep -cE '^plugins/.*/references/' || echo "0")
-if [ "$NEW_REF" -gt 0 ]; then
-  # sync는 별도 체크 불필요 (commit 전 수동)
-  :
-fi
+# 5. 레퍼런스 추가 → sync 실행 확인 (sync 는 commit 전 수동)
+# (placeholder — no-op)
 
 if [ -n "$MISSING" ]; then
   cat <<MSG

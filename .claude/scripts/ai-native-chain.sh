@@ -11,6 +11,25 @@
 #   doc_auto — README/CHANGELOG 자동 갱신
 set -e
 
+# === KILL SWITCH ===
+# .claude/state/ai-native-chain.disabled 파일 있으면 즉시 종료 (leak 방지)
+PROJECT_ROOT_GUARD="${CLAUDE_PROJECT_DIR:-$PWD}"
+if [ -f "${PROJECT_ROOT_GUARD}/.claude/state/ai-native-chain.disabled" ]; then
+  exit 0
+fi
+
+# === RECURSION GUARD (env var) ===
+# 체인 안에서 호출된 sub-hook 이 이 var 확인해서 PostToolUse 재발동 방지
+export AI_NATIVE_CHAIN_ACTIVE=1
+# Depth limit (방어적 — 4단계 이상 = 재귀)
+export AI_NATIVE_CHAIN_DEPTH="${AI_NATIVE_CHAIN_DEPTH:-0}"
+AI_NATIVE_CHAIN_DEPTH=$((AI_NATIVE_CHAIN_DEPTH+1))
+if [ "$AI_NATIVE_CHAIN_DEPTH" -gt 4 ]; then
+  echo "[$(date +%F_%T)] GUARD: depth $AI_NATIVE_CHAIN_DEPTH exceeded — aborting" >> "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/logs/ai-native-chain.log" 2>/dev/null
+  exit 0
+fi
+export AI_NATIVE_CHAIN_DEPTH
+
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG_DIR="${PROJECT_ROOT}/.claude/logs"
 mkdir -p "$LOG_DIR"

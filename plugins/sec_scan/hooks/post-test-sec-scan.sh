@@ -3,6 +3,12 @@
 # AI-Native 파이프라인 2단계
 set -e
 
+# === KILL SWITCH (leak 방지) ===
+PROJECT_ROOT_GUARD="${CLAUDE_PROJECT_DIR:-$PWD}"
+if [ -f "${PROJECT_ROOT_GUARD}/.claude/state/ai-native-chain.disabled" ]; then
+  exit 0
+fi
+
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG_DIR="${PROJECT_ROOT}/.claude/logs"
 mkdir -p "$LOG_DIR"
