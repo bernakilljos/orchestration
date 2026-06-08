@@ -80,7 +80,7 @@
 |---|---|---|---|
 | 13 | Text-to-Video | 🟡 | `design_video` plugin 있음 (template/shorts/subtitle). Sora API 미통합 |
 | 14 | Code Agents | ✅ | Codex (×4 병렬), Cursor·Devin 직접 사용 안 함. 본인 (Claude Code) 자체가 코드 에이전트 |
-| 15 | Multimodal Native | ✅ | Claude Opus 4.7 (text·image·PDF) · Gemini 2.5 (멀티모달) 활용 |
+| 15 | Multimodal Native | ✅ | Claude Opus 4.8 (text·image·PDF) · Gemini 2.5 (멀티모달) 활용 |
 
 ## E. 피지컬 AI (4)
 
@@ -147,7 +147,7 @@
 | 42 | LoRA / QLoRA | ❌ | 학습 X |
 | 43 | Vector DB | 🟡 | `exec_offline-vector.md` skill (ChromaDB 로컬) 존재. 정식 사용 X |
 | 44 | HyDE | ✅ | `rag-hyde.md` skill |
-| 45 | Long Context (1M+) | ✅ | Claude Opus 4.7 1M ctx 활용 |
+| 45 | Long Context (1M+) | ✅ | Claude Opus 4.8 1M ctx (128k 출력) 활용 |
 | 46 | AI Governance | 🟡 | `validate-plugin-schema.py` · `sync-plugins.sh` · `.claude-plugin/plugin.json` = 일부 거버넌스 |
 | 47 | Bias Detection | ❌ | 미통합 |
 | 48 | Domain Foundation Models | 🟡 | 도메인 sLLM 미사용. API 호출만 |

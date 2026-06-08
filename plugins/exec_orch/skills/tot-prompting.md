@@ -60,7 +60,7 @@ route_dispatch.md § Step 2 의 `DESIGN`·`DECISION` 분류 시:
 
 ```bash
 if [ "$TASK_TYPE" = "DESIGN" ] || [ "$TASK_TYPE" = "DECISION" ]; then
-  # ToT 자동 활성 — Opus 4.7 Extended Thinking + 3 branch
+  # ToT 자동 활성 — Opus 4.8 Extended Thinking + 3 branch
   call_claude_opus_with_tot --branches 3 --depth 2 --task "$TASK"
 fi
 ```

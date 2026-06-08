@@ -1,18 +1,18 @@
 ---
 name: route_dispatch
 description: |
-  태스크를 Claude Opus 4.7 우선으로 자동 라우팅. SQLite 상태 기반으로 Codex/Gemini 대체 경로 선택. 24/7 quota/budget 관리.
+  태스크를 Claude Opus 4.8 우선으로 자동 라우팅. SQLite 상태 기반으로 Codex/Gemini 대체 경로 선택. 24/7 quota/budget 관리.
 ---
 
-# route_dispatch — AI 라우팅 · 판단 (v2 Opus 4.7 우선)
+# route_dispatch — AI 라우팅 · 판단 (v2 Opus 4.8 우선)
 
 > **분류:** `route_` (라우팅/판단 계열)
-> **변경점 (4.7 시대)**: Claude Opus 4.7 기본값 + extended thinking + prompt caching + SQLite quota
+> **변경점 (4.8 시대)**: Claude Opus 4.8 기본값 + extended thinking + prompt caching + SQLite quota
 > **참조 plugin:** `.claude-plugin/plugin.json` → `entry_points.task_route`
 
 ## 목적
 
-1M 컨텍스트 + extended thinking + prompt caching으로 Claude Opus 4.7이 단독 최적화 달성.
+1M 컨텍스트 + extended thinking + prompt caching으로 Claude Opus 4.8이 단독 최적화 달성.
 Codex/Gemini는 특정 조건(quota소진, 1M 초과)에서만 호출. 사용자에게 AI 선택 묻지 않음.
 
 ---
@@ -41,10 +41,10 @@ sqlite3 .claude/state/metrics.db "SELECT quota_exceeded FROM quota WHERE ai='cla
 
 | 신호 | 분류 | 라우팅 |
 |------|------|--------|
-| "설계", "아키텍처", "리팩토링", "왜", "어떻게" | **DESIGN** | Opus 4.7 + thinking |
-| 3개 이상 파일 걸친 작업 | **LARGE_SCOPE** | Opus 4.7 + 1M context |
-| "애매", "결정", "트레이드오프", "비교" | **DECISION** | Opus 4.7 + thinking |
-| 재시도 (retry_count > 0) | **RETRY** | Opus 4.7 재분석 |
+| "설계", "아키텍처", "리팩토링", "왜", "어떻게" | **DESIGN** | Opus 4.8 + thinking |
+| 3개 이상 파일 걸친 작업 | **LARGE_SCOPE** | Opus 4.8 + 1M context |
+| "애매", "결정", "트레이드오프", "비교" | **DECISION** | Opus 4.8 + thinking |
+| 재시도 (retry_count > 0) | **RETRY** | Opus 4.8 재분석 |
 | <200줄 구현, 버그 수정 | **SMALL** | Sonnet 4.6 또는 Haiku 4.5 |
 | 검증·리뷰·요약 | **VERIFY** | Haiku 4.5 (기본) |
 | 1M+ 문서 리서치 | **RESEARCH** | Gemini 2.0 Flash |
@@ -53,7 +53,7 @@ sqlite3 .claude/state/metrics.db "SELECT quota_exceeded FROM quota WHERE ai='cla
 
 ## Step 3: 라우팅 결정 (우선순위 순)
 
-```
+```text
 IF budget.breaker_tripped:
   WAIT (다음 주기까지)
 
@@ -67,28 +67,28 @@ IF LARGE_SCOPE AND token_estimate < 800k:
 IF token_estimate >= 800k (프로젝트 분할 필요):
   IF quota.codex_ok:
     task-instruction.md → codex-auto (병렬 4개)
-    THEN Opus 4.7 보완
+    THEN Opus 4.8 보완
     THEN Haiku 4.5 검증
   ELIF quota.gemini_ok:
     Gemini 2.0 Flash (1M+ 네이티브)
-    THEN Opus 4.7 최종 검증
+    THEN Opus 4.8 최종 검증
   ELSE:
     WAIT (quota backoff)
 
 IF VERIFY:
   IF quota.haiku_ok:
     CLAUDE_HAIKU_4_5 (검증 기본자)
-    IF fail: → Opus 4.7 재검증
+    IF fail: → Opus 4.8 재검증
   ELIF quota.gemini_ok AND token_estimate >= 500k:
     Gemini (초장문 검증)
   ELSE:
-    Opus 4.7 fallback
+    Opus 4.8 fallback
 
 IF RESEARCH (1M+ 리서치):
   IF quota.gemini_ok:
     Gemini 2.0 Flash (네이티브 1M)
   ELSE:
-    Opus 4.7 (800k 제한, 2회 분할)
+    Opus 4.8 (800k 제한, 2회 분할)
 
 IF SMALL:
   IF quota.sonnet_ok:
@@ -147,7 +147,7 @@ DEFAULT (ambiguous):
 ### Quota Backoff (지수 대기)
 
 한도 도달 시:
-```
+```text
 1차 재시도: 10분 대기
 2차: 20분
 3차: 40분
@@ -159,7 +159,7 @@ DEFAULT (ambiguous):
 ### Budget Breaker
 
 일일 비용 한도 도달 시:
-```
+```text
 budget.breaker_tripped = 1  → `.claude/state/budget.json`
 신규 태스크 시작 금지
 진행 중 태스크 마무리 허용
@@ -168,7 +168,7 @@ budget.breaker_tripped = 1  → `.claude/state/budget.json`
 
 ---
 
-## Step 7: 금지 사항 (4.7 시대 업데이트)
+## Step 7: 금지 사항 (4.8 시대 업데이트)
 
 1. **사용자에게 AI 묻지 않기** — 자동 결정
 2. **Thinking 낭비** — 단순 작업에 켜기 금지
@@ -185,11 +185,11 @@ budget.breaker_tripped = 1  → `.claude/state/budget.json`
 - `codex-auto.bat`, `gemini-auto.bat` 워커 시스템 유지
 - `task-instruction.md` 포맷 그대로
 - `.claude/tasks/` 구조 유지
-- **변경점 only**: 라우팅 "결정" 먼저 Opus 4.7로 기울임
+- **변경점 only**: 라우팅 "결정" 먼저 Opus 4.8로 기울임
 
 ### 원래 경로 대비 변경
 
-| 상황 | v1 (4.6 이전) | v2 (4.7+) |
+| 상황 | v1 (4.6 이전) | v2 (4.8+) |
 |------|-------------|----------|
 | SMALL | Claude (Sonnet) | Sonnet 또는 Haiku (Thinking 불필요) |
 | LARGE | Codex 4개 병렬 | Opus 1M context (Codex는 800k 초과 또는 Opus quota 소진 시만) |

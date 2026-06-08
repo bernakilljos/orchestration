@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-02): plugins 31 stable + 0 spec-only · rules 17 · hooks 28 · scripts 104
+> **현재 상태** (2026-06-05): plugins 31 stable + 0 spec-only · rules 17 · hooks 28 · scripts 112
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -39,15 +39,19 @@
 2. **First-Run** — `docs/CLAUDE_SETUP_GUIDE.md` 있으면 처리 후 삭제
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
 
-### 3.2 AI 역할 (규모·특성 기반, 4.7 우선)
+### 3.2 AI 역할 (규모·특성 기반, 4.8 우선 — 2026-05-28 Opus 4.8 출시)
 | 태스크 | AI | 방법 |
 |--------|-----|------|
-| 설계·복잡추론 | Claude Opus 4.7 | Extended Thinking (1M context) |
+| 설계·복잡추론 | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
+| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent 자동 orchestration, v2.1.154+) |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
 | 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
+| 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
+
+**Opus 4.8 가격** (2026-05-28부터): 표준 $5/$25 per MTok · Fast mode $10/$50 (2.5x 속도) — Fast mode 가격은 4.7 대비 인하.
 
 라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성·quota 매트릭스)
 프롬프트 강화 (12 기법): `plugins/exec_orch/skills/prompt-techniques.md` + template `plugins/exec_orch/codex/task-instruction-template.md` (Role·Negative·Context·Few-shot·CoT·Prompt-chain·Meta·Self-consistency·ToT·ReAct·Zero-shot-CoT·RAG)
@@ -107,7 +111,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | `.claude-plugin/` | plugin.json + schema + marketplace.json | ✅ |
 | `docs/architecture-patterns.md` | 설계 원칙 9가지 | ✅ |
 | `docs/caching-strategy.md` | Prompt caching TTL 전략 | ✅ |
-| `docs/routing-policy.md` | 4.7 라우팅 결정 트리 상세 | ✅ |
+| `docs/routing-policy.md` | 4.8 라우팅 결정 트리 상세 | ✅ |
 | `docs/metrics-guide.md` | Metrics DB 스키마·쿼리 | ✅ |
 | `docs/2026-04-19/로드맵.md` | Phase 1~3 스펙 (미래 26개) | ✅ |
 | `guide.txt` | 사람용 전체 가이드 (섹션 1~14) | ✅ |

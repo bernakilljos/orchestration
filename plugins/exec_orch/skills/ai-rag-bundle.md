@@ -59,7 +59,7 @@ def hyde_search(query, vector_db, llm):
     return final
 ```
 
-## Long Context — Claude Opus 4.7 (1M tokens)
+## Long Context — Claude Opus 4.8 (1M tokens, 128k output)
 
 ```python
 # 1년치 거래·접근·결재 로그를 단일 호출
@@ -72,7 +72,7 @@ prompt = f"""
 """
 # Claude Opus 1M ctx 한 번에 처리
 response = anthropic.messages.create(
-    model='claude-opus-4-7',
+    model='claude-opus-4-8',
     max_tokens=8000,
     messages=[{'role': 'user', 'content': prompt}]
 )

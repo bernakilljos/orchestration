@@ -26,10 +26,10 @@ python .claude/scripts/route.py --status
 ```
 
 Output:
-```
+```text
 Budget: $2.31 / $50.00 (4.6%) — OK
 Quota Status:
-  claude-opus-4-7      OK
+  claude-opus-4-8      OK
   claude-sonnet-4-6    OK
   claude-haiku-4-5     OK
   codex                OK
@@ -45,7 +45,7 @@ python .claude/scripts/route.py --task-type design --estimated-tokens 5000
 Output:
 ```json
 {
-  "ai": "claude-opus-4-7",
+  "ai": "claude-opus-4-8",
   "use_thinking": true,
   "thinking_budget": 8000,
   "use_caching": true,
@@ -64,19 +64,19 @@ Output:
 
 ## 2. Decision Tree
 
-```
+```text
 ┌─ Breaker Tripped?
 │  └─ YES → BREAKER (no new tasks)
 │  └─ NO ↓
 │
 ├─ Task Type?
 │  ├─ DESIGN / REFACTOR / AMBIGUOUS
-│  │  └─ Opus 4.7 + thinking(8000)
+│  │  └─ Opus 4.8 + thinking(8000)
 │  │     Fallback: Sonnet, Haiku, Gemini
 │  │
 │  ├─ IMPLEMENT
 │  │  ├─ <200 tokens → Sonnet 4.6
-│  │  ├─ 200-800k tokens → Opus 4.7
+│  │  ├─ 200-800k tokens → Opus 4.8
 │  │  └─ ≥800k tokens → Codex (parallel) or Gemini
 │  │
 │  ├─ VERIFY
@@ -122,7 +122,7 @@ python .claude/scripts/route.py --status
 ```
 
 If breaker is tripped, it will show:
-```
+```text
 Budget: $50.50 / $50.00 (101.0%) — TRIPPED
 ```
 
@@ -152,7 +152,7 @@ When an AI hits quota limits (rate_limit, quota_exceeded errors):
 ### Manual Clear
 
 ```bash
-python .claude/scripts/route.py --clear-quota claude-opus-4-7
+python .claude/scripts/route.py --clear-quota claude-opus-4-8
 ```
 
 ### Viewing Quota Status
@@ -242,8 +242,8 @@ python .claude/scripts/route.py --metrics --hours 24
 ```
 
 Output:
-```
-AI: claude-opus-4-7
+```text
+AI: claude-opus-4-8
   Calls: 42
   Success rate: 92.8%
   Input tokens: 2,150,000
@@ -253,15 +253,18 @@ AI: claude-opus-4-7
   Cache hits: 28
 ```
 
-### Pricing Reference (2026-04)
+### Pricing Reference (2026-06 — Opus 4.8 launch 기준)
 
-| Model | Input (1M) | Output (1M) | Cache Read | Cache Write |
+| Model | Input (1M) | Output (1M) | Cache Read (10%) | Cache Write 5m (+25%) |
 |-------|-----------|-----------|-----------|-----------|
-| Opus 4.7 | $15.00 | $75.00 | $1.50 | $18.75 |
+| Opus 4.8 | $5.00 | $25.00 | $0.50 | $6.25 |
+| Opus 4.8 Fast | $10.00 | $50.00 | $1.00 | $12.50 |
 | Sonnet 4.6 | $3.00 | $15.00 | $0.30 | $3.75 |
 | Haiku 4.5 | $0.80 | $4.00 | $0.08 | $1.00 |
 | Codex | $2.50 | $10.00 | — | — |
 | Gemini Flash | $0.075 | $0.30 | — | — |
+
+**Opus 4.8 비용 최적화**: prompt caching 최대 90% 절감 + batch processing 50% 추가 절감 가능.
 
 ---
 
@@ -272,7 +275,7 @@ In task frontmatter, you can optionally specify preferred AI:
 ```yaml
 ---
 title: My Task
-prefer_ai: claude-opus-4-7
+prefer_ai: claude-opus-4-8
 ignore_breaker: false
 ---
 ```
@@ -348,21 +351,21 @@ python .claude/scripts/route.py --reset-breaker
 ### Daily Limit Storage
 
 Stored in SQLite:
-```
+```text
 .claude/state/orca.db → budget table → daily_limit_usd
 ```
 
 ### Quota Flags
 
 Stored in SQLite:
-```
+```text
 .claude/state/orca.db → quota table → (ai, exceeded, expires_at)
 ```
 
 ### Worker State
 
 Stored in SQLite:
-```
+```text
 .claude/state/orca.db → workers table
 ```
 

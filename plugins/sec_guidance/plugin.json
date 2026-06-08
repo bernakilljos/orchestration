@@ -1,0 +1,46 @@
+{
+  "$schema": "../../.claude-plugin/plugin-schema.json",
+  "name": "sec_guidance",
+  "display": "Anthropic 공식 security-guidance 통합 — Write/Edit/MultiEdit pre-hook 25 위험 패턴 무료 검출",
+  "prefix": "sec_",
+  "version": "1.0",
+  "status": "stable",
+  "phase": 1,
+  "commands": "commands/",
+  "skills": "skills/",
+  "hooks": "hooks/",
+  "dependencies": {
+    "plugins": [
+      "exec_orch"
+    ],
+    "mcp": [],
+    "env": []
+  },
+  "entry_points": {
+    "default_command": "install",
+    "core_skills": [
+      "skill-sec-guidance"
+    ]
+  },
+  "metadata": {
+    "category": "보안/검사",
+    "tags": [
+      "security",
+      "vulnerability",
+      "anthropic-official"
+    ],
+    "author": "bernakilljos",
+    "created": "2026-06-08",
+    "updated": "2026-06-08",
+    "precedence": 5,
+    "token_estimate": 800,
+    "triggers": [
+      "보안",
+      "security",
+      "vulnerability",
+      "취약점",
+      "command injection",
+      "XSS"
+    ]
+  }
+}

@@ -63,6 +63,7 @@ declare -A RENAME_MAP=(
   ["mcp_social/commands/status.md"]="mcp_social-status.md"
   ["mcp_social/commands/auth.md"]="mcp_social-auth.md"
   ["mcp_queue/commands/install.md"]="mcp_queue-install.md"
+  ["sec_guidance/commands/install.md"]="sec_guidance-install.md"
   ["exec_remote/commands/setup.md"]="exec_remote-setup.md"
   ["exec_remote/commands/ssh.md"]="exec_remote-ssh.md"
   ["exec_remote/commands/deploy.md"]="exec_remote-deploy.md"

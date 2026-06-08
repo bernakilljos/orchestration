@@ -9,9 +9,18 @@
 
 ## 📋 커맨드 (예정)
 
-- `/yt-research` — 트렌드·키워드 리서치 (급상승·경쟁채널·검색량)
-- `/yt-upload` — YouTube Data API 업로드 (--dry-run 지원)
-- `/yt-analytics` — 수익·조회수·시청지속시간 리포트
+- `/yt-research` — 트렌드·키워드 리서치 (Shorts 트렌드 별도 조회 지원, 2026 first-class endpoint)
+- `/yt-upload` — YouTube Data API v3 업로드 (Shorts 자동 분류: 9:16 + ≤60s)
+- `/yt-analytics` — 수익·조회수·시청지속·**Shorts 전용 metric** (views·engagement·completion rate, 2026 신규)
+
+## 🆕 2026 변경점 (Data API v3, 2026-06-01 doc update)
+
+| 항목 | 변경 |
+|---|---|
+| Shorts API | first-class endpoint — long-form 과 분리 metric |
+| OAuth | 더 granular scope · explicit refresh 의무 (silent expiry = prod 실패 1순위) |
+| Quota | 10,000 units/day per Cloud project 유지, 증액 승인 강화 |
+| Shorts 분류 | 세로 + ≤60s 자동 인식, Videos.insert 동일 endpoint |
 
 ## 🔗 의존성
 

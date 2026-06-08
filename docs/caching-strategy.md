@@ -44,7 +44,7 @@
 
 **가정**: 24시간 자동 실행 × 100 태스크
 
-```
+```text
 Timeline (5분 TTL):
   0:00  Task 1 → Cache Write (1.25×) + Dynamic (1.0×) = 2.25×
   0:03  Task 2 → Cache Hit (0.1×) + Dynamic (1.0×) = 1.1×
@@ -112,7 +112,7 @@ cache_control_block(text, ttl="1h")  # 5분 대신 1시간
 
 ### 예시: 1회 호출 분석
 
-```
+```text
 1회 호출 구성:
   - System Prompt (cached): 500 토큰
   - CLAUDE.md (cached): 3,500 토큰
@@ -152,7 +152,7 @@ cache_control_block(text, ttl="1h")  # 5분 대신 1시간
 ### Phase 1 (지금)
 
 - **Claude 직접 호출 가능한 경우**만 적용:
-  - Opus 4.7 설계 세션 (future)
+  - Opus 4.8 설계 세션 (future)
   - Haiku 단순 검증 (future)
   - Sonnet 보충 구현 (future)
 
@@ -181,7 +181,7 @@ def create_haiku_request(task_id: str, task_desc: str):
     stats = estimate_cached_tokens([...])
     
     response = client.messages.create(
-        model="claude-opus-4-7",
+        model="claude-opus-4-8",
         max_tokens=1024,
         system=system,
         messages=[{"role": "user", "content": task_desc}]
@@ -278,7 +278,7 @@ Extended thinking 사용 시, `<thinking>` 블록은 **캐시 불가**. 시스�
 system = build_cached_system([...])  # 캐시됨
 
 response = client.messages.create(
-    model="claude-opus-4-7",
+    model="claude-opus-4-8",
     thinking={"type": "enabled", "budget_tokens": 5000},  # 캐시 안 됨
     system=system,  # 캐시됨
     messages=[...]
@@ -301,7 +301,7 @@ python examples/cached_claude_call.py
 ```
 
 출력:
-```
+```text
 [DEBUG] Cacheable tokens: 11500 / 12800
 [DEBUG] Cache stats: { "cache_write_cost": 3.75, ... }
 System blocks: 1 (cached) + 1 (dynamic)

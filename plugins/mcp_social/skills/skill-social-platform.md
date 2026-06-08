@@ -27,13 +27,18 @@ description: |
 | 댓글 관리 | YouTube Data API | 댓글 조회·답글·필터 |
 | 재생목록 | YouTube Data API | 생성·편집·순서 변경 |
 
-### Instagram (Phase 2)
+### Instagram (Phase 2) — Graph API v22.0 (2026 stable, quarterly versioning)
+> **중요**: Basic Display API 는 **2024-12 종료**. Professional (Business/Creator) account 필수.
+
 | 기능 | 도구 | 설명 |
 |---|---|---|
-| 피드 게시 | Instagram Graph API | 이미지·캐러셀·태그 |
-| 스토리/릴스 | Instagram Graph API | 24시간 스토리·릴스 |
-| 인사이트 | Instagram Insights API | 도달·참여·팔로워 분석 |
-| DM 자동화 | ManyChat / CreatorFlow | 키워드 트리거 자동 응답 |
+| 피드 게시 | Graph API v22 `/media` → `/media_publish` | 이미지·캐러셀·태그 (carousel 단일 post, 100 posts/24h 제한) |
+| Reels 게시 | Graph API v22 (`media_type=REELS`) | POST `/media` → poll `/{container-id}?fields=status_code=FINISHED` → POST `/media_publish`. 5~90초 + 9:16만 Reels 탭 표시 |
+| 스토리 | Graph API v22 (`media_type=STORIES`) | 24시간 스토리 |
+| 인사이트 (확장) | Graph API v22 Insights | **신규 metric**: reposts·saves·shares·aggregated views/likes/comments (cross-placement: Instagram + crossposted FB + boosted) |
+| Collaborative media | Graph API v22 | 사용자가 collaborator 로 추가/수락된 media 조회 endpoint |
+| Like/Unlike | Graph API v22 | Feed posts·Reels·comments·replies on behalf of user |
+| DM 자동화 | Graph API v22 + ManyChat / CreatorFlow | 키워드 트리거 자동 응답 |
 | 트렌드 수집 | instagrapi (비공식) | 디자인 트렌드 크롤링 |
 
 ### TikTok (Phase 2)

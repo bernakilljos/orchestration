@@ -12,10 +12,10 @@
 
 | # | 파일 | 이름 | 모델 | 역할 | 트리거 |
 |---|---|---|---|---|---|
-| 01 | `agent-01-team-lead.md` | **Team Lead** | Claude Opus 4.7 | 설계·승인·gate 통과 결정. 코드 직접 작성 X | 모든 파이프라인 시작 |
+| 01 | `agent-01-team-lead.md` | **Team Lead** | Claude Opus 4.8 | 설계·승인·gate 통과 결정. 코드 직접 작성 X | 모든 파이프라인 시작 |
 | 02 | `agent-02-implementer.md` | **Implementer** | Codex (×4) | task-instruction 범위 내 구현만 (Writer=1) | 500줄+ 구현 위임 |
 | 03 | `agent-03-reviewer.md` | **Reviewer** | Gemini Flash | 보안·품질·최신패턴 비교. 코드 수정 X (의견만) | post-impl 검증 |
-| 04 | `agent-04-architect.md` | **Architect** | Claude Opus 4.7 | 복잡 설계 — 대안 비교·구조 결정·DB 스키마 | 신규 기능·3+ 파일 영향·인증 관련 |
+| 04 | `agent-04-architect.md` | **Architect** | Claude Opus 4.8 | 복잡 설계 — 대안 비교·구조 결정·DB 스키마 | 신규 기능·3+ 파일 영향·인증 관련 |
 | 05 | `agent-05-monitor.md` | **Monitor** | Bash 스크립트 | PM2·Nginx·포트·디스크·메모리 헬스체크 | 배포 직후·이상 감지 시 rollback 트리거 |
 | 06 | `agent-06-designer.md` | **Designer** | Claude + MCP | UI 자산 생성 — Canva·DALL-E·Figma·Video | UI 신규·디자인 자산 요청 |
 
@@ -50,7 +50,7 @@ LLM-as-judge 로 결과물 0~10 점수화 → `.claude/state/evaluations.jsonl` 
 
 ## 4. 결정 가이드 — 어떤 걸 호출?
 
-```
+```text
 질문 → 카테고리?
 
 작업 위임 (구현/리뷰/배포)        → 메인 워커 (01~06) — exec_orch 가 자동

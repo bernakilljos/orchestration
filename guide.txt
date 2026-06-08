@@ -137,7 +137,7 @@
   │    AI    │              역할                 │
   ├──────────┼───────────────────────────────────┤
   │ Claude   │ 팀장: 설계, 판단, 승인, 보완      │
-  │ (Opus 4.7)│ + 문서/기획/디자인 (Gamma, Canva)  │
+  │ (Opus 4.8)│ + 문서/기획/디자인 (Gamma, Canva)  │
   ├──────────┼───────────────────────────────────┤
   │ Codex    │ 구현: 500줄+ 코드 1차 구현        │
   │          │ codex-a --auto로 실행              │
@@ -440,12 +440,16 @@
       - 멀티모달 (이미지·비디오) 검증
       - Haiku quota 소진 (자동 fallback)
 
-  [라우팅 정책 — Claude Opus 4.7 우선]
-    기본 라우터가 4.7 중심으로 재설계됨:
-      설계·리팩토링·애매한 태스크 → Opus 4.7 + Extended Thinking (1M context)
+  [라우팅 정책 — Claude Opus 4.8 우선 (2026-05-28 출시)]
+    기본 라우터가 4.8 중심으로 재설계됨:
+      설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)
+      초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows, v2.1.154+)
       단순 구현 < 200줄 → Sonnet 4.6 (저비용)
       대량 구현 > 800k 토큰 → Codex (병렬 4개)
       검증 → Haiku 4.5 (기본), 500k+ 초장문/멀티모달만 Gemini Flash
+      보안 패턴 검사 → security-guidance plugin (Anthropic 공식, 모델 호출 0회)
+
+    Fast mode 가격 (2026-05-28): Opus 4.8 $10/$50 per MTok (2.5x 속도, 4.7 대비 인하)
 
     자동 fallback:
       Claude quota 소진 → Codex

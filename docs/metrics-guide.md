@@ -10,13 +10,13 @@
 
 ### 테이블 스키마
 
-```
+```text
 metrics (id, task_id, ai, model_id, tokens_in, tokens_out, cost_usd, 
          latency_ms, success, cache_hit, retry, recorded_at, error_class)
 ```
 
 - **ai**: `claude-opus`, `claude-haiku`, `codex`, `gemini`
-- **model_id**: 정확한 모델 이름 (`claude-opus-4-7`, `gemini-2-0-flash` 등)
+- **model_id**: 정확한 모델 이름 (`claude-opus-4-8`, `gemini-2-0-flash` 등)
 - **tokens_in/out**: 입출력 토큰 수 (캐시 토큰 별도)
 - **cost_usd**: 이 호출의 USD 비용
 - **latency_ms**: 응답 시간 (밀리초)
@@ -47,7 +47,7 @@ from record_call import record_api_call
 
 cost = record_api_call(
     ai="claude-opus",
-    model="claude-opus-4-7",
+    model="claude-opus-4-8",
     tokens_in=1500,
     tokens_out=750,
     latency_ms=2340,
@@ -63,7 +63,7 @@ cost = record_api_call(
 # Prompt cache hit 토큰 추적
 record_api_call(
     ai="claude-opus",
-    model="claude-opus-4-7",
+    model="claude-opus-4-8",
     tokens_in=5000,
     tokens_out=200,
     cache_hit_tokens=4000,  # 캐시에서 로드
@@ -101,7 +101,7 @@ python .claude/scripts/metrics-report.py --ai claude-opus
 
 **출력 예시:**
 
-```
+```bash
 ─────────────────────────────────────────────────────────────
 AI             calls  success%   tokens (in/out)   cost      avg_latency
 ─────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ Errors last 24h:
 
 ### 3.2 대시보드 웹 인터페이스
 
-```
+```text
 http://localhost:8787
 ```
 

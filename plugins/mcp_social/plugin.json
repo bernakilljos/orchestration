@@ -1,11 +1,11 @@
 {
   "$schema": "../../.claude-plugin/plugin-schema.json",
   "name": "mcp_social",
-  "display": "소셜 플랫폼 MCP — YouTube·Instagram·TikTok·X·Naver·Tistory (Phase 1: YouTube 한정)",
+  "display": "소셜 플랫폼 MCP — YouTube·Instagram(v22)·TikTok·X·Naver·Tistory (Phase 2: YouTube + Instagram)",
   "prefix": "mcp_",
-  "version": "1.0",
+  "version": "2.0",
   "status": "stable",
-  "phase": 1,
+  "phase": 2,
   "commands": "commands/",
   "skills": "skills/",
   "dependencies": {
@@ -26,7 +26,7 @@
     ],
     "author": "bernakilljos",
     "created": "2026-04-19",
-    "updated": "2026-05-20",
+    "updated": "2026-06-08",
     "precedence": 10,
     "token_estimate": 600,
     "triggers": [

@@ -32,7 +32,7 @@ description: |
 
 | 워커 | 기본 적용 기법 | 비고 |
 |---|---|---|
-| **Claude Opus 4.7** | 1·3·5·9 (Role + Context + CoT + ToT) | 설계·복잡 추론. Extended Thinking 1M context. |
+| **Claude Opus 4.8** | 1·3·5·9 (Role + Context + CoT + ToT) | 설계·복잡 추론. Extended Thinking 1M context + `/effort xhigh` + ultracode (Dynamic Workflows). |
 | **Claude Sonnet 4.6** | 1·3·11 (Role + Context + Zero-shot CoT) | <200줄 단순 구현. 비용 효율. |
 | **Codex (×4 병렬)** | 1·2·3·4·10 (Role + Negative + Context + Few-shot + ReAct) | 500줄+ 코드. task-instruction.md 의무. |
 | **Haiku 4.5 (×2 검증)** | 1·3·4·11 (Role + Context + Few-shot + Zero-shot CoT) | 검증·점수화. Prompt caching 90% 절감. |

@@ -60,9 +60,10 @@ description: |
 ### 함정 5. 새 슬라이드 어디에 끼울지 모름
 **규칙**: `glob('slide-*.html')` + `sorted()` = 알파벳 순.
 **검증**:
-```
+```text
 "slide-04.html" < "slide-04b.html" < "slide-04c.html" < "slide-05.html"   ✓
 ```
+
 **활용**:
 - slide-04 다음에 = `slide-04a.html`
 - slide-04a 다음에 = `slide-04b.html`
@@ -87,7 +88,7 @@ python .claude/scripts/update-ppt-page-numbers.py
 
 ### 함정 8. Cover / Learn More 페이지번호 표기 다름
 **Cover**: `<div class="value">27</div>` (SLIDES 메트릭) — NN/총수 형식 X.
-**Learn More**: `<span>Opus 4.7 Baseline · 27 slides</span>` — 별도 표기.
+**Learn More**: `<span>Opus 4.8 Baseline · 27 slides</span>` — 별도 표기.
 **해결**: update-ppt-page-numbers.py 에 두 패턴도 처리 룰 추가.
 
 ---
@@ -707,7 +708,7 @@ PPT 외에 **README · 블로그 · 깃 리포 표지** 용 단일 PNG 이미지
 
 ### 폴더 구조
 
-```
+```text
 docs/screens/
 ├── arch/         외부 참고 자료 (Brij Pandey 등)
 ├── func/         외부 참고 자료

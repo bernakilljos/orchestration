@@ -22,7 +22,7 @@ Claude Code 세션당 토큰 사용량을 영구 로깅해서:
 `.claude/state/token-usage.jsonl` — JSON Lines 형식 (append-only)
 
 ```jsonl
-{"ts":"2026-04-19T15:30Z","session":"abc123","model":"claude-opus-4-7","input":45000,"output":12000,"cache_read":20000,"cache_write":5000,"est_cost_usd":0.87}
+{"ts":"2026-04-19T15:30Z","session":"abc123","model":"claude-opus-4-8","input":45000,"output":12000,"cache_read":20000,"cache_write":5000,"est_cost_usd":0.87}
 {"ts":"2026-04-19T16:45Z","session":"def456","model":"claude-sonnet-4-6","input":30000,"output":8000,"cache_read":10000,"cache_write":0,"est_cost_usd":0.12}
 ```
 
@@ -41,17 +41,18 @@ Claude Code 내장 `/cost` 또는 `/usage` 출력을 SessionEnd 훅이 파싱.
 ### 옵션 C: `exec_orch` 훅으로 tool use 단위 추적
 각 tool_use 이벤트에서 추정치 append.
 
-## 단가 테이블 (2026-04 기준)
+## 단가 테이블 (2026-06 기준 — Opus 4.8 launch)
 
 | 모델 | Input ($/M) | Output ($/M) | Cache read | Cache write |
 |------|-------------|--------------|------------|-------------|
-| claude-opus-4-7 | 15 | 75 | 1.5 | 18.75 |
+| claude-opus-4-8 | 5 | 25 | 0.5 | 6.25 |
+| claude-opus-4-8-fast | 10 | 50 | 1.0 | 12.5 |
 | claude-sonnet-4-6 | 3 | 15 | 0.3 | 3.75 |
 | claude-haiku-4-5 | 1 | 5 | 0.1 | 1.25 |
 
 ## 통계 커맨드 (예정)
 
-```
+```text
 /token-stats            이번 달 총 비용 + 모델별 분포
 /token-stats --today    오늘 세션
 /token-stats --top      비용 상위 5개 세션
