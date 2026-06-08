@@ -136,10 +136,10 @@ body{{width:850px;height:1100px;background:#f5efe6;
     <div class="card" style="width:185px">
       <h3>{I['star']} \ud575\uc2ec \ud0a4\uc6cc\ub4dc</h3>
       <div class="tags">
-        <span class="tag">Multi-AI</span><span class="tag">Python</span><span class="tag">Zero-touch</span>
-        <span class="tag">\uc790\ub3d9\ud654</span><span class="tag">MCP</span><span class="tag">\ud480\uc2a4\ud0dd</span>
-        <span class="tag">\uba58\ud1a0\ub9c1</span><span class="tag">RAG</span><span class="tag">\uc2dc\uc2a4\ud15c\uc124\uacc4</span>
-        <span class="tag">\uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</span><span class="tag">\ud488\uc9c8\uac80\uc99d</span>
+        <span class="tag">Opus 4.8</span><span class="tag">ultracode</span><span class="tag">Multi-AI</span>
+        <span class="tag">Python</span><span class="tag">Zero-touch</span><span class="tag">\uc790\ub3d9\ud654</span>
+        <span class="tag">MCP</span><span class="tag">\ud480\uc2a4\ud0dd</span><span class="tag">RAG</span>
+        <span class="tag">\uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</span><span class="tag">\ud488\uc9c8\uac80\uc99d</span><span class="tag">security-guidance</span>
       </div>
     </div>
   </div>
@@ -262,11 +262,11 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <ul>
         <li>&middot; \uc138\uacc4 \ucd5c\ucd08 \uba40\ud2f0AI \ub3d9\uc2dc \uc624\ucf00\uc2a4\ud2b8\ub808\uc774\uc158</li>
         <li>&middot; 23,203\uc904 \uacf5\ud1b5 \ub3c4\uad6c \ucf54\ub4dc (Python 80%)</li>
-        <li>&middot; 92\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 (Zero-touch)</li>
+        <li>&middot; 112\uac1c \uc790\ub3d9\ud654 \uc2a4\ud06c\ub9bd\ud2b8 (Zero-touch)</li>
         <li>&middot; 28\uac1c \ud6c5 (Pre/Post ToolUse \u00b7 SessionStart)</li>
         <li>&middot; SQLite \uae30\ubc18 \ud1b5\ud569 \uc0c1\ud0dc (orca.db)</li>
-        <li>&middot; 11\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c (Hook \ucc28\ub2e8)</li>
-        <li>&middot; 31 stable \ud50c\ub7ec\uadf8\uc778 + 17 spec-only</li>
+        <li>&middot; 17\uac1c \ud488\uc9c8 \uaddc\uce59 \uc790\ub3d9 \uac15\uc81c (Hook \ucc28\ub2e8)</li>
+        <li>&middot; 32 stable \ud50c\ub7ec\uadf8\uc778 (sec_guidance \ud3ec\ud568)</li>
         <li>&middot; 24/7 watchdog + \ube44\uc6a9\u00b7\ucffc\ud130 \uc790\ub3d9 fallback</li>
         <li>&middot; 5\ub2e8\uacc4 \uc790\uac00\uc810\uac80 (\uc804\uc218\u00b7\ubd84\uc11d\u00b7\uc2e4\ud589\u00b7\ud655\uc778\u00b7\ubcf4\uace0)</li>
       </ul>
@@ -287,11 +287,12 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <h3>{I['gear']} \uae30\uc220 \uc544\ud0a4\ud14d\ucc98</h3>
       <ul>
         <li>&middot; Claude Opus 4.8 (\uc124\uacc4\u00b7\ubcf5\uc7a1\ucd94\ub860\u00b71M ctx)</li>
+        <li>&middot; <b>ultracode</b> (Dynamic Workflows, \uc218\uc2ed subagent)</li>
         <li>&middot; Claude Sonnet 4.6 (\ub2e8\uc21c\uad6c\ud604 200\uc904-)</li>
         <li>&middot; Codex \u00d74 \ubcd1\ub82c (\ucf54\ub4dc 500\uc904+)</li>
         <li>&middot; Haiku 4.5 \u00d72 (\uac80\uc99d 90% \uc808\uac10)</li>
         <li>&middot; Gemini Flash (500k+ \ucd08\uc7a5\ubb38)</li>
-        <li>&middot; \uc790\ub3d9 \ub77c\uc6b0\ud305 + budget\u00b7quota \uad00\ub9ac</li>
+        <li>&middot; <b>security-guidance</b> pre-hook (\ubcf4\uc548 0\ube44\uc6a9)</li>
         <li>&middot; SQLite + watchdog 24/7 \ubb34\uc911\ub2e8</li>
         <li>&middot; HITL approval gate (\uc704\ud5d8 \uc2b9\uc778)</li>
       </ul>
@@ -310,25 +311,25 @@ body{{width:850px;height:1100px;background:#f5efe6;
       <h3>{I['compass']} AI 라우팅 정책</h3>
       <ul>
         <li>{I['gear']} 복잡추론·1M ctx → Claude Opus 4.8</li>
+        <li>{I['fire']} 초난도 다각검증 → /effort ultracode</li>
         <li>{I['code']} 코드 500줄+ → Codex ×4 병렬</li>
         <li>{I['check']} 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
         <li>{I['water']} 초장문 500k+ → Gemini Flash</li>
-        <li>{I['shield']} 예산 80% → 자동 fallback</li>
+        <li>{I['shield']} 보안 검사 → security-guidance (0비용)</li>
         <li>{I['target']} Quota 초과 → 10m→20m→2h backoff</li>
-        <li>{I['gear']} Prompt caching → 비용 90% 절감</li>
         <li>{I['star']} 단가·특성·quota 3축 최적화</li>
       </ul>
     </div>
     <div class="card">
       <h3>{I['fire']} 최근 학습 영역</h3>
       <ul>
+        <li>&middot; Dynamic Workflows · ultracode (Week 22)</li>
         <li>&middot; Agentic AI · MCP · Computer-Use</li>
+        <li>&middot; security-guidance · 보안 pre-hook</li>
+        <li>&middot; Instagram Graph v22 · YouTube Shorts API</li>
         <li>&middot; World Models · VLA (피지컬 AI)</li>
         <li>&middot; Self-Critique · Reflexion 루프</li>
-        <li>&middot; Causal AI · DoWhy · 인과그래프</li>
-        <li>&middot; Affective Computing · 감정 인식</li>
-        <li>&middot; Quantum ML · IBM Quantum 가입</li>
-        <li>&middot; Mechanistic Interpretability</li>
+        <li>&middot; Causal AI · Affective Computing · Quantum ML</li>
       </ul>
     </div>
     <div class="card">

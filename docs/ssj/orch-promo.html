@@ -91,10 +91,10 @@ body{width:850px;height:1100px;background:#f5efe6;
     <div class="card" style="width:185px">
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 핵심 키워드</h3>
       <div class="tags">
-        <span class="tag">Multi-AI</span><span class="tag">Python</span><span class="tag">Zero-touch</span>
-        <span class="tag">자동화</span><span class="tag">MCP</span><span class="tag">풀스택</span>
-        <span class="tag">멘토링</span><span class="tag">RAG</span><span class="tag">시스템설계</span>
-        <span class="tag">오케스트레이션</span><span class="tag">품질검증</span>
+        <span class="tag">Opus 4.8</span><span class="tag">ultracode</span><span class="tag">Multi-AI</span>
+        <span class="tag">Python</span><span class="tag">Zero-touch</span><span class="tag">자동화</span>
+        <span class="tag">MCP</span><span class="tag">풀스택</span><span class="tag">RAG</span>
+        <span class="tag">오케스트레이션</span><span class="tag">품질검증</span><span class="tag">security-guidance</span>
       </div>
     </div>
   </div>
@@ -217,11 +217,11 @@ body{width:850px;height:1100px;background:#f5efe6;
       <ul>
         <li>&middot; 세계 최초 멀티AI 동시 오케스트레이션</li>
         <li>&middot; 23,203줄 공통 도구 코드 (Python 80%)</li>
-        <li>&middot; 92개 자동화 스크립트 (Zero-touch)</li>
+        <li>&middot; 112개 자동화 스크립트 (Zero-touch)</li>
         <li>&middot; 28개 훅 (Pre/Post ToolUse · SessionStart)</li>
         <li>&middot; SQLite 기반 통합 상태 (orca.db)</li>
-        <li>&middot; 11개 품질 규칙 자동 강제 (Hook 차단)</li>
-        <li>&middot; 31 stable 플러그인 + 17 spec-only</li>
+        <li>&middot; 17개 품질 규칙 자동 강제 (Hook 차단)</li>
+        <li>&middot; 32 stable 플러그인 (sec_guidance 포함)</li>
         <li>&middot; 24/7 watchdog + 비용·쿼터 자동 fallback</li>
         <li>&middot; 5단계 자가점검 (전수·분석·실행·확인·보고)</li>
       </ul>
@@ -242,11 +242,12 @@ body{width:850px;height:1100px;background:#f5efe6;
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 기술 아키텍처</h3>
       <ul>
         <li>&middot; Claude Opus 4.8 (설계·복잡추론·1M ctx)</li>
+        <li>&middot; <b>ultracode</b> (Dynamic Workflows, 수십 subagent)</li>
         <li>&middot; Claude Sonnet 4.6 (단순구현 200줄-)</li>
         <li>&middot; Codex ×4 병렬 (코드 500줄+)</li>
         <li>&middot; Haiku 4.5 ×2 (검증 90% 절감)</li>
         <li>&middot; Gemini Flash (500k+ 초장문)</li>
-        <li>&middot; 자동 라우팅 + budget·quota 관리</li>
+        <li>&middot; <b>security-guidance</b> pre-hook (보안 0비용)</li>
         <li>&middot; SQLite + watchdog 24/7 무중단</li>
         <li>&middot; HITL approval gate (위험 승인)</li>
       </ul>
@@ -265,25 +266,25 @@ body{width:850px;height:1100px;background:#f5efe6;
       <h3><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c4915a" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36z" fill="rgba(196,145,90,.2)"/></svg> AI 라우팅 정책</h3>
       <ul>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 복잡추론·1M ctx → Claude Opus 4.8</li>
+        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#e07a2f" stroke="none"><path d="M12 23c-4 0-7-3-7-7 0-3 2-5 4-7 0 2 1 3 2 3 0-4 3-8 5-10 0 3 1 5 2 6 2 2 3 4 3 6 0 5-4 9-9 9z"/></svg> 초난도 다각검증 → /effort ultracode</li>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#6b7b8e" stroke-width="1.5"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> 코드 500줄+ → Codex ×4 병렬</li>
         <li><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6b8e5a" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 검증 기본 → Haiku 4.5 ×2 (90% 절감)</li>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#5a9ec4" stroke="none"><path d="M12 2C8 8 5 12 5 16a7 7 0 0 0 14 0c0-4-3-8-7-14z"/></svg> 초장문 500k+ → Gemini Flash</li>
-        <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 예산 80% → 자동 fallback</li>
+        <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6b8e5a" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 보안 검사 → security-guidance (0비용)</li>
         <li><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e07a2f" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="#e07a2f"/></svg> Quota 초과 → 10m→20m→2h backoff</li>
-        <li><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#8b7355" stroke-width="1.5"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Prompt caching → 비용 90% 절감</li>
         <li><svg viewBox="0 0 24 24" width="15" height="15" fill="#e8c36a" stroke="none"><path d="M12 2l3 6.5 7 1-5 5 1.2 7L12 18l-6.2 3.5L7 14.5l-5-5 7-1z"/></svg> 단가·특성·quota 3축 최적화</li>
       </ul>
     </div>
     <div class="card">
       <h3><svg viewBox="0 0 24 24" width="15" height="15" fill="#e07a2f" stroke="none"><path d="M12 23c-4 0-7-3-7-7 0-3 2-5 4-7 0 2 1 3 2 3 0-4 3-8 5-10 0 3 1 5 2 6 2 2 3 4 3 6 0 5-4 9-9 9z"/></svg> 최근 학습 영역</h3>
       <ul>
+        <li>&middot; Dynamic Workflows · ultracode (Week 22)</li>
         <li>&middot; Agentic AI · MCP · Computer-Use</li>
+        <li>&middot; security-guidance · 보안 pre-hook</li>
+        <li>&middot; Instagram Graph v22 · YouTube Shorts API</li>
         <li>&middot; World Models · VLA (피지컬 AI)</li>
         <li>&middot; Self-Critique · Reflexion 루프</li>
-        <li>&middot; Causal AI · DoWhy · 인과그래프</li>
-        <li>&middot; Affective Computing · 감정 인식</li>
-        <li>&middot; Quantum ML · IBM Quantum 가입</li>
-        <li>&middot; Mechanistic Interpretability</li>
+        <li>&middot; Causal AI · Affective Computing · Quantum ML</li>
       </ul>
     </div>
     <div class="card">
