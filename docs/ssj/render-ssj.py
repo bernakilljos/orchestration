@@ -64,11 +64,11 @@ COMMON_CSS = """
   --pad-btm:3px 4px;
   --radius-card:5px;
   --radius-tag:8px;
-  --font-h3:12px;
-  --font-body-size:9px;
-  --font-small:8px;
-  --font-tag:8.5px;
-  --line-height:1.4;
+  --font-h3:14px;
+  --font-body-size:10.5px;
+  --font-small:10px;
+  --font-tag:10px;
+  --line-height:1.45;
   --shadow-card:1px 2px 6px rgba(0,0,0,.05)
 }
 /* === BASE === */
@@ -96,7 +96,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
   radial-gradient(circle at 50% 50%,rgba(180,160,130,.08) 0%,transparent 70%);
   padding:3px 4px;display:flex;flex-direction:column;justify-content:flex-start;gap:1px;overflow:hidden}}
 .header{{display:flex;justify-content:space-between;align-items:flex-start;flex-shrink:0}}
-.header-left h1{{font-family:'Gaegu',cursive;font-size:26px;font-weight:700;color:#2c2418;line-height:1.22}}
+.header-left h1{{font-family:'Gaegu',cursive;font-size:32px;font-weight:700;color:#2c2418;line-height:1.2}}
 .header-left .sub{{font-size:11px;color:#7a6b5a;margin-top:3px;display:flex;align-items:center;gap:4px}}
 .header-right{{display:flex;gap:6px;max-width:360px}}
 .mid{{display:grid;grid-template-columns:230px 1fr 230px;gap:1px;flex:1 1 auto;margin:1px 0;min-height:0}}
@@ -105,9 +105,9 @@ body{{width:850px;height:1100px;background:#efe7d6;
 .mid-left .card ul,.mid-right .card ul,.mid-left .card .tags,.mid-right .card .tags{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-around}}
 .mid-left .card .tags,.mid-right .card .tags{{flex-direction:row;flex-wrap:wrap;align-content:space-around}}
 .center{{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:5px;padding:3px 0;min-height:0}}
-.photo{{width:100%;max-width:300px;height:180px;border-radius:10px;object-fit:cover;border:2.5px solid #c4b49a;flex-shrink:0}}
+.photo{{width:100%;max-width:340px;height:260px;border-radius:10px;object-fit:cover;border:3px solid #c4b49a;flex-shrink:0;box-shadow:2px 4px 12px rgba(0,0,0,.12)}}
 .name-area{{text-align:center;flex-shrink:0}}
-.name-area .nm{{font-family:'Gaegu',cursive;font-size:22px;font-weight:700;color:#2c2418}}
+.name-area .nm{{font-family:'Gaegu',cursive;font-size:28px;font-weight:700;color:#2c2418}}
 .name-area .inf{{font-size:9px;color:#8a7a68;margin-top:1px}}
 .stats{{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;flex-shrink:0}}
 .stat{{background:rgba(252,244,228,.55);border:1.2px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
@@ -122,7 +122,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
 <div class="header">
   <div class="header-left">
-    <h1>혼자 다 하지 마,<br>AI 네 명이 한 팀이 되어<br>당신 옆에 있다</h1>
+    <h1>한 마디면 만사 이루어진다<br>주제는 던져 두고,<br>결과는 받아라</h1>
     <div class="sub">{I['cpu']} orchestration_v1 — Claude + Codex + Gemini 멀티AI 킷</div>
   </div>
   <div class="header-right">
@@ -456,14 +456,14 @@ body{{width:850px;height:1100px;background:#efe7d6;
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['plant']} 사용하면 일어나는 일</h4>
+    <h4>{I['bulb']} 한 마디 설명</h4>
     <ul>
-      <li>&middot; 야근이 줄어 든다</li>
-      <li>&middot; 보고서 두려움이 사라진다</li>
-      <li>&middot; 진짜 중요한 일에 집중한다</li>
-      <li>&middot; 잠을 더 잘 수 있다</li>
-      <li>&middot; 자료 만들기 스트레스 0</li>
-      <li>&middot; 같은 일 두 번 안 한다</li>
+      <li>&middot; AI 네 명이 한 팀</li>
+      <li>&middot; 주제만 던져도 결과가 온다</li>
+      <li>&middot; 사용자 액션 0 (Zero-touch)</li>
+      <li>&middot; 무료·오픈소스·24/7</li>
+      <li>&middot; 음성·텍스트·이미지 모두 OK</li>
+      <li>&middot; 한 도구로 모든 산출물</li>
     </ul>
   </div>
 </div>
