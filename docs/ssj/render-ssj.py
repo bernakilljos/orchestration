@@ -111,7 +111,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
 .name-area .inf{{font-size:9px;color:#8a7a68;margin-top:1px}}
 .stats{{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:100%;flex-shrink:0}}
 .stat{{background:rgba(252,244,228,.55);border:1.2px solid #d4c4a8;border-radius:5px;padding:4px;text-align:center}}
-.stat .n{{font-family:'Gaegu',cursive;font-size:22px;font-weight:700;color:#8b4513;line-height:1}}
+.stat .n{{font-family:'Gaegu',cursive;font-size:18px;font-weight:700;color:#8b4513;line-height:1;display:flex;align-items:center;justify-content:center;height:22px}}
 .stat .l{{font-size:8px;color:#7a6b5a;line-height:1.3;margin-top:2px}}
 .bottom{{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;flex-shrink:0}}
 .btm-card{{background:rgba(252,244,228,.4);border:1.2px solid #d4c4a8;border-radius:5px;padding:3px 5px;display:flex;flex-direction:column;overflow:hidden}}
@@ -127,11 +127,11 @@ body{{width:850px;height:1100px;background:#efe7d6;
   </div>
   <div class="header-right">
     <div class="card" style="width:160px">
-      <h3>{I['clock']} 시간 절감</h3>
+      <h3>{I['cpu']} 어떤 입력이든</h3>
       <ul>
-        <li>&middot; PPT 30장 → 1분</li>
-        <li>&middot; 회의 녹음 → 30초</li>
-        <li>&middot; 영상 1시간 → 쇼츠 5개</li>
+        <li>&middot; 음성 · 텍스트 · 이미지</li>
+        <li>&middot; PDF · 영상 · 폴더 통째</li>
+        <li>&middot; YT 링크 · csv · 한 줄 명령</li>
       </ul>
     </div>
     <div class="card" style="width:185px">
@@ -151,7 +151,7 @@ body{{width:850px;height:1100px;background:#efe7d6;
     <div class="card">
       <h3>{I['star']} PPT 자동 생성 <span class="auto-badge">자동</span></h3>
       <ul>
-        <li>&middot; 주제 던지면 30 슬라이드 (1분)</li>
+        <li>&middot; 주제 던지면 알아서 슬라이드</li>
         <li>&middot; HTML/CSS → Playwright → pptx</li>
         <li>&middot; 잘림 방지 OCR 점검</li>
         <li>&middot; 다이어그램·차트 자동</li>
@@ -237,16 +237,16 @@ body{{width:850px;height:1100px;background:#efe7d6;
       <div class="inf">음성·텍스트·이미지·PDF 어떤 입력도 OK</div>
     </div>
     <div class="stats">
-      <div class="stat"><div class="n">8h→1분</div><div class="l">PPT 30장<br>자동 생성</div></div>
-      <div class="stat"><div class="n">2h→30초</div><div class="l">회의 녹음<br>→ 회의록</div></div>
-      <div class="stat"><div class="n">1h→1분</div><div class="l">영상에서<br>쇼츠 5개</div></div>
+      <div class="stat"><div class="n">{I['cpu']}</div><div class="l"><b>입력</b><br>음성·텍스트<br>이미지·PDF</div></div>
+      <div class="stat"><div class="n">{I['gear']}</div><div class="l"><b>처리</b><br>Claude·Codex<br>Haiku·Gemini</div></div>
+      <div class="stat"><div class="n">{I['star']}</div><div class="l"><b>출력</b><br>모든 산출물<br>한 번에</div></div>
     </div>
     <div class="card" style="padding:5px 7px;margin-top:2px">
       <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['rocket']} 어떻게 쓰나</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
-        · <b>1. 던지기</b> — "주제 X 로 PPT 30장 만들어줘"<br>
-        · <b>2. AI 처리</b> — Claude 설계 → Codex 구현 → Haiku 점검<br>
-        · <b>3. 받기</b> — pptx·docx·mp4·jpg 산출물 즉시<br>
+        · <b>1. 던지기</b> — "주제 X 로 PPT 만들어줘"<br>
+        · <b>2. AI 처리</b> — Claude → Codex → Haiku 자동 분배<br>
+        · <b>3. 받기</b> — pptx·docx·mp4·jpg 산출물<br>
         · <b>4. 자가 점검</b> — 잘림·여백·오타 자동 잡음<br>
         · <b>5. 다듬어진 결과</b> — 사용자는 그냥 받기만
       </div>
@@ -284,8 +284,8 @@ body{{width:850px;height:1100px;background:#efe7d6;
       <h3 style="font-size:10px;border:none;padding:0;margin-bottom:3px">{I['bulb']} 실제 사용 예</h3>
       <div style="font-size:9px;color:#5a4f42;line-height:1.5">
         · "회의 녹음 mp3 보내" → 회의록·요약·할 일<br>
-        · "1시간 영상" → 쇼츠 5개 + 자막 + 썸네일<br>
-        · "RFP PDF 보내" → 제안서 PPT 30장<br>
+        · "이 영상" → 쇼츠 + 자막 + 썸네일<br>
+        · "RFP PDF 보내" → 제안서 PPT<br>
         · "이 사진 흐려" → 4K 초해상도 복원<br>
         · "월간 매출 csv" → Excel·차트·분석 보고
       </div>
