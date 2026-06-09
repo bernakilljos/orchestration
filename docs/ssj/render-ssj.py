@@ -122,25 +122,26 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
 <div class="header">
   <div class="header-left">
-    <h1>주제만 던져,<br>PPT·문서·영상·개발·디자인<br>한 번에 자동으로</h1>
+    <h1>혼자 다 하지 마,<br>AI 네 명이 한 팀이 되어<br>당신 옆에 있다</h1>
     <div class="sub">{I['cpu']} orchestration_v1 — Claude + Codex + Gemini 멀티AI 킷</div>
   </div>
   <div class="header-right">
     <div class="card" style="width:160px">
-      <h3>{I['cpu']} 어떤 입력이든</h3>
+      <h3>{I['lamp']} 당신의 한 마디</h3>
       <ul>
-        <li>&middot; 음성 · 텍스트 · 이미지</li>
-        <li>&middot; PDF · 영상 · 폴더 통째</li>
-        <li>&middot; YT 링크 · csv · 한 줄 명령</li>
+        <li>&middot; 음성으로 부탁하면 — 받는다</li>
+        <li>&middot; 한 줄 텍스트로도 — 답이 온다</li>
+        <li>&middot; 이미지·PDF 던지면 — 풀린다</li>
+        <li>&middot; 폴더 통째로 줘도 — 정리된다</li>
       </ul>
     </div>
     <div class="card" style="width:185px">
-      <h3>{I['star']} 만들 수 있는 것</h3>
+      <h3>{I['star']} 당신에게 오는 것</h3>
       <div class="tags">
-        <span class="tag">PPT</span><span class="tag">Word</span><span class="tag">Excel</span>
-        <span class="tag">PDF</span><span class="tag">웹사이트</span><span class="tag">랜딩</span>
-        <span class="tag">이미지</span><span class="tag">영상</span><span class="tag">쇼츠</span>
-        <span class="tag">음악</span><span class="tag">자막</span><span class="tag">번역</span>
+        <span class="tag">보고서</span><span class="tag">발표자료</span><span class="tag">제안서</span>
+        <span class="tag">분석표</span><span class="tag">홈페이지</span><span class="tag">랜딩</span>
+        <span class="tag">그림</span><span class="tag">영상</span><span class="tag">노래</span>
+        <span class="tag">자막</span><span class="tag">번역</span><span class="tag">코드</span>
       </div>
     </div>
   </div>
@@ -149,79 +150,78 @@ body{{width:850px;height:1100px;background:#efe7d6;
 <div class="mid">
   <div class="mid-left">
     <div class="card">
-      <h3>{I['star']} PPT 자동 생성 <span class="auto-badge">자동</span></h3>
+      <h3>{I['heart']} AI 네 형제가 한 팀</h3>
       <ul>
-        <li>&middot; 주제 던지면 알아서 슬라이드</li>
-        <li>&middot; HTML/CSS → Playwright → pptx</li>
-        <li>&middot; 잘림 방지 OCR 점검</li>
-        <li>&middot; 다이어그램·차트 자동</li>
-        <li>&middot; Gamma·Canva·Figma 연동</li>
+        <li>&middot; <b>Claude</b> — 머리, 설계와 판단</li>
+        <li>&middot; <b>Codex</b> — 손, 코드·문서 만든다</li>
+        <li>&middot; <b>Haiku</b> — 눈, 잘못된 곳 잡는다</li>
+        <li>&middot; <b>Gemini</b> — 발, 멀리까지 본다</li>
+        <li>&middot; 4 명이 한 명처럼 움직인다</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['book']} 문서 Word·PDF <span class="auto-badge">자동</span></h3>
+      <h3>{I['shield']} ChatGPT 와 다른 점</h3>
       <ul>
-        <li>&middot; python-docx + Mermaid 그림</li>
-        <li>&middot; PDF A4·Letter·Digital 전부</li>
-        <li>&middot; 양식 자동 채움 (form fill)</li>
-        <li>&middot; 전자서명·암호화·워터마크</li>
-        <li>&middot; 빈 페이지 자동 차단</li>
+        <li>&middot; 답만 주지 않는다 — 만들어 준다</li>
+        <li>&middot; 한 번 묻고 끝 아니다</li>
+        <li>&middot; AI 가 AI 를 검토한다</li>
+        <li>&middot; 결과까지 책임진다</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['code']} 개발·코드 <span class="auto-badge">자동</span></h3>
+      <h3>{I['code']} Cursor·Copilot 과 다른 점</h3>
       <ul>
-        <li>&middot; 코드 500줄+ Codex ×4 병렬</li>
-        <li>&middot; 테스트 자동 생성 (pytest·jest)</li>
-        <li>&middot; README·CHANGELOG 자동</li>
-        <li>&middot; 보안 25 패턴 사전 차단</li>
-        <li>&middot; PR 자동 리뷰·코멘트</li>
+        <li>&middot; 코드만 아니다 — 모든 산출물</li>
+        <li>&middot; 음성·이미지·영상까지 입력</li>
+        <li>&middot; IDE 없어도 된다</li>
+        <li>&middot; 무료, 무제한, 영원</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['gear']} Excel·시트 <span class="auto-badge">자동</span></h3>
+      <h3>{I['star']} Gamma·Canva 와 다른 점</h3>
       <ul>
-        <li>&middot; openpyxl + 차트 자동</li>
-        <li>&middot; Google Sheets 연동</li>
-        <li>&middot; 피벗·차트·조건부 서식</li>
-        <li>&middot; raw data → 분석 보고서</li>
+        <li>&middot; PPT·디자인만 아니다</li>
+        <li>&middot; 코드·영상·음악·문서까지</li>
+        <li>&middot; 한 도구로 모든 산출물</li>
+        <li>&middot; 산출물끼리 연동 자동</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['water']} 웹사이트·랜딩 <span class="auto-badge">자동</span></h3>
+      <h3>{I['cpu']} 잠도 일한다</h3>
       <ul>
-        <li>&middot; 랜딩페이지 (헤드라인·CTA)</li>
-        <li>&middot; 포트폴리오 사이트</li>
-        <li>&middot; 블로그 (Tistory·Ghost·Jekyll)</li>
-        <li>&middot; SEO 메타·OG·JSON-LD 자동</li>
+        <li>&middot; 자는 동안에도 만든다</li>
+        <li>&middot; 24 시간 무인 운영</li>
+        <li>&middot; 출근 전 산출물 도착</li>
+        <li>&middot; VPS · tmux · watchdog</li>
+        <li>&middot; 폰으로도 명령 가능</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['fire']} 디자인·이미지 <span class="auto-badge">자동</span></h3>
+      <h3>{I['compass']} 잘못 되면 알아서 잡는다</h3>
       <ul>
-        <li>&middot; Pollinations 무료 이미지</li>
-        <li>&middot; 인포그래픽·마인드맵·치트시트</li>
-        <li>&middot; 이미지 복원 (4K·얼굴)</li>
-        <li>&middot; 배경 제거·컬러화·스크래치</li>
+        <li>&middot; 빌드 후 자가 점검 자동</li>
+        <li>&middot; 잘림·여백·오타 잡는다</li>
+        <li>&middot; 실패 시 최대 3회 재시도</li>
+        <li>&middot; 검토 없이 완료 보고 X</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['rocket']} 영상·쇼츠 <span class="auto-badge">자동</span></h3>
+      <h3>{I['target']} 위험은 사람 손에</h3>
       <ul>
-        <li>&middot; 롱폼 → 쇼츠 자동 추출</li>
-        <li>&middot; 자막 (Whisper + 다국어)</li>
-        <li>&middot; 썸네일 A/B 3안</li>
-        <li>&middot; 90~00년대 영상 고화질 복원</li>
-        <li>&middot; YouTube API 자동 업로드</li>
+        <li>&middot; 삭제·배포 등 위험 명령 차단</li>
+        <li>&middot; HITL 사전 승인 게이트</li>
+        <li>&middot; 시크릿 commit 차단</li>
+        <li>&middot; 보안 25 패턴 사전 막음</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['lamp']} 음악·오디오 <span class="auto-badge">자동</span></h3>
+      <h3>{I['plant']} 비싸지면 알아서 줄인다</h3>
       <ul>
-        <li>&middot; AI 작곡 (Suno·Udio·MusicGen)</li>
-        <li>&middot; 가사·편곡·믹스·마스터</li>
-        <li>&middot; 스템 분리 (보컬/드럼)</li>
-        <li>&middot; 노이즈 제거·보이스 클로닝</li>
+        <li>&middot; 일일 비용 상한 자동 fallback</li>
+        <li>&middot; Quota 초과 지수 backoff</li>
+        <li>&middot; 비싼 모델 안 써도 되면 안 쓴다</li>
+        <li>&middot; Prompt 캐싱 90% 절감</li>
+        <li>&middot; 무료 시작, 영원 오픈소스</li>
       </ul>
     </div>
   </div>
@@ -301,75 +301,75 @@ body{{width:850px;height:1100px;background:#efe7d6;
 
   <div class="mid-right">
     <div class="card">
-      <h3>{I['rocket']} 회의·강의 사례</h3>
+      <h3>{I['star']} 이런 분께 좋다</h3>
       <ul>
-        <li>&middot; 회의 mp3 → 회의록·요약·할 일</li>
-        <li>&middot; 강의 영상 → 5살 톤 교재 (8섹션)</li>
-        <li>&middot; 발표 자료 → 자막·번역·쇼츠</li>
-        <li>&middot; 듀얼 마이크 멀티트랙 분리</li>
-        <li>&middot; 다국어 (한·영·일·중) 번역</li>
+        <li>&middot; 자료 만들기에 지친 분</li>
+        <li>&middot; 매번 같은 보고서 반복하는 분</li>
+        <li>&middot; AI 어떻게 쓸지 모르는 분</li>
+        <li>&middot; 혼자 너무 많은 걸 하는 분</li>
+        <li>&middot; 빨리 결과가 필요한 분</li>
+        <li>&middot; 디자인·코딩이 어려운 분</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['book']} 사업·기획 사례</h3>
+      <h3>{I['bulb']} 이런 주제가 잘 풀린다</h3>
       <ul>
-        <li>&middot; RFP PDF → 제안서 PPT 30장</li>
-        <li>&middot; 트렌드 키워드 → 인포그래픽</li>
-        <li>&middot; raw 매출 → Excel·피벗·분석</li>
-        <li>&middot; 사업계획서 → 임원용 1-pager</li>
-        <li>&middot; 회사 자료 → 직무 교육 콘텐츠</li>
+        <li>&middot; 보고서·제안서·기획서</li>
+        <li>&middot; 교육 자료·교재·강의 노트</li>
+        <li>&middot; 마케팅·랜딩·SNS 콘텐츠</li>
+        <li>&middot; 분석·데이터·차트·통계</li>
+        <li>&middot; 영상 편집·쇼츠·자막</li>
+        <li>&middot; 이미지·디자인·인포그래픽</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['shield']} 보안·품질 사례</h3>
+      <h3>{I['rocket']} 일은 이렇게 흐른다</h3>
       <ul>
-        <li>&middot; 코드 보안 스캔 (semgrep·gitleaks)</li>
-        <li>&middot; Write/Edit 직전 25 위험 패턴 차단</li>
-        <li>&middot; 빌드 후 자동 자가 점검 (max 3 재시도)</li>
-        <li>&middot; PNG/docx/pptx 잘림·여백 자동 잡음</li>
-        <li>&middot; 위험 명령 사전 승인 (HITL)</li>
+        <li>&middot; 던지면 — Claude 가 풀어 본다</li>
+        <li>&middot; 풀리면 — Codex 가 만든다</li>
+        <li>&middot; 만들면 — Haiku 가 살펴 본다</li>
+        <li>&middot; 살펴 본 뒤 — 다듬어 보낸다</li>
+        <li>&middot; 사람은 — 받기만 하면 된다</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['water']} 콘텐츠 사례</h3>
+      <h3>{I['shield']} 약속하는 것</h3>
       <ul>
-        <li>&middot; 롱폼 영상 → 쇼츠 + 썸네일 자동</li>
-        <li>&middot; 흐린 사진 → 4K 초해상도</li>
-        <li>&middot; 90~00년대 영상 → 고화질 리마스터</li>
-        <li>&middot; 음악 작곡 (장르·BPM·키 지정)</li>
-        <li>&middot; 노래 스템 분리 (보컬·드럼·기타)</li>
+        <li>&middot; 검토 없이 완료 보고는 없다</li>
+        <li>&middot; 잘림·여백·오타는 자동으로 잡힌다</li>
+        <li>&middot; 위험한 일은 사람 손에 묻는다</li>
+        <li>&middot; 비싸지면 알아서 줄인다</li>
+        <li>&middot; 시크릿은 결코 새지 않는다</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['compass']} 산업별 사용</h3>
+      <h3>{I['plant']} 점점 커지는 것</h3>
       <ul>
-        <li>&middot; <b>금융</b> — IFRS·내부회계·리스크</li>
-        <li>&middot; <b>의료</b> — 환자 차트 정리·요약</li>
-        <li>&middot; <b>교육</b> — 교재·강의·평가 문항</li>
-        <li>&middot; <b>제조</b> — 매뉴얼·SOP·기술 문서</li>
-        <li>&middot; <b>마케팅</b> — 랜딩·블로그·SNS·SEO</li>
-        <li>&middot; <b>법무·HR</b> — 양식 자동 채움</li>
-        <li>&middot; <b>크리에이터</b> — YT·IG·블로그</li>
+        <li>&middot; 매주 새 도구가 들어 온다</li>
+        <li>&middot; 사용한 만큼 똑똑해진다</li>
+        <li>&middot; 실패는 학습으로 쌓인다</li>
+        <li>&middot; 32 → 50 → 100 플러그인</li>
+        <li>&middot; 무료·오픈소스 영원</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['code']} 코드 자동화 사례</h3>
+      <h3>{I['heart']} 이어지는 인연</h3>
       <ul>
-        <li>&middot; 코드 500줄+ Codex 4 병렬 구현</li>
-        <li>&middot; 테스트 자동 생성 (pytest·jest)</li>
-        <li>&middot; README·CHANGELOG 자동 갱신</li>
-        <li>&middot; 디자인 → 코드 변환 (Figma 연동)</li>
-        <li>&middot; GitHub PR 자동 리뷰·코멘트</li>
+        <li>&middot; Slack · Notion · Jira</li>
+        <li>&middot; Gmail · Google · YouTube</li>
+        <li>&middot; Figma · Canva · Gamma</li>
+        <li>&middot; GitHub · Vercel · Firebase</li>
+        <li>&middot; MySQL · BigQuery · MongoDB</li>
       </ul>
     </div>
     <div class="card">
-      <h3>{I['target']} 운영·연결 사례</h3>
+      <h3>{I['compass']} 시작은 한 줄로</h3>
       <ul>
-        <li>&middot; 24/7 무인 운영 (VPS·tmux·watchdog)</li>
-        <li>&middot; Slack·Notion·Jira 연결 (MCP)</li>
-        <li>&middot; YouTube Data API 자동 업로드</li>
-        <li>&middot; Instagram Graph v22 (Reels·피드)</li>
-        <li>&middot; Sheets·Airtable·BigQuery 연동</li>
+        <li>&middot; <b>1.</b> 깃 클론 한 줄</li>
+        <li>&middot; <b>2.</b> install.sh 한 번</li>
+        <li>&middot; <b>3.</b> Claude Code 켜기</li>
+        <li>&middot; <b>4.</b> 주제만 던지기</li>
+        <li>&middot; 그 다음은 — 받기만</li>
       </ul>
     </div>
   </div>
@@ -456,14 +456,14 @@ body{{width:850px;height:1100px;background:#efe7d6;
     </ul>
   </div>
   <div class="btm-card">
-    <h4>{I['plant']} 32 플러그인 카테고리</h4>
+    <h4>{I['plant']} 사용하면 일어나는 일</h4>
     <ul>
-      <li>&middot; <b>디자인</b> — PPT·Word·Excel·웹</li>
-      <li>&middot; <b>미디어</b> — 영상·음악·이미지</li>
-      <li>&middot; <b>개발</b> — 코드·테스트·보안</li>
-      <li>&middot; <b>협업</b> — Slack·Notion·Jira</li>
-      <li>&middot; <b>데이터</b> — DB·Sheets·BigQuery</li>
-      <li>&middot; <b>RAG</b> — 8 종 패턴 (HyDE 등)</li>
+      <li>&middot; 야근이 줄어 든다</li>
+      <li>&middot; 보고서 두려움이 사라진다</li>
+      <li>&middot; 진짜 중요한 일에 집중한다</li>
+      <li>&middot; 잠을 더 잘 수 있다</li>
+      <li>&middot; 자료 만들기 스트레스 0</li>
+      <li>&middot; 같은 일 두 번 안 한다</li>
     </ul>
   </div>
 </div>
