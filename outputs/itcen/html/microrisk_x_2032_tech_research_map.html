@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MicroRisk-X 2032 신기술 리서치맵</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+    background: #f5f7fb;
+    color: #172033;
+    line-height: 1.65;
+  }
+  .hero {
+    padding: 42px 46px;
+    color: #fff;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(20,184,166,.55), transparent 26%),
+      linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #064e3b 100%);
+  }
+  .hero h1 { margin: 0; font-size: 38px; letter-spacing: -0.05em; }
+  .hero p { margin: 10px 0 0; max-width: 1180px; color: #dbeafe; font-size: 16px; }
+  .hero .pill { display:inline-block; margin-bottom: 14px; border:1px solid rgba(255,255,255,.32); border-radius:999px; padding:6px 12px; color:#ecfeff; }
+  main { padding: 28px 36px 60px; }
+  .note {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-left: 6px solid #f97316;
+    padding: 16px 18px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+    color: #7c2d12;
+  }
+  .grid4 { display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom: 24px; }
+  .stat {
+    background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:16px;
+    box-shadow: 0 8px 18px rgba(15,23,42,.06);
+  }
+  .stat b { display:block; font-size:24px; color:#1d4ed8; }
+  .stat span { color:#64748b; font-size:13px; }
+  h2 { margin: 30px 0 14px; font-size: 24px; letter-spacing:-.03em; color:#0f172a; }
+  .architecture {
+    background:#0f172a; color:#e5e7eb; border-radius:18px; padding:24px;
+    display:grid; grid-template-columns: 1fr 1fr; gap:18px;
+  }
+  .arch-box { border:1px solid rgba(255,255,255,.16); border-radius:14px; padding:16px; background:rgba(255,255,255,.04); }
+  .arch-box h3 { margin:0 0 8px; color:#93c5fd; }
+  .arch-box code { display:block; white-space:pre-wrap; color:#bbf7d0; font-family: Consolas, monospace; font-size:13px; }
+  .cards { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; }
+  .card {
+    background:#fff; border:1px solid #e5e7eb; border-radius:18px; padding:18px;
+    box-shadow: 0 10px 22px rgba(15,23,42,.07);
+  }
+  .card-head { display:flex; justify-content:space-between; align-items:center; }
+  .rank { background:#1d4ed8; color:white; border-radius:999px; padding:5px 10px; font-size:12px; font-weight:800; }
+  .badge { background:#ecfdf5; color:#047857; border-radius:999px; padding:5px 10px; font-size:12px; font-weight:800; }
+  .card h3 { margin:12px 0 4px; font-size:20px; color:#111827; letter-spacing:-.03em; }
+  .tech { color:#7c3aed; font-weight:800; font-size:13px; margin-bottom:10px; }
+  .why, .easy { font-size:13px; color:#334155; }
+  .easy { background:#eff6ff; border-radius:10px; padding:10px; }
+  .how { font-size:13px; background:#f8fafc; border:1px solid #eef2f7; border-radius:12px; padding:12px; }
+  .how ol { margin:6px 0 0 18px; padding:0; }
+  .meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .meta span { background:#f1f5f9; color:#475569; border-radius:999px; padding:5px 9px; font-size:12px; font-weight:700; }
+  .roadmap { background:#fff; border:1px solid #e5e7eb; border-radius:18px; overflow:hidden; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { background:#1e3a8a; color:white; text-align:left; padding:10px; position:sticky; top:0; }
+  td { border-bottom:1px solid #e5e7eb; padding:9px 10px; vertical-align:top; }
+  tr:nth-child(even) td { background:#f8fafc; }
+  a { color:#2563eb; text-decoration:none; font-weight:700; }
+  .source-wrap { max-height:520px; overflow:auto; background:white; border:1px solid #e5e7eb; border-radius:18px; }
+  .backlog-wrap { max-height:520px; overflow:auto; background:white; border:1px solid #e5e7eb; border-radius:18px; }
+  .score-table td:nth-child(2) { font-weight:800; }
+  .good { color:#047857; font-weight:800; }
+  .mid { color:#d97706; font-weight:800; }
+  .high { color:#dc2626; font-weight:800; }
+  .footer { margin-top:30px; color:#64748b; font-size:12px; text-align:center; }
+  @media (max-width: 1200px) { .cards { grid-template-columns: repeat(2, 1fr); } .grid4 { grid-template-columns: repeat(2, 1fr); } .architecture { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { main { padding:18px; } .cards, .grid4 { grid-template-columns:1fr; } .hero { padding:30px 22px; } .hero h1 { font-size:28px; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <span class="pill">ITCEN CORE ESG사업부 · RiskTech 신기술 리서치맵 · 2026~2032</span>
+  <h1>MicroRisk-X 2032</h1>
+  <p>Quantum-inspired · Process Intelligence · Digital Twin · Synthetic Risk Data · Temporal Graph · Agent/MCP Governance 기반 차세대 행동위험 모니터링 플랫폼 전략.</p>
+</header>
+<main>
+  <div class="note">
+    <b>정리 기준:</b> 이 문서는 “공식 표준을 만들었다”는 식의 과장 표현을 버리고, 실제 공개 리서치·표준·논문·시장통계에서 확인되는 2026~2032 기술축을 Risk Monitoring 제품으로 바꾼 버전입니다. 
+    사용자가 요청한 “출처 200개”는 본문 하단에 <b>200개 후속 조사 백로그</b>로 넣었고, 지금 웹에서 직접 확인한 핵심 검증 출처는 <b>40개</b>로 별도 표기했습니다.
+  </div>
+
+  <section class="grid4">
+    <div class="stat"><b>15개</b><span>바로 제품화 가능한 신기술 모듈</span></div>
+    <div class="stat"><b>40개</b><span>웹에서 확인한 핵심 출처</span></div>
+    <div class="stat"><b>200개</b><span>후속 조사 키워드/출처 백로그</span></div>
+    <div class="stat"><b>2026~2032</b><span>RiskTech 로드맵 구간</span></div>
+  </section>
+
+  <h2>1. 결론: 주인님 방향은 “ESG 자동화”가 아니라 RiskTech다</h2>
+  <section class="architecture">
+    <div class="arch-box">
+      <h3>MicroRisk-X 한 문장</h3>
+      <code>사람·AI Agent·RPA Bot·ERP·법인카드·출입·현장센서 이벤트를 통합해
+실제 업무흐름을 복원하고,
+가상 위험상황을 시뮬레이션하며,
+합성 위험데이터로 탐지모델을 훈련하고,
+Temporal Graph + Quantum-inspired Optimizer로
+최우선 조사대상을 산정하는 차세대 행동위험 모니터링 플랫폼.</code>
+    </div>
+    <div class="arch-box">
+      <h3>기술 조합</h3>
+      <code>Process Mining     → 실제 업무흐름 발견
+Digital Twin       → 위험상황 가상 재현
+Synthetic Data     → 미발생 사고 시나리오 생성
+Temporal Graph     → 시간순 관계 분석
+Quantum-inspired   → 위험조합 최적화
+Agent/MCP Control  → AI 직원/도구 권한 관제
+Evidence Ledger    → 감사증빙·판단근거 보존</code>
+    </div>
+  </section>
+
+  <h2>2. 제품화 가능한 신기술 모듈 15개</h2>
+  <section class="cards">
+    
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#01</span>
+            <span class="badge">최상</span>
+          </div>
+          <h3>MicroProcess-Risk Miner</h3>
+          <div class="tech">Process Mining + Process Intelligence</div>
+          <p class="why"><b>왜 중요한가:</b> ERP·결재·카드·출입 로그로 실제 업무흐름을 복원해서 정상 프로세스와 다른 위험 경로를 찾는다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 회사 업무를 CCTV처럼 보는 게 아니라, 시스템 로그로 &#x27;업무 동선 지도&#x27;를 그리는 기술.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>ERP/그룹웨어/법인카드/출입 로그에서 case_id, activity, timestamp를 표준화한다.</li><li>정상 프로세스 모델: 품의→승인→결제→증빙→ERP 반영 순서를 만든다.</li><li>실제 로그와 정상 모델을 비교해 사후승인, 우회승인, 반복수정, 누락증빙을 찾는다.</li><li>처음 PoC는 &#x27;법인카드+ERP+결재&#x27; 3개 데이터만 연결해도 된다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 3개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#02</span>
+            <span class="badge">최상</span>
+          </div>
+          <h3>MicroRisk-Twin</h3>
+          <div class="tech">Digital Twin / Process Twin / Risk Twin</div>
+          <p class="why"><b>왜 중요한가:</b> 회사 업무흐름을 가상 복제해서 &#x27;이대로 가면 어떤 사고가 날지&#x27; 미리 돌려본다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 실제 회사 업무를 게임 시뮬레이션처럼 복제해서 위험상황을 테스트하는 것.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>업무 프로세스, 승인권한, 금액한도, 시간규칙을 Twin 모델로 만든다.</li><li>위험 조건: 야간접속, 사후승인, 출입불일치, 거래처 반복을 시나리오로 입력한다.</li><li>시뮬레이션을 돌려 위험점수와 영향도를 계산한다.</li><li>감사팀에는 &#x27;조사 우선순위 TOP 50&#x27;으로 보여준다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 6개월 PoC 가능</span>
+            <span>난이도: 중상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#03</span>
+            <span class="badge">최상</span>
+          </div>
+          <h3>MicroSynthetic-Risk Lab</h3>
+          <div class="tech">Synthetic Data + Risk Scenario Generator</div>
+          <p class="why"><b>왜 중요한가:</b> 실제 부정/통제미비 데이터가 부족하거나 민감할 때, 가짜지만 현실적인 위험데이터를 만들어 모델을 훈련한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 실제 사고가 없어도 &#x27;가짜 사고 데이터&#x27;를 만들어 탐지훈련을 하는 실험실.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>정상 거래 패턴을 먼저 학습한다.</li><li>분할결제, 출입불일치, 야간 ERP, 반복 거래처 같은 위험 템플릿을 만든다.</li><li>정상 95%, 위험 5% 비율로 합성 로그를 생성한다.</li><li>탐지모델 성능을 사전검증하고 고객 PoC 데모 데이터로도 쓴다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 1~2개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#04</span>
+            <span class="badge">최상</span>
+          </div>
+          <h3>MicroTemporal-Risk Graph</h3>
+          <div class="tech">Temporal Graph AI</div>
+          <p class="why"><b>왜 중요한가:</b> 사람·승인자·거래처·시스템·시간의 관계를 그래프로 묶고, 시간순 위험패턴을 탐지한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 누가 누구와 언제 어떤 돈/승인/접속으로 연결됐는지 시간표가 붙은 관계도를 만든다.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>노드: 직원, 승인자, 거래처, 카드, 계정, 시스템.</li><li>엣지: 결제, 승인, 접속, 출입, 수정, 전송.</li><li>시간속성: 이벤트 발생시각, 간격, 반복주기.</li><li>Temporal GNN 또는 규칙+그래프 점수로 위험 관계를 계산한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 3~4개월 PoC 가능</span>
+            <span>난이도: 중상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#05</span>
+            <span class="badge">매우 높음</span>
+          </div>
+          <h3>MicroEvent-Risk Stream</h3>
+          <div class="tech">Real-time Event Stream Intelligence</div>
+          <p class="why"><b>왜 중요한가:</b> 출입→결제→ERP→승인 이벤트가 발생하는 즉시 위험점수를 갱신한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 나중에 보고서로 보는 게 아니라, 위험 이벤트가 생길 때마다 실시간으로 알림을 주는 것.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>Kafka/Flink 같은 스트림 파이프라인을 구성한다.</li><li>카드, 출입, ERP 로그를 이벤트로 변환한다.</li><li>10분/1시간/1일 단위 시간창으로 위험패턴을 계산한다.</li><li>위험점수 임계값을 넘으면 감사/준법 담당자에게 알림을 보낸다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 3개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#06</span>
+            <span class="badge">최상</span>
+          </div>
+          <h3>MicroQuantum-Risk Optimizer</h3>
+          <div class="tech">Quantum-inspired Optimization / QUBO</div>
+          <p class="why"><b>왜 중요한가:</b> 수많은 위험 후보 중 가장 의심스러운 조합을 빠르게 고르는 최적화 엔진.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 수천 개 의심 사건 중 &#x27;가장 먼저 조사할 50개&#x27;를 뽑는 두뇌.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>각 이벤트를 변수로 만들고, 위험조건을 가중치로 정의한다.</li><li>QUBO 형태로 바꿔 조합 최적화 문제를 만든다.</li><li>처음엔 실제 양자컴퓨터가 아니라 simulated annealing, quantum-inspired solver로 시작한다.</li><li>나중에 IBM Quantum/Azure Quantum 같은 하이브리드 실험으로 확장한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 4~6개월 PoC 가능</span>
+            <span>난이도: 상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#07</span>
+            <span class="badge">높음</span>
+          </div>
+          <h3>MicroCausal-Risk Analyzer</h3>
+          <div class="tech">Causal AI</div>
+          <p class="why"><b>왜 중요한가:</b> 단순히 이상하다고 말하는 게 아니라 &#x27;왜 위험해졌는지&#x27; 원인을 추정한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 위험 점수의 이유를 설명해주는 인과관계 분석기.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>위험결과와 후보 원인: 야간, 금액, 승인자, 거래처, 월말, 부서 등을 정의한다.</li><li>DAG/causal graph를 설계한다.</li><li>개입 시뮬레이션: 승인자를 바꾸면 위험이 줄어드는지 계산한다.</li><li>경영진 보고에는 &#x27;원인 TOP 5&#x27;로 보여준다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 6개월 PoC 가능</span>
+            <span>난이도: 상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#08</span>
+            <span class="badge">매우 높음</span>
+          </div>
+          <h3>MicroCCM-AI</h3>
+          <div class="tech">Continuous Controls Monitoring</div>
+          <p class="why"><b>왜 중요한가:</b> 분기/연말에 몰아서 감사하지 않고, 통제가 매일 작동하는지 자동 점검한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 내부회계 통제를 매일 자동 건강검진하는 시스템.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>RCM 통제활동을 데이터 규칙으로 변환한다.</li><li>권한, 승인, 전표, 증빙, 변경로그를 매일 수집한다.</li><li>미작동 통제와 예외건을 자동 분류한다.</li><li>분기 운영효과성 평가 초안을 자동 생성한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 2~3개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#09</span>
+            <span class="badge">매우 높음</span>
+          </div>
+          <h3>MicroAgent-Control Plane</h3>
+          <div class="tech">AgentOps + MCP Governance</div>
+          <p class="why"><b>왜 중요한가:</b> AI Agent, MCP, RPA Bot이 기업 시스템에서 무슨 일을 했는지 통제한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> AI 직원들의 출입증, 업무기록, 권한, 사고방지 장치.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>Agent Registry: 모든 Agent/Bot/MCP 서버를 등록한다.</li><li>Policy: 어떤 도구를 어떤 조건에서 호출할 수 있는지 정의한다.</li><li>Telemetry: tool call, 파일접근, 메일접근, 코드수정 로그를 남긴다.</li><li>Kill Switch: 위험행동 감지 시 Agent 실행을 중단한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 2~3개월 PoC 가능</span>
+            <span>난이도: 중상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#10</span>
+            <span class="badge">매우 높음</span>
+          </div>
+          <h3>MicroEvidence-Ledger</h3>
+          <div class="tech">Digital Provenance / Evidence Ledger</div>
+          <p class="why"><b>왜 중요한가:</b> AI가 왜 그런 위험점수를 냈는지 근거·출처·변경이력을 남긴다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 감사 대응용 블랙박스. AI 판단근거를 나중에 증명할 수 있게 저장.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>입력 로그, 모델 버전, 프롬프트, 규칙, 출력결과를 해시로 묶는다.</li><li>중요 판단마다 evidence_id를 생성한다.</li><li>증빙파일과 연결하고 변경이력을 남긴다.</li><li>감사인 요청 시 판단근거 패키지를 출력한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 2개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#11</span>
+            <span class="badge">높음</span>
+          </div>
+          <h3>MicroRPA-Risk Sentinel</h3>
+          <div class="tech">RPA RiskOps</div>
+          <p class="why"><b>왜 중요한가:</b> RPA가 만든 전표, 승인, 파일수정이 정상인지 감시한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 자동화 봇이 실수하거나 과도하게 일할 때 잡아내는 감시자.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>RPA 실행 로그와 ERP 변경 로그를 연결한다.</li><li>평소보다 많은 처리량, 야간 실행, 동일작업 반복을 탐지한다.</li><li>Bot 계정별 권한과 실행범위를 점검한다.</li><li>위험 작업은 사람 승인 후 진행하게 만든다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 2개월 PoC 가능</span>
+            <span>난이도: 중</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#12</span>
+            <span class="badge">중상</span>
+          </div>
+          <h3>MicroConfidential-Audit AI</h3>
+          <div class="tech">Confidential Computing / TEE</div>
+          <p class="why"><b>왜 중요한가:</b> 감사·회계·개인정보 데이터를 AI가 처리할 때도 실행 중 데이터 보호가 필요하다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> AI가 민감자료를 볼 때, 운영자도 몰래 들여다보지 못하게 잠긴 방에서 처리.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>PoC는 민감자료 일부를 TEE 지원 클라우드/서버에서 처리한다.</li><li>모델 추론 로그와 데이터 접근을 별도 감사한다.</li><li>Agent가 비밀키/토큰을 다루는 업무에 우선 적용한다.</li><li>remote attestation으로 실행환경을 검증한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 6개월 이상</span>
+            <span>난이도: 상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#13</span>
+            <span class="badge">중상</span>
+          </div>
+          <h3>MicroPQC-Readiness Scanner</h3>
+          <div class="tech">Post-Quantum Cryptography / Crypto Agility</div>
+          <p class="why"><b>왜 중요한가:</b> 양자컴퓨터 시대 전, 회사의 암호·인증서·VPN·전자서명 자산을 미리 파악한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 우리 회사가 양자공격 시대에 바꿔야 할 암호 목록을 찾는 점검도구.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>서버, 인증서, VPN, DB, 전자서명 알고리즘을 인벤토리화한다.</li><li>RSA/ECC 사용 위치와 만료일을 정리한다.</li><li>NIST FIPS 203/204/205 대응 필요성을 분류한다.</li><li>전환 로드맵과 비용 추정표를 만든다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 3개월 PoC 가능</span>
+            <span>난이도: 중상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#14</span>
+            <span class="badge">높음</span>
+          </div>
+          <h3>MicroPhysical-Risk Linker</h3>
+          <div class="tech">Physical AI + Sensor Fusion</div>
+          <p class="why"><b>왜 중요한가:</b> 출입·위치·센서·CCTV 메타데이터와 업무 이벤트를 연결한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> 사람의 현실 행동과 시스템 행동을 하나의 위험스토리로 묶는 기술.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>출입기록과 ERP/카드 이벤트를 시간 기준으로 연결한다.</li><li>처음엔 CCTV 원본이 아니라 출입/위치/장비 이벤트 메타데이터만 사용한다.</li><li>외부 결제, 야간접속, 출입불일치 패턴을 탐지한다.</li><li>현장 안전/보안과 재무 리스크를 같은 타임라인에 표시한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 3~4개월 PoC 가능</span>
+            <span>난이도: 중상</span>
+          </div>
+        </article>
+        
+
+        <article class="card">
+          <div class="card-head">
+            <span class="rank">#15</span>
+            <span class="badge">높음</span>
+          </div>
+          <h3>MicroBrowser-Agent Guard</h3>
+          <div class="tech">Browser Session Risk / Agent Browser Control</div>
+          <p class="why"><b>왜 중요한가:</b> Agent가 브라우저에서 업무를 수행할 때 클릭, 다운로드, 입력, 전송을 감시한다.</p>
+          <p class="easy"><b>쉽게 말하면:</b> AI가 웹브라우저로 일할 때 옆에서 위험버튼을 막아주는 안전벨트.</p>
+          <div class="how">
+            <b>어떻게 만들까?</b>
+            <ol><li>브라우저 세션 이벤트를 수집한다.</li><li>민감 페이지, 다운로드, 업로드, 외부 전송을 탐지한다.</li><li>Agent가 실행한 동작과 사람이 실행한 동작을 구분한다.</li><li>고위험 동작은 human confirmation을 요구한다.</li></ol>
+          </div>
+          <div class="meta">
+            <span>PoC: 4개월 PoC 가능</span>
+            <span>난이도: 상</span>
+          </div>
+        </article>
+        
+  </section>
+
+  <h2>3. 우선순위 매트릭스</h2>
+  <section class="roadmap">
+    <table class="score-table">
+      <thead>
+        <tr><th>우선</th><th>모듈</th><th>바로성</th><th>신기술성</th><th>부서 적합성</th><th>첫 PoC 추천 데이터</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>MicroProcess-Risk Miner</td><td class="good">상</td><td class="good">상</td><td class="good">최상</td><td>법인카드 + ERP + 결재</td></tr>
+        <tr><td>2</td><td>MicroSynthetic-Risk Lab</td><td class="good">상</td><td class="good">상</td><td class="good">최상</td><td>가상 결제/승인/출입 로그</td></tr>
+        <tr><td>3</td><td>MicroTemporal-Risk Graph</td><td class="mid">중</td><td class="good">상</td><td class="good">최상</td><td>직원·거래처·승인자 관계</td></tr>
+        <tr><td>4</td><td>MicroQuantum-Risk Optimizer</td><td class="mid">중</td><td class="good">최상</td><td class="good">최상</td><td>위험후보 TOP N 최적화</td></tr>
+        <tr><td>5</td><td>MicroRisk-Twin</td><td class="mid">중</td><td class="good">상</td><td class="good">최상</td><td>사후승인/분할결제 시뮬레이션</td></tr>
+        <tr><td>6</td><td>MicroAgent-Control Plane</td><td class="good">상</td><td class="good">상</td><td class="good">매우 높음</td><td>MCP/Agent tool call 로그</td></tr>
+        <tr><td>7</td><td>MicroEvidence-Ledger</td><td class="good">상</td><td class="mid">중상</td><td class="good">매우 높음</td><td>AI 판단근거/증빙 해시</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2>4. 6개월 PoC 실행안</h2>
+  <section class="architecture">
+    <div class="arch-box">
+      <h3>1단계: 데이터 연결</h3>
+      <code>입력 데이터:
+- 법인카드 승인내역
+- ERP 전표/수정 로그
+- 전자결재 품의/승인 로그
+- 출입기록
+- RPA/Agent 실행 로그
+
+공통키:
+employee_id, vendor_id, amount, timestamp, system_id, approval_id</code>
+    </div>
+    <div class="arch-box">
+      <h3>2단계: 위험 엔진</h3>
+      <code>엔진 구성:
+1. Process Miner: 실제 흐름 복원
+2. Synthetic Lab: 위험 시나리오 생성
+3. Temporal Graph: 관계/시간 분석
+4. Quantum Optimizer: 조사 우선순위 계산
+5. Evidence Ledger: 판단근거 저장</code>
+    </div>
+    <div class="arch-box">
+      <h3>3단계: 탐지 룰 예시</h3>
+      <code>위험 시나리오:
+- 출입기록 없음 + 외부 고액결제
+- 야간 ERP 수정 + 사후승인
+- 동일 거래처 반복 분할결제
+- 승인자 동일 + 증빙 지연
+- RPA Bot 대량 전표 입력
+- Agent/MCP 민감 파일 접근</code>
+    </div>
+    <div class="arch-box">
+      <h3>4단계: 결과 화면</h3>
+      <code>대시보드:
+- 오늘 위험 이벤트 TOP 30
+- 부서별 Risk Heatmap
+- 거래처별 관계 그래프
+- 통제 미비 예상 항목
+- 조사 우선순위
+- AI 판단근거 Evidence Pack</code>
+    </div>
+  </section>
+
+  <h2>5. 직접 확인한 핵심 출처</h2>
+  <section class="source-wrap">
+    <table>
+      <thead><tr><th>No</th><th>출처</th><th>자료명</th><th>핵심 내용</th><th>링크</th></tr></thead>
+      <tbody>
+        <tr>
+            <td>1</td>
+            <td>Gartner</td>
+            <td>Top Strategic Technology Trends for 2026</td>
+            <td>AI Security Platforms, Multiagent Systems, DSLM, Confidential Computing</td>
+            <td><a href="https://www.gartner.com/en/newsroom/press-releases/2025-10-20-gartner-identifies-the-top-strategic-technology-trends-for-2026" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>2</td>
+            <td>Gartner</td>
+            <td>Top Technology Trends 2026 article</td>
+            <td>AI-native development, AI supercomputing, confidential computing, multiagent systems</td>
+            <td><a href="https://www.gartner.com/en/articles/top-technology-trends-2026" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>3</td>
+            <td>Pega / Gartner MQ</td>
+            <td>2026 Process Intelligence Platforms</td>
+            <td>Process mining, task mining, modeling, agentic process intelligence</td>
+            <td><a href="https://www.pega.com/gartner-process-intelligence-2026" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>4</td>
+            <td>Grand View Research</td>
+            <td>Process Mining Software Market</td>
+            <td>2024 $1.4B to 2030 $21.92B, CAGR 59.4%</td>
+            <td><a href="https://www.grandviewresearch.com/industry-analysis/process-mining-software-market-report" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>5</td>
+            <td>MarketsandMarkets</td>
+            <td>Digital Twin Market</td>
+            <td>2025 $21.14B to 2030 $149.81B, CAGR 47.9%</td>
+            <td><a href="https://www.marketsandmarkets.com/Market-Reports/digital-twin-market-225269522.html" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>6</td>
+            <td>Grand View Research</td>
+            <td>Digital Twin Market</td>
+            <td>2025 $35.82B to 2033 $328.51B, CAGR 31.1%</td>
+            <td><a href="https://www.grandviewresearch.com/industry-analysis/digital-twin-market" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>7</td>
+            <td>Grand View Research</td>
+            <td>Synthetic Data Generation Market</td>
+            <td>2023 $218.4M to 2030 $1.788B, CAGR 35.3%</td>
+            <td><a href="https://www.grandviewresearch.com/industry-analysis/synthetic-data-generation-market-report" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>8</td>
+            <td>Grand View Research</td>
+            <td>South Korea Synthetic Data Market</td>
+            <td>Korea synthetic data market CAGR 37.5% to 2030</td>
+            <td><a href="https://www.grandviewresearch.com/horizon/outlook/synthetic-data-generation-market/south-korea" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>9</td>
+            <td>NIST</td>
+            <td>AI Risk Management Framework</td>
+            <td>AI RMF 1.0 and GenAI Profile resources</td>
+            <td><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>10</td>
+            <td>NIST</td>
+            <td>AI RMF Generative AI Profile</td>
+            <td>NIST AI 600-1, July 26 2024</td>
+            <td><a href="https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>11</td>
+            <td>NIST</td>
+            <td>Post-Quantum Cryptography Project</td>
+            <td>FIPS 203, 204, 205 standards</td>
+            <td><a href="https://csrc.nist.gov/projects/post-quantum-cryptography" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>12</td>
+            <td>NIST</td>
+            <td>PQC standards release</td>
+            <td>First three finalized post-quantum encryption standards</td>
+            <td><a href="https://www.nist.gov/news-events/news/2024/08/nist-releases-first-3-finalized-post-quantum-encryption-standards" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>13</td>
+            <td>NIST CSRC</td>
+            <td>FIPS 203 ML-KEM</td>
+            <td>Quantum-resistant key encapsulation mechanism standard</td>
+            <td><a href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>14</td>
+            <td>OWASP</td>
+            <td>OWASP Top 10</td>
+            <td>Application security awareness document</td>
+            <td><a href="https://owasp.org/www-project-top-ten/" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>15</td>
+            <td>MITRE</td>
+            <td>MITRE ATLAS</td>
+            <td>Threats to AI systems</td>
+            <td><a href="https://atlas.mitre.org/" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>16</td>
+            <td>MITRE</td>
+            <td>ATT&amp;CK</td>
+            <td>Adversary tactics and techniques knowledge base</td>
+            <td><a href="https://attack.mitre.org/" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>17</td>
+            <td>MITRE</td>
+            <td>D3FEND</td>
+            <td>Defensive cybersecurity countermeasure knowledge graph</td>
+            <td><a href="https://d3fend.mitre.org/" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>18</td>
+            <td>arXiv</td>
+            <td>PMAx: Agentic Framework for AI-Driven Process Mining</td>
+            <td>LLM agents for process mining while preserving data privacy and exact local computation</td>
+            <td><a href="https://arxiv.org/abs/2603.15351" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>19</td>
+            <td>arXiv</td>
+            <td>Agentic Business Process Management Systems</td>
+            <td>Process mining + agents for autonomous BPM</td>
+            <td><a href="https://arxiv.org/abs/2601.18833" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>20</td>
+            <td>arXiv</td>
+            <td>AAGATE: NIST AI RMF-Aligned Governance Platform</td>
+            <td>Kubernetes-native control plane for agentic AI governance</td>
+            <td><a href="https://arxiv.org/abs/2510.25863" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>21</td>
+            <td>arXiv</td>
+            <td>Breaking the Protocol: MCP Security Analysis</td>
+            <td>MCP prompt injection and protocol-level vulnerabilities</td>
+            <td><a href="https://arxiv.org/abs/2601.17549" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>22</td>
+            <td>arXiv</td>
+            <td>ClawGuard</td>
+            <td>Runtime security framework for tool-augmented LLM agents</td>
+            <td><a href="https://arxiv.org/abs/2604.11790" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>23</td>
+            <td>arXiv</td>
+            <td>AgentDyn</td>
+            <td>Benchmark for real-world agent prompt injection attacks</td>
+            <td><a href="https://arxiv.org/abs/2602.03117" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>24</td>
+            <td>arXiv</td>
+            <td>AgentSentry</td>
+            <td>Temporal causal diagnostics against indirect prompt injection</td>
+            <td><a href="https://arxiv.org/abs/2602.22724" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>25</td>
+            <td>arXiv</td>
+            <td>Quantum Computing for Financial Transformation</td>
+            <td>Optimisation, pricing, tail-risk, QML, PQC</td>
+            <td><a href="https://arxiv.org/abs/2604.08180" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>26</td>
+            <td>arXiv</td>
+            <td>Quantum computing for finance</td>
+            <td>Stochastic modeling, optimization, machine learning</td>
+            <td><a href="https://arxiv.org/abs/2307.11230" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>27</td>
+            <td>MarketsandMarkets</td>
+            <td>Causal AI Market</td>
+            <td>2024 $56.24M to 2030 $456.88M, CAGR 41.8%</td>
+            <td><a href="https://www.marketsandmarkets.com/Market-Reports/causal-ai-market-162494083.html" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>28</td>
+            <td>Grand View Research</td>
+            <td>Confidential Computing Market</td>
+            <td>2023 $5.463B to 2030 $153.843B, CAGR 64.1%</td>
+            <td><a href="https://www.grandviewresearch.com/industry-analysis/confidential-computing-market-report" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>29</td>
+            <td>Fortune Business Insights</td>
+            <td>Confidential Computing Market</td>
+            <td>2026 $42.74B to 2034 $463.89B</td>
+            <td><a href="https://www.fortunebusinessinsights.com/confidential-computing-market-107794" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>30</td>
+            <td>arXiv</td>
+            <td>Confidential Computing for Agentic AI</td>
+            <td>TEE, MCP, A2A, agent secret handling</td>
+            <td><a href="https://arxiv.org/abs/2605.03213" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>31</td>
+            <td>arXiv</td>
+            <td>Temporal-Aware Graph Attention Network for Fraud Detection</td>
+            <td>Temporal graph fraud detection</td>
+            <td><a href="https://arxiv.org/abs/2506.21382" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>32</td>
+            <td>arXiv</td>
+            <td>TeMP-TraG</td>
+            <td>Temporal message passing in transaction graphs</td>
+            <td><a href="https://arxiv.org/abs/2503.16901" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>33</td>
+            <td>arXiv</td>
+            <td>ATM-GAD</td>
+            <td>Temporal motif graph anomaly detection for financial transaction networks</td>
+            <td><a href="https://arxiv.org/abs/2508.20829" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>34</td>
+            <td>TechRadar</td>
+            <td>Security teams do not know half their users</td>
+            <td>AI agents as new automated identities and browser control plane</td>
+            <td><a href="https://www.techradar.com/pro/your-security-team-doesnt-know-about-half-its-users" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>35</td>
+            <td>Reuters</td>
+            <td>Gartner: 40% agentic AI projects scrapped by 2027</td>
+            <td>Agentic AI hype, ROI, governance risks</td>
+            <td><a href="https://www.reuters.com/business/over-40-agentic-ai-projects-will-be-scrapped-by-2027-gartner-says-2025-06-25/" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>36</td>
+            <td>ITPro</td>
+            <td>Shadow AI breaches by 2030</td>
+            <td>Unauthorized AI use and compliance breaches</td>
+            <td><a href="https://www.itpro.com/technology/artificial-intelligence/gartner-says-40-percent-of-enterprises-will-experience-shadow-ai-breaches-by-2030-educating-staff-is-the-key-to-avoiding-disaster" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>37</td>
+            <td>TechRadar</td>
+            <td>AI compliance and governance</td>
+            <td>AI in compliance, audit, risk, continuous monitoring</td>
+            <td><a href="https://www.techradar.com/pro/how-ai-is-reshaping-compliance-why-governance-still-matters" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>38</td>
+            <td>TechRadar</td>
+            <td>OpenAI prompt injection attacks and AI browsers</td>
+            <td>AI browser/agent prompt injection risk</td>
+            <td><a href="https://www.itpro.com/technology/artificial-intelligence/openai-chatgpt-atlas-ai-browser-prompt-injection-attack-risk" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>39</td>
+            <td>TechRadar</td>
+            <td>MCP security flaws</td>
+            <td>MCP vulnerabilities and agentic integration risks</td>
+            <td><a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/anthropics-model-context-protocol-has-critical-security-flaw-exposed" target="_blank">열기</a></td>
+        </tr>
+<tr>
+            <td>40</td>
+            <td>Digital Camera World</td>
+            <td>C2PA provenance in newsrooms</td>
+            <td>Content provenance and authentication adoption</td>
+            <td><a href="https://www.digitalcameraworld.com/photography/photojournalism/canon-rolls-out-c2pa-compliant-image-verification-for-professional-newsrooms" target="_blank">열기</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <h2>6. 200개 후속 조사 백로그</h2>
+  <div class="note">
+    아래 200개는 “확인 완료 출처”가 아니라, 다음 단계에서 실제 리포트/논문/벤더/표준 문서를 추가로 찾기 위한 조사 백로그입니다. 
+    이걸 Claude Code나 검색 Agent에게 던지면 출처 200개짜리 근거집을 만들 수 있습니다.
+  </div>
+  <section class="backlog-wrap">
+    <table>
+      <thead><tr><th>No</th><th>기술축</th><th>출처 유형</th><th>검색 쿼리</th><th>상태</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Process Mining</td><td>Gartner/Forrester류 리서치</td><td>Process Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>2</td><td>Task Mining</td><td>시장통계</td><td>Task Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>3</td><td>Process Intelligence</td><td>표준기관</td><td>Process Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>4</td><td>Agentic BPM</td><td>논문</td><td>Agentic BPM enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>5</td><td>Digital Twin</td><td>벤더 백서</td><td>Digital Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>6</td><td>Process Twin</td><td>보안 리포트</td><td>Process Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>7</td><td>Synthetic Data</td><td>오픈소스/벤치마크</td><td>Synthetic Data Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>8</td><td>Temporal Graph AI</td><td>규제/정부자료</td><td>Temporal Graph AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>9</td><td>Causal AI</td><td>Gartner/Forrester류 리서치</td><td>Causal AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>10</td><td>Continuous Controls Monitoring</td><td>시장통계</td><td>Continuous Controls Monitoring enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>11</td><td>AgentOps</td><td>표준기관</td><td>AgentOps arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>12</td><td>MCP Security</td><td>논문</td><td>MCP Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>13</td><td>Prompt Injection</td><td>벤더 백서</td><td>Prompt Injection market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>14</td><td>RAG Security</td><td>보안 리포트</td><td>RAG Security Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>15</td><td>AI Evidence Ledger</td><td>오픈소스/벤치마크</td><td>AI Evidence Ledger enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>16</td><td>Digital Provenance</td><td>규제/정부자료</td><td>Digital Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>17</td><td>Quantum-inspired Optimization</td><td>Gartner/Forrester류 리서치</td><td>Quantum-inspired Optimization enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>18</td><td>QUBO</td><td>시장통계</td><td>QUBO enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>19</td><td>PQC</td><td>표준기관</td><td>PQC enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>20</td><td>Crypto Agility</td><td>논문</td><td>Crypto Agility enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>21</td><td>Confidential Computing</td><td>벤더 백서</td><td>Confidential Computing Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>22</td><td>TEE</td><td>보안 리포트</td><td>TEE arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>23</td><td>Federated Learning</td><td>오픈소스/벤치마크</td><td>Federated Learning enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>24</td><td>Privacy Enhancing Tech</td><td>규제/정부자료</td><td>Privacy Enhancing Tech enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>25</td><td>Edge AI</td><td>Gartner/Forrester류 리서치</td><td>Edge AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>26</td><td>Physical AI</td><td>시장통계</td><td>Physical AI market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>27</td><td>Sensor Fusion</td><td>표준기관</td><td>Sensor Fusion enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>28</td><td>Event Stream Intelligence</td><td>논문</td><td>Event Stream Intelligence Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>29</td><td>Kafka/Flink Risk</td><td>벤더 백서</td><td>Kafka/Flink Risk enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>30</td><td>Graph Anomaly Detection</td><td>보안 리포트</td><td>Graph Anomaly Detection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>31</td><td>RPA RiskOps</td><td>오픈소스/벤치마크</td><td>RPA RiskOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>32</td><td>Bot Identity Governance</td><td>규제/정부자료</td><td>Bot Identity Governance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>33</td><td>Browser Agent Security</td><td>Gartner/Forrester류 리서치</td><td>Browser Agent Security arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>34</td><td>Shadow AI</td><td>시장통계</td><td>Shadow AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>35</td><td>AI Security Platform</td><td>표준기관</td><td>AI Security Platform Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>36</td><td>Domain-specific Language Model</td><td>논문</td><td>Domain-specific Language Model enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>37</td><td>AI RMF</td><td>벤더 백서</td><td>AI RMF enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>38</td><td>MITRE ATLAS</td><td>보안 리포트</td><td>MITRE ATLAS enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>39</td><td>OWASP LLM Top 10</td><td>오픈소스/벤치마크</td><td>OWASP LLM Top 10 market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>40</td><td>C2PA Provenance</td><td>규제/정부자료</td><td>C2PA Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>41</td><td>Process Mining</td><td>Gartner/Forrester류 리서치</td><td>Process Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>42</td><td>Task Mining</td><td>시장통계</td><td>Task Mining Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>43</td><td>Process Intelligence</td><td>표준기관</td><td>Process Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>44</td><td>Agentic BPM</td><td>논문</td><td>Agentic BPM arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>45</td><td>Digital Twin</td><td>벤더 백서</td><td>Digital Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>46</td><td>Process Twin</td><td>보안 리포트</td><td>Process Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>47</td><td>Synthetic Data</td><td>오픈소스/벤치마크</td><td>Synthetic Data enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>48</td><td>Temporal Graph AI</td><td>규제/정부자료</td><td>Temporal Graph AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>49</td><td>Causal AI</td><td>Gartner/Forrester류 리서치</td><td>Causal AI Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>50</td><td>Continuous Controls Monitoring</td><td>시장통계</td><td>Continuous Controls Monitoring enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>51</td><td>AgentOps</td><td>표준기관</td><td>AgentOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>52</td><td>MCP Security</td><td>논문</td><td>MCP Security market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>53</td><td>Prompt Injection</td><td>벤더 백서</td><td>Prompt Injection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>54</td><td>RAG Security</td><td>보안 리포트</td><td>RAG Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>55</td><td>AI Evidence Ledger</td><td>오픈소스/벤치마크</td><td>AI Evidence Ledger arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>56</td><td>Digital Provenance</td><td>규제/정부자료</td><td>Digital Provenance Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>57</td><td>Quantum-inspired Optimization</td><td>Gartner/Forrester류 리서치</td><td>Quantum-inspired Optimization enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>58</td><td>QUBO</td><td>시장통계</td><td>QUBO enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>59</td><td>PQC</td><td>표준기관</td><td>PQC enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>60</td><td>Crypto Agility</td><td>논문</td><td>Crypto Agility enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>61</td><td>Confidential Computing</td><td>벤더 백서</td><td>Confidential Computing enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>62</td><td>TEE</td><td>보안 리포트</td><td>TEE enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>63</td><td>Federated Learning</td><td>오픈소스/벤치마크</td><td>Federated Learning Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>64</td><td>Privacy Enhancing Tech</td><td>규제/정부자료</td><td>Privacy Enhancing Tech enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>65</td><td>Edge AI</td><td>Gartner/Forrester류 리서치</td><td>Edge AI market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>66</td><td>Physical AI</td><td>시장통계</td><td>Physical AI arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>67</td><td>Sensor Fusion</td><td>표준기관</td><td>Sensor Fusion enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>68</td><td>Event Stream Intelligence</td><td>논문</td><td>Event Stream Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>69</td><td>Kafka/Flink Risk</td><td>벤더 백서</td><td>Kafka/Flink Risk enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>70</td><td>Graph Anomaly Detection</td><td>보안 리포트</td><td>Graph Anomaly Detection Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>71</td><td>RPA RiskOps</td><td>오픈소스/벤치마크</td><td>RPA RiskOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>72</td><td>Bot Identity Governance</td><td>규제/정부자료</td><td>Bot Identity Governance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>73</td><td>Browser Agent Security</td><td>Gartner/Forrester류 리서치</td><td>Browser Agent Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>74</td><td>Shadow AI</td><td>시장통계</td><td>Shadow AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>75</td><td>AI Security Platform</td><td>표준기관</td><td>AI Security Platform enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>76</td><td>Domain-specific Language Model</td><td>논문</td><td>Domain-specific Language Model enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>77</td><td>AI RMF</td><td>벤더 백서</td><td>AI RMF arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>78</td><td>MITRE ATLAS</td><td>보안 리포트</td><td>MITRE ATLAS market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>79</td><td>OWASP LLM Top 10</td><td>오픈소스/벤치마크</td><td>OWASP LLM Top 10 enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>80</td><td>C2PA Provenance</td><td>규제/정부자료</td><td>C2PA Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>81</td><td>Process Mining</td><td>Gartner/Forrester류 리서치</td><td>Process Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>82</td><td>Task Mining</td><td>시장통계</td><td>Task Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>83</td><td>Process Intelligence</td><td>표준기관</td><td>Process Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>84</td><td>Agentic BPM</td><td>논문</td><td>Agentic BPM Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>85</td><td>Digital Twin</td><td>벤더 백서</td><td>Digital Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>86</td><td>Process Twin</td><td>보안 리포트</td><td>Process Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>87</td><td>Synthetic Data</td><td>오픈소스/벤치마크</td><td>Synthetic Data enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>88</td><td>Temporal Graph AI</td><td>규제/정부자료</td><td>Temporal Graph AI arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>89</td><td>Causal AI</td><td>Gartner/Forrester류 리서치</td><td>Causal AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>90</td><td>Continuous Controls Monitoring</td><td>시장통계</td><td>Continuous Controls Monitoring enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>91</td><td>AgentOps</td><td>표준기관</td><td>AgentOps market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>92</td><td>MCP Security</td><td>논문</td><td>MCP Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>93</td><td>Prompt Injection</td><td>벤더 백서</td><td>Prompt Injection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>94</td><td>RAG Security</td><td>보안 리포트</td><td>RAG Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>95</td><td>AI Evidence Ledger</td><td>오픈소스/벤치마크</td><td>AI Evidence Ledger enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>96</td><td>Digital Provenance</td><td>규제/정부자료</td><td>Digital Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>97</td><td>Quantum-inspired Optimization</td><td>Gartner/Forrester류 리서치</td><td>Quantum-inspired Optimization enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>98</td><td>QUBO</td><td>시장통계</td><td>QUBO Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>99</td><td>PQC</td><td>표준기관</td><td>PQC arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>100</td><td>Crypto Agility</td><td>논문</td><td>Crypto Agility enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>101</td><td>Confidential Computing</td><td>벤더 백서</td><td>Confidential Computing enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>102</td><td>TEE</td><td>보안 리포트</td><td>TEE enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>103</td><td>Federated Learning</td><td>오픈소스/벤치마크</td><td>Federated Learning enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>104</td><td>Privacy Enhancing Tech</td><td>규제/정부자료</td><td>Privacy Enhancing Tech market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>105</td><td>Edge AI</td><td>Gartner/Forrester류 리서치</td><td>Edge AI Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>106</td><td>Physical AI</td><td>시장통계</td><td>Physical AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>107</td><td>Sensor Fusion</td><td>표준기관</td><td>Sensor Fusion enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>108</td><td>Event Stream Intelligence</td><td>논문</td><td>Event Stream Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>109</td><td>Kafka/Flink Risk</td><td>벤더 백서</td><td>Kafka/Flink Risk enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>110</td><td>Graph Anomaly Detection</td><td>보안 리포트</td><td>Graph Anomaly Detection arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>111</td><td>RPA RiskOps</td><td>오픈소스/벤치마크</td><td>RPA RiskOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>112</td><td>Bot Identity Governance</td><td>규제/정부자료</td><td>Bot Identity Governance Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>113</td><td>Browser Agent Security</td><td>Gartner/Forrester류 리서치</td><td>Browser Agent Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>114</td><td>Shadow AI</td><td>시장통계</td><td>Shadow AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>115</td><td>AI Security Platform</td><td>표준기관</td><td>AI Security Platform enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>116</td><td>Domain-specific Language Model</td><td>논문</td><td>Domain-specific Language Model enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>117</td><td>AI RMF</td><td>벤더 백서</td><td>AI RMF market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>118</td><td>MITRE ATLAS</td><td>보안 리포트</td><td>MITRE ATLAS enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>119</td><td>OWASP LLM Top 10</td><td>오픈소스/벤치마크</td><td>OWASP LLM Top 10 Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>120</td><td>C2PA Provenance</td><td>규제/정부자료</td><td>C2PA Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>121</td><td>Process Mining</td><td>Gartner/Forrester류 리서치</td><td>Process Mining arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>122</td><td>Task Mining</td><td>시장통계</td><td>Task Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>123</td><td>Process Intelligence</td><td>표준기관</td><td>Process Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>124</td><td>Agentic BPM</td><td>논문</td><td>Agentic BPM enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>125</td><td>Digital Twin</td><td>벤더 백서</td><td>Digital Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>126</td><td>Process Twin</td><td>보안 리포트</td><td>Process Twin Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>127</td><td>Synthetic Data</td><td>오픈소스/벤치마크</td><td>Synthetic Data enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>128</td><td>Temporal Graph AI</td><td>규제/정부자료</td><td>Temporal Graph AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>129</td><td>Causal AI</td><td>Gartner/Forrester류 리서치</td><td>Causal AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>130</td><td>Continuous Controls Monitoring</td><td>시장통계</td><td>Continuous Controls Monitoring market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>131</td><td>AgentOps</td><td>표준기관</td><td>AgentOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>132</td><td>MCP Security</td><td>논문</td><td>MCP Security arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>133</td><td>Prompt Injection</td><td>벤더 백서</td><td>Prompt Injection Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>134</td><td>RAG Security</td><td>보안 리포트</td><td>RAG Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>135</td><td>AI Evidence Ledger</td><td>오픈소스/벤치마크</td><td>AI Evidence Ledger enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>136</td><td>Digital Provenance</td><td>규제/정부자료</td><td>Digital Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>137</td><td>Quantum-inspired Optimization</td><td>Gartner/Forrester류 리서치</td><td>Quantum-inspired Optimization enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>138</td><td>QUBO</td><td>시장통계</td><td>QUBO enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>139</td><td>PQC</td><td>표준기관</td><td>PQC enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>140</td><td>Crypto Agility</td><td>논문</td><td>Crypto Agility Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>141</td><td>Confidential Computing</td><td>벤더 백서</td><td>Confidential Computing enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>142</td><td>TEE</td><td>보안 리포트</td><td>TEE enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>143</td><td>Federated Learning</td><td>오픈소스/벤치마크</td><td>Federated Learning market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>144</td><td>Privacy Enhancing Tech</td><td>규제/정부자료</td><td>Privacy Enhancing Tech enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>145</td><td>Edge AI</td><td>Gartner/Forrester류 리서치</td><td>Edge AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>146</td><td>Physical AI</td><td>시장통계</td><td>Physical AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>147</td><td>Sensor Fusion</td><td>표준기관</td><td>Sensor Fusion Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>148</td><td>Event Stream Intelligence</td><td>논문</td><td>Event Stream Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>149</td><td>Kafka/Flink Risk</td><td>벤더 백서</td><td>Kafka/Flink Risk enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>150</td><td>Graph Anomaly Detection</td><td>보안 리포트</td><td>Graph Anomaly Detection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>151</td><td>RPA RiskOps</td><td>오픈소스/벤치마크</td><td>RPA RiskOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>152</td><td>Bot Identity Governance</td><td>규제/정부자료</td><td>Bot Identity Governance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>153</td><td>Browser Agent Security</td><td>Gartner/Forrester류 리서치</td><td>Browser Agent Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>154</td><td>Shadow AI</td><td>시장통계</td><td>Shadow AI arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>155</td><td>AI Security Platform</td><td>표준기관</td><td>AI Security Platform enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>156</td><td>Domain-specific Language Model</td><td>논문</td><td>Domain-specific Language Model market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>157</td><td>AI RMF</td><td>벤더 백서</td><td>AI RMF enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>158</td><td>MITRE ATLAS</td><td>보안 리포트</td><td>MITRE ATLAS enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>159</td><td>OWASP LLM Top 10</td><td>오픈소스/벤치마크</td><td>OWASP LLM Top 10 enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>160</td><td>C2PA Provenance</td><td>규제/정부자료</td><td>C2PA Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>161</td><td>Process Mining</td><td>Gartner/Forrester류 리서치</td><td>Process Mining Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>162</td><td>Task Mining</td><td>시장통계</td><td>Task Mining enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>163</td><td>Process Intelligence</td><td>표준기관</td><td>Process Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>164</td><td>Agentic BPM</td><td>논문</td><td>Agentic BPM enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>165</td><td>Digital Twin</td><td>벤더 백서</td><td>Digital Twin arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>166</td><td>Process Twin</td><td>보안 리포트</td><td>Process Twin enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>167</td><td>Synthetic Data</td><td>오픈소스/벤치마크</td><td>Synthetic Data enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>168</td><td>Temporal Graph AI</td><td>규제/정부자료</td><td>Temporal Graph AI Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>169</td><td>Causal AI</td><td>Gartner/Forrester류 리서치</td><td>Causal AI market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>170</td><td>Continuous Controls Monitoring</td><td>시장통계</td><td>Continuous Controls Monitoring enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>171</td><td>AgentOps</td><td>표준기관</td><td>AgentOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>172</td><td>MCP Security</td><td>논문</td><td>MCP Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>173</td><td>Prompt Injection</td><td>벤더 백서</td><td>Prompt Injection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>174</td><td>RAG Security</td><td>보안 리포트</td><td>RAG Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>175</td><td>AI Evidence Ledger</td><td>오픈소스/벤치마크</td><td>AI Evidence Ledger Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>176</td><td>Digital Provenance</td><td>규제/정부자료</td><td>Digital Provenance arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>177</td><td>Quantum-inspired Optimization</td><td>Gartner/Forrester류 리서치</td><td>Quantum-inspired Optimization enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>178</td><td>QUBO</td><td>시장통계</td><td>QUBO enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>179</td><td>PQC</td><td>표준기관</td><td>PQC enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>180</td><td>Crypto Agility</td><td>논문</td><td>Crypto Agility enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>181</td><td>Confidential Computing</td><td>벤더 백서</td><td>Confidential Computing enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>182</td><td>TEE</td><td>보안 리포트</td><td>TEE market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>183</td><td>Federated Learning</td><td>오픈소스/벤치마크</td><td>Federated Learning enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>184</td><td>Privacy Enhancing Tech</td><td>규제/정부자료</td><td>Privacy Enhancing Tech enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>185</td><td>Edge AI</td><td>Gartner/Forrester류 리서치</td><td>Edge AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>186</td><td>Physical AI</td><td>시장통계</td><td>Physical AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>187</td><td>Sensor Fusion</td><td>표준기관</td><td>Sensor Fusion arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>188</td><td>Event Stream Intelligence</td><td>논문</td><td>Event Stream Intelligence enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>189</td><td>Kafka/Flink Risk</td><td>벤더 백서</td><td>Kafka/Flink Risk Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>190</td><td>Graph Anomaly Detection</td><td>보안 리포트</td><td>Graph Anomaly Detection enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>191</td><td>RPA RiskOps</td><td>오픈소스/벤치마크</td><td>RPA RiskOps enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>192</td><td>Bot Identity Governance</td><td>규제/정부자료</td><td>Bot Identity Governance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>193</td><td>Browser Agent Security</td><td>Gartner/Forrester류 리서치</td><td>Browser Agent Security enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>194</td><td>Shadow AI</td><td>시장통계</td><td>Shadow AI enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>195</td><td>AI Security Platform</td><td>표준기관</td><td>AI Security Platform market size CAGR 2030</td><td>후속 조사</td></tr>
+<tr><td>196</td><td>Domain-specific Language Model</td><td>논문</td><td>Domain-specific Language Model Gartner 2026</td><td>후속 조사</td></tr>
+<tr><td>197</td><td>AI RMF</td><td>벤더 백서</td><td>AI RMF enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>198</td><td>MITRE ATLAS</td><td>보안 리포트</td><td>MITRE ATLAS arxiv 2026</td><td>후속 조사</td></tr>
+<tr><td>199</td><td>OWASP LLM Top 10</td><td>오픈소스/벤치마크</td><td>OWASP LLM Top 10 enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+<tr><td>200</td><td>C2PA Provenance</td><td>규제/정부자료</td><td>C2PA Provenance enterprise risk monitoring 2026 2030</td><td>후속 조사</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="footer">
+    생성일: 2026-06-05 · MicroRisk-X 2032 신기술 리서치맵 · 공개 웹 기반 1차 조사본
+  </div>
+</main>
+</body>
+</html>

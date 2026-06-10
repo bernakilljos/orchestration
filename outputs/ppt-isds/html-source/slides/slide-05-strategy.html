@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--plum);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .plum{color:var(--plum);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:30px;}
+.body{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;min-height:0;}
+.year{background:white;border-radius:20px;padding:34px 32px;
+  box-shadow:0 4px 20px rgba(26,29,36,0.08);display:flex;flex-direction:column;
+  min-height:0;border-top:6px solid var(--terra);}
+.year.y2{border-top-color:var(--gold);}
+.year.y3{border-top-color:var(--sage);}
+.y-when{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.15em;
+  color:var(--stone);font-weight:700;margin-bottom:6px;}
+.y-title{font-size:30px;font-weight:800;line-height:1.2;margin-bottom:14px;letter-spacing:-0.01em;}
+.y-target{background:linear-gradient(135deg,rgba(178,90,62,0.16),rgba(178,90,62,0.06));
+  border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+.year.y2 .y-target{background:linear-gradient(135deg,rgba(184,134,78,0.16),rgba(184,134,78,0.06));}
+.year.y3 .y-target{background:linear-gradient(135deg,rgba(107,142,127,0.16),rgba(107,142,127,0.06));}
+.yt-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.18em;
+  color:var(--stone);font-weight:700;margin-bottom:4px;}
+.yt-val{font-size:24px;font-weight:800;color:var(--terra);line-height:1.2;}
+.year.y2 .yt-val{color:var(--gold);} .year.y3 .yt-val{color:var(--sage);}
+.yt-sub{font-size:19px;color:var(--stone);margin-top:4px;}
+.yt-bar{width:100%;height:34px;margin-top:10px;display:block;}
+.yt-bar .track{fill:rgba(0,0,0,0.08);}
+.yt-bar .fill{fill:var(--terra);}
+.year.y2 .yt-bar .fill{fill:var(--gold);}
+.year.y3 .yt-bar .fill{fill:var(--sage);}
+.yt-bar .pct{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;fill:white;}
+.yt-bar .axis{font-family:'JetBrains Mono',monospace;font-size:11px;fill:#6E685C;font-weight:600;}
+.y-acts{font-size:20px;line-height:1.7;flex:1;}
+.y-acts li{margin-bottom:6px;}
+.y-acts strong{font-weight:700;}
+.y-rev{margin-top:14px;padding:14px 16px;background:rgba(0,0,0,0.04);border-radius:10px;
+  display:flex;justify-content:space-between;align-items:center;}
+.yr-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);letter-spacing:0.12em;}
+.yr-val{font-weight:800;font-size:22px;color:var(--ink);}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">04 · 3년 전략</div>
+  <div class="q">3년 안에 무엇을 할 것인가</div>
+  <h1>기존 고객 도입율을 <span class="plum">5% → 30% → 60%</span></h1>
+  <p class="lead">MicroICM 기존 고객 대상 정보보호공시 모듈 단계 확산. 신규 영업 X, 기존 채널 활용. 매년 모듈 추가로 단가 인상.</p>
+  <div class="body">
+    <div class="year">
+      <div class="y-when">1년차 · 2026 (MVP + 첫 도입)</div>
+      <div class="y-title">진입</div>
+      <div class="y-target">
+        <div class="yt-lbl">기존 고객 도입율</div>
+        <div class="yt-val">5%</div>
+        <div class="yt-sub">기존 고객 × 5% = 26 가입</div>
+        <svg class="yt-bar" viewBox="0 0 280 34">
+          <rect class="track" x="0" y="14" width="280" height="10" rx="5"/>
+          <rect class="fill" x="0" y="14" width="14" height="10" rx="5"/>
+          <text class="axis" x="0" y="9">0%</text>
+          <text class="axis" x="140" y="9" text-anchor="middle">15%</text>
+          <text class="axis" x="280" y="9" text-anchor="end">30%</text>
+        </svg>
+      </div>
+      <ul class="y-acts">
+        <li>MVP 개발 (3개월) — 양식 자동 채움</li>
+        <li>MicroICM 고객 중 <strong>2027 의무사 우선 영업</strong></li>
+        <li>베타 5사 — 무상 사용 + 피드백</li>
+        <li>1차 유료 전환 21사 (베타 외)</li>
+        <li>단가 평균 1,500만 / 사 / 년</li>
+      </ul>
+      <div class="y-rev">
+        <span class="yr-lbl">1년차 매출</span>
+        <span class="yr-val">3.9억</span>
+      </div>
+    </div>
+    <div class="year y2">
+      <div class="y-when">2년차 · 2027 (의무 시행 첫 해)</div>
+      <div class="y-title">확장</div>
+      <div class="y-target">
+        <div class="yt-lbl">기존 고객 도입율</div>
+        <div class="yt-val">15~20%</div>
+        <div class="yt-sub">기존 고객 × 15% = 78 + 신규 50 = 128 가입</div>
+        <svg class="yt-bar" viewBox="0 0 280 34">
+          <rect class="track" x="0" y="14" width="280" height="10" rx="5"/>
+          <rect class="fill" x="0" y="14" width="163" height="10" rx="5"/>
+          <text class="axis" x="0" y="9">0%</text>
+          <text class="axis" x="140" y="9" text-anchor="middle">15%</text>
+          <text class="axis" x="280" y="9" text-anchor="end">30%</text>
+        </svg>
+      </div>
+      <ul class="y-acts">
+        <li>의무 시행 = <strong>의무사 첫 공시 작성</strong> 폭증</li>
+        <li>사전점검 옵션 추가 (단가 +200만)</li>
+        <li>비-MicroICM 신규 50사 (영업 시작)</li>
+        <li>ISMS 자동화 모듈 추가</li>
+        <li>단가 평균 1,800만 / 사 / 년</li>
+      </ul>
+      <div class="y-rev">
+        <span class="yr-lbl">2년차 매출</span>
+        <span class="yr-val">23억</span>
+      </div>
+    </div>
+    <div class="year y3">
+      <div class="y-when">3년차 · 2028 (시장 안정)</div>
+      <div class="y-title">통합</div>
+      <div class="y-target">
+        <div class="yt-lbl">기존 고객 도입율</div>
+        <div class="yt-val">30%</div>
+        <div class="yt-sub">기존 고객 × 30% = 156 + 신규 100 = 256 가입</div>
+        <svg class="yt-bar" viewBox="0 0 280 34">
+          <rect class="track" x="0" y="14" width="280" height="10" rx="5"/>
+          <rect class="fill" x="0" y="14" width="280" height="10" rx="5"/>
+          <text class="axis" x="0" y="9">0%</text>
+          <text class="axis" x="140" y="9" text-anchor="middle">15%</text>
+          <text class="axis" x="280" y="9" text-anchor="end">30%</text>
+        </svg>
+      </div>
+      <ul class="y-acts">
+        <li>ESG 공시 모듈 추가 (지속가능경영보고서)</li>
+        <li>개인정보보호 자가점검 모듈 추가</li>
+        <li><strong>"규제 자동 대응 플랫폼"</strong> 완성</li>
+        <li>갱신율 90% 보장 (매년 자동 반복)</li>
+        <li>단가 평균 1,800만 / 사 / 년</li>
+      </ul>
+      <div class="y-rev">
+        <span class="yr-lbl">3년차 매출</span>
+        <span class="yr-val">46억</span>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>전제: MicroICM 기존 고객 (출처 itcencore.com) · 도입율 5/15/30% 단계 보수 가정</span><span>05 / 10 · 전략</span></div>
+</div>
+</body></html>

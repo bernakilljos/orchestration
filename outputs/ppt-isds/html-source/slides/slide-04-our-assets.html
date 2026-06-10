@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--sage);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .sage{color:var(--sage);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:36px;}
+.body{flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;min-height:0;}
+.assets{display:flex;flex-direction:column;gap:24px;}
+.asset{background:white;border-radius:20px;padding:32px 38px;
+  box-shadow:0 4px 24px rgba(26,29,36,0.10);display:flex;gap:28px;align-items:center;
+  border-left:8px solid var(--sage);min-height:0;}
+.asset.b{border-left-color:var(--gold);}
+.a-mark{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:800;
+  line-height:1;color:var(--sage);min-width:130px;letter-spacing:-0.04em;}
+.asset.b .a-mark{color:var(--gold);}
+.a-content{flex:1;}
+.a-title{font-size:24px;font-weight:800;margin-bottom:6px;letter-spacing:-0.01em;}
+.a-rank{display:inline-block;background:linear-gradient(135deg,var(--sage),var(--deepgold));
+  color:white;padding:3px 10px;border-radius:10px;font-family:'JetBrains Mono',monospace;
+  font-size:20px;font-weight:700;letter-spacing:0.08em;margin-bottom:10px;}
+.asset.b .a-rank{background:linear-gradient(135deg,var(--gold),var(--deepgold));}
+.a-desc{font-size:19px;color:var(--ink);line-height:1.6;margin-bottom:10px;}
+.a-desc strong{font-weight:700;}
+.a-src{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--ink);
+  padding-top:10px;border-top:1px dashed var(--fog);letter-spacing:0.03em;font-weight:600;}
+.parent-box{background:linear-gradient(135deg,rgba(26,29,36,0.96),rgba(42,45,52,0.92));
+  color:#FAF5EA;border-radius:18px;padding:24px 28px;display:flex;align-items:center;gap:24px;
+  border:1px solid rgba(184,134,78,0.3);}
+.pb-icon{font-family:'Fraunces',serif;font-size:48px;color:var(--gold);line-height:1;font-weight:700;}
+.pb-text{flex:1;}
+.pb-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.2em;
+  color:var(--gold);font-weight:700;margin-bottom:4px;}
+.pb-title{font-size:19px;font-weight:700;color:#FAF5EA;margin-bottom:4px;}
+.pb-desc{font-size:19px;color:rgba(250,245,234,0.85);line-height:1.5;}
+.synergy{background:linear-gradient(135deg,var(--ink),#2A2D34);color:#FAF5EA;
+  border-radius:20px;padding:36px 40px;display:flex;flex-direction:column;
+  box-shadow:0 6px 30px rgba(26,29,36,0.25);}
+.s-tag{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--gold);font-weight:700;margin-bottom:14px;}
+.s-title{font-size:30px;font-weight:800;line-height:1.2;margin-bottom:20px;color:#FAF5EA;}
+.s-stages{display:flex;flex-direction:column;gap:16px;flex:1;}
+.s-stage{background:rgba(184,134,78,0.12);border-radius:14px;padding:20px 22px;
+  border-left:5px solid var(--gold);}
+.s-stage.s2{background:rgba(107,142,127,0.12);border-left-color:var(--sage);}
+.s-stage-tag{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.18em;
+  color:var(--gold);font-weight:700;margin-bottom:8px;}
+.s-stage.s2 .s-stage-tag{color:var(--sage);}
+.s-stage-title{font-size:20px;font-weight:800;margin-bottom:8px;color:#FAF5EA;line-height:1.2;}
+.s-stage-body{font-size:20px;line-height:1.55;color:rgba(250,245,234,0.95);}
+.s-stage-body strong{color:var(--gold);font-weight:700;}
+.s-stage.s2 .s-stage-body strong{color:var(--sage);}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--ink);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);font-weight:600;}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">03 · 우리 자원 — 아이티센 코어 (구 굿센)</div>
+  <div class="q">ESG 사업부가 가진 것</div>
+  <h1>내부회계 솔루션 <span class="sage">국내 1위 자원</span> 활용.</h1>
+  <p class="lead">아이티센 코어 (구 굿센) = 내부회계 솔루션 분야 국내 공급 1위. 회계 데이터·상시 모니터링 노하우를 정보보호공시 자동화에 그대로 확장.</p>
+  <div class="body">
+    <div class="assets">
+      <div class="asset">
+        <div class="a-mark">ICM</div>
+        <div class="a-content">
+          <div class="a-title">MicroICM — 내부회계 SaaS</div>
+          <span class="a-rank">국내 공급 1위</span>
+          <div class="a-desc">18년 운영. <strong>국내 800+ 기업 도입</strong>. 내부회계관리제도 표준. 회계 데이터 접근 가능 = 정보보호 투자·인건비 자동 추출 가능.</div>
+          <div class="a-src">출처: itcencore.com/inSolution/MicroICM</div>
+        </div>
+      </div>
+      <div class="asset b">
+        <div class="a-mark">EWS</div>
+        <div class="a-content">
+          <div class="a-title">RMS — 상시 모니터링</div>
+          <span class="a-rank">내부회계 상시통제</span>
+          <div class="a-desc">시나리오·Rule 기반 <strong>자동 데이터 분석 + 이상 추출 + 통지</strong>. 정보보호 활동·점검 자동 기록에 동일 패턴 활용.</div>
+          <div class="a-src">출처: itcencore.com/inSolution/RMS</div>
+        </div>
+      </div>
+      <div class="parent-box">
+        <div class="pb-icon">∞</div>
+        <div class="pb-text">
+          <div class="pb-lbl">PARENT GROUP</div>
+          <div class="pb-title">아이티센 그룹 — 연결매출 8.87조 (2025)</div>
+          <div class="pb-desc">건설 ERP 시장 점유율 국내 1위. 그룹 신뢰도 + SaaS 운영 인프라 + 영업 채널.</div>
+        </div>
+      </div>
+    </div>
+    <div class="synergy">
+      <span class="s-tag">진입 단계</span>
+      <div class="s-title">1단계 진입<br>+ 2단계 확장</div>
+      <div class="s-stages">
+        <div class="s-stage">
+          <div class="s-stage-tag">1년차 진입</div>
+          <div class="s-stage-title">회계 자동화 + SaaS + 기존 고객</div>
+          <div class="s-stage-body">
+            <strong>MicroICM</strong> 회계 데이터 자동 추출 → 공시 영역 ①·② 자동.<br>
+            <strong>RMS</strong> 정보보호 활동 상시 기록.<br>
+            기존 고객 채널 영업 — 신규 비용 ↓.
+          </div>
+        </div>
+        <div class="s-stage s2">
+          <div class="s-stage-tag">2~3년차 확장</div>
+          <div class="s-stage-title">+ ISMS 자동화 모듈 추가</div>
+          <div class="s-stage-body">
+            시장 검증 후 <strong>ISMS-P 통제 ↔ 공시 양식 매핑 자동화</strong> 추가.<br>
+            영역 ③·④ 자동화 확장.<br>
+            단가 +500만 / 사 / 년.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>출처: itcencore.com · 전자신문 20241230 (김우성 대표 취임) · 아이티센 2024 지속가능경영보고서</span><span>04 / 10 · 자원</span></div>
+</div>
+</body></html>

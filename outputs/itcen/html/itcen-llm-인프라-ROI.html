@@ -57,12 +57,13 @@
 
   /* 우선순위 신상품 */
   .top-list{display:grid;grid-template-columns:1fr;gap:10px}
-  .top-item{background:#FAFBFC;border:1px solid #E0E0E0;border-left:5px solid #FFD600;border-radius:8px;padding:12px 16px;display:grid;grid-template-columns:50px 1fr 180px 120px;gap:12px;align-items:center}
-  .top-rank{font-size:24px;font-weight:800;color:#0D47A1;text-align:center}
-  .top-name{font-size:14px;font-weight:700;color:#0D47A1}
-  .top-desc{font-size:11px;color:#666;margin-top:2px}
-  .top-tech{font-size:11px;color:#7B1FA2;font-weight:600}
-  .top-rev{background:#E8F5E9;color:#1B5E20;padding:8px;border-radius:6px;text-align:center;font-weight:700;font-size:12px}
+  .top-item{background:#FAFBFC;border:1px solid #E0E0E0;border-left:5px solid #FFD600;border-radius:8px;padding:14px 18px;display:grid;grid-template-columns:46px 1fr 150px 130px;gap:14px;align-items:start}
+  .top-rank{font-size:24px;font-weight:800;color:#0D47A1;text-align:center;padding-top:4px}
+  .top-name{font-size:14.5px;font-weight:700;color:#0D47A1;margin-bottom:4px}
+  .top-desc{font-size:12px;color:#444;line-height:1.7}
+  .top-desc strong{color:#0D47A1;background:#FFF9C4;padding:1px 5px;border-radius:3px}
+  .top-tech{font-size:11.5px;color:#7B1FA2;font-weight:600;line-height:1.5;padding-top:2px}
+  .top-rev{background:#E8F5E9;color:#1B5E20;padding:10px 8px;border-radius:6px;text-align:center;font-weight:700;font-size:12px;line-height:1.5}
 
   /* 결정 요청 */
   .decision-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -103,7 +104,7 @@
       <ul>
         <li><strong>API 비용 0</strong> — 전기료만</li>
         <li><strong>on-premise 100%</strong> — 데이터 격리</li>
-        <li><strong>한국 도메인 LoRA fine-tune 자유</strong> (회계·법무·카지노)</li>
+        <li><strong>한국 도메인 LoRA fine-tune 자유</strong> (회계·법무·세무·금융·내부통제)</li>
         <li><strong>오픈소스</strong> — Meta Llama 4 무료</li>
         <li><strong>NIST PQC·EU AI Act</strong> 데이터 주권 충족</li>
         <li>초기 자본 <strong style="color:#1B5E20">1.5억 (Mac Studio 10대)</strong> · 영구 운영</li>
@@ -187,17 +188,18 @@
       <div class="yr"><span><strong>5년 누적</strong></span><strong>9,350억</strong></div>
     </div>
   </div>
-  <h3>💰 매출 모델 (자사 솔루션 회사 기준)</h3>
+  <h3>💰 매출 모델 (현실 기준 — 내부회계·RPA·외부감사 본업 기반)</h3>
   <table>
     <thead><tr><th>모델</th><th>가격</th><th>목표 고객</th><th>예상 매출</th></tr></thead>
     <tbody>
-      <tr><td>영구 라이선스 (대형)</td><td>1社 5-15억</td><td>현대·삼성·LX·하림·삼양 등 재벌사</td><td class="amt">100社 × 5억 = 500억</td></tr>
-      <tr><td>영구 라이선스 (중형)</td><td>1社 1-3억</td><td>중견기업·금융사</td><td class="amt">1000社 × 1억 = 1,000억</td></tr>
-      <tr><td>SaaS 월구독</td><td>월 200-2000만</td><td>중소기업·금융 지점</td><td class="amt">5000社 × 월 500만 = 연 3,000억</td></tr>
-      <tr><td>OEM 라이선스 (글로벌)</td><td>건당 5천-1억</td><td>동남아·일본·중동</td><td class="amt">100건 × 7천 = 70억</td></tr>
-      <tr><td>K-Standard 인증료</td><td>인증당 5천-3억</td><td>한국 5천 대기업 의무</td><td class="amt">영구 5천억+</td></tr>
+      <tr><td>영구 라이선스 (대형 상장사)</td><td>1社 1.5-3억</td><td>코스피 200社 (현대·삼성·LX 등)</td><td class="amt">100社 × 2억 = 200억</td></tr>
+      <tr><td>영구 라이선스 (중견·중형)</td><td>1社 5천-1.5억</td><td>상장사 + 중견기업</td><td class="amt">500社 × 1억 = 500억</td></tr>
+      <tr><td>SaaS 월구독 (중소·회계법인)</td><td>월 100-500만</td><td>중소기업·세무사·중소회계법인</td><td class="amt">2,000社 × 월 200만 = 연 480억</td></tr>
+      <tr><td>유지보수·운영 (15%/년)</td><td>라이선스 15%</td><td>기존 고객 전체</td><td class="amt">누적 라이선스 15% = 연 100억+</td></tr>
+      <tr><td>회계 교육 SaaS (저변)</td><td>월 3-30만</td><td>회계 종사자 50만+</td><td class="amt">10만명 × 월 5만 = 연 600억</td></tr>
     </tbody>
   </table>
+  <p style="margin-top:10px;font-size:12px;color:#666;font-style:italic">※ 글로벌 OEM·K-AI 인증료(5천억) 같은 비현실적 매출은 제거. 우리 본업(회계·내부통제·감사) 기반 도달가능 시장만 산정.</p>
 </div>
 
 <!-- 4. ROI 계산 -->
@@ -231,68 +233,104 @@
 
 <!-- 5. 우선순위 신상품 -->
 <div class="section">
-  <h2>5️⃣ 우선순위 Top 10 신상품 (CORE 영역)</h2>
+  <h2>5️⃣ 우선순위 Top 10 신상품 — 우리 부서가 실제로 만들 수 있는 것만</h2>
+  <p style="font-size:12.5px;color:#666;background:#FFF3E0;padding:10px 14px;border-radius:6px;margin-bottom:14px;border-left:4px solid #FF6F00">
+    <strong>⚠️ 현실 기준</strong>: 부서 5명 (2027년 +10명) 기준 · 우리 보유 기술 (내부회계·VMS·RPA·외부감사) 확장만 · PQC·SOC·ZTNA·연합학습·ISO 42001 인증발급사 같은 보안·암호·인증영역은 본업 아님 → 제외. 그룹사 (PNS·CTS·ENTEC·CLOIT) 협업으로 보강 가능한 것만 포함.
+  </p>
   <div class="top-list">
     <div class="top-item">
       <div class="top-rank">🥇</div>
-      <div><div class="top-name">MicroICM-Reasoning</div><div class="top-desc">내부회계 1위 + Llama 4 Reasoning · 156 RCM 자동 평가</div></div>
-      <div class="top-tech">Llama 4 Reasoning</div>
-      <div class="top-rev">1社 1-3억<br>1,000+社</div>
+      <div>
+        <div class="top-name">MicroICM-AI — 내부회계 AI (현재 1위 솔루션 확장)</div>
+        <div class="top-desc"><strong>지금 하는 일 (현대위아 등 진행 중)</strong>: 156개 RCM(통제활동) 자동 평가 · 통제 미비점 자동 식별 · 외부감사 대응 산출물 자동 생성 · 분기별 운영효과성 평가 · 경영진 분기 보고서 초안 · 연결 자회사 통제 통합 평가</div>
+      </div>
+      <div class="top-tech">Llama 4 + RCM LoRA<br>(우리 보유)</div>
+      <div class="top-rev">1社 1-3억<br>상장사 2,400社</div>
     </div>
     <div class="top-item">
       <div class="top-rank">🥈</div>
-      <div><div class="top-name">MicroCCP-LLM</div><div class="top-desc">CCP 준법 + 도메인 LLM · 법규 자동 추적·영향 분석</div></div>
-      <div class="top-tech">Llama 4 + LoRA</div>
-      <div class="top-rev">1社 5천만-2억<br>1,000+社</div>
+      <div>
+        <div class="top-name">MicroRPA-Agent — AI-RPA 회계 자동화 (이미 운영 중)</div>
+        <div class="top-desc"><strong>지금 하는 일 (실제 가동)</strong>: ① 회계 증빙파일 자동 분류·매칭 (영수증·세금계산서·계좌이체·법인카드) · ② ERP/SAP 분개 자동 입력 · ③ 월말 결산 마감 (계정조정·미수·미지급) · ④ 부가세·원천세 신고 보조 · ⑤ 경비 처리 routing · ⑥ 거래처 잔액·미수금 자동 추적 · ⑦ 그룹사 간 거래 자동 소거 · ⑧ 계약서 OCR + 핵심 조항 추출</div>
+      </div>
+      <div class="top-tech">Llama 4 + UiPath/<br>PowerAutomate 연동</div>
+      <div class="top-rev">1社 5천-2억<br>모든 기업·회계법인</div>
     </div>
     <div class="top-item">
       <div class="top-rank">🥉</div>
-      <div><div class="top-name">MicroCasino-Emotion</div><div class="top-desc">카지노 VMS 9社 + Emotion AI · 딜러·도박중독 감지</div></div>
-      <div class="top-tech">Llama 4 + 감정 LoRA</div>
-      <div class="top-rev">1社 5억+<br>한국 9社 + 글로벌</div>
+      <div>
+        <div class="top-name">MicroAudit-Copilot — 외부감사 대응 자동화</div>
+        <div class="top-desc"><strong>지금 하는 일 (회계법인 협업 자산)</strong>: 감사인 요청 자료(PBC) 자동 수집 · 감사 조서 초안 자동 작성 · 표본 추출 자동 (Benford·이상치) · 증빙 누락 자동 식별 · 감사인 질의 1차 자동 응답 · K-IFRS 주석 자동 작성 보조 · 외부감사 일정 관리</div>
+      </div>
+      <div class="top-tech">Llama 4 + 감사조서<br>RAG (우리 보유)</div>
+      <div class="top-rev">1社 5천-1.5억<br>상장사 + 회계법인</div>
     </div>
     <div class="top-item">
       <div class="top-rank">4</div>
-      <div><div class="top-name">MicroFin-Bureau</div><div class="top-desc">금융 VMS + UEBA · 한국 행동신용평가소 (영구 IP)</div></div>
-      <div class="top-tech">UEBA + Multi-Agent</div>
-      <div class="top-rev">영구 라이선스<br>보험·HR·IAM 3시장</div>
+      <div>
+        <div class="top-name">MicroClose-AI — 결산 마감 가속</div>
+        <div class="top-desc"><strong>지금 하는 일 (RPA 확장)</strong>: 월·분기·연 결산 작업 자동 트래킹 · 계정 잔액 이상치 자동 탐지 · 자동 분개 추천 · 연결결산 그룹사 데이터 자동 취합·소거 · 마감 일정 지연 자동 알림 · IFRS 변경 자동 영향 분석</div>
+      </div>
+      <div class="top-tech">Llama 4 + Time-Series<br>이상치 탐지</div>
+      <div class="top-rev">1社 5천-1.5억<br>모든 상장사</div>
     </div>
     <div class="top-item">
       <div class="top-rank">5</div>
-      <div><div class="top-name">MicroSec-PQC</div><div class="top-desc">PQC 마이그레이션 · NIST 2028 의무화 대응</div></div>
-      <div class="top-tech">NIST PQC</div>
-      <div class="top-rev">1社 1-3억<br>한국 5천 대기업</div>
+      <div>
+        <div class="top-name">MicroVMS-Plus — 회계법인 VMS 확장 (우리 보유 솔루션)</div>
+        <div class="top-desc"><strong>지금 하는 일 (기존 VMS 진화)</strong>: 회계법인 감사인력 자동 배치 · 감사 시간 자동 기록·청구 · 독립성 점검 자동 (이해상충·금전관계) · 감사 품질관리(EQR) 보조 · 감사인 PCAOB·금감원 보고 자동 · 다년 감사 계획 자동 수립</div>
+      </div>
+      <div class="top-tech">기존 VMS + Llama 4<br>(우리 자산 확장)</div>
+      <div class="top-rev">1社 1-3억<br>회계법인 30社</div>
     </div>
     <div class="top-item">
       <div class="top-rank">6</div>
-      <div><div class="top-name">MicroSOC-Agent</div><div class="top-desc">24/7 자율 SOC · Llama 4 ×3 다중 합의</div></div>
-      <div class="top-tech">Multi-Agent</div>
-      <div class="top-rev">1社 10-30억<br>금융·대기업</div>
+      <div>
+        <div class="top-name">MicroTax-Asst — 세무 신고·검토 보조</div>
+        <div class="top-desc"><strong>지금 하는 일</strong>: 부가세·법인세·원천세 신고서 초안 자동 작성 · 세무조정 사항 자동 식별 · 세무 신고 누락 자동 탐지 · 국세청 공시 자료 자동 비교 · 세무조사 대응 자료 자동 수집 · 가산세 자동 시뮬레이션</div>
+      </div>
+      <div class="top-tech">Llama 4 + 세법 RAG<br>+ 국세청 공시 연동</div>
+      <div class="top-rev">1社 3천-1억<br>모든 기업·세무사</div>
     </div>
     <div class="top-item">
       <div class="top-rank">7</div>
-      <div><div class="top-name">MicroIAM-Behavioral</div><div class="top-desc">상시 인증 + Behavioral Biometrics · ZTNA</div></div>
-      <div class="top-tech">Behavioral Biometrics</div>
-      <div class="top-rev">1社 2-5억<br>전 금융사·대기업</div>
+      <div>
+        <div class="top-name">MicroBoard-Brief — 경영진 보고서 자동 생성</div>
+        <div class="top-desc"><strong>지금 하는 일</strong>: ERP·BI 데이터 자동 수집 → 임원 KPI 대시보드 일·주·월 자동 생성 · 매출·이익·현금 흐름 자동 해설(자연어) · 이상치 자동 알림 · 이사회 안건 초안 자동 작성 · 분기실적 IR 자료 자동 보조</div>
+      </div>
+      <div class="top-tech">Llama 4 + BI 연동<br>(Power BI·Tableau)</div>
+      <div class="top-rev">1社 5천-1.5억<br>중견·대기업</div>
     </div>
     <div class="top-item">
       <div class="top-rank">8</div>
-      <div><div class="top-name">MicroData-PET</div><div class="top-desc">데이터 프라이버시 PET 묶음 · 개인정보 의무 대응</div></div>
-      <div class="top-tech">Federated·Confidential·HE</div>
-      <div class="top-rev">1社 2-5억<br>개인정보 의무사</div>
+      <div>
+        <div class="top-name">MicroGroup-Consol — 그룹사 연결결산 자동화</div>
+        <div class="top-desc"><strong>지금 하는 일 (ITCEN 그룹 자체 적용 가능)</strong>: 자회사별 시산표 자동 수집 · 내부거래 자동 매칭·소거 · 환산조정·지분법 자동 처리 · 연결 분개 자동 추천 · K-IFRS 연결 주석 자동 작성 · 분기 연결결산 D+5 단축</div>
+      </div>
+      <div class="top-tech">Llama 4 + IFRS 엔진<br>(ITCEN 그룹 PoC)</div>
+      <div class="top-rev">1社 1-3억<br>지주회사 300+社</div>
     </div>
     <div class="top-item">
       <div class="top-rank">9</div>
-      <div><div class="top-name">MicroGov-AI (ISO 42001)</div><div class="top-desc">AI 거버넌스 인증 자동화 · 한국 1호 인증사</div></div>
-      <div class="top-tech">AI Governance</div>
-      <div class="top-rev">1社 3-10억<br>AI 도입 모든 기업</div>
+      <div>
+        <div class="top-name">MicroRisk-Map — 사내 위험 가시화 (현실 버전)</div>
+        <div class="top-desc"><strong>지금 하는 일 (내부통제 영역 한정)</strong>: 부서별 위험 자동 수집·heat map · 위험 발생 추세 자동 분석 · KPI·KRI 연동 자동 alert · 위험관리 위원회 보고서 자동 · COSO ERM 프레임워크 자동 매핑 · 컴플라이언스 체크리스트 자동 점검 — ※ AI 안전등급 표준 발급사 같은 거대 거버넌스는 한국정보보호진흥원(KISA) 몫, 우리는 기업 내부 위험관리 영역만</div>
+      </div>
+      <div class="top-tech">Llama 4 + COSO ERM<br>(우리 영역 한정)</div>
+      <div class="top-rev">1社 5천-1.5억<br>상장사·금융사</div>
     </div>
     <div class="top-item">
       <div class="top-rank">10</div>
-      <div><div class="top-name">MicroRisk-Lighthouse</div><div class="top-desc">한국 K-AI Risk Standard · 부서 핵심 IP</div></div>
-      <div class="top-tech">8 카테고리 자동 audit</div>
-      <div class="top-rev">영구 5천억+<br>5000 대기업 의무</div>
+      <div>
+        <div class="top-name">MicroEdu-Bot — 회계·자격증 학습 봇 (저비용 SaaS)</div>
+        <div class="top-desc"><strong>지금 하는 일</strong>: 회계사·세무사·CIA·CISA 기출문제 자동 풀이·해설 · 사내 회계 신입 교육 챗봇 · K-IFRS 변경 사항 자동 학습 콘텐츠 · 회계 용어 사전 · 사내 분개 Q&A · 소액 SaaS 월구독(저변 확대용)</div>
+      </div>
+      <div class="top-tech">Llama 4 + 기출 RAG<br>(저비용 운영)</div>
+      <div class="top-rev">월 3-30만<br>회계 종사자 50만+</div>
     </div>
+  </div>
+  <div style="margin-top:14px;background:#E3F2FD;padding:12px 16px;border-radius:8px;border-left:5px solid #1565C0;font-size:12.5px;color:#0D47A1;line-height:1.7">
+    <strong>📌 빠진 영역 (의도적 제외)</strong>: PQC 암호전환 / SOC 24/7 관제 / ZTNA 행동인증 / 연합학습·동형암호 / ISO 42001 인증발급사 / K-AI 표준 등록 1호 — 모두 <strong>본업 아님 + 부서 인력 한계</strong>. 필요 시 그룹사(CLOIT 보안·ENTEC 인프라) 협업 또는 5년 후 재검토.
   </div>
 </div>
 
@@ -320,8 +358,8 @@
     <div class="decision-item"><span class="num">3</span><strong>Llama 4 운영 라이선스</strong> (Meta 사용 약관 검토·승인)</div>
     <div class="decision-item"><span class="num">4</span><strong>Micro 시리즈 브랜드 등록</strong> (자사 패키지 시리즈)</div>
     <div class="decision-item"><span class="num">5</span><strong>그룹사 협업 권한</strong> (PNS·CTS·ENTEC·CLOIT 공동)</div>
-    <div class="decision-item"><span class="num">6</span><strong>KISA·금감원 lobby 대외 채널 권한</strong></div>
-    <div class="decision-item"><span class="num">7</span><strong>ISO 42001 인증 비용·시간 승인</strong> (한국 1호)</div>
+    <div class="decision-item"><span class="num">6</span><strong>회계법인 협업 채널 (Big 4·국내 5)</strong> 외부감사 도구 공동개발</div>
+    <div class="decision-item"><span class="num">7</span><strong>그룹사 자체 PoC 권한</strong> (ITCEN 그룹 연결결산 자동화 1호 사례)</div>
     <div class="decision-item"><span class="num">8</span><strong>분기별 임원진 보고 채널 확정</strong></div>
   </div>
   <div style="margin-top:14px;background:#FFF8E1;padding:14px 20px;border-radius:8px;border-left:5px solid #FFA000;font-size:13.5px;color:#5D4037">

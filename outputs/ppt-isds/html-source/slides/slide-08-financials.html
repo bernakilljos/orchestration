@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--sage);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .sage{color:var(--sage);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:30px;}
+.body{flex:1;display:grid;grid-template-columns:1fr 1.6fr;gap:36px;min-height:0;}
+.kpis{display:flex;flex-direction:column;gap:14px;}
+.k-card{background:white;border-radius:14px;padding:22px 26px;
+  box-shadow:0 2px 12px rgba(26,29,36,0.06);border-left:5px solid var(--gold);}
+.k-card.t{border-left-color:var(--terra);} .k-card.s{border-left-color:var(--sage);}
+.k-card.p{border-left-color:var(--plum);}
+.k-lbl{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.15em;
+  color:var(--stone);font-weight:700;margin-bottom:6px;}
+.k-val{font-size:32px;font-weight:800;line-height:1;color:var(--gold);letter-spacing:-0.02em;}
+.k-card.t .k-val{color:var(--terra);} .k-card.s .k-val{color:var(--sage);}
+.k-card.p .k-val{color:var(--plum);}
+.k-sub{font-size:19px;color:var(--stone);line-height:1.4;margin-top:6px;}
+.chart{background:white;border-radius:18px;padding:30px 36px;
+  box-shadow:0 4px 20px rgba(26,29,36,0.08);display:flex;flex-direction:column;min-height:0;}
+.c-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px;}
+.c-title{font-size:22px;font-weight:800;letter-spacing:-0.01em;}
+.c-sub{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--stone);letter-spacing:0.08em;}
+.bars{flex:1;display:flex;align-items:flex-end;gap:20px;padding:0 8px 40px 8px;position:relative;}
+.bep{position:absolute;left:0;right:0;top:80%;border-top:2px dashed var(--terra);}
+.bep-tag{position:absolute;right:-4px;top:75%;font-family:'JetBrains Mono',monospace;font-size:19px;
+  color:var(--terra);font-weight:700;background:white;padding:2px 6px;}
+.bar-g{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.bar-w{width:100%;height:260px;display:flex;align-items:flex-end;justify-content:center;position:relative;}
+.bar{width:78%;border-radius:8px 8px 0 0;background:linear-gradient(180deg,var(--gold),var(--deepgold));position:relative;}
+.bar.y2{background:linear-gradient(180deg,var(--terra),var(--deepgold));}
+.bar.y3{background:linear-gradient(180deg,var(--plum),var(--terra));}
+.bar.y4{background:linear-gradient(180deg,var(--sage),var(--plum));}
+.bar.y5{background:linear-gradient(180deg,var(--ink),var(--sage));}
+.bar-val{position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  font-size:20px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.bar-lbl{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--stone);font-weight:700;}
+.bar-sub{font-size:19px;color:var(--stone);}
+.c-bottom{display:flex;gap:14px;padding-top:18px;border-top:1px solid var(--fog);margin-top:10px;}
+.cb-item{flex:1;}
+.cb-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);letter-spacing:0.1em;margin-bottom:2px;}
+.cb-val{font-weight:700;color:var(--ink);font-size:20px;}
+.cb-val.green{color:var(--sage);}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">07 · 시장 + 재무</div>
+  <div class="q">얼마나 벌고 언제 흑자인가</div>
+  <h1>1년차 BEP. <span class="sage">3년차 매출 46억.</span></h1>
+  <p class="lead">기존 MicroICM 고객 도입율 5/15/30% 단계 시나리오. 공시 평균 비용 1,199만 (출처: 뉴스1) 보다 보수적 가정.</p>
+  <div class="body">
+    <div class="kpis">
+      <div class="k-card">
+        <div class="k-lbl">진입 가능성</div>
+        <div class="k-val">높음</div>
+        <div class="k-sub">MicroICM 800+ 기업 회계팀 채널 보유 — 신규 영업 비용 ↓</div>
+      </div>
+      <div class="k-card t">
+        <div class="k-lbl">1년차 BEP</div>
+        <div class="k-val">+0.4억</div>
+        <div class="k-sub">매출 3.9 / 비용 3.5 (Phase 0+1+2)</div>
+      </div>
+      <div class="k-card s">
+        <div class="k-lbl">3년차 매출</div>
+        <div class="k-val">46억</div>
+        <div class="k-sub">256 가입 × 평균 1,800만</div>
+      </div>
+      <div class="k-card p">
+        <div class="k-lbl">손절 한계</div>
+        <div class="k-val">3.5억</div>
+        <div class="k-sub">Phase 2 종료 시 유료 의향 3사 미만</div>
+      </div>
+    </div>
+    <div class="chart">
+      <div class="c-head">
+        <div class="c-title">📈 5년 매출 시나리오</div>
+        <div class="c-sub">단위 · 억 원 / 가입사 · 보수 가정</div>
+      </div>
+      <div class="bars">
+        <div class="bep"></div>
+        <span class="bep-tag">← BEP 3.5억</span>
+        <div class="bar-g">
+          <div class="bar-w"><div class="bar" style="height:11px;"><span class="bar-val">3.9억</span></div></div>
+          <div class="bar-lbl">1년차 · 2026</div>
+          <div class="bar-sub">26사 (5%)</div>
+        </div>
+        <div class="bar-g">
+          <div class="bar-w"><div class="bar y2" style="height:64px;"><span class="bar-val">23억</span></div></div>
+          <div class="bar-lbl">2년차 · 2027</div>
+          <div class="bar-sub">128사 (의무 시행)</div>
+        </div>
+        <div class="bar-g">
+          <div class="bar-w"><div class="bar y3" style="height:130px;"><span class="bar-val">46억</span></div></div>
+          <div class="bar-lbl">3년차 · 2028</div>
+          <div class="bar-sub">256사 (30%)</div>
+        </div>
+        <div class="bar-g">
+          <div class="bar-w"><div class="bar y4" style="height:200px;"><span class="bar-val">72억</span></div></div>
+          <div class="bar-lbl">4년차 · 2029</div>
+          <div class="bar-sub">400사 + 모듈</div>
+        </div>
+        <div class="bar-g">
+          <div class="bar-w"><div class="bar y5" style="height:260px;"><span class="bar-val">102억</span></div></div>
+          <div class="bar-lbl">5년차 · 2030</div>
+          <div class="bar-sub">512사 (60%)</div>
+        </div>
+      </div>
+      <div class="c-bottom">
+        <div class="cb-item"><div class="cb-lbl">1년차 비용</div><div class="cb-val">3.5억 (개발+영업+운영)</div></div>
+        <div class="cb-item"><div class="cb-lbl">2년차 흑자 전환</div><div class="cb-val green">+18억 영업이익</div></div>
+        <div class="cb-item"><div class="cb-lbl">5년차 누적 매출</div><div class="cb-val green">+246억</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>가정 출처: 아이티센 코어 MicroICM (itcencore.com) · 공시 1,199만 (news1) · 보수적 5/15/30% 도입율</span><span>08 / 10 · 재무</span></div>
+</div>
+</body></html>

@@ -12,23 +12,23 @@
   --color-accent-warm:#c4915a;
   --color-border:#c4b49a;
   --color-border-light:#d4c4a8;
-  --color-card:rgba(255,255,255,.6);
-  --color-card-dim:rgba(255,255,255,.45);
-  --color-tag-bg:rgba(196,145,90,.12);
-  --color-tag-border:rgba(196,145,90,.3);
+  --color-card:rgba(252,244,228,.55);
+  --color-card-dim:rgba(252,244,228,.45);
+  --color-tag-bg:rgba(196,145,90,.18);
+  --color-tag-border:rgba(196,145,90,.4);
   --color-tag-text:#7a5a3a;
-  --gap-section:3px;
-  --gap-card:3px;
-  --gap-tag:3px;
-  --pad-card:5px 7px;
-  --pad-btm:3px 5px;
+  --gap-section:1px;
+  --gap-card:1px;
+  --gap-tag:2px;
+  --pad-card:3px 5px;
+  --pad-btm:3px 4px;
   --radius-card:5px;
   --radius-tag:8px;
-  --font-h3:13px;
-  --font-body-size:10px;
-  --font-small:9px;
-  --font-tag:9px;
-  --line-height:1.55;
+  --font-h3:14px;
+  --font-body-size:10.5px;
+  --font-small:10px;
+  --font-tag:10px;
+  --line-height:1.45;
   --shadow-card:1px 2px 6px rgba(0,0,0,.05)
 }
 /* === BASE === */
@@ -36,8 +36,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 body{font-family:var(--font-body);overflow:hidden;color:var(--color-text)}
 /* === CARD SYSTEM === */
-.card{background:var(--color-card);border:1.5px solid var(--color-border);border-radius:var(--radius-card);padding:var(--pad-card);box-shadow:var(--shadow-card)}
-.card h3{font-family:var(--font-title);font-size:var(--font-h3);font-weight:700;color:var(--color-accent);margin-bottom:4px;border-bottom:1px solid rgba(180,150,120,.25);padding-bottom:2px;display:flex;align-items:center;gap:var(--gap-tag)}
+.card{background:var(--color-card);border:1.2px solid var(--color-border);border-radius:var(--radius-card);padding:var(--pad-card);box-shadow:none;overflow:hidden}
+.card h3{font-family:var(--font-title);font-size:var(--font-h3);font-weight:700;color:var(--color-accent);margin-bottom:2px;border-bottom:1px solid rgba(180,150,120,.25);padding-bottom:1px;display:flex;align-items:center;gap:var(--gap-tag)}
+.auto-badge{font-family:'Gaegu',cursive;font-size:9px;font-weight:700;color:#fff;background:#c4915a;padding:0 5px;border-radius:8px;margin-left:auto}
 .card li,.card p{font-size:var(--font-body-size);line-height:var(--line-height);color:var(--color-text-sub)}
 .card ul{list-style:none;padding:0}
 /* === TAG SYSTEM === */

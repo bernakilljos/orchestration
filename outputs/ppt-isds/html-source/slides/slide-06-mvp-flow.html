@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:70px 90px 50px 90px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.25em;
+  color:var(--gold);font-weight:700;margin-bottom:8px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:26px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:54px;font-weight:800;margin:0 0 10px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .gold{color:var(--gold);}
+.lead{font-size:20px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:24px;}
+.body{flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:28px;min-height:0;}
+.flow-col{display:flex;flex-direction:column;gap:14px;min-height:0;}
+.step{background:white;border-radius:14px;padding:14px 20px;
+  box-shadow:0 3px 14px rgba(26,29,36,0.06);border-left:5px solid var(--gold);
+  display:flex;gap:16px;align-items:flex-start;}
+.step.s2{border-left-color:var(--sage);}
+.step.s3{border-left-color:var(--plum);}
+.step.s4{border-left-color:var(--terra);}
+.step-num{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:800;
+  color:var(--gold);line-height:1;min-width:36px;}
+.step.s2 .step-num{color:var(--sage);}
+.step.s3 .step-num{color:var(--plum);}
+.step.s4 .step-num{color:var(--terra);}
+.step-content{flex:1;}
+.step-title{font-size:19px;font-weight:800;margin-bottom:3px;letter-spacing:-0.01em;}
+.step-input{font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:0.05em;
+  color:var(--stone);font-weight:600;margin-bottom:4px;background:rgba(0,0,0,0.04);
+  padding:3px 8px;border-radius:6px;display:inline-block;}
+.step-how{font-size:17px;color:var(--ink);line-height:1.4;margin-bottom:4px;}
+.step-how strong{font-weight:700;}
+.step-out{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--sage);
+  font-weight:600;letter-spacing:0.04em;margin-top:4px;}
+.flow-arrow{display:none;}
+.step{position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;left:33px;bottom:-13px;
+  width:2px;height:8px;background:var(--gold);z-index:2;}
+.step:not(:last-child)::before{content:'';position:absolute;left:27px;bottom:-15px;
+  width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;
+  border-top:8px solid var(--gold);z-index:2;}
+.step.s1::after{background:var(--gold);} .step.s1::before{border-top-color:var(--gold);}
+.step.s2::after{background:var(--sage);} .step.s2::before{border-top-color:var(--sage);}
+.step.s3::after{background:var(--plum);} .step.s3::before{border-top-color:var(--plum);}
+.kpmg-comp{background:linear-gradient(135deg,rgba(178,90,62,0.16),rgba(184,134,78,0.10));
+  border-radius:10px;padding:8px 14px;margin-top:6px;border-left:4px solid var(--terra);
+  font-size:17px;line-height:1.4;color:var(--ink);}
+.kpmg-comp strong{color:var(--terra);font-weight:700;}
+.scope-card{background:linear-gradient(135deg,var(--ink),#2A2D34);color:#FAF5EA;
+  border-radius:20px;padding:32px 36px;display:flex;flex-direction:column;min-height:0;
+  box-shadow:0 6px 30px rgba(26,29,36,0.25);}
+.sc-tag{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.25em;
+  color:var(--gold);font-weight:700;margin-bottom:12px;}
+.sc-title{font-size:24px;font-weight:800;margin-bottom:16px;color:#FAF5EA;letter-spacing:-0.01em;}
+.scope{display:flex;flex-direction:column;gap:10px;}
+.sc-row{display:flex;gap:14px;align-items:flex-start;padding:10px 12px;border-radius:8px;}
+.sc-row.do{background:rgba(107,142,127,0.18);border-left:3px solid var(--sage);}
+.sc-row.dont{background:rgba(178,90,62,0.16);border-left:3px solid var(--terra);}
+.sc-icon{font-weight:800;font-size:20px;line-height:1.2;min-width:24px;}
+.sc-row.do .sc-icon{color:var(--sage);}
+.sc-row.dont .sc-icon{color:var(--terra);}
+.sc-text{font-size:19px;line-height:1.5;color:rgba(250,245,234,0.95);}
+.sc-text strong{color:#FAF5EA;font-weight:700;}
+.sc-bottom{margin-top:14px;padding-top:14px;border-top:1px solid rgba(216,210,194,0.18);
+  font-family:'Fraunces',serif;font-style:italic;font-size:20px;color:var(--gold);line-height:1.4;}
+.footer{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">05 · MVP · 자동화 동작 + 개발 범위</div>
+  <div class="q">어떻게 동작하는가 / 무엇을 개발할 것인가</div>
+  <h1>4단계 자동화. <span class="gold">개발 범위 명확.</span></h1>
+  <p class="lead">정보보호 관련 전표 / 인건비 / 외주 자동 추출 = AI 키워드 분류 + 계정과목 매핑. ISMS 인증서 업로드 = 항목 추출 (점검 X).</p>
+  <div class="body">
+    <div class="flow-col">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">정보보호 회계 항목 자동 추출</div>
+          <span class="step-input">INPUT · MicroICM 회계 데이터 (직접 연동)</span>
+          <div class="step-how">
+            <strong>① 계정과목 매핑</strong> — 정보보호 관련 계정 사전 정의 (보안솔루션·외주보안·교육 등 30~50개).<br>
+            <strong>② AI 키워드 분류</strong> — 전표 적요 LLM 분석 (예: "ESM 라이센스 갱신" → 영역 ① 투자).<br>
+            <strong>③ 부서·직군 자동 분류</strong> — 인건비 = 정보보호 부서·직군 (CISO·보안팀) 자동 식별.
+          </div>
+          <div class="kpmg-comp"><strong>KPMG 못 함:</strong> 회계 원장을 외부에서 받아 분류. <strong>우리:</strong> MicroICM 안 데이터 직접 접근 — 매년 자동·실시간 갱신.</div>
+          <div class="step-out">→ 영역 ① 투자 + ② 인력 자동</div>
+        </div>
+      </div>
+<div class="step s2">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">ISMS 인증서 업로드 (1회만)</div>
+          <span class="step-input">INPUT · PDF/Word 인증서 + 점검 결과서</span>
+          <div class="step-how">
+            <strong>한계 명시</strong>: 인증서·결과서에서 <strong>항목 추출만</strong>. ISMS 점검 자체 수행 X.<br>
+            EasyOCR + Claude → 인증명·범위·유효기간·점검일·교육 활동 자동 추출. 매년 자동 갱신 (인증서 1회 업로드).
+          </div>
+          <div class="step-out">→ 영역 ③ 인증 + ④ 활동 자동</div>
+        </div>
+      </div>
+<div class="step s3">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">KISA 양식 자동 채움 + 회계 정합성 검증</div>
+          <span class="step-input">INPUT · 1 + 2 통합 데이터</span>
+          <div class="step-how">
+            KISA 표준 양식 5 영역 자동 생성 (.xlsx + .docx).<br>
+            <strong>Cen's TRM</strong> 노하우 적용 — 회계 정합성 자동 검증 (사후검증 통과 목적).
+          </div>
+          <div class="step-out">→ 양식 초안 + 검증 보고서</div>
+        </div>
+      </div>
+<div class="step s4">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">사전점검 자료 생성 (점검은 외부)</div>
+          <span class="step-input">INPUT · 3 양식 초안</span>
+          <div class="step-how">
+            <strong>한계 명시</strong>: 사전점검 자체 X. <strong>사전점검 신청 자료 자동 생성</strong>.<br>
+            점검은 KISA + 외부 ISMS 컨설팅사 (파트너십). 사전점검 통과 = 사후검증 면제.
+          </div>
+          <div class="step-out">→ KISA 사전점검 신청 (+200만 옵션)</div>
+        </div>
+      </div>
+    </div>
+    <div class="scope-card">
+      <span class="sc-tag">개발 범위 · 우리가 만드는 것</span>
+      <div class="sc-title">개발 ⭕ vs 개발 ✗<br>명확한 경계</div>
+      <div class="scope">
+        <div class="sc-row do">
+          <div class="sc-icon">⭕</div>
+          <div class="sc-text"><strong>MicroICM API 연동 모듈</strong> — 회계 데이터 자동 추출</div>
+        </div>
+        <div class="sc-row do">
+          <div class="sc-icon">⭕</div>
+          <div class="sc-text"><strong>AI 키워드·계정과목 매핑 엔진</strong> — 정보보호 항목 자동 식별</div>
+        </div>
+        <div class="sc-row do">
+          <div class="sc-icon">⭕</div>
+          <div class="sc-text"><strong>ISMS 증적 OCR + 항목 추출</strong></div>
+        </div>
+        <div class="sc-row do">
+          <div class="sc-icon">⭕</div>
+          <div class="sc-text"><strong>KISA 양식 자동 채움 (.xlsx + .docx)</strong></div>
+        </div>
+        <div class="sc-row do">
+          <div class="sc-icon">⭕</div>
+          <div class="sc-text"><strong>회계 정합성 자동 검증</strong> (Cen's TRM 노하우)</div>
+        </div>
+        <div class="sc-row dont">
+          <div class="sc-icon">✗</div>
+          <div class="sc-text"><strong>ISMS 점검 자체 X</strong> — 외부 컨설팅 파트너십</div>
+        </div>
+        <div class="sc-row dont">
+          <div class="sc-icon">✗</div>
+          <div class="sc-text"><strong>사전점검 수행 X</strong> — KISA + 외부 컨설팅사 영역</div>
+        </div>
+        <div class="sc-row dont">
+          <div class="sc-icon">✗</div>
+          <div class="sc-text"><strong>사후검증 대응 컨설팅 X</strong> — 회계법인 영역 (또는 향후 추가)</div>
+        </div>
+      </div>
+      <div class="sc-bottom">"만들 것 5개. 안 만들 것 3개. 명확."</div>
+    </div>
+  </div>
+  <div class="footer"><span>Phase 1 MVP 개발 = 5 모듈 / 3개월 / 채용 2명 (AI 엔지니어 + 회계 도메인) — Phase 0 결과 후 결정</span><span>06 / 10 · MVP · 개발범위</span></div>
+</div>
+</body></html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:70px 90px 50px 90px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.25em;
+  color:var(--terra);font-weight:700;margin-bottom:8px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:26px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:54px;font-weight:800;margin:0 0 10px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .terra{color:var(--terra);}
+.lead{font-size:20px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:24px;}
+.matrix-wrap{flex:1;display:flex;flex-direction:column;min-height:0;background:white;
+  border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(26,29,36,0.08);}
+.mh{display:grid;grid-template-columns:140px 1.4fr 1fr 1fr 1.2fr;background:var(--ink);
+  color:white;padding:0;}
+.mh-cell{padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:17px;
+  letter-spacing:0.08em;font-weight:700;border-right:1px solid rgba(255,255,255,0.1);}
+.mh-cell:last-child{border-right:none;}
+.mr{display:grid;grid-template-columns:140px 1.4fr 1fr 1fr 1.2fr;border-bottom:1px solid var(--fog);}
+.mr:last-child{border-bottom:none;}
+.mr-cell{padding:8px 14px;border-right:1px solid var(--fog);font-size:16px;line-height:1.3;
+  display:flex;flex-direction:column;justify-content:center;}
+.mr-cell:last-child{border-right:none;}
+.mr-cell.firm{font-weight:800;font-size:17px;background:rgba(26,29,36,0.04);}
+.tick{color:var(--sage);font-weight:700;font-size:17px;}
+.cross{color:#C44;font-weight:700;font-size:17px;}
+.partial{color:var(--gold);font-weight:700;font-size:17px;}
+.mr-cell .price{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--stone);
+  margin-top:2px;}
+.mr.us{background:linear-gradient(90deg,rgba(107,142,127,0.10),rgba(184,134,78,0.10));}
+.mr.us .mr-cell{font-weight:600;}
+.mr.us .mr-cell.firm{background:linear-gradient(135deg,var(--sage),var(--deepgold));color:white;
+  font-weight:800;}
+.mr-cell .src{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--stone);
+  margin-top:3px;letter-spacing:0.03em;}
+.insight{background:linear-gradient(135deg,var(--ink),#2A2D34);color:#FAF5EA;
+  border-radius:12px;padding:10px 24px;margin-top:8px;display:flex;align-items:center;gap:18px;flex:0 0 auto;}
+.ins-mark{font-family:'Fraunces',serif;font-size:28px;color:var(--gold);line-height:1;}
+.ins-text{flex:1;font-size:17px;line-height:1.35;}
+.ins-text strong{color:var(--gold);font-weight:700;}
+.ins-chart{width:240px;height:100px;flex-shrink:0;}
+.ins-chart .qline{stroke:rgba(250,245,234,0.3);stroke-width:1;}
+.ins-chart .qlabel{font-family:'JetBrains Mono',monospace;font-size:11px;fill:rgba(250,245,234,0.6);font-weight:600;}
+.ins-chart .qaxis{font-family:'JetBrains Mono',monospace;font-size:11px;fill:rgba(250,245,234,0.85);font-weight:700;}
+.ins-chart .dot-us{fill:var(--gold);stroke:#FAF5EA;stroke-width:2;}
+.ins-chart .dot-other{fill:rgba(250,245,234,0.55);}
+.ins-chart .us-label{font-family:'JetBrains Mono',monospace;font-size:12px;fill:var(--gold);font-weight:800;}
+.footer{font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">02 · 경쟁사 정밀 분석</div>
+  <div class="q">누가 무엇을 어디까지 하고 있는가</div>
+  <h1>7개 경쟁사 매트릭스. <span class="terra">우리 자리 = 마지막 행.</span></h1>
+  <p class="lead">회계 자동화 · ISMS 자동화 · 가격대 · SaaS 운영 노하우 — 4 차원으로 비교. 사실 + 출처 표기.</p>
+  <div class="matrix-wrap">
+    <div class="mh">
+      <div class="mh-cell">경쟁사</div>
+      <div class="mh-cell">정보보호공시 진입 현황</div>
+      <div class="mh-cell">회계 자동화</div>
+      <div class="mh-cell">ISMS 자동화</div>
+      <div class="mh-cell">우리 대비 약점</div>
+    </div>
+    <div class="mr">
+      <div class="mr-cell firm">삼정KPMG</div>
+      <div class="mr-cell">2025-05 SaaS 출시. 회계 원장 분류 + 인건비 산정 자동. <strong>시간 90% ↓</strong>.<div class="src">출처: 아시아경제 25-05-12</div></div>
+      <div class="mr-cell"><span class="tick">⭕ 90%</span><div class="price">SaaS 구독 (가격 비공개)</div></div>
+      <div class="mr-cell"><span class="cross">✗</span><div class="price">컨설팅 수동</div></div>
+      <div class="mr-cell">SaaS 첫 시도 (10개월). <strong>기존 회계 고객 채널 X</strong></div>
+    </div>
+    <div class="mr">
+      <div class="mr-cell firm">삼일PwC</div>
+      <div class="mr-cell">"AI 기반 자동화 + AX/DX 통합 정보보호공시 절차" 자료 발표.<div class="src">출처: pwc.com/kr</div></div>
+      <div class="mr-cell"><span class="partial">⚠️ 일부</span><div class="price">컨설팅 수천만~억</div></div>
+      <div class="mr-cell"><span class="cross">✗</span></div>
+      <div class="mr-cell">컨설팅 중심. SaaS X</div>
+    </div>
+    <div class="mr">
+      <div class="mr-cell firm">EY한영</div>
+      <div class="mr-cell">Auto Sampling + RPA 맞춤 솔루션. 회계 정합성 강화 대응.</div>
+      <div class="mr-cell"><span class="partial">⚠️ RPA</span><div class="price">컨설팅</div></div>
+      <div class="mr-cell"><span class="cross">✗</span></div>
+      <div class="mr-cell">SaaS X. 대기업만</div>
+    </div>
+    <div class="mr">
+      <div class="mr-cell firm">SK쉴더스</div>
+      <div class="mr-cell"><strong>이미 정보보호공시 컨설팅 시행</strong> 발표. "국내 정보보안 1위" 어필.<div class="src">출처: 디지털데일리 (ddaily)</div></div>
+      <div class="mr-cell"><span class="cross">✗</span></div>
+      <div class="mr-cell"><span class="partial">⚠️ 컨설팅</span><div class="price">수천만 / 사</div></div>
+      <div class="mr-cell">회계 영역 약함. SaaS X</div>
+    </div>
+    <div class="mr">
+      <div class="mr-cell firm">안랩·이글루·펜타시큐리티</div>
+      <div class="mr-cell">ISMS-P 컨설팅 보유. 정보보호공시 자동화 솔루션 미진입.</div>
+      <div class="mr-cell"><span class="cross">✗</span></div>
+      <div class="mr-cell"><span class="partial">⚠️ 컨설팅</span></div>
+      <div class="mr-cell">회계 영역 X. SaaS X</div>
+    </div>
+    <div class="mr us">
+      <div class="mr-cell firm">아이티센<br>코어 ESG</div>
+      <div class="mr-cell"><strong>MicroICM 내부회계 + RMS 상시 모니터링</strong> 기존 고객 운영중 = 회계팀 일상 채널.<br>2027 정보보호공시 모듈 확장.<div class="src">출처: itcencore.com</div></div>
+      <div class="mr-cell"><span class="tick">⭕</span><div class="price">월 100~300만 SaaS</div></div>
+      <div class="mr-cell"><span class="partial">2단계 추가</span><div class="price">향후 모듈</div></div>
+      <div class="mr-cell">— 차별화: <strong>기존 고객 + SaaS 18년</strong></div>
+    </div>
+  </div>
+  <div class="insight">
+    <div class="ins-mark">⚡</div>
+    <div class="ins-text">1단계 = <strong>회계 자동화 + SaaS + 기존 고객 채널</strong> 3 가지 자원으로 진입. 2단계 = <strong>ISMS 자동화 모듈 추가</strong> (시장 검증 후).</div>
+  </div>
+  <div class="footer"><span>모든 데이터 2026-05-18 공개 자료 기준 · 출처 표기</span><span>03 / 10 · 경쟁 분석</span></div>
+</div>
+</body></html>

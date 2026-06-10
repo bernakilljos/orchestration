@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--terra);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .terra{color:var(--terra);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:30px;}
+.body{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:36px;min-height:0;}
+.risks{display:flex;flex-direction:column;gap:8px;min-height:0;}
+.risk{background:white;border-radius:12px;padding:11px 18px;
+  box-shadow:0 2px 12px rgba(26,29,36,0.06);border-left:5px solid var(--terra);}
+.risk.m{border-left-color:var(--gold);} .risk.l{border-left-color:var(--sage);}
+.r-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.r-title{font-size:18px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;flex:1;}
+.r-prob{font-family:'JetBrains Mono',monospace;font-size:16px;letter-spacing:0.15em;
+  font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(178,90,62,0.14);color:var(--terra);}
+.risk.m .r-prob{background:rgba(184,134,78,0.14);color:var(--gold);}
+.risk.l .r-prob{background:rgba(107,142,127,0.14);color:var(--sage);}
+.r-desc{font-size:16px;line-height:1.35;color:var(--ink);margin-bottom:6px;}
+.r-mit{font-size:15px;line-height:1.35;color:var(--stone);padding-top:6px;border-top:1px dashed var(--fog);}
+.r-mit strong{color:var(--ink);font-weight:700;}
+.r-mit-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.12em;
+  color:var(--terra);font-weight:700;margin-bottom:4px;display:block;}
+.scenarios{display:flex;flex-direction:column;gap:10px;min-height:0;}
+.sc-card{background:linear-gradient(135deg,var(--ink),#2A2D34);color:#FAF5EA;border-radius:18px;
+  padding:20px 26px;display:flex;flex-direction:column;flex:1;min-height:0;}
+.sc-tag{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.2em;
+  color:var(--gold);font-weight:700;margin-bottom:6px;}
+.sc-title{font-size:21px;font-weight:800;line-height:1.2;margin-bottom:8px;color:#FAF5EA;}
+.sc-cond{font-size:18px;line-height:1.4;color:rgba(250,245,234,0.85);margin-bottom:8px;}
+.sc-cond strong{color:var(--gold);font-weight:700;}
+.sc-act{background:rgba(184,134,78,0.16);border-left:3px solid var(--gold);border-radius:8px;
+  padding:10px 14px;font-size:17px;line-height:1.4;color:rgba(250,245,234,0.95);flex:0 0 auto;}
+.sc-act strong{color:var(--gold);font-weight:700;}
+.sc-card.good{background:linear-gradient(135deg,#1F3A33,#2A4A40);}
+.sc-card.good .sc-tag{color:var(--sage);} .sc-card.good .sc-act{background:rgba(107,142,127,0.20);border-left-color:var(--sage);}
+.sc-card.good .sc-act strong{color:var(--sage);}
+.sc-chart{width:100%;height:64px;display:block;margin:6px 0 8px 0;flex:0 0 auto;}
+.sc-chart .grid{stroke:rgba(250,245,234,0.12);stroke-width:1;}
+.sc-chart .axis{font-family:'JetBrains Mono',monospace;font-size:11px;fill:rgba(250,245,234,0.55);}
+.sc-chart .pt-line{stroke:var(--gold);stroke-width:2.5;fill:none;}
+.sc-card.good .sc-chart .pt-line{stroke:var(--sage);}
+.sc-chart .pt-dot{fill:var(--gold);}
+.sc-card.good .sc-chart .pt-dot{fill:var(--sage);}
+.sc-chart .pt-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;fill:var(--gold);}
+.sc-card.good .sc-chart .pt-val{fill:var(--sage);}
+.sc-chart .bar-loss{fill:var(--terra);}
+.sc-chart .bar-zero{fill:rgba(250,245,234,0.15);}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">08 · 위기 + 시나리오</div>
+  <div class="q">실패할 가능성 + 대응</div>
+  <h1>위기 5개. <span class="terra">손절·확장 시나리오 명확.</span></h1>
+  <p class="lead">사업이 잘 되면 어떻게 / 안 되면 어떻게. 보고 후 6개월 뒤 점검할 기준.</p>
+  <div class="body">
+    <div class="risks">
+      <div class="risk">
+        <div class="r-head">
+          <div class="r-title">신규 보안 SaaS 스타트업 진입</div>
+          <div class="r-prob">고</div>
+        </div>
+        <div class="r-desc">정보보호공시 시장 폭증 = 신규 SaaS 스타트업 진입. 단순 양식 자동화로 가격 인하 경쟁.</div>
+        <div class="r-mit">
+          <span class="r-mit-lbl">MITIGATION</span>
+          <strong>MicroICM 직접 연동 차별화</strong> — 외부 사업자는 회계 데이터 접근 불가
+        </div>
+      </div>
+      <div class="risk m">
+        <div class="r-head">
+          <div class="r-title">SK쉴더스 컨설팅 → SaaS 전환</div>
+          <div class="r-prob">중</div>
+        </div>
+        <div class="r-desc">정보보호공시 컨설팅 중인 SK쉴더스가 SaaS 자동화 진입.</div>
+        <div class="r-mit">
+          <span class="r-mit-lbl">MITIGATION</span>
+          <strong>MicroICM 18년 노하우</strong> 로 회계 영역 깊이 차별. 보안기업은 회계 약함
+        </div>
+      </div>
+      <div class="risk m">
+        <div class="r-head">
+          <div class="r-title">Phase 2 베타 5사 유료 전환 X</div>
+          <div class="r-prob">중</div>
+        </div>
+        <div class="r-desc">3사 미만 유료 의향 시 시장 검증 실패.</div>
+        <div class="r-mit">
+          <span class="r-mit-lbl">MITIGATION</span>
+          <strong>손절 3.5억 한계</strong>. 사업 중단 + ESG 사업부 다른 영역
+        </div>
+      </div>
+      <div class="risk l">
+        <div class="r-head">
+          <div class="r-title">법령 추가 개정 (2027 직전)</div>
+          <div class="r-prob">저</div>
+        </div>
+        <div class="r-desc">시행령 추가 변경 시 양식 어댑터 재작성 부담.</div>
+        <div class="r-mit">
+          <span class="r-mit-lbl">MITIGATION</span>
+          KISA 동향 monitoring + <strong>양식 어댑터 분리</strong> 설계
+        </div>
+      </div>
+      <div class="risk l">
+        <div class="r-head">
+          <div class="r-title">기존 고객 거부감 (사일로)</div>
+          <div class="r-prob">저</div>
+        </div>
+        <div class="r-desc">MicroICM 회계팀 vs 보안팀 협업 거부.</div>
+        <div class="r-mit">
+          <span class="r-mit-lbl">MITIGATION</span>
+          정보보호공시는 <strong>CEO 결재 의무</strong> — 결재 단계에서 양 팀 정렬
+        </div>
+      </div>
+    </div>
+    <div class="scenarios">
+      <div class="sc-card good">
+        <span class="sc-tag">✅ GOOD CASE · 잘 되는 시나리오</span>
+        <div class="sc-title">3년차 매출 46억<br>+ ESG 통합으로 확장</div>
+        <div class="sc-cond">베타 5사 → 100% 유료 전환. 기존 MicroICM 고객 도입율 <strong>5% → 30% (Y3)</strong>. ESG 공시 모듈 추가 → 단가 +500만.</div>
+        <svg class="sc-chart" viewBox="0 0 480 90" preserveAspectRatio="none">
+          <line class="grid" x1="0" y1="20" x2="480" y2="20"/>
+          <line class="grid" x1="0" y1="45" x2="480" y2="45"/>
+          <line class="grid" x1="0" y1="70" x2="480" y2="70"/>
+          <polyline class="pt-line" points="40,76 160,68 280,46 400,12"/>
+          <circle class="pt-dot" cx="40" cy="76" r="4"/>
+          <circle class="pt-dot" cx="160" cy="68" r="4"/>
+          <circle class="pt-dot" cx="280" cy="46" r="4"/>
+          <circle class="pt-dot" cx="400" cy="12" r="6"/>
+          <text class="axis" x="40" y="88" text-anchor="middle">1년차</text>
+          <text class="axis" x="160" y="88" text-anchor="middle">2년차</text>
+          <text class="axis" x="280" y="88" text-anchor="middle">3년차</text>
+          <text class="axis" x="400" y="88" text-anchor="middle">Y5</text>
+          <text class="pt-val" x="40" y="72" text-anchor="middle">3.9억</text>
+          <text class="pt-val" x="160" y="64" text-anchor="middle">23억</text>
+          <text class="pt-val" x="280" y="42" text-anchor="middle">46억</text>
+          <text class="pt-val" x="400" y="8" text-anchor="middle">100억+</text>
+        </svg>
+        <div class="sc-act"><strong>NEXT:</strong> 3년차 매출 46억 → ESG 공시·개인정보 자가점검 모듈 추가 → "규제 자동 대응 플랫폼" 완성 → Y5 매출 100억+</div>
+      </div>
+      <div class="sc-card">
+        <span class="sc-tag">⚠️ BAD CASE · 안 되는 시나리오</span>
+        <div class="sc-title">Phase 2 종료 시<br>유료 의향 3사 미만</div>
+        <div class="sc-cond">베타 시장 검증 실패. 기존 MicroICM 고객도 <strong>"정보보호공시 자동화 안 산다"</strong> 응답. 회계법인 / SK쉴더스 가 가격 인하.</div>
+        <svg class="sc-chart" viewBox="0 0 480 90" preserveAspectRatio="none">
+          <line class="grid" x1="0" y1="45" x2="480" y2="45"/>
+          <rect class="bar-zero" x="40" y="40" width="80" height="10"/>
+          <rect class="bar-zero" x="160" y="40" width="80" height="10"/>
+          <rect class="bar-loss" x="280" y="45" width="80" height="38"/>
+          <rect class="bar-zero" x="400" y="40" width="80" height="10"/>
+          <text class="axis" x="80" y="88" text-anchor="middle">P0 검증</text>
+          <text class="axis" x="200" y="88" text-anchor="middle">P1 MVP</text>
+          <text class="axis" x="320" y="88" text-anchor="middle">P2 종료</text>
+          <text class="axis" x="440" y="88" text-anchor="middle">중단</text>
+          <text class="pt-val" x="80" y="34" text-anchor="middle">-2천</text>
+          <text class="pt-val" x="200" y="34" text-anchor="middle">-1.7억</text>
+          <text class="pt-val" x="320" y="34" text-anchor="middle" fill="#B25A3E">-3.5억</text>
+          <text class="pt-val" x="440" y="34" text-anchor="middle">손절</text>
+        </svg>
+        <div class="sc-act"><strong>NEXT:</strong> 사업 즉시 중단. 손실 <strong>3.5억 손절</strong>. MVP 자산은 ESG 사업부 다른 모듈에 재활용 (예: ESG 공시 자동화 단독)</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>모든 위기 = Phase 2 종료 시 (2026-12) 의사결정 시점 점검 / 손절 한계 3.5억 명시</span><span>09 / 10 · 위기</span></div>
+</div>
+</body></html>

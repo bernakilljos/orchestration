@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--gold);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .gold{color:var(--gold);} h1 .terra{color:var(--terra);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:28px;}
+.facts{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:18px;min-height:0;}
+.fact{background:white;border-radius:18px;padding:28px 28px;
+  box-shadow:0 4px 16px rgba(26,29,36,0.08);display:flex;flex-direction:column;
+  position:relative;border-top:6px solid var(--gold);min-height:0;}
+.fact.t{border-top-color:var(--terra);} .fact.s{border-top-color:var(--sage);}
+.fact.p{border-top-color:var(--plum);} .fact.d{border-top-color:var(--deepgold);}
+.f-tag{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.2em;
+  color:var(--stone);font-weight:700;margin-bottom:10px;}
+.f-stat{font-size:60px;font-weight:800;line-height:1;letter-spacing:-0.03em;color:var(--gold);margin-bottom:8px;}
+.fact.t .f-stat{color:var(--terra);} .fact.s .f-stat{color:var(--sage);}
+.fact.p .f-stat{color:var(--plum);} .fact.d .f-stat{color:var(--deepgold);}
+.f-stat .unit{font-size:24px;font-weight:600;color:var(--stone);margin-left:4px;}
+.f-msg{font-size:20px;line-height:1.55;color:var(--ink);margin-bottom:14px;flex:1;}
+.f-msg strong{font-weight:700;}
+.f-src{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--ink);
+  padding-top:12px;border-top:1px dashed var(--fog);letter-spacing:0.03em;line-height:1.45;font-weight:600;}
+.bottom-call{background:linear-gradient(135deg,rgba(184,134,78,0.20),rgba(178,90,62,0.14));
+  border-radius:14px;padding:20px 32px;margin-top:18px;display:flex;align-items:center;gap:24px;
+  border-left:6px solid var(--gold);}
+.bc-icon{font-size:32px;}
+.bc-text{flex:1;font-size:20px;line-height:1.4;color:var(--ink);}
+.bc-text strong{color:var(--gold);font-weight:800;}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">01 · 시장 사실</div>
+  <div class="q">정보보호공시는 어떤 시장인가</div>
+  <h1>사실 4개. <span class="gold">근거 출처</span> 표기.</h1>
+  <p class="lead">추정·가정 X. 공식 출처와 학술 근거로만 시장 정의.</p>
+  <div class="facts">
+    <div class="fact">
+      <div class="f-tag">FACT 1 · 의무 시기</div>
+      <div class="f-stat">2027</div>
+      <div class="f-msg">정보보호산업법 시행령 개정안 <strong>2026-01~02 입법예고</strong>.<br>통과 시 <strong>2027 공시 대상자부터 적용</strong>.</div>
+      <svg viewBox="0 0 240 60" style="margin:10px 0;width:100%;height:50px;">
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#B8864E" stop-opacity="0.2"/><stop offset="100%" stop-color="#B8864E"/></linearGradient></defs>
+        <line x1="20" y1="40" x2="220" y2="40" stroke="#D8D2C2" stroke-width="2"/>
+        <circle cx="40" cy="40" r="6" fill="#D8D2C2"/><text x="40" y="20" font-size="9" text-anchor="middle" font-family="JetBrains Mono" fill="#6E685C">2024</text>
+        <circle cx="100" cy="40" r="6" fill="#D8D2C2"/><text x="100" y="20" font-size="9" text-anchor="middle" font-family="JetBrains Mono" fill="#6E685C">2025</text>
+        <circle cx="160" cy="40" r="8" fill="#B8864E"/><text x="160" y="20" font-size="9" text-anchor="middle" font-family="JetBrains Mono" fill="#B8864E" font-weight="700">2026 입법</text>
+        <circle cx="210" cy="40" r="10" fill="#B25A3E"/><text x="210" y="58" font-size="10" text-anchor="middle" font-family="JetBrains Mono" fill="#B25A3E" font-weight="700">2027</text>
+      </svg>
+      <div class="f-src">출처: 정책브리핑 156739067<br>법제처 입법예고 (moleg.go.kr)</div>
+    </div>
+    <div class="fact t">
+      <div class="f-tag">FACT 2 · 신규 의무사</div>
+      <div class="f-stat">3,900<span class="unit">곳</span></div>
+      <div class="f-msg">상장사 전체 (코스피·코스닥 ~2,500) + ISMS 인증 의무사 (~1,400). <strong>매출 3,000억 조건 삭제</strong>.</div>
+      <svg viewBox="0 0 240 60" style="margin:10px 0;width:100%;height:50px;">
+        <rect x="20" y="30" width="120" height="22" rx="3" fill="#B25A3E" opacity="0.85"/>
+        <text x="80" y="46" font-size="11" text-anchor="middle" font-family="JetBrains Mono" fill="white" font-weight="700">상장사 2,500</text>
+        <rect x="142" y="30" width="78" height="22" rx="3" fill="#B25A3E" opacity="0.45"/>
+        <text x="181" y="46" font-size="10" text-anchor="middle" font-family="JetBrains Mono" fill="white" font-weight="700">ISMS 1,400</text>
+        <text x="120" y="18" font-size="10" text-anchor="middle" font-family="JetBrains Mono" fill="#B25A3E" font-weight="700">합계 3,900곳 · 1년 후 시행</text>
+      </svg>
+      <div class="f-src">출처: m.boannews.com/html/detail.html?idx=141413<br>"모든 상장사 2027부터 의무"</div>
+    </div>
+    <div class="fact s">
+      <div class="f-tag">FACT 3 · 평균 비용</div>
+      <div class="f-stat">1,199<span class="unit">만/년</span></div>
+      <div class="f-msg">현재 의무사 671곳 평균 정보보호공시 작성 비용. <strong>대기업·중견 평균</strong> (자료 작성·검증·외주 포함).</div>
+      <svg viewBox="0 0 240 60" style="margin:10px 0;width:100%;height:50px;">
+        <text x="20" y="20" font-size="10" font-family="JetBrains Mono" fill="#6E685C">전체 작성 비용 분포</text>
+        <rect x="20" y="32" width="200" height="14" rx="2" fill="#D8D2C2"/>
+        <rect x="20" y="32" width="120" height="14" rx="2" fill="#6B8E7F"/>
+        <line x1="120" y1="28" x2="120" y2="52" stroke="#1A1D24" stroke-width="2"/>
+        <text x="120" y="58" font-size="10" text-anchor="middle" font-family="JetBrains Mono" fill="#1A1D24" font-weight="700">평균 1,199만</text>
+      </svg>
+      <div class="f-src">출처: www.news1.kr/it-science/security-hacking/6064957<br>"정보보호 공시 부담 1199만원"</div>
+    </div>
+    <div class="fact p">
+      <div class="f-tag">FACT 4 · 경제적 편익</div>
+      <div class="f-stat">15.75<span class="unit">배</span></div>
+      <div class="f-msg">정보보호공시제도 사회경제적 편익 = <strong>1,200억 / 비용편익비 15.75</strong>. 정부 확대 의지 강함.</div>
+      <svg viewBox="0 0 240 60" style="margin:10px 0;width:100%;height:50px;">
+        <rect x="20" y="40" width="10" height="14" rx="2" fill="#D8D2C2"/>
+        <text x="25" y="34" font-size="9" text-anchor="middle" font-family="JetBrains Mono" fill="#6E685C">비용 1</text>
+        <rect x="50" y="10" width="170" height="44" rx="2" fill="#7A4E6B" opacity="0.85"/>
+        <text x="135" y="38" font-size="14" text-anchor="middle" font-family="JetBrains Mono" fill="white" font-weight="700">편익 15.75배</text>
+      </svg>
+      <div class="f-src">출처: kci.go.kr/kciportal · ART003162174<br>"공시제도 효과 분석" 학술</div>
+    </div>
+  </div>
+  <div class="bottom-call">
+    <div class="bc-icon">⚖️</div>
+    <div class="bc-text">위반 시 <strong>1천만원 이하 과태료</strong> + 사후검증 회계 정합성 강화 (2026) → 외부 자동화 도구 수요 폭증. KPMG SaaS 5월 출시가 시장 신호.</div>
+  </div>
+  <div class="footer"><span>2026-05-18 1차 조사 기준 · 모든 수치 공식 출처 표기</span><span>02 / 10</span></div>
+</div>
+</body></html>

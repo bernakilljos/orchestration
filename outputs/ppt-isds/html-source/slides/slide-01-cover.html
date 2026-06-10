@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:#FAF5EA;background:#1A1D24;}
+.slide{width:1920px;height:1080px;padding:120px 120px 80px 120px;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;
+  background:
+    radial-gradient(ellipse 1400px 1000px at 100% 0%, rgba(184,134,78,0.32), transparent 55%),
+    radial-gradient(ellipse 1100px 850px at 0% 100%, rgba(107,142,127,0.20), transparent 50%),
+    linear-gradient(135deg, #1A1D24 0%, #2A2D34 100%);}
+.brand{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.35em;
+  color:rgba(250,245,234,0.55);font-weight:700;margin-bottom:10px;}
+.brand-line{height:2px;width:90px;background:var(--gold);margin-bottom:54px;}
+.headline{font-family:'Pretendard Variable',sans-serif;font-size:118px;font-weight:800;
+  line-height:1.04;letter-spacing:-0.025em;margin:0 0 36px 0;color:#FAF5EA;}
+.headline .strong{color:var(--gold);}
+.headline .num{font-family:'JetBrains Mono',monospace;font-size:104px;letter-spacing:-0.04em;}
+.sub-msg{font-family:'Fraunces',serif;font-style:italic;font-size:34px;font-weight:400;
+  line-height:1.5;color:rgba(250,245,234,0.85);max-width:1620px;margin:0;}
+.deco-num{position:absolute;right:130px;top:200px;font-family:'Fraunces',serif;
+  font-size:340px;line-height:1;color:rgba(184,134,78,0.08);font-weight:700;
+  pointer-events:none;letter-spacing:-0.04em;}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end;
+  padding-top:36px;border-top:1px solid rgba(216,210,194,0.18);}
+.kpis{display:flex;gap:48px;}
+.kpi{display:flex;flex-direction:column;gap:2px;}
+.kpi-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.2em;
+  color:rgba(250,245,234,0.5);text-transform:uppercase;font-weight:600;}
+.kpi-val{font-family:'Pretendard Variable',sans-serif;font-size:22px;font-weight:700;color:#FAF5EA;}
+.kpi-val .gold{color:var(--gold);}
+.who{text-align:right;display:flex;flex-direction:column;gap:4px;}
+</style></head>
+<body>
+<div class="slide">
+  <div class="deco-num">2027</div>
+  <div>
+    <div class="brand">아이티센 코어 ESG 사업부 · NEW BUSINESS</div>
+    <div class="brand-line"></div>
+    <h1 class="headline">
+      <span class="strong">기존 고객</span>이<br>
+      이미 우리와 일하고 있다.<br>
+      <span class="strong">다음은 정보보호공시.</span>
+    </h1>
+    <p class="sub-msg">MicroICM 내부회계 SaaS (국내 1위) — 이미 회계팀과 연결된 채널.<br>2027 정보보호공시 의무 확대, 기존 고객에게 회계 자원 그대로 확장.</p>
+  </div>
+  <div class="bottom">
+    <div class="kpis">
+      <div class="kpi"><span class="kpi-lbl">기존 채널</span><span class="kpi-val">MicroICM 800+ 기업</span></div>
+      <div class="kpi"><span class="kpi-lbl">의무 시행</span><span class="kpi-val">2027 / 1년 후</span></div>
+      <div class="kpi"><span class="kpi-lbl">3년차 예상 매출</span><span class="kpi-val">최대 <span class="gold">46억</span> / 년</span></div>
+      <div class="kpi"><span class="kpi-lbl">검토 단계 비용</span><span class="kpi-val">2,000만 · 1개월</span></div>
+    </div>
+    <div class="who">
+      <span class="kpi-lbl">REPORT · 2026-05-18</span>
+      <span class="kpi-val">아이티센 코어 ESG 사업부</span>
+    </div>
+  </div>
+</div>
+</body></html>

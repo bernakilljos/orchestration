@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:var(--ink);}
+.slide{width:1920px;height:1080px;padding:80px 100px 56px 100px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,#FAF5EA 0%,#EFE5CC 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--deepgold);font-weight:700;margin-bottom:10px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--stone);margin-bottom:4px;}
+h1{font-size:60px;font-weight:800;margin:0 0 12px 0;letter-spacing:-0.02em;line-height:1.15;}
+h1 .deepgold{color:var(--deepgold);}
+.lead{font-size:21px;color:var(--stone);max-width:1500px;line-height:1.5;margin-bottom:34px;}
+.body{flex:1;display:flex;flex-direction:column;gap:22px;min-height:0;}
+.tl-axis{height:14px;background:linear-gradient(90deg,var(--terra) 0%,var(--gold) 25%,var(--sage) 50%,var(--plum) 75%,var(--deepgold) 100%);
+  border-radius:7px;margin:30px 80px 0 80px;position:relative;box-shadow:0 2px 8px rgba(26,29,36,0.15);}
+.tl-marks{display:flex;justify-content:space-between;margin:0 80px;padding-top:8px;}
+.tl-mark{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);font-weight:700;}
+.tl-mark.now{color:var(--terra);font-weight:800;}
+.phases{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;min-height:0;}
+.phase{background:white;border-radius:18px;padding:24px 26px;
+  box-shadow:0 4px 20px rgba(26,29,36,0.08);display:flex;flex-direction:column;min-height:0;}
+.phase.p0{border-top:6px solid var(--terra);}
+.phase.p1{border-top:6px solid var(--gold);}
+.phase.p2{border-top:6px solid var(--sage);}
+.phase.p3{border-top:6px solid var(--plum);}
+.p-tag{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.2em;
+  font-weight:700;padding:4px 10px;border-radius:10px;align-self:flex-start;margin-bottom:10px;}
+.phase.p0 .p-tag{background:rgba(178,90,62,0.14);color:var(--terra);}
+.phase.p1 .p-tag{background:rgba(184,134,78,0.14);color:var(--gold);}
+.phase.p2 .p-tag{background:rgba(107,142,127,0.14);color:var(--sage);}
+.phase.p3 .p-tag{background:rgba(122,78,107,0.14);color:var(--plum);}
+.p-when{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  font-weight:700;margin-bottom:6px;letter-spacing:0.05em;}
+.p-title{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:12px;letter-spacing:-0.01em;}
+.p-acts{font-size:19px;line-height:1.6;flex:1;}
+.p-acts li{margin-bottom:4px;}
+.p-acts strong{font-weight:700;}
+.p-stat{margin-top:8px;padding:8px 12px;background:rgba(0,0,0,0.04);border-radius:8px;
+  display:flex;justify-content:space-between;align-items:center;}
+.phase{padding:18px 22px !important;}
+.p-acts{font-size:18px !important;line-height:1.5 !important;}
+.p-title{margin-bottom:8px !important;font-size:21px !important;}
+.p-stat-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--stone);letter-spacing:0.1em;}
+.p-stat-val{font-weight:800;color:var(--ink);font-size:19px;}
+.p-cumul{margin-top:8px;flex:0 0 auto;}
+.p-cumul-track{position:relative;width:100%;height:18px;background:rgba(0,0,0,0.10);
+  border-radius:9px;overflow:hidden;}
+.p-cumul-fill{position:absolute;top:0;left:0;height:100%;background:var(--terra);border-radius:9px;}
+.phase.p1 .p-cumul-fill{background:var(--gold);}
+.phase.p2 .p-cumul-fill{background:var(--sage);}
+.phase.p3 .p-cumul-fill{background:var(--plum);}
+.p-cumul-text{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);
+  font-weight:700;margin-top:4px;display:block;letter-spacing:0.04em;}
+.tl-pin{position:absolute;top:-22px;width:0;height:0;display:block;
+  border-left:10px solid transparent;border-right:10px solid transparent;
+  transform:translateX(-50%);}
+.tl-pin.p0{left:5%;border-top:18px solid var(--terra);}
+.tl-pin.p1{left:30%;border-top:18px solid var(--gold);}
+.tl-pin.p2{left:55%;border-top:18px solid var(--sage);}
+.tl-pin.p3{left:80%;border-top:18px solid var(--plum);}
+.footer{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--stone);
+  display:flex;justify-content:space-between;margin-top:14px;padding-top:14px;
+  border-top:1px solid var(--fog);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">06 · 실행 Roadmap</div>
+  <div class="q">언제 무엇을 하는가</div>
+  <h1>지금부터 <span class="deepgold">11개월 역산</span>. 2027 의무 시행 직전 출시.</h1>
+  <p class="lead">Phase 0 (이번 주 결정) → Phase 1 MVP → Phase 2 베타 → Phase 3 정식 출시. 매 단계 BEP·중단 기준 명확.</p>
+  <div class="body">
+    <div class="tl-axis">
+      <span class="tl-pin p0"></span>
+      <span class="tl-pin p1"></span>
+      <span class="tl-pin p2"></span>
+      <span class="tl-pin p3"></span>
+    </div>
+    <div class="tl-marks">
+      <span class="tl-mark now">▼ 2026-05 지금</span>
+      <span class="tl-mark">2026-06</span>
+      <span class="tl-mark">2026-09</span>
+      <span class="tl-mark">2026-12</span>
+      <span class="tl-mark">2027-03 출시</span>
+    </div>
+    <div class="phases">
+      <div class="phase p0">
+        <span class="p-tag">PHASE 0</span>
+        <div class="p-when">5월 ~ 6월 · 1개월</div>
+        <div class="p-title">기존 고객 검증</div>
+        <ul class="p-acts">
+          <li>MicroICM 기존 고객 중 <strong>2027 의무사 후보</strong> 추출</li>
+          <li>5~10사 인터뷰 (정보보호공시 작년 부담)</li>
+          <li>API 연동 가능성 기술 검토</li>
+          <li>KISA 양식 정확 spec</li>
+          <li><strong>PRD + 베타 의향서</strong></li>
+        </ul>
+        <div class="p-stat"><span class="p-stat-lbl">비용</span><span class="p-stat-val">2,000만</span></div>
+        <div class="p-cumul">
+          <div class="p-cumul-track"><div class="p-cumul-fill" style="width:3%"></div></div>
+          <span class="p-cumul-text">누적 2,000만 / 5.9억</span>
+        </div>
+      </div>
+      <div class="phase p1">
+        <span class="p-tag">PHASE 1</span>
+        <div class="p-when">7월 ~ 9월 · 3개월</div>
+        <div class="p-title">MVP 개발</div>
+        <ul class="p-acts">
+          <li>MicroICM API 연동 모듈</li>
+          <li>ISMS 인증서 OCR + 항목 추출</li>
+          <li>KISA 양식 자동 채움 엔진</li>
+          <li>Cen's TRM 회계 정합성 검증 통합</li>
+          <li>채용: AI 엔지니어 1 + 보안 도메인 1</li>
+        </ul>
+        <div class="p-stat"><span class="p-stat-lbl">비용</span><span class="p-stat-val">1.5억</span></div>
+        <div class="p-cumul">
+          <div class="p-cumul-track"><div class="p-cumul-fill" style="width:29%"></div></div>
+          <span class="p-cumul-text">누적 1.7억 / 5.9억</span>
+        </div>
+      </div>
+      <div class="phase p2">
+        <span class="p-tag">PHASE 2</span>
+        <div class="p-when">10월 ~ 12월 · 3개월</div>
+        <div class="p-title">베타 + 사전점검</div>
+        <ul class="p-acts">
+          <li>베타 5사 무상 사용 (3개월)</li>
+          <li>KISA 사전점검 실 신청 → 통과 사례</li>
+          <li>사전점검 옵션 검증</li>
+          <li>SaaS 출시 채널 준비</li>
+          <li>가격 정책 최종</li>
+        </ul>
+        <div class="p-stat"><span class="p-stat-lbl">비용</span><span class="p-stat-val">2억</span></div>
+        <div class="p-cumul">
+          <div class="p-cumul-track"><div class="p-cumul-fill" style="width:63%"></div></div>
+          <span class="p-cumul-text">누적 3.7억 / 5.9억</span>
+        </div>
+      </div>
+      <div class="phase p3">
+        <span class="p-tag">PHASE 3</span>
+        <div class="p-when">2027-01 ~ 06 · 6개월</div>
+        <div class="p-title">시장 진입</div>
+        <ul class="p-acts">
+          <li>SaaS 정식 출시 (2027-03)</li>
+          <li>의무 시행 첫 해 → 폭증 수요</li>
+          <li>Y1 목표 26사 유료 가입</li>
+          <li>6/30 첫 제출 마감 대응</li>
+          <li><strong>BEP 달성 (1년차 매출 3.9억)</strong></li>
+        </ul>
+        <div class="p-stat"><span class="p-stat-lbl">1년차 매출</span><span class="p-stat-val">+3.9억</span></div>
+        <div class="p-cumul">
+          <div class="p-cumul-track"><div class="p-cumul-fill" style="width:100%"></div></div>
+          <span class="p-cumul-text">누적 5.9억 → BEP 회수</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>중단 기준: Phase 2 종료 시 베타 5사 중 3사 유료 전환 의향 X → 사업 중단 (손절 한계 3.5억)</span><span>07 / 10 · Roadmap</span></div>
+</div>
+</body></html>

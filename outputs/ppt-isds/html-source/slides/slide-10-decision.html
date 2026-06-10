@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#B8864E;--sage:#6B8E7F;--plum:#7A4E6B;--terra:#B25A3E;--deepgold:#8A6235;
+  --ink:#1A1D24;--stone:#6E685C;--fog:#D8D2C2;--cream:#FAF5EA;}
+body{margin:0;font-family:'Pretendard Variable',sans-serif;color:#FAF5EA;background:#1A1D24;}
+.slide{width:1920px;height:1080px;padding:100px 120px 80px 120px;box-sizing:border-box;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:
+    radial-gradient(ellipse 1400px 1000px at 100% 0%, rgba(184,134,78,0.32), transparent 55%),
+    radial-gradient(ellipse 1100px 850px at 0% 100%, rgba(107,142,127,0.22), transparent 50%),
+    linear-gradient(135deg, #1A1D24 0%, #2A2D34 100%);}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.3em;
+  color:var(--gold);font-weight:700;margin-bottom:14px;}
+.q{font-family:'Fraunces',serif;font-style:italic;font-size:30px;color:rgba(250,245,234,0.7);margin-bottom:6px;}
+h1{font-size:90px;font-weight:800;margin:0 0 28px 0;letter-spacing:-0.025em;line-height:1.05;color:#FAF5EA;}
+h1 .gold{color:var(--gold);}
+.lead{font-family:'Fraunces',serif;font-style:italic;font-size:34px;color:rgba(250,245,234,0.85);
+  max-width:1600px;line-height:1.4;margin-bottom:42px;font-weight:400;}
+.body{flex:1;display:grid;grid-template-columns:1.3fr 1fr;gap:48px;min-height:0;}
+.ask{background:rgba(250,245,234,0.06);border:2px solid var(--gold);border-radius:24px;
+  padding:42px 48px;display:flex;flex-direction:column;backdrop-filter:blur(8px);}
+.ask-tag{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.25em;
+  color:var(--gold);font-weight:700;margin-bottom:12px;}
+.ask-title{font-size:42px;font-weight:800;line-height:1.15;margin-bottom:18px;color:#FAF5EA;}
+.ask-body{font-size:20px;line-height:1.6;color:rgba(250,245,234,0.92);margin-bottom:24px;}
+.ask-body strong{color:var(--gold);font-weight:700;}
+.ask-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto;}
+.ai{background:rgba(184,134,78,0.18);border-radius:12px;padding:16px 18px;
+  border-left:4px solid var(--gold);}
+.ai-lbl{font-family:'JetBrains Mono',monospace;font-size:19px;color:rgba(250,245,234,0.65);
+  letter-spacing:0.15em;font-weight:600;margin-bottom:4px;}
+.ai-val{font-size:20px;font-weight:800;color:#FAF5EA;}
+.next{display:flex;flex-direction:column;gap:12px;}
+.next-tag{font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:0.2em;
+  color:rgba(250,245,234,0.5);font-weight:600;margin-bottom:4px;}
+.step{background:rgba(250,245,234,0.08);border-radius:14px;padding:18px 22px;
+  display:flex;gap:16px;align-items:center;border-left:4px solid var(--gold);}
+.step.s2{border-left-color:var(--terra);} .step.s3{border-left-color:var(--sage);}
+.step.s4{border-left-color:var(--plum);} .step.s5{border-left-color:var(--deepgold);}
+.step-num{width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;flex-shrink:0;}
+.step.s2 .step-num{background:var(--terra);} .step.s3 .step-num{background:var(--sage);}
+.step.s4 .step-num{background:var(--plum);} .step.s5 .step-num{background:var(--deepgold);}
+.step-content{flex:1;}
+.step-title{font-size:20px;font-weight:700;color:#FAF5EA;margin-bottom:3px;}
+.step-desc{font-size:19px;color:rgba(250,245,234,0.7);line-height:1.4;}
+.contact{font-family:'JetBrains Mono',monospace;font-size:19px;color:rgba(250,245,234,0.55);
+  display:flex;justify-content:space-between;margin-top:24px;padding-top:18px;
+  border-top:1px solid rgba(216,210,194,0.18);}
+</style></head>
+<body>
+<div class="slide">
+  <div class="eyebrow">09 · 다음 단계 제안</div>
+  <div class="q">사업부장께 제안 드린다</div>
+  <h1>Phase 0 <span class="gold">시장 검증</span></h1>
+  <div class="lead">기존 MicroICM 고객 인터뷰 1개월 가능 여부 검토. <strong style="color:#FAF5EA;">실 영업 가능성 확인</strong>. 결과 후 Phase 1 진입 별도 검토.</div>
+  <div class="body">
+    <div class="ask">
+      <span class="ask-tag">PROPOSAL · 검토 제안</span>
+      <div class="ask-title">MicroICM 기존 고객 중<br>2027 의무사 인터뷰<br>1개월 검증</div>
+      <div class="ask-body">
+        대상: <strong>MicroICM 기존 고객 + 2027 정보보호공시 의무사</strong>.<br>
+        활동: 5~10사 인터뷰 → 작년 작성 부담 청취 → 자동화 가치 검증.<br>
+        결과물: <strong>PRD + 베타 의향서 + 영업 가능성 보고</strong>.
+      </div>
+      <div class="ask-grid">
+        <div class="ai"><div class="ai-lbl">비용</div><div class="ai-val">2,000만</div></div>
+        <div class="ai"><div class="ai-lbl">기간</div><div class="ai-val">1개월</div></div>
+        <div class="ai"><div class="ai-lbl">인력</div><div class="ai-val">1~2명</div></div>
+        <div class="ai"><div class="ai-lbl">기존 채널</div><div class="ai-val">기존 고객 영업</div></div>
+      </div>
+    </div>
+    <div class="next">
+      <span class="next-tag">DECISION TREE · 단계별</span>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Phase 0 시장 검증 (제안)</div>
+          <div class="step-desc">2,000만 · 1개월 · 기존 채널 활용 인터뷰</div>
+        </div>
+      </div>
+      <div class="step s2">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">2026-06 — Phase 0 결과 보고</div>
+          <div class="step-desc">5~10사 인터뷰 결과 → Phase 1 진입 결정</div>
+        </div>
+      </div>
+      <div class="step s3">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">2026-07~09 — Phase 1 (MVP)</div>
+          <div class="step-desc">1.5억 · MicroICM API 연동 · 채용 2명</div>
+        </div>
+      </div>
+      <div class="step s4">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">2026-10~12 — Phase 2 (베타)</div>
+          <div class="step-desc">베타 5사 + 사전점검 사례 + 손절 결정점</div>
+        </div>
+      </div>
+      <div class="step s5">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">2027-03 — 정식 출시 / 1년차 매출 3.9억</div>
+          <div class="step-desc">의무 시행 첫 해 · BEP 달성</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="contact">
+    <span>아이티센 코어 ESG 사업부 신규사업 · 2026-05-18</span>
+    <span>10 / 10 · END</span>
+  </div>
+</div>
+</body></html>

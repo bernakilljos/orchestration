@@ -1,0 +1,24 @@
+{
+  "name": "orchestration_v1",
+  "version": "1.0.0",
+  "description": "Claude Opus 4.7 (Team Lead) + Codex (Implementation) + Haiku 4.5 (Review) — Plugin-Centric 멀티AI 오케스트레이션",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bernakilljos/orchestration.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bernakilljos/orchestration/issues"
+  },
+  "homepage": "https://github.com/bernakilljos/orchestration#readme"
+}

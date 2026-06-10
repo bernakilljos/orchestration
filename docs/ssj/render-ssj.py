@@ -215,7 +215,17 @@ body{{width:850px;height:1100px;background:#efe7d6;
       </ul>
     </div>
     <div class="card">
-      <h3>{I['plant']} 비싸지면 알아서 줄인다</h3>
+      <h3>{I['plant']} 쓸수록 똑똑해진다 (자기 개선)</h3>
+      <ul>
+        <li>&middot; 지적 한 번이면 메모리에 영구 저장</li>
+        <li>&middot; 같은 실수 두 번 안 한다</li>
+        <li>&middot; AI 가 AI 검토 (Self-Critique)</li>
+        <li>&middot; 실패 패턴 자동 학습 (Reflexion)</li>
+        <li>&middot; 매 세션 학습 데이터 누적</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>{I['gear']} 비싸지면 알아서 줄인다</h3>
       <ul>
         <li>&middot; 일일 비용 상한 자동 fallback</li>
         <li>&middot; Quota 초과 지수 backoff</li>
@@ -343,13 +353,13 @@ body{{width:850px;height:1100px;background:#efe7d6;
       </ul>
     </div>
     <div class="card">
-      <h3>{I['plant']} 점점 커지는 것</h3>
+      <h3>{I['plant']} 스스로 자라는 도구</h3>
       <ul>
-        <li>&middot; 매주 새 도구가 들어 온다</li>
-        <li>&middot; 사용한 만큼 똑똑해진다</li>
-        <li>&middot; 실패는 학습으로 쌓인다</li>
+        <li>&middot; 어제 안 됐던 것이 오늘은 된다</li>
+        <li>&middot; 사용자 피드백이 곧 룰이 된다</li>
+        <li>&middot; AI 가 AI 의 결과를 다듬는다</li>
         <li>&middot; 32 → 50 → 100 플러그인</li>
-        <li>&middot; 무료·오픈소스 영원</li>
+        <li>&middot; 매주 새 도구가 들어 온다</li>
       </ul>
     </div>
     <div class="card">
