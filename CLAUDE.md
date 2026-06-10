@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-08): plugins 32 stable + 0 spec-only · rules 17 · hooks 28 · scripts 112
+> **현재 상태** (2026-06-09): plugins 32 stable + 0 spec-only · rules 17 · hooks 28 · scripts 112
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -166,6 +166,8 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 21. **수정·빌드 후 자동 검증 후 보고** — "수정했습니다" 만 보고 X. 검증 도구 자동 실행 → PASS 확인 → 보고 순서. FAIL 이면 사용자에게 알리지 않고 자동 재시도 (max 3회). 3회 후에도 FAIL = 솔직히 보고 + 사용자 결정. 검증 매트릭스: PNG/docx/pptx/코드. 상세: `.claude/rules/best-practices.md` § 검증 후 보고
 22. **오염 파일 자동 정리** — `nul`/`NUL` (Windows redirect 잔재) · nested `.claude/.claude/` · 3일+ `*.bak`/`*.tmp`/`*.orig` · 14일+ `.claude/logs/*.log` · 30일+ `.claude/tasks/done/*` 자동 정리. SessionStart hook 으로 매 세션 실행. `2>nul` (cmd 스타일) bash 사용 금지 — `2>/dev/null` 사용. `PROJECT_ROOT` 계산 시 위치별 `../..` 깊이 주의 (안 그러면 nested 폴더 생성). 상세: `.claude/rules/cleanup-policy.md` · 스크립트 `.claude/scripts/cleanup-pollution.sh`
 23. **위험 작업 승인 없이 실행 금지 (HITL Approval Gate)** — `DROP TABLE` / `rm -rf` / `git push --force` / `sudo` / `curl|bash` / `npm publish` / `docker push prod` / `terraform apply -auto-approve` / Batch API 1000+ 등 위험 명령 감지 시 `approval-gate.py detect` 로 사전 점검 → 매치 시 `request` 로 `waiting_approval` 등록 → 사용자 `/approve <task_id>` 받은 후만 실행. 5 위험 카테고리 (data_loss/security/cost/system/irreversible) · CLAUDE.md § 7-11 알림 5가지와 정합. skill: `plugins/exec_orch/skills/skill-approval-gate.md` · handler: `.claude/scripts/approval-gate.py` · DB schema v2: `.claude/scripts/migrate-approval-gate.py`
+24. **화면·기능 검증 사용자 떠넘김 금지 (Smoke Test 의무)** — DB/API/프론트 변경 후 "확인해 주세요" 금지. 자동 smoke test 의무: SQL → endpoint curl, controller → curl + null·NPE check, 프론트 → Playwright render + console.error. NPE 같은 NULL 컬럼+unsafe 패턴은 smoke test 한 번이면 잡힘. "다음부터는" 약속 X. 사용자는 최종 시각만, AI 가 기능·화면 검증 책임. FAIL = max 3 재시도. 도구: `.claude/scripts/smoke-test-screen.sh` · hook: PostToolUse 자동. 상세: `.claude/rules/screen-verify.md`
+25. **거짓 PASS 보고 금지 (False-Report 차단)** — agent·도구 "PASS" 만으로 사용자 전달 X. 보고 직전 이중 검증: ① 도구 raw Read ② 본문 mojibake 직접 grep (U+FFFD, `꿇룷`, `점쇙올`, `Ã`, `?곸` 등 6 카테고리) ③ 백업 폴더 (`.bak`/`_backup`/`_v2`) 까지 ④ 0건 확인 후 PASS. 도구: `.claude/scripts/verify-no-mojibake.py`. 상세: `.claude/rules/no-false-report.md`
 
 ---
 

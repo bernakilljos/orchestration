@@ -274,6 +274,33 @@
     → 매치 시 approval-gate.py request 호출 + lock 해제 + LOOP 재진입
     → 사용자가 /approve <task_id> 후 재처리
 
+  [화면·기능 검증 자동 (CLAUDE.md §7-24)]
+    DB schema / API controller / 프론트 (HTML·JSX·TSX) 변경 후
+    "사용자가 확인해 주세요" 떠넘김 금지. AI 가 직접 자동 smoke test:
+      SQL → 영향 endpoint grep → curl 호출 + 응답 검사
+      Controller → endpoint curl + null·NPE·status 점검
+      프론트 → Playwright headless render + console.error 잡기
+    NPE 같은 NULL+null-unsafe 패턴은 smoke test 한 번이면 잡힘.
+    사용자는 최종 시각 확인만, AI 가 기능·화면 검증 책임.
+    도구: .claude/scripts/smoke-test-screen.sh
+    hook: .claude/hooks/auto-smoke-test.sh (PostToolUse Edit/Write 자동)
+
+  [거짓 PASS 보고 차단 (CLAUDE.md §7-25)]
+    agent 또는 자동 도구의 "PASS" 만으로 사용자에게 전달 금지.
+    보고 직전 이중 검증 의무:
+      1. 도구 raw 출력 직접 Read (exit code 만 보지 X)
+      2. 산출물 본문 mojibake 직접 grep — 6 카테고리:
+         - U+FFFD replacement char (UTF-8 디코딩 실패)
+         - 꿇룷·꿿·괓 (사용자 보고 실제 깨짐)
+         - 점쇙올·점시 (cp949 → UTF-8)
+         - Ã·â€·ï¿½ (UTF-8 → Latin-1)
+         - ?곸·?쒕 (EUC-KR 깨짐)
+         - 한글-?-한글 정규식
+      3. 백업 폴더 (.bak / _backup / _v2 / _old / archive) 까지
+      4. 깨짐 0건 확인 후 PASS
+    도구: .claude/scripts/verify-no-mojibake.py
+    skip: 룰 파일 자체 + _pdf_text/_ocr_text raw 추출본
+
   [MCP 토큰 최적화 — Deferred Tools (자동 적용)]
     Claude Code 최신 버전부터 MCP 도구 스키마를 지연 로딩(Lazy Load)함.
 

@@ -400,6 +400,14 @@
                                                             "timeout":  10,
                                                             "continueOnBlock":  true,
                                                             "async":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh\"",
+                                                            "timeout":  30,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true,
+                                                            "_purpose":  "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
                                                         }
                                                     ]
                                       },
