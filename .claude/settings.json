@@ -408,6 +408,14 @@
                                                             "continueOnBlock":  true,
                                                             "async":  true,
                                                             "_purpose":  "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
+                                                        },
+                                                        {
+                                                            "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh\"",
+                                                            "timeout":  15,
+                                                            "continueOnBlock":  true,
+                                                            "async":  true,
+                                                            "_purpose":  "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
                                                         }
                                                     ]
                                       },

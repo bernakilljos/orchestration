@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-09): plugins 32 stable + 0 spec-only · rules 17 · hooks 28 · scripts 112
+> **현재 상태** (2026-06-10): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 114
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -168,6 +168,17 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 23. **위험 작업 승인 없이 실행 금지 (HITL Approval Gate)** — `DROP TABLE` / `rm -rf` / `git push --force` / `sudo` / `curl|bash` / `npm publish` / `docker push prod` / `terraform apply -auto-approve` / Batch API 1000+ 등 위험 명령 감지 시 `approval-gate.py detect` 로 사전 점검 → 매치 시 `request` 로 `waiting_approval` 등록 → 사용자 `/approve <task_id>` 받은 후만 실행. 5 위험 카테고리 (data_loss/security/cost/system/irreversible) · CLAUDE.md § 7-11 알림 5가지와 정합. skill: `plugins/exec_orch/skills/skill-approval-gate.md` · handler: `.claude/scripts/approval-gate.py` · DB schema v2: `.claude/scripts/migrate-approval-gate.py`
 24. **화면·기능 검증 사용자 떠넘김 금지 (Smoke Test 의무)** — DB/API/프론트 변경 후 "확인해 주세요" 금지. 자동 smoke test 의무: SQL → endpoint curl, controller → curl + null·NPE check, 프론트 → Playwright render + console.error. NPE 같은 NULL 컬럼+unsafe 패턴은 smoke test 한 번이면 잡힘. "다음부터는" 약속 X. 사용자는 최종 시각만, AI 가 기능·화면 검증 책임. FAIL = max 3 재시도. 도구: `.claude/scripts/smoke-test-screen.sh` · hook: PostToolUse 자동. 상세: `.claude/rules/screen-verify.md`
 25. **거짓 PASS 보고 금지 (False-Report 차단)** — agent·도구 "PASS" 만으로 사용자 전달 X. 보고 직전 이중 검증: ① 도구 raw Read ② 본문 mojibake 직접 grep (U+FFFD, `꿇룷`, `점쇙올`, `Ã`, `?곸` 등 6 카테고리) ③ 백업 폴더 (`.bak`/`_backup`/`_v2`) 까지 ④ 0건 확인 후 PASS. 도구: `.claude/scripts/verify-no-mojibake.py`. 상세: `.claude/rules/no-false-report.md`
+
+### 룰·메모리 빠른 검색 (RAG 인덱스)
+룰·메모리·스크립트 누적 → grep 비효율 → 의미 기반 lookup. AI 가 먼저 활용.
+```bash
+python .claude/scripts/lookup-rule.py "검증 후 보고"   # 의미 기반 top-K
+python .claude/scripts/lookup-rule.py --status        # 인덱스 상태
+python .claude/scripts/lookup-rule.py --rebuild       # 강제 재구성
+```
+- 대상: `.claude/rules/*.md` · `~/.claude/projects/<proj>/memory/*.md` · `.claude/scripts/*` · `.claude/hooks/*` · CLAUDE.md § 7 (현재 252 entries)
+- 자동 rebuild: PostToolUse Edit/Write 시 (룰·메모리·CLAUDE.md 변경 감지)
+- 의존성 0 (TF 점수화 fallback) · chromadb 설치 시 벡터 검색 자동 전환 (예정)
 
 ---
 

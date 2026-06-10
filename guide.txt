@@ -285,6 +285,17 @@
     도구: .claude/scripts/smoke-test-screen.sh
     hook: .claude/hooks/auto-smoke-test.sh (PostToolUse Edit/Write 자동)
 
+  [룰·메모리 빠른 검색 (CLAUDE.md § 7 직후)]
+    누적된 룰·메모리·스크립트·hook → grep 비효율 → 의미 기반 lookup 도구.
+    AI 가 매번 grep 대신 먼저 lookup-rule.py 호출.
+      python .claude/scripts/lookup-rule.py "검증 후 보고"   # top-K 의미 검색
+      python .claude/scripts/lookup-rule.py "거짓 보고" --top 5
+      python .claude/scripts/lookup-rule.py --status        # 인덱스 상태
+      python .claude/scripts/lookup-rule.py --rebuild       # 강제 재구성
+    인덱스 대상: .claude/rules + memory + scripts + hooks + CLAUDE.md § 7
+    자동 rebuild: PostToolUse Edit/Write (룰·메모리·CLAUDE.md 변경)
+    저장: .claude/state/rule-index/rules.json
+
   [거짓 PASS 보고 차단 (CLAUDE.md §7-25)]
     agent 또는 자동 도구의 "PASS" 만으로 사용자에게 전달 금지.
     보고 직전 이중 검증 의무:
