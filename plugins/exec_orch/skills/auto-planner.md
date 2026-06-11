@@ -32,6 +32,21 @@ description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5�
 - 큰 작업 = codex/gemini 한테 task-instruction.md 로 위임
 - 메타 분석 (우리 시스템 매핑 등) 은 Claude 직접
 
+#### Path 2 — Mythos-class 자동 승격 (Opus 4.8 fail 시)
+같은 task 에서 Opus 4.8 가 2회 연속 fail (post-codex-verify hallucination 또는 INCONCLUSIVE) → **3회차는 Fable 5 자동 승격**.
+
+```bash
+# 1. 게이트 확인
+python .claude/scripts/route.py --check claude-fable-5
+# exit 0 = 사용 가능 / exit 1 = budget·quota 차단
+
+# 2. 사용 가능 → /effort mythos 모드로 재시도
+#  단발 예상 $5+ 시 사용자 승인 (cost critical)
+# 3. 차단 → Opus 4.8 재시도 (지수 backoff) 또는 사용자 결정 위임
+```
+
+상세: `plugins/exec_orch/commands/effort-mythos.md` · CLAUDE.md § 3.2 Mythos-class 행
+
 ### Step 4. 확인 (Verification)
 - smoke test, dry-run, 로그 점검
 - 자동 검증 hook 발동 (verify-image-fit, hook-09 등)

@@ -100,7 +100,8 @@ def cmd_status(args):
     # Quota status
     print("Quota Status:")
     for ai_name in [
-        "claude-opus-4-7",
+        "claude-fable-5",
+        "claude-opus-4-8",
         "claude-sonnet-4-6",
         "claude-haiku-4-5",
         "codex",
@@ -180,6 +181,60 @@ def cmd_metrics(args):
         print("No metrics recorded")
 
 
+def cmd_check(args):
+    """Check if an AI can be used (quota + budget + fable-5 20% gate).
+
+    Exits 0 if OK, 1 if any gate fails. Prints flags on stdout.
+    """
+    ai = args.check
+    from state_db import get_db
+
+    quota_ok = 0 if is_quota_exceeded(ai) else 1
+    budget_ok = 1
+    fable_ok = 1
+    fable_spent = 0.0
+    fable_cap = None
+
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT breaker_tripped, today_spent_usd, daily_limit_usd "
+            "FROM budget WHERE id=1"
+        ).fetchone()
+        if row:
+            breaker = row[0] or 0
+            today_spent = row[1] or 0.0
+            daily_limit = row[2]
+            if breaker:
+                budget_ok = 0
+            if daily_limit and today_spent >= daily_limit:
+                budget_ok = 0
+
+            if ai == "claude-fable-5" and daily_limit:
+                try:
+                    fable_spent = conn.execute(
+                        "SELECT COALESCE(SUM(total_cost_usd),0) FROM metrics "
+                        "WHERE ai=? AND ts > datetime('now','-24 hours')",
+                        (ai,),
+                    ).fetchone()[0] or 0.0
+                except Exception:
+                    fable_spent = 0.0
+                fable_cap = daily_limit * 0.20
+                if fable_spent >= fable_cap:
+                    fable_ok = 0
+
+    if ai == "claude-fable-5" and fable_cap is not None:
+        print(
+            f"quota_ok={quota_ok} budget_ok={budget_ok} fable_ok={fable_ok} "
+            f"fable_spent=${fable_spent:.2f} fable_cap=${fable_cap:.2f}"
+        )
+        ok = quota_ok and budget_ok and fable_ok
+    else:
+        print(f"quota_ok={quota_ok} budget_ok={budget_ok}")
+        ok = quota_ok and budget_ok
+
+    sys.exit(0 if ok else 1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Route tasks and manage budget/quota"
@@ -215,6 +270,13 @@ def main():
     parser.add_argument("--metrics", action="store_true", help="Print detailed metrics")
     parser.add_argument("--hours", type=int, help="Hours to include in metrics")
 
+    # Check (quota + budget + fable-5 20% gate)
+    parser.add_argument(
+        "--check",
+        help="Check if AI can be used (e.g. --check claude-fable-5). "
+             "Exits 0 if OK, 1 if any gate fails.",
+    )
+
     args = parser.parse_args()
 
     # Initialize DB schema
@@ -235,6 +297,8 @@ def main():
         cmd_reset_breaker(args)
     elif args.metrics:
         cmd_metrics(args)
+    elif args.check:
+        cmd_check(args)
     else:
         # Default: show status
         cmd_status(args)

@@ -45,6 +45,10 @@ sqlite3 .claude/state/metrics.db "SELECT quota_exceeded FROM quota WHERE ai='cla
 | 3개 이상 파일 걸친 작업 | **LARGE_SCOPE** | Opus 4.8 + 1M context |
 | "애매", "결정", "트레이드오프", "비교" | **DECISION** | Opus 4.8 + thinking |
 | 재시도 (retry_count > 0) | **RETRY** | Opus 4.8 재분석 |
+| **Opus 4.8 가 같은 task 2회 fail** | **MYTHOS** | **Fable 5 (/effort mythos)** |
+| **"fable 5", "mythos", "최고 모델"** | **MYTHOS** | **Fable 5 직통** |
+| **Dynamic Workflows orchestrator (수십~수백 subagent)** | **MYTHOS** | **Fable 5** |
+| **8h+ long-running autonomy / vision-heavy** | **MYTHOS** | **Fable 5** |
 | <200줄 구현, 버그 수정 | **SMALL** | Sonnet 4.6 또는 Haiku 4.5 |
 | 검증·리뷰·요약 | **VERIFY** | Haiku 4.5 (기본) |
 | 1M+ 문서 리서치 | **RESEARCH** | Gemini 2.0 Flash |
@@ -57,12 +61,24 @@ sqlite3 .claude/state/metrics.db "SELECT quota_exceeded FROM quota WHERE ai='cla
 IF budget.breaker_tripped:
   WAIT (다음 주기까지)
 
+IF MYTHOS:
+  # Path 2 자동 승격 또는 사용자 명시
+  result = check_fable_gate()  # route.py --check claude-fable-5
+  IF result.ok:
+    IF estimated_cost_usd >= 5.0:
+      ASK USER (cost critical CLAUDE.md § 7-11)
+    CLAUDE_FABLE_5 + /effort mythos
+  ELIF result.fable_ok == 0:  # 20% cap 도달
+    NOTIFY user (cost critical) → fallback CLAUDE_OPUS_4_8
+  ELSE:
+    fallback CLAUDE_OPUS_4_8 (quota/budget 차단)
+
 IF DESIGN OR DECISION:
-  CLAUDE_OPUS_4_7 + thinking(budget_tokens: 8000)
+  CLAUDE_OPUS_4_8 + thinking(budget_tokens: 8000)
   + prompt_caching(system + CLAUDE.md + route_dispatch 3줄)
 
 IF LARGE_SCOPE AND token_estimate < 800k:
-  CLAUDE_OPUS_4_7 (1M context 활용, thinking 선택)
+  CLAUDE_OPUS_4_8 (1M context 활용, thinking 선택)
 
 IF token_estimate >= 800k (프로젝트 분할 필요):
   IF quota.codex_ok:
@@ -98,7 +114,7 @@ IF SMALL:
   THEN Haiku 4.5 기본 검증
 
 DEFAULT (ambiguous):
-  CLAUDE_OPUS_4_7 (판단 역할)
+  CLAUDE_OPUS_4_8 (판단 역할)
 ```
 
 ---
