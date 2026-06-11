@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-10): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
+> **현재 상태** (2026-06-11): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -38,12 +38,14 @@
 1. **Orca Auto** — `.claude/skills/exec_orca-auto.md` 실행 (워커 spawn)
 2. **First-Run** — `docs/CLAUDE_SETUP_GUIDE.md` 있으면 처리 후 삭제
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
+4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 (⭐⭐ 이상 자율 반영, ⭐ 이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 
-### 3.2 AI 역할 (규모·특성 기반, 4.8 우선 — 2026-05-28 Opus 4.8 출시)
+### 3.2 AI 역할 (규모·특성 기반, 4.8 default · Fable 5 는 초난도만 — 2026-06-09 Fable 5 출시)
 | 태스크 | AI | 방법 |
 |--------|-----|------|
-| 설계·복잡추론 | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
-| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent 자동 orchestration, v2.1.154+) |
+| 설계·복잡추론 (일반) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
+| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent 자동 orchestration) |
+| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5** | **`/effort mythos` 또는 Opus 4.8 2회 fail 시 자동 승격 — $10/$50 (Opus 2배) · 일일 budget 20% 게이트 · cyber/bio/chem 자동 Opus fallback** |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
 | 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
@@ -51,7 +53,11 @@
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**Opus 4.8 가격** (2026-05-28부터): 표준 $5/$25 per MTok · Fast mode $10/$50 (2.5x 속도) — Fast mode 가격은 4.7 대비 인하.
+**가격** (2026-06-11 기준):
+- **Opus 4.8** (default): $5/$25 per MTok · Fast $10/$50 (2.5× 속도)
+- **Fable 5** (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · default 사용 X (Opus 4.8 가 우선)
+
+Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 
 라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성·quota 매트릭스)
 프롬프트 강화 (12 기법): `plugins/exec_orch/skills/prompt-techniques.md` + template `plugins/exec_orch/codex/task-instruction-template.md` (Role·Negative·Context·Few-shot·CoT·Prompt-chain·Meta·Self-consistency·ToT·ReAct·Zero-shot-CoT·RAG)
