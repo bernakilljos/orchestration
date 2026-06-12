@@ -35,6 +35,8 @@ description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5�
 #### Path 2 — Mythos-class 자동 승격 (Opus 4.8 fail 시)
 같은 task 에서 Opus 4.8 가 2회 연속 fail (post-codex-verify hallucination 또는 INCONCLUSIVE) → **3회차는 Fable 5 자동 승격**.
 
+> **sub-agent depth**: Claude Code v2.1.172+ 부터 sub-agent 가 sub-agent 를 spawn 가능 (최대 5 levels deep). Fable 5 orchestrator 가 Dynamic Workflows 안에서 깊은 위임 chain 가능 — Opus 가 표면 task 만 검증하다 fail 할 때 Fable 5 는 task 를 더 깊게 분해해서 재공략.
+
 ```bash
 # 1. 게이트 확인
 python .claude/scripts/route.py --check claude-fable-5

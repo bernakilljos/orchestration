@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-11): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
+> **현재 상태** (2026-06-12): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -44,7 +44,7 @@
 | 태스크 | AI | 방법 |
 |--------|-----|------|
 | 설계·복잡추론 (일반) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
-| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent 자동 orchestration) |
+| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent · sub-agent 가 sub-agent spawn 최대 5 levels deep, v2.1.172+) |
 | **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5** | **`/effort mythos` 또는 Opus 4.8 2회 fail 시 자동 승격 — $10/$50 (Opus 2배) · 일일 budget 20% 게이트 · cyber/bio/chem 자동 Opus fallback** |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
