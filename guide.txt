@@ -478,7 +478,29 @@
       - 멀티모달 (이미지·비디오) 검증
       - Haiku quota 소진 (자동 fallback)
 
-  [라우팅 정책 — Opus 4.8 default · Fable 5 Mythos-class (2026-06-09 Fable 5 출시)]
+  [🚨 2026-06-12: Fable 5 + Mythos 5 SUSPEND (US export-control)]
+    Anthropic 이 Fable 5 출시 3일 만에 US 정부 export-control directive 받음 → 일시 access 차단
+    재개 일정 미정. 우리 kit 자동 처리:
+      route.py --check claude-fable-5 → 항상 fable_ok=0 + fallback=claude-opus-4-8 출력
+      /effort mythos → Opus 4.8 강제 fallback
+      CLAUDE.md § 3.2 Mythos-class 행 [SUSPENDED 2026-06-12] 표시
+    재개 시: route.py SUSPEND_MODELS set 에서 'claude-fable-5' 제거 → 룰 복구
+
+  [🚨 2026-06-15: Agent SDK / claude -p billing 변화]
+    이전: Pro/Max/Team/Enterprise 의 "unlimited" subsidy — programmatic 루프가 interactive 가격
+    이후: plan fee 와 동일한 월 dollar credit — credit 소진 시 별도 API 과금
+    영향: codex-auto / gemini-auto / haiku-auto / vibe-loop / orcauto-start 등 모든 worker spawn
+    정책: route.py --check 가 일일 SDK credit 도 확인 (quota + budget + SDK credit 3중 게이트)
+
+  [Task Scheduler 자동 등록 (zero-touch — 2026-06-16 추가)]
+    SessionStart hook (.claude/hooks/auto-register-scheduled-tasks.sh) 가 매 세션 시작 시
+    register-official-features-task.ps1 호출 (idempotent — 이미 등록되면 skip).
+    Task: OrchestrationV1-OfficialFeaturesCheck (Daily 09:00)
+    Wrapper: .claude/scripts/run-official-features-check.bat
+    효과: 사용자가 claude 세션 안 열어도 매일 09:00 공식 changelog 자동 점검.
+    수동 등록: powershell -File setup\modules\register-official-features-task.ps1
+
+  [라우팅 정책 — Opus 4.8 default · Fable 5 Mythos-class (2026-06-09 Fable 5 출시, 06-12 SUSPEND)]
     기본 라우터가 4.8 중심·Fable 5 신중 승격으로 설계됨:
       설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)
       초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows)

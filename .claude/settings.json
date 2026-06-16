@@ -124,6 +124,16 @@
                         "async": true
                     }
                 ]
+            },
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-register-scheduled-tasks.sh\"",
+                        "timeout": 10,
+                        "async": true
+                    }
+                ]
             }
         ],
         "UserPromptSubmit": [

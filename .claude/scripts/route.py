@@ -189,9 +189,14 @@ def cmd_check(args):
     ai = args.check
     from state_db import get_db
 
+    # 🚨 SUSPEND mode (2026-06-12 US export-control)
+    # Fable 5 / Mythos 5 사용 차단 → 항상 fable_ok=0
+    # 재개 시 SUSPEND_MODELS 에서 제거
+    SUSPEND_MODELS = {"claude-fable-5", "claude-mythos-5"}
+
     quota_ok = 0 if is_quota_exceeded(ai) else 1
     budget_ok = 1
-    fable_ok = 1
+    fable_ok = 0 if ai in SUSPEND_MODELS else 1
     fable_spent = 0.0
     fable_cap = None
 
@@ -219,10 +224,18 @@ def cmd_check(args):
                 except Exception:
                     fable_spent = 0.0
                 fable_cap = daily_limit * 0.20
-                if fable_spent >= fable_cap:
+                # SUSPEND 모드면 fable_ok 가 이미 0 → 추가 게이트 영향 X
+                if ai not in SUSPEND_MODELS and fable_spent >= fable_cap:
                     fable_ok = 0
 
-    if ai == "claude-fable-5" and fable_cap is not None:
+    if ai in SUSPEND_MODELS:
+        print(
+            f"quota_ok={quota_ok} budget_ok={budget_ok} fable_ok=0 "
+            f"SUSPEND=US-export-control-2026-06-12 "
+            f"fallback=claude-opus-4-8"
+        )
+        ok = 0
+    elif ai == "claude-fable-5" and fable_cap is not None:
         print(
             f"quota_ok={quota_ok} budget_ok={budget_ok} fable_ok={fable_ok} "
             f"fable_spent=${fable_spent:.2f} fable_cap=${fable_cap:.2f}"

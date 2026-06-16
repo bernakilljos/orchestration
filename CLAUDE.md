@@ -45,7 +45,7 @@
 |--------|-----|------|
 | 설계·복잡추론 (일반) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
 | 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent · sub-agent 가 sub-agent spawn 최대 5 levels deep, v2.1.172+) |
-| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5** | **`/effort mythos` 또는 Opus 4.8 2회 fail 시 자동 승격 — $10/$50 (Opus 2배) · 일일 budget 20% 게이트 · cyber/bio/chem 자동 Opus fallback** |
+| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [SUSPENDED 2026-06-12]** | **🚨 2026-06-12 US export-control 으로 Fable 5 + Mythos 5 일시 suspend. 재개 미정. `/effort mythos` 호출 시 자동으로 Opus 4.8 fallback. route.py `--check claude-fable-5` 항상 fable_ok=0 반환** |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
 | 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
@@ -68,6 +68,12 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 - Quota 초과: 10m→20m→40m→2h 지수 backoff
 - Budget 초과: 일일 상한 (기본 무제한, `route.py --set-daily-limit` 설정 가능)
 - **절대 금지**: 빈 task 를 `done/` 으로 이동 (위장 완료)
+
+**🚨 Agent SDK / `claude -p` billing 변화 (2026-06-15 적용)**:
+- 이전: Pro/Max/Team/Enterprise 의 "unlimited" subsidy — programmatic 루프가 interactive 가격으로
+- 이후: **plan fee 와 동일한 월 dollar credit** 으로 변경 — credit 소진 시 별도 API 과금
+- 영향: `codex-auto`, `gemini-auto`, `haiku-auto`, `vibe-loop`, `orcauto-start` 등 모든 worker spawn 이 SDK credit 소비
+- 정책: route.py `--check` 가 일일 SDK credit 도 확인 (기존 quota + budget + SDK credit 3중 게이트)
 
 ### 3.4 Orca Auto 규칙
 - 활성: `.claude/orca-enabled` 있고 `.claude/orca-stopped` 없음
