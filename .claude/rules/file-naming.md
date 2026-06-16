@@ -22,6 +22,7 @@
 
 ## 에이전트
 - `agents/agent-XX-<role>.md`
+- **예외**: `plugins/vendor_*/agents/` 는 외부 표준 파일명 보존 (kebab-case 그대로) — vendoring 호환성 (예: `vendor_voltagent/agents/data-scientist.md`). plugin.json 의 `metadata.vendored: true` 명시 필수.
 
 ## 문서
 - 일반 문서: `docs/YYYY-MM-DD/<topic>.md`

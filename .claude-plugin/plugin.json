@@ -79,6 +79,7 @@
     "review_": "검증·리뷰·품질 계열",
     "route_":  "라우팅·판단·분기 계열",
     "state_":  "상태 저장·복구 계열",
+    "vendor_": "외부 vendored 패키지 (라이선스 명시 + plugin.json metadata.vendored=true)",
     "hook_":   "훅 관련 계열",
     "bridge_": "외부 AI 연동 계열",
     "mcp_":    "MCP 설치·연결 계열",

@@ -1,0 +1,28 @@
+{
+  "name": "vendor_voltagent",
+  "display": "VoltAgent awesome-claude-code-subagents 선별 vendoring (MIT) — data/AI + language",
+  "prefix": "vendor_",
+  "version": "0.1",
+  "status": "stable",
+  "phase": 3,
+  "commands": "commands/",
+  "agents": "agents/",
+  "dependencies": {
+    "plugins": ["exec_orch"],
+    "mcp": [],
+    "env": []
+  },
+  "metadata": {
+    "category": "vendor",
+    "tags": ["vendored", "voltagent", "subagents", "data-ai", "language-specialists"],
+    "author": "VoltAgent (MIT) / vendored by orchestration_v1",
+    "created": "2026-06-16",
+    "updated": "2026-06-16",
+    "precedence": 60,
+    "token_estimate": 8000,
+    "vendored": true,
+    "vendor_source": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+    "vendor_license": "MIT",
+    "vendor_copyright": "Copyright (c) 2025 VoltAgent"
+  }
+}
