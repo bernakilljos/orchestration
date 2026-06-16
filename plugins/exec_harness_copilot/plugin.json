@@ -1,6 +1,6 @@
 {
   "name": "exec_harness_copilot",
-  "display": "GitHub Copilot CLI 통합 — wshobson multi-harness 패턴 (spec-only)",
+  "display": "GitHub Copilot CLI 통합 — wshobson multi-harness 패턴 (experimental)",
   "prefix": "exec_",
   "version": "0.2",
   "status": "experimental",
