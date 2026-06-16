@@ -1,6 +1,6 @@
 {
   "name": "exec_graph",
-  "display": "Graph 기반 stateful orchestration (LangGraph 패턴, spec-only)",
+  "display": "Graph 기반 stateful orchestration (LangGraph 패턴, experimental)",
   "prefix": "exec_",
   "version": "0.2",
   "status": "experimental",
