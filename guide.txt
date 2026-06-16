@@ -532,6 +532,15 @@
       "fallbackModel": ["claude-sonnet-4-6", "claude-haiku-4-5"]
     정책: 다운그레이드 only (Fable 5 자동 fallback X — 비용 보호)
     primary (Opus 4.8) fail/quota → Sonnet 4.6 → Haiku 4.5 순차 시도
+    v2.1.178: compaction 이 --fallback-model 무시 버그 fix → cascade 안정성 ↑
+
+  [Claude Code v2.1.178 신규 (2026-06)]
+    Tool(param:value) permission syntax: wildcard 매칭 정밀화 (예: Write(.env*) deny)
+    nested .claude/skills directory: 깊은 폴더 skill 도 directory-qualified name 으로 load
+    auto mode: subagent spawn 전 classifier 가 사전 평가
+    /doctor: flat tree + 명령 이름 highlight
+    --safe-mode (v2.1.169) · /cd (v2.1.169) · post-session hook (v2.1.169) — 우리 kit 이미 통합
+    sub-agent 가 sub-agent spawn 5 levels deep (v2.1.172) — Dynamic Workflows·/effort mythos 정합
 
   [Claude Code v2.1.169+ post-session lifecycle hook]
     SessionEnd (사용자 명시 종료) 와 별개로 *모든* 종료 (kill·crash·timeout) 트리거

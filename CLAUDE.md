@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-12): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
+> **현재 상태** (2026-06-16): plugins 32 stable + 0 spec-only · rules 19 · hooks 28 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -53,9 +53,11 @@
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**가격** (2026-06-11 기준):
+**가격** (2026-06-16 기준):
 - **Opus 4.8** (default): $5/$25 per MTok · Fast $10/$50 (2.5× 속도)
-- **Fable 5** (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · default 사용 X (Opus 4.8 가 우선)
+- **Fable 5** (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · **🚨 2026-06-12 SUSPENDED** (US export-control)
+
+**Claude Code v2.1.178** (2026-06 신규): `Tool(param:value)` permission syntax (wildcard 매칭 정밀화) · `--fallback-model` compaction fix (우리 `fallbackModel` cascade 안정성 ↑) · nested `.claude/skills` directory 우선순위. 자세히는 `guide.txt`.
 
 Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 
