@@ -106,6 +106,8 @@ def cmd_status(args):
         "claude-haiku-4-5",
         "codex",
         "gemini",
+        "grok",       # Perplexity Computer 패턴 — lightweight/speed-sensitive
+        "gpt-5.2",    # Perplexity Computer 패턴 — long-context recall (2M+)
     ]:
         status = "EXCEEDED" if is_quota_exceeded(ai_name) else "OK"
         print(f"  {ai_name:<20} {status}")

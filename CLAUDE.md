@@ -50,6 +50,8 @@
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
 | 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
+| 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
+| 초장기 컨텍스트 recall (2M+) | GPT-5.2 | `route.py --check gpt-5.2` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
@@ -182,6 +184,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 23. **위험 작업 승인 없이 실행 금지 (HITL Approval Gate)** — `DROP TABLE` / `rm -rf` / `git push --force` / `sudo` / `curl|bash` / `npm publish` / `docker push prod` / `terraform apply -auto-approve` / Batch API 1000+ 등 위험 명령 감지 시 `approval-gate.py detect` 로 사전 점검 → 매치 시 `request` 로 `waiting_approval` 등록 → 사용자 `/approve <task_id>` 받은 후만 실행. 5 위험 카테고리 (data_loss/security/cost/system/irreversible) · CLAUDE.md § 7-11 알림 5가지와 정합. skill: `plugins/exec_orch/skills/skill-approval-gate.md` · handler: `.claude/scripts/approval-gate.py` · DB schema v2: `.claude/scripts/migrate-approval-gate.py`
 24. **화면·기능 검증 사용자 떠넘김 금지 (Smoke Test 의무)** — DB/API/프론트 변경 후 "확인해 주세요" 금지. 자동 smoke test 의무: SQL → endpoint curl, controller → curl + null·NPE check, 프론트 → Playwright render + console.error. NPE 같은 NULL 컬럼+unsafe 패턴은 smoke test 한 번이면 잡힘. "다음부터는" 약속 X. 사용자는 최종 시각만, AI 가 기능·화면 검증 책임. FAIL = max 3 재시도. 도구: `.claude/scripts/smoke-test-screen.sh` · hook: PostToolUse 자동. 상세: `.claude/rules/screen-verify.md`
 25. **거짓 PASS 보고 금지 (False-Report 차단)** — agent·도구 "PASS" 만으로 사용자 전달 X. 보고 직전 이중 검증: ① 도구 raw Read ② 본문 mojibake 직접 grep (U+FFFD, `꿇룷`, `점쇙올`, `Ã`, `?곸` 등 6 카테고리) ③ 백업 폴더 (`.bak`/`_backup`/`_v2`) 까지 ④ 0건 확인 후 PASS. 도구: `.claude/scripts/verify-no-mojibake.py`. 상세: `.claude/rules/no-false-report.md`
+26. **기준 일관성 (Standards Drift Prevention)** — 작업마다 적용 잣대 (들여쓰기·명명·자율vs승인·라우팅·검증·보고 형식·commit message) 흔들리면 사용자 신뢰 X. 같은 카테고리 = 같은 기준 매번. "이번엔 예외" 자기 판단 X. 룰 변경 시 명시 사유 + SoT 갱신 + memory + commit message + 다음 turn 부터 일괄 적용. 상세: `.claude/rules/consistency.md`
 
 ### 룰·메모리 빠른 검색 (RAG 인덱스)
 룰·메모리·스크립트 누적 → grep 비효율 → 의미 기반 lookup. AI 가 먼저 활용.

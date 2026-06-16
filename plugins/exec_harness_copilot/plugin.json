@@ -1,0 +1,24 @@
+{
+  "name": "exec_harness_copilot",
+  "display": "GitHub Copilot CLI 통합 — wshobson multi-harness 패턴 (spec-only)",
+  "prefix": "exec_",
+  "version": "0.1",
+  "status": "spec-only",
+  "phase": 3,
+  "commands": "commands/",
+  "skills": "skills/",
+  "dependencies": {
+    "plugins": ["exec_orch"],
+    "mcp": [],
+    "env": ["GITHUB_TOKEN"]
+  },
+  "metadata": {
+    "category": "harness",
+    "tags": ["copilot", "github", "multi-harness"],
+    "author": "orchestration_v1",
+    "created": "2026-06-16",
+    "updated": "2026-06-16",
+    "precedence": 80,
+    "token_estimate": 2000
+  }
+}

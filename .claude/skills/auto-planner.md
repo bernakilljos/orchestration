@@ -75,6 +75,7 @@ python .claude/scripts/route.py --check claude-fable-5
 | **멈춤 방지** | 60초 폴링·지수 backoff·대안 도구? |
 | **외국어 이미지** | 한글로 대체 (영어+한글 같이 X)? |
 | **다이어그램 품질** | SVG/HTML+화살표+흐름 (단순 박스/표만 = 위반)? |
+| **기준 일관성** | 지난 turn 과 같은 기준? 들여쓰기·명명·자율vs승인·라우팅·검증·보고 형식 모두 SoT 따름? (`.claude/rules/consistency.md`) |
 
 ## codex/gemini 위임 기준
 
