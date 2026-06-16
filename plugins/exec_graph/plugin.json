@@ -2,19 +2,25 @@
   "name": "exec_graph",
   "display": "Graph 기반 stateful orchestration (LangGraph 패턴, spec-only)",
   "prefix": "exec_",
-  "version": "0.1",
-  "status": "spec-only",
+  "version": "0.2",
+  "status": "experimental",
   "phase": 3,
   "commands": "commands/",
   "skills": "skills/",
   "dependencies": {
-    "plugins": ["exec_orch"],
+    "plugins": [
+      "exec_orch"
+    ],
     "mcp": [],
     "env": []
   },
   "metadata": {
     "category": "orchestration",
-    "tags": ["graph", "stateful", "langgraph"],
+    "tags": [
+      "graph",
+      "stateful",
+      "langgraph"
+    ],
     "author": "orchestration_v1",
     "created": "2026-06-16",
     "updated": "2026-06-16",

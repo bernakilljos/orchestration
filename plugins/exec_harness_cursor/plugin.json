@@ -1,20 +1,28 @@
 {
   "name": "exec_harness_cursor",
-  "display": "Cursor IDE 통합 — wshobson multi-harness 패턴 (spec-only)",
+  "display": "Cursor IDE 통합 — wshobson multi-harness 패턴 (experimental)",
   "prefix": "exec_",
-  "version": "0.1",
-  "status": "spec-only",
+  "version": "0.2",
+  "status": "experimental",
   "phase": 3,
   "commands": "commands/",
   "skills": "skills/",
   "dependencies": {
-    "plugins": ["exec_orch"],
+    "plugins": [
+      "exec_orch"
+    ],
     "mcp": [],
-    "env": ["CURSOR_API_KEY"]
+    "env": [
+      "CURSOR_API_KEY"
+    ]
   },
   "metadata": {
     "category": "harness",
-    "tags": ["cursor", "ide", "multi-harness"],
+    "tags": [
+      "cursor",
+      "ide",
+      "multi-harness"
+    ],
     "author": "orchestration_v1",
     "created": "2026-06-16",
     "updated": "2026-06-16",
