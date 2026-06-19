@@ -486,11 +486,25 @@
       CLAUDE.md § 3.2 Mythos-class 행 [SUSPENDED 2026-06-12] 표시
     재개 시: route.py SUSPEND_MODELS set 에서 'claude-fable-5' 제거 → 룰 복구
 
-  [🚨 2026-06-15: Agent SDK / claude -p billing 변화]
-    이전: Pro/Max/Team/Enterprise 의 "unlimited" subsidy — programmatic 루프가 interactive 가격
-    이후: plan fee 와 동일한 월 dollar credit — credit 소진 시 별도 API 과금
-    영향: codex-auto / gemini-auto / haiku-auto / vibe-loop / orcauto-start 등 모든 worker spawn
-    정책: route.py --check 가 일일 SDK credit 도 확인 (quota + budget + SDK credit 3중 게이트)
+  [Agent SDK / claude -p billing 변화 — 2026-06-15 → PAUSED (06-17+ Anthropic 보류)]
+    예정: Pro/Max/Team/Enterprise "unlimited" → 월 dollar credit (06-15)
+    현재: PAUSED — 기존 "unlimited" subsidy 유지, programmatic 루프 interactive 가격 그대로
+    재개 일정 미정. route.py --check SDK credit 게이트는 코드만 준비.
+
+  [Task Scheduler wake-up 안내 (2026-06-19 추가)]
+    Daily 09:00 task 가 PC sleep/꺼짐 시 trigger 실패 → 누락 발생
+    Fix 옵션:
+      1. ONLOGON task 추가 (관리자 권한 필요 — 1회):
+         powershell -NoProfile -ExecutionPolicy Bypass -File setup\modules\register-official-features-task.ps1
+      2. Task Scheduler GUI 에서 "Wake the computer to run this task" 체크
+      3. SessionStart hook 가 catch-up (이미 동작 — claude 세션 열 때 자동)
+
+  [Claude Code v2.1.179 ~ 2.1.183 신규 (2026-06)]
+    2.1.183: destructive git 자동 차단 (approval-gate 정합) · 모델 deprecation warning ·
+             attribution.sessionUrl · /config --help · scheduled-task delivery fix
+    2.1.181: /config key=value 단축어 · CLAUDE_CLIENT_PRESENCE_FILE ·
+             Write/Edit 0-byte 파일 fix · prompt caching ANTHROPIC_BASE_URL fix
+    2.1.179: mid-stream connection drop fix · WSL2 mouse-wheel fix
 
   [Task Scheduler 자동 등록 (zero-touch — 2026-06-16 추가)]
     SessionStart hook (.claude/hooks/auto-register-scheduled-tasks.sh) 가 매 세션 시작 시
