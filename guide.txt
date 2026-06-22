@@ -465,6 +465,16 @@
        .claude/scripts/watchdog-start.bat
        → 워커 heartbeat 2분마다 체크
        → 죽은 워커 자동 부활 (quota 소진 시 지수 backoff: 10m→20m→40m→2h)
+       → 100% silent 실행 (pythonw → VBS hidden 3중 폴백). cmd 창 X, 작업표시줄 X
+
+    4. VS Code 워크스페이스 최적화 (.vscode/settings.json):
+       자동 배포 — install 시 setup/templates/vscode-settings.template.json 에서
+       Python 인터프리터 동적 검색 후 채워 .vscode/settings.json 생성.
+       세션 시작 시에도 deploy-vscode-settings.sh hook 이 idempotent 보강.
+       효과:
+         · "Python 못 찾음 / uv 설치" 팝업 차단 (인터프리터 명시)
+         · docs/screens (4675장) + .claude/logs|state|tasks/done 등 file watcher 제외
+         · git auto-fetch / minimap / semantic highlight / TS 인덱싱 OFF — 메모리 절감
 
   [새 검증 워커 — Haiku 4.5]
     기본 검증자가 Gemini → Haiku 로 바뀜. Prompt caching 으로 90% 비용 절감.

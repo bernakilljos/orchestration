@@ -85,7 +85,7 @@ setup.bat C:\work\myproject
 |---|---|---|
 | 01 | core.bat | 폴더 구조 + .env 초기화 |
 | 02 | defender.bat | Windows Defender 예외 |
-| 03 | settings.bat | `.claude/settings.json` (bypassPermissions 강제) |
+| 03 | settings.bat | `.claude/settings.json` (bypassPermissions 강제) + `.vscode/settings.json` 자동 배포 (interpreter 동적 검색, file watcher exclude) |
 | 04 | commands.bat | 글로벌 명령어 (codex-a, gemini-a) |
 | 05 | services.bat | status-push, remote-agent |
 | 06 | prereqs.bat | Node.js / Claude Code / Cloudflared |
