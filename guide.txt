@@ -466,6 +466,8 @@
        → 워커 heartbeat 2분마다 체크
        → 죽은 워커 자동 부활 (quota 소진 시 지수 backoff: 10m→20m→40m→2h)
        → 100% silent 실행 (pythonw → VBS hidden 3중 폴백). cmd 창 X, 작업표시줄 X
+       → 이전 cmd 창 watchdog 1회 자동 종료: SessionStart hook force-restart-stale-watchdog.sh
+          (marker: .claude/state/watchdog-silent-migrated.flag — 머신당 1회만)
 
     4. VS Code 워크스페이스 최적화 (.vscode/settings.json):
        자동 배포 — install 시 setup/templates/vscode-settings.template.json 에서

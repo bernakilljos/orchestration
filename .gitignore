@@ -6,6 +6,11 @@
 # install/SessionStart hook 가 자동 생성
 .vscode/settings.json
 .vscode/*.bak
+.vscode/_*
+
+# Extension 로컬 로그 (Excalidraw 등 VS Code extension)
+excalidraw.log
+*.excalidraw.log
 
 # 컨텍스트 캐시 (자동 생성)
 .claude/context-cache/
