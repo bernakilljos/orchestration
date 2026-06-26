@@ -30,8 +30,8 @@ if [ -n "$NEW_PLUGIN" ]; then
   echo "$STAGED" | grep -q "marketplace.json" || MISSING="$MISSING\n  - .claude-plugin/marketplace.json"
 fi
 
-# 3. 새 hook → settings.json
-NEW_HOOK=$(echo "$STAGED" | grep -E '^(plugins|\.claude)/.*hooks/.*\.sh$' | head -1)
+# 3. 새 hook (Added only — Modified bug-fixes 는 settings.json 등록 불필요) → settings.json
+NEW_HOOK=$(git diff --cached --diff-filter=A --name-only 2>/dev/null | grep -E '^(plugins|\.claude)/.*hooks/.*\.sh$' | head -1)
 if [ -n "$NEW_HOOK" ]; then
   echo "$STAGED" | grep -q "settings.json" || MISSING="$MISSING\n  - .claude/settings.json (hook 등록)"
 fi

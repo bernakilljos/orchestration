@@ -27,12 +27,30 @@ mkdir -p "$PROJECT_DIR/.claude/state" "$PROJECT_DIR/.claude/logs" 2>/dev/null
 TS="$(date '+%Y-%m-%d %H:%M:%S')"
 echo "[$TS] migrating watchdog to silent mode" >> "$LOG"
 
-# Windows path — kill any cmd.exe / python.exe carrying watchdog.py
-if command -v wmic >/dev/null 2>&1 || command -v taskkill >/dev/null 2>&1; then
-  # Find by command line via WMIC
-  if command -v wmic >/dev/null 2>&1; then
-    wmic process where "CommandLine like '%watchdog.py%' and (Name='cmd.exe' or Name='python.exe' or Name='pythonw.exe' or Name='conhost.exe')" call terminate >> "$LOG" 2>&1 || true
-  fi
+# Kill stale watchdog processes via PowerShell (UTF-8 native, no mojibake).
+# Matches cmd.exe / python.exe / pythonw.exe / conhost.exe whose command line
+# contains "watchdog.py".
+if command -v powershell >/dev/null 2>&1; then
+  # Only kill cmd.exe / python.exe (console variants) carrying watchdog.py.
+  # pythonw.exe (silent variant) is what WE spawn — never touch it.
+  # Skip the current PID file's process too (defence-in-depth).
+  CURRENT_PID="$(cat "$PROJECT_DIR/.claude/state/watchdog.pid" 2>/dev/null | tr -d '\r\n ' || echo 0)"
+  KILLED="$(powershell -NoProfile -NonInteractive -Command "
+    \$skip = [int]'${CURRENT_PID:-0}'
+    \$out = New-Object System.Collections.ArrayList
+    Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+      \$_.CommandLine -and \$_.CommandLine -match 'watchdog\.py' -and
+      \$_.Name -in @('cmd.exe','python.exe','conhost.exe') -and
+      \$_.ProcessId -ne \$skip
+    } | ForEach-Object {
+      try {
+        Stop-Process -Id \$_.ProcessId -Force -ErrorAction Stop
+        [void]\$out.Add(\"PID=\$(\$_.ProcessId) NAME=\$(\$_.Name)\")
+      } catch {}
+    }
+    if (\$out.Count -eq 0) { 'no stale watchdog process found (pythonw silent OK)' } else { \$out -join '; ' }
+  " 2>/dev/null | tr -d '\r')"
+  echo "[$TS] kill scan: $KILLED" >> "$LOG"
 fi
 
 # Remove stale PID file so next invocation actually starts fresh
