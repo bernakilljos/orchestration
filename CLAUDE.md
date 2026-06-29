@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-16): plugins 36 stable + 0 spec-only · rules 20 · hooks 28 · scripts 115
+> **현재 상태** (2026-06-26): plugins 36 stable + 0 spec-only · rules 20 · hooks 31 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -59,7 +59,7 @@
 - **Opus 4.8** (default): $5/$25 per MTok · Fast $10/$50 (2.5× 속도)
 - **Fable 5** (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · **🚨 2026-06-12 SUSPENDED** (US export-control)
 
-**Claude Code v2.1.178** (2026-06 신규): `Tool(param:value)` permission syntax (wildcard 매칭 정밀화) · `--fallback-model` compaction fix (우리 `fallbackModel` cascade 안정성 ↑) · nested `.claude/skills` directory 우선순위. 자세히는 `guide.txt`.
+**Claude Code v2.1.183** (2026-06-19 기준 최신): destructive git 자동 차단 (approval-gate § 7-23 정합) · 모델 deprecation warning (Fable 5 SUSPEND 정합) · `attribution.sessionUrl` 설정 · `/config --help` · WebSearch subagent fix · MCP auth-stub fix · scheduled-task delivery 키보드입력 오해 fix. 2.1.181: `/config key=value` 단축어 · `CLAUDE_CLIENT_PRESENCE_FILE` · Write/Edit 0-byte 파일 fix · prompt caching `ANTHROPIC_BASE_URL` fix. 2.1.178: `Tool(param:value)` permission · `--fallback-model` compaction fix · nested skills.
 
 Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 
@@ -73,11 +73,10 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 - Budget 초과: 일일 상한 (기본 무제한, `route.py --set-daily-limit` 설정 가능)
 - **절대 금지**: 빈 task 를 `done/` 으로 이동 (위장 완료)
 
-**🚨 Agent SDK / `claude -p` billing 변화 (2026-06-15 적용)**:
-- 이전: Pro/Max/Team/Enterprise 의 "unlimited" subsidy — programmatic 루프가 interactive 가격으로
-- 이후: **plan fee 와 동일한 월 dollar credit** 으로 변경 — credit 소진 시 별도 API 과금
-- 영향: `codex-auto`, `gemini-auto`, `haiku-auto`, `vibe-loop`, `orcauto-start` 등 모든 worker spawn 이 SDK credit 소비
-- 정책: route.py `--check` 가 일일 SDK credit 도 확인 (기존 quota + budget + SDK credit 3중 게이트)
+**Agent SDK / `claude -p` billing 변화 (2026-06-15 → PAUSED)**:
+- 2026-06-15 예정이었던 dollar credit 전환이 Anthropic 에 의해 **일시 보류** (digitalapplied 보도 6/17+)
+- 현재 (2026-06-19): 기존 "unlimited" subsidy 유지 — programmatic 루프 (codex-auto·gemini-auto·haiku-auto·vibe-loop) 가 interactive 가격으로 동작
+- 재개 일정 미정. route.py `--check` 의 SDK credit 게이트는 코드만 준비, 실제 활성화는 Anthropic 공지 후
 
 ### 3.4 Orca Auto 규칙
 - 활성: `.claude/orca-enabled` 있고 `.claude/orca-stopped` 없음
@@ -132,6 +131,8 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | `docs/2026-04-19/로드맵.md` | Phase 1~3 스펙 (미래 26개) | ✅ |
 | `guide.txt` | 사람용 전체 가이드 (섹션 1~14) | ✅ |
 | `.env` / `.env.example` | 환경변수 (하드코딩 금지) | .env 는 gitignore |
+| `.vscode/settings.json` | VS Code 워크스페이스 최적화 (file watcher exclude·인터프리터 동적 지정·메모리 절감) | 자동 (setup/templates + SessionStart hook 가 idempotent 배포) |
+| `setup/templates/vscode-settings.template.json` | 머신 독립 template (`__PYTHON_PATH__` placeholder) | ✅ |
 
 ---
 
@@ -185,6 +186,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 24. **화면·기능 검증 사용자 떠넘김 금지 (Smoke Test 의무)** — DB/API/프론트 변경 후 "확인해 주세요" 금지. 자동 smoke test 의무: SQL → endpoint curl, controller → curl + null·NPE check, 프론트 → Playwright render + console.error. NPE 같은 NULL 컬럼+unsafe 패턴은 smoke test 한 번이면 잡힘. "다음부터는" 약속 X. 사용자는 최종 시각만, AI 가 기능·화면 검증 책임. FAIL = max 3 재시도. 도구: `.claude/scripts/smoke-test-screen.sh` · hook: PostToolUse 자동. 상세: `.claude/rules/screen-verify.md`
 25. **거짓 PASS 보고 금지 (False-Report 차단)** — agent·도구 "PASS" 만으로 사용자 전달 X. 보고 직전 이중 검증: ① 도구 raw Read ② 본문 mojibake 직접 grep (U+FFFD, `꿇룷`, `점쇙올`, `Ã`, `?곸` 등 6 카테고리) ③ 백업 폴더 (`.bak`/`_backup`/`_v2`) 까지 ④ 0건 확인 후 PASS. 도구: `.claude/scripts/verify-no-mojibake.py`. 상세: `.claude/rules/no-false-report.md`
 26. **기준 일관성 (Standards Drift Prevention)** — 작업마다 적용 잣대 (들여쓰기·명명·자율vs승인·라우팅·검증·보고 형식·commit message) 흔들리면 사용자 신뢰 X. 같은 카테고리 = 같은 기준 매번. "이번엔 예외" 자기 판단 X. 룰 변경 시 명시 사유 + SoT 갱신 + memory + commit message + 다음 turn 부터 일괄 적용. 상세: `.claude/rules/consistency.md`
+27. **누락 의존성 사용자에게 묻지 마 — 자동 설치 (Auto-install dependencies)** — Playwright/Chromium/MCP server/Python package 누락 감지 시 "설치할까요?" 묻지 말고 `nohup ... &` 백그라운드 자동 install. SessionStart hook `auto-install-deps.sh` 가 매 세션 점검 (1시간 throttle) — playwright + pillow + PyMuPDF + python-docx + chromium driver + core MCP (playwright/sequential-thinking/fetch/context7) 자동. 사용자에게 "미설치" 알림 X (Zero-touch 5 알림 외). 로그: `.claude/logs/auto-install-deps.log`. 사용자 명시 거부 시만 skip. CLAUDE.md § 7-11 (Zero-touch) 정합.
 
 ### 룰·메모리 빠른 검색 (RAG 인덱스)
 룰·메모리·스크립트 누적 → grep 비효율 → 의미 기반 lookup. AI 가 먼저 활용.

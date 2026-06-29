@@ -1,6 +1,17 @@
 # 배포 설정 (서버 정보, 계정 포함)
 .claude/deploy-config.env
 
+# VS Code 워크스페이스 설정 — 머신별 동적 생성 (interpreter 절대경로 박힘)
+# template: setup/templates/vscode-settings.template.json (commit)
+# install/SessionStart hook 가 자동 생성
+.vscode/settings.json
+.vscode/*.bak
+.vscode/_*
+
+# Extension 로컬 로그 (Excalidraw 등 VS Code extension)
+excalidraw.log
+*.excalidraw.log
+
 # 컨텍스트 캐시 (자동 생성)
 .claude/context-cache/
 

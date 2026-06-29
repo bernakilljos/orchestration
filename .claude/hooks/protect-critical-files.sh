@@ -9,6 +9,7 @@ FILE=$(echo "$INPUT" | grep -o '"file_path":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 # 보호 대상 파일 패턴
 # 주: .claude/settings.json·settings.local.json 은 Claude 본인이 관리하므로 제외.
+#     .vscode/*.json 은 VS Code IDE 설정이므로 제외 (사용자 워크스페이스 최적화 자율).
 #     (codex/gemini 는 외부 프로세스이므로 이 훅을 거치지 않음 — 워커 보호엔 영향 없음)
 PROTECTED_FILES=(
   "config.py"
@@ -19,13 +20,15 @@ PROTECTED_FILES=(
   "deploy-config.env"
 )
 
-# 루트 settings.json 만 매치하고, .claude/settings.json 은 통과시키기 위한 가드
-# (아래 basename 매칭에서 둘 다 "settings.json"으로 잡히므로 경로로 구분)
+# 화이트리스트 (basename 매칭에서 통과 — 둘 다 "settings.json"으로 잡히므로 경로로 구분)
 # Windows JSON 경로는 \\ 이중 백슬래시로 올 수 있으므로 // 와 / 둘 다 흡수
 if [ -n "$FILE" ]; then
   NORM=$(echo "$FILE" | sed -e 's|\\\\|/|g' -e 's|\\|/|g' -e 's|//|/|g')
   case "$NORM" in
     */.claude/settings.json|*/.claude/settings.local.json|.claude/settings.json|.claude/settings.local.json)
+      exit 0
+      ;;
+    */.vscode/settings.json|.vscode/settings.json|*/.vscode/*.json|.vscode/*.json)
       exit 0
       ;;
   esac

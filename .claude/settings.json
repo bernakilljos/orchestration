@@ -62,6 +62,23 @@
                     },
                     {
                         "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/deploy-vscode-settings.sh\"",
+                        "timeout": 3
+                    },
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/auto-install-deps.sh\"",
+                        "timeout": 5,
+                        "async": true
+                    },
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/force-restart-stale-watchdog.sh\"",
+                        "timeout": 5,
+                        "async": true
+                    },
+                    {
+                        "type": "command",
                         "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"",
                         "timeout": 10
                     },

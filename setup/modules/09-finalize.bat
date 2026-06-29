@@ -115,11 +115,11 @@ echo   기본 MCP (이미 설치됨): context7, playwright, thinking
 echo   자동 연결 (claude.ai): Figma, Gamma, Gmail, Canva, Mermaid
 echo ============================================================
 echo.
-echo   Start Claude now? (15초 후 자동 N)
-echo     [Y] Yes - launch Claude
+echo   Start Claude now? (5초 후 자동 Y — Zero-touch)
+echo     [Y] Yes - launch Claude (default)
 echo     [N] No  - exit
 echo.
-choice /c YN /n /m "Select [Y/N]: " /t 15 /d N
+choice /c YN /n /m "Select [Y/N]: " /t 5 /d Y
 if errorlevel 2 goto END
 cd /d "%TARGET%"
 echo [OK] Starting claude...

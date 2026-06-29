@@ -57,6 +57,26 @@ if not "%TARGET%"=="" if exist "%TARGET%\.claude\settings.json" (
   echo       Done
 )
 
+rem --- VS Code workspace 최적화 (.vscode/settings.json 자동 배포) ---
+rem cmd 창 표시 / Python uv 팝업 / file watcher 폭주 / 메모리 누수 한꺼번에 차단
+if not "%TARGET%"=="" (
+  set "VSC_SRC=%~dp0..\templates\vscode-settings.template.json"
+  set "VSC_DST=%TARGET%\.vscode\settings.json"
+  if exist "!VSC_SRC!" (
+    echo [+] Deploying .vscode/settings.json (workspace optimization)...
+    if not exist "%TARGET%\.vscode" mkdir "%TARGET%\.vscode" >nul 2>&1
+    rem Python 인터프리터 동적 검색 (하드코딩 금지)
+    set "PY_PATH="
+    for /f "delims=" %%P in ('where python 2^>nul') do if not defined PY_PATH set "PY_PATH=%%P"
+    if not defined PY_PATH set "PY_PATH=python"
+    rem JSON 안전 render — ConvertFrom-Json + ConvertTo-Json 으로 backslash 자동 escape
+    powershell -NoProfile -Command "$src='!VSC_SRC!'; $dst='!VSC_DST!'; $py=(& where.exe python 2>$null | Select-Object -First 1); if(-not $py){$py='python'}; if(Test-Path $dst){Copy-Item $dst \"$dst.bak\" -Force}; $raw=(Get-Content $src -Raw).Replace('__PYTHON_PATH__','__PY_PLACEHOLDER__'); $obj=$raw | ConvertFrom-Json; $obj.'python.defaultInterpreterPath'=$py; $out=$obj | ConvertTo-Json -Depth 10; [System.IO.File]::WriteAllText($dst,$out,(New-Object System.Text.UTF8Encoding $false))" >nul 2>&1
+    echo       Done ^(interpreter=!PY_PATH!, watcher exclude 적용^)
+  ) else (
+    echo       [SKIP] vscode-settings template not found: !VSC_SRC!
+  )
+)
+
 rem Orca-auto 활성화 플래그
 if not "%TARGET%"=="" (
   if not exist "%TARGET%\.claude\orca-stopped" (
