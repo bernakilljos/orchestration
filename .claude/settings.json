@@ -539,6 +539,12 @@
                         "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-all.py\"",
                         "timeout": 180,
                         "async": true
+                    },
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-session.sh\"",
+                        "timeout": 30,
+                        "async": true
                     }
                 ]
             }
@@ -596,18 +602,6 @@
                         "type": "command",
                         "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on-file-changed.sh\"",
                         "timeout": 5
-                    }
-                ]
-            }
-        ],
-        "post-session": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-session.sh\"",
-                        "timeout": 30,
-                        "async": true
                     }
                 ]
             }
