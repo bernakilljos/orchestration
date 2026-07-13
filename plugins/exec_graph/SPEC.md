@@ -20,7 +20,7 @@
 2. **반복 정제** — draft → check → refine loop (n 번 까지)
 3. **조건 분기 많음** — task 결과에 따라 다른 후속 단계
 4. **parallel + merge** — 3 워커 병렬 → 결과 merge → 다음 단계
-5. **long-running autonomy** — Fable 5 + Dynamic Workflows 와 함께 (SUSPEND 시 Opus 4.8)
+5. **long-running autonomy** — Fable 5 + Dynamic Workflows 와 함께 (Fable 5 재-suspend 시 Opus 4.8)
 
 ## 명령 (예정)
 
