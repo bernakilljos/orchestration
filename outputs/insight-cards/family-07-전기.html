@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>전기</title><style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }
+body {
+  width: 1080px; height: 1080px;
+  background: linear-gradient(135deg, #0f1419 0%, #1a2540 100%);
+  color: #e8eef5; padding: 50px 55px;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+body::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 10px;
+  background: #fcbf49;
+}
+.head { display: flex; align-items: center; gap: 24px; margin-bottom: 28px; }
+.num { font-size: 70px; font-weight: 900; color: #fcbf49; line-height: 1; }
+.emoji { font-size: 110px; line-height: 1; }
+.title-block { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.name { font-size: 70px; font-weight: 900; color: #fff; line-height: 1; }
+.subtitle { font-size: 26px; color: #8a9bb0; }
+.metaphor {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 5px solid #fcbf49;
+  padding: 20px 28px;
+  border-radius: 6px;
+  font-size: 30px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #fff;
+}
+.steps { display: flex; flex-direction: column; gap: 18px; margin-bottom: 30px; flex: 1; }
+.step {
+  display: flex; align-items: center; gap: 18px;
+  padding: 16px 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  border-left: 4px solid #3a4660;
+}
+.step.now {
+  background: rgba(255, 255, 255, 0.09);
+  border-left-color: #fcbf49;
+  box-shadow: 0 0 24px #fcbf4933;
+}
+.step.past { opacity: 0.5; }
+.step.future { opacity: 0.7; border-left-style: dashed; }
+.step .dot { width: 16px; height: 16px; border-radius: 50%; background: #5a6a85; flex-shrink: 0; }
+.step.now .dot { background: #fcbf49; box-shadow: 0 0 12px #fcbf49; }
+.step.future .dot { background: transparent; border: 2px dashed #8a9bb0; }
+.step-text { font-size: 28px; font-weight: 700; color: #fff; flex: 1; }
+.step.past .step-text { color: #8a9bb0; font-weight: 500; }
+.step.future .step-text { color: #b8c3d6; font-style: italic; }
+.step-year { font-size: 20px; color: #8a9bb0; font-weight: 600; }
+.step.now .step-year { color: #fcbf49; font-weight: 800; }
+.why {
+  background: rgba(255, 209, 102, 0.08);
+  border-left: 4px solid #fcbf49;
+  padding: 18px 24px;
+  border-radius: 6px;
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+.why-label { color: #fcbf49; font-weight: 800; margin-right: 6px; }
+.real { font-size: 17px; color: #8a9bb0; font-style: italic; }
+.real-label { color: #aab8cc; font-style: normal; font-weight: 700; margin-right: 4px; }
+.footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 16px; border-top: 1px solid #2a3548; font-size: 16px; color: #6a7a90; }
+.brand { color: #fcbf49; font-weight: 700; }
+</style></head><body>
+  <div class="head">
+    <div class="num">07</div>
+    <div class="emoji">⚡</div>
+    <div class="title-block">
+      <div class="name">전기</div>
+      <div class="subtitle">AI 의 밥</div>
+    </div>
+  </div>
+  <div class="metaphor">🔌 콘센트 → ☢️ 미니 원전 → ☀️ 핵융합</div>
+  <div class="steps"><div class="step past"><div class="dot"></div><div class="step-text">일반 전기</div><div class="step-year">~2025</div></div><div class="step now"><div class="dot"></div><div class="step-text">SMR (소형 모듈 원자로)</div><div class="step-year">2027 ★</div></div><div class="step future"><div class="dot"></div><div class="step-text">핵융합 (Fusion)</div><div class="step-year">2030+</div></div></div>
+  <div class="why"><span class="why-label">왜?</span>데이터센터 1개 = 도시 1개 전기. 빅테크 $10B 약속</div>
+  <div class="real"><span class="real-label">대표:</span>Microsoft TMI, Amazon, Meta+Oklo, Google+Kairos</div>
+  <div class="footer">
+    <span>AI 진화 10가족 · 학습 카드</span>
+    <span class="brand">07 · 2026-2030</span>
+  </div>
+</body></html>

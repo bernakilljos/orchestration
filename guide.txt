@@ -575,6 +575,12 @@
         비용 재산정 필요 (겉보기 요금표 같아도 실효 비용 ↑)
         v2.1.201+ 에서 mid-conversation harness reminder 제거
 
+    비용 계산 (2026-07-13 pricing.py 갱신):
+      .claude/scripts/lib/pricing.py 에 tokenizer_factor 도입
+      Opus 4.7 계열 (Fable 5·Mythos 5·Sonnet 5) 은 factor=1.3 자동 반영
+      → estimate_cost() 호출 시 실제 청구 토큰 자동 재산정
+      smoke test: python .claude/scripts/lib/pricing.py
+
     자동 fallback:
       Claude quota 소진 → Codex
       Fable 5 일일 20% cap 도달 → Opus 4.8 + 사용자 알림
