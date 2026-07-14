@@ -48,7 +48,7 @@ curl -s https://api.x.ai/v1/chat/completions \
 | 단순 요약·번역 | 설계·아키텍처 (Opus) |
 | 대량 검증 (>10 batch) | 보안·money·DB (Self-consistency Haiku ×2) |
 | 비용 sensitive 작업 | 1M+ 컨텍스트 (Gemini Flash) |
-| 빠른 응답 우선 | 멀티모달·vision (Fable 5 SUSPEND 시 Opus) |
+| 빠른 응답 우선 | 멀티모달·vision (Fable 5 또는 Opus 4.8) |
 
 ## 비용 (2026-06 기준)
 

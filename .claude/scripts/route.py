@@ -191,10 +191,11 @@ def cmd_check(args):
     ai = args.check
     from state_db import get_db
 
-    # 🚨 SUSPEND mode (2026-06-12 US export-control)
-    # Fable 5 / Mythos 5 사용 차단 → 항상 fable_ok=0
-    # 재개 시 SUSPEND_MODELS 에서 제거
-    SUSPEND_MODELS = {"claude-fable-5", "claude-mythos-5"}
+    # SUSPEND mode 이력:
+    #   2026-06-12 US export-control 로 Fable 5 / Mythos 5 suspend
+    #   2026-07-01 Anthropic 이 restored (api-release 공식 statement)
+    # 재-suspend 필요 시 아래 set 에 모델 ID 추가
+    SUSPEND_MODELS = set()
 
     quota_ok = 0 if is_quota_exceeded(ai) else 1
     budget_ok = 1

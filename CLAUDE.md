@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-06-26): plugins 36 stable + 0 spec-only · rules 20 · hooks 31 · scripts 115
+> **현재 상태** (2026-07-10): plugins 36 stable + 0 spec-only · rules 21 · hooks 31 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -40,26 +40,40 @@
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
 4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 (⭐⭐ 이상 자율 반영, ⭐ 이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 
-### 3.2 AI 역할 (규모·특성 기반, 4.8 default · Fable 5 는 초난도만 — 2026-06-09 Fable 5 출시)
+### 3.2 AI 역할 (규모·특성 기반, 4.8 default · Fable 5 초난도·Sonnet 5 신규 — 2026-07-02 Sonnet 5 출시)
 | 태스크 | AI | 방법 |
 |--------|-----|------|
 | 설계·복잡추론 (일반) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` (1M context, 128k 출력) |
-| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent · sub-agent 가 sub-agent spawn 최대 5 levels deep, v2.1.172+) |
-| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [SUSPENDED 2026-06-12]** | **🚨 2026-06-12 US export-control 으로 Fable 5 + Mythos 5 일시 suspend. 재개 미정. `/effort mythos` 호출 시 자동으로 Opus 4.8 fallback. route.py `--check claude-fable-5` 항상 fable_ok=0 반환** |
-| 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용) |
+| 초난도·다각 검증 | Claude Opus 4.8 + ultracode | `/effort ultracode` → Dynamic Workflows (수십~수백 subagent · sub-agent 가 sub-agent spawn 최대 5 levels deep, v2.1.172+) · v2.1.206 에서 findings quality 개선 |
+| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [RESTORED 2026-07-01]** | 2026-06-12 US export-control 로 suspend 되었다가 2026-07-01 Anthropic 이 restored (공식 statement). `/effort mythos` 호출 시 정상 라우팅. route.py `SUSPEND_MODELS = set()`. 30일 data retention 요구 |
+| 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
+| 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
 | 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 초장기 컨텍스트 recall (2M+) | GPT-5.2 | `route.py --check gpt-5.2` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
+| 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**가격** (2026-06-16 기준):
+**가격** (2026-07-01 기준):
 - **Opus 4.8** (default): $5/$25 per MTok · Fast $10/$50 (2.5× 속도)
-- **Fable 5** (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · **🚨 2026-06-12 SUSPENDED** (US export-control)
+- **Fable 5** (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · 30-day data retention 요구
+- **Sonnet 5** (2026-07-02 신규): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. 실제 비용은 tokenizer 특성 반영해 재계산 필요
 
-**Claude Code v2.1.183** (2026-06-19 기준 최신): destructive git 자동 차단 (approval-gate § 7-23 정합) · 모델 deprecation warning (Fable 5 SUSPEND 정합) · `attribution.sessionUrl` 설정 · `/config --help` · WebSearch subagent fix · MCP auth-stub fix · scheduled-task delivery 키보드입력 오해 fix. 2.1.181: `/config key=value` 단축어 · `CLAUDE_CLIENT_PRESENCE_FILE` · Write/Edit 0-byte 파일 fix · prompt caching `ANTHROPIC_BASE_URL` fix. 2.1.178: `Tool(param:value)` permission · `--fallback-model` compaction fix · nested skills.
+**Claude Code v2.1.206** (2026-07-09 기준 최신):
+- 2.1.206: opus-4-8 findings quality 개선 · agents view 전체폭 status column · `remote.pushDefault` 도 push 자동허용
+- 2.1.204~205: session transcript 변조 차단 · Windows worktree symlink 안전화 · project verify skills 재작성 최소화
+- 2.1.203: 로그인 만료 사전 경고 · manual permission 모드 grey ⏸ 뱃지 · MCP `roots/list` 세션 working dir 추가
+- 2.1.202: **`Dynamic workflow size` 설정 (small/medium/large)** · `workflow.run_id`·`workflow.name` OpenTelemetry 속성 · voice dictation 무한 retry 차단
+- 2.1.201: **Sonnet 5 세션에서 mid-conversation harness reminder 제거**
+- 2.1.200: **기본 permission mode 를 `Manual` 로 변경** (우리는 `bypassPermissions` 사용 — 무관)
+- 2.1.199: **stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드** · SSL 인증서 오류 즉시 fail-fast
+- 2.1.198 (7/1): **Fable 5 / Mythos 5 RESTORED** · **subagent 기본 background 실행** · Chrome extension GA · **Explore agent 메인 모델 상속 (opus 상한)** · **subagent·compaction 이 세션 extended thinking 설정 상속** · `/dataviz` skill · `.claude/rules/` 심볼릭 링크 경로 로딩 fix
+- 2.1.183 (6/19): destructive git 자동 차단 (approval-gate § 7-23 정합) · `attribution.sessionUrl` · `/config --help` · WebSearch subagent fix
+
+**API (2026-07-08)**: API key expiration 옵션 (7일+ 키는 만료 전 이메일 발송) · `agent-memory-2026-07-22` beta header (memory list ordering 변경)
 
 Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 

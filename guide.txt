@@ -492,13 +492,15 @@
       - 멀티모달 (이미지·비디오) 검증
       - Haiku quota 소진 (자동 fallback)
 
-  [🚨 2026-06-12: Fable 5 + Mythos 5 SUSPEND (US export-control)]
-    Anthropic 이 Fable 5 출시 3일 만에 US 정부 export-control directive 받음 → 일시 access 차단
-    재개 일정 미정. 우리 kit 자동 처리:
-      route.py --check claude-fable-5 → 항상 fable_ok=0 + fallback=claude-opus-4-8 출력
-      /effort mythos → Opus 4.8 강제 fallback
-      CLAUDE.md § 3.2 Mythos-class 행 [SUSPENDED 2026-06-12] 표시
-    재개 시: route.py SUSPEND_MODELS set 에서 'claude-fable-5' 제거 → 룰 복구
+  [Fable 5 / Mythos 5 SUSPEND → RESTORED 타임라인]
+    2026-06-12: US 정부 export-control directive 로 Fable 5 + Mythos 5 access suspend
+    2026-07-01: Anthropic 공식 statement 로 RESTORED (api-release changelog)
+    현재 (2026-07-13): 정상 라우팅
+      route.py SUSPEND_MODELS = set() → --check claude-fable-5 통과
+      /effort mythos → Fable 5 직통
+      CLAUDE.md § 3.2 Mythos-class 행 [RESTORED 2026-07-01] 표시
+    재-suspend 필요 시: route.py SUSPEND_MODELS 에 모델 ID 추가
+    주의: Fable 5 는 30-day data retention 요구 (zero-data-retention 환경 불가)
 
   [Agent SDK / claude -p billing 변화 — 2026-06-15 → PAUSED (06-17+ Anthropic 보류)]
     예정: Pro/Max/Team/Enterprise "unlimited" → 월 dollar credit (06-15)
@@ -513,7 +515,27 @@
       2. Task Scheduler GUI 에서 "Wake the computer to run this task" 체크
       3. SessionStart hook 가 catch-up (이미 동작 — claude 세션 열 때 자동)
 
-  [Claude Code v2.1.179 ~ 2.1.183 신규 (2026-06)]
+  [Claude Code v2.1.198 ~ 2.1.206 신규 (2026-07)]
+    2.1.206 (7/9): opus-4-8 findings quality 개선 · agents view 전체폭 status column ·
+                    remote.pushDefault 도 push 자동허용 · MCP roots/list 개선
+    2.1.204~205 (7/8): session transcript 변조 차단 · Windows worktree symlink 안전화 ·
+                    project verify skills 재작성 최소화 · Bash 30K 인라인 초과도 PR 링킹
+    2.1.203 (7/7): 로그인 만료 사전 경고 · manual permission 모드 grey ⏸ 뱃지 ·
+                    MCP roots/list 세션 working dir 추가
+    2.1.202 (7/6): Dynamic workflow size 설정 (small/medium/large) ·
+                    workflow.run_id / workflow.name OpenTelemetry 속성 ·
+                    voice dictation 무한 retry 차단
+    2.1.201 (7/3): Sonnet 5 세션에서 mid-conversation harness reminder 제거
+    2.1.200 (7/3): 기본 permission mode 를 Manual 로 변경 (우리는 bypassPermissions — 무관)
+    2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
+                    SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)
+    2.1.198 (7/1): Fable 5 / Mythos 5 RESTORED · subagent 기본 background 실행 ·
+                    Chrome extension GA · Explore agent 메인 모델 상속 (opus 상한) ·
+                    subagent · compaction 이 세션 extended thinking 설정 상속 ·
+                    /dataviz built-in skill (color-palette validator 포함) ·
+                    .claude/rules/ 심볼릭 링크 경로 로딩 fix
+
+  [Claude Code v2.1.179 ~ 2.1.183 (2026-06 이전분)]
     2.1.183: destructive git 자동 차단 (approval-gate 정합) · 모델 deprecation warning ·
              attribution.sessionUrl · /config --help · scheduled-task delivery fix
     2.1.181: /config key=value 단축어 · CLAUDE_CLIENT_PRESENCE_FILE ·
@@ -528,27 +550,35 @@
     효과: 사용자가 claude 세션 안 열어도 매일 09:00 공식 changelog 자동 점검.
     수동 등록: powershell -File setup\modules\register-official-features-task.ps1
 
-  [라우팅 정책 — Opus 4.8 default · Fable 5 Mythos-class (2026-06-09 Fable 5 출시, 06-12 SUSPEND)]
-    기본 라우터가 4.8 중심·Fable 5 신중 승격으로 설계됨:
+  [라우팅 정책 — Opus 4.8 default · Fable 5 RESTORED · Sonnet 5 신규 (2026-07-01 Fable RESTORED, 07-02 Sonnet 5 출시)]
+    기본 라우터가 4.8 중심·Fable 5 신중 승격·Sonnet 5 비용 검토 중으로 설계됨:
       설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)
-      초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows)
+      초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows) — v2.1.206 에서 findings quality 개선
       Mythos-class (Opus 2회 fail / long-running / vision-heavy) → Fable 5 + /effort mythos
-      단순 구현 < 200줄 → Sonnet 4.6 (저비용)
+      균형형 (신규 티어) → Sonnet 5 (2026-07-02 출시, Opus 4.7 계열 tokenizer)
+      단순 구현 < 200줄 → Sonnet 4.6 (저비용, Sonnet 5 승격 검토 중 — 토큰 30%↑)
       대량 구현 > 800k 토큰 → Codex (병렬 4개)
       검증 → Haiku 4.5 (기본), 500k+ 초장문/멀티모달만 Gemini Flash
       보안 패턴 검사 → security-guidance plugin (Anthropic 공식, 모델 호출 0회)
+      데이터 시각화·차트 → /dataviz (v2.1.198 built-in, color-palette validator)
 
-    가격 (2026-06-11 기준):
+    가격 (2026-07-01 기준):
       Opus 4.8 (default): $5/$25 per MTok · Fast $10/$50 (2.5x 속도)
-      Fable 5 (Mythos-class, 2026-06-09 출시): $10/$50 per MTok · 128k 출력
+      Fable 5 (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력
         model ID: claude-fable-5
         일일 budget 20% 게이트 (route.py --check claude-fable-5)
+        30-day data retention 요구 (zero-data-retention 환경 불가)
         단발 $5+ 예상 시 사용자 사전 승인 (cost critical)
         cyber/bio/chem/distillation → Anthropic 자동 Opus fallback (5% 미만 trigger)
+      Sonnet 5 (2026-07-02 신규): 새 tokenizer → 텍스트당 ~30% 토큰 증가
+        model ID: claude-sonnet-5
+        비용 재산정 필요 (겉보기 요금표 같아도 실효 비용 ↑)
+        v2.1.201+ 에서 mid-conversation harness reminder 제거
 
     자동 fallback:
       Claude quota 소진 → Codex
       Fable 5 일일 20% cap 도달 → Opus 4.8 + 사용자 알림
+      Fable 5 재-suspend (Anthropic 공지 시) → route.py SUSPEND_MODELS 추가 → Opus 4.8 자동 fallback
       모든 quota 소진 → WAIT (가장 빠른 복구까지 지수 backoff)
 
     게이트 확인:
