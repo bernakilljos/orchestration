@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-07-13): plugins 36 stable + 0 spec-only · rules 21 · hooks 31 · scripts 115
+> **현재 상태** (2026-07-22): plugins 32 stable + 0 spec-only · rules 21 · hooks 51 · scripts 115
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -62,18 +62,26 @@
 - **Fable 5** (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · 30-day data retention 요구
 - **Sonnet 5** (2026-07-02 신규): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. 실제 비용은 tokenizer 특성 반영해 재계산 필요
 
-**Claude Code v2.1.206** (2026-07-09 기준 최신):
-- 2.1.206: opus-4-8 findings quality 개선 · agents view 전체폭 status column · `remote.pushDefault` 도 push 자동허용
-- 2.1.204~205: session transcript 변조 차단 · Windows worktree symlink 안전화 · project verify skills 재작성 최소화
-- 2.1.203: 로그인 만료 사전 경고 · manual permission 모드 grey ⏸ 뱃지 · MCP `roots/list` 세션 working dir 추가
-- 2.1.202: **`Dynamic workflow size` 설정 (small/medium/large)** · `workflow.run_id`·`workflow.name` OpenTelemetry 속성 · voice dictation 무한 retry 차단
-- 2.1.201: **Sonnet 5 세션에서 mid-conversation harness reminder 제거**
-- 2.1.200: **기본 permission mode 를 `Manual` 로 변경** (우리는 `bypassPermissions` 사용 — 무관)
-- 2.1.199: **stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드** · SSL 인증서 오류 즉시 fail-fast
-- 2.1.198 (7/1): **Fable 5 / Mythos 5 RESTORED** · **subagent 기본 background 실행** · Chrome extension GA · **Explore agent 메인 모델 상속 (opus 상한)** · **subagent·compaction 이 세션 extended thinking 설정 상속** · `/dataviz` skill · `.claude/rules/` 심볼릭 링크 경로 로딩 fix
-- 2.1.183 (6/19): destructive git 자동 차단 (approval-gate § 7-23 정합) · `attribution.sessionUrl` · `/config --help` · WebSearch subagent fix
+**Claude Code v2.1.217** (2026-07-21 기준 최신):
+- 2.1.217 (7/21): emoji shortcode autocomplete (`:heart:`→❤️, `emojiCompletionEnabled`) · transcript write 실패·session save off 경고 · **MCP tool output 메모리 누수 fix** (truncated 결과 세션 내 full 보관) · Windows auto-update 실패 시 이전 `claude.exe` 복원
+- 2.1.216 (7/20): **`sandbox.filesystem.disabled` 설정** (network egress 유지+FS isolation skip) · **긴 세션 quadratic 정규화 slowdown fix** · auto mode HTTP 401 mid-session 처리 · AskUserQuestion 자유텍스트 답변 neutral wording
+- 2.1.215 (7/19): **`/verify` / `/code-review` skill 자동 실행 중단** — 사용자가 명시 호출해야
+- 2.1.214 (7/18): **Windows PowerShell 5.1 permission-check bypass fix (보안)** · `Edit(src/**)` 같은 single-segment allow 규칙이 nested dir 자동승인 방지 · Bash FD redirect·10k+ char command 는 항상 prompt
+- 2.1.213/212 (7/17): **`/fork` = 대화 background session 복사 (`/subtask` 는 in-session subagent)** · `claude auto-mode reset` · **WebSearch 세션 상한 200 (`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION`)** · **subagent 세션 상한 200 (`CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION`)** — 우리 kit 다중 워커에 직접 영향
+- 2.1.211 (7/15): `--forward-subagent-text` + `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT` (stream-json 에 subagent text·thinking 포함) · permission preview zero-width/bidi/look-alike quote neutralize · PreToolUse ask floor
+- 2.1.210 (7/14): **`Write(path)` / `NotebookEdit(path)` / `Glob(path)` permission 규칙 warn — `Edit(path)` / `Read(path)` 사용** · tool call live elapsed-time counter · isolation:worktree subagent 가 main repo 에 git-mutating 실행 방지
+- 2.1.209 (7/14): `/model` 등 dialog claude agents background session 차단 fix
+- 2.1.208 (7/14): **screen reader mode** (`--ax-screen-reader`·`CLAUDE_AX_SCREEN_READER=1`·`axScreenReader:true`) · `vimInsertModeRemaps` (jj→Esc) · **`CLAUDE_CODE_PROCESS_WRAPPER`** (corporate launcher 강제 wrapper)
+- 2.1.207 (7/11): Bedrock/Vertex/Foundry auto mode 기본 활성 (`disableAutoMode` 로 opt-out) · 긴 stream 터미널 freezing fix · `claude -p`·SDK 에서 managed settings 무한 consent 기록 fix · benign 시스템 메시지 spurious prompt-injection 경고 fix
+- 2.1.206 (7/9): opus-4-8 findings quality 개선 · agents view 전체폭 status column · `remote.pushDefault` 도 push 자동허용
+- 2.1.198~205 (요약): Fable 5 RESTORED · subagent 기본 background · Explore agent opus 상속 · Dynamic workflow size · Sonnet 5 mid-conversation reminder 제거 · session transcript 변조 차단 · `.claude/rules/` symlink 로딩 fix
 
-**API (2026-07-08)**: API key expiration 옵션 (7일+ 키는 만료 전 이메일 발송) · `agent-memory-2026-07-22` beta header (memory list ordering 변경)
+**API 신규 (2026-07-08 이후)**:
+- 7/17: legacy Workbench (`platform.claude.com/workbench`) **2026-08-17 종료** — `/v1/experimental/(generate|improve|templatize)_prompt` 도 함께 retire. 저장 프롬프트·evals 는 사전 export
+- 7/15: **mid-conversation system messages** — Fable 5 / Mythos 5 / Opus 4.8 에서 beta header 없이 사용 가능
+- 7/14: Claude Enterprise Admin API user management beta (`anthropic-beta: ce-user-management-2026-07-13`) — 멤버·초대·그룹·custom role 관리
+- 7/10: Dreams (research preview) Fable 5 / Sonnet 5 지원 · CMEK 보존 이벤트 문서 확장
+- 7/8: API key expiration 옵션 (7일+ 키는 만료 전 이메일 발송) · `agent-memory-2026-07-22` beta header (memory list ordering 변경)
 
 Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 
