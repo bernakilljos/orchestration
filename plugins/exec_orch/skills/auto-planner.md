@@ -32,10 +32,10 @@ description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5�
 - 큰 작업 = codex/gemini 한테 task-instruction.md 로 위임
 - 메타 분석 (우리 시스템 매핑 등) 은 Claude 직접
 
-#### Path 2 — Mythos-class 자동 승격 (Opus 4.8 fail 시)
-같은 task 에서 Opus 4.8 가 2회 연속 fail (post-codex-verify hallucination 또는 INCONCLUSIVE) → **3회차는 Fable 5 자동 승격**.
+#### Path 2 — Mythos-class 자동 승격 (Opus 5 fail 시)
+같은 task 에서 Opus 5 가 2회 연속 fail (post-codex-verify hallucination 또는 INCONCLUSIVE) → **3회차는 Fable 5 자동 승격**.
 
-> **sub-agent depth**: Claude Code v2.1.172+ 부터 sub-agent 가 sub-agent 를 spawn 가능 (최대 5 levels deep). Fable 5 orchestrator 가 Dynamic Workflows 안에서 깊은 위임 chain 가능 — Opus 가 표면 task 만 검증하다 fail 할 때 Fable 5 는 task 를 더 깊게 분해해서 재공략.
+> **sub-agent depth**: v2.1.172~224 는 depth 5, **v2.1.225+ (2026-07-24) 부터 default depth 3** (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 비활성). Fable 5 orchestrator 가 Dynamic Workflows 안에서 깊은 위임 chain 가능 — Opus 5 가 표면 task 만 검증하다 fail 할 때 Fable 5 는 task 를 더 깊게 분해해서 재공략. Dynamic workflow 는 medium (≤15 agents) default (`workflowSizeGuideline` 설정 으로 조정).
 
 ```bash
 # 1. 게이트 확인

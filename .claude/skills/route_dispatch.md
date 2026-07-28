@@ -1,19 +1,20 @@
 ---
 name: route_dispatch
 description: |
-  태스크를 Claude Opus 4.8 우선으로 자동 라우팅. SQLite 상태 기반으로 Codex/Gemini 대체 경로 선택. 24/7 quota/budget 관리.
+  태스크를 Claude Opus 5 우선 (2026-07-24 신규 default) 으로 자동 라우팅. Opus 4.8 은 호환 fallback. SQLite 상태 기반 Codex/Gemini 대체 경로. 24/7 quota/budget 관리.
 ---
 
-# route_dispatch — AI 라우팅 · 판단 (v2 Opus 4.8 우선)
+# route_dispatch — AI 라우팅 · 판단 (v3 Opus 5 우선)
 
 > **분류:** `route_` (라우팅/판단 계열)
-> **변경점 (4.8 시대)**: Claude Opus 4.8 기본값 + extended thinking + prompt caching + SQLite quota
+> **변경점 (Opus 5 시대, 2026-07-24)**: Claude Opus 5 기본값. Opus 4.8 은 thinking-disable 호환 fallback. extended thinking on-by-default + prompt caching + SQLite quota
 > **참조 plugin:** `.claude-plugin/plugin.json` → `entry_points.task_route`
 
 ## 목적
 
-1M 컨텍스트 + extended thinking + prompt caching으로 Claude Opus 4.8이 단독 최적화 달성.
-Codex/Gemini는 특정 조건(quota소진, 1M 초과)에서만 호출. 사용자에게 AI 선택 묻지 않음.
+1M 컨텍스트 (기본+최대) + thinking on-by-default + prompt caching 으로 Claude Opus 5 가 단독 최적화 달성.
+Opus 4.8 은 `thinking:{"type":"disabled"}` + effort xhigh/max 조합이 필요할 때 fallback (Opus 5 는 400 error).
+Codex/Gemini 는 특정 조건 (quota 소진, budget cap, 특수 특성) 에서만 호출. 사용자에게 AI 선택 묻지 않음.
 
 ---
 
@@ -41,11 +42,12 @@ sqlite3 .claude/state/metrics.db "SELECT quota_exceeded FROM quota WHERE ai='cla
 
 | 신호 | 분류 | 라우팅 |
 |------|------|--------|
-| "설계", "아키텍처", "리팩토링", "왜", "어떻게" | **DESIGN** | Opus 4.8 + thinking |
-| 3개 이상 파일 걸친 작업 | **LARGE_SCOPE** | Opus 4.8 + 1M context |
-| "애매", "결정", "트레이드오프", "비교" | **DECISION** | Opus 4.8 + thinking |
-| 재시도 (retry_count > 0) | **RETRY** | Opus 4.8 재분석 |
-| **Opus 4.8 가 같은 task 2회 fail** | **MYTHOS** | **Fable 5 (/effort mythos)** |
+| "설계", "아키텍처", "리팩토링", "왜", "어떻게" | **DESIGN** | Opus 5 + thinking (호환 필요 시 Opus 5 fallback) |
+| 3개 이상 파일 걸친 작업 | **LARGE_SCOPE** | Opus 5 (1M 기본) |
+| "애매", "결정", "트레이드오프", "비교" | **DECISION** | Opus 5 + thinking (호환 필요 시 Opus 5 fallback) |
+| 재시도 (retry_count > 0) | **RETRY** | Opus 5 재분석 |
+| **Opus 5 가 같은 task 2회 fail** | **MYTHOS** | **Fable 5 (/effort mythos)** |
+| **thinking-disabled 필요 + effort xhigh/max** | **OPUS_4_8_COMPAT** | **Opus 5 fallback** (Opus 5 는 400 error) |
 | **"fable 5", "mythos", "최고 모델"** | **MYTHOS** | **Fable 5 직통** |
 | **Dynamic Workflows orchestrator (수십~수백 subagent)** | **MYTHOS** | **Fable 5** |
 | **8h+ long-running autonomy / vision-heavy** | **MYTHOS** | **Fable 5** |
@@ -69,42 +71,42 @@ IF MYTHOS:
       ASK USER (cost critical CLAUDE.md § 7-11)
     CLAUDE_FABLE_5 + /effort mythos
   ELIF result.fable_ok == 0:  # 20% cap 도달
-    NOTIFY user (cost critical) → fallback CLAUDE_OPUS_4_8
+    NOTIFY user (cost critical) → fallback CLAUDE_OPUS_5
   ELSE:
-    fallback CLAUDE_OPUS_4_8 (quota/budget 차단)
+    fallback CLAUDE_OPUS_5 (quota/budget 차단)
 
 IF DESIGN OR DECISION:
-  CLAUDE_OPUS_4_8 + thinking(budget_tokens: 8000)
+  CLAUDE_OPUS_5 + thinking(budget_tokens: 8000)
   + prompt_caching(system + CLAUDE.md + route_dispatch 3줄)
 
 IF LARGE_SCOPE AND token_estimate < 800k:
-  CLAUDE_OPUS_4_8 (1M context 활용, thinking 선택)
+  CLAUDE_OPUS_5 (1M context 활용, thinking 선택)
 
 IF token_estimate >= 800k (프로젝트 분할 필요):
   IF quota.codex_ok:
     task-instruction.md → codex-auto (병렬 4개)
-    THEN Opus 4.8 보완
+    THEN Opus 5 보완
     THEN Haiku 4.5 검증
   ELIF quota.gemini_ok:
     Gemini 2.0 Flash (1M+ 네이티브)
-    THEN Opus 4.8 최종 검증
+    THEN Opus 5 최종 검증
   ELSE:
     WAIT (quota backoff)
 
 IF VERIFY:
   IF quota.haiku_ok:
     CLAUDE_HAIKU_4_5 (검증 기본자)
-    IF fail: → Opus 4.8 재검증
+    IF fail: → Opus 5 재검증
   ELIF quota.gemini_ok AND token_estimate >= 500k:
     Gemini (초장문 검증)
   ELSE:
-    Opus 4.8 fallback
+    Opus 5 fallback
 
 IF RESEARCH (1M+ 리서치):
   IF quota.gemini_ok:
     Gemini 2.0 Flash (네이티브 1M)
   ELSE:
-    Opus 4.8 (800k 제한, 2회 분할)
+    Opus 5 (1M 기본, 분할 불필요)
 
 IF SMALL:
   IF quota.sonnet_ok:
@@ -114,7 +116,7 @@ IF SMALL:
   THEN Haiku 4.5 기본 검증
 
 DEFAULT (ambiguous):
-  CLAUDE_OPUS_4_8 (판단 역할)
+  CLAUDE_OPUS_5 (판단 역할)
 ```
 
 ---

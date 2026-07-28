@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 """
-Model pricing per 1M tokens (2026-07 basis, USD).
+Model pricing per 1M tokens (2026-07-24 basis, USD).
 Source: https://docs.anthropic.com/en/docs/about-claude/models
 
 tokenizer_factor:
     같은 텍스트가 각 모델의 tokenizer 로 얼마나 많은 토큰을 생성하는지 배수.
     기준 = Opus 4.7 tokenizer (=1.0). Opus 4.7 계열 (Fable 5, Sonnet 5, Mythos 5) 는
     이전 세대 대비 텍스트당 ~30% 더 많은 토큰 → factor=1.3 (2026-07-02 api-release 공지).
+    Opus 5 (2026-07-24) 는 4.8 계열 tokenizer 유지 → factor=1.0.
     estimate_cost 는 이 factor 를 적용해 실제 청구 토큰을 재산정.
 """
 
 PRICING = {
+    # === Opus 5 (2026-07-24 신규 default, 4.8 대비 step-change) ===
+    "claude-opus-5": {
+        "input": 5.0,
+        "output": 25.0,
+        "cache_write": 6.25,
+        "cache_read": 0.5,
+        "tokenizer_factor": 1.0,  # 4.8 계열 tokenizer
+        # 1M context 기본+최대, 128k 출력, thinking on-by-default.
+        # BREAKING: thinking:{"type":"disabled"} + effort xhigh/max → 400 error
+    },
     # === Opus 4.7 계열 tokenizer (factor 1.0 기준) ===
     "claude-opus-4-7": {
         "input": 15.0,
@@ -18,8 +29,9 @@ PRICING = {
         "cache_write": 18.75,
         "cache_read": 1.5,
         "tokenizer_factor": 1.0,
+        # 2026-07-24: fast mode 제거 (400 error) — fast 는 4.8/Opus 5 로 마이그레이션
     },
-    # === Opus 4.8 (2026-05-28 default, 4.7 대비 저렴) ===
+    # === Opus 4.8 (2026-05-28 default→호환 fallback 2026-07-24, 4.7 대비 저렴) ===
     "claude-opus-4-8": {
         "input": 5.0,
         "output": 25.0,
@@ -139,6 +151,7 @@ def estimate_cost(
 if __name__ == "__main__":
     # Smoke test: 1000 in / 500 out per model
     tests = [
+        "claude-opus-5",
         "claude-opus-4-8",
         "claude-opus-4-7",
         "claude-fable-5",

@@ -14,7 +14,7 @@ description: |
 
 `/effort ultracode` 또는 prompt 안 `ultracode` keyword 사용 시 Claude 가 task 를 **여러 sub-workflow 로 자동 분해** → 수십~수백 subagent 병렬 실행 → 독립 검증 → 최종 종합.
 
-> **v2.1.172+ 신기능**: sub-agent 가 sub-agent 를 spawn 가능 (최대 5 levels deep). orchestrator → L1 subagent → L2 subagent → ... → L5 subagent 까지 자율 위임 chain. 매우 복잡한 task (전체 codebase refactor, multi-system security audit 등) 에서 task 를 자연스럽게 계층 분해.
+> **v2.1.172~224 (레거시)**: sub-agent nested spawn depth 5. **v2.1.225+ (2026-07-24) 부터 default depth 3** — orchestrator → L1 → L2 → L3 까지 자율 위임 chain. `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 완전 비활성 가능. 매우 복잡한 task (전체 codebase refactor, multi-system security audit 등) 에서 task 를 자연스럽게 계층 분해. 더 깊은 depth 필요 시 `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` 상향.
 
 ## 트리거 (자동 감지)
 

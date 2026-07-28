@@ -604,7 +604,7 @@
     auto mode: subagent spawn 전 classifier 가 사전 평가
     /doctor: flat tree + 명령 이름 highlight
     --safe-mode (v2.1.169) · /cd (v2.1.169) · post-session hook (v2.1.169) — 우리 kit 이미 통합
-    sub-agent 가 sub-agent spawn 5 levels deep (v2.1.172) — Dynamic Workflows·/effort mythos 정합
+    sub-agent nested spawn v2.1.172 (depth 5) → v2.1.225 default 3 — Dynamic Workflows·/effort mythos 정합
 
   [Claude Code v2.1.169+ post-session lifecycle hook]
     SessionEnd (사용자 명시 종료) 와 별개로 *모든* 종료 (kill·crash·timeout) 트리거
@@ -614,10 +614,13 @@
       - guard-save.sh 활성 시 자동 snapshot
       - POST_SESSION_AUTO_SYNC=1 시 sync-to-team 자동 트리거
 
-  [Claude Code v2.1.172+ sub-agent depth 5 levels]
-    sub-agent 가 sub-agent spawn 가능 (orchestrator → L1 → L2 → ... → L5)
-    /effort ultracode 및 /effort mythos 의 Dynamic Workflows 더 깊은 계층 분해
-    auto-planner Path 2 (Opus 2회 fail → Fable 5) 와 정합
+  [Claude Code v2.1.172~224 (레거시) sub-agent depth 5 → v2.1.225+ default 3]
+    v2.1.225 (2026-07-24) 부터 default nesting depth 5 → 3
+    CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 로 nesting 완전 비활성 가능
+    (더 깊게 필요하면 env 로 상향 가능)
+    /effort ultracode 및 /effort mythos 의 Dynamic Workflows 계층 분해 유지
+    Dynamic workflow medium (≤15 agents) default — workflowSizeGuideline 설정 조정
+    auto-planner Path 2 (Opus 5 2회 fail → Fable 5) 와 정합
 
   [상태 조회]
     python .claude/scripts/route.py --status
