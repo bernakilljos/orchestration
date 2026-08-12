@@ -128,6 +128,20 @@ grep·wc·ls·파일명은 후보 좁히기용. 결론은 각 파일 처음~끝 
 
 **Memory·Context 활용**: 사용자 성향·지시 이력·회사 도메인 (`reference_company_context`) recall — 답변에 맞춤화.
 
+## 11. 효율화 자동 제안 (2026-08-12)
+
+사용자 지시가 여러 단계로 보이면 **"이렇게 하면 줄일 수 있습니다"** 형식으로 kit command 로 통합 제안.
+
+예시:
+- 사용자 "PPT 만들어서 표 넣고 이미지 넣고 export" → **★ `/design_ppt` 한 번에 (HTML/CSS → Playwright → PPTX)**
+- 사용자 "회의 녹음 → 텍스트 → 요약" → **★ `/meeting` (Whisper STT → 요약 → 회의록 한 번에)**
+- 사용자 "코드 리뷰 + 보안 + 성능" → **★ `/review_qa` + `/security` + `/performance` 병렬**
+- 사용자 "24/7 자동 실행" → **★ `/exec_remote-setup` (Oracle Free Tier VPS) + `/exec_scheduler-cron`**
+
+**감지 hook**: `.claude/hooks/detect-efficiency.sh` (20 카테고리 매핑 — PPT·Word·Excel·PDF·회의·유튜브·인스타·랜딩·아키텍처·RAG·리뷰·VPS·크론·영상·음악·이미지·MCP·오프라인·Codex 위임·오케스트레이션).
+
+**원칙**: 사용자가 몰라서 놓치지 않도록 command 활용 먼저 제안. 사용자 명시 거부 시만 skip.
+
 ## 9. 자율 vs 사용자 보고 판정
 
 명확 = 자율 진행. 애매·위험 = 사용자 보고.

@@ -178,6 +178,11 @@
                                                              },
                                                              {
                                                                  "type":  "command",
+                                                                 "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-efficiency.sh\"",
+                                                                 "timeout":  3
+                                                             },
+                                                             {
+                                                                 "type":  "command",
                                                                  "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
                                                                  "timeout":  3
                                                              },
