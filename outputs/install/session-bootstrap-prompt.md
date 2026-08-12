@@ -142,6 +142,51 @@ grep·wc·ls·파일명은 후보 좁히기용. 결론은 각 파일 처음~끝 
 
 **원칙**: 사용자가 몰라서 놓치지 않도록 command 활용 먼저 제안. 사용자 명시 거부 시만 skip.
 
+## 12. 미사용 기능 proactive 브리핑 (2026-08-12)
+
+매 세션 시작 시 사용자가 아직 안 쓴 기능 3-5개 자동 브리핑 · 일 1회 · 도메인 매칭 우선.
+
+**발동**: `.claude/hooks/brief-unused-features.sh` (SessionStart) + skill `feature-discovery`
+
+**도메인 매칭** (사용자 명시 시):
+- **ISMS-P** → `/security` `/sec-scan` `/analyze-improve` `/pdf-sign` `/pdf-secure`
+- **RMS** → `/analyze-improve` (XAI·Zero Trust) · `/rag-graph` · `/exec_offline-observe`
+- **ITCEN ESG** → `/design_ppt` `/design_word` `/pdf-generate` `/arch-mindmap`
+- **개발팀 리더** → `/godmode` `/exec_orch` `/review_qa` `/vibe-loop` `/graph-run`
+- **콘텐츠** → `/yt-upload` `/ig-upload` `/video-shorts` `/music_studio-*`
+- **회의·문서** → `/meeting` `/transcribe` `/pdf-fill`
+- **원격·모바일** → `/exec_remote-*` (Termius·Blink Shell)
+
+**사용자 관심 표현** ("이거 어떻게 써?"·"자세히"·"예시") 감지 시 → 상세 안내 (사용법·인자·예시 3개·관련 command·도메인 case).
+
+## 13. Web ↔ CLI 왕복 대화 (2026-08-12)
+
+CLI (여기 · kit·개발) 와 Web develop (실운영·감사) 이 애매·비즈니스 판정 필요 시 서로 물어봄.
+
+**CLI 가 develop 에 질문 문안 자동 생성** (표준 형식):
+```markdown
+### develop 에 붙일 질문 (v_YYYY-MM-DD_HH:MM)
+**Context**: [상황 1~2줄]
+**Options**: [옵션 A/B/C]
+**Trade-off**: [옵션별 표]
+**Blocker**: [CLI 가 왜 판정 못 하는지]
+**Ask**: [원하는 답 형식]
+```
+
+사용자 = 클립보드 릴레이만 (수동). 완전 자동은 Chrome Extension 필요 (`outputs/install/chrome-extension-skeleton.md`).
+
+skill: `web-cli-dialogue-workflow`
+
+## 14. 로컬 우선 라우팅 (API 비용 절감)
+
+API 비용 없이 자동화 가능한 것은 로컬 우선.
+
+- **파일·grep·요약·subagent** → 무료 (내장 도구·Ollama·ChromaDB)
+- **복잡 설계·초난도** → API (Opus 5·Fable 5) · 사용자 명시 시만
+- **감사·비즈니스 판정** → claude.ai Web develop (사용자 구독)
+
+상세: `outputs/install/kit-catalog.md § 12.5 API 비용 매트릭스`
+
 ## 9. 자율 vs 사용자 보고 판정
 
 명확 = 자율 진행. 애매·위험 = 사용자 보고.

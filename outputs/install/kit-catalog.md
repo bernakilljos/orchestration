@@ -84,9 +84,11 @@ Command 는 슬래시로 호출, Skill 은 **description 매칭 자동 발동**.
 - **auto-planner** — 사용자 지시 받자마자 5단계 plan (자동)
 - **direction-first** 관련 — 대상 확정 자동
 - **user-emotion-auto-response** — 감정·상황 12 매핑 자동
-- **asset-creation-workflow** — 새 자산 생성 시 유형별 표준
+- **asset-creation-workflow** — 새 자산 생성 시 유형별 표준 (bash↔PowerShell 자매·유사 파일 grep)
+- **feature-discovery** — 사용자 모르는 미사용 기능 proactive 발굴·매 세션 3-5개 브리핑
+- **web-cli-dialogue-workflow** — CLI (kit·개발) ↔ Web develop (실운영·감사) 왕복 대화 표준
 - **exec_orca-auto** — 워커 spawn 자동
-- **route_dispatch** — AI 라우팅 결정
+- **route_dispatch** — AI 라우팅 결정 (로컬 Ollama 우선 · API 명시 시)
 - **prompt-techniques** — 12 프롬프트 강화 기법 (Role·Negative·CoT·Self-consistency·ToT·ReAct·RAG 등)
 - **auto-layout-fit** — 페이지 콘텐츠 fit 자동
 - **post-codex-verify** — Codex hallucination 사후 검증
@@ -185,10 +187,10 @@ Task tool 로 spawn:
 ## 9. Hooks (55) — 이벤트 자동 발동
 
 주요:
-- **SessionStart** — hook-00-init (헌장 A~F 노출) · auto-install-deps · cleanup-pollution · check-workers
-- **UserPromptSubmit** — user-prompt-auto-planner (5단계) · detect-deflection · detect-repeat-request · detect-user-emotion · periodic-rules-reminder
-- **PreToolUse Write/Edit** — detect-asset-creation · block-version-suffix · check-mojibake · protect-critical-files
-- **PreToolUse Bash** — pre-install-lock (install 순서 강제) · pre-commit-full-check
+- **SessionStart** — hook-00-init (헌장 A~F 노출) · brief-unused-features (미사용 3-5개 브리핑) · auto-install-deps · cleanup-pollution · check-workers
+- **UserPromptSubmit** — user-prompt-auto-planner (5단계) · detect-repeat-request (반복→loop) · detect-user-emotion (12 감정) · detect-efficiency (20 카테고리 command 제안) · detect-deflection · periodic-rules-reminder
+- **PreToolUse Write/Edit** — detect-asset-creation · block-version-suffix (매뉴얼 md/txt/html 포함) · check-mojibake · protect-critical-files
+- **PreToolUse Bash** — pre-install-lock (install 순서 강제 · uncommitted 시 block) · pre-commit-full-check
 - **PostToolUse** — auto-smoke-test · check-sync-drift · verify 도구 자동 발동
 - **Stop / SessionEnd** — stop-snapshot · stop-doc-summary · hook-gemini-recap
 
