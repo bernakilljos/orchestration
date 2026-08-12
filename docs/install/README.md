@@ -163,15 +163,13 @@ grep·wc·ls·파일명은 후보 좁히기용. 결론은 각 파일 처음~끝 
 
 CLI (kit·개발) ↔ Web develop (실운영·감사) · 애매 시 서로 물어봄.
 
-CLI 가 질문 문안 자동 생성 표준:
-```
-### develop 질문 (v_YYYY-MM-DD_HH:MM)
-Context: [상황]
-Options: [A/B/C]
-Trade-off: [표]
-Blocker: [CLI 가 왜 판정 못 하는지]
-Ask: [답 형식]
-```text
+CLI 가 질문 문안 자동 생성 표준 형식:
+  · **### develop 질문 (v_YYYY-MM-DD_HH:MM)**
+  · Context: [상황]
+  · Options: [A/B/C]
+  · Trade-off: [표]
+  · Blocker: [CLI 가 왜 판정 못 하는지]
+  · Ask: [답 형식]
 
 사용자 = 클립보드 릴레이. 완전 자동은 Chrome Extension 필요.
 
