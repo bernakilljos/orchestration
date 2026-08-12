@@ -50,6 +50,45 @@
 - [ ] 들여쓰기·명명·라우팅·검증·보고 모두 SoT 따름?
 - [ ] 이번 turn 에 룰 변경 의도 있나? Yes → 절차 따름
 
+## 함수·훅·룰 중복 금지 (2026-08-12 사용자 강조)
+
+**"A함수 B함수 C함수 이렇게 똑같은 걸로 계속 수정에 장난"** = drift 유형.
+
+새 함수·hook·rule·skill 만들기 전 grep 으로 기존 확인. 있으면 확장, 없으면 신규.
+
+| 확인 대상 | 명령 |
+|---|---|
+| 함수·유틸 | `grep -rn "def <name>\|function <name>\|<verb>_<noun>" plugins/ .claude/scripts/` |
+| hook·rule·skill | `grep -rln "<purpose>" .claude/hooks/ plugins/*/hooks/ .claude/rules/ .claude/skills/ plugins/*/skills/` |
+
+### 정본 위치 (SoT)
+
+| 자산 | 정본 |
+|---|---|
+| 공통 유틸 | `.claude/scripts/lib/` |
+| 스킬 로직 | `plugins/exec_orch/skills/` |
+| Hook | `plugins/*/hooks/` (SoT) → `.claude/hooks/` sync 결과 |
+| Rule | `.claude/rules/<name>.md` 하나 |
+| Command | `plugins/*/commands/<name>.md` 하나 |
+| Memory feedback | `memory/feedback_<slug>.md` 하나 |
+
+### 이름 규칙
+
+- **목적 = 이름 1개** — `check-mojibake.sh` 1개, `check-mojibake-v2.sh` X
+- **접미사 금지** — `_v2`·`_new`·`_final`·`_alt`·`_fix`
+
+### 금지
+
+1. "기존 것 조금 다르니 새로" → 확장·파라미터화
+2. `_v2`·`_new`·`_final` 접미사 → 정본 덮어쓰기 + `.bak` 백업
+3. 같은 검증 `verify-A.py`·`verify-B.py`·`verify-C.py` 3개
+4. 같은 목적 룰 여러 개 (`direction-first.md` + `target-check.md`)
+5. grep 없이 신규 생성
+
+헌장 정합: **A5** (기존 자산 재사용) · **E4** (같은 목적 컴포넌트 2개 금지)
+
+memory: [[feedback_no_duplicate_function]]
+
 ## 5중 박기 (잊지 못하도록)
 
 1. 이 파일 (`.claude/rules/consistency.md`)

@@ -51,6 +51,11 @@
         ],
         "defaultMode": "bypassPermissions"
     },
+    "statusLine": {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/statusline.sh\"",
+        "padding": 0
+    },
     "hooks": {
         "SessionStart": [
             {
@@ -163,6 +168,16 @@
                     },
                     {
                         "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-repeat-request.sh\"",
+                        "timeout": 3
+                    },
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-user-emotion.sh\"",
+                        "timeout": 3
+                    },
+                    {
+                        "type": "command",
                         "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
                         "timeout": 3
                     },
@@ -255,6 +270,11 @@
             {
                 "matcher": "Edit|Write",
                 "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-asset-creation.sh\"",
+                        "timeout": 3
+                    },
                     {
                         "type": "command",
                         "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-critical-files.sh\""

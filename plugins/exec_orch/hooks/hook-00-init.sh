@@ -38,6 +38,39 @@ fi
 cat <<'REMINDER'
 
 ==============================
+ ⚠ 재발 방지 헌장 (CLAUDE.md § 7) — 세션 강제 로드
+==============================
+A (하드코딩·폴백): A1 하드경로 X · A2 산식 없는 %·상수 X · A3 배선 없는 UI X · A4 정본 1곳 · A5 기존 자산 재사용
+B (검증): B1 검사 0건≠통과 · B3 육안+픽셀 · B6 수정 후 자동 검증 · B7 smoke test 의무 · B8 페이지 fit · B11 이중 검증 (mojibake+백업)
+C (운영 안전): C1 운영 변경 적용 전 판정 · C4 미커밋 누적 X · C6 위험 작업 approval-gate · C7 멈춤 방지 · C10 install 순서
+D (조사·보고): **D0 대상 확정 0순위** · D6 중간 확인 X · **D7 전수조사=100% Read** · D11 회피 X · D12 기준 일관성
+E (UI/UX): E1 LAYOUTSPEC · E4 정본 1곳 · E5 8섹션 · E6 -v2/-v3 X (원본 덮어쓰기)
+F (kit 고유): F1 .claude/ 직접 X · F3 Zero-touch · F5 auto-planner 5단계 · **F6 함수·훅·룰 중복 X** · **F7 감정 매핑 자동**
+
+상세: .claude/rules/*.md · CLAUDE.md § 7
+
+==============================
+ ⚠ 대상 확정 0순위 (매 사용자 지시)
+==============================
+첫 응답 첫 줄 형식: 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정.
+
+4갈래 후보:
+ 1) C:\pjt\orchestration_v1\               (kit 자체 감사·룰·hook)
+ 2) C:\pjt\orchestration_v1\setup\templates\ (install 배포용 template)
+ 3) install 대상 실운영 프로젝트           (경로 물어봐 — "실운영/하드코딩 실측/재발 방지 헌장" 시)
+ 4) ~/.claude/                              (글로벌 설정)
+
+★ 대상 확정 전 grep·Read·Edit·Bash 착수 = 룰 위반
+★ 자동 판정 힌트:
+   - "install a/b"·"배포"·"공통 kit"·"template"     → 후보 2
+   - "실운영"·"하드코딩 실측"·"헌장"·비즈니스 지표 → 후보 3 (경로 확인)
+   - "룰 21개"·"hook 40개"·"플러그인"·"kit 자체"    → 후보 1
+   - "settings"·"글로벌"·"~/.claude"                → 후보 4
+
+상세: .claude/rules/direction-first.md
+      feedback_confirm_target_first.md
+
+==============================
  ⚠ 전수조사 5단계 의무 (사용자 지시 처리)
 ==============================
 1. 전수조사  — 인접 시스템·전역까지 모든 위치 훑기

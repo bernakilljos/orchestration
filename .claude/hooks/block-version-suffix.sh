@@ -20,8 +20,9 @@ BASENAME=$(basename "$FILE_PATH" 2>/dev/null || echo "")
 # 버전 접미사 패턴 감지: -v2, -v3, _v2 등
 # 단순 검색: -v[0-9], _v[0-9] 패턴
 if echo "$BASENAME" | grep -i '\-v[0-9]\|_v[0-9]' > /dev/null 2>&1; then
-  # 실제 산출물 확장자 확인 (docx/pptx/pdf/xlsx)
-  if echo "$BASENAME" | grep -iE '\.(docx|pptx|pdf|xlsx|doc|ppt)$' > /dev/null 2>&1; then
+  # 실제 산출물 확장자 확인 (docx/pptx/pdf/xlsx + 매뉴얼 md/txt/html/rst/adoc/ipynb)
+  # 근거: 2026-08-12 사용자 지적 — "매뉴얼이든 뭐든 v20 까지 간다"
+  if echo "$BASENAME" | grep -iE '\.(docx|pptx|pdf|xlsx|doc|ppt|md|txt|html|rst|adoc|ipynb)$' > /dev/null 2>&1; then
     cat <<'MSG'
 
 ❌ [BLOCK] 산출물 버전 접미사 감지!
