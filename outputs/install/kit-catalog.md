@@ -223,6 +223,27 @@ Anthropic 공식 커넥터 (claude.ai 자동): Figma · Gamma · Gmail · Canva 
 
 ---
 
+## 12.5 API 비용 매트릭스 (무료 vs 유료)
+
+| 카테고리 | 무료 (로컬·내장) | 유료 (API) |
+|---|---|---|
+| **파일·grep·검색** | Grep·Glob·Bash 도구 | — |
+| **간단 요약·분류** | Ollama Llama 3.3·Gemma·Mistral | Haiku 4.5 ($0.25/$1.25) |
+| **RAG 벡터 검색** | ChromaDB 로컬 | Pinecone·Weaviate |
+| **subagent 격리** | Agent Explore·general-purpose | Managed Agents API |
+| **관측·대시보드** | Phoenix self-hosted | LangSmith·Arize |
+| **복잡 설계·리팩터** | (로컬 한계) | Opus 5 ($5/$25) · Sonnet 5 |
+| **초난도** | (로컬 한계) | Opus 5 + ultracode · Fable 5 ($10/$50) |
+| **감사·비즈니스** | (로컬 무의미) | claude.ai Web develop (사용자 구독 · 브라우저) |
+| **디자인 MCP** | Mermaid CLI (로컬) | Canva·Figma·Gamma OAuth |
+| **음성 STT** | Whisper 로컬 (base·small) | Whisper API · edge-tts |
+| **이미지 생성** | Pollinations.ai (무료 익명) | DALL-E·Midjourney API |
+| **영상 편집** | FFmpeg·Real-ESRGAN 로컬 | Runway ML API |
+
+**API 비용 없이 자동화**: `/exec_offline-setup` (Ollama + ChromaDB + Phoenix) → 대부분 태스크 로컬. 복잡 설계·초난도만 API.
+
+**budget 게이트**: `route.py --set-daily-limit <USD>` — 상한 초과 시 로컬 fallback 자동.
+
 ## 13. 사용자 도메인 (ISMS-P · RMS · ITCEN ESG) 특화
 
 memory `reference_company_context.md`:

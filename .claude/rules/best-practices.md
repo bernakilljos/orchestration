@@ -172,6 +172,44 @@ def _wait_unlock(path, max_sec=60, interval=2):
     return False
 ```
 
+## 로컬 우선 라우팅 (API 비용 절감 · 2026-08-12 사용자 강조)
+
+**"API 비용만 아니면 됨"** — 자율 처리 시 로컬 대안 우선. API 는 사용자 명시 승인 · 복잡추론·설계·초난도만.
+
+### 우선순위 매트릭스
+
+| 태스크 규모 | 1순위 (무료) | 2순위 (API · 명시 필요) |
+|---|---|---|
+| **파일 검색·grep·wc** | `Grep`·`Glob`·`Bash` 도구 (LLM 호출 X) | — |
+| **간단 요약·분류** | 로컬 Ollama (Llama 3.3·Gemma·Mistral) via `/exec_offline-model` | Haiku 4.5 |
+| **RAG 검색** | ChromaDB 로컬 (`/exec_offline-vector`) | Pinecone / Vector API |
+| **subagent 격리 실행** | `Agent Explore` (내부 · 무료) | Managed Agents API |
+| **복잡 코드·리팩터 500줄+** | (로컬 한계) | Codex ×4 · Opus 4.8 |
+| **설계·아키텍처 결정** | (로컬 한계) | Opus 5 (default) |
+| **초난도·다각 검증** | (로컬 한계) | Opus 5 + ultracode · Fable 5 |
+| **감사·비즈니스 판정** | (로컬 무의미) | claude.ai Web develop (사용자 브라우저 · 사용자 계정 · 비용은 사용자 구독) |
+
+### 로컬 스택 (무료 · `/exec_offline-setup`)
+
+- **Ollama** — Llama 3.3 · Gemma 2 · Mistral · Phi-3 (로컬 실행)
+- **ChromaDB** — 벡터 DB (embedding 로컬)
+- **Phoenix** — self-hosted 관측 대시보드
+
+### 원칙
+
+1. 사용자 지시가 grep·검색·요약·분류 등 단순 태스크 → 로컬 도구 · API 호출 X
+2. Claude·GPT·Gemini API 호출 전 "이거 로컬로 되나?" 자가 점검
+3. 사용자 명시 (`/effort xhigh`·`/effort mythos`·`/godmode`) 있으면 API 허용
+4. budget 상한 (`route.py --set-daily-limit`) 존중 · 초과 시 로컬 fallback
+
+### 금지
+
+1. 단순 grep 태스크에 Opus 호출 (비용 낭비)
+2. 로컬 가능한데 Managed Agents API 사용
+3. 사용자 명시 없이 Fable 5·Opus 5 xhigh 라우팅 (일일 budget 20% 게이트)
+
+memory: [[feedback_common_kit_not_domain]] · `feedback_zero_touch_automation`
+
 ## 질문 vs 개발 구분 (2026-08-12 사용자 강조)
 
 **"질문하는 건 바로 대답해줬으면 좋겠어. 개발이 아니잖아"** — 사용자 입력 유형별 대응 분리.
