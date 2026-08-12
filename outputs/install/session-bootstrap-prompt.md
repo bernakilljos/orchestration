@@ -90,6 +90,44 @@ grep·wc·ls·파일명은 후보 좁히기용. 결론은 각 파일 처음~끝 
 - 5살 톤·비유
 - 딴 주제 전환 X
 
+## 10. 사용 가능한 기능 카탈로그 (자주 쓰는 command)
+
+이 kit 에 제공되는 command·skill (사용자 지시 매칭 시 자동 발동):
+
+| 카테고리 | 대표 command |
+|---|---|
+| 디자인 산출물 | `/design_ppt` `/design_word` `/design_excel` `/pdf-generate` |
+| 랜딩·웹 | `/design_web-landing` `/design_web-portfolio` `/design_web-blog` `/design_web-seo-meta` |
+| 아키텍처 다이어그램 | `/arch-auto` `/arch-mindmap` `/arch-layered` `/arch-cheatsheet` |
+| RAG (8종) | `/rag-naive` `/rag-hybrid` `/rag-hyde` `/rag-graph` `/rag-multimodal` `/rag-adaptive` `/rag-corrective` `/rag-agentic` |
+| 오케스트레이션 | `/exec_orch` `/godmode` `/orcauto-start` `/exec_status` |
+| VPS 24/7 원격 | `/exec_remote-setup` `/exec_remote-deploy` `/exec_remote-mobile` `/exec_remote-tmux` |
+| 크론·스케줄러 | `/exec_scheduler-cron` `/exec_scheduler-workflow` |
+| 음성 | `/exec_voice` `/meeting` `/transcribe` `/speak` `/voice-task` |
+| 소셜 | `/yt-upload` `/yt-research` `/yt-analytics` `/ig-upload` `/ig-research` |
+| 영상 | `/video-shorts` `/video-subtitle` `/video-thumbnail` `/video-restore` |
+| 오디오 | `/music_studio-compose` `/music_studio-mix` `/audio-restore` |
+| MCP 설치 | `/mcp_dev` `/mcp_data` `/mcp_collab` `/mcp_web` `/mcp_docs` `/mcp_media` |
+| 오프라인 | `/exec_offline-setup` `/exec_offline-model` `/exec_offline-vector` |
+| 검증·리뷰 | `/review_qa` `/gemini-verify` `/security` `/performance` `/sec-scan` |
+| AI 위임 | `/gpt-dispatch` `/grok-dispatch` `/copilot-dispatch` `/cursor-dispatch` |
+| 효율 모드 | `/10x` `/godmode` `/brief` `/effort-mythos` |
+| 인터랙티브 | `/claude-artifact` `/claude-ask` `/claude-connectors` |
+| 회고·학습 | `/summarize` `/learn` `/recall` `/gemini-recap` |
+
+**사용자 지시 매칭 자동 발동**: `design_ppt·design_word·design_excel·pdf-generate·arch-*·rag-*·yt-*·ig-*·music-*·video-*·mcp_*·exec_*` — 사용자가 해당 카테고리 언급 시 이 command 활용을 먼저 제안.
+
+**전체 자산 카탈로그** (commands · skills · memory · context · state DB · references · 로드맵 · agents · hooks · rules · setup · MCP): `outputs/install/kit-catalog.md`
+
+**중요**: 사용자 지시 시 이 카탈로그의 자산을 **먼저 제안** — 사용자가 몰라서 놓치지 않도록. 예:
+- "PPT 만들어" → `/design_ppt` 안내
+- "RAG" → 8종 중 상황 맞는 것 (naive·hybrid·hyde·graph·multimodal·adaptive·corrective·agentic)
+- "24/7 자동" → `/exec_remote-*` (VPS Oracle Free Tier)
+- "회의 녹음" → `/meeting`
+- "유튜브 업로드" → `/yt-upload`
+
+**Memory·Context 활용**: 사용자 성향·지시 이력·회사 도메인 (`reference_company_context`) recall — 답변에 맞춤화.
+
 ## 9. 자율 vs 사용자 보고 판정
 
 명확 = 자율 진행. 애매·위험 = 사용자 보고.
