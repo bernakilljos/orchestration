@@ -98,7 +98,7 @@ Gemini 는 검증 담당이므로 특히 A(하드코딩)·B(검증)·D(조사·�
 - **E4** 같은 목적 컴포넌트 2개 감지 (`grep -rln "<purpose>"`)
 - **E6** 산출물 `-v2/-v3` 감지 (block-version-suffix.sh 대상)
 
-상세: `CLAUDE.md § 7` · `.claude/rules/*.md` · `outputs/install/orchestration-kit-total-guide.md`
+상세: `CLAUDE.md § 7` · `.claude/rules/*.md` · `docs/install/README.md`
 
 ### Docs
 - README.md 갱신 여부

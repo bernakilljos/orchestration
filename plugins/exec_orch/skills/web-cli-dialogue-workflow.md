@@ -72,7 +72,7 @@ CLI 가 이 형식으로 만들어서 사용자에게 제공:
 
 ## 관련
 
-- `outputs/install/web-cli-bridge.md` (4 방식 상세)
-- `outputs/install/session-bootstrap-prompt.md` (develop project 세팅)
+- `docs/install/README.md § Section 3` (4 방식 상세)
+- `docs/install/README.md § Section 2` (develop project 세팅)
 - `.claude/rules/direction-first.md` (대상 4갈래 · CLI vs Web)
 - `feedback_confirm_target_first` · [[reference_claude_web_projects_setup]]

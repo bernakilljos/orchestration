@@ -49,7 +49,7 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
   fi
 
   # 2) robocopy /MIR /IS /IT — cmd 환경변수 전달 (backslash escape 안전)
-  # outputs/install/ 도 포함 (총망라 매뉴얼 + session-bootstrap-prompt)
+  # docs/install/ 도 포함 (총망라 매뉴얼 + session-bootstrap-prompt)
   for sub in .claude .claude-plugin plugins outputs; do
     if [ -d "$SOURCE/$sub" ]; then
       SRC_WIN=$(cygpath -w "$SOURCE/$sub" 2>/dev/null || echo "$SOURCE/$sub")

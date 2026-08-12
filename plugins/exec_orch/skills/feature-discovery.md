@@ -17,7 +17,7 @@ Kit 은 200+ commands · 250+ skills · 32 plugins 보유. 사용자가 매번 �
 
 ```text
 1. 사용 이력 로드 (.claude/state/feature-usage.log)
-2. 카탈로그 (outputs/install/kit-catalog.md) 순회
+2. 카탈로그 (docs/install/README.md § Section 4) 순회
 3. 미사용 command·skill 필터
 4. 사용자 도메인 (memory reference_company_context) 매칭 우선순위
 5. 최근 로드맵 (docs/2026-04-19/로드맵.md) 신규 우선순위
@@ -77,6 +77,6 @@ session-bootstrap-prompt.md § 10~11 에 카탈로그 링크 + 효율화 원칙 
 
 - `.claude/hooks/brief-unused-features.sh` (SessionStart)
 - `.claude/hooks/detect-efficiency.sh` (UserPromptSubmit)
-- `outputs/install/kit-catalog.md` (SoT)
+- `docs/install/README.md § Section 4` (SoT)
 - `feedback_daily_toolkit_gap_check.md`
 - `reference_company_context.md`

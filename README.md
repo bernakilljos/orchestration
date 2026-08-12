@@ -7,14 +7,14 @@ Claude Opus 5 (default, 2026-07-24) + Codex + Haiku 4.5 (Review) + Fable 5 (Myth
 이 kit 은 **6 카테고리 헌장** 으로 재발 방지 통합:
 - **A** 하드코딩·폴백 금지 · **B** 검증 · **C** 운영 안전 · **D** 조사·보고 · **E** UI/UX · **F** kit 고유
 
-상세: `CLAUDE.md § 7` · **총망라 매뉴얼**: `outputs/install/orchestration-kit-total-guide.md`
+상세: `CLAUDE.md § 7` · **총망라 매뉴얼**: `docs/install/README.md`
 
 ## 다른 프로젝트 · 다른 세션에서 쓰는 법
 
-- **Claude.ai Projects**: `outputs/install/session-bootstrap-prompt.md` 를 System instructions 에 붙임 → 매 대화 자동 seed
+- **Claude.ai Projects**: `docs/install/README.md § Section 2` 를 System instructions 에 붙임 → 매 대화 자동 seed
 - **install target 배포**: `install.bat <target>` (kit 원본 → target 자동 배포)
-- **Web ↔ CLI 자동 브릿지**: `outputs/install/web-cli-bridge.md` (4 방식 · Managed Agents API 완전 자동)
-- **참조 파일**: `outputs/install/claude-web-projects-setup.md`
+- **Web ↔ CLI 자동 브릿지**: `docs/install/README.md § Section 3` (4 방식 · Managed Agents API 완전 자동)
+- **참조 파일**: `docs/install/README.md § Section 1`
 
 ---
 

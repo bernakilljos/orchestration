@@ -1605,7 +1605,7 @@
   19. 총망라 매뉴얼
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  outputs/install/orchestration-kit-total-guide.md
+  docs/install/README.md
 
   다른 프로젝트에서 install 안 해도 이 md 하나로 kit 이해·활용 가능.
   헌장 A~F · rules · hooks · commands · skills · statusline ·

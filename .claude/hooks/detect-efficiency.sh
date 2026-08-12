@@ -2,7 +2,7 @@
 # detect-efficiency.sh — UserPromptSubmit hook
 # 목적: 사용자 지시 안 여러 단계 감지 → kit command 하나로 줄이는 제안
 # 근거: 2026-08-12 사용자 지적 — "감지해서 이렇게 하면 줄일 수 있습니다"
-# 매핑 SoT: outputs/install/kit-catalog.md
+# 매핑 SoT: docs/install/README.md § Section 4
 set -e
 
 INPUT="$(cat)"
@@ -119,7 +119,7 @@ fi
 # 감지된 게 있으면 systemMessage
 if [ -n "$suggestions" ]; then
   cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[효율화 제안 — 이렇게 하면 줄일 수 있습니다]\\n$suggestions\\n★ 상세 카탈로그: outputs/install/kit-catalog.md\\n★ 사용자 지시가 여러 단계면 위 command 로 통합 제안 — 사용자가 몰라서 놓치지 않도록 (2026-08-12 사용자 강조)"}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[효율화 제안 — 이렇게 하면 줄일 수 있습니다]\\n$suggestions\\n★ 상세 카탈로그: docs/install/README.md § Section 4\\n★ 사용자 지시가 여러 단계면 위 command 로 통합 제안 — 사용자가 몰라서 놓치지 않도록 (2026-08-12 사용자 강조)"}}
 EOF
 fi
 exit 0

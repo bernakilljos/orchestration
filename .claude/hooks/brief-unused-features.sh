@@ -91,7 +91,7 @@ done
 
 cat <<EOF
 
-★ 상세 카탈로그: outputs/install/kit-catalog.md
+★ 상세 카탈로그: docs/install/README.md § Section 4
 ★ 관심 있는 것 있으면 사용자 지시 시 자동 매칭 (detect-efficiency.sh)
 ★ 도메인 매칭: reference_company_context (ISMS-P·RMS·ITCEN ESG)
 

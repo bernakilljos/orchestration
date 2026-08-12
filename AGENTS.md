@@ -76,7 +76,7 @@ Codex 도 이 헌장 준수. Codex 는 실행 담당이므로 특히 A(하드코
 - **E** UI/UX: 산출물 `-v2` X (원본 덮어쓰기 + 날짜 기반 v1/v2).
 - **F** 실전 원칙: 목업·mock 자동 X (사용자 명시 시만). 목업 참조 = 실제 기능 구현.
 
-상세: `CLAUDE.md § 7` · `.claude/rules/*.md` · `outputs/install/orchestration-kit-total-guide.md`
+상세: `CLAUDE.md § 7` · `.claude/rules/*.md` · `docs/install/README.md`
 
 ---
 

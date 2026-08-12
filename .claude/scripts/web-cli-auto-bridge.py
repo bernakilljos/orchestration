@@ -24,7 +24,7 @@ Anthropic Managed Agents API (2026-07-22+) 사용.
   # 세션에 지시:
   python .claude/scripts/web-cli-auto-bridge.py --send "<지시>"
 
-근거: outputs/install/web-cli-bridge.md § 방식 3
+근거: docs/install/README.md § Section 3 § 방식 3
 근거: 2026-08-12 사용자 요구 — "web 보내면 명령프롬프트 → cli → web 자동"
 """
 from __future__ import annotations
@@ -42,7 +42,7 @@ except ImportError:
 
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-BOOTSTRAP_PROMPT = ROOT / "outputs/install/session-bootstrap-prompt.md"
+BOOTSTRAP_PROMPT = ROOT / "docs/install/README.md § Section 2"
 STATE_DIR = ROOT / ".claude/state"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 SESSION_FILE = STATE_DIR / "web-cli-session.json"
