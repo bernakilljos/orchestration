@@ -215,6 +215,34 @@ claude → /exec_remote-deploy    # VPS 부트스트랩 + Claude Code 설치
 
 ---
 
+## 완전 자동 (Managed Agents API) — 사용자 개입 0
+
+**전제**: `ANTHROPIC_API_KEY` 환경변수 · `pip install anthropic>=0.40.0`
+
+```bash
+# 1. API key 설정
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# 2. 세션 생성 (헌장 A~F 자동 seed)
+python .claude/scripts/web-cli-auto-bridge.py --new-session
+
+# 3. 지시 전송 (자동 응답)
+python .claude/scripts/web-cli-auto-bridge.py --send "새 프로젝트 X 를 kit 원칙대로 만들어줘"
+
+# 4. daemon 모드 (webhook 수신)
+python .claude/scripts/web-cli-auto-bridge.py --start
+```
+
+세션 상태: `.claude/state/web-cli-session.json` (agent_id · session_id · thread_id)
+
+**흐름**:
+- Managed Agents 세션 하나 = 헌장 A~F seed 된 agent
+- Web (claude.ai) · CLI · API 모두 같은 session_id 참조 → 대화 상태 공유
+- Event stream 으로 실시간 관측
+- Webhook 으로 lifecycle 반응 (polling X)
+
+**복사·붙여넣기 X** — 세션에 등록된 system prompt 가 매 turn 자동 적용.
+
 ## 지금 즉시 시작하는 법 (파일 브릿지)
 
 ```bash

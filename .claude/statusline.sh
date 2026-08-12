@@ -3,8 +3,13 @@
 # 근거: .claude/rules/direction-first.md · feedback_confirm_target_first.md
 # 목적: Claude·사용자 모두 매 turn 마다 "지금 어느 대상 손대는지" 확인
 # 하드코딩 X — CLAUDE.md § 7-A1 · 컴퓨터마다 경로 다름
+# 판정 기준: **스크립트 자체 위치** (BASH_SOURCE) — CLAUDE_PROJECT_DIR 환경변수 override 방지
 set -e
-CWD="${CLAUDE_PROJECT_DIR:-$PWD}"
+
+# 스크립트 위치 = 실제 kit/target 폴더 (CLAUDE_PROJECT_DIR 무관)
+SCRIPT_LOC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null || echo "")"
+# .claude/statusline.sh 위치 → 상위 폴더가 실제 프로젝트 root
+CWD="$(cd "$SCRIPT_LOC/.." 2>/dev/null && pwd 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-$PWD}")"
 BASE="$(basename "$CWD" 2>/dev/null || echo "")"
 
 # 대상 판정 (4갈래) — 하드코딩 X, marker 파일·상대 위치 기반
@@ -18,9 +23,9 @@ case "$CWD" in
     ;;
 esac
 
-# kit 자체 판정 — orchestration_v1 marker 파일 존재 여부
-# marker: .claude-plugin/plugin.json + plugins/exec_orch/ 동시 존재 (kit 고유)
-if [ -z "$scope" ] && [ -f "$CWD/.claude-plugin/plugin.json" ] && [ -d "$CWD/plugins/exec_orch" ]; then
+# kit 자체 판정 — .claude/.is-kit-root marker 파일 (kit 만 있음, sync-team 제외)
+# 근거: .claude-plugin/plugin.json 은 install 시 target 에도 복사됨 → 판정 오류. .is-kit-root 만 kit 전용
+if [ -z "$scope" ] && [ -f "$CWD/.claude/.is-kit-root" ]; then
   scope="[KIT] $BASE (감사·리팩터)"
 fi
 
