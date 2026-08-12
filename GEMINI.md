@@ -48,7 +48,7 @@ install.bat <현재 폴더>
 
 ## 태스크 파일 구조 (verify-*.md 형식)
 
-```
+```text
 # 검증 제목
 ## Target: 검증 대상 (PR / 파일 / 모듈)
 ## Files: 검증할 파일 목록 (상대경로)
@@ -84,6 +84,21 @@ install.bat <현재 폴더>
 - 주석에 "주인" 사용 금지
 - optional chaining(`?.`) 사용 금지
 - 기존 파일 전체 재작성 금지
+
+### 재발 방지 헌장 A~F (2026-08-12) — 검증 항목
+
+Gemini 는 검증 담당이므로 특히 A(하드코딩)·B(검증)·D(조사·보고)·E(UI/UX) 중요.
+
+- **A1** 하드경로·%·상수 검출 (`grep -rn 'C:\\\\Users\\\\|python31[0-9]\\\\'`)
+- **A2** 산식 없는 %·등급 하드코딩 감지 (`grep -rn "'[0-9]\{1,3\}%'"`)
+- **B1** 검사 0건 ≠ 통과. 표본 하한 (expected × 0.8) 확인
+- **B11** 이중 검증: raw Read + mojibake 6 카테고리 grep + 백업 폴더 (`.bak`/`_backup`/`_v2`)
+- **D7 파일 입력 프로토콜**: 검증 대상 파일 100% Read + 핵심 인용 필수
+- **D12** 기준 일관성 (같은 카테고리 = 같은 기준 매번)
+- **E4** 같은 목적 컴포넌트 2개 감지 (`grep -rln "<purpose>"`)
+- **E6** 산출물 `-v2/-v3` 감지 (block-version-suffix.sh 대상)
+
+상세: `CLAUDE.md § 7` · `.claude/rules/*.md` · `outputs/install/orchestration-kit-total-guide.md`
 
 ### Docs
 - README.md 갱신 여부

@@ -20,24 +20,34 @@
     "core_skills": [
       "route_dispatch",
       "exec_orca-auto",
-      "state_session"
+      "state_session",
+      "auto-planner",
+      "asset-creation-workflow",
+      "user-emotion-auto-response"
     ]
   },
   "metadata": {
     "category": "코어",
     "tags": [
-      "exec"
+      "exec",
+      "charter-a-to-f",
+      "direction-first",
+      "emotion-mapping"
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-05-20",
+    "updated": "2026-08-12",
     "precedence": 1,
-    "token_estimate": 3600,
+    "token_estimate": 4200,
     "triggers": [
       "오케스트레이션",
       "멀티AI",
       "워커 시작",
-      "codex 실행"
+      "codex 실행",
+      "대상 확정",
+      "감정 매핑",
+      "자산 생성",
+      "재발 방지 헌장"
     ]
   }
 }

@@ -1,6 +1,20 @@
 # Orchestration Kit v1.0 — Multi-AI Automation Framework
 
-Claude Opus 4.7 (Team Lead) + Codex (Implementation) + Haiku 4.5 (Review) — Plugin-Centric 멀티AI 오케스트레이션
+Claude Opus 5 (default, 2026-07-24) + Codex + Haiku 4.5 (Review) + Fable 5 (Mythos-class) + Sonnet 5 (균형) — Plugin-Centric 멀티AI 오케스트레이션
+
+## 재발 방지 헌장 A~F (2026-08-12)
+
+이 kit 은 **6 카테고리 헌장** 으로 재발 방지 통합:
+- **A** 하드코딩·폴백 금지 · **B** 검증 · **C** 운영 안전 · **D** 조사·보고 · **E** UI/UX · **F** kit 고유
+
+상세: `CLAUDE.md § 7` · **총망라 매뉴얼**: `outputs/install/orchestration-kit-total-guide.md`
+
+## 다른 프로젝트 · 다른 세션에서 쓰는 법
+
+- **Claude.ai Projects**: `outputs/install/session-bootstrap-prompt.md` 를 System instructions 에 붙임 → 매 대화 자동 seed
+- **install target 배포**: `install.bat <target>` (kit 원본 → target 자동 배포)
+- **Web ↔ CLI 자동 브릿지**: `outputs/install/web-cli-bridge.md` (4 방식 · Managed Agents API 완전 자동)
+- **참조 파일**: `outputs/install/claude-web-projects-setup.md`
 
 ---
 
@@ -69,7 +83,7 @@ Claude Code 실행 → 자동으로 환경 구성 완료
 | Gemini | 검증: 리뷰·보안·문서화 | `gemini-a --verify` (단일) / `gemini-auto 2` (병렬) |
 
 ### 명칭 정리
-```
+```text
 codex-a     = 단일 태스크 실행
 codex-auto  = 병렬 구현 워커 (기본 4개)
 gemini-a    = 단일 검증 실행
@@ -81,7 +95,7 @@ claude-auto = Claude 병렬 워커 (기본 3개)
 
 ## 파이프라인
 
-```
+```text
 Hook → Planner → Executor → Validator → State → Retry
   ↓        ↓          ↓           ↓         ↓       ↓
 사전확인  Claude    Codex 4개   Gemini 2개  스냅샷  3회재시도
@@ -89,7 +103,7 @@ Hook → Planner → Executor → Validator → State → Retry
 ```
 
 ### 디자인 파이프라인
-```
+```text
 PPT:   Claude → Canva → Mermaid → Figma
 Excel: Claude → openpyxl → 차트 → Google Sheets
 Word:  Claude → python-docx → Mermaid → PDF
@@ -99,7 +113,7 @@ Word:  Claude → python-docx → Mermaid → PDF
 
 ## 플러그인 구조 (plugins/)
 
-```
+```text
 exec_orch      오케스트레이션 핵심 (pipeline.md)
 exec_voice     음성 STT·TTS·회의록·음성명령
 exec_learning  세션학습·패턴저장·요약
@@ -143,7 +157,7 @@ mcp_media      미디어 (Whisper·TTS·FFmpeg)
 자동 연결 (claude.ai): Figma, Gamma, Gmail, Canva, Mermaid
 
 추가 설치 — Claude에서 실행:
-```
+```text
 /plug_dev      GitHub, Docker, AWS, Vercel...
 /plug_data     MySQL, MongoDB, BigQuery...
 /plug_design   Canva, Figma, Gamma, PowerPoint...
@@ -172,7 +186,7 @@ mcp_media      미디어 (Whisper·TTS·FFmpeg)
 
 ## 확장
 
-```
+```text
 새 플러그인:  plugins/내이름/commands/커맨드명.md
 새 스킬:     .claude/skills/exec_이름.md
 새 에이전트: .claude/agents/agent-07-name.md
