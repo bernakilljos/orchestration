@@ -396,6 +396,9 @@ for idx, (ko, en, emoji, techs) in enumerate(INDUSTRIES, 1):
 
 CATEGORIES = [
     ("🧠 AI 두뇌 (Reasoning)", "AI 가 판단·추론하는 기술", [
+        ("Claude Opus 5 🆕", "1M context 기본+최대 · thinking on-by-default · effort ladder (2026-07-24)", "O ⭐⭐⭐", "복잡 판정 default · Fable 5 대비 절반 비용"),
+        ("자율 수학 발견 🆕", "OpenAI reasoning 이 Erdős 추측 반증 (1946년 open · Fields Medalist 인정)", "O ⭐⭐", "agent 스스로 새 규정·룰 발견 가능성 시사"),
+        ("Gemini 2.5 Pro Deep Think 🆕", "GPQA Diamond 82.4% · MMLU-Pro 89.8%", "O ⭐", "검증 fallback 후보"),
         ("LLM (GPT·Claude·Gemini)", "큰 언어 모델", "O", "이미 씀"),
         ("SLM (Phi·Gemma·Qwen)", "작은 온프레미스 LLM", "O", "RFP 대응"),
         ("Test-Time Compute (o1·o3·R1)", "어려운 문제 오래 생각", "O", "고위험 결재만 deep · 비용 -90%"),
@@ -408,8 +411,10 @@ CATEGORIES = [
         ("World Model", "세상 모델링 (Physical Intelligence)", "X", "실험 단계"),
     ]),
     ("💾 AI 기억·검색 (Memory·Retrieval)", "AI 가 이력·문서 기억·검색", [
+        ("Mem0g (graph-enhanced) 🆕", "mem0 진화 · temporal +29.6점 · time-sensitive 58% vs OpenAI 21%", "O ⭐⭐⭐", "결재 이력 시계열 정확도 2.7배 (2026-06 신규)"),
         ("mem0", "LLM 장기 기억", "O ⭐", "6개월 결재 이력 자동 로드"),
         ("MemGraphRAG", "mem0 + Graph · KDD 2026", "O ⭐", "관계망 통합 기억"),
+        ("Zep GraphRAG 🆕", "graph 순회 + vector 하이브리드 · sub-second", "O ⭐⭐", "Microsoft GraphRAG 대안 · 2026-07 등장"),
         ("Vector DB (Milvus·Weaviate·Qdrant)", "벡터 저장·검색 · 온프레미스", "O", "필수 인프라 · RFP 대응"),
         ("Corrective RAG", "자기 검증 RAG", "O", "환각 자동 정정"),
         ("Adaptive RAG", "상황별 RAG 전략", "O", "쿼리별 최적 검색"),
@@ -418,6 +423,9 @@ CATEGORIES = [
         ("HyDE (가상 답 생성)", "가상 답 생성 후 검색", "검토", "특수 케이스만"),
     ]),
     ("🤖 AI 에이전트·오케스트레이션", "AI 자율 실행·협업", [
+        ("ChatGPT Work 🆕", "GPT-5.6 기반 multi-hour agentic (2026-08)", "O ⭐⭐", "장시간 자율 감사 프로젝트"),
+        ("Managed Agents (Anthropic) 🆕", "session thread streams + webhooks · effort 지정 (2026-07)", "O ⭐⭐", "우리 kit 이미 사용 · route.py 확장"),
+        ("Sol/Terra/Luna tier (OpenAI) 🆕", "durable capability tiers (2026-08 재편)", "O", "라우팅 매트릭스 반영"),
         ("LangChain", "LLM 체인 프레임", "O", "기본 인프라"),
         ("LangGraph", "그래프 기반 에이전트 조율", "O ⭐", "Multi-Agent 필수"),
         ("AutoGen (Microsoft)", "Multi-Agent 대화", "O", "협업 프레임"),
