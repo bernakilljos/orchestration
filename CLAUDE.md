@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-08-12): plugins 36 stable + 0 spec-only · rules 23 · hooks 31 · scripts 116
+> **현재 상태** (2026-08-13): plugins 36 stable + 0 spec-only · rules 24 · hooks 31 · scripts 116
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -78,9 +78,21 @@
 - **Opus 4.8** (호환 fallback): $5/$25 per MTok · Fast $10/$50 (2.5× 속도) · Opus 5 breaking (thinking disable) 안 되는 코드에서 fallback
 - **Opus 4.7**: **fast mode 제거 (2026-07-24 breaking)** — fast 는 4.8 또는 Opus 5 로 마이그레이션. Opus 4.7 표준 속도만 유지
 - **Fable 5** (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · 30-day data retention 요구
-- **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. 실제 비용은 tokenizer 특성 반영해 재계산 필요
+- **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)** — 원래 9/1 예정된 $3/$15 인상 취소.
 
-**Claude Code v2.1.226** (2026-07-28 기준 최신):
+**Claude Code v2.1.234** (2026-08-17 기준 최신):
+- **2.1.234 (8/17)**: **Session auto-continuation** (usage limits reset 시 자동 재개, `/config` 로 disable) · **GitLab MR support** — footer/statusline MR badge, agents view `!N` notation · `CLAUDE_CODE_PROJECT_DIR_NAME` (per-project transcript dir 이름) · **Security: Windows NT-namespace (`\??\`) 경로 거부** (remote file read·session restore·CLAUDE.md include·workflows·file upload — NTLM credential-leak 방어) · session-scoped permission 답변이 background subagent prompt 중 drop 안 됨
+- **2.1.233 (8/14)**: **GitLab worktree flag + agents view** (`!N` merge request URL) · **Linux cgroup memory limit** (`CLAUDE_CODE_TOOL_MEMORY_LIMIT` — 런어웨이 빌드 방지) · MCP v2 endless stream reopening fix · **BREAKING: Todo/task tools 제거 from Opus 4.8+ · Sonnet 5+ · Fable 5+ · Mythos 5+** — 우리 kit `TaskCreate/Get/Update/List`·`TodoWrite` 사용 다수. 복원: `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` env
+- **2.1.232 (8/13)**: **Subagent forking default** — `subagent_type: "fork"` = 전체 대화+prompt cache 상속, 비-teammate agent 는 background · **`@` cross-session mention** — prompt 에 `@name` 으로 다른 세션 호출, `SendMessage` 로 direct · session 이름 unique 유지 (dup 시 `name-word-word` 변형) · **subagent nesting depth 3+ default** (이전 depth 1) · Security: PowerShell variable-write parameter bypass 폐쇄, Git Bash symlink-following permission bypass fix
+- **2.1.231 (8/13)**: MCP OAuth sign-in redirect URI mismatch fix (pre-registered OAuth clients, Slack 등)
+- **2.1.229 (8/12)**: **Server-supplied hooks for self-hosted runner** · SSE keepalive pings (Vertex/Bedrock long thinking idle-timeout 방지) · plugin marketplace `command` source type · `ListAgents` 에 Remote Control offline / cloud session 표시
+- **2.1.225 (8/8)**: **Spend limit** UI (reset time + operator message 표시) · `claude agents` workspace trust prompt (untrusted dir) · Remote Control 사진 direct 표시 · **BREAKING: `SendMessage` — Remote Control 세션 대화 시작 시 name 사용**
+- **2.1.224 (8/7)**: **Self-hosted runner** — `claude self-hosted-runner` (Team/Enterprise 자체 머신 세션) · **Archive plugin source** — HTTPS zip install + optional SHA-256 pinning · macOS/Linux `SendMessage` + `ListAgents` cross-session · sandbox credential masking (`extract`·`decode: "jwt"`·`awsPairs`·`sigv4` — `network.tlsTerminate` 필요) · **BREAKING: 긴 project path 세션 dir 분리** + `strictKnownMarketplaces` SCP validation 강화
+- **2.1.223 (8/6)**: Marketplace wildcard (`"owner/*"` in `strictKnownMarketplaces`/`blockedMarketplaces`) · Workflow/forked skill/command restricted model warning · **BREAKING: permission mode `bypass` 가 org disable policy 존중** (우리 kit `bypassPermissions` 강제 영향 가능 — org 정책 확인 필요) · workflow dynamic `import()` sandboxed
+- **2.1.222 (8/4)**: **Worktree isolation 강화** — isolated session 은 main checkout 대상 destructive git 실행 불가 · **BREAKING: `/review` = `/code-review` alias** · Background session commit/push (작업 보존) · PreToolUse auto-allow hook 이 background task tool restriction bypass 못함
+- **2.1.221 (8/4)**: **VSCode Focus view** (`Ctrl+Alt+F` — tool activity 접기) · Linux/WSL sandbox credential file masking (`mode: "mask"` — sentinel copy 읽기, egress 시 실제 값 치환) · Bash permission check zsh `[[ ]]` regex 조건 hidden command 감지 강화
+- **2.1.220 (7/25)**: 일반 버그 fix + reliability
+- **2.1.219 (7/24)**: **Opus 5 launch** — 1M context, fast mode $10/$50 per MTok (신규 default Opus) · `sandbox.network.strictAllowlist` 비허용 host 프롬프트 없이 거부 · nested subagent (depth 2+) stream-json 에 `--forward-subagent-text` 로 표시 · Opus 4.7 fast mode 제거 (Opus 5/4.8 만)
 - 2.1.226 (7/24~28): **Opus 5 default 승격** — 모델 picker "Opus" (1M) 단일 row · `claude-api` skill 기본 Opus 5, 4.8→5 마이그레이션 경로 문서화 · Opus 4.7 fast mode 제거 · Fable row "Requires usage credits" 오표시 fix · dangerous-rm·background-BG shell 캡 auto 적용 · sandbox 명령 restriction 강화
 - 2.1.225 (7/24): **subagent nested spawn depth 3 default** (이전 1) — `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 비활성 · Dynamic workflows medium 15 default (`workflowSizeGuideline` 로 조정) · `sandbox.network.strictAllowlist` (비허용 host 프롬프트 없이 거부) · nested subagent stream-json forwarding
 - 2.1.223 (7/23): `/code-review` non-interactive 세션에서 로컬 실행 → cloud review 강제 · descriptive argument (예: `review my auth changes`) 처리 fix — 현재 브랜치 review + argument 를 findings note 로 전달
@@ -102,6 +114,9 @@
 - 2.1.198~205 (요약): Fable 5 RESTORED · subagent 기본 background · Explore agent opus 상속 · Dynamic workflow size · Sonnet 5 mid-conversation reminder 제거 · session transcript 변조 차단 · `.claude/rules/` symlink 로딩 fix
 
 **API 신규 (2026-07-08 이후)**:
+- **8/11: Compliance API — 로컬 Cowork/Claude Code 세션 지원** (Enterprise beta) — `GET /v1/compliance/apps/sessions/local[/{id}[/messages]]`. `read:compliance_user_data` scope. 사용자 머신에서 돌아간 세션 감사 가능
+- **8/11: `anthropic-workspace-id` response header** — `wrkspc_` prefix 로 요청 workspace 식별 (Default Workspace 포함)
+- **8/10: Sonnet 5 가격 확정 $2/$10 per MTok** — 원래 9/1 예정된 $3/$15 인상 취소. Sonnet 5 승격 재검토 트리거 (Sonnet 4.6 대비 tokenizer 30%↑ 이지만 단가 $2/$10 = 실비용 비교 필요)
 - **7/24: Claude Opus 5 launched** — `claude-opus-5`, $5/$25 (4.8 동일), 1M context 기본+최대, 128k 출력, thinking on-by-default. Effort 가 primary control (low/medium/high/xhigh/max). Claude API·Bedrock·Vertex·Foundry 모두 GA. **Breaking**: `thinking:{"type":"disabled"}` + effort `xhigh`/`max` → 400 error (4.8 는 fallback 됐음). Opus 4.7 fast mode 제거 (400 error) — fast 는 4.8 또는 Opus 5 로 마이그레이션
 - **7/24: Mid-conversation tool changes beta** — Fable 5·Mythos 5·Opus 4.8·Opus 5 지원. beta header `mid-conversation-tool-changes-2026-07-01`. 턴 사이에 도구 추가/제거하면서 prompt cache 유지
 - **7/24: Server-side fallback beta** — beta header `server-side-fallback-2026-07-01`. Anthropic 권장 fallback 자동 (refusal category 별). Managed Agents 에도 적용
