@@ -72,6 +72,12 @@
                                                          },
                                                          {
                                                              "type":  "command",
+                                                             "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-artifact-staleness.sh\"",
+                                                             "timeout":  5,
+                                                             "async":  true
+                                                         },
+                                                         {
+                                                             "type":  "command",
                                                              "command":  "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/deploy-vscode-settings.sh\"",
                                                              "timeout":  3
                                                          },

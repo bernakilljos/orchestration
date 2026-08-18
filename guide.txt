@@ -381,6 +381,8 @@
       page_layout_tracker.py        페이지 콘텐츠 cumulative fit (H1+콜아웃+이미지+표)
       file_lock_poller.py           파일 잠금 대기 + 자동 폴링 (60초, interval 2초)
       check-official-features.sh    공식 신기능 날짜별 auto-check (SessionStart)
+      detect-artifact-staleness.sh  산출물 (pptx·catalog md) 유통기한 초과 시 알림 (SessionStart, 1h throttle)
+      artifact-freshness-report.py  유통기한 매트릭스 스캔 (룰: artifact-freshness-check.md SoT)
 
     ◆ 차단(block) 훅 — 규칙 위반 시 commit/write 거부 (2026-05-19)
       block-version-suffix           산출물 -v2/-v3/_v2 파일명 차단 (Write/Edit)
