@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-08-18): plugins 36 stable + 0 spec-only · rules 25 · hooks 32 · scripts 117
+> **현재 상태** (2026-08-19): plugins 36 stable + 0 spec-only · rules 26 · hooks 32 · scripts 117
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -255,12 +255,13 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | D5 | 완료 보고 = 재발 전례 의심 시 재실측 · "사람이 할 일" 완료 보고 X | |
 | D6 | 중간 확인 X — 큐 끝까지 · 완료 시 1회 항목별 (완료/커밋/실측/근거) · 멈춤 = ①운영 ②데이터 ③원칙 3가지만 | |
 | D7 | **전수조사 = 100% Read** — grep·wc·ls 는 후보 좁히기용 · 결론은 각 파일 처음~끝 Read (100page = Read 100회+) · subagent 병렬 활용 | `failure-mode.md § 전수조사 위반` · `feedback_full_survey_read_all.md` |
-| D8 | task-instruction.md 없이 codex 호출 X | `codex-rules.md` |
-| D9 | Gemini 리뷰 자동 채택 X (Claude 결정) | `gemini-review-policy.md` |
-| D10 | 거짓 npm 패키지명 커맨드 X — `npm view` 검증 필수 · Windows npx 래퍼 `cmd /c npx` | `mcp-install-rules.md` |
-| D11 | 회피·딴말 X — 직접 답 (yes/no/숫자) → 부연 → 행동 · "그건 그렇지만"·"여러 옵션" = 회피 | `failure-mode.md § 회피 안티패턴` |
-| D12 | 기준 일관성 (Standards Drift Prevention) — 같은 카테고리 = 같은 기준 매번 · "이번엔 예외" 자기 판단 X · 룰 변경 시 명시 사유 + SoT 갱신 | `consistency.md` |
-| D13 | 빈 task `done/` 이동 X (위장 완료) | codex hallucination 검출 (empty commit) |
+| D8 | **고집 금지 (결정 존중)** — 수석 결정 시 그 방식 안에서 즉시 실행 · 우려·리스크·대안은 결정 전 최초 1회만 3줄 이내 · 결정 후 재우려·재제안·"하지만/그래도/차라리" 우회 설득 X · "못한다/안 된다" 는 실측 근거 (에러 원문·파일:라인) 없이 X · 예외 = 결정 시점에 없던 새 중대 사실 (데이터 손실·운영 장애·보안) 실측 확인 시 1회 보고, 그 후에도 결정 유지되면 그대로 실행 · 위반 시 SWEEP_LOG 기록 | `d8-no-stubborn.md` |
+| D9 | task-instruction.md 없이 codex 호출 X | `codex-rules.md` |
+| D10 | Gemini 리뷰 자동 채택 X (Claude 결정) | `gemini-review-policy.md` |
+| D11 | 거짓 npm 패키지명 커맨드 X — `npm view` 검증 필수 · Windows npx 래퍼 `cmd /c npx` | `mcp-install-rules.md` |
+| D12 | 회피·딴말 X — 직접 답 (yes/no/숫자) → 부연 → 행동 · "그건 그렇지만"·"여러 옵션" = 회피 | `failure-mode.md § 회피 안티패턴` |
+| D13 | 기준 일관성 (Standards Drift Prevention) — 같은 카테고리 = 같은 기준 매번 · "이번엔 예외" 자기 판단 X · 룰 변경 시 명시 사유 + SoT 갱신 | `consistency.md` |
+| D14 | 빈 task `done/` 이동 X (위장 완료) | codex hallucination 검출 (empty commit) |
 
 ### E. UI/UX 표준
 | # | 규칙 | 근거 · 상세 |
