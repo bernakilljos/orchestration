@@ -86,6 +86,31 @@ CLI (Claude Code)
 
 돌아온 답 == 보낸 질문 (에코) → `content.js` 의 `SEL_*` 셀렉터 깨짐. claude.ai UI 변경 시 유지보수 필요.
 
+## 배경 탭 제약 (2026-08-20 postmortem)
+
+**claude.ai 붙여넣기 업로드는 배경 탭에서 동작하지 않는다.** 브라우저 탭이 포커스돼 있어야 File 업로드 시작. 다른 탭 활성 상태에서는 붙여넣기 이벤트는 발생하지만 파일이 로드되지 않음.
+
+### 필수 처방 6종
+
+| # | 무엇 | 어디 |
+|---|---|---|
+| 1 | 첨부 시 확장이 탭·창을 스스로 활성화, 끝나면 원래대로 복귀 | `background.js` (`chrome.tabs.update` + `chrome.windows.update`) |
+| 2 | 진단에 `focus`·`visibilityState` 병기 → 재발을 로그 한 줄로 판별 | `content.js` + `background.js` |
+| 3 | 진단 즉시 보고 (답변 대기 앞으로) — `chrome.runtime.sendMessage` | `content.js` → `background.js` |
+| 4 | 진단 파일 기록 (`docs/ask_web/diag.log`) — 메모리 dict X | `ask_web_relay.py` |
+| 5 | 썸네일 판정 증분화 (기준선 찍고 delta 비교, 누적 X) | `content.js` |
+| 6 | 빌드 토큰 파일 내용에서 도출 · manifest 버전 자동 증가 | `stamp_ext_build.py` |
+
+### 성공 조건 명시
+
+- 발송 시점에 탭이 활성화되어 있어야 함
+- 확장은 발송 직전 자동 activate (사용자 개입 최소화)
+- 발송 후 원래 활성 탭으로 복귀
+
+### 조사 채널 (실물 우선)
+
+- claude.ai DOM 조사 = Playwright 새 창 X (재인증 실패) → **이미 붙어 있는 확장으로 조사** (`dom-probe` mode)
+
 ## 콜드부팅 대기 (waitress · uvicorn 등)
 
 - Python 웹 서버 cold boot bind = **~15초** 소요
@@ -100,11 +125,18 @@ CLI (Claude Code)
 4. Web 답을 실측 없이 커밋 (커밋 게이트 원칙)
 5. 콜드부팅 15초 안 기다리고 "서버 안 뜬다" 오판
 6. Extension `SEL_*` 깨짐 무시 (에코 답 그대로 사용)
+7. 배경 탭에서 붙여넣기 발송 (탭 포커스 없이) — File 업로드 무성 실패
+8. `document.querySelectorAll(...).length` 누적값을 새 요청 장수 (증분) 와 직접 비교 — 첫 회만 우연히 맞음
+9. 진단을 `waitDone()` 답변 뒤에 보고 — 몇 분 지연으로 로그 0건 오독
+10. 진단을 메모리 (`_diag[N]`) 에만 저장 — 재기동 시 소실
+11. 빌드 토큰을 손으로 적힌 상수로 유지 — 낡은 코드가 최신 토큰 보고 가능
 
 ## 참조
 
 - `docs/SETUP_OTHER_PC.md` (실전 셋업 원본)
+- `docs/postmortem/2026-08-20-claude-web-attach-6-hypotheses.md` (배경 탭 제약 발견 회고)
 - `feedback_web_cli_dialogue.md` (CLI ↔ Web 개념)
 - `reference_claude_web_projects_setup.md` (Web Projects 세팅)
 - `feedback_multi_session_worktree.md` (memory 인덱스)
-- CLAUDE.md § 7-C8 (파일 잠금 Writer=1) · § 7-A1 (하드 경로 금지)
+- `.claude/rules/environment-dependent-bug.md` · `measurement-two-deaths.md` · `investigation-discipline.md` (같은 postmortem 승격)
+- CLAUDE.md § 7-C8 (파일 잠금 Writer=1) · § 7-A1 (하드 경로 금지) · § 7-D15~D18 (postmortem 승격)

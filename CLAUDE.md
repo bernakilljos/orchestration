@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-08-19): plugins 36 stable + 0 spec-only · rules 26 · hooks 32 · scripts 117
+> **현재 상태** (2026-08-19): plugins 36 stable + 0 spec-only · rules 26 · hooks 31 · scripts 117
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -61,7 +61,8 @@
 | **설계·복잡추론 (default)** | **Claude Opus 5 [NEW 2026-07-24]** | `claude-opus-5` · **1M context 기본+최대** · 128k 출력 · thinking on-by-default · effort ladder (low/medium/high/xhigh/max) · **breaking**: `thinking:{"type":"disabled"}` + effort `xhigh`/`max` = 400 error (4.8 는 허용) · $5/$25 (4.8 동일) |
 | 설계·복잡추론 (호환/저비용 fallback) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` · 1M context 800k 제한 · thinking disable 자유 (Opus 5 호환 안 되는 코드에서 fallback) |
 | 초난도·다각 검증 | Claude Opus 5 + ultracode | `/effort ultracode` → Dynamic Workflows (기본 medium ≤15 agents, `workflowSizeGuideline` settings 로 조정) · **sub-agent 가 sub-agent spawn depth 3 default** (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 비활성) · v2.1.206+ findings quality 개선 |
-| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [RESTORED 2026-07-01]** | 2026-06-12 US export-control 로 suspend 되었다가 2026-07-01 Anthropic 이 restored (공식 statement). `/effort mythos` 호출 시 정상 라우팅. route.py `SUSPEND_MODELS = set()`. 30일 data retention 요구 |
+| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [RESTORED 2026-07-01]** | 2026-06-12 US export-control 로 suspend 되었다가 2026-07-01 Anthropic 이 restored (공식 statement). `/effort mythos` 호출 시 정상 라우팅. route.py `SUSPEND_MODELS = set()`. 30일 data retention 요구. **참고: Anthropic 내부 `Model 2` (Mythos 5 초과, 2026-08-14 RSP disclosed) 외부 release X — 승격 대상 아님** |
+| 로컬·오픈웨이트 (오프라인 대량·edge) | **Qwen 3.8-27B [NEW 2026-08-14]** / Llama 4 / Llama 3.3 | `/exec_offline-model` (Ollama). **Qwen 3.8-27B**: Apache 2.0 · 27.78B params · **262K context** · 멀티모달(text/image/video) · SWE-bench Pro **61.7%** (Claude Opus 4.6 Max 53.4%) · Alibaba 자체 평가. 로컬 우선 라우팅 매트릭스에서 코드·추론 top 후보. Llama 4 는 10M context 강점 (초장기 컨텍스트 로컬 recall) |
 | 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
@@ -80,7 +81,8 @@
 - **Fable 5** (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · 30-day data retention 요구
 - **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)** — 원래 9/1 예정된 $3/$15 인상 취소.
 
-**Claude Code v2.1.234** (2026-08-17 기준 최신):
+**Claude Code v2.1.235** (2026-08-18 기준 최신):
+- **2.1.235 (8/18)**: **Inline spellcheck** — 옵션형 `spellcheck` 설정 · aspell/hunspell/ispell 사용 · 오타 실시간 underline · **Prompt-cache invalidation fix** (LSP disconnect/reconnect 중 whole-prompt-cache 무효화 방지) · Markdown nested list depth 3+ 정렬 fix + wrapped list hanging indent · Vim mode transcript toggle (Ctrl+O) NORMAL mode + cursor 보존 · `SendMessage` oversized 메시지 upfront reject (silent drop X) · Remote Control (`claude rc`) enterprise-gateway 가용성 체크 · context-limit 에러 메시지 auto-compact off 여부 표시 · Shift+Tab permission comment 안 동작 fix · Agent tool 미가용 agent 에러 처리 fix
 - **2.1.234 (8/17)**: **Session auto-continuation** (usage limits reset 시 자동 재개, `/config` 로 disable) · **GitLab MR support** — footer/statusline MR badge, agents view `!N` notation · `CLAUDE_CODE_PROJECT_DIR_NAME` (per-project transcript dir 이름) · **Security: Windows NT-namespace (`\??\`) 경로 거부** (remote file read·session restore·CLAUDE.md include·workflows·file upload — NTLM credential-leak 방어) · session-scoped permission 답변이 background subagent prompt 중 drop 안 됨
 - **2.1.233 (8/14)**: **GitLab worktree flag + agents view** (`!N` merge request URL) · **Linux cgroup memory limit** (`CLAUDE_CODE_TOOL_MEMORY_LIMIT` — 런어웨이 빌드 방지) · MCP v2 endless stream reopening fix · **BREAKING: Todo/task tools 제거 from Opus 4.8+ · Sonnet 5+ · Fable 5+ · Mythos 5+** — 우리 kit `TaskCreate/Get/Update/List`·`TodoWrite` 사용 다수. 복원: `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` env
 - **2.1.232 (8/13)**: **Subagent forking default** — `subagent_type: "fork"` = 전체 대화+prompt cache 상속, 비-teammate agent 는 background · **`@` cross-session mention** — prompt 에 `@name` 으로 다른 세션 호출, `SendMessage` 로 direct · session 이름 unique 유지 (dup 시 `name-word-word` 변형) · **subagent nesting depth 3+ default** (이전 depth 1) · Security: PowerShell variable-write parameter bypass 폐쇄, Git Bash symlink-following permission bypass fix
@@ -97,6 +99,10 @@
 - 상세: [[claude-code-changelog-august]] (memory) · Anthropic 공식 changelog
 
 **API 신규 (2026-07-08 이후)**:
+- **8/18: Workbench → Playground** — Claude Console UI 개편 (`platform.claude.com/playground`). 모든 Messages API parameter 지원 + code execution·web search 데모 템플릿 + full SDK request/response 표시. legacy Workbench 는 8/17 sunset (예정대로 완료)
+- **8/14: Anthropic Risk Report v2 (RSP v3.4)** — catastrophic-misalignment `very low → low` 상향 (cybersecurity eval 불확실성 근거) · **`Model 2` 내부 프론티어 disclosed** — Mythos 5 초과 성능 · 외부 release 계획 X · Mythos 5 대비 새/추가 misalignment 프로파일 X · 커버 기간 2026-02-24 ~ 07-15
+- **8/7: Managed Agents 관리 컨트롤 4종** — ① **Session budgets** (hard cap, `budget_reached` stop_reason, list-rate pricing — 우리 route.py budget 시스템 정합) · ② **Advisor tool** (`{"type":"advisor"}` in multiagent roster — mid-turn 다른 모델 상담, 우리 Claude 설계→Codex 구현→Gemini 검증 협업과 유사) · ③ **Inference geo pinning** (`model.inference_geo` — data residency) · ④ **GitHub-hosted skills** (repo mount 시 `.claude/skills` 자동 discovery — install 워크플로우 정합)
+- **8/5: Inference hooks (Enterprise beta)** — 조직 AI security server 로 각 prompt hold + allow/deny 판정 · claude.ai·Cowork·Claude Code 통합 · 요청 signed·failure handling 구성 가능·denial 은 Compliance Activity Feed 기록 · **우리 approval-gate-rules.md 정합** (kit 는 SQLite 로컬, 이건 조직 서버) · Claude Opus 4.1 retired (같은 날)
 - **8/11: Compliance API — 로컬 Cowork/Claude Code 세션 지원** (Enterprise beta) — `GET /v1/compliance/apps/sessions/local[/{id}[/messages]]`. `read:compliance_user_data` scope. 사용자 머신에서 돌아간 세션 감사 가능
 - **8/11: `anthropic-workspace-id` response header** — `wrkspc_` prefix 로 요청 workspace 식별 (Default Workspace 포함)
 - **8/10: Sonnet 5 가격 확정 $2/$10 per MTok** — 원래 9/1 예정된 $3/$15 인상 취소. Sonnet 5 승격 재검토 트리거 (Sonnet 4.6 대비 tokenizer 30%↑ 이지만 단가 $2/$10 = 실비용 비교 필요)
@@ -262,6 +268,12 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | D12 | 회피·딴말 X — 직접 답 (yes/no/숫자) → 부연 → 행동 · "그건 그렇지만"·"여러 옵션" = 회피 | `failure-mode.md § 회피 안티패턴` |
 | D13 | 기준 일관성 (Standards Drift Prevention) — 같은 카테고리 = 같은 기준 매번 · "이번엔 예외" 자기 판단 X · 룰 변경 시 명시 사유 + SoT 갱신 | `consistency.md` |
 | D14 | 빈 task `done/` 이동 X (위장 완료) | codex hallucination 검출 (empty commit) |
+| D15 | **환경 의존 결함** — 간헐적 실패·테스터별 결과 다름·자동 실행만 실패 등 신호 시 조작자 행동·환경 상태 (탭 포커스·visibilityState·OS 상태·시간·다른 세션) 를 조사 변수에 넣기 · 실패 만든 결함 vs 못 막은 결함 구분 | `environment-dependent-bug.md` · 2026-08-20 postmortem claude web 첨부 사례 |
+| D16 | **계측 3 축** — ① 관측 직후 즉시 보고 (긴 작업·답 대기 뒤 X) ② 파일 append 보존 (메모리 dict X) ③ 증분 vs 증분 비교 (누적을 증분 기대값과 비교 X) · 세 축 모두 지켜야 계측이 살아있음 | `measurement-two-deaths.md` · 같은 postmortem |
+| D17 | **관측 후 한 번 더 질문** — 「A 가 아니다」 는 결론이 아니라 다음 질문의 시작 · "상대가 안 받는다" 에서 멈추지 말고 "왜 안 받나" 던지기 | `investigation-discipline.md` · 같은 postmortem |
+| D18 | **실물 채널 우선** — 새 채널 (새 창·새 프로세스·새 세션·Playwright 새 브라우저) 만들기 전 이미 실물에 닿아 있는 채널 (Bash·Grep·기존 확장·기존 MCP·기존 subagent) 먼저 · 새 채널은 새 문제 (재인증·상태 로드·race) 만듦 | `investigation-discipline.md` · 같은 postmortem |
+| D19 | **이력 먼저** — 가설 세우기 전 재현 가능한 기록 (git log · .claude/logs · state · tasks/done · SWEEP_LOG) 훑기 · 1분 조회가 3시간 헛짚기 예방 | `investigation-discipline.md` · 같은 postmortem |
+| D20 | **30초 실측 > 30분 추론** — 코드 읽기·spec·정황으로 결론 X · bash·curl·Playwright headed·브라우저 F12 로 실제 재현 후 결론 | `investigation-discipline.md` · 같은 postmortem |
 
 ### E. UI/UX 표준
 | # | 규칙 | 근거 · 상세 |

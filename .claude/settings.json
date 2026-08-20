@@ -397,6 +397,12 @@
                                                         },
                                                         {
                                                             "type":  "command",
+                                                            "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-demo-pattern.sh\"",
+                                                            "timeout":  3,
+                                                            "continueOnBlock":  true
+                                                        },
+                                                        {
+                                                            "type":  "command",
                                                             "command":  "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_pycheck.py\"",
                                                             "timeout":  30,
                                                             "continueOnBlock":  true

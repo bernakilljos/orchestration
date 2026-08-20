@@ -516,26 +516,3 @@
 - **AI in Sustainability** (탄소 측정·ESG)
 
 이 영역들 더 깊이?
-
----
-
-## 델타 (2026-08-19 · 카테고리 매핑 갱신)
-
-### 카테고리 진행 상황 업데이트 (2026-08 기준)
-
-| 기존 카테고리 | 2026-08 변화 | 신 진입 |
-|---|---|---|
-| **오픈 프론티어 모델** | Llama 4 (10M ctx) → **Qwen 3.8-27B (262K ctx · SWE 61.7%)** = 오픈 최강 | Apache 2.0 · edge 로컬 배포 |
-| **모델 안전성·감사** | RLHF·CIRL 이론 → **Anthropic Risk Report v2 (RSP v3.4)** = 실제 규제 응답 | 6개월 주기 발행 표준화 |
-| **에이전트 오케스트레이션** | ReAct·Multi-agent → **Managed Agents (budget·advisor·geo·skills)** = 클라우드 표준화 | primary + advisor + geo pin |
-| **엔터프라이즈 거버넌스** | 미분류 → **Inference hooks (Enterprise beta)** · **Compliance API 로컬 세션** | AI security server gate |
-| **개발자 UX** | Workbench → **Playground** (Anthropic UI 개편) · **Claude Code v2.1.235** (spellcheck·cache fix) | 프롬프트 실험 접근성 ↑ |
-| **가격·비용** | Sonnet 4.6 $3/$15 → **Sonnet 5 $2/$10 확정** (9/1 인상 취소) | tokenizer 30%↑ 감안해도 유리 |
-
-### 신 카테고리 후보 (2026-08 등장)
-
-- **Vendor Risk Reporting** (Anthropic Risk Report 표준화) — 벤더 자체 발행 리포트 6개월 주기 · EU AI Act 대응
-- **Data Residency Controls** (inference_geo pinning) — API level 리전 강제 · 한국 리전 pin 가능
-- **Repo-hosted Skills** (GitHub skills) — 조직 skill 공유 표준 · install-to 워크플로우 통합
-
-**관련**: [[ai-tech-2026-08-late]]
