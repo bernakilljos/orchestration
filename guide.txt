@@ -1658,3 +1658,12 @@
   AI 라우팅 · install 절차 · 최신 상태 (2026-08-12) 모두 포함.
 
 ============================================================
+
+
+  2026-09-02 (심야) 6 축 추가 (Concise·Sub-agent·크로스 IDE·API·터미널·평가):
+    * settings.json: outputStyle=concise · keybindingFlavor=readline · session.autoContinuation=true
+    * .claude/rules/subagent-delegation.md (Explore·Plan·Judge 자동 위임)
+    * .claude/scripts/export-cross-ide-rules.py (Cursor/Windsurf/Copilot/Continue 4 IDE)
+    * .claude/rules/anthropic-api-features.md (1h TTL·Advisor·Files·Citations·Batch·geo·hooks)
+    * .claude/rules/terminal-tools.md (fzf·rga·bat·eza·lazygit·delta·zoxide·btop)
+    * .claude/rules/prompt-eval-tools.md (Promptfoo·DeepEval·Ragas·TruLens·LangSmith)

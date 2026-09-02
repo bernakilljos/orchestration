@@ -699,5 +699,10 @@
   ],
   "env": {
     "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1"
+  },
+  "outputStyle": "concise",
+  "keybindingFlavor": "readline",
+  "session": {
+    "autoContinuation": true
   }
 }
