@@ -53,7 +53,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/statusline.sh\"",
+    "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline_context.py\"",
     "padding": 0
   },
   "hooks": {
@@ -213,6 +213,10 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-user-prompt.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/lookup-history.sh\""
           }
         ]
       }

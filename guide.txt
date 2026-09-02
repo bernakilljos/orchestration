@@ -1117,6 +1117,11 @@
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  2026-09-02 (오후) statusline progress bar + DB 이력 자동 조회 + 신기술 아이디어 25:
+    ✓ .claude/scripts/statusline_context.py 신설 (progress bar + 토큰 + 예산 + 대상 + 세션 통계)
+    ✓ .claude/hooks/lookup-history.sh 신설 (UserPromptSubmit · DB 이력 자동 조회 · systemMessage 주입)
+    ✓ Rich TUI · Batch API · Semantic caching · Desktop notification 등 Task 등재
+
   2026-09-02 6 축 초최고강함 강화 + Headroom/claude-mem/task-observer + 히스토리 DB:
     ✓ MCP 3종 무료 통합 (Headroom Apache 2.0 + claude-mem 로컬 + task-observer Skill)
       - Headroom: pip install "headroom-ai[all]" + headroom mcp install (compress/retrieve/stats)
