@@ -111,3 +111,6 @@ docs/screens/_*.log
 # 시크릿 파일 (절대 commit 금지)
 *.git-credentials
 *git-credentials
+.claude/skills/task-observer/
+skills-lock.json
+.claude/state/orca.db.bak.*

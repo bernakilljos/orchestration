@@ -1117,6 +1117,38 @@
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  2026-09-02 6 축 초최고강함 강화 + Headroom/claude-mem/task-observer + 히스토리 DB:
+    ✓ MCP 3종 무료 통합 (Headroom Apache 2.0 + claude-mem 로컬 + task-observer Skill)
+      - Headroom: pip install "headroom-ai[all]" + headroom mcp install (compress/retrieve/stats)
+      - claude-mem: npx -y claude-mem install --provider claude (5 hook 자동)
+      - task-observer: npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer
+      - .claude/rules/mcp-integration.md · .claude/scripts/mcp-autostart.sh (SessionStart hook)
+      - CLAUDE.md § 3.6-5 통합 표기 · setup/modules/16-mcp-headroom-claude-mem.bat
+      - OmniRoute 는 route.py 정면 겹침으로 제외 (사용자 결정)
+    ✓ 세션 히스토리 DB 시스템 (사용자 지적: 섹션 닫히면 못 알아먹음)
+      - orca.db.conversations + session_summary 테이블 신설
+      - .claude/scripts/lib/conversation_logger.py (save_turn/save_summary/load_recent)
+      - .claude/hooks/save-user-prompt.sh (UserPromptSubmit)
+      - .claude/hooks/save-session-summary.sh (Stop/SessionEnd)
+      - .claude/hooks/load-recent-conversations.sh (SessionStart · 최근 3 세션 자동 로드)
+      - .claude/rules/conversation-history.md · CLAUDE.md § 3.1 (5)
+      - 명시 memory (도메인 자산) 유지 · 히스토리는 DB 자동
+    ✓ 6 축 초최고강함 강화 (매우강함 < 초 매우강함 < 초초 매우강함 < 초최고강함):
+      - 5 파인튜닝: .claude/skills/ai-finetune-pipeline.md (unsloth 2~5x + PEFT + trl + GGUF)
+      - 6 임베딩: chromadb + sentence-transformers 설치 · .claude/rules/embedding-strategy.md
+        · 한국어 default multilingual-e5-large · 코드 codebert-base · SOTA bge-m3
+      - 7 화면설계: .claude/rules/app-ui-standard.md (shadcn/AntD/MUI 강제 · 자체 CSS 금지)
+        · 프레임워크·컴포넌트·A11y·i18n·반응형 매트릭스
+      - 8 개발언어별: .claude/rules/language-standards.md (Python ruff · JS/TS ESLint9 ·
+        Go golangci · Rust clippy · Java Checkstyle · 20+ 언어)
+      - 10 운영 grade 파일 관리: .claude/rules/production-file-management.md
+        · orca.db.file_audit 테이블 · .claude/hooks/enforce-file-naming.sh
+        · .claude/scripts/audit_file_write.py (숫자만 파일명·copy·final·v2 접미사 자동 감지)
+        · Retention 매트릭스 (파일 유형별 보존 기간·자동 아카이브)
+      - 11 자동 최적화: .claude/rules/auto-optimization.md
+        · .claude/scripts/nightly-optimize.py (매일 03:00 · DB VACUUM · retention · 백업)
+        · 6 축 자동 (프롬프트 압축 · 컨텍스트 축소 · DB · 이미지 · 로그 · hook 프로파일)
+
   2026-05-19 AI-Native 3대 플러그인 + 7대 뮤스탱 + 디자인 100+ CDN (신규):
     ✓ AI-Native 3대 플러그인 (dd69eeb, 8d5fb2a, f0843fc 누적)
        - test_gen          테스트 코드 자동 생성 (pytest·jest·unittest)

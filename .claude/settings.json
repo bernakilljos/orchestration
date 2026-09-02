@@ -501,6 +501,10 @@
             "continueOnBlock": true,
             "async": true,
             "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-file-naming.sh\""
           }
         ]
       },
