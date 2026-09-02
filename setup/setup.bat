@@ -268,9 +268,14 @@ echo [STEP] 14-mcp-figma %TIME% >> "!LOGFILE!"
 call "%MOD%\14-mcp-figma.bat"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 15/15] 24/7 Auto-Dev Agent...
+echo [Step 15/16] 24/7 Auto-Dev Agent...
 echo [STEP] 15-auto-dev %TIME% >> "!LOGFILE!"
 call "%MOD%\15-auto-dev.bat" "!TARGET!" "%~dp0" "!REAL_USERPROFILE!"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 16/16] MCP Headroom + claude-mem...
+echo [STEP] 16-mcp-headroom-claude-mem %TIME% >> "!LOGFILE!"
+call "%MOD%\16-mcp-headroom-claude-mem.bat" "!TARGET!"
 if errorlevel 1 set /a ERRORS+=1
 
 set "ERR=!ERRORS!"

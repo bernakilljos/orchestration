@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AI 진화 10가족 — 2026-2030</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --card-bg: #1a2030;
+    --card-border: #2a3548;
+    --accent: #ffd166;
+    --accent-2: #06d6a0;
+    --accent-3: #ef476f;
+    --text: #e8eef5;
+    --text-dim: #8a9bb0;
+    --arrow: #4a5a78;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }
+  body {
+    width: 1920px;
+    height: 1200px;
+    background: linear-gradient(135deg, #0f1419 0%, #1a2540 100%);
+    color: var(--text);
+    padding: 40px 50px;
+    overflow: hidden;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .title {
+    font-size: 46px;
+    font-weight: 900;
+    color: var(--text);
+  }
+  .title .highlight {
+    color: var(--accent);
+  }
+  .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+  .meta {
+    text-align: right;
+    font-size: 15px;
+    color: var(--text-dim);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 18px;
+    height: calc(100% - 180px);
+  }
+  .card {
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--family-color, var(--accent));
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .card-num {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--family-color, var(--accent));
+    width: 38px;
+  }
+  .card-emoji {
+    font-size: 36px;
+  }
+  .card-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .card-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    margin-bottom: 12px;
+  }
+  .evolution {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+    margin-bottom: 8px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .step.current .step-dot {
+    background: var(--family-color, var(--accent));
+    box-shadow: 0 0 8px var(--family-color, var(--accent));
+  }
+  .step.future .step-dot {
+    background: transparent;
+    border: 2px dashed var(--text-dim);
+  }
+  .step-text {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .step.current .step-text {
+    color: var(--family-color, var(--accent));
+    font-weight: 800;
+  }
+  .step.future .step-text {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .step-year {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-left: auto;
+  }
+  .card-why {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding-top: 10px;
+    border-top: 1px dashed var(--card-border);
+    line-height: 1.4;
+  }
+  .card-why b { color: var(--family-color, var(--accent)); font-weight: 700; }
+
+  .footer {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: rgba(255, 209, 102, 0.08);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .footer b { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="title">AI 진화 <span class="highlight">10가족</span> — 2026 → 2030 변곡점 지도</div>
+      <div class="subtitle">한 회사가 다 못 풂. 각 가족마다 다른 회사·다른 기술 진행중.</div>
+    </div>
+    <div class="meta">
+      ★ = 2026-2027 진입중<br>
+      ◯ = 2028+ 예상<br>
+      Updated: 2026-06-26
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 1. 뇌화 -->
+    <div class="card" style="--family-color: #ef476f;">
+      <div class="card-header">
+        <span class="card-num">01</span>
+        <span class="card-emoji">🧠</span>
+        <span class="card-title">뇌화</span>
+      </div>
+      <div class="card-subtitle">AI 를 진짜 뇌처럼</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">GPU</span><span class="step-year">~2020</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Neuromorphic ★</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Wetware ★</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">BCI 양산</span><span class="step-year">2028+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> AI 전력 위기 → 진짜 뇌 효율 (100만배) 추격</div>
+    </div>
+
+    <!-- 2. 기억 -->
+    <div class="card" style="--family-color: #06d6a0;">
+      <div class="card-header">
+        <span class="card-num">02</span>
+        <span class="card-emoji">💾</span>
+        <span class="card-title">기억</span>
+      </div>
+      <div class="card-subtitle">AI 가 어떻게 기억하나</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">RAG (책장)</span><span class="step-year">~2024</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">mem0 ★ (일기장)</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Liquid AI ★ (두뇌)</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">Wetware 메모리</span><span class="step-year">2030+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 외부 → 옆 → 안 으로 정보가 점점 깊이</div>
+    </div>
+
+    <!-- 3. 생성 -->
+    <div class="card" style="--family-color: #ffd166;">
+      <div class="card-header">
+        <span class="card-num">03</span>
+        <span class="card-emoji">📝</span>
+        <span class="card-title">생성</span>
+      </div>
+      <div class="card-subtitle">답 만드는 방식</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">Autoregressive</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Diffusion LLM ★</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">Hybrid (둘 결합)</span><span class="step-year">2027</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> Agent 시대 → 긴 답 폭증 → 10배 빠르게</div>
+    </div>
+
+    <!-- 4. 연결 -->
+    <div class="card" style="--family-color: #118ab2;">
+      <div class="card-header">
+        <span class="card-num">04</span>
+        <span class="card-emoji">🔌</span>
+        <span class="card-title">연결</span>
+      </div>
+      <div class="card-subtitle">GPU 끼리 데이터 이동</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">구리 전선 (도로)</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Photonic ★ (빛)</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">광+양자 하이브리드</span><span class="step-year">2028+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> GPU 100만대 80% idle → 통신이 진짜 병목</div>
+    </div>
+
+    <!-- 5. 표현 -->
+    <div class="card" style="--family-color: #a78bfa;">
+      <div class="card-header">
+        <span class="card-num">05</span>
+        <span class="card-emoji">🌐</span>
+        <span class="card-title">표현</span>
+      </div>
+      <div class="card-subtitle">세상을 이해하는 차원</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">언어 (얕은 5%)</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Spatial AI ★ (3D)</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">시간·인과 추가</span><span class="step-year">2028+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 인간 뇌 70%가 공간 처리. 진짜 지능 = 3D</div>
+    </div>
+
+    <!-- 6. 연산 -->
+    <div class="card" style="--family-color: #ff8c42;">
+      <div class="card-header">
+        <span class="card-num">06</span>
+        <span class="card-emoji">⚛️</span>
+        <span class="card-title">연산</span>
+      </div>
+      <div class="card-subtitle">계산 방식 자체</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">고전 GPU</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">NISQ 양자 ★</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Cockatoo ★ (분산)</span><span class="step-year">2027</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">Fault-tolerant 양자</span><span class="step-year">2029+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> QUBO·최적화 영역 양자 우위 시작</div>
+    </div>
+
+    <!-- 7. 전기 -->
+    <div class="card" style="--family-color: #ffd700;">
+      <div class="card-header">
+        <span class="card-num">07</span>
+        <span class="card-emoji">⚡</span>
+        <span class="card-title">전기</span>
+      </div>
+      <div class="card-subtitle">AI 의 밥</div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">일반 전기 (콘센트)</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">SMR ★ (미니 원전)</span><span class="step-year">2027</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">핵융합 (Fusion)</span><span class="step-year">2030+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 데이터센터 1개 = 도시 1개. 빅테크 $10B 약속</div>
+    </div>
+
+    <!-- 8. 신뢰 (NEW) -->
+    <div class="card" style="--family-color: #f72585;">
+      <div class="card-header">
+        <span class="card-num">08</span>
+        <span class="card-emoji">🛡️</span>
+        <span class="card-title">신뢰</span>
+      </div>
+      <div class="card-subtitle">AI 생성물·계산 증명 <span style="background:#f72585;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px;">NEW</span></div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">없음 (watermark)</span><span class="step-year">~2025</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">C2PA ★ (출처)</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">PQC ★ (양자내성)</span><span class="step-year">2026-28</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">동형암호·ZKP</span><span class="step-year">2028+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 가짜 콘텐츠 폭증 + 양자가 곧 암호 다 깸</div>
+    </div>
+
+    <!-- 9. 협업 (NEW) -->
+    <div class="card" style="--family-color: #4cc9f0;">
+      <div class="card-header">
+        <span class="card-num">09</span>
+        <span class="card-emoji">🤝</span>
+        <span class="card-title">협업</span>
+      </div>
+      <div class="card-subtitle">AI 끼리 팀워크 <span style="background:#4cc9f0;color:#0a0a0a;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px;">NEW</span></div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">단일 LLM (ChatGPT)</span><span class="step-year">~2024</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Multi-agent ★</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Autonomous agent ★</span><span class="step-year">2026-27</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">AI Society</span><span class="step-year">2028+</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 17% 배포 → 60% 2년내 (Gartner #1 폭증)</div>
+    </div>
+
+    <!-- 10. 감각·몸 (NEW) -->
+    <div class="card" style="--family-color: #b5179e;">
+      <div class="card-header">
+        <span class="card-num">10</span>
+        <span class="card-emoji">🦾</span>
+        <span class="card-title">감각·몸</span>
+      </div>
+      <div class="card-subtitle">AI 가 몸을 얻음 <span style="background:#b5179e;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;margin-left:4px;">NEW</span></div>
+      <div class="evolution">
+        <div class="step"><span class="step-dot"></span><span class="step-text">텍스트·이미지</span><span class="step-year">~2024</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">멀티모달 ★</span><span class="step-year">2026</span></div>
+        <div class="step current"><span class="step-dot"></span><span class="step-text">Physical AI ★ (로봇)</span><span class="step-year">2026</span></div>
+        <div class="step future"><span class="step-dot"></span><span class="step-text">가정 휴머노이드 $20K</span><span class="step-year">2028</span></div>
+      </div>
+      <div class="card-why"><b>왜?</b> 1956 지능 모방 시작 → 2026 신체성 시작</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>핵심 패턴:</b> 모든 가족이 "흉내 → 진짜" 또는 "외부 → 안" 방향으로 수렴.
+    한 가족만 보면 trend 놓침. <b>2027-2028 = 가족끼리 만나기 시작하는 해</b>
+    (예: 양자+AI / Wetware+BCI / Photonic+양자 / SMR+AI 데이터센터).
+  </div>
+</body>
+</html>

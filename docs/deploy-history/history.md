@@ -1102,3 +1102,508 @@
 - Env  : dev
 - Host : unset:unset
 - HC   : FAIL/SKIP
+
+## Deploy 2026-07-13 17:53:12
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-14 12:41:27
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-14 12:49:35
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-22 16:28:28
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-28 17:30:47
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-28 17:36:37
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-29 13:07:20
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-07-29 13:07:40
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 14:28:39
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 14:35:25
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 14:36:02
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 14:49:28
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:11:30
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:12:17
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:16:51
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:21:36
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:26:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:27:27
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:30:59
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:36:31
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:37:21
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:39:17
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:40:48
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:45:50
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:54:12
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:54:30
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:54:39
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 15:58:25
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 16:06:45
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 16:07:08
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-12 16:08:44
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-13 15:20:27
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-13 17:25:51
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:03:14
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:03:48
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:04:04
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:05:47
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:08:50
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:20:31
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:20:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:25:03
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:25:27
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:28:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:30:57
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:38:43
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:39:49
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:41:09
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:42:43
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:52:04
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:53:32
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:55:20
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 13:58:00
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 14:09:18
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-18 14:20:46
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:38:14
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:38:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:45:00
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:54:04
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:54:43
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:55:52
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 17:59:32
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 18:00:43
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 18:02:10
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 18:06:45
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-19 18:34:58
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-20 14:26:06
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-20 15:09:55
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-20 15:31:09
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-20 15:52:14
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 09:27:08
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 15:11:40
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 16:29:50
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 16:42:40
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 16:49:01
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:01:36
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:04:24
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:05:35
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:06:38
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:07:47
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:17:39
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:18:48
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:19:08
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:19:22
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:19:39
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:21:20
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:24:12
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:31:08
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:31:45
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:32:03
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:32:40
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:32:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:34:28
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:35:54
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:37:24
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:38:36
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:39:55
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:41:27
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:43:07
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 17:44:31
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-21 23:28:05
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP
+
+## Deploy 2026-08-25 13:45:25
+- Env  : dev
+- Host : unset:unset
+- HC   : FAIL/SKIP

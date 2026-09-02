@@ -381,6 +381,8 @@
       page_layout_tracker.py        페이지 콘텐츠 cumulative fit (H1+콜아웃+이미지+표)
       file_lock_poller.py           파일 잠금 대기 + 자동 폴링 (60초, interval 2초)
       check-official-features.sh    공식 신기능 날짜별 auto-check (SessionStart)
+      detect-artifact-staleness.sh  산출물 (pptx·catalog md) 유통기한 초과 시 알림 (SessionStart, 1h throttle)
+      artifact-freshness-report.py  유통기한 매트릭스 스캔 (룰: artifact-freshness-check.md SoT)
 
     ◆ 차단(block) 훅 — 규칙 위반 시 commit/write 거부 (2026-05-19)
       block-version-suffix           산출물 -v2/-v3/_v2 파일명 차단 (Write/Edit)
@@ -575,6 +577,12 @@
         비용 재산정 필요 (겉보기 요금표 같아도 실효 비용 ↑)
         v2.1.201+ 에서 mid-conversation harness reminder 제거
 
+    비용 계산 (2026-07-13 pricing.py 갱신):
+      .claude/scripts/lib/pricing.py 에 tokenizer_factor 도입
+      Opus 4.7 계열 (Fable 5·Mythos 5·Sonnet 5) 은 factor=1.3 자동 반영
+      → estimate_cost() 호출 시 실제 청구 토큰 자동 재산정
+      smoke test: python .claude/scripts/lib/pricing.py
+
     자동 fallback:
       Claude quota 소진 → Codex
       Fable 5 일일 20% cap 도달 → Opus 4.8 + 사용자 알림
@@ -598,7 +606,7 @@
     auto mode: subagent spawn 전 classifier 가 사전 평가
     /doctor: flat tree + 명령 이름 highlight
     --safe-mode (v2.1.169) · /cd (v2.1.169) · post-session hook (v2.1.169) — 우리 kit 이미 통합
-    sub-agent 가 sub-agent spawn 5 levels deep (v2.1.172) — Dynamic Workflows·/effort mythos 정합
+    sub-agent nested spawn v2.1.172 (depth 5) → v2.1.225 default 3 — Dynamic Workflows·/effort mythos 정합
 
   [Claude Code v2.1.169+ post-session lifecycle hook]
     SessionEnd (사용자 명시 종료) 와 별개로 *모든* 종료 (kill·crash·timeout) 트리거
@@ -608,10 +616,13 @@
       - guard-save.sh 활성 시 자동 snapshot
       - POST_SESSION_AUTO_SYNC=1 시 sync-to-team 자동 트리거
 
-  [Claude Code v2.1.172+ sub-agent depth 5 levels]
-    sub-agent 가 sub-agent spawn 가능 (orchestrator → L1 → L2 → ... → L5)
-    /effort ultracode 및 /effort mythos 의 Dynamic Workflows 더 깊은 계층 분해
-    auto-planner Path 2 (Opus 2회 fail → Fable 5) 와 정합
+  [Claude Code v2.1.172~224 (레거시) sub-agent depth 5 → v2.1.225+ default 3]
+    v2.1.225 (2026-07-24) 부터 default nesting depth 5 → 3
+    CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 로 nesting 완전 비활성 가능
+    (더 깊게 필요하면 env 로 상향 가능)
+    /effort ultracode 및 /effort mythos 의 Dynamic Workflows 계층 분해 유지
+    Dynamic workflow medium (≤15 agents) default — workflowSizeGuideline 설정 조정
+    auto-planner Path 2 (Opus 5 2회 fail → Fable 5) 와 정합
 
   [상태 조회]
     python .claude/scripts/route.py --status
@@ -1106,6 +1117,50 @@
   17. 추가 사항 요약
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  2026-09-02 (오후) statusline progress bar + DB 이력 자동 조회 + 신기술 아이디어 25:
+    ✓ .claude/scripts/statusline_context.py 신설 (progress bar + 토큰 + 예산 + 대상 + 세션 통계)
+    ✓ .claude/hooks/lookup-history.sh 신설 (UserPromptSubmit · DB 이력 자동 조회 · systemMessage 주입)
+    ✓ Rich TUI · Batch API · Semantic caching · Desktop notification 등 Task 등재
+
+  2026-09-02 (저녁) problem_solutions 양방향 초최고 (사용자 강력 지시):
+    ✓ orca.db.problem_solutions 신설 (문제·해결·파일·명령·검증·재사용 점수)
+    ✓ .claude/scripts/save_solution.py 신설 (auto 자동 캡처 + manual 수동 등재 + search 재사용 검색)
+    ✓ .claude/hooks/save-session-summary.sh 확장 (Stop/SessionEnd 시 save_solution auto)
+    ✓ .claude/hooks/lookup-history.sh 확장 (UserPromptSubmit 시 problem_solutions 조회 · 자동 힌트)
+    ✓ .claude/rules/solution-reuse.md 신설 (양방향 원리·13 카테고리·점수 기준·retention)
+
+  2026-09-02 6 축 초최고강함 강화 + Headroom/claude-mem/task-observer + 히스토리 DB:
+    ✓ MCP 3종 무료 통합 (Headroom Apache 2.0 + claude-mem 로컬 + task-observer Skill)
+      - Headroom: pip install "headroom-ai[all]" + headroom mcp install (compress/retrieve/stats)
+      - claude-mem: npx -y claude-mem install --provider claude (5 hook 자동)
+      - task-observer: npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer
+      - .claude/rules/mcp-integration.md · .claude/scripts/mcp-autostart.sh (SessionStart hook)
+      - CLAUDE.md § 3.6-5 통합 표기 · setup/modules/16-mcp-headroom-claude-mem.bat
+      - OmniRoute 는 route.py 정면 겹침으로 제외 (사용자 결정)
+    ✓ 세션 히스토리 DB 시스템 (사용자 지적: 섹션 닫히면 못 알아먹음)
+      - orca.db.conversations + session_summary 테이블 신설
+      - .claude/scripts/lib/conversation_logger.py (save_turn/save_summary/load_recent)
+      - .claude/hooks/save-user-prompt.sh (UserPromptSubmit)
+      - .claude/hooks/save-session-summary.sh (Stop/SessionEnd)
+      - .claude/hooks/load-recent-conversations.sh (SessionStart · 최근 3 세션 자동 로드)
+      - .claude/rules/conversation-history.md · CLAUDE.md § 3.1 (5)
+      - 명시 memory (도메인 자산) 유지 · 히스토리는 DB 자동
+    ✓ 6 축 초최고강함 강화 (매우강함 < 초 매우강함 < 초초 매우강함 < 초최고강함):
+      - 5 파인튜닝: .claude/skills/ai-finetune-pipeline.md (unsloth 2~5x + PEFT + trl + GGUF)
+      - 6 임베딩: chromadb + sentence-transformers 설치 · .claude/rules/embedding-strategy.md
+        · 한국어 default multilingual-e5-large · 코드 codebert-base · SOTA bge-m3
+      - 7 화면설계: .claude/rules/app-ui-standard.md (shadcn/AntD/MUI 강제 · 자체 CSS 금지)
+        · 프레임워크·컴포넌트·A11y·i18n·반응형 매트릭스
+      - 8 개발언어별: .claude/rules/language-standards.md (Python ruff · JS/TS ESLint9 ·
+        Go golangci · Rust clippy · Java Checkstyle · 20+ 언어)
+      - 10 운영 grade 파일 관리: .claude/rules/production-file-management.md
+        · orca.db.file_audit 테이블 · .claude/hooks/enforce-file-naming.sh
+        · .claude/scripts/audit_file_write.py (숫자만 파일명·copy·final·v2 접미사 자동 감지)
+        · Retention 매트릭스 (파일 유형별 보존 기간·자동 아카이브)
+      - 11 자동 최적화: .claude/rules/auto-optimization.md
+        · .claude/scripts/nightly-optimize.py (매일 03:00 · DB VACUUM · retention · 백업)
+        · 6 축 자동 (프롬프트 압축 · 컨텍스트 축소 · DB · 이미지 · 로그 · hook 프로파일)
+
   2026-05-19 AI-Native 3대 플러그인 + 7대 뮤스탱 + 디자인 100+ CDN (신규):
     ✓ AI-Native 3대 플러그인 (dd69eeb, 8d5fb2a, f0843fc 누적)
        - test_gen          테스트 코드 자동 생성 (pytest·jest·unittest)
@@ -1471,3 +1526,144 @@
 26 commits push 완료
 
 ============================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  15. 재발 방지 헌장 A~F (2026-08-12)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  CLAUDE.md § 7 재발 방지를 6 카테고리로 통합. 각 조항 = 1줄 규칙 + 근거.
+
+  A. 하드코딩·폴백 금지
+     A1 API 키·경로·시크릿·사용자명·OS 절대경로·Python 버전 하드코딩 X
+     A2 산식 없는 %·등급·상수 값 화면 표시 X (미측정 정직 표기)
+     A3 표시만 있고 배선 없는 설정·기능 X
+     A4 임계·색·규격 값 정본 1곳 (토큰·SPEC 블록)
+     A5 새 지표 만들기 전 기존 자산 재사용 실측
+
+  B. 검증 원칙
+     B1 검사 0건 ≠ 통과 (표본 하한 필수)
+     B3 육안+픽셀 (computed 통과 X)
+     B6 수정·빌드 후 자동 검증 후 보고
+     B7 화면·기능 검증 사용자 떠넘김 X (Smoke Test 의무)
+     B8 산출물 페이지 fit 사전검증
+     B11 거짓 PASS 보고 X (이중 검증)
+
+  C. 운영 안전
+     C1 운영 동작 변경 적용 전 판정
+     C4 미커밋 누적 X
+     C6 위험 작업 approval-gate
+     C7 멈춤 방지 (60초 폴링·지수 backoff)
+     C10 install 순서 (kit→commit→sync→install→검증)
+
+  D. 조사·보고 규율
+     D0 대상 확정 0순위 (매 지시 첫 응답 "대상: <path>" 명시)
+     D6 중간 확인 X (완료 시 1회)
+     D7 전수조사 = 100% Read (grep 만 X)
+     D11 회피·딴말 X
+     D12 기준 일관성
+
+  E. UI/UX 표준
+     E1 LAYOUTSPEC 골격
+     E4 같은 목적 컴포넌트 2개 X
+     E5 교재/강의 doc 8섹션 + 다이어그램
+     E6 산출물 -v2/-v3 X (원본 덮어쓰기 + 날짜 기반 v1/v2)
+
+  F. kit 고유 (orchestration_v1)
+     F1 .claude/ 직접 편집 X (plugins/ 원본만)
+     F3 Zero-touch 자동화
+     F5 auto-planner 5단계 자동
+     F6 함수·훅·룰·skill·command 중복 X
+     F7 감정·상황 자동 대응 매핑
+     F8 자산 생성 감지
+
+  상세: .claude/rules/*.md · CLAUDE.md § 7
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  16. 대상 확정 4갈래 (D0) + statusline
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  매 사용자 지시 첫 응답 첫 줄:
+    대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정
+
+  4갈래 후보:
+    1. <KIT_ROOT>                     kit 자체 감사·리팩터·룰·hook
+    2. <KIT_ROOT>/setup/templates/    install 배포용 template
+    3. install 대상 실운영 프로젝트   비즈니스 로직·하드코딩 실측
+    4. ~/.claude/                     글로벌 설정
+
+  강제:
+    - .claude/statusline.sh           매 turn 4갈래 판정 상태바 표시 (동적)
+    - user-prompt-auto-planner.sh     매 지시 systemMessage
+    - hook-00-init.sh                 SessionStart 헌장 노출
+
+  상세: .claude/rules/direction-first.md
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  17. 감지 hook 시스템 (자동)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  UserPromptSubmit:
+    - user-prompt-auto-planner.sh    5단계 + MoE + 대상 확정
+    - detect-deflection.sh           회피 안티패턴
+    - detect-repeat-request.sh       반복 → /loop
+    - detect-user-emotion.sh         12 감정 매핑
+    - periodic-rules-reminder.sh     10턴마다 룰
+
+  PreToolUse (Write·Edit):
+    - detect-asset-creation.sh       유사 파일 grep + 자매 파일
+    - block-version-suffix.sh        -v2/-v3 차단 (매뉴얼 md/txt/html 포함)
+    - check-mojibake.sh
+    - protect-critical-files.sh
+
+  PreToolUse (Bash):
+    - pre-install-lock.sh            install 순서 강제
+    - pre-commit-full-check.sh       git commit 시 guide.txt·CLAUDE.md 갱신 강제
+
+  감정 매핑 SoT: plugins/exec_orch/skills/user-emotion-auto-response.md
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  18. 실전 원칙 (No 데모·MVP·목업)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  사용자 명시 지시 (`목업`·`mock`·`demo`·`MVP`·`시연`) 없으면
+  모든 산출물·코드·데이터·시연 = 실전 기준.
+
+  데이터 필요 시 DB 추천 자동 매핑:
+    문서·비정형     → MongoDB (Atlas 무료)
+    관계형·트랜잭션 → PostgreSQL (Supabase·Neon)
+    간단 웹         → MySQL (PlanetScale)
+    실시간·in-memory → Redis (Upstash)
+    벡터 검색       → Pinecone / ChromaDB (로컬)
+    그래프          → Neo4j Aura 무료
+    시계열          → TimescaleDB / InfluxDB
+
+  사용자가 목업 참조 (HTML wireframe·PPT slide·mock JSON·Figma) 를 주면
+    → 그것을 실제 기능으로 구현 (mockup 그대로 재현 X)
+
+  상세: .claude/rules/best-practices.md § 실전 원칙
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  19. 총망라 매뉴얼
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  docs/install/README.md
+
+  다른 프로젝트에서 install 안 해도 이 md 하나로 kit 이해·활용 가능.
+  헌장 A~F · rules · hooks · commands · skills · statusline ·
+  AI 라우팅 · install 절차 · 최신 상태 (2026-08-12) 모두 포함.
+
+============================================================
+
+
+  2026-09-02 (심야) 6 축 추가 (Concise·Sub-agent·크로스 IDE·API·터미널·평가):
+    * settings.json: outputStyle=concise · keybindingFlavor=readline · session.autoContinuation=true
+    * .claude/rules/subagent-delegation.md (Explore·Plan·Judge 자동 위임)
+    * .claude/scripts/export-cross-ide-rules.py (Cursor/Windsurf/Copilot/Continue 4 IDE)
+    * .claude/rules/anthropic-api-features.md (1h TTL·Advisor·Files·Citations·Batch·geo·hooks)
+    * .claude/rules/terminal-tools.md (fzf·rga·bat·eza·lazygit·delta·zoxide·btop)
+    * .claude/rules/prompt-eval-tools.md (Promptfoo·DeepEval·Ragas·TruLens·LangSmith)

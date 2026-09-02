@@ -88,6 +88,38 @@ AI 가 사용자에게 "기능 검증해 주세요" 요청 = 룰 위반.
 - hook: `.claude/settings.json` PostToolUse Edit/Write
 - 로그: `.claude/logs/smoke-test.log`
 
+## End-to-End 완결성 (DB → join → API → 화면) — 2026-08-12 사용자 강조
+
+**"DB 추가 하라고 하면 DB 만 추가하고 화면에 안 나오는거·조인 걸어서 나오는 거 반영 안 한다"** = 완결성 위반.
+
+### 원칙
+
+DB·backend·frontend 변경 지시 시 **모든 레이어 자동 반영**:
+
+| 변경 종류 | 반영 대상 (자동 감지) |
+|---|---|
+| DB 컬럼 추가 | ORM/DTO → repository → service → controller → API response → frontend model → 화면 표시 |
+| DB 테이블 추가 | migration → seed → repository → service → API endpoint → frontend list/detail 화면 |
+| API endpoint 추가 | controller → route registration → OpenAPI/swagger → frontend service call → 화면 |
+| frontend 컴포넌트 추가 | route → menu → i18n → 권한 체크 → CSS 토큰 반영 |
+
+### 감지 도구
+
+DB 변경 감지 시 자동 grep:
+```bash
+# 컬럼명이 어디 참조되는지
+grep -rn '<column_name>' src/ frontend/src/ resources/mapper/ *.xml *.sql
+# 관련 화면·API 목록화 → 각각 반영 확인
+```
+
+### 사용자 참조 페이지 100% 반영
+
+**"내가 관련 페이지도 주는데 반영 안 한다"** — 사용자가 참조 URL·파일 경로·PPT slide 번호·화면 명 주면 **100% Read + 관련 요소 다 반영**. 부분 반영 = 위반.
+
+- 참조 파일 있으면 → `Read` tool 로 처음~끝 (`.claude/rules/full-survey.md` 100% Read 원칙 정합)
+- 참조 화면명 있으면 → 화면 내 요소·필터·컬럼·이벤트 모두 나열 후 반영
+- 참조 PPT 있으면 → 슬라이드 png export → 각 슬라이드 시각 검증
+
 ## 참조
 
 - `CLAUDE.md § 7-24` (절대 룰)

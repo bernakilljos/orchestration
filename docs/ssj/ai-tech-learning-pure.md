@@ -699,3 +699,44 @@ pip install transformer-lens captum shap
 - developer.nvidia.com — Physical AI
 - quantum-computing.ibm.com — Quantum
 - microsoft.com/en-us/research/group/causal-ai — Causal
+
+---
+
+## 델타 (2026-08-19 · 순수 기술 갱신)
+
+### 신규 순수 기술 4종
+
+**A. Long-horizon Reasoning Control (Qwen 3.8-27B · 2026-08)**
+- 사용자 지정 reasoning depth (`low`·`medium`·`high`) + context reuse/delete 제어
+- edge 시나리오 (긴 문서 검토 시 중간 사고 삭제로 VRAM 절약)
+- 원조: Alibaba Qwen team
+
+**B. Multiagent Advisor Pattern (Anthropic Managed Agents · 2026-08-07)**
+- primary thread 가 mid-turn 다른 model consulting · consulted model 은 stateless
+- 계층 프롬프트 (main system + advisor 별 mini-system)
+- 관련 논문: `Anthropic Managed Agents Documentation` (research preview)
+
+**C. Session Budget Enforcement (Anthropic · 2026-08-07)**
+- hard cap 도달 시 새 model request 시작 없이 `budget_reached` stop
+- deployment level (모든 세션 공통) + session level override
+- 원조: LLM cost governance research 흐름 (2025~ 흐름의 표준화)
+
+**D. Adaptive Thinking Consolidation (Claude Sonnet 5 · Opus 5 · 2026-06~07)**
+- `thinking:{"type":"enabled",budget_tokens}` (manual) 폐기 · adaptive 만 유지
+- turn 별 필요 여부 자동 판단 · 낭비 사고 토큰 감소
+- Opus 5 는 `disabled` 상태에서 effort xhigh/max = 400 error (thinking 강제)
+
+### Interpretability 트렌드
+
+- **Anthropic Risk Report v2 (2026-08-14 · RSP v3.4)**:
+  - catastrophic-misalignment estimation `very low → low`
+  - 근거: cybersecurity eval disclosure 관련 불확실성
+  - Model 2 (Mythos 5 초과) 내부 approval 결과 새 misalignment 프로파일 없음
+  - 6개월마다 발행 · 규제 응답 근거
+
+**참조 링크 추가**:
+- huggingface.co/Qwen/Qwen3.8-27B — 오픈 웨이트
+- platform.claude.com/docs/en/managed-agents — Managed Agents 표준
+- anthropic.com/news — Risk Report v2
+
+**관련 memory**: [[ai-tech-2026-08-late]]

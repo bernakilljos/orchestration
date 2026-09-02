@@ -458,3 +458,38 @@ def reflexion_loop(query, max_iter=3, threshold=0.8):
 - 100 접목: `ai-tech-applications-100.md`
 - 우리 솔루션: `.claude/rules/`, `plugins/exec_orch/skills/`, `.claude/hooks/`
 - 작성일: 2026-06-01
+
+---
+
+## 델타 (2026-08-19 · 상위 3 깊이)
+
+### 21. Qwen 3.8-27B (Alibaba · 2026-08-14)
+
+- **아키텍처**: Dense 27.78B params · 262K token native context · 멀티모달 encoder (text·image·video 통합)
+- **훈련 특성**: SWE-bench Pro 61.7% (Opus 4.6 Max 53.4%) · Software Engineering·Reasoning·Long-horizon task 특화
+- **Long-horizon reasoning control**: 사용자 지정 reasoning depth · context reuse/delete 제어 (edge 시나리오)
+- **부서 접목 (RMS)**: 4-bit quantization 시 24GB VRAM = 사내 노후 GPU 재활용 · 100+ 페이지 계약서 원본 통째 검토 · Apache 2.0 = 데이터 반출 X
+- **한계**: 자체 평가 우세만 · SWE-bench Verified/독립 benchmark 미확인 · 우리 code review 워커 승격 전에 실측 필요 (task-instruction 5개 → 결과 비교)
+- **우리 시스템 매핑**: `plugins/exec_offline-*/` (Ollama) + `best-practices.md § 로컬 우선 라우팅` 매트릭스 top 후보
+
+### 22. Managed Agents 관리 컨트롤 4종 (2026-08-07)
+
+- **아키텍처**:
+  - **Session budget**: `budget_reached` stop_reason · list-rate pricing · 우리 route.py budget (SQLite) 방향 검증
+  - **Advisor tool**: `{"type":"advisor"}` in multiagent roster · session primary thread 가 mid-turn 다른 model consulting · 각 advisor 별 `model` 지정
+  - **Inference geo pinning**: `model.inference_geo` · agent-level 또는 session override · data residency
+  - **GitHub-hosted skills**: session repo mount 시 `.claude/skills` auto discovery
+- **우리 kit 정합**:
+  - session budget = `plugins/exec_orch/skills/route_dispatch.md § budget-fallback` 로컬 구현이 Anthropic 표준화됨 = 우리 방향 검증
+  - advisor = 우리 Claude(설계) → Codex(구현) → Gemini(검증) 워크플로우 (route.py multi-model)
+  - GitHub skills = 우리 install-to 워크플로우 (kit → target repo 자동 sync) 방향 정합
+- **부서 접목 (RMS)**: primary Sonnet 5 스크리닝 + advisor Opus 5 (애매) · Enterprise 조직 배포 시 geo=korea-central · 감사 skill repo 다른 부서 discovery
+
+### 23. Inference hooks (Enterprise beta · 2026-08-05)
+
+- **아키텍처**: 조직 AI security server → 각 governed prompt hold + allow/deny 판정 · 요청 signed · failure handling 구성 가능 · denial 은 Compliance Activity Feed 기록
+- **우리 kit 정합**: `.claude/rules/approval-gate-rules.md` (SQLite `waiting_approval` 큐) 의 조직 서버 승격 버전
+- **부서 접목 (RMS)**: 개인정보 함유 프롬프트 자동 차단 · 승인 필요 프롬프트 관리자 대기열 → 사내 정책 gate 자동화
+- **한계**: Enterprise 계약 필요 · 우리 로컬 큐는 계속 유효 (개인·팀 규모)
+
+**관련 memory**: [[ai-tech-2026-08-late]] · [[claude-code-changelog-august]]

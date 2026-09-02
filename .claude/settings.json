@@ -1,630 +1,708 @@
 ﻿{
-    "permissions": {
-        "allow": [
-            "Write",
-            "Edit",
-            "Read",
-            "Glob",
-            "Grep",
-            "Write(*)",
-            "Edit(*)",
-            "Write(**)",
-            "Edit(**)",
-            "Write(.claude/**)",
-            "Edit(.claude/**)",
-            "Write(plugins/**)",
-            "Edit(plugins/**)",
-            "Write(docs/**)",
-            "Edit(docs/**)",
-            "Write(C:\\**)",
-            "Edit(C:\\**)",
-            "Write(//C/**)",
-            "Edit(//C/**)",
-            "Bash(rm:*)",
-            "Bash(ls:*)",
-            "Bash(find:*)",
-            "Bash(mkdir:*)",
-            "Bash(cp:*)",
-            "Bash(mv:*)",
-            "Bash(touch:*)",
-            "Bash(cat:*)",
-            "Bash(head:*)",
-            "Bash(tail:*)",
-            "Bash(echo:*)",
-            "Bash(chmod:*)",
-            "Bash(test:*)",
-            "Bash(which:*)",
-            "Bash(where:*)",
-            "Bash(wc:*)",
-            "Bash(sort:*)",
-            "Bash(uniq:*)",
-            "Bash(diff:*)",
-            "Bash(sed:*)",
-            "Bash(awk:*)",
-            "Bash(jq:*)",
-            "Bash(basename:*)",
-            "Bash(dirname:*)",
-            "Bash(realpath:*)",
-            "Bash(pwd:*)",
-            "Bash(date:*)",
-            "Bash(xargs:*)"
-        ],
-        "defaultMode": "bypassPermissions"
-    },
-    "hooks": {
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/deploy-vscode-settings.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/auto-install-deps.sh\"",
-                        "timeout": 5,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/force-restart-stale-watchdog.sh\"",
-                        "timeout": 5,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"",
-                        "timeout": 10
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-workers.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-pollution.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-sync-drift.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "true",
-                        "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
-                        "_disabled_reason": "2026-06-08 leak (auto re-install spawn pile-up)",
-                        "timeout": 5,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-official-features.sh\"",
-                        "timeout": 30,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mcp-health.sh\"",
-                        "timeout": 30,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_offline/hooks/install-on-session-start.sh\"",
-                        "timeout": 10,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-git-hooks.sh\"",
-                        "timeout": 5,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
-                        "timeout": 5,
-                        "async": true
-                    }
-                ]
-            },
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-register-scheduled-tasks.sh\"",
-                        "timeout": 10,
-                        "async": true
-                    }
-                ]
-            }
-        ],
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-auto-planner.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
-                        "timeout": 3
-                    }
-                ]
-            }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-04-pre-deploy.sh\"",
-                        "timeout": 10,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-05-post-deploy.sh\"",
-                        "timeout": 10,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-06-notify.sh\"",
-                        "timeout": 10,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-bat-lines.py\"",
-                        "timeout": 60,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-install-dryrun.py\"",
-                        "timeout": 90,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/sync-to-team.sh\"",
-                        "timeout": 30,
-                        "async": true
-                    }
-                ]
-            }
-        ],
-        "PreToolUse": [
-            {
-                "matcher": "Edit|Write",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-critical-files.sh\""
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-version-suffix.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mojibake.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-tricks.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-01-pre-task.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-claude-md-size.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-hardcoded-paths.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-korean-removal.sh\"",
-                        "timeout": 3
-                    }
-                ]
-            },
-            {
-                "matcher": "Bash",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-visible-windows.sh\""
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-file-deletion.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_dangerous_bash.py\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_bash_command.py\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/pre-build-reminder.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret-scan.sh\"",
-                        "timeout": 3
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/pre-commit-secrets.sh\"",
-                        "timeout": 30
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/approval-gate-detect.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-full-check.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-infra-check.sh\"",
-                        "timeout": 5
-                    }
-                ]
-            }
-        ],
-        "PostToolUse": [
-            {
-                "matcher": "Edit|Write",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-korean-only.sh\""
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_pycheck.py\"",
-                        "timeout": 30,
-                        "continueOnBlock": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_formatter.py\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
-                        "timeout": 3,
-                        "continueOnBlock": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-js-syntax.sh\"",
-                        "timeout": 5,
-                        "continueOnBlock": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-html-balance.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "true",
-                        "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
-                        "_disabled_reason": "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
-                        "timeout": 5,
-                        "continueOnBlock": true,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "true",
-                        "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
-                        "_disabled_reason": "2026-06-08 leak chain step",
-                        "timeout": 5,
-                        "continueOnBlock": true,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "true",
-                        "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
-                        "_disabled_reason": "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
-                        "timeout": 5,
-                        "continueOnBlock": true,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
-                        "timeout": 30,
-                        "continueOnBlock": true,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
-                        "timeout": 10,
-                        "continueOnBlock": true,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh\"",
-                        "timeout": 30,
-                        "continueOnBlock": true,
-                        "async": true,
-                        "_purpose": "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh\"",
-                        "timeout": 15,
-                        "continueOnBlock": true,
-                        "async": true,
-                        "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
-                    }
-                ]
-            },
-            {
-                "matcher": "Bash",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/hook-09-ocr-verify.sh\"",
-                        "timeout": 60
-                    }
-                ]
-            },
-            {
-                "matcher": ".*",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash -c 'test -d \"$CLAUDE_PROJECT_DIR/.claude\" && date +%Y-%m-%dT%H:%M:%S > \"$CLAUDE_PROJECT_DIR/.claude/orca-heartbeat\"'"
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/periodic-snapshot.sh\"",
-                        "timeout": 5
-                    }
-                ]
-            }
-        ],
-        "PostToolUseFailure": [
-            {
-                "matcher": "Bash",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_learning/hooks/hook-worker-failure.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" PostToolUseFailure",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on_error.sh\"",
-                        "timeout": 5
-                    }
-                ]
-            }
-        ],
-        "PreCompact": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PreCompact"
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
-                    }
-                ]
-            }
-        ],
-        "SessionEnd": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" SessionEnd"
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" SessionEnd",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd"
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-token-log.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-gemini-recap.sh\"",
-                        "timeout": 5,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-all.py\"",
-                        "timeout": 180,
-                        "async": true
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-session.sh\"",
-                        "timeout": 30,
-                        "async": true
-                    }
-                ]
-            }
-        ],
-        "PostCompact": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PostCompact",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
-                    }
-                ]
-            }
-        ],
-        "SubagentStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
-                    }
-                ]
-            }
-        ],
-        "SubagentStop": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
-                        "timeout": 5
-                    },
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-subagent-confidence.sh\"",
-                        "timeout": 5
-                    }
-                ]
-            }
-        ],
-        "FileChanged": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on-file-changed.sh\"",
-                        "timeout": 5
-                    }
-                ]
-            }
+  "permissions": {
+    "allow": [
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "Write(*)",
+      "Edit(*)",
+      "Write(**)",
+      "Edit(**)",
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
+      "Write(plugins/**)",
+      "Edit(plugins/**)",
+      "Write(docs/**)",
+      "Edit(docs/**)",
+      "Write(C:\\**)",
+      "Edit(C:\\**)",
+      "Write(//C/**)",
+      "Edit(//C/**)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(touch:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(echo:*)",
+      "Bash(chmod:*)",
+      "Bash(test:*)",
+      "Bash(which:*)",
+      "Bash(where:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(diff:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(jq:*)",
+      "Bash(basename:*)",
+      "Bash(dirname:*)",
+      "Bash(realpath:*)",
+      "Bash(pwd:*)",
+      "Bash(date:*)",
+      "Bash(xargs:*)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline_context.py\"",
+    "padding": 0
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-00-init.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/brief-unused-features.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-artifact-staleness.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/deploy-vscode-settings.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/auto-install-deps.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/force-restart-stale-watchdog.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/install-external-watchdog.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-workers.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/cleanup-pollution.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-sync-drift.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
+            "_disabled_reason": "2026-06-08 leak (auto re-install spawn pile-up)",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-official-features.sh\"",
+            "timeout": 30,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mcp-health.sh\"",
+            "timeout": 30,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_offline/hooks/install-on-session-start.sh\"",
+            "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-git-hooks.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/mcp-autostart.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/load-recent-conversations.sh\""
+          }
         ]
-    },
-    "autoMode": {
-        "hard_deny": [
-            "Bash(rm:*-rf*/*)",
-            "Bash(curl:*|*bash*)",
-            "Bash(curl:*|*sh*)",
-            "Bash(git push --force*)",
-            "Bash(git reset --hard origin/*)",
-            "Bash(npm publish*)",
-            "Bash(docker push *:prod*)",
-            "Bash(docker push *:latest*)",
-            "Bash(terraform apply*-auto-approve*)",
-            "Edit(.env)",
-            "Edit(*.env)",
-            "Write(.env)"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-register-scheduled-tasks.sh\"",
+            "timeout": 10,
+            "async": true
+          }
         ]
-    },
-    "fallbackModel": [
-        "claude-sonnet-4-6",
-        "claude-haiku-4-5"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-auto-planner.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-repeat-request.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-user-emotion.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-efficiency.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-user-prompt.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/lookup-history.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-04-pre-deploy.sh\"",
+            "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-05-post-deploy.sh\"",
+            "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-06-notify.sh\"",
+            "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-bat-lines.py\"",
+            "timeout": 60,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-install-dryrun.py\"",
+            "timeout": 90,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/sync-to-team.sh\"",
+            "timeout": 30,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-asset-creation.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-critical-files.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-version-suffix.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mojibake.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-tricks.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-01-pre-task.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-claude-md-size.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-hardcoded-paths.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-korean-removal.sh\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-visible-windows.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-file-deletion.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_dangerous_bash.py\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_bash_command.py\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/pre-build-reminder.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret-scan.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/pre-commit-secrets.sh\"",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/approval-gate-detect.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-full-check.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-infra-check.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-korean-only.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-demo-pattern.sh\"",
+            "timeout": 3,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_pycheck.py\"",
+            "timeout": 30,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_formatter.py\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
+            "timeout": 3,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-js-syntax.sh\"",
+            "timeout": 5,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-html-balance.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
+            "_disabled_reason": "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
+            "timeout": 10,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh\"",
+            "timeout": 15,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-file-naming.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/hook-09-ocr-verify.sh\"",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'test -d \"$CLAUDE_PROJECT_DIR/.claude\" && date +%Y-%m-%dT%H:%M:%S > \"$CLAUDE_PROJECT_DIR/.claude/orca-heartbeat\"'"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/periodic-snapshot.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_learning/hooks/hook-worker-failure.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" PostToolUseFailure",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on_error.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PreCompact"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" SessionEnd"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" SessionEnd",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-token-log.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/hook-gemini-recap.sh\"",
+            "timeout": 5,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/audit-all.py\"",
+            "timeout": 180,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-session.sh\"",
+            "timeout": 30,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PostCompact",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact-rules-reminder.sh\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-subagent-confidence.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/on-file-changed.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
+  },
+  "autoMode": {
+    "hard_deny": [
+      "Bash(rm:*-rf*/*)",
+      "Bash(curl:*|*bash*)",
+      "Bash(curl:*|*sh*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard origin/*)",
+      "Bash(npm publish*)",
+      "Bash(docker push *:prod*)",
+      "Bash(docker push *:latest*)",
+      "Bash(terraform apply*-auto-approve*)",
+      "Edit(.env)",
+      "Edit(*.env)",
+      "Write(.env)"
+    ]
+  },
+  "fallbackModel": [
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5"
+  ],
+  "env": {
+    "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1"
+  },
+  "outputStyle": "concise",
+  "keybindingFlavor": "readline",
+  "session": {
+    "autoContinuation": true
+  }
 }

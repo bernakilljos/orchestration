@@ -49,11 +49,12 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
   fi
 
   # 2) robocopy /MIR /IS /IT — cmd 환경변수 전달 (backslash escape 안전)
-  for sub in .claude .claude-plugin plugins; do
+  # docs/install/ 도 포함 (총망라 매뉴얼 + session-bootstrap-prompt)
+  for sub in .claude .claude-plugin plugins outputs; do
     if [ -d "$SOURCE/$sub" ]; then
       SRC_WIN=$(cygpath -w "$SOURCE/$sub" 2>/dev/null || echo "$SOURCE/$sub")
       DST_WIN=$(cygpath -w "$TARGET/$sub" 2>/dev/null || echo "$TARGET/$sub")
-      RC_SRC="$SRC_WIN" RC_DST="$DST_WIN" cmd //c "robocopy %RC_SRC% %RC_DST% /MIR /IS /IT /XD .git node_modules state context-cache locks done /XF *.pptx *.png /NFL /NDL /NJH /NJS /NP" > /dev/null 2>&1 || true
+      RC_SRC="$SRC_WIN" RC_DST="$DST_WIN" cmd //c "robocopy %RC_SRC% %RC_DST% /MIR /IS /IT /XD .git node_modules state context-cache locks done /XF *.pptx *.png .is-kit-root /NFL /NDL /NJH /NJS /NP" > /dev/null 2>&1 || true
     fi
   done
 

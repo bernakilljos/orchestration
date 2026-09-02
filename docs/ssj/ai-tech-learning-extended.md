@@ -613,3 +613,18 @@ B5·B6·B7·G1·G2 — Constitutional·PRM·Weak-to-Strong·Prompt Injection·Ja
 - **AI in Linguistics** (low-resource MT)
 
 → 추가 20+ 영역 더 발굴 가능. 어디 더 파볼까?
+
+---
+
+## 델타 (2026-08-19 · 확장 8건 추가)
+
+- **Qwen 3.8-27B** (Alibaba · 2026-08-14) — Apache 2.0 오픈 프론티어 · 262K context · SWE-bench Pro 61.7% (>Opus 4.6 Max)
+- **Anthropic Model 2** (2026-08-14 disclosed) — 내부 Mythos 5 초과 · 외부 release X · RSP v3.4 근거
+- **Managed Agents 4종** — session budget · advisor tool · inference geo pin · GitHub-hosted skills
+- **Inference hooks** (Enterprise beta · 8/5) — 조직 AI security server · governed prompt allow/deny
+- **Workbench → Playground** (8/18) — Console UI 개편 · all Messages API param + code exec·web search 데모
+- **Claude Code v2.1.235** (8/18) — Inline spellcheck · prompt-cache LSP fix · Markdown depth 3+
+- **Anthropic Risk Report v2** (RSP v3.4 · 8/14) — misalignment low 상향
+- **Sonnet 5 $2/$10 확정** (8/10) — 9/1 인상 취소
+
+**관련 memory**: [[ai-tech-2026-08-late]] · [[claude-code-changelog-august]]

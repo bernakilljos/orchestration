@@ -172,6 +172,182 @@ def _wait_unlock(path, max_sec=60, interval=2):
     return False
 ```
 
+## 로컬 우선 라우팅 (API 비용 절감 · 2026-08-12 사용자 강조)
+
+**"API 비용만 아니면 됨"** — 자율 처리 시 로컬 대안 우선. API 는 사용자 명시 승인 · 복잡추론·설계·초난도만.
+
+### 우선순위 매트릭스
+
+| 태스크 규모 | 1순위 (무료) | 2순위 (API · 명시 필요) |
+|---|---|---|
+| **파일 검색·grep·wc** | `Grep`·`Glob`·`Bash` 도구 (LLM 호출 X) | — |
+| **간단 요약·분류** | 로컬 Ollama (Llama 3.3·Gemma·Mistral) via `/exec_offline-model` | Haiku 4.5 |
+| **RAG 검색** | ChromaDB 로컬 (`/exec_offline-vector`) | Pinecone / Vector API |
+| **subagent 격리 실행** | `Agent Explore` (내부 · 무료) | Managed Agents API |
+| **복잡 코드·리팩터 500줄+** | (로컬 한계) | Codex ×4 · Opus 4.8 |
+| **설계·아키텍처 결정** | (로컬 한계) | Opus 5 (default) |
+| **초난도·다각 검증** | (로컬 한계) | Opus 5 + ultracode · Fable 5 |
+| **감사·비즈니스 판정** | (로컬 무의미) | claude.ai Web develop (사용자 브라우저 · 사용자 계정 · 비용은 사용자 구독) |
+
+### 로컬 스택 (무료 · `/exec_offline-setup`)
+
+- **Ollama** — Llama 3.3 · Gemma 2 · Mistral · Phi-3 (로컬 실행)
+- **ChromaDB** — 벡터 DB (embedding 로컬)
+- **Phoenix** — self-hosted 관측 대시보드
+
+### 원칙
+
+1. 사용자 지시가 grep·검색·요약·분류 등 단순 태스크 → 로컬 도구 · API 호출 X
+2. Claude·GPT·Gemini API 호출 전 "이거 로컬로 되나?" 자가 점검
+3. 사용자 명시 (`/effort xhigh`·`/effort mythos`·`/godmode`) 있으면 API 허용
+4. budget 상한 (`route.py --set-daily-limit`) 존중 · 초과 시 로컬 fallback
+
+### 금지
+
+1. 단순 grep 태스크에 Opus 호출 (비용 낭비)
+2. 로컬 가능한데 Managed Agents API 사용
+3. 사용자 명시 없이 Fable 5·Opus 5 xhigh 라우팅 (일일 budget 20% 게이트)
+
+memory: [[feedback_common_kit_not_domain]] · `feedback_zero_touch_automation`
+
+## 질문 vs 개발 구분 (2026-08-12 사용자 강조)
+
+**"질문하는 건 바로 대답해줬으면 좋겠어. 개발이 아니잖아"** — 사용자 입력 유형별 대응 분리.
+
+| 유형 | 예시 | 대응 |
+|---|---|---|
+| **질문 (조회·확인·yes/no)** | "X 가능해?" · "Y 뭐야?" · "왜 이래?" · "어디 있어?" | **즉답** (한 줄 · 표) · 5단계 plan X · Task 등재 X |
+| **개발 (구현·수정·설치·감사)** | "X 만들어" · "Y 고쳐" · "설치해" · "감사해" | 5단계 plan (전수조사·분석·실행·확인·보고) · Task 등재 |
+| **혼합 (질문 + 개발)** | "이거 가능해? 되면 만들어줘" | 질문 즉답 → 사용자 승인 → 개발 5단계 |
+| **감정·짜증** | "짜증나"·"엉망" | detect-user-emotion 매핑 (F7) |
+
+### 금지
+
+1. 질문 받고 Task 등재·5단계 시작 (질문 답 지연)
+2. 개발 지시 받고 즉답만 (Task 등재 skip)
+3. 혼합 받고 개발만 진행 (질문 답 skip)
+
+## 실전 원칙 (No 데모·MVP·목업·시연) — 2026-08-12 사용자 강조
+
+**"뭐든 실전이고 뭐든 공용이고 뭐든 실제로 해야 해. 데모·MVP 아니야. 데이터가 필요하면 DB 연결이 필요합니다 하고"** + **"목업을 해주세요 라고 얘기 없으면 (실전으로)"** + **"나는 데모 mvp 가짜 시연 이런거 별로야"**.
+
+### 원칙
+
+사용자 명시 지시 (`목업`·`mock`·`demo`·`MVP`·`시연`) 없으면 **모든 산출물·코드·데이터·시연 = 실전 기준**.
+
+### 매트릭스
+
+| 상황 | 실전 (기본) | 목업 (사용자 명시 시만) |
+|---|---|---|
+| 데이터 필요 | DB 연결 요구 (MongoDB·PostgreSQL·MySQL 등 추천) | mock JSON |
+| 인증 | 실제 OAuth·JWT | dummy token |
+| API 응답 | 실제 endpoint 호출 | stub |
+| UI 데이터 | 실제 API → 화면 반영 | 하드코딩 sample |
+| 배포 대상 | 실제 target 프로젝트 (kit 배포) | 예시 폴더 |
+| 검증 | 실제 smoke test (curl·Playwright) | 스킵 |
+| 성능 | 실제 부하 측정 | 로컬 소량 |
+
+### DB 필요 시 추천 (사용자 요청 시 자동 매핑)
+
+| 데이터 특성 | 추천 |
+|---|---|
+| 문서·비정형·유연 스키마 | **MongoDB** (Atlas 무료 tier) |
+| 관계형·트랜잭션 강력 | **PostgreSQL** (Supabase·Neon 무료) |
+| 웹 앱·간단 | **MySQL** (PlanetScale·MariaDB) |
+| 실시간·in-memory | **Redis** (Upstash 무료) |
+| 벡터 검색 | **Pinecone**·**ChromaDB** (로컬) |
+| 그래프 | **Neo4j Aura 무료** |
+| 시계열 | **TimescaleDB**·**InfluxDB** |
+
+### 금지
+
+1. 데모 데이터 하드코딩 (A2 정합)
+2. mock API 응답 → 실제 endpoint 인 척
+3. "이 정도면 시연 되지 않을까" 판단
+4. 사용자에게 목업 알림 없이 목업 반영
+5. DB 필요한데 하드코딩 리스트로 대체
+
+### 확인 절차
+
+1. 사용자 지시에 `목업`·`mock`·`demo` 명시 없으면 실전
+2. 데이터 필요 시 → **"DB 연결 필요. <추천> 사용 예정"** 사용자에게 명시 후 진행
+3. 목업으로 진행하려면 사용자 명시 승인 받기
+
+### 사용자가 목업 참조를 주면 (2026-08-12 강조)
+
+**"목업 위치로 목업을 주면 기능을 만들어야 하는데 안만들어"** — 사용자가 mockup·wireframe·PPT slide·mock JSON·design 참조를 주면 그것을 **실제 기능으로 구현** 필수. mockup 그대로 두고 mockup 인 척 X.
+
+| 사용자 제공 | 잘못된 대응 | 올바른 대응 |
+|---|---|---|
+| HTML wireframe URL/파일 | wireframe 그대로 복붙 | wireframe 참고 → 실제 컴포넌트 + API 연결 구현 |
+| PPT slide (기능 명세) | slide 그대로 정리 | slide 요구사항 → 실제 코드·DB·API 구현 |
+| mock JSON 데이터 | mock JSON 그대로 리턴 | mock 을 스키마 참고 → 실제 DB + 실제 endpoint 구현 |
+| Figma 링크 | Figma 화면 그대로 embed | Figma → CSS·컴포넌트 코드 + 실제 데이터 바인딩 |
+| "이 화면처럼" 요청 | 스크린샷만 참고 | 스크린샷 → 실제 라우팅·상태·API 완성 |
+
+### 금지 (실전 원칙 위반)
+
+1. 데모 데이터 하드코딩 (A2 정합)
+2. mock API 응답 → 실제 endpoint 인 척
+3. "이 정도면 시연 되지 않을까" 판단
+4. 사용자에게 목업 알림 없이 목업 반영
+5. DB 필요한데 하드코딩 리스트로 대체
+6. **사용자 목업 참조 → mockup 그대로 재현** (기능 구현 skip)
+
+memory: [[feedback_no_mock_default]] (별도 등재)
+
+## FIFO 큐 + 지시 분리 (2026-08-12 사용자 강조)
+
+**"내가 요청하는 것들은 FIFO 로 작업 등재하고 순서대로 하라고 해도 그래"** + **"내가 문장으로 보낼지 문단으로 보낼지 한 줄로 보낼지 모르자나"** — 사용자 지시 형식 예측 불가 → **자동 분리·큐잉 필요**.
+
+### 지시 분리 감지 (사용자 입력 형식 무관)
+
+| 사용자 입력 형식 | 분리 규칙 |
+|---|---|
+| **연속 짧은 문장** (여러 프롬프트 연속) | 각 프롬프트 = 별도 Task |
+| **한 문단 안 여러 지시** | 마침표·개행·번호로 분리 → 각 Task |
+| **한 줄 하나** | 단일 Task |
+| **번호 리스트** | 각 항목 = Task |
+| **긴 서술문 + 여러 요구** | 동사 (해줘·만들어·확인·수정·설치) 별로 분리 |
+| **질문·감정 표현** (짜증·답답·중복) | Task 등재 X · `detect-user-emotion` 매핑으로 자동 대응 |
+
+### 큐 관리
+
+- 사용자가 한 턴에 여러 지시를 던지면 → `TaskCreate` 로 각 지시를 Task 로 등재
+- Task ID 낮은 것부터 처리 (`TaskList` 참조)
+- 완료 시 `TaskUpdate status=completed`
+- 새 지시가 진행 중 지시를 대체하는지 (override) 아니면 추가인지 (append) 판단 → 애매하면 append
+
+### 금지
+
+1. 최신 지시만 반응 · 앞 지시 유실
+2. 사용자 지시를 여러 개 받고 하나만 처리
+3. Task 등재 skip
+4. 완료 처리 (`TaskUpdate`) skip
+
+## install 순서 강제 (2026-08-12 사용자 강조)
+
+**kit 편집 중 install (다른 프로젝트 배포) 병렬 실행 금지.**
+
+```text
+[Phase 1] kit 편집 (rules·hooks·CLAUDE.md·memory)
+[Phase 2] git commit (kit 상태 스냅샷)
+[Phase 3] sync (plugins → .claude fanout)
+[Phase 4] install / sync-team (target 배포)
+[Phase 5] 검증 (target 에서 반영 확인)
+```
+
+Phase 1~3 미완 → Phase 4 = 룰 위반. **감지 hook**: `.claude/hooks/pre-install-lock.sh` (PreToolUse Bash) — `install.bat`·`sync-to-team.sh` 감지 시 git uncommitted 있으면 block.
+
+### 금지
+
+1. kit 편집 중 subagent 로 install 병렬 dispatch
+2. uncommitted 상태에서 sync-to-team
+3. install 후 검증 skip
+4. "빨리 배포하고 kit 은 나중에 fix" — 오염 확산
+
+memory: [[feedback_install_order]]
+
 ## Zero-touch 자동화 (사용자 액션 요구 금지)
 
 새 기능·셋업·설치는 **사용자 명령 없이** 동작해야 함.

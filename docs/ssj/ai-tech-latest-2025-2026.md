@@ -345,3 +345,23 @@
 - **Crypto AI** (zk-ML)
 - **AGI Theory** (RLHF·CIRL·corrigibility)
 - **AI Memes** (Tulu·Mochi·Tiny Recipes)
+
+---
+
+## 델타 (2026-08-19 · 실전 발표 8건 append)
+
+### 2026-08 (하순)
+
+- **Qwen 3.8-27B** (Alibaba · 8/14) — Apache 2.0 · 27.78B params · 262K context · 멀티모달 · SWE-bench Pro **61.7%** (Opus 4.6 Max 53.4%) · 3M+ downloads 첫 주말
+- **Anthropic Risk Report v2** (RSP v3.4 · 8/14) — catastrophic-misalignment `very low → low` · **내부 Model 2** 최초 disclosed (Mythos 5 초과 · release X) · 6개월 주기
+- **Claude Code v2.1.235** (8/18) — Inline spellcheck (aspell/hunspell/ispell) · Prompt-cache LSP disconnect fix
+- **Workbench → Playground** (Anthropic · 8/18) — Claude Console UI 개편 · legacy Workbench 8/17 sunset (예정대로)
+
+### 2026-08 (중순 · 재확인)
+
+- **Managed Agents 관리 컨트롤 4종** (Anthropic · 8/7) — session budget · advisor tool · inference geo pin · GitHub-hosted skills
+- **Inference hooks** (Anthropic Enterprise beta · 8/5) — 조직 AI security server 로 prompt allow/deny · Compliance Activity Feed
+- **Sonnet 5 가격 $2/$10 확정** (Anthropic · 8/10) — 9/1 예정 $3/$15 인상 취소
+- **Claude Opus 4.1 retired** (Anthropic · 8/5) — `claude-opus-4-1-20250805` 접근 종료
+
+**관련**: [[ai-tech-2026-08-late]] · [[ai-tech-wave-2026-08-mid]] · [[claude-code-changelog-august]]

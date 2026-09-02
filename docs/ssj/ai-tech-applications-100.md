@@ -274,3 +274,40 @@
 - 원본 50 기술: `ai-tech-catalog-50.md`
 - 검색일: 2026-06-01
 - 자산·부서 매핑 가정 (사용자 부서 = 리스크모니터링·행동위험분석, 회사 = 아이티센코어)
+
+---
+
+## 델타 (2026-08-19 갱신 · 8개 접목 아이디어 append)
+
+### 101. Qwen 3.8-27B 사내 GPU 로컬 배포 → RMS 대량 검증
+- **자산**: 사내 GPU (4-bit quantization 시 24GB VRAM · 노후 GPU 재활용 가능)
+- **RMS**: 대량 KYC·AML 문서 판정 (개인정보 외부 API 미노출) · **262K context** 100+ 페이지 통째 검토 · Apache 2.0 데이터 반출 X
+- **행동위험**: 사내 채팅·이메일 대량 스캔 · SWE-bench Pro 61.7% 로 규정 위반 코드 자동 감사
+
+### 102. Managed Agents advisor tool → 다중 시각 리스크 판정
+- **RMS**: primary Sonnet 5 스크리닝 + advisor Opus 5 (애매 case) · 비용 최적화
+- **행동위험**: 이상 행동 3-모델 합의 (Claude + Gemini + Qwen) 로 오탐 감소
+
+### 103. Managed Agents session budget → 감사 세션 예산 hard cap
+- **RMS**: 개별 세션 $5 상한 · 초과 시 auto pause + 담당자 리뷰 · `budget_reached` 로그로 비용 폭주 방지
+- 우리 route.py budget 시스템 (SQLite `.claude/state/orca.db`) 확장 방향
+
+### 104. Inference geo pinning → 국내 데이터 residency
+- **RMS**: 금감원·개인정보위 규제 대응 · 프롬프트+응답 모두 지정 리전 처리 (`model.inference_geo`)
+- **행동위험**: 국내 인사·감사 데이터 해외 반출 위험 제거
+
+### 105. GitHub-hosted skills → 부서 skill 공유 표준
+- **자산**: 사내 GitLab/GitHub Enterprise repo `.claude/skills/` 표준화
+- **RMS**: KYC·AML·PEP 판정 skill repo 배포 · 다른 부서·계열사 자동 discovery
+
+### 106. Inference hooks → 사내 정책 gate 자동화
+- **RMS**: 개인정보 함유 프롬프트 자동 차단 · 승인 필요 프롬프트 관리자 대기열
+- 우리 approval-gate-rules.md 로컬 큐를 조직 서버로 승격 (Enterprise 계약 시)
+
+### 107. Model 2 disclosure → 벤더 리스크 감사 케이스
+- **RMS**: 외부 벤더 (Anthropic) 자체 Risk Report 6개월 주기 발행 → 부서 벤더 감사 인풋 (RSP v3.4) · misalignment 등급 변화 추적
+
+### 108. Anthropic Risk Report v2 → 규제 응답 근거
+- **행동위험**: EU AI Act · 한국 AI 기본법 규제 응답 시 벤더 안전성 문서 인용 (Model 2 non-release + misalignment low)
+
+**소스 · 관련**: [[ai-tech-2026-08-late]]
