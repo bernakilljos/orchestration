@@ -1,4 +1,4 @@
-﻿{
+{
   "permissions": {
     "allow": [
       "Write",
@@ -217,6 +217,22 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/lookup-history.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/websearch-trigger-detect.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-skills.sh\""
           }
         ]
       }
@@ -533,6 +549,15 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/periodic-snapshot.sh\"",
             "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/propagate-rule-change.sh\""
           }
         ]
       }
