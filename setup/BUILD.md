@@ -98,7 +98,7 @@ setup.bat C:\work\myproject
 | 12 | kit-sync.bat | sync-plugins.sh 실행 |
 | 13 | init-state-db.bat | SQLite 통합 상태 DB 초기화 |
 | 14 | mcp-figma.bat | ClaudeTalkToFigma MCP 등록 |
-| 15 | auto-dev.bat | 24/7 자동 개발 에이전트 (Task Scheduler 4h + auto-dev flag) |
+| 15 | auto-dev.bat | 24/7 자동 개발 에이전트 (Task Scheduler 4h + auto-dev flag) · `~/.claude/NO-SCHTASKS` 있으면 즉시 skip |
 
 ## 7. 설치 후 4주차로 가는 길
 

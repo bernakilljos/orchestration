@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# [차단] 킬스위치 - 파일 있으면 아무것도 안 하고 종료
+if [ -f "$HOME/.claude/NO-SCHTASKS" ]; then exit 0; fi
 # exec_offline SessionStart hook — 시스템 자동 감지 + tier 별 자동 install 안내
 # Zero-touch: 사용자 액션 0
 set -e

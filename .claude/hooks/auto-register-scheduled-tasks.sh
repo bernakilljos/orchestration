@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# [차단] 킬스위치 - 파일 있으면 아무것도 안 하고 종료
+if [ -f "$HOME/.claude/NO-SCHTASKS" ]; then exit 0; fi
 # auto-register-scheduled-tasks.sh — SessionStart hook
 #
 # 목적: 사용자가 claude 세션 안 열어도 daily 자동 점검이 돌도록 OS 수준 스케줄 등록

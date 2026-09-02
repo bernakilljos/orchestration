@@ -1,4 +1,6 @@
 @echo off
+rem [차단] 스케줄 자동 등록 킬스위치 - 파일 있으면 아무것도 안 하고 종료
+if exist "%USERPROFILE%\.claude\NO-SCHTASKS" exit /b 0
 chcp 65001 >nul
 rem =====================================================
 rem external-watchdog-register.bat

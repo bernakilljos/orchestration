@@ -1,4 +1,6 @@
 @echo off
+rem [차단] 스케줄 자동 등록 킬스위치 — 파일 있으면 아무것도 안 하고 종료
+if exist "%USERPROFILE%\.claude\NO-SCHTASKS" exit /b 0
 rem =====================================================
 rem Module 15: 24/7 자동 개발 에이전트 등록
 rem Usage: 15-auto-dev.bat [TARGET] [SCRIPT_DIR] [REAL_USERPROFILE]

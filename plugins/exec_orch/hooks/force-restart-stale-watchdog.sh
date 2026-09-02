@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# [차단] 킬스위치 — 파일 있으면 아무것도 안 하고 종료
+if [ -f "$HOME/.claude/NO-SCHTASKS" ]; then exit 0; fi
 # force-restart-stale-watchdog.sh — One-shot cleanup for stale (cmd-window) watchdog.
 #
 # Background: prior versions of watchdog-start.bat used `start /min cmd /c` which

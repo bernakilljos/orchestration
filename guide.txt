@@ -552,6 +552,20 @@
     효과: 사용자가 claude 세션 안 열어도 매일 09:00 공식 changelog 자동 점검.
     수동 등록: powershell -File setup\modules\register-official-features-task.ps1
 
+  [NO-SCHTASKS 킬스위치 (2026-09-02 추가)]
+    파일 하나로 Task Scheduler 자동 등록 · 백그라운드 자동 설치를 전부 차단.
+      차단 켜기: type nul > "%USERPROFILE%\.claude\NO-SCHTASKS"
+      차단 끄기: del "%USERPROFILE%\.claude\NO-SCHTASKS"
+    가드가 박힌 지점 (파일 있으면 즉시 exit 0):
+      .claude/hooks/auto-install-deps.sh · auto-register-scheduled-tasks.sh
+      .claude/hooks/check-workers.sh · force-restart-stale-watchdog.sh
+      .claude/scripts/external-watchdog-register.bat
+      plugins/exec_orch/hooks/{auto-install-deps,force-restart-stale-watchdog,install-external-watchdog}.sh
+      plugins/exec_offline/hooks/install-on-session-start.sh
+      setup/modules/15-auto-dev.bat
+    용도: 스케줄 태스크·워치독이 필요 없는 머신 (노트북·임시 환경·CI) 에서
+          세션 시작 부하와 schtasks 오염을 0 으로.
+
   [라우팅 정책 — Opus 4.8 default · Fable 5 RESTORED · Sonnet 5 신규 (2026-07-01 Fable RESTORED, 07-02 Sonnet 5 출시)]
     기본 라우터가 4.8 중심·Fable 5 신중 승격·Sonnet 5 비용 검토 중으로 설계됨:
       설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)

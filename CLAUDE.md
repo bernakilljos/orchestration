@@ -168,6 +168,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 1. **SQLite 초기화**: `python .claude/scripts/init-state-db.py` (`.claude/state/orca.db` 생성)
 2. **Watchdog 백그라운드**: `.claude/scripts/watchdog-start.bat` (워커 heartbeat 체크)
 3. **예산 상한** (선택): `python .claude/scripts/route.py --set-daily-limit 50` (USD)
+4. **전체 차단 킬스위치**: `~/.claude/NO-SCHTASKS` 파일 존재 시 schtasks 등록·자동 설치 hook 전부 즉시 exit (guide.txt § NO-SCHTASKS)
 
 상세: `guide.txt` § 7 · `docs/routing-policy.md` · `docs/caching-strategy.md` · `docs/metrics-guide.md`
 
