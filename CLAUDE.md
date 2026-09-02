@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-09-02): plugins 36 stable + 0 spec-only · rules 29 · hooks 31 · scripts 117
+> **현재 상태** (2026-09-02): plugins 36 stable + 0 spec-only · rules 30 · hooks 31 · scripts 118
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -156,6 +156,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 5. **통합 MCP (2026-09 채택)**:
    - **Headroom** (Apache 2.0 · 10k+ ⭐ · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
    - **claude-mem** (오픈소스 · `npx -y claude-mem install --provider claude`) — 자동 세션 관측·복원 · SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd 5 hook 자동 등록 · SQLite + Chroma 저장 (`~/.claude-mem`) · Worker 127.0.0.1:37777 · Cloud sync OFF (local)
+   - **task-observer** (오픈소스 Skill · `npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code`) — 태스크 실행 관측 · 패턴·사용자 수정·재사용 스킬 기회 캡처 · `.claude/skills/task-observer/` · description matching 자동 활성 · 우리 orca.db 관측과 병행 (skill 개선 축)
    - **자동 시작**: `.claude/scripts/mcp-autostart.sh` (SessionStart hook · Headroom proxy + claude-mem worker 백그라운드 spawn · 이미 돌면 skip)
    - **역할 분리**: 우리 `route.py`·`orca.db`·명시 memory 유지 · Headroom·claude-mem 은 병행 (라우팅·룰·도메인은 우리 kit · 압축·자동 관측은 오픈소스)
    - 상세: `.claude/rules/mcp-integration.md`

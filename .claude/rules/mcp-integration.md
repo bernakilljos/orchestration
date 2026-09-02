@@ -1,7 +1,7 @@
-# MCP 통합 룰 (Headroom + claude-mem)
+# MCP 통합 룰 (Headroom + claude-mem + task-observer)
 
-> **근거**: 2026-09-02 사용자 요청 · 오픈소스 MCP 3종 검토 후 2개 (Headroom, claude-mem) 채택. OmniRoute·Headroom 중 Headroom 만 채택 (라우팅은 우리 route.py 유지 결정).
-> **이유**: 우리 kit 이 라우팅·룰·도메인 특화 우세 · 압축·자동 세션 관측은 오픈소스 세계급 · 결합이 최적.
+> **근거**: 2026-09-02 사용자 요청 · 오픈소스 MCP 5종 검토 후 3개 (Headroom, claude-mem, task-observer) 채택. OmniRoute 는 라우팅이 우리 route.py 정면 겹침으로 제외 (사용자 결정). claude-code-setup 은 특정 도구 아닌 통칭.
+> **이유**: 우리 kit 이 라우팅·룰·도메인 특화 우세 · 압축·자동 세션 관측·태스크 패턴 캡처는 오픈소스 세계급 · 결합이 최적. **모두 무료 (Apache 2.0 / 로컬 오픈소스).**
 
 ## 절대 룰
 
@@ -52,6 +52,22 @@
 ### Memory injection
 - 2번째 세션부터 이전 세션 컨텍스트 자동 주입
 - 우리 명시 memory (`MEMORY.md` 인덱스) 와 병행 · 서로 다른 축
+
+## task-observer 통합 (Skill)
+
+- **설치**: `npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code`
+- **정체**: MCP 서버가 아니라 **Claude Code Skill** (`.claude/skills/task-observer/`)
+- **역할**: 태스크 실행 관측 · 패턴·사용자 수정·워크플로 인사이트·재사용 가능 스킬 캡처
+- **활성**: multi-step 태스크·agentic workflow·post-task 피드백·"One Skill to Rule Them All" 트리거 시 자동 활성 (description matching)
+- **저장**: skill 자체 observation log (`references/observation-log.md`)
+- **라이선스**: 오픈소스 · 로컬 (외부 전송 X)
+- **Security**: Gen Med Risk · Socket 0 alerts · Snyk Low Risk
+- **주의**: skill 은 full agent permissions 로 실행 · SKILL.md·scripts 검토 후 신뢰
+
+### task-observer 와 우리 kit 관측 시스템 병행
+- 우리 `orca.db.activations`·`decisions`·`determinism` = **kit 도메인 관측** (감사·워커·룰 적용)
+- task-observer = **skill 개선 기회 관측** (사용자 수정 패턴·방법론·재사용 가능성)
+- 서로 다른 축 · 병행
 
 ## 우리 memory vs claude-mem — 병행 원칙
 

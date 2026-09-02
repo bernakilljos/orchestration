@@ -61,6 +61,25 @@ if exist "%USERPROFILE%\.claude\plugins\marketplaces\thedotmack\claude-mem" (
   )
 )
 
+REM ===== task-observer (Skill · npx) =====
+where npx >nul 2>&1
+if errorlevel 1 (
+  echo   [skip] npx not found - task-observer install skipped
+  goto DONE
+)
+
+if exist "%TARGET%\.claude\skills\task-observer\SKILL.md" (
+  echo   [skip] task-observer already installed
+) else (
+  echo   [install] npx skills add task-observer
+  cmd /c "npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code" >nul 2>&1
+  if errorlevel 1 (
+    echo   [warn] task-observer install failed - continue
+  ) else (
+    echo   [ok] task-observer installed
+  )
+)
+
 :DONE
 REM ===== settings.json SessionStart 확인 (kit sync 후 자동 반영되므로 skip) =====
 echo   [note] mcp-autostart.sh is registered via kit sync (12-kit-sync)
