@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-08-25): plugins 36 stable + 0 spec-only · rules 29 · hooks 31 · scripts 117
+> **현재 상태** (2026-09-02): plugins 36 stable + 0 spec-only · rules 29 · hooks 31 · scripts 117
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -153,6 +153,12 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 2. **Windows npx 래퍼**: `cmd /c npx <package>` 필수 (shell 교차호환성)
 3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
 4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
+5. **통합 MCP (2026-09 채택)**:
+   - **Headroom** (Apache 2.0 · 10k+ ⭐ · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
+   - **claude-mem** (오픈소스 · `npx -y claude-mem install --provider claude`) — 자동 세션 관측·복원 · SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd 5 hook 자동 등록 · SQLite + Chroma 저장 (`~/.claude-mem`) · Worker 127.0.0.1:37777 · Cloud sync OFF (local)
+   - **자동 시작**: `.claude/scripts/mcp-autostart.sh` (SessionStart hook · Headroom proxy + claude-mem worker 백그라운드 spawn · 이미 돌면 skip)
+   - **역할 분리**: 우리 `route.py`·`orca.db`·명시 memory 유지 · Headroom·claude-mem 은 병행 (라우팅·룰·도메인은 우리 kit · 압축·자동 관측은 오픈소스)
+   - 상세: `.claude/rules/mcp-integration.md`
 
 상세: `guide.txt` § 8 · `docs/upgrade-notes-2026-04-23.md`
 
