@@ -53,6 +53,25 @@ try:
         print('## 관련 세션 요약')
         for sid, summ in sum_rows:
             print(f'- [{sid[:8]}] {summ}')
+    # problem_solutions 재사용 카탈로그 (2026-09-02 · 양방향)
+    like2 = ' OR '.join(['keywords LIKE ? OR problem LIKE ?'] * min(len(kws), 4))
+    params2 = []
+    for k in kws[:4]:
+        params2.extend([f'%{k}%', f'%{k}%'])
+    try:
+        sol_rows = c.execute(
+            f'SELECT category, substr(problem,1,120), substr(solution,1,200), files_modified, reusable_score FROM problem_solutions WHERE ({like2}) ORDER BY reusable_score DESC, ts DESC LIMIT 3',
+            params2
+        ).fetchall()
+        if sol_rows:
+            print()
+            print('## 재사용 가능한 해결책 (자동 조회)')
+            for cat, prob, sol, files, score in sol_rows:
+                print(f'- [{cat} · ★{score}] 문제: {prob}')
+                if sol: print(f'  해결: {sol}')
+                if files: print(f'  파일: {files[:150]}')
+    except Exception:
+        pass
 except Exception as e:
     sys.stderr.write(f'[lookup] {e}\n')
 " 2>>"$LOG"

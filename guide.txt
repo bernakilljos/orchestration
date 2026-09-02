@@ -1122,6 +1122,13 @@
     ✓ .claude/hooks/lookup-history.sh 신설 (UserPromptSubmit · DB 이력 자동 조회 · systemMessage 주입)
     ✓ Rich TUI · Batch API · Semantic caching · Desktop notification 등 Task 등재
 
+  2026-09-02 (저녁) problem_solutions 양방향 초최고 (사용자 강력 지시):
+    ✓ orca.db.problem_solutions 신설 (문제·해결·파일·명령·검증·재사용 점수)
+    ✓ .claude/scripts/save_solution.py 신설 (auto 자동 캡처 + manual 수동 등재 + search 재사용 검색)
+    ✓ .claude/hooks/save-session-summary.sh 확장 (Stop/SessionEnd 시 save_solution auto)
+    ✓ .claude/hooks/lookup-history.sh 확장 (UserPromptSubmit 시 problem_solutions 조회 · 자동 힌트)
+    ✓ .claude/rules/solution-reuse.md 신설 (양방향 원리·13 카테고리·점수 기준·retention)
+
   2026-09-02 6 축 초최고강함 강화 + Headroom/claude-mem/task-observer + 히스토리 DB:
     ✓ MCP 3종 무료 통합 (Headroom Apache 2.0 + claude-mem 로컬 + task-observer Skill)
       - Headroom: pip install "headroom-ai[all]" + headroom mcp install (compress/retrieve/stats)

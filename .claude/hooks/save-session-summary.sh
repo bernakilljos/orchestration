@@ -30,4 +30,7 @@ except Exception as e:
     print(f'[skip] {e}', file=sys.stderr)
 " >>"$LOG" 2>&1 || true
 
+# solution 자동 캡처 (2026-09-02 · 양방향 초최고)
+python -X utf8 "$PROJECT_ROOT/.claude/scripts/save_solution.py" auto >>"$LOG" 2>&1 || true
+
 exit 0
