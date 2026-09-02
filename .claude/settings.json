@@ -159,6 +159,10 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/mcp-autostart.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/load-recent-conversations.sh\""
           }
         ]
       },
@@ -205,6 +209,10 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-user-prompt.sh\""
           }
         ]
       }
@@ -282,6 +290,10 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/sync-to-team.sh\"",
             "timeout": 30,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
           }
         ]
       }
@@ -591,6 +603,10 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-session.sh\"",
             "timeout": 30,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
           }
         ]
       }

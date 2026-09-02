@@ -54,6 +54,7 @@
 2. **First-Run** — `docs/CLAUDE_SETUP_GUIDE.md` 있으면 처리 후 삭제
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
 4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 (⭐⭐ 이상 자율 반영, ⭐ 이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
+5. **세션 히스토리 자동 로드 (2026-09-02 신설)** — `.claude/hooks/load-recent-conversations.sh` 가 `orca.db.session_summary` 최근 3 세션 요약을 systemMessage 로 주입 → 새 세션이 이전 문맥 자동 인지 · UserPromptSubmit·Stop·SessionEnd 는 대화·요약을 `conversations` / `session_summary` 자동 저장. 상세: `.claude/rules/conversation-history.md`
 
 ### 3.2 AI 역할 (규모·특성 기반, **Opus 5 신규 default 2026-07-24** · Opus 4.8 병존 · Fable 5 초난도 · Sonnet 5 균형)
 | 태스크 | AI | 방법 |
