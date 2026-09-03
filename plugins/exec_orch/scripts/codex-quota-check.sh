@@ -9,7 +9,7 @@
 #   bash .../codex-quota-check.sh --check-error "$(cat stderr.log)"
 #       stderr 에서 "usage limit" 감지 시 플래그 생성 + exit 2
 #   bash .../codex-quota-check.sh --status
-#       플래그 존재 + TTL 체크 → exit 0=정상, 2=한도중
+#       플래그 존재 + TTL 체크 -> exit 0=정상, 2=한도중
 #   bash .../codex-quota-check.sh --clear
 #       플래그 제거 (TTL 만료 시 자동)
 
@@ -41,7 +41,7 @@ case "$MODE" in
   "source": "codex"
 }
 EOF
-      echo "[quota-flag] Codex 한도 감지 → 플래그 생성. 만료: $(date -d @$expire 2>/dev/null || echo $expire)"
+      echo "[quota-flag] Codex 한도 감지 -> 플래그 생성. 만료: $(date -d @$expire 2>/dev/null || echo $expire)"
       exit 2
     fi
     exit 0
@@ -57,12 +57,12 @@ EOF
     now=$(date +%s)
     if [ "$expire" -gt 0 ] && [ "$now" -gt "$expire" ]; then
       rm -f "$FLAG"
-      echo "OK: 한도 플래그 TTL 만료 → 제거됨"
+      echo "OK: 한도 플래그 TTL 만료 -> 제거됨"
       exit 0
     fi
     cat "$FLAG"
     echo ""
-    echo "→ Claude 직접 모드 권장 (codex 건너뛰기)"
+    echo "-> Claude 직접 모드 권장 (codex 건너뛰기)"
     exit 2
     ;;
 

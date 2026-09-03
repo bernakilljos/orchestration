@@ -115,12 +115,12 @@ grep -rn "ghp_\|sk-ant-\|sk-\|AIza\|AKIA" --include="*"
 ```
 OWASP Security Score: 72/100
 
-[CRITICAL] ❌ A03 SQL Injection: src/api/users.js:42 — 문자열 연결 쿼리
-[HIGH]     ❌ A02 Hardcoded secret: .env.example:3 — API 키 노출
-[MEDIUM]   ⚠️ A05 Debug mode: vue.config.js — devtool: 'source-map'
-[LOW]      ⚠️ A09 Missing audit log: 로그인 실패 로깅 없음
-[PASS]     ✅ A01 CORS properly configured
-[PASS]     ✅ A07 Session timeout: 30min
+[CRITICAL]  A03 SQL Injection: src/api/users.js:42 — 문자열 연결 쿼리
+[HIGH]      A02 Hardcoded secret: .env.example:3 — API 키 노출
+[MEDIUM]    A05 Debug mode: vue.config.js — devtool: 'source-map'
+[LOW]       A09 Missing audit log: 로그인 실패 로깅 없음
+[PASS]      A01 CORS properly configured
+[PASS]      A07 Session timeout: 30min
 ```
 
 ### 4. 자동 수정

@@ -1,6 +1,6 @@
 """
 prompt_cache.py — Anthropic prompt caching helper.
-시스템 프롬프트·CLAUDE.md·라우팅 룰 같은 반복 컨텍스트를 5분 TTL ephemeral 캐시로 표시.
+시스템 프롬프트-CLAUDE.md-라우팅 룰 같은 반복 컨텍스트를 5분 TTL ephemeral 캐시로 표시.
 
 사용 방식:
   1. build_cached_system() — system 배열 생성 (마지막 블록에 cache_control 추가)
@@ -97,7 +97,7 @@ def build_cached_system(blocks: list) -> list[dict]:
     Example:
         system = build_cached_system([
             {"text": "You are a code implementation worker.", "cacheable": True},
-            read_file("CLAUDE.md"),  # str → dynamic
+            read_file("CLAUDE.md"),  # str -> dynamic
             {"text": read_file("route_dispatch.md"), "cacheable": True},
             f"Current task: {task_id}",  # dynamic
         ])
@@ -113,7 +113,7 @@ def build_cached_system(blocks: list) -> list[dict]:
             if block.get("cacheable", False) is not False:
                 last_cacheable_idx = i
                 break
-        # str은 dynamic → skip
+        # str은 dynamic -> skip
 
     result = []
     cacheable_text = ""
@@ -229,7 +229,7 @@ def estimate_caching_savings(
     no_cache_cost = cacheable_tokens_per_call * 1.0
 
     # 초기 write + (N-1) hits 가정
-    # 실제: write 후 4분 이내 hit, 5분 후 miss → new write
+    # 실제: write 후 4분 이내 hit, 5분 후 miss -> new write
     # 보수적으로: 1h당 2회 write (30분마다), 나머지 hit
 
     writes_per_hour = 2  # 30분마다 새로 write

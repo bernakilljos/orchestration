@@ -1,6 +1,6 @@
 """Frontend visual + console error verifier.
 
-Playwright headless 로 페이지 N개 로드 → console error / pageerror / network 4xx-5xx 캡처.
+Playwright headless 로 페이지 N개 로드 -> console error / pageerror / network 4xx-5xx 캡처.
 hook-09-ocr-verify.sh 의 build-*-html 패턴 또는 사용자 명시 호출로 발동.
 
 Usage:

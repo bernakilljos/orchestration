@@ -1,7 +1,7 @@
 """
-export-cross-ide-rules — .claude/rules → Cursor/Windsurf/Copilot 자동 export
+export-cross-ide-rules — .claude/rules -> Cursor/Windsurf/Copilot 자동 export
 실행: python .claude/scripts/export-cross-ide-rules.py
-근거: Task 42 · 크로스 IDE 룰 배포
+근거: Task 42 - 크로스 IDE 룰 배포
 """
 from __future__ import annotations
 import os
@@ -33,7 +33,7 @@ def read_rules(top_n: int = 15) -> str:
         "hook-scope-separation.md",
         "subagent-delegation.md",
     ]
-    parts = ["# Cross-IDE Rules · from orchestration_v1 kit", ""]
+    parts = ["# Cross-IDE Rules - from orchestration_v1 kit", ""]
     for name in priority[:top_n]:
         f = RULES / name
         if f.exists():
@@ -84,7 +84,7 @@ def main() -> int:
     export_windsurf(content)
     export_copilot(content)
     export_continue(content)
-    print(f"[done] 4 IDE export 완료 · {len(content)} chars")
+    print(f"[done] 4 IDE export 완료 - {len(content)} chars")
     return 0
 
 

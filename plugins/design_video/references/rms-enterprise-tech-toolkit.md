@@ -280,7 +280,7 @@ with driver.session() as session:
         ORDER BY fast_approvals DESC
     """)
     for record in result:
-        print(f"⚠️ {record['approver.name']}: {record['fast_approvals']}건 빠른 승인")
+        print(f" {record['approver.name']}: {record['fast_approvals']}건 빠른 승인")
 ```
 
 ---

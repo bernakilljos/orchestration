@@ -9,9 +9,9 @@
 
 상태 색상:
   ✓ stable       (녹색)
-  ⚡ experimental (노란색)
-  📝 spec-only   (회색)
-  ⚠ deprecated  (빨강)
+  [FAST] experimental (노란색)
+  [NOTE] spec-only   (회색)
+  [WARN] deprecated  (빨강)
 """
 import json, sys
 from pathlib import Path
@@ -44,9 +44,9 @@ if not USE_COLOR:
 
 STATUS_STYLE = {
     "stable":       (C["green"], "✓", "완성"),
-    "experimental": (C["yellow"], "⚡", "실험"),
-    "spec-only":    (C["gray"], "📝", "스펙만"),
-    "deprecated":   (C["red"], "⚠", "폐기"),
+    "experimental": (C["yellow"], "[FAST]", "실험"),
+    "spec-only":    (C["gray"], "[NOTE]", "스펙만"),
+    "deprecated":   (C["red"], "[WARN]", "폐기"),
 }
 
 plugins_dir = Path("plugins")

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # exec_scheduler plugin — Task Scheduler / cron 등록 wrapper
-# Windows: schtasks · Linux: crontab
+# Windows: schtasks - Linux: crontab
 set -e
 PROJECT_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 

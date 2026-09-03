@@ -40,7 +40,7 @@ def ensure_table(conn):
 RECOMMENDED_TEMP = {
     "code_implementation": 0.0,    # 코드 = 결정론적
     "design_or_complex_reasoning": 0.3,  # 설계 = 약간 창의
-    "fast_verify_or_score": 0.0,   # 검증·분류 = 결정론적
+    "fast_verify_or_score": 0.0,   # 검증-분류 = 결정론적
     "long_context_or_multimodal": 0.2,
     "creative": 0.7,               # 창작 = 높음
 }
@@ -77,12 +77,12 @@ def log(prompt: str, ai: str, result: str = "", temperature: float = None, task_
     warnings = []
     if total >= 3 and unique > 1:
         # 같은 prompt 인데 다른 결과 N개 = non-deterministic
-        warnings.append(f"⚠ prompt_hash={ph} : {total}회 실행 중 {unique}개 다른 결과 — non-deterministic")
+        warnings.append(f"[WARN] prompt_hash={ph} : {total}회 실행 중 {unique}개 다른 결과 — non-deterministic")
 
     # temperature 권장 비교
     rec_temp = RECOMMENDED_TEMP.get(task_type, 0.0)
     if temperature is not None and abs(temperature - rec_temp) > 0.2:
-        warnings.append(f"⚠ {task_type} 권장 temperature={rec_temp}, 실제={temperature} — 분산도 ↑ 위험")
+        warnings.append(f"[WARN] {task_type} 권장 temperature={rec_temp}, 실제={temperature} — 분산도 ↑ 위험")
 
     conn.close()
     return {

@@ -2,7 +2,7 @@
 
 > **출처**: [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents) (MIT License, Copyright (c) 2025 VoltAgent)
 > **vendoring 사유**: 우리 kit 부족 카테고리 (data-AI, language-specialists) 보강. 154+ 중 5개 선별.
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ 4번.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  4번.
 
 ## 선별된 5개 (2026-06-16 기준)
 

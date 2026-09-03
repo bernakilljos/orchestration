@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-render-screens.py — docs/screens/our-html/*.html → arch/ 또는 func/ PNG.
+render-screens.py — docs/screens/our-html/*.html -> arch/ 또는 func/ PNG.
 
 prefix 로 분류:
-  arch-*.html → docs/screens/our-arch/<name>.png
-  func-*.html → docs/screens/our-func/<name>.png
+  arch-*.html -> docs/screens/our-arch/<name>.png
+  func-*.html -> docs/screens/our-func/<name>.png
 
 Usage:
   python .claude/scripts/render-screens.py                # all

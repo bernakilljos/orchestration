@@ -69,4 +69,4 @@ metadata:
 
 ## 참조
 - BioCatch·Nuance·1Password Passkeys
-- `solution-capability-audit.md` #36-38 (❌ → 🟡)
+- `solution-capability-audit.md` #36-38 ( → )

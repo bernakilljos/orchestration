@@ -171,7 +171,7 @@ claude -p "You are a worker agent. Read and implement this task file: %PICKED_TA
 
 set "CLAUDE_EXIT=!errorlevel!"
 
-rem --- Claude 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+rem --- Claude 토큰 소진 감지 -> 대기 -> 복구 시 재개 ---
 if !CLAUDE_EXIT! NEQ 0 (
   echo [Worker-%CHILD_ID%] Claude exited with !CLAUDE_EXIT! — checking token status...
   echo exhausted> "%PROJECT_ROOT%\.claude\claude-token-status"

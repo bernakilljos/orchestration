@@ -1,5 +1,5 @@
 #!/bin/bash
-# orchestration_v1 → orchestration_v1_team 동기화
+# orchestration_v1 -> orchestration_v1_team 동기화
 # 사용: bash .claude/scripts/sync-to-team.sh
 #
 # 복사 대상 (인프라):
@@ -42,7 +42,7 @@ fi
 if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe" ]; then
   ROBO="/c/Windows/System32/Robocopy.exe"
   [ ! -f "$ROBO" ] && ROBO="robocopy"
-  # 1) source 의 .bat CRLF 강제 정규화 (robocopy 가 main → team 정확 복사)
+  # 1) source 의 .bat CRLF 강제 정규화 (robocopy 가 main -> team 정확 복사)
   if command -v powershell.exe >/dev/null 2>&1 || [ -f "/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe" ]; then
     PS_SRC=$(cygpath -w "$SOURCE" 2>/dev/null || echo "$SOURCE")
     powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_SRC' -Recurse -Include '*.bat' -ErrorAction SilentlyContinue | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$n = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; if (\$c -ne \$n) { [IO.File]::WriteAllText(\$_.FullName, \$n, (New-Object System.Text.UTF8Encoding \$false)) } }" >/dev/null 2>&1 || true
@@ -58,7 +58,7 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
     fi
   done
 
-  # 2-1) setup 폴더는 robocopy 가 timestamp 비교로 skip 하는 경우 발생 → 개별 파일 강제 cp
+  # 2-1) setup 폴더는 robocopy 가 timestamp 비교로 skip 하는 경우 발생 -> 개별 파일 강제 cp
   mkdir -p "$TARGET/setup/modules" 2>/dev/null
   for f in "$SOURCE"/setup/*.bat "$SOURCE"/setup/*.iss "$SOURCE"/setup/*.rtf; do
     [ -f "$f" ] && cp -f "$f" "$TARGET/setup/$(basename "$f")"

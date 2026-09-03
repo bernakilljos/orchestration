@@ -1,7 +1,7 @@
 # exec_harness_copilot (spec-only)
 
 > **목적**: orchestration_v1 task 를 GitHub Copilot CLI 에 위임 — multi-harness 확장.
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ wshobson/agents 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  wshobson/agents 패턴.
 > **상태**: spec-only — 사용자 진행 결정 후 stable.
 
 ## 활용 시점

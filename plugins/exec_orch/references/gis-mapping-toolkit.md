@@ -37,13 +37,13 @@
 
 | 도구 | API Type | 한국 지원 | 정확도 | 가격 | API 호출 |
 |---|---|---|---|---|---|
-| **Nominatim** (OpenStreetMap) | REST | ✅ (OSM 기반) | 중간 | 무료 | `GET /search?q=...&format=json` |
-| **Google Geocoding API** | REST | ✅ | 높음 | $0.005/req (5000/일 무료) | `https://maps.googleapis.com/maps/api/geocode/json?address=...` |
-| **Mapbox Geocoding API** | REST | ✅ | 높음 | $0.50/1000 requests | `https://api.mapbox.com/geocoding/v5/...` |
-| **Kakao Local API** | REST | ✅ 최고 | 최고 (한국) | 무료 (25만/일) | `https://dapi.kakao.com/v2/local/search/address.json?query=...` |
-| **Naver Geocoding API** | REST | ✅ 최고 | 최고 (한국) | 무료 (5만/일) | `https://naveropenapi.apigw.ntruss.com/map-geocoding/v2/geocode?query=...` |
-| **AWS Location Service** | REST | ✅ | 높음 | $0.40/1000 requests | `https://geo.us-east-1.amazonaws.com/...` |
-| **Azure Maps** | REST | ✅ | 높음 | $0.50/1000 requests | `https://atlas.microsoft.com/search/address/json?...` |
+| **Nominatim** (OpenStreetMap) | REST |  (OSM 기반) | 중간 | 무료 | `GET /search?q=...&format=json` |
+| **Google Geocoding API** | REST |  | 높음 | $0.005/req (5000/일 무료) | `https://maps.googleapis.com/maps/api/geocode/json?address=...` |
+| **Mapbox Geocoding API** | REST |  | 높음 | $0.50/1000 requests | `https://api.mapbox.com/geocoding/v5/...` |
+| **Kakao Local API** | REST |  최고 | 최고 (한국) | 무료 (25만/일) | `https://dapi.kakao.com/v2/local/search/address.json?query=...` |
+| **Naver Geocoding API** | REST |  최고 | 최고 (한국) | 무료 (5만/일) | `https://naveropenapi.apigw.ntruss.com/map-geocoding/v2/geocode?query=...` |
+| **AWS Location Service** | REST |  | 높음 | $0.40/1000 requests | `https://geo.us-east-1.amazonaws.com/...` |
+| **Azure Maps** | REST |  | 높음 | $0.50/1000 requests | `https://atlas.microsoft.com/search/address/json?...` |
 
 ### 한국 특화 전략
 ```bash

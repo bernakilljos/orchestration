@@ -1,9 +1,9 @@
-"""Memory 자동 검색·로드 — 사용자 메시지 → 관련 feedback memory 추출.
+"""Memory 자동 검색-로드 — 사용자 메시지 -> 관련 feedback memory 추출.
 
 UserPromptSubmit hook 에 통합:
 1. 사용자 메시지 키워드 추출
 2. ~/.claude/projects/<proj>/memory/feedback_*.md 검색
-3. 매칭 memory description 추출 → systemMessage 주입
+3. 매칭 memory description 추출 -> systemMessage 주입
 
 목적: Memory 가 있어도 Claude 가 잊는 문제 해결 (5 핵심 부품 중 #4 Memory 보완).
 """
@@ -18,7 +18,7 @@ PROJECT_NAME = PROJECT_ROOT.name  # "orchestration_v1"
 # Claude Code 의 project memory 경로 — C:--pjt-orchestration-v1 형식
 # Claude Code project memory 경로 자동 검색 — `_` ↔ `-` 변환
 def _candidate_memory_dirs():
-    # `orchestration_v1` → `orchestration-v1` 변환 (Claude Code 의 path → dir 정규화)
+    # `orchestration_v1` -> `orchestration-v1` 변환 (Claude Code 의 path -> dir 정규화)
     proj_normalized = PROJECT_NAME.replace("_", "-")
     base = Path.home() / ".claude" / "projects"
     if base.exists():
@@ -54,7 +54,7 @@ def parse_frontmatter(content: str) -> dict:
 
 
 def extract_keywords(message: str) -> set:
-    """사용자 메시지 → 핵심 키워드 추출."""
+    """사용자 메시지 -> 핵심 키워드 추출."""
     # 한글 2글자+, 영어 3글자+ 단어 추출
     words = set()
     words.update(re.findall(r"[가-힣]{2,}", message))
@@ -119,7 +119,7 @@ def _recall_short_term(keywords: set) -> list:
         "tier": "short",
         "file": "session-snapshot.md",
         "name": "현재 세션 스냅샷",
-        "description": " · ".join(lines[:2])[:200],
+        "description": " - ".join(lines[:2])[:200],
         "score": score,
     }]
 
@@ -159,7 +159,7 @@ def _recall_mid_term(keywords: set, top_n: int = 2) -> list:
 
 
 def recall(message: str, top_n: int = 3) -> list:
-    """사용자 메시지 → 3-tier memory recall.
+    """사용자 메시지 -> 3-tier memory recall.
 
     - 단기: session-snapshot (현재 세션)
     - 중기: orca.db decisions (최근 7일)

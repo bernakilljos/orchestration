@@ -260,7 +260,7 @@ set /a RETRY+=1
 echo [Verifier-%CHILD_ID%] Attempt %RETRY%/3...
 call gemini-a --verify "%PICKED_REPORT%" 2>"%TEMP%\gemini-last-err.log"
 
-rem --- 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+rem --- 토큰 소진 감지 -> 대기 -> 복구 시 재개 ---
 findstr /i /c:"rate" /c:"limit" /c:"quota" /c:"429" /c:"exceeded" "%TEMP%\gemini-last-err.log" >nul 2>&1
 if not errorlevel 1 (
   echo [Verifier-%CHILD_ID%] GEMINI TOKEN EXHAUSTED — 10분 간격 체크
@@ -295,7 +295,7 @@ timeout /t 10 /nobreak >nul
 goto RETRY_LOOP
 
 :ESCALATE
-rem --- 3회 실패 → Claude 에스컬레이션 태스크 생성 ---
+rem --- 3회 실패 -> Claude 에스컬레이션 태스크 생성 ---
 echo [Verifier-%CHILD_ID%] 3 retries failed. Creating Claude escalation task...
 for %%F in ("%PICKED_REPORT%") do (
   set "ESC_TASK=%PROJECT_ROOT%\.claude\tasks\task-escalate-%%~nF.md"

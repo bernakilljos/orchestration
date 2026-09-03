@@ -11,20 +11,20 @@
 
 | 트리거 어휘 · 상황 | WebSearch 발동 |
 |---|---|
-| "최신"·"신기능"·"신기술"·"changelog"·"릴리스"·"릴리즈"·"업데이트" | ✅ |
-| "얼마"·"가격"·"cost"·"응시료"·"수강료"·"학비" | ✅ |
-| "언제 나와"·"출시"·"발표"·"공개" | ✅ |
-| "요즘"·"트렌드"·"동향"·"화제"·"인기" | ✅ |
-| "vs"·"비교"·"차이"·"어떤 게 좋아" (여러 제품·모델·기술) | ✅ |
-| 모델명 (Claude Opus 5·GPT-5·Gemini 3.x·Llama 4 등) + "어때"·"어떻게"·"얼마" | ✅ |
-| 라이브러리·프레임워크 이름 + "설치"·"쓰는 법"·"버전" | ✅ |
-| 규제·법규·정책 (CISA·CFE·개보법·GDPR 등) + 세부 정보 | ✅ |
-| MCP·플러그인 이름 검토 | ✅ |
-| 특정 제품·회사·서비스 이름 조사 | ✅ |
+| "최신"·"신기능"·"신기술"·"changelog"·"릴리스"·"릴리즈"·"업데이트" |  |
+| "얼마"·"가격"·"cost"·"응시료"·"수강료"·"학비" |  |
+| "언제 나와"·"출시"·"발표"·"공개" |  |
+| "요즘"·"트렌드"·"동향"·"화제"·"인기" |  |
+| "vs"·"비교"·"차이"·"어떤 게 좋아" (여러 제품·모델·기술) |  |
+| 모델명 (Claude Opus 5·GPT-5·Gemini 3.x·Llama 4 등) + "어때"·"어떻게"·"얼마" |  |
+| 라이브러리·프레임워크 이름 + "설치"·"쓰는 법"·"버전" |  |
+| 규제·법규·정책 (CISA·CFE·개보법·GDPR 등) + 세부 정보 |  |
+| MCP·플러그인 이름 검토 |  |
+| 특정 제품·회사·서비스 이름 조사 |  |
 | 사용자가 URL·링크 언급 (직접 확인 요청) | WebFetch |
-| 코드베이스 내부만 관련 질문 (kit 자체 감사·수정) | ❌ (grep·Read) |
-| 파일 경로·이름·구조 질문 | ❌ (Glob) |
-| 논리 추론·설계 결정 | ❌ (자체 판단) |
+| 코드베이스 내부만 관련 질문 (kit 자체 감사·수정) |  (grep·Read) |
+| 파일 경로·이름·구조 질문 |  (Glob) |
+| 논리 추론·설계 결정 |  (자체 판단) |
 
 ## 발동 방법
 
@@ -51,7 +51,7 @@
 
 - SessionStart hook: `changelog-check.sh` 는 이미 있음 (Anthropic changelog 자동 감지)
 - 신설 hook: `.claude/hooks/websearch-trigger-detect.sh` (UserPromptSubmit) — 위 트리거 매치 시 systemMessage 주입
-- Rule 참조: `feedback_official_features_auto_check.md` (⭐⭐ 이상 자율 반영) — WebSearch 로 최신 사양 확인 후 반영
+- Rule 참조: `feedback_official_features_auto_check.md` ( 이상 자율 반영) — WebSearch 로 최신 사양 확인 후 반영
 
 ## 금지
 
@@ -64,6 +64,6 @@
 
 - `.claude/rules/failure-mode.md` § 확신 없으면 거절 (WebSearch 로 확신 확보)
 - `.claude/rules/best-practices.md` § Extended Thinking (WebSearch + 추론 병행)
-- `feedback_official_features_auto_check.md` (⭐⭐ 이상 자동 반영)
+- `feedback_official_features_auto_check.md` ( 이상 자동 반영)
 - `.claude/hooks/changelog-check.sh` (기존 SessionStart)
 - `.claude/hooks/websearch-trigger-detect.sh` (신설)

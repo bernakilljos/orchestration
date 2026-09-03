@@ -177,4 +177,4 @@ GraphRAG 가 핵심. 그래프 없이는 "여러 source 통합" 점수 ≤ 30%.
 - Neo4j Graph Data Science Library
 - `plugins/ai_rag/skills/rag-graph.md` (보강)
 - `ai-risk-lighthouse.md` § Behavioral Coverage
-- `solution-capability-audit.md` # 22 (🟡 부분 → ✅ 완성 목표)
+- `solution-capability-audit.md` # 22 ( 부분 →  완성 목표)

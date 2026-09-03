@@ -32,7 +32,7 @@ CONFIDENCE=$(echo "$OUTPUT" | grep -oiE 'confidence[^0-9]{0,5}([0-9]+)' | head -
 
 # PASS 라벨 감지
 PASS_SIGN=0
-echo "$OUTPUT" | grep -qiE '\bPASS\b|통과|✅' && PASS_SIGN=1
+echo "$OUTPUT" | grep -qiE '\bPASS\b|통과|[OK]' && PASS_SIGN=1
 
 # Safety 점수 추출 (있으면)
 SAFETY=$(echo "$OUTPUT" | grep -oiE 'safety[^0-9]{0,5}([0-9]+)' | head -1 | grep -oE '[0-9]+' | head -1)
@@ -44,7 +44,7 @@ if [ "$CONFIDENCE" -le 4 ] && [ "$PASS_SIGN" = "1" ]; then
   echo "[VIOLATION] confidence=$CONFIDENCE 인데 PASS 찍음 (agent=$AGENT_ID)" >> "$LOG"
   cat <<EOF
 {
-  "systemMessage": "⚠️ Subagent confidence=$CONFIDENCE 인데 PASS 라벨. failure-mode.md § Failure mode 위반 가능. 재검토 필요."
+  "systemMessage": "[WARN] Subagent confidence=$CONFIDENCE 인데 PASS 라벨. failure-mode.md § Failure mode 위반 가능. 재검토 필요."
 }
 EOF
 fi
@@ -54,7 +54,7 @@ if [ -n "$SAFETY" ] && [ "$SAFETY" -le 7 ] && [ "$PASS_SIGN" = "1" ]; then
   echo "[VIOLATION] safety=$SAFETY 인데 PASS (agent=$AGENT_ID)" >> "$LOG"
   cat <<EOF
 {
-  "systemMessage": "⚠️ Subagent safety=$SAFETY (≤7) 인데 PASS. failure-mode.md § PASS 자격 미달."
+  "systemMessage": "[WARN] Subagent safety=$SAFETY (≤7) 인데 PASS. failure-mode.md § PASS 자격 미달."
 }
 EOF
 fi

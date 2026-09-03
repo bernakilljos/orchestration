@@ -152,11 +152,11 @@ pip install gettext           # GNU gettext (표준)
 ### 번역 서비스
 | 서비스 | 특장 | 무료 |
 |--------|------|------|
-| **Crowdin** | 번역 관리 플랫폼 | ✅ (오픈소스) |
-| **Lokalise** | 번역 + CI 통합 | ✅ (무료 티어) |
-| **Phrase** | 번역 관리 | ✅ (무료 티어) |
-| **DeepL API** | AI 번역 | ✅ (500k 문자/월) |
-| **Papago API** | 한국어 번역 최강 | ✅ (10k/일) |
+| **Crowdin** | 번역 관리 플랫폼 |  (오픈소스) |
+| **Lokalise** | 번역 + CI 통합 |  (무료 티어) |
+| **Phrase** | 번역 관리 |  (무료 티어) |
+| **DeepL API** | AI 번역 |  (500k 문자/월) |
+| **Papago API** | 한국어 번역 최강 |  (10k/일) |
 
 ---
 
@@ -190,14 +190,14 @@ pip install gettext           # GNU gettext (표준)
 ### SEO 도구
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Google Search Console** | 검색 성능 분석 | ✅ |
-| **Google Analytics 4** | 웹 분석 | ✅ |
+| **Google Search Console** | 검색 성능 분석 |  |
+| **Google Analytics 4** | 웹 분석 |  |
 | **Ahrefs** | 백링크·키워드 분석 | 유료 ($99/월~) |
 | **Semrush** | SEO 올인원 | 유료 ($130/월~) |
-| **Screaming Frog** | 사이트 크롤러 | ✅ (500 URL) |
-| **Lighthouse** | Core Web Vitals | ✅ (Chrome 내장) |
-| **PageSpeed Insights** | 페이지 속도 분석 | ✅ |
-| **Sitemap Generator** | XML 사이트맵 | ✅ |
+| **Screaming Frog** | 사이트 크롤러 |  (500 URL) |
+| **Lighthouse** | Core Web Vitals |  (Chrome 내장) |
+| **PageSpeed Insights** | 페이지 속도 분석 |  |
+| **Sitemap Generator** | XML 사이트맵 |  |
 
 ### 프레임워크별 SEO
 ```bash
@@ -272,7 +272,7 @@ pip install uvloop              # 빠른 이벤트 루프
 | **Apache Kafka** | 이벤트 스트리밍 | Docker |
 | **Debezium** | CDC (Change Data Capture) | Docker |
 | **Fivetran** | ETL SaaS | 유료 |
-| **Airbyte** | 오픈소스 ETL | ✅ |
+| **Airbyte** | 오픈소스 ETL |  |
 
 ---
 
@@ -281,16 +281,16 @@ pip install uvloop              # 빠른 이벤트 루프
 | 도구 | 특장 | 설치 |
 |------|------|------|
 | **Burp Suite** | 웹 보안 테스트 표준 | Community 무료 |
-| **OWASP ZAP** | 오픈소스 웹 스캐너 | ✅ |
-| **Metasploit** | 침투 테스트 프레임워크 | ✅ (Community) |
-| **Nmap** | 네트워크 스캐너 | ✅ |
-| **Wireshark** | 패킷 분석 | ✅ |
-| **Ghidra** | 리버스 엔지니어링 (NSA) | ✅ |
-| **Kali Linux** | 보안 테스트 OS | ✅ |
-| **Snyk** | 의존성 취약점 스캔 | ✅ (무료 티어) |
-| **Trivy** | 컨테이너 보안 스캔 | ✅ |
-| **Gitleaks** | Git 시크릿 스캔 | ✅ (이미 설치) |
-| **Semgrep** | 코드 패턴 보안 스캔 | ✅ (이미 설치) |
+| **OWASP ZAP** | 오픈소스 웹 스캐너 |  |
+| **Metasploit** | 침투 테스트 프레임워크 |  (Community) |
+| **Nmap** | 네트워크 스캐너 |  |
+| **Wireshark** | 패킷 분석 |  |
+| **Ghidra** | 리버스 엔지니어링 (NSA) |  |
+| **Kali Linux** | 보안 테스트 OS |  |
+| **Snyk** | 의존성 취약점 스캔 |  (무료 티어) |
+| **Trivy** | 컨테이너 보안 스캔 |  |
+| **Gitleaks** | Git 시크릿 스캔 |  (이미 설치) |
+| **Semgrep** | 코드 패턴 보안 스캔 |  (이미 설치) |
 
 ```bash
 pip install bandit            # Python 보안 (이미 설치)
@@ -315,14 +315,14 @@ pip install pwntools          # CTF/익스플로잇 개발
 ### 무료 학습 플랫폼
 | 플랫폼 | 특장 | 무료 |
 |--------|------|------|
-| **freeCodeCamp** | 풀스택 웹 (인증서) | ✅ |
-| **The Odin Project** | 웹 개발 로드맵 | ✅ |
-| **CS50** | Harvard CS 입문 | ✅ |
-| **Codecademy** | 인터랙티브 코딩 | ✅ (기본) |
-| **Scrimba** | 인터랙티브 강의 | ✅ (일부) |
-| **인프런** | 한국 개발 강의 | ✅ (일부) |
-| **노마드 코더** | 한국 실전 코딩 | ✅ (일부) |
-| **생활코딩** | 한국 무료 코딩 | ✅ |
+| **freeCodeCamp** | 풀스택 웹 (인증서) |  |
+| **The Odin Project** | 웹 개발 로드맵 |  |
+| **CS50** | Harvard CS 입문 |  |
+| **Codecademy** | 인터랙티브 코딩 |  (기본) |
+| **Scrimba** | 인터랙티브 강의 |  (일부) |
+| **인프런** | 한국 개발 강의 |  (일부) |
+| **노마드 코더** | 한국 실전 코딩 |  (일부) |
+| **생활코딩** | 한국 무료 코딩 |  |
 
 ### 개발 로드맵
 | 리소스 | URL |

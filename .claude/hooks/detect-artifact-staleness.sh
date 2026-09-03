@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# 산출물 유통기한 자동 점검 · SessionStart hook.
+# 산출물 유통기한 자동 점검 - SessionStart hook.
 #
-# 룰: .claude/rules/artifact-freshness-check.md (SoT · 유통기한 매트릭스)
+# 룰: .claude/rules/artifact-freshness-check.md (SoT - 유통기한 매트릭스)
 # 스크립트: .claude/scripts/artifact-freshness-report.py
 #
 # OVERDUE 있으면 systemMessage 로 첫 응답 전 사용자 알림.
@@ -41,7 +41,7 @@ fi
 # Python 동적 검색 (하드코딩 X)
 PY_BIN="$(command -v python 2>/dev/null || command -v python3 2>/dev/null || echo python)"
 
-# 스캔 실행 · stdout=OVERDUE, stderr=STALE
+# 스캔 실행 - stdout=OVERDUE, stderr=STALE
 OUTPUT="$("$PY_BIN" "$REPORT" 2>>"$LOG_FILE")"
 RC=$?
 

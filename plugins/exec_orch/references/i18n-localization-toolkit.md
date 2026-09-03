@@ -12,15 +12,15 @@
 
 | 서비스 | 언어 | 가격 | 품질 | API | 한국어 |
 |---|---|---|---|---|---|
-| **Google Translate API** | 130+ | $15/백만 자 | 높음 | REST · gRPC | ✅ 우수 |
-| **DeepL API** | 30+ | €0.002/단어 (Pro) | 최고 (특히 문학) | REST | ✅ 우수 |
-| **Microsoft Azure Translator** | 90+ | $15/백만 자 | 높음 | REST | ✅ 좋음 |
-| **Amazon Translate** | 70+ | $15/백만 단위 | 높음 | AWS SDK · REST | ✅ 좋음 |
-| **Naver Papago API** | 13 (한국 최적) | 무료 (일일 5만 자) | 최고 (한국어↔영어) | REST | ✅ 최고 |
-| **Kakao i Translator** | 한국어↔주요 9언어 | 무료 (일일 10만 자) | 높음 | REST | ✅ 최고 |
-| **Claude API (with i18n prompt)** | 모든 언어 | $3-15/백만 토큰 | 문맥 우수 | REST | ✅ 우수 |
-| **Open Source: LibreTranslate** | 20+ | 자체호스트 무료 | 중간 | REST | ✅ 가능 |
-| **Hugging Face Transformers** | 모든 언어 | 오픈소스 무료 | 모델 의존 | Python | ✅ 지원 |
+| **Google Translate API** | 130+ | $15/백만 자 | 높음 | REST · gRPC |  우수 |
+| **DeepL API** | 30+ | €0.002/단어 (Pro) | 최고 (특히 문학) | REST |  우수 |
+| **Microsoft Azure Translator** | 90+ | $15/백만 자 | 높음 | REST |  좋음 |
+| **Amazon Translate** | 70+ | $15/백만 단위 | 높음 | AWS SDK · REST |  좋음 |
+| **Naver Papago API** | 13 (한국 최적) | 무료 (일일 5만 자) | 최고 (한국어↔영어) | REST |  최고 |
+| **Kakao i Translator** | 한국어↔주요 9언어 | 무료 (일일 10만 자) | 높음 | REST |  최고 |
+| **Claude API (with i18n prompt)** | 모든 언어 | $3-15/백만 토큰 | 문맥 우수 | REST |  우수 |
+| **Open Source: LibreTranslate** | 20+ | 자체호스트 무료 | 중간 | REST |  가능 |
+| **Hugging Face Transformers** | 모든 언어 | 오픈소스 무료 | 모델 의존 | Python |  지원 |
 
 ### 한국어 최적화 전략
 ```bash
@@ -68,14 +68,14 @@ pip install deepl  # Python DeepL
 
 | 플랫폼 | 가격 | 특징 | 워크플로우 | 한국어 |
 |---|---|---|---|---|
-| **Crowdin** | 프로 $99/월 | 커뮤니티 번역자 · AI 제안 · 검증 | 자동 PR | ✅ 최고 |
-| **Lokalise** | 팀 $99/월 | 개발자 친화 · CLI · Git sync | 자동 push | ✅ 우수 |
-| **Phrase (구 Phraseapp)** | 엔터프라이즈 | 엔터프라이즈급 · 완벽한 번역 추적 | 고급 워크플로우 | ✅ 지원 |
-| **Transifex** | 프로 $99/월 | 오픈소스 친화 · 커뮤니티 · AI | 자동 동기화 | ✅ 지원 |
-| **POEditor** | 기본 무료 | 직관적 · 소규모 팀 · Slack 통합 | 수동 다운로드 | ✅ 지원 |
-| **Weblate** | 셀프호스트 무료 | 오픈소스 · 커뮤니티 · AGPL | Git 기반 | ✅ 최고 |
-| **Tolgee** | 무료 (호스팅 $49) | 개발자 친화 · In-context 번역 · API 우수 | 자동 commit | ✅ 지원 |
-| **OneSky** | 기본 무료 | 간단함 · 앱 중심 · Slack 통합 | 자동 동기화 | ✅ 지원 |
+| **Crowdin** | 프로 $99/월 | 커뮤니티 번역자 · AI 제안 · 검증 | 자동 PR |  최고 |
+| **Lokalise** | 팀 $99/월 | 개발자 친화 · CLI · Git sync | 자동 push |  우수 |
+| **Phrase (구 Phraseapp)** | 엔터프라이즈 | 엔터프라이즈급 · 완벽한 번역 추적 | 고급 워크플로우 |  지원 |
+| **Transifex** | 프로 $99/월 | 오픈소스 친화 · 커뮤니티 · AI | 자동 동기화 |  지원 |
+| **POEditor** | 기본 무료 | 직관적 · 소규모 팀 · Slack 통합 | 수동 다운로드 |  지원 |
+| **Weblate** | 셀프호스트 무료 | 오픈소스 · 커뮤니티 · AGPL | Git 기반 |  최고 |
+| **Tolgee** | 무료 (호스팅 $49) | 개발자 친화 · In-context 번역 · API 우수 | 자동 commit |  지원 |
+| **OneSky** | 기본 무료 | 간단함 · 앱 중심 · Slack 통합 | 자동 동기화 |  지원 |
 
 ### 선택 기준
 | 시나리오 | 추천 |
@@ -193,10 +193,10 @@ module.exports = {
 
 ### 금지 사항
 ```css
-/* ❌ 금지 */
+/*  금지 */
 .sidebar { margin-left: 20px; }
 
-/* ✅ 허용 (RTL 안전) */
+/*  허용 (RTL 안전) */
 .sidebar { margin-inline-start: 20px; }
 ```
 
@@ -286,12 +286,12 @@ result = classifier('훌륭한 서비스입니다')
 
 | CMS | i18n 기능 | 워크플로우 | 한국어 |
 |---|---|---|---|
-| **Contentful** | 로케일별 필드 · API 쿼리 | GraphQL / REST | ✅ 지원 |
-| **Strapi** | 플러그인 기반 i18n · 역할 기반 | UI 직관적 | ✅ 지원 |
-| **Sanity** | 로케일 필드 · 문서 참조 | Studio 시각적 | ✅ 지원 |
-| **Directus** | 언어별 행 · 번역 추적 | 데이터베이스 네이티브 | ✅ 지원 |
-| **Drupal** | 모듈 기반 (언어 · i18n) | 엔터프라이즈급 | ✅ 최고 |
-| **WordPress** | WPML / Polylang 플러그인 | 플러그인 의존 | ✅ 지원 |
+| **Contentful** | 로케일별 필드 · API 쿼리 | GraphQL / REST |  지원 |
+| **Strapi** | 플러그인 기반 i18n · 역할 기반 | UI 직관적 |  지원 |
+| **Sanity** | 로케일 필드 · 문서 참조 | Studio 시각적 |  지원 |
+| **Directus** | 언어별 행 · 번역 추적 | 데이터베이스 네이티브 |  지원 |
+| **Drupal** | 모듈 기반 (언어 · i18n) | 엔터프라이즈급 |  최고 |
+| **WordPress** | WPML / Polylang 플러그인 | 플러그인 의존 |  지원 |
 
 ### 한국 운영 체크리스트
 ```yaml

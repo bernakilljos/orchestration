@@ -25,7 +25,7 @@ if echo "$CMD" | grep -E 'rm\s+.*(-r|-f|--recursive|--force).*plugins/|rm\s+.*pl
   if [ "$HAS_FORCE" = false ]; then
     cat <<'MSG'
 
-❌ [BLOCK] plugins/ 파일 삭제 명령 감지!
+[X] [BLOCK] plugins/ 파일 삭제 명령 감지!
 
   규칙: "명분 없이는 지우지 마" (feedback_no_delete_without_justification.md)
 
@@ -33,7 +33,7 @@ if echo "$CMD" | grep -E 'rm\s+.*(-r|-f|--recursive|--force).*plugins/|rm\s+.*pl
 
   허용하는 명분 (3가지 중 하나):
   1. 사용자 명시:        "X 파일 지워줘"
-  2. 분석·검증:         md5sum·diff·grep 결과로 확정
+  2. 분석-검증:         md5sum-diff-grep 결과로 확정
   3. git deprecated:    commit message + replacement merged
 
   우회 방법: rm --force-delete ...
@@ -50,13 +50,13 @@ if echo "$CMD" | grep -E 'rm\s+.*(-r|-f|--recursive|--force).*\.claude/scripts/|
   if [ "$HAS_FORCE" = false ]; then
     cat <<'MSG'
 
-❌ [BLOCK] .claude/scripts/ 파일 삭제 명령 감지!
+[X] [BLOCK] .claude/scripts/ 파일 삭제 명령 감지!
 
   규칙: .claude 체계 파일은 명분 없이 삭제 금지
 
   허용하는 명분 (3가지 중 하나):
   1. 사용자 명시
-  2. 분석·검증 (md5sum·diff)
+  2. 분석-검증 (md5sum-diff)
   3. git deprecated + replacement merged
 
   우회 방법: rm --force-delete ...

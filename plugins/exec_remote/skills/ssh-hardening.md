@@ -27,7 +27,7 @@ sudo sed -i 's/^#\?Port .*/Port 49222/' /etc/ssh/sshd_config
 sudo systemctl restart sshd
 ```
 
-⚠ **주의**: 새 세션에서 새 포트로 접속 가능한지 먼저 확인하고 기존 세션 종료. UFW 도 새 포트 허용 후 22 차단해야 self-lockout 방지.
+ **주의**: 새 세션에서 새 포트로 접속 가능한지 먼저 확인하고 기존 세션 종료. UFW 도 새 포트 허용 후 22 차단해야 self-lockout 방지.
 
 ### 3. UFW 방화벽
 
@@ -82,10 +82,10 @@ sudo ufw status numbered                       # → 22 차단, 49222 허용
 
 ## 가지 말 것 (안티패턴)
 
-- ❌ `PermitRootLogin yes` (root 직접 로그인 → 자동공격 1순위)
-- ❌ 약한 비밀번호 패스프레이즈로 키 보호 (또는 패스프레이즈 없음 + 키만 있는 USB 분실 시 즉시 노출)
-- ❌ ufw 활성 안 하고 sshd 만 셋업 (다른 포트 노출 위험)
-- ❌ 22 포트 그대로 + fail2ban 없음 (분당 수백 시도 받음)
+-  `PermitRootLogin yes` (root 직접 로그인 → 자동공격 1순위)
+-  약한 비밀번호 패스프레이즈로 키 보호 (또는 패스프레이즈 없음 + 키만 있는 USB 분실 시 즉시 노출)
+-  ufw 활성 안 하고 sshd 만 셋업 (다른 포트 노출 위험)
+-  22 포트 그대로 + fail2ban 없음 (분당 수백 시도 받음)
 
 ## 키 분실 / 분실 의심 시
 

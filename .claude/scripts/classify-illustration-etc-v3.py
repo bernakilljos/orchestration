@@ -69,7 +69,7 @@ def main():
             if i % 50 == 0 or i == len(images):
                 elapsed = int(time.time() - start)
                 eta = int((len(images) - i) / max(i/max(elapsed,1), 0.1))
-                print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) · {elapsed}s · ETA {eta}s", flush=True)
+                print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) - {elapsed}s - ETA {eta}s", flush=True)
         except Exception as e:
             print(f"  [FAIL] {img_path.name}: {type(e).__name__} {str(e)[:60]}", flush=True)
     elapsed = int(time.time() - start)

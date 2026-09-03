@@ -9,13 +9,13 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_data`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-32-db-migration` ⭐ 핵심
+- `skill-32-db-migration`  핵심
 
 ## 🤖 에이전트
 

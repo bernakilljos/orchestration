@@ -102,4 +102,4 @@ memory: [[feedback_no_duplicate_function]]
 - `.claude/rules/best-practices.md` § 검증 후 보고
 - `.claude/rules/failure-mode.md` § 회피·confidence
 - `feedback_approve_before_apply.md` (자율 vs 승인)
-- `feedback_official_features_auto_check.md` (예외: ⭐⭐ 자율 적용 영역)
+- `feedback_official_features_auto_check.md` (예외:  자율 적용 영역)

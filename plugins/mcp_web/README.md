@@ -9,13 +9,13 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_web`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-29-api-tester` ⭐ 핵심
+- `skill-29-api-tester`  핵심
 
 ## 🤖 에이전트
 

@@ -27,12 +27,12 @@ allowed-tools: Bash(where:*), Bash(claude mcp list:*), Write, Bash(python:*)
 
 판단 로그 출력:
 ```
-🎯 주제: <topic>
+ 주제: <topic>
 🔍 분석:
   - 독립 영역 vs 계층: <판단>
   - 정보 밀도: <낮음/높음>
   - 사용 시나리오: <발표/온보딩/레퍼런스>
-✅ 선택: <pattern>
+ 선택: <pattern>
    이유: <한 문장>
 ```
 
@@ -48,7 +48,7 @@ allowed-tools: Bash(where:*), Bash(claude mcp list:*), Write, Bash(python:*)
 ### Step 3 — 결과 보고
 
 ```
-✅ 자동 선택 결과
+ 자동 선택 결과
 - 패턴: <name>
 - 이유: <one-liner>
 - 산출물: outputs/arch/<pattern>-<slug>-<date>.<ext>

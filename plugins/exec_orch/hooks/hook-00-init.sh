@@ -38,51 +38,51 @@ fi
 cat <<'REMINDER'
 
 ==============================
- ⚠ 재발 방지 헌장 (CLAUDE.md § 7) — 세션 강제 로드
+ [WARN] 재발 방지 헌장 (CLAUDE.md § 7) — 세션 강제 로드
 ==============================
-A (하드코딩·폴백): A1 하드경로 X · A2 산식 없는 %·상수 X · A3 배선 없는 UI X · A4 정본 1곳 · A5 기존 자산 재사용
-B (검증): B1 검사 0건≠통과 · B3 육안+픽셀 · B6 수정 후 자동 검증 · B7 smoke test 의무 · B8 페이지 fit · B11 이중 검증 (mojibake+백업)
-C (운영 안전): C1 운영 변경 적용 전 판정 · C4 미커밋 누적 X · C6 위험 작업 approval-gate · C7 멈춤 방지 · C10 install 순서
-D (조사·보고): **D0 대상 확정 0순위** · D6 중간 확인 X · **D7 전수조사=100% Read** · D11 회피 X · D12 기준 일관성
-E (UI/UX): E1 LAYOUTSPEC · E4 정본 1곳 · E5 8섹션 · E6 -v2/-v3 X (원본 덮어쓰기)
-F (kit 고유): F1 .claude/ 직접 X · F3 Zero-touch · F5 auto-planner 5단계 · **F6 함수·훅·룰 중복 X** · **F7 감정 매핑 자동**
+A (하드코딩-폴백): A1 하드경로 X - A2 산식 없는 %-상수 X - A3 배선 없는 UI X - A4 정본 1곳 - A5 기존 자산 재사용
+B (검증): B1 검사 0건≠통과 - B3 육안+픽셀 - B6 수정 후 자동 검증 - B7 smoke test 의무 - B8 페이지 fit - B11 이중 검증 (mojibake+백업)
+C (운영 안전): C1 운영 변경 적용 전 판정 - C4 미커밋 누적 X - C6 위험 작업 approval-gate - C7 멈춤 방지 - C10 install 순서
+D (조사-보고): **D0 대상 확정 0순위** - D6 중간 확인 X - **D7 전수조사=100% Read** - D11 회피 X - D12 기준 일관성
+E (UI/UX): E1 LAYOUTSPEC - E4 정본 1곳 - E5 8섹션 - E6 -v2/-v3 X (원본 덮어쓰기)
+F (kit 고유): F1 .claude/ 직접 X - F3 Zero-touch - F5 auto-planner 5단계 - **F6 함수-훅-룰 중복 X** - **F7 감정 매핑 자동**
 
-상세: .claude/rules/*.md · CLAUDE.md § 7
+상세: .claude/rules/*.md - CLAUDE.md § 7
 
 ==============================
- ⚠ 대상 확정 0순위 (매 사용자 지시)
+ [WARN] 대상 확정 0순위 (매 사용자 지시)
 ==============================
 첫 응답 첫 줄 형식: 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정.
 
 4갈래 후보:
- 1) C:\pjt\orchestration_v1\               (kit 자체 감사·룰·hook)
+ 1) C:\pjt\orchestration_v1\               (kit 자체 감사-룰-hook)
  2) C:\pjt\orchestration_v1\setup\templates\ (install 배포용 template)
  3) install 대상 실운영 프로젝트           (경로 물어봐 — "실운영/하드코딩 실측/재발 방지 헌장" 시)
  4) ~/.claude/                              (글로벌 설정)
 
-★ 대상 확정 전 grep·Read·Edit·Bash 착수 = 룰 위반
+★ 대상 확정 전 grep-Read-Edit-Bash 착수 = 룰 위반
 ★ 자동 판정 힌트:
-   - "install a/b"·"배포"·"공통 kit"·"template"     → 후보 2
-   - "실운영"·"하드코딩 실측"·"헌장"·비즈니스 지표 → 후보 3 (경로 확인)
-   - "룰 21개"·"hook 40개"·"플러그인"·"kit 자체"    → 후보 1
-   - "settings"·"글로벌"·"~/.claude"                → 후보 4
+   - "install a/b"-"배포"-"공통 kit"-"template"     -> 후보 2
+   - "실운영"-"하드코딩 실측"-"헌장"-비즈니스 지표 -> 후보 3 (경로 확인)
+   - "룰 21개"-"hook 40개"-"플러그인"-"kit 자체"    -> 후보 1
+   - "settings"-"글로벌"-"~/.claude"                -> 후보 4
 
 상세: .claude/rules/direction-first.md
       feedback_confirm_target_first.md
 
 ==============================
- ⚠ 전수조사 5단계 의무 (사용자 지시 처리)
+ [WARN] 전수조사 5단계 의무 (사용자 지시 처리)
 ==============================
-1. 전수조사  — 인접 시스템·전역까지 모든 위치 훑기
+1. 전수조사  — 인접 시스템-전역까지 모든 위치 훑기
 2. 분석      — md5sum/diff/본문으로 내용 검증 (파일명만 보고 단정 X)
 3. 실행      — 발견한 문제를 코드로 수정
 4. 확인      — smoke test/dry-run/로그 점검
-5. 보고      — 표·목록으로 결과 + 남은 결정사항
+5. 보고      — 표-목록으로 결과 + 남은 결정사항
 
 상세: .claude/rules/failure-mode.md § 전수조사 위반 안티패턴
 
 ==============================
- ⚠ Zero-touch 자동화 원칙
+ [WARN] Zero-touch 자동화 원칙
 ==============================
 - 사용자 액션 요구 금지 — 모든 셋업은 SessionStart hook 으로 자동
 - 알림은 크리티컬 5가지만:
@@ -93,28 +93,28 @@ F (kit 고유): F1 .claude/ 직접 X · F3 Zero-touch · F5 auto-planner 5단계
 상세: .claude/rules/best-practices.md § Zero-touch 자동화
 
 ==============================
- ⚠ Template Kit 원칙 (공통 폴더 적용)
+ [WARN] Template Kit 원칙 (공통 폴더 적용)
 ==============================
 - orchestration_v1 은 다른 폴더에 install 로 배포되는 공통 kit
-- ~/.claude/ 직접 수정 X → setup/templates/ + setup/modules/03-settings.bat
-- 다른 프로젝트 폴더 (ICM/IFRS/calc 등) 직접 수정 X → install 재배포
-- 새 파일·기능마다 자문: "다른 머신·다른 사용자에서도 동작?"
+- ~/.claude/ 직접 수정 X -> setup/templates/ + setup/modules/03-settings.bat
+- 다른 프로젝트 폴더 (ICM/IFRS/calc 등) 직접 수정 X -> install 재배포
+- 새 파일-기능마다 자문: "다른 머신-다른 사용자에서도 동작?"
                           "install 로 자동 배포?"
                           "사용자 액션 0개?"
 
 상세: .claude/rules/best-practices.md § Template kit 원칙
 
 ==============================
- ⚠ 교재·강의 doc 작성 시 8섹션 + 다이어그램 품질 의무
+ [WARN] 교재-강의 doc 작성 시 8섹션 + 다이어그램 품질 의무
 ==============================
 - 각 챕터: 핵심 / 표 / 흐름 / 강점 / 약점 / 강추 / 우리시스템 매핑 / 점검
-- 외국어 이미지 → 한글 다이어그램으로 "대체" (영어+한글 X, 한글만)
+- 외국어 이미지 -> 한글 다이어그램으로 "대체" (영어+한글 X, 한글만)
 - 다이어그램 = SVG/HTML 기반 + 화살표 + 흐름 (단순 박스/표 = 위반)
 - 도구 우선순위: HTML/CSS+SVG (Playwright) > Mermaid > matplotlib
-- 5살 청자 톤. 비유·일상 예시
+- 5살 청자 톤. 비유-일상 예시
 
 ==============================
- ⚠ 산출물 버전 접미사 금지 (-v2, -v3)
+ [WARN] 산출물 버전 접미사 금지 (-v2, -v3)
 ==============================
 - docx/pptx/pdf 빌드 시 잠금 폴백으로 -v2 만들기 X
 - 백업 + 덮어쓰기: original.docx.bak 만들고 original.docx 덮어쓰기
@@ -124,65 +124,65 @@ F (kit 고유): F1 .claude/ 직접 X · F3 Zero-touch · F5 auto-planner 5단계
 상세: .claude/rules/teaching-doc.md § 산출물 명명
 
 ==============================
- ⚠ 수정·빌드 후 자동 검증 후 보고
+ [WARN] 수정-빌드 후 자동 검증 후 보고
 ==============================
 - "수정했습니다" 만 보고 X
-- 검증 도구 자동 실행 → PASS 확인 → 보고
-- FAIL → 사용자 알리지 않고 자동 재수정 (max 3)
-- 3회 후 FAIL → 솔직히 보고 + 사용자 결정
+- 검증 도구 자동 실행 -> PASS 확인 -> 보고
+- FAIL -> 사용자 알리지 않고 자동 재수정 (max 3)
+- 3회 후 FAIL -> 솔직히 보고 + 사용자 결정
 - 검증: PNG=verify-image-fit / docx=verify-docx-structure / pptx=verify-ppt-overflow
 
 ==============================
- ⚠ 회피·딴말 금지
+ [WARN] 회피-딴말 금지
 ==============================
-- 사용자 질문 빙빙 돌리지 마 — 직접 답 (yes/no/숫자) → 부연 → 행동
-- "그건 그렇지만"·"여러 옵션이 있는데" = 회피
-- 결함 지적 → 시스템 자랑 = 위반
+- 사용자 질문 빙빙 돌리지 마 — 직접 답 (yes/no/숫자) -> 부연 -> 행동
+- "그건 그렇지만"-"여러 옵션이 있는데" = 회피
+- 결함 지적 -> 시스템 자랑 = 위반
 
 ==============================
- ⚠ docx 구조 검증 (빈 페이지·중복 break)
+ [WARN] docx 구조 검증 (빈 페이지-중복 break)
 ==============================
 - build-*-doc.py 후 verify-docx-structure.py 자동 발동 (hook-09)
-- 빈 paragraph 5개+ 연속·중복 page_break 감지
+- 빈 paragraph 5개+ 연속-중복 page_break 감지
 - "빈 페이지 있네" 사용자 지적 후 fix = 전수조사 위반
 
 ==============================
- ⚠ Auto-Planner 자동 활성 (사용자 요청 받자마자)
+ [WARN] Auto-Planner 자동 활성 (사용자 요청 받자마자)
 ==============================
-- "해줘"·"고쳐줘"·결함 지적 받자마자 5단계 plan 생성
+- "해줘"-"고쳐줘"-결함 지적 받자마자 5단계 plan 생성
   1) 전수조사  2) 분석  3) 실행  4) 확인  5) 보고
 - 작업 전 30+ rule 자가 점검
-- 큰 작업·반복 패턴 = codex/gemini 위임
-- 사용자가 매번 지시 기다림 X (Generative→Agentic 약점 보완)
+- 큰 작업-반복 패턴 = codex/gemini 위임
+- 사용자가 매번 지시 기다림 X (Generative->Agentic 약점 보완)
 
 skill: plugins/exec_orch/skills/auto-planner.md
 
 ==============================
- ⚠ 페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)
+ [WARN] 페이지 전체 콘텐츠 fit (H1+callout+이미지+표 합산)
 ==============================
 - 이미지 비율만 X — 페이지의 모든 요소 height 합산
-- 빈 여백·짤림·글씨 작음 = 같은 문제
+- 빈 여백-짤림-글씨 작음 = 같은 문제
 - 빌더에 PageLayoutTracker (skill auto-layout-fit) 의무
-- 사용자가 "여백 큰데"·"짤려" 한 후 fix = 전수조사 위반
+- 사용자가 "여백 큰데"-"짤려" 한 후 fix = 전수조사 위반
 
 상세: .claude/rules/teaching-doc.md § 페이지 콘텐츠 fit
        skill: plugins/exec_orch/skills/auto-layout-fit.md
 
 ==============================
- ⚠ 페이지 fit 검증 (docx · pptx · pdf 전체)
+ [WARN] 페이지 fit 검증 (docx - pptx - pdf 전체)
 ==============================
-- 모든 산출물 (docx · pptx · pdf · html) 페이지 비율 측정 의무
+- 모든 산출물 (docx - pptx - pdf - html) 페이지 비율 측정 의무
 - 산출물별 비율 (h/w):
-    docx portrait 1.46 · landscape 0.69
-    pptx 16:9 0.54 · 4:3 0.71
-    pdf portrait 1.41 · landscape 0.71
+    docx portrait 1.46 - landscape 0.69
+    pptx 16:9 0.54 - 4:3 0.71
+    pdf portrait 1.41 - landscape 0.71
 - PNG viewport 비율 = 페이지 비율 (full_page=False + clip)
 - 자동 검증: verify-image-fit.py + hook-09 (build/generate/render-* 트리거)
 
 상세: .claude/rules/teaching-doc.md § 페이지 fit 검증
 
 ==============================
- ⚠ 하드 경로 금지 (cross-machine)
+ [WARN] 하드 경로 금지 (cross-machine)
 ==============================
 - 사용자명/Python버전/OS절대경로 박지 말 것
 - 동적 검색: where python | tempfile.gettempdir() | %USERPROFILE%
@@ -192,7 +192,7 @@ skill: plugins/exec_orch/skills/auto-planner.md
 상세: .claude/rules/best-practices.md § 하드 경로 금지
 
 ==============================
- ⚠ 오염 파일 자동 정리 (SessionStart hook)
+ [WARN] 오염 파일 자동 정리 (SessionStart hook)
 ==============================
 - nul / NUL (Windows redirect 잔재) — 즉시
 - nested .claude/.claude/ — 즉시
@@ -203,7 +203,7 @@ skill: plugins/exec_orch/skills/auto-planner.md
 - 빈 .claude/tasks/{done,locks} 디렉토리
 
 스크립트: .claude/scripts/cleanup-pollution.sh (매 세션 자동 실행)
-금기: bash 환경에 `2>nul` 사용 X → `2>/dev/null` 사용
+금기: bash 환경에 `2>nul` 사용 X -> `2>/dev/null` 사용
 PROJECT_ROOT 계산: 위치별 ../.. 깊이 주의
 
 상세: .claude/rules/cleanup-policy.md

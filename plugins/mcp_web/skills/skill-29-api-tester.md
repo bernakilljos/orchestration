@@ -34,11 +34,11 @@ gemini 검증 시 실제 API를 호출해서 동작 확인.
 ```
 API Test Results: 15/18 passed (83%)
 
-✅ GET  /api/health         200  45ms
-✅ GET  /api/users          200  120ms
-✅ POST /api/auth/login     200  230ms
-❌ POST /api/data/upload    500  timeout
-⚠️ GET  /api/reports        200  3200ms (slow)
+ GET  /api/health         200  45ms
+ GET  /api/users          200  120ms
+ POST /api/auth/login     200  230ms
+ POST /api/data/upload    500  timeout
+ GET  /api/reports        200  3200ms (slow)
 ```
 
 ## 출력

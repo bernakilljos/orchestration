@@ -46,18 +46,18 @@
 
 ## BE SPECIFIC — VAGUE vs PRECISE
 
-| ❌ Vague | ✅ Precise |
+|  Vague |  Precise |
 |---------|-----------|
 | "Write clean code" | "Use camelCase for variables, PascalCase for components" |
 | "Test everything" | "npm test --watch, min 80% coverage for utils/" |
 
 ## 이 프로젝트 적용 상태
 
-- ✅ Project CLAUDE.md — 이 규칙으로 재구성 (2026-04-19)
-- ✅ WHAT/WHY/HOW 프레임 적용
-- ✅ 500줄 이하 (현재 ~170줄)
-- ✅ Hooks 사용 (`.claude/settings.json` hooks)
-- ✅ 참조 중심 (`guide.txt`·`docs/architecture-patterns.md`·`.claude/rules/*`)
+-  Project CLAUDE.md — 이 규칙으로 재구성 (2026-04-19)
+-  WHAT/WHY/HOW 프레임 적용
+-  500줄 이하 (현재 ~170줄)
+-  Hooks 사용 (`.claude/settings.json` hooks)
+-  참조 중심 (`guide.txt`·`docs/architecture-patterns.md`·`.claude/rules/*`)
 
 ## 참조
 

@@ -1,6 +1,6 @@
 """
 notify_desktop — Windows/Mac/Linux 데스크톱 알림 (Task 38)
-백그라운드 task 완료·크리티컬 5 알림 · watchdog 통합
+백그라운드 task 완료-크리티컬 5 알림 - watchdog 통합
 사용: python notify_desktop.py "제목" "본문" [urgency]
 """
 from __future__ import annotations

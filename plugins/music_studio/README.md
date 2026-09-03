@@ -2,14 +2,14 @@
 
 > **Prefix**: `music_` | **버전**: 0.1 | **Status**: spec-only | **Phase**: 2
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 **spec-only** — 스펙 + 공통 헬퍼. 실구현은 플랫폼에서.
 
 ## 📋 커맨드 (10개)
 
 - `/music_studio-record` — 실시간 녹음·멀티트랙 (마이크·라인 입력·24bit/48kHz)
-- `/music_studio-compose` ⭐ 기본 — AI 작곡 (Suno·Udio·MusicGen) — 장르·BPM·키·길이 지정
+- `/music_studio-compose`  기본 — AI 작곡 (Suno·Udio·MusicGen) — 장르·BPM·키·길이 지정
 - `/music_studio-arrange` — 편곡·코드 진행·섹션 구조 (verse·chorus·bridge)
 - `/music_studio-lyrics` — 가사 작성 (주제·톤·운율·후크 라인)
 - `/music_studio-mix` — 믹싱 — EQ·컴프·리버브·패닝 자동 적용

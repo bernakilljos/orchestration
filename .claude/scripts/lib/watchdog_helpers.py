@@ -239,7 +239,7 @@ def _get_rss_via_ps(pid: int) -> Optional[int]:
 def get_worker_rss_mb(pid: int) -> Optional[int]:
     """Return resident memory (MB) of pid + descendants. None if pid dead.
 
-    Order: psutil → tasklist (Windows) → ps (Unix).
+    Order: psutil -> tasklist (Windows) -> ps (Unix).
     """
     if not pid or pid <= 0:
         return None
@@ -277,7 +277,7 @@ def should_restart_worker(
 
     rss = get_worker_rss_mb(pid)
     if rss is None:
-        # Pid is dead but DB says alive → let detect_dead_workers handle via heartbeat
+        # Pid is dead but DB says alive -> let detect_dead_workers handle via heartbeat
         return None
     if rss >= max_rss_mb:
         return f"max_rss exceeded ({rss}MB >= {max_rss_mb}MB)"

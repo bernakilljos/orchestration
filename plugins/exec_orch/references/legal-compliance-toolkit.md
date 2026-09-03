@@ -38,14 +38,14 @@ curl https://api.pandadoc.com/v1/documents \
 
 | 도구 | 형식 | 법적 효력 | 국가 지원 | 가격 |
 |------|------|----------|---------|------|
-| **DocuSign** | PDF/Word | ✅ ESIGN Act (미국), eIDAS (EU), 한국 | 130+ | $20/월+ |
-| **HelloSign** | PDF 중심 | ✅ 유사 | 50+ | $15/월+ |
-| **SignNow** | 모바일 최적화 | ✅ | 50+ | $9.99/월+ |
-| **Adobe Sign** | Creative Cloud 통합 | ✅ | 50+ | $25/월+ |
-| **Zoho Sign** | CRM 통합 (Zoho 생태계) | ✅ | 30+ | $10/월+ |
-| **Acrobat Sign** | Adobe 제품군 | ✅ | 50+ | $25/월+ |
-| **Secured Signing** | 한국 전자서명법 준수 | ✅ (한국 공식) | 한국 | 협의 |
-| **GPKi (금융결제원)** | 공인인증서 기반 | ✅ (한국 법인) | 한국 | 협의 |
+| **DocuSign** | PDF/Word |  ESIGN Act (미국), eIDAS (EU), 한국 | 130+ | $20/월+ |
+| **HelloSign** | PDF 중심 |  유사 | 50+ | $15/월+ |
+| **SignNow** | 모바일 최적화 |  | 50+ | $9.99/월+ |
+| **Adobe Sign** | Creative Cloud 통합 |  | 50+ | $25/월+ |
+| **Zoho Sign** | CRM 통합 (Zoho 생태계) |  | 30+ | $10/월+ |
+| **Acrobat Sign** | Adobe 제품군 |  | 50+ | $25/월+ |
+| **Secured Signing** | 한국 전자서명법 준수 |  (한국 공식) | 한국 | 협의 |
+| **GPKi (금융결제원)** | 공인인증서 기반 |  (한국 법인) | 한국 | 협의 |
 
 ### DocuSign eSignature API
 ```bash
@@ -109,11 +109,11 @@ curl https://www.iubenda.com/api/privacypolicy \
 
 | 도구 | 출력 | 자동 갱신 | 가격 | 한국 |
 |------|-----|---------|------|------|
-| **Termageddon** | PDF, HTML | ✅ (법규 변경시) | $99/년+ | 영어 중심 |
-| **TermsFeed** | PDF, HTML, 워드프레스 | ✅ | $59/년+ | 다국어 (한국어 O) |
-| **Iubenda** | 모든 언어 동적 | ✅ | $10+/월 | ✅ 한국어 지원 |
-| **GetTerms** | 노코드 생성 | ✅ | $79/월+ | 영어 중심 |
-| **Otherent** | 한국 법률 표준 | 수동 | 협의 | ✅ 한국전문 |
+| **Termageddon** | PDF, HTML |  (법규 변경시) | $99/년+ | 영어 중심 |
+| **TermsFeed** | PDF, HTML, 워드프레스 |  | $59/년+ | 다국어 (한국어 O) |
+| **Iubenda** | 모든 언어 동적 |  | $10+/월 |  한국어 지원 |
+| **GetTerms** | 노코드 생성 |  | $79/월+ | 영어 중심 |
+| **Otherent** | 한국 법률 표준 | 수동 | 협의 |  한국전문 |
 
 ### TermsFeed API (자동 생성)
 ```bash
@@ -139,12 +139,12 @@ curl https://www.termsfeed.com/api/v1/generate \
 
 | 도구 | 표준 | 자동화 | 가격 | 클라우드 |
 |------|------|--------|------|---------|
-| **Vanta** | SOC2, ISO27001, HIPAA, GDPR | ✅ 자동 증거수집 | $500+/월 | AWS, GCP, Azure |
-| **Drata** | SOC2, ISO27001, HIPAA | ✅ 자동 감사 | $400+/월 | 다중클라우드 |
-| **Secureframe** | SOC2, ISO27001, HIPAA, FedRAMP | ✅ 최고 자동화 | $500+/월 | 엔터프라이즈 |
-| **Sprinto** | SOC2, ISO27001, HIPAA | ✅ 차세대 감사 | $300+/월 | 신흥 강자 |
-| **AuditBoard** | 내부감사, 위험관리 | ✅ 협업 | $500+/월 | 대기업 |
-| **LogicGate** | GRC (Governance, Risk, Compliance) | ✅ 자동 워크플로우 | $400+/월 | 위험도 시각화 |
+| **Vanta** | SOC2, ISO27001, HIPAA, GDPR |  자동 증거수집 | $500+/월 | AWS, GCP, Azure |
+| **Drata** | SOC2, ISO27001, HIPAA |  자동 감사 | $400+/월 | 다중클라우드 |
+| **Secureframe** | SOC2, ISO27001, HIPAA, FedRAMP |  최고 자동화 | $500+/월 | 엔터프라이즈 |
+| **Sprinto** | SOC2, ISO27001, HIPAA |  차세대 감사 | $300+/월 | 신흥 강자 |
+| **AuditBoard** | 내부감사, 위험관리 |  협업 | $500+/월 | 대기업 |
+| **LogicGate** | GRC (Governance, Risk, Compliance) |  자동 워크플로우 | $400+/월 | 위험도 시각화 |
 
 ### Vanta API (Python)
 ```bash
@@ -360,7 +360,7 @@ result = classifier("This agreement shall commence...")
 | **무료** | 없음 (평가판 O) | HelloSign 스타트업 패스 | Termly 기본 | GPT + 프롬프팅 | KIPRIS, 국가법령정보 |
 | **엔터프라이즈** | Ironclad, DocuSign | Adobe Sign, Secured Signing | Vanta, Secureframe | CoCounsel, Harvey | 대형로펌 (내부) |
 | **스타트업** | PandaDoc, Juro | SignNow, HelloSign | Osano, Sprinto | OpenAI + 커스텀 | TermsFeed + KIPRIS |
-| **한국 법률** | 없음 (영문 변경) | Secured Signing, GPKi | TrustArc + 국가법령정보 | 개별 프롬프팅 | ✅ 국가법령정보 + 법제처 |
+| **한국 법률** | 없음 (영문 변경) | Secured Signing, GPKi | TrustArc + 국가법령정보 | 개별 프롬프팅 |  국가법령정보 + 법제처 |
 | **AI 강점** | ContractPodAi, Ironclad | 없음 | Vanta (자동증거) | Harvey, CoCounsel | 없음 (LLM 외국 의존) |
 
 ---

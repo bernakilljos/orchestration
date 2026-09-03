@@ -17,7 +17,7 @@ description: |
 설치되어 있으면 Claude Code 가 Write/Edit/MultiEdit 호출 직전 plugin 의 pre-hook 가 발동. 25 위험 패턴 정규식 매치 시:
 
 ```text
-⚠ security-guidance: command injection detected
+ security-guidance: command injection detected
   File: scripts/deploy.sh:42
   Pattern: $(unsanitized_input)
   Suggestion: use printf '%q' or array form

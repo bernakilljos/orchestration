@@ -2,7 +2,7 @@
 # pre-install-lock.sh — PreToolUse Bash hook
 # 목적: install/sync-to-team/install-to 명령 감지 시 kit 편집 상태 검사
 #       미완 상태 (uncommitted / edit-lock) 이면 block
-# 근거: .claude/rules/install-order.md · feedback_install_order.md
+# 근거: .claude/rules/install-order.md - feedback_install_order.md
 set -e
 
 INPUT="$(cat)"
@@ -15,7 +15,7 @@ fi
 # install 트리거 패턴
 TRIGGER='install\.bat|install_codex\.bat|install_gemini\.bat|sync-to-team\.sh|/install-to |install-to '
 if ! echo "$CMD" | grep -qE "$TRIGGER"; then
-  exit 0  # non-install → pass
+  exit 0  # non-install -> pass
 fi
 
 PROJECT="${CLAUDE_PROJECT_DIR:-$(pwd)}"

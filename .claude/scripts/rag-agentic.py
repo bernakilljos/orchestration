@@ -3,7 +3,7 @@
 흐름:
 1. Adaptive 분류 + Corrective 검색
 2. 결과 score 평가 (distance + 매칭 chunks 수)
-3. score 낮으면 → HyDE 추가 검색 (다중 소스)
+3. score 낮으면 -> HyDE 추가 검색 (다중 소스)
 4. 최종 결과 + confidence 점수
 """
 import sys

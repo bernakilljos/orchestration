@@ -60,10 +60,10 @@ $ARGUMENTS = "remove <n>" → 제거 (확인 후)
 
 추천 모드 출력:
 ```
-🔌 추천 커넥터 (현재 사용 패턴 기반)
+ 추천 커넥터 (현재 사용 패턴 기반)
 
 [협업·소통] (당신은 ...)
-  ✅ slack          (이미 설치)
+   slack          (이미 설치)
   ⬜ notion         /claude-connectors add notion
   ⬜ google-cal     /claude-connectors add google-cal
 
@@ -72,7 +72,7 @@ $ARGUMENTS = "remove <n>" → 제거 (확인 후)
   ⬜ google-sheets
 
 [개발]
-  ✅ github         (이미 설치)
+   github         (이미 설치)
 
 → 추가하려면: /claude-connectors add <name>
 → 그룹 일괄: /mcp_collab-install
@@ -90,7 +90,7 @@ $ARGUMENTS = "remove <n>" → 제거 (확인 후)
 ### Step 5 — 결과 보고 (공통)
 
 ```
-✅ <action> 완료
+ <action> 완료
 - 커넥터: <name>
 - 상태: connected | needs-auth | failed
 

@@ -148,4 +148,4 @@ plugins/ai_causal/
 - Pearl 2018, "The Book of Why"
 - Microsoft DoWhy: https://github.com/py-why/dowhy
 - `ai-risk-lighthouse.md` § Causal AI 카테고리
-- `solution-capability-audit.md` # 3 항목 (현재 ❌, 구축 후 ✅)
+- `solution-capability-audit.md` # 3 항목 (현재 , 구축 후 )

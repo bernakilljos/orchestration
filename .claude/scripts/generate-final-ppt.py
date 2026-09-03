@@ -6,7 +6,7 @@ generate-final-ppt.py - HTML/CSS 슬라이드를 Playwright 로 PNG 렌더링 �
 
 Architecture:
   1. Playwright async: 1920×1080 viewport, device_scale_factor=2 (4K)
-  2. 각 HTML → PNG 렌더링 (font load 대기)
+  2. 각 HTML -> PNG 렌더링 (font load 대기)
   3. python-pptx: blank slide layout + 이미지 풀블리드 삽입
 
 Usage:
@@ -235,7 +235,7 @@ async def main():
         log("MODE: DRY-RUN (no files created)", "WARN")
     log("=" * 70)
 
-    # Step 1: Render HTML → PNG
+    # Step 1: Render HTML -> PNG
     log("\n[STEP 1] Rendering HTML to PNG...")
     png_files = await render_all()
 

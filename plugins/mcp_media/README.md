@@ -9,14 +9,14 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_media`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-22-remotion` ⭐ 핵심
-- `skill-25-media-enhance` ⭐ 핵심
+- `skill-22-remotion`  핵심
+- `skill-25-media-enhance`  핵심
 
 ## 🤖 에이전트
 

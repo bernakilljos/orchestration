@@ -219,10 +219,10 @@ pip install whylogs           # 데이터/모델 모니터링
 ## Phase 로드맵
 
 ```text
-Phase 1 ✅ LLM 텍스트 (Claude·Codex·Gemini 오케스트레이션)
-Phase 2 ✅ 디자인 (JS/CSS 100+ CDN)
-Phase 3 ✅ 미디어 (이미지·영상·오디오 복원·생성)
-Phase 4 ✅ 실시간 (WebSocket·WebRTC·대시보드·IoT)
+Phase 1  LLM 텍스트 (Claude·Codex·Gemini 오케스트레이션)
+Phase 2  디자인 (JS/CSS 100+ CDN)
+Phase 3  미디어 (이미지·영상·오디오 복원·생성)
+Phase 4  실시간 (WebSocket·WebRTC·대시보드·IoT)
 Phase 5 🔜 자율 에이전트 (CrewAI·AutoGen·LangGraph)
 Phase 6 🔜 엣지/온디바이스 (모바일 AI·TinyML·WASM)
 ```

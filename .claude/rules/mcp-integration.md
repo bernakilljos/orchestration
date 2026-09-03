@@ -11,14 +11,14 @@
 
 | 축 | 우리 kit | Headroom | claude-mem |
 |---|---|---|---|
-| **라우팅·budget·quota** | ✅ `route.py` · `orca.db` | ❌ | ❌ |
-| **감사·규제·한국어 룰** | ✅ `.claude/rules/*` · CLAUDE.md § 7 | ❌ | ❌ |
-| **컨텍스트 압축 (AST)** | ❌ | ✅ `headroom_compress`·`retrieve`·`stats` | ❌ |
-| **prompt 캐시 (Anthropic)** | ✅ `lib/prompt_cache.py` | 병행 (프록시 앞단) | ❌ |
-| **명시 memory (도메인 자산)** | ✅ `~/.claude/projects/<proj>/memory/*.md` · MEMORY.md 인덱스 | ❌ | ❌ |
-| **자동 세션 관측·복원** | 부분 (`activations`·`decisions` 테이블) | ❌ | ✅ SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd hook |
-| **벡터 검색** | ❌ (TF fallback) | ❌ | ✅ Chroma |
-| **크로스 디바이스 memory 동기화** | ❌ | ❌ ⚠ (cmem.ai Pro 옵션 · 현재 OFF) |
+| **라우팅·budget·quota** |  `route.py` · `orca.db` |  |  |
+| **감사·규제·한국어 룰** |  `.claude/rules/*` · CLAUDE.md § 7 |  |  |
+| **컨텍스트 압축 (AST)** |  |  `headroom_compress`·`retrieve`·`stats` |  |
+| **prompt 캐시 (Anthropic)** |  `lib/prompt_cache.py` | 병행 (프록시 앞단) |  |
+| **명시 memory (도메인 자산)** |  `~/.claude/projects/<proj>/memory/*.md` · MEMORY.md 인덱스 |  |  |
+| **자동 세션 관측·복원** | 부분 (`activations`·`decisions` 테이블) |  |  SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd hook |
+| **벡터 검색** |  (TF fallback) |  |  Chroma |
+| **크로스 디바이스 memory 동기화** |  |   (cmem.ai Pro 옵션 · 현재 OFF) |
 
 ## Headroom 통합
 
@@ -106,8 +106,8 @@
 
 | 도구 | 라이선스 | 상용 가능? |
 |---|---|---|
-| Headroom | **Apache 2.0** (10k+ ⭐) | ✅ |
-| claude-mem | 오픈소스 | ✅ (Cloud sync 는 별도) |
+| Headroom | **Apache 2.0** (10k+ ) |  |
+| claude-mem | 오픈소스 |  (Cloud sync 는 별도) |
 
 ## 금지
 

@@ -2,7 +2,7 @@
 """verify-teaching-doc-sections.py — 교재/강의 doc 8섹션 검증
 
 룰: .claude/rules/teaching-doc.md
-8섹션: 핵심 한 줄·표·흐름·강점·약점·강추·우리 시스템 매핑·점검
+8섹션: 핵심 한 줄-표-흐름-강점-약점-강추-우리 시스템 매핑-점검
 
 호출:
   python verify-teaching-doc-sections.py <docx_or_md_path>
@@ -17,14 +17,14 @@ import sys
 from pathlib import Path
 
 SECTION_PATTERNS = {
-    "1.핵심": r"📚|핵심.{0,4}한.?줄|핵심\s",
-    "2.표":   r"📊|^\s*\|.*\|.*\||\<table\>|<tr>",
-    "3.흐름": r"🌊|흐름|flow|단계|→",
-    "4.강점": r"💪|강점|장점",
-    "5.약점": r"⚠️|약점|주의|함정|단점",
-    "6.강추": r"⭐|강추|추천|언제\s.*사용",
-    "7.매핑": r"🎯|우리\s?시스템|우리\s?매핑|orchestration_v1",
-    "8.점검": r"🧪|점검|check|확인|체크",
+    "1.핵심": r"|핵심.{0,4}한.?줄|핵심\s",
+    "2.표":   r"[STAT]|^\s*\|.*\|.*\||\<table\>|<tr>",
+    "3.흐름": r"|흐름|flow|단계|->",
+    "4.강점": r"|강점|장점",
+    "5.약점": r"[WARN]|약점|주의|함정|단점",
+    "6.강추": r"|강추|추천|언제\s.*사용",
+    "7.매핑": r"[TGT]|우리\s?시스템|우리\s?매핑|orchestration_v1",
+    "8.점검": r"|점검|check|확인|체크",
 }
 
 
@@ -69,7 +69,7 @@ def main():
         print(f"[ERROR] 파일 없음: {path}", file=sys.stderr)
         sys.exit(2)
 
-    # 교재/강의/가이드 doc 만 검증 — 파일명·경로 휴리스틱
+    # 교재/강의/가이드 doc 만 검증 — 파일명-경로 휴리스틱
     name_lower = str(path).lower()
     is_teaching = any(k in name_lower for k in [
         "teaching", "교재", "강의", "guide", "가이드", "튜토리얼", "tutorial",

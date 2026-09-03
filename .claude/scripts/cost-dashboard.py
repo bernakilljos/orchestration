@@ -1,4 +1,4 @@
-"""비용·활성 대시보드 — orca.db 데이터 HTML 시각화.
+"""비용-활성 대시보드 — orca.db 데이터 HTML 시각화.
 
 generates: .claude/state/dashboard.html (열면 시각화 표시)
 """
@@ -51,26 +51,26 @@ th {{ background:#1F3864; color:white; padding:10px; text-align:left; }}
 td {{ padding:8px; border-bottom:1px solid #eee; }}
 .warn {{ color:#C00000; font-weight:700; }}
 </style></head><body>
-<h1>📊 orchestration_v1 Dashboard</h1>
+<h1>[STAT] orchestration_v1 Dashboard</h1>
 <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
 <div class="card">
-  <h2>🎯 Decisions (24h) — AI 분류 분포</h2>
+  <h2>[TGT] Decisions (24h) — AI 분류 분포</h2>
   <table><tr><th>AI</th><th>호출 수</th></tr>
   {''.join(f'<tr><td>{ai}</td><td>{n}</td></tr>' for ai, n in data.get('decisions_24h', {}).items())}
   </table>
 </div>
 
 <div class="card">
-  <h2>⚡ Activations Top 10 — Skill/Hook/Subagent</h2>
+  <h2>[FAST] Activations Top 10 — Skill/Hook/Subagent</h2>
   <table><tr><th>Layer</th><th>Name</th><th>Count</th><th>Avg ms</th></tr>
   {''.join(f'<tr><td>{r["layer"]}</td><td>{r["name"]}</td><td>{r["count"]}</td><td>{r["avg_ms"]}</td></tr>' for r in data.get('activations_top', []))}
   </table>
 </div>
 
 <div class="card">
-  <h2>⚠ Non-Determinism Issues</h2>
-  {f'<p class="warn">{len(data.get("determinism_issues", []))} 개 prompt 가 다른 결과 반환</p>' if data.get('determinism_issues') else '<p>✅ 모두 결정론적</p>'}
+  <h2>[WARN] Non-Determinism Issues</h2>
+  {f'<p class="warn">{len(data.get("determinism_issues", []))} 개 prompt 가 다른 결과 반환</p>' if data.get('determinism_issues') else '<p>[OK] 모두 결정론적</p>'}
   <table><tr><th>prompt_hash</th><th>unique 결과</th><th>total 실행</th></tr>
   {''.join(f'<tr><td>{r["hash"]}</td><td>{r["unique"]}</td><td>{r["total"]}</td></tr>' for r in data.get('determinism_issues', []))}
   </table>

@@ -47,6 +47,6 @@ for p, pat, cnt in hits[:60]:
     print(f"  {p}  [{pat}] x{cnt}")
 
 if not hits:
-    print("✅ 프로젝트 내 mojibake 없음")
+    print("[OK] 프로젝트 내 mojibake 없음")
 else:
     print(f"\n총 {len(hits)} 파일 — git checkout HEAD -- <file> 로 복구 검토")

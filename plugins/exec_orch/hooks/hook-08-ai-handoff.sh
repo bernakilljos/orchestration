@@ -30,11 +30,11 @@ GEMINI_REPORT="docs/gemini-review.md"
 case "$PHASE" in
   claude-to-codex)
     if [ ! -f "$TASK_INSTR" ]; then
-      echo "[HANDOFF] ❌ $TASK_INSTR 없음 - Claude 가 작성 필요"
+      echo "[HANDOFF] [X] $TASK_INSTR 없음 - Claude 가 작성 필요"
       exit 1
     fi
     if [ ! -f "$HANDOFF_LOG" ]; then
-      echo "[HANDOFF] ❌ $HANDOFF_LOG 없음 - 빈 템플릿 생성"
+      echo "[HANDOFF] [X] $HANDOFF_LOG 없음 - 빈 템플릿 생성"
       cat > "$HANDOFF_LOG" <<EOF
 # Handoff Log
 
@@ -56,31 +56,31 @@ EOF
     fi
     # context / expected_output 비어있으면 차단
     if ! grep -qE "^## Context" "$HANDOFF_LOG" || ! grep -qE "^## Expected Output" "$HANDOFF_LOG"; then
-      echo "[HANDOFF] ❌ handoff-log.md 필수 섹션 누락"
+      echo "[HANDOFF] [X] handoff-log.md 필수 섹션 누락"
       exit 1
     fi
-    echo "[HANDOFF-OK] claude → codex"
+    echo "[HANDOFF-OK] claude -> codex"
     ;;
 
   codex-to-claude)
     if [ ! -f "$IMPL_REPORT" ]; then
-      echo "[HANDOFF] ❌ $IMPL_REPORT 없음 - Codex 가 작성 필요"
+      echo "[HANDOFF] [X] $IMPL_REPORT 없음 - Codex 가 작성 필요"
       exit 1
     fi
     # 변경 파일 목록 + 테스트 결과 확인
     grep -qiE "변경.*파일|changed.*files" "$IMPL_REPORT" || {
-      echo "[HANDOFF] ❌ 변경 파일 목록 누락"; exit 1; }
+      echo "[HANDOFF] [X] 변경 파일 목록 누락"; exit 1; }
     grep -qiE "PASS|FAIL|테스트" "$IMPL_REPORT" || {
-      echo "[HANDOFF] ❌ 테스트 결과 누락"; exit 1; }
-    echo "[HANDOFF-OK] codex → claude"
+      echo "[HANDOFF] [X] 테스트 결과 누락"; exit 1; }
+    echo "[HANDOFF-OK] codex -> claude"
     ;;
 
   gemini-to-claude)
     if [ ! -f "$GEMINI_REPORT" ]; then
-      echo "[HANDOFF] ❌ $GEMINI_REPORT 없음 - Gemini 검증 결과 필요"
+      echo "[HANDOFF] [X] $GEMINI_REPORT 없음 - Gemini 검증 결과 필요"
       exit 1
     fi
-    echo "[HANDOFF-OK] gemini → claude"
+    echo "[HANDOFF-OK] gemini -> claude"
     ;;
 
   *)

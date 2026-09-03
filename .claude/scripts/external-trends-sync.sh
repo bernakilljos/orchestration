@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # external-trends-sync.sh
-# 매시간 외부 트렌드 소스 (Claude doc · prompting guide · Reddit RSS · HackerNews) fetch
-# → 변경 발견 시 task-instruction.md 생성 + git branch + PR.
+# 매시간 외부 트렌드 소스 (Claude doc - prompting guide - Reddit RSS - HackerNews) fetch
+# -> 변경 발견 시 task-instruction.md 생성 + git branch + PR.
 #
 # Trigger: Windows Task Scheduler 또는 CronCreate prompt
-# 인스타그램 fetch 는 인증 게이트로 직접 불가 → 공개 소스로 대체:
+# 인스타그램 fetch 는 인증 게이트로 직접 불가 -> 공개 소스로 대체:
 #   - https://docs.anthropic.com/en/release-notes/claude-code
 #   - https://www.promptingguide.ai/sitemap.xml
 #   - https://www.reddit.com/r/PromptEngineering/.rss
@@ -24,7 +24,7 @@ TS_FILE="$(date '+%Y-%m-%d_%H%M')"
 TS_HUMAN="$(date '+%Y-%m-%d %H:%M:%S')"
 LOG="$LOG_DIR/external-trends.log"
 
-# 1) 소스 목록 (URL · 캐시 키)
+# 1) 소스 목록 (URL - 캐시 키)
 declare -A SOURCES=(
   ["anthropic-release-notes"]="https://docs.anthropic.com/en/release-notes/claude-code"
   ["promptingguide-sitemap"]="https://www.promptingguide.ai/sitemap.xml"
@@ -51,7 +51,7 @@ for key in "${!SOURCES[@]}"; do
   # Noise 필터 — sha 계산 전에 변동성 큰 fragment 제거
   # 1) Next.js bundle hash + nonce + CSS chunk (HTML)
   # 2) RSS pubDate/lastBuildDate timestamp
-  # 3) <script>·<style> 내부 (대부분 noise)
+  # 3) <script>-<style> 내부 (대부분 noise)
   clean=$(echo "$body" \
     | sed -E 's|<script[^>]*>.*</script>||gI; s|<style[^>]*>.*</style>||gI' \
     | sed -E 's|/_next/static/[^"]*||g' \
@@ -135,13 +135,13 @@ TASK_FILE="$TASKS_DIR/task-${SLUG}.md"
   echo "- task-instruction-template 의 § 1~10 어디에 적용할지 명시"
   echo
   echo "## 5) Reasoning (CoT)"
-  echo "1. 변경 raw 본문 읽고 핵심 기법·뉴스 추출"
+  echo "1. 변경 raw 본문 읽고 핵심 기법-뉴스 추출"
   echo "2. 12 기법 매트릭스와 비교 — 신규 / 중복 / 보강 분류"
   echo "3. 신규면 추가, 보강이면 example 갱신"
   echo
   echo "## 6) Negative constraints"
-  echo "- 추측·헛소문 추가 X (소스 URL + 발견 일자 명시 필수)"
-  echo "- 12 기법 → 30 기법 무한 확장 X (실제 사용 검증된 것만)"
+  echo "- 추측-헛소문 추가 X (소스 URL + 발견 일자 명시 필수)"
+  echo "- 12 기법 -> 30 기법 무한 확장 X (실제 사용 검증된 것만)"
   echo "- description 1024 byte 초과 X"
   echo
   echo "## 7) 변경 디테일"

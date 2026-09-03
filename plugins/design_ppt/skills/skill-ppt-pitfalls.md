@@ -195,7 +195,7 @@ python .claude/scripts/update-ppt-page-numbers.py
 
 ---
 
-## 10. 우측 여백 함정 (2026-04-29 발견) ⚠️
+## 10. 우측 여백 함정 (2026-04-29 발견) 
 
 **증상**: 본문 슬라이드 (`class="body"` 사용) 가 우측 720px 빈 여백.
 Cover/TOC/Closing 은 정상.

@@ -12,11 +12,11 @@ description: LLM 이 자기 prompt 를 자가 개선·평가·재작성. prompt 
 
 | 상황 | Meta 적용? |
 |---|---|
-| Codex 가 같은 task 2회 hallucination | ✅ prompt 재작성 |
-| 사용자 요청이 1줄 ("X 해줘") | ✅ 5단계 plan 으로 확장 |
-| task-instruction.md 작성 후 hook-01 가 "4 기법 누락" warning | ✅ 보강 |
-| 첫 시도 결과 불일치 | ✅ prompt 자체 점검 |
-| 결과가 잘 나왔음 | ❌ 그대로 |
+| Codex 가 같은 task 2회 hallucination |  prompt 재작성 |
+| 사용자 요청이 1줄 ("X 해줘") |  5단계 plan 으로 확장 |
+| task-instruction.md 작성 후 hook-01 가 "4 기법 누락" warning |  보강 |
+| 첫 시도 결과 불일치 |  prompt 자체 점검 |
+| 결과가 잘 나왔음 |  그대로 |
 
 ## 2. 표준 프로토콜 (3 단계)
 
@@ -74,9 +74,9 @@ Codex, 이거 고쳐줘.
 ```
 
 ### After Critique
-- ❌ Role 없음
-- ❌ Files 없음
-- ❌ Acceptance criteria 없음
+-  Role 없음
+-  Files 없음
+-  Acceptance criteria 없음
 
 ### After Rewrite (강함)
 ```text

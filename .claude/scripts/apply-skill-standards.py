@@ -2,7 +2,7 @@
 """스킬 표준화 일괄 적용 (PDF Anthropic 가이드 기준)
 
 작업:
-  1. plugins/*/skills/*.md 에 frontmatter (name·description) 추가
+  1. plugins/*/skills/*.md 에 frontmatter (name-description) 추가
   2. plugin.json metadata 에 triggers 배열 추가
   3. plugins/*/SPEC.md 에 트러블슈팅 섹션 추가 (없으면)
 """
@@ -123,7 +123,7 @@ TROUBLESHOOT_TEMPLATE = """
 |---|---|---|
 | 커맨드 인식 안 됨 | sync 미실행 | `bash .claude/scripts/sync-plugins.sh` |
 | 환경변수 누락 | `.env` 미설정 | `.env.example` 복사 후 값 입력 |
-| API 호출 실패 | 쿼터·네트워크·토큰 | `scripts/common.sh` 의 retry 로직 확인 |
+| API 호출 실패 | 쿼터-네트워크-토큰 | `scripts/common.sh` 의 retry 로직 확인 |
 | 한글 깨짐 | 인코딩 | `.claude/hooks/check-mojibake.sh` 가 차단. UTF-8 로 재저장 |
 | 드라이런 실패 | 인자 미지원 | `is_dry_run "$@"` 헬퍼 검사 |
 

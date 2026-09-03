@@ -63,10 +63,10 @@ claude mcp add figma -s user \
 
 ## 삭제된 거짓 명령어 (npm에 없음)
 
-❌ `@modelcontextprotocol/server-office` — 404 (npm 존재 안 함)
-❌ `@googleapis/mcp-server-slides` — 404 (npm 존재 안 함)
-❌ "Gamma claude.ai 내장" — Claude Code CLI에는 없음 (claude.ai 웹 전용)
-❌ "Canva/Figma/Gamma 내장" — 가정 제거
+ `@modelcontextprotocol/server-office` — 404 (npm 존재 안 함)
+ `@googleapis/mcp-server-slides` — 404 (npm 존재 안 함)
+ "Gamma claude.ai 내장" — Claude Code CLI에는 없음 (claude.ai 웹 전용)
+ "Canva/Figma/Gamma 내장" — 가정 제거
 
 ## 사용 가능 파이프라인
 

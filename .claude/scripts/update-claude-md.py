@@ -1,6 +1,6 @@
 """CLAUDE.md 자동 업데이트 — 새 plugin/rule/skill 추가 시 § 4 핵심 경로 표 갱신.
 
-PostToolUse hook 트리거: new plugin.json 생성·rule 추가 시 자동.
+PostToolUse hook 트리거: new plugin.json 생성-rule 추가 시 자동.
 """
 import sys
 import json
@@ -50,7 +50,7 @@ def update():
     # § 1 WHAT 안 stats 줄 자동 갱신 (있으면 교체, 없으면 추가)
     marker = "<!-- AUTO-STATS -->"
     stats_block = f"""{marker}
-> **현재 상태** ({today}): plugins {stats['plugins_stable']} stable + {stats['plugins_spec']} spec-only · rules {stats['rules']} · hooks {stats['hooks']} · scripts {stats['scripts']}
+> **현재 상태** ({today}): plugins {stats['plugins_stable']} stable + {stats['plugins_spec']} spec-only - rules {stats['rules']} - hooks {stats['hooks']} - scripts {stats['scripts']}
 {marker}"""
 
     if marker in content:

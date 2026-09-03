@@ -5,7 +5,7 @@ allowed-tools: Bash(cursor:*), Read, Write
 
 # /cursor-dispatch — Cursor IDE multi-harness 위임
 
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ wshobson/agents 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  wshobson/agents 패턴.
 > **사용**: 시각적 step-by-step refactor · 복잡 frontend 작업 · Cursor Composer 의 iterative 강점 필요 시.
 > **요구**: Cursor IDE 설치 + (선택) `CURSOR_API_KEY`.
 

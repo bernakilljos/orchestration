@@ -64,7 +64,7 @@ EOF
   fi
 fi
 
-# docx 실제 페이지 검증 (Word COM — 진짜 빈 페이지·자투리 검출) — build-*-doc.py 호출 시
+# docx 실제 페이지 검증 (Word COM — 진짜 빈 페이지-자투리 검출) — build-*-doc.py 호출 시
 VERIFY_DOCX_PAGES="$PROJECT_ROOT/.claude/scripts/verify-docx-pages.py"
 VERIFY_DOCX_VISUAL="$PROJECT_ROOT/.claude/scripts/verify-docx-visual.py"
 if echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then
@@ -80,7 +80,7 @@ if echo "$CMD" | grep -qE 'build-[a-z-]+-doc\.py'; then
 EOF
       fi
     fi
-    # 2차: docx → PDF → PNG visual export — Claude 가 Read tool 로 시각 확인 의무
+    # 2차: docx -> PDF -> PNG visual export — Claude 가 Read tool 로 시각 확인 의무
     if [ -f "$VERIFY_DOCX_VISUAL" ]; then
       python "$VERIFY_DOCX_VISUAL" "$docx" "1,4,6,10,15,20" >/dev/null 2>&1 || true
       VISUAL_DIR="$(dirname "$docx")/_visual"
@@ -110,9 +110,9 @@ if echo "$CMD" | grep -qE '(render|build|generate)-[a-z-]+\.py'; then
     COV_RESULT="$(PYTHONIOENCODING=utf-8 python "$VERIFY_COVERAGE" "$RENDER_SCRIPT_DIR" 2>&1 || true)"
     if echo "$COV_RESULT" | grep -q '\[WARN\]'; then
       # 자동 생성된 crop PNG 경로 추출
-      CROP_PATHS="$(echo "$COV_RESULT" | grep -oE 'crop → [^[:space:]]+' | sed 's|crop → ||' | sed 's|.*|  - &|' | head -10)"
+      CROP_PATHS="$(echo "$COV_RESULT" | grep -oE 'crop -> [^[:space:]]+' | sed 's|crop -> ||' | sed 's|.*|  - &|' | head -10)"
       cat <<EOF
-{"systemMessage": "[hook-09 coverage] 렌더링 후 **콘텐츠 밀도 부족 영역** 자동 검출 (verify-render-coverage.py):\n\n$COV_RESULT\n\n→ 위 crop PNG 들을 Read tool 로 **반드시 시각 확인**.\n→ 진짜 빈 영역이면 콘텐츠 추가 (SVG·미니카드·아이콘·키워드).\n→ Read 안 하고 보고 = 전수조사 위반.\n\ncrop 파일:\n$CROP_PATHS"}
+{"systemMessage": "[hook-09 coverage] 렌더링 후 **콘텐츠 밀도 부족 영역** 자동 검출 (verify-render-coverage.py):\n\n$COV_RESULT\n\n-> 위 crop PNG 들을 Read tool 로 **반드시 시각 확인**.\n-> 진짜 빈 영역이면 콘텐츠 추가 (SVG-미니카드-아이콘-키워드).\n-> Read 안 하고 보고 = 전수조사 위반.\n\ncrop 파일:\n$CROP_PATHS"}
 EOF
     fi
   fi
@@ -130,7 +130,7 @@ fi
 VERIFY_PPT_VISUAL="$PROJECT_ROOT/.claude/scripts/verify-ppt-overflow.py"
 if echo "$CMD" | grep -qE 'build-[a-z-]+-(ppt|pptx)\.py|generate-[a-z-]+-ppt\.py'; then
   cat <<EOF
-{"systemMessage": "[hook-09 pptx] pptx 빌드 감지. 산출물 실제 출력 확인 의무 — verify-ppt-overflow.py 결과 + 슬라이드 PNG export → Read tool 로 시각 확인. PNG OCR ≠ pptx 안 실제 출력."}
+{"systemMessage": "[hook-09 pptx] pptx 빌드 감지. 산출물 실제 출력 확인 의무 — verify-ppt-overflow.py 결과 + 슬라이드 PNG export -> Read tool 로 시각 확인. PNG OCR ≠ pptx 안 실제 출력."}
 EOF
 fi
 
@@ -169,7 +169,7 @@ if echo "$CMD" | grep -qE '(Write|Edit).*(memory/feedback_|\.claude/rules/|plugi
   fi
 fi
 
-# ★2 Decision pattern alarm — 같은 키워드 1h 내 3회+ → systemMessage
+# ★2 Decision pattern alarm — 같은 키워드 1h 내 3회+ -> systemMessage
 ALARM_DB="$PROJECT_ROOT/.claude/state/orca.db"
 if [ -f "$ALARM_DB" ]; then
   ALARMS="$(PYTHONIOENCODING=utf-8 python -c "
@@ -190,7 +190,7 @@ conn.close()
   if [ -n "$ALARMS" ]; then
     ALARMS_FMT="$(echo "$ALARMS" | tr '\n' ' ')"
     cat <<EOF
-{"systemMessage": "⚠ [Decision Alarm] 같은 패턴 1시간 내 3회+: ${ALARMS_FMT}— 근본 원인 점검 필요"}
+{"systemMessage": "[WARN] [Decision Alarm] 같은 패턴 1시간 내 3회+: ${ALARMS_FMT}— 근본 원인 점검 필요"}
 EOF
   fi
 fi

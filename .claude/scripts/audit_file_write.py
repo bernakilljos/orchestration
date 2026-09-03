@@ -44,7 +44,7 @@ def log_action(action: str, path: str, reason: str = "", actor: str = "claude") 
 
 BANNED_PATTERNS = [
     (r"^\d+\.(jpg|jpeg|png|gif|pdf|docx?|pptx?|xlsx?|txt|md)$", "순수 숫자 파일명"),
-    (r"[_-]?(copy|Copy)[_-]?", "'copy' 접미사·중간사"),
+    (r"[_-]?(copy|Copy)[_-]?", "'copy' 접미사-중간사"),
     (r"[_-]?(final|FINAL)[_-]?", "'final' 접미사"),
     (r"[_-]v\d+[._-]?", "'v<number>' 버전 접미사 (feedback_no_version_suffix)"),
     (r"^(untitled|Untitled|new|new_file|temp|tmp)[._-]", "일반명 (untitled/new/temp)"),

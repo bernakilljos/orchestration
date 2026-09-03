@@ -11,15 +11,15 @@
 
 | 섹션 | 기법 (`prompt-techniques.md`) | 필수? |
 |---|---|---|
-| § 1 Role | #1 Role prompting | ✅ |
-| § 2 Context | #3 Context priming | ✅ |
-| § 3 Files (allow-list) | — | ✅ |
-| § 4 Acceptance criteria | #4 Few-shot | ✅ |
-| § 5 Reasoning (CoT) | #5 Chain of Thought | ✅ |
-| § 6 Negative constraints | #2 Negative prompting | ✅ |
+| § 1 Role | #1 Role prompting |  |
+| § 2 Context | #3 Context priming |  |
+| § 3 Files (allow-list) | — |  |
+| § 4 Acceptance criteria | #4 Few-shot |  |
+| § 5 Reasoning (CoT) | #5 Chain of Thought |  |
+| § 6 Negative constraints | #2 Negative prompting |  |
 | § 7 ReAct loop | #10 ReAct | 도구 사용 시 |
-| § 8 완료 검증 | post-codex-verify | ✅ |
-| § 9 Confidence | failure-mode | ✅ |
+| § 8 완료 검증 | post-codex-verify |  |
+| § 9 Confidence | failure-mode |  |
 | § 10 Self-consistency | #8 Self-consistency | 보안·DB·money 시만 |
 
 표준: `plugins/exec_orch/codex/task-instruction-template.md`
@@ -61,11 +61,11 @@ bash plugins/exec_orch/hooks/post-codex-verify.sh post <slug>
 
 | 신호 | Codex 위임? |
 |---|---|
-| 코드 500줄+ | ✅ ×4 병렬 |
-| 단순 구현 <200줄 | ❌ Sonnet 4.6 직접 |
-| 설계·아키텍처·왜 | ❌ Opus 4.7 Extended Thinking |
-| 검증·리뷰 | ❌ Haiku 4.5 ×2 |
-| 1M+ 리서치 | ❌ Gemini Flash |
+| 코드 500줄+ |  ×4 병렬 |
+| 단순 구현 <200줄 |  Sonnet 4.6 직접 |
+| 설계·아키텍처·왜 |  Opus 4.7 Extended Thinking |
+| 검증·리뷰 |  Haiku 4.5 ×2 |
+| 1M+ 리서치 |  Gemini Flash |
 
 ## 사후 검증 의무 (`post-codex-verify.md`)
 

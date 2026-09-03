@@ -80,16 +80,16 @@ def route(
     2. Check daily rollover (UTC midnight)
     3. Build quota map (check each AI)
     4. Select preferred AI by task type:
-       - DESIGN/REFACTOR/ambiguous → Opus 4.7 + thinking
-       - IMPLEMENT <200 tokens → Sonnet 4.6
-       - IMPLEMENT 200-800k → Opus 4.7
-       - IMPLEMENT >=800k → Codex (parallel) or Gemini 1M
-       - VERIFY → Haiku 4.5 (default), Gemini if >500k
-       - DOCUMENT → Sonnet 4.6
-       - SIMPLE → Sonnet 4.6
-       - retry_count >0 AND prior_ai=(Sonnet/Haiku) → Opus 4.7
+       - DESIGN/REFACTOR/ambiguous -> Opus 4.7 + thinking
+       - IMPLEMENT <200 tokens -> Sonnet 4.6
+       - IMPLEMENT 200-800k -> Opus 4.7
+       - IMPLEMENT >=800k -> Codex (parallel) or Gemini 1M
+       - VERIFY -> Haiku 4.5 (default), Gemini if >500k
+       - DOCUMENT -> Sonnet 4.6
+       - SIMPLE -> Sonnet 4.6
+       - retry_count >0 AND prior_ai=(Sonnet/Haiku) -> Opus 4.7
     5. Check preferred AI quota. If exceeded, use fallback_chain.
-    6. If all exceeded → WAIT with backoff
+    6. If all exceeded -> WAIT with backoff
     7. Auto-enable thinking if DESIGN/REFACTOR or ambiguous or retry_count>0
 
     Args:
@@ -254,7 +254,7 @@ def route(
             tokens_out=int(estimated_tokens * 0.5),  # Conservative estimate
         )
 
-    reason = f"{task_type.value} → {selected_ai.value}"
+    reason = f"{task_type.value} -> {selected_ai.value}"
     if is_ambiguous:
         reason += " (ambiguous)"
     if use_thinking:

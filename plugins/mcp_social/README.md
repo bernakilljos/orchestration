@@ -2,17 +2,17 @@
 
 > **Status**: spec-only (Phase 1) | **Prefix**: `mcp_` | **버전**: 0.1 | **현황**: YouTube API v3 스펙만 완료
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 **spec-only** — 이 플러그인은 킷에 **스펙만** 있습니다. 실제 구현은 설치 후 플랫폼에서 진행.
 
 공식/커뮤니티 MCP:
-- ✅ **YouTube** — Google Data API v3 (토큰 기반) — `@google/youtube-mcp` (찾아볼 예정)
-- ❌ **Instagram** — 공식 MCP 없음 → Instagram Graph API 직접 호출 또는 playwright 기반
-- ❌ **TikTok** — 공식 MCP 없음 → TikTok API (제한적) 또는 커뮤니티 크롤러
-- ❌ **X (Twitter)** — 공식 MCP 없음 → X API v2 직접 호출
-- ❌ **Naver** — 공식 MCP 없음 → Naver API (블로그·카페) 직접 호출
-- ❌ **Tistory** — 공식 MCP 없음 → Tistory API 직접 호출
+-  **YouTube** — Google Data API v3 (토큰 기반) — `@google/youtube-mcp` (찾아볼 예정)
+-  **Instagram** — 공식 MCP 없음 → Instagram Graph API 직접 호출 또는 playwright 기반
+-  **TikTok** — 공식 MCP 없음 → TikTok API (제한적) 또는 커뮤니티 크롤러
+-  **X (Twitter)** — 공식 MCP 없음 → X API v2 직접 호출
+-  **Naver** — 공식 MCP 없음 → Naver API (블로그·카페) 직접 호출
+-  **Tistory** — 공식 MCP 없음 → Tistory API 직접 호출
 
 ## 📋 커맨드 (예정)
 
@@ -54,38 +54,38 @@ YOUTUBE_REDIRECT_URI=http://localhost:3000/callback
 ### MCP 상태 조회 (Phase 계획)
 
 #### Phase 1: YouTube
-- **상태**: ✅ Google Data API v3 공식 지원
+- **상태**:  Google Data API v3 공식 지원
 - **라이브러리**: `googleapis@^136.0.0`
 - **인증**: OAuth 2.0 (refresh token 기반)
 - **Quota**: 10,000 requests/day (기본)
 - **MCP 가능성**: Google 공식 MCP 확인 중
 
 #### Phase 2: Instagram
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **라이브러리**: `instagram-api` (비공식) 또는 Instagram Graph API 직접 호출
 - **인증**: OAuth 2.0 (Facebook Business 필요)
 - **제한**: 국가별 정책 (한국 제약 가능성)
 
 #### Phase 2: TikTok
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **라이브러리**: TikTok API (제한적 access) 또는 playwright 크롤링
 - **인증**: API Key + Secret (개발자 신청 필요)
 - **제한**: Rate limit 매우 낮음 (개발자 tier)
 
 #### Phase 2: X (Twitter)
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **라이브러리**: `tweepy@^4.0`, `twitter-api-v2` 또는 X API v2 직접 호출
 - **인증**: Bearer Token (OAuth 2.0 또는 API Key)
 - **제한**: Post/Like 권한 유료 (Academic/Pro tier)
 
 #### Phase 3: Naver
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **라이브러리**: `naver-api` (커뮤니티) 또는 REST API 직접 호출
 - **인증**: OAuth 또는 API Key (블로그·카페·지도)
 - **지원**: 블로그, 카페, 지도, 웨일
 
 #### Phase 3: Tistory
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **라이브러리**: Tistory API (공식 REST API)
 - **인증**: OAuth 2.0 (Tistory 플랫폼 필요)
 - **지원**: 블로그 포스트 CRUD, 카테고리, 댓글
@@ -140,7 +140,7 @@ YOUTUBE_REDIRECT_URI=http://localhost:3000/callback
 | 한글 깨짐 | 인코딩 | `.claude/hooks/check-mojibake.sh` 확인 |
 | 드라이런 실패 | `--dry-run` 미지원 | `is_dry_run "$@"` 헬퍼 추가 |
 
-## 📚 참조
+##  참조
 
 - 로드맵: `docs/2026-04-19/로드맵.md` § Phase 1~3
 - YouTube API: `https://developers.google.com/youtube/v3`

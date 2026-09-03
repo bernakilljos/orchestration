@@ -24,9 +24,9 @@ Instagram 트렌드·해시태그·경쟁 채널 리서치. 공식 Graph API (�
 
 | 도구 | 공식 | 데이터 |
 |---|---|---|
-| Graph API v22 Hashtag Search | ✅ | 최근 24h top + recent posts (제한적) |
-| Graph API v22 Business Discovery | ✅ | public competitor data (follower 등) |
-| instagrapi (비공식) | ❌ | trends·explore·suggested — 약관 위험 |
+| Graph API v22 Hashtag Search |  | 최근 24h top + recent posts (제한적) |
+| Graph API v22 Business Discovery |  | public competitor data (follower 등) |
+| instagrapi (비공식) |  | trends·explore·suggested — 약관 위험 |
 
 **권장**: 공식 우선. 비공식은 디자인 트렌드 리서치 같은 비-게시 용도만.
 

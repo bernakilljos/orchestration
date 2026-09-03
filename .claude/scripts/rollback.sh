@@ -27,7 +27,7 @@ BACKUP_LIST=$(ssh ${REMOTE_USER}@${REMOTE_HOST} \
   "ls -t ${APP_PATH}/backup/ 2>/dev/null | head -5" || echo "")
 
 if [ -z "$BACKUP_LIST" ]; then
-  echo "[BLOCK] No backups found → Rollback not possible"
+  echo "[BLOCK] No backups found -> Rollback not possible"
   bash .claude/scripts/notify.sh "danger" "Rollback failed: No backups ($REMOTE_HOST)"
   exit 1
 fi
@@ -73,12 +73,12 @@ STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
   "http://${REMOTE_HOST}:${SERVICE_PORT}" 2>/dev/null || echo "000")
 
 if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
-  echo "[OK] Rollback success → Service healthy [$STATUS]"
-  MSG="Auto rollback complete ($TARGET_ENV) → Restored: $TARGET_BACKUP"
+  echo "[OK] Rollback success -> Service healthy [$STATUS]"
+  MSG="Auto rollback complete ($TARGET_ENV) -> Restored: $TARGET_BACKUP"
   bash .claude/scripts/notify.sh "warning" "$MSG"
 else
-  echo "[FAIL] Service still failing after rollback [$STATUS] → Manual check required"
-  bash .claude/scripts/notify.sh "danger" "Service still failing after rollback [$STATUS] ($REMOTE_HOST) → Manual check required"
+  echo "[FAIL] Service still failing after rollback [$STATUS] -> Manual check required"
+  bash .claude/scripts/notify.sh "danger" "Service still failing after rollback [$STATUS] ($REMOTE_HOST) -> Manual check required"
   exit 1
 fi
 

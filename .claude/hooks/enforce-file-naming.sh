@@ -6,7 +6,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG="$PROJECT_ROOT/.claude/logs/file-audit.log"
 mkdir -p "$PROJECT_ROOT/.claude/logs"
 
-# stdin = hook payload · tool_input.file_path 추출
+# stdin = hook payload - tool_input.file_path 추출
 FILE="$(python -X utf8 -c "
 import json, sys
 try:

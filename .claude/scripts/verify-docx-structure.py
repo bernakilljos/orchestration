@@ -1,12 +1,12 @@
-"""verify-docx-structure.py — docx 안 빈 페이지·중복 page_break·이상 구조 감지.
+"""verify-docx-structure.py — docx 안 빈 페이지-중복 page_break-이상 구조 감지.
 
-A·B·D 의 한계 (PNG·external 만 검증) 보완.
+A-B-D 의 한계 (PNG-external 만 검증) 보완.
 build-*-doc.py 호출 후 hook-09 가 자동 발동.
 
 감지:
-- 연속된 빈 paragraph (3개+) → 빈 페이지 위험
-- 연속된 page_break (2개+) → 빈 페이지 확정
-- 빈 paragraph + page_break 패턴 → 빈 페이지
+- 연속된 빈 paragraph (3개+) -> 빈 페이지 위험
+- 연속된 page_break (2개+) -> 빈 페이지 확정
+- 빈 paragraph + page_break 패턴 -> 빈 페이지
 """
 import sys
 import io

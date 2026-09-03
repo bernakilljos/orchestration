@@ -197,8 +197,8 @@ pip install pywinauto pyautogui
    - AAA: 해당 없음 (최소 AA만)
 
 예:
-✅ 검정(#000000) on 흰색(#FFFFFF): 21:1 (WCAG AAA)
-❌ 회색(#777777) on 흰색(#FFFFFF): 4.4:1 (AA, AAA 실패)
+ 검정(#000000) on 흰색(#FFFFFF): 21:1 (WCAG AAA)
+ 회색(#777777) on 흰색(#FFFFFF): 4.4:1 (AA, AAA 실패)
 ```
 
 ### CSS 권장 사항
@@ -243,10 +243,10 @@ button:focus {
 ### 패턴 (Best Practices)
 
 ```html
-<!-- ❌ 나쁜 예 -->
+<!--  나쁜 예 -->
 <div onclick="toggleMenu()">메뉴</div>
 
-<!-- ✅ 좋은 예 -->
+<!--  좋은 예 -->
 <button 
   aria-expanded="false"
   aria-controls="navigation"
@@ -287,10 +287,10 @@ button:focus-visible {
 ### 키보드 이벤트 처리
 
 ```javascript
-// ❌ 잘못된 예: Enter만 처리
+//  잘못된 예: Enter만 처리
 <div onclick="handleClick()" onkeydown={e => e.key === 'Enter' && handleClick()}>
 
-// ✅ 올바른 예: Button 사용 또는 Space도 처리
+//  올바른 예: Button 사용 또는 Space도 처리
 <button onclick="handleClick()">클릭</button>
 
 // 또는 div에서:

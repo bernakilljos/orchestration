@@ -9,7 +9,7 @@ Claude + Codex + Gemini 멀티AI 파이프라인 코어 엔진.
 
 ## 📋 커맨드
 
-- `/check-agents` ⭐ 기본
+- `/check-agents`  기본
 - `/exec_orch`
 - `/gemini-verify`
 - `/godmode`
@@ -20,10 +20,10 @@ Claude + Codex + Gemini 멀티AI 파이프라인 코어 엔진.
 
 ## 🧠 스킬
 
-- `exec_orca-auto` ⭐ 핵심
-- `route_dispatch` ⭐ 핵심
+- `exec_orca-auto`  핵심
+- `route_dispatch`  핵심
 - `skill-03-review`
-- `state_session` ⭐ 핵심
+- `state_session`  핵심
 
 ## 🤖 에이전트
 

@@ -15,9 +15,9 @@ git log에서 CHANGELOG.md를 자동 생성한다. 릴리즈 노트, 버전 히�
   feat:     → ✨ 새 기능
   fix:      → 🐛 버그 수정
   docs:     → 📝 문서
-  refactor: → ♻️ 리팩토링
+  refactor: → ♻ 리팩토링
   perf:     → ⚡ 성능 개선
-  test:     → ✅ 테스트
+  test:     →  테스트
   chore:    → 🔧 기타
   BREAKING: → 💥 호환성 변경
 ```

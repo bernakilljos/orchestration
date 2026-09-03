@@ -90,9 +90,9 @@ echo ""
 echo "=== Result: PASS=$PASS FAIL=$FAIL ==="
 
 if [ "$FAIL" -gt 0 ]; then
-  echo "[BLOCK] Quality gate failed → Deploy aborted"
+  echo "[BLOCK] Quality gate failed -> Deploy aborted"
   exit 1
 fi
 
-echo "[OK] Quality gate passed → Ready to deploy"
+echo "[OK] Quality gate passed -> Ready to deploy"
 exit 0

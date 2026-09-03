@@ -8,7 +8,7 @@
 #   - 마지막 sync 시각
 
 set -uo pipefail
-# set -e 제외 — glob 매치 없을 때 조기 종료 방지 (ls *.md → no match)
+# set -e 제외 — glob 매치 없을 때 조기 종료 방지 (ls *.md -> no match)
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
@@ -51,12 +51,12 @@ for hb_name in "local:$HB_LOCAL" "global:$HB_GLOBAL"; do
     if [ $diff -lt 60 ]; then
       echo "  $label: ✓ 활성 ($diff 초 전)"
     elif [ $diff -lt 300 ]; then
-      echo "  $label: ⚠ 지연 (${diff}초 전)"
+      echo "  $label: [WARN] 지연 (${diff}초 전)"
     else
-      echo "  $label: 💤 휴면 (${diff}초 전)"
+      echo "  $label:  휴면 (${diff}초 전)"
     fi
   else
-    echo "  $label: ❌ heartbeat 없음"
+    echo "  $label: [X] heartbeat 없음"
   fi
 done
 echo ""

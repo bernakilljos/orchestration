@@ -1,6 +1,6 @@
 """HyDE RAG — Hypothetical Document Embeddings.
 
-가상 답 생성 → 그 답으로 검색 (질문 자체보다 더 정확).
+가상 답 생성 -> 그 답으로 검색 (질문 자체보다 더 정확).
 LLM 없이 query 확장 기반 (Claude API 호출은 별도 통합).
 """
 import sys
@@ -15,9 +15,9 @@ rag = importlib.util.module_from_spec(spec); spec.loader.exec_module(rag)
 
 
 def expand_query(query: str) -> list:
-    """질문 → 가상 답 패턴 (Claude 없이 룰 기반 expand)."""
+    """질문 -> 가상 답 패턴 (Claude 없이 룰 기반 expand)."""
     hyp = [query]  # 원본 포함
-    # 질문 → 답 형태 변환
+    # 질문 -> 답 형태 변환
     hyp.append(query.replace("?", "").replace("어떻게", "방법은").replace("뭐야", "이것은"))
     hyp.append(f"{query} 답변: 다음과 같은 방법으로 해결")
     hyp.append(f"이 문제는 {query.replace('?', '')} — 해결 방안")

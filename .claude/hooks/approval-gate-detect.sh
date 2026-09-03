@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # approval-gate-detect.sh — PreToolUse Bash matcher
-# 위험 명령 감지 → approval-gate.py request 등록 (CLAUDE.md § 7-23)
+# 위험 명령 감지 -> approval-gate.py request 등록 (CLAUDE.md § 7-23)
 #
 # 5 위험 카테고리: data_loss / security / cost / system / irreversible
 set -e
@@ -60,7 +60,7 @@ echo "[$(date +%F_%T)] BLOCK: $CATEGORY | task_id=$TASK_ID | cmd=$CMD" >> "$LOG"
 cat >&2 <<EOF
 {
   "decision": "block",
-  "reason": "🚨 위험 명령 감지 ($CATEGORY): $DESC. /approve $TASK_ID 또는 /reject $TASK_ID [reason]",
+  "reason": " 위험 명령 감지 ($CATEGORY): $DESC. /approve $TASK_ID 또는 /reject $TASK_ID [reason]",
   "systemMessage": "HITL Approval Gate — task_id=$TASK_ID | category=$CATEGORY | /approve <id> 로 승인 후 진행"
 }
 EOF

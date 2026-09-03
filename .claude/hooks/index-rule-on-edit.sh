@@ -10,7 +10,7 @@ PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 [ -n "${RULE_INDEX_ACTIVE:-}" ] && exit 0
 export RULE_INDEX_ACTIVE=1
 
-# stdin → file_path
+# stdin -> file_path
 INPUT=$(cat 2>/dev/null || echo "")
 [ -z "$INPUT" ] && exit 0
 

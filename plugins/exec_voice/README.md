@@ -13,14 +13,14 @@
 - `/exec_voice`
 - `/meeting`
 - `/speak`
-- `/transcribe` ⭐ 기본
+- `/transcribe`  기본
 - `/voice-status`
 - `/voice-task`
 
 ## 🧠 스킬
 
-- `skill-22-remotion` ⭐ 핵심
-- `skill-25-media-enhance` ⭐ 핵심
+- `skill-22-remotion`  핵심
+- `skill-25-media-enhance`  핵심
 
 ## 🤖 에이전트
 

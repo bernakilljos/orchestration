@@ -3,7 +3,7 @@
 흐름:
 1. Naive RAG 검색
 2. 결과 distance 평가 (0.7 이상 = 약함)
-3. 약하면 query 재작성 → 재검색
+3. 약하면 query 재작성 -> 재검색
 4. 약함 결과 + 강함 결과 합쳐 반환
 """
 import sys
@@ -20,7 +20,7 @@ spec.loader.exec_module(rag)
 
 
 def corrective_search(query: str, top_n: int = 5, threshold: float = 0.7) -> dict:
-    """1차 검색 → 약하면 query 변형 후 2차 검색."""
+    """1차 검색 -> 약하면 query 변형 후 2차 검색."""
     primary = rag.search(query, top_n)
     weak_count = sum(1 for r in primary if isinstance(r.get("distance"), (int, float)) and r["distance"] > threshold)
 

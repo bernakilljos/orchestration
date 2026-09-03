@@ -14,11 +14,11 @@ allowed-tools: Read
 
 | 앱 | 플랫폼 | 무료? | 강점 | 권장 |
 |---|---|---|---|---|
-| **Termius** | iOS·Android·데스크톱 | ✅ 무료 (Pro 옵션) | 키 동기화·SFTP·snippets | ⭐ 1순위 |
+| **Termius** | iOS·Android·데스크톱 |  무료 (Pro 옵션) | 키 동기화·SFTP·snippets |  1순위 |
 | Blink Shell | iOS | $20 (한 번) | mosh·ssh-agent·터미널 품질 최상 | iOS 헤비유저 |
-| Termux | Android | ✅ | 안드로이드 자체 리눅스 환경 | 안드로이드 파워유저 |
-| iSH | iOS | ✅ | iOS 안에서 alpine 리눅스 | 학습용 |
-| JuiceSSH | Android | ✅ | 가벼움 | Termius 대안 |
+| Termux | Android |  | 안드로이드 자체 리눅스 환경 | 안드로이드 파워유저 |
+| iSH | iOS |  | iOS 안에서 alpine 리눅스 | 학습용 |
+| JuiceSSH | Android |  | 가벼움 | Termius 대안 |
 
 ### 1. Termius 권장 흐름 (가장 빠름)
 
@@ -74,7 +74,7 @@ Termius **Snippets** 에 등록:
 
 ### 4. 완료 후
 
-> ✅ 어디서든 폰으로 Claude Code 접속 가능.
+>  어디서든 폰으로 Claude Code 접속 가능.
 > 다음:
 > - 영속 세션 패턴: `/exec_remote-tmux`
 > - 헬스체크: `/exec_remote-status`

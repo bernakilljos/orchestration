@@ -16,7 +16,7 @@ INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|
 if [ "$INFRA" -gt 0 ]; then
   GUIDE=$(echo "$STAGED" | grep -c "^guide.txt" || echo "0")
   if [ "$GUIDE" -eq 0 ]; then
-    echo "❌ [git pre-commit] guide.txt 미포함! git add guide.txt"
+    echo "[X] [git pre-commit] guide.txt 미포함! git add guide.txt"
     exit 1
   fi
 fi

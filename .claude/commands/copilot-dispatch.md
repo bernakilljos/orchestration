@@ -5,7 +5,7 @@ allowed-tools: Bash(gh:*), Read, Write
 
 # /copilot-dispatch — GitHub Copilot CLI multi-harness 위임
 
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ wshobson/agents 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  wshobson/agents 패턴.
 > **사용**: GitHub-native workflow (issue → PR → review) 자동화 · Copilot 구독 시 저비용 보완.
 > **요구**: `gh` CLI + `gh extension install github/gh-copilot` + Copilot 권한 포함 `GITHUB_TOKEN`.
 

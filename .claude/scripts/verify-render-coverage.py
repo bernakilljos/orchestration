@@ -20,7 +20,7 @@ __doc__ = """PNG 콘텐츠 밀도 그리드 검사 — 내부 빈 박스 탐지 
 - PNG 를 N×M 그리드로 분할 (기본 6×8 = 48 cells)
 - 각 셀의 콘텐츠 픽셀 밀도 (non-bg + non-near-bg) 측정
 - 밀도 < threshold (기본 18%) = "비어 보임"
-- 인접 빈 셀 2개+ 클러스터 = "빈 영역" → WARN + crop PNG 자동 생성
+- 인접 빈 셀 2개+ 클러스터 = "빈 영역" -> WARN + crop PNG 자동 생성
 
 사용:
   python verify-render-coverage.py <png>                       # 단일 검사
@@ -65,11 +65,11 @@ def density_grid(png_path: Path, rows: int = 6, cols: int = 8) -> tuple:
     edge_mask = edge > 12
     # Color variance (사진처럼 그라데이션 풍부한 영역 보존)
     # cream (245,239,230) 자체 RGB std≈6.16, white (255,255,255) std=0
-    # → 임계 >8 로 cream/white 배경 제외, 사진·아이콘 (std>15) 만 콘텐츠로
+    # -> 임계 >8 로 cream/white 배경 제외, 사진-아이콘 (std>15) 만 콘텐츠로
     rgb_std = arr.astype(int).std(axis=2)
     color_mask = rgb_std > 8
-    # Brightness — 텍스트·진한색 카드 (gray<200) 만 콘텐츠
-    # cream gray≈238, white=255 → 둘 다 제외
+    # Brightness — 텍스트-진한색 카드 (gray<200) 만 콘텐츠
+    # cream gray≈238, white=255 -> 둘 다 제외
     bright_mask = gray < 200
     # 콘텐츠 = edge OR color variance OR brightness (셋 중 하나만 있어도 콘텐츠)
     content_mask = edge_mask | color_mask | bright_mask
@@ -179,7 +179,7 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
                 (r1 - r0 == 1 and (r0 == 0 or r1 == rows)) or
                 (c1 - c0 == 1 and (c0 == 0 or c1 == cols))
             )
-            # 페이지 ≥30% 면적은 외곽이라도 큰 빈 영역 → 포함
+            # 페이지 ≥30% 면적은 외곽이라도 큰 빈 영역 -> 포함
             area_ratio = cl["size"] / (rows * cols)
             if edge_only and area_ratio < 0.10:
                 continue
@@ -214,8 +214,8 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
                 print(f"    [{w['idx']}] 그리드 ({r0},{c0})~({r1},{c1}) "
                       f"= {w['cells']} 셀, 평균밀도 {w['avg_density']:.1%}")
                 print(f"        픽셀 bbox: {px}")
-                print(f"        crop → {w['crop']}")
-        print(f"\n→ 위 crop PNG 들을 Read tool 로 시각 확인 → 빈 영역이면 콘텐츠 추가")
+                print(f"        crop -> {w['crop']}")
+        print(f"\n-> 위 crop PNG 들을 Read tool 로 시각 확인 -> 빈 영역이면 콘텐츠 추가")
         return 1
 
     print(f"[PASS] 콘텐츠 밀도 그리드 검증 — {len(pngs)}/{len(pngs)} 모두 통과 (빈 클러스터 없음)")

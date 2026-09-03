@@ -10,7 +10,7 @@ if [ -f "${PROJECT_ROOT_GUARD}/.claude/state/ai-native-chain.disabled" ]; then
 fi
 
 # === RECURSION GUARD ===
-# ai-native-chain.sh 가 set 한 env var 가 있으면 = 체인 내부 호출 → 즉시 종료
+# ai-native-chain.sh 가 set 한 env var 가 있으면 = 체인 내부 호출 -> 즉시 종료
 # (PostToolUse 가 chain 내부 file write 에 재귀하지 않도록)
 if [ -n "${AI_NATIVE_CHAIN_ACTIVE:-}" ]; then
   exit 0
@@ -55,7 +55,7 @@ esac
 
 echo "[$(date +%F_%T)] trigger: $FILE_PATH" >> "$LOG"
 
-# Chain script 호출 (test_gen → sec_scan → doc_auto)
+# Chain script 호출 (test_gen -> sec_scan -> doc_auto)
 CHAIN="${PROJECT_ROOT}/.claude/scripts/ai-native-chain.sh"
 if [ -x "$CHAIN" ]; then
   "$CHAIN" test_gen "$FILE_PATH" >> "$LOG" 2>&1 &

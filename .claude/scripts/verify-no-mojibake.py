@@ -39,14 +39,14 @@ PATTERNS = [
     ("룷", "user-reported break fragment"),
     ("꿿", "Korean break pattern"),
     ("괓", "Korean break pattern"),
-    # EUC-KR / cp949 → UTF-8 decoding failures (these chars themselves are valid hanja)
-    ("점쇙올", "cp949 → UTF-8 break"),
-    ("점시", "cp949 → UTF-8 break"),
-    ("점십", "cp949 → UTF-8 break"),
-    # UTF-8 → Latin-1 corruption (most common in web)
-    ("Ã", "UTF-8 → Latin-1 (Ã)"),
-    ("â€", "UTF-8 → Latin-1 (a-euro)"),
-    ("ï¿½", "UTF-8 → Latin-1 (i-question-half)"),
+    # EUC-KR / cp949 -> UTF-8 decoding failures (these chars themselves are valid hanja)
+    ("점쇙올", "cp949 -> UTF-8 break"),
+    ("점시", "cp949 -> UTF-8 break"),
+    ("점십", "cp949 -> UTF-8 break"),
+    # UTF-8 -> Latin-1 corruption (most common in web)
+    ("Ã", "UTF-8 -> Latin-1 (Ã)"),
+    ("â€", "UTF-8 -> Latin-1 (a-euro)"),
+    ("ï¿½", "UTF-8 -> Latin-1 (i-question-half)"),
 ]
 
 # Regex patterns (Korean + ? combo — broken form)

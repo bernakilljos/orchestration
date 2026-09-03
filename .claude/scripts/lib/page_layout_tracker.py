@@ -3,7 +3,7 @@
 룰: .claude/rules/teaching-doc.md § 페이지 콘텐츠 fit
 출처: feedback_full_page_content_fit.md
 
-목적: H1·callout·이미지·표 등 요소들의 height 합산 → 페이지 한계 검증.
+목적: H1-callout-이미지-표 등 요소들의 height 합산 -> 페이지 한계 검증.
 빌더 (build-*-doc.py) 가 IMG/INSERT 함수 호출 전 PageLayoutTracker 로 max_height 계산.
 
 사용 예:

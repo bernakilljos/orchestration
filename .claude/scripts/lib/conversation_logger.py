@@ -1,5 +1,5 @@
 """
-conversation_logger — 세션 대화·요약 저장/로드
+conversation_logger — 세션 대화-요약 저장/로드
 사용: SessionStart / UserPromptSubmit / Stop hook 에서 호출
 근거: 사용자 지적 (2026-09-02) — 세션 끊기면 memory 유실
 """
@@ -29,7 +29,7 @@ def get_session_id() -> str:
 
 
 def save_turn(role: str, content: str, tags: str | None = None) -> None:
-    """UserPrompt·Assistant·Tool 대화 한 turn 저장."""
+    """UserPrompt-Assistant-Tool 대화 한 turn 저장."""
     if not content:
         return
     sid = get_session_id()
@@ -75,7 +75,7 @@ def save_session_summary(summary: str, key_decisions: str = "", files: str = "")
 
 
 def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
-    """가장 최근 N 세션의 요약 로드 · SessionStart 프롬프트 주입용."""
+    """가장 최근 N 세션의 요약 로드 - SessionStart 프롬프트 주입용."""
     with _conn() as c:
         rows = c.execute(
             """SELECT session_id, started_at, turns, summary, key_decisions
@@ -88,7 +88,7 @@ def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
         return ""
     parts = ["## 이전 세션 요약 (자동 로드)\n"]
     for sid, st, turns, summ, dec in rows:
-        parts.append(f"### {st} · {turns} turns · session={sid[:8]}")
+        parts.append(f"### {st} - {turns} turns - session={sid[:8]}")
         if summ:
             parts.append(summ)
         if dec:

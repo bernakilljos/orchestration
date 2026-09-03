@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-09-02): plugins 36 stable + 0 spec-only · rules 45 · hooks 31 · scripts 129
+> **현재 상태** (2026-09-03): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 132
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -53,7 +53,7 @@
 1. **Orca Auto** — `.claude/skills/exec_orca-auto.md` 실행 (워커 spawn)
 2. **First-Run** — `docs/CLAUDE_SETUP_GUIDE.md` 있으면 처리 후 삭제
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
-4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 (⭐⭐ 이상 자율 반영, ⭐ 이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
+4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 ( 이상 자율 반영,  이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 5. **세션 히스토리 자동 로드 (2026-09-02 신설)** — `.claude/hooks/load-recent-conversations.sh` 가 `orca.db.session_summary` 최근 3 세션 요약을 systemMessage 로 주입 → 새 세션이 이전 문맥 자동 인지 · UserPromptSubmit·Stop·SessionEnd 는 대화·요약을 `conversations` / `session_summary` 자동 저장. 상세: `.claude/rules/conversation-history.md`
 
 ### 3.2 AI 역할 (규모·특성 기반, **Opus 5 신규 default 2026-07-24** · Opus 4.8 병존 · Fable 5 초난도 · Sonnet 5 균형)
@@ -155,7 +155,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
 4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
 5. **통합 MCP (2026-09 채택)**:
-   - **Headroom** (Apache 2.0 · 10k+ ⭐ · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
+   - **Headroom** (Apache 2.0 · 10k+  · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
    - **claude-mem** (오픈소스 · `npx -y claude-mem install --provider claude`) — 자동 세션 관측·복원 · SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd 5 hook 자동 등록 · SQLite + Chroma 저장 (`~/.claude-mem`) · Worker 127.0.0.1:37777 · Cloud sync OFF (local)
    - **task-observer** (오픈소스 Skill · `npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code`) — 태스크 실행 관측 · 패턴·사용자 수정·재사용 스킬 기회 캡처 · `.claude/skills/task-observer/` · description matching 자동 활성 · 우리 orca.db 관측과 병행 (skill 개선 축)
    - **자동 시작**: `.claude/scripts/mcp-autostart.sh` (SessionStart hook · Headroom proxy + claude-mem worker 백그라운드 spawn · 이미 돌면 skip)
@@ -177,25 +177,25 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 
 | 경로 | 용도 | 편집 |
 |------|------|------|
-| `plugins/` | **원본** (14 stable + 7 spec-only + `_template`) | ✅ 여기만 |
-| `.claude/commands,skills/` | sync 결과물 | ❌ 자동 생성 |
-| `.claude/rules/` | 공유 규칙 (plugin-structure·frontmatter·file-naming·sync·indentation) | ✅ |
-| `.claude/scripts/` | sync·validate·install·orca-status·worker-health·route·watchdog·metrics 등 | ✅ |
-| `.claude/scripts/lib/` | state_db·router·pricing·prompt_cache·watchdog_helpers (10개) | ✅ |
-| `.claude/hooks/` | PreToolUse·PostToolUse·SessionEnd 훅 스크립트 | ✅ |
+| `plugins/` | **원본** (14 stable + 7 spec-only + `_template`) |  여기만 |
+| `.claude/commands,skills/` | sync 결과물 |  자동 생성 |
+| `.claude/rules/` | 공유 규칙 (plugin-structure·frontmatter·file-naming·sync·indentation) |  |
+| `.claude/scripts/` | sync·validate·install·orca-status·worker-health·route·watchdog·metrics 등 |  |
+| `.claude/scripts/lib/` | state_db·router·pricing·prompt_cache·watchdog_helpers (10개) |  |
+| `.claude/hooks/` | PreToolUse·PostToolUse·SessionEnd 훅 스크립트 |  |
 | `.claude/state/orca.db` | **SQLite 통합 상태** (workers·tasks·metrics·quota·budget·session) | 자동 |
 | `.claude/tasks/` | task-instruction.md, locks/, done/ | 자동 |
 | `~/.claude/orca/` | **전역 큐** (멀티 프로젝트) | 자동 |
-| `.claude-plugin/` | plugin.json + schema + marketplace.json | ✅ |
-| `docs/architecture-patterns.md` | 설계 원칙 9가지 | ✅ |
-| `docs/caching-strategy.md` | Prompt caching TTL 전략 | ✅ |
-| `docs/routing-policy.md` | 4.8 라우팅 결정 트리 상세 | ✅ |
-| `docs/metrics-guide.md` | Metrics DB 스키마·쿼리 | ✅ |
-| `docs/2026-04-19/로드맵.md` | Phase 1~3 스펙 (미래 26개) | ✅ |
-| `guide.txt` | 사람용 전체 가이드 (섹션 1~14) | ✅ |
+| `.claude-plugin/` | plugin.json + schema + marketplace.json |  |
+| `docs/architecture-patterns.md` | 설계 원칙 9가지 |  |
+| `docs/caching-strategy.md` | Prompt caching TTL 전략 |  |
+| `docs/routing-policy.md` | 4.8 라우팅 결정 트리 상세 |  |
+| `docs/metrics-guide.md` | Metrics DB 스키마·쿼리 |  |
+| `docs/2026-04-19/로드맵.md` | Phase 1~3 스펙 (미래 26개) |  |
+| `guide.txt` | 사람용 전체 가이드 (섹션 1~14) |  |
 | `.env` / `.env.example` | 환경변수 (하드코딩 금지) | .env 는 gitignore |
 | `.vscode/settings.json` | VS Code 워크스페이스 최적화 (file watcher exclude·인터프리터 동적 지정·메모리 절감) | 자동 (setup/templates + SessionStart hook 가 idempotent 배포) |
-| `setup/templates/vscode-settings.template.json` | 머신 독립 template (`__PYTHON_PATH__` placeholder) | ✅ |
+| `setup/templates/vscode-settings.template.json` | 머신 독립 template (`__PYTHON_PATH__` placeholder) |  |
 
 ---
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # UserPromptSubmit hook — 사용자 메시지 받자마자 5단계 plan + MoE 자동 분류 강제 발동.
-# 1) Trigger 키워드 감지 → 5단계 의무 systemMessage 주입
-# 2) classify-task.py 자동 호출 → 최적 AI 결정 → Claude 에 가이드 주입
+# 1) Trigger 키워드 감지 -> 5단계 의무 systemMessage 주입
+# 2) classify-task.py 자동 호출 -> 최적 AI 결정 -> Claude 에 가이드 주입
 # 사용자 액션 0 (Zero-touch). Codex/Gemini 자동 dispatch 가이드 포함.
 set -e
 INPUT="$(cat)"
@@ -12,11 +12,11 @@ else
   PROMPT="$(echo "$INPUT" | grep -oE '"prompt"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/' | head -c 1000)"
 fi
 
-# trigger 키워드 — 작업 지시·결함 지적·점검 요청 (한글 트리거 포함)
+# trigger 키워드 — 작업 지시-결함 지적-점검 요청 (한글 트리거 포함)
 TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|짤린|짤림|잘림|잘리|짤리|여백|여전|넘쳐|안보|글씨|보여야|잘되|잘됨|잘하|부족|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|놓쳤|fix|build|verify|check|review|test|update|add|change|왜이리|방지|보완|이미지|메모리|성능'
 
 if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
-  # MoE 자동 분류 — 사용자 메시지 → 최적 AI 결정
+  # MoE 자동 분류 — 사용자 메시지 -> 최적 AI 결정
   PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
   CLASSIFIER="$PROJECT_ROOT/.claude/scripts/classify-task.py"
   AI="claude"
@@ -36,12 +36,12 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
     *)       GUIDE="[MoE 자동] Claude 직접 처리 ($REASON)" ;;
   esac
 
-  # Subagent 자동 가이드 — 큰 탐색/리뷰 키워드 감지 → Task tool 권장
+  # Subagent 자동 가이드 — 큰 탐색/리뷰 키워드 감지 -> Task tool 권장
   SUBAGENT_GUIDE=""
   if echo "$PROMPT" | grep -qE '전수조사|전체.*탐색|전체.*검색|모든.*파일|모든.*폴더|코드베이스|whole.?code|grep.*all'; then
-    SUBAGENT_GUIDE="\n\n[Subagent 자동] '큰 코드베이스 탐색' 감지 → Task tool 로 Explore subagent 자동 호출 권장 (메인 컨텍스트 격리)"
+    SUBAGENT_GUIDE="\n\n[Subagent 자동] '큰 코드베이스 탐색' 감지 -> Task tool 로 Explore subagent 자동 호출 권장 (메인 컨텍스트 격리)"
   elif echo "$PROMPT" | grep -qE '리뷰|review|코드 검토|PR 검토'; then
-    SUBAGENT_GUIDE="\n\n[Subagent 자동] '코드 리뷰' 감지 → Task tool 로 code-reviewer subagent 자동 호출 권장"
+    SUBAGENT_GUIDE="\n\n[Subagent 자동] '코드 리뷰' 감지 -> Task tool 로 code-reviewer subagent 자동 호출 권장"
   fi
 
   # Activation 로그 (background)
@@ -83,11 +83,11 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   COMPACT_MARKER="$PROJECT_ROOT/.claude/context-cache/auto-compact-recommended"
   if [ -f "$COMPACT_MARKER" ]; then
     MARKER_INFO="$(cat "$COMPACT_MARKER" 2>/dev/null | head -1 | tr -d '\\n\\r' | sed 's/"/\\\\"/g')"
-    COMPACT_GUIDE="\\n\\n[auto-compact ENFORCED — 컨텍스트 임계치 도달]\\n트리거: ${MARKER_INFO}\\n\\n★ Claude 의무 (이번 turn 0순위):\\n  1) 사용자 이번 prompt 처리 **전에 가장 먼저 /compact 자체 실행** (모든 도구 호출·답변 전)\\n  2) compact 완료 후 사용자 원래 요청 처리\\n  3) 한국어 한 줄 통지: '[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행'\\n\\n★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐\\n★ 마커 정리: compact 후 .claude/context-cache/auto-compact-recommended 파일 삭제"
+    COMPACT_GUIDE="\\n\\n[auto-compact ENFORCED — 컨텍스트 임계치 도달]\\n트리거: ${MARKER_INFO}\\n\\n★ Claude 의무 (이번 turn 0순위):\\n  1) 사용자 이번 prompt 처리 **전에 가장 먼저 /compact 자체 실행** (모든 도구 호출-답변 전)\\n  2) compact 완료 후 사용자 원래 요청 처리\\n  3) 한국어 한 줄 통지: '[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행'\\n\\n★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐\\n★ 마커 정리: compact 후 .claude/context-cache/auto-compact-recommended 파일 삭제"
   fi
 
   cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[대상 확정 REQUIRED — 0순위]\n★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\n★ 4갈래 후보:\n  1) C:\\\\pjt\\\\orchestration_v1\\\\ (kit 자체 감사·룰·hook)\n  2) C:\\\\pjt\\\\orchestration_v1\\\\setup\\\\templates\\\\ (install 배포용 template)\n  3) install 대상 실운영 프로젝트 (경로 물어봐 — 사용자가 '실운영'·'하드코딩 실측'·'재발 방지 헌장'·비즈니스 지표명 언급 시)\n  4) ~/.claude/ (글로벌 설정)\n★ 대상 확정 전 grep·Read·Edit·Bash 착수 = 룰 위반. 자동 후보 나열도 X 하고 kit 뒤지기 시작 = 재발.\n상세: .claude/rules/direction-first.md · feedback_confirm_target_first.md\n\n[auto-planner ENFORCED]\n사용자 메시지에 작업 지시·결함 지적·점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템·전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동·PASS 확인\n5) 보고 — 표·목록으로 결과 + 남은 결정사항\n\n금기:\n- 대상 확정 없이 실행 착수 (0순위 위반)\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피·딴말 (직접 답 → 부연 → 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}${COMPACT_GUIDE}"}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[대상 확정 REQUIRED — 0순위]\n★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\n★ 4갈래 후보:\n  1) C:\\\\pjt\\\\orchestration_v1\\\\ (kit 자체 감사-룰-hook)\n  2) C:\\\\pjt\\\\orchestration_v1\\\\setup\\\\templates\\\\ (install 배포용 template)\n  3) install 대상 실운영 프로젝트 (경로 물어봐 — 사용자가 '실운영'-'하드코딩 실측'-'재발 방지 헌장'-비즈니스 지표명 언급 시)\n  4) ~/.claude/ (글로벌 설정)\n★ 대상 확정 전 grep-Read-Edit-Bash 착수 = 룰 위반. 자동 후보 나열도 X 하고 kit 뒤지기 시작 = 재발.\n상세: .claude/rules/direction-first.md - feedback_confirm_target_first.md\n\n[auto-planner ENFORCED]\n사용자 메시지에 작업 지시-결함 지적-점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템-전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동-PASS 확인\n5) 보고 — 표-목록으로 결과 + 남은 결정사항\n\n금기:\n- 대상 확정 없이 실행 착수 (0순위 위반)\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피-딴말 (직접 답 -> 부연 -> 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}${COMPACT_GUIDE}"}}
 EOF
 fi
 

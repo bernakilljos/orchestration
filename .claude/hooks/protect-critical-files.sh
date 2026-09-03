@@ -8,7 +8,7 @@ TOOL=$(echo "$INPUT" | grep -o '"tool_name":"[^"]*"' | head -1 | cut -d'"' -f4)
 FILE=$(echo "$INPUT" | grep -o '"file_path":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 # 보호 대상 파일 패턴
-# 주: .claude/settings.json·settings.local.json 은 Claude 본인이 관리하므로 제외.
+# 주: .claude/settings.json-settings.local.json 은 Claude 본인이 관리하므로 제외.
 #     .vscode/*.json 은 VS Code IDE 설정이므로 제외 (사용자 워크스페이스 최적화 자율).
 #     (codex/gemini 는 외부 프로세스이므로 이 훅을 거치지 않음 — 워커 보호엔 영향 없음)
 PROTECTED_FILES=(

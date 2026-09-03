@@ -89,7 +89,7 @@ index 0000000..fbce883
 +
 +# 헤더 메시지에 Llama 표기 추가
 +old_msg = '<strong>📌 형식:</strong> 각 신상품 = <strong>접목 신기술 + 무엇을 새로 할지 + 대상 + 매출 잠재</strong>.<br>\n    행동위험분석 외 영역 위주. ITCEN CORE 자사 패키지 위에 AI 모듈 추가 → 기존 1위 채널 그대로 활용.'
-+new_msg = '<strong>📌 형식:</strong> 각 신상품 = <strong>접목 신기술 + 무엇 + 어떻게 + 대상 + 매출</strong>.<br>\n    <strong style="color:#FFC107">⭐ LLM 부분 모두 Llama 4 (오픈소스·자체 운영) 통일</strong> — API 비용 0, 데이터 유출 X, 한국 도메인 LoRA fine-tune 가능.<br>\n    행동위험분석 외 영역 위주. ITCEN CORE 자사 패키지 위에 Llama 4 모듈 추가 → 기존 1위 채널 추가판매.'
++new_msg = '<strong>📌 형식:</strong> 각 신상품 = <strong>접목 신기술 + 무엇 + 어떻게 + 대상 + 매출</strong>.<br>\n    <strong style="color:#FFC107"> LLM 부분 모두 Llama 4 (오픈소스·자체 운영) 통일</strong> — API 비용 0, 데이터 유출 X, 한국 도메인 LoRA fine-tune 가능.<br>\n    행동위험분석 외 영역 위주. ITCEN CORE 자사 패키지 위에 Llama 4 모듈 추가 → 기존 1위 채널 추가판매.'
 +html = html.replace(old_msg, new_msg)
 +
 +with open(path, 'w', encoding='utf-8') as f:

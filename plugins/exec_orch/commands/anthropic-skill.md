@@ -6,7 +6,7 @@ allowed-tools: Bash(claude:*), Bash(plugin:*), Read
 # /anthropic-skill — Anthropic 공식 skill 1-shot install
 
 > **근거**: Anthropic 공식 marketplace (`@anthropic-agent-skills`) — 151k stars, 16 검증 skills.
-> **참조**: `docs/2026-06-16/tooling-comparison.md` § 적용 후보 ⭐⭐⭐.
+> **참조**: `docs/2026-06-16/tooling-comparison.md` § 적용 후보 .
 
 ## 사용
 

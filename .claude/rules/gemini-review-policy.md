@@ -11,12 +11,12 @@
 
 | 상황 | Gemini? | 이유 |
 |---|---|---|
-| 1M+ 토큰 리서치 (대량 문서) | ✅ | 컨텍스트 윈도우 |
-| 멀티모달 (이미지·PDF·영상) | ✅ | Flash 의 비전 강력 |
-| 단순 검증 (코드 < 200k) | ❌ | Haiku 4.5 가 2x 빠름·11x 저렴 |
-| 한국어 미묘함 | ❌ | Claude 가 더 정확 |
-| 우리 kit 도메인 (CLAUDE.md·rules) | ❌ | Claude 가 컨텍스트 보유 |
-| 보안·money·DB 결정 | ❌ | Self-consistency Haiku ×2 + Opus 결정 |
+| 1M+ 토큰 리서치 (대량 문서) |  | 컨텍스트 윈도우 |
+| 멀티모달 (이미지·PDF·영상) |  | Flash 의 비전 강력 |
+| 단순 검증 (코드 < 200k) |  | Haiku 4.5 가 2x 빠름·11x 저렴 |
+| 한국어 미묘함 |  | Claude 가 더 정확 |
+| 우리 kit 도메인 (CLAUDE.md·rules) |  | Claude 가 컨텍스트 보유 |
+| 보안·money·DB 결정 |  | Self-consistency Haiku ×2 + Opus 결정 |
 
 ## 호출 전 체크
 

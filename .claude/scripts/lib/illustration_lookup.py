@@ -1,12 +1,12 @@
-"""illustration keyword → docs/screens/illustration/<sub>/<jpg> 매치.
+"""illustration keyword -> docs/screens/illustration/<sub>/<jpg> 매치.
 
 빌더 (build-*-html-diagrams.py, design_word, design_ppt) 가 챕터 keyword 로 호출:
     >>> from illustration_lookup import find
-    >>> find("기린"  )  # → '...illustration/animal/dribbble-XXX.jpg'
-    >>> find("로그인 화면")  # → '...login/<jpg>'
+    >>> find("기린"  )  # -> '...illustration/animal/dribbble-XXX.jpg'
+    >>> find("로그인 화면")  # -> '...login/<jpg>'
 
 전략:
-1. 한글 keyword → 영문 카테고리 매핑 (사전)
+1. 한글 keyword -> 영문 카테고리 매핑 (사전)
 2. 카테고리 폴더에서 무작위 jpg 선택 (또는 hash 로 일관)
 3. 매치 없으면 illustration/etc/ 또는 None
 """
@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 SCREENS = PROJECT_ROOT / "docs" / "screens"
 ILLUSTRATION = SCREENS / "illustration"
 
-# 한글 keyword → illustration sub-카테고리
+# 한글 keyword -> illustration sub-카테고리
 KEYWORD_MAP = {
     # 동물
     "동물": "animal", "기린": "animal", "사자": "animal", "고양이": "animal",
@@ -39,7 +39,7 @@ KEYWORD_MAP = {
     "운송": "transport", "교통": "transport",
     # 건물
     "건물": "building", "집": "building", "아파트": "building", "건축": "building",
-    # 기술·UI
+    # 기술-UI
     "차트": "chart", "그래프": "chart", "데이터": "chart", "시각화": "chart",
     "아이콘": "icon", "로고": "logo", "타이포": "typography",
     "모바일": "mockup", "디바이스": "mockup", "스마트폰": "mockup",
@@ -79,7 +79,7 @@ EN_KEYWORD = {
 
 
 def _resolve_category(keyword: str) -> Optional[str]:
-    """keyword (한·영) → category name 또는 None."""
+    """keyword (한-영) -> category name 또는 None."""
     kw = keyword.lower().strip()
     # 정확한 매치 우선
     if kw in KEYWORD_MAP:
@@ -97,7 +97,7 @@ def _resolve_category(keyword: str) -> Optional[str]:
 
 
 def _category_dir(category: str) -> Optional[Path]:
-    """category → 실제 폴더 path (illustration sub 우선, 그 다음 docs/screens/ 카테고리)."""
+    """category -> 실제 폴더 path (illustration sub 우선, 그 다음 docs/screens/ 카테고리)."""
     # 1. illustration sub
     sub = ILLUSTRATION / category
     if sub.exists() and any(sub.iterdir()):
@@ -129,12 +129,12 @@ def _custom_match(keyword: str) -> Optional[str]:
 
 def find(keyword: str, deterministic: bool = True,
          auto_generate: bool = False, brand_cluster: Optional[str] = None) -> Optional[str]:
-    """keyword → 매치되는 jpg 절대경로.
+    """keyword -> 매치되는 jpg 절대경로.
 
     매치 우선순위:
     1. docs/screens/custom/<keyword-*>.jpg (사용자 import 또는 이전 Pollinations 생성)
     2. docs/screens/illustration/<sub>/ 또는 UI 카테고리
-    3. auto_generate=True 면 Pollinations.ai 자동 호출 → custom/ 저장
+    3. auto_generate=True 면 Pollinations.ai 자동 호출 -> custom/ 저장
 
     Args:
         keyword: 한글 또는 영문 검색어
@@ -170,7 +170,7 @@ def find(keyword: str, deterministic: bool = True,
             import sys as _sys
             _sys.path.insert(0, str(Path(__file__).parent))
             from pollinations_client import generate_to_file
-            # 한글 keyword → 영문 prompt 자동 보강
+            # 한글 keyword -> 영문 prompt 자동 보강
             prompt = f"{keyword}, flat design illustration, clean modern style"
             return generate_to_file(prompt, keyword, brand_cluster=brand_cluster)
         except Exception as e:

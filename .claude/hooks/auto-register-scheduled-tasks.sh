@@ -2,7 +2,7 @@
 # auto-register-scheduled-tasks.sh — SessionStart hook
 #
 # 목적: 사용자가 claude 세션 안 열어도 daily 자동 점검이 돌도록 OS 수준 스케줄 등록
-# 룰: CLAUDE.md § 3.6 24/7 자동화 · feedback_zero_touch_automation.md
+# 룰: CLAUDE.md § 3.6 24/7 자동화 - feedback_zero_touch_automation.md
 # Idempotent: 이미 등록됐으면 ps1 가 skip 출력
 #
 # Windows: schtasks (Task Scheduler) 사용 — register-official-features-task.ps1

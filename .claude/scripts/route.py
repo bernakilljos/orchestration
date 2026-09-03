@@ -227,7 +227,7 @@ def cmd_check(args):
                 except Exception:
                     fable_spent = 0.0
                 fable_cap = daily_limit * 0.20
-                # SUSPEND 모드면 fable_ok 가 이미 0 → 추가 게이트 영향 X
+                # SUSPEND 모드면 fable_ok 가 이미 0 -> 추가 게이트 영향 X
                 if ai not in SUSPEND_MODELS and fable_spent >= fable_cap:
                     fable_ok = 0
 

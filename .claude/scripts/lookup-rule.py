@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """lookup-rule.py — AI 가 룰/메모리/스크립트를 빠르게 검색
-근거: CLAUDE.md 룰·메모리·스크립트 누적 → grep 비효율. RAG/벡터 DB 활용.
+근거: CLAUDE.md 룰-메모리-스크립트 누적 -> grep 비효율. RAG/벡터 DB 활용.
 
 사용:
   python lookup-rule.py "검증 후 보고"        # 의미 기반 검색
@@ -111,7 +111,7 @@ def extract_claude_md_rules() -> list:
 
 
 def build_index() -> list:
-    """전체 인덱싱 → list of {type, id, title, body, path, keywords}"""
+    """전체 인덱싱 -> list of {type, id, title, body, path, keywords}"""
     index = []
 
     for entry_type, base, pattern in TARGETS:
@@ -154,9 +154,9 @@ def build_index() -> list:
 
 # === 검색 (1차: TF 기반) ===
 def tokenize(text: str) -> list:
-    """간단 토큰화 (한글·영문 단어)."""
+    """간단 토큰화 (한글-영문 단어)."""
     text = text.lower()
-    # 한글·영문·숫자 단어
+    # 한글-영문-숫자 단어
     tokens = re.findall(r"[가-힣]+|[a-z][a-z0-9]+", text)
     return tokens
 
@@ -230,7 +230,7 @@ def main():
 
     if args[0] == "--rebuild":
         n = rebuild()
-        print(f"[OK] {n} entries indexed → {INDEX_JSON}")
+        print(f"[OK] {n} entries indexed -> {INDEX_JSON}")
         return
 
     if args[0] == "--status":
@@ -249,7 +249,7 @@ def main():
         print(f"[no match] '{query}' — 다른 키워드 시도")
         return
 
-    print(f"[QUERY] {query} → {len(results)} 결과:\n")
+    print(f"[QUERY] {query} -> {len(results)} 결과:\n")
     for i, (sc, item) in enumerate(results, 1):
         type_label = f"[{item['type']}]"
         print(f"{i}. {type_label:10} {item['title']}  (score {sc:.1f})")

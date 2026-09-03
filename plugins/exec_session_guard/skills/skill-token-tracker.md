@@ -62,7 +62,7 @@ Claude Code 내장 `/cost` 또는 `/usage` 출력을 SessionEnd 훅이 파싱.
 
 ## 구현 상태
 
-- ✅ 스펙 정의 (이 파일)
+-  스펙 정의 (이 파일)
 - 📝 `.claude/state/token-usage.jsonl` 파일 초기화
 - 📝 SessionEnd 훅에서 `/cost` 파싱 (플랫폼별 차이 있음)
 - 📝 `/token-stats` 커맨드

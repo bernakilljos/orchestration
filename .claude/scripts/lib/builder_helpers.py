@@ -27,7 +27,7 @@ def page_assets(keyword: str,
     """1 페이지에 필요한 brand 토큰 + illustration jpg 한번에 조회.
 
     Args:
-        keyword: illustration 검색어 (한·영, 예: "기린", "차트", "로그인")
+        keyword: illustration 검색어 (한-영, 예: "기린", "차트", "로그인")
         use_case: lecture-docx / exec-dashboard / dev-docs / saas-landing / data-viz / fintech / corporate / consumer
         brand_name: 명시 brand (예: "claude", "linear-app") — use_case 무시
         auto_gen: 매치 없으면 Pollinations.ai 자동 호출 (~30초)
@@ -66,7 +66,7 @@ def page_assets(keyword: str,
 
 
 def brand_css(brand: dict) -> str:
-    """brand 토큰 dict → CSS custom property 문자열.
+    """brand 토큰 dict -> CSS custom property 문자열.
 
     빌더 HTML <style> 안에 삽입:
         <style>:root { ...brand_css... }</style>

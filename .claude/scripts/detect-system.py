@@ -1,9 +1,9 @@
 """시스템 사양 자동 감지 — GPU VRAM 기준 LLM 설치 분기.
 
 기준 (현 노트북 Intel Iris Xe 1GB 기준 10배):
-- GPU ≥ 10GB & RAM ≥ 32GB → full (Ollama Llama 8B + RAG)
-- GPU ≥ 6GB  & RAM ≥ 16GB → lite (Ollama Gemma 2B + RAG)
-- else                       → rag_only (RAG 만, LLM = Claude API)
+- GPU ≥ 10GB & RAM ≥ 32GB -> full (Ollama Llama 8B + RAG)
+- GPU ≥ 6GB  & RAM ≥ 16GB -> lite (Ollama Gemma 2B + RAG)
+- else                       -> rag_only (RAG 만, LLM = Claude API)
 
 결과: ~/.claude/cache/system-tier.json 에 캐시.
 """

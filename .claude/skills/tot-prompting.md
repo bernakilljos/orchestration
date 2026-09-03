@@ -12,11 +12,11 @@ description: Tree of Thoughts — 여러 branch 생성·평가·pruning·확장.
 
 | 상황 | ToT 적용? |
 |---|---|
-| 아키텍처 결정 (MQ vs DB polling vs WebSocket) | ✅ |
-| 알고리즘 선택 (BFS vs DFS vs Dijkstra) | ✅ |
-| 디버깅 가설 분기 (network·db·cache·permission) | ✅ |
-| 단순 구현 (CoT 1번 충분) | ❌ |
-| 정답 1개 명확 | ❌ |
+| 아키텍처 결정 (MQ vs DB polling vs WebSocket) |  |
+| 알고리즘 선택 (BFS vs DFS vs Dijkstra) |  |
+| 디버깅 가설 분기 (network·db·cache·permission) |  |
+| 단순 구현 (CoT 1번 충분) |  |
+| 정답 1개 명확 |  |
 
 ## 2. 표준 프로토콜 (4 단계)
 
@@ -50,7 +50,7 @@ Final — Select
 | 1 | 5 | 5 | 작음 |
 | 2 | 3 (prune 후) | 15 | 중간 |
 | 3 | 2 | 30 | 큼 |
-| 4+ | — | 90+ | ❌ 비용 폭증 |
+| 4+ | — | 90+ |  비용 폭증 |
 
 → Depth ≤ 3 / 각 level branch ≤ 5 / prune 매 단계 (top 50% 만).
 

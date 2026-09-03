@@ -2,10 +2,10 @@
 install.bat / setup.bat 진짜 전수조사 (dry-run 실행).
 
 방식:
-  1. install.bat 복사 → 임시 파일
+  1. install.bat 복사 -> 임시 파일
   2. destructive 명령 (powershell, copy, mkdir, reg, setx, ...) 을 echo 로 wrap
   3. admin elevation (net session, Start-Process -Verb RunAs) 우회
-  4. cmd 로 실행 → 모든 echo/rem 출력 capture
+  4. cmd 로 실행 -> 모든 echo/rem 출력 capture
   5. 'is not recognized' / 'unexpected at this time' 검출
 
 이게 진짜 전수조사. install.bat 자체를 끝까지 실행하는 것과 동일.
@@ -73,7 +73,7 @@ def transform(content):
     out = []
     for line in content.splitlines():
         new_line = line
-        # destructive 명령 → echo 로 wrap
+        # destructive 명령 -> echo 로 wrap
         for pat in DESTRUCTIVE:
             m = re.match(pat, new_line, re.IGNORECASE)
             if m:

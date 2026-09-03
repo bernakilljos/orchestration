@@ -6,7 +6,7 @@ plugins/*/agents/ + plugins/*/skills/ + .claude/{agents,skills}/ 까지 전수 �
 5개 룰 (우리 컨텍스트):
   R1  Model Tier      — agent 의 model: 필드 opus 비율 >= 80% FAIL
   R2  HD-003          — 결정 키워드 + code-phase 키워드 0 = FAIL
-  R4  CLAUDE.md/SKILL — 줄·문자 임계 (200줄+ / 8K자+)
+  R4  CLAUDE.md/SKILL — 줄-문자 임계 (200줄+ / 8K자+)
   R5  Prompt Caching  — cache_control / prompt caching 명시 카운트
   R8  Writer Cap      — writer/drafter agent 에 per-call cap 명시
 

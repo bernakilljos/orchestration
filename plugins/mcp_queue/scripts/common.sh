@@ -1,5 +1,5 @@
 #!/bin/bash
-# common.sh - mcp_queue 공통 헬퍼 (dry-run·검증·로깅)
+# common.sh - mcp_queue 공통 헬퍼 (dry-run-검증-로깅)
 
 set -uo pipefail
 

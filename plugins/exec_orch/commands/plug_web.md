@@ -11,10 +11,10 @@ allowed-tools: Bash(claude:*), Bash(cmd:*)
 
 | 패키지 | 버전 | 상태 | 설치 가능 |
 |--------|------|------|---------|
-| @playwright/mcp | 0.0.70 | 공식 | ✅ |
-| @modelcontextprotocol/server-puppeteer | 2025.5.12 | 공식 | ✅ |
-| @modelcontextprotocol/server-pdf | - | 공식 | ✅ |
-| @hisma/server-puppeteer | 0.6.5 | 커뮤니티 fork | ✅ (대체) |
+| @playwright/mcp | 0.0.70 | 공식 |  |
+| @modelcontextprotocol/server-puppeteer | 2025.5.12 | 공식 |  |
+| @modelcontextprotocol/server-pdf | - | 공식 |  |
+| @hisma/server-puppeteer | 0.6.5 | 커뮤니티 fork |  (대체) |
 
 ## 불가능한 패키지
 - `@modelcontextprotocol/server-fetch` — npm 미등록 (404)

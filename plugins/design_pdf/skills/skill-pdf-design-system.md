@@ -174,11 +174,11 @@ async def render_pdf(html: Path, out: Path):
 
 ## 7. 안티패턴
 
-- ❌ `print_background: false` (기본값) — 배경 그라디언트 사라짐
-- ❌ 외부 SVG `<img src="...svg">` — marker / gradient 일부 깨짐. 인라인 SVG 사용
-- ❌ A4 비율 HTML 을 1920px PDF 출력 — 우측 큰 여백
-- ❌ 페이지 분할 마커 없이 N 페이지 콘텐츠 — 한 페이지에 압축
-- ❌ Iconify 비동기 로드 → wait 부족 시 아이콘 누락 → `wait_for_timeout(1500)` 권장
+-  `print_background: false` (기본값) — 배경 그라디언트 사라짐
+-  외부 SVG `<img src="...svg">` — marker / gradient 일부 깨짐. 인라인 SVG 사용
+-  A4 비율 HTML 을 1920px PDF 출력 — 우측 큰 여백
+-  페이지 분할 마커 없이 N 페이지 콘텐츠 — 한 페이지에 압축
+-  Iconify 비동기 로드 → wait 부족 시 아이콘 누락 → `wait_for_timeout(1500)` 권장
 
 ---
 

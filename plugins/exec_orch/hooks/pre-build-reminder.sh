@@ -2,7 +2,7 @@
 # pre-build-reminder.sh — PreToolUse Bash hook
 #
 # 빌더 명령 (build/generate/render-*.py) 실행 전 핵심 rule 강제 reminder.
-# systemMessage 로 Claude 컨텍스트 주입 → 까먹기 어려움.
+# systemMessage 로 Claude 컨텍스트 주입 -> 까먹기 어려움.
 #
 # 트리거 패턴: build-*-doc.py / build-*-diagrams.py / generate-*-ppt.py / render-*-pdf.py
 

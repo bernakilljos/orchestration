@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""4개 신규 플러그인 (design_web·design_pdf·design_video·mcp_queue) 기본 공통 골자 생성"""
+"""4개 신규 플러그인 (design_web-design_pdf-design_video-mcp_queue) 기본 공통 골자 생성"""
 import json, sys
 from pathlib import Path
 
@@ -8,53 +8,53 @@ except: pass
 
 PLUGINS = {
     "design_web": {
-        "display": "웹사이트·랜딩·블로그 템플릿 자동 생성 (HTML·Tailwind·SEO)",
+        "display": "웹사이트-랜딩-블로그 템플릿 자동 생성 (HTML-Tailwind-SEO)",
         "prefix": "design_",
         "phase": 1,
         "deps": ["exec_orch"],
         "default_command": "landing",
         "category": "디자인/Web",
         "commands": {
-            "landing":      "랜딩페이지 자동 생성 (헤드라인·CTA·증명)",
-            "blog-template":"블로그 템플릿 (Tistory·Ghost·Jekyll)",
+            "landing":      "랜딩페이지 자동 생성 (헤드라인-CTA-증명)",
+            "blog-template":"블로그 템플릿 (Tistory-Ghost-Jekyll)",
             "portfolio":    "포트폴리오 사이트 생성",
-            "seo-meta":     "메타태그·OG·JSON-LD 자동 삽입",
+            "seo-meta":     "메타태그-OG-JSON-LD 자동 삽입",
         },
         "skills": {
-            "skill-web-seo": "웹 SEO 최적화 (메타·구조화 데이터·Core Web Vitals)",
+            "skill-web-seo": "웹 SEO 최적화 (메타-구조화 데이터-Core Web Vitals)",
             "skill-web-conversion": "전환율 높이는 랜딩 패턴",
         },
     },
     "design_pdf": {
-        "display": "PDF 생성·양식·서명·암호화 (mcp_docs 는 파싱만)",
+        "display": "PDF 생성-양식-서명-암호화 (mcp_docs 는 파싱만)",
         "prefix": "design_",
         "phase": 2,
         "deps": ["exec_orch"],
         "default_command": "pdf-generate",
         "category": "디자인/PDF",
         "commands": {
-            "pdf-generate": "HTML·Markdown → PDF 변환",
+            "pdf-generate": "HTML-Markdown -> PDF 변환",
             "pdf-fill":     "양식(form) 자동 채우기",
-            "pdf-sign":     "전자서명·직인 삽입",
-            "pdf-secure":   "암호화·워터마크",
+            "pdf-sign":     "전자서명-직인 삽입",
+            "pdf-secure":   "암호화-워터마크",
         },
         "skills": {
-            "skill-pdf-form": "PDF 양식 필드 매핑·검증",
+            "skill-pdf-form": "PDF 양식 필드 매핑-검증",
             "skill-pdf-compliance": "전자서명 법적 요건 (전자서명법)",
         },
     },
     "design_video": {
-        "display": "영상 편집 — 자막·쇼츠·썸네일 (유튜브 수익화 직결)",
+        "display": "영상 편집 — 자막-쇼츠-썸네일 (유튜브 수익화 직결)",
         "prefix": "design_",
         "phase": 2,
         "deps": ["exec_orch", "mcp_media"],
         "default_command": "video-edit",
         "category": "디자인/Video",
         "commands": {
-            "video-edit":      "영상 편집 (자르기·합치기·자막)",
+            "video-edit":      "영상 편집 (자르기-합치기-자막)",
             "video-subtitle":  "자막 자동 생성 (Whisper + 번역)",
-            "video-template":  "유튜브 인트로·아웃트로 템플릿",
-            "video-shorts":    "롱폼 → 쇼츠 자동 추출",
+            "video-template":  "유튜브 인트로-아웃트로 템플릿",
+            "video-shorts":    "롱폼 -> 쇼츠 자동 추출",
             "video-thumbnail": "썸네일 A/B 3안 자동 생성",
         },
         "skills": {
@@ -63,26 +63,26 @@ PLUGINS = {
         },
     },
     "mcp_queue": {
-        "display": "메시지 브로커 MCP — Kafka·RabbitMQ·Redis Pub/Sub·AWS SQS",
+        "display": "메시지 브로커 MCP — Kafka-RabbitMQ-Redis Pub/Sub-AWS SQS",
         "prefix": "mcp_",
         "phase": 2,
         "deps": ["exec_orch"],
         "default_command": "install",
         "category": "MCP/Queue",
         "commands": {
-            "install":  "큐 시스템 MCP 설치 (Kafka·RabbitMQ·Redis·SQS)",
-            "topic":    "토픽·큐 관리 (생성·삭제·파티션)",
-            "consumer": "컨슈머 그룹 lag·오프셋 모니터링",
+            "install":  "큐 시스템 MCP 설치 (Kafka-RabbitMQ-Redis-SQS)",
+            "topic":    "토픽-큐 관리 (생성-삭제-파티션)",
+            "consumer": "컨슈머 그룹 lag-오프셋 모니터링",
             "dlq":      "DLQ 재처리",
         },
         "skills": {
-            "skill-queue-patterns": "큐 패턴 (fan-out·pub-sub·work-queue·DLQ)",
+            "skill-queue-patterns": "큐 패턴 (fan-out-pub-sub-work-queue-DLQ)",
         },
     },
 }
 
 COMMON_HELPER_TEMPLATE = '''#!/bin/bash
-# common.sh - PLUGIN_NAME 공통 헬퍼 (dry-run·검증·로깅)
+# common.sh - PLUGIN_NAME 공통 헬퍼 (dry-run-검증-로깅)
 
 set -uo pipefail
 
@@ -161,7 +161,7 @@ fi
 **목적**: DESC
 
 **단계**:
-1. 입력 검증 (필수 인자·환경변수)
+1. 입력 검증 (필수 인자-환경변수)
 2. 드라이런 분기 (미리보기)
 3. 실제 작업 (플랫폼 구현)
 4. 결과 JSON 로깅
@@ -250,27 +250,27 @@ for name, info in PLUGINS.items():
         "",
         f"> **Prefix**: `{info['prefix']}` | **버전**: 0.1 | **Status**: spec-only | **Phase**: {info['phase']}",
         "",
-        "## ⚠️ 현재 상태",
+        "## [WARN] 현재 상태",
         "",
         "**spec-only** — 스펙 + 기본 공통 헬퍼(`scripts/common.sh`) 만 있음. 도메인 로직은 플랫폼에서 구현.",
         "",
-        "## 📋 커맨드",
+        "## [LIST] 커맨드",
         "",
     ]
     for cmd, desc in info["commands"].items():
-        mark = " ⭐ 기본" if cmd == info["default_command"] else ""
+        mark = "  기본" if cmd == info["default_command"] else ""
         readme.append(f"- `/{cmd}`{mark} — {desc}")
-    readme += ["", "## 🧠 스킬", ""]
+    readme += ["", "##  스킬", ""]
     for s, sd in info.get("skills", {}).items():
         readme.append(f"- `{s}` — {sd}")
     readme += [
         "",
-        "## 🔗 의존성",
+        "##  의존성",
         "",
         f"- **플러그인**: {deps_str}",
-        "- **공통 헬퍼**: `scripts/common.sh` (dry-run·로깅·env)",
+        "- **공통 헬퍼**: `scripts/common.sh` (dry-run-로깅-env)",
         "",
-        "## 📝 참조",
+        "## [NOTE] 참조",
         "",
         "- 스펙: `SPEC.md`",
         "- 로드맵: `docs/2026-04-19/로드맵.md`",

@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 PROJECT_ROOT="$(pwd)"
 echo "[i] Project root: ${PROJECT_ROOT}"
 
-# 1) install.sh (scaffold·sync·env)
+# 1) install.sh (scaffold-sync-env)
 if [ -f ".claude/scripts/install.sh" ]; then
   echo "=== [1/4] install.sh ==="
   bash .claude/scripts/install.sh
@@ -48,10 +48,10 @@ fi
 if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ ! -f "${HOME}/.claude/credentials.json" ]; then
   cat <<'EOF'
 
-⚠ Claude Code 인증 필요. 다음 중 하나:
+[WARN] Claude Code 인증 필요. 다음 중 하나:
    A) tmux 세션에서 직접:
       tmux new -s claude 'cd ~/orch && claude login'
-      → 출력된 URL 을 로컬 브라우저로 열고 토큰 받아 붙여넣기
+      -> 출력된 URL 을 로컬 브라우저로 열고 토큰 받아 붙여넣기
 
    B) API 키 환경변수:
       export ANTHROPIC_API_KEY=sk-ant-...
@@ -60,7 +60,7 @@ if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ ! -f "${HOME}/.claude/credentials.json" 
 EOF
 fi
 
-# 6) tmux 세션 자동 생성 (worker·main)
+# 6) tmux 세션 자동 생성 (worker-main)
 if command -v tmux &>/dev/null; then
   if ! tmux has-session -t worker 2>/dev/null; then
     tmux new-session -d -s worker "cd ${PROJECT_ROOT} && bash .claude/scripts/watchdog-start.sh; bash"

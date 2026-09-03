@@ -1026,13 +1026,13 @@ USE_CASES = {
 
 
 def get_brand(name: str) -> dict:
-    """name (lowercase, dashed) → token dict or fallback to 'claude'."""
+    """name (lowercase, dashed) -> token dict or fallback to 'claude'."""
     normalized = name.lower().replace(".", "-").replace("_", "-")
     return BRAND_TOKENS.get(normalized, BRAND_TOKENS["claude"])
 
 
 def get_use_case(use_case: str) -> dict:
-    """use_case → brand tokens."""
+    """use_case -> brand tokens."""
     brand_name = USE_CASES.get(use_case, "claude")
     return get_brand(brand_name)
 
@@ -1053,6 +1053,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         print(json.dumps(get_brand(sys.argv[1]), ensure_ascii=False, indent=2))
     else:
-        print(f"{len(BRAND_TOKENS)} brands · {len(CLUSTERS)} clusters")
+        print(f"{len(BRAND_TOKENS)} brands - {len(CLUSTERS)} clusters")
         for cluster, brands in sorted(CLUSTERS.items()):
             print(f"  {cluster}: {len(brands)} brands")

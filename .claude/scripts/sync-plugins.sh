@@ -1,8 +1,8 @@
 #!/bin/bash
-# sync-plugins.sh v2 — plugins/ → .claude/ 단방향 동기화 + 고도화 검사
+# sync-plugins.sh v2 — plugins/ -> .claude/ 단방향 동기화 + 고도화 검사
 #
 # 기능:
-#   1. 단방향 sync: plugins/<name>/{commands,skills,agents}/*.md → .claude/{commands,skills,agents}/
+#   1. 단방향 sync: plugins/<name>/{commands,skills,agents}/*.md -> .claude/{commands,skills,agents}/
 #   2. 충돌 룰(rename map) 적용 — 동명 파일 md5 동일이면 마지막 plugin 으로 idempotent 덮어쓰기
 #   3. Orphan 탐지: .claude/ 에만 있는 파일 경고
 #   4. Diff 상세: dry-run 시 내용 차이 표시
@@ -12,7 +12,7 @@
 # 사용법:
 #   bash .claude/scripts/sync-plugins.sh                실제 동기화
 #   bash .claude/scripts/sync-plugins.sh --dry          미리보기 (변경 없음)
-#   bash .claude/scripts/sync-plugins.sh --check        드리프트·orphan 점검만
+#   bash .claude/scripts/sync-plugins.sh --check        드리프트-orphan 점검만
 #   bash .claude/scripts/sync-plugins.sh --verbose      상세 출력
 #   bash .claude/scripts/sync-plugins.sh --prune        orphan 자동 삭제 (주의)
 
@@ -72,7 +72,7 @@ declare -A RENAME_MAP=(
   ["exec_remote/commands/status.md"]="exec_remote-status.md"
 )
 
-# target_name → plugins/ 원본 경로 역맵 (orphan 탐지용)
+# target_name -> plugins/ 원본 경로 역맵 (orphan 탐지용)
 declare -A REVERSE_MAP=()
 
 # =========================================================================
@@ -128,7 +128,7 @@ sync_file() {
       src_mtime=$(stat -c %Y "$src" 2>/dev/null || stat -f %m "$src" 2>/dev/null || echo 0)
       dst_mtime=$(stat -c %Y "$dst" 2>/dev/null || stat -f %m "$dst" 2>/dev/null || echo 0)
       if [ "$dst_mtime" -gt "$src_mtime" ]; then
-        echo "⚠️  DRIFT: $dst 가 $src 보다 새로움 (.claude/ 직접 수정 의심)"
+        echo "[WARN]  DRIFT: $dst 가 $src 보다 새로움 (.claude/ 직접 수정 의심)"
         drift=$((drift+1))
       fi
     fi
@@ -136,7 +136,7 @@ sync_file() {
 
   case "$MODE" in
     dry)
-      echo "[DRY] $src → $dst"
+      echo "[DRY] $src -> $dst"
       if [ "$VERBOSE" = "true" ] && [ -f "$dst" ]; then
         diff -u "$dst" "$src" 2>/dev/null | head -20 || true
       fi
@@ -145,7 +145,7 @@ sync_file() {
     sync)
       mkdir -p "$(dirname "$dst")"
       cp -f "$src" "$dst"
-      [ "$VERBOSE" = "true" ] && echo "[SYNC] $src → $dst"
+      [ "$VERBOSE" = "true" ] && echo "[SYNC] $src -> $dst"
       copied=$((copied+1))
       ;;
     check)
@@ -222,7 +222,7 @@ for sub in commands skills agents; do
 done
 
 if [ "$orphan" -gt 0 ]; then
-  echo "⚠️  Orphan $orphan 개 발견 (plugins/ 에 원본 없음):"
+  echo "[WARN]  Orphan $orphan 개 발견 (plugins/ 에 원본 없음):"
   for f in "${orphan_list[@]}"; do
     echo "   - $f"
   done
@@ -230,7 +230,7 @@ if [ "$orphan" -gt 0 ]; then
   if [ "$PRUNE" = "true" ]; then
     echo "   [--prune] 삭제 진행..."
     for f in "${orphan_list[@]}"; do
-      rm -f "$f" && echo "      ✂ $f 삭제됨" || echo "      ⚠ $f 삭제 실패"
+      rm -f "$f" && echo "      ✂ $f 삭제됨" || echo "      [WARN] $f 삭제 실패"
     done
     orphan=0
   else
@@ -253,7 +253,7 @@ echo "  orphan: $orphan"
 
 case "$MODE" in
   dry)   echo "  (dry run — 실제 파일 변경 없음)" ;;
-  check) echo "  (check mode — 드리프트·orphan 점검만)" ;;
+  check) echo "  (check mode — 드리프트-orphan 점검만)" ;;
   sync)  echo "  ✓ sync complete" ;;
 esac
 

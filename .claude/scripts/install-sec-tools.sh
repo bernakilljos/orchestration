@@ -2,8 +2,8 @@
 # install-sec-tools.sh — sec_scan 도구 자동 설치 (멱등)
 #
 # 설치:
-#   - semgrep / bandit  → pip --user
-#   - gitleaks          → GitHub release binary (OS 감지)
+#   - semgrep / bandit  -> pip --user
+#   - gitleaks          -> GitHub release binary (OS 감지)
 #
 # 호출:
 #   - SessionStart hook (백그라운드)

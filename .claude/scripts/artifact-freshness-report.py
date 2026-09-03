@@ -1,6 +1,6 @@
-"""산출물 신선도 스캔 · SessionStart hook 용.
+"""산출물 신선도 스캔 - SessionStart hook 용.
 
-CLAUDE.md § 3.2 · `.claude/rules/artifact-freshness-check.md` 룰.
+CLAUDE.md § 3.2 - `.claude/rules/artifact-freshness-check.md` 룰.
 
 유통기한 매트릭스 (SoT = 룰 문서):
   pptx catalog (AI 기술)      60일
@@ -25,7 +25,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-# Windows cp949 회피 — 한글·em-dash 안전 출력
+# Windows cp949 회피 — 한글-em-dash 안전 출력
 try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -111,12 +111,12 @@ def main() -> int:
         print("[산출물 유통기한 초과 — 갱신 필요]")
         for f in sorted(overdue, key=lambda x: x.age_days - x.limit_days, reverse=True):
             rel = f.path.relative_to(ROOT).as_posix()
-            print(f"  OVERDUE  {rel} — {f.age_days:.0f}일 · 한계 {f.limit_days}일 · {f.delta}  [{f.label}]")
+            print(f"  OVERDUE  {rel} — {f.age_days:.0f}일 - 한계 {f.limit_days}일 - {f.delta}  [{f.label}]")
 
     if stale:
         for f in sorted(stale, key=lambda x: x.age_days, reverse=True):
             rel = f.path.relative_to(ROOT).as_posix()
-            print(f"  STALE    {rel} — {f.age_days:.0f}일 · 한계 {f.limit_days}일 · {f.delta}  [{f.label}]",
+            print(f"  STALE    {rel} — {f.age_days:.0f}일 - 한계 {f.limit_days}일 - {f.delta}  [{f.label}]",
                   file=sys.stderr)
 
     return 0

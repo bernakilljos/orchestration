@@ -2,15 +2,15 @@
 
 > **Prefix**: `mcp_` | **버전**: 0.1 | **Status**: spec-only (Phase 2 예정) | **현황**: 스펙 정의만 완료
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 **spec-only** — 이 플러그인은 킷에 **스펙만** 있습니다. 실제 구현은 설치 후 플랫폼에서 진행.
 
 공식/커뮤니티 MCP:
-- ❌ **Kafka MCP**: 공식 없음 → `kafkajs` (Node) 또는 `kafka-python` 직접 호출
-- ❌ **RabbitMQ MCP**: 공식 없음 → `amqplib` (Node) 직접 호출
-- ❌ **Redis MCP**: 공식 없음 → `redis` CLI 또는 `ioredis` (Node) 직접 호출
-- ❌ **AWS SQS MCP**: 공식 없음 → `aws-sdk` v3 직접 호출
+-  **Kafka MCP**: 공식 없음 → `kafkajs` (Node) 또는 `kafka-python` 직접 호출
+-  **RabbitMQ MCP**: 공식 없음 → `amqplib` (Node) 직접 호출
+-  **Redis MCP**: 공식 없음 → `redis` CLI 또는 `ioredis` (Node) 직접 호출
+-  **AWS SQS MCP**: 공식 없음 → `aws-sdk` v3 직접 호출
 
 ## 📋 커맨드 (예정)
 
@@ -50,22 +50,22 @@
 ### MCP 상태 조회 (Phase 계획)
 
 #### Kafka
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **대안**: `kafkajs` (Node) 또는 `kafka-python` (Python) 직접 호출
 - **MCP 가능성**: 2026년 중 Confluent 또는 커뮤니티 출시 예상
 
 #### RabbitMQ
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **대안**: `amqplib` (Node) 또는 `pika` (Python)
 - **MCP 가능성**: 낮음 (상용 지원 필요)
 
 #### Redis
-- **상태**: ❌ 공식 MCP 없음
+- **상태**:  공식 MCP 없음
 - **대안**: `redis-cli` 또는 `ioredis` (Node), `redis-py` (Python)
 - **MCP 가능성**: Redis 공식 검토 중
 
 #### AWS SQS
-- **상태**: ❌ 공식 MCP 없음 (AWS SDK로 제공)
+- **상태**:  공식 MCP 없음 (AWS SDK로 제공)
 - **대안**: `@aws-sdk/client-sqs` (v3) 또는 `boto3` (Python)
 - **MCP 가능성**: AWS의 다른 MCP 정책에 따름
 
@@ -102,7 +102,7 @@
 | 한글 깨짐 | 인코딩 | `.claude/hooks/check-mojibake.sh` 확인 |
 | 드라이런 실패 | `--dry-run` 미지원 | `is_dry_run "$@"` 헬퍼 추가 |
 
-## 📚 참조
+##  참조
 
 - 로드맵: `docs/2026-04-19/로드맵.md` § Phase 2
 - 공식 MCP 레지스트리: `modelcontextprotocol.io`

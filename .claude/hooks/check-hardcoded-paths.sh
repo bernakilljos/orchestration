@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PreToolUse hook — best-practices §하드 경로 금지 자동 강제
-# Edit|Write 시 content/new_string 에 하드 경로 패턴 매치 → systemMessage
+# Edit|Write 시 content/new_string 에 하드 경로 패턴 매치 -> systemMessage
 # 차단 안 함 (informational + 권장 fix)
 # CLAUDE.md §7-4 위반 사전 차단
 set +e
@@ -16,13 +16,13 @@ else
   CONTENT="$INPUT"
 fi
 
-# 검사 대상: code/script/config 파일만 (md 문서·rule 예시는 제외)
+# 검사 대상: code/script/config 파일만 (md 문서-rule 예시는 제외)
 case "$FILE_PATH" in
   *.py|*.sh|*.bat|*.ps1|*.js|*.ts|*.json|*.toml|*.yaml|*.yml|*.ini|*.cfg|*.conf) ;;
   *) exit 0 ;;
 esac
 
-# rule 파일·문서·예시 제외 (placeholder 허용)
+# rule 파일-문서-예시 제외 (placeholder 허용)
 case "$FILE_PATH" in
   *.claude/rules/*|*docs/*|*examples/*|*.example*|*setup/templates/*) exit 0 ;;
 esac
@@ -35,25 +35,25 @@ VIOLATIONS=""
 # 1. C:\Users\<사용자명> 또는 C:/Users/<사용자명>
 if echo "$CONTENT" | grep -qE 'C:[\\/]+[Uu]sers[\\/]+[a-z][a-z0-9_]+'; then
   MATCH="$(echo "$CONTENT" | grep -oE 'C:[\\/]+[Uu]sers[\\/]+[a-z][a-z0-9_]+' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - 사용자명: $MATCH → %USERPROFILE% / Path.home()"
+  VIOLATIONS="$VIOLATIONS\n  - 사용자명: $MATCH -> %USERPROFILE% / Path.home()"
 fi
 
 # 2. /home/<사용자명>
 if echo "$CONTENT" | grep -qE '/home/[a-z][a-z0-9_]+'; then
   MATCH="$(echo "$CONTENT" | grep -oE '/home/[a-z][a-z0-9_]+' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - Linux 사용자: $MATCH → \$HOME / Path.home()"
+  VIOLATIONS="$VIOLATIONS\n  - Linux 사용자: $MATCH -> \$HOME / Path.home()"
 fi
 
 # 3. Python3<버전> — Python310 ~ Python399 매치 (현재 + 미래 버전)
 if echo "$CONTENT" | grep -qE 'Python3[0-9]{2}'; then
   MATCH="$(echo "$CONTENT" | grep -oE 'Python3[0-9]{2}' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - Python 버전: $MATCH → where python / shutil.which('python')"
+  VIOLATIONS="$VIOLATIONS\n  - Python 버전: $MATCH -> where python / shutil.which('python')"
 fi
 
 # 4. DESKTOP-XXX 호스트명
 if echo "$CONTENT" | grep -qE 'DESKTOP-[A-Z0-9]{5,}'; then
   MATCH="$(echo "$CONTENT" | grep -oE 'DESKTOP-[A-Z0-9]{5,}' | head -1)"
-  VIOLATIONS="$VIOLATIONS\n  - 호스트명: $MATCH → %COMPUTERNAME% / socket.gethostname()"
+  VIOLATIONS="$VIOLATIONS\n  - 호스트명: $MATCH -> %COMPUTERNAME% / socket.gethostname()"
 fi
 
 if [ -n "$VIOLATIONS" ]; then

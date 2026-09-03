@@ -2,7 +2,7 @@
 
 > **Status**: spec-only (Phase 1) | **Prefix**: `cost_` | **버전**: 0.1
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 이 플러그인은 **스펙만** 있고 실구현은 없습니다. `install 후 플랫폼`에서 구현.
 상세 스펙: [`SPEC.md`](SPEC.md)

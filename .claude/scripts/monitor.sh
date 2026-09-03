@@ -42,12 +42,12 @@ health_check_loop() {
       return 0
     else
       fail=$((fail+1))
-      echo "[${i}/${MAX_RETRY}] FAIL [$STATUS] → ${fail} failure(s)"
+      echo "[${i}/${MAX_RETRY}] FAIL [$STATUS] -> ${fail} failure(s)"
       if [ "$fail" -ge 3 ]; then
-        echo "3 consecutive failures → Triggering auto rollback"
+        echo "3 consecutive failures -> Triggering auto rollback"
         bash .claude/scripts/rollback.sh
         bash .claude/scripts/notify.sh "danger" \
-          "Health check failed 3 times → Auto rollback executed (${host}:${port})"
+          "Health check failed 3 times -> Auto rollback executed (${host}:${port})"
         return 1
       fi
       sleep $INTERVAL
@@ -127,7 +127,7 @@ if [ "$CHECK_ALL" = true ]; then
   check_server "${REMOTE_USER}@${REMOTE_HOST}" "$TARGET_ENV ($REMOTE_HOST)"
 
   echo ""
-  echo "[DONE] All servers check complete → $REPORT"
+  echo "[DONE] All servers check complete -> $REPORT"
 else
   # Default: single server check + health check
   check_server "${REMOTE_USER}@${REMOTE_HOST}" "$TARGET_ENV ($REMOTE_HOST)"

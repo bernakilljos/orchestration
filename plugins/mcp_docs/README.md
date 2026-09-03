@@ -9,13 +9,13 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_docs`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-34-code-docs` ⭐ 핵심
+- `skill-34-code-docs`  핵심
 
 ## 🤖 에이전트
 

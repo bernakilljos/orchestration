@@ -1,8 +1,8 @@
 """Pollinations.ai 무료 image gen 클라이언트.
 
 API: https://image.pollinations.ai/prompt/<text>?width=&height=&model=&seed=
-- 인증 X · rate limit 합리적
-- model: flux (default · 좋음), turbo (빠름)
+- 인증 X - rate limit 합리적
+- model: flux (default - 좋음), turbo (빠름)
 - 결과: image binary (PNG/JPG)
 
 사용:
@@ -25,7 +25,7 @@ CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) orchestration_v1/1.0"
 
-# Brand → Pollinations style hint (선택적, brand 시각 일치)
+# Brand -> Pollinations style hint (선택적, brand 시각 일치)
 BRAND_STYLE_HINT = {
     "warm-editorial": "warm cream background, editorial illustration, soft coral accents",
     "dark-minimal": "dark minimalist background, neon accent, clean lines",
@@ -36,7 +36,7 @@ BRAND_STYLE_HINT = {
 
 
 def _safe_filename(keyword: str, max_len: int = 60) -> str:
-    """keyword → safe filename (ascii only)."""
+    """keyword -> safe filename (ascii only)."""
     h = hashlib.md5(keyword.encode("utf-8")).hexdigest()[:8]
     # ASCII 만 추출
     ascii_part = "".join(c if c.isascii() and (c.isalnum() or c in "-_") else "-"
@@ -48,7 +48,7 @@ def _safe_filename(keyword: str, max_len: int = 60) -> str:
 
 def generate(prompt: str, width: int = 1024, height: int = 1024,
              model: str = "flux", seed: int = 42, timeout: int = 60) -> bytes:
-    """Pollinations.ai 호출 → image binary 반환.
+    """Pollinations.ai 호출 -> image binary 반환.
 
     Args:
         prompt: 자연어 설명 (한글 OK, 영어 더 정확)
@@ -71,7 +71,7 @@ def generate(prompt: str, width: int = 1024, height: int = 1024,
 def generate_to_file(prompt: str, keyword: str, brand_cluster: Optional[str] = None,
                      width: int = 1024, height: int = 1024,
                      seed: int = 42, force: bool = False) -> str:
-    """prompt → docs/screens/custom/<keyword>-<hash>.jpg 저장.
+    """prompt -> docs/screens/custom/<keyword>-<hash>.jpg 저장.
 
     Args:
         prompt: API 에 보낼 자연어

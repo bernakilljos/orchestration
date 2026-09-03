@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # detect-deflection.sh — UserPromptSubmit
-# 사용자가 "농땡이 / 짤려 / 안 보여 / 다시 / 또" 같은 패턴 반복 = Claude 회피·룰 위반 신호
+# 사용자가 "농땡이 / 짤려 / 안 보여 / 다시 / 또" 같은 패턴 반복 = Claude 회피-룰 위반 신호
 #
 # 룰: failure-mode.md § 회피 안티패턴, feedback_nongttaengi_means_full_survey.md
 #
 # 동작:
 #   1. 사용자 메시지에서 회피 신호 키워드 grep
-#   2. 최근 10개 prompt 에서 같은 카테고리 반복 → 누적 위반
-#   3. 위반 감지 → systemMessage 로 Claude 자가 점검 알림 (PASS through, 차단 X)
+#   2. 최근 10개 prompt 에서 같은 카테고리 반복 -> 누적 위반
+#   3. 위반 감지 -> systemMessage 로 Claude 자가 점검 알림 (PASS through, 차단 X)
 set -e
 
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
@@ -35,7 +35,7 @@ fi
 echo "[$(date +%F_%T)] $MSG" >> "$HISTORY"
 tail -n 30 "$HISTORY" > "${HISTORY}.tmp" && mv "${HISTORY}.tmp" "$HISTORY"
 
-# 회피·반복 위반 신호 카테고리
+# 회피-반복 위반 신호 카테고리
 declare -A SIGNALS=(
   [overflow_jal]="짤려|짤린|잘림|넘쳐|넘치"
   [text_too_small]="작은데|글씨.*안 ?보여|작아|크게"
@@ -72,7 +72,7 @@ if [ -n "$MATCHED" ]; then
 {
   "hookSpecificOutput": {
     "hookEventName": "UserPromptSubmit",
-    "additionalContext": "⚠️ 회피·반복 위반 패턴 감지: $MATCHED (최근 10 prompt 중 $COUNT 회). failure-mode.md § 회피 안티패턴 / feedback_nongttaengi_means_full_survey.md 점검. 사용자 직답 → 부연 → 행동 순서로. 5단계 전수조사 필수."
+    "additionalContext": "[WARN] 회피-반복 위반 패턴 감지: $MATCHED (최근 10 prompt 중 $COUNT 회). failure-mode.md § 회피 안티패턴 / feedback_nongttaengi_means_full_survey.md 점검. 사용자 직답 -> 부연 -> 행동 순서로. 5단계 전수조사 필수."
   }
 }
 EOF
@@ -81,7 +81,7 @@ EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "UserPromptSubmit",
-    "additionalContext": "🔍 사용자 신호 감지: $MATCHED. 룰 위반 가능성. 단순 응답 X, 원인 점검 후 행동."
+    "additionalContext": "[SIGNAL] 사용자 신호 감지: $MATCHED. 룰 위반 가능성. 단순 응답 X, 원인 점검 후 행동."
   }
 }
 EOF

@@ -159,4 +159,4 @@ model, optimizer, train_loader = privacy_engine.make_private(
 - Gretel: https://gretel.ai/
 - Opacus: https://opacus.ai/
 - `ai-risk-lighthouse.md` § Privacy (12%)
-- `solution-capability-audit.md` #27-29 (❌ → ✅ 통합 가이드)
+- `solution-capability-audit.md` #27-29 ( →  통합 가이드)

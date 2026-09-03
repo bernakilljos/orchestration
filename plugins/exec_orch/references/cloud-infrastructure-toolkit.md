@@ -27,7 +27,7 @@
 
 ---
 
-## 1️⃣ IaC (Infrastructure as Code) — 16개
+## 1⃣ IaC (Infrastructure as Code) — 16개
 
 코드로 인프라 정의 · 버전 관리 · 자동 배포 · 멱등성.
 
@@ -52,7 +52,7 @@
 
 ---
 
-## 2️⃣ AWS 서비스 (Amazon Web Services) — 24개
+## 2⃣ AWS 서비스 (Amazon Web Services) — 24개
 
 AWS 주요 서비스 · 컴퓨팅 · 데이터베이스 · 네트워킹 · 보안.
 
@@ -85,7 +85,7 @@ AWS 주요 서비스 · 컴퓨팅 · 데이터베이스 · 네트워킹 · 보�
 
 ---
 
-## 3️⃣ Azure 서비스 (Microsoft Azure) — 16개
+## 3⃣ Azure 서비스 (Microsoft Azure) — 16개
 
 Azure 주요 서비스 · 엔터프라이즈 기능 · Microsoft 통합.
 
@@ -110,7 +110,7 @@ Azure 주요 서비스 · 엔터프라이즈 기능 · Microsoft 통합.
 
 ---
 
-## 4️⃣ GCP 서비스 (Google Cloud Platform) — 14개
+## 4⃣ GCP 서비스 (Google Cloud Platform) — 14개
 
 GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
@@ -133,7 +133,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 5️⃣ 멀티클라우드 (Multi-Cloud Orchestration) — 11개
+## 5⃣ 멀티클라우드 (Multi-Cloud Orchestration) — 11개
 
 여러 클라우드 관리 · 일관된 배포 · 벤더 락인 회피.
 
@@ -153,7 +153,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 6️⃣ 서버리스 (Serverless Computing) — 14개
+## 6⃣ 서버리스 (Serverless Computing) — 14개
 
 코드 실행 · 인프라 관리 없음 · 자동 스케일 · 사용량 기반 요금.
 
@@ -176,7 +176,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 7️⃣ 컨테이너 오케스트레이션 (Kubernetes) — 18개
+## 7⃣ 컨테이너 오케스트레이션 (Kubernetes) — 18개
 
 컨테이너 자동 배포 · 스케일링 · 자동 복구 · 롤링 업데이트.
 
@@ -203,7 +203,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 8️⃣ 서비스 메시 (Service Mesh) — 9개
+## 8⃣ 서비스 메시 (Service Mesh) — 9개
 
 마이크로서비스 통신 · 트래픽 관리 · 보안 · 관찰성.
 
@@ -221,7 +221,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 9️⃣ DNS / 도메인 / CDN — 18개
+## 9⃣ DNS / 도메인 / CDN — 18개
 
 도메인 관리 · DNS 라우팅 · 엣지 캐싱 · DDoS 보호.
 
@@ -271,7 +271,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 1️⃣1️⃣ 백업 / DR (Backup & Disaster Recovery) — 13개
+## 1⃣1⃣ 백업 / DR (Backup & Disaster Recovery) — 13개
 
 데이터 보호 · 복원 · 재해 복구 · RTO/RPO.
 
@@ -293,7 +293,7 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 
 ---
 
-## 1️⃣2️⃣ GitOps / 배포 자동화 (GitOps & Deployment) — 14개
+## 1⃣2⃣ GitOps / 배포 자동화 (GitOps & Deployment) — 14개
 
 코드 기반 배포 · CI/CD · 자동 실행 · 감사 추적.
 
@@ -335,14 +335,14 @@ GCP 주요 서비스 · 데이터 분석 · AI 우수.
 - **비용**: Infracost + Kubecost + FinOps
 - **백업**: Velero + AWS Backup
 
-### ☁️ 멀티클라우드 스택 (AWS + Azure + GCP)
+### ☁ 멀티클라우드 스택 (AWS + Azure + GCP)
 - **IaC**: Terraform Cloud + env0 / Spacelift
 - **멀티클라우드**: HashiCorp Consul + Karpenter
 - **컨테이너**: Kubernetes 표준
 - **DNS/CDN**: Route53 + Cloudflare (멀티 레이어)
 - **비용**: CloudZero / Spot.io (통합 분석)
 
-### 🎯 FinOps 스택 (비용 최적화)
+###  FinOps 스택 (비용 최적화)
 - **측정**: Infracost + Kubecost + CloudZero
 - **최적화**: Spot.io + ComputeOptimizer
 - **자동화**: Terraform 비용 정책 + Lambda
@@ -375,7 +375,7 @@ IaC (Terraform)
 
 ---
 
-## 📚 사용 팁
+##  사용 팁
 
 1. **시작**: Terraform + AWS/Azure/GCP 로컬 리소스 프로비저닝
 2. **확장**: Kubernetes + Helm + ArgoCD 로 멀티 환경 관리
