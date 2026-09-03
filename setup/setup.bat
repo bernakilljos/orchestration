@@ -273,9 +273,14 @@ echo [STEP] 15-auto-dev %TIME% >> "!LOGFILE!"
 call "%MOD%\15-auto-dev.bat" "!TARGET!" "%~dp0" "!REAL_USERPROFILE!"
 if errorlevel 1 set /a ERRORS+=1
 
-echo [Step 16/16] MCP Headroom + claude-mem...
+echo [Step 16/17] MCP Headroom + claude-mem...
 echo [STEP] 16-mcp-headroom-claude-mem %TIME% >> "!LOGFILE!"
 call "%MOD%\16-mcp-headroom-claude-mem.bat" "!TARGET!"
+if errorlevel 1 set /a ERRORS+=1
+
+echo [Step 17/17] Community standards 2026 (Firecrawl MCP + Anthropic skills + /go)...
+echo [STEP] 17-community-standards %TIME% >> "!LOGFILE!"
+call "%MOD%\17-community-standards.bat" "!TARGET!"
 if errorlevel 1 set /a ERRORS+=1
 
 set "ERR=!ERRORS!"
