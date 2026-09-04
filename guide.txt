@@ -787,7 +787,7 @@
     [Stable — 즉시 사용 가능]
     ◆ Exec (실행·부트스트랩)
       exec_orch          오케스트레이션 핵심 (멀티AI 라우팅·워커)
-      exec_remote        원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 ⭐
+      exec_remote        원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 
       exec_claude        Claude 전용 심화 (질문폼·아티팩트·Extended Thinking)
       exec_voice         음성 STT·TTS·회의록·음성 명령
       exec_learning      세션 학습·실패 패턴·최적화 규칙
@@ -951,7 +951,7 @@
     ◆ exec_  (실행·부트스트랩)
         exec_orch            멀티AI 오케스트레이션 엔진 (코어)
         exec_claude          Claude 깊이 활용 — 구조화 질문·아티팩트·Extended Thinking
-        exec_remote          원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 ⭐
+        exec_remote          원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 
         exec_learning        세션 학습·실패 패턴 분석
         exec_session_guard   세션 크래시 방어 (periodic-snapshot)
         exec_voice           음성 STT·TTS·회의록
@@ -1683,7 +1683,7 @@
 
 ## statusline 2줄
 - 1줄: 컨텍스트 게이지 (기존)
-- 2줄: [일간 /∞] [주간 /∞] [재사용 N] [세션 N·턴 M] [🔌🟢/⚪] [🌿branch]
+- 2줄: [일간 /∞] [주간 /∞] [재사용 N] [세션 N·턴 M] [/] [🌿branch]
 - ~/.claude/statusline_context.py = 글로벌 (모든 프로젝트)
 - .claude/scripts/statusline_context.py = kit copy (SoT sync)
 

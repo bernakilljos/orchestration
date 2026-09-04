@@ -16,21 +16,21 @@ HERE = Path(__file__).parent
 SRC = HERE / "AI_Evolution_Bible_2035.pptx"
 BAK = HERE / "AI_Evolution_Bible_2035.pptx.bak"
 
-# 13 organs × 2달 새 사건 (우선순위 ⭐⭐⭐ 급함 / ⭐⭐ 중요 / ⭐ 참고)
+# 13 organs × 2달 새 사건 (우선순위  급함 /  중요 /  참고)
 ORGAN_UPDATES = [
-    ("Brain 뇌",         "⭐",   "NVIDIA Rubin CPX · Cerebras Wafer scale 최신"),
-    ("Memory 기억",      "⭐⭐⭐", "Mem0g graph-enhanced +29.6점 · Zep GraphRAG sub-second"),
-    ("Generation 생성",  "⭐⭐",  "Gemini 3.7 Flash (8/13) · code diffusion · Sora 2 rumor"),
-    ("Connectivity 연결","⭐",   "CXL 3.1 · NVLink 6 · Meta MTIA v3"),
-    ("Perception 지각",  "⭐⭐",  "Genie 3 (DeepMind world model, 8월) · 멀티모달 확장"),
-    ("Reasoning 추론",   "⭐⭐⭐", "OpenAI Erdős 자율 발견 (Fields Medalist 인정) · Gemini 2.5 Deep Think"),
-    ("Energy 에너지",    "⭐",   "Anthropic 소형 원전 · Microsoft Three Mile Island · Google 핵융합"),
-    ("Trust 신뢰",       "⭐",   "Lakera·HiddenLayer 신제품 · Anthropic MechInterp 논문"),
-    ("Agency 행위",      "⭐⭐⭐", "ChatGPT Work (GPT-5.6) · OpenAI Sol/Terra/Luna tier · Managed Agents · Fable 5 RESTORED"),
-    ("Embodiment 체화",  "⭐⭐",  "Figure 03 · Optimus Gen 3 · Unitree G1 대량생산"),
-    ("Simulation 시뮬",  "⭐⭐",  "NVIDIA Cosmos world foundation · Genie 3 playable worlds"),
-    ("Civilization 문명","⭐",   "Managed Agents webhooks (환경·메모리 lifecycle) · agent 경제 논문"),
-    ("Evolution 진화",   "⭐⭐⭐", "자율 수학 발견 (Erdős) · Claude self-improvement · AlphaEvolve"),
+    ("Brain 뇌",         "",   "NVIDIA Rubin CPX · Cerebras Wafer scale 최신"),
+    ("Memory 기억",      "", "Mem0g graph-enhanced +29.6점 · Zep GraphRAG sub-second"),
+    ("Generation 생성",  "",  "Gemini 3.7 Flash (8/13) · code diffusion · Sora 2 rumor"),
+    ("Connectivity 연결","",   "CXL 3.1 · NVLink 6 · Meta MTIA v3"),
+    ("Perception 지각",  "",  "Genie 3 (DeepMind world model, 8월) · 멀티모달 확장"),
+    ("Reasoning 추론",   "", "OpenAI Erdős 자율 발견 (Fields Medalist 인정) · Gemini 2.5 Deep Think"),
+    ("Energy 에너지",    "",   "Anthropic 소형 원전 · Microsoft Three Mile Island · Google 핵융합"),
+    ("Trust 신뢰",       "",   "Lakera·HiddenLayer 신제품 · Anthropic MechInterp 논문"),
+    ("Agency 행위",      "", "ChatGPT Work (GPT-5.6) · OpenAI Sol/Terra/Luna tier · Managed Agents · Fable 5 RESTORED"),
+    ("Embodiment 체화",  "",  "Figure 03 · Optimus Gen 3 · Unitree G1 대량생산"),
+    ("Simulation 시뮬",  "",  "NVIDIA Cosmos world foundation · Genie 3 playable worlds"),
+    ("Civilization 문명","",   "Managed Agents webhooks (환경·메모리 lifecycle) · agent 경제 논문"),
+    ("Evolution 진화",   "", "자율 수학 발견 (Erdős) · Claude self-improvement · AlphaEvolve"),
 ]
 
 TIMELINE_ADDS = [

@@ -7,12 +7,12 @@
 
 | 도구 | 강점 | 우리 kit 와 차이 | 통합 후보 |
 |---|---|---|---|
-| **Perplexity Computer** (SaaS, 2026-02) | 19 모델 자동 라우팅 (Claude/Gemini/Grok/GPT-5.2) | 우리는 self-hosted, 3 모델 (Claude+Codex+Gemini) + Haiku | Grok/GPT-5.2 추가 검토 (⭐⭐) |
-| **VoltAgent awesome-claude-code-subagents** (MIT) | 154+ subagents · 10 카테고리 (core dev, lang, infra, security, data/AI, DX, domain, biz, meta, research) | 우리 32 plugins — 카테고리 일부 누락 | reference doc + 선별 vendoring (⭐⭐⭐) |
-| **wshobson/agents** (multi-harness) | Claude/Codex/Cursor/OpenCode/Copilot/Gemini CLI 동시 | 우리 = Claude/Codex/Gemini 만 | Cursor/Copilot wrapper (⭐⭐) |
-| **Anthropic 공식 Skills** (151k stars) | 16 skill (algorithmic-art, canvas-design, docx/pdf/pptx/xlsx, claude-api, mcp-builder, web-artifacts-builder, webapp-testing, skill-creator 등) | 우리 design_*·claude-api 일부 중복 — 공식이 더 검증됨 | `/anthropic-skill <name>` wrapper (⭐⭐⭐) |
-| **LangGraph** | stateful graph orchestration · 멀티 노드 | 우리 task-instruction = linear | exec_graph plugin 별도 (⭐ 복잡도) |
-| **OpenAI Agents SDK** | minimal handoff + MCP | 우리 task-instruction 와 유사 | 패턴 차용 (⭐) |
+| **Perplexity Computer** (SaaS, 2026-02) | 19 모델 자동 라우팅 (Claude/Gemini/Grok/GPT-5.2) | 우리는 self-hosted, 3 모델 (Claude+Codex+Gemini) + Haiku | Grok/GPT-5.2 추가 검토 () |
+| **VoltAgent awesome-claude-code-subagents** (MIT) | 154+ subagents · 10 카테고리 (core dev, lang, infra, security, data/AI, DX, domain, biz, meta, research) | 우리 32 plugins — 카테고리 일부 누락 | reference doc + 선별 vendoring () |
+| **wshobson/agents** (multi-harness) | Claude/Codex/Cursor/OpenCode/Copilot/Gemini CLI 동시 | 우리 = Claude/Codex/Gemini 만 | Cursor/Copilot wrapper () |
+| **Anthropic 공식 Skills** (151k stars) | 16 skill (algorithmic-art, canvas-design, docx/pdf/pptx/xlsx, claude-api, mcp-builder, web-artifacts-builder, webapp-testing, skill-creator 등) | 우리 design_*·claude-api 일부 중복 — 공식이 더 검증됨 | `/anthropic-skill <name>` wrapper () |
+| **LangGraph** | stateful graph orchestration · 멀티 노드 | 우리 task-instruction = linear | exec_graph plugin 별도 ( 복잡도) |
+| **OpenAI Agents SDK** | minimal handoff + MCP | 우리 task-instruction 와 유사 | 패턴 차용 () |
 | **Cursor Composer** | 풀 IDE + 자율 step-by-step | 우리 CLI only · Claude Code 활용 | 통합 X (다른 패러다임) |
 | **Windsurf Cascade** ($15/m) | SWE-1.5 (13x speed) + Fast Context (10x) | 우리는 모델 단가 직접 관리 | 비교만 |
 | **Cline** (VSCode 확장, $0) | API key 만 있으면 무료, 모델 선택 자유 | 우리는 Claude Code 전용 워크플로우 | 통합 X |
@@ -33,17 +33,17 @@
 
 ## 3. 적용 후보 (우선순위)
 
-### ⭐⭐⭐ 자율 진행 가능
+###  자율 진행 가능
 1. **VoltAgent reference doc** — `plugins/exec_orch/references/external-subagents.md` 에 154+ subagent 카탈로그 link + 우리 plugins 매핑
 2. **Anthropic Skills wrapper** — `/anthropic-skill <name>` command 신설 (`/plugin install <name>@anthropic-agent-skills` 자동 호출)
 3. 이 비교 문서 (`docs/2026-06-16/tooling-comparison.md`)
 
-### ⭐⭐ 사용자 결정 (큰 변경)
+###  사용자 결정 (큰 변경)
 4. **Grok / GPT-5.2 라우팅 추가** — `route_dispatch.md` 매트릭스 확장 (Perplexity Computer 패턴). API key·비용·정책 영향
 5. **Cursor / Copilot CLI multi-harness 확장** — wshobson 패턴. 별도 plugin `exec_harness_cursor`·`exec_harness_copilot` 신설
 6. **VoltAgent 154+ subagent 선별 vendoring** — 우리 plugins/ 부족 카테고리 (security audit·infra automation·domain specialist) 만 선별 vendoring
 
-### ⭐ 보류 (복잡도)
+###  보류 (복잡도)
 7. **LangGraph stateful graph orchestration** — 별도 plugin `exec_graph`. 우리 linear task-instruction 패러다임과 다름. 큰 작업.
 
 ## 4. 우리 kit 가 흉내 낼 수 없는 외부 도구 (의도적 제외)

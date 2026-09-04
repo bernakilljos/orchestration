@@ -251,13 +251,13 @@ echo "Total cache tokens saved: ..."
 
 ## 6. 주의사항 & Edge Cases
 
-### ⚠️ Cache 만료 후 비용 폭주
+###  Cache 만료 후 비용 폭주
 
 **시나리오**: 워커가 6분 이상 idle → 캐시 만료 → 다음 호출에 새로 write
 
 **해결**: 4분마다 ping (`.claude/scripts/lib/common.sh` `keep_cache_warm()`)
 
-### ⚠️ 캐시 최소 요건 (1024 토큰)
+###  캐시 최소 요건 (1024 토큰)
 
 **문제**: 캐시 가능 블록이 1024 토큰 미만 → 캐시 안 생성
 
@@ -270,7 +270,7 @@ system = build_cached_system([
 # 확인: estimate_cached_tokens()
 ```
 
-### ⚠️ Extended Thinking 호환
+###  Extended Thinking 호환
 
 Extended thinking 사용 시, `<thinking>` 블록은 **캐시 불가**. 시스템만 캐시:
 
@@ -285,7 +285,7 @@ response = client.messages.create(
 )
 ```
 
-### ⚠️ 다중 시스템 프롬프트 변경
+###  다중 시스템 프롬프트 변경
 
 새 system prompt 배포 시, 기존 캐시는 **자동 무효화** (Anthropic 관리). 새로운 호출부터 새 버전 캐시 생성.
 

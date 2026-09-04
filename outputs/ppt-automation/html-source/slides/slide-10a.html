@@ -55,7 +55,7 @@
     <div class="body">
       <div class="ba-row">
         <div class="ba before">
-          <div class="lbl">❌ BEFORE — 6개만 등록</div>
+          <div class="lbl"> BEFORE — 6개만 등록</div>
           <code>for %%F in (
   codex-a codex-auto gemini-a
   gemini-auto gemini-verify
@@ -67,7 +67,7 @@
         <div class="arrow-mid"><iconify-icon icon="heroicons:arrow-right" style="color:var(--gold);"></iconify-icon></div>
 
         <div class="ba after">
-          <div class="lbl">✅ AFTER — 9개 모두 등록</div>
+          <div class="lbl"> AFTER — 9개 모두 등록</div>
           <code>for %%F in (
   codex-a codex-auto codex-auto-global
   gemini-a gemini-auto gemini-auto-global
@@ -82,9 +82,9 @@
         <table class="gap">
           <thead><tr><th>기능</th><th>BEFORE</th><th>AFTER</th><th>이유</th></tr></thead>
           <tbody>
-            <tr><td class="lbl">haiku-auto (검증자)</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>CLAUDE.md §3.2 기본 검증자, prompt cache 90% 절감</td></tr>
-            <tr><td class="lbl">codex-auto-global</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>멀티 프로젝트 전역 큐 (~/.claude/orca/)</td></tr>
-            <tr><td class="lbl">gemini-auto-global</td><td class="x">❌ 미작동</td><td class="v">✅ 정상</td><td>전역 큐 검증 워커</td></tr>
+            <tr><td class="lbl">haiku-auto (검증자)</td><td class="x"> 미작동</td><td class="v"> 정상</td><td>CLAUDE.md §3.2 기본 검증자, prompt cache 90% 절감</td></tr>
+            <tr><td class="lbl">codex-auto-global</td><td class="x"> 미작동</td><td class="v"> 정상</td><td>멀티 프로젝트 전역 큐 (~/.claude/orca/)</td></tr>
+            <tr><td class="lbl">gemini-auto-global</td><td class="x"> 미작동</td><td class="v"> 정상</td><td>전역 큐 검증 워커</td></tr>
             <tr><td class="lbl">검증 비용 (Haiku vs Gemini)</td><td class="x">Gemini 폴백</td><td class="v">90% ↓</td><td>prompt caching + 더 싼 토큰 단가</td></tr>
           </tbody>
         </table>

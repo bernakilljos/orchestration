@@ -140,7 +140,7 @@ fabrication(허위생성) 은 침묵보다 비용이 크다.
 
 failure-mode 의 "확신 없으면 거절" 룰을 **회피 수단으로 오용** 하는 것이 전수조사 위반.
 
-| 상황 | 전수조사 위반 (❌) | 올바른 행동 (✓) |
+| 상황 | 전수조사 위반 () | 올바른 행동 (✓) |
 |---|---|---|
 | "X 가 어떻게 돼?" | 샘플 1-2개 보고 답변 | X 의 모든 인스턴스 전수조사 후 답변 |
 | 동명 파일 인벤토리 | 파일명만 보고 "중복" 단정 | `md5sum` / `diff` 로 내용 검증 후 판정 |
@@ -584,7 +584,7 @@ D8 위반 감지 시 `.claude/logs/sweep-d8-violations.log` 에 기록:
 
 D8 위반 감지 시 스스로 다음처럼 재작성:
 ```text
-❌ 방금 우회 설득 · D8 위반 · 재작성:
+ 방금 우회 설득 · D8 위반 · 재작성:
 [결정 방식 그대로 실행 결과]
 ```
 
@@ -696,7 +696,7 @@ memory: [[feedback_no_duplicate_function]]
 - `.claude/rules/best-practices.md` § 검증 후 보고
 - `.claude/rules/failure-mode.md` § 회피·confidence
 - `feedback_approve_before_apply.md` (자율 vs 승인)
-- `feedback_official_features_auto_check.md` (예외: ⭐⭐ 자율 적용 영역)
+- `feedback_official_features_auto_check.md` (예외:  자율 적용 영역)
 
 
 ## no-false-report.md
@@ -873,12 +873,12 @@ bash .claude/scripts/smoke-test-screen.sh <changed_file>
 
 | 단계 | AI | 사용자 |
 |---|---|---|
-| 코드 수정 | ✅ | — |
-| 기능 검증 (curl·smoke) | ✅ | — |
-| 화면 검증 (Playwright render) | ✅ | — |
-| 에러 발견 시 자동 재수정 | ✅ (max 3) | — |
-| **최종 시각 확인** | — | ✅ |
-| 비즈니스 로직 결정 | — | ✅ |
+| 코드 수정 |  | — |
+| 기능 검증 (curl·smoke) |  | — |
+| 화면 검증 (Playwright render) |  | — |
+| 에러 발견 시 자동 재수정 |  (max 3) | — |
+| **최종 시각 확인** | — |  |
+| 비즈니스 로직 결정 | — |  |
 
 AI 가 사용자에게 "기능 검증해 주세요" 요청 = 룰 위반.
 
@@ -1748,9 +1748,9 @@ python conversation_logger.py load 3
 
 ## 우리 kit 이 이미 정합 (2026-09-02 실측)
 
-- `~/.claude/settings.json`: hooks 없음 ✅
-- `.claude/settings.json`: 72+ hooks (프로젝트 전용) ✅
-- 각 hook 안 guard: 있음 ✅
+- `~/.claude/settings.json`: hooks 없음 
+- `.claude/settings.json`: 72+ hooks (프로젝트 전용) 
+- 각 hook 안 guard: 있음 
 - 정상 · rule 로 재발 방지
 
 ## 금지

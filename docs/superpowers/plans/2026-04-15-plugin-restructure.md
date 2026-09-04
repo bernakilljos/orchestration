@@ -518,11 +518,11 @@ heartbeat: cat .claude/orca-heartbeat
 
 | CODEX | GEMINI | 태스크 | 실행 경로 |
 |-------|--------|--------|---------|
-| ✅ | ✅ | LARGE | task-instruction.md → codex-auto → Claude 보완 → gemini-auto |
-| ✅ | ✅ | VERIFY | task-instruction.md → gemini-auto (--verify) |
-| ✅ | ❌ | LARGE | task-instruction.md → codex-auto → Claude 검증 |
-| ❌ | ✅ | VERIFY | task-instruction.md → gemini-auto |
-| ❌ | ❌ | ANY | Claude 직접 구현 + 검증 |
+|  |  | LARGE | task-instruction.md → codex-auto → Claude 보완 → gemini-auto |
+|  |  | VERIFY | task-instruction.md → gemini-auto (--verify) |
+|  |  | LARGE | task-instruction.md → codex-auto → Claude 검증 |
+|  |  | VERIFY | task-instruction.md → gemini-auto |
+|  |  | ANY | Claude 직접 구현 + 검증 |
 
 ## Vibe Loop 모드 (양쪽 모두 가용 시)
 

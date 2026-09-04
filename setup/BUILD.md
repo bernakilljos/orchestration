@@ -108,7 +108,7 @@ setup 끝나면 사용자에게 Claude 가 안내해야 할 다음 단계:
 1주차 완료 (MCP 기초)        → /plug_all 로 추가 카테고리
 2주차 완료 (CLAUDE.md)        → 자동
 3주차 (Telegram 알림)         → /mcp_collab-install
-4주차 (VPS 24/7 원격)         → /exec_remote-setup    ⭐ 신규
+4주차 (VPS 24/7 원격)         → /exec_remote-setup     신규
 ```
 
 ## 8. 현행화 체크리스트

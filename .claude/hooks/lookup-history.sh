@@ -59,17 +59,39 @@ try:
     for k in kws[:4]:
         params2.extend([f'%{k}%', f'%{k}%'])
     try:
+        # hit_count · last_hit_ts 컬럼 보장
+        cols = [r[1] for r in c.execute('PRAGMA table_info(problem_solutions)').fetchall()]
+        if 'hit_count' not in cols:
+            c.execute('ALTER TABLE problem_solutions ADD COLUMN hit_count INTEGER DEFAULT 0')
+        if 'last_hit_ts' not in cols:
+            c.execute('ALTER TABLE problem_solutions ADD COLUMN last_hit_ts TIMESTAMP')
         sol_rows = c.execute(
-            f'SELECT category, substr(problem,1,120), substr(solution,1,200), files_modified, reusable_score FROM problem_solutions WHERE ({like2}) ORDER BY reusable_score DESC, ts DESC LIMIT 3',
+            f'SELECT id, category, substr(problem,1,120), substr(solution,1,200), files_modified, reusable_score FROM problem_solutions WHERE ({like2}) ORDER BY reusable_score DESC, ts DESC LIMIT 3',
             params2
         ).fetchall()
         if sol_rows:
             print()
             print('## 재사용 가능한 해결책 (자동 조회)')
-            for cat, prob, sol, files, score in sol_rows:
+            hit_ids = []
+            for sid_s, cat, prob, sol, files, score in sol_rows:
                 print(f'- [{cat} - ★{score}] 문제: {prob}')
                 if sol: print(f'  해결: {sol}')
                 if files: print(f'  파일: {files[:150]}')
+                hit_ids.append(sid_s)
+            # hit_count 증가 · verified 승급 · score 상향
+            for hid in hit_ids:
+                c.execute(
+                    'UPDATE problem_solutions SET hit_count=COALESCE(hit_count,0)+1, '
+                    'last_hit_ts=CURRENT_TIMESTAMP, '
+                    'reusable_score=CASE '
+                    'WHEN COALESCE(hit_count,0)+1 >= 10 THEN 10 '
+                    'WHEN COALESCE(hit_count,0)+1 >= 5 THEN MAX(reusable_score, 9) '
+                    'WHEN COALESCE(hit_count,0)+1 >= 3 THEN MAX(reusable_score, 8) '
+                    'ELSE MAX(reusable_score, 6) END, '
+                    'verified=CASE WHEN COALESCE(hit_count,0)+1 >= 3 THEN 1 ELSE verified END '
+                    'WHERE id=?', (hid,)
+                )
+            c.commit()
     except Exception:
         pass
 except Exception as e:

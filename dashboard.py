@@ -466,7 +466,7 @@ BASE = """<!DOCTYPE html><html lang="ko" translate="no"><head>
 # ── 메인 페이지 ───────────────────────────────────────────────
 def make_index(statuses, err, body_only=False):
     if err:
-        body = f'<div class="error-box">⚠ 연결 오류 — {err}</div>'
+        body = f'<div class="error-box"> 연결 오류 — {err}</div>'
         if body_only: return body
         return BASE.format(title="대시보드",css=CSS,body=body,ajax_poll="")
 
@@ -499,7 +499,7 @@ def make_index(statuses, err, body_only=False):
                        f'<span class="badge b-codex">Codex {r_c}</span>' if r_c else "",
                        f'<span class="badge b-gemini">Gemini {r_g}</span>' if r_g else ""])
               or '<span class="badge b-idle">대기 중</span>')
-        warn=" ⚠" if stale else ""
+        warn=" " if stale else ""
         pid_js = pc_id.replace("'","\\'")
 
         # 버튼 상태: stale=응답없음(정지됨), running=워커실행중
@@ -760,7 +760,7 @@ new Chart(document.getElementById('bar'),{{type:'bar',
   <div class="{anim}" style="flex-shrink:0">{monitor_svg(color,pc_id[:6]+"d",running,pending,done)}</div>
   <div style="flex:1;min-width:240px">
     <div class="detail-name">{projects} <span style="font-size:16px;font-weight:400;color:var(--muted)">({pc})</span></div>
-    <div class="detail-meta" style="margin-bottom:12px">업데이트: {ago} · 프로젝트: {projects} · MAC: {mac}{'  ⚠ 응답없음' if stale else ''}</div>
+    <div class="detail-meta" style="margin-bottom:12px">업데이트: {ago} · 프로젝트: {projects} · MAC: {mac}{'   응답없음' if stale else ''}</div>
     <div class="ctrl-panel">
       <!-- 일시정지: 정상일 때만 활성 -->
       <div class="ctrl-svg-btn" onclick="{("ctrl('pause')" if not stale else "")}" title="일시정지" style="opacity:{('1' if not stale else '0.25')};cursor:{('pointer' if not stale else 'default')}">
@@ -855,7 +855,7 @@ new Chart(document.getElementById('bar'),{{type:'bar',
     <select id="task-ai" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-size:12px;outline:none">
       <option value="any">🤖 자동 워커</option>
       <option value="claude">🧠 Claude 설계</option>
-      <option value="codex">⚙️ Codex 구현</option>
+      <option value="codex">⚙ Codex 구현</option>
       <option value="gemini">🔍 Gemini 검증</option>
     </select>
   </div>
@@ -898,9 +898,9 @@ src/views/Login.vue"></textarea>
 <div class="section-title">작업 내용 요약</div>
 <div class="tab-bar">
   <button class="tab-btn active" onclick="showTab('task',this)">🧠 Claude 설계</button>
-  <button class="tab-btn" onclick="showTab('impl',this)">⚙️ Codex 구현</button>
+  <button class="tab-btn" onclick="showTab('impl',this)">⚙ Codex 구현</button>
   <button class="tab-btn" onclick="showTab('review',this)">🔍 Gemini 검증</button>
-  <button class="tab-btn" onclick="showTab('tasks',this)">📊 태스크 목록</button>
+  <button class="tab-btn" onclick="showTab('tasks',this)"> 태스크 목록</button>
   <button class="tab-btn" onclick="showTab('hist',this)">🕐 이력</button>
 </div>
 <div id="tab-task"   class="tab-pane active"><pre class="summary-box">{task_sum}</pre></div>

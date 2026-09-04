@@ -179,7 +179,7 @@ CLI 가 질문 문안 자동 생성 표준 형식:
 - 복잡 설계·초난도 → API (Opus 5·Fable 5) · 사용자 명시 시만
 - 감사·비즈니스 판정 → claude.ai Web develop (사용자 구독)
 
-이 원칙 확인했으면 "orchestration_v1 헌장 A~F 준수 ✅" 답하고 대기.
+이 원칙 확인했으면 "orchestration_v1 헌장 A~F 준수 " 답하고 대기.
 ```
 
 ---
@@ -188,11 +188,11 @@ CLI 가 질문 문안 자동 생성 표준 형식:
 
 | 방식 | 설치 | 자동성 | 비용 |
 |---|---|---|---|
-| **파일 브릿지** (`~/.claude/orca/`) | ❌ kit 이미 있음 | 사용자 파일 저장 개입 | 무료 |
-| **MCP Server** | ⚠️ CLI 가 도구 export | Web 이 CLI 도구 사용 (반대 방향은 X) | 무료 |
-| **Managed Agents API** | ⚠️ SDK 코드 | 세션 완전 자동 (별개 UI) | 유료 (Anthropic API) |
-| **Remote Agent** (VPS + SSH) | ✅ kit `/exec_remote-*` | 24/7 + 모바일 SSH | Oracle Free Tier 무료 |
-| **Chrome Extension** | ✅ 개발 필요 (9일) | 진짜 완전 자동 (claude.ai UI) | 무료 (사용자 계정) |
+| **파일 브릿지** (`~/.claude/orca/`) |  kit 이미 있음 | 사용자 파일 저장 개입 | 무료 |
+| **MCP Server** |  CLI 가 도구 export | Web 이 CLI 도구 사용 (반대 방향은 X) | 무료 |
+| **Managed Agents API** |  SDK 코드 | 세션 완전 자동 (별개 UI) | 유료 (Anthropic API) |
+| **Remote Agent** (VPS + SSH) |  kit `/exec_remote-*` | 24/7 + 모바일 SSH | Oracle Free Tier 무료 |
+| **Chrome Extension** |  개발 필요 (9일) | 진짜 완전 자동 (claude.ai UI) | 무료 (사용자 계정) |
 
 **MCP 로 web 발주 = 불가** (Anthropic 이 그 API 공개 X). 완전 자동 원하면 Chrome Extension 개발 또는 Managed Agents API (유료).
 

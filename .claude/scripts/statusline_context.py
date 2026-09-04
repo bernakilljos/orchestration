@@ -440,27 +440,30 @@ def extra_gauges(cwd):
         filled = int(round(pct / 100.0 * w))
         return "█" * filled + "▒" * (w - filled)
 
-    # 1) Current session — 5h window - 세션 파일 startedAt 기반
+    # 1) Current session — 5h window · 가장 오래된 startedAt 기준 (안정적)
+    # 근거: 사용자 지시 2026-09-03 - 최신 window 급변 방지 · 최근 5h 안 window 중 가장 이른 것
     try:
         home = os.path.expanduser("~")
         sess_files = _glob.glob(os.path.join(home, ".claude", "sessions", "*.json"))
-        latest = None
+        now_ms = int(_dt.datetime.now().timestamp() * 1000)
+        window_ms = 5 * 60 * 60 * 1000
+        cutoff_ms = now_ms - window_ms
+        oldest_in_window = None
         for sf in sess_files:
             try:
                 with open(sf, "r", encoding="utf-8") as f:
                     j = json.load(f)
-                started = j.get("startedAt") or 0
-                if latest is None or started > latest.get("startedAt", 0):
-                    latest = j
+                started = int(j.get("startedAt") or 0)
+                # 현재 5h window 내부 · 가장 이른 것
+                if started >= cutoff_ms and started > 0:
+                    if oldest_in_window is None or started < oldest_in_window:
+                        oldest_in_window = started
             except Exception:
                 continue
-        if latest and latest.get("startedAt"):
-            started_ms = int(latest["startedAt"])
-            now_ms = int(_dt.datetime.now().timestamp() * 1000)
-            window_ms = 5 * 60 * 60 * 1000
-            elapsed = max(0, now_ms - started_ms)
+        if oldest_in_window:
+            elapsed = max(0, now_ms - oldest_in_window)
             pct = min(elapsed / window_ms * 100.0, 100.0)
-            reset_dt = _dt.datetime.fromtimestamp((started_ms + window_ms) / 1000.0)
+            reset_dt = _dt.datetime.fromtimestamp((oldest_in_window + window_ms) / 1000.0)
             reset_str = reset_dt.strftime("%I:%M%p").lstrip("0").lower()
             session_gauge = f"세션 {_bar(pct)} {pct:.0f}% (reset {reset_str})"
     except Exception:
