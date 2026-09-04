@@ -56,8 +56,18 @@ tokens = int(
     + (last_usage.get("cache_creation_input_tokens") or 0)
 )
 
-# 상한 (Opus [1m] 자주 사용 - 토큰이 200K 넘으면 1M 로 판정)
-limit = 1_000_000 if ("[1m]" in (model_id or "") or tokens > 200_000) else 200_000
+# 상한 - 정본은 statusline_context.py 가 기록한 .claude/state/context-limit.json.
+# 이유: jsonl 의 message.model 은 "claude-opus-5" 로만 기록되어 "[1m]" 접미가 없다.
+#       그래서 model_id 만 보면 1M 세션을 200K 로 오판 -> 93% 허위 경보 (2026-09-05 실측).
+limit = None
+try:
+    with open(os.path.join(cwd, ".claude", "state", "context-limit.json"), encoding="utf-8") as f:
+        limit = int(json.load(f).get("limit") or 0) or None
+except Exception:
+    pass
+if not limit:
+    # fallback - 정본 없을 때만 휴리스틱
+    limit = 1_000_000 if ("[1m]" in (model_id or "") or tokens > 200_000) else 200_000
 pct = tokens / limit * 100
 
 if pct >= 90:

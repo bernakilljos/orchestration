@@ -302,31 +302,6 @@ _CACHE_HIT_RATE = 0.0  # 세션 prompt cache 히트율 %
 _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 
 
-def plan_usage(cwd):
-    """Anthropic plan usage — 세션-주간 한도. jsonl 안 usage.plan_limit."""
-    # Claude Code jsonl 의 message.usage 는 session_limit-week_limit 표기 X (2026-09 기준).
-    # 대체: statsig cache - ~/.claude/statsig/ 안 session-week percent
-    import glob
-    home = os.path.expanduser("~")
-    session_pct = week_pct = None
-    reset_str = ""
-    # try statsig cached values
-    for p in glob.glob(os.path.join(home, ".claude", "statsig", "*")):
-        try:
-            with open(p, "r", encoding="utf-8", errors="replace") as f:
-                txt = f.read()
-                # 대충 파싱 (JSON 안 usage%)
-                import re
-                m = re.search(r'session[_-]?limit["\s:]+([\d.]+)', txt)
-                if m:
-                    session_pct = float(m.group(1))
-                m = re.search(r'week[_-]?limit["\s:]+([\d.]+)', txt)
-                if m:
-                    week_pct = float(m.group(1))
-        except Exception:
-            pass
-    return session_pct, week_pct, reset_str
-
 
 def extra_gauges(cwd):
     """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
@@ -465,7 +440,7 @@ def extra_gauges(cwd):
             pct = min(elapsed / window_ms * 100.0, 100.0)
             reset_dt = _dt.datetime.fromtimestamp((oldest_in_window + window_ms) / 1000.0)
             reset_str = reset_dt.strftime("%I:%M%p").lstrip("0").lower()
-            session_gauge = f"세션 {_bar(pct)} {pct:.0f}% (reset {reset_str})"
+            session_gauge = f"5h창 {_bar(pct)} {pct:.0f}% 경과 (reset {reset_str})"
     except Exception:
         pass
 
@@ -509,14 +484,13 @@ def extra_gauges(cwd):
                                     week_msgs += 1
                     except Exception:
                         continue
-        # 주간 상한 (env override · 기본 5000)
-        week_limit = int(os.environ.get("CLAUDE_WEEK_MSG_LIMIT", "5000"))
-        pct = min(week_msgs / max(week_limit, 1) * 100.0, 100.0)
-        # 주간 reset — 다음 목요일 (Anthropic weekly cycle)
+        # 주간 - 플랜 한도 실값은 로컬에 없음 (statsig X · stats-cache stale).
+        # 근거 없는 상수로 % 를 만들면 A2 위반 -> 실측 메시지 수만 표기.
+        # 실제 플랜 사용률은 /usage 에서 확인.
         days_to_thu = (3 - today.weekday()) % 7 or 7
         reset_day = today + _dt.timedelta(days=days_to_thu)
         reset_str = reset_day.strftime("%b ") + str(reset_day.day)
-        week_gauge = f"주간 {_bar(pct)} {pct:.0f}% (reset {reset_str})"
+        week_gauge = f"주간 {week_msgs:,} msg (reset {reset_str} · 한도는 /usage)"
     except Exception:
         pass
 
@@ -646,6 +620,19 @@ def main() -> None:
     cwd = data.get("cwd") or ""
 
     limit, exact_model = pick_limit(model_id)
+
+    # 해결된 상한을 SoT 로 공유 - jsonl 은 model 을 "[1m]" 없이 기록하므로
+    # hook(inject-compact-reminder)은 stdin model.id 를 못 본다. 여기서만 정본 기록.
+    if exact_model and cwd:
+        try:
+            import datetime as _dtc
+            st = os.path.join(cwd, ".claude", "state")
+            os.makedirs(st, exist_ok=True)
+            with open(os.path.join(st, "context-limit.json"), "w", encoding="utf-8") as _f:
+                json.dump({"model": model_id, "limit": limit,
+                           "ts": _dtc.datetime.now().isoformat(timespec="seconds")}, _f)
+        except Exception:
+            pass
 
     tokens = 0
     no_usage = True
