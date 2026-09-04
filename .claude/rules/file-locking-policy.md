@@ -30,7 +30,7 @@ TARGET_FILES=$(grep -E "^- target: " .claude/tasks/task-<slug>.md | sed 's/^- ta
 # 2. 다른 lock 의 files 와 교집합 검사
 for tgt in $TARGET_FILES; do
   if grep -l "$tgt" .claude/tasks/locks/*.lock 2>/dev/null; then
-    echo "❌ 파일 잠금 충돌: $tgt"
+    echo " 파일 잠금 충돌: $tgt"
     exit 1
   fi
 done

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 r"""
 statusline_context — Claude Code 컨텍스트 잔량 표시
-표준 라이브러리만 사용 · Windows 함정 4개 회피.
+표준 라이브러리만 사용 - Windows 함정 4개 회피.
 
 경로 예: ~/.claude/statusline_context.py
 """
@@ -22,9 +22,9 @@ FILLED = "█"  # █
 EMPTY = "▒"   # ▒
 WIDTH = 10
 
-# 상한 매핑 · 긴 것부터
+# 상한 매핑 - 긴 것부터
 LIMIT_PREFIXES = [
-    # [1m] 접미 · 긴 것 먼저
+    # [1m] 접미 - 긴 것 먼저
     ("claude-opus-5[1m]", 1_000_000),
     ("claude-sonnet-5[1m]", 1_000_000),
     ("claude-opus-4-8[1m]", 1_000_000),
@@ -53,7 +53,7 @@ def pick_limit(model_id: str) -> tuple[int, bool]:
 
 
 def cwd_to_proj_dir(cwd: str) -> str:
-    """cwd → ~/.claude/projects/<safe>/ 폴더명."""
+    """cwd -> ~/.claude/projects/<safe>/ 폴더명."""
     safe = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
     home = os.path.expanduser("~")
     return os.path.join(home, ".claude", "projects", safe)
@@ -106,7 +106,7 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if pct >= 95:
         line += "  compact 임박"
     elif pct >= 80:
-        line += "  ⚠"
+        line += "  [WARN]"
     return line
 
 

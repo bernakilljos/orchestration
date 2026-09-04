@@ -81,7 +81,7 @@ COLORS = {
 ### Step 4 — 결과 보고
 
 ```
-✅ 레이어 케이크 생성 완료
+ 레이어 케이크 생성 완료
 - 결과: outputs/arch/layered-{slug}-{date}.{pdf|pptx}
 - 원본: outputs/arch/layered-{slug}-{date}.md
 - 레이어: N개 (TOP → FOUNDATION)

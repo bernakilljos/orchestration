@@ -45,12 +45,12 @@
 ```
 SEO Score: 78/100
 
-[PASS] ✅ title 태그 적절 (52자)
-[PASS] ✅ H1 태그 1개
-[FAIL] ❌ meta description 없음
-[FAIL] ❌ og:image 미설정
-[WARN] ⚠️ 이미지 3개 alt 태그 없음
-[WARN] ⚠️ sitemap.xml 미생성
+[PASS]  title 태그 적절 (52자)
+[PASS]  H1 태그 1개
+[FAIL]  meta description 없음
+[FAIL]  og:image 미설정
+[WARN]  이미지 3개 alt 태그 없음
+[WARN]  sitemap.xml 미생성
 ```
 
 ### 3. 자동 수정

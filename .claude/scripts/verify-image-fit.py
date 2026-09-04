@@ -4,7 +4,7 @@ teaching-doc.md § 페이지 fit 사전검증 자동화.
 hook-09-ocr-verify.sh 에서 build-*-diagrams.py 호출 후 발동.
 
 PASS: PNG 비율이 페이지 비율 (landscape 0.69 ± 0.05) 안
-FAIL: 비율 불일치 → docx 에서 짤림 또는 빈 공간
+FAIL: 비율 불일치 -> docx 에서 짤림 또는 빈 공간
 """
 import sys
 import io
@@ -29,8 +29,8 @@ TARGET = ROOT / "docs" / "screens" / "arch-kor"
 # 산출물별 페이지 비율 (margin 제외, h/w) — 확장 가능
 RATIOS = {
     # === 문서 (A4 기본) ===
-    "docx-portrait":     1.46,    # 8.27×11.69 → 사용 6.5×9.5
-    "docx-landscape":    0.69,    # 11.69×8.27 → 사용 9.5×6.6
+    "docx-portrait":     1.46,    # 8.27×11.69 -> 사용 6.5×9.5
+    "docx-landscape":    0.69,    # 11.69×8.27 -> 사용 9.5×6.6
     "pdf-portrait":      1.41,    # A4
     "pdf-landscape":     0.71,    # A4
     # === A3 / A5 / Letter ===
@@ -41,7 +41,7 @@ RATIOS = {
     "letter-portrait":   1.29,    # 8.5×11
     "letter-landscape":  0.77,
     # === 슬라이드 ===
-    "pptx-16:9":         0.54,    # 13.33×7.5 → 사용 12.5×6.7
+    "pptx-16:9":         0.54,    # 13.33×7.5 -> 사용 12.5×6.7
     "pptx-4:3":          0.71,    # 10×7.5
     "google-slides":     0.54,    # 16:9
     "keynote":           0.54,    # 16:9
@@ -61,7 +61,7 @@ RATIOS = {
     "twitter-card":      0.563,   # 1200×675
     "linkedin-post":     1.0,     # 1:1 권장
     "tiktok":            1.78,    # 9:16
-    # === 인쇄·기타 ===
+    # === 인쇄-기타 ===
     "business-card":     0.572,   # 89×51mm
     "poster-a2":         1.41,
     "card-3:2":          0.667,
@@ -125,7 +125,7 @@ for png in sorted(TARGET.glob("*.png")):
         problems.append((png.name, f"비율 {ratio:.2f} vs 기대 {EXPECTED:.2f} (차이 {diff:.2f}) — 짤림/여백 위험"))
         continue
 
-    # WARN: 추가 검증 (빈 여백·콘텐츠 부족)
+    # WARN: 추가 검증 (빈 여백-콘텐츠 부족)
     # 매우 작은 PNG = 콘텐츠 부족 (예: width < 800 px)
     if w < 900:
         warnings.append((png.name, f"width {w}px 작음 — 정보 부족 또는 폰트 비율 ↓"))

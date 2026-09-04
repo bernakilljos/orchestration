@@ -2,13 +2,13 @@
 """External OS-level watchdog — runs OUTSIDE Claude Code via Task Scheduler.
 
 Claude Code 의 내부 watchdog.py 는 Claude 가 살아 있을 때만 동작한다.
-VSCode 자체가 hang 되면 내부 watchdog 도 같이 죽어서 복구 불가 → 이 외부 데몬이 보완.
+VSCode 자체가 hang 되면 내부 watchdog 도 같이 죽어서 복구 불가 -> 이 외부 데몬이 보완.
 
 스케줄: Windows Task Scheduler 가 1분 간격으로 호출.
 체크:
   1. heartbeat 파일 (.claude/orca-heartbeat) mtime
   2. Code.exe / claude.exe 프로세스 존재
-  3. 5분 이상 heartbeat 정지 + VSCode 프로세스 살아있음 → hang 의심
+  3. 5분 이상 heartbeat 정지 + VSCode 프로세스 살아있음 -> hang 의심
 
 행동:
   - 기본: 로그만 남김 (./claude/state/external-watchdog.log)

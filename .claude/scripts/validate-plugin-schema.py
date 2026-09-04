@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-plugin.json 스키마 검증 — 필수 필드·타입·prefix 일치·의존 참조 유효성 확인.
+plugin.json 스키마 검증 — 필수 필드-타입-prefix 일치-의존 참조 유효성 확인.
 
 사용법:
   python .claude/scripts/validate-plugin-schema.py              전체 검증
@@ -120,17 +120,17 @@ for t in targets:
 # 출력
 print(f"=== plugin.json 스키마 검증 ({len(targets)}개) ===\n")
 if errors:
-    print(f"🔴 오류 {len(errors)}:")
+    print(f"[RED] 오류 {len(errors)}:")
     for e in errors:
         print(f"   - {e}")
     print()
 if warnings:
-    print(f"🟡 경고 {len(warnings)}:")
+    print(f"[YEL] 경고 {len(warnings)}:")
     for w in warnings:
         print(f"   - {w}")
     print()
 if not errors and not warnings:
-    print("✅ 전부 통과")
+    print("[OK] 전부 통과")
 
 if errors:
     sys.exit(1)

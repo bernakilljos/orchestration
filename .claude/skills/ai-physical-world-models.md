@@ -70,4 +70,4 @@ metadata:
 - NVIDIA Cosmos: https://www.nvidia.com/en-us/ai/cosmos/
 - NVIDIA Isaac: https://developer.nvidia.com/isaac
 - `ai-risk-lighthouse.md` § Behavioral Coverage
-- `solution-capability-audit.md` #16-19 (❌ → 🟡 가이드 제공)
+- `solution-capability-audit.md` #16-19 ( →  가이드 제공)

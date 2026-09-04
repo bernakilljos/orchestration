@@ -132,7 +132,7 @@ claude mcp add telegram -s user \
 # Hook 안에서 MCP 호출하거나, scripts/notify-telegram.sh 로 직접 curl 도 가능
 curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
   -d chat_id="${TELEGRAM_CHAT_ID}" \
-  -d text="✅ Claude task 완료: $(date)"
+  -d text=" Claude task 완료: $(date)"
 ```
 
 > **보안 주의**: 토큰이 채팅을 보낼 수 있는 모든 권한을 가짐 → `.env` (gitignore)에만 저장. `docs/ini/telegram.ini` 도 가능.

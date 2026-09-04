@@ -124,12 +124,12 @@ curl https://api.loom.com/api/user \
 
 | 도구 | 형태 | 실시간 협업 | 수출 | 교육용 |
 |------|------|-----------|------|--------|
-| **Excalidraw** | 오픈소스 | ✅ (협업링크) | SVG/PNG/JSON | ✅ 교실용 |
-| **tldraw** | 오픈소스 | ✅ (구축 필요) | SVG/JSON | ✅ 자체 호스팅 |
-| **Miro** | SaaS | ✅ (실시간) | PNG/PDF/SVG, API 내보내기 | ✅ 엔터프라이즈 |
-| **FigJam** (Figma 일부) | SaaS | ✅ (실시간) | 디자인+보드 | ✅ 팀협업 |
-| **Jamboard** (deprecated) | SaaS | ✅ Google Meet 통합 | Google Drive → PDF | ✅ 학교 |
-| **OneNote** | 클라우드 | ✅ (MSOffice 통합) | ONETNOTE, PDF | ✅ 교실 공책 |
+| **Excalidraw** | 오픈소스 |  (협업링크) | SVG/PNG/JSON |  교실용 |
+| **tldraw** | 오픈소스 |  (구축 필요) | SVG/JSON |  자체 호스팅 |
+| **Miro** | SaaS |  (실시간) | PNG/PDF/SVG, API 내보내기 |  엔터프라이즈 |
+| **FigJam** (Figma 일부) | SaaS |  (실시간) | 디자인+보드 |  팀협업 |
+| **Jamboard** (deprecated) | SaaS |  Google Meet 통합 | Google Drive → PDF |  학교 |
+| **OneNote** | 클라우드 |  (MSOffice 통합) | ONETNOTE, PDF |  교실 공책 |
 
 ### Excalidraw 호스팅
 ```bash
@@ -153,14 +153,14 @@ curl https://api.miro.com/v2/boards \
 
 | 도구 | 형태 | 언어 | 교실 기능 | 설치 |
 |------|------|------|----------|------|
-| **CodeSandbox** | SaaS | JS, TS, Vue, React, Next.js 등 | ✅ (소셜 기능 제한) | https://codesandbox.io |
-| **StackBlitz** | SaaS | Node.js + 브라우저 IDE | ✅ (팀 워크스페이스) | https://stackblitz.com |
-| **Replit** | SaaS | 100+ 언어, 협업, 호스팅 포함 | ✅ (교실 + 숙제) | https://replit.com/teams |
-| **Judge0** | 오픈소스 | 60+ 언어 (C, Python, Java 등) | ❌ (API 기반) | `docker run -d judge0/judge0:latest` |
-| **Codewars** | SaaS | 다양한 언어 kata (문제), 랭킹 | ✅ (워리어 갤럽) | API: https://www.codewars.com/api |
-| **LeetCode** | SaaS | 알고리즘 특화, 면접 준비 | ❌ (개인학습) | Premium API 제한적 |
-| **HackerRank** | SaaS | 기술 평가 + 학습, 채용공고 연결 | ✅ (기업 교실) | API: https://www.hackerrank.com |
-| **GitHub Classroom** | SaaS (GitHub) | Git 기반 과제, 자동 채점 | ✅ (교실+과제 자동화) | 무료 (GitHub) |
+| **CodeSandbox** | SaaS | JS, TS, Vue, React, Next.js 등 |  (소셜 기능 제한) | https://codesandbox.io |
+| **StackBlitz** | SaaS | Node.js + 브라우저 IDE |  (팀 워크스페이스) | https://stackblitz.com |
+| **Replit** | SaaS | 100+ 언어, 협업, 호스팅 포함 |  (교실 + 숙제) | https://replit.com/teams |
+| **Judge0** | 오픈소스 | 60+ 언어 (C, Python, Java 등) |  (API 기반) | `docker run -d judge0/judge0:latest` |
+| **Codewars** | SaaS | 다양한 언어 kata (문제), 랭킹 |  (워리어 갤럽) | API: https://www.codewars.com/api |
+| **LeetCode** | SaaS | 알고리즘 특화, 면접 준비 |  (개인학습) | Premium API 제한적 |
+| **HackerRank** | SaaS | 기술 평가 + 학습, 채용공고 연결 |  (기업 교실) | API: https://www.hackerrank.com |
+| **GitHub Classroom** | SaaS (GitHub) | Git 기반 과제, 자동 채점 |  (교실+과제 자동화) | 무료 (GitHub) |
 
 ### Replit 교실 API
 ```bash

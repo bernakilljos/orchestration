@@ -61,7 +61,7 @@ ssh orch-vps "tmux new -d -s claude 'cd ~/orch && claude'"
 
 ### 5. 완료 후 출력
 
-> ✅ VPS 에 Claude Code + orchestration_v1 배포 완료.
+>  VPS 에 Claude Code + orchestration_v1 배포 완료.
 > 다음:
 > - 모바일 접속: `/exec_remote-mobile`
 > - tmux 사용법: `/exec_remote-tmux`

@@ -94,12 +94,12 @@ PATTERNS = {
 
 | 상황 | 안내? |
 |---|---|
-| 위 5 카테고리 매치 | ✅ approval-gate 필수 |
-| 단순 file write / read | ❌ 자동 진행 |
-| 외부 API call (read-only) | ❌ 자동 진행 |
-| `git commit` (local) | ❌ 자동 진행 |
-| `git push` (origin feature branch) | ❌ 자동 진행 |
-| `git push` (origin main) | ✅ approval-gate |
+| 위 5 카테고리 매치 |  approval-gate 필수 |
+| 단순 file write / read |  자동 진행 |
+| 외부 API call (read-only) |  자동 진행 |
+| `git commit` (local) |  자동 진행 |
+| `git push` (origin feature branch) |  자동 진행 |
+| `git push` (origin main) |  approval-gate |
 
 CLAUDE.md § 7-11 (Zero-touch 자동화) 와 정합:
 - 알림 = 위 5가지만

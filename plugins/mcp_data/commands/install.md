@@ -52,12 +52,12 @@ claude mcp list
 
 | MCP | 패키지명 | 버전 | 상태 |
 |-----|---------|------|------|
-| postgres | @modelcontextprotocol/server-postgres | 0.6.2 | ✅ 검증 |
-| mongodb | mongodb-mcp-server | 1.10.0+ | ✅ 검증 |
-| bigquery | bigquery-mcp-server | 0.1.16+ | ✅ 검증 |
-| snowflake | snowflake-mcp | 1.1.0+ | ✅ 검증 |
-| google-sheets | @shivaduke28/google-sheets-mcp | 1.2.2+ | ✅ 검증 |
-| airtable | airtable-mcp-server | 1.13.0+ | ✅ 검증 |
+| postgres | @modelcontextprotocol/server-postgres | 0.6.2 |  검증 |
+| mongodb | mongodb-mcp-server | 1.10.0+ |  검증 |
+| bigquery | bigquery-mcp-server | 0.1.16+ |  검증 |
+| snowflake | snowflake-mcp | 1.1.0+ |  검증 |
+| google-sheets | @shivaduke28/google-sheets-mcp | 1.2.2+ |  검증 |
+| airtable | airtable-mcp-server | 1.13.0+ |  검증 |
 
 ---
 

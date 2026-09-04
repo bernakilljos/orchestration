@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Codex / Gemini 호출 후 자동 git diff + hallucination 검출
 # 사용:
-#   pre  <task-slug>     → snapshot 저장
-#   post <task-slug>     → git add + diff + commit (변경 0 = hallucination)
+#   pre  <task-slug>     -> snapshot 저장
+#   post <task-slug>     -> git add + diff + commit (변경 0 = hallucination)
 set -e
-cd "$(dirname "$0")/../../.."  # PROJECT_ROOT (plugins/exec_orch/hooks → repo root)
+cd "$(dirname "$0")/../../.."  # PROJECT_ROOT (plugins/exec_orch/hooks -> repo root)
 
 MODE="${1:-}"
 SLUG="${2:-unknown}"

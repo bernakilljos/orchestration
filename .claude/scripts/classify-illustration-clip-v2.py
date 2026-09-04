@@ -1,7 +1,7 @@
 """CLIP 분류 v2 — 더 세분화 카테고리 (20개).
 
 dribbble illustration 의 실제 분포에 맞춘 prompts.
-character·etc 가 등 큰 폴더를 더 세분화.
+character-etc 가 등 큰 폴더를 더 세분화.
 """
 import time
 from pathlib import Path
@@ -29,7 +29,7 @@ CATEGORIES = {
     "transport":      "an illustration of a vehicle, car, ship, train, plane, rocket, transportation",
     "building":       "an illustration of architecture, building, house, structure",
 
-    # 디지털·UI
+    # 디지털-UI
     "chart":          "a chart, graph, data visualization, bar or line chart, dashboard",
     "icon":           "an icon set, app icon, symbol icons, glyph",
     "logo":           "a brand logo, wordmark, monogram, brand identity",
@@ -95,7 +95,7 @@ def main():
                 elapsed = int(time.time() - start)
                 rate = i / max(elapsed, 1)
                 eta = int((len(images) - i) / max(rate, 0.1))
-                print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) · {elapsed}s · ETA {eta}s", flush=True)
+                print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) - {elapsed}s - ETA {eta}s", flush=True)
         except Exception as e:
             skipped += 1
             print(f"  [FAIL] {img_path.name}: {type(e).__name__} {str(e)[:60]}", flush=True)

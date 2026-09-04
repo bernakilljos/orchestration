@@ -1,6 +1,6 @@
 """3000 신상품 HTML — 30 영역 × 100 신상품 자동 생성
 
-각 영역에 100 신상품 = sub-카테고리·세부 시나리오·산업별 변형
+각 영역에 100 신상품 = sub-카테고리-세부 시나리오-산업별 변형
 모두 Llama 4 base + Mac Studio 인프라
 """
 import os
@@ -10,36 +10,36 @@ OUT = os.path.join(ROOT, 'outputs', 'itcen', 'html', 'itcen-core-3000신상품.h
 
 # 30 영역 (300 신상품 base 동일)
 AREAS_BASE = [
-    ('📒', '내부회계', '국내 1위 MicroICM-C'),
-    ('⚖️', 'CCP 준법', 'EPM·Compliance 1위'),
-    ('🏗️', '건설 ERP', '국내 1위'),
-    ('🎰', '카지노 VMS', '9社 독점'),
-    ('🏦', '금융 VMS', '은행·증권 30+'),
-    ('📹', 'AI CCTV', '영상 분석'),
-    ('🌐', '디지털트윈', '제조·건설·인프라'),
-    ('⚙️', 'ITO', 'IT 아웃소싱'),
-    ('🌱', 'ESG·GRC', '거버넌스'),
-    ('🚨', '부서 IP', '한국 K-Standard'),
-    ('🏛️', '공공·전자정부', 'ENTEC 협업'),
-    ('☁️', '클라우드', 'CTS·CLOIT'),
-    ('🛡️', '사이버보안', 'PNS 협업'),
-    ('📊', '데이터·AI 거버넌스', '데이터 라이프사이클'),
-    ('🏥', '의료·헬스케어', 'AI 진료'),
-    ('📚', '교육·이러닝', 'AI 튜터'),
-    ('🛒', '유통·이커머스', 'AI 추천·결제'),
-    ('🏭', '제조 SI', '스마트팩토리'),
-    ('🚛', '물류·SCM', '공급망·운송'),
-    ('🎬', '미디어·콘텐츠', '영상·음악'),
-    ('🌾', '농업·스마트팜', '농업 AI'),
-    ('⚡', '에너지·SMR', '발전·전력망'),
-    ('🚗', '자율주행·모빌리티', '자율시스템'),
-    ('🚀', '우주·항공', '위성·발사'),
-    ('🧪', '신소재·반도체', 'AI 신소재'),
-    ('🧬', '바이오·신약', 'AI 신약'),
-    ('🛡️', 'K-방산', '국방·무기'),
-    ('⚛️', '양자컴퓨팅', 'IBM Quantum'),
-    ('🤖', '휴머노이드·로봇', '로봇 AI'),
-    ('🌟', '합성데이터·신영역', '미래 사업'),
+    ('', '내부회계', '국내 1위 MicroICM-C'),
+    ('⚖', 'CCP 준법', 'EPM-Compliance 1위'),
+    ('', '건설 ERP', '국내 1위'),
+    ('', '카지노 VMS', '9社 독점'),
+    ('', '금융 VMS', '은행-증권 30+'),
+    ('', 'AI CCTV', '영상 분석'),
+    ('', '디지털트윈', '제조-건설-인프라'),
+    ('⚙', 'ITO', 'IT 아웃소싱'),
+    ('', 'ESG-GRC', '거버넌스'),
+    ('', '부서 IP', '한국 K-Standard'),
+    ('', '공공-전자정부', 'ENTEC 협업'),
+    ('☁', '클라우드', 'CTS-CLOIT'),
+    ('', '사이버보안', 'PNS 협업'),
+    ('[STAT]', '데이터-AI 거버넌스', '데이터 라이프사이클'),
+    ('', '의료-헬스케어', 'AI 진료'),
+    ('', '교육-이러닝', 'AI 튜터'),
+    ('', '유통-이커머스', 'AI 추천-결제'),
+    ('', '제조 SI', '스마트팩토리'),
+    ('', '물류-SCM', '공급망-운송'),
+    ('', '미디어-콘텐츠', '영상-음악'),
+    ('', '농업-스마트팜', '농업 AI'),
+    ('[FAST]', '에너지-SMR', '발전-전력망'),
+    ('', '자율주행-모빌리티', '자율시스템'),
+    ('[GO]', '우주-항공', '위성-발사'),
+    ('', '신소재-반도체', 'AI 신소재'),
+    ('', '바이오-신약', 'AI 신약'),
+    ('', 'K-방산', '국방-무기'),
+    ('⚛', '양자컴퓨팅', 'IBM Quantum'),
+    ('', '휴머노이드-로봇', '로봇 AI'),
+    ('', '합성데이터-신영역', '미래 사업'),
 ]
 
 # 신기술 100개 (각 영역에 적용)
@@ -58,8 +58,8 @@ TECHS = [
     'Mechanistic Interpretability', 'Bias Detection (Fairlearn)', 'Explainability (SHAP/LIME)',
     'AI Governance (ISO 42001)', 'Vector DB (ChromaDB)', 'HyDE', 'Long Context 1M+',
     'GraphRAG (Microsoft)', 'HippoRAG', 'RAPTOR', 'Corrective RAG', 'Adaptive RAG',
-    'Multi-Agent (LangGraph)', 'Reflexion', 'Constitutional AI', 'RLHF·DPO·KTO',
-    'LoRA·QLoRA·DoRA', 'Knowledge Distillation', 'Speculative Decoding', 'FlashAttention 3',
+    'Multi-Agent (LangGraph)', 'Reflexion', 'Constitutional AI', 'RLHF-DPO-KTO',
+    'LoRA-QLoRA-DoRA', 'Knowledge Distillation', 'Speculative Decoding', 'FlashAttention 3',
     'Quantization (GPTQ/AWQ)', 'Quantum ML (IBM)', 'Variational Quantum Circuit',
     'Quantum Optimization (QAOA)', 'PQC Migration (NIST)', 'Generative Video (Sora style)',
     'Text-to-3D', 'Voice Cloning', 'Music Generation', 'Avatar Generation',
@@ -114,8 +114,8 @@ REVENUES = [
 def gen_subcats(area_name):
     """영역별 sub-카테고리 10개"""
     common_subs = [
-        '진단·자동탐지', '예측·예방', '자동화·운영', '컨설팅·인증', '글로벌 진출',
-        '한국 표준화', '데이터 마켓', '교육·자격', '플랫폼 SaaS', '통합 SI'
+        '진단-자동탐지', '예측-예방', '자동화-운영', '컨설팅-인증', '글로벌 진출',
+        '한국 표준화', '데이터 마켓', '교육-자격', '플랫폼 SaaS', '통합 SI'
     ]
     return common_subs
 
@@ -131,19 +131,19 @@ def gen_products(area_idx, emoji, area_name, sub_desc):
         tech = TECHS[tech_idx]
 
         # 신상품 이름 (영역 약어 + sub + 번호)
-        area_short = area_name.replace('·', '-').replace(' ', '')[:8]
+        area_short = area_name.replace('-', '-').replace(' ', '')[:8]
         name = f'{area_short}-{sub[:4]}-{i+1:02d}'
 
         # 무엇 (한 줄)
-        what = f'{area_name} {sub} — {tech} 활용. {area_name} 도메인 특화 자동화·정확도 향상.'
+        what = f'{area_name} {sub} — {tech} 활용. {area_name} 도메인 특화 자동화-정확도 향상.'
 
         # 어떻게
-        how = f'① {tech} base 운영 → ② {area_name} 도메인 데이터 LoRA 학습 → ③ 자사 패키지 모듈 통합'
+        how = f'① {tech} base 운영 -> ② {area_name} 도메인 데이터 LoRA 학습 -> ③ 자사 패키지 모듈 통합'
 
         # 인프라
         infra = get_infra(tech)
 
-        # 대상·매출 (랜덤 풀에서)
+        # 대상-매출 (랜덤 풀에서)
         target = f'{area_name} 도입 기업'
         rev = REVENUES[(base_num + i) % len(REVENUES)]
 
@@ -165,7 +165,7 @@ for area_idx, (emoji, area_name, sub_desc) in enumerate(AREAS_BASE):
 <div class="area" id="area{area_idx+1}" style="border-left-color:#{color}">
   <div class="area-head" style="background:linear-gradient(90deg,#{color},#{color}AA)">
     <div class="area-emoji">{emoji}</div>
-    <div class="area-info"><div class="area-name">{area_idx+1}. {area_name} (100개)</div><div class="area-old">{sub_desc} · #{products[0][0]:04d}-#{products[-1][0]:04d}</div></div>
+    <div class="area-info"><div class="area-name">{area_idx+1}. {area_name} (100개)</div><div class="area-old">{sub_desc} - #{products[0][0]:04d}-#{products[-1][0]:04d}</div></div>
   </div>
   <div class="grid">""")
 
@@ -173,10 +173,10 @@ for area_idx, (emoji, area_name, sub_desc) in enumerate(AREAS_BASE):
         cards_html_parts.append(f"""
     <div class="card">
       <div class="card-head"><div class="card-num">#{prod_num:04d}</div><div class="card-name">{name}</div></div>
-      <div class="card-tech">🦙 {tech}</div>
-      <div class="card-what">📋 {what}</div>
-      <div class="card-how"><strong>🔧 어떻게:</strong> {how}</div>
-      <div class="card-infra"><strong>💻 인프라:</strong> {infra}</div>
+      <div class="card-tech"> {tech}</div>
+      <div class="card-what">[LIST] {what}</div>
+      <div class="card-how"><strong>[FIX] 어떻게:</strong> {how}</div>
+      <div class="card-infra"><strong> 인프라:</strong> {infra}</div>
       <div class="card-meta"><span class="lbl">대상:</span><span>{target}</span><span class="rev">{rev}</span></div>
     </div>""")
     cards_html_parts.append("  </div>\n</div>")
@@ -229,27 +229,27 @@ HTML = f"""<!DOCTYPE html>
 <body>
 
 <div class="nav">
-  <strong>📋 3000 신상품 목차 (30 영역)</strong>
+  <strong>[LIST] 3000 신상품 목차 (30 영역)</strong>
 {nav_html}
 </div>
 
 <div class="hero">
-  <h1>🎯 ITCEN CORE × Llama 4 — 3000 신상품 카탈로그</h1>
-  <h2>30 영역 × 각 100 신상품 = 3000 사업 아이디어 · 모든 LLM = Llama 4 자체 운영</h2>
+  <h1>[TGT] ITCEN CORE × Llama 4 — 3000 신상품 카탈로그</h1>
+  <h2>30 영역 × 각 100 신상품 = 3000 사업 아이디어 - 모든 LLM = Llama 4 자체 운영</h2>
   <div class="msg">
-    <strong>📌 각 카드:</strong> 신상품명 + 🦙 신기술 + 📋 무엇 + 🔧 어떻게 + 💻 인프라 + 대상 + 매출<br>
-    <strong style="color:#FFC107">⭐ LLM 모두 Llama 4 (오픈소스·자체 운영)</strong> — API 비용 0·데이터 유출 X·한국 도메인 LoRA 자유<br>
-    <strong style="color:#FFC107">💻 자체 인프라:</strong> Mac Studio M3 Ultra 512GB (1,500만원/대) · 양자=IBM Quantum 무료 · 로봇=별도 HW · BCI=별도 HW<br>
-    <strong style="color:#FFC107">📊 영역당 100 신상품:</strong> 10 sub-카테고리 (진단·예측·자동화·컨설팅·글로벌·표준·데이터·교육·SaaS·통합SI) × 10 신기술 변형
+    <strong> 각 카드:</strong> 신상품명 +  신기술 + [LIST] 무엇 + [FIX] 어떻게 +  인프라 + 대상 + 매출<br>
+    <strong style="color:#FFC107"> LLM 모두 Llama 4 (오픈소스-자체 운영)</strong> — API 비용 0-데이터 유출 X-한국 도메인 LoRA 자유<br>
+    <strong style="color:#FFC107"> 자체 인프라:</strong> Mac Studio M3 Ultra 512GB (1,500만원/대) - 양자=IBM Quantum 무료 - 로봇=별도 HW - BCI=별도 HW<br>
+    <strong style="color:#FFC107">[STAT] 영역당 100 신상품:</strong> 10 sub-카테고리 (진단-예측-자동화-컨설팅-글로벌-표준-데이터-교육-SaaS-통합SI) × 10 신기술 변형
   </div>
 </div>
 
 {''.join(cards_html_parts)}
 
 <div class="footer">
-  ITCEN CORE × Llama 4 — 3000 신상품 (30 영역 × 100) · 자동 생성<br>
-  작성: 2026-06-04 · 행동위험 외 ITCEN 자사 + 신영역 30 영역 모두 cover<br>
-  세부 카드는 100·300 신상품 (별도 HTML) 참조
+  ITCEN CORE × Llama 4 — 3000 신상품 (30 영역 × 100) - 자동 생성<br>
+  작성: 2026-06-04 - 행동위험 외 ITCEN 자사 + 신영역 30 영역 모두 cover<br>
+  세부 카드는 100-300 신상품 (별도 HTML) 참조
 </div>
 
 </body>

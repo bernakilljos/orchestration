@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""build_graph.py — yaml graph spec → langgraph StateGraph
+"""build_graph.py — yaml graph spec -> langgraph StateGraph
 
 Usage:
     python build_graph.py <spec.yaml>
@@ -26,7 +26,7 @@ def load_spec(spec_path):
 
 
 def build_state_class(state_def):
-    """spec.state 정의 → TypedDict 동적 생성"""
+    """spec.state 정의 -> TypedDict 동적 생성"""
     fields = {}
     for field in state_def:
         # field: dict like {"input": "str"} or {"critiques": "list[str]"}
@@ -43,7 +43,7 @@ def build_state_class(state_def):
 
 
 def make_node_fn(node_def):
-    """node 정의 → 실행 함수 (mock — 실제 LLM 호출은 사용자 구현)
+    """node 정의 -> 실행 함수 (mock — 실제 LLM 호출은 사용자 구현)
 
     실제 호출 패턴 (placeholder):
         from langchain_anthropic import ChatAnthropic
@@ -65,7 +65,7 @@ def make_node_fn(node_def):
         result = f"[{node_id} via {agent}] would process: {rendered[:80]}..."
 
         # 상태 갱신 키 = node_id (또는 spec 의 state field name)
-        # multi-angle-verify 예시: draft → state["draft"], critique-1 → state["critiques"]
+        # multi-angle-verify 예시: draft -> state["draft"], critique-1 -> state["critiques"]
         if node_id == "draft":
             return {"draft": result}
         elif node_id.startswith("critique"):
@@ -79,7 +79,7 @@ def make_node_fn(node_def):
 
 
 def build_graph(spec):
-    """spec → CompiledGraph"""
+    """spec -> CompiledGraph"""
     State = build_state_class(spec.get("state", [{"input": "str"}]))
     graph = StateGraph(State)
 
@@ -87,7 +87,7 @@ def build_graph(spec):
     for node in spec["nodes"]:
         graph.add_node(node["id"], make_node_fn(node))
 
-    # edges 등록 (START → first node, last node → END 자동)
+    # edges 등록 (START -> first node, last node -> END 자동)
     first_node = spec["nodes"][0]["id"]
     last_node = spec["nodes"][-1]["id"]
     graph.add_edge(START, first_node)
@@ -97,11 +97,11 @@ def build_graph(spec):
         src = edge["from"]
         dst = edge["to"]
         if isinstance(src, list) and isinstance(dst, str):
-            # fan-in (parallel → single)
+            # fan-in (parallel -> single)
             for s in src:
                 graph.add_edge(s, dst)
         elif isinstance(src, str) and isinstance(dst, list):
-            # fan-out (single → parallel)
+            # fan-out (single -> parallel)
             for d in dst:
                 graph.add_edge(src, d)
         elif isinstance(src, str) and isinstance(dst, str):

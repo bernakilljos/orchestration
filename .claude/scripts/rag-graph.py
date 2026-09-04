@@ -52,7 +52,7 @@ def extract_entities(text: str) -> list:
 
 
 def build_graph():
-    """문서들 → 엔티티 + 관계 (co-occurrence) → orca.db."""
+    """문서들 -> 엔티티 + 관계 (co-occurrence) -> orca.db."""
     conn = sqlite3.connect(str(DB_PATH))
     ensure_graph_table(conn)
     conn.execute("DELETE FROM graph_edges")
@@ -90,7 +90,7 @@ def build_graph():
 
 
 def graph_search(query: str, top_n: int = 5) -> dict:
-    """질문 → 엔티티 추출 → 관련 엔티티 hop → 문서 반환."""
+    """질문 -> 엔티티 추출 -> 관련 엔티티 hop -> 문서 반환."""
     query_entities = extract_entities(query)
     if not query_entities:
         return {"error": "no entities in query", "supported": [p[:20] for p in ENTITY_PATTERNS]}

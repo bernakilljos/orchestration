@@ -1,7 +1,7 @@
 # exec_graph (spec-only)
 
 > **목적**: linear task-instruction 외 **stateful graph orchestration** 도입 — LangGraph 패턴.
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐ LangGraph.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  LangGraph.
 > **상태**: spec-only — 우리 linear 패러다임으로 충분한 case 대다수. graph 가 필요한 case 식별 후 활성.
 
 ## linear vs graph 비교

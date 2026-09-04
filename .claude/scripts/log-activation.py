@@ -49,7 +49,7 @@ def log(layer: str, name: str, trigger_text: str = "", result: str = "success", 
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         trace = LOG_DIR / "hook-trace.log"
         with open(trace, "a", encoding="utf-8") as f:
-            f.write(f"[{ts}] {name} → {result} ({duration_ms}ms) | {trigger_text[:100]}\n")
+            f.write(f"[{ts}] {name} -> {result} ({duration_ms}ms) | {trigger_text[:100]}\n")
 
 
 def report(layer: str = None, top_n: int = 10):

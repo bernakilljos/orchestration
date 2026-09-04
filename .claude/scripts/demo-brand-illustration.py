@@ -21,25 +21,25 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 DEMO_PAGES = [
     {"title": "Claude warm — 강의 docx",
-     "subtitle": "warm-editorial · cream + coral · Copernicus serif",
+     "subtitle": "warm-editorial - cream + coral - Copernicus serif",
      "keyword": "기린",
      "use_case": "lecture-docx",
      "body": "5살 청자에게 \"AI 에이전트\"는 \"심부름꾼 친구\" 비유. 친절하고 따뜻한 어조로 풀어 쓰는 페이지입니다."},
     {"title": "Stripe corporate — 임원 dashboard",
-     "subtitle": "corporate-blue · 결제·금융 신뢰 · Sohne sans",
+     "subtitle": "corporate-blue - 결제-금융 신뢰 - Sohne sans",
      "keyword": "차트",
      "use_case": "exec-dashboard",
-     "body": "월간 매출 추이 · 전년 대비 +24% · 핵심 KPI 4 개 요약. 임원이 5초 안에 의사결정 가능한 페이지."},
+     "body": "월간 매출 추이 - 전년 대비 +24% - 핵심 KPI 4 개 요약. 임원이 5초 안에 의사결정 가능한 페이지."},
     {"title": "Linear dark — 개발자 docs",
-     "subtitle": "dark-minimal · purple accent · Inter Display",
+     "subtitle": "dark-minimal - purple accent - Inter Display",
      "keyword": "아이콘",
      "use_case": "dev-docs",
-     "body": "API reference · code blocks · 빠른 navigation. 개발자가 사랑하는 미니멀 다크 모드 docs."},
+     "body": "API reference - code blocks - 빠른 navigation. 개발자가 사랑하는 미니멀 다크 모드 docs."},
     {"title": "Airbnb consumer — 마케팅 랜딩",
-     "subtitle": "colorful · bold single accent · 친근 storytelling",
+     "subtitle": "colorful - bold single accent - 친근 storytelling",
      "keyword": "여행 일러스트, 친근한 모험",
      "use_case": "consumer",
-     "body": "여행을 시작하는 사람들 · 일러스트 중심 · 감성 + bold CTA."},
+     "body": "여행을 시작하는 사람들 - 일러스트 중심 - 감성 + bold CTA."},
 ]
 
 
@@ -119,7 +119,7 @@ h1 {{
   <div class="right">{img_tag}</div>
 </div>
 <div class="meta">
-  primary={brand.get('primary')} · canvas={brand.get('canvas')} · img={assets.get('image_source', 'none')}
+  primary={brand.get('primary')} - canvas={brand.get('canvas')} - img={assets.get('image_source', 'none')}
 </div>
 </body></html>"""
 
@@ -136,7 +136,7 @@ async def render(html: str, out_path: Path):
 
 
 async def main():
-    print(f"[START] demo {len(DEMO_PAGES)} pages → {OUT}", flush=True)
+    print(f"[START] demo {len(DEMO_PAGES)} pages -> {OUT}", flush=True)
     for i, page in enumerate(DEMO_PAGES, 1):
         keyword = page["keyword"]
         use_case = page["use_case"]
@@ -147,7 +147,7 @@ async def main():
         html = build_html(page, assets)
         out = OUT / f"demo-{i:02d}-{use_case}.jpg"
         await render(html, out)
-        print(f"  → {out.name} ({out.stat().st_size//1024}KB)", flush=True)
+        print(f"  -> {out.name} ({out.stat().st_size//1024}KB)", flush=True)
     print(f"\n[DONE] {OUT}", flush=True)
 
 

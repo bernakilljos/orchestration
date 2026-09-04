@@ -7,7 +7,7 @@ verify-ppt-overflow.py — PPT 렌더 후 잘림(overflow) 의심 영역 자동 
 - 결과를 markdown 리포트로 저장 + stdout 요약
 
 원리:
-- slides 가장자리 (하단 30px·우측 30px) 의 다크 픽셀 (텍스트·코드·박스 보더) 비율 측정
+- slides 가장자리 (하단 30px-우측 30px) 의 다크 픽셀 (텍스트-코드-박스 보더) 비율 측정
 - 임계치 초과 = 콘텐츠가 영역 끝까지 차있음 = 잘림 가능성
 - 단순 픽셀 분석이라 100% 정확하지 않음 — Claude 의 Read tool OCR 보완용
 
@@ -33,7 +33,7 @@ DEFAULT_THRESHOLD = 0.10
 
 
 def edge_dark_ratio(img: Image.Image, band_px: int = EDGE_BAND_PX) -> tuple[float, float]:
-    """slides 하단·우측 가장자리 영역의 다크 픽셀 비율."""
+    """slides 하단-우측 가장자리 영역의 다크 픽셀 비율."""
     rgb = img.convert("RGB")
     w, h = rgb.size
 
@@ -112,7 +112,7 @@ def write_report(results: list[dict], out_path: Path, threshold: float, src_dir:
             lines.append(f"Read('{src_dir}/{r['file']}')")
         lines += ["```"]
     else:
-        lines += ["", "## ✅ 모든 slides 통과 — 잘림 의심 없음", ""]
+        lines += ["", "## [OK] 모든 slides 통과 — 잘림 의심 없음", ""]
 
     out_path.write_text("\n".join(lines), encoding="utf-8")
 

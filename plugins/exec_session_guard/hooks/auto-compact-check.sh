@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # auto-compact-check.sh — LV12 토큰 절약 자동 트리거
 # 트리거: Stop hook (매 턴 종료마다)
-# 동작: 턴 카운트 증가 → 임계치 도달 시 /compact 권장 메시지 + 마커 파일 생성
+# 동작: 턴 카운트 증가 -> 임계치 도달 시 /compact 권장 메시지 + 마커 파일 생성
 # Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 #
@@ -72,7 +72,7 @@ cat <<EOF
 
 ★ Claude 의무 (NEXT TURN 첫 동작):
   1) 사용자 다음 prompt 받자마자 **가장 먼저 /compact 자체 실행**
-     (도구 호출·답변 전, 모든 작업의 0순위)
+     (도구 호출-답변 전, 모든 작업의 0순위)
   2) compact 완료 후 사용자 원래 요청 처리
   3) 한국어 한 줄 통지: "[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행"
 

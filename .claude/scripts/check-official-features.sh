@@ -10,9 +10,9 @@
 #
 # 동작:
 #   1. last-check flag 확인 (24시간 이내면 skip)
-#   2. 공식 changelog 다운로드 → 캐시
+#   2. 공식 changelog 다운로드 -> 캐시
 #   3. 이전 캐시와 diff
-#   4. 변경 발견 → .claude/state/changelog-new.md (Claude 가 다음 응답 전 읽음)
+#   4. 변경 발견 -> .claude/state/changelog-new.md (Claude 가 다음 응답 전 읽음)
 set -e
 
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
@@ -79,7 +79,7 @@ for entry in "${URLS[@]}"; do
   fi
 done
 
-# 변경 발견 → 알림 파일 생성 (Claude가 다음 응답 전 읽음)
+# 변경 발견 -> 알림 파일 생성 (Claude가 다음 응답 전 읽음)
 if [ "$CHANGED_ANY" = "1" ]; then
   cat > "$NEW_FILE" <<EOF
 # Claude Code 공식 신기능 점검 알림
@@ -89,8 +89,8 @@ if [ "$CHANGED_ANY" = "1" ]; then
 
 ## 다음 행동
 1. ${STATE_DIR}/changelog-cache/ 의 *.html 검토
-2. 신기능 평가 (feedback_official_features_auto_check.md § 발견 → 분석 → 적용 매트릭스)
-3. ⭐⭐ 이상 자동 적용, ⭐ 이하 사용자 보고만
+2. 신기능 평가 (feedback_official_features_auto_check.md § 발견 -> 분석 -> 적용 매트릭스)
+3.  이상 자동 적용,  이하 사용자 보고만
 4. 적용 후 이 알림 파일 삭제: rm ${NEW_FILE}
 
 ## 출처

@@ -67,7 +67,7 @@ Context 결과에 따라:
 ### Step 4 — 결과 보고
 
 ```
-✅ 마인드맵 생성 완료
+ 마인드맵 생성 완료
 - 원본: outputs/arch/mindmap-{slug}-{date}.md
 - 이미지: outputs/arch/mindmap-{slug}-{date}.png
 - 카테고리: N개 / 노드: 총 M개

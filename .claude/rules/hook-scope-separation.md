@@ -64,9 +64,9 @@
 
 ## 우리 kit 이 이미 정합 (2026-09-02 실측)
 
-- `~/.claude/settings.json`: hooks 없음 ✅
-- `.claude/settings.json`: 72+ hooks (프로젝트 전용) ✅
-- 각 hook 안 guard: 있음 ✅
+- `~/.claude/settings.json`: hooks 없음 
+- `.claude/settings.json`: 72+ hooks (프로젝트 전용) 
+- 각 hook 안 guard: 있음 
 - 정상 · rule 로 재발 방지
 
 ## 금지

@@ -35,7 +35,7 @@ fi
 if [ -f ".claude/orca-heartbeat" ]; then
   HB_AGE=$(( $(date +%s) - $(stat -c %Y .claude/orca-heartbeat 2>/dev/null || echo 0) ))
   if [ "$HB_AGE" -gt 300 ]; then
-    # heartbeat 5분 이상 안 갱신 → 워커 좀비 상태로 간주 → 관련 cmd 창 정리
+    # heartbeat 5분 이상 안 갱신 -> 워커 좀비 상태로 간주 -> 관련 cmd 창 정리
     KILLED=$(powershell -NoProfile -Command "
       \$count = 0;
       Get-WmiObject Win32_Process -Filter \"Name='cmd.exe'\" 2>\$null |

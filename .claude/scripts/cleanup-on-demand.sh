@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cleanup-on-demand.sh — /cleanup command 의 handler
-# 사용자 명시 지시 시만 발동. dry-run 기본, --apply 시 실삭제·archive.
+# 사용자 명시 지시 시만 발동. dry-run 기본, --apply 시 실삭제-archive.
 #
 # 사용:
 #   bash .claude/scripts/cleanup-on-demand.sh <target> [--apply]
@@ -172,7 +172,7 @@ cleanup_plugins() {
       last_commit=$(git log -1 --format=%ct -- "plugins/$plug" 2>/dev/null || echo 0)
       age=$(( ($(date +%s) - last_commit) / 86400 ))
       if [ "$age" -gt 90 ]; then
-        echo "  - $plug (spec-only, last commit ${age}d ago) → deprecated 후보"
+        echo "  - $plug (spec-only, last commit ${age}d ago) -> deprecated 후보"
       fi
     fi
   done

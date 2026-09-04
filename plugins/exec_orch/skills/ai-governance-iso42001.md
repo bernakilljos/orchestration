@@ -38,7 +38,7 @@ metadata:
 | **모니터링** | 운영 중 성능·드리프트·편향 자동 추적 |
 | **인증 audit** | 외부 인증기관 audit |
 
-## 우리 솔루션 자산 활용 ✅
+## 우리 솔루션 자산 활용 
 
 | ISO 요구 | 우리 자산 |
 |---|---|
@@ -78,8 +78,8 @@ shap_values = explainer(X_test)
 | 회사 | 특징 | 한국 진입 |
 |---|---|---|
 | **IBM watsonx.governance** | 종합 (정책·audit·모델 카드) | 추격 중 |
-| **Credo AI** | 위험·컴플라이언스 자동 | 없음 ⭐ |
-| **Holistic AI** | EU AI Act 특화 | 없음 ⭐ |
+| **Credo AI** | 위험·컴플라이언스 자동 | 없음  |
+| **Holistic AI** | EU AI Act 특화 | 없음  |
 | **Fiddler** | Bias·Explainability | 추격 중 |
 | **Arthur** | 모델 모니터 | 추격 중 |
 
@@ -128,5 +128,5 @@ shap_values = explainer(X_test)
 - ISO 42001:2024 (AI Management System)
 - EU AI Act timeline
 - IBM watsonx.governance
-- `solution-capability-audit.md` #46-47 (🟡 → ✅)
+- `solution-capability-audit.md` #46-47 ( → )
 - `constitutional-ai.md` (헌법화 패턴 연동)

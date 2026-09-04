@@ -3,13 +3,13 @@
 > **Prefix**: `exec_` | **버전**: 0.1 | **Status**: spec-only | **Phase**: 2
 > **출처**: docs/upgrade § 이미지 3 ($0 AI Stack 2026, Brij Kishore Pandey)
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 **spec-only** — 스펙 + 공통 헬퍼만. 실구현은 install 후 플랫폼에서.
 
 ## 📋 커맨드
 
-- `/exec_offline-setup` ⭐ 기본 — 로컬 스택 설치 (Ollama + ChromaDB + Phoenix)
+- `/exec_offline-setup`  기본 — 로컬 스택 설치 (Ollama + ChromaDB + Phoenix)
 - `/exec_offline-model` — 로컬 모델 다운로드·실행 (Llama·Gemma·Mistral)
 - `/exec_offline-vector` — ChromaDB 로컬 벡터DB 관리
 - `/exec_offline-observe` — Phoenix self-hosted 관측 대시보드

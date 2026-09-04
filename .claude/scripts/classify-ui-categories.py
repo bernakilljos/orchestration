@@ -1,4 +1,4 @@
-"""CLIP — UI 카테고리들 (signup·checkout·login·dashboard 등) sub 분류.
+"""CLIP — UI 카테고리들 (signup-checkout-login-dashboard 등) sub 분류.
 
 각 카테고리당 5 sub: dark-theme / light-theme / mobile / minimalist / illustrative.
 """
@@ -74,11 +74,11 @@ def main():
                 grand_summary[cat] += 1
                 if i % 50 == 0 or i == len(images):
                     elapsed = int(time.time() - start)
-                    print(f"  [{i}/{len(images)}] {cat} · {elapsed}s", flush=True)
+                    print(f"  [{i}/{len(images)}] {cat} - {elapsed}s", flush=True)
             except Exception as e:
                 print(f"  [FAIL] {img_path.name}: {type(e).__name__}", flush=True)
         grand_total += len(images)
-        print(f"  {ui_cat}: " + " · ".join(f"{k}={v}" for k,v in summary.items()), flush=True)
+        print(f"  {ui_cat}: " + " - ".join(f"{k}={v}" for k,v in summary.items()), flush=True)
 
     elapsed = int(time.time() - grand_start)
     print(f"\n[DONE] {grand_total} classified / {elapsed}s", flush=True)

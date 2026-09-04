@@ -4,10 +4,10 @@
 test-router.py — Smoke tests for routing and budget system.
 
 Runs:
-1. Budget breaker tripped → route() returns BREAKER
-2. All quota OK → DESIGN task → Opus 4.7 + thinking
-3. Claude quota exceeded → fallback to Codex
-4. All quota exceeded → WAIT
+1. Budget breaker tripped -> route() returns BREAKER
+2. All quota OK -> DESIGN task -> Opus 4.7 + thinking
+3. Claude quota exceeded -> fallback to Codex
+4. All quota exceeded -> WAIT
 5. pricing.estimate_cost() calculations
 6. register_outcome() updates metrics
 
@@ -50,7 +50,7 @@ def test_breaker_tripped():
 
 
 def test_design_opus():
-    """Test 2: DESIGN task → Opus 4.7 with thinking."""
+    """Test 2: DESIGN task -> Opus 4.7 with thinking."""
     print("Test 2: DESIGN task routes to Opus 4.7 with thinking...")
     init_schema()
     reset_breaker()
@@ -67,8 +67,8 @@ def test_design_opus():
 
 
 def test_fallback_on_quota():
-    """Test 3: Claude quota exceeded → fallback to Codex."""
-    print("Test 3: Claude quota exceeded → fallback...")
+    """Test 3: Claude quota exceeded -> fallback to Codex."""
+    print("Test 3: Claude quota exceeded -> fallback...")
     init_schema()
     reset_breaker()
     clear_quota("claude-opus-4-7")
@@ -87,8 +87,8 @@ def test_fallback_on_quota():
 
 
 def test_all_exceeded_wait():
-    """Test 4: All quotas exceeded → WAIT."""
-    print("Test 4: All quotas exceeded → WAIT...")
+    """Test 4: All quotas exceeded -> WAIT."""
+    print("Test 4: All quotas exceeded -> WAIT...")
     init_schema()
     reset_breaker()
 
@@ -163,7 +163,7 @@ def test_register_outcome():
 
 
 def test_simple_task_routing():
-    """Test 7: SIMPLE task → Sonnet or Haiku."""
+    """Test 7: SIMPLE task -> Sonnet or Haiku."""
     print("Test 7: SIMPLE task routing...")
     init_schema()
     reset_breaker()
@@ -180,7 +180,7 @@ def test_simple_task_routing():
 
 
 def test_verify_task_routing():
-    """Test 8: VERIFY task → Haiku by default."""
+    """Test 8: VERIFY task -> Haiku by default."""
     print("Test 8: VERIFY task routing...")
     init_schema()
     reset_breaker()

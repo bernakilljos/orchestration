@@ -130,4 +130,4 @@ model = Mamba(d_model=256, d_state=16, d_conv=4, expand=2)
 - TRL (Hugging Face): https://huggingface.co/docs/trl
 - PEFT: https://huggingface.co/docs/peft
 - Mamba: https://github.com/state-spaces/mamba
-- `solution-capability-audit.md` #10-12, #39-40, #42 (❌ → 🟡)
+- `solution-capability-audit.md` #10-12, #39-40, #42 ( → )

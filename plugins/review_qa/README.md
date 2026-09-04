@@ -9,7 +9,7 @@
 
 ## 📋 커맨드
 
-- `/check` ⭐ 기본
+- `/check`  기본
 - `/performance`
 - `/review_qa`
 - `/screenshot`
@@ -18,9 +18,9 @@
 
 ## 🧠 스킬
 
-- `skill-03-review` ⭐ 핵심
-- `skill-06-test` ⭐ 핵심
-- `skill-10-quality-verify` ⭐ 핵심
+- `skill-03-review`  핵심
+- `skill-06-test`  핵심
+- `skill-10-quality-verify`  핵심
 - `skill-17-debugging-canvas`
 - `skill-23-owasp-security`
 - `skill-27-mandatory-verify`

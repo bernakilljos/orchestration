@@ -10,9 +10,9 @@ FAIL=0
 run_test() {
   local name="$1"; shift
   if "$@" >/dev/null 2>&1; then
-    echo "  ✅ $name"; PASS=$((PASS+1))
+    echo "  [OK] $name"; PASS=$((PASS+1))
   else
-    echo "  ❌ $name"; FAIL=$((FAIL+1))
+    echo "  [X] $name"; FAIL=$((FAIL+1))
   fi
 }
 

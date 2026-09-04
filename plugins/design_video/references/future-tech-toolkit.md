@@ -207,13 +207,13 @@ pip install liboqs-python      # Open Quantum Safe
 ## Phase 로드맵 (최종)
 
 ```text
-Phase 1 ✅ LLM 오케스트레이션 (Claude·Codex·Gemini)
-Phase 2 ✅ 디자인 (JS/CSS 100+ CDN)
-Phase 3 ✅ 미디어 (이미지·영상·오디오 복원·생성)
-Phase 4 ✅ 실시간 (WebSocket·WebRTC·대시보드·IoT)
-Phase 5 ✅ 생성형 AI (영상·3D·아바타·에이전트·파인튜닝)
-Phase 6 ✅ 엣지/온디바이스 (모바일·TinyML·WASM)
-Phase 7 ✅ 인프라 (DB·캐시·배포·CI/CD·K8s)
-Phase 8 ✅ 비즈니스 로직 (인증·결제·예약·알림·검색·추천)
-Phase 9 ✅ 미래 기술 (양자·로보틱스·뉴로모픽·BCI·공간컴퓨팅·Web3)
+Phase 1  LLM 오케스트레이션 (Claude·Codex·Gemini)
+Phase 2  디자인 (JS/CSS 100+ CDN)
+Phase 3  미디어 (이미지·영상·오디오 복원·생성)
+Phase 4  실시간 (WebSocket·WebRTC·대시보드·IoT)
+Phase 5  생성형 AI (영상·3D·아바타·에이전트·파인튜닝)
+Phase 6  엣지/온디바이스 (모바일·TinyML·WASM)
+Phase 7  인프라 (DB·캐시·배포·CI/CD·K8s)
+Phase 8  비즈니스 로직 (인증·결제·예약·알림·검색·추천)
+Phase 9  미래 기술 (양자·로보틱스·뉴로모픽·BCI·공간컴퓨팅·Web3)
 ```

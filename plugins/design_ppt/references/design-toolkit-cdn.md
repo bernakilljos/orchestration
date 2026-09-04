@@ -1185,13 +1185,13 @@ npm install hono                    # Hono (초경량 웹 프레임워크)
 ### 메타 프레임워크 비교 (2026)
 | 프레임워크 | 언어 | SSR | 특장 |
 |-----------|------|-----|------|
-| **Next.js** | React | ✅ | 가장 큰 생태계, App Router, Vercel |
-| **Nuxt** | Vue | ✅ | Vue 풀스택, 자동 import |
-| **SvelteKit** | Svelte | ✅ | 가장 빠름, 컴파일러 |
-| **Astro** | 다국어 | ✅ | 콘텐츠 사이트 최적 (0 JS 기본) |
-| **Remix** | React | ✅ | 웹 표준, 데이터 로딩 |
-| **Qwik** | TS | ✅ | Resumability (즉시 인터랙티브) |
-| **Hono** | TS | ✅ | 엣지 최적, 초경량 |
+| **Next.js** | React |  | 가장 큰 생태계, App Router, Vercel |
+| **Nuxt** | Vue |  | Vue 풀스택, 자동 import |
+| **SvelteKit** | Svelte |  | 가장 빠름, 컴파일러 |
+| **Astro** | 다국어 |  | 콘텐츠 사이트 최적 (0 JS 기본) |
+| **Remix** | React |  | 웹 표준, 데이터 로딩 |
+| **Qwik** | TS |  | Resumability (즉시 인터랙티브) |
+| **Hono** | TS |  | 엣지 최적, 초경량 |
 
 ### 상태 관리 (2026)
 | 도구 | 특장 | 프레임워크 |

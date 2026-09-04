@@ -5,7 +5,7 @@ allowed-tools: Bash(python:*), Bash(curl:*), Read, Write
 
 # /grok-dispatch — Grok API 호출 wrapper
 
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ Perplexity Computer 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  Perplexity Computer 패턴.
 > **사용**: 가벼운·빠른·대량 task (검증·summarize·번역). 비싼 Opus 4.8 절감.
 > **요구**: `XAI_API_KEY` (.env)
 

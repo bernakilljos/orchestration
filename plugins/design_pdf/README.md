@@ -3,7 +3,7 @@
 > **Prefix**: `design_` | **버전**: 0.2 | **Status**: spec-only | **Phase**: 2
 > **2026-04-30 R51 흡수**: design_ppt 의 디자인 시스템·차트·SVG 패턴 + Screens 워크플로우 적용.
 
-## ⚠️ 현재 상태
+##  현재 상태
 
 **spec-only** — 스펙 + 기본 공통 헬퍼(`scripts/common.sh`) 만 있음. 도메인 로직은 플랫폼에서 구현.
 
@@ -17,14 +17,14 @@ design_ppt 와 동일한 시각 시스템 공유:
 
 ## 📋 커맨드
 
-- `/pdf-generate` ⭐ 기본 — HTML/CSS → Playwright → PDF (A4·Letter·Digital 1920×1080)
+- `/pdf-generate`  기본 — HTML/CSS → Playwright → PDF (A4·Letter·Digital 1920×1080)
 - `/pdf-fill` — 양식(form) 자동 채우기
 - `/pdf-sign` — 전자서명·직인 삽입
 - `/pdf-secure` — 암호화·워터마크
 
 ## 🧠 스킬
 
-- **`skill-pdf-design-system`** ⭐ (R51 신규) — HTML→PDF 워크플로우 + 12 계명 + 안티패턴
+- **`skill-pdf-design-system`**  (R51 신규) — HTML→PDF 워크플로우 + 12 계명 + 안티패턴
 - `skill-pdf-form` — PDF 양식 필드 매핑·검증
 - `skill-pdf-compliance` — 전자서명 법적 요건 (전자서명법)
 

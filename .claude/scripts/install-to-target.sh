@@ -6,9 +6,9 @@
 #
 # 복사 대상 (덮어쓰기 + 백업):
 #   - plugins/               (킷 플러그인 전체)
-#   - .claude-plugin/        (메타·스키마·마켓플레이스)
+#   - .claude-plugin/        (메타-스키마-마켓플레이스)
 #   - .claude/rules/         (공유 규칙)
-#   - .claude/scripts/       (sync·validate·install 등 인프라)
+#   - .claude/scripts/       (sync-validate-install 등 인프라)
 #   - .claude/hooks/*.sh     (신규 훅만 추가 — 기존 유지)
 #   - guide.txt
 #   - .gitattributes
@@ -19,7 +19,7 @@
 # 보호 (절대 건드리지 않음):
 #   - CLAUDE.md              (프로젝트 고유 — 병합은 수동)
 #   - .claude/tasks/         (진행 중 태스크)
-#   - .claude/state/         (워커 heartbeat·플래그)
+#   - .claude/state/         (워커 heartbeat-플래그)
 #   - .claude/context-cache/ (세션 스냅샷)
 #   - .claude/learning/      (학습 JSON)
 #   - .claude/settings.json  (프로젝트별 권한 — 병합은 수동)
@@ -90,12 +90,12 @@ cp -f "$SRC/.claude/scripts/"*.sh "$TARGET/.claude/scripts/" 2>/dev/null || true
 cp -f "$SRC/.claude/scripts/"*.py "$TARGET/.claude/scripts/" 2>/dev/null || true
 cp -f "$SRC/.claude/scripts/"*.bat "$TARGET/.claude/scripts/" 2>/dev/null || true
 cp -f "$SRC/.claude/scripts/"*.ps1 "$TARGET/.claude/scripts/" 2>/dev/null || true
-# scripts/lib/ 도 동기화 (state_db·router·pricing·prompt_cache 등)
+# scripts/lib/ 도 동기화 (state_db-router-pricing-prompt_cache 등)
 if [ -d "$SRC/.claude/scripts/lib" ]; then
   mkdir -p "$TARGET/.claude/scripts/lib"
   cp -f "$SRC/.claude/scripts/lib/"*.py "$TARGET/.claude/scripts/lib/" 2>/dev/null || true
 fi
-echo "  ✓ sync·validate·install·worker-health·rag·trends·cleanup 등 (.sh/.py/.bat/.ps1 + lib/)"
+echo "  ✓ sync-validate-install-worker-health-rag-trends-cleanup 등 (.sh/.py/.bat/.ps1 + lib/)"
 
 # ─────────────────────────────────────────────
 # 5. .claude/hooks/ 신규 훅만 추가 (기존 .sh 건드리지 않음)
@@ -153,4 +153,4 @@ echo ""
 echo "보호됨 (수동 병합 필요):"
 echo "  - CLAUDE.md"
 echo "  - .claude/settings.json"
-echo "  - .claude/tasks/·state/·context-cache/·learning/"
+echo "  - .claude/tasks/-state/-context-cache/-learning/"

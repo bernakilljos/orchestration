@@ -33,8 +33,8 @@ def detect_slide_kind(content: str, filename: str) -> str:
     # Cover: SLIDES 메트릭 박스 (stat-item .label 'Slides')
     if re.search(r'class="label">\s*Slides\s*</div>', content):
         return "cover"
-    # Learn More: "Opus ... · N slides" 표기
-    if re.search(r"Opus\s+[\d.]+\s+Baseline\s*·\s*\d+\s+slides", content):
+    # Learn More: "Opus ... - N slides" 표기
+    if re.search(r"Opus\s+[\d.]+\s+Baseline\s*-\s*\d+\s+slides", content):
         return "learn-more"
     # Standard: NN / 총수 caption
     if re.search(r'class="mono caption">\s*\d+\s*/\s*\d+\s*</span>', content):
@@ -69,8 +69,8 @@ def update_cover(content: str, total: int) -> str:
 
 
 def update_learn_more(content: str, total: int) -> str:
-    """Learn More: 'Opus 4.7 Baseline · N slides' 갱신."""
-    pattern = re.compile(r'(Opus\s+[\d.]+\s+Baseline\s*·\s*)(\d+)(\s+slides)')
+    """Learn More: 'Opus 4.7 Baseline - N slides' 갱신."""
+    pattern = re.compile(r'(Opus\s+[\d.]+\s+Baseline\s*-\s*)(\d+)(\s+slides)')
     return pattern.sub(rf'\g<1>{total}\g<3>', content)
 
 
@@ -123,13 +123,13 @@ def main():
 
         if content != original:
             mark = "DRY" if args.dry_run else "OK "
-            print(f"[{mark}] {fp.name:30s} → page {idx:02d}/{total} ({kind})")
+            print(f"[{mark}] {fp.name:30s} -> page {idx:02d}/{total} ({kind})")
             if not args.dry_run:
                 with open(fp, "w", encoding="utf-8") as f:
                     f.write(content)
             changed += 1
         else:
-            print(f"[--] {fp.name:30s} → page {idx:02d}/{total} ({kind}, no change)")
+            print(f"[--] {fp.name:30s} -> page {idx:02d}/{total} ({kind}, no change)")
 
     print()
     if args.dry_run:

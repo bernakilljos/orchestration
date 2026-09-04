@@ -1,6 +1,6 @@
 """
 dashboard — Rich TUI 실시간 대시보드 (Task 35)
-orca.db 실시간 시각화 · 세션·워커·토큰·비용·큐
+orca.db 실시간 시각화 - 세션-워커-토큰-비용-큐
 실행: python .claude/scripts/dashboard.py
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ try:
     from rich.layout import Layout
     from rich.panel import Panel
 except ImportError:
-    print("rich 미설치 · python -m pip install rich", file=sys.stderr)
+    print("rich 미설치 - python -m pip install rich", file=sys.stderr)
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -110,10 +110,10 @@ def render_tasks() -> Table:
 def render_dashboard() -> Layout:
     lay = build_layout()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    lay["header"].update(Panel(f"[bold]Orchestration Kit v1 · Dashboard[/bold]  ·  {now}", style="cyan"))
+    lay["header"].update(Panel(f"[bold]Orchestration Kit v1 - Dashboard[/bold]  -  {now}", style="cyan"))
     lay["left"].update(render_sessions())
     lay["right"].update(render_metrics())
-    lay["footer"].update(Panel("[green]Ctrl+C[/green] 종료  ·  1s refresh", style="dim"))
+    lay["footer"].update(Panel("[green]Ctrl+C[/green] 종료  -  1s refresh", style="dim"))
     return lay
 
 

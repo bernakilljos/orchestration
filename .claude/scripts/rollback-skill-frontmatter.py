@@ -2,8 +2,8 @@
 """자동 생성한 스킬 frontmatter 롤백 (사용자 수동 편집분 보존)
 
 원칙:
-  - 내가 추가한 generic frontmatter (48개) → 제거
-  - 사용자가 수동 편집한 파일 → 보존 (SKIP)
+  - 내가 추가한 generic frontmatter (48개) -> 제거
+  - 사용자가 수동 편집한 파일 -> 보존 (SKIP)
   - 기준: frontmatter description 에 '관련 키워드 언급 시 또는' 문구가 있으면 자동 생성물
 """
 import sys, re

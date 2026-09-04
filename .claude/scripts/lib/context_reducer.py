@@ -2,7 +2,7 @@
 context_reducer.py — 큰 파일을 요약 형태로 축소.
 
 24시간 세션에서 전체 프로젝트 컨텍스트 매번 로드는 낭비.
-Markdown·Python 파일을 주요 구조만 유지하면서 축소.
+Markdown-Python 파일을 주요 구조만 유지하면서 축소.
 """
 
 import re
@@ -199,13 +199,13 @@ def reduce_python(path: str, max_chars: int = 6000) -> str:
 
 def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
     """
-    프로젝트 루트에서 주요 파일들을 축소·합성한 요약 반환.
+    프로젝트 루트에서 주요 파일들을 축소-합성한 요약 반환.
 
     포함 대상 (우선순위):
       1. CLAUDE.md (전체 유지)
       2. README.md (축소 가능)
       3. .claude/rules/*.md (전체, 이미 짧음)
-      4. plugins/*/plugin.json (이름·display·status만 추출)
+      4. plugins/*/plugin.json (이름-display-status만 추출)
       5. docs/architecture-patterns.md (축소)
 
     max_total_chars 넘으면 lower priority 섹션부터 자름.

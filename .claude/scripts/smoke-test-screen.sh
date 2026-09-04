@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# smoke-test-screen.sh — 화면·기능 자동 smoke test
+# smoke-test-screen.sh — 화면-기능 자동 smoke test
 # 근거: CLAUDE.md § 7-24 + .claude/rules/screen-verify.md
 #
 # 호출:
@@ -49,7 +49,7 @@ PASS=1
 ISSUES=()
 
 # =========================================================
-# MODE: db — SQL schema 변경 → NULL 컬럼 + null-unsafe 검출
+# MODE: db — SQL schema 변경 -> NULL 컬럼 + null-unsafe 검출
 # =========================================================
 run_db_check() {
   local sql="$1"
@@ -80,14 +80,14 @@ run_db_check() {
     local has_null_check
     has_null_check=$(grep -lE "!= *null|is None|Optional\.ofNullable|\?\." $refs 2>/dev/null | head -1 || true)
     if [ -z "$has_null_check" ]; then
-      ISSUES+=("NULL 가능 컬럼 '$col' 참조 코드에 null check 없음 → NPE 위험")
+      ISSUES+=("NULL 가능 컬럼 '$col' 참조 코드에 null check 없음 -> NPE 위험")
       PASS=0
     fi
   done
 }
 
 # =========================================================
-# MODE: api — controller 수정 → endpoint curl
+# MODE: api — controller 수정 -> endpoint curl
 # =========================================================
 run_api_check() {
   local file="$1"
@@ -138,13 +138,13 @@ run_ui_check() {
   echo "[$TS] UI 모드 — $target" >> "$LOG"
 
   if ! command -v python >/dev/null 2>&1; then
-    echo "[$TS]   python 없음 → skip" >> "$LOG"
+    echo "[$TS]   python 없음 -> skip" >> "$LOG"
     return 0
   fi
 
   # Playwright 가용성 체크
   if ! python -c "from playwright.sync_api import sync_playwright" 2>/dev/null; then
-    echo "[$TS]   playwright 없음 → skip" >> "$LOG"
+    echo "[$TS]   playwright 없음 -> skip" >> "$LOG"
     return 0
   fi
 
@@ -153,7 +153,7 @@ run_ui_check() {
   case "$target" in
     http*) ;;
     *.html) url="file://$target" ;;
-    *) echo "[$TS]   render 대상 모호 → skip" >> "$LOG"; return 0 ;;
+    *) echo "[$TS]   render 대상 모호 -> skip" >> "$LOG"; return 0 ;;
   esac
 
   python <<EOF >> "$LOG" 2>&1

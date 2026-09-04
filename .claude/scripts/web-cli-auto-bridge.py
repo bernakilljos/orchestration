@@ -2,21 +2,21 @@
 """web-cli-auto-bridge.py — Web ↔ CLI 완전 자동 양방향 브릿지
 
 Anthropic Managed Agents API (2026-07-22+) 사용.
-사용자가 web (claude.ai) 에서 대화 → API 가 감지 → CLI 로 forward → 결과 web 으로.
+사용자가 web (claude.ai) 에서 대화 -> API 가 감지 -> CLI 로 forward -> 결과 web 으로.
 
 전제:
   - Anthropic API key (환경변수 ANTHROPIC_API_KEY 또는 .env)
   - `pip install anthropic>=0.40.0`
 
 용도:
-  - 사용자 계정 연동 없이 API 만으로 web·CLI 세션 통합
+  - 사용자 계정 연동 없이 API 만으로 web-CLI 세션 통합
   - 매 turn 마다 orchestration_v1 헌장 A~F 자동 seed
-  - 애매·위험만 사용자에게 (자율 진행)
+  - 애매-위험만 사용자에게 (자율 진행)
 
 사용법:
   export ANTHROPIC_API_KEY=sk-...
   python .claude/scripts/web-cli-auto-bridge.py --start
-  # → daemon 모드 · 백그라운드에서 event stream 수신
+  # -> daemon 모드 - 백그라운드에서 event stream 수신
 
   # 세션 생성:
   python .claude/scripts/web-cli-auto-bridge.py --new-session
@@ -25,7 +25,7 @@ Anthropic Managed Agents API (2026-07-22+) 사용.
   python .claude/scripts/web-cli-auto-bridge.py --send "<지시>"
 
 근거: docs/install/README.md § Section 3 § 방식 3
-근거: 2026-08-12 사용자 요구 — "web 보내면 명령프롬프트 → cli → web 자동"
+근거: 2026-08-12 사용자 요구 — "web 보내면 명령프롬프트 -> cli -> web 자동"
 """
 from __future__ import annotations
 import argparse
@@ -114,11 +114,11 @@ def send(prompt: str) -> None:
 
 
 def daemon() -> None:
-    """웹훅 수신 대기 모드 (환경·메모리 lifecycle 반응)."""
+    """웹훅 수신 대기 모드 (환경-메모리 lifecycle 반응)."""
     print("[DAEMON] Managed Agents webhook 수신 대기 (Ctrl+C 종료)")
     print("[SETUP] webhook URL 을 Anthropic Console 에 등록: environment.* / memory_store.*")
     # 실제 webhook receiver 구현 시 여기에 HTTP server (Flask/FastAPI)
-    print("[TODO] webhook receiver 구현 (환경별 · 사용자 코드)")
+    print("[TODO] webhook receiver 구현 (환경별 - 사용자 코드)")
 
 
 def main():

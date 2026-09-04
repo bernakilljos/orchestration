@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 카테고리 & 도구 수 (전체 131)
+##  카테고리 & 도구 수 (전체 131)
 
 | # | 카테고리 | 도구 수 | 주 목적 |
 |---|---|---|---|
@@ -30,7 +30,7 @@
 
 ---
 
-## 1️⃣ APM (Application Performance Monitoring) — 8개
+## 1⃣ APM (Application Performance Monitoring) — 8개
 
 애플리케이션 성능 추적 · 응답시간 · 트랜잭션 · 병목지점 분석.
 
@@ -47,7 +47,7 @@
 
 ---
 
-## 2️⃣ 메트릭 (Metrics & Time-Series) — 12개
+## 2⃣ 메트릭 (Metrics & Time-Series) — 12개
 
 시계열 데이터 저장 · 메트릭 수집 · 다차원 쿼리 · 시각화.
 
@@ -68,7 +68,7 @@
 
 ---
 
-## 3️⃣ 로깅 (Logging & Log Management) — 14개
+## 3⃣ 로깅 (Logging & Log Management) — 14개
 
 로그 수집 · 처리 · 저장 · 검색 · 분석.
 
@@ -91,7 +91,7 @@
 
 ---
 
-## 4️⃣ 분산 추적 (Distributed Tracing) — 8개
+## 4⃣ 분산 추적 (Distributed Tracing) — 8개
 
 요청 흐름 추적 · 마이크로서비스 지연 분석 · 의존성 매핑.
 
@@ -108,7 +108,7 @@
 
 ---
 
-## 5️⃣ 통합 관측 (Unified Observability Stack) — 7개
+## 5⃣ 통합 관측 (Unified Observability Stack) — 7개
 
 APM + 메트릭 + 로그 + 추적 + 대시보드 통합 플랫폼.
 
@@ -124,7 +124,7 @@ APM + 메트릭 + 로그 + 추적 + 대시보드 통합 플랫폼.
 
 ---
 
-## 6️⃣ AI/LLM 관측 (AI & LLM Monitoring) — 10개
+## 6⃣ AI/LLM 관측 (AI & LLM Monitoring) — 10개
 
 생성형 AI · LLM 토큰 · 비용 · 정확도 · 지연시간 모니터링.
 
@@ -143,7 +143,7 @@ APM + 메트릭 + 로그 + 추적 + 대시보드 통합 플랫폼.
 
 ---
 
-## 7️⃣ 인프라 모니터링 (Infrastructure Monitoring) — 10개
+## 7⃣ 인프라 모니터링 (Infrastructure Monitoring) — 10개
 
 서버 · OS · 네트워크 · 스토리지 · 리소스 모니터링.
 
@@ -162,7 +162,7 @@ APM + 메트릭 + 로그 + 추적 + 대시보드 통합 플랫폼.
 
 ---
 
-## 8️⃣ 클라우드 네이티브 (Cloud Native & Kubernetes) — 9개
+## 8⃣ 클라우드 네이티브 (Cloud Native & Kubernetes) — 9개
 
 AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
@@ -180,7 +180,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 9️⃣ 상태 페이지 (Status Page & Incident Management) — 6개
+## 9⃣ 상태 페이지 (Status Page & Incident Management) — 6개
 
 서비스 상태 공시 · 인시던트 추적 · 사용자 소통.
 
@@ -212,7 +212,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 1️⃣1️⃣ 비용 모니터링 (Cost Management & Optimization) — 8개
+## 1⃣1⃣ 비용 모니터링 (Cost Management & Optimization) — 8개
 
 클라우드 비용 분석 · 리소스 최적화 · 예산 관리 · RI/Savings Plans.
 
@@ -229,7 +229,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 1️⃣2️⃣ 프론트엔드 모니터링 (Frontend & Web Performance) — 10개
+## 1⃣2⃣ 프론트엔드 모니터링 (Frontend & Web Performance) — 10개
 
 웹 성능 · JavaScript 에러 · 사용자 행동 · RUM (Real User Monitoring).
 
@@ -248,7 +248,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 1️⃣3️⃣ 네트워크 (Network Monitoring & Analysis) — 12개
+## 1⃣3⃣ 네트워크 (Network Monitoring & Analysis) — 12개
 
 패킷 분석 · 네트워크 지연 · 대역폭 · 트래픽 분석 · DNS.
 
@@ -269,7 +269,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 1️⃣4️⃣ 합성 모니터링 (Synthetic Monitoring) — 9개
+## 1⃣4⃣ 합성 모니터링 (Synthetic Monitoring) — 9개
 
 정기적 헬스 체크 · 성능 벤치마크 · 가용성 확인 · 엣지 로케이션.
 
@@ -287,7 +287,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 1️⃣5️⃣ SRE & Chaos Engineering (카오스 엔지니어링) — 8개
+## 1⃣5⃣ SRE & Chaos Engineering (카오스 엔지니어링) — 8개
 
 복원력 검증 · 장애 주입 · 장애 시뮬레이션 · 테스트.
 
@@ -341,7 +341,7 @@ AWS · Azure · GCP · Kubernetes · 컨테이너 모니터링.
 
 ---
 
-## 📚 설치 패턴
+##  설치 패턴
 
 ### Docker Compose 스택 (로컬)
 ```yaml
@@ -424,7 +424,7 @@ npm i posthog-js
 
 ---
 
-## 🎯 도구별 주요 특징 비교
+##  도구별 주요 특징 비교
 
 ### 메트릭 저장소
 | 도구 | 처리량 | 장기저장 | 비용 | 학습곡선 |

@@ -4,7 +4,7 @@
 # 트리거: PreToolUse (Write|Edit)
 # 검출:
 #   - U+FFFD (REPLACEMENT CHARACTER, 깨진 문자)
-#   - UTF-8 → cp949 오인 패턴 (ÂÃ 연속, íìîï 연속)
+#   - UTF-8 -> cp949 오인 패턴 (ÂÃ 연속, íìîï 연속)
 #   - 이중 이스케이프 \uXXXX\uXXXX
 #
 # 결과: 깨짐 감지 시 tool 실행 차단 + 원인 알림
@@ -33,7 +33,7 @@ if [ -z "$content" ]; then
     exit 0
 fi
 
-# REPL char 감지 (stdin·stdout UTF-8 강제)
+# REPL char 감지 (stdin-stdout UTF-8 강제)
 has_repl=$(echo "$content" | python -c "
 import sys
 try:

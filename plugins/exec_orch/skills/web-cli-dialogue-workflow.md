@@ -59,7 +59,7 @@ CLI 가 이 형식으로 만들어서 사용자에게 제공:
 | **파일 브릿지** (`~/.claude/orca/`) | 사용자 저장 | X (kit 이미 있음) |
 | **Managed Agents API** | 자체 UI · web claude.ai 아님 | Python·Node SDK 코드 |
 | **Chrome Extension** | web 브라우저 자동 | 확장 프로그램 개발 |
-| **Playwright 로 claude.ai 조작** | ⚠️ ToS 위반 소지 | 권장 X |
+| **Playwright 로 claude.ai 조작** |  ToS 위반 소지 | 권장 X |
 
 지금 = 수동 릴레이가 유일 . Chrome Extension 이 미래 진짜 자동화.
 

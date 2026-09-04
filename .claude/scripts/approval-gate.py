@@ -1,7 +1,7 @@
 """HITL Approval Gate — 위험 작업 감지 + DB 승인 워크플로우.
 
 사용 방법:
-  python approval-gate.py detect <command>       # 위험 패턴 매치 → JSON
+  python approval-gate.py detect <command>       # 위험 패턴 매치 -> JSON
   python approval-gate.py request <task_id> <command> <category> <detail>
   python approval-gate.py approve <task_id> [by]
   python approval-gate.py reject  <task_id> [by] [reason]
@@ -58,7 +58,7 @@ RISK_PATTERNS = {
 
 
 def detect_risk(command: str) -> dict | None:
-    """명령 문자열 → 매치된 위험 dict 반환 (또는 None)."""
+    """명령 문자열 -> 매치된 위험 dict 반환 (또는 None)."""
     for category, patterns in RISK_PATTERNS.items():
         for pattern, desc in patterns:
             if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):

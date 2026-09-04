@@ -25,7 +25,7 @@ description: VPS 업체 선택 매트릭스 — Oracle Free 1순위, Vultr·AWS 
 
 ## 업체별 상세
 
-### Oracle Free Tier ⭐ 1순위
+### Oracle Free Tier  1순위
 - **사양**: 4 OCPU ARM Ampere A1 / 24GB RAM / 200GB / 10TB outbound 무료
 - **장점**: 완전 무료, 사양 압도적, Seoul·Chuncheon 리전
 - **단점**: 가입 까다로움 (해외카드, 본인인증, capacity 부족 시 발급 지연)
@@ -49,7 +49,7 @@ description: VPS 업체 선택 매트릭스 — Oracle Free 1순위, Vultr·AWS 
 - **장점**: 사양 가성비 최고
 - **단점**: EU 리전 (한국에서 ping ~250ms)
 
-### ❌ 비추 — AWS EC2
+###  비추 — AWS EC2
 - 학습 곡선 높음, 트래픽 과금 폭탄 위험
 - Lightsail 로 시작 권장
 

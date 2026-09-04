@@ -1,5 +1,5 @@
 #!/bin/bash
-# common.sh - design_video 공통 헬퍼 (dry-run·검증·로깅)
+# common.sh - design_video 공통 헬퍼 (dry-run-검증-로깅)
 
 set -uo pipefail
 

@@ -1,5 +1,5 @@
 """
-Fix UTF-8 → CP949 → UTF-8 mojibake (한글 깨짐 복원).
+Fix UTF-8 -> CP949 -> UTF-8 mojibake (한글 깨짐 복원).
 사용: python .claude/scripts/fix_mojibake.py <file1> [file2 ...]
 """
 import sys
@@ -25,7 +25,7 @@ def try_unmojibake(text: str) -> tuple[str, int]:
         for n in range(2, 14):
             chunk = text[i:i+n]
             try:
-                # mojibake → 원래 bytes → 한글
+                # mojibake -> 원래 bytes -> 한글
                 raw = chunk.encode('cp949', errors='strict')
                 korean = raw.decode('utf-8', errors='strict')
                 # 복원 결과가 정상 한글 범위인지 확인

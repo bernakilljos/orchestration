@@ -1,7 +1,7 @@
 """RAG 의미 검색 — ChromaDB + sentence-transformers (로컬, GPU 0).
 
 vs recall-memory.py (키워드 grep):
-- 의미 유사 검색 (synonym·paraphrase OK)
+- 의미 유사 검색 (synonym-paraphrase OK)
 - index = CLAUDE.md + .claude/rules/ + memory/feedback + plugins/exec_orch/skills/
 
 5 핵심 부품 #2 Data layer (RAG) — 사용자 GPU 부족 시 외부 LLM + 로컬 vector DB.
@@ -46,7 +46,7 @@ def _get_client():
 
 
 def _get_embedding_fn():
-    """한글 지원 embedding 함수 — bge-m3 (한·영 둘 다 강함) 사용 가능 시.
+    """한글 지원 embedding 함수 — bge-m3 (한-영 둘 다 강함) 사용 가능 시.
     fallback: chromadb 기본 (all-MiniLM-L6-v2 — 영어 위주).
     """
     try:
@@ -87,7 +87,7 @@ def _docs_to_index() -> list:
     # 6. commands (slash command spec)
     for p in (PROJECT_ROOT / "plugins").glob("*/commands/*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
-    # 7. docs/ permanent (architecture-patterns·routing-policy·caching-strategy 등)
+    # 7. docs/ permanent (architecture-patterns-routing-policy-caching-strategy 등)
     for p in (PROJECT_ROOT / "docs").glob("*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
     return docs

@@ -5,7 +5,7 @@
 #   powershell -ExecutionPolicy Bypass -File .claude\scripts\register-daily-cleanup-task.ps1 -Time 03:30      # 시간 변경
 #   powershell -ExecutionPolicy Bypass -File .claude\scripts\register-daily-cleanup-task.ps1 -TaskName foo    # 이름 변경
 #
-# 태스크 이름·경로 모두 호출 프로젝트 기준 동적 결정 (kit 공통, 도메인 의존 없음)
+# 태스크 이름-경로 모두 호출 프로젝트 기준 동적 결정 (kit 공통, 도메인 의존 없음)
 
 param(
   [switch]$Remove = $false,

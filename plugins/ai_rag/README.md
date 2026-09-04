@@ -2,11 +2,11 @@
 
 > **Prefix**: `ai_` | **버전**: 1.0 | **Status**: stable (Naive) · spec-only (Multimodal·HyDE·Corrective·Graph·Hybrid·Adaptive·Agentic) | **Phase**: 2
 
-## ✅ 현재 상태 (2026-05-31 갱신)
+##  현재 상태 (2026-05-31 갱신)
 
 | 패턴 | 상태 | 동작 방식 |
 |---|---|---|
-| **Naive RAG (`/rag-naive`)** | ✅ **stable — 즉시 동작** | `.claude/scripts/rag-recall.py` (ChromaDB PersistentClient + multilingual MiniLM 임베딩, 한·영 OK). 첫 호출 시 chromadb 자동 install (zero-touch). |
+| **Naive RAG (`/rag-naive`)** |  **stable — 즉시 동작** | `.claude/scripts/rag-recall.py` (ChromaDB PersistentClient + multilingual MiniLM 임베딩, 한·영 OK). 첫 호출 시 chromadb 자동 install (zero-touch). |
 | Multimodal·HyDE·Corrective·Graph·Hybrid·Adaptive·Agentic | 📋 spec-only | 스크립트 stub 존재, 실구현 install 후 플랫폼에서 |
 
 ## 🚀 즉시 사용 (Naive RAG)
@@ -27,7 +27,7 @@ ChromaDB 자동 install (없으면) — `chromadb` + `sentence-transformers` 패
 
 | 커맨드 | 패턴 | 특징 |
 |---|---|---|
-| `/rag-naive` ⭐ 기본 | Naive RAG | Query → Embed → VectorDB → Prompt → LLM |
+| `/rag-naive`  기본 | Naive RAG | Query → Embed → VectorDB → Prompt → LLM |
 | `/rag-multimodal` | Multimodal | 이미지·텍스트 동시 검색 |
 | `/rag-hyde` | HyDE | Hypothetical Response 생성 후 검색 |
 | `/rag-corrective` | Corrective RAG | Grade · Query Analyzer · Web Search fallback |

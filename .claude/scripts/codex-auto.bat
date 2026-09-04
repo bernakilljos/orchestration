@@ -220,7 +220,7 @@ for %%F in ("%PICKED_TASK%") do (
 call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
 set "CODEX_EXIT=!errorlevel!"
 
-rem --- 토큰 소진 감지 → 대기 → 복구 시 재개 ---
+rem --- 토큰 소진 감지 -> 대기 -> 복구 시 재개 ---
 if !CODEX_EXIT! NEQ 0 (
   findstr /i /c:"rate" /c:"limit" /c:"quota" /c:"429" /c:"exceeded" "%TEMP%\codex-last-err.log" >nul 2>&1
   if not errorlevel 1 (

@@ -25,7 +25,7 @@ npm view @scope/package version
 bash → npx 직접 호출 시 PATH 문제. **`cmd /c npx` 래퍼 사용**.
 
 ```json
-// .claude/settings.json mcp 등록 (잘못된 예 ❌)
+// .claude/settings.json mcp 등록 (잘못된 예 )
 {
   "mcp": {
     "my-server": {
@@ -35,7 +35,7 @@ bash → npx 직접 호출 시 PATH 문제. **`cmd /c npx` 래퍼 사용**.
   }
 }
 
-// 올바른 예 ✅
+// 올바른 예 
 {
   "mcp": {
     "my-server": {

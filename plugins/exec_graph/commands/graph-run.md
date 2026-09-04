@@ -5,7 +5,7 @@ allowed-tools: Bash(python:*), Read, Write
 
 # /graph-run — Stateful graph 실행
 
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐ LangGraph 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  LangGraph 패턴.
 > **사용**: linear task-instruction 부족 case — multi-angle 검증·반복 정제·조건 분기 많음.
 > **요구**: `pip install langgraph langchain` (Python 3.10+).
 
@@ -78,12 +78,12 @@ python plugins/exec_graph/runtime/run_graph.py "$1"
 
 | 상황 | linear (task-instruction) | graph (이 명령) |
 |---|---|---|
-| 단순 implementation | ✅ | ❌ |
-| 1회 검증 | ✅ | ❌ |
-| 3+ 다른 시각 비판 | ❌ | ✅ |
-| 반복 정제 (n 회) | ❌ | ✅ |
-| 조건 분기 많음 | ❌ | ✅ |
-| parallel + merge | partial | ✅ |
+| 단순 implementation |  |  |
+| 1회 검증 |  |  |
+| 3+ 다른 시각 비판 |  |  |
+| 반복 정제 (n 회) |  |  |
+| 조건 분기 많음 |  |  |
+| parallel + merge | partial |  |
 
 ## 참조
 

@@ -68,13 +68,13 @@ FHIR.oauth2.init({
 
 | 플랫폼 | 형태 | 특징 | FHIR API | 가격 |
 |--------|------|------|----------|------|
-| **OpenEMR** | 오픈소스 | 미국 FDA 인증, 소규모 의원/診所 | ✅ (R4) | 무료 (서포트 유료) |
-| **GNU Health** | 오픈소스 | 전자의료기록 + 병원 관리, 개발도상국 | ⚠️ (HL7 v2) | 무료 |
-| **OpenMRS** | 오픈소스 | 발도국 의료 플랫폼 특화 | ✅ (R4) | 무료 |
-| **Epic** | 상용 | 북미 점유율 최고 (56% 병원), EHI 강점 | ✅ (R4) | $10k+/월 |
-| **Cerner** | 상용 | 미국 병원 2위 (EMR+EHR) | ✅ (R4) | $10k+/월 |
-| **Medidata** (Veeva) | 클라우드 | 임상시험 + EHR 통합 | ✅ (R4) | 엔터프라이즈 |
-| **NextGen Healthcare** | 클라우드 | 소규모 클리닉 친화 | ✅ (R4) | $500+/월 |
+| **OpenEMR** | 오픈소스 | 미국 FDA 인증, 소규모 의원/診所 |  (R4) | 무료 (서포트 유료) |
+| **GNU Health** | 오픈소스 | 전자의료기록 + 병원 관리, 개발도상국 |  (HL7 v2) | 무료 |
+| **OpenMRS** | 오픈소스 | 발도국 의료 플랫폼 특화 |  (R4) | 무료 |
+| **Epic** | 상용 | 북미 점유율 최고 (56% 병원), EHI 강점 |  (R4) | $10k+/월 |
+| **Cerner** | 상용 | 미국 병원 2위 (EMR+EHR) |  (R4) | $10k+/월 |
+| **Medidata** (Veeva) | 클라우드 | 임상시험 + EHR 통합 |  (R4) | 엔터프라이즈 |
+| **NextGen Healthcare** | 클라우드 | 소규모 클리닉 친화 |  (R4) | $500+/월 |
 
 ### OpenEMR 설치 (Docker)
 ```bash
@@ -433,12 +433,12 @@ structure.save("protein.pdb")
 
 | 플랫폼 | 특징 | 보안 | 가격 | HIPAA |
 |--------|------|------|------|--------|
-| **Twilio Video (HIPAA)** | 실시간 화상진료 | TLS 1.2, 암호화 | $0.04-0/분 | ✅ 준수 |
-| **Doxy.me** | 통합 비디오 + 대기실 | HIPAA 준수 | $20+/월 | ✅ 준수 |
-| **Zoom for Healthcare** | 화상회의 HIPAA 버전 | 종단 암호화 | $150+/월 | ✅ 준수 |
-| **Teladoc** | 원격진료 플랫폼 (B2B) | 군데이터 센터 | 요청 시 | ✅ 준수 |
-| **MDLive** | 전문의 매칭 플랫폼 | HIPAA 준수 | $0-500/상담 | ✅ 준수 |
-| **Amwell** | 원격진료 + 의료기관 통합 | EHR 연계 | 요청 시 | ✅ 준수 |
+| **Twilio Video (HIPAA)** | 실시간 화상진료 | TLS 1.2, 암호화 | $0.04-0/분 |  준수 |
+| **Doxy.me** | 통합 비디오 + 대기실 | HIPAA 준수 | $20+/월 |  준수 |
+| **Zoom for Healthcare** | 화상회의 HIPAA 버전 | 종단 암호화 | $150+/월 |  준수 |
+| **Teladoc** | 원격진료 플랫폼 (B2B) | 군데이터 센터 | 요청 시 |  준수 |
+| **MDLive** | 전문의 매칭 플랫폼 | HIPAA 준수 | $0-500/상담 |  준수 |
+| **Amwell** | 원격진료 + 의료기관 통합 | EHR 연계 | 요청 시 |  준수 |
 
 ### Twilio Video HIPAA API (Node.js)
 ```bash
@@ -645,9 +645,9 @@ predictions = model.predict(X)
 |------|----------|---------|------------|---------|------------|
 | **무료/오픈소스** | FHIR JS, HAPI | OpenEMR, GNU Health | MONAI, AlphaFold | KIPRIS, 질병청 | Twilio 스타트업 |
 | **엔터프라이즈** | Epic, Cerner FHIR | Epic, Cerner EMR | Tempus, IBM Watson | 병원EHR 자체 개발 | Zoom, Amwell |
-| **한국 친화** | 없음 (번역 필요) | 없음 (해외 제품) | 없음 (한국어 미지원) | ✅ 건보공단, 심평원 | Doxy.me, 국내 업체 |
-| **AI 강점** | 데이터 교환 표준 | 데이터 저장 표준 | ✅ MONAI, AlphaFold | 없음 (AI 미흡) | AI 진단 보조 미약 |
-| **규제 명확** | ✅ FHIR 표준화 | ❌ EHR 경쟁 | ⚠️ FDA 승인 경로 | ✅ 의료법, 의료기기법 | ✅ HIPAA, PIPA |
+| **한국 친화** | 없음 (번역 필요) | 없음 (해외 제품) | 없음 (한국어 미지원) |  건보공단, 심평원 | Doxy.me, 국내 업체 |
+| **AI 강점** | 데이터 교환 표준 | 데이터 저장 표준 |  MONAI, AlphaFold | 없음 (AI 미흡) | AI 진단 보조 미약 |
+| **규제 명확** |  FHIR 표준화 |  EHR 경쟁 |  FDA 승인 경로 |  의료법, 의료기기법 |  HIPAA, PIPA |
 
 ---
 

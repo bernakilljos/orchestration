@@ -10,12 +10,12 @@
 ## 📋 커맨드
 
 - `/exec_session_guard`
-- `/guard-save` ⭐ 기본
+- `/guard-save`  기본
 - `/token-stats`
 
 ## 🧠 스킬
 
-- `guard_snapshot` ⭐ 핵심
+- `guard_snapshot`  핵심
 - `skill-token-tracker`
 
 ## 🪝 훅

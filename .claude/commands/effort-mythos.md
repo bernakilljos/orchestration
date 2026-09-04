@@ -44,15 +44,15 @@ python .claude/scripts/route.py --check claude-fable-5
 
 | 작업 | Mythos 사용? | 이유 |
 |---|---|---|
-| 초난도 시스템 redesign | ✅ | Opus 4.8 가 fail 한 경우 |
-| Dynamic Workflows orchestrator (수십~수백 subagent) | ✅ | Fable 5 의 강점 |
-| 8h+ long-running autonomy | ✅ | hallucination 위험 감소 |
-| Vision-heavy 산출물 검증 | ✅ | SOTA vision |
-| 일반 설계 / 추론 | ❌ | Opus 4.8 충분 |
-| 단순 구현 <200줄 | ❌ | Sonnet 4.6 |
-| 코드 500줄+ 병렬 | ❌ | Codex ×4 |
-| 검증 / 리뷰 | ❌ | Haiku 4.5 ×2 |
-| 보안 / 생물 / 화학 | ❌ | 자동 Opus fallback |
+| 초난도 시스템 redesign |  | Opus 4.8 가 fail 한 경우 |
+| Dynamic Workflows orchestrator (수십~수백 subagent) |  | Fable 5 의 강점 |
+| 8h+ long-running autonomy |  | hallucination 위험 감소 |
+| Vision-heavy 산출물 검증 |  | SOTA vision |
+| 일반 설계 / 추론 |  | Opus 4.8 충분 |
+| 단순 구현 <200줄 |  | Sonnet 4.6 |
+| 코드 500줄+ 병렬 |  | Codex ×4 |
+| 검증 / 리뷰 |  | Haiku 4.5 ×2 |
+| 보안 / 생물 / 화학 |  | 자동 Opus fallback |
 
 ## 사전 알림 (cost critical — CLAUDE.md § 7-11)
 

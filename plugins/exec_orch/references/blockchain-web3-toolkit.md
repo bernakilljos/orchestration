@@ -6,31 +6,31 @@
 
 ---
 
-## 📊 카테고리 요약
+##  카테고리 요약
 
 | # | 카테고리 | 도구 수 | 핵심 용도 |
 |----|---------|--------|---------|
 | 1 | 🔐 스마트 컨트랙트 언어 | 8 | Solidity, Vyper, Rust, Move, Cairo, 컴파일 |
-| 2 | 🛠️ 개발 프레임워크 | 12 | Hardhat, Foundry, Truffle, Brownie, Anchor, 테스트 |
+| 2 | 🛠 개발 프레임워크 | 12 | Hardhat, Foundry, Truffle, Brownie, Anchor, 테스트 |
 | 3 | 💻 JS/TS 라이브러리 | 15 | ethers.js, viem, web3.js, wagmi, RainbowKit |
 | 4 | 🐍 Python 라이브러리 | 10 | web3.py, Brownie, Ape, 상호작용 |
 | 5 | 👛 지갑 & 인증 | 12 | MetaMask, Phantom, WalletConnect, Safe |
 | 6 | 🌐 노드 & RPC | 15 | Infura, Alchemy, QuickNode, Ankr, 로컬 노드 |
 | 7 | 🔍 블록 탐색기 & 인덱싱 | 10 | Etherscan, The Graph, Dune, Nansen |
 | 8 | 💰 DeFi 도구 & SDK | 12 | Uniswap, 1inch, Aave, Curve, Chainlink |
-| 9 | 🖼️ NFT & 토큰 | 10 | OpenSea API, Metaplex, Zora, thirdweb |
-| 10 | 🗂️ IPFS & 탈중앙 스토리지 | 10 | IPFS, Pinata, Arweave, Filecoin, Ceramic |
+| 9 | 🖼 NFT & 토큰 | 10 | OpenSea API, Metaplex, Zora, thirdweb |
+| 10 | 🗂 IPFS & 탈중앙 스토리지 | 10 | IPFS, Pinata, Arweave, Filecoin, Ceramic |
 | 11 | 🔒 보안 감사 & 분석 | 12 | Slither, Mythril, Certora, Trail of Bits |
-| 12 | ⛓️ L2 & 스케일링 | 8 | Optimism, Arbitrum, zkSync, Polygon, Base |
+| 12 | ⛓ L2 & 스케일링 | 8 | Optimism, Arbitrum, zkSync, Polygon, Base |
 | 13 | 🌉 크로스체인 & 브릿지 | 8 | LayerZero, Wormhole, Axelar, Hyperlane |
-| 14 | 📊 데이터 & 분석 | 8 | Dune, Flipside, Covalent, GraphQL 도구 |
-| 15 | 🏛️ DAO & 거버넌스 | 10 | Snapshot, Tally, Aragon, Governor, Colony |
+| 14 |  데이터 & 분석 | 8 | Dune, Flipside, Covalent, GraphQL 도구 |
+| 15 | 🏛 DAO & 거버넌스 | 10 | Snapshot, Tally, Aragon, Governor, Colony |
 
 **총 도구 수: 140개** (각 카테고리별 최소 8개 이상)
 
 ---
 
-## 1️⃣ 스마트 컨트랙트 언어 (Smart Contract Languages)
+## 1⃣ 스마트 컨트랙트 언어 (Smart Contract Languages)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -45,7 +45,7 @@
 
 ---
 
-## 2️⃣ 개발 프레임워크 (Development Frameworks)
+## 2⃣ 개발 프레임워크 (Development Frameworks)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -64,7 +64,7 @@
 
 ---
 
-## 3️⃣ JS/TypeScript 라이브러리 (JavaScript & TypeScript Libraries)
+## 3⃣ JS/TypeScript 라이브러리 (JavaScript & TypeScript Libraries)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -86,7 +86,7 @@
 
 ---
 
-## 4️⃣ Python 라이브러리 (Python Libraries)
+## 4⃣ Python 라이브러리 (Python Libraries)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -103,7 +103,7 @@
 
 ---
 
-## 5️⃣ 지갑 & 인증 (Wallets & Authentication)
+## 5⃣ 지갑 & 인증 (Wallets & Authentication)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -122,7 +122,7 @@
 
 ---
 
-## 6️⃣ 노드 & RPC (Nodes & RPC Providers)
+## 6⃣ 노드 & RPC (Nodes & RPC Providers)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -144,7 +144,7 @@
 
 ---
 
-## 7️⃣ 블록 탐색기 & 인덱싱 (Block Explorers & Indexing)
+## 7⃣ 블록 탐색기 & 인덱싱 (Block Explorers & Indexing)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -161,7 +161,7 @@
 
 ---
 
-## 8️⃣ DeFi 도구 & SDK (DeFi Tools & SDKs)
+## 8⃣ DeFi 도구 & SDK (DeFi Tools & SDKs)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -180,7 +180,7 @@
 
 ---
 
-## 9️⃣ NFT & 토큰 (NFT & Token Tools)
+## 9⃣ NFT & 토큰 (NFT & Token Tools)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -214,7 +214,7 @@
 
 ---
 
-## 1️⃣1️⃣ 보안 감시 & 분석 (Security Auditing & Analysis)
+## 1⃣1⃣ 보안 감시 & 분석 (Security Auditing & Analysis)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -233,7 +233,7 @@
 
 ---
 
-## 1️⃣2️⃣ L2 & 스케일링 솔루션 (Layer 2 & Scaling Solutions)
+## 1⃣2⃣ L2 & 스케일링 솔루션 (Layer 2 & Scaling Solutions)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -248,7 +248,7 @@
 
 ---
 
-## 1️⃣3️⃣ 크로스체인 & 브릿지 (Cross-Chain & Bridges)
+## 1⃣3⃣ 크로스체인 & 브릿지 (Cross-Chain & Bridges)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -263,7 +263,7 @@
 
 ---
 
-## 1️⃣4️⃣ 데이터 & 분석 (Data & Analytics)
+## 1⃣4⃣ 데이터 & 분석 (Data & Analytics)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -278,7 +278,7 @@
 
 ---
 
-## 1️⃣5️⃣ DAO & 거버넌스 (DAO & Governance)
+## 1⃣5⃣ DAO & 거버넌스 (DAO & Governance)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |----|--------|------|---------|
@@ -330,7 +330,7 @@
 
 ---
 
-## 🎯 사용 패턴
+##  사용 패턴
 
 ### 신규 DeFi 프로젝트
 1. **개발**: Hardhat + ethers.js + wagmi
@@ -358,7 +358,7 @@
 
 ---
 
-## ✅ 점검 리스트
+##  점검 리스트
 
 | 항목 | 확인 |
 |------|------|

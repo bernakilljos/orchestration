@@ -30,7 +30,7 @@ BASE = "https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/desig
 
 
 def safe_name(brand):
-    """linear.app → linear, mistral.ai → mistral, x.ai → xai 같은 안전한 파일명"""
+    """linear.app -> linear, mistral.ai -> mistral, x.ai -> xai 같은 안전한 파일명"""
     return brand.replace(".", "-").replace("/", "-")
 
 
@@ -41,7 +41,7 @@ def download(url, out_path):
 
 
 def main():
-    print(f"[START] {len(BRANDS)} brands → {OUT}", flush=True)
+    print(f"[START] {len(BRANDS)} brands -> {OUT}", flush=True)
     start = time.time()
     ok = 0
     fail = 0

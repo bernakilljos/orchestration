@@ -29,15 +29,15 @@ echo "=============================="
 
 # Protect prod environment
 if [ "$TARGET_ENV" = "prod" ] && [ "$CONFIRMED" != "true" ]; then
-  echo "[BLOCK] PROD environment → --confirmed flag required"
-  echo "  → bash .claude/scripts/deploy.sh --env prod --confirmed"
+  echo "[BLOCK] PROD environment -> --confirmed flag required"
+  echo "  -> bash .claude/scripts/deploy.sh --env prod --confirmed"
   exit 1
 fi
 
 # Run quality gate first
 echo "[1/6] Quality gate check..."
 bash .claude/scripts/quality-gate.sh || {
-  echo "[BLOCK] Quality gate failed → Deploy aborted"
+  echo "[BLOCK] Quality gate failed -> Deploy aborted"
   bash .claude/scripts/notify.sh "danger" "Deploy blocked: Quality gate failed ($TARGET_ENV)"
   exit 1
 }
@@ -85,9 +85,9 @@ fi
 # Health check
 echo "[6/6] Health check..."
 bash .claude/scripts/monitor.sh --health-only || {
-  echo "[FAIL] Health check failed → Running auto rollback"
+  echo "[FAIL] Health check failed -> Running auto rollback"
   bash .claude/scripts/rollback.sh
-  bash .claude/scripts/notify.sh "danger" "Deploy failed → Auto rollback executed ($TARGET_ENV / $REMOTE_HOST)"
+  bash .claude/scripts/notify.sh "danger" "Deploy failed -> Auto rollback executed ($TARGET_ENV / $REMOTE_HOST)"
   exit 1
 }
 
@@ -101,7 +101,7 @@ cat >> docs/deploy-history/history.md <<EOF
 EOF
 
 # Completion notification
-bash .claude/scripts/notify.sh "good" "Deploy success ($TARGET_ENV) → http://${REMOTE_HOST}:${SERVICE_PORT}"
+bash .claude/scripts/notify.sh "good" "Deploy success ($TARGET_ENV) -> http://${REMOTE_HOST}:${SERVICE_PORT}"
 
 echo ""
 echo "[DONE] Deploy success: http://${REMOTE_HOST}:${SERVICE_PORT}"

@@ -9,51 +9,51 @@
 ### 1. task-instruction.md 작성 후 (Claude → Codex)
 ```
 검증 항목:
-  ✅ .claude/tasks/task-instruction.md 존재
-  ✅ handoff-log.md에 from:claude, to:codex 기록
-  ✅ context 섹션에 설계 결정 사유 포함
-  ✅ expected_output 명시
-  ✅ constraints (수정 금지 파일, 코딩 규칙) 명시
+   .claude/tasks/task-instruction.md 존재
+   handoff-log.md에 from:claude, to:codex 기록
+   context 섹션에 설계 결정 사유 포함
+   expected_output 명시
+   constraints (수정 금지 파일, 코딩 규칙) 명시
 
 실패 시:
-  → "[HANDOFF] ❌ 인수인계 불완전 — handoff-log.md 보완 필요"
+  → "[HANDOFF]  인수인계 불완전 — handoff-log.md 보완 필요"
   → task-instruction.md 옆에 handoff-log.md 자동 생성 (빈 템플릿)
 ```
 
 ### 2. Codex 완료 후 (Codex → Claude)
 ```
 검증 항목:
-  ✅ docs/implementation-report.md 존재
-  ✅ 변경 파일 목록 포함
-  ✅ 테스트 결과 포함 (PASS/FAIL)
-  ✅ Claude 보완 요청 사항 (있으면)
+   docs/implementation-report.md 존재
+   변경 파일 목록 포함
+   테스트 결과 포함 (PASS/FAIL)
+   Claude 보완 요청 사항 (있으면)
 
 실패 시:
-  → "[HANDOFF] ❌ Codex 보고서 불완전 — done/ 이동 보류"
+  → "[HANDOFF]  Codex 보고서 불완전 — done/ 이동 보류"
   → lock 파일 유지 (task 완료 처리 안 함)
 ```
 
 ### 3. Claude 보완 후 (Claude → Gemini)
 ```
 검증 항목:
-  ✅ 검증 지시 파일 존재 (verify-*.md 또는 task-instruction.md 업데이트)
-  ✅ handoff-log.md에 from:claude, to:gemini 기록
-  ✅ 검증 포인트 목록 명시
+   검증 지시 파일 존재 (verify-*.md 또는 task-instruction.md 업데이트)
+   handoff-log.md에 from:claude, to:gemini 기록
+   검증 포인트 목록 명시
 
 실패 시:
-  → "[HANDOFF] ❌ 검증 지시 불완전 — Gemini에 넘기기 전에 보완"
+  → "[HANDOFF]  검증 지시 불완전 — Gemini에 넘기기 전에 보완"
 ```
 
 ### 4. Gemini 완료 후 (Gemini → Claude)
 ```
 검증 항목:
-  ✅ docs/review-result.md 존재
-  ✅ 합격/불합격/조건부합격 판정 포함
-  ✅ 이슈 발견 시 파일:줄번호 포함
-  ✅ 보안 점검 결과 포함
+   docs/review-result.md 존재
+   합격/불합격/조건부합격 판정 포함
+   이슈 발견 시 파일:줄번호 포함
+   보안 점검 결과 포함
 
 실패 시:
-  → "[HANDOFF] ❌ Gemini 리뷰 불완전 — 재실행 필요"
+  → "[HANDOFF]  Gemini 리뷰 불완전 — 재실행 필요"
 ```
 
 ## 자동 handoff-log.md 관리

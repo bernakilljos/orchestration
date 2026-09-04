@@ -10,7 +10,7 @@ HTML/CSS → Playwright → PPTX 파이프라인으로 고품질 발표자료 �
 
 ## 📋 커맨드
 
-- `/design_ppt` ⭐ **기본** — HTML→PPTX 풀 파이프라인 (잘림 방지 워크플로우 내장)
+- `/design_ppt`  **기본** — HTML→PPTX 풀 파이프라인 (잘림 방지 워크플로우 내장)
 - `/make-ppt` — 호환 alias (`/design_ppt` 와 동일)
 - `/ai-system-stages` — AI 시스템 6단계 템플릿
 - `/arch-auto` — 아키텍처 다이어그램 자동
@@ -20,10 +20,10 @@ HTML/CSS → Playwright → PPTX 파이프라인으로 고품질 발표자료 �
 
 ## 🧠 스킬
 
-- `skill-ppt-pitfalls` ⭐ **신규** — 13가지 함정 체크리스트 (잘림·정렬·페이지번호·OCR)
-- `skill-08-design` ⭐ 핵심 — Canva/DALL-E/Figma 자산 생성
-- `skill-14-auto-detail` ⭐ 핵심 — 짧은 요청 → 상세 instruction 자동 확장
-- `skill-15-theme-factory` ⭐ 핵심 — 테마·팔레트 자동 생성
+- `skill-ppt-pitfalls`  **신규** — 13가지 함정 체크리스트 (잘림·정렬·페이지번호·OCR)
+- `skill-08-design`  핵심 — Canva/DALL-E/Figma 자산 생성
+- `skill-14-auto-detail`  핵심 — 짧은 요청 → 상세 instruction 자동 확장
+- `skill-15-theme-factory`  핵심 — 테마·팔레트 자동 생성
 - `skill-16-brand-guidelines` — 브랜드 일관성
 - `skill-21-marketing` — 마케팅 자료
 - `skill-22-remotion` — 동영상 슬라이드
@@ -72,7 +72,7 @@ python .claude/scripts/generate-final-ppt.py
 2. font-size 또는 padding 단계 축소
 3. 그래도 안 되면 분할 (`slide-NN.html` + `slide-NNa.html`)
 
-## 🎯 핵심 노하우 (2026-04-27 업데이트)
+##  핵심 노하우 (2026-04-27 업데이트)
 
 ### 잘림 방지 패턴
 ```css

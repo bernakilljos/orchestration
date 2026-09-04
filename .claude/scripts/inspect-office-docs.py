@@ -115,7 +115,7 @@ INSPECTORS = {
     '.docx': inspect_docx,
     '.pptx': inspect_pptx,
     '.ppt':  inspect_ppt,
-    # .hwp: 한글 보안 dialog 가 사용자 액션 요구 → Zero-touch 위반. SKIP
+    # .hwp: 한글 보안 dialog 가 사용자 액션 요구 -> Zero-touch 위반. SKIP
 }
 
 def main():

@@ -22,24 +22,24 @@ Claude 전용 기능 4영역을 가용성 표로 출력하고, 어느 시나리�
 📋 4대 영역 가용성
 
   1. AskUserQuestion (구조화 질문)
-     상태: ✅ 항상 사용 가능 (Claude 내장)
+     상태:  항상 사용 가능 (Claude 내장)
      커맨드: /claude-ask <topic>
 
   2. Artifacts (인터랙티브 결과물)
-     상태: ✅ 항상 사용 가능 (HTML 출력)
+     상태:  항상 사용 가능 (HTML 출력)
      커맨드: /claude-artifact <type> <subject>
      타입: dashboard | calculator | chart | form | game
 
   3. Connectors (외부 SaaS 통합)
-     상태: <MCP 목록 보고 판단> ⚠️ 일부만 설치됨
+     상태: <MCP 목록 보고 판단>  일부만 설치됨
      커맨드: /claude-connectors [list|add]
      설치된 것: <상위 5개>
 
   4. Extended Thinking (복잡 추론)
-     상태: ✅ 항상 사용 가능 (Claude Opus/Sonnet)
+     상태:  항상 사용 가능 (Claude Opus/Sonnet)
      커맨드: /claude-thinking <task>
 
-🎯 시나리오별 추천
+ 시나리오별 추천
 
   사용자에게 입력 받아야 함         → /claude-ask
   대시보드·계산기·시각화 만들기      → /claude-artifact

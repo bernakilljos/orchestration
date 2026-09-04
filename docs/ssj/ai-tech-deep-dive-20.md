@@ -6,13 +6,13 @@
 
 ---
 
-## 🎯 깊이 들어갈 20개 기술 (시너지·임팩트 순)
+##  깊이 들어갈 20개 기술 (시너지·임팩트 순)
 
 | # | 기술 | 핵심 / 아키텍처 | 부서·ITCEN 접목 | 한국 진입자 |
 |---|---|---|---|---|
-| 1 | **Self-Critique / Reflexion** | LLM 답 → critique LLM → 재시도 (최대 3회) → 합의 | UEBA 점수 2단계 검증 = 부서 IP | 거의 없음 ⭐⭐⭐ |
-| 2 | **Causal AI** | Pearl 인과 그래프·do-calculus·DoWhy | 행동위험 인과 추론·사고 원인 분석 | 거의 없음 ⭐⭐⭐ |
-| 3 | **GraphRAG** | Knowledge Graph 추출 → community detection → LLM 답 | 행동패턴 그래프·내부 자금 흐름 | 거의 없음 ⭐⭐⭐ |
+| 1 | **Self-Critique / Reflexion** | LLM 답 → critique LLM → 재시도 (최대 3회) → 합의 | UEBA 점수 2단계 검증 = 부서 IP | 거의 없음  |
+| 2 | **Causal AI** | Pearl 인과 그래프·do-calculus·DoWhy | 행동위험 인과 추론·사고 원인 분석 | 거의 없음  |
+| 3 | **GraphRAG** | Knowledge Graph 추출 → community detection → LLM 답 | 행동패턴 그래프·내부 자금 흐름 | 거의 없음  |
 | 4 | **Agentic AI** | Plan-Act-Reflect 루프·MCP 도구 호출·메모리 | 24/7 자율 Risk Officer | 추격 중 |
 | 5 | **Multi-Agent Systems** | CrewAI·AutoGen·LangGraph 협업·토론·합의 | 위험점수 다중 AI 합의 | 추격 중 |
 | 6 | **World Models** | 영상 → 물리법칙 학습 (Cosmos·Sora·V-JEPA) | 디지털트윈 자동 학습·사고 시뮬 | 거의 없음 |
@@ -29,7 +29,7 @@
 | 17 | **Constitutional AI** | 헌법(원칙) 박고 AI 가 자기 규제 | 부서 SOP·법규 헌법화 | Anthropic 만 |
 | 18 | **Quantum ML (QML)** | Variational Quantum Circuit + 고전 학습 | 금융 부정거래 양자최적화 | KAIST·KISTI |
 | 19 | **Deepfake Detection / C2PA** | 음성·영상 위조 탐지·콘텐츠 출처 표준 | 보이스피싱법 2026 의무 | 추격 중 |
-| 20 | **AI Risk Lighthouse** ⭐ | 회사 AI·내부통제·행동위험 자동 감사·점수 | **부서가 만들 한국 표준** | **없음** ⭐⭐⭐ |
+| 20 | **AI Risk Lighthouse**  | 회사 AI·내부통제·행동위험 자동 감사·점수 | **부서가 만들 한국 표준** | **없음**  |
 
 ---
 
@@ -382,7 +382,7 @@ def reflexion_loop(query, max_iter=3, threshold=0.8):
 
 ---
 
-## 🛡️ Lighthouse 본인 (Claude Code) 자체 구현 — orchestration_v1 자산 활용
+## 🛡 Lighthouse 본인 (Claude Code) 자체 구현 — orchestration_v1 자산 활용
 
 `orchestration_v1` 의 rule·hook·skill 을 묶어 **Claude Code 가 자기 작업 자율 검증·재시도** 하는 Lighthouse-style 시스템.
 

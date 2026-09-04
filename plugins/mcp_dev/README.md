@@ -9,14 +9,14 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_dev`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-30-docker` ⭐ 핵심
-- `skill-33-github-actions` ⭐ 핵심
+- `skill-30-docker`  핵심
+- `skill-33-github-actions`  핵심
 
 ## 🤖 에이전트
 

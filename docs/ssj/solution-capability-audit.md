@@ -1,7 +1,7 @@
 # 솔루션 적용 가능성 점검 — 50/100 신기술 × orchestration_v1 자산
 
 > **목적**: ITCEN proposal xlsx 의 50 기술·100 접목 아이디어가 우리 자산 (rule·hook·skill·script) 으로 **실제 적용 가능한지** 점검
-> **결론 등급**: ✅ 이미 적용 / 🟡 부분 적용 / ❌ 미적용 (구축 필요)
+> **결론 등급**:  이미 적용 /  부분 적용 /  미적용 (구축 필요)
 > **작성**: 2026-06-02
 >
 > **2026-06-02 보강 완성** (5 핵심 + 6 묶음 = **11 skill** 신설):
@@ -26,9 +26,9 @@
 > - `ai-governance-iso42001.md` — #46-47 거버넌스 2개 (ISO 42001·EU AI Act·금감원)
 >
 > ### 보강 결과 (재산정)
-> - ✅ **즉시 활용** (우리 자산 + 신규 skill): **21개** (+10)
-> - 🟡 **OEM 가이드 + 통합 가이드 보유**: **25개** (skill 신설 — 설치·계약·운영 필요)
-> - ❌ **미적용** (자체 R&D 필수): **4개** (MoE·SSM·LoRA 자체학습 - 부서 영역 X)
+> -  **즉시 활용** (우리 자산 + 신규 skill): **21개** (+10)
+> -  **OEM 가이드 + 통합 가이드 보유**: **25개** (skill 신설 — 설치·계약·운영 필요)
+> -  **미적용** (자체 R&D 필수): **4개** (MoE·SSM·LoRA 자체학습 - 부서 영역 X)
 >
 > → **50개 중 46개 (92%) cover**. 부서 즉시 활용 가능 21 + 1-3개월 내 도입 25 + 자체 R&D 4.
 
@@ -51,45 +51,45 @@
 
 | # | 기술 | 상태 | 적용 자산 / 부족분 |
 |---|---|---|---|
-| 1 | Reasoning Models | ✅ | Claude Extended Thinking 활용 (1M context). `claude-thinking` skill |
-| 2 | **Self-Critique / Reflexion** | ✅ | `haiku-validator.md` · `verify-subagent-confidence.sh` · `post-codex-verify.sh` · `auto-planner` 5단계 |
-| 3 | Causal AI | ❌ | DoWhy·Causica 미설치. 구축 필요 — `plugins/ai_rag/causal/` 신설 가능 |
-| 4 | Chain/Tree-of-Thought | ✅ | `meta-prompting.md` · `tot-prompting.md` skill 존재 |
-| 5 | Neurosymbolic AI | 🟡 | `auto-planner` 5단계 plan = 기호 룰 + LLM 부분 융합. 정식 fail safe X |
+| 1 | Reasoning Models |  | Claude Extended Thinking 활용 (1M context). `claude-thinking` skill |
+| 2 | **Self-Critique / Reflexion** |  | `haiku-validator.md` · `verify-subagent-confidence.sh` · `post-codex-verify.sh` · `auto-planner` 5단계 |
+| 3 | Causal AI |  | DoWhy·Causica 미설치. 구축 필요 — `plugins/ai_rag/causal/` 신설 가능 |
+| 4 | Chain/Tree-of-Thought |  | `meta-prompting.md` · `tot-prompting.md` skill 존재 |
+| 5 | Neurosymbolic AI |  | `auto-planner` 5단계 plan = 기호 룰 + LLM 부분 융합. 정식 fail safe X |
 
 ## B. 에이전트 (4)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 6 | Agentic AI | ✅ | `exec_orch` codex/gemini/haiku-auto 워커 = 자율 plan-act-reflect |
-| 7 | Multi-Agent | ✅ | `route_dispatch.md` 다중 AI 라우팅·합의 (Codex·Gemini·Haiku) |
-| 8 | Computer-Use / Browser-Use | 🟡 | Claude Computer Use 미통합. 본 프로젝트 = CLI 위주. 신설 가능 |
-| 9 | MCP / Tool Use | ✅ | MCP 광범위 활용 (Slack·Notion·Figma·Gamma·Canva·Mermaid). `mcp_*` plugin 다수 |
+| 6 | Agentic AI |  | `exec_orch` codex/gemini/haiku-auto 워커 = 자율 plan-act-reflect |
+| 7 | Multi-Agent |  | `route_dispatch.md` 다중 AI 라우팅·합의 (Codex·Gemini·Haiku) |
+| 8 | Computer-Use / Browser-Use |  | Claude Computer Use 미통합. 본 프로젝트 = CLI 위주. 신설 가능 |
+| 9 | MCP / Tool Use |  | MCP 광범위 활용 (Slack·Notion·Figma·Gamma·Canva·Mermaid). `mcp_*` plugin 다수 |
 
 ## C. 학습 패러다임 (3)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 10 | MoE | ❌ | 자체 모델 학습 X. API 호출만 |
-| 11 | State Space Models | ❌ | 자체 학습 X |
-| 12 | Test-Time Compute | ✅ | Claude Extended Thinking·o3 사용 (간접) |
+| 10 | MoE |  | 자체 모델 학습 X. API 호출만 |
+| 11 | State Space Models |  | 자체 학습 X |
+| 12 | Test-Time Compute |  | Claude Extended Thinking·o3 사용 (간접) |
 
 ## D. 생성형 AI (3)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 13 | Text-to-Video | 🟡 | `design_video` plugin 있음 (template/shorts/subtitle). Sora API 미통합 |
-| 14 | Code Agents | ✅ | Codex (×4 병렬), Cursor·Devin 직접 사용 안 함. 본인 (Claude Code) 자체가 코드 에이전트 |
-| 15 | Multimodal Native | ✅ | Claude Opus 4.8 (text·image·PDF) · Gemini 2.5 (멀티모달) 활용 |
+| 13 | Text-to-Video |  | `design_video` plugin 있음 (template/shorts/subtitle). Sora API 미통합 |
+| 14 | Code Agents |  | Codex (×4 병렬), Cursor·Devin 직접 사용 안 함. 본인 (Claude Code) 자체가 코드 에이전트 |
+| 15 | Multimodal Native |  | Claude Opus 4.8 (text·image·PDF) · Gemini 2.5 (멀티모달) 활용 |
 
 ## E. 피지컬 AI (4)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 16 | World Models | ❌ | NVIDIA Cosmos·Sora 미통합. 신설 필요 |
-| 17 | Vision-Language-Action | ❌ | 로봇·자율 X. 본 프로젝트는 software-only |
-| 18 | Embodied AI | ❌ | 로봇 영역 X |
-| 19 | Sim-to-Real | ❌ | 시뮬레이션 환경 X |
+| 16 | World Models |  | NVIDIA Cosmos·Sora 미통합. 신설 필요 |
+| 17 | Vision-Language-Action |  | 로봇·자율 X. 본 프로젝트는 software-only |
+| 18 | Embodied AI |  | 로봇 영역 X |
+| 19 | Sim-to-Real |  | 시뮬레이션 환경 X |
 
 → **피지컬 AI 전체 미적용**. 부서가 한국 1호 SI 로 진입하려면 NVIDIA 파트너십 필요.
 
@@ -97,85 +97,85 @@
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 20 | Quantum ML | ❌ | IBM Quantum Network 가입 X. 무료 가입 후 활용 가능 |
-| 21 | VQC | ❌ | Qiskit·PennyLane 미설치 |
+| 20 | Quantum ML |  | IBM Quantum Network 가입 X. 무료 가입 후 활용 가능 |
+| 21 | VQC |  | Qiskit·PennyLane 미설치 |
 
 ## G. 검색·메모리 (2)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 22 | **GraphRAG** | 🟡 | `rag-graph.md` skill 존재 (Microsoft GraphRAG 패턴). 자체 구현 X |
-| 23 | Memory Architectures | 🟡 | `.claude/memory/` + `learn` skill = 일종의 long-term memory. MemGPT·Letta 미통합 |
+| 22 | **GraphRAG** |  | `rag-graph.md` skill 존재 (Microsoft GraphRAG 패턴). 자체 구현 X |
+| 23 | Memory Architectures |  | `.claude/memory/` + `learn` skill = 일종의 long-term memory. MemGPT·Letta 미통합 |
 
 ## H. AI 보안 (3)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 24 | Prompt Injection Defense | 🟡 | `failure-mode.md` 룰 + `approval-gate.py` = 일부 방어. Lakera·HiddenLayer 미통합 |
-| 25 | Mechanistic Interpretability | ❌ | Anthropic·Goodfire 도구 미통합 |
-| 26 | Deepfake Detection | ❌ | Reality Defender·Hive 미통합 |
+| 24 | Prompt Injection Defense |  | `failure-mode.md` 룰 + `approval-gate.py` = 일부 방어. Lakera·HiddenLayer 미통합 |
+| 25 | Mechanistic Interpretability |  | Anthropic·Goodfire 도구 미통합 |
+| 26 | Deepfake Detection |  | Reality Defender·Hive 미통합 |
 
 ## I. 프라이버시 AI (3)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 27 | Federated Learning | ❌ | NVIDIA FLARE·Flower 미통합 |
-| 28 | Confidential Computing | ❌ | TEE·SGX·H100 CC 미적용 (개발 환경 X) |
-| 29 | Synthetic Data | 🟡 | 자체 생성기 X. LLM 으로 합성 가능 (간접) |
+| 27 | Federated Learning |  | NVIDIA FLARE·Flower 미통합 |
+| 28 | Confidential Computing |  | TEE·SGX·H100 CC 미적용 (개발 환경 X) |
+| 29 | Synthetic Data |  | 자체 생성기 X. LLM 으로 합성 가능 (간접) |
 
 ## J. 인지·정서 (1)
 
 | # | 기술 | 상태 | 자산 |
 |---|---|---|---|
-| 30 | Affective Computing | ❌ | Affectiva·Hume API 미통합 |
+| 30 | Affective Computing |  | Affectiva·Hume API 미통합 |
 
 ## K-P. 추가 영역 (20)
 
 | # | 기술 | 상태 | 비고 |
 |---|---|---|---|
-| 31 | Adversarial ML Defense | ❌ | 미통합 |
-| 32 | AI Workload Protection | ❌ | 미통합 |
-| 33 | NHI (Non-Human Identity) | 🟡 | API 키·MCP 인증 관리 부분 |
-| 34 | CSMA | ❌ | 분산 보안 메시 X |
-| 35 | DSPM | ❌ | 데이터 위치 추적 X |
-| 36 | Behavioral Biometrics | ❌ | 미통합 |
-| 37 | Continuous Auth | ❌ | 미통합 |
-| 38 | Passkeys / FIDO2 | ❌ | 미통합 |
-| 39 | DPO | ❌ | 학습 X |
-| 40 | RLHF | ❌ | 학습 X |
-| 41 | **Constitutional AI** | ✅ | `failure-mode.md` + `best-practices.md` + `teaching-doc.md` + `cleanup-policy.md` = 우리 헌법 |
-| 42 | LoRA / QLoRA | ❌ | 학습 X |
-| 43 | Vector DB | 🟡 | `exec_offline-vector.md` skill (ChromaDB 로컬) 존재. 정식 사용 X |
-| 44 | HyDE | ✅ | `rag-hyde.md` skill |
-| 45 | Long Context (1M+) | ✅ | Claude Opus 4.8 1M ctx (128k 출력) 활용 |
-| 46 | AI Governance | 🟡 | `validate-plugin-schema.py` · `sync-plugins.sh` · `.claude-plugin/plugin.json` = 일부 거버넌스 |
-| 47 | Bias Detection | ❌ | 미통합 |
-| 48 | Domain Foundation Models | 🟡 | 도메인 sLLM 미사용. API 호출만 |
-| 49 | AI Search | ❌ | Perplexity·SearchGPT 통합 X (WebSearch 직접 사용) |
-| 50 | Ambient Invisible Intelligence | ❌ | IoT·센서 X |
+| 31 | Adversarial ML Defense |  | 미통합 |
+| 32 | AI Workload Protection |  | 미통합 |
+| 33 | NHI (Non-Human Identity) |  | API 키·MCP 인증 관리 부분 |
+| 34 | CSMA |  | 분산 보안 메시 X |
+| 35 | DSPM |  | 데이터 위치 추적 X |
+| 36 | Behavioral Biometrics |  | 미통합 |
+| 37 | Continuous Auth |  | 미통합 |
+| 38 | Passkeys / FIDO2 |  | 미통합 |
+| 39 | DPO |  | 학습 X |
+| 40 | RLHF |  | 학습 X |
+| 41 | **Constitutional AI** |  | `failure-mode.md` + `best-practices.md` + `teaching-doc.md` + `cleanup-policy.md` = 우리 헌법 |
+| 42 | LoRA / QLoRA |  | 학습 X |
+| 43 | Vector DB |  | `exec_offline-vector.md` skill (ChromaDB 로컬) 존재. 정식 사용 X |
+| 44 | HyDE |  | `rag-hyde.md` skill |
+| 45 | Long Context (1M+) |  | Claude Opus 4.8 1M ctx (128k 출력) 활용 |
+| 46 | AI Governance |  | `validate-plugin-schema.py` · `sync-plugins.sh` · `.claude-plugin/plugin.json` = 일부 거버넌스 |
+| 47 | Bias Detection |  | 미통합 |
+| 48 | Domain Foundation Models |  | 도메인 sLLM 미사용. API 호출만 |
+| 49 | AI Search |  | Perplexity·SearchGPT 통합 X (WebSearch 직접 사용) |
+| 50 | Ambient Invisible Intelligence |  | IoT·센서 X |
 
 ---
 
-## 📊 종합 통계
+##  종합 통계
 
 | 상태 | 개수 | 비율 |
 |---|---|---|
-| ✅ 이미 적용 (즉시 활용 가능) | **11개** | 22% |
-| 🟡 부분 적용 (보강 필요) | **12개** | 24% |
-| ❌ 미적용 (구축 필요) | **27개** | 54% |
+|  이미 적용 (즉시 활용 가능) | **11개** | 22% |
+|  부분 적용 (보강 필요) | **12개** | 24% |
+|  미적용 (구축 필요) | **27개** | 54% |
 | **합계** | 50 | 100% |
 
-### ✅ 즉시 활용 가능 11개 (강점)
+###  즉시 활용 가능 11개 (강점)
 1, 2, 4, 6, 7, 9, 14, 15, 41, 44, 45
 
 → **Self-Critique·Agentic·Multi-Agent·MCP·Constitutional AI·HyDE·Long Context** 등 **추론·에이전트·검증 영역 강함**.
 
-### 🟡 부분 적용 12개 (보강 1-3개월)
+###  부분 적용 12개 (보강 1-3개월)
 5, 8, 13, 22, 23, 24, 29, 33, 43, 46, 48 + 일부
 
 → GraphRAG·Memory·Computer-Use·Prompt Injection 등 **부분 구현 + 라이브러리 통합으로 완성 가능**.
 
-### ❌ 미적용 27개 (전략 결정)
+###  미적용 27개 (전략 결정)
 3, 10, 11, 16-21, 25-28, 30-32, 34-40, 42, 47, 49, 50
 
 대분류:
@@ -187,7 +187,7 @@
 
 ---
 
-## 🎯 부서 적용 우선순위 (점검 결과 기반)
+##  부서 적용 우선순위 (점검 결과 기반)
 
 ### Phase 1 — 즉시 활용 (이미 자산 보유, 0원)
 | # | 기술 | 어떻게 |

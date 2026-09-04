@@ -652,7 +652,7 @@ Joy · Sadness · Anger · Fear · Surprise · Disgust
 
 ---
 
-## 📚 추천 학습 경로
+##  추천 학습 경로
 
 ### 입문 (1개월)
 1. Wei et al. "Chain-of-Thought" 논문 — Reasoning 입문

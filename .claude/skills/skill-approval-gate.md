@@ -59,7 +59,7 @@ metadata:
 task 생성 시 state=waiting_approval (orca.db)
    ↓
 사용자에게 표시:
-  ## ⚠ 승인 필요
+  ##  승인 필요
   
   | 항목 | 값 |
   |---|---|

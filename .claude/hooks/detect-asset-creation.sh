@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # detect-asset-creation.sh — PreToolUse Write hook
-# 목적: 새 자산 (rule/hook/skill/command/agent) 생성 시 자동 감지 → 유사 파일 grep → 자매 파일 유형 검사
-# 근거: .claude/rules/consistency.md § 함수·훅·룰 중복 금지 · feedback_no_duplicate_function
+# 목적: 새 자산 (rule/hook/skill/command/agent) 생성 시 자동 감지 -> 유사 파일 grep -> 자매 파일 유형 검사
+# 근거: .claude/rules/consistency.md § 함수-훅-룰 중복 금지 - feedback_no_duplicate_function
 set -e
 
 INPUT="$(cat)"
@@ -72,9 +72,9 @@ elif [ "$kind" = "hook_ps" ]; then
 fi
 
 # systemMessage warn (block X — 경고만)
-msg="[자산 감지] 유형: $kind · 신규: $BASENAME"
-[ -n "$similar_files" ] && msg="$msg\\n\\n⚠ 유사 자산 존재:\\n$(echo "$similar_files" | sed 's/^/  - /' | tr '\\n' '_' | sed 's/_/\\\\n/g')\\n\\n→ 기존 확장 검토 (consistency.md § 함수·훅·룰 중복 금지)"
-[ -n "$sibling_warn" ] && msg="$msg\\n\\n⚠ $sibling_warn"
+msg="[자산 감지] 유형: $kind - 신규: $BASENAME"
+[ -n "$similar_files" ] && msg="$msg\\n\\n[WARN] 유사 자산 존재:\\n$(echo "$similar_files" | sed 's/^/  - /' | tr '\\n' '_' | sed 's/_/\\\\n/g')\\n\\n-> 기존 확장 검토 (consistency.md § 함수-훅-룰 중복 금지)"
+[ -n "$sibling_warn" ] && msg="$msg\\n\\n[WARN] $sibling_warn"
 msg="$msg\\n\\n워크플로우: plugins/exec_orch/skills/asset-creation-workflow.md"
 
 cat <<EOF

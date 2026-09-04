@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PostToolUse hook — indentation rule 강제
-# md/json/yaml/yml/sh/py 편집 후 탭/스페이스 혼용 검출 → systemMessage
+# md/json/yaml/yml/sh/py 편집 후 탭/스페이스 혼용 검출 -> systemMessage
 # 차단 안 함 (informational)
 set +e
 

@@ -18,7 +18,7 @@ RESULT="$(bash "$SYNC_SCRIPT" --check 2>&1 | tail -10)"
 # drift 또는 orphan 감지 시 systemMessage (informational)
 if echo "$RESULT" | grep -qE "drift.*[1-9]|orphan.*[1-9]"; then
   cat <<EOF
-{"systemMessage": "[sync-drift] plugins/ <-> .claude/ 드리프트·orphan 감지 — bash .claude/scripts/sync-plugins.sh 권장:\n$RESULT"}
+{"systemMessage": "[sync-drift] plugins/ <-> .claude/ 드리프트-orphan 감지 — bash .claude/scripts/sync-plugins.sh 권장:\n$RESULT"}
 EOF
   echo "[$TS] DRIFT|ORPHAN detected" >> "$LOG_FILE"
   echo "$RESULT" >> "$LOG_FILE"

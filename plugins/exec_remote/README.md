@@ -73,7 +73,7 @@ VPS_SSH_KEY=~/.ssh/oracle_orch_ed25519
 
 | 업체 | 사양 | 월 |
 |---|---|---|
-| **Oracle Free Tier** ⭐ | 4 OCPU ARM / 24GB | **$0** |
+| **Oracle Free Tier**  | 4 OCPU ARM / 24GB | **$0** |
 | Vultr | 1 vCPU / 1GB | $3.50 |
 | AWS Lightsail | 1 vCPU / 1GB | $5 |
 | Hetzner CX22 | 2 vCPU / 4GB | €4.51 |

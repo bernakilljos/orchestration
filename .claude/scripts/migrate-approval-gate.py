@@ -31,7 +31,7 @@ def migrate():
         if current >= 2:
             print(f"[migrate] schema_version={current} (이미 마이그레이션 됨)")
             return
-        print(f"[migrate] schema {current} → 2: approval gate 컬럼 추가")
+        print(f"[migrate] schema {current} -> 2: approval gate 컬럼 추가")
 
         # tasks 테이블에 컬럼 추가 (IF NOT EXISTS 직접 X — column_exists 체크)
         cols_to_add = [

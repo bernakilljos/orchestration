@@ -2,10 +2,10 @@
 """Watchdog process for orchestration_v1 — monitors and revives dead workers.
 
 Runs as a background process, checking every 2 minutes for:
-1. Stale worker heartbeats (>5 min old) → mark dead
-2. Quota-blocked workers whose backoff expired → retry with exponential delay
-3. Dead workers → restart (max 3 retries)
-4. Claude Code session alive → if dead, shutdown watchdog
+1. Stale worker heartbeats (>5 min old) -> mark dead
+2. Quota-blocked workers whose backoff expired -> retry with exponential delay
+3. Dead workers -> restart (max 3 retries)
+4. Claude Code session alive -> if dead, shutdown watchdog
 
 Quota-aware: if quota still exceeded, extends backoff exponentially instead of restarting.
 
@@ -89,7 +89,7 @@ class WatchdogLogger:
                 return
 
             base = self.log_path
-            # Shift .N → .(N+1), dropping the oldest
+            # Shift .N -> .(N+1), dropping the oldest
             for i in range(backup_count, 0, -1):
                 src = base.parent / f"{base.name}.{i}"
                 if not src.exists():
@@ -210,8 +210,8 @@ def enforce_worker_limits(
     """Restart workers exceeding memory or lifetime limits.
 
     For each running worker:
-    - RSS (incl. child processes) >= max_rss_mb → kill tree + respawn
-    - Uptime >= max_uptime_sec → kill tree + respawn (preempts memory leak)
+    - RSS (incl. child processes) >= max_rss_mb -> kill tree + respawn
+    - Uptime >= max_uptime_sec -> kill tree + respawn (preempts memory leak)
     """
     for w in get_running_workers():
         reason = should_restart_worker(w, max_rss_mb, max_uptime_sec)

@@ -13,7 +13,7 @@
     .top-band { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
     .svc { background: rgba(255,255,255,0.86); border: 0.5px solid var(--fog); border-radius: 10px; padding: 12px 14px; text-align: center; position: relative; overflow: hidden; }
     .svc.new { background: linear-gradient(135deg, rgba(184,134,78,0.18) 0%, rgba(255,255,255,0.9) 70%); border-color: var(--gold); }
-    .svc.new::after { content:'⭐'; position: absolute; top: 6px; right: 8px; font-size: 12px; }
+    .svc.new::after { content:''; position: absolute; top: 6px; right: 8px; font-size: 12px; }
     .svc .nm { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--deep-gold); margin-bottom: 4px; }
     .svc .pkg { font-size: 11px; color: var(--stone); line-height: 1.3; word-break: break-all; }
     .svc.builtin { background: rgba(107,142,127,0.08); }
@@ -106,7 +106,7 @@ claude mcp add telegram <span class="v">-s user</span> \
             <div class="code-box" style="font-size:13px;"><span class="c"># SessionEnd hook 안에서</span>
 curl <span class="v">-s</span> <span class="s">"https://api.telegram.org/bot$TOKEN/sendMessage"</span> \
   <span class="v">-d</span> chat_id=<span class="s">"$CHAT"</span> \
-  <span class="v">-d</span> text=<span class="s">"✅ Claude task 완료"</span></div>
+  <span class="v">-d</span> text=<span class="s">" Claude task 완료"</span></div>
           </div>
         </div>
       </div>

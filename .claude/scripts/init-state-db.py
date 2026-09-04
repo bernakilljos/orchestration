@@ -107,7 +107,7 @@ def migrate_quota_flags() -> int:
         # Rename original
         migrated = flag_path.with_suffix(".json.migrated")
         flag_path.rename(migrated)
-        print(f"[OK] Migrated {ai_name} quota flag → {migrated.name}")
+        print(f"[OK] Migrated {ai_name} quota flag -> {migrated.name}")
       except Exception as e:
         print(f"[WARN] Failed to migrate {ai_name} quota: {e}", file=sys.stderr)
 

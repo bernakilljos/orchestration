@@ -30,7 +30,7 @@ except: print('unknown')
 
 # Gemini 가용성 체크
 if ! command -v gemini-a >/dev/null 2>&1 && ! command -v gemini-auto >/dev/null 2>&1; then
-  # Gemini 없음 → skip (Claude 대행 금지)
+  # Gemini 없음 -> skip (Claude 대행 금지)
   echo '{"continue": true}'
   exit 0
 fi
@@ -58,7 +58,7 @@ created: $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # 세션 요약 요청
 
-**대상**: 세션 $session_id 의 주요 활동·결정·결과
+**대상**: 세션 $session_id 의 주요 활동-결정-결과
 **형식**: 10~15줄 (detailed)
 **저장**: \`$RECAP\` 에 JSON Lines 1줄 append:
 \`\`\`json

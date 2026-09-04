@@ -48,13 +48,13 @@
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Linear** | 개발팀 이슈 트래커 (빠름) | ✅ (250 이슈) |
-| **Jira** | 엔터프라이즈 프로젝트 관리 | ✅ (10명) |
-| **Notion** | 위키 + 프로젝트 + DB | ✅ |
-| **Trello** | 칸반 보드 | ✅ |
-| **GitHub Projects** | GitHub 통합 프로젝트 | ✅ |
-| **Plane** | 오픈소스 Jira 대안 | ✅ |
-| **Taiga** | 오픈소스 애자일 관리 | ✅ |
+| **Linear** | 개발팀 이슈 트래커 (빠름) |  (250 이슈) |
+| **Jira** | 엔터프라이즈 프로젝트 관리 |  (10명) |
+| **Notion** | 위키 + 프로젝트 + DB |  |
+| **Trello** | 칸반 보드 |  |
+| **GitHub Projects** | GitHub 통합 프로젝트 |  |
+| **Plane** | 오픈소스 Jira 대안 |  |
+| **Taiga** | 오픈소스 애자일 관리 |  |
 
 ---
 
@@ -87,14 +87,14 @@ with mlflow.start_run():
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Sentry** | 에러 트래킹 표준 (AI 자동 분석) | ✅ (5k 이벤트/월) |
-| **BugSnag** | 에러 모니터링 | ✅ (7500 이벤트/월) |
-| **LogRocket** | 세션 리플레이 + 에러 | ✅ (1k 세션/월) |
-| **Highlight.io** | 오픈소스 세션 리플레이 | ✅ |
-| **Datadog** | APM + 로그 + 메트릭 통합 | ✅ (제한적) |
-| **New Relic** | APM 표준 | ✅ (100GB/월) |
-| **Uptime Kuma** | 오픈소스 업타임 모니터 | ✅ |
-| **Better Stack** | 업타임 + 로그 | ✅ |
+| **Sentry** | 에러 트래킹 표준 (AI 자동 분석) |  (5k 이벤트/월) |
+| **BugSnag** | 에러 모니터링 |  (7500 이벤트/월) |
+| **LogRocket** | 세션 리플레이 + 에러 |  (1k 세션/월) |
+| **Highlight.io** | 오픈소스 세션 리플레이 |  |
+| **Datadog** | APM + 로그 + 메트릭 통합 |  (제한적) |
+| **New Relic** | APM 표준 |  (100GB/월) |
+| **Uptime Kuma** | 오픈소스 업타임 모니터 |  |
+| **Better Stack** | 업타임 + 로그 |  |
 
 ```python
 pip install sentry-sdk
@@ -108,16 +108,16 @@ sentry_sdk.init(dsn="https://xxx@sentry.io/xxx", traces_sample_rate=1.0)
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **n8n** | 오픈소스 워크플로우 자동화 (Zapier 대안) | ✅ (셀프호스팅) |
-| **Zapier** | 7000+ 앱 연결 | ✅ (100 태스크/월) |
-| **Make (Integromat)** | 비주얼 자동화 | ✅ (1000 ops/월) |
-| **Retool** | 내부 도구 빌더 | ✅ (5 사용자) |
-| **Appsmith** | 오픈소스 내부 도구 | ✅ |
-| **Tooljet** | 오픈소스 로우코드 | ✅ |
-| **Budibase** | 오픈소스 앱 빌더 | ✅ |
-| **Directus** | 오픈소스 Headless CMS + API | ✅ |
-| **NocoDB** | 오픈소스 Airtable 대안 | ✅ |
-| **Baserow** | 오픈소스 Airtable 대안 | ✅ |
+| **n8n** | 오픈소스 워크플로우 자동화 (Zapier 대안) |  (셀프호스팅) |
+| **Zapier** | 7000+ 앱 연결 |  (100 태스크/월) |
+| **Make (Integromat)** | 비주얼 자동화 |  (1000 ops/월) |
+| **Retool** | 내부 도구 빌더 |  (5 사용자) |
+| **Appsmith** | 오픈소스 내부 도구 |  |
+| **Tooljet** | 오픈소스 로우코드 |  |
+| **Budibase** | 오픈소스 앱 빌더 |  |
+| **Directus** | 오픈소스 Headless CMS + API |  |
+| **NocoDB** | 오픈소스 Airtable 대안 |  |
+| **Baserow** | 오픈소스 Airtable 대안 |  |
 
 ---
 
@@ -125,14 +125,14 @@ sentry_sdk.init(dsn="https://xxx@sentry.io/xxx", traces_sample_rate=1.0)
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Strapi** | 오픈소스 Headless CMS (Node.js) | ✅ |
-| **Sanity** | 구조화 콘텐츠 (실시간 협업) | ✅ (무료 티어) |
-| **Contentful** | 엔터프라이즈 Headless CMS | ✅ (무료 티어) |
-| **Payload** | 오픈소스 CMS + 앱 프레임워크 | ✅ |
-| **Ghost** | 퍼블리싱 플랫폼 (블로그) | ✅ (셀프호스팅) |
-| **WordPress** | 세계 1위 CMS | ✅ |
-| **KeystoneJS** | 오픈소스 Headless CMS (GraphQL) | ✅ |
-| **Decap CMS** | Git 기반 CMS (정적 사이트) | ✅ |
+| **Strapi** | 오픈소스 Headless CMS (Node.js) |  |
+| **Sanity** | 구조화 콘텐츠 (실시간 협업) |  (무료 티어) |
+| **Contentful** | 엔터프라이즈 Headless CMS |  (무료 티어) |
+| **Payload** | 오픈소스 CMS + 앱 프레임워크 |  |
+| **Ghost** | 퍼블리싱 플랫폼 (블로그) |  (셀프호스팅) |
+| **WordPress** | 세계 1위 CMS |  |
+| **KeystoneJS** | 오픈소스 Headless CMS (GraphQL) |  |
+| **Decap CMS** | Git 기반 CMS (정적 사이트) |  |
 
 ---
 
@@ -163,15 +163,15 @@ pip install robot             # Robot Framework
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Docusaurus** | React 문서 사이트 (Meta) | ✅ |
-| **Mintlify** | AI 문서 (Stripe 스타일) | ✅ (무료 티어) |
-| **GitBook** | 팀 문서 | ✅ (개인) |
-| **Nextra** | Next.js 문서 | ✅ |
-| **VitePress** | Vite 정적 문서 (Vue) | ✅ |
-| **Starlight** | Astro 문서 | ✅ |
-| **Readme** | API 문서 (인터랙티브) | ✅ (무료 티어) |
-| **Swagger/OpenAPI** | API 스펙 문서 | ✅ |
-| **Redoc** | OpenAPI 문서 렌더링 | ✅ |
+| **Docusaurus** | React 문서 사이트 (Meta) |  |
+| **Mintlify** | AI 문서 (Stripe 스타일) |  (무료 티어) |
+| **GitBook** | 팀 문서 |  (개인) |
+| **Nextra** | Next.js 문서 |  |
+| **VitePress** | Vite 정적 문서 (Vue) |  |
+| **Starlight** | Astro 문서 |  |
+| **Readme** | API 문서 (인터랙티브) |  (무료 티어) |
+| **Swagger/OpenAPI** | API 스펙 문서 |  |
+| **Redoc** | OpenAPI 문서 렌더링 |  |
 
 ---
 
@@ -179,13 +179,13 @@ pip install robot             # Robot Framework
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **v0.dev** | 프롬프트→React UI (Vercel) | ✅ |
-| **Bolt.new** | 프롬프트→풀스택 앱 | ✅ |
-| **Lovable** | 프롬프트→앱 (GPT Engineer 후속) | ✅ |
-| **Screenshot-to-Code** | 스크린샷→HTML/React | ✅ (오픈소스) |
+| **v0.dev** | 프롬프트→React UI (Vercel) |  |
+| **Bolt.new** | 프롬프트→풀스택 앱 |  |
+| **Lovable** | 프롬프트→앱 (GPT Engineer 후속) |  |
+| **Screenshot-to-Code** | 스크린샷→HTML/React |  (오픈소스) |
 | **Figma→Code** | Figma 디자인→코드 | Figma 플러그인 |
-| **Vercel AI SDK** | AI 앱 빌드 프레임워크 | ✅ |
-| **Langbase** | AI 파이프 빌더 | ✅ |
+| **Vercel AI SDK** | AI 앱 빌드 프레임워크 |  |
+| **Langbase** | AI 파이프 빌더 |  |
 
 ---
 
@@ -228,8 +228,8 @@ pip install robot             # Robot Framework
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Doppler** | 시크릿 동기화 (팀) | ✅ (5명) |
-| **Infisical** | 오픈소스 시크릿 관리 | ✅ |
+| **Doppler** | 시크릿 동기화 (팀) |  (5명) |
+| **Infisical** | 오픈소스 시크릿 관리 |  |
 | **1Password CLI** | 개발자 시크릿 (SSH, API 키) | $3/월 |
 | **direnv** | 디렉토리별 환경변수 자동 로드 | 무료 |
 | **dotenvx** | dotenv 차세대 (암호화 지원) | 무료 |
@@ -240,12 +240,12 @@ pip install robot             # Robot Framework
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Bruno** | 오픈소스 API 클라이언트 (Git 친화) | ✅ |
-| **Hoppscotch** | 오픈소스 Postman 대안 (웹) | ✅ |
-| **Insomnia** | API 클라이언트 (Kong) | ✅ |
-| **Postman** | API 개발 표준 | ✅ (무료 티어) |
-| **httpie** | CLI HTTP 클라이언트 (Python) | ✅ |
-| **Thunder Client** | VS Code API 클라이언트 | ✅ |
+| **Bruno** | 오픈소스 API 클라이언트 (Git 친화) |  |
+| **Hoppscotch** | 오픈소스 Postman 대안 (웹) |  |
+| **Insomnia** | API 클라이언트 (Kong) |  |
+| **Postman** | API 개발 표준 |  (무료 티어) |
+| **httpie** | CLI HTTP 클라이언트 (Python) |  |
+| **Thunder Client** | VS Code API 클라이언트 |  |
 
 ---
 
@@ -253,14 +253,14 @@ pip install robot             # Robot Framework
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Supabase** | 오픈소스 Firebase 대안 (PostgreSQL) | ✅ (500MB) |
-| **Firebase** | Google BaaS (인증+DB+스토리지+호스팅) | ✅ |
-| **Appwrite** | 오픈소스 BaaS | ✅ |
-| **PocketBase** | Go 싱글바이너리 BaaS | ✅ |
-| **Convex** | 리액티브 BaaS (실시간) | ✅ |
-| **Neon** | 서버리스 PostgreSQL | ✅ (0.5GB) |
-| **Turso** | 서버리스 SQLite (엣지) | ✅ (9GB) |
-| **Upstash** | 서버리스 Redis + Kafka | ✅ |
+| **Supabase** | 오픈소스 Firebase 대안 (PostgreSQL) |  (500MB) |
+| **Firebase** | Google BaaS (인증+DB+스토리지+호스팅) |  |
+| **Appwrite** | 오픈소스 BaaS |  |
+| **PocketBase** | Go 싱글바이너리 BaaS |  |
+| **Convex** | 리액티브 BaaS (실시간) |  |
+| **Neon** | 서버리스 PostgreSQL |  (0.5GB) |
+| **Turso** | 서버리스 SQLite (엣지) |  (9GB) |
+| **Upstash** | 서버리스 Redis + Kafka |  |
 
 ---
 
@@ -320,12 +320,12 @@ Docusaurus + Mintlify + Swagger + Storybook + GitHub Pages
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Unleash** | 오픈소스 피처 플래그 | ✅ (셀프호스팅) |
-| **GrowthBook** | 오픈소스 A/B 테스트 + 피처 플래그 | ✅ |
+| **Unleash** | 오픈소스 피처 플래그 |  (셀프호스팅) |
+| **GrowthBook** | 오픈소스 A/B 테스트 + 피처 플래그 |  |
 | **LaunchDarkly** | 엔터프라이즈 피처 플래그 | 유료 |
-| **Flipt** | 오픈소스 (Go, 경량) | ✅ |
-| **PostHog** | 분석 + 피처 플래그 + 세션 리플레이 | ✅ (무료 티어) |
-| **Flagsmith** | 오픈소스 피처 플래그 | ✅ |
+| **Flipt** | 오픈소스 (Go, 경량) |  |
+| **PostHog** | 분석 + 피처 플래그 + 세션 리플레이 |  (무료 티어) |
+| **Flagsmith** | 오픈소스 피처 플래그 |  |
 
 ---
 
@@ -345,12 +345,12 @@ Docusaurus + Mintlify + Swagger + Storybook + GitHub Pages
 
 | 도구 | 특장 | 무료 |
 |------|------|------|
-| **Infracost** | Terraform 비용 예측 | ✅ |
-| **Vantage** | 클라우드 비용 분석 | ✅ (무료 티어) |
-| **OpenCost** | K8s 비용 모니터링 (오픈소스) | ✅ |
-| **Helicone** | LLM API 비용 추적 | ✅ (무료 티어) |
+| **Infracost** | Terraform 비용 예측 |  |
+| **Vantage** | 클라우드 비용 분석 |  (무료 티어) |
+| **OpenCost** | K8s 비용 모니터링 (오픈소스) |  |
+| **Helicone** | LLM API 비용 추적 |  (무료 티어) |
 | **LiteLLM** | LLM 프록시 + 비용 추적 | `pip install litellm` |
-| **portkey** | AI Gateway (비용+캐싱+로깅) | ✅ (무료 티어) |
+| **portkey** | AI Gateway (비용+캐싱+로깅) |  (무료 티어) |
 
 ---
 
@@ -362,8 +362,8 @@ Docusaurus + Mintlify + Swagger + Storybook + GitHub Pages
 | **Litmus** | K8s 카오스 테스트 | Docker |
 | **Gremlin** | 카오스 SaaS | 유료 |
 | **Toxiproxy** | 네트워크 장애 시뮬레이션 | `go install` |
-| **k6** | 부하 테스트 (Grafana) | ✅ |
-| **Grafana k6** | 분산 부하 테스트 | ✅ |
+| **k6** | 부하 테스트 (Grafana) |  |
+| **Grafana k6** | 분산 부하 테스트 |  |
 
 ---
 
@@ -374,8 +374,8 @@ Docusaurus + Mintlify + Swagger + Storybook + GitHub Pages
 | **OpenTelemetry** | 메트릭+로그+트레이스 통합 표준 | `pip install opentelemetry-api` |
 | **SigNoz** | 오픈소스 Datadog 대안 | Docker |
 | **Grafana Stack** | Prometheus+Loki+Tempo+Grafana | Docker |
-| **Axiom** | 서버리스 로그+트레이스 | ✅ (무료 티어) |
-| **Baselime** | 서버리스 관측 | ✅ |
+| **Axiom** | 서버리스 로그+트레이스 |  (무료 티어) |
+| **Baselime** | 서버리스 관측 |  |
 
 ```python
 # OpenTelemetry — Python 자동 계측

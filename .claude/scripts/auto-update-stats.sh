@@ -16,7 +16,7 @@ HOOKS=$(find plugins -path "*/hooks/*.sh" -type f 2>/dev/null | wc -l | tr -d ' 
 SCRIPTS=$(ls .claude/scripts/*.{sh,py} 2>/dev/null | wc -l | tr -d ' ')
 TODAY=$(date +%Y-%m-%d)
 
-NEW_LINE="> **현재 상태** ($TODAY): plugins $PLUGINS stable + 0 spec-only · rules $RULES · hooks $HOOKS · scripts $SCRIPTS"
+NEW_LINE="> **현재 상태** ($TODAY): plugins $PLUGINS stable + 0 spec-only - rules $RULES - hooks $HOOKS - scripts $SCRIPTS"
 
 # AUTO-STATS 태그 사이의 라인 교체
 sed -i "/<!-- AUTO-STATS -->/,/<!-- AUTO-STATS -->/{

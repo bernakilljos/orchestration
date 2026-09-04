@@ -5,7 +5,7 @@ allowed-tools: Bash(python:*), Bash(curl:*), Read, Write
 
 # /gpt-dispatch — GPT-5.2 API 호출 wrapper
 
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ Perplexity Computer 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  Perplexity Computer 패턴.
 > **사용**: **2M+ 토큰** 초장기 문서 recall·전체 codebase 분석 (Gemini Flash 의 1M 부족 시).
 > **요구**: `OPENAI_API_KEY` (.env)
 

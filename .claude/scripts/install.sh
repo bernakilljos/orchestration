@@ -4,7 +4,7 @@
 # 기능:
 #   1. 의존성 확인 (python3, git, bash)
 #   2. ~/.claude/orca/ 전역 큐 디렉토리 생성
-#   3. plugins/ → .claude/ 초기 sync
+#   3. plugins/ -> .claude/ 초기 sync
 #   4. 환경변수 템플릿 (.env.example) 생성
 #   5. 검증 (validate-plugin-schema.py)
 
@@ -25,14 +25,14 @@ echo "[1/5] 의존성 확인..."
 MISS=0
 for cmd in git bash; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "   ❌ $cmd 없음"
+    echo "   [X] $cmd 없음"
     MISS=$((MISS+1))
   fi
 done
 if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
   echo "   ✓ python OK"
 else
-  echo "   ❌ python 없음"
+  echo "   [X] python 없음"
   MISS=$((MISS+1))
 fi
 if [ $MISS -gt 0 ]; then
@@ -57,7 +57,7 @@ echo "   ✓ ~/.claude/orca/ 준비 완료"
 echo ""
 
 # ------------------------------------------
-# 3. plugins → .claude sync
+# 3. plugins -> .claude sync
 # ------------------------------------------
 echo "[3/5] 플러그인 동기화..."
 # sync-plugins.sh 는 orphan/drift 있을 때 exit 2 — 설치 단계에서는 경고로만 취급
@@ -114,4 +114,4 @@ echo ""
 echo "다음 단계:"
 echo "  1. cp .env.example .env && vi .env      # API 키 입력"
 echo "  2. guide.txt 읽기"
-echo "  3. Claude Code 세션 시작 → exec_orca-auto 자동 동작"
+echo "  3. Claude Code 세션 시작 -> exec_orca-auto 자동 동작"

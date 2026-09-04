@@ -37,7 +37,7 @@ index 0000000..1b84488
 +        ('MicroICM-Agent', 'Llama 4 + Agentic', 'AI 자율 감사 봇·24/7 모니터·보고', 'Llama 4 + LangGraph + MicroICM 통합', 'Mac Studio 2대', '대기업 그룹', '월 1000-3000만'),
 +    ]),
 +    # ───── 영역 2: CCP 준법 (10) ─────
-+    ('⚖️', '2. CCP 준법경영 (EPM·Compliance 1위)', 'EPM·Compliance 1위 · ISO 42001 base', [
++    ('⚖', '2. CCP 준법경영 (EPM·Compliance 1위)', 'EPM·Compliance 1위 · ISO 42001 base', [
 +        ('MicroCCP-LLM', 'Llama 4 + 도메인 LoRA', '한국 법규·사규 특화 LLM·회사별 fine-tune', 'Llama 4 + 법규 데이터 LoRA', 'Mac Studio 1대', '1000+ CCP 사', '1社 5천만-2억'),
 +        ('MicroCCP-GraphRAG', 'GraphRAG', '사규·법규·판례·위반사례 그래프', 'Microsoft GraphRAG OSS', 'Mac Studio 1대 + Neo4j', '금융·공공', '1社 3-5억'),
 +        ('MicroCCP-Constitutional', 'Constitutional AI', '사규를 헌법으로 박고 AI 자동 준수', 'failure-mode.md 패턴 + PreToolUse hook', 'Mac Studio 1대', 'AI 도입 기업', '1社 2-4억'),
@@ -50,7 +50,7 @@ index 0000000..1b84488
 +        ('MicroCCP-Audit', 'Llama 4 + Computer Use', '자율 컴플라이언스 점검·증거 수집', 'Llama 4 + Computer Use + RPA', 'Mac Studio 2대', '대기업·공공', '월 500-1500만'),
 +    ]),
 +    # ───── 영역 3: 건설 ERP (10) ─────
-+    ('🏗️', '3. 건설 ERP (국내 1위)', '건설업 표준 · 중대재해법 의무', [
++    ('🏗', '3. 건설 ERP (국내 1위)', '건설업 표준 · 중대재해법 의무', [
 +        ('SmartConstruct-Cosmos', 'NVIDIA Cosmos', '가상 시공 시뮬·사고·붕괴 예측', 'NVIDIA Cosmos Free Research', 'Mac Studio 2대 + NVIDIA GPU 1', '50인+ 건설사', '1社 5천만-2억'),
 +        ('SmartConstruct-VLA', 'OpenVLA + AI CCTV', '작업자 자세·위험행동·PPE 미착용 감지', 'OpenVLA + Edge AI', 'Mac Studio 1대 + Edge', '1만+ 건설사', '월 50-200만'),
 +        ('SmartConstruct-AR', 'AR 디지털트윈', '스마트글래스 현장 가이드', 'Vision Pro + Unity', 'Vision Pro 10대 (5천만)', '중대형 건설사', '1社 1-3억'),
@@ -115,7 +115,7 @@ index 0000000..1b84488
 +        ('DigitalTwin-Defense', '국방 시뮬레이션', 'K-방산 무기·전장 시뮬', '한화·LIG 협업', 'NVIDIA Cluster + 보안', '방위사업청', '50-150억'),
 +    ]),
 +    # ───── 영역 8: ITO 운영 (10) ─────
-+    ('⚙️', '8. ITO (IT 아웃소싱)', 'IT 운영 위탁', [
++    ('⚙', '8. ITO (IT 아웃소싱)', 'IT 운영 위탁', [
 +        ('ITO-Agentic', 'Llama 4 + Agentic', '24/7 자율 운영·사람 1명 = 100배', 'Llama 4 + LangGraph + MCP', 'Mac Studio 2대', '기존 ITO 고객', '월 1000-3000만'),
 +        ('ITO-Workload', 'AI Workload Protection', 'AI 모델·데이터 보호 MSP', 'Palo Alto·Wiz OEM', 'Mac Studio 1대 + 클라우드', 'AI 도입 기업', '월 500-2000만'),
 +        ('ITO-NHI', 'NHI', 'AI 에이전트·서비스계정 신원', 'Astrix·Oasis OEM', 'Mac Studio 1대', 'AI 도입 기업', '월 200-1000만'),
@@ -154,7 +154,7 @@ index 0000000..1b84488
 +        ('K-AI Academy', 'AI 교육·자격증', 'KISA 등록 정식 과정', '교육 콘텐츠 + LMS', 'Mac Studio 1대', '전 한국 기업', '수강료+자격증'),
 +    ]),
 +    # ───── 영역 11: 공공·전자정부 (ENTEC 협업) ─────
-+    ('🏛️', '11. 공공·전자정부 (ENTEC 협업)', '전자정부 1위', [
++    ('🏛', '11. 공공·전자정부 (ENTEC 협업)', '전자정부 1위', [
 +        ('Gov-LLM', 'Llama 4 + 행정 LoRA', '공공기관 행정 특화 LLM', 'Llama 4 + 행정 데이터 LoRA', 'Mac Studio 2대', '중앙·지방 정부', 'B2G 5-30억'),
 +        ('Gov-Chatbot', 'Llama 4 + 민원', '24/7 민원 응대 자동화', 'Llama 4 + RAG', 'Mac Studio 1대', '지자체·공공', '1기관 1-3억'),
 +        ('Gov-Doc', 'Llama 4 + Vision', '공문·법령 OCR·자동 분류', 'Llama 4 Multimodal', 'Mac Studio 1대', '중앙부처', '1기관 2-5억'),
@@ -167,7 +167,7 @@ index 0000000..1b84488
 +        ('Gov-Identity', 'Behavioral Biometrics', '공공 디지털 신원', 'BioCatch + FIDO2', 'Mac Studio 1대', '행안부·KISA', 'B2G 5-15억'),
 +    ]),
 +    # ───── 영역 12: 클라우드 (CTS·CLOIT 협업) ─────
-+    ('☁️', '12. 클라우드 네이티브 (CTS·CLOIT 협업)', 'Google Cloud Partner', [
++    ('☁', '12. 클라우드 네이티브 (CTS·CLOIT 협업)', 'Google Cloud Partner', [
 +        ('Cloud-AI-Native', 'Llama 4 + K8s', 'AI 네이티브 컨테이너 운영', 'Llama 4 + Kubernetes', 'Mac Studio 3대 + K8s', '대기업 IT', '1社 5-15억'),
 +        ('Cloud-Migration', 'AI 마이그레이션', '온프레→클라우드 자동', 'Llama 4 + 마이그레이션 도구', 'Mac Studio 1대 + Cloud', '대기업', '1社 5-30억'),
 +        ('Cloud-Multi', 'Llama 4 + Multi-cloud', 'AWS·Azure·GCP 통합', '자체 추상화', 'Mac Studio 2대', '글로벌 기업', '월 1000만+'),
@@ -180,7 +180,7 @@ index 0000000..1b84488
 +        ('Cloud-SovEU', 'Sovereign Cloud', '국가 데이터 주권 클라우드', '자체 + 정부 협력', 'Mac Studio 5대', '국가·금융', 'B2G 30-100억'),
 +    ]),
 +    # ───── 영역 13: 사이버보안 (PNS 협업) ─────
-+    ('🛡️', '13. 사이버보안 (PNS 협업)', '사이버보안 전문', [
++    ('🛡', '13. 사이버보안 (PNS 협업)', '사이버보안 전문', [
 +        ('Sec-SOC', 'Llama 4 + Multi-Agent', '24/7 자율 SOC 운영', 'Llama 4 ×3 + SOAR', 'Mac Studio 3대', '금융·대기업', '1社 10-30억'),
 +        ('Sec-XDR', 'XDR + AI', '통합 탐지·대응', 'CrowdStrike·SentinelOne OEM', 'Mac Studio 1대', '대기업', '월 1000-3000만'),
 +        ('Sec-ZeroTrust', 'Zero Trust', 'ZTNA 자동 정책', 'Zscaler·Cato OEM', 'Mac Studio 2대', '금융·공공', '1社 5-15억'),
@@ -193,7 +193,7 @@ index 0000000..1b84488
 +        ('Sec-OT', 'OT/ICS Security', '산업제어망 보안', 'Claroty·Nozomi OEM', 'Mac Studio 1대', '제조·에너지', '1社 5-15억'),
 +    ]),
 +    # ───── 영역 14: 데이터·AI 거버넌스 ─────
-+    ('📊', '14. 데이터·AI 거버넌스', '데이터 관리·AI 라이프사이클', [
++    ('', '14. 데이터·AI 거버넌스', '데이터 관리·AI 라이프사이클', [
 +        ('Data-Catalog', 'Llama 4 + Catalog', 'AI 자동 데이터 카탈로그', 'Llama 4 + Collibra OEM', 'Mac Studio 1대', '대기업', '월 300-1000만'),
 +        ('Data-Lineage', 'Graph DB', '데이터 흐름 자동 추적', 'Neo4j + Llama 4', 'Mac Studio 1대 + Neo4j', '금융·공공', '1社 3-10억'),
 +        ('Data-Quality', 'AI Data Quality', '데이터 품질 자동 점검', 'Great Expectations + Llama 4', 'Mac Studio 1대', 'DW 사용사', '월 200-500만'),

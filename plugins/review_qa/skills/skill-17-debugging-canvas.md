@@ -23,7 +23,7 @@
 graph TD
   A[입력] --> B{함수 A}
   B -->|정상| C[중간값]
-  B -->|에러| D[❌ TypeError]
+  B -->|에러| D[ TypeError]
   C --> E{함수 B}
   E --> F[출력]
   style D fill:#ff6666

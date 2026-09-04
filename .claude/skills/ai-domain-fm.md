@@ -97,4 +97,4 @@ response = requests.post(
 - Perplexity Enterprise
 - BloombergGPT 논문
 - Harvey AI (법무)
-- `solution-capability-audit.md` #48-50 (🟡 → ✅)
+- `solution-capability-audit.md` #48-50 ( → )

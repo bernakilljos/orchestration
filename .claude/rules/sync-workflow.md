@@ -6,12 +6,12 @@
 
 | 대상 | 편집 가능 | 비고 |
 |------|:---------:|------|
-| `plugins/<name>/` | ✅ | 모든 편집은 여기서 |
-| `.claude/commands/` | ❌ | 자동 생성 — 편집 시 sync 로 덮어씀 |
-| `.claude/skills/` | ❌ | 자동 생성 |
-| `.claude/scripts/` | ✅ | sync 대상 아님 (인프라) |
-| `.claude/settings.json` | ✅ | 수동 설정 |
-| `.claude/hooks/*.sh` | ✅ | 수동 스크립트 |
+| `plugins/<name>/` |  | 모든 편집은 여기서 |
+| `.claude/commands/` |  | 자동 생성 — 편집 시 sync 로 덮어씀 |
+| `.claude/skills/` |  | 자동 생성 |
+| `.claude/scripts/` |  | sync 대상 아님 (인프라) |
+| `.claude/settings.json` |  | 수동 설정 |
+| `.claude/hooks/*.sh` |  | 수동 스크립트 |
 
 ## 편집 → 배포 플로우
 

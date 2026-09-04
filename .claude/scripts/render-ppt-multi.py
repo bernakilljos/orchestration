@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-render-ppt-multi.py — 3개 PPT (automation/plugins/team) HTML→PNG→PPTX.
+render-ppt-multi.py — 3개 PPT (automation/plugins/team) HTML->PNG->PPTX.
 
 Usage:
   python .claude/scripts/render-ppt-multi.py auto plugins team    # all 3

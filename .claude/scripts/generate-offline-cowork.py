@@ -12,7 +12,7 @@ except: pass
 
 PLUGINS = {
     "exec_offline": {
-        "display": "로컬/오프라인 AI 스택 — Ollama·ChromaDB·Phoenix ($0 운영)",
+        "display": "로컬/오프라인 AI 스택 — Ollama-ChromaDB-Phoenix ($0 운영)",
         "prefix": "exec_",
         "phase": 2,
         "deps": ["exec_orch"],
@@ -21,18 +21,18 @@ PLUGINS = {
         "source": "docs/upgrade § 이미지 3 ($0 AI Stack 2026, Brij Kishore Pandey)",
         "commands": {
             "exec_offline-setup":    "로컬 스택 설치 (Ollama + ChromaDB + Phoenix)",
-            "exec_offline-model":    "로컬 모델 다운로드·실행 (Llama·Gemma·Mistral)",
+            "exec_offline-model":    "로컬 모델 다운로드-실행 (Llama-Gemma-Mistral)",
             "exec_offline-vector":   "ChromaDB 로컬 벡터DB 관리",
             "exec_offline-observe":  "Phoenix self-hosted 관측 대시보드",
-            "exec_offline-route":    "API vs 로컬 라우팅 결정 (비용·품질)",
+            "exec_offline-route":    "API vs 로컬 라우팅 결정 (비용-품질)",
         },
         "skills": {
-            "skill-local-llm":       "Ollama 모델 선택 가이드 (VRAM·품질 매트릭스)",
+            "skill-local-llm":       "Ollama 모델 선택 가이드 (VRAM-품질 매트릭스)",
             "skill-cost-zero":       "완전 오프라인 파이프라인 설계 (no external API)",
         },
     },
     "bundles_cowork": {
-        "display": "업무 자동화 번들 — 이메일·영수증·슬라이드·제안서·계약·브리핑",
+        "display": "업무 자동화 번들 — 이메일-영수증-슬라이드-제안서-계약-브리핑",
         "prefix": "bundles_",
         "phase": 2,
         "deps": ["exec_orch", "design_ppt", "design_word", "design_pdf", "mcp_collab", "exec_scheduler"],
@@ -40,17 +40,17 @@ PLUGINS = {
         "category": "번들/Cowork",
         "source": "https://www.instagram.com/p/DW9GwvhFCu5/ (@aifornontechies 'Claude Cowork Essentials')",
         "commands": {
-            "bundles_cowork-email":      "이메일 자동 분류·초안·답장 (mcp_collab·Gmail 연계)",
-            "bundles_cowork-receipt":    "영수증 스캔·회계 JSON·세금 분류 (mcp_docs·OCR)",
+            "bundles_cowork-email":      "이메일 자동 분류-초안-답장 (mcp_collab-Gmail 연계)",
+            "bundles_cowork-receipt":    "영수증 스캔-회계 JSON-세금 분류 (mcp_docs-OCR)",
             "bundles_cowork-deck":       "슬라이드 빌드 (design_ppt 연계)",
             "bundles_cowork-proposal":   "제안서 작성 (design_word 연계)",
-            "bundles_cowork-plan":       "주간 계획·할 일 (exec_scheduler 연계)",
-            "bundles_cowork-contract":   "계약 검토·리스크 (design_pdf·legal 체크)",
-            "bundles_cowork-briefing":   "아침 브리핑 드래프트 (Slack·이메일 요약)",
+            "bundles_cowork-plan":       "주간 계획-할 일 (exec_scheduler 연계)",
+            "bundles_cowork-contract":   "계약 검토-리스크 (design_pdf-legal 체크)",
+            "bundles_cowork-briefing":   "아침 브리핑 드래프트 (Slack-이메일 요약)",
         },
         "skills": {
             "skill-cowork-flow":         "여러 플러그인 조합 워크플로우 (체인 패턴)",
-            "skill-cowork-personal":     "개인 비서 수준 컨텍스트 유지 (name·prefs·history)",
+            "skill-cowork-personal":     "개인 비서 수준 컨텍스트 유지 (name-prefs-history)",
         },
     },
 }
@@ -148,27 +148,27 @@ for name, info in PLUGINS.items():
         f"> **Prefix**: `{info['prefix']}` | **버전**: 0.1 | **Status**: spec-only | **Phase**: {info['phase']}",
         f"> **출처**: {info['source']}",
         "",
-        "## ⚠️ 현재 상태",
+        "## [WARN] 현재 상태",
         "",
         "**spec-only** — 스펙 + 공통 헬퍼만. 실구현은 install 후 플랫폼에서.",
         "",
-        "## 📋 커맨드",
+        "## [LIST] 커맨드",
         "",
     ]
     for cmd, desc in info["commands"].items():
-        mark = " ⭐ 기본" if cmd == info["default_command"] else ""
+        mark = "  기본" if cmd == info["default_command"] else ""
         readme.append(f"- `/{cmd}`{mark} — {desc}")
-    readme += ["", "## 🧠 스킬", ""]
+    readme += ["", "##  스킬", ""]
     for s, sd in info.get("skills", {}).items():
         readme.append(f"- `{s}` — {sd}")
     readme += [
         "",
-        "## 🔗 의존성",
+        "##  의존성",
         "",
         f"- **플러그인**: {deps_str}",
         "- **공통 헬퍼**: `scripts/common.sh`",
         "",
-        "## 📝 참조",
+        "## [NOTE] 참조",
         "",
         "- 스펙: `SPEC.md`",
         "- 분석: `docs/upgrade-analysis-2026-04-19.md`",

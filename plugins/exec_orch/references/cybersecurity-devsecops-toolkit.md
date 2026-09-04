@@ -676,7 +676,7 @@ npm install -g npm-audit         # npm audit — 의존성 보안
 
 ## 빠른 시작 (검사 목적별)
 
-### 🔴 긴급 — 한 시간 안에
+###  긴급 — 한 시간 안에
 ```bash
 # Step 1: Git 시크릿 탐지
 pip install gitleaks
@@ -695,7 +695,7 @@ docker pull aquasec/trivy
 trivy image myapp:latest
 ```
 
-### 🟡 표준 — 반일 범위
+###  표준 — 반일 범위
 ```bash
 # 위 4단계 + 다음:
 # Step 5: 정적 분석
@@ -714,7 +714,7 @@ pip install prowler
 prowler -g aws_audit
 ```
 
-### 🟢 전수 — 전체 감시 (지속)
+###  전수 — 전체 감시 (지속)
 ```bash
 # 위 8단계 + 다음:
 # Step 9: WAF + 정책

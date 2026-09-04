@@ -79,7 +79,7 @@ Context 결과에 따라:
 ### Step 4 — 결과 보고
 
 ```
-✅ 치트시트 생성 완료
+ 치트시트 생성 완료
 - PDF: outputs/arch/cheatsheet-{slug}-{date}.pdf
 - 원본: outputs/arch/cheatsheet-{slug}-{date}.md
 - 블록 N개 / 코드 M개

@@ -1,7 +1,7 @@
 # exec_harness_cursor (spec-only)
 
 > **목적**: orchestration_v1 task 를 Cursor Composer 에 위임 — Claude Code CLI ↔ Cursor IDE multi-harness.
-> **근거**: `docs/2026-06-16/tooling-comparison.md` § ⭐⭐ wshobson/agents multi-harness 패턴.
+> **근거**: `docs/2026-06-16/tooling-comparison.md` §  wshobson/agents multi-harness 패턴.
 > **상태**: spec-only — 사용자 진행 결정 후 stable 로 승격.
 
 ## 활용 시점

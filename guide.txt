@@ -801,7 +801,7 @@
     [Stable — 즉시 사용 가능]
     ◆ Exec (실행·부트스트랩)
       exec_orch          오케스트레이션 핵심 (멀티AI 라우팅·워커)
-      exec_remote        원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 ⭐
+      exec_remote        원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 
       exec_claude        Claude 전용 심화 (질문폼·아티팩트·Extended Thinking)
       exec_voice         음성 STT·TTS·회의록·음성 명령
       exec_learning      세션 학습·실패 패턴·최적화 규칙
@@ -965,7 +965,7 @@
     ◆ exec_  (실행·부트스트랩)
         exec_orch            멀티AI 오케스트레이션 엔진 (코어)
         exec_claude          Claude 깊이 활용 — 구조화 질문·아티팩트·Extended Thinking
-        exec_remote          원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 ⭐
+        exec_remote          원격 24/7 운영 (VPS·SSH·tmux·모바일) — 4주차 신규 
         exec_learning        세션 학습·실패 패턴 분석
         exec_session_guard   세션 크래시 방어 (periodic-snapshot)
         exec_voice           음성 STT·TTS·회의록
@@ -1681,3 +1681,37 @@
     * .claude/rules/anthropic-api-features.md (1h TTL·Advisor·Files·Citations·Batch·geo·hooks)
     * .claude/rules/terminal-tools.md (fzf·rga·bat·eza·lazygit·delta·zoxide·btop)
     * .claude/rules/prompt-eval-tools.md (Promptfoo·DeepEval·Ragas·TruLens·LangSmith)
+
+
+# § 18 · 2026-09-02 시각 tool + 자동 추천 hook (session-2)
+
+## kit-view.bat (더블클릭 실행)
+- python .claude/scripts/kit-dashboard.py --open
+- 브라우저 자동 열기 → 시각 dashboard (MCP·cost·DB·재사용·hook·세션·로그)
+- 60초 자동 새로고침
+
+## kit-stats.py bar 시각화
+- python .claude/scripts/kit-stats.py [db|cost|hooks|sessions|solutions|files|kit|logs|mcp|all]
+- statusline 스타일 progress bar (████▒▒▒▒▒▒ %)
+- 예산: 일간·주간·월간 한도 (setup 시 route.py --set-*-limit 로 설정)
+
+## statusline 2줄
+- 1줄: 컨텍스트 게이지 (기존)
+- 2줄: [일간 /∞] [주간 /∞] [재사용 N] [세션 N·턴 M] [/] [🌿branch]
+- ~/.claude/statusline_context.py = 글로벌 (모든 프로젝트)
+- .claude/scripts/statusline_context.py = kit copy (SoT sync)
+
+## suggest-skills.sh (UserPromptSubmit)
+- 사용자 프롬프트 → 관련 skill/command/rule 자동 추천 + 즉시 실행 명령
+- 매칭: PPT·docx·엑셀·감사·계산기·최신·배포·commit·감정·전수조사·검증·DB·시각·재사용·파일·파인튜닝
+
+## auto-websearch.md rule
+- 최신·신기능·가격·changelog·모델명 감지 시 WebSearch 자동 발동
+- .claude/hooks/websearch-trigger-detect.sh (UserPromptSubmit)
+
+## propagate-rule-change.sh (PostToolUse Edit|Write)
+- rule 파일 편집 감지 → CLAUDE.md·guide.txt·other rules·memory·setup 안 참조 자동 grep
+- '하나 알려주면 전체 안 바뀜' 방지
+
+## cmem 광고 disable
+- ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Hook: codex/claude 구현 완료 후 자동 검증
 # Python 문법, import, 서버 기동 테스트
-# 실패 시 exit 2 → 태스크 완료 처리 차단
+# 실패 시 exit 2 -> 태스크 완료 처리 차단
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # FileChanged hook — plugins/ 변경 시 sync-drift 실시간 점검
-# 우리 check-sync-drift.sh 는 SessionStart 만 → 실시간 보강
+# 우리 check-sync-drift.sh 는 SessionStart 만 -> 실시간 보강
 set +e
 
 INPUT="$(cat)"
@@ -27,7 +27,7 @@ case "$FILE_PATH" in
     RESULT="$(bash "$SYNC_SCRIPT" --check 2>&1 | tail -5)"
     if echo "$RESULT" | grep -qE "drift.*[1-9]|orphan.*[1-9]"; then
       cat <<EOF
-{"systemMessage": "[file-changed] plugins/ 변경 → drift/orphan 감지:\n$RESULT\nbash .claude/scripts/sync-plugins.sh 권장"}
+{"systemMessage": "[file-changed] plugins/ 변경 -> drift/orphan 감지:\n$RESULT\nbash .claude/scripts/sync-plugins.sh 권장"}
 EOF
       echo "[$TS] DRIFT detected after $FILE_PATH" >> "$LOG_FILE"
     fi

@@ -10,12 +10,12 @@ Word 문서 자동 생성 — python-docx + Mermaid + PDF.
 ## 📋 커맨드
 
 - `/design_word`
-- `/word-make` ⭐ 기본
+- `/word-make`  기본
 - `/word-status`
 
 ## 🧠 스킬
 
-- `skill-34-code-docs` ⭐ 핵심
+- `skill-34-code-docs`  핵심
 
 ## 🤖 에이전트
 

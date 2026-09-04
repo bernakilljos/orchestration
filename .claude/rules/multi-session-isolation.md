@@ -37,7 +37,7 @@ git branch -d dev  # merge 후에만
 
 ## ASCII 경로 강제
 
-| ❌ 금지 | ✅ 허용 |
+|  금지 |  허용 |
 |---|---|
 | `C:\프로젝트\...` | `C:\pjt\...` |
 | `C:\사용자\...\Documents\` | `%USERPROFILE%\Documents\` |

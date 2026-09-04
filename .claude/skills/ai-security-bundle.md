@@ -16,9 +16,9 @@ metadata:
 |---|---|---|---|
 | 24 | Prompt Injection Defense | Lakera·HiddenLayer·Protect AI | 없음 |
 | 25 | Mechanistic Interpretability | Anthropic·Goodfire | 학계 |
-| 26 | Deepfake Detection / C2PA | Reality Defender·Hive·Pindrop | 없음 ⭐ |
+| 26 | Deepfake Detection / C2PA | Reality Defender·Hive·Pindrop | 없음  |
 | 31 | Adversarial ML Defense | Robust Intelligence·CalypsoAI | 없음 |
-| 32 | AI Workload Protection | Palo Alto AI·Wiz AI·Aim Security | 없음 ⭐ |
+| 32 | AI Workload Protection | Palo Alto AI·Wiz AI·Aim Security | 없음  |
 | 33 | Non-Human Identity (NHI) | Astrix·Oasis·Entro | 없음 |
 | 34 | Cybersecurity Mesh Architecture | Fortinet·Cisco·Palo Alto | 추격 중 |
 | 35 | DSPM | Cyera·Sentra·Varonis | 추격 중 |
@@ -40,7 +40,7 @@ ITCEN CORE 가 한국 총판·MSP 운영
 
 ## 영역별 OEM 추천 + 한국 시장
 
-### 1. Deepfake Detection ⭐⭐⭐ (보이스피싱법 2026 의무)
+### 1. Deepfake Detection  (보이스피싱법 2026 의무)
 
 **OEM 후보**:
 - **Reality Defender** — 다중 모달 (음성·영상·문서)
@@ -58,7 +58,7 @@ ITCEN CORE 가 한국 총판·MSP 운영
 pip install realitydefender-sdk
 ```
 
-### 2. AI Workload Protection ⭐⭐⭐ (Agentic AI 폭증)
+### 2. AI Workload Protection  (Agentic AI 폭증)
 
 **OEM 후보**:
 - **Palo Alto Networks AI Security** — 종합
@@ -80,7 +80,7 @@ pip install realitydefender-sdk
 - AI 에이전트·로봇·서비스계정 신원관리 — 모든 기업 필수
 - 금감원·KISA 가이드 대응
 
-### 4. Mechanistic Interpretability ⭐ (EU AI Act 의무)
+### 4. Mechanistic Interpretability  (EU AI Act 의무)
 
 **도구**:
 - **Anthropic Mech Interp** — 학술 도구 (오픈)
@@ -156,4 +156,4 @@ OEM 통합 시 두 카테고리 ≥ 80점.
 - Wiz AI Security: https://www.wiz.io/
 - Reality Defender: https://realitydefender.com/
 - Astrix Security: https://astrix.security/
-- `solution-capability-audit.md` #24-26, #31-35, #47 (❌ → 🟡 OEM 가이드)
+- `solution-capability-audit.md` #24-26, #31-35, #47 ( →  OEM 가이드)

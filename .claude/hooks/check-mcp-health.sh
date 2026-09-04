@@ -37,25 +37,25 @@ for server in $FAILED; do
     filesystem)
       claude mcp remove filesystem 2>/dev/null
       claude mcp add filesystem -- cmd /c npx -y @modelcontextprotocol/server-filesystem "%USERPROFILE%" "C:\\pjt" 2>/dev/null
-      echo "  → filesystem re-registered" >> "$LOG"
+      echo "  -> filesystem re-registered" >> "$LOG"
       ;;
     powerpoint)
       claude mcp remove powerpoint 2>/dev/null
       claude mcp add powerpoint -- cmd /c npx -y powerpoint-mcp-ultimate 2>/dev/null
-      echo "  → powerpoint re-registered" >> "$LOG"
+      echo "  -> powerpoint re-registered" >> "$LOG"
       ;;
     dom-to-pptx)
       claude mcp remove dom-to-pptx 2>/dev/null
       claude mcp add dom-to-pptx -- cmd /c npx -y dom-to-pptx 2>/dev/null
-      echo "  → dom-to-pptx re-registered" >> "$LOG"
+      echo "  -> dom-to-pptx re-registered" >> "$LOG"
       ;;
     figma)
       claude mcp remove figma 2>/dev/null
       claude mcp add figma -- cmd /c npx -y claude-talk-to-figma-mcp 2>/dev/null
-      echo "  → figma re-registered" >> "$LOG"
+      echo "  -> figma re-registered" >> "$LOG"
       ;;
     *)
-      echo "  → $server: unknown, manual fix needed" >> "$LOG"
+      echo "  -> $server: unknown, manual fix needed" >> "$LOG"
       ;;
   esac
 done
@@ -63,7 +63,7 @@ done
 # systemMessage 로 Claude 에게 알림
 cat <<MSG
 
-⚠️ [MCP Health] 실패 MCP 서버 감지 + 자동 재등록 시도:
+[WARN] [MCP Health] 실패 MCP 서버 감지 + 자동 재등록 시도:
 $(echo "$FAILED" | sed 's/^/  - /')
 
 로그: .claude/logs/mcp-health.log

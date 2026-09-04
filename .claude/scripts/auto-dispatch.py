@@ -1,10 +1,10 @@
-"""mHC 자동 인수인계 chain — Claude 결정 → 자동 AI dispatch.
+"""mHC 자동 인수인계 chain — Claude 결정 -> 자동 AI dispatch.
 
 흐름:
 1. classify-task.py 로 사용자 메시지 분류
 2. AI 결정 (codex/gemini/haiku/claude)
 3. task-instruction.md 자동 작성
-4. .claude/tasks/ 또는 ~/.claude/orca/ 에 enqueue → 워커 폴링
+4. .claude/tasks/ 또는 ~/.claude/orca/ 에 enqueue -> 워커 폴링
 """
 import sys
 import os
@@ -57,7 +57,7 @@ def make_task_instruction(message: str, ai: str, task_type: str, reason: str, ch
 
 
 def estimate_tokens(text: str) -> int:
-    """대략적 토큰 추정 (한글·영어 혼합 평균)."""
+    """대략적 토큰 추정 (한글-영어 혼합 평균)."""
     # 한글 1자 ≈ 1.5 token, 영어 4자 ≈ 1 token 추정
     return int(len(text) * 1.2)
 
@@ -65,7 +65,7 @@ def estimate_tokens(text: str) -> int:
 def chunk_message(message: str, chunk_size_tokens: int = 50000) -> list:
     """큰 task 자동 chunk 분할 (Codex 용).
 
-    파일·섹션 단위 우선 분할. 안 되면 줄 단위.
+    파일-섹션 단위 우선 분할. 안 되면 줄 단위.
     """
     estimated = estimate_tokens(message)
     if estimated <= chunk_size_tokens:

@@ -81,7 +81,7 @@ Claude: /<cmd-1> 실행 → 결과
 
 ---
 
-## 🧪 테스트
+##  테스트
 
 ```bash
 bash plugins/_template/tests/run.sh

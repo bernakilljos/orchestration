@@ -4,8 +4,8 @@
 # 현재 시스템은 단일 heartbeat 파일(.claude/orca-heartbeat)만 갱신.
 # 이 스크립트는 워커별 세분화된 상태를 추적:
 #   - 개별 워커 heartbeat 파일 (.claude/state/workers/<role>-<id>.hb)
-#   - 5분 이상 미갱신 → stale
-#   - 10분 이상 → dead (재시작 권고)
+#   - 5분 이상 미갱신 -> stale
+#   - 10분 이상 -> dead (재시작 권고)
 #
 # 사용법:
 #   bash .claude/scripts/worker-health.sh              현재 상태
@@ -76,10 +76,10 @@ for hb in "$STATE_DIR"/*.hb; do
   diff=$((now - last))
 
   if [ "$diff" -ge "$DEAD_SEC" ]; then
-    echo "  💀 $worker: DEAD (${diff}s) — 재시작 권고"
+    echo "   $worker: DEAD (${diff}s) — 재시작 권고"
     dead=$((dead+1))
   elif [ "$diff" -ge "$STALE_SEC" ]; then
-    echo "  ⚠️  $worker: STALE (${diff}s)"
+    echo "  [WARN]  $worker: STALE (${diff}s)"
     stale=$((stale+1))
   else
     echo "  ✓  $worker: OK (${diff}s 전)"

@@ -60,5 +60,5 @@ for i, slide in enumerate(prs.slides, 1):
         sorted_texts = sorted(set(texts), key=lambda x: -len(x))[:8]
         for t in sorted_texts:
             short = t[:120].replace('\n', ' / ')
-            print(f'  · {short}')
+            print(f'  - {short}')
     print()

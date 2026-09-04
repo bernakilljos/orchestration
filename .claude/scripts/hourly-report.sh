@@ -54,7 +54,7 @@ OUT="$OUT_DIR/${TS_FILE}.md"
     curl -sS -o /dev/null -w "Tunnel: %{http_code}\n" --max-time 8 -L "$URL" 2>&1 || echo "Tunnel: DOWN"
   fi
   echo
-  echo "## 6) 메모리·디스크"
+  echo "## 6) 메모리-디스크"
   echo '```'
   ps -W 2>/dev/null | awk 'NR>1{ram+=$5}END{printf "Total RAM: %.1f MB\n", ram/1024}' 2>/dev/null || true
   df -h /c 2>/dev/null | tail -1 || true

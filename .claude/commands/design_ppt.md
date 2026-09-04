@@ -3,7 +3,7 @@ description: "PPT 자동 생성 — HTML/CSS → Playwright → PPTX · 잘림 �
 allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 ---
 
-# /design_ppt — PPT 자동 생성 (HTML/CSS → PPTX) ⭐
+# /design_ppt — PPT 자동 생성 (HTML/CSS → PPTX) 
 
 > **2026-04-30 업데이트** (R51): 차트·SVG 다이어그램·표→카드 그리드·결정 트리·Screens 워크플로우 4종 패턴 추가.
 > **2026-04-27 업데이트**: 27→40장 확장 작업에서 학습한 함정 13개를 워크플로우에 반영.
@@ -354,16 +354,16 @@ python .claude/scripts/verify-ppt-overflow.py --threshold 0.10
 
 > 자세히는 `skill-ppt-pitfalls.md` 참조.
 
-1. ❌ Sub-Agent "전체 OK" 보고 → 실제 4장 잘림. **수동 OCR 필수**
-2. ❌ `flex: 1` 코드 박스 → 영역 부족시 자동 잘림. **`flex: 0 0 auto`**
-3. ❌ 새 슬라이드 추가 후 페이지번호 그대로 → "5/27" + "13/40" 혼재. **일괄 갱신**
-4. ❌ `slide-04b.html` 만들었는데 PNG 가 slide-05.png 로 출력 — 정렬 자연스러움 OK
-5. ❌ Cover 만 페이지번호 갱신 안 됨 — Cover 는 NN/총수 표기 없고 SLIDES 메트릭만
-6. ❌ Mermaid 특수문자 `/init` 처리 못해 💣 표시 → 단순 라벨로 변경
-7. ❌ optional chaining `?.` 사용 → CSS 파서 에러 (이 프로젝트 금지)
-8. ❌ 한글·영문 혼용 description → 검증 스크립트 fail
-9. ❌ DALL-E 직접 호출 시도 → API 키 없음. **Iconify + SVG + 그라디언트** 로 대체
-10. ❌ 빈 task `done/` 이동 (위장 완료) → 절대 금지
+1.  Sub-Agent "전체 OK" 보고 → 실제 4장 잘림. **수동 OCR 필수**
+2.  `flex: 1` 코드 박스 → 영역 부족시 자동 잘림. **`flex: 0 0 auto`**
+3.  새 슬라이드 추가 후 페이지번호 그대로 → "5/27" + "13/40" 혼재. **일괄 갱신**
+4.  `slide-04b.html` 만들었는데 PNG 가 slide-05.png 로 출력 — 정렬 자연스러움 OK
+5.  Cover 만 페이지번호 갱신 안 됨 — Cover 는 NN/총수 표기 없고 SLIDES 메트릭만
+6.  Mermaid 특수문자 `/init` 처리 못해 💣 표시 → 단순 라벨로 변경
+7.  optional chaining `?.` 사용 → CSS 파서 에러 (이 프로젝트 금지)
+8.  한글·영문 혼용 description → 검증 스크립트 fail
+9.  DALL-E 직접 호출 시도 → API 키 없음. **Iconify + SVG + 그라디언트** 로 대체
+10.  빈 task `done/` 이동 (위장 완료) → 절대 금지
 
 ---
 

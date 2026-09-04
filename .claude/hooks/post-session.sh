@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # post-session.sh — Claude Code v2.1.169+ lifecycle hook
 #
-# 트리거: Claude Code 세션이 *어떻게든* 종료될 때 (사용자 명시 종료·kill·crash·timeout)
+# 트리거: Claude Code 세션이 *어떻게든* 종료될 때 (사용자 명시 종료-kill-crash-timeout)
 # vs SessionEnd: 사용자 명시 종료만
-# 용도: self-hosted runner (exec_remote VPS 24/7) 환경에서 snapshot·sync·log archive
+# 용도: self-hosted runner (exec_remote VPS 24/7) 환경에서 snapshot-sync-log archive
 #
 # 동작:
 #   1. 종료 시각 + reason (env: CLAUDE_SESSION_END_REASON) log

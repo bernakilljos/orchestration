@@ -47,7 +47,7 @@ $DIFF
 \`\`\`
 
 ## Action
-1. 변경된 public API 추출 (함수·클래스·exports)
+1. 변경된 public API 추출 (함수-클래스-exports)
 2. CHANGELOG.md \`[Unreleased]\` 섹션에 entry 추가:
    - Added/Changed/Fixed/Removed/Security 분류
 3. README.md 의 API 섹션 갱신 (있을 시)

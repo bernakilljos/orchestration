@@ -27,7 +27,7 @@ metadata:
 
 | 회사 | 특징 | 한국 |
 |---|---|---|
-| **Hume AI** | 음성+얼굴+텍스트 통합 (최강) | 없음 ⭐⭐⭐ |
+| **Hume AI** | 음성+얼굴+텍스트 통합 (최강) | 없음  |
 | **Affectiva** (SmartEye 인수) | 얼굴 표정 표준 | 없음 |
 | **Realeyes** | 마케팅·UX 측정 | 없음 |
 | **Beyond Verbal** | 음성 감정 | 학계 |
@@ -100,4 +100,4 @@ result = requests.get(f'https://api.hume.ai/v0/batch/jobs/{job_id}/predictions')
 - Hume AI: https://hume.ai/
 - Affectiva (SmartEye)
 - `ai-risk-lighthouse.md` § Behavioral Coverage
-- `solution-capability-audit.md` #30 (❌ → 🟡)
+- `solution-capability-audit.md` #30 ( → )

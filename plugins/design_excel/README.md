@@ -10,12 +10,12 @@ Excel·스프레드시트 자동 생성 — openpyxl + 차트 + Google Sheets.
 ## 📋 커맨드
 
 - `/design_excel`
-- `/excel-make` ⭐ 기본
+- `/excel-make`  기본
 - `/excel-status`
 
 ## 🧠 스킬
 
-- `skill-36-data-viz` ⭐ 핵심
+- `skill-36-data-viz`  핵심
 
 ## 🤖 에이전트
 

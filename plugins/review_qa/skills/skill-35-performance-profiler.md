@@ -45,19 +45,19 @@ Java:
 Performance Report:
 
 [API Response Time]
-  ✅ GET  /api/users     45ms
-  ⚠️ GET  /api/reports   1200ms  → 캐싱 권장
-  ❌ POST /api/export    8500ms  → 비동기 처리 필요
+   GET  /api/users     45ms
+   GET  /api/reports   1200ms  → 캐싱 권장
+   POST /api/export    8500ms  → 비동기 처리 필요
 
 [DB Queries]
-  ✅ 평균 쿼리 시간: 12ms
-  ❌ N+1 감지: UserRepository.findAll() → 50 추가 쿼리
-  ⚠️ 인덱스 없음: orders.created_at
+   평균 쿼리 시간: 12ms
+   N+1 감지: UserRepository.findAll() → 50 추가 쿼리
+   인덱스 없음: orders.created_at
 
 [Frontend]
   Lighthouse: 72/100
-  LCP: 2.8s (⚠️ > 2.5s)
-  Bundle: 1.2MB (❌ > 500KB)
+  LCP: 2.8s ( > 2.5s)
+  Bundle: 1.2MB ( > 500KB)
 ```
 
 ## 출력

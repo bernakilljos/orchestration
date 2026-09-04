@@ -128,7 +128,7 @@ review-result.md 필수 항목:
 status-push가 handoff-log.md를 읽어서 대시보드에 표시:
   [Claude] → task-instruction.md → [Codex] → impl-report → [Claude] → verify → [Gemini] → review → [Claude 채택]
   
-각 단계별 상태: ⏳대기 / 🔄진행중 / ✅완료 / ❌실패
+각 단계별 상태: ⏳대기 / 🔄진행중 / 완료 / 실패
 ```
 
 ## 출력

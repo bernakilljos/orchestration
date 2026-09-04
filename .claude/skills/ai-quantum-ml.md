@@ -100,4 +100,4 @@ PQC 마이그레이션 = NIST 2028-2030 의무화 대응.
 - IBM Quantum Network: https://quantum-computing.ibm.com/
 - Qiskit Tutorials: https://qiskit.org/learn/
 - PennyLane: https://pennylane.ai/
-- `solution-capability-audit.md` #20-21 (❌ → 🟡 가입 가이드 제공)
+- `solution-capability-audit.md` #20-21 ( →  가입 가이드 제공)

@@ -48,9 +48,9 @@ allowed-tools: Read, Glob, Grep, Bash(find:*), Bash(wc:*), Bash(python:*), Agent
 | 수익화 안 됨 | SaaS/API 과금/구독 | monetization-toolkit |
 
 ### 3단계: 우선순위 매기기
-- 🔴 즉시 (보안·안정성)
-- 🟡 단기 (성능·테스트)
-- 🟢 중기 (AI·자동화)
+-  즉시 (보안·안정성)
+-  단기 (성능·테스트)
+-  중기 (AI·자동화)
 - 🔵 장기 (확장·수익화)
 
 ### 4단계: 실행 계획 생성

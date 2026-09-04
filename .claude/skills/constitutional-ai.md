@@ -24,7 +24,7 @@ Anthropic 의 Constitutional AI (Bai et al. 2022) 패턴:
 
 → 사람 RLHF 대비 비용 1/10, 일관성 ↑, 정책 변경 즉시 반영.
 
-## 우리 솔루션이 이미 Constitutional AI 패턴 ✅
+## 우리 솔루션이 이미 Constitutional AI 패턴 
 
 | 우리 자산 | Anthropic 패턴 대응 |
 |---|---|
@@ -109,7 +109,7 @@ CMD=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 if echo "$CMD" | grep -qE 'risk_score=0\.[89][0-9]|fraud_alert'; then
     # 고위험 알람 → 24시간 보고서 의무
     if [ ! -f .claude/state/risk_reports/$(date +%Y-%m-%d).md ]; then
-        echo '{"systemMessage": "⚠️ 부서 헌법 위반 — 고위험 알람 발생 시 24h 내 보고서 의무. 즉시 작성하세요."}'
+        echo '{"systemMessage": " 부서 헌법 위반 — 고위험 알람 발생 시 24h 내 보고서 의무. 즉시 작성하세요."}'
         exit 1  # 차단
     fi
 fi
@@ -177,4 +177,4 @@ def constitutional_finetune(model, data, constitution):
 - Anthropic Constitutional AI (Bai et al. 2022)
 - `.claude/rules/*.md` (이미 구축된 헌법 시스템)
 - `ai-risk-lighthouse.md` § Compliance
-- `solution-capability-audit.md` # 41 (✅ 이미 적용 — 부서로 확장)
+- `solution-capability-audit.md` # 41 ( 이미 적용 — 부서로 확장)

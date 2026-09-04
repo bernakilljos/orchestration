@@ -36,6 +36,6 @@
 
 ## 금지
 
-- 공백 포함 파일명 (`my file.md` ❌)
-- 대문자 시작 (`MyPlugin.md` ❌ — 대문자 사용은 CLAUDE.md 같은 전통적 규약만)
+- 공백 포함 파일명 (`my file.md` )
+- 대문자 시작 (`MyPlugin.md`  — 대문자 사용은 CLAUDE.md 같은 전통적 규약만)
 - `.backup`, `.bak`, `.orig` 확장자 — cleanup-orphans 훅이 자동 제거

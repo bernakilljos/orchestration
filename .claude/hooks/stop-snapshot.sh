@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# stop-snapshot.sh — 턴 종료·압축 직전 최소 메타 스냅샷 기록
+# stop-snapshot.sh — 턴 종료-압축 직전 최소 메타 스냅샷 기록
 # 토큰 부족으로 Claude가 말 못 하고 끊겨도 이 훅은 항상 실행됨
 # Windows Git Bash 호환
 

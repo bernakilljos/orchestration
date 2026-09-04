@@ -77,7 +77,7 @@ echo "[OK] Large files: $(wc -l < docs/large-files.txt) files"
 # Copy deploy-config.env from example if missing
 if [ ! -f .claude/deploy-config.env ]; then
   cp .claude/deploy-config.env.example .claude/deploy-config.env
-  echo "[OK] deploy-config.env created → Edit server info before deploy"
+  echo "[OK] deploy-config.env created -> Edit server info before deploy"
 else
   echo "[OK] deploy-config.env already exists"
 fi
@@ -100,10 +100,10 @@ EOF
 # CLI check
 echo ""
 echo "=== CLI Environment ==="
-command -v claude  >/dev/null && echo "[OK] claude" || echo "[X]  claude  → https://docs.anthropic.com/claude-code"
-command -v codex   >/dev/null && echo "[OK] codex"  || echo "[X]  codex   → npm install -g @openai/codex"
-command -v gemini  >/dev/null && echo "[OK] gemini" || echo "[X]  gemini  → npm install -g @google/gemini-cli"
-command -v git     >/dev/null && echo "[OK] git"    || echo "[X]  git     → https://git-scm.com"
+command -v claude  >/dev/null && echo "[OK] claude" || echo "[X]  claude  -> https://docs.anthropic.com/claude-code"
+command -v codex   >/dev/null && echo "[OK] codex"  || echo "[X]  codex   -> npm install -g @openai/codex"
+command -v gemini  >/dev/null && echo "[OK] gemini" || echo "[X]  gemini  -> npm install -g @google/gemini-cli"
+command -v git     >/dev/null && echo "[OK] git"    || echo "[X]  git     -> https://git-scm.com"
 
 echo ""
-echo "[DONE] Init complete → See docs/project-structure.md"
+echo "[DONE] Init complete -> See docs/project-structure.md"

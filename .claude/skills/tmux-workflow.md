@@ -138,6 +138,6 @@ sudo systemctl enable claude-tmux.service
 
 ## 안티패턴
 
-- ❌ `nohup` 만 사용 (tmux 가 더 직관적·재진입 쉬움)
-- ❌ `screen` 신규 도입 (tmux 가 표준, screen 은 레거시)
-- ❌ 세션 이름 없이 만들기 (`tmux new` → `0`, `1` 헷갈림)
+-  `nohup` 만 사용 (tmux 가 더 직관적·재진입 쉬움)
+-  `screen` 신규 도입 (tmux 가 표준, screen 은 레거시)
+-  세션 이름 없이 만들기 (`tmux new` → `0`, `1` 헷갈림)

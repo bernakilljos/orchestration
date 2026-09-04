@@ -10,13 +10,13 @@
 ## 📋 커맨드
 
 - `/exec_learning`
-- `/learn` ⭐ 기본
+- `/learn`  기본
 - `/recall`
 - `/summarize`
 
 ## 🧠 스킬
 
-- `skill-09-memory-reset` ⭐ 핵심
+- `skill-09-memory-reset`  핵심
 
 ## 🤖 에이전트
 

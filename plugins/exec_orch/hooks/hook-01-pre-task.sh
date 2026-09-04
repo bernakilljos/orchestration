@@ -24,7 +24,7 @@ if [ -f "$TASK_INSTR" ]; then
       while IFS= read -r tgt; do
         [ -z "$tgt" ] && continue
         if echo "$LOCKED" | grep -Fxq "$tgt" 2>/dev/null; then
-          echo "[HOOK-01] ❌ 파일 잠금 충돌: $tgt"
+          echo "[HOOK-01] [X] 파일 잠금 충돌: $tgt"
           exit 1
         fi
       done <<< "$TARGET_FILES"
@@ -38,9 +38,9 @@ if [ -f "$TASK_INSTR" ]; then
   grep -qE "^## .*Context|Project root:" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH context"
   grep -qE "Acceptance|Few-shot|INPUT:.*OUTPUT:" "$TASK_INSTR" || MISSING_TECH="$MISSING_TECH few-shot"
   if [ -n "$MISSING_TECH" ]; then
-    echo "[HOOK-01] ⚠ task-instruction.md 12 기법 누락:$MISSING_TECH"
-    echo "[HOOK-01]   → plugins/exec_orch/codex/task-instruction-template.md 참고"
-    echo "[HOOK-01]   → skill: plugins/exec_orch/skills/prompt-techniques.md"
+    echo "[HOOK-01] [WARN] task-instruction.md 12 기법 누락:$MISSING_TECH"
+    echo "[HOOK-01]   -> plugins/exec_orch/codex/task-instruction-template.md 참고"
+    echo "[HOOK-01]   -> skill: plugins/exec_orch/skills/prompt-techniques.md"
   fi
 fi
 

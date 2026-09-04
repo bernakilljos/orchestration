@@ -171,9 +171,9 @@ def main():
         n = collect_for_category(cat, hashes)
         collected += n
         if n > 0:
-            print(f"  ✅ {cat}: 1장 수집")
+            print(f"  [OK] {cat}: 1장 수집")
         else:
-            print(f"  ⏭️ {cat}: 중복 또는 실패")
+            print(f"  ⏭ {cat}: 중복 또는 실패")
 
     save_hashes(hashes)
 

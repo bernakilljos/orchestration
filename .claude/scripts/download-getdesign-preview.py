@@ -33,7 +33,7 @@ def safe_name(brand):
 
 
 async def main():
-    print(f"[START] {len(BRANDS)} brand previews → {OUT}", flush=True)
+    print(f"[START] {len(BRANDS)} brand previews -> {OUT}", flush=True)
     start = time.time()
     ok, fail = 0, 0
     async with async_playwright() as p:

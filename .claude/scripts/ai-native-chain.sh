@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # AI-Native 파이프라인 체인 스크립트
-# test_gen → sec_scan → doc_auto 순차 호출
+# test_gen -> sec_scan -> doc_auto 순차 호출
 #
 # Usage:
 #   ai-native-chain.sh <stage> <file_path>
@@ -90,7 +90,7 @@ run_stage() {
           return $rc
         fi
       fi
-      # sec_scan PASS → doc_auto
+      # sec_scan PASS -> doc_auto
       "$0" doc_auto "$file" &
       ;;
     doc_auto)

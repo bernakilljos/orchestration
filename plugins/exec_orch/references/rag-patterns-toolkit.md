@@ -7,20 +7,20 @@
 
 ---
 
-## 📊 카테고리 요약
+##  카테고리 요약
 
 | # | 카테고리 | 도구 수 | 핵심 용도 |
 |---|---------|--------|---------|
-| 1 | 🎯 8 RAG 패턴 | 8 | Naive, Multimodal, HyDE, Corrective, Graph, Hybrid, Adaptive, Agentic |
-| 2 | 🗃️ 벡터 데이터베이스 | 8 | ChromaDB, Pinecone, Weaviate, Qdrant, Milvus, FAISS, LanceDB, pgvector |
+| 1 |  8 RAG 패턴 | 8 | Naive, Multimodal, HyDE, Corrective, Graph, Hybrid, Adaptive, Agentic |
+| 2 | 🗃 벡터 데이터베이스 | 8 | ChromaDB, Pinecone, Weaviate, Qdrant, Milvus, FAISS, LanceDB, pgvector |
 | 3 | 🧮 임베딩 모델 | 9 | OpenAI, Cohere, Sentence-Transformers, BAAI/BGE, Instructor, Nomic, Jina, Hugging Face |
-| 4 | ✂️ 청킹 전략 | 7 | RecursiveCharacter, SemanticChunker, MarkdownHeader, HTMLSplitter, Token, SentenceWindow |
-| 5 | 🏗️ RAG 프레임워크 | 6 | LangChain, LlamaIndex, Haystack, RAGFlow, Verba, AutoRAG |
+| 4 | ✂ 청킹 전략 | 7 | RecursiveCharacter, SemanticChunker, MarkdownHeader, HTMLSplitter, Token, SentenceWindow |
+| 5 | 🏗 RAG 프레임워크 | 6 | LangChain, LlamaIndex, Haystack, RAGFlow, Verba, AutoRAG |
 | 6 | 🔄 리랭킹 & 리트리버 | 7 | Cohere Rerank, ColBERT, bge-reranker, FlashRank, RankLLM, BGE, Jina Reranker |
-| 7 | 📊 평가 & 모니터링 | 8 | RAGAS, DeepEval, TruLens, Phoenix, LangSmith, OpenLLM, Giskard, WhyLabs |
+| 7 |  평가 & 모니터링 | 8 | RAGAS, DeepEval, TruLens, Phoenix, LangSmith, OpenLLM, Giskard, WhyLabs |
 | 8 | ⚡ 캐싱 & 최적화 | 7 | Semantic Cache, GPTCache, Prompt Caching, Token Optimizer, Litellm, Marqo, MiniRAG |
 | 9 | 🔗 그래프 & 구조화 | 6 | Neo4j, LlamaIndex KG, GraphRAG, Knowledge Graphs, RxDB, Nebula Graph |
-| 10 | 🛠️ 유틸 & 통합 | 9 | Unstructured, LangUI, Cursor Composer, JSONSchema, Query Rewriting, Metadata Filter |
+| 10 | 🛠 유틸 & 통합 | 9 | Unstructured, LangUI, Cursor Composer, JSONSchema, Query Rewriting, Metadata Filter |
 | 11 | 🤖 멀티모달 & 이미지 | 8 | CLIP, GPT-4V, LLaVA, LayoutLM, Tesseract, EasyOCR, ColPali, Qwen-VL |
 | 12 | 🔐 보안 & 규정 준수 | 6 | PII Masking, Data Privacy, Audit Trail, Fairness Check, Poisoning Detection |
 
@@ -28,13 +28,13 @@
 
 ---
 
-## 1️⃣ 8 RAG 패턴 개요 & 코드
+## 1⃣ 8 RAG 패턴 개요 & 코드
 
 ### 패턴 선택 매트릭스
 
 | 패턴 | 복잡도 | 정확도 | 레이턴시 | 추천 용도 | 선결 조건 |
 |------|--------|--------|---------|---------|---------|
-| **Naive RAG** | ⭐ | ★★☆ | 빠름 | 간단 FAQ, 문서 검색 | Vector DB + 임베딩 |
+| **Naive RAG** |  | ★★☆ | 빠름 | 간단 FAQ, 문서 검색 | Vector DB + 임베딩 |
 | **Multimodal** | ★★★ | ★★★★ | 중간 | 이미지 + 텍스트 혼합 | Vision 모델 + 벡터DB |
 | **HyDE** | ★★ | ★★★ | 중간 | 검색어 모호, 쿼리 다양성 | LLM + 임베딩 |
 | **Corrective (CRAG)** | ★★★ | ★★★★★ | 느림 | 높은 정확도 필요 | 품질 평가 모델 + Web API |
@@ -45,7 +45,7 @@
 
 ---
 
-### 패턴 1️⃣: Naive RAG (기본 패턴)
+### 패턴 1⃣: Naive RAG (기본 패턴)
 
 **정의**: Query → Embed → Vector Retrieve → Prompt → LLM
 
@@ -89,7 +89,7 @@ print(result)
 
 ---
 
-### 패턴 2️⃣: Multimodal RAG
+### 패턴 2⃣: Multimodal RAG
 
 **정의**: 이미지 + 텍스트 동시 벡터화 → 멀티모달 검색
 
@@ -127,7 +127,7 @@ results_img = vectorstore.similarity_search_by_image("image.png", k=5)
 
 ---
 
-### 패턴 3️⃣: HyDE (Hypothetical Document Embeddings)
+### 패턴 3⃣: HyDE (Hypothetical Document Embeddings)
 
 **정의**: LLM으로 가상 답변 생성 → 임베딩 후 검색
 
@@ -176,7 +176,7 @@ results = vectorstore.similarity_search_by_vector(hypothetical_embedding, k=5)
 
 ---
 
-### 패턴 4️⃣: Corrective RAG (CRAG)
+### 패턴 4⃣: Corrective RAG (CRAG)
 
 **정의**: 검색 품질 평가 → 부실 시 재검색 또는 웹 폴백
 
@@ -248,7 +248,7 @@ result = crag.run("질문?")
 
 ---
 
-### 패턴 5️⃣: Graph RAG (Knowledge Graph)
+### 패턴 5⃣: Graph RAG (Knowledge Graph)
 
 **정의**: 문서 → 엔티티 추출 → 그래프 구축 → 관계 기반 검색
 
@@ -306,7 +306,7 @@ result = cypher_chain.run("A와 B의 관계는?")
 
 ---
 
-### 패턴 6️⃣: Hybrid RAG (벡터 + 키워드 + 그래프)
+### 패턴 6⃣: Hybrid RAG (벡터 + 키워드 + 그래프)
 
 **정의**: 벡터 검색 + BM25 키워드 검색 + 그래프 검색 결합
 
@@ -356,7 +356,7 @@ results = rrf_retriever.get_relevant_documents("질문?")
 
 ---
 
-### 패턴 7️⃣: Adaptive RAG (라우터 기반)
+### 패턴 7⃣: Adaptive RAG (라우터 기반)
 
 **정의**: 쿼리 복잡도 판정 → 다단계 추론 라우팅
 
@@ -436,7 +436,7 @@ result = adaptive.run("복잡한 질문?")
 
 ---
 
-### 패턴 8️⃣: Agentic RAG (ReAct + MCP)
+### 패턴 8⃣: Agentic RAG (ReAct + MCP)
 
 **정의**: 에이전트 루프 + 도구 사용 (웹 검색, DB 쿼리, 계산 등)
 
@@ -522,7 +522,7 @@ Final Answer: 최종 답변
 
 ---
 
-## 2️⃣ 벡터 데이터베이스 (Vector DB)
+## 2⃣ 벡터 데이터베이스 (Vector DB)
 
 | # | 도구명 | 설명 | 설치 명령 | 가격 모델 |
 |---|--------|------|---------|---------|
@@ -574,7 +574,7 @@ vectorstore = Qdrant.from_documents(
 
 ---
 
-## 3️⃣ 임베딩 모델 (Embedding Models)
+## 3⃣ 임베딩 모델 (Embedding Models)
 
 | # | 모델명 | 설명 | 크기 | 비용 | 설치 명령 |
 |---|--------|------|------|------|---------|
@@ -614,7 +614,7 @@ vector = client.encode(['매우 긴 문서...'], show_progress=True)
 
 ---
 
-## 4️⃣ 청킹 전략 (Text Splitting & Chunking)
+## 4⃣ 청킹 전략 (Text Splitting & Chunking)
 
 | # | 도구/전략 | 설명 | 용도 | 설치 명령 |
 |---|----------|------|------|---------|
@@ -670,7 +670,7 @@ nodes = parser.get_nodes_from_documents(documents)
 
 ---
 
-## 5️⃣ RAG 프레임워크 (High-Level Frameworks)
+## 5⃣ RAG 프레임워크 (High-Level Frameworks)
 
 | # | 프레임워크 | 설명 | 강점 | 약점 | 설치 명령 |
 |---|-----------|------|------|------|---------|
@@ -708,7 +708,7 @@ result = pipeline.run({"retriever": {"query": "질문?"}})
 
 ---
 
-## 6️⃣ 리랭킹 & 고급 리트리버 (Reranking & Advanced Retrieval)
+## 6⃣ 리랭킹 & 고급 리트리버 (Reranking & Advanced Retrieval)
 
 | # | 도구명 | 설명 | 정확도 | 비용 | 설치 명령 |
 |---|--------|------|--------|------|---------|
@@ -748,7 +748,7 @@ reranked_docs = [doc for _, doc in sorted(zip(scores, docs), reverse=True)]
 
 ---
 
-## 7️⃣ 평가 & 모니터링 (Evaluation & Monitoring)
+## 7⃣ 평가 & 모니터링 (Evaluation & Monitoring)
 
 | # | 도구명 | 설명 | 메트릭 | 설치 명령 |
 |---|--------|------|--------|---------|
@@ -801,7 +801,7 @@ print(results)
 
 ---
 
-## 8️⃣ 캐싱 & 최적화 (Caching & Optimization)
+## 8⃣ 캐싱 & 최적화 (Caching & Optimization)
 
 | # | 도구명 | 설명 | 절감율 | 설치 명령 |
 |---|--------|------|--------|---------|
@@ -855,7 +855,7 @@ print(response.usage)
 
 ---
 
-## 9️⃣ 그래프 & 지식 구조화 (Knowledge Graphs)
+## 9⃣ 그래프 & 지식 구조화 (Knowledge Graphs)
 
 | # | 도구명 | 설명 | 설치 명령 | 가격 |
 |---|--------|------|---------|------|
@@ -916,7 +916,7 @@ result = cypher_chain.run("A와 B의 최단 경로는?")
 
 ---
 
-## 1️⃣1️⃣ 멀티모달 & 이미지 처리 (Multimodal & Vision)
+## 1⃣1⃣ 멀티모달 & 이미지 처리 (Multimodal & Vision)
 
 | # | 도구명 | 설명 | 용도 | 설치 명령 |
 |---|--------|------|------|---------|
@@ -959,7 +959,7 @@ print(response.content)
 
 ---
 
-## 1️⃣2️⃣ 보안 & 규정 준수 (Security & Compliance)
+## 1⃣2⃣ 보안 & 규정 준수 (Security & Compliance)
 
 | # | 도구명 | 설명 | 설치 명령 |
 |---|--------|------|---------|
@@ -1001,7 +1001,7 @@ Q5: 프라이버시 우선인가?
 
 ---
 
-## 📚 참고 자료 & 학습 순서
+##  참고 자료 & 학습 순서
 
 ### 1단계: 기초 (1주)
 1. Naive RAG (LangChain 튜토리얼)

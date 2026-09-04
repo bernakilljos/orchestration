@@ -40,7 +40,7 @@ def build_image_index():
     for d in IMG_DIRS:
         if not d.exists(): continue
         for img in d.glob("*.png"):
-            # 파일명 기반 캡션 (예: 08-8-models.png → "8 models 8 모델")
+            # 파일명 기반 캡션 (예: 08-8-models.png -> "8 models 8 모델")
             cap = img.stem.replace("-", " ").replace("_", " ")
             # 디렉토리 컨텍스트
             cap_full = f"{cap} ({d.name})"

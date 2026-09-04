@@ -138,10 +138,10 @@ gcloud iot devices create my-device \
 
 | 플랫폼 | 특징 | 설치 | 한국 |
 |---|---|---|---|
-| **ThingsBoard** | 오픈소스 · 대시보드 · 규칙 엔진 | Docker / K8s | ✅ 지원 |
-| **Home Assistant** | 홈 오토메이션 · 자동화 | Docker / Raspberry Pi | ✅ 최고 |
-| **EdgeX Foundry** | 엣지 컴퓨팅 참고 구현 | Docker Compose | ✅ 지원 |
-| **Node-RED** | 시각적 프로그래밍 · 플로우 | npm install -g node-red | ✅ 지원 |
+| **ThingsBoard** | 오픈소스 · 대시보드 · 규칙 엔진 | Docker / K8s |  지원 |
+| **Home Assistant** | 홈 오토메이션 · 자동화 | Docker / Raspberry Pi |  최고 |
+| **EdgeX Foundry** | 엣지 컴퓨팅 참고 구현 | Docker Compose |  지원 |
+| **Node-RED** | 시각적 프로그래밍 · 플로우 | npm install -g node-red |  지원 |
 
 ---
 
@@ -342,13 +342,13 @@ qemu-system-arm -M raspi3b -kernel kernel8.img -drive file=sdcard.img
 
 | DB | 특징 | 설치 | 한국 |
 |---|---|---|---|
-| **InfluxDB** | IoT 최적화 · 고속 쓰기 · 쿼리 언어 Flux | `docker run -d -p 8086:8086 influxdb` | ✅ 지원 |
-| **TimescaleDB** | PostgreSQL 확장 · SQL · 빠른 압축 | `CREATE EXTENSION timescaledb` | ✅ 지원 |
-| **QuestDB** | 초고속 · SIMD · 진정한 OLAP | `docker run -d -p 9000:9000 questdb/questdb` | ✅ 지원 |
-| **Prometheus** | 메트릭 중심 · Pull 모델 · 경보 | `docker run -d -p 9090:9090 prom/prometheus` | ✅ 지원 |
-| **Apache Kafka** | 스트리밍 · 고처리량 · 메시지 브로커 | `docker run -d confluentinc/cp-kafka` | ✅ 지원 |
-| **MongoDB** (시계열) | NoSQL · 유연함 · 수평 확장 | `docker run -d -p 27017:27017 mongo` | ✅ 지원 |
-| **SQLite** (엣지) | 경량 · 파일 기반 · 무제한 무료 | 내장 (Python · Node.js 등) | ✅ 최고 |
+| **InfluxDB** | IoT 최적화 · 고속 쓰기 · 쿼리 언어 Flux | `docker run -d -p 8086:8086 influxdb` |  지원 |
+| **TimescaleDB** | PostgreSQL 확장 · SQL · 빠른 압축 | `CREATE EXTENSION timescaledb` |  지원 |
+| **QuestDB** | 초고속 · SIMD · 진정한 OLAP | `docker run -d -p 9000:9000 questdb/questdb` |  지원 |
+| **Prometheus** | 메트릭 중심 · Pull 모델 · 경보 | `docker run -d -p 9090:9090 prom/prometheus` |  지원 |
+| **Apache Kafka** | 스트리밍 · 고처리량 · 메시지 브로커 | `docker run -d confluentinc/cp-kafka` |  지원 |
+| **MongoDB** (시계열) | NoSQL · 유연함 · 수평 확장 | `docker run -d -p 27017:27017 mongo` |  지원 |
+| **SQLite** (엣지) | 경량 · 파일 기반 · 무제한 무료 | 내장 (Python · Node.js 등) |  최고 |
 
 ### InfluxDB 예제
 

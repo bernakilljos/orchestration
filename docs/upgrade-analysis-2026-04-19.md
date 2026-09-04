@@ -109,31 +109,31 @@ my_project/
 
 | 영역 | 상태 | 권장 |
 |------|------|------|
-| RAG 파이프라인 | ❌ 없음 | `ai_rag` 스펙 (8 패턴) — 로드맵 Phase 3 → Phase 2 승급 검토 |
-| 8 AI 아키텍처 인지 | ❌ LLM only | `ai_models` or `ai_arch` 신규 스펙 |
-| 로컬 LLM ($0) | ❌ API만 | `exec_offline` — Ollama·Phoenix 통합 |
-| CLAUDE.md 5 Rules | ⚠ 일부 | ✅ CLAUDE.md 재구성 완료 (오늘) |
-| Workflow Essentials 번들 | ❌ 없음 | `bundles_cowork` 같은 패키지 |
-| Observability | ⚠ 기본만 | Phoenix 통합 검토 |
-| Extended Thinking 가이드 | ❌ 없음 | CLAUDE.md 또는 guide.txt 에 섹션 |
-| 1M Token Window 활용 | ⚠ 명시 안 됨 | guide.txt 에 가이드 추가 |
+| RAG 파이프라인 |  없음 | `ai_rag` 스펙 (8 패턴) — 로드맵 Phase 3 → Phase 2 승급 검토 |
+| 8 AI 아키텍처 인지 |  LLM only | `ai_models` or `ai_arch` 신규 스펙 |
+| 로컬 LLM ($0) |  API만 | `exec_offline` — Ollama·Phoenix 통합 |
+| CLAUDE.md 5 Rules |  일부 |  CLAUDE.md 재구성 완료 (오늘) |
+| Workflow Essentials 번들 |  없음 | `bundles_cowork` 같은 패키지 |
+| Observability |  기본만 | Phoenix 통합 검토 |
+| Extended Thinking 가이드 |  없음 | CLAUDE.md 또는 guide.txt 에 섹션 |
+| 1M Token Window 활용 |  명시 안 됨 | guide.txt 에 가이드 추가 |
 
 ---
 
 ## 즉시 반영한 것 (오늘 세션)
 
-1. ✅ **CLAUDE.md 재구성** — Brij 5 Rules + WHAT/WHY/HOW + 3 Scopes
-2. ✅ **`.claude/rules/claude-md-design.md`** — CLAUDE.md 규칙 박제
-3. ✅ **`.claude/rules/best-practices.md`** — Best Practices + Extended Thinking + 1M + Artifacts/Skills/Plugins 구분
-4. ✅ **`plugins/ai_rag/`** — 8 RAG 패턴 신규 (이미지 1·2) — 기존에 없던 영역
-5. ✅ **`plugins/exec_offline/`** — 로컬 $0 스택 신규 (이미지 3) — 기존에 없던 영역
-6. ✅ **`plugins/_template/.mcp.json.example`** — MCP 표준 예시 (이미지 6)
-7. ✅ **`route_dispatch.md § Step 2.6`** — 8 AI 아키텍처 인지 섹션 (IG Reel 2 통합)
+1.  **CLAUDE.md 재구성** — Brij 5 Rules + WHAT/WHY/HOW + 3 Scopes
+2.  **`.claude/rules/claude-md-design.md`** — CLAUDE.md 규칙 박제
+3.  **`.claude/rules/best-practices.md`** — Best Practices + Extended Thinking + 1M + Artifacts/Skills/Plugins 구분
+4.  **`plugins/ai_rag/`** — 8 RAG 패턴 신규 (이미지 1·2) — 기존에 없던 영역
+5.  **`plugins/exec_offline/`** — 로컬 $0 스택 신규 (이미지 3) — 기존에 없던 영역
+6.  **`plugins/_template/.mcp.json.example`** — MCP 표준 예시 (이미지 6)
+7.  **`route_dispatch.md § Step 2.6`** — 8 AI 아키텍처 인지 섹션 (IG Reel 2 통합)
 
 ## 삭제된 것 (중복 — 기존 플러그인과 겹쳐 제거)
 
-- ❌ **`plugins/ai_arch/`** — `route_dispatch` 와 개념 중복 → route_dispatch 에 Step 2.6 섹션으로 통합
-- ❌ **`plugins/bundles_cowork/`** — 7개 커맨드 모두 기존 플러그인 호출 wrapper:
+-  **`plugins/ai_arch/`** — `route_dispatch` 와 개념 중복 → route_dispatch 에 Step 2.6 섹션으로 통합
+-  **`plugins/bundles_cowork/`** — 7개 커맨드 모두 기존 플러그인 호출 wrapper:
   - email → `mcp_collab` (Gmail)
   - receipt → `mcp_docs` (OCR)
   - deck → `design_ppt/make-ppt`

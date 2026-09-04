@@ -17,11 +17,11 @@ echo "$COUNT" > "$COUNTER_FILE"
 if [ $((COUNT % 10)) -eq 0 ]; then
   cat <<'MSG'
 
-📌 [규칙 리마인드 — 10번째 프롬프트]
-0. **대상 확정 우선** — 첫 응답 첫 줄에 "대상: <path>" 명시. kit/설정/target/글로벌 4갈래. 확정 전 grep·Read·Edit X. (direction-first.md)
-1. git commit → guide.txt+CLAUDE.md+settings.json 같이
-2. 도메인별 X → 공통 도구 보강
-3. 사용자 카테고리만 → 알아서 세부 채움
+ [규칙 리마인드 — 10번째 프롬프트]
+0. **대상 확정 우선** — 첫 응답 첫 줄에 "대상: <path>" 명시. kit/설정/target/글로벌 4갈래. 확정 전 grep-Read-Edit X. (direction-first.md)
+1. git commit -> guide.txt+CLAUDE.md+settings.json 같이
+2. 도메인별 X -> 공통 도구 보강
+3. 사용자 카테고리만 -> 알아서 세부 채움
 4. 물어보지 말고 실행 (Zero-touch)
 5. sync + auto-stats 자동
 

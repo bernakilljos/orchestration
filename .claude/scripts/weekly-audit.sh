@@ -17,7 +17,7 @@ echo "=== 미등록 hook ===" >> "$LOG"
 MISSING_HOOKS=0
 for f in $(find plugins -path "*/hooks/*.sh" -type f -exec basename {} \;); do
   grep -q "$f" .claude/settings.json 2>/dev/null || {
-    echo "  ❌ $f" >> "$LOG"
+    echo "  [X] $f" >> "$LOG"
     MISSING_HOOKS=$((MISSING_HOOKS + 1))
   }
 done
@@ -31,9 +31,9 @@ for d in plugins/*/; do
   [ "$p" = "_template" ] && continue
   readme="$d/README.md"
   if [ ! -f "$readme" ]; then
-    echo "  ❌ $p: README.md 없음" >> "$LOG"
+    echo "  [X] $p: README.md 없음" >> "$LOG"
   elif [ $(wc -l < "$readme") -lt 5 ]; then
-    echo "  ⚠️ $p: README.md 5줄 미만" >> "$LOG"
+    echo "  [WARN] $p: README.md 5줄 미만" >> "$LOG"
   fi
 done
 
@@ -45,7 +45,7 @@ bash .claude/scripts/sync-plugins.sh --check 2>&1 | tail -5 >> "$LOG"
 # 4. 스키마 검증
 echo "" >> "$LOG"
 echo "=== Plugin schema ===" >> "$LOG"
-python .claude/scripts/validate-plugin-schema.py 2>&1 | grep -E "FAIL|WARN|ERROR" >> "$LOG" || echo "  ✅ All PASS" >> "$LOG"
+python .claude/scripts/validate-plugin-schema.py 2>&1 | grep -E "FAIL|WARN|ERROR" >> "$LOG" || echo "  [OK] All PASS" >> "$LOG"
 
 # 5. 하드코딩 경로
 echo "" >> "$LOG"

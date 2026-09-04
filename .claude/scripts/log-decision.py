@@ -2,7 +2,7 @@
 
 orca.db `decisions` table:
 - id, ts, user_msg (truncated), ai_classified, memory_hits, status
-- 같은 키워드 N회 발생 → 자동 알람 → systemMessage 주입
+- 같은 키워드 N회 발생 -> 자동 알람 -> systemMessage 주입
 
 5 핵심 부품 #5 Observability — decision trace + 사용자 패턴 인지.
 """

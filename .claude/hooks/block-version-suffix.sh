@@ -25,7 +25,7 @@ if echo "$BASENAME" | grep -i '\-v[0-9]\|_v[0-9]' > /dev/null 2>&1; then
   if echo "$BASENAME" | grep -iE '\.(docx|pptx|pdf|xlsx|doc|ppt|md|txt|html|rst|adoc|ipynb)$' > /dev/null 2>&1; then
     cat <<'MSG'
 
-❌ [BLOCK] 산출물 버전 접미사 감지!
+[X] [BLOCK] 산출물 버전 접미사 감지!
 
   규칙: 빌드 결과물 (.docx/.pptx/.pdf 등) 에 -v2, -v3, _v2 자동 추가 금지
 
@@ -33,8 +33,8 @@ if echo "$BASENAME" | grep -i '\-v[0-9]\|_v[0-9]' > /dev/null 2>&1; then
   허용:   report.docx (원본 덮어쓰기), report.docx.bak (백업)
 
   방법:
-  1. 파일 잠겨있으면 → 사용자에게 알림 ("원본 닫아주세요")
-  2. 파일 접근 가능하면 → .bak 백업 후 원본 자리에 덮어쓰기
+  1. 파일 잠겨있으면 -> 사용자에게 알림 ("원본 닫아주세요")
+  2. 파일 접근 가능하면 -> .bak 백업 후 원본 자리에 덮어쓰기
   3. 버전은 사용자 명시 요청 시만
 
   상세: .claude/rules/teaching-doc.md § 산출물 명명

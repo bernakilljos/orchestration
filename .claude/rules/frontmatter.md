@@ -69,7 +69,7 @@ python .claude/scripts/validate-plugin-schema.py --strict # warning 도 실패
 
 ## 금지 사항
 
-- description 에 플러그인 이름 반복 (`review_qa — 코드 리뷰...` ❌)
+- description 에 플러그인 이름 반복 (`review_qa — 코드 리뷰...` )
 - optional chaining 스타일 표기
 - 한글·영문 혼용 (description 은 한글로 통일)
-- version 패턴 위반 (`1` ❌, `1.0` ✅)
+- version 패턴 위반 (`1` , `1.0` )

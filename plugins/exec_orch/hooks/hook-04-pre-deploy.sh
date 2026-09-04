@@ -1,5 +1,5 @@
 #!/bin/bash
-# HOOK-04 — Pre-Deploy: 배포 전 게이트 (빌드·시크릿·리뷰 검사)
+# HOOK-04 — Pre-Deploy: 배포 전 게이트 (빌드-시크릿-리뷰 검사)
 set -e
 
 PROJECT="${1:-$(pwd)}"

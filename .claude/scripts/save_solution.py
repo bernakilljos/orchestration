@@ -1,6 +1,6 @@
 """
-save_solution — 세션 종료 시 문제·해결·파일·명령 자동 캡처 → orca.db.problem_solutions
-근거: 2026-09-02 사용자 지적 — "읽기(자동 조회) + 쓰기(처리 결과 기록) 양방향 · 초최고"
+save_solution — 세션 종료 시 문제-해결-파일-명령 자동 캡처 -> orca.db.problem_solutions
+근거: 2026-09-02 사용자 지적 — "읽기(자동 조회) + 쓰기(처리 결과 기록) 양방향 - 초최고"
 호출: Stop / SessionEnd hook + 수동 CLI
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ def _sid() -> str:
 
 
 def _extract_category(text: str) -> str:
-    """문제·해결에서 카테고리 자동 추출."""
+    """문제-해결에서 카테고리 자동 추출."""
     text_l = text.lower()
     for cat, kws in [
         ("db", ["sql", "sqlite", "database", "테이블", "orca.db", "migration"]),
@@ -57,7 +57,7 @@ def _extract_keywords(text: str, k: int = 8) -> str:
 
 
 def _capture_session(session_id: str = None) -> dict:
-    """이번 세션의 최근 대화·결정·파일·명령 종합."""
+    """이번 세션의 최근 대화-결정-파일-명령 종합."""
     sid = session_id or _sid()
     if not DB.exists():
         return {}
@@ -204,9 +204,9 @@ if __name__ == "__main__":
     elif cmd == "search":
         query = " ".join(sys.argv[2:])
         results = search(query, top_k=5)
-        print(f"## 검색: {query} · {len(results)} 결과")
+        print(f"## 검색: {query} - {len(results)} 결과")
         for r in results:
-            print(f"\n[{r['category']} · score={r['reusable_score']} · {r['ts']}]")
+            print(f"\n[{r['category']} - score={r['reusable_score']} - {r['ts']}]")
             print(f"  문제: {r['problem']}")
             if r['solution']:
                 print(f"  해결: {r['solution']}")

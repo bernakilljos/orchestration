@@ -95,7 +95,7 @@
 
 ## 8. 다음 단계
 
-1. ✅ `plugins/exec_claude/` 생성 완료
+1.  `plugins/exec_claude/` 생성 완료
 2. ⏳ sync-plugins → `.claude/` 반영
 3. ⏳ `guide.txt § exec_claude` 섹션 추가
 4. ⏳ setup 모듈에 추가 (자동 설치)

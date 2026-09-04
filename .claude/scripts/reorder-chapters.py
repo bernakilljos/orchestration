@@ -7,7 +7,7 @@ from pathlib import Path
 
 LECT = Path(__file__).resolve().parent / "build-arch-lecture-doc.py"
 
-# 새 순서 (이전 # → 새 #) — title prefix (번호 빼고) 매칭
+# 새 순서 (이전 # -> 새 #) — title prefix (번호 빼고) 매칭
 NEW_ORDER = [
     # A 부 — Claude Code 도구 (1~9)
     (".claude 폴더",            18),
@@ -19,7 +19,7 @@ NEW_ORDER = [
     ("Claude Code 아키텍처",     16),
     ("8가지 프롬프트",           20),
     ("Claude 마스터",           13),
-    # B 부 — AI 기초·RAG·프로토콜 (10~20)
+    # B 부 — AI 기초-RAG-프로토콜 (10~20)
     ("AI 3종 세트",             1),
     ("AI 에이전트의 8가지",      2),
     ("에이전트의 5가지",         3),
@@ -37,7 +37,7 @@ NEW_ORDER = [
 def reorder():
     src = LECT.read_text(encoding="utf-8")
 
-    # 1) CHAPTERS list 시작·끝 찾기
+    # 1) CHAPTERS list 시작-끝 찾기
     start_match = re.search(r"^CHAPTERS\s*=\s*\[", src, re.MULTILINE)
     if not start_match:
         return {"error": "CHAPTERS list not found"}
@@ -83,7 +83,7 @@ def reorder():
             return {"error": f"챕터 매칭 실패: {prefix}"}
         j, c, old_n, name = match
         used.add(j)
-        # title 번호 갱신: "N. <name>" → "<new_idx>. <name>"
+        # title 번호 갱신: "N. <name>" -> "<new_idx>. <name>"
         new_c = re.sub(r'"title":\s*"\d+\.\s*([^"]+)"',
                        f'"title": "{new_idx}. \\1"', c, count=1)
         reordered.append(new_c)

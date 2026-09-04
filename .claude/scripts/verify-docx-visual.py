@@ -1,6 +1,6 @@
-"""docx → PDF → PNG 변환 후 페이지별 시각 검증.
+"""docx -> PDF -> PNG 변환 후 페이지별 시각 검증.
 
-Word COM 으로 docx → PDF, PyMuPDF 로 PDF → 페이지별 PNG.
+Word COM 으로 docx -> PDF, PyMuPDF 로 PDF -> 페이지별 PNG.
 Read tool 로 확인 가능한 PNG 산출.
 """
 import sys
@@ -57,10 +57,10 @@ if __name__ == "__main__":
         pages = [int(p) for p in sys.argv[2].split(",")]
     pdf = docx.with_suffix(".pdf")
     out_dir = docx.parent / "_visual"
-    print(f"[1/3] docx → pdf ...")
+    print(f"[1/3] docx -> pdf ...")
     docx_to_pdf(docx, pdf)
     print(f"  {pdf}")
-    print(f"[2/3] pdf → png (pages={pages or 'all'}) ...")
+    print(f"[2/3] pdf -> png (pages={pages or 'all'}) ...")
     pngs = pdf_to_pngs(pdf, out_dir, pages=pages)
     print(f"[3/3] {len(pngs)} PNGs:")
     for p in pngs:

@@ -19,11 +19,11 @@
 
 ```
 실행 항목:
-  ✅ .claude/tasks/task-instruction.md 존재 여부
-  ✅ 대상 파일 잠금 확인 (.claude/tasks/locks/)
-  ✅ 동시 수정 충돌 방지 (Writer=1 규칙)
-  ✅ MCP 필요 여부 확인
-  ✅ orca-workers-config.json 워커 수 확인
+   .claude/tasks/task-instruction.md 존재 여부
+   대상 파일 잠금 확인 (.claude/tasks/locks/)
+   동시 수정 충돌 방지 (Writer=1 규칙)
+   MCP 필요 여부 확인
+   orca-workers-config.json 워커 수 확인
 
 실패 시: 작업 중단 + 원인 보고
 ```

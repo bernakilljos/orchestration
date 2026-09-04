@@ -323,7 +323,7 @@ function App() {
 | 스트리밍 | SSE | SSE + WebSocket | SSE | SSE (16 이벤트) |
 | 채택 | Claude, Cursor, Windsurf | Google, 50+ 파트너 | IBM, LangGraph, CrewAI | CopilotKit, 30k+ stars |
 | 보완 관계 | **도구 연결** | **에이전트 협업** | **프레임워크 통합** | **UI 렌더링** |
-| 우리 킷 | ✅ 14개 MCP 연결 | ⚠️ 레퍼런스 | ⚠️ 레퍼런스 | ⚠️ 레퍼런스 |
+| 우리 킷 |  14개 MCP 연결 |  레퍼런스 |  레퍼런스 |  레퍼런스 |
 
 ### 관계도
 ```text
@@ -357,9 +357,9 @@ function App() {
 
 | 프로토콜 | 현재 | 계획 |
 |---------|------|------|
-| **MCP** | ✅ 14개 서버 연결 (Slack·Notion·Figma·GitHub 등) | 유지 + 자동 점검 |
-| **A2A** | ⚠️ exec_orch 라우팅이 유사 패턴 (Claude→Codex→Gemini) | Agent Card 표준 채택 가능 |
-| **ACP** | ❌ 미구현 | BeeAI 프레임워크 검토 |
+| **MCP** |  14개 서버 연결 (Slack·Notion·Figma·GitHub 등) | 유지 + 자동 점검 |
+| **A2A** |  exec_orch 라우팅이 유사 패턴 (Claude→Codex→Gemini) | Agent Card 표준 채택 가능 |
+| **ACP** |  미구현 | BeeAI 프레임워크 검토 |
 
 ### 우리 exec_orch 가 이미 A2A/ACP 패턴
 ```text

@@ -84,7 +84,7 @@ def main():
     print(f"  Cache ratio: {stats['cache_ratio']:.1%}")
 
     for warning in stats.get("warnings", []):
-        print(f"  ⚠️  {warning}")
+        print(f"    {warning}")
 
     # 4. 비용 절감 시뮬레이션
     print("\n[Step 4] Cost savings estimate (24h × 100 tasks)...")
@@ -101,7 +101,7 @@ def main():
     print(f"  Cache hit cost: {savings['cache_hit_cost']:.2f} (per call)")
     print(f"  Average cost: {savings['average_cost_per_call']:.2f} (with caching)")
     print(f"  Savings ratio: {savings['savings_ratio']:.1%}")
-    print(f"\n  📊 {savings['notes']}")
+    print(f"\n   {savings['notes']}")
 
     # 5. Request body 덤프 (SDK 없을 때 직접 호출 가능)
     print("\n[Step 5] Request body structure...")
@@ -159,7 +159,7 @@ def main():
             ],
         )
 
-        print("\n  ✅ Response received:")
+        print("\n   Response received:")
         print(f"  {response.content[0].text[:200]}...")
 
         # Cache 통계 출력
@@ -176,7 +176,7 @@ def main():
                 print(f"     Run the script again within 5 minutes to see cache hit!")
 
     except ImportError:
-        print("  ❌ anthropic SDK not found.")
+        print("   anthropic SDK not found.")
         print("     Install: pip install anthropic")
         print("     Set: export ANTHROPIC_API_KEY='sk-...'")
         print("\n  You can still use the request body above with requests or curl:")
@@ -186,7 +186,7 @@ def main():
         print("       -d @request.json")
 
     except anthropic.APIError as e:
-        print(f"  ❌ API error: {e}")
+        print(f"   API error: {e}")
 
     print("\n" + "=" * 70)
     print("Example complete. See docs/caching-strategy.md for details.")

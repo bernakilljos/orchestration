@@ -9,13 +9,13 @@
 
 ## 📋 커맨드
 
-- `/install` ⭐ 기본
+- `/install`  기본
 - `/mcp_collab`
 - `/status`
 
 ## 🧠 스킬
 
-- `skill-24-ai-handoff` ⭐ 핵심
+- `skill-24-ai-handoff`  핵심
 
 ## 🤖 에이전트
 

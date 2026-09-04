@@ -345,7 +345,7 @@ Watchdog이 budget breaker 감시:
 # Phase 3 watchdog (미래)
 # budget.breaker_tripped = 1 감지 시
 # - 모든 워커 신호 (SIGTERM)
-# - 대시보드에 ⚠ 빨간 배너 표시
+# - 대시보드에  빨간 배너 표시
 # - escalation task 생성
 ```
 

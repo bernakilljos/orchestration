@@ -57,7 +57,7 @@ class PageLayoutTracker:
 ```python
 tracker = PageLayoutTracker("docx-landscape")
 H(doc, ch["title"], level=1); tracker.add("h1")
-callout(doc, "📚 핵심 한 줄", ch["핵심"]); tracker.add("callout")
+callout(doc, " 핵심 한 줄", ch["핵심"]); tracker.add("callout")
 
 # 이미지 max_height 자동 계산
 with Image.open(png) as im:
@@ -149,11 +149,11 @@ teaching-doc.md § 페이지 콘텐츠 fit / failure-mode.md § 전수조사 위
 ### 진단
 
 ```css
-/* ❌ 빈 영역 트리거 */
+/*  빈 영역 트리거 */
 .svg-deco { flex:1 1 0; min-height:60px; }
 .svg-deco svg { max-width:200px; max-height:280px; }  /* 박스 > SVG → 여백 */
 
-/* ✅ 빈 영역 0 */
+/*  빈 영역 0 */
 .svg-deco { flex:1 1 0; min-height:60px; padding:4px; }
 .svg-deco svg { width:100%; height:100%; display:block; }
 /* viewBox 비율 = 컨테이너 비율 + preserveAspectRatio="xMidYMid meet" */
