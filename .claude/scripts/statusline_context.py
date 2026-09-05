@@ -302,8 +302,12 @@ _CACHE_HIT_RATE = 0.0  # 세션 prompt cache 히트율 %
 _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 
 
+# 2026-09-05: plan_usage() 를 걷어냈다. ~/.claude/statsig/ 파일을 정규식으로 훑어
+#   session_limit·week_limit 을 뽑으려 했는데 그 폴더에는 파일이 0개였고(실측),
+#   호출하는 곳도 없었다. Anthropic 실제 한도는 이 스크립트가 읽을 수 없다 —
+#   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
 
-def extra_gauges(cwd):
+def extra_gauges(cwd, data=None):
     """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
     budget_str = ""
     solutions_str = ""
@@ -440,7 +444,7 @@ def extra_gauges(cwd):
             pct = min(elapsed / window_ms * 100.0, 100.0)
             reset_dt = _dt.datetime.fromtimestamp((oldest_in_window + window_ms) / 1000.0)
             reset_str = reset_dt.strftime("%I:%M%p").lstrip("0").lower()
-            session_gauge = f"5h창 {_bar(pct)} {pct:.0f}% 경과 (reset {reset_str})"
+            session_gauge = f"세션 {_bar(pct)} {pct:.0f}% (reset {reset_str})"
     except Exception:
         pass
 
@@ -484,13 +488,22 @@ def extra_gauges(cwd):
                                     week_msgs += 1
                     except Exception:
                         continue
-        # 주간 - 플랜 한도 실값은 로컬에 없음 (statsig X · stats-cache stale).
-        # 근거 없는 상수로 % 를 만들면 A2 위반 -> 실측 메시지 수만 표기.
-        # 실제 플랜 사용률은 /usage 에서 확인.
-        days_to_thu = (3 - today.weekday()) % 7 or 7
-        reset_day = today + _dt.timedelta(days=days_to_thu)
-        reset_str = reset_day.strftime("%b ") + str(reset_day.day)
-        week_gauge = f"주간 {week_msgs:,} msg (reset {reset_str} · 한도는 /usage)"
+        # 2026-09-05: 여기서 "주간 100% (reset Sep 10)" 을 그리고 있었는데
+        #   그 숫자는 Anthropic 사용량 한도가 **아니었다**.
+        #   week_msgs = 이 프로젝트 폴더의 최근 7일 jsonl 안 assistant 줄 수,
+        #   상한은 근거 없이 박아 둔 5000, 게다가 min(...,100) 으로 잘랐다.
+        #   lottoclaude 는 7,894줄이라 늘 100%, orchestration_v1 은 120줄이라 2% —
+        #   같은 계정인데 창마다 다른 숫자가 나와 "곧 멈추겠다" 고 읽혔다.
+        #   산식 없는 %는 띄우지 않는다 (헌장 A2). 한도를 사람이 정해 준 경우에만 %를 쓰고,
+        #   아니면 센 값을 그대로 보여 준다.
+        raw_limit = os.environ.get("CLAUDE_WEEK_MSG_LIMIT", "").strip()
+        if raw_limit.isdigit() and int(raw_limit) > 0:
+            week_limit = int(raw_limit)
+            pct = min(week_msgs / week_limit * 100.0, 100.0)
+            week_gauge = f"주간 {_bar(pct)} {pct:.0f}% ({week_msgs:,}/{week_limit:,}건)"
+        else:
+            # 한도 미설정 — 퍼센트도 reset 날짜도 지어내지 않는다.
+            week_gauge = f"주간 이 프로젝트 응답 {week_msgs:,}건 (7일 · 한도 미설정)"
     except Exception:
         pass
 
@@ -575,6 +588,16 @@ def extra_gauges(cwd):
         pass
 
     # AI 비용 line3 (세션 · 현월 · 년간 · KRW 병기)
+    # 2026-09-05: 세션 비용은 Claude Code 가 cost.total_cost_usd 로 준다(정확한 값).
+    #   jsonl 을 단가표로 되짚어 계산하던 근사치보다 이쪽이 맞다. 월·년간은 여전히
+    #   이 프로젝트 jsonl 합산이라 "(이 프로젝트)" 라벨을 유지한다.
+    global _SESSION_COST
+    try:
+        _c = (data or {}).get("cost") or {}
+        if isinstance(_c.get("total_cost_usd"), (int, float)):
+            _SESSION_COST = float(_c["total_cost_usd"])
+    except Exception:
+        pass
     rate = float(os.environ.get("USD_KRW_RATE", "1350"))
     monthly = _MONTHLY_COST if _MONTHLY_COST > 0 else _SESSION_COST
     yearly = _YEARLY_COST if _YEARLY_COST > 0 else monthly
@@ -584,13 +607,50 @@ def extra_gauges(cwd):
         def _krw(usd):
             v = usd * rate
             return f"₩{int(v):,}" if v >= 1 else f"₩{v:.0f}"
+        # 2026-09-05: monthly_cost·yearly_cost 는 **이 프로젝트 폴더의 jsonl 만** 합산한다
+        #   (statusline_context.py 의 monthly_cost(cwd) 참고). 그래서 창마다 값이 다르다 —
+        #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
+        #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"AI 비용 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
+            f"AI 비용(이 프로젝트) 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
             f"{cur_m}월 ${monthly:.2f} ({_krw(monthly)}) · "
             f"년간 ${yearly:.2f} ({_krw(yearly)})"
         )
     else:
         line3 = ""
+
+    # ------------------------------------------------------------------
+    # 2026-09-05: Claude Code 가 statusline 입력으로 **진짜 사용량**을 준다.
+    #   rate_limits.five_hour / seven_day 의 used_percentage 와 resets_at 이
+    #   /status 화면과 같은 값이다(실측: 세션 15% resets 12:20pm, 주간 2% resets Sep 10 8am).
+    #   그동안 이 스크립트는 그걸 못 받는 줄 알고 jsonl 을 세서 근사치를 만들고 있었다 —
+    #   세션은 5시간 창 추정, 주간은 "프로젝트 응답 건수 / 임의 분모" 라 /status 와 안 맞았다.
+    #   받은 값이 있으면 그것을 쓴다. 없을 때만 아래 자체 계산으로 물러난다.
+    def _fmt_reset(ts):
+        try:
+            dt = _dt.datetime.fromtimestamp(int(ts))
+        except Exception:
+            return ""
+        today = _dt.date.today()
+        clock = dt.strftime("%I:%M%p").lstrip("0").lower()
+        if dt.date() == today:
+            return clock
+        return dt.strftime("%b ") + str(dt.day) + " " + clock
+
+    try:
+        rl = (data or {}).get("rate_limits") or {}
+        fh = rl.get("five_hour") or {}
+        sd = rl.get("seven_day") or {}
+        if isinstance(fh.get("used_percentage"), (int, float)):
+            pct = float(fh["used_percentage"])
+            r = _fmt_reset(fh.get("resets_at"))
+            session_gauge = "세션 " + _bar(pct) + f" {pct:.0f}%" + (f" (reset {r})" if r else "")
+        if isinstance(sd.get("used_percentage"), (int, float)):
+            pct = float(sd["used_percentage"])
+            r = _fmt_reset(sd.get("resets_at"))
+            week_gauge = "주간 " + _bar(pct) + f" {pct:.0f}%" + (f" (reset {r})" if r else "")
+    except Exception:
+        pass
 
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
@@ -621,8 +681,9 @@ def main() -> None:
 
     limit, exact_model = pick_limit(model_id)
 
-    # 해결된 상한을 SoT 로 공유 - jsonl 은 model 을 "[1m]" 없이 기록하므로
-    # hook(inject-compact-reminder)은 stdin model.id 를 못 본다. 여기서만 정본 기록.
+    # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
+    # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
+    # 볼 수 없어 1M 세션을 200K 로 오판했다 (193K/200K = 93% 허위 경보, 2026-09-05 실측).
     if exact_model and cwd:
         try:
             import datetime as _dtc
@@ -664,7 +725,7 @@ def main() -> None:
     import datetime as _dt3
     clock = _dt3.datetime.now().strftime("%m/%d %H:%M")
     token_line = render(tokens, limit, exact_model, no_usage)
-    gauges = extra_gauges(cwd) if cwd else {"session": "", "line2": "", "line3": ""}
+    gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
     line1_parts = [clock, token_line]
     if gauges.get("session"):
         line1_parts.append(gauges["session"])
