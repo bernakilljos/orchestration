@@ -419,93 +419,9 @@ def extra_gauges(cwd, data=None):
         filled = int(round(pct / 100.0 * w))
         return "█" * filled + "▒" * (w - filled)
 
-    # 1) Current session — 5h window · 가장 오래된 startedAt 기준 (안정적)
-    # 근거: 사용자 지시 2026-09-03 - 최신 window 급변 방지 · 최근 5h 안 window 중 가장 이른 것
-    try:
-        home = os.path.expanduser("~")
-        sess_files = _glob.glob(os.path.join(home, ".claude", "sessions", "*.json"))
-        now_ms = int(_dt.datetime.now().timestamp() * 1000)
-        window_ms = 5 * 60 * 60 * 1000
-        cutoff_ms = now_ms - window_ms
-        oldest_in_window = None
-        for sf in sess_files:
-            try:
-                with open(sf, "r", encoding="utf-8") as f:
-                    j = json.load(f)
-                started = int(j.get("startedAt") or 0)
-                # 현재 5h window 내부 · 가장 이른 것
-                if started >= cutoff_ms and started > 0:
-                    if oldest_in_window is None or started < oldest_in_window:
-                        oldest_in_window = started
-            except Exception:
-                continue
-        if oldest_in_window:
-            elapsed = max(0, now_ms - oldest_in_window)
-            pct = min(elapsed / window_ms * 100.0, 100.0)
-            reset_dt = _dt.datetime.fromtimestamp((oldest_in_window + window_ms) / 1000.0)
-            reset_str = reset_dt.strftime("%I:%M%p").lstrip("0").lower()
-            session_gauge = f"세션 {_bar(pct)} {pct:.0f}% (reset {reset_str})"
-    except Exception:
-        pass
-
-    # 2) Current week — stats-cache 우선 · stale 시 jsonl mtime fallback
-    try:
-        home = os.path.expanduser("~")
-        stats_p = os.path.join(home, ".claude", "stats-cache.json")
-        today = _dt.date.today()
-        week_msgs = 0
-        stats_stale = True
-        if os.path.exists(stats_p):
-            import time as _time
-            age_h = (_time.time() - os.path.getmtime(stats_p)) / 3600
-            with open(stats_p, "r", encoding="utf-8") as f:
-                sc = json.load(f)
-            for row in sc.get("dailyActivity", []):
-                try:
-                    d = _dt.date.fromisoformat(row.get("date", ""))
-                    if 0 <= (today - d).days <= 7:
-                        week_msgs += int(row.get("messageCount", 0) or 0)
-                        stats_stale = False
-                except Exception:
-                    continue
-        # jsonl mtime fallback — stats-cache 데이터 부족 시
-        if stats_stale or week_msgs == 0:
-            import re as _re
-            safe = _re.sub(r"[^a-zA-Z0-9]", "-", cwd)
-            proj_dir = os.path.join(home, ".claude", "projects", safe)
-            if os.path.isdir(proj_dir):
-                import glob as _g
-                import time as _t
-                cutoff = _t.time() - 7 * 86400
-                # 각 jsonl 안 assistant 응답 카운트 = 근사 message 수
-                for jp in _g.glob(os.path.join(proj_dir, "*.jsonl")):
-                    try:
-                        if os.path.getmtime(jp) < cutoff:
-                            continue
-                        with open(jp, "r", encoding="utf-8", errors="replace") as f:
-                            for line in f:
-                                if '"type":"assistant"' in line:
-                                    week_msgs += 1
-                    except Exception:
-                        continue
-        # 2026-09-05: 여기서 "주간 100% (reset Sep 10)" 을 그리고 있었는데
-        #   그 숫자는 Anthropic 사용량 한도가 **아니었다**.
-        #   week_msgs = 이 프로젝트 폴더의 최근 7일 jsonl 안 assistant 줄 수,
-        #   상한은 근거 없이 박아 둔 5000, 게다가 min(...,100) 으로 잘랐다.
-        #   lottoclaude 는 7,894줄이라 늘 100%, orchestration_v1 은 120줄이라 2% —
-        #   같은 계정인데 창마다 다른 숫자가 나와 "곧 멈추겠다" 고 읽혔다.
-        #   산식 없는 %는 띄우지 않는다 (헌장 A2). 한도를 사람이 정해 준 경우에만 %를 쓰고,
-        #   아니면 센 값을 그대로 보여 준다.
-        raw_limit = os.environ.get("CLAUDE_WEEK_MSG_LIMIT", "").strip()
-        if raw_limit.isdigit() and int(raw_limit) > 0:
-            week_limit = int(raw_limit)
-            pct = min(week_msgs / week_limit * 100.0, 100.0)
-            week_gauge = f"주간 {_bar(pct)} {pct:.0f}% ({week_msgs:,}/{week_limit:,}건)"
-        else:
-            # 한도 미설정 — 퍼센트도 reset 날짜도 지어내지 않는다.
-            week_gauge = f"주간 이 프로젝트 응답 {week_msgs:,}건 (7일 · 한도 미설정)"
-    except Exception:
-        pass
+    # 2026-09-07: 세션·주간 자체 추정(5h창 경과 · 프로젝트 jsonl 응답 수)을 걷어냈다.
+    #   아래 rate_limits 블록이 항상 덮어써서 죽은 코드였고, 매 렌더마다 7일치 jsonl 을
+    #   전부 읽느라 상태바만 느려졌다. 실값은 stdin rate_limits + 캐시로 충분하다.
 
     # 3) 짧은 인디케이터 (MCP - 재사용)
     tail = []
@@ -637,20 +553,66 @@ def extra_gauges(cwd, data=None):
             return clock
         return dt.strftime("%b ") + str(dt.day) + " " + clock
 
-    try:
-        rl = (data or {}).get("rate_limits") or {}
+    # 2026-09-07: rate_limits 가 **매 렌더마다 오는 것이 아니다** (실측).
+    #   세션 첫 렌더(첫 API 응답 전)·일부 렌더에서는 키 자체가 없다. 그때 아래 자체 계산으로
+    #   물러나면 "주간 이 프로젝트 응답 232건 (7일 · 한도 미설정)" 처럼 **다른 지표**가 튀어나와
+    #   "고쳤다더니 또 그 문구" 로 읽혔다 (2026-09-07 사용자 지적).
+    #   -> 마지막으로 받은 실값을 계정 단위로 캐시해 두고, 안 올 때는 그 값을 쓴다.
+    #      캐시도 없으면 숫자를 지어내지 말고 "집계 대기" 로 비운다 (헌장 A2).
+    _rl_cache = os.path.join(os.path.expanduser("~"), ".claude", "state", "rate-limits.json")
+
+    def _read_rl(d):
+        """페이로드에서 유효한 rate_limits 만 뽑는다. 없으면 None."""
+        rl = (d or {}).get("rate_limits") or {}
+        out = {}
+        for k in ("five_hour", "seven_day"):
+            v = rl.get(k) or {}
+            if isinstance(v.get("used_percentage"), (int, float)):
+                out[k] = {"used_percentage": float(v["used_percentage"]),
+                          "resets_at": v.get("resets_at")}
+        return out or None
+
+    rl = _read_rl(data)
+    rl_age = 0.0
+    if rl:
+        try:
+            os.makedirs(os.path.dirname(_rl_cache), exist_ok=True)
+            import time as _time
+            with open(_rl_cache, "w", encoding="utf-8") as _f:
+                json.dump({"rate_limits": rl, "ts": _time.time()}, _f)
+        except Exception:
+            pass
+    else:
+        try:
+            import time as _time
+            with open(_rl_cache, "r", encoding="utf-8") as _f:
+                c = json.load(_f)
+            cached = _read_rl(c)
+            if cached:
+                rl = cached
+                rl_age = max(0.0, _time.time() - float(c.get("ts") or 0))
+        except Exception:
+            rl = None
+
+    if rl:
+        # 캐시가 30분 넘게 묵었으면 값 뒤에 ~ 를 붙여 "직전 실값" 임을 밝힌다.
+        mark = "~" if rl_age > 1800 else ""
         fh = rl.get("five_hour") or {}
         sd = rl.get("seven_day") or {}
-        if isinstance(fh.get("used_percentage"), (int, float)):
-            pct = float(fh["used_percentage"])
+        if "used_percentage" in fh:
+            pct = fh["used_percentage"]
             r = _fmt_reset(fh.get("resets_at"))
-            session_gauge = "세션 " + _bar(pct) + f" {pct:.0f}%" + (f" (reset {r})" if r else "")
-        if isinstance(sd.get("used_percentage"), (int, float)):
-            pct = float(sd["used_percentage"])
+            session_gauge = ("세션 " + _bar(pct) + f" {pct:.0f}%{mark}"
+                             + (f" (reset {r})" if r else ""))
+        if "used_percentage" in sd:
+            pct = sd["used_percentage"]
             r = _fmt_reset(sd.get("resets_at"))
-            week_gauge = "주간 " + _bar(pct) + f" {pct:.0f}%" + (f" (reset {r})" if r else "")
-    except Exception:
-        pass
+            week_gauge = ("주간 " + _bar(pct) + f" {pct:.0f}%{mark}"
+                          + (f" (reset {r})" if r else ""))
+    else:
+        # 실값도 캐시도 없다 = 아직 한 번도 못 받았다. 다른 지표로 대체하지 않는다.
+        session_gauge = "세션 (집계 대기)"
+        week_gauge = "주간 (집계 대기)"
 
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []

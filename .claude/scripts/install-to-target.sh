@@ -102,7 +102,7 @@ echo "  ✓ sync-validate-install-worker-health-rag-trends-cleanup 등 (.sh/.py/
 # ─────────────────────────────────────────────
 echo "[5/7] .claude/hooks/ (신규만)..."
 mkdir -p "$TARGET/.claude/hooks"
-for hook in check-mojibake.sh; do
+for hook in check-mojibake.sh inject-compact-reminder.sh; do
   if [ ! -f "$TARGET/.claude/hooks/$hook" ] && [ -f "$SRC/.claude/hooks/$hook" ]; then
     cp "$SRC/.claude/hooks/$hook" "$TARGET/.claude/hooks/"
     echo "  + $hook"
@@ -140,6 +140,41 @@ if [ -d "$SRC/docs/2026-04-19" ]; then
   cp -f "$SRC/docs/2026-04-19/"* "$TARGET/docs/2026-04-19/" 2>/dev/null || true
 fi
 echo "  ✓ architecture-patterns.md + 2026-04-19/"
+
+# -----------------------------------------------
+# 8. statusline 활성화 (settings.json 은 통째 덮어쓰지 않고 키가 없을 때만 주입)
+#    이유: statusline_context.py 는 [4/7] 에서 복사되지만 settings.json 이 "수동 병합"
+#          이라 statusLine 블록이 target 에 안 갔다. 그래서 파일만 있고 기능은 죽어 있었다.
+#          (2026-09-07 실측: orchestration_v1 -> lottoclaude 양쪽 다 손으로 넣어둔 상태였음)
+# -----------------------------------------------
+echo "[8/8] statusline 활성화..."
+if [ -f "$SRC/.claude/scripts/statusline_context.py" ]; then
+  mkdir -p "$TARGET/.claude/state"
+  python - "$TARGET" <<'PYEOF'
+import io, json, os, shutil, sys, datetime
+target = sys.argv[1]
+p = os.path.join(target, ".claude", "settings.json")
+cmd = 'python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/scripts/statusline_context.py"'
+try:
+    if os.path.exists(p):
+        d = json.load(io.open(p, encoding="utf-8"))
+    else:
+        d = {}
+    if isinstance(d.get("statusLine"), dict) and d["statusLine"].get("command"):
+        print("  = statusLine 이미 있음 - 건드리지 않음")
+    else:
+        if os.path.exists(p):
+            shutil.copy(p, p + ".bak." + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+        d["statusLine"] = {"type": "command", "command": cmd, "padding": 0}
+        with io.open(p, "w", encoding="utf-8") as f:
+            json.dump(d, f, ensure_ascii=False, indent=2)
+        print("  + statusLine 주입 (기존 설정 보존, .bak 백업)")
+except Exception as e:
+    print("  ! statusLine 주입 실패 - 수동으로 넣어라: %s" % e)
+PYEOF
+else
+  echo "  - statusline_context.py 없음 - 건너뜀"
+fi
 
 echo ""
 echo "=== 업그레이드 완료 ==="
