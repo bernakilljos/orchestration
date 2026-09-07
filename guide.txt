@@ -1701,6 +1701,21 @@
 - ~/.claude/statusline_context.py = 글로벌 (모든 프로젝트)
 - .claude/scripts/statusline_context.py = kit copy (SoT sync)
 
+### install 로 배포될 때 statusline 이 켜지는 자리 (2026-09-07)
+- `statusline_context.py` 는 `install-to-target.sh [4/7]` 이 `.claude/scripts/*.py` 로 복사한다.
+- 그런데 `.claude/settings.json` 은 **보호 대상(수동 병합)** 이라 `statusLine` 블록이 안 갔다.
+  그래서 target 은 스크립트만 있고 statusline 이 안 뜨는 상태였다 (파일은 있는데 기능은 죽음).
+- `[8/8] statusline 활성화` 단계를 넣었다:
+  target `settings.json` 에 `statusLine` 키가 **없을 때만** 주입하고,
+  이미 있으면 손대지 않는다. 주입 전 `.bak.<타임스탬프>` 를 남기고
+  `permissions`/`env` 등 다른 키는 그대로 둔다. `.claude/state/` 도 만들어 준다.
+- `[5/7]` 신규 훅 목록에 `inject-compact-reminder.sh` 를 넣었다.
+  이 훅은 `.claude/state/context-limit.json`(statusline 이 쓰는 정본)을 읽어
+  컨텍스트 상한을 판정한다. jsonl 의 `message.model` 에는 `[1m]` 이 없어
+  이 정본이 없으면 1M 세션을 200K 로 오판한다 (93% 허위 경보).
+- 검증은 임시 target 두 개로 한다: statusLine 없는 쪽 / 이미 있는 쪽.
+  전자는 주입되고 기존 키가 살아 있어야, 후자는 원본이 그대로여야 한다.
+
 ## suggest-skills.sh (UserPromptSubmit)
 - 사용자 프롬프트 → 관련 skill/command/rule 자동 추천 + 즉시 실행 명령
 - 매칭: PPT·docx·엑셀·감사·계산기·최신·배포·commit·감정·전수조사·검증·DB·시각·재사용·파일·파인튜닝
