@@ -346,6 +346,11 @@
                          · 카운터는 세션별 .claude/state/session-turns.d/<sid>.*
                          · 마커는 컨텍스트가 임계 미만이면 auto-planner 가 자동 무효화
       context-usage-pct.py  컨텍스트 사용률 계산 정본 — 훅마다 따로 계산하지 마
+      session-history-db.py --ingest  jsonl -> .claude/state/sessions.db 증분 적재
+                         · SessionStart-SessionEnd 훅 등록 (증분 0.3초)
+                         · --stats 종료사유-최대컨텍스트% · --crashes · --session <id> · --sql
+                         · 프로젝트 고유 등록을 settings.json 에만 두면 kit sync 가 덮는다.
+                           kit 에 스크립트+등록을 함께 둬야 sync 가 오히려 유지해 준다.
       session-start-load-snapshot  SessionStart 에서 이전 문맥 주입 (미등록 시 새 세션 백지 시작)
 
     ◆ 디자인 & 문서

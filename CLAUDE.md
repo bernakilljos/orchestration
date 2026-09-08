@@ -56,6 +56,16 @@
 4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 ( 이상 자율 반영,  이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 5. **세션 히스토리 자동 로드 (2026-09-02 신설)** — `.claude/hooks/load-recent-conversations.sh` 가 `orca.db.session_summary` 최근 3 세션 요약을 systemMessage 로 주입 → 새 세션이 이전 문맥 자동 인지 · UserPromptSubmit·Stop·SessionEnd 는 대화·요약을 `conversations` / `session_summary` 자동 저장. 상세: `.claude/rules/conversation-history.md`
 
+### 3.1.2 세션 이력 DB (2026-09-08)
+
+`.claude/state/sessions.db` — jsonl 증분 적재(`session-history-db.py --ingest`,
+SessionStart·SessionEnd 훅). 턴별 컨텍스트 %·도구 호출·훅 이벤트·종료 사유 추정.
+"언제 왜 끝났나" 를 한 줄 쿼리로 답한다.
+
+**프로젝트 고유 등록을 target 의 settings.json 에만 두지 마.** kit sync 가
+settings.json 을 통째로 덮으므로(2026-09-02 sync 는 179줄 교체) 고유 등록은 사라진다.
+스크립트와 훅 등록을 **kit 에 함께** 둬야 sync 가 오히려 유지해 준다.
+
 ### 3.1.1 강제 compact 는 컨텍스트 %로만 판정 (2026-09-08)
 
 턴 수로 압축을 강제하지 마. `auto-compact-check.sh` 가 25턴만 세고 "다음 턴 0순위로 /compact"

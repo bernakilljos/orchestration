@@ -168,6 +168,11 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/session-start-load-snapshot.sh\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash -c \"cd \\\"$CLAUDE_PROJECT_DIR\\\" && python -X utf8 .claude/scripts/session-history-db.py --ingest >/dev/null 2>&1 || true\"",
+            "timeout": 60
           }
         ]
       },
@@ -650,6 +655,11 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash -c \"cd \\\"$CLAUDE_PROJECT_DIR\\\" && python -X utf8 .claude/scripts/session-history-db.py --ingest >/dev/null 2>&1 || true\"",
+            "timeout": 60
           }
         ]
       }
