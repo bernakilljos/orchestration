@@ -81,6 +81,18 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   # auto-compact 마커 체크 — 임계치 도달 시 NEXT TURN 첫 동작으로 /compact 강제
   COMPACT_GUIDE=""
   COMPACT_MARKER="$PROJECT_ROOT/.claude/context-cache/auto-compact-recommended"
+  # 마커는 stale 해질 수 있다. 지우는 주체가 Claude 뿐이라
+  # 2026-09-05 마커가 사흘간 살아남아 모든 프롬프트에 강제 압축이 주입됐다.
+  # 실제 컨텍스트가 임계 미만이면 마커를 무효화하고 주입하지 않는다.
+  if [ -f "$COMPACT_MARKER" ]; then
+    _PY="$(command -v python 2>/dev/null || command -v python3 2>/dev/null)"
+    if [ -n "$_PY" ]; then
+      _PCT="$("$_PY" -X utf8 "$PROJECT_ROOT/.claude/scripts/context-usage-pct.py" 2>/dev/null || echo 0)"
+      if [ "${_PCT%.*}" -lt "${COMPACT_PCT_THRESHOLD:-85}" ]; then
+        rm -f "$COMPACT_MARKER" 2>/dev/null || true
+      fi
+    fi
+  fi
   if [ -f "$COMPACT_MARKER" ]; then
     MARKER_INFO="$(cat "$COMPACT_MARKER" 2>/dev/null | head -1 | tr -d '\\n\\r' | sed 's/"/\\\\"/g')"
     COMPACT_GUIDE="\\n\\n[auto-compact ENFORCED — 컨텍스트 임계치 도달]\\n트리거: ${MARKER_INFO}\\n\\n★ Claude 의무 (이번 turn 0순위):\\n  1) 사용자 이번 prompt 처리 **전에 가장 먼저 /compact 자체 실행** (모든 도구 호출-답변 전)\\n  2) compact 완료 후 사용자 원래 요청 처리\\n  3) 한국어 한 줄 통지: '[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행'\\n\\n★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐\\n★ 마커 정리: compact 후 .claude/context-cache/auto-compact-recommended 파일 삭제"

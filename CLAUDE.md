@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-09-05): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 132
+> **현재 상태** (2026-09-07): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 132
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -55,6 +55,19 @@
 3. **Resume** — `.claude/context-cache/session-snapshot.md` 있으면 복구 제안
 4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 ( 이상 자율 반영,  이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 5. **세션 히스토리 자동 로드 (2026-09-02 신설)** — `.claude/hooks/load-recent-conversations.sh` 가 `orca.db.session_summary` 최근 3 세션 요약을 systemMessage 로 주입 → 새 세션이 이전 문맥 자동 인지 · UserPromptSubmit·Stop·SessionEnd 는 대화·요약을 `conversations` / `session_summary` 자동 저장. 상세: `.claude/rules/conversation-history.md`
+
+### 3.1.1 강제 compact 는 컨텍스트 %로만 판정 (2026-09-08)
+
+턴 수로 압축을 강제하지 마. `auto-compact-check.sh` 가 25턴만 세고 "다음 턴 0순위로 /compact"
+를 명령해, 컨텍스트 29.5% 인 멀쩡한 대화가 반복해서 요약으로 뭉개졌다. 판정 정본은
+`.claude/scripts/context-usage-pct.py` (상한은 `.claude/state/context-limit.json`), 기본 임계 85%.
+턴 수·guard 라인은 보조 신호일 뿐 단독 발동 금지. 카운터는 반드시 **세션별**
+(`.claude/state/session-turns.d/<sid>.*`) — 전역 파일은 세션이 바뀌어도 누적된다.
+마커 `auto-compact-recommended` 는 컨텍스트가 임계 미만이면 `user-prompt-auto-planner.sh` 가
+자동 무효화한다 (지우는 주체가 Claude 뿐이라 사흘간 살아남아 매 프롬프트에 주입됐다).
+
+**이 교정은 2026-08-28 에 lottoclaude 에서 한 번 했다가 2026-09-02 kit sync 로 통째 revert 됐다.**
+kit 이 SoT 이므로 세션 가드 교정은 반드시 kit 에도 반영할 것.
 
 ### 3.2 AI 역할 (규모·특성 기반, **Opus 5 신규 default 2026-07-24** · Opus 4.8 병존 · Fable 5 초난도 · Sonnet 5 균형)
 | 태스크 | AI | 방법 |

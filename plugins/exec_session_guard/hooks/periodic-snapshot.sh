@@ -16,6 +16,14 @@ INTERVAL=300  # 5분 (초)
 
 mkdir -p "$CACHE_DIR" 2>/dev/null || exit 0
 
+# 본문 재생성 — session-snapshot-save.py 가 정본 (한 줄만 갱신하던 결함 교정 2026-09-08)
+_regen_snapshot() {
+  local PY
+  PY="$(command -v python 2>/dev/null || command -v python3 2>/dev/null)"
+  [ -n "$PY" ] || return 1
+  "$PY" "$PROJECT_DIR/.claude/scripts/session-snapshot-save.py" >/dev/null 2>&1
+}
+
 # 마지막 스냅샷 시각 확인 — INTERVAL 미경과면 skip (경량)
 NOW=$(date +%s)
 if [ -f "$LAST_TS_FILE" ]; then
@@ -39,6 +47,16 @@ RECENT_COMMITS=$(git log --oneline -5 2>/dev/null)
 
 # snapshot 갱신 (Last Hook Record 섹션 — pure bash, python 미사용)
 LINE="[$TS] event=PeriodicSnapshot branch=$BRANCH HEAD=$HEAD"
+
+# 5분 게이트를 통과했으므로 본문을 통째로 다시 쓴다 (한 줄만 갱신하던 결함 교정 2026-09-08)
+if _regen_snapshot; then
+  printf "
+### Last Hook Record
+%s
+" "$LINE" >> "$SNAP"
+  exit 0
+fi
+
 if [ -f "$SNAP" ]; then
   if grep -q "^### Last Hook Record" "$SNAP"; then
     # Last Hook Record 다음 줄만 교체 (sed)

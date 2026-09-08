@@ -4,7 +4,12 @@
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-COUNTER_FILE="$PROJECT_DIR/.claude/state/.prompt-counter"
+# 세션별 카운터 — 전역이면 세션이 바뀌어도 누적돼 새 세션 2번째 프롬프트가
+# "10번째" 로 세어진다 (2026-09-08: 전역값 2510 이었다)
+_SID="$(ls -t "$HOME/.claude/projects/"*"$(basename "$PROJECT_DIR")"*/*.jsonl 2>/dev/null | head -1 | xargs -r basename 2>/dev/null | sed 's/\.jsonl$//')"
+[ -n "${_SID:-}" ] || _SID="unknown"
+mkdir -p "$PROJECT_DIR/.claude/state/session-turns.d" 2>/dev/null
+COUNTER_FILE="$PROJECT_DIR/.claude/state/session-turns.d/$_SID.prompts"
 mkdir -p "$PROJECT_DIR/.claude/state" 2>/dev/null
 
 # 카운터 증가

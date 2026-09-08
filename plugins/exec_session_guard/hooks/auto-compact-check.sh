@@ -19,12 +19,22 @@ set -uo pipefail
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}"
 STATE_DIR="$PROJECT_ROOT/.claude/state"
 CACHE_DIR="$PROJECT_ROOT/.claude/context-cache"
-TURN_FILE="$STATE_DIR/session-turns"
-COOLDOWN_FILE="$STATE_DIR/auto-compact-cooldown"
+# 세션별 턴 카운터 — 전역 파일은 세션이 바뀌어도 누적돼 새 세션이
+# 이미 임계치 근처에서 시작했다 (2026-09-08: turns=31 로 4턴 뒤 강제압축 예약 상태였음)
+# 세션 id 는 훅 stdin(JSON) 이 정본. 없으면 최신 transcript 파일명으로 대체.
+PAYLOAD="$(cat 2>/dev/null || true)"
+SID="$(printf '%s' "$PAYLOAD" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+if [ -z "${SID:-}" ]; then
+  SID="$(ls -t "$HOME/.claude/projects/"*"$(basename "$PROJECT_ROOT")"*/*.jsonl 2>/dev/null | head -1 | xargs -r basename 2>/dev/null | sed 's/\.jsonl$//')"
+fi
+[ -n "${SID:-}" ] || SID="nosid-$PPID"
+mkdir -p "$STATE_DIR/session-turns.d" 2>/dev/null
+TURN_FILE="$STATE_DIR/session-turns.d/$SID.turns"
+COOLDOWN_FILE="$STATE_DIR/session-turns.d/$SID.cooldown"
 MARKER="$CACHE_DIR/auto-compact-recommended"
 GUARD_LOG="$CACHE_DIR/guard.log"
 
-THRESHOLD_TURNS="${COMPACT_TURN_THRESHOLD:-25}"
+THRESHOLD_TURNS="${COMPACT_TURN_THRESHOLD:-60}"
 THRESHOLD_LINES="${COMPACT_GUARD_LINES:-600}"
 COOLDOWN="${COMPACT_COOLDOWN_TURNS:-10}"
 
@@ -47,18 +57,31 @@ if [ -f "$GUARD_LOG" ]; then
   LINES=$(wc -l < "$GUARD_LOG" 2>/dev/null | tr -d ' ' || echo "0")
 fi
 
-# 4. 임계치 판정
-TRIGGER=""
-if [ "$TURNS" -ge "$THRESHOLD_TURNS" ]; then
-  TRIGGER="turns=$TURNS≥$THRESHOLD_TURNS"
+# 4. 임계치 판정 — 실제 컨텍스트 사용률이 정본.
+#    2026-09-08: 턴 수만 보고 강제 압축하던 탓에 컨텍스트 29.5% 인데도 대화가
+#    25턴마다 요약으로 뭉개졌다. 사용자 체감은 "또 처음부터 다시 시작".
+#    턴 수-guard 라인은 컨텍스트 양과 무관하므로 단독 발동 금지.
+PCT=0
+if command -v python >/dev/null 2>&1; then PY=python
+elif command -v python3 >/dev/null 2>&1; then PY=python3
+else PY=""; fi
+if [ -n "$PY" ]; then
+  PCT=$("$PY" -X utf8 "$PROJECT_ROOT/.claude/scripts/context-usage-pct.py" 2>/dev/null || echo 0)
 fi
-if [ "${LINES:-0}" -ge "$THRESHOLD_LINES" ]; then
-  TRIGGER="${TRIGGER:+$TRIGGER, }guard_lines=$LINES≥$THRESHOLD_LINES"
+PCT=${PCT:-0}
+
+TRIGGER=""
+if [ "${PCT%.*}" -ge "${COMPACT_PCT_THRESHOLD:-85}" ]; then
+  TRIGGER="context=${PCT}%≥${COMPACT_PCT_THRESHOLD:-85}%"
 fi
 
 if [ -z "$TRIGGER" ]; then
   exit 0
 fi
+
+# 보조 신호는 참고로만 덧붙인다 (단독 발동 X)
+[ "$TURNS" -ge "$THRESHOLD_TURNS" ] && TRIGGER="$TRIGGER (turns=$TURNS)"
+[ "${LINES:-0}" -ge "$THRESHOLD_LINES" ] && TRIGGER="$TRIGGER (guard_lines=$LINES)"
 
 # 5. 마커 + cooldown 기록
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

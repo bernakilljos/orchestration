@@ -340,6 +340,13 @@
       design-toolkit     100+ 디자인 CDN 패턴 (30개 카테고리)
       skill-approval-gate 위험 작업 승인 게이트 (HITL)
       periodic-snapshot  PostToolUse 5분 주기 세션 저장 (크래시 방어)
+      auto-compact-check    강제 압축 판정 — 실제 컨텍스트 %가 정본 (기본 85%)
+                         · 턴 수-guard 라인은 보조 신호. 단독 발동 금지
+                           (2026-09-08: 턴 25 만으로 강제해 컨텍스트 29.5% 에서 대화가 날아갔다)
+                         · 카운터는 세션별 .claude/state/session-turns.d/<sid>.*
+                         · 마커는 컨텍스트가 임계 미만이면 auto-planner 가 자동 무효화
+      context-usage-pct.py  컨텍스트 사용률 계산 정본 — 훅마다 따로 계산하지 마
+      session-start-load-snapshot  SessionStart 에서 이전 문맥 주입 (미등록 시 새 세션 백지 시작)
 
     ◆ 디자인 & 문서
       ppt-pitfalls       13 common mistakes

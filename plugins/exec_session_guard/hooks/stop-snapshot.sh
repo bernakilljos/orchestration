@@ -16,6 +16,14 @@ SNAP="$CACHE_DIR/session-snapshot.md"
 
 mkdir -p "$CACHE_DIR" 2>/dev/null || exit 0
 
+# 본문 재생성 — session-snapshot-save.py 가 정본 (한 줄만 갱신하던 결함 교정 2026-09-08)
+_regen_snapshot() {
+  local PY
+  PY="$(command -v python 2>/dev/null || command -v python3 2>/dev/null)"
+  [ -n "$PY" ] || return 1
+  "$PY" "$PROJECT_DIR/.claude/scripts/session-snapshot-save.py" >/dev/null 2>&1
+}
+
 TS="$(date '+%Y-%m-%d %H:%M:%S')"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'n/a')"
 EVENT="${1:-Stop}"
@@ -36,7 +44,21 @@ if [ "${LINES:-0}" -gt 500 ]; then
   tail -n 300 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
 fi
 
-# 3. snapshot.md 에 "Last Hook Record" 섹션 append (없으면 뼈대 생성)
+# 3. 문맥이 끊기는 시점(PreCompact/PostCompact/SessionEnd)에는 본문 전체를 다시 쓴다.
+#    Stop 은 턴마다 발생하므로 한 줄만 갱신 (비용).
+case "$EVENT" in
+  PreCompact|PostCompact|SessionEnd)
+    if _regen_snapshot; then
+      printf "
+### Last Hook Record
+[%s] event=%s branch=%s
+" "$TS" "$EVENT" "$BRANCH" >> "$SNAP"
+      exit 0
+    fi
+    ;;
+esac
+
+# 4. snapshot.md 에 "Last Hook Record" 섹션 append (없으면 뼈대 생성)
 if [ ! -f "$SNAP" ]; then
   cat > "$SNAP" <<EOF
 ## Session Snapshot - $TS
