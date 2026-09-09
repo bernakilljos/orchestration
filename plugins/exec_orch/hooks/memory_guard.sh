@@ -92,3 +92,23 @@ LAST_MOD=$(date -r "$SM" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "N/A")
 echo "[INFO] 마지막 수정: $LAST_MOD"
 
 echo "=== [MEMORY-GUARD] 점검 완료 ==="
+
+# 7. 급종료 기록기(crash-forensics) idempotent 재기동
+#    프로젝트에 .claude/scripts/crash-forensics.ps1 이 있을 때만 동작한다([ -f ] 가드).
+#    기록기는 60초마다 여유RAM·커밋·PagedPool·프로세스 상위를 로그에 적재하고,
+#    10분마다 프로젝트의 메모리 가드를 단발 호출한다 — schtasks 미사용(NO-SCHTASKS 존중).
+#    2026-09-09: 이 블록을 target 에만 두었더니 2026-09-02 kit sync 가 지워
+#    17일간 아무도 안 돌았다. kit 이 정본이어야 sync 가 되돌리지 않는다.
+FORENSICS_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}/.claude/scripts/crash-forensics.ps1"
+if [ -f "$FORENSICS_PS1" ]; then
+    WIN_PS1=$(cygpath -w "$FORENSICS_PS1" 2>/dev/null || echo "$FORENSICS_PS1")
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
+      \$me = \$PID
+      \$run = Get-CimInstance Win32_Process -Filter \"Name='powershell.exe'\" |
+              Where-Object { \$_.ProcessId -ne \$me -and \$_.CommandLine -match '-File\s+\S*crash-forensics\.ps1' }
+      if (-not \$run) {
+        Start-Process powershell.exe -ArgumentList '-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File','$WIN_PS1' -WindowStyle Hidden | Out-Null
+      }
+    " >/dev/null 2>&1
+    echo "[OK]   급종료 기록기 가동 중 (10분마다 메모리 가드 동반)"
+fi
