@@ -46,6 +46,41 @@ bash → npx 직접 호출 시 PATH 문제. **`cmd /c npx` 래퍼 사용**.
 }
 ```
 
+## Git Bash 에서 등록하면 `/c` 가 `C:/` 로 바뀐다 (2026-09-09 · 실사고)
+
+`cmd /c npx ...` 를 **Git Bash 에서** `claude mcp add` 로 등록하면 MSYS 경로 자동변환이
+`/c` 를 `C:/` 로 바꿔 버린다. 저장된 결과:
+
+```json
+{ "command": "cmd", "args": ["C:/", "npx", "-y", "@playwright/mcp"] }   // 망가진 것
+{ "command": "cmd", "args": ["/c",  "npx", "-y", "@playwright/mcp"] }   // 올바른 것
+```
+
+`/c` 가 없으니 cmd 가 **대화형 셸로 떠서** MCP 프로토콜을 말하지 않고 30초 타임아웃난다.
+증상은 "connection timed out" 이라 콜드스타트로 오해하기 쉽다 — 실제로 그 패키지를
+직접 `npx -y <pkg>` 로 띄우면 **3~5초에 정상 응답**한다. 그 대조가 판별법이다.
+
+2026-09-09 에 이것으로 **4개 서버(fetch·playwright·sequential-thinking·context7)가
+전부 죽어 있었다.**
+
+### 처방
+1. 등록은 **PowerShell 에서** 한다 (MSYS 변환 없음):
+   `claude mcp add <name> -s user -- cmd /c npx -y <pkg>`
+   Git Bash 에서 해야 하면 `MSYS_NO_PATHCONV=1` 을 앞에 붙인다.
+2. 등록 후 **저장된 args 를 눈으로 확인**한다 — `args[0]` 이 `/c` 인지.
+   `claude mcp list` 는 명령줄을 그대로 찍어 주므로 여기서 바로 보인다.
+3. 같은 서버가 두 스코프에 등록되면 `claude mcp list` 가 `[Conflicting scopes]` 로 알려 준다.
+   OAuth 토큰은 엔드포인트별로 저장되니 하나만 남긴다.
+
+## npm 에 없는 패키지가 설정에 들어가 있었다 (2026-09-09)
+
+`@modelcontextprotocol/server-fetch` = **E404**. `mcp-server-fetch`(npm) 은
+`0.0.1-security` = 자리만 잡아둔 플레이스홀더라 이것도 아니다.
+공식 fetch 서버는 **파이썬**이다 — `uvx mcp-server-fetch` (mcp-fetch 1.30.0, 6초 응답).
+
+이 룰의 `npm view` 검증 의무는 **이미 등록된 설정에도** 적용해야 한다. 새로 넣을 때만
+검증하고 기존 것은 안 봤더니, 존재하지 않는 패키지가 계속 30초씩 타임아웃을 내고 있었다.
+
 ## OAuth / 인증 도구
 
 | 항목 | 어디 | 어떻게 |
