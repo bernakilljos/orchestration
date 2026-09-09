@@ -130,3 +130,21 @@ if [ -f "$FORENSICS_PS1" ]; then
     " >/dev/null 2>&1
     echo "[OK]   급종료 기록기 가동 중 (10분마다 메모리 가드 동반)"
 fi
+
+# 8. VS Code 창 멈춤 감시 (crash-forensics 와 별개 축)
+#    "창이 응답하지 않습니다" 는 5초만 멈춰도 뜬다 — 60초 간격 기록기에는 한 줄도 안 남는다.
+#    이 감시는 3초마다 응답성을 재고, 멈춘 순간의 CPU 상위-여유RAM-디스크큐-확장호스트 RSS 를
+#    .claude/logs/vscode-hang.log 에 남긴다. 메모리가 넉넉한데도 멈추는 경우의 원인을 잡기 위함.
+HANG_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}/.claude/scripts/watch-vscode-hang.ps1"
+if [ -f "$HANG_PS1" ]; then
+    WIN_HANG=$(cygpath -w "$HANG_PS1" 2>/dev/null || echo "$HANG_PS1")
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
+      \$me = \$PID
+      \$run = Get-CimInstance Win32_Process -Filter \"Name='powershell.exe'\" |
+              Where-Object { \$_.ProcessId -ne \$me -and \$_.CommandLine -match '-File\s+\S*watch-vscode-hang\.ps1' }
+      if (-not \$run) {
+        Start-Process powershell.exe -ArgumentList '-NoProfile','-WindowStyle','Hidden','-ExecutionPolicy','Bypass','-File','$WIN_HANG' -WindowStyle Hidden | Out-Null
+      }
+    " >/dev/null 2>&1
+    echo "[OK]   창 멈춤 감시 가동 중 (3초 간격)"
+fi
