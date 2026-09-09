@@ -68,23 +68,41 @@ else
 fi
 
 # 5. 중복 전략 체크
-DUPE_COUNT=$(python -c "
-import json
+# 2026-09-09: 이 검사가 매 세션 "중복 2,179건" 을 외쳤는데 **전부 거짓**이었다.
+#   원인 = e.get('name', ...) 이 name 키 없는 항목까지 빈 문자열 하나로 뭉갠 것.
+#   실측: 3,529개 중 2,530개(72%)가 name 키 자체가 없고 id 로 식별된다
+#   (예: claude_exp_20260327_072113). 내용 완전동일 0건 · 이름 겹침 0건 · id 겹침 0건.
+#   그래서 식별자를 id > name > phase 순으로 잡고, 셋 다 없는 항목은 중복이 아니라
+#   '식별자 없음' 으로 따로 센다. 진짜 중복은 내용 해시로도 교차 확인한다.
+DUPE_OUT=$(python -c "
+import json, hashlib
 with open('${SM_PY}', encoding='utf-8') as f:
     data = json.load(f)
 entries = data if isinstance(data, list) else data.get('strategies', data.get('experiments', []))
-if isinstance(entries, list):
-    names = [e.get('name', e.get('phase', '')) for e in entries if isinstance(e, dict)]
-    dupes = len(names) - len(set(names))
-    print(dupes)
-else:
-    print(0)
-" 2>/dev/null || echo "0")
+if not isinstance(entries, list):
+    print('0 0 0'); raise SystemExit
+items = [e for e in entries if isinstance(e, dict)]
+keys, noid = [], 0
+for e in items:
+    k = e.get('id') or e.get('name') or e.get('phase')
+    if k: keys.append(k)
+    else: noid += 1
+dup_key = len(keys) - len(set(keys))
+hashes = {hashlib.sha256(json.dumps(e, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest() for e in items}
+dup_full = len(items) - len(hashes)
+print('%d %d %d' % (dup_key, dup_full, noid))
+" 2>/dev/null || echo "0 0 0")
+DUPE_KEY=$(echo "$DUPE_OUT" | awk '{print $1}')
+DUPE_FULL=$(echo "$DUPE_OUT" | awk '{print $2}')
+NO_ID=$(echo "$DUPE_OUT" | awk '{print $3}')
 
-if [ "${DUPE_COUNT:-0}" -gt 0 ]; then
-    echo "[WARN] 중복 전략 감지: ${DUPE_COUNT}건"
+if [ "${DUPE_KEY:-0}" -gt 0 ] || [ "${DUPE_FULL:-0}" -gt 0 ]; then
+    echo "[WARN] 중복 전략 감지: 식별자 중복 ${DUPE_KEY}건 · 내용 완전동일 ${DUPE_FULL}건"
 else
-    echo "[OK]   중복 전략 없음"
+    echo "[OK]   중복 전략 없음 (식별자 0 · 내용 0)"
+fi
+if [ "${NO_ID:-0}" -gt 0 ]; then
+    echo "[INFO] 식별자(id/name/phase) 없는 항목: ${NO_ID}건 — 중복 아님"
 fi
 
 # 6. 마지막 수정 시각
