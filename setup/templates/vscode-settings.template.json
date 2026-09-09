@@ -5,16 +5,17 @@
   "python.analysis.autoImportCompletions": false,
   "python.analysis.diagnosticMode": "openFilesOnly",
   "python.analysis.exclude": [
-    "**/docs/screens/**",
-    "**/docs/deploy-history/**",
-    "**/.claude/logs/**",
-    "**/.claude/state/**",
-    "**/.claude/tasks/done/**",
-    "**/.claude/context-cache/**",
-    "**/outputs/**",
+    "**/node_modules",
+    "**/__pycache__",
+    "**/data/**",
+    "**/docs/**",
     "**/archive/**",
-    "**/node_modules/**",
-    "**/.git/**"
+    "**/outputs/**",
+    "**/nextjs/**",
+    "**/frontend/**",
+    "**/.claude/**",
+    "**/.venv/**",
+    "**/venv/**"
   ],
   "files.watcherExclude": {
     "**/docs/screens/**": true,
@@ -30,7 +31,13 @@
     "**/node_modules/**": true,
     "**/.git/objects/**": true,
     "**/__pycache__/**": true,
-    "**/*.pyc": true
+    "**/*.pyc": true,
+    "**/.venv/**": true,
+    "**/venv/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/image-cache/**": true
   },
   "files.exclude": {
     "**/__pycache__": true,
@@ -50,7 +57,16 @@
     "**/archive": true,
     "**/node_modules": true,
     "**/__pycache__": true,
-    "**/*.pyc": true
+    "**/*.pyc": true,
+    "**/__pycache__/**": true,
+    "**/.venv/**": true,
+    "**/venv/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/image-cache/**": true,
+    "**/outputs/**": true,
+    "**/archive/**": true
   },
   "search.followSymlinks": false,
   "search.useIgnoreFiles": true,
@@ -72,5 +88,7 @@
   "typescript.tsserver.maxTsServerMemory": 1024,
   "typescript.disableAutomaticTypeAcquisition": true,
   "files.maxMemoryForLargeFilesMB": 2048,
-  "terminal.integrated.gpuAcceleration": "off"
+  "terminal.integrated.gpuAcceleration": "off",
+  "python.analysis.userFileIndexingLimit": 500,
+  "git.autoRepositoryDetection": false
 }
