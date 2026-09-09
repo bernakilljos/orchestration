@@ -2,7 +2,21 @@
 # HOOK-01 — Pre-Task: 태스크 시작 전 등록 + 파일 충돌 검사
 set -e
 
-PROJECT="${1:-$(pwd)}"
+# 2026-09-10: 기본값이 $(pwd) 라 하위 디렉터리에서 부르면 거기에 .claude/tasks 를
+#   만들었다(nextjs/src/app/.claude 등 8곳). 루트 표식을 찾아 올라간다.
+_find_root() {
+  [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "$CLAUDE_PROJECT_DIR" ] && { echo "$CLAUDE_PROJECT_DIR"; return; }
+  d="$(pwd)"
+  i=0
+  while [ "$i" -lt 12 ]; do
+    if [ -d "$d/.git" ] || { [ -d "$d/.claude" ] && [ -d "$d/plugins" ]; }; then echo "$d"; return; fi
+    p="$(dirname "$d")"
+    [ "$p" = "$d" ] && break
+    d="$p"; i=$((i+1))
+  done
+  pwd
+}
+PROJECT="${1:-$(_find_root)}"
 TASKS_DIR="$PROJECT/.claude/tasks"
 CURRENT="$TASKS_DIR/current-tasks.json"
 
