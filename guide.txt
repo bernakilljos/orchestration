@@ -1174,6 +1174,10 @@
       - 11 자동 최적화: .claude/rules/auto-optimization.md
         · .claude/scripts/nightly-optimize.py (매일 03:00 · DB VACUUM · retention · 백업)
         · 6 축 자동 (프롬프트 압축 · 컨텍스트 축소 · DB · 이미지 · 로그 · hook 프로파일)
+      - 12 일일 산출물 refresh (2026-09-16 신설): .claude/rules/artifact-freshness-check.md § 매일 자동 갱신
+        · .claude/scripts/daily-artifact-refresh.py + wrapper .bat (동적 python 검색)
+        · setup/modules/18-daily-artifact-refresh.bat (Task Scheduler Orca_DailyArtifactRefresh 매일 04:00)
+        · OVERDUE 산출물 (강의 docx · catalog pptx · md · README) 자동 append + .bak 백업 + idempotent
 
   2026-05-19 AI-Native 3대 플러그인 + 7대 뮤스탱 + 디자인 100+ CDN (신규):
     ✓ AI-Native 3대 플러그인 (dd69eeb, 8d5fb2a, f0843fc 누적)
