@@ -72,6 +72,91 @@ if echo "$PROMPT" | grep -qE '모르겠|이해.*안|뭔 소리|무슨 말|쉽게
   actions="${actions}[이해 어려움 감지] -> /explainlikeim5 자동 발동. 5살 톤·일상 비유·고급 용어 X. 긴 essay 금지.\\n"
 fi
 
+# 12. 비교·결정 트리거
+if echo "$PROMPT" | grep -qE 'vs |대 |비교|뭐가 좋|어떤 게|차이'; then
+  actions="${actions}[비교 요청] -> /compare 자동 (장단점·추천·근거 표).\\n"
+fi
+
+# 13. 확신·리스크 질문
+if echo "$PROMPT" | grep -qE '확신|괜찮을|리스크|위험|걱정|문제 없|안전'; then
+  actions="${actions}[리스크 질문] -> /devil 자동 (악마의 변호인 · 모든 가정 반론).\\n"
+fi
+
+# 14. 복잡·기초부터
+if echo "$PROMPT" | grep -qE '복잡해|처음부터|기초|기본부터|차근차근'; then
+  actions="${actions}[단계별 교육 필요] -> /teacher 자동 (단계별 · 이해 확인).\\n"
+fi
+
+# 15. 접근 방식·brainstorming
+if echo "$PROMPT" | grep -qE '어떻게 해야|접근 방식|어떻게 할까|방법론|전략'; then
+  actions="${actions}[접근 방식 질문] -> /ooda 또는 /brainstorm 자동 (상황 분석·설계 옵션).\\n"
+fi
+
+# 16. 피드백·평가 요청
+if echo "$PROMPT" | grep -qE '내 생각|피드백|평가|어때\?|의견'; then
+  actions="${actions}[피드백 요청] -> /critique 자동 (냉정 비판 · 칭찬 X).\\n"
+fi
+
+# 17. 리서치·조사
+if echo "$PROMPT" | grep -qE '리서치|조사|알아봐|뭐가 있나|후보'; then
+  actions="${actions}[리서치] -> /scout 자동 (정찰 · breadth 먼저 · WebSearch 병행).\\n"
+fi
+
+# 18. 요약·짧게
+if echo "$PROMPT" | grep -qE '요약|짧게|3줄|한 줄|초간결'; then
+  actions="${actions}[요약 요청] -> /brief 자동 (3줄 이내).\\n"
+fi
+
+# 19. 발표·보고·PL
+if echo "$PROMPT" | grep -qE '발표|보고|피치|PT|임원|PL|설득'; then
+  actions="${actions}[보고/발표] -> /pitch 자동 (설득력 있는 투자자 피치 포맷).\\n"
+fi
+
+# 20. AI 티·natural
+if echo "$PROMPT" | grep -qE 'AI 티|사람처럼|자연스럽게|natural|AI 글'; then
+  actions="${actions}[AI 티 제거] -> /ghost 자동 (AI 글쓰기 패턴 제거).\\n"
+fi
+
+# 21. 상태·대시보드
+if echo "$PROMPT" | grep -qE '상태|지금 어때|현황|대시보드|dashboard'; then
+  actions="${actions}[상태 조회] -> /exec_status 자동 (워커·큐·heartbeat·sync 통합).\\n"
+fi
+
+# 22. 승인·대기
+if echo "$PROMPT" | grep -qE '승인|approve|대기|pending|waiting'; then
+  actions="${actions}[승인 체크] -> /approvals 자동 (대기 task 전부 보기).\\n"
+fi
+
+# 23. 비용·토큰
+if echo "$PROMPT" | grep -qE '비용|얼마나 썼|지출|토큰 통계|token stat'; then
+  actions="${actions}[비용 조회] -> /token-stats 자동.\\n"
+fi
+
+# 24. 완료·마무리
+if echo "$PROMPT" | grep -qE '완료|끝났|다 됐|마무리|끝'; then
+  actions="${actions}[완료 처리] -> /validate 자동 (테스트·스크린샷·증거 저장).\\n"
+fi
+
+# 25. commit·push·PR 전
+if echo "$PROMPT" | grep -qE 'commit|push|PR|배포 전|릴리스'; then
+  actions="${actions}[배포 전] -> /sec-scan 자동 (semgrep·gitleaks·bandit).\\n"
+fi
+
+# 26. God mode·알아서
+if echo "$PROMPT" | grep -qE '다 해줘|알아서|god ?mode|모든 것'; then
+  actions="${actions}[God mode] -> /godmode 자동 (최대 자율 · 직통 라우팅).\\n"
+fi
+
+# 27. 초난도·Mythos
+if echo "$PROMPT" | grep -qE '최고 성능|초난도|어려운 문제|mythos|fable'; then
+  actions="${actions}[Mythos] -> /effort-mythos 자동 (Fable 5.1 라우팅 · budget 게이트).\\n"
+fi
+
+# 28. 다이어그램·시각화
+if echo "$PROMPT" | grep -qE '다이어그램|그림|시각화|구조도|마인드맵'; then
+  actions="${actions}[시각화] -> /arch-auto 자동 (마인드맵·레이어·치트 중 적합).\\n"
+fi
+
 # 감지된 게 있으면 systemMessage
 if [ -n "$actions" ]; then
   cat <<EOF
