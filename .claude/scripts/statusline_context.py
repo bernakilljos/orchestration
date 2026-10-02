@@ -24,6 +24,8 @@ WIDTH = 10
 
 # 상한 매핑 - 긴 것부터
 LIMIT_PREFIXES = [
+    # Opus 5.5 = 1M 기본 (접미 유무 무관) - "claude-opus-5" 보다 먼저 와야 함
+    ("claude-opus-5-5", 1_000_000),
     # [1m] 접미 - 긴 것 먼저
     ("claude-opus-5[1m]", 1_000_000),
     ("claude-sonnet-5[1m]", 1_000_000),
@@ -85,6 +87,8 @@ def last_assistant_usage(jsonl_path: str) -> dict | None:
 
 # 모델별 rate (USD per MTok) - input · output · cache_write · cache_read
 MODEL_RATES = {
+    # 긴 접두사 먼저 - "claude-opus-5" 가 opus-5-5 를 가로채지 않게
+    "claude-opus-5-5": (4.0, 20.0, 5.0, 0.2),
     "claude-opus-5": (5.0, 25.0, 6.25, 0.5),
     "claude-opus-4-8": (5.0, 25.0, 6.25, 0.5),
     "claude-opus-4-7": (5.0, 25.0, 6.25, 0.5),
