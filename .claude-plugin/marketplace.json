@@ -42,7 +42,7 @@
     {
       "name": "mcp_collab",
       "source": "./plugins/mcp_collab",
-      "description": "협업 MCP (Slack·Notion·Jira·Gmail)",
+      "description": "협업 MCP (Slack·Notion·Jira·Trello·Telegram·Zendesk·Gmail)",
       "version": "1.0"
     },
     {

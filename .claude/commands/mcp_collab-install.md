@@ -1,5 +1,5 @@
 ---
-description: "협업 MCP 설치 (Slack·Notion·Jira·Trello·Telegram + 내장 Gmail·Calendar) — 2026-05 npm 검증"
+description: "협업 MCP 설치 (Slack·Notion·Jira·Trello·Telegram·Zendesk + 내장 Gmail·Calendar) — 2026-10 npm 검증"
 allowed-tools: Bash(claude:*), Bash(npm:*)
 ---
 
@@ -137,19 +137,56 @@ curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
 
 > **보안 주의**: 토큰이 채팅을 보낼 수 있는 모든 권한을 가짐 → `.env` (gitignore)에만 저장. `docs/ini/telegram.ini` 도 가능.
 
+### 6. Zendesk — @fruggr/zendesk-mcp-server v3.0.1 (2026-09-30 최신)
+
+**왜 이것?**: 2026-10 npm 실측 — `zendesk-mcp` v1.0.0 (2026-01) 보다 최신·기능 풍부. Support ticket end-to-end (comments·triage·attachments) + Help Center article (search·draft·update·translate) 지원.
+
+**준비 (API Token)**:
+```bash
+# 1. Zendesk 관리자 콘솔 → Admin Center → Apps and integrations → APIs → Zendesk API
+# 2. Settings → Enabled 체크 → "Token Access" ON
+# 3. "Add API token" → label 입력 → 토큰 복사 (한 번만 보임)
+# 4. Email·subdomain 확인:
+#    - Subdomain: https://<SUBDOMAIN>.zendesk.com 의 <SUBDOMAIN>
+#    - Email: Zendesk 로그인 이메일
+```
+
+**설치**:
+```bash
+export ZENDESK_SUBDOMAIN="your-company"           # yourname.zendesk.com 의 yourname
+export ZENDESK_EMAIL="your-email@company.com"
+export ZENDESK_API_TOKEN="abc123..."
+
+# Windows cmd /c 래퍼 권장
+claude mcp add zendesk -s user \
+  --env ZENDESK_SUBDOMAIN=$ZENDESK_SUBDOMAIN \
+  --env ZENDESK_EMAIL=$ZENDESK_EMAIL \
+  --env ZENDESK_API_TOKEN=$ZENDESK_API_TOKEN \
+  -- npx -y @fruggr/zendesk-mcp-server
+```
+
+**주요 기능**:
+- `create_ticket` · `update_ticket` · `add_comment` · `search_tickets`
+- `list_articles` · `create_article` · `translate_article` (Help Center)
+- `get_user` · `assign_ticket`
+- 첨부 이미지 처리 (OCR 포함)
+
+> **보안 주의**: API Token = 전체 ticket·user 조회 권한. `.env` (gitignore) 또는 `docs/ini/zendesk.ini` 저장. 공유 X.
+
 ## 설치 확인
 
 ```bash
-claude mcp list | grep -E "slack|notion|jira|trello|telegram"
+claude mcp list | grep -E "slack|notion|jira|trello|telegram|zendesk"
 ```
 
 기대 결과:
-```
+```text
 slack    @sigmacomputing/slack-mcp-server
 notion   @notionhq/notion-mcp-server
 jira     @rui.branco/jira-mcp
 trello   trello-mcp
 telegram telegram-bot-mcp-server
+zendesk  @fruggr/zendesk-mcp-server
 ```
 
 ## 미지원 (또는 대체 경로)

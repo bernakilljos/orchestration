@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-09-18): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 134
+> **현재 상태** (2026-10-02): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 134
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -56,13 +56,14 @@
 4. **신규 changelog 알림 확인 (필수)** — `.claude/state/changelog-new.md` 있으면 **첫 응답 전 반드시 Read** → `feedback_official_features_auto_check.md` 매트릭스로 평가 ( 이상 자율 반영,  이하 보고) → 처리 후 파일 삭제. Hook 가 만들어둔 알림을 안 읽는 것 = `feedback_official_features_auto_check.md` 위반
 5. **세션 히스토리 자동 로드 (2026-09-02 신설)** — `.claude/hooks/load-recent-conversations.sh` 가 `orca.db.session_summary` 최근 3 세션 요약을 systemMessage 로 주입 → 새 세션이 이전 문맥 자동 인지 · UserPromptSubmit·Stop·SessionEnd 는 대화·요약을 `conversations` / `session_summary` 자동 저장. 상세: `.claude/rules/conversation-history.md`
 
-### 3.2 AI 역할 (규모·특성 기반, **Opus 5 신규 default 2026-07-24** · Opus 4.8 병존 · Fable 5 초난도 · Sonnet 5 균형)
+### 3.2 AI 역할 (규모·특성 기반, **Opus 5.5 신규 default 2026-09-22 · 5.5 family 첫 모델** · Opus 5 호환 fallback · Fable 5.1 / Mythos 5.1 초난도 · Sonnet 5 균형)
 | 태스크 | AI | 방법 |
 |--------|-----|------|
-| **설계·복잡추론 (default)** | **Claude Opus 5 [NEW 2026-07-24]** | `claude-opus-5` · **1M context 기본+최대** · 128k 출력 · thinking on-by-default · effort ladder (low/medium/high/xhigh/max) · **breaking**: `thinking:{"type":"disabled"}` + effort `xhigh`/`max` = 400 error (4.8 는 허용) · $5/$25 (4.8 동일) |
-| 설계·복잡추론 (호환/저비용 fallback) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` · 1M context 800k 제한 · thinking disable 자유 (Opus 5 호환 안 되는 코드에서 fallback) |
-| 초난도·다각 검증 | Claude Opus 5 + ultracode | `/effort ultracode` → Dynamic Workflows (기본 medium ≤15 agents, `workflowSizeGuideline` settings 로 조정) · **sub-agent 가 sub-agent spawn depth 3 default** (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 비활성) · v2.1.206+ findings quality 개선 |
-| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5 [RESTORED 2026-07-01]** | 2026-06-12 US export-control 로 suspend 되었다가 2026-07-01 Anthropic 이 restored (공식 statement). `/effort mythos` 호출 시 정상 라우팅. route.py `SUSPEND_MODELS = set()`. 30일 data retention 요구. **참고: Anthropic 내부 `Model 2` (Mythos 5 초과, 2026-08-14 RSP disclosed) 외부 release X — 승격 대상 아님** |
+| **설계·복잡추론 (default)** | **Claude Opus 5.5 [NEW 2026-09-22]** | `claude-opus-5-5` · **1M context 기본** (no surcharge) · 128k 출력 · **adaptive thinking always-on** (API default effort medium) · **$4/$20** per MTok (Opus 5 대비 **40% 저렴** · cache $0.20) · 지식 cutoff 2026-06 · beta: mid-conversation system message 내 inline tools · **thinking disable 불가** (always-on) |
+| 설계·복잡추론 (호환 fallback) | Claude Opus 5 | `claude-opus-5` · $5/$25 · 1M context · thinking disable 가능 (5.5 는 always-on 이라 disable 불가 — 호환성 필요한 코드에서 fallback) |
+| 설계·복잡추론 (저비용 fallback) | Claude Opus 4.8 | Extended Thinking + `/effort xhigh` · 1M context 800k 제한 · thinking disable 자유 (Opus 5/5.5 호환 안 되는 코드에서 fallback) |
+| 초난도·다각 검증 | Claude Opus 5.5 + ultracode | `/effort ultracode` → Dynamic Workflows (기본 medium ≤15 agents, `workflowSizeGuideline` settings 로 조정) · **sub-agent 가 sub-agent spawn depth 3 default** (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` 로 nesting 비활성) · v2.1.206+ findings quality 개선 |
+| **Mythos-class (Opus 가 fail / long-running / vision-heavy)** | **Claude Fable 5.1 / Mythos 5.1 [NEW 2026-09-01]** | 동일 weights · 다른 safeguard. Fable 5.1 Terminal-Bench 4.0 **55.8%** · Terminal-Bench-Science 0.1 **52.6%** (vs Fable 5 24.7%·Opus 5 29.0%·GPT-5.6 Sol 22.4%) · AutomationBench 31.4% · CursorBench 3.2.0 73.4% · GDPval-AA v2 **1853** (vs Opus 5 1824·Fable 5 1723) · **cache reads 75% 저렴**. Mythos 5.1 Terminal-Bench 4.0 60.9% (access-gated). `/effort mythos` 호출. 30일 data retention 요구 |
 | 로컬·오픈웨이트 (오프라인 대량·edge) | **Qwen 3.8-27B [NEW 2026-08-14]** / Llama 4 / Llama 3.3 | `/exec_offline-model` (Ollama). **Qwen 3.8-27B**: Apache 2.0 · 27.78B params · **262K context** · 멀티모달(text/image/video) · SWE-bench Pro **61.7%** (Claude Opus 4.6 Max 53.4%) · Alibaba 자체 평가. 로컬 우선 라우팅 매트릭스에서 코드·추론 top 후보. Llama 4 는 10M context 강점 (초장기 컨텍스트 로컬 recall) |
 | 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
@@ -75,14 +76,19 @@
 | 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**가격** (2026-07-24 기준):
-- **Opus 5** (신규 default): $5/$25 per MTok · `claude-opus-5` · 1M context 기본+최대 · 128k 출력 · thinking on-by-default · Claude API·Bedrock·Vertex·Foundry 모두 GA
-- **Opus 4.8** (호환 fallback): $5/$25 per MTok · Fast $10/$50 (2.5× 속도) · Opus 5 breaking (thinking disable) 안 되는 코드에서 fallback
-- **Opus 4.7**: **fast mode 제거 (2026-07-24 breaking)** — fast 는 4.8 또는 Opus 5 로 마이그레이션. Opus 4.7 표준 속도만 유지
-- **Fable 5** (Mythos-class, 2026-07-01 RESTORED): $10/$50 per MTok · 128k 출력 · `claude-fable-5` · 30-day data retention 요구
-- **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)** — 원래 9/1 예정된 $3/$15 인상 취소.
+**가격** (2026-10-02 기준):
+- **Opus 5.5** (신규 default, 2026-09-22): **$4/$20** per MTok · cache $0.20 · `claude-opus-5-5` · 1M context 기본 (surcharge 없음) · 128k 출력 · adaptive thinking always-on · 지식 cutoff 2026-06 · Claude API·Bedrock·Vertex·Foundry 모두 GA
+- **Opus 5** (호환 fallback): $5/$25 per MTok · `claude-opus-5` · thinking disable 가능 (5.5 는 always-on)
+- **Opus 4.8** (저비용 fallback): $5/$25 per MTok · Fast $10/$50 (2.5× 속도) · thinking disable 자유
+- **Opus 4.7**: **fast mode 제거 (2026-07-24 breaking)** — fast 는 4.8 또는 Opus 5/5.5 로 마이그레이션
+- **Fable 5.1 / Mythos 5.1** (2026-09-01): $10/$50 per MTok · 128k 출력 · `claude-fable-5-1` · `claude-mythos-5-1` · **cache reads 75% 저렴** · 30-day data retention 요구
+- **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)**.
 
-**Claude Code v2.1.241** (2026-08-25 기준 최신):
+**Claude Code v2.1.287** (2026-10-02 기준 최신):
+- **2.1.287 (10/1)**: **Claude Mods** 공식 출시 — TypeScript 기반 custom behavior·새 UI·feature replacement (CLI + desktop app). Mods 는 plugins 로 ship · directory 통해 공유. **built-in `/diff` = 이제 mod** (`/plugin` 에서 off 가능 or 교체). 팀 custom plugin 영향 — install order 룰 영향 없음
+- **2.1.285 (9/29 · BIG RELEASE)**: **MCP fixes** — `claude mcp list` 가 WebSocket (ws) MCP 서버 포함 (URL + health status) · mid-session 추가 MCP server off 전환 시 tool 잔존 fix (SDK + `-p` 세션) · **Plugin fixes** — bundled `.mcpb` MCP server 미설정 시 silent skip X (/plugin, install message, `claude plugin install` 모두 "Configure" 안내) · **`claude --desktop`** (현재 디렉토리 또는 `--continue`/`--resume <id>` 세션에서 Claude desktop app 오픈) · **`CLAUDE_CODE_DISABLE_WEB_FETCH`** env var (WebFetch tool 비활성 · 우리 approval-gate 와 상호보완)
+- **2.1.280 (9/22 · BIG RELEASE)**: **Opus 5.5 default 승격** — `claude-opus-5-5` 신규 default · 1M context 유지 · adaptive thinking always-on · fullscreen 모드 **list 마우스 지원** 개선
+- **2.1.260 (9/4)**: **Fullscreen diff panel** — conversation 옆에 diff panel 자동 오픈. Claude 가 edit 할 때마다 uncommitted changes 실시간 표시 (우리 git commit auto-verify 룰과 정합)
 - **2.1.241 · 2.1.240 (8/24, 8/23)**: Bug fixes and reliability improvements
 - **2.1.239 (8/22 · BIG RELEASE)**: **`ANTHROPIC_DEFAULT_MODEL` env var** (신 세션 시작 모델 지정) · **Fullscreen renderer** Bedrock/Vertex/Foundry 확장 · **`/claude-api upgrade`** (anthropic Python 0.x→1.x 마이그레이션 command) · **Cloud sessions synced plugins** (`name@synced` 표시 · enable/disable 지원) · **Alpine/musl** native image paste·clipboard·audio-capture · **Usage-limit reset 표시** (세션·주간) · **Bedrock streaming Content-Type strip fix** (silent doubled billing 방지 — 우리 budget 룰 정합) · **`awsAuthRefresh`** HTTPS proxy + Bedrock SSO hang fix · **Edit/Write JetBrains IDE 5초 pause fix** · **WebFetch 15-min cache respect** (expired page content 재사용 fix) · **`/resume` cross-directory + all-projects fix** (deleted directory 처리) · **`.worktreeinclude` `**/` fix** · **UTF-8 BOM agents/skills/commands 무시 fix** (우리 no-mojibake 룰 정합) · **Vim mode Escape NORMAL + text 보존** · **OpenTelemetry trace fragmentation** (deferred tool executions) fix · **Persistent retry mode**: spend-limit + out-of-credits 즉시 fail (기존 재시도 X · 우리 budget 시스템 정합) · **Claude in Chrome**: `/clear` = 세션 Chrome tab group 닫기 · **Windows cross-session messaging** (`SendMessage` cross-session Windows 지원 · 우리 다중 세션 격리 룰 정합) · **`ListAgents` live teammates + 자기 이름 반환** · **`keybindingFlavor: "readline"` Bash 매치** · Remote sessions mobile-uploaded images path 포함 · VSCode "View usage" inline · `/goal` 재개 시 active goal 복원 · `/insights` `<message>` 태그 echo fix · `claudeMdExcludes` symlink 처리 fix
 - **2.1.238 (8/22)**: **`keybindingFlavor` 설정** — `"readline"` 로 Bash-style Ctrl+W (word delete) · Alt+F · Option+→ · **Plugin marketplace `headersHelper`** (HTTP 헤더 dynamic 생성 · install/update 시 user confirmation · 우리 MCP OAuth 룰 확장) · **`claude self-hosted-runner --defer-shutdown-max-min`** (graceful shutdown) · Proxy authorization command (egress proxy 헤더 refresh) · 장기 세션 unbounded memory growth fix (subagent 결과 release) · Custom output styles 대화 중 default 복귀 fix · Worktree isolation 강화
@@ -105,6 +111,11 @@
 - 상세: [[claude-code-changelog-august]] (memory) · Anthropic 공식 changelog
 
 **API 신규 (2026-07-08 이후)**:
+- **9/22: Claude Opus 5.5 launched** — `claude-opus-5-5`, $4/$20 (Opus 5 대비 **40% 저렴**), 1M context 기본, 128k 출력, **adaptive thinking always-on**, 지식 cutoff 2026-06. 첫 Claude 5.5 family 모델. Beta: mid-conversation system message 내 inline tools. API·Bedrock·Vertex·Foundry 모두 GA 당일 (우리 route.py default 승격 트리거)
+- **9/22: On-demand conversation compaction (Messages API)** — 긴 대화 compaction 요청 → signed `compaction` block 반환 → 이후 요청에서 재사용 가능. **`thinking_mismatch_allowed`** 추가 (preserved thinking 가 history edit 전에 감지 돕기 · 우리 state_session 룰 정합)
+- **9/22: Agent Skills (GA)** — custom AI workflow 를 skill 로 패키징 · GitHub-hosted auto-discovery (`.claude/skills`) · 조직 내 공유 · 우리 skill-design.md 와 정합
+- **9/22: Commerce agents blueprint** — retail·travel·telecom·ticketing reference impl. Messages API·Agent SDK·Managed Agents 모두 지원. Guardrail (가격 catalog 제한·manipulative upsell 차단). Claude Code plugin 로 customization
+- **9/01: Fable 5.1 / Mythos 5.1 launched** — 동일 weights 다른 safeguard. 벤치마크 (Terminal-Bench 4.0 Fable 55.8% / Mythos 60.9% · Science 0.1 Fable 52.6%). GDPval-AA v2 1853. **cache reads 75% 저렴** (Fable 측). API·우리 route.py `/effort mythos` 라우팅 그대로
 - **8/18: Workbench → Playground** — Claude Console UI 개편 (`platform.claude.com/playground`). 모든 Messages API parameter 지원 + code execution·web search 데모 템플릿 + full SDK request/response 표시. legacy Workbench 는 8/17 sunset (예정대로 완료)
 - **8/14: Anthropic Risk Report v2 (RSP v3.4)** — catastrophic-misalignment `very low → low` 상향 (cybersecurity eval 불확실성 근거) · **`Model 2` 내부 프론티어 disclosed** — Mythos 5 초과 성능 · 외부 release 계획 X · Mythos 5 대비 새/추가 misalignment 프로파일 X · 커버 기간 2026-02-24 ~ 07-15
 - **8/7: Managed Agents 관리 컨트롤 4종** — ① **Session budgets** (hard cap, `budget_reached` stop_reason, list-rate pricing — 우리 route.py budget 시스템 정합) · ② **Advisor tool** (`{"type":"advisor"}` in multiagent roster — mid-turn 다른 모델 상담, 우리 Claude 설계→Codex 구현→Gemini 검증 협업과 유사) · ③ **Inference geo pinning** (`model.inference_geo` — data residency) · ④ **GitHub-hosted skills** (repo mount 시 `.claude/skills` 자동 discovery — install 워크플로우 정합)

@@ -435,14 +435,22 @@
     /explainlikeim5        5살도 이해하게 쉽게 설명
     /brief                 핵심만 3줄 이내로
     /teacher               단계별 교육 방식으로 설명
+    /rewrite               글 다시 쓰기 (톤·스타일·대상·길이 지정)                 [2026-10-02]
+    /translate             번역 (--to lang · glossary 유지)                       [2026-10-02]
+    /expand                요약·bullet → 상세 본문으로 확장                        [2026-10-02]
+    /format-as             table·json·yaml·md·csv·xml·html·sql·mermaid 변환      [2026-10-02]
+    /generate-ideas        브레인스토밍 — 다양한 각도 N개 아이디어                 [2026-10-02]
 
-  [에이전트 — 6개]
+  [에이전트 — 6개 + 동료 모드 3개]
     01 team-lead     설계/지시서 작성
     02 implementer   구현 실행
     03 reviewer      코드 리뷰
     04 architect     아키텍처 설계
     05 monitor       서버 헬스 체크
     06 designer      디자인 참조/생성
+    coach                   1:1 코칭 · GROW 모델 · 목표·결정 지원      [2026-10-02]
+    pm                      프로젝트 매니지먼트 · 스코프·리스크·일정    [2026-10-02]
+    brainstorming-partner   divergent-first 아이디어 생성 · 산업 이식  [2026-10-02]
 
   [도구 — 2개]
     tools/video-restore.py     동영상/이미지 복원 (CodeFormer+Real-ESRGAN)
@@ -566,7 +574,7 @@
     용도: 스케줄 태스크·워치독이 필요 없는 머신 (노트북·임시 환경·CI) 에서
           세션 시작 부하와 schtasks 오염을 0 으로.
 
-  [라우팅 정책 — Opus 4.8 default · Fable 5 RESTORED · Sonnet 5 신규 (2026-07-01 Fable RESTORED, 07-02 Sonnet 5 출시)]
+  [라우팅 정책 — Opus 5.5 default (2026-09-22) · Fable 5.1/Mythos 5.1 (2026-09-01) · Sonnet 5]
     기본 라우터가 4.8 중심·Fable 5 신중 승격·Sonnet 5 비용 검토 중으로 설계됨:
       설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)
       초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows) — v2.1.206 에서 findings quality 개선

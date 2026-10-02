@@ -1,12 +1,18 @@
 # Anthropic API 신기능 활용 룰
 
-> **근거**: 2026-09-02 · Anthropic 2026-07~09 신기능 · 우리 kit 통합.
+> **근거**: 2026-10-02 갱신 · Anthropic 2026-07~10 신기능 · 우리 kit 통합.
 
 ## 신기능 매트릭스
 
 | 기능 | 적용 | 우리 활용 |
 |---|---|---|
-| **Prompt cache 1시간 TTL** | `cache_control: {type: "ephemeral", ttl: "1h"}` | 장기 세션 · 큰 시스템 프롬프트 |
+| **Opus 5.5 adaptive thinking (always-on)** | `claude-opus-5-5` default effort medium | 설계·복잡추론 default — thinking disable 불가 |
+| **On-demand conversation compaction** (9/22) | `/v1/messages/compaction` → signed `compaction` block 재사용 | 긴 세션 자동 압축 · state_session 룰과 정합 |
+| **`thinking_mismatch_allowed`** (9/22) | preserved thinking 블록이 history edit 전에 감지 | multi-session·orchestration 안전 |
+| **Agent Skills (GA)** (9/22) | GitHub repo `.claude/skills` 자동 discovery + 조직 공유 | 우리 skill-design.md 와 정합 · install 워크플로우 |
+| **Commerce agents blueprint** (9/22) | retail·travel·telecom·ticketing reference impl · Messages API·Agent SDK·Managed Agents | Guardrail 패턴 참고 (가격 catalog 제한·upsell 차단) |
+| **Mid-conversation inline tools in system messages** (beta, 9/22) | Opus 5.5 only | dynamic tool addition 가능 |
+| **Prompt cache 1시간 TTL** | `cache_control: {type: "ephemeral", ttl: "1h"}` | 장기 세션 · 큰 시스템 프롬프트 · Fable 5.1 **cache reads 75% 저렴** |
 | **Advisor tool** | `{"type":"advisor"}` in multiagent roster | mid-turn 다른 모델 상담 (Claude → GPT 상담) |
 | **Session budgets** | `budget_reached` stop_reason | route.py budget 정합 |
 | **Inference geo pinning** | `model.inference_geo` | 개보법·GDPR 대응 |
@@ -15,7 +21,7 @@
 | **Managed Agents webhooks** | `environment.*`·`memory_store.*` | 이벤트 자동 |
 | **Files API** | 파일 업로드·재사용 | 대량 문서 감사 |
 | **Citations** | 응답 근거 자동 인용 | 감사 신뢰도 |
-| **Extended Thinking** (`beta`) | 사고 체인 저장 | Opus 5 default |
+| **Extended Thinking** (`beta`) | 사고 체인 저장 | Opus 5.5 default (always-on) |
 
 ## 실제 사용 예
 
