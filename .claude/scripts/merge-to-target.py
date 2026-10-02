@@ -158,6 +158,19 @@ def main() -> int:
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
     stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "kit-only")}
+    # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
+    man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
+    try:
+        manifest = json.loads(man_p.read_text(encoding="utf-8")) if man_p.exists() else {}
+    except Exception:
+        manifest = {}
+
+    def owned(rel: str, db: bytes) -> bool:
+        return manifest.get(rel) == md5(norm(db)) or md5(db) in git_history_hashes(rel)
+
+    def put(rel: str, src: Path, dst: Path) -> None:
+        shutil.copy2(src, dst)
+        manifest[rel] = md5(norm(src.read_bytes()))
 
     for tree in TREES:
         for rel in walk(KIT, tree):
@@ -167,18 +180,19 @@ def main() -> int:
                 stats["kit-only"].append(rel)
                 if apply:
                     dst.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(src, dst)
+                    put(rel, src, dst)
                 continue
             db = dst.read_bytes()
             if norm(sb) == norm(db):
                 stats["identical"].append(rel)
+                manifest[rel] = md5(norm(db))
                 continue
-            if md5(db) in git_history_hashes(rel):
+            if owned(rel, db):
                 stats["stale-kit"].append(rel)
                 if apply:
                     (backup / rel).parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(dst, backup / rel)
-                    shutil.copy2(src, dst)
+                    put(rel, src, dst)
             else:
                 stats["target-custom"].append(rel)
 
@@ -189,15 +203,15 @@ def main() -> int:
         if not dst.exists():
             stats["kit-only"].append(rel)
             if apply:
-                shutil.copy2(src, dst)
+                put(rel, src, dst)
         elif norm(src.read_bytes()) == norm(dst.read_bytes()):
             stats["identical"].append(rel)
-        elif md5(dst.read_bytes()) in git_history_hashes(rel):
+        elif owned(rel, dst.read_bytes()):
             stats["stale-kit"].append(rel)
             if apply:
                 backup.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(dst, backup / rel)
-                shutil.copy2(src, dst)
+                put(rel, src, dst)
         else:
             stats["target-custom"].append(rel)
 
@@ -249,6 +263,9 @@ def main() -> int:
                 with open(idx, "a", encoding="utf-8") as f:
                     f.write(line)
 
+    if apply:
+        man_p.parent.mkdir(parents=True, exist_ok=True)
+        man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
     # 병합한 대상은 이 PC 의 목록에 자동 등록 → git pull (post-merge) 때 자동 재병합
     #   목록은 .claude/state/ (gitignore · PC 별) — 경로를 git 에 박지 않는다
     if apply:

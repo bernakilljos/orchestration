@@ -43,3 +43,15 @@ PM_EOF
   chmod +x "$PM" 2>/dev/null
   echo "[install-git-hooks] post-merge hook 설치 완료"
 fi
+
+# post-rewrite: pull --rebase 는 post-merge 를 안 부른다 → 같은 동작을 rebase 후에도
+PR="$PROJECT_DIR/.git/hooks/post-rewrite"
+if ! grep -q "merge-to-target" "$PR" 2>/dev/null; then
+  cat > "$PR" <<'PR_EOF'
+#!/usr/bin/env bash
+[ "$1" = "rebase" ] || exit 0
+exec "$(git rev-parse --show-toplevel)/.git/hooks/post-merge"
+PR_EOF
+  chmod +x "$PR" 2>/dev/null
+  echo "[install-git-hooks] post-rewrite hook 설치 완료"
+fi
