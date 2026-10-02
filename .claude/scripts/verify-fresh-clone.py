@@ -46,6 +46,27 @@ def main() -> int:
             written.setdefault(tbl, set()).add(str(p.relative_to(ROOT)))
     no_ddl = {t: w for t, w in written.items() if t not in created}
 
+    # 1-b) 쓰는 컬럼이 DDL(또는 ALTER ADD COLUMN)에 있는가 — 2026-10-02 session_summary.updated_at 누락 사고
+    ddl_cols: dict[str, set[str]] = {}
+    for m in re.finditer(r"CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\)\s*;", all_text, re.S):
+        body = re.sub(r"--[^\n]*", "", m.group(2))   # SQL 주석 제거 (오탐 방지)
+        cols = {c.strip().split()[0] for c in body.split(",") if c.strip()}
+        ddl_cols.setdefault(m.group(1), set()).update(cols)
+    alter_cols = set(re.findall(r"ADD COLUMN\s+(\w+)", all_text)) | set(re.findall(r"""\("(\w+)",\s*"(?:TIMESTAMP|INTEGER|TEXT)""", all_text))
+    bad_cols: list[str] = []
+    for p, t in texts.items():
+        for m in re.finditer(r"INSERT(?:\s+OR\s+\w+)?\s+INTO\s+(\w+)\s*\(([^)]*)\)(.{0,800}?)(?:\"\"\"|\"\s*,|\)\s*$)", t, re.S):
+            tbl = m.group(1)
+            if tbl not in ddl_cols:
+                continue
+            # 파이썬 문자열 이어붙이기("a, " "b") 의 따옴표·공백 제거
+            cols = {re.sub(r"[\s\"']", "", c) for c in m.group(2).split(",")} - {""}
+            tail = m.group(3)
+            if "DO UPDATE SET" in tail:
+                cols |= set(re.findall(r"(\w+)\s*=", tail.split("DO UPDATE SET", 1)[1]))
+            for c in sorted(cols - ddl_cols[tbl] - alter_cols - {"excluded"}):
+                bad_cols.append(f"{tbl}.{c} ({p.relative_to(ROOT)})")
+
     # 2) state 파일 생성기 → hook 연결
     # hooks 섹션의 command 만 (statusLine 은 생성기가 아니라 소비자라 제외)
     sj = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8-sig"))
@@ -80,6 +101,9 @@ def main() -> int:
     for t, w in sorted(no_ddl.items()):
         bad += 1
         print(f"  [FAIL] 테이블 {t}: DDL 없음 (쓰는 곳 {', '.join(sorted(w))[:160]})")
+    for bc in sorted(set(bad_cols)):
+        bad += 1
+        print(f"  [FAIL] 컬럼 {bc}: DDL·ALTER 에 없음")
     for f, (r, pr) in sorted(orphan_state.items()):
         bad += 1
         print(f"  [FAIL] state/{f}: 읽는 곳 {r} · 생성기 {pr or '없음'} — hook 미연결")

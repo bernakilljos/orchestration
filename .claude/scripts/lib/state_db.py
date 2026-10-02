@@ -85,7 +85,8 @@ def ensure_history_tables(conn) -> None:
     CREATE TABLE IF NOT EXISTS session_summary (
       session_id TEXT PRIMARY KEY,
       started_at TIMESTAMP, ended_at TIMESTAMP, turns INTEGER,
-      summary TEXT, key_decisions TEXT, files_touched TEXT, tokens_total INTEGER
+      summary TEXT, key_decisions TEXT, files_touched TEXT, tokens_total INTEGER,
+      updated_at TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS problem_solutions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,6 +104,20 @@ def ensure_history_tables(conn) -> None:
     );
     CREATE INDEX IF NOT EXISTS idx_file_audit_ts ON file_audit(ts);
   """)
+  # 이미 만들어진 테이블에 빠진 컬럼 보강 (CREATE IF NOT EXISTS 는 컬럼을 안 더한다)
+  #   2026-10-02: session_summary.updated_at 누락 → conversation_logger 의 ON CONFLICT UPDATE 실패,
+  #   resume-last-24h 의 WHERE updated_at 조회가 조용히 빈 결과
+  need = {
+    "session_summary": [("updated_at", "TIMESTAMP")],
+    "problem_solutions": [("hit_count", "INTEGER DEFAULT 0"), ("last_hit_ts", "TIMESTAMP")],
+    # approval-gate.py 가 쓰는 승인 게이트 컬럼 — tasks DDL 에 없어 새 PC 에서 승인 기능 불능
+    "tasks": [("approval_state", "TEXT DEFAULT 'not_required'"), ("risk_category", "TEXT"), ("risk_detail", "TEXT"), ("approved_at", "INTEGER"), ("approved_by", "TEXT")],
+  }
+  for tbl, cols in need.items():
+    have = {r[1] for r in conn.execute(f"PRAGMA table_info({tbl})")}
+    for col, typ in cols:
+      if col not in have:
+        conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
 
 
 def init_schema() -> None:

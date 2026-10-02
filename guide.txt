@@ -457,6 +457,8 @@
     statusline git 호출                     --no-optional-locks (렌더 1초 timeout 강제종료 시 .git/index.lock 잔존 → pull 차단되던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건일 때 "0
+    state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
+    verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
 0" 비교 오류 → || true
     로그                                    .claude/logs/user-style-updates.log
 
