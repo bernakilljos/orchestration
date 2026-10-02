@@ -635,7 +635,8 @@ def extra_gauges(cwd, data=None):
     if tail:
         line2_parts.extend(tail)
     line2 = " - ".join(line2_parts)
-    return {"session": session_gauge, "line2": line2, "line3": line3}
+    return {"session": session_gauge, "line2": line2, "line3": line3,
+            "week": week_gauge, "tail": tail, "cost": line3}
 
 
 def main() -> None:
@@ -717,17 +718,18 @@ def main() -> None:
     clock = _dt3.datetime.now().strftime("%m/%d %H:%M")
     token_line = render(tokens, limit, exact_model, no_usage)
     gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
-    line1_parts = [clock, token_line]
-    if gauges.get("session"):
-        line1_parts.append(gauges["session"])
-    line1 = " - ".join(line1_parts)
-    line2 = gauges.get("line2", "")
-    line3 = gauges.get("line3", "")
-    out = [line1]
-    if line2:
-        out.append(line2)
-    if line3:
-        out.append(line3)
+    # 2026-10-02 4줄 배치 (사용자 요청): 머리말로 구획 · 줄당 짧게 → 터미널 폭 잘림(…) 방지
+    #   시각·토큰 / 한도(세션·주간) / 상태(MCP·cache·재사용·errors·하드코딩) / 비용
+    SEP = " · "
+    out = [f"{clock}  {token_line}"]
+    lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
+    if lim:
+        out.append("한도  " + SEP.join(lim))
+    if gauges.get("tail"):
+        out.append("상태  " + SEP.join(gauges["tail"]))
+    cost = gauges.get("cost") or ""
+    if cost:
+        out.append("비용  " + cost.replace("AI 비용(이 프로젝트) ", "(이 프로젝트) "))
     print("\n".join(out))
 
 
