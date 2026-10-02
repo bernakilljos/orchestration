@@ -265,6 +265,15 @@
             "timeout": 3
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-command-from-context.sh\"",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [
