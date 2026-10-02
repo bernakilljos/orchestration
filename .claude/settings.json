@@ -60,6 +60,17 @@
           },
           {
             "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/ensure-state.sh\"",
+            "async": true,
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject-user-style.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/brief-unused-features.sh\"",
             "timeout": 3
           },
@@ -166,6 +177,11 @@
             "type": "command",
             "command": "bash -c \"cd \\\"$CLAUDE_PROJECT_DIR\\\" && python -X utf8 .claude/scripts/session-history-db.py --ingest >/dev/null 2>&1 || true\"",
             "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/resume-last-24h.sh\"",
+            "timeout": 5
           }
         ]
       },
@@ -241,6 +257,24 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-skills.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/aggregate-rule-adherence.sh\"",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-command-from-context.sh\"",
+            "timeout": 3
           }
         ]
       }

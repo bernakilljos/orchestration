@@ -6,7 +6,7 @@
 
 set -uo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$PROJECT_DIR" || exit 0
 
 # 이번 세션에서 수정된 파일 (staged + unstaged + untracked)

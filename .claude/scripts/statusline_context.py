@@ -24,6 +24,8 @@ WIDTH = 10
 
 # 상한 매핑 - 긴 것부터
 LIMIT_PREFIXES = [
+    # Opus 5.5 = 1M 기본 (접미 유무 무관) - "claude-opus-5" 보다 먼저 와야 함
+    ("claude-opus-5-5", 1_000_000),
     # [1m] 접미 - 긴 것 먼저
     ("claude-opus-5[1m]", 1_000_000),
     ("claude-sonnet-5[1m]", 1_000_000),
@@ -83,25 +85,21 @@ def last_assistant_usage(jsonl_path: str) -> dict | None:
     return last
 
 
-# 모델별 rate (USD per MTok) - input · output · cache_write · cache_read
-MODEL_RATES = {
-    "claude-opus-5": (5.0, 25.0, 6.25, 0.5),
-    "claude-opus-4-8": (5.0, 25.0, 6.25, 0.5),
-    "claude-opus-4-7": (5.0, 25.0, 6.25, 0.5),
-    "claude-sonnet-5": (2.0, 10.0, 2.5, 0.2),
-    "claude-sonnet-4-6": (3.0, 15.0, 3.75, 0.3),
-    "claude-fable-5": (10.0, 50.0, 12.5, 1.0),
-    "claude-haiku-4-5": (0.25, 1.25, 0.3, 0.03),
-}
+# 모델별 rate - 정본은 lib/pricing.py (여기 따로 두면 갈린다 · 헌장 E)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+try:
+    from pricing import rates_for as _rates_for
+except Exception:
+    _rates_for = None
 
 
 def pick_rate(model_id: str) -> tuple[float, float, float, float]:
-    if not model_id:
-        return (5.0, 25.0, 6.25, 0.5)
-    for pref, rates in MODEL_RATES.items():
-        if model_id.startswith(pref):
-            return rates
-    return (5.0, 25.0, 6.25, 0.5)
+    """(input, output, cache_write, cache_read) USD/MTok. 모르는 모델은 0 (추정 안 함)."""
+    p = _rates_for(model_id) if _rates_for else None
+    if not p:
+        return (0.0, 0.0, 0.0, 0.0)
+    return (p["input"] or 0.0, p["output"] or 0.0,
+            p["cache_write"] or 0.0, p["cache_read"] or 0.0)
 
 
 def cache_hit_rate(jsonl_path: str) -> float:
@@ -165,9 +163,12 @@ def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
     if not os.path.exists(jsonl_path):
         return 0.0
     total = 0.0
+    # 응답 1개가 content block 마다 여러 줄로 기록되고 줄마다 같은 usage 를 반복한다
+    # (실측 2026-10-02: 103줄 / message.id 46개 → 비용 2배 과대). id 별 마지막 usage 만 센다.
+    by_id: dict = {}
     try:
         with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
+            for n, line in enumerate(f):
                 line = line.strip()
                 if not line:
                     continue
@@ -178,6 +179,8 @@ def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
                 if rec.get("type") != "assistant":
                     continue
                 msg = rec.get("message") or {}
+                by_id[msg.get("id") or f"_line{n}"] = msg
+        for msg in by_id.values():
                 u = msg.get("usage") or {}
                 mid = msg.get("model") or default_model
                 in_r, out_r, cw_r, cr_r = pick_rate(mid)
@@ -394,12 +397,12 @@ def extra_gauges(cwd, data=None):
     try:
         import subprocess
         b = subprocess.run(
-            ["git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
+            ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
             capture_output=True, text=True, timeout=1
         )
         branch = b.stdout.strip() if b.returncode == 0 else ""
         s = subprocess.run(
-            ["git", "-C", cwd, "status", "--porcelain"],
+            ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
             capture_output=True, text=True, timeout=1
         )
         dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
@@ -475,31 +478,39 @@ def extra_gauges(cwd, data=None):
                         tail.append(f"orca 활성 {ac}건 · task {tk}")
                 except Exception:
                     pass
-                # Cache hit rate (prompt cache 절감)
-                if _CACHE_HIT_RATE > 0:
-                    tail.append(f"cache {_CACHE_HIT_RATE:.0f}% hit")
-                # 최근 24h error·warn 카운트
-                if _ERROR_COUNT > 0:
-                    prefix = "[!] " if _ERROR_COUNT > 20 else ""
-                    tail.append(f"{prefix}errors {_ERROR_COUNT}")
-                # 하드코딩 감사 결과 (별도 캐시)
-                try:
-                    aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
-                    if os.path.exists(aud):
-                        with open(aud, "r", encoding="utf-8") as f:
-                            a = json.load(f)
-                        st = a.get("status", "?")
-                        tot = int(a.get("total_hits", 0))
-                        if st == "PASS":
-                            tail.append("하드코딩 감사 PASS")
-                        elif st == "CRITICAL":
-                            tail.append(f"[!] 하드코딩 CRITICAL {tot}")
-                        else:
-                            tail.append(f"하드코딩 WARN {tot}")
-                except Exception:
-                    pass
                 # AI 비용은 별도 line3 로 분리 (여기서는 append X)
                 pass
+    except Exception:
+        pass
+    # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
+    try:
+        # Cache hit rate (prompt cache 절감)
+        # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산
+        _pc = (data or {}).get("prompt_cache") or {}
+        _hr = _pc.get("hit_ratio")
+        _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
+        if _cr > 0:
+            tail.append(f"cache {_cr:.0f}% hit")
+        # 최근 24h error·warn 카운트
+        if _ERROR_COUNT > 0:
+            prefix = "[!] " if _ERROR_COUNT > 20 else ""
+            tail.append(f"{prefix}errors {_ERROR_COUNT}")
+        # 하드코딩 감사 결과 (별도 캐시)
+        try:
+            aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
+            if os.path.exists(aud):
+                with open(aud, "r", encoding="utf-8") as f:
+                    a = json.load(f)
+                st = a.get("status", "?")
+                tot = int(a.get("total_hits", 0))
+                if st == "PASS":
+                    tail.append("하드코딩 감사 PASS")
+                elif st == "CRITICAL":
+                    tail.append(f"[!] 하드코딩 CRITICAL {tot}")
+                else:
+                    tail.append(f"하드코딩 WARN {tot}")
+        except Exception:
+            pass
     except Exception:
         pass
 
@@ -508,15 +519,18 @@ def extra_gauges(cwd, data=None):
     #   jsonl 을 단가표로 되짚어 계산하던 근사치보다 이쪽이 맞다. 월·년간은 여전히
     #   이 프로젝트 jsonl 합산이라 "(이 프로젝트)" 라벨을 유지한다.
     global _SESSION_COST
+    _delta = 0.0  # 이 세션의 (공식값 - jsonl 추정) — 월·년 합계 안의 세션 몫도 공식값으로 교체
     try:
         _c = (data or {}).get("cost") or {}
         if isinstance(_c.get("total_cost_usd"), (int, float)):
-            _SESSION_COST = float(_c["total_cost_usd"])
+            _official = float(_c["total_cost_usd"])
+            _delta = _official - _SESSION_COST
+            _SESSION_COST = _official
     except Exception:
         pass
     rate = float(os.environ.get("USD_KRW_RATE", "1350"))
-    monthly = _MONTHLY_COST if _MONTHLY_COST > 0 else _SESSION_COST
-    yearly = _YEARLY_COST if _YEARLY_COST > 0 else monthly
+    monthly = (_MONTHLY_COST + _delta) if _MONTHLY_COST > 0 else _SESSION_COST
+    yearly = (_YEARLY_COST + _delta) if _YEARLY_COST > 0 else monthly
     import datetime as _dt2
     cur_m = _dt2.datetime.now().month
     if _SESSION_COST > 0.001 or monthly > 0.001 or yearly > 0.001:
@@ -614,6 +628,43 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
+    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
+    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
+    try:
+        _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
+        _tp = float((data or {}).get("_ctx_pct", 0))
+        if _wp >= 80:
+            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
+        elif _wp >= 50:
+            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
+        elif _tp >= 80:
+            tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
+        else:
+            tail.append("fast ON")
+    except Exception:
+        pass
+
+    # 디자인·개발 룰 위반 지수 (rule-adherence.json cache · 10분 TTL · ~14ms)
+    design_line = ""
+    dev_line = ""
+    try:
+        ra = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
+        if os.path.exists(ra):
+            with open(ra, "r", encoding="utf-8") as f:
+                _ra = json.load(f)
+            def _fmt(section_name, section):
+                c90 = section.get("counts_90d") or {}
+                rr  = section.get("recur_rate_pct", 0)
+                if not c90: return ""
+                parts = [f"{k} {v}" for k, v in c90.items() if v > 0]
+                if not parts: return ""
+                suffix = f" · 재발률 {rr}%" if rr else ""
+                return " · ".join(parts) + suffix
+            design_line = _fmt("design", _ra.get("design") or {})
+            dev_line    = _fmt("dev", _ra.get("dev") or {})
+    except Exception:
+        pass
+
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
     if week_gauge:
@@ -621,7 +672,9 @@ def extra_gauges(cwd, data=None):
     if tail:
         line2_parts.extend(tail)
     line2 = " - ".join(line2_parts)
-    return {"session": session_gauge, "line2": line2, "line3": line3}
+    return {"session": session_gauge, "line2": line2, "line3": line3,
+            "week": week_gauge, "tail": tail, "cost": line3,
+            "design": design_line, "dev": dev_line}
 
 
 def main() -> None:
@@ -632,6 +685,16 @@ def main() -> None:
     except Exception:
         data = {}
 
+    # 진단용 - 마지막 stdin 원문 (필드 실측 근거)
+    try:
+        _cwd0 = data.get("cwd") or ""
+        if _cwd0:
+            with open(os.path.join(_cwd0, ".claude", "state", "statusline-stdin.json"),
+                      "w", encoding="utf-8") as _f:
+                json.dump(data, _f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
     model_id = ""
     try:
         model_id = (data.get("model") or {}).get("id") or ""
@@ -641,7 +704,12 @@ def main() -> None:
     session_id = data.get("session_id") or ""
     cwd = data.get("cwd") or ""
 
-    limit, exact_model = pick_limit(model_id)
+    # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
+    _cw = data.get("context_window") or {}
+    if isinstance(_cw.get("context_window_size"), int) and _cw["context_window_size"] > 0:
+        limit, exact_model = _cw["context_window_size"], True
+    else:
+        limit, exact_model = pick_limit(model_id)
 
     # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
     # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
@@ -687,18 +755,26 @@ def main() -> None:
     import datetime as _dt3
     clock = _dt3.datetime.now().strftime("%m/%d %H:%M")
     token_line = render(tokens, limit, exact_model, no_usage)
+    # fast 로직용: 토큰 context % inject (compact 임박 판정)
+    if isinstance(data, dict) and limit and tokens:
+        data["_ctx_pct"] = min(100.0, tokens / limit * 100.0)
     gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
-    line1_parts = [clock, token_line]
-    if gauges.get("session"):
-        line1_parts.append(gauges["session"])
-    line1 = " - ".join(line1_parts)
-    line2 = gauges.get("line2", "")
-    line3 = gauges.get("line3", "")
-    out = [line1]
-    if line2:
-        out.append(line2)
-    if line3:
-        out.append(line3)
+    # 2026-10-02 4줄 배치 (사용자 요청): 머리말로 구획 · 줄당 짧게 → 터미널 폭 잘림(…) 방지
+    #   시각·토큰 / 한도(세션·주간) / 상태(MCP·cache·재사용·errors·하드코딩) / 비용
+    SEP = " · "
+    out = [f"{clock}  {token_line}"]
+    lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
+    if lim:
+        out.append("한도  " + SEP.join(lim))
+    if gauges.get("design"):
+        out.append("디자인  " + gauges["design"])
+    if gauges.get("dev"):
+        out.append("개발  " + gauges["dev"])
+    if gauges.get("tail"):
+        out.append("상태  " + SEP.join(gauges["tail"]))
+    cost = gauges.get("cost") or ""
+    if cost:
+        out.append("비용  " + cost.replace("AI 비용(이 프로젝트) ", "(이 프로젝트) "))
     print("\n".join(out))
 
 

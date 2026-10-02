@@ -63,18 +63,24 @@ if command -v claude >/dev/null 2>&1; then
   CORE_MCP=(
     "playwright|claude mcp add playwright -s user -- cmd /c npx -y @playwright/mcp"
     "sequential-thinking|claude mcp add sequential-thinking -s user -- cmd /c npx -y @modelcontextprotocol/server-sequential-thinking"
-    "fetch|claude mcp add fetch -s user -- cmd /c npx -y @modelcontextprotocol/server-fetch"
+    "fetch|claude mcp add fetch -s user -- uvx mcp-server-fetch"  # npm @modelcontextprotocol/server-fetch 는 404 (2026-10-02 npm view) · 정본은 PyPI mcp-server-fetch
     "context7|claude mcp add context7 -s user -- cmd /c npx -y @upstash/context7-mcp"
   )
 
   for entry in "${CORE_MCP[@]}"; do
     NAME="${entry%%|*}"
     CMD="${entry#*|}"
-    if echo "$MCP_LIST" | grep -qE "^${NAME}[[:space:]]"; then
-      continue
+    # 출력 형식 = "name: <command> - ✓ Connected" (콜론). 예전 패턴 "^name[공백]" 은 한 번도 안 맞았다.
+    LINE="$(echo "$MCP_LIST" | grep -E "^${NAME}:" | head -1)"
+    # Git Bash 가 "cmd /c" 의 /c 를 "C:/" 로 바꿔 등록한 깨진 항목 → 지우고 재등록 (2026-10-02 실측 4개 전부)
+    WANT="${CMD#*-- }"   # 등록돼야 할 실행 명령 (예: uvx mcp-server-fetch)
+    if [ -n "$LINE" ] && echo "$LINE" | grep -qF "$WANT"; then
+      continue   # 이미 kit 정의대로 등록됨
     fi
-    echo "[$TS] installing MCP: $NAME" >> "$LOG"
-    nohup bash -c "$CMD" >> "$LOG" 2>&1 &
+    echo "[$TS] installing MCP: $NAME ${LINE:+(정의와 다름 → 재등록)}" >> "$LOG"
+    [ -n "$LINE" ] && claude mcp remove "$NAME" -s user >> "$LOG" 2>&1
+    # MSYS_NO_PATHCONV: /c 경로 변환 차단 (이게 없으면 cmd /c → cmd C:/)
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" nohup bash -c "$CMD" >> "$LOG" 2>&1 &
     disown 2>/dev/null || true
   done
 fi

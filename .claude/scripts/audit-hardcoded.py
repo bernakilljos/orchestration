@@ -30,12 +30,38 @@ PATTERNS = [
     ("github_pat", re.compile(r"ghp_[a-zA-Z0-9]{36}"), "GitHub PAT"),
 ]
 
+# ★★★1002 — 두 갈래로 나눴다. 종전엔 한 집합에 섞여 있었고, 그래서
+#   «.claude/state» 류 **경로형 3개가 한 번도 걸러진 적이 없었다**:
+#   비교가 `any(p in SKIP_DIRS for p in rel.split("/"))` 라 한 칸(.claude 또는
+#   state)하고만 맞춰 보는데, 집합에는 두 칸짜리 문자열이 들어 있었다.
+#   ★그 결과 감사기가 **자기 결과 파일(.claude/state/hardcoded-audit.json)을
+#     다시 스캔**했다 — 검출한 위반이 캐시에 적히고, 다음 실행이 그걸 또 센다.
+#     실측 1002: 전체 115건 중 **38건이 이 자기참조**였다(출처 1위).
+#     숫자가 실행마다 출렁이던 것도, 고치지 않아도 늘던 것도 이 때문이다.
+#   ★「방어가 있다고 믿는 것이 없는 것보다 위험하다」(A4)·「측정 도구는 자기를
+#     세지 않는다」(A12)가 한 자리에서 같이 났다.
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
-             "archive", ".claude/state", ".claude/logs",
-             ".claude/context-cache", "outputs", "local_data"}
+             # ★`archive` 만 적혀 있어 이 저장소의 실제 이름 `_archive` 가 안 걸렸다
+             #   (과거 스냅샷 = 작업 대상 아님 · 루트 CLAUDE.md § 3 이 그렇게 말한다).
+             "archive", "_archive", "outputs", "local_data",
+             # ★런타임 로그 — 사설 IP 가 찍히는 건 그 서버가 실제로 그 주소였다는
+             #   **기록**이지 소스의 하드코딩이 아니다. 지우면 기록이 사라진다(A15).
+             "logs",
+             # ★RPA 수집 산출물 — 고객 사이트에서 긁어온 **데이터**이지 우리 소스가
+             #   아니다. 수집할 때마다 늘어서 숫자가 작업과 무관하게 흔들리고,
+             #   받아온 텍스트에 토큰 비슷한 문자열이 있으면 CRITICAL 오탐이 난다.
+             "download", "evidence", "highlight",
+             # ★벤더가 배포한 런타임(네이버 WASM 바인딩 등) — 고칠 수 없는 코드.
+             "rpa_profiles"}
+
+# 경로형 제외(두 칸 이상) — 위 집합과 비교 방식이 다르므로 따로 둔다.
+SKIP_PREFIXES = (".claude/state", ".claude/logs", ".claude/context-cache")
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".pptx",
             ".xlsx", ".zip", ".tar", ".gz", ".mp4", ".mp3", ".wav", ".sqlite",
-            ".db", ".bak", ".pyc", ".pyo", ".ico"}
+            ".db", ".bak", ".pyc", ".pyo", ".ico",
+            # ★로그는 «일어난 일»의 기록이다 — `logs/` 밖에 떨어진 것도 있어
+            #   확장자로도 막는다(실측 1002: 루트 `test_mock_err.log`).
+            ".log", ".err"}
 
 
 def scan():
@@ -45,7 +71,8 @@ def scan():
         rel = Path(base).relative_to(ROOT).as_posix()
         # skip
         parts = rel.split("/")
-        if any(p in SKIP_DIRS for p in parts):
+        if any(p in SKIP_DIRS for p in parts) or \
+                any(rel == p or rel.startswith(p + "/") for p in SKIP_PREFIXES):
             dirs[:] = []
             continue
         for name in files:

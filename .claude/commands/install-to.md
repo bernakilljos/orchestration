@@ -60,6 +60,11 @@ cp "$SOURCE/CLAUDE.md" "$SOURCE/guide.txt" "$TARGET/"
 cd "$TARGET" && bash .claude/scripts/sync-plugins.sh
 python .claude/scripts/init-state-db.py 2>/dev/null
 
+# user-style-profile 복사 (사용자 스타일 자동 주입용 · 2026-10-02 신설)
+mkdir -p "$TARGET/.claude/state"
+[ -f "$SOURCE/setup/templates/user_style_profile.md" ] && \
+  cp "$SOURCE/setup/templates/user_style_profile.md" "$TARGET/.claude/state/user_style_profile.md" 2>/dev/null
+
 # 플래그
 echo "enabled" > "$TARGET/.claude/orca-enabled"
 echo "enabled" > "$TARGET/.claude/auto-dev-enabled"

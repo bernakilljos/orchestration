@@ -61,6 +61,231 @@ if echo "$PROMPT" | grep -qE 'install|배포|deploy|sync-team|install-to'; then
   actions="${actions}[install 언급] -> install 순서 (kit 편집 -> commit -> sync -> install -> 검증). pre-install-lock.sh 감지. best-practices.md § install 순서.\\n"
 fi
 
+# 10. 격한 감정 (미쳐·답답해 죽겠·막혀·안 풀려) -> /brainstorm 또는 /go 자동 발동
+if echo "$PROMPT" | grep -qE '미쳐|미치겠|미치긋|돌아버|답답해 죽|막혀|안 풀|안풀려|막막|어떻게 해야'; then
+  actions="${actions}[격한 감정 감지] -> /brainstorm 또는 /go 자동 발동. 혼자 결과 내지 말고 설계 옵션 2~3개 + trade-off + 추천 1개 제시. 사용자 결정 받고 그 다음 실행.\\n"
+fi
+
+# 11. 같은 질문 3회+ 반복 (detect-repeat-request.sh 가 similarity_score 측정)
+#     여기서는 "모르겠다·이해 안 돼·뭔 소리" 어휘 감지 시 explainlikeim5 트리거
+if echo "$PROMPT" | grep -qE '모르겠|이해.*안|뭔 소리|무슨 말|쉽게|어려워'; then
+  actions="${actions}[이해 어려움 감지] -> /explainlikeim5 자동 발동. 5살 톤·일상 비유·고급 용어 X. 긴 essay 금지.\\n"
+fi
+
+# 12. 비교·결정 트리거
+if echo "$PROMPT" | grep -qE 'vs |대 |비교|뭐가 좋|어떤 게|차이'; then
+  actions="${actions}[비교 요청] -> /compare 자동 (장단점·추천·근거 표).\\n"
+fi
+
+# 13. 확신·리스크 질문
+if echo "$PROMPT" | grep -qE '확신|괜찮을|리스크|위험|걱정|문제 없|안전'; then
+  actions="${actions}[리스크 질문] -> /devil 자동 (악마의 변호인 · 모든 가정 반론).\\n"
+fi
+
+# 14. 복잡·기초부터
+if echo "$PROMPT" | grep -qE '복잡해|처음부터|기초|기본부터|차근차근'; then
+  actions="${actions}[단계별 교육 필요] -> /teacher 자동 (단계별 · 이해 확인).\\n"
+fi
+
+# 15. 접근 방식·brainstorming
+if echo "$PROMPT" | grep -qE '어떻게 해야|접근 방식|어떻게 할까|방법론|전략'; then
+  actions="${actions}[접근 방식 질문] -> /ooda 또는 /brainstorm 자동 (상황 분석·설계 옵션).\\n"
+fi
+
+# 16. 피드백·평가 요청
+if echo "$PROMPT" | grep -qE '내 생각|피드백|평가|어때\?|의견'; then
+  actions="${actions}[피드백 요청] -> /critique 자동 (냉정 비판 · 칭찬 X).\\n"
+fi
+
+# 17. 리서치·조사
+if echo "$PROMPT" | grep -qE '리서치|조사|알아봐|뭐가 있나|후보'; then
+  actions="${actions}[리서치] -> /scout 자동 (정찰 · breadth 먼저 · WebSearch 병행).\\n"
+fi
+
+# 18. 요약·짧게
+if echo "$PROMPT" | grep -qE '요약|짧게|3줄|한 줄|초간결'; then
+  actions="${actions}[요약 요청] -> /brief 자동 (3줄 이내).\\n"
+fi
+
+# 19. 발표·보고·PL
+if echo "$PROMPT" | grep -qE '발표|보고|피치|PT|임원|PL|설득'; then
+  actions="${actions}[보고/발표] -> /pitch 자동 (설득력 있는 투자자 피치 포맷).\\n"
+fi
+
+# 20. AI 티·natural
+if echo "$PROMPT" | grep -qE 'AI 티|사람처럼|자연스럽게|natural|AI 글'; then
+  actions="${actions}[AI 티 제거] -> /ghost 자동 (AI 글쓰기 패턴 제거).\\n"
+fi
+
+# 21. 상태·대시보드
+if echo "$PROMPT" | grep -qE '상태|지금 어때|현황|대시보드|dashboard'; then
+  actions="${actions}[상태 조회] -> /exec_status 자동 (워커·큐·heartbeat·sync 통합).\\n"
+fi
+
+# 22. 승인·대기
+if echo "$PROMPT" | grep -qE '승인|approve|대기|pending|waiting'; then
+  actions="${actions}[승인 체크] -> /approvals 자동 (대기 task 전부 보기).\\n"
+fi
+
+# 23. 비용·토큰
+if echo "$PROMPT" | grep -qE '비용|얼마나 썼|지출|토큰 통계|token stat'; then
+  actions="${actions}[비용 조회] -> /token-stats 자동.\\n"
+fi
+
+# 24. 완료·마무리
+if echo "$PROMPT" | grep -qE '완료|끝났|다 됐|마무리|끝'; then
+  actions="${actions}[완료 처리] -> /validate 자동 (테스트·스크린샷·증거 저장).\\n"
+fi
+
+# 25. commit·push·PR 전
+if echo "$PROMPT" | grep -qE 'commit|push|PR|배포 전|릴리스'; then
+  actions="${actions}[배포 전] -> /sec-scan 자동 (semgrep·gitleaks·bandit).\\n"
+fi
+
+# 26. God mode·알아서
+if echo "$PROMPT" | grep -qE '다 해줘|알아서|god ?mode|모든 것'; then
+  actions="${actions}[God mode] -> /godmode 자동 (최대 자율 · 직통 라우팅).\\n"
+fi
+
+# 27. 초난도·Mythos
+if echo "$PROMPT" | grep -qE '최고 성능|초난도|어려운 문제|mythos|fable'; then
+  actions="${actions}[Mythos] -> /effort-mythos 자동 (Fable 5.1 라우팅 · budget 게이트).\\n"
+fi
+
+# 28. 다이어그램·시각화
+if echo "$PROMPT" | grep -qE '다이어그램|그림|시각화|구조도|마인드맵'; then
+  actions="${actions}[시각화] -> /arch-auto 자동 (마인드맵·레이어·치트 중 적합).\\n"
+fi
+
+# 28-B. 루틴·시스템화·AI 시스템 → ai-system-stages 자동 발동
+if echo "$PROMPT" | grep -qE '루틴|루틴화|시스템화|반복.*자동|자동화 체인|AI 시스템|6단계|자가발전'; then
+  actions="${actions}[루틴/시스템화] -> /ai-system-stages 자동 (Prompt→Agent→Orchestration→Automation→Autonomous→Platform · 우리 kit 자가발전 계층 매핑 · WebSearch 실측 Step 0).\\n"
+fi
+
+# 29-M. MCP 설치 (top1 · 27회/30d)
+if echo "$PROMPT" | grep -qiE 'MCP|플러그인|install mcp|mcp 설치'; then
+  actions="${actions}[MCP 설치 top1] -> /install-mcp 또는 /mcp_dev-install·/mcp_data-install·/mcp_web-install·/mcp_collab-install·/mcp_docs-install·/mcp_media-install 자동.\\n"
+fi
+
+# 29-S. 보안·QA (top2 · 13회/30d)
+if echo "$PROMPT" | grep -qiE '보안|security|리뷰|review|테스트|QA|audit'; then
+  actions="${actions}[보안·QA top2] -> /security·/sec-scan·/review_qa·/test-gen·/score-task 자동 (최적 하나).\\n"
+fi
+
+# 29-X. 10x·효율 (top3 · 9회/30d)
+if echo "$PROMPT" | grep -qiE '10x|최대 효율|ship it|군더더기|빠르게 끝'; then
+  actions="${actions}[10x top3] -> /10x 자동 (prose 제거 · 바로 solution · one-shot).\\n"
+fi
+
+# 29-D. 문서 생성 (top4 · 8회/30d)
+if echo "$PROMPT" | grep -qiE 'PDF|pdf|엑셀|xlsx|워드|docx|pptx|문서 만들|스프레드'; then
+  actions="${actions}[문서 top4] -> /pdf-generate·/excel-make·/word-make·/make-ppt 자동 (유형별).\\n"
+fi
+
+# 30~44 전체 그룹 매핑 (사용자 명시: 다 반영)
+if echo "$PROMPT" | grep -qE '빠른 체크|지금 상태|ping|status check'; then
+  actions="${actions}[종합 체크] -> /check·/check-agents·/check-services·/claude-status 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '학습해|저장해|기억해|recall|회상'; then
+  actions="${actions}[학습·기억] -> /learn·/recall·/gemini-recap 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE 'install-to|다른 머신|다른 폴더|배포 대상'; then
+  actions="${actions}[install-to] -> /install-to <path> 자동 (kit 전수 복사).\\n"
+fi
+if echo "$PROMPT" | grep -qE '다이어그램|마인드맵|레이어|치트|artifact|랜딩|포트폴리오'; then
+  actions="${actions}[디자인] -> /arch-mindmap·/arch-layered·/arch-cheatsheet·/claude-artifact·/design_web-landing·/design_web-portfolio 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qiE 'copilot|cursor|GPT|gpt-|grok|gemini-verify'; then
+  actions="${actions}[AI dispatch] -> /copilot-dispatch·/cursor-dispatch·/gpt-dispatch·/grok-dispatch·/gemini-verify 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '녹음|음성|영상|비디오|이미지|썸네일|쇼츠|복원'; then
+  actions="${actions}[미디어] -> /audio-restore·/video-restore·/video-shorts·/video-subtitle·/image-generate·/image-restore 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qiE '유튜브|youtube|인스타|instagram|릴스|쇼츠'; then
+  actions="${actions}[소셜] -> /yt-upload·/yt-research·/yt-analytics·/ig-upload·/ig-research·/ig-analytics 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '스케줄|cron|매일|매주|예약|원격|VPS|SSH|tmux'; then
+  actions="${actions}[스케줄·원격] -> /exec_scheduler-cron·/exec_scheduler-status·/exec_remote-status·/exec_remote-tmux·/exec_remote-ssh 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '로컬 모델|오프라인|ollama|llama|gemma|mistral'; then
+  actions="${actions}[로컬 모델] -> /exec_offline-model·/exec_offline-setup·/exec_offline-route·/exec_offline-vector 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '분석해|개선 포인트|기술 추천|아키 분석'; then
+  actions="${actions}[분석·개선] -> /analyze-improve 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '워크스루|투어|안내|처음 쓰|어떻게 쓰'; then
+  actions="${actions}[워크스루] -> /walkthrough 자동 (기능 투어).\\n"
+fi
+if echo "$PROMPT" | grep -qiE '음성 명령|말로 지시|voice|voice task'; then
+  actions="${actions}[음성 명령] -> /voice-task 자동 (STT → task-instruction).\\n"
+fi
+if echo "$PROMPT" | grep -qE '회의 녹음|회의록|meeting'; then
+  actions="${actions}[회의] -> /meeting 자동 (STT → 요약 → 회의록).\\n"
+fi
+if echo "$PROMPT" | grep -qE 'MCP 상태|MCP 체크|MCP 재점검'; then
+  actions="${actions}[MCP 상태] -> /mcp_dev-status·/mcp_data-status·/mcp_web-status·/mcp_collab-status·/mcp_docs-status·/mcp_media-status 자동.\\n"
+fi
+
+# 29. 수정 지시 -> 증명 체인 강제 (수정 후 자동 pre/post snapshot + 작동 테스트 + 보고)
+if echo "$PROMPT" | grep -qE '수정해|고쳐|바꿔|변경해|고쳐줘|수정 해|바꿔줘'; then
+  actions="${actions}[수정 지시] -> 증명 체인 강제 (verify-after-edit-mandatory.md). 5단계: ① pre-snapshot (md5/Read/sqlite SELECT/curl) ② 수정 실행 ③ post-snapshot ④ diff + 작동 테스트 ⑤ 보고 (증거 첨부). '수정했습니다' 만 보고 X.\\n"
+fi
+
+# 30. "왜 안 됐어" 재지시 -> 자가 진단 5단계
+if echo "$PROMPT" | grep -qE '왜.*안 됐|왜 안됐|수정했다며|적용 안 됨|적용 안됨|효과 없|안 되어있|안되어있|안 되어 있|실제 안|증명해'; then
+  actions="${actions}[재검증 재지시] -> 자가 진단 5단계 (verify-after-edit-mandatory.md): ① 파일 Read 재확인 ② cascade override ③ 캐시·재시작 ④ 엉뚱한 파일 ⑤ 실행 테스트. 원인 1줄 + 수정 + 재검증 결과 첨부.\\n"
+fi
+
+# 31. 에러·오류 -> 자동 로그 조회 + 디버깅
+if echo "$PROMPT" | grep -qE '에러|오류|error|exception|traceback|fail|실패'; then
+  actions="${actions}[에러 감지] -> recent-error-count·.claude/logs tail 자동 조회 + 원인 분석 + 수정 체인.\\n"
+fi
+
+# 32. 성능·느림
+if echo "$PROMPT" | grep -qE '느려|느리|slow|성능|응답 안 와|끊김|렉'; then
+  actions="${actions}[성능 저하] -> /performance 자동 (응답시간·메모리·번들·Lighthouse).\\n"
+fi
+
+# 33. 원복·revert·rollback
+if echo "$PROMPT" | grep -qE '원복|되돌려|revert|롤백|rollback|undo|돌려놔'; then
+  actions="${actions}[원복] -> git revert 또는 .bak restore 자동 (사용자 승인 후).\\n"
+fi
+
+# 34. 코드 리뷰
+if echo "$PROMPT" | grep -qE '리뷰해|코드 리뷰|review|PR 리뷰|점검해'; then
+  actions="${actions}[리뷰] -> code-reviewer agent 자동 dispatch (격리 · 구조화 반환).\\n"
+fi
+
+# 35. 스크린샷·캡처
+if echo "$PROMPT" | grep -qE '스크린샷|캡처|screenshot|화면 찍|screen capture'; then
+  actions="${actions}[스크린샷] -> /screenshot 자동 (Playwright headless).\\n"
+fi
+
+# 36. 번역
+if echo "$PROMPT" | grep -qE '번역|translate|영어로|한글로|일본어로|중국어로'; then
+  actions="${actions}[번역] -> /translate 자동.\\n"
+fi
+
+# 37. 회의·녹음·음성 입력
+if echo "$PROMPT" | grep -qE '녹음|음성|회의|meeting|회의록|STT'; then
+  actions="${actions}[회의/녹음] -> /meeting·/transcribe 자동 (Whisper STT).\\n"
+fi
+
+# 38. 말로·TTS
+if echo "$PROMPT" | grep -qE '말로|읽어줘|speak|TTS|음성 출력'; then
+  actions="${actions}[TTS] -> /speak 자동 (edge-tts).\\n"
+fi
+
+# 39. 예시·artifact
+if echo "$PROMPT" | grep -qE '예시 보여|artifact|바로 쓸|샘플|즉시 실행'; then
+  actions="${actions}[예시] -> /artifacts 자동 (실행 가능 산출물).\\n"
+fi
+
+# 40. 데모·mock·가짜 (명시 안 하면 실전 강제)
+if echo "$PROMPT" | grep -qE '데모|mock|가짜|시연용|dummy'; then
+  actions="${actions}[목업 트리거] -> 사용자 명시 (목업·mock·demo) 있는지 재확인. 없으면 feedback_no_mock_default 룰 적용 (실전 강제 · DB 연결 요구).\\n"
+fi
+
 # 감지된 게 있으면 systemMessage
 if [ -n "$actions" ]; then
   cat <<EOF

@@ -79,26 +79,28 @@ setup.bat C:\work\myproject
 
 ## 6. 모듈 구조 (현행)
 
-`setup/modules/` 14개 모듈 (실행 순서):
+`setup/modules/` 18개 모듈 (실행 순서):
 
 | # | 모듈 | 역할 |
 |---|---|---|
 | 01 | core.bat | 폴더 구조 + .env 초기화 |
 | 02 | defender.bat | Windows Defender 예외 |
 | 03 | settings.bat | `.claude/settings.json` (bypassPermissions 강제) + `.vscode/settings.json` 자동 배포 (interpreter 동적 검색, file watcher exclude) |
-| 09 | finalize.bat | 마무리 — claude 자동 실행 default Y (5초 timeout, zero-touch) |
 | 04 | commands.bat | 글로벌 명령어 (codex-a, gemini-a) |
 | 05 | services.bat | status-push, remote-agent |
 | 06 | prereqs.bat | Node.js / Claude Code / Cloudflared |
 | 07 | github.bat | Git 초기화 + PAT 등록 (v1/team 자동 분기) |
 | 08 | plugins.bat | Claude 플러그인 (community + superpowers) |
-| 09 | finalize.bat | 마무리 |
+| 09 | finalize.bat | 마무리 — claude 자동 실행 default Y (5초 timeout, zero-touch) |
 | 10 | video-restore.bat | 비디오 도구 복원 |
 | 11 | media-enhance.bat | 미디어 의존성 |
 | 12 | kit-sync.bat | sync-plugins.sh 실행 |
 | 13 | init-state-db.bat | SQLite 통합 상태 DB 초기화 |
 | 14 | mcp-figma.bat | ClaudeTalkToFigma MCP 등록 |
 | 15 | auto-dev.bat | 24/7 자동 개발 에이전트 (Task Scheduler 4h + auto-dev flag) · `~/.claude/NO-SCHTASKS` 있으면 즉시 skip |
+| 16 | mcp-headroom-claude-mem.bat | Headroom 프롬프트 압축 프록시 + claude-mem 자동 관측 통합 |
+| 17 | community-standards.bat | 커뮤니티 표준 kit 통합 |
+| 18 | daily-artifact-refresh.bat | Task Scheduler `Orca_DailyArtifactRefresh` 매일 04:00 · OVERDUE 산출물 (강의 docx·pptx·md·README) 자동 refresh · `~/.claude/NO-SCHTASKS` honor (2026-09-16 신설) |
 
 ## 7. 설치 후 4주차로 가는 길
 

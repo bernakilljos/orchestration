@@ -43,6 +43,28 @@ python .claude/scripts/artifact-freshness-report.py
 3. 빌더 편집 (있으면) 또는 python-pptx append (없으면) 실행
 4. mtime 갱신 → freshness reset
 
+## 매일 자동 갱신 (Zero-touch · 2026-09-16 신설)
+
+**사용자 지시 없이도 매일 04:00 자동 실행** (Task Scheduler `Orca_DailyArtifactRefresh`).
+
+- 스크립트: `.claude/scripts/daily-artifact-refresh.py`
+- Wrapper: `.claude/scripts/daily-artifact-refresh.bat` (동적 python 검색 · NO-SCHTASKS killswitch honor)
+- Install: `setup/modules/18-daily-artifact-refresh.bat` (다른 프로젝트 배포 시 자동 등록)
+- 로그: `.claude/logs/daily-artifact-refresh.log`
+
+**Kind 별 refresh 방식**:
+| Kind | 방식 | 원본 보존 |
+|---|---|---|
+| docx (강의) | python-docx append "최신 업데이트 노트" 섹션 | `.bak` 백업 |
+| pptx (catalog) | 동명 `update_*.py`·`build_*.py` 실행 → 없으면 python-pptx 마지막 슬라이드 append | `.bak` 백업 |
+| md (catalog·README) | 파일 하단 `## Update YYYY-MM-DD` append | `.bak` 백업 |
+| CLAUDE.md § 3.2 | skip (모델 매트릭스 = 사람이 판단) | — |
+| 로드맵 | skip (분기 단위 = 사람이 결정) | — |
+
+**Idempotent**: 같은 날짜 `[AUTO-REFRESH YYYY-MM-DD]` 마커가 산출물 안에 이미 있으면 skip. SessionStart 에서도 안전하게 재호출 가능.
+
+**최신 정보 소스**: `_latest_headlines()` 함수 — 하드코딩된 headline (매주 세션에서 사용자 갱신) + 향후 WebSearch·memory 자동 수집으로 확장.
+
 ## 금지
 
 1. **OVERDUE 상태 무시** — 사용자 지적 후 갱신 = 룰 위반 (feedback_official_features_auto_check.md 정합)

@@ -13,6 +13,7 @@
 |---|---|
 | **답답·빠름·fast·서두름** | `/fast` mode 활성 + 짧은 응답 |
 | **짜증·짱나·엉망·대충·장난** | 시스템 결함 진단 5단계 (실측·등재·강화·보고·게이트) |
+| **미쳐·미치겠·돌아버리·답답해 죽겠·막혀·안 풀려** | `/brainstorm` 또는 `/go` 자동 발동 (혼자 결과 내지 말고 설계 옵션 공유 · trade-off 제시 · 사용자 결정 받기) |
 | **중복·또 요청·반복** | `/loop` 발동 |
 | **design 별로·UI 이상·화면 못생김** | 관련 command md 자동 수정 (design_*/commands/*.md) |
 | **또 방향 오해·target 아니** | direction-first 재적용 + statusline 확인 |
@@ -23,6 +24,57 @@
 | **회피·딴말·빙빙 돌림** | 직접 답 강제 |
 | **비용·budget·quota·돈** | budget 상한·quota fallback 재확인 |
 | **성능·느림·slow** | 캐싱·병렬·subagent Explore 검토 |
+| **같은 질문 3회+ 반복** | `/explainlikeim5` 자동 (5살 톤·비유·짧게 재설명) |
+| **응답에 고급 용어 (RAG·CoT·quorum·eventual consistency·byzantine 등)** | `/explainlikeim5` 자동 (일상 비유 치환) |
+| **"A vs B"·"비교"·"뭐가 좋아"·"vs"** | `/compare` 자동 (장단점·추천·근거) |
+| **"확신 안 서"·"괜찮을까"·"리스크"·"위험"·"걱정"** | `/devil` 자동 (악마의 변호인 · 모든 가정 반론) |
+| **"복잡해"·"처음부터"·"기초"·"기본부터"** | `/teacher` 자동 (단계별 교육) |
+| **"어떻게 해야 돼"·"접근 방식"·"어떻게 할까"** | `/ooda` 또는 `/brainstorm` 자동 (상황 분석·설계) |
+| **"내 생각 어때"·"피드백"·"평가"** | `/critique` 자동 (냉정 비판 · 칭찬 X) |
+| **세션 80%+ (statusline rate_limits.five_hour)** | `/guard-save` 자동 (스냅샷) |
+| **"리서치"·"조사"·"알아봐"·"뭐가 있나"** | `/scout` 자동 (정찰 · breadth 먼저) |
+| **"요약"·"짧게"·"3줄"·"한 줄"** | `/brief` 자동 (초간결) |
+| **"발표"·"보고"·"피치"·"PT"·"임원"·"PL"** | `/pitch` 자동 (설득력 있는 투자자 피치 포맷) |
+| **"AI 티나"·"사람처럼"·"자연스럽게"·"natural"** | `/ghost` 자동 (AI 글쓰기 패턴 제거) |
+| **"상태"·"지금 어때"·"현황"·"대시보드"** | `/exec_status` 자동 (워커·큐·heartbeat·sync 통합) |
+| **"승인"·"approve"·"대기"·"pending"** | `/approvals` 자동 (대기 task 전부 보기) |
+| **"비용"·"얼마나 썼"·"token"·"지출"** | `/token-stats` 자동 (세션별 토큰 통계) |
+| **"완료"·"끝났"·"다 됐"·"마무리"** | `/validate` 자동 (테스트·스크린샷·증거 저장) |
+| **"commit"·"push"·"PR"·"배포 전"** | `/sec-scan` 자동 (semgrep·gitleaks·bandit) |
+| **"다 해줘"·"알아서"·"God mode"** | `/godmode` 자동 (최대 자율) |
+| **"최고 성능"·"초난도"·"어려운 문제"·"Mythos"** | `/effort-mythos` 자동 (Fable 5.1 라우팅) |
+| **"다이어그램"·"그림"·"시각화"·"구조도"** | `/arch-auto` 자동 (마인드맵·레이어·치트 중 적합한 것) |
+| **"루틴"·"루틴화"·"시스템화"·"반복 자동"·"자동화 체인"·"AI 시스템"·"6단계"** | `/ai-system-stages` 자동 (Prompt→Agent→Orchestration→Automation→Autonomous→Platform · 우리 kit 현재 구현 매핑 포함) |
+| **"MCP"·"플러그인"·"install mcp"·"mcp 설치"** (top1 · 27회/30d) | `/install-mcp` 또는 그룹별 `/mcp_dev-install`·`/mcp_data-install`·`/mcp_web-install`·`/mcp_collab-install`·`/mcp_docs-install`·`/mcp_media-install` 자동 |
+| **"보안"·"security"·"리뷰"·"review"·"테스트"·"QA"·"audit"** (top2 · 13회/30d) | `/security`·`/sec-scan`·`/review_qa`·`/test-gen`·`/score-task` 자동 (최적 하나) |
+| **"10x"·"최대 효율"·"ship it"·"군더더기 X"·"빠르게 끝"** (top3 · 9회/30d) | `/10x` 자동 (prose 제거 · 바로 solution · one-shot) |
+| **"PDF"·"엑셀"·"xlsx"·"워드"·"docx"·"pptx"·"문서 만들"** (top4 · 8회/30d) | `/pdf-generate`·`/excel-make`·`/word-make`·`/make-ppt` 자동 (유형별) |
+| **"빠른 체크"·"지금 상태"·"ping"·"status check"** | `/check`·`/check-agents`·`/check-services`·`/claude-status` 자동 |
+| **"학습"·"저장해"·"기억해"·"recall"·"회상"** | `/learn` (저장) / `/recall` (조회) / `/gemini-recap` 자동 |
+| **"install-to"·"다른 머신"·"다른 폴더"·"배포 대상"** | `/install-to <path>` 자동 (kit 전수 복사) |
+| **"다이어그램"·"마인드맵"·"레이어"·"치트"·"artifact"·"랜딩"·"포트폴리오"** | `/arch-mindmap`·`/arch-layered`·`/arch-cheatsheet`·`/claude-artifact`·`/design_web-landing`·`/design_web-portfolio` 자동 |
+| **"copilot"·"cursor"·"GPT"·"grok"·"gemini-verify"** | `/copilot-dispatch`·`/cursor-dispatch`·`/gpt-dispatch`·`/grok-dispatch`·`/gemini-verify` 자동 |
+| **"녹음"·"음성"·"영상"·"비디오"·"이미지"·"썸네일"·"쇼츠"·"복원"** | `/audio-restore`·`/video-restore`·`/video-shorts`·`/video-subtitle`·`/image-generate`·`/image-restore` 자동 |
+| **"유튜브"·"YouTube"·"쇼츠"·"인스타"·"Instagram"·"릴스"** | `/yt-upload`·`/yt-research`·`/yt-analytics`·`/ig-upload`·`/ig-research`·`/ig-analytics` 자동 |
+| **"스케줄"·"cron"·"매일"·"매주"·"예약"·"원격"·"VPS"·"SSH"·"tmux"** | `/exec_scheduler-cron`·`/exec_scheduler-status`·`/exec_remote-status`·`/exec_remote-tmux`·`/exec_remote-ssh` 자동 |
+| **"로컬 모델"·"오프라인"·"ollama"·"llama"·"gemma"·"mistral"** | `/exec_offline-model`·`/exec_offline-setup`·`/exec_offline-route`·`/exec_offline-vector` 자동 |
+| **"분석"·"개선 포인트"·"기술 추천"·"아키 분석"** | `/analyze-improve` 자동 (XAI·Zero Trust·RAG·이벤트 등 추천) |
+| **"워크스루"·"투어"·"안내"·"처음 쓰"·"어떻게 쓰"** | `/walkthrough` 자동 (기능 투어 · 체험 가이드) |
+| **"음성 명령"·"말로 지시"·"voice"** | `/voice-task` 자동 (STT → task-instruction) |
+| **"회의 녹음"·"회의록"·"meeting"** | `/meeting` 자동 (STT → 요약 → 회의록) |
+| **"MCP 상태"·"MCP 체크"·"MCP 재점검"** | `/mcp_dev-status`·`/mcp_data-status`·`/mcp_web-status`·`/mcp_collab-status`·`/mcp_docs-status`·`/mcp_media-status` 자동 |
+| **"수정해"·"고쳐"·"바꿔"·"변경"** | 증명 체인 강제 (pre-snapshot → 수정 → post-snapshot → 작동 테스트 → 보고 · verify-after-edit-mandatory.md) |
+| **"왜 안 됐어"·"수정했다며 안 됨"·"적용 안 됨"·"효과 없"** | 자가 진단 5단계 (파일·cascade·캐시·다른 파일·실행 테스트 · verify-after-edit-mandatory.md) |
+| **"에러"·"오류"·"error"·"exception"·"traceback"·"fail"** | 자동 로그 조회 (recent-error-count·.claude/logs tail) + 원인 분석 + 수정 |
+| **"느려"·"slow"·"성능"·"응답 안 와"·"끊김"** | `/performance` 자동 (응답시간·메모리·번들·Lighthouse) |
+| **"원복"·"되돌려"·"revert"·"롤백"·"rollback"·"undo"** | git revert 또는 `.bak` restore 자동 (사용자 승인 후) |
+| **"리뷰해"·"코드 리뷰"·"review"·"PR 리뷰"** | code-reviewer agent 자동 dispatch (격리 · 구조화 반환) |
+| **"스크린샷"·"캡처"·"screenshot"·"화면 찍어"** | `/screenshot` 자동 (Playwright headless) |
+| **"번역"·"translate"·"영어로"·"한글로"·"일본어로"** | `/translate` 자동 |
+| **"녹음"·"음성"·"회의"·"meeting"·"회의록"** | `/meeting`·`/transcribe` 자동 (Whisper STT) |
+| **"말로"·"읽어줘"·"speak"·"TTS"** | `/speak` 자동 (edge-tts) |
+| **"예시 보여"·"artifact"·"바로 쓸"·"샘플"** | `/artifacts` 자동 (실행 가능 산출물) |
+| **"데모"·"mock"·"가짜"·"임시"·"시연용"** | feedback_no_mock_default 룰 재주입 (사용자 명시 없으면 실전 강제) |
 
 ## 강제
 

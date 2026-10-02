@@ -447,14 +447,44 @@
     /explainlikeim5        5살도 이해하게 쉽게 설명
     /brief                 핵심만 3줄 이내로
     /teacher               단계별 교육 방식으로 설명
+    /rewrite               글 다시 쓰기 (톤·스타일·대상·길이 지정)                 [2026-10-02]
+    /translate             번역 (--to lang · glossary 유지)                       [2026-10-02]
+    /expand                요약·bullet → 상세 본문으로 확장                        [2026-10-02]
+    /format-as             table·json·yaml·md·csv·xml·html·sql·mermaid 변환      [2026-10-02]
+    /generate-ideas        브레인스토밍 — 다양한 각도 N개 아이디어                 [2026-10-02]
 
-  [에이전트 — 6개]
+  [사용자 스타일 자동 학습 (2026-10-02 신설 · 다중 프로젝트 전파)]
+    setup/templates/user_style_profile.md  git-tracked SoT (10 축 · 50 feedback)
+    .claude/state/user_style_profile.md    install 결과 (프로젝트별)
+    inject-user-style.sh                   SessionStart · 12h throttle · 3-tier fallback
+    learn-style.py                         주 1회 (일요일 04:30) orca.db + memory 재분석
+    install-to                             자동 전파 (target 의 .claude/state/ 로 복사)
+    merge-to-target.py <TARGET> [--apply]  기존 프로젝트에 kit 병합 (덮어쓰기 X · 대상 수정본 보존 · 중복 제외 · .bak 백업)
+                                           판정: 동일=skip / kit 과거버전=갱신 / 대상 수정본=보존 / kit 전용=추가
+                                           병합한 대상은 .claude/state/merge-targets.txt (PC별) 자동 등록
+    git pull 자동 병합                       .git/hooks/post-merge + post-rewrite(pull --rebase) → merge-to-target --all --apply
+                                           소유 판정: 대상 .claude/state/kit-merge-manifest.json (도구가 쓴 내용 지문) + kit git 이력
+    verify-fresh-clone.py                  새 PC(pull만) 동작 검사: INSERT 테이블 DDL · state 생성기 hook 연결 (ensure-state 매 세션)
+    MCP 자동 등록 (auto-install-deps)       Git Bash 경로변환(cmd /c→C:/) 차단 MSYS_NO_PATHCONV · 정의와 다르면 재등록 · fetch=uvx mcp-server-fetch(PyPI)
+    statusline git 호출                     --no-optional-locks (렌더 1초 timeout 강제종료 시 .git/index.lock 잔존 → pull 차단되던 것)
+    merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
+    pre-commit                              grep -c 0건일 때 "0
+    state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
+    verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
+    역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
+0" 비교 오류 → || true
+    로그                                    .claude/logs/user-style-updates.log
+
+  [에이전트 — 6개 + 동료 모드 3개]
     01 team-lead     설계/지시서 작성
     02 implementer   구현 실행
     03 reviewer      코드 리뷰
     04 architect     아키텍처 설계
     05 monitor       서버 헬스 체크
     06 designer      디자인 참조/생성
+    coach                   1:1 코칭 · GROW 모델 · 목표·결정 지원      [2026-10-02]
+    pm                      프로젝트 매니지먼트 · 스코프·리스크·일정    [2026-10-02]
+    brainstorming-partner   divergent-first 아이디어 생성 · 산업 이식  [2026-10-02]
 
   [도구 — 2개]
     tools/video-restore.py     동영상/이미지 복원 (CodeFormer+Real-ESRGAN)
@@ -467,7 +497,7 @@
 
   [초기 설정]
     1. SQLite 상태 DB 초기화:
-       python .claude/scripts/init-state-db.py
+       python .claude/scripts/init-state-db.py   (SessionStart ensure-state.sh 가 자동 실행 — 이력 4테이블 포함)
        → .claude/state/orca.db 생성 (8 테이블)
        → 기존 token-usage.jsonl 자동 마이그레이션
 
@@ -578,7 +608,7 @@
     용도: 스케줄 태스크·워치독이 필요 없는 머신 (노트북·임시 환경·CI) 에서
           세션 시작 부하와 schtasks 오염을 0 으로.
 
-  [라우팅 정책 — Opus 4.8 default · Fable 5 RESTORED · Sonnet 5 신규 (2026-07-01 Fable RESTORED, 07-02 Sonnet 5 출시)]
+  [라우팅 정책 — Opus 5.5 default (2026-09-22) · Fable 5.1/Mythos 5.1 (2026-09-01) · Sonnet 5]
     기본 라우터가 4.8 중심·Fable 5 신중 승격·Sonnet 5 비용 검토 중으로 설계됨:
       설계·리팩토링·애매한 태스크 → Opus 4.8 + Extended Thinking + /effort xhigh (1M context, 128k 출력)
       초난도·다각 검증 → Opus 4.8 + ultracode (Dynamic Workflows) — v2.1.206 에서 findings quality 개선
@@ -1186,6 +1216,10 @@
       - 11 자동 최적화: .claude/rules/auto-optimization.md
         · .claude/scripts/nightly-optimize.py (매일 03:00 · DB VACUUM · retention · 백업)
         · 6 축 자동 (프롬프트 압축 · 컨텍스트 축소 · DB · 이미지 · 로그 · hook 프로파일)
+      - 12 일일 산출물 refresh (2026-09-16 신설): .claude/rules/artifact-freshness-check.md § 매일 자동 갱신
+        · .claude/scripts/daily-artifact-refresh.py + wrapper .bat (동적 python 검색)
+        · setup/modules/18-daily-artifact-refresh.bat (Task Scheduler Orca_DailyArtifactRefresh 매일 04:00)
+        · OVERDUE 산출물 (강의 docx · catalog pptx · md · README) 자동 append + .bak 백업 + idempotent
 
   2026-05-19 AI-Native 3대 플러그인 + 7대 뮤스탱 + 디자인 100+ CDN (신규):
     ✓ AI-Native 3대 플러그인 (dd69eeb, 8d5fb2a, f0843fc 누적)
@@ -1742,3 +1776,14 @@
 
 ## cmem 광고 disable
 - ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false
+
+
+
+
+
+
+
+
+
+
+

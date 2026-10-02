@@ -66,9 +66,64 @@ def tx():
       conn.close()
 
 
+def ensure_history_tables(conn) -> None:
+  """이력 테이블 4종 (conversations·session_summary·problem_solutions·file_audit). Idempotent.
+
+  2026-10-02: 쓰는 쪽(conversation_logger·save_solution·audit_file_write)만 있고 DDL 이 kit 에
+  없어서, 새 PC 의 orca.db 에서는 INSERT 가 except 에 삼켜져 이력이 0건이었다.
+  schema_version 조기 return 과 무관하게 매번 실행한다 (기존 DB 에도 보강).
+  컬럼은 각 INSERT/SELECT 문 기준. hit_count·last_hit_ts 는 promote-solutions 가 쓰는 컬럼.
+  """
+  conn.executescript("""
+    CREATE TABLE IF NOT EXISTS conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      session_id TEXT, turn INTEGER, role TEXT, content TEXT,
+      content_hash TEXT, tokens INTEGER, tags TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_id, turn);
+    CREATE TABLE IF NOT EXISTS session_summary (
+      session_id TEXT PRIMARY KEY,
+      started_at TIMESTAMP, ended_at TIMESTAMP, turns INTEGER,
+      summary TEXT, key_decisions TEXT, files_touched TEXT, tokens_total INTEGER,
+      updated_at TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS problem_solutions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      session_id TEXT, problem TEXT, category TEXT, keywords TEXT,
+      approach TEXT, solution TEXT, files_modified TEXT, commands_run TEXT,
+      verified INTEGER DEFAULT 0, reusable_score INTEGER DEFAULT 5,
+      problem_hash TEXT UNIQUE, hit_count INTEGER DEFAULT 0, last_hit_ts TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS file_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      session_id TEXT, action TEXT, path TEXT, size INTEGER,
+      hash TEXT, actor TEXT, reason TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_file_audit_ts ON file_audit(ts);
+  """)
+  # 이미 만들어진 테이블에 빠진 컬럼 보강 (CREATE IF NOT EXISTS 는 컬럼을 안 더한다)
+  #   2026-10-02: session_summary.updated_at 누락 → conversation_logger 의 ON CONFLICT UPDATE 실패,
+  #   resume-last-24h 의 WHERE updated_at 조회가 조용히 빈 결과
+  need = {
+    "session_summary": [("updated_at", "TIMESTAMP")],
+    "problem_solutions": [("hit_count", "INTEGER DEFAULT 0"), ("last_hit_ts", "TIMESTAMP")],
+    # approval-gate.py 가 쓰는 승인 게이트 컬럼 — tasks DDL 에 없어 새 PC 에서 승인 기능 불능
+    "tasks": [("approval_state", "TEXT DEFAULT 'not_required'"), ("risk_category", "TEXT"), ("risk_detail", "TEXT"), ("approved_at", "INTEGER"), ("approved_by", "TEXT")],
+  }
+  for tbl, cols in need.items():
+    have = {r[1] for r in conn.execute(f"PRAGMA table_info({tbl})")}
+    for col, typ in cols:
+      if col not in have:
+        conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
+
+
 def init_schema() -> None:
   """Initialize database schema if missing. Idempotent."""
   with tx() as conn:
+    ensure_history_tables(conn)
     # Check schema version
     try:
       cur = conn.execute("SELECT version FROM schema_version LIMIT 1")
