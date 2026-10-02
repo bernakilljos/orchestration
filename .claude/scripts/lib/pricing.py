@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Model pricing per 1M tokens (2026-07-24 basis, USD).
+Model pricing per 1M tokens (2026-10-02 basis, USD — claude-api skill 모델표 2026-09-25 대조).
 Source: https://docs.anthropic.com/en/docs/about-claude/models
 
 tokenizer_factor:
@@ -34,10 +34,10 @@ PRICING = {
     },
     # === Opus 4.7 계열 tokenizer (factor 1.0 기준) ===
     "claude-opus-4-7": {
-        "input": 15.0,
-        "output": 75.0,
-        "cache_write": 18.75,
-        "cache_read": 1.5,
+        "input": 5.0,
+        "output": 25.0,
+        "cache_write": 6.25,
+        "cache_read": 0.5,
         "tokenizer_factor": 1.0,
         # 2026-07-24: fast mode 제거 (400 error) — fast 는 4.8/Opus 5 로 마이그레이션
     },
@@ -57,6 +57,21 @@ PRICING = {
         "cache_read": 1.0,
         "tokenizer_factor": 1.3,  # 30% 더 많은 토큰
     },
+    # === Fable 5.1 / Mythos 5.1 (2026-09-01, cache read $0.25 = 75% 저렴) ===
+    "claude-fable-5-1": {
+        "input": 10.0,
+        "output": 50.0,
+        "cache_write": 12.5,
+        "cache_read": 0.25,
+        "tokenizer_factor": 1.3,
+    },
+    "claude-mythos-5-1": {
+        "input": 10.0,
+        "output": 50.0,
+        "cache_write": 12.5,
+        "cache_read": 0.25,
+        "tokenizer_factor": 1.3,
+    },
     "claude-mythos-5": {
         "input": 10.0,
         "output": 50.0,
@@ -72,20 +87,28 @@ PRICING = {
         "cache_read": 0.3,
         "tokenizer_factor": 1.0,
     },
+    # === Sonnet 5.5 ===
+    "claude-sonnet-5-5": {
+        "input": 2.0,
+        "output": 10.0,
+        "cache_write": 2.5,
+        "cache_read": 0.2,
+        "tokenizer_factor": 1.3,
+    },
     # === Sonnet 5 (2026-07-02 신규, Opus 4.7 tokenizer -> 실효 비용 ~30% ↑) ===
     "claude-sonnet-5": {
-        "input": 3.0,
-        "output": 15.0,
-        "cache_write": 3.75,
-        "cache_read": 0.3,
+        "input": 2.0,
+        "output": 10.0,
+        "cache_write": 2.5,
+        "cache_read": 0.2,
         "tokenizer_factor": 1.3,
     },
     # === Haiku ===
     "claude-haiku-4-5": {
-        "input": 0.8,
-        "output": 4.0,
-        "cache_write": 1.0,
-        "cache_read": 0.08,
+        "input": 1.0,
+        "output": 5.0,
+        "cache_write": 1.25,
+        "cache_read": 0.1,
         "tokenizer_factor": 1.0,
     },
     # === Non-Anthropic ===
