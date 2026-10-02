@@ -6,7 +6,7 @@
 
 set -uo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 LOG="$PROJECT_DIR/.claude/logs/mcp-health.log"
 mkdir -p "$PROJECT_DIR/.claude/logs" 2>/dev/null
 
@@ -14,6 +14,9 @@ TS="$(date '+%Y-%m-%d %H:%M:%S')"
 
 # claude mcp list 실행 + 실패 서버 감지
 MCP_OUTPUT=$(claude mcp list 2>&1 || echo "MCP_CHECK_FAILED")
+
+# statusline 의 "MCP N on M off" 원천 (.claude/state/mcp-status.json) 갱신 — 같은 출력 재사용
+MCP_LIST_OUTPUT="$MCP_OUTPUT" bash "$PROJECT_DIR/.claude/scripts/refresh-mcp-status.sh" >/dev/null 2>&1 || true
 
 if echo "$MCP_OUTPUT" | grep -q "MCP_CHECK_FAILED"; then
   echo "[$TS] MCP health check failed (claude mcp list error)" >> "$LOG"

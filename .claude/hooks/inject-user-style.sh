@@ -8,7 +8,10 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 # 3-tier fallback: 프로젝트 state (install-to 자동 전파) → setup/templates (git-tracked SoT) → user memory
 PROFILE="$PROJECT_DIR/.claude/state/user_style_profile.md"
 [ -f "$PROFILE" ] || PROFILE="$PROJECT_DIR/setup/templates/user_style_profile.md"
-[ -f "$PROFILE" ] || PROFILE="$HOME/.claude/projects/C--pjt-orchestration-v1/memory/user_style_profile.md"
+# Claude Code 프로젝트 폴더명 = cwd 의 영숫자 외 문자를 '-' 로 (statusline cwd_to_proj_dir 와 동일 규칙)
+WIN_DIR="$(cygpath -w "$PROJECT_DIR" 2>/dev/null || echo "$PROJECT_DIR")"
+MEM_DIR="$HOME/.claude/projects/$(printf '%s' "$WIN_DIR" | python -X utf8 -c "import re,sys;print(re.sub(r'[^a-zA-Z0-9]','-',sys.stdin.read().strip()))" 2>/dev/null)/memory"
+[ -f "$PROFILE" ] || PROFILE="$MEM_DIR/user_style_profile.md"
 STATE="$PROJECT_DIR/.claude/state/inject-user-style.last"
 
 # Throttle · 세션당 1회 (12시간 기준)
@@ -33,7 +36,7 @@ cat <<'MSG'
 ⑨ 조사: 대상 확정 0순위 · 100% Read · 이력 먼저 · 30초 실측 > 30분 추론
 ⑩ 실전: 데모·목업 X (명시 시만) · install 순서 · 공통 kit · 신기능 자동 반영
 
-전체: ~/.claude/projects/C--pjt-orchestration-v1/memory/user_style_profile.md
+전체: setup/templates/user_style_profile.md
 MSG
 
 mkdir -p "$(dirname "$STATE")"

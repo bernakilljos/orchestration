@@ -471,7 +471,7 @@
 
   [초기 설정]
     1. SQLite 상태 DB 초기화:
-       python .claude/scripts/init-state-db.py
+       python .claude/scripts/init-state-db.py   (SessionStart ensure-state.sh 가 자동 실행 — 이력 4테이블 포함)
        → .claude/state/orca.db 생성 (8 테이블)
        → 기존 token-usage.jsonl 자동 마이그레이션
 

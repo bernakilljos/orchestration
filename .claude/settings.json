@@ -67,6 +67,12 @@
           },
           {
             "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/ensure-state.sh\"",
+            "async": true,
+            "timeout": 60
+          },
+          {
+            "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject-user-style.sh\"",
             "timeout": 3
           },

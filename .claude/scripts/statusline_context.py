@@ -478,31 +478,39 @@ def extra_gauges(cwd, data=None):
                         tail.append(f"orca 활성 {ac}건 · task {tk}")
                 except Exception:
                     pass
-                # Cache hit rate (prompt cache 절감)
-                if _CACHE_HIT_RATE > 0:
-                    tail.append(f"cache {_CACHE_HIT_RATE:.0f}% hit")
-                # 최근 24h error·warn 카운트
-                if _ERROR_COUNT > 0:
-                    prefix = "[!] " if _ERROR_COUNT > 20 else ""
-                    tail.append(f"{prefix}errors {_ERROR_COUNT}")
-                # 하드코딩 감사 결과 (별도 캐시)
-                try:
-                    aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
-                    if os.path.exists(aud):
-                        with open(aud, "r", encoding="utf-8") as f:
-                            a = json.load(f)
-                        st = a.get("status", "?")
-                        tot = int(a.get("total_hits", 0))
-                        if st == "PASS":
-                            tail.append("하드코딩 감사 PASS")
-                        elif st == "CRITICAL":
-                            tail.append(f"[!] 하드코딩 CRITICAL {tot}")
-                        else:
-                            tail.append(f"하드코딩 WARN {tot}")
-                except Exception:
-                    pass
                 # AI 비용은 별도 line3 로 분리 (여기서는 append X)
                 pass
+    except Exception:
+        pass
+    # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
+    try:
+        # Cache hit rate (prompt cache 절감)
+        # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산
+        _pc = (data or {}).get("prompt_cache") or {}
+        _hr = _pc.get("hit_ratio")
+        _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
+        if _cr > 0:
+            tail.append(f"cache {_cr:.0f}% hit")
+        # 최근 24h error·warn 카운트
+        if _ERROR_COUNT > 0:
+            prefix = "[!] " if _ERROR_COUNT > 20 else ""
+            tail.append(f"{prefix}errors {_ERROR_COUNT}")
+        # 하드코딩 감사 결과 (별도 캐시)
+        try:
+            aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
+            if os.path.exists(aud):
+                with open(aud, "r", encoding="utf-8") as f:
+                    a = json.load(f)
+                st = a.get("status", "?")
+                tot = int(a.get("total_hits", 0))
+                if st == "PASS":
+                    tail.append("하드코딩 감사 PASS")
+                elif st == "CRITICAL":
+                    tail.append(f"[!] 하드코딩 CRITICAL {tot}")
+                else:
+                    tail.append(f"하드코딩 WARN {tot}")
+        except Exception:
+            pass
     except Exception:
         pass
 
