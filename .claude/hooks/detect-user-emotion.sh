@@ -182,6 +182,50 @@ if echo "$PROMPT" | grep -qiE 'PDF|pdf|엑셀|xlsx|워드|docx|pptx|문서 만�
   actions="${actions}[문서 top4] -> /pdf-generate·/excel-make·/word-make·/make-ppt 자동 (유형별).\\n"
 fi
 
+# 30~44 전체 그룹 매핑 (사용자 명시: 다 반영)
+if echo "$PROMPT" | grep -qE '빠른 체크|지금 상태|ping|status check'; then
+  actions="${actions}[종합 체크] -> /check·/check-agents·/check-services·/claude-status 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '학습해|저장해|기억해|recall|회상'; then
+  actions="${actions}[학습·기억] -> /learn·/recall·/gemini-recap 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE 'install-to|다른 머신|다른 폴더|배포 대상'; then
+  actions="${actions}[install-to] -> /install-to <path> 자동 (kit 전수 복사).\\n"
+fi
+if echo "$PROMPT" | grep -qE '다이어그램|마인드맵|레이어|치트|artifact|랜딩|포트폴리오'; then
+  actions="${actions}[디자인] -> /arch-mindmap·/arch-layered·/arch-cheatsheet·/claude-artifact·/design_web-landing·/design_web-portfolio 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qiE 'copilot|cursor|GPT|gpt-|grok|gemini-verify'; then
+  actions="${actions}[AI dispatch] -> /copilot-dispatch·/cursor-dispatch·/gpt-dispatch·/grok-dispatch·/gemini-verify 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '녹음|음성|영상|비디오|이미지|썸네일|쇼츠|복원'; then
+  actions="${actions}[미디어] -> /audio-restore·/video-restore·/video-shorts·/video-subtitle·/image-generate·/image-restore 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qiE '유튜브|youtube|인스타|instagram|릴스|쇼츠'; then
+  actions="${actions}[소셜] -> /yt-upload·/yt-research·/yt-analytics·/ig-upload·/ig-research·/ig-analytics 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '스케줄|cron|매일|매주|예약|원격|VPS|SSH|tmux'; then
+  actions="${actions}[스케줄·원격] -> /exec_scheduler-cron·/exec_scheduler-status·/exec_remote-status·/exec_remote-tmux·/exec_remote-ssh 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '로컬 모델|오프라인|ollama|llama|gemma|mistral'; then
+  actions="${actions}[로컬 모델] -> /exec_offline-model·/exec_offline-setup·/exec_offline-route·/exec_offline-vector 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '분석해|개선 포인트|기술 추천|아키 분석'; then
+  actions="${actions}[분석·개선] -> /analyze-improve 자동.\\n"
+fi
+if echo "$PROMPT" | grep -qE '워크스루|투어|안내|처음 쓰|어떻게 쓰'; then
+  actions="${actions}[워크스루] -> /walkthrough 자동 (기능 투어).\\n"
+fi
+if echo "$PROMPT" | grep -qiE '음성 명령|말로 지시|voice|voice task'; then
+  actions="${actions}[음성 명령] -> /voice-task 자동 (STT → task-instruction).\\n"
+fi
+if echo "$PROMPT" | grep -qE '회의 녹음|회의록|meeting'; then
+  actions="${actions}[회의] -> /meeting 자동 (STT → 요약 → 회의록).\\n"
+fi
+if echo "$PROMPT" | grep -qE 'MCP 상태|MCP 체크|MCP 재점검'; then
+  actions="${actions}[MCP 상태] -> /mcp_dev-status·/mcp_data-status·/mcp_web-status·/mcp_collab-status·/mcp_docs-status·/mcp_media-status 자동.\\n"
+fi
+
 # 29. 수정 지시 -> 증명 체인 강제 (수정 후 자동 pre/post snapshot + 작동 테스트 + 보고)
 if echo "$PROMPT" | grep -qE '수정해|고쳐|바꿔|변경해|고쳐줘|수정 해|바꿔줘'; then
   actions="${actions}[수정 지시] -> 증명 체인 강제 (verify-after-edit-mandatory.md). 5단계: ① pre-snapshot (md5/Read/sqlite SELECT/curl) ② 수정 실행 ③ post-snapshot ④ diff + 작동 테스트 ⑤ 보고 (증거 첨부). '수정했습니다' 만 보고 X.\\n"
