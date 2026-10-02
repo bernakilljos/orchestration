@@ -397,12 +397,12 @@ def extra_gauges(cwd, data=None):
     try:
         import subprocess
         b = subprocess.run(
-            ["git", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
+            ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
             capture_output=True, text=True, timeout=1
         )
         branch = b.stdout.strip() if b.returncode == 0 else ""
         s = subprocess.run(
-            ["git", "-C", cwd, "status", "--porcelain"],
+            ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
             capture_output=True, text=True, timeout=1
         )
         dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
