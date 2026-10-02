@@ -167,6 +167,56 @@ if echo "$PROMPT" | grep -qE '왜.*안 됐|왜 안됐|수정했다며|적용 안
   actions="${actions}[재검증 재지시] -> 자가 진단 5단계 (verify-after-edit-mandatory.md): ① 파일 Read 재확인 ② cascade override ③ 캐시·재시작 ④ 엉뚱한 파일 ⑤ 실행 테스트. 원인 1줄 + 수정 + 재검증 결과 첨부.\\n"
 fi
 
+# 31. 에러·오류 -> 자동 로그 조회 + 디버깅
+if echo "$PROMPT" | grep -qE '에러|오류|error|exception|traceback|fail|실패'; then
+  actions="${actions}[에러 감지] -> recent-error-count·.claude/logs tail 자동 조회 + 원인 분석 + 수정 체인.\\n"
+fi
+
+# 32. 성능·느림
+if echo "$PROMPT" | grep -qE '느려|느리|slow|성능|응답 안 와|끊김|렉'; then
+  actions="${actions}[성능 저하] -> /performance 자동 (응답시간·메모리·번들·Lighthouse).\\n"
+fi
+
+# 33. 원복·revert·rollback
+if echo "$PROMPT" | grep -qE '원복|되돌려|revert|롤백|rollback|undo|돌려놔'; then
+  actions="${actions}[원복] -> git revert 또는 .bak restore 자동 (사용자 승인 후).\\n"
+fi
+
+# 34. 코드 리뷰
+if echo "$PROMPT" | grep -qE '리뷰해|코드 리뷰|review|PR 리뷰|점검해'; then
+  actions="${actions}[리뷰] -> code-reviewer agent 자동 dispatch (격리 · 구조화 반환).\\n"
+fi
+
+# 35. 스크린샷·캡처
+if echo "$PROMPT" | grep -qE '스크린샷|캡처|screenshot|화면 찍|screen capture'; then
+  actions="${actions}[스크린샷] -> /screenshot 자동 (Playwright headless).\\n"
+fi
+
+# 36. 번역
+if echo "$PROMPT" | grep -qE '번역|translate|영어로|한글로|일본어로|중국어로'; then
+  actions="${actions}[번역] -> /translate 자동.\\n"
+fi
+
+# 37. 회의·녹음·음성 입력
+if echo "$PROMPT" | grep -qE '녹음|음성|회의|meeting|회의록|STT'; then
+  actions="${actions}[회의/녹음] -> /meeting·/transcribe 자동 (Whisper STT).\\n"
+fi
+
+# 38. 말로·TTS
+if echo "$PROMPT" | grep -qE '말로|읽어줘|speak|TTS|음성 출력'; then
+  actions="${actions}[TTS] -> /speak 자동 (edge-tts).\\n"
+fi
+
+# 39. 예시·artifact
+if echo "$PROMPT" | grep -qE '예시 보여|artifact|바로 쓸|샘플|즉시 실행'; then
+  actions="${actions}[예시] -> /artifacts 자동 (실행 가능 산출물).\\n"
+fi
+
+# 40. 데모·mock·가짜 (명시 안 하면 실전 강제)
+if echo "$PROMPT" | grep -qE '데모|mock|가짜|시연용|dummy'; then
+  actions="${actions}[목업 트리거] -> 사용자 명시 (목업·mock·demo) 있는지 재확인. 없으면 feedback_no_mock_default 룰 적용 (실전 강제 · DB 연결 요구).\\n"
+fi
+
 # 감지된 게 있으면 systemMessage
 if [ -n "$actions" ]; then
   cat <<EOF

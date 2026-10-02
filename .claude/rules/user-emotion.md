@@ -46,6 +46,16 @@
 | **"다이어그램"·"그림"·"시각화"·"구조도"** | `/arch-auto` 자동 (마인드맵·레이어·치트 중 적합한 것) |
 | **"수정해"·"고쳐"·"바꿔"·"변경"** | 증명 체인 강제 (pre-snapshot → 수정 → post-snapshot → 작동 테스트 → 보고 · verify-after-edit-mandatory.md) |
 | **"왜 안 됐어"·"수정했다며 안 됨"·"적용 안 됨"·"효과 없"** | 자가 진단 5단계 (파일·cascade·캐시·다른 파일·실행 테스트 · verify-after-edit-mandatory.md) |
+| **"에러"·"오류"·"error"·"exception"·"traceback"·"fail"** | 자동 로그 조회 (recent-error-count·.claude/logs tail) + 원인 분석 + 수정 |
+| **"느려"·"slow"·"성능"·"응답 안 와"·"끊김"** | `/performance` 자동 (응답시간·메모리·번들·Lighthouse) |
+| **"원복"·"되돌려"·"revert"·"롤백"·"rollback"·"undo"** | git revert 또는 `.bak` restore 자동 (사용자 승인 후) |
+| **"리뷰해"·"코드 리뷰"·"review"·"PR 리뷰"** | code-reviewer agent 자동 dispatch (격리 · 구조화 반환) |
+| **"스크린샷"·"캡처"·"screenshot"·"화면 찍어"** | `/screenshot` 자동 (Playwright headless) |
+| **"번역"·"translate"·"영어로"·"한글로"·"일본어로"** | `/translate` 자동 |
+| **"녹음"·"음성"·"회의"·"meeting"·"회의록"** | `/meeting`·`/transcribe` 자동 (Whisper STT) |
+| **"말로"·"읽어줘"·"speak"·"TTS"** | `/speak` 자동 (edge-tts) |
+| **"예시 보여"·"artifact"·"바로 쓸"·"샘플"** | `/artifacts` 자동 (실행 가능 산출물) |
+| **"데모"·"mock"·"가짜"·"임시"·"시연용"** | feedback_no_mock_default 룰 재주입 (사용자 명시 없으면 실전 강제) |
 
 ## 강제
 
