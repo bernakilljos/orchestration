@@ -655,9 +655,10 @@ def extra_gauges(cwd, data=None):
             def _fmt(section_name, section):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
-                if not c90: return ""
                 parts = [f"{k} {v}" for k, v in c90.items() if v > 0]
-                if not parts: return ""
+                # 0건도 표시 — 줄이 사라지면 "집계 안 됨" 과 구분이 안 된다 (헌장 A2)
+                if not parts:
+                    return f"위반 0 (90일 · 발화 {_ra.get('user_turns_90d', 0)}건)"
                 suffix = f" · 재발률 {rr}%" if rr else ""
                 return " · ".join(parts) + suffix
             design_line = _fmt("design", _ra.get("design") or {})

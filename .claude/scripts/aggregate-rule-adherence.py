@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / ".claude" / "state" / "orca.db"
+SESSIONS_DB = ROOT / ".claude" / "state" / "sessions.db"
 OUT = ROOT / ".claude" / "state" / "rule-adherence.json"
 TTL = 600  # 10분
 
@@ -38,7 +39,9 @@ def count_in_window(rows, patterns, days):
     for (ts, txt) in rows:
         if not txt: continue
         try:
-            tsd = datetime.fromisoformat(ts)
+            tsd = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            if tsd.tzinfo:  # sessions.db 는 UTC(Z) · 로컬 naive 로 맞춰 비교
+                tsd = tsd.astimezone().replace(tzinfo=None)
         except Exception:
             continue
         if tsd < cutoff: continue
@@ -53,20 +56,35 @@ def main():
         age = time.time() - OUT.stat().st_mtime
         if age < TTL and os.environ.get("FORCE") != "1":
             return  # cache valid
-    if not DB.exists():
-        return
+    # 정본 = sessions.db prompts(source='typed') — jsonl 증분 적재라 전 세션이 있다.
+    # orca.db.conversations 는 save-user-prompt 훅이 놓친 게 많아 (2026-10-02 실측 12건 vs typed 133건)
+    # 위반 0 으로 보여 상태줄 줄이 통째로 숨었다. 없을 때만 폴백.
+    cutoff90 = (datetime.now() - timedelta(days=90)).isoformat()
+    rows, source = [], ""
     try:
-        c = sqlite3.connect(DB)
-        rows = c.execute(
-            "SELECT ts, content FROM conversations WHERE role='user' "
-            "AND ts >= ? ORDER BY ts DESC LIMIT 5000",
-            ((datetime.now() - timedelta(days=90)).isoformat(),)
-        ).fetchall()
+        if SESSIONS_DB.exists():
+            c = sqlite3.connect(SESSIONS_DB)
+            rows = c.execute(
+                "SELECT ts, text FROM prompts WHERE source='typed' "
+                "AND ts >= ? ORDER BY ts DESC LIMIT 5000", (cutoff90[:10],)
+            ).fetchall()
+            source = "sessions.db:prompts(typed)"
+        if not rows and DB.exists():
+            c = sqlite3.connect(DB)
+            rows = c.execute(
+                "SELECT ts, content FROM conversations WHERE role='user' "
+                "AND ts >= ? ORDER BY ts DESC LIMIT 5000", (cutoff90,)
+            ).fetchall()
+            source = "orca.db:conversations"
     except Exception as e:
         print(f"[ERR] {e}", file=sys.stderr); return
+    if not source:
+        return
 
+    design_90 = count_in_window(rows, DESIGN_PATTERNS, 90)
     design_30 = count_in_window(rows, DESIGN_PATTERNS, 30)
     design_7  = count_in_window(rows, DESIGN_PATTERNS, 7)
+    dev_90    = count_in_window(rows, DEV_PATTERNS, 90)
     dev_30    = count_in_window(rows, DEV_PATTERNS, 30)
     dev_7     = count_in_window(rows, DEV_PATTERNS, 7)
 
@@ -77,14 +95,17 @@ def main():
 
     result = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "source": source,
         "user_turns_90d": len(rows),
         "design": {
-            "counts_90d": design_30,
+            "counts_90d": design_90,
+            "counts_30d": design_30,
             "counts_7d":  design_7,
             "recur_rate_pct": recur_rate(design_7, design_30),
         },
         "dev": {
-            "counts_90d": dev_30,
+            "counts_90d": dev_90,
+            "counts_30d": dev_30,
             "counts_7d":  dev_7,
             "recur_rate_pct": recur_rate(dev_7, dev_30),
         },
