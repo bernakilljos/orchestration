@@ -189,13 +189,13 @@ def _emit(data):
     for s in data.get("external_signals") or []:
         parts.append(s)
     if not parts: return
-    ctx = "\\n".join(parts)
+    ctx = _sanitize("\\n".join(_sanitize(p) for p in parts))
     print(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
             "additionalContext": ctx
         }
-    }, ensure_ascii=False))
+    }, ensure_ascii=True))
 
 if __name__ == "__main__":
     try: main()
