@@ -468,8 +468,7 @@
     MCP 자동 등록 (auto-install-deps)       Git Bash 경로변환(cmd /c→C:/) 차단 MSYS_NO_PATHCONV · 정의와 다르면 재등록 · fetch=uvx mcp-server-fetch(PyPI)
     statusline git 호출                     --no-optional-locks (렌더 1초 timeout 강제종료 시 .git/index.lock 잔존 → pull 차단되던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
-    pre-commit                              grep -c 0건일 때 "0
-0" 비교 오류 → || true
+    pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
     verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
     역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
