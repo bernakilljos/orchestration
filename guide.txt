@@ -1765,3 +1765,4 @@
 - ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false
 
 
+
