@@ -162,6 +162,26 @@ if echo "$PROMPT" | grep -qE '루틴|루틴화|시스템화|반복.*자동|자�
   actions="${actions}[루틴/시스템화] -> /ai-system-stages 자동 (Prompt→Agent→Orchestration→Automation→Autonomous→Platform · 우리 kit 자가발전 계층 매핑 · WebSearch 실측 Step 0).\\n"
 fi
 
+# 29-M. MCP 설치 (top1 · 27회/30d)
+if echo "$PROMPT" | grep -qiE 'MCP|플러그인|install mcp|mcp 설치'; then
+  actions="${actions}[MCP 설치 top1] -> /install-mcp 또는 /mcp_dev-install·/mcp_data-install·/mcp_web-install·/mcp_collab-install·/mcp_docs-install·/mcp_media-install 자동.\\n"
+fi
+
+# 29-S. 보안·QA (top2 · 13회/30d)
+if echo "$PROMPT" | grep -qiE '보안|security|리뷰|review|테스트|QA|audit'; then
+  actions="${actions}[보안·QA top2] -> /security·/sec-scan·/review_qa·/test-gen·/score-task 자동 (최적 하나).\\n"
+fi
+
+# 29-X. 10x·효율 (top3 · 9회/30d)
+if echo "$PROMPT" | grep -qiE '10x|최대 효율|ship it|군더더기|빠르게 끝'; then
+  actions="${actions}[10x top3] -> /10x 자동 (prose 제거 · 바로 solution · one-shot).\\n"
+fi
+
+# 29-D. 문서 생성 (top4 · 8회/30d)
+if echo "$PROMPT" | grep -qiE 'PDF|pdf|엑셀|xlsx|워드|docx|pptx|문서 만들|스프레드'; then
+  actions="${actions}[문서 top4] -> /pdf-generate·/excel-make·/word-make·/make-ppt 자동 (유형별).\\n"
+fi
+
 # 29. 수정 지시 -> 증명 체인 강제 (수정 후 자동 pre/post snapshot + 작동 테스트 + 보고)
 if echo "$PROMPT" | grep -qE '수정해|고쳐|바꿔|변경해|고쳐줘|수정 해|바꿔줘'; then
   actions="${actions}[수정 지시] -> 증명 체인 강제 (verify-after-edit-mandatory.md). 5단계: ① pre-snapshot (md5/Read/sqlite SELECT/curl) ② 수정 실행 ③ post-snapshot ④ diff + 작동 테스트 ⑤ 보고 (증거 첨부). '수정했습니다' 만 보고 X.\\n"
