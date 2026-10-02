@@ -73,7 +73,9 @@ def git_history_hashes(rel: str) -> set[str]:
 
 
 def norm(b: bytes) -> bytes:
-    return b.replace(b"\r\n", b"\n")
+    # 줄끝 통일 + CLAUDE.md 의 AUTO-STATS 한 줄(스크립트 수 등, hook 이 수시로 고침)은 비교에서 제외
+    b = b.replace(b"\r\n", b"\n")
+    return re.sub(rb"(?m)^> \*\*" + "현재 상태".encode("utf-8") + rb"\*\*.*$", b"", b)
 
 
 def walk(root: Path, rel_tree: str):
