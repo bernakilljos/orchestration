@@ -6,9 +6,12 @@
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 HOOK="$PROJECT_DIR/.git/hooks/pre-commit"
 
-# 이미 있으면 skip
-[ -f "$HOOK" ] && grep -q "guide.txt" "$HOOK" 2>/dev/null && exit 0
-
+# 최신본이면 pre-commit 만 건너뛴다. 예전엔 "guide.txt" 만 보고 exit 0 해서
+# 고친 판(|| true)이 기존 설치에 영영 안 들어갔고, 아래 post-merge·post-rewrite 도
+# 설치되지 않았다 (2026-10-02 실측: pull 후에도 'integer expression expected' 재현).
+if [ -f "$HOOK" ] && grep -q "guide.txt" "$HOOK" 2>/dev/null && ! grep -q '|| echo "0"' "$HOOK" 2>/dev/null; then
+  : # 최신 pre-commit
+else
 cat > "$HOOK" <<'HOOK_EOF'
 #!/usr/bin/env bash
 STAGED=$(git diff --cached --name-only 2>/dev/null)
@@ -25,6 +28,7 @@ HOOK_EOF
 
 chmod +x "$HOOK" 2>/dev/null
 echo "[install-git-hooks] pre-commit hook 설치 완료"
+fi
 
 # post-merge: git pull 후 등록된 대상 프로젝트(.claude/state/merge-targets.txt)에 kit 자동 병합
 PM="$PROJECT_DIR/.git/hooks/post-merge"
@@ -46,7 +50,7 @@ fi
 
 # post-rewrite: pull --rebase 는 post-merge 를 안 부른다 → 같은 동작을 rebase 후에도
 PR="$PROJECT_DIR/.git/hooks/post-rewrite"
-if ! grep -q "merge-to-target" "$PR" 2>/dev/null; then
+if ! grep -q "hooks/post-merge" "$PR" 2>/dev/null; then
   cat > "$PR" <<'PR_EOF'
 #!/usr/bin/env bash
 [ "$1" = "rebase" ] || exit 0
