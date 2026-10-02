@@ -39,22 +39,22 @@ for server in $FAILED; do
   case "$server" in
     filesystem)
       claude mcp remove filesystem 2>/dev/null
-      claude mcp add filesystem -- cmd /c npx -y @modelcontextprotocol/server-filesystem "%USERPROFILE%" "C:\\pjt" 2>/dev/null
+      MSYS_NO_PATHCONV=1 claude mcp add filesystem -- cmd /c npx -y @modelcontextprotocol/server-filesystem "%USERPROFILE%" "C:\\pjt" 2>/dev/null
       echo "  -> filesystem re-registered" >> "$LOG"
       ;;
     powerpoint)
       claude mcp remove powerpoint 2>/dev/null
-      claude mcp add powerpoint -- cmd /c npx -y powerpoint-mcp-ultimate 2>/dev/null
+      MSYS_NO_PATHCONV=1 claude mcp add powerpoint -- cmd /c npx -y powerpoint-mcp-ultimate 2>/dev/null
       echo "  -> powerpoint re-registered" >> "$LOG"
       ;;
     dom-to-pptx)
       claude mcp remove dom-to-pptx 2>/dev/null
-      claude mcp add dom-to-pptx -- cmd /c npx -y dom-to-pptx 2>/dev/null
+      MSYS_NO_PATHCONV=1 claude mcp add dom-to-pptx -- cmd /c npx -y dom-to-pptx 2>/dev/null
       echo "  -> dom-to-pptx re-registered" >> "$LOG"
       ;;
     figma)
       claude mcp remove figma 2>/dev/null
-      claude mcp add figma -- cmd /c npx -y claude-talk-to-figma-mcp 2>/dev/null
+      MSYS_NO_PATHCONV=1 claude mcp add figma -- cmd /c npx -y claude-talk-to-figma-mcp 2>/dev/null
       echo "  -> figma re-registered" >> "$LOG"
       ;;
     *)

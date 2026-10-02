@@ -453,6 +453,7 @@
     git pull 자동 병합                       .git/hooks/post-merge + post-rewrite(pull --rebase) → merge-to-target --all --apply
                                            소유 판정: 대상 .claude/state/kit-merge-manifest.json (도구가 쓴 내용 지문) + kit git 이력
     verify-fresh-clone.py                  새 PC(pull만) 동작 검사: INSERT 테이블 DDL · state 생성기 hook 연결 (ensure-state 매 세션)
+    MCP 자동 등록 (auto-install-deps)       Git Bash 경로변환(cmd /c→C:/) 차단 MSYS_NO_PATHCONV · 정의와 다르면 재등록 · fetch=uvx mcp-server-fetch(PyPI)
     로그                                    .claude/logs/user-style-updates.log
 
   [에이전트 — 6개 + 동료 모드 3개]
