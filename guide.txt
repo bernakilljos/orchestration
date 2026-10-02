@@ -456,6 +456,8 @@
     MCP 자동 등록 (auto-install-deps)       Git Bash 경로변환(cmd /c→C:/) 차단 MSYS_NO_PATHCONV · 정의와 다르면 재등록 · fetch=uvx mcp-server-fetch(PyPI)
     statusline git 호출                     --no-optional-locks (렌더 1초 timeout 강제종료 시 .git/index.lock 잔존 → pull 차단되던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
+    pre-commit                              grep -c 0건일 때 "0
+0" 비교 오류 → || true
     로그                                    .claude/logs/user-style-updates.log
 
   [에이전트 — 6개 + 동료 모드 3개]

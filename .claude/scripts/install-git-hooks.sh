@@ -12,9 +12,9 @@ HOOK="$PROJECT_DIR/.git/hooks/pre-commit"
 cat > "$HOOK" <<'HOOK_EOF'
 #!/usr/bin/env bash
 STAGED=$(git diff --cached --name-only 2>/dev/null)
-INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)' || echo "0")
+INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)' || true)
 if [ "$INFRA" -gt 0 ]; then
-  GUIDE=$(echo "$STAGED" | grep -c "^guide.txt" || echo "0")
+  GUIDE=$(echo "$STAGED" | grep -c "^guide.txt" || true)
   if [ "$GUIDE" -eq 0 ]; then
     echo "[X] [git pre-commit] guide.txt 미포함! git add guide.txt"
     exit 1
