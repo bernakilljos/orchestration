@@ -459,6 +459,7 @@
     pre-commit                              grep -c 0건일 때 "0
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
     verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
+    역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
 0" 비교 오류 → || true
     로그                                    .claude/logs/user-style-updates.log
 
