@@ -25,3 +25,21 @@ HOOK_EOF
 
 chmod +x "$HOOK" 2>/dev/null
 echo "[install-git-hooks] pre-commit hook 설치 완료"
+
+# post-merge: git pull 후 등록된 대상 프로젝트(.claude/state/merge-targets.txt)에 kit 자동 병합
+PM="$PROJECT_DIR/.git/hooks/post-merge"
+if ! grep -q "merge-to-target" "$PM" 2>/dev/null; then
+  cat > "$PM" <<'PM_EOF'
+#!/usr/bin/env bash
+# kit git pull → 대상 프로젝트 자동 병합 (덮어쓰기 X · 대상 수정본 보존 · 백업)
+ROOT="$(git rev-parse --show-toplevel)"
+PY="$(command -v python || command -v python3)"
+[ -n "$PY" ] && [ -f "$ROOT/.claude/state/merge-targets.txt" ] || exit 0
+mkdir -p "$ROOT/.claude/logs"
+"$PY" -X utf8 "$ROOT/.claude/scripts/merge-to-target.py" --all --apply >> "$ROOT/.claude/logs/merge-to-target.log" 2>&1 &
+echo "[post-merge] 대상 프로젝트 자동 병합 시작 (로그: .claude/logs/merge-to-target.log)"
+exit 0
+PM_EOF
+  chmod +x "$PM" 2>/dev/null
+  echo "[install-git-hooks] post-merge hook 설치 완료"
+fi

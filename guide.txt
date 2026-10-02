@@ -447,6 +447,11 @@
     inject-user-style.sh                   SessionStart · 12h throttle · 3-tier fallback
     learn-style.py                         주 1회 (일요일 04:30) orca.db + memory 재분석
     install-to                             자동 전파 (target 의 .claude/state/ 로 복사)
+    merge-to-target.py <TARGET> [--apply]  기존 프로젝트에 kit 병합 (덮어쓰기 X · 대상 수정본 보존 · 중복 제외 · .bak 백업)
+                                           판정: 동일=skip / kit 과거버전=갱신 / 대상 수정본=보존 / kit 전용=추가
+                                           병합한 대상은 .claude/state/merge-targets.txt (PC별) 자동 등록
+    git pull 자동 병합                       .git/hooks/post-merge → merge-to-target --all --apply (install-git-hooks.sh 가 설치)
+    verify-fresh-clone.py                  새 PC(pull만) 동작 검사: INSERT 테이블 DDL · state 생성기 hook 연결 (ensure-state 매 세션)
     로그                                    .claude/logs/user-style-updates.log
 
   [에이전트 — 6개 + 동료 모드 3개]
