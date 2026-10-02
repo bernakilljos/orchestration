@@ -7,6 +7,15 @@ LOG="$PROJECT_ROOT/.claude/logs/conversation-save.log"
 mkdir -p "$PROJECT_ROOT/.claude/logs"
 
 # 1. jsonl 에서 assistant 응답 sync (Claude Code 는 assistant hook 없음)
+# 0. stdin(JSON) 의 session_id · transcript_path 가 정본 (2026-09-19 · mtime 추정으로 남의 세션에 저장되던 것)
+INPUT="$(cat 2>/dev/null || true)"
+eval "$(printf '%s' "$INPUT" | python -X utf8 -c "import json,sys,shlex
+try:
+    d=json.load(sys.stdin)
+    if d.get('session_id'): print('export CLAUDE_CODE_SESSION_ID='+shlex.quote(d['session_id']))
+    if d.get('transcript_path'): print('export CLAUDE_TRANSCRIPT_PATH='+shlex.quote(d['transcript_path']))
+except Exception: pass" 2>/dev/null)"
+
 python -X utf8 "$PROJECT_ROOT/.claude/scripts/sync-assistant-from-jsonl.py" >>"$LOG" 2>&1 || true
 
 # 2. session_summary 저장

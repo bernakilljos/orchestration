@@ -5,6 +5,11 @@
 # 사용자 액션 0 (Zero-touch). Codex/Gemini 자동 dispatch 가이드 포함.
 set -e
 INPUT="$(cat)"
+# 2026-09-19: context-usage-pct.py 가 이 세션 transcript 를 읽도록 stdin 의 transcript_path 를 넘긴다 (mtime 추정 X)
+_TP="$(printf '%s' "$INPUT" | python -X utf8 -c "import json,sys
+try: print(json.load(sys.stdin).get('transcript_path') or '', end='')
+except Exception: pass" 2>/dev/null || true)"
+if [ -n "$_TP" ]; then export CLAUDE_TRANSCRIPT_PATH="$_TP"; fi
 
 if command -v jq >/dev/null 2>&1; then
   PROMPT="$(echo "$INPUT" | jq -r '.prompt // ""' 2>/dev/null | head -c 1000)"

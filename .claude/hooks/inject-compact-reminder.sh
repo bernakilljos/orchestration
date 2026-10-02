@@ -15,6 +15,13 @@ elif command -v python3 >/dev/null 2>&1; then PY=python3
 else exit 0
 fi
 
+# 2026-09-19: "mtime 최신 jsonl" 을 처음부터 끝까지 읽다가 306MB /loop 세션에서 3.2초 → 3초 타임아웃으로 매번 취소돼
+# 압축 알림이 한 번도 안 갔다. stdin 의 transcript_path 가 정본이고, 마지막 usage 는 꼬리 4MB 안에 있다.
+INPUT="$(cat 2>/dev/null || true)"
+export CLAUDE_TRANSCRIPT_PATH="$(printf '%s' "$INPUT" | "$PY" -X utf8 -c "import json,sys
+try: print(json.load(sys.stdin).get('transcript_path') or '', end='')
+except Exception: pass" 2>/dev/null)"
+
 # 최근 assistant usage 에서 토큰 사용률 계산
 "$PY" -X utf8 - <<'PYEOF' 2>/dev/null
 import json, os, glob, re, sys, subprocess
@@ -25,25 +32,41 @@ safe = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
 proj = os.path.join(home, ".claude", "projects", safe)
 if not os.path.isdir(proj):
     sys.exit(0)
-jsonls = sorted(glob.glob(os.path.join(proj, "*.jsonl")), key=os.path.getmtime, reverse=True)
+own = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
+if own and os.path.isfile(own):
+    jsonls = [own]
+else:
+    jsonls = sorted(glob.glob(os.path.join(proj, "*.jsonl")), key=os.path.getmtime, reverse=True)
 if not jsonls:
     sys.exit(0)
 last_usage = None
 model_id = ""
 try:
-    with open(jsonls[0], encoding="utf-8", errors="replace") as f:
-        for line in f:
+    # 꼬리 4MB 만 읽는다 — 마지막 assistant usage 만 필요하고, 300MB 를 다 읽으면 3초 타임아웃에 걸린다.
+    # 꼬리에 없으면(뒤가 attachment 뿐인 세션) 64MB 로 한 번 더.
+    for TAIL in (4 * 1024 * 1024, 64 * 1024 * 1024):
+        with open(jsonls[0], "rb") as fb:
+            fb.seek(0, 2)
+            size = fb.tell()
+            fb.seek(max(0, size - TAIL))
+            chunk = fb.read().decode("utf-8", errors="replace")
+        lines = chunk.split("\n")[1:] if size > TAIL else chunk.split("\n")
+        for line in reversed(lines):
+            if '"type":"assistant"' not in line:
+                continue
             try:
                 rec = json.loads(line)
             except Exception:
                 continue
-            if rec.get("type") == "assistant":
-                u = ((rec.get("message") or {}).get("usage")) or None
-                m = ((rec.get("message") or {}).get("model")) or ""
-                if u:
-                    last_usage = u
-                if m:
-                    model_id = m
+            u = ((rec.get("message") or {}).get("usage")) or None
+            # 전부 0 인 usage(한도 초과 안내 등) 는 건너뛰고 직전 실제 응답을 쓴다
+            if u and ((u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)
+                      + (u.get("cache_creation_input_tokens") or 0)) > 0:
+                last_usage = u
+                model_id = ((rec.get("message") or {}).get("model")) or ""
+                break
+        if last_usage or size <= TAIL:
+            break
 except Exception:
     sys.exit(0)
 

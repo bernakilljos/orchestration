@@ -42,10 +42,15 @@ def main() -> int:
     )
     added = 0
     # 최근 5 jsonl 만 sync (부하 절감)
-    files = sorted(
-        glob.glob(os.path.join(proj_dir, "*.jsonl")),
-        key=os.path.getmtime, reverse=True
-    )[:5]
+    # 훅 stdin 이 준 이번 세션 transcript 만 sync. 없을 때만 최근 5 jsonl (2026-09-19: 306MB 옛 파일을 매 Stop 마다 읽었다)
+    own = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
+    if own and os.path.isfile(own):
+        files = [own]
+    else:
+        files = sorted(
+            glob.glob(os.path.join(proj_dir, "*.jsonl")),
+            key=os.path.getmtime, reverse=True
+        )[:5]
     for jp in files:
         sid = os.path.splitext(os.path.basename(jp))[0]
         try:

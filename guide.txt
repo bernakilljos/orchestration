@@ -472,6 +472,7 @@
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
     verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
     역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
+    역병합 1002 lottoclaude                   훅 stdin session_id·transcript_path 정본(창 여러 개 동시 세션 오기록) · jsonl 꼬리 4MB 읽기(306MB 3초 타임아웃) · 월·년 비용 timestamp 필터 · [1m]=1M · 루트 표식 탐색
     install-git-hooks 재설치                  기존 pre-commit 에 "guide.txt" 만 있으면 exit 0 하던 것 → 옛판(|| echo "0")이면 교체 · post-merge/post-rewrite 도 그제야 설치됨
     로그                                    .claude/logs/user-style-updates.log
 

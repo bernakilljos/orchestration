@@ -44,10 +44,36 @@ LIMIT_PREFIXES = [
 DEFAULT_LIMIT = 200_000
 
 
+
+def _project_root(start: str) -> str:
+    """루트 표식(.git 또는 .claude+plugins)이 있는 조상 디렉터리를 돌려준다.
+
+    못 찾으면 start 를 그대로 준다(안전측 — 없던 곳에 새로 만들지는 않는다).
+    CLAUDE_PROJECT_DIR 이 있으면 그것이 정본이다.
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env and os.path.isdir(env):
+        return env
+    cur = os.path.abspath(start or ".")
+    for _ in range(12):
+        if os.path.isdir(os.path.join(cur, ".git")):
+            return cur
+        if os.path.isdir(os.path.join(cur, ".claude")) and os.path.isdir(os.path.join(cur, "plugins")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return os.path.abspath(start or ".")
+
 def pick_limit(model_id: str) -> tuple[int, bool]:
     """(상한, 정확?) 반환."""
     if not model_id:
         return DEFAULT_LIMIT, False
+    # 2026-09-23: 이름표만 보면 새 모델(claude-opus-5-5[1m])이 claude-opus-5 에 걸려 200K 로 오판됐다
+    # (실제 26% 인데 "125% 즉시 compact"). [1m] 접미가 곧 1M 이다 — 이름과 무관하게 먼저 본다.
+    if "[1m]" in model_id.lower():
+        return 1_000_000, True
     for pref, lim in LIMIT_PREFIXES:
         if model_id.startswith(pref):
             return lim, True
@@ -143,7 +169,13 @@ def recent_error_count(cwd: str) -> int:
     cutoff = now - 86400
     total = 0
     pat = _re.compile(r"\b(ERROR|WARN|FAIL|\[err\]|\[skip\]|\[!!\])", _re.IGNORECASE)
+    # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
+    # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
+    skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
+            "conversation-save.log", "deflection-detect.log", "emotion-response.log"}
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
+        if os.path.basename(lp) in skip:
+            continue
         try:
             if os.path.getmtime(lp) < cutoff:
                 continue
@@ -158,7 +190,7 @@ def recent_error_count(cwd: str) -> int:
     return total
 
 
-def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
+def _jsonl_cost(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -> float:
     """단일 jsonl - 파일 안 message.model 로 rate 결정, 없으면 default_model."""
     if not os.path.exists(jsonl_path):
         return 0.0
@@ -177,6 +209,9 @@ def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
                 except Exception:
                     continue
                 if rec.get("type") != "assistant":
+                    continue
+                # 2026-09-23: 월·년 합산은 파일 mtime 으로만 걸러 8월 기록까지 9월에 더했다($4,635 → 실제 $2,924).
+                if ts_prefix and not str(rec.get("timestamp") or "").startswith(ts_prefix):
                     continue
                 msg = rec.get("message") or {}
                 by_id[msg.get("id") or f"_line{n}"] = msg
@@ -215,7 +250,7 @@ def monthly_cost(cwd: str, model_id: str) -> float:
             try:
                 if os.path.getmtime(jp) < month_start:
                     continue
-                total += _jsonl_cost(jp, model_id)
+                total += _jsonl_cost(jp, model_id, now.strftime("%Y-%m"))
             except Exception:
                 continue
         return total
@@ -238,7 +273,7 @@ def yearly_cost(cwd: str, model_id: str) -> float:
             try:
                 if os.path.getmtime(jp) < year_start:
                     continue
-                total += _jsonl_cost(jp, model_id)
+                total += _jsonl_cost(jp, model_id, now.strftime("%Y"))
             except Exception:
                 continue
         return total
@@ -542,7 +577,7 @@ def extra_gauges(cwd, data=None):
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"AI 비용(이 프로젝트) 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
+            f"API 정가 환산(이 프로젝트·구독 청구액 아님) 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
             f"{cur_m}월 ${monthly:.2f} ({_krw(monthly)}) · "
             f"년간 ${yearly:.2f} ({_krw(yearly)})"
         )
@@ -712,13 +747,26 @@ def main() -> None:
     else:
         limit, exact_model = pick_limit(model_id)
 
+    # 2026-10-01: 이름표 추정보다 Claude Code 가 주는 실제 상한이 정본이다.
+    #   model.id 가 "claude-opus-5-5"([1m] 없음)인 1M 세션이 claude-opus-5 항목에 걸려
+    #   200K 로 기록됐고, 시작 직후 231K 에서 "116% 즉시 compact" 허위 경보가 났다.
+    try:
+        cw = int((data.get("context_window") or {}).get("context_window_size") or 0)
+        if cw > 0:
+            limit, exact_model = cw, True
+    except Exception:
+        pass
+
     # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
     # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
     # 볼 수 없어 1M 세션을 200K 로 오판했다 (193K/200K = 93% 허위 경보, 2026-09-05 실측).
     if exact_model and cwd:
         try:
             import datetime as _dtc
-            st = os.path.join(cwd, ".claude", "state")
+            # 2026-09-10: cwd 는 **세션의 현재 디렉터리**다. `cd nextjs` 한 순간
+            #   nextjs/.claude/state/ 가 생겼고, 그렇게 만들어진 엉뚱한 .claude 가
+            #   8곳까지 늘어 있었다. 루트 표식을 찾아 올라간다.
+            st = os.path.join(_project_root(cwd), ".claude", "state")
             os.makedirs(st, exist_ok=True)
             with open(os.path.join(st, "context-limit.json"), "w", encoding="utf-8") as _f:
                 json.dump({"model": model_id, "limit": limit,

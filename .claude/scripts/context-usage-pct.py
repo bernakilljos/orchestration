@@ -23,24 +23,43 @@ def main() -> None:
         print("0")
         return
 
-    files = list(proj.glob("*.jsonl"))
-    if not files:
-        print("0")
-        return
-    latest = max(files, key=lambda f: f.stat().st_mtime)
+    # 2026-09-19: 훅 stdin 의 transcript_path(env CLAUDE_TRANSCRIPT_PATH) 가 정본. mtime 최신 파일은 동시 세션에서 남의 것이고,
+    # 306MB 를 처음부터 읽으면 3초 타임아웃에 걸려 auto-planner 가 매번 취소됐다. 마지막 usage 는 꼬리 4MB 안에 있다.
+    own = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
+    if own and Path(own).is_file():
+        latest = Path(own)
+    else:
+        files = list(proj.glob("*.jsonl"))
+        if not files:
+            print("0")
+            return
+        latest = max(files, key=lambda f: f.stat().st_mtime)
 
     usage = None
     try:
-        with latest.open(encoding="utf-8", errors="replace") as f:
-            for line in f:
+        # 꼬리 4MB 에 없으면(뒤가 attachment 뿐인 세션) 64MB 로 한 번 더. 그래도 없으면 0.
+        for TAIL in (4 * 1024 * 1024, 64 * 1024 * 1024):
+            with latest.open("rb") as fb:
+                fb.seek(0, 2)
+                size = fb.tell()
+                fb.seek(max(0, size - TAIL))
+                chunk = fb.read().decode("utf-8", errors="replace")
+            lines = chunk.split("\n")[1:] if size > TAIL else chunk.split("\n")
+            for line in reversed(lines):
+                if '"type":"assistant"' not in line:
+                    continue
                 try:
                     rec = json.loads(line)
                 except Exception:
                     continue
-                if rec.get("type") == "assistant":
-                    u = (rec.get("message") or {}).get("usage")
-                    if u:
-                        usage = u
+                u = (rec.get("message") or {}).get("usage")
+                # 전부 0 인 usage(한도 초과 안내 등) 는 건너뛰고 직전 실제 응답을 쓴다
+                if u and ((u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)
+                          + (u.get("cache_creation_input_tokens") or 0)) > 0:
+                    usage = u
+                    break
+            if usage or size <= TAIL:
+                break
     except Exception:
         print("0")
         return
