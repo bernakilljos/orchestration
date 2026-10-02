@@ -441,6 +441,12 @@
     /format-as             table·json·yaml·md·csv·xml·html·sql·mermaid 변환      [2026-10-02]
     /generate-ideas        브레인스토밍 — 다양한 각도 N개 아이디어                 [2026-10-02]
 
+  [사용자 스타일 자동 학습 (2026-10-02 신설)]
+    user_style_profile.md    10 축 종합 프로필 (ENFP-ADHD · 50 feedback 축약)
+    inject-user-style.sh     SessionStart hook · 12h throttle · systemMessage 주입
+    learn-style.py           주 1회 (일요일 04:30) orca.db + memory 재분석
+    로그                      .claude/logs/user-style-updates.log
+
   [에이전트 — 6개 + 동료 모드 3개]
     01 team-lead     설계/지시서 작성
     02 implementer   구현 실행
