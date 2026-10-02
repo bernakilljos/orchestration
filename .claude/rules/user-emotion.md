@@ -44,6 +44,8 @@
 | **"다 해줘"·"알아서"·"God mode"** | `/godmode` 자동 (최대 자율) |
 | **"최고 성능"·"초난도"·"어려운 문제"·"Mythos"** | `/effort-mythos` 자동 (Fable 5.1 라우팅) |
 | **"다이어그램"·"그림"·"시각화"·"구조도"** | `/arch-auto` 자동 (마인드맵·레이어·치트 중 적합한 것) |
+| **"수정해"·"고쳐"·"바꿔"·"변경"** | 증명 체인 강제 (pre-snapshot → 수정 → post-snapshot → 작동 테스트 → 보고 · verify-after-edit-mandatory.md) |
+| **"왜 안 됐어"·"수정했다며 안 됨"·"적용 안 됨"·"효과 없"** | 자가 진단 5단계 (파일·cascade·캐시·다른 파일·실행 테스트 · verify-after-edit-mandatory.md) |
 
 ## 강제
 

@@ -157,6 +157,16 @@ if echo "$PROMPT" | grep -qE '다이어그램|그림|시각화|구조도|마인�
   actions="${actions}[시각화] -> /arch-auto 자동 (마인드맵·레이어·치트 중 적합).\\n"
 fi
 
+# 29. 수정 지시 -> 증명 체인 강제 (수정 후 자동 pre/post snapshot + 작동 테스트 + 보고)
+if echo "$PROMPT" | grep -qE '수정해|고쳐|바꿔|변경해|고쳐줘|수정 해|바꿔줘'; then
+  actions="${actions}[수정 지시] -> 증명 체인 강제 (verify-after-edit-mandatory.md). 5단계: ① pre-snapshot (md5/Read/sqlite SELECT/curl) ② 수정 실행 ③ post-snapshot ④ diff + 작동 테스트 ⑤ 보고 (증거 첨부). '수정했습니다' 만 보고 X.\\n"
+fi
+
+# 30. "왜 안 됐어" 재지시 -> 자가 진단 5단계
+if echo "$PROMPT" | grep -qE '왜.*안 됐|왜 안됐|수정했다며|적용 안 됨|적용 안됨|효과 없|안 되어있|안되어있|안 되어 있|실제 안|증명해'; then
+  actions="${actions}[재검증 재지시] -> 자가 진단 5단계 (verify-after-edit-mandatory.md): ① 파일 Read 재확인 ② cascade override ③ 캐시·재시작 ④ 엉뚱한 파일 ⑤ 실행 테스트. 원인 1줄 + 수정 + 재검증 결과 첨부.\\n"
+fi
+
 # 감지된 게 있으면 systemMessage
 if [ -n "$actions" ]; then
   cat <<EOF
