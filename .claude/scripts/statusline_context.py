@@ -647,6 +647,27 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
+    # 디자인·개발 룰 위반 지수 (rule-adherence.json cache · 10분 TTL · ~14ms)
+    design_line = ""
+    dev_line = ""
+    try:
+        ra = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
+        if os.path.exists(ra):
+            with open(ra, "r", encoding="utf-8") as f:
+                _ra = json.load(f)
+            def _fmt(section_name, section):
+                c90 = section.get("counts_90d") or {}
+                rr  = section.get("recur_rate_pct", 0)
+                if not c90: return ""
+                parts = [f"{k} {v}" for k, v in c90.items() if v > 0]
+                if not parts: return ""
+                suffix = f" · 재발률 {rr}%" if rr else ""
+                return " · ".join(parts) + suffix
+            design_line = _fmt("design", _ra.get("design") or {})
+            dev_line    = _fmt("dev", _ra.get("dev") or {})
+    except Exception:
+        pass
+
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
     if week_gauge:
@@ -655,7 +676,8 @@ def extra_gauges(cwd, data=None):
         line2_parts.extend(tail)
     line2 = " - ".join(line2_parts)
     return {"session": session_gauge, "line2": line2, "line3": line3,
-            "week": week_gauge, "tail": tail, "cost": line3}
+            "week": week_gauge, "tail": tail, "cost": line3,
+            "design": design_line, "dev": dev_line}
 
 
 def main() -> None:
@@ -744,6 +766,10 @@ def main() -> None:
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
     if lim:
         out.append("한도  " + SEP.join(lim))
+    if gauges.get("design"):
+        out.append("디자인  " + gauges["design"])
+    if gauges.get("dev"):
+        out.append("개발  " + gauges["dev"])
     if gauges.get("tail"):
         out.append("상태  " + SEP.join(gauges["tail"]))
     cost = gauges.get("cost") or ""

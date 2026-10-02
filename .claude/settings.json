@@ -251,6 +251,15 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-skills.sh\""
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/aggregate-rule-adherence.sh\"",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [
