@@ -27,7 +27,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
 MEMORY_DIR = Path.home() / ".claude" / "projects" / "C--pjt-orchestration-v1" / "memory"
-PROFILE = MEMORY_DIR / "user_style_profile.md"
+# Primary: 프로젝트 로컬 (install-to 자동 전파) · Fallback: user memory (원본)
+PROFILE_LOCAL = ROOT / ".claude" / "state" / "user_style_profile.md"
+PROFILE_USER = MEMORY_DIR / "user_style_profile.md"
+PROFILE = PROFILE_LOCAL if PROFILE_LOCAL.exists() else PROFILE_USER
 LOG = ROOT / ".claude" / "logs" / "user-style-updates.log"
 WINDOW_DAYS = 7
 

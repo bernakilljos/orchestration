@@ -5,7 +5,10 @@
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
-PROFILE="$HOME/.claude/projects/C--pjt-orchestration-v1/memory/user_style_profile.md"
+# 3-tier fallback: 프로젝트 state (install-to 자동 전파) → setup/templates (git-tracked SoT) → user memory
+PROFILE="$PROJECT_DIR/.claude/state/user_style_profile.md"
+[ -f "$PROFILE" ] || PROFILE="$PROJECT_DIR/setup/templates/user_style_profile.md"
+[ -f "$PROFILE" ] || PROFILE="$HOME/.claude/projects/C--pjt-orchestration-v1/memory/user_style_profile.md"
 STATE="$PROJECT_DIR/.claude/state/inject-user-style.last"
 
 # Throttle · 세션당 1회 (12시간 기준)
