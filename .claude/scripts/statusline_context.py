@@ -628,24 +628,18 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
-    # fast 추천 뱃지 — 토큰(context)·세션·주간 % 융통성 로직
-    # compact 는 context window (토큰 line 1) 기준 · 세션/주간은 quota (한도 line 2)
-    # 룰 우선순위: 주간 ≥50% OFF 강제 > 토큰 ≥80% OFF (compact) > 세션 ≥80% OFF > 세션 ≥60% ON 권장
+    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
+    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
     try:
-        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
-        _tp = float((data or {}).get("_ctx_pct", 0))  # main() 에서 inject
+        _tp = float((data or {}).get("_ctx_pct", 0))
         if _wp >= 80:
             tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
         elif _wp >= 50:
             tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
         elif _tp >= 80:
             tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
-        elif _sp >= 80:
-            tail.append(f"fast OFF (세션 {_sp:.0f}%)")
-        elif _sp >= 60:
-            tail.append(f"fast ON 권장 (세션 {_sp:.0f}%)")
-        elif _sp > 0 or _wp > 0 or _tp > 0:
+        else:
             tail.append("fast ON")
     except Exception:
         pass
