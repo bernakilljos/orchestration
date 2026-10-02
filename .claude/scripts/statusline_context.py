@@ -663,15 +663,21 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
-    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
-    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
+    # fast 추천 뱃지 — 주간·세션 한도 보호 · 토큰 compact 임박이면 OFF
+    # 2026-10-02 사용자 지적: 세션 86% 에서 "fast ON" 이 떴다. fast 는 같은 시간에 한도를 더 빨리 태우므로
+    #   세션 % (five_hour) 도 주간과 같은 임계(80/50)로 본다 (a6e4c83 의 "세션 무관" 판단 번복).
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
+        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _wp >= 80:
             tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
+        elif _sp >= 80:
+            tail.append(f"[!] fast OFF (세션 {_sp:.0f}%)")
         elif _wp >= 50:
             tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
+        elif _sp >= 50:
+            tail.append(f"fast OFF (세션 {_sp:.0f}% 보호)")
         elif _tp >= 80:
             tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
         else:
