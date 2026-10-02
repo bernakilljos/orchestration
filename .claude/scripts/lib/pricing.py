@@ -12,6 +12,16 @@ tokenizer_factor:
 """
 
 PRICING = {
+    # === Opus 5.5 (2026-09-22 신규 default) ===
+    # BASIS: agreed(2026-10-02, CLAUDE.md §3.2 가격표 $4/$20 · cache_read $0.20.
+    #   cache_write 는 input×1.25 관행. tokenizer 공식 공지 없어 1.0 — 공지 나오면 갱신)
+    "claude-opus-5-5": {
+        "input": 4.0,
+        "output": 20.0,
+        "cache_write": 5.0,
+        "cache_read": 0.2,
+        "tokenizer_factor": 1.0,
+    },
     # === Opus 5 (2026-07-24 신규 default, 4.8 대비 step-change) ===
     "claude-opus-5": {
         "input": 5.0,
@@ -96,6 +106,20 @@ PRICING = {
 }
 
 
+def rates_for(model_id: str):
+    """모델 id (접미 '[1m]'·날짜 포함 가능) → PRICING 항목. 가장 긴 접두사 우선. 없으면 None.
+
+    statusline 등 다른 스크립트는 단가를 따로 두지 말고 이것을 쓴다 (단가 정본 = 이 파일).
+    """
+    if not model_id:
+        return None
+    best = None
+    for key in PRICING:
+        if model_id.startswith(key) and (best is None or len(key) > len(best)):
+            best = key
+    return PRICING.get(best) if best else None
+
+
 def estimate_cost(
     model: str,
     tokens_in: int,
@@ -116,7 +140,7 @@ def estimate_cost(
     Returns:
         float: Estimated cost in USD, rounded to 6 decimals
     """
-    p = PRICING.get(model)
+    p = PRICING.get(model) or rates_for(model)
     if not p:
         return 0.0
 
@@ -151,6 +175,7 @@ def estimate_cost(
 if __name__ == "__main__":
     # Smoke test: 1000 in / 500 out per model
     tests = [
+        "claude-opus-5-5",
         "claude-opus-5",
         "claude-opus-4-8",
         "claude-opus-4-7",

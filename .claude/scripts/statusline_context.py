@@ -85,27 +85,21 @@ def last_assistant_usage(jsonl_path: str) -> dict | None:
     return last
 
 
-# 모델별 rate (USD per MTok) - input · output · cache_write · cache_read
-MODEL_RATES = {
-    # 긴 접두사 먼저 - "claude-opus-5" 가 opus-5-5 를 가로채지 않게
-    "claude-opus-5-5": (4.0, 20.0, 5.0, 0.2),
-    "claude-opus-5": (5.0, 25.0, 6.25, 0.5),
-    "claude-opus-4-8": (5.0, 25.0, 6.25, 0.5),
-    "claude-opus-4-7": (5.0, 25.0, 6.25, 0.5),
-    "claude-sonnet-5": (2.0, 10.0, 2.5, 0.2),
-    "claude-sonnet-4-6": (3.0, 15.0, 3.75, 0.3),
-    "claude-fable-5": (10.0, 50.0, 12.5, 1.0),
-    "claude-haiku-4-5": (0.25, 1.25, 0.3, 0.03),
-}
+# 모델별 rate - 정본은 lib/pricing.py (여기 따로 두면 갈린다 · 헌장 E)
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+try:
+    from pricing import rates_for as _rates_for
+except Exception:
+    _rates_for = None
 
 
 def pick_rate(model_id: str) -> tuple[float, float, float, float]:
-    if not model_id:
-        return (5.0, 25.0, 6.25, 0.5)
-    for pref, rates in MODEL_RATES.items():
-        if model_id.startswith(pref):
-            return rates
-    return (5.0, 25.0, 6.25, 0.5)
+    """(input, output, cache_write, cache_read) USD/MTok. 모르는 모델은 0 (추정 안 함)."""
+    p = _rates_for(model_id) if _rates_for else None
+    if not p:
+        return (0.0, 0.0, 0.0, 0.0)
+    return (p["input"] or 0.0, p["output"] or 0.0,
+            p["cache_write"] or 0.0, p["cache_read"] or 0.0)
 
 
 def cache_hit_rate(jsonl_path: str) -> float:
@@ -169,9 +163,12 @@ def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
     if not os.path.exists(jsonl_path):
         return 0.0
     total = 0.0
+    # 응답 1개가 content block 마다 여러 줄로 기록되고 줄마다 같은 usage 를 반복한다
+    # (실측 2026-10-02: 103줄 / message.id 46개 → 비용 2배 과대). id 별 마지막 usage 만 센다.
+    by_id: dict = {}
     try:
         with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
+            for n, line in enumerate(f):
                 line = line.strip()
                 if not line:
                     continue
@@ -182,6 +179,8 @@ def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
                 if rec.get("type") != "assistant":
                     continue
                 msg = rec.get("message") or {}
+                by_id[msg.get("id") or f"_line{n}"] = msg
+        for msg in by_id.values():
                 u = msg.get("usage") or {}
                 mid = msg.get("model") or default_model
                 in_r, out_r, cw_r, cr_r = pick_rate(mid)
@@ -512,15 +511,18 @@ def extra_gauges(cwd, data=None):
     #   jsonl 을 단가표로 되짚어 계산하던 근사치보다 이쪽이 맞다. 월·년간은 여전히
     #   이 프로젝트 jsonl 합산이라 "(이 프로젝트)" 라벨을 유지한다.
     global _SESSION_COST
+    _delta = 0.0  # 이 세션의 (공식값 - jsonl 추정) — 월·년 합계 안의 세션 몫도 공식값으로 교체
     try:
         _c = (data or {}).get("cost") or {}
         if isinstance(_c.get("total_cost_usd"), (int, float)):
-            _SESSION_COST = float(_c["total_cost_usd"])
+            _official = float(_c["total_cost_usd"])
+            _delta = _official - _SESSION_COST
+            _SESSION_COST = _official
     except Exception:
         pass
     rate = float(os.environ.get("USD_KRW_RATE", "1350"))
-    monthly = _MONTHLY_COST if _MONTHLY_COST > 0 else _SESSION_COST
-    yearly = _YEARLY_COST if _YEARLY_COST > 0 else monthly
+    monthly = (_MONTHLY_COST + _delta) if _MONTHLY_COST > 0 else _SESSION_COST
+    yearly = (_YEARLY_COST + _delta) if _YEARLY_COST > 0 else monthly
     import datetime as _dt2
     cur_m = _dt2.datetime.now().month
     if _SESSION_COST > 0.001 or monthly > 0.001 or yearly > 0.001:
@@ -636,6 +638,16 @@ def main() -> None:
     except Exception:
         data = {}
 
+    # 진단용 - 마지막 stdin 원문 (필드 실측 근거)
+    try:
+        _cwd0 = data.get("cwd") or ""
+        if _cwd0:
+            with open(os.path.join(_cwd0, ".claude", "state", "statusline-stdin.json"),
+                      "w", encoding="utf-8") as _f:
+                json.dump(data, _f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
     model_id = ""
     try:
         model_id = (data.get("model") or {}).get("id") or ""
@@ -645,7 +657,12 @@ def main() -> None:
     session_id = data.get("session_id") or ""
     cwd = data.get("cwd") or ""
 
-    limit, exact_model = pick_limit(model_id)
+    # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
+    _cw = data.get("context_window") or {}
+    if isinstance(_cw.get("context_window_size"), int) and _cw["context_window_size"] > 0:
+        limit, exact_model = _cw["context_window_size"], True
+    else:
+        limit, exact_model = pick_limit(model_id)
 
     # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
     # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
