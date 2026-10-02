@@ -157,6 +157,11 @@ if echo "$PROMPT" | grep -qE '다이어그램|그림|시각화|구조도|마인�
   actions="${actions}[시각화] -> /arch-auto 자동 (마인드맵·레이어·치트 중 적합).\\n"
 fi
 
+# 28-B. 루틴·시스템화·AI 시스템 → ai-system-stages 자동 발동
+if echo "$PROMPT" | grep -qE '루틴|루틴화|시스템화|반복.*자동|자동화 체인|AI 시스템|6단계|자가발전'; then
+  actions="${actions}[루틴/시스템화] -> /ai-system-stages 자동 (Prompt→Agent→Orchestration→Automation→Autonomous→Platform · 우리 kit 자가발전 계층 매핑 · WebSearch 실측 Step 0).\\n"
+fi
+
 # 29. 수정 지시 -> 증명 체인 강제 (수정 후 자동 pre/post snapshot + 작동 테스트 + 보고)
 if echo "$PROMPT" | grep -qE '수정해|고쳐|바꿔|변경해|고쳐줘|수정 해|바꿔줘'; then
   actions="${actions}[수정 지시] -> 증명 체인 강제 (verify-after-edit-mandatory.md). 5단계: ① pre-snapshot (md5/Read/sqlite SELECT/curl) ② 수정 실행 ③ post-snapshot ④ diff + 작동 테스트 ⑤ 보고 (증거 첨부). '수정했습니다' 만 보고 X.\\n"
