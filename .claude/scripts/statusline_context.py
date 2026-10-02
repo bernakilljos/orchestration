@@ -628,6 +628,25 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
+    # fast 추천 뱃지 — 세션·주간 % 융통성 로직
+    # 룰: 주간 ≥50% = OFF 강제 (budget 보호) · 세션 80%+ = OFF (compact 임박)
+    #     세션 60~80% = ON (세션 임박 · 빨리 끝) · 그 외 = ON
+    try:
+        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
+        _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
+        if _wp >= 80:
+            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
+        elif _wp >= 50:
+            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
+        elif _sp >= 80:
+            tail.append(f"fast OFF (세션 {_sp:.0f}% · compact)")
+        elif _sp >= 60:
+            tail.append(f"fast ON 권장 (세션 {_sp:.0f}%)")
+        elif _sp > 0 or _wp > 0:
+            tail.append("fast ON")
+    except Exception:
+        pass
+
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
     if week_gauge:
