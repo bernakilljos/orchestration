@@ -105,6 +105,11 @@ def section_snapshot() -> str:
     if not txt.strip(): return ""
     return _h("최종 세션 스냅샷") + txt
 
+def _sanitize(s: str) -> str:
+    """unpaired surrogate 제거 (orca.db 안 cp949↔utf-8 변환 잔재) — Claude API lone surrogate 400 방지"""
+    if not isinstance(s, str): return s
+    return s.encode("utf-8", "replace").decode("utf-8", "replace")
+
 def main():
     parts = [
         section_session_summary(),
@@ -115,7 +120,7 @@ def main():
     ]
     body = "\n".join(p for p in parts if p).strip()
     if not body: return  # 복구할 거 없음
-    body = body[:MAX_CHARS]
+    body = _sanitize(body)[:MAX_CHARS]
     header = f"# 자동 복구 (최근 {CUTOFF_HOURS}h · resume-last-24h.py)\n"
     header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
     print(header + body)

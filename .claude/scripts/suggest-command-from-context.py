@@ -171,6 +171,11 @@ def main():
     CACHE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     _emit(data)
 
+
+def _sanitize(s):
+    if not isinstance(s, str): return s
+    return s.encode("utf-8", "replace").decode("utf-8", "replace")
+
 def _emit(data):
     parts = []
     top3 = data.get("top3_from_recent_10turns") or {}
