@@ -808,17 +808,15 @@ def main() -> None:
     if isinstance(data, dict) and limit and tokens:
         data["_ctx_pct"] = min(100.0, tokens / limit * 100.0)
     gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
-    # 2026-10-02 4줄 배치 (사용자 요청): 머리말로 구획 · 줄당 짧게 → 터미널 폭 잘림(…) 방지
-    #   시각·토큰 / 한도(세션·주간) / 상태(MCP·cache·재사용·errors·하드코딩) / 비용
+    # 2026-10-02 4줄 상한 (사용자 화면 실측): 상태줄은 4줄까지만 보이고 넘치면 뒤가 잘린다.
+    #   디자인·개발 줄 2개를 더했더니 6줄 → 상태·비용이 화면에서 사라졌다.
+    #   시각·토큰·한도 / 룰(디자인·개발) / 상태 / 비용 — 4줄을 넘기지 말 것.
     SEP = " · "
-    out = [f"{clock}  {token_line}"]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
-    if lim:
-        out.append("한도  " + SEP.join(lim))
-    if gauges.get("design"):
-        out.append("디자인  " + gauges["design"])
-    if gauges.get("dev"):
-        out.append("개발  " + gauges["dev"])
+    out = [f"{clock}  {token_line}" + (SEP + SEP.join(lim) if lim else "")]
+    rule = [f"{k} {gauges[g]}" for k, g in (("디자인", "design"), ("개발", "dev")) if gauges.get(g)]
+    if rule:
+        out.append("룰  " + " │ ".join(rule))
     if gauges.get("tail"):
         out.append("상태  " + SEP.join(gauges["tail"]))
     cost = gauges.get("cost") or ""
