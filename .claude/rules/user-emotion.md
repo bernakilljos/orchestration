@@ -23,6 +23,8 @@
 | **회피·딴말·빙빙 돌림** | 직접 답 강제 |
 | **비용·budget·quota·돈** | budget 상한·quota fallback 재확인 |
 | **성능·느림·slow** | 캐싱·병렬·subagent Explore 검토 |
+| **같은 질문 3회+ 반복** | `/explainlikeim5` 자동 (5살 톤·비유·짧게 재설명) |
+| **응답에 고급 용어 (RAG·CoT·quorum·eventual consistency·byzantine 등)** | `/explainlikeim5` 자동 (일상 비유 치환) |
 
 ## 강제
 
