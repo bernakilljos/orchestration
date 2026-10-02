@@ -17,4 +17,6 @@ AUD="$PROJECT_DIR/.claude/state/hardcoded-audit.json"
 if [ ! -f "$AUD" ] || [ $(( $(date +%s) - $(stat -c %Y "$AUD" 2>/dev/null || echo 0) )) -gt 21600 ]; then
   "$PY" -X utf8 "$PROJECT_DIR/.claude/scripts/audit-hardcoded.py" >>"$LOG" 2>&1 || true
 fi
+# 새 PC 재발 방지 검사 (DDL · state 생성기 hook 연결) — 결과는 로그에만
+"$PY" -X utf8 "$PROJECT_DIR/.claude/scripts/verify-fresh-clone.py" >>"$LOG" 2>&1 || echo "[$TS] verify-fresh-clone FAIL" >>"$LOG"
 exit 0
