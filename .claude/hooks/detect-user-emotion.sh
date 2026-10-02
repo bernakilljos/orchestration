@@ -61,6 +61,17 @@ if echo "$PROMPT" | grep -qE 'install|배포|deploy|sync-team|install-to'; then
   actions="${actions}[install 언급] -> install 순서 (kit 편집 -> commit -> sync -> install -> 검증). pre-install-lock.sh 감지. best-practices.md § install 순서.\\n"
 fi
 
+# 10. 격한 감정 (미쳐·답답해 죽겠·막혀·안 풀려) -> /brainstorm 또는 /go 자동 발동
+if echo "$PROMPT" | grep -qE '미쳐|미치겠|미치긋|돌아버|답답해 죽|막혀|안 풀|안풀려|막막|어떻게 해야'; then
+  actions="${actions}[격한 감정 감지] -> /brainstorm 또는 /go 자동 발동. 혼자 결과 내지 말고 설계 옵션 2~3개 + trade-off + 추천 1개 제시. 사용자 결정 받고 그 다음 실행.\\n"
+fi
+
+# 11. 같은 질문 3회+ 반복 (detect-repeat-request.sh 가 similarity_score 측정)
+#     여기서는 "모르겠다·이해 안 돼·뭔 소리" 어휘 감지 시 explainlikeim5 트리거
+if echo "$PROMPT" | grep -qE '모르겠|이해.*안|뭔 소리|무슨 말|쉽게|어려워'; then
+  actions="${actions}[이해 어려움 감지] -> /explainlikeim5 자동 발동. 5살 톤·일상 비유·고급 용어 X. 긴 essay 금지.\\n"
+fi
+
 # 감지된 게 있으면 systemMessage
 if [ -n "$actions" ]; then
   cat <<EOF
