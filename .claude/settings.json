@@ -199,7 +199,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-auto-planner.sh\"",
-            "timeout": 3
+            "timeout": 15
           },
           {
             "type": "command",
@@ -224,7 +224,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
@@ -237,7 +237,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject-compact-reminder.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       },
@@ -262,7 +262,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/aggregate-rule-adherence.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       },
@@ -271,7 +271,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-command-from-context.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       }

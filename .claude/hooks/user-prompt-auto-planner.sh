@@ -12,17 +12,41 @@ else
   PROMPT="$(echo "$INPUT" | grep -oE '"prompt"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/' | head -c 1000)"
 fi
 
+_m() { local re="$1"; [[ $PROMPT =~ $re ]]; }   # echo|grep fork 대신 bash 내장 (1006)
+
 # trigger 키워드 — 작업 지시-결함 지적-점검 요청 (한글 트리거 포함)
 TRIGGER_RE='해줘|고쳐줘|확인|점검|왜|뭐야|되니|되네|안돼|안되|작네|크네|짤려|짤린|짤림|잘림|잘리|짤리|여백|여전|넘쳐|안보|글씨|보여야|잘되|잘됨|잘하|부족|틀렸|틀린|발동|농땡이|전수조사|정신|회피|딴말|무시|또|놓쳤|fix|build|verify|check|review|test|update|add|change|왜이리|방지|보완|이미지|메모리|성능'
 
-if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
+if _m "$TRIGGER_RE"; then
   # MoE 자동 분류 — 사용자 메시지 -> 최적 AI 결정
   PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
   CLASSIFIER="$PROJECT_ROOT/.claude/scripts/classify-task.py"
   AI="claude"
   REASON="기본"
-  if [ -f "$CLASSIFIER" ]; then
-    CLASSIFY_RESULT="$(PYTHONIOENCODING=utf-8 LANG=en_US.UTF-8 echo "$PROMPT" | PYTHONIOENCODING=utf-8 python "$CLASSIFIER" 2>/dev/null || echo '{}')"
+  # 2026-10-06: 분류·키워드회상·RAG python 3개를 순차 실행(8.6s · 3초 timeout 초과)하던 것을 병렬로.
+  #   프롬프트는 환경변수로 전달 (예전 RAG 는 bash -c "echo '$PROMPT'" 라 ' 하나로 깨지고 주입 가능했다)
+  _TMP="$(mktemp -d 2>/dev/null || echo "${TMPDIR:-/tmp}/ap.$$")"; mkdir -p "$_TMP"
+  RECALL_SCRIPT="$PROJECT_ROOT/.claude/scripts/recall-memory.py"
+  RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
+  export AP_PROMPT="$PROMPT" PYTHONIOENCODING=utf-8
+  [ -f "$CLASSIFIER" ]    && { printf '%s' "$AP_PROMPT" | python "$CLASSIFIER" > "$_TMP/cls" 2>/dev/null; } &
+  [ -f "$RECALL_SCRIPT" ] && { printf '%s' "$AP_PROMPT" | python "$RECALL_SCRIPT" > "$_TMP/rec" 2>/dev/null; } &
+  # RAG(의미 검색)는 동기 경로에서 뺀다 — 실측 1006: rag-recall.py 1회 17.5s (chromadb·임베딩 매번 로드)
+  #   + Windows 에서 timeout 5 가 python 을 못 죽여 hook 전체가 3초 timeout 으로 폐기됐다 (RAG 결과는 0회 전달).
+  #   → 백그라운드로 돌려 결과를 캐시에 쓰고, 다음 프롬프트에서 그 캐시를 읽는다 (창 없음 · 동시 1개).
+  RAG_CACHE="$PROJECT_ROOT/.claude/state/rag-last.json"
+  RAG_LOCK="$PROJECT_ROOT/.claude/state/rag-running"
+  if [ -f "$RAG_SCRIPT" ] && [ ! -f "$RAG_LOCK" ]; then
+    ( : > "$RAG_LOCK"; printf '%s' "$AP_PROMPT" | python "$RAG_SCRIPT" --top 3 > "$RAG_CACHE.tmp" 2>/dev/null         && mv -f "$RAG_CACHE.tmp" "$RAG_CACHE"; rm -f "$RAG_LOCK" ) >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+  fi
+  [ -f "$RAG_CACHE" ] && cp -f "$RAG_CACHE" "$_TMP/rag" 2>/dev/null
+  wait
+  CLASSIFY_RESULT="$(cat "$_TMP/cls" 2>/dev/null || echo '{}')"
+  RECALL_JSON="$(cat "$_TMP/rec" 2>/dev/null || echo '[]')"
+  RAG_JSON="$(cat "$_TMP/rag" 2>/dev/null || echo '[]')"
+  rm -f "$_TMP/cls" "$_TMP/rec" "$_TMP/rag"; rmdir "$_TMP" 2>/dev/null
+  if [ -n "$CLASSIFY_RESULT" ] && [ "$CLASSIFY_RESULT" != "{}" ]; then
     AI_PARSED="$(echo "$CLASSIFY_RESULT" | grep -oE '"ai"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([a-z]*\)"$/\1/')"
     [ -n "$AI_PARSED" ] && AI="$AI_PARSED"
     REASON_PARSED="$(echo "$CLASSIFY_RESULT" | grep -oE '"reason"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*: *"\(.*\)"$/\1/')"
@@ -38,9 +62,9 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
 
   # Subagent 자동 가이드 — 큰 탐색/리뷰 키워드 감지 -> Task tool 권장
   SUBAGENT_GUIDE=""
-  if echo "$PROMPT" | grep -qE '전수조사|전체.*탐색|전체.*검색|모든.*파일|모든.*폴더|코드베이스|whole.?code|grep.*all'; then
+  if _m '전수조사|전체.*탐색|전체.*검색|모든.*파일|모든.*폴더|코드베이스|whole.?code|grep.*all'; then
     SUBAGENT_GUIDE="\n\n[Subagent 자동] '큰 코드베이스 탐색' 감지 -> Task tool 로 Explore subagent 자동 호출 권장 (메인 컨텍스트 격리)"
-  elif echo "$PROMPT" | grep -qE '리뷰|review|코드 검토|PR 검토'; then
+  elif _m '리뷰|review|코드 검토|PR 검토'; then
     SUBAGENT_GUIDE="\n\n[Subagent 자동] '코드 리뷰' 감지 -> Task tool 로 code-reviewer subagent 자동 호출 권장"
   fi
 
@@ -50,20 +74,10 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
     (PYTHONIOENCODING=utf-8 python "$LOG_ACT" hook user-prompt-auto-planner "$PROMPT" --result success >/dev/null 2>&1) &
   fi
 
-  # Memory 자동 recall — 키워드 (3-tier) + RAG 의미 검색 둘 다
-  RECALL_SCRIPT="$PROJECT_ROOT/.claude/scripts/recall-memory.py"
-  RAG_SCRIPT="$PROJECT_ROOT/.claude/scripts/rag-recall.py"
+  # Memory 자동 recall — 키워드 (3-tier) + RAG 의미 검색 (위에서 병렬 실행한 결과 사용)
   MEMORY_GUIDE=""
-  if [ -f "$RECALL_SCRIPT" ]; then
-    RECALL_JSON="$(PYTHONIOENCODING=utf-8 echo "$PROMPT" | PYTHONIOENCODING=utf-8 python "$RECALL_SCRIPT" 2>/dev/null || echo '[]')"
-    MEM_LINES="$(echo "$RECALL_JSON" | grep -oE '"description"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (kw) \1/' | head -3)"
-  fi
-  RAG_LINES=""
-  if [ -f "$RAG_SCRIPT" ] && command -v timeout >/dev/null 2>&1; then
-    # 5초 timeout — chromadb 첫 호출 시 embedding 다운로드 시간 cap
-    RAG_JSON="$(timeout 5 bash -c "echo '$PROMPT' | PYTHONIOENCODING=utf-8 python '$RAG_SCRIPT' --top 3" 2>/dev/null || echo '[]')"
-    RAG_LINES="$(echo "$RAG_JSON" | grep -oE '"preview"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (rag) \1/' | head -2)"
-  fi
+  MEM_LINES="$(echo "$RECALL_JSON" | grep -oE '"description"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (kw) \1/' | head -3)"
+  RAG_LINES="$(echo "$RAG_JSON" | grep -oE '"preview"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*: *"\(.*\)"$/- (rag) \1/' | head -2)"
   COMBINED="$(printf '%s\n%s' "$MEM_LINES" "$RAG_LINES" | sed '/^$/d')"
   if [ -n "$COMBINED" ]; then
     MEMORY_GUIDE="\n\n[Memory 자동 recall — kw=키워드 / rag=의미] 관련 학습 (재발 방지):\n$(echo "$COMBINED" | sed 's/$/\\n/' | tr -d '\n')"
@@ -87,7 +101,7 @@ if echo "$PROMPT" | grep -qE "$TRIGGER_RE"; then
   fi
 
   cat <<EOF
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[대상 확정 REQUIRED — 0순위]\n★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\n★ 4갈래 후보:\n  1) C:\\\\pjt\\\\orchestration_v1\\\\ (kit 자체 감사-룰-hook)\n  2) C:\\\\pjt\\\\orchestration_v1\\\\setup\\\\templates\\\\ (install 배포용 template)\n  3) install 대상 실운영 프로젝트 (경로 물어봐 — 사용자가 '실운영'-'하드코딩 실측'-'재발 방지 헌장'-비즈니스 지표명 언급 시)\n  4) ~/.claude/ (글로벌 설정)\n★ 대상 확정 전 grep-Read-Edit-Bash 착수 = 룰 위반. 자동 후보 나열도 X 하고 kit 뒤지기 시작 = 재발.\n상세: .claude/rules/direction-first.md - feedback_confirm_target_first.md\n\n[auto-planner ENFORCED]\n사용자 메시지에 작업 지시-결함 지적-점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템-전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동-PASS 확인\n5) 보고 — 표-목록으로 결과 + 남은 결정사항\n\n금기:\n- 대상 확정 없이 실행 착수 (0순위 위반)\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피-딴말 (직접 답 -> 부연 -> 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}${COMPACT_GUIDE}"}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[대상 확정 REQUIRED — 0순위]\n★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\n★ 4갈래 후보:\n  1) ${PROJECT_ROOT} (kit 자체 감사-룰-hook)\n  2) ${PROJECT_ROOT}/setup/templates/ (install 배포용 template)\n  3) install 대상 실운영 프로젝트 (경로 물어봐 — 사용자가 '실운영'-'하드코딩 실측'-'재발 방지 헌장'-비즈니스 지표명 언급 시)\n  4) ~/.claude/ (글로벌 설정)\n★ 대상 확정 전 grep-Read-Edit-Bash 착수 = 룰 위반. 자동 후보 나열도 X 하고 kit 뒤지기 시작 = 재발.\n상세: .claude/rules/direction-first.md - feedback_confirm_target_first.md\n\n[auto-planner ENFORCED]\n사용자 메시지에 작업 지시-결함 지적-점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템-전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동-PASS 확인\n5) 보고 — 표-목록으로 결과 + 남은 결정사항\n\n금기:\n- 대상 확정 없이 실행 착수 (0순위 위반)\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피-딴말 (직접 답 -> 부연 -> 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}${COMPACT_GUIDE}"}}
 EOF
 fi
 

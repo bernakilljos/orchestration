@@ -463,6 +463,9 @@
     statusline 정렬 (1006)                   머리말 6칸 정렬 + │ · 구분자 통일 · MCP N/M (Nh 전, 1h+ 백그라운드 재측정) · 오류=줄 시각 24h 내만 (오류/경고 분리)
     detect-* hook 4종 (1006)                 echo|grep fork → bash 내장 정규식 (9.4s→0.9s) · timeout 3→10 · 출력 동일성 72/72 대조
     merge settings                          kit hook 의 timeout·async 도 대상에 동기화
+    UserPromptSubmit timeout (1006)          13개 병렬 실행 → 개별 0.5s 도 부하 시 3s 초과. 3→10 (auto-planner 15)
+    auto-planner RAG (1006)                  rag-recall 1회 17.5s · Windows timeout 이 python 못 죽임 → hook 전체 폐기 → 백그라운드+캐시(다음 프롬프트) · 프롬프트는 env 전달(주입 차단) · 옛 경로 C:pjt 하드코딩 제거
+    RMS 하위 폴더                            A1.RMS-UPG · A2.RMS-DEMO 도 병합 대상 (세션이 하위 폴더에서 열림)
 0" 비교 오류 → || true
     로그                                    .claude/logs/user-style-updates.log
 
