@@ -74,10 +74,44 @@ pct = tokens / limit * 100
 #   21만 91s · 33만 169s · 56만 211s · 97~100만(자동) 중앙 173s. 50% 조기 compact 는 1회 시간은 같고 횟수만 2배.
 #   → 90%+ 는 «작업 단위가 끝났으면 /clear (0초 · resume-last-24h 가 자동 복구)», 진행 중이면 97% 자동 compact 대기.
 RED = "\033[1;31m"; YEL = "\033[1;33m"; RST = "\033[0m"
-if pct >= 90:
-    print(f"{RED}[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 작업 단위 끝났으면 /clear 즉시 (0초 · 24h 자동 복구). 진행 중이면 그대로 - 97% 자동 compact (실측 중앙 173초).{RST}")
-elif pct >= 75:
-    print(f"{YEL}[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 다음 작업 경계에서 /clear 권장. 조기 /compact 는 빨라지지 않음 (실측 56만 토큰 211초).{RST}")
+
+# /clear 안전 판정 (ICM·RMS 세션 개선 1006 을 일반화해 역병합)
+#   Claude 는 /clear 를 누를 수 없다 → 대신 «지금 눌러도 되는가»를 실측해 단정한다.
+#   잃으면 복구 못 하는 것 = 추적 중 파일의 미커밋 수정(M/A/D/R). 미추적(??)은 /clear 로 사라지지 않으므로 제외.
+#   저장소 = 프로젝트 루트, 루트가 저장소가 아니면 바로 아래 하위 저장소들 (특정 폴더명 하드코딩 X).
+def _safe_to_clear(root):
+    import subprocess
+    repos = [root] if os.path.isdir(os.path.join(root, ".git")) else [
+        os.path.join(root, d) for d in sorted(os.listdir(root))
+        if os.path.isdir(os.path.join(root, d, ".git"))]
+    reasons = []
+    for repo in repos[:6]:
+        try:
+            r = subprocess.run(["git", "--no-optional-locks", "-C", repo, "status", "--porcelain"],
+                               capture_output=True, text=True, timeout=8, encoding="utf-8", errors="replace")
+        except Exception:
+            return (None, "git 확인 실패")
+        lost = [x[3:].strip().strip('"') for x in (r.stdout or "").splitlines() if len(x) > 3 and x[:2] != "??"]
+        lost = [q for q in lost if not q.startswith(("docs/deploy-history/",))]   # hook 자동 기록은 제외
+        if lost:
+            head = ", ".join(lost[:3]) + (f" 외 {len(lost) - 3}" if len(lost) > 3 else "")
+            reasons.append(f"{os.path.basename(repo)} 미커밋 {len(lost)}건({head})")
+    if reasons:
+        return (False, " · ".join(reasons))
+    return (True, "미커밋 0")
+
+if pct >= 75:
+    ok, why = _safe_to_clear(cwd)
+    if ok is True:
+        verdict = f"지금 /clear 해도 안전 ({why}) - 0초에 비워지고 새 세션이 최근 24h 작업 자동 복구."
+    elif ok is False:
+        verdict = f"지금은 /clear 보류 - {why}. 커밋 먼저."
+    else:
+        verdict = f"/clear 안전 판정 불가 ({why})."
+    if pct >= 90:
+        print(f"{RED}[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - {verdict} 진행 중이면 그대로 - 97% 자동 compact (실측 중앙 173초).{RST}")
+    else:
+        print(f"{YEL}[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 작업 경계에서 /clear 권장 · {verdict} 조기 /compact 는 빨라지지 않음 (실측 56만 토큰 211초).{RST}")
 elif pct >= 60:
     print(f"[i] 토큰 {pct:.0f}% - compact 임박. 앞으로 큰 파일 read 자제.")
 PYEOF
