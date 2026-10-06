@@ -705,15 +705,19 @@ def extra_gauges(cwd, data=None):
     #   주간 50~79% → fast OFF (주간 N% 보호)
     #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
     #   그 외       → fast ON
+    # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
+    _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
-        if _wp >= 80:
-            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
-        elif _wp >= 50:
-            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
+        if _tp >= 95:
+            tail.append(f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
-            tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
+            tail.append(f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+        elif _wp >= 80:
+            tail.append(f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+        elif _wp >= 50:
+            tail.append(f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
             tail.append("fast ON")
     except Exception:
