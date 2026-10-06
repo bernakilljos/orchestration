@@ -473,6 +473,7 @@
     auto-planner compact 안내 제거 (1006)      «Claude 가 /compact 자체 실행» = 불가능한 지시 + 25턴 기준(토큰 무관) → 제거. 토큰 기준 안내는 inject-compact-reminder
     /clear 안전 판정 (1006)                   ICM·RMS 개선 일반화 역병합: 75%+ 알림에 "지금 /clear 해도 안전(미커밋 0)" / "보류 - 미커밋 N건" 실측 판정 (루트 또는 하위 저장소 자동 탐지 · 특정 폴더명 X)
     hook 속도 (1006)                          suggest-skills grep fork 17회→bash 내장 정규식 (3.9s→0.7s · 14건 출력 동일) · audit-bat-lines 대상 .bat 미변경 시 skip (Stop 마다 177~254s → 0.3s · --force 로 강제)
+    상태줄 머리말 이모지 (1006)               6줄 머리말 🧠토큰 ⏳한도 🎨디자인 💻개발 📡상태 💰비용 · 폭 계산 east_asian_width 로 정렬 유지 · 사용자 지시 기준 (fast 블록 무변경)
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완

@@ -887,10 +887,16 @@ def main() -> None:
     #   시각·토큰 / 한도(세션·주간) / 상태(MCP·cache·재사용·errors·하드코딩) / 비용
     SEP = " · "
 
+    # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
+    #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
+    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "비용": "💰"}
+
     def _row(label: str, body: str) -> str:
-        # 머리말 표시폭 6칸으로 맞춤 (한글 2칸) → 모든 줄 내용이 같은 칸에서 시작
-        w = sum(2 if ord(ch) > 0x2E80 else 1 for ch in label)
-        return label + " " * max(0, 6 - w) + " │ " + body
+        # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
+        import unicodedata as _ud
+        head = f"{ICONS[label]} {label}" if label in ICONS else label
+        w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
+        return head + " " * max(0, 9 - w) + " │ " + body
 
     out = [_row("토큰", f"{token_line}{SEP}{clock}")]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
