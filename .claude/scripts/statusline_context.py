@@ -334,6 +334,20 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 
 def extra_gauges(cwd, data=None):
     """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
+    # ★★★1006 — **정규화는 여기서 한다(정본 1곳 · ⑥).**
+    #   처음엔 main() 쪽에만 넣었는데 이 함수 안의 8개 경로가 그대로 하위 폴더를
+    #   보고 있어 MCP·비용이 계속 비었다 — 「한 곳씩 고치면 또 빠진다」를 내가 했다.
+    #   ★판정은 «.claude 폴더가 있는가»다(프로젝트 구조를 지어내지 않는다).
+    if cwd:
+        _p0 = os.path.abspath(cwd)
+        for _ in range(5):
+            if os.path.isdir(os.path.join(_p0, "plugins")) and os.path.isdir(os.path.join(_p0, ".claude")):  # kit 설치 루트 (하위 폴더의 로컬 .claude 에서 멈추지 않게 · hook guard 와 같은 기준)
+                cwd = _p0
+                break
+            _u0 = os.path.dirname(_p0)
+            if _u0 == _p0:
+                break
+            _p0 = _u0
     budget_str = ""
     solutions_str = ""
     sessions_str = ""
@@ -796,6 +810,24 @@ def main() -> None:
            or (data.get("workspace") or {}).get("current_dir")
            or (data.get("workspace") or {}).get("project_dir")
            or os.getcwd() or "")
+
+    # ★★★1006 — **cwd 를 «.claude 를 가진 저장소 루트»로 올린다(정본 1곳).**
+    #   실측: 이 파일에서 `os.path.join(cwd, ".claude", …)` 가 **8곳**이다
+    #   (logs · orca.db ×2 · mcp-status · mcp-refresh · refresh 스크립트 ·
+    #    hardcoded-audit · state). cwd 가 하위 폴더면 **그 8곳이 전부** 빈 값이 되어
+    #   디자인·개발·비용·MCP 줄이 사라진다 — 그래서 statusline 이 때로 3줄이었다.
+    #   ★★한 곳씩 고치면 반드시 또 빠진다(⑥) — 그래서 **cwd 를 한 번 정규화**한다.
+    #   ★판정은 «.claude 폴더가 있는가» — 프로젝트 구조를 지어내지 않는다.
+    if cwd:
+        _p = os.path.abspath(cwd)
+        for _ in range(5):
+            if os.path.isdir(os.path.join(_p, "plugins")) and os.path.isdir(os.path.join(_p, ".claude")):  # kit 설치 루트 기준
+                cwd = _p
+                break
+            _u = os.path.dirname(_p)
+            if _u == _p:
+                break
+            _p = _u
 
     # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
     _cw = data.get("context_window") or {}
