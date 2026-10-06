@@ -700,27 +700,22 @@ def extra_gauges(cwd, data=None):
 
     # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
     # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
-    # 2026-10-06: 'fast ON/OFF' 는 «권장»이었는데 현재 상태로 읽혔다 (실제 fast_mode=false 인데 'fast ON').
-    #   → 실제 상태(payload fast_mode)를 먼저 쓰고, 권장이 다를 때만 '→ 켜기/끄기 권장 (이유)' 를 붙인다.
+    # ★기준 (사용자 확정 2026-10-06 — 임의 변경 금지):
+    #   주간 ≥80%  → [!] fast OFF (주간 N%)
+    #   주간 50~79% → fast OFF (주간 N% 보호)
+    #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
+    #   그 외       → fast ON
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
-        if _wp >= 50:
-            _want, _why = False, f"주간 {_wp:.0f}%"
+        if _wp >= 80:
+            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
+        elif _wp >= 50:
+            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
         elif _tp >= 80:
-            _want, _why = False, f"토큰 {_tp:.0f}%"
+            tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
         else:
-            _want, _why = True, ""
-        _fm = (data or {}).get("fast_mode")
-        if isinstance(_fm, bool):
-            s_fast = "fast 켜짐" if _fm else "fast 꺼짐"
-            if _fm != _want:
-                s_fast += " → " + ("켜기" if _want else "끄기") + " 권장" + (f" ({_why})" if _why else "")
-                if not _want and _wp >= 80:
-                    s_fast = "[!] " + s_fast
-        else:  # 상태를 모르면 권장만 (상태처럼 보이지 않게 '권장' 명시)
-            s_fast = ("fast 켜기 권장" if _want else f"fast 끄기 권장 ({_why})")
-        tail.append(s_fast)
+            tail.append("fast ON")
     except Exception:
         pass
 

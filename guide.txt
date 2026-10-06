@@ -467,7 +467,7 @@
     auto-planner RAG (1006)                  rag-recall 1회 17.5s · Windows timeout 이 python 못 죽임 → hook 전체 폐기 → 백그라운드+캐시(다음 프롬프트) · 프롬프트는 env 전달(주입 차단) · 옛 경로 C:pjt 하드코딩 제거
     RMS 하위 폴더                            A1.RMS-UPG · A2.RMS-DEMO 도 병합 대상 (세션이 하위 폴더에서 열림)
     auto-planner prompt 파싱                 A1.RMS-UPG 개선본 역병합: jq 없는 PC 에서 python json 파싱 (uXXXX 한글도 트리거)
-    fast 표시 (1006)                         권장(ON/OFF)이 현재 상태로 읽히던 것 → 실제 상태(payload fast_mode) "켜짐/꺼짐" + 다를 때만 "→ 켜기/끄기 권장 (이유)"
+    fast 표시                                ★사용자 확정 기준 — 승인 없이 변경 금지: 주간≥80 [!] fast OFF · 50~79 fast OFF(보호) · 토큰≥80 fast OFF(compact 임박) · 그 외 fast ON
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완
