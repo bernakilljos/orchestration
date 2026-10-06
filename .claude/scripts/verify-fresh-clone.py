@@ -39,7 +39,7 @@ def main() -> int:
     all_text = "\n".join(texts.values())
 
     # 1) 테이블 DDL
-    created = set(re.findall(r"CREATE TABLE IF NOT EXISTS\s+(\w+)", all_text))
+    created = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS\s+(\w+)", all_text))  # FTS5 등 VIRTUAL 포함
     written: dict[str, set[str]] = {}
     for p, t in texts.items():
         for tbl in re.findall(r"(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|UPDATE)\s+(\w+)\s*(?:\(|SET)", t):

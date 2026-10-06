@@ -115,6 +115,8 @@ def ensure_history_tables(conn) -> None:
   }
   for tbl, cols in need.items():
     have = {r[1] for r in conn.execute(f"PRAGMA table_info({tbl})")}
+    if not have:
+      continue  # 아직 없는 테이블 (새 DB 의 tasks 등) — 생성 후 init_schema 끝에서 다시 보강 (1006 A2 실측 FAIL)
     for col, typ in cols:
       if col not in have:
         conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
@@ -233,6 +235,8 @@ def init_schema() -> None:
       "INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, ?)",
       (now,)
     )
+    # 새 DB: 위에서 막 만든 tasks 등에 보강 컬럼 추가 (앞 호출에선 테이블이 없어 건너뜀)
+    ensure_history_tables(conn)
 
 
 # Worker management

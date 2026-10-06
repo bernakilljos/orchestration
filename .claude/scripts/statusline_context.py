@@ -454,6 +454,20 @@ def extra_gauges(cwd, data=None):
     mcp_shown = False
     try:
         mcp_cache = os.path.join(cwd, ".claude", "state", "mcp-status.json")
+        # 파일이 아예 없을 때도 백그라운드 측정 시작 (새로 병합된 폴더에서 'MCP off' 로만 뜨던 것 · 1006 A1 실측)
+        if not os.path.exists(mcp_cache):
+            try:
+                import time as _time0
+                mk0 = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
+                scr0 = os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")
+                if os.path.exists(scr0) and (not os.path.exists(mk0) or _time0.time() - os.path.getmtime(mk0) > 600):
+                    os.makedirs(os.path.dirname(mk0), exist_ok=True)
+                    open(mk0, "w").close()
+                    import subprocess as _sp0
+                    _sp0.Popen(["bash", scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
+                               creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+            except Exception:
+                pass
         if os.path.exists(mcp_cache):
             import time as _time
             age = _time.time() - os.path.getmtime(mcp_cache)
@@ -672,17 +686,27 @@ def extra_gauges(cwd, data=None):
 
     # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
     # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
+    # 2026-10-06: 'fast ON/OFF' 는 «권장»이었는데 현재 상태로 읽혔다 (실제 fast_mode=false 인데 'fast ON').
+    #   → 실제 상태(payload fast_mode)를 먼저 쓰고, 권장이 다를 때만 '→ 켜기/끄기 권장 (이유)' 를 붙인다.
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
-        if _wp >= 80:
-            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
-        elif _wp >= 50:
-            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
+        if _wp >= 50:
+            _want, _why = False, f"주간 {_wp:.0f}%"
         elif _tp >= 80:
-            tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
+            _want, _why = False, f"토큰 {_tp:.0f}%"
         else:
-            tail.append("fast ON")
+            _want, _why = True, ""
+        _fm = (data or {}).get("fast_mode")
+        if isinstance(_fm, bool):
+            s_fast = "fast 켜짐" if _fm else "fast 꺼짐"
+            if _fm != _want:
+                s_fast += " → " + ("켜기" if _want else "끄기") + " 권장" + (f" ({_why})" if _why else "")
+                if not _want and _wp >= 80:
+                    s_fast = "[!] " + s_fast
+        else:  # 상태를 모르면 권장만 (상태처럼 보이지 않게 '권장' 명시)
+            s_fast = ("fast 켜기 권장" if _want else f"fast 끄기 권장 ({_why})")
+        tail.append(s_fast)
     except Exception:
         pass
 
@@ -690,8 +714,26 @@ def extra_gauges(cwd, data=None):
     design_line = ""
     dev_line = ""
     try:
-        ra = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
-        if os.path.exists(ra):
+        # ★★★1006 — **파일은 부모(저장소 루트)에 있고 cwd 는 하위 폴더다.**
+        #   실측: cwd=…/Project1.5 인데 rule-adherence.json 은
+        #   …/C.ICM_Agent_Go/.claude/state/ 에만 있다 → 디자인·개발 줄이 비었다.
+        #   ★★그래서 statusline 이 때로는 6줄, 때로는 3~4줄로 나왔다 —
+        #     Claude Code 가 주는 cwd 가 루트일 때만 맞았던 것이다.
+        #   ★부모로 거슬러 찾는다(최대 4단) — 루트가 어디든 동작해야 한다.
+        ra = ""
+        _d = os.path.abspath(cwd) if cwd else ""
+        for _ in range(4):
+            if not _d:
+                break
+            _c = os.path.join(_d, ".claude", "state", "rule-adherence.json")
+            if os.path.exists(_c):
+                ra = _c
+                break
+            _u = os.path.dirname(_d)
+            if _u == _d:
+                break
+            _d = _u
+        if ra:
             with open(ra, "r", encoding="utf-8") as f:
                 _ra = json.load(f)
             def _fmt(section_name, section):
@@ -744,7 +786,16 @@ def main() -> None:
         pass
 
     session_id = data.get("session_id") or ""
-    cwd = data.get("cwd") or ""
+    # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
+    #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
+    #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
+    #   ★그런데 바깥 `except Exception` 이 「측정 전」만 찍어 **원인이 안 보였다**
+    #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
+    #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
+    cwd = (data.get("cwd")
+           or (data.get("workspace") or {}).get("current_dir")
+           or (data.get("workspace") or {}).get("project_dir")
+           or os.getcwd() or "")
 
     # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
     _cw = data.get("context_window") or {}

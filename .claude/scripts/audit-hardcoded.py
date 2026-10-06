@@ -30,6 +30,18 @@ PATTERNS = [
     ("github_pat", re.compile(r"ghp_[a-zA-Z0-9]{36}"), "GitHub PAT"),
 ]
 
+# ★★★1002 — 문서(.md)에서 **경로·버전·호스트·IP 만** 면제한다.
+#   왜: 실측 1002 에 남은 22건이 전부 **룰·가이드가 「이렇게 쓰지 마라」고 인용한
+#   금지 예시**였다(`best-practices.md` 의 사용자 경로 예시 4건 등). 규칙 문서가
+#   자기가 금지하는 패턴을 적었다고 위반으로 세면, 고치는 길은 **예시를 지우는
+#   것**뿐이고 그러면 룰이 뜻을 잃는다.
+#   ★★단, **시크릿 3종(aws_key·openai_key·github_pat)은 문서에서도 계속 잡는다** —
+#     「.md 는 전부 면제」로 넓히면 문서에 박힌 진짜 키를 영원히 못 본다.
+#     면제는 «오탐이 구조적인 패턴»에만 걸고, «나면 사고인 패턴»에는 안 건다.
+#   ★이것은 「규칙이 틀렸으면 규칙을 고친다」 갈래다(코드를 비틀지 않는다).
+DOC_EXEMPT_KEYS = {"users_path_win", "users_path_unix",
+                   "python_version", "desktop_hostname", "ip_192"}
+
 # ★★★1002 — 두 갈래로 나눴다. 종전엔 한 집합에 섞여 있었고, 그래서
 #   «.claude/state» 류 **경로형 3개가 한 번도 걸러진 적이 없었다**:
 #   비교가 `any(p in SKIP_DIRS for p in rel.split("/"))` 라 한 칸(.claude 또는
@@ -87,7 +99,11 @@ def scan():
             except Exception:
                 continue
             scanned += 1
+            _is_doc = (ext == ".md")
             for key, pat, _ in PATTERNS:
+                # ★문서의 금지 예시 면제 — 단 시크릿 3종은 면제하지 않는다(위 주석).
+                if _is_doc and key in DOC_EXEMPT_KEYS:
+                    continue
                 for m in pat.finditer(txt):
                     lineno = txt.count("\n", 0, m.start()) + 1
                     hits[key].append({
