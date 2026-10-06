@@ -465,7 +465,7 @@
     merge settings                          kit hook 의 timeout·async 도 대상에 동기화
     UserPromptSubmit timeout (1006)          13개 병렬 실행 → 개별 0.5s 도 부하 시 3s 초과. 3→10 (auto-planner 15)
     auto-planner RAG (1006)                  rag-recall 1회 17.5s · Windows timeout 이 python 못 죽임 → hook 전체 폐기 → 백그라운드+캐시(다음 프롬프트) · 프롬프트는 env 전달(주입 차단) · 옛 경로 C:pjt 하드코딩 제거
-    병합 대상 (1006)                          A.RMS · C.ICM_Agent_Go 2개 폴더만 (RMS 하위 A1·A2 는 대상 아님 — 사용자 지시)
+    병합 대상 (1006)                          kit + A.RMS · C.ICM_Agent_Go + RMS 하위 A1.RMS-UPG · A2.RMS-DEMO = 5곳 (세션이 하위 폴더에서도 열림 · 사용자 확정)
     auto-planner prompt 파싱                 A1.RMS-UPG 개선본 역병합: jq 없는 PC 에서 python json 파싱 (uXXXX 한글도 트리거)
     fast 표시                                ★사용자 확정 기준 — 승인 없이 변경 금지: 주간≥80 [!] fast OFF · 50~79 fast OFF(보호) · 토큰≥80 fast OFF(compact 임박) · 그 외 fast ON
     compact vs clear (1006 실측 29건)        compact 소요는 토큰 비례 X (21만 91s·56만 211s·97만+ 중앙 173s) → 50% 조기 compact 이득 없음. 90%+ 에서 작업 단위 끝났으면 /clear (0초·resume 복구), 진행 중이면 97% 자동 compact
