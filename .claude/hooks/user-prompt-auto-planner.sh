@@ -6,11 +6,31 @@
 set -e
 INPUT="$(cat)"
 
-if command -v jq >/dev/null 2>&1; then
-  PROMPT="$(echo "$INPUT" | jq -r '.prompt // ""' 2>/dev/null | head -c 1000)"
-else
-  PROMPT="$(echo "$INPUT" | grep -oE '"prompt"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/' | head -c 1000)"
-fi
+# prompt 추출. (A.RMS/A1 세션 개선본 역병합 2026-10-06)
+#
+# 2026-09-02 수정 (중대): jq 없는 환경(이 PC)의 fallback 이 두 가지로 깨져 있었다 —
+#   ① sed 's/.*:"\(.*\)"/\1/' 가 키 이름을 남겨 결과가  "prompt": "..."  가 됐다.
+#   ② JSON 은 한글을 \uXXXX 로 이스케이프해 보낸다. 그러면 아래 한글 TRIGGER_RE
+#      (해줘|고쳐줘|점검 ...) 가 **원리적으로 절대 매치하지 않는다**.
+#   결과: UserPromptSubmit 훅이 매 메시지마다 돌면서도 트리거를 한 번도 잡지 못했다.
+#   → jq 유무와 무관하게 python 으로 파싱한다(이스케이프 자동 복원). python 은
+#     이 프로젝트 훅 다수가 이미 의존하므로 새 의존성이 아니다.
+PROMPT="$(printf '%s' "$INPUT" | PYTHONIOENCODING=utf-8 python -c "
+import json, sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+p = d.get('prompt') or ''
+if not isinstance(p, str):
+    p = str(p)
+sys.stdout.write(p[:1000])
+" 2>/dev/null || true)"
+
 
 _m() { local re="$1"; [[ $PROMPT =~ $re ]]; }   # echo|grep fork 대신 bash 내장 (1006)
 
