@@ -62,27 +62,35 @@ def cwd_to_proj_dir(cwd: str) -> str:
 
 
 def last_assistant_usage(jsonl_path: str) -> dict | None:
-    """jsonl 마지막 assistant 레코드의 message.usage."""
+    """jsonl 마지막 assistant 레코드의 message.usage.
+
+    2026-10-06 — 끝에서부터 256KB 씩 거꾸로 읽고 찾으면 멈춘다 (127MB 세션 전체 읽기 → 수 초 실측)."""
     if not os.path.exists(jsonl_path):
         return None
-    last = None
     try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") == "assistant":
-                    usage = ((rec.get("message") or {}).get("usage")) or None
-                    if usage:
-                        last = usage
+        with open(jsonl_path, "rb") as f:
+            f.seek(0, 2)
+            pos, tail = f.tell(), b""
+            while pos > 0:
+                step = min(262144, pos)
+                pos -= step
+                f.seek(pos)
+                lines = (f.read(step) + tail).split(b"\n")
+                tail = lines[0] if pos > 0 else b""
+                for raw in reversed(lines[1:] if pos > 0 else lines):
+                    if b'"assistant"' not in raw:
+                        continue
+                    try:
+                        rec = json.loads(raw.decode("utf-8", errors="replace"))
+                    except Exception:
+                        continue
+                    if rec.get("type") == "assistant":
+                        usage = ((rec.get("message") or {}).get("usage")) or None
+                        if usage:
+                            return usage
     except Exception:
         return None
-    return last
+    return None
 
 
 # 모델별 rate - 정본은 lib/pricing.py (여기 따로 두면 갈린다 · 헌장 E)
@@ -104,27 +112,7 @@ def pick_rate(model_id: str) -> tuple[float, float, float, float]:
 
 def cache_hit_rate(jsonl_path: str) -> float:
     """세션 prompt cache 히트율 = cache_read / (cache_read + input + cache_creation) * 100."""
-    if not os.path.exists(jsonl_path):
-        return 0.0
-    tot_in = tot_cw = tot_cr = 0
-    try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") != "assistant":
-                    continue
-                u = ((rec.get("message") or {}).get("usage")) or {}
-                tot_in += u.get("input_tokens", 0) or 0
-                tot_cw += u.get("cache_creation_input_tokens", 0) or 0
-                tot_cr += u.get("cache_read_input_tokens", 0) or 0
-    except Exception:
-        return 0.0
+    _c, tot_in, tot_cw, tot_cr = _scan_jsonl(jsonl_path, "")
     denom = tot_in + tot_cw + tot_cr
     if denom <= 0:
         return 0.0
@@ -180,41 +168,89 @@ def recent_log_issues(cwd: str):
     return sum(errs.values()), warns, top
 
 
+# 2026-10-06 — 렌더마다 모든 jsonl 을 처음부터 다시 읽었다 (월·연 합계로 같은 파일 2번 · 127MB 세션 4초 실측).
+#   파일별 (크기·읽은 위치·message.id 별 집계) 를 state 에 두고 **늘어난 뒷부분만** 읽는다.
+#   크기가 줄면(덮어쓰기) 처음부터 다시. 결과는 전체 재계산과 같다 (id 별 마지막 usage 규칙 동일).
+_SCAN_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state", "jsonl-scan-cache.json")
+_SCAN: dict | None = None
+_SCAN_DIRTY = False
+
+
+def _scan_load() -> dict:
+    global _SCAN
+    if _SCAN is None:
+        try:
+            with open(_SCAN_PATH, encoding="utf-8") as f:
+                _SCAN = json.load(f)
+        except Exception:
+            _SCAN = {}
+    return _SCAN
+
+
+def _scan_save() -> None:
+    if not _SCAN_DIRTY or _SCAN is None:
+        return
+    try:
+        os.makedirs(os.path.dirname(_SCAN_PATH), exist_ok=True)
+        tmp = f"{_SCAN_PATH}.{os.getpid()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_SCAN, f, separators=(",", ":"))
+        os.replace(tmp, _SCAN_PATH)
+    except Exception:
+        pass
+
+
+import atexit as _atexit
+_atexit.register(_scan_save)
+
+
+def _scan_jsonl(jsonl_path: str, default_model: str = "") -> tuple[float, int, int, int]:
+    """(비용 USD, input, cache_write, cache_read) — message.id 별 마지막 usage 만 센다."""
+    global _SCAN_DIRTY
+    if not os.path.exists(jsonl_path):
+        return (0.0, 0, 0, 0)
+    cache = _scan_load()
+    key = os.path.abspath(jsonl_path) + "|" + (default_model or "")
+    size = os.path.getsize(jsonl_path)
+    ent = cache.get(key)
+    if not ent or ent.get("size", 0) > size:
+        ent = {"size": 0, "off": 0, "ids": {}}
+    if ent["size"] != size:
+        try:
+            with open(jsonl_path, "rb") as f:
+                f.seek(ent["off"])
+                buf = f.read()
+            end = buf.rfind(b"\n")
+            if end >= 0:
+                n0 = ent["off"]
+                for i, raw in enumerate(buf[:end].split(b"\n")):
+                    if b'"assistant"' not in raw:
+                        continue
+                    try:
+                        rec = json.loads(raw.decode("utf-8", errors="replace"))
+                    except Exception:
+                        continue
+                    if rec.get("type") != "assistant":
+                        continue
+                    msg = rec.get("message") or {}
+                    u = msg.get("usage") or {}
+                    in_r, out_r, cw_r, cr_r = pick_rate(msg.get("model") or default_model)
+                    ti, tw, tr = (u.get("input_tokens", 0) or 0), (u.get("cache_creation_input_tokens", 0) or 0), (u.get("cache_read_input_tokens", 0) or 0)
+                    cost = (ti * in_r + (u.get("output_tokens", 0) or 0) * out_r + tw * cw_r + tr * cr_r) / 1_000_000
+                    ent["ids"][msg.get("id") or f"_off{n0}_{i}"] = [cost, ti, tw, tr]
+                ent["off"] += end + 1
+            ent["size"] = size
+            cache[key] = ent
+            _SCAN_DIRTY = True
+        except Exception:
+            return (0.0, 0, 0, 0)
+    vals = ent["ids"].values()
+    return (sum(v[0] for v in vals), sum(v[1] for v in vals), sum(v[2] for v in vals), sum(v[3] for v in vals))
+
+
 def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
     """단일 jsonl - 파일 안 message.model 로 rate 결정, 없으면 default_model."""
-    if not os.path.exists(jsonl_path):
-        return 0.0
-    total = 0.0
-    # 응답 1개가 content block 마다 여러 줄로 기록되고 줄마다 같은 usage 를 반복한다
-    # (실측 2026-10-02: 103줄 / message.id 46개 → 비용 2배 과대). id 별 마지막 usage 만 센다.
-    by_id: dict = {}
-    try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for n, line in enumerate(f):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") != "assistant":
-                    continue
-                msg = rec.get("message") or {}
-                by_id[msg.get("id") or f"_line{n}"] = msg
-        for msg in by_id.values():
-                u = msg.get("usage") or {}
-                mid = msg.get("model") or default_model
-                in_r, out_r, cw_r, cr_r = pick_rate(mid)
-                total += (
-                    (u.get("input_tokens", 0) or 0) * in_r
-                    + (u.get("output_tokens", 0) or 0) * out_r
-                    + (u.get("cache_creation_input_tokens", 0) or 0) * cw_r
-                    + (u.get("cache_read_input_tokens", 0) or 0) * cr_r
-                ) / 1_000_000
-    except Exception:
-        return 0.0
-    return total
+    return _scan_jsonl(jsonl_path, default_model)[0]
 
 
 def session_cost(jsonl_path: str, model_id: str) -> float:
@@ -753,10 +789,16 @@ def extra_gauges(cwd, data=None):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
                 if not c90: return ""
-                parts = [f"{k} {v}" for k, v in sorted(c90.items(), key=lambda kv: -kv[1]) if v > 0]
-                if not parts: return ""
-                suffix = f" · 재발률 {rr}%" if rr else ""
-                return " · ".join(parts) + suffix
+                # 2026-10-06 사용자 지시 「0이라도」+「강조만 색 · 나머지 기본색」
+                #   0건 = 기본색 · 1~2건 = 노랑 · 3건+ = 빨강 / 재발률 <20 기본 · 20~39 노랑 · 40+ 빨강
+                def _hl(text, v, warn, crit):
+                    if v >= crit:
+                        return f"\033[1;31m{text}\033[0m"
+                    if v >= warn:
+                        return f"\033[33m{text}\033[0m"
+                    return text
+                parts = [_hl(f"{k} {v}", v, 1, 3) for k, v in sorted(c90.items(), key=lambda kv: -kv[1])]
+                return " · ".join(parts) + " · " + _hl(f"재발률 {rr}%", rr, 20, 40)
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
@@ -896,7 +938,8 @@ def main() -> None:
         import unicodedata as _ud
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
-        return head + " " * max(0, 9 - w) + " │ " + body
+        # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
+        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
 
     out = [_row("토큰", f"{token_line}{SEP}{clock}")]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]

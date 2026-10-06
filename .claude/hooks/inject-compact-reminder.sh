@@ -30,20 +30,33 @@ if not jsonls:
     sys.exit(0)
 last_usage = None
 model_id = ""
+# 2026-10-06 — 처음부터 끝까지 읽으면 세션 jsonl(121MB 실측)에서 10초+ → timeout.
+#   필요한 건 마지막 assistant usage 하나뿐이라 끝에서부터 256KB 씩 거꾸로 읽고 찾으면 즉시 멈춘다.
 try:
-    with open(jsonls[0], encoding="utf-8", errors="replace") as f:
-        for line in f:
-            try:
-                rec = json.loads(line)
-            except Exception:
-                continue
-            if rec.get("type") == "assistant":
-                u = ((rec.get("message") or {}).get("usage")) or None
-                m = ((rec.get("message") or {}).get("model")) or ""
-                if u:
-                    last_usage = u
-                if m:
-                    model_id = m
+    with open(jsonls[0], "rb") as f:
+        f.seek(0, 2)
+        pos = f.tell()
+        tail = b""
+        while pos > 0 and last_usage is None:
+            step = min(262144, pos)
+            pos -= step
+            f.seek(pos)
+            buf = f.read(step) + tail
+            lines = buf.split(b"\n")
+            tail = lines[0] if pos > 0 else b""   # 잘린 첫 줄은 다음 블록과 이어 붙임
+            for raw in reversed(lines[1:] if pos > 0 else lines):
+                if b'"assistant"' not in raw:
+                    continue
+                try:
+                    rec = json.loads(raw.decode("utf-8", errors="replace"))
+                except Exception:
+                    continue
+                if rec.get("type") == "assistant":
+                    msg = rec.get("message") or {}
+                    if msg.get("usage"):
+                        last_usage = msg["usage"]
+                        model_id = msg.get("model") or ""
+                        break
 except Exception:
     sys.exit(0)
 

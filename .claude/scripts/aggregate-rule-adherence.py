@@ -75,6 +75,9 @@ def main():
     design_30 = count_in_window(rows, DESIGN_PATTERNS, 30)
     design_7  = count_in_window(rows, DESIGN_PATTERNS, 7)
     dev_30    = count_in_window(rows, DEV_PATTERNS, 30)
+    # 2026-10-06 사용자 지시 「0이라도」 — 0건 항목도 상태줄에 보이도록 전 카테고리 키 유지
+    design_30 = {k: design_30.get(k, 0) for k in DESIGN_PATTERNS}
+    dev_30    = {k: dev_30.get(k, 0) for k in DEV_PATTERNS}
     dev_7     = count_in_window(rows, DEV_PATTERNS, 7)
 
     def recur_rate(c7, c30):
