@@ -28,6 +28,14 @@ TARGETS = [
 # OS-agnostic 임시 디렉토리 (Windows TEMP / Unix /tmp 자동)
 _TMP = Path(tempfile.gettempdir())
 TMP_LINE = _TMP / '_audit_line.bat'
+
+# 2026-10-06 — Stop hook 으로 매 턴 254초(실측) 돌며 CPU 를 먹어 응답이 느려졌다.
+#   대상 .bat 이 마지막 감사 이후 안 바뀌었으면 건너뛴다 (--force 로 강제).
+_STAMP = Path('.claude/state/audit-bat-lines.stamp')
+if '--force' not in sys.argv and _STAMP.exists():
+    _last = _STAMP.stat().st_mtime
+    if all(Path(t).stat().st_mtime <= _last for t in TARGETS if Path(t).exists()):
+        sys.exit(0)
 TMP_CTX = _TMP / '_audit_ctx.bat'
 
 errors = []
@@ -97,6 +105,8 @@ for target in TARGETS:
 TMP_LINE.unlink(missing_ok=True)
 TMP_CTX.unlink(missing_ok=True)
 
+_STAMP.parent.mkdir(parents=True, exist_ok=True)
+_STAMP.touch()
 if errors:
     print(f"=== {len(errors)} broken pattern(s) ===")
     for t, loc, s in errors:
