@@ -113,12 +113,11 @@ if _m "$TRIGGER_RE"; then
   fi
 
   # auto-compact 마커 체크 — 임계치 도달 시 NEXT TURN 첫 동작으로 /compact 강제
+  # 2026-10-06: «auto-compact ENFORCED — Claude 가 /compact 자체 실행» 안내 제거.
+  #   ① Claude 는 /compact·/clear 를 실행할 수 없다(사용자 입력창 전용) — 지킬 수 없는 지시였다.
+  #   ② 마커는 «25턴마다» 생겨 토큰과 무관했다. 실측(compact 29건): 소요가 토큰에 비례하지 않아
+  #      조기 compact 는 이득이 없다. 토큰 기준 안내는 inject-compact-reminder.sh 가 담당 (/clear 권장).
   COMPACT_GUIDE=""
-  COMPACT_MARKER="$PROJECT_ROOT/.claude/context-cache/auto-compact-recommended"
-  if [ -f "$COMPACT_MARKER" ]; then
-    MARKER_INFO="$(cat "$COMPACT_MARKER" 2>/dev/null | head -1 | tr -d '\\n\\r' | sed 's/"/\\\\"/g')"
-    COMPACT_GUIDE="\\n\\n[auto-compact ENFORCED — 컨텍스트 임계치 도달]\\n트리거: ${MARKER_INFO}\\n\\n★ Claude 의무 (이번 turn 0순위):\\n  1) 사용자 이번 prompt 처리 **전에 가장 먼저 /compact 자체 실행** (모든 도구 호출-답변 전)\\n  2) compact 완료 후 사용자 원래 요청 처리\\n  3) 한국어 한 줄 통지: '[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행'\\n\\n★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐\\n★ 마커 정리: compact 후 .claude/context-cache/auto-compact-recommended 파일 삭제"
-  fi
 
   cat <<EOF
 {"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[대상 확정 REQUIRED — 0순위]\n★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\n★ 4갈래 후보:\n  1) ${PROJECT_ROOT} (kit 자체 감사-룰-hook)\n  2) ${PROJECT_ROOT}/setup/templates/ (install 배포용 template)\n  3) install 대상 실운영 프로젝트 (경로 물어봐 — 사용자가 '실운영'-'하드코딩 실측'-'재발 방지 헌장'-비즈니스 지표명 언급 시)\n  4) ~/.claude/ (글로벌 설정)\n★ 대상 확정 전 grep-Read-Edit-Bash 착수 = 룰 위반. 자동 후보 나열도 X 하고 kit 뒤지기 시작 = 재발.\n상세: .claude/rules/direction-first.md - feedback_confirm_target_first.md\n\n[auto-planner ENFORCED]\n사용자 메시지에 작업 지시-결함 지적-점검 키워드 감지. 5단계 의무 발동:\n1) 전수조사 — 인접 시스템-전역까지 모든 위치 훑기 (단일 후보로 결론 X)\n2) 분석 — diff/md5sum/본문으로 내용 검증 (파일명만 보고 단정 X)\n3) 실행 — 발견한 문제를 코드로 수정\n4) 확인 — 자동 검증 (verify-image-fit / verify-docx-pages / verify-docx-structure / verify-ppt-overflow) 발동-PASS 확인\n5) 보고 — 표-목록으로 결과 + 남은 결정사항\n\n금기:\n- 대상 확정 없이 실행 착수 (0순위 위반)\n- 부분 처리 (한 파일만 보고 답변)\n- 검증 X 하고 완료 보고\n- 사용자에게 결정 떠넘기기 (크리티컬 5가지 외)\n- 회피-딴말 (직접 답 -> 부연 -> 행동)\n- 매번 사용자 지시 기다림 (auto-planner 자동 발동)\n\n자동 발동 트리거: auto-planner.md skill\n\n${GUIDE}${SUBAGENT_GUIDE}${MEMORY_GUIDE}${ALARM_GUIDE}${COMPACT_GUIDE}"}}
