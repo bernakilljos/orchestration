@@ -13,6 +13,13 @@ from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Windows cp949 환경에서 stdout·stderr UTF-8 강제 (키 cp949 저장 방지)
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / ".claude" / "state" / "orca.db"
 OUT = ROOT / ".claude" / "state" / "rule-adherence.json"
@@ -90,7 +97,8 @@ def main():
         },
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ensure_ascii=True → 한국어 키 \uXXXX escape 로 저장 (Windows cp949 환경 호환)
+    OUT.write_text(json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")
 
 if __name__ == "__main__":
     try: main()
