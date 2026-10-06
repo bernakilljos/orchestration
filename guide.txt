@@ -460,6 +460,9 @@
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
     verify-fresh-clone 컬럼 검사             INSERT·ON CONFLICT 컬럼이 DDL/ALTER 에 있는지
     역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
+    statusline 정렬 (1006)                   머리말 6칸 정렬 + │ · 구분자 통일 · MCP N/M (Nh 전, 1h+ 백그라운드 재측정) · 오류=줄 시각 24h 내만 (오류/경고 분리)
+    detect-* hook 4종 (1006)                 echo|grep fork → bash 내장 정규식 (9.4s→0.9s) · timeout 3→10 · 출력 동일성 72/72 대조
+    merge settings                          kit hook 의 timeout·async 도 대상에 동기화
 0" 비교 오류 → || true
     로그                                    .claude/logs/user-style-updates.log
 

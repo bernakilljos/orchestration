@@ -132,30 +132,52 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """.claude/logs/*.log 안 최근 24h ERROR·WARN·[err]·[skip] 카운트."""
+    """하위호환 — 오류 수만."""
+    return recent_log_issues(cwd)[0]
+
+
+def recent_log_issues(cwd: str):
+    """(오류 수, 경고 수, 오류 최다 로그) — 줄 안 시각이 최근 24h 인 것만 센다.
+
+    2026-10-06: 예전엔 «24h 안에 갱신된 로그의 마지막 500줄»을 시각 무관하게 셌고 WARN·skip 까지
+    섞어 «errors 121» 처럼 부풀었다 (실측: kit 36건 전부 시각 없는 줄 · 24h 내 실제 오류 0).
+    시각 없는 줄은 언제 것인지 모르므로 세지 않는다.
+    """
     import glob as _g
     import time as _t
     import re as _re
+    import collections as _co
     log_dir = os.path.join(cwd, ".claude", "logs")
     if not os.path.isdir(log_dir):
-        return 0
-    now = _t.time()
-    cutoff = now - 86400
-    total = 0
-    pat = _re.compile(r"\b(ERROR|WARN|FAIL|\[err\]|\[skip\]|\[!!\])", _re.IGNORECASE)
+        return 0, 0, ""
+    cutoff = _t.time() - 86400
+    ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
+    err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
+    warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
+    errs, warns = _co.Counter(), 0
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
         try:
             if os.path.getmtime(lp) < cutoff:
                 continue
             with open(lp, encoding="utf-8", errors="replace") as f:
-                # 마지막 500 줄만 (부하 절감)
                 lines = f.readlines()[-500:]
-                for ln in lines:
-                    if pat.search(ln):
-                        total += 1
+            for ln in lines:
+                e, w = err_re.search(ln), warn_re.search(ln)
+                if not (e or w):
+                    continue
+                m = ts_re.search(ln)
+                if not m:
+                    continue
+                if _t.mktime(tuple(map(int, m.groups())) + (0, 0, -1)) < cutoff:
+                    continue
+                if e:
+                    errs[os.path.basename(lp)] += 1
+                else:
+                    warns += 1
         except Exception:
             continue
-    return total
+    top = errs.most_common(1)[0][0] if errs else ""
+    return sum(errs.values()), warns, top
 
 
 def _jsonl_cost(jsonl_path: str, default_model: str = "") -> float:
@@ -256,7 +278,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"토큰 {EMPTY * 8} 측정 전"
+        return f"{EMPTY * 8} 측정 전"
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -266,13 +288,13 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     tok_s = fmt_tokens(tokens)
     lim_s = fmt_tokens(limit)
     q = "" if exact_model else "?"
-    line = f"토큰 {bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
+    line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
     if pct >= 95:
-        line += " - [!] /compact 즉시 실행"
+        line += " · [!] /compact 즉시"
     elif pct >= 80:
-        line += " - [주의] /compact 준비"
+        line += " · [!] /compact 준비"
     elif pct >= 70:
-        line += " - 주의"
+        line += " · 주의"
     return line
 
 
@@ -439,8 +461,23 @@ def extra_gauges(cwd, data=None):
                 ms = json.load(f)
             ok = int(ms.get("connected", 0))
             fail = int(ms.get("failed", 0))
-            stale = "?" if age > 14400 else ""  # 4h 이상 = 오래됨 표시
-            tail.append(f"MCP {ok} on {fail} off{stale}")
+            # 1h 넘으면 백그라운드 재측정 (SessionStart 에서만 갱신돼 며칠 세션엔 91h 전 값이 떴다)
+            #   창 없음 · 10분 안 재실행 방지 마커 · 렌더는 기다리지 않음 (claude mcp list ~30s)
+            if age > 3600:
+                try:
+                    mk = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
+                    if not os.path.exists(mk) or _time.time() - os.path.getmtime(mk) > 600:
+                        open(mk, "w").close()
+                        import subprocess as _sp
+                        _sp.Popen(["bash", os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
+                                  stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
+                                  creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+                except Exception:
+                    pass
+            # 4h 넘으면 몇 시간 전 값인지 적는다 (예전 "?" 는 뜻이 안 보였다)
+            stale = f" ({int(age // 3600)}h 전)" if age > 14400 else ""
+            tot = ok + fail
+            tail.append((f"MCP {ok}/{tot}" if not fail else f"[!] MCP {ok}/{tot} ({fail} 실패)") + stale)
             mcp_shown = True
     except Exception:
         pass
@@ -464,7 +501,7 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     avg = float(r[1] or 0)
                     rate = min(max(avg / 10.0 * 100.0, 0.0), 100.0)
-                    tail.append(f"재사용 {cnt}건 (사용률 {rate:.0f}%)")
+                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
@@ -474,8 +511,11 @@ def extra_gauges(cwd, data=None):
                     ).fetchone()
                     ac = int(a[0]) if a else 0
                     tk = int(t[0]) if t else 0
-                    if ac or tk:
-                        tail.append(f"orca 활성 {ac}건 · task {tk}")
+                    # 칸 안에 '·' 를 또 쓰면 칸 구분과 섞인다 · task 0 은 표시 안 함
+                    if ac:
+                        tail.append(f"orca {ac}")
+                    if tk:
+                        tail.append(f"task {tk}")
                 except Exception:
                     pass
                 # AI 비용은 별도 line3 로 분리 (여기서는 append X)
@@ -490,11 +530,13 @@ def extra_gauges(cwd, data=None):
         _hr = _pc.get("hit_ratio")
         _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
         if _cr > 0:
-            tail.append(f"cache {_cr:.0f}% hit")
+            tail.append(f"cache {_cr:.0f}%")
         # 최근 24h error·warn 카운트
-        if _ERROR_COUNT > 0:
-            prefix = "[!] " if _ERROR_COUNT > 20 else ""
-            tail.append(f"{prefix}errors {_ERROR_COUNT}")
+        _e, _w, _top = recent_log_issues(cwd)
+        if _e:
+            tail.append(("[!] " if _e > 20 else "") + f"오류 {_e}" + (f" ({_top})" if _top else ""))
+        if _w:
+            tail.append(f"경고 {_w}")
         # 하드코딩 감사 결과 (별도 캐시)
         try:
             aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
@@ -504,11 +546,11 @@ def extra_gauges(cwd, data=None):
                 st = a.get("status", "?")
                 tot = int(a.get("total_hits", 0))
                 if st == "PASS":
-                    tail.append("하드코딩 감사 PASS")
+                    tail.append("하드코딩 0")
                 elif st == "CRITICAL":
-                    tail.append(f"[!] 하드코딩 CRITICAL {tot}")
+                    tail.append(f"[!] 하드코딩 {tot}")
                 else:
-                    tail.append(f"하드코딩 WARN {tot}")
+                    tail.append(f"하드코딩 {tot}")
         except Exception:
             pass
     except Exception:
@@ -542,9 +584,9 @@ def extra_gauges(cwd, data=None):
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"AI 비용(이 프로젝트) 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
-            f"{cur_m}월 ${monthly:.2f} ({_krw(monthly)}) · "
-            f"년간 ${yearly:.2f} ({_krw(yearly)})"
+            f"AI 비용(이 프로젝트) 세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
+            f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
+            f"연간 ${yearly:,.2f} ({_krw(yearly)}) · 이 프로젝트 기준"
         )
     else:
         line3 = ""
@@ -656,7 +698,7 @@ def extra_gauges(cwd, data=None):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
                 if not c90: return ""
-                parts = [f"{k} {v}" for k, v in c90.items() if v > 0]
+                parts = [f"{k} {v}" for k, v in sorted(c90.items(), key=lambda kv: -kv[1]) if v > 0]
                 if not parts: return ""
                 suffix = f" · 재발률 {rr}%" if rr else ""
                 return " · ".join(parts) + suffix
@@ -762,19 +804,25 @@ def main() -> None:
     # 2026-10-02 4줄 배치 (사용자 요청): 머리말로 구획 · 줄당 짧게 → 터미널 폭 잘림(…) 방지
     #   시각·토큰 / 한도(세션·주간) / 상태(MCP·cache·재사용·errors·하드코딩) / 비용
     SEP = " · "
-    out = [f"{clock}  {token_line}"]
+
+    def _row(label: str, body: str) -> str:
+        # 머리말 표시폭 6칸으로 맞춤 (한글 2칸) → 모든 줄 내용이 같은 칸에서 시작
+        w = sum(2 if ord(ch) > 0x2E80 else 1 for ch in label)
+        return label + " " * max(0, 6 - w) + " │ " + body
+
+    out = [_row("토큰", f"{token_line}{SEP}{clock}")]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
     if lim:
-        out.append("한도  " + SEP.join(lim))
+        out.append(_row("한도", SEP.join(lim)))
     if gauges.get("design"):
-        out.append("디자인  " + gauges["design"])
+        out.append(_row("디자인", gauges["design"]))
     if gauges.get("dev"):
-        out.append("개발  " + gauges["dev"])
+        out.append(_row("개발", gauges["dev"]))
     if gauges.get("tail"):
-        out.append("상태  " + SEP.join(gauges["tail"]))
+        out.append(_row("상태", SEP.join(gauges["tail"])))
     cost = gauges.get("cost") or ""
     if cost:
-        out.append("비용  " + cost.replace("AI 비용(이 프로젝트) ", "(이 프로젝트) "))
+        out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
     print("\n".join(out))
 
 

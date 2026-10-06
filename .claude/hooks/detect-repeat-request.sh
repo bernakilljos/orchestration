@@ -14,32 +14,34 @@ fi
 
 PROJECT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 HIST="$PROJECT/.claude/state/prompt-history"
-mkdir -p "$(dirname "$HIST")" 2>/dev/null
+[ -d "$PROJECT/.claude/state" ] || mkdir -p "$PROJECT/.claude/state" 2>/dev/null
 
 # 최근 10개 프롬프트 유지 (원소당 한 줄, 특수문자 escape)
-current_line="$(echo "$PROMPT" | tr '\n' ' ' | tr -s ' ' | head -c 300)"
+# bash 내장 (tr·head fork 제거): 줄바꿈→공백 · 연속 공백 1개 · 300자
+shopt -s extglob; current_line="${PROMPT//$'\n'/ }"; current_line="${current_line//+( )/ }"; current_line="${current_line:0:300}"
 
 # 유사도 계산 — 키워드 3+ 겹치면 중복
 similarity_score=0
 if [ -f "$HIST" ]; then
-  # 현재 프롬프트에서 키워드 (2자+) 추출
-  current_kw="$(echo "$current_line" | grep -oE '[가-힣a-zA-Z][가-힣a-zA-Z0-9_-]+' | sort -u | head -10)"
-  # 최근 5개 프롬프트와 비교
-  tail -5 "$HIST" 2>/dev/null | while IFS= read -r past; do
-    past_kw="$(echo "$past" | grep -oE '[가-힣a-zA-Z][가-힣a-zA-Z0-9_-]+' | sort -u)"
-    common="$(comm -12 <(echo "$current_kw") <(echo "$past_kw" | sort -u) 2>/dev/null | wc -l | tr -d '[:space:]')"
-    if [ "$common" -ge 3 ] 2>/dev/null; then
-      echo "$common"
-    fi
-  done | head -1 > "$PROJECT/.claude/state/.repeat-score" 2>/dev/null
-  similarity_score="$(cat "$PROJECT/.claude/state/.repeat-score" 2>/dev/null | tr -d '[:space:]')"
+  # 2026-10-06: 지난 5개마다 grep·sort·comm·wc·tr 를 띄우던 것(~25 fork · 2.7초)을 python 1회로.
+  #   규칙 동일: 키워드 = [가-힣a-zA-Z][가-힣a-zA-Z0-9_-]+ · 현재 상위 10개 · 최근 5개 중 처음 3개+ 겹친 수
+  similarity_score="$(CUR="$current_line" python -X utf8 -c '
+import os,re,sys
+kw=lambda t:set(re.findall(r"[가-힣a-zA-Z][가-힣a-zA-Z0-9_-]+",t))
+cur=set(sorted(kw(os.environ.get("CUR","")))[:10])
+try: past=open(sys.argv[1],encoding="utf-8",errors="replace").read().splitlines()[-5:]
+except Exception: past=[]
+for ln in past:
+    n=len(cur & kw(ln))
+    if n>=3: print(n); break
+' "$HIST" 2>/dev/null | tr -d '[:space:]')"
   [ -z "$similarity_score" ] && similarity_score=0
 fi
 
 # 히스토리 추가
-echo "$current_line" >> "$HIST"
-# 최근 10개만 유지
-tail -10 "$HIST" > "$HIST.tmp" 2>/dev/null && mv "$HIST.tmp" "$HIST" 2>/dev/null
+printf '%s\n' "$current_line" >> "$HIST"
+# 최근 10개만 유지 (tail·mv fork 대신 bash 내장)
+mapfile -t _H < "$HIST"; (( ${#_H[@]} > 10 )) && printf '%s\n' "${_H[@]: -10}" > "$HIST"
 
 # 유사도 3+ 감지 시 systemMessage + /explainlikeim5 자동 트리거
 if [ "$similarity_score" -ge 3 ] 2>/dev/null; then
