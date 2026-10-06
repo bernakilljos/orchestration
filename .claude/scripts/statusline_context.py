@@ -789,16 +789,14 @@ def extra_gauges(cwd, data=None):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
                 if not c90: return ""
-                # 2026-10-06 사용자 지시 「0이라도」+「강조만 색 · 나머지 기본색」
-                #   0건 = 기본색 · 1~2건 = 노랑 · 3건+ = 빨강 / 재발률 <20 기본 · 20~39 노랑 · 40+ 빨강
-                def _hl(text, v, warn, crit):
-                    if v >= crit:
-                        return f"\033[1;31m{text}\033[0m"
-                    if v >= warn:
-                        return f"\033[33m{text}\033[0m"
-                    return text
-                parts = [_hl(f"{k} {v}", v, 1, 3) for k, v in sorted(c90.items(), key=lambda kv: -kv[1])]
-                return " · ".join(parts) + " · " + _hl(f"재발률 {rr}%", rr, 20, 40)
+                # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
+                #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
+                _HUE = {"여백": "35", "산출물기한": "33", "버전관리": "36", "이모지": "34",
+                        "전수조사skip": "31", "증명지시": "33", "미반영": "35"}
+                def _hl(k):
+                    return f"\033[1;{_HUE.get(k, '37')}m{k}\033[0m"
+                parts = [f"{_hl(k)} {v}" for k, v in sorted(c90.items(), key=lambda kv: -kv[1])]
+                return " · ".join(parts) + f" · \033[1m재발률\033[0m {rr}%"
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
