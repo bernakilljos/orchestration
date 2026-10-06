@@ -70,10 +70,13 @@ if not limit:
     limit = 1_000_000 if ("[1m]" in (model_id or "") or tokens > 200_000) else 200_000
 pct = tokens / limit * 100
 
+# 2026-10-06 실측 (이 PC compact 29건): 소요가 토큰에 비례하지 않는다 —
+#   21만 91s · 33만 169s · 56만 211s · 97~100만(자동) 중앙 173s. 50% 조기 compact 는 1회 시간은 같고 횟수만 2배.
+#   → 90%+ 는 «작업 단위가 끝났으면 /clear (0초 · resume-last-24h 가 자동 복구)», 진행 중이면 97% 자동 compact 대기.
 if pct >= 90:
-    print(f"[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - /compact 즉시 실행 필수. 다음 응답 전 반드시. 컨텍스트 폭주 임박.")
+    print(f"[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 작업 단위가 끝났으면 /clear 권장 (0초 · 새 세션이 최근 24h 작업 자동 복구). 진행 중이면 그대로 - 97% 에서 자동 compact (실측 중앙 173초).")
 elif pct >= 75:
-    print(f"[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - /compact 준비. 응답이 느려지거나 멍청해지면 즉시 실행.")
+    print(f"[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 다음 작업 단위 경계에서 /clear 권장. 조기 /compact 는 빨라지지 않음 (실측 56만 토큰 211초).")
 elif pct >= 60:
     print(f"[i] 토큰 {pct:.0f}% - compact 임박. 앞으로 큰 파일 read 자제.")
 PYEOF

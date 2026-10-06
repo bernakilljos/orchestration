@@ -290,9 +290,9 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     q = "" if exact_model else "?"
     line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
     if pct >= 95:
-        line += " · [!] /compact 즉시"
+        line += " · [!] 자동 compact 임박 (끝났으면 /clear)"
     elif pct >= 80:
-        line += " · [!] /compact 준비"
+        line += " · 작업 끝나면 /clear"
     elif pct >= 70:
         line += " · 주의"
     return line
