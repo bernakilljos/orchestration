@@ -11,6 +11,10 @@ else
   PROMPT="$(echo "$INPUT" | grep -oE '"prompt"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*: *"\(.*\)"$/\1/' | head -c 500)"
 fi
 [ -z "$PROMPT" ] && exit 0
+# 2026-10-03: /loop(Cron) 가 보낸 프롬프트는 사용자 감정·반복이 아니다 — 루프 문구의 '다시'·'상태' 가
+#   "사용자가 못 알아들어 반복 중" 으로 오탐됐다. 루프 프롬프트는 "[LOOP] " 로 시작한다(active-loops.json).
+# 2026-10-05: 배경 작업 완료 알림(<task-notification>)도 사람 입력이 아니다 — 같은 길로 들어와 '중복 요청 3회+' 를 매번 냈다.
+[[ "$PROMPT" == "[LOOP]"* || "$PROMPT" == "<task-notification>"* ]] && exit 0
 
 PROJECT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 HIST="$PROJECT/.claude/state/prompt-history"

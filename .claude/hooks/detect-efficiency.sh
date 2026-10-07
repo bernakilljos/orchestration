@@ -6,6 +6,11 @@
 set -e
 
 INPUT="$(cat)"
+# 2026-10-03: /loop(Cron) 프롬프트("[LOOP] ...")엔 안내문을 넣지 않는다 — 루프 한 번에 훅들이 5.5KB 를 넣어
+#   하루 168회면 ~900KB, 1M 창을 이틀이면 안내문만으로 채운다(루프 세션 천장의 한 원인).
+# 2026-10-05: 배경 작업 완료 알림(<task-notification>)도 사람 입력이 아니다 — 같은 길로 들어와 '중복 요청 3회+' 를 매번 냈다.
+_LOOP_RE='"prompt"[[:space:]]*:[[:space:]]*"(\[LOOP\] |<task-notification>)'
+[[ "${INPUT:-}" =~ $_LOOP_RE ]] && exit 0
 if command -v jq >/dev/null 2>&1; then
   PROMPT="$(echo "$INPUT" | jq -r '.prompt // ""' 2>/dev/null | head -c 500)"
 else

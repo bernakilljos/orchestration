@@ -12,6 +12,10 @@ else
   PROMPT="$(echo "$INPUT" | grep -oE '"prompt"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*: *"\(.*\)"$/\1/' | head -c 500)"
 fi
 [ -z "$PROMPT" ] && exit 0
+# 2026-10-03: /loop(Cron) 가 보낸 프롬프트는 사용자 감정·반복이 아니다 — 루프 문구의 '다시'·'상태' 가
+#   "사용자가 못 알아들어 반복 중" 으로 오탐됐다. 루프 프롬프트는 "[LOOP] " 로 시작한다(active-loops.json).
+# 2026-10-05: 배경 작업 완료 알림(<task-notification>)도 사람 입력이 아니다 — 같은 길로 들어와 '중복 요청 3회+' 를 매번 냈다.
+[[ "$PROMPT" == "[LOOP]"* || "$PROMPT" == "<task-notification>"* ]] && exit 0
 
 # 2026-10-06: 검사마다 `echo | grep` 을 띄우던 것(프롬프트당 최대 59회 fork · Windows 에서 9.4초 →
 #   3초 timeout 초과로 출력 폐기)을 bash 내장 정규식으로 교체. 패턴·출력은 그대로.

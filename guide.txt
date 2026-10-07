@@ -495,6 +495,7 @@
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완
+    역병합 1007 lottoclaude                   /loop([LOOP])·배경 알림(<task-notification>) 프롬프트는 detect-efficiency·emotion·repeat·periodic-reminder 가 건너뜀 (루프 1회 5.5KB 안내문 · 반복요청 오탐) · 월·년 비용 timestamp 필터를 _scan_jsonl 로 이식
     로그                                    .claude/logs/user-style-updates.log
 
   [에이전트 — 6개 + 동료 모드 3개]
