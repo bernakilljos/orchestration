@@ -788,6 +788,11 @@ def extra_gauges(cwd, data=None):
             def _fmt(section_name, section):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
+                # 2026-10-07 — 집계 파일이 옛 판(0건 키 없음)이거나 비어 있어도(세션 없는 상위 폴더)
+                #   항목 전부를 0 으로 채워 줄 자체가 사라지지 않게 한다 (A.RMS·A2 실측).
+                _ALL = {"design": ("이모지", "여백", "버전관리", "산출물기한"),
+                        "dev": ("증명지시", "미반영", "전수조사skip")}
+                c90 = {**{k: 0 for k in _ALL.get(section_name, ())}, **c90}
                 if not c90: return ""
                 # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
                 #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
