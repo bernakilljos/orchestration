@@ -120,6 +120,25 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             have |= {hook_key(h.get("command", "")) for h in new_hooks}
             added += len(new_hooks)
     report.append(f"settings.hooks +{added}")
+    # 이미 있는 kit hook 의 실행 속성(timeout·async)은 kit 값을 따른다
+    #   2026-10-06: kit 에서 detect-* timeout 3→10 으로 올려도 대상은 3 에 머물던 것
+    kit_attr = {}
+    for ev, kmatchers in kh.items():
+        for km in kmatchers or []:
+            for h in km.get("hooks", []):
+                kit_attr[(ev, hook_key(h.get("command", "")))] = {k: h[k] for k in ("timeout", "async") if k in h}
+    synced = 0
+    for ev, tmatchers in th.items():
+        for tm in tmatchers or []:
+            for h in tm.get("hooks", []):
+                want = kit_attr.get((ev, hook_key(h.get("command", ""))))
+                if want is None:
+                    continue
+                for k, v in want.items():
+                    if h.get(k) != v:
+                        h[k] = v
+                        synced += 1
+    report.append(f"settings.hooks 속성 동기화 {synced}")
     # permissions.allow 합집합
     ka = (kit.get("permissions") or {}).get("allow") or []
     perm = out.setdefault("permissions", {})

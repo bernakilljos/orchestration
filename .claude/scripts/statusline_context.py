@@ -88,27 +88,35 @@ def cwd_to_proj_dir(cwd: str) -> str:
 
 
 def last_assistant_usage(jsonl_path: str) -> dict | None:
-    """jsonl 마지막 assistant 레코드의 message.usage."""
+    """jsonl 마지막 assistant 레코드의 message.usage.
+
+    2026-10-06 — 끝에서부터 256KB 씩 거꾸로 읽고 찾으면 멈춘다 (127MB 세션 전체 읽기 → 수 초 실측)."""
     if not os.path.exists(jsonl_path):
         return None
-    last = None
     try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") == "assistant":
-                    usage = ((rec.get("message") or {}).get("usage")) or None
-                    if usage:
-                        last = usage
+        with open(jsonl_path, "rb") as f:
+            f.seek(0, 2)
+            pos, tail = f.tell(), b""
+            while pos > 0:
+                step = min(262144, pos)
+                pos -= step
+                f.seek(pos)
+                lines = (f.read(step) + tail).split(b"\n")
+                tail = lines[0] if pos > 0 else b""
+                for raw in reversed(lines[1:] if pos > 0 else lines):
+                    if b'"assistant"' not in raw:
+                        continue
+                    try:
+                        rec = json.loads(raw.decode("utf-8", errors="replace"))
+                    except Exception:
+                        continue
+                    if rec.get("type") == "assistant":
+                        usage = ((rec.get("message") or {}).get("usage")) or None
+                        if usage:
+                            return usage
     except Exception:
         return None
-    return last
+    return None
 
 
 # 모델별 rate - 정본은 lib/pricing.py (여기 따로 두면 갈린다 · 헌장 E)
@@ -130,27 +138,7 @@ def pick_rate(model_id: str) -> tuple[float, float, float, float]:
 
 def cache_hit_rate(jsonl_path: str) -> float:
     """세션 prompt cache 히트율 = cache_read / (cache_read + input + cache_creation) * 100."""
-    if not os.path.exists(jsonl_path):
-        return 0.0
-    tot_in = tot_cw = tot_cr = 0
-    try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") != "assistant":
-                    continue
-                u = ((rec.get("message") or {}).get("usage")) or {}
-                tot_in += u.get("input_tokens", 0) or 0
-                tot_cw += u.get("cache_creation_input_tokens", 0) or 0
-                tot_cr += u.get("cache_read_input_tokens", 0) or 0
-    except Exception:
-        return 0.0
+    _c, tot_in, tot_cw, tot_cr = _scan_jsonl(jsonl_path, "")
     denom = tot_in + tot_cw + tot_cr
     if denom <= 0:
         return 0.0
@@ -158,17 +146,29 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """.claude/logs/*.log 안 최근 24h ERROR·WARN·[err]·[skip] 카운트."""
+    """하위호환 — 오류 수만."""
+    return recent_log_issues(cwd)[0]
+
+
+def recent_log_issues(cwd: str):
+    """(오류 수, 경고 수, 오류 최다 로그) — 줄 안 시각이 최근 24h 인 것만 센다.
+
+    2026-10-06: 예전엔 «24h 안에 갱신된 로그의 마지막 500줄»을 시각 무관하게 셌고 WARN·skip 까지
+    섞어 «errors 121» 처럼 부풀었다 (실측: kit 36건 전부 시각 없는 줄 · 24h 내 실제 오류 0).
+    시각 없는 줄은 언제 것인지 모르므로 세지 않는다.
+    """
     import glob as _g
     import time as _t
     import re as _re
+    import collections as _co
     log_dir = os.path.join(cwd, ".claude", "logs")
     if not os.path.isdir(log_dir):
-        return 0
-    now = _t.time()
-    cutoff = now - 86400
-    total = 0
-    pat = _re.compile(r"\b(ERROR|WARN|FAIL|\[err\]|\[skip\]|\[!!\])", _re.IGNORECASE)
+        return 0, 0, ""
+    cutoff = _t.time() - 86400
+    ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
+    err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
+    warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
+    errs, warns = _co.Counter(), 0
     # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
     # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
@@ -180,54 +180,113 @@ def recent_error_count(cwd: str) -> int:
             if os.path.getmtime(lp) < cutoff:
                 continue
             with open(lp, encoding="utf-8", errors="replace") as f:
-                # 마지막 500 줄만 (부하 절감)
                 lines = f.readlines()[-500:]
-                for ln in lines:
-                    if pat.search(ln):
-                        total += 1
+            for ln in lines:
+                e, w = err_re.search(ln), warn_re.search(ln)
+                if not (e or w):
+                    continue
+                m = ts_re.search(ln)
+                if not m:
+                    continue
+                if _t.mktime(tuple(map(int, m.groups())) + (0, 0, -1)) < cutoff:
+                    continue
+                if e:
+                    errs[os.path.basename(lp)] += 1
+                else:
+                    warns += 1
         except Exception:
             continue
-    return total
+    top = errs.most_common(1)[0][0] if errs else ""
+    return sum(errs.values()), warns, top
+
+
+# 2026-10-06 — 렌더마다 모든 jsonl 을 처음부터 다시 읽었다 (월·연 합계로 같은 파일 2번 · 127MB 세션 4초 실측).
+#   파일별 (크기·읽은 위치·message.id 별 집계) 를 state 에 두고 **늘어난 뒷부분만** 읽는다.
+#   크기가 줄면(덮어쓰기) 처음부터 다시. 결과는 전체 재계산과 같다 (id 별 마지막 usage 규칙 동일).
+_SCAN_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state", "jsonl-scan-cache.json")
+_SCAN: dict | None = None
+_SCAN_DIRTY = False
+
+
+def _scan_load() -> dict:
+    global _SCAN
+    if _SCAN is None:
+        try:
+            with open(_SCAN_PATH, encoding="utf-8") as f:
+                _SCAN = json.load(f)
+        except Exception:
+            _SCAN = {}
+    return _SCAN
+
+
+def _scan_save() -> None:
+    if not _SCAN_DIRTY or _SCAN is None:
+        return
+    try:
+        os.makedirs(os.path.dirname(_SCAN_PATH), exist_ok=True)
+        tmp = f"{_SCAN_PATH}.{os.getpid()}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_SCAN, f, separators=(",", ":"))
+        os.replace(tmp, _SCAN_PATH)
+    except Exception:
+        pass
+
+
+import atexit as _atexit
+_atexit.register(_scan_save)
+
+
+def _scan_jsonl(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -> tuple[float, int, int, int]:
+    """(비용 USD, input, cache_write, cache_read) — message.id 별 마지막 usage 만 센다.
+
+    ts_prefix ("2026-10"·"2026") 가 있으면 그 기간 timestamp 의 응답만 합산한다.
+    2026-09-23: 월·년 합산을 파일 mtime 으로만 걸러 8월 기록까지 9월에 더했다($4,635 → 실제 $2,924).
+    """
+    global _SCAN_DIRTY
+    if not os.path.exists(jsonl_path):
+        return (0.0, 0, 0, 0)
+    cache = _scan_load()
+    key = os.path.abspath(jsonl_path) + "|" + (default_model or "") + "|v2"  # v2: 항목에 timestamp 추가
+    size = os.path.getsize(jsonl_path)
+    ent = cache.get(key)
+    if not ent or ent.get("size", 0) > size:
+        ent = {"size": 0, "off": 0, "ids": {}}
+    if ent["size"] != size:
+        try:
+            with open(jsonl_path, "rb") as f:
+                f.seek(ent["off"])
+                buf = f.read()
+            end = buf.rfind(b"\n")
+            if end >= 0:
+                n0 = ent["off"]
+                for i, raw in enumerate(buf[:end].split(b"\n")):
+                    if b'"assistant"' not in raw:
+                        continue
+                    try:
+                        rec = json.loads(raw.decode("utf-8", errors="replace"))
+                    except Exception:
+                        continue
+                    if rec.get("type") != "assistant":
+                        continue
+                    msg = rec.get("message") or {}
+                    u = msg.get("usage") or {}
+                    in_r, out_r, cw_r, cr_r = pick_rate(msg.get("model") or default_model)
+                    ti, tw, tr = (u.get("input_tokens", 0) or 0), (u.get("cache_creation_input_tokens", 0) or 0), (u.get("cache_read_input_tokens", 0) or 0)
+                    cost = (ti * in_r + (u.get("output_tokens", 0) or 0) * out_r + tw * cw_r + tr * cr_r) / 1_000_000
+                    ent["ids"][msg.get("id") or f"_off{n0}_{i}"] = [cost, ti, tw, tr, str(rec.get("timestamp") or "")[:10]]
+                ent["off"] += end + 1
+            ent["size"] = size
+            cache[key] = ent
+            _SCAN_DIRTY = True
+        except Exception:
+            return (0.0, 0, 0, 0)
+    vals = [v for v in ent["ids"].values() if not ts_prefix or (len(v) > 4 and v[4].startswith(ts_prefix))]
+    return (sum(v[0] for v in vals), sum(v[1] for v in vals), sum(v[2] for v in vals), sum(v[3] for v in vals))
 
 
 def _jsonl_cost(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -> float:
     """단일 jsonl - 파일 안 message.model 로 rate 결정, 없으면 default_model."""
-    if not os.path.exists(jsonl_path):
-        return 0.0
-    total = 0.0
-    # 응답 1개가 content block 마다 여러 줄로 기록되고 줄마다 같은 usage 를 반복한다
-    # (실측 2026-10-02: 103줄 / message.id 46개 → 비용 2배 과대). id 별 마지막 usage 만 센다.
-    by_id: dict = {}
-    try:
-        with open(jsonl_path, "r", encoding="utf-8", errors="replace") as f:
-            for n, line in enumerate(f):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                except Exception:
-                    continue
-                if rec.get("type") != "assistant":
-                    continue
-                # 2026-09-23: 월·년 합산은 파일 mtime 으로만 걸러 8월 기록까지 9월에 더했다($4,635 → 실제 $2,924).
-                if ts_prefix and not str(rec.get("timestamp") or "").startswith(ts_prefix):
-                    continue
-                msg = rec.get("message") or {}
-                by_id[msg.get("id") or f"_line{n}"] = msg
-        for msg in by_id.values():
-                u = msg.get("usage") or {}
-                mid = msg.get("model") or default_model
-                in_r, out_r, cw_r, cr_r = pick_rate(mid)
-                total += (
-                    (u.get("input_tokens", 0) or 0) * in_r
-                    + (u.get("output_tokens", 0) or 0) * out_r
-                    + (u.get("cache_creation_input_tokens", 0) or 0) * cw_r
-                    + (u.get("cache_read_input_tokens", 0) or 0) * cr_r
-                ) / 1_000_000
-    except Exception:
-        return 0.0
-    return total
+    return _scan_jsonl(jsonl_path, default_model, ts_prefix)[0]
 
 
 def session_cost(jsonl_path: str, model_id: str) -> float:
@@ -291,7 +350,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"토큰 {EMPTY * 8} 측정 전"
+        return f"{EMPTY * 8} 측정 전"
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -301,13 +360,13 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     tok_s = fmt_tokens(tokens)
     lim_s = fmt_tokens(limit)
     q = "" if exact_model else "?"
-    line = f"토큰 {bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
+    line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
     if pct >= 95:
-        line += " - [!] /compact 즉시 실행"
+        line += " · [!] 자동 compact 임박 (끝났으면 /clear)"
     elif pct >= 80:
-        line += " - [주의] /compact 준비"
+        line += " · 작업 끝나면 /clear"
     elif pct >= 70:
-        line += " - 주의"
+        line += " · 주의"
     return line
 
 
@@ -347,6 +406,20 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 
 def extra_gauges(cwd, data=None):
     """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
+    # ★★★1006 — **정규화는 여기서 한다(정본 1곳 · ⑥).**
+    #   처음엔 main() 쪽에만 넣었는데 이 함수 안의 8개 경로가 그대로 하위 폴더를
+    #   보고 있어 MCP·비용이 계속 비었다 — 「한 곳씩 고치면 또 빠진다」를 내가 했다.
+    #   ★판정은 «.claude 폴더가 있는가»다(프로젝트 구조를 지어내지 않는다).
+    if cwd:
+        _p0 = os.path.abspath(cwd)
+        for _ in range(5):
+            if os.path.isdir(os.path.join(_p0, "plugins")) and os.path.isdir(os.path.join(_p0, ".claude")):  # kit 설치 루트 (하위 폴더의 로컬 .claude 에서 멈추지 않게 · hook guard 와 같은 기준)
+                cwd = _p0
+                break
+            _u0 = os.path.dirname(_p0)
+            if _u0 == _p0:
+                break
+            _p0 = _u0
     budget_str = ""
     solutions_str = ""
     sessions_str = ""
@@ -467,6 +540,20 @@ def extra_gauges(cwd, data=None):
     mcp_shown = False
     try:
         mcp_cache = os.path.join(cwd, ".claude", "state", "mcp-status.json")
+        # 파일이 아예 없을 때도 백그라운드 측정 시작 (새로 병합된 폴더에서 'MCP off' 로만 뜨던 것 · 1006 A1 실측)
+        if not os.path.exists(mcp_cache):
+            try:
+                import time as _time0
+                mk0 = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
+                scr0 = os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")
+                if os.path.exists(scr0) and (not os.path.exists(mk0) or _time0.time() - os.path.getmtime(mk0) > 600):
+                    os.makedirs(os.path.dirname(mk0), exist_ok=True)
+                    open(mk0, "w").close()
+                    import subprocess as _sp0
+                    _sp0.Popen(["bash", scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
+                               creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+            except Exception:
+                pass
         if os.path.exists(mcp_cache):
             import time as _time
             age = _time.time() - os.path.getmtime(mcp_cache)
@@ -474,8 +561,23 @@ def extra_gauges(cwd, data=None):
                 ms = json.load(f)
             ok = int(ms.get("connected", 0))
             fail = int(ms.get("failed", 0))
-            stale = "?" if age > 14400 else ""  # 4h 이상 = 오래됨 표시
-            tail.append(f"MCP {ok} on {fail} off{stale}")
+            # 1h 넘으면 백그라운드 재측정 (SessionStart 에서만 갱신돼 며칠 세션엔 91h 전 값이 떴다)
+            #   창 없음 · 10분 안 재실행 방지 마커 · 렌더는 기다리지 않음 (claude mcp list ~30s)
+            if age > 3600:
+                try:
+                    mk = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
+                    if not os.path.exists(mk) or _time.time() - os.path.getmtime(mk) > 600:
+                        open(mk, "w").close()
+                        import subprocess as _sp
+                        _sp.Popen(["bash", os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
+                                  stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
+                                  creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+                except Exception:
+                    pass
+            # 4h 넘으면 몇 시간 전 값인지 적는다 (예전 "?" 는 뜻이 안 보였다)
+            stale = f" ({int(age // 3600)}h 전)" if age > 14400 else ""
+            tot = ok + fail
+            tail.append((f"MCP {ok}/{tot}" if not fail else f"[!] MCP {ok}/{tot} ({fail} 실패)") + stale)
             mcp_shown = True
     except Exception:
         pass
@@ -499,7 +601,7 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     avg = float(r[1] or 0)
                     rate = min(max(avg / 10.0 * 100.0, 0.0), 100.0)
-                    tail.append(f"재사용 {cnt}건 (사용률 {rate:.0f}%)")
+                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
@@ -509,8 +611,11 @@ def extra_gauges(cwd, data=None):
                     ).fetchone()
                     ac = int(a[0]) if a else 0
                     tk = int(t[0]) if t else 0
-                    if ac or tk:
-                        tail.append(f"orca 활성 {ac}건 · task {tk}")
+                    # 칸 안에 '·' 를 또 쓰면 칸 구분과 섞인다 · task 0 은 표시 안 함
+                    if ac:
+                        tail.append(f"orca {ac}")
+                    if tk:
+                        tail.append(f"task {tk}")
                 except Exception:
                     pass
                 # AI 비용은 별도 line3 로 분리 (여기서는 append X)
@@ -525,11 +630,13 @@ def extra_gauges(cwd, data=None):
         _hr = _pc.get("hit_ratio")
         _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
         if _cr > 0:
-            tail.append(f"cache {_cr:.0f}% hit")
+            tail.append(f"cache {_cr:.0f}%")
         # 최근 24h error·warn 카운트
-        if _ERROR_COUNT > 0:
-            prefix = "[!] " if _ERROR_COUNT > 20 else ""
-            tail.append(f"{prefix}errors {_ERROR_COUNT}")
+        _e, _w, _top = recent_log_issues(cwd)
+        if _e:
+            tail.append(("[!] " if _e > 20 else "") + f"오류 {_e}" + (f" ({_top})" if _top else ""))
+        if _w:
+            tail.append(f"경고 {_w}")
         # 하드코딩 감사 결과 (별도 캐시)
         try:
             aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
@@ -539,11 +646,11 @@ def extra_gauges(cwd, data=None):
                 st = a.get("status", "?")
                 tot = int(a.get("total_hits", 0))
                 if st == "PASS":
-                    tail.append("하드코딩 감사 PASS")
+                    tail.append("하드코딩 0")
                 elif st == "CRITICAL":
-                    tail.append(f"[!] 하드코딩 CRITICAL {tot}")
+                    tail.append(f"[!] 하드코딩 {tot}")
                 else:
-                    tail.append(f"하드코딩 WARN {tot}")
+                    tail.append(f"하드코딩 {tot}")
         except Exception:
             pass
     except Exception:
@@ -577,9 +684,9 @@ def extra_gauges(cwd, data=None):
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"API 정가 환산(이 프로젝트·구독 청구액 아님) 세션 ${_SESSION_COST:.2f} ({_krw(_SESSION_COST)}) · "
-            f"{cur_m}월 ${monthly:.2f} ({_krw(monthly)}) · "
-            f"년간 ${yearly:.2f} ({_krw(yearly)})"
+            f"API 정가 환산(구독 청구액 아님) 세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
+            f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
+            f"연간 ${yearly:,.2f} ({_krw(yearly)}) · 이 프로젝트 기준"
         )
     else:
         line3 = ""
@@ -663,23 +770,26 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
-    # fast 추천 뱃지 — 주간·세션 한도 보호 · 토큰 compact 임박이면 OFF
-    # 2026-10-02 사용자 지적: 세션 86% 에서 "fast ON" 이 떴다. fast 는 같은 시간에 한도를 더 빨리 태우므로
-    #   세션 % (five_hour) 도 주간과 같은 임계(80/50)로 본다 (a6e4c83 의 "세션 무관" 판단 번복).
+    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
+    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
+    # ★기준 (사용자 확정 2026-10-06 — 임의 변경 금지):
+    #   주간 ≥80%  → [!] fast OFF (주간 N%)
+    #   주간 50~79% → fast OFF (주간 N% 보호)
+    #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
+    #   그 외       → fast ON
+    # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
+    _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
-        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
-        if _wp >= 80:
-            tail.append(f"[!] fast OFF (주간 {_wp:.0f}%)")
-        elif _sp >= 80:
-            tail.append(f"[!] fast OFF (세션 {_sp:.0f}%)")
-        elif _wp >= 50:
-            tail.append(f"fast OFF (주간 {_wp:.0f}% 보호)")
-        elif _sp >= 50:
-            tail.append(f"fast OFF (세션 {_sp:.0f}% 보호)")
+        if _tp >= 95:
+            tail.append(f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
-            tail.append(f"fast OFF (토큰 {_tp:.0f}% · compact 임박)")
+            tail.append(f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+        elif _wp >= 80:
+            tail.append(f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+        elif _wp >= 50:
+            tail.append(f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
             tail.append("fast ON")
     except Exception:
@@ -689,19 +799,45 @@ def extra_gauges(cwd, data=None):
     design_line = ""
     dev_line = ""
     try:
-        ra = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
-        if os.path.exists(ra):
+        # ★★★1006 — **파일은 부모(저장소 루트)에 있고 cwd 는 하위 폴더다.**
+        #   실측: cwd=…/Project1.5 인데 rule-adherence.json 은
+        #   …/C.ICM_Agent_Go/.claude/state/ 에만 있다 → 디자인·개발 줄이 비었다.
+        #   ★★그래서 statusline 이 때로는 6줄, 때로는 3~4줄로 나왔다 —
+        #     Claude Code 가 주는 cwd 가 루트일 때만 맞았던 것이다.
+        #   ★부모로 거슬러 찾는다(최대 4단) — 루트가 어디든 동작해야 한다.
+        ra = ""
+        _d = os.path.abspath(cwd) if cwd else ""
+        for _ in range(4):
+            if not _d:
+                break
+            _c = os.path.join(_d, ".claude", "state", "rule-adherence.json")
+            if os.path.exists(_c):
+                ra = _c
+                break
+            _u = os.path.dirname(_d)
+            if _u == _d:
+                break
+            _d = _u
+        if ra:
             with open(ra, "r", encoding="utf-8") as f:
                 _ra = json.load(f)
             def _fmt(section_name, section):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
-                parts = [f"{k} {v}" for k, v in c90.items() if v > 0]
-                # 0건도 표시 — 줄이 사라지면 "집계 안 됨" 과 구분이 안 된다 (헌장 A2)
-                if not parts:
-                    return f"위반 0 (90일 · 발화 {_ra.get('user_turns_90d', 0)}건)"
-                suffix = f" · 재발률 {rr}%" if rr else ""
-                return " · ".join(parts) + suffix
+                # 2026-10-07 — 집계 파일이 옛 판(0건 키 없음)이거나 비어 있어도(세션 없는 상위 폴더)
+                #   항목 전부를 0 으로 채워 줄 자체가 사라지지 않게 한다 (A.RMS·A2 실측).
+                _ALL = {"design": ("이모지", "여백", "버전관리", "산출물기한"),
+                        "dev": ("증명지시", "미반영", "전수조사skip")}
+                c90 = {**{k: 0 for k in _ALL.get(section_name, ())}, **c90}
+                if not c90: return ""
+                # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
+                #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
+                _HUE = {"여백": "35", "산출물기한": "33", "버전관리": "36", "이모지": "34",
+                        "전수조사skip": "31", "증명지시": "33", "미반영": "35"}
+                def _hl(k):
+                    return f"\033[1;{_HUE.get(k, '37')}m{k}\033[0m"
+                parts = [f"{_hl(k)} {v}" for k, v in sorted(c90.items(), key=lambda kv: -kv[1])]
+                return " · ".join(parts) + f" · \033[1m재발률\033[0m {rr}%"
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
@@ -744,7 +880,34 @@ def main() -> None:
         pass
 
     session_id = data.get("session_id") or ""
-    cwd = data.get("cwd") or ""
+    # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
+    #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
+    #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
+    #   ★그런데 바깥 `except Exception` 이 「측정 전」만 찍어 **원인이 안 보였다**
+    #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
+    #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
+    cwd = (data.get("cwd")
+           or (data.get("workspace") or {}).get("current_dir")
+           or (data.get("workspace") or {}).get("project_dir")
+           or os.getcwd() or "")
+
+    # ★★★1006 — **cwd 를 «.claude 를 가진 저장소 루트»로 올린다(정본 1곳).**
+    #   실측: 이 파일에서 `os.path.join(cwd, ".claude", …)` 가 **8곳**이다
+    #   (logs · orca.db ×2 · mcp-status · mcp-refresh · refresh 스크립트 ·
+    #    hardcoded-audit · state). cwd 가 하위 폴더면 **그 8곳이 전부** 빈 값이 되어
+    #   디자인·개발·비용·MCP 줄이 사라진다 — 그래서 statusline 이 때로 3줄이었다.
+    #   ★★한 곳씩 고치면 반드시 또 빠진다(⑥) — 그래서 **cwd 를 한 번 정규화**한다.
+    #   ★판정은 «.claude 폴더가 있는가» — 프로젝트 구조를 지어내지 않는다.
+    if cwd:
+        _p = os.path.abspath(cwd)
+        for _ in range(5):
+            if os.path.isdir(os.path.join(_p, "plugins")) and os.path.isdir(os.path.join(_p, ".claude")):  # kit 설치 루트 기준
+                cwd = _p
+                break
+            _u = os.path.dirname(_p)
+            if _u == _p:
+                break
+            _p = _u
 
     # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
     _cw = data.get("context_window") or {}
@@ -814,20 +977,33 @@ def main() -> None:
     if isinstance(data, dict) and limit and tokens:
         data["_ctx_pct"] = min(100.0, tokens / limit * 100.0)
     gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
-    # 2026-10-02 4줄 상한 (사용자 화면 실측): 상태줄은 4줄까지만 보이고 넘치면 뒤가 잘린다.
-    #   디자인·개발 줄 2개를 더했더니 6줄 → 상태·비용이 화면에서 사라졌다.
-    #   시각·토큰·한도 / 룰(디자인·개발) / 상태 / 비용 — 4줄을 넘기지 말 것.
     SEP = " · "
+
+    # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
+    #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
+    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "비용": "💰"}
+
+    def _row(label: str, body: str) -> str:
+        # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
+        import unicodedata as _ud
+        head = f"{ICONS[label]} {label}" if label in ICONS else label
+        w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
+        # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
+        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
+
+    out = [_row("토큰", f"{token_line}{SEP}{clock}")]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
-    out = [f"{clock}  {token_line}" + (SEP + SEP.join(lim) if lim else "")]
-    rule = [f"{k} {gauges[g]}" for k, g in (("디자인", "design"), ("개발", "dev")) if gauges.get(g)]
-    if rule:
-        out.append("룰  " + " │ ".join(rule))
+    if lim:
+        out.append(_row("한도", SEP.join(lim)))
+    if gauges.get("design"):
+        out.append(_row("디자인", gauges["design"]))
+    if gauges.get("dev"):
+        out.append(_row("개발", gauges["dev"]))
     if gauges.get("tail"):
-        out.append("상태  " + SEP.join(gauges["tail"]))
+        out.append(_row("상태", SEP.join(gauges["tail"])))
     cost = gauges.get("cost") or ""
     if cost:
-        out.append("비용  " + cost.replace("AI 비용(이 프로젝트) ", "(이 프로젝트) "))
+        out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
     print("\n".join(out))
 
 

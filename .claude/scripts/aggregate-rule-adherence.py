@@ -13,6 +13,13 @@ from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
 
+# Windows cp949 환경에서 stdout·stderr UTF-8 강제 (키 cp949 저장 방지)
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / ".claude" / "state" / "orca.db"
 SESSIONS_DB = ROOT / ".claude" / "state" / "sessions.db"
@@ -86,6 +93,9 @@ def main():
     design_7  = count_in_window(rows, DESIGN_PATTERNS, 7)
     dev_90    = count_in_window(rows, DEV_PATTERNS, 90)
     dev_30    = count_in_window(rows, DEV_PATTERNS, 30)
+    # 2026-10-06 사용자 지시 「0이라도」 — 0건 항목도 상태줄에 보이도록 전 카테고리 키 유지
+    design_30 = {k: design_30.get(k, 0) for k in DESIGN_PATTERNS}
+    dev_30    = {k: dev_30.get(k, 0) for k in DEV_PATTERNS}
     dev_7     = count_in_window(rows, DEV_PATTERNS, 7)
 
     def recur_rate(c7, c30):
@@ -111,7 +121,8 @@ def main():
         },
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ensure_ascii=True → 한국어 키 \uXXXX escape 로 저장 (Windows cp949 환경 호환)
+    OUT.write_text(json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")
 
 if __name__ == "__main__":
     try: main()

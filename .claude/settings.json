@@ -202,32 +202,32 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-auto-planner.sh\"",
-            "timeout": 3
+            "timeout": 15
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-repeat-request.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-user-emotion.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-efficiency.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-deflection.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/periodic-rules-reminder.sh\"",
-            "timeout": 3
+            "timeout": 10
           },
           {
             "type": "command",
@@ -240,7 +240,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject-compact-reminder.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       },
@@ -265,7 +265,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/aggregate-rule-adherence.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       },
@@ -274,7 +274,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/suggest-command-from-context.sh\"",
-            "timeout": 3
+            "timeout": 10
           }
         ]
       }
@@ -290,7 +290,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" Stop",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -631,7 +632,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PreCompact"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PreCompact",
+            "async": true
           },
           {
             "type": "command",
@@ -697,7 +699,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" PostCompact",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",

@@ -476,6 +476,25 @@
     역병합 (대상→kit)                        대상에서 고친 kit 파일이 개선이면 kit 로 올려 전파 (1002 ICM: audit-hardcoded 자기참조 · vbs 사용자명)
     역병합 1002 lottoclaude                   훅 stdin session_id·transcript_path 정본(창 여러 개 동시 세션 오기록) · jsonl 꼬리 4MB 읽기(306MB 3초 타임아웃) · 월·년 비용 timestamp 필터 · [1m]=1M · 루트 표식 탐색
     install-git-hooks 재설치                  기존 pre-commit 에 "guide.txt" 만 있으면 exit 0 하던 것 → 옛판(|| echo "0")이면 교체 · post-merge/post-rewrite 도 그제야 설치됨
+    statusline 정렬 (1006)                   머리말 6칸 정렬 + │ · 구분자 통일 · MCP N/M (Nh 전, 1h+ 백그라운드 재측정) · 오류=줄 시각 24h 내만 (오류/경고 분리)
+    detect-* hook 4종 (1006)                 echo|grep fork → bash 내장 정규식 (9.4s→0.9s) · timeout 3→10 · 출력 동일성 72/72 대조
+    merge settings                          kit hook 의 timeout·async 도 대상에 동기화
+    UserPromptSubmit timeout (1006)          13개 병렬 실행 → 개별 0.5s 도 부하 시 3s 초과. 3→10 (auto-planner 15)
+    auto-planner RAG (1006)                  rag-recall 1회 17.5s · Windows timeout 이 python 못 죽임 → hook 전체 폐기 → 백그라운드+캐시(다음 프롬프트) · 프롬프트는 env 전달(주입 차단) · 옛 경로 C:pjt 하드코딩 제거
+    병합 대상 (1006)                          kit + A.RMS · C.ICM_Agent_Go + RMS 하위 A1.RMS-UPG · A2.RMS-DEMO = 5곳 (세션이 하위 폴더에서도 열림 · 사용자 확정)
+    auto-planner prompt 파싱                 A1.RMS-UPG 개선본 역병합: jq 없는 PC 에서 python json 파싱 (uXXXX 한글도 트리거)
+    fast 표시                                ★사용자 확정 기준 — 승인 없이 변경 금지: 주간≥80 [!] fast OFF · 50~79 fast OFF(보호) · 토큰≥80 fast OFF(compact 임박) · 그 외 fast ON
+    compact vs clear (1006 실측 29건)        compact 소요는 토큰 비례 X (21만 91s·56만 211s·97만+ 중앙 173s) → 50% 조기 compact 이득 없음. 90%+ 에서 작업 단위 끝났으면 /clear (0초·resume 복구), 진행 중이면 97% 자동 compact
+    stop-snapshot async (1006)                Stop·PreCompact·PostCompact 백그라운드 (3.2s+4.3s 대기 제거) · SessionEnd 는 동기 유지
+    auto-planner compact 안내 제거 (1006)      «Claude 가 /compact 자체 실행» = 불가능한 지시 + 25턴 기준(토큰 무관) → 제거. 토큰 기준 안내는 inject-compact-reminder
+    /clear 안전 판정 (1006)                   ICM·RMS 개선 일반화 역병합: 75%+ 알림에 "지금 /clear 해도 안전(미커밋 0)" / "보류 - 미커밋 N건" 실측 판정 (루트 또는 하위 저장소 자동 탐지 · 특정 폴더명 X)
+    hook 속도 (1006)                          suggest-skills grep fork 17회→bash 내장 정규식 (3.9s→0.7s · 14건 출력 동일) · audit-bat-lines 대상 .bat 미변경 시 skip (Stop 마다 177~254s → 0.3s · --force 로 강제)
+    상태줄 머리말 이모지 (1006)               6줄 머리말 🧠토큰 ⏳한도 🎨디자인 💻개발 📡상태 💰비용 · 폭 계산 east_asian_width 로 정렬 유지 · 사용자 지시 기준 (fast 블록 무변경)
+    상태줄 색·0건 표시 (1006)                디자인·개발 항목 0건도 표시 · 항목마다 고정 색 (여백 보라 · 산출물기한 노랑 · 버전관리 청록 · 이모지 파랑 · 전수조사skip 빨강 · 증명지시 노랑 · 미반영 보라) → 어느 프로젝트든 같은 항목 = 같은 색 · 숫자는 기본색 · 1007: 집계 파일이 옛 판·빈 값이어도 전 항목 0 으로 채움 (A.RMS 상위·A2 에서 줄이 빠지던 문제)
+    jsonl 읽기 가속 (1006)                    reminder·상태줄 마지막 usage = 끝에서 거꾸로 읽고 즉시 멈춤 · 비용·cache 집계 = 파일별 증분 캐시(state/jsonl-scan-cache.json) · 127MB 세션 실측 reminder 1.8s→0.3s · 상태줄 4.0s→0.9s · 값 동일
+    ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
+    state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
+    statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완
     로그                                    .claude/logs/user-style-updates.log
 
   [에이전트 — 6개 + 동료 모드 3개]
@@ -1779,6 +1798,8 @@
 
 ## cmem 광고 disable
 - ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false
+
+
 
 
 

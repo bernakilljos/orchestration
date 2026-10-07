@@ -123,7 +123,17 @@ def main():
     body = _sanitize(body)[:MAX_CHARS]
     header = f"# 자동 복구 (최근 {CUTOFF_HOURS}h · resume-last-24h.py)\n"
     header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
-    print(header + body)
+    # 사용자 지시 '--json' 시 SessionStart hook JSON 직접 반환 (shell escape 우회)
+    if "--json" in sys.argv:
+        import json as _j
+        print(_j.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": _sanitize(header + body)
+            }
+        }, ensure_ascii=True))
+    else:
+        print(header + body)
 
 if __name__ == "__main__":
     try: main()

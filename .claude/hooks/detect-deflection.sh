@@ -12,7 +12,7 @@ set -e
 
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG_DIR="${PROJECT_ROOT}/.claude/logs"
-mkdir -p "$LOG_DIR"
+[ -d "$LOG_DIR" ] || mkdir -p "$LOG_DIR"
 LOG="${LOG_DIR}/deflection-detect.log"
 HISTORY="${LOG_DIR}/user-prompt-history.log"
 
@@ -32,8 +32,10 @@ fi
 [ -z "$MSG" ] && exit 0
 
 # 누적 prompt 기록 (10개 회전)
-echo "[$(date +%F_%T)] $MSG" >> "$HISTORY"
-tail -n 30 "$HISTORY" > "${HISTORY}.tmp" && mv "${HISTORY}.tmp" "$HISTORY"
+printf '[%(%F_%T)T] %s
+' -1 "$MSG" >> "$HISTORY"   # date fork 없이 (bash 내장 시각)
+mapfile -t _H < "$HISTORY"; (( ${#_H[@]} > 30 )) && printf '%s
+' "${_H[@]: -30}" > "$HISTORY"
 
 # 회피-반복 위반 신호 카테고리
 declare -A SIGNALS=(
@@ -50,7 +52,7 @@ declare -A SIGNALS=(
 MATCHED=""
 for cat in "${!SIGNALS[@]}"; do
   pattern="${SIGNALS[$cat]}"
-  if echo "$MSG" | grep -qE "$pattern"; then
+  if [[ $MSG =~ $pattern ]]; then   # 2026-10-06: echo|grep fork → bash 내장 (3초 timeout 초과 해소)
     MATCHED="$MATCHED $cat"
   fi
 done
@@ -58,13 +60,17 @@ done
 if [ -n "$MATCHED" ]; then
   # 최근 10 prompt 에서 같은 카테고리 반복 카운트
   COUNT=0
+  # 주의: "${arr[@]: -10}" 은 원소가 10개 미만이면 빈 결과 → 시작 위치를 직접 계산 (대조 테스트로 검출)
+  mapfile -t _ALL < "$HISTORY"; _st=$(( ${#_ALL[@]} > 10 ? ${#_ALL[@]} - 10 : 0 )); _RECENT=("${_ALL[@]:_st}")   # 1회만 읽고 bash 내장으로 셈 (카테고리마다 tail|grep 하던 것)
   for cat in $MATCHED; do
     pattern="${SIGNALS[$cat]}"
-    c=$(tail -n 10 "$HISTORY" | grep -cE "$pattern" || echo 0)
-    COUNT=$((COUNT + c))
+    for _ln in "${_RECENT[@]}"; do
+      [[ $_ln =~ $pattern ]] && COUNT=$((COUNT + 1))
+    done
   done
 
-  echo "[$(date +%F_%T)] MATCHED:$MATCHED | recent_count=$COUNT | msg=$MSG" >> "$LOG"
+  printf '[%(%F_%T)T] MATCHED:%s | recent_count=%s | msg=%s
+' -1 "$MATCHED" "$COUNT" "$MSG" >> "$LOG"
 
   if [ "$COUNT" -ge 3 ]; then
     # 3번 이상 반복 = 명백한 신호
