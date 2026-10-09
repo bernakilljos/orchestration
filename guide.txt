@@ -1704,6 +1704,7 @@
   PreToolUse (Bash):
     - pre-install-lock.sh            install 순서 강제
     - pre-commit-full-check.sh       git commit 시 guide.txt·CLAUDE.md 갱신 강제
+                                     (2026-10-09: CLAUDE.md 는 auto-update-stats 로 다시 셈해 실제로 바뀔 때만 요구 — 최신이면 통과)
 
   감정 매핑 SoT: plugins/exec_orch/skills/user-emotion-auto-response.md
 
