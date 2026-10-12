@@ -69,7 +69,7 @@
 | 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
 | 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
-| 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
+| 검증 (기본) | **Haiku 5.5 [NEW 2026-10-07]** / Haiku 4.5 (×2 병렬) | `haiku-auto` · **Haiku 5.5**: `claude-haiku-5-5` · 1M context · 128k 출력 · **adaptive thinking (effort)** · high-volume·latency-sensitive 전용. **Breaking**: `budget_tokens` 수동 thinking X · `temperature`·`top_p`·`top_k` X · prefill X · `computer_20250124` X (→ `computer_toolset_20260801`) — Haiku 4.5 코드 그대로 쓰면 400 error |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 초장기 컨텍스트 recall (2M+) | GPT-5.2 | `route.py --check gpt-5.2` (Perplexity Computer 패턴, API key 필요 시만 활성) |
@@ -77,13 +77,15 @@
 | 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**가격** (2026-10-02 기준):
+**가격** (2026-10-12 기준):
 - **Opus 5.5** (신규 default, 2026-09-22): **$4/$20** per MTok · cache $0.20 · `claude-opus-5-5` · 1M context 기본 (surcharge 없음) · 128k 출력 · adaptive thinking always-on · 지식 cutoff 2026-06 · Claude API·Bedrock·Vertex·Foundry 모두 GA
 - **Opus 5** (호환 fallback): $5/$25 per MTok · `claude-opus-5` · thinking disable 가능 (5.5 는 always-on)
 - **Opus 4.8** (저비용 fallback): $5/$25 per MTok · Fast $10/$50 (2.5× 속도) · thinking disable 자유
 - **Opus 4.7**: **fast mode 제거 (2026-07-24 breaking)** — fast 는 4.8 또는 Opus 5/5.5 로 마이그레이션
 - **Fable 5.1 / Mythos 5.1** (2026-09-01): $10/$50 per MTok · 128k 출력 · `claude-fable-5-1` · `claude-mythos-5-1` · **cache reads 75% 저렴** · 30-day data retention 요구
+- **Sonnet 5.5** (2026-10-07 cache 가격 인하): **cache read $0.10** (기존 $0.20 대비 **50% ↓** · base input 0.05x) · cache write·기타 unchanged · Dreams 지원
 - **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)**.
+- **Haiku 5.5** [NEW 2026-10-07]: `claude-haiku-5-5` · 1M context · 128k 출력 · adaptive thinking (effort) · high-volume·latency-sensitive 전용 · API·Bedrock·AWS·GCP·Foundry GA · Breaking (budget_tokens·temp·top_p·top_k·prefill·computer_20250124 모두 400 error)
 
 **Claude Code v2.1.287** (2026-10-02 기준 최신):
 - **2.1.287 (10/1)**: **Claude Mods** 공식 출시 — TypeScript 기반 custom behavior·새 UI·feature replacement (CLI + desktop app). Mods 는 plugins 로 ship · directory 통해 공유. **built-in `/diff` = 이제 mod** (`/plugin` 에서 off 가능 or 교체). 팀 custom plugin 영향 — install order 룰 영향 없음
