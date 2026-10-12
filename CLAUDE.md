@@ -73,6 +73,20 @@
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 초장기 컨텍스트 recall (2M+) | GPT-5.2 | `route.py --check gpt-5.2` (Perplexity Computer 패턴, API key 필요 시만 활성) |
+
+**Claude 가 처음 보는 문제 / 못 풀겠다 싶을 때 fallback 매트릭스**:
+| 상황 | 1차 fallback | 2차 fallback | fallback 대상 아님 |
+|---|---|---|---|
+| 처음 보는 라이브러리·프레임워크·도메인 | **Grok** (대량 리서치·최신 트렌드 저렴) | **GPT-5.2** (초장기 컨텍스트 recall) | Fable 5.1/Mythos 5.1 ✗ (성능 특화 — 초난도 전용) |
+| Claude 가 반복 실패·막힘 | **Grok** 다른 각도 조명 | **GPT-5.2** 전체 코드베이스 recall | Fable 5.1/Mythos 5.1 ✗ |
+| 2M+ 토큰 recall 필요 | **GPT-5.2** | Gemini Flash (1M+ 멀티모달) | Opus 5.5 (1M 한계) |
+| 즉시 다량 응답 (품질↓ OK) | **Grok** / Haiku 5.5 | Sonnet 5.5 | Opus/Fable (느림·비쌈) |
+
+**Fable 5.1 / Mythos 5.1 쓸 때만** (fallback X · 특화 트리거만):
+- Opus 가 실제 fail (`/effort xhigh` 로도 안 됨)
+- Terminal-Bench 등 초난도 벤치 수준 작업
+- 몇 시간 돌릴 long-running agent (safeguard 강화 필요)
+- Vision-heavy (멀티모달 집약)
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
