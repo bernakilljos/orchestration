@@ -14,8 +14,26 @@
 | 코드 설계·플랜 | **Plan** | Edit X·설계만·안전 |
 | 검증·채점 (0~10) | **Judge** (Haiku 4.5) | 빠름·저비용·객관 |
 | 복잡 리서치 (3+ 쿼리) | **general-purpose** | 병렬 dispatch |
+| **코드 500줄+ 구현** [NEW 2026-10-12] | **general-purpose (×N 병렬)** | Tools:* · Edit·Write 가능 · Opus 상속 · codex-auto 대체 1순위 |
 | 코드 리뷰 | **code-reviewer / superpowers:code-reviewer** | 격리·구조화 반환 |
 | 테스트 실행 | **test-runner** | stack trace 격리 |
+
+## codex-auto 대체 매트릭스 (2026-10-12 명시)
+
+사용자 지적 — codex CLI 환경 세팅 어려움 · subagent 가 더 빠른 대안.
+
+| 작업 | 1순위 | 2순위 (fallback) | 3순위 |
+|---|---|---|---|
+| 코드 500줄+ 구현 | **general-purpose 병렬** | codex-auto (CLI 가용 시) | Claude 직접 |
+| 반복 패턴 (×4+ 유사) | **general-purpose ×4 병렬** | codex-auto ×4 | — |
+| 격리 리서치·탐색 | **Explore ×N 병렬** | — | — |
+| 테스트 코드 생성 | **general-purpose** | codex `/test-gen` | — |
+
+**장점 (codex-auto 대비)**:
+- CLI 세팅 X (즉시 호출)
+- 격리 컨텍스트 (메인 오염 방지)
+- Opus 상속 (품질 유지)
+- 한 메시지 내 병렬 가능 (`Agent(A)` + `Agent(B)` + `Agent(C)`)
 
 ## 병렬 dispatch (v2.1.232)
 

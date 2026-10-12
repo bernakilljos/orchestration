@@ -68,7 +68,8 @@
 | 로컬·오픈웨이트 (오프라인 대량·edge) | **Qwen 3.8-27B [NEW 2026-08-14]** / Llama 4 / Llama 3.3 | `/exec_offline-model` (Ollama). **Qwen 3.8-27B**: Apache 2.0 · 27.78B params · **262K context** · 멀티모달(text/image/video) · SWE-bench Pro **61.7%** (Claude Opus 4.6 Max 53.4%) · Alibaba 자체 평가. 로컬 우선 라우팅 매트릭스에서 코드·추론 top 후보. Llama 4 는 10M context 강점 (초장기 컨텍스트 로컬 recall) |
 | 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
-| 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
+| 코드 500줄+ | **general-purpose subagent (×N 병렬)** / Codex fallback | **1순위**: `Agent` tool 로 `general-purpose` 병렬 dispatch (Tools:* · Edit·Write 가능 · 메인 컨텍스트 격리 · Opus 상속) · **2순위**: `task-instruction.md` → `codex-auto` (codex CLI 가용 시만) · **3순위**: Claude 직접 (<500줄) |
+| 대량 리서치·설계 | **Explore / Plan subagent (병렬)** | 한 메시지 내 여러 Agent 호출 — 메인 컨텍스트 보호 |
 | 검증 (기본) | **Haiku 5.5 [NEW 2026-10-07]** / Haiku 4.5 (×2 병렬) | `haiku-auto` · **Haiku 5.5**: `claude-haiku-5-5` · 1M context · 128k 출력 · **adaptive thinking (effort)** · high-volume·latency-sensitive 전용. **Breaking**: `budget_tokens` 수동 thinking X · `temperature`·`top_p`·`top_k` X · prefill X · `computer_20250124` X (→ `computer_toolset_20260801`) — Haiku 4.5 코드 그대로 쓰면 400 error |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
