@@ -1,4 +1,9 @@
+﻿---
+name: cloud-provider-select
+description: |
+  cloud-provider-select
 ---
+--
 name: cloud-provider-select
 description: VPS 업체 선택 매트릭스 — Oracle Free 1순위, Vultr·AWS Lightsail·Hetzner 폴백. VPS·클라우드·원격 서버 언급 시 활성.
 ---

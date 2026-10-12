@@ -1,4 +1,9 @@
-# Skill 30: Docker Compose
+﻿---
+name: skill-30-docker
+description: |
+  skill-30-docker
+---
+ Skill 30: Docker Compose
 
 ## 목적
 프로젝트에 맞는 Dockerfile + docker-compose.yml을 자동 생성한다.

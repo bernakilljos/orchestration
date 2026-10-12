@@ -1,4 +1,9 @@
-# skill-music-copyright
+﻿---
+name: skill-music-copyright
+description: |
+  skill-music-copyright
+---
+ skill-music-copyright
 
 > Status: spec-only
 

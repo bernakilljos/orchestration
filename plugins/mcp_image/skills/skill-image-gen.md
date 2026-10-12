@@ -1,4 +1,9 @@
+﻿---
+name: skill-image-gen
+description: |
+  skill-image-gen
 ---
+--
 name: image-gen
 description: |
   Pollinations.ai 무료 이미지 생성 자동 호출. 빌더 (build-*-html-diagrams.py / design_word / design_ppt)

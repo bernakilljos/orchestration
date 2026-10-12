@@ -1,4 +1,9 @@
-# SKILL-14 — Auto Detail (Request Auto-Expansion)
+﻿---
+name: skill-14-auto-detail
+description: |
+  skill-14-auto-detail
+---
+ SKILL-14 — Auto Detail (Request Auto-Expansion)
 
 ## Purpose
 When the user gives a short/vague request (e.g., "RMS architecture diagram"),

@@ -1,4 +1,9 @@
+﻿---
+name: skill-media-restore
+description: |
+  skill-media-restore
 ---
+--
 name: media-restore
 description: |
   이미지·영상·오디오 복원 작업 시 자동 활성화.

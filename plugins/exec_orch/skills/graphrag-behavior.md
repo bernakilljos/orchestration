@@ -1,4 +1,9 @@
+﻿---
+name: graphrag-behavior
+description: |
+  graphrag-behavior
 ---
+--
 name: graphrag-behavior
 description: 행동패턴·자금흐름·관계 데이터를 지식그래프(Knowledge Graph)로 구축하고 LLM 으로 다단계 추론. Microsoft GraphRAG 패턴을 행동위험분석·내부자위협·자금세탁 탐지에 적용. 사용자가 "GraphRAG", "지식그래프", "행동패턴 그래프", "자금세탁 다단계 추적", "관계 기반 위험" 같은 키워드를 말할 때 활성화.
 metadata:

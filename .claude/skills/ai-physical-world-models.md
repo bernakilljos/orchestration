@@ -1,4 +1,9 @@
+﻿---
+name: ai-physical-world-models
+description: |
+  ai-physical-world-models
 ---
+--
 name: ai-physical-world-models
 description: NVIDIA Cosmos·Sora·Isaac·VLA·GR00T 등 피지컬 AI 4 영역 (World Models·VLA·Embodied AI·Sim-to-Real) 통합 가이드. 디지털트윈·CCTV·VMS 자산과 결합해 행동 시뮬·로봇 순찰·시뮬→현실 학습 구현. 사용자가 "피지컬 AI", "World Models", "Cosmos", "VLA", "휴머노이드 로봇", "Sim-to-Real" 같은 키워드를 말할 때 활성화.
 metadata:

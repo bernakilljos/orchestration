@@ -1,4 +1,9 @@
+﻿---
+name: meta-prompting
+description: |
+  meta-prompting
 ---
+--
 name: meta-prompting
 description: LLM 이 자기 prompt 를 자가 개선·평가·재작성. prompt 자체가 모호하거나, 결과 품질 지속적으로 낮을 때 자동 활성. "meta prompting", "prompt 개선", "self-refine", "rewrite prompt" 키워드.
 ---

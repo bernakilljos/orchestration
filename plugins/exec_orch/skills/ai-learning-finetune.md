@@ -1,4 +1,9 @@
+﻿---
+name: ai-learning-finetune
+description: |
+  ai-learning-finetune
 ---
+--
 name: ai-learning-finetune
 description: MoE·SSM·DPO·RLHF·LoRA/QLoRA 학습 패러다임 통합. 자체 도메인 sLLM 저비용 학습, RLHF 대체로 DPO 적용, Mamba SSM 으로 긴 컨텍스트 효율. 사용자가 "MoE", "Mamba", "State Space Models", "DPO", "RLHF", "LoRA", "fine-tuning" 같은 키워드를 말할 때 활성화.
 metadata:

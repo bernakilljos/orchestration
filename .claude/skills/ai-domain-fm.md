@@ -1,4 +1,9 @@
+﻿---
+name: ai-domain-fm
+description: |
+  ai-domain-fm
 ---
+--
 name: ai-domain-fm
 description: Domain Foundation Models·AI Search Engines·Ambient Intelligence 통합. 회계·법무·금융 특화 LLM, Perplexity·SearchGPT 사내 활용, IoT + Digital Twin Ambient Intelligence. 사용자가 "Domain FM", "특화 LLM", "AI Search", "Perplexity", "Ambient Intelligence" 같은 키워드를 말할 때 활성화.
 metadata:

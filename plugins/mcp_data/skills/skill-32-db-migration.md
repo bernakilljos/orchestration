@@ -1,4 +1,9 @@
-# Skill 32: DB Migration
+﻿---
+name: skill-32-db-migration
+description: |
+  skill-32-db-migration
+---
+ Skill 32: DB Migration
 
 ## 목적
 DB 스키마 변경을 안전하게 관리한다. 직접 SQL 수정 금지 규칙 보강.

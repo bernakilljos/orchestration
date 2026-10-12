@@ -75,6 +75,10 @@
 | **"말로"·"읽어줘"·"speak"·"TTS"** | `/speak` 자동 (edge-tts) |
 | **"예시 보여"·"artifact"·"바로 쓸"·"샘플"** | `/artifacts` 자동 (실행 가능 산출물) |
 | **"데모"·"mock"·"가짜"·"임시"·"시연용"** | feedback_no_mock_default 룰 재주입 (사용자 명시 없으면 실전 강제) |
+| **loop 진행 중 + 세션 메모리 ≥65% (statusline)** [NEW 2026-10-12] | **codex-auto 자동 발동** (긴 작업 격리 · 메인 세션 유휴 · 메모리 회복) |
+| **loop 진행 중 + 토큰 ≥80%** [NEW 2026-10-12] | **codex-auto 또는 general-purpose subagent 자동 위임** (긴 추론 격리) |
+| **10분 주기 (기본 · Task Scheduler)** [NEW 2026-10-12] | 메모리 조회 + 추가 메모리 확보 (claude 세션 과다 감지·orca.db VACUUM·cleanup-pollution 재발동) |
+| **RAM ≥80% (nightly-optimize)** | 미사용 Claude 세션 알림 + VS Code 중복 창 알림 (크리티컬 5 중 비용) |
 
 ## 강제
 

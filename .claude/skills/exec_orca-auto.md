@@ -1,4 +1,9 @@
-# exec_orca-auto — Orca Auto Worker 관리 (로컬 + 글로벌)
+﻿---
+name: exec_orca-auto
+description: |
+  exec_orca-auto
+---
+ exec_orca-auto — Orca Auto Worker 관리 (로컬 + 글로벌)
 
 > **분류:** `exec_` (실행 계열)
 > **레거시 커맨드:** `/orcauto-stop` (orcauto-start는 삭제됨 — 이 skill로 직접 실행)

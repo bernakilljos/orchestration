@@ -1,4 +1,9 @@
+﻿---
+name: skill-pdf-design-system
+description: |
+  skill-pdf-design-system
 ---
+--
 name: pdf-design-system
 description: |
   PDF 생성 시 design_ppt 와 동일한 디자인 시스템 (gold/sage/plum/terra/deep-gold) 사용.

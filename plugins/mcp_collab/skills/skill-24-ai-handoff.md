@@ -1,4 +1,9 @@
-# Skill 24: AI Handoff (멀티AI 강제 연동)
+﻿---
+name: skill-24-ai-handoff
+description: |
+  skill-24-ai-handoff
+---
+ Skill 24: AI Handoff (멀티AI 강제 연동)
 
 ## 목적
 Claude ↔ Codex ↔ Gemini 간 작업 인수인계를 강제화한다.

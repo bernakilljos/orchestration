@@ -1,4 +1,9 @@
-# skill-yt-algorithm
+﻿---
+name: skill-yt-algorithm
+description: |
+  skill-yt-algorithm
+---
+ skill-yt-algorithm
 
 > **Status**: spec-only
 

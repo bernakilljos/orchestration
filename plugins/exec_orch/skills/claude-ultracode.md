@@ -1,4 +1,9 @@
+﻿---
+name: claude-ultracode
+description: |
+  claude-ultracode
 ---
+--
 name: claude-ultracode
 description: |
   Claude Code Dynamic Workflows (ultracode) 자동 활용. 초난도 task — codebase-wide bug hunt, profiler-guided optimization, security audit, multi-angle verification — 감지 시 /effort ultracode 라우팅.

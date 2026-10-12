@@ -1,4 +1,9 @@
-# Skill 36: Data Visualization
+﻿---
+name: skill-36-data-viz
+description: |
+  skill-36-data-viz
+---
+ Skill 36: Data Visualization
 
 ## 목적
 데이터를 차트, 그래프, 대시보드로 자동 시각화한다.

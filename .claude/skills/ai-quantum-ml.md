@@ -1,4 +1,9 @@
+﻿---
+name: ai-quantum-ml
+description: |
+  ai-quantum-ml
 ---
+--
 name: ai-quantum-ml
 description: IBM Quantum Network·Qiskit·PennyLane 무료 가입으로 Quantum ML 도입. 금융 부정거래·신용평가·공급망 최적화에 양자 우위 (Quantum Advantage) 적용. 사용자가 "Quantum ML", "QML", "IBM Quantum", "Qiskit", "양자모델" 같은 키워드를 말할 때 활성화.
 metadata:

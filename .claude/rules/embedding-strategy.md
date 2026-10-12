@@ -1,5 +1,8 @@
 # 임베딩 전략 룰 (Embedding Strategy)
 
+> **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.
+
+
 > **근거**: 2026-09-02 · 축 9 임베딩 강화. chromadb + sentence-transformers 설치 완료. TF fallback 만으로 lookup 성능 약함.
 > **이유**: rule·memory·conversations 벡터 검색 필요. 도메인·언어 특화 모델 선택.
 

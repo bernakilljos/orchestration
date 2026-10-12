@@ -1,4 +1,9 @@
+﻿---
+name: auto-compact
+description: |
+  auto-compact
 ---
+--
 name: auto-compact
 description: |
   세션 컨텍스트가 무거워지면 자동으로 /compact 를 권장.

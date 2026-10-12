@@ -1,4 +1,9 @@
-# skill-rag-patterns
+﻿---
+name: skill-rag-patterns
+description: |
+  skill-rag-patterns
+---
+ skill-rag-patterns
 
 > Status: spec-only
 

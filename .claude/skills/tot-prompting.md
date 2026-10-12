@@ -1,4 +1,9 @@
+﻿---
+name: tot-prompting
+description: |
+  tot-prompting
 ---
+--
 name: tot-prompting
 description: Tree of Thoughts — 여러 branch 생성·평가·pruning·확장. 탐색 공간 큰 결정 (아키텍처·알고리즘 선택·디버깅 가설 분기). "tree of thoughts", "ToT", "branch", "여러 후보", "비교 선택" 키워드.
 ---

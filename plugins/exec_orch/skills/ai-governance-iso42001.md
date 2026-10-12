@@ -1,4 +1,9 @@
+﻿---
+name: ai-governance-iso42001
+description: |
+  ai-governance-iso42001
 ---
+--
 name: ai-governance-iso42001
 description: ISO 42001 AI 관리시스템 + EU AI Act + 금감원 AI 거버넌스 + Bias Detection + Explainability 통합 거버넌스. IBM watsonx.governance·Credo AI·Holistic AI 활용. 사용자가 "AI Governance", "ISO 42001", "EU AI Act", "Bias Detection", "Explainability", "AI 거버넌스" 같은 키워드를 말할 때 활성화.
 metadata:

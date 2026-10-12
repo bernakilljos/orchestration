@@ -1,4 +1,9 @@
+﻿---
+name: causal-ai
+description: |
+  causal-ai
 ---
+--
 name: causal-ai
 description: 상관관계 X 인과관계로 행동위험·부정거래·사고 원인 추론. Pearl 의 do-calculus·DoWhy·반사실 (counterfactual) 분석으로 "왜 그 행동이 위험한지" 진짜 원인 식별. 사용자가 "인과 추론", "Causal AI", "원인 분석", "DoWhy", "단순 상관관계 X", "왜 위험한가" 같은 키워드를 말할 때 활성화.
 metadata:

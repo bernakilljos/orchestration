@@ -1,4 +1,9 @@
-# Skill 29: API Tester
+﻿---
+name: skill-29-api-tester
+description: |
+  skill-29-api-tester
+---
+ Skill 29: API Tester
 
 ## 목적
 API 엔드포인트를 자동으로 테스트한다. Postman/Insomnia 대체.

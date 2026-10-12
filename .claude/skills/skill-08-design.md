@@ -1,4 +1,9 @@
-# SKILL-08 — Design (Design Asset Generation)
+﻿---
+name: skill-08-design
+description: |
+  skill-08-design
+---
+ SKILL-08 — Design (Design Asset Generation)
 
 ## Purpose
 Reference design references before UI implementation and produce assets using Canva / DALL-E / video generation AI.

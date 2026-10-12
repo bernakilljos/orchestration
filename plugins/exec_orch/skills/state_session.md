@@ -1,4 +1,9 @@
-# state_session — 세션 상태 관리
+﻿---
+name: state_session
+description: |
+  state_session
+---
+ state_session — 세션 상태 관리
 
 > **분류:** `state_` (상태 저장/복구 계열)
 > **통합 레거시:** `skill-09-memory-reset`, `check-agents` command

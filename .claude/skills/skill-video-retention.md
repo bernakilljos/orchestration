@@ -1,4 +1,9 @@
-# skill-video-retention
+﻿---
+name: skill-video-retention
+description: |
+  skill-video-retention
+---
+ skill-video-retention
 
 > **분류**: `design_` | **Status**: spec-only
 

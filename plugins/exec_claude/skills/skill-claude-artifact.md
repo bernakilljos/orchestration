@@ -1,4 +1,9 @@
+﻿---
+name: skill-claude-artifact
+description: |
+  skill-claude-artifact
 ---
+--
 name: skill-claude-artifact
 description: |
   단일 HTML 파일로 인터랙티브 결과물(대시보드·계산기·차트·폼·게임)을 생성하는 패턴.

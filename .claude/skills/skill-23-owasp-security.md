@@ -1,4 +1,9 @@
-# Skill 23: OWASP Security Audit
+﻿---
+name: skill-23-owasp-security
+description: |
+  skill-23-owasp-security
+---
+ Skill 23: OWASP Security Audit
 
 ## 목적
 OWASP Top 10 기반으로 프로젝트의 보안 취약점을 체계적으로 감사한다.

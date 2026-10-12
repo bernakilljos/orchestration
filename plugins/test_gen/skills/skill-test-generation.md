@@ -1,4 +1,9 @@
+﻿---
+name: skill-test-generation
+description: |
+  skill-test-generation
 ---
+--
 name: skill-test-generation
 description: |
   코드 변경 후 자동으로 pytest/jest 테스트 케이스 생성하는 패턴.

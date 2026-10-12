@@ -1,4 +1,9 @@
+﻿---
+name: ai-rag-bundle
+description: |
+  ai-rag-bundle
 ---
+--
 name: ai-rag-bundle
 description: Vector DB·HyDE·Long Context·Memory Architectures 통합 RAG 기반 인프라 가이드. ChromaDB·Pinecone·Weaviate 활용 + Claude 1M ctx + MemGPT·Letta 장기 기억. 사용자가 "Vector DB", "RAG 인프라", "HyDE", "Long Context", "Memory", "MemGPT", "Letta" 같은 키워드를 말할 때 활성화.
 metadata:

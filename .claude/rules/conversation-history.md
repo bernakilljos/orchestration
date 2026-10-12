@@ -1,5 +1,8 @@
 # 세션 대화 히스토리 DB 룰
 
+> **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.
+
+
 > **근거**: 2026-09-02 사용자 지적 — "세션 끊기면 다시 지시할 때 못 알아먹음. 메모리 부족. **히스토리는 DB 로 관리**".
 > **이유**: 명시 memory (`memory/*.md`) 는 도메인 자산 · 세션 대화는 자동 축적 필요. 파일 기반 스냅샷 (`context-cache/session-snapshot.md`) 은 최근 1건만 · 다중 세션 조회 X.
 

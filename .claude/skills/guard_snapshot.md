@@ -1,4 +1,9 @@
-# guard_snapshot — 세션 스냅샷 능동 저장
+﻿---
+name: guard_snapshot
+description: |
+  guard_snapshot
+---
+ guard_snapshot — 세션 스냅샷 능동 저장
 
 > **분류:** `exec_session_guard`
 > **협력 skill:** `state_session` (SNAPSHOT 액션 재사용)

@@ -1,4 +1,9 @@
-# Skill 34: Code Documentation
+﻿---
+name: skill-34-code-docs
+description: |
+  skill-34-code-docs
+---
+ Skill 34: Code Documentation
 
 ## 목적
 코드에서 API 문서, 함수 문서를 자동 생성한다. JSDoc/Sphinx/Javadoc.

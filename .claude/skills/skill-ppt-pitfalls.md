@@ -1,4 +1,9 @@
+﻿---
+name: skill-ppt-pitfalls
+description: |
+  skill-ppt-pitfalls
 ---
+--
 name: ppt-pitfalls-checklist
 description: |
   PPT 생성 시 자주 마주치는 함정 13가지 체크리스트. 잘림(overflow)·파일명 정렬·페이지번호·OCR 검증·이미지 채움 관련 실수 방지.

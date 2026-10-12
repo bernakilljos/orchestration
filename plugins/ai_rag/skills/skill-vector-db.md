@@ -1,4 +1,9 @@
-# skill-vector-db
+﻿---
+name: skill-vector-db
+description: |
+  skill-vector-db
+---
+ skill-vector-db
 
 > Status: spec-only
 

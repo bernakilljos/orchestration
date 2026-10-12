@@ -18,7 +18,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-10-09): plugins 36 stable + 0 spec-only - rules 46 - hooks 32 - scripts 145
+> **현재 상태** (2026-10-12): plugins 36 stable + 0 spec-only - rules 45 - hooks 31 - scripts 147
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -91,22 +91,39 @@ kit 이 SoT 이므로 세션 가드 교정은 반드시 kit 에도 반영할 것
 | 로컬·오픈웨이트 (오프라인 대량·edge) | **Qwen 3.8-27B [NEW 2026-08-14]** / Llama 4 / Llama 3.3 | `/exec_offline-model` (Ollama). **Qwen 3.8-27B**: Apache 2.0 · 27.78B params · **262K context** · 멀티모달(text/image/video) · SWE-bench Pro **61.7%** (Claude Opus 4.6 Max 53.4%) · Alibaba 자체 평가. 로컬 우선 라우팅 매트릭스에서 코드·추론 top 후보. Llama 4 는 10M context 강점 (초장기 컨텍스트 로컬 recall) |
 | 균형형 (Sonnet 대체·차세대) | Claude Sonnet 5 | 2026-07-02 출시 · Opus 4.7 tokenizer 사용 (텍스트당 ~30% 더 많은 토큰) · harness reminder mid-conversation 제거 (v2.1.201) · 마이그레이션은 [Prompting Claude Sonnet 5](https://docs.claude.com/) 참고 |
 | 단순구현 <200줄 | Claude Sonnet 4.6 | 직접 (저비용, Sonnet 5 로 승격 검토 중 — 토큰 30%↑ 비용 재산정 필요) |
-| 코드 500줄+ | Codex (×4 병렬) | `task-instruction.md` → `codex-auto` |
-| 검증 (기본) | Haiku 4.5 (×2 병렬) | `haiku-auto` (Prompt caching 90% 절감) |
+| 코드 500줄+ | **general-purpose subagent (×N 병렬)** / Codex fallback | **1순위**: `Agent` tool 로 `general-purpose` 병렬 dispatch (Tools:* · Edit·Write 가능 · 메인 컨텍스트 격리 · Opus 상속) · **2순위**: `task-instruction.md` → `codex-auto` (codex CLI 가용 시만) · **3순위**: Claude 직접 (<500줄) |
+| 대량 리서치·설계 | **Explore / Plan subagent (병렬)** | 한 메시지 내 여러 Agent 호출 — 메인 컨텍스트 보호 |
+| 검증 (기본) | **Haiku 5.5 [NEW 2026-10-07]** / Haiku 4.5 (×2 병렬) | `haiku-auto` · **Haiku 5.5**: `claude-haiku-5-5` · 1M context · 128k 출력 · **adaptive thinking (effort)** · high-volume·latency-sensitive 전용. **Breaking**: `budget_tokens` 수동 thinking X · `temperature`·`top_p`·`top_k` X · prefill X · `computer_20250124` X (→ `computer_toolset_20260801`) — Haiku 4.5 코드 그대로 쓰면 400 error |
 | 검증 (초장문/멀티모달) | Gemini Flash | >500k 토큰만 `gemini-auto` |
 | 가벼운·빠른 응답 (대량) | Grok | `route.py --check grok` (Perplexity Computer 패턴, API key 필요 시만 활성) |
 | 초장기 컨텍스트 recall (2M+) | GPT-5.2 | `route.py --check gpt-5.2` (Perplexity Computer 패턴, API key 필요 시만 활성) |
+
+**Claude 가 처음 보는 문제 / 못 풀겠다 싶을 때 fallback 매트릭스**:
+| 상황 | 1차 fallback | 2차 fallback | fallback 대상 아님 |
+|---|---|---|---|
+| 처음 보는 라이브러리·프레임워크·도메인 | **Grok** (대량 리서치·최신 트렌드 저렴) | **GPT-5.2** (초장기 컨텍스트 recall) | Fable 5.1/Mythos 5.1 ✗ (성능 특화 — 초난도 전용) |
+| Claude 가 반복 실패·막힘 | **Grok** 다른 각도 조명 | **GPT-5.2** 전체 코드베이스 recall | Fable 5.1/Mythos 5.1 ✗ |
+| 2M+ 토큰 recall 필요 | **GPT-5.2** | Gemini Flash (1M+ 멀티모달) | Opus 5.5 (1M 한계) |
+| 즉시 다량 응답 (품질↓ OK) | **Grok** / Haiku 5.5 | Sonnet 5.5 | Opus/Fable (느림·비쌈) |
+
+**Fable 5.1 / Mythos 5.1 쓸 때만** (fallback X · 특화 트리거만):
+- Opus 가 실제 fail (`/effort xhigh` 로도 안 됨)
+- Terminal-Bench 등 초난도 벤치 수준 작업
+- 몇 시간 돌릴 long-running agent (safeguard 강화 필요)
+- Vision-heavy (멀티모달 집약)
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
 
-**가격** (2026-10-02 기준):
+**가격** (2026-10-12 기준):
 - **Opus 5.5** (신규 default, 2026-09-22): **$4/$20** per MTok · cache $0.20 · `claude-opus-5-5` · 1M context 기본 (surcharge 없음) · 128k 출력 · adaptive thinking always-on · 지식 cutoff 2026-06 · Claude API·Bedrock·Vertex·Foundry 모두 GA
 - **Opus 5** (호환 fallback): $5/$25 per MTok · `claude-opus-5` · thinking disable 가능 (5.5 는 always-on)
 - **Opus 4.8** (저비용 fallback): $5/$25 per MTok · Fast $10/$50 (2.5× 속도) · thinking disable 자유
 - **Opus 4.7**: **fast mode 제거 (2026-07-24 breaking)** — fast 는 4.8 또는 Opus 5/5.5 로 마이그레이션
 - **Fable 5.1 / Mythos 5.1** (2026-09-01): $10/$50 per MTok · 128k 출력 · `claude-fable-5-1` · `claude-mythos-5-1` · **cache reads 75% 저렴** · 30-day data retention 요구
+- **Sonnet 5.5** (2026-10-07 cache 가격 인하): **cache read $0.10** (기존 $0.20 대비 **50% ↓** · base input 0.05x) · cache write·기타 unchanged · Dreams 지원
 - **Sonnet 5** (2026-07-02): 새 tokenizer (Opus 4.7 계열) → 텍스트당 ~30% 토큰 증가. **가격 $2/$10 per MTok 확정 (2026-08-10)**.
+- **Haiku 5.5** [NEW 2026-10-07]: `claude-haiku-5-5` · 1M context · 128k 출력 · adaptive thinking (effort) · high-volume·latency-sensitive 전용 · API·Bedrock·AWS·GCP·Foundry GA · Breaking (budget_tokens·temp·top_p·top_k·prefill·computer_20250124 모두 400 error)
 
 **Claude Code v2.1.287** (2026-10-02 기준 최신):
 - **2.1.287 (10/1)**: **Claude Mods** 공식 출시 — TypeScript 기반 custom behavior·새 UI·feature replacement (CLI + desktop app). Mods 는 plugins 로 ship · directory 통해 공유. **built-in `/diff` = 이제 mod** (`/plugin` 에서 off 가능 or 교체). 팀 custom plugin 영향 — install order 룰 영향 없음
@@ -189,13 +206,8 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 2. **Windows npx 래퍼**: `cmd /c npx <package>` 필수 (shell 교차호환성)
 3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
 4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
-5. **통합 MCP (2026-09 채택)**:
-   - **Headroom** (Apache 2.0 · 10k+  · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
-   - **claude-mem** (오픈소스 · `npx -y claude-mem install --provider claude`) — 자동 세션 관측·복원 · SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd 5 hook 자동 등록 · SQLite + Chroma 저장 (`~/.claude-mem`) · Worker 127.0.0.1:37777 · Cloud sync OFF (local)
-   - **task-observer** (오픈소스 Skill · `npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code`) — 태스크 실행 관측 · 패턴·사용자 수정·재사용 스킬 기회 캡처 · `.claude/skills/task-observer/` · description matching 자동 활성 · 우리 orca.db 관측과 병행 (skill 개선 축)
-   - **자동 시작**: `.claude/scripts/mcp-autostart.sh` (SessionStart hook · Headroom proxy + claude-mem worker 백그라운드 spawn · 이미 돌면 skip)
-   - **역할 분리**: 우리 `route.py`·`orca.db`·명시 memory 유지 · Headroom·claude-mem 은 병행 (라우팅·룰·도메인은 우리 kit · 압축·자동 관측은 오픈소스)
-   - 상세: `.claude/rules/mcp-integration.md`
+5. **통합 MCP (DEPRECATED 2026-10-12)** — Headroom + claude-mem 완전 삭제. 설치만 됐고 ANTHROPIC_BASE_URL 미세팅 → 실제 압축 X · RAM 2.5GB 낭비 · 매 요청 overhead 81ms. **Anthropic 네이티브 prompt caching (90% 절감) 만으로 충분**. `.claude/scripts/mcp-autostart.sh` 는 noop (exit 0). `.claude/rules/mcp-integration.md` 삭제. 다시 설치 금지.
+6. **task-observer** (오픈소스 Skill · 유지) — 태스크 관측·패턴 캡처. `.claude/skills/task-observer/` · 로컬·외부 전송 X.
 
 상세: `guide.txt` § 8 · `docs/upgrade-notes-2026-04-23.md`
 

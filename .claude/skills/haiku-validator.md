@@ -1,4 +1,9 @@
+﻿---
+name: haiku-validator
+description: |
+  haiku-validator
 ---
+--
 name: haiku-validator
 description: Claude Haiku 4.5 격리 검증 워커. Gemini 대비 2x 빠름·11x 저렴, prompt caching 90% 절감. task-review-*.md 우선, 범용 task-*.md 가능.
 ---

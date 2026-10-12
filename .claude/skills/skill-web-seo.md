@@ -1,4 +1,9 @@
-# skill-web-seo
+﻿---
+name: skill-web-seo
+description: |
+  skill-web-seo
+---
+ skill-web-seo
 
 > **분류**: `design_` | **Status**: spec-only
 

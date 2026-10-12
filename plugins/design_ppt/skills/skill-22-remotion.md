@@ -1,4 +1,9 @@
-# Skill 22: Remotion (프로그래매틱 동영상 생성)
+﻿---
+name: skill-22-remotion
+description: |
+  skill-22-remotion
+---
+ Skill 22: Remotion (프로그래매틱 동영상 생성)
 
 ## 목적
 React 코드로 동영상을 프로그래밍 방식으로 생성한다.
