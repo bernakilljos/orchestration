@@ -1,4 +1,9 @@
-# SKILL-03 — Review (Verification & Enhancement)
+﻿---
+name: skill-03-review
+description: |
+  skill-03-review
+---
+ SKILL-03 — Review (Verification & Enhancement)
 
 ## Purpose
 Verify implementation results with Gemini and collect improvement points.

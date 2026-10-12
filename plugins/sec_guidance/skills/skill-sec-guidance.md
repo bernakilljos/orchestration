@@ -1,4 +1,9 @@
+﻿---
+name: skill-sec-guidance
+description: |
+  skill-sec-guidance
 ---
+--
 name: sec-guidance-integration
 description: |
   Anthropic 공식 security-guidance plugin 자동 활용. Write/Edit/MultiEdit 시 25 위험 패턴 검출 → 경고 시 사용자 결정.

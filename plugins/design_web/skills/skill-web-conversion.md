@@ -1,4 +1,9 @@
-# skill-web-conversion
+﻿---
+name: skill-web-conversion
+description: |
+  skill-web-conversion
+---
+ skill-web-conversion
 
 > **분류**: `design_` | **Status**: spec-only
 

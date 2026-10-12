@@ -467,6 +467,7 @@
     Grok/GPT-5.2 fallback (1012)             Claude 처음·막힘 시 Grok (리서치) · GPT-5.2 (2M+ recall) · Fable/Mythos 는 fallback X (초난도·vision·long-running 전용)
     Headroom+claude-mem 삭제 (1012)         DEPRECATED. 설치만 되고 ANTHROPIC_BASE_URL 미세팅 → 실제 압축 0% · RAM 2.5GB·디스크 620MB 낭비 · 요청 overhead 81ms. "무료 설치 = 사실상 비용" 패턴. 재설치 금지. mcp-autostart.sh noop · mcp-integration.md 삭제 · 6 룰 DEPRECATION 블록 · MEMORY.md 정리. Anthropic 네이티브 prompt caching (90% 절감) 만 사용
     codex-auto 조건부+10분 loop (1012)       codex-auto = loop 진행 중 + 세션 메모리 ≥65% (또는 토큰 ≥80%) 자동 발동 · 10분 Task Scheduler 기본: 메모리 조회 + 추가 메모리 확보 (claude 세션 과다 감지·orca.db VACUUM·cleanup-pollution 재발동)
+    결함 audit 4 과제 완료 (1012)            ① skills 49/60 frontmatter 복구 (plugins 원본 + .claude sync) ② 신규 스크립트 5: nightly-optimize·weekly-audit·hook-profile·auto-optimize-image·verify-hook-scope ③ Task Scheduler Orca_10MinLoop·Orca_NightlyOptimize·Orca_WeeklyAudit 등록 ④ 멀티에이전트 UI: track-agent-dispatch.sh + statusline 🤖 Agents 섹션 (🟢🟡🟠🔴 색깔)
     detect-* hook 4종 (1006)                 echo|grep fork → bash 내장 정규식 (9.4s→0.9s) · timeout 3→10 · 출력 동일성 72/72 대조
     merge settings                          kit hook 의 timeout·async 도 대상에 동기화
     UserPromptSubmit timeout (1006)          13개 병렬 실행 → 개별 0.5s 도 부하 시 3s 초과. 3→10 (auto-planner 15)

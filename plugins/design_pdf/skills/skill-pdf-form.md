@@ -1,4 +1,9 @@
-# skill-pdf-form
+﻿---
+name: skill-pdf-form
+description: |
+  skill-pdf-form
+---
+ skill-pdf-form
 
 > **분류**: `design_` | **Status**: spec-only
 

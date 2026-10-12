@@ -1,4 +1,9 @@
+﻿---
+name: self-critique-loop
+description: |
+  self-critique-loop
 ---
+--
 name: self-critique-loop
 description: AI 답을 1차 Actor → 2차 Critic LLM 이 비판·재검토·합의하는 Reflexion 루프. UEBA 위험점수·AI CCTV·내부회계 부정탐지에 적용해 거짓양성 감소·정확도 향상. 사용자가 "Self-Critique", "Reflexion", "다중 AI 합의", "위험점수 재검토", "AI 답 검증 루프" 같은 키워드를 말할 때 활성화.
 metadata:

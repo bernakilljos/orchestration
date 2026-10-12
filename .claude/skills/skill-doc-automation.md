@@ -1,4 +1,9 @@
+﻿---
+name: skill-doc-automation
+description: |
+  skill-doc-automation
 ---
+--
 name: skill-doc-automation
 description: |
   코드 변경 → README/CHANGELOG/API doc 자동 갱신 패턴.

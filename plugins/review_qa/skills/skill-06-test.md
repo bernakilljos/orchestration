@@ -1,4 +1,9 @@
-# SKILL-06 — Test (Automated Test Generation and Execution)
+﻿---
+name: skill-06-test
+description: |
+  skill-06-test
+---
+ SKILL-06 — Test (Automated Test Generation and Execution)
 
 ## Purpose
 Automatically generate and execute test code after implementation is complete.

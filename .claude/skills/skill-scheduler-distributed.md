@@ -1,4 +1,9 @@
-# skill-scheduler-distributed
+﻿---
+name: skill-scheduler-distributed
+description: |
+  skill-scheduler-distributed
+---
+ skill-scheduler-distributed
 
 > **Status**: spec-only
 

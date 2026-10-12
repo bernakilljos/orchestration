@@ -1,4 +1,9 @@
-# skill-music-production
+﻿---
+name: skill-music-production
+description: |
+  skill-music-production
+---
+ skill-music-production
 
 > Status: spec-only
 

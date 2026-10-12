@@ -1,4 +1,9 @@
+﻿---
+name: skill-claude-ask
+description: |
+  skill-claude-ask
 ---
+--
 name: skill-claude-ask
 description: |
   사용자에게 자유텍스트 대신 구조화된 질문 폼(선택지·라벨·예시)으로 입력을 받는 패턴.

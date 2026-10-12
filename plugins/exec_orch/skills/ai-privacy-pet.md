@@ -1,4 +1,9 @@
+﻿---
+name: ai-privacy-pet
+description: |
+  ai-privacy-pet
 ---
+--
 name: ai-privacy-pet
 description: Federated Learning·Confidential Computing·Synthetic Data·동형암호·차등프라이버시 등 PET (Privacy-Enhancing Technologies) 묶음 통합. 고객사 데이터 안 모으고 학습 + 메모리 사용 중 암호화 + 개인정보 0 합성. 사용자가 "Federated Learning", "Confidential Computing", "동형암호", "차등프라이버시", "PET", "Synthetic Data" 같은 키워드를 말할 때 활성화.
 metadata:

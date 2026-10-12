@@ -1,4 +1,9 @@
-# skill-cost-zero
+﻿---
+name: skill-cost-zero
+description: |
+  skill-cost-zero
+---
+ skill-cost-zero
 
 > Status: spec-only
 

@@ -1,4 +1,9 @@
-# skill-yt-hook-writing
+﻿---
+name: skill-yt-hook-writing
+description: |
+  skill-yt-hook-writing
+---
+ skill-yt-hook-writing
 
 > **Status**: spec-only
 

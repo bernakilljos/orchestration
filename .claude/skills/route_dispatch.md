@@ -1,4 +1,9 @@
+﻿---
+name: route_dispatch
+description: |
+  route_dispatch
 ---
+--
 name: route_dispatch
 description: |
   태스크를 Claude Opus 5 우선 (2026-07-24 신규 default) 으로 자동 라우팅. Opus 4.8 은 호환 fallback. SQLite 상태 기반 Codex/Gemini 대체 경로. 24/7 quota/budget 관리.

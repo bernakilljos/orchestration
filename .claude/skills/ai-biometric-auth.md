@@ -1,4 +1,9 @@
+﻿---
+name: ai-biometric-auth
+description: |
+  ai-biometric-auth
 ---
+--
 name: ai-biometric-auth
 description: Behavioral Biometrics·Continuous Authentication·Passkeys/FIDO2 통합 — 타이핑·마우스·걸음·심박변동으로 상시 인증. VMS·금융·카지노 차세대 인증. 사용자가 "Behavioral Biometrics", "상시 인증", "Continuous Authentication", "Passkeys", "FIDO2" 같은 키워드를 말할 때 활성화.
 metadata:

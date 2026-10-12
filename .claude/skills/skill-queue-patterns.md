@@ -1,4 +1,9 @@
-# skill-queue-patterns
+﻿---
+name: skill-queue-patterns
+description: |
+  skill-queue-patterns
+---
+ skill-queue-patterns
 
 > **분류**: `mcp_` | **Status**: spec-only
 

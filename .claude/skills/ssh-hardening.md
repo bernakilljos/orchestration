@@ -1,4 +1,9 @@
+﻿---
+name: ssh-hardening
+description: |
+  ssh-hardening
 ---
+--
 name: ssh-hardening
 description: VPS SSH 보안 강화 — 키만 허용·포트 변경·UFW·fail2ban 5분 셋업. 보안·hardening·brute-force·무차별 공격 언급 시 활성화.
 ---

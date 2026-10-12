@@ -1,4 +1,9 @@
-# Skill 27: Mandatory Verification (필수 검증)
+﻿---
+name: skill-27-mandatory-verify
+description: |
+  skill-27-mandatory-verify
+---
+ Skill 27: Mandatory Verification (필수 검증)
 
 ## 목적
 모든 코드 변경 후 검증을 **강제**한다.

@@ -1,4 +1,9 @@
+﻿---
+name: skill-arch-layered
+description: |
+  skill-arch-layered
 ---
+--
 name: skill-arch-layered
 description: A4 1페이지 레이어 케이크 다이어그램. 좌측 아이콘 컬럼 + 레이어별 다른 배경색 + 코드 임베드. "레이어", "층층이", "스택", "계층", "layer cake", "tier" 키워드 활성. Brij Pandey 스타일.
 ---

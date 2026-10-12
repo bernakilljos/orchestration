@@ -1,4 +1,9 @@
+﻿---
+name: web-cli-dialogue-workflow
+description: |
+  web-cli-dialogue-workflow
 ---
+--
 name: web-cli-dialogue-workflow
 description: CLI (kit·개발 실행 담당) ↔ claude.ai Web (실운영 판정·감사 담당) 왕복 대화 워크플로우. 애매·감사 판정 필요 시 CLI 가 질문 문안 만듬 → 사용자 web 에 붙임 → web 답 → 사용자 CLI 에 붙임 → 진행. 사용자 = 클립보드 릴레이만. 완전 자동은 Chrome Extension 필요.
 ---

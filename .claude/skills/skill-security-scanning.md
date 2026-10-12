@@ -1,4 +1,9 @@
+﻿---
+name: skill-security-scanning
+description: |
+  skill-security-scanning
 ---
+--
 name: skill-security-scanning
 description: |
   코드 보안 스캔 — semgrep (OWASP) + gitleaks (시크릿) + bandit (Python) 통합.

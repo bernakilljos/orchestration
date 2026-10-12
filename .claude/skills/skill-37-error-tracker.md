@@ -1,4 +1,9 @@
-# Skill 37: Error Tracker
+﻿---
+name: skill-37-error-tracker
+description: |
+  skill-37-error-tracker
+---
+ Skill 37: Error Tracker
 
 ## 목적
 프로젝트의 에러를 수집, 분류, 분석한다. Sentry/Bugsnag 대체.

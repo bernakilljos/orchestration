@@ -1,4 +1,9 @@
-# Skill 35: Performance Profiler
+﻿---
+name: skill-35-performance-profiler
+description: |
+  skill-35-performance-profiler
+---
+ Skill 35: Performance Profiler
 
 ## 목적
 런타임 성능을 분석하고 느린 API/쿼리/렌더링을 찾아낸다.

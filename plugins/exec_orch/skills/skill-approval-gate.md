@@ -1,4 +1,9 @@
+﻿---
+name: skill-approval-gate
+description: |
+  skill-approval-gate
 ---
+--
 name: approval-gate
 description: |
   Human-in-the-Loop 승인 게이트. 위험한 작업 (DROP TABLE / rm -rf / force push / 비용 $5+ / 시크릿 commit / DB migration) 감지 시 자동으로 task 를 `waiting_approval` state 로 전환하고 사용자 `/approve <id>` 입력 대기. CLAUDE.md § 7-11 의 알림 5가지 (시크릿/데이터손실/보안/비용폭증/시스템손상) 와 동일 기준.

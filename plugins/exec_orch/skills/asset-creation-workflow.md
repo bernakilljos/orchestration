@@ -1,4 +1,9 @@
+﻿---
+name: asset-creation-workflow
+description: |
+  asset-creation-workflow
 ---
+--
 name: asset-creation-workflow
 description: 새 자산 (rule·hook·skill·command·agent·memory) 만들 때 유형별 표준 세트 체크리스트. Windows PowerShell 자매 파일·유사 파일 grep·자매 spec (hook = md + sh) 강제. 감지 hook `.claude/hooks/detect-asset-creation.sh` 자동 발동.
 ---

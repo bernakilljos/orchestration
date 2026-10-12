@@ -1,4 +1,9 @@
-# skill-video-remotion
+﻿---
+name: skill-video-remotion
+description: |
+  skill-video-remotion
+---
+ skill-video-remotion
 
 > **분류**: `design_` | **Status**: spec-only
 

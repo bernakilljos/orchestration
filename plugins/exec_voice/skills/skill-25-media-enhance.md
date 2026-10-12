@@ -1,4 +1,9 @@
-# Skill 25: Media Enhance (미디어 화질/품질 개선)
+﻿---
+name: skill-25-media-enhance
+description: |
+  skill-25-media-enhance
+---
+ Skill 25: Media Enhance (미디어 화질/품질 개선)
 
 ## 목적
 동영상, 오디오, 이미지, PDF, PPT 파일의 화질/음질을 AI로 개선한다.

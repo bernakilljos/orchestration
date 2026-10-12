@@ -1,4 +1,9 @@
+﻿---
+name: auto-layout-fit
+description: |
+  auto-layout-fit
 ---
+--
 name: auto-layout-fit
 description: docx/pptx/pdf 빌드 시 페이지 콘텐츠 (H1·callout·이미지·표·캡션 등) 합산 height 자동 계산 후 이미지 max_height 동적 조정. 빈 여백·짤림·글씨 작음 동시 해결.
 ---

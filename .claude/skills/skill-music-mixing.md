@@ -1,4 +1,9 @@
-# skill-music-mixing
+﻿---
+name: skill-music-mixing
+description: |
+  skill-music-mixing
+---
+ skill-music-mixing
 
 > Status: spec-only
 

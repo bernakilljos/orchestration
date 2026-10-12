@@ -1,4 +1,9 @@
+﻿---
+name: auto-planner
+description: |
+  auto-planner
 ---
+--
 name: auto-planner
 description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5단계 plan (전수조사·분석·실행·확인·보고) 자가 발동, 30+ rule 자가점검, 큰 작업·반복 패턴은 codex/gemini 위임. Generative→Agentic 약점 보완.
 ---

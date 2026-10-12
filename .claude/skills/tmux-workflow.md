@@ -1,4 +1,9 @@
+﻿---
+name: tmux-workflow
+description: |
+  tmux-workflow
 ---
+--
 name: tmux-workflow
 description: tmux 영속 세션 패턴 (claude·worker·main 3 세션) + 폰 친화 단축키. 세션·attach·detach·끊김·persistent 언급 시 활성화.
 ---

@@ -1,4 +1,9 @@
-# SKILL-10 — Quality & Performance Verification
+﻿---
+name: skill-10-quality-verify
+description: |
+  skill-10-quality-verify
+---
+ SKILL-10 — Quality & Performance Verification
 
 ## Purpose
 Comprehensive quality and performance verification across all layers.

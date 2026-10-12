@@ -1,4 +1,9 @@
-# SKILL-09 - Memory Reset (Session Interruption/Recovery)
+﻿---
+name: skill-09-memory-reset
+description: |
+  skill-09-memory-reset
+---
+ SKILL-09 - Memory Reset (Session Interruption/Recovery)
 
 ## Purpose
 When a session is interrupted or context exceeds 80%,

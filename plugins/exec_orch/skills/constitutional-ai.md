@@ -1,4 +1,9 @@
+﻿---
+name: constitutional-ai
+description: |
+  constitutional-ai
 ---
+--
 name: constitutional-ai
 description: 부서 SOP·금감원 가이드·EU AI Act·ISO 42001 을 AI 가 따라야 할 헌법(원칙)으로 박고, AI 가 자기 답을 헌법에 비교·위반 시 자동 수정. Anthropic Constitutional AI 패턴을 컴플라이언스·내부통제에 적용. 사용자가 "Constitutional AI", "헌법화", "SOP 자동 준수", "법규 자동 준수", "원칙 기반 AI" 같은 키워드를 말할 때 활성화.
 metadata:

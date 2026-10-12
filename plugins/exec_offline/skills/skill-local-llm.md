@@ -1,4 +1,9 @@
-# skill-local-llm
+﻿---
+name: skill-local-llm
+description: |
+  skill-local-llm
+---
+ skill-local-llm
 
 > Status: spec-only
 

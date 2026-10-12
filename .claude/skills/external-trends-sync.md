@@ -1,4 +1,9 @@
+﻿---
+name: external-trends-sync
+description: |
+  external-trends-sync
 ---
+--
 name: external-trends-sync
 description: 매시간 외부 프롬프트 엔지니어링 트렌드 (Claude doc · promptingguide · Reddit · HN) 자동 fetch, 변경 발견 시 task-instruction + git branch + PR 자동 생성. "최신 적용", "트렌드", "external sync", "Claude doc 변경" 키워드 활성.
 ---

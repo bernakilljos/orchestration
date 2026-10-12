@@ -1,4 +1,9 @@
-# Skill 21: Marketing Skill
+﻿---
+name: skill-21-marketing
+description: |
+  skill-21-marketing
+---
+ Skill 21: Marketing Skill
 
 ## 목적
 마케팅 콘텐츠(카피, SNS 포스트, 이메일, 랜딩페이지)를 자동 생성한다.

@@ -1,4 +1,9 @@
+﻿---
+name: ai-security-bundle
+description: |
+  ai-security-bundle
 ---
+--
 name: ai-security-bundle
 description: AI 보안 신영역 통합 — Adversarial ML·AI Workload Protection·NHI·CSMA·DSPM·Mechanistic Interpretability·Deepfake Detection·Prompt Injection·Anti-Drone 등. 글로벌 OEM (Palo Alto·Wiz·Reality Defender·Lakera) 한국 통합 가이드. 사용자가 "AI 보안", "AI Workload", "NHI", "Deepfake", "Adversarial ML", "Interpretability" 같은 키워드를 말할 때 활성화.
 metadata:

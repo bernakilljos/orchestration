@@ -1,4 +1,9 @@
+﻿---
+name: user-emotion-auto-response
+description: |
+  user-emotion-auto-response
 ---
+--
 name: user-emotion-auto-response
 description: 사용자 감정·상황별 자동 대응 매핑. 답답→fast, 짜증→시스템 결함 진단, 반복→loop, design 불만→command 수정, 방향 오해→direction-first, 하드코딩 지적→grep 감사, 전수조사 지시→100% Read, 망각 지적→hook 등재, install 언급→순서 확인. 매 사용자 프롬프트마다 detect-user-emotion.sh 가 자동 발동.
 ---

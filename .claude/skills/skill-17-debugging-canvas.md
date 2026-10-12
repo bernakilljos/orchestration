@@ -1,4 +1,9 @@
-# Skill 17: Debugging Canvas
+﻿---
+name: skill-17-debugging-canvas
+description: |
+  skill-17-debugging-canvas
+---
+ Skill 17: Debugging Canvas
 
 ## 목적
 버그를 시각적으로 분석·추적하는 디버깅 캔버스를 생성한다.

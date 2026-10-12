@@ -1,4 +1,9 @@
-# skill-pdf-compliance
+﻿---
+name: skill-pdf-compliance
+description: |
+  skill-pdf-compliance
+---
+ skill-pdf-compliance
 
 > **분류**: `design_` | **Status**: spec-only
 

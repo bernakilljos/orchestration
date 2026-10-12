@@ -487,7 +487,40 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
-    # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용
+    # Agent 진행률 섹션 추가 (2026-10-12)
+    agent_str = ""
+    try:
+        active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
+        if os.path.exists(active_agents_file):
+            with open(active_agents_file, "r", encoding="utf-8") as f:
+                agents = json.load(f) if isinstance(json.load(open(active_agents_file)), list) else []
+            # 활성 agent (end_ts 없는 것들) 집계
+            active = [a for a in agents if not a.get("end_ts")]
+            if active:
+                import collections as _col
+                agent_counts = _col.Counter(a["id"].split("-")[0].lower() for a in active)
+                agent_list = " · ".join(f"{name} ×{cnt}" if cnt > 1 else name
+                                       for name, cnt in sorted(agent_counts.items()))
+                # 최대 duration (진행 중인 것 중) - 색깔 기준
+                max_dur = max((a.get("duration_s", 0) for a in active), default=0)
+                if max_dur > 180:  # 3분+
+                    color = "\033[1;31m"  # 빨강
+                    severity = "🔴"
+                elif max_dur > 60:  # 1~3분
+                    color = "\033[1;35m"  # 주황/마젠타
+                    severity = "🟠"
+                elif max_dur > 30:  # 30s~1분
+                    color = "\033[1;33m"  # 노랑
+                    severity = "🟡"
+                else:  # <30s
+                    color = "\033[1;32m"  # 녹색
+                    severity = "🟢"
+                agent_str = (f"{color}{severity} {agent_list} "
+                            f"({max_dur}s)\033[0m")
+    except Exception:
+        pass
+
+    # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용 + agent
     import datetime as _dt
     import glob as _glob
     session_gauge = ""
@@ -591,6 +624,9 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
     # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
+    # 2026-10-12: Agent 진행률 추가
+    if agent_str:
+        tail.insert(0, agent_str)
     try:
         # Cache hit rate (prompt cache 절감)
         # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산

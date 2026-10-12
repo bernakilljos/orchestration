@@ -1,4 +1,9 @@
+﻿---
+name: skill-social-platform
+description: |
+  skill-social-platform
 ---
+--
 name: social-platform-integration
 description: |
   소셜 플랫폼 MCP 통합 스킬 — YouTube·Instagram·TikTok·X·Naver·Tistory 자동화.

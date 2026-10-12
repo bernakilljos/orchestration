@@ -1,4 +1,9 @@
+﻿---
+name: ai-risk-lighthouse
+description: |
+  ai-risk-lighthouse
 ---
+--
 name: ai-risk-lighthouse
 description: AI 시스템·내부통제·행동위험을 8 카테고리 가중점수로 자동 감사. Google Lighthouse 패턴을 AI 위험관리에 적용한 한국 표준 후보. 사용자가 "AI 위험 점수", "Risk Lighthouse", "내부통제 자동 감사", "ISO 42001 인증", "EU AI Act 컴플라이언스" 같은 키워드를 말할 때 활성화.
 metadata:

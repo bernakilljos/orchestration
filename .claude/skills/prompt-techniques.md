@@ -1,4 +1,9 @@
+﻿---
+name: prompt-techniques
+description: |
+  prompt-techniques
 ---
+--
 name: prompt-techniques
 description: |
   Codex·Gemini·Haiku 워커 호출 시 12 프롬프팅 기법 자동 적용으로 결과 품질 개선.

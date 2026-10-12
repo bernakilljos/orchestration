@@ -1,4 +1,9 @@
+﻿---
+name: feature-discovery
+description: |
+  feature-discovery
 ---
+--
 name: feature-discovery
 description: 사용자가 모르는·미사용 kit 기능 proactive 발굴·제시. 매 세션 시작 시 미사용 3-5개 자동 브리핑. 사용자 도메인 (ISMS-P·RMS·ITCEN ESG) 매칭 · 관심 태그 우선. 사용 이력 기반 반복 제안 방지.
 ---

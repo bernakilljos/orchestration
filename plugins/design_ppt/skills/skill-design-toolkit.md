@@ -1,4 +1,9 @@
+﻿---
+name: skill-design-toolkit
+description: |
+  skill-design-toolkit
 ---
+--
 name: design-toolkit
 description: |
   HTML/CSS 산출물(PPT·다이어그램·랜딩페이지·대시보드) 작성 시 디자인 도구·라이브러리 선택 가이드.

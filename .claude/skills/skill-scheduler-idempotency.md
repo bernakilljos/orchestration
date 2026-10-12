@@ -1,4 +1,9 @@
-# skill-scheduler-idempotency
+﻿---
+name: skill-scheduler-idempotency
+description: |
+  skill-scheduler-idempotency
+---
+ skill-scheduler-idempotency
 
 > **Status**: spec-only
 

@@ -1,4 +1,9 @@
+﻿---
+name: skill-arch-cheatsheet
+description: |
+  skill-arch-cheatsheet
 ---
+--
 name: skill-arch-cheatsheet
 description: A4 1페이지 치트시트 다이어그램. 좌측 폴더 트리 + 중앙 컨셉 블록 + 우측 코드 스니펫 3컬럼. "치트시트", "컨닝페이퍼", "한 장 요약", "cheatsheet", "reference card" 키워드 활성. Brij Pandey 스타일.
 ---

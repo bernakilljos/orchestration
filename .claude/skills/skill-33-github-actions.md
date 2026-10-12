@@ -1,4 +1,9 @@
-# Skill 33: GitHub Actions (CI/CD)
+﻿---
+name: skill-33-github-actions
+description: |
+  skill-33-github-actions
+---
+ Skill 33: GitHub Actions (CI/CD)
 
 ## 목적
 GitHub Actions 워크플로우를 자동 생성한다.

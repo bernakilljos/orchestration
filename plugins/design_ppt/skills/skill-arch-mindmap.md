@@ -1,4 +1,9 @@
+﻿---
+name: skill-arch-mindmap
+description: |
+  skill-arch-mindmap
 ---
+--
 name: skill-arch-mindmap
 description: |
   중앙 주제에서 사방으로 뻗어나가는 방사형 마인드맵 다이어그램을 1장에 생성한다.

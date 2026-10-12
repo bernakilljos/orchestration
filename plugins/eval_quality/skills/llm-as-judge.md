@@ -1,4 +1,9 @@
+﻿---
+name: llm-as-judge
+description: |
+  llm-as-judge
 ---
+--
 name: llm-as-judge
 description: Haiku 4.5 격리 채점관. 4차원 (Correctness·Completeness·Style·Safety) 0~10 점수화. post-impl·PR 직전·회귀 감지·라우팅 검증 시. Prompt caching 90% 절감.
 ---

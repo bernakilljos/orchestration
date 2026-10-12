@@ -1,4 +1,9 @@
+﻿---
+name: skill-claude-thinking
+description: |
+  skill-claude-thinking
 ---
+--
 name: skill-claude-thinking
 description: |
   복잡한 추론·설계·트레이드오프 문제에서 Claude 의 Extended Thinking 패턴을 적용해 단계적으로 답변하는 메소드론.

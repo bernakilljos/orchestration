@@ -1,4 +1,9 @@
+﻿---
+name: ai-affective-emotion
+description: |
+  ai-affective-emotion
 ---
+--
 name: ai-affective-emotion
 description: Affective Computing / Emotion AI 통합 — Affectiva·Hume·Realeyes OEM 으로 감정·스트레스 인식. 카지노 딜러·금융직원 부정 사전 예방, 카지노 플레이어 도박중독 조기경보. 사용자가 "Affective Computing", "Emotion AI", "감정 인식", "스트레스 탐지", "Hume", "Affectiva" 같은 키워드를 말할 때 활성화.
 metadata:

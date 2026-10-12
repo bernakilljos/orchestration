@@ -1,4 +1,9 @@
-# SKILL-XX — Example Skill
+﻿---
+name: skill-example
+description: |
+  skill-example
+---
+ SKILL-XX — Example Skill
 
 > **분류**: `template_`
 > **활성 조건**: 어떤 상황에서 자동 호출되는지
