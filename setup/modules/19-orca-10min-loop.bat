@@ -32,7 +32,12 @@ if !errorlevel! equ 0 (
 
 REM --- Task Scheduler 등록 ---
 echo [INFO] Registering Orca_10MinLoop...
-schtasks /create /tn "Orca_10MinLoop" /tr "!WRAPPER_PATH!" /sc minute /mo 10 /f /rl highest
+schtasks /create /tn "Orca_10MinLoop" /tr "!WRAPPER_PATH!" /sc minute /mo 10 /f /rl highest >nul 2>&1
+REM 2026-10-12 — 관리자 아닌 PC 에선 /rl highest 가 "액세스 거부". 이 작업은 관리자 권한 불필요 → 일반 권한으로 재시도
+if errorlevel 1 (
+  echo [INFO] highest denied - retry with normal privilege
+  schtasks /create /tn "Orca_10MinLoop" /tr "!WRAPPER_PATH!" /sc minute /mo 10 /f
+)
 
 if errorlevel 1 (
   echo [ERROR] Failed to register Orca_10MinLoop
