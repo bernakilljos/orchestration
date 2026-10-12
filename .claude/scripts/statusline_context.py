@@ -143,8 +143,12 @@ def recent_log_issues(cwd: str):
     err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
     errs, warns = _co.Counter(), 0
+    # 2026-10-12 — mcp-health.log 는 MCP 섹션 ("N/M (K 실패)") 에서 별도 집계 → "오류" 카운트에서 제외 (중복 방지).
+    EXCLUDE = {"mcp-health.log"}
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
         try:
+            if os.path.basename(lp) in EXCLUDE:
+                continue
             if os.path.getmtime(lp) < cutoff:
                 continue
             with open(lp, encoding="utf-8", errors="replace") as f:
@@ -796,11 +800,20 @@ def extra_gauges(cwd, data=None):
                 if not c90: return ""
                 # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
                 #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
+                # 2026-10-12 사용자 지시 — 순서도 세션마다 바뀌면 안 됨. count DESC 정렬 X · 고정 순서.
                 _HUE = {"여백": "35", "산출물기한": "33", "버전관리": "36", "이모지": "34",
                         "전수조사skip": "31", "증명지시": "33", "미반영": "35"}
+                _ORDER = {
+                    "design": ["산출물기한", "이모지", "여백", "버전관리"],
+                    "dev":    ["전수조사skip", "미반영", "증명지시"],
+                }
                 def _hl(k):
                     return f"\033[1;{_HUE.get(k, '37')}m{k}\033[0m"
-                parts = [f"{_hl(k)} {v}" for k, v in sorted(c90.items(), key=lambda kv: -kv[1])]
+                order = _ORDER.get(section_name, list(c90.keys()))
+                # 고정 순서 먼저, 매핑 밖 항목은 뒤에 count DESC 로 붙임 (신규 카테고리 대응)
+                seen = set(order)
+                extras = sorted([k for k in c90.keys() if k not in seen], key=lambda k: -c90[k])
+                parts = [f"{_hl(k)} {c90[k]}" for k in (order + extras) if k in c90]
                 return " · ".join(parts) + f" · \033[1m재발률\033[0m {rr}%"
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
