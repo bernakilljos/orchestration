@@ -183,13 +183,8 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 2. **Windows npx 래퍼**: `cmd /c npx <package>` 필수 (shell 교차호환성)
 3. **OAuth/인증도구**: 실제 값은 환경변수만, 개발자 콘솔 URL + 변수 이름 명시
 4. **각 plug_<category> 준수**: design·dev·data·web·collab·docs·media 모두 위 규칙 따름
-5. **통합 MCP (2026-09 채택)**:
-   - **Headroom** (Apache 2.0 · 10k+  · `pip install "headroom-ai[all]"` + `headroom mcp install`) — 프롬프트 압축 프록시 60~95% 절감 · MCP 도구 `headroom_compress`·`retrieve`·`stats` · 프록시 127.0.0.1:8787 · `ANTHROPIC_BASE_URL` 세팅 시 최대 효과
-   - **claude-mem** (오픈소스 · `npx -y claude-mem install --provider claude`) — 자동 세션 관측·복원 · SessionStart / UserPromptSubmit / PostToolUse / Stop / SessionEnd 5 hook 자동 등록 · SQLite + Chroma 저장 (`~/.claude-mem`) · Worker 127.0.0.1:37777 · Cloud sync OFF (local)
-   - **task-observer** (오픈소스 Skill · `npx -y skills add rebelytics/one-skill-to-rule-them-all --skill task-observer --agent claude-code`) — 태스크 실행 관측 · 패턴·사용자 수정·재사용 스킬 기회 캡처 · `.claude/skills/task-observer/` · description matching 자동 활성 · 우리 orca.db 관측과 병행 (skill 개선 축)
-   - **자동 시작**: `.claude/scripts/mcp-autostart.sh` (SessionStart hook · Headroom proxy + claude-mem worker 백그라운드 spawn · 이미 돌면 skip)
-   - **역할 분리**: 우리 `route.py`·`orca.db`·명시 memory 유지 · Headroom·claude-mem 은 병행 (라우팅·룰·도메인은 우리 kit · 압축·자동 관측은 오픈소스)
-   - 상세: `.claude/rules/mcp-integration.md`
+5. **통합 MCP (DEPRECATED 2026-10-12)** — Headroom + claude-mem 완전 삭제. 설치만 됐고 ANTHROPIC_BASE_URL 미세팅 → 실제 압축 X · RAM 2.5GB 낭비 · 매 요청 overhead 81ms. **Anthropic 네이티브 prompt caching (90% 절감) 만으로 충분**. `.claude/scripts/mcp-autostart.sh` 는 noop (exit 0). `.claude/rules/mcp-integration.md` 삭제. 다시 설치 금지.
+6. **task-observer** (오픈소스 Skill · 유지) — 태스크 관측·패턴 캡처. `.claude/skills/task-observer/` · 로컬·외부 전송 X.
 
 상세: `guide.txt` § 8 · `docs/upgrade-notes-2026-04-23.md`
 

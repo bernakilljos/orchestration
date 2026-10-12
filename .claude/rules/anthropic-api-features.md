@@ -1,5 +1,8 @@
 # Anthropic API 신기능 활용 룰
 
+> **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.
+
+
 > **근거**: 2026-10-12 갱신 · Anthropic 2026-07~10 신기능 · 우리 kit 통합.
 
 ## 신기능 매트릭스

@@ -1,5 +1,8 @@
 # 자동 최적화 룰 (Auto Optimization)
 
+> **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.
+
+
 > **근거**: 2026-09-02 사용자 지적 — "최적화가 자동으로 안 됨".
 > **이유**: 이미지·프롬프트·DB·캐시·로그가 시간 지나면 자동 정리·압축·최적화되어야 실전 운영.
 
