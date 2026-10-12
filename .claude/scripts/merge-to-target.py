@@ -120,6 +120,30 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             have |= {hook_key(h.get("command", "")) for h in new_hooks}
             added += len(new_hooks)
     report.append(f"settings.hooks +{added}")
+    # 2026-10-12 — kit 에서 다른 hook 으로 대체된 hook 은 대상에서도 뺀다 (안 빼면 옛 13개 + 새 1개가 같이 돈다).
+    #   대체 hook 이 대상에 들어간 경우에만 뺀다 · 대상이 직접 고친 hook 도 같은 이름이면 대체된 것으로 본다.
+    retired_n = 0
+    try:
+        ret = json.loads((KIT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
+    except Exception:
+        ret = {}
+    for ev, spec in ret.items():
+        if ev.startswith("_") or not isinstance(spec, dict):
+            continue
+        gone = set(spec.get("hooks") or [])
+        tm_list = th.get(ev) or []
+        have_new = any(hook_key(h.get("command", "")) == spec.get("replaced_by")
+                       for m in tm_list for h in m.get("hooks", []))
+        if not have_new or not gone:
+            continue
+        kept = []
+        for m in tm_list:
+            hs = [h for h in m.get("hooks", []) if hook_key(h.get("command", "")) not in gone]
+            retired_n += len(m.get("hooks", [])) - len(hs)
+            if hs:
+                kept.append({**m, "hooks": hs})
+        th[ev] = kept
+    report.append(f"settings.hooks 대체로 제거 {retired_n}")
     # 이미 있는 kit hook 의 실행 속성(timeout·async)은 kit 값을 따른다
     #   2026-10-06: kit 에서 detect-* timeout 3→10 으로 올려도 대상은 3 에 머물던 것
     kit_attr = {}

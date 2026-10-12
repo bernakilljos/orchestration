@@ -53,6 +53,8 @@ def main() -> int:
         cols = {c.strip().split()[0] for c in body.split(",") if c.strip()}
         ddl_cols.setdefault(m.group(1), set()).update(cols)
     alter_cols = set(re.findall(r"ADD COLUMN\s+(\w+)", all_text)) | set(re.findall(r"""\("(\w+)",\s*"(?:TIMESTAMP|INTEGER|TEXT)""", all_text))
+    # (테이블, 컬럼, 타입) 3-튜플 형식 ALTER 목록도 인식 (session-history-db.py 실측 · 2026-10-12)
+    alter_cols |= set(re.findall(r"""\("\w+",\s*"(\w+)",\s*"(?:TIMESTAMP|INTEGER|TEXT|REAL)"\)""", all_text))
     bad_cols: list[str] = []
     for p, t in texts.items():
         for m in re.finditer(r"INSERT(?:\s+OR\s+\w+)?\s+INTO\s+(\w+)\s*\(([^)]*)\)(.{0,800}?)(?:\"\"\"|\"\s*,|\)\s*$)", t, re.S):
@@ -79,6 +81,19 @@ def main() -> int:
     for p, t in texts.items():
         if p.name in hooked:
             reach |= {m for m in run_re.findall(t)}
+    # 2026-10-12 — prompt-dispatch.py 처럼 hook 이 모듈을 import 해 in-process 로 돌리면 실행 줄이 없다.
+    #   hook 인 .py 안에 이름(stem)이 나오는 같은 트리의 .py 모듈도 실행 경로로 본다 (1단계 + 그 모듈의 실행 줄).
+    mods = set()
+    for p, t in texts.items():
+        if p.name in hooked and p.suffix == ".py":
+            for q in texts:
+                if q.suffix == ".py" and q != p and q.parent.parent == p.parent and any(s in t for s in (q.stem, q.stem.replace("_", "-"))):
+                    mods.add(q)
+    for q in mods:
+        reach.add(q.name)
+        reach |= {m for m in run_re.findall(texts[q])}
+        # load_script("이름") — 확장자 없이 스크립트를 in-process 로 불러오는 형식 (prompt/_common.py)
+        reach |= {m + ".py" for m in re.findall(r"""load_script\(\s*["']([\w.-]+)["']""", texts[q])}
     # statusLine 명령도 매 렌더 실행되는 생성기 (자기 캐시를 스스로 씀) — 확장은 안 함
     sl = (sj.get("statusLine") or {}).get("command", "")
     reach |= {Path(m).name for m in re.findall(r"[\w./-]+\.(?:sh|py)", sl)}

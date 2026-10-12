@@ -1,0 +1,14 @@
+{
+  "_doc": "kit 에서 다른 hook 으로 대체된 hook. merge-to-target 이 대상 settings 에서도 뺀다 (대체 hook 이 있을 때만). 키 = hook_key (스크립트 파일명+인자).",
+  "UserPromptSubmit": {
+    "replaced_by": "prompt-dispatch.py",
+    "since": "2026-10-12",
+    "hooks": [
+      "user-prompt-auto-planner.sh", "detect-repeat-request.sh", "detect-user-emotion.sh",
+      "detect-efficiency.sh", "detect-deflection.sh", "periodic-rules-reminder.sh",
+      "save-user-prompt.sh", "lookup-history.sh", "inject-compact-reminder.sh",
+      "websearch-trigger-detect.sh", "suggest-skills.sh", "aggregate-rule-adherence.sh",
+      "suggest-command-from-context.sh"
+    ]
+  }
+}
