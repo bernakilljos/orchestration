@@ -105,6 +105,29 @@ def run(ctx):
 
 
 def _safe_to_clear(root):
+    """/clear 안전 판정 — 결과를 60초 재사용 (2026-10-12: ICM 처럼 하위 저장소가 여럿이면 매 프롬프트 git 이 1.8~3초)."""
+    import json as _json
+    import time as _time
+
+    cache = os.path.join(root, ".claude", "state", "clear-safe-cache.json")
+    try:
+        with open(cache, encoding="utf-8") as f:
+            c = _json.load(f)
+        if _time.time() - c.get("ts", 0) < 60:
+            return (c.get("ok"), c.get("why", ""))
+    except Exception:
+        pass
+    ok, why = _safe_to_clear_git(root)
+    try:
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        with open(cache, "w", encoding="utf-8") as f:
+            _json.dump({"ts": _time.time(), "ok": ok, "why": why}, f, ensure_ascii=False)
+    except Exception:
+        pass
+    return (ok, why)
+
+
+def _safe_to_clear_git(root):
     """/clear 안전 판정 — 추적 중 파일의 미커밋 수정(M/A/D/R) 이 있으면 보류. 75%+ 일 때만 호출 (git 사용)."""
     import subprocess
 

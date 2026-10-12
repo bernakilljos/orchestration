@@ -501,7 +501,7 @@
     jsonl 읽기 가속 (1006)                    reminder·상태줄 마지막 usage = 끝에서 거꾸로 읽고 즉시 멈춤 · 비용·cache 집계 = 파일별 증분 캐시(state/jsonl-scan-cache.json) · 127MB 세션 실측 reminder 1.8s→0.3s · 상태줄 4.0s→0.9s · 값 동일
     프롬프트 저장 hook (1012)                 ICM 개선 역병합: save-user-prompt python 2회→1회 기동 (같은 부하에서 5.0s→3.9s) · venv 자동 탐지(폴더명 X) · python3 스토어 별칭 회피
     10분 loop 등록 (1012)                     19-orca-10min-loop.bat: 관리자 아닌 PC 에서 /rl highest 거부 → 일반 권한 재등록 (VACUUM·오염정리만 · 프로세스 종료 X) · psutil 필요
-    프롬프트 hook 통합 (1012)                 UserPromptSubmit 13개 → prompt-dispatch.py 1개 (hook 별 모듈 .claude/hooks/prompt/*.py · 머리말·출력 그대로) · 이 PC 프로세스 기동 1회 ~0.5s 라 13개 동시 4.6~13.6s → 1~1.7s · 동등 40/40 (차이 1 = 옛 jq 없는 경로의 따옴표 잘림 버그) · 옛 .sh 는 남김 · 대상 폴더는 retired-hooks.json 으로 옛 13개 자동 제거
+    프롬프트 hook 통합 (1012)                 UserPromptSubmit 13개 → prompt-dispatch.py 1개 (hook 별 모듈 .claude/hooks/prompt/*.py · 머리말·출력 그대로) · 이 PC 프로세스 기동 1회 ~0.5s 라 13개 동시 4.6~13.6s → 1~1.7s · 동등 40/40 (차이 1 = 옛 jq 없는 경로의 따옴표 잘림 버그) · 옛 .sh 는 남김 · 대상 폴더는 retired-hooks.json 으로 옛 13개 자동 제거 · /clear 안전 판정(git) 60초 재사용 (ICM 3.0s→0.4~0.7s)
     프롬프트 hook 되돌리기 (1012)             python .claude/scripts/switch-prompt-hooks.py separate (옛 13개) / merged (1개) / status · 두 판 모두 prompt-hooks-presets.json 에 보관 · 옛 .sh 13개 그대로 유지
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
