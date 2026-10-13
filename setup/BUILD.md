@@ -79,7 +79,7 @@ setup.bat C:\work\myproject
 
 ## 6. 모듈 구조 (현행)
 
-`setup/modules/` 19개 모듈 (실행 순서):
+`setup/modules/` 20개 모듈 (실행 순서):
 
 | # | 모듈 | 역할 |
 |---|---|---|
@@ -101,7 +101,8 @@ setup.bat C:\work\myproject
 | 16 | mcp-headroom-claude-mem.bat | Headroom 프롬프트 압축 프록시 + claude-mem 자동 관측 통합 |
 | 17 | community-standards.bat | 커뮤니티 표준 kit 통합 |
 | 18 | daily-artifact-refresh.bat | Task Scheduler `Orca_DailyArtifactRefresh` 매일 04:00 · OVERDUE 산출물 (강의 docx·pptx·md·README) 자동 refresh · `~/.claude/NO-SCHTASKS` honor (2026-09-16 신설) |
-| 19 | orca-10min-loop.bat | Task Scheduler `Orca_10MinLoop` 10분 주기 메모리 조회·회복·확보 (RAM 임계·claude 프로세스 수·orca.db VACUUM·cleanup 재발동) · `~/.claude/NO-SCHTASKS` honor (2026-10-12 신설) |
+| 19 | webtech-sync.bat | Task Scheduler Orca_WebTechSync 일요일 05:00 · Java/.NET/Python/Node LTS 등 최신 버전 자동 fetch · WebSearch 능동 반영 (2026-10-13 신설) |
+| 20 | orca-10min-loop.bat | Task Scheduler `Orca_10MinLoop` 10분 주기 메모리 조회·회복·확보 (RAM 임계·claude 프로세스 수·orca.db VACUUM·cleanup 재발동) · `~/.claude/NO-SCHTASKS` honor (2026-10-12 신설) |
 
 ## 7. 설치 후 4주차로 가는 길
 

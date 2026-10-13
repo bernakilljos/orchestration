@@ -467,6 +467,7 @@
     verify-fresh-clone.py                  새 PC(pull만) 동작 검사: INSERT 테이블 DDL · state 생성기 hook 연결 (ensure-state 매 세션)
     MCP 자동 등록 (auto-install-deps)       Git Bash 경로변환(cmd /c→C:/) 차단 MSYS_NO_PATHCONV · 정의와 다르면 재등록 · fetch=uvx mcp-server-fetch(PyPI)
     statusline git 호출                     --no-optional-locks (렌더 1초 timeout 강제종료 시 .git/index.lock 잔존 → pull 차단되던 것)
+    kit 7 보완 통합 (1013)                  A 애자일 사이클(session-recap/snapshot) · B 배포포맷 능동(언어감지+WebSearch 주1회) · C 재발추적(verify-after-edit·auto-explore) · D 공통lib+silent fail 차단 · E 디자인 사전차단(이모지/여백/버전) · pyproject+requirements+CHANGELOG+Dockerfile+pytest+v1.0.0 태그
     statusline 4줄 상한                      넘치면 뒤 줄이 화면에서 잘림 → 시각·토큰·한도 / 룰(디자인│개발) / 상태 / 비용
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)

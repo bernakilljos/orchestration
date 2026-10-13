@@ -5,7 +5,29 @@
 
 ## 절대 룰
 
-**언어 감지 → 언어별 표준 자동 적용 (lint·format·test 규칙 · 파일 구조).**
+**언어 감지 → 언어별 표준 자동 적용 (lint·format·test 규칙 · 파일 구조 · 빌드·배포 명령).**
+
+---
+
+## 🆕 배포 포맷 매트릭스 (2026-10-13 신설)
+
+| 언어 | 빌드 도구 | 빌드 명령 | 배포 포맷 | 주의사항 |
+|---|---|---|---|---|
+| **Java** | Maven | `mvn clean package` | `.jar` / `.war` / `.ear` | pom.xml 확인 · assembly plugin |
+| **Java** | Gradle | `gradle build` | `.jar` / `.war` | build.gradle(kts) 확인 |
+| **.NET** | dotnet | `dotnet build` | `.dll` / `.nupkg` | *.csproj 또는 .sln |
+| **.NET Release** | dotnet | `dotnet publish -c Release` | `.exe` / Docker | net6.0+ LTS 권장 |
+| **Python** | uv | `uv build` | `.whl` / `.tar.gz` | 10배 빠름 · pyproject.toml |
+| **Python** | pip | `python -m build` | `.whl` / `.tar.gz` | setup.py 또는 pyproject.toml |
+| **Go** | go | `go build ./...` | **binary** | 멀티스테이지 빌드·cross-compile 가능 |
+| **Go Release** | go | `GOOS=linux GOARCH=amd64 go build` | binary+zip | ldflags 로 버전 정보 삽입 |
+| **Rust** | cargo | `cargo build --release` | **binary** / `.rlib` | target/release/ 생성 · Cargo.toml 메타 필수 |
+| **Node.js** | npm | `npm run build` | npm package / `.tgz` | package.json 확인 · webpack/esbuild 설정 |
+| **Node.js** | pnpm | `pnpm build` | npm package / `.tgz` | pnpm-lock.yaml 확인 · npm 대비 10% 빠름 |
+| **TypeScript** | npm/pnpm | `npm run build` | `.js` / npm package | tsconfig.json strict mode · tsc --build |
+| **Ruby** | bundler | `bundle exec rake build` | **.gem** | ruby 3.0+ · *.gemspec 필수 |
+| **Dart (Flutter)** | flutter | `flutter build apk` | **.apk** / `.ipa` / `.aab` | pubspec.yaml 확인 · Flutter 3.0+ |
+| **Dart (CLI)** | dart | `dart compile exe lib/main.dart` | **binary** | Dart CLI · standalone 실행 파일 |
 
 ## 언어별 매트릭스
 
@@ -42,6 +64,66 @@
 | Rust | `Cargo.toml` · `Cargo.lock` · `rust-toolchain.toml` |
 | Java | `pom.xml` (Maven) or `build.gradle` (Gradle) · `.editorconfig` |
 | SQL | `migrations/` (Alembic·Flyway·Prisma) |
+
+## 자동 감지 (SessionStart hook · 2026-10-13 신설)
+
+`.claude/hooks/detect-project-language.sh`:
+- **감지 대상**: `pom.xml`(Maven) · `build.gradle`(Gradle) · `*.csproj`(.NET) · `Cargo.toml`(Rust) · `go.mod`(Go) · `pyproject.toml`(Python) · `package.json`(Node) · `Gemfile`(Ruby) · `pubspec.yaml`(Flutter/Dart)
+- **결과 저장**: `.claude/state/project-language.json`
+- **예시**:
+  ```json
+  {
+    "language": "java",
+    "build_tool": "maven",
+    "deploy_format": "jar/war",
+    "detected_at": "2026-10-13T05:00:00Z"
+  }
+  ```
+
+## 빌드·배포 자동 제안 (SystemMessage 주입)
+
+`.claude/scripts/suggest-build-deploy.py`:
+- SessionStart 후 project-language.json 읽음
+- 해당 언어의 빌드·배포 명령 매트릭스를 systemMessage 로 Claude 에게 주입
+- **사용자 질문 전에 자동 노출** (Z 축 첫 우선순위)
+
+예 (Java Maven):
+```text
+## 감지된 프로젝트 언어: JAVA · maven
+
+### MAVEN 명령
+
+| 작업 | 명령 |
+|-----|------|
+| build | `mvn clean package` |
+| test | `mvn test` |
+| package | `mvn assembly:assembly` |
+| publish | `mvn deploy -DrepositoryId=central` |
+
+**배포 포맷**: .jar, .war, .ear
+
+**주의**: pom.xml 확인 · assembly plugin 설정
+```
+
+## WebTech 버전 동기화 (주 1회)
+
+`.claude/scripts/webtech-sync.py`:
+- **스케줄**: 일요일 05:00 (Task Scheduler `Orca_WebTechSync`)
+- **역할**: Java LTS · .NET LTS · Python · Node LTS · Go · Rust 최신 버전 fetch
+- **결과**: `.claude/state/webtech-updates.md` (마크다운 형식)
+
+### 현재 SoT (2026-10-13)
+
+| 언어 | 현재 버전 | 권장 | 주요 업데이트 |
+|---|---|---|---|
+| **Java** | 21 LTS | 21 | 25 LTS 2026-09 예정 |
+| **.NET** | 8.0 LTS | 8.0 | 9.0 2026-11 예정 |
+| **Python** | 3.13 | 3.12+ | 3.14 2026-10 예정 |
+| **Node.js** | 22 LTS | 22 | 24 LTS 2026-04 예정 |
+| **Go** | 1.23 | 1.23+ | 6개월 주기 release |
+| **Rust** | 1.84 | 1.84+ | 6주 주기 release |
+
+---
 
 ## 자동 hook 확장 (PostToolUse Edit|Write)
 

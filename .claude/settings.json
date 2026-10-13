@@ -182,6 +182,12 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/resume-last-24h.sh\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start-recap.sh\"",
+            "timeout": 10,
+            "async": true
           }
         ]
       },
@@ -212,6 +218,12 @@
             "type": "command",
             "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/prompt-dispatch.py\"",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-explore-on-task.py\\\" --check '$(cat)'\" 2>/dev/null || true",
+            "timeout": 3,
+            "async": true
           }
         ]
       }
@@ -294,6 +306,12 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-stop-snapshot.sh\"",
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -345,6 +363,22 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-korean-removal.sh\"",
             "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-emoji-in-code.sh\" \"$FILE\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-version-suffix.sh\" \"$FILE\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-after-edit-logger.py\\\" '$1'\" 2>/dev/null || true",
+            "timeout": 3,
+            "async": true
           }
         ]
       },
@@ -442,6 +476,13 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
             "timeout": 3,
+            "continueOnBlock": true
+          },
+          {
+            "matcher": "Write",
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-whitespace-png.sh\" \"$FILE\"",
+            "timeout": 5,
             "continueOnBlock": true
           },
           {

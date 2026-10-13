@@ -114,3 +114,51 @@ docs/screens/_*.log
 .claude/skills/task-observer/
 skills-lock.json
 .claude/state/orca.db.bak.*
+
+# Build & distribution
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Python virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDE & editor
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Database backups & snapshots
+*.db.backup
+*.db.*.bak
+*.sqlite3.bak
+
+# Dependency caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage reports (local only)
+htmlcov/
+.coverage
+.coverage.*
+
+# Test artifacts
+.tox/
+.hypothesis/
+
+# Doc build output
+site/
+docs/_build/
+
+# Docker artifacts (local compose)
+docker-compose.override.yml
+.docker-compose.env

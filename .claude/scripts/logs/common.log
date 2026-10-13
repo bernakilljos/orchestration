@@ -1,0 +1,8 @@
+[2026-10-13 09:31:07] INFO: common.py loaded
+[2026-10-13 09:31:07] ERROR: Infrastructure path missing: state_dir = C:\pjt\orchestration_v1\.claude\.claude\state
+[2026-10-13 09:31:29] INFO: common.py loaded
+[2026-10-13 09:31:29] INFO: Infrastructure root: C:\pjt\orchestration_v1
+[2026-10-13 09:31:29] DEBUG: Scanned C:\pjt\orchestration_v1\.claude\scripts with pattern **/*.py: 143 results
+[2026-10-13 09:31:29] DEBUG: Scanned C:\pjt\orchestration_v1\plugins with pattern **/*.py: 4 results
+[2026-10-13 09:31:29] DEBUG: Search for 'except[^:]*:\s*pass' in 147 files: 8 matches
+[2026-10-13 09:31:29] INFO: Silent fail audit: found 8 instances
