@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 r"""
-statusline_context — Claude Code 토큰 잔량 표시
-표준 라이브러리만 사용 - Windows 함정 4개 회피.
+statusline_context ??Claude Code ?좏겙 ?붾웾 ?쒖떆
+?쒖? ?쇱씠釉뚮윭由щ쭔 ?ъ슜 - Windows ?⑥젙 4媛??뚰뵾.
 
-경로 예: ~/.claude/statusline_context.py
+寃쎈줈 ?? ~/.claude/statusline_context.py
 """
 from __future__ import annotations
 import json
@@ -12,27 +12,23 @@ import os
 import re
 import sys
 
-# [함정 1] CP949 stdout 회피
+# [?⑥젙 1] CP949 stdout ?뚰뵾
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except Exception:
+except (AttributeError, TypeError):
     pass
 
-FILLED = "█"  # █
-EMPTY = "▒"   # ▒
-WIDTH = 10
+FILLED = "??  # ??EMPTY = "??   # ??WIDTH = 10
 
-# 상한 매핑 - 긴 것부터
-LIMIT_PREFIXES = [
-    # Opus 5.5 = 1M 기본 (접미 유무 무관) - "claude-opus-5" 보다 먼저 와야 함
-    ("claude-opus-5-5", 1_000_000),
-    # [1m] 접미 - 긴 것 먼저
+# ?곹븳 留ㅽ븨 - 湲?寃껊???LIMIT_PREFIXES = [
+    # Opus 5.5 = 1M 湲곕낯 (?묐? ?좊Т 臾닿?) - "claude-opus-5" 蹂대떎 癒쇱? ?????    ("claude-opus-5-5", 1_000_000),
+    # [1m] ?묐? - 湲?寃?癒쇱?
     ("claude-opus-5[1m]", 1_000_000),
     ("claude-sonnet-5[1m]", 1_000_000),
     ("claude-opus-4-8[1m]", 1_000_000),
     ("claude-opus-4-7[1m]", 1_000_000),
     ("claude-sonnet-4-6[1m]", 1_000_000),
-    # 표준 200K
+    # ?쒖? 200K
     ("claude-opus-5", 200_000),
     ("claude-sonnet-5", 200_000),
     ("claude-opus-4-8", 200_000),
@@ -46,10 +42,10 @@ DEFAULT_LIMIT = 200_000
 
 
 def _project_root(start: str) -> str:
-    """루트 표식(.git 또는 .claude+plugins)이 있는 조상 디렉터리를 돌려준다.
+    """猷⑦듃 ?쒖떇(.git ?먮뒗 .claude+plugins)???덈뒗 議곗긽 ?붾젆?곕━瑜??뚮젮以??
 
-    못 찾으면 start 를 그대로 준다(안전측 — 없던 곳에 새로 만들지는 않는다).
-    CLAUDE_PROJECT_DIR 이 있으면 그것이 정본이다.
+    紐?李얠쑝硫?start 瑜?洹몃?濡?以???덉쟾痢????녿뜕 怨녹뿉 ?덈줈 留뚮뱾吏???딅뒗??.
+    CLAUDE_PROJECT_DIR ???덉쑝硫?洹멸쾬???뺣낯?대떎.
     """
     env = os.environ.get("CLAUDE_PROJECT_DIR")
     if env and os.path.isdir(env):
@@ -67,11 +63,11 @@ def _project_root(start: str) -> str:
     return os.path.abspath(start or ".")
 
 def pick_limit(model_id: str) -> tuple[int, bool]:
-    """(상한, 정확?) 반환."""
+    """(?곹븳, ?뺥솗?) 諛섑솚."""
     if not model_id:
         return DEFAULT_LIMIT, False
-    # 2026-09-23: 이름표만 보면 새 모델(claude-opus-5-5[1m])이 claude-opus-5 에 걸려 200K 로 오판됐다
-    # (실제 26% 인데 "125% 즉시 compact"). [1m] 접미가 곧 1M 이다 — 이름과 무관하게 먼저 본다.
+    # 2026-09-23: ?대쫫?쒕쭔 蹂대㈃ ??紐⑤뜽(claude-opus-5-5[1m])??claude-opus-5 ??嫄몃젮 200K 濡??ㅽ뙋?먮떎
+    # (?ㅼ젣 26% ?몃뜲 "125% 利됱떆 compact"). [1m] ?묐?媛 怨?1M ?대떎 ???대쫫怨?臾닿??섍쾶 癒쇱? 蹂몃떎.
     if "[1m]" in model_id.lower():
         return 1_000_000, True
     for pref, lim in LIMIT_PREFIXES:
@@ -81,16 +77,16 @@ def pick_limit(model_id: str) -> tuple[int, bool]:
 
 
 def cwd_to_proj_dir(cwd: str) -> str:
-    """cwd -> ~/.claude/projects/<safe>/ 폴더명."""
+    """cwd -> ~/.claude/projects/<safe>/ ?대뜑紐?"""
     safe = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
     home = os.path.expanduser("~")
     return os.path.join(home, ".claude", "projects", safe)
 
 
 def last_assistant_usage(jsonl_path: str) -> dict | None:
-    """jsonl 마지막 assistant 레코드의 message.usage.
+    """jsonl 留덉?留?assistant ?덉퐫?쒖쓽 message.usage.
 
-    2026-10-06 — 끝에서부터 256KB 씩 거꾸로 읽고 찾으면 멈춘다 (127MB 세션 전체 읽기 → 수 초 실측)."""
+    2026-10-06 ???앹뿉?쒕???256KB ??嫄곌씀濡??쎄퀬 李얠쑝硫?硫덉텣??(127MB ?몄뀡 ?꾩껜 ?쎄린 ????珥??ㅼ륫)."""
     if not os.path.exists(jsonl_path):
         return None
     try:
@@ -108,27 +104,27 @@ def last_assistant_usage(jsonl_path: str) -> dict | None:
                         continue
                     try:
                         rec = json.loads(raw.decode("utf-8", errors="replace"))
-                    except Exception:
+                    except (json.JSONDecodeError, ValueError):
                         continue
                     if rec.get("type") == "assistant":
                         usage = ((rec.get("message") or {}).get("usage")) or None
                         if usage:
                             return usage
-    except Exception:
+    except (OSError, IOError, json.JSONDecodeError):
         return None
     return None
 
 
-# 모델별 rate - 정본은 lib/pricing.py (여기 따로 두면 갈린다 · 헌장 E)
+# 紐⑤뜽蹂?rate - ?뺣낯? lib/pricing.py (?ш린 ?곕줈 ?먮㈃ 媛덈┛??쨌 ?뚯옣 E)
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 try:
     from pricing import rates_for as _rates_for
-except Exception:
+except (ImportError, ModuleNotFoundError):
     _rates_for = None
 
 
 def pick_rate(model_id: str) -> tuple[float, float, float, float]:
-    """(input, output, cache_write, cache_read) USD/MTok. 모르는 모델은 0 (추정 안 함)."""
+    """(input, output, cache_write, cache_read) USD/MTok. 紐⑤Ⅴ??紐⑤뜽? 0 (異붿젙 ????."""
     p = _rates_for(model_id) if _rates_for else None
     if not p:
         return (0.0, 0.0, 0.0, 0.0)
@@ -137,7 +133,7 @@ def pick_rate(model_id: str) -> tuple[float, float, float, float]:
 
 
 def cache_hit_rate(jsonl_path: str) -> float:
-    """세션 prompt cache 히트율 = cache_read / (cache_read + input + cache_creation) * 100."""
+    """?몄뀡 prompt cache ?덊듃??= cache_read / (cache_read + input + cache_creation) * 100."""
     _c, tot_in, tot_cw, tot_cr = _scan_jsonl(jsonl_path, "")
     denom = tot_in + tot_cw + tot_cr
     if denom <= 0:
@@ -146,16 +142,16 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """하위호환 — 오류 수만."""
+    """?섏쐞?명솚 ???ㅻ쪟 ?섎쭔."""
     return recent_log_issues(cwd)[0]
 
 
 def recent_log_issues(cwd: str):
-    """(오류 수, 경고 수, 오류 최다 로그) — 줄 안 시각이 최근 24h 인 것만 센다.
+    """(?ㅻ쪟 ?? 寃쎄퀬 ?? ?ㅻ쪟 理쒕떎 濡쒓렇) ??以????쒓컖??理쒓렐 24h ??寃껊쭔 ?쇰떎.
 
-    2026-10-06: 예전엔 «24h 안에 갱신된 로그의 마지막 500줄»을 시각 무관하게 셌고 WARN·skip 까지
-    섞어 «errors 121» 처럼 부풀었다 (실측: kit 36건 전부 시각 없는 줄 · 24h 내 실제 오류 0).
-    시각 없는 줄은 언제 것인지 모르므로 세지 않는다.
+    2026-10-06: ?덉쟾??짬24h ?덉뿉 媛깆떊??濡쒓렇??留덉?留?500以꽷살쓣 ?쒓컖 臾닿??섍쾶 ?뚭퀬 WARN쨌skip 源뚯?
+    ?욎뼱 짬errors 121쨩 泥섎읆 遺??덈떎 (?ㅼ륫: kit 36嫄??꾨? ?쒓컖 ?녿뒗 以?쨌 24h ???ㅼ젣 ?ㅻ쪟 0).
+    ?쒓컖 ?녿뒗 以꾩? ?몄젣 寃껋씤吏 紐⑤Ⅴ誘濡??몄? ?딅뒗??
     """
     import glob as _g
     import time as _t
@@ -169,11 +165,10 @@ def recent_log_issues(cwd: str):
     err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
     errs, warns = _co.Counter(), 0
-    # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
-    # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
+    # 2026-09-23: 紐낅졊쨌?꾨＼?꾪듃쨌議고쉶瑜?洹몃?濡??곷뒗 湲곕줉??濡쒓렇??類?? 紐낅졊 臾몄옄?댁뿉 "error" 媛 ?덉쑝硫?    # ?ㅻ쪟濡??몄뼱 90嫄?以?65嫄댁씠 bash_commands.log ????ㅼ젣 ?ㅻ쪟 ?꾨떂).
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
             "conversation-save.log", "deflection-detect.log", "emotion-response.log",
-            # 2026-10-12: mcp-health.log 는 MCP 섹션에서 별도 집계 (중복 방지)
+            # 2026-10-12: mcp-health.log ??MCP ?뱀뀡?먯꽌 蹂꾨룄 吏묎퀎 (以묐났 諛⑹?)
             "mcp-health.log"}
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
         if os.path.basename(lp) in skip:
@@ -196,15 +191,15 @@ def recent_log_issues(cwd: str):
                     errs[os.path.basename(lp)] += 1
                 else:
                     warns += 1
-        except Exception:
+        except (OSError, IOError, UnicodeDecodeError):
             continue
     top = errs.most_common(1)[0][0] if errs else ""
     return sum(errs.values()), warns, top
 
 
-# 2026-10-06 — 렌더마다 모든 jsonl 을 처음부터 다시 읽었다 (월·연 합계로 같은 파일 2번 · 127MB 세션 4초 실측).
-#   파일별 (크기·읽은 위치·message.id 별 집계) 를 state 에 두고 **늘어난 뒷부분만** 읽는다.
-#   크기가 줄면(덮어쓰기) 처음부터 다시. 결과는 전체 재계산과 같다 (id 별 마지막 usage 규칙 동일).
+# 2026-10-06 ???뚮뜑留덈떎 紐⑤뱺 jsonl ??泥섏쓬遺???ㅼ떆 ?쎌뿀??(?붋룹뿰 ?⑷퀎濡?媛숈? ?뚯씪 2踰?쨌 127MB ?몄뀡 4珥??ㅼ륫).
+#   ?뚯씪蹂?(?ш린쨌?쎌? ?꾩튂쨌message.id 蹂?吏묎퀎) 瑜?state ???먭퀬 **?섏뼱???룸?遺꾨쭔** ?쎈뒗??
+#   ?ш린媛 以꾨㈃(??뼱?곌린) 泥섏쓬遺???ㅼ떆. 寃곌낵???꾩껜 ?ш퀎?곌낵 媛숇떎 (id 蹂?留덉?留?usage 洹쒖튃 ?숈씪).
 _SCAN_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state", "jsonl-scan-cache.json")
 _SCAN: dict | None = None
 _SCAN_DIRTY = False
@@ -216,7 +211,7 @@ def _scan_load() -> dict:
         try:
             with open(_SCAN_PATH, encoding="utf-8") as f:
                 _SCAN = json.load(f)
-        except Exception:
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
             _SCAN = {}
     return _SCAN
 
@@ -230,7 +225,7 @@ def _scan_save() -> None:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(_SCAN, f, separators=(",", ":"))
         os.replace(tmp, _SCAN_PATH)
-    except Exception:
+    except (OSError, IOError, TypeError):
         pass
 
 
@@ -239,16 +234,16 @@ _atexit.register(_scan_save)
 
 
 def _scan_jsonl(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -> tuple[float, int, int, int]:
-    """(비용 USD, input, cache_write, cache_read) — message.id 별 마지막 usage 만 센다.
+    """(鍮꾩슜 USD, input, cache_write, cache_read) ??message.id 蹂?留덉?留?usage 留??쇰떎.
 
-    ts_prefix ("2026-10"·"2026") 가 있으면 그 기간 timestamp 의 응답만 합산한다.
-    2026-09-23: 월·년 합산을 파일 mtime 으로만 걸러 8월 기록까지 9월에 더했다($4,635 → 실제 $2,924).
+    ts_prefix ("2026-10"쨌"2026") 媛 ?덉쑝硫?洹?湲곌컙 timestamp ???묐떟留??⑹궛?쒕떎.
+    2026-09-23: ?붋룸뀈 ?⑹궛???뚯씪 mtime ?쇰줈留?嫄몃윭 8??湲곕줉源뚯? 9?붿뿉 ?뷀뻽??$4,635 ???ㅼ젣 $2,924).
     """
     global _SCAN_DIRTY
     if not os.path.exists(jsonl_path):
         return (0.0, 0, 0, 0)
     cache = _scan_load()
-    key = os.path.abspath(jsonl_path) + "|" + (default_model or "") + "|v2"  # v2: 항목에 timestamp 추가
+    key = os.path.abspath(jsonl_path) + "|" + (default_model or "") + "|v2"  # v2: ??ぉ??timestamp 異붽?
     size = os.path.getsize(jsonl_path)
     ent = cache.get(key)
     if not ent or ent.get("size", 0) > size:
@@ -266,7 +261,7 @@ def _scan_jsonl(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -
                         continue
                     try:
                         rec = json.loads(raw.decode("utf-8", errors="replace"))
-                    except Exception:
+                    except (json.JSONDecodeError, ValueError):
                         continue
                     if rec.get("type") != "assistant":
                         continue
@@ -280,14 +275,14 @@ def _scan_jsonl(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -
             ent["size"] = size
             cache[key] = ent
             _SCAN_DIRTY = True
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             return (0.0, 0, 0, 0)
     vals = [v for v in ent["ids"].values() if not ts_prefix or (len(v) > 4 and v[4].startswith(ts_prefix))]
     return (sum(v[0] for v in vals), sum(v[1] for v in vals), sum(v[2] for v in vals), sum(v[3] for v in vals))
 
 
 def _jsonl_cost(jsonl_path: str, default_model: str = "", ts_prefix: str = "") -> float:
-    """단일 jsonl - 파일 안 message.model 로 rate 결정, 없으면 default_model."""
+    """?⑥씪 jsonl - ?뚯씪 ??message.model 濡?rate 寃곗젙, ?놁쑝硫?default_model."""
     return _scan_jsonl(jsonl_path, default_model, ts_prefix)[0]
 
 
@@ -296,14 +291,14 @@ def session_cost(jsonl_path: str, model_id: str) -> float:
 
 
 def monthly_cost(cwd: str, model_id: str) -> float:
-    """이번 달 1일 ~ 오늘 · 이 프로젝트의 모든 jsonl 세션 비용 합산."""
+    """?대쾲 ??1??~ ?ㅻ뒛 쨌 ???꾨줈?앺듃??紐⑤뱺 jsonl ?몄뀡 鍮꾩슜 ?⑹궛."""
     import glob as _g
     import datetime as _d
     try:
         proj_dir = cwd_to_proj_dir(cwd)
         if not os.path.isdir(proj_dir):
             return 0.0
-        # 이번 달 1일 00:00 timestamp
+        # ?대쾲 ??1??00:00 timestamp
         now = _d.datetime.now()
         month_start = _d.datetime(now.year, now.month, 1).timestamp()
         total = 0.0
@@ -312,15 +307,15 @@ def monthly_cost(cwd: str, model_id: str) -> float:
                 if os.path.getmtime(jp) < month_start:
                     continue
                 total += _jsonl_cost(jp, model_id, now.strftime("%Y-%m"))
-            except Exception:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                 continue
         return total
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         return 0.0
 
 
 def yearly_cost(cwd: str, model_id: str) -> float:
-    """올해 1월 1일 ~ 오늘 · 프로젝트의 모든 jsonl 세션 비용 합산."""
+    """?ы빐 1??1??~ ?ㅻ뒛 쨌 ?꾨줈?앺듃??紐⑤뱺 jsonl ?몄뀡 鍮꾩슜 ?⑹궛."""
     import glob as _g
     import datetime as _d
     try:
@@ -335,10 +330,10 @@ def yearly_cost(cwd: str, model_id: str) -> float:
                 if os.path.getmtime(jp) < year_start:
                     continue
                 total += _jsonl_cost(jp, model_id, now.strftime("%Y"))
-            except Exception:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                 continue
         return total
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         return 0.0
 
 
@@ -352,7 +347,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"{EMPTY * 8} 측정 전"
+        return f"{EMPTY * 8} 痢≪젙 ??
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -364,28 +359,28 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     q = "" if exact_model else "?"
     line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
     if pct >= 95:
-        line += " · [!] 자동 compact 임박 (끝났으면 /clear)"
+        line += " 쨌 [!] ?먮룞 compact ?꾨컯 (?앸궗?쇰㈃ /clear)"
     elif pct >= 80:
-        line += " · 작업 끝나면 /clear"
+        line += " 쨌 ?묒뾽 ?앸굹硫?/clear"
     elif pct >= 70:
-        line += " · 주의"
+        line += " 쨌 二쇱쓽"
     return line
 
 
 def mini_bar(cur, total, w=6):
-    """짧은 bar (multi-gauge 용)."""
+    """吏㏃? bar (multi-gauge ??."""
     if total <= 0:
-        return "─" * w
+        return "?" * w
     r = min(cur / total, 1.0)
     filled = int(round(r * w))
     filled = min(w, max(0, filled))
-    return "█" * filled + "▒" * (w - filled)
+    return "?? * filled + "?? * (w - filled)
 
 
 def gauge(label, cur, total, cur_s="", tot_s="", w=6):
-    """§ ██▒▒▒▒ 32% (cur/tot) 스타일."""
+    """짠 ?댿뻽?믠뼊?믠뼊 32% (cur/tot) ?ㅽ???"""
     if total <= 0:
-        return f"{label} {'─' * w} (∞)"
+        return f"{label} {'?' * w} (??"
     r = min(cur / total, 1.0)
     pct = r * 100
     cs = cur_s or fmt_tokens(int(cur))
@@ -393,29 +388,25 @@ def gauge(label, cur, total, cur_s="", tot_s="", w=6):
     return f"{label} {mini_bar(cur, total, w)} {pct:.0f}% ({cs}/{ts})"
 
 
-SEP = "─" * 50  # 구분선
-_SESSION_COST = 0.0  # 세션 누적 추정 비용 (jsonl 계산 후 셋)
-_MONTHLY_COST = 0.0  # 이번 달 전체 비용 (모든 jsonl 합산)
-_YEARLY_COST = 0.0   # 올해 1월 1일부터 오늘까지 합산
-_CACHE_HIT_RATE = 0.0  # 세션 prompt cache 히트율 %
-_ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
+SEP = "?" * 50  # 援щ텇??_SESSION_COST = 0.0  # ?몄뀡 ?꾩쟻 異붿젙 鍮꾩슜 (jsonl 怨꾩궛 ????
+_MONTHLY_COST = 0.0  # ?대쾲 ???꾩껜 鍮꾩슜 (紐⑤뱺 jsonl ?⑹궛)
+_YEARLY_COST = 0.0   # ?ы빐 1??1?쇰????ㅻ뒛源뚯? ?⑹궛
+_CACHE_HIT_RATE = 0.0  # ?몄뀡 prompt cache ?덊듃??%
+_ERROR_COUNT = 0     # 理쒓렐 24h .claude/logs ??error쨌warn 移댁슫??
 
-
-# 2026-09-05: plan_usage() 를 걷어냈다. ~/.claude/statsig/ 파일을 정규식으로 훑어
-#   session_limit·week_limit 을 뽑으려 했는데 그 폴더에는 파일이 0개였고(실측),
-#   호출하는 곳도 없었다. Anthropic 실제 한도는 이 스크립트가 읽을 수 없다 —
-#   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
+# 2026-09-05: plan_usage() 瑜?嫄룹뼱?덈떎. ~/.claude/statsig/ ?뚯씪???뺢퇋?앹쑝濡??묒뼱
+#   session_limit쨌week_limit ??戮묒쑝???덈뒗??洹??대뜑?먮뒗 ?뚯씪??0媛쒖?怨??ㅼ륫),
+#   ?몄텧?섎뒗 怨노룄 ?놁뿀?? Anthropic ?ㅼ젣 ?쒕룄?????ㅽ겕由쏀듃媛 ?쎌쓣 ???녿떎 ??#   紐??쎈뒗 媛믪쓣 吏?대궡?먮땲 ???꾩슫??(?뚯옣 A2).
 
 def extra_gauges(cwd, data=None):
-    """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
-    # ★★★1006 — **정규화는 여기서 한다(정본 1곳 · ⑥).**
-    #   처음엔 main() 쪽에만 넣었는데 이 함수 안의 8개 경로가 그대로 하위 폴더를
-    #   보고 있어 MCP·비용이 계속 비었다 — 「한 곳씩 고치면 또 빠진다」를 내가 했다.
-    #   ★판정은 «.claude 폴더가 있는가»다(프로젝트 구조를 지어내지 않는다).
+    """??以??뺤텞 - [?좏겙][?ъ궗??[?쇨컙][二쇨컙][?몄뀡?쒕룄][二쇨컙?쒕룄][MCP][git]."""
+    # ?끸쁾??006 ??**?뺢퇋?붾뒗 ?ш린???쒕떎(?뺣낯 1怨?쨌 ??.**
+    #   泥섏쓬??main() 履쎌뿉留??ｌ뿀?붾뜲 ???⑥닔 ?덉쓽 8媛?寃쎈줈媛 洹몃?濡??섏쐞 ?대뜑瑜?    #   蹂닿퀬 ?덉뼱 MCP쨌鍮꾩슜??怨꾩냽 鍮꾩뿀?????뚰븳 怨녹뵫 怨좎튂硫???鍮좎쭊?ㅳ띾? ?닿? ?덈떎.
+    #   ?낇뙋?뺤? 짬.claude ?대뜑媛 ?덈뒗媛쨩???꾨줈?앺듃 援ъ“瑜?吏?대궡吏 ?딅뒗??.
     if cwd:
         _p0 = os.path.abspath(cwd)
         for _ in range(5):
-            if os.path.isdir(os.path.join(_p0, "plugins")) and os.path.isdir(os.path.join(_p0, ".claude")):  # kit 설치 루트 (하위 폴더의 로컬 .claude 에서 멈추지 않게 · hook guard 와 같은 기준)
+            if os.path.isdir(os.path.join(_p0, "plugins")) and os.path.isdir(os.path.join(_p0, ".claude")):  # kit ?ㅼ튂 猷⑦듃 (?섏쐞 ?대뜑??濡쒖뺄 .claude ?먯꽌 硫덉텛吏 ?딄쾶 쨌 hook guard ? 媛숈? 湲곗?)
                 cwd = _p0
                 break
             _u0 = os.path.dirname(_p0)
@@ -432,7 +423,7 @@ def extra_gauges(cwd, data=None):
         db = os.path.join(cwd, ".claude", "state", "orca.db")
         if os.path.exists(db):
             with sqlite3.connect(db) as c:
-                # 예산 (일간-주간-월간)
+                # ?덉궛 (?쇨컙-二쇨컙-?붽컙)
                 try:
                     b = c.execute(
                         "SELECT COALESCE(today_spent_usd,0), COALESCE(daily_limit_usd,0), "
@@ -442,65 +433,64 @@ def extra_gauges(cwd, data=None):
                     ).fetchone()
                     if b:
                         ds, dl, ws, wl, ms, ml = b
-                        d_lim = f"${dl:.0f}" if dl else "∞"
-                        w_lim = f"${wl:.0f}" if wl else "∞"
-                        m_lim = f"${ml:.0f}" if ml else "∞"
-                        db_bar = mini_bar(ds*100, (dl or 1)*100, 4) if dl else "────"
-                        wb_bar = mini_bar(ws*100, (wl or 1)*100, 4) if wl else "────"
-                        mb_bar = mini_bar(ms*100, (ml or 1)*100, 4) if ml else "────"
+                        d_lim = f"${dl:.0f}" if dl else "??
+                        w_lim = f"${wl:.0f}" if wl else "??
+                        m_lim = f"${ml:.0f}" if ml else "??
+                        db_bar = mini_bar(ds*100, (dl or 1)*100, 4) if dl else "????"
+                        wb_bar = mini_bar(ws*100, (wl or 1)*100, 4) if wl else "????"
+                        mb_bar = mini_bar(ms*100, (ml or 1)*100, 4) if ml else "????"
                         budget_str = (
-                            f"일간 {db_bar} ${ds:.2f}/{d_lim}\n"
-                            f"주간 {wb_bar} ${ws:.2f}/{w_lim}\n"
-                            f"월간 {mb_bar} ${ms:.2f}/{m_lim}"
+                            f"?쇨컙 {db_bar} ${ds:.2f}/{d_lim}\n"
+                            f"二쇨컙 {wb_bar} ${ws:.2f}/{w_lim}\n"
+                            f"?붽컙 {mb_bar} ${ms:.2f}/{m_lim}"
                         )
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-                # 재사용 solutions
+                # ?ъ궗??solutions
                 try:
                     r = c.execute(
                         "SELECT COUNT(*), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
                     ).fetchone()
                     if r and r[0]:
-                        solutions_str = f"재사용 {r[0]}건 - 평균 {r[1]:.1f}"
-                except Exception:
+                        solutions_str = f"?ъ궗??{r[0]}嫄?- ?됯퇏 {r[1]:.1f}"
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-                # 세션
+                # ?몄뀡
                 try:
                     r = c.execute(
                         "SELECT COUNT(*), COALESCE(SUM(turns),0), COALESCE(SUM(tokens_total),0) "
                         "FROM session_summary"
                     ).fetchone()
                     if r:
-                        sessions_str = f"세션 {r[0]} - 턴 {r[1]}"
-                except Exception:
+                        sessions_str = f"?몄뀡 {r[0]} - ??{r[1]}"
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-                # 오늘 파일 변경
-                try:
+                # ?ㅻ뒛 ?뚯씪 蹂寃?                try:
                     r = c.execute(
                         "SELECT COUNT(*) FROM file_audit "
                         "WHERE ts >= datetime('now','-1 day')"
                     ).fetchone()
                     if r and r[0]:
-                        files_str = f"오늘 파일 {r[0]}건"
-                except Exception:
+                        files_str = f"?ㅻ뒛 ?뚯씪 {r[0]}嫄?
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-                # 진행 중 task
+                # 吏꾪뻾 以?task
                 try:
                     r = c.execute(
                         "SELECT COUNT(*) FROM tasks WHERE status IN ('pending','in_progress')"
                     ).fetchone()
                     if r and r[0]:
                         tasks_str = f"task {r[0]}"
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
-    # MCP - Headroom proxy 헬스체크
+    # MCP - Headroom proxy ?ъ뒪泥댄겕
     try:
         import urllib.request
         urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
         mcp = "MCP on"
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         mcp = "MCP off"
     # git branch + uncommitted
     git_str = ""
@@ -517,44 +507,42 @@ def extra_gauges(cwd, data=None):
         )
         dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
         if branch:
-            git_str = f"git {branch}" + (f" ({dirty} 변경)" if dirty else " clean")
-    except Exception:
+            git_str = f"git {branch}" + (f" ({dirty} 蹂寃?" if dirty else " clean")
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # Agent 진행률 섹션 추가 (2026-10-12)
+    # Agent 吏꾪뻾瑜??뱀뀡 異붽? (2026-10-12)
     agent_str = ""
     try:
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
         if os.path.exists(active_agents_file):
             with open(active_agents_file, "r", encoding="utf-8") as f:
                 agents = json.load(f) if isinstance(json.load(open(active_agents_file)), list) else []
-            # 활성 agent (end_ts 없는 것들) 집계
+            # ?쒖꽦 agent (end_ts ?녿뒗 寃껊뱾) 吏묎퀎
             active = [a for a in agents if not a.get("end_ts")]
             if active:
                 import collections as _col
                 agent_counts = _col.Counter(a["id"].split("-")[0].lower() for a in active)
-                agent_list = " · ".join(f"{name} ×{cnt}" if cnt > 1 else name
+                agent_list = " 쨌 ".join(f"{name} 횞{cnt}" if cnt > 1 else name
                                        for name, cnt in sorted(agent_counts.items()))
-                # 최대 duration (진행 중인 것 중) - 색깔 기준
+                # 理쒕? duration (吏꾪뻾 以묒씤 寃?以? - ?됯퉼 湲곗?
                 max_dur = max((a.get("duration_s", 0) for a in active), default=0)
-                if max_dur > 180:  # 3분+
-                    color = "\033[1;31m"  # 빨강
-                    severity = "🔴"
-                elif max_dur > 60:  # 1~3분
-                    color = "\033[1;35m"  # 주황/마젠타
-                    severity = "🟠"
-                elif max_dur > 30:  # 30s~1분
-                    color = "\033[1;33m"  # 노랑
-                    severity = "🟡"
+                if max_dur > 180:  # 3遺?
+                    color = "\033[1;31m"  # 鍮④컯
+                    severity = "?뵶"
+                elif max_dur > 60:  # 1~3遺?                    color = "\033[1;35m"  # 二쇳솴/留덉젨?
+                    severity = "?윝"
+                elif max_dur > 30:  # 30s~1遺?                    color = "\033[1;33m"  # ?몃옉
+                    severity = "?윞"
                 else:  # <30s
-                    color = "\033[1;32m"  # 녹색
-                    severity = "🟢"
+                    color = "\033[1;32m"  # ?뱀깋
+                    severity = "?윟"
                 agent_str = (f"{color}{severity} {agent_list} "
                             f"({max_dur}s)\033[0m")
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용 + agent
+    # ??以?援ъ“ - line 1: ?몄뀡(?좏겙怨??⑹퀜吏?in main) 쨌 line 2: 二쇨컙 + MCP + ?ъ궗??+ agent
     import datetime as _dt
     import glob as _glob
     session_gauge = ""
@@ -563,19 +551,18 @@ def extra_gauges(cwd, data=None):
     def _bar(pct, w=8):
         pct = max(0.0, min(100.0, pct))
         filled = int(round(pct / 100.0 * w))
-        return "█" * filled + "▒" * (w - filled)
+        return "?? * filled + "?? * (w - filled)
 
-    # 2026-09-07: 세션·주간 자체 추정(5h창 경과 · 프로젝트 jsonl 응답 수)을 걷어냈다.
-    #   아래 rate_limits 블록이 항상 덮어써서 죽은 코드였고, 매 렌더마다 7일치 jsonl 을
-    #   전부 읽느라 상태바만 느려졌다. 실값은 stdin rate_limits + 캐시로 충분하다.
+    # 2026-09-07: ?몄뀡쨌二쇨컙 ?먯껜 異붿젙(5h李?寃쎄낵 쨌 ?꾨줈?앺듃 jsonl ?묐떟 ????嫄룹뼱?덈떎.
+    #   ?꾨옒 rate_limits 釉붾줉????긽 ??뼱?⑥꽌 二쎌? 肄붾뱶?怨? 留??뚮뜑留덈떎 7?쇱튂 jsonl ??    #   ?꾨? ?쎈뒓???곹깭諛붾쭔 ?먮젮議뚮떎. ?ㅺ컪? stdin rate_limits + 罹먯떆濡?異⑸텇?섎떎.
 
-    # 3) 짧은 인디케이터 (MCP - 재사용)
+    # 3) 吏㏃? ?몃뵒耳?댄꽣 (MCP - ?ъ궗??
     tail = []
-    # MCP 카운트 — .claude/state/mcp-status.json (형식: "MCP 14 on 13 off")
+    # MCP 移댁슫????.claude/state/mcp-status.json (?뺤떇: "MCP 14 on 13 off")
     mcp_shown = False
     try:
         mcp_cache = os.path.join(cwd, ".claude", "state", "mcp-status.json")
-        # 파일이 아예 없을 때도 백그라운드 측정 시작 (새로 병합된 폴더에서 'MCP off' 로만 뜨던 것 · 1006 A1 실측)
+        # ?뚯씪???꾩삁 ?놁쓣 ?뚮룄 諛깃렇?쇱슫??痢≪젙 ?쒖옉 (?덈줈 蹂묓빀???대뜑?먯꽌 'MCP off' 濡쒕쭔 ?⑤뜕 寃?쨌 1006 A1 ?ㅼ륫)
         if not os.path.exists(mcp_cache):
             try:
                 import time as _time0
@@ -587,7 +574,7 @@ def extra_gauges(cwd, data=None):
                     import subprocess as _sp0
                     _sp0.Popen(["bash", scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
                                creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
-            except Exception:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                 pass
         if os.path.exists(mcp_cache):
             import time as _time
@@ -596,8 +583,8 @@ def extra_gauges(cwd, data=None):
                 ms = json.load(f)
             ok = int(ms.get("connected", 0))
             fail = int(ms.get("failed", 0))
-            # 1h 넘으면 백그라운드 재측정 (SessionStart 에서만 갱신돼 며칠 세션엔 91h 전 값이 떴다)
-            #   창 없음 · 10분 안 재실행 방지 마커 · 렌더는 기다리지 않음 (claude mcp list ~30s)
+            # 1h ?섏쑝硫?諛깃렇?쇱슫???ъ륫??(SessionStart ?먯꽌留?媛깆떊??硫곗튌 ?몄뀡??91h ??媛믪씠 ?대떎)
+            #   李??놁쓬 쨌 10遺????ъ떎??諛⑹? 留덉빱 쨌 ?뚮뜑??湲곕떎由ъ? ?딆쓬 (claude mcp list ~30s)
             if age > 3600:
                 try:
                     mk = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
@@ -607,23 +594,23 @@ def extra_gauges(cwd, data=None):
                         _sp.Popen(["bash", os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
                                   stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
                                   creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-            # 4h 넘으면 몇 시간 전 값인지 적는다 (예전 "?" 는 뜻이 안 보였다)
-            stale = f" ({int(age // 3600)}h 전)" if age > 14400 else ""
+            # 4h ?섏쑝硫?紐??쒓컙 ??媛믪씤吏 ?곷뒗??(?덉쟾 "?" ???살씠 ??蹂댁???
+            stale = f" ({int(age // 3600)}h ??" if age > 14400 else ""
             tot = ok + fail
-            tail.append((f"MCP {ok}/{tot}" if not fail else f"[!] MCP {ok}/{tot} ({fail} 실패)") + stale)
+            tail.append((f"MCP {ok}/{tot}" if not fail else f"[!] MCP {ok}/{tot} ({fail} ?ㅽ뙣)") + stale)
             mcp_shown = True
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
     if not mcp_shown:
         try:
             import urllib.request
             urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
             tail.append("MCP on")
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             tail.append("MCP off")
-    # git 표시 제거 (사용자 요청 2026-09-03)
+    # git ?쒖떆 ?쒓굅 (?ъ슜???붿껌 2026-09-03)
     try:
         import sqlite3
         db = os.path.join(cwd, ".claude", "state", "orca.db")
@@ -636,8 +623,8 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     avg = float(r[1] or 0)
                     rate = min(max(avg / 10.0 * 100.0, 0.0), 100.0)
-                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
-                # orca hit 카운터 (activations · tasks)
+                    tail.append(f"?ъ궗??{cnt} ({rate:.0f}%)")
+                # orca hit 移댁슫??(activations 쨌 tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
                     t = c.execute(
@@ -646,36 +633,34 @@ def extra_gauges(cwd, data=None):
                     ).fetchone()
                     ac = int(a[0]) if a else 0
                     tk = int(t[0]) if t else 0
-                    # 칸 안에 '·' 를 또 쓰면 칸 구분과 섞인다 · task 0 은 표시 안 함
-                    if ac:
+                    # 移??덉뿉 '쨌' 瑜????곕㈃ 移?援щ텇怨??욎씤??쨌 task 0 ? ?쒖떆 ????                    if ac:
                         tail.append(f"orca {ac}")
                     if tk:
                         tail.append(f"task {tk}")
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
                     pass
-                # AI 비용은 별도 line3 로 분리 (여기서는 append X)
+                # AI 鍮꾩슜? 蹂꾨룄 line3 濡?遺꾨━ (?ш린?쒕뒗 append X)
                 pass
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
-    # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
-    # 2026-10-12: Agent 진행률 추가
+    # 2026-10-02: ?꾨옒 3媛쒕뒗 orca.db ? 臾닿? ??DB ?녿뒗 PC ?먯꽌???쒖떆 (?꾩뿏 db 釉붾줉 ?덉뿉 媛뉙? ?щ씪吏?
+    # 2026-10-12: Agent 吏꾪뻾瑜?異붽?
     if agent_str:
         tail.insert(0, agent_str)
     try:
-        # Cache hit rate (prompt cache 절감)
-        # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산
+        # Cache hit rate (prompt cache ?덇컧)
+        # stdin prompt_cache.hit_ratio (Claude Code ?ㅼ륫) ?곗꽑, ?놁쑝硫?jsonl 怨꾩궛
         _pc = (data or {}).get("prompt_cache") or {}
         _hr = _pc.get("hit_ratio")
         _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
         if _cr > 0:
             tail.append(f"cache {_cr:.0f}%")
-        # 최근 24h error·warn 카운트
-        _e, _w, _top = recent_log_issues(cwd)
+        # 理쒓렐 24h error쨌warn 移댁슫??        _e, _w, _top = recent_log_issues(cwd)
         if _e:
-            tail.append(("[!] " if _e > 20 else "") + f"오류 {_e}" + (f" ({_top})" if _top else ""))
+            tail.append(("[!] " if _e > 20 else "") + f"?ㅻ쪟 {_e}" + (f" ({_top})" if _top else ""))
         if _w:
-            tail.append(f"경고 {_w}")
-        # 하드코딩 감사 결과 (별도 캐시)
+            tail.append(f"寃쎄퀬 {_w}")
+        # ?섎뱶肄붾뵫 媛먯궗 寃곌낵 (蹂꾨룄 罹먯떆)
         try:
             aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
             if os.path.exists(aud):
@@ -684,29 +669,28 @@ def extra_gauges(cwd, data=None):
                 st = a.get("status", "?")
                 tot = int(a.get("total_hits", 0))
                 if st == "PASS":
-                    tail.append("하드코딩 0")
+                    tail.append("?섎뱶肄붾뵫 0")
                 elif st == "CRITICAL":
-                    tail.append(f"[!] 하드코딩 {tot}")
+                    tail.append(f"[!] ?섎뱶肄붾뵫 {tot}")
                 else:
-                    tail.append(f"하드코딩 {tot}")
-        except Exception:
+                    tail.append(f"?섎뱶肄붾뵫 {tot}")
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             pass
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # AI 비용 line3 (세션 · 현월 · 년간 · KRW 병기)
-    # 2026-09-05: 세션 비용은 Claude Code 가 cost.total_cost_usd 로 준다(정확한 값).
-    #   jsonl 을 단가표로 되짚어 계산하던 근사치보다 이쪽이 맞다. 월·년간은 여전히
-    #   이 프로젝트 jsonl 합산이라 "(이 프로젝트)" 라벨을 유지한다.
+    # AI 鍮꾩슜 line3 (?몄뀡 쨌 ?꾩썡 쨌 ?꾧컙 쨌 KRW 蹂묎린)
+    # 2026-09-05: ?몄뀡 鍮꾩슜? Claude Code 媛 cost.total_cost_usd 濡?以???뺥솗??媛?.
+    #   jsonl ???④??쒕줈 ?섏쭦??怨꾩궛?섎뜕 洹쇱궗移섎낫???댁そ??留욌떎. ?붋룸뀈媛꾩? ?ъ쟾??    #   ???꾨줈?앺듃 jsonl ?⑹궛?대씪 "(???꾨줈?앺듃)" ?쇰꺼???좎??쒕떎.
     global _SESSION_COST
-    _delta = 0.0  # 이 세션의 (공식값 - jsonl 추정) — 월·년 합계 안의 세션 몫도 공식값으로 교체
+    _delta = 0.0  # ???몄뀡??(怨듭떇媛?- jsonl 異붿젙) ???붋룸뀈 ?⑷퀎 ?덉쓽 ?몄뀡 紐ル룄 怨듭떇媛믪쑝濡?援먯껜
     try:
         _c = (data or {}).get("cost") or {}
         if isinstance(_c.get("total_cost_usd"), (int, float)):
             _official = float(_c["total_cost_usd"])
             _delta = _official - _SESSION_COST
             _SESSION_COST = _official
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
     rate = float(os.environ.get("USD_KRW_RATE", "1350"))
     monthly = (_MONTHLY_COST + _delta) if _MONTHLY_COST > 0 else _SESSION_COST
@@ -716,30 +700,26 @@ def extra_gauges(cwd, data=None):
     if _SESSION_COST > 0.001 or monthly > 0.001 or yearly > 0.001:
         def _krw(usd):
             v = usd * rate
-            return f"₩{int(v):,}" if v >= 1 else f"₩{v:.0f}"
-        # 2026-09-05: monthly_cost·yearly_cost 는 **이 프로젝트 폴더의 jsonl 만** 합산한다
-        #   (statusline_context.py 의 monthly_cost(cwd) 참고). 그래서 창마다 값이 다르다 —
-        #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
-        #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
+            return f"??int(v):,}" if v >= 1 else f"??v:.0f}"
+        # 2026-09-05: monthly_cost쨌yearly_cost ??**???꾨줈?앺듃 ?대뜑??jsonl 留?* ?⑹궛?쒕떎
+        #   (statusline_context.py ??monthly_cost(cwd) 李멸퀬). 洹몃옒??李쎈쭏??媛믪씠 ?ㅻⅤ????        #   lottoclaude ??9??$2,306, orchestration_v1 ? 媛숈? ??$14. ????留욌뒗 媛믪씤??        #   ?쇰꺼???놁뼱??怨꾩젙 ?꾩껜 泥?뎄?≪쑝濡??쏀삍?? 踰붿쐞瑜??곸뼱 ?붾떎.
         line3 = (
-            f"API 정가 환산(구독 청구액 아님) 세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
-            f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
-            f"연간 ${yearly:,.2f} ({_krw(yearly)}) · 이 프로젝트 기준"
+            f"API ?뺢? ?섏궛(援щ룆 泥?뎄???꾨떂) ?몄뀡 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) 쨌 "
+            f"{cur_m}??${monthly:,.2f} ({_krw(monthly)}) 쨌 "
+            f"?곌컙 ${yearly:,.2f} ({_krw(yearly)}) 쨌 ???꾨줈?앺듃 湲곗?"
         )
     else:
         line3 = ""
 
     # ------------------------------------------------------------------
-    # 2026-09-05: Claude Code 가 statusline 입력으로 **진짜 사용량**을 준다.
-    #   rate_limits.five_hour / seven_day 의 used_percentage 와 resets_at 이
-    #   /status 화면과 같은 값이다(실측: 세션 15% resets 12:20pm, 주간 2% resets Sep 10 8am).
-    #   그동안 이 스크립트는 그걸 못 받는 줄 알고 jsonl 을 세서 근사치를 만들고 있었다 —
-    #   세션은 5시간 창 추정, 주간은 "프로젝트 응답 건수 / 임의 분모" 라 /status 와 안 맞았다.
-    #   받은 값이 있으면 그것을 쓴다. 없을 때만 아래 자체 계산으로 물러난다.
+    # 2026-09-05: Claude Code 媛 statusline ?낅젰?쇰줈 **吏꾩쭨 ?ъ슜??*??以??
+    #   rate_limits.five_hour / seven_day ??used_percentage ? resets_at ??    #   /status ?붾㈃怨?媛숈? 媛믪씠???ㅼ륫: ?몄뀡 15% resets 12:20pm, 二쇨컙 2% resets Sep 10 8am).
+    #   洹몃룞?????ㅽ겕由쏀듃??洹멸구 紐?諛쏅뒗 以??뚭퀬 jsonl ???몄꽌 洹쇱궗移섎? 留뚮뱾怨??덉뿀????    #   ?몄뀡? 5?쒓컙 李?異붿젙, 二쇨컙? "?꾨줈?앺듃 ?묐떟 嫄댁닔 / ?꾩쓽 遺꾨え" ??/status ? ??留욎븯??
+    #   諛쏆? 媛믪씠 ?덉쑝硫?洹멸쾬???대떎. ?놁쓣 ?뚮쭔 ?꾨옒 ?먯껜 怨꾩궛?쇰줈 臾쇰윭?쒕떎.
     def _fmt_reset(ts):
         try:
             dt = _dt.datetime.fromtimestamp(int(ts))
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             return ""
         today = _dt.date.today()
         clock = dt.strftime("%I:%M%p").lstrip("0").lower()
@@ -747,16 +727,16 @@ def extra_gauges(cwd, data=None):
             return clock
         return dt.strftime("%b ") + str(dt.day) + " " + clock
 
-    # 2026-09-07: rate_limits 가 **매 렌더마다 오는 것이 아니다** (실측).
-    #   세션 첫 렌더(첫 API 응답 전)·일부 렌더에서는 키 자체가 없다. 그때 아래 자체 계산으로
-    #   물러나면 "주간 이 프로젝트 응답 232건 (7일 · 한도 미설정)" 처럼 **다른 지표**가 튀어나와
-    #   "고쳤다더니 또 그 문구" 로 읽혔다 (2026-09-07 사용자 지적).
-    #   -> 마지막으로 받은 실값을 계정 단위로 캐시해 두고, 안 올 때는 그 값을 쓴다.
-    #      캐시도 없으면 숫자를 지어내지 말고 "집계 대기" 로 비운다 (헌장 A2).
+    # 2026-09-07: rate_limits 媛 **留??뚮뜑留덈떎 ?ㅻ뒗 寃껋씠 ?꾨땲??* (?ㅼ륫).
+    #   ?몄뀡 泥??뚮뜑(泥?API ?묐떟 ??쨌?쇰? ?뚮뜑?먯꽌?????먯껜媛 ?녿떎. 洹몃븣 ?꾨옒 ?먯껜 怨꾩궛?쇰줈
+    #   臾쇰윭?섎㈃ "二쇨컙 ???꾨줈?앺듃 ?묐떟 232嫄?(7??쨌 ?쒕룄 誘몄꽕??" 泥섎읆 **?ㅻⅨ 吏??*媛 ??대굹?
+    #   "怨좎낀?ㅻ뜑????洹?臾멸뎄" 濡??쏀삍??(2026-09-07 ?ъ슜??吏??.
+    #   -> 留덉?留됱쑝濡?諛쏆? ?ㅺ컪??怨꾩젙 ?⑥쐞濡?罹먯떆???먭퀬, ?????뚮뒗 洹?媛믪쓣 ?대떎.
+    #      罹먯떆???놁쑝硫??レ옄瑜?吏?대궡吏 留먭퀬 "吏묎퀎 ?湲? 濡?鍮꾩슫??(?뚯옣 A2).
     _rl_cache = os.path.join(os.path.expanduser("~"), ".claude", "state", "rate-limits.json")
 
     def _read_rl(d):
-        """페이로드에서 유효한 rate_limits 만 뽑는다. 없으면 None."""
+        """?섏씠濡쒕뱶?먯꽌 ?좏슚??rate_limits 留?戮묐뒗?? ?놁쑝硫?None."""
         rl = (d or {}).get("rate_limits") or {}
         out = {}
         for k in ("five_hour", "seven_day"):
@@ -774,7 +754,7 @@ def extra_gauges(cwd, data=None):
             import time as _time
             with open(_rl_cache, "w", encoding="utf-8") as _f:
                 json.dump({"rate_limits": rl, "ts": _time.time()}, _f)
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             pass
     else:
         try:
@@ -785,64 +765,63 @@ def extra_gauges(cwd, data=None):
             if cached:
                 rl = cached
                 rl_age = max(0.0, _time.time() - float(c.get("ts") or 0))
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             rl = None
 
     if rl:
-        # 캐시가 30분 넘게 묵었으면 값 뒤에 ~ 를 붙여 "직전 실값" 임을 밝힌다.
+        # 罹먯떆媛 30遺??섍쾶 臾듭뿀?쇰㈃ 媛??ㅼ뿉 ~ 瑜?遺숈뿬 "吏곸쟾 ?ㅺ컪" ?꾩쓣 諛앺엺??
         mark = "~" if rl_age > 1800 else ""
         fh = rl.get("five_hour") or {}
         sd = rl.get("seven_day") or {}
         if "used_percentage" in fh:
             pct = fh["used_percentage"]
             r = _fmt_reset(fh.get("resets_at"))
-            session_gauge = ("세션 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            session_gauge = ("?몄뀡 " + _bar(pct) + f" {pct:.0f}%{mark}"
                              + (f" (reset {r})" if r else ""))
         if "used_percentage" in sd:
             pct = sd["used_percentage"]
             r = _fmt_reset(sd.get("resets_at"))
-            week_gauge = ("주간 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            week_gauge = ("二쇨컙 " + _bar(pct) + f" {pct:.0f}%{mark}"
                           + (f" (reset {r})" if r else ""))
     else:
-        # 실값도 캐시도 없다 = 아직 한 번도 못 받았다. 다른 지표로 대체하지 않는다.
-        session_gauge = "세션 (집계 대기)"
-        week_gauge = "주간 (집계 대기)"
+        # ?ㅺ컪??罹먯떆???녿떎 = ?꾩쭅 ??踰덈룄 紐?諛쏆븯?? ?ㅻⅨ 吏?쒕줈 ?泥댄븯吏 ?딅뒗??
+        session_gauge = "?몄뀡 (吏묎퀎 ?湲?"
+        week_gauge = "二쇨컙 (吏묎퀎 ?湲?"
 
-    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
-    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
-    # ★기준 (사용자 확정 2026-10-06 — 임의 변경 금지):
-    #   주간 ≥80%  → [!] fast OFF (주간 N%)
-    #   주간 50~79% → fast OFF (주간 N% 보호)
-    #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
-    #   그 외       → fast ON
-    # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
+    # fast 異붿쿇 諭껋? ??二쇨컙 budget 蹂댄샇 쨌 ?좏겙 compact ?꾨컯留?OFF
+    # ?몄뀡 % (five_hour) ??quota ?꾨컯 吏??쨌 fast on/off ? 臾닿? (reset 湲곕떎由щ㈃ ??
+    # ?낃린以 (?ъ슜???뺤젙 2026-10-06 ???꾩쓽 蹂寃?湲덉?):
+    #   二쇨컙 ??0%  ??[!] fast OFF (二쇨컙 N%)
+    #   二쇨컙 50~79% ??fast OFF (二쇨컙 N% 蹂댄샇)
+    #   ?좏겙 ??0%  ??fast OFF (?좏겙 N% 쨌 compact ?꾨컯)
+    #   洹???      ??fast ON
+    # ANSI ??(/clear ?좊룄??쨌 Claude 媛 slash command ?먮룞 ?ㅽ뻾 遺덇? ???ъ슜???덉뿉 ?꾧쾶)
     _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _tp >= 95:
-            tail.append(f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
+            tail.append(f"{_RED}[!!] /clear 沅뚯옣 (?좏겙 {_tp:.0f}% 쨌 ?묒뾽 ?앸궗?쇰㈃ 利됱떆){_RST}")
         elif _tp >= 80:
-            tail.append(f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+            tail.append(f"{_YEL}[!] /clear 沅뚯옣 (?좏겙 {_tp:.0f}% 쨌 compact ?꾨컯){_RST}")
         elif _wp >= 80:
-            tail.append(f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+            tail.append(f"{_RED}[!!] fast OFF (二쇨컙 {_wp:.0f}%){_RST}")
         elif _wp >= 50:
-            tail.append(f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
+            tail.append(f"{_YEL}fast OFF (二쇨컙 {_wp:.0f}% 蹂댄샇){_RST}")
         else:
             tail.append("fast ON")
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # 디자인·개발 룰 위반 지수 (rule-adherence.json cache · 10분 TTL · ~14ms)
+    # ?붿옄?맞룰컻諛?猷??꾨컲 吏??(rule-adherence.json cache 쨌 10遺?TTL 쨌 ~14ms)
     design_line = ""
     dev_line = ""
     try:
-        # ★★★1006 — **파일은 부모(저장소 루트)에 있고 cwd 는 하위 폴더다.**
-        #   실측: cwd=…/Project1.5 인데 rule-adherence.json 은
-        #   …/C.ICM_Agent_Go/.claude/state/ 에만 있다 → 디자인·개발 줄이 비었다.
-        #   ★★그래서 statusline 이 때로는 6줄, 때로는 3~4줄로 나왔다 —
-        #     Claude Code 가 주는 cwd 가 루트일 때만 맞았던 것이다.
-        #   ★부모로 거슬러 찾는다(최대 4단) — 루트가 어디든 동작해야 한다.
+        # ?끸쁾??006 ??**?뚯씪? 遺紐???μ냼 猷⑦듃)???덇퀬 cwd ???섏쐞 ?대뜑??**
+        #   ?ㅼ륫: cwd=??Project1.5 ?몃뜲 rule-adherence.json ?
+        #   ??C.ICM_Agent_Go/.claude/state/ ?먮쭔 ?덈떎 ???붿옄?맞룰컻諛?以꾩씠 鍮꾩뿀??
+        #   ?끸쁾洹몃옒??statusline ???뚮줈??6以? ?뚮줈??3~4以꾨줈 ?섏솕????        #     Claude Code 媛 二쇰뒗 cwd 媛 猷⑦듃???뚮쭔 留욎븯??寃껋씠??
+        #   ?낅?紐⑤줈 嫄곗뒳??李얜뒗??理쒕? 4?? ??猷⑦듃媛 ?대뵒???숈옉?댁빞 ?쒕떎.
         ra = ""
         _d = os.path.abspath(cwd) if cwd else ""
         for _ in range(4):
@@ -862,35 +841,35 @@ def extra_gauges(cwd, data=None):
             def _fmt(section_name, section):
                 c90 = section.get("counts_90d") or {}
                 rr  = section.get("recur_rate_pct", 0)
-                # 2026-10-07 — 집계 파일이 옛 판(0건 키 없음)이거나 비어 있어도(세션 없는 상위 폴더)
-                #   항목 전부를 0 으로 채워 줄 자체가 사라지지 않게 한다 (A.RMS·A2 실측).
-                _ALL = {"design": ("이모지", "여백", "버전관리", "산출물기한"),
-                        "dev": ("증명지시", "미반영", "전수조사skip")}
+                # 2026-10-07 ??吏묎퀎 ?뚯씪??????0嫄????놁쓬)?닿굅??鍮꾩뼱 ?덉뼱???몄뀡 ?녿뒗 ?곸쐞 ?대뜑)
+                #   ??ぉ ?꾨?瑜?0 ?쇰줈 梨꾩썙 以??먯껜媛 ?щ씪吏吏 ?딄쾶 ?쒕떎 (A.RMS쨌A2 ?ㅼ륫).
+                _ALL = {"design": ("?대え吏", "?щ갚", "踰꾩쟾愿由?, "?곗텧臾쇨린??),
+                        "dev": ("利앸챸吏??, "誘몃컲??, "?꾩닔議곗궗skip")}
                 c90 = {**{k: 0 for k in _ALL.get(section_name, ())}, **c90}
                 if not c90: return ""
-                # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
-                #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
-                # 2026-10-12 사용자 지시 — 순서도 세션마다 바뀌면 안 됨. count DESC 정렬 X · 고정 순서.
-                _HUE = {"여백": "35", "산출물기한": "33", "버전관리": "36", "이모지": "34",
-                        "전수조사skip": "31", "증명지시": "33", "미반영": "35"}
+                # 2026-10-06 ?ъ슜??吏????媛숈? ??ぉ? ?대뒓 ?꾨줈?앺듃?먯꽌??媛숈? ??(嫄댁닔濡???諛붽씀吏 ?딆쓬).
+                #   ??ぉ ?대쫫留?怨좎젙 ?됱쑝濡?媛뺤“ 쨌 ?レ옄쨌援щ텇?먮뒗 湲곕낯??쨌 0嫄대룄 ?쒖떆.
+                # 2026-10-12 ?ъ슜??吏?????쒖꽌???몄뀡留덈떎 諛붾뚮㈃ ???? count DESC ?뺣젹 X 쨌 怨좎젙 ?쒖꽌.
+                _HUE = {"?щ갚": "35", "?곗텧臾쇨린??: "33", "踰꾩쟾愿由?: "36", "?대え吏": "34",
+                        "?꾩닔議곗궗skip": "31", "利앸챸吏??: "33", "誘몃컲??: "35"}
                 _ORDER = {
-                    "design": ["산출물기한", "이모지", "여백", "버전관리"],
-                    "dev":    ["전수조사skip", "미반영", "증명지시"],
+                    "design": ["?곗텧臾쇨린??, "?대え吏", "?щ갚", "踰꾩쟾愿由?],
+                    "dev":    ["?꾩닔議곗궗skip", "誘몃컲??, "利앸챸吏??],
                 }
                 def _hl(k):
                     return f"\033[1;{_HUE.get(k, '37')}m{k}\033[0m"
                 order = _ORDER.get(section_name, list(c90.keys()))
-                # 고정 순서 먼저, 매핑 밖 항목은 뒤에 count DESC 로 붙임 (신규 카테고리 대응)
+                # 怨좎젙 ?쒖꽌 癒쇱?, 留ㅽ븨 諛???ぉ? ?ㅼ뿉 count DESC 濡?遺숈엫 (?좉퇋 移댄뀒怨좊━ ???
                 seen = set(order)
                 extras = sorted([k for k in c90.keys() if k not in seen], key=lambda k: -c90[k])
                 parts = [f"{_hl(k)} {c90[k]}" for k in (order + extras) if k in c90]
-                return " · ".join(parts) + f" · \033[1m재발률\033[0m {rr}%"
+                return " 쨌 ".join(parts) + f" 쨌 \033[1m?щ컻瑜?033[0m {rr}%"
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
+    # 理쒖쥌 議곕┰ - session_gauge ??蹂꾨룄 諛섑솚 (main ?먯꽌 token_line 怨??⑹묠)
     line2_parts = []
     if week_gauge:
         line2_parts.append(week_gauge)
@@ -903,52 +882,52 @@ def extra_gauges(cwd, data=None):
 
 
 def main() -> None:
-    # [함정 4] 예외 나도 rc=0 + 빈 게이지
+    # [?⑥젙 4] ?덉쇅 ?섎룄 rc=0 + 鍮?寃뚯씠吏
     try:
         raw = sys.stdin.read()
         data = json.loads(raw) if raw.strip() else {}
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         data = {}
 
-    # 진단용 - 마지막 stdin 원문 (필드 실측 근거)
+    # 吏꾨떒??- 留덉?留?stdin ?먮Ц (?꾨뱶 ?ㅼ륫 洹쇨굅)
     try:
         _cwd0 = data.get("cwd") or ""
         if _cwd0:
             with open(os.path.join(_cwd0, ".claude", "state", "statusline-stdin.json"),
                       "w", encoding="utf-8") as _f:
                 json.dump(data, _f, ensure_ascii=False, indent=2)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
     model_id = ""
     try:
         model_id = (data.get("model") or {}).get("id") or ""
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
     session_id = data.get("session_id") or ""
-    # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
-    #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
-    #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
-    #   ★그런데 바깥 `except Exception` 이 「측정 전」만 찍어 **원인이 안 보였다**
-    #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
-    #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
+    # ?끸쁾??006 ??**Claude Code ??`cwd` 媛 ?꾨땲??`workspace.current_dir` 濡?以??**
+    #   ?ㅼ륫: ??以꾩씠 鍮?臾몄옄?댁쓣 ?댁꽌 design쨌dev쨌cost 以꾩씠 **?꾨? 鍮꾩뿀怨?*,
+    #   statusline ???뚰넗???쒕룄/?곹깭/鍮꾩슜??4以??먮뒗 1以?濡쒕쭔 ?섏솕??
+    #   ?낃렇?곕뜲 諛붽묑 `except Exception` ???뚯륫???꾠띾쭔 李띿뼱 **?먯씤????蹂댁???*
+    #     (議곗슜???대갚 ???ㅽ뙣???뚮━媛 ?놁쑝硫??꾨Т??紐?怨좎튇??쨌 A7).
+    #   ?낅몢 ?대쫫??紐⑤몢 蹂몃떎 ???몄뒪?멸? ?대뒓 履쎌쑝濡?以섎룄 ?숈옉?댁빞 ?쒕떎.
     cwd = (data.get("cwd")
            or (data.get("workspace") or {}).get("current_dir")
            or (data.get("workspace") or {}).get("project_dir")
            or os.getcwd() or "")
 
-    # ★★★1006 — **cwd 를 «.claude 를 가진 저장소 루트»로 올린다(정본 1곳).**
-    #   실측: 이 파일에서 `os.path.join(cwd, ".claude", …)` 가 **8곳**이다
-    #   (logs · orca.db ×2 · mcp-status · mcp-refresh · refresh 스크립트 ·
-    #    hardcoded-audit · state). cwd 가 하위 폴더면 **그 8곳이 전부** 빈 값이 되어
-    #   디자인·개발·비용·MCP 줄이 사라진다 — 그래서 statusline 이 때로 3줄이었다.
-    #   ★★한 곳씩 고치면 반드시 또 빠진다(⑥) — 그래서 **cwd 를 한 번 정규화**한다.
-    #   ★판정은 «.claude 폴더가 있는가» — 프로젝트 구조를 지어내지 않는다.
+    # ?끸쁾??006 ??**cwd 瑜?짬.claude 瑜?媛吏???μ냼 猷⑦듃쨩濡??щ┛???뺣낯 1怨?.**
+    #   ?ㅼ륫: ???뚯씪?먯꽌 `os.path.join(cwd, ".claude", ??` 媛 **8怨?*?대떎
+    #   (logs 쨌 orca.db 횞2 쨌 mcp-status 쨌 mcp-refresh 쨌 refresh ?ㅽ겕由쏀듃 쨌
+    #    hardcoded-audit 쨌 state). cwd 媛 ?섏쐞 ?대뜑硫?**洹?8怨녹씠 ?꾨?** 鍮?媛믪씠 ?섏뼱
+    #   ?붿옄?맞룰컻諛쑣룸퉬?㈑텺CP 以꾩씠 ?щ씪吏꾨떎 ??洹몃옒??statusline ???뚮줈 3以꾩씠?덈떎.
+    #   ?끸쁾??怨녹뵫 怨좎튂硫?諛섎뱶????鍮좎쭊???? ??洹몃옒??**cwd 瑜???踰??뺢퇋??*?쒕떎.
+    #   ?낇뙋?뺤? 짬.claude ?대뜑媛 ?덈뒗媛쨩 ???꾨줈?앺듃 援ъ“瑜?吏?대궡吏 ?딅뒗??
     if cwd:
         _p = os.path.abspath(cwd)
         for _ in range(5):
-            if os.path.isdir(os.path.join(_p, "plugins")) and os.path.isdir(os.path.join(_p, ".claude")):  # kit 설치 루트 기준
+            if os.path.isdir(os.path.join(_p, "plugins")) and os.path.isdir(os.path.join(_p, ".claude")):  # kit ?ㅼ튂 猷⑦듃 湲곗?
                 cwd = _p
                 break
             _u = os.path.dirname(_p)
@@ -956,38 +935,37 @@ def main() -> None:
                 break
             _p = _u
 
-    # 상한 정본 = Claude Code 가 주는 context_window.context_window_size. 없을 때만 표 추정.
+    # ?곹븳 ?뺣낯 = Claude Code 媛 二쇰뒗 context_window.context_window_size. ?놁쓣 ?뚮쭔 ??異붿젙.
     _cw = data.get("context_window") or {}
     if isinstance(_cw.get("context_window_size"), int) and _cw["context_window_size"] > 0:
         limit, exact_model = _cw["context_window_size"], True
     else:
         limit, exact_model = pick_limit(model_id)
 
-    # 2026-10-01: 이름표 추정보다 Claude Code 가 주는 실제 상한이 정본이다.
-    #   model.id 가 "claude-opus-5-5"([1m] 없음)인 1M 세션이 claude-opus-5 항목에 걸려
-    #   200K 로 기록됐고, 시작 직후 231K 에서 "116% 즉시 compact" 허위 경보가 났다.
+    # 2026-10-01: ?대쫫??異붿젙蹂대떎 Claude Code 媛 二쇰뒗 ?ㅼ젣 ?곹븳???뺣낯?대떎.
+    #   model.id 媛 "claude-opus-5-5"([1m] ?놁쓬)??1M ?몄뀡??claude-opus-5 ??ぉ??嫄몃젮
+    #   200K 濡?湲곕줉?먭퀬, ?쒖옉 吏곹썑 231K ?먯꽌 "116% 利됱떆 compact" ?덉쐞 寃쎈낫媛 ?щ떎.
     try:
         cw = int((data.get("context_window") or {}).get("context_window_size") or 0)
         if cw > 0:
             limit, exact_model = cw, True
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
         pass
 
-    # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
-    # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
-    # 볼 수 없어 1M 세션을 200K 로 오판했다 (193K/200K = 93% 허위 경보, 2026-09-05 실측).
+    # ?닿껐??而⑦뀓?ㅽ듃 ?곹븳??SoT 濡?怨듭쑀 - jsonl ??message.model ? "claude-opus-5" 濡쒕쭔
+    # 湲곕줉?섏뼱 "[1m]" ?묐?媛 ?녿떎. hook(inject-compact-reminder)? stdin ??model.id 瑜?    # 蹂????놁뼱 1M ?몄뀡??200K 濡??ㅽ뙋?덈떎 (193K/200K = 93% ?덉쐞 寃쎈낫, 2026-09-05 ?ㅼ륫).
     if exact_model and cwd:
         try:
             import datetime as _dtc
-            # 2026-09-10: cwd 는 **세션의 현재 디렉터리**다. `cd nextjs` 한 순간
-            #   nextjs/.claude/state/ 가 생겼고, 그렇게 만들어진 엉뚱한 .claude 가
-            #   8곳까지 늘어 있었다. 루트 표식을 찾아 올라간다.
+            # 2026-09-10: cwd ??**?몄뀡???꾩옱 ?붾젆?곕━**?? `cd nextjs` ???쒓컙
+            #   nextjs/.claude/state/ 媛 ?앷꼈怨? 洹몃젃寃?留뚮뱾?댁쭊 ?됰슧??.claude 媛
+            #   8怨녠퉴吏 ?섏뼱 ?덉뿀?? 猷⑦듃 ?쒖떇??李얠븘 ?щ씪媛꾨떎.
             st = os.path.join(_project_root(cwd), ".claude", "state")
             os.makedirs(st, exist_ok=True)
             with open(os.path.join(st, "context-limit.json"), "w", encoding="utf-8") as _f:
                 json.dump({"model": model_id, "limit": limit,
                            "ts": _dtc.datetime.now().isoformat(timespec="seconds")}, _f)
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             pass
 
     tokens = 0
@@ -1005,7 +983,7 @@ def main() -> None:
                     + (usage.get("cache_creation_input_tokens") or 0)
                 )
                 no_usage = False
-            # 세션 · 이번 달 · 올해 전체 비용 + cache hit + error count
+            # ?몄뀡 쨌 ?대쾲 ??쨌 ?ы빐 ?꾩껜 鍮꾩슜 + cache hit + error count
             global _SESSION_COST, _MONTHLY_COST, _YEARLY_COST
             global _CACHE_HIT_RATE, _ERROR_COUNT
             _SESSION_COST = session_cost(jsonl, model_id)
@@ -1013,54 +991,55 @@ def main() -> None:
             _YEARLY_COST = yearly_cost(cwd, model_id)
             _CACHE_HIT_RATE = cache_hit_rate(jsonl)
             _ERROR_COUNT = recent_error_count(cwd)
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
             pass
 
-    # 3줄 구조: [시각 + 토큰 + 세션] / [주간 + MCP + 재사용 + 하드코딩 + orca + cache + err] / [AI 비용]
+    # 3以?援ъ“: [?쒓컖 + ?좏겙 + ?몄뀡] / [二쇨컙 + MCP + ?ъ궗??+ ?섎뱶肄붾뵫 + orca + cache + err] / [AI 鍮꾩슜]
     import datetime as _dt3
     clock = _dt3.datetime.now().strftime("%m/%d %H:%M")
     token_line = render(tokens, limit, exact_model, no_usage)
-    # fast 로직용: 토큰 context % inject (compact 임박 판정)
+    # fast 濡쒖쭅?? ?좏겙 context % inject (compact ?꾨컯 ?먯젙)
     if isinstance(data, dict) and limit and tokens:
         data["_ctx_pct"] = min(100.0, tokens / limit * 100.0)
     gauges = extra_gauges(cwd, data) if cwd else {"session": "", "line2": "", "line3": ""}
-    SEP = " · "
+    SEP = " 쨌 "
 
-    # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
-    #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
-    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "비용": "💰"}
+    # 2026-10-06 ?ъ슜??吏????以?癒몃━留??대え吏 ?좎? 湲곗? ("洹?湲곗?? 吏耳쒖빞吏").
+    #   VS16(U+FE0F) ???꾩슂 ?녿뒗 ?⑥씪 肄붾뱶?ъ씤?몃쭔 ?대떎 (?곕??먮쭏????씠 ?щ씪???뺣젹??源⑥쭚).
+    ICONS = {"?좏겙": "?쭬", "?쒕룄": "??, "?붿옄??: "?렓", "媛쒕컻": "?뮲", "?곹깭": "?뱻", "鍮꾩슜": "?뮥"}
 
     def _row(label: str, body: str) -> str:
-        # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
+        # 癒몃━留??쒖떆??9移??대え吏 2 + 怨듬갚 1 + ?쒓? 理쒕? 6)?쇰줈 留욎땄 ??紐⑤뱺 以??댁슜??媛숈? 移몄뿉???쒖옉
         import unicodedata as _ud
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
-        # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
+        # 癒몃━留?援듭? 泥?줉 쨌 援щ텇???뚯깋 (?대え吏 癒몃━留???媛뺤“ ???ъ슜??吏??1006)
+        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m??033[0m " + body
 
-    out = [_row("토큰", f"{token_line}{SEP}{clock}")]
+    out = [_row("?좏겙", f"{token_line}{SEP}{clock}")]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
     if lim:
-        out.append(_row("한도", SEP.join(lim)))
+        out.append(_row("?쒕룄", SEP.join(lim)))
     if gauges.get("design"):
-        out.append(_row("디자인", gauges["design"]))
+        out.append(_row("?붿옄??, gauges["design"]))
     if gauges.get("dev"):
-        out.append(_row("개발", gauges["dev"]))
+        out.append(_row("媛쒕컻", gauges["dev"]))
     if gauges.get("tail"):
-        out.append(_row("상태", SEP.join(gauges["tail"])))
+        out.append(_row("?곹깭", SEP.join(gauges["tail"])))
     cost = gauges.get("cost") or ""
     if cost:
-        out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
+        out.append(_row("鍮꾩슜", cost.replace("AI 鍮꾩슜(???꾨줈?앺듃) ", "")))
     print("\n".join(out))
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
-        # 최후 fallback
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
+        # 理쒗썑 fallback
         try:
-            print(EMPTY * WIDTH + " 측정 전")
-        except Exception:
-            print("측정 전")
+            print(EMPTY * WIDTH + " 痢≪젙 ??)
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError):
+            print("痢≪젙 ??)
     sys.exit(0)
+

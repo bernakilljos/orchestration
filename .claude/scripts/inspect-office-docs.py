@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-inspect-office-docs.py — docx/xlsx/pptx/xls/ppt 일괄 본문 미리보기
-사용: python inspect-office-docs.py <dir>
-출력: 각 파일의 첫 sheet/슬라이드/paragraph 의 텍스트 일부
+inspect-office-docs.py ??docx/xlsx/pptx/xls/ppt ?쇨큵 蹂몃Ц 誘몃━蹂닿린
+?ъ슜: python inspect-office-docs.py <dir>
+異쒕젰: 媛??뚯씪??泥?sheet/?щ씪?대뱶/paragraph ???띿뒪???쇰?
 """
 import sys, os, subprocess
 from pathlib import Path
@@ -33,7 +33,7 @@ def inspect_xlsx(p):
             cells.append(' | '.join(str(c) if c is not None else '' for c in row))
         wb.close()
         return f"sheets={sheets[:3]}; rows: {' / '.join(cells)}"[:300]
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR: {e}"
 
 def inspect_xls(p):
@@ -46,7 +46,7 @@ def inspect_xls(p):
             cells = [str(s.cell_value(r,c)) for c in range(min(8, s.ncols))]
             rows.append(' | '.join(cells))
         return f"sheets={sheets[:3]}; rows: {' / '.join(rows)}"[:300]
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR: {e}"
 
 def inspect_docx(p):
@@ -54,7 +54,7 @@ def inspect_docx(p):
         d = Document(p)
         paras = [p.text.strip() for p in d.paragraphs if p.text.strip()][:5]
         return ' / '.join(paras)[:300] or '(no text)'
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR: {e}"
 
 def inspect_pptx(p):
@@ -70,7 +70,7 @@ def inspect_pptx(p):
                         out.append(f"S{i+1}: {txt[:100]}")
                         break
         return ' / '.join(out)[:400] or '(no text)'
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR: {e}"
 
 def inspect_ppt(p):
@@ -91,7 +91,7 @@ def inspect_ppt(p):
         pres.Close()
         pp.Quit()
         return ' / '.join(out)[:400] or '(no text)'
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR (ppt COM): {e}"
 
 def inspect_hwp(p):
@@ -106,7 +106,7 @@ def inspect_hwp(p):
         hwp.Quit()
         lines = [l.strip() for l in text.split('\n') if l.strip()][:5]
         return ' / '.join(lines)[:400] or '(no text)'
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"ERR (hwp COM): {e}"
 
 INSPECTORS = {
@@ -115,7 +115,7 @@ INSPECTORS = {
     '.docx': inspect_docx,
     '.pptx': inspect_pptx,
     '.ppt':  inspect_ppt,
-    # .hwp: 한글 보안 dialog 가 사용자 액션 요구 -> Zero-touch 위반. SKIP
+    # .hwp: ?쒓? 蹂댁븞 dialog 媛 ?ъ슜???≪뀡 ?붽뎄 -> Zero-touch ?꾨컲. SKIP
 }
 
 def main():
@@ -132,3 +132,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

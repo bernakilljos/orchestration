@@ -1,26 +1,25 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""세션 이력 DB — Claude Code 대화 기록(jsonl)을 SQLite 로 적재해 분석한다.
+"""?몄뀡 ?대젰 DB ??Claude Code ???湲곕줉(jsonl)??SQLite 濡??곸옱??遺꾩꽍?쒕떎.
 
-왜 만들었나:
-  세션이 "꺼지는" 원인을 추적할 때마다 266MB 짜리 jsonl 을 손으로 뒤졌다.
-  언제·몇 % 에서·무엇을 하다 멈췄는지는 기록에 다 있는데 질의를 못 했다.
-  DB 에 넣으면 한 줄 쿼리로 답이 나온다.
+??留뚮뱾?덈굹:
+  ?몄뀡??"爰쇱??? ?먯씤??異붿쟻???뚮쭏??266MB 吏쒕━ jsonl ???먯쑝濡??ㅼ죱??
+  ?몄젣쨌紐?% ?먯꽌쨌臾댁뾿???섎떎 硫덉톬?붿???湲곕줉?????덈뒗??吏덉쓽瑜?紐??덈떎.
+  DB ???ｌ쑝硫???以?荑쇰━濡??듭씠 ?섏삩??
 
-무엇을 넣나:
-  sessions      세션 한 줄 요약 (기간·턴수·최대 컨텍스트·종료 추정)
-  turns         assistant 응답마다 토큰 점유 (컨텍스트 % 추이)
-  tool_calls    도구 호출과 결과 (무엇을 하다 멈췄나)
-  prompts       사용자가 실제로 친 말
-  hook_events   훅 성공·실패 (방어 장치가 돌았나)
-  ingest_state  파일별 읽은 위치 (증분 적재)
+臾댁뾿???ｋ굹:
+  sessions      ?몄뀡 ??以??붿빟 (湲곌컙쨌?댁닔쨌理쒕? 而⑦뀓?ㅽ듃쨌醫낅즺 異붿젙)
+  turns         assistant ?묐떟留덈떎 ?좏겙 ?먯쑀 (而⑦뀓?ㅽ듃 % 異붿씠)
+  tool_calls    ?꾧뎄 ?몄텧怨?寃곌낵 (臾댁뾿???섎떎 硫덉톬??
+  prompts       ?ъ슜?먭? ?ㅼ젣濡?移?留?  hook_events   ???깃났쨌?ㅽ뙣 (諛⑹뼱 ?μ튂媛 ?뚯븯??
+  ingest_state  ?뚯씪蹂??쎌? ?꾩튂 (利앸텇 ?곸옱)
 
-쓰는 법:
-  python .claude/scripts/session-history-db.py --ingest      증분 적재
-  python .claude/scripts/session-history-db.py --stats       요약
-  python .claude/scripts/session-history-db.py --crashes     꺼짐 분석
-  python .claude/scripts/session-history-db.py --session ID  세션 상세
-  python .claude/scripts/session-history-db.py --sql "..."   임의 쿼리
+?곕뒗 踰?
+  python .claude/scripts/session-history-db.py --ingest      利앸텇 ?곸옱
+  python .claude/scripts/session-history-db.py --stats       ?붿빟
+  python .claude/scripts/session-history-db.py --crashes     爰쇱쭚 遺꾩꽍
+  python .claude/scripts/session-history-db.py --session ID  ?몄뀡 ?곸꽭
+  python .claude/scripts/session-history-db.py --sql "..."   ?꾩쓽 荑쇰━
 """
 import argparse
 import json
@@ -34,16 +33,16 @@ if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         pass
 
 PROJECT_ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
 DB_PATH = PROJECT_ROOT / ".claude" / "state" / "sessions.db"
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
 
-# 모델 컨텍스트 창. 세션이 얼어붙은 지점을 % 로 재기 위한 기준.
+# 紐⑤뜽 而⑦뀓?ㅽ듃 李? ?몄뀡???쇱뼱遺숈? 吏?먯쓣 % 濡??ш린 ?꾪븳 湲곗?.
 CONTEXT_LIMIT = int(os.environ.get("CONTEXT_LIMIT", "1000000"))
-# 도구 입력·결과는 통째로 넣지 않는다. DB 가 원문만큼 커지면 질의가 느려진다.
+# ?꾧뎄 ?낅젰쨌寃곌낵???듭㎏濡??ｌ? ?딅뒗?? DB 媛 ?먮Ц留뚰겮 而ㅼ?硫?吏덉쓽媛 ?먮젮吏꾨떎.
 TEXT_CAP = 2000
 
 SCHEMA = """
@@ -134,9 +133,9 @@ CREATE INDEX IF NOT EXISTS ix_hooks_sess   ON hook_events(session_id, ts);
 """
 
 
-# 나중에 붙인 칼럼. 기존 DB 에도 조용히 추가된다.
-# 서브에이전트 기록은 부모와 같은 sessionId 를 쓰고 agentId 로만 갈린다.
-# 섞어서 세면 컨텍스트 % 가 오염되므로 칼럼으로 갈라 둔다.
+# ?섏쨷??遺숈씤 移쇰읆. 湲곗〈 DB ?먮룄 議곗슜??異붽??쒕떎.
+# ?쒕툕?먯씠?꾪듃 湲곕줉? 遺紐⑥? 媛숈? sessionId 瑜??곌퀬 agentId 濡쒕쭔 媛덈┛??
+# ?욎뼱???몃㈃ 而⑦뀓?ㅽ듃 % 媛 ?ㅼ뿼?섎?濡?移쇰읆?쇰줈 媛덈씪 ?붾떎.
 LATER_COLUMNS = [
     ("turns", "agent_id", "TEXT"),
     ("tool_calls", "agent_id", "TEXT"),
@@ -165,7 +164,7 @@ def parse_ts(s):
         return None
     try:
         return datetime.fromisoformat(s.replace("Z", "+00:00"))
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return None
 
 
@@ -177,7 +176,7 @@ def brief(obj, cap=TEXT_CAP):
     else:
         try:
             s = json.dumps(obj, ensure_ascii=False)
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             s = str(obj)
     return s[:cap]
 
@@ -189,26 +188,26 @@ def full_len(obj):
         return len(obj)
     try:
         return len(json.dumps(obj, ensure_ascii=False))
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return len(str(obj))
 
 
 def ingest_file(conn, path, force=False):
-    """한 jsonl 파일을 증분 적재. 이미 읽은 바이트는 건너뛴다."""
+    """??jsonl ?뚯씪??利앸텇 ?곸옱. ?대? ?쎌? 諛붿씠?몃뒗 嫄대꼫?대떎."""
     st = path.stat()
     row = conn.execute("SELECT * FROM ingest_state WHERE file=?", (str(path),)).fetchone()
     offset = 0
     lines_done = 0
     if row and not force:
-        # 파일이 그대로면 다시 읽지 않는다.
+        # ?뚯씪??洹몃?濡쒕㈃ ?ㅼ떆 ?쎌? ?딅뒗??
         if st.st_size == row["size"] and abs(st.st_mtime - row["mtime"]) < 1:
             return 0
-        # 줄지 않았으면 읽던 자리에서 이어 읽는다.
+        # 以꾩? ?딆븯?쇰㈃ ?쎈뜕 ?먮━?먯꽌 ?댁뼱 ?쎈뒗??
         if st.st_size >= row["size"]:
             offset = row["offset"]
             lines_done = row["lines"]
 
-    # 서브에이전트 기록은 <project>/<세션id>/subagents/agent-*.jsonl 에 있다.
+    # ?쒕툕?먯씠?꾪듃 湲곕줉? <project>/<?몄뀡id>/subagents/agent-*.jsonl ???덈떎.
     if path.parent.name == "subagents":
         project = path.parents[2].name
     else:
@@ -224,7 +223,7 @@ def ingest_file(conn, path, force=False):
             lines_done += 1
             try:
                 r = json.loads(raw)
-            except Exception:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
                 continue
             n_new += 1
             t = r.get("type")
@@ -277,7 +276,7 @@ def ingest_file(conn, path, force=False):
             elif t == "user":
                 m = r.get("message") or {}
                 c = m.get("content")
-                # 사용자가 친 말인지, 도구 결과인지 가른다.
+                # ?ъ슜?먭? 移?留먯씤吏, ?꾧뎄 寃곌낵?몄? 媛瑜몃떎.
                 is_tool_result = False
                 if isinstance(c, list):
                     for b in c:
@@ -307,14 +306,14 @@ def ingest_file(conn, path, force=False):
                     )
 
             elif t == "queue-operation":
-                # 턴 도중 사용자가 끼워 넣은 말. 재촉이 잦은 구간을 보는 데 쓴다.
+                # ???꾩쨷 ?ъ슜?먭? ?쇱썙 ?ｌ? 留? ?ъ큺????? 援ш컙??蹂대뒗 ???대떎.
                 conn.execute(
                     "INSERT OR REPLACE INTO prompts(uuid,session_id,ts,source,text) VALUES(?,?,?,?,?)",
                     ("q-" + str(sid)[:8] + "-" + str(ts), sid, ts, "queued",
                      brief(r.get("content"), 4000)),
                 )
 
-            # 세션 메타는 아무 레코드에서나 주워 담는다.
+            # ?몄뀡 硫뷀????꾨Т ?덉퐫?쒖뿉?쒕굹 二쇱썙 ?대뒗??
             if r.get("cwd"):
                 conn.execute(
                     "INSERT INTO sessions(session_id,project,cwd,git_branch,cli_version,file,file_size)"
@@ -345,10 +344,10 @@ def ingest_file(conn, path, force=False):
 
 
 def rollup(conn):
-    """세션 요약을 다시 계산한다. 종료 사유는 기록에서 추정한다."""
+    """?몄뀡 ?붿빟???ㅼ떆 怨꾩궛?쒕떎. 醫낅즺 ?ъ쑀??湲곕줉?먯꽌 異붿젙?쒕떎."""
     sids = [r[0] for r in conn.execute("SELECT session_id FROM sessions").fetchall()]
     for sid in sids:
-        # 세션 요약은 메인 에이전트 턴만 센다. 서브에이전트는 제 컨텍스트를 따로 쓴다.
+        # ?몄뀡 ?붿빟? 硫붿씤 ?먯씠?꾪듃 ?대쭔 ?쇰떎. ?쒕툕?먯씠?꾪듃????而⑦뀓?ㅽ듃瑜??곕줈 ?대떎.
         agg = conn.execute(
             "SELECT COUNT(*) n, MAX(ctx_total) mx, MAX(ctx_pct) mxp, SUM(output_tokens) out,"
             " MIN(ts) t0, MAX(ts) t1, GROUP_CONCAT(DISTINCT model) models"
@@ -385,19 +384,19 @@ def rollup(conn):
             " ORDER BY ts DESC LIMIT 1", (sid,)).fetchone()
 
         maxp = agg["mxp"] or 0
-        last_kind = "도구대기" if (last and last["n_tool_use"]) else "글"
+        last_kind = "?꾧뎄?湲? if (last and last["n_tool_use"]) else "湲"
 
-        # 종료 사유 추정. 확정이 아니라 신호다 — 상세는 --session 으로 본다.
+        # 醫낅즺 ?ъ쑀 異붿젙. ?뺤젙???꾨땲???좏샇?????곸꽭??--session ?쇰줈 蹂몃떎.
         if (agg["n"] or 0) == 0:
-            reason = "빈세션"
+            reason = "鍮덉꽭??
         elif maxp >= 85:
-            reason = "컨텍스트천장"
-        elif last_kind == "도구대기" and n_dangling > 0:
-            reason = "도구응답없음"
+            reason = "而⑦뀓?ㅽ듃泥쒖옣"
+        elif last_kind == "?꾧뎄?湲? and n_dangling > 0:
+            reason = "?꾧뎄?묐떟?놁쓬"
         elif maxp >= 70:
-            reason = "컨텍스트경고권"
+            reason = "而⑦뀓?ㅽ듃寃쎄퀬沅?
         else:
-            reason = "정상종료추정"
+            reason = "?뺤긽醫낅즺異붿젙"
 
         conn.execute(
             "UPDATE sessions SET started_at=?, ended_at=?, duration_min=?, n_turns=?, n_prompts=?,"
@@ -417,15 +416,15 @@ def rollup(conn):
 
 def cmd_ingest(args):
     conn = connect()
-    # 메인 세션(*/x.jsonl) 과 서브에이전트(*/세션/subagents/agent-*.jsonl) 를 모두 훑는다.
+    # 硫붿씤 ?몄뀡(*/x.jsonl) 怨??쒕툕?먯씠?꾪듃(*/?몄뀡/subagents/agent-*.jsonl) 瑜?紐⑤몢 ?묐뒗??
     files = sorted(PROJECTS_DIR.rglob("*.jsonl"))
     total = 0
     touched = 0
     for p in files:
         try:
             n = ingest_file(conn, p, force=args.force)
-        except Exception as e:
-            print("  건너뜀 " + p.name + ": " + str(e))
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+            print("  嫄대꼫? " + p.name + ": " + str(e))
             continue
         if n:
             touched += 1
@@ -436,15 +435,15 @@ def cmd_ingest(args):
     nt = conn.execute("SELECT COUNT(*) FROM turns").fetchone()[0]
     nc = conn.execute("SELECT COUNT(*) FROM tool_calls").fetchone()[0]
     npm = conn.execute("SELECT COUNT(*) FROM prompts").fetchone()[0]
-    print("적재 완료 — 파일 %d/%d 갱신, 새 줄 %d" % (touched, len(files), total))
-    print("세션 %d · 턴 %d · 도구호출 %d · 프롬프트 %d · DB %.1fMB" % (ns, nt, nc, npm, size_mb))
+    print("?곸옱 ?꾨즺 ???뚯씪 %d/%d 媛깆떊, ??以?%d" % (touched, len(files), total))
+    print("?몄뀡 %d 쨌 ??%d 쨌 ?꾧뎄?몄텧 %d 쨌 ?꾨＼?꾪듃 %d 쨌 DB %.1fMB" % (ns, nt, nc, npm, size_mb))
 
 
 def cmd_stats(args):
     conn = connect()
-    print("=== 세션 요약 (최근 15) ===")
+    print("=== ?몄뀡 ?붿빟 (理쒓렐 15) ===")
     print("%-9s %-22s %-17s %6s %5s %6s %6s %s"
-          % ("id", "project", "시작", "분", "턴", "최대%", "도구", "종료추정"))
+          % ("id", "project", "?쒖옉", "遺?, "??, "理쒕?%", "?꾧뎄", "醫낅즺異붿젙"))
     for r in conn.execute(
             "SELECT substr(session_id,1,8) id, project, substr(started_at,1,16) t0,"
             " duration_min dur, n_turns, max_ctx_pct, n_tools, end_reason"
@@ -454,7 +453,7 @@ def cmd_stats(args):
             r["dur"] if r["dur"] is not None else "-",
             r["n_turns"], r["max_ctx_pct"], r["n_tools"], r["end_reason"]))
     print("")
-    print("=== 종료 사유 분포 ===")
+    print("=== 醫낅즺 ?ъ쑀 遺꾪룷 ===")
     for r in conn.execute(
             "SELECT end_reason, COUNT(*) c FROM sessions WHERE n_turns>0"
             " GROUP BY end_reason ORDER BY c DESC"):
@@ -463,27 +462,27 @@ def cmd_stats(args):
 
 def cmd_crashes(args):
     conn = connect()
-    print("=== 컨텍스트 70% 이상 간 세션 (얼어붙기 쉬운 구간) ===")
+    print("=== 而⑦뀓?ㅽ듃 70% ?댁긽 媛??몄뀡 (?쇱뼱遺숆린 ?ъ슫 援ш컙) ===")
     for r in conn.execute(
             "SELECT substr(session_id,1,8) id, project, substr(ended_at,1,16) t1, n_turns,"
             " max_ctx, max_ctx_pct, last_kind, last_tool, last_gap_min"
             " FROM sessions WHERE max_ctx_pct>=70 ORDER BY max_ctx_pct DESC"):
-        print("  %s %-20s %s 턴%-4d 최대 %d (%d%%) 끝=%s/%s 마지막간격 %s분" % (
+        print("  %s %-20s %s ??-4d 理쒕? %d (%d%%) ??%s/%s 留덉?留됯컙寃?%s遺? % (
             r["id"], (r["project"] or "")[:20], r["t1"], r["n_turns"], r["max_ctx"],
             r["max_ctx_pct"], r["last_kind"], r["last_tool"] or "-", r["last_gap_min"]))
     print("")
-    print("=== 답을 못 받은 도구 호출 (턴 도중 멈춘 자리) ===")
+    print("=== ?듭쓣 紐?諛쏆? ?꾧뎄 ?몄텧 (???꾩쨷 硫덉텣 ?먮━) ===")
     for r in conn.execute(
             "SELECT substr(session_id,1,8) id, MAX(ts) ts, tool_name, COUNT(*) c"
             " FROM tool_calls WHERE answered=0"
             " GROUP BY session_id, tool_name ORDER BY ts DESC LIMIT 20"):
         print("  %s %s %-16s x%d" % (r["id"], (r["ts"] or "")[:16], r["tool_name"], r["c"]))
     print("")
-    print("=== 컨텍스트 대별 턴 수 (어디서 위험해지나) ===")
+    print("=== 而⑦뀓?ㅽ듃 ?蹂?????(?대뵒???꾪뿕?댁??? ===")
     for r in conn.execute(
             "SELECT (ctx_pct/10)*10 band, COUNT(*) n FROM turns WHERE ctx_pct>0"
             " GROUP BY band ORDER BY band"):
-        print("  %3d%% 대  %6d 턴  %s" % (r["band"], r["n"], "#" * min(50, r["n"] // 40)))
+        print("  %3d%% ?  %6d ?? %s" % (r["band"], r["n"], "#" * min(50, r["n"] // 40)))
 
 
 def cmd_session(args):
@@ -491,31 +490,31 @@ def cmd_session(args):
     r = conn.execute("SELECT * FROM sessions WHERE session_id LIKE ?",
                      (args.session + "%",)).fetchone()
     if not r:
-        print("그런 세션이 없습니다: " + args.session)
+        print("洹몃윴 ?몄뀡???놁뒿?덈떎: " + args.session)
         return
-    print("세션 " + r["session_id"] + " (" + str(r["project"]) + ")")
-    print("  기간 %s ~ %s (%s분)" % (r["started_at"], r["ended_at"], r["duration_min"]))
-    print("  턴 %d · 프롬프트 %d · 도구 %d (실패 %d)"
+    print("?몄뀡 " + r["session_id"] + " (" + str(r["project"]) + ")")
+    print("  湲곌컙 %s ~ %s (%s遺?" % (r["started_at"], r["ended_at"], r["duration_min"]))
+    print("  ??%d 쨌 ?꾨＼?꾪듃 %d 쨌 ?꾧뎄 %d (?ㅽ뙣 %d)"
           % (r["n_turns"], r["n_prompts"], r["n_tools"], r["n_tool_err"]))
-    print("  컨텍스트 최대 %d (%d%%) · 마지막 %d" % (r["max_ctx"], r["max_ctx_pct"], r["last_ctx"]))
-    print("  종료 추정: %s (마지막=%s/%s, 직전 간격 %s분)"
+    print("  而⑦뀓?ㅽ듃 理쒕? %d (%d%%) 쨌 留덉?留?%d" % (r["max_ctx"], r["max_ctx_pct"], r["last_ctx"]))
+    print("  醫낅즺 異붿젙: %s (留덉?留?%s/%s, 吏곸쟾 媛꾧꺽 %s遺?"
           % (r["end_reason"], r["last_kind"], r["last_tool"], r["last_gap_min"]))
     print("")
-    print("  --- 마지막 도구 호출 10건 ---")
+    print("  --- 留덉?留??꾧뎄 ?몄텧 10嫄?---")
     for t in conn.execute(
             "SELECT ts, tool_name, answered, is_error, substr(input_brief,1,80) inp"
             " FROM tool_calls WHERE session_id=? ORDER BY ts DESC LIMIT 10", (r["session_id"],)):
-        mark = "정상" if t["answered"] else "무응답"
+        mark = "?뺤긽" if t["answered"] else "臾댁쓳??
         if t["is_error"]:
-            mark = "실패"
+            mark = "?ㅽ뙣"
         print("   %s %-6s %-16s %s" % ((t["ts"] or "")[:19], mark, t["tool_name"],
                                        (t["inp"] or "").replace("\n", " ")))
     print("")
-    print("  --- 컨텍스트 추이 (끝 12턴) ---")
+    print("  --- 而⑦뀓?ㅽ듃 異붿씠 (??12?? ---")
     for t in conn.execute(
             "SELECT ts, ctx_total, ctx_pct, output_tokens FROM turns"
             " WHERE session_id=? ORDER BY ts DESC LIMIT 12", (r["session_id"],)):
-        print("   %s  %8d (%2d%%)  출력 %d"
+        print("   %s  %8d (%2d%%)  異쒕젰 %d"
               % ((t["ts"] or "")[:19], t["ctx_total"], t["ctx_pct"], t["output_tokens"]))
 
 
@@ -523,28 +522,28 @@ def cmd_sql(args):
     conn = connect()
     try:
         rows = conn.execute(args.sql).fetchall()
-    except Exception as e:
-        print("쿼리 실패: " + str(e))
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        print("荑쇰━ ?ㅽ뙣: " + str(e))
         return
     if not rows:
-        print("(결과 없음)")
+        print("(寃곌낵 ?놁쓬)")
         return
     cols = rows[0].keys()
     print(" | ".join(cols))
     for r in rows[:args.limit]:
         print(" | ".join("" if r[c] is None else str(r[c])[:60] for c in cols))
     if len(rows) > args.limit:
-        print("... 총 %d행" % len(rows))
+        print("... 珥?%d?? % len(rows))
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Claude 세션 이력 DB")
-    ap.add_argument("--ingest", action="store_true", help="jsonl 을 DB 로 증분 적재")
-    ap.add_argument("--force", action="store_true", help="처음부터 다시 적재")
-    ap.add_argument("--stats", action="store_true", help="세션 요약")
-    ap.add_argument("--crashes", action="store_true", help="꺼짐 분석")
-    ap.add_argument("--session", help="세션 상세 (앞 8자리로도 됨)")
-    ap.add_argument("--sql", help="임의 SELECT")
+    ap = argparse.ArgumentParser(description="Claude ?몄뀡 ?대젰 DB")
+    ap.add_argument("--ingest", action="store_true", help="jsonl ??DB 濡?利앸텇 ?곸옱")
+    ap.add_argument("--force", action="store_true", help="泥섏쓬遺???ㅼ떆 ?곸옱")
+    ap.add_argument("--stats", action="store_true", help="?몄뀡 ?붿빟")
+    ap.add_argument("--crashes", action="store_true", help="爰쇱쭚 遺꾩꽍")
+    ap.add_argument("--session", help="?몄뀡 ?곸꽭 (??8?먮━濡쒕룄 ??")
+    ap.add_argument("--sql", help="?꾩쓽 SELECT")
     ap.add_argument("--limit", type=int, default=40)
     a = ap.parse_args()
 
@@ -564,3 +563,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

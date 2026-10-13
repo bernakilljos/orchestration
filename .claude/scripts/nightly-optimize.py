@@ -1,12 +1,12 @@
-"""
-nightly-optimize — 매일 03:00 실행 (Task Scheduler 등록)
-1. orca.db 백업
-2. conversations 30일 초과 압축
+﻿"""
+nightly-optimize ??留ㅼ씪 03:00 ?ㅽ뻾 (Task Scheduler ?깅줉)
+1. orca.db 諛깆뾽
+2. conversations 30??珥덇낵 ?뺤텞
 3. VACUUM + ANALYZE
-4. 로그 14일 초과 삭제
-5. image-cache 7일 초과 삭제
-6. hook profile 리포트 (예정)
-근거: .claude/rules/auto-optimization.md
+4. 濡쒓렇 14??珥덇낵 ??젣
+5. image-cache 7??珥덇낵 ??젣
+6. hook profile 由ы룷??(?덉젙)
+洹쇨굅: .claude/rules/auto-optimization.md
 """
 from __future__ import annotations
 import os
@@ -39,14 +39,14 @@ def backup_db() -> None:
     shutil.copy2(DB, bak)
     log(f"backup: {bak.name}")
 
-    # 30일 rolling
+    # 30??rolling
     cutoff = datetime.now() - timedelta(days=30)
     for p in DB.parent.glob("orca.db.bak.*"):
         try:
             if p.stat().st_mtime < cutoff.timestamp():
                 p.unlink()
                 log(f"rolling delete: {p.name}")
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             pass
 
 
@@ -82,7 +82,7 @@ def cleanup_logs() -> None:
             if p.stat().st_mtime < cutoff.timestamp():
                 p.unlink()
                 n += 1
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             pass
     if n:
         log(f"deleted old logs: {n}")
@@ -99,7 +99,7 @@ def cleanup_image_cache() -> None:
             if p.is_file() and p.stat().st_mtime < cutoff.timestamp():
                 p.unlink()
                 n += 1
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             pass
     if n:
         log(f"cleaned image-cache: {n} files")
@@ -110,7 +110,7 @@ def main() -> int:
     for fn in (backup_db, compress_conversations, vacuum_db, cleanup_logs, cleanup_image_cache):
         try:
             fn()
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             log(f"[warn] {fn.__name__}: {e}")
     log("=== done ===")
     return 0
@@ -118,3 +118,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

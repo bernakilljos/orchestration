@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
-# verify-after-edit-logger.py — PostToolUse Edit/Write 시 "왜 안 됐어" 재지시 패턴 감지
-# 2026-10-13 신설 · 목표 C · Auto regression tracking
+﻿#!/usr/bin/env python3
+# verify-after-edit-logger.py ??PostToolUse Edit/Write ??"?????먯뼱" ?ъ????⑦꽩 媛먯?
+# 2026-10-13 ?좎꽕 쨌 紐⑺몴 C 쨌 Auto regression tracking
 
 import os
 import json
@@ -16,9 +16,9 @@ STATE_DIR = Path(PROJECT_DIR) / '.claude/state'
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-# 1. DB 테이블 스키마 (필요 시 생성)
+# 1. DB ?뚯씠釉??ㅽ궎留?(?꾩슂 ???앹꽦)
 def init_db():
-    """DB 테이블 보장"""
+    """DB ?뚯씠釉?蹂댁옣"""
     if not DB_PATH.exists():
         return
     try:
@@ -37,34 +37,33 @@ def init_db():
         """)
         conn.commit()
         conn.close()
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         log(f"[ERROR] DB init failed: {e}")
 
 def log(msg: str):
-    """로그 기록"""
+    """濡쒓렇 湲곕줉"""
     with open(LOG_FILE, 'a', encoding='utf-8') as f:
         f.write(f"[{datetime.now().isoformat()}] {msg}\n")
 
 def detect_requery_pattern(ts_edit: datetime) -> bool:
     """
-    지난 1시간 내 같은 파일 Edit 2회 이상 + 사이에 "왜 안 됐어" 패턴 키워드 감지
-    (개선: UserPromptSubmit hook 에서 keyword 저장 필요 · 현재는 heuristic)
+    吏??1?쒓컙 ??媛숈? ?뚯씪 Edit 2???댁긽 + ?ъ씠??"?????먯뼱" ?⑦꽩 ?ㅼ썙??媛먯?
+    (媛쒖꽑: UserPromptSubmit hook ?먯꽌 keyword ????꾩슂 쨌 ?꾩옱??heuristic)
     """
-    # 실제 구현: session_summary 또는 conversations 테이블에서
-    # ts_edit 전후 대화에 "왜"·"안 됐"·"적용"·"효과" 등 키워드 확인
-    # 임시: True 반환 (보수적으로)
+    # ?ㅼ젣 援ы쁽: session_summary ?먮뒗 conversations ?뚯씠釉붿뿉??    # ts_edit ?꾪썑 ??붿뿉 "??쨌"????쨌"?곸슜"쨌"?④낵" ???ㅼ썙???뺤씤
+    # ?꾩떆: True 諛섑솚 (蹂댁닔?곸쑝濡?
     return True
 
-# 2. PostToolUse Edit/Write 감지
+# 2. PostToolUse Edit/Write 媛먯?
 def on_edit_tool(file_path: str):
-    """Edit/Write 도구 실행 감지"""
+    """Edit/Write ?꾧뎄 ?ㅽ뻾 媛먯?"""
     init_db()
 
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
 
-        # 지난 1시간 내 같은 파일 Edit 이력 조회
+        # 吏??1?쒓컙 ??媛숈? ?뚯씪 Edit ?대젰 議고쉶
         hour_ago = datetime.now() - timedelta(hours=1)
         c.execute("""
             SELECT COUNT(*), MAX(ts) FROM verify_after_edit_patterns
@@ -81,23 +80,23 @@ def on_edit_tool(file_path: str):
                     VALUES (?, ?, ?, ?, ?)
                 """, (file_path, count + 1, datetime.now().isoformat(), 'suspected_requery',
                       'Multiple edits within 1h + likely user requery'))
-                log(f"[PATTERN] {file_path} — edit #{count+1} (possible requery)")
+                log(f"[PATTERN] {file_path} ??edit #{count+1} (possible requery)")
         else:
             c.execute("""
                 INSERT INTO verify_after_edit_patterns
                 (file_path, edit_count)
                 VALUES (?, 1)
             """, (file_path,))
-            log(f"[EDIT] {file_path} — first edit in window")
+            log(f"[EDIT] {file_path} ??first edit in window")
 
         conn.commit()
         conn.close()
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         log(f"[ERROR] on_edit_tool({file_path}): {e}")
 
-# 3. 주간 리포트 생성
+# 3. 二쇨컙 由ы룷???앹꽦
 def generate_weekly_report():
-    """verify-after-edit 패턴 주간 요약"""
+    """verify-after-edit ?⑦꽩 二쇨컙 ?붿빟"""
     if not DB_PATH.exists():
         return
 
@@ -121,7 +120,7 @@ def generate_weekly_report():
                 log(f"  {path}: {cnt} requery(ies)")
 
         conn.close()
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         log(f"[ERROR] weekly_report: {e}")
 
 if __name__ == '__main__':
@@ -134,3 +133,4 @@ if __name__ == '__main__':
         on_edit_tool(sys.argv[1])
     else:
         log("[INFO] Usage: verify-after-edit-logger.py <file_path> [--report]")
+

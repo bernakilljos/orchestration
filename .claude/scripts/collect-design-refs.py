@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
-"""collect-design-refs.py — 매시간 카테고리별 디자인 레퍼런스 자동 수집
+﻿#!/usr/bin/env python3
+"""collect-design-refs.py ??留ㅼ떆媛?移댄뀒怨좊━蹂??붿옄???덊띁?곗뒪 ?먮룞 ?섏쭛
 
-용도: docs/screens/<category>/ 에 웹사이트 캡처 또는 이미지 다운로드
-중복: 파일명 해시로 중복 방지
-호출: python .claude/scripts/collect-design-refs.py [--category dashboard]
+?⑸룄: docs/screens/<category>/ ???뱀궗?댄듃 罹≪쿂 ?먮뒗 ?대?吏 ?ㅼ슫濡쒕뱶
+以묐났: ?뚯씪紐??댁떆濡?以묐났 諛⑹?
+?몄텧: python .claude/scripts/collect-design-refs.py [--category dashboard]
 """
 import hashlib
 import json
@@ -19,7 +19,7 @@ SCREENS_DIR = PROJECT_ROOT / "docs" / "screens"
 LOG_FILE = PROJECT_ROOT / ".claude" / "logs" / "collect-design-refs.log"
 HASH_FILE = PROJECT_ROOT / ".claude" / "state" / "design-refs-hashes.json"
 
-# 카테고리별 수집 소스 (Unsplash/Dribbble/Behance API 또는 curated URLs)
+# 移댄뀒怨좊━蹂??섏쭛 ?뚯뒪 (Unsplash/Dribbble/Behance API ?먮뒗 curated URLs)
 CATEGORY_SOURCES = {
     "dashboard": [
         "https://dribbble.com/search/dashboard-design",
@@ -77,11 +77,11 @@ CATEGORY_SOURCES = {
 
 
 def load_hashes() -> set:
-    """기존 수집된 이미지 해시 로드 (중복 방지)"""
+    """湲곗〈 ?섏쭛???대?吏 ?댁떆 濡쒕뱶 (以묐났 諛⑹?)"""
     if HASH_FILE.exists():
         try:
             return set(json.loads(HASH_FILE.read_text(encoding="utf-8")))
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             return set()
     return set()
 
@@ -96,7 +96,7 @@ def hash_content(content: bytes) -> str:
 
 
 def capture_screenshot(url: str, output_path: Path, width: int = 1920, height: int = 1080) -> bool:
-    """Playwright로 웹사이트 캡처"""
+    """Playwright濡??뱀궗?댄듃 罹≪쿂"""
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
@@ -107,26 +107,26 @@ def capture_screenshot(url: str, output_path: Path, width: int = 1920, height: i
             page.screenshot(path=str(output_path), full_page=False)
             browser.close()
             return True
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         print(f"[WARN] Screenshot failed for {url}: {e}", file=sys.stderr)
         return False
 
 
 def download_image(url: str, output_path: Path) -> bool:
-    """이미지 URL 다운로드"""
+    """?대?吏 URL ?ㅼ슫濡쒕뱶"""
     try:
         import requests
         r = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code == 200 and len(r.content) > 1000:
             output_path.write_bytes(r.content)
             return True
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         print(f"[WARN] Download failed for {url}: {e}", file=sys.stderr)
     return False
 
 
 def collect_for_category(category: str, hashes: set) -> int:
-    """카테고리 1개에서 이미지 1장 수집"""
+    """移댄뀒怨좊━ 1媛쒖뿉???대?吏 1???섏쭛"""
     cat_dir = SCREENS_DIR / category
     cat_dir.mkdir(parents=True, exist_ok=True)
 
@@ -137,12 +137,12 @@ def collect_for_category(category: str, hashes: set) -> int:
     ts = datetime.now().strftime("%Y%m%d_%H%M")
     url = random.choice(sources)
 
-    # Playwright 캡처 시도
+    # Playwright 罹≪쿂 ?쒕룄
     output = cat_dir / f"ref-{ts}-{hash_content(url.encode())[:8]}.png"
     if capture_screenshot(url, output):
         content_hash = hash_content(output.read_bytes())
         if content_hash in hashes:
-            output.unlink()  # 중복 삭제
+            output.unlink()  # 以묐났 ??젣
             return 0
         hashes.add(content_hash)
         return 1
@@ -151,9 +151,9 @@ def collect_for_category(category: str, hashes: set) -> int:
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description="디자인 레퍼런스 자동 수집")
-    parser.add_argument("--category", help="특정 카테고리만 수집")
-    parser.add_argument("--all", action="store_true", help="전체 카테고리 수집")
+    parser = argparse.ArgumentParser(description="?붿옄???덊띁?곗뒪 ?먮룞 ?섏쭛")
+    parser.add_argument("--category", help="?뱀젙 移댄뀒怨좊━留??섏쭛")
+    parser.add_argument("--all", action="store_true", help="?꾩껜 移댄뀒怨좊━ ?섏쭛")
     args = parser.parse_args()
 
     hashes = load_hashes()
@@ -164,26 +164,27 @@ def main():
     elif args.all:
         categories = list(CATEGORY_SOURCES.keys())
     else:
-        # 기본: 랜덤 3개 카테고리
+        # 湲곕낯: ?쒕뜡 3媛?移댄뀒怨좊━
         categories = random.sample(list(CATEGORY_SOURCES.keys()), min(3, len(CATEGORY_SOURCES)))
 
     for cat in categories:
         n = collect_for_category(cat, hashes)
         collected += n
         if n > 0:
-            print(f"  [OK] {cat}: 1장 수집")
+            print(f"  [OK] {cat}: 1???섏쭛")
         else:
-            print(f"  ⏭ {cat}: 중복 또는 실패")
+            print(f"  ??{cat}: 以묐났 ?먮뒗 ?ㅽ뙣")
 
     save_hashes(hashes)
 
-    # 로그
+    # 濡쒓렇
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{datetime.now()}] collected={collected} categories={categories}\n")
 
-    print(f"\n총 {collected}장 수집 완료")
+    print(f"\n珥?{collected}???섏쭛 ?꾨즺")
 
 
 if __name__ == "__main__":
     main()
+

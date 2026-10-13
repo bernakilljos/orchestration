@@ -1,4 +1,4 @@
-"""PNG 콘텐츠 밀도 그리드 검사 — 내부 빈 박스 탐지 (외곽 흰 띠 X).
+﻿"""PNG 肄섑뀗痢?諛??洹몃━??寃?????대? 鍮?諛뺤뒪 ?먯? (?멸낸 ????X).
 """
 # Force UTF-8 stdout on Windows (avoid cp949 encode errors for Korean output)
 import io
@@ -8,31 +8,31 @@ if hasattr(_sys.stdout, "buffer"):
     _sys.stdout = io.TextIOWrapper(_sys.stdout.buffer, encoding="utf-8")
     _sys.stderr = io.TextIOWrapper(_sys.stderr.buffer, encoding="utf-8")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-__doc__ = """PNG 콘텐츠 밀도 그리드 검사 — 내부 빈 박스 탐지 (외곽 흰 띠 X).
+__doc__ = """PNG 肄섑뀗痢?諛??洹몃━??寃?????대? 鍮?諛뺤뒪 ?먯? (?멸낸 ????X).
 
-배경:
-- verify-image-whitespace.py 는 PNG 외곽 흰 띠만 검출
-- 콘텐츠 영역 안에 cream-bg 채워진 빈 박스 (svg-deco 가 flex 로 grow 했지만 SVG 가 작음)
-  같은 케이스는 못 잡음
-- 사용자 "에너지 흐름 아래 여백", "뿌리 깊은 나무 위 공백" 같은 호소가 이 케이스
+諛곌꼍:
+- verify-image-whitespace.py ??PNG ?멸낸 ???좊쭔 寃異?
+- 肄섑뀗痢??곸뿭 ?덉뿉 cream-bg 梨꾩썙吏?鍮?諛뺤뒪 (svg-deco 媛 flex 濡?grow ?덉?留?SVG 媛 ?묒쓬)
+  媛숈? 耳?댁뒪??紐??≪쓬
+- ?ъ슜??"?먮꼫吏 ?먮쫫 ?꾨옒 ?щ갚", "肉뚮━ 源딆? ?섎Т ??怨듬갚" 媛숈? ?몄냼媛 ??耳?댁뒪
 
-해결:
-- PNG 를 N×M 그리드로 분할 (기본 6×8 = 48 cells)
-- 각 셀의 콘텐츠 픽셀 밀도 (non-bg + non-near-bg) 측정
-- 밀도 < threshold (기본 18%) = "비어 보임"
-- 인접 빈 셀 2개+ 클러스터 = "빈 영역" -> WARN + crop PNG 자동 생성
+?닿껐:
+- PNG 瑜?N횞M 洹몃━?쒕줈 遺꾪븷 (湲곕낯 6횞8 = 48 cells)
+- 媛????肄섑뀗痢??쎌? 諛??(non-bg + non-near-bg) 痢≪젙
+- 諛??< threshold (湲곕낯 18%) = "鍮꾩뼱 蹂댁엫"
+- ?몄젒 鍮?? 2媛? ?대윭?ㅽ꽣 = "鍮??곸뿭" -> WARN + crop PNG ?먮룞 ?앹꽦
 
-사용:
-  python verify-render-coverage.py <png>                       # 단일 검사
-  python verify-render-coverage.py <dir>                       # 디렉토리 일괄
-  python verify-render-coverage.py <png> --cols 3              # 컬럼 3 분할 (좌/중/우)
-  python verify-render-coverage.py <png> --threshold 0.15      # 밀도 임계치
-  python verify-render-coverage.py <png> --crop-dir _coverage  # crop 저장 폴더
+?ъ슜:
+  python verify-render-coverage.py <png>                       # ?⑥씪 寃??
+  python verify-render-coverage.py <dir>                       # ?붾젆?좊━ ?쇨큵
+  python verify-render-coverage.py <png> --cols 3              # 而щ읆 3 遺꾪븷 (醫?以???
+  python verify-render-coverage.py <png> --threshold 0.15      # 諛???꾧퀎移?
+  python verify-render-coverage.py <png> --crop-dir _coverage  # crop ????대뜑
 
-종료 코드:
-  0 — PASS (빈 클러스터 없음)
-  1 — WARN (빈 클러스터 있음, crop PNG 생성됨)
-  2 — usage error
+醫낅즺 肄붾뱶:
+  0 ??PASS (鍮??대윭?ㅽ꽣 ?놁쓬)
+  1 ??WARN (鍮??대윭?ㅽ꽣 ?덉쓬, crop PNG ?앹꽦??
+  2 ??usage error
 """
 import sys
 import argparse
@@ -42,36 +42,36 @@ try:
     from PIL import Image
     import numpy as np
 except ImportError:
-    print("[SKIP] PIL/numpy 없음 — verify-render-coverage 건너뜀")
+    print("[SKIP] PIL/numpy ?놁쓬 ??verify-render-coverage 嫄대꼫?")
     sys.exit(0)
 
 
 def density_grid(png_path: Path, rows: int = 6, cols: int = 8) -> tuple:
-    """PNG 를 rows×cols 그리드로 분할 후 각 셀의 콘텐츠 픽셀 밀도 반환.
+    """PNG 瑜?rows횞cols 洹몃━?쒕줈 遺꾪븷 ??媛????肄섑뀗痢??쎌? 諛??諛섑솚.
 
-    밀도 = non-bg 픽셀 비율 (배경색 평균과 diff sum > 45 인 픽셀)
-    배경색은 모서리 4개 평균 사용 (PNG body 배경).
+    諛??= non-bg ?쎌? 鍮꾩쑉 (諛곌꼍???됯퇏怨?diff sum > 45 ???쎌?)
+    諛곌꼍?됱? 紐⑥꽌由?4媛??됯퇏 ?ъ슜 (PNG body 諛곌꼍).
     """
     img = Image.open(str(png_path)).convert("RGB")
     arr = np.array(img)
     h, w = arr.shape[:2]
     gray = arr.astype(int).mean(axis=2)
-    # Edge density (텍스트 stroke / 아이콘 / 차트 가장자리)
+    # Edge density (?띿뒪??stroke / ?꾩씠肄?/ 李⑦듃 媛?μ옄由?
     gy = np.abs(np.diff(gray, axis=0))
     gx = np.abs(np.diff(gray, axis=1))
     edge = np.zeros_like(gray)
     edge[:-1, :] += gy
     edge[:, :-1] += gx
     edge_mask = edge > 12
-    # Color variance (사진처럼 그라데이션 풍부한 영역 보존)
-    # cream (245,239,230) 자체 RGB std≈6.16, white (255,255,255) std=0
-    # -> 임계 >8 로 cream/white 배경 제외, 사진-아이콘 (std>15) 만 콘텐츠로
+    # Color variance (?ъ쭊泥섎읆 洹몃씪?곗씠???띾????곸뿭 蹂댁〈)
+    # cream (245,239,230) ?먯껜 RGB std??.16, white (255,255,255) std=0
+    # -> ?꾧퀎 >8 濡?cream/white 諛곌꼍 ?쒖쇅, ?ъ쭊-?꾩씠肄?(std>15) 留?肄섑뀗痢좊줈
     rgb_std = arr.astype(int).std(axis=2)
     color_mask = rgb_std > 8
-    # Brightness — 텍스트-진한색 카드 (gray<200) 만 콘텐츠
-    # cream gray≈238, white=255 -> 둘 다 제외
+    # Brightness ???띿뒪??吏꾪븳??移대뱶 (gray<200) 留?肄섑뀗痢?
+    # cream gray??38, white=255 -> ?????쒖쇅
     bright_mask = gray < 200
-    # 콘텐츠 = edge OR color variance OR brightness (셋 중 하나만 있어도 콘텐츠)
+    # 肄섑뀗痢?= edge OR color variance OR brightness (??以??섎굹留??덉뼱??肄섑뀗痢?
     content_mask = edge_mask | color_mask | bright_mask
     bg = np.array([245, 239, 230])
 
@@ -87,9 +87,9 @@ def density_grid(png_path: Path, rows: int = 6, cols: int = 8) -> tuple:
 
 
 def find_empty_clusters(grid: np.ndarray, threshold: float = 0.05, min_cluster: int = 2):
-    """밀도 < threshold 인 셀 중 인접 (상하좌우) 셀 클러스터 반환.
+    """諛??< threshold ??? 以??몄젒 (?곹븯醫뚯슦) ? ?대윭?ㅽ꽣 諛섑솚.
 
-    반환: [{"cells": [(r,c), ...], "bbox": (r0,c0,r1,c1)}, ...]
+    諛섑솚: [{"cells": [(r,c), ...], "bbox": (r0,c0,r1,c1)}, ...]
     """
     rows, cols = grid.shape
     empty = grid < threshold
@@ -124,10 +124,10 @@ def find_empty_clusters(grid: np.ndarray, threshold: float = 0.05, min_cluster: 
 
 def crop_cluster(png_path: Path, cluster: dict, cell_h: float, cell_w: float,
                  crop_dir: Path, idx: int) -> Path:
-    """빈 클러스터 영역을 crop 해서 _coverage/<png>_empty_<idx>.png 저장."""
+    """鍮??대윭?ㅽ꽣 ?곸뿭??crop ?댁꽌 _coverage/<png>_empty_<idx>.png ???"""
     img = Image.open(str(png_path)).convert("RGB")
     r0, c0, r1, c1 = cluster["bbox"]
-    # 여유 1셀 padding (시각 확인용)
+    # ?ъ쑀 1? padding (?쒓컖 ?뺤씤??
     pad_r, pad_c = 1, 1
     y0 = max(0, int((r0 - pad_r) * cell_h))
     y1 = min(img.size[1], int((r1 + pad_r) * cell_h))
@@ -142,17 +142,17 @@ def crop_cluster(png_path: Path, cluster: dict, cell_h: float, cell_w: float,
 
 def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
            min_cluster: int = 2, crop_dir: Path = None) -> int:
-    """target (PNG/JPG 또는 디렉토리) 검사. 빈 클러스터 있으면 WARN."""
+    """target (PNG/JPG ?먮뒗 ?붾젆?좊━) 寃?? 鍮??대윭?ㅽ꽣 ?덉쑝硫?WARN."""
     pngs = []
     if target.is_file() and target.suffix.lower() in (".png", ".jpg", ".jpeg"):
         pngs = [target]
     elif target.is_dir():
-        # 언더스코어로 시작하는 파일 (temp) 제외
+        # ?몃뜑?ㅼ퐫?대줈 ?쒖옉?섎뒗 ?뚯씪 (temp) ?쒖쇅
         for ext in ("*.png", "*.jpg", "*.jpeg"):
             pngs.extend(p for p in target.glob(ext) if not p.name.startswith("_"))
         pngs = sorted(pngs)
     if not pngs:
-        print(f"[INFO] {target} — PNG/JPG 없음")
+        print(f"[INFO] {target} ??PNG/JPG ?놁쓬")
         return 0
 
     if crop_dir is None:
@@ -162,7 +162,7 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
     for p in pngs:
         try:
             grid, (h, w), (cell_h, cell_w), bg = density_grid(p, rows, cols)
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             print(f"[ERR] {p.name}: {e}")
             continue
 
@@ -170,8 +170,8 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
         if not clusters:
             continue
 
-        # 외곽 한 줄 (page padding) 클러스터는 제외 — 진짜 외부 흰 띠
-        # 외곽 셀만 있는 클러스터 (bbox 가 page 경계에 붙은 작은 띠) 는 skip
+        # ?멸낸 ??以?(page padding) ?대윭?ㅽ꽣???쒖쇅 ??吏꾩쭨 ?몃? ????
+        # ?멸낸 ?留??덈뒗 ?대윭?ㅽ꽣 (bbox 媛 page 寃쎄퀎??遺숈? ?묒? ?? ??skip
         interior_clusters = []
         for cl in clusters:
             r0, c0, r1, c1 = cl["bbox"]
@@ -179,7 +179,7 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
                 (r1 - r0 == 1 and (r0 == 0 or r1 == rows)) or
                 (c1 - c0 == 1 and (c0 == 0 or c1 == cols))
             )
-            # 페이지 ≥30% 면적은 외곽이라도 큰 빈 영역 -> 포함
+            # ?섏씠吏 ??0% 硫댁쟻? ?멸낸?대씪????鍮??곸뿭 -> ?ы븿
             area_ratio = cl["size"] / (rows * cols)
             if edge_only and area_ratio < 0.10:
                 continue
@@ -205,39 +205,39 @@ def verify(target: Path, rows: int = 6, cols: int = 8, threshold: float = 0.20,
         all_warns.append((p, warns_for_png))
 
     if all_warns:
-        print(f"[WARN] 콘텐츠 밀도 부족 영역 {len(all_warns)}/{len(pngs)} 개 PNG 에서 발견 (밀도 < {threshold:.0%}):")
+        print(f"[WARN] 肄섑뀗痢?諛??遺議??곸뿭 {len(all_warns)}/{len(pngs)} 媛?PNG ?먯꽌 諛쒓껄 (諛??< {threshold:.0%}):")
         for png, warns in all_warns:
             print(f"\n  [PNG] {png.name}")
             for w in warns:
                 r0, c0, r1, c1 = w["bbox_grid"]
                 px = w["bbox_px"]
-                print(f"    [{w['idx']}] 그리드 ({r0},{c0})~({r1},{c1}) "
-                      f"= {w['cells']} 셀, 평균밀도 {w['avg_density']:.1%}")
-                print(f"        픽셀 bbox: {px}")
+                print(f"    [{w['idx']}] 洹몃━??({r0},{c0})~({r1},{c1}) "
+                      f"= {w['cells']} ?, ?됯퇏諛??{w['avg_density']:.1%}")
+                print(f"        ?쎌? bbox: {px}")
                 print(f"        crop -> {w['crop']}")
-        print(f"\n-> 위 crop PNG 들을 Read tool 로 시각 확인 -> 빈 영역이면 콘텐츠 추가")
+        print(f"\n-> ??crop PNG ?ㅼ쓣 Read tool 濡??쒓컖 ?뺤씤 -> 鍮??곸뿭?대㈃ 肄섑뀗痢?異붽?")
         return 1
 
-    print(f"[PASS] 콘텐츠 밀도 그리드 검증 — {len(pngs)}/{len(pngs)} 모두 통과 (빈 클러스터 없음)")
+    print(f"[PASS] 肄섑뀗痢?諛??洹몃━??寃利???{len(pngs)}/{len(pngs)} 紐⑤몢 ?듦낵 (鍮??대윭?ㅽ꽣 ?놁쓬)")
     return 0
 
 
 def main():
-    ap = argparse.ArgumentParser(description="PNG 콘텐츠 밀도 그리드 검사 — 내부 빈 박스 탐지")
-    ap.add_argument("target", help="PNG/JPG 파일 또는 디렉토리")
-    ap.add_argument("--rows", type=int, default=6, help="그리드 행 수 (기본 6)")
-    ap.add_argument("--cols", type=int, default=8, help="그리드 열 수 (기본 8)")
+    ap = argparse.ArgumentParser(description="PNG 肄섑뀗痢?諛??洹몃━??寃?????대? 鍮?諛뺤뒪 ?먯?")
+    ap.add_argument("target", help="PNG/JPG ?뚯씪 ?먮뒗 ?붾젆?좊━")
+    ap.add_argument("--rows", type=int, default=6, help="洹몃━??????(湲곕낯 6)")
+    ap.add_argument("--cols", type=int, default=8, help="洹몃━??????(湲곕낯 8)")
     ap.add_argument("--threshold", type=float, default=0.05,
-                    help="콘텐츠 밀도 임계치 (기본 0.05 = 5%%; 진짜 빈 영역 ≈0%%, "
-                         "텍스트 카드 6-15%%, 사진 30%%+. 5%% 이하만 WARN)")
+                    help="肄섑뀗痢?諛???꾧퀎移?(湲곕낯 0.05 = 5%%; 吏꾩쭨 鍮??곸뿭 ??%%, "
+                         "?띿뒪??移대뱶 6-15%%, ?ъ쭊 30%%+. 5%% ?댄븯留?WARN)")
     ap.add_argument("--min-cluster", type=int, default=2,
-                    help="최소 클러스터 셀 수 (기본 2)")
-    ap.add_argument("--crop-dir", default=None, help="crop PNG 저장 폴더 (기본: target/_coverage)")
+                    help="理쒖냼 ?대윭?ㅽ꽣 ? ??(湲곕낯 2)")
+    ap.add_argument("--crop-dir", default=None, help="crop PNG ????대뜑 (湲곕낯: target/_coverage)")
     args = ap.parse_args()
 
     target = Path(args.target)
     if not target.exists():
-        print(f"[ERR] 대상 없음: {target}")
+        print(f"[ERR] ????놁쓬: {target}")
         return 2
 
     crop_dir = Path(args.crop_dir) if args.crop_dir else None
@@ -248,3 +248,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

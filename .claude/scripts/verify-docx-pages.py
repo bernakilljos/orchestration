@@ -1,16 +1,16 @@
-#!/usr/bin/env python
-"""docx 진짜 페이지 검증 — Word COM 으로 실제 렌더링 페이지 분석.
+﻿#!/usr/bin/env python
+"""docx 吏꾩쭨 ?섏씠吏 寃利???Word COM ?쇰줈 ?ㅼ젣 ?뚮뜑留??섏씠吏 遺꾩꽍.
 
-verify-docx-structure.py 는 paragraph 만 보고 빈 페이지 못 찾음.
-이 스크립트는 Word COM 으로 실제 페이지 분할 + 페이지별 글자 수 측정.
+verify-docx-structure.py ??paragraph 留?蹂닿퀬 鍮??섏씠吏 紐?李얠쓬.
+???ㅽ겕由쏀듃??Word COM ?쇰줈 ?ㅼ젣 ?섏씠吏 遺꾪븷 + ?섏씠吏蹂?湲????痢≪젙.
 
-빈 페이지 (0자) 또는 자투리 (<100자) 검출 시 FAIL.
+鍮??섏씠吏 (0?? ?먮뒗 ?먰닾由?(<100?? 寃異???FAIL.
 """
 import sys
 import os
 from pathlib import Path
 
-# pywin32 path 보강 (Python 3.14 + post-install 미실행 케이스)
+# pywin32 path 蹂닿컯 (Python 3.14 + post-install 誘몄떎??耳?댁뒪)
 _site = Path(sys.executable).parent / "Lib" / "site-packages"
 for sub in ("win32", "win32/lib", "Pythonwin"):
     p = _site / sub
@@ -20,17 +20,17 @@ for sub in ("win32", "win32/lib", "Pythonwin"):
 try:
     import win32com.client
 except ImportError:
-    print("[SKIP] pywin32 not available — verify-docx-pages 건너뜀")
+    print("[SKIP] pywin32 not available ??verify-docx-pages 嫄대꼫?")
     sys.exit(0)
 
 
-SHORT_THRESHOLD = 100  # 100자 미만 = 자투리 의심
-EMPTY_THRESHOLD = 5    # 5자 미만 = 빈 페이지
+SHORT_THRESHOLD = 100  # 100??誘몃쭔 = ?먰닾由??섏떖
+EMPTY_THRESHOLD = 5    # 5??誘몃쭔 = 鍮??섏씠吏
 
 
 def verify(docx_path: Path, retry: int = 1) -> int:
     if not docx_path.exists():
-        print(f"[ERR] {docx_path} 없음")
+        print(f"[ERR] {docx_path} ?놁쓬")
         return 2
 
     abspath = str(docx_path.resolve())
@@ -58,24 +58,24 @@ def verify(docx_path: Path, retry: int = 1) -> int:
                 short_pages.append((pg, n, txt[:50]))
         doc.Close(SaveChanges=False)
 
-        print(f"[INFO] {docx_path.name} — 총 {total} 페이지")
+        print(f"[INFO] {docx_path.name} ??珥?{total} ?섏씠吏")
         if empty_pages:
-            print(f"[FAIL] 빈 페이지 {len(empty_pages)} 개:")
+            print(f"[FAIL] 鍮??섏씠吏 {len(empty_pages)} 媛?")
             for pg, n, preview in empty_pages:
-                print(f"  page {pg}: {n}자 — {preview!r}")
+                print(f"  page {pg}: {n}????{preview!r}")
         if short_pages:
-            print(f"[WARN] 자투리 페이지 {len(short_pages)} 개 (<100자):")
+            print(f"[WARN] ?먰닾由??섏씠吏 {len(short_pages)} 媛?(<100??:")
             for pg, n, preview in short_pages:
-                print(f"  page {pg}: {n}자 — {preview!r}")
+                print(f"  page {pg}: {n}????{preview!r}")
         if not empty_pages and not short_pages:
-            print(f"[PASS] 빈/자투리 페이지 없음")
+            print(f"[PASS] 鍮??먰닾由??섏씠吏 ?놁쓬")
             return 0
-        return 1 if empty_pages else 0  # 빈 페이지만 FAIL, 자투리는 WARN
+        return 1 if empty_pages else 0  # 鍮??섏씠吏留?FAIL, ?먰닾由щ뒗 WARN
     finally:
         if word is not None:
             try:
                 word.Quit()
-            except Exception:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
                 pass
 
 
@@ -85,3 +85,4 @@ if __name__ == "__main__":
         sys.exit(2)
     rc = verify(Path(sys.argv[1]))
     sys.exit(rc)
+

@@ -1,30 +1,30 @@
-#!/usr/bin/env python3
-"""verify-teaching-doc-sections.py — 교재/강의 doc 8섹션 검증
+﻿#!/usr/bin/env python3
+"""verify-teaching-doc-sections.py ??援먯옱/媛뺤쓽 doc 8?뱀뀡 寃利?
 
-룰: .claude/rules/teaching-doc.md
-8섹션: 핵심 한 줄-표-흐름-강점-약점-강추-우리 시스템 매핑-점검
+猷? .claude/rules/teaching-doc.md
+8?뱀뀡: ?듭떖 ??以????먮쫫-媛뺤젏-?쎌젏-媛뺤텛-?곕━ ?쒖뒪??留ㅽ븨-?먭?
 
-호출:
+?몄텧:
   python verify-teaching-doc-sections.py <docx_or_md_path>
 
-종료 코드:
-  0 = 통과
-  1 = 누락 섹션 있음
-  2 = 파일 못 읽음
+醫낅즺 肄붾뱶:
+  0 = ?듦낵
+  1 = ?꾨씫 ?뱀뀡 ?덉쓬
+  2 = ?뚯씪 紐??쎌쓬
 """
 import re
 import sys
 from pathlib import Path
 
 SECTION_PATTERNS = {
-    "1.핵심": r"|핵심.{0,4}한.?줄|핵심\s",
-    "2.표":   r"[STAT]|^\s*\|.*\|.*\||\<table\>|<tr>",
-    "3.흐름": r"|흐름|flow|단계|->",
-    "4.강점": r"|강점|장점",
-    "5.약점": r"[WARN]|약점|주의|함정|단점",
-    "6.강추": r"|강추|추천|언제\s.*사용",
-    "7.매핑": r"[TGT]|우리\s?시스템|우리\s?매핑|orchestration_v1",
-    "8.점검": r"|점검|check|확인|체크",
+    "1.?듭떖": r"|?듭떖.{0,4}???以??듭떖\s",
+    "2.??:   r"[STAT]|^\s*\|.*\|.*\||\<table\>|<tr>",
+    "3.?먮쫫": r"|?먮쫫|flow|?④퀎|->",
+    "4.媛뺤젏": r"|媛뺤젏|?μ젏",
+    "5.?쎌젏": r"[WARN]|?쎌젏|二쇱쓽|?⑥젙|?⑥젏",
+    "6.媛뺤텛": r"|媛뺤텛|異붿쿇|?몄젣\s.*?ъ슜",
+    "7.留ㅽ븨": r"[TGT]|?곕━\s??쒖뒪???곕━\s?留ㅽ븨|orchestration_v1",
+    "8.?먭?": r"|?먭?|check|?뺤씤|泥댄겕",
 }
 
 
@@ -40,21 +40,21 @@ def extract_text(path: Path) -> str:
                     for cell in row.cells:
                         parts.append(cell.text)
             return "\n".join(parts)
-        except Exception as e:
-            print(f"[ERROR] docx 읽기 실패: {e}", file=sys.stderr)
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+            print(f"[ERROR] docx ?쎄린 ?ㅽ뙣: {e}", file=sys.stderr)
             return ""
     elif suffix in (".md", ".txt"):
         try:
             return path.read_text(encoding="utf-8", errors="replace")
-        except Exception as e:
-            print(f"[ERROR] {suffix} 읽기 실패: {e}", file=sys.stderr)
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+            print(f"[ERROR] {suffix} ?쎄린 ?ㅽ뙣: {e}", file=sys.stderr)
             return ""
     elif suffix == ".pdf":
         try:
             import fitz  # PyMuPDF
             doc = fitz.open(str(path))
             return "\n".join(page.get_text() for page in doc)
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             return ""
     return ""
 
@@ -66,17 +66,17 @@ def main():
 
     path = Path(sys.argv[1])
     if not path.exists():
-        print(f"[ERROR] 파일 없음: {path}", file=sys.stderr)
+        print(f"[ERROR] ?뚯씪 ?놁쓬: {path}", file=sys.stderr)
         sys.exit(2)
 
-    # 교재/강의/가이드 doc 만 검증 — 파일명-경로 휴리스틱
+    # 援먯옱/媛뺤쓽/媛?대뱶 doc 留?寃利????뚯씪紐?寃쎈줈 ?대━?ㅽ떛
     name_lower = str(path).lower()
     is_teaching = any(k in name_lower for k in [
-        "teaching", "교재", "강의", "guide", "가이드", "튜토리얼", "tutorial",
+        "teaching", "援먯옱", "媛뺤쓽", "guide", "媛?대뱶", "?쒗넗由ъ뼹", "tutorial",
         "docs/", "docs\\",
     ])
     if not is_teaching:
-        # 비-교재 doc 은 skip
+        # 鍮?援먯옱 doc ? skip
         sys.exit(0)
 
     text = extract_text(path)
@@ -92,18 +92,19 @@ def main():
             missing.append(label)
 
     if missing:
-        # systemMessage 로 Claude 에게 알림 (PostToolUse 차단 X)
-        print(f"[VIOLATION] teaching-doc 8섹션 누락 ({len(missing)}/8): {missing}",
+        # systemMessage 濡?Claude ?먭쾶 ?뚮┝ (PostToolUse 李⑤떒 X)
+        print(f"[VIOLATION] teaching-doc 8?뱀뀡 ?꾨씫 ({len(missing)}/8): {missing}",
               file=sys.stderr)
-        print(f"[OK] 발견: {found}", file=sys.stderr)
+        print(f"[OK] 諛쒓껄: {found}", file=sys.stderr)
         print(f"[FILE] {path}", file=sys.stderr)
-        print("[RULE] .claude/rules/teaching-doc.md § 각 챕터 필수 8 섹션",
+        print("[RULE] .claude/rules/teaching-doc.md 짠 媛?梨뺥꽣 ?꾩닔 8 ?뱀뀡",
               file=sys.stderr)
         sys.exit(1)
 
-    print(f"[PASS] {path}: 8섹션 모두 발견")
+    print(f"[PASS] {path}: 8?뱀뀡 紐⑤몢 諛쒓껄")
     sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
+

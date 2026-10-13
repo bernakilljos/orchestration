@@ -1,23 +1,23 @@
-"""매일 산출물 신선도 자동 refresh.
+﻿"""留ㅼ씪 ?곗텧臾??좎꽑???먮룞 refresh.
 
-`.claude/rules/artifact-freshness-check.md` OVERDUE 산출물을 자동 갱신하여
-사용자가 매일 같은 알림을 다시 보지 않게 한다 (Zero-touch).
+`.claude/rules/artifact-freshness-check.md` OVERDUE ?곗텧臾쇱쓣 ?먮룞 媛깆떊?섏뿬
+?ъ슜?먭? 留ㅼ씪 媛숈? ?뚮┝???ㅼ떆 蹂댁? ?딄쾶 ?쒕떎 (Zero-touch).
 
-- Task Scheduler (`Orca_DailyArtifactRefresh`) 매일 04:00 wrapper 경유 호출
-- SessionStart 에서도 idempotent 하게 호출 가능 (오늘 이미 처리했으면 skip)
+- Task Scheduler (`Orca_DailyArtifactRefresh`) 留ㅼ씪 04:00 wrapper 寃쎌쑀 ?몄텧
+- SessionStart ?먯꽌??idempotent ?섍쾶 ?몄텧 媛??(?ㅻ뒛 ?대? 泥섎━?덉쑝硫?skip)
 
-Refresh 매트릭스 (SoT: artifact-freshness-check.md):
-  강의 docx           → python-docx 로 마지막에 "최신 업데이트 노트" 섹션 append
-  pptx catalog        → 동명 update_*.py 있으면 실행, 없으면 mtime 만 touch (append-note logs)
-  md catalog          → 파일 하단에 "## Update YYYY-MM-DD" append
-  install README      → mtime touch + log
-  로드맵              → skip (분기 단위 — 사람이 결정)
-  CLAUDE.md § 3.2     → skip (모델 매트릭스 — 사람이 판단)
+Refresh 留ㅽ듃由?뒪 (SoT: artifact-freshness-check.md):
+  媛뺤쓽 docx           ??python-docx 濡?留덉?留됱뿉 "理쒖떊 ?낅뜲?댄듃 ?명듃" ?뱀뀡 append
+  pptx catalog        ???숇챸 update_*.py ?덉쑝硫??ㅽ뻾, ?놁쑝硫?mtime 留?touch (append-note logs)
+  md catalog          ???뚯씪 ?섎떒??"## Update YYYY-MM-DD" append
+  install README      ??mtime touch + log
+  濡쒕뱶留?             ??skip (遺꾧린 ?⑥쐞 ???щ엺??寃곗젙)
+  CLAUDE.md 짠 3.2     ??skip (紐⑤뜽 留ㅽ듃由?뒪 ???щ엺???먮떒)
 
-Idempotent: 같은 날짜 재실행 시 skip (마지막 append 날짜를 파일 자체에서 감지).
+Idempotent: 媛숈? ?좎쭨 ?ъ떎????skip (留덉?留?append ?좎쭨瑜??뚯씪 ?먯껜?먯꽌 媛먯?).
 
 Logs: .claude/logs/daily-artifact-refresh.log
-Exit code 0 (항상 · Zero-touch 로 사용자 방해 X).
+Exit code 0 (??긽 쨌 Zero-touch 濡??ъ슜??諛⑺빐 X).
 """
 from __future__ import annotations
 
@@ -51,12 +51,12 @@ def log(msg: str) -> None:
         f.write(line + "\n")
 
 
-# ── OVERDUE 스캔 (freshness-report 매트릭스 재사용) ─────────────────
+# ?? OVERDUE ?ㅼ틪 (freshness-report 留ㅽ듃由?뒪 ?ъ궗?? ?????????????????
 RULES = [
-    ("강의 docx", "docs/lecture-*.docx", 90, "docx"),
-    ("AI 기술 catalog pptx", "docs/ssj/*.pptx", 60, "pptx"),
-    ("AI 기술 catalog pptx", "docs/AI_*.pptx", 60, "pptx"),
-    ("AI 기술 catalog md", "docs/ssj/ai-tech-*.md", 45, "md"),
+    ("媛뺤쓽 docx", "docs/lecture-*.docx", 90, "docx"),
+    ("AI 湲곗닠 catalog pptx", "docs/ssj/*.pptx", 60, "pptx"),
+    ("AI 湲곗닠 catalog pptx", "docs/AI_*.pptx", 60, "pptx"),
+    ("AI 湲곗닠 catalog md", "docs/ssj/ai-tech-*.md", 45, "md"),
     ("install README", "docs/install/README.md", 30, "readme"),
 ]
 
@@ -77,12 +77,12 @@ def scan_overdue() -> list[tuple[Path, str, int, str]]:
     return overdue
 
 
-# ── refresh 핸들러 ─────────────────────────────────────────────────
+# ?? refresh ?몃뱾???????????????????????????????????????????????????
 UPDATE_MARK = f"[AUTO-REFRESH {TODAY}]"
 
 
 def already_refreshed_today(path: Path, kind: str) -> bool:
-    """오늘 자 UPDATE_MARK 가 산출물 안에 있으면 skip."""
+    """?ㅻ뒛 ??UPDATE_MARK 媛 ?곗텧臾??덉뿉 ?덉쑝硫?skip."""
     try:
         if kind == "docx":
             from docx import Document
@@ -100,23 +100,23 @@ def already_refreshed_today(path: Path, kind: str) -> bool:
                 for shape in slide.shapes:
                     if shape.has_text_frame and UPDATE_MARK in (shape.text_frame.text or ""):
                         return True
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         log(f"WARN idempotency check failed for {path.name}: {e}")
     return False
 
 
 def _latest_headlines() -> list[str]:
-    """CLAUDE.md § 3.2 + 최근 memory 기반 요약 헤드라인.
+    """CLAUDE.md 짠 3.2 + 理쒓렐 memory 湲곕컲 ?붿빟 ?ㅻ뱶?쇱씤.
 
-    WebSearch 결과·최근 changelog 를 하드코딩하지 않고 memory 파일에서 유추.
-    없으면 generic 문구.
+    WebSearch 寃곌낵쨌理쒓렐 changelog 瑜??섎뱶肄붾뵫?섏? ?딄퀬 memory ?뚯씪?먯꽌 ?좎텛.
+    ?놁쑝硫?generic 臾멸뎄.
     """
     hl = [
-        "Claude Code v2.1.270 (2026-09-12) — read-only git bash permission 회귀 fix",
-        "v2.1.269 — `claude plugin eval` 신설 (플러그인 평가 JSON+HTML 리포트)",
-        "v2.1.268 — Claude apps gateway pricing 통합 (/cost 정합)",
-        "Claude Fable 5.1 (2026-09-01) — 신규 GA · $10/$50 · 1M context · 128k 출력 · Opus 5 대비 7 벤치 리드 · cache read $0.25/M (75% ↓)",
-        "MCP (Model Context Protocol) — Linux Foundation Agentic AI Foundation 이관 · 200+ servers · MCP Apps (인터랙티브 UI in chat)",
+        "Claude Code v2.1.270 (2026-09-12) ??read-only git bash permission ?뚭? fix",
+        "v2.1.269 ??`claude plugin eval` ?좎꽕 (?뚮윭洹몄씤 ?됯? JSON+HTML 由ы룷??",
+        "v2.1.268 ??Claude apps gateway pricing ?듯빀 (/cost ?뺥빀)",
+        "Claude Fable 5.1 (2026-09-01) ???좉퇋 GA 쨌 $10/$50 쨌 1M context 쨌 128k 異쒕젰 쨌 Opus 5 ?鍮?7 踰ㅼ튂 由щ뱶 쨌 cache read $0.25/M (75% ??",
+        "MCP (Model Context Protocol) ??Linux Foundation Agentic AI Foundation ?닿? 쨌 200+ servers 쨌 MCP Apps (?명꽣?숉떚釉?UI in chat)",
     ]
     return hl
 
@@ -128,25 +128,25 @@ def refresh_docx(path: Path) -> bool:
     bak = path.with_suffix(path.suffix + ".bak")
     if not bak.exists():
         bak.write_bytes(path.read_bytes())
-        log(f"  backup → {bak.name}")
+        log(f"  backup ??{bak.name}")
 
     doc = Document(str(path))
     doc.add_page_break()
     h = doc.add_paragraph()
-    h_run = h.add_run(f"최신 업데이트 노트 · {TODAY}")
+    h_run = h.add_run(f"理쒖떊 ?낅뜲?댄듃 ?명듃 쨌 {TODAY}")
     h_run.bold = True
     h_run.font.size = Pt(16)
 
     intro = doc.add_paragraph()
-    intro.add_run(f"{UPDATE_MARK} 이 섹션은 매일 최신 changelog·모델·MCP 동향을 자동 반영합니다.").italic = True
+    intro.add_run(f"{UPDATE_MARK} ???뱀뀡? 留ㅼ씪 理쒖떊 changelog쨌紐⑤뜽쨌MCP ?숉뼢???먮룞 諛섏쁺?⑸땲??").italic = True
 
     for hl in _latest_headlines():
         b = doc.add_paragraph(style="List Bullet")
-        b.add_run("• " + hl)
+        b.add_run("??" + hl)
 
     tail = doc.add_paragraph()
     tail.add_run(
-        "출처: Anthropic Claude Code Docs · claudefa.st models guide · agdex_ai MCP 2026 guide"
+        "異쒖쿂: Anthropic Claude Code Docs 쨌 claudefa.st models guide 쨌 agdex_ai MCP 2026 guide"
     ).italic = True
 
     doc.save(str(path))
@@ -154,7 +154,7 @@ def refresh_docx(path: Path) -> bool:
 
 
 def refresh_pptx(path: Path) -> bool:
-    # 프로젝트에 이미 등록된 개별 update_*.py 우선 실행
+    # ?꾨줈?앺듃???대? ?깅줉??媛쒕퀎 update_*.py ?곗꽑 ?ㅽ뻾
     stem = path.stem
     candidates = [
         ROOT / "docs" / f"update_{stem}.py",
@@ -162,7 +162,7 @@ def refresh_pptx(path: Path) -> bool:
     ]
     for c in candidates:
         if c.exists():
-            log(f"  → run {c.relative_to(ROOT)}")
+            log(f"  ??run {c.relative_to(ROOT)}")
             r = subprocess.run(
                 [sys.executable, str(c)], capture_output=True, text=True, timeout=600
             )
@@ -171,7 +171,7 @@ def refresh_pptx(path: Path) -> bool:
             log(f"  builder failed rc={r.returncode}: {r.stderr[:300]}")
             break
 
-    # Fallback: python-pptx 로 마지막 슬라이드에 update 노트 텍스트 박스 추가
+    # Fallback: python-pptx 濡?留덉?留??щ씪?대뱶??update ?명듃 ?띿뒪??諛뺤뒪 異붽?
     try:
         from pptx import Presentation
         from pptx.util import Inches, Pt
@@ -188,19 +188,19 @@ def refresh_pptx(path: Path) -> bool:
         tf = tb.text_frame
         tf.word_wrap = True
         p0 = tf.paragraphs[0]
-        p0.text = f"최신 업데이트 노트 · {TODAY}"
+        p0.text = f"理쒖떊 ?낅뜲?댄듃 ?명듃 쨌 {TODAY}"
         p0.runs[0].font.size = Pt(28)
         p0.runs[0].font.bold = True
         note = tf.add_paragraph()
-        note.text = f"{UPDATE_MARK} 자동 반영 항목:"
+        note.text = f"{UPDATE_MARK} ?먮룞 諛섏쁺 ??ぉ:"
         note.font.size = Pt(14)
         for hl in _latest_headlines():
             b = tf.add_paragraph()
-            b.text = "• " + hl
+            b.text = "??" + hl
             b.font.size = Pt(12)
         prs.save(str(path))
         return True
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         log(f"  pptx refresh failed: {e}")
         return False
 
@@ -231,7 +231,7 @@ HANDLERS = {
 def main() -> int:
     overdue = scan_overdue()
     if not overdue:
-        log("no OVERDUE artifacts — skip")
+        log("no OVERDUE artifacts ??skip")
         return 0
 
     log(f"found {len(overdue)} OVERDUE candidates")
@@ -258,16 +258,17 @@ def main() -> int:
                 # touch mtime as final belt-and-suspenders (idempotent)
                 os.utime(path, None)
                 ok += 1
-                log(f"  → OK · mtime bumped")
+                log(f"  ??OK 쨌 mtime bumped")
             else:
                 failed += 1
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             failed += 1
-            log(f"  → FAIL {e}")
+            log(f"  ??FAIL {e}")
 
-    log(f"summary · ok={ok} skipped={skipped} failed={failed}")
+    log(f"summary 쨌 ok={ok} skipped={skipped} failed={failed}")
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

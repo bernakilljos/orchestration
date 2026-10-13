@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-10-Minute Memory Recovery Loop
-자동 메모리·CPU 모니터링·수집·최적화
+10-Minute Memory Recovery Loop.
 
-실행: python orca-10min-loop.py [--dry-run]
-로그: .claude/logs/orca-10min-loop.log
-상태: .claude/state/last-10min-loop.json
+System metrics monitoring + cleanup automation.
+Runs: python orca-10min-loop.py [--dry-run]
+Logs: .claude/logs/orca-10min-loop.log
+State: .claude/state/last-10min-loop.json
 """
 
 import os
@@ -13,68 +14,80 @@ import sys
 import json
 import subprocess
 import sqlite3
+import shutil
 from pathlib import Path
 from datetime import datetime
-import psutil
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 # ============================================================================
 # Config
 # ============================================================================
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent  # .claude/scripts/../.. → project root
+PROJECT_ROOT = Path(__file__).parent.parent.parent  # -> project root
 LOG_DIR = PROJECT_ROOT / ".claude" / "logs"
 STATE_DIR = PROJECT_ROOT / ".claude" / "state"
 DB_PATH = STATE_DIR / "orca.db"
 LOG_FILE = LOG_DIR / "orca-10min-loop.log"
 STATE_FILE = STATE_DIR / "last-10min-loop.json"
 
-THRESHOLD_RAM_PERCENT = 80  # RAM ≥80% → 알림
-THRESHOLD_PROC_COUNT = 3    # claude 프로세스 ≥3 → 알림
-IDLE_THRESHOLD_SEC = 600    # 10분 이상 미사용 세션
+THRESHOLD_RAM_PERCENT = 80  # RAM usage threshold
+THRESHOLD_PROC_COUNT = 3    # Claude process threshold
+IDLE_THRESHOLD_SEC = 600    # 10 minutes idle
 
 DRY_RUN = "--dry-run" in sys.argv
 
 # ============================================================================
-# Logging
+# Logging (UTF-8 safe)
 # ============================================================================
 
 def log_msg(msg: str, level: str = "INFO"):
-    """로그 append (메모리 dict 아님 · 파일 기반)"""
+    """Append log line (UTF-8 safe, no interpolation issues)."""
     ts = datetime.now().isoformat()
-    log_line = f"[{ts}] [{level}] {msg}\n"
+    log_line = f"[{ts}] [{level}] {msg}"
+
     try:
         LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(log_line)
+            f.write(log_line + "\n")
     except Exception as e:
-        print(f"Log write failed: {e}", file=sys.stderr)
+        print(f"[ERROR] Log write failed: {e}", file=sys.stderr)
+
     if level in ["WARN", "ERROR"]:
-        print(log_line.rstrip())
+        print(log_line)
 
 # ============================================================================
-# Memory Query
+# System Metrics
 # ============================================================================
 
 def get_system_metrics():
-    """psutil로 시스템 메트릭 조회 (1초 이내)"""
+    """Query system metrics using psutil (if available)."""
     try:
+        if psutil is None:
+            log_msg("psutil not installed, skipping metrics", "WARN")
+            return {
+                "ram_percent": 0,
+                "cpu_percent": 0,
+                "claude_procs": 0,
+                "vscode_procs": 0,
+                "timestamp": datetime.now().isoformat()
+            }
+
         ram_percent = psutil.virtual_memory().percent
         cpu_percent = psutil.cpu_percent(interval=0.1)
 
-        # claude 프로세스 수
         claude_count = 0
-        for proc in psutil.process_iter(['name']):
-            try:
-                if 'claude' in proc.name().lower():
-                    claude_count += 1
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-
-        # VS Code 프로세스 수
         vscode_count = 0
+
         for proc in psutil.process_iter(['name']):
             try:
-                if 'code' in proc.name().lower():
+                name = proc.name().lower()
+                if 'claude' in name:
+                    claude_count += 1
+                if 'code' in name:
                     vscode_count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
@@ -91,11 +104,11 @@ def get_system_metrics():
         return None
 
 # ============================================================================
-# DB Optimization
+# Database Optimization
 # ============================================================================
 
 def optimize_orca_db():
-    """orca.db VACUUM (경량 정리)"""
+    """Run VACUUM on orca.db (optimize storage)."""
     try:
         if not DB_PATH.exists():
             log_msg(f"DB not found: {DB_PATH}", "WARN")
@@ -111,43 +124,51 @@ def optimize_orca_db():
         return False
 
 # ============================================================================
-# Cleanup
+# Cleanup Execution
 # ============================================================================
 
 def run_cleanup_pollution():
-    """cleanup-pollution.sh 재발동 (조용 · 0 알림)"""
+    """Execute cleanup-pollution.sh (exit code 0 expected)."""
     try:
         cleanup_script = PROJECT_ROOT / ".claude" / "scripts" / "cleanup-pollution.sh"
+
         if not cleanup_script.exists():
-            log_msg(f"cleanup-pollution.sh not found", "WARN")
+            log_msg(f"cleanup-pollution.sh not found: {cleanup_script}", "WARN")
             return False
 
+        # Windows compatibility: find bash in PATH
+        bash_exe = shutil.which("bash") or "bash.exe"
+
+        # Cross-platform subprocess call
         result = subprocess.run(
-            ["bash", str(cleanup_script)],
+            [bash_exe, str(cleanup_script)],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
+            shell=False  # More secure on Windows
         )
 
         if result.returncode == 0:
             log_msg("cleanup-pollution.sh: OK")
             return True
         else:
-            log_msg(f"cleanup-pollution.sh failed: {result.stderr[:200]}", "WARN")
+            err_text = result.stderr[:200] if result.stderr else "unknown error"
+            log_msg(f"cleanup-pollution.sh FAIL: {err_text}", "WARN")
             return False
+
     except subprocess.TimeoutExpired:
-        log_msg("cleanup-pollution.sh timeout", "WARN")
+        log_msg("cleanup-pollution.sh timeout (30s)", "WARN")
         return False
     except Exception as e:
-        log_msg(f"cleanup-pollution.sh error: {e}", "ERROR")
+        log_msg(f"cleanup-pollution.sh exception: {e}", "ERROR")
         return False
 
 # ============================================================================
-# Session Idle Detection
+# Idle Session Detection
 # ============================================================================
 
 def detect_idle_sessions():
-    """idle 세션 리스트업 (강제 종료 X · 보고만)"""
+    """List recent idle sessions (info only, no killing)."""
     try:
         if not DB_PATH.exists():
             return []
@@ -155,7 +176,7 @@ def detect_idle_sessions():
         conn = sqlite3.connect(str(DB_PATH))
         cursor = conn.cursor()
 
-        # 최근 활동 없는 session_id 찾기 (구조 가정: session_summary 테이블)
+        # Query last 10 ended sessions
         cursor.execute("""
             SELECT session_id, ended_at FROM session_summary
             WHERE ended_at IS NOT NULL
@@ -167,12 +188,11 @@ def detect_idle_sessions():
 
         idle_sessions = []
         for session_id, ended_at in results:
-            # ended_at 이후 경과 시간 계산 (간단 버전)
-            # (구체적으로는 DB 시간 형식에 따라 다름)
             if ended_at:
                 idle_sessions.append(session_id)
 
-        return idle_sessions[:5]  # 최대 5개만
+        return idle_sessions[:5]
+
     except Exception as e:
         log_msg(f"Idle session detection failed: {e}", "WARN")
         return []
@@ -182,18 +202,23 @@ def detect_idle_sessions():
 # ============================================================================
 
 def main():
+    """Main entry point."""
     log_msg("=== 10-Min Loop START ===")
 
-    # 1. 시스템 메트릭 조회
+    # 1. Get system metrics
     metrics = get_system_metrics()
     if not metrics:
         log_msg("Failed to get metrics", "ERROR")
         return 1
 
-    log_msg(f"Metrics: RAM {metrics['ram_percent']}% / CPU {metrics['cpu_percent']}% / "
-            f"claude {metrics['claude_procs']} / vscode {metrics['vscode_procs']}")
+    log_msg(
+        f"Metrics: RAM {metrics['ram_percent']}% / "
+        f"CPU {metrics['cpu_percent']}% / "
+        f"claude {metrics['claude_procs']} / "
+        f"vscode {metrics['vscode_procs']}"
+    )
 
-    # 2. 임계 감지 (알림 X · 로그만)
+    # 2. Check thresholds (warn only, no action)
     alerts = []
     if metrics['ram_percent'] >= THRESHOLD_RAM_PERCENT:
         alerts.append(f"RAM HIGH: {metrics['ram_percent']}%")
@@ -203,7 +228,7 @@ def main():
     if alerts:
         log_msg(" | ".join(alerts), "WARN")
 
-    # 3. 메모리 확보 액션 (dry-run 존중)
+    # 3. Execute cleanup if not dry-run
     if not DRY_RUN:
         # 3a. DB VACUUM
         optimize_orca_db()
@@ -211,14 +236,14 @@ def main():
         # 3b. cleanup-pollution.sh
         run_cleanup_pollution()
 
-        # 3c. idle session 감지 (리스트업만)
+        # 3c. Idle session info (list only)
         idle = detect_idle_sessions()
         if idle:
             log_msg(f"Idle sessions (info only): {idle[:3]}")
     else:
         log_msg("DRY-RUN mode: no actions taken")
 
-    # 4. 상태 저장 (last-10min-loop.json)
+    # 4. Save state
     state = {
         "timestamp": datetime.now().isoformat(),
         "metrics": metrics,
@@ -229,7 +254,7 @@ def main():
     try:
         STATE_DIR.mkdir(parents=True, exist_ok=True)
         with open(STATE_FILE, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
+            json.dump(state, f, indent=2, ensure_ascii=False)
     except Exception as e:
         log_msg(f"State save failed: {e}", "ERROR")
 

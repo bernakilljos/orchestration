@@ -49,12 +49,10 @@ repos:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 120}}}']
 
-  # JSON: Formatting
+  # JSON/YAML/TOML: Format & Validate
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-      - id: pretty-print-json
-        args: ['--autofix']
       - id: check-json
       - id: check-yaml
       - id: check-toml

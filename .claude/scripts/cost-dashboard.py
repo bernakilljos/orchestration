@@ -1,6 +1,6 @@
-"""비용-활성 대시보드 — orca.db 데이터 HTML 시각화.
+﻿"""鍮꾩슜-?쒖꽦 ??쒕낫????orca.db ?곗씠??HTML ?쒓컖??
 
-generates: .claude/state/dashboard.html (열면 시각화 표시)
+generates: .claude/state/dashboard.html (?대㈃ ?쒓컖???쒖떆)
 """
 import sys
 import sqlite3
@@ -18,23 +18,23 @@ def query_all():
         return {"error": "orca.db not found"}
     conn = sqlite3.connect(str(DB))
     data = {}
-    # 최근 24h decisions
+    # 理쒓렐 24h decisions
     try:
         cur = conn.execute("SELECT ai_classified, COUNT(*) FROM decisions WHERE ts >= datetime('now','-24 hours') GROUP BY ai_classified")
         data["decisions_24h"] = dict(cur.fetchall())
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         data["decisions_24h"] = {}
     # activations top
     try:
         cur = conn.execute("SELECT layer, name, COUNT(*), AVG(duration_ms) FROM activations GROUP BY layer, name ORDER BY COUNT(*) DESC LIMIT 10")
         data["activations_top"] = [{"layer": r[0], "name": r[1], "count": r[2], "avg_ms": round(r[3] or 0, 1)} for r in cur.fetchall()]
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         data["activations_top"] = []
     # determinism warning
     try:
         cur = conn.execute("SELECT prompt_hash, COUNT(DISTINCT result_hash), COUNT(*) FROM determinism WHERE result_hash != '' GROUP BY prompt_hash HAVING COUNT(DISTINCT result_hash) > 1 LIMIT 5")
         data["determinism_issues"] = [{"hash": r[0], "unique": r[1], "total": r[2]} for r in cur.fetchall()]
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         data["determinism_issues"] = []
     conn.close()
     return data
@@ -55,14 +55,14 @@ td {{ padding:8px; border-bottom:1px solid #eee; }}
 <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
 
 <div class="card">
-  <h2>[TGT] Decisions (24h) — AI 분류 분포</h2>
-  <table><tr><th>AI</th><th>호출 수</th></tr>
+  <h2>[TGT] Decisions (24h) ??AI 遺꾨쪟 遺꾪룷</h2>
+  <table><tr><th>AI</th><th>?몄텧 ??/th></tr>
   {''.join(f'<tr><td>{ai}</td><td>{n}</td></tr>' for ai, n in data.get('decisions_24h', {}).items())}
   </table>
 </div>
 
 <div class="card">
-  <h2>[FAST] Activations Top 10 — Skill/Hook/Subagent</h2>
+  <h2>[FAST] Activations Top 10 ??Skill/Hook/Subagent</h2>
   <table><tr><th>Layer</th><th>Name</th><th>Count</th><th>Avg ms</th></tr>
   {''.join(f'<tr><td>{r["layer"]}</td><td>{r["name"]}</td><td>{r["count"]}</td><td>{r["avg_ms"]}</td></tr>' for r in data.get('activations_top', []))}
   </table>
@@ -70,8 +70,8 @@ td {{ padding:8px; border-bottom:1px solid #eee; }}
 
 <div class="card">
   <h2>[WARN] Non-Determinism Issues</h2>
-  {f'<p class="warn">{len(data.get("determinism_issues", []))} 개 prompt 가 다른 결과 반환</p>' if data.get('determinism_issues') else '<p>[OK] 모두 결정론적</p>'}
-  <table><tr><th>prompt_hash</th><th>unique 결과</th><th>total 실행</th></tr>
+  {f'<p class="warn">{len(data.get("determinism_issues", []))} 媛?prompt 媛 ?ㅻⅨ 寃곌낵 諛섑솚</p>' if data.get('determinism_issues') else '<p>[OK] 紐⑤몢 寃곗젙濡좎쟻</p>'}
+  <table><tr><th>prompt_hash</th><th>unique 寃곌낵</th><th>total ?ㅽ뻾</th></tr>
   {''.join(f'<tr><td>{r["hash"]}</td><td>{r["unique"]}</td><td>{r["total"]}</td></tr>' for r in data.get('determinism_issues', []))}
   </table>
 </div>
@@ -85,3 +85,4 @@ if __name__ == "__main__":
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
     print(json.dumps({"dashboard": str(OUT), "data_summary": {k: len(v) if isinstance(v, (list, dict)) else v for k, v in data.items()}}, ensure_ascii=False, indent=2))
+

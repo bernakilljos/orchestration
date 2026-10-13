@@ -1,4 +1,4 @@
-"""Korean removal blocker - check if Edit removes korean chars."""
+﻿"""Korean removal blocker - check if Edit removes korean chars."""
 import sys
 import json
 import re
@@ -7,7 +7,7 @@ import os
 
 try:
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     pass
 
 if os.environ.get('ALLOW_KOREAN_REMOVAL') == '1':
@@ -18,7 +18,7 @@ try:
     if not raw.strip():
         sys.exit(0)
     data = json.loads(raw)
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     sys.exit(0)
 
 tool = data.get('tool_name', '')
@@ -29,7 +29,7 @@ ti = data.get('tool_input', {}) or {}
 old = ti.get('old_string', '') or ''
 new = ti.get('new_string', '') or ''
 
-KR = re.compile(r'[가-힣]')
+KR = re.compile(r'[媛-??')
 old_kr = len(KR.findall(old))
 new_kr = len(KR.findall(new))
 
@@ -40,3 +40,4 @@ if old_kr > 0 and new_kr < old_kr:
     sys.exit(1)
 
 sys.exit(0)
+

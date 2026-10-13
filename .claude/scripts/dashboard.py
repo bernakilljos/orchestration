@@ -1,7 +1,7 @@
-"""
-dashboard — Rich TUI 실시간 대시보드 (Task 35)
-orca.db 실시간 시각화 - 세션-워커-토큰-비용-큐
-실행: python .claude/scripts/dashboard.py
+﻿"""
+dashboard ??Rich TUI ?ㅼ떆媛???쒕낫??(Task 35)
+orca.db ?ㅼ떆媛??쒓컖??- ?몄뀡-?뚯빱-?좏겙-鍮꾩슜-??
+?ㅽ뻾: python .claude/scripts/dashboard.py
 """
 from __future__ import annotations
 import os
@@ -19,7 +19,7 @@ try:
     from rich.layout import Layout
     from rich.panel import Panel
 except ImportError:
-    print("rich 미설치 - python -m pip install rich", file=sys.stderr)
+    print("rich 誘몄꽕移?- python -m pip install rich", file=sys.stderr)
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -32,7 +32,7 @@ def _q(sql, params=()):
     try:
         with sqlite3.connect(str(DB)) as c:
             return c.execute(sql, params).fetchall()
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return []
 
 
@@ -51,11 +51,11 @@ def build_layout() -> Layout:
 
 
 def render_sessions() -> Table:
-    t = Table(title="최근 세션 (5)", show_header=True, header_style="bold cyan")
+    t = Table(title="理쒓렐 ?몄뀡 (5)", show_header=True, header_style="bold cyan")
     t.add_column("session")
     t.add_column("turns", justify="right")
     t.add_column("tokens", justify="right")
-    t.add_column("종료 시각")
+    t.add_column("醫낅즺 ?쒓컖")
     rows = _q(
         "SELECT session_id, turns, tokens_total, ended_at FROM session_summary ORDER BY ended_at DESC LIMIT 5"
     )
@@ -65,9 +65,9 @@ def render_sessions() -> Table:
 
 
 def render_metrics() -> Table:
-    t = Table(title="AI 사용량 (24h)", show_header=True, header_style="bold magenta")
+    t = Table(title="AI ?ъ슜??(24h)", show_header=True, header_style="bold magenta")
     t.add_column("AI")
-    t.add_column("호출", justify="right")
+    t.add_column("?몄텧", justify="right")
     t.add_column("tokens_in", justify="right")
     t.add_column("tokens_out", justify="right")
     t.add_column("cost", justify="right")
@@ -82,10 +82,10 @@ def render_metrics() -> Table:
 
 
 def render_solutions() -> Table:
-    t = Table(title="재사용 solution TOP 5", show_header=True, header_style="bold green")
+    t = Table(title="?ъ궗??solution TOP 5", show_header=True, header_style="bold green")
     t.add_column("category")
     t.add_column("problem", max_width=40)
-    t.add_column("★", justify="right")
+    t.add_column("??, justify="right")
     rows = _q(
         "SELECT category, substr(problem,1,60), reusable_score FROM problem_solutions ORDER BY reusable_score DESC, ts DESC LIMIT 5"
     )
@@ -95,7 +95,7 @@ def render_solutions() -> Table:
 
 
 def render_tasks() -> Table:
-    t = Table(title="대기 tasks", show_header=True, header_style="bold yellow")
+    t = Table(title="?湲?tasks", show_header=True, header_style="bold yellow")
     t.add_column("task_id")
     t.add_column("ai")
     t.add_column("status")
@@ -113,7 +113,7 @@ def render_dashboard() -> Layout:
     lay["header"].update(Panel(f"[bold]Orchestration Kit v1 - Dashboard[/bold]  -  {now}", style="cyan"))
     lay["left"].update(render_sessions())
     lay["right"].update(render_metrics())
-    lay["footer"].update(Panel("[green]Ctrl+C[/green] 종료  -  1s refresh", style="dim"))
+    lay["footer"].update(Panel("[green]Ctrl+C[/green] 醫낅즺  -  1s refresh", style="dim"))
     return lay
 
 
@@ -136,3 +136,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

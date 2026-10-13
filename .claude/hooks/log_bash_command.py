@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 PreToolUse hook: log Bash commands to .claude/logs/bash_commands.log (append).
 """
@@ -8,7 +8,7 @@ from datetime import datetime
 def main():
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return
     tool_input = payload.get("tool_input", {}) or {}
     cmd = tool_input.get("command") or ""
@@ -24,6 +24,7 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         pass
     sys.exit(0)
+

@@ -1,7 +1,7 @@
-"""
-conversation_logger — 세션 대화-요약 저장/로드
-사용: SessionStart / UserPromptSubmit / Stop hook 에서 호출
-근거: 사용자 지적 (2026-09-02) — 세션 끊기면 memory 유실
+﻿"""
+conversation_logger ???몄뀡 ????붿빟 ???濡쒕뱶
+?ъ슜: SessionStart / UserPromptSubmit / Stop hook ?먯꽌 ?몄텧
+洹쇨굅: ?ъ슜??吏??(2026-09-02) ???몄뀡 ?딄린硫?memory ?좎떎
 """
 from __future__ import annotations
 import hashlib
@@ -63,11 +63,11 @@ CREATE INDEX IF NOT EXISTS idx_sol_cat ON problem_solutions(category);
 
 
 def _conn() -> sqlite3.Connection:
-    """테이블이 없으면 만들고 연다.
+    """?뚯씠釉붿씠 ?놁쑝硫?留뚮뱾怨??곕떎.
 
-    2026-09-08: 스키마를 만드는 주체가 아무도 없어 conversations /
-    session_summary / problem_solutions 가 3개월간 미생성 상태였다.
-    매 턴 'no such table' 로 죽으면서 세션 인계가 통째로 끊겼다.
+    2026-09-08: ?ㅽ궎留덈? 留뚮뱶??二쇱껜媛 ?꾨Т???놁뼱 conversations /
+    session_summary / problem_solutions 媛 3媛쒖썡媛?誘몄깮???곹깭???
+    留???'no such table' 濡?二쎌쑝硫댁꽌 ?몄뀡 ?멸퀎媛 ?듭㎏濡??딄꼈??
     """
     conn = sqlite3.connect(str(DB_PATH))
     try:
@@ -79,11 +79,10 @@ def _conn() -> sqlite3.Connection:
 
 
 def _session_id_from_transcript() -> str:
-    """현재 세션의 transcript 파일명(uuid)을 세션 id 로 쓴다.
+    """?꾩옱 ?몄뀡??transcript ?뚯씪紐?uuid)???몄뀡 id 濡??대떎.
 
-    2026-09-08: 훅 실행 환경에 CLAUDE_CODE_SESSION_ID 가 없어 모든 세션이
-    'unknown' 한 덩어리로 저장됐다. load 는 "자기 세션 제외" 조건이라
-    항상 0건 -> 인계가 영원히 안 됐다. 파일명은 실측 가능한 값이다.
+    2026-09-08: ???ㅽ뻾 ?섍꼍??CLAUDE_CODE_SESSION_ID 媛 ?놁뼱 紐⑤뱺 ?몄뀡??    'unknown' ???⑹뼱由щ줈 ??λ릱?? load ??"?먭린 ?몄뀡 ?쒖쇅" 議곌굔?대씪
+    ??긽 0嫄?-> ?멸퀎媛 ?곸썝?????먮떎. ?뚯씪紐낆? ?ㅼ륫 媛?ν븳 媛믪씠??
     """
     try:
         enc = str(PROJECT_ROOT).replace(":", "-").replace("\\", "-").replace("/", "-")
@@ -98,7 +97,7 @@ def _session_id_from_transcript() -> str:
         if not files:
             return ""
         return max(files, key=lambda f: f.stat().st_mtime).stem
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return ""
 
 
@@ -112,7 +111,7 @@ def get_session_id() -> str:
 
 
 def save_turn(role: str, content: str, tags: str | None = None) -> None:
-    """UserPrompt-Assistant-Tool 대화 한 turn 저장."""
+    """UserPrompt-Assistant-Tool ?????turn ???"""
     if not content:
         return
     sid = get_session_id()
@@ -158,7 +157,7 @@ def save_session_summary(summary: str, key_decisions: str = "", files: str = "")
 
 
 def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
-    """가장 최근 N 세션의 요약 로드 - SessionStart 프롬프트 주입용."""
+    """媛??理쒓렐 N ?몄뀡???붿빟 濡쒕뱶 - SessionStart ?꾨＼?꾪듃 二쇱엯??"""
     with _conn() as c:
         rows = c.execute(
             """SELECT session_id, started_at, turns, summary, key_decisions
@@ -169,13 +168,13 @@ def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
         ).fetchall()
     if not rows:
         return ""
-    parts = ["## 이전 세션 요약 (자동 로드)\n"]
+    parts = ["## ?댁쟾 ?몄뀡 ?붿빟 (?먮룞 濡쒕뱶)\n"]
     for sid, st, turns, summ, dec in rows:
         parts.append(f"### {st} - {turns} turns - session={sid[:8]}")
         if summ:
             parts.append(summ)
         if dec:
-            parts.append(f"**결정**: {dec}")
+            parts.append(f"**寃곗젙**: {dec}")
         parts.append("")
     out = "\n".join(parts)
     return out[:max_chars]
@@ -201,3 +200,4 @@ if __name__ == "__main__":
         print(load_recent_context(n_sessions=n))
     else:
         print("usage: conversation_logger.py {save-turn <role>|save-summary|load [N]}")
+

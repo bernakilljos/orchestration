@@ -1,12 +1,12 @@
-"""
-.bat 파일의 cmd parsing 깨짐 전수 조사 (강화판).
+﻿"""
+.bat ?뚯씪??cmd parsing 源⑥쭚 ?꾩닔 議곗궗 (媛뺥솕??.
 
-방식 1 (단독 라인): 각 echo/rem 라인을 별도 .bat 에서 실행
-방식 2 (컨텍스트):  한 .bat 의 모든 echo/rem 라인을 한 .bat 에 모아 실행
-                   -> install.bat 자체의 chcp 65001 + 누적 컨텍스트 재현
+諛⑹떇 1 (?⑤룆 ?쇱씤): 媛?echo/rem ?쇱씤??蹂꾨룄 .bat ?먯꽌 ?ㅽ뻾
+諛⑹떇 2 (而⑦뀓?ㅽ듃):  ??.bat ??紐⑤뱺 echo/rem ?쇱씤????.bat ??紐⑥븘 ?ㅽ뻾
+                   -> install.bat ?먯껜??chcp 65001 + ?꾩쟻 而⑦뀓?ㅽ듃 ?ы쁽
 
-방식 1 만으로는 사용자가 본 install.bat:658 같은 누적 컨텍스트 깨짐을 못 잡음.
-방식 2 추가로 진짜 전수 검증.
+諛⑹떇 1 留뚯쑝濡쒕뒗 ?ъ슜?먭? 蹂?install.bat:658 媛숈? ?꾩쟻 而⑦뀓?ㅽ듃 源⑥쭚??紐??≪쓬.
+諛⑹떇 2 異붽?濡?吏꾩쭨 ?꾩닔 寃利?
 """
 import subprocess
 import re
@@ -25,12 +25,12 @@ TARGETS = [
     'setup/install-from-git.bat',
 ] + sorted(str(p) for p in Path('setup/modules').glob('*.bat'))
 
-# OS-agnostic 임시 디렉토리 (Windows TEMP / Unix /tmp 자동)
+# OS-agnostic ?꾩떆 ?붾젆?좊━ (Windows TEMP / Unix /tmp ?먮룞)
 _TMP = Path(tempfile.gettempdir())
 TMP_LINE = _TMP / '_audit_line.bat'
 
-# 2026-10-06 — Stop hook 으로 매 턴 254초(실측) 돌며 CPU 를 먹어 응답이 느려졌다.
-#   대상 .bat 이 마지막 감사 이후 안 바뀌었으면 건너뛴다 (--force 로 강제).
+# 2026-10-06 ??Stop hook ?쇰줈 留???254珥??ㅼ륫) ?뚮ŉ CPU 瑜?癒뱀뼱 ?묐떟???먮젮議뚮떎.
+#   ???.bat ??留덉?留?媛먯궗 ?댄썑 ??諛붾뚯뿀?쇰㈃ 嫄대꼫?대떎 (--force 濡?媛뺤젣).
 _STAMP = Path('.claude/state/audit-bat-lines.stamp')
 if '--force' not in sys.argv and _STAMP.exists():
     _last = _STAMP.stat().st_mtime
@@ -64,22 +64,22 @@ for target in TARGETS:
     content = Path(target).read_text(encoding='utf-8', errors='replace')
     lines = content.splitlines()
 
-    # ---- 방식 1: 단독 라인 ----
+    # ---- 諛⑹떇 1: ?⑤룆 ?쇱씤 ----
     for i, line in enumerate(lines, 1):
         stripped = line.strip()
         if not (stripped.startswith('echo ') or stripped.startswith('echo.') or
                 stripped.startswith('rem ') or stripped == 'echo.'):
             continue
-        if not re.search(r'[가-힯]', stripped):
+        if not re.search(r'[媛-??', stripped):
             continue
         TMP_LINE.write_text(f"@echo off\r\nchcp 65001 >nul\r\n{stripped}\r\n", encoding='utf-8')
         try:
             r = run_cmd(TMP_LINE, timeout=5)
             errors.extend(collect_errors((r.stdout or '') + (r.stderr or ''), target, str(i)))
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             errors.append((target, str(i), f'EXEC_ERR: {e}'))
 
-    # ---- 방식 2: 컨텍스트 (모든 echo/rem 한 .bat) ----
+    # ---- 諛⑹떇 2: 而⑦뀓?ㅽ듃 (紐⑤뱺 echo/rem ??.bat) ----
     bat_lines = ['@echo off', 'chcp 65001 >nul', 'setlocal enabledelayedexpansion']
     has_korean = False
     for line in lines:
@@ -87,7 +87,7 @@ for target in TARGETS:
         if not (stripped.startswith('echo ') or stripped.startswith('echo.') or
                 stripped.startswith('rem ') or stripped == 'echo.'):
             continue
-        if re.search(r'[가-힯]', stripped):
+        if re.search(r'[媛-??', stripped):
             has_korean = True
         bat_lines.append(stripped)
     bat_lines.append('exit /b 0')
@@ -98,7 +98,7 @@ for target in TARGETS:
             r = run_cmd(TMP_CTX, timeout=15)
             errors.extend(collect_errors((r.stdout or '') + (r.stderr or ''),
                                           target, 'CONTEXT'))
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             errors.append((target, 'CONTEXT', f'EXEC_ERR: {e}'))
 
 
@@ -113,5 +113,6 @@ if errors:
         print(f"  {t}@{loc}: {s}")
     sys.exit(1)
 else:
-    print("=== ALL OK — 단독 + 컨텍스트 전수 검사 통과 ===")
+    print("=== ALL OK ???⑤룆 + 而⑦뀓?ㅽ듃 ?꾩닔 寃???듦낵 ===")
     sys.exit(0)
+

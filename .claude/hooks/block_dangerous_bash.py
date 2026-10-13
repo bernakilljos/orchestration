@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 PreToolUse hook: block obviously destructive Bash commands.
 Reads JSON from stdin and (optionally) returns permissionDecision: deny.
@@ -44,7 +44,7 @@ def get_patterns():
 
 def strip_quoted_strings(cmd: str) -> str:
     """Replace contents of quotes and heredoc bodies with empty placeholders
-    so DENY_PATTERNS only match real shell commands — not natural-language
+    so DENY_PATTERNS only match real shell commands ??not natural-language
     text inside `git commit -m "..."` or `cat <<EOF ... EOF`.
 
     NOTE: We intentionally do NOT strip $(...) or `...` since those execute.
@@ -66,7 +66,7 @@ def strip_quoted_strings(cmd: str) -> str:
 def main():
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return None
 
     tool_input = payload.get("tool_input", {}) or {}
@@ -81,7 +81,7 @@ def main():
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "deny",
-                    "permissionDecisionReason": f"[BLOCK] 위험 명령 차단: {cmd[:200]}",
+                    "permissionDecisionReason": f"[BLOCK] ?꾪뿕 紐낅졊 李⑤떒: {cmd[:200]}",
                 }
             }
     return None
@@ -91,3 +91,4 @@ if __name__ == "__main__":
     if out:
         sys.stdout.write(json.dumps(out, ensure_ascii=False))
     sys.exit(0)
+

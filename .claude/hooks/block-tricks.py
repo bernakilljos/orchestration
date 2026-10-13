@@ -1,13 +1,13 @@
-"""
+﻿"""
 Trick blocker - PreToolUse Edit hook.
 Catches multiple known patterns where I (Claude) avoid user intent.
 
 Blocked patterns:
-  T1. Korean removal — old has more korean chars than new
-  T2. Secret to placeholder — real PAT/key replaced by placeholder text
+  T1. Korean removal ??old has more korean chars than new
+  T2. Secret to placeholder ??real PAT/key replaced by placeholder text
   T3. PAT to placeholder (specific GITHUB_PAT detection)
-  T4. Mojibake bypass — code adds chr(0xFFFD) or escape sequences for U+FFFD
-  T5. Auto-prompt regression — choice/timeout reverted to set /p / pause
+  T4. Mojibake bypass ??code adds chr(0xFFFD) or escape sequences for U+FFFD
+  T5. Auto-prompt regression ??choice/timeout reverted to set /p / pause
 
 Bypass: ALLOW_TRICKS=1 environment variable.
 """
@@ -19,7 +19,7 @@ import os
 
 try:
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     pass
 
 if os.environ.get('ALLOW_TRICKS') == '1':
@@ -30,7 +30,7 @@ try:
     if not raw.strip():
         sys.exit(0)
     data = json.loads(raw)
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     sys.exit(0)
 
 tool = data.get('tool_name', '')
@@ -102,3 +102,4 @@ if violations:
     sys.exit(1)
 
 sys.exit(0)
+

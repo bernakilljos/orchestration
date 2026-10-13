@@ -1,13 +1,11 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 """
-suggest-learned-patterns.py — 학습된 반복 패턴 중 **아직 매핑 안 된** 것을 제안
-(자동 patch X · dry-run 전용 · 사용자 승인 후만 반영)
+suggest-learned-patterns.py ???숈뒿??諛섎났 ?⑦꽩 以?**?꾩쭅 留ㅽ븨 ????* 寃껋쓣 ?쒖븞
+(?먮룞 patch X 쨌 dry-run ?꾩슜 쨌 ?ъ슜???뱀씤 ?꾨쭔 諛섏쁺)
 
-흐름:
-1. .claude/state/learned-user-patterns.json 읽기
-2. user-emotion.md 현재 매핑된 트리거와 대조
-3. 미매핑 + count≥5 패턴만 "제안" 으로 저장
-4. SessionStart hook 가 systemMessage 로 "N 개 신규 패턴 발견 · /apply-learned 로 반영" 안내
+?먮쫫:
+1. .claude/state/learned-user-patterns.json ?쎄린
+2. user-emotion.md ?꾩옱 留ㅽ븨???몃━嫄곗? ?議?3. 誘몃ℓ??+ count?? ?⑦꽩留?"?쒖븞" ?쇰줈 ???4. SessionStart hook 媛 systemMessage 濡?"N 媛??좉퇋 ?⑦꽩 諛쒓껄 쨌 /apply-learned 濡?諛섏쁺" ?덈궡
 """
 from __future__ import annotations
 import json, re, sys
@@ -19,22 +17,22 @@ LEARNED = ROOT / ".claude" / "state" / "learned-user-patterns.json"
 RULES = ROOT / ".claude" / "rules" / "user-emotion.md"
 SUGGESTIONS = ROOT / ".claude" / "state" / "learned-pattern-suggestions.json"
 
-MIN_COUNT = 5  # 안전 threshold
-NOISE = {"id","task","on","reset","mcp","command","pm","local","pjt","claude","트랙",
-         "ago","src","dst","usr","etc","tmp","log","dir","env","key","val"}  # 노이즈 (명백한 설정 어휘)
+MIN_COUNT = 5  # ?덉쟾 threshold
+NOISE = {"id","task","on","reset","mcp","command","pm","local","pjt","claude","?몃옓",
+         "ago","src","dst","usr","etc","tmp","log","dir","env","key","val"}  # ?몄씠利?(紐낅갚???ㅼ젙 ?댄쐶)
 
 def extract_existing_triggers(txt: str) -> set[str]:
     out = set()
-    # | **"X"·"Y"·"Z"** | 패턴
+    # | **"X"쨌"Y"쨌"Z"** | ?⑦꽩
     for m in re.finditer(r'\*\*["\']([^"\'\*]+)["\']\*\*', txt):
-        for tok in re.split(r'[·,、/]', m.group(1)):
+        for tok in re.split(r'[쨌,??]', m.group(1)):
             t = tok.strip().strip('"\'').lower()
             if t: out.add(t)
     return out
 
 def main():
     if not LEARNED.exists():
-        print(f"[WARN] {LEARNED.name} 없음 · learn-user-patterns.py 먼저")
+        print(f"[WARN] {LEARNED.name} ?놁쓬 쨌 learn-user-patterns.py 癒쇱?")
         return
     data = json.loads(LEARNED.read_text(encoding="utf-8"))
     patterns = data.get("top_patterns", [])
@@ -45,13 +43,13 @@ def main():
         tok = p["trigger"].lower()
         if tok in NOISE: continue
         if tok in existing: continue
-        if any(tok in e or e in tok for e in existing if len(e) > 2): continue  # 부분 매칭도 skip
+        if any(tok in e or e in tok for e in existing if len(e) > 2): continue  # 遺遺?留ㅼ묶??skip
         if p["count"] < MIN_COUNT: continue
         suggestions.append({
             "trigger": p["trigger"],
             "count": p["count"],
             "example": p["example"],
-            "proposed_action": "매핑 미정 · 사용자 지정 필요"
+            "proposed_action": "留ㅽ븨 誘몄젙 쨌 ?ъ슜??吏???꾩슂"
         })
 
     result = {
@@ -60,15 +58,16 @@ def main():
         "existing_mappings": len(existing),
         "learned_total": len(patterns),
         "suggestions_count": len(suggestions),
-        "note": "자동 patch X · 사용자가 /apply-learned 또는 직접 user-emotion.md 수정",
+        "note": "?먮룞 patch X 쨌 ?ъ슜?먭? /apply-learned ?먮뒗 吏곸젒 user-emotion.md ?섏젙",
         "suggestions": suggestions,
     }
     SUGGESTIONS.parent.mkdir(parents=True, exist_ok=True)
     SUGGESTIONS.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"[OK] {SUGGESTIONS.name} · 신규 제안 {len(suggestions)} 개 (count>={MIN_COUNT})")
+    print(f"[OK] {SUGGESTIONS.name} 쨌 ?좉퇋 ?쒖븞 {len(suggestions)} 媛?(count>={MIN_COUNT})")
     for s in suggestions[:5]:
-        print(f"  [{s['count']}x] {s['trigger']}  —  {s['example'][:60]}")
+        print(f"  [{s['count']}x] {s['trigger']}  ?? {s['example'][:60]}")
 
 if __name__ == "__main__":
     try: main()
-    except Exception as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
+

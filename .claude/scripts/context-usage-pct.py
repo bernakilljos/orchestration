@@ -1,12 +1,11 @@
-#!/usr/bin/env python3
-"""현재 세션의 컨텍스트 사용률(%)을 한 줄로 출력한다.
+﻿#!/usr/bin/env python3
+"""?꾩옱 ?몄뀡??而⑦뀓?ㅽ듃 ?ъ슜瑜?%)????以꾨줈 異쒕젰?쒕떎.
 
-정본을 한 곳에 둔다. 같은 계산이 훅마다 흩어지면 한쪽만 고쳐져
-서로 다른 판정을 내린다 (2026-09-08: auto-compact-check 는 턴 수로,
-inject-compact-reminder 는 % 로 판정해 29.5% 에서 강제 압축이 걸렸다).
+?뺣낯????怨녹뿉 ?붾떎. 媛숈? 怨꾩궛???낅쭏???⑹뼱吏硫??쒖そ留?怨좎퀜???쒕줈 ?ㅻⅨ ?먯젙???대┛??(2026-09-08: auto-compact-check ?????섎줈,
+inject-compact-reminder ??% 濡??먯젙??29.5% ?먯꽌 媛뺤젣 ?뺤텞??嫄몃졇??.
 
-상한 정본: .claude/state/context-limit.json (statusline_context.py 가 기록).
-jsonl 의 message.model 에는 "[1m]" 이 없어 model 만 보면 1M 세션을 200K 로 오판한다.
+?곹븳 ?뺣낯: .claude/state/context-limit.json (statusline_context.py 媛 湲곕줉).
+jsonl ??message.model ?먮뒗 "[1m]" ???놁뼱 model 留?蹂대㈃ 1M ?몄뀡??200K 濡??ㅽ뙋?쒕떎.
 """
 import json
 import os
@@ -23,8 +22,8 @@ def main() -> None:
         print("0")
         return
 
-    # 2026-09-19: 훅 stdin 의 transcript_path(env CLAUDE_TRANSCRIPT_PATH) 가 정본. mtime 최신 파일은 동시 세션에서 남의 것이고,
-    # 306MB 를 처음부터 읽으면 3초 타임아웃에 걸려 auto-planner 가 매번 취소됐다. 마지막 usage 는 꼬리 4MB 안에 있다.
+    # 2026-09-19: ??stdin ??transcript_path(env CLAUDE_TRANSCRIPT_PATH) 媛 ?뺣낯. mtime 理쒖떊 ?뚯씪? ?숈떆 ?몄뀡?먯꽌 ?⑥쓽 寃껋씠怨?
+    # 306MB 瑜?泥섏쓬遺???쎌쑝硫?3珥???꾩븘?껋뿉 嫄몃젮 auto-planner 媛 留ㅻ쾲 痍⑥냼?먮떎. 留덉?留?usage ??瑗щ━ 4MB ?덉뿉 ?덈떎.
     own = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
     if own and Path(own).is_file():
         latest = Path(own)
@@ -37,7 +36,7 @@ def main() -> None:
 
     usage = None
     try:
-        # 꼬리 4MB 에 없으면(뒤가 attachment 뿐인 세션) 64MB 로 한 번 더. 그래도 없으면 0.
+        # 瑗щ━ 4MB ???놁쑝硫??ㅺ? attachment 肉먯씤 ?몄뀡) 64MB 濡???踰??? 洹몃옒???놁쑝硫?0.
         for TAIL in (4 * 1024 * 1024, 64 * 1024 * 1024):
             with latest.open("rb") as fb:
                 fb.seek(0, 2)
@@ -50,17 +49,17 @@ def main() -> None:
                     continue
                 try:
                     rec = json.loads(line)
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
                     continue
                 u = (rec.get("message") or {}).get("usage")
-                # 전부 0 인 usage(한도 초과 안내 등) 는 건너뛰고 직전 실제 응답을 쓴다
+                # ?꾨? 0 ??usage(?쒕룄 珥덇낵 ?덈궡 ?? ??嫄대꼫?곌퀬 吏곸쟾 ?ㅼ젣 ?묐떟???대떎
                 if u and ((u.get("input_tokens") or 0) + (u.get("cache_read_input_tokens") or 0)
                           + (u.get("cache_creation_input_tokens") or 0)) > 0:
                     usage = u
                     break
             if usage or size <= TAIL:
                 break
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         print("0")
         return
 
@@ -78,7 +77,7 @@ def main() -> None:
     try:
         with (cwd / ".claude" / "state" / "context-limit.json").open(encoding="utf-8") as f:
             limit = int(json.load(f).get("limit") or 0)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         pass
     if not limit:
         limit = 1_000_000 if tokens > 200_000 else 200_000
@@ -88,3 +87,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

@@ -1,11 +1,11 @@
-"""시스템 사양 자동 감지 — GPU VRAM 기준 LLM 설치 분기.
+﻿"""?쒖뒪???ъ뼇 ?먮룞 媛먯? ??GPU VRAM 湲곗? LLM ?ㅼ튂 遺꾧린.
 
-기준 (현 노트북 Intel Iris Xe 1GB 기준 10배):
-- GPU ≥ 10GB & RAM ≥ 32GB -> full (Ollama Llama 8B + RAG)
-- GPU ≥ 6GB  & RAM ≥ 16GB -> lite (Ollama Gemma 2B + RAG)
-- else                       -> rag_only (RAG 만, LLM = Claude API)
+湲곗? (???명듃遺?Intel Iris Xe 1GB 湲곗? 10諛?:
+- GPU ??10GB & RAM ??32GB -> full (Ollama Llama 8B + RAG)
+- GPU ??6GB  & RAM ??16GB -> lite (Ollama Gemma 2B + RAG)
+- else                       -> rag_only (RAG 留? LLM = Claude API)
 
-결과: ~/.claude/cache/system-tier.json 에 캐시.
+寃곌낵: ~/.claude/cache/system-tier.json ??罹먯떆.
 """
 import sys
 import os
@@ -17,7 +17,7 @@ from pathlib import Path
 CACHE_PATH = Path.home() / ".claude" / "cache" / "system-tier.json"
 CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# LLM 설치 한계 (이 노트북 1GB GPU 의 10배)
+# LLM ?ㅼ튂 ?쒓퀎 (???명듃遺?1GB GPU ??10諛?
 LLM_FULL_MIN_VRAM_GB = 10
 LLM_FULL_MIN_RAM_GB = 32
 LLM_LITE_MIN_VRAM_GB = 6
@@ -25,8 +25,8 @@ LLM_LITE_MIN_RAM_GB = 16
 
 
 def detect_gpu_vram_gb() -> float:
-    """GPU VRAM (GB) 감지 — Windows wmic + nvidia-smi fallback."""
-    # nvidia-smi (정확)
+    """GPU VRAM (GB) 媛먯? ??Windows wmic + nvidia-smi fallback."""
+    # nvidia-smi (?뺥솗)
     if shutil.which("nvidia-smi"):
         try:
             r = subprocess.run(
@@ -35,7 +35,7 @@ def detect_gpu_vram_gb() -> float:
             )
             mb = max((int(line.strip()) for line in r.stdout.strip().splitlines() if line.strip()), default=0)
             return mb / 1024
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             pass
     # Windows wmic (integrated GPU)
     try:
@@ -49,7 +49,7 @@ def detect_gpu_vram_gb() -> float:
             if line.isdigit():
                 bytes_max = max(bytes_max, int(line))
         return bytes_max / (1024**3)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return 0.0
 
 
@@ -73,17 +73,17 @@ def detect() -> dict:
         llm_install = "Ollama + Gemma 2 2B"
     else:
         tier = "rag_only"
-        llm_install = "X (Claude API 사용)"
+        llm_install = "X (Claude API ?ъ슜)"
 
     result = {
         "tier": tier,
         "gpu_vram_gb": round(vram, 2),
         "ram_gb": round(ram, 2),
         "llm_install": llm_install,
-        "rag_install": "ChromaDB + Voyage embedding (항상 설치)",
+        "rag_install": "ChromaDB + Voyage embedding (??긽 ?ㅼ튂)",
         "thresholds": {
-            "full": f"VRAM ≥ {LLM_FULL_MIN_VRAM_GB}GB & RAM ≥ {LLM_FULL_MIN_RAM_GB}GB",
-            "lite": f"VRAM ≥ {LLM_LITE_MIN_VRAM_GB}GB & RAM ≥ {LLM_LITE_MIN_RAM_GB}GB",
+            "full": f"VRAM ??{LLM_FULL_MIN_VRAM_GB}GB & RAM ??{LLM_FULL_MIN_RAM_GB}GB",
+            "lite": f"VRAM ??{LLM_LITE_MIN_VRAM_GB}GB & RAM ??{LLM_LITE_MIN_RAM_GB}GB",
         },
     }
     CACHE_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -92,11 +92,12 @@ def detect() -> dict:
 
 if __name__ == "__main__":
     if "--force" in sys.argv:
-        # 캐시 무시
+        # 罹먯떆 臾댁떆
         result = detect()
     elif CACHE_PATH.exists():
-        # 캐시 사용
+        # 罹먯떆 ?ъ슜
         result = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
     else:
         result = detect()
     print(json.dumps(result, ensure_ascii=False, indent=2))
+

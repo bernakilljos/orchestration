@@ -1,0 +1,10 @@
+{"timestamp": "2026-10-13T00:43:34.182944Z", "level": "INFO", "logger": "__main__", "message": "Structured logging test", "trace_id": "cf4d8398-6bb", "version": "1.0", "test_field": 42}
+{"timestamp": "2026-10-13T00:43:34.183301Z", "level": "DEBUG", "logger": "__main__", "message": "Debug message", "trace_id": "cf4d8398-6bb", "operation": "startup", "duration_ms": 123}
+{"timestamp": "2026-10-13T00:43:34.183932Z", "level": "WARNING", "logger": "__main__", "message": "Warning example", "trace_id": "cf4d8398-6bb", "severity": "low", "component": "worker"}
+{"timestamp": "2026-10-13T00:43:34.184255Z", "level": "ERROR", "logger": "__main__", "message": "Error occurred", "trace_id": "cf4d8398-6bb", "error_code": "ERR_001", "retry_count": 3}
+{"timestamp": "2026-10-13T00:43:34.184764Z", "level": "INFO", "logger": "__main__", "message": "Backward compat test", "trace_id": "cf4d8398-6bb", "module": "lib", "status": "ok"}
+{"timestamp": "2026-10-13T00:44:14.432933+00:00", "level": "INFO", "logger": "__main__", "message": "Structured logging test", "trace_id": "2ed4e5d6-b12", "version": "1.0", "test_field": 42}
+{"timestamp": "2026-10-13T00:44:14.433540+00:00", "level": "DEBUG", "logger": "__main__", "message": "Debug message", "trace_id": "2ed4e5d6-b12", "operation": "startup", "duration_ms": 123}
+{"timestamp": "2026-10-13T00:44:14.433861+00:00", "level": "WARNING", "logger": "__main__", "message": "Warning example", "trace_id": "2ed4e5d6-b12", "severity": "low", "component": "worker"}
+{"timestamp": "2026-10-13T00:44:14.434076+00:00", "level": "ERROR", "logger": "__main__", "message": "Error occurred", "trace_id": "2ed4e5d6-b12", "error_code": "ERR_001", "retry_count": 3}
+{"timestamp": "2026-10-13T00:44:14.434266+00:00", "level": "INFO", "logger": "__main__", "message": "Backward compat test", "trace_id": "2ed4e5d6-b12", "module": "lib", "status": "ok"}

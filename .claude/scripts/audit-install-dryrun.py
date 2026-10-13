@@ -1,14 +1,14 @@
-"""
-install.bat / setup.bat 진짜 전수조사 (dry-run 실행).
+﻿"""
+install.bat / setup.bat 吏꾩쭨 ?꾩닔議곗궗 (dry-run ?ㅽ뻾).
 
-방식:
-  1. install.bat 복사 -> 임시 파일
-  2. destructive 명령 (powershell, copy, mkdir, reg, setx, ...) 을 echo 로 wrap
-  3. admin elevation (net session, Start-Process -Verb RunAs) 우회
-  4. cmd 로 실행 -> 모든 echo/rem 출력 capture
-  5. 'is not recognized' / 'unexpected at this time' 검출
+諛⑹떇:
+  1. install.bat 蹂듭궗 -> ?꾩떆 ?뚯씪
+  2. destructive 紐낅졊 (powershell, copy, mkdir, reg, setx, ...) ??echo 濡?wrap
+  3. admin elevation (net session, Start-Process -Verb RunAs) ?고쉶
+  4. cmd 濡??ㅽ뻾 -> 紐⑤뱺 echo/rem 異쒕젰 capture
+  5. 'is not recognized' / 'unexpected at this time' 寃異?
 
-이게 진짜 전수조사. install.bat 자체를 끝까지 실행하는 것과 동일.
+?닿쾶 吏꾩쭨 ?꾩닔議곗궗. install.bat ?먯껜瑜??앷퉴吏 ?ㅽ뻾?섎뒗 寃껉낵 ?숈씪.
 """
 import subprocess
 import re
@@ -24,7 +24,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 TARGETS = ['install.bat', 'install_codex.bat', 'install_gemini.bat']
 
-# destructive 명령 패턴 (echo 로 wrap)
+# destructive 紐낅졊 ?⑦꽩 (echo 濡?wrap)
 DESTRUCTIVE = [
     r'^(\s*)(call\s+winget\s)',
     r'^(\s*)(call\s+npm\s)',
@@ -62,7 +62,7 @@ DESTRUCTIVE = [
     r'^(\s*)(install_gemini\.bat)',
 ]
 
-# admin elevation 우회 (전체 라인 skip)
+# admin elevation ?고쉶 (?꾩껜 ?쇱씤 skip)
 SKIP_PATTERNS = [
     r'^\s*if\s+%errorlevel%\s+neq\s+0\s*\(',
     r'^\s*Start-Process\s+.*-Verb\s+RunAs',
@@ -73,7 +73,7 @@ def transform(content):
     out = []
     for line in content.splitlines():
         new_line = line
-        # destructive 명령 -> echo 로 wrap
+        # destructive 紐낅졊 -> echo 濡?wrap
         for pat in DESTRUCTIVE:
             m = re.match(pat, new_line, re.IGNORECASE)
             if m:
@@ -102,12 +102,12 @@ for target in TARGETS:
     tmp.write_text(transformed, encoding='utf-8')
 
     try:
-        # admin 우회를 위해 환경변수 + skip 인자
+        # admin ?고쉶瑜??꾪빐 ?섍꼍蹂??+ skip ?몄옄
         r = subprocess.run(
             ['cmd', '/c', str(tmp), '--dryrun-skip'],
             capture_output=True, text=True, timeout=60,
             encoding='utf-8', errors='replace',
-            input='n\nn\nn\n\n\n\n\n\n\n'  # 모든 prompt 에 N
+            input='n\nn\nn\n\n\n\n\n\n\n'  # 紐⑤뱺 prompt ??N
         )
         combined = (r.stdout or '') + (r.stderr or '')
         errs = collect_errors(combined)
@@ -117,7 +117,7 @@ for target in TARGETS:
             results.append((target, [], None))
     except subprocess.TimeoutExpired as e:
         results.append((target, ['TIMEOUT'], (e.stdout or b'').decode('utf-8', errors='replace')[:2000]))
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         results.append((target, [f'EXEC_ERR: {e}'], None))
     finally:
         tmp.unlink(missing_ok=True)
@@ -137,3 +137,4 @@ for target, errs, output in results:
         print(f"=== {target}: OK ===")
 
 sys.exit(1 if any_err else 0)
+

@@ -1,18 +1,18 @@
-"""
-build-arch-lecture-doc.py v2 — 19 챕터 × 8 섹션 표준.
+﻿"""
+build-arch-lecture-doc.py v2 ??19 梨뺥꽣 횞 8 ?뱀뀡 ?쒖?.
 
-각 챕터에 반드시 포함 (.claude/rules/teaching-doc.md):
-  1.  핵심 한 줄
-  2. [STAT] 표 (비교-구조)
-  3.  흐름도 / 단계
-  4.  강점
-  5. [WARN] 약점-주의
-  6.  강추 시점
-  7. [TGT] 우리 시스템 매핑 (orchestration_v1 의 어디-어떻게)
-  8.  점검 1줄
+媛?梨뺥꽣??諛섎뱶???ы븿 (.claude/rules/teaching-doc.md):
+  1.  ?듭떖 ??以?
+  2. [STAT] ??(鍮꾧탳-援ъ“)
+  3.  ?먮쫫??/ ?④퀎
+  4.  媛뺤젏
+  5. [WARN] ?쎌젏-二쇱쓽
+  6.  媛뺤텛 ?쒖젏
+  7. [TGT] ?곕━ ?쒖뒪??留ㅽ븨 (orchestration_v1 ???대뵒-?대뼸寃?
+  8.  ?먭? 1以?
 
-이미지: 영어 원본 + 한글 다이어그램 (matplotlib 생성) 동반.
-톤: 5살 청자, 친근 1인칭, 비유 풍부.
+?대?吏: ?곸뼱 ?먮낯 + ?쒓? ?ㅼ씠?닿렇??(matplotlib ?앹꽦) ?숇컲.
+?? 5??泥?옄, 移쒓렐 1?몄묶, 鍮꾩쑀 ?띾?.
 """
 from pathlib import Path
 from docx import Document
@@ -24,12 +24,12 @@ from docx.oxml import OxmlElement
 ROOT = Path(__file__).resolve().parent.parent.parent
 ARCH = ROOT / "docs" / "screens" / "arch"
 ARCH_KOR = ROOT / "docs" / "screens" / "arch-kor"
-OUT = ROOT / "docs" / "lecture-AI-Claude-초보자가이드.docx"
+OUT = ROOT / "docs" / "lecture-AI-Claude-珥덈낫?먭??대뱶.docx"
 
 
-# ---------- 스타일 helpers ----------
+# ---------- ?ㅽ???helpers ----------
 def _set_kor(run, size=11, bold=False, color=None):
-    run.font.name = "맑은 고딕"
+    run.font.name = "留묒? 怨좊뵓"
     run.font.size = Pt(size)
     run.bold = bold
     if color:
@@ -39,9 +39,9 @@ def _set_kor(run, size=11, bold=False, color=None):
     if rFonts is None:
         rFonts = OxmlElement("w:rFonts")
         rPr.append(rFonts)
-    rFonts.set(qn("w:eastAsia"), "맑은 고딕")
-    rFonts.set(qn("w:ascii"), "맑은 고딕")
-    rFonts.set(qn("w:hAnsi"), "맑은 고딕")
+    rFonts.set(qn("w:eastAsia"), "留묒? 怨좊뵓")
+    rFonts.set(qn("w:ascii"), "留묒? 怨좊뵓")
+    rFonts.set(qn("w:hAnsi"), "留묒? 怨좊뵓")
 
 
 def P(doc, text="", size=11, bold=False, align="left", color=None, after=6):
@@ -78,7 +78,7 @@ def callout(doc, label, text, label_color=(192, 0, 0)):
 
 
 class PageLayoutTracker:
-    """페이지 콘텐츠 height 누적 — skill: auto-layout-fit."""
+    """?섏씠吏 肄섑뀗痢?height ?꾩쟻 ??skill: auto-layout-fit."""
     PAGE_LIMITS = {"docx-landscape": 7.33, "docx-portrait": 9.5, "pptx-16:9": 6.7}
     H = {"h1": 0.55, "h2": 0.4, "callout": 0.5, "para_line": 0.18,
          "bullet_line": 0.2, "caption": 0.25, "table_row": 0.3, "safety": 0.3}
@@ -101,10 +101,10 @@ class PageLayoutTracker:
 
 
 def IMG(doc, dir_path, name, width=5.8, height=None, caption=None, max_height=6.6):
-    """이미지 임베드.
+    """?대?吏 ?꾨쿋??
 
-    max_height: 페이지 세로 한계 (landscape A4 = 약 7.0 inch, margin 빼면 6.6).
-    width 비율 유지 시 height > max_height 면 height 기준으로 축소.
+    max_height: ?섏씠吏 ?몃줈 ?쒓퀎 (landscape A4 = ??7.0 inch, margin 鍮쇰㈃ 6.6).
+    width 鍮꾩쑉 ?좎? ??height > max_height 硫?height 湲곗??쇰줈 異뺤냼.
     """
     img = dir_path / name
     if not img.exists():
@@ -113,22 +113,22 @@ def IMG(doc, dir_path, name, width=5.8, height=None, caption=None, max_height=6.
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after = Pt(4)
 
-    # PIL 로 실제 PNG 크기 읽어 비율 계산
+    # PIL 濡??ㅼ젣 PNG ?ш린 ?쎌뼱 鍮꾩쑉 怨꾩궛
     try:
         from PIL import Image as PILImage
         with PILImage.open(str(img)) as pim:
             iw, ih = pim.size
-        # width=W inch 적용 시 height = W * (ih/iw) inch
+        # width=W inch ?곸슜 ??height = W * (ih/iw) inch
         expected_h = width * (ih / iw)
         if expected_h > max_height:
-            # height 기준으로 축소
+            # height 湲곗??쇰줈 異뺤냼
             use_h = max_height
             use_w = max_height * (iw / ih)
             p.add_run().add_picture(str(img), width=Inches(use_w), height=Inches(use_h))
         else:
             p.add_run().add_picture(str(img), width=Inches(width))
-    except Exception:
-        # PIL 실패 시 fallback
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        # PIL ?ㅽ뙣 ??fallback
         p.add_run().add_picture(str(img), width=Inches(width))
 
     if caption:
@@ -152,7 +152,7 @@ def HR(doc):
 
 
 def table(doc, header, rows, header_fill="4472C4"):
-    """간단한 비교 표."""
+    """媛꾨떒??鍮꾧탳 ??"""
     t = doc.add_table(rows=1 + len(rows), cols=len(header))
     t.style = "Light Grid Accent 1"
     hdr = t.rows[0].cells
@@ -171,48 +171,48 @@ def table(doc, header, rows, header_fill="4472C4"):
     P(doc, "", after=4)
 
 
-# ---------- 챕터 렌더링 ----------
+# ---------- 梨뺥꽣 ?뚮뜑留?----------
 CHAPTER_TO_KOR = {
-    # A 부 — Claude Code 도구 (1~9)
-    "1. .claude 폴더": "18-dk-folder.png",
-    "2. CLAUDE.md 설계": "19-claude-md-design.png",
-    "3. Claude Code 프로젝트": "17-project-structure.png",
-    "4. 에이전트 개발킷": "04-dev-kit-5layers.png",
-    "5. Claude Code 결정트리": "14-decision-tree.png",
-    "6. Claude Code 완전 가이드": "15-complete-guide.png",
-    "7. Claude Code 아키텍처": "16-arch-reference.png",
-    "8. 8가지 프롬프트": "20-prompt-8.png",
-    "9. Claude 마스터": "07-14-levels.png",
-    # B 부 — AI 기초-RAG-프로토콜 (10~20)
-    "10. AI 3종 세트": "01-gen-vs-agentic-vs-agent.png",
-    "11. AI 에이전트의 8가지": "08-8-models.png",
-    "12. 에이전트의 5가지": "02-5-cores.png",
-    "13. 9가지 숨은 함정": "09-9-killers.png",
-    "14. AI 스택 5층": "03-ai-stack-5layers.png",
-    "15. 제로비용 AI": "10-zero-cost.png",
-    "16. AI 빌더 도구": "05-ai-builder-6cat.png",
-    "17. RAG 입문": "11-rag-intro.png",
-    "18. RAG 8가지": "12-rag-8.png",
-    "19. API 프로토콜": "13-api-protocols.png",
+    # A 遺 ??Claude Code ?꾧뎄 (1~9)
+    "1. .claude ?대뜑": "18-dk-folder.png",
+    "2. CLAUDE.md ?ㅺ퀎": "19-claude-md-design.png",
+    "3. Claude Code ?꾨줈?앺듃": "17-project-structure.png",
+    "4. ?먯씠?꾪듃 媛쒕컻??: "04-dev-kit-5layers.png",
+    "5. Claude Code 寃곗젙?몃━": "14-decision-tree.png",
+    "6. Claude Code ?꾩쟾 媛?대뱶": "15-complete-guide.png",
+    "7. Claude Code ?꾪궎?띿쿂": "16-arch-reference.png",
+    "8. 8媛吏 ?꾨＼?꾪듃": "20-prompt-8.png",
+    "9. Claude 留덉뒪??: "07-14-levels.png",
+    # B 遺 ??AI 湲곗큹-RAG-?꾨줈?좎퐳 (10~20)
+    "10. AI 3醫??명듃": "01-gen-vs-agentic-vs-agent.png",
+    "11. AI ?먯씠?꾪듃??8媛吏": "08-8-models.png",
+    "12. ?먯씠?꾪듃??5媛吏": "02-5-cores.png",
+    "13. 9媛吏 ?⑥? ?⑥젙": "09-9-killers.png",
+    "14. AI ?ㅽ깮 5痢?: "03-ai-stack-5layers.png",
+    "15. ?쒕줈鍮꾩슜 AI": "10-zero-cost.png",
+    "16. AI 鍮뚮뜑 ?꾧뎄": "05-ai-builder-6cat.png",
+    "17. RAG ?낅Ц": "11-rag-intro.png",
+    "18. RAG 8媛吏": "12-rag-8.png",
+    "19. API ?꾨줈?좎퐳": "13-api-protocols.png",
     "20. MCP vs A2A": "06-mcp-vs-a2a.png",
 }
 
 
 def _kor_image_for(title):
-    """챕터 제목에서 한글 PNG 매핑."""
+    """梨뺥꽣 ?쒕ぉ?먯꽌 ?쒓? PNG 留ㅽ븨."""
     for prefix, png in CHAPTER_TO_KOR.items():
         if title.startswith(prefix):
             return png
 
 
-# 사용자 전수조사 (2026-05-11) — 챕터별 이미지 max_height (inch)
-# A4 landscape inside 7.33 - H1(0.55) - safety(0.3) = 6.48 한계 -> max 6.4 clamp
-# base = 6.0 -> 사용자 ratio 그대로 적용 + 빈 페이지 방지
-# 모든 PNG ratio 0.692 (1300×900) — 페이지 inside 11.46×8.03
-# H1 한 줄: H1 0.58 + IMG 7.10 = 7.68 fit
-# H1 두 줄 (Ch 4 — title 너무 김): H1 1.16 + IMG 7.10 = 8.26 OVER -> max_h 6.40 override
+# ?ъ슜???꾩닔議곗궗 (2026-05-11) ??梨뺥꽣蹂??대?吏 max_height (inch)
+# A4 landscape inside 7.33 - H1(0.55) - safety(0.3) = 6.48 ?쒓퀎 -> max 6.4 clamp
+# base = 6.0 -> ?ъ슜??ratio 洹몃?濡??곸슜 + 鍮??섏씠吏 諛⑹?
+# 紐⑤뱺 PNG ratio 0.692 (1300횞900) ???섏씠吏 inside 11.46횞8.03
+# H1 ??以? H1 0.58 + IMG 7.10 = 7.68 fit
+# H1 ??以?(Ch 4 ??title ?덈Т 源): H1 1.16 + IMG 7.10 = 8.26 OVER -> max_h 6.40 override
 CHAPTER_MAX_HEIGHT = {
-    "4. 에이전트 개발킷": 6.40,  # H1 두 줄 -> IMG 축소 필요
+    "4. ?먯씠?꾪듃 媛쒕컻??: 6.40,  # H1 ??以?-> IMG 異뺤냼 ?꾩슂
 }
 DEFAULT_MAX_HEIGHT = 7.10
 
@@ -225,31 +225,31 @@ def _max_height_for(title):
     return None
 
 
-# cwd 기반 PROJECT_NAME 동적 — team 폴더에서 빌드하면 v2_team
+# cwd 湲곕컲 PROJECT_NAME ?숈쟻 ??team ?대뜑?먯꽌 鍮뚮뱶?섎㈃ v2_team
 import os
 _cwd = Path(os.getcwd()).name
 SYSTEM_NAME = "orchestration_v2_team" if "team" in _cwd.lower() else "orchestration_v1"
 
 
 def render_chapter(doc, ch, idx=0):
-    """8 섹션 표준 챕터 렌더링 — PageLayoutTracker + 빈 페이지 방지.
+    """8 ?뱀뀡 ?쒖? 梨뺥꽣 ?뚮뜑留???PageLayoutTracker + 鍮??섏씠吏 諛⑹?.
 
-    빈 페이지 방지 패턴: H1 paragraph 의 page_break_before 속성 사용.
-    명시적 PB(doc) 는 Word 자동 분할과 충돌해 빈 페이지 생성 -> 사용 금지.
-    page_break_before 는 Word 가 H1 위치에서 직접 새 페이지 시작 -> 빈 페이지 0.
+    鍮??섏씠吏 諛⑹? ?⑦꽩: H1 paragraph ??page_break_before ?띿꽦 ?ъ슜.
+    紐낆떆??PB(doc) ??Word ?먮룞 遺꾪븷怨?異⑸룎??鍮??섏씠吏 ?앹꽦 -> ?ъ슜 湲덉?.
+    page_break_before ??Word 媛 H1 ?꾩튂?먯꽌 吏곸젒 ???섏씠吏 ?쒖옉 -> 鍮??섏씠吏 0.
     """
     tracker = PageLayoutTracker("docx-landscape")
 
     h1_para = H(doc, ch["title"], level=1)
     if idx > 0:
-        h1_para.paragraph_format.page_break_before = True  # 두 번째 챕터부터 새 페이지
-    # H1 + IMG 같은 페이지 보장 — keep_with_next + space_after 축소
+        h1_para.paragraph_format.page_break_before = True  # ??踰덉㎏ 梨뺥꽣遺?????섏씠吏
+    # H1 + IMG 媛숈? ?섏씠吏 蹂댁옣 ??keep_with_next + space_after 異뺤냼
     h1_para.paragraph_format.keep_with_next = True
     h1_para.paragraph_format.space_after = Pt(2)
     tracker.add("h1")
 
-    # 사용자 전수조사 (2026-05-11) 챕터별 max_height 적용
-    # H1 + IMG 한 페이지 + PB -> callout/본문 별도 페이지 (잘림 방지)
+    # ?ъ슜???꾩닔議곗궗 (2026-05-11) 梨뺥꽣蹂?max_height ?곸슜
+    # H1 + IMG ???섏씠吏 + PB -> callout/蹂몃Ц 蹂꾨룄 ?섏씠吏 (?섎┝ 諛⑹?)
     max_h = _max_height_for(ch["title"])
     kor_png = _kor_image_for(ch["title"])
     if kor_png:
@@ -257,1148 +257,1148 @@ def render_chapter(doc, ch, idx=0):
     elif ch.get("image_kor"):
         IMG(doc, ARCH_KOR, ch["image_kor"], width=11.0, max_height=max_h, caption=None)
 
-    # IMG 후 강제 PB — 본문 (callout + 표 + ...) 별도 페이지 -> 잘림 방지
+    # IMG ??媛뺤젣 PB ??蹂몃Ц (callout + ??+ ...) 蹂꾨룄 ?섏씠吏 -> ?섎┝ 諛⑹?
     PB(doc)
-    callout(doc, " 핵심 한 줄", ch["핵심"]); tracker.reset(); tracker.add("callout")
+    callout(doc, " ?듭떖 ??以?, ch["?듭떖"]); tracker.reset(); tracker.add("callout")
 
-    # 1.5 강사 한 마디 — 강사 톤 인트로 (친근-예시-학습자 가정)
-    if ch.get("강사"):
-        H(doc, " 강사 한 마디", level=3)
-        for line in ch["강사"] if isinstance(ch["강사"], list) else [ch["강사"]]:
+    # 1.5 媛뺤궗 ??留덈뵒 ??媛뺤궗 ???명듃濡?(移쒓렐-?덉떆-?숈뒿??媛??
+    if ch.get("媛뺤궗"):
+        H(doc, " 媛뺤궗 ??留덈뵒", level=3)
+        for line in ch["媛뺤궗"] if isinstance(ch["媛뺤궗"], list) else [ch["媛뺤궗"]]:
             P(doc, line, size=11, after=4)
 
-    # 2. 표
-    if ch.get("표"):
-        H(doc, "[STAT] 표 — 한눈에 비교", level=3)
-        table(doc, ch["표"]["header"], ch["표"]["rows"])
+    # 2. ??
+    if ch.get("??):
+        H(doc, "[STAT] ?????쒕늿??鍮꾧탳", level=3)
+        table(doc, ch["??]["header"], ch["??]["rows"])
 
-    # 3. 흐름/단계
-    if ch.get("흐름"):
-        H(doc, " 흐름-단계", level=3)
-        for s in ch["흐름"]:
+    # 3. ?먮쫫/?④퀎
+    if ch.get("?먮쫫"):
+        H(doc, " ?먮쫫-?④퀎", level=3)
+        for s in ch["?먮쫫"]:
             B(doc, s)
 
-    # 4. 강점
-    if ch.get("강점"):
-        H(doc, " 강점", level=3)
-        for s in ch["강점"]:
+    # 4. 媛뺤젏
+    if ch.get("媛뺤젏"):
+        H(doc, " 媛뺤젏", level=3)
+        for s in ch["媛뺤젏"]:
             B(doc, s)
 
-    # 5. 약점-주의
-    if ch.get("약점"):
-        H(doc, "[WARN] 약점-주의 (놓치기 쉬운 함정)", level=3)
-        for s in ch["약점"]:
+    # 5. ?쎌젏-二쇱쓽
+    if ch.get("?쎌젏"):
+        H(doc, "[WARN] ?쎌젏-二쇱쓽 (?볦튂湲??ъ슫 ?⑥젙)", level=3)
+        for s in ch["?쎌젏"]:
             B(doc, s)
 
-    # 6. 강추 시점
-    if ch.get("강추"):
-        H(doc, " 강추 — 언제 써야 하나", level=3)
-        if isinstance(ch["강추"], list):
-            for s in ch["강추"]:
+    # 6. 媛뺤텛 ?쒖젏
+    if ch.get("媛뺤텛"):
+        H(doc, " 媛뺤텛 ???몄젣 ?⑥빞 ?섎굹", level=3)
+        if isinstance(ch["媛뺤텛"], list):
+            for s in ch["媛뺤텛"]:
                 B(doc, s)
         else:
-            P(doc, ch["강추"])
+            P(doc, ch["媛뺤텛"])
 
-    # 7. 우리 시스템 매핑 (가장 중요)
-    if ch.get("우리시스템"):
-        H(doc, f"[TGT] 우리 시스템 매핑 — {SYSTEM_NAME} 의 어디-어떻게", level=3)
-        if isinstance(ch["우리시스템"], dict):
-            table(doc, ["개념", "우리 시스템 위치 / 동작"], list(ch["우리시스템"].items()),
+    # 7. ?곕━ ?쒖뒪??留ㅽ븨 (媛??以묒슂)
+    if ch.get("?곕━?쒖뒪??):
+        H(doc, f"[TGT] ?곕━ ?쒖뒪??留ㅽ븨 ??{SYSTEM_NAME} ???대뵒-?대뼸寃?, level=3)
+        if isinstance(ch["?곕━?쒖뒪??], dict):
+            table(doc, ["媛쒕뀗", "?곕━ ?쒖뒪???꾩튂 / ?숈옉"], list(ch["?곕━?쒖뒪??].items()),
                   header_fill="C00000")
         else:
-            for s in ch["우리시스템"]:
+            for s in ch["?곕━?쒖뒪??]:
                 B(doc, s)
 
-    # 비유 (선택)
-    if ch.get("비유"):
-        H(doc, "[TGT] 비유 (5살에게 설명한다면)", level=3)
-        P(doc, ch["비유"])
+    # 鍮꾩쑀 (?좏깮)
+    if ch.get("鍮꾩쑀"):
+        H(doc, "[TGT] 鍮꾩쑀 (5?댁뿉寃??ㅻ챸?쒕떎硫?", level=3)
+        P(doc, ch["鍮꾩쑀"])
 
-    # 8. 강사 결론 (이전 "점검" Q/A 대체)
-    if ch.get("점검"):
-        H(doc, "[TGT] 강사 결론 — 한 마디", level=3)
-        _, a = ch["점검"]
+    # 8. 媛뺤궗 寃곕줎 (?댁쟾 "?먭?" Q/A ?泥?
+    if ch.get("?먭?"):
+        H(doc, "[TGT] 媛뺤궗 寃곕줎 ????留덈뵒", level=3)
+        _, a = ch["?먭?"]
         P(doc, a, size=12, bold=True, color=(192, 0, 0))
 
-    # 챕터 끝 PB 제거 — 다음 챕터의 시작 PB 가 처리 (빈 페이지 방지)
+    # 梨뺥꽣 ??PB ?쒓굅 ???ㅼ쓬 梨뺥꽣???쒖옉 PB 媛 泥섎━ (鍮??섏씠吏 諛⑹?)
 
 
 # ============================================================
-# 챕터 데이터 (19개)
+# 梨뺥꽣 ?곗씠??(19媛?
 # ============================================================
 CHAPTERS = [
     {
-        "title": "1. .claude 폴더 전체 구조 (DK 메소드)",
-        "image_eng": "클로드폴더-전체구조-DK메소드.jpg",
+        "title": "1. .claude ?대뜑 ?꾩껜 援ъ“ (DK 硫붿냼??",
+        "image_eng": "?대줈?쒗뤃???꾩껜援ъ“-DK硫붿냼??jpg",
         "image_kor": None,
-        "핵심": "한글로 가장 친절하게 정리된 .claude/ 트리.",
-        "강사": [".claude 폴더 = AI 팀원의 사무실.", "commit (팀 공유): CLAUDE.md - settings.json - commands/ - rules/ - skills/ - agents/", "gitignore (개인): CLAUDE.local.md - settings.local - .env", "시크릿은 절대 commit X — 우리 secret-scan hook 자동 차단."],
-        "표": {
-            "header": ["파일/폴더", "용도", "git"],
+        "?듭떖": "?쒓?濡?媛??移쒖젅?섍쾶 ?뺣━??.claude/ ?몃━.",
+        "媛뺤궗": [".claude ?대뜑 = AI ??먯쓽 ?щТ??", "commit (? 怨듭쑀): CLAUDE.md - settings.json - commands/ - rules/ - skills/ - agents/", "gitignore (媛쒖씤): CLAUDE.local.md - settings.local - .env", "?쒗겕由우? ?덈? commit X ???곕━ secret-scan hook ?먮룞 李⑤떒."],
+        "??: {
+            "header": ["?뚯씪/?대뜑", "?⑸룄", "git"],
             "rows": [
-                ["CLAUDE.md", "팀 공유 기억", "commit"],
-                ["CLAUDE.local.md", "나만의 기억", "gitignore"],
-                [".claude/settings.json", "권한 설정 (공유)", "commit"],
-                [".claude/settings.local", "개인 권한", "gitignore"],
-                [".claude/commands/", "나만의 /명령어", "commit"],
-                [".claude/rules/", "항상 적용 규칙", "commit"],
-                [".claude/skills/", "자동 워크플로우", "commit"],
-                [".claude/agents/", "서브에이전트", "commit"],
+                ["CLAUDE.md", "? 怨듭쑀 湲곗뼲", "commit"],
+                ["CLAUDE.local.md", "?섎쭔??湲곗뼲", "gitignore"],
+                [".claude/settings.json", "沅뚰븳 ?ㅼ젙 (怨듭쑀)", "commit"],
+                [".claude/settings.local", "媛쒖씤 沅뚰븳", "gitignore"],
+                [".claude/commands/", "?섎쭔??/紐낅졊??, "commit"],
+                [".claude/rules/", "??긽 ?곸슜 洹쒖튃", "commit"],
+                [".claude/skills/", "?먮룞 ?뚰겕?뚮줈??, "commit"],
+                [".claude/agents/", "?쒕툕?먯씠?꾪듃", "commit"],
             ],
         },
-        "흐름": [
-            "새 프로젝트 = /init -> 위 파일들 만들어짐 -> 팀과 합의로 채움.",
-            "팀 공유 (CLAUDE.md, settings.json, commands/, rules/, skills/, agents/) 와 개인 (CLAUDE.local.md, settings.local, .env) 분리.",
-            "settings.json 에 hooks 등록 -> PreToolUse/PostToolUse 자동 발동.",
+        "?먮쫫": [
+            "???꾨줈?앺듃 = /init -> ???뚯씪??留뚮뱾?댁쭚 -> ?怨??⑹쓽濡?梨꾩?.",
+            "? 怨듭쑀 (CLAUDE.md, settings.json, commands/, rules/, skills/, agents/) ? 媛쒖씤 (CLAUDE.local.md, settings.local, .env) 遺꾨━.",
+            "settings.json ??hooks ?깅줉 -> PreToolUse/PostToolUse ?먮룞 諛쒕룞.",
         ],
-        "강점": [
-            "공유 (commit) 와 개인 (gitignore) 명확 분리 — 시크릿 안전.",
-            "한글 친화 — DK 메소드가 한글 라벨 풍부.",
-            "rules/ 폴더로 항상 적용 규칙 별도 관리.",
-            "팀 onboarding 쉬움 — 신입이 폴더 봐도 즉시 이해.",
-            "Git 정책 명확 — commit/gitignore 표시.",
+        "媛뺤젏": [
+            "怨듭쑀 (commit) ? 媛쒖씤 (gitignore) 紐낇솗 遺꾨━ ???쒗겕由??덉쟾.",
+            "?쒓? 移쒗솕 ??DK 硫붿냼?쒓? ?쒓? ?쇰꺼 ?띾?.",
+            "rules/ ?대뜑濡???긽 ?곸슜 洹쒖튃 蹂꾨룄 愿由?",
+            "? onboarding ?ъ? ???좎엯???대뜑 遊먮룄 利됱떆 ?댄빐.",
+            "Git ?뺤콉 紐낇솗 ??commit/gitignore ?쒖떆.",
         ],
-        "약점": [
-            ".local 파일 잊고 commit 하면 시크릿 누출 위험 — pre-commit hook 필수.",
-            "CLAUDE.md vs CLAUDE.local.md 혼동 — 어느 것에 뭐 쓸지 결정 필요.",
-            "rules/ 와 skills/ 차이 헷갈림 — rules 는 규칙, skills 는 워크플로우.",
-            "Agent 가 많으면 description 매칭 충돌.",
+        "?쎌젏": [
+            ".local ?뚯씪 ?딄퀬 commit ?섎㈃ ?쒗겕由??꾩텧 ?꾪뿕 ??pre-commit hook ?꾩닔.",
+            "CLAUDE.md vs CLAUDE.local.md ?쇰룞 ???대뒓 寃껋뿉 萸??몄? 寃곗젙 ?꾩슂.",
+            "rules/ ? skills/ 李⑥씠 ?룰컝由???rules ??洹쒖튃, skills ???뚰겕?뚮줈??",
+            "Agent 媛 留롮쑝硫?description 留ㅼ묶 異⑸룎.",
         ],
-        "강추": [
-            "팀 작업 = CLAUDE.md + .local.md 둘 다 활용 — 분담.",
-            "시크릿은 무조건 .local 또는 .env — 절대 commit X.",
-            "rules/ 에 code-style.md 같은 강제 룰 — Hook 으로 자동 검증.",
-            "agents/ 에 code-reviewer, test-runner 같은 핵심 subagent 만.",
+        "媛뺤텛": [
+            "? ?묒뾽 = CLAUDE.md + .local.md ?????쒖슜 ??遺꾨떞.",
+            "?쒗겕由우? 臾댁“嫄?.local ?먮뒗 .env ???덈? commit X.",
+            "rules/ ??code-style.md 媛숈? 媛뺤젣 猷???Hook ?쇰줈 ?먮룞 寃利?",
+            "agents/ ??code-reviewer, test-runner 媛숈? ?듭떖 subagent 留?",
         ],
-        "우리시스템": {
-            "CLAUDE.md": "✓ 169줄, commit 됨",
-            "CLAUDE.local.md": "사용 X (전체 가이드에 다 박음)",
-            "settings.json": "24 hooks 등록",
-            ".local 파일": ".env (gitignore) 로 시크릿 분리",
+        "?곕━?쒖뒪??: {
+            "CLAUDE.md": "??169以? commit ??,
+            "CLAUDE.local.md": "?ъ슜 X (?꾩껜 媛?대뱶????諛뺤쓬)",
+            "settings.json": "24 hooks ?깅줉",
+            ".local ?뚯씪": ".env (gitignore) 濡??쒗겕由?遺꾨━",
         },
-        "점검": ("팀과 공유 안 할 메모는 어디에?", "CLAUDE.local.md (gitignore)."),
+        "?먭?": ("?怨?怨듭쑀 ????硫붾え???대뵒??", "CLAUDE.local.md (gitignore)."),
     },
     {
-        "title": "2. CLAUDE.md 설계 가이드 — 진짜로 작동하는 메모리",
-        "image_eng": "클로드MD-설계가이드-판데이.jpg",
+        "title": "2. CLAUDE.md ?ㅺ퀎 媛?대뱶 ??吏꾩쭨濡??묐룞?섎뒗 硫붾え由?,
+        "image_eng": "?대줈?쏮D-?ㅺ퀎媛?대뱶-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "CLAUDE.md 는 사람용 README 가 아니라 AI 팀원 온보딩 문서.",
-        "강사": ["CLAUDE.md 는 사람용 README 가 아니라 **AI 팀원 온보딩 문서**.", "3 Scope: Global (~/.claude/) - Project (./CLAUDE.md) - Folder (./src/CLAUDE.md). 가까운 게 이김.", "5 Rules: /init 먼저 - 500줄 이하 - Hooks 사용 - 월간 갱신 - 참조 중심.", "우리 = 169줄 (한계의 33%, 충분히 짧음) + 5중박기 + 13 금지."],
-        "표": {
-            "header": ["Scope", "위치", "용도"],
+        "?듭떖": "CLAUDE.md ???щ엺??README 媛 ?꾨땲??AI ????⑤낫??臾몄꽌.",
+        "媛뺤궗": ["CLAUDE.md ???щ엺??README 媛 ?꾨땲??**AI ????⑤낫??臾몄꽌**.", "3 Scope: Global (~/.claude/) - Project (./CLAUDE.md) - Folder (./src/CLAUDE.md). 媛源뚯슫 寃??닿?.", "5 Rules: /init 癒쇱? - 500以??댄븯 - Hooks ?ъ슜 - ?붽컙 媛깆떊 - 李몄“ 以묒떖.", "?곕━ = 169以?(?쒓퀎??33%, 異⑸텇??吏㏃쓬) + 5以묐컯湲?+ 13 湲덉?."],
+        "??: {
+            "header": ["Scope", "?꾩튂", "?⑸룄"],
             "rows": [
-                ["Global", "~/.claude/CLAUDE.md", "모든 프로젝트 공통"],
-                ["Project", "./CLAUDE.md", "이 프로젝트 규칙"],
-                ["Folder", "./src/CLAUDE.md", "모듈별 오버라이드"],
+                ["Global", "~/.claude/CLAUDE.md", "紐⑤뱺 ?꾨줈?앺듃 怨듯넻"],
+                ["Project", "./CLAUDE.md", "???꾨줈?앺듃 洹쒖튃"],
+                ["Folder", "./src/CLAUDE.md", "紐⑤뱢蹂??ㅻ쾭?쇱씠??],
             ],
         },
-        "흐름": [
-            "WHAT (컨텍스트) -> 목적-기술스택-구조",
-            "WHY (원칙) -> 아키텍처 결정-스타일-안티패턴",
-            "HOW (워크플로우) -> build-test-lint-commit",
+        "?먮쫫": [
+            "WHAT (而⑦뀓?ㅽ듃) -> 紐⑹쟻-湲곗닠?ㅽ깮-援ъ“",
+            "WHY (?먯튃) -> ?꾪궎?띿쿂 寃곗젙-?ㅽ????덊떚?⑦꽩",
+            "HOW (?뚰겕?뚮줈?? -> build-test-lint-commit",
         ],
-        "강점": [
-            "3 스코프로 충돌 해결 — Folder > Project > Global (가까운 게 이김).",
-            "WHAT/WHY/HOW 프레임으로 빠진 정보 없이 정리.",
-            "5 Rules 가 실용적 — /init 먼저, 500줄 이하, Hooks, 월간 갱신, 참조 중심.",
-            "Hooks 와 결합으로 70% (메모리) -> 100% (Hooks) 강제력.",
-            "AI 팀원 온보딩 표준 — 사람용 README 아닌 AI 용 문서.",
+        "媛뺤젏": [
+            "3 ?ㅼ퐫?꾨줈 異⑸룎 ?닿껐 ??Folder > Project > Global (媛源뚯슫 寃??닿?).",
+            "WHAT/WHY/HOW ?꾨젅?꾩쑝濡?鍮좎쭊 ?뺣낫 ?놁씠 ?뺣━.",
+            "5 Rules 媛 ?ㅼ슜????/init 癒쇱?, 500以??댄븯, Hooks, ?붽컙 媛깆떊, 李몄“ 以묒떖.",
+            "Hooks ? 寃고빀?쇰줈 70% (硫붾え由? -> 100% (Hooks) 媛뺤젣??",
+            "AI ????⑤낫???쒖? ???щ엺??README ?꾨땶 AI ??臾몄꽌.",
         ],
-        "약점": [
-            "500줄 넘으면 무시됨 — 길어지지 않게 참조 중심.",
-            "Folder scope 는 거의 안 쓰임 — 복잡도 ↑.",
-            "Specific 하게 쓰기 어려움 — 'clean code' 같은 모호한 표현 함정.",
-            "월간 갱신 노동 — 살아있는 문서 유지 부담.",
-            "GLOBAL 의 시크릿 수정 시 모든 프로젝트 영향 — 위험.",
+        "?쎌젏": [
+            "500以??섏쑝硫?臾댁떆????湲몄뼱吏吏 ?딄쾶 李몄“ 以묒떖.",
+            "Folder scope ??嫄곗쓽 ???곗엫 ??蹂듭옟????",
+            "Specific ?섍쾶 ?곌린 ?대젮? ??'clean code' 媛숈? 紐⑦샇???쒗쁽 ?⑥젙.",
+            "?붽컙 媛깆떊 ?몃룞 ???댁븘?덈뒗 臾몄꽌 ?좎? 遺??",
+            "GLOBAL ???쒗겕由??섏젙 ??紐⑤뱺 ?꾨줈?앺듃 ?곹뼢 ???꾪뿕.",
         ],
-        "강추": [
-            "1) /init 먼저 — Claude 가 잡게 둔 후 큐레이션",
-            "2) 500줄 이하",
-            "3) Hooks 사용 (메모리는 70%, hooks 는 100% 강제)",
-            "4) 월간 업데이트",
-            "5) 참조 중심, 중복 X",
+        "媛뺤텛": [
+            "1) /init 癒쇱? ??Claude 媛 ?↔쾶 ?????먮젅?댁뀡",
+            "2) 500以??댄븯",
+            "3) Hooks ?ъ슜 (硫붾え由щ뒗 70%, hooks ??100% 媛뺤젣)",
+            "4) ?붽컙 ?낅뜲?댄듃",
+            "5) 李몄“ 以묒떖, 以묐났 X",
         ],
-        "우리시스템": {
-            "Global": "~/.claude/CLAUDE.md (방금 install 자동 배포)",
-            "Project": "./CLAUDE.md 169줄 (5중 박기 + 13개 금지)",
-            "Folder": "사용 X",
-            "강화 위치": "rules/teaching-doc.md-failure-mode.md-best-practices.md 로 분산",
+        "?곕━?쒖뒪??: {
+            "Global": "~/.claude/CLAUDE.md (諛⑷툑 install ?먮룞 諛고룷)",
+            "Project": "./CLAUDE.md 169以?(5以?諛뺢린 + 13媛?湲덉?)",
+            "Folder": "?ъ슜 X",
+            "媛뺥솕 ?꾩튂": "rules/teaching-doc.md-failure-mode.md-best-practices.md 濡?遺꾩궛",
         },
-        "점검": ("CLAUDE.md 가 500줄 넘으면?", "무시됨. 참조 파일로 분산."),
+        "?먭?": ("CLAUDE.md 媛 500以??섏쑝硫?", "臾댁떆?? 李몄“ ?뚯씪濡?遺꾩궛."),
     },
     {
-        "title": "3. Claude Code 프로젝트 구조",
-        "image_eng": "클로드코드-프로젝트구조-판데이.jpg",
+        "title": "3. Claude Code ?꾨줈?앺듃 援ъ“",
+        "image_eng": "?대줈?쒖퐫???꾨줈?앺듃援ъ“-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "어디에 무엇을 두는가 표준. 처음부터 이 구조면 90점.",
-        "강사": ["어디에 무엇을 두는가 표준 — 90점 시작.", "CLAUDE.md (팀 규칙) - settings.json (권한+hook) - .claude/ (commands/skills/agents/hooks) - plugins/ (원본 SoT).", "이 구조만 따르면 90점. 나머지 10점 = 팀 합의로 보완."],
-        "표": {
-            "header": ["폴더", "역할", "예"],
+        "?듭떖": "?대뵒??臾댁뾿???먮뒗媛 ?쒖?. 泥섏쓬遺????援ъ“硫?90??",
+        "媛뺤궗": ["?대뵒??臾댁뾿???먮뒗媛 ?쒖? ??90???쒖옉.", "CLAUDE.md (? 洹쒖튃) - settings.json (沅뚰븳+hook) - .claude/ (commands/skills/agents/hooks) - plugins/ (?먮낯 SoT).", "??援ъ“留??곕Ⅴ硫?90?? ?섎㉧吏 10??= ? ?⑹쓽濡?蹂댁셿."],
+        "??: {
+            "header": ["?대뜑", "??븷", "??],
             "rows": [
-                ["루트 CLAUDE.md", "팀 공유 규칙", "git commit"],
-                [".claude/commands/", "슬래시 명령", "/review-/test"],
-                [".claude/skills/", "자동 워크플로우", "SKILL.md"],
+                ["猷⑦듃 CLAUDE.md", "? 怨듭쑀 洹쒖튃", "git commit"],
+                [".claude/commands/", "?щ옒??紐낅졊", "/review-/test"],
+                [".claude/skills/", "?먮룞 ?뚰겕?뚮줈??, "SKILL.md"],
                 [".claude/agents/", "subagent", "code-reviewer.md"],
-                [".claude/hooks/", "가드레일", "PreToolUse.sh"],
-                [".mcp.json", "MCP 서버 설정", "GitHub-Postgres"],
+                [".claude/hooks/", "媛?쒕젅??, "PreToolUse.sh"],
+                [".mcp.json", "MCP ?쒕쾭 ?ㅼ젙", "GitHub-Postgres"],
             ],
         },
-        "흐름": [
-            "새 프로젝트 = /init -> 위 구조 자동 생성 -> 필요한 파일만 채움.",
-            "CLAUDE.md 부터 정의 -> skills/ 추가 -> agents/ 위임 -> hooks/ 가드레일 -> .mcp.json 외부 도구.",
-            "plugins/ 는 sync 원본 — .claude/ 는 sync 결과물 (자동 생성).",
+        "?먮쫫": [
+            "???꾨줈?앺듃 = /init -> ??援ъ“ ?먮룞 ?앹꽦 -> ?꾩슂???뚯씪留?梨꾩?.",
+            "CLAUDE.md 遺???뺤쓽 -> skills/ 異붽? -> agents/ ?꾩엫 -> hooks/ 媛?쒕젅??-> .mcp.json ?몃? ?꾧뎄.",
+            "plugins/ ??sync ?먮낯 ??.claude/ ??sync 寃곌낵臾?(?먮룞 ?앹꽦).",
         ],
-        "강점": [
-            "표준 폴더 — 다른 사람이 봐도 즉시 이해.",
-            "/init 한 번이면 끝 — 자동 생성.",
-            "각 폴더 책임 분명 — 어디에 무엇 둬야 할지 헷갈림 X.",
-            "Git 친화 — CLAUDE.md commit, settings.local gitignore.",
-            "팀 표준화 쉬움 — 모두 같은 구조 따름.",
+        "媛뺤젏": [
+            "?쒖? ?대뜑 ???ㅻⅨ ?щ엺??遊먮룄 利됱떆 ?댄빐.",
+            "/init ??踰덉씠硫??????먮룞 ?앹꽦.",
+            "媛??대뜑 梨낆엫 遺꾨챸 ???대뵒??臾댁뾿 ?ъ빞 ?좎? ?룰컝由?X.",
+            "Git 移쒗솕 ??CLAUDE.md commit, settings.local gitignore.",
+            "? ?쒖????ъ? ??紐⑤몢 媛숈? 援ъ“ ?곕쫫.",
         ],
-        "약점": [
-            "폴더 많으면 처음 부담 — 필요한 것만.",
-            "plugins/ 와 .claude/ 분리 -> 어디 편집할지 헷갈림 (plugins/ 가 SoT).",
-            "settings.local 잊고 commit 위험 — 시크릿 누출.",
-            "agents/ 와 skills/ 차이 헷갈림 — subagent 는 명시 호출, skill 은 자동.",
+        "?쎌젏": [
+            "?대뜑 留롮쑝硫?泥섏쓬 遺?????꾩슂??寃껊쭔.",
+            "plugins/ ? .claude/ 遺꾨━ -> ?대뵒 ?몄쭛?좎? ?룰컝由?(plugins/ 媛 SoT).",
+            "settings.local ?딄퀬 commit ?꾪뿕 ???쒗겕由??꾩텧.",
+            "agents/ ? skills/ 李⑥씠 ?룰컝由???subagent ??紐낆떆 ?몄텧, skill ? ?먮룞.",
         ],
-        "강추": [
-            "팀 작업 = 무조건 이 구조 — 표준 준수.",
-            "혼자면 CLAUDE.md + skills/ 만으로 시작 — 점진 확장.",
-            "/init 먼저 -> 큐레이션 — Anthropic 권장 워크플로우.",
-            "sync 충돌 방지 = plugins/ 에서만 편집.",
+        "媛뺤텛": [
+            "? ?묒뾽 = 臾댁“嫄???援ъ“ ???쒖? 以??",
+            "?쇱옄硫?CLAUDE.md + skills/ 留뚯쑝濡??쒖옉 ???먯쭊 ?뺤옣.",
+            "/init 癒쇱? -> ?먮젅?댁뀡 ??Anthropic 沅뚯옣 ?뚰겕?뚮줈??",
+            "sync 異⑸룎 諛⑹? = plugins/ ?먯꽌留??몄쭛.",
         ],
-        "우리시스템": {
-            ".claude/commands/": "152개 (sync 결과물)",
-            ".claude/skills/": "77개",
-            ".claude/agents/": "11개 (최근 +4 sync 보강)",
-            ".claude/hooks/": "21 .sh/.py + settings.json 등록",
-            "plugins/": "25개 (원본 SoT)",
+        "?곕━?쒖뒪??: {
+            ".claude/commands/": "152媛?(sync 寃곌낵臾?",
+            ".claude/skills/": "77媛?,
+            ".claude/agents/": "11媛?(理쒓렐 +4 sync 蹂닿컯)",
+            ".claude/hooks/": "21 .sh/.py + settings.json ?깅줉",
+            "plugins/": "25媛?(?먮낯 SoT)",
         },
-        "점검": ("CLAUDE.md 와 CLAUDE.local.md 차이?", "전자 = 팀 공유 (commit), 후자 = 개인용 (gitignore)."),
+        "?먭?": ("CLAUDE.md ? CLAUDE.local.md 李⑥씠?", "?꾩옄 = ? 怨듭쑀 (commit), ?꾩옄 = 媛쒖씤??(gitignore)."),
     },
     {
-        "title": "4. 에이전트 개발킷 5레이어 — CLAUDE.md + Skills + Hooks + Subagents + Plugins",
-        "image_eng": "에이전트개발킷-5레이어구조-판데이.jpg",
+        "title": "4. ?먯씠?꾪듃 媛쒕컻??5?덉씠????CLAUDE.md + Skills + Hooks + Subagents + Plugins",
+        "image_eng": "?먯씠?꾪듃媛쒕컻??5?덉씠?닿뎄議??먮뜲??jpg",
         "image_kor": "04-dev-kit-5layers.png",
-        "핵심": "Claude Code 의 5 부품. 이 5개를 잘 짜면 '확장-안전-팀배포' 다 됨.",
-        "강사": ["Claude Code 의 5 레이어 = CLAUDE.md + Skills + Hooks + Subagents + Plugins.", "각 레이어 책임 분명 — 어디서 결정됐는지 명확.", "**Hooks 가 결정론적 강제** — AI 신뢰 X. 위험 명령 차단은 무조건 Hook.", "우리 = **34 hooks + 145 skills + 44 subagents + 26 plugins** — 본보기 수준."],
-        "표": {
-            "header": ["Layer", "이름", "역할", "비유"],
+        "?듭떖": "Claude Code ??5 遺?? ??5媛쒕? ??吏쒕㈃ '?뺤옣-?덉쟾-?諛고룷' ????",
+        "媛뺤궗": ["Claude Code ??5 ?덉씠??= CLAUDE.md + Skills + Hooks + Subagents + Plugins.", "媛??덉씠??梨낆엫 遺꾨챸 ???대뵒??寃곗젙?먮뒗吏 紐낇솗.", "**Hooks 媛 寃곗젙濡좎쟻 媛뺤젣** ??AI ?좊ː X. ?꾪뿕 紐낅졊 李⑤떒? 臾댁“嫄?Hook.", "?곕━ = **34 hooks + 145 skills + 44 subagents + 26 plugins** ??蹂몃낫湲??섏?."],
+        "??: {
+            "header": ["Layer", "?대쫫", "??븷", "鍮꾩쑀"],
             "rows": [
-                ["1", "CLAUDE.md", "메모리-규칙", "사규집"],
-                ["2", "Skills", "지식-워크플로우", "부서 매뉴얼"],
-                ["3", "Hooks", "가드레일", "보안 검색대"],
-                ["4", "Subagents", "위임-격리", "특수 부서"],
-                ["5", "Plugins", "묶음 배포", "부서 패키지"],
+                ["1", "CLAUDE.md", "硫붾え由?洹쒖튃", "?ш퇋吏?],
+                ["2", "Skills", "吏???뚰겕?뚮줈??, "遺??留ㅻ돱??],
+                ["3", "Hooks", "媛?쒕젅??, "蹂댁븞 寃?됰?"],
+                ["4", "Subagents", "?꾩엫-寃⑸━", "?뱀닔 遺??],
+                ["5", "Plugins", "臾띠쓬 諛고룷", "遺???⑦궎吏"],
             ],
         },
-        "흐름": [
-            "1 CLAUDE.md (큰 규칙 정의) -> 2 Skills (작업별 전문지식) -> 3 Hooks (안전 강제) -> 4 Subagents (큰 작업 위임) -> 5 Plugins (1-4 묶음 + 팀 배포).",
-            "레이어 마다 독립 진화 — 새 Skill 추가해도 CLAUDE.md 안 건드림.",
-            "Plugin 은 marketplace 또는 git 으로 공유 — 한 번 만들면 팀 전체 자동 적용.",
+        "?먮쫫": [
+            "1 CLAUDE.md (??洹쒖튃 ?뺤쓽) -> 2 Skills (?묒뾽蹂??꾨Ц吏?? -> 3 Hooks (?덉쟾 媛뺤젣) -> 4 Subagents (???묒뾽 ?꾩엫) -> 5 Plugins (1-4 臾띠쓬 + ? 諛고룷).",
+            "?덉씠??留덈떎 ?낅┰ 吏꾪솕 ????Skill 異붽??대룄 CLAUDE.md ??嫄대뱶由?",
+            "Plugin ? marketplace ?먮뒗 git ?쇰줈 怨듭쑀 ????踰?留뚮뱾硫?? ?꾩껜 ?먮룞 ?곸슜.",
         ],
-        "강점": [
-            "각 레이어 책임 분명 — 디버깅 쉽고 변경 영향 적음.",
-            "Plugin 으로 팀-다른 프로젝트에 통째 배포 (우리 install/setup 패턴 본보기).",
-            "Hooks 는 결정론적 강제 — AI 신뢰성 무관 (예: 위험 명령 차단).",
-            "Subagents 격리로 메인 컨텍스트 보호 — 큰 탐색-테스트 위임.",
-            "CLAUDE.md 의 3 scope (Global/Project/Folder) 로 규칙 충돌 자동 해결.",
-            "Skills 자동 호출 — description 매칭만 잘 쓰면 사용자 명시 호출 X.",
+        "媛뺤젏": [
+            "媛??덉씠??梨낆엫 遺꾨챸 ???붾쾭源??쎄퀬 蹂寃??곹뼢 ?곸쓬.",
+            "Plugin ?쇰줈 ?-?ㅻⅨ ?꾨줈?앺듃???듭㎏ 諛고룷 (?곕━ install/setup ?⑦꽩 蹂몃낫湲?.",
+            "Hooks ??寃곗젙濡좎쟻 媛뺤젣 ??AI ?좊ː??臾닿? (?? ?꾪뿕 紐낅졊 李⑤떒).",
+            "Subagents 寃⑸━濡?硫붿씤 而⑦뀓?ㅽ듃 蹂댄샇 ?????먯깋-?뚯뒪???꾩엫.",
+            "CLAUDE.md ??3 scope (Global/Project/Folder) 濡?洹쒖튃 異⑸룎 ?먮룞 ?닿껐.",
+            "Skills ?먮룞 ?몄텧 ??description 留ㅼ묶留????곕㈃ ?ъ슜??紐낆떆 ?몄텧 X.",
         ],
-        "약점": [
-            "레이어 많으면 시작 진입장벽 ↑ — 처음엔 CLAUDE.md + Skills 두 개로 시작 추천.",
-            "Subagent 는 컨텍스트 격리지만 호출 비용 ↑ — 자체 모델-도구 인스턴스.",
-            "Hooks 는 디버깅 어려움 — 자동 발동이라 어느 hook 이 차단했는지 추적 필요.",
-            "Skills 가 description 매칭에 실패하면 호출 X — false negative.",
-            "Plugin 의존성 관리 — 한 plugin 이 다른 plugin 의존하면 순서 중요.",
+        "?쎌젏": [
+            "?덉씠??留롮쑝硫??쒖옉 吏꾩엯?λ꼍 ????泥섏쓬??CLAUDE.md + Skills ??媛쒕줈 ?쒖옉 異붿쿇.",
+            "Subagent ??而⑦뀓?ㅽ듃 寃⑸━吏留??몄텧 鍮꾩슜 ?????먯껜 紐⑤뜽-?꾧뎄 ?몄뒪?댁뒪.",
+            "Hooks ???붾쾭源??대젮? ???먮룞 諛쒕룞?대씪 ?대뒓 hook ??李⑤떒?덈뒗吏 異붿쟻 ?꾩슂.",
+            "Skills 媛 description 留ㅼ묶???ㅽ뙣?섎㈃ ?몄텧 X ??false negative.",
+            "Plugin ?섏〈??愿由?????plugin ???ㅻⅨ plugin ?섏〈?섎㈃ ?쒖꽌 以묒슂.",
         ],
-        "강추": [
-            "혼자 쓸 거면 Layer 1-2 만으로도 충분 — CLAUDE.md + 기본 skill 몇 개.",
-            "팀 작업 = 무조건 5 Plugin 화 — git 으로 공유, install 로 자동 배포.",
-            "위험 차단 (rm -rf, 시크릿 노출) = 반드시 3 Hook — AI 신뢰 X.",
-            "큰 코드베이스 탐색 = 4 Subagent (explorer) — 메인 컨텍스트 보호.",
-            "재사용 워크플로우 (PR 리뷰-테스트) = 2 Skill 화.",
+        "媛뺤텛": [
+            "?쇱옄 ??嫄곕㈃ Layer 1-2 留뚯쑝濡쒕룄 異⑸텇 ??CLAUDE.md + 湲곕낯 skill 紐?媛?",
+            "? ?묒뾽 = 臾댁“嫄?5 Plugin ????git ?쇰줈 怨듭쑀, install 濡??먮룞 諛고룷.",
+            "?꾪뿕 李⑤떒 (rm -rf, ?쒗겕由??몄텧) = 諛섎뱶??3 Hook ??AI ?좊ː X.",
+            "??肄붾뱶踰좎씠???먯깋 = 4 Subagent (explorer) ??硫붿씤 而⑦뀓?ㅽ듃 蹂댄샇.",
+            "?ъ궗???뚰겕?뚮줈??(PR 由щ럭-?뚯뒪?? = 2 Skill ??",
         ],
-        "우리시스템": {
-            "1 CLAUDE.md": "프로젝트 CLAUDE.md (~169줄) + ~/.claude/CLAUDE.md (글로벌, install 자동배포)",
-            "2 Skills": ".claude/skills/ 77개 (예: arch-mindmap, design_ppt, route_dispatch)",
-            "3 Hooks": "PreToolUse + PostToolUse + SessionStart + Stop + SessionEnd (24개 등록)",
-            "4 Subagents": ".claude/agents/ 11개 (team-lead, reviewer, judge, explorer, test-runner)",
-            "5 Plugins": "plugins/ 25개 (exec_orch, eval_quality, mcp_*, design_*, etc)",
+        "?곕━?쒖뒪??: {
+            "1 CLAUDE.md": "?꾨줈?앺듃 CLAUDE.md (~169以? + ~/.claude/CLAUDE.md (湲濡쒕쾶, install ?먮룞諛고룷)",
+            "2 Skills": ".claude/skills/ 77媛?(?? arch-mindmap, design_ppt, route_dispatch)",
+            "3 Hooks": "PreToolUse + PostToolUse + SessionStart + Stop + SessionEnd (24媛??깅줉)",
+            "4 Subagents": ".claude/agents/ 11媛?(team-lead, reviewer, judge, explorer, test-runner)",
+            "5 Plugins": "plugins/ 25媛?(exec_orch, eval_quality, mcp_*, design_*, etc)",
         },
-        "비유": "회사 시스템. 사규(1) -> 매뉴얼(2) -> 검색대(3) -> 특수부서(4) -> 부서패키지(5). 사규부터 정해야 모두 같은 방향.",
-        "점검": ("위험 명령 차단은 5레이어 중?", "3 Hooks. AI 가 아니라 결정론적 강제."),
+        "鍮꾩쑀": "?뚯궗 ?쒖뒪?? ?ш퇋(1) -> 留ㅻ돱??2) -> 寃?됰?(3) -> ?뱀닔遺??4) -> 遺?쒗뙣?ㅼ?(5). ?ш퇋遺???뺥빐??紐⑤몢 媛숈? 諛⑺뼢.",
+        "?먭?": ("?꾪뿕 紐낅졊 李⑤떒? 5?덉씠??以?", "3 Hooks. AI 媛 ?꾨땲??寃곗젙濡좎쟻 媛뺤젣."),
     },
     {
-        "title": "5. Claude Code 결정트리 — Skills/Subagents/MCP/Hooks",
-        "image_eng": "클로드코드-아키텍처-결정트리-판데이.jpg",
+        "title": "5. Claude Code 寃곗젙?몃━ ??Skills/Subagents/MCP/Hooks",
+        "image_eng": "?대줈?쒖퐫???꾪궎?띿쿂-寃곗젙?몃━-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "4 가지 도구 (Skills/Subagents/MCP/Hooks) 중 무엇을 쓸지 한 그림에 결정.",
-        "강사": ["4 도구 (Skills/Subagents/MCP/Hooks) 중 무엇을 쓸지 결정:", "지식 = Skills/CLAUDE.md. 외부 호출 = MCP. 강제 = Hooks. 격리 추론 = Subagent.", "**위험 차단 = 반드시 Hook** (AI 신뢰 X). rm -rf 차단은 PreToolUse hook 강제.", "우리 = 4/4 다 활용."],
-        "표": {
-            "header": ["도구", "트리거", "특징", "예"],
+        "?듭떖": "4 媛吏 ?꾧뎄 (Skills/Subagents/MCP/Hooks) 以?臾댁뾿???몄? ??洹몃┝??寃곗젙.",
+        "媛뺤궗": ["4 ?꾧뎄 (Skills/Subagents/MCP/Hooks) 以?臾댁뾿???몄? 寃곗젙:", "吏??= Skills/CLAUDE.md. ?몃? ?몄텧 = MCP. 媛뺤젣 = Hooks. 寃⑸━ 異붾줎 = Subagent.", "**?꾪뿕 李⑤떒 = 諛섎뱶??Hook** (AI ?좊ː X). rm -rf 李⑤떒? PreToolUse hook 媛뺤젣.", "?곕━ = 4/4 ???쒖슜."],
+        "??: {
+            "header": ["?꾧뎄", "?몃━嫄?, "?뱀쭠", "??],
             "rows": [
-                ["Skills", "모델이 결정 (description)", "지식-작업별", "/pr-review-checklist"],
-                ["Subagents", "명시적 호출", "격리 추론-자체 모델", "/agent code-reviewer"],
-                ["MCP", "모델이 결정", "외부 시스템 호출", "GitHub-Slack-Postgres"],
-                ["Hooks", "이벤트 강제", "결정론-AI 아님", "PreToolUse-Stop"],
+                ["Skills", "紐⑤뜽??寃곗젙 (description)", "吏???묒뾽蹂?, "/pr-review-checklist"],
+                ["Subagents", "紐낆떆???몄텧", "寃⑸━ 異붾줎-?먯껜 紐⑤뜽", "/agent code-reviewer"],
+                ["MCP", "紐⑤뜽??寃곗젙", "?몃? ?쒖뒪???몄텧", "GitHub-Slack-Postgres"],
+                ["Hooks", "?대깽??媛뺤젣", "寃곗젙濡?AI ?꾨떂", "PreToolUse-Stop"],
             ],
         },
-        "흐름": [
-            "Q1: 지식? 행동? -> 지식 = Skills/CLAUDE.md.",
-            "Q2 (행동): 내부 추론? 외부 호출? -> 외부 = MCP or Hooks.",
-            "Q3 (외부): 모델이 결정? 강제? -> 모델결정 = MCP / 강제 = Hooks.",
+        "?먮쫫": [
+            "Q1: 吏?? ?됰룞? -> 吏??= Skills/CLAUDE.md.",
+            "Q2 (?됰룞): ?대? 異붾줎? ?몃? ?몄텧? -> ?몃? = MCP or Hooks.",
+            "Q3 (?몃?): 紐⑤뜽??寃곗젙? 媛뺤젣? -> 紐⑤뜽寃곗젙 = MCP / 媛뺤젣 = Hooks.",
         ],
-        "강점": [
-            "역할 분리로 디버깅 쉬움 — 어디서 결정됐는지 명확.",
-            "Hooks 가 AI 아닌 결정론적 강제 — 가장 신뢰.",
-            "Subagents 의 컨텍스트 격리로 메인 보호.",
-            "MCP 표준으로 새 외부 시스템 추가 쉬움.",
-            "Skills 자동 호출 — 사용자 명시 X.",
+        "媛뺤젏": [
+            "??븷 遺꾨━濡??붾쾭源??ъ? ???대뵒??寃곗젙?먮뒗吏 紐낇솗.",
+            "Hooks 媛 AI ?꾨땶 寃곗젙濡좎쟻 媛뺤젣 ??媛???좊ː.",
+            "Subagents ??而⑦뀓?ㅽ듃 寃⑸━濡?硫붿씤 蹂댄샇.",
+            "MCP ?쒖??쇰줈 ???몃? ?쒖뒪??異붽? ?ъ?.",
+            "Skills ?먮룞 ?몄텧 ???ъ슜??紐낆떆 X.",
         ],
-        "약점": [
-            "Subagents 격리 = 부모 메모리 못 봄. 정보 전달 필요.",
-            "Subagents 호출 비용 ↑ — 자체 모델 인스턴스.",
-            "Hooks 디버깅 어려움 — 자동 발동이라 추적 도구 필요.",
-            "MCP 의 외부 시스템 의존 — 네트워크-인증 fail 가능.",
-            "Skills description 매칭 실패 시 호출 X — false negative.",
+        "?쎌젏": [
+            "Subagents 寃⑸━ = 遺紐?硫붾え由?紐?遊? ?뺣낫 ?꾨떖 ?꾩슂.",
+            "Subagents ?몄텧 鍮꾩슜 ?????먯껜 紐⑤뜽 ?몄뒪?댁뒪.",
+            "Hooks ?붾쾭源??대젮? ???먮룞 諛쒕룞?대씪 異붿쟻 ?꾧뎄 ?꾩슂.",
+            "MCP ???몃? ?쒖뒪???섏〈 ???ㅽ듃?뚰겕-?몄쬆 fail 媛??",
+            "Skills description 留ㅼ묶 ?ㅽ뙣 ???몄텧 X ??false negative.",
         ],
-        "강추": [
-            "위험 차단 = 반드시 Hook (모델 신뢰 X).",
-            "큰 코드 탐색 = Explorer subagent.",
-            "외부 SaaS = MCP.",
-            "재사용 워크플로우 = Skill.",
+        "媛뺤텛": [
+            "?꾪뿕 李⑤떒 = 諛섎뱶??Hook (紐⑤뜽 ?좊ː X).",
+            "??肄붾뱶 ?먯깋 = Explorer subagent.",
+            "?몃? SaaS = MCP.",
+            "?ъ궗???뚰겕?뚮줈??= Skill.",
         ],
-        "우리시스템": {
-            "Skills": ".claude/skills/ 77개 (auto-compact-llm-as-judge-route_dispatch 등)",
-            "Subagents": ".claude/agents/ 11개 (team-lead-reviewer-judge-explorer-test-runner)",
-            "MCP": "GitHub-Playwright-Figma-Slack-Notion-Mermaid 등 다수",
-            "Hooks": "settings.json 24개 등록 (block_dangerous_bash-protect-critical-files 등)",
+        "?곕━?쒖뒪??: {
+            "Skills": ".claude/skills/ 77媛?(auto-compact-llm-as-judge-route_dispatch ??",
+            "Subagents": ".claude/agents/ 11媛?(team-lead-reviewer-judge-explorer-test-runner)",
+            "MCP": "GitHub-Playwright-Figma-Slack-Notion-Mermaid ???ㅼ닔",
+            "Hooks": "settings.json 24媛??깅줉 (block_dangerous_bash-protect-critical-files ??",
         },
-        "점검": ("git rm -rf 자동 차단은 어느 도구?", "Hook (PreToolUse Bash). 모델 결정 X."),
+        "?먭?": ("git rm -rf ?먮룞 李⑤떒? ?대뒓 ?꾧뎄?", "Hook (PreToolUse Bash). 紐⑤뜽 寃곗젙 X."),
     },
     {
-        "title": "6. Claude Code 완전 가이드 — 6 단계 사이클",
-        "image_eng": "클로드코드-완전가이드-판데이.jpg",
+        "title": "6. Claude Code ?꾩쟾 媛?대뱶 ??6 ?④퀎 ?ъ씠??,
+        "image_eng": "?대줈?쒖퐫???꾩쟾媛?대뱶-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "Install -> Configure -> Prompt -> Review -> Iterate -> Ship. 6 단계 사이클이 끝까지 반복.",
-        "강사": ["6 단계 사이클: Install -> Configure -> Prompt -> Review -> Iterate -> Ship.", "각 단계 산출물 명확. 작은 PR 단위로 사이클 돌리세요.", "Review-Iterate 가 핵심 — 한 번에 완벽 X.", "우리 = 6/6 다 작동. install.bat (Zero-touch) + eval_quality + watchdog + auto-review CI."],
-        "표": {
-            "header": ["단계", "할 일", "산출물"],
+        "?듭떖": "Install -> Configure -> Prompt -> Review -> Iterate -> Ship. 6 ?④퀎 ?ъ씠?댁씠 ?앷퉴吏 諛섎났.",
+        "媛뺤궗": ["6 ?④퀎 ?ъ씠?? Install -> Configure -> Prompt -> Review -> Iterate -> Ship.", "媛??④퀎 ?곗텧臾?紐낇솗. ?묒? PR ?⑥쐞濡??ъ씠???뚮━?몄슂.", "Review-Iterate 媛 ?듭떖 ????踰덉뿉 ?꾨꼍 X.", "?곕━ = 6/6 ???묐룞. install.bat (Zero-touch) + eval_quality + watchdog + auto-review CI."],
+        "??: {
+            "header": ["?④퀎", "????, "?곗텧臾?],
             "rows": [
-                ["1 Install", "Claude Code CLI 설치", "claude 명령"],
-                ["2 Configure", "CLAUDE.md-hooks-skills", ".claude/ 폴더"],
-                ["3 Prompt", "구체적 요청 작성", "task-instruction"],
-                ["4 Review", "결과 검토-수정 요청", "리뷰 코멘트"],
-                ["5 Iterate", "반복 개선", "v2, v3..."],
-                ["6 Ship", "출시-배포", "merged PR"],
+                ["1 Install", "Claude Code CLI ?ㅼ튂", "claude 紐낅졊"],
+                ["2 Configure", "CLAUDE.md-hooks-skills", ".claude/ ?대뜑"],
+                ["3 Prompt", "援ъ껜???붿껌 ?묒꽦", "task-instruction"],
+                ["4 Review", "寃곌낵 寃???섏젙 ?붿껌", "由щ럭 肄붾찘??],
+                ["5 Iterate", "諛섎났 媛쒖꽑", "v2, v3..."],
+                ["6 Ship", "異쒖떆-諛고룷", "merged PR"],
             ],
         },
-        "흐름": [
-            "1 Install -> 2 Configure -> 3 Prompt -> 4 Review -> 5 Iterate -> 6 Ship -> (필요시 3 으로 루프).",
-            "각 단계마다 산출물 명확 — claude 명령, .claude/ 폴더, task-instruction, 리뷰 코멘트, v2, merged PR.",
-            "4 Review 와 5 Iterate 가 핵심 — 한 번에 완벽 X, 점진 개선.",
+        "?먮쫫": [
+            "1 Install -> 2 Configure -> 3 Prompt -> 4 Review -> 5 Iterate -> 6 Ship -> (?꾩슂??3 ?쇰줈 猷⑦봽).",
+            "媛??④퀎留덈떎 ?곗텧臾?紐낇솗 ??claude 紐낅졊, .claude/ ?대뜑, task-instruction, 由щ럭 肄붾찘?? v2, merged PR.",
+            "4 Review ? 5 Iterate 媛 ?듭떖 ????踰덉뿉 ?꾨꼍 X, ?먯쭊 媛쒖꽑.",
         ],
-        "강점": [
-            "사이클 명확 — 어느 단계서 막혀도 다음 행동 알 수 있음.",
-            "각 단계 산출물 정의 — 진행 상황 가시화.",
-            "Review-Iterate 가 품질 보장 — 한 번에 완벽 안 해도 됨.",
-            "Install/Configure 한 번이면 끝 — 매번 반복 X.",
-            "Ship 후에도 3 으로 루프 가능 — 기능 추가-버그 fix.",
+        "媛뺤젏": [
+            "?ъ씠??紐낇솗 ???대뒓 ?④퀎??留됲????ㅼ쓬 ?됰룞 ?????덉쓬.",
+            "媛??④퀎 ?곗텧臾??뺤쓽 ??吏꾪뻾 ?곹솴 媛?쒗솕.",
+            "Review-Iterate 媛 ?덉쭏 蹂댁옣 ????踰덉뿉 ?꾨꼍 ???대룄 ??",
+            "Install/Configure ??踰덉씠硫?????留ㅻ쾲 諛섎났 X.",
+            "Ship ?꾩뿉??3 ?쇰줈 猷⑦봽 媛????湲곕뒫 異붽?-踰꾧렇 fix.",
         ],
-        "약점": [
-            "사이클마다 사람 개입 필요 — 자동화 한계 (특히 Review).",
-            "Configure 가 초기 노동 ↑ — CLAUDE.md, hooks, skills 작성.",
-            "Iterate 가 무한 루프 위험 — 완벽주의 함정.",
-            "Ship 기준이 모호 — 어느 시점에 출시할지 본인 판단.",
-            "작은 변경에도 1-6 다 도는 게 과함 — 핫픽스 fast path 별도 필요.",
+        "?쎌젏": [
+            "?ъ씠?대쭏???щ엺 媛쒖엯 ?꾩슂 ???먮룞???쒓퀎 (?뱁엳 Review).",
+            "Configure 媛 珥덇린 ?몃룞 ????CLAUDE.md, hooks, skills ?묒꽦.",
+            "Iterate 媛 臾댄븳 猷⑦봽 ?꾪뿕 ???꾨꼍二쇱쓽 ?⑥젙.",
+            "Ship 湲곗???紐⑦샇 ???대뒓 ?쒖젏??異쒖떆?좎? 蹂몄씤 ?먮떒.",
+            "?묒? 蹂寃쎌뿉??1-6 ???꾨뒗 寃?怨쇳븿 ???ロ뵿??fast path 蹂꾨룄 ?꾩슂.",
         ],
-        "강추": [
-            "처음엔 1-3 만 익히세요 — 4-6 은 자연스럽게 익숙.",
-            "작은 PR 단위로 사이클 돌리세요 — 큰 변경은 위험.",
-            "Review 단계에 eval_quality + score-task 활용 — 자동 채점.",
-            "Iterate 는 최대 3회 — 더 돌면 처음부터 다시 (Prompt).",
-            "Ship 기준 = 핵심 테스트 통과 + 리뷰 OK + 비용 임계 이내.",
+        "媛뺤텛": [
+            "泥섏쓬??1-3 留??듯엳?몄슂 ??4-6 ? ?먯뿰?ㅻ읇寃??듭닕.",
+            "?묒? PR ?⑥쐞濡??ъ씠???뚮━?몄슂 ????蹂寃쎌? ?꾪뿕.",
+            "Review ?④퀎??eval_quality + score-task ?쒖슜 ???먮룞 梨꾩젏.",
+            "Iterate ??理쒕? 3???????뚮㈃ 泥섏쓬遺???ㅼ떆 (Prompt).",
+            "Ship 湲곗? = ?듭떖 ?뚯뒪???듦낵 + 由щ럭 OK + 鍮꾩슜 ?꾧퀎 ?대궡.",
         ],
-        "우리시스템": {
-            "1 Install": "install.bat / setup/setup.bat 1회 실행 (zero-touch 보강 중)",
-            "2 Configure": "이미 설정됨 (CLAUDE.md 169줄, 24 hooks, 77 skills)",
-            "3 Prompt": "사용자 채팅 또는 task-instruction.md",
-            "4 Review": "eval_quality + score-task (Haiku 자동 채점)",
-            "5 Iterate": "watchdog 가 죽은 워커 재시작 = 자동 iterate",
-            "6 Ship": "git commit + (선택) gh pr create",
+        "?곕━?쒖뒪??: {
+            "1 Install": "install.bat / setup/setup.bat 1???ㅽ뻾 (zero-touch 蹂닿컯 以?",
+            "2 Configure": "?대? ?ㅼ젙??(CLAUDE.md 169以? 24 hooks, 77 skills)",
+            "3 Prompt": "?ъ슜??梨꾪똿 ?먮뒗 task-instruction.md",
+            "4 Review": "eval_quality + score-task (Haiku ?먮룞 梨꾩젏)",
+            "5 Iterate": "watchdog 媛 二쎌? ?뚯빱 ?ъ떆??= ?먮룞 iterate",
+            "6 Ship": "git commit + (?좏깮) gh pr create",
         },
-        "점검": ("이 사이클에서 hook 이 자동 발동되는 단계?", "2-6 전체 (PreToolUse-PostToolUse-Stop 등)."),
+        "?먭?": ("???ъ씠?댁뿉??hook ???먮룞 諛쒕룞?섎뒗 ?④퀎?", "2-6 ?꾩껜 (PreToolUse-PostToolUse-Stop ??."),
     },
     {
-        "title": "7. Claude Code 아키텍처 레퍼런스 — 60초 셋업",
-        "image_eng": "클로드코드-아키텍처-레퍼런스-판데이.jpg",
+        "title": "7. Claude Code ?꾪궎?띿쿂 ?덊띁?곗뒪 ??60珥??뗭뾽",
+        "image_eng": "?대줈?쒖퐫???꾪궎?띿쿂-?덊띁?곗뒪-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "한 장에 5 레이어 + 60초 셋업 + 키 단축키. 두고두고 보는 치트시트.",
-        "강사": ["한 장에 5 레이어 + 60초 셋업 + 키 단축키 정리한 치트시트.", "60초 셋업: npm install -g claude-code -> claude -> /init -> 끝.", "/compact (컨텍스트 압축), /clear (초기화) 외우면 비용 ↓.", "주 1회 봐주세요 — 새 단축키 발견 = 시간 절약."],
-        "표": {
-            "header": ["Layer", "이름", "위치"],
+        "?듭떖": "???μ뿉 5 ?덉씠??+ 60珥??뗭뾽 + ???⑥텞?? ?먭퀬?먭퀬 蹂대뒗 移섑듃?쒗듃.",
+        "媛뺤궗": ["???μ뿉 5 ?덉씠??+ 60珥??뗭뾽 + ???⑥텞???뺣━??移섑듃?쒗듃.", "60珥??뗭뾽: npm install -g claude-code -> claude -> /init -> ??", "/compact (而⑦뀓?ㅽ듃 ?뺤텞), /clear (珥덇린?? ?몄슦硫?鍮꾩슜 ??", "二?1??遊먯＜?몄슂 ?????⑥텞??諛쒓껄 = ?쒓컙 ?덉빟."],
+        "??: {
+            "header": ["Layer", "?대쫫", "?꾩튂"],
             "rows": [
-                ["Foundation", "Runtime", "claude 명령"],
+                ["Foundation", "Runtime", "claude 紐낅졊"],
                 ["1", "Memory System", "CLAUDE.md (3 scopes)"],
                 ["2", "Skills Engine", ".claude/skills/"],
-                ["3", "MCP Connections", "200+ 도구"],
+                ["3", "MCP Connections", "200+ ?꾧뎄"],
                 ["4", "Commands", "/init-/clear-/compact"],
-                ["5", "Orchestration", "Hooks-체크포인트"],
+                ["5", "Orchestration", "Hooks-泥댄겕?ъ씤??],
             ],
         },
-        "흐름": [
-            "60초 셋업: npm install -g claude-code -> claude 명령 -> /init -> 끝.",
-            "Layer 1 (Memory) 부터 차례로 — CLAUDE.md 정의 -> Skills 추가 -> MCP 연결 -> Commands 활용 -> Hooks 설정.",
-            "각 Layer 가 다음 Layer 의 기반 — 1 없이 2 만 만들면 컨텍스트 부재.",
+        "?먮쫫": [
+            "60珥??뗭뾽: npm install -g claude-code -> claude 紐낅졊 -> /init -> ??",
+            "Layer 1 (Memory) 遺??李⑤?濡???CLAUDE.md ?뺤쓽 -> Skills 異붽? -> MCP ?곌껐 -> Commands ?쒖슜 -> Hooks ?ㅼ젙.",
+            "媛?Layer 媛 ?ㅼ쓬 Layer ??湲곕컲 ??1 ?놁씠 2 留?留뚮뱾硫?而⑦뀓?ㅽ듃 遺??",
         ],
-        "강점": [
-            "치트시트 화 가능 — 모니터 옆에 출력 붙여둘 만함.",
-            "5 레이어 전체 한 장에 정리 — 큰 그림 명확.",
-            "60초 셋업 — 진입 장벽 ↓.",
-            "키 단축키 (Esc-Shift+Esc 등) 포함 — 시간 절약.",
-            "60-second setup 으로 빠른 PoC 가능.",
+        "媛뺤젏": [
+            "移섑듃?쒗듃 ??媛????紐⑤땲???놁뿉 異쒕젰 遺숈뿬??留뚰븿.",
+            "5 ?덉씠???꾩껜 ???μ뿉 ?뺣━ ????洹몃┝ 紐낇솗.",
+            "60珥??뗭뾽 ??吏꾩엯 ?λ꼍 ??",
+            "???⑥텞??(Esc-Shift+Esc ?? ?ы븿 ???쒓컙 ?덉빟.",
+            "60-second setup ?쇰줈 鍮좊Ⅸ PoC 媛??",
         ],
-        "약점": [
-            "정보 밀도 ↑ — 처음엔 어디부터 봐야 할지 모름.",
-            "Foundation Runtime 은 OS 별 차이 — Windows-Mac-Linux 별도 확인.",
-            "Layer 4-5 (Commands-Orchestration) 는 사용해봐야 이해.",
-            "치트시트 1장에 모두 압축이라 깊이 부족.",
-            "버전마다 단축키-명령 바뀜 — 최신 버전 확인 필요.",
+        "?쎌젏": [
+            "?뺣낫 諛??????泥섏쓬???대뵒遺??遊먯빞 ?좎? 紐⑤쫫.",
+            "Foundation Runtime ? OS 蹂?李⑥씠 ??Windows-Mac-Linux 蹂꾨룄 ?뺤씤.",
+            "Layer 4-5 (Commands-Orchestration) ???ъ슜?대킄???댄빐.",
+            "移섑듃?쒗듃 1?μ뿉 紐⑤몢 ?뺤텞?대씪 源딆씠 遺議?",
+            "踰꾩쟾留덈떎 ?⑥텞??紐낅졊 諛붾???理쒖떊 踰꾩쟾 ?뺤씤 ?꾩슂.",
         ],
-        "강추": [
-            "주 1회 봐주세요 — 새 키 단축키 발견 = 시간 절약.",
-            "출력해서 모니터 옆에 — 자주 보면 외워짐.",
-            "Layer 별로 점검 — 1-2 가 약하면 3-5 효율 ↓.",
-            "/compact, /clear, /reset context 같은 명령 외우면 비용 ↓.",
+        "媛뺤텛": [
+            "二?1??遊먯＜?몄슂 ???????⑥텞??諛쒓껄 = ?쒓컙 ?덉빟.",
+            "異쒕젰?댁꽌 紐⑤땲???놁뿉 ???먯＜ 蹂대㈃ ?몄썙吏?",
+            "Layer 蹂꾨줈 ?먭? ??1-2 媛 ?쏀븯硫?3-5 ?⑥쑉 ??",
+            "/compact, /clear, /reset context 媛숈? 紐낅졊 ?몄슦硫?鍮꾩슜 ??",
         ],
-        "우리시스템": {
-            "Foundation": "claude --dangerously-skip-permissions 자동",
-            "Layer 1-5": "위 챕터 6 의 5 레이어와 동일 매핑",
+        "?곕━?쒖뒪??: {
+            "Foundation": "claude --dangerously-skip-permissions ?먮룞",
+            "Layer 1-5": "??梨뺥꽣 6 ??5 ?덉씠?댁? ?숈씪 留ㅽ븨",
         },
-        "점검": ("\"내 컨텍스트 너무 길어\" 할 때 명령?", "/compact. 자동 압축."),
+        "?먭?": ("\"??而⑦뀓?ㅽ듃 ?덈Т 湲몄뼱\" ????紐낅졊?", "/compact. ?먮룞 ?뺤텞."),
     },
     {
-        "title": "8. 8가지 프롬프트 프레임워크 — 결과를 두 배로",
-        "image_eng": "클로드프롬프트-8가지프레임워크-natanmohart.jpg",
+        "title": "8. 8媛吏 ?꾨＼?꾪듃 ?꾨젅?꾩썙????寃곌낵瑜???諛곕줈",
+        "image_eng": "?대줈?쒗봽濡ы봽??8媛吏?꾨젅?꾩썙??natanmohart.jpg",
         "image_kor": None,
-        "핵심": "프롬프트는 '대충 쓰기' 가 아니라 '템플릿'. 8 중 한 개만 외워도 80% 커버.",
-        "강사": ["프롬프트는 '대충 쓰기' 아니라 '템플릿'. 8 중 1개 (CLARITY) 만 외워도 80%.", "CLARITY = Context+Look+Ask+Rules+Input+Target+Yardstick.", "복잡 작업 = TRUST. 데이터 분석 = RIPPLE.", "우리 task-instruction.md = CLARITY 구조와 일치. 다 활용."],
-        "표": {
-            "header": ["#", "프레임워크", "쓰는 곳"],
+        "?듭떖": "?꾨＼?꾪듃??'?異??곌린' 媛 ?꾨땲??'?쒗뵆由?. 8 以???媛쒕쭔 ?몄썙??80% 而ㅻ쾭.",
+        "媛뺤궗": ["?꾨＼?꾪듃??'?異??곌린' ?꾨땲??'?쒗뵆由?. 8 以?1媛?(CLARITY) 留??몄썙??80%.", "CLARITY = Context+Look+Ask+Rules+Input+Target+Yardstick.", "蹂듭옟 ?묒뾽 = TRUST. ?곗씠??遺꾩꽍 = RIPPLE.", "?곕━ task-instruction.md = CLARITY 援ъ“? ?쇱튂. ???쒖슜."],
+        "??: {
+            "header": ["#", "?꾨젅?꾩썙??, "?곕뒗 怨?],
             "rows": [
-                ["1", "CLARITY", "처음 시작-만능"],
-                ["2", "SOCRATES", "단계별 계획"],
-                ["3", "ANTICIPATE", "상품 기획"],
-                ["4", "PARTNER", "콘텐츠 전략"],
-                ["5", "TRUST", "깊이 있는 분석"],
-                ["6", "RIPPLE", "데이터 분석"],
-                ["7", "CATCH", "마케팅 카피"],
-                ["8", "MAGIC", "랜딩페이지"],
+                ["1", "CLARITY", "泥섏쓬 ?쒖옉-留뚮뒫"],
+                ["2", "SOCRATES", "?④퀎蹂?怨꾪쉷"],
+                ["3", "ANTICIPATE", "?곹뭹 湲고쉷"],
+                ["4", "PARTNER", "肄섑뀗痢??꾨왂"],
+                ["5", "TRUST", "源딆씠 ?덈뒗 遺꾩꽍"],
+                ["6", "RIPPLE", "?곗씠??遺꾩꽍"],
+                ["7", "CATCH", "留덉???移댄뵾"],
+                ["8", "MAGIC", "?쒕뵫?섏씠吏"],
             ],
         },
-        "흐름": [
-            "요청 유형 분류 (콘텐츠-계획-분석-마케팅) -> 적합 프레임워크 선택.",
-            "프레임워크 슬롯 채워서 프롬프트 작성 — 빠진 정보 없게.",
-            "한 번 작성하면 템플릿으로 저장 -> 재사용.",
-            "프레임워크는 가이드라인 — 상황 따라 조정 (모든 슬롯 안 채워도 OK).",
+        "?먮쫫": [
+            "?붿껌 ?좏삎 遺꾨쪟 (肄섑뀗痢?怨꾪쉷-遺꾩꽍-留덉??? -> ?곹빀 ?꾨젅?꾩썙???좏깮.",
+            "?꾨젅?꾩썙???щ’ 梨꾩썙???꾨＼?꾪듃 ?묒꽦 ??鍮좎쭊 ?뺣낫 ?녾쾶.",
+            "??踰??묒꽦?섎㈃ ?쒗뵆由우쑝濡????-> ?ъ궗??",
+            "?꾨젅?꾩썙?щ뒗 媛?대뱶?쇱씤 ???곹솴 ?곕씪 議곗젙 (紐⑤뱺 ?щ’ ??梨꾩썙??OK).",
         ],
-        "강점": [
-            "프롬프트 품질 일관 ↑ — 매번 다른 결과 X.",
-            "복붙해서 재사용 가능 — 시간 절약.",
-            "구조화되어 LLM 이 이해하기 쉬움.",
-            "팀 표준화 가능 — 같은 작업에 같은 프레임워크.",
-            "빠진 정보 자동 인식 — 슬롯이 체크리스트 역할.",
+        "媛뺤젏": [
+            "?꾨＼?꾪듃 ?덉쭏 ?쇨? ????留ㅻ쾲 ?ㅻⅨ 寃곌낵 X.",
+            "蹂듬텤?댁꽌 ?ъ궗??媛?????쒓컙 ?덉빟.",
+            "援ъ“?붾릺??LLM ???댄빐?섍린 ?ъ?.",
+            "? ?쒖???媛????媛숈? ?묒뾽??媛숈? ?꾨젅?꾩썙??",
+            "鍮좎쭊 ?뺣낫 ?먮룞 ?몄떇 ???щ’??泥댄겕由ъ뒪????븷.",
         ],
-        "약점": [
-            "프레임워크 너무 길면 LLM 컨텍스트 잡아먹음 — 토큰 비용 ↑.",
-            "8개 다 외우면 결정 마비 — 1개만으로 충분.",
-            "프레임워크에 갇히면 창의성 ↓ — 가끔 자유 형식도 필요.",
-            "상황별 적합도 다름 — 마케팅에 SOCRATES 쓰면 과함.",
-            "한국어 매칭 안 됨 — 영어 약자 (CLARITY 등) 가 한국어 단어 안 됨.",
+        "?쎌젏": [
+            "?꾨젅?꾩썙???덈Т 湲몃㈃ LLM 而⑦뀓?ㅽ듃 ?≪븘癒뱀쓬 ???좏겙 鍮꾩슜 ??",
+            "8媛????몄슦硫?寃곗젙 留덈퉬 ??1媛쒕쭔?쇰줈 異⑸텇.",
+            "?꾨젅?꾩썙?ъ뿉 媛뉙엳硫?李쎌쓽??????媛???먯쑀 ?뺤떇???꾩슂.",
+            "?곹솴蹂??곹빀???ㅻ쫫 ??留덉??낆뿉 SOCRATES ?곕㈃ 怨쇳븿.",
+            "?쒓뎅??留ㅼ묶 ???????곸뼱 ?쎌옄 (CLARITY ?? 媛 ?쒓뎅???⑥뼱 ????",
         ],
-        "강추": [
-            "CLARITY 한 개만 외우세요 — 80% 커버.",
-            "단계별 계획 = SOCRATES.",
-            "콘텐츠-마케팅 = CATCH or MAGIC.",
-            "데이터 분석 = RIPPLE.",
-            "복잡 작업 = TRUST.",
+        "媛뺤텛": [
+            "CLARITY ??媛쒕쭔 ?몄슦?몄슂 ??80% 而ㅻ쾭.",
+            "?④퀎蹂?怨꾪쉷 = SOCRATES.",
+            "肄섑뀗痢?留덉???= CATCH or MAGIC.",
+            "?곗씠??遺꾩꽍 = RIPPLE.",
+            "蹂듭옟 ?묒뾽 = TRUST.",
         ],
-        "우리시스템": {
-            "CLARITY": "task-instruction.md 의 구조와 비슷 (Context + Rules + Target + Constraints)",
-            "TRUST": "code review-아키텍처 결정 시 적합",
-            "5중 박기 원칙": "결과적으로 SOCRATES-ANTICIPATE 와 비슷한 효과",
+        "?곕━?쒖뒪??: {
+            "CLARITY": "task-instruction.md ??援ъ“? 鍮꾩듂 (Context + Rules + Target + Constraints)",
+            "TRUST": "code review-?꾪궎?띿쿂 寃곗젙 ???곹빀",
+            "5以?諛뺢린 ?먯튃": "寃곌낵?곸쑝濡?SOCRATES-ANTICIPATE ? 鍮꾩듂???④낵",
         },
-        "점검": ("프레임워크 8개 다 외워야 하나?", "X. CLARITY 한 개만으로 80% 커버."),
+        "?먭?": ("?꾨젅?꾩썙??8媛????몄썙???섎굹?", "X. CLARITY ??媛쒕쭔?쇰줈 80% 而ㅻ쾭."),
     },
     {
-        "title": "9. Claude 마스터 로드맵 14 단계",
-        "image_eng": "클로드마스터-로드맵-14레벨-RubenHassid.jpg",
+        "title": "9. Claude 留덉뒪??濡쒕뱶留?14 ?④퀎",
+        "image_eng": "?대줈?쒕쭏?ㅽ꽣-濡쒕뱶留?14?덈꺼-RubenHassid.jpg",
         "image_kor": "07-14-levels.png",
-        "핵심": "Claude 를 0에서 마스터까지 14 단계. Lv5 까지만 가도 일상 작업 80% 자동화.",
-        "강사": ["Claude Code 사용 능력 = 14 레벨로 나눌 수 있어요.", "Lv 1-5 (입문): 단일 명령-기본 hook.", "Lv 6-10 (중급): MCP-Skills-Subagents 활용.", "Lv 11-14 (마스터): plugin 개발-multi-agent chain-CI/CD 통합.", "우리 시스템 사용자 = Lv 9-10 추정. 본 강의 끝나면 Lv 11+ 가능."],
-        "표": {
-            "header": ["Lv", "단계", "핵심 결과"],
+        "?듭떖": "Claude 瑜?0?먯꽌 留덉뒪?곌퉴吏 14 ?④퀎. Lv5 源뚯?留?媛???쇱긽 ?묒뾽 80% ?먮룞??",
+        "媛뺤궗": ["Claude Code ?ъ슜 ?λ젰 = 14 ?덈꺼濡??섎닃 ???덉뼱??", "Lv 1-5 (?낅Ц): ?⑥씪 紐낅졊-湲곕낯 hook.", "Lv 6-10 (以묎툒): MCP-Skills-Subagents ?쒖슜.", "Lv 11-14 (留덉뒪??: plugin 媛쒕컻-multi-agent chain-CI/CD ?듯빀.", "?곕━ ?쒖뒪???ъ슜??= Lv 9-10 異붿젙. 蹂?媛뺤쓽 ?앸굹硫?Lv 11+ 媛??"],
+        "??: {
+            "header": ["Lv", "?④퀎", "?듭떖 寃곌낵"],
             "rows": [
-                ["1-2", "가입-모델 선택", "Pro $20 결제, Opus 4.7"],
-                ["3", "프롬프트 잘쓰기", "구체적-예시-새 대화"],
-                ["4", "도구 연결", "Gmail-Drive-Gamma 등"],
-                ["5", "Cowork", "PC 폴더 직접 읽고 씀"],
-                ["6", "컨텍스트 폴더", "about-me 등 2000단어 이하"],
-                ["7", "음성 입력", "WisprFlow"],
-                ["8", "Obsidian", "마크다운 관리"],
+                ["1-2", "媛??紐⑤뜽 ?좏깮", "Pro $20 寃곗젣, Opus 4.7"],
+                ["3", "?꾨＼?꾪듃 ?섏벐湲?, "援ъ껜???덉떆-?????],
+                ["4", "?꾧뎄 ?곌껐", "Gmail-Drive-Gamma ??],
+                ["5", "Cowork", "PC ?대뜑 吏곸젒 ?쎄퀬 ?"],
+                ["6", "而⑦뀓?ㅽ듃 ?대뜑", "about-me ??2000?⑥뼱 ?댄븯"],
+                ["7", "?뚯꽦 ?낅젰", "WisprFlow"],
+                ["8", "Obsidian", "留덊겕?ㅼ슫 愿由?],
                 ["9", "Skills", "/linkedin-/negotiation"],
-                ["10", "프로젝트", "세션 간 메모리"],
-                ["11-12", "도구 추가-토큰 절약", ""],
-                ["13", "팀 배포", "Shared Projects"],
-                ["14", "본인 안목 ★", "AI 가 못 뺏는 영역"],
+                ["10", "?꾨줈?앺듃", "?몄뀡 媛?硫붾え由?],
+                ["11-12", "?꾧뎄 異붽?-?좏겙 ?덉빟", ""],
+                ["13", "? 諛고룷", "Shared Projects"],
+                ["14", "蹂몄씤 ?덈ぉ ??, "AI 媛 紐?類뤿뒗 ?곸뿭"],
             ],
         },
-        "흐름": [
-            "Lv 1-3 (가입-모델-프롬프트) 첫 주 — 기본기.",
-            "Lv 4-5 (도구 연결-Cowork) 둘째 주 — 일상 작업 80% 자동화 시작.",
-            "Lv 6-10 (컨텍스트-Skills-프로젝트) 1-2개월 — 본격 사용.",
-            "Lv 11-13 (도구 추가-토큰 절약-팀 배포) 3-6개월 — 시스템 구축.",
-            "Lv 14 (본인 안목) 평생 — AI 가 못 뺏는 영역.",
+        "?먮쫫": [
+            "Lv 1-3 (媛??紐⑤뜽-?꾨＼?꾪듃) 泥?二???湲곕낯湲?",
+            "Lv 4-5 (?꾧뎄 ?곌껐-Cowork) ?섏㎏ 二????쇱긽 ?묒뾽 80% ?먮룞???쒖옉.",
+            "Lv 6-10 (而⑦뀓?ㅽ듃-Skills-?꾨줈?앺듃) 1-2媛쒖썡 ??蹂멸꺽 ?ъ슜.",
+            "Lv 11-13 (?꾧뎄 異붽?-?좏겙 ?덉빟-? 諛고룷) 3-6媛쒖썡 ???쒖뒪??援ъ텞.",
+            "Lv 14 (蹂몄씤 ?덈ぉ) ?됱깮 ??AI 媛 紐?類뤿뒗 ?곸뿭.",
         ],
-        "강점": [
-            "로드맵화 — 막막함 ↓, 단계별 성취감.",
-            "각 Lv 가 독립적 — Lv5 만 가도 큰 효과.",
-            "단계별 시간 투자 ↑ — 한 번에 다 안 해도 됨.",
-            "Lv 9 (Skills) 부터는 본인만의 도구 — 차별화.",
-            "Lv 14 (안목) 가 사람 영역 — AI 시대에도 사람 가치 ↑.",
+        "媛뺤젏": [
+            "濡쒕뱶留듯솕 ??留됰쭑???? ?④퀎蹂??깆랬媛?",
+            "媛?Lv 媛 ?낅┰????Lv5 留?媛?????④낵.",
+            "?④퀎蹂??쒓컙 ?ъ옄 ??????踰덉뿉 ?????대룄 ??",
+            "Lv 9 (Skills) 遺?곕뒗 蹂몄씤留뚯쓽 ?꾧뎄 ??李⑤퀎??",
+            "Lv 14 (?덈ぉ) 媛 ?щ엺 ?곸뿭 ??AI ?쒕??먮룄 ?щ엺 媛移???",
         ],
-        "약점": [
-            "Lv 13-14 는 팀 환경 필요 — 혼자면 Lv 5-10 에서 만족.",
-            "Lv 11+ 는 유료 도구 비용 ↑ — Excel-Design-Code Pro.",
-            "Lv 6 (컨텍스트 폴더) 는 만들기 노동 — 작성 시간 큼.",
-            "Lv 7 (음성) 은 한국어 환경에서 정확도 제한.",
-            "Lv 마다 학습 곡선 — 한 번에 너무 많은 도구 X.",
+        "?쎌젏": [
+            "Lv 13-14 ??? ?섍꼍 ?꾩슂 ???쇱옄硫?Lv 5-10 ?먯꽌 留뚯”.",
+            "Lv 11+ ???좊즺 ?꾧뎄 鍮꾩슜 ????Excel-Design-Code Pro.",
+            "Lv 6 (而⑦뀓?ㅽ듃 ?대뜑) ??留뚮뱾湲??몃룞 ???묒꽦 ?쒓컙 ??",
+            "Lv 7 (?뚯꽦) ? ?쒓뎅???섍꼍?먯꽌 ?뺥솗???쒗븳.",
+            "Lv 留덈떎 ?숈뒿 怨≪꽑 ????踰덉뿉 ?덈Т 留롮? ?꾧뎄 X.",
         ],
-        "강추": [
-            "오늘 시작이면 Lv 1-3 (가입-모델-프롬프트) 만 — 1주.",
-            "Lv 4-5 (도구 연결-Cowork) 추가 — 2주.",
-            "Lv 9 (Skills) 가 게임 체인저 — 반복 작업 자동화.",
-            "Lv 13 (팀 배포) 는 우리 install/setup 패턴 활용.",
-            "Lv 14 는 항상 — AI 출력 중 어느 걸 출시할지 본인 안목.",
+        "媛뺤텛": [
+            "?ㅻ뒛 ?쒖옉?대㈃ Lv 1-3 (媛??紐⑤뜽-?꾨＼?꾪듃) 留???1二?",
+            "Lv 4-5 (?꾧뎄 ?곌껐-Cowork) 異붽? ??2二?",
+            "Lv 9 (Skills) 媛 寃뚯엫 泥댁씤? ??諛섎났 ?묒뾽 ?먮룞??",
+            "Lv 13 (? 諛고룷) ???곕━ install/setup ?⑦꽩 ?쒖슜.",
+            "Lv 14 ????긽 ??AI 異쒕젰 以??대뒓 嫄?異쒖떆?좎? 蹂몄씤 ?덈ぉ.",
         ],
-        "우리시스템": {
-            "현재 사용자 위치": "Lv 9-10 추정 (Skills + 프로젝트 활용 중)",
-            "Lv 11 추가도구": "Excel/Design/Code 다양 사용",
-            "Lv 13 팀 배포": "orchestration_v1 의 install/setup 으로 팀 배포 가능 (template kit)",
-            "Lv 14 본인 안목": "여전히 사람의 영역 — 깐깐 검수도 사람이",
+        "?곕━?쒖뒪??: {
+            "?꾩옱 ?ъ슜???꾩튂": "Lv 9-10 異붿젙 (Skills + ?꾨줈?앺듃 ?쒖슜 以?",
+            "Lv 11 異붽??꾧뎄": "Excel/Design/Code ?ㅼ뼇 ?ъ슜",
+            "Lv 13 ? 諛고룷": "orchestration_v1 ??install/setup ?쇰줈 ? 諛고룷 媛??(template kit)",
+            "Lv 14 蹂몄씤 ?덈ぉ": "?ъ쟾???щ엺???곸뿭 ??源먭퉸 寃?섎룄 ?щ엺??,
         },
-        "점검": ("Lv 14 (본인 안목) 가 가장 중요한 이유?", "AI 가 10개 만들면 어느 걸 선택할지는 사람의 가치판단. 대체 불가."),
+        "?먭?": ("Lv 14 (蹂몄씤 ?덈ぉ) 媛 媛??以묒슂???댁쑀?", "AI 媛 10媛?留뚮뱾硫??대뒓 嫄??좏깮?좎????щ엺??媛移섑뙋?? ?泥?遺덇?."),
     },
     {
-        "title": "10. AI 3종 세트 — Generative vs Agentic vs AI Agent",
+        "title": "10. AI 3醫??명듃 ??Generative vs Agentic vs AI Agent",
         "image_eng": "GenerativeAI-vs-AgenticAI-vs-AIAgents.jpg",
         "image_kor": "01-gen-vs-agentic-vs-agent.png",
-        "핵심": "Generative = 글-그림을 한 번에 만들어 주는 AI. Agentic = 스스로 단계를 짜고 계획하는 AI. AI Agent = 외부 도구-API 까지 직접 호출하며 결과 평가하는 AI. 셋은 진화 단계이자, 한 시스템에 같이 들어갈 수도 있습니다.",
-        "강사": ["여러분, AI 라고 하면 보통 ChatGPT 만 떠올리시죠? 근데 AI 가 사실 진화 단계가 있어요.", "Generative 는 '글만 쓰는 카피라이터'. 시키는 대로 한 번 답하고 끝.", "Agentic 는 '신입 매니저' — 목표 주면 단계를 짜요. 단 실행은 사람이.", "AI Agent 는 '경력 매니저' — 외부 API 까지 직접 호출하고 24/7 돌아갑니다.", "**우리 시스템 = Multi-Agent (가장 진화)** — Claude+Codex+Gemini+Haiku 가 회사처럼 협업."],
-        "표": {
-            "header": ["구분", "Generative", "Agentic", "AI Agent"],
+        "?듭떖": "Generative = 湲-洹몃┝????踰덉뿉 留뚮뱾??二쇰뒗 AI. Agentic = ?ㅼ뒪濡??④퀎瑜?吏쒓퀬 怨꾪쉷?섎뒗 AI. AI Agent = ?몃? ?꾧뎄-API 源뚯? 吏곸젒 ?몄텧?섎ŉ 寃곌낵 ?됯??섎뒗 AI. ?뗭? 吏꾪솕 ?④퀎?댁옄, ???쒖뒪?쒖뿉 媛숈씠 ?ㅼ뼱媛??섎룄 ?덉뒿?덈떎.",
+        "媛뺤궗": ["?щ윭遺? AI ?쇨퀬 ?섎㈃ 蹂댄넻 ChatGPT 留??좎삱由ъ떆二? 洹쇰뜲 AI 媛 ?ъ떎 吏꾪솕 ?④퀎媛 ?덉뼱??", "Generative ??'湲留??곕뒗 移댄뵾?쇱씠??. ?쒗궎???濡???踰??듯븯怨???", "Agentic ??'?좎엯 留ㅻ땲?' ??紐⑺몴 二쇰㈃ ?④퀎瑜?吏쒖슂. ???ㅽ뻾? ?щ엺??", "AI Agent ??'寃쎈젰 留ㅻ땲?' ???몃? API 源뚯? 吏곸젒 ?몄텧?섍퀬 24/7 ?뚯븘媛묐땲??", "**?곕━ ?쒖뒪??= Multi-Agent (媛??吏꾪솕)** ??Claude+Codex+Gemini+Haiku 媛 ?뚯궗泥섎읆 ?묒뾽."],
+        "??: {
+            "header": ["援щ텇", "Generative", "Agentic", "AI Agent"],
             "rows": [
-                ["하는 일", "한 번 답 만들고 끝", "스스로 단계 짜기", "API 호출까지 실행"],
-                ["예시", "ChatGPT, DALL-E", "여행 계획 자동 설계", "비행기 예약 + 캘린더"],
-                ["사람 비유", "카피라이터", "신입 매니저", "경력 매니저"],
-                ["주도성", "낮음", "중간", "높음"],
-                ["위험도", "낮음 (글뿐)", "중간", "높음 (실행)"],
+                ["?섎뒗 ??, "??踰???留뚮뱾怨???, "?ㅼ뒪濡??④퀎 吏쒓린", "API ?몄텧源뚯? ?ㅽ뻾"],
+                ["?덉떆", "ChatGPT, DALL-E", "?ы뻾 怨꾪쉷 ?먮룞 ?ㅺ퀎", "鍮꾪뻾湲??덉빟 + 罹섎┛??],
+                ["?щ엺 鍮꾩쑀", "移댄뵾?쇱씠??, "?좎엯 留ㅻ땲?", "寃쎈젰 留ㅻ땲?"],
+                ["二쇰룄??, "??쓬", "以묎컙", "?믪쓬"],
+                ["?꾪뿕??, "??쓬 (湲肉?", "以묎컙", "?믪쓬 (?ㅽ뻾)"],
             ],
         },
-        "흐름": [
-            "[Generative] 사용자 프롬프트 -> 사전 학습된 거대 모델 (Transformer) -> 토큰 시퀀스 예측 -> 글-이미지-코드 출력. 한 번의 forward pass 로 끝, 자기 반성 없음.",
-            "[Agentic] 사용자 목표 -> LLM 이 작업 분해 (ReAct/CoT) -> 각 단계마다 도구 선택 + 호출 -> 중간 결과 검토 -> 다음 단계 계획 -> 최종 답. 단계는 LLM 이 직접 짬.",
-            "[AI Agent] 목표 -> 계획 + 메모리 로드 -> 외부 API 실제 호출 (예약-이메일-DB) -> 결과로 자기 평가 (성공/실패) -> 보정 후 다음 행동 -> 종료 조건까지 반복. 사람 개입 0.",
+        "?먮쫫": [
+            "[Generative] ?ъ슜???꾨＼?꾪듃 -> ?ъ쟾 ?숈뒿??嫄곕? 紐⑤뜽 (Transformer) -> ?좏겙 ?쒗???덉륫 -> 湲-?대?吏-肄붾뱶 異쒕젰. ??踰덉쓽 forward pass 濡??? ?먭린 諛섏꽦 ?놁쓬.",
+            "[Agentic] ?ъ슜??紐⑺몴 -> LLM ???묒뾽 遺꾪빐 (ReAct/CoT) -> 媛??④퀎留덈떎 ?꾧뎄 ?좏깮 + ?몄텧 -> 以묎컙 寃곌낵 寃??-> ?ㅼ쓬 ?④퀎 怨꾪쉷 -> 理쒖쥌 ?? ?④퀎??LLM ??吏곸젒 吏?",
+            "[AI Agent] 紐⑺몴 -> 怨꾪쉷 + 硫붾え由?濡쒕뱶 -> ?몃? API ?ㅼ젣 ?몄텧 (?덉빟-?대찓??DB) -> 寃곌낵濡??먭린 ?됯? (?깃났/?ㅽ뙣) -> 蹂댁젙 ???ㅼ쓬 ?됰룞 -> 醫낅즺 議곌굔源뚯? 諛섎났. ?щ엺 媛쒖엯 0.",
         ],
-        "강점": [
-            "[Generative] 빠르고 단순. 콘텐츠 (글-그림-코드) 즉시 생성. 학습 데이터 안에 있으면 매우 강함.",
-            "[Generative] 비용 가장 낮음 (한 번 호출). 캐싱-배치 쉬움.",
-            "[Agentic] LLM 이 계획을 명시적으로 펼쳐 보여줌 — 사람이 검토-수정 가능 (Human-in-the-Loop).",
-            "[Agentic] 복잡한 다단계 작업도 분해 -> 작업 단위로 검증 가능.",
-            "[AI Agent] 사람 손 없이 끝까지 자동. 24/7 운영 가능.",
-            "[AI Agent] 환경과 상호작용하며 학습-적응. 새 상황에도 대응.",
+        "媛뺤젏": [
+            "[Generative] 鍮좊Ⅴ怨??⑥닚. 肄섑뀗痢?(湲-洹몃┝-肄붾뱶) 利됱떆 ?앹꽦. ?숈뒿 ?곗씠???덉뿉 ?덉쑝硫?留ㅼ슦 媛뺥븿.",
+            "[Generative] 鍮꾩슜 媛????쓬 (??踰??몄텧). 罹먯떛-諛곗튂 ?ъ?.",
+            "[Agentic] LLM ??怨꾪쉷??紐낆떆?곸쑝濡??쇱퀜 蹂댁뿬以????щ엺??寃???섏젙 媛??(Human-in-the-Loop).",
+            "[Agentic] 蹂듭옟???ㅻ떒怨??묒뾽??遺꾪빐 -> ?묒뾽 ?⑥쐞濡?寃利?媛??",
+            "[AI Agent] ?щ엺 ???놁씠 ?앷퉴吏 ?먮룞. 24/7 ?댁쁺 媛??",
+            "[AI Agent] ?섍꼍怨??곹샇?묒슜?섎ŉ ?숈뒿-?곸쓳. ???곹솴?먮룄 ???",
         ],
-        "약점": [
-            "[Generative] 시킨 것만 함. 모르면 자신만만하게 거짓말 (hallucination) — 9 함정 #9.",
-            "[Generative] 단일 turn 한계. 긴 작업-다단계 추론 약함.",
-            "[Agentic] 계획은 짜지만 실제 실행은 제한적 — 도구 결과 신뢰성 부담.",
-            "[Agentic] 단계가 많아지면 비용 ↑ (호출 N 배), 지연 ↑.",
-            "[AI Agent] 잘못된 실행 = 회복 어려움 (이메일 발송, DB 변경 등). 가드레일-롤백 필수.",
-            "[AI Agent] 무한 루프 위험 (9 함정 #4). 예산-중지 조건 필수.",
+        "?쎌젏": [
+            "[Generative] ?쒗궓 寃껊쭔 ?? 紐⑤Ⅴ硫??먯떊留뚮쭔?섍쾶 嫄곗쭞留?(hallucination) ??9 ?⑥젙 #9.",
+            "[Generative] ?⑥씪 turn ?쒓퀎. 湲??묒뾽-?ㅻ떒怨?異붾줎 ?쏀븿.",
+            "[Agentic] 怨꾪쉷? 吏쒖?留??ㅼ젣 ?ㅽ뻾? ?쒗븳?????꾧뎄 寃곌낵 ?좊ː??遺??",
+            "[Agentic] ?④퀎媛 留롮븘吏硫?鍮꾩슜 ??(?몄텧 N 諛?, 吏????",
+            "[AI Agent] ?섎せ???ㅽ뻾 = ?뚮났 ?대젮? (?대찓??諛쒖넚, DB 蹂寃???. 媛?쒕젅??濡ㅻ갚 ?꾩닔.",
+            "[AI Agent] 臾댄븳 猷⑦봽 ?꾪뿕 (9 ?⑥젙 #4). ?덉궛-以묒? 議곌굔 ?꾩닔.",
         ],
-        "강추": [
-            "[Generative] 글-이미지-코드 한 번에 만들 때 — 블로그 글, 디자인 시안, 보일러플레이트 코드.",
-            "[Agentic] 결과보다 '과정' 이 중요할 때 — 사용자에게 계획 보여주고 승인 받는 워크플로우.",
-            "[Agentic] 도메인 전문가 + AI 협업 — AI 가 단계 짜고 사람이 검토-수정.",
-            "[AI Agent] 반복 가능한 자동화 — 매일 같은 작업 (보고서-예약-모니터링).",
-            "[AI Agent] hooks 가드레일 + observability 필수. 둘 다 갖춰야 운영 안전.",
+        "媛뺤텛": [
+            "[Generative] 湲-?대?吏-肄붾뱶 ??踰덉뿉 留뚮뱾 ????釉붾줈洹?湲, ?붿옄???쒖븞, 蹂댁씪?ы뵆?덉씠??肄붾뱶.",
+            "[Agentic] 寃곌낵蹂대떎 '怨쇱젙' ??以묒슂???????ъ슜?먯뿉寃?怨꾪쉷 蹂댁뿬二쇨퀬 ?뱀씤 諛쏅뒗 ?뚰겕?뚮줈??",
+            "[Agentic] ?꾨찓???꾨Ц媛 + AI ?묒뾽 ??AI 媛 ?④퀎 吏쒓퀬 ?щ엺??寃???섏젙.",
+            "[AI Agent] 諛섎났 媛?ν븳 ?먮룞????留ㅼ씪 媛숈? ?묒뾽 (蹂닿퀬???덉빟-紐⑤땲?곕쭅).",
+            "[AI Agent] hooks 媛?쒕젅??+ observability ?꾩닔. ????媛뽰떠???댁쁺 ?덉쟾.",
         ],
-        "우리시스템": {
-            "어느 단계?": "AI Agent (가장 오른쪽). 더 정확히는 Multi-Agent System.",
-            "Generative 능력": "Claude/Codex/Gemini 가 글-코드 생성",
-            "Agentic 능력": "task-instruction.md 가 단계 정의 (단 자율 계획은 약함)",
-            "AI Agent 능력": "MCP 도구 호출 + 자가 평가 (eval_quality) + 자가 복구 (watchdog)",
-            "한 단계 더": "여러 워커 협력 = Multi-Agent (Claude->Codex->Gemini->Haiku 인수인계)",
+        "?곕━?쒖뒪??: {
+            "?대뒓 ?④퀎?": "AI Agent (媛???ㅻⅨ履?. ???뺥솗?덈뒗 Multi-Agent System.",
+            "Generative ?λ젰": "Claude/Codex/Gemini 媛 湲-肄붾뱶 ?앹꽦",
+            "Agentic ?λ젰": "task-instruction.md 媛 ?④퀎 ?뺤쓽 (???먯쑉 怨꾪쉷? ?쏀븿)",
+            "AI Agent ?λ젰": "MCP ?꾧뎄 ?몄텧 + ?먭? ?됯? (eval_quality) + ?먭? 蹂듦뎄 (watchdog)",
+            "???④퀎 ??: "?щ윭 ?뚯빱 ?묐젰 = Multi-Agent (Claude->Codex->Gemini->Haiku ?몄닔?멸퀎)",
         },
-        "비유": "Generative = 카피라이터 한 명. Agentic = 신입 매니저. AI Agent = 경력 매니저. 우리 = AI 회사 한 채.",
-        "점검": ("캘린더에 일정 자동 등록까지 해주는 AI 는?", "AI Agent. (Generative 는 글만, Agentic 는 계획만.)"),
+        "鍮꾩쑀": "Generative = 移댄뵾?쇱씠????紐? Agentic = ?좎엯 留ㅻ땲?. AI Agent = 寃쎈젰 留ㅻ땲?. ?곕━ = AI ?뚯궗 ??梨?",
+        "?먭?": ("罹섎┛?붿뿉 ?쇱젙 ?먮룞 ?깅줉源뚯? ?댁＜??AI ??", "AI Agent. (Generative ??湲留? Agentic ??怨꾪쉷留?)"),
     },
     {
-        "title": "11. AI 에이전트의 8가지 두뇌 — 모델 유형",
-        "image_eng": "AI에이전트-8가지모델유형-jaiinfoway.jpg",
+        "title": "11. AI ?먯씠?꾪듃??8媛吏 ?먮뇤 ??紐⑤뜽 ?좏삎",
+        "image_eng": "AI?먯씠?꾪듃-8媛吏紐⑤뜽?좏삎-jaiinfoway.jpg",
         "image_kor": None,
-        "핵심": "AI 뇌는 한 종류가 아닙니다. 작업에 맞는 뇌를 골라 써야 비용-품질이 최적.",
-        "강사": ["AI 뇌는 한 종류가 아니에요. 작업에 맞는 뇌를 골라써야 비용-품질이 최적이죠.", "비싼 모델 (Claude Opus) 만 쓰면 비용 폭증. 작은 모델 (Haiku) 로 80% 처리하고 큰 모델은 어려운 20% 만.", "**8개 모델 우리가 코드로 만드는 건 0개** — Claude-Codex-Gemini-Haiku 가 다 제공. 우리는 라우팅만 합니다.", "초보자 추천: GPT 계열 1개 (Claude or GPT-4) 로 시작 — 단순함 우선."],
-        "표": {
-            "header": ["뇌 유형", "예시", "★ 우리시스템 (현재)", "[FIX] 보완 (TODO)"],
+        "?듭떖": "AI ?뚮뒗 ??醫낅쪟媛 ?꾨떃?덈떎. ?묒뾽??留욌뒗 ?뚮? 怨⑤씪 ?⑥빞 鍮꾩슜-?덉쭏??理쒖쟻.",
+        "媛뺤궗": ["AI ?뚮뒗 ??醫낅쪟媛 ?꾨땲?먯슂. ?묒뾽??留욌뒗 ?뚮? 怨⑤씪?⑥빞 鍮꾩슜-?덉쭏??理쒖쟻?댁짛.", "鍮꾩떬 紐⑤뜽 (Claude Opus) 留??곕㈃ 鍮꾩슜 ??쬆. ?묒? 紐⑤뜽 (Haiku) 濡?80% 泥섎━?섍퀬 ??紐⑤뜽? ?대젮??20% 留?", "**8媛?紐⑤뜽 ?곕━媛 肄붾뱶濡?留뚮뱶??嫄?0媛?* ??Claude-Codex-Gemini-Haiku 媛 ???쒓났. ?곕━???쇱슦?낅쭔 ?⑸땲??", "珥덈낫??異붿쿇: GPT 怨꾩뿴 1媛?(Claude or GPT-4) 濡??쒖옉 ???⑥닚???곗꽑."],
+        "??: {
+            "header": ["???좏삎", "?덉떆", "???곕━?쒖뒪??(?꾩옱)", "[FIX] 蹂댁셿 (TODO)"],
             "rows": [
-                ["GPT (Transformer)", "Claude", "Claude Opus 4.7 [OK]", "—"],
-                ["MoE (전문가 분배)", "Qwen 2", "route_dispatch.md (룰)", "★ 입력 자동 분류기 (1-2h)"],
-                ["LRM (긴 추론)", "Gemini Flash", "Extended Thinking [OK]", "Gemini quota 통합 (30m)"],
-                ["VLM (이미지+글)", "GPT-4V", "Claude 멀티모달 [OK]", "자동 OCR pipeline (1-2h)"],
-                ["SLM (작은-빠름)", "Gemma", "Haiku 4.5 + cache 90%↓ [OK]", "—"],
-                ["LAM (행동)", "X-LAM", "MCP + Codex CLI [OK]", "—"],
-                ["HRM (계획->실행)", "Sapient", "auto-planner.md (skill)", "★ 자동 발동 강화 (30m)"],
-                ["mHC (다층 협업)", "Deepseek", "킷 전체 구조 (수동 chain)", "자동 인수인계 chain (4-6h)"],
+                ["GPT (Transformer)", "Claude", "Claude Opus 4.7 [OK]", "??],
+                ["MoE (?꾨Ц媛 遺꾨같)", "Qwen 2", "route_dispatch.md (猷?", "???낅젰 ?먮룞 遺꾨쪟湲?(1-2h)"],
+                ["LRM (湲?異붾줎)", "Gemini Flash", "Extended Thinking [OK]", "Gemini quota ?듯빀 (30m)"],
+                ["VLM (?대?吏+湲)", "GPT-4V", "Claude 硫?곕え??[OK]", "?먮룞 OCR pipeline (1-2h)"],
+                ["SLM (?묒?-鍮좊쫫)", "Gemma", "Haiku 4.5 + cache 90%??[OK]", "??],
+                ["LAM (?됰룞)", "X-LAM", "MCP + Codex CLI [OK]", "??],
+                ["HRM (怨꾪쉷->?ㅽ뻾)", "Sapient", "auto-planner.md (skill)", "???먮룞 諛쒕룞 媛뺥솕 (30m)"],
+                ["mHC (?ㅼ링 ?묒뾽)", "Deepseek", "???꾩껜 援ъ“ (?섎룞 chain)", "?먮룞 ?몄닔?멸퀎 chain (4-6h)"],
             ],
         },
-        "흐름": [
-            "사용자 요청 -> 작업 유형 분류 (콘텐츠 생성 / 복잡 추론 / 도구 호출 / 이미지-멀티모달).",
-            "분류 결과로 적합 모델 선택 — 비용-정확도-속도 우선순위 결정.",
-            "단일 작업에 여러 모델 라우팅 가능 — 설계는 LRM, 구현은 GPT, 검증은 SLM 같은 분업.",
-            "결과 검증 후 다음 작업 라우팅 — 자가 평가가 있으면 LAM/HRM 으로 보강.",
+        "?먮쫫": [
+            "?ъ슜???붿껌 -> ?묒뾽 ?좏삎 遺꾨쪟 (肄섑뀗痢??앹꽦 / 蹂듭옟 異붾줎 / ?꾧뎄 ?몄텧 / ?대?吏-硫?곕え??.",
+            "遺꾨쪟 寃곌낵濡??곹빀 紐⑤뜽 ?좏깮 ??鍮꾩슜-?뺥솗???띾룄 ?곗꽑?쒖쐞 寃곗젙.",
+            "?⑥씪 ?묒뾽???щ윭 紐⑤뜽 ?쇱슦??媛?????ㅺ퀎??LRM, 援ы쁽? GPT, 寃利앹? SLM 媛숈? 遺꾩뾽.",
+            "寃곌낵 寃利????ㅼ쓬 ?묒뾽 ?쇱슦?????먭? ?됯?媛 ?덉쑝硫?LAM/HRM ?쇰줈 蹂닿컯.",
         ],
-        "강점": [
-            "비싼 모델만 안 쓰면 됨 — 작은 모델로 80% 처리, 큰 모델은 어려운 20% 만 호출 (비용 ↓ 60-80%).",
-            "특정 작업 (이미지-행동-복잡 추론) 은 전용 모델 (VLM/LAM/LRM) 이 정확도-속도 ↑.",
-            "라우팅 시스템 한 번 만들면 새 모델 추가 쉬움 — 인터페이스 표준화.",
-            "각 모델 강점 합쳐 시너지 — GPT(글) + LAM(행동) + VLM(이미지) = 멀티모달 에이전트.",
-            "Quota-rate limit 분산 가능 — 한 API 한계에 걸리면 다른 모델로 fallback.",
+        "媛뺤젏": [
+            "鍮꾩떬 紐⑤뜽留????곕㈃ ?????묒? 紐⑤뜽濡?80% 泥섎━, ??紐⑤뜽? ?대젮??20% 留??몄텧 (鍮꾩슜 ??60-80%).",
+            "?뱀젙 ?묒뾽 (?대?吏-?됰룞-蹂듭옟 異붾줎) ? ?꾩슜 紐⑤뜽 (VLM/LAM/LRM) ???뺥솗???띾룄 ??",
+            "?쇱슦???쒖뒪????踰?留뚮뱾硫???紐⑤뜽 異붽? ?ъ? ???명꽣?섏씠???쒖???",
+            "媛?紐⑤뜽 媛뺤젏 ?⑹퀜 ?쒕꼫吏 ??GPT(湲) + LAM(?됰룞) + VLM(?대?吏) = 硫?곕え???먯씠?꾪듃.",
+            "Quota-rate limit 遺꾩궛 媛??????API ?쒓퀎??嫄몃━硫??ㅻⅨ 紐⑤뜽濡?fallback.",
         ],
-        "약점": [
-            "모델 라우팅 로직 직접 만들어야 함 — 자동화 안 됨, 결정 트리-휴리스틱 필요.",
-            "각 모델 API/토큰 비용-지연 다름 — 추적-관측 없으면 비용 폭증 (9 함정 #8).",
-            "모델 간 출력 포맷 다름 — adapter-parsing 코드 추가 필요.",
-            "라우팅 잘못하면 결과 품질 ↓ (예: 단순 작업에 LRM 쓰면 비싸고 느림).",
-            "Vendor lock-in 위험 — 한 회사 모델만 쓰면 가격-정책 변경에 취약.",
-            "버전 관리 복잡 — 각 모델 업데이트 영향 따로 검증해야.",
+        "?쎌젏": [
+            "紐⑤뜽 ?쇱슦??濡쒖쭅 吏곸젒 留뚮뱾?댁빞 ?????먮룞?????? 寃곗젙 ?몃━-?대━?ㅽ떛 ?꾩슂.",
+            "媛?紐⑤뜽 API/?좏겙 鍮꾩슜-吏???ㅻ쫫 ??異붿쟻-愿痢??놁쑝硫?鍮꾩슜 ??쬆 (9 ?⑥젙 #8).",
+            "紐⑤뜽 媛?異쒕젰 ?щ㎎ ?ㅻ쫫 ??adapter-parsing 肄붾뱶 異붽? ?꾩슂.",
+            "?쇱슦???섎せ?섎㈃ 寃곌낵 ?덉쭏 ??(?? ?⑥닚 ?묒뾽??LRM ?곕㈃ 鍮꾩떥怨??먮┝).",
+            "Vendor lock-in ?꾪뿕 ?????뚯궗 紐⑤뜽留??곕㈃ 媛寃??뺤콉 蹂寃쎌뿉 痍⑥빟.",
+            "踰꾩쟾 愿由?蹂듭옟 ??媛?紐⑤뜽 ?낅뜲?댄듃 ?곹뼢 ?곕줈 寃利앺빐??",
         ],
-        "강추": [
-            "처음엔 GPT 계열 1개 (Claude or GPT-4) 로 시작 — 단순함 우선.",
-            "VLM 은 이미지-차트-UI 분석이 필요할 때만 추가 (비용 ↑).",
-            "SLM 은 검증-필터링-분류 같은 단순 반복에 — Haiku, Gemma.",
-            "LAM/HRM 은 도구 호출 많고 복잡한 워크플로우에서.",
-            "사용자 요청 분류기 (route_dispatch) 만들어 자동 라우팅 — 우리 시스템 본보기.",
+        "媛뺤텛": [
+            "泥섏쓬??GPT 怨꾩뿴 1媛?(Claude or GPT-4) 濡??쒖옉 ???⑥닚???곗꽑.",
+            "VLM ? ?대?吏-李⑦듃-UI 遺꾩꽍???꾩슂???뚮쭔 異붽? (鍮꾩슜 ??.",
+            "SLM ? 寃利??꾪꽣留?遺꾨쪟 媛숈? ?⑥닚 諛섎났????Haiku, Gemma.",
+            "LAM/HRM ? ?꾧뎄 ?몄텧 留롪퀬 蹂듭옟???뚰겕?뚮줈?곗뿉??",
+            "?ъ슜???붿껌 遺꾨쪟湲?(route_dispatch) 留뚮뱾???먮룞 ?쇱슦?????곕━ ?쒖뒪??蹂몃낫湲?",
         ],
-        "우리시스템": {
-            "결론": "★ 8개 모델 우리가 구현 X — Claude-Codex-Gemini-Haiku 가 이미 제공. 우리는 '언제 어느 뇌 쓸지' 라우팅만.",
-            "[OK] 잘하는 3개": "GPT (Claude Opus 4.7), SLM (Haiku 4.5 + prompt cache 90%↓), LAM (MCP + Codex CLI)",
-            "[FIX] 보완 필요 5개": "★ MoE 자동 분류기 (1-2h) - ★ HRM 자동 발동 (30m) - mHC 자동 인수인계 (4-6h) - LRM Gemini 통합 (30m) - VLM 자동 OCR (1-2h)",
-            "[TGT] 가장 중요한 보완": "HRM 자동 발동 — 사용자가 매번 '5단계 해줘' 명시 X. Claude 가 자가 발동 (auto-planner skill description 매칭). 이번 세션 6시간 사용자 매번 지시받은 근본 원인.",
-            "왜 보완?": "Generative->Agentic->Agent->Multi-Agent 진화 중 Agent 단계 약점. 자가 발동-자가 분배-자가 인수인계 부족 -> 사용자 매번 지시.",
-            "총 보완 시간": "1+2 우선 = 2시간 (즉시 큰 효과). 전부 = 8-10시간 (Phase 작업).",
+        "?곕━?쒖뒪??: {
+            "寃곕줎": "??8媛?紐⑤뜽 ?곕━媛 援ы쁽 X ??Claude-Codex-Gemini-Haiku 媛 ?대? ?쒓났. ?곕━??'?몄젣 ?대뒓 ???몄?' ?쇱슦?낅쭔.",
+            "[OK] ?섑븯??3媛?: "GPT (Claude Opus 4.7), SLM (Haiku 4.5 + prompt cache 90%??, LAM (MCP + Codex CLI)",
+            "[FIX] 蹂댁셿 ?꾩슂 5媛?: "??MoE ?먮룞 遺꾨쪟湲?(1-2h) - ??HRM ?먮룞 諛쒕룞 (30m) - mHC ?먮룞 ?몄닔?멸퀎 (4-6h) - LRM Gemini ?듯빀 (30m) - VLM ?먮룞 OCR (1-2h)",
+            "[TGT] 媛??以묒슂??蹂댁셿": "HRM ?먮룞 諛쒕룞 ???ъ슜?먭? 留ㅻ쾲 '5?④퀎 ?댁쨾' 紐낆떆 X. Claude 媛 ?먭? 諛쒕룞 (auto-planner skill description 留ㅼ묶). ?대쾲 ?몄뀡 6?쒓컙 ?ъ슜??留ㅻ쾲 吏?쒕컺? 洹쇰낯 ?먯씤.",
+            "??蹂댁셿?": "Generative->Agentic->Agent->Multi-Agent 吏꾪솕 以?Agent ?④퀎 ?쎌젏. ?먭? 諛쒕룞-?먭? 遺꾨같-?먭? ?몄닔?멸퀎 遺議?-> ?ъ슜??留ㅻ쾲 吏??",
+            "珥?蹂댁셿 ?쒓컙": "1+2 ?곗꽑 = 2?쒓컙 (利됱떆 ???④낵). ?꾨? = 8-10?쒓컙 (Phase ?묒뾽).",
         },
-        "점검": ("8개 모델 중 우리가 코드로 구현하는 건 몇 개?", "0개. 모두 외부 모델 제공 — 우리는 라우팅-조율만."),
+        "?먭?": ("8媛?紐⑤뜽 以??곕━媛 肄붾뱶濡?援ы쁽?섎뒗 嫄?紐?媛?", "0媛? 紐⑤몢 ?몃? 紐⑤뜽 ?쒓났 ???곕━???쇱슦??議곗쑉留?"),
     },
     {
-        "title": "12. 에이전트의 5가지 핵심 부품",
-        "image_eng": "에이전틱AI-5가지핵심개념.jpg",
+        "title": "12. ?먯씠?꾪듃??5媛吏 ?듭떖 遺??,
+        "image_eng": "?먯씠?꾪떛AI-5媛吏?듭떖媛쒕뀗.jpg",
         "image_kor": "02-5-cores.png",
-        "핵심": "안전한 에이전트는 5부품 모두 필요: 가드레일 / 오케스트레이션 / 도구(MCP) / 메모리 / 관측.",
-        "강사": ["안전한 에이전트는 5부품 모두 필요해요. 회사로 비유하면:", "1) 입구 경비실 (Guardrails) — 잘못된 입력-민감정보 차단", "2) 부장님 (Orchestration) — 작업 분해-라우팅", "3) 도구함 (Tools/MCP) — GitHub-DB-API 안전 연결", "4) 서류 캐비넷 (Memory) — 단기/중기/장기 기억", "5) CCTV+회의록 (Observability) — 추적-비용 로그", "우리 시스템 = 5부품 모두 풍부. 24 hooks + 11 MCP + orca.db + recall-memory."],
-        "표": {
-            "header": ["부품", "역할", "회사 비유", "안 갖추면"],
+        "?듭떖": "?덉쟾???먯씠?꾪듃??5遺??紐⑤몢 ?꾩슂: 媛?쒕젅??/ ?ㅼ??ㅽ듃?덉씠??/ ?꾧뎄(MCP) / 硫붾え由?/ 愿痢?",
+        "媛뺤궗": ["?덉쟾???먯씠?꾪듃??5遺??紐⑤몢 ?꾩슂?댁슂. ?뚯궗濡?鍮꾩쑀?섎㈃:", "1) ?낃뎄 寃쎈퉬??(Guardrails) ???섎せ???낅젰-誘쇨컧?뺣낫 李⑤떒", "2) 遺?λ떂 (Orchestration) ???묒뾽 遺꾪빐-?쇱슦??, "3) ?꾧뎄??(Tools/MCP) ??GitHub-DB-API ?덉쟾 ?곌껐", "4) ?쒕쪟 罹먮퉬??(Memory) ???④린/以묎린/?κ린 湲곗뼲", "5) CCTV+?뚯쓽濡?(Observability) ??異붿쟻-鍮꾩슜 濡쒓렇", "?곕━ ?쒖뒪??= 5遺??紐⑤몢 ?띾?. 24 hooks + 11 MCP + orca.db + recall-memory."],
+        "??: {
+            "header": ["遺??, "??븷", "?뚯궗 鍮꾩쑀", "??媛뽰텛硫?],
             "rows": [
-                ["1 Guardrails", "잘못된 입력-민감정보 차단", "입구 경비실", "사고-개인정보 유출"],
-                ["2 Orchestration", "작업 분해-라우팅-상태관리", "부장님 작업 분배", "무한 루프-중복"],
-                ["3 Tool & MCP", "외부 도구 안전 호출", "부서 도구함", "도구 못 씀"],
-                ["4 Memory", "단기-중기-장기 기억", "서류 캐비넷", "맥락 망각"],
-                ["5 Observability", "추적-비용-결정 로그", "CCTV+회의록", "왜 그랬는지 모름"],
+                ["1 Guardrails", "?섎せ???낅젰-誘쇨컧?뺣낫 李⑤떒", "?낃뎄 寃쎈퉬??, "?ш퀬-媛쒖씤?뺣낫 ?좎텧"],
+                ["2 Orchestration", "?묒뾽 遺꾪빐-?쇱슦???곹깭愿由?, "遺?λ떂 ?묒뾽 遺꾨같", "臾댄븳 猷⑦봽-以묐났"],
+                ["3 Tool & MCP", "?몃? ?꾧뎄 ?덉쟾 ?몄텧", "遺???꾧뎄??, "?꾧뎄 紐??"],
+                ["4 Memory", "?④린-以묎린-?κ린 湲곗뼲", "?쒕쪟 罹먮퉬??, "留λ씫 留앷컖"],
+                ["5 Observability", "異붿쟻-鍮꾩슜-寃곗젙 濡쒓렇", "CCTV+?뚯쓽濡?, "??洹몃옱?붿? 紐⑤쫫"],
             ],
         },
-        "흐름": [
-            "User Request -> 1 Guardrails (입력 검증-PII 필터-rate limit) -> 2 Orchestration (작업 분해-라우팅-상태) -> 3 Tools/MCP (외부 도구 호출) -> 4 Memory (단/중/장기 저장) -> 5 Observability (트레이스-메트릭-로그) -> Agent Response.",
-            "5 레이어 간 context 전달 — 각 레이어가 다음 레이어에 정제된 데이터-결정 사유 전달.",
-            "Observability 는 모든 레이어에서 trace 발생 — 사고 시 어느 레이어에서 문제인지 추적.",
+        "?먮쫫": [
+            "User Request -> 1 Guardrails (?낅젰 寃利?PII ?꾪꽣-rate limit) -> 2 Orchestration (?묒뾽 遺꾪빐-?쇱슦???곹깭) -> 3 Tools/MCP (?몃? ?꾧뎄 ?몄텧) -> 4 Memory (??以??κ린 ??? -> 5 Observability (?몃젅?댁뒪-硫뷀듃由?濡쒓렇) -> Agent Response.",
+            "5 ?덉씠??媛?context ?꾨떖 ??媛??덉씠?닿? ?ㅼ쓬 ?덉씠?댁뿉 ?뺤젣???곗씠??寃곗젙 ?ъ쑀 ?꾨떖.",
+            "Observability ??紐⑤뱺 ?덉씠?댁뿉??trace 諛쒖깮 ???ш퀬 ???대뒓 ?덉씠?댁뿉??臾몄젣?몄? 異붿쟻.",
         ],
-        "강점": [
-            "사고 났을 때 추적 가능 (5 Observability) — 어느 단계에서 망가졌는지 명확.",
-            "외부 도구 호환 표준 (3 MCP) — 새 도구 추가 시 도구 자체만 만들면 됨, 시스템 안 건드림.",
-            "메모리 분리로 맥락 안 깨짐 (4) — 단기 vs 장기 메모리가 서로 영향 X.",
-            "각 레이어 독립 교체 가능 — Orchestration 만 LangGraph -> CrewAI 로 갈아끼우기 OK.",
-            "표준화로 팀 협업 쉬움 — 각 레이어 담당자 분리 가능.",
-            "Guardrails 가 첫 방어선 — 시크릿 노출-PII 유출-악성 입력 차단.",
+        "媛뺤젏": [
+            "?ш퀬 ?ъ쓣 ??異붿쟻 媛??(5 Observability) ???대뒓 ?④퀎?먯꽌 留앷?議뚮뒗吏 紐낇솗.",
+            "?몃? ?꾧뎄 ?명솚 ?쒖? (3 MCP) ?????꾧뎄 異붽? ???꾧뎄 ?먯껜留?留뚮뱾硫??? ?쒖뒪????嫄대뱶由?",
+            "硫붾え由?遺꾨━濡?留λ씫 ??源⑥쭚 (4) ???④린 vs ?κ린 硫붾え由ш? ?쒕줈 ?곹뼢 X.",
+            "媛??덉씠???낅┰ 援먯껜 媛????Orchestration 留?LangGraph -> CrewAI 濡?媛덉븘?쇱슦湲?OK.",
+            "?쒖??붾줈 ? ?묒뾽 ?ъ? ??媛??덉씠???대떦??遺꾨━ 媛??",
+            "Guardrails 媛 泥?諛⑹뼱?????쒗겕由??몄텧-PII ?좎텧-?낆꽦 ?낅젰 李⑤떒.",
         ],
-        "약점": [
-            "5개 다 만들려면 초기 작업량 큼 — 작은 PoC 엔 과함.",
-            "Observability 가 토큰-비용 ↑ — 모든 호출 로깅 시 스토리지 부담.",
-            "레이어 간 인터페이스 표준화 안 되면 디버깅 어려움.",
-            "Guardrails 너무 엄격하면 false positive — 정상 입력 차단.",
-            "Memory 의 장기 (벡터 DB) 는 인덱스 구축 비용-시간 큼.",
-            "Orchestration 의 상태 머신 복잡 -> 버그 추적 어려움.",
+        "?쎌젏": [
+            "5媛???留뚮뱾?ㅻ㈃ 珥덇린 ?묒뾽???????묒? PoC ??怨쇳븿.",
+            "Observability 媛 ?좏겙-鍮꾩슜 ????紐⑤뱺 ?몄텧 濡쒓퉭 ???ㅽ넗由ъ? 遺??",
+            "?덉씠??媛??명꽣?섏씠???쒖??????섎㈃ ?붾쾭源??대젮?.",
+            "Guardrails ?덈Т ?꾧꺽?섎㈃ false positive ???뺤긽 ?낅젰 李⑤떒.",
+            "Memory ???κ린 (踰≫꽣 DB) ???몃뜳??援ъ텞 鍮꾩슜-?쒓컙 ??",
+            "Orchestration ???곹깭 癒몄떊 蹂듭옟 -> 踰꾧렇 異붿쟻 ?대젮?.",
         ],
-        "강추": [
-            "첫 프로젝트라도 Guardrails + Observability 두 개는 절대 빼지 마세요 — 사고 났을 때 추적 못 합니다.",
-            "Memory 는 단기 (대화) + 중기 (세션) 두 층부터 — 장기 (벡터 DB) 는 필요할 때 추가.",
-            "Orchestration 은 단순한 state machine 으로 시작 — 복잡한 게 좋은 게 아님.",
-            "MCP 는 외부 도구 1개부터 — GitHub-Slack 같은 핵심부터 연결.",
+        "媛뺤텛": [
+            "泥??꾨줈?앺듃?쇰룄 Guardrails + Observability ??媛쒕뒗 ?덈? 鍮쇱? 留덉꽭?????ш퀬 ?ъ쓣 ??異붿쟻 紐??⑸땲??",
+            "Memory ???④린 (??? + 以묎린 (?몄뀡) ??痢듬??????κ린 (踰≫꽣 DB) ???꾩슂????異붽?.",
+            "Orchestration ? ?⑥닚??state machine ?쇰줈 ?쒖옉 ??蹂듭옟??寃?醫뗭? 寃??꾨떂.",
+            "MCP ???몃? ?꾧뎄 1媛쒕?????GitHub-Slack 媛숈? ?듭떖遺???곌껐.",
         ],
-        "우리시스템": {
+        "?곕━?쒖뒪??: {
             "1 Guardrails": "Hook (block_dangerous_bash-block-tricks-check-mojibake-protect-critical-files)",
             "2 Orchestration": "exec_orch plugin (route_dispatch-codex-auto-gemini-auto-watchdog)",
-            "3 Tool & MCP": "MCP 서버 다수 (GitHub-Playwright-Figma-Slack-Notion 등)",
-            "4 Memory": "orca.db (워커-태스크) + .claude/state/session-turns/ + ~/.claude/projects/<proj>/memory/",
-            "5 Observability": "orca.db metrics + watchdog.log + external-watchdog 1분 간격 점검",
+            "3 Tool & MCP": "MCP ?쒕쾭 ?ㅼ닔 (GitHub-Playwright-Figma-Slack-Notion ??",
+            "4 Memory": "orca.db (?뚯빱-?쒖뒪?? + .claude/state/session-turns/ + ~/.claude/projects/<proj>/memory/",
+            "5 Observability": "orca.db metrics + watchdog.log + external-watchdog 1遺?媛꾧꺽 ?먭?",
         },
-        "비유": "에이전트 = 회사 한 채. 경비-부장-도구함-캐비넷-CCTV 다 갖춰야 사고 안 남.",
-        "점검": ("우리 hooks 는 5부품 중 어디?", "1 Guardrails (입구 경비)."),
+        "鍮꾩쑀": "?먯씠?꾪듃 = ?뚯궗 ??梨? 寃쎈퉬-遺???꾧뎄??罹먮퉬??CCTV ??媛뽰떠???ш퀬 ????",
+        "?먭?": ("?곕━ hooks ??5遺??以??대뵒?", "1 Guardrails (?낃뎄 寃쎈퉬)."),
     },
     {
-        "title": "13. 9가지 숨은 함정 — 에이전트가 망하는 패턴",
-        "image_eng": "AI에이전트-9가지숨은킬러-판데이.jpg",
+        "title": "13. 9媛吏 ?⑥? ?⑥젙 ???먯씠?꾪듃媛 留앺븯???⑦꽩",
+        "image_eng": "AI?먯씠?꾪듃-9媛吏?⑥??щ윭-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "성공한 에이전트는 다양하지만 망한 에이전트는 9가지 패턴 중 하나. 이걸 피하면 사고 80% ↓.",
-        "강사": ["성공한 에이전트는 다양하지만 망한 에이전트는 9가지 패턴 중 하나. 이거 피하면 사고 80% ↓.", "가장 무서운 3개: **#4 Runaway Loop** (재시도 847번), **#8 Cost Blind** ($48,200 청구), **#9 No Failure Mode** (모르면 거짓말).", "우리 시스템 대응: watchdog backoff + orca.db budget + failure-mode.md 5중박기.", "9 중 8 [OK] 대응 — 본보기 수준입니다."],
-        "표": {
-            "header": ["#", "함정", "현상", "고치는 법"],
+        "?듭떖": "?깃났???먯씠?꾪듃???ㅼ뼇?섏?留?留앺븳 ?먯씠?꾪듃??9媛吏 ?⑦꽩 以??섎굹. ?닿구 ?쇳븯硫??ш퀬 80% ??",
+        "媛뺤궗": ["?깃났???먯씠?꾪듃???ㅼ뼇?섏?留?留앺븳 ?먯씠?꾪듃??9媛吏 ?⑦꽩 以??섎굹. ?닿굅 ?쇳븯硫??ш퀬 80% ??", "媛??臾댁꽌??3媛? **#4 Runaway Loop** (?ъ떆??847踰?, **#8 Cost Blind** ($48,200 泥?뎄), **#9 No Failure Mode** (紐⑤Ⅴ硫?嫄곗쭞留?.", "?곕━ ?쒖뒪????? watchdog backoff + orca.db budget + failure-mode.md 5以묐컯湲?", "9 以?8 [OK] ?????蹂몃낫湲??섏??낅땲??"],
+        "??: {
+            "header": ["#", "?⑥젙", "?꾩긽", "怨좎튂??踰?],
             "rows": [
-                ["1", "Tool Bloat (도구 비대)", "도구 너무 많아 모델이 헷갈림", "도구 줄이고 날카롭게"],
-                ["2", "Context Decay (맥락 부패)", "긴 대화에서 규칙 묻힘", "핵심 규칙 다시 박기"],
-                ["3", "Retrieval Poisoning", "잘못 문서 들어옴 -> 자신만만하게 틀림", "필터-랭킹-검증"],
-                ["4", "Runaway Loop", "재시도 847번", "예산-중지조건-루프 가드"],
-                ["5", "Schema Drift", "v1 -> v2 필드 바뀐 거 못 봄", "스키마 버전-경계 검증"],
-                ["6", "Eval Blindness", "10 예시로만 검증", "실 트래픽 슬라이스 평가"],
-                ["7", "Non-Determinism", "같은 입력, 다른 답", "랜덤 제어-추적"],
-                ["8", "Cost Blind", "어느날 $48,200 청구", "작업당 토큰-비용 추적"],
-                ["9", "No Failure Mode", "모르면 거짓말", "거절-헤지 정책 박기"],
+                ["1", "Tool Bloat (?꾧뎄 鍮꾨?)", "?꾧뎄 ?덈Т 留롮븘 紐⑤뜽???룰컝由?, "?꾧뎄 以꾩씠怨??좎뭅濡?쾶"],
+                ["2", "Context Decay (留λ씫 遺??", "湲???붿뿉??洹쒖튃 臾삵옒", "?듭떖 洹쒖튃 ?ㅼ떆 諛뺢린"],
+                ["3", "Retrieval Poisoning", "?섎せ 臾몄꽌 ?ㅼ뼱??-> ?먯떊留뚮쭔?섍쾶 ?由?, "?꾪꽣-??궧-寃利?],
+                ["4", "Runaway Loop", "?ъ떆??847踰?, "?덉궛-以묒?議곌굔-猷⑦봽 媛??],
+                ["5", "Schema Drift", "v1 -> v2 ?꾨뱶 諛붾?嫄?紐?遊?, "?ㅽ궎留?踰꾩쟾-寃쎄퀎 寃利?],
+                ["6", "Eval Blindness", "10 ?덉떆濡쒕쭔 寃利?, "???몃옒???щ씪?댁뒪 ?됯?"],
+                ["7", "Non-Determinism", "媛숈? ?낅젰, ?ㅻⅨ ??, "?쒕뜡 ?쒖뼱-異붿쟻"],
+                ["8", "Cost Blind", "?대뒓??$48,200 泥?뎄", "?묒뾽???좏겙-鍮꾩슜 異붿쟻"],
+                ["9", "No Failure Mode", "紐⑤Ⅴ硫?嫄곗쭞留?, "嫄곗젅-?ㅼ? ?뺤콉 諛뺢린"],
             ],
         },
-        "흐름": [
-            "프로덕션 가기 전 체크리스트 9개 출력 -> 한 줄씩 점검 -> 다 ✓ 면 배포 -> 운영 중 매주 재점검.",
-            "각 함정마다 자동 감시 메트릭 정의 — 임계 초과 시 알람-자동 차단.",
-            "9 함정 중 #4 (Loop), #8 (Cost), #9 (Failure) 는 Hook 으로 강제 — AI 신뢰 X.",
+        "?먮쫫": [
+            "?꾨줈?뺤뀡 媛湲???泥댄겕由ъ뒪??9媛?異쒕젰 -> ??以꾩뵫 ?먭? -> ????硫?諛고룷 -> ?댁쁺 以?留ㅼ＜ ?ъ젏寃.",
+            "媛??⑥젙留덈떎 ?먮룞 媛먯떆 硫뷀듃由??뺤쓽 ???꾧퀎 珥덇낵 ???뚮엺-?먮룞 李⑤떒.",
+            "9 ?⑥젙 以?#4 (Loop), #8 (Cost), #9 (Failure) ??Hook ?쇰줈 媛뺤젣 ??AI ?좊ː X.",
         ],
-        "강점": [
-            "체크리스트 화 가능 — 한 번 만들면 모든 프로젝트에서 재사용.",
-            "Hook 으로 #4 (루프) 와 #8 (비용) 강제 차단 가능 — AI 가 못 어김.",
-            "운영 중 점검 가능 — 메트릭 임계로 자동 알람.",
-            "팀 온보딩에 좋음 — 신입 개발자도 9 함정 알면 시야 ↑.",
-            "9 함정 잡으면 PoC -> 프로덕션 전환 시간 ↓.",
+        "媛뺤젏": [
+            "泥댄겕由ъ뒪????媛??????踰?留뚮뱾硫?紐⑤뱺 ?꾨줈?앺듃?먯꽌 ?ъ궗??",
+            "Hook ?쇰줈 #4 (猷⑦봽) ? #8 (鍮꾩슜) 媛뺤젣 李⑤떒 媛????AI 媛 紐??닿?.",
+            "?댁쁺 以??먭? 媛????硫뷀듃由??꾧퀎濡??먮룞 ?뚮엺.",
+            "? ?⑤낫?⑹뿉 醫뗭쓬 ???좎엯 媛쒕컻?먮룄 9 ?⑥젙 ?뚮㈃ ?쒖빞 ??",
+            "9 ?⑥젙 ?≪쑝硫?PoC -> ?꾨줈?뺤뀡 ?꾪솚 ?쒓컙 ??",
         ],
-        "약점": [
-            "#7 (비결정성) 는 LLM 본질이라 완전 제거 불가 — 추적-로깅이 최선.",
-            "#6 (평가 맹점) 는 사람이 라벨 데이터 모아야 — 노동량 큼.",
-            "#3 (Retrieval Poisoning) 은 RAG 사용 시만 — 단순 LLM 에는 무관.",
-            "#9 (No Failure Mode) 의 거절 정책은 false positive 위험 — 정상 질문 거절.",
-            "9 함정 다 잡으려면 초기 작업량 큼 — 작은 PoC 엔 과함.",
+        "?쎌젏": [
+            "#7 (鍮꾧껐?뺤꽦) ??LLM 蹂몄쭏?대씪 ?꾩쟾 ?쒓굅 遺덇? ??異붿쟻-濡쒓퉭??理쒖꽑.",
+            "#6 (?됯? 留뱀젏) ???щ엺???쇰꺼 ?곗씠??紐⑥븘?????몃룞????",
+            "#3 (Retrieval Poisoning) ? RAG ?ъ슜 ?쒕쭔 ???⑥닚 LLM ?먮뒗 臾닿?.",
+            "#9 (No Failure Mode) ??嫄곗젅 ?뺤콉? false positive ?꾪뿕 ???뺤긽 吏덈Ц 嫄곗젅.",
+            "9 ?⑥젙 ???≪쑝?ㅻ㈃ 珥덇린 ?묒뾽???????묒? PoC ??怨쇳븿.",
         ],
-        "강추": [
-            "#9 (No Failure) + #2 (Context Decay) 두 개만 잡아도 신뢰도 두 배.",
-            "#4 (Loop) + #8 (Cost) 는 Hook 으로 강제 — 운영 안전망 필수.",
-            "#7 (Non-Determinism) 은 추적 메트릭에 집중 — 완벽 제거 X.",
-            "PoC 단계에선 #1-#2-#9 만, 프로덕션 가면 9 개 다 점검.",
+        "媛뺤텛": [
+            "#9 (No Failure) + #2 (Context Decay) ??媛쒕쭔 ?≪븘???좊ː????諛?",
+            "#4 (Loop) + #8 (Cost) ??Hook ?쇰줈 媛뺤젣 ???댁쁺 ?덉쟾留??꾩닔.",
+            "#7 (Non-Determinism) ? 異붿쟻 硫뷀듃由?뿉 吏묒쨷 ???꾨꼍 ?쒓굅 X.",
+            "PoC ?④퀎?먯꽑 #1-#2-#9 留? ?꾨줈?뺤뀡 媛硫?9 媛????먭?.",
         ],
-        "우리시스템": {
-            "#1 Tool Bloat": "개별 plugin (mcp_dev/mcp_data/mcp_collab 등) 으로 분리 — 필요한 것만 install",
-            "#2 Context Decay": "CLAUDE.md + 5중 박기 + hook-00-init 매 세션 reminder 강제 출력",
-            "#3 Retrieval Poisoning": "block-mojibake-check-korean-only 로 입력 검증",
-            "#4 Runaway Loop": "watchdog backoff (10m->20m->40m->2h 지수) + quota_retry_count max 3 + kill_worker_tree",
+        "?곕━?쒖뒪??: {
+            "#1 Tool Bloat": "媛쒕퀎 plugin (mcp_dev/mcp_data/mcp_collab ?? ?쇰줈 遺꾨━ ???꾩슂??寃껊쭔 install",
+            "#2 Context Decay": "CLAUDE.md + 5以?諛뺢린 + hook-00-init 留??몄뀡 reminder 媛뺤젣 異쒕젰",
+            "#3 Retrieval Poisoning": "block-mojibake-check-korean-only 濡??낅젰 寃利?,
+            "#4 Runaway Loop": "watchdog backoff (10m->20m->40m->2h 吏?? + quota_retry_count max 3 + kill_worker_tree",
             "#5 Schema Drift": "plugin.json schema v1.2 + validate-plugin-schema.py --strict",
-            "#6 Eval Blindness": "eval_quality plugin + score-task (Haiku 자동 0-10 채점)",
-            "#7 Non-Determinism": "orca.db metrics 에 모든 호출 기록 (model_id-tokens-cost-success)",
-            "#8 Cost Blind": "orca.db budget 테이블 + daily_limit + breaker_tripped 자동 차단",
-            "#9 No Failure Mode": "rules/failure-mode.md + 메모리 5중 박기 (\"모르면 거절\" 강제)",
+            "#6 Eval Blindness": "eval_quality plugin + score-task (Haiku ?먮룞 0-10 梨꾩젏)",
+            "#7 Non-Determinism": "orca.db metrics ??紐⑤뱺 ?몄텧 湲곕줉 (model_id-tokens-cost-success)",
+            "#8 Cost Blind": "orca.db budget ?뚯씠釉?+ daily_limit + breaker_tripped ?먮룞 李⑤떒",
+            "#9 No Failure Mode": "rules/failure-mode.md + 硫붾え由?5以?諛뺢린 (\"紐⑤Ⅴ硫?嫄곗젅\" 媛뺤젣)",
         },
-        "비유": "9 함정 = 회사 운영 9 사고. 우리는 9가지 다 hook-DB-rule 로 막아둠. 그래도 100% 는 아님 — 사람이 모니터링 필요.",
-        "점검": ("\"$48,200 청구\" 사고는 9 함정 중?", "#8 Cost Blind. 우리는 orca.db budget 으로 차단."),
+        "鍮꾩쑀": "9 ?⑥젙 = ?뚯궗 ?댁쁺 9 ?ш퀬. ?곕━??9媛吏 ??hook-DB-rule 濡?留됱븘?? 洹몃옒??100% ???꾨떂 ???щ엺??紐⑤땲?곕쭅 ?꾩슂.",
+        "?먭?": ("\"$48,200 泥?뎄\" ?ш퀬??9 ?⑥젙 以?", "#8 Cost Blind. ?곕━??orca.db budget ?쇰줈 李⑤떒."),
     },
     {
-        "title": "14. AI 스택 5층 — 인프라부터 인터페이스까지",
-        "image_eng": "AI스택-5단계-인프라부터인터페이스.jpg",
+        "title": "14. AI ?ㅽ깮 5痢????명봽?쇰????명꽣?섏씠?ㅺ퉴吏",
+        "image_eng": "AI?ㅽ깮-5?④퀎-?명봽?쇰??곗씤?고럹?댁뒪.jpg",
         "image_kor": "03-ai-stack-5layers.png",
-        "핵심": "AI 시스템은 5층 빌딩. 아래 -> 위: 인프라 -> 데이터 -> LLM -> 오케스트레이션 -> 인터페이스.",
-        "강사": ["AI 시스템은 빌딩 같아요. 아래부터 5층 올리세요:", "1 Infra (실행) -> 2 Data (RAG) -> 3 LLM (추론) -> 4 Orchestration (워크플로우) -> 5 Interface (UI)", "**GPU 0 으로도 5층 다 작동** — LLM 만 외부 API (Claude) 쓰면 GPU 부담 0.", "우리 = 5/5 작동. Data 층 = ChromaDB 로컬 RAG 추가 (이번 세션)."],
-        "표": {
-            "header": ["층", "역할", "도구 예시"],
+        "?듭떖": "AI ?쒖뒪?쒖? 5痢?鍮뚮뵫. ?꾨옒 -> ?? ?명봽??-> ?곗씠??-> LLM -> ?ㅼ??ㅽ듃?덉씠??-> ?명꽣?섏씠??",
+        "媛뺤궗": ["AI ?쒖뒪?쒖? 鍮뚮뵫 媛숈븘?? ?꾨옒遺??5痢??щ━?몄슂:", "1 Infra (?ㅽ뻾) -> 2 Data (RAG) -> 3 LLM (異붾줎) -> 4 Orchestration (?뚰겕?뚮줈?? -> 5 Interface (UI)", "**GPU 0 ?쇰줈??5痢????묐룞** ??LLM 留??몃? API (Claude) ?곕㈃ GPU 遺??0.", "?곕━ = 5/5 ?묐룞. Data 痢?= ChromaDB 濡쒖뺄 RAG 異붽? (?대쾲 ?몄뀡)."],
+        "??: {
+            "header": ["痢?, "??븷", "?꾧뎄 ?덉떆"],
             "rows": [
-                ["5 Interface", "사용자와 만남", "Streamlit-FastAPI-React-Vue-Auth0"],
-                ["4 Orchestration", "여러 에이전트 흐름", "LangGraph-CrewAI-Claude Agent SDK"],
-                ["3 LLM", "진짜 뇌", "Claude-GPT-Llama-OpenRouter"],
-                ["2 Data", "벡터 DB-문서", "Chroma-Pinecone-Qdrant-Neo4j"],
-                ["1 Infrastructure", "하드웨어-컨테이너", "Docker-K8s-AWS-GCP-RunPod"],
+                ["5 Interface", "?ъ슜?먯? 留뚮궓", "Streamlit-FastAPI-React-Vue-Auth0"],
+                ["4 Orchestration", "?щ윭 ?먯씠?꾪듃 ?먮쫫", "LangGraph-CrewAI-Claude Agent SDK"],
+                ["3 LLM", "吏꾩쭨 ??, "Claude-GPT-Llama-OpenRouter"],
+                ["2 Data", "踰≫꽣 DB-臾몄꽌", "Chroma-Pinecone-Qdrant-Neo4j"],
+                ["1 Infrastructure", "?섎뱶?⑥뼱-而⑦뀒?대꼫", "Docker-K8s-AWS-GCP-RunPod"],
             ],
         },
-        "흐름": [
-            "사용자 -> 5 Interface (UI) -> 4 Orchestration (워크플로우) -> 3 LLM (추론) -> (필요시) 2 Data (RAG) -> 1 Infra (실행) -> 응답.",
-            "각 층은 표준 인터페이스로 통신 — 다음 층 구현 알 필요 없음.",
-            "확장 시 위에서부터 — 사용자 ↑ 면 Interface 부터, 정확도 ↑ 면 Data 강화, 비용 ↓ 면 LLM 라우팅.",
+        "?먮쫫": [
+            "?ъ슜??-> 5 Interface (UI) -> 4 Orchestration (?뚰겕?뚮줈?? -> 3 LLM (異붾줎) -> (?꾩슂?? 2 Data (RAG) -> 1 Infra (?ㅽ뻾) -> ?묐떟.",
+            "媛?痢듭? ?쒖? ?명꽣?섏씠?ㅻ줈 ?듭떊 ???ㅼ쓬 痢?援ы쁽 ???꾩슂 ?놁쓬.",
+            "?뺤옣 ???꾩뿉?쒕??????ъ슜????硫?Interface 遺?? ?뺥솗????硫?Data 媛뺥솕, 鍮꾩슜 ??硫?LLM ?쇱슦??",
         ],
-        "강점": [
-            "계층 분리로 부분 교체 쉬움 — LLM 만 갈아끼우거나 Data 만 업그레이드 가능.",
-            "각 층 독립 스케일링 — Interface 만 다중 인스턴스 띄울 수 있음.",
-            "비용-성능 튜닝 명확 — 어느 층에 돈 쓸지 결정 가능.",
-            "팀 분담 쉬움 — 인프라팀-데이터팀-ML팀-백엔드팀이 각자 층 담당.",
-            "디버깅 명확 — 문제 어느 층인지 추적 가능.",
+        "媛뺤젏": [
+            "怨꾩링 遺꾨━濡?遺遺?援먯껜 ?ъ? ??LLM 留?媛덉븘?쇱슦嫄곕굹 Data 留??낃렇?덉씠??媛??",
+            "媛?痢??낅┰ ?ㅼ??쇰쭅 ??Interface 留??ㅼ쨷 ?몄뒪?댁뒪 ?꾩슱 ???덉쓬.",
+            "鍮꾩슜-?깅뒫 ?쒕떇 紐낇솗 ???대뒓 痢듭뿉 ???몄? 寃곗젙 媛??",
+            "? 遺꾨떞 ?ъ? ???명봽?쇳?-?곗씠?고?-ML?-諛깆뿏?쒗???媛곸옄 痢??대떦.",
+            "?붾쾭源?紐낇솗 ??臾몄젣 ?대뒓 痢듭씤吏 異붿쟻 媛??",
         ],
-        "약점": [
-            "스타트업은 5층 다 만들면 과중 — 클라우드 서비스로 1-2층 빌리는 게 보통.",
-            "계층 간 데이터 복사 = 지연 ↑ (각 층 통과마다 직렬화-역직렬화).",
-            "Vendor lock-in 위험 — 각 층 SaaS 의존 시 가격 인상에 취약.",
-            "버전 호환성 — 한 층 업데이트가 다른 층에 영향 가능.",
-            "Observability 가 5층 모두 커버해야 — 추적 시스템 복잡.",
+        "?쎌젏": [
+            "?ㅽ??몄뾽? 5痢???留뚮뱾硫?怨쇱쨷 ???대씪?곕뱶 ?쒕퉬?ㅻ줈 1-2痢?鍮뚮━??寃?蹂댄넻.",
+            "怨꾩링 媛??곗씠??蹂듭궗 = 吏????(媛?痢??듦낵留덈떎 吏곷젹????쭅?ы솕).",
+            "Vendor lock-in ?꾪뿕 ??媛?痢?SaaS ?섏〈 ??媛寃??몄긽??痍⑥빟.",
+            "踰꾩쟾 ?명솚??????痢??낅뜲?댄듃媛 ?ㅻⅨ 痢듭뿉 ?곹뼢 媛??",
+            "Observability 媛 5痢?紐⑤몢 而ㅻ쾭?댁빞 ??異붿쟻 ?쒖뒪??蹂듭옟.",
         ],
-        "강추": [
-            "MVP 는 Streamlit (5) + Claude API (3) 만으로 — 30분 시작.",
-            "트래픽 늘면 4 Orchestration 부터 추가 — LangGraph or CrewAI.",
-            "데이터 검색 필요하면 2 Data — ChromaDB-Pinecone.",
-            "프로덕션은 1 Infra 도 직접 — Docker + K8s.",
-            "회사 정책상 클라우드 의존 X 면 Ollama (3) + ChromaDB (2) 로 로컬 풀스택.",
+        "媛뺤텛": [
+            "MVP ??Streamlit (5) + Claude API (3) 留뚯쑝濡???30遺??쒖옉.",
+            "?몃옒???섎㈃ 4 Orchestration 遺??異붽? ??LangGraph or CrewAI.",
+            "?곗씠??寃???꾩슂?섎㈃ 2 Data ??ChromaDB-Pinecone.",
+            "?꾨줈?뺤뀡? 1 Infra ??吏곸젒 ??Docker + K8s.",
+            "?뚯궗 ?뺤콉???대씪?곕뱶 ?섏〈 X 硫?Ollama (3) + ChromaDB (2) 濡?濡쒖뺄 ??ㅽ깮.",
         ],
-        "우리시스템": {
-            "1 Infra": "사용자 PC 또는 VPS (Oracle Free Tier 권장 — exec_remote-setup)",
-            "2 Data": "SQLite (orca.db) + 옵션 ChromaDB (exec_offline-vector)",
-            "3 LLM": "Claude/Codex/Gemini/Haiku/로컬 LLM (라우팅)",
-            "4 Orchestration": "exec_orch plugin (워커 + watchdog + 큐)",
+        "?곕━?쒖뒪??: {
+            "1 Infra": "?ъ슜??PC ?먮뒗 VPS (Oracle Free Tier 沅뚯옣 ??exec_remote-setup)",
+            "2 Data": "SQLite (orca.db) + ?듭뀡 ChromaDB (exec_offline-vector)",
+            "3 LLM": "Claude/Codex/Gemini/Haiku/濡쒖뺄 LLM (?쇱슦??",
+            "4 Orchestration": "exec_orch plugin (?뚯빱 + watchdog + ??",
             "5 Interface": "Claude Code CLI (terminal) + VS Code IDE",
         },
-        "점검": ("스타트업 MVP 에 최소 어느 층?", "3 LLM + 5 Interface. 1-2-4 는 클라우드로 빌림."),
+        "?먭?": ("?ㅽ??몄뾽 MVP ??理쒖냼 ?대뒓 痢?", "3 LLM + 5 Interface. 1-2-4 ???대씪?곕뱶濡?鍮뚮┝."),
     },
     {
-        "title": "15. 제로비용 AI 아키텍처 2026 — 0원으로 만드는 AI",
-        "image_eng": "제로비용-AI아키텍처-2026-판데이.jpg",
+        "title": "15. ?쒕줈鍮꾩슜 AI ?꾪궎?띿쿂 2026 ??0?먯쑝濡?留뚮뱶??AI",
+        "image_eng": "?쒕줈鍮꾩슜-AI?꾪궎?띿쿂-2026-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "회사 카드 없어도 AI 서비스 띄울 수 있음. 무료 티어 + 로컬 LLM 조합.",
-        "강사": ["회사 카드 없어도 AI 띄울 수 있어요. 무료 도구만으로:", "Frontend (Next.js/Streamlit) - Orchestrator (LangGraph) - LLM (Ollama+Gemma 로컬) - RAG (ChromaDB) - Tool (MCP) - Deploy (Cloudflare)", "**우리 = 거의 제로비용 본보기** — Claude Code CLI + exec_orch + SQLite + 선택 Ollama. 유료는 Claude API ($20/월) 만.", "초보자: 1+2 만으로 80% 작업. 작은 모델 + 작은 폴더로 시작하세요."],
-        "표": {
-            "header": ["층", "무료 도구", "유료 대체"],
+        "?듭떖": "?뚯궗 移대뱶 ?놁뼱??AI ?쒕퉬???꾩슱 ???덉쓬. 臾대즺 ?곗뼱 + 濡쒖뺄 LLM 議고빀.",
+        "媛뺤궗": ["?뚯궗 移대뱶 ?놁뼱??AI ?꾩슱 ???덉뼱?? 臾대즺 ?꾧뎄留뚯쑝濡?", "Frontend (Next.js/Streamlit) - Orchestrator (LangGraph) - LLM (Ollama+Gemma 濡쒖뺄) - RAG (ChromaDB) - Tool (MCP) - Deploy (Cloudflare)", "**?곕━ = 嫄곗쓽 ?쒕줈鍮꾩슜 蹂몃낫湲?* ??Claude Code CLI + exec_orch + SQLite + ?좏깮 Ollama. ?좊즺??Claude API ($20/?? 留?", "珥덈낫?? 1+2 留뚯쑝濡?80% ?묒뾽. ?묒? 紐⑤뜽 + ?묒? ?대뜑濡??쒖옉?섏꽭??"],
+        "??: {
+            "header": ["痢?, "臾대즺 ?꾧뎄", "?좊즺 ?泥?],
             "rows": [
                 ["Frontend", "Streamlit / Vercel free", "Vercel Pro"],
                 ["Orchestrator", "LangGraph / CrewAI", "Claude Agent SDK"],
-                ["LLM (로컬)", "Ollama + Gemma/Llama", "Claude / GPT API"],
+                ["LLM (濡쒖뺄)", "Ollama + Gemma/Llama", "Claude / GPT API"],
                 ["RAG", "LlamaIndex + ChromaDB", "Pinecone"],
-                ["Tool Use", "MCP (open)", "유료 SaaS API"],
-                ["DB", "SQLite / Supabase free", "Postgres 유료"],
+                ["Tool Use", "MCP (open)", "?좊즺 SaaS API"],
+                ["DB", "SQLite / Supabase free", "Postgres ?좊즺"],
                 ["Observability", "Phoenix self-host", "LangSmith / Datadog"],
-                ["Deploy", "Docker / HF Spaces", "AWS / GCP 유료"],
+                ["Deploy", "Docker / HF Spaces", "AWS / GCP ?좊즺"],
             ],
         },
-        "흐름": [
-            "사용자 -> Vercel Frontend (free) -> LangGraph Orchestrator -> Ollama LLM (로컬, 무료) -> 필요시 RAG (LlamaIndex + ChromaDB) -> SQLite Data -> 응답.",
-            "Phoenix self-host 가 모든 단계 관측 — 어디서 막혔는지 추적.",
-            "Docker / Cloudflare Workers / HF Spaces 로 무료 배포.",
+        "?먮쫫": [
+            "?ъ슜??-> Vercel Frontend (free) -> LangGraph Orchestrator -> Ollama LLM (濡쒖뺄, 臾대즺) -> ?꾩슂??RAG (LlamaIndex + ChromaDB) -> SQLite Data -> ?묐떟.",
+            "Phoenix self-host 媛 紐⑤뱺 ?④퀎 愿痢????대뵒??留됲삍?붿? 異붿쟻.",
+            "Docker / Cloudflare Workers / HF Spaces 濡?臾대즺 諛고룷.",
         ],
-        "강점": [
-            "금전 비용 0 — GPU 만 있으면 (개인 PC 활용).",
-            "오픈소스라 커스터마이즈 자유 — 코드 수정 가능.",
-            "데이터-모델 자기 통제 — privacy-security 강함.",
-            "Vendor lock-in 없음 — 언제든 갈아끼움.",
-            "학습용 최고 — 각 층 직접 만들어 보며 이해.",
+        "媛뺤젏": [
+            "湲덉쟾 鍮꾩슜 0 ??GPU 留??덉쑝硫?(媛쒖씤 PC ?쒖슜).",
+            "?ㅽ뵂?뚯뒪??而ㅼ뒪?곕쭏?댁쫰 ?먯쑀 ??肄붾뱶 ?섏젙 媛??",
+            "?곗씠??紐⑤뜽 ?먭린 ?듭젣 ??privacy-security 媛뺥븿.",
+            "Vendor lock-in ?놁쓬 ???몄젣??媛덉븘?쇱?.",
+            "?숈뒿??理쒓퀬 ??媛?痢?吏곸젒 留뚮뱾??蹂대ŉ ?댄빐.",
         ],
-        "약점": [
-            "GPU-CPU 본인 자원 — 트래픽 늘면 한계 (사용자 100+ 면 부담).",
-            "운영 복잡도 ↑ — 직접 모니터링-업데이트-백업.",
-            "지원-SLA 없음 — 사고 나면 본인이 처리.",
-            "최신 모델 못 씀 — Claude 4.x-GPT-4 같은 SOTA 는 API 만.",
-            "초기 셋업 시간 ↑ — Ollama-ChromaDB-LangGraph 다 설치-튜닝.",
+        "?쎌젏": [
+            "GPU-CPU 蹂몄씤 ?먯썝 ???몃옒???섎㈃ ?쒓퀎 (?ъ슜??100+ 硫?遺??.",
+            "?댁쁺 蹂듭옟??????吏곸젒 紐⑤땲?곕쭅-?낅뜲?댄듃-諛깆뾽.",
+            "吏??SLA ?놁쓬 ???ш퀬 ?섎㈃ 蹂몄씤??泥섎━.",
+            "理쒖떊 紐⑤뜽 紐?? ??Claude 4.x-GPT-4 媛숈? SOTA ??API 留?",
+            "珥덇린 ?뗭뾽 ?쒓컙 ????Ollama-ChromaDB-LangGraph ???ㅼ튂-?쒕떇.",
         ],
-        "강추": [
-            "PoC-개인 프로젝트-학습용 — 최적.",
-            "사내 폐쇄망 (인터넷 X) 환경 — 외부 API 못 쓸 때 유일.",
-            "트래픽 늘면 LLM 부분만 유료 API 로 갈아끼움 — 부드러운 진화.",
-            "RAG 만 로컬 (사내 문서 보안) + LLM 은 API 하이브리드 추천.",
-            "오프라인 데모-강의 — Ollama 면 인터넷 없이도.",
+        "媛뺤텛": [
+            "PoC-媛쒖씤 ?꾨줈?앺듃-?숈뒿????理쒖쟻.",
+            "?щ궡 ?먯뇙留?(?명꽣??X) ?섍꼍 ???몃? API 紐??????좎씪.",
+            "?몃옒???섎㈃ LLM 遺遺꾨쭔 ?좊즺 API 濡?媛덉븘?쇱? ??遺?쒕윭??吏꾪솕.",
+            "RAG 留?濡쒖뺄 (?щ궡 臾몄꽌 蹂댁븞) + LLM ? API ?섏씠釉뚮━??異붿쿇.",
+            "?ㅽ봽?쇱씤 ?곕え-媛뺤쓽 ??Ollama 硫??명꽣???놁씠??",
         ],
-        "우리시스템": {
-            "Frontend": "Claude Code CLI (terminal) — 무료",
-            "Orchestrator": "exec_orch (자체 구현) — 무료",
-            "LLM (로컬)": "exec_offline-setup 으로 Ollama 설치 옵션",
-            "RAG": "spec-only — 향후 ai_rag plugin",
-            "DB": "SQLite (orca.db) — 무료",
-            "Observability": "watchdog.log + external-watchdog — 무료",
+        "?곕━?쒖뒪??: {
+            "Frontend": "Claude Code CLI (terminal) ??臾대즺",
+            "Orchestrator": "exec_orch (?먯껜 援ы쁽) ??臾대즺",
+            "LLM (濡쒖뺄)": "exec_offline-setup ?쇰줈 Ollama ?ㅼ튂 ?듭뀡",
+            "RAG": "spec-only ???ν썑 ai_rag plugin",
+            "DB": "SQLite (orca.db) ??臾대즺",
+            "Observability": "watchdog.log + external-watchdog ??臾대즺",
         },
-        "점검": ("로컬 LLM 무료 옵션 한 줄?", "Ollama + Gemma 또는 Llama. GPU 만 있으면 0원."),
+        "?먭?": ("濡쒖뺄 LLM 臾대즺 ?듭뀡 ??以?", "Ollama + Gemma ?먮뒗 Llama. GPU 留??덉쑝硫?0??"),
     },
     {
-        "title": "16. AI 빌더 도구 매트릭스 — 30가지 도구를 6 카테고리로",
-        "image_eng": "AI빌더도구-6카테고리매트릭스.jpg",
+        "title": "16. AI 鍮뚮뜑 ?꾧뎄 留ㅽ듃由?뒪 ??30媛吏 ?꾧뎄瑜?6 移댄뀒怨좊━濡?,
+        "image_eng": "AI鍮뚮뜑?꾧뎄-6移댄뀒怨좊━留ㅽ듃由?뒪.jpg",
         "image_kor": "05-ai-builder-6cat.png",
-        "핵심": "AI 도구 백화점. 본인 필요 카테고리만 골라 둘러보기.",
-        "강사": ["AI 도구 백화점. 6 카테고리 × 5 도구 = 30 개 중 본인 필요한 거만 골라쓰세요.", "초보 = 1+2 (Claude + Claude Code) 만으로 80% 작업.", "MVP 만들기 = 3 (Lovable-v0) 추가.", "회사 배포 = 4-5 (HuggingFace-LangChain).", "콘텐츠 = 6 (Mirra-Midjourney-Runway).", "우리 = 5/6 활용 + 1개 의도적 미사용 (앱-프로토타입은 우리 작업 외)."],
-        "표": {
-            "header": ["#", "카테고리", "베스트 도구"],
+        "?듭떖": "AI ?꾧뎄 諛깊솕?? 蹂몄씤 ?꾩슂 移댄뀒怨좊━留?怨⑤씪 ?섎윭蹂닿린.",
+        "媛뺤궗": ["AI ?꾧뎄 諛깊솕?? 6 移댄뀒怨좊━ 횞 5 ?꾧뎄 = 30 媛?以?蹂몄씤 ?꾩슂??嫄곕쭔 怨⑤씪?곗꽭??", "珥덈낫 = 1+2 (Claude + Claude Code) 留뚯쑝濡?80% ?묒뾽.", "MVP 留뚮뱾湲?= 3 (Lovable-v0) 異붽?.", "?뚯궗 諛고룷 = 4-5 (HuggingFace-LangChain).", "肄섑뀗痢?= 6 (Mirra-Midjourney-Runway).", "?곕━ = 5/6 ?쒖슜 + 1媛??섎룄??誘몄궗??(???꾨줈?좏??낆? ?곕━ ?묒뾽 ??."],
+        "??: {
+            "header": ["#", "移댄뀒怨좊━", "踰좎뒪???꾧뎄"],
             "rows": [
-                ["1", "모델-검색", "ChatGPT / Claude / Gemini / Perplexity / Grok"],
-                ["2", "코딩-에이전트", "Cursor / Claude Code / Windsurf / Copilot / Replit"],
-                ["3", "앱-프로토타입", "Lovable / Bolt / v0 / Framer AI / Vercel SDK"],
-                ["4", "데이터-인프라", "HuggingFace / Replicate / Modal / RunPod / Pinecone"],
-                ["5", "워크플로우", "LangChain / LlamaIndex / n8n / Make / Browserbase"],
-                ["6", "미디어-콘텐츠", "★Mirra / Midjourney / Runway / ElevenLabs / ComfyUI"],
+                ["1", "紐⑤뜽-寃??, "ChatGPT / Claude / Gemini / Perplexity / Grok"],
+                ["2", "肄붾뵫-?먯씠?꾪듃", "Cursor / Claude Code / Windsurf / Copilot / Replit"],
+                ["3", "???꾨줈?좏???, "Lovable / Bolt / v0 / Framer AI / Vercel SDK"],
+                ["4", "?곗씠???명봽??, "HuggingFace / Replicate / Modal / RunPod / Pinecone"],
+                ["5", "?뚰겕?뚮줈??, "LangChain / LlamaIndex / n8n / Make / Browserbase"],
+                ["6", "誘몃뵒??肄섑뀗痢?, "?꿒irra / Midjourney / Runway / ElevenLabs / ComfyUI"],
             ],
         },
-        "흐름": [
-            "요구사항 정의 (콘텐츠? 코딩? 앱? 데이터?) -> 적합 카테고리 선택 -> 카테고리 안 1-2 도구 무료 시도 -> 가장 맞는 거 정착 -> 부족하면 옆 카테고리 추가.",
-            "초기엔 1+2 (모델+코딩) 만으로 80% — 다른 카테고리는 필요할 때 추가.",
-            "도구 간 통합 (예: Cursor + Claude + n8n) 으로 워크플로우 확장.",
+        "?먮쫫": [
+            "?붽뎄?ы빆 ?뺤쓽 (肄섑뀗痢? 肄붾뵫? ?? ?곗씠??) -> ?곹빀 移댄뀒怨좊━ ?좏깮 -> 移댄뀒怨좊━ ??1-2 ?꾧뎄 臾대즺 ?쒕룄 -> 媛??留욌뒗 嫄??뺤갑 -> 遺議깊븯硫???移댄뀒怨좊━ 異붽?.",
+            "珥덇린??1+2 (紐⑤뜽+肄붾뵫) 留뚯쑝濡?80% ???ㅻⅨ 移댄뀒怨좊━???꾩슂????異붽?.",
+            "?꾧뎄 媛??듯빀 (?? Cursor + Claude + n8n) ?쇰줈 ?뚰겕?뚮줈???뺤옣.",
         ],
-        "강점": [
-            "한 장에 30 도구 매핑 — 의사결정 빠름.",
-            "카테고리 별로 무료/유료 옵션 다양 — 예산 맞춤.",
-            "최신 트렌드 반영 — 2026 기준 가장 핫한 도구 (Cursor-Mirra-Lovable).",
-            "단계별 진화 가능 — 초보->중급->전문 단계 별 추천 명확.",
-            "한 도구가 fail 해도 같은 카테고리 다른 도구로 즉시 교체.",
+        "媛뺤젏": [
+            "???μ뿉 30 ?꾧뎄 留ㅽ븨 ???섏궗寃곗젙 鍮좊쫫.",
+            "移댄뀒怨좊━ 蹂꾨줈 臾대즺/?좊즺 ?듭뀡 ?ㅼ뼇 ???덉궛 留욎땄.",
+            "理쒖떊 ?몃젋??諛섏쁺 ??2026 湲곗? 媛???ロ븳 ?꾧뎄 (Cursor-Mirra-Lovable).",
+            "?④퀎蹂?吏꾪솕 媛????珥덈낫->以묎툒->?꾨Ц ?④퀎 蹂?異붿쿇 紐낇솗.",
+            "???꾧뎄媛 fail ?대룄 媛숈? 移댄뀒怨좊━ ?ㅻⅨ ?꾧뎄濡?利됱떆 援먯껜.",
         ],
-        "약점": [
-            "도구 너무 많으면 결정 마비 — 처음엔 카테고리 1+2 만.",
-            "최신 도구 (Mirra-v0 같은) 는 안정성 검증 필요 — 운영 위험.",
-            "카테고리 간 통합 표준 없음 — 자체 glue code 필요.",
-            "30 도구 다 라이센스-계정 관리 부담 — 비용-보안.",
-            "도구 빠른 변화 — 6개월마다 매트릭스 재검토 필요.",
+        "?쎌젏": [
+            "?꾧뎄 ?덈Т 留롮쑝硫?寃곗젙 留덈퉬 ??泥섏쓬??移댄뀒怨좊━ 1+2 留?",
+            "理쒖떊 ?꾧뎄 (Mirra-v0 媛숈?) ???덉젙??寃利??꾩슂 ???댁쁺 ?꾪뿕.",
+            "移댄뀒怨좊━ 媛??듯빀 ?쒖? ?놁쓬 ???먯껜 glue code ?꾩슂.",
+            "30 ?꾧뎄 ???쇱씠?쇱뒪-怨꾩젙 愿由?遺????鍮꾩슜-蹂댁븞.",
+            "?꾧뎄 鍮좊Ⅸ 蹂????6媛쒖썡留덈떎 留ㅽ듃由?뒪 ?ш????꾩슂.",
         ],
-        "강추": [
-            "초보 = 1(Claude) + 2(Claude Code) 로 80% 작업.",
-            "MVP 만들기 = 1 + 2 + 3 (Lovable or v0).",
-            "회사 배포 = 4 + 5 도 같이.",
-            "콘텐츠 크리에이터 = 6 만.",
+        "媛뺤텛": [
+            "珥덈낫 = 1(Claude) + 2(Claude Code) 濡?80% ?묒뾽.",
+            "MVP 留뚮뱾湲?= 1 + 2 + 3 (Lovable or v0).",
+            "?뚯궗 諛고룷 = 4 + 5 ??媛숈씠.",
+            "肄섑뀗痢??щ━?먯씠??= 6 留?",
         ],
-        "우리시스템": {
-            "1 모델": "Claude (Opus/Sonnet/Haiku) — 메인 LLM",
-            "2 코딩": "Claude Code (이 도구!) + codex-auto + gemini-auto",
-            "3 앱": "사용 X (필요시 Streamlit 추천)",
-            "4 데이터": "SQLite (orca.db) — 작은 규모",
-            "5 워크플로우": "exec_orch (자체 구현) — LangChain 대체",
-            "6 미디어": "design_ppt + design_word + design_excel (자체)",
+        "?곕━?쒖뒪??: {
+            "1 紐⑤뜽": "Claude (Opus/Sonnet/Haiku) ??硫붿씤 LLM",
+            "2 肄붾뵫": "Claude Code (???꾧뎄!) + codex-auto + gemini-auto",
+            "3 ??: "?ъ슜 X (?꾩슂??Streamlit 異붿쿇)",
+            "4 ?곗씠??: "SQLite (orca.db) ???묒? 洹쒕え",
+            "5 ?뚰겕?뚮줈??: "exec_orch (?먯껜 援ы쁽) ??LangChain ?泥?,
+            "6 誘몃뵒??: "design_ppt + design_word + design_excel (?먯껜)",
         },
-        "점검": ("코드 모르고 앱 만들고 싶다 — 어느 카테고리?", "3 앱-프로토타입. Lovable-Bolt-v0 으로 프롬프트 -> 앱."),
+        "?먭?": ("肄붾뱶 紐⑤Ⅴ怨???留뚮뱾怨??띕떎 ???대뒓 移댄뀒怨좊━?", "3 ???꾨줈?좏??? Lovable-Bolt-v0 ?쇰줈 ?꾨＼?꾪듃 -> ??"),
     },
     {
-        "title": "17. RAG 입문 — '읽고 답하는 AI'",
-        "image_eng": "RAG-고전vs그래프vs에이전틱-판데이.jpg",
+        "title": "17. RAG ?낅Ц ??'?쎄퀬 ?듯븯??AI'",
+        "image_eng": "RAG-怨좎쟾vs洹몃옒?꼟s?먯씠?꾪떛-?먮뜲??jpg",
         "image_kor": None,
-        "핵심": "RAG = 검색(Retrieval) + 생성(Generation). LLM 이 모르는 내용을 외부 문서에서 찾아 답하게 함.",
-        "강사": ["RAG = 검색(Retrieval) + 생성(Generation). LLM 이 모르는 내용을 외부 문서에서 찾아 답하게 합니다.", "장점: 출처 표시 가능 (감사-검증 강함) + Hallucination ↓.", "**우리 = ChromaDB + 한글 임베딩 (paraphrase-multilingual)** + 36 docs indexed.", "Hook 자동 통합 — 사용자 메시지 시 관련 memory 자동 recall."],
-        "표": {
-            "header": ["방식", "흐름", "정확도", "복잡도"],
+        "?듭떖": "RAG = 寃??Retrieval) + ?앹꽦(Generation). LLM ??紐⑤Ⅴ???댁슜???몃? 臾몄꽌?먯꽌 李얠븘 ?듯븯寃???",
+        "媛뺤궗": ["RAG = 寃??Retrieval) + ?앹꽦(Generation). LLM ??紐⑤Ⅴ???댁슜???몃? 臾몄꽌?먯꽌 李얠븘 ?듯븯寃??⑸땲??", "?μ젏: 異쒖쿂 ?쒖떆 媛??(媛먯궗-寃利?媛뺥븿) + Hallucination ??", "**?곕━ = ChromaDB + ?쒓? ?꾨쿋??(paraphrase-multilingual)** + 36 docs indexed.", "Hook ?먮룞 ?듯빀 ???ъ슜??硫붿떆吏 ??愿??memory ?먮룞 recall."],
+        "??: {
+            "header": ["諛⑹떇", "?먮쫫", "?뺥솗??, "蹂듭옟??],
             "rows": [
-                ["Classic", "질문 -> 임베딩 -> 벡터DB Top-K -> LLM", "보통", "낮음"],
-                ["Graph", "엔티티 추출 -> 지식그래프 -> LLM", "관계 강함", "중간"],
-                ["Agentic", "추론 에이전트 -> 다중 소스 -> 자가 검증", "최고", "높음"],
+                ["Classic", "吏덈Ц -> ?꾨쿋??-> 踰≫꽣DB Top-K -> LLM", "蹂댄넻", "??쓬"],
+                ["Graph", "?뷀떚??異붿텧 -> 吏?앷렇?섑봽 -> LLM", "愿怨?媛뺥븿", "以묎컙"],
+                ["Agentic", "異붾줎 ?먯씠?꾪듃 -> ?ㅼ쨷 ?뚯뒪 -> ?먭? 寃利?, "理쒓퀬", "?믪쓬"],
             ],
         },
-        "흐름": [
-            "사내 문서-웹 -> 청크 분할 -> 임베딩 모델 -> 벡터 DB 인덱싱 (사전 작업).",
-            "사용자 질문 -> 임베딩 (수치 변환) -> 벡터 DB 검색 (코사인 유사도 Top-K) -> 관련 문서 추출.",
-            "추출 문서 + 원 질문 -> LLM 프롬프트 -> 답변 생성 + 출처 인용.",
-            "Agentic RAG 는 추가로 자가 평가 (검색 결과 충분한지) -> 부족하면 재검색.",
+        "?먮쫫": [
+            "?щ궡 臾몄꽌-??-> 泥?겕 遺꾪븷 -> ?꾨쿋??紐⑤뜽 -> 踰≫꽣 DB ?몃뜳??(?ъ쟾 ?묒뾽).",
+            "?ъ슜??吏덈Ц -> ?꾨쿋??(?섏튂 蹂?? -> 踰≫꽣 DB 寃??(肄붿궗???좎궗??Top-K) -> 愿??臾몄꽌 異붿텧.",
+            "異붿텧 臾몄꽌 + ??吏덈Ц -> LLM ?꾨＼?꾪듃 -> ?듬? ?앹꽦 + 異쒖쿂 ?몄슜.",
+            "Agentic RAG ??異붽?濡??먭? ?됯? (寃??寃곌낵 異⑸텇?쒖?) -> 遺議깊븯硫??ш???",
         ],
-        "강점": [
-            "LLM 이 학습 안 한 최신-사내 정보도 답할 수 있음 — 회사 위키 검색 같은 거.",
-            "출처 표시 가능 — 어느 문서에서 왔는지 명확 (감사-검증 강함).",
-            "LLM 재학습 (fine-tuning) 보다 싸고 빠름 — 문서 추가만 하면 즉시 반영.",
-            "Hallucination 줄임 — 실제 문서 근거로 답.",
-            "도메인 특화 쉬움 — 법률-의료-사내 매뉴얼 같은 닫힌 영역에 강함.",
+        "媛뺤젏": [
+            "LLM ???숈뒿 ????理쒖떊-?щ궡 ?뺣낫???듯븷 ???덉쓬 ???뚯궗 ?꾪궎 寃??媛숈? 嫄?",
+            "異쒖쿂 ?쒖떆 媛?????대뒓 臾몄꽌?먯꽌 ?붾뒗吏 紐낇솗 (媛먯궗-寃利?媛뺥븿).",
+            "LLM ?ы븰??(fine-tuning) 蹂대떎 ?멸퀬 鍮좊쫫 ??臾몄꽌 異붽?留??섎㈃ 利됱떆 諛섏쁺.",
+            "Hallucination 以꾩엫 ???ㅼ젣 臾몄꽌 洹쇨굅濡???",
+            "?꾨찓???뱁솕 ?ъ? ??踰뺣쪧-?섎즺-?щ궡 留ㅻ돱??媛숈? ?ロ엺 ?곸뿭??媛뺥븿.",
         ],
-        "약점": [
-            "검색 품질이 답 품질 결정 — 잘못 검색 = 자신만만 틀림 (9 함정 #3).",
-            "벡터DB 인덱스 구축 시간-비용 — 100만 문서면 인덱싱만 몇 시간.",
-            "임베딩 모델 선택 중요 — 도메인 안 맞으면 검색 실패.",
-            "청크 크기 튜닝 어려움 — 너무 크면 검색 부정확, 작으면 맥락 부족.",
-            "최신 정보 반영 지연 — 새 문서 추가 -> 재인덱싱 -> 검색 가능.",
+        "?쎌젏": [
+            "寃???덉쭏?????덉쭏 寃곗젙 ???섎せ 寃??= ?먯떊留뚮쭔 ?由?(9 ?⑥젙 #3).",
+            "踰≫꽣DB ?몃뜳??援ъ텞 ?쒓컙-鍮꾩슜 ??100留?臾몄꽌硫??몃뜳?깅쭔 紐??쒓컙.",
+            "?꾨쿋??紐⑤뜽 ?좏깮 以묒슂 ???꾨찓????留욎쑝硫?寃???ㅽ뙣.",
+            "泥?겕 ?ш린 ?쒕떇 ?대젮? ???덈Т ?щ㈃ 寃??遺?뺥솗, ?묒쑝硫?留λ씫 遺議?",
+            "理쒖떊 ?뺣낫 諛섏쁺 吏??????臾몄꽌 異붽? -> ?ъ씤?깆떛 -> 寃??媛??",
         ],
-        "강추": [
-            "사내 위키-매뉴얼-법규 문서 같은 닫힌 도메인 — RAG 최적.",
-            "고객지원 챗봇 — FAQ + 매뉴얼 RAG.",
-            "법률-의료-금융 — 출처 표시 필수 영역.",
-            "처음엔 Naive RAG (단순 벡터) 로 — 정확도 부족하면 Corrective 추가.",
-            "LLM 재학습 (fine-tuning) 비싸고 느리면 RAG 가 답.",
+        "媛뺤텛": [
+            "?щ궡 ?꾪궎-留ㅻ돱??踰뺢퇋 臾몄꽌 媛숈? ?ロ엺 ?꾨찓????RAG 理쒖쟻.",
+            "怨좉컼吏??梨쀫큸 ??FAQ + 留ㅻ돱??RAG.",
+            "踰뺣쪧-?섎즺-湲덉쑖 ??異쒖쿂 ?쒖떆 ?꾩닔 ?곸뿭.",
+            "泥섏쓬??Naive RAG (?⑥닚 踰≫꽣) 濡????뺥솗??遺議깊븯硫?Corrective 異붽?.",
+            "LLM ?ы븰??(fine-tuning) 鍮꾩떥怨??먮━硫?RAG 媛 ??",
         ],
-        "우리시스템": {
-            "현재 상태": "[OK] RAG 구현 완료 (ai_rag plugin stable v1.0)",
-            "도구": "ChromaDB + sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2 — 한-영 모두)",
-            "indexed docs": "36개 (CLAUDE.md - .claude/rules/ - memory/feedback - plugins/skills)",
-            "구현 방식": "Naive (벡터) + Hybrid (kw+rag) — hook 자동 통합",
-            "자동 재빌드": "feedback/rule/skill md 변경 시 PostToolUse hook -> ChromaDB 자동 rebuild",
-            "8 아키텍처 중": "Naive [OK], Hybrid [OK], 나머지 6 (Corrective/HyDE/Graph/Adaptive/Agentic/Multimodal) plugin spec",
+        "?곕━?쒖뒪??: {
+            "?꾩옱 ?곹깭": "[OK] RAG 援ы쁽 ?꾨즺 (ai_rag plugin stable v1.0)",
+            "?꾧뎄": "ChromaDB + sentence-transformers (paraphrase-multilingual-MiniLM-L12-v2 ??????紐⑤몢)",
+            "indexed docs": "36媛?(CLAUDE.md - .claude/rules/ - memory/feedback - plugins/skills)",
+            "援ы쁽 諛⑹떇": "Naive (踰≫꽣) + Hybrid (kw+rag) ??hook ?먮룞 ?듯빀",
+            "?먮룞 ?щ퉴??: "feedback/rule/skill md 蹂寃???PostToolUse hook -> ChromaDB ?먮룞 rebuild",
+            "8 ?꾪궎?띿쿂 以?: "Naive [OK], Hybrid [OK], ?섎㉧吏 6 (Corrective/HyDE/Graph/Adaptive/Agentic/Multimodal) plugin spec",
         },
-        "점검": ("LLM 이 모르는 사내 정책을 묻는다면?", "RAG 필요. 사내 문서 인덱싱 후 검색 + LLM."),
+        "?먭?": ("LLM ??紐⑤Ⅴ???щ궡 ?뺤콉??臾삳뒗?ㅻ㈃?", "RAG ?꾩슂. ?щ궡 臾몄꽌 ?몃뜳????寃??+ LLM."),
     },
     {
-        "title": "18. RAG 8가지 아키텍처",
-        "image_eng": "RAG-8가지아키텍처-dailydoseofds.jpg",
+        "title": "18. RAG 8媛吏 ?꾪궎?띿쿂",
+        "image_eng": "RAG-8媛吏?꾪궎?띿쿂-dailydoseofds.jpg",
         "image_kor": None,
-        "핵심": "내 데이터 특성-정확도 요구에 따라 RAG 도 8가지 중 골라야.",
-        "강사": ["데이터 특성-정확도 요구에 따라 RAG 도 8가지 중 골라야:", "Naive (PoC) -> Corrective (정확도) -> HyDE (모호) -> Graph (관계) -> Adaptive (다양) -> Agentic (최고).", "**우리 = 8/8 모두 구현** (rag-naive-corrective-hyde-adaptive-agentic-graph-multimodal-hybrid). 학계 표준 다 작동."],
-        "표": {
-            "header": ["RAG 종류", "특징", "강추 상황"],
+        "?듭떖": "???곗씠???뱀꽦-?뺥솗???붽뎄???곕씪 RAG ??8媛吏 以?怨⑤씪??",
+        "媛뺤궗": ["?곗씠???뱀꽦-?뺥솗???붽뎄???곕씪 RAG ??8媛吏 以?怨⑤씪??", "Naive (PoC) -> Corrective (?뺥솗?? -> HyDE (紐⑦샇) -> Graph (愿怨? -> Adaptive (?ㅼ뼇) -> Agentic (理쒓퀬).", "**?곕━ = 8/8 紐⑤몢 援ы쁽** (rag-naive-corrective-hyde-adaptive-agentic-graph-multimodal-hybrid). ?숆퀎 ?쒖? ???묐룞."],
+        "??: {
+            "header": ["RAG 醫낅쪟", "?뱀쭠", "媛뺤텛 ?곹솴"],
             "rows": [
-                ["Naive", "기본형, 단순-빠름", "PoC, 단순 사실 조회"],
-                ["Multimodal", "이미지+텍스트", "도식-표가 많은 문서"],
-                ["HyDE", "가상 답 만들고 검색", "모호한 질문"],
-                ["Corrective", "결과 채점-웹 fallback", "정확도 매우 중요"],
-                ["Graph", "지식 그래프", "관계-다중 출처"],
-                ["Hybrid", "벡터+그래프 동시", "최고 정확도, 복잡"],
-                ["Adaptive", "질문 분석 후 분기", "다양한 질문 유형"],
-                ["Agentic", "ReAct + 멀티 에이전트", "복잡 추론-도구 같이"],
+                ["Naive", "湲곕낯?? ?⑥닚-鍮좊쫫", "PoC, ?⑥닚 ?ъ떎 議고쉶"],
+                ["Multimodal", "?대?吏+?띿뒪??, "?꾩떇-?쒓? 留롮? 臾몄꽌"],
+                ["HyDE", "媛????留뚮뱾怨?寃??, "紐⑦샇??吏덈Ц"],
+                ["Corrective", "寃곌낵 梨꾩젏-??fallback", "?뺥솗??留ㅼ슦 以묒슂"],
+                ["Graph", "吏??洹몃옒??, "愿怨??ㅼ쨷 異쒖쿂"],
+                ["Hybrid", "踰≫꽣+洹몃옒???숈떆", "理쒓퀬 ?뺥솗?? 蹂듭옟"],
+                ["Adaptive", "吏덈Ц 遺꾩꽍 ??遺꾧린", "?ㅼ뼇??吏덈Ц ?좏삎"],
+                ["Agentic", "ReAct + 硫???먯씠?꾪듃", "蹂듭옟 異붾줎-?꾧뎄 媛숈씠"],
             ],
         },
-        "흐름": [
-            "Naive RAG 시작 (가장 단순) -> 정확도 부족하면 Corrective (결과 채점) 또는 HyDE (가상답으로 검색) 추가.",
-            "다중 출처-관계 검색 필요 -> Graph RAG (지식 그래프) 도입.",
-            "최고 정확도 필요 -> Hybrid (Vector+Graph) 또는 Agentic (자율 검증 루프).",
-            "Multimodal (이미지+텍스트) 필요 -> 별도 분기.",
+        "?먮쫫": [
+            "Naive RAG ?쒖옉 (媛???⑥닚) -> ?뺥솗??遺議깊븯硫?Corrective (寃곌낵 梨꾩젏) ?먮뒗 HyDE (媛?곷떟?쇰줈 寃?? 異붽?.",
+            "?ㅼ쨷 異쒖쿂-愿怨?寃???꾩슂 -> Graph RAG (吏??洹몃옒?? ?꾩엯.",
+            "理쒓퀬 ?뺥솗???꾩슂 -> Hybrid (Vector+Graph) ?먮뒗 Agentic (?먯쑉 寃利?猷⑦봽).",
+            "Multimodal (?대?吏+?띿뒪?? ?꾩슂 -> 蹂꾨룄 遺꾧린.",
         ],
-        "강점": [
-            "선택지 풍부 — 상황별 최적화 가능.",
-            "단계별 진화 가능 — Naive -> Corrective -> Graph -> Agentic 점진 강화.",
-            "각 방식이 다른 한계 보완 — 조합 가능.",
-            "오픈소스 풍부 (LlamaIndex-LangChain 등) — 구현 부담 ↓.",
-            "8 방식 다 표준 패턴 — 학계-업계 검증 완료.",
+        "媛뺤젏": [
+            "?좏깮吏 ?띾? ???곹솴蹂?理쒖쟻??媛??",
+            "?④퀎蹂?吏꾪솕 媛????Naive -> Corrective -> Graph -> Agentic ?먯쭊 媛뺥솕.",
+            "媛?諛⑹떇???ㅻⅨ ?쒓퀎 蹂댁셿 ??議고빀 媛??",
+            "?ㅽ뵂?뚯뒪 ?띾? (LlamaIndex-LangChain ?? ??援ы쁽 遺????",
+            "8 諛⑹떇 ???쒖? ?⑦꽩 ???숆퀎-?낃퀎 寃利??꾨즺.",
         ],
-        "약점": [
-            "선택 어려움 — 처음엔 Naive 면 충분, 과한 설계 함정.",
-            "8 방식마다 구축 비용-복잡도 다름 — Hybrid-Agentic 은 매우 큼.",
-            "Agentic RAG 는 느림-비용 ↑ — 자가 검증 루프 토큰 소비.",
-            "Multimodal 은 임베딩 모델 부담 — 이미지-텍스트 통합 모델 필요.",
-            "Adaptive RAG 의 질문 분류기 만들기 자체 노동.",
+        "?쎌젏": [
+            "?좏깮 ?대젮? ??泥섏쓬??Naive 硫?異⑸텇, 怨쇳븳 ?ㅺ퀎 ?⑥젙.",
+            "8 諛⑹떇留덈떎 援ъ텞 鍮꾩슜-蹂듭옟???ㅻ쫫 ??Hybrid-Agentic ? 留ㅼ슦 ??",
+            "Agentic RAG ???먮┝-鍮꾩슜 ?????먭? 寃利?猷⑦봽 ?좏겙 ?뚮퉬.",
+            "Multimodal ? ?꾨쿋??紐⑤뜽 遺?????대?吏-?띿뒪???듯빀 紐⑤뜽 ?꾩슂.",
+            "Adaptive RAG ??吏덈Ц 遺꾨쪟湲?留뚮뱾湲??먯껜 ?몃룞.",
         ],
-        "강추": [
-            "PoC = Naive — 1주일 안에 검증.",
-            "정확도 ↑ 필요 = Corrective + HyDE — 답 품질 두 배.",
-            "관계-다중 출처 검색 = Graph RAG.",
-            "최고 품질 + 비용 OK = Hybrid (Vector+Graph) 또는 Agentic.",
-            "복잡 추론 (Multi-hop) = Agentic — Self-Eval 포함.",
+        "媛뺤텛": [
+            "PoC = Naive ??1二쇱씪 ?덉뿉 寃利?",
+            "?뺥솗?????꾩슂 = Corrective + HyDE ?????덉쭏 ??諛?",
+            "愿怨??ㅼ쨷 異쒖쿂 寃??= Graph RAG.",
+            "理쒓퀬 ?덉쭏 + 鍮꾩슜 OK = Hybrid (Vector+Graph) ?먮뒗 Agentic.",
+            "蹂듭옟 異붾줎 (Multi-hop) = Agentic ??Self-Eval ?ы븿.",
         ],
-        "우리시스템": {
-            "결론": "★ 8/8 모두 구현 완료 (2026-05-12 세션)",
-            "Naive": ".claude/scripts/rag-recall.py — ChromaDB 기본 벡터 검색",
-            "Multimodal": "rag-multimodal.py — 이미지 캡션 + 텍스트 통합 검색",
-            "HyDE": "rag-hyde.py — 가상 답 4개 생성 후 검색",
-            "Corrective": "rag-corrective.py — distance > 0.7 약함 -> query 변형 재검색",
-            "Graph": "rag-graph.py — entity 추출 + co-occurrence graph (orca.db graph_edges 1059 edges)",
-            "Hybrid": "user-prompt-auto-planner.sh hook 안 kw+rag 동시 (keyword + 의미)",
-            "Adaptive": "rag-adaptive.py — factual/complex/vague/multi_hop 자동 분류 -> 적합 RAG 분기",
-            "Agentic": "rag-agentic.py — Corrective + 자가 평가 (confidence) + HyDE fallback",
+        "?곕━?쒖뒪??: {
+            "寃곕줎": "??8/8 紐⑤몢 援ы쁽 ?꾨즺 (2026-05-12 ?몄뀡)",
+            "Naive": ".claude/scripts/rag-recall.py ??ChromaDB 湲곕낯 踰≫꽣 寃??,
+            "Multimodal": "rag-multimodal.py ???대?吏 罹≪뀡 + ?띿뒪???듯빀 寃??,
+            "HyDE": "rag-hyde.py ??媛????4媛??앹꽦 ??寃??,
+            "Corrective": "rag-corrective.py ??distance > 0.7 ?쏀븿 -> query 蹂???ш???,
+            "Graph": "rag-graph.py ??entity 異붿텧 + co-occurrence graph (orca.db graph_edges 1059 edges)",
+            "Hybrid": "user-prompt-auto-planner.sh hook ??kw+rag ?숈떆 (keyword + ?섎?)",
+            "Adaptive": "rag-adaptive.py ??factual/complex/vague/multi_hop ?먮룞 遺꾨쪟 -> ?곹빀 RAG 遺꾧린",
+            "Agentic": "rag-agentic.py ??Corrective + ?먭? ?됯? (confidence) + HyDE fallback",
         },
-        "점검": ("회사 정책 + 외부 법규 같이 검색하려면?", "Hybrid 또는 Agentic. 우리 시스템 = 둘 다 구현됨."),
+        "?먭?": ("?뚯궗 ?뺤콉 + ?몃? 踰뺢퇋 媛숈씠 寃?됲븯?ㅻ㈃?", "Hybrid ?먮뒗 Agentic. ?곕━ ?쒖뒪??= ????援ы쁽??"),
     },
     {
-        "title": "19. API 프로토콜 한눈에 보기",
-        "image_eng": "API프로토콜-한눈에.jpg",
+        "title": "19. API ?꾨줈?좎퐳 ?쒕늿??蹂닿린",
+        "image_eng": "API?꾨줈?좎퐳-?쒕늿??jpg",
         "image_kor": None,
-        "핵심": "외부 시스템 연결 약속 11가지. AI 작업엔 거의 REST + Webhooks 만 알면 됨.",
-        "강사": ["프로토콜 11가지 중 AI 작업엔 **REST + Webhooks 만 알면 80%** 커버.", "REST = HTTP+JSON 표준. 거의 모든 API.", "Webhooks = 이벤트 콜백. GitHub-Slack 알림.", "토큰 스트리밍 = SSE (Claude API 자동).", "우리 = REST 11+ MCP + Webhooks (GitHub/Slack) + EDA (auto-dispatch)."],
-        "표": {
-            "header": ["프로토콜", "쓰는 곳", "한 줄"],
+        "?듭떖": "?몃? ?쒖뒪???곌껐 ?쎌냽 11媛吏. AI ?묒뾽??嫄곗쓽 REST + Webhooks 留??뚮㈃ ??",
+        "媛뺤궗": ["?꾨줈?좎퐳 11媛吏 以?AI ?묒뾽??**REST + Webhooks 留??뚮㈃ 80%** 而ㅻ쾭.", "REST = HTTP+JSON ?쒖?. 嫄곗쓽 紐⑤뱺 API.", "Webhooks = ?대깽??肄쒕갚. GitHub-Slack ?뚮┝.", "?좏겙 ?ㅽ듃由щ컢 = SSE (Claude API ?먮룞).", "?곕━ = REST 11+ MCP + Webhooks (GitHub/Slack) + EDA (auto-dispatch)."],
+        "??: {
+            "header": ["?꾨줈?좎퐳", "?곕뒗 怨?, "??以?],
             "rows": [
-                ["REST", "거의 모든 API", "HTTP+JSON, 표준"],
-                ["Webhooks", "이벤트 알림", "서버 -> 클라이언트 콜백"],
-                ["GraphQL", "복잡 UI", "원하는 필드만 요청"],
-                ["WebSocket", "채팅-게임", "양방향 실시간"],
-                ["SSE", "실시간 푸시", "서버 -> 클라이언트 일방향"],
-                ["gRPC", "고성능 내부 통신", "Protocol Buffers"],
-                ["SOAP", "은행-정부", "XML 기반 전통"],
-                ["AMQP/MQTT", "메시지 큐-IoT", "비동기 메시징"],
-                ["EDA", "마이크로서비스", "이벤트 발행/구독"],
-                ["EDI", "기업 간 문서", "발주서-인보이스"],
+                ["REST", "嫄곗쓽 紐⑤뱺 API", "HTTP+JSON, ?쒖?"],
+                ["Webhooks", "?대깽???뚮┝", "?쒕쾭 -> ?대씪?댁뼵??肄쒕갚"],
+                ["GraphQL", "蹂듭옟 UI", "?먰븯???꾨뱶留??붿껌"],
+                ["WebSocket", "梨꾪똿-寃뚯엫", "?묐갑???ㅼ떆媛?],
+                ["SSE", "?ㅼ떆媛??몄떆", "?쒕쾭 -> ?대씪?댁뼵???쇰갑??],
+                ["gRPC", "怨좎꽦???대? ?듭떊", "Protocol Buffers"],
+                ["SOAP", "????뺣?", "XML 湲곕컲 ?꾪넻"],
+                ["AMQP/MQTT", "硫붿떆吏 ??IoT", "鍮꾨룞湲?硫붿떆吏?],
+                ["EDA", "留덉씠?щ줈?쒕퉬??, "?대깽??諛쒗뻾/援щ룆"],
+                ["EDI", "湲곗뾽 媛?臾몄꽌", "諛쒖＜???몃낫?댁뒪"],
             ],
         },
-        "흐름": [
-            "요구사항 분류 (요청-응답-이벤트-스트림-메시지큐) -> 적합 프로토콜 선택.",
-            "AI 도구 호출 = 거의 REST. 외부 알람 받기 = Webhooks. 토큰 스트리밍 = SSE.",
-            "마이크로서비스 = EDA + AMQP. IoT = MQTT. 내부 고성능 = gRPC.",
+        "?먮쫫": [
+            "?붽뎄?ы빆 遺꾨쪟 (?붿껌-?묐떟-?대깽???ㅽ듃由?硫붿떆吏?? -> ?곹빀 ?꾨줈?좎퐳 ?좏깮.",
+            "AI ?꾧뎄 ?몄텧 = 嫄곗쓽 REST. ?몃? ?뚮엺 諛쏄린 = Webhooks. ?좏겙 ?ㅽ듃由щ컢 = SSE.",
+            "留덉씠?щ줈?쒕퉬??= EDA + AMQP. IoT = MQTT. ?대? 怨좎꽦??= gRPC.",
         ],
-        "강점": [
-            "REST 한 가지만 마스터해도 80% 커버 — 대부분 AI 작업 충분.",
-            "표준화 명확 — 도구 간 호환성 ↑.",
-            "각 프로토콜 별 SDK 풍부 — 구현 부담 ↓.",
-            "필요할 때만 다른 프로토콜 추가 — 점진 확장.",
-            "Webhooks + REST 조합으로 양방향 통신 가능.",
+        "媛뺤젏": [
+            "REST ??媛吏留?留덉뒪?고빐??80% 而ㅻ쾭 ???遺遺?AI ?묒뾽 異⑸텇.",
+            "?쒖???紐낇솗 ???꾧뎄 媛??명솚????",
+            "媛??꾨줈?좎퐳 蹂?SDK ?띾? ??援ы쁽 遺????",
+            "?꾩슂???뚮쭔 ?ㅻⅨ ?꾨줈?좎퐳 異붽? ???먯쭊 ?뺤옣.",
+            "Webhooks + REST 議고빀?쇰줈 ?묐갑???듭떊 媛??",
         ],
-        "약점": [
-            "프로토콜 많으면 결정 피로 — 단순한 것부터.",
-            "REST 외엔 학습 곡선 ↑ — gRPC-SOAP 는 진입장벽.",
-            "WebSocket-SSE 는 연결 관리 복잡 — heartbeat-재연결 처리.",
-            "AMQP-MQTT 는 메시지큐 인프라 필요 — RabbitMQ-Mosquitto 운영 부담.",
-            "프로토콜 혼용 시 디버깅 어려움 — 추적 시스템 통합 필요.",
+        "?쎌젏": [
+            "?꾨줈?좎퐳 留롮쑝硫?寃곗젙 ?쇰줈 ???⑥닚??寃껊???",
+            "REST ?몄뿏 ?숈뒿 怨≪꽑 ????gRPC-SOAP ??吏꾩엯?λ꼍.",
+            "WebSocket-SSE ???곌껐 愿由?蹂듭옟 ??heartbeat-?ъ뿰寃?泥섎━.",
+            "AMQP-MQTT ??硫붿떆吏???명봽???꾩슂 ??RabbitMQ-Mosquitto ?댁쁺 遺??",
+            "?꾨줈?좎퐳 ?쇱슜 ???붾쾭源??대젮? ??異붿쟻 ?쒖뒪???듯빀 ?꾩슂.",
         ],
-        "강추": [
-            "처음엔 REST + JSON — 80% 완료.",
-            "실시간 알림 필요 = Webhooks (서버->클라이언트).",
-            "토큰 스트리밍 (LLM 답변) = SSE — 가장 단순한 단방향 push.",
-            "양방향 실시간 (채팅) = WebSocket.",
-            "마이크로서비스 = EDA + AMQP — Kafka-RabbitMQ.",
+        "媛뺤텛": [
+            "泥섏쓬??REST + JSON ??80% ?꾨즺.",
+            "?ㅼ떆媛??뚮┝ ?꾩슂 = Webhooks (?쒕쾭->?대씪?댁뼵??.",
+            "?좏겙 ?ㅽ듃由щ컢 (LLM ?듬?) = SSE ??媛???⑥닚???⑤갑??push.",
+            "?묐갑???ㅼ떆媛?(梨꾪똿) = WebSocket.",
+            "留덉씠?щ줈?쒕퉬??= EDA + AMQP ??Kafka-RabbitMQ.",
         ],
-        "우리시스템": {
-            "REST": "MCP 서버들이 내부적으로 REST 사용",
-            "Webhooks": "GitHub MCP-Slack MCP 가 webhook 콜백 받음",
-            "기타": "AI 작업 범위에서 거의 REST + Webhooks 로 충분",
+        "?곕━?쒖뒪??: {
+            "REST": "MCP ?쒕쾭?ㅼ씠 ?대??곸쑝濡?REST ?ъ슜",
+            "Webhooks": "GitHub MCP-Slack MCP 媛 webhook 肄쒕갚 諛쏆쓬",
+            "湲고?": "AI ?묒뾽 踰붿쐞?먯꽌 嫄곗쓽 REST + Webhooks 濡?異⑸텇",
         },
-        "점검": ("실시간 알림이 필요하면?", "Webhooks (서버에서 푸시) 또는 SSE."),
+        "?먭?": ("?ㅼ떆媛??뚮┝???꾩슂?섎㈃?", "Webhooks (?쒕쾭?먯꽌 ?몄떆) ?먮뒗 SSE."),
     },
     {
-        "title": "20. MCP vs A2A — 두 프로토콜의 차이",
-        "image_eng": "MCP-vs-A2A-프로토콜비교-datasciencedojo.jpg",
+        "title": "20. MCP vs A2A ?????꾨줈?좎퐳??李⑥씠",
+        "image_eng": "MCP-vs-A2A-?꾨줈?좎퐳鍮꾧탳-datasciencedojo.jpg",
         "image_kor": "06-mcp-vs-a2a.png",
-        "핵심": "MCP = LLM이 도구를 직접 부름. A2A = 매니저가 부서장(에이전트)에게 위임.",
-        "강사": ["MCP = LLM 한 명이 도구 호출. A2A = 여러 Agent 가 자율 협력.", "보통 = MCP (단순-디버깅 쉬움). 멀티 도메인 = A2A.", "**우리 = MCP 11 서버 + A2A-lite chain** (Claude 통제 + auto-dispatch). 둘 다 본보기."],
-        "표": {
-            "header": ["구분", "MCP", "A2A"],
+        "?듭떖": "MCP = LLM???꾧뎄瑜?吏곸젒 遺由? A2A = 留ㅻ땲?媛 遺?쒖옣(?먯씠?꾪듃)?먭쾶 ?꾩엫.",
+        "媛뺤궗": ["MCP = LLM ??紐낆씠 ?꾧뎄 ?몄텧. A2A = ?щ윭 Agent 媛 ?먯쑉 ?묐젰.", "蹂댄넻 = MCP (?⑥닚-?붾쾭源??ъ?). 硫???꾨찓??= A2A.", "**?곕━ = MCP 11 ?쒕쾭 + A2A-lite chain** (Claude ?듭젣 + auto-dispatch). ????蹂몃낫湲?"],
+        "??: {
+            "header": ["援щ텇", "MCP", "A2A"],
             "rows": [
-                ["주체", "LLM 한 명", "여러 에이전트"],
-                ["호출 대상", "외부 도구 (API)", "다른 에이전트"],
-                ["제어권", "LLM이 끝까지 통제", "각 에이전트가 자율"],
-                ["비유", "비서 + 도구함", "매니저 + 부서장"],
-                ["복잡도", "낮음", "높음"],
-                ["언제", "도구 표준화 필요", "도메인별 자율 협력 필요"],
+                ["二쇱껜", "LLM ??紐?, "?щ윭 ?먯씠?꾪듃"],
+                ["?몄텧 ???, "?몃? ?꾧뎄 (API)", "?ㅻⅨ ?먯씠?꾪듃"],
+                ["?쒖뼱沅?, "LLM???앷퉴吏 ?듭젣", "媛??먯씠?꾪듃媛 ?먯쑉"],
+                ["鍮꾩쑀", "鍮꾩꽌 + ?꾧뎄??, "留ㅻ땲? + 遺?쒖옣"],
+                ["蹂듭옟??, "??쓬", "?믪쓬"],
+                ["?몄젣", "?꾧뎄 ?쒖????꾩슂", "?꾨찓?몃퀎 ?먯쑉 ?묐젰 ?꾩슂"],
             ],
         },
-        "흐름": [
-            "[MCP] User -> LLM -> MCP Client (도구 선택) -> MCP Server (도구 wrapper) -> 외부 API -> 결과 -> LLM -> 사용자 응답. LLM 이 끝까지 통제.",
-            "[A2A] User -> Orchestrator Agent (작업 분해) -> 도메인 Agent (위임) -> Agent 가 자체 도구 호출 -> 결과 -> Orchestrator -> 통합 응답. 각 Agent 자율.",
-            "혼합: MCP 로 도구 표준화 + A2A 로 Agent 협력 — 우리 시스템 패턴.",
+        "?먮쫫": [
+            "[MCP] User -> LLM -> MCP Client (?꾧뎄 ?좏깮) -> MCP Server (?꾧뎄 wrapper) -> ?몃? API -> 寃곌낵 -> LLM -> ?ъ슜???묐떟. LLM ???앷퉴吏 ?듭젣.",
+            "[A2A] User -> Orchestrator Agent (?묒뾽 遺꾪빐) -> ?꾨찓??Agent (?꾩엫) -> Agent 媛 ?먯껜 ?꾧뎄 ?몄텧 -> 寃곌낵 -> Orchestrator -> ?듯빀 ?묐떟. 媛?Agent ?먯쑉.",
+            "?쇳빀: MCP 濡??꾧뎄 ?쒖???+ A2A 濡?Agent ?묐젰 ???곕━ ?쒖뒪???⑦꽩.",
         ],
-        "강점": [
-            "[MCP] 단순-검증 쉬움 — LLM 한 명 통제, 흐름 추적 명확.",
-            "[MCP] 도구 표준화로 새 API 추가 쉬움 — Wrapper 만 만들면 됨.",
-            "[A2A] 확장 좋음 — 새 도메인 Agent 추가가 시스템 영향 적음.",
-            "[A2A] 자율성 ↑ — 각 Agent 가 자기 영역 책임.",
-            "[A2A] 멀티 도메인 협력 자연 — 항공-호텔-캘린더 Agent 따로 자율 결정.",
+        "媛뺤젏": [
+            "[MCP] ?⑥닚-寃利??ъ? ??LLM ??紐??듭젣, ?먮쫫 異붿쟻 紐낇솗.",
+            "[MCP] ?꾧뎄 ?쒖??붾줈 ??API 異붽? ?ъ? ??Wrapper 留?留뚮뱾硫???",
+            "[A2A] ?뺤옣 醫뗭쓬 ?????꾨찓??Agent 異붽?媛 ?쒖뒪???곹뼢 ?곸쓬.",
+            "[A2A] ?먯쑉??????媛?Agent 媛 ?먭린 ?곸뿭 梨낆엫.",
+            "[A2A] 硫???꾨찓???묐젰 ?먯뿰 ????났-?명뀛-罹섎┛??Agent ?곕줈 ?먯쑉 寃곗젙.",
         ],
-        "약점": [
-            "[MCP] LLM 컨텍스트 폭주 위험 — 도구 결과 전부 LLM 에 들어감.",
-            "[MCP] LLM 의존도 ↑ — 모델 능력에 직접 영향 받음.",
-            "[A2A] 디버깅 어려움 — 여러 Agent 가 자율 결정해 추적 복잡.",
-            "[A2A] 비용 ↑ — Agent 마다 LLM 호출 누적.",
-            "[A2A] 표준 부족 — 아직 industry standard 정립 중.",
+        "?쎌젏": [
+            "[MCP] LLM 而⑦뀓?ㅽ듃 ??＜ ?꾪뿕 ???꾧뎄 寃곌낵 ?꾨? LLM ???ㅼ뼱媛?",
+            "[MCP] LLM ?섏〈??????紐⑤뜽 ?λ젰??吏곸젒 ?곹뼢 諛쏆쓬.",
+            "[A2A] ?붾쾭源??대젮? ???щ윭 Agent 媛 ?먯쑉 寃곗젙??異붿쟻 蹂듭옟.",
+            "[A2A] 鍮꾩슜 ????Agent 留덈떎 LLM ?몄텧 ?꾩쟻.",
+            "[A2A] ?쒖? 遺議????꾩쭅 industry standard ?뺣┰ 以?",
         ],
-        "강추": [
-            "보통 = MCP — 단일 LLM 으로 도구 호출, 시작 쉬움.",
-            "멀티 도메인 자율 협력 = A2A — 큰 시스템.",
-            "둘 다 혼합 가능 — MCP 로 도구 + A2A 로 Agent 협력 (우리 시스템 본보기).",
-            "PoC = MCP 만, 프로덕션 = MCP + A2A.",
-            "단순 작업 = MCP, 복잡 워크플로우 = A2A.",
+        "媛뺤텛": [
+            "蹂댄넻 = MCP ???⑥씪 LLM ?쇰줈 ?꾧뎄 ?몄텧, ?쒖옉 ?ъ?.",
+            "硫???꾨찓???먯쑉 ?묐젰 = A2A ?????쒖뒪??",
+            "?????쇳빀 媛????MCP 濡??꾧뎄 + A2A 濡?Agent ?묐젰 (?곕━ ?쒖뒪??蹂몃낫湲?.",
+            "PoC = MCP 留? ?꾨줈?뺤뀡 = MCP + A2A.",
+            "?⑥닚 ?묒뾽 = MCP, 蹂듭옟 ?뚰겕?뚮줈??= A2A.",
         ],
-        "우리시스템": {
-            "MCP": "GitHub-Playwright-Figma-Slack-Notion MCP 서버 설치-사용",
-            "A2A 스타일": "Claude (설계) -> Codex (구현) -> Gemini (검증) -> Haiku (판정) 인수인계 (hook-08-ai-handoff)",
-            "결론": "MCP + A2A 동시 사용 (다양한 작업에 적합한 방식 선택)",
+        "?곕━?쒖뒪??: {
+            "MCP": "GitHub-Playwright-Figma-Slack-Notion MCP ?쒕쾭 ?ㅼ튂-?ъ슜",
+            "A2A ?ㅽ???: "Claude (?ㅺ퀎) -> Codex (援ы쁽) -> Gemini (寃利? -> Haiku (?먯젙) ?몄닔?멸퀎 (hook-08-ai-handoff)",
+            "寃곕줎": "MCP + A2A ?숈떆 ?ъ슜 (?ㅼ뼇???묒뾽???곹빀??諛⑹떇 ?좏깮)",
         },
-        "점검": ("Slack 으로 메시지 보내기 = MCP or A2A?", "MCP. 외부 도구 호출이라."),
+        "?먭?": ("Slack ?쇰줈 硫붿떆吏 蹂대궡湲?= MCP or A2A?", "MCP. ?몃? ?꾧뎄 ?몄텧?대씪."),
     },
 ]
 
 
 # ============================================================
-# 문서 생성
+# 臾몄꽌 ?앹꽦
 # ============================================================
 doc = Document()
 
-# 페이지: landscape (가로) — 이미지 글씨 최대 가독성
+# ?섏씠吏: landscape (媛濡? ???대?吏 湲??理쒕? 媛?낆꽦
 from docx.enum.section import WD_ORIENT
 from docx.shared import Mm
 for section in doc.sections:
     section.orientation = WD_ORIENT.LANDSCAPE
-    # A4 landscape (297×210mm = 11.69×8.27 inch) — PNG 비율 0.69 와 inside 비율 0.70 일치
+    # A4 landscape (297횞210mm = 11.69횞8.27 inch) ??PNG 鍮꾩쑉 0.69 ? inside 鍮꾩쑉 0.70 ?쇱튂
     section.page_width = Mm(297)
     section.page_height = Mm(210)
     section.top_margin = Cm(0.3)
@@ -1406,8 +1406,8 @@ for section in doc.sections:
     section.left_margin = Cm(0.3)
     section.right_margin = Cm(0.3)
 
-# default view zoom 100% + 인쇄 레이아웃 강제 (Word 가 페이지 가득 표시)
-# w:val="none" 강제 — "bestFit"이면 percent 무시되고 창에 맞춤 (작아 보임)
+# default view zoom 100% + ?몄뇙 ?덉씠?꾩썐 媛뺤젣 (Word 媛 ?섏씠吏 媛???쒖떆)
+# w:val="none" 媛뺤젣 ??"bestFit"?대㈃ percent 臾댁떆?섍퀬 李쎌뿉 留욎땄 (?묒븘 蹂댁엫)
 _settings = doc.settings.element
 _zoom = _settings.find(qn("w:zoom"))
 if _zoom is None:
@@ -1422,37 +1422,37 @@ if _view is None:
 _view.set(qn("w:val"), "print")
 
 
-# ---- 표지 ----
+# ---- ?쒖? ----
 P(doc, "", size=8, after=80)
-P(doc, "AI 에이전트 + Claude Code", size=30, bold=True, align="center",
+P(doc, "AI ?먯씠?꾪듃 + Claude Code", size=30, bold=True, align="center",
   color=(32, 56, 100), after=8)
-P(doc, "초보자 가이드 — 24장 그림으로 끝내는 2026 AI 입문",
+P(doc, "珥덈낫??媛?대뱶 ??24??洹몃┝?쇰줈 ?앸궡??2026 AI ?낅Ц",
   size=14, align="center", color=(89, 89, 89), after=40)
-P(doc, "강사: AI 에이전트 강사 (Claude)", size=12, align="center",
+P(doc, "媛뺤궗: AI ?먯씠?꾪듃 媛뺤궗 (Claude)", size=12, align="center",
   color=(120, 120, 120), after=4)
-P(doc, "교재: docs/screens/arch (영어 원본) + docs/screens/arch-kor (한글 다이어그램)",
+P(doc, "援먯옱: docs/screens/arch (?곸뼱 ?먮낯) + docs/screens/arch-kor (?쒓? ?ㅼ씠?닿렇??",
   size=10, align="center", color=(150, 150, 150), after=4)
-P(doc, "버전: 2026-05-11 v2 (8섹션 표준 + 한글 다이어그램)",
+P(doc, "踰꾩쟾: 2026-05-11 v2 (8?뱀뀡 ?쒖? + ?쒓? ?ㅼ씠?닿렇??",
   size=10, align="center", color=(150, 150, 150), after=60)
 
-P(doc, "▷ 이 책의 약속 (8섹션 표준)", size=13, bold=True, color=(192, 0, 0), after=6)
-B(doc, "각 챕터에 표-흐름-강점-약점-강추-우리 시스템 매핑-점검 모두 포함")
-B(doc, "외국어 그림은 한글 다이어그램과 같이 (matplotlib 자동 생성)")
-B(doc, "5살 청자 톤 — 어려운 단어 즉시 풀이, 비유 풍부")
-B(doc, "막히면 부록 B '한 줄 정리' 부터 30분 안에 전체 파악")
+P(doc, "????梨낆쓽 ?쎌냽 (8?뱀뀡 ?쒖?)", size=13, bold=True, color=(192, 0, 0), after=6)
+B(doc, "媛?梨뺥꽣?????먮쫫-媛뺤젏-?쎌젏-媛뺤텛-?곕━ ?쒖뒪??留ㅽ븨-?먭? 紐⑤몢 ?ы븿")
+B(doc, "?멸뎅??洹몃┝? ?쒓? ?ㅼ씠?닿렇?④낵 媛숈씠 (matplotlib ?먮룞 ?앹꽦)")
+B(doc, "5??泥?옄 ?????대젮???⑥뼱 利됱떆 ??? 鍮꾩쑀 ?띾?")
+B(doc, "留됲엳硫?遺濡?B '??以??뺣━' 遺??30遺??덉뿉 ?꾩껜 ?뚯븙")
 PB(doc)
 
 
-# ---- 목차 ----
-H(doc, "목차", level=1)
-B(doc, "0. 들어가며")
+# ---- 紐⑹감 ----
+H(doc, "紐⑹감", level=1)
+B(doc, "0. ?ㅼ뼱媛硫?)
 for i, ch in enumerate(CHAPTERS, 1):
     B(doc, ch["title"])
-B(doc, "부록 A. 한 줄 정리")
-B(doc, "부록 B. 고퀄리티 다이어그램 도구 (Canva-Figma-Mermaid)")
+B(doc, "遺濡?A. ??以??뺣━")
+B(doc, "遺濡?B. 怨좏꾨━???ㅼ씠?닿렇???꾧뎄 (Canva-Figma-Mermaid)")
 
 
-# ---- 0. 들어가며 (IMG paragraph 자체에 page_break_before — 빈 PB 페이지 방지) ----
+# ---- 0. ?ㅼ뼱媛硫?(IMG paragraph ?먯껜??page_break_before ??鍮?PB ?섏씠吏 諛⑹?) ----
 _intro_para = doc.add_paragraph()
 _intro_para.paragraph_format.page_break_before = True
 _intro_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1468,89 +1468,89 @@ if _h_in > 8.0:
 _intro_para.add_run().add_picture(str(_img_path), width=Inches(_w_in), height=Inches(_h_in))
 
 
-# ---- 19 챕터 자동 렌더링 ----
+# ---- 19 梨뺥꽣 ?먮룞 ?뚮뜑留?----
 for idx, ch in enumerate(CHAPTERS):
     render_chapter(doc, ch, idx=idx)
 
 
-# ---- 부록 A — 한 줄 정리 (이전 부록 B) ----
-H(doc, "부록 A. 한 줄 정리 — 5분 안에 전체 복습", level=1)
+# ---- 遺濡?A ????以??뺣━ (?댁쟾 遺濡?B) ----
+H(doc, "遺濡?A. ??以??뺣━ ??5遺??덉뿉 ?꾩껜 蹂듭뒿", level=1)
 cheats = [
-    ("Generative vs Agentic vs Agent", "글 -> 단계 -> 손까지. 셋이 같은 AI 아님."),
-    ("AI 8가지 모델", "GPT 만 있지 않음. 작업에 맞는 뇌 골라쓰기."),
-    ("에이전트 5 핵심", "Guardrail / Orch / MCP / Memory / Observability."),
-    ("9 Silent Killers", "#2 맥락 부패와 #9 거짓말 두 개만 잡아도 신뢰도 두 배."),
-    ("AI 스택 5층", "Infra -> Data -> LLM -> Orch -> Interface."),
-    ("개발킷 5레이어", "CLAUDE.md + Skills + Hooks + Subagents + Plugins."),
-    ("$0 AI 2026", "Streamlit + Ollama + ChromaDB 30 분 안에 띄움."),
-    ("AI 빌더 30 도구", "초보 = 카테고리 1 (Claude) + 2 (Claude Code) 만."),
-    ("RAG", "사내 문서 묻고 답할 때. 처음엔 Naive."),
-    ("RAG 8가지", "Naive -> Corrective -> Graph -> Agentic 순으로 발전."),
-    ("API 프로토콜", "REST + Webhooks 만 알면 80% 끝."),
-    ("MCP vs A2A", "MCP = 도구 호출. A2A = 에이전트 협력."),
-    ("Claude 14 레벨", "Lv5 (Cowork) 까지면 일상 자동화 80%."),
-    ("결정트리", "지식 = Skill/CLAUDE.md. 행동 = Subagent/MCP/Hook."),
-    ("완전 가이드", "Install -> Configure -> Prompt -> Review -> Iterate -> Ship."),
-    ("60초 셋업", "/init 만 치면 폴더 잡힘."),
-    ("프로젝트 구조", "CLAUDE.md + .claude/{commands,skills,agents,hooks}."),
-    (".claude DK", "CLAUDE.md(공유) + CLAUDE.local.md(개인) 분리."),
-    ("CLAUDE.md", "500줄 이하-Hooks 사용-월간 갱신-참조 중심."),
-    ("프롬프트", "CLARITY 한 개만 외우면 80% 커버."),
+    ("Generative vs Agentic vs Agent", "湲 -> ?④퀎 -> ?먭퉴吏. ?뗭씠 媛숈? AI ?꾨떂."),
+    ("AI 8媛吏 紐⑤뜽", "GPT 留??덉? ?딆쓬. ?묒뾽??留욌뒗 ??怨⑤씪?곌린."),
+    ("?먯씠?꾪듃 5 ?듭떖", "Guardrail / Orch / MCP / Memory / Observability."),
+    ("9 Silent Killers", "#2 留λ씫 遺?⑥? #9 嫄곗쭞留???媛쒕쭔 ?≪븘???좊ː????諛?"),
+    ("AI ?ㅽ깮 5痢?, "Infra -> Data -> LLM -> Orch -> Interface."),
+    ("媛쒕컻??5?덉씠??, "CLAUDE.md + Skills + Hooks + Subagents + Plugins."),
+    ("$0 AI 2026", "Streamlit + Ollama + ChromaDB 30 遺??덉뿉 ?꾩?."),
+    ("AI 鍮뚮뜑 30 ?꾧뎄", "珥덈낫 = 移댄뀒怨좊━ 1 (Claude) + 2 (Claude Code) 留?"),
+    ("RAG", "?щ궡 臾몄꽌 臾산퀬 ?듯븷 ?? 泥섏쓬??Naive."),
+    ("RAG 8媛吏", "Naive -> Corrective -> Graph -> Agentic ?쒖쑝濡?諛쒖쟾."),
+    ("API ?꾨줈?좎퐳", "REST + Webhooks 留??뚮㈃ 80% ??"),
+    ("MCP vs A2A", "MCP = ?꾧뎄 ?몄텧. A2A = ?먯씠?꾪듃 ?묐젰."),
+    ("Claude 14 ?덈꺼", "Lv5 (Cowork) 源뚯?硫??쇱긽 ?먮룞??80%."),
+    ("寃곗젙?몃━", "吏??= Skill/CLAUDE.md. ?됰룞 = Subagent/MCP/Hook."),
+    ("?꾩쟾 媛?대뱶", "Install -> Configure -> Prompt -> Review -> Iterate -> Ship."),
+    ("60珥??뗭뾽", "/init 留?移섎㈃ ?대뜑 ?≫옒."),
+    ("?꾨줈?앺듃 援ъ“", "CLAUDE.md + .claude/{commands,skills,agents,hooks}."),
+    (".claude DK", "CLAUDE.md(怨듭쑀) + CLAUDE.local.md(媛쒖씤) 遺꾨━."),
+    ("CLAUDE.md", "500以??댄븯-Hooks ?ъ슜-?붽컙 媛깆떊-李몄“ 以묒떖."),
+    ("?꾨＼?꾪듃", "CLARITY ??媛쒕쭔 ?몄슦硫?80% 而ㅻ쾭."),
 ]
 for k, v in cheats:
     p = doc.add_paragraph()
     p.paragraph_format.space_after = Pt(4)
-    _set_kor(p.add_run("◆ " + k + " — "), size=11, bold=True, color=(192, 0, 0))
+    _set_kor(p.add_run("??" + k + " ??"), size=11, bold=True, color=(192, 0, 0))
     _set_kor(p.add_run(v), size=11)
 PB(doc)
 
 
-# ---- 부록 B — 고퀄리티 도구 (이전 부록 C) ----
-H(doc, "부록 B. 고퀄리티 다이어그램 도구 (가입 + MCP 등록)", level=1)
-callout(doc, " 핵심 한 줄",
-        "이 책 한글 다이어그램은 matplotlib 무료. 더 예쁘게 = 아래 도구 가입 + MCP 등록.")
+# ---- 遺濡?B ??怨좏꾨━???꾧뎄 (?댁쟾 遺濡?C) ----
+H(doc, "遺濡?B. 怨좏꾨━???ㅼ씠?닿렇???꾧뎄 (媛??+ MCP ?깅줉)", level=1)
+callout(doc, " ?듭떖 ??以?,
+        "??梨??쒓? ?ㅼ씠?닿렇?⑥? matplotlib 臾대즺. ???덉걯寃?= ?꾨옒 ?꾧뎄 媛??+ MCP ?깅줉.")
 quality_tools = [
-    ("Mermaid Chart (mermaid.live)", "무료 / 유료 $14/월",
-     "코드로 다이어그램. 한글 OK. 빠른 작업.", "claude.ai -> 커넥터 -> Mermaid 활성화"),
-    ("Excalidraw", "무료 / 유료 $7/월",
-     "손그림 톤. 발표용 좋음.", "https://excalidraw.com (API 유료)"),
-    ("Figma", "무료 / 유료 $12/월",
-     "전문 디자인 표준.", "/install-mcp 또는 Figma MCP + PAT"),
-    ("Canva", "무료 / Pro $13/월",
-     "인포그래픽-소셜-프레젠테이션. 한글 폰트 풍부.", "claude.ai -> 커넥터 -> Canva (1-click)"),
-    ("Gamma", "무료 (제한) / Plus $10/월",
-     "AI 프레젠테이션 자동 생성.", "claude.ai -> 커넥터 -> Gamma 활성화"),
+    ("Mermaid Chart (mermaid.live)", "臾대즺 / ?좊즺 $14/??,
+     "肄붾뱶濡??ㅼ씠?닿렇?? ?쒓? OK. 鍮좊Ⅸ ?묒뾽.", "claude.ai -> 而ㅻ꽖??-> Mermaid ?쒖꽦??),
+    ("Excalidraw", "臾대즺 / ?좊즺 $7/??,
+     "?먭렇由??? 諛쒗몴??醫뗭쓬.", "https://excalidraw.com (API ?좊즺)"),
+    ("Figma", "臾대즺 / ?좊즺 $12/??,
+     "?꾨Ц ?붿옄???쒖?.", "/install-mcp ?먮뒗 Figma MCP + PAT"),
+    ("Canva", "臾대즺 / Pro $13/??,
+     "?명룷洹몃옒???뚯뀥-?꾨젅?좏뀒?댁뀡. ?쒓? ?고듃 ?띾?.", "claude.ai -> 而ㅻ꽖??-> Canva (1-click)"),
+    ("Gamma", "臾대즺 (?쒗븳) / Plus $10/??,
+     "AI ?꾨젅?좏뀒?댁뀡 ?먮룞 ?앹꽦.", "claude.ai -> 而ㅻ꽖??-> Gamma ?쒖꽦??),
 ]
 for name, price, desc, how in quality_tools:
-    P(doc, "◆ " + name, size=12, bold=True, color=(32, 56, 100), after=2)
-    callout(doc, "가격:", price, label_color=(192, 0, 0))
-    callout(doc, "용도:", desc, label_color=(89, 89, 89))
-    callout(doc, "연결법:", how, label_color=(11, 83, 148))
+    P(doc, "??" + name, size=12, bold=True, color=(32, 56, 100), after=2)
+    callout(doc, "媛寃?", price, label_color=(192, 0, 0))
+    callout(doc, "?⑸룄:", desc, label_color=(89, 89, 89))
+    callout(doc, "?곌껐踰?", how, label_color=(11, 83, 148))
 
-H(doc, "[TIP] 권장 조합", level=3)
-B(doc, "초보: matplotlib (이 책) + Mermaid 무료.")
-B(doc, "중급: Canva 무료 + Gamma 무료 (AI 프레젠테이션).")
-B(doc, "전문: Figma Pro + Canva Pro + Mermaid Pro.")
-H(doc, " 우리 시스템 활용", level=3)
-B(doc, "/install-mcp — Canva (OAuth) + Figma (PAT) + Mermaid 한 번에")
-B(doc, "/plug_design — 디자인 MCP 패키지 (Canva-Figma-Gamma-PPT-Slides-Mermaid)")
-B(doc, "/arch-auto, /arch-mindmap, /arch-layered, /arch-cheatsheet — 자동 다이어그램")
+H(doc, "[TIP] 沅뚯옣 議고빀", level=3)
+B(doc, "珥덈낫: matplotlib (??梨? + Mermaid 臾대즺.")
+B(doc, "以묎툒: Canva 臾대즺 + Gamma 臾대즺 (AI ?꾨젅?좏뀒?댁뀡).")
+B(doc, "?꾨Ц: Figma Pro + Canva Pro + Mermaid Pro.")
+H(doc, " ?곕━ ?쒖뒪???쒖슜", level=3)
+B(doc, "/install-mcp ??Canva (OAuth) + Figma (PAT) + Mermaid ??踰덉뿉")
+B(doc, "/plug_design ???붿옄??MCP ?⑦궎吏 (Canva-Figma-Gamma-PPT-Slides-Mermaid)")
+B(doc, "/arch-auto, /arch-mindmap, /arch-layered, /arch-cheatsheet ???먮룞 ?ㅼ씠?닿렇??)
 
 
-# ---- 마지막 ----
+# ---- 留덉?留?----
 HR(doc)
-P(doc, "끝까지 읽어주셔서 감사합니다.", size=12, align="center", bold=True, after=4)
-P(doc, "막히면 Claude 에게 '5살한테 설명하듯 알려줘' 라고 부탁하세요.",
+P(doc, "?앷퉴吏 ?쎌뼱二쇱뀛??媛먯궗?⑸땲??", size=12, align="center", bold=True, after=4)
+P(doc, "留됲엳硫?Claude ?먭쾶 '5?댄븳???ㅻ챸?섎벏 ?뚮젮以? ?쇨퀬 遺?곹븯?몄슂.",
   size=10, align="center", color=(120, 120, 120))
 
 
-# ---- 저장: .bak 백업 + 폴링 대기 (rule: 멈추지 마라, 자동 우회) ----
+# ---- ??? .bak 諛깆뾽 + ?대쭅 ?湲?(rule: 硫덉텛吏 留덈씪, ?먮룞 ?고쉶) ----
 import time as _time
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 
 def _wait_unlock(path, max_sec=60, interval=2):
-    """잠금 해제 대기 — 사용자가 Word 닫을 때까지 폴링."""
+    """?좉툑 ?댁젣 ?湲????ъ슜?먭? Word ?レ쓣 ?뚭퉴吏 ?대쭅."""
     elapsed = 0
     while elapsed < max_sec:
         try:
@@ -1560,7 +1560,7 @@ def _wait_unlock(path, max_sec=60, interval=2):
             return True
         except (PermissionError, OSError):
             if elapsed == 0:
-                print(f"[WAIT] {path.name} 잠김 — 자동 폴링 ({max_sec}초). 다른 작업 진행 가능.")
+                print(f"[WAIT] {path.name} ?좉? ???먮룞 ?대쭅 ({max_sec}珥?. ?ㅻⅨ ?묒뾽 吏꾪뻾 媛??")
             _time.sleep(interval)
             elapsed += interval
     return False
@@ -1576,7 +1576,7 @@ if OUT.exists():
             bak.unlink(missing_ok=True)
             OUT.rename(bak)
         else:
-            print(f"[FAIL] 60초 지나도 {OUT.name} 잠김. Word 직접 닫고 재실행.")
+            print(f"[FAIL] 60珥?吏?섎룄 {OUT.name} ?좉?. Word 吏곸젒 ?リ퀬 ?ъ떎??")
             raise SystemExit(1)
 
 try:
@@ -1585,10 +1585,11 @@ except PermissionError:
     if _wait_unlock(OUT, max_sec=60):
         doc.save(str(OUT))
     else:
-        print(f"[FAIL] 저장 실패. Word 닫고 재실행.")
+        print(f"[FAIL] ????ㅽ뙣. Word ?リ퀬 ?ъ떎??")
         raise SystemExit(1)
 
 print(f"[OK] {OUT.name}  {OUT.stat().st_size:,} bytes")
-print(f"     {len(CHAPTERS)} 챕터 × 8 섹션 표준")
+print(f"     {len(CHAPTERS)} 梨뺥꽣 횞 8 ?뱀뀡 ?쒖?")
 if (OUT.with_suffix(OUT.suffix + ".bak")).exists():
-    print(f"     백업: {OUT.name}.bak (이전 버전)")
+    print(f"     諛깆뾽: {OUT.name}.bak (?댁쟾 踰꾩쟾)")
+

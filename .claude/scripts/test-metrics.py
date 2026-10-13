@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-test-metrics.py — Smoke tests for metrics recording.
+test-metrics.py ??Smoke tests for metrics recording.
 
 Tests:
 1. record_api_call() records 3 calls (2 success, 1 fail)
@@ -209,7 +209,7 @@ def main():
     except AssertionError as e:
         print(f"\n[FAIL] TEST FAILED: {e}\n")
         return 1
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         print(f"\n[FAIL] ERROR: {e}\n")
         import traceback
         traceback.print_exc()
@@ -218,3 +218,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

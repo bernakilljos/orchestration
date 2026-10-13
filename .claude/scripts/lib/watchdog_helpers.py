@@ -1,4 +1,4 @@
-"""Helper functions for watchdog.py.
+﻿"""Helper functions for watchdog.py.
 
 Provides database queries and worker spawning logic for the watchdog monitoring process.
 """
@@ -18,7 +18,7 @@ from state_db import (
 )
 from backoff import compute_backoff
 
-# Optional psutil — fallback to OS tools if missing
+# Optional psutil ??fallback to OS tools if missing
 try:
     import psutil  # type: ignore
     _HAS_PSUTIL = True
@@ -123,7 +123,7 @@ def spawn_worker(ai_type: str, worker_id: str, dry_run: bool = False) -> bool:
             creationflags=0x08000000  # CREATE_NO_WINDOW on Windows
         )
         return True
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return False
 
 
@@ -207,7 +207,7 @@ def _get_rss_via_tasklist(pid: int) -> Optional[int]:
         ).decode("utf-8", errors="ignore").strip()
         if not out or "No tasks" in out:
             return None
-        # Use csv.reader — mem column "14,516 K" contains a comma inside quotes
+        # Use csv.reader ??mem column "14,516 K" contains a comma inside quotes
         row = next(csv.reader(io.StringIO(out)), None)
         if not row or len(row) < 5:
             return None
@@ -361,3 +361,4 @@ def mark_worker_restart(worker_id: str, reason: str) -> None:
             "UPDATE workers SET status = 'dead', last_heartbeat = ? WHERE worker_id = ?",
             (now, worker_id),
         )
+

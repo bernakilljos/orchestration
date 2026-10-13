@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 """
-resume-last-24h.py — 최근 24시간 작업 자동 복구 요약
-SessionStart hook 가 호출 → stdout → systemMessage 로 주입
+resume-last-24h.py ??理쒓렐 24?쒓컙 ?묒뾽 ?먮룞 蹂듦뎄 ?붿빟
+SessionStart hook 媛 ?몄텧 ??stdout ??systemMessage 濡?二쇱엯
 
-출력 포함:
-- 최근 24h session_summary (어제·오늘)
-- 미완료 task (.claude/tasks pending·in_progress)
-- 최근 24h git commit
-- 마지막 user 지시 3개 (대화 복원)
-- session-snapshot.md 안 최종 상태
+異쒕젰 ?ы븿:
+- 理쒓렐 24h session_summary (?댁젣쨌?ㅻ뒛)
+- 誘몄셿猷?task (.claude/tasks pending쨌in_progress)
+- 理쒓렐 24h git commit
+- 留덉?留?user 吏??3媛?(???蹂듭썝)
+- session-snapshot.md ??理쒖쥌 ?곹깭
 
-사용자 설명 요구 X · 재부팅·메모리 종료 복구 자동.
+?ъ슜???ㅻ챸 ?붽뎄 X 쨌 ?щ??끒룸찓紐⑤━ 醫낅즺 蹂듦뎄 ?먮룞.
 """
 from __future__ import annotations
 import json, os, sqlite3, subprocess, sys
@@ -23,7 +23,7 @@ TASKS = ROOT / ".claude" / "tasks"
 SNAPSHOT = ROOT / ".claude" / "context-cache" / "session-snapshot.md"
 
 CUTOFF_HOURS = 24
-MAX_CHARS = 3000  # systemMessage 폭주 방지
+MAX_CHARS = 3000  # systemMessage ??＜ 諛⑹?
 
 def _h(title: str) -> str:
     return f"\n## {title}\n"
@@ -39,14 +39,14 @@ def section_session_summary() -> str:
             "ORDER BY updated_at DESC LIMIT 5",
             (cutoff,)
         ).fetchall()
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return ""
     if not rows: return ""
-    out = [_h(f"최근 {CUTOFF_HOURS}h 세션 요약")]
+    out = [_h(f"理쒓렐 {CUTOFF_HOURS}h ?몄뀡 ?붿빟")]
     for sid, ended, turns, summ, dec in rows:
         s = (summ or "")[:400]
         d = (dec or "")[:200]
-        out.append(f"- **[{sid[:8]}]** turns={turns} · ended={ended or '진행중'}")
+        out.append(f"- **[{sid[:8]}]** turns={turns} 쨌 ended={ended or '吏꾪뻾以?}")
         if s: out.append(f"  summary: {s}")
         if d: out.append(f"  decisions: {d}")
     return "\n".join(out)
@@ -60,11 +60,11 @@ def section_pending_tasks() -> str:
             for f in sorted(p.glob("*.md"))[:5]:
                 try:
                     first = f.read_text(encoding="utf-8", errors="replace").splitlines()[0][:80]
-                except Exception:
+                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
                     first = "?"
-                pending.append(f"  - [{d}] {f.name} — {first}")
+                pending.append(f"  - [{d}] {f.name} ??{first}")
     if not pending: return ""
-    return _h(f"미완료 task") + "\n".join(pending)
+    return _h(f"誘몄셿猷?task") + "\n".join(pending)
 
 def section_recent_commits() -> str:
     try:
@@ -74,10 +74,10 @@ def section_recent_commits() -> str:
             capture_output=True, text=True, encoding="utf-8", timeout=5
         )
         lines = (r.stdout or "").strip().splitlines()
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return ""
     if not lines: return ""
-    return _h(f"최근 {CUTOFF_HOURS}h commit") + "\n".join(f"  - {ln}" for ln in lines[:10])
+    return _h(f"理쒓렐 {CUTOFF_HOURS}h commit") + "\n".join(f"  - {ln}" for ln in lines[:10])
 
 def section_last_prompts() -> str:
     if not DB.exists(): return ""
@@ -87,10 +87,10 @@ def section_last_prompts() -> str:
             "SELECT content, ts FROM conversations WHERE role='user' "
             "ORDER BY ts DESC LIMIT 3"
         ).fetchall()
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return ""
     if not rows: return ""
-    out = [_h("마지막 사용자 지시 3개 (최신→과거)")]
+    out = [_h("留덉?留??ъ슜??吏??3媛?(理쒖떊?믨낵嫄?")]
     for txt, ts in rows:
         snip = (txt or "")[:150].replace("\n", " ")
         out.append(f"  - [{ts}] {snip}")
@@ -100,13 +100,13 @@ def section_snapshot() -> str:
     if not SNAPSHOT.exists(): return ""
     try:
         txt = SNAPSHOT.read_text(encoding="utf-8", errors="replace")[:600]
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return ""
     if not txt.strip(): return ""
-    return _h("최종 세션 스냅샷") + txt
+    return _h("理쒖쥌 ?몄뀡 ?ㅻ깄??) + txt
 
 def _sanitize(s: str) -> str:
-    """unpaired surrogate 제거 (orca.db 안 cp949↔utf-8 변환 잔재) — Claude API lone surrogate 400 방지"""
+    """unpaired surrogate ?쒓굅 (orca.db ??cp949?봴tf-8 蹂???붿옱) ??Claude API lone surrogate 400 諛⑹?"""
     if not isinstance(s, str): return s
     return s.encode("utf-8", "replace").decode("utf-8", "replace")
 
@@ -119,11 +119,11 @@ def main():
         section_snapshot(),
     ]
     body = "\n".join(p for p in parts if p).strip()
-    if not body: return  # 복구할 거 없음
+    if not body: return  # 蹂듦뎄??嫄??놁쓬
     body = _sanitize(body)[:MAX_CHARS]
-    header = f"# 자동 복구 (최근 {CUTOFF_HOURS}h · resume-last-24h.py)\n"
-    header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
-    # 사용자 지시 '--json' 시 SessionStart hook JSON 직접 반환 (shell escape 우회)
+    header = f"# ?먮룞 蹂듦뎄 (理쒓렐 {CUTOFF_HOURS}h 쨌 resume-last-24h.py)\n"
+    header += "?щ??끒룸찓紐⑤━ 醫낅즺 ???묒뾽 ?곹깭. ?ъ슜???ㅻ챸 ?붽뎄 X 쨌 諛붾줈 ?댁뼱??\n"
+    # ?ъ슜??吏??'--json' ??SessionStart hook JSON 吏곸젒 諛섑솚 (shell escape ?고쉶)
     if "--json" in sys.argv:
         import json as _j
         print(_j.dumps({
@@ -137,4 +137,5 @@ def main():
 
 if __name__ == "__main__":
     try: main()
-    except Exception as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
+

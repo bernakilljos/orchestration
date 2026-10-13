@@ -1,22 +1,22 @@
-"""Frontend visual + console error verifier.
+﻿"""Frontend visual + console error verifier.
 
-Playwright headless 로 페이지 N개 로드 -> console error / pageerror / network 4xx-5xx 캡처.
-hook-09-ocr-verify.sh 의 build-*-html 패턴 또는 사용자 명시 호출로 발동.
+Playwright headless 濡??섏씠吏 N媛?濡쒕뱶 -> console error / pageerror / network 4xx-5xx 罹≪쿂.
+hook-09-ocr-verify.sh ??build-*-html ?⑦꽩 ?먮뒗 ?ъ슜??紐낆떆 ?몄텧濡?諛쒕룞.
 
 Usage:
   python .claude/scripts/verify-frontend.py <url-or-html-file> [<url-or-html-file>...]
-  python .claude/scripts/verify-frontend.py --dir <html-root-dir>  (재귀 *.html 스캔)
+  python .claude/scripts/verify-frontend.py --dir <html-root-dir>  (?ш? *.html ?ㅼ틪)
 
-Whitelist (noise 제거):
+Whitelist (noise ?쒓굅):
   - favicon.ico 404
   - .map (sourcemap) 404
   - chrome-extension://
   - DevTools listening
 
 Exit:
-  0 = PASS (오류 0)
-  1 = FAIL (콘솔 에러 / pageerror / 4xx-5xx 검출)
-  2 = SKIP (Playwright 미설치)
+  0 = PASS (?ㅻ쪟 0)
+  1 = FAIL (肄섏넄 ?먮윭 / pageerror / 4xx-5xx 寃異?
+  2 = SKIP (Playwright 誘몄꽕移?
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from pathlib import Path
 try:
     from playwright.sync_api import sync_playwright
 except ImportError:
-    print("[SKIP] Playwright 미설치 — pip install playwright + playwright install chromium")
+    print("[SKIP] Playwright 誘몄꽕移???pip install playwright + playwright install chromium")
     sys.exit(2)
 
 WHITELIST_PATTERNS = [
@@ -82,8 +82,8 @@ def verify_url(url: str, timeout_ms: int = 10000) -> dict:
 
         try:
             page.goto(url, timeout=timeout_ms, wait_until="networkidle")
-            page.wait_for_timeout(1000)  # JS 실행 시간 부여
-        except Exception as e:
+            page.wait_for_timeout(1000)  # JS ?ㅽ뻾 ?쒓컙 遺??
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             result["page_errors"].append(f"navigation failed: {e}")
 
         browser.close()
@@ -99,9 +99,9 @@ def to_url(target: str) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("targets", nargs="*", help="URL 또는 HTML 파일 경로")
-    ap.add_argument("--dir", help="HTML 루트 디렉토리 (재귀 *.html 스캔)")
-    ap.add_argument("--json", action="store_true", help="JSON 출력")
+    ap.add_argument("targets", nargs="*", help="URL ?먮뒗 HTML ?뚯씪 寃쎈줈")
+    ap.add_argument("--dir", help="HTML 猷⑦듃 ?붾젆?좊━ (?ш? *.html ?ㅼ틪)")
+    ap.add_argument("--json", action="store_true", help="JSON 異쒕젰")
     args = ap.parse_args()
 
     urls = [to_url(t) for t in args.targets]
@@ -138,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

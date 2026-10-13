@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-"""score_task.py — Haiku LLM-as-judge for task results.
+﻿#!/usr/bin/env python3
+"""score_task.py ??Haiku LLM-as-judge for task results.
 
 Usage:
     python score_task.py --task <task-file> --result <result-file>
@@ -82,7 +82,7 @@ def call_haiku(task_md: str, result_md: str) -> dict:
                      "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": user}],
         )
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return {"error": f"API call failed: {e}"}
 
     text = "".join(b.text for b in resp.content if hasattr(b, "text")).strip()
@@ -188,3 +188,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

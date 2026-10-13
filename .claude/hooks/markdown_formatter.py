@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Markdown formatter for Claude Code output.
 Fixes missing language tags and spacing issues while preserving code content.
@@ -76,8 +76,8 @@ try:
         if formatted != content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(formatted)
-            print(f"✓ Fixed markdown formatting in {file_path}")
+            print(f"??Fixed markdown formatting in {file_path}")
 
-except Exception as e:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
     print(f"Error formatting markdown: {e}", file=sys.stderr)
     sys.exit(1)

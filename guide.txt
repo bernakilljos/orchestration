@@ -1834,8 +1834,30 @@
 ## cmem 광고 disable
 - ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false
 
+## capture-browser-errors.py (2026-10-13 신규)
+- Playwright F12 콘솔 자동 캡처 (Windows/Mac/Linux 크로스 플랫폼)
+- 사용: python .claude/scripts/capture-browser-errors.py "https://url.com" [--headed] [--timeout 30]
+- 캡처 대상: 콘솔 에러·경고 · 미처리 예외 · 네트워크 fail · HTTP 4xx/5xx
+- 결과: .claude/logs/browser-errors-<timestamp>.json (구조화된 JSON)
+- 스킬 trigger: "F12"·"콘솔 에러"·"빨간 에러" 감지 시 자동 활성
+- 에러 발견 시 exit code 1 (CI/CD 통합 가능)
 
+## vscode-java-lsp-fix.md (2026-10-13 신규 스킬)
+- VSCode Java Language Server 크래시 자동 진단 (에러 -32097)
+- 3단계 해결: ① Python 프로젝트면 java.enabled=false (workspace .vscode/settings.json) ②
+  Java 프로젝트면 Red Hat Extension Pack + JDK 21 설치 ③ 포트 충돌 확인
+- SessionStart hook가 자동 .vscode/settings.json 생성 (프로젝트 타입 감지)
+- trigger: "crashed"·"-32097"·"LSP 죽었어"·"Red Hat Java" 감지 시 즉시 스킬 활성
 
+## orca-10min-loop.py 개선 (2026-10-13)
+- 이전 버전: 유니코드 깨짐(mojibake) → ERROR 83건 발생
+- 개선 사항:
+  - UTF-8 encoding 명시 (# -*- coding: utf-8 -*-)
+  - subprocess 크로스플랫폼: shutil.which("bash") 로 동적 검색 + shell=False
+  - 예외 처리 강화 (모든 except → Exception)
+  - psutil 선택적 (미설치 시 graceful fallback)
+- 테스트: python .claude/scripts/orca-10min-loop.py --dry-run
+- wrapper: .claude/scripts/orca-10min-loop.bat (Task Scheduler 용)
 
 
 

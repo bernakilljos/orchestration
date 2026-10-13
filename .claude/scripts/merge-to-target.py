@@ -1,25 +1,25 @@
-#!/usr/bin/env python3
-"""merge-to-target — kit 인프라를 기존 프로젝트에 **병합** (덮어쓰기 X · 중복 제외).
+﻿#!/usr/bin/env python3
+"""merge-to-target ??kit ?명봽?쇰? 湲곗〈 ?꾨줈?앺듃??**蹂묓빀** (??뼱?곌린 X 쨌 以묐났 ?쒖쇅).
 
-install-to-target.sh 는 rules/·plugins/ 를 rm -rf 후 통째 복사 → 대상 고유 파일이 사라지고,
-commands·skills·agents·settings hook 은 아예 안 갔다. 이 스크립트가 그 병합판이다.
+install-to-target.sh ??rules/쨌plugins/ 瑜?rm -rf ???듭㎏ 蹂듭궗 ?????怨좎쑀 ?뚯씪???щ씪吏怨?
+commands쨌skills쨌agents쨌settings hook ? ?꾩삁 ??媛붾떎. ???ㅽ겕由쏀듃媛 洹?蹂묓빀?먯씠??
 
-같은 경로 파일 판정 (내용 기준 · 추측 X):
-  identical      → skip (중복)
-  stale-kit      → 대상 내용이 kit git 이력의 과거 버전과 바이트 동일 = 옛 kit 사본 → 최신으로 교체
-  target-custom  → 어느 kit 버전과도 다름 = 대상에서 고친 것 → 보존 (보고만)
-  kit-only       → 추가
-  target-only    → 보존
+媛숈? 寃쎈줈 ?뚯씪 ?먯젙 (?댁슜 湲곗? 쨌 異붿륫 X):
+  identical      ??skip (以묐났)
+  stale-kit      ??????댁슜??kit git ?대젰??怨쇨굅 踰꾩쟾怨?諛붿씠???숈씪 = ??kit ?щ낯 ??理쒖떊?쇰줈 援먯껜
+  target-custom  ???대뒓 kit 踰꾩쟾怨쇰룄 ?ㅻ쫫 = ??곸뿉??怨좎튇 寃???蹂댁〈 (蹂닿퀬留?
+  kit-only       ??異붽?
+  target-only    ??蹂댁〈
 
-settings.json : hook 은 command 문자열 기준 합집합 · permissions.allow 합집합 ·
-                없는 최상위 키만 추가 · statusLine 은 없거나 전역(~/.claude) 옛 스크립트일 때만 kit 포인터로.
-.mcp.json     : 없는 서버만 추가.
-메모리        : setup/templates/user_style_profile.md → 대상 프로젝트 memory + .claude/state (없을 때).
-CLAUDE.md     : 건드리지 않음 (프로젝트 헌장).
+settings.json : hook ? command 臾몄옄??湲곗? ?⑹쭛??쨌 permissions.allow ?⑹쭛??쨌
+                ?녿뒗 理쒖긽???ㅻ쭔 異붽? 쨌 statusLine ? ?녾굅???꾩뿭(~/.claude) ???ㅽ겕由쏀듃???뚮쭔 kit ?ъ씤?곕줈.
+.mcp.json     : ?녿뒗 ?쒕쾭留?異붽?.
+硫붾え由?       : setup/templates/user_style_profile.md ??????꾨줈?앺듃 memory + .claude/state (?놁쓣 ??.
+CLAUDE.md     : 嫄대뱶由ъ? ?딆쓬 (?꾨줈?앺듃 ?뚯옣).
 
-사용: python merge-to-target.py <TARGET> [--apply]   (기본 = 미리보기)
-      python merge-to-target.py --all --apply           (.claude/state/merge-targets.txt 전부 · git post-merge 가 호출)
-백업: <TARGET>/.claude/backups/kit-merge-<ts>/ (교체되는 파일만)
+?ъ슜: python merge-to-target.py <TARGET> [--apply]   (湲곕낯 = 誘몃━蹂닿린)
+      python merge-to-target.py --all --apply           (.claude/state/merge-targets.txt ?꾨? 쨌 git post-merge 媛 ?몄텧)
+諛깆뾽: <TARGET>/.claude/backups/kit-merge-<ts>/ (援먯껜?섎뒗 ?뚯씪留?
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ from pathlib import Path
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     pass
 
 KIT = Path(__file__).resolve().parents[2]
@@ -52,7 +52,7 @@ def md5(b: bytes) -> str:
 
 
 def git_history_hashes(rel: str) -> set[str]:
-    """kit git 이력에 있었던 이 경로의 모든 내용 hash (CRLF/LF 둘 다)."""
+    """kit git ?대젰???덉뿀????寃쎈줈??紐⑤뱺 ?댁슜 hash (CRLF/LF ????."""
     out: set[str] = set()
     try:
         revs = subprocess.run(
@@ -67,15 +67,15 @@ def git_history_hashes(rel: str) -> set[str]:
                 out.add(md5(blob))
                 out.add(md5(blob.replace(b"\r\n", b"\n")))
                 out.add(md5(blob.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")))
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         pass
     return out
 
 
 def norm(b: bytes) -> bytes:
-    # 줄끝 통일 + CLAUDE.md 의 AUTO-STATS 한 줄(스크립트 수 등, hook 이 수시로 고침)은 비교에서 제외
+    # 以꾨걹 ?듭씪 + CLAUDE.md ??AUTO-STATS ??以??ㅽ겕由쏀듃 ???? hook ???섏떆濡?怨좎묠)? 鍮꾧탳?먯꽌 ?쒖쇅
     b = b.replace(b"\r\n", b"\n")
-    return re.sub(rb"(?m)^> \*\*" + "현재 상태".encode("utf-8") + rb"\*\*.*$", b"", b)
+    return re.sub(rb"(?m)^> \*\*" + "?꾩옱 ?곹깭".encode("utf-8") + rb"\*\*.*$", b"", b)
 
 
 def walk(root: Path, rel_tree: str):
@@ -99,15 +99,15 @@ def load_json(p: Path) -> dict:
 
 
 def hook_key(cmd: str) -> str:
-    """중복 판정 키 = 실행 스크립트 파일명 + 인자 (경로가 달라도 같은 hook 이면 중복).
-    예: .claude/hooks/cleanup-orphans.sh SessionEnd == plugins/x/hooks/cleanup-orphans.sh SessionEnd"""
+    """以묐났 ?먯젙 ??= ?ㅽ뻾 ?ㅽ겕由쏀듃 ?뚯씪紐?+ ?몄옄 (寃쎈줈媛 ?щ씪??媛숈? hook ?대㈃ 以묐났).
+    ?? .claude/hooks/cleanup-orphans.sh SessionEnd == plugins/x/hooks/cleanup-orphans.sh SessionEnd"""
     m = re.search(r"([\w.-]+\.(?:sh|py))[\"']?(.*)$", cmd)
     return (m.group(1) + m.group(2).strip()) if m else cmd.strip()
 
 
 def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     out = json.loads(json.dumps(tgt))
-    # hooks: event 별 command 합집합 (대상 순서 유지, kit 것은 뒤에 append)
+    # hooks: event 蹂?command ?⑹쭛??(????쒖꽌 ?좎?, kit 寃껋? ?ㅼ뿉 append)
     kh, th = kit.get("hooks") or {}, out.setdefault("hooks", {})
     added = 0
     for ev, kmatchers in kh.items():
@@ -120,12 +120,12 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             have |= {hook_key(h.get("command", "")) for h in new_hooks}
             added += len(new_hooks)
     report.append(f"settings.hooks +{added}")
-    # 2026-10-12 — kit 에서 다른 hook 으로 대체된 hook 은 대상에서도 뺀다 (안 빼면 옛 13개 + 새 1개가 같이 돈다).
-    #   대체 hook 이 대상에 들어간 경우에만 뺀다 · 대상이 직접 고친 hook 도 같은 이름이면 대체된 것으로 본다.
+    # 2026-10-12 ??kit ?먯꽌 ?ㅻⅨ hook ?쇰줈 ?泥대맂 hook ? ??곸뿉?쒕룄 類??(??鍮쇰㈃ ??13媛?+ ??1媛쒓? 媛숈씠 ?덈떎).
+    #   ?泥?hook ????곸뿉 ?ㅼ뼱媛?寃쎌슦?먮쭔 類??쨌 ??곸씠 吏곸젒 怨좎튇 hook ??媛숈? ?대쫫?대㈃ ?泥대맂 寃껋쑝濡?蹂몃떎.
     retired_n = 0
     try:
         ret = json.loads((KIT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         ret = {}
     for ev, spec in ret.items():
         if ev.startswith("_") or not isinstance(spec, dict):
@@ -143,10 +143,8 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             if hs:
                 kept.append({**m, "hooks": hs})
         th[ev] = kept
-    report.append(f"settings.hooks 대체로 제거 {retired_n}")
-    # 이미 있는 kit hook 의 실행 속성(timeout·async)은 kit 값을 따른다
-    #   2026-10-06: kit 에서 detect-* timeout 3→10 으로 올려도 대상은 3 에 머물던 것
-    kit_attr = {}
+    report.append(f"settings.hooks ?泥대줈 ?쒓굅 {retired_n}")
+    # ?대? ?덈뒗 kit hook ???ㅽ뻾 ?띿꽦(timeout쨌async)? kit 媛믪쓣 ?곕Ⅸ??    #   2026-10-06: kit ?먯꽌 detect-* timeout 3??0 ?쇰줈 ?щ젮????곸? 3 ??癒몃Ъ??寃?    kit_attr = {}
     for ev, kmatchers in kh.items():
         for km in kmatchers or []:
             for h in km.get("hooks", []):
@@ -162,24 +160,23 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
                     if h.get(k) != v:
                         h[k] = v
                         synced += 1
-    report.append(f"settings.hooks 속성 동기화 {synced}")
-    # permissions.allow 합집합
-    ka = (kit.get("permissions") or {}).get("allow") or []
+    report.append(f"settings.hooks ?띿꽦 ?숆린??{synced}")
+    # permissions.allow ?⑹쭛??    ka = (kit.get("permissions") or {}).get("allow") or []
     perm = out.setdefault("permissions", {})
     ta = perm.setdefault("allow", [])
     add_allow = [a for a in ka if a not in ta]
     ta.extend(add_allow)
     report.append(f"settings.permissions.allow +{len(add_allow)}")
-    # statusLine: 없거나 전역 옛 스크립트를 가리키면 kit 포인터로
+    # statusLine: ?녾굅???꾩뿭 ???ㅽ겕由쏀듃瑜?媛由ы궎硫?kit ?ъ씤?곕줈
     sl = (out.get("statusLine") or {}).get("command", "")
     if not sl or ".claude/statusline_context.py" in sl.replace("\\", "/") and "$CLAUDE_PROJECT_DIR" not in sl:
         out["statusLine"] = kit.get("statusLine")
-        report.append("settings.statusLine → kit 포인터")
-    # 없는 최상위 키만
+        report.append("settings.statusLine ??kit ?ъ씤??)
+    # ?녿뒗 理쒖긽???ㅻ쭔
     for k, v in kit.items():
         if k not in out:
             out[k] = v
-            report.append(f"settings.{k} 추가")
+            report.append(f"settings.{k} 異붽?")
     return out
 
 
@@ -198,16 +195,16 @@ def main() -> int:
     target = Path(sys.argv[1]).resolve()
     apply = "--apply" in sys.argv
     if not target.is_dir():
-        print(f"대상 없음: {target}")
+        print(f"????놁쓬: {target}")
         return 2
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
     stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "kit-only")}
-    # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
+    # ???꾧뎄媛 留덉?留됱쑝濡????ｌ? ?댁슜 吏臾???洹몃?濡쒕㈃ kit ?뚯쑀 (而ㅻ컠 ??踰꾩쟾??蹂듭궗?덉뼱??媛깆떊 媛??
     man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
     try:
         manifest = json.loads(man_p.read_text(encoding="utf-8")) if man_p.exists() else {}
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         manifest = {}
 
     def owned(rel: str, db: bytes) -> bool:
@@ -276,33 +273,33 @@ def main() -> int:
     km, tm_p = load_json(KIT / ".mcp.json"), target / ".mcp.json"
     tm = load_json(tm_p)
     if km.get("mcpServers"):
-        # 실행 파일이 이 PC 에 없는 서버는 넣지 않는다 (연결 실패를 퍼뜨리지 않음)
+        # ?ㅽ뻾 ?뚯씪????PC ???녿뒗 ?쒕쾭???ｌ? ?딅뒗??(?곌껐 ?ㅽ뙣瑜??쇰쑉由ъ? ?딆쓬)
         add = {k: v for k, v in km["mcpServers"].items()
                if k not in (tm.get("mcpServers") or {}) and (v.get("url") or shutil.which(v.get("command", "")))}
         skipped = [k for k, v in km["mcpServers"].items()
                    if k not in (tm.get("mcpServers") or {}) and k not in add]
         if skipped:
-            report.append(f".mcp.json 제외(실행파일 없음) {skipped}")
-        report.append(f".mcp.json 서버 +{len(add)} {sorted(add)}")
+            report.append(f".mcp.json ?쒖쇅(?ㅽ뻾?뚯씪 ?놁쓬) {skipped}")
+        report.append(f".mcp.json ?쒕쾭 +{len(add)} {sorted(add)}")
         if apply and add:
             if tm_p.exists():
                 shutil.copy2(tm_p, backup / ".mcp.json") if backup.exists() else None
             tm.setdefault("mcpServers", {}).update(add)
             tm_p.write_text(json.dumps(tm, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    # 메모리 (스타일 프로필)
+    # 硫붾え由?(?ㅽ????꾨줈??
     prof = KIT / "setup" / "templates" / "user_style_profile.md"
     if prof.exists():
         mem = proj_memory_dir(target)
         for dst in (mem / "user_style_profile.md", target / ".claude" / "state" / "user_style_profile.md"):
             if not dst.exists() or norm(dst.read_bytes()) != norm(prof.read_bytes()):
-                report.append(f"memory → {dst}")
+                report.append(f"memory ??{dst}")
                 if apply:
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(prof, dst)
         idx = mem / "MEMORY.md"
-        line = "- [사용자 스타일 10축](user_style_profile.md) — ENFP-ADHD · 짧고 명확 · Zero-touch · 이력 먼저 (kit setup/templates 정본)\n"
+        line = "- [?ъ슜???ㅽ???10異?(user_style_profile.md) ??ENFP-ADHD 쨌 吏㏐퀬 紐낇솗 쨌 Zero-touch 쨌 ?대젰 癒쇱? (kit setup/templates ?뺣낯)\n"
         if not idx.exists() or "user_style_profile.md" not in idx.read_text(encoding="utf-8", errors="replace"):
-            report.append(f"memory index → {idx}")
+            report.append(f"memory index ??{idx}")
             if apply:
                 idx.parent.mkdir(parents=True, exist_ok=True)
                 with open(idx, "a", encoding="utf-8") as f:
@@ -311,29 +308,28 @@ def main() -> int:
     if apply:
         man_p.parent.mkdir(parents=True, exist_ok=True)
         man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
-    # 병합한 대상은 이 PC 의 목록에 자동 등록 → git pull (post-merge) 때 자동 재병합
-    #   목록은 .claude/state/ (gitignore · PC 별) — 경로를 git 에 박지 않는다
-    if apply:
+    # 蹂묓빀????곸? ??PC ??紐⑸줉???먮룞 ?깅줉 ??git pull (post-merge) ???먮룞 ?щ퀝??    #   紐⑸줉? .claude/state/ (gitignore 쨌 PC 蹂? ??寃쎈줈瑜?git ??諛뺤? ?딅뒗??    if apply:
         reg = KIT / ".claude" / "state" / "merge-targets.txt"
         reg.parent.mkdir(parents=True, exist_ok=True)
         cur = reg.read_text(encoding="utf-8").splitlines() if reg.exists() else []
         if str(target) not in cur:
             with open(reg, "a", encoding="utf-8") as f:
                 f.write(str(target) + chr(10))
-            report.append(f"자동 병합 목록 등록 → {reg}")
+            report.append(f"?먮룞 蹂묓빀 紐⑸줉 ?깅줉 ??{reg}")
 
     mode = "APPLY" if apply else "DRY-RUN"
     print(f"=== merge-to-target [{mode}] {target}")
     for k, v in stats.items():
         print(f"  {k:14} {len(v)}")
     for rel in stats["target-custom"]:
-        print(f"    보존(대상 수정본) {rel}")
+        print(f"    蹂댁〈(????섏젙蹂? {rel}")
     for r in report:
         print(f"  {r}")
     if apply:
-        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+        print(f"  諛깆뾽: {backup if backup.exists() else '(援먯껜 ?놁쓬)'}")
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

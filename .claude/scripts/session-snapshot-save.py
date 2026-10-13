@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
-"""세션 스냅샷 저장 — /clear 전에 또는 cycle 끝마다 자동 호출.
+﻿#!/usr/bin/env python3
+"""?몄뀡 ?ㅻ깄???????/clear ?꾩뿉 ?먮뒗 cycle ?앸쭏???먮룞 ?몄텧.
 
-저장 내용:
-- 현재 cycle 번호
-- 미완료 task (pending 1~28)
-- 마지막 5개 git commit
-- 마지막 30min report 경로
-- 핵심 결함 (logs 분석)
-- 다음 action
+????댁슜:
+- ?꾩옱 cycle 踰덊샇
+- 誘몄셿猷?task (pending 1~28)
+- 留덉?留?5媛?git commit
+- 留덉?留?30min report 寃쎈줈
+- ?듭떖 寃고븿 (logs 遺꾩꽍)
+- ?ㅼ쓬 action
 
-위치: .claude/context-cache/session-snapshot.md
+?꾩튂: .claude/context-cache/session-snapshot.md
 """
 import json
 import subprocess
@@ -25,7 +25,7 @@ SNAPSHOT = CACHE / "session-snapshot.md"
 def _run(cmd: list[str]) -> str:
     try:
         return subprocess.check_output(cmd, cwd=ROOT, encoding="utf-8", errors="replace", timeout=15)
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"(error: {e})"
 
 
@@ -46,8 +46,8 @@ def main() -> None:
         for f in sorted(pending_dir.glob("*.md"))[:30]:
             pending_items.append(f.name)
 
-    # 직전 세션의 사용자 지시 — hook-trace.log 에서 실측 (하드코딩 금지)
-    recent_prompts = "(기록 없음)"
+    # 吏곸쟾 ?몄뀡???ъ슜??吏????hook-trace.log ?먯꽌 ?ㅼ륫 (?섎뱶肄붾뵫 湲덉?)
+    recent_prompts = "(湲곕줉 ?놁쓬)"
     trace = ROOT / ".claude" / "logs" / "hook-trace.log"
     if trace.exists():
         lines = []
@@ -58,7 +58,7 @@ def main() -> None:
                     txt = ln.split("|", 1)[1].strip()
                     if txt:
                         lines.append(f"- [{ts}] {txt[:160]}")
-        except Exception:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
             lines = []
         if lines:
             recent_prompts = chr(10).join(lines[-5:][::-1])
@@ -69,29 +69,29 @@ def main() -> None:
     done_dir = ROOT / ".claude" / "tasks" / "done"
     done_count = len(list(done_dir.glob("*.md"))) if done_dir.exists() else 0
 
-    content = f"""# 세션 스냅샷 — {now}
+    content = f"""# ?몄뀡 ?ㅻ깄????{now}
 
-자동 저장. SessionStart hook 이 이 파일 발견하면 systemMessage 로 로드.
+?먮룞 ??? SessionStart hook ?????뚯씪 諛쒓껄?섎㈃ systemMessage 濡?濡쒕뱶.
 
-## 현재 상태
+## ?꾩옱 ?곹깭
 
-- 작업 디렉토리: {ROOT}
-- 저장 시각: {now}
+- ?묒뾽 ?붾젆?좊━: {ROOT}
+- ????쒓컖: {now}
 
-## 미완료 task (pending)
+## 誘몄셿猷?task (pending)
 
-{chr(10).join(f"- {p}" for p in pending_items) if pending_items else "- (pending 없음)"}
+{chr(10).join(f"- {p}" for p in pending_items) if pending_items else "- (pending ?놁쓬)"}
 
-## Codex 큐 상태
+## Codex ???곹깭
 
-- 큐 대기: {queue_count}
-- 완료 (시도): {done_count}
+- ???湲? {queue_count}
+- ?꾨즺 (?쒕룄): {done_count}
 
-## 최근 30min reports
+## 理쒓렐 30min reports
 
-{chr(10).join(f"- .claude/logs/30min-reports/{r}" for r in last_reports) if last_reports else "- (없음)"}
+{chr(10).join(f"- .claude/logs/30min-reports/{r}" for r in last_reports) if last_reports else "- (?놁쓬)"}
 
-## 최근 git commits
+## 理쒓렐 git commits
 
 ```
 {git_log.strip()}
@@ -103,16 +103,14 @@ def main() -> None:
 {git_status.strip() if git_status.strip() else "(clean)"}
 ```
 
-## 직전 세션의 사용자 지시 (최근 순)
+## 吏곸쟾 ?몄뀡???ъ슜??吏??(理쒓렐 ??
 
 {recent_prompts}
 
-## 이어서 할 일
-
-위 지시와 Working tree 의 미커밋 변경이 곧 진행 중이던 작업이다.
-새로 시작하지 말고 여기서 이어갈 것. 하드코딩된 할 일 목록은 두지 않는다
-(2026-09-08: 3개월 전 목록이 계속 주입되던 결함 교정).
-핵심 룰은 MEMORY.md 인덱스가 세션 시작 시 별도로 주입한다.
+## ?댁뼱??????
+??吏?쒖? Working tree ??誘몄빱諛?蹂寃쎌씠 怨?吏꾪뻾 以묒씠???묒뾽?대떎.
+?덈줈 ?쒖옉?섏? 留먭퀬 ?ш린???댁뼱媛?寃? ?섎뱶肄붾뵫??????紐⑸줉? ?먯? ?딅뒗??(2026-09-08: 3媛쒖썡 ??紐⑸줉??怨꾩냽 二쇱엯?섎뜕 寃고븿 援먯젙).
+?듭떖 猷곗? MEMORY.md ?몃뜳?ㅺ? ?몄뀡 ?쒖옉 ??蹂꾨룄濡?二쇱엯?쒕떎.
 """
     SNAPSHOT.write_text(content, encoding="utf-8")
     print(f"[snapshot] saved {SNAPSHOT}")
@@ -126,3 +124,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

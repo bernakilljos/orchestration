@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-record_call.py — Workers record API call metrics to SQLite.
+record_call.py ??Workers record API call metrics to SQLite.
 
 CLI usage:
     python record_call.py --ai codex --model codex \\
@@ -109,7 +109,7 @@ def record_api_call(
             ).fetchone()
         if row and row[0] is not None and today_spent >= row[0]:
             trip_breaker(f"Daily limit ${row[0]:.2f} reached (spent ${today_spent:.2f})")
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         pass  # Budget check failed, but metric recorded
 
     return cost_usd
@@ -151,3 +151,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

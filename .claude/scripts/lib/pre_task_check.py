@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-pre_task_check.py — Pre-flight check before worker executes task.
+pre_task_check.py ??Pre-flight check before worker executes task.
 
 Usage:
     python pre_task_check.py <ai_type> [task_file]
@@ -52,10 +52,11 @@ def main():
         # OK
         sys.exit(0)
 
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         print(f"ERROR in pre_task_check: {e}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
+

@@ -1,13 +1,13 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-generate-final-ppt.py - HTML/CSS 슬라이드를 Playwright 로 PNG 렌더링 후
-                        python-pptx 에 풀블리드로 조립.
+generate-final-ppt.py - HTML/CSS ?щ씪?대뱶瑜?Playwright 濡?PNG ?뚮뜑留???
+                        python-pptx ???釉붾━?쒕줈 議곕┰.
 
 Architecture:
-  1. Playwright async: 1920×1080 viewport, device_scale_factor=2 (4K)
-  2. 각 HTML -> PNG 렌더링 (font load 대기)
-  3. python-pptx: blank slide layout + 이미지 풀블리드 삽입
+  1. Playwright async: 1920횞1080 viewport, device_scale_factor=2 (4K)
+  2. 媛?HTML -> PNG ?뚮뜑留?(font load ?湲?
+  3. python-pptx: blank slide layout + ?대?吏 ?釉붾━???쎌엯
 
 Usage:
   python generate-final-ppt.py [--dry-run] [--verbose]
@@ -149,7 +149,7 @@ async def render_all() -> List[Path]:
                 rendered_pngs.append(png_path)
                 log(f"  [OK] {png_path.name} ({png_path.stat().st_size / 1024:.1f} KB)")
 
-            except Exception as e:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
                 log(f"  ERROR rendering {slide_html.name}: {e}", "WARN")
                 continue
 
@@ -181,16 +181,16 @@ def assemble_pptx(png_files: List[Path]) -> Path:
     # Create presentation
     prs = Presentation()
 
-    # Set slide dimensions to 1920×1080 (landscape widescreen)
+    # Set slide dimensions to 1920횞1080 (landscape widescreen)
     # EMU = English Metric Units. 1 inch = 914400 EMU
-    # 1920px ≈ 2.67 inches, 1080px ≈ 1.5 inches (at 72 DPI)
-    # But we want exact 1920×1080, so use EMU directly:
+    # 1920px ??2.67 inches, 1080px ??1.5 inches (at 72 DPI)
+    # But we want exact 1920횞1080, so use EMU directly:
     # 1920 * 9525 = 18,288,000 EMU
     # 1080 * 9525 = 10,287,000 EMU
     prs.slide_width = Emu(int(SLIDE_WIDTH * 9525))
     prs.slide_height = Emu(int(SLIDE_HEIGHT * 9525))
 
-    debug(f"Slide dimensions: {prs.slide_width} × {prs.slide_height} EMU")
+    debug(f"Slide dimensions: {prs.slide_width} 횞 {prs.slide_height} EMU")
 
     # Use blank layout (index 6)
     blank_layout = prs.slide_layouts[6]
@@ -273,3 +273,4 @@ async def main():
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
     sys.exit(exit_code)
+

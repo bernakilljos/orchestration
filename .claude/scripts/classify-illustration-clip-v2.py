@@ -1,7 +1,7 @@
-"""CLIP 분류 v2 — 더 세분화 카테고리 (20개).
+﻿"""CLIP 遺꾨쪟 v2 ?????몃텇??移댄뀒怨좊━ (20媛?.
 
-dribbble illustration 의 실제 분포에 맞춘 prompts.
-character-etc 가 등 큰 폴더를 더 세분화.
+dribbble illustration ???ㅼ젣 遺꾪룷??留욎텣 prompts.
+character-etc 媛 ?????대뜑瑜????몃텇??
 """
 import time
 from pathlib import Path
@@ -14,22 +14,22 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = ROOT / "docs" / "screens" / "illustration"
 
 CATEGORIES = {
-    # 사람/캐릭터
+    # ?щ엺/罹먮┃??
     "human":          "a photo of real people, person, photographer",
     "character":      "a cartoon character, mascot, or stylized human figure illustration",
     "portrait":       "a portrait painting or drawing of a face",
 
-    # 자연/생물
+    # ?먯뿰/?앸Ъ
     "animal":         "an illustration of an animal, wildlife, pet, dog, cat, bird",
     "plant":          "an illustration of plants, flowers, trees, leaves, botanical",
     "scenery":        "a landscape, mountains, beach, sunset, city skyline, outdoor scene",
 
-    # 음식/사물
+    # ?뚯떇/?щЪ
     "food":           "an illustration of food, drink, meal, fruit, coffee",
     "transport":      "an illustration of a vehicle, car, ship, train, plane, rocket, transportation",
     "building":       "an illustration of architecture, building, house, structure",
 
-    # 디지털-UI
+    # ?붿???UI
     "chart":          "a chart, graph, data visualization, bar or line chart, dashboard",
     "icon":           "an icon set, app icon, symbol icons, glyph",
     "logo":           "a brand logo, wordmark, monogram, brand identity",
@@ -38,7 +38,7 @@ CATEGORIES = {
     "ui-screen":      "a user interface screen, app interface, dashboard interface design",
     "poster":         "a poster, banner, advertisement design, hero artwork",
 
-    # 추상
+    # 異붿긽
     "pattern":        "a repeating pattern, texture, geometric tile, wallpaper",
     "gradient":       "an abstract gradient, color blend, soft color composition",
     "abstract-shape": "abstract geometric shapes, sphere, cube, fluid shapes, blobs",
@@ -60,16 +60,16 @@ def main():
     text_prompts = list(CATEGORIES.values())
     category_keys = list(CATEGORIES.keys())
 
-    # 모든 카테고리 폴더 (기존 + 신규)
+    # 紐⑤뱺 移댄뀒怨좊━ ?대뜑 (湲곗〈 + ?좉퇋)
     for cat in category_keys:
         (SRC_DIR / cat).mkdir(exist_ok=True)
 
-    # 이미지 list — 기존 폴더 내 + root 둘 다 수집 (재분류)
+    # ?대?吏 list ??湲곗〈 ?대뜑 ??+ root ?????섏쭛 (?щ텇瑜?
     images = []
     for f in SRC_DIR.rglob("*"):
         if f.is_file() and f.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp"):
             images.append(f)
-    print(f"[total] {len(images)} images (재분류)", flush=True)
+    print(f"[total] {len(images)} images (?щ텇瑜?", flush=True)
 
     summary = {k: 0 for k in category_keys}
     skipped = 0
@@ -85,7 +85,7 @@ def main():
                 best_idx = probs.argmax(dim=-1).item()
             cat = category_keys[best_idx]
             score = probs[0, best_idx].item()
-            # 폴더로 이동 (현재 폴더와 다르면)
+            # ?대뜑濡??대룞 (?꾩옱 ?대뜑? ?ㅻⅤ硫?
             target_dir = SRC_DIR / cat
             new_path = target_dir / img_path.name
             if img_path.resolve() != new_path.resolve():
@@ -96,15 +96,16 @@ def main():
                 rate = i / max(elapsed, 1)
                 eta = int((len(images) - i) / max(rate, 0.1))
                 print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) - {elapsed}s - ETA {eta}s", flush=True)
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             skipped += 1
             print(f"  [FAIL] {img_path.name}: {type(e).__name__} {str(e)[:60]}", flush=True)
     elapsed = int(time.time() - start)
     print(f"\n[DONE] {sum(summary.values())} classified / {skipped} skipped / {elapsed}s", flush=True)
-    print("\n=== 분류 결과 ===", flush=True)
+    print("\n=== 遺꾨쪟 寃곌낵 ===", flush=True)
     for k, v in sorted(summary.items(), key=lambda x: -x[1]):
         print(f"  {k}: {v}", flush=True)
 
 
 if __name__ == "__main__":
     main()
+

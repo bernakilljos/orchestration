@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 PostToolUse hook: quick Python sanity checks after Claude writes/edits files.
 
@@ -20,7 +20,7 @@ def _run(cmd, cwd):
 def main():
     try:
         payload = json.load(sys.stdin)
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         return 0
 
     tool_input = payload.get("tool_input", {}) or {}
@@ -42,9 +42,9 @@ def main():
 
     msg_lines = []
     if rc == 0:
-        msg_lines.append(f"✓ py_compile OK: {file_path}")
+        msg_lines.append(f"??py_compile OK: {file_path}")
     else:
-        msg_lines.append(f"✗ py_compile FAIL: {file_path}")
+        msg_lines.append(f"??py_compile FAIL: {file_path}")
         if err:
             msg_lines.append(err)
 
@@ -56,9 +56,9 @@ def main():
         if os.path.exists(qt):
             rc2, out2, err2 = _run([sys.executable, qt], cwd=project_dir)
             if rc2 == 0:
-                msg_lines.append("✓ quick_tests OK")
+                msg_lines.append("??quick_tests OK")
             else:
-                msg_lines.append("✗ quick_tests FAIL")
+                msg_lines.append("??quick_tests FAIL")
                 if out2:
                     msg_lines.append(out2[-1200:])
                 if err2:
@@ -75,6 +75,7 @@ if __name__ == "__main__":
         if isinstance(result, dict):
             sys.stdout.write(json.dumps(result, ensure_ascii=False))
         sys.exit(0)
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         sys.stdout.write(json.dumps({"systemMessage": f"Hook error: {e}"}, ensure_ascii=False))
         sys.exit(0)
+

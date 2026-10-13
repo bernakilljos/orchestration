@@ -1,14 +1,14 @@
-#!/usr/bin/env python3
-"""verify-fresh-clone — "git pull 만 받은 새 PC 에서도 동작하나" 정적 검사.
+﻿#!/usr/bin/env python3
+"""verify-fresh-clone ??"git pull 留?諛쏆? ??PC ?먯꽌???숈옉?섎굹" ?뺤쟻 寃??
 
-2026-10-02 사고: 쓰는 코드만 있고 그릇(DDL·상태파일 생성기)이 없어서, 수동으로 쌓인
-다른 PC 에서만 동작했다. 아래 2가지를 kit 전체에서 전수 검사한다.
+2026-10-02 ?ш퀬: ?곕뒗 肄붾뱶留??덇퀬 洹몃쫯(DDL쨌?곹깭?뚯씪 ?앹꽦湲????놁뼱?? ?섎룞?쇰줈 ?볦씤
+?ㅻⅨ PC ?먯꽌留??숈옉?덈떎. ?꾨옒 2媛吏瑜?kit ?꾩껜?먯꽌 ?꾩닔 寃?ы븳??
 
-  1. INSERT/UPDATE 하는 모든 테이블에 CREATE TABLE IF NOT EXISTS 가 kit 안에 있는가
-  2. .claude/state/*.json 을 읽는 파일마다, 그 파일을 쓰는 생성기가 hook(settings.json)
-     에서 (직접 또는 1단계 호출로) 실행되는가
+  1. INSERT/UPDATE ?섎뒗 紐⑤뱺 ?뚯씠釉붿뿉 CREATE TABLE IF NOT EXISTS 媛 kit ?덉뿉 ?덈뒗媛
+  2. .claude/state/*.json ???쎈뒗 ?뚯씪留덈떎, 洹??뚯씪???곕뒗 ?앹꽦湲곌? hook(settings.json)
+     ?먯꽌 (吏곸젒 ?먮뒗 1?④퀎 ?몄텧濡? ?ㅽ뻾?섎뒗媛
 
-결과: 위반 0 = exit 0 · 위반 있음 = exit 1 + 목록. 분모(검사 대상 수)를 항상 출력.
+寃곌낵: ?꾨컲 0 = exit 0 쨌 ?꾨컲 ?덉쓬 = exit 1 + 紐⑸줉. 遺꾨え(寃???????瑜???긽 異쒕젰.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ EXTS = {".py", ".sh"}
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except Exception:
+except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
     pass
 
 
@@ -38,22 +38,22 @@ def main() -> int:
     texts = {p: p.read_text(encoding="utf-8", errors="replace") for p in files()}
     all_text = "\n".join(texts.values())
 
-    # 1) 테이블 DDL
-    created = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS\s+(\w+)", all_text))  # FTS5 등 VIRTUAL 포함
+    # 1) ?뚯씠釉?DDL
+    created = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS\s+(\w+)", all_text))  # FTS5 ??VIRTUAL ?ы븿
     written: dict[str, set[str]] = {}
     for p, t in texts.items():
         for tbl in re.findall(r"(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|UPDATE)\s+(\w+)\s*(?:\(|SET)", t):
             written.setdefault(tbl, set()).add(str(p.relative_to(ROOT)))
     no_ddl = {t: w for t, w in written.items() if t not in created}
 
-    # 1-b) 쓰는 컬럼이 DDL(또는 ALTER ADD COLUMN)에 있는가 — 2026-10-02 session_summary.updated_at 누락 사고
+    # 1-b) ?곕뒗 而щ읆??DDL(?먮뒗 ALTER ADD COLUMN)???덈뒗媛 ??2026-10-02 session_summary.updated_at ?꾨씫 ?ш퀬
     ddl_cols: dict[str, set[str]] = {}
     for m in re.finditer(r"CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\)\s*;", all_text, re.S):
-        body = re.sub(r"--[^\n]*", "", m.group(2))   # SQL 주석 제거 (오탐 방지)
+        body = re.sub(r"--[^\n]*", "", m.group(2))   # SQL 二쇱꽍 ?쒓굅 (?ㅽ깘 諛⑹?)
         cols = {c.strip().split()[0] for c in body.split(",") if c.strip()}
         ddl_cols.setdefault(m.group(1), set()).update(cols)
     alter_cols = set(re.findall(r"ADD COLUMN\s+(\w+)", all_text)) | set(re.findall(r"""\("(\w+)",\s*"(?:TIMESTAMP|INTEGER|TEXT)""", all_text))
-    # (테이블, 컬럼, 타입) 3-튜플 형식 ALTER 목록도 인식 (session-history-db.py 실측 · 2026-10-12)
+    # (?뚯씠釉? 而щ읆, ??? 3-?쒗뵆 ?뺤떇 ALTER 紐⑸줉???몄떇 (session-history-db.py ?ㅼ륫 쨌 2026-10-12)
     alter_cols |= set(re.findall(r"""\("\w+",\s*"(\w+)",\s*"(?:TIMESTAMP|INTEGER|TEXT|REAL)"\)""", all_text))
     bad_cols: list[str] = []
     for p, t in texts.items():
@@ -61,7 +61,7 @@ def main() -> int:
             tbl = m.group(1)
             if tbl not in ddl_cols:
                 continue
-            # 파이썬 문자열 이어붙이기("a, " "b") 의 따옴표·공백 제거
+            # ?뚯씠??臾몄옄???댁뼱遺숈씠湲?"a, " "b") ???곗샂?쑣룰났諛??쒓굅
             cols = {re.sub(r"[\s\"']", "", c) for c in m.group(2).split(",")} - {""}
             tail = m.group(3)
             if "DO UPDATE SET" in tail:
@@ -69,20 +69,20 @@ def main() -> int:
             for c in sorted(cols - ddl_cols[tbl] - alter_cols - {"excluded"}):
                 bad_cols.append(f"{tbl}.{c} ({p.relative_to(ROOT)})")
 
-    # 2) state 파일 생성기 → hook 연결
-    # hooks 섹션의 command 만 (statusLine 은 생성기가 아니라 소비자라 제외)
+    # 2) state ?뚯씪 ?앹꽦湲???hook ?곌껐
+    # hooks ?뱀뀡??command 留?(statusLine ? ?앹꽦湲곌? ?꾨땲???뚮퉬?먮씪 ?쒖쇅)
     sj = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8-sig"))
     cmds = [h.get("command", "") for evs in (sj.get("hooks") or {}).values()
             for m in evs or [] for h in m.get("hooks", [])]
     hooked = {Path(m).name for c in cmds for m in re.findall(r"[\w./-]+\.(?:sh|py)", c)}
-    # hook 스크립트가 **실행하는** 스크립트까지 1단계 확장 (주석 언급은 제외)
+    # hook ?ㅽ겕由쏀듃媛 **?ㅽ뻾?섎뒗** ?ㅽ겕由쏀듃源뚯? 1?④퀎 ?뺤옣 (二쇱꽍 ?멸툒? ?쒖쇅)
     run_re = re.compile(r"^(?!\s*#).*?(?:bash|python3?|sh|\$PY)\b[^\n]*?([\w.-]+\.(?:sh|py))", re.M)
     reach = set(hooked)
     for p, t in texts.items():
         if p.name in hooked:
             reach |= {m for m in run_re.findall(t)}
-    # 2026-10-12 — prompt-dispatch.py 처럼 hook 이 모듈을 import 해 in-process 로 돌리면 실행 줄이 없다.
-    #   hook 인 .py 안에 이름(stem)이 나오는 같은 트리의 .py 모듈도 실행 경로로 본다 (1단계 + 그 모듈의 실행 줄).
+    # 2026-10-12 ??prompt-dispatch.py 泥섎읆 hook ??紐⑤뱢??import ??in-process 濡??뚮━硫??ㅽ뻾 以꾩씠 ?녿떎.
+    #   hook ??.py ?덉뿉 ?대쫫(stem)???섏삤??媛숈? ?몃━??.py 紐⑤뱢???ㅽ뻾 寃쎈줈濡?蹂몃떎 (1?④퀎 + 洹?紐⑤뱢???ㅽ뻾 以?.
     mods = set()
     for p, t in texts.items():
         if p.name in hooked and p.suffix == ".py":
@@ -92,10 +92,9 @@ def main() -> int:
     for q in mods:
         reach.add(q.name)
         reach |= {m for m in run_re.findall(texts[q])}
-        # load_script("이름") — 확장자 없이 스크립트를 in-process 로 불러오는 형식 (prompt/_common.py)
+        # load_script("?대쫫") ???뺤옣???놁씠 ?ㅽ겕由쏀듃瑜?in-process 濡?遺덈윭?ㅻ뒗 ?뺤떇 (prompt/_common.py)
         reach |= {m + ".py" for m in re.findall(r"""load_script\(\s*["']([\w.-]+)["']""", texts[q])}
-    # statusLine 명령도 매 렌더 실행되는 생성기 (자기 캐시를 스스로 씀) — 확장은 안 함
-    sl = (sj.get("statusLine") or {}).get("command", "")
+    # statusLine 紐낅졊??留??뚮뜑 ?ㅽ뻾?섎뒗 ?앹꽦湲?(?먭린 罹먯떆瑜??ㅼ뒪濡??) ???뺤옣? ????    sl = (sj.get("statusLine") or {}).get("command", "")
     reach |= {Path(m).name for m in re.findall(r"[\w./-]+\.(?:sh|py)", sl)}
     state_reads: dict[str, set[str]] = {}
     for p, t in texts.items():
@@ -103,28 +102,29 @@ def main() -> int:
             state_reads.setdefault(f, set()).add(p.name)
     orphan_state = {}
     for f, readers in state_reads.items():
-        # 생성기 = 그 파일명을 다루는 '읽는 쪽이 아닌' 파일. 읽는 쪽만 있으면 자기 캐시
-        # (statusline 이 쓰고 읽는 rate-limits 등) → 읽는 쪽이 실행 경로에 있으면 정상.
+        # ?앹꽦湲?= 洹??뚯씪紐낆쓣 ?ㅻ（??'?쎈뒗 履쎌씠 ?꾨땶' ?뚯씪. ?쎈뒗 履쎈쭔 ?덉쑝硫??먭린 罹먯떆
+        # (statusline ???곌퀬 ?쎈뒗 rate-limits ?? ???쎈뒗 履쎌씠 ?ㅽ뻾 寃쎈줈???덉쑝硫??뺤긽.
         producers = {p.name for p, t in texts.items() if f in t and p.name not in readers}
         if not producers:
             producers = set(readers)
         if not (producers & reach):
             orphan_state[f] = (sorted(readers), sorted(producers))
 
-    print(f"[verify-fresh-clone] 검사 파일 {len(texts)} · 쓰는 테이블 {len(written)} · state 읽기 {len(state_reads)}")
+    print(f"[verify-fresh-clone] 寃???뚯씪 {len(texts)} 쨌 ?곕뒗 ?뚯씠釉?{len(written)} 쨌 state ?쎄린 {len(state_reads)}")
     bad = 0
     for t, w in sorted(no_ddl.items()):
         bad += 1
-        print(f"  [FAIL] 테이블 {t}: DDL 없음 (쓰는 곳 {', '.join(sorted(w))[:160]})")
+        print(f"  [FAIL] ?뚯씠釉?{t}: DDL ?놁쓬 (?곕뒗 怨?{', '.join(sorted(w))[:160]})")
     for bc in sorted(set(bad_cols)):
         bad += 1
-        print(f"  [FAIL] 컬럼 {bc}: DDL·ALTER 에 없음")
+        print(f"  [FAIL] 而щ읆 {bc}: DDL쨌ALTER ???놁쓬")
     for f, (r, pr) in sorted(orphan_state.items()):
         bad += 1
-        print(f"  [FAIL] state/{f}: 읽는 곳 {r} · 생성기 {pr or '없음'} — hook 미연결")
-    print(f"[verify-fresh-clone] {'PASS' if bad == 0 else 'FAIL'} 위반 {bad}")
+        print(f"  [FAIL] state/{f}: ?쎈뒗 怨?{r} 쨌 ?앹꽦湲?{pr or '?놁쓬'} ??hook 誘몄뿰寃?)
+    print(f"[verify-fresh-clone] {'PASS' if bad == 0 else 'FAIL'} ?꾨컲 {bad}")
     return 0 if bad == 0 else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

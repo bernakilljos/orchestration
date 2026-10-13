@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 test-haiku.py
 
@@ -84,25 +84,25 @@ DONE
 
         # Check exit codes
         if result.returncode == 0:
-            print("\n✓ PASS: Validation succeeded")
+            print("\n??PASS: Validation succeeded")
             return 0
         elif result.returncode == 3:
-            print("\n✓ PASS (Quota exceeded - expected on rate-limited API key)")
+            print("\n??PASS (Quota exceeded - expected on rate-limited API key)")
             return 0
         elif result.returncode == 1:
-            print("\n✗ FAIL: Validation failed but completed")
+            print("\n??FAIL: Validation failed but completed")
             # Still counts as pass for test (script worked)
             return 0
         else:
-            print(f"\n✗ FAIL: Unexpected exit code {result.returncode}")
+            print(f"\n??FAIL: Unexpected exit code {result.returncode}")
             return 1
 
     except subprocess.TimeoutExpired:
-        print("\n✗ FAIL: Timeout (> 120s)")
+        print("\n??FAIL: Timeout (> 120s)")
         return 1
 
-    except Exception as e:
-        print(f"\n✗ FAIL: {e}")
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        print(f"\n??FAIL: {e}")
         return 1
 
     finally:
@@ -114,3 +114,4 @@ DONE
 
 if __name__ == "__main__":
     sys.exit(main())
+

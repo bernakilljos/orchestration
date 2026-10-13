@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-test-router.py — Smoke tests for routing and budget system.
+test-router.py ??Smoke tests for routing and budget system.
 
 Runs:
 1. Budget breaker tripped -> route() returns BREAKER
@@ -217,7 +217,7 @@ def main():
         except AssertionError as e:
             print(f"  [FAIL]: {e}")
             failed += 1
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             print(f"  [ERROR]: {e}")
             failed += 1
 
@@ -233,3 +233,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

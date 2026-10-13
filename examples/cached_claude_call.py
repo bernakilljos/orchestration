@@ -1,12 +1,12 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-Example: Prompt caching을 활용한 Claude API 호출.
+Example: Prompt caching???쒖슜??Claude API ?몄텧.
 
-Anthropic SDK 사용 (없으면 pip install anthropic 안내).
-이 예제는 .claude/scripts/lib/prompt_cache.py를 활용해
-시스템 프롬프트와 CLAUDE.md, route_dispatch.md를 캐시합니다.
+Anthropic SDK ?ъ슜 (?놁쑝硫?pip install anthropic ?덈궡).
+???덉젣??.claude/scripts/lib/prompt_cache.py瑜??쒖슜??
+?쒖뒪???꾨＼?꾪듃? CLAUDE.md, route_dispatch.md瑜?罹먯떆?⑸땲??
 
-실행:
+?ㅽ뻾:
   python examples/cached_claude_call.py
 
 (Python 3.8+)
@@ -17,7 +17,7 @@ import os
 import sys
 from pathlib import Path
 
-# 부모 디렉토리 lib 경로 추가
+# 遺紐??붾젆?좊━ lib 寃쎈줈 異붽?
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / ".claude" / "scripts" / "lib"))
 
@@ -29,23 +29,23 @@ from prompt_cache import (
 
 
 def read_file(path: str) -> str:
-    """파일 읽기 (에러 처리 포함)."""
+    """?뚯씪 ?쎄린 (?먮윭 泥섎━ ?ы븿)."""
     try:
         p = Path(path)
         if not p.is_absolute():
             p = project_root / p
         return p.read_text(encoding="utf-8")
-    except Exception as e:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
         return f"[Error reading {path}: {e}]"
 
 
 def main():
-    """메인 예제."""
+    """硫붿씤 ?덉젣."""
     print("=" * 70)
-    print("Prompt Caching Example — Orchestration v1")
+    print("Prompt Caching Example ??Orchestration v1")
     print("=" * 70)
 
-    # 1. 캐시할 파일들 로드
+    # 1. 罹먯떆???뚯씪??濡쒕뱶
     print("\n[Step 1] Loading cacheable files...")
 
     system_prompt = "You are an expert code implementation worker in the Orchestration v1 kit."
@@ -56,14 +56,14 @@ def main():
     print(f"  - CLAUDE.md: {len(claude_md)} chars")
     print(f"  - route_dispatch.md: {len(route_dispatch)} chars")
 
-    # 2. 캐시 시스템 구성
+    # 2. 罹먯떆 ?쒖뒪??援ъ꽦
     print("\n[Step 2] Building cached system...")
 
     system = build_cached_system([
         {"text": system_prompt, "cacheable": True},
         {"text": claude_md, "cacheable": True},
         {"text": route_dispatch, "cacheable": True},
-        "Current session: example demo",  # dynamic (cache 안 됨)
+        "Current session: example demo",  # dynamic (cache ????
     ])
 
     print(f"  System blocks: {len(system)}")
@@ -75,7 +75,7 @@ def main():
             chars = len(block.get("text", ""))
             print(f"    Block {i}: {chars} chars (dynamic)")
 
-    # 3. 토큰 추정
+    # 3. ?좏겙 異붿젙
     print("\n[Step 3] Estimating tokens...")
 
     stats = estimate_cached_tokens([claude_md, route_dispatch])
@@ -86,8 +86,8 @@ def main():
     for warning in stats.get("warnings", []):
         print(f"    {warning}")
 
-    # 4. 비용 절감 시뮬레이션
-    print("\n[Step 4] Cost savings estimate (24h × 100 tasks)...")
+    # 4. 鍮꾩슜 ?덇컧 ?쒕??덉씠??
+    print("\n[Step 4] Cost savings estimate (24h 횞 100 tasks)...")
 
     savings = estimate_caching_savings(
         total_calls=100,
@@ -103,7 +103,7 @@ def main():
     print(f"  Savings ratio: {savings['savings_ratio']:.1%}")
     print(f"\n   {savings['notes']}")
 
-    # 5. Request body 덤프 (SDK 없을 때 직접 호출 가능)
+    # 5. Request body ?ㅽ봽 (SDK ?놁쓣 ??吏곸젒 ?몄텧 媛??
     print("\n[Step 5] Request body structure...")
 
     request_body = {
@@ -137,7 +137,7 @@ def main():
     print(f"    ],")
     print(f"    'messages': [...]\n  }}")
 
-    # 6. Anthropic SDK로 실제 호출 (있으면)
+    # 6. Anthropic SDK濡??ㅼ젣 ?몄텧 (?덉쑝硫?
     print("\n[Step 6] Attempting API call (requires anthropic SDK)...")
 
     try:
@@ -162,7 +162,7 @@ def main():
         print("\n   Response received:")
         print(f"  {response.content[0].text[:200]}...")
 
-        # Cache 통계 출력
+        # Cache ?듦퀎 異쒕젰
         if hasattr(response, "usage"):
             usage = response.usage
             print(f"\n  Cache statistics:")
@@ -172,7 +172,7 @@ def main():
             print(f"    Output tokens: {usage.output_tokens}")
 
             if getattr(usage, "cache_creation_input_tokens", 0) > 0:
-                print(f"\n  💾 First call: Cache created ({getattr(usage, 'cache_creation_input_tokens', 0)} tokens)")
+                print(f"\n  ?뮶 First call: Cache created ({getattr(usage, 'cache_creation_input_tokens', 0)} tokens)")
                 print(f"     Run the script again within 5 minutes to see cache hit!")
 
     except ImportError:
@@ -195,3 +195,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

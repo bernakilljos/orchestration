@@ -1,4 +1,4 @@
-"""
+﻿"""
 Full audit - 10 checks across all .bat / .sh / .md / .py / .json files.
 
 10 categories:
@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 REPLACEMENT_CHAR = chr(0xFFFD)
-KOREAN_RE = re.compile(r'[가-힣]')
+KOREAN_RE = re.compile(r'[媛-??')
 
 issues = []
 def add(category, target, info):
@@ -107,7 +107,7 @@ for t in BAT_TARGETS:
                 add('bat_break', t, "NOT_RECOGNIZED: '" + m.group(1) + "'")
             if 'unexpected at this time' in out:
                 add('bat_break', t, 'UNEXPECTED_AT_THIS_TIME')
-        except Exception as e:
+        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
             add('bat_break', t, 'EXEC_ERR: ' + str(e))
 
 TMP.unlink(missing_ok=True)
@@ -189,7 +189,7 @@ for p in SECRET_SCAN_PATHS:
     progress(str(p) + ' [secret scan]')
     try:
         text = p.read_text(encoding='utf-8', errors='replace')
-    except Exception:
+    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
         continue
     for label, pat in SECRET_PATTERNS:
         if pat.search(text):
@@ -247,3 +247,4 @@ print('Shellcheck: ' + ('available' if has_shellcheck else 'not installed'))
 print('OCR hook:   ' + ('present' if ocr_hook.exists() else 'missing'))
 
 sys.exit(1 if issues else 0)
+

@@ -1,6 +1,6 @@
-"""CLIP — UI 카테고리들 (signup-checkout-login-dashboard 등) sub 분류.
+﻿"""CLIP ??UI 移댄뀒怨좊━??(signup-checkout-login-dashboard ?? sub 遺꾨쪟.
 
-각 카테고리당 5 sub: dark-theme / light-theme / mobile / minimalist / illustrative.
+媛?移댄뀒怨좊━??5 sub: dark-theme / light-theme / mobile / minimalist / illustrative.
 """
 import time
 from pathlib import Path
@@ -46,10 +46,10 @@ def main():
         src = SCREENS / ui_cat
         if not src.exists():
             continue
-        # sub 폴더 생성
+        # sub ?대뜑 ?앹꽦
         for sub in category_keys:
             (src / sub).mkdir(exist_ok=True)
-        # 이미지 list (sub 폴더 제외)
+        # ?대?吏 list (sub ?대뜑 ?쒖쇅)
         images = []
         for f in src.iterdir():
             if f.is_file() and f.suffix.lower() in (".jpg",".jpeg",".png",".webp"):
@@ -75,17 +75,18 @@ def main():
                 if i % 50 == 0 or i == len(images):
                     elapsed = int(time.time() - start)
                     print(f"  [{i}/{len(images)}] {cat} - {elapsed}s", flush=True)
-            except Exception as e:
+            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
                 print(f"  [FAIL] {img_path.name}: {type(e).__name__}", flush=True)
         grand_total += len(images)
         print(f"  {ui_cat}: " + " - ".join(f"{k}={v}" for k,v in summary.items()), flush=True)
 
     elapsed = int(time.time() - grand_start)
     print(f"\n[DONE] {grand_total} classified / {elapsed}s", flush=True)
-    print("\n=== 전체 sub 합계 ===", flush=True)
+    print("\n=== ?꾩껜 sub ?⑷퀎 ===", flush=True)
     for k, v in sorted(grand_summary.items(), key=lambda x: -x[1]):
         print(f"  {k}: {v}", flush=True)
 
 
 if __name__ == "__main__":
     main()
+
