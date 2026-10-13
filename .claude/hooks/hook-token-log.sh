@@ -11,6 +11,10 @@
 
 set -uo pipefail
 
+# Windows Store python.exe 스텁 회피
+SCRIPT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+source "$SCRIPT_DIR/.claude/hooks/find-python.sh" 2>/dev/null || PYTHON=""
+
 REPO_ROOT="${CLAUDE_PROJECT_ROOT:-$(pwd)}"
 STATE_DIR="$REPO_ROOT/.claude/state"
 LOG="$STATE_DIR/token-usage.jsonl"
@@ -20,7 +24,7 @@ mkdir -p "$STATE_DIR"
 # stdin 파싱 (없어도 OK)
 INPUT=$(cat 2>/dev/null || echo '{}')
 
-session_id=$(echo "$INPUT" | python -c "
+session_id=$(echo "$INPUT" | ${PYTHON:-python} -c "
 import json, sys
 try:
     d = json.load(sys.stdin)
@@ -33,7 +37,7 @@ ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # JSON Lines append
 # 토큰 수치는 N/A (Claude Code 네이티브 export 없음)
-python -c "
+${PYTHON:-python} -c "
 import json
 entry = {
     'ts': '$ts',

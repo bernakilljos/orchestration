@@ -118,6 +118,8 @@ sync_file() {
   fi
 
   if [ -f "$dst" ]; then
+    # TODO 2026-10-13: cmp -s per-file 로 bash loop 300+ 느림 (실측 71s · size 선체크 효과 X)
+    # → 다음 세션: Python 로 재작성 (전체 md5 batch 비교) · 또는 git ls-files 로 변경만 비교
     if cmp -s "$src" "$dst"; then
       skipped=$((skipped+1))
       return

@@ -5,7 +5,7 @@
 
 set -uo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+PROJECT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$PROJECT_DIR"
 
 SM="$PROJECT_DIR/data/strategy_memory.json"
@@ -117,7 +117,7 @@ echo "=== [MEMORY-GUARD] 점검 완료 ==="
 #    10분마다 프로젝트의 메모리 가드를 단발 호출한다 — schtasks 미사용(NO-SCHTASKS 존중).
 #    2026-09-09: 이 블록을 target 에만 두었더니 2026-09-02 kit sync 가 지워
 #    17일간 아무도 안 돌았다. kit 이 정본이어야 sync 가 되돌리지 않는다.
-FORENSICS_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}/.claude/scripts/crash-forensics.ps1"
+FORENSICS_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}/.claude/scripts/crash-forensics.ps1"
 if [ -f "$FORENSICS_PS1" ]; then
     WIN_PS1=$(cygpath -w "$FORENSICS_PS1" 2>/dev/null || echo "$FORENSICS_PS1")
     powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
@@ -135,7 +135,7 @@ fi
 #    "창이 응답하지 않습니다" 는 5초만 멈춰도 뜬다 — 60초 간격 기록기에는 한 줄도 안 남는다.
 #    이 감시는 3초마다 응답성을 재고, 멈춘 순간의 CPU 상위-여유RAM-디스크큐-확장호스트 RSS 를
 #    .claude/logs/vscode-hang.log 에 남긴다. 메모리가 넉넉한데도 멈추는 경우의 원인을 잡기 위함.
-HANG_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}/.claude/scripts/watch-vscode-hang.ps1"
+HANG_PS1="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}/.claude/scripts/watch-vscode-hang.ps1"
 if [ -f "$HANG_PS1" ]; then
     WIN_HANG=$(cygpath -w "$HANG_PS1" 2>/dev/null || echo "$HANG_PS1")
     powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "
