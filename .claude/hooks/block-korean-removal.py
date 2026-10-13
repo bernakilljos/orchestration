@@ -7,7 +7,7 @@ import os
 
 try:
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 if os.environ.get('ALLOW_KOREAN_REMOVAL') == '1':
@@ -18,7 +18,7 @@ try:
     if not raw.strip():
         sys.exit(0)
     data = json.loads(raw)
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     sys.exit(0)
 
 tool = data.get('tool_name', '')
@@ -40,4 +40,3 @@ if old_kr > 0 and new_kr < old_kr:
     sys.exit(2)  # PreToolUse 차단 규약: 2 = block (1 은 무시됨 · A1.RMS-UPG 실측 역병합)
 
 sys.exit(0)
-

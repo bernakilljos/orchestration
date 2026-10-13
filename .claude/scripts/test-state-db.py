@@ -38,7 +38,7 @@ class TestRunner:
       self.tests.append((name, f"FAIL: {e}"))
       self.failed += 1
       print(f"  [FAIL] {name}: {e}")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
       self.tests.append((name, f"ERROR: {e}"))
       self.failed += 1
       print(f"  [ERROR] {name}: {e}")
@@ -286,4 +286,3 @@ def main():
 
 if __name__ == "__main__":
   sys.exit(main())
-

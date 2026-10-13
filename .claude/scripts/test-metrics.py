@@ -209,7 +209,7 @@ def main():
     except AssertionError as e:
         print(f"\n[FAIL] TEST FAILED: {e}\n")
         return 1
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"\n[FAIL] ERROR: {e}\n")
         import traceback
         traceback.print_exc()
@@ -218,4 +218,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

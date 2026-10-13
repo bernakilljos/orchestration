@@ -38,11 +38,10 @@ def main():
         register_worker(worker_id, ai_type, pid)
         # Update heartbeat timestamp
         update_heartbeat(worker_id)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         # Fail silently - workers should not crash if DB is unavailable
         pass
 
 
 if __name__ == "__main__":
     main()
-

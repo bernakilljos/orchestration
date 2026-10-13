@@ -73,7 +73,7 @@ class WatchdogLogger:
         try:
             with open(self.log_path, "a") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             pass
 
     def rotate_if_needed(self, max_size_mb: int = 10, backup_count: int = LOG_BACKUP_COUNT) -> None:
@@ -100,7 +100,7 @@ class WatchdogLogger:
                     dst = base.parent / f"{base.name}.{i+1}"
                     src.rename(dst)
             base.rename(base.parent / f"{base.name}.1")
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             pass
 
 
@@ -353,7 +353,7 @@ def run_loop(
             time.sleep(check_interval_sec)
     except KeyboardInterrupt:
         logger.log("info", "Watchdog interrupted by user")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         logger.log("error", f"Watchdog fatal error: {e}")
         raise
 
@@ -392,7 +392,7 @@ def main():
     # Ensure DB schema exists
     try:
         init_schema()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         logger.log("error", f"Failed to initialize schema: {e}")
         return 1
 
@@ -414,4 +414,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

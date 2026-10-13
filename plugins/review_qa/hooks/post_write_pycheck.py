@@ -20,7 +20,7 @@ def _run(cmd, cwd):
 def main():
     try:
         payload = json.load(sys.stdin)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return 0
 
     tool_input = payload.get("tool_input", {}) or {}
@@ -75,7 +75,6 @@ if __name__ == "__main__":
         if isinstance(result, dict):
             sys.stdout.write(json.dumps(result, ensure_ascii=False))
         sys.exit(0)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         sys.stdout.write(json.dumps({"systemMessage": f"Hook error: {e}"}, ensure_ascii=False))
         sys.exit(0)
-

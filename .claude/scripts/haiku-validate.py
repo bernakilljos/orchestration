@@ -36,7 +36,7 @@ def read_file(path: Path) -> str:
     """Read file with UTF-8 encoding."""
     try:
         return path.read_text(encoding="utf-8")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"ERROR reading {path}: {e}", file=sys.stderr)
         return ""
 
@@ -161,7 +161,7 @@ def call_haiku(system: list, messages: list, project_root: Path) -> dict:
                 "error_class": "api_error",
                 "latency_ms": latency
             }
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         latency = int((time.time() - t0) * 1000)
         return {
             "success": False,
@@ -213,7 +213,7 @@ def main():
     # Initialize DB schema
     try:
         init_schema()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"WARN: Could not init DB: {e}", file=sys.stderr)
 
     # Read task content
@@ -238,7 +238,7 @@ def main():
         try:
             expires_at = int(time.time()) + 3600
             set_quota_exceeded("claude-haiku", expires_at, result["content"])
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"WARN: Could not record quota: {e}", file=sys.stderr)
 
         try:
@@ -253,7 +253,7 @@ def main():
                 task_id=task_file.stem,
                 error_class="quota"
             )
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"WARN: Could not record metric: {e}", file=sys.stderr)
 
         print(f"[{args.worker_id}] Quota exceeded. Waiting before retry.", file=sys.stderr)
@@ -272,7 +272,7 @@ def main():
                 task_id=task_file.stem,
                 error_class=result.get("error_class", "unknown")
             )
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"WARN: Could not record metric: {e}", file=sys.stderr)
 
         print(f"[{args.worker_id}] Validation failed: {result['content']}", file=sys.stderr)
@@ -283,14 +283,14 @@ def main():
     out_dir = project_root / "docs" / today
     try:
         out_dir.mkdir(parents=True, exist_ok=True)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"ERROR: Could not create docs dir: {e}", file=sys.stderr)
         sys.exit(1)
 
     out_file = out_dir / f"haiku-review-{task_file.stem}.md"
     try:
         out_file.write_text(result["content"], encoding="utf-8")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"ERROR: Could not write review: {e}", file=sys.stderr)
         sys.exit(1)
 
@@ -317,7 +317,7 @@ def main():
             task_id=task_file.stem,
             cache_hit=bool(usage.get("cache_read_tokens", 0) > 0)
         )
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"WARN: Could not record metric: {e}", file=sys.stderr)
 
     # Log success
@@ -331,4 +331,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

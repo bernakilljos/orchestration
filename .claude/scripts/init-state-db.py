@@ -69,7 +69,7 @@ def migrate_token_usage_jsonl() -> int:
               error_class=error_class
             )
             count += 1
-      except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+      except Exception as e:
         errors.append(f"Line {line_num}: {str(e)}")
 
   if errors and len(errors) <= 10:
@@ -81,7 +81,7 @@ def migrate_token_usage_jsonl() -> int:
   try:
     jsonl_path.rename(migrated_path)
     print(f"[OK] Migrated {count} metrics. Original renamed to {migrated_path.name}")
-  except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+  except Exception as e:
     print(f"[WARN] Could not rename {jsonl_path.name}: {e}", file=sys.stderr)
 
   return count
@@ -108,7 +108,7 @@ def migrate_quota_flags() -> int:
         migrated = flag_path.with_suffix(".json.migrated")
         flag_path.rename(migrated)
         print(f"[OK] Migrated {ai_name} quota flag -> {migrated.name}")
-      except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+      except Exception as e:
         print(f"[WARN] Failed to migrate {ai_name} quota: {e}", file=sys.stderr)
 
   return count
@@ -136,7 +136,7 @@ def migrate_heartbeat_files() -> int:
       # Rename original
       migrated = hb_file.with_suffix(".hb.migrated")
       hb_file.rename(migrated)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
       print(f"[WARN] Failed to migrate {hb_file.name}: {e}", file=sys.stderr)
 
   if count:
@@ -192,7 +192,7 @@ def main() -> int:
 
     return 0
 
-  except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+  except Exception as e:
     print(f"[ERROR] {str(e)}", file=sys.stderr)
     # Log to error file
     error_log = _get_project_root() / ".claude" / "state" / "state-db-errors.log"
@@ -210,4 +210,3 @@ def main() -> int:
 
 if __name__ == "__main__":
   sys.exit(main())
-

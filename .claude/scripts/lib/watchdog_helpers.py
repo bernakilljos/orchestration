@@ -123,7 +123,7 @@ def spawn_worker(ai_type: str, worker_id: str, dry_run: bool = False) -> bool:
             creationflags=0x08000000  # CREATE_NO_WINDOW on Windows
         )
         return True
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return False
 
 
@@ -361,4 +361,3 @@ def mark_worker_restart(worker_id: str, reason: str) -> None:
             "UPDATE workers SET status = 'dead', last_heartbeat = ? WHERE worker_id = ?",
             (now, worker_id),
         )
-

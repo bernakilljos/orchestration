@@ -8,7 +8,7 @@ from datetime import datetime
 def main():
     try:
         payload = json.load(sys.stdin)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return
     tool_input = payload.get("tool_input", {}) or {}
     cmd = tool_input.get("command") or ""
@@ -24,7 +24,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         pass
     sys.exit(0)
-

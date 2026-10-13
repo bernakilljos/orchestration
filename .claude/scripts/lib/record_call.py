@@ -109,7 +109,7 @@ def record_api_call(
             ).fetchone()
         if row and row[0] is not None and today_spent >= row[0]:
             trip_breaker(f"Daily limit ${row[0]:.2f} reached (spent ${today_spent:.2f})")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         pass  # Budget check failed, but metric recorded
 
     return cost_usd
@@ -151,4 +151,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

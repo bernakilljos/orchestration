@@ -217,7 +217,7 @@ def main():
         except AssertionError as e:
             print(f"  [FAIL]: {e}")
             failed += 1
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"  [ERROR]: {e}")
             failed += 1
 
@@ -233,4 +233,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -78,6 +78,6 @@ try:
                 f.write(formatted)
             print(f"✓ Fixed markdown formatting in {file_path}")
 
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+except Exception as e:
     print(f"Error formatting markdown: {e}", file=sys.stderr)
     sys.exit(1)

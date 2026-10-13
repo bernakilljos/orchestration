@@ -24,23 +24,54 @@ import hashlib
 import re
 import subprocess
 
-# Import structured logging
-from .structured_logger import get_logger as _get_structured_logger, log as structured_log
+# Global logger
+_logger = None
+
+def _get_logger():
+    """Lazy initialize logger."""
+    global _logger
+    if _logger is None:
+        _logger = logging.getLogger(__name__)
+        _logger.setLevel(logging.DEBUG)
+
+        # Log directory
+        log_dir = Path(__file__).parent.parent / "logs"
+        log_dir.mkdir(exist_ok=True)
+
+        # Console handler
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.INFO)
+
+        # File handler
+        fh = logging.FileHandler(log_dir / "common.log", encoding='utf-8')
+        fh.setLevel(logging.DEBUG)
+
+        # Formatter
+        fmt = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        ch.setFormatter(fmt)
+        fh.setFormatter(fmt)
+
+        _logger.addHandler(ch)
+        _logger.addHandler(fh)
+
+    return _logger
 
 def log(level: str, msg: str, **kwargs):
     """
-    Unified logging: write to console + file with structured fields.
+    Unified logging: write to console + file.
 
     Args:
         level: 'DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'
         msg: Message
-        **kwargs: Extra structured fields (logged as JSON)
-
-    Note: This now uses structured_logger.py for JSON output.
-          All kwargs are included as structured fields.
+        **kwargs: Extra fields (logged as JSON)
     """
-    # Delegate to structured logger
-    structured_log(level, msg, **kwargs)
+    logger = _get_logger()
+    level_name = level.upper()
+
+    if kwargs:
+        msg = f"{msg} | {json.dumps(kwargs)}"
+
+    getattr(logger, level_name.lower())(msg)
 
 def get_infra() -> Dict[str, Path]:
     """
@@ -143,7 +174,7 @@ def scan(path: str, pattern: str, recursive: bool = True) -> List[Path]:
         results = list(root.glob(pattern))
         log('DEBUG', f"Scanned {path} with pattern {pattern}: {len(results)} results")
         return sorted(results)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         log('ERROR', f"Scan failed: {path} / {pattern}: {e}")
         return []
 
@@ -204,7 +235,7 @@ def search(query: str, files: List[Path], case_sensitive: bool = False) -> List[
 
                     if match:
                         results.append((filepath, line_num, line.rstrip()))
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             log('WARN', f"Could not search {filepath}: {e}")
 
     log('DEBUG', f"Search for '{query}' in {len(files)} files: {len(results)} matches")
@@ -255,4 +286,3 @@ if __name__ == '__main__':
             print(f"{filepath}:{line_num}: {line_text.strip()}")
         if len(silent_fails) > 10:
             print(f"... and {len(silent_fails) - 10} more")
-
