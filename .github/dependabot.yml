@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    reviewers:
+      - "bernakilljos"
+    labels:
+      - "dependencies"
+      - "python"
+    allow:
+      - dependency-type: "production"
+      - dependency-type: "development"
+    ignore:
+      # Pin specific versions to avoid breaking changes
+      - dependency-name: "anthropic"
+        update-types: ["version-update:semver-major"]
+    pull-request-branch-name:
+      separator: "/"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "05:00"
+    reviewers:
+      - "bernakilljos"
+    labels:
+      - "ci/cd"
+      - "github-actions"
+    allow:
+      - dependency-type: "direct"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    reviewers:
+      - "bernakilljos"
+    labels:
+      - "docker"
+      - "dependencies"
+    allow:
+      - dependency-type: "direct"

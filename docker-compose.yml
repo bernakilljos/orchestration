@@ -1,0 +1,199 @@
+version: '3.9'
+
+services:
+  # Main orchestration kit container
+  kit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-main}
+    image: orchestration-kit:latest
+    container_name: orch-kit-main
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONHASHSEED: random
+      CLAUDE_PROJECT_DIR: /kit
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?}
+      # Optional: for distributed workers
+      ORCA_WORKER_ID: kit-main
+      ORCA_LOG_LEVEL: INFO
+    volumes:
+      # Persistent state
+      - orch-state:/kit/.claude/state
+      # Editable code
+      - ./plugins:/kit/plugins:ro
+      - ./setup:/kit/setup:ro
+      - ./docs:/kit/docs:ro
+      # Logs
+      - orch-logs:/kit/.claude/logs
+    networks:
+      - orch-network
+    ports:
+      - "9080:9080"  # Ask-Web relay (optional)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sqlite3; sqlite3.connect('/kit/.claude/state/orca.db').execute('SELECT 1')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    labels:
+      - "com.orchestration.service=kit"
+      - "com.orchestration.version=1.0"
+
+  # Headroom proxy for prompt compression (optional)
+  headroom:
+    image: headroom-ai:latest
+    container_name: orch-headroom
+    environment:
+      HEADROOM_PORT: 8787
+      HEADROOM_WORKERS: 4
+      ANTHROPIC_BASE_URL: http://kit:8787
+    volumes:
+      - orch-cache:/headroom/cache
+    networks:
+      - orch-network
+    ports:
+      - "8787:8787"
+    depends_on:
+      kit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    profiles: ["with-headroom"]
+    labels:
+      - "com.orchestration.service=compression"
+
+  # claude-mem worker for auto-memory (optional)
+  mem-worker:
+    image: node:20-alpine
+    container_name: orch-mem-worker
+    working_dir: /mem
+    command: npx -y claude-mem start --port 37777
+    environment:
+      CLAUDE_MEM_WORKER_PORT: 37777
+      NODE_ENV: production
+    volumes:
+      - orch-memory:/root/.claude-mem
+    networks:
+      - orch-network
+    ports:
+      - "37777:37777"
+    depends_on:
+      kit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:37777/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    profiles: ["with-memory"]
+    labels:
+      - "com.orchestration.service=memory"
+
+  # PostgreSQL for distributed state (optional)
+  postgres:
+    image: postgres:16-alpine
+    container_name: orch-postgres
+    environment:
+      POSTGRES_DB: orchestration
+      POSTGRES_USER: orch_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - orch-postgres:/var/lib/postgresql/data
+      - ./setup/sql/init-schema.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - orch-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orch_user -d orchestration"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles: ["with-db"]
+    labels:
+      - "com.orchestration.service=database"
+
+  # Redis for caching/pub-sub (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: orch-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?}
+    volumes:
+      - orch-redis:/data
+    networks:
+      - orch-network
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles: ["with-cache"]
+    labels:
+      - "com.orchestration.service=cache"
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orch-prometheus
+    volumes:
+      - ./setup/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - orch-prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - orch-network
+    ports:
+      - "9090:9090"
+    depends_on:
+      - kit
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    profiles: ["with-monitoring"]
+    labels:
+      - "com.orchestration.service=metrics"
+
+volumes:
+  orch-state:
+    driver: local
+  orch-logs:
+    driver: local
+  orch-cache:
+    driver: local
+  orch-memory:
+    driver: local
+  orch-postgres:
+    driver: local
+  orch-redis:
+    driver: local
+  orch-prometheus:
+    driver: local
+
+networks:
+  orch-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

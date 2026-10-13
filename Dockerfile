@@ -1,53 +1,111 @@
+# Multi-stage Dockerfile for orchestration-kit-v1
+# Optimized for production deployment with security hardening
+
+# ============ Stage 1: Builder ============
+FROM python:3.14-slim AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency files
+COPY pyproject.toml requirements.txt ./
+
+# Build wheels for all dependencies
+RUN pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
+
+# ============ Stage 2: Runtime ============
 FROM python:3.14-slim
 
-# Metadata
 LABEL maintainer="Claude <noreply@anthropic.com>"
-LABEL description="Multi-AI Orchestration Kit v1 container"
-LABEL version="1.0.0"
+LABEL org.opencontainers.image.title="Orchestration Kit v1"
+LABEL org.opencontainers.image.description="Multi-AI Orchestration Kit — Claude + Codex + Gemini"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.url="https://github.com/anthropics/orchestration-kit-v1"
 
-# Set working directory
 WORKDIR /kit
 
-# Install system dependencies
+# Install runtime dependencies only (minimal attack surface)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     ca-certificates \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files (excluding .gitignore'd items)
-COPY pyproject.toml requirements.txt ./
-COPY plugins/ ./plugins/
-COPY .claude/ ./.claude/
-COPY setup/ ./setup/
-COPY docs/ ./docs/
-COPY CLAUDE.md README.md CHANGELOG.md guide.txt ./
+# Create non-root user (security best practice)
+RUN groupadd -r orchestration && \
+    useradd -r -u 1000 -g orchestration orchestration && \
+    mkdir -p /kit/.claude /kit/plugins /kit/setup && \
+    chown -R orchestration:orchestration /kit
 
-# Install Python dependencies
+# Copy wheels from builder
+COPY --from=builder --chown=orchestration:orchestration /build/wheels /tmp/wheels
+
+# Install wheels
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --no-index --find-links=/tmp/wheels -r requirements.txt && \
+    rm -rf /tmp/wheels
 
-# Create non-root user (optional, for security)
-RUN useradd -m -u 1000 orchestration && chown -R orchestration:orchestration /kit
+# Copy application code
+COPY --chown=orchestration:orchestration pyproject.toml requirements.txt ./
+COPY --chown=orchestration:orchestration .claude/ ./.claude/
+COPY --chown=orchestration:orchestration plugins/ ./plugins/
+COPY --chown=orchestration:orchestration setup/ ./setup/
+COPY --chown=orchestration:orchestration docs/ ./docs/
+COPY --chown=orchestration:orchestration CLAUDE.md README.md CHANGELOG.md guide.txt ./
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONHASHSEED=random \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_INPUT=1 \
+    CLAUDE_PROJECT_DIR=/kit \
+    PATH="/kit/.claude/scripts:${PATH}" \
+    ANTHROPIC_API_KEY=""
+
+# Health check (startup grace period: 30s)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import sys, sqlite3; \
+                   db=sqlite3.connect('/kit/.claude/state/orca.db'); \
+                   cursor=db.cursor(); \
+                   cursor.execute('SELECT 1 FROM sqlite_master LIMIT 1'); \
+                   sys.exit(0 if cursor.fetchone() else 1)" || exit 1
+
+# Switch to non-root user
 USER orchestration
 
-# Health check (basic)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+# Volume mounts for persistence
+VOLUME ["/kit/.claude/state", "/kit/plugins", "/kit/setup", "/kit/docs"]
 
-# Environment defaults
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONHASHSEED=random
-ENV CLAUDE_PROJECT_DIR=/kit
-ENV PATH="/kit/.claude/scripts:${PATH}"
+# Expose ports (optional — used only in server mode)
+# 8787: Headroom proxy
+# 9080: Ask-Web relay
+# 37777: claude-mem worker
+EXPOSE 8787 9080 37777
 
-# Volume mounts (user can bind at runtime)
-VOLUME ["/kit/.claude", "/kit/plugins", "/kit/setup"]
-
-# Default entrypoint (user can override)
+# Default entrypoint: bash shell (developer friendly)
 ENTRYPOINT ["/bin/bash"]
-CMD ["bash", ".claude/scripts/init-state-db.py"]
 
-# Optional: For orchestration server mode
-# EXPOSE 8787 9080 37777
-# CMD ["python", "-m", "uvicorn", "plugins.exec_orch.api:app", "--host", "0.0.0.0", "--port", "8787"]
+# Default command: initialize state DB and show help
+CMD ["-c", "python .claude/scripts/init-state-db.py 2>/dev/null || true; \
+            echo ''; \
+            echo '╔══════════════════════════════════════════════════════════╗'; \
+            echo '║  Orchestration Kit v1 — Multi-AI Container Ready        ║'; \
+            echo '║  Run: bash .claude/scripts/sync-plugins.sh --dry        ║'; \
+            echo '║  Or:  python -m pytest .claude/scripts/tests/          ║'; \
+            echo '║  Or:  /bin/bash (interactive shell)                    ║'; \
+            echo '╚══════════════════════════════════════════════════════════╝'; \
+            echo ''; \
+            /bin/bash"]
+
+# Build metadata labels (populated by docker build --label-file)
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}"
