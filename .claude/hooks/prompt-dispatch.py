@@ -1,17 +1,18 @@
-﻿#!/usr/bin/env python
-"""UserPromptSubmit ?⑥씪 ?붿뒪?⑥쿂 ????13媛쒕? python ?꾨줈?몄뒪 1媛쒕줈.
+#!/usr/bin/env python
+"""UserPromptSubmit 단일 디스패처 — 훅 13개를 python 프로세스 1개로.
 
-諛곌꼍: ??PC ???꾨줈?몄뒪 湲곕룞 1?뚯뿉 ~0.5珥?(蹂댁븞 ?먯씠?꾪듃) ??bash ??13媛쒓? ?꾨＼?꾪듃???섏떗 媛??꾨줈?몄뒪瑜??꾩썙 5~6珥덇? 嫄몃졇?? 媛??낆쓽 濡쒖쭅? 洹몃?濡??먭퀬 紐⑤뱢濡???꺼 in-process ?ㅽ뻾?쒕떎.
+배경: 이 PC 는 프로세스 기동 1회에 ~0.5초 (보안 에이전트) 라 bash 훅 13개가 프롬프트당
+수십 개 프로세스를 띄워 5~6초가 걸렸다. 각 훅의 로직은 그대로 두고 모듈로 옮겨 in-process 실행한다.
 
-援ъ“: .claude/hooks/prompt/<?낆씠由??몃뜑?ㅼ퐫??.py 媛 ??1媛쒖뵫 (run(ctx) -> str | dict | None).
-      ???뚯씪? ?꾨옒 HOOKS ?쒖꽌(settings.json ?쒖꽌)?濡?import 쨌 ?ㅽ뻾?섍퀬 寃곌낵瑜??⑹튂湲곕쭔 ?쒕떎.
-      紐⑤뱢 ?섎굹媛 二쎄굅???먮젮???섎㉧吏??怨꾩냽 (try/except + ?ㅻ젅????꾩븘??.
+구조: .claude/hooks/prompt/<훅이름_언더스코어>.py 가 훅 1개씩 (run(ctx) -> str | dict | None).
+      이 파일은 아래 HOOKS 순서(settings.json 순서)대로 import · 실행하고 결과를 합치기만 한다.
+      모듈 하나가 죽거나 느려도 나머지는 계속 (try/except + 스레드 타임아웃).
 
-異쒕젰: additionalContext = 媛????띿뒪?몃? ?먮옒 ?쒖꽌濡?"\\n\\n" ?곌껐??JSON 1媛?(??留??놁쑝硫?臾댁텧??.
-?듭뀡: --debug-per-hook  ?낅퀎 ?띿뒪??dict 瑜?JSON ?쇰줈 異쒕젰 (?뚯뒪?몄슜 쨌 濡쒓렇 ???④?)
-      --rag-worker      (?대??? RAG 罹먯떆 媛깆떊 detached ?뚯빱
-?섍꼍: PROMPT_DISPATCH_NO_SPAWN=1  RAG detached ?뚯빱瑜??꾩슦吏 ?딆쓬 (?뚯뒪?몄슜)
-濡쒓렇: .claude/logs/prompt-dispatch.log (?낅퀎 ms 쨌 ?먮윭)
+출력: additionalContext = 각 훅 텍스트를 원래 순서로 "\\n\\n" 연결한 JSON 1개 (할 말 없으면 무출력).
+옵션: --debug-per-hook  훅별 텍스트 dict 를 JSON 으로 출력 (테스트용 · 로그 안 남김)
+      --rag-worker      (내부용) RAG 캐시 갱신 detached 워커
+환경: PROMPT_DISPATCH_NO_SPAWN=1  RAG detached 워커를 띄우지 않음 (테스트용)
+로그: .claude/logs/prompt-dispatch.log (훅별 ms · 에러)
 """
 from __future__ import annotations
 
@@ -29,7 +30,7 @@ HOOKS_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HOOKS_DIR))
 sys.path.insert(0, os.path.join(HOOKS_DIR, "prompt"))
 
-# (???대쫫 = ?먮낯 .sh ?뚯씪紐? 紐⑤뱢紐? ??.claude/settings.json UserPromptSubmit ?쒖꽌
+# (훅 이름 = 원본 .sh 파일명, 모듈명) — .claude/settings.json UserPromptSubmit 순서
 HOOKS = [
     ("user-prompt-auto-planner", "user_prompt_auto_planner"),
     ("detect-repeat-request", "detect_repeat_request"),
@@ -46,8 +47,8 @@ HOOKS = [
     ("suggest-command-from-context", "suggest_command_from_context"),
 ]
 
-HOOK_TIMEOUT_SEC = 6.0  # ??1媛??곹븳 (?먮낯 settings timeout 10~15珥??덉そ)
-TOTAL_BUDGET_SEC = 12.0  # ?꾩껜 ?곹븳 ???섏쑝硫??⑥? ?낆? 嫄대꼫?대떎
+HOOK_TIMEOUT_SEC = 6.0  # 훅 1개 상한 (원본 settings timeout 10~15초 안쪽)
+TOTAL_BUDGET_SEC = 12.0  # 전체 상한 — 넘으면 남은 훅은 건너뛴다
 LOG_MAX_BYTES = 1_000_000
 
 
@@ -57,13 +58,13 @@ def _run_one(ctx, name: str, modname: str, box: dict) -> None:
 
         mod = importlib.import_module(modname)
         box["out"] = mod.run(ctx)
-    except BaseException as e:  # noqa: BLE001 ????紐⑤뱢???ㅽ뙣媛 ?ㅻⅨ ?낆뿉 踰덉?吏 ?딄쾶
+    except BaseException as e:  # noqa: BLE001 — 한 모듈의 실패가 다른 훅에 번지지 않게
         box["err"] = f"{type(e).__name__}: {e}"
         box["tb"] = traceback.format_exc(limit=3).strip().splitlines()[-1]
 
 
 def _split(out):
-    """??諛섑솚媛?-> (additionalContext ?띿뒪?? ?섎㉧吏 ?꾨뱶 dict)."""
+    """훅 반환값 -> (additionalContext 텍스트, 나머지 필드 dict)."""
     if out is None:
         return "", {}
     if isinstance(out, dict):
@@ -83,7 +84,7 @@ def _write_log(line_list):
                 f.write(b"\n".join(keep) + b"\n")
         with open(path, "ab") as f:
             f.write(("\n".join(line_list) + "\n").encode("utf-8", "replace"))
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         pass
 
 
@@ -108,7 +109,7 @@ def main(argv) -> int:
     problems: list[str] = []
     for name, modname in HOOKS:
         if time.perf_counter() - t_start > TOTAL_BUDGET_SEC:
-            problems.append(f"SKIP {name}: ?꾩껜 ?곹븳 {TOTAL_BUDGET_SEC:.0f}s 珥덇낵")
+            problems.append(f"SKIP {name}: 전체 상한 {TOTAL_BUDGET_SEC:.0f}s 초과")
             results[name] = None
             continue
         ctx.start_hook(name)
@@ -120,7 +121,7 @@ def main(argv) -> int:
         ms = (time.perf_counter() - t0) * 1000
         timings.append((name, ms))
         if th.is_alive():
-            problems.append(f"TIMEOUT {name}: {HOOK_TIMEOUT_SEC:.0f}s 珥덇낵 (寃곌낵 踰꾨┝)")
+            problems.append(f"TIMEOUT {name}: {HOOK_TIMEOUT_SEC:.0f}s 초과 (결과 버림)")
             results[name] = None
         elif "err" in box:
             problems.append(f"ERROR {name}: {box['err']}")
@@ -163,7 +164,7 @@ def main(argv) -> int:
         lines += [f"[{ts_iso_tz()}]   {p}" for p in problems]
         _write_log(lines)
 
-    # ??꾩븘?껋쑝濡??⑥? daemon ?ㅻ젅?쒓? ?덉뼱??利됱떆 醫낅즺
+    # 타임아웃으로 남은 daemon 스레드가 있어도 즉시 종료
     if any(t.is_alive() for t in threading.enumerate() if t is not threading.current_thread()):
         sys.stdout.flush()
         os._exit(0)
@@ -171,6 +172,5 @@ def main(argv) -> int:
 
 
 if __name__ == "__main__":
-    # ?섏쐞 ?꾨줈?몄뒪 ?놁씠 ?뺤긽 醫낅즺 ??吏????媛?? plugins ?녿뒗 ?꾨줈?앺듃??媛??낆씠 ?먯껜 媛?쒕줈 skip
+    # 하위 프로세스 없이 정상 종료 — 지시 외 가드: plugins 없는 프로젝트는 각 훅이 자체 가드로 skip
     sys.exit(main(sys.argv[1:]))
-

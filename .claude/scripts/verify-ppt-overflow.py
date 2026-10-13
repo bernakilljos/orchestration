@@ -1,17 +1,17 @@
-﻿"""
-verify-ppt-overflow.py ??PPT ?뚮뜑 ???섎┝(overflow) ?섏떖 ?곸뿭 ?먮룞 ?먯?
+"""
+verify-ppt-overflow.py — PPT 렌더 후 잘림(overflow) 의심 영역 자동 탐지
 
-湲곕뒫:
-- outputs/ppt*/html-source/png-output/slide-*.png 紐⑤몢 遺꾩꽍
-- 媛?μ옄由?(?섎떒 + ?곗륫) ?쎌? 遺꾪룷濡?肄섑뀗痢??섎┝ ?섏떖 slides ?앸퀎
-- 寃곌낵瑜?markdown 由ы룷?몃줈 ???+ stdout ?붿빟
+기능:
+- outputs/ppt*/html-source/png-output/slide-*.png 모두 분석
+- 가장자리 (하단 + 우측) 픽셀 분포로 콘텐츠 잘림 의심 slides 식별
+- 결과를 markdown 리포트로 저장 + stdout 요약
 
-?먮━:
-- slides 媛?μ옄由?(?섎떒 30px-?곗륫 30px) ???ㅽ겕 ?쎌? (?띿뒪??肄붾뱶-諛뺤뒪 蹂대뜑) 鍮꾩쑉 痢≪젙
-- ?꾧퀎移?珥덇낵 = 肄섑뀗痢좉? ?곸뿭 ?앷퉴吏 李⑥엳??= ?섎┝ 媛?μ꽦
-- ?⑥닚 ?쎌? 遺꾩꽍?대씪 100% ?뺥솗?섏? ?딆쓬 ??Claude ??Read tool OCR 蹂댁셿??
+원리:
+- slides 가장자리 (하단 30px-우측 30px) 의 다크 픽셀 (텍스트-코드-박스 보더) 비율 측정
+- 임계치 초과 = 콘텐츠가 영역 끝까지 차있음 = 잘림 가능성
+- 단순 픽셀 분석이라 100% 정확하지 않음 — Claude 의 Read tool OCR 보완용
 
-?ъ슜:
+사용:
   python .claude/scripts/verify-ppt-overflow.py
   python .claude/scripts/verify-ppt-overflow.py --dir outputs/ppt-automation
   python .claude/scripts/verify-ppt-overflow.py --threshold 0.15
@@ -33,7 +33,7 @@ DEFAULT_THRESHOLD = 0.10
 
 
 def edge_dark_ratio(img: Image.Image, band_px: int = EDGE_BAND_PX) -> tuple[float, float]:
-    """slides ?섎떒-?곗륫 媛?μ옄由??곸뿭???ㅽ겕 ?쎌? 鍮꾩쑉."""
+    """slides 하단-우측 가장자리 영역의 다크 픽셀 비율."""
     rgb = img.convert("RGB")
     w, h = rgb.size
 
@@ -58,7 +58,7 @@ def scan_dir(png_dir: Path, threshold: float) -> list[dict]:
         try:
             img = Image.open(p)
             bottom, right = edge_dark_ratio(img)
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             results.append({"file": p.name, "error": str(e)})
             continue
 
@@ -89,7 +89,7 @@ def write_report(results: list[dict], out_path: Path, threshold: float, src_dir:
     ]
     for r in results:
         if "error" in r:
-            lines.append(f"| {r['file']} | ERR | ERR | ??|")
+            lines.append(f"| {r['file']} | ERR | ERR | — |")
         else:
             mark = "[!] YES" if r["suspect"] else "[OK]"
             lines.append(f"| {r['file']} | {r['bottom']:.3f} | {r['right']:.3f} | {mark} |")
@@ -97,22 +97,22 @@ def write_report(results: list[dict], out_path: Path, threshold: float, src_dir:
     if suspects:
         lines += [
             "",
-            "## Suspect slides ??Claude OCR 吏곸젒 ?뺤씤 沅뚯옣",
+            "## Suspect slides — Claude OCR 직접 확인 권장",
             "",
         ]
         for r in suspects:
-            lines.append(f"- **{r['file']}** ??bottom {r['bottom']:.3f}, right {r['right']:.3f}")
+            lines.append(f"- **{r['file']}** — bottom {r['bottom']:.3f}, right {r['right']:.3f}")
         lines += [
             "",
-            "**?ㅼ쓬 ?≪뀡:**",
+            "**다음 액션:**",
             "```python",
-            "# Claude 媛 ?섏떖 slides瑜?Read tool 濡?吏곸젒 OCR",
+            "# Claude 가 의심 slides를 Read tool 로 직접 OCR",
         ]
         for r in suspects[:5]:
             lines.append(f"Read('{src_dir}/{r['file']}')")
         lines += ["```"]
     else:
-        lines += ["", "## [OK] 紐⑤뱺 slides ?듦낵 ???섎┝ ?섏떖 ?놁쓬", ""]
+        lines += ["", "## [OK] 모든 slides 통과 — 잘림 의심 없음", ""]
 
     out_path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -120,9 +120,9 @@ def write_report(results: list[dict], out_path: Path, threshold: float, src_dir:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=None,
-                    help="PPT ?묒뾽 ?대뜑 (?? outputs/ppt-automation). 誘몄??뺤떆 outputs/ppt* ?꾨?")
+                    help="PPT 작업 폴더 (예: outputs/ppt-automation). 미지정시 outputs/ppt* 전부")
     ap.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD,
-                    help="媛?μ옄由??ㅽ겕 ?쎌? 鍮꾩쑉 ?꾧퀎移?(default: 0.10)")
+                    help="가장자리 다크 픽셀 비율 임계치 (default: 0.10)")
     args = ap.parse_args()
 
     project_root = Path(__file__).resolve().parent.parent.parent
@@ -169,4 +169,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

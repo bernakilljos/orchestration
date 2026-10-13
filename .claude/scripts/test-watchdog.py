@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Smoke test suite for watchdog + backoff system.
 
@@ -40,10 +40,10 @@ def test_backoff_schedule():
     actual = [compute_backoff(i) for i in range(6)]
 
     if actual == expected:
-        print("??Backoff schedule correct:", actual)
+        print("✓ Backoff schedule correct:", actual)
         return True
     else:
-        print("??Backoff schedule wrong. Expected:", expected, "Got:", actual)
+        print("✗ Backoff schedule wrong. Expected:", expected, "Got:", actual)
         return False
 
 
@@ -60,9 +60,9 @@ def test_format_duration():
     for sec, expected in tests:
         actual = format_duration(sec)
         if actual == expected:
-            print(f"  ??{sec}s -> '{actual}'")
+            print(f"  ✓ {sec}s -> '{actual}'")
         else:
-            print(f"  ??{sec}s -> expected '{expected}', got '{actual}'")
+            print(f"  ✗ {sec}s -> expected '{expected}', got '{actual}'")
             all_pass = False
     return all_pass
 
@@ -86,14 +86,14 @@ def test_stale_worker_detection():
     live_ids = {w["worker_id"] for w in live}
 
     if "test-stale-1" not in live_ids:
-        print("??Stale worker correctly excluded from live workers")
+        print("✓ Stale worker correctly excluded from live workers")
 
         # Cleanup
         with tx() as conn:
             conn.execute("DELETE FROM workers WHERE worker_id = 'test-stale-1'")
         return True
     else:
-        print("??Stale worker should not be in live workers list")
+        print("✗ Stale worker should not be in live workers list")
         return False
 
 
@@ -117,14 +117,14 @@ def test_quota_aware_backoff():
     ready_ids = {w["worker_id"] for w in ready}
 
     if "test-quota-1" in ready_ids:
-        print("??Quota-backoff-expired worker detected as ready to revive")
+        print("✓ Quota-backoff-expired worker detected as ready to revive")
 
         # Cleanup
         with tx() as conn:
             conn.execute("DELETE FROM workers WHERE worker_id = 'test-quota-1'")
         return True
     else:
-        print("??Quota-backoff-expired worker should be in ready_to_revive")
+        print("✗ Quota-backoff-expired worker should be in ready_to_revive")
         return False
 
 
@@ -157,15 +157,15 @@ def test_dead_worker_retry_limit():
 
     success = True
     if "test-dead-2" in dead_ids:
-        print("??Dead worker with retry_count=2 included in retry list")
+        print("✓ Dead worker with retry_count=2 included in retry list")
     else:
-        print("??Dead worker with retry_count=2 should be in retry list")
+        print("✗ Dead worker with retry_count=2 should be in retry list")
         success = False
 
     if "test-dead-3" not in dead_ids:
-        print("??Dead worker with retry_count=3 excluded from retry list")
+        print("✓ Dead worker with retry_count=3 excluded from retry list")
     else:
-        print("??Dead worker with retry_count=3 should NOT be in retry list")
+        print("✗ Dead worker with retry_count=3 should NOT be in retry list")
         success = False
 
     # Cleanup
@@ -180,13 +180,13 @@ def test_spawn_worker_dry_run():
     try:
         result = spawn_worker("codex", "codex-5", dry_run=True)
         if result:
-            print("??Spawn worker dry_run succeeded (printed command)")
+            print("✓ Spawn worker dry_run succeeded (printed command)")
             return True
         else:
-            print("??Spawn worker dry_run should return True")
+            print("✗ Spawn worker dry_run should return True")
             return False
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
-        print(f"??Spawn worker dry_run raised exception: {e}")
+    except Exception as e:
+        print(f"✗ Spawn worker dry_run raised exception: {e}")
         return False
 
 
@@ -202,19 +202,19 @@ def test_quota_exceeded_flag():
     set_quota_exceeded("test-ai", expires_at, "test error")
 
     if is_quota_exceeded("test-ai"):
-        print("??Quota exceeded flag set correctly")
+        print("✓ Quota exceeded flag set correctly")
     else:
-        print("??Quota exceeded flag not set")
+        print("✗ Quota exceeded flag not set")
         return False
 
     # Clear it
     clear_quota("test-ai")
 
     if not is_quota_exceeded("test-ai"):
-        print("??Quota exceeded flag cleared correctly")
+        print("✓ Quota exceeded flag cleared correctly")
         return True
     else:
-        print("??Quota exceeded flag should be cleared")
+        print("✗ Quota exceeded flag should be cleared")
         return False
 
 
@@ -238,8 +238,8 @@ def main():
         try:
             result = test_func()
             results.append((name, result))
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
-            print(f"??Test raised exception: {e}")
+        except Exception as e:
+            print(f"✗ Test raised exception: {e}")
             import traceback
             traceback.print_exc()
             results.append((name, False))
@@ -250,16 +250,15 @@ def main():
     print(f"Passed: {passed}/{total}")
 
     if passed == total:
-        print("\n??ALL TESTS PASSED\n")
+        print("\n✓ ALL TESTS PASSED\n")
         return 0
     else:
-        print("\n??SOME TESTS FAILED\n")
+        print("\n✗ SOME TESTS FAILED\n")
         for name, result in results:
-            status = "?? if result else "??
+            status = "✓" if result else "✗"
             print(f"  {status} {name}")
         return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -9,7 +9,8 @@ HOOK="$PROJECT_DIR/.git/hooks/pre-commit"
 # 최신본이면 pre-commit 만 건너뛴다. 예전엔 "guide.txt" 만 보고 exit 0 해서
 # 고친 판(|| true)이 기존 설치에 영영 안 들어갔고, 아래 post-merge·post-rewrite 도
 # 설치되지 않았다 (2026-10-02 실측: pull 후에도 'integer expression expected' 재현).
-if [ -f "$HOOK" ] && grep -q "guide.txt" "$HOOK" 2>/dev/null && ! grep -q '|| echo "0"' "$HOOK" 2>/dev/null; then
+# 2026-10-13: 인코딩 검사(precommit-encoding-check) 가 없는 옛 판도 다시 설치한다.
+if [ -f "$HOOK" ] && grep -q "guide.txt" "$HOOK" 2>/dev/null && ! grep -q '|| echo "0"' "$HOOK" 2>/dev/null && grep -q "precommit-encoding-check" "$HOOK" 2>/dev/null; then
   : # 최신 pre-commit
 else
 cat > "$HOOK" <<'HOOK_EOF'
@@ -22,6 +23,12 @@ if [ "$INFRA" -gt 0 ]; then
     echo "[X] [git pre-commit] guide.txt 미포함! git add guide.txt"
     exit 1
   fi
+fi
+# 한글 깨짐·python 문법 오류 파일 커밋 차단 (2026-10-13 11c622f 사고)
+ROOT="$(git rev-parse --show-toplevel)"
+PY="$(command -v python || command -v python3)"
+if [ -n "$PY" ] && [ -f "$ROOT/.claude/scripts/precommit-encoding-check.py" ]; then
+  "$PY" -X utf8 "$ROOT/.claude/scripts/precommit-encoding-check.py" || exit 1
 fi
 exit 0
 HOOK_EOF

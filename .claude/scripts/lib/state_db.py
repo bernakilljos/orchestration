@@ -1,4 +1,4 @@
-﻿"""SQLite state management library for orchestration_v1 kit.
+"""SQLite state management library for orchestration_v1 kit.
 
 Provides atomic transaction handling, worker tracking, task locking, metrics,
 and quota management via WAL-enabled SQLite.
@@ -59,7 +59,7 @@ def tx():
       conn.execute("BEGIN IMMEDIATE")
       yield conn
       conn.commit()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
       conn.rollback()
       raise
     finally:
@@ -67,11 +67,12 @@ def tx():
 
 
 def ensure_history_tables(conn) -> None:
-  """?대젰 ?뚯씠釉?4醫?(conversations쨌session_summary쨌problem_solutions쨌file_audit). Idempotent.
+  """이력 테이블 4종 (conversations·session_summary·problem_solutions·file_audit). Idempotent.
 
-  2026-10-02: ?곕뒗 履?conversation_logger쨌save_solution쨌audit_file_write)留??덇퀬 DDL ??kit ??  ?놁뼱?? ??PC ??orca.db ?먯꽌??INSERT 媛 except ???쇱폒???대젰??0嫄댁씠?덈떎.
-  schema_version 議곌린 return 怨?臾닿??섍쾶 留ㅻ쾲 ?ㅽ뻾?쒕떎 (湲곗〈 DB ?먮룄 蹂닿컯).
-  而щ읆? 媛?INSERT/SELECT 臾?湲곗?. hit_count쨌last_hit_ts ??promote-solutions 媛 ?곕뒗 而щ읆.
+  2026-10-02: 쓰는 쪽(conversation_logger·save_solution·audit_file_write)만 있고 DDL 이 kit 에
+  없어서, 새 PC 의 orca.db 에서는 INSERT 가 except 에 삼켜져 이력이 0건이었다.
+  schema_version 조기 return 과 무관하게 매번 실행한다 (기존 DB 에도 보강).
+  컬럼은 각 INSERT/SELECT 문 기준. hit_count·last_hit_ts 는 promote-solutions 가 쓰는 컬럼.
   """
   conn.executescript("""
     CREATE TABLE IF NOT EXISTS conversations (
@@ -103,19 +104,19 @@ def ensure_history_tables(conn) -> None:
     );
     CREATE INDEX IF NOT EXISTS idx_file_audit_ts ON file_audit(ts);
   """)
-  # ?대? 留뚮뱾?댁쭊 ?뚯씠釉붿뿉 鍮좎쭊 而щ읆 蹂닿컯 (CREATE IF NOT EXISTS ??而щ읆?????뷀븳??
-  #   2026-10-02: session_summary.updated_at ?꾨씫 ??conversation_logger ??ON CONFLICT UPDATE ?ㅽ뙣,
-  #   resume-last-24h ??WHERE updated_at 議고쉶媛 議곗슜??鍮?寃곌낵
+  # 이미 만들어진 테이블에 빠진 컬럼 보강 (CREATE IF NOT EXISTS 는 컬럼을 안 더한다)
+  #   2026-10-02: session_summary.updated_at 누락 → conversation_logger 의 ON CONFLICT UPDATE 실패,
+  #   resume-last-24h 의 WHERE updated_at 조회가 조용히 빈 결과
   need = {
     "session_summary": [("updated_at", "TIMESTAMP")],
     "problem_solutions": [("hit_count", "INTEGER DEFAULT 0"), ("last_hit_ts", "TIMESTAMP")],
-    # approval-gate.py 媛 ?곕뒗 ?뱀씤 寃뚯씠??而щ읆 ??tasks DDL ???놁뼱 ??PC ?먯꽌 ?뱀씤 湲곕뒫 遺덈뒫
+    # approval-gate.py 가 쓰는 승인 게이트 컬럼 — tasks DDL 에 없어 새 PC 에서 승인 기능 불능
     "tasks": [("approval_state", "TEXT DEFAULT 'not_required'"), ("risk_category", "TEXT"), ("risk_detail", "TEXT"), ("approved_at", "INTEGER"), ("approved_by", "TEXT")],
   }
   for tbl, cols in need.items():
     have = {r[1] for r in conn.execute(f"PRAGMA table_info({tbl})")}
     if not have:
-      continue  # ?꾩쭅 ?녿뒗 ?뚯씠釉?(??DB ??tasks ?? ???앹꽦 ??init_schema ?앹뿉???ㅼ떆 蹂닿컯 (1006 A2 ?ㅼ륫 FAIL)
+      continue  # 아직 없는 테이블 (새 DB 의 tasks 등) — 생성 후 init_schema 끝에서 다시 보강 (1006 A2 실측 FAIL)
     for col, typ in cols:
       if col not in have:
         conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {typ}")
@@ -234,7 +235,7 @@ def init_schema() -> None:
       "INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (1, ?)",
       (now,)
     )
-    # ??DB: ?꾩뿉??留?留뚮뱺 tasks ?깆뿉 蹂닿컯 而щ읆 異붽? (???몄텧?먯꽑 ?뚯씠釉붿씠 ?놁뼱 嫄대꼫?)
+    # 새 DB: 위에서 막 만든 tasks 등에 보강 컬럼 추가 (앞 호출에선 테이블이 없어 건너뜀)
     ensure_history_tables(conn)
 
 
@@ -566,4 +567,3 @@ def get_workers_by_status(status: str) -> List[Dict[str, Any]]:
       (status,)
     ).fetchall()
   return [dict(row) for row in rows]
-

@@ -1,8 +1,8 @@
-﻿"""UserPromptSubmit ??紐⑤뱢 怨듭슜 ?꾧뎄 ??ctx 쨌 ?낅젰 異붿텧 쨌 寃쎈줈 쨌 ?뚯씪 ?곌린 쨌 ?ㅽ겕由쏀듃 濡쒕뜑.
+"""UserPromptSubmit 훅 모듈 공용 도구 — ctx · 입력 추출 · 경로 · 파일 쓰기 · 스크립트 로더.
 
-媛???紐⑤뱢 (.claude/hooks/prompt/<?대쫫>.py) ? run(ctx) 瑜??몄텧?쒕떎.
-  諛섑솚: str (additionalContext ?띿뒪?? | dict ({"additionalContext":..., "systemMessage":...}) | None (??留??놁쓬)
-prompt-dispatch.py 媛 紐⑤뱢??settings ?쒖꽌?濡?import ???ㅽ뻾?섍퀬 寃곌낵瑜??⑹튇??
+각 훅 모듈 (.claude/hooks/prompt/<이름>.py) 은 run(ctx) 를 노출한다.
+  반환: str (additionalContext 텍스트) | dict ({"additionalContext":..., "systemMessage":...}) | None (할 말 없음)
+prompt-dispatch.py 가 모듈을 settings 순서대로 import 해 실행하고 결과를 합친다.
 """
 from __future__ import annotations
 
@@ -14,25 +14,26 @@ import sys
 import time
 from pathlib import Path
 
-# ???ㅽ겕由쏀듃 ?꾩튂 湲곗? (?먮낯 .sh ??$(dirname "$0")/../.. ? ?숈씪)
+# 훅 스크립트 위치 기준 (원본 .sh 의 $(dirname "$0")/../.. 와 동일)
 HOOKS_DIR = Path(os.path.abspath(__file__)).parent.parent
 ROOT = HOOKS_DIR.parent.parent
 SCRIPTS_DIR = ROOT / ".claude" / "scripts"
 
 
 class Ctx:
-    """??怨듭슜 ?낅젰 ??stdin ? ??踰덈쭔 ?쎌뼱 紐⑤뱺 紐⑤뱢??怨듭쑀?쒕떎."""
+    """훅 공용 입력 — stdin 은 한 번만 읽어 모든 모듈이 공유한다."""
 
     def __init__(self, raw: str) -> None:
         self.raw = raw
-        # bash $(cat) ? ?앹쓽 媛쒗뻾??吏?대떎 ??JSON ?먮Ц??洹몃?濡?留ㅼ묶?섎뜕 ?낆슜
+        # bash $(cat) 은 끝의 개행을 지운다 — JSON 원문을 그대로 매칭하던 훅용
         self.raw_stripped = raw.rstrip("\n")
-        self.parse_error = ""          # json.loads(stdin or '{}') 諛⑹떇 (save-user-prompt)
+        self.parse_error = ""          # json.loads(stdin or '{}') 방식 (save-user-prompt)
         payload = None
         try:
             payload = json.loads(raw or "{}")
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:  # ?먮낯???뚯떛 ?ㅽ뙣 ??議곗슜??鍮?媛?            self.parse_error = str(e)
-        # json.load(stdin) 諛⑹떇 ??鍮??낅젰???ㅻ쪟 (lookup-history)
+        except Exception as e:  # 원본도 파싱 실패 시 조용히 빈 값
+            self.parse_error = str(e)
+        # json.load(stdin) 방식 — 빈 입력도 오류 (lookup-history)
         self.parse_error_strict = "Expecting value: line 1 column 1 (char 0)" if raw.strip() == "" else self.parse_error
         self.payload = payload if isinstance(payload, dict) else {}
         # ${CLAUDE_PROJECT_DIR:-$PWD}
@@ -43,7 +44,7 @@ class Ctx:
         self.marks: dict[str, list[tuple[str, float]]] = {}
         self._t0 = time.perf_counter()
 
-    # ?섏쐞 ?④퀎 ?쒓컙 湲곕줉 (濡쒓렇??hook:label=ms 濡??⑤뒗??
+    # 하위 단계 시간 기록 (로그에 hook:label=ms 로 남는다)
     def mark(self, label: str) -> None:
         self.marks.setdefault(self.hook, []).append((label, (time.perf_counter() - self._t0) * 1000))
 
@@ -52,11 +53,11 @@ class Ctx:
         self._t0 = time.perf_counter()
 
     def has_plugins(self) -> bool:
-        """?쒕툕?꾨줈?앺듃 媛????plugins/ ?놁쑝硫?kit ??skip."""
+        """서브프로젝트 가드 — plugins/ 없으면 kit 훅 skip."""
         return os.path.isdir(os.path.join(self.project_dir, "plugins"))
 
     def field(self, *keys: str) -> str:
-        """d.get(k1) or d.get(k2) or '' (泥?踰덉㎏ truthy 媛?."""
+        """d.get(k1) or d.get(k2) or '' (첫 번째 truthy 값)."""
         for k in keys:
             v = self.payload.get(k)
             if v:
@@ -64,15 +65,15 @@ class Ctx:
         return ""
 
     def prompt_jq(self) -> str:
-        """jq -r '.prompt // ""' ? ?숈씪 (null/false -> 鍮?臾몄옄??."""
+        """jq -r '.prompt // ""' 와 동일 (null/false -> 빈 문자열)."""
         v = self.payload.get("prompt")
         if v is None or v is False:
             return ""
         return v if isinstance(v, str) else str(v)
 
 
-# 2026-10-03/05 (69ad9c9): /loop(Cron) ?꾨＼?꾪듃("[LOOP] ...") 쨌 諛곌꼍 ?묒뾽 ?뚮┝(<task-notification>) ? ?щ엺 ?낅젰???꾨땲??
-# stdin JSON ?먮Ц?먯꽌 "prompt" 媛믪쓽 ?쒖옉??蹂몃떎 (?먮낯 _LOOP_RE ? ?숈씪).
+# 2026-10-03/05 (69ad9c9): /loop(Cron) 프롬프트("[LOOP] ...") · 배경 작업 알림(<task-notification>) 은 사람 입력이 아니다.
+# stdin JSON 원문에서 "prompt" 값의 시작을 본다 (원본 _LOOP_RE 와 동일).
 LOOP_RE = r'"prompt"\s*:\s*"(\[LOOP\] |<task-notification>)'
 
 
@@ -81,22 +82,22 @@ def is_loop_prompt_raw(raw: str) -> bool:
 
 
 def is_loop_prompt(prompt: str) -> bool:
-    """PROMPT 媛??먯껜媛 [LOOP] / <task-notification> 濡??쒖옉 (?먮낯 `== "[LOOP]"*` ?⑦꽩)."""
+    """PROMPT 값 자체가 [LOOP] / <task-notification> 로 시작 (원본 `== "[LOOP]"*` 패턴)."""
     return prompt.startswith("[LOOP]") or prompt.startswith("<task-notification>")
 
 
 def bash_strip(s: str) -> str:
-    """bash $(...) ???앹쓽 媛쒗뻾留??쒓굅."""
+    """bash $(...) — 끝의 개행만 제거."""
     return s.rstrip("\n")
 
 
 def head_bytes(s: str, n: int) -> str:
-    """head -c N (諛붿씠??湲곗? ?먮쫫 쨌 湲??以묎컙?먯꽌 ?섎━硫?源⑥쭊 諛붿씠?몃? 洹몃?濡??붾떎 ???먮낯 ?숈씪)."""
+    """head -c N (바이트 기준 자름 · 글자 중간에서 잘리면 깨진 바이트를 그대로 둔다 — 원본 동일)."""
     return s.encode("utf-8", "replace")[:n].decode("utf-8", "surrogateescape")
 
 
 def _enc(text: str) -> bytes:
-    """head_bytes 媛 ?④릿 源⑥쭊 諛붿씠??surrogateescape)瑜??먮옒 諛붿씠?몃줈 ?섎룎???대떎."""
+    """head_bytes 가 남긴 깨진 바이트(surrogateescape)를 원래 바이트로 되돌려 쓴다."""
     try:
         return text.encode("utf-8", "surrogateescape")
     except UnicodeEncodeError:
@@ -104,7 +105,7 @@ def _enc(text: str) -> bytes:
 
 
 def msys_path(p) -> str:
-    """Git Bash pwd ?쒓린 (C:\\a\\b -> /c/a/b) ???먮낯 ?낆씠 異쒕젰?섎뜕 寃쎈줈 ?뺤떇 ?좎?."""
+    """Git Bash pwd 표기 (C:\\a\\b -> /c/a/b) — 원본 훅이 출력하던 경로 형식 유지."""
     s = str(p)
     if os.name == "nt" and len(s) > 1 and s[1] == ":":
         return "/" + s[0].lower() + s[2:].replace("\\", "/")
@@ -112,12 +113,12 @@ def msys_path(p) -> str:
 
 
 def search(pattern: str, text: str, ignorecase: bool = False) -> bool:
-    """bash [[ =~ ]] (POSIX ERE 쨌 . 媛 媛쒗뻾??留ㅼ튂) ???遺덈━??留ㅼ튂."""
+    """bash [[ =~ ]] (POSIX ERE · . 가 개행도 매치) 대응 불리언 매치."""
     return re.search(pattern, text, re.S | (re.I if ignorecase else 0)) is not None
 
 
 def append_text(path, text: str) -> None:
-    """諛붿씠?덈━ append (Windows ?띿뒪??紐⑤뱶 媛쒗뻾 蹂??諛⑹? 쨌 bash >> ? ?숈씪)."""
+    """바이너리 append (Windows 텍스트 모드 개행 변환 방지 · bash >> 와 동일)."""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(p, "ab") as f:
@@ -136,7 +137,7 @@ def read_text(path) -> str:
 
 
 def read_lines(path) -> list[str]:
-    """bash mapfile -t (媛쒗뻾?쇰줈留?遺꾨━ 쨌 ??媛쒗뻾? ??ぉ ?꾨떂)."""
+    """bash mapfile -t (개행으로만 분리 · 끝 개행은 항목 아님)."""
     data = read_text(path)
     lines = data.split("\n")
     if lines and lines[-1] == "":
@@ -149,7 +150,7 @@ def ts_local(fmt: str) -> str:
 
 
 def ts_iso_tz() -> str:
-    """printf '%(%FT%T%z)T' -1 ? ?숈씪 (+0900)."""
+    """printf '%(%FT%T%z)T' -1 와 동일 (+0900)."""
     lt = time.localtime()
     off = lt.tm_gmtoff or 0
     sign = "+" if off >= 0 else "-"
@@ -161,7 +162,7 @@ _SCRIPT_CACHE: dict[str, object] = {}
 
 
 def load_script(name: str):
-    """.claude/scripts/<name>.py (?섏씠???뚯씪紐??ы븿) 瑜?in-process 濡?濡쒕뱶. ?놁쑝硫?None."""
+    """.claude/scripts/<name>.py (하이픈 파일명 포함) 를 in-process 로 로드. 없으면 None."""
     if name in _SCRIPT_CACHE:
         return _SCRIPT_CACHE[name]
     path = SCRIPTS_DIR / (name + ".py")
@@ -173,4 +174,3 @@ def load_script(name: str):
         spec.loader.exec_module(mod)
     _SCRIPT_CACHE[name] = mod
     return mod
-

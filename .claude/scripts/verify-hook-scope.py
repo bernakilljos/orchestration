@@ -1,10 +1,11 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-verify-hook-scope.py ??Hook ?ㅼ퐫??遺꾨━ 寃利?1. ~/.claude/settings.json ??kit hook ?좎텧 媛먯?
-2. kit hook script ??[ -d plugins ] guard 議댁옱 ?뺤씤
-3. 臾몄젣 ??寃쎄퀬
+verify-hook-scope.py — Hook 스코프 분리 검증
+1. ~/.claude/settings.json 안 kit hook 유출 감지
+2. kit hook script 안 [ -d plugins ] guard 존재 확인
+3. 문제 시 경고
 
-洹쇨굅: .claude/rules/hook-scope-separation.md
+근거: .claude/rules/hook-scope-separation.md
 """
 from __future__ import annotations
 
@@ -14,12 +15,12 @@ import re
 import sys
 from pathlib import Path
 
-# ?섍꼍 蹂??湲곕컲 ?숈쟻 寃쎈줈
+# 환경 변수 기반 동적 경로
 ROOT = Path(__file__).resolve().parent.parent.parent
 LOGS = ROOT / ".claude" / "logs"
 LOGS.mkdir(parents=True, exist_ok=True)
 
-# 濡쒓퉭
+# 로깅
 LOG_FILE = LOGS / "verify-hook-scope.log"
 logging.basicConfig(
     level=logging.INFO,
@@ -31,7 +32,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Kit hook ?⑦꽩 (?꾨줈?앺듃 ?꾩슜 = plugins/ 愿??
+# Kit hook 패턴 (프로젝트 전용 = plugins/ 관련)
 KIT_HOOK_PATTERNS = [
     "exec_orch",
     "detect-user-emotion",
@@ -54,7 +55,7 @@ KIT_HOOK_PATTERNS = [
 
 
 def is_kit_hook(hook_name: str) -> bool:
-    """Hook ?대쫫??kit ?꾩슜?몄? ?먯젙."""
+    """Hook 이름이 kit 전용인지 판정."""
     for pattern in KIT_HOOK_PATTERNS:
         if pattern.lower() in hook_name.lower():
             return True
@@ -62,7 +63,7 @@ def is_kit_hook(hook_name: str) -> bool:
 
 
 def check_global_settings() -> list:
-    """湲濡쒕쾶 ~/.claude/settings.json ?먯꽌 kit hook ?좎텧 媛먯?."""
+    """글로벌 ~/.claude/settings.json 에서 kit hook 유출 감지."""
     issues = []
 
     global_settings = Path.home() / ".claude" / "settings.json"
@@ -73,11 +74,11 @@ def check_global_settings() -> list:
     try:
         with global_settings.open(encoding="utf-8") as f:
             data = json.load(f)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         logger.error(f"failed to parse global settings: {e}")
         return issues
 
-    # hooks ?뱀뀡 ?뺤씤
+    # hooks 섹션 확인
     hooks = data.get("hooks", {})
     for event, hook_list in hooks.items():
         if not isinstance(hook_list, list):
@@ -99,17 +100,18 @@ def check_global_settings() -> list:
 
 
 def check_kit_guard(hook_script: Path) -> bool:
-    """kit hook script ??[ -d plugins ] guard 議댁옱 ?뺤씤."""
+    """kit hook script 안 [ -d plugins ] guard 존재 확인."""
     if not hook_script.exists() or not hook_script.is_file():
-        return True  # ?뚯씪 ?놁쑝硫?臾몄젣 ?꾨떂
+        return True  # 파일 없으면 문제 아님
 
     try:
         content = hook_script.read_text(encoding="utf-8")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         logger.warning(f"failed to read {hook_script}: {e}")
         return False
 
-    # Guard ?⑦꽩 寃??    guard_patterns = [
+    # Guard 패턴 검사
+    guard_patterns = [
         r'\[\s*-d\s+.*plugins\s*\]',  # [ -d plugins ]
         r'\[\s*-d\s+"\${.*}/plugins"\s*\]',  # [ -d "${...}/plugins" ]
         r'plugins_dir.*exit\s+0',  # guard via variable
@@ -123,7 +125,7 @@ def check_kit_guard(hook_script: Path) -> bool:
 
 
 def scan_kit_hooks() -> list:
-    """kit hook script ???꾩닔議곗궗."""
+    """kit hook script 들 전수조사."""
     issues = []
 
     kit_hook_dir = ROOT / ".claude" / "hooks"
@@ -132,7 +134,7 @@ def scan_kit_hooks() -> list:
         return issues
 
     for script in kit_hook_dir.glob("*.sh"):
-        # ?ㅽ겕由쏀듃 ?대쫫??kit hook ?몄? ?뺤씤
+        # 스크립트 이름이 kit hook 인지 확인
         if is_kit_hook(script.name):
             if not check_kit_guard(script):
                 issues.append(
@@ -144,20 +146,20 @@ def scan_kit_hooks() -> list:
 
 
 def main(verbose: bool = False) -> int:
-    """寃利??ㅽ뻾."""
+    """검증 실행."""
     logger.info("=== verify-hook-scope start ===")
 
     all_issues = []
 
-    # 1. 湲濡쒕쾶 ?ㅼ젙 ?뺤씤
+    # 1. 글로벌 설정 확인
     logger.info("checking global settings...")
     all_issues.extend(check_global_settings())
 
-    # 2. kit hook guard ?뺤씤
+    # 2. kit hook guard 확인
     logger.info("checking kit hooks...")
     all_issues.extend(scan_kit_hooks())
 
-    # 寃곌낵
+    # 결과
     if all_issues:
         logger.error(f"found {len(all_issues)} issues:")
         for issue in all_issues:
@@ -180,4 +182,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     sys.exit(main(verbose=args.verbose))
-

@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
-"""verify-no-mojibake.py ??Korean mojibake (encoding break) detector
-Ref: CLAUDE.md 짠 7-25 + .claude/rules/no-false-report.md
+#!/usr/bin/env python3
+"""verify-no-mojibake.py — Korean mojibake (encoding break) detector
+Ref: CLAUDE.md § 7-25 + .claude/rules/no-false-report.md
 
 Targets: text files (.md, .txt, .html, .py, .js, .ts, .json, .yaml, .sh, .sql)
 Includes backup folders (.bak, _backup, _v2, _old, archive)
@@ -11,8 +11,8 @@ Usage:
   python verify-no-mojibake.py file.md --quiet   # exit code only (CI)
 
 Exit codes:
-  0 ??PASS (no mojibake)
-  1 ??FAIL (mojibake found, listed to stdout)
+  0 — PASS (no mojibake)
+  1 — FAIL (mojibake found, listed to stdout)
 """
 import sys
 import re
@@ -34,27 +34,27 @@ REPLACEMENT_CHAR = chr(0xFFFD)  # U+FFFD replacement char (most reliable signal)
 PATTERNS = [
     (REPLACEMENT_CHAR, "U+FFFD replacement char"),
     # User-reported actual breaks (2026-06-10)
-    ("轅뉖７", "user-reported break (kkuh-rut)"),
-    ("轅?, "user-reported break fragment"),
-    ("猷?, "user-reported break fragment"),
-    ("轅?, "Korean break pattern"),
-    ("愿?, "Korean break pattern"),
+    ("꿇룷", "user-reported break (kkuh-rut)"),
+    ("꿇", "user-reported break fragment"),
+    ("룷", "user-reported break fragment"),
+    ("꿿", "Korean break pattern"),
+    ("괓", "Korean break pattern"),
     # EUC-KR / cp949 -> UTF-8 decoding failures (these chars themselves are valid hanja)
-    ("?먯뇵??, "cp949 -> UTF-8 break"),
-    ("?먯떆", "cp949 -> UTF-8 break"),
-    ("?먯떗", "cp949 -> UTF-8 break"),
+    ("점쇙올", "cp949 -> UTF-8 break"),
+    ("점시", "cp949 -> UTF-8 break"),
+    ("점십", "cp949 -> UTF-8 break"),
     # UTF-8 -> Latin-1 corruption (most common in web)
-    ("횄", "UTF-8 -> Latin-1 (횄)"),
-    ("창??, "UTF-8 -> Latin-1 (a-euro)"),
-    ("챦쩔쩍", "UTF-8 -> Latin-1 (i-question-half)"),
+    ("Ã", "UTF-8 -> Latin-1 (Ã)"),
+    ("â€", "UTF-8 -> Latin-1 (a-euro)"),
+    ("ï¿½", "UTF-8 -> Latin-1 (i-question-half)"),
 ]
 
-# Regex patterns (Korean + ? combo ??broken form)
+# Regex patterns (Korean + ? combo — broken form)
 REGEX_PATTERNS = [
     # Korean char + ? + Korean char (decoding failure)
-    (re.compile(r"[媛-??\?[媛-??"), "Korean-?-Korean (decode failure suspect)"),
-    # ?怨?????? ??cp949 broken
-    (re.compile(r"\?[怨몄뿑??爾?"), "EUC-KR break (?+broken-korean)"),
+    (re.compile(r"[가-힯]\?[가-힯]"), "Korean-?-Korean (decode failure suspect)"),
+    # ?곸 ?쒕 ?대 — cp949 broken
+    (re.compile(r"\?[곸엕대щ쳨]"), "EUC-KR break (?+broken-korean)"),
 ]
 
 # Skip dirs
@@ -76,7 +76,7 @@ def check_file(path: Path) -> list:
     """Check one file; return list of (lineno, msg)."""
     try:
         content = path.read_text(encoding="utf-8", errors="replace")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         return [(0, f"read failed: {e}")]
 
     issues = []
@@ -152,7 +152,7 @@ def main():
 
     if not results:
         if not quiet:
-            print(f"[PASS] mojibake 0 ??{target}")
+            print(f"[PASS] mojibake 0 — {target}")
         sys.exit(0)
 
     total = sum(len(v) for v in results.values())
@@ -168,4 +168,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

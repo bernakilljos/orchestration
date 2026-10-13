@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 PostToolUse hook: quick Python sanity checks after Claude writes/edits files.
 
@@ -13,7 +13,7 @@ import subprocess
 import sys
 from datetime import datetime
 
-# Windows 肄섏넄 cp949 ?뚰뵾 ??UTF-8 媛뺤젣 (ASCII 異쒕젰 ?ъ슜 + ?댁쨷 ?덉쟾留?
+# Windows 콘솔 cp949 회피 — UTF-8 강제 (ASCII 출력 사용 + 이중 안전망)
 try:
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -28,7 +28,7 @@ def _run(cmd, cwd):
 def main():
     try:
         payload = json.load(sys.stdin)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return 0
 
     tool_input = payload.get("tool_input", {}) or {}
@@ -83,7 +83,6 @@ if __name__ == "__main__":
         if isinstance(result, dict):
             sys.stdout.write(json.dumps(result, ensure_ascii=False))
         sys.exit(0)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         sys.stdout.write(json.dumps({"systemMessage": f"Hook error: {e}"}, ensure_ascii=False))
         sys.exit(0)
-

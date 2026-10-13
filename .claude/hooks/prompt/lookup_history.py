@@ -1,7 +1,7 @@
-﻿"""lookup-history.sh ?댁떇 ???꾨＼?꾪듃 ?ㅼ썙?쒕줈 orca.db ?대젰(?댁쟾 ??붋룹꽭???붿빟쨌?ъ궗???닿껐梨? 議고쉶 ??二쇱엯.
+"""lookup-history.sh 이식 — 프롬프트 키워드로 orca.db 이력(이전 대화·세션 요약·재사용 해결책) 조회 후 주입.
 
-遺?묒슜: problem_solutions.hit_count / last_hit_ts / reusable_score / verified 媛깆떊 (?먮낯 ?숈씪).
-?ㅻ쪟??.claude/logs/lookup-history.log 濡?
+부작용: problem_solutions.hit_count / last_hit_ts / reusable_score / verified 갱신 (원본 동일).
+오류는 .claude/logs/lookup-history.log 로.
 """
 from __future__ import annotations
 
@@ -20,13 +20,13 @@ def run(ctx):
     if ctx.parse_error_strict:
         append_text(log, f"[parse] {ctx.parse_error_strict}\n")
         return None
-    # print(p[:500], end='') -> $(...) 媛 ??媛쒗뻾 ?쒓굅
+    # print(p[:500], end='') -> $(...) 가 끝 개행 제거
     prompt = bash_strip(ctx.field("user_prompt", "prompt")[:500])
     if not prompt:
         return None
 
-    # ?먮낯? ?꾨＼?꾪듃瑜?''' ''' 由ы꽣?대줈 python ?뚯뒪???쇱썙 ?ｌ뿀??(諛깆뒳?섏떆쨌''' 媛 ?덉쑝硫?源⑥쭚).
-    # ?ш린?쒕뒗 蹂?섎줈 吏곸젒 ?꾨떖 ???뺤긽 寃쎈줈 寃곌낵???숈씪.
+    # 원본은 프롬프트를 ''' ''' 리터럴로 python 소스에 끼워 넣었다 (백슬래시·''' 가 있으면 깨짐).
+    # 여기서는 변수로 직접 전달 — 정상 경로 결과는 동일.
     kws = [w for w in re.findall(r"\w{3,}", prompt) if not w.isdigit()][:8]
     if not kws:
         return None
@@ -47,19 +47,20 @@ def run(ctx):
             (*params, os.environ.get("CLAUDE_CODE_SESSION_ID", "")),
         ).fetchall()
         if rows:
-            out.append("## 愿???댁쟾 ???(?먮룞 議고쉶 - DB)")
+            out.append("## 관련 이전 대화 (자동 조회 - DB)")
             for sid, turn, role, content in rows:
                 out.append(f"- [{sid[:8]}#{turn} {role}] {content}")
-        # ?몄뀡 ?붿빟 理쒓렐 愿??        sum_rows = c.execute(
+        # 세션 요약 최근 관련
+        sum_rows = c.execute(
             "SELECT session_id, substr(summary,1,150) FROM session_summary WHERE summary LIKE ? OR key_decisions LIKE ? ORDER BY ended_at DESC LIMIT 2",
             (f"%{kws[0]}%", f"%{kws[0]}%"),
         ).fetchall()
         if sum_rows:
             out.append("")
-            out.append("## 愿???몄뀡 ?붿빟")
+            out.append("## 관련 세션 요약")
             for sid, summ in sum_rows:
                 out.append(f"- [{sid[:8]}] {summ}")
-        # problem_solutions ?ъ궗??移댄깉濡쒓렇 (?묐갑??
+        # problem_solutions 재사용 카탈로그 (양방향)
         like2 = " OR ".join(["keywords LIKE ? OR problem LIKE ?"] * min(len(kws), 4))
         params2: list[str] = []
         for k in kws[:4]:
@@ -76,16 +77,16 @@ def run(ctx):
             ).fetchall()
             if sol_rows:
                 out.append("")
-                out.append("## ?ъ궗??媛?ν븳 ?닿껐梨?(?먮룞 議고쉶)")
+                out.append("## 재사용 가능한 해결책 (자동 조회)")
                 hit_ids = []
                 for sid_s, cat, prob, sol, files, score in sol_rows:
-                    out.append(f"- [{cat} - ??score}] 臾몄젣: {prob}")
+                    out.append(f"- [{cat} - ★{score}] 문제: {prob}")
                     if sol:
-                        out.append(f"  ?닿껐: {sol}")
+                        out.append(f"  해결: {sol}")
                     if files:
-                        out.append(f"  ?뚯씪: {files[:150]}")
+                        out.append(f"  파일: {files[:150]}")
                     hit_ids.append(sid_s)
-                # hit_count 利앷? 쨌 verified ?밴툒 쨌 score ?곹뼢
+                # hit_count 증가 · verified 승급 · score 상향
                 for hid in hit_ids:
                     c.execute(
                         "UPDATE problem_solutions SET hit_count=COALESCE(hit_count,0)+1, "
@@ -100,15 +101,14 @@ def run(ctx):
                         (hid,),
                     )
                 c.commit()
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             pass
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         append_text(log, f"[lookup] {e}\n")
     finally:
         if c is not None:
             try:
                 c.close()
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 pass
     return "\n".join(out) + "\n" if out else None
-

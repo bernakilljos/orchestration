@@ -1,8 +1,8 @@
-﻿"""
-context_reducer.py ?????뚯씪???붿빟 ?뺥깭濡?異뺤냼.
+"""
+context_reducer.py — 큰 파일을 요약 형태로 축소.
 
-24?쒓컙 ?몄뀡?먯꽌 ?꾩껜 ?꾨줈?앺듃 而⑦뀓?ㅽ듃 留ㅻ쾲 濡쒕뱶????퉬.
-Markdown-Python ?뚯씪??二쇱슂 援ъ“留??좎??섎㈃??異뺤냼.
+24시간 세션에서 전체 프로젝트 컨텍스트 매번 로드는 낭비.
+Markdown-Python 파일을 주요 구조만 유지하면서 축소.
 """
 
 import re
@@ -12,23 +12,23 @@ from typing import Optional
 
 def reduce_markdown(path: str, max_chars: int = 8000) -> str:
     """
-    Markdown ?뚯씪??max_chars ?댄븯濡?異뺤냼.
+    Markdown 파일을 max_chars 이하로 축소.
 
-    ?꾨왂:
-      1. frontmatter (---...---) ?좎?
-      2. ?ㅻ뵫 (## ~ #####) ?꾨? ?좎?
-      3. 肄붾뱶 釉붾줉 以?湲?嫄?"... N以??앸왂 ..." 留덉빱濡??붿빟
-      4. ?쒕뒗 ?좎?
-      5. ?쇰컲 ?띿뒪???⑤씫? 泥?以꾨쭔 ?좎? + "..."
+    전략:
+      1. frontmatter (---...---) 유지
+      2. 헤딩 (## ~ #####) 전부 유지
+      3. 코드 블록 중 긴 건 "... N줄 생략 ..." 마커로 요약
+      4. 표는 유지
+      5. 일반 텍스트 단락은 첫 줄만 유지 + "..."
 
-    ?먮낯???대? max_chars ?댄븯硫?洹몃?濡?諛섑솚.
+    원본이 이미 max_chars 이하면 그대로 반환.
 
     Args:
-        path: ?뚯씪 寃쎈줈
-        max_chars: 紐⑺몴 ?ш린
+        path: 파일 경로
+        max_chars: 목표 크기
 
     Returns:
-        異뺤냼???띿뒪??
+        축소된 텍스트
     """
     try:
         content = Path(path).read_text(encoding="utf-8")
@@ -46,7 +46,7 @@ def reduce_markdown(path: str, max_chars: int = 8000) -> str:
     frontmatter = []
 
     for i, line in enumerate(lines):
-        # Frontmatter 泥섎━
+        # Frontmatter 처리
         if i == 0 and line.strip() == "---":
             in_frontmatter = True
             frontmatter.append(line)
@@ -57,20 +57,20 @@ def reduce_markdown(path: str, max_chars: int = 8000) -> str:
                 in_frontmatter = False
             continue
 
-        # 肄붾뱶 釉붾줉 泥섎━
+        # 코드 블록 처리
         if line.strip().startswith("```"):
             if in_code_block:
-                # 釉붾줉 醫낅즺
+                # 블록 종료
                 if len(code_block_lines) > 10:
-                    result.append(code_block_lines[0])  # 泥?以?(?몄뼱 吏??
-                    result.append(f"  ... ({len(code_block_lines) - 2} 以??앸왂) ...")
-                    result.append(code_block_lines[-1])  # 醫낅즺 諛깊떛
+                    result.append(code_block_lines[0])  # 첫 줄 (언어 지정)
+                    result.append(f"  ... ({len(code_block_lines) - 2} 줄 생략) ...")
+                    result.append(code_block_lines[-1])  # 종료 백틱
                 else:
                     result.extend(code_block_lines)
                 in_code_block = False
                 code_block_lines = []
             else:
-                # 釉붾줉 ?쒖옉
+                # 블록 시작
                 in_code_block = True
                 code_block_lines = [line]
             continue
@@ -79,33 +79,33 @@ def reduce_markdown(path: str, max_chars: int = 8000) -> str:
             code_block_lines.append(line)
             continue
 
-        # ?ㅻ뵫 (## ~ #####)
+        # 헤딩 (## ~ #####)
         if re.match(r"^#{2,5}\s", line):
             result.append(line)
             continue
 
-        # ??(| 濡??쒖옉)
+        # 표 (| 로 시작)
         if line.strip().startswith("|"):
             result.append(line)
             continue
 
-        # ?쇰컲 ?띿뒪???⑤씫 異뺤냼
+        # 일반 텍스트 단락 축소
         if line.strip() and not line.startswith("#"):
-            # 泥?以꾨쭔 ?좎?
+            # 첫 줄만 유지
             if result and result[-1] != "":
-                # ?곗냽 鍮?以??꾨떂
+                # 연속 빈 줄 아님
                 result.append(line[:100] + ("..." if len(line) > 100 else ""))
             else:
                 result.append(line[:100] + ("..." if len(line) > 100 else ""))
         else:
-            # 鍮?以??좎? (援щ텇??
+            # 빈 줄 유지 (구분용)
             if not result or result[-1] != "":
                 result.append("")
 
-    # Frontmatter ?욎뿉 遺숈엫
+    # Frontmatter 앞에 붙임
     final = "\n".join(frontmatter) + "\n" + "\n".join(result)
 
-    # ?ъ쟾??max_chars ?섏쑝硫??앸????먮Ⅴ湲?
+    # 여전히 max_chars 넘으면 끝부터 자르기
     if len(final) > max_chars:
         final = final[:max_chars] + "\n... (truncated)"
 
@@ -114,18 +114,18 @@ def reduce_markdown(path: str, max_chars: int = 8000) -> str:
 
 def reduce_python(path: str, max_chars: int = 6000) -> str:
     """
-    Python ?뚯씪??API + docstring 堉덈?濡?異뺤냼.
+    Python 파일을 API + docstring 뼈대로 축소.
 
-    - import ?좎?
-    - class/def ?쒓렇?덉쿂 + docstring ?좎?
-    - ?⑥닔 蹂몃Ц? "..." 濡??泥?(?? 5以??댄븯???좎?)
+    - import 유지
+    - class/def 시그니처 + docstring 유지
+    - 함수 본문은 "..." 로 대체 (단, 5줄 이하는 유지)
 
     Args:
-        path: ?뚯씪 寃쎈줈
-        max_chars: 紐⑺몴 ?ш린
+        path: 파일 경로
+        max_chars: 목표 크기
 
     Returns:
-        異뺤냼??肄붾뱶
+        축소된 코드
     """
     try:
         content = Path(path).read_text(encoding="utf-8")
@@ -142,27 +142,27 @@ def reduce_python(path: str, max_chars: int = 6000) -> str:
     while i < len(lines):
         line = lines[i]
 
-        # import ?쇱씤 ?좎?
+        # import 라인 유지
         if line.strip().startswith(("import ", "from ")):
             result.append(line)
             i += 1
             continue
 
-        # class ?뺤쓽 ?좎?
+        # class 정의 유지
         if re.match(r"^class\s+\w+", line):
             result.append(line)
             i += 1
-            # docstring 李얘린
+            # docstring 찾기
             while i < len(lines) and lines[i].strip().startswith(('"""', "'''", "#")):
                 result.append(lines[i])
                 i += 1
             continue
 
-        # def ?뺤쓽 ?좎?
+        # def 정의 유지
         if re.match(r"^\s*def\s+\w+", line):
             result.append(line)
             i += 1
-            # docstring + 泥?5以??좎?
+            # docstring + 첫 5줄 유지
             docstring_lines = 0
             body_lines = 0
             in_docstring = False
@@ -190,7 +190,7 @@ def reduce_python(path: str, max_chars: int = 6000) -> str:
 
     final = "\n".join(result)
 
-    # ?ъ쟾???섏쑝硫??먮Ⅴ湲?
+    # 여전히 넘으면 자르기
     if len(final) > max_chars:
         final = final[:max_chars] + "\n# ... (truncated)"
 
@@ -199,52 +199,52 @@ def reduce_python(path: str, max_chars: int = 6000) -> str:
 
 def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
     """
-    ?꾨줈?앺듃 猷⑦듃?먯꽌 二쇱슂 ?뚯씪?ㅼ쓣 異뺤냼-?⑹꽦???붿빟 諛섑솚.
+    프로젝트 루트에서 주요 파일들을 축소-합성한 요약 반환.
 
-    ?ы븿 ???(?곗꽑?쒖쐞):
-      1. CLAUDE.md (?꾩껜 ?좎?)
-      2. README.md (異뺤냼 媛??
-      3. .claude/rules/*.md (?꾩껜, ?대? 吏㏃쓬)
-      4. plugins/*/plugin.json (?대쫫-display-status留?異붿텧)
-      5. docs/architecture-patterns.md (異뺤냼)
+    포함 대상 (우선순위):
+      1. CLAUDE.md (전체 유지)
+      2. README.md (축소 가능)
+      3. .claude/rules/*.md (전체, 이미 짧음)
+      4. plugins/*/plugin.json (이름-display-status만 추출)
+      5. docs/architecture-patterns.md (축소)
 
-    max_total_chars ?섏쑝硫?lower priority ?뱀뀡遺???먮쫫.
+    max_total_chars 넘으면 lower priority 섹션부터 자름.
 
     Args:
-        root: ?꾨줈?앺듃 猷⑦듃 寃쎈줈
-        max_total_chars: 理쒕? ?⑹꽦 ?ш린
+        root: 프로젝트 루트 경로
+        max_total_chars: 최대 합성 크기
 
     Returns:
-        ?붿빟 ?띿뒪??
+        요약 텍스트
     """
     root_path = Path(root)
     sections = []
 
-    # 1. CLAUDE.md (?꾩껜)
+    # 1. CLAUDE.md (전체)
     claude_md = root_path / "CLAUDE.md"
     if claude_md.exists():
         try:
             content = claude_md.read_text(encoding="utf-8")
             sections.append(("CLAUDE.md", content, 1))
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             pass
 
-    # 2. README.md (異뺤냼)
+    # 2. README.md (축소)
     readme = root_path / "README.md"
     if readme.exists():
         sections.append(("README.md", reduce_markdown(str(readme), max_chars=3000), 2))
 
-    # 3. .claude/rules/*.md (?꾩껜)
+    # 3. .claude/rules/*.md (전체)
     rules_dir = root_path / ".claude" / "rules"
     if rules_dir.exists():
         for rule_file in sorted(rules_dir.glob("*.md")):
             try:
                 content = rule_file.read_text(encoding="utf-8")
                 sections.append((f"rules/{rule_file.name}", content, 3))
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 pass
 
-    # 4. plugins/*/plugin.json (異뺤냼)
+    # 4. plugins/*/plugin.json (축소)
     plugins_dir = root_path / "plugins"
     if plugins_dir.exists():
         plugin_summary = "# Plugin Summary\n\n"
@@ -262,12 +262,12 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
                         f"{data.get('display', '(no display)')} "
                         f"(status: {data.get('status', 'unknown')})\n"
                     )
-                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                except Exception:
                     pass
         if plugin_summary != "# Plugin Summary\n\n":
             sections.append(("plugins/summary", plugin_summary, 4))
 
-    # 5. docs/architecture-patterns.md (異뺤냼)
+    # 5. docs/architecture-patterns.md (축소)
     arch_patterns = root_path / "docs" / "architecture-patterns.md"
     if arch_patterns.exists():
         sections.append(
@@ -278,10 +278,10 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
             )
         )
 
-    # ?곗꽑?쒖쐞 ?뺣젹 (??? priority 踰덊샇媛 ?믪? ?곗꽑?쒖쐞)
+    # 우선순위 정렬 (낮은 priority 번호가 높은 우선순위)
     sections.sort(key=lambda x: x[2])
 
-    # ?ш린 ?쒖빟 ?댁뿉???뱀뀡 異뺤쟻
+    # 크기 제약 내에서 섹션 축적
     result = "# Project Summary\n\n"
     current_size = len(result)
 
@@ -291,7 +291,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
             result += section
             current_size += len(section)
         else:
-            # ?⑥? 怨듦컙???ㅻ뜑留뚯씠?쇰룄
+            # 남은 공간에 헤더만이라도
             if current_size + 50 <= max_total_chars:
                 result += f"\n## {name}\n(truncated - no space)\n"
             break
@@ -303,7 +303,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
 
 
 if __name__ == "__main__":
-    # ?뚯뒪??
+    # 테스트
     import sys
 
     if len(sys.argv) > 1:
@@ -313,7 +313,6 @@ if __name__ == "__main__":
         elif file_path.endswith(".py"):
             print(reduce_python(file_path))
     else:
-        # ?꾨줈?앺듃 ?붿빟 ?앹꽦
+        # 프로젝트 요약 생성
         summary = build_project_summary(".")
         print(summary)
-

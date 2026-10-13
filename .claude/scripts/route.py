@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-route.py ??CLI tool for routing decisions and budget management.
+route.py — CLI tool for routing decisions and budget management.
 
 Usage:
     python route.py [--task-type TYPE] [--estimated-tokens N] [--ambiguous] [--status]
@@ -106,8 +106,8 @@ def cmd_status(args):
         "claude-haiku-4-5",
         "codex",
         "gemini",
-        "grok",       # Perplexity Computer ?⑦꽩 ??lightweight/speed-sensitive
-        "gpt-5.2",    # Perplexity Computer ?⑦꽩 ??long-context recall (2M+)
+        "grok",       # Perplexity Computer 패턴 — lightweight/speed-sensitive
+        "gpt-5.2",    # Perplexity Computer 패턴 — long-context recall (2M+)
     ]:
         status = "EXCEEDED" if is_quota_exceeded(ai_name) else "OK"
         print(f"  {ai_name:<20} {status}")
@@ -191,10 +191,10 @@ def cmd_check(args):
     ai = args.check
     from state_db import get_db
 
-    # SUSPEND mode ?대젰:
-    #   2026-06-12 US export-control 濡?Fable 5 / Mythos 5 suspend
-    #   2026-07-01 Anthropic ??restored (api-release 怨듭떇 statement)
-    # ??suspend ?꾩슂 ???꾨옒 set ??紐⑤뜽 ID 異붽?
+    # SUSPEND mode 이력:
+    #   2026-06-12 US export-control 로 Fable 5 / Mythos 5 suspend
+    #   2026-07-01 Anthropic 이 restored (api-release 공식 statement)
+    # 재-suspend 필요 시 아래 set 에 모델 ID 추가
     SUSPEND_MODELS = set()
 
     quota_ok = 0 if is_quota_exceeded(ai) else 1
@@ -224,10 +224,10 @@ def cmd_check(args):
                         "WHERE ai=? AND ts > datetime('now','-24 hours')",
                         (ai,),
                     ).fetchone()[0] or 0.0
-                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                except Exception:
                     fable_spent = 0.0
                 fable_cap = daily_limit * 0.20
-                # SUSPEND 紐⑤뱶硫?fable_ok 媛 ?대? 0 -> 異붽? 寃뚯씠???곹뼢 X
+                # SUSPEND 모드면 fable_ok 가 이미 0 -> 추가 게이트 영향 X
                 if ai not in SUSPEND_MODELS and fable_spent >= fable_cap:
                     fable_ok = 0
 
@@ -322,4 +322,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

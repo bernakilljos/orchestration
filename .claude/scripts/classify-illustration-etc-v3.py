@@ -1,4 +1,4 @@
-﻿"""CLIP v3 ??illustration/etc 330 留????몃텇???щ텇瑜?"""
+"""CLIP v3 — illustration/etc 330 만 더 세분화 재분류."""
 import time
 from pathlib import Path
 
@@ -61,7 +61,7 @@ def main():
                 best_idx = probs.argmax(dim=-1).item()
             cat = category_keys[best_idx]
             score = probs[0, best_idx].item()
-            # etc ??洹몃?濡??먭퀬, 洹??몃뒗 sibling ?대뜑濡??대룞
+            # etc 는 그대로 두고, 그 외는 sibling 폴더로 이동
             if cat != "etc":
                 new_path = parent / cat / img_path.name
                 img_path.rename(new_path)
@@ -70,15 +70,14 @@ def main():
                 elapsed = int(time.time() - start)
                 eta = int((len(images) - i) / max(i/max(elapsed,1), 0.1))
                 print(f"  [{i}/{len(images)}] {cat} ({score:.2f}) - {elapsed}s - ETA {eta}s", flush=True)
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"  [FAIL] {img_path.name}: {type(e).__name__} {str(e)[:60]}", flush=True)
     elapsed = int(time.time() - start)
     print(f"\n[DONE] {elapsed}s", flush=True)
-    print("\n=== etc ?щ텇瑜?寃곌낵 ===", flush=True)
+    print("\n=== etc 재분류 결과 ===", flush=True)
     for k, v in sorted(summary.items(), key=lambda x: -x[1]):
         print(f"  {k}: {v}", flush=True)
 
 
 if __name__ == "__main__":
     main()
-

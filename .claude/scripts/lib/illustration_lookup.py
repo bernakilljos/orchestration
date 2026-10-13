@@ -1,14 +1,14 @@
-﻿"""illustration keyword -> docs/screens/illustration/<sub>/<jpg> 留ㅼ튂.
+"""illustration keyword -> docs/screens/illustration/<sub>/<jpg> 매치.
 
-鍮뚮뜑 (build-*-html-diagrams.py, design_word, design_ppt) 媛 梨뺥꽣 keyword 濡??몄텧:
+빌더 (build-*-html-diagrams.py, design_word, design_ppt) 가 챕터 keyword 로 호출:
     >>> from illustration_lookup import find
-    >>> find("湲곕┛"  )  # -> '...illustration/animal/dribbble-XXX.jpg'
-    >>> find("濡쒓렇???붾㈃")  # -> '...login/<jpg>'
+    >>> find("기린"  )  # -> '...illustration/animal/dribbble-XXX.jpg'
+    >>> find("로그인 화면")  # -> '...login/<jpg>'
 
-?꾨왂:
-1. ?쒓? keyword -> ?곷Ц 移댄뀒怨좊━ 留ㅽ븨 (?ъ쟾)
-2. 移댄뀒怨좊━ ?대뜑?먯꽌 臾댁옉??jpg ?좏깮 (?먮뒗 hash 濡??쇨?)
-3. 留ㅼ튂 ?놁쑝硫?illustration/etc/ ?먮뒗 None
+전략:
+1. 한글 keyword -> 영문 카테고리 매핑 (사전)
+2. 카테고리 폴더에서 무작위 jpg 선택 (또는 hash 로 일관)
+3. 매치 없으면 illustration/etc/ 또는 None
 """
 import hashlib
 import os
@@ -20,47 +20,47 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 SCREENS = PROJECT_ROOT / "docs" / "screens"
 ILLUSTRATION = SCREENS / "illustration"
 
-# ?쒓? keyword -> illustration sub-移댄뀒怨좊━
+# 한글 keyword -> illustration sub-카테고리
 KEYWORD_MAP = {
-    # ?숇Ъ
-    "?숇Ъ": "animal", "湲곕┛": "animal", "?ъ옄": "animal", "怨좎뼇??: "animal",
-    "媛뺤븘吏": "animal", "??: "animal", "臾쇨퀬湲?: "animal", "怨?: "animal",
-    "?먯댂??: "animal", "?좊겮": "animal", "?ъ슦": "animal",
-    # ?щ엺/罹먮┃??
-    "?щ엺": "character", "罹먮┃??: "character", "?몃Ъ": "portrait",
-    "?": "character", "?꾨줈??: "portrait", "?꾨컮?": "avatar",
-    # ?먯뿰
-    "?앸Ъ": "plant", "苑?: "plant", "?섎Т": "plant", "??: "plant",
-    "?띻꼍": "scenery", "??: "scenery", "諛붾떎": "scenery", "?섎뒛": "scenery",
-    # ?뚯떇
-    "?뚯떇": "food", "而ㅽ뵾": "food", "?뚮즺": "food", "怨쇱씪": "food",
-    # ?댁넚
-    "?먮룞李?: "transport", "鍮꾪뻾湲?: "transport", "湲곗감": "transport", "濡쒖폆": "transport",
-    "?댁넚": "transport", "援먰넻": "transport",
-    # 嫄대Ъ
-    "嫄대Ъ": "building", "吏?: "building", "?꾪뙆??: "building", "嫄댁텞": "building",
-    # 湲곗닠-UI
-    "李⑦듃": "chart", "洹몃옒??: "chart", "?곗씠??: "chart", "?쒓컖??: "chart",
-    "?꾩씠肄?: "icon", "濡쒓퀬": "logo", "??댄룷": "typography",
-    "紐⑤컮??: "mockup", "?붾컮?댁뒪": "mockup", "?ㅻ쭏?명룿": "mockup",
-    "UI": "ui-screen", "?붾㈃": "ui-screen", "?명꽣?섏씠??: "ui-screen",
-    "?ъ뒪??: "poster", "諛곕꼫": "poster",
-    # 異붿긽
-    "?⑦꽩": "pattern", "?띿뒪泥?: "pattern", "踰쎌?": "pattern",
-    "洹몃씪?곗씠??: "gradient", "而щ윭": "gradient",
-    "?꾪삎": "abstract-shape", "異붿긽": "abstract-shape",
-    "3D": "3d", "3d": "3d", "?낆껜": "3d",
-    # etc ??遺꾨쪟
-    "?ㅽ떚而?: "sticker", "諛곗?": "badge", "?먮뵒?좊━??: "editorial",
-    "?숈꽌": "doodle", "?ㅼ?移?: "doodle",
-    # UI 移댄뀒怨좊━ (illustration ??
-    "濡쒓렇??: "login", "?뚯썝媛??: "signup", "寃곗젣": "checkout", "泥댄겕?꾩썐": "checkout",
-    "??쒕낫??: "dashboard", "硫붾돱": "menu", "媛寃?: "pricing", "?붽툑": "pricing",
-    "?⑤낫??: "onboarding", "??: "form", "寃??: "search", "?ㅼ젙": "settings",
-    "?뚮┝": "notification", "404": "404", "?ㅻ쪟": "404",
+    # 동물
+    "동물": "animal", "기린": "animal", "사자": "animal", "고양이": "animal",
+    "강아지": "animal", "새": "animal", "물고기": "animal", "곰": "animal",
+    "원숭이": "animal", "토끼": "animal", "여우": "animal",
+    # 사람/캐릭터
+    "사람": "character", "캐릭터": "character", "인물": "portrait",
+    "팀": "character", "프로필": "portrait", "아바타": "avatar",
+    # 자연
+    "식물": "plant", "꽃": "plant", "나무": "plant", "잎": "plant",
+    "풍경": "scenery", "산": "scenery", "바다": "scenery", "하늘": "scenery",
+    # 음식
+    "음식": "food", "커피": "food", "음료": "food", "과일": "food",
+    # 운송
+    "자동차": "transport", "비행기": "transport", "기차": "transport", "로켓": "transport",
+    "운송": "transport", "교통": "transport",
+    # 건물
+    "건물": "building", "집": "building", "아파트": "building", "건축": "building",
+    # 기술-UI
+    "차트": "chart", "그래프": "chart", "데이터": "chart", "시각화": "chart",
+    "아이콘": "icon", "로고": "logo", "타이포": "typography",
+    "모바일": "mockup", "디바이스": "mockup", "스마트폰": "mockup",
+    "UI": "ui-screen", "화면": "ui-screen", "인터페이스": "ui-screen",
+    "포스터": "poster", "배너": "poster",
+    # 추상
+    "패턴": "pattern", "텍스처": "pattern", "벽지": "pattern",
+    "그라데이션": "gradient", "컬러": "gradient",
+    "도형": "abstract-shape", "추상": "abstract-shape",
+    "3D": "3d", "3d": "3d", "입체": "3d",
+    # etc 후 분류
+    "스티커": "sticker", "배지": "badge", "에디토리얼": "editorial",
+    "낙서": "doodle", "스케치": "doodle",
+    # UI 카테고리 (illustration 외)
+    "로그인": "login", "회원가입": "signup", "결제": "checkout", "체크아웃": "checkout",
+    "대시보드": "dashboard", "메뉴": "menu", "가격": "pricing", "요금": "pricing",
+    "온보딩": "onboarding", "폼": "form", "검색": "search", "설정": "settings",
+    "알림": "notification", "404": "404", "오류": "404",
 }
 
-# ?곷Ц keyword (fallback)
+# 영문 keyword (fallback)
 EN_KEYWORD = {
     "giraffe": "animal", "cat": "animal", "dog": "animal", "bird": "animal",
     "person": "character", "people": "character", "team": "character",
@@ -79,14 +79,14 @@ EN_KEYWORD = {
 
 
 def _resolve_category(keyword: str) -> Optional[str]:
-    """keyword (???? -> category name ?먮뒗 None."""
+    """keyword (한-영) -> category name 또는 None."""
     kw = keyword.lower().strip()
-    # ?뺥솗??留ㅼ튂 ?곗꽑
+    # 정확한 매치 우선
     if kw in KEYWORD_MAP:
         return KEYWORD_MAP[kw]
     if kw in EN_KEYWORD:
         return EN_KEYWORD[kw]
-    # 遺遺?留ㅼ튂 (keyword 媛 dict ?댄쐶 ?ы븿)
+    # 부분 매치 (keyword 가 dict 어휘 포함)
     for k, v in KEYWORD_MAP.items():
         if k in kw or kw in k:
             return v
@@ -97,7 +97,7 @@ def _resolve_category(keyword: str) -> Optional[str]:
 
 
 def _category_dir(category: str) -> Optional[Path]:
-    """category -> ?ㅼ젣 ?대뜑 path (illustration sub ?곗꽑, 洹??ㅼ쓬 docs/screens/ 移댄뀒怨좊━)."""
+    """category -> 실제 폴더 path (illustration sub 우선, 그 다음 docs/screens/ 카테고리)."""
     # 1. illustration sub
     sub = ILLUSTRATION / category
     if sub.exists() and any(sub.iterdir()):
@@ -113,7 +113,7 @@ CUSTOM_DIR = SCREENS / "custom"
 
 
 def _custom_match(keyword: str) -> Optional[str]:
-    """docs/screens/custom/ ?먯꽌 keyword 留ㅼ튂 (?ъ슜??ChatGPT ?먮뒗 Pollinations ?앹꽦)."""
+    """docs/screens/custom/ 에서 keyword 매치 (사용자 ChatGPT 또는 Pollinations 생성)."""
     if not CUSTOM_DIR.exists():
         return None
     kw_lower = keyword.lower().replace(" ", "-")
@@ -129,28 +129,28 @@ def _custom_match(keyword: str) -> Optional[str]:
 
 def find(keyword: str, deterministic: bool = True,
          auto_generate: bool = False, brand_cluster: Optional[str] = None) -> Optional[str]:
-    """keyword -> 留ㅼ튂?섎뒗 jpg ?덈?寃쎈줈.
+    """keyword -> 매치되는 jpg 절대경로.
 
-    留ㅼ튂 ?곗꽑?쒖쐞:
-    1. docs/screens/custom/<keyword-*>.jpg (?ъ슜??import ?먮뒗 ?댁쟾 Pollinations ?앹꽦)
-    2. docs/screens/illustration/<sub>/ ?먮뒗 UI 移댄뀒怨좊━
-    3. auto_generate=True 硫?Pollinations.ai ?먮룞 ?몄텧 -> custom/ ???
+    매치 우선순위:
+    1. docs/screens/custom/<keyword-*>.jpg (사용자 import 또는 이전 Pollinations 생성)
+    2. docs/screens/illustration/<sub>/ 또는 UI 카테고리
+    3. auto_generate=True 면 Pollinations.ai 자동 호출 -> custom/ 저장
 
     Args:
-        keyword: ?쒓? ?먮뒗 ?곷Ц 寃?됱뼱
-        deterministic: True 硫?hash 湲곕컲 ?쇨? ?좏깮
-        auto_generate: 留ㅼ튂 ?놁쑝硫?Pollinations ?먮룞 ?몄텧
-        brand_cluster: warm-editorial/dark-minimal/etc ??style hint
+        keyword: 한글 또는 영문 검색어
+        deterministic: True 면 hash 기반 일관 선택
+        auto_generate: 매치 없으면 Pollinations 자동 호출
+        brand_cluster: warm-editorial/dark-minimal/etc — style hint
 
     Returns:
-        jpg ?덈?寃쎈줈 ?먮뒗 None
+        jpg 절대경로 또는 None
     """
-    # 1. custom/ ?곗꽑
+    # 1. custom/ 우선
     custom = _custom_match(keyword)
     if custom:
         return custom
 
-    # 2. illustration/ + UI 移댄뀒怨좊━
+    # 2. illustration/ + UI 카테고리
     category = _resolve_category(keyword)
     if category:
         dir_path = _category_dir(category)
@@ -164,23 +164,23 @@ def find(keyword: str, deterministic: bool = True,
                     return str(images[h % len(images)])
                 return str(random.choice(images))
 
-    # 3. auto-generate (Pollinations.ai) ??臾대즺, 30珥??뺣룄
+    # 3. auto-generate (Pollinations.ai) — 무료, 30초 정도
     if auto_generate:
         try:
             import sys as _sys
             _sys.path.insert(0, str(Path(__file__).parent))
             from pollinations_client import generate_to_file
-            # ?쒓? keyword -> ?곷Ц prompt ?먮룞 蹂닿컯
+            # 한글 keyword -> 영문 prompt 자동 보강
             prompt = f"{keyword}, flat design illustration, clean modern style"
             return generate_to_file(prompt, keyword, brand_cluster=brand_cluster)
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             return None
 
     return None
 
 
 def find_many(keyword: str, count: int = 3) -> list:
-    """count 媛쒖쓽 jpg 寃쎈줈 list 諛섑솚 (遺議깊븯硫??덈뒗 留뚰겮)."""
+    """count 개의 jpg 경로 list 반환 (부족하면 있는 만큼)."""
     category = _resolve_category(keyword)
     if not category:
         return []
@@ -200,7 +200,7 @@ def find_many(keyword: str, count: int = 3) -> list:
 
 
 def stats() -> dict:
-    """illustration ?대뜑 + UI 移댄뀒怨좊━ jpg 移댁슫??"""
+    """illustration 폴더 + UI 카테고리 jpg 카운트."""
     out = {}
     for sub in ILLUSTRATION.iterdir():
         if sub.is_dir():
@@ -232,4 +232,3 @@ if __name__ == "__main__":
             print(f"size: {os.path.getsize(result) // 1024} KB")
     else:
         print(json.dumps(stats(), ensure_ascii=False, indent=2))
-

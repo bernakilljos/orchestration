@@ -1,24 +1,24 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-?뚮윭洹몄씤 媛쒖슂 ???곹깭蹂??됱긽 ?쒖떆 + 移댁슫??
+플러그인 개요 — 상태별 색상 표시 + 카운트.
 
-?ъ슜踰?
-  python .claude/scripts/plugin-overview.py              ?꾩껜 媛쒖슂
-  python .claude/scripts/plugin-overview.py --no-color   ?됱긽 ?놁쓬
-  python .claude/scripts/plugin-overview.py <plugin>     ?⑥씪 ?뚮윭洹몄씤 ?곸꽭
+사용법:
+  python .claude/scripts/plugin-overview.py              전체 개요
+  python .claude/scripts/plugin-overview.py --no-color   색상 없음
+  python .claude/scripts/plugin-overview.py <plugin>     단일 플러그인 상세
 
-?곹깭 ?됱긽:
-  ??stable       (?뱀깋)
-  [FAST] experimental (?몃???
-  [NOTE] spec-only   (?뚯깋)
-  [WARN] deprecated  (鍮④컯)
+상태 색상:
+  ✓ stable       (녹색)
+  [FAST] experimental (노란색)
+  [NOTE] spec-only   (회색)
+  [WARN] deprecated  (빨강)
 """
 import json, sys
 from pathlib import Path
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 USE_COLOR = True
@@ -30,7 +30,7 @@ for arg in sys.argv[1:]:
     elif not arg.startswith("-"):
         target = arg
 
-# ANSI ?됱긽 (Windows Terminal / Git Bash 吏??
+# ANSI 색상 (Windows Terminal / Git Bash 지원)
 C = {
     "green":  "\033[32m",
     "yellow": "\033[33m",
@@ -43,10 +43,10 @@ if not USE_COLOR:
     C = {k: "" for k in C}
 
 STATUS_STYLE = {
-    "stable":       (C["green"], "??, "?꾩꽦"),
-    "experimental": (C["yellow"], "[FAST]", "?ㅽ뿕"),
-    "spec-only":    (C["gray"], "[NOTE]", "?ㅽ럺留?),
-    "deprecated":   (C["red"], "[WARN]", "?먭린"),
+    "stable":       (C["green"], "✓", "완성"),
+    "experimental": (C["yellow"], "[FAST]", "실험"),
+    "spec-only":    (C["gray"], "[NOTE]", "스펙만"),
+    "deprecated":   (C["red"], "[WARN]", "폐기"),
 }
 
 plugins_dir = Path("plugins")
@@ -60,34 +60,34 @@ for p in sorted(plugins_dir.iterdir()):
     try:
         data = json.loads(pj.read_text(encoding="utf-8"))
         entries.append((p.name, data))
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         continue
 
 if target:
-    # ?⑥씪 ?곸꽭
+    # 단일 상세
     hit = next((e for e in entries if e[0] == target), None)
     if not hit:
-        print(f"?뚮윭洹몄씤 '{target}' ?놁쓬")
+        print(f"플러그인 '{target}' 없음")
         sys.exit(1)
     name, d = hit
     status = d.get("status", "unknown")
-    color, icon, label = STATUS_STYLE.get(status, (C["gray"], "?", "誘몃텇瑜?))
+    color, icon, label = STATUS_STYLE.get(status, (C["gray"], "?", "미분류"))
     print(f"{color}{C['bold']}{icon} {name}{C['reset']} v{d.get('version', '')}")
     print(f"  {d.get('display', '')}")
     print(f"  Status: {color}{status}{C['reset']} ({label}) | Phase: {d.get('phase', '-')}")
     deps = d.get("dependencies", {}).get("plugins", [])
     if deps:
-        print(f"  ?섏〈: {', '.join(deps)}")
+        print(f"  의존: {', '.join(deps)}")
     ep = d.get("entry_points", {})
     if ep.get("default_command"):
-        print(f"  湲곕낯: /{ep['default_command']}")
+        print(f"  기본: /{ep['default_command']}")
     if ep.get("core_skills"):
-        print(f"  ?듭떖 ?ㅽ궗: {', '.join(ep['core_skills'])}")
+        print(f"  핵심 스킬: {', '.join(ep['core_skills'])}")
     sys.exit(0)
 
-# ?꾩껜 媛쒖슂
+# 전체 개요
 count = {s: 0 for s in STATUS_STYLE}
-print(f"{C['bold']}=== ?뚮윭洹몄씤 媛쒖슂 ({len(entries)}媛? ==={C['reset']}\n")
+print(f"{C['bold']}=== 플러그인 개요 ({len(entries)}개) ==={C['reset']}\n")
 
 by_phase = {}
 for name, d in entries:
@@ -98,7 +98,7 @@ for name, d in entries:
         count[st] += 1
 
 for phase in sorted(by_phase):
-    phase_label = {0: "Phase 0 ???꾩꽦", 1: "Phase 1 ???ㅽ럺", 2: "Phase 2 ???湲?, 3: "Phase 3 ??寃??}.get(phase, f"Phase {phase}")
+    phase_label = {0: "Phase 0 — 완성", 1: "Phase 1 — 스펙", 2: "Phase 2 — 대기", 3: "Phase 3 — 검토"}.get(phase, f"Phase {phase}")
     print(f"{C['bold']}[{phase_label}]{C['reset']}")
     for name, d in sorted(by_phase[phase]):
         status = d.get("status", "unknown")
@@ -111,4 +111,3 @@ print(f"{C['bold']}Summary:{C['reset']}")
 for st, n in count.items():
     color, icon, label = STATUS_STYLE[st]
     print(f"  {color}{icon} {st:14s}{C['reset']} {n:3d}")
-

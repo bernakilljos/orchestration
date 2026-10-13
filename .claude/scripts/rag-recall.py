@@ -1,10 +1,10 @@
-﻿"""RAG ?섎? 寃????ChromaDB + sentence-transformers (濡쒖뺄, GPU 0).
+"""RAG 의미 검색 — ChromaDB + sentence-transformers (로컬, GPU 0).
 
-vs recall-memory.py (?ㅼ썙??grep):
-- ?섎? ?좎궗 寃??(synonym-paraphrase OK)
+vs recall-memory.py (키워드 grep):
+- 의미 유사 검색 (synonym-paraphrase OK)
 - index = CLAUDE.md + .claude/rules/ + memory/feedback + plugins/exec_orch/skills/
 
-5 ?듭떖 遺??#2 Data layer (RAG) ???ъ슜??GPU 遺議????몃? LLM + 濡쒖뺄 vector DB.
+5 핵심 부품 #2 Data layer (RAG) — 사용자 GPU 부족 시 외부 LLM + 로컬 vector DB.
 """
 import sys
 import os
@@ -18,13 +18,13 @@ COLLECTION_NAME = "project_knowledge"
 
 
 def _ensure_chromadb():
-    """chromadb ?먮룞 install (?놁쑝硫? ??Zero-touch ?먮룞??"""
+    """chromadb 자동 install (없으면) — Zero-touch 자동화."""
     try:
         import chromadb  # noqa: F401
         return True
     except ImportError:
         import subprocess
-        print("[rag-recall] chromadb 誘몄꽕移????먮룞 install", file=sys.stderr)
+        print("[rag-recall] chromadb 미설치 — 자동 install", file=sys.stderr)
         try:
             subprocess.run(
                 [sys.executable, "-m", "pip", "install", "--quiet", "chromadb", "sentence-transformers"],
@@ -32,7 +32,7 @@ def _ensure_chromadb():
             )
             import chromadb  # noqa: F401
             return True
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"[rag-recall] auto-install failed: {e}", file=sys.stderr)
             return False
 
@@ -46,22 +46,22 @@ def _get_client():
 
 
 def _get_embedding_fn():
-    """?쒓? 吏??embedding ?⑥닔 ??bge-m3 (????????媛뺥븿) ?ъ슜 媛????
-    fallback: chromadb 湲곕낯 (all-MiniLM-L6-v2 ???곸뼱 ?꾩＜).
+    """한글 지원 embedding 함수 — bge-m3 (한-영 둘 다 강함) 사용 가능 시.
+    fallback: chromadb 기본 (all-MiniLM-L6-v2 — 영어 위주).
     """
     try:
         from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-        # BAAI/bge-m3 ???쒓? + ?곸뼱 紐⑤몢 理쒓컯. ??2.3GB
-        # ?먮뒗 paraphrase-multilingual-MiniLM-L12-v2 ???묎퀬 鍮좊쫫 (?쒓? 吏??
+        # BAAI/bge-m3 — 한글 + 영어 모두 최강. 약 2.3GB
+        # 또는 paraphrase-multilingual-MiniLM-L12-v2 — 작고 빠름 (한글 지원)
         return SentenceTransformerEmbeddingFunction(
             model_name="paraphrase-multilingual-MiniLM-L12-v2"
         )
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
-        return None  # chromadb 湲곕낯 ?ъ슜
+    except Exception:
+        return None  # chromadb 기본 사용
 
 
 def _docs_to_index() -> list:
-    """index ????뚯씪 ?먮룞 ?섏쭛."""
+    """index 대상 파일 자동 수집."""
     docs = []
     # 1. CLAUDE.md (project + global)
     for p in [PROJECT_ROOT / "CLAUDE.md", Path.home() / ".claude" / "CLAUDE.md"]:
@@ -78,27 +78,27 @@ def _docs_to_index() -> list:
             if proj_normalized in sub.name:
                 for p in (sub / "memory").glob("feedback_*.md") if (sub / "memory").exists() else []:
                     docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
-    # 4. skills (紐⑤뱺 plugin)
+    # 4. skills (모든 plugin)
     for p in (PROJECT_ROOT / "plugins").glob("*/skills/*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
-    # 5. references (49 toolkit ??12 RAG 湲곕쾿 #12 ???듭떖 RAG corpus)
+    # 5. references (49 toolkit — 12 RAG 기법 #12 의 핵심 RAG corpus)
     for p in (PROJECT_ROOT / "plugins").glob("*/references/*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
     # 6. commands (slash command spec)
     for p in (PROJECT_ROOT / "plugins").glob("*/commands/*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
-    # 7. docs/ permanent (architecture-patterns-routing-policy-caching-strategy ??
+    # 7. docs/ permanent (architecture-patterns-routing-policy-caching-strategy 등)
     for p in (PROJECT_ROOT / "docs").glob("*.md"):
         docs.append((str(p), p.read_text(encoding="utf-8", errors="ignore")))
     return docs
 
 
 def index_build():
-    """ChromaDB 而щ젆??鍮뚮뱶 ??紐⑤뱺 臾몄꽌 ?먮룞 index."""
+    """ChromaDB 컬렉션 빌드 — 모든 문서 자동 index."""
     client = _get_client()
     try:
         client.delete_collection(COLLECTION_NAME)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         pass
     emb_fn = _get_embedding_fn()
     if emb_fn:
@@ -113,7 +113,7 @@ def index_build():
     ids = []
     contents = []
     metas = []
-    # 泥?겕 ?ш린 ???섍꼍蹂???먮뒗 default 800 (?쒓? 臾몄꽌???곹빀, ?곸뼱??500)
+    # 청크 크기 — 환경변수 또는 default 800 (한글 문서에 적합, 영어는 500)
     chunk_size = int(os.environ.get("RAG_CHUNK_SIZE", "800"))
     chunk_overlap = int(os.environ.get("RAG_CHUNK_OVERLAP", "100"))
     for path, content in docs:
@@ -124,13 +124,13 @@ def index_build():
             contents.append(chunk)
             metas.append({"path": path, "chunk": i})
 
-    # ChromaDB 湲곕낯 embedding (all-MiniLM-L6-v2 ??濡쒖뺄, GPU 0)
+    # ChromaDB 기본 embedding (all-MiniLM-L6-v2 — 로컬, GPU 0)
     coll.add(ids=ids, documents=contents, metadatas=metas)
     return {"indexed": len(ids), "docs": len(docs), "collection": COLLECTION_NAME}
 
 
 def search(query: str, top_n: int = 5) -> list:
-    """?섎? ?좎궗 寃??"""
+    """의미 유사 검색."""
     client = _get_client()
     emb_fn = _get_embedding_fn()
     try:
@@ -138,7 +138,7 @@ def search(query: str, top_n: int = 5) -> list:
             coll = client.get_collection(COLLECTION_NAME, embedding_function=emb_fn)
         else:
             coll = client.get_collection(COLLECTION_NAME)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return [{"error": "index not built. run: rag-recall.py --build"}]
 
     results = coll.query(query_texts=[query], n_results=top_n)
@@ -173,4 +173,3 @@ if __name__ == "__main__":
             top = int(sys.argv[i + 1])
     results = search(query, top)
     print(json.dumps(results, ensure_ascii=False, indent=2))
-

@@ -1,6 +1,6 @@
-﻿"""CLAUDE.md ?먮룞 ?낅뜲?댄듃 ????plugin/rule/skill 異붽? ??짠 4 ?듭떖 寃쎈줈 ??媛깆떊.
+"""CLAUDE.md 자동 업데이트 — 새 plugin/rule/skill 추가 시 § 4 핵심 경로 표 갱신.
 
-PostToolUse hook ?몃━嫄? new plugin.json ?앹꽦-rule 異붽? ???먮룞.
+PostToolUse hook 트리거: new plugin.json 생성-rule 추가 시 자동.
 """
 import sys
 import json
@@ -30,7 +30,7 @@ def collect_stats():
                         stats["plugins_stable"] += 1
                     elif data.get("status") == "spec-only":
                         stats["plugins_spec"] += 1
-                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                except Exception:
                     pass
     stats["rules"] = len(list((PROJECT_ROOT / ".claude" / "rules").glob("*.md")))
     stats["hooks"] = len(list((PROJECT_ROOT / ".claude" / "hooks").glob("*.sh"))) + \
@@ -47,14 +47,14 @@ def update():
     content = CLAUDE_MD.read_text(encoding="utf-8")
     today = date.today().isoformat()
 
-    # 짠 1 WHAT ??stats 以??먮룞 媛깆떊 (?덉쑝硫?援먯껜, ?놁쑝硫?異붽?)
+    # § 1 WHAT 안 stats 줄 자동 갱신 (있으면 교체, 없으면 추가)
     marker = "<!-- AUTO-STATS -->"
     stats_block = f"""{marker}
-> **?꾩옱 ?곹깭** ({today}): plugins {stats['plugins_stable']} stable + {stats['plugins_spec']} spec-only - rules {stats['rules']} - hooks {stats['hooks']} - scripts {stats['scripts']}
+> **현재 상태** ({today}): plugins {stats['plugins_stable']} stable + {stats['plugins_spec']} spec-only - rules {stats['rules']} - hooks {stats['hooks']} - scripts {stats['scripts']}
 {marker}"""
 
     if marker in content:
-        # 湲곗〈 marker 釉붾줉 援먯껜
+        # 기존 marker 블록 교체
         import re
         content = re.sub(
             f"{marker}.*?{marker}",
@@ -64,7 +64,7 @@ def update():
             flags=re.DOTALL,
         )
     else:
-        # 짠 1 WHAT ?ㅼ쓬???쎌엯
+        # § 1 WHAT 다음에 삽입
         idx = content.find("## 1. WHAT")
         if idx >= 0:
             next_section = content.find("\n## ", idx + 5)
@@ -78,4 +78,3 @@ def update():
 if __name__ == "__main__":
     result = update()
     print(json.dumps(result, ensure_ascii=False, indent=2))
-

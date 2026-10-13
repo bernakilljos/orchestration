@@ -1,7 +1,7 @@
-﻿"""getdesign.md (VoltAgent/awesome-design-md) 71 brand DESIGN.md raw ?ㅼ슫濡쒕뱶.
+"""getdesign.md (VoltAgent/awesome-design-md) 71 brand DESIGN.md raw 다운로드.
 
-URL ?⑦꽩: https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/design-md/<brand>/DESIGN.md
-??? docs/screens/_brand-md/<brand>-DESIGN.md
+URL 패턴: https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/design-md/<brand>/DESIGN.md
+저장: docs/screens/_brand-md/<brand>-DESIGN.md
 """
 import time
 import urllib.request
@@ -30,7 +30,7 @@ BASE = "https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/desig
 
 
 def safe_name(brand):
-    """linear.app -> linear, mistral.ai -> mistral, x.ai -> xai 媛숈? ?덉쟾???뚯씪紐?""
+    """linear.app -> linear, mistral.ai -> mistral, x.ai -> xai 같은 안전한 파일명"""
     return brand.replace(".", "-").replace("/", "-")
 
 
@@ -52,24 +52,24 @@ def main():
             print(f"  [{i}/{len(BRANDS)}] skip {safe} (existing {out.stat().st_size//1024}KB)", flush=True)
             ok += 1
             continue
-        # 硫붿씤 DESIGN.md
+        # 메인 DESIGN.md
         url = f"{BASE}/{brand}/DESIGN.md"
         try:
             download(url, out)
             size = out.stat().st_size // 1024
             print(f"  [{i}/{len(BRANDS)}] OK {safe} {size}KB", flush=True)
             ok += 1
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"  [{i}/{len(BRANDS)}] FAIL {safe}: {type(e).__name__} {str(e)[:60]}", flush=True)
             fail += 1
-        # preview.html ???쒕룄 (?덉쑝硫?異붽? reference)
+        # preview.html 도 시도 (있으면 추가 reference)
         prev_url = f"{BASE}/{brand}/preview.html"
         prev_out = OUT / f"{safe}-preview.html"
         if not prev_out.exists():
             try:
                 download(prev_url, prev_out)
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
-                pass  # preview ?놁쓣 ???덉쓬
+            except Exception:
+                pass  # preview 없을 수 있음
         time.sleep(0.3)
     elapsed = int(time.time() - start)
     print(f"\n[DONE] OK {ok} / FAIL {fail} / elapsed {elapsed}s", flush=True)
@@ -77,4 +77,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

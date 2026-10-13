@@ -1,11 +1,12 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
-learn-user-patterns.py ???ъ슜??諛섎났 吏???⑦꽩 ?먮룞 ?숈뒿
+learn-user-patterns.py — 사용자 반복 지시 패턴 자동 학습
 
-orca.db conversations + problem_solutions 遺꾩꽍 ??諛섎났 ?몃━嫄??ㅼ썙??top N 異붿텧
-??.claude/state/learned-user-patterns.json ?????SessionStart hook 媛 systemMessage 濡??덈궡
+orca.db conversations + problem_solutions 분석 → 반복 트리거 키워드 top N 추출
+→ .claude/state/learned-user-patterns.json 저장
+→ SessionStart hook 가 systemMessage 로 안내
 
-二?1???먮룞 (?쇱슂??04:30 쨌 learn-style.py ? 媛숈씠) + ?ъ슜??紐낆떆 ??(/recall-patterns)
+주 1회 자동 (일요일 04:30 · learn-style.py 와 같이) + 사용자 명시 시 (/recall-patterns)
 """
 from __future__ import annotations
 import json, os, sqlite3, re, sys
@@ -18,24 +19,24 @@ DB = ROOT / ".claude" / "state" / "orca.db"
 OUT = ROOT / ".claude" / "state" / "learned-user-patterns.json"
 RULES = ROOT / ".claude" / "rules" / "user-emotion.md"
 
-# ?대? 留ㅽ븨???몃━嫄?(user-emotion.md ?먯꽌 異붿텧)
+# 이미 매핑된 트리거 (user-emotion.md 에서 추출)
 EXISTING_TRIGGERS = set()
 if RULES.exists():
     txt = RULES.read_text(encoding="utf-8", errors="ignore")
-    # | **"X"쨌"Y"쨌"Z"** | ... | ?⑦꽩?먯꽌 X쨌Y쨌Z 異붿텧
+    # | **"X"·"Y"·"Z"** | ... | 패턴에서 X·Y·Z 추출
     for m in re.finditer(r'\*\*["\']([^"\'\*]+)["\']', txt):
-        for tok in re.split(r'[쨌,??]', m.group(1)):
+        for tok in re.split(r'[·,、/]', m.group(1)):
             tok = tok.strip().strip('"\'')
             if 1 < len(tok) < 20:
                 EXISTING_TRIGGERS.add(tok.lower())
 
-# ?ъ슜???먯＜ ?곕뒗 ?댄쐶 異붿텧 (紐낆궗쨌?숈궗 ?대? 쨌 2~15 chars)
-TOKEN_RE = re.compile(r'[媛-?즑-zA-Z]{2,15}')
-# 遺덉슜??(?쇰컲???쒖쇅)
+# 사용자 자주 쓰는 어휘 추출 (명사·동사 어미 · 2~15 chars)
+TOKEN_RE = re.compile(r'[가-힣a-zA-Z]{2,15}')
+# 불용어 (일반어 제외)
 STOPWORDS = {
-    "洹몃━怨?,"洹몃옒??,"?닿굅","?嫄?,"?곕━","吏湲?,"?꾨땲","?ㅻ뒛","?닿?","?덇?","洹몃깷","醫",
-    "媛숈씠","紐⑤몢","?꾨?","?닿쾶","洹멸쾶","?寃?,"?대윴","洹몃윴","???,"?섎뒗","?덈뒗","?녿뒗","?덉뼱","?놁뼱",
-    "?섎뒗","?덈릺","?섏뼱","?덉뼱??,"?덉옄??,"?먮굹","?댁빞","媛숈븘","媛숇떎","?띠뼱","?띕떎","?섏옄","?섏?",
+    "그리고","그래서","이거","저거","우리","지금","아니","오늘","내가","너가","그냥","좀",
+    "같이","모두","전부","이게","그게","저게","이런","그런","저런","하는","있는","없는","있어","없어",
+    "되는","안되","되어","있어야","있자나","자나","이야","같아","같다","싶어","싶다","하자","하지",
     "the","and","for","with","this","that","what","how","why","when","where","your","from","have","has",
 }
 
@@ -50,7 +51,7 @@ def extract_tokens(text: str) -> list[str]:
 
 def main():
     if not DB.exists():
-        print("[WARN] orca.db ?놁쓬 쨌 skip"); return
+        print("[WARN] orca.db 없음 · skip"); return
     cutoff = (datetime.now() - timedelta(days=30)).isoformat()
     counter = Counter()
     phrase_examples: dict[str, str] = {}
@@ -60,23 +61,23 @@ def main():
             "SELECT content FROM conversations WHERE role='user' AND ts >= ? LIMIT 2000",
             (cutoff,)
         ).fetchall()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
-        print(f"[WARN] conversations 議고쉶 ?ㅽ뙣: {e}"); return
+    except Exception as e:
+        print(f"[WARN] conversations 조회 실패: {e}"); return
 
     for (content,) in rows:
         if not content: continue
         snippet = content[:200]
         for tok in extract_tokens(snippet):
             counter[tok] += 1
-            # ?덉떆 臾몄옣 ???(泥섏쓬 1媛?
+            # 예시 문장 저장 (처음 1개)
             if tok not in phrase_examples and len(snippet) < 100:
                 phrase_examples[tok] = snippet.strip()
 
-    # top 30 (3?? 諛섎났留?
+    # top 30 (3회+ 반복만)
     top = [(k, v) for k, v in counter.most_common(100) if v >= 3][:30]
     result = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "source": "orca.db.conversations 쨌 理쒓렐 30??쨌 role=user",
+        "source": "orca.db.conversations · 최근 30일 · role=user",
         "existing_triggers_count": len(EXISTING_TRIGGERS),
         "total_user_turns": len(rows),
         "top_patterns": [
@@ -86,12 +87,11 @@ def main():
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"[OK] {OUT.name} 쨌 top {len(top)} ?⑦꽩 쨌 total user turns {len(rows)}")
+    print(f"[OK] {OUT.name} · top {len(top)} 패턴 · total user turns {len(rows)}")
     print(f"  top 5: {[t['trigger'] for t in result['top_patterns'][:5]]}")
 
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
-

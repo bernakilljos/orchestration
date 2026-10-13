@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""audit-mojibake ??U+FFFD쨌CP949?봘TF-8 源⑥쭚 ?⑦꽩 媛먯궗 + ?먮룞 蹂듦뎄.
-寃곌낵: .claude/state/mojibake-audit.json
+"""audit-mojibake — U+FFFD·CP949↔UTF-8 깨짐 패턴 감사 + 자동 복구.
+결과: .claude/state/mojibake-audit.json
 """
 from __future__ import annotations
 import json
@@ -13,21 +13,21 @@ from datetime import datetime
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / ".claude" / "state" / "mojibake-audit.json"
 
-# 6 移댄뀒怨좊━ (no-false-report.md 짠 Mojibake ?⑦꽩)
+# 6 카테고리 (no-false-report.md § Mojibake 패턴)
 PATTERNS = [
-    ("replacement_char", re.compile(r"占?), "U+FFFD replacement character"),
-    ("known_broken_ko", re.compile(r"[轅뉖７轅욧킇]|?먯뇵??), "?쒓? 源⑥쭚 (?ㅼ젣 ?щ?)"),
-    ("euc_kr_broken", re.compile(r"\?怨?\???\??"), "EUC-KR ??UTF-8 ?ㅽ뙣"),
-    ("utf8_to_latin1", re.compile(r"횄[징-쩔]|창??챦쩔쩍"), "UTF-8 ??Latin-1 源⑥쭚"),
-    ("byte_sequence", re.compile(r"\\xc3\\x83|\\xc2"), "?섎せ??byte sequence ?쒓린"),
+    ("replacement_char", re.compile(r"�"), "U+FFFD replacement character"),
+    ("known_broken_ko", re.compile(r"[꿇룷꿿괓]|점쇙올"), "한글 깨짐 (실제 사례)"),
+    ("euc_kr_broken", re.compile(r"\?곸|\?쒕|\?대"), "EUC-KR → UTF-8 실패"),
+    ("utf8_to_latin1", re.compile(r"Ã[¡-¿]|â€|ï¿½"), "UTF-8 → Latin-1 깨짐"),
+    ("byte_sequence", re.compile(r"\\xc3\\x83|\\xc2"), "잘못된 byte sequence 표기"),
     ("emoji_leak", re.compile(r"[]"),
-     "?대え吏 leak (kit ?먯튃: ?대え吏 湲덉?)"),
+     "이모지 leak (kit 원칙: 이모지 금지)"),
 ]
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
@@ -38,7 +38,7 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".pptx",
             ".xlsx", ".zip", ".tar", ".gz", ".mp4", ".mp3", ".wav", ".sqlite",
             ".db", ".bak", ".pyc", ".pyo", ".ico", ".woff", ".woff2", ".ttf"}
-# 媛먯궗 ????뺤옣??(kit ?먯껜)
+# 감사 대상 확장자 (kit 자체)
 SCAN_EXT = {".md", ".py", ".sh", ".json", ".yaml", ".yml", ".txt",
             ".html", ".css", ".js", ".ts", ".bat", ".ps1"}
 
@@ -66,7 +66,7 @@ def scan(fix=False):
                 if fp.stat().st_size > 500_000:
                     continue
                 txt = fp.read_text(encoding="utf-8", errors="replace")
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 continue
             scanned += 1
             file_had_hit = False
@@ -86,7 +86,7 @@ def scan(fix=False):
                 if found:
                     file_had_hit = True
                     if fix and key == "emoji_leak":
-                        # ?대え吏 ?먮룞 ?쒓굅 (kit 猷?- ?대え吏 leak 留?
+                        # 이모지 자동 제거 (kit 룰 - 이모지 leak 만)
                         new_txt = pat.sub("", new_txt)
             if fix and file_had_hit and new_txt != txt:
                 try:
@@ -95,7 +95,7 @@ def scan(fix=False):
                         bak.write_text(txt, encoding="utf-8")
                     fp.write_text(new_txt, encoding="utf-8")
                     fixed_files.append(str(fp.relative_to(ROOT).as_posix()))
-                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                except Exception:
                     pass
     return hits, hits_flat, scanned, fixed_files
 
@@ -120,7 +120,7 @@ def main():
     OUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[audit-mojibake] {status} - scanned {scanned} - total {total}")
     if fix:
-        print(f"  ?먮룞 蹂듦뎄: {len(fixed)} ?뚯씪 (?대え吏 leak 쨌 .bak 諛깆뾽)")
+        print(f"  자동 복구: {len(fixed)} 파일 (이모지 leak · .bak 백업)")
     for k, n in counts.items():
         if n:
             print(f"  {k}: {n}")
@@ -129,7 +129,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"[audit-mojibake] err: {e}", file=sys.stderr)
         sys.exit(1)
-

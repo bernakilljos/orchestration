@@ -1,7 +1,7 @@
-﻿"""
-save_solution ???몄뀡 醫낅즺 ??臾몄젣-?닿껐-?뚯씪-紐낅졊 ?먮룞 罹≪쿂 -> orca.db.problem_solutions
-洹쇨굅: 2026-09-02 ?ъ슜??吏????"?쎄린(?먮룞 議고쉶) + ?곌린(泥섎━ 寃곌낵 湲곕줉) ?묐갑??- 珥덉턀怨?
-?몄텧: Stop / SessionEnd hook + ?섎룞 CLI
+"""
+save_solution — 세션 종료 시 문제-해결-파일-명령 자동 캡처 -> orca.db.problem_solutions
+근거: 2026-09-02 사용자 지적 — "읽기(자동 조회) + 쓰기(처리 결과 기록) 양방향 - 초최고"
+호출: Stop / SessionEnd hook + 수동 CLI
 """
 from __future__ import annotations
 import hashlib
@@ -21,22 +21,22 @@ def _sid() -> str:
 
 
 def _extract_category(text: str) -> str:
-    """臾몄젣-?닿껐?먯꽌 移댄뀒怨좊━ ?먮룞 異붿텧."""
+    """문제-해결에서 카테고리 자동 추출."""
     text_l = text.lower()
     for cat, kws in [
-        ("db", ["sql", "sqlite", "database", "?뚯씠釉?, "orca.db", "migration"]),
+        ("db", ["sql", "sqlite", "database", "테이블", "orca.db", "migration"]),
         ("hook", ["hook", "sessionstart", "posttooluse", "userpromptsubmit"]),
         ("mcp", ["mcp", "claude-mem", "headroom", "task-observer", "omniroute"]),
-        ("rule", ["rule", "猷?, ".claude/rules"]),
-        ("skill", ["skill", "?ㅽ궗", ".claude/skills"]),
+        ("rule", ["rule", "룰", ".claude/rules"]),
+        ("skill", ["skill", "스킬", ".claude/skills"]),
         ("commit", ["commit", "git", "push", "branch"]),
         ("install", ["install", "setup", "pip install", "npm install"]),
-        ("ui", ["shadcn", "tailwind", "antd", "mui", "ui", "?붾㈃", "?붿옄??]),
-        ("memory", ["memory", "硫붾え由?, "conversations", "session_summary", "?대젰"]),
-        ("finetune", ["?뚯씤?쒕떇", "fine-tune", "lora", "qlora", "unsloth", "peft"]),
-        ("embedding", ["?꾨쿋??, "embed", "chromadb", "vector", "sentence-transformers"]),
-        ("optimize", ["理쒖쟻??, "optim", "compress", "vacuum", "cache"]),
-        ("file", ["?뚯씪", "紐낅챸", "naming", "cleanup", "audit"]),
+        ("ui", ["shadcn", "tailwind", "antd", "mui", "ui", "화면", "디자인"]),
+        ("memory", ["memory", "메모리", "conversations", "session_summary", "이력"]),
+        ("finetune", ["파인튜닝", "fine-tune", "lora", "qlora", "unsloth", "peft"]),
+        ("embedding", ["임베딩", "embed", "chromadb", "vector", "sentence-transformers"]),
+        ("optimize", ["최적화", "optim", "compress", "vacuum", "cache"]),
+        ("file", ["파일", "명명", "naming", "cleanup", "audit"]),
     ]:
         for kw in kws:
             if kw in text_l:
@@ -45,7 +45,7 @@ def _extract_category(text: str) -> str:
 
 
 def _extract_keywords(text: str, k: int = 8) -> str:
-    words = re.findall(r"[媛-?즑-zA-Z]{3,}", text)
+    words = re.findall(r"[가-힣a-zA-Z]{3,}", text)
     seen = []
     for w in words:
         wl = w.lower()
@@ -57,12 +57,12 @@ def _extract_keywords(text: str, k: int = 8) -> str:
 
 
 def _capture_session(session_id: str = None) -> dict:
-    """?대쾲 ?몄뀡??理쒓렐 ???寃곗젙-?뚯씪-紐낅졊 醫낇빀."""
+    """이번 세션의 최근 대화-결정-파일-명령 종합."""
     sid = session_id or _sid()
     if not DB.exists():
         return {}
     with sqlite3.connect(str(DB)) as c:
-        # 理쒓렐 ?ъ슜???꾨＼?꾪듃 (泥?臾몄젣)
+        # 최근 사용자 프롬프트 (첫 문제)
         user_prompts = c.execute(
             "SELECT content FROM conversations WHERE session_id=? AND role='user' ORDER BY turn LIMIT 5",
             (sid,),
@@ -71,12 +71,12 @@ def _capture_session(session_id: str = None) -> dict:
             return {}
         problem = " ".join(p[0][:200] for p in user_prompts)[:1000]
 
-        # ?몄뀡???쒕룞 ?붿빟
+        # 세션의 활동 요약
         activations = c.execute(
             "SELECT name FROM activations WHERE ts >= datetime('now','-2 hours') ORDER BY ts DESC LIMIT 20"
         ).fetchall()
 
-        # ?뚯씪 audit
+        # 파일 audit
         try:
             files = c.execute(
                 "SELECT path, action FROM file_audit WHERE session_id=? ORDER BY ts DESC LIMIT 20",
@@ -85,7 +85,7 @@ def _capture_session(session_id: str = None) -> dict:
         except sqlite3.OperationalError:
             files = []
 
-        # 理쒓렐 寃곗젙
+        # 최근 결정
         decisions = c.execute(
             "SELECT ai_classified FROM decisions WHERE ts >= datetime('now','-2 hours') ORDER BY ts DESC LIMIT 10"
         ).fetchall()
@@ -132,7 +132,7 @@ def save(data: dict, verified: int = 0, reusable_score: int = 5) -> int | None:
             )
             c.commit()
             return cur.lastrowid
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             sys.stderr.write(f"[save-solution] {e}\n")
             return None
 
@@ -140,7 +140,7 @@ def save(data: dict, verified: int = 0, reusable_score: int = 5) -> int | None:
 def search(query: str, top_k: int = 5) -> list[dict]:
     if not DB.exists() or not query:
         return []
-    kws = re.findall(r"[媛-?즑-zA-Z]{3,}", query)[:5]
+    kws = re.findall(r"[가-힣a-zA-Z]{3,}", query)[:5]
     if not kws:
         return []
     where = " OR ".join(
@@ -173,7 +173,7 @@ def search(query: str, top_k: int = 5) -> list[dict]:
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "auto"
     if cmd == "auto":
-        # Stop hook ?먮룞 罹≪쿂
+        # Stop hook 자동 캡처
         data = _capture_session()
         rid = save(data, verified=0, reusable_score=5)
         if rid:
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         else:
             print("[skip] no problem to capture")
     elif cmd == "manual":
-        # ?섎룞 ?깆옱: save_solution.py manual "臾몄젣" "?닿껐" [移댄뀒怨좊━] [?먯닔]
+        # 수동 등재: save_solution.py manual "문제" "해결" [카테고리] [점수]
         problem = sys.argv[2]
         solution = sys.argv[3]
         category = sys.argv[4] if len(sys.argv) > 4 else _extract_category(problem + solution)
@@ -204,14 +204,13 @@ if __name__ == "__main__":
     elif cmd == "search":
         query = " ".join(sys.argv[2:])
         results = search(query, top_k=5)
-        print(f"## 寃?? {query} - {len(results)} 寃곌낵")
+        print(f"## 검색: {query} - {len(results)} 결과")
         for r in results:
             print(f"\n[{r['category']} - score={r['reusable_score']} - {r['ts']}]")
-            print(f"  臾몄젣: {r['problem']}")
+            print(f"  문제: {r['problem']}")
             if r['solution']:
-                print(f"  ?닿껐: {r['solution']}")
+                print(f"  해결: {r['solution']}")
             if r['files_modified']:
-                print(f"  ?뚯씪: {r['files_modified']}")
+                print(f"  파일: {r['files_modified']}")
     else:
-        print("usage: save_solution.py {auto|manual <臾몄젣> <?닿껐> [移댄뀒怨좊━] [?먯닔]|search <荑쇰━>}")
-
+        print("usage: save_solution.py {auto|manual <문제> <해결> [카테고리] [점수]|search <쿼리>}")

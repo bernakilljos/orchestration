@@ -1,8 +1,8 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-render-screens.py ??docs/screens/our-html/*.html -> arch/ ?먮뒗 func/ PNG.
+render-screens.py — docs/screens/our-html/*.html -> arch/ 또는 func/ PNG.
 
-prefix 濡?遺꾨쪟:
+prefix 로 분류:
   arch-*.html -> docs/screens/our-arch/<name>.png
   func-*.html -> docs/screens/our-func/<name>.png
 
@@ -55,7 +55,7 @@ async def render(only: list[str] | None):
             await page.goto(url, wait_until="networkidle", timeout=20000)
             try:
                 await page.wait_for_load_state("networkidle", timeout=4000)
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 pass
             await page.wait_for_timeout(900)
             await page.screenshot(path=str(out), full_page=False, omit_background=False,
@@ -73,4 +73,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

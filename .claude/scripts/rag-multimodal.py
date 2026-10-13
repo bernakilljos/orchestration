@@ -1,7 +1,7 @@
-﻿"""Multimodal RAG ???대?吏 + ?띿뒪???듯빀 寃??
+"""Multimodal RAG — 이미지 + 텍스트 통합 검색.
 
-理쒖냼 援ы쁽: ?대?吏 罹≪뀡 + filename ?띿뒪??indexing.
-?ㅼ젣 ?ъ슜 ??CLIP/BLIP 媛숈? ?대?吏 embedding 紐⑤뜽 沅뚯옣.
+최소 구현: 이미지 캡션 + filename 텍스트 indexing.
+실제 사용 시 CLIP/BLIP 같은 이미지 embedding 모델 권장.
 """
 import sys
 import json
@@ -14,7 +14,7 @@ import importlib.util
 spec = importlib.util.spec_from_file_location("rag", PROJECT_ROOT / ".claude" / "scripts" / "rag-recall.py")
 rag = importlib.util.module_from_spec(spec); spec.loader.exec_module(rag)
 
-# ?대?吏 ?붾젆?좊━
+# 이미지 디렉토리
 IMG_DIRS = [
     PROJECT_ROOT / "docs" / "screens" / "arch-kor",
     PROJECT_ROOT / "docs" / "screens" / "arch",
@@ -22,7 +22,7 @@ IMG_DIRS = [
 
 
 def build_image_index():
-    """?대?吏 ?뚯씪紐?+ ?붾젆?좊━ = ?띿뒪??罹≪뀡?쇰줈 indexing."""
+    """이미지 파일명 + 디렉토리 = 텍스트 캡션으로 indexing."""
     import chromadb
     import hashlib
     INDEX_DIR = PROJECT_ROOT / ".claude" / "state" / "chromadb"
@@ -30,7 +30,7 @@ def build_image_index():
     coll_name = "image_captions"
     try:
         client.delete_collection(coll_name)
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         pass
 
     emb_fn = rag._get_embedding_fn()
@@ -40,9 +40,9 @@ def build_image_index():
     for d in IMG_DIRS:
         if not d.exists(): continue
         for img in d.glob("*.png"):
-            # ?뚯씪紐?湲곕컲 罹≪뀡 (?? 08-8-models.png -> "8 models 8 紐⑤뜽")
+            # 파일명 기반 캡션 (예: 08-8-models.png -> "8 models 8 모델")
             cap = img.stem.replace("-", " ").replace("_", " ")
-            # ?붾젆?좊━ 而⑦뀓?ㅽ듃
+            # 디렉토리 컨텍스트
             cap_full = f"{cap} ({d.name})"
             cid = hashlib.md5(str(img).encode()).hexdigest()
             ids.append(cid); docs.append(cap_full); metas.append({"path": str(img), "type": "image"})
@@ -52,15 +52,15 @@ def build_image_index():
 
 
 def multimodal_search(query: str, top_n: int = 5) -> dict:
-    """?대?吏 + ?띿뒪???듯빀 寃??"""
+    """이미지 + 텍스트 통합 검색."""
     import chromadb
     INDEX_DIR = PROJECT_ROOT / ".claude" / "state" / "chromadb"
     client = chromadb.PersistentClient(path=str(INDEX_DIR))
 
-    # ?띿뒪??RAG (湲곗〈)
+    # 텍스트 RAG (기존)
     text_results = rag.search(query, top_n=top_n)
 
-    # ?대?吏 RAG
+    # 이미지 RAG
     image_results = []
     try:
         emb_fn = rag._get_embedding_fn()
@@ -72,7 +72,7 @@ def multimodal_search(query: str, top_n: int = 5) -> dict:
                 "caption": r["documents"][0][i],
                 "distance": round(r["distances"][0][i], 3) if r["distances"] else None,
             })
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         image_results = [{"error": "image index not built. run: rag-multimodal.py --build"}]
 
     return {"text": text_results, "images": image_results}
@@ -85,4 +85,3 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: rag-multimodal.py '<query>' OR --build"); sys.exit(2)
     print(json.dumps(multimodal_search(sys.argv[1]), ensure_ascii=False, indent=2))
-

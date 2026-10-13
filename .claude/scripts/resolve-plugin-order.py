@@ -1,11 +1,11 @@
-﻿#!/usr/bin/env python3
-"""plugin.json dependencies 湲곕컲 ?꾩긽?뺣젹. stdout ??以꾨떦 ?뚮윭洹몄씤 ?대쫫."""
+#!/usr/bin/env python3
+"""plugin.json dependencies 기반 위상정렬. stdout 한 줄당 플러그인 이름."""
 import json, sys
 from pathlib import Path
 
 try:
     sys.stdout.reconfigure(encoding='utf-8')
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 plugins_dir = Path("plugins")
@@ -19,7 +19,7 @@ for n in names:
         try:
             pj = json.loads(pj_path.read_text(encoding="utf-8"))
             deps = [d for d in pj.get("dependencies", {}).get("plugins", []) if d in names]
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             pass
     plugins[n] = deps
 
@@ -39,4 +39,3 @@ for n in sorted(plugins):
 
 for n in ordered:
     print(n)
-

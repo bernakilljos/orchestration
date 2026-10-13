@@ -1,10 +1,11 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
-aggregate-rule-adherence.py ??猷??꾨컲 吏??吏묎퀎 (?붿옄?맞룰컻諛?
+aggregate-rule-adherence.py — 룰 위반 지수 집계 (디자인·개발)
 
-orca.db conversations ?ㅼ틪 ???ъ슜???ъ????⑦꽩 count ??.claude/state/rule-adherence.json ??? statusline ????JSON ?쎌쓬.
+orca.db conversations 스캔 → 사용자 재지적 패턴 count →
+.claude/state/rule-adherence.json 저장. statusline 이 이 JSON 읽음.
 
-cache TTL 10遺?(留????ш퀎??X).
+cache TTL 10분 (매 턴 재계산 X).
 """
 from __future__ import annotations
 import json, sqlite3, re, sys, os, time
@@ -12,29 +13,31 @@ from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Windows cp949 ?섍꼍?먯꽌 stdout쨌stderr UTF-8 媛뺤젣 (??cp949 ???諛⑹?)
+# Windows cp949 환경에서 stdout·stderr UTF-8 강제 (키 cp949 저장 방지)
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / ".claude" / "state" / "orca.db"
 SESSIONS_DB = ROOT / ".claude" / "state" / "sessions.db"
 OUT = ROOT / ".claude" / "state" / "rule-adherence.json"
-TTL = 600  # 10遺?
-# ?붿옄??猷??꾨컲 吏??(?ъ슜???ъ????댄쐶)
+TTL = 600  # 10분
+
+# 디자인 룰 위반 지표 (사용자 재지적 어휘)
 DESIGN_PATTERNS = {
-    "?대え吏":          r'?대え吏|?대え?곗퐯|emoji',
-    "?щ갚":            r'?щ갚|鍮?怨듦컙|鍮꾩뼱|諛뗫컠|諛뗫컠??,
-    "踰꾩쟾愿由?:        r'-v2|-v3|_v2|_v3|final_final|踰꾩쟾\s*?묐?|v2\s*(留뚮뱾|?뚯씪)',
-    "?곗텧臾쇨린??:      r'OVERDUE|?곗텧臾?*湲고븳|freshness|?ㅻ옒\s*???≪?',
+    "이모지":          r'이모지|이모티콘|emoji',
+    "여백":            r'여백|빈 공간|비어|밋밋|밋밋해',
+    "버전관리":        r'-v2|-v3|_v2|_v3|final_final|버전\s*접미|v2\s*(만들|파일)',
+    "산출물기한":      r'OVERDUE|산출물.*기한|freshness|오래\s*됐|낡은',
 }
-# 媛쒕컻 猷??꾨컲 吏??DEV_PATTERNS = {
-    "利앸챸吏??:        r'利앸챸???뺤씤??遊?寃利앺빐',
-    "誘몃컲??:          r'??s*?섏뿀|??s*????s*?섏뼱???곸슜\s*???④낵\s*???묐룞\s*??諛섏쁺\s*??,
-    "?꾩닔議곗궗skip":    r'?띾븸???異??λ궃|?쒕?濡?*???꾩닔議곗궗|??s*(蹂댁?|蹂댁떆)',
+# 개발 룰 위반 지표
+DEV_PATTERNS = {
+    "증명지시":        r'증명해|확인해 봐|검증해',
+    "미반영":          r'안\s*되었|안\s*됐|안\s*되어있|적용\s*안|효과\s*없|작동\s*안|반영\s*안',
+    "전수조사skip":    r'농땡이|대충|장난|제대로.*해|전수조사|다\s*(보지|보시)',
 }
 
 def count_in_window(rows, patterns, days):
@@ -44,9 +47,9 @@ def count_in_window(rows, patterns, days):
         if not txt: continue
         try:
             tsd = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-            if tsd.tzinfo:  # sessions.db ??UTC(Z) 쨌 濡쒖뺄 naive 濡?留욎떠 鍮꾧탳
+            if tsd.tzinfo:  # sessions.db 는 UTC(Z) · 로컬 naive 로 맞춰 비교
                 tsd = tsd.astimezone().replace(tzinfo=None)
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             continue
         if tsd < cutoff: continue
         for k, pat in patterns.items():
@@ -55,14 +58,14 @@ def count_in_window(rows, patterns, days):
     return dict(cnt)
 
 def main():
-    # TTL 泥댄겕
+    # TTL 체크
     if OUT.exists():
         age = time.time() - OUT.stat().st_mtime
         if age < TTL and os.environ.get("FORCE") != "1":
             return  # cache valid
-    # ?뺣낯 = sessions.db prompts(source='typed') ??jsonl 利앸텇 ?곸옱?????몄뀡???덈떎.
-    # orca.db.conversations ??save-user-prompt ?낆씠 ?볦튇 寃?留롮븘 (2026-10-02 ?ㅼ륫 12嫄?vs typed 133嫄?
-    # ?꾨컲 0 ?쇰줈 蹂댁뿬 ?곹깭以?以꾩씠 ?듭㎏濡??⑥뿀?? ?놁쓣 ?뚮쭔 ?대갚.
+    # 정본 = sessions.db prompts(source='typed') — jsonl 증분 적재라 전 세션이 있다.
+    # orca.db.conversations 는 save-user-prompt 훅이 놓친 게 많아 (2026-10-02 실측 12건 vs typed 133건)
+    # 위반 0 으로 보여 상태줄 줄이 통째로 숨었다. 없을 때만 폴백.
     cutoff90 = (datetime.now() - timedelta(days=90)).isoformat()
     rows, source = [], ""
     try:
@@ -80,7 +83,7 @@ def main():
                 "AND ts >= ? ORDER BY ts DESC LIMIT 5000", (cutoff90,)
             ).fetchall()
             source = "orca.db:conversations"
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"[ERR] {e}", file=sys.stderr); return
     if not source:
         return
@@ -90,7 +93,7 @@ def main():
     design_7  = count_in_window(rows, DESIGN_PATTERNS, 7)
     dev_90    = count_in_window(rows, DEV_PATTERNS, 90)
     dev_30    = count_in_window(rows, DEV_PATTERNS, 30)
-    # 2026-10-06 ?ъ슜??吏?????대씪?꾠???0嫄???ぉ???곹깭以꾩뿉 蹂댁씠?꾨줉 ??移댄뀒怨좊━ ???좎?
+    # 2026-10-06 사용자 지시 「0이라도」 — 0건 항목도 상태줄에 보이도록 전 카테고리 키 유지
     design_30 = {k: design_30.get(k, 0) for k in DESIGN_PATTERNS}
     dev_30    = {k: dev_30.get(k, 0) for k in DEV_PATTERNS}
     dev_7     = count_in_window(rows, DEV_PATTERNS, 7)
@@ -118,10 +121,9 @@ def main():
         },
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    # ensure_ascii=True ???쒓뎅????\uXXXX escape 濡????(Windows cp949 ?섍꼍 ?명솚)
+    # ensure_ascii=True → 한국어 키 \uXXXX escape 로 저장 (Windows cp949 환경 호환)
     OUT.write_text(json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")
 
 if __name__ == "__main__":
     try: main()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)
-
+    except Exception as e: print(f"[ERR] {e}", file=sys.stderr); sys.exit(0)

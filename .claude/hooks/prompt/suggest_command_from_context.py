@@ -1,8 +1,8 @@
-﻿"""suggest-command-from-context.sh ?댁떇 ??理쒓렐 10 turn ?⑦꽩쨌?꾧퀎 珥덇낵쨌?ъ궗???닿껐梨끒룹쇅遺 ?좏샇 湲곕컲 command 異붿쿇.
+"""suggest-command-from-context.sh 이식 — 최근 10 turn 패턴·임계 초과·재사용 해결책·외부 신호 기반 command 추천.
 
-濡쒖쭅? .claude/scripts/suggest-command-from-context.py (5遺?TTL 罹먯떆) 瑜?in-process 濡??몄텧?쒕떎.
-洹??ㅽ겕由쏀듃媛 print ?섎뜕 JSON 留?媛濡쒖콈 additionalContext 瑜?爰쇰궦??(紐⑤뱢 ?꾩뿭 print 援먯껜 ???꾩뿭 stdout ? 嫄대뱶由ъ? ?딆쓬).
-罹먯떆 留뚮즺 ???ㅽ겕由쏀듃 ?대??먯꽌 git status 瑜?1??遺瑜몃떎 (5遺꾩뿉 理쒕? 1??쨌 ?먮낯 ?숈씪).
+로직은 .claude/scripts/suggest-command-from-context.py (5분 TTL 캐시) 를 in-process 로 호출한다.
+그 스크립트가 print 하던 JSON 만 가로채 additionalContext 를 꺼낸다 (모듈 전역 print 교체 — 전역 stdout 은 건드리지 않음).
+캐시 만료 시 스크립트 내부에서 git status 를 1회 부른다 (5분에 최대 1회 · 원본 동일).
 """
 from __future__ import annotations
 
@@ -28,6 +28,5 @@ def run(ctx):
     text = "\n".join(buf)
     try:
         return json.loads(text)["hookSpecificOutput"]["additionalContext"]
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         return text + "\n"
-

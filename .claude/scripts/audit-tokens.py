@@ -1,21 +1,21 @@
-﻿"""Token-cost audit ??orchestration_v1 ?꾩슜.
+"""Token-cost audit — orchestration_v1 전용.
 
-tokensave (epoko77-ai/tokensave) audit.py ??9媛?猷?以??곕━ 援ъ“???곹빀??5媛쒕?
-plugins/*/agents/ + plugins/*/skills/ + .claude/{agents,skills}/ 源뚯? ?꾩닔 ?ㅼ틪.
+tokensave (epoko77-ai/tokensave) audit.py 의 9개 룰 중 우리 구조에 적합한 5개를
+plugins/*/agents/ + plugins/*/skills/ + .claude/{agents,skills}/ 까지 전수 스캔.
 
-5媛?猷?(?곕━ 而⑦뀓?ㅽ듃):
-  R1  Model Tier      ??agent ??model: ?꾨뱶 opus 鍮꾩쑉 >= 80% FAIL
-  R2  HD-003          ??寃곗젙 ?ㅼ썙??+ code-phase ?ㅼ썙??0 = FAIL
-  R4  CLAUDE.md/SKILL ??以?臾몄옄 ?꾧퀎 (200以? / 8K??)
-  R5  Prompt Caching  ??cache_control / prompt caching 紐낆떆 移댁슫??
-  R8  Writer Cap      ??writer/drafter agent ??per-call cap 紐낆떆
+5개 룰 (우리 컨텍스트):
+  R1  Model Tier      — agent 의 model: 필드 opus 비율 >= 80% FAIL
+  R2  HD-003          — 결정 키워드 + code-phase 키워드 0 = FAIL
+  R4  CLAUDE.md/SKILL — 줄-문자 임계 (200줄+ / 8K자+)
+  R5  Prompt Caching  — cache_control / prompt caching 명시 카운트
+  R8  Writer Cap      — writer/drafter agent 에 per-call cap 명시
 
 Usage:
   python .claude/scripts/audit-tokens.py
   python .claude/scripts/audit-tokens.py --json
   python .claude/scripts/audit-tokens.py --rules R1,R5
 
-?쒖? ?쇱씠釉뚮윭由щ쭔 ?ъ슜 (?몃? ?섏〈 0). LLM 0?? 5珥????꾨즺.
+표준 라이브러리만 사용 (외부 의존 0). LLM 0회. 5초 안 완료.
 """
 from __future__ import annotations
 
@@ -26,24 +26,24 @@ import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent  # orchestration_v1 猷⑦듃
+ROOT = Path(__file__).resolve().parent.parent.parent  # orchestration_v1 루트
 
 DETERMINISTIC_KEYWORDS = [
-    r"\bverbatim\b", r"\b1:1\s*留ㅽ븨\b", r"\b1:1\s+mapping\b",
+    r"\bverbatim\b", r"\b1:1\s*매핑\b", r"\b1:1\s+mapping\b",
     r"\bBibTeX\b", r"\bformat\s+normalization\b", r"\bcross-?reference\b",
     r"\bdead[ -]?link\b", r"\bregex\s+transformation\b",
-    r"\b寃곗젙??b.*\b蹂??b", r"\bJSON\s*?뺢퇋??b", r"\bsha256\b", r"\b?댁떆\b",
+    r"\b결정적\b.*\b변환\b", r"\bJSON\s*정규화\b", r"\bsha256\b", r"\b해시\b",
 ]
 CODE_SPLIT_KEYWORDS = [
-    r"\bPython\b.*\b(?ㅽ겕由쏀듃|script|phase)\b",
-    r"\bBash\b.*\b(?ㅽ겕由쏀듃|script)\b",
+    r"\bPython\b.*\b(스크립트|script|phase)\b",
+    r"\bBash\b.*\b(스크립트|script)\b",
     r"code[- ]?phase", r"deterministic.*pass.*code",
     r"verify-.*\.py", r"validate-.*\.py",
 ]
-WRITER_PATTERNS = [r"writer", r"drafter", r"吏묓븘", r"composer", r"section-writer"]
+WRITER_PATTERNS = [r"writer", r"drafter", r"집필", r"composer", r"section-writer"]
 CAP_KEYWORDS = [
     r"per[- ]?call.*cap", r"output.*cap", r"\bmax\s*words\b",
-    r"\bcap:\s*\d", r"遺꾨웾\s*?쒕룄", r"?먮룞\s*遺꾪븷", r"?뱀뀡\s*>.*sub",
+    r"\bcap:\s*\d", r"분량\s*한도", r"자동\s*분할", r"섹션\s*>.*sub",
 ]
 CACHE_KEYWORDS = [r"cache_control", r"prompt\s*caching", r"prompt_cache"]
 
@@ -82,7 +82,7 @@ def normalize_model(raw: str) -> str:
 def scan_agent(p: Path) -> Agent:
     try:
         text = p.read_text(encoding="utf-8", errors="replace")
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+    except Exception:
         text = ""
     m = re.search(r"^model:\s*(\S+)", text, re.MULTILINE | re.IGNORECASE)
     model = normalize_model(m.group(1)) if m else "none"
@@ -92,7 +92,7 @@ def scan_agent(p: Path) -> Agent:
     cap = sum(1 for kw in CAP_KEYWORDS if re.search(kw, text, re.IGNORECASE))
     name = p.name.lower()
     is_writer = any(re.search(pat, name) for pat in WRITER_PATTERNS) or \
-                bool(re.search(r"(?쒕옒?꾪듃|draft|writer|吏묓븘|composer).*\b(agent|?먯씠?꾪듃)\b", text, re.IGNORECASE))
+                bool(re.search(r"(드래프트|draft|writer|집필|composer).*\b(agent|에이전트)\b", text, re.IGNORECASE))
     return Agent(
         path=str(p.relative_to(ROOT)),
         name=p.name,
@@ -107,7 +107,7 @@ def scan_agent(p: Path) -> Agent:
 
 
 def discover_agents() -> list[Path]:
-    """plugins/*/agents/*.md + .claude/agents/*.md 紐⑤몢."""
+    """plugins/*/agents/*.md + .claude/agents/*.md 모두."""
     paths = []
     paths.extend(sorted((ROOT / ".claude" / "agents").glob("*.md")))
     for plug in sorted((ROOT / "plugins").iterdir()):
@@ -132,37 +132,37 @@ def discover_skills() -> list[Path]:
 def rule_R1(agents: list[Agent]) -> Finding:
     total = len(agents)
     if total == 0:
-        return Finding("R1", "Model Tier (Opus ?⑥슜)", "N/A", "agent 0媛?)
+        return Finding("R1", "Model Tier (Opus 남용)", "N/A", "agent 0개")
     opus = sum(1 for a in agents if a.model == "opus")
     pct = opus / total * 100
     if pct >= 80:
         ev = [f"{a.path} (size {a.size})" for a in agents if a.model == "opus"][:5]
-        return Finding("R1", "Model Tier (Opus ?⑥슜)", "FAIL",
+        return Finding("R1", "Model Tier (Opus 남용)", "FAIL",
                        f"Opus {pct:.1f}% ({opus}/{total})",
                        evidence=ev,
-                       fix="?ш린 5K+ + 寃곗젙?ㅼ썙??0 + writer ?꾨땶 opus agent 瑜?Sonnet/Haiku 濡??대룞")
-    return Finding("R1", "Model Tier (Opus ?⑥슜)", "PASS",
+                       fix="크기 5K+ + 결정키워드 0 + writer 아닌 opus agent 를 Sonnet/Haiku 로 이동")
+    return Finding("R1", "Model Tier (Opus 남용)", "PASS",
                    f"Opus {pct:.1f}% ({opus}/{total})")
 
 
 def rule_R2(agents: list[Agent]) -> Finding:
     risky = [a for a in agents if a.det_kw > 0 and a.code_kw == 0]
     if not risky:
-        return Finding("R2", "HD-003 (寃곗젙???묒뾽 LLM ?꾩엫)", "PASS",
-                       "寃곗젙 ?ㅼ썙???덈뒗 紐⑤뱺 agent 媛 code-phase ?ㅼ썙???ы븿")
+        return Finding("R2", "HD-003 (결정적 작업 LLM 위임)", "PASS",
+                       "결정 키워드 있는 모든 agent 가 code-phase 키워드 포함")
     ev = [f"{a.path} (det_kw={a.det_kw}, code_kw={a.code_kw})" for a in risky[:5]]
-    return Finding("R2", "HD-003 (寃곗젙???묒뾽 LLM ?꾩엫)", "FAIL",
+    return Finding("R2", "HD-003 (결정적 작업 LLM 위임)", "FAIL",
                    f"RISKY {len(risky)}/{len(agents)}",
                    evidence=ev,
-                   fix="?대떦 agent ??寃곗젙 ?묒뾽??verify-*.py / validate-*.py 媛숈? Python phase 濡?遺꾨━")
+                   fix="해당 agent 의 결정 작업을 verify-*.py / validate-*.py 같은 Python phase 로 분리")
 
 
 def rule_R4(skills: list[Path]) -> Finding:
-    """CLAUDE.md + skill ?뚯씪?ㅼ쓽 size ?먭?.
+    """CLAUDE.md + skill 파일들의 size 점검.
 
-    ?꾧퀎: 300以? / 12K?? (tokensave ?곸뼱沅?200以?8K?먯뿉???쒓? +50% 蹂댁젙).
-    洹쇨굅: ?숈씪 ?뺣낫媛 ?쒓??????곸뼱 ?鍮?1.5~2諛?湲몄뼱吏?(?쒓? ?뚯젅 = ?곸뼱 ?⑥뼱).
-    ?곕━ CLAUDE.md self-rule (500以?誘몃쭔) 怨쇰룄 ?뺥빀.
+    임계: 300줄+ / 12K자+ (tokensave 영어권 200줄/8K자에서 한글 +50% 보정).
+    근거: 동일 정보가 한글일 때 영어 대비 1.5~2배 길어짐 (한글 음절 = 영어 단어).
+    우리 CLAUDE.md self-rule (500줄 미만) 과도 정합.
     """
     LINE_LIMIT = 300
     CHAR_LIMIT = 12000
@@ -173,72 +173,72 @@ def rule_R4(skills: list[Path]) -> Finding:
             continue
         try:
             text = f.read_text(encoding="utf-8", errors="replace")
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             continue
         lines = text.count("\n") + 1
         chars = len(text)
         if lines >= LINE_LIMIT or chars >= CHAR_LIMIT:
             over.append((f, lines, chars))
     if not over:
-        return Finding("R4", "鍮꾨? (CLAUDE.md/SKILL.md)", "PASS",
-                       f"?꾧퀎 誘몃쭔 ({LINE_LIMIT}以?{CHAR_LIMIT}?? ?쒓? 蹂댁젙): {len(files)} ?뚯씪")
-    ev = [f"{f.relative_to(ROOT)} ({lines}以? {chars}??" for f, lines, chars in over[:10]]
+        return Finding("R4", "비대 (CLAUDE.md/SKILL.md)", "PASS",
+                       f"임계 미만 ({LINE_LIMIT}줄/{CHAR_LIMIT}자, 한글 보정): {len(files)} 파일")
+    ev = [f"{f.relative_to(ROOT)} ({lines}줄, {chars}자)" for f, lines, chars in over[:10]]
     decision = "FAIL" if any(c >= CHAR_LIMIT for _, _, c in over) else "WARN"
-    return Finding("R4", "鍮꾨? (CLAUDE.md/SKILL.md)", decision,
-                   f"{len(over)} ?뚯씪 ?꾧퀎 珥덇낵 ({LINE_LIMIT}以?{CHAR_LIMIT}??",
+    return Finding("R4", "비대 (CLAUDE.md/SKILL.md)", decision,
+                   f"{len(over)} 파일 임계 초과 ({LINE_LIMIT}줄/{CHAR_LIMIT}자)",
                    evidence=ev,
-                   fix=f"{LINE_LIMIT}以?/{CHAR_LIMIT}?? ?뚯씪??references/ 濡?遺꾨━?섍퀬 蹂몃Ц???몃━嫄?actionable留?)
+                   fix=f"{LINE_LIMIT}줄+/{CHAR_LIMIT}자+ 파일을 references/ 로 분리하고 본문엔 트리거+actionable만")
 
 
 def rule_R5(agents: list[Agent], skills: list[Path]) -> Finding:
-    """cache_control / prompt caching 紐낆떆 移댁슫??(agent + skill + scripts)."""
+    """cache_control / prompt caching 명시 카운트 (agent + skill + scripts)."""
     cache_in_agents = sum(1 for a in agents if a.cache_kw > 0)
     cache_in_skills = 0
     for sk in skills:
         try:
             text = sk.read_text(encoding="utf-8", errors="replace")
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+        except Exception:
             continue
         if any(re.search(kw, text, re.IGNORECASE) for kw in CACHE_KEYWORDS):
             cache_in_skills += 1
-    # scripts ???ㅼ젣 ?ъ슜 移댁슫??
+    # scripts 안 실제 사용 카운트
     cache_in_scripts = 0
     scripts_dir = ROOT / ".claude" / "scripts"
     if scripts_dir.is_dir():
         for p in scripts_dir.rglob("*.py"):
             try:
                 text = p.read_text(encoding="utf-8", errors="replace")
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 continue
             if any(re.search(kw, text, re.IGNORECASE) for kw in CACHE_KEYWORDS):
                 cache_in_scripts += 1
     total = cache_in_agents + cache_in_skills + cache_in_scripts
     if total == 0:
-        return Finding("R5", "Prompt Caching 遺??, "FAIL",
-                       "cache_control / prompt caching ?멸툒 0??,
-                       fix="docs/caching-strategy.md ??3?④퀎 TTL ?곸슜 + cache_control 紐낆떆")
+        return Finding("R5", "Prompt Caching 부재", "FAIL",
+                       "cache_control / prompt caching 언급 0회",
+                       fix="docs/caching-strategy.md 의 3단계 TTL 적용 + cache_control 명시")
     if total < 3:
         return Finding("R5", "Prompt Caching", "WARN",
-                       f"{total} ?뚮쭔 紐낆떆 (agent {cache_in_agents} + skill {cache_in_skills} + scripts {cache_in_scripts})",
-                       fix="agent ?뺤쓽??cache_control 紐낆떆 異붽?濡?PASS ?꾨떖 媛??)
+                       f"{total} 회만 명시 (agent {cache_in_agents} + skill {cache_in_skills} + scripts {cache_in_scripts})",
+                       fix="agent 정의에 cache_control 명시 추가로 PASS 도달 가능")
     return Finding("R5", "Prompt Caching", "PASS",
-                   f"{total} ??紐낆떆 (agent {cache_in_agents} + skill {cache_in_skills} + scripts {cache_in_scripts})")
+                   f"{total} 회 명시 (agent {cache_in_agents} + skill {cache_in_skills} + scripts {cache_in_scripts})")
 
 
 def rule_R8(agents: list[Agent]) -> Finding:
     writers = [a for a in agents if a.is_writer]
     if not writers:
-        return Finding("R8", "Writer Cap (HD-011)", "N/A", "writer/drafter agent 0媛?)
+        return Finding("R8", "Writer Cap (HD-011)", "N/A", "writer/drafter agent 0개")
     no_cap = [a for a in writers if a.cap_kw == 0]
     if not no_cap:
         return Finding("R8", "Writer Cap (HD-011)", "PASS",
-                       f"writer {len(writers)} 紐⑤몢 cap 紐낆떆")
+                       f"writer {len(writers)} 모두 cap 명시")
     ev = [f"{a.path} (cap_kw=0)" for a in no_cap[:5]]
     decision = "FAIL" if len(no_cap) == len(writers) else "WARN"
     return Finding("R8", "Writer Cap (HD-011)", decision,
-                   f"{len(no_cap)}/{len(writers)} writer 媛 cap ?놁쓬",
+                   f"{len(no_cap)}/{len(writers)} writer 가 cap 없음",
                    evidence=ev,
-                   fix="?대떦 writer 蹂몃Ц??per-call cap (max words / ?먮룞 遺꾪븷) 紐낆떆")
+                   fix="해당 writer 본문에 per-call cap (max words / 자동 분할) 명시")
 
 
 def main():
@@ -303,4 +303,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

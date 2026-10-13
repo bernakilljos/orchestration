@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-render-ppt-multi.py ??3媛?PPT (automation/plugins/team) HTML->PNG->PPTX.
+render-ppt-multi.py — 3개 PPT (automation/plugins/team) HTML->PNG->PPTX.
 
 Usage:
   python .claude/scripts/render-ppt-multi.py auto plugins team    # all 3
@@ -58,7 +58,7 @@ async def render_html(html_dir: Path, png_dir: Path, only: list[str] | None):
             await page.goto(url, wait_until="networkidle", timeout=20000)
             try:
                 await page.wait_for_load_state("networkidle", timeout=5000)
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 pass
             await page.wait_for_timeout(800)
             await page.screenshot(path=str(png), full_page=False, omit_background=False,
@@ -105,4 +105,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

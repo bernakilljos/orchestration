@@ -1,7 +1,7 @@
-﻿"""getdesign.md ?ъ씠?몄쓽 /<brand>/design-md preview HTML ?섏씠吏 ?ㅼ슫濡쒕뱶 + PNG 罹≪퀜.
+"""getdesign.md 사이트의 /<brand>/design-md preview HTML 페이지 다운로드 + PNG 캡쳐.
 
-???섏씠吏 = brand ???꾩껜 9 ?뱀뀡 ?붿옄??spec ???쒓컖?곸쑝濡?蹂댁뿬二쇰뒗 detail page.
-71 brand 횞 HTML + PNG fullpage 罹≪퀜.
+이 페이지 = brand 의 전체 9 섹션 디자인 spec 을 시각적으로 보여주는 detail page.
+71 brand × HTML + PNG fullpage 캡쳐.
 """
 import asyncio
 import time
@@ -52,9 +52,9 @@ async def main():
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 try:
                     await page.wait_for_load_state("networkidle", timeout=15000)
-                except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                except Exception:
                     await asyncio.sleep(3)
-                # ?ㅽ겕濡?
+                # 스크롤
                 await page.evaluate("""
                     () => new Promise(r => {
                         let y = 0;
@@ -69,17 +69,17 @@ async def main():
                     })
                 """)
                 await asyncio.sleep(1.5)
-                # HTML ???
+                # HTML 저장
                 html = await page.content()
                 html_out.write_text(html, encoding="utf-8")
-                # PNG full_page 罹≪퀜
+                # PNG full_page 캡쳐
                 await page.screenshot(path=str(png_out), full_page=True, type="jpeg", quality=85)
                 size_kb = png_out.stat().st_size // 1024
                 html_kb = html_out.stat().st_size // 1024
                 print(f"  [{i}/{len(BRANDS)}] OK {safe} png={size_kb}KB html={html_kb}KB", flush=True)
                 ok += 1
                 await ctx.close()
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+            except Exception as e:
                 fail += 1
                 print(f"  [{i}/{len(BRANDS)}] FAIL {safe}: {type(e).__name__} {str(e)[:60]}", flush=True)
                 try: await ctx.close()
@@ -92,4 +92,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

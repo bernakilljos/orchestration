@@ -1,9 +1,9 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""sync-assistant-from-jsonl - Claude Code jsonl ?먯꽌 assistant ?묐떟 ??orca.db.conversations.
+"""sync-assistant-from-jsonl - Claude Code jsonl 에서 assistant 응답 → orca.db.conversations.
 
-諛곌꼍: Claude Code ??assistant ?묐떟??hook ???놁쓬. Stop hook ??jsonl ?뚯떛??sync.
-洹쇨굅: ?ъ슜??吏??(2026-09-03) - assistant ?대젰 ?좎떎.
+배경: Claude Code 는 assistant 응답용 hook 이 없음. Stop hook 시 jsonl 파싱해 sync.
+근거: 사용자 지적 (2026-09-03) - assistant 이력 유실.
 """
 from __future__ import annotations
 import glob
@@ -16,7 +16,7 @@ import sys
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 
@@ -33,7 +33,7 @@ def main() -> int:
         print(f"[skip] db not found: {db}")
         return 0
     c = sqlite3.connect(db)
-    # ?대? ??λ맂 content_hash (以묐났 諛⑹?)
+    # 이미 저장된 content_hash (중복 방지)
     existing = set(
         r[0] for r in c.execute(
             "SELECT content_hash FROM conversations WHERE role IN ('assistant','user') "
@@ -41,8 +41,8 @@ def main() -> int:
         ).fetchall()
     )
     added = 0
-    # 理쒓렐 5 jsonl 留?sync (遺???덇컧)
-    # ??stdin ??以 ?대쾲 ?몄뀡 transcript 留?sync. ?놁쓣 ?뚮쭔 理쒓렐 5 jsonl (2026-09-19: 306MB ???뚯씪??留?Stop 留덈떎 ?쎌뿀??
+    # 최근 5 jsonl 만 sync (부하 절감)
+    # 훅 stdin 이 준 이번 세션 transcript 만 sync. 없을 때만 최근 5 jsonl (2026-09-19: 306MB 옛 파일을 매 Stop 마다 읽었다)
     own = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
     if own and os.path.isfile(own):
         files = [own]
@@ -58,7 +58,7 @@ def main() -> int:
                 for line in f:
                     try:
                         rec = json.loads(line)
-                    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+                    except Exception:
                         continue
                     rtype = rec.get("type")
                     if rtype not in ("assistant", "user"):
@@ -92,15 +92,18 @@ def main() -> int:
                         "SELECT COALESCE(MAX(turn),0)+1 FROM conversations WHERE session_id=?",
                         (sid,)
                     ).fetchone()[0] or 1
-                    # ?끸쁾??002 ??`ts` 瑜?**jsonl ???ㅼ젣 ????쒓컖**?쇰줈 ?ｋ뒗??
-                    #   醫낆쟾??`ts` 瑜???二쇱뼱 `DEFAULT CURRENT_TIMESTAMP`(=?곸옱 ?쒓컖)媛
-                    #   ?ㅼ뼱媛붾떎. 洹몃옒??**怨쇨굅 ?몄뀡 ?꾨?媛 ?뚯삤?섅띾줈 李랁삍??* ??                    #   ?ㅼ륫 1002: ?몄뀡 5媛쒓? ?꾨? `07:55:47` ???쒓컖?댁뿀怨?9/30 ?몄뀡 ?ы븿),
-                    #   7?셋?0?셋?0??李쎌씠 **媛숈? 404嫄?*???먮떎.
-                    #   ?끸쁾洹?寃곌낵 statusline ??**?щ컻瑜좎씠 援ъ“?곸쑝濡?100%** ???                    #     (?곗떇 = 7??첨 30??. ?뚰빆???щ컻?쒕떎?띻? ?꾨땲??                    #     **?뚮퉬援먰븷 怨쇨굅媛 ?녿떎??*?????遺꾨え媛 遺꾩옄? 媛숈? 吏묓빀?대떎.
-                    #   ?꾿10: ??李쎌씠 媛숈? ?먮줈 ??媛믪씠硫?鍮꾧탳媛 ?듭씠 ?꾨땲???뚯쓬?대떎.
+                    # ★★★1002 — `ts` 를 **jsonl 의 실제 대화 시각**으로 넣는다.
+                    #   종전엔 `ts` 를 안 주어 `DEFAULT CURRENT_TIMESTAMP`(=적재 시각)가
+                    #   들어갔다. 그래서 **과거 세션 전부가 「오늘」로 찍혔다** —
+                    #   실측 1002: 세션 5개가 전부 `07:55:47` 한 시각이었고(9/30 세션 포함),
+                    #   7일·30일·90일 창이 **같은 404건**이 됐다.
+                    #   ★★그 결과 statusline 의 **재발률이 구조적으로 100%** 였다
+                    #     (산식 = 7일 ÷ 30일). 「항상 재발한다」가 아니라
+                    #     **「비교할 과거가 없다」**였다 — 분모가 분자와 같은 집합이다.
+                    #   ★A10: 두 창이 같은 자로 잰 값이면 비교가 답이 아니라 소음이다.
                     _ts = (rec.get("timestamp") or "").strip()
                     if _ts:
-                        # "2026-09-30T00:22:04.982Z" ??"2026-09-30 00:22:04"
+                        # "2026-09-30T00:22:04.982Z" → "2026-09-30 00:22:04"
                         _ts = _ts.replace("T", " ").replace("Z", "").split(".")[0]
                     if _ts:
                         c.execute(
@@ -110,7 +113,8 @@ def main() -> int:
                             (sid, turn, rtype, text, ch, len(text) // 4, _ts)
                         )
                     else:
-                        # ?낆떆媛곸씠 ?놁쑝硫?**吏?대궡吏 ?딅뒗??* ??湲곕낯媛??곸옱 ?쒓컖)??留↔린怨?                        #   洹??ъ떎??吏묎퀎?먯꽌 짬?ㅻ뒛쨩濡?蹂댁씠??寃껋? 媛먯닔?쒕떎(A8).
+                        # ★시각이 없으면 **지어내지 않는다** — 기본값(적재 시각)에 맡기고
+                        #   그 사실이 집계에서 «오늘»로 보이는 것은 감수한다(A8).
                         c.execute(
                             "INSERT INTO conversations"
                             "(session_id,turn,role,content,content_hash,tokens) "
@@ -118,7 +122,7 @@ def main() -> int:
                             (sid, turn, rtype, text, ch, len(text) // 4)
                         )
                     added += 1
-        except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+        except Exception as e:
             print(f"[skip jsonl] {jp}: {e}", file=sys.stderr)
     c.commit()
     print(f"[ok] jsonl sync - added {added}")
@@ -128,7 +132,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"[err] {e}", file=sys.stderr)
         sys.exit(0)
-

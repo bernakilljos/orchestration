@@ -1,22 +1,22 @@
-﻿#!/usr/bin/env python3
-"""lookup-rule.py ??AI 媛 猷?硫붾え由??ㅽ겕由쏀듃瑜?鍮좊Ⅴ寃?寃??
-洹쇨굅: CLAUDE.md 猷?硫붾え由??ㅽ겕由쏀듃 ?꾩쟻 -> grep 鍮꾪슚?? RAG/踰≫꽣 DB ?쒖슜.
+#!/usr/bin/env python3
+"""lookup-rule.py — AI 가 룰/메모리/스크립트를 빠르게 검색
+근거: CLAUDE.md 룰-메모리-스크립트 누적 -> grep 비효율. RAG/벡터 DB 활용.
 
-?ъ슜:
-  python lookup-rule.py "寃利???蹂닿퀬"        # ?섎? 湲곕컲 寃??
-  python lookup-rule.py "嫄곗쭞 蹂닿퀬" --top 5    # top-K
-  python lookup-rule.py --rebuild              # ?몃뜳???ш뎄??
-  python lookup-rule.py --status               # ?몃뜳???곹깭
+사용:
+  python lookup-rule.py "검증 후 보고"        # 의미 기반 검색
+  python lookup-rule.py "거짓 보고" --top 5    # top-K
+  python lookup-rule.py --rebuild              # 인덱스 재구성
+  python lookup-rule.py --status               # 인덱스 상태
 
-?꾨왂 (?먮룞 ?좏깮):
-  1李?(?섏〈??0): frontmatter + 蹂몃Ц TF ?먯닔??(Python ?댁옣)
-  2李?(chromadb ?ㅼ튂 ??: 踰≫꽣 DB ?섎? 寃??(?먮룞 ?꾪솚)
+전략 (자동 선택):
+  1차 (의존성 0): frontmatter + 본문 TF 점수화 (Python 내장)
+  2차 (chromadb 설치 시): 벡터 DB 의미 검색 (자동 전환)
 
-?몃뜳?????
+인덱싱 대상:
   - .claude/rules/*.md
   - ~/.claude/projects/<proj>/memory/*.md
-  - .claude/scripts/*.{py,sh} (frontmatter / 泥?docstring)
-  - CLAUDE.md 짠 7 湲덉? ??ぉ
+  - .claude/scripts/*.{py,sh} (frontmatter / 첫 docstring)
+  - CLAUDE.md § 7 금지 항목
 """
 import sys
 import os
@@ -38,7 +38,7 @@ INDEX_DIR = PROJECT_ROOT / ".claude" / "state" / "rule-index"
 INDEX_JSON = INDEX_DIR / "rules.json"
 CHROMA_DIR = INDEX_DIR / "chroma"
 
-# === ?몃뜳??????붾젆?좊━ ===
+# === 인덱싱 대상 디렉토리 ===
 TARGETS = [
     ("rule", PROJECT_ROOT / ".claude" / "rules", "*.md"),
     ("memory", Path.home() / ".claude" / "projects", "**/memory/*.md"),
@@ -51,7 +51,7 @@ CLAUDE_MD = PROJECT_ROOT / "CLAUDE.md"
 
 
 def extract_frontmatter(text: str) -> dict:
-    """?뚯씪 泥?frontmatter (--- ?ъ씠) 異붿텧."""
+    """파일 첫 frontmatter (--- 사이) 추출."""
     m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
     if not m:
         return {}
@@ -64,13 +64,13 @@ def extract_frontmatter(text: str) -> dict:
 
 
 def extract_doc(text: str, lang: str) -> str:
-    """script ??泥?docstring/二쇱꽍 釉붾줉 異붿텧."""
+    """script 의 첫 docstring/주석 블록 추출."""
     if lang == "py":
         m = re.search(r'"""(.+?)"""', text, re.DOTALL)
         if m:
             return m.group(1).strip()[:500]
     elif lang == "sh":
-        # 泥?# comment 釉붾줉
+        # 첫 # comment 블록
         lines = []
         for line in text.splitlines():
             s = line.strip()
@@ -87,22 +87,22 @@ def extract_doc(text: str, lang: str) -> str:
 
 
 def extract_claude_md_rules() -> list:
-    """CLAUDE.md 짠 7 湲덉? ??ぉ 異붿텧."""
+    """CLAUDE.md § 7 금지 항목 추출."""
     if not CLAUDE_MD.exists():
         return []
     text = CLAUDE_MD.read_text(encoding="utf-8")
-    # 짠 7. 湲덉? ?ы빆 ~ ---
-    m = re.search(r"## 7\. 湲덉? ?ы빆\s*\n(.+?)\n---", text, re.DOTALL)
+    # § 7. 금지 사항 ~ ---
+    m = re.search(r"## 7\. 금지 사항\s*\n(.+?)\n---", text, re.DOTALL)
     if not m:
         return []
     body = m.group(1)
     items = []
     for num, content in re.findall(r"^(\d+)\.\s+(.+?)(?=\n\d+\.\s|\Z)", body, re.DOTALL | re.MULTILINE):
-        # 泥?以?(?쒕ぉ)
+        # 첫 줄 (제목)
         first_line = content.strip().split("\n")[0]
         items.append({
             "type": "claude_md",
-            "id": f"짠7-{num}",
+            "id": f"§7-{num}",
             "title": first_line[:80],
             "body": content.strip()[:600],
             "path": "CLAUDE.md",
@@ -111,7 +111,7 @@ def extract_claude_md_rules() -> list:
 
 
 def build_index() -> list:
-    """?꾩껜 ?몃뜳??-> list of {type, id, title, body, path, keywords}"""
+    """전체 인덱싱 -> list of {type, id, title, body, path, keywords}"""
     index = []
 
     for entry_type, base, pattern in TARGETS:
@@ -122,7 +122,7 @@ def build_index() -> list:
                 continue
             try:
                 text = p.read_text(encoding="utf-8")
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 continue
 
             fm = extract_frontmatter(text)
@@ -134,7 +134,7 @@ def build_index() -> list:
                 doc = extract_doc(text, lang)
                 body = (desc + " " + doc).strip() or text[:500]
             else:
-                # rule / memory ??蹂몃Ц 泥?500??(frontmatter ??
+                # rule / memory — 본문 첫 500자 (frontmatter 후)
                 content_after_fm = re.sub(r"^---.+?---\s*", "", text, count=1, flags=re.DOTALL)
                 body = (desc + " " + content_after_fm[:600]).strip()
 
@@ -146,23 +146,23 @@ def build_index() -> list:
                 "path": str(p.relative_to(PROJECT_ROOT) if PROJECT_ROOT in p.parents else p),
             })
 
-    # CLAUDE.md 짠 7 猷?
+    # CLAUDE.md § 7 룰
     index.extend(extract_claude_md_rules())
 
     return index
 
 
-# === 寃??(1李? TF 湲곕컲) ===
+# === 검색 (1차: TF 기반) ===
 def tokenize(text: str) -> list:
-    """媛꾨떒 ?좏겙??(?쒓?-?곷Ц ?⑥뼱)."""
+    """간단 토큰화 (한글-영문 단어)."""
     text = text.lower()
-    # ?쒓?-?곷Ц-?レ옄 ?⑥뼱
-    tokens = re.findall(r"[媛-??+|[a-z][a-z0-9]+", text)
+    # 한글-영문-숫자 단어
+    tokens = re.findall(r"[가-힣]+|[a-z][a-z0-9]+", text)
     return tokens
 
 
 def score(query: str, item: dict) -> float:
-    """媛꾨떒 TF ?먯닔: query ?⑥뼱媛 item ???쇰쭏???섏삤?붿?."""
+    """간단 TF 점수: query 단어가 item 에 얼마나 나오는지."""
     q_tokens = tokenize(query)
     if not q_tokens:
         return 0.0
@@ -175,11 +175,11 @@ def score(query: str, item: dict) -> float:
     for q in q_tokens:
         if q in counter:
             s += counter[q] / len(item_tokens) * 100
-        # 遺遺?留ㅼ튂 (substring)
+        # 부분 매치 (substring)
         for tok, cnt in counter.items():
             if q in tok and q != tok:
                 s += cnt / len(item_tokens) * 30
-    # title 留ㅼ튂 媛以?
+    # title 매치 가중
     title_tokens = tokenize(item.get("title", ""))
     for q in q_tokens:
         if q in title_tokens:
@@ -191,7 +191,7 @@ def score(query: str, item: dict) -> float:
 
 
 def search(query: str, top: int = 8) -> list:
-    """Top-K 寃곌낵."""
+    """Top-K 결과."""
     if not INDEX_JSON.exists():
         rebuild()
     index = json.loads(INDEX_JSON.read_text(encoding="utf-8"))
@@ -201,7 +201,7 @@ def search(query: str, top: int = 8) -> list:
     return results[:top]
 
 
-# === ?몃뜳???ш뎄??===
+# === 인덱스 재구성 ===
 def rebuild():
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     idx = build_index()
@@ -211,7 +211,7 @@ def rebuild():
 
 def status():
     if not INDEX_JSON.exists():
-        print("[NO INDEX] --rebuild 癒쇱? ?ㅽ뻾")
+        print("[NO INDEX] --rebuild 먼저 실행")
         return
     idx = json.loads(INDEX_JSON.read_text(encoding="utf-8"))
     by_type = Counter(item["type"] for item in idx)
@@ -237,7 +237,7 @@ def main():
         status()
         return
 
-    # 寃??
+    # 검색
     query = args[0]
     top = 8
     if "--top" in args:
@@ -246,16 +246,16 @@ def main():
 
     results = search(query, top)
     if not results:
-        print(f"[no match] '{query}' ???ㅻⅨ ?ㅼ썙???쒕룄")
+        print(f"[no match] '{query}' — 다른 키워드 시도")
         return
 
-    print(f"[QUERY] {query} -> {len(results)} 寃곌낵:\n")
+    print(f"[QUERY] {query} -> {len(results)} 결과:\n")
     for i, (sc, item) in enumerate(results, 1):
         type_label = f"[{item['type']}]"
         print(f"{i}. {type_label:10} {item['title']}  (score {sc:.1f})")
         if item.get("path"):
             print(f"   {item['path']}")
-        # body 泥?以?
+        # body 첫 줄
         body_first = item.get("body", "").strip().split("\n")[0][:100]
         if body_first:
             print(f"   {body_first}")
@@ -264,4 +264,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

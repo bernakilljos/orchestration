@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""audit-hardcoded ??CLAUDE.md 짠 7-A1 (?섎뱶 寃쎈줈쨌?쒗겕由온텾ython 踰꾩쟾 湲덉?) ?먮룞 媛먯궗.
-寃곌낵: .claude/state/hardcoded-audit.json
+"""audit-hardcoded — CLAUDE.md § 7-A1 (하드 경로·시크릿·Python 버전 금지) 자동 감사.
+결과: .claude/state/hardcoded-audit.json
 """
 from __future__ import annotations
 import json
@@ -13,60 +13,66 @@ from datetime import datetime
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+except Exception:
     pass
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / ".claude" / "state" / "hardcoded-audit.json"
 
 PATTERNS = [
-    ("users_path_win", re.compile(r"C:\\Users\\[a-z0-9_]+", re.IGNORECASE), "Windows ?ъ슜??寃쎈줈"),
-    ("users_path_unix", re.compile(r"/home/[a-z0-9_]+"), "Linux ?ъ슜??寃쎈줈"),
-    ("python_version", re.compile(r"Python3(10|11|12|13|14|15)\\python\.exe"), "Python 踰꾩쟾 諛뺤쓬"),
-    ("desktop_hostname", re.compile(r"DESKTOP-[A-Z0-9]+"), "?뱀젙 ?몄뒪?몃챸"),
-    ("ip_192", re.compile(r"192\.168\.\d+\.\d+"), "怨좎젙 ?ъ꽕 IP"),
+    ("users_path_win", re.compile(r"C:\\Users\\[a-z0-9_]+", re.IGNORECASE), "Windows 사용자 경로"),
+    ("users_path_unix", re.compile(r"/home/[a-z0-9_]+"), "Linux 사용자 경로"),
+    ("python_version", re.compile(r"Python3(10|11|12|13|14|15)\\python\.exe"), "Python 버전 박음"),
+    ("desktop_hostname", re.compile(r"DESKTOP-[A-Z0-9]+"), "특정 호스트명"),
+    ("ip_192", re.compile(r"192\.168\.\d+\.\d+"), "고정 사설 IP"),
     ("aws_key", re.compile(r"AKIA[0-9A-Z]{16}"), "AWS Access Key"),
     ("openai_key", re.compile(r"sk-[a-zA-Z0-9]{40,}"), "OpenAI/Anthropic API key"),
     ("github_pat", re.compile(r"ghp_[a-zA-Z0-9]{36}"), "GitHub PAT"),
 ]
 
-# ?끸쁾??002 ??臾몄꽌(.md)?먯꽌 **寃쎈줈쨌踰꾩쟾쨌?몄뒪?맞텶P 留?* 硫댁젣?쒕떎.
-#   ?? ?ㅼ륫 1002 ???⑥? 22嫄댁씠 ?꾨? **猷걔룰??대뱶媛 ?뚯씠?뉕쾶 ?곗? 留덈씪?띻퀬 ?몄슜??#   湲덉? ?덉떆**???`best-practices.md` ???ъ슜??寃쎈줈 ?덉떆 4嫄???. 洹쒖튃 臾몄꽌媛
-#   ?먭린媛 湲덉??섎뒗 ?⑦꽩???곸뿀?ㅺ퀬 ?꾨컲?쇰줈 ?몃㈃, 怨좎튂??湲몄? **?덉떆瑜?吏?곕뒗
-#   寃?*肉먯씠怨?洹몃윭硫?猷곗씠 ?살쓣 ?껊뒗??
-#   ?끸쁾?? **?쒗겕由?3醫?aws_key쨌openai_key쨌github_pat)? 臾몄꽌?먯꽌??怨꾩냽 ?〓뒗??* ??#     ??md ???꾨? 硫댁젣?띾줈 ?볧엳硫?臾몄꽌??諛뺥엺 吏꾩쭨 ?ㅻ? ?곸썝??紐?蹂몃떎.
-#     硫댁젣??짬?ㅽ깘??援ъ“?곸씤 ?⑦꽩쨩?먮쭔 嫄멸퀬, 짬?섎㈃ ?ш퀬???⑦꽩쨩?먮뒗 ??嫄대떎.
-#   ?낆씠寃껋? ?뚭퇋移숈씠 ??몄쑝硫?洹쒖튃??怨좎튇?ㅳ?媛덈옒??肄붾뱶瑜?鍮꾪?吏 ?딅뒗??.
+# ★★★1002 — 문서(.md)에서 **경로·버전·호스트·IP 만** 면제한다.
+#   왜: 실측 1002 에 남은 22건이 전부 **룰·가이드가 「이렇게 쓰지 마라」고 인용한
+#   금지 예시**였다(`best-practices.md` 의 사용자 경로 예시 4건 등). 규칙 문서가
+#   자기가 금지하는 패턴을 적었다고 위반으로 세면, 고치는 길은 **예시를 지우는
+#   것**뿐이고 그러면 룰이 뜻을 잃는다.
+#   ★★단, **시크릿 3종(aws_key·openai_key·github_pat)은 문서에서도 계속 잡는다** —
+#     「.md 는 전부 면제」로 넓히면 문서에 박힌 진짜 키를 영원히 못 본다.
+#     면제는 «오탐이 구조적인 패턴»에만 걸고, «나면 사고인 패턴»에는 안 건다.
+#   ★이것은 「규칙이 틀렸으면 규칙을 고친다」 갈래다(코드를 비틀지 않는다).
 DOC_EXEMPT_KEYS = {"users_path_win", "users_path_unix",
                    "python_version", "desktop_hostname", "ip_192"}
 
-# ?끸쁾??002 ????媛덈옒濡??섎댋?? 醫낆쟾????吏묓빀???욎뿬 ?덉뿀怨? 洹몃옒??#   짬.claude/state쨩 瑜?**寃쎈줈??3媛쒓? ??踰덈룄 嫄몃윭吏??곸씠 ?놁뿀??*:
-#   鍮꾧탳媛 `any(p in SKIP_DIRS for p in rel.split("/"))` ????移?.claude ?먮뒗
-#   state)?섍퀬留?留욎떠 蹂대뒗?? 吏묓빀?먮뒗 ??移몄쭨由?臾몄옄?댁씠 ?ㅼ뼱 ?덉뿀??
-#   ?낃렇 寃곌낵 媛먯궗湲곌? **?먭린 寃곌낵 ?뚯씪(.claude/state/hardcoded-audit.json)??#     ?ㅼ떆 ?ㅼ틪**?덈떎 ??寃異쒗븳 ?꾨컲??罹먯떆???곹엳怨? ?ㅼ쓬 ?ㅽ뻾??洹멸구 ???쇰떎.
-#     ?ㅼ륫 1002: ?꾩껜 115嫄?以?**38嫄댁씠 ???먭린李몄“**???異쒖쿂 1??.
-#     ?レ옄媛 ?ㅽ뻾留덈떎 異쒕쟻?대뜕 寃껊룄, 怨좎튂吏 ?딆븘???섎뜕 寃껊룄 ???뚮Ц?대떎.
-#   ?끹뚮갑?닿? ?덈떎怨?誘용뒗 寃껋씠 ?녿뒗 寃껊낫???꾪뿕?섎떎??A4)쨌?뚯륫???꾧뎄???먭린瑜?#     ?몄? ?딅뒗?ㅳ?A12)媛 ???먮━?먯꽌 媛숈씠 ?щ떎.
+# ★★★1002 — 두 갈래로 나눴다. 종전엔 한 집합에 섞여 있었고, 그래서
+#   «.claude/state» 류 **경로형 3개가 한 번도 걸러진 적이 없었다**:
+#   비교가 `any(p in SKIP_DIRS for p in rel.split("/"))` 라 한 칸(.claude 또는
+#   state)하고만 맞춰 보는데, 집합에는 두 칸짜리 문자열이 들어 있었다.
+#   ★그 결과 감사기가 **자기 결과 파일(.claude/state/hardcoded-audit.json)을
+#     다시 스캔**했다 — 검출한 위반이 캐시에 적히고, 다음 실행이 그걸 또 센다.
+#     실측 1002: 전체 115건 중 **38건이 이 자기참조**였다(출처 1위).
+#     숫자가 실행마다 출렁이던 것도, 고치지 않아도 늘던 것도 이 때문이다.
+#   ★「방어가 있다고 믿는 것이 없는 것보다 위험하다」(A4)·「측정 도구는 자기를
+#     세지 않는다」(A12)가 한 자리에서 같이 났다.
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
-             # ??archive` 留??곹? ?덉뼱 ????μ냼???ㅼ젣 ?대쫫 `_archive` 媛 ??嫄몃졇??             #   (怨쇨굅 ?ㅻ깄??= ?묒뾽 ????꾨떂 쨌 猷⑦듃 CLAUDE.md 짠 3 ??洹몃젃寃?留먰븳??.
+             # ★`archive` 만 적혀 있어 이 저장소의 실제 이름 `_archive` 가 안 걸렸다
+             #   (과거 스냅샷 = 작업 대상 아님 · 루트 CLAUDE.md § 3 이 그렇게 말한다).
              "archive", "_archive", "outputs", "local_data",
-             # ?낅윴???濡쒓렇 ???ъ꽕 IP 媛 李랁엳??嫄?洹??쒕쾭媛 ?ㅼ젣濡?洹?二쇱냼??ㅻ뒗
-             #   **湲곕줉**?댁? ?뚯뒪???섎뱶肄붾뵫???꾨땲?? 吏?곕㈃ 湲곕줉???щ씪吏꾨떎(A15).
+             # ★런타임 로그 — 사설 IP 가 찍히는 건 그 서버가 실제로 그 주소였다는
+             #   **기록**이지 소스의 하드코딩이 아니다. 지우면 기록이 사라진다(A15).
              "logs",
-             # ?꿘PA ?섏쭛 ?곗텧臾???怨좉컼 ?ъ씠?몄뿉??湲곸뼱??**?곗씠??*?댁? ?곕━ ?뚯뒪媛
-             #   ?꾨땲?? ?섏쭛???뚮쭏???섏뼱???レ옄媛 ?묒뾽怨?臾닿??섍쾶 ?붾뱾由ш퀬,
-             #   諛쏆븘???띿뒪?몄뿉 ?좏겙 鍮꾩듂??臾몄옄?댁씠 ?덉쑝硫?CRITICAL ?ㅽ깘???쒕떎.
+             # ★RPA 수집 산출물 — 고객 사이트에서 긁어온 **데이터**이지 우리 소스가
+             #   아니다. 수집할 때마다 늘어서 숫자가 작업과 무관하게 흔들리고,
+             #   받아온 텍스트에 토큰 비슷한 문자열이 있으면 CRITICAL 오탐이 난다.
              "download", "evidence", "highlight",
-             # ?낅깽?붽? 諛고룷???고????ㅼ씠踰?WASM 諛붿씤???? ??怨좎튌 ???녿뒗 肄붾뱶.
+             # ★벤더가 배포한 런타임(네이버 WASM 바인딩 등) — 고칠 수 없는 코드.
              "rpa_profiles"}
 
-# 寃쎈줈???쒖쇅(??移??댁긽) ????吏묓빀怨?鍮꾧탳 諛⑹떇???ㅻⅤ誘濡??곕줈 ?붾떎.
+# 경로형 제외(두 칸 이상) — 위 집합과 비교 방식이 다르므로 따로 둔다.
 SKIP_PREFIXES = (".claude/state", ".claude/logs", ".claude/context-cache")
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".pptx",
             ".xlsx", ".zip", ".tar", ".gz", ".mp4", ".mp3", ".wav", ".sqlite",
             ".db", ".bak", ".pyc", ".pyo", ".ico",
-            # ?낅줈洹몃뒗 짬?쇱뼱???셋살쓽 湲곕줉?대떎 ??`logs/` 諛뽰뿉 ?⑥뼱吏?寃껊룄 ?덉뼱
-            #   ?뺤옣?먮줈??留됰뒗???ㅼ륫 1002: 猷⑦듃 `test_mock_err.log`).
+            # ★로그는 «일어난 일»의 기록이다 — `logs/` 밖에 떨어진 것도 있어
+            #   확장자로도 막는다(실측 1002: 루트 `test_mock_err.log`).
             ".log", ".err"}
 
 
@@ -90,12 +96,12 @@ def scan():
                 if fp.stat().st_size > 500_000:
                     continue
                 txt = fp.read_text(encoding="utf-8", errors="replace")
-            except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
+            except Exception:
                 continue
             scanned += 1
             _is_doc = (ext == ".md")
             for key, pat, _ in PATTERNS:
-                # ?낅Ц?쒖쓽 湲덉? ?덉떆 硫댁젣 ?????쒗겕由?3醫낆? 硫댁젣?섏? ?딅뒗????二쇱꽍).
+                # ★문서의 금지 예시 면제 — 단 시크릿 3종은 면제하지 않는다(위 주석).
                 if _is_doc and key in DOC_EXEMPT_KEYS:
                     continue
                 for m in pat.finditer(txt):
@@ -137,7 +143,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError) as e:
+    except Exception as e:
         print(f"[audit-hardcoded] err: {e}", file=sys.stderr)
         sys.exit(1)
-
