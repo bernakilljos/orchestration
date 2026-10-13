@@ -99,7 +99,7 @@ if violations:
         sys.stderr.write('  - ' + v + '\n')
     sys.stderr.write('\nIf user explicitly authorized this change:\n')
     sys.stderr.write('  Bypass: set environment variable ALLOW_TRICKS=1\n')
-    sys.exit(1)
+    sys.exit(2)  # PreToolUse 차단 규약: 2 = block (1 은 무시됨 · A1.RMS-UPG 실측 역병합)
 
 sys.exit(0)
 

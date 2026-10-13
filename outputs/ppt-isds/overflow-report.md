@@ -1,6 +1,6 @@
 # PPT Overflow Verification Report
 
-- Source: `C:\pjt\orchestration_v1\outputs\ppt-isds\html-source\png-output`
+- Source: `C:\자료\03.PJT\B.Edu\B1.orchestration_v1\outputs\ppt-isds\html-source\png-output`
 - Total slides: 10
 - Suspect (>10% edge dark): **2**
 - Threshold: bottom + right band 30px, dark = RGB < 80
@@ -28,6 +28,6 @@
 **다음 액션:**
 ```python
 # Claude 가 의심 slides를 Read tool 로 직접 OCR
-Read('C:\pjt\orchestration_v1\outputs\ppt-isds\html-source\png-output/slide-01.png')
-Read('C:\pjt\orchestration_v1\outputs\ppt-isds\html-source\png-output/slide-10.png')
+Read('C:\자료\03.PJT\B.Edu\B1.orchestration_v1\outputs\ppt-isds\html-source\png-output/slide-01.png')
+Read('C:\자료\03.PJT\B.Edu\B1.orchestration_v1\outputs\ppt-isds\html-source\png-output/slide-10.png')
 ```

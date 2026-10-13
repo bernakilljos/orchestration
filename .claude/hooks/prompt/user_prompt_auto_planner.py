@@ -57,9 +57,10 @@ OUTPUT_TEMPLATE = (
 # 원본 버그 호환 — 키워드 회상 결과가 0건이면 `grep -c ... || echo 0` 이 "0\n0" 을 만들고
 # log-decision.py 가 int("0\n0") 로 죽어 decisions 에 기록되지 않았다 (회상 1건+ 일 때만 기록).
 # 또 log-decision.py 는 인자가 있으면 argv[1] (= "--ai") 을 메시지로 저장한다.
-# 동작 그대로 보존. 고치려면 두 값을 False / 프롬프트로 바꾼다.
-COMPAT_SKIP_ZERO_HIT_DECISION = True
-COMPAT_DECISION_MSG = "--ai"
+# 2026-10-13: log-decision.py 를 A1.RMS-UPG 수정본(옵션 뒤 위치인자/stdin 만 메시지로)으로 역병합하며
+#   호환 흉내를 끈다 → 회상 0건이어도 기록 · 메시지 = 실제 프롬프트 (decisions 47건 전부 '--ai' 였던 것 해소).
+COMPAT_SKIP_ZERO_HIT_DECISION = False
+COMPAT_DECISION_MSG = ""   # 빈 값이면 실제 프롬프트를 쓴다
 
 
 def _read_rag_cache(root) -> str:
@@ -215,7 +216,7 @@ def run(ctx):
         mem_count = sum(1 for ln in rec_text.split("\n") if '"file"' in ln)
         if mem_count > 0 or not COMPAT_SKIP_ZERO_HIT_DECISION:
             try:
-                ld.log(COMPAT_DECISION_MSG, ai, mem_count)
+                ld.log(COMPAT_DECISION_MSG or prompt, ai, mem_count)
             except Exception:
                 pass
     ctx.mark("log-decision")

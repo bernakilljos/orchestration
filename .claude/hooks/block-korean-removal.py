@@ -37,7 +37,7 @@ if old_kr > 0 and new_kr < old_kr:
     sys.stderr.write(f"[BLOCK] korean removal detected: old={old_kr} chars -> new={new_kr} chars\n")
     sys.stderr.write("        Edit refused: explicit user consent required to remove korean.\n")
     sys.stderr.write("        Bypass: set environment variable ALLOW_KOREAN_REMOVAL=1\n")
-    sys.exit(1)
+    sys.exit(2)  # PreToolUse 차단 규약: 2 = block (1 은 무시됨 · A1.RMS-UPG 실측 역병합)
 
 sys.exit(0)
 

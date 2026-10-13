@@ -1,0 +1,86 @@
+{
+  "session_id": "5718e5e3-b345-4ae8-aedb-7b3be624ba7b",
+  "transcript_path": "C:\\Users\\서성종\\.claude\\projects\\C-----03-PJT-B-Edu-B1-orchestration-v1\\5718e5e3-b345-4ae8-aedb-7b3be624ba7b.jsonl",
+  "cwd": "C:\\자료\\03.PJT\\B.Edu\\B1.orchestration_v1\\.claude\\hooks",
+  "scratchpad_dir": "C:\\Users\\서성종\\AppData\\Local\\Temp\\claude\\C-----03-PJT-B-Edu-B1-orchestration-v1\\5718e5e3-b345-4ae8-aedb-7b3be624ba7b\\scratchpad",
+  "prompt_id": "442a7f82-9492-4d2a-a0fe-4a191eb45101",
+  "effort": {
+    "level": "medium"
+  },
+  "session_name": "Git push 현행화",
+  "model": {
+    "id": "claude-opus-5-5",
+    "display_name": "Opus 5.5"
+  },
+  "workspace": {
+    "current_dir": "C:\\자료\\03.PJT\\B.Edu\\B1.orchestration_v1\\.claude\\hooks",
+    "project_dir": "C:\\자료\\03.PJT\\B.Edu\\B1.orchestration_v1",
+    "added_dirs": [],
+    "repo": {
+      "host": "github.com",
+      "owner": "bernakilljos",
+      "name": "orchestration"
+    }
+  },
+  "version": "2.1.285",
+  "output_style": {
+    "name": "concise"
+  },
+  "cost": {
+    "total_cost_usd": 68.35682290000001,
+    "total_duration_ms": 870912024,
+    "total_api_duration_ms": 5222234,
+    "total_lines_added": 599,
+    "total_lines_removed": 46
+  },
+  "context_window": {
+    "total_input_tokens": 374784,
+    "total_output_tokens": 304,
+    "context_window_size": 1000000,
+    "current_usage": {
+      "input_tokens": 1,
+      "output_tokens": 304,
+      "cache_creation_input_tokens": 2302,
+      "cache_read_input_tokens": 372481
+    },
+    "used_percentage": 37,
+    "remaining_percentage": 63
+  },
+  "exceeds_200k_tokens": true,
+  "prompt_cache": {
+    "warm": true,
+    "caching_observed": true,
+    "ttl": "1h",
+    "expires_at": 1791795940,
+    "requests": 496,
+    "misses": 4,
+    "expected_rebuilds": 1,
+    "hit_ratio": 0.9865635934883105,
+    "cache_write_tokens": 2539475,
+    "miss_recache_tokens": 1540995,
+    "last_miss_at": 1791788976,
+    "last_miss_cause": {
+      "causes": [
+        "ttl_expired_1h"
+      ]
+    },
+    "miss_causes": {
+      "ttl_expired_1h": 4
+    },
+    "recache_tokens_if_cold": 374784
+  },
+  "fast_mode": false,
+  "thinking": {
+    "enabled": true
+  },
+  "rate_limits": {
+    "five_hour": {
+      "used_percentage": 54,
+      "resets_at": 1791801600
+    },
+    "seven_day": {
+      "used_percentage": 25,
+      "resets_at": 1792090800
+    }
+  }
+}

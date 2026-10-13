@@ -2,7 +2,7 @@
 
 orca.db `decisions` table:
 - id, ts, user_msg (truncated), ai_classified, memory_hits, status
-- 같은 키워드 N회 발생 -> 자동 알람 -> systemMessage 주입
+- 같은 키워드 N회 발생 → 자동 알람 → systemMessage 주입
 
 5 핵심 부품 #5 Observability — decision trace + 사용자 패턴 인지.
 """
@@ -13,7 +13,7 @@ import json
 import sqlite3
 import time
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DB_PATH = PROJECT_ROOT / ".claude" / "state" / "orca.db"
@@ -71,7 +71,8 @@ def log(user_msg: str, ai_classified: str = "claude", memory_hits: int = 0):
     # 패턴 검출 — 최근 1시간 같은 키워드 3회+
     alarms = []
     # SQL CURRENT_TIMESTAMP 는 UTC — cutoff 도 UTC 로 맞춤
-    cutoff = (datetime.utcnow() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    # utcnow() 는 Python 3.12+ 에서 deprecated — timezone-aware 로 대체
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
     for kw in keywords:
         cur = conn.execute(
             "SELECT COUNT(*) FROM decisions WHERE keywords LIKE ? AND ts >= ?",
@@ -86,14 +87,36 @@ def log(user_msg: str, ai_classified: str = "claude", memory_hits: int = 0):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        if not sys.stdin.isatty():
-            msg = sys.stdin.read().strip()
-        else:
-            print("usage: log-decision.py '<사용자 메시지>' [--ai codex] [--mem-hits N]")
-            sys.exit(2)
+    # 2026-09-02 수정: 이전 로직은 `len(sys.argv) < 2` 로 판정해 argv[1] 을 메시지로
+    # 삼았다. 실제 호출부는
+    #     echo "$PROMPT" | python log-decision.py --ai claude --mem-hits 0
+    # 이라 argv[1] == '--ai' 였고, stdin 의 진짜 메시지는 버려졌다.
+    # 결과: decisions 47건 전부 user_msg='--ai', keywords='' (실측).
+    # → 옵션 플래그를 제외한 첫 위치인자만 메시지로 인정하고, 없으면 stdin 을 읽는다.
+    OPTS_WITH_VALUE = {"--ai", "--mem-hits"}
+    positional = []
+    i = 1
+    while i < len(sys.argv):
+        a = sys.argv[i]
+        if a in OPTS_WITH_VALUE:
+            i += 2
+            continue
+        if a.startswith("--"):
+            i += 1
+            continue
+        positional.append(a)
+        i += 1
+
+    if positional:
+        msg = positional[0]
+    elif not sys.stdin.isatty():
+        msg = sys.stdin.read().strip()
     else:
-        msg = sys.argv[1]
+        print("usage: log-decision.py '<사용자 메시지>' [--ai codex] [--mem-hits N]")
+        sys.exit(2)
+
+    if not msg:
+        sys.exit(0)  # 빈 메시지는 기록하지 않는다 (쓰레기 행 방지)
 
     ai = "claude"
     mem = 0

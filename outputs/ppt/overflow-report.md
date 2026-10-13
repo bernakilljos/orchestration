@@ -1,6 +1,6 @@
 # PPT Overflow Verification Report
 
-- Source: `C:\pjt\orchestration_v1\outputs\ppt\html-source\png-output`
+- Source: `C:\자료\03.PJT\B.Edu\B1.orchestration_v1\outputs\ppt\html-source\png-output`
 - Total slides: 40
 - Suspect (>10% edge dark): **0**
 - Threshold: bottom + right band 30px, dark = RGB < 80
@@ -50,4 +50,4 @@
 | slide-39.png | 0.000 | 0.000 | [OK] |
 | slide-40.png | 0.000 | 0.000 | [OK] |
 
-##  모든 slides 통과 — 잘림 의심 없음
+## [OK] 모든 slides 통과 — 잘림 의심 없음
