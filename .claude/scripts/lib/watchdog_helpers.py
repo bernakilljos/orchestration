@@ -308,7 +308,7 @@ def kill_worker_tree(pid: int, dry_run: bool = False) -> bool:
             try:
                 p.terminate()
             except psutil.Error:
-                pass
+                pass  # noqa: BLE001
             # Wait briefly then force-kill stragglers
             gone, alive = psutil.wait_procs([p] + children, timeout=3)
             for proc in alive:

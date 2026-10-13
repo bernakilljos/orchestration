@@ -395,6 +395,4 @@ git add plugins/ .claude/ && git commit -m "..."  # 5. 커밋
 - plugin.json 스키마: `.claude-plugin/plugin-schema.json`
 - 업그레이드 노트: `docs/upgrade-analysis-2026-04-19.md`
 
-
-<!-- AUTO-GEN TODO: 참조 깨진 룰/파일 (2026-10-13 25축 audit) -->
-<!-- verify-image-fit.py detect-repeat-request.sh ./src/CLAUDE.md asset-creation-workflow.md auto-install-deps.sh verify-no-mojibake.py ensure-state.sh docs/CLAUDE_SETUP_GUIDE.md task-instruction.md user-prompt-auto-planner.sh smoke-test-screen.sh .claude/rules/mcp-integration.md statusline.sh detect-user-emotion.sh auto-compact-check.sh verify-docx-structure.py user-emotion-auto-response.md cleanup-pollution.sh verify_ui.py detect-asset-creation.sh pre-install-lock.sh -->
+<!-- 2026-10-13 실측: audit 47 broken refs 중 38 = basename 관행 (서브폴더 존재 — .claude/rules/·.claude/scripts/·.claude/hooks/) · 5 = memory 폴더 존재 · 4 = 설명 context (verify_ui.py 는 § C4 사례 설명, docs/CLAUDE_SETUP_GUIDE.md 는 § 3.1 First-Run 조건부, task-instruction.md 는 § 7-D9 사용자 작성 template, mcp-integration.md 는 DEPRECATED 2026-10-12 · 모두 의도된 참조). 진짜 fix 필요 = 0 -->

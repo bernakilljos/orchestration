@@ -36,7 +36,7 @@ def detect_gpu_vram_gb() -> float:
             mb = max((int(line.strip()) for line in r.stdout.strip().splitlines() if line.strip()), default=0)
             return mb / 1024
         except Exception:
-            pass
+            pass  # noqa: BLE001
     # Windows wmic (integrated GPU)
     try:
         r = subprocess.run(

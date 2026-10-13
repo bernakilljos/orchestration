@@ -1577,7 +1577,7 @@ def _collect_local_status(pc_id):
                     if not task_summary:
                         task_summary = tic[:500]
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
         # Running (locks)
         if os.path.isdir(locks_dir):
@@ -1629,7 +1629,7 @@ def _collect_local_status(pc_id):
                     with open(review_file, encoding="utf-8", errors="replace") as fh:
                         p_review_summary = "\n".join(fh.readlines()[:30])
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
         # 전체 요약은 첫 번째로 발견된 것 유지
         if not impl_summary and p_impl_summary:
             impl_summary = p_impl_summary
@@ -1697,7 +1697,7 @@ def _capture_screen_pil(monitor_idx=0):
                 # mss built-in PNG (fallback, larger)
                 return mss.tools.to_png(img.rgb, img.size), len(monitors)
     except ImportError:
-        pass
+        pass  # noqa: BLE001
     # PowerShell fallback
     try:
         ps = f'''

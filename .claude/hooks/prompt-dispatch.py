@@ -86,7 +86,7 @@ def _write_log(line_list):
         with open(path, "ab") as f:
             f.write(("\n".join(line_list) + "\n").encode("utf-8", "replace"))
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
 
 def main(argv) -> int:

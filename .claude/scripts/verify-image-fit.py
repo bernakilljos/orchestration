@@ -76,7 +76,7 @@ if USER_RATIOS.exists():
         with open(USER_RATIOS, encoding="utf-8") as f:
             RATIOS.update(json.load(f))
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
 # 기본: docx landscape (현재 lecture 빌더). 다른 산출물은 FIT_TARGET=<key>
 EXPECTED_KEY = os.environ.get("FIT_TARGET", "docx-landscape")

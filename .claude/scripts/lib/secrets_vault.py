@@ -95,7 +95,7 @@ class SecretVault:
                 if value is not None:
                     return value
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
         # Try .env.vault cache
         if key in self._env_cache:
@@ -188,7 +188,7 @@ class SecretVault:
                 keyring.delete_password(self.config.service_name, key)
                 deleted = True
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
         # Remove from cache
         if key in self._env_cache:

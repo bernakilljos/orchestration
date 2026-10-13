@@ -113,7 +113,7 @@ def check_external_signals():
             signals.append(f"[5중 외부신호] git unstaged {n_unstaged}건 ≥ 10 → "
                            f"/validate·/sec-scan 후 commit 묶기 권장")
     except Exception:
-        pass
+        pass  # noqa: BLE001
     # tasks pending 많음
     try:
         pending_dir = ROOT / ".claude" / "tasks" / "pending"
@@ -123,7 +123,7 @@ def check_external_signals():
                 signals.append(f"[5중 외부신호] pending task {n_pending}건 ≥ 5 → "
                                f"/approvals 또는 /exec_status 로 큐 정리")
     except Exception:
-        pass
+        pass  # noqa: BLE001
     # MCP fail
     try:
         mcp = ROOT / ".claude" / "state" / "mcp-status.json"
@@ -134,7 +134,7 @@ def check_external_signals():
                 signals.append(f"[5중 외부신호] MCP fail {fail}건 ≥ 3 → "
                                f"/mcp_dev-install·/mcp_data-install 재점검")
     except Exception:
-        pass
+        pass  # noqa: BLE001
     # budget 임박 (rate-limits.json seven_day >= 70%)
     try:
         rl = Path(os.path.expanduser("~")) / ".claude" / "state" / "rate-limits.json"

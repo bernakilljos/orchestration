@@ -132,7 +132,7 @@ def init_schema() -> None:
       if cur.fetchone():
         return  # Already initialized
     except sqlite3.OperationalError:
-      pass
+      pass  # noqa: BLE001
 
     # Create tables
     conn.executescript("""

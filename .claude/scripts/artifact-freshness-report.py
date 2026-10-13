@@ -30,7 +30,7 @@ try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except AttributeError:
-    pass
+    pass  # noqa: BLE001
 
 # ── 유통기한 매트릭스 (SoT: .claude/rules/artifact-freshness-check.md) ──
 DAY = 86400  # seconds

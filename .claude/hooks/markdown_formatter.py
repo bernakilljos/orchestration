@@ -18,7 +18,7 @@ def detect_language(code):
             json.loads(s)
             return 'json'
         except:
-            pass
+            pass  # noqa: BLE001
 
     # Python detection
     if re.search(r'^\s*def\s+\w+\s*\(', s, re.M) or \

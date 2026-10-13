@@ -454,7 +454,7 @@ def extra_gauges(cwd, data=None):
                             f"월간 {mb_bar} ${ms:.2f}/{m_lim}"
                         )
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
                 # 재사용 solutions
                 try:
                     r = c.execute(
@@ -463,7 +463,7 @@ def extra_gauges(cwd, data=None):
                     if r and r[0]:
                         solutions_str = f"재사용 {r[0]}건 - 평균 {r[1]:.1f}"
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
                 # 세션
                 try:
                     r = c.execute(
@@ -473,7 +473,7 @@ def extra_gauges(cwd, data=None):
                     if r:
                         sessions_str = f"세션 {r[0]} - 턴 {r[1]}"
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
                 # 오늘 파일 변경
                 try:
                     r = c.execute(
@@ -483,7 +483,7 @@ def extra_gauges(cwd, data=None):
                     if r and r[0]:
                         files_str = f"오늘 파일 {r[0]}건"
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
                 # 진행 중 task
                 try:
                     r = c.execute(
@@ -494,7 +494,7 @@ def extra_gauges(cwd, data=None):
                 except Exception:
                     pass  # noqa: BLE001
     except Exception:
-        pass
+        pass  # noqa: BLE001
     # MCP - Headroom proxy 헬스체크
     try:
         import urllib.request
@@ -519,7 +519,7 @@ def extra_gauges(cwd, data=None):
         if branch:
             git_str = f"git {branch}" + (f" ({dirty} 변경)" if dirty else " clean")
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # Agent 진행률 섹션 추가 (2026-10-12)
     agent_str = ""
@@ -552,7 +552,7 @@ def extra_gauges(cwd, data=None):
                 agent_str = (f"{color}{severity} {agent_list} "
                             f"({max_dur}s)\033[0m")
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용 + agent
     import datetime as _dt
@@ -608,7 +608,7 @@ def extra_gauges(cwd, data=None):
                                   stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
                                   creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
             # 4h 넘으면 몇 시간 전 값인지 적는다 (예전 "?" 는 뜻이 안 보였다)
             stale = f" ({int(age // 3600)}h 전)" if age > 14400 else ""
             tot = ok + fail
@@ -652,11 +652,11 @@ def extra_gauges(cwd, data=None):
                     if tk:
                         tail.append(f"task {tk}")
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
                 # AI 비용은 별도 line3 로 분리 (여기서는 append X)
                 pass
     except Exception:
-        pass
+        pass  # noqa: BLE001
     # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
     # 2026-10-12: Agent 진행률 추가
     if agent_str:
@@ -692,7 +692,7 @@ def extra_gauges(cwd, data=None):
         except Exception:
             pass  # noqa: BLE001
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # AI 비용 line3 (세션 · 현월 · 년간 · KRW 병기)
     # 2026-09-05: 세션 비용은 Claude Code 가 cost.total_cost_usd 로 준다(정확한 값).
@@ -831,7 +831,7 @@ def extra_gauges(cwd, data=None):
         else:
             tail.append("fast ON")
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # 디자인·개발 룰 위반 지수 (rule-adherence.json cache · 10분 TTL · ~14ms)
     design_line = ""
@@ -888,7 +888,7 @@ def extra_gauges(cwd, data=None):
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
@@ -971,7 +971,7 @@ def main() -> None:
         if cw > 0:
             limit, exact_model = cw, True
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     # 해결된 컨텍스트 상한을 SoT 로 공유 - jsonl 의 message.model 은 "claude-opus-5" 로만
     # 기록되어 "[1m]" 접미가 없다. hook(inject-compact-reminder)은 stdin 의 model.id 를
@@ -1014,7 +1014,7 @@ def main() -> None:
             _CACHE_HIT_RATE = cache_hit_rate(jsonl)
             _ERROR_COUNT = recent_error_count(cwd)
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
     # 3줄 구조: [시각 + 토큰 + 세션] / [주간 + MCP + 재사용 + 하드코딩 + orca + cache + err] / [AI 비용]
     import datetime as _dt3

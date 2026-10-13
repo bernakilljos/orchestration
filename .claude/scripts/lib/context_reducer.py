@@ -227,7 +227,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
             content = claude_md.read_text(encoding="utf-8")
             sections.append(("CLAUDE.md", content, 1))
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
     # 2. README.md (축소)
     readme = root_path / "README.md"
@@ -242,7 +242,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
                 content = rule_file.read_text(encoding="utf-8")
                 sections.append((f"rules/{rule_file.name}", content, 3))
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
     # 4. plugins/*/plugin.json (축소)
     plugins_dir = root_path / "plugins"
