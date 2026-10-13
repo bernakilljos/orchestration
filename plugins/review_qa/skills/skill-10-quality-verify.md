@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-10-quality-verify
+description: Vue/Nuxt/React — analyze build output size
+---
+
+---
 name: skill-10-quality-verify
 description: |
   skill-10-quality-verify

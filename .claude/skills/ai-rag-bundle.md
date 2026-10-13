@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-rag-bundle
 description: |
   ai-rag-bundle

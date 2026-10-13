@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-web-seo
+description: skill-web-seo skill
+---
+
+---
 name: skill-web-seo
 description: |
   skill-web-seo

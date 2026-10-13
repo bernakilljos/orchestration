@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-14-auto-detail
+description: [Project Name] System Architecture Diagram
+---
+
+---
 name: skill-14-auto-detail
 description: |
   skill-14-auto-detail

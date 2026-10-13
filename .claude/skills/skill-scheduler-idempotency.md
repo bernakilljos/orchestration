@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-scheduler-idempotency
+description: skill-scheduler-idempotency skill
+---
+
+---
 name: skill-scheduler-idempotency
 description: |
   skill-scheduler-idempotency

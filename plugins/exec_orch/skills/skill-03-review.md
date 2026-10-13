@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-03-review
+description: Secret scan
+---
+
+---
 name: skill-03-review
 description: |
   skill-03-review

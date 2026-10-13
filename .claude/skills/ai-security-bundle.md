@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-security-bundle
 description: |
   ai-security-bundle

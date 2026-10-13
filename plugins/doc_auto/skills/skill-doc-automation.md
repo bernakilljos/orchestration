@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-doc-automation
 description: |
   skill-doc-automation

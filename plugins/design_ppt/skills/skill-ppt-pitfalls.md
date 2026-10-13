@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-ppt-pitfalls
 description: |
   skill-ppt-pitfalls

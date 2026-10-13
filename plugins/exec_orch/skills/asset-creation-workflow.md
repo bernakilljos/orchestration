@@ -1,4 +1,4 @@
-﻿---
+---
 name: asset-creation-workflow
 description: |
   asset-creation-workflow

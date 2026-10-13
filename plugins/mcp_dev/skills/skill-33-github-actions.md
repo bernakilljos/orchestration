@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-33-github-actions
+description: .github/workflows/ci.yml
+---
+
+---
 name: skill-33-github-actions
 description: |
   skill-33-github-actions

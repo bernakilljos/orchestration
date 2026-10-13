@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-pdf-compliance
+description: skill-pdf-compliance skill
+---
+
+---
 name: skill-pdf-compliance
 description: |
   skill-pdf-compliance

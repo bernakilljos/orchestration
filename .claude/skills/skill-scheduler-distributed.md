@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-scheduler-distributed
+description: skill-scheduler-distributed skill
+---
+
+---
 name: skill-scheduler-distributed
 description: |
   skill-scheduler-distributed

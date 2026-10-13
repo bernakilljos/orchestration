@@ -1,4 +1,9 @@
-﻿---
+---
+name: post-codex-verify
+description: post-codex-verify skill
+---
+
+---
 name: post-codex-verify
 description: |
   post-codex-verify

@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-17-debugging-canvas
+description: skill-17-debugging-canvas skill
+---
+
+---
 name: skill-17-debugging-canvas
 description: |
   skill-17-debugging-canvas

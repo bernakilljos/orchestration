@@ -1,4 +1,4 @@
-﻿---
+---
 name: auto-layout-fit
 description: |
   auto-layout-fit

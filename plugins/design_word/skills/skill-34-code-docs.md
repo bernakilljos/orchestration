@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-34-code-docs
+description: skill-34-code-docs skill
+---
+
+---
 name: skill-34-code-docs
 description: |
   skill-34-code-docs

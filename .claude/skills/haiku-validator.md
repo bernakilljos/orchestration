@@ -1,4 +1,4 @@
-﻿---
+---
 name: haiku-validator
 description: |
   haiku-validator

@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-image-gen
 description: |
   skill-image-gen

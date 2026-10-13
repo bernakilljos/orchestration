@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-music-copyright
+description: skill-music-copyright skill
+---
+
+---
 name: skill-music-copyright
 description: |
   skill-music-copyright

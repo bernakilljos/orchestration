@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-approval-gate
 description: |
   skill-approval-gate

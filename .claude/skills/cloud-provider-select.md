@@ -1,4 +1,4 @@
-﻿---
+---
 name: cloud-provider-select
 description: |
   cloud-provider-select

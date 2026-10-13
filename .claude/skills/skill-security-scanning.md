@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-security-scanning
 description: |
   skill-security-scanning

@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-music-mixing
+description: skill-music-mixing skill
+---
+
+---
 name: skill-music-mixing
 description: |
   skill-music-mixing

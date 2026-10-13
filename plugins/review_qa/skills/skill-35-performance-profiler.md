@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-35-performance-profiler
+description: skill-35-performance-profiler skill
+---
+
+---
 name: skill-35-performance-profiler
 description: |
   skill-35-performance-profiler

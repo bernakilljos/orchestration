@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-social-platform
 description: |
   skill-social-platform

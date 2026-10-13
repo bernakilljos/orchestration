@@ -1,4 +1,4 @@
-﻿---
+---
 name: tot-prompting
 description: |
   tot-prompting

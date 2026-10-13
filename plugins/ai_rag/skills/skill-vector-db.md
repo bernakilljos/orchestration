@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-vector-db
+description: skill-vector-db skill
+---
+
+---
 name: skill-vector-db
 description: |
   skill-vector-db

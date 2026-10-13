@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-risk-lighthouse
 description: |
   ai-risk-lighthouse

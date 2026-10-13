@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-29-api-tester
+description: skill-29-api-tester skill
+---
+
+---
 name: skill-29-api-tester
 description: |
   skill-29-api-tester

@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-local-llm
+description: skill-local-llm skill
+---
+
+---
 name: skill-local-llm
 description: |
   skill-local-llm

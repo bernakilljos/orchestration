@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-yt-hook-writing
+description: skill-yt-hook-writing skill
+---
+
+---
 name: skill-yt-hook-writing
 description: |
   skill-yt-hook-writing

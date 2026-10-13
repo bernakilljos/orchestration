@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-claude-ask
 description: |
   skill-claude-ask

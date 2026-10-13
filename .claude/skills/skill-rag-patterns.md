@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-rag-patterns
+description: skill-rag-patterns skill
+---
+
+---
 name: skill-rag-patterns
 description: |
   skill-rag-patterns

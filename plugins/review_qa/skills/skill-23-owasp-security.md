@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-23-owasp-security
+description: 의존성 취약점
+---
+
+---
 name: skill-23-owasp-security
 description: |
   skill-23-owasp-security

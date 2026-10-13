@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-arch-mindmap
 description: |
   skill-arch-mindmap

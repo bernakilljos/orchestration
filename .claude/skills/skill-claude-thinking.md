@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-claude-thinking
 description: |
   skill-claude-thinking

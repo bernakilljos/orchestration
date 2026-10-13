@@ -1,4 +1,4 @@
-﻿---
+---
 name: claude-ultracode
 description: |
   claude-ultracode

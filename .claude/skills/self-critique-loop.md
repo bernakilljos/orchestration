@@ -1,4 +1,4 @@
-﻿---
+---
 name: self-critique-loop
 description: |
   self-critique-loop

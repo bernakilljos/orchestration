@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-affective-emotion
 description: |
   ai-affective-emotion

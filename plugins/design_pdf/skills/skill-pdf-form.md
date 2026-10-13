@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-pdf-form
+description: skill-pdf-form skill
+---
+
+---
 name: skill-pdf-form
 description: |
   skill-pdf-form

@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-physical-world-models
 description: |
   ai-physical-world-models

@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-claude-artifact
 description: |
   skill-claude-artifact

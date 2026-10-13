@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-learning-finetune
 description: |
   ai-learning-finetune

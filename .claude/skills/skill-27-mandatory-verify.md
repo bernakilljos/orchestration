@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-27-mandatory-verify
+description: skill-27-mandatory-verify skill
+---
+
+---
 name: skill-27-mandatory-verify
 description: |
   skill-27-mandatory-verify

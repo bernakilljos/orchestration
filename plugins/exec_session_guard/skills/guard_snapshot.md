@@ -1,4 +1,9 @@
-﻿---
+---
+name: guard_snapshot
+description: guard_snapshot skill
+---
+
+---
 name: guard_snapshot
 description: |
   guard_snapshot

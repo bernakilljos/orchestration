@@ -1,4 +1,4 @@
-﻿---
+---
 name: causal-ai
 description: |
   causal-ai

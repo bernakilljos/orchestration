@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-video-retention
+description: skill-video-retention skill
+---
+
+---
 name: skill-video-retention
 description: |
   skill-video-retention

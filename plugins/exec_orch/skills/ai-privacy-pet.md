@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-privacy-pet
 description: |
   ai-privacy-pet

@@ -1,4 +1,4 @@
-﻿---
+---
 name: external-trends-sync
 description: |
   external-trends-sync

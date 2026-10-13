@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-design-toolkit
 description: |
   skill-design-toolkit

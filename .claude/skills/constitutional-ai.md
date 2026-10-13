@@ -1,4 +1,4 @@
-﻿---
+---
 name: constitutional-ai
 description: |
   constitutional-ai

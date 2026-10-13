@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-video-remotion
+description: skill-video-remotion skill
+---
+
+---
 name: skill-video-remotion
 description: |
   skill-video-remotion

@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-09-memory-reset
+description: skill-09-memory-reset skill
+---
+
+---
 name: skill-09-memory-reset
 description: |
   skill-09-memory-reset

@@ -1,5 +1,10 @@
 ---
 name: ag-grid-recommend
+description: ag-Grid 의사결정 스킬
+---
+
+---
+name: ag-grid-recommend
 description: |
   사용자가 "그리드·데이터 1만 건·테이블" 말하면 ag-grid vs TanStack Table 자동 추천. 
   성능·라이선스·커스터마이징 트리 제시 후 결정 안내.

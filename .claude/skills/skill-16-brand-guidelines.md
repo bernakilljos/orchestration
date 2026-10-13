@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-16-brand-guidelines
 description: |
   skill-16-brand-guidelines

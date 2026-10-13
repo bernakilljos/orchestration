@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-queue-patterns
+description: skill-queue-patterns skill
+---
+
+---
 name: skill-queue-patterns
 description: |
   skill-queue-patterns

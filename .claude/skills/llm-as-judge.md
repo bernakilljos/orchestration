@@ -1,4 +1,4 @@
-﻿---
+---
 name: llm-as-judge
 description: |
   llm-as-judge

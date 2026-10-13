@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-token-tracker
 description: |
   skill-token-tracker

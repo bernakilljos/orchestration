@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-cost-zero
+description: skill-cost-zero skill
+---
+
+---
 name: skill-cost-zero
 description: |
   skill-cost-zero

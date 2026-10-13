@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-arch-layered
 description: |
   skill-arch-layered

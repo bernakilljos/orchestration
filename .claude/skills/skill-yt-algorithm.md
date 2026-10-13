@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-yt-algorithm
+description: skill-yt-algorithm skill
+---
+
+---
 name: skill-yt-algorithm
 description: |
   skill-yt-algorithm

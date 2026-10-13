@@ -1,4 +1,9 @@
-﻿---
+---
+name: exec_orca-auto
+description: exec_orca-auto skill
+---
+
+---
 name: exec_orca-auto
 description: |
   exec_orca-auto

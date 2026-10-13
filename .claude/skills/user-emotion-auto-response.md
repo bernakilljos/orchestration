@@ -1,4 +1,4 @@
-﻿---
+---
 name: user-emotion-auto-response
 description: |
   user-emotion-auto-response

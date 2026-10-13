@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-sec-guidance
 description: |
   skill-sec-guidance

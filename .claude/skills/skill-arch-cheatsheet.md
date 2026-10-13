@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-arch-cheatsheet
 description: |
   skill-arch-cheatsheet

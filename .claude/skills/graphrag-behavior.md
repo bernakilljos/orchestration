@@ -1,4 +1,4 @@
-﻿---
+---
 name: graphrag-behavior
 description: |
   graphrag-behavior

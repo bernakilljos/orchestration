@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-pdf-design-system
 description: |
   skill-pdf-design-system

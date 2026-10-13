@@ -1,4 +1,4 @@
-﻿---
+---
 name: auto-planner
 description: |
   auto-planner

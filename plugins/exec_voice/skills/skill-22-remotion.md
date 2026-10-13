@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-22-remotion
+description: 미리보기
+---
+
+---
 name: skill-22-remotion
 description: |
   skill-22-remotion

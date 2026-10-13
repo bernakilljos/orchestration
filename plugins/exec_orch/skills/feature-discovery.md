@@ -1,4 +1,4 @@
-﻿---
+---
 name: feature-discovery
 description: |
   feature-discovery

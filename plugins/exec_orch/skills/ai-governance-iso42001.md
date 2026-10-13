@@ -1,4 +1,4 @@
-﻿---
+---
 name: ai-governance-iso42001
 description: |
   ai-governance-iso42001

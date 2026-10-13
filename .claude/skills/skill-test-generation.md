@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-test-generation
 description: |
   skill-test-generation

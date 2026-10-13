@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-32-db-migration
+description: skill-32-db-migration skill
+---
+
+---
 name: skill-32-db-migration
 description: |
   skill-32-db-migration

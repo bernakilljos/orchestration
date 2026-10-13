@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-25-media-enhance
+description: OpenCV가 한글 경로를 못 읽는 문제 해결
+---
+
+---
 name: skill-25-media-enhance
 description: |
   skill-25-media-enhance

@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-36-data-viz
+description: skill-36-data-viz skill
+---
+
+---
 name: skill-36-data-viz
 description: |
   skill-36-data-viz

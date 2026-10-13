@@ -1,4 +1,4 @@
-﻿---
+---
 name: skill-media-restore
 description: |
   skill-media-restore

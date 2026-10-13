@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-web-conversion
+description: skill-web-conversion skill
+---
+
+---
 name: skill-web-conversion
 description: |
   skill-web-conversion

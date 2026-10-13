@@ -1,4 +1,4 @@
-﻿---
+---
 name: prompt-techniques
 description: |
   prompt-techniques

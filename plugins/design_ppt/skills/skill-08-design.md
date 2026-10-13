@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-08-design
+description: skill-08-design skill
+---
+
+---
 name: skill-08-design
 description: |
   skill-08-design

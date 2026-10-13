@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-06-test
+description: Run all tests
+---
+
+---
 name: skill-06-test
 description: |
   skill-06-test

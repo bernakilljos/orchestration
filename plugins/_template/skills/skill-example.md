@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-example
+description: skill-example skill
+---
+
+---
 name: skill-example
 description: |
   skill-example

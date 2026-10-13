@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-21-marketing
+description: skill-21-marketing skill
+---
+
+---
 name: skill-21-marketing
 description: |
   skill-21-marketing

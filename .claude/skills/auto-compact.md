@@ -1,4 +1,4 @@
-﻿---
+---
 name: auto-compact
 description: |
   auto-compact

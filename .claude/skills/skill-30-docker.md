@@ -1,4 +1,9 @@
-﻿---
+---
+name: skill-30-docker
+description: skill-30-docker skill
+---
+
+---
 name: skill-30-docker
 description: |
   skill-30-docker

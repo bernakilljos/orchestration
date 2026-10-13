@@ -1,4 +1,4 @@
-﻿---
+---
 name: meta-prompting
 description: |
   meta-prompting
