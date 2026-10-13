@@ -138,7 +138,9 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             continue
         kept = []
         for m in tm_list:
-            hs = [h for h in m.get("hooks", []) if hook_key(h.get("command", "")) not in gone]
+            # 파일명만 비교 (인자·따옴표 차이로 놓치지 않게)
+            hs = [h for h in m.get("hooks", [])
+                  if (re.search(r"[\w.-]+\.(?:sh|py)", h.get("command", "")) or re.match("", "")).group(0) not in gone]
             retired_n += len(m.get("hooks", [])) - len(hs)
             if hs:
                 kept.append({**m, "hooks": hs})

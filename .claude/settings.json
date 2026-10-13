@@ -218,12 +218,6 @@
             "type": "command",
             "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/prompt-dispatch.py\"",
             "timeout": 15
-          },
-          {
-            "type": "command",
-            "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-explore-on-task.py\\\" --check '$(cat)'\" 2>/dev/null || true",
-            "timeout": 3,
-            "async": true
           }
         ]
       }

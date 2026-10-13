@@ -92,6 +92,14 @@
           "timeout": 10
         }
       ]
+    },
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-explore-on-task.py\\\" --check '$(cat)'\" 2>/dev/null || true"
+        }
+      ]
     }
   ]
 }
