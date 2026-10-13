@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 PreToolUse hook: log Bash commands to .claude/logs/bash_commands.log (append).
 """

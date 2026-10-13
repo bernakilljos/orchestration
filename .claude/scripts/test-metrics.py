@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-test-metrics.py ??Smoke tests for metrics recording.
+test-metrics.py — Smoke tests for metrics recording.
 
 Tests:
 1. record_api_call() records 3 calls (2 success, 1 fail)

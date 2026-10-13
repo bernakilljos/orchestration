@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Lightweight OpenTelemetry-inspired tracing without external dependencies.
 
@@ -225,5 +225,5 @@ if __name__ == '__main__':
         print(f"  - {span.name} ({span.duration_ms:.1f}ms) [{span.status}]")
 
     tracer.save_spans()
-    print("\n??Traces saved to: .claude/logs/")
+    print("\n[OK] Traces saved to: .claude/logs/")
 

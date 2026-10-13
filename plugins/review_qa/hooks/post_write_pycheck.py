@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 PostToolUse hook: quick Python sanity checks after Claude writes/edits files.
 
@@ -42,9 +42,9 @@ def main():
 
     msg_lines = []
     if rc == 0:
-        msg_lines.append(f"??py_compile OK: {file_path}")
+        msg_lines.append(f"✓ py_compile OK: {file_path}")
     else:
-        msg_lines.append(f"??py_compile FAIL: {file_path}")
+        msg_lines.append(f"✗ py_compile FAIL: {file_path}")
         if err:
             msg_lines.append(err)
 
@@ -56,9 +56,9 @@ def main():
         if os.path.exists(qt):
             rc2, out2, err2 = _run([sys.executable, qt], cwd=project_dir)
             if rc2 == 0:
-                msg_lines.append("??quick_tests OK")
+                msg_lines.append("✓ quick_tests OK")
             else:
-                msg_lines.append("??quick_tests FAIL")
+                msg_lines.append("✗ quick_tests FAIL")
                 if out2:
                     msg_lines.append(out2[-1200:])
                 if err2:

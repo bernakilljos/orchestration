@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Smoke tests for state_db.py library."""
 
 import sys

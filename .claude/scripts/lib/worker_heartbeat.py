@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Worker heartbeat reporter for .bat child workers.
 
 Called from codex-auto.bat to update worker heartbeat in SQLite.

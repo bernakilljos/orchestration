@@ -1,4 +1,4 @@
-﻿"""
+"""
 Full audit - 10 checks across all .bat / .sh / .md / .py / .json files.
 
 10 categories:
@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 REPLACEMENT_CHAR = chr(0xFFFD)
-KOREAN_RE = re.compile(r'[媛-??')
+KOREAN_RE = re.compile(r'[가-힣]')
 
 issues = []
 def add(category, target, info):

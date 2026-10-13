@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-pre_task_check.py ??Pre-flight check before worker executes task.
+pre_task_check.py — Pre-flight check before worker executes task.
 
 Usage:
     python pre_task_check.py <ai_type> [task_file]

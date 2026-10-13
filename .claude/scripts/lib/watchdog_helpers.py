@@ -1,4 +1,4 @@
-﻿"""Helper functions for watchdog.py.
+"""Helper functions for watchdog.py.
 
 Provides database queries and worker spawning logic for the watchdog monitoring process.
 """
@@ -18,7 +18,7 @@ from state_db import (
 )
 from backoff import compute_backoff
 
-# Optional psutil ??fallback to OS tools if missing
+# Optional psutil — fallback to OS tools if missing
 try:
     import psutil  # type: ignore
     _HAS_PSUTIL = True
@@ -207,7 +207,7 @@ def _get_rss_via_tasklist(pid: int) -> Optional[int]:
         ).decode("utf-8", errors="ignore").strip()
         if not out or "No tasks" in out:
             return None
-        # Use csv.reader ??mem column "14,516 K" contains a comma inside quotes
+        # Use csv.reader — mem column "14,516 K" contains a comma inside quotes
         row = next(csv.reader(io.StringIO(out)), None)
         if not row or len(row) < 5:
             return None

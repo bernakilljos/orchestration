@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 haiku-validate.py <task_file> --worker-id <worker_id> --project-root <root>
 

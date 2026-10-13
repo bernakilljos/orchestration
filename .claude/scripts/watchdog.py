@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env python3
-"""Watchdog process for orchestration_v1 ??monitors and revives dead workers.
+#!/usr/bin/env python3
+"""Watchdog process for orchestration_v1 — monitors and revives dead workers.
 
 Runs as a background process, checking every 2 minutes for:
 1. Stale worker heartbeats (>5 min old) -> mark dead
@@ -40,7 +40,7 @@ from watchdog_helpers import (
 from backoff import format_duration
 
 
-# Default policy ??overridable via CLI flags or env vars
+# Default policy — overridable via CLI flags or env vars
 DEFAULT_MAX_RSS_MB = int(os.environ.get("WATCHDOG_MAX_RSS_MB", "2048"))
 DEFAULT_MAX_UPTIME_HOURS = int(os.environ.get("WATCHDOG_MAX_UPTIME_HOURS", "6"))
 LOG_BACKUP_COUNT = 5
@@ -176,7 +176,7 @@ def revive_quota_blocked_workers(logger: WatchdogLogger, dry_run: bool = False) 
         retry_count = w["quota_retry_count"]
 
         if is_quota_exceeded(ai_type):
-            # Quota still exceeded ??extend backoff
+            # Quota still exceeded — extend backoff
             new_backoff = extend_quota_backoff(worker_id, retry_count)
             logger.log(
                 "info",
@@ -184,7 +184,7 @@ def revive_quota_blocked_workers(logger: WatchdogLogger, dry_run: bool = False) 
                 {"worker_id": worker_id, "retry_count": retry_count},
             )
         else:
-            # Quota recovered ??revive worker
+            # Quota recovered — revive worker
             success = spawn_worker(ai_type, worker_id, dry_run=dry_run)
             if success:
                 mark_worker_as_revived(worker_id)
@@ -297,10 +297,10 @@ def run_once(
         max_rss_mb: RSS threshold per worker (incl. children)
         max_uptime_sec: Worker max uptime before forced restart
     """
-    # 1. Claude session liveness ??log only, never auto-shutdown watchdog.
+    # 1. Claude session liveness — log only, never auto-shutdown watchdog.
     #    Workers must outlive the IDE session; explicit stop is via /orcauto-stop.
     if not is_claude_alive(max_age_sec=300):
-        logger.log("info", "Claude session heartbeat stale (>5min) ??keeping workers alive")
+        logger.log("info", "Claude session heartbeat stale (>5min) — keeping workers alive")
 
     # 2. Check orca enabled (explicit stop flag honored)
     if not check_orca_enabled(project_root):

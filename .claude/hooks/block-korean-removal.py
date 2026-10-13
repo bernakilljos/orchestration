@@ -1,4 +1,4 @@
-﻿"""Korean removal blocker - check if Edit removes korean chars."""
+"""Korean removal blocker - check if Edit removes korean chars."""
 import sys
 import json
 import re
@@ -29,7 +29,7 @@ ti = data.get('tool_input', {}) or {}
 old = ti.get('old_string', '') or ''
 new = ti.get('new_string', '') or ''
 
-KR = re.compile(r'[媛-??')
+KR = re.compile(r'[가-힣]')
 old_kr = len(KR.findall(old))
 new_kr = len(KR.findall(new))
 

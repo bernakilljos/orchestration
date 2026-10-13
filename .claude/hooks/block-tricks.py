@@ -1,13 +1,13 @@
-﻿"""
+"""
 Trick blocker - PreToolUse Edit hook.
 Catches multiple known patterns where I (Claude) avoid user intent.
 
 Blocked patterns:
-  T1. Korean removal ??old has more korean chars than new
-  T2. Secret to placeholder ??real PAT/key replaced by placeholder text
+  T1. Korean removal — old has more korean chars than new
+  T2. Secret to placeholder — real PAT/key replaced by placeholder text
   T3. PAT to placeholder (specific GITHUB_PAT detection)
-  T4. Mojibake bypass ??code adds chr(0xFFFD) or escape sequences for U+FFFD
-  T5. Auto-prompt regression ??choice/timeout reverted to set /p / pause
+  T4. Mojibake bypass — code adds chr(0xFFFD) or escape sequences for U+FFFD
+  T5. Auto-prompt regression — choice/timeout reverted to set /p / pause
 
 Bypass: ALLOW_TRICKS=1 environment variable.
 """

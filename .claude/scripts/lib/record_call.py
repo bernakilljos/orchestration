@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-record_call.py ??Workers record API call metrics to SQLite.
+record_call.py — Workers record API call metrics to SQLite.
 
 CLI usage:
     python record_call.py --ai codex --model codex \\

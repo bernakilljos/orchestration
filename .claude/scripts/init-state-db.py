@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Initialize or upgrade SQLite state database. Migrates from legacy file flags."""
 
 import sys

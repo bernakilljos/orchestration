@@ -26,7 +26,8 @@ PATTERNS = [
     ("euc_kr_broken", re.compile(r"\?곸|\?쒕|\?대"), "EUC-KR → UTF-8 실패"),
     ("utf8_to_latin1", re.compile(r"Ã[¡-¿]|â€|ï¿½"), "UTF-8 → Latin-1 깨짐"),
     ("byte_sequence", re.compile(r"\\xc3\\x83|\\xc2"), "잘못된 byte sequence 표기"),
-    ("emoji_leak", re.compile(r"[]"),
+    # 2026-10-13: 예전 이모지 일괄 제거 때 범위 글자까지 지워져 r"[]" (실행 즉시 re.error) 로 남아 있었다
+    ("emoji_leak", re.compile("[\U0001F300-\U0001FAFF☀-➿]"),
      "이모지 leak (kit 원칙: 이모지 금지)"),
 ]
 

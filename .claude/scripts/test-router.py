@@ -1,7 +1,7 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-test-router.py ??Smoke tests for routing and budget system.
+test-router.py — Smoke tests for routing and budget system.
 
 Runs:
 1. Budget breaker tripped -> route() returns BREAKER
