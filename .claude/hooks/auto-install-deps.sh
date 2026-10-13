@@ -32,7 +32,7 @@ date +%s > "$MARK"
 
 # ---- 1) Playwright Python package + Chromium browser ----
 PYBIN=""
-for cand in python python3 py; do
+for cand in python python py; do
   if command -v "$cand" >/dev/null 2>&1; then
     PYBIN="$cand"; break
   fi

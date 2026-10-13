@@ -27,12 +27,12 @@ if command -v where >/dev/null 2>&1; then
   PY="$(where python 2>/dev/null | head -n 1 | tr -d '\r')"
 fi
 [ -z "$PY" ] && PY="$(command -v python 2>/dev/null || true)"
-[ -z "$PY" ] && PY="$(command -v python3 2>/dev/null || true)"
+[ -z "$PY" ] && PY="$(command -v python 2>/dev/null || true)"
 [ -z "$PY" ] && PY="python"
 
 # JSON-safe render — load template, replace placeholder, dump (auto-escapes backslashes)
 PYBIN="$PY"
-[ ! -x "$PYBIN" ] && command -v python3 >/dev/null 2>&1 && PYBIN="python3" || true
+[ ! -x "$PYBIN" ] && command -v python >/dev/null 2>&1 && PYBIN="python" || true
 [ ! -x "$PYBIN" ] && command -v python >/dev/null 2>&1 && PYBIN="python" || true
 
 "$PYBIN" - "$SRC" "$DST" "$PY" <<'PYEOF'

@@ -94,8 +94,8 @@ echo "=============================="
 CLAUDE_DIR="$HOME/.claude"
 mkdir -p "$CLAUDE_DIR"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
-if command -v python3 >/dev/null 2>&1; then
-  python3 -c "
+if command -v python >/dev/null 2>&1; then
+  python -c "
 import json, os
 f = '$SETTINGS_FILE'
 j = json.load(open(f)) if os.path.exists(f) else {}
@@ -106,7 +106,7 @@ j['autoUpdatesChannel'] = 'latest'
 json.dump(j, open(f, 'w'), indent=2)
 " && echo "[OK] settings.json configured" || echo "[WARN] Failed to configure settings.json"
 else
-  echo "[WARN] python3 not found - configure ~/.claude/settings.json manually (see docs/CLAUDE_SETUP_GUIDE.md)"
+  echo "[WARN] python not found - configure ~/.claude/settings.json manually (see docs/CLAUDE_SETUP_GUIDE.md)"
 fi
 
 # Check API keys
@@ -127,17 +127,17 @@ command -v claude  >/dev/null && echo "[OK] claude" || echo "[X]  claude  → ht
 command -v codex   >/dev/null && echo "[OK] codex"  || echo "[X]  codex   → npm install -g @openai/codex"
 command -v gemini  >/dev/null && echo "[OK] gemini" || echo "[X]  gemini  → npm install -g @google/gemini-cli"
 command -v git     >/dev/null && echo "[OK] git"    || echo "[X]  git     → https://git-scm.com"
-command -v python3 >/dev/null && echo "[OK] python3 (PPT/PDF/screens 렌더링용)" || echo "[X]  python3 → 필수 (Playwright + python-pptx)"
+command -v python >/dev/null && echo "[OK] python (PPT/PDF/screens 렌더링용)" || echo "[X]  python → 필수 (Playwright + python-pptx)"
 
 # R51 Design tools check
 echo ""
 echo "=============================="
 echo " Design Tools (R51)"
 echo "=============================="
-if command -v python3 >/dev/null 2>&1; then
-  python3 -c "import playwright" 2>/dev/null && echo "[OK] playwright (HTML→PPT/PDF/PNG)" || echo "[X]  playwright → pip install playwright && playwright install chromium"
-  python3 -c "import pptx"       2>/dev/null && echo "[OK] python-pptx (PPT 조립)"        || echo "[X]  python-pptx → pip install python-pptx"
-  python3 -c "import PIL"        2>/dev/null && echo "[OK] Pillow (overflow 검증)"         || echo "[X]  Pillow → pip install Pillow"
+if command -v python >/dev/null 2>&1; then
+  python -c "import playwright" 2>/dev/null && echo "[OK] playwright (HTML→PPT/PDF/PNG)" || echo "[X]  playwright → pip install playwright && playwright install chromium"
+  python -c "import pptx"       2>/dev/null && echo "[OK] python-pptx (PPT 조립)"        || echo "[X]  python-pptx → pip install python-pptx"
+  python -c "import PIL"        2>/dev/null && echo "[OK] Pillow (overflow 검증)"         || echo "[X]  Pillow → pip install Pillow"
 fi
 echo "  /design_ppt   PPT 자동 (HTML→PPTX)"
 echo "  /pdf-generate PDF 자동 (A4/Digital)"

@@ -11,7 +11,7 @@ sudo apt update
 sudo DEBIAN_FRONTEND=noninteractive apt -y full-upgrade
 sudo apt install -y \
   git tmux mosh jq curl wget unzip \
-  python3 python3-pip python3-venv \
+  python python3-pip python3-venv \
   build-essential \
   ufw fail2ban \
   unattended-upgrades \

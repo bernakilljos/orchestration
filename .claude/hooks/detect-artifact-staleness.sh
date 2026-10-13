@@ -39,7 +39,7 @@ if [ ! -f "$REPORT" ]; then
 fi
 
 # Python 동적 검색 (하드코딩 X)
-PY_BIN="$(command -v python 2>/dev/null || command -v python3 2>/dev/null || echo python)"
+PY_BIN="$(command -v python 2>/dev/null || command -v python 2>/dev/null || echo python)"
 
 # 스캔 실행 - stdout=OVERDUE, stderr=STALE
 OUTPUT="$("$PY_BIN" "$REPORT" 2>>"$LOG_FILE")"

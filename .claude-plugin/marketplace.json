@@ -200,6 +200,41 @@
       "source": "./plugins/eval_quality",
       "description": "결과 품질 자동 평가 — Haiku LLM-as-judge 0~10점 (실험)",
       "version": "0.1"
+    },
+    {
+      "name": "design_system",
+      "source": "./plugins/design_system",
+      "description": "40년차 초특급 공통 디자인 시스템 — 토큰·컴포넌트·패턴",
+      "version": "1.0.0",
+      "strict": true
+    },
+    {
+      "name": "exec_graph",
+      "source": "./plugins/exec_graph",
+      "description": "Graph 기반 stateful orchestration (LangGraph 패턴, experimental)",
+      "version": "0.2",
+      "strict": true
+    },
+    {
+      "name": "exec_harness_copilot",
+      "source": "./plugins/exec_harness_copilot",
+      "description": "GitHub Copilot CLI 통합 — wshobson multi-harness 패턴 (experimental)",
+      "version": "0.2",
+      "strict": true
+    },
+    {
+      "name": "exec_harness_cursor",
+      "source": "./plugins/exec_harness_cursor",
+      "description": "Cursor IDE 통합 — wshobson multi-harness 패턴 (experimental)",
+      "version": "0.2",
+      "strict": true
+    },
+    {
+      "name": "vendor_voltagent",
+      "source": "./plugins/vendor_voltagent",
+      "description": "VoltAgent awesome-claude-code-subagents 선별 vendoring (MIT) — data/AI + language",
+      "version": "0.1",
+      "strict": true
     }
   ]
 }

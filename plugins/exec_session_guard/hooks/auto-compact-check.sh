@@ -63,7 +63,7 @@ fi
 #    턴 수-guard 라인은 컨텍스트 양과 무관하므로 단독 발동 금지.
 PCT=0
 if command -v python >/dev/null 2>&1; then PY=python
-elif command -v python3 >/dev/null 2>&1; then PY=python3
+elif command -v python >/dev/null 2>&1; then PY=python
 else PY=""; fi
 if [ -n "$PY" ]; then
   PCT=$("$PY" -X utf8 "$PROJECT_ROOT/.claude/scripts/context-usage-pct.py" 2>/dev/null || echo 0)

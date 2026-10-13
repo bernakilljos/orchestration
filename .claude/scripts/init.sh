@@ -46,7 +46,7 @@ fi
 echo "[OK] Stack detected: FE=$FE_STACK / BE=$BE_STACK / DB=$DB_STACK"
 
 # Save stack to task-memory.json
-python3 - <<PYEOF
+python - <<PYEOF
 import json
 with open('.claude/tasks/task-memory.json') as f:
     memory = json.load(f)

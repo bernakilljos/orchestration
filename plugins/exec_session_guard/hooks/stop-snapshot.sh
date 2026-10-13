@@ -19,7 +19,7 @@ mkdir -p "$CACHE_DIR" 2>/dev/null || exit 0
 # 본문 재생성 — session-snapshot-save.py 가 정본 (한 줄만 갱신하던 결함 교정 2026-09-08)
 _regen_snapshot() {
   local PY
-  PY="$(command -v python 2>/dev/null || command -v python3 2>/dev/null)"
+  PY="$(command -v python 2>/dev/null || command -v python 2>/dev/null)"
   [ -n "$PY" ] || return 1
   "$PY" "$PROJECT_DIR/.claude/scripts/session-snapshot-save.py" >/dev/null 2>&1
 }

@@ -11,7 +11,7 @@ ROOT="$(cd "$SELF/../.." && pwd)"
 
 # python 자동 검색
 if command -v python >/dev/null 2>&1; then PY=python
-elif command -v python3 >/dev/null 2>&1; then PY=python3
+elif command -v python >/dev/null 2>&1; then PY=python
 else exit 0
 fi
 

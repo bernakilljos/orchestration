@@ -5,7 +5,7 @@
 
 _find_real_python() {
   local p path
-  for p in python3 python; do
+  for p in python python; do
     path="$(command -v "$p" 2>/dev/null)" || continue
     # Windows Store 스텁 제외
     case "$path" in

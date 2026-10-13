@@ -22,7 +22,7 @@ fi
 # 2) SQLite 초기화
 if [ -f ".claude/scripts/init-state-db.py" ]; then
   echo "=== [2/4] state DB 초기화 ==="
-  python3 .claude/scripts/init-state-db.py
+  python .claude/scripts/init-state-db.py
 fi
 
 # 3) Watchdog 백그라운드

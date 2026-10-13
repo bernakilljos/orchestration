@@ -12,7 +12,7 @@ PY=""
 for c in "$PROJECT_ROOT"/.venv/Scripts/python.exe "$PROJECT_ROOT"/*/.venv/Scripts/python.exe "$PROJECT_ROOT"/.venv/bin/python; do
   [ -x "$c" ] && { PY="$c"; break; }
 done
-[ -n "$PY" ] || PY="$(command -v python || command -v python3 || true)"   # python3 는 Windows 스토어 별칭(가짜)일 수 있어 python 우선
+[ -n "$PY" ] || PY="$(command -v python || command -v python || true)"   # python 는 Windows 스토어 별칭(가짜)일 수 있어 python 우선
 [ -n "$PY" ] || exit 0
 
 export PROJECT_ROOT

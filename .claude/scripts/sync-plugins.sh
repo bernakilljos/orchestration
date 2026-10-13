@@ -79,12 +79,12 @@ declare -A REVERSE_MAP=()
 # 1. 의존성 순서 결정 (plugin.json dependencies 위상정렬)
 # =========================================================================
 resolve_plugin_order() {
-  # Windows 의 python3 는 MS 스토어 placeholder 일 수 있어 python 우선
+  # Windows 의 python 는 MS 스토어 placeholder 일 수 있어 python 우선
   local py=""
   if command -v python >/dev/null 2>&1 && python -c "import sys" 2>/dev/null; then
     py="python"
-  elif command -v python3 >/dev/null 2>&1 && python3 -c "import sys" 2>/dev/null; then
-    py="python3"
+  elif command -v python >/dev/null 2>&1 && python -c "import sys" 2>/dev/null; then
+    py="python"
   fi
 
   if [ -n "$py" ]; then

@@ -88,7 +88,7 @@ echo "--- CPU Load ---"
 uptime | awk -F'load average:' '{print "Load:" $2}'
 
 echo "--- PM2 Crash Detection ---"
-pm2 jlist 2>/dev/null | python3 -c "
+pm2 jlist 2>/dev/null | python -c "
 import json, sys
 try:
     apps = json.load(sys.stdin)

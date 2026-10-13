@@ -29,7 +29,7 @@ for cmd in git bash; do
     MISS=$((MISS+1))
   fi
 done
-if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
+if command -v python >/dev/null 2>&1 || command -v python >/dev/null 2>&1; then
   echo "   ✓ python OK"
 else
   echo "   [X] python 없음"

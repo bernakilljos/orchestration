@@ -29,7 +29,7 @@ FILEPATH="$1"
 if [ -f "$VERIFY_SCRIPT" ]; then
     log "Checking whitespace in $FILEPATH"
 
-    if python3 "$VERIFY_SCRIPT" "$FILEPATH" 2>&1 | tee -a "$LOGFILE" | grep -q "WARN\|FAIL"; then
+    if python "$VERIFY_SCRIPT" "$FILEPATH" 2>&1 | tee -a "$LOGFILE" | grep -q "WARN\|FAIL"; then
         echo "[WARN] PNG has excessive whitespace: $FILEPATH" >&2
         echo "Recommendation: check image layout (padding, banner, content distribution)" >&2
     fi

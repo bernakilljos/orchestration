@@ -19,7 +19,7 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 
 # Run with dry-run
-python3 "$SCRIPT_PATH" --dry-run 2>&1 | tee -a "$LOG_FILE"
+python "$SCRIPT_PATH" --dry-run 2>&1 | tee -a "$LOG_FILE"
 
 if [ $? -eq 0 ]; then
     echo ""
