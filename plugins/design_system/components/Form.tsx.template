@@ -1,0 +1,110 @@
+/**
+ * Form — react-hook-form v7 + zod v3
+ * 20+ 필드도 성능 안 떨어짐 (uncontrolled)
+ * npm install: react-hook-form zod @hookform/resolvers
+ */
+import * as React from "react";
+import { useForm, type FieldValues, type UseFormProps, type SubmitHandler, FormProvider, useFormContext, type Path } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { z, ZodType } from "zod";
+import { Input, Button } from "./core";
+
+/* ============================================================
+ * Form container
+ * ============================================================ */
+interface FormProps<T extends FieldValues> extends Omit<React.FormHTMLAttributes<HTMLFormElement>, "onSubmit"> {
+  schema: ZodType<T>;
+  defaultValues?: UseFormProps<T>["defaultValues"];
+  onSubmit: SubmitHandler<T>;
+  children: React.ReactNode;
+}
+
+export function Form<T extends FieldValues>({
+  schema,
+  defaultValues,
+  onSubmit,
+  children,
+  className,
+  ...formProps
+}: FormProps<T>) {
+  const methods = useForm<T>({
+    resolver: zodResolver(schema),
+    defaultValues,
+    mode: "onBlur",
+  });
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className={`flex flex-col gap-4 ${className ?? ""}`}
+        noValidate
+        {...formProps}
+      >
+        {children}
+      </form>
+    </FormProvider>
+  );
+}
+
+/* ============================================================
+ * Field — Input 과 자동 연결
+ * ============================================================ */
+interface FieldProps<T extends FieldValues> extends Omit<React.ComponentProps<typeof Input>, "name"> {
+  name: Path<T>;
+}
+
+export function Field<T extends FieldValues>({ name, ...props }: FieldProps<T>) {
+  const { register, formState: { errors } } = useFormContext<T>();
+  const error = errors[name]?.message as string | undefined;
+  return <Input {...register(name)} error={error} {...props} />;
+}
+
+/* ============================================================
+ * SubmitButton — isSubmitting · isValid 자동 반영
+ * ============================================================ */
+export function SubmitButton({
+  children = "저장",
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  const { formState } = useFormContext();
+  return (
+    <Button
+      type="submit"
+      loading={formState.isSubmitting}
+      disabled={!formState.isValid && formState.isSubmitted}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+
+/* ============================================================
+ * 사용 예시
+ * ============================================================
+ *
+ * import { z } from "zod";
+ * import { Form, Field, SubmitButton } from "./Form";
+ *
+ * const schema = z.object({
+ *   email: z.string().email("올바른 이메일 입력"),
+ *   password: z.string().min(8, "8자 이상"),
+ *   age: z.number().int().min(0).max(150),
+ * });
+ *
+ * type FormData = z.infer<typeof schema>;
+ *
+ * <Form<FormData>
+ *   schema={schema}
+ *   defaultValues={{ email: "", password: "", age: 0 }}
+ *   onSubmit={async (data) => {
+ *     await api.register(data);
+ *   }}
+ * >
+ *   <Field<FormData> name="email" label="이메일" type="email" required />
+ *   <Field<FormData> name="password" label="비밀번호" type="password" required />
+ *   <Field<FormData> name="age" label="나이" type="number" />
+ *   <SubmitButton>가입하기</SubmitButton>
+ * </Form>
+ *
+ * ============================================================ */

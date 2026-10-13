@@ -59,10 +59,31 @@ python .claude/scripts/route.py --check claude-fable-5
 - 자동 검증 hook 발동 (verify-image-fit, hook-09 등)
 - 사용자가 짚을 필요 없게 — Claude 가 결과 확인 후 보고
 
-### Step 5. 보고 (Reporting)
+### Step 5. 보고 + 리스크 기반 A/B 플랜 (Reporting + Risk-Based Planning)
 - 표·목록으로 결과 명시
 - Before/After 비교
+- **A/B 플랜 제시** (보수 순차 vs 공격 병행) — 선택권 사용자에게
+  - A: 순차적·100% 검증·게이트 다중
+  - B: 병행 가능·시간 단축·리스크 등급 + 증명 근거
 - 남은 결정사항 (사용자만 답 가능한 것) 만 묻기
+
+**A/B 포맷**:
+```text
+## 플랜 A — 안전 (사용자 확인 후)
+- 단계별 순차
+- 일정: X분
+- 리스크: 0
+
+## 플랜 B — 병행 (리스크 등급 + 근거)
+- 병렬 단계
+- 일정: Y분
+- 리스크: N (공식 문서 기반 / 코드 분석 / 테스트 통과)
+- 롤백 계획: 명시 (Z분 내 역조작 가능)
+
+👉 선택: 사용자가 A 또는 B 결정
+```
+
+상세: `.claude/rules/risk-based-planning.md`
 
 ## 자가 점검 — rule 위반 가능성 사전 확인
 

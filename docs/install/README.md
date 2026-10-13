@@ -1,8 +1,15 @@
 # Orchestration Kit v1 — 통합 매뉴얼 (하나만 참고하면 됨)
 
-> **작성**: 2026-08-12 · Claude Opus 5 default
+> **최종 갱신**: 2026-10-13 · Claude Opus 5.5 default · Headroom/claude-mem 제거 반영
 > **정본**: 이 파일 하나 · 다른 md X (사용자 요구)
 > **위치**: `docs/install/README.md`
+
+**최신 kit 통계** (2026-10-13):
+- **Plugins**: 36 stable (spec-only 0)
+- **Rules**: 46 규칙 파일
+- **Hooks**: 31개 (SessionStart·UserPromptSubmit·PreToolUse·PostToolUse)
+- **Scripts**: 142개 (cli·py·bat·sh)
+- **References**: 49개 toolkit 도메인 지식
 
 ---
 
@@ -184,7 +191,7 @@ CLI 가 질문 문안 자동 생성 표준 형식:
 
 ---
 
-## Section 3. Web ↔ CLI 브릿지 4 방식
+## Section 3. Web ↔ CLI 브릿지 4 방식 (Headroom/claude-mem 제거됨, 단순화)
 
 | 방식 | 설치 | 자동성 | 비용 |
 |---|---|---|---|
@@ -193,6 +200,8 @@ CLI 가 질문 문안 자동 생성 표준 형식:
 | **Managed Agents API** |  SDK 코드 | 세션 완전 자동 (별개 UI) | 유료 (Anthropic API) |
 | **Remote Agent** (VPS + SSH) |  kit `/exec_remote-*` | 24/7 + 모바일 SSH | Oracle Free Tier 무료 |
 | **Chrome Extension** |  개발 필요 (9일) | 진짜 완전 자동 (claude.ai UI) | 무료 (사용자 계정) |
+
+**참고**: Headroom (프롬프트 압축)·claude-mem (자동 세션 관측) 은 2026-10-13 제거됨. 기존 프롬프트 캐시 + 명시 memory 로 통합.
 
 **MCP 로 web 발주 = 불가** (Anthropic 이 그 API 공개 X). 완전 자동 원하면 Chrome Extension 개발 또는 Managed Agents API (유료).
 
@@ -221,6 +230,30 @@ agent = client.agents.create(
     system=open("docs/install/README.md").read(),
 )
 ```
+
+---
+
+## Section 3.5. 자동 갱신 (Daily Refresh Task Scheduler)
+
+**매일 04:00 자동** — 사용자 개입 없음 (Zero-touch):
+
+| 대상 | 갱신 방식 | 빌더 |
+|---|---|---|
+| 강의 docx | python-docx로 "최신 업데이트 노트" 섹션 append | `update_lecture_*.py` |
+| catalog pptx | `update_*.py` 실행 또는 python-pptx append | `docs/ssj/build_*.py` |
+| catalog md | 하단에 "## Update YYYY-MM-DD" 마크 append | 텍스트 append |
+| install README | mtime touch + 로그 기록 | (자동) |
+| 로드맵 | skip (분기 단위 · 사람 결정) | — |
+| CLAUDE.md § 3.2 | skip (모델 매트릭스 · 사람 판단) | — |
+
+**idempotent**: 같은 날짜 마크가 있으면 skip.
+
+**Task Scheduler 등록** (Windows):
+```batch
+schtasks /create /tn "Orca_DailyArtifactRefresh" /tr "C:\pjt\orchestration_v1\.claude\scripts\daily-artifact-refresh.bat" /sc daily /st 04:00
+```
+
+**실패 원인 (2026-10-13)**: 로그 파일 권한 문제 — reset 완료.
 
 ---
 
@@ -378,10 +411,36 @@ Target 에는 statusline `[TARGET] <name>` 자동 표시.
 - cleanup-pollution : 오염 파일 정리
 - auto-install-deps : Playwright·MCP·Python pkg (1h throttle)
 - check-workers : 워커 heartbeat
+- check-artifact-freshness : OVERDUE 산출물 알림 (4건 매트릭스)
 
 매 프롬프트 자동:
 - 대상 확정 요청 · 5단계 plan · MoE 라우팅
 - 회피 감지 · 반복 감지 (/loop) · 감정 매핑 · 효율화 제안
+
+---
+
+## Section 11. 트러블슈팅 (83개 패턴)
+
+### Task Scheduler 관련
+- **`Orca_DailyArtifactRefresh` 안 돈다**: `schtasks /query /tn Orca_DailyArtifactRefresh` 확인 → 없으면 setup/modules/18-daily-artifact-refresh.bat 재실행
+- **PermissionError on .log**: `rm .claude/logs/daily-artifact-refresh.log && touch .claude/logs/daily-artifact-refresh.log && chmod 666`
+- **OVERDUE 알림 안 옴**: SessionStart hook 확인 · `.claude/logs/artifact-freshness-check.log` tail
+
+### VSCode 관련
+- **Java LSP 느림**: settings.json 확인 · `java.server.launchMode` = `standard` (디버그 모드 off)
+- **Python 인터프리터 못 찾음**: `python3 --version` 확인 후 `.vscode/settings.json` 에 경로 추가
+
+### MCP 관련
+- **MCP 서버 연결 실패**: `pip list | grep anthropic` · claude CLI version 업그레이드
+- **OAuth 토큰 만료**: `.env` 에서 PAT 갱신 · Notion/Slack/GitHub 재인증
+
+### Git 관련
+- **worktree conflict**: `git worktree prune` 후 `git worktree list`
+- **commit 너무 크다**: `git gc --aggressive` (repository 최적화)
+
+### Windows WSL/PowerShell
+- **한글 경로 깨짐**: 절대 경로에 한글 사용 X · ASCII 경로만 (C:\pjt\ 등)
+- **PowerShell UTF-8**: `$OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8`
 
 ---
 

@@ -1,0 +1,148 @@
+/* ============================================================
+ * 40년차 공통 디자인 토큰 — 운영 바로 사용 가능
+ * 사용: @import "all.css"; HTML/CSS/Tailwind 어디서든
+ * ============================================================ */
+
+@layer tokens {
+  :root {
+    /* === COLORS (60-30-10 룰 · Light) === */
+    --color-bg:          #ffffff;
+    --color-bg-subtle:   #f8fafc; /* slate-50 */
+    --color-fg:          #0f172a; /* slate-900 */
+    --color-fg-muted:    #64748b; /* slate-500 */
+    --color-border:      #e2e8f0; /* slate-200 */
+    --color-border-strong: #cbd5e1; /* slate-300 */
+
+    --color-primary:     #2563eb; /* blue-600 */
+    --color-primary-hover: #1d4ed8; /* blue-700 */
+    --color-primary-fg:  #ffffff;
+
+    --color-secondary:   #475569; /* slate-600 */
+    --color-accent:      #06b6d4; /* cyan-500 */
+
+    --color-success:     #16a34a; /* green-600 */
+    --color-warning:     #f59e0b; /* amber-500 */
+    --color-danger:      #dc2626; /* red-600 */
+    --color-info:        #0ea5e9; /* sky-500 */
+
+    /* === TYPOGRAPHY === */
+    --font-sans:  "Pretendard", "Pretendard Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono:  "JetBrains Mono", "Fira Code", "D2 Coding", Consolas, "Courier New", monospace;
+
+    --text-xs:    0.75rem;  /* 12px */
+    --text-sm:    0.875rem; /* 14px */
+    --text-base:  1rem;     /* 16px */
+    --text-lg:    1.125rem; /* 18px */
+    --text-xl:    1.25rem;  /* 20px */
+    --text-2xl:   1.5rem;   /* 24px */
+    --text-3xl:   1.875rem; /* 30px */
+    --text-4xl:   2.25rem;  /* 36px */
+    --text-5xl:   3rem;     /* 48px */
+    --text-6xl:   3.75rem;  /* 60px */
+
+    --leading-tight:   1.25;
+    --leading-snug:    1.375;
+    --leading-normal:  1.5;
+    --leading-relaxed: 1.625;
+
+    --font-light:    300;
+    --font-normal:   400;
+    --font-medium:   500;
+    --font-semibold: 600;
+    --font-bold:     700;
+
+    /* === SPACING (8-pt grid) === */
+    --space-0:  0;
+    --space-1:  0.25rem; /* 4 */
+    --space-2:  0.5rem;  /* 8 */
+    --space-3:  0.75rem; /* 12 */
+    --space-4:  1rem;    /* 16 */
+    --space-5:  1.25rem; /* 20 */
+    --space-6:  1.5rem;  /* 24 */
+    --space-8:  2rem;    /* 32 */
+    --space-10: 2.5rem;  /* 40 */
+    --space-12: 3rem;    /* 48 */
+    --space-16: 4rem;    /* 64 */
+    --space-20: 5rem;    /* 80 */
+    --space-24: 6rem;    /* 96 */
+
+    /* === RADIUS === */
+    --radius-sm:   0.25rem;  /* 4 */
+    --radius-md:   0.375rem; /* 6 — default */
+    --radius-lg:   0.5rem;   /* 8 — card */
+    --radius-xl:   0.75rem;  /* 12 */
+    --radius-2xl:  1rem;     /* 16 */
+    --radius-full: 9999px;
+
+    /* === SHADOW === */
+    --shadow-xs:  0 1px 2px 0 rgba(0,0,0,0.05);
+    --shadow-sm:  0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+    --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    --shadow-focus: 0 0 0 3px rgba(37,99,235,0.5);
+
+    /* === MOTION === */
+    --duration-fast:   150ms;
+    --duration-normal: 250ms;
+    --duration-slow:   400ms;
+    --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --easing-decel:    cubic-bezier(0, 0, 0.2, 1);
+    --easing-accel:    cubic-bezier(0.4, 0, 1, 1);
+
+    /* === Z-INDEX === */
+    --z-dropdown: 1000;
+    --z-sticky:   1100;
+    --z-overlay:  1200;
+    --z-modal:    1300;
+    --z-toast:    1400;
+    --z-tooltip:  1500;
+  }
+
+  /* === DARK MODE === */
+  .dark, [data-theme="dark"] {
+    --color-bg:          #0f172a; /* slate-900 */
+    --color-bg-subtle:   #1e293b; /* slate-800 */
+    --color-fg:          #f1f5f9; /* slate-100 */
+    --color-fg-muted:    #94a3b8; /* slate-400 */
+    --color-border:      #334155; /* slate-700 */
+    --color-border-strong: #475569; /* slate-600 */
+
+    --color-primary:     #3b82f6; /* blue-500 (약간 밝게) */
+    --color-primary-hover: #2563eb;
+    --color-primary-fg:  #ffffff;
+
+    --shadow-focus: 0 0 0 3px rgba(59,130,246,0.5);
+  }
+
+  /* === BREAKPOINTS (CSS 미디어 쿼리 지원) === */
+  /* Tailwind 와 동일 */
+  /* sm: 640px / md: 768px / lg: 1024px / xl: 1280px / 2xl: 1536px */
+}
+
+/* ============================================================
+ * BASE RESET + 기본 타이포그래피
+ * ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1 { font-size: var(--text-4xl); line-height: var(--leading-tight); font-weight: var(--font-bold); }
+h2 { font-size: var(--text-3xl); line-height: var(--leading-tight); font-weight: var(--font-semibold); }
+h3 { font-size: var(--text-2xl); line-height: var(--leading-snug); font-weight: var(--font-semibold); }
+h4 { font-size: var(--text-xl); line-height: var(--leading-snug); font-weight: var(--font-semibold); }
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+*:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-sm); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

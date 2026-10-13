@@ -1,0 +1,194 @@
+/**
+ * 40년차 공통 컴포넌트 — Button / Input / Table / Modal / Toast
+ * 사용: shadcn/ui 설치 후 복붙 or 참조
+ * npm install: tailwindcss class-variance-authority clsx tailwind-merge
+ *              lucide-react @radix-ui/react-dialog sonner
+ */
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { Loader2, X } from "lucide-react";
+
+const cn = (...i: Parameters<typeof clsx>) => twMerge(clsx(...i));
+
+/* ============================================================
+ * BUTTON — 6 variants · 4 sizes · loading · icon · a11y
+ * ============================================================ */
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +
+    "disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        primary:   "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
+        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200 focus-visible:ring-slate-500",
+        outline:   "border border-slate-300 bg-transparent hover:bg-slate-100 focus-visible:ring-slate-500",
+        ghost:     "hover:bg-slate-100 focus-visible:ring-slate-500",
+        danger:    "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500",
+        link:      "underline-offset-4 hover:underline text-blue-600",
+      },
+      size: {
+        sm: "h-8 px-3 text-sm",
+        md: "h-10 px-4 text-base",
+        lg: "h-12 px-6 text-lg",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: { variant: "primary", size: "md" },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  loading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, loading, leftIcon, rightIcon, children, disabled, ...props }, ref) => (
+    <button
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || loading}
+      aria-busy={loading}
+      {...props}
+    >
+      {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+      {!loading && leftIcon}
+      {children}
+      {!loading && rightIcon}
+    </button>
+  )
+);
+Button.displayName = "Button";
+
+/* ============================================================
+ * INPUT — label·error·helper·prefix·suffix·a11y
+ * ============================================================ */
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  helper?: string;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+}
+
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, helper, prefix, suffix, className, id, ...props }, ref) => {
+    const inputId = id || React.useId();
+    const descId = error || helper ? `${inputId}-desc` : undefined;
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label && (
+          <label htmlFor={inputId} className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {label}
+            {props.required && <span className="text-red-500 ml-0.5" aria-hidden>*</span>}
+          </label>
+        )}
+        <div className={cn(
+          "flex items-center rounded-md border bg-white dark:bg-slate-900",
+          error ? "border-red-500 focus-within:ring-red-500" : "border-slate-300 focus-within:ring-blue-500",
+          "focus-within:ring-2 focus-within:ring-offset-0"
+        )}>
+          {prefix && <div className="pl-3 text-slate-500">{prefix}</div>}
+          <input
+            ref={ref}
+            id={inputId}
+            aria-invalid={!!error}
+            aria-describedby={descId}
+            className={cn(
+              "flex-1 bg-transparent px-3 py-2 text-base outline-none placeholder:text-slate-400",
+              className
+            )}
+            {...props}
+          />
+          {suffix && <div className="pr-3 text-slate-500">{suffix}</div>}
+        </div>
+        {error && <p id={descId} className="text-xs text-red-600">{error}</p>}
+        {!error && helper && <p id={descId} className="text-xs text-slate-500">{helper}</p>}
+      </div>
+    );
+  }
+);
+Input.displayName = "Input";
+
+/* ============================================================
+ * TABLE (shadcn 호환) — 간단 1k rows
+ * 큰 DataGrid 는 DataGrid.tsx.template (ag-grid) 사용
+ * ============================================================ */
+export const Table = ({ className, ...p }: React.HTMLAttributes<HTMLTableElement>) => (
+  <div className="w-full overflow-auto">
+    <table className={cn("w-full caption-bottom text-sm", className)} {...p} />
+  </div>
+);
+export const Thead = ({ className, ...p }: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  <thead className={cn("[&_tr]:border-b bg-slate-50 dark:bg-slate-800", className)} {...p} />
+);
+export const Tbody = ({ className, ...p }: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  <tbody className={cn("[&_tr:last-child]:border-0", className)} {...p} />
+);
+export const Tr = ({ className, ...p }: React.HTMLAttributes<HTMLTableRowElement>) => (
+  <tr className={cn("border-b transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50", className)} {...p} />
+);
+export const Th = ({ className, ...p }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+  <th className={cn("h-10 px-3 text-left align-middle font-medium text-slate-600 dark:text-slate-400", className)} {...p} />
+);
+export const Td = ({ className, ...p }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+  <td className={cn("px-3 py-2 align-middle", className)} {...p} />
+);
+
+/* ============================================================
+ * CARD
+ * ============================================================ */
+export const Card = ({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("rounded-lg border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-800", className)} {...p} />
+);
+export const CardHeader = ({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col gap-1.5 p-6", className)} {...p} />
+);
+export const CardTitle = ({ className, ...p }: React.HTMLAttributes<HTMLHeadingElement>) => (
+  <h3 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...p} />
+);
+export const CardContent = ({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("p-6 pt-0", className)} {...p} />
+);
+export const CardFooter = ({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex items-center p-6 pt-0", className)} {...p} />
+);
+
+/* ============================================================
+ * MODAL (Radix Dialog 기반)
+ * ============================================================ */
+import * as Dialog from "@radix-ui/react-dialog";
+
+export const Modal = Dialog.Root;
+export const ModalTrigger = Dialog.Trigger;
+export const ModalContent = React.forwardRef<
+  React.ElementRef<typeof Dialog.Content>,
+  React.ComponentPropsWithoutRef<typeof Dialog.Content>
+>(({ className, children, ...props }, ref) => (
+  <Dialog.Portal>
+    <Dialog.Overlay className="fixed inset-0 z-[1200] bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out" />
+    <Dialog.Content
+      ref={ref}
+      className={cn(
+        "fixed left-1/2 top-1/2 z-[1300] -translate-x-1/2 -translate-y-1/2",
+        "w-full max-w-lg rounded-lg border bg-white p-6 shadow-xl dark:bg-slate-900 dark:border-slate-800",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <Dialog.Close className="absolute right-4 top-4 opacity-70 hover:opacity-100 focus-visible:ring-2 focus-visible:ring-blue-500 rounded-sm">
+        <X className="h-4 w-4" />
+        <span className="sr-only">닫기</span>
+      </Dialog.Close>
+    </Dialog.Content>
+  </Dialog.Portal>
+));
+ModalContent.displayName = "ModalContent";

@@ -2,7 +2,15 @@
 
 > **목적**: 아이티센코어 리스크모니터링·행동위험분석 부서용 기술 지식 정리
 > **기준**: 2027-2030 메가트렌드 + 시장 검증 + 한국 도입 가능성
-> **작성**: 2026-06-01
+> **작성**: 2026-06-01 · **최종 갱신**: 2026-10-13
+
+## Update 2026-10-13
+
+신추가 기술:
+- **Qwen 3.8-27B** (Alibaba Apache 2.0 · 262K context · SWE-bench Pro 61.7%) — 로컬·오프라인 강화
+- **Claude Opus 5.5** (Anthropic 2026-09-22 · $4/$20 · 40% 저렴 · 1M context · adaptive thinking always-on)
+- **Haiku 4.5 / Haiku 5.5** (신 버전 · cache 최적화 · 응답시간 반감)
+- **Gemini 2.5 Flash** (Google · 1M context · 저가 · 멀티모달 강화)
 
 ---
 

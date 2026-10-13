@@ -1,0 +1,150 @@
+/**
+ * CRUD List Pattern — Search + Filter + Sort + Table + Pagination + Detail Modal
+ * ag-grid 사용 (10k+ rows OK)
+ */
+import * as React from "react";
+import { AppShell, Container, PageHeader } from "../components/Layout.tsx.template";
+import { Button, Input, Card, CardContent, Modal, ModalContent, ModalTrigger } from "../components/core.tsx.template";
+import { DataGrid } from "../components/DataGrid.tsx.template";
+import { Form, Field, SubmitButton } from "../components/Form.tsx.template";
+import { Search, Plus, Download } from "lucide-react";
+import { z } from "zod";
+import type { ColDef } from "ag-grid-community";
+
+interface Row {
+  id: number;
+  name: string;
+  email: string;
+  status: "active" | "inactive";
+  amount: number;
+  createdAt: string;
+}
+
+const schema = z.object({
+  name: z.string().min(1, "이름 필수"),
+  email: z.string().email("올바른 이메일"),
+  amount: z.coerce.number().int().min(0),
+});
+type FormData = z.infer<typeof schema>;
+
+export default function CrudList() {
+  const [rows, setRows] = React.useState<Row[]>([
+    { id: 1, name: "홍길동", email: "hong@example.com", status: "active", amount: 125000, createdAt: "2026-10-01" },
+    { id: 2, name: "김영희", email: "kim@example.com", status: "inactive", amount: 85000, createdAt: "2026-10-05" },
+    { id: 3, name: "이철수", email: "lee@example.com", status: "active", amount: 230000, createdAt: "2026-10-10" },
+  ]);
+  const [query, setQuery] = React.useState("");
+  const [modalOpen, setModalOpen] = React.useState(false);
+
+  const columns: ColDef<Row>[] = [
+    { field: "id", headerName: "ID", width: 70, pinned: "left" },
+    { field: "name", headerName: "이름", minWidth: 120 },
+    { field: "email", headerName: "이메일", minWidth: 200 },
+    {
+      field: "status",
+      headerName: "상태",
+      width: 100,
+      cellRenderer: (p: { value: string }) => (
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+          p.value === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"
+        }`}>
+          {p.value === "active" ? "활성" : "비활성"}
+        </span>
+      ),
+    },
+    {
+      field: "amount",
+      headerName: "금액",
+      type: "numericColumn",
+      width: 120,
+      valueFormatter: (p) => (p.value as number).toLocaleString() + "원",
+    },
+    { field: "createdAt", headerName: "등록일", width: 120 },
+    {
+      headerName: "작업",
+      width: 160,
+      sortable: false,
+      filter: false,
+      cellRenderer: (p: { data: Row }) => (
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => alert(`편집: ${p.data.id}`)}>편집</Button>
+          <Button size="sm" variant="ghost" onClick={() => confirm(`삭제?`) && setRows((rs) => rs.filter((r) => r.id !== p.data.id))}>삭제</Button>
+        </div>
+      ),
+    },
+  ];
+
+  const filtered = React.useMemo(() => {
+    if (!query) return rows;
+    const q = query.toLowerCase();
+    return rows.filter((r) => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+  }, [rows, query]);
+
+  const handleCreate = async (data: FormData) => {
+    setRows((rs) => [
+      ...rs,
+      { id: Date.now(), ...data, status: "active", createdAt: new Date().toISOString().slice(0, 10) },
+    ]);
+    setModalOpen(false);
+  };
+
+  return (
+    <AppShell sidebar={<div />} title="사용자 관리">
+      <Container>
+        <PageHeader
+          title="사용자 목록"
+          description="총 " + filtered.length + "건"
+          actions={
+            <>
+              <Button variant="outline" leftIcon={<Download className="h-4 w-4" />}>내보내기</Button>
+              <Modal open={modalOpen} onOpenChange={setModalOpen}>
+                <ModalTrigger asChild>
+                  <Button leftIcon={<Plus className="h-4 w-4" />}>신규 등록</Button>
+                </ModalTrigger>
+                <ModalContent>
+                  <h2 className="mb-4 text-lg font-semibold">신규 사용자</h2>
+                  <Form<FormData>
+                    schema={schema}
+                    defaultValues={{ name: "", email: "", amount: 0 }}
+                    onSubmit={handleCreate}
+                  >
+                    <Field<FormData> name="name" label="이름" required />
+                    <Field<FormData> name="email" label="이메일" type="email" required />
+                    <Field<FormData> name="amount" label="초기 금액" type="number" />
+                    <div className="mt-2 flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>취소</Button>
+                      <SubmitButton>저장</SubmitButton>
+                    </div>
+                  </Form>
+                </ModalContent>
+              </Modal>
+            </>
+          }
+        />
+
+        <Card className="mb-4">
+          <CardContent className="pt-6">
+            <Input
+              placeholder="이름 또는 이메일 검색..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              prefix={<Search className="h-4 w-4" />}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <DataGrid<Row>
+              rowData={filtered}
+              columnDefs={columns}
+              pagination
+              pageSize={50}
+              rowSelection="multiple"
+            />
+          </CardContent>
+        </Card>
+      </Container>
+    </AppShell>
+  );
+}

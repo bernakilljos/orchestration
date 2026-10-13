@@ -1,0 +1,124 @@
+/**
+ * DataGrid — ag-grid community v32+ (Apache 2.0 · 무제한 무료)
+ * 1k~1M rows · 가상화·정렬·필터·그룹·pivot·export 모두
+ * npm install: ag-grid-community ag-grid-react
+ *
+ * v31+ Breaking: frameworkComponents → components (제거됨)
+ * v33 예정 (2026-11): 더 많은 enterprise 기능 community 로 이관
+ */
+import * as React from "react";
+import { AgGridReact } from "ag-grid-react";
+import type { ColDef, GridOptions, GridReadyEvent, CellValueChangedEvent } from "ag-grid-community";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-alpine.css";
+
+export interface DataGridProps<T = Record<string, unknown>> {
+  rowData: T[];
+  columnDefs: ColDef<T>[];
+  theme?: "alpine" | "alpine-dark" | "balham" | "material" | "quartz";
+  height?: number | string;
+  pagination?: boolean;
+  pageSize?: number;
+  rowSelection?: "single" | "multiple";
+  onCellValueChanged?: (e: CellValueChangedEvent<T>) => void;
+  onReady?: (e: GridReadyEvent<T>) => void;
+  /** 100k+ rows 고속 모드 (가상 스크롤 + 지연 렌더) */
+  highPerformance?: boolean;
+}
+
+export function DataGrid<T = Record<string, unknown>>({
+  rowData,
+  columnDefs,
+  theme = "alpine",
+  height = 600,
+  pagination = true,
+  pageSize = 50,
+  rowSelection = "multiple",
+  onCellValueChanged,
+  onReady,
+  highPerformance = false,
+}: DataGridProps<T>) {
+  const defaultColDef = React.useMemo<ColDef<T>>(
+    () => ({
+      sortable: true,
+      filter: true,
+      resizable: true,
+      floatingFilter: true,
+      editable: !!onCellValueChanged,
+      minWidth: 100,
+      flex: 1,
+    }),
+    [onCellValueChanged]
+  );
+
+  const gridOptions: GridOptions<T> = {
+    animateRows: !highPerformance,
+    enableCellTextSelection: true,
+    ensureDomOrder: true,
+    rowBuffer: highPerformance ? 10 : 20,
+    suppressColumnVirtualisation: false,
+    suppressRowVirtualisation: false,
+    rowModelType: "clientSide",
+    pagination,
+    paginationPageSize: pageSize,
+    paginationPageSizeSelector: [20, 50, 100, 200, 500],
+    rowSelection,
+    suppressRowClickSelection: rowSelection === "multiple",
+    enableRangeSelection: false, // enterprise 기능 — community 에선 false
+    localeText: {
+      page: "페이지",
+      more: "더보기",
+      to: "~",
+      of: "/",
+      next: "다음",
+      last: "마지막",
+      first: "처음",
+      previous: "이전",
+      loadingOoo: "불러오는 중...",
+      noRowsToShow: "데이터 없음",
+    },
+  };
+
+  return (
+    <div className={`ag-theme-${theme}`} style={{ height, width: "100%" }} role="grid" aria-label="데이터 그리드">
+      <AgGridReact<T>
+        rowData={rowData}
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        gridOptions={gridOptions}
+        onCellValueChanged={onCellValueChanged}
+        onGridReady={onReady}
+      />
+    </div>
+  );
+}
+
+/* ============================================================
+ * 사용 예시
+ * ============================================================
+ *
+ * import { DataGrid } from "./DataGrid";
+ *
+ * const columns = [
+ *   { field: "id", headerName: "ID", width: 80, pinned: "left" },
+ *   { field: "name", headerName: "이름" },
+ *   { field: "amount", headerName: "금액", type: "numericColumn",
+ *     valueFormatter: (p) => p.value?.toLocaleString() + "원" },
+ *   { field: "status", headerName: "상태",
+ *     cellRenderer: (p) => (
+ *       <span className={p.value === "완료" ? "text-green-600" : "text-amber-600"}>
+ *         {p.value}
+ *       </span>
+ *     ) },
+ * ];
+ *
+ * <DataGrid
+ *   rowData={rows}
+ *   columnDefs={columns}
+ *   pagination
+ *   pageSize={100}
+ *   rowSelection="multiple"
+ *   onCellValueChanged={(e) => console.log("수정:", e.data)}
+ * />
+ *
+ * ============================================================ */
