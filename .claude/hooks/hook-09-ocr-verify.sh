@@ -1,24 +1,37 @@
 #!/usr/bin/env bash
 # HOOK-09 — OCR Overflow Verify
 #
-# PostToolUse hook — Bash 명령에 'generate-*-ppt.py' 패턴이 포함되면 자동 검증.
+# PostToolUse hook — Bash 명령에 산출물 빌드 스크립트 패턴이 포함되면 자동 검증.
 # stdin 으로 hook input JSON 받음 (tool_input.command).
+#
+# 성능 (2026-09-02 A1.RMS-UPG 실측 · 2026-10-13 kit 역병합): 매 Bash 호출마다 돈다.
+#   기존 구현은 cat + jq/grep + head + sed 파이프로 command 를 뽑아 그것만으로 2102ms 였다
+#   (프로세스 생성 1회 300~500ms 환경). 대상이 아닌 명령은 서브프로세스 0개로 즉시 빠진다.
+#
+# 정확성 (같은 날 수정): jq 없는 환경의 fallback sed 's/.*:"\(.*\)"/\1/' 이 키 이름을 남겨
+#   'command": "...' 가 됐고, 이어지는 패턴이 never match — jq 없는 PC 에서 검증이 한 번도 안 돌았다.
 
 set -e
 
-# stdin 의 JSON 에서 command 추출
-INPUT="$(cat)"
+# read -d '' 는 EOF 에서 rc=1 — set -e 와 함께 쓰면 죽으므로 || true
+read -r -d '' INPUT || true
 
-# jq 가 있으면 정확 추출, 없으면 grep fallback
-if command -v jq >/dev/null 2>&1; then
-  CMD="$(echo "$INPUT" | jq -r '.tool_input.command // ""')"
-else
-  CMD="$(echo "$INPUT" | grep -oE '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*:"\(.*\)"/\1/')"
-fi
+# 1차 필터: bash 내장 글롭. 빌드·렌더 스크립트 호출이 아니면 즉시 종료.
+case "$INPUT" in
+  *build-*|*generate-*|*render-*) ;;
+  *) exit 0 ;;
+esac
+
+# command 값 추출 — 콜론 뒤 공백 유무 무관, 서브프로세스 0개
+CMD="${INPUT#*\"command\":}"
+CMD="${CMD#\"}"
+CMD="${CMD# \"}"
+CMD="${CMD%%\"*}"
 
 # 산출물 빌드 패턴 매칭 (확장: build-*-doc / build-*-diagrams / generate-*-ppt / render-* / pdf)
-# render-ssj.py 같은 직접 렌더 스크립트도 포함
-if ! echo "$CMD" | grep -qE '(build|generate|render)-[a-z-]+-(ppt|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py|render-[a-z-]+\.py'; then
+# render-ssj.py 같은 직접 렌더 스크립트도 포함 · 정규식은 변수에 담아야 이스케이프가 산다
+BUILD_RE='(build|generate|render)-[a-z-]+-(ppt|pptx|doc|diagrams|pdf|html)\.py|build-[a-z-]+-doc\.py|render-[a-z-]+\.py'
+if [[ ! "$CMD" =~ $BUILD_RE ]]; then
   exit 0
 fi
 
