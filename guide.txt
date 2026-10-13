@@ -1,7 +1,7 @@
 ============================================================
   Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Updated: 2026-10-13 (15축 audit · settings.template.json 생성)
+  Updated: 2026-10-13 (agent-tracking color display 복구 · hook stdin JSON 파싱)
 ============================================================
 
 

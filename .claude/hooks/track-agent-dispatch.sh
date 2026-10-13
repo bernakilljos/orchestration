@@ -1,21 +1,21 @@
 #!/bin/bash
 # track-agent-dispatch.sh — Agent tool 호출 감지 & 진행률 기록
-# 발동: PreToolUse (Agent tool 시작) / PostToolUse (완료)
+# 발동: PreToolUse Agent (start) / PostToolUse Agent (end)
+# 입력: stdin JSON { tool_name, tool_input: { subagent_type, description } }
 # 저장: .claude/state/active-agents.json
+# Sub-project guard
+[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 
-set -euo pipefail
+set -uo pipefail
 
-# 프로젝트 디렉토리 확인
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
-[ -d "$PROJECT_DIR" ] || exit 0
-
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 STATE_DIR="$PROJECT_DIR/.claude/state"
-mkdir -p "$STATE_DIR"
+LOG_DIR="$PROJECT_DIR/.claude/logs"
+mkdir -p "$STATE_DIR" "$LOG_DIR"
 
 ACTIVE_AGENTS_FILE="$STATE_DIR/active-agents.json"
 AGENT_MODEL_MAP="$STATE_DIR/agent-model-map.json"
 
-# 신규 agent-model-map.json 초기화 (없으면)
 if [ ! -f "$AGENT_MODEL_MAP" ]; then
   cat > "$AGENT_MODEL_MAP" <<'EOF'
 {
@@ -24,105 +24,93 @@ if [ ! -f "$AGENT_MODEL_MAP" ]; then
   "judge": "claude-haiku-4-5",
   "general-purpose": "inherit",
   "code-reviewer": "inherit",
-  "test-runner": "inherit"
+  "test-runner": "inherit",
+  "brainstorming-partner": "inherit",
+  "claude": "inherit"
 }
 EOF
 fi
 
-# 신규 active-agents.json 초기화 (없으면)
-if [ ! -f "$ACTIVE_AGENTS_FILE" ]; then
-  echo "[]" > "$ACTIVE_AGENTS_FILE"
-fi
+[ ! -f "$ACTIVE_AGENTS_FILE" ] && echo "[]" > "$ACTIVE_AGENTS_FILE"
 
-# 입력 JSON에서 tool 정보 파싱
-# TOOL_NAME, TOOL_TYPE, AGENT_ID, AGENT_DESC 환경변수 기대
-if [ -z "${TOOL_NAME:-}" ] || [ "$TOOL_TYPE" != "agent" ]; then
-  exit 0
-fi
+ACTION="${1:-start}"
+export HOOK_STDIN="$(cat 2>/dev/null || echo '{}')"
+export HOOK_ACTION="$ACTION"
+export HOOK_STATE_FILE="$ACTIVE_AGENTS_FILE"
 
-AGENT_ID="${AGENT_ID:-unknown}"
-AGENT_DESC="${AGENT_DESC:-$AGENT_ID}"
-ACTION="${1:-start}"  # start 또는 end
-TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "unknown")
+# Windows Store 스텁 회피
+HERE="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=/dev/null
+[ -f "$HERE/find-python.sh" ] && . "$HERE/find-python.sh"
+PY="${PYTHON:-python}"
 
-# active-agents.json 임시 파일로 업데이트
-TEMP_FILE="$ACTIVE_AGENTS_FILE.tmp.$$"
-trap "rm -f '$TEMP_FILE'" EXIT
-
-if [ "$ACTION" = "start" ]; then
-  # Agent 시작: 배열에 항목 추가
-  python3 <<PYTHON 2>/dev/null || true
-import json
-import sys
-
-try:
-    with open("$ACTIVE_AGENTS_FILE", "r") as f:
-        agents = json.load(f)
-except:
-    agents = []
-
-# 중복 제거 (같은 agent_id)
-agents = [a for a in agents if a.get("id") != "$AGENT_ID"]
-
-# 신규 항목 추가
-agents.append({
-    "id": "$AGENT_ID",
-    "description": "$AGENT_DESC",
-    "start_ts": "$TS",
-    "end_ts": None,
-    "duration_s": None
-})
-
-with open("$TEMP_FILE", "w") as f:
-    json.dump(agents, f, indent=2, ensure_ascii=False)
-PYTHON
-  mv "$TEMP_FILE" "$ACTIVE_AGENTS_FILE" 2>/dev/null || true
-
-elif [ "$ACTION" = "end" ]; then
-  # Agent 완료: 항목 업데이트
-  python3 <<PYTHON 2>/dev/null || true
-import json
+"$PY" - <<'PYEOF' 2>>"$LOG_DIR/track-agent-dispatch.err" || true
+import json, os, sys
 from datetime import datetime
 
+action = os.environ.get("HOOK_ACTION", "start")
+state_file = os.environ["HOOK_STATE_FILE"]
+raw = os.environ.get("HOOK_STDIN", "{}")
+
 try:
-    with open("$ACTIVE_AGENTS_FILE", "r") as f:
+    hook = json.loads(raw) if raw.strip() else {}
+except Exception as e:
+    sys.stderr.write(f"[track] json parse: {e}\n")
+    sys.exit(0)
+
+tool_name = hook.get("tool_name") or hook.get("toolName") or ""
+if tool_name != "Agent":
+    sys.exit(0)
+
+tool_input = hook.get("tool_input") or hook.get("toolInput") or {}
+agent_id = tool_input.get("subagent_type") or tool_input.get("agent_type") or "unknown"
+desc = (tool_input.get("description") or agent_id)[:80]
+ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+try:
+    with open(state_file, "r", encoding="utf-8") as f:
         agents = json.load(f)
-except:
+    if not isinstance(agents, list):
+        agents = []
+except Exception:
     agents = []
 
-# 해당 agent 찾아서 end_ts 설정
-for agent in agents:
-    if agent.get("id") == "$AGENT_ID":
-        if agent.get("start_ts"):
+if action == "start":
+    agents = [a for a in agents if not (a.get("id") == agent_id and not a.get("end_ts"))]
+    agents.append({
+        "id": agent_id,
+        "description": desc,
+        "start_ts": ts,
+        "end_ts": None,
+        "duration_s": 0,
+    })
+elif action == "end":
+    for a in agents:
+        if a.get("id") == agent_id and not a.get("end_ts"):
             try:
-                start = datetime.fromisoformat(agent["start_ts"].replace("Z", "+00:00"))
-                end = datetime.fromisoformat("$TS".replace("Z", "+00:00"))
-                duration = (end - start).total_seconds()
-                agent["end_ts"] = "$TS"
-                agent["duration_s"] = max(0, int(duration))
-            except:
-                pass
-        break
+                start = datetime.strptime(a["start_ts"], "%Y-%m-%dT%H:%M:%SZ")
+                end = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+                a["duration_s"] = max(0, int((end - start).total_seconds()))
+            except Exception:
+                a["duration_s"] = 0
+            a["end_ts"] = ts
+            break
+    now = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+    kept = []
+    for a in agents:
+        if a.get("end_ts"):
+            try:
+                e = datetime.strptime(a["end_ts"], "%Y-%m-%dT%H:%M:%SZ")
+                if (now - e).total_seconds() <= 30:
+                    kept.append(a)
+            except Exception:
+                kept.append(a)
+        else:
+            kept.append(a)
+    agents = kept
 
-# 오래된 항목 정리 (30초 이상 지난 완료 항목)
-now = datetime.fromisoformat("$TS".replace("Z", "+00:00"))
-cleaned = []
-for agent in agents:
-    if agent.get("end_ts"):
-        try:
-            end = datetime.fromisoformat(agent["end_ts"].replace("Z", "+00:00"))
-            if (now - end).total_seconds() <= 30:
-                cleaned.append(agent)
-        except:
-            cleaned.append(agent)
-    else:
-        cleaned.append(agent)
-agents = cleaned
-
-with open("$TEMP_FILE", "w") as f:
+with open(state_file, "w", encoding="utf-8") as f:
     json.dump(agents, f, indent=2, ensure_ascii=False)
-PYTHON
-  mv "$TEMP_FILE" "$ACTIVE_AGENTS_FILE" 2>/dev/null || true
-fi
+PYEOF
 
 exit 0

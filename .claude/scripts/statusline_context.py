@@ -527,9 +527,21 @@ def extra_gauges(cwd, data=None):
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
         if os.path.exists(active_agents_file):
             with open(active_agents_file, "r", encoding="utf-8") as f:
-                agents = json.load(f) if isinstance(json.load(open(active_agents_file)), list) else []
-            # 활성 agent (end_ts 없는 것들) 집계
-            active = [a for a in agents if not a.get("end_ts")]
+                raw = json.load(f)
+            agents = raw if isinstance(raw, list) else []
+            # 활성 agent (end_ts 없는 것들) 집계 · 현재 시각 기준 duration 재계산
+            import datetime as _dt_mod
+            now_ts = _dt_mod.datetime.utcnow()
+            active = []
+            for a in agents:
+                if a.get("end_ts"):
+                    continue
+                try:
+                    s = _dt_mod.datetime.strptime(a.get("start_ts", ""), "%Y-%m-%dT%H:%M:%SZ")
+                    a["duration_s"] = max(0, int((now_ts - s).total_seconds()))
+                except Exception:
+                    a["duration_s"] = 0
+                active.append(a)
             if active:
                 import collections as _col
                 agent_counts = _col.Counter(a["id"].split("-")[0].lower() for a in active)
