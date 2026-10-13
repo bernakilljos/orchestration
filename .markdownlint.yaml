@@ -1,0 +1,79 @@
+# Markdownlint configuration for orchestration_v1
+# See: https://github.com/igorshubovych/markdownlint-cli
+
+default: true
+
+rules:
+  # Line length — allow up to 120 characters (wider terminal support)
+  line-length:
+    line_length: 120
+    heading_line_length: 120
+    headers: true
+    code_lines: false
+    code_blocks: false
+
+  # Headers — consecutive headers are allowed (multiple H1s in doc)
+  no-multiple-blanks:
+    maximum: 2
+
+  # Emphasis — allow both *emphasis* and _emphasis_
+  emphasis-markers:
+    style: mixed
+
+  # Lists — consistent indentation
+  list-indent:
+    indent: 2
+
+  # Headings — number style (atx style: # H1, ## H2)
+  heading-style:
+    style: consistent
+
+  # No hard tabs
+  no-hard-tabs: true
+
+  # No trailing spaces (except in code blocks)
+  trailing-spaces: true
+
+  # No multiple consecutive spaces
+  no-multiple-spaces: false
+
+  # Ordered list marker — incrementing numbers required
+  ol-prefix:
+    style: ordered
+
+  # Proper formatting of code blocks
+  code-block-style:
+    style: backtick
+    consistent: true
+
+  # No bare URLs — wrap in angle brackets or markdown link
+  no-bare-urls: true
+
+  # Proper heading levels — no skipping levels
+  heading-increment:
+    headers_increment: true
+
+  # Link formatting
+  link-image-reference-definitions:
+    spacing: consistent
+
+  # MD024: no-duplicate-heading disabled (we use h2 multiple times in complex docs)
+  no-duplicate-heading: false
+
+  # MD041: first-line-h1 disabled (CLAUDE.md starts with > blockquote)
+  first-line-heading: false
+
+  # MD033: no-inline-html disabled (allowed for complex tables/diagrams)
+  no-inline-html: false
+
+# Exclude patterns
+exclude:
+  - node_modules
+  - venv
+  - .venv
+  - __pycache__
+  - .git
+  - .github/workflows
+
+# Indentation: 2 spaces (markdown standard)
+indent: 2

@@ -1,0 +1,101 @@
+# Pre-commit hooks for orchestration_v1
+# See https://pre-commit.com for more information
+
+repos:
+  # Security: Detect hardcoded secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # Security: Scan for common vulnerabilities in Python
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: ['-c', '.bandit.yaml', '-r', '.claude/scripts', 'plugins/']
+        language: python
+
+  # Security: Detect Git credentials / private keys
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+        args: ['detect', '--verbose', '--source', 'commit']
+
+  # Python: Linting with ruff (fast AST-based)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.8
+    hooks:
+      - id: ruff
+        args: ['check', '--config', 'pyproject.toml']
+      - id: ruff-format
+        args: ['--config', 'pyproject.toml']
+
+  # Python: Type checking with mypy (strict mode on lib/)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.0
+    hooks:
+      - id: mypy
+        args: ['--strict', '--config-file=mypy.ini', '.claude/scripts/lib/']
+        additional_dependencies: ['types-all']
+        exclude: '^\.claude/scripts/lib/.*test.*\.py$'
+
+  # YAML: Linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: default, rules: {line-length: {max: 120}}}']
+
+  # JSON: Formatting
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: pretty-print-json
+        args: ['--autofix']
+      - id: check-json
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-args=--ignore-all]
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+  # Markdown: Linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.36.0
+    hooks:
+      - id: markdownlint
+        args: ['--config', '.markdownlint.yaml']
+
+  # Git: Prevent commits with large diffs
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-case-conflict
+
+# Global exclude patterns
+exclude: |
+  (?x)^(
+    \.git/|
+    \.venv/|
+    venv/|
+    __pycache__/|
+    build/|
+    dist/|
+    \.claude/state/|
+    \.claude/logs/|
+    \.claude/tasks/done/|
+    \.claude/context-cache/|
+    local_data/|
+    \.bak|
+    node_modules/|
+    package-lock.json
+  )
+
+# Fail fast on first hook failure (for local use)
+fail_fast: false

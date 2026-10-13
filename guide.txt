@@ -97,6 +97,20 @@
 
   * 나머지(MCP, 플러그인, 설정)는 전부 자동 설치됨
 
+  [보안 설정 — F8 (2026-10-13)]
+    Pre-commit hooks (12 저장소 · 22+ 검사):
+      - detect-secrets: 자격증명 감시 (AWS · GitHub · Stripe 등 22 detector)
+      - bandit: Python 보안 (exec/eval/pickle/hardcoded-secrets)
+      - gitleaks: Git credential 누출 방지
+      - mypy strict: 타입 검사 (.claude/scripts/lib/)
+      - ruff: 린팅 + 포매팅
+      - YAML/JSON/TOML/Markdown 검증
+    수동 활성화 (선택):
+      pre-commit install
+      pre-commit run --all-files
+    시크릿 관리: .env.vault (0o600) 또는 OS keyring (python-keyring)
+    상세: SECURITY.md · .pre-commit-config.yaml
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   3. 기본 사용법

@@ -1,0 +1,163 @@
+# Bandit security configuration for orchestration_v1
+# See: https://bandit.readthedocs.io/
+
+assert_used:
+  skips: []
+
+blacklist_calls:
+  blacklist:
+    # Unsafe exec/eval patterns
+    - name: exec
+      message: "Use of exec detected. Avoid dynamic code execution."
+      level: HIGH
+    - name: eval
+      message: "Use of eval detected. Use ast.literal_eval for data only."
+      level: HIGH
+    - name: pickle
+      message: "Pickle is insecure for untrusted data. Use JSON."
+      level: MEDIUM
+
+blacklist_imports:
+  # Disabled imports (none currently for our stack)
+  blacklist: []
+
+execute_with_run_as_root_equals_true:
+  skips: []
+
+hardcoded_password_string:
+  word_list: passwd, password, pwd, secret, token, api_key, apikey, access_key
+
+hardcoded_sql_string:
+  skips: []
+
+hardcoded_tmp_directory:
+  skips: []
+
+insecure_hash_functions:
+  weak_key: md5, sha1
+
+insecure_ssl_tls_version:
+  skips: []
+
+jinja2_autoescape_false:
+  skips: []
+
+linux_process_with_positive_rlimit:
+  skips: []
+
+mako_templates:
+  jinja2: true
+  mako: true
+
+paramiko_calls:
+  skips: []
+
+secure_random_module:
+  skips: []
+
+start_process_with_a_shell:
+  skips: []
+
+start_process_with_no_binaries:
+  skips: []
+
+start_process_with_partial_path:
+  skips: []
+
+subprocess:
+  subprocess:
+    - check_call
+    - check_output
+    - call
+    - run
+    - Popen
+
+tests:
+  - B201   # Flask debug true
+  - B301   # Pickle
+  - B302   # Tempfile
+  - B303   # Use of insecure MD5 hash function
+  - B304   # Insecure hash function
+  - B305   # Insecure XML parsing
+  - B306   # Temporary directory
+  - B307   # eval
+  - B308   # Mark safe (Jinja2)
+  - B309   # HTTPSConnection
+  - B310   # urllib/urlopen
+  - B311   # Random
+  - B312   # Telnet
+  - B313   # XML
+  - B314   # XML ElementTree
+  - B315   # XML Expat
+  - B316   # XML Sax
+  - B317   # Pickle
+  - B318   # Yaml
+  - B319   # Yaml
+  - B320   # Yaml
+  - B321   # Ftplib
+  - B322   # Input
+  - B323   # Unverified Context
+  - B324   # Hash
+  - B325   # TemporaryDirectory
+  - B401   # telnetlib
+  - B402   # ftplib
+  - B403   # pickle
+  - B404   # subprocess
+  - B405   # xml
+  - B406   # xml
+  - B407   # xml
+  - B408   # xml
+  - B409   # xml
+  - B410   # xml
+  - B411   # xmlrpc
+  - B412   # httpoxy
+  - B413   # pycrypto
+  - B501   # request_with_no_cert_validation
+  - B502   # ssl_with_bad_version
+  - B503   # ssl_with_bad_defaults
+  - B504   # ssl_with_no_version
+  - B505   # weak_cryptographic_key
+  - B506   # yaml_load
+  - B507   # ssh_no_host_key_verification
+  - B601   # paramiko_calls
+  - B602   # shell_injection
+  - B603   # subprocess_without_shell_equals_true
+  - B604   # any_other_function_with_shell_equals_true
+  - B605   # start_process_with_a_shell
+  - B606   # start_process_with_partial_path
+  - B607   # start_process_with_partial_path
+  - B608   # hardcoded_sql_string
+  - B609   # wildcard_injection
+  - B610   # django_sql_injection
+  - B611   # django_sql_injection_extra
+  - B701   # jinja2_autoescape_false
+  - B702   # mako_templatesinjection
+  - B703   # django_mark_safe
+  - B704   # flask_debug_true
+  - B705   # logging_config_injection
+  - B706   # logging_config_injection
+
+# Skips (test files, etc.)
+skips:
+  - B101  # assert_used (skip in tests)
+  - B601  # paramiko_calls (skip in tests)
+
+# Exclude patterns
+exclude_dirs:
+  - /test
+  - /tests
+  - /.venv
+  - /venv
+  - /node_modules
+  - /__pycache__
+  - /.pytest_cache
+
+# Report format (JSON for CI)
+format: json
+output: /tmp/bandit-report.json
+
+# Severity levels
+severity: MEDIUM
+
+# Confidence levels
+confidence: MEDIUM
