@@ -1256,6 +1256,8 @@
         · 한국어 default multilingual-e5-large · 코드 codebert-base · SOTA bge-m3
       - 7 화면설계: .claude/rules/app-ui-standard.md (shadcn/AntD/MUI 강제 · 자체 CSS 금지)
         · 프레임워크·컴포넌트·A11y·i18n·반응형 매트릭스
+        · 신규 2026: .claude/rules/ui-component-matrix.md (15 카테고리 · ag-grid 50+ 설정 · 성능비교)
+        · 스킬: .claude/skills/ag-grid-recommend.md (그리드 결정 트리 자동 활성)
       - 8 개발언어별: .claude/rules/language-standards.md (Python ruff · JS/TS ESLint9 ·
         Go golangci · Rust clippy · Java Checkstyle · 20+ 언어)
       - 10 운영 grade 파일 관리: .claude/rules/production-file-management.md

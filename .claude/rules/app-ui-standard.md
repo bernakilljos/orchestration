@@ -34,14 +34,21 @@
 |---|---|
 | Button·Input·Select·Checkbox·Radio | shadcn/AntD/MUI 컴포넌트 |
 | Modal·Drawer·Tooltip·Popover | Radix UI (shadcn 기본) |
-| DataTable·DataGrid·Pagination | AntD Table or TanStack Table + shadcn |
-| Form·Validation | react-hook-form + zod |
-| Chart | Recharts or Apache ECharts |
+| DataGrid 대규모 (10k+ rows) | **ag-grid-community** (Apache 2.0 · 무제한 무료) |
+| DataTable·Table 간단 (< 1k rows) | AntD Table or shadcn Table |
+| DataTable 커스톰 (1k-10k rows) | **TanStack Table v9** + 가상화 |
+| Pagination | AntD 또는 Recharts / shadcn custom |
+| Form·Validation | react-hook-form v7 + zod |
+| Chart (라인·막대·산점도) | **Recharts** (권장) or Apache ECharts |
+| Chart (실시간·대용량) | Apache ECharts v5.5 |
 | Icon | lucide-react (shadcn 표준) or heroicons |
 | Toast·Notification | sonner (shadcn) or AntD notification |
 | Date Picker | date-fns + react-day-picker (shadcn) or AntD |
 | Command Menu (Cmd+K) | cmdk (shadcn) |
 | Color Palette | Tailwind default (slate·zinc·blue 등) or 사용자 지정 |
+| State · 비동기 | **Zustand + TanStack Query v5** (권장) |
+| Drag & Drop | **dnd-kit v8** (2026 권장) |
+| 드래그 정렬 | SortableJS 또는 react-beautiful-dnd |
 
 ## 접근성 (A11y) 자동
 
@@ -86,23 +93,57 @@
 
 ## 금지
 
-1. **자체 CSS 대량 작성 X** (10줄 이상 = 재검토)
+1. **자체 CSS 대량 작성 X** (10줄 이상 = 재검토) · Tailwind 우선
 2. **인라인 style 남발 X** (Tailwind class 우선)
-3. **버전 오래된 라이브러리 X** (AntD v4·MUI v4 등 · v5+ 만)
+3. **버전 오래된 라이브러리 X** (AntD v4·MUI v4·react-hook-form v6 등 · v5+ 또는 v7+ 만)
 4. **KRDS·행안부 코드 직접 배포 X** (라이선스 조건 확인 · 참고만)
 5. **다크모드 미지원 X** (`dark:` prefix 필수)
 6. **모바일 미대응 X** (반응형 필수)
-7. **접근성 무시 X** (aria-label·역할·키보드)
+7. **접근성 무시 X** (aria-label·역할·키보드 필수)
+8. **ag-grid 커뮤니티 = 무제한 무료** (enterprise 기능 혼동 X · 라이선스 확인)
+9. **자체 그리드 구현** (ag-grid·TanStack Table 있는데 처음부터 만들기 X)
+10. **번들 사이즈 300 KB+** (code splitting 없이 증가 X)
 
-## 사용자 요청 시 자동 적용
+## 사용자 요청 시 자동 라우팅 (ag-grid-recommend 스킬 활성 + 매트릭스)
 
-- "계산기 만들어" → shadcn + Tailwind + 필수 요소
-- "관리자 화면" → AntD + DataTable + Form
-- "대시보드" → shadcn + Recharts + KPI 카드
-- "랜딩" → shadcn + Tailwind + 반응형
+| 요청 | 자동 선택 | 추가 의존 |
+|---|---|---|
+| "계산기" | shadcn + Tailwind | Input + Button + Result 표시 |
+| "관리자 화면" | AntD + Form + DataGrid | ag-grid (1k+ rows) 또는 AntD Table |
+| "대시보드" | shadcn + Recharts + KPI 카드 | TanStack Query (비동기) |
+| "랜딩" | shadcn + Tailwind + 반응형 | 애니메이션 = Framer Motion |
+| "테이블 1만 건" | **ag-grid-recommend 스킬 → ag-grid community** | 페이지네이션 · 필터 · 정렬 |
+| "커스텀 그리드" | **ag-grid-recommend 스킬 → TanStack Table v9** | 완전 제어 · 가상화 |
+| "폼 (복잡)" | react-hook-form v7 + zod | Server Actions (Next.js) 또는 Conform |
+| "차트 (실시간)" | Apache ECharts v5.5 + TanStack Query | WebSocket 연동 |
+| "다크모드" | Tailwind `dark:` class 필수 | shadcn dark mode 기본 지원 |
+
+## 2026 신규 추가
+
+- **ag-grid-recommend 스킬** (`.claude/skills/ag-grid-recommend.md`) — 자동 활성 (그리드·대량 데이터)
+- **ui-component-matrix.md** (신규) — 15 카테고리 매트릭스 · 2026 버전 · breaking changes
+- **ag-grid 상세 설정 50+** (matrix에 포함) — 성능·라이선스·번들 비교
+
+## 마이그레이션 체크리스트 (2026-10 기준)
+
+| 라이브러리 | 이전 버전 | 신규 버전 | 주의사항 |
+|---|---|---|---|
+| react-hook-form | v6 | v7 | nested field API 변경 |
+| TanStack Table | v8 | v9 | useColumnFilters → useFilters |
+| ag-grid | v28-v30 | v32+ | frameworkComponents → components |
+| Recharts | v2.x | v5.0 beta | 2026-11 준비 |
+| ECharts | v5.4 | v5.5 | GL Renderer 기본 (100k 포인트) |
 
 ## 관련
 
 - `plugins/design_web/` (랜딩·포트폴리오·블로그·SEO)
+- `plugins/design_system/` (컴포넌트 라이브러리 · ag-grid template 예정)
 - CLAUDE.md § 7 E (UI/UX 표준 기존)
 - `.claude/rules/teaching-doc.md` (문서 디자인 시스템)
+- `.claude/rules/ui-component-matrix.md` (2026 신규 · 15 카테고리 · 성능 비교)
+- `.claude/skills/ag-grid-recommend.md` (의사결정 자동화)
+- 공식 문서:
+  - https://www.ag-grid.com/react-data-grid/
+  - https://tanstack.com/table/v9/docs
+  - https://recharts.org/
+  - https://echarts.apache.org/

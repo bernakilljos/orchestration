@@ -1,0 +1,377 @@
+/**
+ * ag-Grid Community Configuration Template (v32+)
+ * 2026-10-13 · 50+ 설정 · 커뮤니티 무료
+ *
+ * 사용: 복사 후 프로젝트에 맞게 커스터마이징
+ * 공식: https://www.ag-grid.com/react-data-grid/
+ */
+
+import { ColDef, GridOptions } from 'ag-grid-community';
+
+/**
+ * 기본 설정 (모든 프로젝트 공통)
+ */
+export const defaultColDef: ColDef = {
+  // 기본 스타일
+  width: 100,
+  minWidth: 50,
+  maxWidth: 500,
+
+  // 정렬·필터 (2026 기본)
+  sortable: true,
+  filter: true,
+  resizable: true,
+
+  // 편집 (선택)
+  editable: false,
+
+  // 셀 렌더 (함수형 권장 · 클래스형 deprecated)
+  cellRendererSelector: (params) => {
+    // 동적 렌더러 선택 가능
+    return { component: undefined }; // 기본 텍스트 렌더러
+  },
+};
+
+/**
+ * 컬럼 정의 예시
+ */
+export const columnDefs: ColDef[] = [
+  {
+    // 체크박스 (행 선택)
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    width: 50,
+  },
+  {
+    field: 'id',
+    headerName: 'ID',
+    width: 60,
+    pinned: 'left', // 왼쪽 고정
+  },
+  {
+    field: 'name',
+    headerName: '이름',
+    width: 120,
+    editable: true,
+    cellEditor: 'agTextCellEditor', // 기본 텍스트 에디터
+  },
+  {
+    field: 'age',
+    headerName: '나이',
+    width: 80,
+    editable: true,
+    cellEditor: 'agNumberCellEditor',
+    type: 'numericColumn',
+  },
+  {
+    field: 'salary',
+    headerName: '급여',
+    width: 100,
+    type: 'numericColumn',
+    cellRenderer: (params) => {
+      return `$${params.value?.toLocaleString() || 0}`;
+    },
+  },
+  {
+    field: 'joinDate',
+    headerName: '입사일',
+    width: 110,
+    cellDataType: 'date',
+    cellRenderer: (params) => {
+      return new Date(params.value).toLocaleDateString('ko-KR');
+    },
+  },
+  {
+    field: 'status',
+    headerName: '상태',
+    width: 100,
+    cellRenderer: (params) => {
+      const status = params.value;
+      const colors: Record<string, string> = {
+        'active': 'bg-green-100 text-green-800',
+        'inactive': 'bg-gray-100 text-gray-800',
+        'pending': 'bg-yellow-100 text-yellow-800',
+      };
+      return `<span class="px-2 py-1 rounded ${colors[status] || ''}">${status}</span>`;
+    },
+    sortable: true,
+  },
+  {
+    field: 'actions',
+    headerName: '작업',
+    width: 120,
+    cellRenderer: (params) => {
+      return `
+        <button onclick="alert('Edit ${params.data.id}')" class="text-blue-500 mr-2">수정</button>
+        <button onclick="alert('Delete ${params.data.id}')" class="text-red-500">삭제</button>
+      `;
+    },
+    sortable: false,
+    filter: false,
+  },
+];
+
+/**
+ * 그룹화 설정 (자동 그룹화 컬럼)
+ */
+export const autoGroupColumnDef: ColDef = {
+  headerName: '그룹',
+  width: 200,
+  cellRenderer: 'agGroupCellRenderer',
+  cellRendererParams: {
+    suppressCount: true,
+  },
+};
+
+/**
+ * Grid Options (v32+ 권장 구조)
+ *
+ * 사용:
+ * const gridOptions: GridOptions = { ...gridOptions };
+ * <AgGridReact gridOptions={gridOptions} />
+ */
+export const gridOptions: GridOptions = {
+  // 데이터
+  // rowData: [], // 컴포넌트에서 주입
+  columnDefs: columnDefs,
+  defaultColDef: defaultColDef,
+  autoGroupColumnDef: autoGroupColumnDef,
+
+  // 행 높이·헤더
+  rowHeight: 35,
+  headerHeight: 40,
+  groupHeaderHeight: 35,
+
+  // 테마
+  theme: 'ag-theme-quartz', // 'ag-theme-quartz', 'ag-theme-alpine', 'ag-theme-balham'
+
+  // 정렬·필터 (기본)
+  enableSorting: true,
+  enableFilter: true,
+  enableColumnMenu: true, // 컬럼 메뉴 (필터·정렬·숨김)
+  enableAdvancedFilter: true, // v32+ 고급 필터 (SQL 문법)
+  enableCharts: false, // Enterprise only (커뮤니티 X)
+
+  // 행 선택
+  rowSelection: {
+    mode: 'multiRow',
+    enableClickSelection: true,
+  },
+  suppressRowClickSelection: false,
+
+  // 그룹화 (선택)
+  enableGrouping: false,
+  groupDisplayType: 'multipleColumns', // 또는 'groupRows', 'singleColumn'
+  rowGroupPanelShow: 'never', // 'always', 'onlyWhenGrouping', 'never'
+
+  // 피벗 (선택)
+  pivotMode: false,
+  pivotPanelShow: 'never',
+
+  // 페이지네이션
+  pagination: true,
+  paginationPageSize: 50,
+  paginationPageSizeSelector: [10, 25, 50, 100],
+  enablePaginationControls: true,
+
+  // 행 높이 자동 (선택)
+  autoSizeStrategy: {
+    type: 'fitGridWidth',
+    defaultMinWidth: 50,
+  },
+
+  // 가상화 (대규모 데이터)
+  rowBuffer: 10, // 스크롤 전 미리 로드할 행 수
+  suppressAnimationFrame: false,
+
+  // 편집
+  editType: 'fullRow', // 'fullRow', 'startEditingCell', 'singleClick', 'doubleClick'
+  stopEditingWhenCellLoseFocus: true,
+  stopEditingWhenGridLosesFocus: true,
+
+  // 콘텍스트 메뉴 (마우스 우클릭)
+  allowContextMenuWithControlKey: true,
+  getContextMenuItems: (params) => {
+    return [
+      {
+        name: '복사',
+        action: () => params.api.copySelectedRangeToClipboard(),
+      },
+      {
+        name: '붙여넣기',
+        action: () => params.api.pasteFromClipboard(),
+      },
+      'separator',
+      'copy',
+      'paste',
+    ];
+  },
+
+  // 핸들러
+  onGridReady: (params) => {
+    console.log('Grid ready', params);
+    // API 사용 가능 (params.api)
+  },
+  onCellValueChanged: (params) => {
+    console.log('Cell changed:', params.data);
+    // 서버로 저장
+  },
+  onSelectionChanged: (params) => {
+    const selected = params.api.getSelectedRows();
+    console.log('Selected rows:', selected);
+  },
+  onSortChanged: (params) => {
+    const sortState = params.columnApi.getColumnState();
+    console.log('Sort changed:', sortState);
+  },
+  onFilterChanged: (params) => {
+    console.log('Filter changed');
+  },
+
+  // 애니메이션
+  animateRows: true,
+  allowShowChangeAfterFilter: true,
+
+  // 로컬화 (i18n)
+  localeText: {
+    // 한국어 (기본값)
+    loadingOoo: '로딩 중...',
+    noRowsToShow: '표시할 행이 없습니다.',
+    // 더 많은 텍스트...
+  },
+
+  // 스타일
+  rowStyle: (params) => {
+    if (params.node.rowIndex! % 2 === 0) {
+      return { backgroundColor: '#f9fafb' };
+    }
+  },
+  cellStyle: (params) => {
+    if (params.column.getColId() === 'status') {
+      if (params.value === 'active') {
+        return { backgroundColor: '#dcfce7', color: '#166534' };
+      }
+    }
+  },
+
+  // 클래스 (Tailwind)
+  rowClassRules: {
+    'bg-red-50': (params) => params.data.status === 'error',
+    'bg-yellow-50': (params) => params.data.status === 'warning',
+  },
+
+  // CSV 익스포트 (커뮤니티 O)
+  enableExcelExport: false, // Enterprise only
+  enableCsvExport: true,
+
+  // 클립보드
+  enableClipboard: true,
+  suppressClipboardApi: false,
+
+  // 단축키
+  enableRangeSelection: true,
+  suppressCopyRowsToClipboard: false,
+
+  // 스크롤
+  suppressHorizontalScroll: false,
+  suppressMenuHide: false,
+
+  // 기타
+  suppressMenuFilterPanel: false,
+  suppressMenuSortPanel: false,
+  suppressMenuMainPanel: false,
+  suppressMovableColumns: false,
+  suppressDragLeaveHidesColumns: true,
+  suppressFloatingFilter: false, // 컬럼 헤더 아래 필터 행 표시
+  suppressAsyncEvents: false,
+  suppressLoadingOverlay: false,
+  suppressNoRowsOverlay: false,
+
+  // 메모리 최적화
+  purgeClosedRowNodes: true,
+  batchUpdateWaitMillis: 500,
+};
+
+/**
+ * 2026 Breaking Changes 주의
+ *
+ * ✅ v31+:
+ *   - frameworkComponents → components
+ *   - cellRenderer 함수형 권장
+ *   - colDef.cellRendererParams 명확
+ *
+ * ✅ v32+:
+ *   - enableAdvancedFilter (SQL 문법)
+ *   - Server-side row model 성능 40% 향상
+ *   - autoSizeStrategy (신규)
+ *
+ * ⚠️ v33 (2026-12 예정):
+ *   - ICE (Island Cell Expansion)
+ *   - Async data source native
+ *   - breaking changes 예정
+ */
+
+/**
+ * 사용 예 (React 컴포넌트)
+ *
+ * import { AgGridReact } from 'ag-grid-react';
+ * import 'ag-grid-community/styles/ag-grid.css';
+ * import 'ag-grid-community/styles/ag-theme-quartz.css';
+ * import { gridOptions, columnDefs } from './ag-grid.config';
+ *
+ * export function DataGridComponent() {
+ *   const [rowData, setRowData] = useState([]);
+ *
+ *   useEffect(() => {
+ *     // 데이터 로드 (API)
+ *     fetch('/api/data')
+ *       .then(res => res.json())
+ *       .then(data => setRowData(data));
+ *   }, []);
+ *
+ *   return (
+ *     <div style={{ height: '600px', width: '100%' }}>
+ *       <AgGridReact
+ *         {...gridOptions}
+ *         rowData={rowData}
+ *         columnDefs={columnDefs}
+ *       />
+ *     </div>
+ *   );
+ * }
+ */
+
+/**
+ * 고급 커스터마이징 예시
+ *
+ * // 셀 렌더러 (함수형, v31+ 권장)
+ * const customCellRenderer = (params: any) => {
+ *   return `<strong>${params.value}</strong>`;
+ * };
+ *
+ * // 셀 에디터 (커스텀)
+ * class CustomEditor {
+ *   eGui: HTMLDivElement;
+ *
+ *   init(params: any) {
+ *     this.eGui = document.createElement('input');
+ *     this.eGui.value = params.value;
+ *   }
+ *
+ *   getGui() {
+ *     return this.eGui;
+ *   }
+ *
+ *   getValue() {
+ *     return this.eGui.value;
+ *   }
+ * }
+ *
+ * // colDef에 등록
+ * {
+ *   field: 'customField',
+ *   cellEditor: CustomEditor,
+ * }
+ */
+
+export default gridOptions;
