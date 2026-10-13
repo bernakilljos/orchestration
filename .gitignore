@@ -162,3 +162,7 @@ docs/_build/
 # Docker artifacts (local compose)
 docker-compose.override.yml
 .docker-compose.env
+
+# 2026-10-13: 하위 폴더를 cwd 로 돌린 스크립트가 만든 중첩 .claude/ (오염 · cleanup-policy) 는 추적하지 않는다
+.claude/*/.claude/
+plugins/*/.claude/
