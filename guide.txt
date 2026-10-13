@@ -1810,6 +1810,13 @@
 - rule 파일 편집 감지 → CLAUDE.md·guide.txt·other rules·memory·setup 안 참조 자동 grep
 - '하나 알려주면 전체 안 바뀜' 방지
 
+## async_http.py (2026-10-13 신규)
+- Production-grade async HTTP 클라이언트 라이브러리 (.claude/scripts/lib/)
+- aiohttp 기반 timeout (기본 10초) · 재시도 (지수 backoff) · 세마포어 동시성 제어
+- fetch_urls_concurrent() 제너레이터로 대량 URL 병렬 처리
+- 모든 blocking HTTP 호출 → 비동기로 마이그레이션 권장
+- 테스트: pytest .claude/scripts/lib/test_async_http.py
+
 ## cmem 광고 disable
 - ~/.claude-mem/settings.json: CLAUDE_MEM_WELCOME_HINT_ENABLED=false
 

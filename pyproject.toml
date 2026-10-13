@@ -36,6 +36,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+async = [
+    "aiohttp>=3.9.0",
+    "asyncio>=3.4.3",
+]
 dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
@@ -43,6 +47,7 @@ dev = [
     "mypy>=1.10.0",
     "black>=24.0.0",
     "isort>=5.13.0",
+    "aiohttp>=3.9.0",
 ]
 test = [
     "pytest>=7.4.0",
@@ -71,6 +76,7 @@ select = [
     "C",      # flake8-comprehensions
     "B",      # flake8-bugbear
     "UP",     # pyupgrade
+    "PL",     # pylint
 ]
 ignore = [
     "E501",   # line too long (handled by formatter)
@@ -87,8 +93,8 @@ python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
 ignore_missing_imports = true
 exclude = ["build/", "dist/", ".venv", "setup/Output"]
 
