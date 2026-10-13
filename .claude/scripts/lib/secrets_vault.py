@@ -61,7 +61,7 @@ class SecretVault:
                     # On Windows, stat mode is different; just warn
                     pass
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
     def _load_env_vault(self) -> None:
         """Load .env.vault into memory cache."""

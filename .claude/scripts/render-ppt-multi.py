@@ -59,7 +59,7 @@ async def render_html(html_dir: Path, png_dir: Path, only: list[str] | None):
             try:
                 await page.wait_for_load_state("networkidle", timeout=5000)
             except Exception:
-                pass
+                pass  # noqa: BLE001
             await page.wait_for_timeout(800)
             await page.screenshot(path=str(png), full_page=False, omit_background=False,
                                   clip={"x": 0, "y": 0, "width": SLIDE_W, "height": SLIDE_H})

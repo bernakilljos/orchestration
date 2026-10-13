@@ -19,7 +19,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
@@ -49,7 +49,7 @@ def scan_hits():
                     key = m.group(1) or m.group(2)
                     hits[key] = hits.get(key, 0) + 1
     except Exception:
-        pass
+        pass  # noqa: BLE001
     return hits
 
 

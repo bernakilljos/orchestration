@@ -188,7 +188,7 @@ def _get_rss_via_psutil(pid: int) -> Optional[int]:
             for child in p.children(recursive=True):
                 rss_bytes += child.memory_info().rss
         except psutil.Error:
-            pass
+            pass  # noqa: BLE001
         return rss_bytes // (1024 * 1024)
     except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
         return None
@@ -299,12 +299,12 @@ def kill_worker_tree(pid: int, dry_run: bool = False) -> bool:
             try:
                 children = p.children(recursive=True)
             except psutil.Error:
-                pass
+                pass  # noqa: BLE001
             for child in children:
                 try:
                     child.terminate()
                 except psutil.Error:
-                    pass
+                    pass  # noqa: BLE001
             try:
                 p.terminate()
             except psutil.Error:
@@ -315,7 +315,7 @@ def kill_worker_tree(pid: int, dry_run: bool = False) -> bool:
                 try:
                     proc.kill()
                 except psutil.Error:
-                    pass
+                    pass  # noqa: BLE001
             return True
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return False
@@ -336,7 +336,7 @@ def kill_worker_tree(pid: int, dry_run: bool = False) -> bool:
                 time.sleep(2)
                 os.killpg(os.getpgid(pid), 9)   # SIGKILL
             except (ProcessLookupError, PermissionError):
-                pass
+                pass  # noqa: BLE001
         return True
     except (subprocess.SubprocessError, OSError):
         return False

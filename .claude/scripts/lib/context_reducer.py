@@ -263,7 +263,7 @@ def build_project_summary(root: str, max_total_chars: int = 30000) -> str:
                         f"(status: {data.get('status', 'unknown')})\n"
                     )
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
         if plugin_summary != "# Plugin Summary\n\n":
             sections.append(("plugins/summary", plugin_summary, 4))
 

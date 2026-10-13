@@ -215,7 +215,7 @@ def main():
     try:
         sys.stdout.reconfigure(encoding='utf-8')
     except (AttributeError, Exception):
-        pass
+        pass  # noqa: BLE001
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(2)

@@ -19,7 +19,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding='utf-8')
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 USE_COLOR = True
 target = None

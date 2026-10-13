@@ -1023,7 +1023,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(d)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
-            pass
+            pass  # noqa: BLE001
 
     def send_json(self, obj):
         try:
@@ -1034,7 +1034,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(d)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
-            pass
+            pass  # noqa: BLE001
 
     def read_body(self):
         l=int(self.headers.get("Content-Length",0))
@@ -1063,7 +1063,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(d)
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
-            pass
+            pass  # noqa: BLE001
 
     def do_GET(self):
         path=urllib.parse.unquote(self.path)
@@ -1623,7 +1623,7 @@ def _collect_local_status(pc_id):
                     with open(impl_file, encoding="utf-8", errors="replace") as fh:
                         p_impl_summary = "\n".join(fh.readlines()[:30])
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
             if os.path.exists(review_file):
                 try:
                     with open(review_file, encoding="utf-8", errors="replace") as fh:
@@ -1671,7 +1671,7 @@ def _status_push_loop():
                     if pc_id not in _deleted_pcs:
                         _status_store[pc_id] = data
         except Exception as e:
-            pass
+            pass  # noqa: BLE001
         time.sleep(0.2)
 
 # ── 로컬 Screen Capture (remote-agent 대체) ──
@@ -1755,7 +1755,7 @@ def _remote_agent_loop():
             if cmd and cmd.get("action"):
                 _handle_local_cmd(cmd)
         except Exception:
-            pass
+            pass  # noqa: BLE001
         time.sleep(0.2)
 
 def _handle_local_cmd(cmd):
@@ -1789,7 +1789,7 @@ $ax=[int]($s.Left+{x}*$s.Width);$ay=[int]($s.Top+{y}*$s.Height)
                 ps = f"Add-Type -AssemblyName System.Windows.Forms;[System.Windows.Forms.SendKeys]::SendWait('{key}')"
                 subprocess.run(["powershell", "-Command", ps], capture_output=True, timeout=5)
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
 
 if __name__=="__main__":

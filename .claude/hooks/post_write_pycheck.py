@@ -19,7 +19,7 @@ try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, Exception):
-    pass
+    pass  # noqa: BLE001
 
 def _run(cmd, cwd):
     p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, shell=False)

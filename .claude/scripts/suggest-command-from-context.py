@@ -77,7 +77,7 @@ def check_thresholds():
                 forced.append(f"[3중 강제] 미반영 {misreflect}건 ≥ 5건 → "
                               f"수정 지시 시 verify-after-edit-mandatory.md 증명 체인 100%")
         except Exception:
-            pass
+            pass  # noqa: BLE001
     return forced
 
 def check_reusable_solutions():
@@ -145,7 +145,7 @@ def check_external_signals():
                 signals.append(f"[5중 외부신호] 주간 budget {wp:.0f}% ≥ 70% → "
                                f"/token-stats + /guard-save + fast OFF 강제")
     except Exception:
-        pass
+        pass  # noqa: BLE001
     return signals
 
 def main():

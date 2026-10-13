@@ -16,7 +16,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
@@ -316,7 +316,7 @@ def stats_mcp():
             ms = d.get("mcpServers") or {}
             print(f"  등록 MCP {len(ms)}개: {', '.join(ms.keys())}")
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
 
 def stats_all():

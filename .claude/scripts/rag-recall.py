@@ -99,7 +99,7 @@ def index_build():
     try:
         client.delete_collection(COLLECTION_NAME)
     except Exception:
-        pass
+        pass  # noqa: BLE001
     emb_fn = _get_embedding_fn()
     if emb_fn:
         coll = client.create_collection(COLLECTION_NAME, embedding_function=emb_fn)

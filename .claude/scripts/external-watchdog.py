@@ -52,13 +52,13 @@ def log(root: Path, msg: str, level: str = "info") -> None:
                 backup.unlink()
             log_path.rename(backup)
     except OSError:
-        pass
+        pass  # noqa: BLE001
     line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} [{level}] {msg}\n"
     try:
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(line)
     except OSError:
-        pass
+        pass  # noqa: BLE001
 
 
 def find_process(name: str) -> bool:

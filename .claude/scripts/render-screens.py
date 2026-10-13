@@ -56,7 +56,7 @@ async def render(only: list[str] | None):
             try:
                 await page.wait_for_load_state("networkidle", timeout=4000)
             except Exception:
-                pass
+                pass  # noqa: BLE001
             await page.wait_for_timeout(900)
             await page.screenshot(path=str(out), full_page=False, omit_background=False,
                                   clip={"x": 0, "y": 0, "width": W, "height": H})

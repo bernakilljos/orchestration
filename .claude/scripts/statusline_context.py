@@ -16,7 +16,7 @@ import sys
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 FILLED = "█"  # █
 EMPTY = "▒"   # ▒
@@ -231,7 +231,7 @@ def _scan_save() -> None:
             json.dump(_SCAN, f, separators=(",", ":"))
         os.replace(tmp, _SCAN_PATH)
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
 
 import atexit as _atexit
@@ -492,7 +492,7 @@ def extra_gauges(cwd, data=None):
                     if r and r[0]:
                         tasks_str = f"task {r[0]}"
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
     except Exception:
         pass
     # MCP - Headroom proxy 헬스체크
@@ -588,7 +588,7 @@ def extra_gauges(cwd, data=None):
                     _sp0.Popen(["bash", scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
                                creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
             except Exception:
-                pass
+                pass  # noqa: BLE001
         if os.path.exists(mcp_cache):
             import time as _time
             age = _time.time() - os.path.getmtime(mcp_cache)
@@ -615,7 +615,7 @@ def extra_gauges(cwd, data=None):
             tail.append((f"MCP {ok}/{tot}" if not fail else f"[!] MCP {ok}/{tot} ({fail} 실패)") + stale)
             mcp_shown = True
     except Exception:
-        pass
+        pass  # noqa: BLE001
     if not mcp_shown:
         try:
             import urllib.request
@@ -690,7 +690,7 @@ def extra_gauges(cwd, data=None):
                 else:
                     tail.append(f"하드코딩 {tot}")
         except Exception:
-            pass
+            pass  # noqa: BLE001
     except Exception:
         pass
 
@@ -707,7 +707,7 @@ def extra_gauges(cwd, data=None):
             _delta = _official - _SESSION_COST
             _SESSION_COST = _official
     except Exception:
-        pass
+        pass  # noqa: BLE001
     rate = float(os.environ.get("USD_KRW_RATE", "1350"))
     monthly = (_MONTHLY_COST + _delta) if _MONTHLY_COST > 0 else _SESSION_COST
     yearly = (_YEARLY_COST + _delta) if _YEARLY_COST > 0 else monthly
@@ -775,7 +775,7 @@ def extra_gauges(cwd, data=None):
             with open(_rl_cache, "w", encoding="utf-8") as _f:
                 json.dump({"rate_limits": rl, "ts": _time.time()}, _f)
         except Exception:
-            pass
+            pass  # noqa: BLE001
     else:
         try:
             import time as _time
@@ -918,13 +918,13 @@ def main() -> None:
                       "w", encoding="utf-8") as _f:
                 json.dump(data, _f, ensure_ascii=False, indent=2)
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     model_id = ""
     try:
         model_id = (data.get("model") or {}).get("id") or ""
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     session_id = data.get("session_id") or ""
     # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
@@ -988,7 +988,7 @@ def main() -> None:
                 json.dump({"model": model_id, "limit": limit,
                            "ts": _dtc.datetime.now().isoformat(timespec="seconds")}, _f)
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
     tokens = 0
     no_usage = True

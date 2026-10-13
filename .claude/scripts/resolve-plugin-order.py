@@ -6,7 +6,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding='utf-8')
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 plugins_dir = Path("plugins")
 names = [p.name for p in plugins_dir.iterdir() if p.is_dir() and not p.name.startswith("_")]
@@ -20,7 +20,7 @@ for n in names:
             pj = json.loads(pj_path.read_text(encoding="utf-8"))
             deps = [d for d in pj.get("dependencies", {}).get("plugins", []) if d in names]
         except Exception:
-            pass
+            pass  # noqa: BLE001
     plugins[n] = deps
 
 ordered = []

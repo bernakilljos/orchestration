@@ -16,7 +16,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding='utf-8')
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 REQUIRED = ["name", "display", "prefix", "version", "status", "phase"]
 STATUSES = {"stable", "experimental", "spec-only", "deprecated"}

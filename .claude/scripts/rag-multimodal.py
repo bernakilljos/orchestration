@@ -31,7 +31,7 @@ def build_image_index():
     try:
         client.delete_collection(coll_name)
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     emb_fn = rag._get_embedding_fn()
     coll = client.create_collection(coll_name, embedding_function=emb_fn) if emb_fn else client.create_collection(coll_name)

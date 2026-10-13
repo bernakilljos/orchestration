@@ -14,7 +14,7 @@ from datetime import datetime
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / ".claude" / "state" / "mojibake-audit.json"
@@ -97,7 +97,7 @@ def scan(fix=False):
                     fp.write_text(new_txt, encoding="utf-8")
                     fixed_files.append(str(fp.relative_to(ROOT).as_posix()))
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
     return hits, hits_flat, scanned, fixed_files
 
 

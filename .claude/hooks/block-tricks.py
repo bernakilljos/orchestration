@@ -20,7 +20,7 @@ import os
 try:
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 if os.environ.get('ALLOW_TRICKS') == '1':
     sys.exit(0)

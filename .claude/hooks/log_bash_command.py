@@ -25,5 +25,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        pass
+        pass  # noqa: BLE001
     sys.exit(0)

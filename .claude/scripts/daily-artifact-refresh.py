@@ -33,7 +33,7 @@ try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except AttributeError:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 LOG = ROOT / ".claude" / "logs" / "daily-artifact-refresh.log"

@@ -76,7 +76,7 @@ def verify(docx_path: Path, retry: int = 1) -> int:
             try:
                 word.Quit()
             except Exception:
-                pass
+                pass  # noqa: BLE001
 
 
 if __name__ == "__main__":

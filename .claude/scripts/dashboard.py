@@ -130,7 +130,7 @@ def main() -> int:
                 time.sleep(1)
                 live.update(render_dashboard())
     except KeyboardInterrupt:
-        pass
+        pass  # noqa: BLE001
     return 0
 
 

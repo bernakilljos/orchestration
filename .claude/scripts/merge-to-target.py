@@ -36,7 +36,7 @@ from pathlib import Path
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 KIT = Path(__file__).resolve().parents[2]
 TREES = [
@@ -68,7 +68,7 @@ def git_history_hashes(rel: str) -> set[str]:
                 out.add(md5(blob.replace(b"\r\n", b"\n")))
                 out.add(md5(blob.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")))
     except Exception:
-        pass
+        pass  # noqa: BLE001
     return out
 
 

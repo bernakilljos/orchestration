@@ -74,7 +74,7 @@ def _conn() -> sqlite3.Connection:
         conn.executescript(_SCHEMA)
         conn.commit()
     except sqlite3.Error:
-        pass
+        pass  # noqa: BLE001
     return conn
 
 

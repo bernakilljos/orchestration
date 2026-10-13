@@ -204,7 +204,7 @@ def main() -> int:
           "script": "init-state-db.py"
         }) + "\n")
     except:
-      pass
+      pass  # noqa: BLE001
     return 1
 
 

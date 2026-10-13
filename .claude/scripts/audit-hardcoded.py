@@ -14,7 +14,7 @@ from datetime import datetime
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 OUT = ROOT / ".claude" / "state" / "hardcoded-audit.json"

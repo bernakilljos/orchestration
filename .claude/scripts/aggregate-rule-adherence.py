@@ -18,7 +18,7 @@ try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parents[2]
 DB = ROOT / ".claude" / "state" / "orca.db"

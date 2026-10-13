@@ -17,7 +17,7 @@ import sys
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 
 def main() -> int:

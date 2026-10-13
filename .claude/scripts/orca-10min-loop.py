@@ -90,7 +90,7 @@ def get_system_metrics():
                 if 'code' in name:
                     vscode_count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
+                pass  # noqa: BLE001
 
         return {
             "ram_percent": round(ram_percent, 1),

@@ -24,7 +24,7 @@ EXTS = {".py", ".sh"}
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 
 def files():

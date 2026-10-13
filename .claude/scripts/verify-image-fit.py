@@ -15,7 +15,7 @@ try:
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except (AttributeError, Exception):
-    pass
+    pass  # noqa: BLE001
 
 try:
     from PIL import Image
@@ -96,7 +96,7 @@ def auto_register_ratio(name: str, width: int, height: int) -> None:
             with open(USER_RATIOS, encoding="utf-8") as f:
                 cur = json.load(f)
         except Exception:
-            pass
+            pass  # noqa: BLE001
     cur[name] = round(height / width, 4)
     with open(USER_RATIOS, "w", encoding="utf-8") as f:
         json.dump(cur, f, ensure_ascii=False, indent=2)

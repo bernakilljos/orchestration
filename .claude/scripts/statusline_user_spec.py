@@ -16,7 +16,7 @@ import sys
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    pass  # noqa: BLE001
 
 FILLED = "█"  # █
 EMPTY = "▒"   # ▒
@@ -122,7 +122,7 @@ def main() -> None:
     try:
         model_id = (data.get("model") or {}).get("id") or ""
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
     session_id = data.get("session_id") or ""
     cwd = data.get("cwd") or ""
@@ -145,7 +145,7 @@ def main() -> None:
                 )
                 no_usage = False
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
     print(render(tokens, limit, exact_model, no_usage))
 

@@ -31,7 +31,7 @@ def collect_stats():
                     elif data.get("status") == "spec-only":
                         stats["plugins_spec"] += 1
                 except Exception:
-                    pass
+                    pass  # noqa: BLE001
     stats["rules"] = len(list((PROJECT_ROOT / ".claude" / "rules").glob("*.md")))
     stats["hooks"] = len(list((PROJECT_ROOT / ".claude" / "hooks").glob("*.sh"))) + \
                     len(list((PROJECT_ROOT / ".claude" / "hooks").glob("*.py")))

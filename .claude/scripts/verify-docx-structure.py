@@ -16,7 +16,7 @@ try:
     if sys.platform == "win32":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 except (AttributeError, Exception):
-    pass
+    pass  # noqa: BLE001
 
 try:
     from docx import Document

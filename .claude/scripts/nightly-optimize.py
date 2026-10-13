@@ -47,7 +47,7 @@ def backup_db() -> None:
                 p.unlink()
                 log(f"rolling delete: {p.name}")
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
 
 def compress_conversations() -> None:
@@ -83,7 +83,7 @@ def cleanup_logs() -> None:
                 p.unlink()
                 n += 1
         except Exception:
-            pass
+            pass  # noqa: BLE001
     if n:
         log(f"deleted old logs: {n}")
 
@@ -100,7 +100,7 @@ def cleanup_image_cache() -> None:
                 p.unlink()
                 n += 1
         except Exception:
-            pass
+            pass  # noqa: BLE001
     if n:
         log(f"cleaned image-cache: {n} files")
 

@@ -79,7 +79,7 @@ def run(ctx):
         with open(os.path.join(cwd, ".claude", "state", "context-limit.json"), encoding="utf-8") as f:
             limit = int(json.load(f).get("limit") or 0) or None
     except Exception:
-        pass
+        pass  # noqa: BLE001
     if not limit:
         limit = 1_000_000 if ("[1m]" in (model_id or "") or tokens > 200_000) else 200_000
     pct = tokens / limit * 100
@@ -116,14 +116,14 @@ def _safe_to_clear(root):
         if _time.time() - c.get("ts", 0) < 60:
             return (c.get("ok"), c.get("why", ""))
     except Exception:
-        pass
+        pass  # noqa: BLE001
     ok, why = _safe_to_clear_git(root)
     try:
         os.makedirs(os.path.dirname(cache), exist_ok=True)
         with open(cache, "w", encoding="utf-8") as f:
             _json.dump({"ts": _time.time(), "ok": ok, "why": why}, f, ensure_ascii=False)
     except Exception:
-        pass
+        pass  # noqa: BLE001
     return (ok, why)
 
 

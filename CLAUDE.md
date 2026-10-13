@@ -394,3 +394,7 @@ git add plugins/ .claude/ && git commit -m "..."  # 5. 커밋
 - 공유 규칙: `.claude/rules/*.md`
 - plugin.json 스키마: `.claude-plugin/plugin-schema.json`
 - 업그레이드 노트: `docs/upgrade-analysis-2026-04-19.md`
+
+
+<!-- AUTO-GEN TODO: 참조 깨진 룰/파일 (2026-10-13 25축 audit) -->
+<!-- verify-image-fit.py detect-repeat-request.sh ./src/CLAUDE.md asset-creation-workflow.md auto-install-deps.sh verify-no-mojibake.py ensure-state.sh docs/CLAUDE_SETUP_GUIDE.md task-instruction.md user-prompt-auto-planner.sh smoke-test-screen.sh .claude/rules/mcp-integration.md statusline.sh detect-user-emotion.sh auto-compact-check.sh verify-docx-structure.py user-emotion-auto-response.md cleanup-pollution.sh verify_ui.py detect-asset-creation.sh pre-install-lock.sh -->

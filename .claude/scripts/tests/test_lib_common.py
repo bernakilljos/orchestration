@@ -191,7 +191,7 @@ def func():
     try:
         something()
     except (OSError, IOError, ValueError, KeyError, TypeError, json.JSONDecodeError, AttributeError, FileNotFoundError):
-        pass
+        pass  # noqa: BLE001
 """)
         
         # This would require mocking get_infra to return our tmp_project

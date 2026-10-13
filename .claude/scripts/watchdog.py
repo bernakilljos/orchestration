@@ -74,7 +74,7 @@ class WatchdogLogger:
             with open(self.log_path, "a") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
     def rotate_if_needed(self, max_size_mb: int = 10, backup_count: int = LOG_BACKUP_COUNT) -> None:
         """Rotate log if > max_size_mb, keeping `backup_count` historical backups.
@@ -101,7 +101,7 @@ class WatchdogLogger:
                     src.rename(dst)
             base.rename(base.parent / f"{base.name}.1")
         except Exception:
-            pass
+            pass  # noqa: BLE001
 
 
 def get_project_root() -> Path:

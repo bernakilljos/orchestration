@@ -102,7 +102,7 @@ def _spawn_rag(root, prompt: str) -> None:
         try:
             lock.unlink()
         except OSError:
-            pass
+            pass  # noqa: BLE001
 
 
 def rag_worker() -> None:
@@ -119,12 +119,12 @@ def rag_worker() -> None:
             f.write((json.dumps(results, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
         os.replace(tmp, cache)
     except Exception:
-        pass
+        pass  # noqa: BLE001
     finally:
         try:
             lock.unlink()
         except OSError:
-            pass
+            pass  # noqa: BLE001
 
 
 def _lines(rx: str, text: str, label: str, limit: int) -> list[str]:
@@ -157,7 +157,7 @@ def run(ctx):
             ai = res.get("ai") or ai
             reason = res.get("reason") or reason
         except Exception:
-            pass
+            pass  # noqa: BLE001
     ctx.mark("classify")
 
     # 키워드 3-tier 회상
@@ -196,7 +196,7 @@ def run(ctx):
             trig = "" if prompt.startswith("--") else prompt
             la.log("hook", "user-prompt-auto-planner", trig, "success", 0)
         except Exception:
-            pass
+            pass  # noqa: BLE001
     ctx.mark("log-activation")
 
     # Memory 자동 recall 문구 (원본 grep/sed 파이프라인을 정규식으로)
@@ -218,7 +218,7 @@ def run(ctx):
             try:
                 ld.log(COMPAT_DECISION_MSG or prompt, ai, mem_count)
             except Exception:
-                pass
+                pass  # noqa: BLE001
     ctx.mark("log-decision")
 
     out = (

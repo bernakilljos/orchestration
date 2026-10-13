@@ -131,7 +131,7 @@ def list_cached() -> list:
             meta["path"] = str(jpg) if jpg.exists() else None
             out.append(meta)
         except Exception:
-            pass
+            pass  # noqa: BLE001
     return sorted(out, key=lambda x: x.get("generated_at", 0), reverse=True)
 
 

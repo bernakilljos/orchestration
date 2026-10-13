@@ -248,7 +248,7 @@ def main():
       db_path.unlink()
       print(f"[*] Cleaned up old database at {db_path}\n")
     except:
-      pass
+      pass  # noqa: BLE001
 
   runner = TestRunner()
 

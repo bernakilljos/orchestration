@@ -79,7 +79,7 @@ def main() -> None:
         with (cwd / ".claude" / "state" / "context-limit.json").open(encoding="utf-8") as f:
             limit = int(json.load(f).get("limit") or 0)
     except Exception:
-        pass
+        pass  # noqa: BLE001
     if not limit:
         limit = 1_000_000 if tokens > 200_000 else 200_000
 

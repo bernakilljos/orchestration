@@ -35,7 +35,7 @@ if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
     except Exception:
-        pass
+        pass  # noqa: BLE001
 
 PROJECT_ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
 DB_PATH = PROJECT_ROOT / ".claude" / "state" / "sessions.db"

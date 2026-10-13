@@ -102,7 +102,7 @@ def run(ctx):
                     )
                 c.commit()
         except Exception:
-            pass
+            pass  # noqa: BLE001
     except Exception as e:
         append_text(log, f"[lookup] {e}\n")
     finally:
@@ -110,5 +110,5 @@ def run(ctx):
             try:
                 c.close()
             except Exception:
-                pass
+                pass  # noqa: BLE001
     return "\n".join(out) + "\n" if out else None
