@@ -197,6 +197,41 @@ def detect_idle_sessions():
         log_msg(f"Idle session detection failed: {e}", "WARN")
         return []
 
+def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
+    """부모가 죽은 채 멈춘 kit hook·스크립트 python 을 정리한다.
+
+    2026-10-14 실측: 부모 없는 python 65개가 최대 289시간 CPU 0초로 멈춰 있었다
+    (approval-gate.py 51 · 옛 check-mojibake 의 python -c 9 · `python --version` 까지 멈춤).
+    `--version` 도 멈춘 것 = 원인은 스크립트가 아니라 이 PC 의 python 기동 단계(환경).
+    → hook 이 python 을 덜 띄우게 고치고(예방), 그래도 남은 것은 여기서 치운다(정리).
+    안전 조건 (셋 다): 부모 프로세스 없음 · min_age_hours 이상 · kit hook/스크립트 흔적
+    (명령줄에 /.claude/ 또는 python -c / --version). 서버(run.py 등)·사용자 작업은 대상이 아니다.
+    """
+    import time as _t
+    reaped = 0
+    alive = set(psutil.pids())
+    for proc in psutil.process_iter(["pid", "ppid", "name", "cmdline", "create_time"]):
+        try:
+            info = proc.info
+            if not (info["name"] or "").lower().startswith("python"):
+                continue
+            if info["ppid"] in alive:
+                continue
+            if (_t.time() - (info["create_time"] or _t.time())) < min_age_hours * 3600:
+                continue
+            cmd = " ".join(info["cmdline"] or []).replace("\\", "/")
+            if not ("/.claude/" in cmd or " -c " in f" {cmd} " or cmd.endswith("--version")):
+                continue
+            proc.kill()
+            reaped += 1
+            log_msg(f"stuck orphan python 정리: pid={info['pid']} cmd={cmd[:120]}")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    if reaped:
+        log_msg(f"stuck orphan python {reaped}개 정리", "WARN")
+    return reaped
+
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -236,7 +271,10 @@ def main():
         # 3b. cleanup-pollution.sh
         run_cleanup_pollution()
 
-        # 3c. Idle session info (list only)
+        # 3c. 멈춘 고아 python 정리 (2026-10-14 · 좀비 62개 사례)
+        reap_stuck_orphans()
+
+        # 3d. Idle session info (list only)
         idle = detect_idle_sessions()
         if idle:
             log_msg(f"Idle sessions (info only): {idle[:3]}")
