@@ -31,6 +31,11 @@ def main() -> int:
         print(__doc__)
         return 2
     sj.setdefault("hooks", {})["UserPromptSubmit"] = presets[mode]
+    # 2026-10-14: 도구 hook(PreToolUse·PostToolUse) 도 같이 전환 (tool-dispatch.py ↔ 옛 .sh 들)
+    tool = presets.get("tool_" + mode)
+    if tool:
+        for ev, groups in tool.items():
+            sj["hooks"][ev] = groups
     SETTINGS.write_text(json.dumps(sj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"전환 → {mode}: {names(presets[mode])}")
     print("※ 열려 있는 세션은 다음 프롬프트부터 적용")

@@ -182,7 +182,6 @@ def load_script(name: str):
 # 원본 bash 훅이 JSON 원문을 bash 내장·grep·sed 로 뽑던 방식을 그대로 재현한다 (이스케이프된 \ 포함).
 # ============================================================================
 import fnmatch
-import subprocess
 
 
 class Result:
@@ -318,13 +317,6 @@ def root_path(*parts: str) -> str:
     return os.path.join(str(ROOT), *parts)
 
 
-def run_script_text(cmd: list, stdin_text: str = "", cwd=None, timeout: float = 30.0):
-    """보조 프로세스 실행 → (rc, stdout, stderr) 문자열. 드문 경로 전용."""
-    p = subprocess.run(cmd, input=stdin_text.encode("utf-8", "replace"), capture_output=True,
-                       cwd=cwd, timeout=timeout)
-    return p.returncode, p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace")
-
-
 def write_dispatch_log(path: str, lines: list, max_bytes: int = 1_000_000, keep: int = 3000) -> None:
     """디스패처 로그 append (크기 상한 초과 시 끝 N줄만 유지)."""
     try:
@@ -344,12 +336,36 @@ _JQ = []
 
 
 def has_jq() -> bool:
-    """command -v jq — jq 가 있으면 원본 훅이 다른 분기(jq 파서)를 타므로, 그런 훅은 원본 스크립트로 위임한다."""
-    if not _JQ:
+    """command -v jq — jq 가 있으면 원본 훅이 다른 분기(jq 파서)를 타므로, 그런 훅은 원본 스크립트로 위임한다.
+
+    PATH 전체 탐색은 이 PC 에서 100~300ms 라 (보안 에이전트가 stat 마다 개입) PATH 문자열 해시로 결과를 파일에 캐시한다.
+    PATH 가 바뀌면 (jq 설치 등) 해시가 달라져 다시 탐색한다.
+    """
+    if _JQ:
+        return _JQ[0]
+    import hashlib
+
+    path_env = os.environ.get("PATH", "")
+    key = hashlib.sha1(path_env.encode("utf-8", "replace")).hexdigest()[:16]
+    cache = ROOT / ".claude" / "state" / "tool-dispatch-env.json"
+    val = None
+    try:
+        d = json.loads(cache.read_text(encoding="utf-8"))
+        if d.get("path_hash") == key:
+            val = bool(d.get("jq"))
+    except Exception:
+        pass
+    if val is None:
         import shutil
 
-        _JQ.append(shutil.which("jq") is not None)
-    return _JQ[0]
+        val = shutil.which("jq") is not None
+        try:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text(json.dumps({"path_hash": key, "jq": val}), encoding="utf-8")
+        except OSError:
+            pass
+    _JQ.append(val)
+    return val
 
 
 # ----------------------------------------------------------------------------

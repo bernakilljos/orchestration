@@ -1,5 +1,5 @@
 {
-  "_doc": "UserPromptSubmit hook 두 방식. 전환: python .claude/scripts/switch-prompt-hooks.py merged|separate",
+  "_doc": "hook 방식 프리셋. 전환: python .claude/scripts/switch-prompt-hooks.py merged|separate (프롬프트+도구 hook 함께)",
   "merged": [
     {
       "hooks": [
@@ -101,5 +101,393 @@
         }
       ]
     }
-  ]
+  ],
+  "tool_merged": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py\" pre",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-after-edit-logger.py\\\" '$1'\" 2>/dev/null || true",
+            "timeout": 3,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py\" post",
+            "timeout": 90
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
+            "_disabled_reason": "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
+            "timeout": 10,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh\"",
+            "timeout": 15,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
+          }
+        ]
+      }
+    ]
+  },
+  "tool_separate": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-asset-creation.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-critical-files.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-version-suffix.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mojibake.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-tricks.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-01-pre-task.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-claude-md-size.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-hardcoded-paths.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-korean-removal.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-emoji-in-code.sh\" \"$FILE\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-version-suffix.sh\" \"$FILE\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-after-edit-logger.py\\\" '$1'\" 2>/dev/null || true",
+            "timeout": 3,
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-visible-windows.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-file-deletion.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_dangerous_bash.py\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/log_bash_command.py\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/pre-build-reminder.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret-scan.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/pre-commit-secrets.sh\"",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/approval-gate-detect.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-full-check.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-commit-infra-check.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/track-agent-dispatch.sh\" start",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-korean-only.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-demo-pattern.sh\"",
+            "timeout": 3,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_write_pycheck.py\"",
+            "timeout": 30,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_formatter.py\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-indentation.sh\"",
+            "timeout": 3,
+            "continueOnBlock": true
+          },
+          {
+            "matcher": "Write",
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/prevent-whitespace-png.sh\" \"$FILE\"",
+            "timeout": 5,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-js-syntax.sh\"",
+            "timeout": 5,
+            "continueOnBlock": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-html-balance.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
+            "_disabled_reason": "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "true",
+            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
+            "_disabled_reason": "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
+            "timeout": 5,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
+            "timeout": 10,
+            "continueOnBlock": true,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh\"",
+            "timeout": 30,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "CLAUDE.md § 7-24 — DB/API/UI 변경 자동 smoke test"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh\"",
+            "timeout": 15,
+            "continueOnBlock": true,
+            "async": true,
+            "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-file-naming.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/hook-09-ocr-verify.sh\"",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'test -d \"$CLAUDE_PROJECT_DIR/.claude\" && date +%Y-%m-%dT%H:%M:%S > \"$CLAUDE_PROJECT_DIR/.claude/orca-heartbeat\"'"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/periodic-snapshot.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/propagate-rule-change.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/track-agent-dispatch.sh\" end",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }

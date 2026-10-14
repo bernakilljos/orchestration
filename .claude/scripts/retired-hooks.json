@@ -19,5 +19,52 @@
       "suggest-command-from-context.sh",
       "auto-explore-on-task.py"
     ]
+  },
+  "PreToolUse": {
+    "replaced_by": "tool-dispatch.py",
+    "since": "2026-10-14",
+    "hooks": [
+      "approval-gate-detect.sh",
+      "block-file-deletion.sh",
+      "block-korean-removal.sh",
+      "block-tricks.sh",
+      "block-version-suffix.sh",
+      "block-visible-windows.sh",
+      "block_dangerous_bash.py",
+      "check-claude-md-size.sh",
+      "check-hardcoded-paths.sh",
+      "check-mojibake.sh",
+      "detect-asset-creation.sh",
+      "hook-01-pre-task.sh",
+      "log_bash_command.py",
+      "pre-build-reminder.sh",
+      "pre-commit-full-check.sh",
+      "pre-commit-infra-check.sh",
+      "pre-commit-secrets.sh",
+      "prevent-emoji-in-code.sh",
+      "prevent-version-suffix.sh",
+      "protect-critical-files.sh",
+      "secret-scan.sh",
+      "track-agent-dispatch.sh"
+    ]
+  },
+  "PostToolUse": {
+    "replaced_by": "tool-dispatch.py",
+    "since": "2026-10-14",
+    "hooks": [
+      "check-html-balance.sh",
+      "check-indentation.sh",
+      "check-js-syntax.sh",
+      "check-korean-only.sh",
+      "detect-demo-pattern.sh",
+      "enforce-file-naming.sh",
+      "hook-09-ocr-verify.sh",
+      "markdown_formatter.py",
+      "periodic-snapshot.sh",
+      "post_write_pycheck.py",
+      "prevent-whitespace-png.sh",
+      "propagate-rule-change.sh",
+      "track-agent-dispatch.sh"
+    ]
   }
 }
