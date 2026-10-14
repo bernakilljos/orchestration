@@ -24,7 +24,7 @@ SUBAGENT_BIG_PATTERN = "전수조사|전체.*탐색|전체.*검색|모든.*파�
 SUBAGENT_REVIEW_PATTERN = "리뷰|review|코드 검토|PR 검토"
 OUTPUT_TEMPLATE = (
     "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"[대상 확정 REQUIRED — 0순위]\\n"
-    "★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 맞으면 진행, 아니면 정정\\n"
+    "★ 첫 응답 첫 줄 형식 (매 지시 필수): 대상: <path> (kit/설정/target/글로벌) — 바로 진행 (틀리면 사용자가 정정 · 확인 기다리지 않음 D6)\\n"
     "★ 4갈래 후보:\\n"
     "  1) ${PROJECT_ROOT} (kit 자체 감사-룰-hook)\\n"
     "  2) ${PROJECT_ROOT}/setup/templates/ (install 배포용 template)\\n"
