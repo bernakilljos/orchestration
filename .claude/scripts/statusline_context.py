@@ -778,8 +778,36 @@ def extra_gauges(cwd, data=None):
                           "resets_at": v.get("resets_at")}
         return out or None
 
-    rl = _read_rl(data)
-    rl_age = 0.0
+    # 2026-10-14: 세션(five_hour)·주간(seven_day)은 **같이 오지 않을 때가 있다**(실측: 주간만 온 렌더).
+    #   종전엔 「하나라도 오면 그것만 쓰고 캐시를 통째로 덮었다」 → 안 온 쪽이 화면에서 빠지고
+    #   캐시에서도 지워져 «나왔다 안 나왔다» 했다. -> 키별로 합친다: 온 것은 새 값, 안 온 것은 캐시.
+    import time as _time
+    fresh = _read_rl(data) or {}
+    cached, c_ts = {}, {}
+    try:
+        with open(_rl_cache, "r", encoding="utf-8") as _f:
+            c = json.load(_f)
+        cached = _read_rl(c) or {}
+        c_ts = c.get("key_ts") or {k: float(c.get("ts") or 0) for k in cached}
+    except Exception:
+        pass
+    now = _time.time()
+    rl, key_ts = {}, {}
+    for k in ("five_hour", "seven_day"):
+        if k in fresh:
+            rl[k], key_ts[k] = fresh[k], now
+        elif k in cached:
+            rl[k], key_ts[k] = cached[k], float(c_ts.get(k) or 0)
+    if fresh:
+        try:
+            os.makedirs(os.path.dirname(_rl_cache), exist_ok=True)
+            with open(_rl_cache, "w", encoding="utf-8") as _f:
+                json.dump({"rate_limits": rl, "ts": now, "key_ts": key_ts}, _f)
+        except Exception:
+            pass
+    rl_age = max([now - key_ts[k] for k in key_ts if k not in fresh] or [0.0])
+    rl = rl or None
+
     if rl:
         try:
             os.makedirs(os.path.dirname(_rl_cache), exist_ok=True)
