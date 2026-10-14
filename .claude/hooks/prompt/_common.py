@@ -174,3 +174,179 @@ def load_script(name: str):
         spec.loader.exec_module(mod)
     _SCRIPT_CACHE[name] = mod
     return mod
+
+
+# ============================================================================
+# 도구 훅 (PreToolUse / PostToolUse) 공용 — .claude/hooks/tool-dispatch.py + .claude/hooks/tool/*.py
+# 각 모듈은 run(ctx) -> Result | Spawn | None.  (None = 무출력 · exit 0)
+# 원본 bash 훅이 JSON 원문을 bash 내장·grep·sed 로 뽑던 방식을 그대로 재현한다 (이스케이프된 \ 포함).
+# ============================================================================
+import fnmatch
+import subprocess
+
+
+class Result:
+    """훅 1개의 실행 결과 — 원본 프로세스의 (exit code, stdout, stderr) 와 같은 의미."""
+
+    __slots__ = ("rc", "out", "err")
+
+    def __init__(self, rc: int = 0, out: str = "", err: str = "") -> None:
+        self.rc = rc
+        self.out = out
+        self.err = err
+
+
+class Spawn:
+    """드물게만 타는 무거운 경로(git 커밋·외부 도구 호출) — 원본 스크립트를 그대로 실행한다.
+
+    디스패처가 병렬로 띄우고 수거한다 (원본이 동시 실행이던 것과 동일).
+    rel: 프로젝트 루트 기준 스크립트 경로 · args: 원본이 받던 인자 (settings 의 "$FILE" 등)
+    """
+
+    __slots__ = ("rel", "args")
+
+    def __init__(self, rel: str, args: tuple = ()) -> None:
+        self.rel = rel
+        self.args = tuple(args)
+
+
+def tool_name(ctx) -> str:
+    return ctx.field("tool_name", "toolName")
+
+
+def tool_input(ctx) -> dict:
+    ti = ctx.payload.get("tool_input")
+    return ti if isinstance(ti, dict) else {}
+
+
+def bash_cat(raw: str) -> str:
+    """INPUT=$(cat) — 끝의 개행만 제거."""
+    return raw.rstrip("\n")
+
+
+def bash_read(raw: str) -> str:
+    """read -r -d '' INPUT — 앞뒤 IFS 공백(스페이스·탭·개행) 제거."""
+    return raw.strip(" \t\n")
+
+
+def bash_field(inp: str, key: str) -> str:
+    """${INPUT#*"key":} → 앞 따옴표 제거 → 앞 ' "' 제거 → 첫 따옴표 이후 제거 (bash 내장 치환 체인)."""
+    tag = '"%s":' % key
+    i = inp.find(tag)
+    v = inp[i + len(tag):] if i >= 0 else inp
+    if v.startswith('"'):
+        v = v[1:]
+    if v.startswith(' "'):
+        v = v[2:]
+    j = v.find('"')
+    return v[:j] if j >= 0 else v
+
+
+def bash_basename(s: str) -> str:
+    r"""Git Bash(msys) basename — / 와 \ 둘 다 구분자, 끝의 구분자 무시."""
+    t = s.rstrip("/\\")
+    if not t:
+        return "/" if s else ""
+    k = max(t.rfind("/"), t.rfind("\\"))
+    return t[k + 1:]
+
+
+def glob_any(s: str, *patterns: str) -> bool:
+    """bash case 글롭 — * 는 / 도 매치."""
+    return any(fnmatch.fnmatchcase(s, p) for p in patterns)
+
+
+_WS = r"[ \t\r\f\v]"
+
+
+def sed_json_value(inp: str, key: str):
+    r"""echo $INPUT | sed -n 's/.*"key"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1."""
+    rx = re.compile(r'.*"%s"%s*:%s*"([^"]*)"' % (key, _WS, _WS))
+    for line in inp.split("\n"):
+        m = rx.match(line)
+        if m:
+            return m.group(1)
+    return None
+
+
+def grep_o_first(inp: str, pattern: str):
+    """grep -oE PATTERN | head -1 (줄 단위 · 첫 매치 전체 텍스트)."""
+    rx = re.compile(pattern)
+    for line in inp.split("\n"):
+        m = rx.search(line)
+        if m:
+            return m.group(0)
+    return None
+
+
+def grep_key_value_a(inp: str, key: str) -> str:
+    r"""grep -oE '"key"\s*:\s*"[^"]+' | head -1 | sed 's/.*"\([^"]*\)$/\1/' → 값 (없으면 빈 문자열)."""
+    m = grep_o_first(inp, r'"%s"[ \t\r\f\v]*:[ \t\r\f\v]*"[^"]+' % key)
+    if m is None:
+        return ""
+    return m[m.rfind('"') + 1:]
+
+
+def grep_key_value_b(inp: str, key: str) -> str:
+    r"""grep -oE '"key"[[:space:]]*:[[:space:]]*"[^"]+"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/' → 값."""
+    m = grep_o_first(inp, r'"%s"[ \t\r\f\v]*:[ \t\r\f\v]*"[^"]+"' % key)
+    if m is None:
+        return ""
+    mm = re.match(r'.*"([^"]*)"$', m)
+    return mm.group(1) if mm else m
+
+
+def project_guard(ctx) -> bool:
+    """[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] — 서브프로젝트 가드 (없으면 False)."""
+    return ctx.has_plugins()
+
+
+def ensure_dir(path) -> None:
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError:
+        pass
+
+
+def project_path(ctx, *parts: str) -> str:
+    """${CLAUDE_PROJECT_DIR:-$PWD}/... (환경변수 기준 — 훅 스크립트 위치 기준이 아님)."""
+    return os.path.join(ctx.project_dir, *parts)
+
+
+def root_path(*parts: str) -> str:
+    """훅 스크립트 위치 기준 PROJECT_ROOT/... (원본의 $(dirname "$0")/../.. 와 동일)."""
+    return os.path.join(str(ROOT), *parts)
+
+
+def run_script_text(cmd: list, stdin_text: str = "", cwd=None, timeout: float = 30.0):
+    """보조 프로세스 실행 → (rc, stdout, stderr) 문자열. 드문 경로 전용."""
+    p = subprocess.run(cmd, input=stdin_text.encode("utf-8", "replace"), capture_output=True,
+                       cwd=cwd, timeout=timeout)
+    return p.returncode, p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace")
+
+
+def write_dispatch_log(path: str, lines: list, max_bytes: int = 1_000_000, keep: int = 3000) -> None:
+    """디스패처 로그 append (크기 상한 초과 시 끝 N줄만 유지)."""
+    try:
+        ensure_dir(os.path.dirname(path))
+        if os.path.exists(path) and os.path.getsize(path) > max_bytes:
+            with open(path, "rb") as f:
+                tail = f.read().splitlines()[-keep:]
+            with open(path, "wb") as f:
+                f.write(b"\n".join(tail) + b"\n")
+        with open(path, "ab") as f:
+            f.write(("\n".join(lines) + "\n").encode("utf-8", "replace"))
+    except Exception:
+        pass  # noqa: BLE001
+
+
+_JQ = []
+
+
+def has_jq() -> bool:
+    """command -v jq — jq 가 있으면 원본 훅이 다른 분기(jq 파서)를 타므로, 그런 훅은 원본 스크립트로 위임한다."""
+    if not _JQ:
+        import shutil
+
+        _JQ.append(shutil.which("jq") is not None)
+    return _JQ[0]
