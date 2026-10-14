@@ -536,7 +536,7 @@
     확인 대기 제거 D6 (1014)                  «대상 명시 → 유지·정정 확인 → 실행» · «맞으면 진행, 아니면 정정» (CLAUDE.md §3.0·direction-first·프롬프트 hook sh/모듈·hook-00-init 6곳) → «바로 진행» · 최종 답변 20% 가 되묻기로 끝나던 원인 · complete-output.md § 끝까지 하고 1회 보고
     창 예방 (1014)                            block-visible-windows: 명령뿐 아니라 실행하는 bat/cmd/ps1 파일 안의 start(/b 없음)·cmd /k·Start-Process(Hidden 없음) 까지 보고 띄우기 전에 차단 (파일:줄 안내 · ALLOW_VISIBLE_WINDOW=1 우회) · 시험 12/12 · rules/no-visible-windows.md (테스트로 띄운 것은 닫는다 · 모든 프로젝트)
     위험 감지 hook 좀비 예방 (1014)          approval-gate-detect: Bash 명령마다 python(2~4s) 을 띄워 hook 시간 초과 시 Windows 에 python 이 남아 좀비 51개(최대 12일) · grep 폴백이 \" 에서 명령을 잘라 전부 인자 "cd \" → 위험 단어 1차 필터(bash 내장)로 무관 명령은 python 0개 · JSON 이스케이프 복원 추출 · 시험 9/9 · 좀비 62개 정리
-    멈춘 고아 python 자동 정리 (1014)        `python --version` 까지 이틀 멈춘 것 실측 = 원인은 스크립트가 아니라 이 PC 의 python 기동(환경) → 예방(hook 이 python 덜 띄우기) + 정리(orca-10min-loop reap_stuck_orphans: 부모 없음·1시간+·kit 흔적(/.claude/·-c·--version) 셋 다일 때만 · 서버 제외) · 시험 3개 정리 · 서버 14 무사
+    멈춘 고아 python 자동 정리 (1014)        `python --version` 까지 이틀 멈춘 것 실측 = 원인은 스크립트가 아니라 이 PC 의 python 기동(환경) → 예방(hook 이 python 덜 띄우기) + 정리(orca-10min-loop reap_stuck_orphans: 부모 없음·1시간+·kit 흔적(/.claude/·-c·--version) 셋 다일 때만 · 서버 제외) · 시험 3개 정리 · 서버 14 무사 · 확장: 부모 없는 Claude 셸 bash·grep·find 등도 (09-23 부터 남은 bash 4개+자식 정리 · 흔적 없으면 CPU 5%+ 인 것만)
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완

@@ -213,15 +213,32 @@ def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
     for proc in psutil.process_iter(["pid", "ppid", "name", "cmdline", "create_time"]):
         try:
             info = proc.info
-            if not (info["name"] or "").lower().startswith("python"):
+            pname = (info["name"] or "").lower()
+            # 2026-10-14 확장: python 만이 아니라 Claude 셸이 남긴 bash·grep·find 등도 (09-23 부터 남은 bash 9개 · CPU 43% grep 실측)
+            if not (pname.startswith("python") or pname in ("bash.exe", "grep.exe", "find.exe", "sed.exe", "awk.exe", "cat.exe", "sh.exe")):
                 continue
             if info["ppid"] in alive:
                 continue
             if (_t.time() - (info["create_time"] or _t.time())) < min_age_hours * 3600:
                 continue
             cmd = " ".join(info["cmdline"] or []).replace("\\", "/")
-            if not ("/.claude/" in cmd or " -c " in f" {cmd} " or cmd.endswith("--version")):
+            kit_trace = ("/.claude/" in cmd or " -c " in f" {cmd} " or cmd.endswith("--version")
+                         or "shell-snapshots" in cmd or "export TEMP=" in cmd)
+            if not kit_trace and pname.startswith("python"):
                 continue
+            if not pname.startswith("python") and not kit_trace:
+                # grep·find 등은 명령줄에 흔적이 없을 수 있다 — 부모 없음 + 1시간 + CPU 를 계속 쓰는 것만
+                try:
+                    if proc.cpu_percent(interval=0.5) < 5:
+                        continue
+                except Exception:
+                    continue
+            # 자식부터 정리 (bash 밑에서 도는 grep 등)
+            for ch in proc.children(recursive=True):
+                try:
+                    ch.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
             proc.kill()
             reaped += 1
             log_msg(f"stuck orphan python 정리: pid={info['pid']} cmd={cmd[:120]}")
