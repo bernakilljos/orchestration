@@ -19,6 +19,7 @@ TABLE = [
     ("매번.*까먹|또.*까먹|왜.*까먹|기억.*못", False, "[망각 지적] -> Claude 세션 간 학습 X. 시스템 (hook/statusline/rule/memory) 에 강제 박기. 이번 지적을 hook 감지 -> systemMessage 로 발동하도록 매핑.\n"),
     ("install|배포|deploy|sync-team|install-to", False, "[install 언급] -> install 순서 (kit 편집 -> commit -> sync -> install -> 검증). pre-install-lock.sh 감지. best-practices.md § install 순서.\n"),
     ("미쳐|미치겠|미치긋|돌아버|답답해 죽|막혀|안 풀|안풀려|막막|어떻게 해야", False, "[격한 감정 감지] -> /brainstorm 또는 /go 자동 발동. 혼자 결과 내지 말고 설계 옵션 2~3개 + trade-off + 추천 1개 제시. 사용자 결정 받고 그 다음 실행.\n"),
+    ("전체 문구|문구 ?(줘|달라|알려|만들어)|복붙|복사할 ?수 ?있게|복사해서|붙여넣기 ?(용|할)|그대로 (줘|달라)", False, "[문구 요청 감지] -> 사용자가 준 형식 그대로 '전체'를 코드블록 1개로 준다. ①헤더(#api·#batch·#fe 등)·섹션 번호·순서 유지 (서버마다 다르게 재구성 X · 번호 줄이기 X) ②서버별로 쪼개지 말고 한 번에 복사 가능하게 ③'원하시면 ~' 되묻기 X — 요청 범위 전체를 바로 ④고친 점은 블록 뒤 3줄 이내 ⑤도구 실행 흔적(heredoc·EOF·메모리 저장 명령)을 답변에 섞지 않는다. 상세: .claude/rules/copy-text-request.md\n"),  # 2026-10-14 문구 요청
     ("모르겠|이해.*안|뭔 소리|무슨 말|쉽게|어려워", False, "[이해 어려움 감지] -> /explainlikeim5 자동 발동. 5살 톤·일상 비유·고급 용어 X. 긴 essay 금지.\n"),
     ("vs |대 |비교|뭐가 좋|어떤 게|차이", False, "[비교 요청] -> /compare 자동 (장단점·추천·근거 표).\n"),
     ("확신|괜찮을|리스크|위험|걱정|문제 없|안전", False, "[리스크 질문] -> /devil 자동 (악마의 변호인 · 모든 가정 반론).\n"),
