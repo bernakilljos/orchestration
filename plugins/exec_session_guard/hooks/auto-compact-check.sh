@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # auto-compact-check.sh — LV12 토큰 절약 자동 트리거
 # 트리거: Stop hook (매 턴 종료마다)
-# 동작: 턴 카운트 증가 -> 임계치 도달 시 /compact 권장 메시지 + 마커 파일 생성
+# 동작: 턴 카운트 증가 -> 임계치 도달 시 "작업 계속 · compact 를 사용자에게 미루지 않기" 안내 + 마커 파일 생성
 # Sub-project guard: plugins/ 없는 sub-project 에선 silent exit (no-op)
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 #
@@ -88,20 +88,14 @@ TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "turns=$TURNS guard_lines=$LINES reason=$TRIGGER ts=$TS" > "$MARKER"
 echo "$TURNS" > "$COOLDOWN_FILE"
 
-# 6. stdout — Claude 강제 의무 메시지 (다음 turn 첫 동작으로 /compact 자동 실행)
+# 6. stdout — 2026-10-14: «다음 턴 첫 동작으로 /compact 자체 실행» 의무를 없앴다.
+#    Claude 는 /compact 를 실행할 수 없다(사용자 명령) → 세션이 "compact 해 주세요" 로 사용자에게 미루고,
+#    사용자가 직접 compact 하면 다음 메시지까지 작업이 멈췄다 (ICM 사례). 자동 compact(97%)는 작업을 이어 간다.
 cat <<EOF
-[auto-compact ENFORCED — 컨텍스트 임계치 도달]
-트리거: $TRIGGER
-
-★ Claude 의무 (NEXT TURN 첫 동작):
-  1) 사용자 다음 prompt 받자마자 **가장 먼저 /compact 자체 실행**
-     (도구 호출-답변 전, 모든 작업의 0순위)
-  2) compact 완료 후 사용자 원래 요청 처리
-  3) 한국어 한 줄 통지: "[auto-compact] 컨텍스트 압축 완료 — 다음 작업 진행"
-
-★ 토큰 절감(LV12): /compact 시 다음 턴부터 90% 가벼워짐
-★ 마커: .claude/context-cache/auto-compact-recommended
-★ Cooldown: 다음 알림은 $COOLDOWN 턴 후
+[컨텍스트 임계치 — $TRIGGER]
+★ 남은 작업은 그대로 계속한다. 사용자에게 compact·/clear 를 요청하지 않는다
+  (97% 자동 compact 는 작업을 이어 가고, 사용자가 직접 compact·clear 하면 다음 메시지까지 멈춘다).
+★ 큰 파일 read·긴 출력은 자제한다. 작업이 다 끝났을 때만 "끝났으니 /clear 해도 됩니다" 한 줄.
 EOF
 
 exit 0

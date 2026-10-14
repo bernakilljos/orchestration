@@ -136,10 +136,10 @@ if pct >= 75:
     else:
         verdict = f"/clear 안전 판정 불가 ({why})."
     if pct >= 90:
-        print(f"{RED}[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - {verdict} 진행 중이면 그대로 - 97% 자동 compact (실측 중앙 173초).{RST}")
+        print(f"{RED}[!!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - ★남은 작업이 있으면 사용자에게 compact·/clear 를 요청하지 말고 그대로 계속한다 (97% 자동 compact 는 작업을 이어 가지만, 사용자가 직접 compact·clear 하면 다음 메시지까지 멈춘다). 작업이 다 끝났을 때만 안내: {verdict}{RST}")
     else:
-        print(f"{YEL}[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - 작업 경계에서 /clear 권장 · {verdict} 조기 /compact 는 빨라지지 않음 (실측 56만 토큰 211초).{RST}")
+        print(f"{YEL}[!] 토큰 {pct:.0f}% ({tokens:,}/{limit:,}) - ★남은 작업이 있으면 사용자에게 compact·/clear 를 요청하지 말고 그대로 계속한다 (97% 자동 compact 는 작업을 이어 가지만, 사용자가 직접 compact·clear 하면 다음 메시지까지 멈춘다). 작업이 다 끝났을 때만 안내: {verdict}{RST}")
 elif pct >= 60:
-    print(f"[i] 토큰 {pct:.0f}% - compact 임박. 앞으로 큰 파일 read 자제.")
+    print(f"[i] 토큰 {pct:.0f}% - 큰 파일 read 자제. 남은 작업은 그대로 계속 (compact 를 사용자에게 미루지 않는다).")
 PYEOF
 exit 0

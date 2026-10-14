@@ -38,3 +38,11 @@
 - 이 룰 파일 (모든 세션 자동 로드) · CLAUDE.md § 7 D21
 - 보조: prompt-dispatch → `detect_user_emotion` 「문구 요청 감지」 (표현이 달라도 걸리게 넓게)
 - 관련: `d8-no-stubborn.md` · `failure-mode.md` § 회피 안티패턴 · § 전수조사
+
+## 작업 미루기 금지 (compact·clear) — 2026-10-14
+
+**남은 작업이 있으면 사용자에게 "compact 해 주세요 / clear 해 주세요" 를 요청하지 않는다. 그대로 계속한다.**
+- 근거(실측): Claude 는 `/compact`·`/clear` 를 실행할 수 없다(사용자 명령). 사용자가 직접 하면 **다음 메시지까지 작업이 멈춘다.**
+  반면 97% 자동 compact 는 작업 도중에 일어나 **스스로 이어 간다**.
+- 원인이던 지시 2개 제거: `auto-compact-check.sh` 의 «다음 턴 첫 동작으로 /compact 자체 실행» · `inject-compact-reminder` 의 «작업 경계에서 /clear 권장».
+- "이어서 할 일: …" 을 남기고 끝내지 않는다 — 그 일을 지금 한다. 작업이 **다 끝났을 때만** "끝났으니 /clear 해도 됩니다" 한 줄.
