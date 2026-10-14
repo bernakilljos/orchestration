@@ -532,6 +532,7 @@
     완전본 원칙 D21 (1014)                    무엇이든(명령·SQL·설정·코드·문서) 전부·받은 형식 그대로·한 블록으로 · 쪼개기·생략·되묻기 X · 예시 하나 말고 같은 종류 전체 (.claude/rules/complete-output.md · 모든 세션 자동 로드 · 감지는 보조: 표현 달라도 걸리게 18/18) · 원인 4가지 실측 수리: 감정 hook 의 "사용자 결정 받고 실행"(되묻기 지시) 삭제 · 결함 지적(안 맞/틀려/이상해/깨져/버그/무시/항상 그래 등) 에 "같은 종류 전체 · N개 중 N개" 주입 · sh·합친 hook 동일 11/11
     한도 줄 세션·주간 (1014)                  ICM 세션이 쓰이지 않는 ~/.claude/statusline_context.py 를 고쳐 효과 없던 수정을 kit 정본으로 이식 · 세션/주간 키별 병합 (온 값만 갱신, 안 온 값은 저장값) · 4경우 모두 둘 다 표시 · 6줄
     compact 미루기 제거 (1014)                auto-compact-check 의 «다음 턴 /compact 자체 실행» 의무(실행 불가 → 사용자에게 미룸 → 수동 compact 후 멈춤) · inject-compact-reminder 의 «작업 경계에서 /clear 권장» → «남은 작업은 계속 · compact 요청 X · 다 끝났을 때만 안내» (sh·합친 hook·SoT·복사본) · complete-output.md § 작업 미루기 금지
+    compact·clear 후 바로 이어서 (1014)      남은 일 = .claude/state/next-actions.md · resume-last-24h 가 SessionStart(compact·clear 포함) 때 맨 위에 «확인 질문 없이 바로 시작» 주입 · 규칙: 수정 = 검증→commit→push→전파→대상 실측 한 세트
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완

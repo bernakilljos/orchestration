@@ -13,6 +13,8 @@ SessionStart hook 가 호출 → stdout → systemMessage 로 주입
 사용자 설명 요구 X · 재부팅·메모리 종료 복구 자동.
 """
 from __future__ import annotations
+import time
+import os
 import json, os, sqlite3, subprocess, sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -123,6 +125,17 @@ def main():
     body = _sanitize(body)[:MAX_CHARS]
     header = f"# 자동 복구 (최근 {CUTOFF_HOURS}h · resume-last-24h.py)\n"
     header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
+    # 2026-10-14 — compact·clear 직후 새 세션이 «무엇을 이어서 할지» 몰라 사용자에게 다시 물었다
+    #   (요약은 최근 프롬프트 나열뿐). 세션이 남긴 «다음에 할 일» 을 맨 위에 «바로 시작» 으로 붙인다.
+    _na = Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()) / ".claude" / "state" / "next-actions.md"
+    try:
+        if _na.is_file() and (time.time() - _na.stat().st_mtime) < CUTOFF_HOURS * 3600:
+            _txt = _na.read_text(encoding="utf-8").strip()
+            if _txt:
+                header += ("\n## ★ 이어서 할 일 — 사용자 첫 메시지가 무엇이든 확인 질문 없이 이것부터 바로 시작\n"
+                           + _txt[:3000] + "\n(다 끝내면 .claude/state/next-actions.md 를 비운다)\n\n")
+    except Exception:
+        pass
     # 사용자 지시 '--json' 시 SessionStart hook JSON 직접 반환 (shell escape 우회)
     if "--json" in sys.argv:
         import json as _j
