@@ -350,3 +350,36 @@ def has_jq() -> bool:
 
         _JQ.append(shutil.which("jq") is not None)
     return _JQ[0]
+
+
+# ----------------------------------------------------------------------------
+# python 원본 훅(block_dangerous_bash · log_bash_command · post_write_pycheck · markdown_formatter) 호환
+# 원본은 `python script.py` 로 떠서 stdin 을 시스템 기본 인코딩(한국어 Windows = cp949) 으로 읽는다.
+# 페이로드의 한글(cwd 의 폴더명 등) 은 UTF-8 바이트라 cp949 로는 깨진 글자 · 서로게이트로 읽혀,
+# 한글 경로 파일의 py_compile 이 "FAIL" 이 되고 한글 경로 md 는 정리가 안 되는 등 동작이 달라진다.
+# 디스패처는 -X utf8 로 뜨지만 원본과 같은 결과를 내도록 같은 방식으로 디코딩한다 (기본 = 원본 호환).
+# 원본의 이 결함을 고치려면 환경변수 TOOL_DISPATCH_PY_STDIN_FIX=1 (한글이 정상 인식되어 동작이 "의도대로" 바뀐다).
+# ----------------------------------------------------------------------------
+PY_STDIN_FIX = os.environ.get("TOOL_DISPATCH_PY_STDIN_FIX") == "1"
+
+
+def py_child_encoding() -> str:
+    """원본 `python script.py` 프로세스의 stdin/stdout 인코딩 (PYTHONIOENCODING > PYTHONUTF8 > 로케일)."""
+    import locale
+
+    enc = os.environ.get("PYTHONIOENCODING", "").split(":")[0].strip()
+    if enc:
+        return enc
+    if os.environ.get("PYTHONUTF8") == "1":
+        return "utf-8"
+    return locale.getencoding()
+
+
+def py_stdin_text(ctx) -> str:
+    """원본 python 훅이 sys.stdin 에서 읽는 텍스트 (errors=surrogateescape · 줄바꿈 변환 포함)."""
+    if PY_STDIN_FIX:
+        return ctx.raw
+    data = getattr(ctx, "raw_bytes", None)
+    if data is None:
+        return ctx.raw
+    return data.decode(py_child_encoding(), "surrogateescape").replace("\r\n", "\n").replace("\r", "\n")

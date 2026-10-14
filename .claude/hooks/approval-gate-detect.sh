@@ -13,17 +13,23 @@ LOG="${LOG_DIR}/approval-gate.log"
 # Sub-project guard
 [ -d "${PROJECT_ROOT}/plugins" ] || exit 0
 
-# stdin
-INPUT=$(cat 2>/dev/null || echo "")
+# stdin — bash 내장 (cat·jq·grep·sed 프로세스 0개)
+# 2026-10-14: 종전엔 Bash 명령마다 python 을 띄웠다(실측 1회 2~4초). 이 PC 는 느려 hook 이 시간 초과로
+#   끊기면 Windows 에선 bash 만 죽고 python 이 남아 좀비 51개가 최대 12일 쌓였다 (전부 인자 'cd \' —
+#   grep 폴백이 JSON 의 \" 에서 명령을 잘랐다). → 위험 단어가 없으면 python 을 아예 띄우지 않는다.
+read -r -d '' INPUT || true
 [ -z "$INPUT" ] && exit 0
 
-# command 추출
-if command -v jq >/dev/null 2>&1; then
-  CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
-else
-  CMD=$(echo "$INPUT" | grep -oE '"command"[[:space:]]*:[[:space:]]*"[^"]+"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
-fi
+# 1차 필터 — approval-gate.py RISK_PATTERNS 의 핵심 단어 (하나도 없으면 위험 명령일 수 없다)
+shopt -s nocasematch
+RE_RISKWORD='drop|truncate|delete|rm[[:space:]]|git[[:space:]]+(push|reset|branch)|sudo|curl|wget|runas|chmod|batch|daily-limit|setx|reg[[:space:]]+(add|delete)|alembic|systemctl|npm[[:space:]]+publish|docker[[:space:]]+push|gh[[:space:]]+release|terraform'
+[[ $INPUT =~ $RE_RISKWORD ]] || exit 0
+shopt -u nocasematch
 
+# command 추출 — 콜론 뒤 공백 유무 무관 · JSON 이스케이프(\" \\) 복원 (종전 grep 폴백은 \" 에서 잘렸다)
+CMD="${INPUT#*\"command\":}"; CMD="${CMD#\"}"; CMD="${CMD# \"}"
+CMD="${CMD%%\", \"*}"; CMD="${CMD%%\",\"*}"; CMD="${CMD%%\"\}*}"
+CMD="${CMD//\\\"/\"}"; CMD="${CMD//\\\\/\\}"
 [ -z "$CMD" ] && exit 0
 
 GATE="${PROJECT_ROOT}/.claude/scripts/approval-gate.py"
