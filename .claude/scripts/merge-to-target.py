@@ -132,7 +132,7 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
             continue
         gone = set(spec.get("hooks") or [])
         tm_list = th.get(ev) or []
-        have_new = any(hook_key(h.get("command", "")) == spec.get("replaced_by")
+        have_new = any(spec.get("replaced_by", "") in h.get("command", "")  # 파일명 포함 여부 (인자 pre/post 무관)
                        for m in tm_list for h in m.get("hooks", []))
         if not have_new or not gone:
             continue
@@ -140,7 +140,9 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
         for m in tm_list:
             # 파일명만 비교 (인자·따옴표 차이로 놓치지 않게)
             hs = [h for h in m.get("hooks", [])
-                  if (re.search(r"[\w.-]+\.(?:sh|py)", h.get("command", "")) or re.match("", "")).group(0) not in gone]
+                  if (re.search(r"[\w.-]+\.(?:sh|py)", h.get("command", "")) or re.match("", "")).group(0) not in gone
+                  # 파일 없는 인라인 명령은 표식(확장자 없는 이름)이 명령에 들어 있으면 대체된 것으로 본다
+                  and not any(g in h.get("command", "") for g in gone if "." not in g)]
             retired_n += len(m.get("hooks", [])) - len(hs)
             if hs:
                 kept.append({**m, "hooks": hs})

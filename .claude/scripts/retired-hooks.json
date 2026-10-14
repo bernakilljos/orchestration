@@ -64,7 +64,8 @@
       "post_write_pycheck.py",
       "prevent-whitespace-png.sh",
       "propagate-rule-change.sh",
-      "track-agent-dispatch.sh"
+      "track-agent-dispatch.sh",
+      "orca-heartbeat"
     ]
   }
 }
