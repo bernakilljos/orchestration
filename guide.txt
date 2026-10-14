@@ -1,7 +1,7 @@
 ============================================================
   Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Updated: 2026-10-13 (sync-plugins Python 재작성 · 71s -> 0.4s · 190배 성능)
+  Updated: 2026-10-14 (git fetch SessionStart hook · 다중 세션 drift 감지 + claude-mem 글로벌 제거)
 ============================================================
 
 
