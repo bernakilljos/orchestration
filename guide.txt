@@ -529,7 +529,7 @@
     폴더 개선판 역병합 (1013)                 A1.RMS-UPG 0902 수정 6개(block-visible-windows·check-korean-only·secret-scan·protect-critical-files·check-mojibake·log-decision) + hook-09 앞부분 + ICM pre-commit-secrets: ①도구 호출마다 도는 hook 을 무관 명령이면 프로세스 0개로 즉시 종료 (hook-09 0.9~1.3s→0.3~0.7s) ②"command": " (콜론 뒤 공백) 를 못 읽어 검사가 한 번도 안 돌던 것 ③차단 exit 1→2 (1 은 무시됨 · block-korean-removal·block-tricks 포함) ④log-decision 메시지가 늘 --ai 이던 것 ⑤gitleaks 를 git 아닌 폴더에서 돌리고 실행 실패를 발견으로 보고하던 것 · 기능 시험 12/12
     중첩 .claude 오염 차단 (1013)             하위 폴더를 cwd 로 돌린 스크립트가 만든 .claude/hooks/.claude/ 를 추적에서 제거 · .gitignore 에 .claude/*/.claude/ · plugins/*/.claude/
     hook 원본 되돌림 복구 (1013)              b2653c2(plugins 원본 → .claude/hooks 맞춤) 가 protect-critical-files·hook-09 를 옛 판으로 되돌림 (원본 plugins/ 에 개선판이 없었던 탓) → 개선판을 plugins 원본에 넣고 .claude/hooks 와 일치 · post_write_pycheck 는 반대로 .claude 판(cp949 안전) 을 원본으로 · 원본↔복사본 차이 0
-    문구 요청 룰 (1014)                       "전체 문구/복사할 수 있게" → 받은 형식 그대로 전체를 코드블록 1개로 · 섹션 유지 · 쪼개기·되묻기·도구 흔적 X (.claude/rules/copy-text-request.md · 감정 매핑 sh·합친 hook 동일 2/2)
+    완전본 원칙 D21 (1014)                    무엇이든(명령·SQL·설정·코드·문서) 전부·받은 형식 그대로·한 블록으로 · 쪼개기·생략·되묻기 X · 예시 하나 말고 같은 종류 전체 (.claude/rules/complete-output.md · 모든 세션 자동 로드 · 감지는 보조: 표현 달라도 걸리게 18/18)
     ICM 역병합 (1006)                         statusline 하위폴더 cwd 시 상위 rule-adherence 탐색 · audit-hardcoded 문서 금지예시 면제 · sync-assistant ts=대화시각
     state_db 새 DB (1006)                     보강 컬럼을 테이블 생성 뒤에도 적용 (A2 새 DB 에서 no such table: tasks 로 schema FAIL 이던 것)
     statusline cwd 정규화 (1006)              ICM 개선 역병합: 하위 폴더 세션이면 kit 설치 루트(plugins+.claude)로 올라가 8개 경로 모두 정규화 · 하위 폴더 로컬 .claude 에서 멈추던 것 보완

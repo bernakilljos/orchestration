@@ -336,6 +336,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | D18 | **실물 채널 우선** — 새 채널 (새 창·새 프로세스·새 세션·Playwright 새 브라우저) 만들기 전 이미 실물에 닿아 있는 채널 (Bash·Grep·기존 확장·기존 MCP·기존 subagent) 먼저 · 새 채널은 새 문제 (재인증·상태 로드·race) 만듦 | `investigation-discipline.md` · 같은 postmortem |
 | D19 | **이력 먼저** — 가설 세우기 전 재현 가능한 기록 (git log · .claude/logs · state · tasks/done · SWEEP_LOG) 훑기 · 1분 조회가 3시간 헛짚기 예방 | `investigation-discipline.md` · 같은 postmortem |
 | D20 | **30초 실측 > 30분 추론** — 코드 읽기·spec·정황으로 결론 X · bash·curl·Playwright headed·브라우저 F12 로 실제 재현 후 결론 | `investigation-discipline.md` · 같은 postmortem |
+| D21 | **완전본 원칙** — 달라고 한 것은 무엇이든 (명령·SQL·설정·코드·문서) 전부·받은 형식 그대로·한 블록으로 바로 · 일부만·생략·대상별 재구성·"원하시면" 되묻기 X · 예시로 지적하면 그 하나가 아니라 같은 종류 전체를 고친다 | `complete-output.md` · 2026-10-14 서버 점검 문구 핑퐁 사례 |
 
 ### E. UI/UX 표준
 | # | 규칙 | 근거 · 상세 |
