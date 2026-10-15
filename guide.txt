@@ -1881,6 +1881,17 @@
 - 테스트: python .claude/scripts/orca-10min-loop.py --dry-run
 - wrapper: .claude/scripts/orca-10min-loop.bat (Task Scheduler 용)
 
+## git fetch hook 자동 pull 승격 (2026-10-15, B안)
+- 이전: session-start-git-fetch.sh · user-prompt-git-fetch.sh 가 fetch + 알림만
+- 신규: behind > 0 감지 시 자동 git pull --rebase (stash → rebase → pop 체인)
+- conflict 가 docs/deploy-history/history.md 뿐이면 --theirs 로 자동 해결 (chore 자동 생성이라 손실 X)
+- 다른 파일 conflict 는 rebase --abort + 알림만 (사용자 결정 존중) · push 는 절대 안 함
+- 근거: 48h 안 "pull 받아봐" 재지시 5회+ · 사용자 본인 다중 세션 작업 (bernakilljos 100%) + chore(auto) deploy-history (21%)
+- throttle: session-start = 1h · user-prompt = 10분
+- 로그: .claude/logs/session-git-fetch.log · .claude/logs/user-prompt-fetch.log
+- 롤백: 두 hook 안의 git pull 블록 삭제 → A안 (알림만) 복귀 (2분)
+- memory: feedback_auto_pull_on_behind.md
+
 
 
 
