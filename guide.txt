@@ -507,6 +507,7 @@
     결함 audit 4 과제 완료 (1012)            ① skills 49/60 frontmatter 복구 (plugins 원본 + .claude sync) ② 신규 스크립트 5: nightly-optimize·weekly-audit·hook-profile·auto-optimize-image·verify-hook-scope ③ Task Scheduler Orca_10MinLoop·Orca_NightlyOptimize·Orca_WeeklyAudit 등록 ④ 멀티에이전트 UI: track-agent-dispatch.sh + statusline 🤖 Agents 섹션 (🟢🟡🟠🔴 색깔)
     detect-* hook 4종 (1006)                 echo|grep fork → bash 내장 정규식 (9.4s→0.9s) · timeout 3→10 · 출력 동일성 72/72 대조
     merge settings                          kit hook 의 timeout·async 도 대상에 동기화
+    merge settings timeout 하한 (1016)      동기화가 kit 값(3·5초)으로 대상의 10초를 되돌려(lottoclaude 66건) 부하 겹침 때 PreToolUse 가드가 버려짐 → settings.json 39건 10초 + merge_settings 는 HOOK_TIMEOUT_MIN_S(10) 아래로 안 내림(기존·신규 hook 모두 · 보정 건수 보고)
     UserPromptSubmit timeout (1006)          13개 병렬 실행 → 개별 0.5s 도 부하 시 3s 초과. 3→10 (auto-planner 15)
     auto-planner RAG (1006)                  rag-recall 1회 17.5s · Windows timeout 이 python 못 죽임 → hook 전체 폐기 → 백그라운드+캐시(다음 프롬프트) · 프롬프트는 env 전달(주입 차단) · 옛 경로 C:pjt 하드코딩 제거
     병합 대상 (1006)                          kit + A.RMS · C.ICM_Agent_Go + RMS 하위 A1.RMS-UPG · A2.RMS-DEMO = 5곳 (세션이 하위 폴더에서도 열림 · 사용자 확정)

@@ -105,6 +105,18 @@ def hook_key(cmd: str) -> str:
     return (m.group(1) + m.group(2).strip()) if m else cmd.strip()
 
 
+HOOK_TIMEOUT_MIN = int(os.environ.get("HOOK_TIMEOUT_MIN_S", "10"))  # hook-timeout-scan.py 와 같은 이름
+
+
+def _floor_timeout(h: dict) -> bool:
+    """hook 의 timeout 이 하한 미만이면 하한으로 올린다. 올렸으면 True."""
+    t = h.get("timeout")
+    if isinstance(t, (int, float)) and t < HOOK_TIMEOUT_MIN:
+        h["timeout"] = HOOK_TIMEOUT_MIN
+        return True
+    return False
+
+
 def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     out = json.loads(json.dumps(tgt))
     # hooks: event 별 command 합집합 (대상 순서 유지, kit 것은 뒤에 append)
@@ -155,18 +167,26 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
         for km in kmatchers or []:
             for h in km.get("hooks", []):
                 kit_attr[(ev, hook_key(h.get("command", "")))] = {k: h[k] for k in ("timeout", "async") if k in h}
+    # 2026-10-16: timeout 은 하한(HOOK_TIMEOUT_MIN_S · 기본 10초) 아래로 내리지 않는다 — kit 이 3·5초인 채로
+    #   동기화하면 대상이 10초로 올린 것을 되돌린다(10-16 00:15 sync 가 66건을 3·5초로 되돌려 병렬 spawn 겹침 때
+    #   PreToolUse 가드가 버려졌다). 새로 더하는 kit hook 도 같은 하한. kit 쪽 값도 10초로 고쳤지만 이중 안전장치.
     synced = 0
+    floored = 0
     for ev, tmatchers in th.items():
         for tm in tmatchers or []:
             for h in tm.get("hooks", []):
+                if _floor_timeout(h):
+                    floored += 1
                 want = kit_attr.get((ev, hook_key(h.get("command", ""))))
                 if want is None:
                     continue
                 for k, v in want.items():
+                    if k == "timeout" and isinstance(v, (int, float)) and v < HOOK_TIMEOUT_MIN:
+                        v = max(HOOK_TIMEOUT_MIN, h.get("timeout") or 0)
                     if h.get(k) != v:
                         h[k] = v
                         synced += 1
-    report.append(f"settings.hooks 속성 동기화 {synced}")
+    report.append(f"settings.hooks 속성 동기화 {synced} (timeout 하한 {HOOK_TIMEOUT_MIN}s 보정 {floored})")
     # permissions.allow 합집합
     ka = (kit.get("permissions") or {}).get("allow") or []
     perm = out.setdefault("permissions", {})
