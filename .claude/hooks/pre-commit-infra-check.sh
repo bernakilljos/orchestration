@@ -20,18 +20,18 @@ cd "$PROJECT_DIR" || exit 0
 # staged 파일 목록
 STAGED=$(git diff --cached --name-only 2>/dev/null)
 
-# plugins/hooks/scripts 변경 여부
-INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)' || echo "0")
+# plugins/hooks/scripts 변경 여부 (grep -c 는 0건이어도 '0' 을 찍는다 — 예전 `|| echo 0` 이 '0 0' 을 만들어 [ -eq ] 가 깨지고 늘 통과했다, 2026-10-16)
+INFRA=$(echo "$STAGED" | grep -cE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup/)')
 
 if [ "$INFRA" -eq 0 ]; then
   exit 0  # 인프라 변경 없으면 pass
 fi
 
 # guide.txt 또는 CLAUDE.md 포함 여부
-DOCS=$(echo "$STAGED" | grep -cE '^(guide\.txt|CLAUDE\.md|setup/BUILD\.md)' || echo "0")
+DOCS=$(echo "$STAGED" | grep -cE '^(guide\.txt|CLAUDE\.md|setup/BUILD\.md)')
 
 if [ "$DOCS" -eq 0 ]; then
-  cat <<'MSG'
+  cat >&2 <<'MSG'
 
 [X] [BLOCK] plugins/hooks/scripts 변경 감지 — guide.txt-CLAUDE.md 미포함!
 
@@ -42,8 +42,7 @@ if [ "$DOCS" -eq 0 ]; then
     - CLAUDE.md (상태 라인)
     - setup/BUILD.md (모듈 설명)
 
-  guide.txt 갱신 불필요한 경우 (bugfix 등):
-    git commit --no-verify
+  bugfix 라도 guide.txt 해당 절에 한 줄(무엇이 왜 바뀌었나) 을 적고 같이 stage 한다 — --no-verify 금지.
 
 MSG
   exit 2  # block

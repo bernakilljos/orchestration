@@ -50,7 +50,8 @@ fi
 # (placeholder — no-op)
 
 if [ -n "$MISSING" ]; then
-  cat <<MSG
+  # 사유는 stderr 로 — exit 2 일 때 Claude 에게 돌아가는 것은 stderr 뿐 (2026-10-16, stdout 이라 사유가 사라졌다)
+  cat >&2 <<MSG
 
 [X] [BLOCK] 커밋 시 갱신 누락 감지!
 
@@ -58,7 +59,7 @@ if [ -n "$MISSING" ]; then
 $(echo -e "$MISSING")
 
   배포용 솔루션 규칙: 기능 변경과 관련 문서는 같은 커밋에.
-  불필요한 경우 (bugfix 등): git commit --no-verify
+  bugfix 라도 guide.txt 해당 절에 한 줄(무엇이 왜 바뀌었나) 을 적고 같이 stage 한다 — --no-verify 금지.
 
 MSG
   exit 2

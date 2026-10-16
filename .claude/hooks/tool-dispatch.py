@@ -200,7 +200,9 @@ def _merge(results):
         if r is None:
             continue
         if r.rc == 2:
-            blockers.append(r.err)
+            # 2026-10-16: 차단 사유를 stdout 에 찍는 훅(pre-commit-full-check 등)은 사유가 통째로 사라져
+            #   "No stderr output" 만 보였다 — stderr 가 비면 stdout 을 사유로 쓴다.
+            blockers.append(r.err if r.err.strip() else r.out)
         elif r.rc == 0:
             if r.out.strip():
                 j = _as_json(r.out)
