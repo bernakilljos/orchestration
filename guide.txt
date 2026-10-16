@@ -488,9 +488,13 @@
     UTF-8 BOM 사고 복구 (1013)           11c622f commit 가 Python 195 중 104 broken (U+FEFF BOM + mojibake) · 100 파일 git checkout 복구 + BOM 4 직접 제거 + pytest.ini duplicate 제거 · 195/195 syntax OK · statusline 복구 · 25축 전수조사 (10축 기본 + 15축 추가) · 잔존 silent fail 124 + 문서 47 + [[link]] 58 → 다음 과제
     25축 잔존 과제 fix (1013)             silent fail 48 파일 marker 추가 (unmarked 35 남음) · [[link]] 55->2 · CLAUDE.md broken refs 21 TODO 섹션 · sync-plugins timeout 원인 cmp 느림 · MCP 4->2 FAIL 축소
     최종 마무리 체크 (1013)              plugin skills frontmatter 104 broken 재발견 (BOM 때문 · rebase 로 agent fix 날아감) · 51 재적용 + md 150 BOM 일괄 제거 · pytest --cov 인자 제거 (pytest-cov 미설치 호환) · MCP 3 FAIL 수동 fix 필요 (canva-dev/powerpoint/dom-to-pptx)
-    statusline 7줄 (1016 확정)              토큰(+fast 뱃지) / 한도 / 디자인 / 개발 / 상태 / 🤖 서브(에이전트 돌 때만) / 비용(맨 끝)
+    statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)
     statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
     서브 4개+ 축약 (1016)                   top 3 full + 「...」 + 등급별 색상+모델첫글자+개수 (예: ... 🟣O+2 🟢H+1) · 섞여 보이던 색 없는 +N 제거
+    🧪 영향 줄 (1016 2차)                  수정 N (git diff --stat) · 영향 「측정 전」 · API N (heuristic) · DB N (migration/*.sql) · breaking 「측정 전」. 영향 그래프 설계는 Phase 2
+    📡 인프라 vs 🚨 오류 분리 (1016 2차)   인프라=MCP·cache·재사용·orca·task·하드코딩 (돌아가는 상태). 오류=critical·error·warn·반복 N×·최근 소스 (24h). 섞여있던 것 떼냄
+    🎯 READY 가중 공식 (1016 2차)          test 30%·오류 25%·재발 20%·하드코딩 10%·MCP 10%·신선도 5%. 데이터 없는 축은 「미측정」 (test-cache·rule-adherence 없으면 가중 재분배). 등급 A/B+/B/C/D. 배포 아이콘: merge-to-target.log 24h ✅ · 7d ⚠ · 없음 ❌
+    디자인·개발 축약 라벨 (1016 2차)        산출물기한→기한 · 버전관리→버전 · 전수조사skip→조사skip · 증명지시→증명 · 재발률→재발 (한 줄로 합치려면 짧게)
     서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
     로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
     10분 작업 오류 453건 (1016)             작업 스케줄러 PATH 에 bash 없음 → find_bash() (git 위치 역산·ProgramFiles) · Claude procs HIGH 는 RAM 80%+ 일 때만 · 배터리면 안 돌던 것 → setup/modules/_task-allow-battery.bat (15·18·19 모듈)
