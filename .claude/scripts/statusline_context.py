@@ -1226,6 +1226,26 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass  # noqa: BLE001
 
+    # Request Ledger 표시 (2026-10-16 외부 감사 · execution-contract § 1 n/n 완료 강제)
+    ledger_line = ""
+    try:
+        import json as _json
+        ledger_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if os.path.exists(ledger_file):
+            with open(ledger_file, "r", encoding="utf-8") as f:
+                _lg = _json.load(f)
+            reqs = _lg.get("requests", [])
+            if reqs:
+                total = len(reqs)
+                done = sum(1 for r in reqs if r.get("status") == "completed")
+                color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
+                mark = "✓" if done == total else "☐"
+                pending_first = next((r.get("desc", "")[:30] for r in reqs if r.get("status") != "completed"), "")
+                extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
+                ledger_line = f"\033[1;{color}m📋 요청 {done}/{total} {mark}\033[0m{extra}"
+    except Exception:
+        pass
+
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
     if week_gauge:
@@ -1272,7 +1292,8 @@ def extra_gauges(cwd, data=None):
     return {"session": session_gauge, "line2": line2, "line3": line3,
             "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
             "design": design_line, "dev": dev_line,
-            "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line}
+            "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line,
+            "ledger": ledger_line}
 
 
 def main() -> None:
@@ -1455,6 +1476,10 @@ def main() -> None:
         out.append(_row("READY", _rdy))
     # 🤖 서브 — 도는 에이전트가 없으면 회색 «실행 중 없음»
     out.append(_row("서브", gauges.get("agents") or "[90m실행 중 없음[0m"))
+
+    _ledger = gauges.get("ledger") or ""
+    if _ledger:
+        out.append(_row("요청", _ledger))
 
     cost = gauges.get("cost") or ""
     if cost:

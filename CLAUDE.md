@@ -47,6 +47,14 @@
 
 반복 감사·증명: `/audit-claude` command. 상세: `plugins/exec_orch/commands/audit-claude.md`.
 
+### Execution Contract (SoT · 2026-10-16 외부 감사 반영)
+
+**Request Ledger + n/n 완료 + 중간보고 금지 + Codex 자동 dispatch + 고객 UI 분리**:
+- SoT: `.claude/rules/execution-contract.md`
+- Request Ledger: `.claude/scripts/request-ledger.py` + `.claude/hooks/stop-request-ledger-gate.sh`
+- 외부 감사: `docs/ORCHESTRATION_AUDIT_2026-10-16.md` (5대 결함 해결)
+- 핵심: **N/N 완료 전 보고 금지** · **A/B 플랜 X** · **임의 범위 확대 X**
+
 ---
 
 ## 1. WHAT — 이 프로젝트는 무엇인가
@@ -61,7 +69,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-10-16): plugins 37 stable + 0 spec-only - rules 51 - hooks 32 - scripts 168
+> **현재 상태** (2026-10-16): plugins 37 stable + 0 spec-only - rules 52 - hooks 32 - scripts 169
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가

@@ -10,17 +10,32 @@ from typing import Optional
 
 
 # 분류 규칙 (정규식 + 우선순위)
+# 2026-10-16 외부 감사 결함 #3 수정 — Codex 트리거 확장 (명시/3+파일/300줄+/반복/코드 리뷰)
 RULES = [
-    # 코드 대량 구현 -> Codex
+    # 사용자 Codex 명시 (최우선)
+    {
+        "task_type": "codex_explicit",
+        "ai": "codex",
+        "patterns": [
+            r"\b[Cc]odex\b.*(?:로|으로|시켜|써|구현|검증|리뷰|review|verify)",
+            r"(?:로|으로|시켜|써)\s*\b[Cc]odex\b",
+        ],
+        "reason": "사용자가 Codex 명시 -> 즉시 Codex 위임 (orchestrator 자동 dispatch)",
+    },
+    # 코드 대량 구현 -> Codex (확장: 3+파일/300줄+/반복)
     {
         "task_type": "code_implementation",
         "ai": "codex",
         "patterns": [
-            r"(\d{3,}|500\+|대량|batch)\s*(줄|line|file|파일)",
+            r"(\d{3,}|300\+|500\+|대량|batch)\s*(줄|line|file|파일)",
             r"(refactor|리팩토링|마이그레이션|migration)",
             r"(전체|모든|all)\s*(파일|file|폴더|directory).*(?:수정|편집|edit|update)",
+            r"(3|4|5|여러|multiple)\s*(개|\+)?\s*(파일|file|페이지|page).*(?:구현|수정|작성|만들|생성)",
+            r"(반복|repeat|동일한?)\s*(패턴|pattern|구현|작성|설정).*(?:×|x|여러)",
+            r"(독립.*(?:리뷰|검증)|code\s*review|코드\s*리뷰)",
+            r"(공통화|중앙화|dedupe|통합|리팩터).*(?:필요|해줘|작업|진행)",
         ],
-        "reason": "코드 500줄+ 또는 대규모 변경 -> Codex CLI ×4 병렬",
+        "reason": "3+파일/300줄+/반복패턴/공통화 -> Codex 자동 dispatch (orchestrator 호출)",
     },
     # 장문/멀티모달 -> Gemini Flash
     {

@@ -1949,3 +1949,11 @@
 - 1차 적용: 5 skill REMOVE (skill-03-review, skill-22-remotion × 2, skill-25-media-enhance, skill-34-code-docs)
 - 트래시: .claude/state/skill-removed/<ts>/ (롤백 가능)
 
+
+## 외부 감사 2026-10-16 반영 (R1~R11)
+- docs/ORCHESTRATION_AUDIT_2026-10-16.md Read 후 5대 결함 전부 반영
+- NEW: execution-contract.md · request-ledger.py · stop-request-ledger-gate.sh · dedupe-rule.py · dedupe-skill.py · dedupe-agent.py
+- CHANGE: auto-planner.md Step 5 (A/B 폐지) · classify-task.py (Codex 트리거 확장) · agent-02-implementer × 9 (수동실행 → orchestrator) · CLAUDE.md § 0 Execution Contract 연결 · statusline Request Ledger 라인
+- Request Ledger: 사용자 요청 N개 추출 → N/N 완료 전 Stop hook 차단
+- Change Budget: NEW 상한 해제 (사용자 명시 '다 해')
+
