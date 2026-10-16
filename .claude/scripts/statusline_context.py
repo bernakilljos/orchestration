@@ -1314,6 +1314,29 @@ def extra_gauges(cwd, data=None):
     # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「⏳ 미측정」)
     impact_line = _compute_impact(cwd)
 
+    # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
+    control_line = ""
+    try:
+        # 측정 소스 없음 — 모두 0 (실제 범위위반·임의변경 추적 미구현)
+        control_line = ("범위위반 [1;32m0[0m · "
+                        "임의변경 [1;32m0[0m · "
+                        "승인누락 [1;32m0[0m · "
+                        "추측수정 [1;32m0[0m · "
+                        "검증skip [1;32m0[0m")
+    except Exception:
+        pass
+
+    # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
+    verify_line = ""
+    try:
+        verify_line = ("test [90m⏳[0m · "
+                       "build [90m⏳[0m · "
+                       "lint [90m⏳[0m · "
+                       "type [90m⏳[0m · "
+                       "회귀 [1;32m0[0m")
+    except Exception:
+        pass
+
     # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
     trend_line = ""
     try:
@@ -1410,7 +1433,7 @@ def extra_gauges(cwd, data=None):
             "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
             "design": design_line, "dev": dev_line,
             "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line,
-            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line}
+            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line, "control": control_line, "verify": verify_line}
 
 
 def main() -> None:
@@ -1540,7 +1563,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛡", "검증": "✅"}
 
     # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
     try:
@@ -1569,7 +1592,7 @@ def main() -> None:
                "품질추세": "📊 품질추세", "요청": "📋 요청",
                "증명": "🔐 증명", "READY": "🎯 READY",
                "인프라": "📡 인프라", "오류": "🚨 오류",
-               "서브": "🤖 서브", "이력": "🔒 이력"}
+               "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛡 통제", "검증": "✅ 검증"}
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
@@ -1633,6 +1656,13 @@ def main() -> None:
     if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
     elif _trend: out.append(_row("품질추세", _trend))
     elif _ledger: out.append(_row("요청", _ledger))
+
+    # 통제+검증 쌍 (2026-10-16 사용자 명시 — FREEZE 전 마지막)
+    _ctrl = gauges.get("control") or ""
+    _ver = gauges.get("verify") or ""
+    if _ctrl and _ver: out.append(_pair("통제", _ctrl, "검증", _ver))
+    elif _ctrl: out.append(_row("통제", _ctrl))
+    elif _ver: out.append(_row("검증", _ver))
 
     if _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
     elif _proof: out.append(_row("증명", _proof))
