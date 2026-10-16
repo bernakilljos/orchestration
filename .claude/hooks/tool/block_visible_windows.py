@@ -18,6 +18,9 @@ _S = r"[ \t\n\r\f\v]"
 _I = re.I
 _RE_COMMENT = re.compile(r"^" + _S + r"*(rem" + _S + r"|::|#)", _I)
 _RE_START = re.compile(r"(^|[ \t\n\r\f\v&|(])start" + _S, _I)
+# `npm run start`·`next start`·`yarn start` 는 cmd 의 start 가 아니라 하위 명령이다
+#   (2026-10-17: start-3000.bat:63 의 Hidden 줄을 이것 때문에 막아 3000 재기동이 막혔다)
+_RE_SUBCMD_START = re.compile(r"\b(run|next|npm|yarn|pnpm)" + _S + r"+start\b", _I)
 _RE_HIDDEN_START = re.compile(_S + r"/(b|min)(" + _S + r"|\Z)", _I)
 _RE_PROG = re.compile(r'(cmd|powershell|pwsh|python|py' + _S + r'|\.exe|\.bat|\.cmd|%PY%|"%)', _I)
 _RE_CMDK = re.compile(r"cmd(\.exe)?" + _S + r"+//?k(" + _S + r"|\Z)", _I)
@@ -39,7 +42,8 @@ MSG_4 = "  → 사용자가 창을 원하면 명령 앞에 ALLOW_VISIBLE_WINDOW=
 def _opens_window(line: str) -> bool:
     if _RE_COMMENT.search(line):
         return False
-    if _RE_START.search(line) and not _RE_HIDDEN_START.search(line) and _RE_PROG.search(line):
+    bare = _RE_SUBCMD_START.sub(" ", line)
+    if _RE_START.search(bare) and not _RE_HIDDEN_START.search(bare) and _RE_PROG.search(bare):
         return True
     if _RE_CMDK.search(line):
         return True
