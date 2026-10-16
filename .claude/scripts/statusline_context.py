@@ -997,11 +997,11 @@ def extra_gauges(cwd, data=None):
                 _hc_status = a.get("status", "?")
                 _hc_total = int(a.get("total_hits", 0))
                 if _hc_status == "PASS":
-                    tail.append("하드코딩 0")
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
                 elif _hc_status == "CRITICAL":
-                    tail.append(f"[!] 하드코딩 {_hc_total}")
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
                 else:
-                    tail.append(f"하드코딩 {_hc_total}")
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
         except Exception:
             pass  # noqa: BLE001
     except Exception:
@@ -1244,8 +1244,8 @@ def extra_gauges(cwd, data=None):
                     top_rule = rec.get("top_rule")
                     top_count = rec.get("top_count", 0) or 0
                     top_display = f" (TOP: {top_rule} ×{top_count})" if top_rule and top_count >= 2 else ""
-                    return " · ".join(parts) + f" · \033[1;{s_color}m재발 {rpct:.0f}%{trend}\033[0m{top_display}"
-                return " · ".join(parts) + f" · \033[1m재발\033[0m {rr}%"
+                    return " · ".join(parts)
+                return " · ".join(parts)
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
@@ -1382,7 +1382,6 @@ def extra_gauges(cwd, data=None):
             except: pass
         proof_line = (f"git {_git_icon} · "
                       f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
-                      f"request [1;33m{_rl_done}/{_rl_total}[0m · "
                       f"golden {_gt_icon} · test [90m미측정[0m")
     except Exception:
         pass
@@ -1585,12 +1584,9 @@ def main() -> None:
     # 🚨 오류 + 🎯 READY 한 줄 합성 (사용자 지시 오류·READY 한 줄 통합)
     _err = gauges.get("errors") or ""
     _rdy = gauges.get("ready") or ""
-    if _err and _rdy:
-        _head_rdy = "\033[1;36m🎯 READY\033[0m \033[90m│\033[0m "
-        out.append(_row("오류", f"{_err}    {_head_rdy}{_rdy}"))
-    elif _err:
+    if _err:
         out.append(_row("오류", _err))
-    elif _rdy:
+    if _rdy:
         out.append(_row("READY", _rdy))
     # 🤖 서브 — 도는 에이전트가 없으면 회색 «실행 중 없음»
     out.append(_row("서브", gauges.get("agents") or "[90m실행 중 없음[0m"))
