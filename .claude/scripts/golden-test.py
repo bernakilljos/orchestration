@@ -3,6 +3,7 @@
 """Golden regression tests (10 scenarios) — 사용자 요청 2026-10-16."""
 from __future__ import annotations
 import json, os, subprocess, sys
+from datetime import datetime
 from pathlib import Path
 
 # Windows CP949 → UTF-8 (checkmark / crossmark 출력 보장)
@@ -95,6 +96,17 @@ def main():
         else: failed.append(tid)
     print("="*60); print(f"총 {passed}/{len(TESTS)} PASS")
     if failed: print(f"FAIL: {', '.join(failed)}")
+    # test-cache.json 작성 (READY 산정 source · 사용자 "품질 미평가 왜" 해결)
+    try:
+        cache = ROOT / ".claude" / "state" / "test-cache.json"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps({
+            "passed": passed, "total": len(TESTS),
+            "ts": datetime.now().isoformat(timespec="seconds"),
+            "source": "golden-test.py",
+        }, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
     return 0 if passed==len(TESTS) else 1
 
 if __name__ == "__main__":

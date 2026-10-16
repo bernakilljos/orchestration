@@ -2088,3 +2088,6 @@
 ## 🎯 READY 재설계 — 미측정 감점 X · 재발률 직접 감점 X · 실제 실패만 감점 · 검증 완료 후만 A/B/C/D (2026-10-16)
 ## golden-test.py UTF-8 stdout reconfigure (CP949 UnicodeEncodeError fix · 2026-10-16)
 ## »»»» -> ▶ 중간 밝기 청록(36) 교체 (사용자 명시 2026-10-16)
+## golden-test.py → test-cache.json 자동 작성 (READY source 승격 · 품질 미평가 해결 · 2026-10-16)
+## diet-audit.py 신설 — hooks/rules/agents/skills KEEP/MERGE/REMOVE/MOVE 분류 (자동 수정 X · 2026-10-16)
+## hourglass-audit.py 신설 — ⏳ 상태 세분화 (?/—/⏳/↻/✅/❌/⚠) · 13 지표 소스 증명 (2026-10-16)
