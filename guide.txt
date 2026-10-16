@@ -495,6 +495,7 @@
     📡 인프라 vs 🚨 오류 분리 (1016 2차)   인프라=MCP·cache·재사용·orca·task·하드코딩 (돌아가는 상태). 오류=critical·error·warn·반복 N×·최근 소스 (24h). 섞여있던 것 떼냄
     🎯 READY 가중 공식 (1016 2차)          test 30%·오류 25%·재발 20%·하드코딩 10%·MCP 10%·신선도 5%. 데이터 없는 축은 「미측정」 (test-cache·rule-adherence 없으면 가중 재분배). 등급 A/B+/B/C/D. 배포 아이콘: merge-to-target.log 24h ✅ · 7d ⚠ · 없음 ❌
     🚨 오류 줄 모든 축 (1016 2차)          critical·error·warn·반복 모두 0 포함 항상 표시 (0 은 회색 · 수치 큰 건 노랑/빨강). 최근 소스는 데이터 있을 때만
+    /verify command (1016 2차)             사용자가 "증명해/확인해" 재지시 없이 자동 증명. 요구 체크 → git diff → build → test → lint → 공통우회 → 영향범위 → 증거 출력 한 번에. Phase 2 Stop hook 통합 예정. plugins/exec_orch/commands/verify.md
     디자인·개발 축약 라벨 (1016 2차)        산출물기한→기한 · 버전관리→버전 · 전수조사skip→조사skip · 증명지시→증명 · 재발률→재발 (한 줄로 합치려면 짧게)
     서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
     로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
