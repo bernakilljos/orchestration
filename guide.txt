@@ -2087,3 +2087,4 @@
 ## LABEL_WIDTH 하드테이블 (wcwidth 변동 회피 · "줄좀 맞추자" · 2026-10-16)
 ## 🎯 READY 재설계 — 미측정 감점 X · 재발률 직접 감점 X · 실제 실패만 감점 · 검증 완료 후만 A/B/C/D (2026-10-16)
 ## golden-test.py UTF-8 stdout reconfigure (CP949 UnicodeEncodeError fix · 2026-10-16)
+## »»»» -> ▶ 중간 밝기 청록(36) 교체 (사용자 명시 2026-10-16)
