@@ -589,7 +589,8 @@ def _compute_impact(cwd):
     api = 0
     db = 0
     try:
-        r = _sp.run(["git", "diff", "--name-only", "HEAD"], cwd=cwd,
+        # --no-optional-locks: git diff 도 index 를 새로 쓰려고 잠근다 — 3초에 잘리면 .git/index.lock 이 남는다(2026-10-17 실측)
+        r = _sp.run(["git", "--no-optional-locks", "diff", "--name-only", "HEAD"], cwd=cwd,
                     capture_output=True, text=True, timeout=3)
         if r.returncode == 0:
             files = [f for f in r.stdout.splitlines() if f.strip()]

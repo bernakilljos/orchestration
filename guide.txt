@@ -2104,3 +2104,5 @@
 - 2026-10-17 git index.lock 이 혼자 남던 것: 상태줄이 3초 제한으로 부르는 git status 가 잘려 죽으면 .git/index.lock 이 남아 그 뒤
     git add·commit 이 'File exists' 로 막힌다(재현 15/15 · --no-optional-locks·GIT_OPTIONAL_LOCKS=0 이면 0/15). settings.json env 에
     GIT_OPTIONAL_LOCKS=0(훅·상태줄·Bash 전부) · 상태줄 git status 에 --no-optional-locks. 읽기 전용 git 호출이라 동작은 같다.
+    (같은 날 보강) 감시 로그로 상태줄의 git diff --name-only HEAD 도 잠금을 잡는 것을 확인(04:50:35 lock=True) → 거기에도 --no-optional-locks.
+    이미 떠 있는 Claude 창은 settings env 를 새로 안 읽으므로, 매 렌더 도는 상태줄은 플래그를 직접 단다.
