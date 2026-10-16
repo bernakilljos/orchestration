@@ -1,8 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Golden regression tests (10 scenarios) — 사용자 요청 2026-10-16."""
 from __future__ import annotations
 import json, os, subprocess, sys
 from pathlib import Path
+
+# Windows CP949 → UTF-8 (checkmark / crossmark 출력 보장)
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
 
