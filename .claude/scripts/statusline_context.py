@@ -1150,7 +1150,7 @@ def extra_gauges(cwd, data=None):
         elif _wp >= 50:
             fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
-            fast_badge = ("fast ON")
+            fast_badge = "\033[1;32mfast ON\033[0m"
     except Exception:
         pass  # noqa: BLE001
 
@@ -1233,12 +1233,16 @@ def extra_gauges(cwd, data=None):
     _w_safe = locals().get("_log_warns", 0) or 0
     _rpt_safe = locals().get("_log_rpt", 0) or 0
     _top_safe = locals().get("_log_top", "") or ""
-    if _c_safe:
-        err_parts.append(f"\033[1;31mcritical {_c_safe}\033[0m")
-    err_parts.append(f"error {_e_safe}" if _e_safe <= 20 else f"\033[1;33m[!] error {_e_safe}\033[0m")
-    err_parts.append(f"warn {_w_safe}")
-    if _rpt_safe >= 10:
-        err_parts.append(f"\033[90m반복 {_rpt_safe}×\033[0m")
+    # 2026-10-16 사용자 지시 — critical/error/warn/반복 모든 축 항상 표시 (0 포함)
+    _crit_color = "\033[1;31m" if _c_safe else "\033[90m"
+    err_parts.append(f"{_crit_color}critical {_c_safe}\033[0m")
+    _err_color = "\033[1;33m" if _e_safe > 20 else ("\033[0m" if _e_safe else "\033[90m")
+    _err_prefix = "[!] " if _e_safe > 20 else ""
+    err_parts.append(f"{_err_color}{_err_prefix}error {_e_safe}\033[0m")
+    _warn_color = "\033[1;33m" if _w_safe > 50 else ("\033[0m" if _w_safe else "\033[90m")
+    err_parts.append(f"{_warn_color}warn {_w_safe}\033[0m")
+    _rpt_color = "\033[1;33m" if _rpt_safe >= 10 else "\033[90m"
+    err_parts.append(f"{_rpt_color}반복 {_rpt_safe}×\033[0m")
     if _top_safe:
         err_parts.append(f"\033[90m최근 {_top_safe}\033[0m")
     errors_line = " · ".join(err_parts)
@@ -1395,20 +1399,18 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
+        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 10 - w) + " \033[90m│\033[0m " + body
 
-    # 10줄 레이아웃 (2026-10-16 사용자 재설계):
-    #   토큰(+세션/주간+시계+fast 통합) · 디자인+개발(한 줄) · 영향 · 인프라 · 오류 · 서브 · READY · 비용
+    # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
+    #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
     tok_parts = [token_line]
     _lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
     if _lim:
         tok_parts.append(SEP.join(_lim))
     tok_parts.append(clock)
-    if gauges.get("fast"):
-        tok_parts.append(gauges["fast"])
     out = [_row("토큰", SEP.join(tok_parts))]
 
-    # 디자인 + 개발 한 줄 합성 (두 섹션을 한 줄에 넣고 두 번째 label 안에 포함)
+    # 디자인 + 개발 한 줄 합성 (두 섹션을 한 줄에 넣고 두 번째 라벨 안에 포함)
     _d = gauges.get("design") or ""
     _dv = gauges.get("dev") or ""
     if _d and _dv:
@@ -1419,19 +1421,29 @@ def main() -> None:
     elif _dv:
         out.append(_row("개발", _dv))
 
-    # 🧪 영향 · 📡 인프라 · 🚨 오류
-    if gauges.get("impact"):
-        out.append(_row("영향", gauges["impact"]))
+    # 🧪 영향 (+ fast 뱃지 끝에 — 사용자 지시 fast 는 영향 줄로 이동)
+    _impact = gauges.get("impact") or ""
+    if _impact:
+        if gauges.get("fast"):
+            _impact = f"{_impact}{SEP}{gauges['fast']}"
+        out.append(_row("영향", _impact))
+
+    # 📡 인프라
     if gauges.get("infra"):
         out.append(_row("인프라", gauges["infra"]))
-    if gauges.get("errors"):
-        out.append(_row("오류", gauges["errors"]))
+
+    # 🚨 오류 + 🎯 READY 한 줄 합성 (사용자 지시 오류·READY 한 줄 통합)
+    _err = gauges.get("errors") or ""
+    _rdy = gauges.get("ready") or ""
+    if _err and _rdy:
+        _head_rdy = "\033[1;36m🎯 READY\033[0m \033[90m│\033[0m "
+        out.append(_row("오류", f"{_err}    {_head_rdy}{_rdy}"))
+    elif _err:
+        out.append(_row("오류", _err))
+    elif _rdy:
+        out.append(_row("READY", _rdy))
     # 🤖 서브 — 도는 에이전트가 없으면 회색 «실행 중 없음»
     out.append(_row("서브", gauges.get("agents") or "[90m실행 중 없음[0m"))
-
-    # 🎯 READY (요약 점수) — 비용 바로 위
-    if gauges.get("ready"):
-        out.append(_row("READY", gauges["ready"]))
 
     cost = gauges.get("cost") or ""
     if cost:
