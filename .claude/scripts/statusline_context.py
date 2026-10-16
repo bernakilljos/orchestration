@@ -1606,7 +1606,7 @@ def main() -> None:
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
-        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[90m│[0m " + body
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[15G[90m│[0m " + body
 
     _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
                "영향": "🧪 영향", "공통화": "🧩 공통화",
@@ -1623,7 +1623,7 @@ def main() -> None:
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
-        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[90m│[0m " + b1
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[15G[90m│[0m " + b1
                 + "   [1;35m»»»»[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
