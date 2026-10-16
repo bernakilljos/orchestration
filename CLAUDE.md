@@ -6,6 +6,49 @@
 
 ---
 
+## 0. Operating Principles (최우선 · SoT)
+
+**목표**: 많이 수정이 아니라, 요청 범위 정확 이해 + 최소 변경 + 완성도 높은 결과.
+**SoT**: `.claude/rules/operating-principles.md` (10 원칙 전문). 이 섹션은 요약·참조.
+
+### 10 원칙 (요약 — 상세: SoT)
+
+1. **조사 → 수정** (추측 수정 X · 기존 구현 재사용 증명)
+2. **범위 lock** (요청 외 임의 변경 X · 발견은 제안만 · `/scope`)
+3. **최소 변경** (불필요 리팩터링 X · 기존 정상 동작 우선)
+4. **공통화 우선** ("이미 존재하는가?" 먼저 증명)
+5. **디자인 임의 해석 X** (design token · 공통 CSS 우선)
+6. **완료는 증명** ("될 것 같다" X · 실제 diff·build·test·실행 결과)
+7. **구현자 ≠ 검증자** (reviewer 는 구현 옹호 X · 결함 찾기)
+8. **재발 = 품질 실패** (SoT: `recurrence-tracker.py` · 1·2·3·5 자동 승격)
+9. **미측정 ≠ 정상** (정상 / 실패 / 미측정 3 분류)
+10. **종료 조건 8가지** 전부 만족해야 완료 (SoT § 10)
+
+### 역할 분리 (엔트로피 낮춤 · SoT · 중복 금지)
+
+| 층 | 책임 | 중복 금지 |
+|---|---|---|
+| **CLAUDE.md** | 기본 원칙 · SoT 참조 | 본문 중복 X · 500줄 이하 |
+| **Rule** (`.claude/rules/*.md`) | 영역별 규칙 (판단 기준) | 1 규칙 = 1 SoT · 다른 파일은 `[[참조]]` |
+| **Hook** | 반드시 막음 · deterministic 자동 실행 | 경고·알림은 Hook X → Skill·Subagent |
+| **Skill** | 반복 작업 절차 | 1회성·실험 Skill X |
+| **Subagent** | 독립 조사·리뷰·검증 (판단) | 1 역할 = 1 agent · 범용 agent X |
+| **Statusline** | 관측·표시 | 지시·행동 X (관측만) |
+
+### Change Budget (매 세션)
+
+- **NEW**: 최대 2개 (사용자 명시 승인 시 상한 해제)
+- **CHANGE**: 최대 5개
+- **REMOVE**: 무제한 (엔트로피 낮춤 장려)
+
+**변경할 필요 없으면 변경 안 함.** 설정 수정이 목표 X · 단순·안정·검증 가능이 목표.
+
+### 작업 패턴 — "감사 → 증명 → 필요할 때만 수정"
+
+반복 감사·증명: `/audit-claude` command. 상세: `plugins/exec_orch/commands/audit-claude.md`.
+
+---
+
 ## 1. WHAT — 이 프로젝트는 무엇인가
 
 **멀티AI 오케스트레이션 킷** (Claude + Codex + Gemini).
@@ -18,7 +61,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-10-16): plugins 37 stable + 0 spec-only - rules 50 - hooks 32 - scripts 161
+> **현재 상태** (2026-10-16): plugins 37 stable + 0 spec-only - rules 51 - hooks 32 - scripts 165
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가

@@ -287,6 +287,12 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-stop-snapshot.sh\"",
             "timeout": 10,
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-save-next-actions.sh\"",
+            "timeout": 10,
+            "async": true
           }
         ]
       }
@@ -428,6 +434,11 @@
     "SessionEnd": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-save-next-actions.sh\"",
+            "timeout": 10
+          },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/stop-snapshot.sh\" SessionEnd"

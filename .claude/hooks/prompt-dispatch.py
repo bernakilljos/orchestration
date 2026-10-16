@@ -44,6 +44,7 @@ HOOKS = [
     ("websearch-trigger-detect", "websearch_trigger_detect"),
     ("suggest-skills", "suggest_skills"),
     ("aggregate-rule-adherence", "aggregate_rule_adherence"),
+    ("recurrence-tracker", "recurrence_tracker"),
     ("suggest-command-from-context", "suggest_command_from_context"),
     ("auto-explore-on-task", "auto_explore_on_task"),  # 2026-10-13 신설 (713c91f) 이식
     ("surface-log-errors", "surface_log_errors"),  # 2026-10-16 상태줄 오류·경고를 세션이 먼저 처리

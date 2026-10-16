@@ -1906,6 +1906,18 @@
 - 롤백: 두 hook 안의 git pull 블록 삭제 → A안 (알림만) 복귀 (2분)
 - memory: feedback_auto_pull_on_behind.md
 
+## Operating Principles + Change Budget + 역할 분리 (2026-10-16)
+- CLAUDE.md § 0 (요약·참조) + .claude/rules/operating-principles.md (SoT · 10 원칙 전문)
+- 10 원칙: 조사→수정·범위 lock·최소 변경·공통화 우선·디자인 임의 해석 X·완료는 증명·구현자≠검증자·재발=품질 실패·미측정≠정상·종료 조건 8가지
+- 역할 분리 (중복 금지): CLAUDE.md=원칙 · Rule=영역 규칙 (1 규칙 1 SoT) · Hook=deterministic 자동 실행 · Skill=반복 절차 · Subagent=독립 판단 · Statusline=관측
+- Change Budget: NEW ≤2 · CHANGE ≤5 · REMOVE 무제한 (엔트로피 낮춤)
+- /audit-claude: 반복 감사 · 조사→공식 확인→증명→최소 변경 (9 단계)
+- /scope: 요청 범위 lock (opt-in · WARN · 24h TTL)
+- recurrence-tracker: 재발 자동 추적 + 1·2·3·5 자동 승격 (CLAUDE.md 룰 · hook 강제 후보)
+- auto-save-next-actions: 응답 끝 "## Next Actions" 자동 추출 → /clear 후 다음 세션 바로 재개
+- 근거: 2026-10-16 사용자 "엔트로피 쫌 낮추자" + "변경할 필요 없으면 변경 안 함"
+- 실측 중복: "공통 컴포넌트 먼저 검색" 7 파일 · "검증 후 보고" 13 파일 → SoT 통합 후보
+
 
 
 

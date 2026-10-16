@@ -67,12 +67,14 @@ if grep -rql "$RULE_NAME" "$ROOT/setup/templates/" 2>/dev/null; then
 fi
 
 # 알림 (조합이 있을 때만)
+# 2026-10-16 수정: "본문 복제" 유도 → "참조 그래프 · SoT 통합 검토" 로 변경
+# 사용자 Operating Principles (SoT · 중복 금지) 정합. CLAUDE.md § 0 역할 분리.
 if [ -n "$MATCHES" ]; then
   cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": " Rule 확산 필요 — [$RULE_NAME] 변경 감지. 다음 위치도 함께 갱신 필요:${MATCHES}\n\n※ '하나 알려주면 전체 안 바뀜' 방지 (auto-propagate rule)"
+    "additionalContext": "[참조 그래프] [$RULE_NAME] 변경 — 다음 위치가 이 룰을 참조:${MATCHES}\n\n※ **SoT 통합 검토** (중복 본문 발견 시 1곳만 남기고 다른 곳은 \`[[$RULE_NAME]]\` 참조로 축약 · CLAUDE.md § 0 역할 분리)."
   }
 }
 EOF
