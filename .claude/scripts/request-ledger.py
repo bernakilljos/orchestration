@@ -142,7 +142,7 @@ def cmd_status() -> int:
         print("[ledger] empty")
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] == "completed")  # implemented·verified 는 미완료 (뻥 완료 방지)
+    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred"))  # deferred = 사용자 명시 다음 세션 지연
     print(f"=== Request Ledger · {done}/{total} 완료 ===")
     for r in data["requests"]:
         mark = "✓" if r["status"] == "completed" else "☐"
@@ -156,7 +156,7 @@ def cmd_gate() -> int:
     if not data or not data.get("requests"):
         return 0  # ledger 없음 = 통과
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] == "completed")  # implemented·verified 는 미완료 (뻥 완료 방지)
+    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred"))  # deferred = 사용자 명시 다음 세션 지연
     if done == total:
         return 0  # 모두 완료 = 통과
     # 미완료 있음 — Claude 에게 알림

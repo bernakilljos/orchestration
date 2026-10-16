@@ -40,7 +40,9 @@ fi
 # 3. Verification Guard — golden-test (warn only · block 하면 overload)
 # 사용자 명시 지시 시만 block
 GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null | tail -3 | grep -oE "[0-9]+/10" | head -1 || echo "")
-if [ -n "$GOLDEN_RESULT" ] && [ "$GOLDEN_RESULT" != "10/10" ]; then
+GOLDEN_PASS=$(echo "$GOLDEN_RESULT" | cut -d/ -f1)
+GOLDEN_TOTAL=$(echo "$GOLDEN_RESULT" | cut -d/ -f2)
+if [ -n "$GOLDEN_RESULT" ] && [ "$GOLDEN_PASS" != "$GOLDEN_TOTAL" ]; then
   # warn
   echo "[six-guards] WARN · Golden Test $GOLDEN_RESULT (10/10 아님)" >&2
 fi
