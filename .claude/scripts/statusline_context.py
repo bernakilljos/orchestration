@@ -1544,7 +1544,7 @@ def main() -> None:
 
     def _row(label: str, body: str) -> str:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
-        return "[1;36m" + head + "[0m[18G[90m│[0m " + body
+        return "  [1;36m" + head + "[0m[20G[90m│[0m " + body
 
     _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
                "영향": "🧪 영향", "공통화": "🧩 공통화",
@@ -1555,8 +1555,8 @@ def main() -> None:
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
-        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
-                + "[70G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2)
+        return ("  [1;36m" + _h1 + "[0m[20G[90m│[0m " + b1
+                + "[72G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
@@ -1608,23 +1608,22 @@ def main() -> None:
     # 빈 줄
     out.append("")
 
-    # 그룹 3: 품질추세 (단독) + 요청+증명+READY (3블록 한 줄)
-    if _trend: out.append(_row("품질추세", _trend))
-
-    if _ledger and _proof and _rdy:
-        out.append(_triple("요청", _ledger, "증명", _proof, "READY", _rdy))
-    elif _ledger and _proof: out.append(_pair("요청", _ledger, "증명", _proof))
-    elif _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
+    # 그룹 3: 품질추세+요청 (쌍) + 증명+READY (쌍)
+    if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
+    elif _trend: out.append(_row("품질추세", _trend))
     elif _ledger: out.append(_row("요청", _ledger))
+
+    if _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
     elif _proof: out.append(_row("증명", _proof))
     elif _rdy: out.append(_row("READY", _rdy))
 
     # 빈 줄
     out.append("")
 
-    # 그룹 4: 인프라 (단독) + 오류 (단독) + 서브+이력 (쌍)
-    if _infra: out.append(_row("인프라", _infra))
-    if _err: out.append(_row("오류", _err))
+    # 그룹 4: 인프라+오류 (쌍) + 서브+이력 (쌍)
+    if _infra and _err: out.append(_pair("인프라", _infra, "오류", _err))
+    elif _infra: out.append(_row("인프라", _infra))
+    elif _err: out.append(_row("오류", _err))
 
     if _history: out.append(_pair("서브", _agents, "이력", _history))
     else: out.append(_row("서브", _agents))
