@@ -1269,6 +1269,7 @@
       - .claude/hooks/save-user-prompt.sh (UserPromptSubmit)
       - .claude/hooks/save-session-summary.sh (Stop/SessionEnd)
       - .claude/hooks/load-recent-conversations.sh (SessionStart · 최근 3 세션 자동 로드)
+      - 2026-10-16: 헤드리스(claude -p) 회차마다 대화 0건·transcript 없는 세션 id 가 Stop/SessionEnd 를 한 번 더 때려 session_summary 에 빈 행이 1:1 로 쌓였다(443/757행) → save_session_summary 는 transcript 없는 0건 세션을 저장하지 않고(건너뛴 이벤트는 conversation-save.log 에 [skip] … event=), load-recent-conversations·resume-last-24h 는 turns > 0 만 읽는다
       - .claude/rules/conversation-history.md · CLAUDE.md § 3.1 (5)
       - 명시 memory (도메인 자산) 유지 · 히스토리는 DB 자동
     ✓ 6 축 초최고강함 강화 (매우강함 < 초 매우강함 < 초초 매우강함 < 초최고강함):

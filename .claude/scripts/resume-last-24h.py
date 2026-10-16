@@ -37,7 +37,7 @@ def section_session_summary() -> str:
         c = sqlite3.connect(DB)
         rows = c.execute(
             "SELECT session_id, ended_at, turns, summary, key_decisions "
-            "FROM session_summary WHERE updated_at >= ? "
+            "FROM session_summary WHERE updated_at >= ? AND turns > 0 "
             "ORDER BY updated_at DESC LIMIT 5",
             (cutoff,)
         ).fetchall()

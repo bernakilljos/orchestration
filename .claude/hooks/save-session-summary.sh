@@ -14,6 +14,7 @@ try:
     d=json.load(sys.stdin)
     if d.get('session_id'): print('export CLAUDE_CODE_SESSION_ID='+shlex.quote(d['session_id']))
     if d.get('transcript_path'): print('export CLAUDE_TRANSCRIPT_PATH='+shlex.quote(d['transcript_path']))
+    print('export HOOK_EVENT='+shlex.quote(str(d.get('hook_event_name',''))+('/'+str(d['reason']) if d.get('reason') else '')))
 except Exception: pass" 2>/dev/null)"
 
 python -X utf8 "$PROJECT_ROOT/.claude/scripts/sync-assistant-from-jsonl.py" >>"$LOG" 2>&1 || true
@@ -35,8 +36,11 @@ try:
         summary = ''
     dec_rows = c.execute('SELECT ai_classified FROM decisions WHERE ts >= datetime(\"now\",\"-1 hour\") LIMIT 5').fetchall()
     key_dec = '; '.join(r[0] for r in dec_rows if r[0])[:1000]
-    save_session_summary(summary, key_dec, '')
-    print(f'[ok] session {sid[:8]} summary saved - {len(rows)} turns')
+    if save_session_summary(summary, key_dec, ''):
+        print(f'[ok] session {sid[:8]} summary saved - {len(rows)} turns')
+    else:
+        # transcript 없는 0건 세션(헤드리스 회차의 보조 프로세스) — 저장 안 함 · 어떤 이벤트였는지만 남긴다
+        print(f'[skip] session {sid[:8]} 0 turns · transcript 없음 · event={os.environ.get(\"HOOK_EVENT\",\"?\")}')
 except Exception as e:
     print(f'[skip] {e}', file=sys.stderr)
 " >>"$LOG" 2>&1 || true

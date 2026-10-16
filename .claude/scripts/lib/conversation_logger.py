@@ -134,12 +134,35 @@ def save_turn(role: str, content: str, tags: str | None = None) -> None:
         c.commit()
 
 
-def save_session_summary(summary: str, key_decisions: str = "", files: str = "") -> None:
+def _transcript_exists(sid: str) -> bool:
+    """이 세션 id 의 transcript(jsonl)가 어느 프로젝트 폴더에든 있는가."""
+    if not sid or sid == "unknown":
+        return False
+    tp = os.environ.get("CLAUDE_TRANSCRIPT_PATH", "")
+    if tp and Path(tp).is_file():
+        return True
+    try:
+        root = Path.home() / ".claude" / "projects"
+        return any(root.glob(f"*/{sid}.jsonl"))
+    except Exception:
+        return False
+
+
+def save_session_summary(summary: str, key_decisions: str = "", files: str = "") -> bool:
+    """세션 요약 UPSERT. 저장했으면 True.
+
+    2026-10-16: 헤드리스(`claude -p`) 회차마다 대화 0건·transcript 없는 세션 id 가
+    Stop/SessionEnd 훅을 한 번 더 때려 빈 행이 1:1 로 쌓였다(757행 중 443행).
+    SessionStart 가 '최근 3 세션' 을 주입할 때 그 빈 행이 자리를 차지해 실제 인계가
+    2건으로 줄었다. transcript 가 없는 0건 세션은 저장하지 않는다.
+    """
     sid = get_session_id()
     with _conn() as c:
         turns = c.execute(
             "SELECT COUNT(*) FROM conversations WHERE session_id=?", (sid,)
         ).fetchone()[0]
+        if turns == 0 and not summary and not _transcript_exists(sid):
+            return False
         tokens = c.execute(
             "SELECT COALESCE(SUM(tokens),0) FROM conversations WHERE session_id=?", (sid,)
         ).fetchone()[0]
@@ -155,6 +178,7 @@ def save_session_summary(summary: str, key_decisions: str = "", files: str = "")
             (sid, sid, turns, summary[:4000], key_decisions[:4000], files[:2000], tokens),
         )
         c.commit()
+    return True
 
 
 def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
@@ -163,7 +187,7 @@ def load_recent_context(n_sessions: int = 3, max_chars: int = 3000) -> str:
         rows = c.execute(
             """SELECT session_id, started_at, turns, summary, key_decisions
                FROM session_summary
-               WHERE session_id != ?
+               WHERE session_id != ? AND turns > 0
                ORDER BY updated_at DESC LIMIT ?""",
             (get_session_id(), n_sessions),
         ).fetchall()
