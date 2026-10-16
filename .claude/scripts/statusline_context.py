@@ -1376,10 +1376,10 @@ def extra_gauges(cwd, data=None):
     try:
         _hc = int(locals().get("_hc_total", 0) or 0)
         # 측정 소스 없음 — ⏳ 명시 (operating-principles § 9)
-        reuse_line = ("컴포넌트 재사용 [90m⏳[0m · "
-                      "우회 [90m⏳[0m · "
-                      "CSS중복 [90m⏳[0m · "
-                      "신규공통 [90m⏳[0m · "
+        reuse_line = ("컴포넌트 재사용 [90m?[0m · "
+                      "우회 [90m?[0m · "
+                      "CSS중복 [90m—[0m · "
+                      "신규공통 [90m?[0m · "
                       f"하드코딩 [1;33m{_hc}[0m")
     except Exception:
         pass
@@ -1656,11 +1656,11 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
         _w = LABEL_WIDTH.get(label, _width(head))
-        _pad = max(1, 12 - _w)  # indent 2 + head + pad = col 14 · │ at col 15
+        _pad = max(1, 15 - _w)  # indent 2 + head + pad = col 17 · │ at col 18 (margin 3)
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
-        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[15G[90m│[0m " + body
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[18G[90m│[0m " + body
 
     _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
                "영향": "🧪 영향", "공통화": "🧩 공통화",
@@ -1675,13 +1675,13 @@ def main() -> None:
         # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
         _w1 = LABEL_WIDTH.get(l1, _width(_h1))
         _w2 = LABEL_WIDTH.get(l2, _width(_h2))
-        _pad1 = max(1, 12 - _w1)
+        _pad1 = max(1, 15 - _w1)
         # 오른쪽 label 뒤 │ 는 padding 2 (짧은 label-value 간격)
-        _pad2 = max(1, 11 - _w2)
+        _pad2 = max(1, 14 - _w2)
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
-        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[15G[90m│[0m " + b1
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
                 + "   [36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):

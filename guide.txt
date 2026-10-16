@@ -2091,3 +2091,5 @@
 ## golden-test.py → test-cache.json 자동 작성 (READY source 승격 · 품질 미평가 해결 · 2026-10-16)
 ## diet-audit.py 신설 — hooks/rules/agents/skills KEEP/MERGE/REMOVE/MOVE 분류 (자동 수정 X · 2026-10-16)
 ## hourglass-audit.py 신설 — ⏳ 상태 세분화 (?/—/⏳/↻/✅/❌/⚠) · 13 지표 소스 증명 (2026-10-16)
+## 공통화 라인 ?/— 교체 (kit 자체 UI 자산 X · hourglass-audit 반영 · 2026-10-16)
+## statusline │ col 15 → 18 (3칸 margin · 터미널 wcwidth 변동 완전 흡수 · 2026-10-16)
