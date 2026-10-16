@@ -1429,11 +1429,39 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
+    # 🧭 DRIFT · 🩺 HEALTH (2026-10-16 사용자 명시 — 비용 위 한 쌍 · 청록 라벨 + 상태색 값)
+    #   DRIFT: core/rule/hook/agent 변경 수 · frozen 여부 · release-manifest baseline 대비
+    #   HEALTH: 월 1회 health-check 점수 · last/next 날짜 · 자동 수정 X · 보고만
+    #   SoT: drift-detect.py · health-check.py
+    drift_line = ""
+    health_line = ""
+    try:
+        import subprocess as _sp_d
+        _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
+        if os.path.exists(_dd):
+            _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
+                           capture_output=True, text=True, timeout=3, cwd=cwd)
+            if _r.returncode == 0 and _r.stdout.strip():
+                drift_line = _r.stdout.strip()
+    except Exception:
+        pass
+    try:
+        import subprocess as _sp_h
+        _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
+        if os.path.exists(_hc):
+            _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
+                           capture_output=True, text=True, timeout=3, cwd=cwd)
+            if _r.returncode == 0 and _r.stdout.strip():
+                health_line = _r.stdout.strip()
+    except Exception:
+        pass
+
     return {"session": session_gauge, "line2": line2, "line3": line3,
             "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
             "design": design_line, "dev": dev_line,
             "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line,
-            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line, "control": control_line, "verify": verify_line}
+            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line, "control": control_line, "verify": verify_line,
+            "drift": drift_line, "health": health_line}
 
 
 def main() -> None:
@@ -1563,7 +1591,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅", "DRIFT": "🧭", "HEALTH": "🩺"}
 
     # 2026-10-16 사용자 명시 — 라벨별 카테고리 색 고정
     LABEL_COLOR = {
@@ -1572,6 +1600,8 @@ def main() -> None:
         # 중간 (normal 30s)
         "토큰": "36", "디자인": "95", "개발": "94", "영향": "92", "공통화": "96",
         "검증": "92", "품질추세": "95",
+        # DRIFT = 청록 (사용자 2026-10-16 명시 · 품질추세 보라·오류 빨강·READY 상태색과 겹치지 X)
+        "DRIFT": "96", "HEALTH": "96",
         # 약한 dim
         "인프라": "34", "서브": "35", "이력": "90", "비용": "33",
     }
@@ -1579,8 +1609,19 @@ def main() -> None:
     LABEL_STYLE = {
         "READY": "B", "오류": "B", "증명": "B", "통제": "B", "요청": "B",
         "토큰": "B", "디자인": "B", "개발": "B", "영향": "B", "공통화": "B",
-        "검증": "B", "품질추세": "B",
+        "검증": "B", "품질추세": "B", "DRIFT": "B", "HEALTH": "B",
         "인프라": "D", "서브": "D", "이력": "D", "비용": "D",
+    }
+
+    # 2026-10-16 사용자 "줄좀 맞추자" — wcwidth 터미널 변동 회피용 하드 label-width 테이블.
+    #   label 별 시각 폭 (emoji 2 + space 1 + 한글 2×N 또는 ASCII 1×N) 을 미리 계산해 둔다.
+    #   이 테이블이 있으면 wcwidth 가 1 틀려도 padding 이 어긋나지 않는다.
+    LABEL_WIDTH = {
+        "토큰": 7, "디자인": 9, "개발": 7, "품질추세": 11,
+        "요청": 7, "영향": 7, "공통화": 9, "인프라": 9,
+        "오류": 7, "READY": 8, "증명": 7, "통제": 7,
+        "검증": 7, "서브": 7, "이력": 7, "비용": 7,
+        "DRIFT": 8, "HEALTH": 9,
     }
 
     # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
@@ -1601,8 +1642,9 @@ def main() -> None:
 
     def _row(label: str, body: str) -> str:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
-        _w = _width(head)
-        _pad = max(1, 12 - _w)  # indent 2 + head + pad + │ = col 20
+        # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
+        _w = LABEL_WIDTH.get(label, _width(head))
+        _pad = max(1, 12 - _w)  # indent 2 + head + pad = col 14 · │ at col 15
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
@@ -1613,13 +1655,17 @@ def main() -> None:
                "품질추세": "📊 품질추세", "요청": "📋 요청",
                "증명": "🔐 증명", "READY": "🎯 READY",
                "인프라": "📡 인프라", "오류": "🚨 오류",
-               "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛑 통제", "검증": "✅ 검증"}
+               "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛑 통제", "검증": "✅ 검증",
+               "DRIFT": "🧭 DRIFT", "HEALTH": "🩺 HEALTH"}
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
-        _pad1 = max(1, 12 - _width(_h1))
+        # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
+        _w1 = LABEL_WIDTH.get(l1, _width(_h1))
+        _w2 = LABEL_WIDTH.get(l2, _width(_h2))
+        _pad1 = max(1, 12 - _w1)
         # 오른쪽 label 뒤 │ 는 padding 2 (짧은 label-value 간격)
-        _pad2 = max(1, 11 - _width(_h2))
+        _pad2 = max(1, 11 - _w2)
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
@@ -1705,6 +1751,13 @@ def main() -> None:
 
     # 빈 줄
     out.append("")
+
+    # 🧭 DRIFT · 🩺 HEALTH 쌍 (2026-10-16 사용자 명시 — 비용 위 · 청록 라벨 pair)
+    _drift = gauges.get("drift") or ""
+    _health = gauges.get("health") or ""
+    if _drift and _health: out.append(_pair("DRIFT", _drift, "HEALTH", _health))
+    elif _drift: out.append(_row("DRIFT", _drift))
+    elif _health: out.append(_row("HEALTH", _health))
 
     if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
 

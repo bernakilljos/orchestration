@@ -2083,3 +2083,5 @@
 ## Golden Test N/N dynamic (2026-10-16)
 ## statusline ledger: deferred 완료 간주 (gate 일치 · 2026-10-16)
 ## | col 15 cursor position [15G 강제 (wcwidth 편차 fallback · 2026-10-16)
+## 🧭 DRIFT + 🩺 HEALTH 쌍 비용 위 추가 (release-manifest baseline · 월 1회 health · 2026-10-16)
+## LABEL_WIDTH 하드테이블 (wcwidth 변동 회피 · "줄좀 맞추자" · 2026-10-16)
