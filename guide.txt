@@ -2081,3 +2081,4 @@
 ## FREEZE 2.0 (외부 감사 5개 반영 · 2026-10-16)
 ## deferred 상태 (2026-10-16 사용자 명시 다음 세션 지연) + Golden pattern N/N
 ## Golden Test N/N dynamic (2026-10-16)
+## statusline ledger: deferred 완료 간주 (gate 일치 · 2026-10-16)

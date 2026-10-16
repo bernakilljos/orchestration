@@ -1262,10 +1262,10 @@ def extra_gauges(cwd, data=None):
             reqs = _lg.get("requests", [])
             if reqs:
                 total = len(reqs)
-                done = sum(1 for r in reqs if r.get("status") == "completed")
+                done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
                 color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
                 mark = "✓" if done == total else "☐"
-                pending_first = next((r.get("desc", "").split("(")[0].strip()[:40] for r in reqs if r.get("status") != "completed"), "")
+                pending_first = next((r.get("desc", "").split("(")[0].strip()[:40] for r in reqs if r.get("status") not in ("completed", "deferred")), "")
                 extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
                 ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
     except Exception:
