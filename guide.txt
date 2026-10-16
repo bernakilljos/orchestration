@@ -1,7 +1,7 @@
 ============================================================
   Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Updated: 2026-10-16 (상태줄 7줄 · 🤖 서브 줄(등급색·긴급도·도구·토큰·마지막 동작) · 서브에이전트 추적 SubagentStart/Stop · Stop 배포 hook 제거 · MCP 점검 지연 · 단순 삭제 hook 도 전파)
+  Updated: 2026-10-16 (상태줄 7줄 · 🤖 서브 줄 · 서브에이전트 추적 SubagentStart/Stop · 로그 오류 자동 점검(surface-log-errors) · 10분 작업 bash 경로·배터리 · Stop 배포 hook 제거 · MCP 점검 지연)
 ============================================================
 
 
@@ -491,6 +491,8 @@
     statusline 7줄 (1016 확정)              토큰(+fast 뱃지) / 한도 / 디자인 / 개발 / 상태 / 🤖 서브(에이전트 돌 때만) / 비용(맨 끝)
     statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
     서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
+    로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
+    10분 작업 오류 453건 (1016)             작업 스케줄러 PATH 에 bash 없음 → find_bash() (git 위치 역산·ProgramFiles) · Claude procs HIGH 는 RAM 80%+ 일 때만 · 배터리면 안 돌던 것 → setup/modules/_task-allow-battery.bat (15·18·19 모듈)
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true

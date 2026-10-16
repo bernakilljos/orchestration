@@ -174,7 +174,9 @@ def recent_log_issues(cwd: str):
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
             "conversation-save.log", "deflection-detect.log", "emotion-response.log",
             # 2026-10-12: mcp-health.log 는 MCP 섹션에서 별도 집계 (중복 방지)
-            "mcp-health.log"}
+            "mcp-health.log",
+            # 2026-10-16: hook-trace.log 는 사용자 프롬프트 원문을 적는다 → 프롬프트의 "failed" 글자가 오류로 세졌다
+            "hook-trace.log", "prompt-dispatch.log", "tool-dispatch.log"}
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
         if os.path.basename(lp) in skip:
             continue
@@ -839,9 +841,9 @@ def extra_gauges(cwd, data=None):
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"API 정가 환산(구독 청구액 아님) 세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
+            f"세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
             f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
-            f"연간 ${yearly:,.2f} ({_krw(yearly)}) · 이 프로젝트 기준"
+            f"연간 ${yearly:,.2f} ({_krw(yearly)})"
         )
     else:
         line3 = ""
@@ -1194,8 +1196,8 @@ def main() -> None:
         out.append(_row("개발", gauges["dev"]))
     if gauges.get("tail"):
         out.append(_row("상태", SEP.join(gauges["tail"])))
-    if gauges.get("agents"):  # 서브에이전트가 돌 때만 · 상태 바로 다음 줄 (사용자 지시 2026-10-16)
-        out.append(_row("서브", gauges["agents"]))
+    # 서브 줄은 항상 (7줄 확정 · 2026-10-16) — 도는 에이전트가 없으면 회색 «실행 중 없음»
+    out.append(_row("서브", gauges.get("agents") or "[90m실행 중 없음[0m"))
     cost = gauges.get("cost") or ""
     if cost:
         out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
