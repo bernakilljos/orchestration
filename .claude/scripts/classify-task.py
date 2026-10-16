@@ -12,13 +12,14 @@ from typing import Optional
 # 분류 규칙 (정규식 + 우선순위)
 # 2026-10-16 외부 감사 결함 #3 수정 — Codex 트리거 확장 (명시/3+파일/300줄+/반복/코드 리뷰)
 RULES = [
-    # 사용자 Codex 명시 (최우선)
+    # 사용자 Codex 명시 (최우선) · 한글 조사 대응 (2026-10-16 R13 결함 수정)
     {
         "task_type": "codex_explicit",
         "ai": "codex",
         "patterns": [
-            r"\b[Cc]odex\b.*(?:로|으로|시켜|써|구현|검증|리뷰|review|verify)",
-            r"(?:로|으로|시켜|써)\s*\b[Cc]odex\b",
+            r"[Cc]odex(?:로|으로|에게|한테|시켜|써|로서|보고)",
+            r"(?:로|으로|시켜|써)\s*[Cc]odex",
+            r"[Cc]odex\s+(?:실행|호출|구현|검증|리뷰|review|verify|dispatch)",
         ],
         "reason": "사용자가 Codex 명시 -> 즉시 Codex 위임 (orchestrator 자동 dispatch)",
     },

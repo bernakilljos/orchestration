@@ -1957,3 +1957,11 @@
 - Request Ledger: 사용자 요청 N개 추출 → N/N 완료 전 Stop hook 차단
 - Change Budget: NEW 상한 해제 (사용자 명시 '다 해')
 
+
+## 2차 운영 안정화 감사 완료 (R13·R14 · 2026-10-16)
+- FREEZE 룰 신설 (operational-freeze.md)
+- Golden Test 10 PASS (.claude/scripts/golden-test.py)
+- Codex 라우팅 한글 조사 fix (\bcodex\b -> codex(로|으로|에게))
+- statusline Request Ledger 포맷 fix + 이력 라인 추가
+- Edit tool 에러 원인: PostToolUse formatter 가 timestamp 변경 -> 'file modified since read' -> Bash python 로 우회
+

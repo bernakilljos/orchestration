@@ -1240,9 +1240,9 @@ def extra_gauges(cwd, data=None):
                 done = sum(1 for r in reqs if r.get("status") == "completed")
                 color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
                 mark = "✓" if done == total else "☐"
-                pending_first = next((r.get("desc", "")[:30] for r in reqs if r.get("status") != "completed"), "")
+                pending_first = next((r.get("desc", "").split("(")[0].strip()[:40] for r in reqs if r.get("status") != "completed"), "")
                 extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
-                ledger_line = f"\033[1;{color}m📋 요청 {done}/{total} {mark}\033[0m{extra}"
+                ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
     except Exception:
         pass
 
@@ -1423,7 +1423,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "💾"}
 
     def _row(label: str, body: str) -> str:
         # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
@@ -1480,6 +1480,10 @@ def main() -> None:
     _ledger = gauges.get("ledger") or ""
     if _ledger:
         out.append(_row("요청", _ledger))
+
+    _history = gauges.get("history") or ""
+    if _history:
+        out.append(_row("이력", _history))
 
     cost = gauges.get("cost") or ""
     if cost:
