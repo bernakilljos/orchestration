@@ -1289,11 +1289,104 @@ def extra_gauges(cwd, data=None):
     # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「측정 전」)
     impact_line = _compute_impact(cwd)
 
+    # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
+    trend_line = ""
+    try:
+        import json as _tj
+        _ra_f = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
+        if os.path.exists(_ra_f):
+            with open(_ra_f, "r", encoding="utf-8") as f:
+                _ra = _tj.load(f)
+            rec = _ra.get("recurrence", {}).get("by_category", {})
+            d = rec.get("design") or {}
+            v = rec.get("dev") or {}
+            d_pct = float(d.get("recur_rate_pct", 0) if d else _ra.get("design", {}).get("recur_rate_pct", 0))
+            v_pct = float(v.get("recur_rate_pct", 0) if v else _ra.get("dev", {}).get("recur_rate_pct", 0))
+            d_tr = d.get("trend", "→") if d else "→"
+            v_tr = v.get("trend", "→") if v else "→"
+            d_col = "32" if d_pct < 20 else ("33" if d_pct < 40 else "31")
+            v_col = "32" if v_pct < 20 else ("33" if v_pct < 40 else "31")
+            trend_line = (f"디자인 재발 \033[1;{d_col}m{d_pct:.0f}%{d_tr}\033[0m · "
+                          f"개발 재발 \033[1;{v_col}m{v_pct:.0f}%{v_tr}\033[0m")
+    except Exception:
+        pass
+
+    # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 미측정 · 하드코딩만 실측)
+    reuse_line = ""
+    try:
+        _hc = int(locals().get("_hc_total", 0) or 0)
+        # 측정 소스 없음 — 미측정 명시 (operating-principles § 9)
+        reuse_line = ("컴포넌트 재사용 [90m측정 전[0m · "
+                      "우회 [90m측정 전[0m · "
+                      "CSS중복 [90m측정 전[0m · "
+                      "신규공통 [90m측정 전[0m · "
+                      f"하드코딩 [1;33m{_hc}[0m")
+    except Exception:
+        pass
+
+    # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
+    proof_line = ""
+    try:
+        import subprocess as _sp
+        # git clean
+        _git_clean = _sp.run(["git","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
+        _git_icon = "✅" if _git_clean else "⚠"
+        # standing requirements gate
+        _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
+        _sr_ok = _sr_total = 0
+        if os.path.exists(_sr):
+            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, timeout=5, cwd=cwd)
+            try:
+                import json as _pj
+                _s = _pj.loads(_r.stdout)
+                _sr_ok, _sr_total = _s.get("ok",0), _s.get("active",0)
+            except: pass
+        # golden test (quick existence check)
+        _gt = os.path.join(cwd, ".claude", "scripts", "golden-test.py")
+        _gt_icon = "⚠" if os.path.exists(_gt) else "❌"
+        # request ledger
+        _rl_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        _rl_done = _rl_total = 0
+        if os.path.exists(_rl_file):
+            try:
+                with open(_rl_file, "r", encoding="utf-8") as _f:
+                    import json as _jj
+                    _rl = _jj.load(_f)
+                    _rl_total = len(_rl.get("requests",[]))
+                    _rl_done = sum(1 for _r in _rl.get("requests",[]) if _r.get("status")=="completed")
+            except: pass
+        proof_line = (f"git {_git_icon} · "
+                      f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
+                      f"request [1;33m{_rl_done}/{_rl_total}[0m · "
+                      f"golden {_gt_icon} · test [90m미측정[0m")
+    except Exception:
+        pass
+
+    # 💾 이력 (orca.db · 2026-10-16 사용자 요청)
+    history_line = ""
+    try:
+        import sqlite3 as _sq
+        _db = os.path.join(cwd, ".claude", "state", "orca.db")
+        if os.path.exists(_db):
+            _c = _sq.connect(_db)
+            _conv = _c.execute("SELECT COUNT(*) FROM conversations").fetchone()[0]
+            _sess = _c.execute("SELECT COUNT(*) FROM session_summary").fetchone()[0]
+            _dec = _c.execute("SELECT COUNT(*) FROM decisions").fetchone()[0]
+            _file = _c.execute("SELECT COUNT(*) FROM file_audit").fetchone()[0]
+            _rr = _c.execute("SELECT COUNT(*) FROM recurrence_rules WHERE archived=0").fetchone()[0]
+            _re = _c.execute("SELECT COUNT(*) FROM recurrence_events").fetchone()[0]
+            _sol = _c.execute("SELECT COUNT(*) FROM problem_solutions").fetchone()[0]
+            _c.close()
+            history_line = (f"대화 {_conv} · 세션 {_sess} · 결정 {_dec} · "
+                            f"파일 {_file} · 재발 {_rr}룰({_re}건) · 솔루션 {_sol}")
+    except Exception:
+        pass
+
     return {"session": session_gauge, "line2": line2, "line3": line3,
             "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
             "design": design_line, "dev": dev_line,
             "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line,
-            "ledger": ledger_line}
+            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line}
 
 
 def main() -> None:
@@ -1423,7 +1516,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "💾"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "💾", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
 
     def _row(label: str, body: str) -> str:
         # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
@@ -1480,6 +1573,18 @@ def main() -> None:
     _ledger = gauges.get("ledger") or ""
     if _ledger:
         out.append(_row("요청", _ledger))
+
+    _trend = gauges.get("trend") or ""
+    if _trend:
+        out.append(_row("품질추세", _trend))
+
+    _reuse = gauges.get("reuse") or ""
+    if _reuse:
+        out.append(_row("공통화", _reuse))
+
+    _proof = gauges.get("proof") or ""
+    if _proof:
+        out.append(_row("증명", _proof))
 
     _history = gauges.get("history") or ""
     if _history:

@@ -1965,3 +1965,10 @@
 - statusline Request Ledger 포맷 fix + 이력 라인 추가
 - Edit tool 에러 원인: PostToolUse formatter 가 timestamp 변경 -> 'file modified since read' -> Bash python 로 우회
 
+
+## standing-requirements + proof (R23-R26 · 2026-10-16)
+- standing-requirements.py: Persistent Requirement Registry
+- session-start-replay-standing.sh + stop-standing-gate.sh
+- statusline: 품질추세·공통화·이력·증명 4 라인 추가
+- 사용자 '뻥치지 마' 외부 증거 기반 검증
+
