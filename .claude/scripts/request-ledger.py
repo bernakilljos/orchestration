@@ -155,6 +155,15 @@ def cmd_gate() -> int:
     data = _load()
     if not data or not data.get("requests"):
         return 0  # ledger 없음 = 통과
+    # 2026-10-16: 시험이 남긴 ledger(session_id "test") 하나가 모든 세션의 Stop 을 막았다.
+    #   시험 기록과 오래된 기록(지난 작업)은 이번 세션의 미완이 아니다 → 통과.
+    # BASIS: agreed(2026-10-16, 한 세션의 요청 묶음은 몇 시간 안에 끝난다 — 6시간 넘게 안 바뀐 ledger 는 지난 작업.
+    #   한계: 6시간 넘게 이어지는 긴 작업의 미완은 놓친다. 그때는 시각이 아니라 세션 id 대조로 바꾼다.)
+    STALE_SEC = 6 * 3600
+    import time as _t
+    if data.get("session_id") == "test" or _t.time() - LEDGER.stat().st_mtime > STALE_SEC:
+        print("[request-ledger] 시험·지난 작업 ledger — 이번 세션 기준 아님 · 통과", file=sys.stderr)
+        return 0
     total = len(data["requests"])
     done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred"))  # deferred = 사용자 명시 다음 세션 지연
     if done == total:
