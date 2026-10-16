@@ -1548,7 +1548,7 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "[90m│[0m " + "[1;36m" + head + "[0m[18G[90m│[0m " + body
+        return "[1;36m" + head + "[0m [90m│[0m " + body
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
@@ -1578,14 +1578,12 @@ def main() -> None:
                "품질추세":"📊 품질추세","요청":"📋 요청","증명":"🔐 증명","READY":"🎯 READY",
                "인프라":"📡 인프라","오류":"🚨 오류","서브":"🤖 서브","이력":"🔒 이력"}
     def _pair(l1, b1, l2, b2):
-        # 2026-10-16 사용자 명시 — 공통 renderer · cursor position 절대 col 1/18/68/86
+        # 2026-10-16 사용자 명시 — 왼쪽 경계 │ 제거 · 좌우 사이 » · 라벨 뒤 │ 하나
         _h1 = _ICONS2.get(l1, l1)
         _h2 = _ICONS2.get(l2, l2)
         return (
-            "[90m│[0m " + "[1;36m" + _h1 + "[0m"
-            + "[18G[90m│[0m " + b1
-            + "[68G[90m│[0m " + "[1;36m" + _h2 + "[0m"
-            + "[86G[90m│[0m " + b2
+            "[1;36m" + _h1 + "[0m [90m│[0m " + b1
+            + "[70G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
         )
     if _impact and _fast:
         _impact = f"{_impact} · {_fast}"

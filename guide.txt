@@ -2010,3 +2010,10 @@
 - ⏳ 미측정 unified (10 instances replaced)
 - READY cap 70 when verify unmeasured
 
+
+## statusline » 좌우 분리 (2026-10-16 사용자 명시)
+- 왼쪽 경계 │ 제거
+- 라벨 뒤 │ 하나
+- 좌우 블록 사이 » (col 70 cursor jump)
+- 값/색상/이모지/계산 유지
+
