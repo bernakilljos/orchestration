@@ -2101,3 +2101,6 @@
     ✅ n/n · ❌ n/m · 7일 넘게 묵으면 ⏳. 결과 파일은 golden-test.py 를 돌려야 생긴다(대상 프로젝트는 주기 실행을 기록기에 건다).
 - 2026-10-17 verify-fresh-clone: DDL 을 저장소 전체 .py·.sql 에서 모은다(대상의 앱 표 DDL 이 storage/·web/ 에 있어 'DDL 없음' 거짓 FAIL) ·
     읽는 스크립트가 같은 state 파일을 스스로 쓰면 고아가 아니다(손으로 돌리는 도구의 진행 파일). 읽기만 하고 쓰는 곳이 없는 것만 FAIL.
+- 2026-10-17 git index.lock 이 혼자 남던 것: 상태줄이 3초 제한으로 부르는 git status 가 잘려 죽으면 .git/index.lock 이 남아 그 뒤
+    git add·commit 이 'File exists' 로 막힌다(재현 15/15 · --no-optional-locks·GIT_OPTIONAL_LOCKS=0 이면 0/15). settings.json env 에
+    GIT_OPTIONAL_LOCKS=0(훅·상태줄·Bash 전부) · 상태줄 git status 에 --no-optional-locks. 읽기 전용 git 호출이라 동작은 같다.

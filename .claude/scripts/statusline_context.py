@@ -1420,7 +1420,9 @@ def extra_gauges(cwd, data=None):
     try:
         import subprocess as _sp
         # git clean
-        _git_clean = _sp.run(["git","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
+        # --no-optional-locks: 3초에 잘려 죽은 git status 가 .git/index.lock 을 남겨 그 뒤 git add·commit 이 전부 막혔다
+        #   (2026-10-17 lottoclaude 하루 2번 · 재현 15/15 → 이 옵션이면 0/15). 상태줄은 읽기만 하므로 index 를 고쳐 쓸 이유가 없다.
+        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
         _git_icon = "✅" if _git_clean else "⚠"
         # standing requirements gate
         _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")

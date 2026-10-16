@@ -588,7 +588,8 @@
   ],
   "env": {
     "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
-    "TOOL_DISPATCH_PY_STDIN_FIX": "1"
+    "TOOL_DISPATCH_PY_STDIN_FIX": "1",
+    "GIT_OPTIONAL_LOCKS": "0"
   },
   "outputStyle": "concise",
   "keybindingFlavor": "readline",
