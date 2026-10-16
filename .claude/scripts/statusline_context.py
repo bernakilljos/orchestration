@@ -521,7 +521,9 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass  # noqa: BLE001
 
-    # Agent 진행률 섹션 추가 (2026-10-12)
+    # Agent 진행 섹션 (2026-10-12 · 10-16 등급별 색으로 교체)
+    #   기록: .claude/hooks/tool/track_agent_dispatch.py (SubagentStart/Stop · 키=agent_id)
+    #   색 = 등급(모델): haiku 녹 · sonnet 청 · opus/inherit 보라 · fable/mythos 빨강. 숫자 = 그 등급 중 최장 경과.
     agent_str = ""
     try:
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
@@ -529,40 +531,144 @@ def extra_gauges(cwd, data=None):
             with open(active_agents_file, "r", encoding="utf-8") as f:
                 raw = json.load(f)
             agents = raw if isinstance(raw, list) else []
-            # 활성 agent (end_ts 없는 것들) 집계 · 현재 시각 기준 duration 재계산
             import datetime as _dt_mod
-            now_ts = _dt_mod.datetime.utcnow()
-            active = []
+            now_ts = _dt_mod.datetime.now(_dt_mod.timezone.utc).replace(tzinfo=None)
+            _GRADES = [  # (판정 키워드, 순위, ANSI, 표식, 이름)
+                (("fable", "mythos"), 4, "[1;31m", "🔴", "F"),
+                (("opus", "inherit"), 3, "[1;35m", "🟣", "O"),
+                (("sonnet",), 2, "[1;36m", "🔵", "S"),
+                (("haiku",), 1, "[1;32m", "🟢", "H"),
+            ]
+
+            def _grade(model):
+                m = (model or "inherit").lower()
+                for keys, rank, ansi, mark, nm in _GRADES:
+                    if any(k in m for k in keys):
+                        return rank, ansi, mark, nm
+                return 3, "[1;35m", "🟣", "O"  # 모르는 값 = 메인 모델 상속으로 본다
+
+            def _dur(sec):
+                return f"{sec // 60}m{sec % 60:02d}s" if sec >= 60 else f"{sec}s"
+
+            def _k(n):
+                return f"{n / 1000:.0f}k" if n >= 1000 else str(n)
+
+            # 서브에이전트 기록 파일 증분 읽기 — 도구 수 · 현재 컨텍스트 토큰 · 마지막 동작
+            #   (파일이 MB 단위라 매번 전체를 읽지 않는다: 읽은 위치를 .claude/state/agent-scan.json 에 둔다)
+            scan_p = os.path.join(cwd, ".claude", "state", "agent-scan.json")
+            try:
+                with open(scan_p, "r", encoding="utf-8") as f:
+                    scan = json.load(f)
+            except Exception:
+                scan = {}
+
+            def _scan(path):
+                st = scan.get(path) or {"off": 0, "tools": 0, "ctx": 0, "last": ""}
+                try:
+                    size = os.path.getsize(path)
+                    if size < st["off"]:
+                        st = {"off": 0, "tools": 0, "ctx": 0, "last": ""}
+                    if size > st["off"]:
+                        with open(path, "rb") as f:
+                            f.seek(st["off"])
+                            chunk = f.read(size - st["off"])
+                        end = chunk.rfind(b"\n") + 1  # 완성된 줄까지만
+                        for line in chunk[:end].splitlines():
+                            try:
+                                o = json.loads(line)
+                            except Exception:
+                                continue
+                            m = o.get("message") or {}
+                            if not isinstance(m, dict):
+                                continue
+                            u = m.get("usage")
+                            if isinstance(u, dict):
+                                st["ctx"] = (int(u.get("input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0)
+                                             + int(u.get("cache_creation_input_tokens") or 0) + int(u.get("output_tokens") or 0))
+                            content = m.get("content")
+                            for c in (content if isinstance(content, list) else []):
+                                if isinstance(c, dict) and c.get("type") == "tool_use":
+                                    st["tools"] += 1
+                                    ti = c.get("input") or {}
+                                    nm_ = c.get("name", "")
+                                    # Claude Code 에이전트 목록처럼 «무엇을 하는 중» 으로 읽히게 (예: Write dbg_one.py)
+                                    fp = os.path.basename(str(ti.get("file_path") or ti.get("notebook_path") or ""))
+                                    if ti.get("description"):
+                                        act = str(ti["description"])
+                                    elif fp:
+                                        act = f"{nm_} {fp}"
+                                    elif ti.get("pattern"):
+                                        act = f"{nm_} {ti['pattern']}"
+                                    elif ti.get("command"):
+                                        act = str(ti["command"])
+                                    elif ti.get("url") or ti.get("query"):
+                                        act = f"{nm_} {ti.get('url') or ti.get('query')}"
+                                    else:
+                                        act = nm_
+                                    act = " ".join(act.split())
+                                    st["last"] = act if len(act) <= 40 else act[:39] + "…"
+                        st["off"] += end
+                    scan[path] = st
+                except OSError:
+                    pass
+                return st
+
+            proj_dir = cwd_to_proj_dir(cwd)
+            rows = []
             for a in agents:
                 if a.get("end_ts"):
                     continue
                 try:
-                    s = _dt_mod.datetime.strptime(a.get("start_ts", ""), "%Y-%m-%dT%H:%M:%SZ")
-                    a["duration_s"] = max(0, int((now_ts - s).total_seconds()))
+                    st0 = _dt_mod.datetime.strptime(a.get("start_ts", ""), "%Y-%m-%dT%H:%M:%SZ")
+                    dur = max(0, int((now_ts - st0).total_seconds()))
                 except Exception:
-                    a["duration_s"] = 0
-                active.append(a)
-            if active:
-                import collections as _col
-                agent_counts = _col.Counter(a["id"].split("-")[0].lower() for a in active)
-                agent_list = " · ".join(f"{name} ×{cnt}" if cnt > 1 else name
-                                       for name, cnt in sorted(agent_counts.items()))
-                # 최대 duration (진행 중인 것 중) - 색깔 기준
-                max_dur = max((a.get("duration_s", 0) for a in active), default=0)
-                if max_dur > 180:  # 3분+
-                    color = "\033[1;31m"  # 빨강
-                    severity = "🔴"
-                elif max_dur > 60:  # 1~3분
-                    color = "\033[1;35m"  # 주황/마젠타
-                    severity = "🟠"
-                elif max_dur > 30:  # 30s~1분
-                    color = "\033[1;33m"  # 노랑
-                    severity = "🟡"
-                else:  # <30s
-                    color = "\033[1;32m"  # 녹색
-                    severity = "🟢"
-                agent_str = (f"{color}{severity} {agent_list} "
-                            f"({max_dur}s)\033[0m")
+                    dur = 0
+                tp = a.get("transcript") or ""
+                if not (tp and os.path.exists(tp)) and a.get("id"):  # 경로가 없으면 이 프로젝트 세션 폴더에서 찾는다
+                    import glob as _g
+                    hits = _g.glob(os.path.join(proj_dir, "*", "subagents", f"agent-{a['id']}.jsonl"))
+                    tp = hits[0] if hits else ""
+                # 이 프로젝트 세션의 기록만 읽는다 — 다른 프로젝트 에이전트의 동작이 섞여 보이지 않게 (2026-10-16)
+                if tp and os.path.normcase(os.path.abspath(tp)).find(os.path.normcase(os.path.abspath(proj_dir))) != 0:
+                    tp = ""
+                info = _scan(tp) if tp else None
+                rows.append((_grade(a.get("model")), a, dur, info, tp))
+            try:  # 열린 에이전트의 스캔 기록만 남긴다
+                live = {r[4] for r in rows if r[4]}
+                with open(scan_p, "w", encoding="utf-8") as f:
+                    json.dump({k: v for k, v in scan.items() if k in live}, f)
+            except Exception:
+                pass
+            rows.sort(key=lambda r: (-r[0][0], -r[2]))
+            # 긴급도 (2026-10-16 사용자 지시 «긴급도 하나 넣어서 7줄로»)
+            #   긴급 = 기록 파일이 3분+ 안 늘어남(멈춤 의심) · 주의 = 10분+ 실행 · 정상 = 그 외
+            import time as _tm
+            stalled = set()
+            for r in rows:
+                try:
+                    if r[4] and r[2] > 180 and _tm.time() - os.path.getmtime(r[4]) > 180:
+                        stalled.add(id(r[1]))
+                except OSError:
+                    pass
+            if stalled:
+                urgency = "[1;31m긴급 멈춤의심 " + str(len(stalled)) + "[0m"
+            elif any(r[2] > 600 for r in rows):
+                urgency = "[1;33m주의 10분+[0m"
+            else:
+                urgency = "[1;32m정상[0m"
+            parts = []
+            for (rank, ansi, mark, nm), a, dur, info, _tp in rows[:3]:
+                name = (a.get("type") or "agent").split(":")[-1]
+                desc = a.get("description") or ""
+                desc = f"「{desc[:14]}」" if desc and desc != name else ""
+                extra = ""
+                if info:
+                    extra = f" 도구{info['tools']} {_k(info['ctx'])}" + (f" {info['last']}" if info.get("last") else "")
+                warn = " ⛔정지" if id(a) in stalled else (" ⏳" if dur > 600 else "")
+                parts.append(f"{ansi}{mark}{nm} {name}{desc} {_dur(dur)}{extra}{warn}\033[0m")
+            if len(rows) > 3:
+                parts.append(f"+{len(rows) - 3}")
+            agent_str = (" · ".join(parts) + " · " + urgency) if parts else ""
     except Exception:
         pass  # noqa: BLE001
 
@@ -671,8 +777,7 @@ def extra_gauges(cwd, data=None):
         pass  # noqa: BLE001
     # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
     # 2026-10-12: Agent 진행률 추가
-    if agent_str:
-        tail.insert(0, agent_str)
+    # 에이전트는 상태 줄이 아니라 전용 7번째 줄 (gauges['agents'])
     try:
         # Cache hit rate (prompt cache 절감)
         # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산
@@ -857,19 +962,20 @@ def extra_gauges(cwd, data=None):
     #   그 외       → fast ON
     # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
     _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
+    fast_badge = ""  # 2026-10-16 사용자 지시 — fast·/clear 표시는 상태 줄이 아니라 토큰 줄 옆 (기준은 동결 · 위치만)
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _tp >= 95:
-            tail.append(f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
+            fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
-            tail.append(f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+            fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
         elif _wp >= 80:
-            tail.append(f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+            fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
         elif _wp >= 50:
-            tail.append(f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
+            fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
-            tail.append("fast ON")
+            fast_badge = ("fast ON")
     except Exception:
         pass  # noqa: BLE001
 
@@ -938,7 +1044,7 @@ def extra_gauges(cwd, data=None):
         line2_parts.extend(tail)
     line2 = " - ".join(line2_parts)
     return {"session": session_gauge, "line2": line2, "line3": line3,
-            "week": week_gauge, "tail": tail, "cost": line3,
+            "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
             "design": design_line, "dev": dev_line}
 
 
@@ -1068,7 +1174,7 @@ def main() -> None:
 
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
-    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "비용": "💰"}
+    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰"}
 
     def _row(label: str, body: str) -> str:
         # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
@@ -1078,7 +1184,7 @@ def main() -> None:
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
         return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
 
-    out = [_row("토큰", f"{token_line}{SEP}{clock}")]
+    out = [_row("토큰", f"{token_line}{SEP}{clock}" + (SEP + gauges["fast"] if gauges.get("fast") else ""))]
     lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
     if lim:
         out.append(_row("한도", SEP.join(lim)))
@@ -1088,6 +1194,8 @@ def main() -> None:
         out.append(_row("개발", gauges["dev"]))
     if gauges.get("tail"):
         out.append(_row("상태", SEP.join(gauges["tail"])))
+    if gauges.get("agents"):  # 서브에이전트가 돌 때만 · 상태 바로 다음 줄 (사용자 지시 2026-10-16)
+        out.append(_row("서브", gauges["agents"]))
     cost = gauges.get("cost") or ""
     if cost:
         out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))

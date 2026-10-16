@@ -5,6 +5,7 @@ description: |
   메인 컨텍스트를 더럽히지 않고 평가만 수행. /score-task 가 우회 호출 가능.
 tools: Read, Bash
 model: haiku
+color: green
 ---
 
 # Judge (Subagent)

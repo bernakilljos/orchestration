@@ -1,7 +1,7 @@
 ============================================================
   Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Updated: 2026-10-14 (user-prompt-git-fetch · 세션 중간 drift 10분 throttle 감지)
+  Updated: 2026-10-16 (상태줄 7줄 · 🤖 서브 줄(등급색·긴급도·도구·토큰·마지막 동작) · 서브에이전트 추적 SubagentStart/Stop · Stop 배포 hook 제거 · MCP 점검 지연 · 단순 삭제 hook 도 전파)
 ============================================================
 
 
@@ -488,7 +488,9 @@
     UTF-8 BOM 사고 복구 (1013)           11c622f commit 가 Python 195 중 104 broken (U+FEFF BOM + mojibake) · 100 파일 git checkout 복구 + BOM 4 직접 제거 + pytest.ini duplicate 제거 · 195/195 syntax OK · statusline 복구 · 25축 전수조사 (10축 기본 + 15축 추가) · 잔존 silent fail 124 + 문서 47 + [[link]] 58 → 다음 과제
     25축 잔존 과제 fix (1013)             silent fail 48 파일 marker 추가 (unmarked 35 남음) · [[link]] 55->2 · CLAUDE.md broken refs 21 TODO 섹션 · sync-plugins timeout 원인 cmp 느림 · MCP 4->2 FAIL 축소
     최종 마무리 체크 (1013)              plugin skills frontmatter 104 broken 재발견 (BOM 때문 · rebase 로 agent fix 날아감) · 51 재적용 + md 150 BOM 일괄 제거 · pytest --cov 인자 제거 (pytest-cov 미설치 호환) · MCP 3 FAIL 수동 fix 필요 (canva-dev/powerpoint/dom-to-pptx)
-    statusline 4줄 상한                      넘치면 뒤 줄이 화면에서 잘림 → 시각·토큰·한도 / 룰(디자인│개발) / 상태 / 비용
+    statusline 7줄 (1016 확정)              토큰(+fast 뱃지) / 한도 / 디자인 / 개발 / 상태 / 🤖 서브(에이전트 돌 때만) / 비용(맨 끝)
+    statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
+    서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true

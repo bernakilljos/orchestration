@@ -124,14 +124,6 @@
           },
           {
             "type": "command",
-            "command": "true",
-            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
-            "_disabled_reason": "2026-06-08 leak (auto re-install spawn pile-up)",
-            "timeout": 10,
-            "async": true
-          },
-          {
-            "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/check-official-features.sh\"",
             "timeout": 30,
             "async": true
@@ -139,7 +131,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-mcp-health.sh\"",
-            "timeout": 30,
+            "timeout": 10,
             "async": true
           },
           {
@@ -159,10 +151,6 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
             "timeout": 10,
             "async": true
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/mcp-autostart.sh\""
           },
           {
             "type": "command",
@@ -265,18 +253,6 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-04-pre-deploy.sh\"",
-            "timeout": 10,
-            "async": true
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-05-post-deploy.sh\"",
-            "timeout": 10,
-            "async": true
           },
           {
             "type": "command",
@@ -521,7 +497,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
+            "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py\" sub",
             "timeout": 10
           },
           {
@@ -536,7 +512,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-subagent.sh\"",
+            "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py\" sub",
             "timeout": 10
           },
           {

@@ -6,6 +6,7 @@ description: |
   사용 시점: 새 영역 진입 전·"X 가 어디 정의됐지?"·"Y 패턴 어디서 쓰지?"
 tools: Glob, Grep, Read, Bash
 model: sonnet
+color: cyan
 ---
 
 # Explorer (Subagent)

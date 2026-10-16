@@ -72,6 +72,16 @@ def git_history_hashes(rel: str) -> set[str]:
     return out
 
 
+def kit_newer(rel: str, target: Path) -> bool:
+    """kit 의 마지막 커밋 시각 > 대상 파일 수정 시각 이면 True (보존 파일이 kit 수정을 못 받은 것)."""
+    try:
+        ct = subprocess.run(["git", "-C", str(KIT), "log", "-1", "--format=%ct", "--", rel],
+                            capture_output=True, text=True, timeout=30).stdout.strip()
+        return bool(ct) and int(ct) > int((target / rel).stat().st_mtime)
+    except Exception:
+        return False
+
+
 def norm(b: bytes) -> bytes:
     # 줄끝 통일 + CLAUDE.md 의 AUTO-STATS 한 줄(스크립트 수 등, hook 이 수시로 고침)은 비교에서 제외
     b = b.replace(b"\r\n", b"\n")
@@ -117,6 +127,30 @@ def _floor_timeout(h: dict) -> bool:
     return False
 
 
+def _retire(th: dict, ev: str, spec: dict) -> int:
+    """retired-hooks.json 의 spec 1개를 대상 settings 의 event 에 적용. 뺀 hook 수 반환."""
+    gone = set(spec.get("hooks") or [])
+    tm_list = th.get(ev) or []
+    rb = spec.get("replaced_by", "")
+    have_new = (not rb) or any(rb in h.get("command", "")  # 파일명 포함 여부 (인자 pre/post 무관)
+                               for m in tm_list for h in m.get("hooks", []))
+    if not have_new or not gone:
+        return 0
+    retired_n = 0
+    kept = []
+    for m in tm_list:
+        # 파일명만 비교 (인자·따옴표 차이로 놓치지 않게)
+        hs = [h for h in m.get("hooks", [])
+              if (re.search(r"[\w.-]+\.(?:sh|py)", h.get("command", "")) or re.match("", "")).group(0) not in gone
+              # 파일 없는 인라인 명령은 표식(확장자 없는 이름)이 명령에 들어 있으면 대체된 것으로 본다
+              and not any(g in h.get("command", "") for g in gone if "." not in g)]
+        retired_n += len(m.get("hooks", [])) - len(hs)
+        if hs:
+            kept.append({**m, "hooks": hs})
+    th[ev] = kept
+    return retired_n
+
+
 def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     out = json.loads(json.dumps(tgt))
     # hooks: event 별 command 합집합 (대상 순서 유지, kit 것은 뒤에 append)
@@ -139,26 +173,14 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
         ret = json.loads((KIT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
     except Exception:
         ret = {}
-    for ev, spec in ret.items():
-        if ev.startswith("_") or not isinstance(spec, dict):
+    # 2026-10-16 — 값이 목록이면 spec 여러 개 · replaced_by "" = 대체 없이 kit 에서 삭제한 hook (무조건 제거).
+    #   종전: 대체 hook 이 있을 때만 뺐다 → kit 에서 그냥 지운 hook(Stop 의 배포 hook 등)은 대상에 영원히 남았다.
+    for ev, specs in ret.items():
+        if ev.startswith("_"):
             continue
-        gone = set(spec.get("hooks") or [])
-        tm_list = th.get(ev) or []
-        have_new = any(spec.get("replaced_by", "") in h.get("command", "")  # 파일명 포함 여부 (인자 pre/post 무관)
-                       for m in tm_list for h in m.get("hooks", []))
-        if not have_new or not gone:
-            continue
-        kept = []
-        for m in tm_list:
-            # 파일명만 비교 (인자·따옴표 차이로 놓치지 않게)
-            hs = [h for h in m.get("hooks", [])
-                  if (re.search(r"[\w.-]+\.(?:sh|py)", h.get("command", "")) or re.match("", "")).group(0) not in gone
-                  # 파일 없는 인라인 명령은 표식(확장자 없는 이름)이 명령에 들어 있으면 대체된 것으로 본다
-                  and not any(g in h.get("command", "") for g in gone if "." not in g)]
-            retired_n += len(m.get("hooks", [])) - len(hs)
-            if hs:
-                kept.append({**m, "hooks": hs})
-        th[ev] = kept
+        for spec in (specs if isinstance(specs, list) else [specs]):
+            if isinstance(spec, dict):
+                retired_n += _retire(th, ev, spec)
     report.append(f"settings.hooks 대체로 제거 {retired_n}")
     # 이미 있는 kit hook 의 실행 속성(timeout·async)은 kit 값을 따른다
     #   2026-10-06: kit 에서 detect-* timeout 3→10 으로 올려도 대상은 3 에 머물던 것
@@ -351,7 +373,8 @@ def main() -> int:
     for k, v in stats.items():
         print(f"  {k:14} {len(v)}")
     for rel in stats["target-custom"]:
-        print(f"    보존(대상 수정본) {rel}")
+        # kit 이 이 파일을 대상 수정 시각 이후에 고쳤으면 «kit 수정 미반영» — 조용히 넘기지 않는다 (2026-10-16)
+        print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if kit_newer(rel, target) else ""))
     for r in report:
         print(f"  {r}")
     if apply:

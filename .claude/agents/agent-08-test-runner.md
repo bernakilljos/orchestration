@@ -6,6 +6,7 @@ description: |
   사용 시점: 구현 직후·CI 실패 디버깅·flaky 테스트 격리 재현.
 tools: Bash, Read, Grep
 model: sonnet
+color: cyan
 ---
 
 # Test Runner (Subagent)

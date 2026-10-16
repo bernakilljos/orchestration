@@ -6,6 +6,7 @@ description: |
   사용 시점: 커밋 직전·PR 생성 전·완료 보고 전.
 tools: Read, Grep, Glob, Bash
 model: sonnet
+color: cyan
 ---
 
 # Code Reviewer (Subagent)

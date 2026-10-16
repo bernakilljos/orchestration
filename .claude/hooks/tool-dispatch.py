@@ -64,7 +64,7 @@ PRE = [
     ("approval-gate-detect", "approval_gate_detect", "Bash", 5, None),
     ("pre-commit-full-check", "pre_commit_full_check", "Bash", 5, None),
     ("pre-commit-infra-check", "pre_commit_infra_check", "Bash", 5, None),
-    ("track-agent-dispatch", "track_agent_dispatch", "Agent", 5, "start"),
+    ("track-agent-dispatch", "track_agent_dispatch", "Agent", 5, "pending"),
 ]
 POST = [
     ("check-korean-only", "check_korean_only", "Edit|Write", 60, None),
@@ -80,9 +80,14 @@ POST = [
     ("orca-heartbeat", "heartbeat", ".*", 60, None),
     ("periodic-snapshot", "periodic_snapshot", ".*", 5, None),
     ("propagate-rule-change", "propagate_rule_change", "Edit|Write", 60, None),
-    ("track-agent-dispatch", "track_agent_dispatch", "Agent", 5, "end"),
 ]
-TABLE = {"pre": PRE, "post": POST}
+# SubagentStart / SubagentStop (2026-10-16) — 백그라운드 서브에이전트의 실제 시작·종료는 여기로만 온다
+#   (PostToolUse Agent 는 백그라운드면 «실행 직후» 에 와서 종료 신호로 쓸 수 없다)
+SUB = [
+    ("track-agent-dispatch", "track_agent_dispatch", ".*", 5, "sub"),
+    ("log-subagent", "log_subagent", ".*", 10, None),
+]
+TABLE = {"pre": PRE, "post": POST, "sub": SUB}
 
 TOTAL_BUDGET_SEC = 55.0  # 전체 상한 - 넘으면 남은 훅은 건너뛴다
 SPAWN_MIN_SEC = float(os.environ.get("TOOL_DISPATCH_SPAWN_MIN_SEC") or 0.0)  # 테스트 부하용 하한 (기본 0 = 원본 settings timeout 그대로)
@@ -279,7 +284,7 @@ def _merge(results):
 
 def main(argv) -> int:
     if not argv or argv[0] not in TABLE:
-        sys.stderr.write("usage: tool-dispatch.py pre|post [--debug-per-hook]\n")
+        sys.stderr.write("usage: tool-dispatch.py pre|post|sub [--debug-per-hook]\n")
         return 0
     event = argv[0]
     debug = "--debug-per-hook" in argv
