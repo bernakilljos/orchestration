@@ -1559,61 +1559,55 @@ def main() -> None:
     tok_parts.append(clock)
     out = [_row("토큰", SEP.join(tok_parts))]
 
-    # 디자인 + 개발 한 줄 합성 (두 섹션을 한 줄에 넣고 두 번째 라벨 안에 포함)
+    # 2026-10-16 사용자 명시 레이아웃: 6 범주 · 4쌍 합성 (사용량/현재작업/품질/검증/시스템/기록)
     _d = gauges.get("design") or ""
     _dv = gauges.get("dev") or ""
-    if _d and _dv:
-        _head_dv = "\033[1;36m💻 개발\033[0m \033[90m│\033[0m "
-        out.append(_row("디자인", f"{_d}    {_head_dv}{_dv}"))
-    elif _d:
-        out.append(_row("디자인", _d))
-    elif _dv:
-        out.append(_row("개발", _dv))
-
-    # 🧪 영향 (+ fast 뱃지 끝에 — 사용자 지시 fast 는 영향 줄로 이동)
     _impact = gauges.get("impact") or ""
-    if _impact:
-        if gauges.get("fast"):
-            _impact = f"{_impact}{SEP}{gauges['fast']}"
-        out.append(_row("영향", _impact))
-
-    # 📡 인프라
-    if gauges.get("infra"):
-        out.append(_row("인프라", gauges["infra"]))
-
-    # 🚨 오류 + 🎯 READY 한 줄 합성 (사용자 지시 오류·READY 한 줄 통합)
-    _err = gauges.get("errors") or ""
-    _rdy = gauges.get("ready") or ""
-    if _err:
-        out.append(_row("오류", _err))
-    if _rdy:
-        out.append(_row("READY", _rdy))
-    # 🤖 서브 — 도는 에이전트가 없으면 회색 «실행 중 없음»
-    out.append(_row("서브", gauges.get("agents") or "[90m실행 중 없음[0m"))
-
-    _ledger = gauges.get("ledger") or ""
-    if _ledger:
-        out.append(_row("요청", _ledger))
-
-    _trend = gauges.get("trend") or ""
-    if _trend:
-        out.append(_row("품질추세", _trend))
-
     _reuse = gauges.get("reuse") or ""
-    if _reuse:
-        out.append(_row("공통화", _reuse))
-
+    _trend = gauges.get("trend") or ""
+    _ledger = gauges.get("ledger") or ""
     _proof = gauges.get("proof") or ""
-    if _proof:
-        out.append(_row("증명", _proof))
-
+    _rdy = gauges.get("ready") or ""
+    _infra = gauges.get("infra") or ""
+    _err = gauges.get("errors") or ""
+    _agents = gauges.get("agents") or "[90m실행 중 없음[0m"
     _history = gauges.get("history") or ""
-    if _history:
-        out.append(_row("이력", _history))
-
     cost = gauges.get("cost") or ""
-    if cost:
-        out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
+    _fast = gauges.get("fast") or ""
+    _ICONS2 = {"디자인":"🎨 디자인","개발":"💻 개발","영향":"🧪 영향","공통화":"🧩 공통화",
+               "품질추세":"📊 품질추세","요청":"📋 요청","증명":"🔐 증명","READY":"🎯 READY",
+               "인프라":"📡 인프라","오류":"🚨 오류","서브":"🤖 서브","이력":"🔒 이력"}
+    def _pair(l1, b1, l2, b2):
+        h2 = "[90m│[0m " + "[1;36m" + _ICONS2.get(l2, l2) + "[0m [90m│[0m "
+        return _row(l1, f"{b1}    {h2}{b2}")
+    if _impact and _fast:
+        _impact = f"{_impact} · {_fast}"
+
+    if _d and _dv: out.append(_pair("디자인", _d, "개발", _dv))
+    elif _d: out.append(_row("디자인", _d))
+    elif _dv: out.append(_row("개발", _dv))
+
+    if _impact and _reuse: out.append(_pair("영향", _impact, "공통화", _reuse))
+    elif _impact: out.append(_row("영향", _impact))
+    elif _reuse: out.append(_row("공통화", _reuse))
+
+    if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
+    elif _trend: out.append(_row("품질추세", _trend))
+    elif _ledger: out.append(_row("요청", _ledger))
+
+    if _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
+    elif _proof: out.append(_row("증명", _proof))
+    elif _rdy: out.append(_row("READY", _rdy))
+
+    if _infra and _err: out.append(_pair("인프라", _infra, "오류", _err))
+    elif _infra: out.append(_row("인프라", _infra))
+    elif _err: out.append(_row("오류", _err))
+
+    if _history: out.append(_pair("서브", _agents, "이력", _history))
+    else: out.append(_row("서브", _agents))
+
+    if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
+
     print("\n".join(out))
 
 
