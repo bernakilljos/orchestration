@@ -1927,3 +1927,10 @@
 
 
 
+
+## statusline recurrence SoT (2026-10-16)
+- statusline_context.py 가 recurrence-tracker SoT 사용 (legacy 7d/30d 가속도 X)
+- 사용자 정의 임계: normal (<20%) · caution (20~40%) · danger (>=40%) + trend arrow + TOP rule
+- 색상: 녹색/노랑/빨강 (status 기반)
+- 사용자 지시 2026-10-16: '엔트로피 쫌 낮추자' + '다 해줘'
+

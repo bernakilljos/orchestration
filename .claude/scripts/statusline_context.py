@@ -1209,6 +1209,17 @@ def extra_gauges(cwd, data=None):
                 seen = set(order)
                 extras = sorted([k for k in c90.keys() if k not in seen], key=lambda k: -c90[k])
                 parts = [f"{_hl(k)} {c90[k]}" for k in (order + extras) if k in c90]
+                # 2026-10-16 사용자 지시 — 재발률 재정의 (SoT: recurrence-tracker · 임계 20/40 · 추세 ↓→↑)
+                rec = (_ra.get("recurrence", {}).get("by_category", {}) or {}).get(section_name)
+                if rec:
+                    rpct = rec.get("recur_rate_pct", 0)
+                    trend = rec.get("trend", "→")
+                    status = rec.get("status", "normal")
+                    s_color = {"normal": "32", "caution": "33", "danger": "31"}.get(status, "37")
+                    top_rule = rec.get("top_rule")
+                    top_count = rec.get("top_count", 0) or 0
+                    top_display = f" (TOP: {top_rule} ×{top_count})" if top_rule and top_count >= 2 else ""
+                    return " · ".join(parts) + f" · \033[1;{s_color}m재발 {rpct:.0f}%{trend}\033[0m{top_display}"
                 return " · ".join(parts) + f" · \033[1m재발\033[0m {rr}%"
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
