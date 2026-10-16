@@ -2003,3 +2003,10 @@
 
 ## 측정 전 → ⏳미측정 (2026-10-16 사용자 명시)
 
+
+## statusline absolute column position (2026-10-16 user explicit)
+- Common renderer _row + _pair (no direct print, no manual padding)
+- Cursor absolute columns: 1 / 18 / 68 / 86 (|<sp>label<sp>|<sp>value<sp>|<sp>label<sp>|<sp>value)
+- ⏳ 미측정 unified (10 instances replaced)
+- READY cap 70 when verify unmeasured
+

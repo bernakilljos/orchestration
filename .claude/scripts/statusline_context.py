@@ -374,7 +374,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"{EMPTY * 8} ⏳미측정"
+        return f"{EMPTY * 8} ⏳ 미측정"
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -431,17 +431,17 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 def _compute_readiness(cwd, crits, errs, warns, hc_total):
     """🎯 READY 가중 공식 — 2026-10-16.
     축: test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%.
-    데이터 소스 없는 축은 「미측정」 → 가중 재분배 (가능한 축만 평균).
+    데이터 소스 없는 축은 「⏳ 미측정」 → 가중 재분배 (가능한 축만 평균).
     등급: 90+ A · 80+ B+ · 70+ B · 60+ C · <60 D.
-    검증: test pass 95%+ ✅ · 80~94% ⚠ · <80% ❌ · 소스 없음 → "미측정".
+    검증: test pass 95%+ ✅ · 80~94% ⚠ · <80% ❌ · 소스 없음 → "⏳ 미측정".
     배포: merge-to-target.log 24h 이내 ✅ · 7일 이내 ⚠ · 없음 ❌.
     """
     import os as _os, glob as _g, time as _tm
     scores = []  # (weight, score 0~100)
 
-    # 1) test 축 (지금은 캐시 없음 → 미측정)
+    # 1) test 축 (지금은 캐시 없음 → ⏳ 미측정)
     test_cache = _os.path.join(cwd, ".claude", "state", "test-cache.json")
-    verify_icon = "미측정"
+    verify_icon = "⏳ 미측정"
     if _os.path.exists(test_cache):
         try:
             with open(test_cache, "r", encoding="utf-8") as f:
@@ -512,9 +512,9 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
         final = 0
 
     # 2026-10-16 외부 감사 — 미증명 상한 (사용자 명시):
-    #   test 미측정 → 최대 70 · 검증 ❌ → 최대 60 · 미증명 >0 → A 금지
+    #   test ⏳ 미측정 → 최대 70 · 검증 ❌ → 최대 60 · 미증명 >0 → A 금지
     _caps = []
-    if verify_icon == "미측정":
+    if verify_icon == "⏳ 미측정":
         _caps.append(70)
     elif verify_icon == "❌":
         _caps.append(60)
@@ -568,7 +568,7 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
 
 
 def _compute_impact(cwd):
-    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳미측정」.
+    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳ 미측정」.
     2026-10-16: Phase 2 설계 선행 필요 (영향 그래프 · API/DB/breaking 패턴).
     지금은 수정 파일 수만 정확히 · 나머지는 placeholder.
     """
@@ -589,10 +589,10 @@ def _compute_impact(cwd):
     except Exception:
         pass  # noqa: BLE001
     parts = [f"수정 {mod}"]
-    parts.append(f"영향 \033[90m⏳미측정\033[0m")
+    parts.append(f"영향 \033[90m⏳ 미측정\033[0m")
     parts.append(f"API {api}" if api else "API 0")
     parts.append(f"DB {db}" if db else "DB 0")
-    parts.append(f"breaking \033[90m⏳미측정\033[0m")
+    parts.append(f"breaking \033[90m⏳ 미측정\033[0m")
     return " · ".join(parts)
 
 
@@ -1304,14 +1304,14 @@ def extra_gauges(cwd, data=None):
     errors_line = " · ".join(err_parts)
     infra_line = " · ".join(infra_parts)
 
-    # 🎯 READY (2026-10-16 · 가중 공식 — 테스트 소스 없으면 「미측정」 축 제외하고 재가중)
+    # 🎯 READY (2026-10-16 · 가중 공식 — 테스트 소스 없으면 「⏳ 미측정」 축 제외하고 재가중)
     #   test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%
     _ready_score, _ready_grade, _verify_icon, _deploy_icon = _compute_readiness(
         cwd, _c_safe, _e_safe, _w_safe, locals().get("_hc_total", 0),
     )
     ready_line = f"{_ready_score} · 검증 {_verify_icon} · 배포 {_deploy_icon} · 품질 {_ready_grade}"
 
-    # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「⏳미측정」)
+    # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「⏳ 미측정」)
     impact_line = _compute_impact(cwd)
 
     # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
@@ -1336,15 +1336,15 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
-    # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 미측정 · 하드코딩만 실측)
+    # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 ⏳ 미측정 · 하드코딩만 실측)
     reuse_line = ""
     try:
         _hc = int(locals().get("_hc_total", 0) or 0)
-        # 측정 소스 없음 — 미측정 명시 (operating-principles § 9)
-        reuse_line = ("컴포넌트 재사용 [90m⏳미측정[0m · "
-                      "우회 [90m⏳미측정[0m · "
-                      "CSS중복 [90m⏳미측정[0m · "
-                      "신규공통 [90m⏳미측정[0m · "
+        # 측정 소스 없음 — ⏳ 미측정 명시 (operating-principles § 9)
+        reuse_line = ("컴포넌트 재사용 [90m⏳ 미측정[0m · "
+                      "우회 [90m⏳ 미측정[0m · "
+                      "CSS중복 [90m⏳ 미측정[0m · "
+                      "신규공통 [90m⏳ 미측정[0m · "
                       f"하드코딩 [1;33m{_hc}[0m")
     except Exception:
         pass
@@ -1382,7 +1382,7 @@ def extra_gauges(cwd, data=None):
             except: pass
         proof_line = (f"git {_git_icon} · "
                       f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
-                      f"golden {_gt_icon} · test [90m미측정[0m")
+                      f"golden {_gt_icon} · test [90m⏳ 미측정[0m")
     except Exception:
         pass
 
@@ -1441,7 +1441,7 @@ def main() -> None:
     # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
     #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
     #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
-    #   ★그런데 바깥 `except Exception` 이 「⏳미측정」만 찍어 **원인이 안 보였다**
+    #   ★그런데 바깥 `except Exception` 이 「⏳ 미측정」만 찍어 **원인이 안 보였다**
     #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
     #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
     cwd = (data.get("cwd")
@@ -1578,8 +1578,15 @@ def main() -> None:
                "품질추세":"📊 품질추세","요청":"📋 요청","증명":"🔐 증명","READY":"🎯 READY",
                "인프라":"📡 인프라","오류":"🚨 오류","서브":"🤖 서브","이력":"🔒 이력"}
     def _pair(l1, b1, l2, b2):
-        h2 = "[90m│[0m " + "[1;36m" + _ICONS2.get(l2, l2) + "[0m [90m│[0m "
-        return _row(l1, f"{b1}    {h2}{b2}")
+        # 2026-10-16 사용자 명시 — 공통 renderer · cursor position 절대 col 1/18/68/86
+        _h1 = _ICONS2.get(l1, l1)
+        _h2 = _ICONS2.get(l2, l2)
+        return (
+            "[90m│[0m " + "[1;36m" + _h1 + "[0m"
+            + "[18G[90m│[0m " + b1
+            + "[68G[90m│[0m " + "[1;36m" + _h2 + "[0m"
+            + "[86G[90m│[0m " + b2
+        )
     if _impact and _fast:
         _impact = f"{_impact} · {_fast}"
 
@@ -1617,7 +1624,7 @@ if __name__ == "__main__":
     except Exception:
         # 최후 fallback
         try:
-            print(EMPTY * WIDTH + " ⏳미측정")
+            print(EMPTY * WIDTH + " ⏳ 미측정")
         except Exception:
-            print("⏳미측정")
+            print("⏳ 미측정")
     sys.exit(0)
