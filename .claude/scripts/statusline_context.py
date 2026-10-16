@@ -1543,12 +1543,26 @@ def main() -> None:
              "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
 
     def _row(label: str, body: str) -> str:
-        # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
-        import unicodedata as _ud
         head = f"{ICONS[label]} {label}" if label in ICONS else label
-        w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
-        # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "[1;36m" + head + "[0m [90m│[0m " + body
+        return "[1;36m" + head + "[0m[18G[90m│[0m " + body
+
+    _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
+               "영향": "🧪 영향", "공통화": "🧩 공통화",
+               "품질추세": "📊 품질추세", "요청": "📋 요청",
+               "증명": "🔐 증명", "READY": "🎯 READY",
+               "인프라": "📡 인프라", "오류": "🚨 오류",
+               "서브": "🤖 서브", "이력": "🔒 이력"}
+
+    def _pair(l1, b1, l2, b2):
+        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
+        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
+                + "[70G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2)
+
+    def _triple(l1, b1, l2, b2, l3, b3):
+        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
+        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
+                + "[48G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
+                + "[100G[1;35m»[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
@@ -1559,7 +1573,7 @@ def main() -> None:
     tok_parts.append(clock)
     out = [_row("토큰", SEP.join(tok_parts))]
 
-    # 2026-10-16 사용자 명시 레이아웃: 6 범주 · 4쌍 합성 (사용량/현재작업/품질/검증/시스템/기록)
+    # 2026-10-16 사용자 명시 레이아웃 (재구성): 토큰 / 쌍쌍 / 품질+요청3 / 인프라단독+오류단독+쌍 / 비용
     _d = gauges.get("design") or ""
     _dv = gauges.get("dev") or ""
     _impact = gauges.get("impact") or ""
@@ -1574,20 +1588,15 @@ def main() -> None:
     _history = gauges.get("history") or ""
     cost = gauges.get("cost") or ""
     _fast = gauges.get("fast") or ""
-    _ICONS2 = {"디자인":"🎨 디자인","개발":"💻 개발","영향":"🧪 영향","공통화":"🧩 공통화",
-               "품질추세":"📊 품질추세","요청":"📋 요청","증명":"🔐 증명","READY":"🎯 READY",
-               "인프라":"📡 인프라","오류":"🚨 오류","서브":"🤖 서브","이력":"🔒 이력"}
-    def _pair(l1, b1, l2, b2):
-        # 2026-10-16 사용자 명시 — 왼쪽 경계 │ 제거 · 좌우 사이 » · 라벨 뒤 │ 하나
-        _h1 = _ICONS2.get(l1, l1)
-        _h2 = _ICONS2.get(l2, l2)
-        return (
-            "[1;36m" + _h1 + "[0m [90m│[0m " + b1
-            + "[70G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
-        )
     if _impact and _fast:
         _impact = f"{_impact} · {_fast}"
 
+    # 그룹 1: 토큰 (단독) · 이미 out[0] 에 있음
+
+    # 빈 줄
+    out.append("")
+
+    # 그룹 2: 디자인+개발 · 영향+공통화 (쌍 2개 연속)
     if _d and _dv: out.append(_pair("디자인", _d, "개발", _dv))
     elif _d: out.append(_row("디자인", _d))
     elif _dv: out.append(_row("개발", _dv))
@@ -1596,20 +1605,32 @@ def main() -> None:
     elif _impact: out.append(_row("영향", _impact))
     elif _reuse: out.append(_row("공통화", _reuse))
 
-    if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
-    elif _trend: out.append(_row("품질추세", _trend))
-    elif _ledger: out.append(_row("요청", _ledger))
+    # 빈 줄
+    out.append("")
 
-    if _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
+    # 그룹 3: 품질추세 (단독) + 요청+증명+READY (3블록 한 줄)
+    if _trend: out.append(_row("품질추세", _trend))
+
+    if _ledger and _proof and _rdy:
+        out.append(_triple("요청", _ledger, "증명", _proof, "READY", _rdy))
+    elif _ledger and _proof: out.append(_pair("요청", _ledger, "증명", _proof))
+    elif _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
+    elif _ledger: out.append(_row("요청", _ledger))
     elif _proof: out.append(_row("증명", _proof))
     elif _rdy: out.append(_row("READY", _rdy))
 
-    if _infra and _err: out.append(_pair("인프라", _infra, "오류", _err))
-    elif _infra: out.append(_row("인프라", _infra))
-    elif _err: out.append(_row("오류", _err))
+    # 빈 줄
+    out.append("")
+
+    # 그룹 4: 인프라 (단독) + 오류 (단독) + 서브+이력 (쌍)
+    if _infra: out.append(_row("인프라", _infra))
+    if _err: out.append(_row("오류", _err))
 
     if _history: out.append(_pair("서브", _agents, "이력", _history))
     else: out.append(_row("서브", _agents))
+
+    # 빈 줄
+    out.append("")
 
     if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
 
