@@ -7,6 +7,16 @@
 
 **현재 orchestration 구조를 안정화 완료 상태로 간주한다.**
 
+## statusline FREEZE 범위 (2026-10-16 사용자 명시 재확인)
+
+- **레이아웃** (6쌍 + 토큰·비용 단독 · 9 라인)
+- **색상 체계** (ANSI color code · 강조 · 배경 · 라벨 색 · 값 색)
+- **구분자** (│ · »»»»)
+- **들여쓰기** (앞 공백 2칸 · col 15)
+- **이모지** (🧠·🎨·💻·🧪·🧩·📊·📋·🛑·✅·🔐·🎯·📡·🚨·🤖·🔒·💰)
+- **지표 소유** (한 지표 = 한 줄 · 중복 금지)
+- **전파** (sync-to-team · install-to-target · merge-to-target 정책)
+
 - Operating Principles · Execution Contract · Request Ledger · recurrence-tracker · scope-lock 모두 정상 작동
 - 2차 안정화 감사 완료 (ORCHESTRATION_AUDIT_2026-10-16.md § 다음 권장 포함)
 - 골든 테스트 10개 PASS
