@@ -490,6 +490,7 @@
     최종 마무리 체크 (1013)              plugin skills frontmatter 104 broken 재발견 (BOM 때문 · rebase 로 agent fix 날아감) · 51 재적용 + md 150 BOM 일괄 제거 · pytest --cov 인자 제거 (pytest-cov 미설치 호환) · MCP 3 FAIL 수동 fix 필요 (canva-dev/powerpoint/dom-to-pptx)
     statusline 7줄 (1016 확정)              토큰(+fast 뱃지) / 한도 / 디자인 / 개발 / 상태 / 🤖 서브(에이전트 돌 때만) / 비용(맨 끝)
     statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
+    서브 4개+ 축약 (1016)                   top 3 full + 「...」 + 등급별 색상+모델첫글자+개수 (예: ... 🟣O+2 🟢H+1) · 섞여 보이던 색 없는 +N 제거
     서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
     로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
     10분 작업 오류 453건 (1016)             작업 스케줄러 PATH 에 bash 없음 → find_bash() (git 위치 역산·ProgramFiles) · Claude procs HIGH 는 RAM 80%+ 일 때만 · 배터리면 안 돌던 것 → setup/modules/_task-allow-battery.bat (15·18·19 모듈)

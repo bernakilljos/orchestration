@@ -669,7 +669,13 @@ def extra_gauges(cwd, data=None):
                 warn = " ⛔정지" if id(a) in stalled else (" ⏳" if dur > 600 else "")
                 parts.append(f"{ansi}{mark}{nm} {name}{desc} {_dur(dur)}{extra}{warn}\033[0m")
             if len(rows) > 3:
-                parts.append(f"+{len(rows) - 3}")
+                # 나머지는 "..." + 등급별 색상 아이콘 + 개수 (우선순위 보이게 · 2026-10-16)
+                extras = {}
+                for (rank, ansi, mark, nm), *_rest in rows[3:]:
+                    key = (ansi, mark, nm)
+                    extras[key] = extras.get(key, 0) + 1
+                extra_parts = [f"{a}{m}{n}+{c}\033[0m" for (a, m, n), c in extras.items()]
+                parts.append("\033[90m...\033[0m " + " ".join(extra_parts))
             agent_str = (" · ".join(parts) + " · " + urgency) if parts else ""
     except Exception:
         pass  # noqa: BLE001
