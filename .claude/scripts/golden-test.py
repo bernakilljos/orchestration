@@ -17,6 +17,32 @@ def _ct(p, s):
     f = ROOT/p
     return f.exists() and s in f.read_text(encoding="utf-8",errors="ignore")
 
+
+def _run_gate_test():
+    # evidence 없이 complete 시도 → status != completed 확인 (뻥 방지)
+    import tempfile, shutil, subprocess
+    orig = ROOT/'.claude/state/request-ledger.json'
+    backup = tempfile.mktemp(suffix='.json')
+    if orig.exists(): shutil.copy(orig, backup)
+    try:
+        test_rl = ROOT/'.claude/state/request-ledger.json'
+        test_rl.write_text('{"session_id":"test","created_at":"t","requests":[{"id":"T_R1","desc":"test","status":"pending","ts":"t"}]}', encoding='utf-8')
+        # evidence 없이 complete
+        r = subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/request-ledger.py'),'complete','T_R1'],
+                         capture_output=True, text=True, timeout=5, encoding='utf-8')
+        import json as _j
+        data = _j.loads(test_rl.read_text(encoding='utf-8'))
+        # 뻥 방지 확인: evidence 없으면 completed 되면 안됨
+        return data['requests'][0]['status'] != 'completed'
+    finally:
+        if Path(backup).exists(): shutil.copy(backup, orig)
+
+def _run_sr_gate():
+    import subprocess
+    r = subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/standing-requirements.py'),'gate'],
+                     capture_output=True, text=True, timeout=5, encoding='utf-8')
+    return r.returncode == 0
+
 TESTS = [
     ("T01","Request Ledger n/n gate",
      lambda: _ex(".claude/scripts/request-ledger.py") and _ex(".claude/hooks/stop-request-ledger-gate.sh")
@@ -39,8 +65,14 @@ TESTS = [
      and _ct(".claude/rules/execution-contract.md","범위 lock")),
     ("T09","중간보고 금지",
      lambda: _ct(".claude/rules/execution-contract.md","보고 금지")),
+    ("T11","Request Ledger gate 실제 차단 (뻥 completed 방지)",
+     lambda: _run_gate_test()),
+    ("T12","Codex 라우팅 1-step 종단 (명시 -> ai=codex 반환)",
+     lambda: _classify("codex로 리뷰해줘").get("ai")=="codex" and _classify("codex 로 3개 파일 수정").get("ai")=="codex"),
+    ("T13","Standing Requirements gate 실제 통과",
+     lambda: _run_sr_gate()),
     ("T10","미측정 != 정상",
-     lambda: _ct(".claude/scripts/statusline_context.py","미측정")
+     lambda: _ct(".claude/scripts/statusline_context.py","⏳")
      and _ct(".claude/rules/operating-principles.md","미측정")),
 ]
 

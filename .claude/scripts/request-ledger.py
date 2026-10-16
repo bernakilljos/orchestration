@@ -103,17 +103,34 @@ def cmd_add_batch(json_str: str) -> int:
     return 0
 
 
-def cmd_complete(rid: str) -> int:
+def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
+    """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사)."""
     data = _load()
     if not data:
         print("[ledger] empty", file=sys.stderr)
         return 2
     for r in data["requests"]:
         if r["id"] == rid or r["id"].lower() == rid.lower():
+            # 증거 없으면 implemented 로만 (completed 불허)
+            if not evidence:
+                r["status"] = "implemented"
+                r["note"] = "evidence 없음 · completed 대신 implemented (뻥 완료 방지)"
+                _save(data)
+                print(f"[ledger] ⚠ {rid}: implemented (evidence 미제공 — completed 보류)", file=sys.stderr)
+                return 1
+            if verification and verification.upper() != "PASS":
+                r["status"] = "verified"
+                r["evidence"] = evidence[:500]
+                r["verification"] = verification
+                _save(data)
+                print(f"[ledger] ⚠ {rid}: verified (verification={verification} · PASS 아님)", file=sys.stderr)
+                return 1
             r["status"] = "completed"
             r["completed_at"] = datetime.now().isoformat(timespec="seconds")
+            r["evidence"] = evidence[:500]
+            r["verification"] = verification or "PASS"
             _save(data)
-            print(f"[ledger] ✓ {rid}: {r['desc'][:80]}")
+            print(f"[ledger] ✓ {rid}: {r['desc'][:60]} · evidence 확보")
             return 0
     print(f"[ledger] {rid} not found", file=sys.stderr)
     return 2
@@ -125,7 +142,7 @@ def cmd_status() -> int:
         print("[ledger] empty")
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] == "completed")
+    done = sum(1 for r in data["requests"] if r["status"] == "completed")  # implemented·verified 는 미완료 (뻥 완료 방지)
     print(f"=== Request Ledger · {done}/{total} 완료 ===")
     for r in data["requests"]:
         mark = "✓" if r["status"] == "completed" else "☐"
@@ -139,7 +156,7 @@ def cmd_gate() -> int:
     if not data or not data.get("requests"):
         return 0  # ledger 없음 = 통과
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] == "completed")
+    done = sum(1 for r in data["requests"] if r["status"] == "completed")  # implemented·verified 는 미완료 (뻥 완료 방지)
     if done == total:
         return 0  # 모두 완료 = 통과
     # 미완료 있음 — Claude 에게 알림
@@ -172,6 +189,8 @@ def main() -> int:
 
     p_comp = sub.add_parser("complete")
     p_comp.add_argument("rid")
+    p_comp.add_argument("--evidence", default="", help="실제 수행 증거 (git diff·실행 결과·파일 경로)")
+    p_comp.add_argument("--verification", default="", help="검증 결과 (PASS·FAIL)")
 
     sub.add_parser("status")
     sub.add_parser("gate")
@@ -183,7 +202,7 @@ def main() -> int:
     if args.op == "add-batch":
         return cmd_add_batch(args.json_str)
     if args.op == "complete":
-        return cmd_complete(args.rid)
+        return cmd_complete(args.rid, args.evidence, args.verification)
     if args.op == "status":
         return cmd_status()
     if args.op == "gate":
