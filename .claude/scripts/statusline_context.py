@@ -374,7 +374,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"{EMPTY * 8} 측정 전"
+        return f"{EMPTY * 8} ⏳미측정"
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -568,7 +568,7 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
 
 
 def _compute_impact(cwd):
-    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「측정 전」.
+    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳미측정」.
     2026-10-16: Phase 2 설계 선행 필요 (영향 그래프 · API/DB/breaking 패턴).
     지금은 수정 파일 수만 정확히 · 나머지는 placeholder.
     """
@@ -589,10 +589,10 @@ def _compute_impact(cwd):
     except Exception:
         pass  # noqa: BLE001
     parts = [f"수정 {mod}"]
-    parts.append(f"영향 \033[90m측정 전\033[0m")
+    parts.append(f"영향 \033[90m⏳미측정\033[0m")
     parts.append(f"API {api}" if api else "API 0")
     parts.append(f"DB {db}" if db else "DB 0")
-    parts.append(f"breaking \033[90m측정 전\033[0m")
+    parts.append(f"breaking \033[90m⏳미측정\033[0m")
     return " · ".join(parts)
 
 
@@ -1311,7 +1311,7 @@ def extra_gauges(cwd, data=None):
     )
     ready_line = f"{_ready_score} · 검증 {_verify_icon} · 배포 {_deploy_icon} · 품질 {_ready_grade}"
 
-    # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「측정 전」)
+    # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「⏳미측정」)
     impact_line = _compute_impact(cwd)
 
     # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
@@ -1341,10 +1341,10 @@ def extra_gauges(cwd, data=None):
     try:
         _hc = int(locals().get("_hc_total", 0) or 0)
         # 측정 소스 없음 — 미측정 명시 (operating-principles § 9)
-        reuse_line = ("컴포넌트 재사용 [90m측정 전[0m · "
-                      "우회 [90m측정 전[0m · "
-                      "CSS중복 [90m측정 전[0m · "
-                      "신규공통 [90m측정 전[0m · "
+        reuse_line = ("컴포넌트 재사용 [90m⏳미측정[0m · "
+                      "우회 [90m⏳미측정[0m · "
+                      "CSS중복 [90m⏳미측정[0m · "
+                      "신규공통 [90m⏳미측정[0m · "
                       f"하드코딩 [1;33m{_hc}[0m")
     except Exception:
         pass
@@ -1441,7 +1441,7 @@ def main() -> None:
     # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
     #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
     #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
-    #   ★그런데 바깥 `except Exception` 이 「측정 전」만 찍어 **원인이 안 보였다**
+    #   ★그런데 바깥 `except Exception` 이 「⏳미측정」만 찍어 **원인이 안 보였다**
     #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
     #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
     cwd = (data.get("cwd")
@@ -1548,7 +1548,7 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "[90m|[0m " + "[1;36m" + head + "[0m" + " " * max(0, 13 - w) + "[90m│[0m " + body
+        return "[90m│[0m " + "[1;36m" + head + "[0m[18G[90m│[0m " + body
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
@@ -1617,7 +1617,7 @@ if __name__ == "__main__":
     except Exception:
         # 최후 fallback
         try:
-            print(EMPTY * WIDTH + " 측정 전")
+            print(EMPTY * WIDTH + " ⏳미측정")
         except Exception:
-            print("측정 전")
+            print("⏳미측정")
     sys.exit(0)
