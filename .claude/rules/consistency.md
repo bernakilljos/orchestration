@@ -50,7 +50,7 @@
 - [ ] 들여쓰기·명명·라우팅·검증·보고 모두 SoT 따름?
 - [ ] 이번 turn 에 룰 변경 의도 있나? Yes → 절차 따름
 
-## 함수·훅·룰 중복 금지 (2026-08-12 사용자 강조) → [[operating-principles]]
+## 함수·훅·룰 중복 금지 → [[operating-principles]]
 
 SoT: `.claude/rules/operating-principles.md` — § 1 조사→수정 · § 4 공통화 우선 ('이미 존재하는가?' 먼저 증명).
 Operating Principles § 1·4 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').

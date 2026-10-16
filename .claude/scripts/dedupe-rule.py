@@ -66,13 +66,10 @@ MIN_BODY_LEN = 80  # 이보다 짧으면 이미 축약된 것 — skip
 
 # 각 파일 자체가 그 영역의 SoT · 축약 리스크 큼 (영역 특화 세부 있음)
 SKIP_FILES = {
-    "post-codex-verify.md",       # post-verify 특화 SoT
-    "teaching-doc.md",            # 디자인 산출물 비율별 특화 (일반 verify 와 다름)
-    "screen-verify.md",           # 화면/DB/API 특화 매트릭스
-    "operating-principles.md",    # Operating Principles SoT 자체
-    "verify-after-edit-mandatory.md",  # verify SoT 자체
-    "no-false-report.md",         # false-report SoT 자체
-    "best-practices.md",          # best-practices 자체 (이미 1건 수동 처리)
+    "operating-principles.md",
+    "verify-after-edit-mandatory.md",
+    "no-false-report.md",
+    "post-codex-verify.md",
 }
 
 
@@ -127,6 +124,11 @@ def process_file(path: Path, pat_key: str, pat_cfg: dict, apply: bool) -> tuple[
 
     section_re = re.compile(pat_cfg["section_regex"], re.MULTILINE | re.IGNORECASE)
     sections = _extract_section(text, section_re)
+    if not sections:
+        return 0, []
+    # 이미 축약된 섹션 (title 안 '→ [[sot_slug]]' 포함) 제외
+    sot_marker = f"[[{pat_cfg['sot_slug']}]]"
+    sections = [(s, e, t) for (s, e, t) in sections if sot_marker not in t]
     if not sections:
         return 0, []
 

@@ -1941,3 +1941,11 @@
 - 패턴: verify_after_edit · common_component · false_report · stop_prevention
 - 안전: .bak 자동 백업 · dry-run 기본 · ALLOW_KOREAN_REMOVAL=1 필요
 
+
+## dedupe-skill.py + dedupe-agent.py (2026-10-16)
+- dedupe-skill.py: 중복 skill 자동 REMOVE (SoT ownership 매핑 · MD5 일치만)
+- dedupe-agent.py: 중복 agent 분석 (plugin.json 참조 구조 분석 전 scan 만)
+- 사용자 '다 · 계속' 명시 지시로 상한 해제
+- 1차 적용: 5 skill REMOVE (skill-03-review, skill-22-remotion × 2, skill-25-media-enhance, skill-34-code-docs)
+- 트래시: .claude/state/skill-removed/<ts>/ (롤백 가능)
+

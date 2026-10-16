@@ -170,12 +170,10 @@ if diff > 0.05: FAIL — 짤림 또는 빈 공간
 | html | Playwright headless 캡쳐 PNG → Read tool | `build-*-html-diagrams.py` 자체 |
 | 원본 PNG | OCR/visual | `verify-image-fit.py` + Read tool |
 
-### 의무 흐름 (산출물 빌드 시)
-1. 빌드 (`build-*-doc.py` / `build-*-ppt.py` 등)
-2. **1차 검증**: paragraph/slide 구조 (`verify-docx-pages.py` / `verify-ppt-overflow.py`)
-3. **2차 visual 검증**: 산출물 → PNG export → Read tool 로 시각 확인 (필수)
-4. PASS 후 보고. FAIL → 자동 재수정 (max 3) → 보고
+### 의무 흐름 (산출물 빌드 시) → [[verify-after-edit-mandatory]]
 
+SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
+Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').
 ### 금기
 - PNG OCR 만 보고 "통과" 보고 = 위반 (산출물 안에서는 다를 수 있음)
 - 빌드 후 visual 확인 안 하고 "수정했습니다" = 전수조사 위반
@@ -239,14 +237,10 @@ body {
 .banner-content { font-size:{H*0.018}px; } /* 한 줄만! */
 ```
 
-### 사후 검증 (산출물 무관 자동 발동)
+### 사후 검증 (산출물 무관 자동 발동) → [[verify-after-edit-mandatory]]
 
-| 단계 | 도구 | hook |
-|---|---|---|
-| PNG 생성 후 | `verify-image-whitespace.py` (흰 여백 ≥5% WARN) | hook-09 |
-| 산출물 임베드 후 | `verify-docx-visual.py` / `verify-ppt-overflow.py` 등 산출물별 | hook-09 |
-| 진짜 잘림 검출 | OCR (easyocr/tesseract) | 미설치 시 Read tool |
-
+SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
+Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').
 ### 공통 금기
 
 - viewport 비율 ≠ 산출물 inside 비율 → 잘림 또는 흰 여백 (둘 중 하나)

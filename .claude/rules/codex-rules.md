@@ -67,7 +67,7 @@ bash plugins/exec_orch/hooks/post-codex-verify.sh post <slug>
 | 검증·리뷰 |  Haiku 4.5 ×2 |
 | 1M+ 리서치 |  Gemini Flash |
 
-## 사후 검증 의무 (`post-codex-verify.md`) → [[verify-after-edit-mandatory]]
+## 사후 검증 의무 → [[verify-after-edit-mandatory]]
 
 SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
 Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').

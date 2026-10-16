@@ -97,12 +97,10 @@ orchestration_v1 은 **여러 머신·여러 사용자에서 동작**해야 함.
 
 상세: `.claude/rules/failure-mode.md` § 전수조사 위반 안티패턴
 
-## 검증 후 보고 → [[verify-after-edit-mandatory]]
+## 검증 후 보고 → [[verify-after-edit-mandatory]] → [[verify-after-edit-mandatory]]
 
-SoT: `.claude/rules/verify-after-edit-mandatory.md` (증명 체인 5단계).
-Operating Principles § 6 "완료는 증명" · § 10 "종료 조건" 정합.
-중복 본문 삭제 (2026-10-16 · 사용자 지시 "엔트로피 낮추자" + SoT 통합).
-
+SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
+Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').
 ## 자율 Plan — Auto-Planner 의무
 
 사용자 요청 받으면 **auto-planner skill 즉시 활성** (description 매칭).
