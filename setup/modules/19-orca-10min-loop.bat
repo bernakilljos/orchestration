@@ -44,5 +44,6 @@ if errorlevel 1 (
   exit /b 1
 )
 
+call "%~dp0_task-allow-battery.bat" "Orca_10MinLoop"
 echo [INFO] Task "Orca_10MinLoop" registered successfully (10-min interval)
 exit /b 0

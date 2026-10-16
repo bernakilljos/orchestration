@@ -57,6 +57,7 @@ if errorlevel 1 (
   echo       Registered: %TASK_NAME% (every 4h)
 )
 
+call "%~dp0_task-allow-battery.bat" "%TASK_NAME%"
 rem === 3. auto-dev 활성 플래그 ===
 echo enabled > "%TARGET%\.claude\auto-dev-enabled"
 echo       Auto-dev flag: %TARGET%\.claude\auto-dev-enabled

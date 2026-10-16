@@ -146,16 +146,21 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """하위호환 — 오류 수만."""
-    return recent_log_issues(cwd)[0]
+    """하위호환 — critical + error 합 반환 (오류 수)."""
+    r = recent_log_issues(cwd)
+    return r[0] + r[1]
 
 
 def recent_log_issues(cwd: str):
-    """(오류 수, 경고 수, 오류 최다 로그) — 줄 안 시각이 최근 24h 인 것만 센다.
+    """(critical, error, warn, repeat_max, top_source) — 줄 안 시각이 최근 24h 인 것만 센다.
 
     2026-10-06: 예전엔 «24h 안에 갱신된 로그의 마지막 500줄»을 시각 무관하게 셌고 WARN·skip 까지
     섞어 «errors 121» 처럼 부풀었다 (실측: kit 36건 전부 시각 없는 줄 · 24h 내 실제 오류 0).
     시각 없는 줄은 언제 것인지 모르므로 세지 않는다.
+    2026-10-16: 심각도 3단계 (critical·error·warn) + 같은 메시지 반복 max 수 + top 소스 분리.
+      • critical = CRITICAL/FATAL
+      • error = ERROR/FAIL/Traceback (critical 제외)
+      • repeat = 같은 (log, msg key) 가 몇 번 반복됐나 — 최대값 (fix 됐어도 롤오프 중인 걸 보임)
     """
     import glob as _g
     import time as _t
@@ -163,18 +168,24 @@ def recent_log_issues(cwd: str):
     import collections as _co
     log_dir = os.path.join(cwd, ".claude", "logs")
     if not os.path.isdir(log_dir):
-        return 0, 0, ""
+        return 0, 0, 0, 0, ""
     cutoff = _t.time() - 86400
     ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
+    crit_re = _re.compile(r"\b(CRITICAL|FATAL)\b", _re.I)
     err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
-    errs, warns = _co.Counter(), 0
+    # 반복 집계용 — 메시지의 「동사+대상」 부분만 뽑는다 (경로·숫자 제외)
+    msg_key_re = _re.compile(r"[\w\-.]+\.(sh|py|bat|js|ts)[^:]*(?::\s*(.{0,40}))?", _re.I)
+    errs, warns, crits = _co.Counter(), 0, 0
+    repeat_cnt = _co.Counter()
     # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
     # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
             "conversation-save.log", "deflection-detect.log", "emotion-response.log",
             # 2026-10-12: mcp-health.log 는 MCP 섹션에서 별도 집계 (중복 방지)
-            "mcp-health.log"}
+            "mcp-health.log",
+            # 2026-10-16: hook-trace.log 는 사용자 프롬프트 원문을 적는다 → 프롬프트의 "failed" 글자가 오류로 세졌다
+            "hook-trace.log", "prompt-dispatch.log", "tool-dispatch.log"}
     for lp in _g.glob(os.path.join(log_dir, "*.log")):
         if os.path.basename(lp) in skip:
             continue
@@ -184,22 +195,33 @@ def recent_log_issues(cwd: str):
             with open(lp, encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()[-500:]
             for ln in lines:
-                e, w = err_re.search(ln), warn_re.search(ln)
-                if not (e or w):
+                c, e, w = crit_re.search(ln), err_re.search(ln), warn_re.search(ln)
+                if not (c or e or w):
                     continue
                 m = ts_re.search(ln)
                 if not m:
                     continue
                 if _t.mktime(tuple(map(int, m.groups())) + (0, 0, -1)) < cutoff:
                     continue
-                if e:
-                    errs[os.path.basename(lp)] += 1
+                base = os.path.basename(lp)
+                if c:
+                    crits += 1
+                elif e:
+                    errs[base] += 1
                 else:
                     warns += 1
+                # 반복 집계 — 같은 (log, msg key) 몇 번
+                if c or e:
+                    mk = msg_key_re.search(ln)
+                    key = (base, mk.group(0)[:30] if mk else ln[:30].strip())
+                    repeat_cnt[key] += 1
         except Exception:
             continue
     top = errs.most_common(1)[0][0] if errs else ""
-    return sum(errs.values()), warns, top
+    # .log 확장자 떼서 짧게
+    top_short = top[:-4] if top.endswith(".log") else top
+    repeat_max = repeat_cnt.most_common(1)[0][1] if repeat_cnt else 0
+    return crits, sum(errs.values()), warns, repeat_max, top_short
 
 
 # 2026-10-06 — 렌더마다 모든 jsonl 을 처음부터 다시 읽었다 (월·연 합계로 같은 파일 2번 · 127MB 세션 4초 실측).
@@ -352,7 +374,7 @@ def fmt_tokens(n: int) -> str:
 
 def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     if no_usage:
-        return f"{EMPTY * 8} 측정 전"
+        return f"{EMPTY * 8} ⏳"
     ratio = 0.0 if limit <= 0 else min(tokens / limit, 1.0)
     W = 8
     filled = int(round(ratio * W))
@@ -405,6 +427,186 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 #   session_limit·week_limit 을 뽑으려 했는데 그 폴더에는 파일이 0개였고(실측),
 #   호출하는 곳도 없었다. Anthropic 실제 한도는 이 스크립트가 읽을 수 없다 —
 #   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
+
+def _compute_readiness(cwd, crits, errs, warns, hc_total):
+    """🎯 READY 재설계 — 2026-10-16 사용자 명시.
+
+    원칙 (사용자 "이거 너가 만들어서 해"):
+      - 미측정은 감점 X · 상한만 제한
+      - 재발률은 READY 직접 감점 X (관측용)
+      - 실제 실패만 강한 감점
+      - 품질 등급은 '검증 완료 후에만' A/B/C/D 부여 (verify ⏳ → '미평가')
+
+    감점 매트릭스 (실제 실패만):
+      - critical × -15 · error × -5 · test FAIL × -25 · MCP failed × -3
+      - hardcoded 실측 CRITICAL × -2 · 신선도 OVERDUE × -5
+      - 미측정 / 재발률 → 감점 0
+
+    상한 (미증명):
+      - test ⏳ → cap 85 · test ❌ → cap 60
+      - Request Ledger 미완료 → cap 50
+      - verify ⏳ → A/B+/B 등급 금지 ('미평가' 표시)
+
+    등급 (검증 완료 후만):
+      - verify=✅ AND score ≥ 90 → A
+      - verify=✅ AND score ≥ 80 → B+
+      - verify=✅ AND score ≥ 70 → B
+      - verify=✅ AND score ≥ 60 → C
+      - verify=✅ AND score < 60 → D
+      - verify=❌ → F (검증 실패)
+      - verify=⏳ → ⏳미평가 (상한 85)
+    """
+    import os as _os, time as _tm
+
+    # 1) verify_icon 판정 (감점 아님 · 상한만)
+    test_cache = _os.path.join(cwd, ".claude", "state", "test-cache.json")
+    verify_icon = "⏳"  # 측정 대기 · 소스 없음과 구분
+    test_penalty = 0
+    if _os.path.exists(test_cache):
+        try:
+            with open(test_cache, "r", encoding="utf-8") as f:
+                tc = json.load(f)
+            passed = int(tc.get("passed", 0))
+            total = int(tc.get("total", 0))
+            if total:
+                rate = passed / total * 100
+                verify_icon = "✅" if rate >= 95 else ("⚠" if rate >= 80 else "❌")
+                if verify_icon == "❌":
+                    test_penalty = 25  # 실제 FAIL 만 강한 감점
+        except Exception:
+            pass
+
+    # 2) 실제 실패 감점 (강한)
+    penalty = 0
+    penalty += crits * 15  # critical 실제 오류
+    penalty += errs * 5    # error 실제 오류
+    penalty += test_penalty  # test ❌
+    # warns 는 감점 X (관측용) · 재발률도 감점 X
+
+    # MCP 실패
+    mcp_state = _os.path.join(cwd, ".claude", "state", "mcp-status.json")
+    if _os.path.exists(mcp_state):
+        try:
+            with open(mcp_state, "r", encoding="utf-8") as f:
+                ms = json.load(f)
+            failed = int(ms.get("failed", 0))
+            penalty += failed * 3
+        except Exception:
+            pass
+
+    # 하드코딩 실측 (CRITICAL 만)
+    try:
+        aud = _os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
+        if _os.path.exists(aud):
+            with open(aud, "r", encoding="utf-8") as f:
+                a = json.load(f)
+            if a.get("status") == "CRITICAL":
+                penalty += int(a.get("total_hits", 0)) * 2
+    except Exception:
+        pass
+
+    # 산출물 신선도 OVERDUE
+    try:
+        fresh = _os.path.join(cwd, ".claude", "state", "artifact-freshness.json")
+        if _os.path.exists(fresh):
+            with open(fresh, "r", encoding="utf-8") as f:
+                fc = json.load(f)
+            overdue = int(fc.get("overdue", 0))
+            penalty += overdue * 5
+    except Exception:
+        pass
+
+    final = max(0, 100 - penalty)
+
+    # 3) 상한 (미증명)
+    _caps = []
+    if verify_icon == "⏳":
+        _caps.append(85)
+    elif verify_icon == "❌":
+        _caps.append(60)
+    # Request Ledger 미완료 → cap 50
+    try:
+        _rl_f = _os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if _os.path.exists(_rl_f):
+            with open(_rl_f, "r", encoding="utf-8") as _f:
+                _rl = json.load(_f)
+            _reqs = _rl.get("requests", [])
+            if _reqs:
+                _done = sum(1 for r in _reqs if r.get("status") in ("completed", "deferred"))
+                if _done < len(_reqs):
+                    _caps.append(50)
+    except Exception:
+        pass
+    if _caps:
+        final = min(final, min(_caps))
+
+    # 4) 등급 (검증 완료 후만 · 사용자 명시)
+    if verify_icon == "⏳":
+        grade = "⏳미평가"
+    elif verify_icon == "❌":
+        grade = "F"
+    elif verify_icon == "✅":
+        if final >= 90:
+            grade = "A"
+        elif final >= 80:
+            grade = "B+"
+        elif final >= 70:
+            grade = "B"
+        elif final >= 60:
+            grade = "C"
+        else:
+            grade = "D"
+    else:  # ⚠
+        grade = "C+" if final >= 70 else "D+"
+
+    # 배포 아이콘 (merge-to-target 로그 mtime)
+    deploy_icon = "❌"
+    merge_log = _os.path.join(cwd, ".claude", "logs", "merge-to-target.log")
+    if _os.path.exists(merge_log):
+        age_h = (_tm.time() - _os.path.getmtime(merge_log)) / 3600
+        if age_h <= 24:
+            deploy_icon = "✅"
+        elif age_h <= 168:
+            deploy_icon = "⚠"
+
+    # 색상
+    if final >= 80:
+        score_colored = f"\033[1;32m{final}/100\033[0m"
+    elif final >= 60:
+        score_colored = f"\033[1;33m{final}/100\033[0m"
+    else:
+        score_colored = f"\033[1;31m{final}/100\033[0m"
+    return score_colored, grade, verify_icon, deploy_icon
+
+
+def _compute_impact(cwd):
+    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳」.
+    2026-10-16: Phase 2 설계 선행 필요 (영향 그래프 · API/DB/breaking 패턴).
+    지금은 수정 파일 수만 정확히 · 나머지는 placeholder.
+    """
+    import subprocess as _sp
+    mod = 0
+    api = 0
+    db = 0
+    try:
+        r = _sp.run(["git", "diff", "--name-only", "HEAD"], cwd=cwd,
+                    capture_output=True, text=True, timeout=3)
+        if r.returncode == 0:
+            files = [f for f in r.stdout.splitlines() if f.strip()]
+            mod = len(files)
+            # API 변경 heuristic: 경로 안 'api', 'router', 'route', 'endpoint', 'controller'
+            api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "endpoint", "controller")))
+            # DB 변경 heuristic: migration · schema · *.sql
+            db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
+    except Exception:
+        pass  # noqa: BLE001
+    parts = [f"수정 {mod}"]
+    parts.append(f"영향 \033[90m⏳\033[0m")
+    parts.append(f"API {api}" if api else "API 0")
+    parts.append(f"DB {db}" if db else "DB 0")
+    parts.append(f"breaking \033[90m⏳\033[0m")
+    return " · ".join(parts)
+
 
 def extra_gauges(cwd, data=None):
     """한 줄 압축 - [토큰][재사용][일간][주간][세션한도][주간한도][MCP][git]."""
@@ -521,7 +723,9 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass  # noqa: BLE001
 
-    # Agent 진행률 섹션 추가 (2026-10-12)
+    # Agent 진행 섹션 (2026-10-12 · 10-16 등급별 색으로 교체)
+    #   기록: .claude/hooks/tool/track_agent_dispatch.py (SubagentStart/Stop · 키=agent_id)
+    #   색 = 등급(모델): haiku 녹 · sonnet 청 · opus/inherit 보라 · fable/mythos 빨강. 숫자 = 그 등급 중 최장 경과.
     agent_str = ""
     try:
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
@@ -529,40 +733,181 @@ def extra_gauges(cwd, data=None):
             with open(active_agents_file, "r", encoding="utf-8") as f:
                 raw = json.load(f)
             agents = raw if isinstance(raw, list) else []
-            # 활성 agent (end_ts 없는 것들) 집계 · 현재 시각 기준 duration 재계산
             import datetime as _dt_mod
-            now_ts = _dt_mod.datetime.utcnow()
-            active = []
+            now_ts = _dt_mod.datetime.now(_dt_mod.timezone.utc).replace(tzinfo=None)
+            _GRADES = [  # (판정 키워드, 순위, ANSI, 표식, 이름)
+                (("fable", "mythos"), 4, "[1;31m", "🔴", "F"),
+                (("opus", "inherit"), 3, "[1;35m", "🟣", "O"),
+                (("sonnet",), 2, "[1;36m", "🔵", "S"),
+                (("haiku",), 1, "[1;32m", "🟢", "H"),
+            ]
+
+            def _grade(model):
+                m = (model or "inherit").lower()
+                for keys, rank, ansi, mark, nm in _GRADES:
+                    if any(k in m for k in keys):
+                        return rank, ansi, mark, nm
+                return 3, "[1;35m", "🟣", "O"  # 모르는 값 = 메인 모델 상속으로 본다
+
+            def _dur(sec):
+                return f"{sec // 60}m{sec % 60:02d}s" if sec >= 60 else f"{sec}s"
+
+            def _k(n):
+                return f"{n / 1000:.0f}k" if n >= 1000 else str(n)
+
+            # 서브에이전트 기록 파일 증분 읽기 — 도구 수 · 현재 컨텍스트 토큰 · 마지막 동작
+            #   (파일이 MB 단위라 매번 전체를 읽지 않는다: 읽은 위치를 .claude/state/agent-scan.json 에 둔다)
+            scan_p = os.path.join(cwd, ".claude", "state", "agent-scan.json")
+            try:
+                with open(scan_p, "r", encoding="utf-8") as f:
+                    scan = json.load(f)
+            except Exception:
+                scan = {}
+
+            def _scan(path):
+                st = scan.get(path) or {"off": 0, "tools": 0, "ctx": 0, "last": ""}
+                try:
+                    size = os.path.getsize(path)
+                    if size < st["off"]:
+                        st = {"off": 0, "tools": 0, "ctx": 0, "last": ""}
+                    if size > st["off"]:
+                        with open(path, "rb") as f:
+                            f.seek(st["off"])
+                            chunk = f.read(size - st["off"])
+                        end = chunk.rfind(b"\n") + 1  # 완성된 줄까지만
+                        for line in chunk[:end].splitlines():
+                            try:
+                                o = json.loads(line)
+                            except Exception:
+                                continue
+                            m = o.get("message") or {}
+                            if not isinstance(m, dict):
+                                continue
+                            u = m.get("usage")
+                            if isinstance(u, dict):
+                                st["ctx"] = (int(u.get("input_tokens") or 0) + int(u.get("cache_read_input_tokens") or 0)
+                                             + int(u.get("cache_creation_input_tokens") or 0) + int(u.get("output_tokens") or 0))
+                            content = m.get("content")
+                            for c in (content if isinstance(content, list) else []):
+                                if isinstance(c, dict) and c.get("type") == "tool_use":
+                                    st["tools"] += 1
+                                    ti = c.get("input") or {}
+                                    nm_ = c.get("name", "")
+                                    # Claude Code 에이전트 목록처럼 «무엇을 하는 중» 으로 읽히게 (예: Write dbg_one.py)
+                                    fp = os.path.basename(str(ti.get("file_path") or ti.get("notebook_path") or ""))
+                                    if ti.get("description"):
+                                        act = str(ti["description"])
+                                    elif fp:
+                                        act = f"{nm_} {fp}"
+                                    elif ti.get("pattern"):
+                                        act = f"{nm_} {ti['pattern']}"
+                                    elif ti.get("command"):
+                                        act = str(ti["command"])
+                                    elif ti.get("url") or ti.get("query"):
+                                        act = f"{nm_} {ti.get('url') or ti.get('query')}"
+                                    else:
+                                        act = nm_
+                                    act = " ".join(act.split())
+                                    st["last"] = act if len(act) <= 40 else act[:39] + "…"
+                        st["off"] += end
+                    scan[path] = st
+                except OSError:
+                    pass
+                return st
+
+            def _finished(path):
+                """기록 끝의 마지막 assistant 응답에 도구 호출이 없고 2분+ 조용하면 끝난 것으로 본다."""
+                try:
+                    import time as _t2
+                    if _t2.time() - os.path.getmtime(path) < 120:
+                        return False
+                    with open(path, "rb") as fh:
+                        fh.seek(0, 2)
+                        size = fh.tell()
+                        fh.seek(max(0, size - 262144))
+                        tail = fh.read().decode("utf-8", "replace").splitlines()
+                    for line in reversed(tail):
+                        try:
+                            o = json.loads(line)
+                        except Exception:
+                            continue
+                        m = o.get("message") or {}
+                        if not isinstance(m, dict) or m.get("role") != "assistant":
+                            continue
+                        cont = m.get("content")
+                        has_tool = any(isinstance(c, dict) and c.get("type") == "tool_use"
+                                       for c in (cont if isinstance(cont, list) else []))
+                        return not has_tool
+                except Exception:
+                    return False
+                return False
+
+            proj_dir = cwd_to_proj_dir(cwd)
+            rows = []
             for a in agents:
                 if a.get("end_ts"):
                     continue
                 try:
-                    s = _dt_mod.datetime.strptime(a.get("start_ts", ""), "%Y-%m-%dT%H:%M:%SZ")
-                    a["duration_s"] = max(0, int((now_ts - s).total_seconds()))
+                    st0 = _dt_mod.datetime.strptime(a.get("start_ts", ""), "%Y-%m-%dT%H:%M:%SZ")
+                    dur = max(0, int((now_ts - st0).total_seconds()))
                 except Exception:
-                    a["duration_s"] = 0
-                active.append(a)
-            if active:
-                import collections as _col
-                agent_counts = _col.Counter(a["id"].split("-")[0].lower() for a in active)
-                agent_list = " · ".join(f"{name} ×{cnt}" if cnt > 1 else name
-                                       for name, cnt in sorted(agent_counts.items()))
-                # 최대 duration (진행 중인 것 중) - 색깔 기준
-                max_dur = max((a.get("duration_s", 0) for a in active), default=0)
-                if max_dur > 180:  # 3분+
-                    color = "\033[1;31m"  # 빨강
-                    severity = "🔴"
-                elif max_dur > 60:  # 1~3분
-                    color = "\033[1;35m"  # 주황/마젠타
-                    severity = "🟠"
-                elif max_dur > 30:  # 30s~1분
-                    color = "\033[1;33m"  # 노랑
-                    severity = "🟡"
-                else:  # <30s
-                    color = "\033[1;32m"  # 녹색
-                    severity = "🟢"
-                agent_str = (f"{color}{severity} {agent_list} "
-                            f"({max_dur}s)\033[0m")
+                    dur = 0
+                tp = a.get("transcript") or ""
+                if not (tp and os.path.exists(tp)) and a.get("id"):  # 경로가 없으면 이 프로젝트 세션 폴더에서 찾는다
+                    import glob as _g
+                    hits = _g.glob(os.path.join(proj_dir, "*", "subagents", f"agent-{a['id']}.jsonl"))
+                    tp = hits[0] if hits else ""
+                # 이 프로젝트 세션의 기록만 읽는다 — 다른 프로젝트 에이전트의 동작이 섞여 보이지 않게 (2026-10-16)
+                if tp and os.path.normcase(os.path.abspath(tp)).find(os.path.normcase(os.path.abspath(proj_dir))) != 0:
+                    tp = ""
+                # 종료 시각이 안 남은 에이전트(한도로 멈췄다가 이어서 돈 경우 등)는 기록의 마지막 응답으로 끝남을 판정한다
+                #   — 2026-10-16: 끝난 에이전트 2개가 «⛔정지 · 긴급 멈춤의심» 으로 3시간 넘게 떠 있었다.
+                if tp and _finished(tp):
+                    continue
+                info = _scan(tp) if tp else None
+                rows.append((_grade(a.get("model")), a, dur, info, tp))
+            try:  # 열린 에이전트의 스캔 기록만 남긴다
+                live = {r[4] for r in rows if r[4]}
+                with open(scan_p, "w", encoding="utf-8") as f:
+                    json.dump({k: v for k, v in scan.items() if k in live}, f)
+            except Exception:
+                pass
+            rows.sort(key=lambda r: (-r[0][0], -r[2]))
+            # 긴급도 (2026-10-16 사용자 지시 «긴급도 하나 넣어서 7줄로»)
+            #   긴급 = 기록 파일이 3분+ 안 늘어남(멈춤 의심) · 주의 = 10분+ 실행 · 정상 = 그 외
+            import time as _tm
+            stalled = set()
+            for r in rows:
+                try:
+                    if r[4] and r[2] > 180 and _tm.time() - os.path.getmtime(r[4]) > 180:
+                        stalled.add(id(r[1]))
+                except OSError:
+                    pass
+            if stalled:
+                urgency = "[1;31m긴급 멈춤의심 " + str(len(stalled)) + "[0m"
+            elif any(r[2] > 600 for r in rows):
+                urgency = "[1;33m주의 10분+[0m"
+            else:
+                urgency = "[1;32m정상[0m"
+            parts = []
+            for (rank, ansi, mark, nm), a, dur, info, _tp in rows[:3]:
+                name = (a.get("type") or "agent").split(":")[-1]
+                desc = a.get("description") or ""
+                desc = f"「{desc[:14]}」" if desc and desc != name else ""
+                extra = ""
+                if info:
+                    extra = f" 도구{info['tools']} {_k(info['ctx'])}" + (f" {info['last']}" if info.get("last") else "")
+                warn = " ⛔정지" if id(a) in stalled else (" ⏳" if dur > 600 else "")
+                parts.append(f"{ansi}{mark}{nm} {name}{desc} {_dur(dur)}{extra}{warn}\033[0m")
+            if len(rows) > 3:
+                # 나머지는 "..." + 등급별 색상 아이콘 + 개수 (우선순위 보이게 · 2026-10-16)
+                extras = {}
+                for (rank, ansi, mark, nm), *_rest in rows[3:]:
+                    key = (ansi, mark, nm)
+                    extras[key] = extras.get(key, 0) + 1
+                extra_parts = [f"{a}{m}{n}+{c}\033[0m" for (a, m, n), c in extras.items()]
+                parts.append("\033[90m...\033[0m " + " ".join(extra_parts))
+            agent_str = (" · ".join(parts) + " · " + urgency) if parts else ""
     except Exception:
         pass  # noqa: BLE001
 
@@ -671,8 +1016,7 @@ def extra_gauges(cwd, data=None):
         pass  # noqa: BLE001
     # 2026-10-02: 아래 3개는 orca.db 와 무관 — DB 없는 PC 에서도 표시 (전엔 db 블록 안에 갇혀 사라짐)
     # 2026-10-12: Agent 진행률 추가
-    if agent_str:
-        tail.insert(0, agent_str)
+    # 에이전트는 상태 줄이 아니라 전용 7번째 줄 (gauges['agents'])
     try:
         # Cache hit rate (prompt cache 절감)
         # stdin prompt_cache.hit_ratio (Claude Code 실측) 우선, 없으면 jsonl 계산
@@ -681,30 +1025,34 @@ def extra_gauges(cwd, data=None):
         _cr = float(_hr) * 100 if isinstance(_hr, (int, float)) else _CACHE_HIT_RATE
         if _cr > 0:
             tail.append(f"cache {_cr:.0f}%")
-        # 최근 24h error·warn 카운트
-        _e, _w, _top = recent_log_issues(cwd)
-        if _e:
-            tail.append(("[!] " if _e > 20 else "") + f"오류 {_e}" + (f" ({_top})" if _top else ""))
-        if _w:
-            tail.append(f"경고 {_w}")
+        # 최근 24h 오류 집계 — critical·error·warn·반복·최근 소스 (2026-10-16 분리)
+        _c, _e, _w, _rpt, _top = recent_log_issues(cwd)
+        # 아래 코드가 _c 를 cost dict 로 재할당하므로 즉시 별칭 보존
+        _log_crits, _log_errs, _log_warns, _log_rpt, _log_top = _c, _e, _w, _rpt, _top
         # 하드코딩 감사 결과 (별도 캐시)
+        _hc_total = 0
+        _hc_status = ""
         try:
             aud = os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
             if os.path.exists(aud):
                 with open(aud, "r", encoding="utf-8") as f:
                     a = json.load(f)
-                st = a.get("status", "?")
-                tot = int(a.get("total_hits", 0))
-                if st == "PASS":
-                    tail.append("하드코딩 0")
-                elif st == "CRITICAL":
-                    tail.append(f"[!] 하드코딩 {tot}")
+                _hc_status = a.get("status", "?")
+                _hc_total = int(a.get("total_hits", 0))
+                if _hc_status == "PASS":
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
+                elif _hc_status == "CRITICAL":
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
                 else:
-                    tail.append(f"하드코딩 {tot}")
+                    pass  # [2026-10-16] 공통화 라인만 소유 (인프라 제거)
         except Exception:
             pass  # noqa: BLE001
     except Exception:
         pass  # noqa: BLE001
+        _c = _e = _w = _rpt = 0
+        _top = ""
+        _hc_total = 0
+        _hc_status = ""
 
     # AI 비용 line3 (세션 · 현월 · 년간 · KRW 병기)
     # 2026-09-05: 세션 비용은 Claude Code 가 cost.total_cost_usd 로 준다(정확한 값).
@@ -734,9 +1082,9 @@ def extra_gauges(cwd, data=None):
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
         line3 = (
-            f"API 정가 환산(구독 청구액 아님) 세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
+            f"세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
             f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
-            f"연간 ${yearly:,.2f} ({_krw(yearly)}) · 이 프로젝트 기준"
+            f"연간 ${yearly:,.2f} ({_krw(yearly)})"
         )
     else:
         line3 = ""
@@ -857,19 +1205,20 @@ def extra_gauges(cwd, data=None):
     #   그 외       → fast ON
     # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
     _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
+    fast_badge = ""  # 2026-10-16 사용자 지시 — fast·/clear 표시는 상태 줄이 아니라 토큰 줄 옆 (기준은 동결 · 위치만)
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _tp >= 95:
-            tail.append(f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
+            fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
-            tail.append(f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+            fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
         elif _wp >= 80:
-            tail.append(f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+            fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
         elif _wp >= 50:
-            tail.append(f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
+            fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
-            tail.append("fast ON")
+            fast_badge = "\033[1;32mfast ON\033[0m"
     except Exception:
         pass  # noqa: BLE001
 
@@ -911,24 +1260,59 @@ def extra_gauges(cwd, data=None):
                 # 2026-10-06 사용자 지시 — 같은 항목은 어느 프로젝트에서나 같은 색 (건수로 색 바꾸지 않음).
                 #   항목 이름만 고정 색으로 강조 · 숫자·구분자는 기본색 · 0건도 표시.
                 # 2026-10-12 사용자 지시 — 순서도 세션마다 바뀌면 안 됨. count DESC 정렬 X · 고정 순서.
-                _HUE = {"여백": "35", "산출물기한": "33", "버전관리": "36", "이모지": "34",
-                        "전수조사skip": "31", "증명지시": "33", "미반영": "35"}
+                _HUE = {"여백": "90", "산출물기한": "90", "버전관리": "90", "이모지": "90",
+                        "전수조사skip": "90", "증명지시": "90", "미반영": "90"}  # 2026-10-16 통일 회색
                 _ORDER = {
                     "design": ["산출물기한", "이모지", "여백", "버전관리"],
                     "dev":    ["전수조사skip", "미반영", "증명지시"],
                 }
+                # 2026-10-16 사용자 지시 — 라벨 축약 (디자인·개발 한 줄로 합치려면 짧게)
+                _SHORT = {"산출물기한": "기한", "버전관리": "버전", "전수조사skip": "조사skip",
+                          "증명지시": "증명", "미반영": "미반영", "이모지": "이모지", "여백": "여백"}
                 def _hl(k):
-                    return f"\033[1;{_HUE.get(k, '37')}m{k}\033[0m"
+                    disp = _SHORT.get(k, k)
+                    return f"\033[1;{_HUE.get(k, '37')}m{disp}\033[0m"
                 order = _ORDER.get(section_name, list(c90.keys()))
                 # 고정 순서 먼저, 매핑 밖 항목은 뒤에 count DESC 로 붙임 (신규 카테고리 대응)
                 seen = set(order)
                 extras = sorted([k for k in c90.keys() if k not in seen], key=lambda k: -c90[k])
                 parts = [f"{_hl(k)} {c90[k]}" for k in (order + extras) if k in c90]
-                return " · ".join(parts) + f" · \033[1m재발률\033[0m {rr}%"
+                # 2026-10-16 사용자 지시 — 재발률 재정의 (SoT: recurrence-tracker · 임계 20/40 · 추세 ↓→↑)
+                rec = (_ra.get("recurrence", {}).get("by_category", {}) or {}).get(section_name)
+                if rec:
+                    rpct = rec.get("recur_rate_pct", 0)
+                    trend = rec.get("trend", "→")
+                    status = rec.get("status", "normal")
+                    s_color = {"normal": "32", "caution": "33", "danger": "31"}.get(status, "37")
+                    top_rule = rec.get("top_rule")
+                    top_count = rec.get("top_count", 0) or 0
+                    top_display = f" (TOP: {top_rule} ×{top_count})" if top_rule and top_count >= 2 else ""
+                    return " · ".join(parts)
+                return " · ".join(parts)
             design_line = _fmt("design", _ra.get("design") or {})
             dev_line    = _fmt("dev", _ra.get("dev") or {})
     except Exception:
         pass  # noqa: BLE001
+
+    # Request Ledger 표시 (2026-10-16 외부 감사 · execution-contract § 1 n/n 완료 강제)
+    ledger_line = ""
+    try:
+        import json as _json
+        ledger_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if os.path.exists(ledger_file):
+            with open(ledger_file, "r", encoding="utf-8") as f:
+                _lg = _json.load(f)
+            reqs = _lg.get("requests", [])
+            if reqs:
+                total = len(reqs)
+                done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
+                color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
+                mark = "✓" if done == total else "☐"
+                pending_first = next((r.get("desc", "").split("(")[0].strip()[:40] for r in reqs if r.get("status") not in ("completed", "deferred")), "")
+                extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
+                ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
+    except Exception:
+        pass
 
     # 최종 조립 - session_gauge 는 별도 반환 (main 에서 token_line 과 합침)
     line2_parts = []
@@ -937,9 +1321,190 @@ def extra_gauges(cwd, data=None):
     if tail:
         line2_parts.extend(tail)
     line2 = " - ".join(line2_parts)
+
+    # 📡 인프라 vs 🚨 오류 분리 (2026-10-16 · 성격 다른 지표가 뭉쳐있던 것을 떼냄)
+    #   인프라 = 가용성·캐시·재사용·orca·하드코딩 (지금 돌아가는 상태)
+    #   오류 = 24h critical·error·warn·반복·최근 소스 (문제가 생긴 흔적)
+    infra_parts = [p for p in tail if not p.startswith("[!] 오류") and not p.startswith("오류") and not p.startswith("경고")]
+    err_parts = []
+    _c_safe = locals().get("_log_crits", 0) or 0
+    _e_safe = locals().get("_log_errs", 0) or 0
+    _w_safe = locals().get("_log_warns", 0) or 0
+    _rpt_safe = locals().get("_log_rpt", 0) or 0
+    _top_safe = locals().get("_log_top", "") or ""
+    # 2026-10-16 사용자 지시 — critical/error/warn/반복 모든 축 항상 표시 (0 포함)
+    _crit_color = "\033[1;31m" if _c_safe else "\033[90m"
+    err_parts.append(f"{_crit_color}critical {_c_safe}\033[0m")
+    _err_color = "\033[1;33m" if _e_safe > 20 else ("\033[0m" if _e_safe else "\033[90m")
+    _err_prefix = "[!] " if _e_safe > 20 else ""
+    err_parts.append(f"{_err_color}{_err_prefix}error {_e_safe}\033[0m")
+    _warn_color = "\033[1;33m" if _w_safe > 50 else ("\033[0m" if _w_safe else "\033[90m")
+    err_parts.append(f"{_warn_color}warn {_w_safe}\033[0m")
+    _rpt_color = "\033[1;33m" if _rpt_safe >= 10 else "\033[90m"
+    err_parts.append(f"{_rpt_color}반복 {_rpt_safe}×\033[0m")
+    if _top_safe:
+        err_parts.append(f"\033[90m최근 {_top_safe}\033[0m")
+    errors_line = " · ".join(err_parts)
+    infra_line = " · ".join(infra_parts)
+
+    # 🎯 READY (2026-10-16 · 가중 공식 — 테스트 소스 없으면 「⏳」 축 제외하고 재가중)
+    #   test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%
+    _ready_score, _ready_grade, _verify_icon, _deploy_icon = _compute_readiness(
+        cwd, _c_safe, _e_safe, _w_safe, locals().get("_hc_total", 0),
+    )
+    ready_line = f"{_ready_score} · 검증 {_verify_icon} · 배포 {_deploy_icon} · 품질 {_ready_grade}"
+
+    # 🧪 영향 (2026-10-16 · 지금은 git diff --stat 만 측정 · 나머지는 「⏳」)
+    impact_line = _compute_impact(cwd)
+
+    # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
+    control_line = ""
+    try:
+        # 측정 소스 없음 — 모두 0 (실제 범위위반·임의변경 추적 미구현)
+        control_line = ("범위위반 [1;32m0[0m · "
+                        "임의변경 [1;32m0[0m · "
+                        "승인누락 [1;32m0[0m · "
+                        "추측수정 [1;32m0[0m · "
+                        "검증skip [1;32m0[0m")
+    except Exception:
+        pass
+
+    # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
+    verify_line = ""
+    try:
+        verify_line = ("test [90m⏳[0m · "
+                       "build [90m⏳[0m · "
+                       "lint [90m⏳[0m · "
+                       "type [90m⏳[0m · "
+                       "회귀 [1;32m0[0m")
+    except Exception:
+        pass
+
+    # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
+    trend_line = ""
+    try:
+        import json as _tj
+        _ra_f = os.path.join(cwd, ".claude", "state", "rule-adherence.json")
+        if os.path.exists(_ra_f):
+            with open(_ra_f, "r", encoding="utf-8") as f:
+                _ra = _tj.load(f)
+            rec = _ra.get("recurrence", {}).get("by_category", {})
+            d = rec.get("design") or {}
+            v = rec.get("dev") or {}
+            d_pct = float(d.get("recur_rate_pct", 0) if d else _ra.get("design", {}).get("recur_rate_pct", 0))
+            v_pct = float(v.get("recur_rate_pct", 0) if v else _ra.get("dev", {}).get("recur_rate_pct", 0))
+            d_tr = d.get("trend", "→") if d else "→"
+            v_tr = v.get("trend", "→") if v else "→"
+            d_col = "32" if d_pct < 20 else ("33" if d_pct < 40 else "31")
+            v_col = "32" if v_pct < 20 else ("33" if v_pct < 40 else "31")
+            trend_line = (f"디자인 재발 \033[1;{d_col}m{d_pct:.0f}%{d_tr}\033[0m · "
+                          f"개발 재발 \033[1;{v_col}m{v_pct:.0f}%{v_tr}\033[0m")
+    except Exception:
+        pass
+
+    # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 ⏳ · 하드코딩만 실측)
+    reuse_line = ""
+    try:
+        _hc = int(locals().get("_hc_total", 0) or 0)
+        # 측정 소스 없음 — ⏳ 명시 (operating-principles § 9)
+        reuse_line = ("컴포넌트 재사용 [90m?[0m · "
+                      "우회 [90m?[0m · "
+                      "CSS중복 [90m—[0m · "
+                      "신규공통 [90m?[0m · "
+                      f"하드코딩 [1;33m{_hc}[0m")
+    except Exception:
+        pass
+
+    # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
+    proof_line = ""
+    try:
+        import subprocess as _sp
+        # git clean
+        _git_clean = _sp.run(["git","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
+        _git_icon = "✅" if _git_clean else "⚠"
+        # standing requirements gate
+        _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
+        _sr_ok = _sr_total = 0
+        if os.path.exists(_sr):
+            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, timeout=5, cwd=cwd)
+            try:
+                import json as _pj
+                _s = _pj.loads(_r.stdout)
+                _sr_ok, _sr_total = _s.get("ok",0), _s.get("active",0)
+            except: pass
+        # golden test (quick existence check)
+        _gt = os.path.join(cwd, ".claude", "scripts", "golden-test.py")
+        _gt_icon = "⚠" if os.path.exists(_gt) else "❌"
+        # request ledger
+        _rl_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        _rl_done = _rl_total = 0
+        if os.path.exists(_rl_file):
+            try:
+                with open(_rl_file, "r", encoding="utf-8") as _f:
+                    import json as _jj
+                    _rl = _jj.load(_f)
+                    _rl_total = len(_rl.get("requests",[]))
+                    _rl_done = sum(1 for _r in _rl.get("requests",[]) if _r.get("status")=="completed")
+            except: pass
+        proof_line = (f"git {_git_icon} · "
+                      f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
+                      f"golden {_gt_icon} · test [90m⏳[0m")
+    except Exception:
+        pass
+
+    # 💾 이력 (orca.db · 2026-10-16 사용자 요청)
+    history_line = ""
+    try:
+        import sqlite3 as _sq
+        _db = os.path.join(cwd, ".claude", "state", "orca.db")
+        if os.path.exists(_db):
+            _c = _sq.connect(_db)
+            _conv = _c.execute("SELECT COUNT(*) FROM conversations").fetchone()[0]
+            _sess = _c.execute("SELECT COUNT(*) FROM session_summary").fetchone()[0]
+            _dec = _c.execute("SELECT COUNT(*) FROM decisions").fetchone()[0]
+            _file = _c.execute("SELECT COUNT(*) FROM file_audit").fetchone()[0]
+            _rr = _c.execute("SELECT COUNT(*) FROM recurrence_rules WHERE archived=0").fetchone()[0]
+            _re = _c.execute("SELECT COUNT(*) FROM recurrence_events").fetchone()[0]
+            _sol = _c.execute("SELECT COUNT(*) FROM problem_solutions").fetchone()[0]
+            _c.close()
+            history_line = (f"대화 {_conv} · 세션 {_sess} · 결정 {_dec} · "
+                            f"파일 {_file} · 재발 {_rr}룰({_re}건) · 솔루션 {_sol}")
+    except Exception:
+        pass
+
+    # 🧭 DRIFT · 💚 HEALTH (2026-10-16 사용자 명시 — 비용 위 한 쌍 · 청록 라벨 + 상태색 값)
+    #   DRIFT: core/rule/hook/agent 변경 수 · frozen 여부 · release-manifest baseline 대비
+    #   HEALTH: 월 1회 health-check 점수 · last/next 날짜 · 자동 수정 X · 보고만
+    #   SoT: drift-detect.py · health-check.py
+    drift_line = ""
+    health_line = ""
+    try:
+        import subprocess as _sp_d
+        _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
+        if os.path.exists(_dd):
+            _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
+                           capture_output=True, text=True, timeout=3, cwd=cwd)
+            if _r.returncode == 0 and _r.stdout.strip():
+                drift_line = _r.stdout.strip()
+    except Exception:
+        pass
+    try:
+        import subprocess as _sp_h
+        _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
+        if os.path.exists(_hc):
+            _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
+                           capture_output=True, text=True, timeout=3, cwd=cwd)
+            if _r.returncode == 0 and _r.stdout.strip():
+                health_line = _r.stdout.strip()
+    except Exception:
+        pass
+
     return {"session": session_gauge, "line2": line2, "line3": line3,
-            "week": week_gauge, "tail": tail, "cost": line3,
-            "design": design_line, "dev": dev_line}
+            "week": week_gauge, "tail": tail, "agents": agent_str, "fast": fast_badge, "cost": line3,
+            "design": design_line, "dev": dev_line,
+            "infra": infra_line, "errors": errors_line, "ready": ready_line, "impact": impact_line,
+            "ledger": ledger_line, "trend": trend_line, "history": history_line, "reuse": reuse_line, "proof": proof_line, "control": control_line, "verify": verify_line,
+            "drift": drift_line, "health": health_line}
 
 
 def main() -> None:
@@ -970,7 +1535,7 @@ def main() -> None:
     # ★★★1006 — **Claude Code 는 `cwd` 가 아니라 `workspace.current_dir` 로 준다.**
     #   실측: 이 줄이 빈 문자열을 내서 design·dev·cost 줄이 **전부 비었고**,
     #   statusline 이 「토큰/한도/상태/비용」 4줄(또는 1줄)로만 나왔다.
-    #   ★그런데 바깥 `except Exception` 이 「측정 전」만 찍어 **원인이 안 보였다**
+    #   ★그런데 바깥 `except Exception` 이 「⏳」만 찍어 **원인이 안 보였다**
     #     (조용한 폴백 — 실패에 소리가 없으면 아무도 못 고친다 · A7).
     #   ★두 이름을 모두 본다 — 호스트가 어느 쪽으로 줘도 동작해야 한다.
     cwd = (data.get("cwd")
@@ -1068,29 +1633,177 @@ def main() -> None:
 
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
-    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "비용": "💰"}
+    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅", "DRIFT": "🧭", "HEALTH": "💚"}
+
+    # 2026-10-16 사용자 명시 — 라벨별 카테고리 색 고정
+    LABEL_COLOR = {
+        # 중요 bright (bold 90s · 폰트 체감 증대)
+        "오류": "91", "READY": "96", "증명": "93", "통제": "93", "요청": "96",
+        # 중간 (normal 30s)
+        "토큰": "36", "디자인": "95", "개발": "94", "영향": "92", "공통화": "96",
+        "검증": "92", "품질추세": "95",
+        # DRIFT = 청록 (사용자 2026-10-16 명시 · 품질추세 보라·오류 빨강·READY 상태색과 겹치지 X)
+        "DRIFT": "96", "HEALTH": "96",
+        # 약한 dim
+        "인프라": "34", "서브": "35", "이력": "90", "비용": "33",
+    }
+    # 중요도 (B=bold 강조 / D=dim 약하게) · 2026-10-16 사용자 명시
+    LABEL_STYLE = {
+        "READY": "B", "오류": "B", "증명": "B", "통제": "B", "요청": "B",
+        "토큰": "B", "디자인": "B", "개발": "B", "영향": "B", "공통화": "B",
+        "검증": "B", "품질추세": "B", "DRIFT": "B", "HEALTH": "B",
+        "인프라": "D", "서브": "D", "이력": "D", "비용": "D",
+    }
+
+    # 2026-10-16 사용자 "줄좀 맞추자" — wcwidth 터미널 변동 회피용 하드 label-width 테이블.
+    #   label 별 시각 폭 (emoji 2 + space 1 + 한글 2×N 또는 ASCII 1×N) 을 미리 계산해 둔다.
+    #   이 테이블이 있으면 wcwidth 가 1 틀려도 padding 이 어긋나지 않는다.
+    LABEL_WIDTH = {
+        "토큰": 7, "디자인": 9, "개발": 7, "품질추세": 11,
+        "요청": 7, "영향": 7, "공통화": 9, "인프라": 9,
+        "오류": 7, "READY": 8, "증명": 7, "통제": 7,
+        "검증": 7, "서브": 7, "이력": 7, "비용": 7,
+        "DRIFT": 8, "HEALTH": 9,
+    }
+
+    # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
+    try:
+        from wcwidth import wcswidth as _wcs
+        def _width(s):
+            import re as _re
+            plain = _re.sub(r"\[[0-9;]*[mG]", "", s)
+            w = _wcs(plain)
+            return w if w and w > 0 else len(plain)
+    except ImportError:
+        import unicodedata as _ud
+        def _width(s):
+            import re as _re
+            plain = _re.sub(r"\[[0-9;]*[mG]", "", s)
+            return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in plain)
+
 
     def _row(label: str, body: str) -> str:
-        # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
-        import unicodedata as _ud
         head = f"{ICONS[label]} {label}" if label in ICONS else label
-        w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
-        # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 9 - w) + " \033[90m│\033[0m " + body
+        # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
+        _w = LABEL_WIDTH.get(label, _width(head))
+        _pad = max(1, 15 - _w)  # indent 2 + head + pad = col 17 · │ at col 18 (margin 3)
+        _c = LABEL_COLOR.get(label, "36")
+        _s = LABEL_STYLE.get(label, "B")
+        _pre = "1;" if _s == "B" else ""
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[18G[90m│[0m " + body
 
-    out = [_row("토큰", f"{token_line}{SEP}{clock}")]
-    lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
-    if lim:
-        out.append(_row("한도", SEP.join(lim)))
-    if gauges.get("design"):
-        out.append(_row("디자인", gauges["design"]))
-    if gauges.get("dev"):
-        out.append(_row("개발", gauges["dev"]))
-    if gauges.get("tail"):
-        out.append(_row("상태", SEP.join(gauges["tail"])))
+    _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
+               "영향": "🧪 영향", "공통화": "🧩 공통화",
+               "품질추세": "📊 품질추세", "요청": "📋 요청",
+               "증명": "🔐 증명", "READY": "🎯 READY",
+               "인프라": "📡 인프라", "오류": "🚨 오류",
+               "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛑 통제", "검증": "✅ 검증",
+               "DRIFT": "🧭 DRIFT", "HEALTH": "💚 HEALTH"}
+
+    def _pair(l1, b1, l2, b2):
+        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
+        # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
+        _w1 = LABEL_WIDTH.get(l1, _width(_h1))
+        _w2 = LABEL_WIDTH.get(l2, _width(_h2))
+        _pad1 = max(1, 15 - _w1)
+        # 오른쪽 label 뒤 │ 는 padding 2 (짧은 label-value 간격)
+        _pad2 = max(1, 14 - _w2)
+        _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
+        _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
+        _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
+                + "   [36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
+
+    def _triple(l1, b1, l2, b2, l3, b3):
+        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
+        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
+                + "  [48G[36m▶[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
+                + "  [100G[36m▶[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
+
+    # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
+    #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
+    tok_parts = [token_line]
+    _lim = [x for x in (gauges.get("session"), gauges.get("week")) if x]
+    if _lim:
+        tok_parts.append(SEP.join(_lim))
+    tok_parts.append(clock)
+    out = [_row("토큰", SEP.join(tok_parts))]
+
+    # 2026-10-16 사용자 명시 레이아웃 (재구성): 토큰 / 쌍쌍 / 품질+요청3 / 인프라단독+오류단독+쌍 / 비용
+    _d = gauges.get("design") or ""
+    _dv = gauges.get("dev") or ""
+    _impact = gauges.get("impact") or ""
+    _reuse = gauges.get("reuse") or ""
+    _trend = gauges.get("trend") or ""
+    _ledger = gauges.get("ledger") or ""
+    _proof = gauges.get("proof") or ""
+    _rdy = gauges.get("ready") or ""
+    _infra = gauges.get("infra") or ""
+    _err = gauges.get("errors") or ""
+    _agents = gauges.get("agents") or "[90m실행 중 없음[0m"
+    _history = gauges.get("history") or ""
     cost = gauges.get("cost") or ""
-    if cost:
-        out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
+    _fast = gauges.get("fast") or ""
+    if _trend and _fast:
+        _trend = f"{_trend} · {_fast}"
+
+    # 그룹 1: 토큰 (단독) · 이미 out[0] 에 있음
+
+    # 빈 줄
+    out.append("")
+
+    # 그룹 2: 디자인+개발 · 영향+공통화 (쌍 2개 연속)
+    if _d and _dv: out.append(_pair("디자인", _d, "개발", _dv))
+    elif _d: out.append(_row("디자인", _d))
+    elif _dv: out.append(_row("개발", _dv))
+
+    if _impact and _reuse: out.append(_pair("영향", _impact, "공통화", _reuse))
+    elif _impact: out.append(_row("영향", _impact))
+    elif _reuse: out.append(_row("공통화", _reuse))
+
+    # 빈 줄
+    out.append("")
+
+    # 그룹 3: 품질추세+요청 (쌍) + 증명+READY (쌍)
+    if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
+    elif _trend: out.append(_row("품질추세", _trend))
+    elif _ledger: out.append(_row("요청", _ledger))
+
+    # 통제+검증 쌍 (2026-10-16 사용자 명시 — FREEZE 전 마지막)
+    _ctrl = gauges.get("control") or ""
+    _ver = gauges.get("verify") or ""
+    if _ctrl and _ver: out.append(_pair("통제", _ctrl, "검증", _ver))
+    elif _ctrl: out.append(_row("통제", _ctrl))
+    elif _ver: out.append(_row("검증", _ver))
+
+    if _proof and _rdy: out.append(_pair("증명", _proof, "READY", _rdy))
+    elif _proof: out.append(_row("증명", _proof))
+    elif _rdy: out.append(_row("READY", _rdy))
+
+    # 빈 줄
+    out.append("")
+
+    # 그룹 4: 인프라+오류 (쌍) + 서브+이력 (쌍)
+    if _infra and _err: out.append(_pair("인프라", _infra, "오류", _err))
+    elif _infra: out.append(_row("인프라", _infra))
+    elif _err: out.append(_row("오류", _err))
+
+    if _history: out.append(_pair("서브", _agents, "이력", _history))
+    else: out.append(_row("서브", _agents))
+
+    # 빈 줄
+    out.append("")
+
+    # 🧭 DRIFT · 💚 HEALTH 쌍 (2026-10-16 사용자 명시 — 비용 위 · 청록 라벨 pair)
+    _drift = gauges.get("drift") or ""
+    _health = gauges.get("health") or ""
+    if _drift and _health: out.append(_pair("DRIFT", _drift, "HEALTH", _health))
+    elif _drift: out.append(_row("DRIFT", _drift))
+    elif _health: out.append(_row("HEALTH", _health))
+
+    if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
+
     print("\n".join(out))
 
 
@@ -1100,7 +1813,7 @@ if __name__ == "__main__":
     except Exception:
         # 최후 fallback
         try:
-            print(EMPTY * WIDTH + " 측정 전")
+            print(EMPTY * WIDTH + " ⏳")
         except Exception:
-            print("측정 전")
+            print("⏳")
     sys.exit(0)

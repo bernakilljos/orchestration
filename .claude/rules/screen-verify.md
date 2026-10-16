@@ -7,15 +7,10 @@
 
 **DB / API / 프론트 변경 후 사용자에게 "확인해 주세요" 금지.** 자동 smoke test → PASS 후 보고.
 
-## 검증 매트릭스
+## 검증 매트릭스 → [[verify-after-edit-mandatory]]
 
-| 변경 종류 | 자동 검증 | 도구 |
-|---|---|---|
-| **DB schema** (CREATE/ALTER/DROP TABLE) | 영향 endpoint grep → 각 endpoint curl → 응답 status·null·schema 검사 | `smoke-test-screen.sh --db <sql>` |
-| **API controller** (.java/.py/.rb/.go 컨트롤러) | 해당 endpoint curl (세션 포함) → 응답 status·body·null 검사 | `smoke-test-screen.sh --api <file>` |
-| **프론트** (.html/.jsx/.tsx/.vue) | Playwright headless 로드 → 페이지 렌더 + console.error 잡기 + DOM 핵심 selector 점검 | `smoke-test-screen.sh --ui <url>` |
-| **마이그레이션 스크립트** | dry-run + rollback 가능 여부 점검 | DB tool dependent |
-
+SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
+Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').
 ## NPE 패턴 자동 검출 (NULL 컬럼 + null-unsafe)
 
 DB 컬럼이 NULL 가능 + Java/JS/Python 코드가 null check 안 함 = NPE 시한폭탄.

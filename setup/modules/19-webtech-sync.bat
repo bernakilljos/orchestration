@@ -40,6 +40,7 @@ if errorlevel 1 (
 
 echo [19-webtech-sync] ✓ Task 등록 완료 (일요일 05:00 실행)
 
+call "%~dp0_task-allow-battery.bat" "Orca_WebTechSync"
 REM 즉시 실행 옵션 (사용자 선택)
 choice /C YN /M "[19-webtech-sync] 지금 즉시 실행할까요?" /T 3 /D N
 if errorlevel 2 goto :end

@@ -1,7 +1,7 @@
 ============================================================
   Orchestration Kit v1 — Complete Guide
   Claude + Codex + Gemini Multi-AI Framework
-  Updated: 2026-10-14 (user-prompt-git-fetch · 세션 중간 drift 10분 throttle 감지)
+  Updated: 2026-10-16 (상태줄 7줄 · 🤖 서브 줄 · 서브에이전트 추적 SubagentStart/Stop · 로그 오류 자동 점검(surface-log-errors) · 10분 작업 bash 경로·배터리 · Stop 배포 hook 제거 · MCP 점검 지연)
 ============================================================
 
 
@@ -488,7 +488,19 @@
     UTF-8 BOM 사고 복구 (1013)           11c622f commit 가 Python 195 중 104 broken (U+FEFF BOM + mojibake) · 100 파일 git checkout 복구 + BOM 4 직접 제거 + pytest.ini duplicate 제거 · 195/195 syntax OK · statusline 복구 · 25축 전수조사 (10축 기본 + 15축 추가) · 잔존 silent fail 124 + 문서 47 + [[link]] 58 → 다음 과제
     25축 잔존 과제 fix (1013)             silent fail 48 파일 marker 추가 (unmarked 35 남음) · [[link]] 55->2 · CLAUDE.md broken refs 21 TODO 섹션 · sync-plugins timeout 원인 cmp 느림 · MCP 4->2 FAIL 축소
     최종 마무리 체크 (1013)              plugin skills frontmatter 104 broken 재발견 (BOM 때문 · rebase 로 agent fix 날아감) · 51 재적용 + md 150 BOM 일괄 제거 · pytest --cov 인자 제거 (pytest-cov 미설치 호환) · MCP 3 FAIL 수동 fix 필요 (canva-dev/powerpoint/dom-to-pptx)
-    statusline 4줄 상한                      넘치면 뒤 줄이 화면에서 잘림 → 시각·토큰·한도 / 룰(디자인│개발) / 상태 / 비용
+    statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)
+    statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
+    서브 4개+ 축약 (1016)                   top 3 full + 「...」 + 등급별 색상+모델첫글자+개수 (예: ... 🟣O+2 🟢H+1) · 섞여 보이던 색 없는 +N 제거
+    🧪 영향 줄 (1016 2차)                  수정 N (git diff --stat) · 영향 「측정 전」 · API N (heuristic) · DB N (migration/*.sql) · breaking 「측정 전」. 영향 그래프 설계는 Phase 2
+    📡 인프라 vs 🚨 오류 분리 (1016 2차)   인프라=MCP·cache·재사용·orca·task·하드코딩 (돌아가는 상태). 오류=critical·error·warn·반복 N×·최근 소스 (24h). 섞여있던 것 떼냄
+    🎯 READY 가중 공식 (1016 2차)          test 30%·오류 25%·재발 20%·하드코딩 10%·MCP 10%·신선도 5%. 데이터 없는 축은 「미측정」 (test-cache·rule-adherence 없으면 가중 재분배). 등급 A/B+/B/C/D. 배포 아이콘: merge-to-target.log 24h ✅ · 7d ⚠ · 없음 ❌
+    🚨 오류 줄 모든 축 (1016 2차)          critical·error·warn·반복 모두 0 포함 항상 표시 (0 은 회색 · 수치 큰 건 노랑/빨강). 최근 소스는 데이터 있을 때만
+    /verify command (1016 2차)             사용자가 "증명해/확인해" 재지시 없이 자동 증명. 요구 체크 → git diff → build → test → lint → 공통우회 → 영향범위 → 증거 출력 한 번에. Phase 2 Stop hook 통합 예정. plugins/exec_orch/commands/verify.md
+    디자인·개발 축약 라벨 (1016 2차)        산출물기한→기한 · 버전관리→버전 · 전수조사skip→조사skip · 증명지시→증명 · 재발률→재발 (한 줄로 합치려면 짧게)
+    서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
+    로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
+    10분 작업 오류 453건 (1016)             작업 스케줄러 PATH 에 bash 없음 → find_bash() (git 위치 역산·ProgramFiles) · Claude procs HIGH 는 RAM 80%+ 일 때만 · 배터리면 안 돌던 것 → setup/modules/_task-allow-battery.bat (15·18·19 모듈)
+    merge-to-target 보존 경고 (1016)         kit 이 보존 파일을 더 최근에 고쳤으면 ⚠ 수동 병합 · CLAUDE.md(대상 고유본)·대체된 훅은 제외 · 단순 삭제 훅도 대상에서 제거 (retired-hooks replaced_by "")
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
@@ -1895,6 +1907,17 @@
 - 롤백: 두 hook 안의 git pull 블록 삭제 → A안 (알림만) 복귀 (2분)
 - memory: feedback_auto_pull_on_behind.md
 
+## Operating Principles + Change Budget + 역할 분리 (2026-10-16)
+- CLAUDE.md § 0 (요약·참조) + .claude/rules/operating-principles.md (SoT · 10 원칙 전문)
+- 10 원칙: 조사→수정·범위 lock·최소 변경·공통화 우선·디자인 임의 해석 X·완료는 증명·구현자≠검증자·재발=품질 실패·미측정≠정상·종료 조건 8가지
+- 역할 분리 (중복 금지): CLAUDE.md=원칙 · Rule=영역 규칙 (1 규칙 1 SoT) · Hook=deterministic 자동 실행 · Skill=반복 절차 · Subagent=독립 판단 · Statusline=관측
+- Change Budget: NEW ≤2 · CHANGE ≤5 · REMOVE 무제한 (엔트로피 낮춤)
+- /audit-claude: 반복 감사 · 조사→공식 확인→증명→최소 변경 (9 단계)
+- /scope: 요청 범위 lock (opt-in · WARN · 24h TTL)
+- recurrence-tracker: 재발 자동 추적 + 1·2·3·5 자동 승격 (CLAUDE.md 룰 · hook 강제 후보)
+- auto-save-next-actions: 응답 끝 "## Next Actions" 자동 추출 → /clear 후 다음 세션 바로 재개
+- 근거: 2026-10-16 사용자 "엔트로피 쫌 낮추자" + "변경할 필요 없으면 변경 안 함"
+- 실측 중복: "공통 컴포넌트 먼저 검색" 7 파일 · "검증 후 보고" 13 파일 → SoT 통합 후보
 
 
 
@@ -1904,3 +1927,173 @@
 
 
 
+
+
+## statusline recurrence SoT (2026-10-16)
+- statusline_context.py 가 recurrence-tracker SoT 사용 (legacy 7d/30d 가속도 X)
+- 사용자 정의 임계: normal (<20%) · caution (20~40%) · danger (>=40%) + trend arrow + TOP rule
+- 색상: 녹색/노랑/빨강 (status 기반)
+- 사용자 지시 2026-10-16: '엔트로피 쫌 낮추자' + '다 해줘'
+
+
+## dedupe-rule.py (2026-10-16)
+- 자동 중복 축약 스크립트 — 섹션 regex 매치 → SoT 참조로 교체
+- SKIP_FILES: 각 영역 특화 SoT (post-codex-verify, teaching-doc, screen-verify 등)
+- 패턴: verify_after_edit · common_component · false_report · stop_prevention
+- 안전: .bak 자동 백업 · dry-run 기본 · ALLOW_KOREAN_REMOVAL=1 필요
+
+
+## dedupe-skill.py + dedupe-agent.py (2026-10-16)
+- dedupe-skill.py: 중복 skill 자동 REMOVE (SoT ownership 매핑 · MD5 일치만)
+- dedupe-agent.py: 중복 agent 분석 (plugin.json 참조 구조 분석 전 scan 만)
+- 사용자 '다 · 계속' 명시 지시로 상한 해제
+- 1차 적용: 5 skill REMOVE (skill-03-review, skill-22-remotion × 2, skill-25-media-enhance, skill-34-code-docs)
+- 트래시: .claude/state/skill-removed/<ts>/ (롤백 가능)
+
+
+## 외부 감사 2026-10-16 반영 (R1~R11)
+- docs/ORCHESTRATION_AUDIT_2026-10-16.md Read 후 5대 결함 전부 반영
+- NEW: execution-contract.md · request-ledger.py · stop-request-ledger-gate.sh · dedupe-rule.py · dedupe-skill.py · dedupe-agent.py
+- CHANGE: auto-planner.md Step 5 (A/B 폐지) · classify-task.py (Codex 트리거 확장) · agent-02-implementer × 9 (수동실행 → orchestrator) · CLAUDE.md § 0 Execution Contract 연결 · statusline Request Ledger 라인
+- Request Ledger: 사용자 요청 N개 추출 → N/N 완료 전 Stop hook 차단
+- Change Budget: NEW 상한 해제 (사용자 명시 '다 해')
+
+
+## 2차 운영 안정화 감사 완료 (R13·R14 · 2026-10-16)
+- FREEZE 룰 신설 (operational-freeze.md)
+- Golden Test 10 PASS (.claude/scripts/golden-test.py)
+- Codex 라우팅 한글 조사 fix (\bcodex\b -> codex(로|으로|에게))
+- statusline Request Ledger 포맷 fix + 이력 라인 추가
+- Edit tool 에러 원인: PostToolUse formatter 가 timestamp 변경 -> 'file modified since read' -> Bash python 로 우회
+
+
+## standing-requirements + proof (R23-R26 · 2026-10-16)
+- standing-requirements.py: Persistent Requirement Registry
+- session-start-replay-standing.sh + stop-standing-gate.sh
+- statusline: 품질추세·공통화·이력·증명 4 라인 추가
+- 사용자 '뻥치지 마' 외부 증거 기반 검증
+
+
+## statusline format (2026-10-16 사용자 명시)
+- 모든 라인 맨 앞 | 추가
+- display width 기준 padding 12칸 (이모지 2w + 한글 2w)
+
+
+## statusline 포맷 최종 (2026-10-16 사용자 명시)
+- 모든 줄 맨 앞 | 강제
+- wcwidth 우선 (설치됨) + east_asian_width fallback
+- 머리말 13칸 통일 padding
+- READY 상한: 검증 미측정 → max 70 · ❌ → max 60 · request 누락 → max 50 · A등급은 검증 ✅ 필수
+- 이력 💾 → 🔒 (사용자 포맷 반영)
+
+
+## statusline 지표 소유 원칙 (2026-10-16 사용자 명시)
+- 재발률 → 품질추세만 (디자인/개발 제거)
+- 하드코딩 → 공통화만 (인프라 제거)
+- 요청수 → 요청만 (증명 제거)
+- READY → READY 별도 행 (오류와 분리)
+
+
+## statusline 사용자 명시 레이아웃 (2026-10-16)
+- 6 범주 4쌍 합성 (사용량·현재작업·품질·검증·시스템·기록)
+- [왼쪽 라벨][왼쪽 값][오른쪽 라벨][오른쪽 값] 구조
+- 왼쪽 경계 │ · 섹션 구분 │ · 쌍 사이 │
+- padding 13칸 · wcwidth 적용
+- 지표 중복 제거: 재발→품질추세·하드코딩→공통화·요청→요청·READY 별도
+
+
+## 측정 전 → ⏳미측정 (2026-10-16 사용자 명시)
+
+
+## statusline absolute column position (2026-10-16 user explicit)
+- Common renderer _row + _pair (no direct print, no manual padding)
+- Cursor absolute columns: 1 / 18 / 68 / 86 (|<sp>label<sp>|<sp>value<sp>|<sp>label<sp>|<sp>value)
+- ⏳ 미측정 unified (10 instances replaced)
+- READY cap 70 when verify unmeasured
+
+
+## statusline » 좌우 분리 (2026-10-16 사용자 명시)
+- 왼쪽 경계 │ 제거
+- 라벨 뒤 │ 하나
+- 좌우 블록 사이 » (col 70 cursor jump)
+- 값/색상/이모지/계산 유지
+
+
+## statusline 재구성 (2026-10-16 사용자 명시)
+- 토큰 단독 + 빈줄
+- 디자인+개발 / 영향+공통화 (쌍 2개 연속) + 빈줄
+- 품질추세 단독 / 요청+증명+READY (triple 3블록) + 빈줄
+- 인프라 단독 / 오류 단독 / 서브+이력 (쌍) + 빈줄
+- 비용 단독
+- 모든 왼쪽 │ col 18 통일 (_row + _pair + _triple 모두)
+- _triple col 48/100 (중앙 »)
+
+
+## statusline FREEZE 레이아웃 (2026-10-16 사용자 명시)
+- 6쌍 균일: 디자인+개발 / 영향+공통화 / 품질추세+요청 / 증명+READY / 인프라+오류 / 서브+이력
+- 모든 행 앞 공백 2칸
+- 왼쪽 라벨 뒤 │ col 20 통일
+- 쌍 중앙 » col 72
+- _triple 제거
+- 토큰·비용 단독 (유지)
+
+
+## six-guards (2026-10-16 사용자 명시)
+- 6 Guards: Scope / Completion / Verification / Memory / Quality / Freeze
+- six-guards.md 매트릭스 (반복 짜증 → 자동 대응)
+- stop-six-guards.sh (Stop hook 통합 검증)
+
+
+## statusline 조정 (2026-10-16 사용자 명시)
+- »  » (2x)
+- 라벨-│ col 20 → 17 → 15 (사용자 2 더 땡김)
+- fast ON 위치: 영향 → 품질추세 (속도=품질 축)
+- ⏳ 미측정 점검:
+  - 토큰: 세션 실제 측정 (테스트 입력만 fallback)
+  - 영향·breaking·공통화 전부·test·검증: 하드코딩 (측정 로직 미구현)
+
+
+## 🛡 통제 + ✅ 검증 추가 (2026-10-16 FREEZE 전 마지막)
+- 🛡 통제: 범위위반 · 임의변경 · 승인누락 · 추측수정 · 검증skip (전부 0 측정)
+- ✅ 검증: test · build · lint · type · 회귀 (test/build/lint/type ⏳ 미측정 · 회귀 0)
+- 🔐 증명: git·standing·golden 유지 (외부 증거)
+- 통제·검증은 쌍 (품질추세+요청 뒤 · 증명+READY 앞)
+
+
+## FREEZE 전 최종 (2026-10-16)
+- 🛡 → 🚫 (shield narrow emoji → prohibit full-width)
+- 공통화 라인 '⏳ 미측정' → '⏳' (짧게 · 검증 라인과 통일)
+
+## FREEZE 최종 (2026-10-16)
+- ⏳ 미측정 → ⏳ (18건)
+- 🛡 → 🚫 → 🛑 (narrow → full → bold)
+- 🛑 통제 + ✅ 검증 쌍 추가
+
+## »»»» (2026-10-16 사용자 명시 4개로)
+## 색상·전파도 FREEZE 명시 (2026-10-16)
+
+## 색상 체계 통일 (2026-10-16 사용자 명시)
+- 라벨: 카테고리별 고정 색 (토큰 36 · 디자인 35 · 개발 34 · 영향 32 · 공통화 36 · 통제 33 · 검증 32 · 품질추세 35 · 요청 36 · 증명 33 · READY 36 · 인프라 34 · 오류 31 · 서브 35 · 이력 90 · 비용 33)
+- 중요도 2단계: Bold (READY·오류·증명·통제·요청·토큰·디자인·개발·영향·공통화·검증·품질추세) · Dim (인프라·서브·이력·비용)
+- 값/숫자: 기본 회색 (상태 이상 시만 색 변경)
+- 재발 추세 색: 상태 기반 (정상=녹색·주의=노랑·위험=빨강)
+
+## 폰트 체감 — bright color (90s · 2026-10-16 사용자 명시) · 1회 해제 후 재동결
+## FREEZE 2.0 (외부 감사 5개 반영 · 2026-10-16)
+## deferred 상태 (2026-10-16 사용자 명시 다음 세션 지연) + Golden pattern N/N
+## Golden Test N/N dynamic (2026-10-16)
+## statusline ledger: deferred 완료 간주 (gate 일치 · 2026-10-16)
+## | col 15 cursor position [15G 강제 (wcwidth 편차 fallback · 2026-10-16)
+## 🧭 DRIFT + 🩺 HEALTH 쌍 비용 위 추가 (release-manifest baseline · 월 1회 health · 2026-10-16)
+## LABEL_WIDTH 하드테이블 (wcwidth 변동 회피 · "줄좀 맞추자" · 2026-10-16)
+## 🎯 READY 재설계 — 미측정 감점 X · 재발률 직접 감점 X · 실제 실패만 감점 · 검증 완료 후만 A/B/C/D (2026-10-16)
+## golden-test.py UTF-8 stdout reconfigure (CP949 UnicodeEncodeError fix · 2026-10-16)
+## »»»» -> ▶ 중간 밝기 청록(36) 교체 (사용자 명시 2026-10-16)
+## golden-test.py → test-cache.json 자동 작성 (READY source 승격 · 품질 미평가 해결 · 2026-10-16)
+## diet-audit.py 신설 — hooks/rules/agents/skills KEEP/MERGE/REMOVE/MOVE 분류 (자동 수정 X · 2026-10-16)
+## hourglass-audit.py 신설 — ⏳ 상태 세분화 (?/—/⏳/↻/✅/❌/⚠) · 13 지표 소스 증명 (2026-10-16)
+## 공통화 라인 ?/— 교체 (kit 자체 UI 자산 X · hourglass-audit 반영 · 2026-10-16)
+## statusline │ col 15 → 18 (3칸 margin · 터미널 wcwidth 변동 완전 흡수 · 2026-10-16)
+## HEALTH 이모지 🩺 → 💚 (가시성 향상 · 사용자 명시 2026-10-16)
+- 2026-10-16 상태줄 서브: 종료 기록 없는 에이전트(한도로 멈췄다 이어진 경우 등)는 기록 끝 응답에 도구 호출이 없고 2분+ 조용하면 끝난 것으로 본다 — 끝난 에이전트가 3시간 «긴급 멈춤의심» 으로 남던 결함 (ICM 수정 kit 반영)
+- 2026-10-16 Stop 게이트: 시험 ledger(session_id test)·6시간 넘게 안 바뀐 ledger 는 이번 세션 미완으로 보지 않는다 — 시험 잔재 1건이 모든 세션 종료를 막던 결함

@@ -127,6 +127,28 @@ def optimize_orca_db():
 # Cleanup Execution
 # ============================================================================
 
+def find_bash():
+    """Git Bash 경로. 작업 스케줄러는 사용자 PATH 를 못 받아 shutil.which("bash") 가 None →
+    "bash.exe" 로 실행해 [WinError 2] 가 10분마다 났다 (2026-10-13~16 · 453건).
+    PATH → git.exe 위치에서 역산 → Program Files 기본 위치 순으로 찾는다 (하드코딩 X · 환경변수 기준)."""
+    b = shutil.which("bash")
+    if b:
+        return b
+    cands = []
+    g = shutil.which("git")
+    if g:
+        root = Path(g).resolve().parent.parent  # ...\Git\cmd\git.exe -> ...\Git
+        cands += [root / "bin" / "bash.exe", root / "usr" / "bin" / "bash.exe"]
+    for env in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        base = os.environ.get(env)
+        if base:
+            cands += [Path(base) / "Git" / "bin" / "bash.exe", Path(base) / "Programs" / "Git" / "bin" / "bash.exe"]
+    for c in cands:
+        if c.is_file():
+            return str(c)
+    return None
+
+
 def run_cleanup_pollution():
     """Execute cleanup-pollution.sh (exit code 0 expected)."""
     try:
@@ -136,8 +158,10 @@ def run_cleanup_pollution():
             log_msg(f"cleanup-pollution.sh not found: {cleanup_script}", "WARN")
             return False
 
-        # Windows compatibility: find bash in PATH
-        bash_exe = shutil.which("bash") or "bash.exe"
+        bash_exe = find_bash()
+        if not bash_exe:
+            log_msg("cleanup-pollution.sh skip: bash 없음 (Git for Windows 미설치)", "WARN")
+            return False
 
         # Cross-platform subprocess call
         result = subprocess.run(
@@ -274,8 +298,10 @@ def main():
     alerts = []
     if metrics['ram_percent'] >= THRESHOLD_RAM_PERCENT:
         alerts.append(f"RAM HIGH: {metrics['ram_percent']}%")
-    if metrics['claude_procs'] >= THRESHOLD_PROC_COUNT:
-        alerts.append(f"Claude procs HIGH: {metrics['claude_procs']}")
+    # 2026-10-16: 세션 여러 개는 평소 사용이다 — 3개 기준(근거 없음)으로 10분마다 WARN 420건이 쌓였다.
+    #   조치할 일이 생기는 것은 메모리가 찰 때뿐이므로 RAM HIGH 와 겹칠 때만 경고한다.
+    if metrics['claude_procs'] >= THRESHOLD_PROC_COUNT and metrics['ram_percent'] >= THRESHOLD_RAM_PERCENT:
+        alerts.append(f"Claude procs HIGH: {metrics['claude_procs']} (RAM {metrics['ram_percent']}%)")
 
     if alerts:
         log_msg(" | ".join(alerts), "WARN")

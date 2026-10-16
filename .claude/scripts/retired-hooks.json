@@ -1,5 +1,5 @@
 {
-  "_doc": "kit 에서 다른 hook 으로 대체된 hook. merge-to-target 이 대상 settings 에서도 뺀다 (대체 hook 이 있을 때만). 키 = 실행 스크립트 파일명 (인자 무시).",
+  "_doc": "kit 에서 다른 hook 으로 대체된 hook. merge-to-target 이 대상 settings 에서도 뺀다 (대체 hook 이 있을 때만). 키 = 실행 스크립트 파일명 (인자 무시). 값이 목록이면 spec 여러 개. replaced_by \"\" = 대체 없이 삭제한 hook (무조건 제거).",
   "UserPromptSubmit": {
     "replaced_by": "prompt-dispatch.py",
     "since": "2026-10-12",
@@ -66,6 +66,43 @@
       "propagate-rule-change.sh",
       "track-agent-dispatch.sh",
       "orca-heartbeat"
+    ]
+  },
+  "Stop": [
+    {
+      "replaced_by": "",
+      "since": "2026-10-16",
+      "reason": "배포를 안 해도 매 응답 끝마다 돌아 가짜 배포 기록을 쌓고, deploy-config.env 가 채워지면 서버 무응답 시 rollback.sh 를 자동 실행했다. deploy.sh 가 health check·롤백·기록을 직접 한다.",
+      "hooks": [
+        "hook-04-pre-deploy.sh",
+        "hook-05-post-deploy.sh"
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "replaced_by": "",
+      "since": "2026-10-16",
+      "reason": "2026-10-12 폐기된 noop (exit 0 만 함)",
+      "hooks": [
+        "mcp-autostart.sh"
+      ]
+    }
+  ],
+  "SubagentStart": {
+    "replaced_by": "tool-dispatch.py",
+    "since": "2026-10-16",
+    "reason": "jq 미설치로 id=?·type=? 만 기록하던 것 → 디스패처 모듈(log_subagent·track_agent_dispatch)",
+    "hooks": [
+      "log-subagent.sh"
+    ]
+  },
+  "SubagentStop": {
+    "replaced_by": "tool-dispatch.py",
+    "since": "2026-10-16",
+    "reason": "jq 미설치로 id=?·type=? 만 기록하던 것 → 디스패처 모듈(log_subagent·track_agent_dispatch)",
+    "hooks": [
+      "log-subagent.sh"
     ]
   }
 }

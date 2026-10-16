@@ -103,6 +103,19 @@ def main():
         total_7  = sum(c7.values())
         return round(total_7 / total_30 * 100) if total_30 else 0
 
+    # recurrence-tracker.py 통합 (2026-10-16 사용자 지시 — 재발률 재정의)
+    rec_stats = None
+    try:
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location(
+            "_rec_tracker", str(ROOT / ".claude" / "scripts" / "recurrence-tracker.py")
+        )
+        _mod = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        rec_stats = _mod.stats()
+    except Exception:
+        pass
+
     result = {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "source": source,
@@ -120,6 +133,9 @@ def main():
             "recur_rate_pct": recur_rate(dev_7, dev_30),
         },
     }
+    # recurrence-tracker SoT 통계 (사용자 정의 재발률)
+    if rec_stats:
+        result["recurrence"] = rec_stats
     OUT.parent.mkdir(parents=True, exist_ok=True)
     # ensure_ascii=True → 한국어 키 \uXXXX escape 로 저장 (Windows cp949 환경 호환)
     OUT.write_text(json.dumps(result, ensure_ascii=True, indent=2), encoding="utf-8")

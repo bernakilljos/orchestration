@@ -29,5 +29,6 @@ if errorlevel 1 (
   exit /b 0
 )
 
+call "%~dp0_task-allow-battery.bat" "%TASK_NAME%"
 echo   [18] Registered: %TASK_NAME% DAILY 04:00
 exit /b 0
