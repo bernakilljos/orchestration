@@ -1441,7 +1441,7 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
-    # 🧭 DRIFT · 🩺 HEALTH (2026-10-16 사용자 명시 — 비용 위 한 쌍 · 청록 라벨 + 상태색 값)
+    # 🧭 DRIFT · 💚 HEALTH (2026-10-16 사용자 명시 — 비용 위 한 쌍 · 청록 라벨 + 상태색 값)
     #   DRIFT: core/rule/hook/agent 변경 수 · frozen 여부 · release-manifest baseline 대비
     #   HEALTH: 월 1회 health-check 점수 · last/next 날짜 · 자동 수정 X · 보고만
     #   SoT: drift-detect.py · health-check.py
@@ -1603,7 +1603,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅", "DRIFT": "🧭", "HEALTH": "🩺"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅", "DRIFT": "🧭", "HEALTH": "💚"}
 
     # 2026-10-16 사용자 명시 — 라벨별 카테고리 색 고정
     LABEL_COLOR = {
@@ -1668,7 +1668,7 @@ def main() -> None:
                "증명": "🔐 증명", "READY": "🎯 READY",
                "인프라": "📡 인프라", "오류": "🚨 오류",
                "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛑 통제", "검증": "✅ 검증",
-               "DRIFT": "🧭 DRIFT", "HEALTH": "🩺 HEALTH"}
+               "DRIFT": "🧭 DRIFT", "HEALTH": "💚 HEALTH"}
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
@@ -1764,7 +1764,7 @@ def main() -> None:
     # 빈 줄
     out.append("")
 
-    # 🧭 DRIFT · 🩺 HEALTH 쌍 (2026-10-16 사용자 명시 — 비용 위 · 청록 라벨 pair)
+    # 🧭 DRIFT · 💚 HEALTH 쌍 (2026-10-16 사용자 명시 — 비용 위 · 청록 라벨 pair)
     _drift = gauges.get("drift") or ""
     _health = gauges.get("health") or ""
     if _drift and _health: out.append(_pair("DRIFT", _drift, "HEALTH", _health))
