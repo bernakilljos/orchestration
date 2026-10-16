@@ -85,9 +85,9 @@ def main():
         print(f"  {'✓' if ok else '✗'} {tid} {'PASS' if ok else 'FAIL'}: {name}")
         if ok: passed += 1
         else: failed.append(tid)
-    print("="*60); print(f"총 {passed}/10 PASS")
+    print("="*60); print(f"총 {passed}/{len(TESTS)} PASS")
     if failed: print(f"FAIL: {', '.join(failed)}")
-    return 0 if passed==10 else 1
+    return 0 if passed==len(TESTS) else 1
 
 if __name__ == "__main__":
     sys.exit(main())
