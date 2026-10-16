@@ -1977,3 +1977,11 @@
 - 모든 라인 맨 앞 | 추가
 - display width 기준 padding 12칸 (이모지 2w + 한글 2w)
 
+
+## statusline 포맷 최종 (2026-10-16 사용자 명시)
+- 모든 줄 맨 앞 | 강제
+- wcwidth 우선 (설치됨) + east_asian_width fallback
+- 머리말 13칸 통일 padding
+- READY 상한: 검증 미측정 → max 70 · ❌ → max 60 · request 누락 → max 50 · A등급은 검증 ✅ 필수
+- 이력 💾 → 🔒 (사용자 포맷 반영)
+

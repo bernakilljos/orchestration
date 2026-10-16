@@ -511,7 +511,32 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
     else:
         final = 0
 
-    if final >= 90:
+    # 2026-10-16 외부 감사 — 미증명 상한 (사용자 명시):
+    #   test 미측정 → 최대 70 · 검증 ❌ → 최대 60 · 미증명 >0 → A 금지
+    _caps = []
+    if verify_icon == "미측정":
+        _caps.append(70)
+    elif verify_icon == "❌":
+        _caps.append(60)
+    # Request Ledger 미완료 비율 → 상한
+    try:
+        import json as _j
+        _rl_f = _os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if _os.path.exists(_rl_f):
+            with open(_rl_f, "r", encoding="utf-8") as _f:
+                _rl = _j.load(_f)
+            _reqs = _rl.get("requests", [])
+            if _reqs:
+                _done = sum(1 for r in _reqs if r.get("status") == "completed")
+                if _done < len(_reqs):
+                    _caps.append(50)
+    except Exception:
+        pass
+    if _caps:
+        final = min(final, min(_caps))
+
+    # A 등급 = 검증 통과 필수
+    if final >= 90 and verify_icon in ("✅",):
         grade = "A"
     elif final >= 80:
         grade = "B+"
@@ -1516,7 +1541,7 @@ def main() -> None:
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "💾", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
+             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
 
     def _row(label: str, body: str) -> str:
         # 머리말 표시폭 9칸(이모지 2 + 공백 1 + 한글 최대 6)으로 맞춤 → 모든 줄 내용이 같은 칸에서 시작
@@ -1524,7 +1549,7 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "[90m|[0m " + "[1;36m" + head + "[0m" + " " * max(0, 12 - w) + "[90m│[0m " + body
+        return "[90m|[0m " + "[1;36m" + head + "[0m" + " " * max(0, 13 - w) + "[90m│[0m " + body
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용
