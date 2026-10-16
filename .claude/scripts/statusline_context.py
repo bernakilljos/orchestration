@@ -1542,9 +1542,27 @@ def main() -> None:
     ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
              "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐"}
 
+    # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
+    try:
+        from wcwidth import wcswidth as _wcs
+        def _width(s):
+            import re as _re
+            plain = _re.sub(r"\[[0-9;]*[mG]", "", s)
+            w = _wcs(plain)
+            return w if w and w > 0 else len(plain)
+    except ImportError:
+        import unicodedata as _ud
+        def _width(s):
+            import re as _re
+            plain = _re.sub(r"\[[0-9;]*[mG]", "", s)
+            return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in plain)
+
+
     def _row(label: str, body: str) -> str:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
-        return "  [1;36m" + head + "[0m[20G[90m│[0m " + body
+        _w = _width(head)
+        _pad = max(1, 17 - _w)  # indent 2 + head + pad + │ = col 20
+        return "  [1;36m" + head + "[0m" + " " * _pad + "[90m│[0m " + body
 
     _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
                "영향": "🧪 영향", "공통화": "🧩 공통화",
@@ -1555,14 +1573,17 @@ def main() -> None:
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
-        return ("  [1;36m" + _h1 + "[0m[20G[90m│[0m " + b1
-                + "[72G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2)
+        _pad1 = max(1, 17 - _width(_h1))
+        # 오른쪽 label 뒤 │ 는 padding 2 (짧은 label-value 간격)
+        _pad2 = max(1, 11 - _width(_h2))
+        return ("  [1;36m" + _h1 + "[0m" + " " * _pad1 + "[90m│[0m " + b1
+                + "   [1;35m»[0m   [1;36m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
         return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
-                + "[48G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
-                + "[100G[1;35m»[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
+                + "  [48G[1;35m»[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
+                + "  [100G[1;35m»[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용

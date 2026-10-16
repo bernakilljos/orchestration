@@ -2036,3 +2036,9 @@
 - _triple 제거
 - 토큰·비용 단독 (유지)
 
+
+## six-guards (2026-10-16 사용자 명시)
+- 6 Guards: Scope / Completion / Verification / Memory / Quality / Freeze
+- six-guards.md 매트릭스 (반복 짜증 → 자동 대응)
+- stop-six-guards.sh (Stop hook 통합 검증)
+
