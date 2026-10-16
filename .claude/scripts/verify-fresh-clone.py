@@ -34,12 +34,34 @@ def files():
                 yield p
 
 
+def _writes_itself(text: str, fname: str) -> bool:
+    """text 가 fname 을 쓰기 모드로 여는가 — 경로를 담은 변수(STATE = ….json)를 거쳐도 본다."""
+    names = [re.escape(fname)] + [r"\b" + re.escape(v) + r"\b" for v in re.findall(
+        r"^\s*(\w+)\s*=.*" + re.escape(fname), text, re.M)]
+    for line in text.splitlines():
+        if line.lstrip().startswith("#") or not any(re.search(n, line) for n in names):
+            continue
+        if ("open(" in line and re.search(r"""['"][wa]b?\+?['"]""", line)) or ".write_text(" in line:
+            return True
+    return False
+
+
 def main() -> int:
     texts = {p: p.read_text(encoding="utf-8", errors="replace") for p in files()}
     all_text = "\n".join(texts.values())
 
     # 1) 테이블 DDL
     created = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS\s+(\w+)", all_text))  # FTS5 등 VIRTUAL 포함
+    # 2026-10-17: 대상 프로젝트의 앱 표(coupons 등)는 DDL 이 storage/·web/ 에 있다 — 그것도 git 에 있어 새 PC 에 따라온다.
+    #   검사 폴더 밖이라 'DDL 없음' 으로 잘못 잡았다. 저장소 전체의 .py·.sql 에서 DDL 을 모은다(쓰는 곳 검사 범위는 그대로).
+    skip = {".git", "node_modules", ".next", ".venv", "venv", "__pycache__", "archive"}
+    for p in ROOT.rglob("*"):
+        if p.suffix in (".py", ".sql") and not (skip & set(p.relative_to(ROOT).parts)) and p not in texts:
+            try:
+                created |= set(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS\s+(\w+)",
+                                          p.read_text(encoding="utf-8", errors="replace"), re.I))
+            except OSError:
+                pass
     written: dict[str, set[str]] = {}
     for p, t in texts.items():
         for tbl in re.findall(r"(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|UPDATE)\s+(\w+)\s*(?:\(|SET)", t):
@@ -108,6 +130,10 @@ def main() -> int:
         producers = {p.name for p, t in texts.items() if f in t and p.name not in readers}
         if not producers:
             producers = set(readers)
+            # 2026-10-17: 읽는 스크립트가 같은 파일을 스스로 쓰면(손으로 돌리는 도구의 진행 상태·결과) 새 PC 에서도
+            #   첫 실행이 만든다 — hook 이 없어도 된다. 읽기만 하고 쓰지 않는 쪽만 결함으로 본다.
+            if all(_writes_itself(texts[p], f) for p in texts if p.name in readers):
+                continue
         if not (producers & reach):
             orphan_state[f] = (sorted(readers), sorted(producers))
 

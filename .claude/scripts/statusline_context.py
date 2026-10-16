@@ -1432,9 +1432,23 @@ def extra_gauges(cwd, data=None):
                 _s = _pj.loads(_r.stdout)
                 _sr_ok, _sr_total = _s.get("ok",0), _s.get("active",0)
             except: pass
-        # golden test (quick existence check)
+        # golden test — 2026-10-17: 예전엔 파일이 있기만 하면 늘 ⚠ 였다(13/13 PASS 여도). golden-test.py 가 남기는
+        #   test-cache.json 의 결과를 읽는다 · 없거나 7일 넘게 묵으면 ⏳(미측정 ≠ 정상)
         _gt = os.path.join(cwd, ".claude", "scripts", "golden-test.py")
-        _gt_icon = "⚠" if os.path.exists(_gt) else "❌"
+        _gt_icon = "❌"
+        if os.path.exists(_gt):
+            _gt_icon = "[90m⏳[0m"
+            try:
+                import json as _gj
+                from datetime import datetime as _gdt
+                with open(os.path.join(cwd, ".claude", "state", "test-cache.json"), encoding="utf-8") as _gf:
+                    _g = _gj.load(_gf)
+                if (_gdt.now() - _gdt.fromisoformat(_g["ts"])).days < 7:
+                    _gp, _gt_n = int(_g.get("passed", 0)), int(_g.get("total", 0))
+                    _gt_icon = (f"[1;32m✅ {_gp}/{_gt_n}[0m" if _gt_n and _gp == _gt_n
+                                else f"[1;31m❌ {_gp}/{_gt_n}[0m")
+            except Exception:
+                pass
         # request ledger
         _rl_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
         _rl_done = _rl_total = 0
