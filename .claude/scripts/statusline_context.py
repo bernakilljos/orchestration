@@ -429,19 +429,39 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 #   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
 
 def _compute_readiness(cwd, crits, errs, warns, hc_total):
-    """🎯 READY 가중 공식 — 2026-10-16.
-    축: test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%.
-    데이터 소스 없는 축은 「⏳」 → 가중 재분배 (가능한 축만 평균).
-    등급: 90+ A · 80+ B+ · 70+ B · 60+ C · <60 D.
-    검증: test pass 95%+ ✅ · 80~94% ⚠ · <80% ❌ · 소스 없음 → "⏳".
-    배포: merge-to-target.log 24h 이내 ✅ · 7일 이내 ⚠ · 없음 ❌.
-    """
-    import os as _os, glob as _g, time as _tm
-    scores = []  # (weight, score 0~100)
+    """🎯 READY 재설계 — 2026-10-16 사용자 명시.
 
-    # 1) test 축 (지금은 캐시 없음 → ⏳)
+    원칙 (사용자 "이거 너가 만들어서 해"):
+      - 미측정은 감점 X · 상한만 제한
+      - 재발률은 READY 직접 감점 X (관측용)
+      - 실제 실패만 강한 감점
+      - 품질 등급은 '검증 완료 후에만' A/B/C/D 부여 (verify ⏳ → '미평가')
+
+    감점 매트릭스 (실제 실패만):
+      - critical × -15 · error × -5 · test FAIL × -25 · MCP failed × -3
+      - hardcoded 실측 CRITICAL × -2 · 신선도 OVERDUE × -5
+      - 미측정 / 재발률 → 감점 0
+
+    상한 (미증명):
+      - test ⏳ → cap 85 · test ❌ → cap 60
+      - Request Ledger 미완료 → cap 50
+      - verify ⏳ → A/B+/B 등급 금지 ('미평가' 표시)
+
+    등급 (검증 완료 후만):
+      - verify=✅ AND score ≥ 90 → A
+      - verify=✅ AND score ≥ 80 → B+
+      - verify=✅ AND score ≥ 70 → B
+      - verify=✅ AND score ≥ 60 → C
+      - verify=✅ AND score < 60 → D
+      - verify=❌ → F (검증 실패)
+      - verify=⏳ → ⏳미평가 (상한 85)
+    """
+    import os as _os, time as _tm
+
+    # 1) verify_icon 판정 (감점 아님 · 상한만)
     test_cache = _os.path.join(cwd, ".claude", "state", "test-cache.json")
-    verify_icon = "⏳"
+    verify_icon = "⏳"  # 측정 대기 · 소스 없음과 구분
+    test_penalty = 0
     if _os.path.exists(test_cache):
         try:
             with open(test_cache, "r", encoding="utf-8") as f:
@@ -450,84 +470,69 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
             total = int(tc.get("total", 0))
             if total:
                 rate = passed / total * 100
-                scores.append((30, rate))
                 verify_icon = "✅" if rate >= 95 else ("⚠" if rate >= 80 else "❌")
+                if verify_icon == "❌":
+                    test_penalty = 25  # 실제 FAIL 만 강한 감점
         except Exception:
-            pass  # noqa: BLE001
+            pass
 
-    # 2) 오류 축 (critical×−10, error×−3, warn×−1 → 100점 역산)
-    penalty = crits * 10 + errs * 3 + warns * 1
-    err_score = max(0, 100 - penalty)
-    scores.append((25, err_score))
+    # 2) 실제 실패 감점 (강한)
+    penalty = 0
+    penalty += crits * 15  # critical 실제 오류
+    penalty += errs * 5    # error 실제 오류
+    penalty += test_penalty  # test ❌
+    # warns 는 감점 X (관측용) · 재발률도 감점 X
 
-    # 3) 재발률 축 — rule_adherence 데이터 (별도 캐시)
-    ra_cache = _os.path.join(cwd, ".claude", "state", "rule-adherence.json")
-    if _os.path.exists(ra_cache):
-        try:
-            with open(ra_cache, "r", encoding="utf-8") as f:
-                ra = json.load(f)
-            d_rate = float(ra.get("design", {}).get("recur_rate", 0))
-            dev_rate = float(ra.get("dev", {}).get("recur_rate", 0))
-            avg = (d_rate + dev_rate) / 2
-            recur_score = max(0, 100 - avg * 100) if avg <= 1 else max(0, 100 - avg)
-            scores.append((20, recur_score))
-        except Exception:
-            pass  # noqa: BLE001
-
-    # 4) 하드코딩 축 (0=100 · 50+=0 · 선형)
-    hc_score = max(0, 100 - hc_total * 2)
-    scores.append((10, hc_score))
-
-    # 5) MCP 가용성 축 (별도 state 에서 읽기)
+    # MCP 실패
     mcp_state = _os.path.join(cwd, ".claude", "state", "mcp-status.json")
     if _os.path.exists(mcp_state):
         try:
             with open(mcp_state, "r", encoding="utf-8") as f:
                 ms = json.load(f)
-            ok = int(ms.get("ok", 0))
-            tot = int(ms.get("total", 0))
-            if tot:
-                scores.append((10, ok / tot * 100))
+            failed = int(ms.get("failed", 0))
+            penalty += failed * 3
         except Exception:
-            pass  # noqa: BLE001
+            pass
 
-    # 6) 산출물 신선도 축 (OVERDUE 비율 역산)
-    fresh_cache = _os.path.join(cwd, ".claude", "state", "artifact-freshness.json")
-    if _os.path.exists(fresh_cache):
-        try:
-            with open(fresh_cache, "r", encoding="utf-8") as f:
+    # 하드코딩 실측 (CRITICAL 만)
+    try:
+        aud = _os.path.join(cwd, ".claude", "state", "hardcoded-audit.json")
+        if _os.path.exists(aud):
+            with open(aud, "r", encoding="utf-8") as f:
+                a = json.load(f)
+            if a.get("status") == "CRITICAL":
+                penalty += int(a.get("total_hits", 0)) * 2
+    except Exception:
+        pass
+
+    # 산출물 신선도 OVERDUE
+    try:
+        fresh = _os.path.join(cwd, ".claude", "state", "artifact-freshness.json")
+        if _os.path.exists(fresh):
+            with open(fresh, "r", encoding="utf-8") as f:
                 fc = json.load(f)
             overdue = int(fc.get("overdue", 0))
-            total = int(fc.get("total", 1)) or 1
-            scores.append((5, max(0, 100 - overdue / total * 100)))
-        except Exception:
-            pass  # noqa: BLE001
+            penalty += overdue * 5
+    except Exception:
+        pass
 
-    # 가중 평균 (가능한 축만)
-    if scores:
-        total_w = sum(w for w, _ in scores)
-        total_s = sum(w * s for w, s in scores)
-        final = int(total_s / total_w) if total_w else 0
-    else:
-        final = 0
+    final = max(0, 100 - penalty)
 
-    # 2026-10-16 외부 감사 — 미증명 상한 (사용자 명시):
-    #   test ⏳ → 최대 70 · 검증 ❌ → 최대 60 · 미증명 >0 → A 금지
+    # 3) 상한 (미증명)
     _caps = []
     if verify_icon == "⏳":
-        _caps.append(70)
+        _caps.append(85)
     elif verify_icon == "❌":
         _caps.append(60)
-    # Request Ledger 미완료 비율 → 상한
+    # Request Ledger 미완료 → cap 50
     try:
-        import json as _j
         _rl_f = _os.path.join(cwd, ".claude", "state", "request-ledger.json")
         if _os.path.exists(_rl_f):
             with open(_rl_f, "r", encoding="utf-8") as _f:
-                _rl = _j.load(_f)
+                _rl = json.load(_f)
             _reqs = _rl.get("requests", [])
             if _reqs:
-                _done = sum(1 for r in _reqs if r.get("status") == "completed")
+                _done = sum(1 for r in _reqs if r.get("status") in ("completed", "deferred"))
                 if _done < len(_reqs):
                     _caps.append(50)
     except Exception:
@@ -535,17 +540,24 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
     if _caps:
         final = min(final, min(_caps))
 
-    # A 등급 = 검증 통과 필수
-    if final >= 90 and verify_icon in ("✅",):
-        grade = "A"
-    elif final >= 80:
-        grade = "B+"
-    elif final >= 70:
-        grade = "B"
-    elif final >= 60:
-        grade = "C"
-    else:
-        grade = "D"
+    # 4) 등급 (검증 완료 후만 · 사용자 명시)
+    if verify_icon == "⏳":
+        grade = "⏳미평가"
+    elif verify_icon == "❌":
+        grade = "F"
+    elif verify_icon == "✅":
+        if final >= 90:
+            grade = "A"
+        elif final >= 80:
+            grade = "B+"
+        elif final >= 70:
+            grade = "B"
+        elif final >= 60:
+            grade = "C"
+        else:
+            grade = "D"
+    else:  # ⚠
+        grade = "C+" if final >= 70 else "D+"
 
     # 배포 아이콘 (merge-to-target 로그 mtime)
     deploy_icon = "❌"
