@@ -72,6 +72,22 @@ def git_history_hashes(rel: str) -> set[str]:
     return out
 
 
+def _retired_names() -> set:
+    """retired-hooks.json 에 올라간(대체·삭제된) 훅 파일명."""
+    try:
+        ret = json.loads((KIT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    out = set()
+    for k, v in ret.items():
+        if k.startswith("_"):
+            continue
+        for spec in (v if isinstance(v, list) else [v]):
+            if isinstance(spec, dict):
+                out |= set(spec.get("hooks") or [])
+    return out
+
+
 def kit_newer(rel: str, target: Path) -> bool:
     """kit 의 마지막 커밋 시각 > 대상 파일 수정 시각 이면 True (보존 파일이 kit 수정을 못 받은 것)."""
     try:
@@ -374,7 +390,9 @@ def main() -> int:
         print(f"  {k:14} {len(v)}")
     for rel in stats["target-custom"]:
         # kit 이 이 파일을 대상 수정 시각 이후에 고쳤으면 «kit 수정 미반영» — 조용히 넘기지 않는다 (2026-10-16)
-        print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if kit_newer(rel, target) else ""))
+        # CLAUDE.md = 대상 고유본(설계상 다름) · retired 훅 = 대체돼 실행 안 됨 → 경고 대상 아님
+        warn = rel != "CLAUDE.md" and Path(rel).name not in _retired_names() and kit_newer(rel, target)
+        print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if warn else ""))
     for r in report:
         print(f"  {r}")
     if apply:

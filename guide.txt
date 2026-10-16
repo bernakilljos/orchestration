@@ -493,6 +493,7 @@
     서브에이전트 추적 (1016)                 SubagentStart/Stop + agent_id 키 (종전 PostToolUse 는 백그라운드면 실행 1초 뒤 와서 «1초 종료» 로 기록 · 같은 종류 병렬은 1개만 남음) · agents/*.md color: 등급색
     로그 오류 자동 점검 (1016)              prompt-dispatch surface-log-errors · 새 오류 종류 / 24h 20회+ 반복 경고 → 다음 프롬프트에 1회 주입 (상태줄 숫자만 있고 세션은 몰랐던 것) · 재알림은 2배+·6h
     10분 작업 오류 453건 (1016)             작업 스케줄러 PATH 에 bash 없음 → find_bash() (git 위치 역산·ProgramFiles) · Claude procs HIGH 는 RAM 80%+ 일 때만 · 배터리면 안 돌던 것 → setup/modules/_task-allow-battery.bat (15·18·19 모듈)
+    merge-to-target 보존 경고 (1016)         kit 이 보존 파일을 더 최근에 고쳤으면 ⚠ 수동 병합 · CLAUDE.md(대상 고유본)·대체된 훅은 제외 · 단순 삭제 훅도 대상에서 제거 (retired-hooks replaced_by "")
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
