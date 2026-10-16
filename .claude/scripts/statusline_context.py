@@ -1524,7 +1524,7 @@ def main() -> None:
         head = f"{ICONS[label]} {label}" if label in ICONS else label
         w = sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in head)
         # 머리말 굵은 청록 · 구분선 회색 (이모지 머리말 색 강조 — 사용자 지시 1006)
-        return "\033[1;36m" + head + "\033[0m" + " " * max(0, 10 - w) + " \033[90m│\033[0m " + body
+        return "[90m|[0m " + "[1;36m" + head + "[0m" + " " * max(0, 12 - w) + "[90m│[0m " + body
 
     # 7줄 레이아웃 (2026-10-16 사용자 재설계 v2 — fast 영향 줄로 · 오류+READY 한 줄로 합):
     #   토큰(+세션/주간+시계) · 디자인+개발 · 영향(+fast) · 인프라 · 오류+READY · 서브 · 비용

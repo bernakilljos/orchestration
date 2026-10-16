@@ -1972,3 +1972,8 @@
 - statusline: 품질추세·공통화·이력·증명 4 라인 추가
 - 사용자 '뻥치지 마' 외부 증거 기반 검증
 
+
+## statusline format (2026-10-16 사용자 명시)
+- 모든 라인 맨 앞 | 추가
+- display width 기준 padding 12칸 (이모지 2w + 한글 2w)
+
