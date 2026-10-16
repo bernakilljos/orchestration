@@ -815,6 +815,33 @@ def extra_gauges(cwd, data=None):
                     pass
                 return st
 
+            def _finished(path):
+                """기록 끝의 마지막 assistant 응답에 도구 호출이 없고 2분+ 조용하면 끝난 것으로 본다."""
+                try:
+                    import time as _t2
+                    if _t2.time() - os.path.getmtime(path) < 120:
+                        return False
+                    with open(path, "rb") as fh:
+                        fh.seek(0, 2)
+                        size = fh.tell()
+                        fh.seek(max(0, size - 262144))
+                        tail = fh.read().decode("utf-8", "replace").splitlines()
+                    for line in reversed(tail):
+                        try:
+                            o = json.loads(line)
+                        except Exception:
+                            continue
+                        m = o.get("message") or {}
+                        if not isinstance(m, dict) or m.get("role") != "assistant":
+                            continue
+                        cont = m.get("content")
+                        has_tool = any(isinstance(c, dict) and c.get("type") == "tool_use"
+                                       for c in (cont if isinstance(cont, list) else []))
+                        return not has_tool
+                except Exception:
+                    return False
+                return False
+
             proj_dir = cwd_to_proj_dir(cwd)
             rows = []
             for a in agents:
@@ -833,6 +860,10 @@ def extra_gauges(cwd, data=None):
                 # 이 프로젝트 세션의 기록만 읽는다 — 다른 프로젝트 에이전트의 동작이 섞여 보이지 않게 (2026-10-16)
                 if tp and os.path.normcase(os.path.abspath(tp)).find(os.path.normcase(os.path.abspath(proj_dir))) != 0:
                     tp = ""
+                # 종료 시각이 안 남은 에이전트(한도로 멈췄다가 이어서 돈 경우 등)는 기록의 마지막 응답으로 끝남을 판정한다
+                #   — 2026-10-16: 끝난 에이전트 2개가 «⛔정지 · 긴급 멈춤의심» 으로 3시간 넘게 떠 있었다.
+                if tp and _finished(tp):
+                    continue
                 info = _scan(tp) if tp else None
                 rows.append((_grade(a.get("model")), a, dur, info, tp))
             try:  # 열린 에이전트의 스캔 기록만 남긴다
