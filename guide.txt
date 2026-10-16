@@ -1934,3 +1934,10 @@
 - 색상: 녹색/노랑/빨강 (status 기반)
 - 사용자 지시 2026-10-16: '엔트로피 쫌 낮추자' + '다 해줘'
 
+
+## dedupe-rule.py (2026-10-16)
+- 자동 중복 축약 스크립트 — 섹션 regex 매치 → SoT 참조로 교체
+- SKIP_FILES: 각 영역 특화 SoT (post-codex-verify, teaching-doc, screen-verify 등)
+- 패턴: verify_after_edit · common_component · false_report · stop_prevention
+- 안전: .bak 자동 백업 · dry-run 기본 · ALLOW_KOREAN_REMOVAL=1 필요
+

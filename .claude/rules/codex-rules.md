@@ -67,12 +67,10 @@ bash plugins/exec_orch/hooks/post-codex-verify.sh post <slug>
 | 검증·리뷰 |  Haiku 4.5 ×2 |
 | 1M+ 리서치 |  Gemini Flash |
 
-## 사후 검증 의무 (`post-codex-verify.md`)
+## 사후 검증 의무 (`post-codex-verify.md`) → [[verify-after-edit-mandatory]]
 
-- pre/post snapshot 자동
-- 변경 0 라인 = `[HALLUCINATION]` 표시 + empty commit
-- 같은 task 3회 hallucination → codex 임시 disable
-
+SoT: `.claude/rules/verify-after-edit-mandatory.md` — 증명 체인 5단계 (pre→수정→post→작동 테스트→보고).
+Operating Principles § 6 '완료는 증명' · § 10 '종료 조건' 정합. 중복 본문 삭제 (2026-10-16 · 사용자 지시 '엔트로피 쫌 낮추자').
 ## 참조
 
 - `CLAUDE.md § 7-1` (금지)
