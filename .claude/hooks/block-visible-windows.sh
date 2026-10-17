@@ -30,6 +30,7 @@ shopt -s nocasematch
 RE_COMMENT='^[[:space:]]*(rem[[:space:]]|::|#)'
 RE_START='(^|[[:space:]&|(])start[[:space:]]'
 RE_HIDDEN_START='[[:space:]]/(b|min)([[:space:]]|$)'
+RE_SUBCMD_START='(run|next|npm|yarn|pnpm)[[:space:]]+start([^[:alnum:]_-]|$)'
 RE_PROG='(cmd|powershell|pwsh|python|py[[:space:]]|\.exe|\.bat|\.cmd|%PY%|"%)'
 RE_CMDK='cmd(\.exe)?[[:space:]]+//?k([[:space:]]|$)'
 RE_SP='Start-Process'
@@ -39,7 +40,11 @@ RE_SP_HIDDEN='(-WindowStyle[[:space:]]+Hidden|-NoNewWindow)'
 _opens_window() {
   local l="$1"
   [[ $l =~ $RE_COMMENT ]] && return 1
-  if [[ $l =~ $RE_START ]] && [[ ! $l =~ $RE_HIDDEN_START ]] && [[ $l =~ $RE_PROG ]]; then return 0; fi
+  # `npm run start`·`next start` 는 cmd 의 start 가 아니라 하위 명령이다 — 빼고 본다
+  #   (2026-10-17: 637 에서 python 이식판만 고쳐, cd /c/... 로 이 원본에 넘어온 명령은 start-3000.bat 의 Hidden 줄로 계속 막혔다)
+  local bare="$l"
+  while [[ $bare =~ $RE_SUBCMD_START ]]; do bare="${bare/"${BASH_REMATCH[0]}"/ }"; done
+  if [[ $bare =~ $RE_START ]] && [[ ! $bare =~ $RE_HIDDEN_START ]] && [[ $bare =~ $RE_PROG ]]; then return 0; fi
   [[ $l =~ $RE_CMDK ]] && return 0
   if [[ $l =~ $RE_SP ]] && [[ ! $l =~ $RE_SP_HIDDEN ]]; then return 0; fi
   return 1
