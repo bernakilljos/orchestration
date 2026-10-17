@@ -589,6 +589,14 @@
        python .claude/scripts/route.py --set-daily-limit 50
        → 하루 $50 넘으면 자동으로 breaker 발동 (신규 태스크 시작 중단)
 
+    2-1. 플랜 사용률 위임 (2026-10-17 · 자동):
+       세션·주간 사용률 중 높은 쪽이 90% 넘으면 구현·리팩터·단순 작업을 codex 로,
+       95% 넘으면 검증·문서·대량 조사도 gemini 로 넘긴다. 설계·애매한 작업은 Claude 유지.
+       값은 상태줄이 쓰는 ~/.claude/state/rate-limits.json (리셋 지난 값은 무시 · 없으면 위임 안 함).
+       확인: python .claude/scripts/route.py --usage
+       임계 조정: 환경변수 USAGE_OFFLOAD_CODEX_PCT / USAGE_OFFLOAD_GEMINI_PCT (기본 90 / 95)
+       90% 넘는 동안 매 프롬프트에 [사용량 위임 L1/L2] 안내가 뜬다.
+
     3. Watchdog 시작 (백그라운드 감시자):
        .claude/scripts/watchdog-start.bat
        → 워커 heartbeat 2분마다 체크

@@ -10,6 +10,7 @@ Usage:
     python route.py --trip-breaker
     python route.py --reset-breaker
     python route.py --metrics [--hours N]
+    python route.py --usage          # 세션·주간 사용률 위임 단계 (>=90% codex · >=95% gemini)
 
 Examples:
     # Get routing decision
@@ -95,6 +96,16 @@ def cmd_status(args):
     else:
         print(f"Budget: ${today_spent:.2f} / unlimited (no limit set)")
 
+    print()
+
+    # Claude 플랜 사용률 위임 단계 (lib/usage_offload.py)
+    try:
+        from usage_offload import status as usage_status
+        us = usage_status()
+        use = " / ".join(f"{k} {v:.0f}%" for k, v in us["usage"].items()) or "미측정"
+        print(f"Usage offload: L{us['level']} ({use}) -> {us['offload'] or 'Claude 유지'}")
+    except Exception as e:  # noqa: BLE001
+        print(f"Usage offload: 판정 실패 ({e})")
     print()
 
     # Quota status
@@ -251,6 +262,12 @@ def cmd_check(args):
     sys.exit(0 if ok else 1)
 
 
+def cmd_usage(args):
+    """Claude 플랜 사용률 위임 단계를 JSON 으로."""
+    from usage_offload import status as usage_status
+    print(json.dumps(usage_status(), ensure_ascii=False, indent=2))
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Route tasks and manage budget/quota"
@@ -286,6 +303,11 @@ def main():
     parser.add_argument("--metrics", action="store_true", help="Print detailed metrics")
     parser.add_argument("--hours", type=int, help="Hours to include in metrics")
 
+    parser.add_argument(
+        "--usage", action="store_true",
+        help="Claude plan usage offload level (session/weekly >=90%% codex, >=95%% gemini)",
+    )
+
     # Check (quota + budget + fable-5 20% gate)
     parser.add_argument(
         "--check",
@@ -315,6 +337,8 @@ def main():
         cmd_metrics(args)
     elif args.check:
         cmd_check(args)
+    elif args.usage:
+        cmd_usage(args)
     else:
         # Default: show status
         cmd_status(args)

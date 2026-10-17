@@ -69,7 +69,7 @@
 ---
 
 <!-- AUTO-STATS -->
-> **현재 상태** (2026-10-16): plugins 37 stable + 0 spec-only - rules 54 - hooks 32 - scripts 175
+> **현재 상태** (2026-10-17): plugins 37 stable + 0 spec-only - rules 54 - hooks 32 - scripts 174
 <!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
@@ -229,6 +229,7 @@ Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/pro
 SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 - 감지: `.claude/state/orca.db` (quota·budget 테이블)
 - Quota 초과: 10m→20m→40m→2h 지수 backoff
+- **플랜 사용률 위임 (2026-10-17)**: 세션·주간 중 높은 쪽 ≥90% → 구현·리팩터·단순 작업 codex · ≥95% → 검증·문서 gemini 추가 (설계는 Claude 유지). 정본 `.claude/scripts/lib/usage_offload.py` · `route.py --usage` · 매 프롬프트 `[사용량 위임 L1/L2]` 주입
 - Budget 초과: 일일 상한 (기본 무제한, `route.py --set-daily-limit` 설정 가능)
 - **절대 금지**: 빈 task 를 `done/` 으로 이동 (위장 완료)
 

@@ -220,6 +220,24 @@ def route(
             AiChoice.GEMINI,
         ]
 
+    # Step 4.5: Claude 플랜 사용률 위임 (세션·주간 중 높은 쪽 >=90% codex · >=95% gemini 추가)
+    #   정본: lib/usage_offload.py. 설계·애매한 작업은 Claude 유지.
+    offload_note = ""
+    if task_type != TaskType.DESIGN and not is_ambiguous:
+        try:
+            from usage_offload import offload_target, level_of, read_usage
+            tgt = offload_target(task_type.value)
+            if tgt:
+                tgt_ai = AiChoice(tgt)
+                if quota_map[tgt_ai]:
+                    lvl, pct, _ = level_of(read_usage())
+                    fallback_chain = [preferred_ai] + [a for a in fallback_chain if a not in (preferred_ai, tgt_ai)]
+                    preferred_ai = tgt_ai
+                    use_thinking, thinking_budget = False, 0
+                    offload_note = f" [usage-offload L{lvl} {pct:.0f}%]"
+        except Exception:
+            pass  # noqa: BLE001 — 사용률 판정 실패 시 평소 라우팅
+
     # Step 5: Check preferred AI quota
     selected_ai = None
     if quota_map[preferred_ai]:
@@ -259,6 +277,7 @@ def route(
         reason += " (ambiguous)"
     if use_thinking:
         reason += f" + thinking({thinking_budget})"
+    reason += offload_note
 
     return RouteDecision(
         ai=selected_ai,
