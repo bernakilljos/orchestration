@@ -68,6 +68,13 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
 
 # 경로형 제외(두 칸 이상) — 위 집합과 비교 방식이 다르므로 따로 둔다.
 SKIP_PREFIXES = (".claude/state", ".claude/logs", ".claude/context-cache")
+
+# ★2026-10-17 — 만들어진 사본(빌드 결과 .next · 커버리지 리포트 htmlcov · kit 병합 백업 .claude/backups)은
+#   소스의 사본이라 경로·IP 패턴을 다시 센다. lottoclaude 실측: 29건 중 16건이 이 사본(같은 줄을 소스에서 한 번
+#   이미 센다). 고칠 수도 없다(다음 빌드·백업이 다시 만든다). 그래서 «하드코딩» 패턴(DOC_EXEMPT_KEYS)만 면제하고
+#   시크릿 3종은 그대로 본다 — 백업에 남은 토큰은 사고다.
+GENERATED_DIRS = {".next", "htmlcov", ".ruff_cache", ".pytest_cache", ".mypy_cache"}
+GENERATED_PREFIXES = (".claude/backups",)
 SKIP_EXT = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".docx", ".pptx",
             ".xlsx", ".zip", ".tar", ".gz", ".mp4", ".mp3", ".wav", ".sqlite",
             ".db", ".bak", ".pyc", ".pyo", ".ico",
@@ -87,6 +94,8 @@ def scan():
                 any(rel == p or rel.startswith(p + "/") for p in SKIP_PREFIXES):
             dirs[:] = []
             continue
+        _generated = any(p in GENERATED_DIRS for p in parts) or \
+            any(rel == p or rel.startswith(p + "/") for p in GENERATED_PREFIXES)
         for name in files:
             ext = Path(name).suffix.lower()
             if ext in SKIP_EXT:
@@ -102,7 +111,7 @@ def scan():
             _is_doc = (ext == ".md")
             for key, pat, _ in PATTERNS:
                 # ★문서의 금지 예시 면제 — 단 시크릿 3종은 면제하지 않는다(위 주석).
-                if _is_doc and key in DOC_EXEMPT_KEYS:
+                if (_is_doc or _generated) and key in DOC_EXEMPT_KEYS:
                     continue
                 for m in pat.finditer(txt):
                     lineno = txt.count("\n", 0, m.start()) + 1
