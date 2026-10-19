@@ -190,6 +190,25 @@ def score(query: str, item: dict) -> float:
     return s
 
 
+def _log_search(query: str, hit_count: int, top: int):
+    """Phase 1-4 (2026-10-19): 검색 적중률 측정용 구조화 로그.
+    포맷: ISO_TS | [search|hit|miss] | query... | hit=N | top=K
+    learning-report.py 가 최근 500 줄 분석하여 적중률 계산."""
+    try:
+        from datetime import datetime as _dt
+        log_dir = PROJECT_ROOT / ".claude" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log = log_dir / "lookup-rule.log"
+        now = _dt.now().strftime("%Y-%m-%dT%H:%M:%S")
+        tag = "[hit]" if hit_count > 0 else "[miss]"
+        q_short = (query[:60] + "...") if len(query) > 60 else query
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(f"{now} | [search] | query='{q_short}' | top={top}\n")
+            f.write(f"{now} | {tag} | query='{q_short}' | hits={hit_count} | top={top}\n")
+    except Exception:
+        pass  # 로그 실패는 검색 결과에 영향 X
+
+
 def search(query: str, top: int = 8) -> list:
     """Top-K 결과."""
     if not INDEX_JSON.exists():
@@ -198,7 +217,9 @@ def search(query: str, top: int = 8) -> list:
     results = [(score(query, item), item) for item in index]
     results = [r for r in results if r[0] > 0]
     results.sort(key=lambda x: -x[0])
-    return results[:top]
+    top_results = results[:top]
+    _log_search(query, len(top_results), top)
+    return top_results
 
 
 # === 인덱스 재구성 ===

@@ -2123,3 +2123,4 @@
     슬래시 경로(C:/Users/...)로 바꿨다. 이 토큰은 로컬 git 이력(커밋 5개)에 남아 있다 — 강제 push 전에 토큰을 폐기·재발급할 것.
 ## 서브 라인 멀티 라인 분리 (최소 작업 2줄 + 요약 1줄 · 이력 standalone · 사용자 '이력 안보여' 2026-10-19)
 ## adaptive-measure.py 신설 - 학습 바닥선 측정 (Phase 0 · 신규 시스템 X · 2026-10-19)
+## Phase 1 adaptive: 스키마 마이그레이션 + learning-report + lookup-rule 로그 포맷 (2026-10-19)
