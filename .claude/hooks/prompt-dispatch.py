@@ -49,6 +49,7 @@ HOOKS = [
     ("auto-explore-on-task", "auto_explore_on_task"),  # 2026-10-13 신설 (713c91f) 이식
     ("surface-log-errors", "surface_log_errors"),  # 2026-10-16 상태줄 오류·경고를 세션이 먼저 처리
     ("usage-offload-notice", "usage_offload_notice"),  # 2026-10-17 세션·주간 90%+ codex · 95%+ gemini 위임
+    ("inject-experience", "inject_experience"),  # 2026-10-19 A1 관련 검증 경험 top 3 자동 주입
 ]
 
 HOOK_TIMEOUT_SEC = 6.0  # 훅 1개 상한 (원본 settings timeout 10~15초 안쪽)

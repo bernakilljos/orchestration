@@ -2127,3 +2127,4 @@
 ## CLAUDE.md auto-stats bump (Phase 1 adaptive scripts 3개 추가 반영 · 2026-10-19)
 ## adaptive-audit.py 최종 감사 + ZIP (ADAPTIVE_ORCHESTRATION_AUDIT · 2026-10-19)
 ## integrated-audit.py — ORCHESTRATION_FINAL_INTEGRATED_AUDIT 11축 통합 (2026-10-19)
+## A/B 사이클: inject-experience(A1 hook) + verify-improvement(A2) + promote-experience(A3) + expire-stale(A4) + B trend 재사용 (2026-10-19)
