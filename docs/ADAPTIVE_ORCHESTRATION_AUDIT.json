@@ -1,0 +1,319 @@
+{
+  "axis1": {
+    "total": 10,
+    "tests": [
+      {
+        "n": 1,
+        "ts": "2026-10-19 01:21:27",
+        "snip": "작업이 끝나면 수정 결과만 보고하지 말고, 실제 실행 증거까지 포함한 최종 감사 보고서를 ",
+        "query": "작업이 끝나면 수정",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      },
+      {
+        "n": 2,
+        "ts": "2026-10-19 01:18:12",
+        "snip": "다 된거야?",
+        "query": "된거야?",
+        "lookup_rc": 0,
+        "hits": 0,
+        "status": "❌ 복원 실패"
+      },
+      {
+        "n": 3,
+        "ts": "2026-10-19 01:11:15",
+        "snip": "전부해야지.",
+        "query": "전부해야지.",
+        "lookup_rc": 0,
+        "hits": 0,
+        "status": "❌ 복원 실패"
+      },
+      {
+        "n": 4,
+        "ts": "2026-10-19 01:08:33",
+        "snip": "진행하자",
+        "query": "진행하자",
+        "lookup_rc": 0,
+        "hits": 0,
+        "status": "❌ 복원 실패"
+      },
+      {
+        "n": 5,
+        "ts": "2026-10-19 01:07:13",
+        "snip": "그런데 주인님이 진짜 원하는 건 그보다 한 단계 위예요.\n내가 반복해서 지시하지 않아도, ",
+        "query": "그런데 주인님이 진짜",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      },
+      {
+        "n": 6,
+        "ts": "2026-10-19 01:00:26",
+        "snip": "어떠한가",
+        "query": "어떠한가",
+        "lookup_rc": 0,
+        "hits": 0,
+        "status": "❌ 복원 실패"
+      },
+      {
+        "n": 7,
+        "ts": "2026-10-19 00:14:27",
+        "snip": "  🧠 토큰        │ ██████▒▒ 73% (732K/1.0M) · 주의 · 세션",
+        "query": "토큰 ██████▒▒ 73%",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      },
+      {
+        "n": 8,
+        "ts": "2026-10-19 00:14:26",
+        "snip": "🧠 토큰        │ ██████▒▒ 73% (732K/1.0M) · 주의 · 세션 █",
+        "query": "토큰 ██████▒▒ 73%",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      },
+      {
+        "n": 9,
+        "ts": "2026-10-19 00:13:18",
+        "snip": "우선 git pull받고 좋은지 안좋은지 확인해줘봐",
+        "query": "우선 git pull받고",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      },
+      {
+        "n": 10,
+        "ts": "2026-10-16 08:28:59",
+        "snip": "<task-notification>\n<task-id>bqk6kp961</task-id>\n<",
+        "query": "<task-notification> <task-id>bqk6kp961</task-id> <tool-use-id>toolu_01CgN8CZZ6bDkPD16xEahHhV</tool-u",
+        "lookup_rc": 0,
+        "hits": 3,
+        "status": "✅ 복원"
+      }
+    ]
+  },
+  "axis2": [
+    {
+      "rule_id": "이모지",
+      "category": "design",
+      "occurrences": 12,
+      "promoted_level": 3,
+      "description": "0/16 14:35   🎨 디자인  │ 기한 17 · 이모지 33 · 여백 15 · 버전 2 · 재발 48%   ",
+      "events_total": 12,
+      "events_with_root_cause": 0,
+      "root_cause_rate_pct": 0.0,
+      "improvements": [],
+      "verification_status": "❌ UNVERIFIED (개선 이력 X)"
+    },
+    {
+      "rule_id": "여백불일치",
+      "category": "design",
+      "occurrences": 10,
+      "promoted_level": 3,
+      "description": "5   🎨 디자인  │ 기한 17 · 이모지 33 · 여백 15 · 버전 2 · 재발 48%    💻 개발 │ ",
+      "events_total": 10,
+      "events_with_root_cause": 0,
+      "root_cause_rate_pct": 0.0,
+      "improvements": [],
+      "verification_status": "❌ UNVERIFIED (개선 이력 X)"
+    },
+    {
+      "rule_id": "하드코딩",
+      "category": "dev",
+      "occurrences": 7,
+      "promoted_level": 3,
+      "description": "57 · task 6 · cache 98% · [!] 하드코딩 17   🚨 오류    │ critical 0 · e",
+      "events_total": 7,
+      "events_with_root_cause": 0,
+      "root_cause_rate_pct": 0.0,
+      "improvements": [],
+      "verification_status": "❌ UNVERIFIED (개선 이력 X)"
+    },
+    {
+      "rule_id": "검증생략",
+      "category": "dev",
+      "occurrences": 5,
+      "promoted_level": 3,
+      "description": "ng Rule + Hook/Dispatcher Web 검증 안 함    Skill + Rule 공통컴포넌트 안 씀   ",
+      "events_total": 5,
+      "events_with_root_cause": 0,
+      "root_cause_rate_pct": 0.0,
+      "improvements": [],
+      "verification_status": "❌ UNVERIFIED (개선 이력 X)"
+    },
+    {
+      "rule_id": "증명지시",
+      "category": "dev",
+      "occurrences": 3,
+      "promoted_level": 2,
+      "description": "는: \"codex로 로그인 페이지 3개 파일 구현하고 검증해줘\"  를 실제로: ai: codex task_type",
+      "events_total": 3,
+      "events_with_root_cause": 0,
+      "root_cause_rate_pct": 0.0,
+      "improvements": [],
+      "verification_status": "❌ UNVERIFIED (개선 이력 X)"
+    }
+  ],
+  "axis3": {
+    "new_assets_summary": {
+      "scripts": 5,
+      "commands": 1,
+      "tables": 1,
+      "columns": 2,
+      "new_hooks": 0,
+      "new_subagents": 0,
+      "new_rules": 0
+    },
+    "conflicts": [],
+    "status": "✅ 중복·충돌 없음"
+  },
+  "axis4": {
+    "status": "✅ 측정 완료",
+    "baseline_date": "2026-10-19 10:10 (Phase 0)",
+    "current_date": "2026-10-19T10:24:47",
+    "comparison": [
+      {
+        "metric": "ever_hit_rate_pct",
+        "baseline": 38.7,
+        "current": 38.7,
+        "delta": "38.7→38.7 (Δ +0.0)"
+      },
+      {
+        "metric": "verified_rate_pct",
+        "baseline": 25.8,
+        "current": 25.8,
+        "delta": "25.8→25.8 (Δ +0.0)"
+      },
+      {
+        "metric": "events_root_cause_rate_pct",
+        "baseline": 0.0,
+        "current": 0.0,
+        "delta": "0.0→0.0 (Δ +0.0)"
+      },
+      {
+        "metric": "search_hit_rate_pct",
+        "baseline": null,
+        "current": 0,
+        "delta": "⏳→0 (신 측정)"
+      },
+      {
+        "metric": "classification_distinct",
+        "baseline": 8,
+        "current": 8,
+        "delta": "8→8 (Δ +0.0)"
+      }
+    ],
+    "learning_report_short": "재사용 39% · root_cause 0% · 검증개선 0 · 검색적중 61.9",
+    "note": "Phase 0 → Phase 1 = 측정 체계 구축이 주요 변화 · 사용자 행동 변화 측정은 추후 세션 필요"
+  },
+  "axis5": [
+    {
+      "item": "사용자 행동 개선 효과 (재사용률 변화)",
+      "reason": "Phase 1 적용 당일 · 사용 데이터 축적 전 · 재사용률 38.7% 그대로",
+      "fix": "다음 세션 1주 사용 후 /learning-report 재실행"
+    },
+    {
+      "item": "검색 적중률 개선",
+      "reason": "lookup-rule 호출 2회만 축적 · 통계적 유의미 X",
+      "fix": "100회+ 호출 후 재측정"
+    },
+    {
+      "item": "root_cause 저장 실제 활용",
+      "reason": "컬럼 신설 · 데이터 0건 (events 42건 모두 NULL)",
+      "fix": "Stop hook 또는 수동 입력으로 root_cause 기록 시작 필요"
+    },
+    {
+      "item": "recurrence_improvements 효과",
+      "reason": "테이블 신설 · 데이터 0건",
+      "fix": "실제 개선안 1~2건 입력 후 pre/post 측정"
+    },
+    {
+      "item": "Experience 분류 (TASK/EXPERIENCE/CORRECTION/FAILURE)",
+      "reason": "experience_type 컬럼 신설 · 62건 모두 unclassified",
+      "fix": "save_solution.py 수정하여 자동 분류 또는 수동 BULK UPDATE"
+    }
+  ],
+  "axis6": {
+    "drift_status": "core \u001b[90m0\u001b[0m · rule \u001b[90m0\u001b[0m · hook \u001b[90m0\u001b[0m · agent \u001b[90m0\u001b[0m · frozen \u001b[1;32m✅\u001b[0m",
+    "freeze_status": "✅ FREEZE 유지 (operational-freeze.md 존재)",
+    "standing_gate_exit": 0,
+    "merge_targets": [
+      {
+        "target": "C:\\IFRS_PJT",
+        "exists": true,
+        "backups_total": 72,
+        "today_backups": 2,
+        "latest_backup": "kit-merge-20261019-101508",
+        "status": "✅ 전파 완료"
+      },
+      {
+        "target": "C:\\ICMAI_PJT",
+        "exists": true,
+        "backups_total": 4,
+        "today_backups": 2,
+        "latest_backup": "kit-merge-20261019-101511",
+        "status": "✅ 전파 완료"
+      }
+    ],
+    "sync_to_team_last": ""
+  },
+  "axis7": {
+    "recent_commits": [
+      "bc0deba chore(stats): CLAUDE.md auto-stats bump + drift baseline update",
+      "f54deaa feat(adaptive phase 1): schema migrate + learning-report + lookup log format",
+      "40b1d4d feat(adaptive): baseline measurement (phase 0) - 재사용률 38.7%, root_cause events 0%, search 적중률 0%",
+      "4da5ffd feat(statusline): 서브 multi-line + 이력 standalone (사용자 'nothing visible')",
+      "37e4bf0 feat(route): 플랜 사용률 위임 — 세션·주간 90%+ codex · 95%+ gemini",
+      "1a0028a fix(audit-hardcoded): 하드코딩 29건 중 16건이 빌드·커버리지·백업·도구 캐시 사본이던 것 — 그 폴더는 경로·IP 패턴만 면제, 시크릿 3종은 그대로",
+      "8c9de8c fix(창 예방 훅 bash 원본도 하위 명령 제외): be646df 는 python 이식판만 고쳐, cd /c/... 처럼 원본 block-visible-windows.sh 로 넘어가는 명령은 3000 기동 bat 의 -WindowStyle Hidden 줄(npm run start)을 계속 창으로 읽어 막았다(lottoclaude 실측 — bat 을 읽기만 해도 차단) — 원본에도 같은 하위 명령 제외 · 시험 9/9 (Hidden 줄·npm run start·start /b 통과 · start 에 /b 없음·cmd /k·Hidden 없는 Start-Process·창 여는 bat 차단)",
+      "be646df fix(창 예방 훅 오탐): npm·next·yarn 의 하위 명령을 cmd 명령으로 읽어, 이미 -WindowStyle Hidden 인 3000 기동 bat 줄을 막아 재기동이 막혔다(lottoclaude 실측) — 하위 명령은 빼고 판정 · 보이는 창(start 에 /b 없음 · cmd /k · Hidden 없는 Start-Process)은 그대로 막음 · 시험 10/10",
+      "6c5d76c fix(statusline): git diff 에도 --no-optional-locks — 3초에 잘린 diff 가 .git/index.lock 을 남겼다(lottoclaude 감시 로그 실측)",
+      "2befd39 fix(settings·statusline): 상태줄의 3초짜리 git status 가 잘려 죽으며 .git/index.lock 을 남겨 git add·commit 이 막히던 것 — lottoclaude 대상 수정본을 kit 으로 반영",
+      "1de7aa5 fix(statusline·verify-fresh-clone): golden 칸이 결과와 무관하게 늘 ⚠ · 새 PC 검사기가 앱 표 DDL 과 스스로 쓰는 진행 파일을 거짓 FAIL 로 친 것 — lottoclaude 대상 수정본을 kit 으로 반영",
+      "e08a881 Merge branch 'main' of https://github.com/bernakilljos/orchestration",
+      "421e05b fix(request-ledger): 시험이 남긴 ledger 1건이 모든 세션의 Stop 을 막던 결함",
+      "71a3739 fix(statusline): 종료 기록 없이 끝난 서브에이전트를 «긴급 멈춤의심» 으로 계속 표시하던 결함 — ICM 대상 수정본을 kit 으로 반영",
+      "45892d3 style(statusline): 🩺 → 💚 HEALTH emoji (visibility)"
+    ],
+    "phase1_files": [
+      "A\t.claude/scripts/adaptive-schema-migrate.py",
+      "A\t.claude/scripts/learning-report.py",
+      "M\t.claude/scripts/lookup-rule.py",
+      "A\tdocs/LEARNING_REPORT_2026-10-19.md",
+      "M\tguide.txt",
+      "A\tplugins/exec_orch/commands/learning-report.md"
+    ],
+    "executed_commands": [
+      "python .claude/scripts/adaptive-measure.py",
+      "python .claude/scripts/adaptive-schema-migrate.py",
+      "python .claude/scripts/learning-report.py",
+      "python .claude/scripts/lookup-rule.py \"검증 후 보고\"",
+      "python .claude/scripts/golden-test.py",
+      "python .claude/scripts/request-ledger.py gate",
+      "python .claude/scripts/standing-requirements.py gate",
+      "python .claude/scripts/drift-detect.py baseline",
+      "python .claude/scripts/merge-to-target.py --all --apply",
+      "bash .claude/scripts/sync-to-team.sh"
+    ],
+    "verifications": {
+      "golden": {
+        "exit": 0,
+        "pass": true
+      },
+      "ledger_gate": {
+        "exit": 0,
+        "pass": true
+      },
+      "standing_gate": {
+        "exit": 0,
+        "pass": true
+      },
+      "drift_status": {
+        "exit": 0,
+        "pass": true
+      }
+    }
+  }
+}
