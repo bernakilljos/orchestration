@@ -2124,3 +2124,4 @@
 ## 서브 라인 멀티 라인 분리 (최소 작업 2줄 + 요약 1줄 · 이력 standalone · 사용자 '이력 안보여' 2026-10-19)
 ## adaptive-measure.py 신설 - 학습 바닥선 측정 (Phase 0 · 신규 시스템 X · 2026-10-19)
 ## Phase 1 adaptive: 스키마 마이그레이션 + learning-report + lookup-rule 로그 포맷 (2026-10-19)
+## CLAUDE.md auto-stats bump (Phase 1 adaptive scripts 3개 추가 반영 · 2026-10-19)
