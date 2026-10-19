@@ -890,8 +890,11 @@ def extra_gauges(cwd, data=None):
                 urgency = "[1;33m주의 10분+[0m"
             else:
                 urgency = "[1;32m정상[0m"
+            # 2026-10-19 사용자 "서브 1줄로 이력 안보여" — 최소 작업 2줄 + 요약 1줄
+            # 한 줄 1 agent (잘림 없음) · 상위 6개까지 노출 (3 pair) · 그 외는 요약 라인
             parts = []
-            for (rank, ansi, mark, nm), a, dur, info, _tp in rows[:3]:
+            MAX_AGENT_LINES = 6
+            for (rank, ansi, mark, nm), a, dur, info, _tp in rows[:MAX_AGENT_LINES]:
                 name = (a.get("type") or "agent").split(":")[-1]
                 desc = a.get("description") or ""
                 desc = f"「{desc[:14]}」" if desc and desc != name else ""
@@ -900,15 +903,21 @@ def extra_gauges(cwd, data=None):
                     extra = f" 도구{info['tools']} {_k(info['ctx'])}" + (f" {info['last']}" if info.get("last") else "")
                 warn = " ⛔정지" if id(a) in stalled else (" ⏳" if dur > 600 else "")
                 parts.append(f"{ansi}{mark}{nm} {name}{desc} {_dur(dur)}{extra}{warn}\033[0m")
-            if len(rows) > 3:
-                # 나머지는 "..." + 등급별 색상 아이콘 + 개수 (우선순위 보이게 · 2026-10-16)
-                extras = {}
-                for (rank, ansi, mark, nm), *_rest in rows[3:]:
-                    key = (ansi, mark, nm)
-                    extras[key] = extras.get(key, 0) + 1
-                extra_parts = [f"{a}{m}{n}+{c}\033[0m" for (a, m, n), c in extras.items()]
-                parts.append("\033[90m...\033[0m " + " ".join(extra_parts))
-            agent_str = (" · ".join(parts) + " · " + urgency) if parts else ""
+            # 요약 라인 (등급별 집계 + 긴급도)
+            summary_counts = {}
+            for (rank, ansi, mark, nm), *_rest in rows:
+                key = (ansi, mark, nm)
+                summary_counts[key] = summary_counts.get(key, 0) + 1
+            summary_parts = [f"{a}{m}{n}×{c}\033[0m" for (a, m, n), c in summary_counts.items()]
+            summary_line = f"총 {len(rows)} · " + " ".join(summary_parts) + " · " + urgency
+            # \n 로 라인 분리 (main 에서 split 후 각 줄을 _row 로 렌더)
+            # 최소 2 lines 보장 (사용자 명시) · 요약 1 line
+            if parts:
+                while len(parts) < 2 and len(parts) < len(rows):
+                    parts.append("")
+                agent_str = "\n".join(parts) + "\n" + summary_line
+            else:
+                agent_str = ""
     except Exception:
         pass  # noqa: BLE001
 
@@ -1806,8 +1815,17 @@ def main() -> None:
     elif _infra: out.append(_row("인프라", _infra))
     elif _err: out.append(_row("오류", _err))
 
-    if _history: out.append(_pair("서브", _agents, "이력", _history))
-    else: out.append(_row("서브", _agents))
+    # 2026-10-19 사용자 "서브 1줄로 이력 안보여" — 서브 멀티 라인 + 이력 분리
+    #   agent_str 가 \n 분리면 각 줄 _row 렌더 (첫 줄 서브 라벨 · 나머지 continuation)
+    _agent_lines = _agents.split("\n") if _agents else [""]
+    if _agent_lines and _agent_lines[0]:
+        out.append(_row("서브", _agent_lines[0]))
+        for extra in _agent_lines[1:]:
+            # continuation 라인 (라벨 공백 + │ + 내용)
+            out.append("                [18G[90m│[0m " + extra if extra else "")
+    else:
+        out.append(_row("서브", "[90m실행 중 없음[0m"))
+    if _history: out.append(_row("이력", _history))
 
     # 빈 줄
     out.append("")
