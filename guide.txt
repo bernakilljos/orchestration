@@ -2126,3 +2126,4 @@
 ## Phase 1 adaptive: 스키마 마이그레이션 + learning-report + lookup-rule 로그 포맷 (2026-10-19)
 ## CLAUDE.md auto-stats bump (Phase 1 adaptive scripts 3개 추가 반영 · 2026-10-19)
 ## adaptive-audit.py 최종 감사 + ZIP (ADAPTIVE_ORCHESTRATION_AUDIT · 2026-10-19)
+## integrated-audit.py — ORCHESTRATION_FINAL_INTEGRATED_AUDIT 11축 통합 (2026-10-19)
