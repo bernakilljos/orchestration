@@ -26,25 +26,54 @@ def _extract_keywords(text, top_n=5):
     return [w for w, _ in sorted_w[:top_n]]
 
 
-def _find_experiences(keywords, top=3):
+def _find_experiences(keywords, top=3, current_project=None):
+    """프로젝트 격리 (2026-10-19 #4):
+       - PROMOTED/CORE 는 전역 공유
+       - 그 외 verified+score≥8 은 current_project 와 연관된 것만 (session_id 접두 매칭)
+    """
     if not keywords or not DB.exists():
         return []
     try:
         with sqlite3.connect(str(DB)) as c:
             rows = c.execute(
-                "SELECT id, problem, solution, category, reusable_score, verified, hit_count "
+                "SELECT id, problem, solution, category, reusable_score, verified, hit_count, session_id, experience_type "
                 "FROM problem_solutions "
                 "WHERE (verified=1 OR reusable_score >= 8) "
                 "AND (experience_type IS NULL OR experience_type NOT IN ('ARCHIVED','STALE'))"
             ).fetchall()
     except Exception:
         return []
+    # 프로젝트 격리 (사용자 명시 2026-10-19 #4):
+    #   CORE/PROMOTED = 전역 공유 (어느 프로젝트에서든 노출)
+    #   다른 프로젝트 명시 tag = 제외
+    #   tag 없음 = 통과 (하위 호환 · 현재 모든 경험이 tag 없음)
+    other_project_markers = set()
+    if current_project:
+        # IFRS 에서 kit 경험 OK · ICMAI 에서 kit 경험 OK (kit 은 공통)
+        # 하지만 target 끼리는 격리 필요
+        cp_lower = str(current_project).lower()
+        if "ifrs" in cp_lower:
+            other_project_markers = {"icmai", "icm"}
+        elif "icmai" in cp_lower or "/icm" in cp_lower:
+            other_project_markers = {"ifrs"}
     scored = []
     for r in rows:
         text = ((r[1] or "") + " " + (r[2] or "") + " " + (r[3] or "")).lower()
         s = sum(1 for kw in keywords if kw in text)
-        if s > 0:
+        if s == 0:
+            continue
+        exp_type = r[8] or ""
+        session = (r[7] or "").lower()
+        is_core = exp_type in ("PROMOTED", "CORE")
+        # CORE 는 무조건 통과
+        if is_core:
             scored.append((s, r))
+            continue
+        # 다른 프로젝트 marker 포함 세션 → 제외
+        if any(m in session or m in text for m in other_project_markers):
+            continue
+        # 그 외 통과
+        scored.append((s, r))
     scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][6] or 0)))
     return [r for _, r in scored[:top]]
 
@@ -69,18 +98,22 @@ def run(ctx: Ctx):
     if not prompt or len(prompt) < 10:
         return None
     kws = _extract_keywords(prompt)
-    exps = _find_experiences(kws, top=3)
+    # 프로젝트 격리: 현재 project_dir 전달
+    exps = _find_experiences(kws, top=3, current_project=ctx.project_dir)
     if not exps:
         return None
     _update_hits([e[0] for e in exps])
-    L = ["## 📚 관련 검증 경험 (A1 자동 주입 · verified/score≥8 중 top 3 · hit_count 자동 증가)"]
-    for i, (eid, problem, solution, category, score, verified, hits) in enumerate(exps, 1):
+    L = ["## 📚 관련 검증 경험 (A1 자동 주입 · verified/score≥8 · 프로젝트 격리 적용)"]
+    for i, row in enumerate(exps, 1):
+        eid, problem, solution, category, score, verified, hits = row[0], row[1], row[2], row[3], row[4], row[5], row[6]
+        exp_type = row[8] if len(row) > 8 else None
         vcheck = "✅" if verified else "⭐"
+        core_tag = " [CORE]" if exp_type in ("PROMOTED", "CORE") else ""
         p_short = (problem or "")[:80].replace("\n", " ")
         s_short = (solution or "")[:120].replace("\n", " ")
-        L.append(f"{i}. {vcheck} [{category or '?'}] score={score} hits={hits}: {p_short}")
+        L.append(f"{i}. {vcheck}{core_tag} [{category or '?'}] score={score} hits={hits}: {p_short}")
         if s_short.strip():
             L.append(f"   → {s_short}")
     L.append("")
-    L.append("*적용 가능 시 재사용 · 부적합 시 무시 · hit_count 가 자동 추적*")
+    L.append("*적용 시 `python .claude/scripts/mark-applied.py <id>` · hit=검색 vs apply=적용 구분 (2026-10-19)*")
     return "\n".join(L)

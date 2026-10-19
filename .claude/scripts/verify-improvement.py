@@ -65,7 +65,19 @@ def cmd_finish(args):
         improved = value < pre  # 지표가 낮을수록 좋음 (재발률·오류 등)
         delta = pre - value
         pct_change = (delta / pre * 100) if pre else 0
-        status = "VERIFIED" if improved and abs(pct_change) >= 10 else ("REJECTED" if value >= pre else "OBSERVING")
+        # 사용자 명시 2026-10-19: 표본 크기 고려 · VERIFIED 는 sample>=5 AND pct>=10 AND pre-post sample 조건
+        pre_sample = c.execute(
+            "SELECT pre_sample_size FROM recurrence_improvements WHERE improvement_id=?", (imp_id,)
+        ).fetchone()[0] or 0
+        sufficient_sample = sample >= 5 and pre_sample >= 5
+        if improved and abs(pct_change) >= 10 and sufficient_sample:
+            status = "VERIFIED"
+        elif value >= pre:
+            status = "REJECTED"
+        elif improved and not sufficient_sample:
+            status = "OBSERVING"  # 표본 부족 → UNVERIFIED
+        else:
+            status = "OBSERVING"
         verified = 1 if status == "VERIFIED" else 0
         c.execute(
             "UPDATE recurrence_improvements "
