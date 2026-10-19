@@ -893,7 +893,7 @@ def extra_gauges(cwd, data=None):
             # 2026-10-19 사용자 "서브 1줄로 이력 안보여" — 최소 작업 2줄 + 요약 1줄
             # 한 줄 1 agent (잘림 없음) · 상위 6개까지 노출 (3 pair) · 그 외는 요약 라인
             parts = []
-            MAX_AGENT_LINES = 6
+            MAX_AGENT_LINES = 2  # 2026-10-19 사용자 "서브 3개 이후 DRIFT·비용 잘림" bug fix · 2줄 + 요약 = 3줄 max
             for (rank, ansi, mark, nm), a, dur, info, _tp in rows[:MAX_AGENT_LINES]:
                 name = (a.get("type") or "agent").split(":")[-1]
                 desc = a.get("description") or ""
@@ -1827,8 +1827,7 @@ def main() -> None:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
 
-    # 빈 줄
-    out.append("")
+    # 2026-10-19 사용자 "서브 3개면 DRIFT·비용 잘림" bug fix: 빈 줄 제거 (줄 수 축소)
 
     # 🧭 DRIFT · 💚 HEALTH 쌍 (2026-10-16 사용자 명시 — 비용 위 · 청록 라벨 pair)
     _drift = gauges.get("drift") or ""

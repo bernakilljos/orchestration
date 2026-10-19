@@ -2130,3 +2130,4 @@
 ## A/B 사이클: inject-experience(A1 hook) + verify-improvement(A2) + promote-experience(A3) + expire-stale(A4) + B trend 재사용 (2026-10-19)
 ## 최종 검증 7축 (사용자 명시 · 실제 행동 증명 · FINAL_VERIFICATION.md 2026-10-19)
 ## CLAUDE.md auto-stats bump · scripts 178→186 (A/B + verify scripts 반영 · 2026-10-19)
+## 서브 MAX_AGENT_LINES 6→2 + 이력-DRIFT 사이 빈줄 제거 (3+ agents 시 DRIFT·비용 잘림 bug fix · 2026-10-19)
