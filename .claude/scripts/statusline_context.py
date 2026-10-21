@@ -1822,7 +1822,7 @@ def main() -> None:
         out.append(_row("서브", _agent_lines[0]))
         for extra in _agent_lines[1:]:
             # continuation 라인 (라벨 공백 + │ + 내용)
-            out.append("                [18G[90m│[0m " + extra if extra else "")
+            out.append("                [18G[90m│[0m " + extra if extra else "")
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
