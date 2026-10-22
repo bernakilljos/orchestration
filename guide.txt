@@ -2132,3 +2132,4 @@
 ## CLAUDE.md auto-stats bump · scripts 178→186 (A/B + verify scripts 반영 · 2026-10-19)
 ## 서브 MAX_AGENT_LINES 6→2 + 이력-DRIFT 사이 빈줄 제거 (3+ agents 시 DRIFT·비용 잘림 bug fix · 2026-10-19)
 ## continuation 줄 ESC 바이트 누락 fix - 리터럴 [18G/[90m 표시 bug 해결 (2026-10-21)
+## kit CLAUDE.md auto-stats (2026-10-22)
