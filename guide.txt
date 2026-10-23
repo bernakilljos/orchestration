@@ -2133,3 +2133,4 @@
 ## 서브 MAX_AGENT_LINES 6→2 + 이력-DRIFT 사이 빈줄 제거 (3+ agents 시 DRIFT·비용 잘림 bug fix · 2026-10-19)
 ## continuation 줄 ESC 바이트 누락 fix - 리터럴 [18G/[90m 표시 bug 해결 (2026-10-21)
 ## kit CLAUDE.md auto-stats (2026-10-22)
+## verify-fresh-clone 자기쓰기 판정 오탐 fix - release-manifest.json hook 미연결 FAIL 해소 (2026-10-23)

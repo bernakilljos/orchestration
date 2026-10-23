@@ -127,13 +127,15 @@ def main() -> int:
     for f, readers in state_reads.items():
         # 생성기 = 그 파일명을 다루는 '읽는 쪽이 아닌' 파일. 읽는 쪽만 있으면 자기 캐시
         # (statusline 이 쓰고 읽는 rate-limits 등) → 읽는 쪽이 실행 경로에 있으면 정상.
+        # 2026-10-17: 읽는 스크립트가 같은 파일을 스스로 쓰면(손으로 돌리는 도구의 진행 상태·결과) 새 PC 에서도
+        #   첫 실행이 만든다 — hook 이 없어도 된다. 읽기만 하고 쓰지 않는 쪽만 결함으로 본다.
+        # 2026-10-23: 다른 파일이 이름만 언급(다른 경로 표기로 읽기만)해도 이 판정을 건너뛰던 오탐 수정
+        #   (release-manifest.json — drift-detect.py 가 쓰고 integrated-audit.py 는 존재 여부만 읽음).
+        if all(_writes_itself(texts[p], f) for p in texts if p.name in readers):
+            continue
         producers = {p.name for p, t in texts.items() if f in t and p.name not in readers}
         if not producers:
             producers = set(readers)
-            # 2026-10-17: 읽는 스크립트가 같은 파일을 스스로 쓰면(손으로 돌리는 도구의 진행 상태·결과) 새 PC 에서도
-            #   첫 실행이 만든다 — hook 이 없어도 된다. 읽기만 하고 쓰지 않는 쪽만 결함으로 본다.
-            if all(_writes_itself(texts[p], f) for p in texts if p.name in readers):
-                continue
         if not (producers & reach):
             orphan_state[f] = (sorted(readers), sorted(producers))
 
