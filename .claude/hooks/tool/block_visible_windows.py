@@ -4,16 +4,18 @@
       (2) 명령이 실행하는 .bat/.cmd/.ps1 파일 안에 (1) 이 있다 (cd "DIR" 의 DIR 기준으로 상대 경로 해석)
 우회: 명령에 ALLOW_VISIBLE_WINDOW=1.
 원본의 bash [[ =~ ]] 는 nocasematch + POSIX ERE ([[:space:]]) 이다 - 같은 의미의 python 정규식으로 옮겼다.
-POSIX 절대경로(/tmp/x.bat 등 드라이브 표기가 아닌 것) 는 python 이 msys 경로를 못 풀어 원본 스크립트에 위임한다.
+판정의 정본은 이 파일 하나다 — .sh 는 이것을 부르는 껍데기(2026-10-25 사이클 881: 두 벌이 어긋나 637 처럼 한쪽만 고쳐지던 것).
+  /c/... 는 직접 C:/... 로, /tmp 같은 다른 POSIX 경로는 cygpath 로 푼다.
+읽기만 하는 명령(grep·sed·cat·git …)으로 시작하는 조각은 판정에서 뺀다 — 인자·heredoc 글은 실행되지 않는다.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
+import subprocess
 
-from _common import Result, Spawn, bash_read
-
-REL = ".claude/hooks/block-visible-windows.sh"
+from _common import Result, bash_read
 _S = r"[ \t\n\r\f\v]"
 _I = re.I
 _RE_COMMENT = re.compile(r"^" + _S + r"*(rem" + _S + r"|::|#)", _I)
@@ -31,6 +33,103 @@ _RE_CD = re.compile(r"cd" + _S + r"+([^ \t\n\r\f\v&;]+)", _I)
 _RE_FILE = re.compile(r"([A-Za-z]:[\\/][^\"' \t\n\r\f\v]*|[^\"' \t\n\r\f\v]*)\.(bat|cmd|ps1)", _I)
 
 _GATE = ("start", "START", "Start", "cmd /k", "cmd //k", ".bat", ".BAT", ".cmd", ".ps1")
+
+# 읽기만 하는 명령 — 인자는 글·파일 경로일 뿐 실행되지 않는다. 이 명령으로 시작하는 조각은 판정에서 뺀다.
+#   (2026-10-25 사이클 881: `grep -n taskkill memcheck.ps1` · `grep "Start-Process\|start " x.ps1` ·
+#    `git commit -F - <<EOF … start cmd …` 처럼 인자·heredoc 글에 든 낱말·파일까지 '실행' 으로 보고 막았다)
+#   find(-exec)·xargs·bash·python 은 남을 실행하므로 넣지 않는다.
+_READERS = frozenset((
+    "grep", "egrep", "fgrep", "rg", "sed", "awk", "gawk", "cat", "head", "tail", "less", "more", "wc",
+    "diff", "cmp", "md5sum", "sha1sum", "sha256sum", "file", "ls", "stat", "echo", "printf", "git",
+    "sort", "uniq", "cut", "tr", "iconv", "od", "xxd", "strings", "basename", "dirname", "realpath",
+    "readlink", "test", "[", "cygpath",
+))
+_PREFIX_WORDS = frozenset(("env", "time", "nohup", "command", "builtin", "exec"))
+_RE_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+_RE_HEREDOC = re.compile(r"(?<!<)<<(?!<)-?[ \t]*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?")
+_RE_MSYS_DRIVE = re.compile(r"^/([A-Za-z])(/|$)")
+
+
+def _segments(cmd: str) -> list:
+    """명령을 실행 단위 조각으로 — 따옴표 밖의 && || ; | & 줄바꿈에서 자른다. heredoc 본문은 그 조각에 붙인다."""
+    segs, cur, q, i, n = [], [], None, 0, len(cmd)
+    line_start = 0   # cur 안에서 지금 줄이 시작된 위치
+
+    def flush():
+        s = "".join(cur)
+        if s.strip():
+            segs.append(s)
+        cur.clear()
+
+    while i < n:
+        c = cmd[i]
+        if q:
+            cur.append(c)
+            if c == q:
+                q = None
+            elif c == "\\" and q == '"' and i + 1 < n:
+                cur.append(cmd[i + 1])
+                i += 1
+            i += 1
+            continue
+        if c in "'\"":
+            q = c
+            cur.append(c)
+            i += 1
+            continue
+        if c == "\\" and i + 1 < n:
+            cur.append(c)
+            cur.append(cmd[i + 1])
+            i += 2
+            continue
+        if c == "\n":
+            m = _RE_HEREDOC.search("".join(cur[line_start:]))
+            if m:
+                delim = m.group(1)
+                j = i + 1
+                while j <= n:
+                    k = cmd.find("\n", j)
+                    k = n if k < 0 else k
+                    body_line = cmd[j:k]
+                    cur.append("\n" + body_line)
+                    j = k + 1
+                    if body_line.strip() == delim:
+                        break
+                i = j
+                flush()
+                line_start = 0
+                continue
+            flush()
+            line_start = 0
+            i += 1
+            continue
+        if c in ";|&":
+            flush()
+            line_start = 0
+            i += 2 if (c in "|&" and i + 1 < n and cmd[i + 1] == c) else 1
+            continue
+        cur.append(c)
+        i += 1
+    flush()
+    return segs
+
+
+def _is_reader(seg: str) -> bool:
+    for w in seg.split():
+        w = w.lstrip("({!")
+        if not w or _RE_ASSIGN.match(w) or w in _PREFIX_WORDS:
+            continue
+        w = w.strip("'\"").replace("\\", "/").rsplit("/", 1)[-1].lower()
+        if w.endswith(".exe"):
+            w = w[:-4]
+        return w in _READERS
+    return True   # 빈 조각
+
+
+def _msys_to_win(p: str) -> str:
+    """/c/work/x → C:/work/x (Git Bash 드라이브 표기). 다른 POSIX 경로는 그대로."""
+    m = _RE_MSYS_DRIVE.match(p)
+    return (m.group(1).upper() + ":/" + p[m.end():]) if m else p
 
 MSG_1 = "BLOCKED(창 예방): %s\n"
 MSG_2 = ("  → 테스트·검증은 창 없이: run_in_background 로 직접 실행 (예: python run.py …) · 프로젝트에 숨김 모드가 있으면 그것 "
@@ -73,16 +172,35 @@ def _is_posix_abs(p: str) -> bool:
     return p.startswith("/")
 
 
+def _posix_to_win(p: str) -> str:
+    """/tmp/x 같은 Git Bash 경로 → Windows 경로 (cygpath · 드물다). 못 풀면 빈 문자열."""
+    try:
+        r = subprocess.run(["cygpath", "-m", p], capture_output=True, timeout=5)
+        return r.stdout.decode("utf-8", "replace").strip() if r.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def run(ctx):
     inp = bash_read(ctx.raw)
     if not any(g in inp for g in _GATE):
         return None
     if "ALLOW_VISIBLE_WINDOW=1" in inp:
         return None
-    cmd = _extract_cmd(inp)
+    try:   # 줄바꿈(\n)·따옴표가 제대로 풀려야 조각을 나눌 수 있다 — 옛 글자 치환은 실패할 때만
+        cmd = json.loads(ctx.raw)["tool_input"]["command"]
+        if not isinstance(cmd, str):
+            raise TypeError
+    except Exception:
+        cmd = _extract_cmd(inp)
+    run_segs = [s for s in _segments(cmd) if not _is_reader(s)]
+    if not run_segs:
+        return None
     reason = ""
-    if _opens_window(cmd):
-        reason = "명령이 보이는 창을 연다: " + cmd[:120]
+    for s in run_segs:
+        if _opens_window(s):
+            reason = "명령이 보이는 창을 연다: " + s.strip()[:120]
+            break
     if not reason:
         base = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
         m = _RE_CDQ.search(cmd)
@@ -92,7 +210,8 @@ def run(ctx):
             m = _RE_CD.search(cmd)
             if m:
                 base = m.group(1)
-        rest = cmd
+        base = _msys_to_win(base.replace("\\", "/"))
+        rest = "\n".join(run_segs)
         while True:
             m = _RE_FILE.search(rest)
             if not m:
@@ -100,15 +219,15 @@ def run(ctx):
             f = m.group(0)
             k = rest.find(f)
             rest = rest[k + len(f):] if k >= 0 else ""
-            f = f.replace("\\", "/")
+            f = _msys_to_win(f.replace("\\", "/"))
             if re.match(r"[A-Za-z]:/", f):
                 p = f
             elif f.startswith("/"):
-                return Spawn(REL)            # msys 절대경로 - 원본에 위임
+                p = _posix_to_win(f)
             else:
-                if _is_posix_abs(base):
-                    return Spawn(REL)        # cd /c/... 형태 - 원본에 위임
-                p = base + "/" + f
+                p = (_posix_to_win(base) if _is_posix_abs(base) else base) + "/" + f
+            if not p:
+                continue
             if not os.path.isfile(p):
                 continue
             try:
@@ -119,9 +238,23 @@ def run(ctx):
             lines = data.split("\n")
             if lines and lines[-1] == "":
                 lines.pop()
+            # 줄 잇기(ps1 끝 ` · bat 끝 ^)는 한 명령으로 붙여 본다 — memcheck.ps1:31 의 Start-Process 는
+            #   -WindowStyle Hidden 이 33줄에 있는데 31줄만 보고 막았다 (사이클 881)
+            cont = "`" if f.lower().endswith(".ps1") else "^"
+            logical, buf, buf_n = [], "", 0
             for n, line in enumerate(lines, 1):
                 if line.endswith("\r"):
                     line = line[:-1]
+                if not buf:
+                    buf_n = n
+                if line.rstrip().endswith(cont):
+                    buf += line.rstrip()[:-1] + " "
+                    continue
+                logical.append((buf_n, buf + line))
+                buf = ""
+            if buf:
+                logical.append((buf_n, buf))
+            for n, line in logical:
                 if _opens_window(line):
                     reason = "%s:%d 이 보이는 창을 연다 → %s" % (f[f.rfind("/") + 1:], n, line[:100])
                     break
@@ -130,3 +263,19 @@ def run(ctx):
     if reason:
         return Result(2, "", MSG_1 % reason + MSG_2 + MSG_3 + MSG_4)
     return None
+
+
+if __name__ == "__main__":   # block-visible-windows.sh 껍데기가 부른다 (stdin = 훅 페이로드)
+    import sys
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+    class _Ctx:
+        def __init__(self, raw):
+            self.raw = raw
+
+    res = run(_Ctx(sys.stdin.read()))
+    if res is not None:
+        sys.stderr.write(res.err)
+        sys.exit(res.rc)
+    sys.exit(0)
