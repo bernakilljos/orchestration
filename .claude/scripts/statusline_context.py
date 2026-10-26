@@ -591,7 +591,7 @@ def _compute_impact(cwd):
     try:
         # --no-optional-locks: git diff 도 index 를 새로 쓰려고 잠근다 — 3초에 잘리면 .git/index.lock 이 남는다(2026-10-17 실측)
         r = _sp.run(["git", "--no-optional-locks", "diff", "--name-only", "HEAD"], cwd=cwd,
-                    capture_output=True, text=True, timeout=3)
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3)
         if r.returncode == 0:
             files = [f for f in r.stdout.splitlines() if f.strip()]
             mod = len(files)
@@ -713,12 +713,12 @@ def extra_gauges(cwd, data=None):
         import subprocess
         b = subprocess.run(
             ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, timeout=1
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
         )
         branch = b.stdout.strip() if b.returncode == 0 else ""
         s = subprocess.run(
             ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
-            capture_output=True, text=True, timeout=1
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
         )
         dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
         if branch:
@@ -1438,13 +1438,13 @@ def extra_gauges(cwd, data=None):
         # git clean
         # --no-optional-locks: 3초에 잘려 죽은 git status 가 .git/index.lock 을 남겨 그 뒤 git add·commit 이 전부 막혔다
         #   (2026-10-17 lottoclaude 하루 2번 · 재현 15/15 → 이 옵션이면 0/15). 상태줄은 읽기만 하므로 index 를 고쳐 쓸 이유가 없다.
-        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
+        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd).stdout.strip() == ""
         _git_icon = "✅" if _git_clean else "⚠"
         # standing requirements gate
         _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
         _sr_ok = _sr_total = 0
         if os.path.exists(_sr):
-            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, timeout=5, cwd=cwd)
+            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, cwd=cwd)
             try:
                 import json as _pj
                 _s = _pj.loads(_r.stdout)
@@ -1515,7 +1515,7 @@ def extra_gauges(cwd, data=None):
         _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
         if os.path.exists(_dd):
             _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
-                           capture_output=True, text=True, timeout=3, cwd=cwd)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
             if _r.returncode == 0 and _r.stdout.strip():
                 drift_line = _r.stdout.strip()
     except Exception:
@@ -1525,7 +1525,7 @@ def extra_gauges(cwd, data=None):
         _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
         if os.path.exists(_hc):
             _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
-                           capture_output=True, text=True, timeout=3, cwd=cwd)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
             if _r.returncode == 0 and _r.stdout.strip():
                 health_line = _r.stdout.strip()
     except Exception:
