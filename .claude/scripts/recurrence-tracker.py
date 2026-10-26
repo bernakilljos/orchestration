@@ -135,6 +135,44 @@ def _append_md(path: Path, line: str, header: str) -> None:
     path.write_text(existing + line + "\n", encoding="utf-8")
 
 
+def _trigger_improvement_start(rule_id: str, category: str, total: int, desc: str) -> None:
+    """2026-10-26: 승격 전환 시 verify-improvement.py start 자동 호출.
+    실패해도 추적 자체는 성공 (best-effort · timeout 10s · 로그 .claude/logs/)."""
+    log = ROOT / ".claude" / "logs" / "recurrence-trigger.log"
+    try:
+        log.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    try:
+        import subprocess
+        script = ROOT / ".claude" / "scripts" / "verify-improvement.py"
+        if not script.exists():
+            with log.open("a", encoding="utf-8") as f:
+                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] SKIP {rule_id}: script missing\n")
+            return
+        env = os.environ.copy()
+        env["ALLOW_VISIBLE_WINDOW"] = "1"  # tool-dispatch block-visible-windows 우회 (subcommand 'start' 오탐 방지)
+        r = subprocess.run([
+            sys.executable, "-X", "utf8", str(script), "start", rule_id,
+            "--metric", "재발률",
+            "--direction", "descending",
+            "--value", str(total),
+            "--sample", str(total),
+            "--cause", f"재발 {total}회 자동 승격 ({category})",
+            "--plan", f"CLAUDE.md § 7 또는 .claude/rules/ 추가 검토 · {(desc or '')[:100]}",
+        ], check=False, timeout=10, capture_output=True, text=True, env=env)
+        with log.open("a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} rc={r.returncode}\n")
+            if r.stdout: f.write(f"  stdout: {r.stdout.strip()[:1500]}\n")
+            if r.stderr: f.write(f"  stderr: {r.stderr.strip()[:1500]}\n")
+    except Exception as e:  # noqa: BLE001
+        try:
+            with log.open("a", encoding="utf-8") as f:
+                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] ERR {rule_id}: {e}\n")
+        except Exception:
+            pass
+
+
 def _check_promotion(c: sqlite3.Connection, rule_id: str, total: int) -> int:
     """return new promoted_level"""
     row = c.execute(
@@ -145,23 +183,24 @@ def _check_promotion(c: sqlite3.Connection, rule_id: str, total: int) -> int:
         return 0
     category, lvl, desc = row
     desc = desc or rule_id
-    new_lvl = lvl or 0
+    old_lvl = lvl or 0
+    new_lvl = old_lvl
 
-    if total >= 5 and (lvl or 0) < 3:
+    if total >= 5 and old_lvl < 3:
         new_lvl = 3
         _append_md(
             ENFORCE_MD,
             f"- [{category}] **{rule_id}** · {total}회 · PreToolUse hook 강제 차단 후보 · {desc}",
             "# Hook 강제 차단 후보 (재발 5회+ 자동 승격)\n\n수동 리뷰 후 `.claude/hooks/tool/<name>.py` 추가.",
         )
-    elif total >= 3 and (lvl or 0) < 2:
+    elif total >= 3 and old_lvl < 2:
         new_lvl = 2
         _append_md(
             PROMO_MD,
             f"- [{category}] **{rule_id}** · {total}회 · CLAUDE.md § 7 승격 후보 · {desc}",
             "# CLAUDE.md 규칙 승격 후보 (재발 3회+ 자동 승격)\n\n수동 리뷰 후 CLAUDE.md § 7 또는 `.claude/rules/*.md` 추가.",
         )
-    elif total >= 2 and (lvl or 0) < 1:
+    elif total >= 2 and old_lvl < 1:
         new_lvl = 1
 
     return new_lvl
@@ -178,12 +217,14 @@ def record(rule_id: str, category: str = "misc", snippet: str = "", session_id: 
     ).fetchone()
     if row:
         total = (row[0] or 0) + 1
+        old_promoted = row[1] or 0
         c.execute(
             "UPDATE recurrence_rules SET total_occurrences=?, last_seen=? WHERE rule_id=?",
             (total, now, rule_id),
         )
     else:
         total = 1
+        old_promoted = 0
         c.execute(
             "INSERT INTO recurrence_rules(rule_id, category, first_seen, last_seen, total_occurrences, description) "
             "VALUES (?,?,?,?,1,?)",
@@ -201,6 +242,10 @@ def record(rule_id: str, category: str = "misc", snippet: str = "", session_id: 
 
     c.commit()
     c.close()
+
+    # 2026-10-26: 승격 전환 (level 2+) 시 verify-improvement.py start 자동 호출 (DB close 후 호출로 lock 회피)
+    if new_lvl >= 2 and new_lvl > old_promoted:
+        _trigger_improvement_start(rule_id, category or "misc", total, snippet or rule_id)
 
     return {"rule_id": rule_id, "total": total, "promoted_level": new_lvl}
 

@@ -2144,3 +2144,5 @@
 룰: 주간 ≥80 OFF · 세션 ≥70 OFF (신규) · 주간 ≥50 OFF · 토큰 ≥80/95 /clear 안내 (유지 · fast 와 분리). 과거 a6e4c83 번복.
 ## 2026-10-26 5단계 약점 fix P0 4건
 외부 AI (ZIP 분석) 10 주장 실측 → 7 결함·3 오판. P0 4건 fix: ① statusline 재사용률 산식 (AVG(reusable_score)/10*100 → verified 성공률 %) · ② exec_scheduler README spec-only 와 plugin.json stable 드리프트 → stable SoT 통합 · ③ recurrence_events 스키마 선확장 (root_cause·auto_fix_status·improvement_id · verify-improvement.py 연결 대비) · ④ ai-native-chain.disabled 사유·해제조건·영향 5파일 기록. P1 (auto-dispatch 추적·recurrence→autofix·Golden 차단·active-agents 검증) 는 .claude/state/next-actions.md 저장.
+## 2026-10-26 statusline 라벨 길이 lock + P1 fix 2건
+statusline 재사용 라벨 길이 복원 (`재사용 N (NN%)` · 16 cell · 종전과 동일) · pipe `│` 세로축 유지 · memory feedback_statusline_width_lock.md 등재 (중요 룰). P1-2 recurrence→autofix 체인 (3회+ 승격 시 verify-improvement.py start 자동 호출 · DB commit·close 후 lock 회피 · 로그 .claude/logs/recurrence-trigger.log) · P1-3 Golden Test opt-in block (.claude/state/golden-test.block-on-fail flag 있으면 차단 · default WARN · overload 방지).

@@ -43,8 +43,13 @@ GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null
 GOLDEN_PASS=$(echo "$GOLDEN_RESULT" | cut -d/ -f1)
 GOLDEN_TOTAL=$(echo "$GOLDEN_RESULT" | cut -d/ -f2)
 if [ -n "$GOLDEN_RESULT" ] && [ "$GOLDEN_PASS" != "$GOLDEN_TOTAL" ]; then
-  # warn
-  echo "[six-guards] WARN · Golden Test $GOLDEN_RESULT (N/N 미달)" >&2
+  # 2026-10-26: opt-in block (flag 있으면 차단 · default WARN · overload 방지)
+  if [ -f "$ROOT/.claude/state/golden-test.block-on-fail" ]; then
+    FAIL_COUNT=$((FAIL_COUNT + 1))
+    FAIL_MSGS="${FAIL_MSGS}\n  ✗ Verification Guard: Golden Test $GOLDEN_RESULT (block-on-fail flag ON)"
+  else
+    echo "[six-guards] WARN · Golden Test $GOLDEN_RESULT (N/N 미달 · block 하려면 touch .claude/state/golden-test.block-on-fail)" >&2
+  fi
 fi
 
 # 4·5·6: warn-only — 참고용

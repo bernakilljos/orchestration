@@ -1005,7 +1005,7 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     ver = int(r[1] or 0)
                     rate = (ver * 100.0 / cnt) if cnt else 0.0
-                    tail.append(f"재사용 {cnt}·검증 {ver}({rate:.0f}%)")
+                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
