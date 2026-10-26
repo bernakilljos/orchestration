@@ -1723,7 +1723,7 @@ def main() -> None:
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
-        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[18G[90m│[0m " + body
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[90m│[0m " + body
 
     _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
                "영향": "🧪 영향", "공통화": "🧩 공통화",
@@ -1744,12 +1744,12 @@ def main() -> None:
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
-        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
-                + "[88G[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m[106G[90m│[0m " + b2)
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[90m│[0m " + b1
+                + "" + " " * max(1, 70 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * max(1, 14 - _width(_h2)) + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
-        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
+        return ("[1;36m" + _h1 + "[0m" + " " * max(1, 15 - _width(_h1)) + "[90m│[0m " + b1
                 + "  [48G[36m▶[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
                 + "  [100G[36m▶[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
 
@@ -1828,7 +1828,7 @@ def main() -> None:
         out.append(_row("서브", _agent_lines[0]))
         for extra in _agent_lines[1:]:
             # continuation 라인 (라벨 공백 + │ + 내용)
-            out.append("                [18G[90m│[0m " + extra if extra else "")
+            out.append("                [90m│[0m " + extra if extra else "")
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
