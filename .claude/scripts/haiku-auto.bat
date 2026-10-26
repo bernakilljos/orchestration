@@ -177,6 +177,10 @@ goto LOOP
 set "IDLE_COUNT=0"
 echo [Validator-%CHILD_ID%] Processing: !PICKED_TASK!
 
+rem --- P1-1 상태머신 (2026-10-26): pending -> locked ---
+for %%F in ("!PICKED_TASK!") do set "TASK_ID=%%~nF"
+python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" locked "haiku-%CHILD_ID%" >nul 2>&1
+
 rem --- Call haiku-validate.py ---
 python "%PROJECT_ROOT%\.claude\scripts\haiku-validate.py" "!PICKED_TASK!" --worker-id "haiku-%CHILD_ID%" --project-root "%PROJECT_ROOT%"
 set "HAIKU_EXIT=!errorlevel!"
@@ -193,6 +197,8 @@ if !HAIKU_EXIT!==3 (
 rem --- Handle validation failure (exit 1) ---
 if !HAIKU_EXIT!==1 (
   echo [Validator-%CHILD_ID%] Validation failed. Moving to done/ for review.
+  rem --- P1-1 상태머신: locked -> failed ---
+  python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
   for %%F in ("!PICKED_TASK!") do (
     copy "!PICKED_TASK!" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" >nul 2>&1
     del "!PICKED_TASK!" >nul 2>&1
@@ -206,6 +212,8 @@ if !HAIKU_EXIT!==1 (
 
 rem --- Success (exit 0) ---
 echo [Validator-%CHILD_ID%] Validation succeeded. Review written to docs/%TODAY%/
+rem --- P1-1 상태머신: locked -> completed ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" completed >nul 2>&1
 for %%F in ("!PICKED_TASK!") do (
   copy "!PICKED_TASK!" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" >nul 2>&1
   del "!PICKED_TASK!" >nul 2>&1

@@ -195,6 +195,10 @@ goto LOOP
 set "IDLE_COUNT=0"
 echo [Worker-%CHILD_ID%] Picked: %PICKED_TASK%
 
+rem --- P1-1 상태머신 (2026-10-26): tasks.status pending -> locked ---
+for %%F in ("%PICKED_TASK%") do set "TASK_ID=%%~nF"
+python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" locked "codex-%CHILD_ID%" >nul 2>&1
+
 rem --- HITL Approval Gate (CLAUDE.md §7-23) — 위험 패턴 task 차단 ---
 rem 매치 시 lock 해제 + LOOP — 사용자가 /approve <task_id> 후 재처리
 findstr /R /I /C:"DROP[ ]*TABLE" /C:"rm -rf" /C:"git push --force" /C:"sudo " /C:"curl .* | .*bash" /C:"--auto-approve" /C:"npm publish" /C:"docker push" "%PICKED_TASK%" >nul 2>&1
@@ -253,6 +257,8 @@ if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
   bash "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
   if errorlevel 1 (
     echo [Worker-%CHILD_ID%] [VERIFY FAIL] Errors found — task NOT marked as done
+    rem --- P1-1 상태머신: locked -> failed ---
+    python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
     for %%F in ("%PICKED_TASK%") do del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
     goto LOOP
   )
@@ -273,6 +279,9 @@ rem --- Clean up lock after completion ---
 for %%F in ("%PICKED_TASK%") do (
   del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
 )
+
+rem --- P1-1 상태머신 (2026-10-26): locked -> completed ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" completed >nul 2>&1
 
 rem --- Git commit + push (git 설정된 경우) ---
 if exist "%PROJECT_ROOT%\.git" (
