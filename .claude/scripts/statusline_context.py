@@ -1745,7 +1745,7 @@ def main() -> None:
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
         return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
-                + "   [36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
+                + "[88G[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m[106G[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
