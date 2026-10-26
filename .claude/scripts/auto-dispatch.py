@@ -17,11 +17,33 @@ from datetime import datetime
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 TASKS_DIR = PROJECT_ROOT / ".claude" / "tasks"
 GLOBAL_ORCA = Path.home() / ".claude" / "orca"
+ORCA_DB = PROJECT_ROOT / ".claude" / "state" / "orca.db"
 
 sys.path.insert(0, str(PROJECT_ROOT / ".claude" / "scripts"))
 from importlib import import_module
 _classify = import_module("classify-task")
 classify = _classify.classify
+
+
+def _register_task(task_file: str, ai: str) -> str:
+    """2026-10-26 P1-1 fix: enqueue 시 orca.db.tasks INSERT (status=pending).
+    워커가 pick-up 시 status=locked·completed·failed UPDATE 로 상태 전환 추적.
+    실패해도 enqueue 자체는 성공 (best-effort · DB 없어도 파일 큐는 유지)."""
+    try:
+        import sqlite3
+        if not ORCA_DB.exists():
+            return ""
+        task_id = Path(task_file).stem  # task-20261026-141900-codex-foo
+        now = int(time.time())
+        with sqlite3.connect(str(ORCA_DB)) as c:
+            c.execute(
+                "INSERT OR IGNORE INTO tasks (task_id, task_file, ai_assigned, status, created_at) "
+                "VALUES (?, ?, ?, 'pending', ?)",
+                (task_id, task_file, ai, now)
+            )
+        return task_id
+    except Exception:
+        return ""  # noqa: BLE001
 
 
 def make_task_instruction(message: str, ai: str, task_type: str, reason: str, chunk_info: str = "") -> str:
@@ -106,6 +128,7 @@ def enqueue(message: str, target: str = "local") -> dict:
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
     safe_msg = re.sub(r"[^\w\-]", "_", message[:30])
     task_files = []
+    task_ids = []
     for i, chunk in enumerate(chunks, 1):
         chunk_info = f"\n**Chunk**: {i}/{len(chunks)} (자동 분할 — {ai} context 한계 대응)" if len(chunks) > 1 else ""
         instruction = make_task_instruction(chunk, ai, result["task_type"], result["reason"], chunk_info)
@@ -113,11 +136,16 @@ def enqueue(message: str, target: str = "local") -> dict:
         task_file = queue_dir / f"task-{ts}-{ai}-{safe_msg}{suffix}.md"
         task_file.write_text(instruction, encoding="utf-8")
         task_files.append(str(task_file))
+        # 2026-10-26 P1-1: orca.db.tasks INSERT (status=pending · 워커가 pick-up 시 UPDATE)
+        tid = _register_task(str(task_file), ai)
+        if tid:
+            task_ids.append(tid)
 
     return {
         **result,
         "dispatched": True,
         "task_files": task_files,
+        "task_ids": task_ids,
         "chunks": len(chunks),
         "target": target,
         "worker": f"{ai}-auto",
