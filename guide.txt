@@ -2136,3 +2136,4 @@
 ## 적응형 실행 체계 통합 (statusline 재검증 + complete-output 일반화 6단계 + execution-contract § 7 SoT · worktree 선택적 · 2026-10-26)
 ## 적응형 실행 체계 통합 (execution-contract § 7 SoT · 2026-10-26)
 ## sync-to-team.sh defect fix (--delete-after·/MIR 제거 → additive · set -e 트립 fix · 2026-10-26)
+## CLAUDE.md auto-stats bump (2026-10-26)
