@@ -1691,14 +1691,14 @@ def main() -> None:
     # 2026-10-16 사용자 "줄좀 맞추자" — wcwidth 터미널 변동 회피용 하드 label-width 테이블.
     #   label 별 시각 폭 (emoji 2 + space 1 + 한글 2×N 또는 ASCII 1×N) 을 미리 계산해 둔다.
     #   이 테이블이 있으면 wcwidth 가 1 틀려도 padding 이 어긋나지 않는다.
-    # 2026-10-26 사용자 터미널 render 역산: CJK 1자당 -1 cell (wcwidth 2 but render 1)
-    #   측정: pipe_pos - 2(indent) - pad(15-lw) = actual render cell
-    #   보정 lw = render_cell → padding 식과 결합해 pipe col 17 정렬
+    # 2026-10-26 CJK -1 보정 제거 (사용자 지시 · 단일 실험): render 가 CJK 2 cell wcwidth 그대로.
+    #   종전 d4e6603 보정 (lw=render-1) 이 render pipe 를 오른쪽으로 밀어서 DRIFT (ASCII) 와 어긋남.
+    #   wcwidth 기준 복원: emoji 2 + sp 1 + CJK 2자(4) = 7 (토큰·영향 등) · CJK 3자(6) = 9 (디자인·공통화·인프라) · CJK 4자(8) = 11 (품질추세) · ASCII 라벨 (READY 8·DRIFT 8·HEALTH 9) 유지.
     LABEL_WIDTH = {
-        "토큰": 5, "디자인": 6, "개발": 5, "품질추세": 7,
-        "요청": 5, "영향": 5, "공통화": 6, "인프라": 6,
-        "오류": 5, "READY": 8, "증명": 5, "통제": 5,
-        "검증": 5, "서브": 5, "이력": 5, "비용": 5,
+        "토큰": 7, "디자인": 9, "개발": 7, "품질추세": 11,
+        "요청": 7, "영향": 7, "공통화": 9, "인프라": 9,
+        "오류": 7, "READY": 8, "증명": 7, "통제": 7,
+        "검증": 7, "서브": 7, "이력": 7, "비용": 7,
         "DRIFT": 8, "HEALTH": 9,
     }
 
