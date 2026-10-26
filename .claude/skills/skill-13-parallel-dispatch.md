@@ -1,14 +1,17 @@
 # SKILL-13 — Parallel Dispatch (Claude Subagent System)
 
+> **SoT (2026-10-26)**: 실행 방식 결정 (직접·병렬·worktree·Codex·순차) 매트릭스는 **`.claude/rules/execution-contract.md § 7 상황 적응형 실행`** 참조. 이 스킬은 Claude Code `Agent` tool 호출 패턴만 보유.
+
 ## Purpose
 When user gives a task, Claude decides how to split and execute in parallel.
 Claude is ALWAYS the orchestrator — user gives instructions, Claude executes.
+**선택 기준**: `execution-contract.md § 7` (고정 임계값 X · 상황 종합 판단).
 
 ---
 
 ## Decision Flow
 
-```
+```bash
 User instruction received
   → Claude analyzes scope and complexity
   → Small (< 200 lines, 1-2 files): Handle directly, no split
@@ -23,7 +26,7 @@ Claude uses the built-in Agent tool to spawn subagents within the conversation.
 Each subagent runs independently and returns results.
 
 ### Parallel-Safe Operations (can run simultaneously)
-```
+```text
 [P] SKILL-01  research          File exploration, risk scan
 [P] SKILL-04  context-summary   Summarize large files
 [P] SKILL-12  domain-detect     Stack auto-detection
@@ -35,7 +38,7 @@ Each subagent runs independently and returns results.
 ```
 
 ### Sequential Operations (must wait for dependencies)
-```
+```text
 [S] AGENT-01  team-lead         Task split (runs FIRST)
 [S] SKILL-02  implement         After research + architect
 [S] SKILL-03  review            After implementation
@@ -48,7 +51,7 @@ Each subagent runs independently and returns results.
 ## Dispatch Patterns
 
 ### Pattern 1 — Research Burst (task start)
-```
+```bash
 Spawn in parallel:
   Agent: SKILL-01 research (explore files, find risks)
   Agent: SKILL-04 context-summary (summarize 500+ line files)
@@ -58,7 +61,7 @@ Wait for all → Claude synthesizes → decide approach
 ```
 
 ### Pattern 2 — Implementation Split (large feature)
-```
+```bash
 Claude (team-lead) splits into subtasks:
   task-01-api.md      [P] Backend API endpoints
   task-02-store.md    [P] Frontend store/state
@@ -79,7 +82,7 @@ Then spawn parallel:
 ```
 
 ### Pattern 3 — Review + Quality (post-implementation)
-```
+```bash
 Spawn in parallel:
   Agent: SKILL-10 quality-verify (4-area check)
   Agent: SKILL-06 test (run all tests)
@@ -89,7 +92,7 @@ Wait for all → Claude makes final decision
 ```
 
 ### Pattern 4 — Full Auto (user away)
-```
+```text
 Claude runs Continuous Dev Loop:
   1. Pick next priority item
   2. Pattern 1 (research burst)
@@ -103,7 +106,7 @@ Claude runs Continuous Dev Loop:
 ## Subagent Prompt Template
 
 When spawning a subagent via Agent tool:
-```
+```bash
 "You are a {role} subagent for the orchestration pipeline.
 Project: {PROJECT_ROOT}
 Task: {specific task description}

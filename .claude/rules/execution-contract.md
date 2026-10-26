@@ -140,7 +140,73 @@ Reviewer agent 가 UI PR 검토 시 추가 체크:
 - [ ] 각 단계 "사용자 관점" 설명 (내부 구현 설명 X)
 - [ ] 상세·도움말 패널로 기술 세부 분리
 
-## 7. Change Budget (Operating Principles 상속)
+## 7. 상황 적응형 실행 (사용자 명시 2026-10-26 · SoT 통합)
+
+**원칙**: 고정 임계값(3+ 파일 = 병렬) 만으로 결정 X · 상황 종합 판단. 신규 Hook/Agent/Rule X · 기존 자산 재사용 연결.
+
+### 실행 방식 선택 매트릭스 (복합 판단)
+
+메인 Claude 가 아래 **5 축** 복합 평가 후 결정:
+
+| 축 | 신호 | 가중치 |
+|---|---|---|
+| **규모** | 파일 수 · 줄 수 · 범위 | 중 |
+| **의존성** | 작업 간 import·call·DB·설정 공유 | 상 |
+| **쓰기 충돌** | 같은 파일/함수/row 수정 | **최상** |
+| **복잡도·위험** | 비즈니스 로직·보안·운영 영향 | 상 |
+| **비용** | 토큰·실행시간 (실측 데이터 활용) | 중 |
+
+### 선택지 (상황별 우선순위)
+
+| 상황 | 선택 | 근거 |
+|---|---|---|
+| 단순 1~2 파일 수정 | **메인 Claude 직접** | 에이전트 overhead 가 손해 |
+| **독립** 작업 2~N 개 (쓰기 충돌 X) | **병렬 subagent** (`general-purpose` ×N) | 대기 시간 축소 |
+| 같은 파일 쓰기 **충돌** 예상 | **worktree 격리** → 각 agent 가 별 작업 디렉토리 → 메인에서 **최종 병합·테스트** | 유실·race 방지 |
+| **읽기** 전수 조사 (서로 안 겹침) | 병렬 (`Explore` ×N) · 쓰기 충돌 없음 | 안전 |
+| 300줄+ 반복 패턴·마이그레이션 | **Codex 위임** (task-instruction) | 기존 Codex 정책 유지 (§ 4) |
+| 토큰·세션 쿼터 부족 | **에이전트 수 축소** or 순차 | 비용 제약 |
+| 실측 결과 병렬이 더 느림·충돌 발생 | **순차 자동 전환** · 다음 유사 작업에 반영 | Adaptive learning (§ 아래) |
+
+### 쓰기 소유권 규칙
+
+- 1 파일 = 1 writer (동시 쓰기 X)
+- 공통 파일 (Vue 컴포넌트·공통 DTO·공통 설정) → **메인 Claude 가 통합 책임**
+- 각 agent 는 자기 영역 (지정된 파일 목록) 만 수정 · 공통 파일은 **메인 머지 큐** 에 제안만
+
+### Worktree 격리 (선택적 트리거)
+
+**사용 시점**: 쓰기 충돌 예상 + 격리 이득 > overhead
+
+- `git worktree add <path> -b <branch>` → 각 agent 가 독립 디렉토리
+- agent 완료 후 메인이 diff 검토 → 머지 → 통합 테스트 → 통과 시 commit
+- **SVN**: 독립 working copy (`svn checkout` 로 별 디렉토리) · 완료 후 통합
+- **자동 사용 금지**: worktree 는 overhead 가 있음 · 쓰기 충돌 **예상 시만** 사용
+
+### 메인 Claude 책임 (위임해도 그대로)
+
+1. 요구사항 **누락 체크** (Request Ledger n/n)
+2. 결과 **통합** (파일 머지 · diff 검토)
+3. **회귀 테스트** (golden-test + 사용자 명시 검증)
+4. **최종 1회 보고** (중간 보고 X · 사용자 반복 지시 금지 § 2)
+
+### 과도한 에이전트 방지
+
+- 복잡 작업이라도 **병렬 이득 < overhead** 면 순차
+- 사용자에게 "병렬? 순차?" 묻지 X · 메인이 판단 후 실행 (Zero-touch)
+- 결과 측정 후 다음 유사 작업에 **adaptive learning** 반영 (`.claude/scripts/learning-report.py`)
+
+### Adaptive Learning 연계
+
+- 실행 방식·시간·토큰·충돌 · `problem_solutions` 또는 `recurrence_improvements` 에 기록
+- 다음 유사 작업 시 `inject-experience` hook 가 자동 조회 → 더 나은 선택
+
+### SoT 통합 (중복 축약)
+
+- 이 섹션 = **병렬·subagent·worktree 통합 SoT**
+- `subagent-delegation.md` · `skill-13-parallel-dispatch.md` · `agent-01-team-lead.md` 는 이 섹션 **참조** 로 축약 (중복 삭제)
+
+## 8. Change Budget (Operating Principles 상속)
 
 - NEW ≤ 2 · CHANGE ≤ 5 · REMOVE 무제한
 - 사용자 명시 상한 해제 가능
