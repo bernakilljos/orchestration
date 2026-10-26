@@ -78,7 +78,7 @@ def _is_posix_abs(p: str) -> bool:
     return p.startswith("/")
 
 
-def run(ctx):
+def _run_inner(ctx):
     inp = bash_read(ctx.raw)
     if not any(g in inp for g in _GATE):
         return None
@@ -135,3 +135,22 @@ def run(ctx):
     if reason:
         return Result(2, "", MSG_1 % reason + MSG_2 + MSG_3 + MSG_4)
     return None
+
+
+def run(ctx):
+    """2026-10-26 외부 AI 지적: fail-closed 정책 적용.
+    hook 자체 exception 시 → GATE 매치한 명령만 BLOCK (안전 쪽 default)."""
+    try:
+        return _run_inner(ctx)
+    except Exception as e:  # noqa: BLE001
+        # fail-closed: GATE 매치 명령에서 hook 오류 발생 시 BLOCK (위험 쪽 default)
+        try:
+            inp = bash_read(ctx.raw)
+            if any(g in inp for g in _GATE) and "ALLOW_VISIBLE_WINDOW=1" not in inp:
+                return Result(2, "",
+                    "BLOCKED(창 예방 · fail-closed): hook 검사 중 오류 발생 — 안전상 차단\n"
+                    f"  → err: {type(e).__name__}: {str(e)[:120]}\n"
+                    "  → 확실히 안전하면 ALLOW_VISIBLE_WINDOW=1 로 bypass\n")
+        except Exception:
+            pass
+        return None  # non-GATE 명령은 통과 (평상 동작 유지)
