@@ -2183,3 +2183,5 @@ task_state.py 신설 (`.claude/scripts/lib/`) — 워커 .bat 가 `python task_s
 Fix 1: feedback_rebase_no_auto_ours.md 신규 memory — rebase 자동 ours/theirs 금지 · 수동 수단 merge · append-only 로그는 두 블록 다 유지. MEMORY.md ★ 표시.
 Fix 2: approval_gate_detect.py 에 _strip_git_commit_message() 추가 — git commit -m 안 message body (heredoc + simple) 는 risk pattern 매칭 전 strip. 세션 중 commit msg 안 "DROP TABLE" 로 5회 반복 block 유발 해결. memory feedback_approval_exec_vs_mention.md 등재.
 Fix 3 (사용자 지적 "아직 | 삐뚤"): _pair() 리턴에 가운데 ▶·오른쪽 pipe ANSI column 고정 (`[88G ▶ · [106G │`). 종전 padding 기반이라 b1 body 길이에 따라 흔들림. 왼쪽 pipe `[18G` 와 동일 전략. 7 행 pair 전부 적용.
+## 2026-10-26 statusline LABEL_WIDTH render 역산 보정 (왼쪽 pipe only)
+사용자 D안 수용 + 외부 AI '왼쪽 pipe 만 fix' 지시. 분석: last-statusline.txt 측정 render = wcwidth - CJK글자수 (CJK 1자당 1 cell 과대 추정). 보정: CJK -1/글자 (토큰 7→5·디자인 9→6·품질추세 11→7 등). ASCII (DRIFT 8·HEALTH 9·READY 8) 유지. Python 좌표 재측정: 전 10 라인 pipe @ col 16 일관 정렬. _pair·_triple·오른쪽 레이아웃 안 건드림 (최소 범위). 사용자 다음 statusline 실제 화면 확인 대기 — 완료 보고 X.
