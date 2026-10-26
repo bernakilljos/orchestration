@@ -661,10 +661,12 @@ def extra_gauges(cwd, data=None):
                 # 재사용 solutions
                 try:
                     r = c.execute(
-                        "SELECT COUNT(*), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
+                        "SELECT COUNT(*), COALESCE(SUM(verified),0), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
                     ).fetchone()
                     if r and r[0]:
-                        solutions_str = f"재사용 {r[0]}건 - 평균 {r[1]:.1f}"
+                        cnt = int(r[0]); ver = int(r[1] or 0)
+                        rate = (ver * 100.0 / cnt) if cnt else 0.0
+                        solutions_str = f"재사용 {cnt}건 - 검증 {ver}({rate:.0f}%) - 평균점수 {r[2]:.1f}"
                 except Exception:
                     pass  # noqa: BLE001
                 # 세션
@@ -997,13 +999,13 @@ def extra_gauges(cwd, data=None):
         if os.path.exists(db):
             with sqlite3.connect(db) as c:
                 r = c.execute(
-                    "SELECT COUNT(*), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
+                    "SELECT COUNT(*), COALESCE(SUM(verified),0) FROM problem_solutions"
                 ).fetchone()
                 if r and r[0]:
                     cnt = int(r[0])
-                    avg = float(r[1] or 0)
-                    rate = min(max(avg / 10.0 * 100.0, 0.0), 100.0)
-                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
+                    ver = int(r[1] or 0)
+                    rate = (ver * 100.0 / cnt) if cnt else 0.0
+                    tail.append(f"재사용 {cnt}·검증 {ver}({rate:.0f}%)")
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()

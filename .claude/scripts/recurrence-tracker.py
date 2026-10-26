@@ -91,6 +91,17 @@ def ensure_schema() -> None:
             c.execute("ALTER TABLE recurrence_rules ADD COLUMN archived INTEGER DEFAULT 0")
     except Exception:
         pass
+    # recurrence_events 에 root_cause / auto_fix_status 컬럼 추가 (2026-10-26 · verify-improvement.py 연결용 스키마 선확장)
+    try:
+        ev_cols = [r[1] for r in c.execute("PRAGMA table_info(recurrence_events)").fetchall()]
+        if "root_cause" not in ev_cols:
+            c.execute("ALTER TABLE recurrence_events ADD COLUMN root_cause TEXT")
+        if "auto_fix_status" not in ev_cols:
+            c.execute("ALTER TABLE recurrence_events ADD COLUMN auto_fix_status TEXT")  # pending|dispatched|fixed|skipped
+        if "improvement_id" not in ev_cols:
+            c.execute("ALTER TABLE recurrence_events ADD COLUMN improvement_id INTEGER")
+    except Exception:
+        pass
     c.commit()
     c.close()
 

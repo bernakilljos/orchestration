@@ -2142,3 +2142,5 @@
 ## 2026-10-26 fast 룰 세션 % 반영
 사용자 지시: "fast on 인데 세션 74%" + "토큰은 상관없다 (fast 와)" + "토큰은 compact 안내용으로 /clear 유지".
 룰: 주간 ≥80 OFF · 세션 ≥70 OFF (신규) · 주간 ≥50 OFF · 토큰 ≥80/95 /clear 안내 (유지 · fast 와 분리). 과거 a6e4c83 번복.
+## 2026-10-26 5단계 약점 fix P0 4건
+외부 AI (ZIP 분석) 10 주장 실측 → 7 결함·3 오판. P0 4건 fix: ① statusline 재사용률 산식 (AVG(reusable_score)/10*100 → verified 성공률 %) · ② exec_scheduler README spec-only 와 plugin.json stable 드리프트 → stable SoT 통합 · ③ recurrence_events 스키마 선확장 (root_cause·auto_fix_status·improvement_id · verify-improvement.py 연결 대비) · ④ ai-native-chain.disabled 사유·해제조건·영향 5파일 기록. P1 (auto-dispatch 추적·recurrence→autofix·Golden 차단·active-agents 검증) 는 .claude/state/next-actions.md 저장.

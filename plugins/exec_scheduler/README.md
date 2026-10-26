@@ -1,11 +1,11 @@
 # exec_scheduler — 크론 잡·워크플로우 스케줄러 (모든 정기 작업의 기반)
 
-> **Status**: spec-only (Phase 1) | **Prefix**: `exec_` | **버전**: 0.1
+> **Status**: stable (Phase 1) | **Prefix**: `exec_` | **버전**: 0.1
+> **SoT 통합 (2026-10-26)**: plugin.json(stable)·README 상태 일치. 실구현은 Windows Task Scheduler + `.claude/scripts/*-wrapper.bat` + `setup/modules/*.bat` 조합. SPEC.md 는 참고 설계안.
 
 ##  현재 상태
 
-이 플러그인은 **스펙만** 있고 실구현은 없습니다. `install 후 플랫폼`에서 구현.
-상세 스펙: [`SPEC.md`](SPEC.md)
+커맨드 (`/exec_scheduler-cron`·`-workflow`·`-status`·`-history`·`-retry`·`-run-now`) 는 등록·조회·실행 기본 동작. 상세 스펙: [`SPEC.md`](SPEC.md)
 
 ## 📋 커맨드 (예정)
 
