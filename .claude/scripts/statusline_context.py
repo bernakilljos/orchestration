@@ -384,7 +384,17 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     tok_s = fmt_tokens(tokens)
     lim_s = fmt_tokens(limit)
     q = "" if exact_model else "?"
-    line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
+    # 2026-10-26 사용자 지시 — 토큰도 세션·주간과 동일 임계 색상 (50/80/100): 왜 주간만 노란색?
+    if pct >= 100:
+        _tc = "\x1b[1;31m"
+    elif pct >= 80:
+        _tc = "\x1b[31m"
+    elif pct > 50:
+        _tc = "\x1b[33m"
+    else:
+        _tc = "\x1b[32m"
+    _tr = "\x1b[0m"
+    line = f"{_tc}{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q}){_tr}"
     if pct >= 95:
         line += " · [!] 자동 compact 임박 (끝났으면 /clear)"
     elif pct >= 80:
@@ -1196,7 +1206,17 @@ def extra_gauges(cwd, data=None):
         if "used_percentage" in fh:
             pct = fh["used_percentage"]
             r = _fmt_reset(fh.get("resets_at"))
-            session_gauge = ("세션 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            # 2026-10-26 사용자 지시 — 세션도 주간과 동일 임계 색상 (50/80/100): 왜 주간만 노란색?
+            if pct >= 100:
+                _sc = "\x1b[1;31m"
+            elif pct >= 80:
+                _sc = "\x1b[31m"
+            elif pct > 50:
+                _sc = "\x1b[33m"
+            else:
+                _sc = "\x1b[32m"
+            _sr = "\x1b[0m"
+            session_gauge = (f"{_sc}세션 " + _bar(pct) + f" {pct:.0f}%{mark}{_sr}"
                              + (f" (reset {r})" if r else ""))
         if "used_percentage" in sd:
             pct = sd["used_percentage"]
@@ -1206,11 +1226,11 @@ def extra_gauges(cwd, data=None):
                 _wc = "\x1b[1;31m"
             elif pct >= 80:
                 _wc = "\x1b[31m"
-            elif pct >= 50:
+            elif pct > 50:
                 _wc = "\x1b[33m"
             else:
-                _wc = ""
-            _wr = "\x1b[0m" if _wc else ""
+                _wc = "\x1b[32m"
+            _wr = "\x1b[0m"
             week_gauge = (f"{_wc}주간 " + _bar(pct) + f" {pct:.0f}%{mark}{_wr}"
                           + (f" (reset {r})" if r else ""))
     else:
@@ -1704,12 +1724,14 @@ def main() -> None:
     # 2026-10-26 CJK -1 보정 제거 (사용자 지시 · 단일 실험): render 가 CJK 2 cell wcwidth 그대로.
     #   종전 d4e6603 보정 (lw=render-1) 이 render pipe 를 오른쪽으로 밀어서 DRIFT (ASCII) 와 어긋남.
     #   wcwidth 기준 복원: emoji 2 + sp 1 + CJK 2자(4) = 7 (토큰·영향 등) · CJK 3자(6) = 9 (디자인·공통화·인프라) · CJK 4자(8) = 11 (품질추세) · ASCII 라벨 (READY 8·DRIFT 8·HEALTH 9) 유지.
+    # 2026-10-26 사용자 "빨리 | 줄 정렬" — CJK -1 보정 완전 제거 (주석과 정합).
+    #   wcwidth 그대로: emoji 2 + sp 1 + CJK 2자(4)=7 · 3자(6)=9 · 4자(8)=11 · ASCII (DRIFT 5자+emoji 2+sp 1=8 · HEALTH 6자+3=9 · READY 5자+3=8)
     LABEL_WIDTH = {
-        "토큰": 7, "디자인": 8, "개발": 7, "품질추세": 10,
-        "요청": 7, "영향": 7, "공통화": 8, "인프라": 8,
+        "토큰": 7, "디자인": 9, "개발": 7, "품질추세": 11,
+        "요청": 7, "영향": 7, "공통화": 9, "인프라": 9,
         "오류": 7, "READY": 8, "증명": 7, "통제": 7,
         "검증": 7, "서브": 7, "이력": 7, "비용": 7,
-        "DRIFT": 9, "HEALTH": 9,
+        "DRIFT": 8, "HEALTH": 9,
     }
 
     # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
@@ -1758,7 +1780,7 @@ def main() -> None:
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
         return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[90m│[0m " + b1
-                + "" + " " * max(1, 40 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * max(1, 14 - _width(_h2)) + "[90m│[0m " + b2)
+                + "" + " " * max(1, 40 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
