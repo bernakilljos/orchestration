@@ -84,9 +84,16 @@ def create(goal_id: str) -> dict:
     # git worktree add -b <branch> <path> HEAD · timeout 600s (큰 kit · Windows)
     r = _git("worktree", "add", "-b", branch, str(sandbox_path), "HEAD", timeout=600)
 
-    # 2026-10-26 fallback: subprocess timeout 등으로 r.returncode != 0 이어도
-    # 실제 worktree 가 생성됐을 수 있음 (Windows + 큰 kit 조합) → 디렉토리 존재 확인 후 state 저장
-    worktree_exists = sandbox_path.exists() and (sandbox_path / ".git").exists()
+    # 2026-10-26 fallback v2: 외부 AI 지적 수용 — .git 존재만 X · git 등록 상태까지 검증
+    worktree_exists = False
+    if sandbox_path.exists() and (sandbox_path / ".git").exists():
+        # git worktree list --porcelain 로 공식 등록 확인
+        wl = _git("worktree", "list", "--porcelain", timeout=30)
+        if wl.returncode == 0 and str(sandbox_path).replace("\\", "/") in wl.stdout.replace("\\", "/"):
+            # rev-parse 로 실제 작업 가능한 worktree 인지 확인
+            rp = _git("rev-parse", "--is-inside-work-tree", cwd=sandbox_path, timeout=30)
+            if rp.returncode == 0 and "true" in rp.stdout.strip():
+                worktree_exists = True
     if r.returncode != 0 and not worktree_exists:
         return {"ok": False, "reason": f"worktree add 실패: {r.stderr.strip()[:200]}", "stderr": r.stderr}
 
