@@ -9,7 +9,8 @@
 
 set -uo pipefail
 
-REPO_ROOT="${CLAUDE_PROJECT_ROOT:-$(pwd)}"
+# CLAUDE_PROJECT_DIR 가 정본 — 없을 때 pwd 로 빠지면 cd 한 소스 폴더 안에 .claude/ 가 생긴다(10-26 nextjs/src/app/pet)
+REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}"
 STATE_DIR="$REPO_ROOT/.claude/state"
 RECAP="$STATE_DIR/recap.jsonl"
 mkdir -p "$STATE_DIR"

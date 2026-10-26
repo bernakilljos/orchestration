@@ -2135,3 +2135,7 @@
 ## continuation 줄 ESC 바이트 누락 fix - 리터럴 [18G/[90m 표시 bug 해결 (2026-10-21)
 ## kit CLAUDE.md auto-stats (2026-10-22)
 ## verify-fresh-clone 자기쓰기 판정 오탐 fix - release-manifest.json hook 미연결 FAIL 해소 (2026-10-23)
+## 소스 폴더 안 .claude/ 잔재 방지 (2026-10-26)
+- SessionEnd 훅 3개(hook-token-log·hook-gemini-recap·hook-worker-failure)가 존재하지 않는 CLAUDE_PROJECT_ROOT 를 읽어 pwd 로 빠졌다 — 세션이 하위 폴더에 cd 한 채 끝나면 거기에 .claude/state/ 가 생겼다(lottoclaude nextjs/src 등 9곳). 이제 CLAUDE_PROJECT_DIR(없으면 스크립트 위치) 기준.
+- audit-bat-lines.py 는 저장소 루트로 chdir, statusline_context.py 의 statusline-stdin.json 은 스크립트 기준 루트에.
+- cleanup-pollution.sh 2b: 하위 폴더 .claude 중 잔재 파일(token-usage.jsonl·audit-bat-lines.stamp·statusline-stdin.json·current-tasks.json)만 든 것을 지운다.

@@ -1543,8 +1543,9 @@ def main() -> None:
 
     # 진단용 - 마지막 stdin 원문 (필드 실측 근거)
     try:
-        _cwd0 = data.get("cwd") or ""
-        if _cwd0:
+        # 저장소 루트(이 스크립트 기준) — data["cwd"] 는 cd 한 하위 폴더일 수 있어 거기에 .claude/ 가 생겼다(10-26 nextjs/.claude)
+        _cwd0 = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if os.path.isdir(os.path.join(_cwd0, ".claude", "state")):
             with open(os.path.join(_cwd0, ".claude", "state", "statusline-stdin.json"),
                       "w", encoding="utf-8") as _f:
                 json.dump(data, _f, ensure_ascii=False, indent=2)

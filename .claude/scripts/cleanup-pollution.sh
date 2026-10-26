@@ -33,6 +33,17 @@ if [ -d "$PROJECT_ROOT/.claude/.claude" ]; then
   rm -rf "$PROJECT_ROOT/.claude/.claude" && log "nested .claude/.claude/"
 fi
 
+# 2b. 하위 폴더에 생긴 .claude/ — 훅·statusline 이 cd 한 폴더(pwd)를 루트로 착각해 만든 잔재(10-26 nextjs/src/app/pet 등 9곳).
+#     아래 이름의 파일만 든 폴더만 지운다 — 다른 파일이 있으면 그대로 두고 로그만.
+find "$PROJECT_ROOT" -mindepth 2 -maxdepth 7 -type d -name .claude   -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "$PROJECT_ROOT/.claude/*" 2>/dev/null | while read -r d; do
+  other=$(find "$d" -type f ! -name token-usage.jsonl ! -name audit-bat-lines.stamp ! -name statusline-stdin.json ! -name current-tasks.json 2>/dev/null | head -1)
+  if [ -z "$other" ]; then
+    find "$d" -depth -delete 2>/dev/null && log "stray .claude/: ${d#$PROJECT_ROOT/}"
+  else
+    log "stray .claude/ 남김(다른 파일 있음): ${d#$PROJECT_ROOT/}"
+  fi
+done
+
 # 3. 3일+ 임시 파일 (*.bak / *.orig / *.tmp / *.swp / *~)
 DAYS=3
 find "$PROJECT_ROOT" -maxdepth 5 -type f \

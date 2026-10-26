@@ -17,6 +17,10 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+# 대상·스탬프가 모두 상대경로라 저장소 루트로 옮긴다 — 다른 폴더에서 불리면 그 폴더에 .claude/state/ 가 생겼다(10-26 nextjs/.claude)
+import os
+os.chdir(Path(__file__).resolve().parents[2])
+
 TARGETS = [
     'install.bat',
     'install_codex.bat',

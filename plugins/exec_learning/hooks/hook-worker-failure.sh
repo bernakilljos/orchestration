@@ -11,7 +11,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 source "$SCRIPT_DIR/.claude/hooks/find-python.sh" 2>/dev/null || PYTHON=""
 
-REPO_ROOT="${CLAUDE_PROJECT_ROOT:-$(pwd)}"
+# CLAUDE_PROJECT_DIR 가 정본 — 없을 때 pwd 로 빠지면 cd 한 소스 폴더 안에 .claude/ 가 생긴다(10-26 nextjs/src/app/pet)
+REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}"
 LEARNING_DIR="$REPO_ROOT/.claude/learning"
 PATTERNS_FILE="$LEARNING_DIR/failure-patterns.json"
 
