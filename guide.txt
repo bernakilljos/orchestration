@@ -2187,3 +2187,5 @@ Fix 3 (사용자 지적 "아직 | 삐뚤"): _pair() 리턴에 가운데 ▶·오
 사용자 D안 수용 + 외부 AI '왼쪽 pipe 만 fix' 지시. 분석: last-statusline.txt 측정 render = wcwidth - CJK글자수 (CJK 1자당 1 cell 과대 추정). 보정: CJK -1/글자 (토큰 7→5·디자인 9→6·품질추세 11→7 등). ASCII (DRIFT 8·HEALTH 9·READY 8) 유지. Python 좌표 재측정: 전 10 라인 pipe @ col 16 일관 정렬. _pair·_triple·오른쪽 레이아웃 안 건드림 (최소 범위). 사용자 다음 statusline 실제 화면 확인 대기 — 완료 보고 X.
 ## 2026-10-26 statusline LABEL_WIDTH CJK -1 보정 제거 (단일 실험 · 사용자 지시)
 d4e6603 revert 전체 X · CJK -1 보정 부분만 제거. 사용자 render 가설 (CJK=2·ASCII=1·emoji=2·nbsp=1) 로 전 라인 pipe @ col 17 정렬 예상. Python char count 측정은 13~16 변동 (wcwidth 와 render 차이).
+
+## 2026-10-26 merge-to-target 3-way 자동 병합 - 대상 수정본(ICM statusline 등)도 kit 새 수정 자동 반영 (충돌 시만 보존·경고) · 손 병합 누락으로 «전파 안 됨» 재발 차단

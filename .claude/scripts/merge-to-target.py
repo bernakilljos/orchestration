@@ -72,6 +72,48 @@ def git_history_hashes(rel: str) -> set[str]:
     return out
 
 
+def three_way(rel: str, db: bytes) -> bytes | None:
+    """대상 수정본에 kit 의 새 수정을 3-way 로 얹는다 (2026-10-26).
+
+    공통 조상 = 대상과 줄 차이가 가장 적은 kit 이력 버전(대상이 갈라져 나온 곳).
+    git merge-file 충돌 0 이면 병합본, 충돌이 있거나 조상을 못 찾으면 None (종전대로 보존·경고).
+    이유: 대상 수정본은 kit 이 고칠 때마다 손 병합이 필요했고, 손 병합이 빠지면 «전파 안 된» 채로 남았다.
+    """
+    import difflib
+    import tempfile
+    tgt = db.replace(b"\r\n", b"\n")
+    kit_now = (KIT / rel).read_bytes().replace(b"\r\n", b"\n")
+    try:
+        revs = subprocess.run(["git", "-C", str(KIT), "log", "--format=%H", "--", rel],
+                              capture_output=True, text=True, timeout=60).stdout.split()
+    except Exception:
+        return None
+    tl = tgt.decode("utf-8", "replace").splitlines()
+    best, best_n, seen = None, None, set()
+    for r in revs[:200]:
+        blob = subprocess.run(["git", "-C", str(KIT), "show", f"{r}:{rel}"],
+                              capture_output=True, timeout=30).stdout.replace(b"\r\n", b"\n")
+        if not blob or md5(blob) in seen:
+            continue
+        seen.add(md5(blob))
+        n = sum(1 for d in difflib.unified_diff(blob.decode("utf-8", "replace").splitlines(), tl, n=0, lineterm="")
+                if d[:1] in "+-" and d[:3] not in ("+++", "---"))
+        if best_n is None or n < best_n:
+            best, best_n = blob, n
+    if best is None or best == kit_now:
+        return None
+    with tempfile.TemporaryDirectory() as td:
+        f = {k: Path(td) / k for k in ("tgt", "base", "kit")}
+        f["tgt"].write_bytes(tgt)
+        f["base"].write_bytes(best)
+        f["kit"].write_bytes(kit_now)
+        r = subprocess.run(["git", "merge-file", "-p", str(f["tgt"]), str(f["base"]), str(f["kit"])],
+                           capture_output=True, timeout=60)
+    if r.returncode != 0 or not r.stdout:
+        return None
+    return r.stdout.replace(b"\n", b"\r\n") if b"\r\n" in db else r.stdout
+
+
 def _retired_names() -> set:
     """retired-hooks.json 에 올라간(대체·삭제된) 훅 파일명."""
     try:
@@ -264,7 +306,7 @@ def main() -> int:
         return 2
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
-    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "kit-only")}
+    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only")}
     # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
     man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
     try:
@@ -301,7 +343,15 @@ def main() -> int:
                     shutil.copy2(dst, backup / rel)
                     put(rel, src, dst)
             else:
-                stats["target-custom"].append(rel)
+                merged = None if Path(rel).name in _retired_names() else three_way(rel, db)
+                if merged is not None and norm(merged) != norm(db):
+                    stats["auto-merged"].append(rel)
+                    if apply:
+                        (backup / rel).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(dst, backup / rel)
+                        dst.write_bytes(merged)
+                else:
+                    stats["target-custom"].append(rel)
 
     for rel in ("CLAUDE.md", "guide.txt"):
         src, dst = KIT / rel, target / rel
@@ -393,6 +443,8 @@ def main() -> int:
         # CLAUDE.md = 대상 고유본(설계상 다름) · retired 훅 = 대체돼 실행 안 됨 → 경고 대상 아님
         warn = rel != "CLAUDE.md" and Path(rel).name not in _retired_names() and kit_newer(rel, target)
         print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if warn else ""))
+    for rel in stats["auto-merged"]:
+        print(f"    3-way 병합(대상 수정 유지 + kit 새 수정) {rel}")
     for r in report:
         print(f"  {r}")
     if apply:
