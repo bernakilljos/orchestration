@@ -30,19 +30,32 @@ SANDBOX_ROOT = ROOT / ".repair-sandbox"
 STATE_FILE = ROOT / ".claude" / "state" / "repair-sandboxes.json"
 
 
-def _git(*args: str, cwd: Path = None, check: bool = True) -> subprocess.CompletedProcess:
-    """git 명령 실행 (ALLOW_VISIBLE_WINDOW env 로 Pre-Execution hook 호환)."""
+def _git(*args: str, cwd: Path = None, check: bool = True, timeout: int = 300) -> subprocess.CompletedProcess:
+    """git 명령 실행 (ALLOW_VISIBLE_WINDOW env 로 Pre-Execution hook 호환).
+    2026-10-26 fix: Python 3.14 Windows subprocess reader thread bug — encoding/errors 명시.
+    timeout 300s default (git worktree add 가 Windows + 큰 kit 디렉토리에서 느림)."""
     env = os.environ.copy()
     env["ALLOW_VISIBLE_WINDOW"] = "1"
-    return subprocess.run(
-        ["git"] + list(args),
-        cwd=str(cwd or ROOT),
-        env=env,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
+    try:
+        return subprocess.run(
+            ["git"] + list(args),
+            cwd=str(cwd or ROOT),
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except Exception as e:
+        # subprocess 자체 fail — dummy CompletedProcess 리턴 (호출자 returncode 체크 가능)
+        return subprocess.CompletedProcess(
+            args=["git"] + list(args),
+            returncode=1,
+            stdout="",
+            stderr=f"[_git subprocess failure] {type(e).__name__}: {e}",
+        )
 
 
 def _load_state() -> dict:
@@ -68,9 +81,13 @@ def create(goal_id: str) -> dict:
     if sandbox_path.exists():
         return {"ok": False, "reason": f"sandbox 이미 존재: {sandbox_path}", "path": str(sandbox_path)}
 
-    # git worktree add -b <branch> <path> HEAD
-    r = _git("worktree", "add", "-b", branch, str(sandbox_path), "HEAD")
-    if r.returncode != 0:
+    # git worktree add -b <branch> <path> HEAD · timeout 600s (큰 kit · Windows)
+    r = _git("worktree", "add", "-b", branch, str(sandbox_path), "HEAD", timeout=600)
+
+    # 2026-10-26 fallback: subprocess timeout 등으로 r.returncode != 0 이어도
+    # 실제 worktree 가 생성됐을 수 있음 (Windows + 큰 kit 조합) → 디렉토리 존재 확인 후 state 저장
+    worktree_exists = sandbox_path.exists() and (sandbox_path / ".git").exists()
+    if r.returncode != 0 and not worktree_exists:
         return {"ok": False, "reason": f"worktree add 실패: {r.stderr.strip()[:200]}", "stderr": r.stderr}
 
     state = _load_state()
@@ -79,9 +96,11 @@ def create(goal_id: str) -> dict:
         "branch": branch,
         "created_at": int(time.time()),
         "status": "active",
+        "subprocess_rc": r.returncode,  # 디버깅 참조
     }
     _save_state(state)
-    return {"ok": True, "path": str(sandbox_path), "branch": branch, "goal_id": goal_id}
+    note = "" if r.returncode == 0 else " (subprocess timeout · worktree 실제 생성 확인됨)"
+    return {"ok": True, "path": str(sandbox_path), "branch": branch, "goal_id": goal_id, "note": note}
 
 
 def test(goal_id: str, test_cmd: str = "") -> dict:
