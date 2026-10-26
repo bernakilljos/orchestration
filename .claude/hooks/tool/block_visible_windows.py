@@ -24,13 +24,15 @@ _RE_SUBCMD_START = re.compile(r"\b(run|next|npm|yarn|pnpm)" + _S + r"+start\b", 
 _RE_HIDDEN_START = re.compile(_S + r"/(b|min)(" + _S + r"|\Z)", _I)
 _RE_PROG = re.compile(r'(cmd|powershell|pwsh|python|py' + _S + r'|\.exe|\.bat|\.cmd|%PY%|"%)', _I)
 _RE_CMDK = re.compile(r"cmd(\.exe)?" + _S + r"+//?k(" + _S + r"|\Z)", _I)
+# 2026-10-26 외부 AI 지적: cmd //c "start ..." Git Bash 패턴 추가 감지
+_RE_CMDC_START = re.compile(r"cmd(\.exe)?" + _S + r"+//?c" + _S + r"+[\"']?start" + _S, _I)
 _RE_SP = re.compile(r"Start-Process", _I)
 _RE_SP_HIDDEN = re.compile(r"(-WindowStyle" + _S + r"+Hidden|-NoNewWindow)", _I)
 _RE_CDQ = re.compile(r'cd' + _S + r'+"([^"]+)"', _I)
 _RE_CD = re.compile(r"cd" + _S + r"+([^ \t\n\r\f\v&;]+)", _I)
 _RE_FILE = re.compile(r"([A-Za-z]:[\\/][^\"' \t\n\r\f\v]*|[^\"' \t\n\r\f\v]*)\.(bat|cmd|ps1)", _I)
 
-_GATE = ("start", "START", "Start", "cmd /k", "cmd //k", ".bat", ".BAT", ".cmd", ".ps1")
+_GATE = ("start", "START", "Start", "cmd /k", "cmd //k", "cmd /c", "cmd //c", ".bat", ".BAT", ".cmd", ".ps1")
 
 MSG_1 = "BLOCKED(창 예방): %s\n"
 MSG_2 = ("  → 테스트·검증은 창 없이: run_in_background 로 직접 실행 (예: python run.py …) · 프로젝트에 숨김 모드가 있으면 그것 "
@@ -46,6 +48,9 @@ def _opens_window(line: str) -> bool:
     if _RE_START.search(bare) and not _RE_HIDDEN_START.search(bare) and _RE_PROG.search(bare):
         return True
     if _RE_CMDK.search(line):
+        return True
+    # 2026-10-26: cmd //c "start ..." Git Bash 패턴 (/b·/min 없이)
+    if _RE_CMDC_START.search(line) and not _RE_HIDDEN_START.search(line):
         return True
     if _RE_SP.search(line) and not _RE_SP_HIDDEN.search(line):
         return True

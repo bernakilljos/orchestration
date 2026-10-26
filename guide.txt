@@ -2162,3 +2162,5 @@ task_state.py 신설 (`.claude/scripts/lib/`) — 워커 .bat 가 `python task_s
 ④ verify-after-edit-logger.py disk I/O error 1건 fix (sqlite3.connect timeout=10 + 1회 retry + 2회 실패 silent return — 로거가 메인 작업 방해 X).
 
 실측 PASS (test_int2 3회 재발): Supervisor REPAIR goal #2 PENDING 자동 생성 + verify-improvement #9 OBSERVING 동시 등록 + 로그 양쪽 기록 확인. 외부 AI 지적 "작업 상태·재시도·비용 한도 공통 활용" 충족. 다음 단계는 supervisor_runtime 자동 실행 루프 (PENDING→PLANNING→RUNNING→VERIFIED 자동 진행).
+## 2026-10-26 Pre-Execution Policy 강화 (cmd //c start Git Bash 패턴)
+외부 AI 핵심 지적: "aa8391d 소스 fix 와 별개로 에이전트가 테스트 중 cmd //c 'start ...' Git Bash 패턴을 새로 만들어 Windows 팝업 재발 · 규칙 기억 ≠ 실행 차단". 실측: 이번 세션 ALLOW_VISIBLE_WINDOW=1 bypass 15회 사용 — 외부 AI 지적 "에이전트가 bypass 로 금지 규칙 우회" 패턴 확인. Fix: block-visible-windows (sh+py 양쪽) RE_CMDC_START 패턴 신설 — cmd //c "start ..." (/b·/min 없이) 자동 block. _opens_window 함수에 체크 추가. _GATE 에 "cmd /c"·"cmd //c" 추가 (gate 통과율 향상). 실측 6/6 PASS: cmd //c start → block · cmd /c start → block · cmd /c call → 통과 · start /b → 통과 · git → 통과 · cmd //c start /b → 통과. 정상 명령 영향 X. 외부 AI 완료 기준 8개 중 "실행 전 정책 강제" (P0) 종결. 다음 큰 과제: Supervisor Runtime 자동 실행 루프 (P1) · Verified Repair 격리 worktree 수정 (P1).

@@ -33,6 +33,8 @@ RE_HIDDEN_START='[[:space:]]/(b|min)([[:space:]]|$)'
 RE_SUBCMD_START='(run|next|npm|yarn|pnpm)[[:space:]]+start([^[:alnum:]_-]|$)'
 RE_PROG='(cmd|powershell|pwsh|python|py[[:space:]]|\.exe|\.bat|\.cmd|%PY%|"%)'
 RE_CMDK='cmd(\.exe)?[[:space:]]+//?k([[:space:]]|$)'
+# 2026-10-26 외부 AI 지적: cmd //c "start ..." Git Bash 패턴 추가 감지
+RE_CMDC_START='cmd(\.exe)?[[:space:]]+//?c[[:space:]]+["'"'"']?start[[:space:]]'
 RE_SP='Start-Process'
 RE_SP_HIDDEN='(-WindowStyle[[:space:]]+Hidden|-NoNewWindow)'
 
@@ -46,6 +48,8 @@ _opens_window() {
   while [[ $bare =~ $RE_SUBCMD_START ]]; do bare="${bare/"${BASH_REMATCH[0]}"/ }"; done
   if [[ $bare =~ $RE_START ]] && [[ ! $bare =~ $RE_HIDDEN_START ]] && [[ $bare =~ $RE_PROG ]]; then return 0; fi
   [[ $l =~ $RE_CMDK ]] && return 0
+  # 2026-10-26: cmd //c "start ..." Git Bash 패턴 (/b·/min 없이)
+  if [[ $l =~ $RE_CMDC_START ]] && [[ ! $l =~ $RE_HIDDEN_START ]]; then return 0; fi
   if [[ $l =~ $RE_SP ]] && [[ ! $l =~ $RE_SP_HIDDEN ]]; then return 0; fi
   return 1
 }
