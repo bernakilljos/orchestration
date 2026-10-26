@@ -1844,7 +1844,16 @@ def main() -> None:
 
     if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
 
-    print("\n".join(out))
+    final = "\n".join(out)
+    # 2026-10-26: debug save — Claude Code 가 실제 호출한 raw output 저장 (사용자 터미널 삐뚤 진단용)
+    try:
+        import os as _os
+        dbg = _os.path.join(_os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "last-statusline.txt")
+        with open(dbg, "w", encoding="utf-8") as _f:
+            _f.write(final)
+    except Exception:
+        pass
+    print(final)
 
 
 if __name__ == "__main__":
