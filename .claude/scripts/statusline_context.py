@@ -1201,7 +1201,17 @@ def extra_gauges(cwd, data=None):
         if "used_percentage" in sd:
             pct = sd["used_percentage"]
             r = _fmt_reset(sd.get("resets_at"))
-            week_gauge = ("주간 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            # 2026-10-26 사용자 지시 — 주간 % 임계 색상: 50 이하 default · 50~80 yellow · 80~100 red · 100+ bold red
+            if pct >= 100:
+                _wc = "\x1b[1;31m"
+            elif pct >= 80:
+                _wc = "\x1b[31m"
+            elif pct >= 50:
+                _wc = "\x1b[33m"
+            else:
+                _wc = ""
+            _wr = "\x1b[0m" if _wc else ""
+            week_gauge = (f"{_wc}주간 " + _bar(pct) + f" {pct:.0f}%{mark}{_wr}"
                           + (f" (reset {r})" if r else ""))
     else:
         # 실값도 캐시도 없다 = 아직 한 번도 못 받았다. 다른 지표로 대체하지 않는다.
