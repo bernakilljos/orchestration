@@ -2187,3 +2187,5 @@ statusline_context.py line 1204 week_gauge 포맷 수정: 50 이하 default · 5
 ANSI 배경색 진단으로 토큰 X=495.5 vs DRIFT X=497.5 (2px 차이) 측정. LABEL_WIDTH[DRIFT] 8→9 (nbsp pad -1) → DRIFT │ 1 cell 왼쪽 이동. 다른 라벨·운영 코드 X. 측정 기반 단일 가설 fix.
 ## 2026-10-26 Universal Technology Discovery scaffold (외부 AI P0)
 외부 AI P0: 수천 기술 하드코딩 X · 프로젝트 받으면 관련 기술 자동 탐색. .claude/scripts/lib/tech_discovery.py 신설 — 상위 20 seed 도메인 (ai-model·agent·memory·rag·document-ai·multimodal·rpa·backend·frontend·ui-ux·data·db·security·cloud·devops·quality·observability·mobile·distributed·biz-platform). 4 테이블 (tech_domains·evidence·gaps·discovery_runs). CLI: analyze·domain-list·evidence·gap·coverage·summary·ensure. 실측 PASS: analyze (현재 kit) → 7 도메인 자동 감지 (README·package.json·Dockerfile signal). Coverage Gate scaffold (30% 임계 default). WebSearch는 Claude agent 호출 · save_evidence/save_gap 로 저장. 다음: Supervisor DISCOVERY workflow 추가 · Innovation Gate · Autonomous research loop. Statusline (b963c00·6d7fd4e) 미해결 유지 (측정 수단 한계 보고).
+## 2026-10-26 statusline nbsp → ASCII 공백 복원 (최종 fix 시도 · 사용자 '빨리')
+nbsp (U+00A0) 가 사용자 터미널에서 불균일 render 가설 → ASCII 공백 (0x20) 전부 복원. 5곳 nbsp → space. 다른 로직 X · 핑퐁 중단.
