@@ -56,6 +56,6 @@ print(command_text)
 "Codex에 위임할까요?" 확인.
 
 ### Step 4 — 워커 시작 (확인 시)
-```
-start "Codex-Worker-1" cmd /c "cd /d %CD% && codex-auto 4"
+```text
+start "Codex-Worker-1" /D "%CD%" cmd /d /c "call codex-auto 4"
 ```

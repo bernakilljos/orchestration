@@ -85,7 +85,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting verifier %%i / %WORKER_COUNT%
-  start "Gemini-Verifier-%%i" cmd /c "cd /d "%PROJECT_ROOT%" && gemini-auto --child %%i"
+  start "Gemini-Verifier-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call gemini-auto --child %%i"
 )
 
 echo.

@@ -73,7 +73,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting worker %%i / %WORKER_COUNT%
-  start "Codex-Worker-%%i" cmd /c "cd /d "%PROJECT_ROOT%" && codex-auto --child %%i"
+  start "Codex-Worker-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call codex-auto --child %%i"
 )
 
 echo.

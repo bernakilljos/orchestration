@@ -74,7 +74,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting Haiku validator %%i / %WORKER_COUNT%
-  start "Haiku-Validator-%%i" cmd /c "cd /d "%PROJECT_ROOT%" && haiku-auto --child %%i"
+  start "Haiku-Validator-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call haiku-auto --child %%i"
 )
 
 echo.
