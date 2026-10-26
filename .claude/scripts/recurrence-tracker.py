@@ -136,22 +136,38 @@ def _append_md(path: Path, line: str, header: str) -> None:
 
 
 def _trigger_improvement_start(rule_id: str, category: str, total: int, desc: str) -> None:
-    """2026-10-26: 승격 전환 시 verify-improvement.py start 자동 호출.
-    실패해도 추적 자체는 성공 (best-effort · timeout 10s · 로그 .claude/logs/)."""
+    """2026-10-26 외부 AI 설계 수용: 통합 Supervisor Runtime 호출 (REPAIR workflow).
+    + verify-improvement.py start 호출 유지 (관찰 레코드 · 지표 추적용 · 이중 등록).
+
+    실패해도 추적 자체는 성공 (best-effort · 로그 .claude/logs/)."""
     log = ROOT / ".claude" / "logs" / "recurrence-trigger.log"
     try:
         log.parent.mkdir(parents=True, exist_ok=True)
     except Exception:
         pass
+
+    # ① Supervisor REPAIR goal 등록 (실행 엔진 통합 — 외부 AI 설계)
+    try:
+        sys.path.insert(0, str(ROOT / ".claude" / "scripts" / "lib"))
+        import supervisor  # noqa: WPS433
+        gid = supervisor.create_repair_goal(rule_id, category, total, desc)
+        with log.open("a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} REPAIR goal #{gid} created\n")
+    except Exception as e:  # noqa: BLE001
+        try:
+            with log.open("a", encoding="utf-8") as f:
+                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} supervisor ERR: {e}\n")
+        except Exception:
+            pass
+
+    # ② verify-improvement.py start (관찰 레코드 · 지표 전후 비교용)
     try:
         import subprocess
         script = ROOT / ".claude" / "scripts" / "verify-improvement.py"
         if not script.exists():
-            with log.open("a", encoding="utf-8") as f:
-                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] SKIP {rule_id}: script missing\n")
             return
         env = os.environ.copy()
-        env["ALLOW_VISIBLE_WINDOW"] = "1"  # tool-dispatch block-visible-windows 우회 (subcommand 'start' 오탐 방지)
+        env["ALLOW_VISIBLE_WINDOW"] = "1"
         r = subprocess.run([
             sys.executable, "-X", "utf8", str(script), "start", rule_id,
             "--metric", "재발률",
@@ -159,16 +175,15 @@ def _trigger_improvement_start(rule_id: str, category: str, total: int, desc: st
             "--value", str(total),
             "--sample", str(total),
             "--cause", f"재발 {total}회 자동 승격 ({category})",
-            "--plan", f"CLAUDE.md § 7 또는 .claude/rules/ 추가 검토 · {(desc or '')[:100]}",
+            "--plan", f"Supervisor REPAIR workflow 등록 · {(desc or '')[:100]}",
         ], check=False, timeout=10, capture_output=True, text=True, env=env)
         with log.open("a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} rc={r.returncode}\n")
-            if r.stdout: f.write(f"  stdout: {r.stdout.strip()[:1500]}\n")
-            if r.stderr: f.write(f"  stderr: {r.stderr.strip()[:1500]}\n")
+            f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} verify-improvement rc={r.returncode}\n")
+            if r.stderr: f.write(f"  stderr: {r.stderr.strip()[:500]}\n")
     except Exception as e:  # noqa: BLE001
         try:
             with log.open("a", encoding="utf-8") as f:
-                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] ERR {rule_id}: {e}\n")
+                f.write(f"[{datetime.now().isoformat(timespec='seconds')}] {rule_id} verify-improvement ERR: {e}\n")
         except Exception:
             pass
 

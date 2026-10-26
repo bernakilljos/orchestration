@@ -52,6 +52,8 @@ def ensure_schema() -> None:
           goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
           description TEXT NOT NULL,
           status TEXT NOT NULL DEFAULT 'PENDING',
+          workflow_type TEXT DEFAULT 'GENERAL',
+          source_ref TEXT,
           max_retry INTEGER DEFAULT 3,
           retry_count INTEGER DEFAULT 0,
           timeout_h INTEGER DEFAULT 24,
@@ -85,24 +87,54 @@ def ensure_schema() -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_goal_trans ON goal_transitions(goal_id, ts);
         """)
+        # 2026-10-26 외부 AI 설계 수용: workflow_type / source_ref 선확장 (기존 테이블)
+        try:
+            cols = [r[1] for r in c.execute("PRAGMA table_info(goals)").fetchall()]
+            if "workflow_type" not in cols:
+                c.execute("ALTER TABLE goals ADD COLUMN workflow_type TEXT DEFAULT 'GENERAL'")
+            if "source_ref" not in cols:
+                c.execute("ALTER TABLE goals ADD COLUMN source_ref TEXT")
+            # 컬럼 보장 후 index 생성
+            c.execute("CREATE INDEX IF NOT EXISTS idx_goals_workflow ON goals(workflow_type, status)")
+        except Exception:
+            pass
 
 
-def create_goal(description: str, max_retry: int = 3, timeout_h: int = 24) -> int:
+def create_goal(description: str, max_retry: int = 3, timeout_h: int = 24,
+                workflow_type: str = "GENERAL", source_ref: str = "") -> int:
+    """workflow_type: GENERAL (일반 목표) | REPAIR (재발 자동 해결 · Diagnose→Repair→Verify)
+    source_ref: REPAIR 의 경우 rule_id · improvement_id 등 추적 ref."""
     ensure_schema()
     now = int(time.time())
     with sqlite3.connect(str(DB)) as c:
         cur = c.execute(
-            "INSERT INTO goals (description, status, max_retry, timeout_h, created_at, updated_at) "
-            "VALUES (?, 'PENDING', ?, ?, ?, ?)",
-            (description, max_retry, timeout_h, now, now)
+            "INSERT INTO goals (description, status, workflow_type, source_ref, "
+            "max_retry, timeout_h, created_at, updated_at) "
+            "VALUES (?, 'PENDING', ?, ?, ?, ?, ?, ?)",
+            (description, workflow_type, source_ref, max_retry, timeout_h, now, now)
         )
         goal_id = cur.lastrowid
         c.execute(
-            "INSERT INTO goal_transitions (goal_id, from_status, to_status, actor, ts) "
-            "VALUES (?, NULL, 'PENDING', 'supervisor', ?)",
-            (goal_id, now)
+            "INSERT INTO goal_transitions (goal_id, from_status, to_status, reason, actor, ts) "
+            "VALUES (?, NULL, 'PENDING', ?, 'supervisor', ?)",
+            (goal_id, f"workflow={workflow_type}", now)
         )
     return goal_id
+
+
+def create_repair_goal(rule_id: str, category: str, total_recurrences: int, snippet: str = "") -> int:
+    """재발 자동 해결 전용 goal 생성 (recurrence-tracker 에서 호출).
+    외부 AI 설계: REPAIR workflow = Diagnose → Repair → Verify."""
+    desc = f"[REPAIR] 재발 자동 해결 · rule={rule_id} · category={category} · 총 {total_recurrences}회"
+    if snippet:
+        desc += f" · 샘플: {snippet[:80]}"
+    return create_goal(
+        description=desc,
+        max_retry=3,
+        timeout_h=12,  # REPAIR 는 짧게 (12h · GENERAL 24h 보다 보수적)
+        workflow_type="REPAIR",
+        source_ref=f"rule:{rule_id}"
+    )
 
 
 def advance(goal_id: int, to_status: str, reason: str = "", actor: str = "supervisor") -> bool:
