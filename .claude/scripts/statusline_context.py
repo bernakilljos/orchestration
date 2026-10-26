@@ -1206,18 +1206,20 @@ def extra_gauges(cwd, data=None):
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
-    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
-    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
-    # ★기준 (사용자 확정 2026-10-06 — 임의 변경 금지):
-    #   주간 ≥80%  → [!] fast OFF (주간 N%)
-    #   주간 50~79% → fast OFF (주간 N% 보호)
-    #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
+    # fast 추천 뱃지 — 주간·세션·토큰 모두 반영 (2026-10-26 사용자 재지시 "fast on 인데 세션 74%")
+    # ★기준 (2026-10-26 roll-forward · 과거 a6e4c83 번복 사유: 세션 74% 에서 ON 이 체감상 틀림):
+    #   토큰 ≥95%  → [!!] /clear 권장 (작업 끝났으면 즉시)
+    #   토큰 ≥80%  → [!]  /clear 권장 (compact 임박)
+    #   주간 ≥80%  → [!!] fast OFF (주간 budget)
+    #   세션 ≥70%  → fast OFF (세션 quota 임박)   ← 2026-10-26 추가
+    #   주간 ≥50%  → fast OFF (주간 보호)
     #   그 외       → fast ON
-    # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
+    # 세션 % 포함 사유: reset 기다리는 게 실전에서 사용자 체감상 "낭비" · OFF 로 reset 시간 벌기
     _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
-    fast_badge = ""  # 2026-10-16 사용자 지시 — fast·/clear 표시는 상태 줄이 아니라 토큰 줄 옆 (기준은 동결 · 위치만)
+    fast_badge = ""
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
+        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _tp >= 95:
             fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
@@ -1225,6 +1227,8 @@ def extra_gauges(cwd, data=None):
             fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
         elif _wp >= 80:
             fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+        elif _sp >= 70:
+            fast_badge = (f"{_YEL}fast OFF (세션 {_sp:.0f}% quota 임박){_RST}")
         elif _wp >= 50:
             fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:

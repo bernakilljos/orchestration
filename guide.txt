@@ -2138,3 +2138,7 @@
 ## sync-to-team.sh defect fix (--delete-after·/MIR 제거 → additive · set -e 트립 fix · 2026-10-26)
 ## CLAUDE.md auto-stats bump (2026-10-26)
 ## defect #2+#3+#5 fix (inject_experience strict 격리·[검증완료] 명시 + verify-improvement 방향·metric 일치·pre=0 가드 · 2026-10-26)
+
+## 2026-10-26 fast 룰 세션 % 반영
+사용자 지시: "fast on 인데 세션 74%" + "토큰은 상관없다 (fast 와)" + "토큰은 compact 안내용으로 /clear 유지".
+룰: 주간 ≥80 OFF · 세션 ≥70 OFF (신규) · 주간 ≥50 OFF · 토큰 ≥80/95 /clear 안내 (유지 · fast 와 분리). 과거 a6e4c83 번복.
