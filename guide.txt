@@ -2183,3 +2183,5 @@ d4e6603 revert 전체 X · CJK -1 보정 부분만 제거. 사용자 render 가�
 ## 2026-10-26 주간 % 임계 색상 (사용자 신규 지시 · 50/80/100)
 statusline_context.py line 1204 week_gauge 포맷 수정: 50 이하 default · 50~80 yellow (33) · 80~100 red (31) · 100+ bold red (1;31). ANSI 색상 코드만 추가. 라벨·값·구분자·레이아웃 무관.
 : 주간 % 임계 색상 (50/80/100 · 사용자 지시))
+## 2026-10-26 statusline DRIFT 2px 편차 fix (ANSI bg 진단 측정 기반)
+ANSI 배경색 진단으로 토큰 X=495.5 vs DRIFT X=497.5 (2px 차이) 측정. LABEL_WIDTH[DRIFT] 8→9 (nbsp pad -1) → DRIFT │ 1 cell 왼쪽 이동. 다른 라벨·운영 코드 X. 측정 기반 단일 가설 fix.
