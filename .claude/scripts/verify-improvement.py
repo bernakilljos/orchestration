@@ -30,54 +30,77 @@ DB = os.path.join(ROOT, ".claude", "state", "orca.db")
 def cmd_start(args):
     rule_id = args[0]
     metric = _flag(args, "--metric", "unknown")
+    direction = _flag(args, "--direction", "descending")  # defect #5 fix 2026-10-26
+    if direction not in ("ascending", "descending"):
+        print(f"[ERR] --direction 는 ascending|descending (지표가 올라야 좋은지 내려야 좋은지)", file=sys.stderr)
+        sys.exit(2)
     value = float(_flag(args, "--value", "0") or 0)
     sample = int(_flag(args, "--sample", "0") or 0)
     plan = _flag(args, "--plan", "")
     cause = _flag(args, "--cause", "")
     now = datetime.now().isoformat(timespec="seconds")
+    # metric + direction 을 problem_summary 에 함께 저장 (스키마 변경 없이 식별)
+    summary = f"metric={metric}|direction={direction}|측정 전"
     with sqlite3.connect(DB) as c:
         cur = c.execute(
             "INSERT INTO recurrence_improvements "
             "(rule_id, problem_summary, root_cause, improvement_plan, "
             " pre_metric, pre_sample_size, pre_measured_at, status, ts_created, ts_updated) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, 'OBSERVING', ?, ?)",
-            (rule_id, f"{metric} 측정 전", cause, plan, value, sample, now, now, now)
+            (rule_id, summary, cause, plan, value, sample, now, now, now)
         )
         imp_id = cur.lastrowid
-    print(f"[OK] improvement #{imp_id} started · {rule_id} · {metric}={value} (n={sample}) · OBSERVING")
+    print(f"[OK] improvement #{imp_id} started · {rule_id} · {metric}={value} (n={sample}) · dir={direction} · OBSERVING")
 
 
 def cmd_finish(args):
     imp_id = int(args[0])
     value = float(_flag(args, "--value", "0") or 0)
     sample = int(_flag(args, "--sample", "0") or 0)
+    finish_metric = _flag(args, "--metric", "")  # defect #5: metric 일치 확인
     now = datetime.now().isoformat(timespec="seconds")
     with sqlite3.connect(DB) as c:
         row = c.execute(
-            "SELECT pre_metric, rule_id FROM recurrence_improvements WHERE improvement_id=?",
+            "SELECT pre_metric, rule_id, pre_sample_size, problem_summary FROM recurrence_improvements WHERE improvement_id=?",
             (imp_id,)
         ).fetchone()
         if not row:
             print(f"[ERR] improvement #{imp_id} 없음", file=sys.stderr)
             sys.exit(1)
-        pre, rule_id = row
+        pre, rule_id, pre_sample, summary = row
         pre = pre or 0
-        improved = value < pre  # 지표가 낮을수록 좋음 (재발률·오류 등)
-        delta = pre - value
-        pct_change = (delta / pre * 100) if pre else 0
-        # 사용자 명시 2026-10-19: 표본 크기 고려 · VERIFIED 는 sample>=5 AND pct>=10 AND pre-post sample 조건
-        pre_sample = c.execute(
-            "SELECT pre_sample_size FROM recurrence_improvements WHERE improvement_id=?", (imp_id,)
-        ).fetchone()[0] or 0
-        sufficient_sample = sample >= 5 and pre_sample >= 5
-        if improved and abs(pct_change) >= 10 and sufficient_sample:
-            status = "VERIFIED"
-        elif value >= pre:
-            status = "REJECTED"
-        elif improved and not sufficient_sample:
-            status = "OBSERVING"  # 표본 부족 → UNVERIFIED
+        pre_sample = pre_sample or 0
+        # defect #5 fix: metric name + direction 파싱
+        start_metric = "unknown"
+        direction = "descending"
+        if summary and "|" in summary:
+            for part in summary.split("|"):
+                if part.startswith("metric="):
+                    start_metric = part[7:]
+                elif part.startswith("direction="):
+                    direction = part[10:]
+        # metric 일치 확인
+        if finish_metric and finish_metric != start_metric:
+            print(f"[ERR] metric 불일치 · start='{start_metric}' finish='{finish_metric}' — 동일 metric 로 측정해야 비교 유효", file=sys.stderr)
+            sys.exit(2)
+        # 지표 방향 반영
+        if direction == "ascending":
+            improved = value > pre  # 높을수록 좋음 (coverage·pass rate·throughput)
+            delta = value - pre
         else:
-            status = "OBSERVING"
+            improved = value < pre  # 낮을수록 좋음 (재발률·오류·latency)
+            delta = pre - value
+        pct_change = (abs(delta) / pre * 100) if pre else 0
+        sufficient_sample = sample >= 5 and pre_sample >= 5
+        # defect #5 fix: pre 값 0 이면 비교 무의미 · VERIFIED 금지
+        if pre <= 0:
+            status = "OBSERVING"  # 기준값 없음 · 비교 불가
+        elif improved and pct_change >= 10 and sufficient_sample:
+            status = "VERIFIED"
+        elif not improved:
+            status = "REJECTED"
+        else:
+            status = "OBSERVING"  # 개선됐으나 표본·크기 부족
         verified = 1 if status == "VERIFIED" else 0
         c.execute(
             "UPDATE recurrence_improvements "
