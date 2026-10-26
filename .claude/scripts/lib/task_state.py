@@ -22,27 +22,33 @@ DB = ROOT / ".claude" / "state" / "orca.db"
 
 
 def update(task_id: str, status: str, worker_id: str = "") -> bool:
+    """Returns True if row affected, False if no-op or error.
+    2026-10-26 CAS: locked 는 pending 상태에서만 성공 (race condition 방지)."""
     if not DB.exists() or not task_id:
         return False
     now = int(time.time())
     try:
         with sqlite3.connect(str(DB)) as c:
             if status == "locked":
-                c.execute(
-                    "UPDATE tasks SET status=?, worker_id=?, locked_at=? WHERE task_id=?",
+                # CAS (compare-and-swap): pending → locked 만 허용 · 이미 locked/completed 면 no-op
+                cur = c.execute(
+                    "UPDATE tasks SET status=?, worker_id=?, locked_at=? "
+                    "WHERE task_id=? AND status='pending'",
                     (status, worker_id or "unknown", now, task_id),
                 )
+                return cur.rowcount > 0
             elif status in ("completed", "failed"):
-                c.execute(
+                cur = c.execute(
                     "UPDATE tasks SET status=?, completed_at=? WHERE task_id=?",
                     (status, now, task_id),
                 )
+                return cur.rowcount > 0
             else:
-                c.execute(
+                cur = c.execute(
                     "UPDATE tasks SET status=? WHERE task_id=?",
                     (status, task_id),
                 )
-        return True
+                return cur.rowcount > 0
     except Exception:
         return False
 
