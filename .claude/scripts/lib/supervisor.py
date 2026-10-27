@@ -305,6 +305,161 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
     return None
 
 
+# 2026-10-27 실 구현 — decompose + execute_goal
+# 사용자 지시 "P1 작업 RUNNING 유지만 하지 말고 실제 실행 자동화 완성"
+
+import re as _re
+
+# 허용 명령 whitelist (사용자 지시 "임의 명령 실행 금지 · 승인 우회 금지")
+_ALLOWED_CMD_PREFIXES = (
+    "python .claude/scripts/",
+    "python -X utf8 .claude/scripts/",
+    "python -m pytest",
+    "bash .claude/hooks/",
+    "bash .claude/scripts/",
+    "git status", "git log", "git diff", "git branch",
+    "ls ", "find .claude", "grep ",
+    "echo ",
+    "cat .claude/",
+)
+
+def _is_allowed_cmd(cmd: str) -> bool:
+    s = cmd.strip()
+    for pfx in _ALLOWED_CMD_PREFIXES:
+        if s.startswith(pfx):
+            return True
+    return False
+
+
+def _parse_markers(description: str) -> list:
+    """description 에서 [CMD: ...] [VERIFY: ...] 마커 추출.
+    각 CMD 마커는 하나의 task · 바로 뒤 VERIFY 가 그 task 의 검증 명령.
+    형식 예:
+        [CMD: python .claude/scripts/foo.py]
+        [VERIFY: python -m pytest tests/foo_test.py]
+    """
+    tasks = []
+    pattern = _re.compile(r"\[CMD:\s*([^\]]+)\](?:\s*\[VERIFY:\s*([^\]]+)\])?")
+    for m in pattern.finditer(description):
+        cmd = (m.group(1) or "").strip()
+        verify = (m.group(2) or "").strip() or None
+        if cmd:
+            tasks.append({"cmd": cmd, "verify": verify})
+    return tasks
+
+
+def decompose_goal(goal_id: int) -> dict:
+    """description 파싱 → tasks·goal_tasks 등록. 실 구현 (stub 아님).
+    description 에 [CMD:...] 마커 없으면 분해 불가 → NO_MARKERS 반환."""
+    ensure_schema()
+    g = show_goal(goal_id)
+    if not g:
+        return {"goal_id": goal_id, "error": "goal_not_found"}
+    desc = g.get("description") or ""
+    task_specs = _parse_markers(desc)
+    if not task_specs:
+        return {"goal_id": goal_id, "tasks_registered": 0,
+                "note": "NO_MARKERS", "hint": "goal description 에 [CMD:...] 마커 필요"}
+
+    import json as _json
+    now = int(time.time())
+    registered = []
+    with sqlite3.connect(str(DB)) as c:
+        for seq, spec in enumerate(task_specs):
+            task_id = f"g{goal_id}-t{seq}"
+            # 기존 등록 skip (idempotent)
+            exist = c.execute("SELECT task_id FROM tasks WHERE task_id=?", (task_id,)).fetchone()
+            if exist:
+                continue
+            task_file = _json.dumps(spec, ensure_ascii=False)
+            try:
+                c.execute(
+                    "INSERT INTO tasks (task_id, task_file, status, created_at, retry_count) "
+                    "VALUES (?, ?, 'pending', ?, 0)",
+                    (task_id, task_file, now)
+                )
+                c.execute(
+                    "INSERT INTO goal_tasks (goal_id, task_id, sequence) VALUES (?, ?, ?)",
+                    (goal_id, task_id, seq)
+                )
+                registered.append({"task_id": task_id, "cmd": spec["cmd"][:80],
+                                   "verify": (spec.get("verify") or "")[:80],
+                                   "allowed": _is_allowed_cmd(spec["cmd"])})
+            except sqlite3.IntegrityError as e:
+                registered.append({"task_id": task_id, "error": str(e)[:100]})
+    return {"goal_id": goal_id, "tasks_registered": len(registered), "tasks": registered}
+
+
+def execute_goal(goal_id: int) -> dict:
+    """goal_tasks 조회 → tasks (JSON) 에서 cmd 추출 → runner.run → verify.
+    사용자 지시 5 "허용된 명령 범위 내에서만" · _is_allowed_cmd 체크 필수.
+    반환: {goal_id, executed, verified, failed, skipped_disallowed, details}."""
+    ensure_schema()
+    import json as _json
+    import importlib.util
+    runner_path = ROOT / ".claude" / "scripts" / "lib" / "runner.py"
+    if not runner_path.exists():
+        return {"goal_id": goal_id, "error": "runner_not_found"}
+    spec = importlib.util.spec_from_file_location("_runner", runner_path)
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+
+    results = {"goal_id": goal_id, "executed": 0, "verified": 0, "failed": 0,
+               "skipped_disallowed": 0, "details": []}
+    with sqlite3.connect(str(DB)) as c:
+        rows = c.execute(
+            "SELECT t.task_id, t.task_file, t.status FROM tasks t "
+            "JOIN goal_tasks gt ON gt.task_id = t.task_id "
+            "WHERE gt.goal_id = ? AND t.status NOT IN ('completed') "
+            "ORDER BY gt.sequence",
+            (goal_id,)
+        ).fetchall()
+    for task_id, task_file, status in rows:
+        try:
+            spec_obj = _json.loads(task_file) if task_file else {}
+        except Exception:
+            spec_obj = {}
+        cmd = spec_obj.get("cmd", "")
+        verify = spec_obj.get("verify")
+        if not cmd or not _is_allowed_cmd(cmd):
+            results["skipped_disallowed"] += 1
+            results["details"].append({"task_id": task_id, "status": "skipped_disallowed",
+                                       "cmd": cmd[:80]})
+            continue
+        # 실행 via runner (허용된 명령만 · shell=True 자동)
+        r = runner.run(cmd, task_id=task_id, worker_id="supervisor", timeout=180)
+        exit_code = r.get("exit_code", -1)
+        verified_flag = False
+        if exit_code == 0 and verify and _is_allowed_cmd(verify):
+            # verify 실행
+            vr = runner.run(verify, task_id=f"{task_id}-verify", worker_id="supervisor", timeout=120)
+            if vr.get("exit_code") == 0:
+                out = (vr.get("stdout") or "") + (vr.get("stderr") or "")
+                if "PASS" in out or "OK" in out or "passed" in out or vr.get("exit_code") == 0:
+                    verified_flag = True
+                    runner.mark_verified(r.get("exec_id"), True)
+                    runner.mark_verified(vr.get("exec_id"), True)
+        if exit_code == 0:
+            results["executed"] += 1
+            if verified_flag:
+                results["verified"] += 1
+            # tasks 상태 업데이트
+            with sqlite3.connect(str(DB)) as c:
+                c.execute("UPDATE tasks SET status=?, completed_at=? WHERE task_id=?",
+                          ("completed" if verified_flag else "executed_unverified",
+                           int(time.time()), task_id))
+        else:
+            results["failed"] += 1
+            with sqlite3.connect(str(DB)) as c:
+                c.execute("UPDATE tasks SET status='failed' WHERE task_id=?", (task_id,))
+        results["details"].append({
+            "task_id": task_id, "cmd": cmd[:80],
+            "exit_code": exit_code, "verified": verified_flag,
+            "verify_cmd": (verify or "")[:80] if verify else None
+        })
+    return results
+
+
 def status_summary() -> dict:
     """현재 goal 상태 요약 (Stop hook · statusline 용)."""
     ensure_schema()
@@ -447,9 +602,35 @@ def main(argv):
                for r in rows]
         print(json.dumps(out, ensure_ascii=False, indent=2))
         return 0
+    if cmd == "decompose-impl":
+        # 2026-10-27 실 구현 — description 안 [CMD:...] [VERIFY:...] 마커 파싱
+        # NO_MARKERS 는 exit 2 (사용자 지시 "stub 처럼 보고 금지")
+        gid = None
+        if "--goal" in argv:
+            i = argv.index("--goal")
+            if i + 1 < len(argv):
+                try:
+                    gid = int(argv[i + 1])
+                except Exception:
+                    gid = None
+        if gid is None:
+            print(json.dumps({"error": "usage: decompose-impl --goal <id>"}, ensure_ascii=False))
+            return 2
+        result = decompose_goal(gid)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 2 if result.get("note") == "NO_MARKERS" else 0
+    if cmd == "execute":
+        # 2026-10-27 실 구현 — goal_tasks → runner.run → verify (허용 명령만)
+        if len(argv) < 3:
+            print("usage: supervisor.py execute <goal_id>")
+            return 2
+        gid = int(argv[2])
+        result = execute_goal(gid)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result.get("executed", 0) > 0 else 1
     if cmd == "decompose":
-        # 2026-10-27 workflow-run.py 04-plan 지원 · stub (실 구현 미완)
-        # 사용자 지적 2026-10-27 "stub 상태에서 실제 분해 되는 것처럼 보고하지 마"
+        # 2026-10-27 호환성 유지 — 과거 workflow-run.py 가 호출 · 실 구현은 decompose-impl
+        # 사용자 지시 2026-10-27 "stub 상태에서 실제 분해 되는 것처럼 보고하지 마"
         gid = None
         if "--goal" in argv:
             i = argv.index("--goal")
