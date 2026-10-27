@@ -179,6 +179,20 @@ def run(cmd: Union[str, List[str]],
     stdout = ""
     stderr = ""
 
+    # 2026-10-27 사용자 외부 AI 지시 "Windows CMD 창 보이지 않게 강제" fix
+    # Windows: ALLOW_VISIBLE_WINDOW=1 아니면 CREATE_NO_WINDOW + STARTUPINFO SW_HIDE 강제
+    _popen_kwargs = {}
+    if os.name == "nt" and env.get("ALLOW_VISIBLE_WINDOW", "0") != "1":
+        try:
+            CREATE_NO_WINDOW = 0x08000000  # subprocess.CREATE_NO_WINDOW (Python 3.7+)
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0  # SW_HIDE
+            _popen_kwargs["creationflags"] = CREATE_NO_WINDOW
+            _popen_kwargs["startupinfo"] = si
+        except Exception:
+            pass  # 지원 안 하면 skip (non-Windows fallback)
+
     try:
         r = subprocess.run(
             cmd,
@@ -190,6 +204,7 @@ def run(cmd: Union[str, List[str]],
             timeout=timeout,
             cwd=cwd_str or None,
             env=env,
+            **_popen_kwargs,
         )
         exit_code = r.returncode
         stdout = r.stdout or ""
