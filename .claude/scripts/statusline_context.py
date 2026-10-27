@@ -1754,17 +1754,24 @@ def main() -> None:
 
     # 2026-10-27 사용자 공백 삽입 통일 · DRIFT → 기 준 룰
     # 2026-10-27 14차: 신형 이모지 (🧠·🧪·🛑·🧩·🧭) 1cell render 보상 — 라벨 공백 +1
-    LABEL_SPACED = {
-        "토큰": "토    큰", "디자인": "디 자 인", "개발": "개    발",
-        "영향": "영    향", "공통화": "공 통 화", "품질추세": "품질추세 ",
-        "요청": "요    청", "증명": "증    명", "통제": "통    제",
-        "검증": "검    증", "인프라": "인 프 라", "오류": "오    류",
-        "서브": "서    브", "이력": "이    력", "비용": "비    용",
-        "DRIFT": "기 준 룰",
-    }
+    # 2026-10-27 외부 AI 제안 수용 · 품질추세 8셀 기준 뒤 패딩 (내부 공백 삽입 폐지)
+    LABEL_RENAME = {"DRIFT": "기 준 룰"}
+    LABEL_WIDTH_CELLS = 8
+
+    def align_label(label: str) -> str:
+        """품질추세 8셀 기준 라벨 뒤 패딩. ANSI 코드 없는 순수 라벨만 받음."""
+        try:
+            from wcwidth import wcswidth as _wcs
+            w = _wcs(label)
+        except ImportError:
+            import unicodedata as _ud
+            w = sum(2 if _ud.east_asian_width(c) in ("W","F") else 1 for c in label)
+        if w is None or w < 0:
+            w = len(label)
+        return label + " " * max(0, LABEL_WIDTH_CELLS - w)
 
     def _row(label: str, body: str) -> str:
-        _lbl = LABEL_SPACED.get(label, label)
+        _lbl = align_label(LABEL_RENAME.get(label, label))
         head = f"{ICONS[label]} {_lbl}" if label in ICONS else _lbl
         # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
         _w = LABEL_WIDTH.get(label, _width(head))
@@ -1775,16 +1782,19 @@ def main() -> None:
         return "  [" + _pre + _c + "m" + head + "[0m" + " " * 0 + "[90m│[0m " + body
 
     # 2026-10-27 14차: _ICONS2 신형 이모지 (🧪·🧩·🛑·🧭) 공백 +1 보상 (LABEL_SPACED 와 동기화)
-    _ICONS2 = {"디자인": "🎨️ 디 자 인", "개발": "💻️ 개    발",
-               "영향": "🧪️ 영    향", "공통화": "🧩️ 공 통 화",
-               "품질추세": "📊️ 품질추세 ", "요청": "📋️ 요    청",
-               "증명": "🔐️ 증    명", "READY": "🎯️ READY",
-               "인프라": "📡️ 인 프 라", "오류": "🚨️ 오    류",
-               "서브": "🤖️ 서    브", "이력": "🔒️ 이    력", "통제": "🛑️ 통    제", "검증": "✅️ 검    증",
-               "DRIFT": "🧭️ 기 준 룰", "HEALTH": "💚️ HEALTH"}
+    _ICONS2_EMOJI = {"디자인": "🎨️", "개발": "💻️", "영향": "🧪️", "공통화": "🧩️",
+                     "품질추세": "📊️", "요청": "📋️", "증명": "🔐️", "READY": "🎯️",
+                     "인프라": "📡️", "오류": "🚨️", "서브": "🤖️", "이력": "🔒️",
+                     "통제": "🛑️", "검증": "✅️", "DRIFT": "🧭️", "HEALTH": "💚️"}
+    _ICONS2 = {}  # legacy · 사용 안 함
 
     def _pair(l1, b1, l2, b2):
-        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
+        _e1 = _ICONS2_EMOJI.get(l1, "")
+        _e2 = _ICONS2_EMOJI.get(l2, "")
+        _lbl1 = align_label(LABEL_RENAME.get(l1, l1))
+        _lbl2 = align_label(LABEL_RENAME.get(l2, l2))
+        _h1 = f"{_e1} {_lbl1}" if _e1 else _lbl1
+        _h2 = f"{_e2} {_lbl2}" if _e2 else _lbl2
         # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
         _w1 = LABEL_WIDTH.get(l1, _width(_h1))
         _w2 = LABEL_WIDTH.get(l2, _width(_h2))
