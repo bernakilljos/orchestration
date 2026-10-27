@@ -181,17 +181,19 @@ def advance(goal_id: int, to_status: str, reason: str = "", actor: str = "superv
     return True
 
 
-def advance_all_pending(dry_run: bool = False) -> dict:
-    """모든 미완료 goal 을 다음 상태로 자동 진행 (사용자 지시 '10개 중 2개 멈추지 마' fix).
-    PENDING → PLANNING → RUNNING → VERIFIED 자동 루프.
-    - 독립 goal 병렬 처리 (하나 FAIL 해도 나머지 계속)
-    - Timeout 초과 goal 은 FAILED
-    - REPAIR workflow 는 verify-improvement.py 자동 호출
-    - GENERAL workflow 는 PLANNING/RUNNING 전환만 (실제 agent dispatch 는 호출자 책임)
+def advance_all_pending(dry_run: bool = False, auto_execute: bool = True) -> dict:
+    """모든 미완료 goal 을 다음 상태로 자동 진행 + 실제 실행 (2026-10-27 사용자 지시 "무인 자율").
+    PENDING → PLANNING → RUNNING → (auto_execute 시 execute_goal) → VERIFIED/REPAIRING.
+    - 독립 goal 병렬 처리 · BLOCKED 는 skip · Timeout 초과 FAILED
+    - REPAIR workflow: verify-improvement.py 자동 호출
+    - GENERAL workflow + source_ref=verify: → 자동 verify
+    - GENERAL workflow + goal_tasks (decompose 완료): auto_execute 시 execute_goal 호출
+    - 중복 실행 방지: 최근 30초 내 execution 있으면 skip
     """
     ensure_schema()
     advanced = {"PENDING": 0, "PLANNING": 0, "RUNNING": 0, "REPAIRING": 0, "FAILED": 0, "BLOCKED": 0}
     details = []
+    executed_goals = []  # auto_execute 실행 goal_id 목록
     with sqlite3.connect(str(DB)) as c:
         # BLOCKED 는 외부 의존 대기 — 자동 진행 스킵 (다른 goal 은 계속)
         rows = c.execute(
@@ -213,7 +215,83 @@ def advance_all_pending(dry_run: bool = False) -> dict:
                 advance(goal_id, next_status, f"auto advance from {status}", "supervisor:auto")
             advanced[status] = advanced.get(status, 0) + 1
             details.append({"goal_id": goal_id, "from": status, "to": next_status})
-    return {"advanced": advanced, "details": details, "timestamp": now}
+            continue
+        # 2026-10-27 사용자 지시 "RUNNING 상태에서 execute 자동 호출"
+        # GENERAL workflow + RUNNING + goal_tasks 있음 + auto_execute → execute_goal
+        if status == "RUNNING" and wtype == "GENERAL" and auto_execute and not dry_run:
+            if _should_auto_execute(goal_id):
+                exec_result = execute_goal(goal_id)
+                executed_goals.append({"goal_id": goal_id, "executed": exec_result.get("executed", 0),
+                                       "verified": exec_result.get("verified", 0),
+                                       "failed": exec_result.get("failed", 0)})
+                # 전체 task 중 모두 verified → Goal VERIFIED · 일부 실패 → REPAIRING
+                total_tasks = _count_goal_tasks(goal_id)
+                all_verified = _all_tasks_verified(goal_id)
+                has_unverified = _any_task_unverified(goal_id)
+                if total_tasks > 0 and all_verified:
+                    advance(goal_id, "VERIFIED", f"auto: all {total_tasks} tasks verified", "supervisor:auto")
+                    details.append({"goal_id": goal_id, "from": "RUNNING", "to": "VERIFIED",
+                                    "tasks": total_tasks})
+                elif exec_result.get("failed", 0) > 0:
+                    advance(goal_id, "REPAIRING", f"auto: {exec_result.get('failed')} tasks failed", "supervisor:auto")
+                    details.append({"goal_id": goal_id, "from": "RUNNING", "to": "REPAIRING",
+                                    "failed_tasks": exec_result.get("failed")})
+                elif has_unverified:
+                    # cmd exit=0 but verify fail (NOT OK · Traceback 등) → REPAIRING
+                    advance(goal_id, "REPAIRING", "auto: verify failed (fail-closed)", "supervisor:auto")
+                    details.append({"goal_id": goal_id, "from": "RUNNING", "to": "REPAIRING",
+                                    "reason": "verify_fail"})
+    return {"advanced": advanced, "details": details, "executed_goals": executed_goals,
+            "timestamp": now}
+
+
+def _should_auto_execute(goal_id: int) -> bool:
+    """중복 실행 방지 — 최근 30초 내 execution 있으면 skip."""
+    import sqlite3 as _s
+    try:
+        with _s.connect(str(DB)) as c:
+            # goal_id 의 task_id 와 매치되는 최근 execution 확인
+            cutoff = int(time.time()) - 30
+            n = c.execute(
+                "SELECT COUNT(*) FROM executions e "
+                "JOIN goal_tasks gt ON gt.task_id = e.task_id "
+                "WHERE gt.goal_id = ? AND e.started_at > ?",
+                (goal_id, cutoff)
+            ).fetchone()[0]
+            return n == 0
+    except Exception:
+        return False
+
+
+def _count_goal_tasks(goal_id: int) -> int:
+    with sqlite3.connect(str(DB)) as c:
+        return c.execute("SELECT COUNT(*) FROM goal_tasks WHERE goal_id=?", (goal_id,)).fetchone()[0]
+
+
+def _all_tasks_verified(goal_id: int) -> bool:
+    """goal 의 모든 task 가 completed 상태 (= execute_goal 에서 verified_flag=True)."""
+    with sqlite3.connect(str(DB)) as c:
+        rows = c.execute(
+            "SELECT t.status FROM tasks t "
+            "JOIN goal_tasks gt ON gt.task_id = t.task_id "
+            "WHERE gt.goal_id = ?",
+            (goal_id,)
+        ).fetchall()
+    if not rows:
+        return False
+    return all(r[0] == "completed" for r in rows)
+
+
+def _any_task_unverified(goal_id: int) -> bool:
+    """verify 실패 (executed_unverified) 또는 failed task 하나라도 있나."""
+    with sqlite3.connect(str(DB)) as c:
+        rows = c.execute(
+            "SELECT t.status FROM tasks t "
+            "JOIN goal_tasks gt ON gt.task_id = t.task_id "
+            "WHERE gt.goal_id = ?",
+            (goal_id,)
+        ).fetchall()
+    return any(r[0] in ("executed_unverified", "failed") for r in rows)
 
 
 def _next_status_hook(status: str, workflow_type: str, source_ref: str,
@@ -390,6 +468,45 @@ def decompose_goal(goal_id: int) -> dict:
     return {"goal_id": goal_id, "tasks_registered": len(registered), "tasks": registered}
 
 
+def _verify_output_passed(stdout: str, stderr: str, exit_code: int) -> bool:
+    """검증 오탐 차단 (2026-10-27 사용자 지적 "NOT OK, 0 PASS, FAIL...PASS, PASS but errors").
+    규칙:
+    1. exit_code != 0 → False
+    2. 금지 패턴 (word boundary) 매치 → False
+    3. 긍정 신호 (word boundary) 매치 → True
+    4. 아무 긍정 신호 없음 → False (불명확 = fail-closed)
+    """
+    if exit_code != 0:
+        return False
+    combined = (stdout or "") + "\n" + (stderr or "")
+    low = combined.lower()
+    # 금지 패턴 (대소문자 무관 · 반례 테스트 통과)
+    negatives = [
+        "not ok", "fail", "error", "exception", "traceback", "critical",
+        "0 passed", "0 pass", "no tests ran", "no tests collected",
+        "but errors found", "but failed", "failed:", "failures:",
+        "assertion", "aborted", "did not pass",
+    ]
+    for n in negatives:
+        if n in low:
+            return False
+    # 긍정 신호 — word boundary 로 "PASS but" 같은 단어 포함 체크 X
+    # 반드시 아래 중 하나와 매치 (whole word 또는 명시 패턴)
+    positives_re = [
+        _re.compile(r"\bPASS\b"),
+        _re.compile(r"\bOK\b"),
+        _re.compile(r"\bpassed\b"),
+        _re.compile(r"\bok\b"),
+        _re.compile(r"[1-9][0-9]*\s+(?:tests?|checks?|cases?)\s+passed"),
+        _re.compile(r"all\s+(?:tests?|checks?)\s+passed"),
+        _re.compile(r'"status"\s*:\s*"(?:verified|pass|ok|success)"', _re.I),
+    ]
+    for pat in positives_re:
+        if pat.search(combined):
+            return True
+    return False
+
+
 def execute_goal(goal_id: int) -> dict:
     """goal_tasks 조회 → tasks (JSON) 에서 cmd 추출 → runner.run → verify.
     사용자 지시 5 "허용된 명령 범위 내에서만" · _is_allowed_cmd 체크 필수.
@@ -431,14 +548,12 @@ def execute_goal(goal_id: int) -> dict:
         exit_code = r.get("exit_code", -1)
         verified_flag = False
         if exit_code == 0 and verify and _is_allowed_cmd(verify):
-            # verify 실행
+            # verify 실행 — 2026-10-27 사용자 지적 "stdout PASS 단순 포함 오탐 차단"
             vr = runner.run(verify, task_id=f"{task_id}-verify", worker_id="supervisor", timeout=120)
-            if vr.get("exit_code") == 0:
-                out = (vr.get("stdout") or "") + (vr.get("stderr") or "")
-                if "PASS" in out or "OK" in out or "passed" in out or vr.get("exit_code") == 0:
-                    verified_flag = True
-                    runner.mark_verified(r.get("exec_id"), True)
-                    runner.mark_verified(vr.get("exec_id"), True)
+            if _verify_output_passed(vr.get("stdout") or "", vr.get("stderr") or "", vr.get("exit_code", -1)):
+                verified_flag = True
+                runner.mark_verified(r.get("exec_id"), True)
+                runner.mark_verified(vr.get("exec_id"), True)
         if exit_code == 0:
             results["executed"] += 1
             if verified_flag:
