@@ -241,26 +241,68 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True) -> dic
                     advance(goal_id, "REPAIRING", "auto: verify failed (fail-closed)", "supervisor:auto")
                     details.append({"goal_id": goal_id, "from": "RUNNING", "to": "REPAIRING",
                                     "reason": "verify_fail"})
+                # claim 해제 — 다음 사이클 재사용 (실행 완료)
+                _release_claim(goal_id)
+        # REPAIRING 자동 재시도 (사용자 지시 P1 "REPAIRING 전환만으로 완료 아님")
+        if status == "REPAIRING" and wtype == "GENERAL" and auto_execute and not dry_run:
+            retry, max_r = _get_retry_count(goal_id)
+            if retry < max_r:
+                # 다음 사이클: REPAIRING → RUNNING (retry_count++) · 재시도
+                advance(goal_id, "RUNNING", f"auto repair retry {retry+1}/{max_r}", "supervisor:auto")
+                details.append({"goal_id": goal_id, "from": "REPAIRING", "to": "RUNNING",
+                                "retry": f"{retry+1}/{max_r}"})
+                # tasks 를 pending 으로 reset (재실행 가능하도록)
+                _reset_tasks_for_retry(goal_id)
+            else:
+                advance(goal_id, "FAILED", f"auto repair exhausted {retry}/{max_r}", "supervisor:auto")
+                details.append({"goal_id": goal_id, "from": "REPAIRING", "to": "FAILED",
+                                "reason": "repair_exhausted"})
     return {"advanced": advanced, "details": details, "executed_goals": executed_goals,
             "timestamp": now}
 
 
-def _should_auto_execute(goal_id: int) -> bool:
-    """중복 실행 방지 — 최근 30초 내 execution 있으면 skip."""
+def _try_claim_goal(goal_id: int, worker_id: str = "supervisor:auto", lease_s: int = 300) -> bool:
+    """원자적 claim (2026-10-27 사용자 지시 "원자적 claim · lease · 만료 복구").
+    goals 테이블에 executor_claim_by / executor_claim_at 추가 · UPDATE WHERE rowcount 로 race 방지.
+    lease_s 초과 claim 은 stale 로 간주 · 다른 워커가 take-over 가능 (만료 복구).
+    반환: True = claim 성공 · False = 이미 다른 워커가 처리 중."""
     import sqlite3 as _s
+    now = int(time.time())
+    stale_cutoff = now - lease_s
     try:
-        with _s.connect(str(DB)) as c:
-            # goal_id 의 task_id 와 매치되는 최근 execution 확인
-            cutoff = int(time.time()) - 30
-            n = c.execute(
-                "SELECT COUNT(*) FROM executions e "
-                "JOIN goal_tasks gt ON gt.task_id = e.task_id "
-                "WHERE gt.goal_id = ? AND e.started_at > ?",
-                (goal_id, cutoff)
-            ).fetchone()[0]
-            return n == 0
+        with _s.connect(str(DB), timeout=10, isolation_level="IMMEDIATE") as c:
+            # 컬럼 lazy add (idempotent)
+            cols = [r[1] for r in c.execute("PRAGMA table_info(goals)").fetchall()]
+            if "executor_claim_by" not in cols:
+                c.execute("ALTER TABLE goals ADD COLUMN executor_claim_by TEXT")
+            if "executor_claim_at" not in cols:
+                c.execute("ALTER TABLE goals ADD COLUMN executor_claim_at INTEGER DEFAULT 0")
+            # UPDATE WHERE claim 없음 또는 stale · rowcount 로 결과 확인
+            cur = c.execute(
+                "UPDATE goals SET executor_claim_by=?, executor_claim_at=? "
+                "WHERE goal_id=? AND (executor_claim_by IS NULL OR executor_claim_by='' "
+                "OR executor_claim_at < ?)",
+                (worker_id, now, goal_id, stale_cutoff)
+            )
+            return cur.rowcount == 1
     except Exception:
         return False
+
+
+def _release_claim(goal_id: int) -> None:
+    """실행 완료 후 claim 해제 (다른 워커가 다음 사이클에 재사용 가능)."""
+    import sqlite3 as _s
+    try:
+        with _s.connect(str(DB), timeout=10) as c:
+            c.execute("UPDATE goals SET executor_claim_by=NULL, executor_claim_at=0 WHERE goal_id=?",
+                      (goal_id,))
+    except Exception:
+        pass
+
+
+def _should_auto_execute(goal_id: int) -> bool:
+    """원자적 claim 시도 · 성공 시 True (실제 실행 가능) · 실패 시 다른 워커 처리 중."""
+    return _try_claim_goal(goal_id)
 
 
 def _count_goal_tasks(goal_id: int) -> int:
@@ -292,6 +334,24 @@ def _any_task_unverified(goal_id: int) -> bool:
             (goal_id,)
         ).fetchall()
     return any(r[0] in ("executed_unverified", "failed") for r in rows)
+
+
+def _get_retry_count(goal_id: int) -> tuple:
+    """(retry_count, max_retry) 반환."""
+    with sqlite3.connect(str(DB)) as c:
+        row = c.execute("SELECT retry_count, max_retry FROM goals WHERE goal_id=?",
+                        (goal_id,)).fetchone()
+    return (row[0] or 0, row[1] or 3) if row else (0, 3)
+
+
+def _reset_tasks_for_retry(goal_id: int) -> None:
+    """repair retry 시 goal 의 task 들을 pending 으로 reset."""
+    with sqlite3.connect(str(DB)) as c:
+        c.execute(
+            "UPDATE tasks SET status='pending', completed_at=NULL "
+            "WHERE task_id IN (SELECT task_id FROM goal_tasks WHERE goal_id=?)",
+            (goal_id,)
+        )
 
 
 def _next_status_hook(status: str, workflow_type: str, source_ref: str,
@@ -468,43 +528,64 @@ def decompose_goal(goal_id: int) -> dict:
     return {"goal_id": goal_id, "tasks_registered": len(registered), "tasks": registered}
 
 
-def _verify_output_passed(stdout: str, stderr: str, exit_code: int) -> bool:
-    """검증 오탐 차단 (2026-10-27 사용자 지적 "NOT OK, 0 PASS, FAIL...PASS, PASS but errors").
+def _verify_output_passed(stdout: str, stderr: str, exit_code: int,
+                          evidence_path: str = "", evidence_assert: str = "") -> bool:
+    """검증 오탐 차단 — 종료코드 + 구조화 패턴 + 증거 파일 (2026-10-27 사용자 지시 강화).
     규칙:
     1. exit_code != 0 → False
-    2. 금지 패턴 (word boundary) 매치 → False
-    3. 긍정 신호 (word boundary) 매치 → True
-    4. 아무 긍정 신호 없음 → False (불명확 = fail-closed)
+    2. 금지 패턴 매치 → False (fail-closed)
+    3. 긍정 신호 매치 → 다음 단계 (구조화 검증)
+    4. evidence_path 지정 시 → 파일 존재 + assert 매치 필수
+    5. 긍정 신호 없음 → False (불명확 = fail-closed)
     """
     if exit_code != 0:
         return False
     combined = (stdout or "") + "\n" + (stderr or "")
     low = combined.lower()
-    # 금지 패턴 (대소문자 무관 · 반례 테스트 통과)
-    negatives = [
-        "not ok", "fail", "error", "exception", "traceback", "critical",
-        "0 passed", "0 pass", "no tests ran", "no tests collected",
-        "but errors found", "but failed", "failed:", "failures:",
-        "assertion", "aborted", "did not pass",
-    ]
-    for n in negatives:
-        if n in low:
+    # pytest JSON 완전 통과 early positive (negatives substring 보다 우선 · "fail" 하위 매치 회피)
+    pytest_full_pass = _re.search(
+        r'"passed"\s*:\s*[1-9][0-9]*.*?"failed"\s*:\s*0\b', combined, _re.DOTALL)
+    if pytest_full_pass:
+        has_positive = True
+    else:
+        # 금지 패턴 (혼재 반례)
+        negatives = [
+            "not ok", "fail", "error", "exception", "traceback", "critical",
+            "0 passed", "0 pass", "no tests ran", "no tests collected",
+            "but errors found", "but failed", "failed:", "failures:",
+            "assertion", "aborted", "did not pass", "errored", "errors)",
+            " errors ", "panic", "crash", "fatal",
+        ]
+        for n in negatives:
+            if n in low:
+                return False
+        # 긍정 신호 — word boundary
+        positives_re = [
+            _re.compile(r"\bPASS\b"),
+            _re.compile(r"\bOK\b"),
+            _re.compile(r"\bpassed\b"),
+            _re.compile(r"[1-9][0-9]*\s+(?:tests?|checks?|cases?)\s+passed"),
+            _re.compile(r"all\s+(?:tests?|checks?)\s+passed"),
+            _re.compile(r'"status"\s*:\s*"(?:verified|pass|ok|success)"', _re.I),
+        ]
+        has_positive = any(pat.search(combined) for pat in positives_re)
+    if not has_positive:
+        return False
+    # 증거 파일 체크 (지정 시 필수)
+    if evidence_path:
+        import os as _os
+        from pathlib import Path as _P
+        full = _P(ROOT) / evidence_path
+        if not full.exists():
             return False
-    # 긍정 신호 — word boundary 로 "PASS but" 같은 단어 포함 체크 X
-    # 반드시 아래 중 하나와 매치 (whole word 또는 명시 패턴)
-    positives_re = [
-        _re.compile(r"\bPASS\b"),
-        _re.compile(r"\bOK\b"),
-        _re.compile(r"\bpassed\b"),
-        _re.compile(r"\bok\b"),
-        _re.compile(r"[1-9][0-9]*\s+(?:tests?|checks?|cases?)\s+passed"),
-        _re.compile(r"all\s+(?:tests?|checks?)\s+passed"),
-        _re.compile(r'"status"\s*:\s*"(?:verified|pass|ok|success)"', _re.I),
-    ]
-    for pat in positives_re:
-        if pat.search(combined):
-            return True
-    return False
+        if evidence_assert:
+            try:
+                content = full.read_text(encoding="utf-8", errors="replace")
+                if evidence_assert not in content:
+                    return False
+            except Exception:
+                return False
+    return True
 
 
 def execute_goal(goal_id: int) -> dict:
