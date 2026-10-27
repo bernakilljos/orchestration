@@ -176,6 +176,81 @@ def advance(goal_id: int, to_status: str, reason: str = "", actor: str = "superv
     return True
 
 
+def advance_all_pending(dry_run: bool = False) -> dict:
+    """모든 미완료 goal 을 다음 상태로 자동 진행 (사용자 지시 '10개 중 2개 멈추지 마' fix).
+    PENDING → PLANNING → RUNNING → VERIFIED 자동 루프.
+    - 독립 goal 병렬 처리 (하나 FAIL 해도 나머지 계속)
+    - Timeout 초과 goal 은 FAILED
+    - REPAIR workflow 는 verify-improvement.py 자동 호출
+    - GENERAL workflow 는 PLANNING/RUNNING 전환만 (실제 agent dispatch 는 호출자 책임)
+    """
+    ensure_schema()
+    advanced = {"PENDING": 0, "PLANNING": 0, "RUNNING": 0, "REPAIRING": 0, "FAILED": 0}
+    details = []
+    with sqlite3.connect(str(DB)) as c:
+        rows = c.execute(
+            "SELECT goal_id, status, workflow_type, source_ref, timeout_h, created_at "
+            "FROM goals WHERE status IN ('PENDING', 'PLANNING', 'RUNNING', 'REPAIRING') "
+            "ORDER BY created_at"
+        ).fetchall()
+    now = int(time.time())
+    for goal_id, status, wtype, source_ref, timeout_h, created_at in rows:
+        if timeout_h and (now - created_at) > timeout_h * 3600:
+            if not dry_run:
+                advance(goal_id, "FAILED", f"timeout {timeout_h}h 초과", "supervisor:auto")
+            advanced["FAILED"] += 1
+            details.append({"goal_id": goal_id, "action": "FAILED(timeout)"})
+            continue
+        next_status = _next_status_hook(status, wtype, source_ref, goal_id, dry_run)
+        if next_status:
+            if not dry_run:
+                advance(goal_id, next_status, f"auto advance from {status}", "supervisor:auto")
+            advanced[status] = advanced.get(status, 0) + 1
+            details.append({"goal_id": goal_id, "from": status, "to": next_status})
+    return {"advanced": advanced, "details": details, "timestamp": now}
+
+
+def _next_status_hook(status: str, workflow_type: str, source_ref: str,
+                       goal_id: int, dry_run: bool):
+    """현재 상태에서 다음 자동 전환 상태 결정 (훅 호출)."""
+    if status == "PENDING":
+        return "PLANNING"
+    if status == "PLANNING":
+        return "RUNNING"
+    if status == "RUNNING":
+        if workflow_type == "REPAIR":
+            try:
+                import subprocess
+                vf = ROOT / ".claude" / "scripts" / "verify-improvement.py"
+                if vf.exists() and not dry_run:
+                    result = subprocess.run(
+                        [sys.executable, str(vf), "--source-ref", source_ref or ""],
+                        capture_output=True, text=True, timeout=60,
+                        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+                    )
+                    return "VERIFIED" if result.returncode == 0 else "REPAIRING"
+            except Exception:
+                pass
+            return None  # verify 못하면 수동
+        return None  # GENERAL workflow 는 수동 verify
+    if status == "REPAIRING":
+        return "RUNNING"
+    return None
+
+
+def status_summary() -> dict:
+    """현재 goal 상태 요약 (Stop hook · statusline 용)."""
+    ensure_schema()
+    with sqlite3.connect(str(DB)) as c:
+        rows = c.execute("SELECT status, COUNT(*) FROM goals GROUP BY status").fetchall()
+    s = {state: 0 for state in VALID_STATES}
+    for status, cnt in rows:
+        s[status] = cnt
+    s["active"] = s["PENDING"] + s["PLANNING"] + s["RUNNING"] + s["REPAIRING"]
+    s["complete"] = s["VERIFIED"] + s["FAILED"]
+    return s
+
+
 def list_goals(status_filter: str = "") -> list:
     ensure_schema()
     with sqlite3.connect(str(DB)) as c:
@@ -273,6 +348,14 @@ def main(argv):
             print("usage: supervisor.py show <goal_id>")
             return 2
         print(json.dumps(show_goal(int(argv[2])), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "advance-all":
+        dry = "--dry" in argv
+        result = advance_all_pending(dry_run=dry)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "summary":
+        print(json.dumps(status_summary(), ensure_ascii=False, indent=2))
         return 0
     print(f"unknown cmd: {cmd}")
     return 2

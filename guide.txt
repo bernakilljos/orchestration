@@ -512,6 +512,8 @@
     statusline 좌측 │ FROZEN (1027 5차)      사용자 "이제 맞자나 · 11줄 왼쪽 | 동결 · 서브는 미검증 제외" → operational-freeze.md § statusline 좌측 │ 정렬 FROZEN 추가 · memory feedback_statusline_frozen_1027.md 등재 · 10/11 라인 LW FROZEN · 서브만 조정 가능 · 재조정 금지 (wcwidth 이론 X · 자동 개선 X)
     statusline 6차 재조정 (1027)             사용자 명시 지시 "토큰 우측 1 · 디자인 1.5 · 품질추세 2 · 통제 1 · 증명 1 · DRIFT 0.5 · 다 우측" (반올림 up) → LW: 토큰 6·디자인 7·품질추세 9·통제 6·증명 6·DRIFT 7 (동결 해제 조건 "명시 지시" 매치)
     statusline 7차 재조정 (1027)             사용자 명시 "DRIFT 좌1 · 통제 좌1 · 증명 좌1 · 품질추세 좌2 · 디자인 좌2" → LW +N (pad -N · │ 좌측 이동) · 디자인 9·품질추세 11·통제 7·증명 7·DRIFT 8 (토큰 6 유지)
+    statusline 8차 대폭 (1027)               사용자 "이게 왜 갑자기 틀어졌지" · 환경 변화 추정 · 전 라인 좌측 이동 · LW: 토큰 11·디자인 11·영향 9·품질추세 13·통제 10·증명 10·인프라 13·서브 11·이력 11·DRIFT 11·비용 11
+    supervisor.advance_all_pending (1027)    사용자 외부 AI 지시 "10개 중 2개 멈추지 마 · supervisor_runtime 미완성 fix" → supervisor.py 에 advance_all_pending() + _next_status_hook() + status_summary() + CLI (advance-all · summary) 추가 · stop-six-guards.sh Guard 7 (Supervisor Advance) 추가 · PENDING→PLANNING→RUNNING 자동 전환 · REPAIR workflow 는 verify-improvement.py 자동 호출 · timeout 초과 FAILED · 독립 goal 병렬 (하나 FAIL 다른 goal 계속)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)

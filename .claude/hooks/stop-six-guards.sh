@@ -52,6 +52,16 @@ if [ -n "$GOLDEN_RESULT" ] && [ "$GOLDEN_PASS" != "$GOLDEN_TOTAL" ]; then
   fi
 fi
 
+# 7. Supervisor Guard — 미완료 goal 자동 advance (2026-10-27 사용자 "10개 중 2개 멈추지 마" fix)
+# supervisor.advance_all_pending() 호출 · PENDING→PLANNING→RUNNING 자동 진행 · 결과 로그만 (block 안 함)
+SUP_OUT=$("$PY" -X utf8 "$ROOT/.claude/scripts/lib/supervisor.py" advance-all 2>/dev/null || echo "")
+if [ -n "$SUP_OUT" ]; then
+  SUP_ADV=$(echo "$SUP_OUT" | grep -oE '"PENDING":[[:space:]]*[1-9][0-9]*|"PLANNING":[[:space:]]*[1-9][0-9]*|"RUNNING":[[:space:]]*[1-9][0-9]*' | head -1 || echo "")
+  if [ -n "$SUP_ADV" ]; then
+    echo "[six-guards] Supervisor: $SUP_ADV goal 자동 전환" >&2
+  fi
+fi
+
 # 4·5·6: warn-only — 참고용
 
 if [ "$FAIL_COUNT" -gt 0 ]; then
