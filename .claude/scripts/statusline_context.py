@@ -1727,11 +1727,11 @@ def main() -> None:
     #   wcwidth 기준 복원: emoji 2 + sp 1 + CJK 2자(4) = 7 (토큰·영향 등) · CJK 3자(6) = 9 (디자인·공통화·인프라) · CJK 4자(8) = 11 (품질추세) · ASCII 라벨 (READY 8·DRIFT 8·HEALTH 9) 유지.
     # 2026-10-26 사용자 "빨리 | 줄 정렬" — CJK -1 보정 완전 제거 (주석과 정합).
     #   wcwidth 그대로: emoji 2 + sp 1 + CJK 2자(4)=7 · 3자(6)=9 · 4자(8)=11 · ASCII (DRIFT 5자+emoji 2+sp 1=8 · HEALTH 6자+3=9 · READY 5자+3=8)
-    # 2026-10-27 10차: 품질추세 좌1 (pad 1 최소) · 통제·증명 우0.5 (LW -1)
+    # 2026-10-27 11차: DRIFT 우0.2 (반올림 0) · 증명 좌1 · 통제 좌1 (LW +1)
     LABEL_WIDTH = {
         "토큰": 11, "디자인": 13, "개발": 7, "품질추세": 16,
         "요청": 7, "영향": 11, "공통화": 9, "인프라": 13,
-        "오류": 7, "READY": 8, "증명": 10, "통제": 10,
+        "오류": 7, "READY": 8, "증명": 11, "통제": 11,
         "검증": 7, "서브": 11, "이력": 11, "비용": 11,
         "DRIFT": 12, "HEALTH": 9,
     }
@@ -1865,7 +1865,8 @@ def main() -> None:
         out.append(_row("서브", _agent_lines[0]))
         for extra in _agent_lines[1:]:
             # continuation 라인 (라벨 공백 + │ + 내용)
-            out.append("                [90m│[0m " + extra if extra else "")
+            # 2026-10-27 continuation │ col 18 통일 (CHA + 17 공백)
+            out.append("                 [18G[90m│[0m " + extra if extra else "")
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
