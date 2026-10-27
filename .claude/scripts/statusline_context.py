@@ -1889,10 +1889,12 @@ def main() -> None:
     _agent_lines = _agents.split("\n") if _agents else [""]
     if _agent_lines and _agent_lines[0]:
         out.append(_row("서브", _agent_lines[0]))
+        # 2026-10-27 사용자 명시 — continuation 보조 행 정렬 수정 (서브 FREEZE 대상 아님 · 보조 행만)
+        # LABEL_WIDTH["서브"]=11 재사용 (하드코딩 X · _row 와 pipe col 매칭)
+        _sub_lw = LABEL_WIDTH.get("서브", 11)
         for extra in _agent_lines[1:]:
-            # continuation 라인 (라벨 공백 + │ + 내용)
-            # 2026-10-27 continuation │ col 18 통일 (CHA + 17 공백)
-            out.append("             [90m│[0m " + extra if extra else "")
+            if extra:
+                out.append("  " + " " * _sub_lw + "[90m│[0m " + extra)
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))

@@ -19,7 +19,7 @@ steps:
   - id: register_goal
     desc: supervisor.db.goals 에 등록
     script: .claude/scripts/lib/supervisor.py
-    args: ["add-goal", "--prompt", "{user_prompt}", "--session", "{session_id}"]
+    args: ["create", "--prompt", "{user_prompt}", "--session", "{session_id}"]
     outputs: [goal_id]
 
 outputs:

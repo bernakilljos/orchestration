@@ -357,6 +357,20 @@ def main(argv):
     if cmd == "summary":
         print(json.dumps(status_summary(), ensure_ascii=False, indent=2))
         return 0
+    if cmd == "decompose":
+        # 2026-10-27 workflow-run.py 04-plan 지원 · stub (다음 세션 실 구현)
+        gid = None
+        if "--goal" in argv:
+            i = argv.index("--goal")
+            if i + 1 < len(argv):
+                try:
+                    gid = int(argv[i + 1])
+                except Exception:
+                    gid = None
+        goal = show_goal(gid) if gid else {}
+        tasks = [{"id": 1, "desc": "(stub) decompose placeholder — Request Ledger R items will be mapped here"}]
+        print(json.dumps({"goal_id": gid, "goal": goal, "tasks": tasks, "note": "stub"}, ensure_ascii=False, indent=2))
+        return 0
     print(f"unknown cmd: {cmd}")
     return 2
 
