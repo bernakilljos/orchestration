@@ -1,0 +1,42 @@
+name: plan
+step: 4
+trigger: after_research
+description: Task 분해 + 라우팅 결정 (execution-contract § 7 상황 적응형)
+
+inputs:
+  - name: goal_id
+  - name: research_notes
+  - name: recommended_stack
+
+steps:
+  - id: decompose
+    desc: Request Ledger 각 R 을 세부 Task 로 분해
+    script: .claude/scripts/supervisor.py
+    args: ["decompose", "--goal", "{goal_id}"]
+    outputs: [tasks]
+  - id: classify_tasks
+    desc: 규모·의존성·쓰기충돌·복잡도·비용 5축 평가
+    script: .claude/scripts/classify-task.py
+    for_each: "{tasks}"
+    outputs: [classification]
+  - id: route
+    desc: Claude 직접 · 병렬 subagent · worktree · Codex · 순차 결정
+    script: .claude/scripts/route.py
+    args: ["decide", "--tasks", "{tasks}", "--class", "{classification}"]
+    outputs: [routing]
+  - id: scope_lock
+    desc: 범위 lock (execution-contract § 3)
+    script: .claude/scripts/scope-lock.py
+    args: ["activate", "--files", "{routing.target_files}"]
+
+outputs:
+  - plan: markdown
+  - routing: object
+  - tasks: array
+
+next_chain: 05-execute
+on_failure: 07-repair
+
+notes:
+  - execution-contract § 7 상황 적응형 매트릭스 SoT
+  - Change Budget (NEW ≤ 2 · CHANGE ≤ 5 · REMOVE 무제한) 확인

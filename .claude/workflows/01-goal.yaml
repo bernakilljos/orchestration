@@ -1,0 +1,35 @@
+name: goal
+step: 1
+trigger: UserPromptSubmit
+description: 사용자 목표를 Supervisor goal 테이블에 등록
+
+inputs:
+  - name: user_prompt
+    type: string
+    required: true
+  - name: session_id
+    type: string
+    required: true
+
+steps:
+  - id: parse_requests
+    desc: Request Ledger 로 N개 request 추출
+    script: .claude/scripts/request-ledger.py
+    args: ["parse", "{user_prompt}"]
+  - id: register_goal
+    desc: supervisor.db.goals 에 등록
+    script: .claude/scripts/supervisor.py
+    args: ["add-goal", "--prompt", "{user_prompt}", "--session", "{session_id}"]
+    outputs: [goal_id]
+
+outputs:
+  - goal_id: int
+  - requests: array
+  - status: pending
+
+next_chain: 02-discovery
+on_failure: 08-learn
+
+notes:
+  - Request Ledger n/n 완료 전 종료 X (execution-contract § 2)
+  - 범위 lock (execution-contract § 3) — 사용자 명시 외 자동 확장 X

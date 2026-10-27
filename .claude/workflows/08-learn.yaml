@@ -1,0 +1,45 @@
+name: learn
+step: 8
+trigger: after_verify_pass or after_repair_halt
+description: solution 등재 + recurrence-tracker + memory 승격
+
+inputs:
+  - name: goal_id
+  - name: outcome       # success | partial | fail | halted
+  - name: files_modified
+  - name: diff_report
+
+steps:
+  - id: save_solution
+    desc: problem_solutions 테이블 저장 (solution-reuse.md)
+    script: .claude/scripts/save_solution.py
+    args: ["auto", "--goal", "{goal_id}"]
+    outputs: [solution_id]
+  - id: recurrence_promote
+    desc: 재발 1/2/3/5 자동 승격
+    script: .claude/scripts/recurrence-tracker.py
+    args: ["check-promote"]
+  - id: memory_candidate
+    desc: feedback·project·reference 메모리 후보 제안
+    script: .claude/scripts/memory-candidate.py
+    args: ["--goal", "{goal_id}", "--outcome", "{outcome}"]
+  - id: standing_requirement_check
+    desc: 새 Standing Requirement 추가 필요성 평가
+    script: .claude/scripts/standing-requirements.py
+    args: ["suggest", "--goal", "{goal_id}"]
+  - id: close_ledger
+    desc: Request Ledger 완료 처리
+    script: .claude/scripts/request-ledger.py
+    args: ["complete", "--goal", "{goal_id}"]
+
+outputs:
+  - learned: object
+  - memory_updated: array
+  - ledger_status: complete|partial
+
+next_chain: null         # 체인 종료
+on_failure: null          # 실패해도 종료 (learn 자체 무한 X)
+
+notes:
+  - Six Guards § 5 Quality Guard · § 4 Memory Guard 정합
+  - 성공·실패 모두 learn (operating-principles § 8 재발=품질 실패)

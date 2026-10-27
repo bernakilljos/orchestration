@@ -1,0 +1,37 @@
+name: discovery
+step: 2
+trigger: after_goal
+description: 목표에 필요한 기술·도메인·공통 컴포넌트 자동 발견
+
+inputs:
+  - name: goal_id
+    type: int
+    required: true
+
+steps:
+  - id: scan_existing
+    desc: 이미 존재하는 구현 grep (operating-principles § 4 "이미 존재하는가?")
+    script: .claude/scripts/tech_discovery.py
+    args: ["scan", "--goal", "{goal_id}"]
+    outputs: [existing_components]
+  - id: trigger_websearch
+    desc: 미등록 기술 WebSearch (R4 완료 · trigger_discovery_prompt)
+    script: .claude/scripts/tech_discovery.py
+    args: ["trigger_discovery_prompt", "--goal", "{goal_id}"]
+    outputs: [discovery_prompt]
+  - id: classify
+    desc: 발견 결과 분류 (reuse / adopt / investigate / defer)
+    script: .claude/scripts/tech_discovery.py
+    args: ["classify", "--goal", "{goal_id}"]
+
+outputs:
+  - reuse_list: array    # 재사용 가능 (바로 execute)
+  - adopt_list: array    # 신규 adopt (research 필요)
+  - gaps: array          # 미발견 (research 필요)
+
+next_chain: 03-research
+on_empty_adopt: 04-plan   # 전부 reuse 면 research skip
+
+notes:
+  - operating-principles § 1·4 (조사 후 수정 · 공통화 우선) 정합
+  - R4 완료: trigger_discovery_prompt 가 WebSearch systemMessage 반환
