@@ -504,6 +504,7 @@
     statusline │ CHA 강제 (1026 2차)         좌측 │ 에 ANSI CHA `\x1b[18G` 삽입 (VT100 Cursor Horizontal Absolute · col 18 강제 이동) · wcwidth 측정과 사용자 터미널 render 괴리 완전 우회 · padding fallback 유지 (CHA 미지원 시) · 사용자 지시 "다하고 끝내야지 · │ 아직도 그러네"
     statusline LABEL_WIDTH 1cell (1027)      사용자 터미널 CJK 1cell render 실측 확인 → LABEL_WIDTH 를 CJK 1 cell 기준 재설정 (토큰 5/디자인 6/품질추세 7/DRIFT 8 등) · pad = max(1, 15 - w) 공식 유지 · CJK 1cell 터미널에서 col 17 통일 · CHA 작동 시 col 18 통일 이중 안전 · 사용자 지시 "토큰 | 디자인 | 안맞자나"
     statusline LABEL_WIDTH 2cell 복원 (1027) 사용자 듀얼 모니터 캡처 분석 → 오른쪽 모니터 (주 작업) CJK 2cell render 확인 · LABEL_WIDTH 를 CJK 2cell 가정으로 복원 (토큰 7/디자인 9/품질추세 11/DRIFT 8) · 사용자 지시 "하나는 맞춰져 있고 하나는 안 맞춰져 있어 · 토큰 | 디자인 | 영향 | | 이선이 안맞는다고"
+    statusline VS-16 2cell 강제 (1027)       사용자 지시 "인프라·서브·이력 맞으니 기준잡고 맞춰" → 구형 이모지 (📡·🤖·🔒 1F4xx·1F5xx 2014↓) 2cell render · 신형 이모지 (🧠·🧭·🛑·🧪·🧩 Supplemental Symbols 2015+) 1cell render 폰트 차이 확정 · 각 이모지 뒤 ️ (VS-16 Emoji Presentation Selector `️`) 삽입 → 모든 이모지 2cell 강제 · ICONS·_ICONS2 둘 다 적용 · 한글 라벨 유지 · CHA `\x1b[18G` 유지 (이중 안전) · 수치상 col 17 통일 수학 보장
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
