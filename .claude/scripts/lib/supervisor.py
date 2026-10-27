@@ -238,14 +238,68 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
             except Exception:
                 pass
             return None  # verify 못하면 수동
-        # GENERAL workflow: verify_target (source_ref 에 path 지정 시) 로 자동 verify
-        # source_ref 형식 예: "verify:.claude/state/p0-rpa-done.flag"
+        # GENERAL workflow: verify_target 자동 verify (2026-10-27 사용자 지적 "오검증 우회 경로" fix)
+        # 지원 패턴 (3가지 · flag 단독은 더 이상 VERIFIED 로 자동 전환 X):
+        #   verify:cmd:<shell_command>              — exit=0 요구 · stdout 비어있지 않아야 함
+        #   verify:exit:<flag_path>:<min_lines>     — flag 파일 존재 + 최소 N 라인
+        #   verify:test:<pytest_or_script>          — pytest/script 실행 exit=0 + "PASS"·"OK" 포함
+        # 단순 flag 존재만 (verify:<path>) 은 UNSAFE_AUTOCOMPLETE 로 간주 — 로그만 남기고 전환 X
         if source_ref and source_ref.startswith("verify:"):
-            target = source_ref.split(":", 1)[1]
-            flag_path = ROOT / target
-            if flag_path.exists():
-                return "VERIFIED"
-        return None  # verify_target 없거나 flag 미존재 — 수동 대기
+            try:
+                import subprocess
+                payload = source_ref[len("verify:"):]
+                parts = payload.split(":", 1)
+                verify_type = parts[0] if len(parts) > 1 else "flag"
+                verify_arg = parts[1] if len(parts) > 1 else payload
+
+                if verify_type == "cmd":
+                    # 실행 결과로 판정 · exit=0 + stdout 길이 > 0
+                    if dry_run:
+                        return None
+                    result = subprocess.run(
+                        verify_arg, shell=True, capture_output=True, text=True, timeout=120,
+                        cwd=str(ROOT),
+                        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+                    )
+                    if result.returncode == 0 and (result.stdout or "").strip():
+                        return "VERIFIED"
+                    return "REPAIRING"  # 실패 = 재시도 trigger
+
+                if verify_type == "exit":
+                    sub = verify_arg.rsplit(":", 1)
+                    path_str = sub[0]
+                    min_lines = int(sub[1]) if len(sub) > 1 and sub[1].isdigit() else 1
+                    flag_path = ROOT / path_str
+                    if not flag_path.exists():
+                        return None  # 미생성 — 수동 대기
+                    try:
+                        n = sum(1 for _ in open(flag_path, "r", encoding="utf-8", errors="replace"))
+                    except Exception:
+                        return None
+                    if n >= min_lines:
+                        return "VERIFIED"
+                    return None  # 라인 부족 — 수동 대기
+
+                if verify_type == "test":
+                    if dry_run:
+                        return None
+                    cmd = f"{sys.executable} {verify_arg}" if verify_arg.endswith(".py") else verify_arg
+                    result = subprocess.run(
+                        cmd, shell=True, capture_output=True, text=True, timeout=180,
+                        cwd=str(ROOT),
+                        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+                    )
+                    out = (result.stdout or "") + (result.stderr or "")
+                    if result.returncode == 0 and ("PASS" in out or "OK" in out or "passed" in out):
+                        return "VERIFIED"
+                    return "REPAIRING"
+
+                # verify:<path> (flag 단독) — UNSAFE_AUTOCOMPLETE (사용자 지시 fix)
+                # 자동 VERIFIED 금지 · 로그만 남김 (실제 테스트 증거 요구)
+                return None  # 수동 대기
+            except Exception:
+                return None
+        return None  # verify_target 없음 — 수동 대기
     if status == "REPAIRING":
         return "RUNNING"
     return None
@@ -394,7 +448,8 @@ def main(argv):
         print(json.dumps(out, ensure_ascii=False, indent=2))
         return 0
     if cmd == "decompose":
-        # 2026-10-27 workflow-run.py 04-plan 지원 · stub (다음 세션 실 구현)
+        # 2026-10-27 workflow-run.py 04-plan 지원 · stub (실 구현 미완)
+        # 사용자 지적 2026-10-27 "stub 상태에서 실제 분해 되는 것처럼 보고하지 마"
         gid = None
         if "--goal" in argv:
             i = argv.index("--goal")
@@ -404,9 +459,17 @@ def main(argv):
                 except Exception:
                     gid = None
         goal = show_goal(gid) if gid else {}
-        tasks = [{"id": 1, "desc": "(stub) decompose placeholder — Request Ledger R items will be mapped here"}]
-        print(json.dumps({"goal_id": gid, "goal": goal, "tasks": tasks, "note": "stub"}, ensure_ascii=False, indent=2))
-        return 0
+        print(json.dumps({
+            "goal_id": gid,
+            "goal": goal,
+            "tasks": [],
+            "note": "STUB_NOT_IMPLEMENTED",
+            "warning": "decompose 는 아직 실 구현 안 됨 · 실제 task 분해 결과 아님 · 수동 등록 필요",
+            "roadmap": "P1 (3h) · roadmap in docs/ORCHESTRATION_AUDIT_2026-10-27.md § E",
+            "status": "stub",
+            "exit_code": 2  # non-zero · workflow-run 이 성공으로 오해하지 않도록
+        }, ensure_ascii=False, indent=2))
+        return 2  # stub 명시 — workflow 가 성공 처리 안 함
     print(f"unknown cmd: {cmd}")
     return 2
 
