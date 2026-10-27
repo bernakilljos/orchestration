@@ -1755,11 +1755,13 @@ def main() -> None:
     # 2026-10-27 사용자 공백 삽입 통일 · DRIFT → 기 준 룰
     # 2026-10-27 14차: 신형 이모지 (🧠·🧪·🛑·🧩·🧭) 1cell render 보상 — 라벨 공백 +1
     # 2026-10-27 외부 AI 제안 수용 · 품질추세 8셀 기준 뒤 패딩 (내부 공백 삽입 폐지)
-    LABEL_RENAME = {"DRIFT": "기 준 룰"}
+    LABEL_RENAME = {"DRIFT": "기준룰"}
     LABEL_WIDTH_CELLS = 8
+    # 2026-10-27 pixel 측정 보상 (사용자 터미널 render 변수 · 수치상 맞지만 실측 어긋남)
+    LABEL_WIDTH_OVERRIDE = {}  # 2026-10-27 revert · 사용자 토큰·디자인·영향 기준 유지
 
-    def align_label(label: str) -> str:
-        """품질추세 8셀 기준 라벨 뒤 패딩. ANSI 코드 없는 순수 라벨만 받음."""
+    def align_label(label: str, target: int = None) -> str:
+        """품질추세 8셀 기준 라벨 뒤 패딩 · target 명시 시 그 값 사용. ANSI 없는 순수 라벨만."""
         try:
             from wcwidth import wcswidth as _wcs
             w = _wcs(label)
@@ -1768,10 +1770,11 @@ def main() -> None:
             w = sum(2 if _ud.east_asian_width(c) in ("W","F") else 1 for c in label)
         if w is None or w < 0:
             w = len(label)
-        return label + " " * max(0, LABEL_WIDTH_CELLS - w)
+        t = target if target is not None else LABEL_WIDTH_CELLS
+        return label + " " * max(0, t - w)
 
     def _row(label: str, body: str) -> str:
-        _lbl = align_label(LABEL_RENAME.get(label, label))
+        _lbl = align_label(LABEL_RENAME.get(label, label), LABEL_WIDTH_OVERRIDE.get(label))
         head = f"{ICONS[label]} {_lbl}" if label in ICONS else _lbl
         # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
         _w = LABEL_WIDTH.get(label, _width(head))
@@ -1791,8 +1794,8 @@ def main() -> None:
     def _pair(l1, b1, l2, b2):
         _e1 = _ICONS2_EMOJI.get(l1, "")
         _e2 = _ICONS2_EMOJI.get(l2, "")
-        _lbl1 = align_label(LABEL_RENAME.get(l1, l1))
-        _lbl2 = align_label(LABEL_RENAME.get(l2, l2))
+        _lbl1 = align_label(LABEL_RENAME.get(l1, l1), LABEL_WIDTH_OVERRIDE.get(l1))
+        _lbl2 = align_label(LABEL_RENAME.get(l2, l2), LABEL_WIDTH_OVERRIDE.get(l2))
         _h1 = f"{_e1} {_lbl1}" if _e1 else _lbl1
         _h2 = f"{_e2} {_lbl2}" if _e2 else _lbl2
         # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
