@@ -181,19 +181,24 @@ def advance(goal_id: int, to_status: str, reason: str = "", actor: str = "superv
     return True
 
 
-def advance_all_pending(dry_run: bool = False, auto_execute: bool = True) -> dict:
+def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
+                        trigger_source: str = "") -> dict:
     """모든 미완료 goal 을 다음 상태로 자동 진행 + 실제 실행 (2026-10-27 사용자 지시 "무인 자율").
+    trigger_source (2026-10-27 사용자 지시 "실행 주체 식별"): scheduler · stop_hook · manual · ""
+      - goal source_ref 가 "scheduler_only:..." → trigger_source=scheduler 때만 처리 (격리)
+      - Hook 전체 비활성화 X · 특정 goal 만 scheduler 전용
     PENDING → PLANNING → RUNNING → (auto_execute 시 execute_goal) → VERIFIED/REPAIRING.
     - 독립 goal 병렬 처리 · BLOCKED 는 skip · Timeout 초과 FAILED
     - REPAIR workflow: verify-improvement.py 자동 호출
     - GENERAL workflow + source_ref=verify: → 자동 verify
     - GENERAL workflow + goal_tasks (decompose 완료): auto_execute 시 execute_goal 호출
-    - 중복 실행 방지: 최근 30초 내 execution 있으면 skip
+    - 중복 실행 방지: 원자적 claim (DB UPDATE WHERE rowcount)
     """
     ensure_schema()
     advanced = {"PENDING": 0, "PLANNING": 0, "RUNNING": 0, "REPAIRING": 0, "FAILED": 0, "BLOCKED": 0}
     details = []
     executed_goals = []  # auto_execute 실행 goal_id 목록
+    skipped_scheduler_only = 0  # scheduler_only goal 가 trigger != scheduler 로 skip 된 수
     with sqlite3.connect(str(DB)) as c:
         # BLOCKED 는 외부 의존 대기 — 자동 진행 스킵 (다른 goal 은 계속)
         rows = c.execute(
@@ -203,6 +208,11 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True) -> dic
         ).fetchall()
     now = int(time.time())
     for goal_id, status, wtype, source_ref, timeout_h, created_at in rows:
+        # 2026-10-27 trigger_source 격리 (사용자 지시 "실행 주체 식별 격리")
+        if source_ref and source_ref.startswith("scheduler_only:"):
+            if trigger_source != "scheduler":
+                skipped_scheduler_only += 1
+                continue
         if timeout_h and (now - created_at) > timeout_h * 3600:
             if not dry_run:
                 advance(goal_id, "FAILED", f"timeout {timeout_h}h 초과", "supervisor:auto")
@@ -258,6 +268,8 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True) -> dic
                 details.append({"goal_id": goal_id, "from": "REPAIRING", "to": "FAILED",
                                 "reason": "repair_exhausted"})
     return {"advanced": advanced, "details": details, "executed_goals": executed_goals,
+            "skipped_scheduler_only": skipped_scheduler_only,
+            "trigger_source": trigger_source or "unspecified",
             "timestamp": now}
 
 
@@ -779,7 +791,12 @@ def main(argv):
         return 0
     if cmd == "advance-all":
         dry = "--dry" in argv
-        result = advance_all_pending(dry_run=dry)
+        trigger = ""
+        if "--trigger" in argv:
+            i = argv.index("--trigger")
+            if i + 1 < len(argv):
+                trigger = argv[i + 1]
+        result = advance_all_pending(dry_run=dry, trigger_source=trigger)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     if cmd == "summary":

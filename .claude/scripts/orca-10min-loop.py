@@ -321,8 +321,9 @@ def main():
         try:
             sup_py = PROJECT_ROOT / ".claude" / "scripts" / "lib" / "supervisor.py"
             if sup_py.exists():
+                # 2026-10-27 사용자 지시 "실행 주체 식별" — --trigger scheduler
                 result = subprocess.run(
-                    [sys.executable, str(sup_py), "advance-all"],
+                    [sys.executable, str(sup_py), "advance-all", "--trigger", "scheduler"],
                     capture_output=True, text=True, timeout=120,
                     env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
                     cwd=str(PROJECT_ROOT)
