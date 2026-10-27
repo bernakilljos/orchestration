@@ -317,6 +317,23 @@ def main():
         # 3c. 멈춘 고아 python 정리 (2026-10-14 · 좀비 62개 사례)
         reap_stuck_orphans()
 
+        # 3d. Supervisor 자동 진행 (2026-10-27 · P0-2 fix) — goals DB PENDING/PLANNING/RUNNING 상태 자동 전환
+        try:
+            sup_py = PROJECT_ROOT / ".claude" / "scripts" / "lib" / "supervisor.py"
+            if sup_py.exists():
+                result = subprocess.run(
+                    [sys.executable, str(sup_py), "advance-all"],
+                    capture_output=True, text=True, timeout=120,
+                    env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+                    cwd=str(PROJECT_ROOT)
+                )
+                if result.returncode == 0:
+                    log_msg(f"supervisor advance-all: OK · {result.stdout[:200]}")
+                else:
+                    log_msg(f"supervisor advance-all FAIL: {result.stderr[:200]}", "WARN")
+        except Exception as e:
+            log_msg(f"supervisor advance-all exception: {e}", "WARN")
+
         # 3d. Idle session info (list only)
         idle = detect_idle_sessions()
         if idle:

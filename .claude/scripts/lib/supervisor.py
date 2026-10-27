@@ -31,17 +31,22 @@ from datetime import datetime
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[3])
 DB = ROOT / ".claude" / "state" / "orca.db"
 
-VALID_STATES = ("PENDING", "PLANNING", "RUNNING", "VERIFIED", "REPAIRING", "FAILED")
+VALID_STATES = ("PENDING", "PLANNING", "RUNNING", "VERIFIED", "REPAIRING", "FAILED", "BLOCKED")
 
 # 허용되는 상태 전환 (A → B)
+# BLOCKED = 외부 의존 (사용자 승인·권한·계정) 대기 · 나머지 goal 은 계속 진행
 ALLOWED_TRANSITIONS = {
-    "PENDING":   {"PLANNING", "FAILED"},
-    "PLANNING":  {"RUNNING", "FAILED"},
-    "RUNNING":   {"VERIFIED", "REPAIRING", "FAILED"},
-    "REPAIRING": {"RUNNING", "FAILED"},
+    "PENDING":   {"PLANNING", "BLOCKED", "FAILED"},
+    "PLANNING":  {"RUNNING", "BLOCKED", "FAILED"},
+    "RUNNING":   {"VERIFIED", "REPAIRING", "BLOCKED", "FAILED"},
+    "REPAIRING": {"RUNNING", "BLOCKED", "FAILED"},
+    "BLOCKED":   {"PENDING", "PLANNING", "RUNNING", "FAILED"},  # 해제 시 복귀
     "VERIFIED":  set(),  # 종결
     "FAILED":    set(),  # 종결
 }
+
+# 미완 상태 (Stop hook 이 next-actions.md 재기록 트리거)
+ACTIVE_STATES = {"PENDING", "PLANNING", "RUNNING", "REPAIRING", "BLOCKED"}
 
 
 def ensure_schema() -> None:
@@ -185,9 +190,10 @@ def advance_all_pending(dry_run: bool = False) -> dict:
     - GENERAL workflow 는 PLANNING/RUNNING 전환만 (실제 agent dispatch 는 호출자 책임)
     """
     ensure_schema()
-    advanced = {"PENDING": 0, "PLANNING": 0, "RUNNING": 0, "REPAIRING": 0, "FAILED": 0}
+    advanced = {"PENDING": 0, "PLANNING": 0, "RUNNING": 0, "REPAIRING": 0, "FAILED": 0, "BLOCKED": 0}
     details = []
     with sqlite3.connect(str(DB)) as c:
+        # BLOCKED 는 외부 의존 대기 — 자동 진행 스킵 (다른 goal 은 계속)
         rows = c.execute(
             "SELECT goal_id, status, workflow_type, source_ref, timeout_h, created_at "
             "FROM goals WHERE status IN ('PENDING', 'PLANNING', 'RUNNING', 'REPAIRING') "
@@ -232,7 +238,14 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
             except Exception:
                 pass
             return None  # verify 못하면 수동
-        return None  # GENERAL workflow 는 수동 verify
+        # GENERAL workflow: verify_target (source_ref 에 path 지정 시) 로 자동 verify
+        # source_ref 형식 예: "verify:.claude/state/p0-rpa-done.flag"
+        if source_ref and source_ref.startswith("verify:"):
+            target = source_ref.split(":", 1)[1]
+            flag_path = ROOT / target
+            if flag_path.exists():
+                return "VERIFIED"
+        return None  # verify_target 없거나 flag 미존재 — 수동 대기
     if status == "REPAIRING":
         return "RUNNING"
     return None
@@ -356,6 +369,29 @@ def main(argv):
         return 0
     if cmd == "summary":
         print(json.dumps(status_summary(), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "block":
+        if len(argv) < 4:
+            print("usage: supervisor.py block <goal_id> <reason>")
+            return 2
+        gid = int(argv[2])
+        reason = argv[3]
+        ok = advance(gid, "BLOCKED", reason)
+        print(json.dumps({"goal_id": gid, "blocked": ok, "reason": reason}, ensure_ascii=False))
+        return 0 if ok else 1
+    if cmd == "active":
+        # 미완료 goal 목록 (Stop hook · next-actions 재기록용)
+        ensure_schema()
+        with sqlite3.connect(str(DB)) as c:
+            rows = c.execute(
+                "SELECT goal_id, status, workflow_type, source_ref, substr(description,1,200), created_at "
+                "FROM goals WHERE status IN ('PENDING','PLANNING','RUNNING','REPAIRING','BLOCKED') "
+                "ORDER BY created_at"
+            ).fetchall()
+        out = [{"goal_id": r[0], "status": r[1], "workflow_type": r[2], "source_ref": r[3],
+                "description": r[4], "created": datetime.fromtimestamp(r[5]).isoformat(timespec='seconds')}
+               for r in rows]
+        print(json.dumps(out, ensure_ascii=False, indent=2))
         return 0
     if cmd == "decompose":
         # 2026-10-27 workflow-run.py 04-plan 지원 · stub (다음 세션 실 구현)
