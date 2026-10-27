@@ -518,6 +518,8 @@
     statusline 9차 조정 (1027)               사용자 "DRIFT 좌1 · 통제 좌1 · 증명 좌1 · 품질추세 좌2 · 영향 좌2 · 디자인 좌2" → LW +N · 디자인 13·품질추세 15·영향 11·통제 11·증명 11·DRIFT 12 (품질추세 pad 1 최소)
     statusline 10차 조정 (1027)              사용자 "품질추세 좌1 · 통제·증명 우0.5" → 품질추세 16 (pad 1 최소 유지) · 통제·증명 10 (LW -1 반올림 up)
     statusline 11차 + 서브 2줄 fix (1027)    사용자 "DRIFT 우0.2 (반올림 0) · 증명 좌1 · 통제 좌1 · 서브 2줄째 총 부분과 서브 | 맞춰줘" → 증명·통제 LW 11 · 서브 continuation 라인 CHA `\x1b[18G` + 17 공백 추가 (col 18 통일 · 1번째 줄과 세로 정렬)
+    statusline 12차 공백 삽입 통일 (1027)    사용자 "토    큰 | 디 자 인 | ... 공백 삽입 · 내가 얘기 안한 것도 해줘" + "DRIFT → 기 준 룰" → LABEL_SPACED dict 신설 · CJK 2자(공백 4 삽입)·3자(공백 2 삽입)·4자(그대로) → 통일 cell 폭 8 (CJK 2cell 가정) · 라벨 width 11 통일 · pad 4 · col 17 수치 일치 · DRIFT 라벨 "기 준 룰" (한글 3자) 전면 전환 · _ICONS2 (오른쪽 column) + ICONS (왼쪽) 둘 다 적용 · READY · HEALTH 는 ASCII 유지
+    statusline 13차 pad 0 (1027)             사용자 "글자 바로 공백없이 | 이게 나와" → _row·_pair 좌우 pad 모두 0 강제 (" * _pad" → " * 0") · CHA 제거 (라벨 끝 바로 │) · 라벨 width 통일 + pad 0 → 모든 라인 "라벨|" 동일 폭 수학 보장 · continuation 라인 (서브 2줄째) 13 공백 (col 14 매칭)
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)

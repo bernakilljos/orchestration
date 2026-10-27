@@ -241,6 +241,56 @@ def save_gap(project_path: str, domain_id: str, as_is: str, to_be: str,
         return cur.lastrowid or 0
 
 
+def trigger_discovery_prompt(project_path: str, max_queries: int = 5) -> Dict[str, Any]:
+    """R42 (R4) 2026-10-27 사용자 외부 AI 지시 "WebSearch 실제 연결" fix.
+
+    tech_discovery.py 는 Python · WebSearch tool 직접 호출 불가 (Claude agent 전용).
+    대신 Claude agent 가 받아서 수행할 **구조화된 WebSearch 지시 프롬프트** 생성.
+
+    흐름:
+        1. analyze_project() 로 도메인 추정
+        2. 각 도메인별 WebSearch 쿼리 N개 생성
+        3. prompt + queries dict 반환 → Claude agent 가 WebSearch 호출
+        4. 결과를 save_evidence() 로 저장
+
+    Returns:
+        {
+            "project": str,
+            "domains": [...],
+            "websearch_queries": [{"domain_id": ..., "queries": [...], "max_depth": N}],
+            "instruction": "Claude agent: 각 query 에 WebSearch 호출 후 save_evidence 저장",
+        }
+    """
+    analysis = analyze_project(project_path)
+    queries = []
+    for d in analysis.get("domains", []):
+        did = d.get("id") if isinstance(d, dict) else d
+        did = did or "unknown"
+        queries.append({
+            "domain_id": did,
+            "queries": [
+                f"{did} 최신 기술 2026",
+                f"{did} 오픈소스 top 10 github",
+                f"{did} AS-IS vs TO-BE 비교",
+                f"{did} 경쟁 제품 비교 2026",
+                f"{did} 신기능 로드맵",
+            ][:max_queries],
+            "max_depth": 2,
+        })
+    return {
+        "project": str(project_path),
+        "domains_detected": len(queries),
+        "websearch_queries": queries,
+        "instruction": (
+            "Claude agent 는 각 query 에 WebSearch tool 을 호출하고 "
+            "결과를 tech_discovery.save_evidence() 로 저장. "
+            "evidence 저장 후 coverage_audit() 로 gap 측정 · gap 발견율 ≥30% 이면 "
+            "supervisor.create_goal(workflow_type='REPAIR') 로 자동 백로그 생성."
+        ),
+        "next_step": "claude agent -> WebSearch -> save_evidence -> coverage_audit",
+    }
+
+
 def coverage_audit(run_id: int) -> Dict[str, Any]:
     """Coverage Gate: 조사가 상위 20 도메인 중 얼마나 포괄? 핵심 영역 누락?"""
     _ensure_schema()
@@ -313,6 +363,17 @@ def main(argv):
         r = analyze_project(argv[2])
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
+    if cmd == "trigger":
+        if len(argv) < 3:
+            print("usage: tech_discovery.py trigger <project_path> [--max-queries N]")
+            return 2
+        max_q = 5
+        if "--max-queries" in argv:
+            i = argv.index("--max-queries")
+            if i + 1 < len(argv):
+                max_q = int(argv[i + 1])
+        print(json.dumps(trigger_discovery_prompt(argv[2], max_q), ensure_ascii=False, indent=2))
+        return 0
     if cmd == "domain-list":
         print(json.dumps(list_domains(), ensure_ascii=False, indent=2))
         return 0

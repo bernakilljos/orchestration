@@ -1727,13 +1727,13 @@ def main() -> None:
     #   wcwidth 기준 복원: emoji 2 + sp 1 + CJK 2자(4) = 7 (토큰·영향 등) · CJK 3자(6) = 9 (디자인·공통화·인프라) · CJK 4자(8) = 11 (품질추세) · ASCII 라벨 (READY 8·DRIFT 8·HEALTH 9) 유지.
     # 2026-10-26 사용자 "빨리 | 줄 정렬" — CJK -1 보정 완전 제거 (주석과 정합).
     #   wcwidth 그대로: emoji 2 + sp 1 + CJK 2자(4)=7 · 3자(6)=9 · 4자(8)=11 · ASCII (DRIFT 5자+emoji 2+sp 1=8 · HEALTH 6자+3=9 · READY 5자+3=8)
-    # 2026-10-27 11차: DRIFT 우0.2 (반올림 0) · 증명 좌1 · 통제 좌1 (LW +1)
+    # 2026-10-27 12차 공백 삽입 통일: 모든 CJK 라벨 8 cell (emoji 2 + sp 1 + 8 = 11)
     LABEL_WIDTH = {
-        "토큰": 11, "디자인": 13, "개발": 7, "품질추세": 16,
-        "요청": 7, "영향": 11, "공통화": 9, "인프라": 13,
-        "오류": 7, "READY": 8, "증명": 11, "통제": 11,
-        "검증": 7, "서브": 11, "이력": 11, "비용": 11,
-        "DRIFT": 12, "HEALTH": 9,
+        "토큰": 11, "디자인": 11, "개발": 11, "품질추세": 11,
+        "요청": 11, "영향": 11, "공통화": 11, "인프라": 11,
+        "오류": 11, "READY": 8, "증명": 11, "통제": 11,
+        "검증": 11, "서브": 11, "이력": 11, "비용": 11,
+        "DRIFT": 11, "HEALTH": 9,
     }
 
     # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
@@ -1752,23 +1752,34 @@ def main() -> None:
             return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in plain)
 
 
+    # 2026-10-27 사용자 공백 삽입 통일 · DRIFT → 기 준 룰
+    LABEL_SPACED = {
+        "토큰": "토    큰", "디자인": "디 자 인", "개발": "개    발",
+        "영향": "영    향", "공통화": "공 통 화", "품질추세": "품질추세",
+        "요청": "요    청", "증명": "증    명", "통제": "통    제",
+        "검증": "검    증", "인프라": "인 프 라", "오류": "오    류",
+        "서브": "서    브", "이력": "이    력", "비용": "비    용",
+        "DRIFT": "기 준 룰",
+    }
+
     def _row(label: str, body: str) -> str:
-        head = f"{ICONS[label]} {label}" if label in ICONS else label
+        _lbl = LABEL_SPACED.get(label, label)
+        head = f"{ICONS[label]} {_lbl}" if label in ICONS else _lbl
         # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
         _w = LABEL_WIDTH.get(label, _width(head))
         _pad = max(1, 15 - _w)  # indent 2 + head + pad = col 17 · │ at col 18 (margin 3)
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
-        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[18G[90m│[0m " + body
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * 0 + "[90m│[0m " + body
 
-    _ICONS2 = {"디자인": "🎨️ 디자인", "개발": "💻️ 개발",
-               "영향": "🧪️ 영향", "공통화": "🧩️ 공통화",
-               "품질추세": "📊️ 품질추세", "요청": "📋️ 요청",
-               "증명": "🔐️ 증명", "READY": "🎯️ READY",
-               "인프라": "📡️ 인프라", "오류": "🚨️ 오류",
-               "서브": "🤖️ 서브", "이력": "🔒️ 이력", "통제": "🛑️ 통제", "검증": "✅️ 검증",
-               "DRIFT": "🧭️ DRIFT", "HEALTH": "💚️ HEALTH"}
+    _ICONS2 = {"디자인": "🎨️ 디 자 인", "개발": "💻️ 개    발",
+               "영향": "🧪️ 영    향", "공통화": "🧩️ 공 통 화",
+               "품질추세": "📊️ 품질추세", "요청": "📋️ 요    청",
+               "증명": "🔐️ 증    명", "READY": "🎯️ READY",
+               "인프라": "📡️ 인 프 라", "오류": "🚨️ 오    류",
+               "서브": "🤖️ 서    브", "이력": "🔒️ 이    력", "통제": "🛑️ 통    제", "검증": "✅️ 검    증",
+               "DRIFT": "🧭️ 기 준 룰", "HEALTH": "💚️ HEALTH"}
 
     def _pair(l1, b1, l2, b2):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
@@ -1781,8 +1792,8 @@ def main() -> None:
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
-        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
-                + "" + " " * max(1, 40 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * 0 + "[90m│[0m " + b1
+                + "" + " " * max(1, 40 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * 0 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
@@ -1866,7 +1877,7 @@ def main() -> None:
         for extra in _agent_lines[1:]:
             # continuation 라인 (라벨 공백 + │ + 내용)
             # 2026-10-27 continuation │ col 18 통일 (CHA + 17 공백)
-            out.append("                 [18G[90m│[0m " + extra if extra else "")
+            out.append("             [90m│[0m " + extra if extra else "")
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
