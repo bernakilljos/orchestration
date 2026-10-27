@@ -358,6 +358,16 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
                        goal_id: int, dry_run: bool):
     """현재 상태에서 다음 자동 전환 상태 결정 (훅 호출)."""
     if status == "PENDING":
+        # 2026-10-27 사용자 지시 "사람 touch 없이 자연 실행만으로 VERIFIED"
+        # PENDING → PLANNING 전환 시 CMD 마커 있으면 자동 decompose (사람 decompose-impl X)
+        if workflow_type == "GENERAL" and not dry_run:
+            try:
+                g = show_goal(goal_id)
+                desc = g.get("description") or "" if g else ""
+                if _parse_markers(desc) and _count_goal_tasks(goal_id) == 0:
+                    decompose_goal(goal_id)
+            except Exception:
+                pass
         return "PLANNING"
     if status == "PLANNING":
         return "RUNNING"
