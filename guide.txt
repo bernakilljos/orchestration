@@ -502,6 +502,7 @@
     statusline fast 뱃지                     주간·세션 % 둘 다 80↑ [!] OFF · 50↑ OFF · 토큰 80↑ OFF (세션 86% 에 ON 뜨던 것)
     statusline % 임계 색상 (1026)            토큰·세션·주간 세 지표 통일 (≤50 녹 · 50<pct≤80 노 · 80<pct<100 빨 · ≥100 bold빨) · 좌측 │ col=17 정렬 (LABEL_WIDTH CJK -1 보정 제거 · _pair _pad2 활용) · 사용자 지시 "왜 주간만 노란색이야 세션은 토큰은" + "50% 이하 녹색"
     statusline │ CHA 강제 (1026 2차)         좌측 │ 에 ANSI CHA `\x1b[18G` 삽입 (VT100 Cursor Horizontal Absolute · col 18 강제 이동) · wcwidth 측정과 사용자 터미널 render 괴리 완전 우회 · padding fallback 유지 (CHA 미지원 시) · 사용자 지시 "다하고 끝내야지 · │ 아직도 그러네"
+    statusline LABEL_WIDTH 1cell (1027)      사용자 터미널 CJK 1cell render 실측 확인 → LABEL_WIDTH 를 CJK 1 cell 기준 재설정 (토큰 5/디자인 6/품질추세 7/DRIFT 8 등) · pad = max(1, 15 - w) 공식 유지 · CJK 1cell 터미널에서 col 17 통일 · CHA 작동 시 col 18 통일 이중 안전 · 사용자 지시 "토큰 | 디자인 | 안맞자나"
     merge 비교 제외                          CLAUDE.md AUTO-STATS 한 줄 (hook 이 수시로 갱신 → 매번 갱신대상으로 잡히던 것)
     pre-commit                              grep -c 0건이면 || echo "0" 가 0 을 두 줄 출력 → 정수 비교 오류 → || true
     state_db 컬럼 보강                      CREATE IF NOT EXISTS 는 컬럼 안 더함 → PRAGMA 비교 후 ALTER (session_summary.updated_at · tasks 승인게이트 5컬럼)
