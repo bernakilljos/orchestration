@@ -412,6 +412,16 @@
             "_purpose": "룰·메모리·CLAUDE.md 변경 시 lookup-rule 인덱스 자동 rebuild"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-ping-pong.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [

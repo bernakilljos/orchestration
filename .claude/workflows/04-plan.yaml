@@ -11,7 +11,7 @@ inputs:
 steps:
   - id: decompose
     desc: Request Ledger 각 R 을 세부 Task 로 분해
-    script: .claude/scripts/supervisor.py
+    script: .claude/scripts/lib/supervisor.py
     args: ["decompose", "--goal", "{goal_id}"]
     outputs: [tasks]
   - id: classify_tasks

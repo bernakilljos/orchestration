@@ -20,7 +20,7 @@ steps:
     for_each: "{websearch.results.official_urls}"
   - id: compare
     desc: 공식 vs 우리 kit 매칭 · 성능·가격·라이선스 비교
-    script: .claude/scripts/tech_discovery.py
+    script: .claude/scripts/lib/tech_discovery.py
     args: ["compare", "--items", "{websearch.results}"]
     outputs: [comparison_table]
 
