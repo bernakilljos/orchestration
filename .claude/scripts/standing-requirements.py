@@ -86,19 +86,25 @@ def cmd_list(active_only: bool = False) -> int:
     return 0
 
 
-def _verify(r: dict) -> bool:
-    """verify_pattern 이 verify_target 안에 존재하는지."""
+def _verify(r: dict) -> "str":
+    """verify_pattern 이 verify_target 안에 존재하는지.
+
+    P0a-C: 2026-10-28 CRITICAL #3 fix.
+    기존 verify_pattern 없으면 True 자동 반환 — gate 무력화 결함.
+    이제 3-state 반환: 'PASS' / 'FAIL' / 'UNKNOWN'.
+    UNKNOWN 은 gate 에서 PASS 로 간주 X · 수동 검증 요구 flag 로 처리.
+    """
     tgt = r.get("verify_target", "")
     pat = r.get("verify_pattern", "")
     if not tgt or not pat:
-        return True  # 자동 검증 안 함 (수동 확인 전제)
+        return "UNKNOWN"  # 검증 패턴 미제공 — 자동 True X · gate 가 수동 확인 요구
     p = ROOT / tgt
     if not p.exists():
-        return False
+        return "FAIL"
     try:
-        return pat in p.read_text(encoding="utf-8", errors="ignore")
+        return "PASS" if pat in p.read_text(encoding="utf-8", errors="ignore") else "FAIL"
     except Exception:
-        return False
+        return "FAIL"
 
 
 def cmd_replay() -> int:
@@ -130,19 +136,31 @@ def cmd_gate() -> int:
     if not active:
         return 0
     failed = []
+    unknown = []
     for rid, r in active:
-        if not _verify(r):
-            failed.append((rid, r))
-        else:
+        result = _verify(r)
+        if result == "PASS":
             r["last_verified_at"] = datetime.now().isoformat(timespec="seconds")
+        elif result == "FAIL":
+            failed.append((rid, r))
+        else:  # UNKNOWN — verify_pattern 미제공 (P0a-C fix: 자동 True X)
+            unknown.append((rid, r))
     _save(data)
-    if not failed:
+    if not failed and not unknown:
         return 0
-    msg = f"[standing-req] {len(active)-len(failed)}/{len(active)} 유지 · 누락 {len(failed)}건:\n"
+    msg = f"[standing-req] {len(active)-len(failed)-len(unknown)}/{len(active)} 유지"
+    if failed:
+        msg += f" · 누락 {len(failed)}건"
+    if unknown:
+        msg += f" · 미검증 {len(unknown)}건 (verify_pattern 미제공 · 수동 확인 요구)"
+    msg += ":\n"
     for rid, r in failed[:5]:
         msg += f"  ✗ {rid}: {r['rule'][:80]}\n"
+    for rid, r in unknown[:3]:
+        msg += f"  ⏳ {rid} (UNKNOWN · verify_pattern 추가 필요): {r['rule'][:70]}\n"
     msg += "→ ACTIVE standing requirement 복원 후 완료 (Stop 차단)"
     print(msg, file=sys.stderr)
+    # FAIL 이 있거나 UNKNOWN 이 있어도 exit 2 (fail-closed)
     return 2
 
 

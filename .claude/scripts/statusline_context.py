@@ -146,8 +146,11 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """하위호환 — critical + error 합 반환 (오류 수)."""
+    """하위호환 — critical + error 합 반환 (오류 수).
+    P0a-D: 미측정 (None) 시 -1 반환 (호출자가 ⏳ 표시 결정 · 0 과 구분)."""
     r = recent_log_issues(cwd)
+    if r[0] is None or r[1] is None:
+        return -1  # 미측정 신호 (log_dir 없음)
     return r[0] + r[1]
 
 
@@ -168,7 +171,10 @@ def recent_log_issues(cwd: str):
     import collections as _co
     log_dir = os.path.join(cwd, ".claude", "logs")
     if not os.path.isdir(log_dir):
-        return 0, 0, 0, 0, ""
+        # P0a-D: 미측정 ≠ 정상 (2026-10-28 CRITICAL #4 fix · 헌장 § 9 준수)
+        # 기존 '0, 0, 0, 0, ""' 는 로그 폴더 없음을 "오류 0" 처럼 표시 → 상태 왜곡
+        # None 반환으로 호출자가 미측정 ⏳ 표시 결정 (statusline 디자인 FROZEN 유지 · 데이터 계층만 수정)
+        return None, None, None, None, "unmeasured"
     cutoff = _t.time() - 86400
     ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
     crit_re = _re.compile(r"\b(CRITICAL|FATAL)\b", _re.I)
@@ -1048,7 +1054,12 @@ def extra_gauges(cwd, data=None):
         if _cr > 0:
             tail.append(f"cache {_cr:.0f}%")
         # 최근 24h 오류 집계 — critical·error·warn·반복·최근 소스 (2026-10-16 분리)
+        # P0a-D (2026-10-28): None 반환 시 미측정 (log_dir 없음) · 하위호환 0 fallback
         _c, _e, _w, _rpt, _top = recent_log_issues(cwd)
+        _unmeasured = (_c is None)
+        if _unmeasured:
+            _c, _e, _w, _rpt = 0, 0, 0, 0
+            _top = _top or "unmeasured"
         # 아래 코드가 _c 를 cost dict 로 재할당하므로 즉시 별칭 보존
         _log_crits, _log_errs, _log_warns, _log_rpt, _log_top = _c, _e, _w, _rpt, _top
         # 하드코딩 감사 결과 (별도 캐시)

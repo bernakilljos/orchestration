@@ -135,7 +135,17 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
                 _save(data)
                 print(f"[ledger] ⚠ {rid}: implemented (evidence 미제공 — completed 보류)", file=sys.stderr)
                 return 1
-            if verification and verification.upper() != "PASS":
+            # P0a-A: verification 명시 요구 (2026-10-28 하드코딩 감사 CRITICAL #1 fix)
+            # 기존 L148 'verification or "PASS"' 자동 매핑 제거 — UNKNOWN 을 PASS 로 치환하는 결함
+            # R11·R23 거짓 완료의 근본 원인. 이제 verification 미제공 = verified (completed X)
+            if not verification:
+                r["status"] = "verified"
+                r["evidence"] = evidence[:500]
+                r["verification"] = "UNKNOWN"
+                _save(data)
+                print(f"[ledger] ⚠ {rid}: verified (verification 미제공 · UNKNOWN · completed 보류)", file=sys.stderr)
+                return 1
+            if verification.upper() != "PASS":
                 r["status"] = "verified"
                 r["evidence"] = evidence[:500]
                 r["verification"] = verification
@@ -145,7 +155,7 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
             r["status"] = "completed"
             r["completed_at"] = datetime.now().isoformat(timespec="seconds")
             r["evidence"] = evidence[:500]
-            r["verification"] = verification or "PASS"
+            r["verification"] = verification  # 명시된 PASS 값만 저장
             _save(data)
             print(f"[ledger] ✓ {rid}: {r['desc'][:60]} · evidence 확보")
             return 0

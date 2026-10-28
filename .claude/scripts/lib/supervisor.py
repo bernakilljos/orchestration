@@ -449,8 +449,10 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
                         cwd=str(ROOT),
                         env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
                     )
-                    out = (result.stdout or "") + (result.stderr or "")
-                    if result.returncode == 0 and ("PASS" in out or "OK" in out or "passed" in out):
+                    # P0a-B: substring 검증 제거 (2026-10-28 CRITICAL #2 fix)
+                    # 기존 '"PASS" in out or "OK" in out or "passed" in out' 은 혼재 반례 (FAILED but PASS) 오탐 가능
+                    # _verify_output_passed() 재사용 (word boundary + fail-closed 금지 패턴 + pytest JSON 구조 검증)
+                    if _verify_output_passed(result.stdout or "", result.stderr or "", result.returncode):
                         return "VERIFIED"
                     return "REPAIRING"
 
@@ -470,23 +472,25 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
 
 import re as _re
 
-# 허용 명령 whitelist (사용자 지시 "임의 명령 실행 금지 · 승인 우회 금지")
-_ALLOWED_CMD_PREFIXES = (
-    "python .claude/scripts/",
-    "python -X utf8 .claude/scripts/",
-    "python -m pytest",
-    "bash .claude/hooks/",
-    "bash .claude/scripts/",
-    "git status", "git log", "git diff", "git branch",
-    "ls ", "find .claude", "grep ",
-    "echo ",
-    "cat .claude/",
-    # Self-Healing fix 전용 (2026-10-28 사용자 지시)
-    "touch .claude/state/", "touch .repair-sandbox/",
-    "mkdir -p .repair-sandbox/", "mkdir -p .claude/state/",
-    "python .repair-sandbox/",
-    "cp .claude/", "cp .repair-sandbox/",
-)
+# 허용 명령 whitelist — 외부 설정 (P0a-E · 2026-10-28 하드코딩 감사 CRITICAL #5 fix)
+# 기존 하드코딩 (예시용 Self-Healing prefix 포함) → .claude/config/approved-commands.json 외부화
+# fail-closed: 파일 없거나 파싱 실패 시 빈 whitelist (모든 명령 차단)
+def _load_allowed_prefixes() -> tuple:
+    cfg = ROOT / ".claude" / "config" / "approved-commands.json"
+    if not cfg.exists():
+        return ()  # fail-closed
+    try:
+        with open(cfg, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        prefixes = data.get("allowed_prefixes", [])
+        if not isinstance(prefixes, list):
+            return ()  # fail-closed
+        return tuple(p for p in prefixes if isinstance(p, str) and p)
+    except Exception:
+        return ()  # fail-closed (파싱 오류)
+
+
+_ALLOWED_CMD_PREFIXES = _load_allowed_prefixes()
 
 def _is_allowed_cmd(cmd: str) -> bool:
     s = cmd.strip()
