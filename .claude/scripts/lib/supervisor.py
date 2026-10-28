@@ -604,47 +604,73 @@ def decompose_goal(goal_id: int) -> dict:
     return {"goal_id": goal_id, "tasks_registered": len(registered), "tasks": registered}
 
 
+# P0b H6+H7: verify-patterns.json 외부 로드 (2026-10-28 다중 프레임워크)
+# 하드코딩 긍정/부정 패턴 → .claude/config/verify-patterns.json
+# 새 프레임워크 추가 시 JSON 만 수정 · 코드 수정 X
+def _load_verify_patterns() -> dict:
+    cfg = ROOT / ".claude" / "config" / "verify-patterns.json"
+    if not cfg.exists():
+        return {"positive_patterns": [], "negative_patterns": [], "pytest_json_pass_pattern": None}
+    try:
+        with open(cfg, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        positives = []
+        for p in data.get("positive_patterns", []):
+            if isinstance(p, dict):
+                positives.append(p.get("pattern", ""))
+            elif isinstance(p, str):
+                positives.append(p)
+        return {
+            "positive_patterns": [p for p in positives if p],
+            "negative_patterns": [str(n) for n in data.get("negative_patterns", []) if n],
+            "pytest_json_pass_pattern": data.get("pytest_json_pass_pattern"),
+        }
+    except Exception:
+        return {"positive_patterns": [], "negative_patterns": [], "pytest_json_pass_pattern": None}
+
+
+_VERIFY_PATTERNS = _load_verify_patterns()
+# 컴파일 캐시 (성능)
+_POSITIVE_RE = [_re.compile(p, _re.I) for p in _VERIFY_PATTERNS["positive_patterns"]]
+_PYTEST_JSON_RE = (_re.compile(_VERIFY_PATTERNS["pytest_json_pass_pattern"], _re.DOTALL)
+                   if _VERIFY_PATTERNS.get("pytest_json_pass_pattern") else None)
+
+
 def _verify_output_passed(stdout: str, stderr: str, exit_code: int,
                           evidence_path: str = "", evidence_assert: str = "") -> bool:
-    """검증 오탐 차단 — 종료코드 + 구조화 패턴 + 증거 파일 (2026-10-27 사용자 지시 강화).
+    """검증 오탐 차단 — 종료코드 + 구조화 패턴 + 증거 파일.
+    P0b H6+H7 외부화: verify-patterns.json (다중 프레임워크 pytest·unittest·cargo·jest·mocha·xunit).
     규칙:
     1. exit_code != 0 → False
-    2. 금지 패턴 매치 → False (fail-closed)
-    3. 긍정 신호 매치 → 다음 단계 (구조화 검증)
-    4. evidence_path 지정 시 → 파일 존재 + assert 매치 필수
-    5. 긍정 신호 없음 → False (불명확 = fail-closed)
+    2. 설정 미로드 (fail-closed) → False
+    3. pytest_json 완전 통과 → early positive
+    4. 금지 패턴 매치 → False (fail-closed)
+    5. 긍정 신호 매치 → 다음 단계 (증거 파일 검증)
+    6. 긍정 신호 없음 → False (불명확 = fail-closed)
     """
     if exit_code != 0:
         return False
+    if not _POSITIVE_RE and not _VERIFY_PATTERNS["negative_patterns"]:
+        # 설정 로드 실패 → fail-closed
+        return False
     combined = (stdout or "") + "\n" + (stderr or "")
     low = combined.lower()
-    # pytest JSON 완전 통과 early positive (negatives substring 보다 우선 · "fail" 하위 매치 회피)
-    pytest_full_pass = _re.search(
-        r'"passed"\s*:\s*[1-9][0-9]*.*?"failed"\s*:\s*0\b', combined, _re.DOTALL)
+    # pytest JSON 완전 통과 early positive (negatives substring 보다 우선)
+    pytest_full_pass = _PYTEST_JSON_RE.search(combined) if _PYTEST_JSON_RE else None
     if pytest_full_pass:
         has_positive = True
     else:
-        # 금지 패턴 (혼재 반례)
-        negatives = [
-            "not ok", "fail", "error", "exception", "traceback", "critical",
-            "0 passed", "0 pass", "no tests ran", "no tests collected",
-            "but errors found", "but failed", "failed:", "failures:",
-            "assertion", "aborted", "did not pass", "errored", "errors)",
-            " errors ", "panic", "crash", "fatal",
-        ]
-        for n in negatives:
-            if n in low:
-                return False
-        # 긍정 신호 — word boundary
-        positives_re = [
-            _re.compile(r"\bPASS\b"),
-            _re.compile(r"\bOK\b"),
-            _re.compile(r"\bpassed\b"),
-            _re.compile(r"[1-9][0-9]*\s+(?:tests?|checks?|cases?)\s+passed"),
-            _re.compile(r"all\s+(?:tests?|checks?)\s+passed"),
-            _re.compile(r'"status"\s*:\s*"(?:verified|pass|ok|success)"', _re.I),
-        ]
-        has_positive = any(pat.search(combined) for pat in positives_re)
+        # 금지 패턴 (혼재 반례) — regex 매치 · case flag 는 각 패턴 안 (?i) 로 명시
+        # (대문자 FAILED strict · 소문자 "0 failed" 는 매치 X 분리)
+        for n in _VERIFY_PATTERNS["negative_patterns"]:
+            try:
+                if _re.search(n, combined):
+                    return False
+            except _re.error:
+                if n.lower() in low:
+                    return False
+        # 긍정 신호 — 프레임워크별 패턴 (word boundary 포함)
+        has_positive = any(pat.search(combined) for pat in _POSITIVE_RE)
     if not has_positive:
         return False
     # 증거 파일 체크 (지정 시 필수)

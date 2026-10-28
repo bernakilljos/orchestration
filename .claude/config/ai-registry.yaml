@@ -1,0 +1,189 @@
+# AI Registry — 중앙 모델 매트릭스 (P0b H3+H4 · 2026-10-28)
+#
+# 근거: 하드코딩 감사
+#   - H3 (route.py:231,252 fable-5 특수 분기 20% cap)
+#   - H4 (router.py:43-51 AiChoice enum (7) vs route.py:113-124 status (8) 불일치)
+#
+# 원칙:
+#   - 모델 추가·삭제 시 이 YAML 만 수정 (코드 변경 X)
+#   - 모델별 실제 한도 (Anthropic·OpenAI·Google docs 기반) · 임의 숫자 X
+#   - fable-5 등 특수 분기는 모델 자체 속성 (budget_cap_pct) 으로 표현
+#   - 가용성·능력·비용을 각각 분리 (switch 분기 금지)
+#
+# 참조:
+#   - .claude/scripts/route.py (status 체크 · _lookup_model(name))
+#   - .claude/scripts/lib/router.py (라우팅 · AiChoice ↔ provider_id)
+#   - .claude/scripts/classify-task.py (토큰 기반 분류 임계값)
+#   - docs/HARDCODING_AUDIT_2026-10-28.md (H1~H7 발견 근거)
+
+# ----- 모델 등록 -----
+models:
+  claude-opus-5-5:
+    provider: anthropic
+    tier: default
+    context_window: 1000000  # 1M (API default · surcharge 없음)
+    output_limit: 128000
+    pricing_input_per_mtok: 4.0
+    pricing_output_per_mtok: 20.0
+    pricing_cache_read: 0.20
+    availability: active
+    knowledge_cutoff: "2026-06"
+    thinking_mode: always_on
+    use_cases: [design, complex_reasoning, decision]
+
+  claude-opus-5:
+    provider: anthropic
+    tier: fallback
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 5.0
+    pricing_output_per_mtok: 25.0
+    availability: active
+    use_cases: [design, complex_reasoning]
+
+  claude-opus-4-8:
+    provider: anthropic
+    tier: cost_fallback
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 5.0
+    pricing_output_per_mtok: 25.0
+    availability: active
+
+  claude-opus-4-7:
+    provider: anthropic
+    tier: legacy
+    context_window: 1000000
+    output_limit: 128000
+    availability: active
+
+  claude-fable-5-1:
+    provider: anthropic
+    tier: mythos_class
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 10.0
+    pricing_output_per_mtok: 50.0
+    budget_cap_pct: 20  # H3 fix — 일일 budget 20% cap (fable-5 특수 분기 → 속성)
+    availability: active
+    data_retention_days: 30
+    use_cases: [mythos_class, long_running, vision_heavy]
+
+  claude-fable-5:
+    provider: anthropic
+    tier: mythos_class
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 10.0
+    pricing_output_per_mtok: 50.0
+    budget_cap_pct: 20  # H3 fix
+    availability: active
+    data_retention_days: 30
+
+  claude-mythos-5-1:
+    provider: anthropic
+    tier: access_gated
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 10.0
+    pricing_output_per_mtok: 50.0
+    budget_cap_pct: 20
+    availability: active
+    data_retention_days: 30
+
+  claude-sonnet-5-5:
+    provider: anthropic
+    tier: balanced
+    context_window: 1000000
+    output_limit: 128000
+    pricing_cache_read: 0.10
+    availability: active
+
+  claude-sonnet-5:
+    provider: anthropic
+    tier: balanced
+    context_window: 1000000
+    output_limit: 128000
+    pricing_input_per_mtok: 2.0
+    pricing_output_per_mtok: 10.0
+    availability: active
+
+  claude-sonnet-4-6:
+    provider: anthropic
+    tier: balanced
+    context_window: 1000000
+    availability: active
+
+  claude-haiku-5-5:
+    provider: anthropic
+    tier: fast_verify
+    context_window: 1000000
+    output_limit: 128000
+    availability: active
+    thinking_mode: effort
+
+  claude-haiku-4-5:
+    provider: anthropic
+    tier: fast_verify
+    context_window: 200000
+    availability: active
+
+  codex:
+    provider: openai
+    tier: external_coder
+    context_window: 128000
+    availability: active
+    parallelism_default: 4  # Codex 는 동시 N 워커 (설정화)
+
+  gemini:
+    provider: google
+    tier: long_context
+    context_window: 2000000  # 2M (Flash)
+    availability: active
+
+  grok:
+    provider: xai
+    tier: fast_bulk
+    availability: active
+
+  gpt-5.2:
+    provider: openai
+    tier: long_recall
+    context_window: 2000000
+    availability: active
+
+# ----- 라우팅 임계값 (H1 참조 · 토큰 기반 범용화 scaffold) -----
+# 모델 context_window 대비 비율로 결정 (예시 하드코딩 숫자 아님)
+routing_thresholds:
+  small_task_tokens: 2000  # 간단 작업 — Haiku
+  medium_task_tokens: 20000  # 보통 — Sonnet
+  large_task_tokens: 200000  # 대량 리서치 — Opus
+  recall_task_tokens: 800000  # 초장기 recall — Gemini Flash
+  # 각 모델 context_window 80% 이상 사용 시 다음 티어로 승격
+
+# ----- Thinking budget (H2 참조) -----
+# Opus 5+ 는 always_on (설정 X). 다른 모델만 effort 조정 가능.
+thinking_budget:
+  low: 2000
+  medium: 4000  # default
+  high: 8000
+  xhigh: 16000
+  mythos: 32000
+
+# ----- Classifier 임계값 (H5 참조 · 토큰 기반) -----
+classifier:
+  implement_small_tokens: 2000  # 작은 구현 — Sonnet/Haiku
+  implement_large_tokens: 20000  # 큰 구현 — Opus
+  review_lines_min: 100  # 리뷰 최소 (예시 300 → 100 재조정 · 2026-10-28)
+  parallel_file_threshold: 3  # 병렬 subagent 트리거 (3+ 파일)
+
+# ----- 메타 -----
+_meta:
+  version: "1.0"
+  last_updated: "2026-10-28"
+  authority: ".claude/rules/execution-contract.md § 7 상황 적응형 실행"
+  notes:
+    - "라우팅·thinking·classifier 임계값은 모델별 실제 한도 비율 기반 (예시 숫자 아님)"
+    - "fable-5 등 특수 분기는 budget_cap_pct 속성으로 일원화 (switch 분기 금지)"
+    - "모델 추가 시 이 YAML 만 수정 · 코드 수정 X"
+    - "AiChoice enum (router.py) 과 status 리스트 (route.py) 는 이 YAML 참조로 전환 예정 (별도 commit)"

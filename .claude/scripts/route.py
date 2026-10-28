@@ -228,7 +228,17 @@ def cmd_check(args):
             if daily_limit and today_spent >= daily_limit:
                 budget_ok = 0
 
-            if ai == "claude-fable-5" and daily_limit:
+            # P0b H3 fix (2026-10-28): fable-5 특수 분기 → ai-registry.yaml budget_cap_pct 참조
+            # 하드코딩 "claude-fable-5" + 0.20 cap 제거 · 모델 자체 속성으로 일원화
+            # 새 모델 (mythos-5-1 등) 이 cap 필요 시 YAML 만 수정
+            try:
+                import sys as _sys
+                _sys.path.insert(0, str(Path(__file__).parent / "lib"))
+                from ai_registry import get_budget_cap_pct
+                _cap_pct = get_budget_cap_pct(ai)
+            except Exception:
+                _cap_pct = None
+            if _cap_pct and daily_limit:
                 try:
                     fable_spent = conn.execute(
                         "SELECT COALESCE(SUM(total_cost_usd),0) FROM metrics "
@@ -237,8 +247,8 @@ def cmd_check(args):
                     ).fetchone()[0] or 0.0
                 except Exception:
                     fable_spent = 0.0
-                fable_cap = daily_limit * 0.20
-                # SUSPEND 모드면 fable_ok 가 이미 0 -> 추가 게이트 영향 X
+                fable_cap = daily_limit * (_cap_pct / 100.0)
+                # SUSPEND 모드면 fable_ok 가 이미 0 → 추가 게이트 영향 X
                 if ai not in SUSPEND_MODELS and fable_spent >= fable_cap:
                     fable_ok = 0
 
@@ -249,10 +259,11 @@ def cmd_check(args):
             f"fallback=claude-opus-4-8"
         )
         ok = 0
-    elif ai == "claude-fable-5" and fable_cap is not None:
+    elif fable_cap is not None:
+        # H3 fix: hardcoded 'claude-fable-5' 비교 제거 · fable_cap 존재 자체가 cap 모델 신호
         print(
-            f"quota_ok={quota_ok} budget_ok={budget_ok} fable_ok={fable_ok} "
-            f"fable_spent=${fable_spent:.2f} fable_cap=${fable_cap:.2f}"
+            f"quota_ok={quota_ok} budget_ok={budget_ok} cap_ok={fable_ok} "
+            f"spent=${fable_spent:.2f} cap=${fable_cap:.2f}"
         )
         ok = quota_ok and budget_ok and fable_ok
     else:
