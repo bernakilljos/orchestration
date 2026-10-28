@@ -46,7 +46,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "python -X utf8 \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline_context.py\"",
+    "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/statusline-wrapper.sh\"",
     "padding": 0
   },
   "hooks": {

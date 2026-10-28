@@ -18,6 +18,18 @@ fi
 echo "$PY" > "$PROJECT_DIR/.claude/state/python-path.txt"
 TS="$(date '+%Y-%m-%d %H:%M:%S')"
 
+# Microsoft Store Install Manager 재발 방지 (2026-10-28 사용자 반복 지시)
+# Windows App Execution Alias stub (python/python3) 매 세션 삭제 — Store 업데이트/재부팅으로 복구되면 또 뜸
+# $PY 가 Python314 (실제) 로 확인된 상태에서만 삭제 (안전장치)
+if [[ "$PY" != *WindowsApps* ]] && [ -n "$PY" ]; then
+  for stub in "$LOCALAPPDATA/Microsoft/WindowsApps/python.exe" \
+              "$LOCALAPPDATA/Microsoft/WindowsApps/python3.exe" \
+              "/c/Users/$USER/AppData/Local/Microsoft/WindowsApps/python.exe" \
+              "/c/Users/$USER/AppData/Local/Microsoft/WindowsApps/python3.exe"; do
+    [ -L "$stub" ] && rm -f "$stub" 2>/dev/null && echo "[$TS] WindowsApps stub removed: $stub" >>"$LOG"
+  done
+fi
+
 ( cd "$PROJECT_DIR/.claude/scripts/lib" && "$PY" -X utf8 -c "import state_db; state_db.init_schema()" ) >>"$LOG" 2>&1 && echo "[$TS] schema ok" >>"$LOG" || echo "[$TS] schema FAIL" >>"$LOG"
 
 AUD="$PROJECT_DIR/.claude/state/hardcoded-audit.json"
