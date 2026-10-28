@@ -7,8 +7,15 @@
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 LOG="$PROJECT_DIR/.claude/logs/ensure-state.log"
 mkdir -p "$PROJECT_DIR/.claude/logs" "$PROJECT_DIR/.claude/state"
-PY="$(command -v python || command -v python3)"
+# python 자동 검색 - WindowsApps stub 회피 (Microsoft Store Install Manager 뜨는 문제 fix)
+if [ -r "$PROJECT_DIR/.claude/hooks/find-python.sh" ]; then
+  . "$PROJECT_DIR/.claude/hooks/find-python.sh"
+  PY="${PYTHON:-}"
+fi
+[ -z "$PY" ] && PY="$(command -v python || command -v python3)"
 [ -n "$PY" ] || exit 0
+# 캐시 저장 - 모든 hook 이 참조
+echo "$PY" > "$PROJECT_DIR/.claude/state/python-path.txt"
 TS="$(date '+%Y-%m-%d %H:%M:%S')"
 
 ( cd "$PROJECT_DIR/.claude/scripts/lib" && "$PY" -X utf8 -c "import state_db; state_db.init_schema()" ) >>"$LOG" 2>&1 && echo "[$TS] schema ok" >>"$LOG" || echo "[$TS] schema FAIL" >>"$LOG"

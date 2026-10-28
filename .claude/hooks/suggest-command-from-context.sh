@@ -4,5 +4,6 @@
 set -eu
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 cat >/dev/null 2>&1 || true
-python -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/suggest-command-from-context.py" 2>/dev/null
+PY=$(cat "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+"${PY:-python}" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/suggest-command-from-context.py" 2>/dev/null
 exit 0

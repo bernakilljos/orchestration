@@ -45,7 +45,8 @@ bash .claude/scripts/sync-plugins.sh --check 2>&1 | tail -5 >> "$LOG"
 # 4. 스키마 검증
 echo "" >> "$LOG"
 echo "=== Plugin schema ===" >> "$LOG"
-python .claude/scripts/validate-plugin-schema.py 2>&1 | grep -E "FAIL|WARN|ERROR" >> "$LOG" || echo "  [OK] All PASS" >> "$LOG"
+PY=$(cat "$PROJECT_DIR/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+"${PY:-python}" .claude/scripts/validate-plugin-schema.py 2>&1 | grep -E "FAIL|WARN|ERROR" >> "$LOG" || echo "  [OK] All PASS" >> "$LOG"
 
 # 5. 하드코딩 경로
 echo "" >> "$LOG"

@@ -5,5 +5,6 @@ set -eu
 [ -d "${CLAUDE_PROJECT_DIR:-$PWD}/plugins" ] || exit 0
 # stdin 소비 (hook 규약)
 cat >/dev/null 2>&1 || true
-python -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/aggregate-rule-adherence.py" >/dev/null 2>&1 &
+PY=$(cat "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+"${PY:-python}" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/aggregate-rule-adherence.py" >/dev/null 2>&1 &
 exit 0
