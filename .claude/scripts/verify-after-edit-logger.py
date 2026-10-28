@@ -57,12 +57,22 @@ def detect_requery_pattern(ts_edit: datetime) -> bool:
 
 # 2. PostToolUse Edit/Write 감지
 def on_edit_tool(file_path: str):
-    """Edit/Write 도구 실행 감지"""
+    """Edit/Write 도구 실행 감지 (2026-10-26: disk I/O error 1회 retry 추가)"""
     init_db()
 
+    import time
+    for attempt in range(2):
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            c = conn.cursor()
+            break
+        except sqlite3.OperationalError:
+            if attempt == 0:
+                time.sleep(0.3)
+                continue
+            return  # 2회 실패 silent return — 로거 자체는 메인 작업 방해 X
+
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
 
         # 지난 1시간 내 같은 파일 Edit 이력 조회
         hour_ago = datetime.now() - timedelta(hours=1)

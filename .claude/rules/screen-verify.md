@@ -115,10 +115,58 @@ grep -rn '<column_name>' src/ frontend/src/ resources/mapper/ *.xml *.sql
 - 참조 화면명 있으면 → 화면 내 요소·필터·컬럼·이벤트 모두 나열 후 반영
 - 참조 PPT 있으면 → 슬라이드 png export → 각 슬라이드 시각 검증
 
+## RPA / Desktop UI (C/S) / Legacy SAP 검증 추가 (2026-10-27 사용자 지시 P0-2 반영)
+
+**근거**: 2026-10-26 RPA 보고에서 사용자에게 "C/S 녹화·SAP 녹화 직접 해 봐 주십시오" 요청 = 이 룰 위반.
+
+### 환경 제약 분리 보고 포맷 (떠넘김 패턴 유일 예외)
+
+AI 가 **직접 검증 못 하는 유일한 경우** = 외부 의존 (사용자 계정·실제 SAP 접속·물리 장비). 그 외는 모의/테스트 더블로 수행.
+
+```text
+[보고 포맷 — 3구분 필수]
+1. 자체 검증 완료: <테스트 환경·시나리오·실행 결과·증거 경로>
+2. 환경 제약 미검증 (모의 수행): <부족 계정/장비/권한 + 모의 테스트 결과>
+3. 사용자 최종 승인 요청: <자체 검증 완료 기능만 · 외부 의존 분리>
+```
+
+### C/S (Windows Desktop) 검증 매트릭스
+
+| 대상 | AI 자체 검증 방법 |
+|---|---|
+| 테스트용 Windows 프로그램 실행 | `subprocess.Popen` + `psutil` + exit code |
+| 클릭·입력·창 전환 | `pywinauto` · `pyautogui` headless (듀얼 모니터 주의 — `no-visible-windows.md` 정합) |
+| 녹화 저장/재불러오기 | 파일 I/O + hash 비교 |
+| 로그인 중복 방지 | 모의 세션 토큰 + mock DB |
+
+### SAP (실제 접속 불가) 검증 매트릭스
+
+| 대상 | AI 자체 검증 방법 |
+|---|---|
+| VBS 녹화 로직 | 테스트 더블 (`sap_mock.py`) · 샘플 VBS 파싱·변환·재생 |
+| COM 호출 | `unittest.mock.MagicMock` 로 SAP COM object 대체 |
+| 실제 SAP 접속 | **BLOCKED_EXTERNAL_DEPENDENCY** 분리 보고 |
+
+### Supervisor 연결 (완료 판정 조건 오류 fix)
+
+**구현 완료 ≠ 테스트 완료 ≠ 사용자 승인** 원칙 Supervisor 에 연결:
+- 코드 작성 (RUNNING) → 자체 검증 통과 (`verify:<flag_path>`) → VERIFIED
+- 환경 제약 발견 시 → `supervisor.py block <goal_id> "<사유>"` → BLOCKED (다른 goal 은 계속)
+- BLOCKED 상태는 사용자 계정 제공 시 PLANNING 으로 복귀
+
+### 2000+ 전체 시스템 반영 범위 (사용자 명시)
+
+이 매트릭스 = RPA 특정 X · 모든 `.exe`·desktop UI·외부 시스템 통합 작업 공통. Universal Technology Discovery 결과 평가도 동일 원칙:
+- 코드 작성 ≠ L4 (종단 간 실측)
+- "기능 수 많음" ≠ 완성도 높음
+- 테스트 증거 없이 L4 선언 금지
+
 ## 참조
 
 - `CLAUDE.md § 7-24` (절대 룰)
 - `CLAUDE.md § 7-21` (수정·빌드 후 자동 검증) — 디자인 산출물 검증과 정합
 - `.claude/rules/best-practices.md` § 검증 후 보고
 - `.claude/rules/failure-mode.md` § 회피 안티패턴
+- `.claude/rules/no-visible-windows.md` (듀얼 모니터 창 숨김)
+- `.claude/scripts/lib/supervisor.py` (BLOCKED 상태 · `block <goal_id> <reason>`)
 - 메모리: `feedback_screen_verify_required.md`

@@ -43,19 +43,25 @@ def _find_experiences(keywords, top=3, current_project=None):
             ).fetchall()
     except Exception:
         return []
-    # 프로젝트 격리 (사용자 명시 2026-10-19 #4):
-    #   CORE/PROMOTED = 전역 공유 (어느 프로젝트에서든 노출)
-    #   다른 프로젝트 명시 tag = 제외
-    #   tag 없음 = 통과 (하위 호환 · 현재 모든 경험이 tag 없음)
+    # 프로젝트 격리 (defect #2 fix 2026-10-26 · 사용자 명시 "소속 불명 통과 방지"):
+    #   PROMOTED/CORE = 전역 공유 (CORE 승격 전 적합성 전제)
+    #   verified=1 = 전역 공유 (검증된 지식 교차 재사용)
+    #   verified=0 + 소속 불명 (session_id 비어있음) = SKIP
+    #   verified=0 + 다른 프로젝트 marker 포함 = SKIP
+    #   verified=0 + 소속 현재 프로젝트 = PASS
     other_project_markers = set()
-    if current_project:
-        # IFRS 에서 kit 경험 OK · ICMAI 에서 kit 경험 OK (kit 은 공통)
-        # 하지만 target 끼리는 격리 필요
-        cp_lower = str(current_project).lower()
-        if "ifrs" in cp_lower:
-            other_project_markers = {"icmai", "icm"}
-        elif "icmai" in cp_lower or "/icm" in cp_lower:
-            other_project_markers = {"ifrs"}
+    cp_lower = (str(current_project) if current_project else "").lower()
+    if "ifrs" in cp_lower:
+        other_project_markers = {"icmai", "icm", "orchestration"}
+        own_markers = {"ifrs"}
+    elif "icmai" in cp_lower or "/icm" in cp_lower:
+        other_project_markers = {"ifrs", "orchestration"}
+        own_markers = {"icmai", "icm"}
+    elif "orchestration" in cp_lower:
+        other_project_markers = {"ifrs", "icmai", "icm"}
+        own_markers = {"orchestration"}
+    else:
+        own_markers = set()
     scored = []
     for r in rows:
         text = ((r[1] or "") + " " + (r[2] or "") + " " + (r[3] or "")).lower()
@@ -64,16 +70,30 @@ def _find_experiences(keywords, top=3, current_project=None):
             continue
         exp_type = r[8] or ""
         session = (r[7] or "").lower()
+        verified_flag = r[5] or 0
         is_core = exp_type in ("PROMOTED", "CORE")
-        # CORE 는 무조건 통과
         if is_core:
+            # CORE 승격 적합성 전제 (승격 자체가 공유 승인)
             scored.append((s, r))
             continue
-        # 다른 프로젝트 marker 포함 세션 → 제외
+        if verified_flag == 1:
+            # 검증된 지식은 전역 (단 명시된 다른 프로젝트 marker 는 제외)
+            if any(m in session or m in text for m in other_project_markers):
+                continue
+            scored.append((s, r))
+            continue
+        # verified=0 : strict project match 필요
+        if not current_project:
+            # current_project 모름 → verified 아닌 경험 skip (안전)
+            continue
         if any(m in session or m in text for m in other_project_markers):
             continue
-        # 그 외 통과
-        scored.append((s, r))
+        # 자기 프로젝트 marker 포함 or kit (orchestration) 공통일 때만 통과
+        if own_markers and any(m in session or m in text for m in own_markers):
+            scored.append((s, r))
+            continue
+        # 소속 불명 (own_markers 매치 X · other 매치 X) → skip (defect #2 fix)
+        continue
     scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][6] or 0)))
     return [r for _, r in scored[:top]]
 
@@ -103,17 +123,22 @@ def run(ctx: Ctx):
     if not exps:
         return None
     _update_hits([e[0] for e in exps])
-    L = ["## 📚 관련 검증 경험 (A1 자동 주입 · verified/score≥8 · 프로젝트 격리 적용)"]
+    # defect #3 fix 2026-10-26 — 검증 전 vs 검증된 경험 명시 구분
+    L = ["## 📚 관련 경험 (A1 자동 주입 · [검증완료]/[후보] 명시 · 프로젝트 격리 적용)"]
     for i, row in enumerate(exps, 1):
         eid, problem, solution, category, score, verified, hits = row[0], row[1], row[2], row[3], row[4], row[5], row[6]
         exp_type = row[8] if len(row) > 8 else None
-        vcheck = "✅" if verified else "⭐"
-        core_tag = " [CORE]" if exp_type in ("PROMOTED", "CORE") else ""
+        if exp_type in ("PROMOTED", "CORE"):
+            status_tag = "[CORE 승격]"
+        elif verified:
+            status_tag = "[검증완료 ✅]"
+        else:
+            status_tag = "[후보 ⭐ 미검증]"
         p_short = (problem or "")[:80].replace("\n", " ")
         s_short = (solution or "")[:120].replace("\n", " ")
-        L.append(f"{i}. {vcheck}{core_tag} [{category or '?'}] score={score} hits={hits}: {p_short}")
+        L.append(f"{i}. {status_tag} [{category or '?'}] score={score} hits={hits}: {p_short}")
         if s_short.strip():
             L.append(f"   → {s_short}")
     L.append("")
-    L.append("*적용 시 `python .claude/scripts/mark-applied.py <id>` · hit=검색 vs apply=적용 구분 (2026-10-19)*")
+    L.append("*적용 시 `python .claude/scripts/mark-applied.py <id>` · 후보 는 참고만 · 검증완료만 적극 재사용*")
     return "\n".join(L)

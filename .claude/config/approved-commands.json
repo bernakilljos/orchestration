@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "purpose": "Supervisor execute_goal 자동 실행 경로 whitelist (P0a-E · 2026-10-28)",
+    "근거": "하드코딩 감사 CRITICAL #5 — supervisor.py:474-489 예시용 prefix 하드코딩 결함 fix",
+    "원칙": "fail-closed · 외부 설정 파일만 수정하는 것으로 임의 명령 실행 허용 X · Approval Gate 와 다중 방어선",
+    "변경 방법": "이 JSON 수정 후 supervisor.py reload (git tracked)",
+    "last_updated": "2026-10-28"
+  },
+  "allowed_prefixes": [
+    "python .claude/scripts/",
+    "python -X utf8 .claude/scripts/",
+    "python -m pytest",
+    "bash .claude/hooks/",
+    "bash .claude/scripts/",
+    "git status",
+    "git log",
+    "git diff",
+    "git branch",
+    "ls ",
+    "find .claude",
+    "grep ",
+    "echo ",
+    "cat .claude/",
+    "touch .claude/state/",
+    "touch .repair-sandbox/",
+    "mkdir -p .repair-sandbox/",
+    "mkdir -p .claude/state/",
+    "python .repair-sandbox/",
+    "cp .claude/",
+    "cp .repair-sandbox/"
+  ],
+  "_notes": [
+    "fail-closed: 파일 읽기 실패 또는 JSON 파싱 오류 시 빈 whitelist (모든 명령 차단)",
+    "Approval Gate 와 독립 — supervisor 레이어 whitelist 통과 후 approval-gate.detect 추가 체크",
+    "새 prefix 추가 시 사용자 승인 필요 (git commit 로그에 사유 명시)"
+  ]
+}

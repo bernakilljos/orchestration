@@ -169,3 +169,6 @@ plugins/*/.claude/
 
 # 2026-10-13: 대용량 PPT 산출물
 outputs/
+
+# 2026-10-26: Verified Repair sandbox (worktree 격리 환경)
+.repair-sandbox/

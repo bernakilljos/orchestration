@@ -146,8 +146,11 @@ def cache_hit_rate(jsonl_path: str) -> float:
 
 
 def recent_error_count(cwd: str) -> int:
-    """하위호환 — critical + error 합 반환 (오류 수)."""
+    """하위호환 — critical + error 합 반환 (오류 수).
+    P0a-D: 미측정 (None) 시 -1 반환 (호출자가 ⏳ 표시 결정 · 0 과 구분)."""
     r = recent_log_issues(cwd)
+    if r[0] is None or r[1] is None:
+        return -1  # 미측정 신호 (log_dir 없음)
     return r[0] + r[1]
 
 
@@ -168,7 +171,10 @@ def recent_log_issues(cwd: str):
     import collections as _co
     log_dir = os.path.join(cwd, ".claude", "logs")
     if not os.path.isdir(log_dir):
-        return 0, 0, 0, 0, ""
+        # P0a-D: 미측정 ≠ 정상 (2026-10-28 CRITICAL #4 fix · 헌장 § 9 준수)
+        # 기존 '0, 0, 0, 0, ""' 는 로그 폴더 없음을 "오류 0" 처럼 표시 → 상태 왜곡
+        # None 반환으로 호출자가 미측정 ⏳ 표시 결정 (statusline 디자인 FROZEN 유지 · 데이터 계층만 수정)
+        return None, None, None, None, "unmeasured"
     cutoff = _t.time() - 86400
     ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
     crit_re = _re.compile(r"\b(CRITICAL|FATAL)\b", _re.I)
@@ -384,7 +390,17 @@ def render(tokens: int, limit: int, exact_model: bool, no_usage: bool) -> str:
     tok_s = fmt_tokens(tokens)
     lim_s = fmt_tokens(limit)
     q = "" if exact_model else "?"
-    line = f"{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q})"
+    # 2026-10-26 사용자 지시 — 토큰도 세션·주간과 동일 임계 색상 (50/80/100): 왜 주간만 노란색?
+    if pct >= 100:
+        _tc = "\x1b[1;31m"
+    elif pct >= 80:
+        _tc = "\x1b[31m"
+    elif pct > 50:
+        _tc = "\x1b[33m"
+    else:
+        _tc = "\x1b[32m"
+    _tr = "\x1b[0m"
+    line = f"{_tc}{bar} {pct:.0f}%{q} ({tok_s}/{lim_s}{q}){_tr}"
     if pct >= 95:
         line += " · [!] 자동 compact 임박 (끝났으면 /clear)"
     elif pct >= 80:
@@ -591,7 +607,7 @@ def _compute_impact(cwd):
     try:
         # --no-optional-locks: git diff 도 index 를 새로 쓰려고 잠근다 — 3초에 잘리면 .git/index.lock 이 남는다(2026-10-17 실측)
         r = _sp.run(["git", "--no-optional-locks", "diff", "--name-only", "HEAD"], cwd=cwd,
-                    capture_output=True, text=True, timeout=3)
+                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3)
         if r.returncode == 0:
             files = [f for f in r.stdout.splitlines() if f.strip()]
             mod = len(files)
@@ -661,10 +677,12 @@ def extra_gauges(cwd, data=None):
                 # 재사용 solutions
                 try:
                     r = c.execute(
-                        "SELECT COUNT(*), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
+                        "SELECT COUNT(*), COALESCE(SUM(verified),0), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
                     ).fetchone()
                     if r and r[0]:
-                        solutions_str = f"재사용 {r[0]}건 - 평균 {r[1]:.1f}"
+                        cnt = int(r[0]); ver = int(r[1] or 0)
+                        rate = (ver * 100.0 / cnt) if cnt else 0.0
+                        solutions_str = f"재사용 {cnt}건 - 검증 {ver}({rate:.0f}%) - 평균점수 {r[2]:.1f}"
                 except Exception:
                     pass  # noqa: BLE001
                 # 세션
@@ -711,12 +729,12 @@ def extra_gauges(cwd, data=None):
         import subprocess
         b = subprocess.run(
             ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, timeout=1
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
         )
         branch = b.stdout.strip() if b.returncode == 0 else ""
         s = subprocess.run(
             ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
-            capture_output=True, text=True, timeout=1
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
         )
         dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
         if branch:
@@ -997,12 +1015,12 @@ def extra_gauges(cwd, data=None):
         if os.path.exists(db):
             with sqlite3.connect(db) as c:
                 r = c.execute(
-                    "SELECT COUNT(*), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
+                    "SELECT COUNT(*), COALESCE(SUM(verified),0) FROM problem_solutions"
                 ).fetchone()
                 if r and r[0]:
                     cnt = int(r[0])
-                    avg = float(r[1] or 0)
-                    rate = min(max(avg / 10.0 * 100.0, 0.0), 100.0)
+                    ver = int(r[1] or 0)
+                    rate = (ver * 100.0 / cnt) if cnt else 0.0
                     tail.append(f"재사용 {cnt} ({rate:.0f}%)")
                 # orca hit 카운터 (activations · tasks)
                 try:
@@ -1036,7 +1054,12 @@ def extra_gauges(cwd, data=None):
         if _cr > 0:
             tail.append(f"cache {_cr:.0f}%")
         # 최근 24h 오류 집계 — critical·error·warn·반복·최근 소스 (2026-10-16 분리)
+        # P0a-D (2026-10-28): None 반환 시 미측정 (log_dir 없음) · 하위호환 0 fallback
         _c, _e, _w, _rpt, _top = recent_log_issues(cwd)
+        _unmeasured = (_c is None)
+        if _unmeasured:
+            _c, _e, _w, _rpt = 0, 0, 0, 0
+            _top = _top or "unmeasured"
         # 아래 코드가 _c 를 cost dict 로 재할당하므로 즉시 별칭 보존
         _log_crits, _log_errs, _log_warns, _log_rpt, _log_top = _c, _e, _w, _rpt, _top
         # 하드코딩 감사 결과 (별도 캐시)
@@ -1194,30 +1217,52 @@ def extra_gauges(cwd, data=None):
         if "used_percentage" in fh:
             pct = fh["used_percentage"]
             r = _fmt_reset(fh.get("resets_at"))
-            session_gauge = ("세션 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            # 2026-10-26 사용자 지시 — 세션도 주간과 동일 임계 색상 (50/80/100): 왜 주간만 노란색?
+            if pct >= 100:
+                _sc = "\x1b[1;31m"
+            elif pct >= 80:
+                _sc = "\x1b[31m"
+            elif pct > 50:
+                _sc = "\x1b[33m"
+            else:
+                _sc = "\x1b[32m"
+            _sr = "\x1b[0m"
+            session_gauge = (f"{_sc}세션 " + _bar(pct) + f" {pct:.0f}%{mark}{_sr}"
                              + (f" (reset {r})" if r else ""))
         if "used_percentage" in sd:
             pct = sd["used_percentage"]
             r = _fmt_reset(sd.get("resets_at"))
-            week_gauge = ("주간 " + _bar(pct) + f" {pct:.0f}%{mark}"
+            # 2026-10-26 사용자 지시 — 주간 % 임계 색상: 50 이하 default · 50~80 yellow · 80~100 red · 100+ bold red
+            if pct >= 100:
+                _wc = "\x1b[1;31m"
+            elif pct >= 80:
+                _wc = "\x1b[31m"
+            elif pct > 50:
+                _wc = "\x1b[33m"
+            else:
+                _wc = "\x1b[32m"
+            _wr = "\x1b[0m"
+            week_gauge = (f"{_wc}주간 " + _bar(pct) + f" {pct:.0f}%{mark}{_wr}"
                           + (f" (reset {r})" if r else ""))
     else:
         # 실값도 캐시도 없다 = 아직 한 번도 못 받았다. 다른 지표로 대체하지 않는다.
         session_gauge = "세션 (집계 대기)"
         week_gauge = "주간 (집계 대기)"
 
-    # fast 추천 뱃지 — 주간 budget 보호 · 토큰 compact 임박만 OFF
-    # 세션 % (five_hour) 는 quota 임박 지표 · fast on/off 와 무관 (reset 기다리면 됨)
-    # ★기준 (사용자 확정 2026-10-06 — 임의 변경 금지):
-    #   주간 ≥80%  → [!] fast OFF (주간 N%)
-    #   주간 50~79% → fast OFF (주간 N% 보호)
-    #   토큰 ≥80%  → fast OFF (토큰 N% · compact 임박)
+    # fast 추천 뱃지 — 주간·세션·토큰 모두 반영 (2026-10-26 사용자 재지시 "fast on 인데 세션 74%")
+    # ★기준 (2026-10-26 roll-forward · 과거 a6e4c83 번복 사유: 세션 74% 에서 ON 이 체감상 틀림):
+    #   토큰 ≥95%  → [!!] /clear 권장 (작업 끝났으면 즉시)
+    #   토큰 ≥80%  → [!]  /clear 권장 (compact 임박)
+    #   주간 ≥80%  → [!!] fast OFF (주간 budget)
+    #   세션 ≥70%  → fast OFF (세션 quota 임박)   ← 2026-10-26 추가
+    #   주간 ≥50%  → fast OFF (주간 보호)
     #   그 외       → fast ON
-    # ANSI 색 (/clear 유도용 · Claude 가 slash command 자동 실행 불가 → 사용자 눈에 띄게)
+    # 세션 % 포함 사유: reset 기다리는 게 실전에서 사용자 체감상 "낭비" · OFF 로 reset 시간 벌기
     _RED = "\033[1;31m"; _YEL = "\033[1;33m"; _RST = "\033[0m"
-    fast_badge = ""  # 2026-10-16 사용자 지시 — fast·/clear 표시는 상태 줄이 아니라 토큰 줄 옆 (기준은 동결 · 위치만)
+    fast_badge = ""
     try:
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
+        _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
         if _tp >= 95:
             fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
@@ -1225,6 +1270,8 @@ def extra_gauges(cwd, data=None):
             fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
         elif _wp >= 80:
             fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+        elif _sp >= 70:
+            fast_badge = (f"{_YEL}fast OFF (세션 {_sp:.0f}% quota 임박){_RST}")
         elif _wp >= 50:
             fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
         else:
@@ -1432,13 +1479,13 @@ def extra_gauges(cwd, data=None):
         # git clean
         # --no-optional-locks: 3초에 잘려 죽은 git status 가 .git/index.lock 을 남겨 그 뒤 git add·commit 이 전부 막혔다
         #   (2026-10-17 lottoclaude 하루 2번 · 재현 15/15 → 이 옵션이면 0/15). 상태줄은 읽기만 하므로 index 를 고쳐 쓸 이유가 없다.
-        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, timeout=3, cwd=cwd).stdout.strip() == ""
+        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd).stdout.strip() == ""
         _git_icon = "✅" if _git_clean else "⚠"
         # standing requirements gate
         _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
         _sr_ok = _sr_total = 0
         if os.path.exists(_sr):
-            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, timeout=5, cwd=cwd)
+            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, cwd=cwd)
             try:
                 import json as _pj
                 _s = _pj.loads(_r.stdout)
@@ -1509,7 +1556,7 @@ def extra_gauges(cwd, data=None):
         _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
         if os.path.exists(_dd):
             _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
-                           capture_output=True, text=True, timeout=3, cwd=cwd)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
             if _r.returncode == 0 and _r.stdout.strip():
                 drift_line = _r.stdout.strip()
     except Exception:
@@ -1519,7 +1566,7 @@ def extra_gauges(cwd, data=None):
         _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
         if os.path.exists(_hc):
             _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
-                           capture_output=True, text=True, timeout=3, cwd=cwd)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
             if _r.returncode == 0 and _r.stdout.strip():
                 health_line = _r.stdout.strip()
     except Exception:
@@ -1660,8 +1707,9 @@ def main() -> None:
 
     # 2026-10-06 사용자 지시 — 줄 머리말 이모지 유지 기준 ("그 기준은 지켜야지").
     #   VS16(U+FE0F) 이 필요 없는 단일 코드포인트만 쓴다 (터미널마다 폭이 달라져 정렬이 깨짐).
-    ICONS = {"토큰": "🧠", "한도": "⏳", "디자인": "🎨", "개발": "💻", "상태": "📡", "서브": "🤖", "비용": "💰",
-             "영향": "🧪", "인프라": "📡", "오류": "🚨", "READY": "🎯", "요청": "📋", "이력": "🔒", "품질추세": "📊", "공통화": "🧩", "증명": "🔐", "통제": "🛑", "검증": "✅", "DRIFT": "🧭", "HEALTH": "💚"}
+    # 2026-10-27 사용자 "인프라·서브·이력 맞으니 기준잡고 맞춰" — 각 이모지 뒤 VS-16 (️) 2 cell 강제
+    ICONS = {"토큰": "🧠️", "한도": "⏳️", "디자인": "🎨️", "개발": "💻️", "상태": "📡️", "서브": "🤖️", "비용": "💰️",
+             "영향": "🧪️", "인프라": "📡️", "오류": "🚨️", "READY": "🎯️", "요청": "📋️", "이력": "🔒️", "품질추세": "📊️", "공통화": "🧩️", "증명": "🔐️", "통제": "🛑️", "검증": "✅️", "DRIFT": "🧭️", "HEALTH": "💚️"}
 
     # 2026-10-16 사용자 명시 — 라벨별 카테고리 색 고정
     LABEL_COLOR = {
@@ -1686,12 +1734,18 @@ def main() -> None:
     # 2026-10-16 사용자 "줄좀 맞추자" — wcwidth 터미널 변동 회피용 하드 label-width 테이블.
     #   label 별 시각 폭 (emoji 2 + space 1 + 한글 2×N 또는 ASCII 1×N) 을 미리 계산해 둔다.
     #   이 테이블이 있으면 wcwidth 가 1 틀려도 padding 이 어긋나지 않는다.
+    # 2026-10-26 CJK -1 보정 제거 (사용자 지시 · 단일 실험): render 가 CJK 2 cell wcwidth 그대로.
+    #   종전 d4e6603 보정 (lw=render-1) 이 render pipe 를 오른쪽으로 밀어서 DRIFT (ASCII) 와 어긋남.
+    #   wcwidth 기준 복원: emoji 2 + sp 1 + CJK 2자(4) = 7 (토큰·영향 등) · CJK 3자(6) = 9 (디자인·공통화·인프라) · CJK 4자(8) = 11 (품질추세) · ASCII 라벨 (READY 8·DRIFT 8·HEALTH 9) 유지.
+    # 2026-10-26 사용자 "빨리 | 줄 정렬" — CJK -1 보정 완전 제거 (주석과 정합).
+    #   wcwidth 그대로: emoji 2 + sp 1 + CJK 2자(4)=7 · 3자(6)=9 · 4자(8)=11 · ASCII (DRIFT 5자+emoji 2+sp 1=8 · HEALTH 6자+3=9 · READY 5자+3=8)
+    # 2026-10-27 12차 공백 삽입 통일: 모든 CJK 라벨 8 cell (emoji 2 + sp 1 + 8 = 11)
     LABEL_WIDTH = {
-        "토큰": 7, "디자인": 9, "개발": 7, "품질추세": 11,
-        "요청": 7, "영향": 7, "공통화": 9, "인프라": 9,
-        "오류": 7, "READY": 8, "증명": 7, "통제": 7,
-        "검증": 7, "서브": 7, "이력": 7, "비용": 7,
-        "DRIFT": 8, "HEALTH": 9,
+        "토큰": 11, "디자인": 11, "개발": 11, "품질추세": 11,
+        "요청": 11, "영향": 11, "공통화": 11, "인프라": 11,
+        "오류": 11, "READY": 8, "증명": 11, "통제": 11,
+        "검증": 11, "서브": 11, "이력": 11, "비용": 11,
+        "DRIFT": 11, "HEALTH": 9,
     }
 
     # visible width (wcwidth · ANSI 제외) · col 통일용 (2026-10-16 사용자 명시)
@@ -1710,26 +1764,52 @@ def main() -> None:
             return sum(2 if _ud.east_asian_width(ch) in ("W", "F") else 1 for ch in plain)
 
 
+    # 2026-10-27 사용자 공백 삽입 통일 · DRIFT → 기 준 룰
+    # 2026-10-27 14차: 신형 이모지 (🧠·🧪·🛑·🧩·🧭) 1cell render 보상 — 라벨 공백 +1
+    # 2026-10-27 외부 AI 제안 수용 · 품질추세 8셀 기준 뒤 패딩 (내부 공백 삽입 폐지)
+    LABEL_RENAME = {"DRIFT": "기준룰"}
+    LABEL_WIDTH_CELLS = 8
+    # 2026-10-27 pixel 측정 보상 (사용자 터미널 render 변수 · 수치상 맞지만 실측 어긋남)
+    LABEL_WIDTH_OVERRIDE = {}  # 2026-10-27 revert · 사용자 토큰·디자인·영향 기준 유지
+
+    def align_label(label: str, target: int = None) -> str:
+        """품질추세 8셀 기준 라벨 뒤 패딩 · target 명시 시 그 값 사용. ANSI 없는 순수 라벨만."""
+        try:
+            from wcwidth import wcswidth as _wcs
+            w = _wcs(label)
+        except ImportError:
+            import unicodedata as _ud
+            w = sum(2 if _ud.east_asian_width(c) in ("W","F") else 1 for c in label)
+        if w is None or w < 0:
+            w = len(label)
+        t = target if target is not None else LABEL_WIDTH_CELLS
+        return label + " " * max(0, t - w)
+
     def _row(label: str, body: str) -> str:
-        head = f"{ICONS[label]} {label}" if label in ICONS else label
+        _lbl = align_label(LABEL_RENAME.get(label, label), LABEL_WIDTH_OVERRIDE.get(label))
+        head = f"{ICONS[label]} {_lbl}" if label in ICONS else _lbl
         # 2026-10-16 사용자 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선 (wcwidth 터미널 변동 회피)
         _w = LABEL_WIDTH.get(label, _width(head))
         _pad = max(1, 15 - _w)  # indent 2 + head + pad = col 17 · │ at col 18 (margin 3)
         _c = LABEL_COLOR.get(label, "36")
         _s = LABEL_STYLE.get(label, "B")
         _pre = "1;" if _s == "B" else ""
-        return "  [" + _pre + _c + "m" + head + "[0m" + " " * _pad + "[18G[90m│[0m " + body
+        return "  [" + _pre + _c + "m" + head + "[0m" + " " * 0 + "[90m│[0m " + body
 
-    _ICONS2 = {"디자인": "🎨 디자인", "개발": "💻 개발",
-               "영향": "🧪 영향", "공통화": "🧩 공통화",
-               "품질추세": "📊 품질추세", "요청": "📋 요청",
-               "증명": "🔐 증명", "READY": "🎯 READY",
-               "인프라": "📡 인프라", "오류": "🚨 오류",
-               "서브": "🤖 서브", "이력": "🔒 이력", "통제": "🛑 통제", "검증": "✅ 검증",
-               "DRIFT": "🧭 DRIFT", "HEALTH": "💚 HEALTH"}
+    # 2026-10-27 14차: _ICONS2 신형 이모지 (🧪·🧩·🛑·🧭) 공백 +1 보상 (LABEL_SPACED 와 동기화)
+    _ICONS2_EMOJI = {"디자인": "🎨️", "개발": "💻️", "영향": "🧪️", "공통화": "🧩️",
+                     "품질추세": "📊️", "요청": "📋️", "증명": "🔐️", "READY": "🎯️",
+                     "인프라": "📡️", "오류": "🚨️", "서브": "🤖️", "이력": "🔒️",
+                     "통제": "🛑️", "검증": "✅️", "DRIFT": "🧭️", "HEALTH": "💚️"}
+    _ICONS2 = {}  # legacy · 사용 안 함
 
     def _pair(l1, b1, l2, b2):
-        _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2)
+        _e1 = _ICONS2_EMOJI.get(l1, "")
+        _e2 = _ICONS2_EMOJI.get(l2, "")
+        _lbl1 = align_label(LABEL_RENAME.get(l1, l1), LABEL_WIDTH_OVERRIDE.get(l1))
+        _lbl2 = align_label(LABEL_RENAME.get(l2, l2), LABEL_WIDTH_OVERRIDE.get(l2))
+        _h1 = f"{_e1} {_lbl1}" if _e1 else _lbl1
+        _h2 = f"{_e2} {_lbl2}" if _e2 else _lbl2
         # 2026-10-16 "줄좀 맞추자" — 하드 LABEL_WIDTH 우선
         _w1 = LABEL_WIDTH.get(l1, _width(_h1))
         _w2 = LABEL_WIDTH.get(l2, _width(_h2))
@@ -1739,12 +1819,12 @@ def main() -> None:
         _c1 = LABEL_COLOR.get(l1, "36"); _c2 = LABEL_COLOR.get(l2, "36")
         _p1 = "1;" if LABEL_STYLE.get(l1, "B") == "B" else ""
         _p2 = "1;" if LABEL_STYLE.get(l2, "B") == "B" else ""
-        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * _pad1 + "[18G[90m│[0m " + b1
-                + "   [36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * _pad2 + "[90m│[0m " + b2)
+        return ("  [" + _p1 + _c1 + "m" + _h1 + "[0m" + " " * 0 + "[90m│[0m " + b1
+                + "" + " " * max(1, 40 - _width(b1)) + "[36m▶[0m   [" + _p2 + _c2 + "m" + _h2 + "[0m" + " " * 0 + "[90m│[0m " + b2)
 
     def _triple(l1, b1, l2, b2, l3, b3):
         _h1 = _ICONS2.get(l1, l1); _h2 = _ICONS2.get(l2, l2); _h3 = _ICONS2.get(l3, l3)
-        return ("[1;36m" + _h1 + "[0m[18G[90m│[0m " + b1
+        return ("[1;36m" + _h1 + "[0m" + " " * max(1, 15 - _width(_h1)) + "[90m│[0m " + b1
                 + "  [48G[36m▶[0m   [1;36m" + _h2 + "[0m [90m│[0m " + b2
                 + "  [100G[36m▶[0m   [1;36m" + _h3 + "[0m [90m│[0m " + b3)
 
@@ -1821,9 +1901,12 @@ def main() -> None:
     _agent_lines = _agents.split("\n") if _agents else [""]
     if _agent_lines and _agent_lines[0]:
         out.append(_row("서브", _agent_lines[0]))
+        # 2026-10-27 사용자 명시 — continuation 보조 행 정렬 수정 (서브 FREEZE 대상 아님 · 보조 행만)
+        # LABEL_WIDTH["서브"]=11 재사용 (하드코딩 X · _row 와 pipe col 매칭)
+        _sub_lw = LABEL_WIDTH.get("서브", 11)
         for extra in _agent_lines[1:]:
-            # continuation 라인 (라벨 공백 + │ + 내용)
-            out.append("                [18G[90m│[0m " + extra if extra else "")
+            if extra:
+                out.append("  " + " " * _sub_lw + "[90m│[0m " + extra)
     else:
         out.append(_row("서브", "[90m실행 중 없음[0m"))
     if _history: out.append(_row("이력", _history))
@@ -1839,7 +1922,16 @@ def main() -> None:
 
     if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
 
-    print("\n".join(out))
+    final = "\n".join(out)
+    # 2026-10-26: debug save — Claude Code 가 실제 호출한 raw output 저장 (사용자 터미널 삐뚤 진단용)
+    try:
+        import os as _os
+        dbg = _os.path.join(_os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "last-statusline.txt")
+        with open(dbg, "w", encoding="utf-8") as _f:
+            _f.write(final)
+    except Exception:
+        pass
+    print(final)
 
 
 if __name__ == "__main__":

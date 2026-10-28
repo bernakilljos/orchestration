@@ -1,0 +1,46 @@
+name: verify
+step: 6
+trigger: after_execute
+description: test·build·smoke·Standing Requirements·golden test
+
+inputs:
+  - name: files_modified
+  - name: goal_id
+
+steps:
+  - id: pre_post_snapshot
+    desc: verify-after-edit-mandatory.md 증명 체인 (pre·수정·post)
+    script: .claude/scripts/lib/snapshot.py
+    args: ["diff", "--files", "{files_modified}"]
+    outputs: [diff_report]
+  - id: run_tests
+    desc: 언어별 테스트 (language-standards.md)
+    script: .claude/scripts/run-language-tests.sh
+    args: ["--changed", "{files_modified}"]
+  - id: smoke_screen
+    desc: UI·API 변경 시 Playwright·curl (screen-verify.md)
+    script: .claude/scripts/smoke-test-screen.sh
+    args: ["{files_modified}"]
+    when: "any(f.endswith('.vue') or f.endswith('.tsx') for f in files_modified)"
+  - id: standing_requirements
+    desc: OP-COMPLETE · UX-STATUS · OP-DESIGN · OP-COMMON · OP-CODEX
+    script: .claude/scripts/standing-requirements.py
+    args: ["gate"]
+  - id: golden_test
+    desc: 10 회귀 테스트 (operational-freeze.md)
+    script: .claude/scripts/golden-test.py
+  - id: no_false_report
+    desc: mojibake · 백업 폴더 검증 (no-false-report.md)
+    script: .claude/scripts/verify-no-mojibake.py
+    args: ["{files_modified}"]
+
+outputs:
+  - verify_status: pass|partial|fail
+  - evidence: markdown
+
+next_chain: 08-learn      # PASS
+on_failure: 07-repair      # FAIL
+
+notes:
+  - OP-COMPLETE-001 "N/N 완료 전 보고 금지" 준수
+  - 증거 없이 완료 선언 금지 (operating-principles § 6)

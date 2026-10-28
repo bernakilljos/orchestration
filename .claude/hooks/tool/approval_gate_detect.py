@@ -38,6 +38,23 @@ def _extract_cmd(inp: str) -> str:
     return cmd
 
 
+def _strip_git_commit_message(cmd: str) -> str:
+    """2026-10-26 외부 AI 지적: git commit -m 안 message body (문자열 '언급') 는 실행 대상 X.
+    실행 vs 언급 구분 — msg body 안 위험 문자열은 매칭 제외.
+    "DROP TABLE DB 실행" (위험) vs "feat: DROP TABLE 패턴 fix" (문서 기록) 구분."""
+    if not re.search(r'\bgit\s+commit\b', cmd):
+        return cmd
+    # heredoc: -m "$(cat <<'EOF' ... EOF\n)"
+    cmd2 = re.sub(
+        r'-m\s+"\$\(cat\s+<<[\'"]?([A-Z0-9_]+)[\'"]?\s*\n.*?\n\1\s*\n\s*\)"',
+        '-m "<MSG>"', cmd, flags=re.S
+    )
+    # 단순 -m "..." 또는 -m '...'
+    cmd2 = re.sub(r'-m\s+"[^"]*"', '-m "<MSG>"', cmd2)
+    cmd2 = re.sub(r"-m\s+'[^']*'", "-m '<MSG>'", cmd2)
+    return cmd2
+
+
 def run(ctx):
     log_dir = project_path(ctx, ".claude", "logs")
     ensure_dir(log_dir)
@@ -52,6 +69,8 @@ def run(ctx):
     cmd = _extract_cmd(inp)
     if not cmd:
         return None
+    # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
+    cmd = _strip_git_commit_message(cmd)
     gate = project_path(ctx, ".claude", "scripts", "approval-gate.py")
     if not os.path.isfile(gate):
         return None

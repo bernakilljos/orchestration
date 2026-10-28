@@ -1,0 +1,50 @@
+name: repair
+step: 7
+trigger: verify_fail or ping_pong_detected
+description: FAIL 시 격리 수정 (sandbox) + 재검증 · Anti-Ping-Pong 적용
+
+inputs:
+  - name: failure_report
+  - name: files_modified
+  - name: goal_id
+
+steps:
+  - id: ping_pong_check
+    desc: 같은 수정 3회+ 반복 시 체인 중단
+    script: .claude/scripts/anti-ping-pong.py
+    args: ["check", "--goal", "{goal_id}"]
+    on_detect:
+      - action: halt
+      - action: rollback
+        script: .claude/scripts/rollback.py
+      - action: notify_user
+  - id: diagnose
+    desc: 원인 분석 (environment-dependent-bug.md · measurement-two-deaths.md · investigation-discipline.md)
+    script: .claude/scripts/diagnose-failure.py
+    args: ["--report", "{failure_report}"]
+    outputs: [root_cause]
+  - id: isolate_sandbox
+    desc: git worktree 격리 수정 (쓰기 충돌 방지)
+    script: .claude/scripts/worktree-dispatch.py
+    args: ["sandbox", "--goal", "{goal_id}"]
+  - id: fix
+    desc: root_cause 기반 수정 (최소 변경 · operating-principles § 3)
+    tool: Edit
+  - id: re_verify
+    desc: 06-verify 재실행
+    workflow: 06-verify
+  - id: recurrence_track
+    desc: recurrence-tracker 등재 (1/2/3/5 자동 승격)
+    script: .claude/scripts/recurrence-tracker.py
+    args: ["record", "--goal", "{goal_id}", "--cause", "{root_cause}"]
+
+outputs:
+  - repair_status: fixed|escalated|halted
+  - sandbox_merged: bool
+
+next_chain: 06-verify     # 재검증 PASS 시 → 08-learn
+on_halt: 08-learn          # 중단도 learn 체인으로 (실패 등재)
+
+notes:
+  - Anti-Ping-Pong (P1-C) 가 가장 먼저 실행 — 무한 핑퐁 방지
+  - Verified Repair Sandbox (외부 감사 § E)

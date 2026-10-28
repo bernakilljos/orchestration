@@ -11,15 +11,17 @@ allowed-tools: Bash(where:*), Bash(gemini-a:*)
 ## Your task
 
 ### gemini-auto YES → 워커로 검증
+```text
+start "Gemini-Verifier-1" /D "%CD%" cmd /d /c "call gemini-auto 2"
 ```
-start "Gemini-Verifier-1" cmd /c "cd /d %CD% && gemini-auto 2"
-```
+
 워커가 `.claude/tasks/` 의 완료 태스크를 자동 검증.
 
 ### gemini-auto NO → gemini-a 직접 실행
-```
+```text
 gemini-a --verify
 ```
+
 task-instruction.md 기준으로 구현 결과 검증.
 
 ### 검증 항목 (skill-03-review 기준)
@@ -30,11 +32,12 @@ task-instruction.md 기준으로 구현 결과 검증.
 5. 개선 권고
 
 ### 결과 보고
-```
+```text
 [GEMINI 검증 결과]
 MUST:     [반드시 적용]
 SHOULD:   [권장]
 COULD:    [선택]
 SECURITY: [보안 이슈]
 ```
+
 → Claude가 최종 채택 여부 결정 (자동 적용 금지)

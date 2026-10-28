@@ -29,8 +29,8 @@ allowed-tools: Bash(where:*), Bash(echo:*), Bash(del:*), Bash(powershell:*), Bas
    - `.claude/orca-workers` 파일 있으면 그 숫자 사용
    - 없으면 기본값 1
 
-5. codex-auto가 YES면 → `start "Codex-Worker-1" cmd /c codex-auto [워커수]` 실행
-6. gemini-auto가 YES면 → `start "Gemini-Verifier-1" cmd /c gemini-auto [워커수]` 실행
+5. codex-auto가 YES면 → `start "Codex-Worker-1" /D "%CD%" cmd /d /c "call codex-auto [워커수]"` 실행
+6. gemini-auto가 YES면 → `start "Gemini-Verifier-1" /D "%CD%" cmd /d /c "call gemini-auto [워커수]"` 실행
 
 7. 결과 보고:
    | 에이전트 | 상태 | 워커 수 |

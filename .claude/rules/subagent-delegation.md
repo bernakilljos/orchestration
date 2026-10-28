@@ -1,10 +1,12 @@
 # Sub-agent 자동 위임 룰
 
 > **근거**: 2026-09-02 · 컨텍스트 절약·병렬화. v2.1.232 subagent forking·nesting depth 3.
+> **SoT 통합 (2026-10-26)**: 적응형 실행 매트릭스는 **`.claude/rules/execution-contract.md § 7`** 가 SoT. 이 파일은 매트릭스 참조 + Explore/Plan/Judge 역할 설명만 유지.
 
 ## 절대 룰
 
 **대량 처리·격리 필요·병렬 가능 = 즉시 sub-agent 위임. 메인 컨텍스트 오염 방지.**
+**실행 방식 결정 (직접·병렬·worktree·Codex·순차) 은 `execution-contract.md § 7 상황 적응형 실행` 매트릭스 참조.**
 
 ## 위임 매트릭스
 

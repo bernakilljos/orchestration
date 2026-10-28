@@ -85,7 +85,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting verifier %%i / %WORKER_COUNT%
-  start "Gemini-Verifier-%%i" cmd /c "cd /d "%PROJECT_ROOT%" && gemini-auto --child %%i"
+  start "Gemini-Verifier-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call gemini-auto --child %%i"
 )
 
 echo.
@@ -195,7 +195,21 @@ goto SKIP_RESEARCH
 
 :RESEARCH_PICKED
 echo [Verifier-%CHILD_ID%] Research task: %PICKED_RESEARCH%
+
+rem --- P1-1 상태머신 (2026-10-26): pending -> locked ---
+for %%F in ("%PICKED_RESEARCH%") do set "TASK_ID=%%~nF"
+python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" locked "gemini-%CHILD_ID%" >nul 2>&1
+
 call gemini-a --research "%PICKED_RESEARCH%"
+set "GEMINI_EXIT=!errorlevel!"
+
+rem --- P1-1 상태머신: locked -> completed/failed (gemini-a exit code 기반) ---
+if !GEMINI_EXIT! EQU 0 (
+  python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" completed >nul 2>&1
+) else (
+  python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
+)
+
 rem 완료된 태스크 done 폴더로 이동
 for %%F in ("%PICKED_RESEARCH%") do (
   copy "%%F" "%PROJECT_ROOT%\.claude\tasks\done\%%~nxF" >nul 2>&1

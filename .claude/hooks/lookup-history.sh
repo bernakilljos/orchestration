@@ -6,8 +6,11 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG="$PROJECT_ROOT/.claude/logs/lookup-history.log"
 mkdir -p "$PROJECT_ROOT/.claude/logs"
 
+PY=$(cat "$PROJECT_ROOT/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+PY="${PY:-python}"
+
 # stdin = hook JSON payload - prompt 추출
-PROMPT="$(python -X utf8 -c "
+PROMPT="$("$PY" -X utf8 -c "
 import json,sys
 try:
     d = json.load(sys.stdin)
@@ -22,7 +25,7 @@ if [ -z "${PROMPT:-}" ]; then
 fi
 
 # 최근 20 turns 중 유사 프롬프트 검색 (키워드 3+ 매치)
-python -X utf8 -c "
+"$PY" -X utf8 -c "
 import os, re, sqlite3, sys
 prompt = '''$PROMPT'''
 kws = [w for w in re.findall(r'\w{3,}', prompt) if not w.isdigit()][:8]

@@ -36,7 +36,8 @@ GATE="${PROJECT_ROOT}/.claude/scripts/approval-gate.py"
 [ -f "$GATE" ] || exit 0
 
 # detect — JSON 출력 또는 빈 출력
-DETECT_JSON=$(python "$GATE" detect "$CMD" 2>>"$LOG" || echo "")
+PY=$(cat "${PROJECT_ROOT}/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+DETECT_JSON=$("${PY:-python}" "$GATE" detect "$CMD" 2>>"$LOG" || echo "")
 
 # JSON 비어있거나 null 이면 통과
 if [ -z "$DETECT_JSON" ] || [ "$DETECT_JSON" = "null" ] || [ "$DETECT_JSON" = "{}" ]; then
@@ -59,7 +60,7 @@ TASK_ID="appr-$(echo -n "$CMD$(date +%s)" | sha256sum 2>/dev/null | cut -c1-12)"
 [ -z "$TASK_ID" ] || [ "$TASK_ID" = "appr-" ] && TASK_ID="appr-$(date +%s)"
 
 # request 등록 (4 인자: task_id, command, category, detail)
-python "$GATE" request "$TASK_ID" "$CMD" "$CATEGORY" "$DESC" >>"$LOG" 2>&1 || true
+"${PY:-python}" "$GATE" request "$TASK_ID" "$CMD" "$CATEGORY" "$DESC" >>"$LOG" 2>&1 || true
 
 echo "[$(date +%F_%T)] BLOCK: $CATEGORY | task_id=$TASK_ID | cmd=$CMD" >> "$LOG"
 

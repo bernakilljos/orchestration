@@ -1,0 +1,47 @@
+name: execute
+step: 5
+trigger: after_plan
+description: Worker dispatch (Claude·Codex·general-purpose·Explore 병렬)
+
+inputs:
+  - name: tasks
+  - name: routing
+
+steps:
+  - id: dispatch
+    desc: routing.mode 별 실행
+    switch:
+      direct:        # 메인 Claude 직접
+        tool: Edit
+      parallel:      # Agent ×N 병렬
+        tool: Agent
+        subagent_type: general-purpose
+        for_each: "{tasks}"
+      worktree:      # 쓰기 충돌 시 격리
+        script: .claude/scripts/worktree-dispatch.py
+      codex:         # 300줄+ · 반복 패턴
+        script: .claude/scripts/orca-dispatch.py
+        args: ["codex", "{task.instruction_file}"]
+      sequential:    # 순차 (의존성 체인)
+        tool: Edit
+        serial: true
+  - id: anti_ping_pong_check
+    desc: 같은 수정 3회+ 반복 감지
+    script: .claude/scripts/anti-ping-pong.py
+    args: ["check", "--task", "{task.id}"]
+    on_detect: 07-repair
+  - id: file_audit
+    desc: 변경 파일 기록 (production-file-management.md)
+    script: .claude/scripts/audit_file_write.py
+
+outputs:
+  - diffs: array
+  - exit_codes: array
+  - files_modified: array
+
+next_chain: 06-verify
+on_failure: 07-repair
+
+notes:
+  - subagent-delegation.md 매트릭스 적용
+  - OP-CODEX-001 Standing Requirement — Codex 명시 자동 dispatch

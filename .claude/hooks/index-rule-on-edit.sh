@@ -31,5 +31,6 @@ case "$FILE_PATH" in
 esac
 
 # 백그라운드 rebuild
-python "${PROJECT_ROOT}/.claude/scripts/lookup-rule.py" --rebuild >> "${PROJECT_ROOT}/.claude/logs/lookup-index.log" 2>&1 &
+PY=$(cat "${PROJECT_ROOT}/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+"${PY:-python}" "${PROJECT_ROOT}/.claude/scripts/lookup-rule.py" --rebuild >> "${PROJECT_ROOT}/.claude/logs/lookup-index.log" 2>&1 &
 exit 0

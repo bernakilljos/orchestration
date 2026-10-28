@@ -6,10 +6,13 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOG="$PROJECT_ROOT/.claude/logs/conversation-save.log"
 mkdir -p "$PROJECT_ROOT/.claude/logs"
 
+PY=$(cat "$PROJECT_ROOT/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+PY="${PY:-python}"
+
 # 1. jsonl 에서 assistant 응답 sync (Claude Code 는 assistant hook 없음)
 # 0. stdin(JSON) 의 session_id · transcript_path 가 정본 (2026-09-19 · mtime 추정으로 남의 세션에 저장되던 것)
 INPUT="$(cat 2>/dev/null || true)"
-eval "$(printf '%s' "$INPUT" | python -X utf8 -c "import json,sys,shlex
+eval "$(printf '%s' "$INPUT" | "$PY" -X utf8 -c "import json,sys,shlex
 try:
     d=json.load(sys.stdin)
     if d.get('session_id'): print('export CLAUDE_CODE_SESSION_ID='+shlex.quote(d['session_id']))
@@ -17,10 +20,10 @@ try:
     print('export HOOK_EVENT='+shlex.quote(str(d.get('hook_event_name',''))+('/'+str(d['reason']) if d.get('reason') else '')))
 except Exception: pass" 2>/dev/null)"
 
-python -X utf8 "$PROJECT_ROOT/.claude/scripts/sync-assistant-from-jsonl.py" >>"$LOG" 2>&1 || true
+"$PY" -X utf8 "$PROJECT_ROOT/.claude/scripts/sync-assistant-from-jsonl.py" >>"$LOG" 2>&1 || true
 
 # 2. session_summary 저장
-python -X utf8 -c "
+"$PY" -X utf8 -c "
 import json, os, subprocess, sys
 sys.path.insert(0, os.path.join(os.environ.get('CLAUDE_PROJECT_DIR', '.'), '.claude', 'scripts', 'lib'))
 from conversation_logger import get_session_id, save_session_summary
@@ -46,6 +49,6 @@ except Exception as e:
 " >>"$LOG" 2>&1 || true
 
 # 3. solution 자동 캡처
-python -X utf8 "$PROJECT_ROOT/.claude/scripts/save_solution.py" auto >>"$LOG" 2>&1 || true
+"$PY" -X utf8 "$PROJECT_ROOT/.claude/scripts/save_solution.py" auto >>"$LOG" 2>&1 || true
 
 exit 0

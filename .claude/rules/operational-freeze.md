@@ -17,6 +17,36 @@
 - **지표 소유** (한 지표 = 한 줄 · 중복 금지)
 - **전파** (sync-to-team · install-to-target · merge-to-target 정책)
 
+### 좌측 │ 세로축 정렬 FROZEN (2026-10-27 · 재확인 · 핑퐁 24+회 종결)
+
+**최종 사용자 명시 (2026-10-27 세션 2)**: "오호 맞춰진거같아 · 동결하자... · 너무 힘들다".
+**결정**: 디자인·인프라·이력·서브 포함 **11 라인 전부 FREEZE** · 다음 요청·개선 제안 모두 거절 · 재발 시 operating-principles.md § 2 범위 lock 적용.
+
+**사용자 "이제 맞자나 · 11줄 왼쪽 | 동결 · 서브는 미검증 제외" 지시** (2026-10-27 세션 1 · commit 38f0ab3).
+
+| 라인 | LW | pad | 상태 |
+|---|---|---|---|
+| 토큰 | 7 | 8 | 🔒 FROZEN |
+| 디자인 | 9 | 6 | 🔒 FROZEN |
+| 영향 | 7 | 8 | 🔒 FROZEN |
+| 품질추세 | 11 | 4 | 🔒 FROZEN |
+| 통제 | 7 | 8 | 🔒 FROZEN |
+| 증명 | 7 | 8 | 🔒 FROZEN |
+| 인프라 | 9 | 6 | 🔒 FROZEN |
+| **서브** | **7** | **8** | ⚠ **제외 (미검증)** |
+| 이력 | 7 | 8 | 🔒 FROZEN |
+| DRIFT | 8 | 7 | 🔒 FROZEN |
+| 비용 | 7 | 8 | 🔒 FROZEN |
+
+**필수 전제 조건** (유지 의무):
+1. VS-16 (`️` U+FE0F) 각 이모지 뒤 삽입 (신형 이모지 2cell 강제)
+2. ANSI CHA (`\x1b[18G`) 좌측 `│` col 18 cursor 강제
+3. padding fallback 유지 (CHA 미지원 터미널)
+
+**조정 금지** (10 동결 라인): wcwidth 수치 일치 이론 · 자동 개선 · 리팩터링 X · 사용자 실측 우선. 서브는 사용자 재검증 지시 시 조정 가능.
+
+**SoT**: `.claude/scripts/statusline_context.py` LABEL_WIDTH dict · memory `feedback_statusline_frozen_1027.md`.
+
 - Operating Principles · Execution Contract · Request Ledger · recurrence-tracker · scope-lock 모두 정상 작동
 - 2차 안정화 감사 완료 (ORCHESTRATION_AUDIT_2026-10-16.md § 다음 권장 포함)
 - 골든 테스트 10개 PASS

@@ -30,12 +30,19 @@ fi
 echo "=== sync $SOURCE -> $TARGET ==="
 
 # rsync 있으면 우선
+# 2026-10-26 fix (사용자 명시 defect #1): --delete-after 제거 (대상 파일 삭제 금지)
+#   additive-only: 소스에 없는 파일은 target 에 보존 (운영 target 안전)
+#   오류는 전파 (|| true 사용 X · set -e 가 잡음)
 if command -v rsync >/dev/null 2>&1; then
-  RSYNC="rsync -av --delete-after"
+  RSYNC="rsync -av"
   EXCL='--exclude=.git/ --exclude=node_modules/ --exclude=*.pptx --exclude=*.png --exclude=docs/ini/ --exclude=.claude/state/ --exclude=.claude/tasks/locks/ --exclude=.claude/tasks/done/ --exclude=.claude/context-cache/ --exclude=.claude_backup_*/'
-  $RSYNC $EXCL "$SOURCE/" "$TARGET/"
-  echo "[OK] rsync 동기화 완료"
-  exit 0
+  if $RSYNC $EXCL "$SOURCE/" "$TARGET/"; then
+    echo "[OK] rsync 동기화 완료 (additive · 대상 파일 삭제 X)"
+    exit 0
+  else
+    echo "[ERROR] rsync 실패 (exit $?) — 성공 처리 X"
+    exit 2
+  fi
 fi
 
 # Fallback: robocopy (Windows)
@@ -48,13 +55,24 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
     powershell.exe -NoProfile -Command "Get-ChildItem -Path '$PS_SRC' -Recurse -Include '*.bat' -ErrorAction SilentlyContinue | ForEach-Object { \$c = [IO.File]::ReadAllText(\$_.FullName); \$n = \$c -replace \"\`r\`n\",\"\`n\" -replace \"\`n\",\"\`r\`n\"; if (\$c -ne \$n) { [IO.File]::WriteAllText(\$_.FullName, \$n, (New-Object System.Text.UTF8Encoding \$false)) } }" >/dev/null 2>&1 || true
   fi
 
-  # 2) robocopy /MIR /IS /IT — cmd 환경변수 전달 (backslash escape 안전)
-  # docs/install/ 도 포함 (총망라 매뉴얼 + session-bootstrap-prompt)
+  # 2) robocopy — cmd 환경변수 전달 (backslash escape 안전)
+  # 2026-10-26 fix (사용자 defect #1):
+  #   /MIR → /E · 대상 파일 삭제 금지 (additive 복사만)
+  #   || true 제거 · robocopy exit 8+ 는 실패 · 실패 시 성공 표시 X
+  #   > /dev/null 2>&1 제거 · stderr 는 보존 (디버깅)
+  SYNC_FAIL=0
   for sub in .claude .claude-plugin plugins outputs; do
     if [ -d "$SOURCE/$sub" ]; then
       SRC_WIN=$(cygpath -w "$SOURCE/$sub" 2>/dev/null || echo "$SOURCE/$sub")
       DST_WIN=$(cygpath -w "$TARGET/$sub" 2>/dev/null || echo "$TARGET/$sub")
-      RC_SRC="$SRC_WIN" RC_DST="$DST_WIN" cmd //c "robocopy %RC_SRC% %RC_DST% /MIR /IS /IT /XD .git node_modules state context-cache locks done /XF *.pptx *.png .is-kit-root /NFL /NDL /NJH /NJS /NP" > /dev/null 2>&1 || true
+      # 2026-10-26: robocopy exit 1~7 는 정상 · set -e 트립 방지용 || RC=$?
+      RC=0
+      RC_SRC="$SRC_WIN" RC_DST="$DST_WIN" cmd //c "robocopy %RC_SRC% %RC_DST% /E /IS /IT /XD .git node_modules state context-cache locks done /XF *.pptx *.png .is-kit-root /NFL /NDL /NJH /NJS /NP" > /dev/null || RC=$?
+      # robocopy exit code: 0~7 = 성공·no change·copy OK · 8+ = 실패
+      if [ "$RC" -ge 8 ]; then
+        echo "[ERROR] robocopy $sub 실패 (exit $RC)"
+        SYNC_FAIL=1
+      fi
     fi
   done
 
@@ -78,7 +96,12 @@ if command -v robocopy >/dev/null 2>&1 || [ -f "/c/Windows/System32/Robocopy.exe
     cp -f "$SOURCE/setup/Output/OrchestrationKit-Setup.exe" "$TARGET/setup/Output/OrchestrationKit-Setup.exe"
   fi
 
-  echo "[OK] robocopy 동기화 완료 (CRLF 정규화 + 강제 복사)"
+  # 2026-10-26 fix: 실패 1건이라도 있으면 성공 처리 X
+  if [ "$SYNC_FAIL" -ne 0 ]; then
+    echo "[ERROR] robocopy 일부 실패 — 성공 처리 X"
+    exit 3
+  fi
+  echo "[OK] robocopy 동기화 완료 (additive · CRLF 정규화 + 강제 복사 · 대상 파일 삭제 X)"
   exit 0
 fi
 

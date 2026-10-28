@@ -1,0 +1,37 @@
+name: research
+step: 3
+trigger: after_discovery
+description: 미등록·adopt 기술 공식 docs·벤치마크·사례 조사
+
+inputs:
+  - name: adopt_list
+    type: array
+  - name: gaps
+    type: array
+
+steps:
+  - id: websearch
+    desc: WebSearch (최신 공식 docs·버전·가격)
+    tool: WebSearch
+    for_each: "{adopt_list + gaps}"
+  - id: webfetch_official
+    desc: 공식 docs WebFetch
+    tool: WebFetch
+    for_each: "{websearch.results.official_urls}"
+  - id: compare
+    desc: 공식 vs 우리 kit 매칭 · 성능·가격·라이선스 비교
+    script: .claude/scripts/lib/tech_discovery.py
+    args: ["compare", "--items", "{websearch.results}"]
+    outputs: [comparison_table]
+
+outputs:
+  - research_notes: markdown
+  - recommended_stack: object
+  - risks: array
+
+next_chain: 04-plan
+on_failure: 07-repair
+
+notes:
+  - CLAUDE.md § 3.2 라우팅 매트릭스 반영 (Opus·Fable·Codex·general-purpose 선택)
+  - auto-websearch.md 트리거 매칭 시 자동

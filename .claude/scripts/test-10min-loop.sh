@@ -19,7 +19,8 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 
 # Run with dry-run
-python "$SCRIPT_PATH" --dry-run 2>&1 | tee -a "$LOG_FILE"
+PY=$(cat "$PROJECT_ROOT/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n') || PY=python
+"${PY:-python}" "$SCRIPT_PATH" --dry-run 2>&1 | tee -a "$LOG_FILE"
 
 if [ $? -eq 0 ]; then
     echo ""

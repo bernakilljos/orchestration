@@ -317,6 +317,39 @@ def main():
         # 3c. 멈춘 고아 python 정리 (2026-10-14 · 좀비 62개 사례)
         reap_stuck_orphans()
 
+        # 3c-ledger. Ledger → Goal 자동 변환 (2026-10-28 사용자 지시 "자동 연결 필요")
+        try:
+            ledger_py = PROJECT_ROOT / ".claude" / "scripts" / "request-ledger.py"
+            if ledger_py.exists():
+                lresult = subprocess.run(
+                    [sys.executable, str(ledger_py), "to-goals"],
+                    capture_output=True, text=True, timeout=60,
+                    env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+                    cwd=str(PROJECT_ROOT)
+                )
+                if lresult.returncode == 0 and lresult.stdout:
+                    log_msg(f"ledger to-goals: {lresult.stdout.strip()[:200]}")
+        except Exception as e:
+            log_msg(f"ledger to-goals exception: {e}", "WARN")
+
+        # 3d. Supervisor 자동 진행 (2026-10-27 · P0-2 fix) — goals DB PENDING/PLANNING/RUNNING 상태 자동 전환
+        try:
+            sup_py = PROJECT_ROOT / ".claude" / "scripts" / "lib" / "supervisor.py"
+            if sup_py.exists():
+                # 2026-10-27 사용자 지시 "실행 주체 식별" — --trigger scheduler
+                result = subprocess.run(
+                    [sys.executable, str(sup_py), "advance-all", "--trigger", "scheduler"],
+                    capture_output=True, text=True, timeout=120,
+                    env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+                    cwd=str(PROJECT_ROOT)
+                )
+                if result.returncode == 0:
+                    log_msg(f"supervisor advance-all: OK · {result.stdout[:200]}")
+                else:
+                    log_msg(f"supervisor advance-all FAIL: {result.stderr[:200]}", "WARN")
+        except Exception as e:
+            log_msg(f"supervisor advance-all exception: {e}", "WARN")
+
         # 3d. Idle session info (list only)
         idle = detect_idle_sessions()
         if idle:

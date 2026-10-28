@@ -83,7 +83,7 @@ if %WORKER_COUNT% LEQ 1 (
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting Claude worker %%i / %WORKER_COUNT%
-  start "Claude-Worker-%%i" cmd /c "cd /d "%PROJECT_ROOT%" && claude-auto --child %%i"
+  start "Claude-Worker-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call claude-auto --child %%i"
 )
 
 echo.
