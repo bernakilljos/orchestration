@@ -56,7 +56,16 @@ def _next_id(requests: list) -> str:
     return f"R{len(requests) + 1}"
 
 
-def cmd_add(desc: str, session: str = "") -> int:
+def _idempotency_key(desc: str, session: str = "") -> str:
+    """멱등성 키 — 같은 desc 24h 안 재수신 중복 등록 방지 (사용자 지시 2026-10-28)."""
+    import hashlib
+    norm = (desc or "").strip().lower()[:300]
+    base = f"{norm}|{session or 'unknown'}"
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
+
+
+def cmd_add(desc: str, session: str = "", idempotency_window_h: int = 24) -> int:
+    """사용자 지시 등록 — append-only + 멱등성 체크 (중복 skip)."""
     data = _load()
     if not data:
         data = {
@@ -64,12 +73,20 @@ def cmd_add(desc: str, session: str = "") -> int:
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "requests": [],
         }
+    key = _idempotency_key(desc, session)
+    import datetime as _dt
+    cutoff = (datetime.now() - _dt.timedelta(hours=idempotency_window_h)).isoformat(timespec="seconds")
+    for r in data["requests"]:
+        if r.get("idempotency_key") == key and r.get("ts", "") > cutoff:
+            print(f"[ledger] = {r.get('id')} (duplicate · idempotency_key · skipped)")
+            return 0
     rid = _next_id(data["requests"])
     data["requests"].append({
         "id": rid,
         "desc": desc[:200],
         "status": "pending",
         "ts": datetime.now().isoformat(timespec="seconds"),
+        "idempotency_key": key,
     })
     _save(data)
     print(f"[ledger] + {rid}: {desc[:80]}")
@@ -185,6 +202,44 @@ def cmd_clear() -> int:
     return 0
 
 
+def cmd_to_goals() -> int:
+    """pending Ledger entries → Supervisor create_goal 자동 변환 (사용자 지시 2026-10-28).
+    각 request 는 request_id 를 goal source_ref 에 저장 → 역추적 가능.
+    기존 goal 보존 (덮어쓰기 X) · idempotency 는 ledger 에서 이미 처리됨."""
+    data = _load()
+    if not data:
+        print("[ledger→goal] no ledger")
+        return 1
+    import sqlite3
+    sup_db = ROOT / ".claude" / "state" / "orca.db"
+    created = 0
+    skipped = 0
+    with sqlite3.connect(str(sup_db)) as c:
+        for r in data.get("requests", []):
+            if r.get("status") != "pending":
+                continue
+            rid = r.get("id")
+            desc = r.get("desc") or ""
+            source_ref = f"ledger:{rid}"
+            # 기존 goal 중 같은 source_ref 있나 (idempotency)
+            exist = c.execute("SELECT goal_id FROM goals WHERE source_ref=?",
+                             (source_ref,)).fetchone()
+            if exist:
+                skipped += 1
+                continue
+            import time as _t
+            now = int(_t.time())
+            c.execute(
+                "INSERT INTO goals (description, status, workflow_type, source_ref, "
+                "max_retry, timeout_h, created_at, updated_at) "
+                "VALUES (?, 'PENDING', 'GENERAL', ?, 3, 24, ?, ?)",
+                (f"[{rid}] {desc}", source_ref, now, now)
+            )
+            created += 1
+    print(f"[ledger→goal] created={created} skipped_existing={skipped}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="op")
@@ -204,6 +259,7 @@ def main() -> int:
     sub.add_parser("status")
     sub.add_parser("gate")
     sub.add_parser("clear")
+    sub.add_parser("to-goals")
 
     args = ap.parse_args()
     if args.op == "add":
@@ -218,6 +274,8 @@ def main() -> int:
         return cmd_gate()
     if args.op == "clear":
         return cmd_clear()
+    if args.op == "to-goals":
+        return cmd_to_goals()
     ap.print_help()
     return 0
 
