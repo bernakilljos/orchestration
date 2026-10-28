@@ -481,6 +481,11 @@ _ALLOWED_CMD_PREFIXES = (
     "ls ", "find .claude", "grep ",
     "echo ",
     "cat .claude/",
+    # Self-Healing fix 전용 (2026-10-28 사용자 지시)
+    "touch .claude/state/", "touch .repair-sandbox/",
+    "mkdir -p .repair-sandbox/", "mkdir -p .claude/state/",
+    "python .repair-sandbox/",
+    "cp .claude/", "cp .repair-sandbox/",
 )
 
 def _is_allowed_cmd(cmd: str) -> bool:
@@ -492,19 +497,27 @@ def _is_allowed_cmd(cmd: str) -> bool:
 
 
 def _parse_markers(description: str) -> list:
-    """description 에서 [CMD: ...] [VERIFY: ...] 마커 추출.
-    각 CMD 마커는 하나의 task · 바로 뒤 VERIFY 가 그 task 의 검증 명령.
-    형식 예:
-        [CMD: python .claude/scripts/foo.py]
-        [VERIFY: python -m pytest tests/foo_test.py]
+    """description 에서 [CMD: ...] [VERIFY: ...] [FIX: ...] [TEST: ...] 마커 추출.
+    GENERAL workflow:
+        [CMD: <명령>] [VERIFY: <검증>]
+    REPAIR workflow (Self-Healing 2026-10-28 사용자 지시):
+        [FIX: <수정 명령>] [TEST: <재검증 명령>]
+        → fix 실행 후 test 실행 · test 통과 시 VERIFIED
+    두 패턴 혼용 가능 (한 goal 안에 N 개 task).
     """
     tasks = []
-    pattern = _re.compile(r"\[CMD:\s*([^\]]+)\](?:\s*\[VERIFY:\s*([^\]]+)\])?")
-    for m in pattern.finditer(description):
+    cmd_pattern = _re.compile(r"\[CMD:\s*([^\]]+)\](?:\s*\[VERIFY:\s*([^\]]+)\])?")
+    fix_pattern = _re.compile(r"\[FIX:\s*([^\]]+)\](?:\s*\[TEST:\s*([^\]]+)\])?")
+    for m in cmd_pattern.finditer(description):
         cmd = (m.group(1) or "").strip()
         verify = (m.group(2) or "").strip() or None
         if cmd:
-            tasks.append({"cmd": cmd, "verify": verify})
+            tasks.append({"kind": "cmd", "cmd": cmd, "verify": verify})
+    for m in fix_pattern.finditer(description):
+        fix = (m.group(1) or "").strip()
+        test = (m.group(2) or "").strip() or None
+        if fix:
+            tasks.append({"kind": "fix", "cmd": fix, "verify": test})
     return tasks
 
 
@@ -650,10 +663,19 @@ def execute_goal(goal_id: int) -> dict:
         r = runner.run(cmd, task_id=task_id, worker_id="supervisor", timeout=180)
         exit_code = r.get("exit_code", -1)
         verified_flag = False
+        kind = spec_obj.get("kind", "cmd")
         if exit_code == 0 and verify and _is_allowed_cmd(verify):
             # verify 실행 — 2026-10-27 사용자 지적 "stdout PASS 단순 포함 오탐 차단"
             vr = runner.run(verify, task_id=f"{task_id}-verify", worker_id="supervisor", timeout=120)
-            if _verify_output_passed(vr.get("stdout") or "", vr.get("stderr") or "", vr.get("exit_code", -1)):
+            vr_exit = vr.get("exit_code", -1)
+            # Self-Healing (kind=fix) 의 TEST 는 exit=0 만으로 성공 (파일 존재 cat 등 긍정 신호 없이도)
+            # GENERAL (kind=cmd) 의 VERIFY 는 _verify_output_passed 로 오탐 차단
+            if kind == "fix":
+                verify_pass = vr_exit == 0
+            else:
+                verify_pass = _verify_output_passed(vr.get("stdout") or "",
+                                                   vr.get("stderr") or "", vr_exit)
+            if verify_pass:
                 verified_flag = True
                 runner.mark_verified(r.get("exec_id"), True)
                 runner.mark_verified(vr.get("exec_id"), True)
