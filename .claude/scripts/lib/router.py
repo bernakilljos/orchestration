@@ -127,10 +127,25 @@ def route(
     use_thinking = False
     thinking_budget = 0
 
+    # P0b H1·H2 fix (2026-10-28): 하드코딩 임계값 (200·500k·800k) 제거
+    # ai-registry.yaml routing_thresholds 참조 · 모델 추가 시 YAML 만 수정
+    try:
+        from ai_registry import get_routing_threshold as _grt, get_thinking_budget as _gtb
+        _SMALL = _grt("small_task_tokens") or 2000
+        _MEDIUM = _grt("medium_task_tokens") or 20000
+        _LARGE = _grt("large_task_tokens") or 200000
+        _RECALL = _grt("recall_task_tokens") or 800000
+        _THINK_HIGH = _gtb("high") or 8000
+        _THINK_MED = _gtb("medium") or 4000
+    except Exception:
+        # fail-closed to conservative defaults (ai-registry 로드 실패 시 작동 유지)
+        _SMALL, _MEDIUM, _LARGE, _RECALL = 2000, 20000, 200000, 800000
+        _THINK_HIGH, _THINK_MED = 8000, 4000
+
     if task_type == TaskType.DESIGN or task_type == TaskType.REFACTOR or is_ambiguous:
         preferred_ai = AiChoice.CLAUDE_OPUS_4_7
         use_thinking = True
-        thinking_budget = 8000
+        thinking_budget = _THINK_HIGH
         fallback_chain = [
             AiChoice.CLAUDE_SONNET_4_6,
             AiChoice.CLAUDE_HAIKU_4_5,
@@ -138,13 +153,13 @@ def route(
         ]
 
     elif task_type == TaskType.IMPLEMENT:
-        if estimated_tokens < 200:
+        if estimated_tokens < _SMALL:
             preferred_ai = AiChoice.CLAUDE_SONNET_4_6
             fallback_chain = [
                 AiChoice.CLAUDE_HAIKU_4_5,
                 AiChoice.CLAUDE_OPUS_4_7,
             ]
-        elif estimated_tokens < 800_000:
+        elif estimated_tokens < _RECALL:
             preferred_ai = AiChoice.CLAUDE_OPUS_4_7
             fallback_chain = [
                 AiChoice.CODEX,
@@ -152,7 +167,7 @@ def route(
                 AiChoice.CLAUDE_SONNET_4_6,
             ]
         else:
-            # >=800k: prefer Codex or Gemini
+            # >= recall: prefer Codex or Gemini (long context 처리)
             if quota_map[AiChoice.CODEX]:
                 preferred_ai = AiChoice.CODEX
                 fallback_chain = [
@@ -167,7 +182,8 @@ def route(
                 ]
 
     elif task_type == TaskType.VERIFY:
-        if estimated_tokens < 500_000:
+        # VERIFY 는 Haiku 가 default · 큰 context (recall 이상) 는 Gemini
+        if estimated_tokens < _RECALL:
             preferred_ai = AiChoice.CLAUDE_HAIKU_4_5
             fallback_chain = [
                 AiChoice.CLAUDE_SONNET_4_6,
@@ -198,14 +214,14 @@ def route(
         # Fallback for unknown type
         preferred_ai = AiChoice.CLAUDE_OPUS_4_7
         use_thinking = True
-        thinking_budget = 8000
+        thinking_budget = _THINK_HIGH
         fallback_chain = [
             AiChoice.CLAUDE_SONNET_4_6,
             AiChoice.CLAUDE_HAIKU_4_5,
             AiChoice.GEMINI,
         ]
 
-    # Step 4: Handle retry logic
+    # Step 4: Handle retry logic (P0b H2 fix · ai-registry thinking_budget 참조)
     if retry_count > 0 and prior_ai in (
         AiChoice.CLAUDE_SONNET_4_6,
         AiChoice.CLAUDE_HAIKU_4_5,
@@ -213,7 +229,7 @@ def route(
         # If smaller model failed, escalate to Opus
         preferred_ai = AiChoice.CLAUDE_OPUS_4_7
         use_thinking = True
-        thinking_budget = 4000 if retry_count == 1 else 8000
+        thinking_budget = _THINK_MED if retry_count == 1 else _THINK_HIGH
         fallback_chain = [
             AiChoice.CLAUDE_SONNET_4_6,
             AiChoice.CLAUDE_HAIKU_4_5,

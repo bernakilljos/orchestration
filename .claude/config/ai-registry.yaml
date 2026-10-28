@@ -30,6 +30,8 @@ models:
     knowledge_cutoff: "2026-06"
     thinking_mode: always_on
     use_cases: [design, complex_reasoning, decision]
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-09-22 release"
+    verified_at: "2026-10-28"
 
   claude-opus-5:
     provider: anthropic
@@ -144,13 +146,15 @@ models:
   grok:
     provider: xai
     tier: fast_bulk
-    availability: active
+    availability: provisional  # route.py 안 fallback option · 실제 API key 설정 필요
+    verified_from: "route.py:113-124 등록 · 실 API 미검증"
 
   gpt-5.2:
     provider: openai
     tier: long_recall
     context_window: 2000000
-    availability: active
+    availability: provisional
+    verified_from: "route.py:113-124 등록 · 실 API 미검증"
 
 # ----- 라우팅 임계값 (H1 참조 · 토큰 기반 범용화 scaffold) -----
 # 모델 context_window 대비 비율로 결정 (예시 하드코딩 숫자 아님)
