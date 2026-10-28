@@ -496,6 +496,43 @@ def _is_allowed_cmd(cmd: str) -> bool:
     return False
 
 
+def _check_approval_gate(cmd: str) -> dict:
+    """P0 Approval Gate — supervisor/runner 자동 실행 경로에서도 승인 게이트 호출.
+
+    2026-10-28 사용자 지시 (전수 감사 결과):
+    "Runner/Scheduler/Supervisor 코드 안 approval-gate 호출 0건 · hook 경로만" 결함 fix.
+
+    반환:
+        {"blocked": True, "category": "...", "description": "..."} — 위험 패턴 감지, 실행 금지
+        {"blocked": False} — 안전, 실행 허용
+    """
+    try:
+        gate = ROOT / ".claude" / "scripts" / "approval-gate.py"
+        if not gate.exists():
+            return {"blocked": False, "reason": "gate_not_found"}
+        import subprocess as _sp
+        # sys.executable 우선 (supervisor 가 Python 으로 돌고 있으므로 가장 확실)
+        # python-path.txt 캐시는 Unix 스타일 (/c/...) 경로일 수 있어 Windows subprocess 불가
+        py = sys.executable
+        r = _sp.run([py, str(gate), "detect", cmd], capture_output=True, text=True, timeout=10)
+        # approval-gate.py 는 match 시 exit code 10 반환 · 둘 다 stdout 파싱 필요
+        out = (r.stdout or "").strip()
+        if not out or out in ("null", "{}", ""):
+            return {"blocked": False}
+        try:
+            data = json.loads(out)
+        except Exception:
+            return {"blocked": False, "reason": "parse_error"}
+        if data and data.get("category"):
+            return {"blocked": True, "category": data.get("category"),
+                    "description": data.get("description", ""),
+                    "severity": data.get("severity", "high")}
+        return {"blocked": False}
+    except Exception as e:
+        # fail-open (gate 자체 오류 시 whitelist 가 2차 방어선)
+        return {"blocked": False, "reason": f"exception:{type(e).__name__}"}
+
+
 def _parse_markers(description: str) -> list:
     """description 에서 [CMD: ...] [VERIFY: ...] [FIX: ...] [TEST: ...] 마커 추출.
     GENERAL workflow:
@@ -658,6 +695,19 @@ def execute_goal(goal_id: int) -> dict:
             results["skipped_disallowed"] += 1
             results["details"].append({"task_id": task_id, "status": "skipped_disallowed",
                                        "cmd": cmd[:80]})
+            continue
+        # P0 Approval Gate 체크 (2026-10-28 사용자 지시 — 자동 실행 경로도 Gate 통제)
+        gate_result = _check_approval_gate(cmd)
+        if gate_result.get("blocked"):
+            results.setdefault("skipped_approval_required", 0)
+            results["skipped_approval_required"] += 1
+            results["details"].append({
+                "task_id": task_id, "status": "skipped_approval_required",
+                "cmd": cmd[:80],
+                "category": gate_result.get("category"),
+                "reason": gate_result.get("description", "")[:120],
+            })
+            # tasks 상태 — pending 유지 (수동 승인 후 재시도 가능)
             continue
         # 실행 via runner (허용된 명령만 · shell=True 자동)
         r = runner.run(cmd, task_id=task_id, worker_id="supervisor", timeout=180)

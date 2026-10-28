@@ -40,13 +40,29 @@ _QUESTION_SUFFIX = ("?", "？", "지?", "까?")
 _STATUS_KEYWORDS = ("상태", "현황", "확인해", "보여줘", "show", "status", "list", "뭐야", "몇", "어디", "왜")
 _CANCEL_KEYWORDS = ("취소", "그만", "안 할", "안할", "안 해", "안해", "하지 마", "cancel", "abort", "stop ")
 _REDO_PREFIXES = ("재실행", "다시 실행", "REDO:", "다시해", "다시 해")
+# 보고 재출력 요청 (2026-10-28 사용자 지시 — R24 재발 방지)
+# "다시보고해줘 짤려서" 류를 execute 로 오분류 X · 보고 재출력로 분류
+_REPORT_REQUEST_KEYWORDS = (
+    "다시 보고", "다시보고", "재보고", "짤렸", "짤려서", "짤림",
+    "재출력", "다시 출력", "다시출력", "다시 알려",
+    "요약해줘", "정리해줘", "report again", "summary again",
+    "이전 보고", "지난 보고", "방금 보고",
+)
 
 
 def _classify(text: str) -> str:
-    """사용자 메시지 유형 분류 → execute / question / status / cancel / redo / unknown."""
+    """사용자 메시지 유형 분류 → report_request / execute / question / status / cancel / redo / unknown.
+
+    2026-10-28 R24 재발 방지 (사용자 "다시보고해줘 짤려서" 오분류 fix):
+    report_request 를 execute 보다 **먼저** 체크 (해줘 가 execute 매치하기 전).
+    """
     low = (text or "").lower().strip()
     if not low:
         return "unknown"
+    # 보고 재출력 요청 (R24 재발 방지 · execute 보다 우선 · "다시보고해줘" 에 "해줘" 포함되어도 report_request)
+    for k in _REPORT_REQUEST_KEYWORDS:
+        if k.lower() in low:
+            return "report_request"
     # 명시적 재실행
     for p in _REDO_PREFIXES:
         if p.lower() in low:
