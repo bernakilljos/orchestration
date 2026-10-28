@@ -104,6 +104,27 @@ def _new_event_id(session_id: str, prompt: str) -> str:
     return hashlib.sha256(f"{session_id}|{phash}|{ns}".encode("utf-8")).hexdigest()[:16]
 
 
+def _append_raw(prompt: str, session_id: str, classification: str, status: str) -> None:
+    """사용자 지시 2026-10-28: 모든 UserPromptSubmit 원본 이벤트 append-only 보존.
+    분류 결과·중복 여부 무관하게 전부 기록 · 삭제 X · 추적용."""
+    try:
+        raw_log = os.path.join(os.environ.get("CLAUDE_PROJECT_DIR", "."),
+                               ".claude", "logs", "ledger-raw.jsonl")
+        os.makedirs(os.path.dirname(raw_log), exist_ok=True)
+        with open(raw_log, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "ts": datetime.now().isoformat(timespec="seconds"),
+                "ts_epoch": time.time(),
+                "session_id": session_id,
+                "classification": classification,
+                "status": status,  # registered·duplicate_skipped·deferred·approval_required
+                "prompt": (prompt or "")[:800],
+                "prompt_hash": _prompt_hash(prompt),
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def _append_deferred(prompt: str, session_id: str) -> None:
     """unknown 분류 — 원문 보존 (실행 보류 · 사용자 재해석 가능)."""
     try:
@@ -116,6 +137,32 @@ def _append_deferred(prompt: str, session_id: str) -> None:
                                ensure_ascii=False) + "\n")
     except Exception:
         pass
+
+
+# 승인 게이트 — 사용자 지시 2026-10-28 "삭제·배포·외부·권한·비용은 자동 실행 X"
+_APPROVAL_PATTERNS = (
+    # 데이터 손실
+    "삭제해", "삭제해줘", "삭제해라", "지워", "remove ", "delete ", "drop table", "truncate",
+    "rm -rf", "git reset --hard", "git clean -fd",
+    # 배포·외부 push
+    "배포", "deploy", "git push --force", "force push",
+    "production", "운영", "실배포", "publish",
+    # 권한 상승
+    "sudo", "chmod 777", "권한 상승", "admin 권한",
+    # 비용
+    "결제", "구독", "유료", "paid plan", "subscription",
+    # 외부 시스템
+    "sap", "oracle", "실제 db", "운영 db",
+    # 포괄 지시
+    "전부 개발해", "모두 실행해", "다 해버려",
+)
+
+
+def _needs_approval(prompt: str) -> list:
+    """위험 패턴 매치 반환 (사용자 지시 "포괄 '전부 개발해' 를 무제한 실행 권한으로 해석 X")."""
+    low = (prompt or "").lower()
+    matched = [p for p in _APPROVAL_PATTERNS if p in low]
+    return matched
 
 
 def _append_ledger_entry(prompt: str, session_id: str, classification: str) -> dict:
@@ -138,21 +185,27 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str) -> d
     existing = data.get("requests", [])
     dup = _is_recent_duplicate(session_id, prompt, existing, window_s=10)
     if dup.get("duplicate"):
+        # 원본은 raw log 에 이미 보존 (삭제 X · 사용자 지시 반영)
         return {"status": "duplicate_within_window", "request_id": dup.get("existing_id"),
                 "event_id": dup.get("event_id")}
     event_id = _new_event_id(session_id, prompt)
     rid = f"R{len(existing) + 1}"
+    # 승인 요구 패턴 매치 시 status=approval_required (실행 보류)
+    approval_matches = _needs_approval(prompt)
+    initial_status = "approval_required" if approval_matches else "pending"
     entry = {
         "id": rid,
         "desc": (prompt or "")[:400],
         "classification": classification,
-        "status": "pending",
+        "status": initial_status,
         "event_id": event_id,
         "session_id": session_id or "unknown",
         "ts": datetime.now().isoformat(timespec="seconds"),
         "ts_epoch": time.time(),
         "prompt_hash": _prompt_hash(prompt),
     }
+    if approval_matches:
+        entry["approval_reasons"] = approval_matches[:5]
     data.setdefault("requests", []).append(entry)
     try:
         with open(LEDGER, "w", encoding="utf-8") as f:
@@ -173,19 +226,35 @@ def run(ctx) -> str:
         if not prompt:
             return ""
         classification = _classify(prompt)
-        # 사용자 지시 "불확실하면 원문 보존 + 실행 보류" — unknown 은 deferred 로 등록 (status=deferred)
+        # 모든 UserPromptSubmit → raw log 보존 (사용자 지시 "원본 이벤트 전부 append-only · 삭제 X")
         if classification == "unknown":
-            # 원문 보존 — 분류 실패 보고 · 실행 X
+            # 분류 불확실 → raw + deferred (원문 2중 보존 · 실행 보류 · 사용자 재해석 가능)
+            _append_raw(prompt, session_id, "unknown", "deferred")
             _append_deferred(prompt, session_id)
             return ""
-        # 실행 요청만 등록 (사용자 지시 "불명확한 요청 임의 실행 X")
         if classification not in ("execute", "redo"):
-            return ""  # 질문·조회·취소 는 등록 X
+            # 질문·조회·취소 — 원본만 raw 로그에 보존 (ledger 등록 X)
+            _append_raw(prompt, session_id, classification, "skipped_non_exec")
+            return ""
         result = _append_ledger_entry(prompt, session_id, classification)
         if result.get("status") == "registered":
+            # 승인 요구 여부 확인 (ledger 안 entry 의 status 가 approval_required 인지)
+            ledger_path = os.path.join(os.environ.get("CLAUDE_PROJECT_DIR", "."),
+                                       ".claude", "state", "request-ledger.json")
+            with open(ledger_path, "r", encoding="utf-8") as f:
+                d = json.load(f)
+            latest = d.get("requests", [])[-1] if d.get("requests") else {}
+            if latest.get("status") == "approval_required":
+                _append_raw(prompt, session_id, classification, "approval_required")
+                reasons = latest.get("approval_reasons", [])[:3]
+                return f"[ledger] + {result['request_id']} (APPROVAL REQUIRED · reasons={reasons} · class={classification})"
+            _append_raw(prompt, session_id, classification, "registered")
             return f"[ledger] + {result['request_id']} (event_id={result['event_id']} · class={classification})"
-        if result.get("status") == "duplicate_event":
-            return f"[ledger] = {result['request_id']} (duplicate event · same minute)"
+        if result.get("status") == "duplicate_within_window":
+            # 중복 의심이지만 원본은 raw 로그에 보존됨 · 실행만 보류 (사용자 지시 "원본 삭제 X")
+            _append_raw(prompt, session_id, classification, "duplicate_skipped_but_logged")
+            return f"[ledger] = {result['request_id']} (duplicate 10s · raw 보존됨)"
+        _append_raw(prompt, session_id, classification, "unknown_status")
         return ""
     except Exception as e:
         # Hook 실패해도 다른 hook 영향 X · log 만
