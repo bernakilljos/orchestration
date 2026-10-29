@@ -8,6 +8,11 @@ inputs:
   - name: routing
 
 steps:
+  - id: pre_snapshot
+    desc: 수정 전 상태 md5 저장 (2026-10-29 F3 fix · snapshot.py pre.json 생성)
+    script: .claude/scripts/lib/snapshot.py
+    args: ["pre", "--files", "{files_modified}"]
+    outputs: [pre_snapshot_result]
   - id: dispatch
     desc: routing.mode 별 실행
     switch:

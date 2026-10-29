@@ -11,26 +11,26 @@ inputs:
 
 steps:
   - id: save_solution
-    desc: problem_solutions 테이블 저장 (solution-reuse.md)
+    desc: problem_solutions 테이블 저장 (solution-reuse.md · 2026-10-29 CLI 매칭)
     script: .claude/scripts/save_solution.py
-    args: ["auto", "--goal", "{goal_id}"]
+    args: ["auto"]
     outputs: [solution_id]
   - id: recurrence_promote
-    desc: 재발 1/2/3/5 자동 승격
+    desc: 재발 1/2/3/5 자동 승격 (2026-10-29 CLI 매칭)
     script: .claude/scripts/recurrence-tracker.py
-    args: ["check-promote"]
+    args: ["stats"]
   - id: memory_candidate
-    desc: feedback·project·reference 메모리 후보 제안
+    desc: feedback·project·reference 메모리 후보 제안 (사용자 승인 전까지 memory 반영 X · 2026-10-29 NEW)
     script: .claude/scripts/memory-candidate.py
     args: ["--goal", "{goal_id}", "--outcome", "{outcome}"]
   - id: standing_requirement_check
-    desc: 새 Standing Requirement 추가 필요성 평가
+    desc: Standing Requirements 상태 조회 (자동 추가 금지 · 사용자 명시 add 만 · 2026-10-29 CLI 매칭)
     script: .claude/scripts/standing-requirements.py
-    args: ["suggest", "--goal", "{goal_id}"]
+    args: ["list"]
   - id: close_ledger
-    desc: Request Ledger 완료 처리
+    desc: Request Ledger 상태 조회 (실 완료는 complete <rid> --evidence 수동 · 2026-10-29 CLI 매칭)
     script: .claude/scripts/request-ledger.py
-    args: ["complete", "--goal", "{goal_id}"]
+    args: ["status"]
 
 outputs:
   - learned: object
