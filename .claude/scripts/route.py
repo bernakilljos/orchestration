@@ -108,20 +108,28 @@ def cmd_status(args):
         print(f"Usage offload: 판정 실패 ({e})")
     print()
 
-    # Quota status
+    # Quota status (P0b H4 fix · 2026-10-29): 하드코딩 모델 리스트 제거
+    # ai-registry.yaml 참조 → 모델 추가 시 YAML 만 수정 (코드 수정 X)
     print("Quota Status:")
-    for ai_name in [
-        "claude-fable-5",
-        "claude-opus-4-8",
-        "claude-sonnet-4-6",
-        "claude-haiku-4-5",
-        "codex",
-        "gemini",
-        "grok",       # Perplexity Computer 패턴 — lightweight/speed-sensitive
-        "gpt-5.2",    # Perplexity Computer 패턴 — long-context recall (2M+)
-    ]:
+    try:
+        from ai_registry import list_models as _list_models
+        _active = _list_models("active")
+        _provisional = _list_models("provisional")
+        _all = _active + _provisional
+    except Exception:
+        # fail-closed fallback (ai-registry 로드 실패 시 최소 동작)
+        _all = ["claude-opus-5-5", "claude-sonnet-5", "claude-haiku-4-5", "codex", "gemini"]
+    for ai_name in _all:
         status = "EXCEEDED" if is_quota_exceeded(ai_name) else "OK"
-        print(f"  {ai_name:<20} {status}")
+        _avail = ""
+        try:
+            from ai_registry import get_model as _gm
+            _m = _gm(ai_name) or {}
+            if _m.get("availability") == "provisional":
+                _avail = " [provisional]"
+        except Exception:
+            pass
+        print(f"  {ai_name:<24} {status}{_avail}")
 
     print()
 

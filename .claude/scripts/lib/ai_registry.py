@@ -127,6 +127,102 @@ def get_thinking_budget(level: str) -> Optional[int]:
     return int(v) if v is not None else None
 
 
+def select_by_tier(tier: str, availability: str = "active") -> list:
+    """특정 tier 의 모델 리스트 반환 (H4 중앙화 helper)."""
+    data = _load()
+    out = []
+    for name, m in data.get("models", {}).items():
+        if m.get("tier") == tier and m.get("availability", "active") == availability:
+            out.append(name)
+    return out
+
+
+def select_by_use_case(use_case: str, availability: str = "active") -> list:
+    """use_cases 포함 모델 리스트."""
+    data = _load()
+    out = []
+    for name, m in data.get("models", {}).items():
+        if use_case in (m.get("use_cases") or []) and m.get("availability", "active") == availability:
+            out.append(name)
+    return out
+
+
+def preferred_for(task_kind: str, tokens: int = 0) -> Optional[str]:
+    """task kind (design/implement/verify/document/simple/refactor) → preferred model.
+
+    ai-registry.yaml 안 tier/use_cases/context_window 를 참조해 동적 선택.
+    모델 추가·삭제 시 YAML 만 수정 (코드 수정 X).
+
+    kind → tier 매핑:
+        design, refactor → default (Opus 5.5) → fallback (Opus 5) → cost_fallback (4.8)
+        implement <small → balanced (Sonnet) → fast_verify (Haiku)
+        implement >=recall → long_context (Gemini) → external_coder (Codex)
+        verify <recall → fast_verify (Haiku 5.5·4.5) → balanced (Sonnet)
+        verify >=recall → long_context (Gemini) → default (Opus)
+        document, simple → balanced (Sonnet) → fast_verify (Haiku)
+    """
+    small = get_routing_threshold("small_task_tokens") or 2000
+    recall = get_routing_threshold("recall_task_tokens") or 800000
+
+    def _first(*tiers: str) -> Optional[str]:
+        for t in tiers:
+            lst = select_by_tier(t)
+            if lst:
+                return lst[0]
+        return None
+
+    kind = (task_kind or "").lower()
+    if kind in ("design", "refactor"):
+        return _first("default", "fallback", "cost_fallback")
+    if kind == "implement":
+        if tokens >= recall:
+            return _first("long_context", "external_coder", "default")
+        if tokens < small:
+            return _first("balanced", "fast_verify")
+        return _first("default", "fallback")
+    if kind == "verify":
+        if tokens >= recall:
+            return _first("long_context", "default")
+        return _first("fast_verify", "balanced")
+    if kind in ("document", "simple"):
+        return _first("balanced", "fast_verify")
+    # unknown → default
+    return _first("default", "fallback")
+
+
+def is_available(name: str) -> bool:
+    """모델이 active 인지 (provisional/unavailable 는 False)."""
+    m = get_model(name)
+    if not m:
+        return False
+    return m.get("availability", "active") == "active"
+
+
+def fallback_chain(primary: str, tokens: int = 0) -> list:
+    """primary 외 fallback 리스트 (tier 기반 · 중복 제거)."""
+    primary_m = get_model(primary) or {}
+    primary_tier = primary_m.get("tier")
+    chain = []
+
+    # 같은 tier 다른 모델 (예: default 안 opus-5-5 → opus-5)
+    for name in select_by_tier(primary_tier or ""):
+        if name != primary and name not in chain:
+            chain.append(name)
+
+    # 인접 tier
+    tier_order = ["default", "fallback", "cost_fallback", "balanced", "fast_verify", "long_context", "external_coder"]
+    try:
+        idx = tier_order.index(primary_tier) if primary_tier in tier_order else 0
+        for t in tier_order[idx + 1:]:
+            for name in select_by_tier(t):
+                if name not in chain and name != primary:
+                    chain.append(name)
+    except (ValueError, IndexError):
+        pass
+
+    return chain[:5]  # 최대 5개
+
+
 # CLI test
 if __name__ == "__main__":
     import sys, json

@@ -41,7 +41,13 @@ class TaskType(str, Enum):
 
 
 class AiChoice(str, Enum):
-    """Available AI choices."""
+    """Available AI choices.
+
+    P0b H4 (2026-10-29) · 호환 어댑터 패턴:
+      - 기존 enum 멤버는 유지 (하위 호환 · 외부 호출자 깨짐 방지)
+      - 신규 모델은 ai-registry.yaml 등록 후 _registry_resolve() 로 접근
+      - Router 선택 로직은 ai_registry.preferred_for() 참조 (아래 route())
+    """
     CLAUDE_OPUS_4_7 = "claude-opus-4-7"
     CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"
     CLAUDE_HAIKU_4_5 = "claude-haiku-4-5"
@@ -49,6 +55,50 @@ class AiChoice(str, Enum):
     GEMINI = "gemini"
     WAIT = "wait"               # Cannot start now
     BREAKER = "breaker"         # Budget exceeded
+
+
+def _registry_resolve(name: str) -> Optional[AiChoice]:
+    """ai-registry 모델명 → AiChoice (호환 어댑터).
+
+    registry 에만 있고 enum 미등록이면 가장 가까운 tier 로 fallback 매핑.
+    """
+    # 직접 매치
+    for choice in AiChoice:
+        if choice.value == name:
+            return choice
+    # tier 기반 fallback
+    try:
+        from ai_registry import get_model
+        m = get_model(name) or {}
+        tier = m.get("tier", "")
+        if tier in ("default", "fallback", "cost_fallback", "legacy", "mythos_class", "access_gated"):
+            return AiChoice.CLAUDE_OPUS_4_7
+        if tier == "balanced":
+            return AiChoice.CLAUDE_SONNET_4_6
+        if tier == "fast_verify":
+            return AiChoice.CLAUDE_HAIKU_4_5
+        if tier == "long_context":
+            return AiChoice.GEMINI
+        if tier == "external_coder":
+            return AiChoice.CODEX
+    except Exception:
+        pass
+    return None
+
+
+def registry_preferred(task_type_str: str, tokens: int = 0) -> Optional[AiChoice]:
+    """Registry 참조로 preferred AI 반환 (H4 중앙화 helper).
+
+    모델 추가 시 ai-registry.yaml 만 수정하면 자동 반영.
+    """
+    try:
+        from ai_registry import preferred_for, is_available
+        name = preferred_for(task_type_str, tokens=tokens)
+        if name and is_available(name):
+            return _registry_resolve(name)
+    except Exception:
+        pass
+    return None
 
 
 @dataclass
@@ -122,10 +172,26 @@ def route(
     }
 
     # Step 3: Select preferred AI by task type
+    # P0b H4 (2026-10-29): Registry 우선 참조 (preferred_for) · 미매치 시 기존 로직
     preferred_ai = None
     fallback_chain = []
     use_thinking = False
     thinking_budget = 0
+
+    # H4 중앙화: ai-registry 참조 (preferred + fallback_chain 모두 registry 기반)
+    _registry_pref = registry_preferred(task_type.value, estimated_tokens)
+    _registry_fb: List[AiChoice] = []
+    if _registry_pref:
+        try:
+            from ai_registry import preferred_for, fallback_chain as _ai_fb
+            primary_name = preferred_for(task_type.value, estimated_tokens)
+            if primary_name:
+                for fb_name in _ai_fb(primary_name, estimated_tokens):
+                    resolved = _registry_resolve(fb_name)
+                    if resolved and resolved not in _registry_fb and resolved != _registry_pref:
+                        _registry_fb.append(resolved)
+        except Exception:
+            _registry_fb = []
 
     # P0b H1·H2 fix (2026-10-28): 하드코딩 임계값 (200·500k·800k) 제거
     # ai-registry.yaml routing_thresholds 참조 · 모델 추가 시 YAML 만 수정
@@ -254,14 +320,29 @@ def route(
         except Exception:
             pass  # noqa: BLE001 — 사용률 판정 실패 시 평소 라우팅
 
+    # H4 중앙화 적용 (2026-10-29): Registry preferred 가 유효하고 quota OK 면 승격
+    # 하드코딩 분기 결과보다 Registry 가 더 최신 (예: Opus 4.7 → Opus 5.5 자동 승격)
+    _registry_decided = False
+    if _registry_pref and _registry_pref != preferred_ai:
+        if _registry_pref in quota_map and quota_map[_registry_pref]:
+            # 기존 preferred 를 fallback 맨 앞에 보존
+            prev = preferred_ai
+            preferred_ai = _registry_pref
+            # Registry fallback_chain 사용 · 기존 preferred 를 뒤에 보존
+            new_fb = list(_registry_fb)
+            if prev not in new_fb:
+                new_fb.append(prev)
+            fallback_chain = new_fb
+            _registry_decided = True
+
     # Step 5: Check preferred AI quota
     selected_ai = None
-    if quota_map[preferred_ai]:
+    if quota_map.get(preferred_ai, False):
         selected_ai = preferred_ai
     else:
         # Walk fallback chain
         for ai in fallback_chain:
-            if quota_map[ai]:
+            if quota_map.get(ai, False):
                 selected_ai = ai
                 break
 

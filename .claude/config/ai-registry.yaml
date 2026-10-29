@@ -35,6 +35,7 @@ models:
 
   claude-opus-5:
     provider: anthropic
+    api_id: "claude-opus-5"
     tier: fallback
     context_window: 1000000
     output_limit: 128000
@@ -42,22 +43,33 @@ models:
     pricing_output_per_mtok: 25.0
     availability: active
     use_cases: [design, complex_reasoning]
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-07-24 release"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"  # API 실호출 검증 미수행 (계정 키 필요)
 
   claude-opus-4-8:
     provider: anthropic
+    api_id: "claude-opus-4-8"
     tier: cost_fallback
     context_window: 1000000
     output_limit: 128000
     pricing_input_per_mtok: 5.0
     pricing_output_per_mtok: 25.0
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-06 release"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   claude-opus-4-7:
     provider: anthropic
+    api_id: "claude-opus-4-7"
     tier: legacy
     context_window: 1000000
     output_limit: 128000
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · 레거시 호환 (현 세션 default)"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   claude-fable-5-1:
     provider: anthropic
@@ -95,66 +107,103 @@ models:
 
   claude-sonnet-5-5:
     provider: anthropic
+    api_id: "claude-sonnet-5-5"
     tier: balanced
     context_window: 1000000
     output_limit: 128000
     pricing_cache_read: 0.10
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-10-07 cache 가격 인하"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   claude-sonnet-5:
     provider: anthropic
+    api_id: "claude-sonnet-5"
     tier: balanced
     context_window: 1000000
     output_limit: 128000
     pricing_input_per_mtok: 2.0
     pricing_output_per_mtok: 10.0
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-07-02 release · 가격 8/10 확정"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   claude-sonnet-4-6:
     provider: anthropic
+    api_id: "claude-sonnet-4-6"
     tier: balanced
     context_window: 1000000
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · 저비용 fallback"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   claude-haiku-5-5:
     provider: anthropic
+    api_id: "claude-haiku-5-5"
     tier: fast_verify
     context_window: 1000000
     output_limit: 128000
     availability: active
     thinking_mode: effort
+    verified_from: "CLAUDE.md § 3.2 · Anthropic 2026-10-07 release"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
+    breaking_notes: "budget_tokens·temp·top_p·top_k·prefill·computer_20250124 모두 400 error"
 
   claude-haiku-4-5:
     provider: anthropic
+    api_id: "claude-haiku-4-5"
     tier: fast_verify
     context_window: 200000
     availability: active
+    verified_from: "CLAUDE.md § 3.2 · 검증·채점 default"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
 
   codex:
     provider: openai
+    api_id: "codex-cli"  # Codex CLI 호출 (OpenAI Codex 모델 추상)
     tier: external_coder
     context_window: 128000
     availability: active
     parallelism_default: 4  # Codex 는 동시 N 워커 (설정화)
+    verified_from: "Codex CLI 설치 확인 · hook-00-init.sh"
+    verified_at: "2026-10-28"
+    verification_method: "cli_installed"
 
   gemini:
     provider: google
+    api_id: "gemini-2.0-flash"  # Flash 1M+ 멀티모달
     tier: long_context
     context_window: 2000000  # 2M (Flash)
     availability: active
+    verified_from: "Gemini CLI 설치 확인 · hook-00-init.sh"
+    verified_at: "2026-10-28"
+    verification_method: "cli_installed"
 
   grok:
     provider: xai
+    api_id: "grok-2"
     tier: fast_bulk
-    availability: provisional  # route.py 안 fallback option · 실제 API key 설정 필요
+    availability: provisional  # xAI API key 설정 필요 · 세션 미검증
     verified_from: "route.py:113-124 등록 · 실 API 미검증"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
+    blocked_reason: "xAI API key 미설정 · Models API 실호출 BLOCKED"
 
   gpt-5.2:
     provider: openai
+    api_id: "gpt-5.2"
     tier: long_recall
     context_window: 2000000
     availability: provisional
     verified_from: "route.py:113-124 등록 · 실 API 미검증"
+    verified_at: "2026-10-28"
+    verification_method: "docs_only"
+    blocked_reason: "OpenAI API key 미설정 · Models API 실호출 BLOCKED"
 
 # ----- 라우팅 임계값 (H1 참조 · 토큰 기반 범용화 scaffold) -----
 # 모델 context_window 대비 비율로 결정 (예시 하드코딩 숫자 아님)
