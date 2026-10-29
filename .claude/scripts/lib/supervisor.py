@@ -608,14 +608,31 @@ def _parse_natural_language(description: str) -> list:
         if text:
             numbered_items = [text[:300]]
 
+    # 2026-10-29 Phase 1-D 확장: risk 평가 (획일 approval 금지 · 사용자 지시).
+    #   investigate (cmd=None) 는 조사만 → 실행 명령 없음 → risk=low · 자동 허용
+    #   실 cmd 추출은 미지원 (추측 X) · cmd 있는 task 는 approval-gate.detect 로 판정
+    import re as _re3
+    _risk_hints = {
+        # 위험 어휘 (일반화 · 특정 모델·숫자 X)
+        "high": _re3.compile(r"(삭제|제거|포맷|초기화|revoke|disable|drop\s+table|rm\s+-rf|force\s+push|프로덕션|production)", _re3.IGNORECASE),
+        "medium": _re3.compile(r"(수정|변경|생성|배포|install|deploy|commit|push|publish|migration)", _re3.IGNORECASE),
+    }
     for item in numbered_items:
+        # investigate 는 조사만 (실행 명령 X) → low 기본
+        # 그러나 어휘에 위험 신호 있으면 승격 (사용자 승인 필요)
+        risk = "low"
+        for level, pat in _risk_hints.items():
+            if pat.search(item):
+                risk = level
+                break
         tasks.append({
             "kind": "investigate",
             "desc": item,
-            "cmd": None,  # 실행 명령 추출 X · 사용자 명시 후 추가
-            "verify": None,  # 검증 계약 추출 X
-            "risk": "unknown",
-            "requires_user_approval": True,  # investigate → cmd/verify 승격 전 승인
+            "cmd": None,  # 추측 X · 명시 후 추가
+            "verify": None,
+            "risk": risk,
+            # low = 조사 자동 허용 · medium/high = 사용자 승인 필요
+            "requires_user_approval": (risk != "low"),
         })
     return tasks
 
