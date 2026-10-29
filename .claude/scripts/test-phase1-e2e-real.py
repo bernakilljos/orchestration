@@ -130,6 +130,38 @@ def main() -> int:
     check(approval_false != sum(risk_counts.values()),
           "모든 작업 획일 허용 아님 (사용자 지시 '모든 작업을 자동 허용 금지')")
 
+    # 4-추가: UNKNOWN 분리 검증 (R53 · 2026-10-29)
+    # 사용자 지시: "unknown 을 별도 상태로 두고 · UNKNOWN → LOW 자동 변환 X"
+    section("4-UNKNOWN. UNKNOWN risk 분리 (어휘 매칭 X 는 LOW 아님)")
+    # 어휘 매칭 전혀 안 되는 요청 → UNKNOWN 반환 확인
+    with sqlite3.connect(str(db)) as conn:
+        now = int(time.time())
+        source = f"test:unknown-{now}"
+        conn.execute(
+            "INSERT INTO goals (description, status, workflow_type, source_ref, "
+            "max_retry, timeout_h, created_at, updated_at) VALUES "
+            "(?, 'PENDING', 'GENERAL', ?, 3, 24, ?, ?)",
+            ("1. 어떻게든 잘 되게 해줘", source, now, now),  # 어휘 매칭 X
+        )
+        unk_gid = conn.execute(
+            "SELECT goal_id FROM goals WHERE source_ref=? ORDER BY created_at DESC LIMIT 1",
+            (source,),
+        ).fetchone()[0]
+    decompose_goal(unk_gid)
+    with sqlite3.connect(str(db)) as conn:
+        rows = conn.execute(
+            "SELECT task_file FROM tasks WHERE task_id LIKE ?",
+            (f"g{unk_gid}-%",),
+        ).fetchall()
+    unk_specs = [json.loads(tf) for (tf,) in rows]
+    unk_count = sum(1 for s in unk_specs if s.get("risk") == "unknown")
+    unk_approval = sum(1 for s in unk_specs if s.get("risk") == "unknown" and s.get("requires_user_approval"))
+    check(unk_count > 0, f"UNKNOWN 반환됨 ({unk_count}건)")
+    check(unk_approval == unk_count, f"UNKNOWN 전부 승인 필요 ({unk_approval}/{unk_count})")
+    # 어휘 매칭 X 가 LOW 로 자동 변환 안 됨
+    low_count_unk = sum(1 for s in unk_specs if s.get("risk") == "low")
+    check(low_count_unk == 0, f"어휘 매칭 X 가 LOW 로 자동 변환 X ({low_count_unk}건 저변환)")
+
     section("5. 부분 실패 격리 (존재하지 않는 goal 요청 → 다른 goal 영향 X)")
     bad_gid = max(goal_ids) + 999  # 존재 X
     r_bad = decompose_goal(bad_gid)

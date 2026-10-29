@@ -608,31 +608,48 @@ def _parse_natural_language(description: str) -> list:
         if text:
             numbered_items = [text[:300]]
 
-    # 2026-10-29 Phase 1-D 확장: risk 평가 (획일 approval 금지 · 사용자 지시).
-    #   investigate (cmd=None) 는 조사만 → 실행 명령 없음 → risk=low · 자동 허용
-    #   실 cmd 추출은 미지원 (추측 X) · cmd 있는 task 는 approval-gate.detect 로 판정
+    # 2026-10-29 Phase 1-D 개선 (R53): risk 로직 "그외=low" 제거 · UNKNOWN 별도 분리.
+    #
+    # 사용자 지적 (a3750e0 후속):
+    #   "low = 그 외 규칙은 위험. 위험 키워드가 발견되지 않았다는 이유만으로 안전하다고 판단 X.
+    #    unknown 을 별도 상태로 두고, 실제 도구·명령·대상 환경까지 포함해 위험도를 판정해야."
+    #   "commit·push·수정 단어만 포함 → 무조건 medium 처리도 너무 단순"
+    #
+    # 수정 원칙:
+    #   - 어휘 매칭 X → unknown (not low)
+    #   - 조사·분석 명시 어휘 매칭 → low (조사 작업)
+    #   - 수정·배포 어휘 매칭 → medium (실행 영향)
+    #   - 삭제·프로덕션 어휘 매칭 → high (비가역)
+    #   - UNKNOWN → LOW 자동 변환 금지
+    #   - UNKNOWN 은 approval 필요 (안전 default)
+    #   - 실제 cmd·파일·권한 평가는 cmd 추출 단계 (다음 세션 Phase 1-D 완성)
     import re as _re3
     _risk_hints = {
-        # 위험 어휘 (일반화 · 특정 모델·숫자 X)
         "high": _re3.compile(r"(삭제|제거|포맷|초기화|revoke|disable|drop\s+table|rm\s+-rf|force\s+push|프로덕션|production)", _re3.IGNORECASE),
         "medium": _re3.compile(r"(수정|변경|생성|배포|install|deploy|commit|push|publish|migration)", _re3.IGNORECASE),
+        "low": _re3.compile(r"(조사|분석|확인|점검|스캔|검사|읽|읽기|조회|탐색|파악|이해|리포트|보고)", _re3.IGNORECASE),
     }
     for item in numbered_items:
-        # investigate 는 조사만 (실행 명령 X) → low 기본
-        # 그러나 어휘에 위험 신호 있으면 승격 (사용자 승인 필요)
-        risk = "low"
-        for level, pat in _risk_hints.items():
-            if pat.search(item):
+        risk = "unknown"  # default: 어휘 매칭 X → unknown (not low)
+        for level in ("high", "medium", "low"):  # 우선순위: high > medium > low
+            if _risk_hints[level].search(item):
                 risk = level
                 break
+        # approval 분기:
+        #   low (명시 조사) = 자동 허용
+        #   medium/high (명시 위험) = 승인 필요
+        #   unknown (판정 불가) = 승인 필요 (안전 default · 사용자 명시 "UNKNOWN→LOW 자동 변환 X")
         tasks.append({
             "kind": "investigate",
             "desc": item,
-            "cmd": None,  # 추측 X · 명시 후 추가
+            "cmd": None,
             "verify": None,
             "risk": risk,
-            # low = 조사 자동 허용 · medium/high = 사용자 승인 필요
-            "requires_user_approval": (risk != "low"),
+            "requires_user_approval": (risk != "low"),  # low 만 자동 허용 · unknown 포함 승인
+            "risk_evaluation_note": (
+                "어휘 매칭 기반 · 실제 cmd/파일/권한 평가는 cmd 추출 단계에서 재평가 필요"
+                if risk == "unknown" else None
+            ),
         })
     return tasks
 

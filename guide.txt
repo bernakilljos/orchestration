@@ -2307,3 +2307,7 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 ## 2026-10-29 Phase 1-D risk 평가 + Phase 1-E 가변 N 종단 20/20 (R51)
 
 사용자 지시 반영 (bf41a4b 후속 · PAT 대응 R50 완료). Phase 1-D: _parse_natural_language 안 risk 어휘 매칭 추가 (low=조사 · medium=수정·변경·배포·commit·push · high=삭제·revoke·프로덕션) · requires_user_approval = risk != low · '모든 작업 획일 분류 금지' 사용자 명시 정합. Phase 1-E 실 종단 테스트 (test-phase1-e2e-real.py NEW · 20/20 PASS · 8 섹션): 가변 N 3/5/7 요청 생성 · N goal 독립 등재 · 자연어 분해 · risk 분포 (low=3 medium=1 high=1) · 획일 아님 검증 · 부분 실패 격리 · idempotent 재분해 · 세션 복원 · Learning Candidate STANDING 안전 장치. 산출물 생성 범위 외 (플로우만 검증). 회귀 golden 13/13·e2e 68/68·full-chain 51/51·phase1-e2e 20/20. 예산 NEW 1 + CHANGE 1. Statusline FROZEN. Ledger R51 (49/51). 다음: Phase 2 Self-Healing·3 Discovery·4 Multi-Agent·5 Managed Agents PoC.
+
+## 2026-10-29 R53 risk 로직 unknown 분리 (사용자 지적 "그외=low 위험")
+
+사용자 지적 (a3750e0 후속): "low = 그 외 규칙은 위험 · 위험 키워드가 발견되지 않았다는 이유만으로 안전하다고 판단 X · unknown 을 별도 상태로 두고 UNKNOWN→LOW 자동 변환 X". 수정: _parse_natural_language risk 로직 변경 — 어휘 매칭 X 는 "unknown" 반환 (not low) · low 는 명시 조사 어휘 (조사·분석·확인·점검·스캔·탐색·파악·보고) 매칭 시만 · requires_user_approval=True (unknown 포함) · 사용자 안전 default. 테스트: test-phase1-e2e-real.py §4-UNKNOWN 추가 (23/23 PASS · 기존 20 + 3). 실측: '어떻게든 잘 되게 해줘' → unknown · 승인 필요 · LOW 저변환 0건. P0 PAT 재확인: 로컬 파일 placeholder 유지 · audit github_pat=0 · 사용자 GitHub Settings 폐기·재발급 BLOCKED 유지. 회귀 golden 13/13·e2e 68/68·full-chain 51/51·phase1-e2e 23/23. 예산 CHANGE 2 (supervisor.py · test-phase1-e2e-real.py). Ledger R53 (50/52 · 범위외 2).
