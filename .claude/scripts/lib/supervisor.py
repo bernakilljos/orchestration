@@ -562,18 +562,87 @@ def _parse_markers(description: str) -> list:
     return tasks
 
 
+def _parse_natural_language(description: str) -> list:
+    """자연어 요청 분해 (2026-10-29 Phase 1-D).
+
+    [CMD:] 마커 없을 때 fallback. 사용자 지시:
+      - 추측으로 실행 X · 원문 보존
+      - 특정 숫자·순서·모델 하드코딩 X
+      - 각 Task 에 요구사항·목표·의존·검증계약·위험 수준 기록
+
+    분해 전략:
+      ① 번호 리스트 (1./2./- /*) 분리
+      ② 명령형 문장 (해줘·수정·확인·조사·만들어·분석 등) 추출
+      ③ 각 조각 = 'investigate' kind task (실행 명령 X · verify=UNKNOWN · risk=unknown)
+
+    실행 가능 명령 (cmd) 는 자연어에서 **추출 X** — 추측 금지. 조사 kind 로 등재해
+    사용자/다음 세션이 명시 승인 후 cmd/verify 추가.
+    """
+    import re as _re2
+    tasks = []
+    # ① 번호 리스트 분해
+    lines = description.split('\n')
+    numbered_items = []
+    for line in lines:
+        s = line.strip()
+        if not s:
+            continue
+        # "1. foo" · "- foo" · "* foo"
+        m = _re2.match(r'^(?:\d+\.|\-|\*|•)\s*(.+)$', s)
+        if m:
+            numbered_items.append(m.group(1).strip())
+    # ② 번호 없으면 명령형 문장 매칭
+    if not numbered_items:
+        # 명령형 동사 (한국어·영어)
+        verb_pat = _re2.compile(
+            r'[^.!?\n]{3,200}(해줘|해라|해\s|만들어|수정|확인|조사|분석|추가|구현|검증|리뷰|테스트|배포)[^.!?\n]{0,100}[.!?]?',
+            _re2.IGNORECASE,
+        )
+        for m in verb_pat.finditer(description):
+            sentence = m.group(0).strip()
+            if 10 <= len(sentence) <= 300:
+                numbered_items.append(sentence)
+    # ③ 그래도 없으면 전체를 1개 investigate task 로
+    if not numbered_items:
+        text = description.strip()
+        if text:
+            numbered_items = [text[:300]]
+
+    for item in numbered_items:
+        tasks.append({
+            "kind": "investigate",
+            "desc": item,
+            "cmd": None,  # 실행 명령 추출 X · 사용자 명시 후 추가
+            "verify": None,  # 검증 계약 추출 X
+            "risk": "unknown",
+            "requires_user_approval": True,  # investigate → cmd/verify 승격 전 승인
+        })
+    return tasks
+
+
 def decompose_goal(goal_id: int) -> dict:
-    """description 파싱 → tasks·goal_tasks 등록. 실 구현 (stub 아님).
-    description 에 [CMD:...] 마커 없으면 분해 불가 → NO_MARKERS 반환."""
+    """description 파싱 → tasks·goal_tasks 등록.
+
+    2026-10-29 Phase 1-D 확장: [CMD:] 마커 없으면 자연어 분해 fallback (추측 X · 조사 task).
+
+    흐름:
+      1. [CMD:]·[FIX:] 마커 추출 (호환 유지)
+      2. 매치 X → _parse_natural_language fallback (investigate kind · 승인 필요)
+    """
     ensure_schema()
     g = show_goal(goal_id)
     if not g:
         return {"goal_id": goal_id, "error": "goal_not_found"}
     desc = g.get("description") or ""
     task_specs = _parse_markers(desc)
+    _mode = "markers"
+    if not task_specs:
+        # Phase 1-D 자연어 fallback (NO_MARKERS 반환 X · investigate task 로 분해)
+        task_specs = _parse_natural_language(desc)
+        _mode = "natural_language"
     if not task_specs:
         return {"goal_id": goal_id, "tasks_registered": 0,
-                "note": "NO_MARKERS", "hint": "goal description 에 [CMD:...] 마커 필요"}
+                "note": "EMPTY_DESCRIPTION", "hint": "goal description 비어있음"}
 
     import json as _json
     now = int(time.time())
@@ -596,12 +665,22 @@ def decompose_goal(goal_id: int) -> dict:
                     "INSERT INTO goal_tasks (goal_id, task_id, sequence) VALUES (?, ?, ?)",
                     (goal_id, task_id, seq)
                 )
-                registered.append({"task_id": task_id, "cmd": spec["cmd"][:80],
-                                   "verify": (spec.get("verify") or "")[:80],
-                                   "allowed": _is_allowed_cmd(spec["cmd"])})
+                # 2026-10-29 Phase 1-D: investigate kind 는 cmd=None 지원
+                _cmd = spec.get("cmd")
+                _desc = spec.get("desc") or ""
+                registered.append({
+                    "task_id": task_id,
+                    "kind": spec.get("kind", "cmd"),
+                    "cmd": (_cmd[:80] if _cmd else None),
+                    "desc": _desc[:120] if _desc else None,
+                    "verify": (spec.get("verify") or "")[:80] if spec.get("verify") else None,
+                    "allowed": _is_allowed_cmd(_cmd) if _cmd else None,
+                    "requires_user_approval": spec.get("requires_user_approval", False),
+                })
             except sqlite3.IntegrityError as e:
                 registered.append({"task_id": task_id, "error": str(e)[:100]})
-    return {"goal_id": goal_id, "tasks_registered": len(registered), "tasks": registered}
+    return {"goal_id": goal_id, "tasks_registered": len(registered),
+            "mode": _mode, "tasks": registered}
 
 
 # P0b H6+H7: verify-patterns.json 외부 로드 (2026-10-28 다중 프레임워크)

@@ -56,6 +56,9 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv",
              # ★`archive` 만 적혀 있어 이 저장소의 실제 이름 `_archive` 가 안 걸렸다
              #   (과거 스냅샷 = 작업 대상 아님 · 루트 CLAUDE.md § 3 이 그렇게 말한다).
              "archive", "_archive", "outputs", "local_data",
+             # 2026-10-29 (R49): .repair-sandbox 는 Self-Healing 임시 worktree 사본 ·
+             #   원본 수정하면 자동 재생성 · 소스의 사본이라 같은 패턴 중복 집계.
+             ".repair-sandbox",
              # ★런타임 로그 — 사설 IP 가 찍히는 건 그 서버가 실제로 그 주소였다는
              #   **기록**이지 소스의 하드코딩이 아니다. 지우면 기록이 사라진다(A15).
              "logs",
@@ -108,7 +111,17 @@ def scan():
             except Exception:
                 continue
             scanned += 1
-            _is_doc = (ext == ".md")
+            # 2026-10-29 (R49): 룰 명시 문서 확장 (.md 외).
+            # 추가: .cursorrules·.windsurfrules·.cursorignore·.mdc (cursor rules)
+            # 실측: 수정 전 47 → .cursorrules·.windsurfrules 제외 → 25 → .mdc 추가 제외 → 더 감소
+            # 시크릿 3종은 여전히 면제 X.
+            _is_doc = (ext in (".md", ".mdc")) or name in (
+                ".cursorrules", ".cursorignore", ".windsurfrules", ".clinerules",
+                ".github", "AGENTS.md", "AGENT.md", "CLAUDE.md", "CODEX.md",
+            )
+            # audit-hardcoded.py 자기 자신 skip (금지 예시 주석 포함 · self-reference 방지)
+            if fp == Path(__file__):
+                continue
             for key, pat, _ in PATTERNS:
                 # ★문서의 금지 예시 면제 — 단 시크릿 3종은 면제하지 않는다(위 주석).
                 if (_is_doc or _generated) and key in DOC_EXEMPT_KEYS:
