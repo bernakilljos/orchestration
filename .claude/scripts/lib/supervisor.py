@@ -836,8 +836,11 @@ def execute_goal(goal_id: int) -> dict:
         verify = spec_obj.get("verify")
         if not cmd or not _is_allowed_cmd(cmd):
             results["skipped_disallowed"] += 1
+            # 2026-10-29 fix: cmd=None (investigate kind · 자연어 분해) 안전 처리
+            # 기존 cmd[:80] 가 None 에서 TypeError (orca-10min-loop 19회 FAIL 원인)
             results["details"].append({"task_id": task_id, "status": "skipped_disallowed",
-                                       "cmd": cmd[:80]})
+                                       "cmd": (cmd or "")[:80],
+                                       "kind": spec_obj.get("kind", "cmd")})
             continue
         # P0 Approval Gate 체크 (2026-10-28 사용자 지시 — 자동 실행 경로도 Gate 통제)
         gate_result = _check_approval_gate(cmd)
@@ -852,8 +855,36 @@ def execute_goal(goal_id: int) -> dict:
             })
             # tasks 상태 — pending 유지 (수동 승인 후 재시도 가능)
             continue
+        # 2026-10-29 Phase 2-B: safe_mode=True → repair_sandbox 재사용 (worktree 격리).
+        # 사용자 명시: "Worktree 생성만으로 OS 수준 격리 완성 X · 경로 격리와 실행 권한 격리 구분".
+        # 이번 통합 = 경로 격리만 (git worktree) · OS 수준은 다음 세션 (사용자 결정).
+        safe_mode = bool(spec_obj.get("safe_mode", False))
+        _sandbox_cwd = None
+        if safe_mode:
+            try:
+                sb_path = ROOT / ".claude" / "scripts" / "lib" / "repair_sandbox.py"
+                if sb_path.exists():
+                    import importlib.util as _ilu2
+                    _spec_sb = _ilu2.spec_from_file_location("_sb", sb_path)
+                    _sb = _ilu2.module_from_spec(_spec_sb)
+                    _spec_sb.loader.exec_module(_sb)
+                    sb_result = _sb.create(f"g{goal_id}-safe")
+                    if sb_result.get("ok"):
+                        _sandbox_cwd = sb_result["path"]
+                        results.setdefault("sandboxes", []).append({
+                            "task_id": task_id, "path": _sandbox_cwd,
+                            "branch": sb_result.get("branch"),
+                        })
+            except Exception as _sbe:
+                results.setdefault("sandbox_errors", []).append({
+                    "task_id": task_id, "error": str(_sbe)[:120],
+                })
         # 실행 via runner (허용된 명령만 · shell=True 자동)
-        r = runner.run(cmd, task_id=task_id, worker_id="supervisor", timeout=180)
+        # safe_mode=True 이고 sandbox 생성 성공 시 격리 cwd 전달 (runner.run 지원 시만)
+        _run_kwargs = {"task_id": task_id, "worker_id": "supervisor", "timeout": 180}
+        if _sandbox_cwd:
+            _run_kwargs["cwd"] = _sandbox_cwd  # runner.run 가 cwd 를 받아 subprocess 호출
+        r = runner.run(cmd, **_run_kwargs)
         exit_code = r.get("exit_code", -1)
         verified_flag = False
         kind = spec_obj.get("kind", "cmd")
