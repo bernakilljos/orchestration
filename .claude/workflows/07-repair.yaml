@@ -24,9 +24,9 @@ steps:
     args: ["--report", "{failure_report}"]
     outputs: [root_cause]
   - id: isolate_sandbox
-    desc: git worktree 격리 수정 (쓰기 충돌 방지)
-    script: .claude/scripts/worktree-dispatch.py
-    args: ["sandbox", "--goal", "{goal_id}"]
+    desc: git worktree 격리 수정 (쓰기 충돌 방지) · lib/repair_sandbox.py 재사용 (2026-10-29 F1 fix)
+    script: .claude/scripts/lib/repair_sandbox.py
+    args: ["create", "{goal_id}"]
   - id: fix
     desc: root_cause 기반 수정 (최소 변경 · operating-principles § 3)
     tool: Edit

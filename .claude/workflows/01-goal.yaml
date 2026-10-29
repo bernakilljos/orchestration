@@ -13,9 +13,9 @@ inputs:
 
 steps:
   - id: parse_requests
-    desc: Request Ledger 로 N개 request 추출
+    desc: Request Ledger 상태 조회 (사용자 메시지 → requests 분해는 UserPromptSubmit hook 자동 수행 · 2026-10-29 F2 fix)
     script: .claude/scripts/request-ledger.py
-    args: ["parse", "{user_prompt}"]
+    args: ["status"]
   - id: register_goal
     desc: supervisor.db.goals 에 등록
     script: .claude/scripts/lib/supervisor.py
