@@ -120,6 +120,36 @@ def cmd_add_batch(json_str: str) -> int:
     return 0
 
 
+def cmd_out_of_scope(rid: str, target: str = "", reason: str = "") -> int:
+    """범위 외 요청 처리 (2026-10-29 P0 fix · 사용자 지시).
+
+    사용자 지적: "다른 프로젝트 요청을 complete 처리하면 작업 끝난 것으로 보일 수 있다"
+    해결: OUT_OF_SCOPE / PENDING_HANDOFF 상태 분리. completed 와 혼동 X.
+
+    target 명시 필수 (어느 프로젝트/세션으로 인계되는지).
+    실제 인계 증거는 사용자 책임 — 이 상태는 "이 세션 범위 아님" 만 명시.
+    """
+    if not target:
+        print("[ledger] out-of-scope: --target 필수 (어느 프로젝트/세션으로 인계)", file=sys.stderr)
+        return 2
+    data = _load()
+    if not data:
+        print("[ledger] empty", file=sys.stderr)
+        return 2
+    for r in data["requests"]:
+        if r["id"] == rid or r["id"].lower() == rid.lower():
+            r["status"] = "out_of_scope"
+            r["out_of_scope_at"] = datetime.now().isoformat(timespec="seconds")
+            r["handoff_target"] = target
+            r["handoff_reason"] = reason[:300] if reason else "범위 외"
+            r["note"] = "⚠ completed 아님 · 실제 인계 증거는 사용자 책임"
+            _save(data)
+            print(f"[ledger] ↷ {rid}: OUT_OF_SCOPE → {target} (completed X · 작업 종결 X)")
+            return 0
+    print(f"[ledger] {rid} not found", file=sys.stderr)
+    return 2
+
+
 def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
     """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사)."""
     data = _load()
@@ -169,11 +199,21 @@ def cmd_status() -> int:
         print("[ledger] empty")
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred"))  # deferred = 사용자 명시 다음 세션 지연
+    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29)
     print(f"=== Request Ledger · {done}/{total} 완료 ===")
     for r in data["requests"]:
-        mark = "✓" if r["status"] == "completed" else "☐"
-        print(f"  {mark} {r['id']}: {r['desc'][:100]}")
+        if r["status"] == "completed":
+            mark = "✓"
+        elif r["status"] == "out_of_scope":
+            mark = "↷"  # 범위 외 인계 · completed X
+        elif r["status"] == "deferred":
+            mark = "⏭"
+        else:
+            mark = "☐"
+        suffix = ""
+        if r["status"] == "out_of_scope":
+            suffix = f" [OUT_OF_SCOPE → {r.get('handoff_target','?')}]"
+        print(f"  {mark} {r['id']}: {r['desc'][:100]}{suffix}")
     return 0
 
 
@@ -192,7 +232,7 @@ def cmd_gate() -> int:
         print("[request-ledger] 시험·지난 작업 ledger — 이번 세션 기준 아님 · 통과", file=sys.stderr)
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred"))  # deferred = 사용자 명시 다음 세션 지연
+    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29)
     if done == total:
         return 0  # 모두 완료 = 통과
     # 미완료 있음 — Claude 에게 알림
@@ -266,6 +306,12 @@ def main() -> int:
     p_comp.add_argument("--evidence", default="", help="실제 수행 증거 (git diff·실행 결과·파일 경로)")
     p_comp.add_argument("--verification", default="", help="검증 결과 (PASS·FAIL)")
 
+    # out-of-scope — 범위 외 요청 (completed 와 혼동 금지 · 2026-10-29 P0 fix)
+    p_oos = sub.add_parser("out-of-scope")
+    p_oos.add_argument("rid")
+    p_oos.add_argument("--target", required=True, help="인계 대상 (예: C:/pjt/Project1.5)")
+    p_oos.add_argument("--reason", default="", help="범위 외 사유")
+
     sub.add_parser("status")
     sub.add_parser("gate")
     sub.add_parser("clear")
@@ -278,6 +324,8 @@ def main() -> int:
         return cmd_add_batch(args.json_str)
     if args.op == "complete":
         return cmd_complete(args.rid, args.evidence, args.verification)
+    if args.op == "out-of-scope":
+        return cmd_out_of_scope(args.rid, args.target, args.reason)
     if args.op == "status":
         return cmd_status()
     if args.op == "gate":
