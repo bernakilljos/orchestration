@@ -857,7 +857,36 @@ def execute_goal(goal_id: int) -> dict:
         exit_code = r.get("exit_code", -1)
         verified_flag = False
         kind = spec_obj.get("kind", "cmd")
-        if exit_code == 0 and verify and _is_allowed_cmd(verify):
+        # 2026-10-29 Phase 2-A: Python callable verifier 분기 (verify_type="python").
+        # spec_obj.verify_type 이 "python" 이고 verifier_id 등록되면 임의 코드 X · 등록 verifier 만.
+        verify_type = spec_obj.get("verify_type", "shell")  # 기본 shell (호환 유지)
+        if exit_code == 0 and verify_type == "python" and spec_obj.get("verifier_id"):
+            try:
+                import importlib.util as _ilu
+                vreg_path = ROOT / ".claude" / "scripts" / "lib" / "verifier_registry.py"
+                if vreg_path.exists():
+                    _spec = _ilu.spec_from_file_location("_vreg", vreg_path)
+                    _vreg = _ilu.module_from_spec(_spec)
+                    _spec.loader.exec_module(_vreg)
+                    _ctx = spec_obj.get("verifier_ctx") or {}
+                    _ok, _note, _status = _vreg.run_verifier(spec_obj["verifier_id"], _ctx, timeout=30)
+                    verify_pass = bool(_ok)
+                    results["details"].append({
+                        "task_id": task_id, "verifier_id": spec_obj["verifier_id"],
+                        "status": _status, "note": _note[:120] if _note else None,
+                    })
+                    if verify_pass:
+                        verified_flag = True
+                    # python verify 는 continue (shell verify 분기 skip)
+                    # 아래 shell 분기는 verify_type == "shell" 때만 작동
+                    exit_code_shell_check = True  # 이미 처리
+                else:
+                    results["details"].append({"task_id": task_id, "verifier_error": "verifier_registry not found"})
+                    verify_pass = False
+            except Exception as _ve:
+                results["details"].append({"task_id": task_id, "verifier_exception": str(_ve)[:120]})
+                verify_pass = False
+        if exit_code == 0 and verify and verify_type == "shell" and _is_allowed_cmd(verify):
             # verify 실행 — 2026-10-27 사용자 지적 "stdout PASS 단순 포함 오탐 차단"
             vr = runner.run(verify, task_id=f"{task_id}-verify", worker_id="supervisor", timeout=120)
             vr_exit = vr.get("exit_code", -1)
