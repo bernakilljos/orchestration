@@ -194,13 +194,25 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
 
 
 def cmd_status() -> int:
+    """2026-10-29 사용자 지적 반영: completed · deferred · out_of_scope 집계 분리.
+
+    기존: 셋 다 "완료" 로 묶음 → 범위 외 요청이 작업 끝난 것처럼 보임.
+    변경: 완료(completed) 와 진행 가능 상태(deferred·out_of_scope) 를 별도 집계.
+    """
     data = _load()
     if not data:
         print("[ledger] empty")
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29)
-    print(f"=== Request Ledger · {done}/{total} 완료 ===")
+    completed = sum(1 for r in data["requests"] if r["status"] == "completed")
+    verified = sum(1 for r in data["requests"] if r["status"] == "verified")
+    implemented = sum(1 for r in data["requests"] if r["status"] == "implemented")
+    out_of_scope = sum(1 for r in data["requests"] if r["status"] == "out_of_scope")
+    deferred = sum(1 for r in data["requests"] if r["status"] == "deferred")
+    pending = sum(1 for r in data["requests"] if r["status"] == "pending")
+    # 데이터 계약: 완료(≠ 범위 외) · 진행 가능 · 미완료 분리
+    progressable = completed + out_of_scope + deferred  # Stop gate 통과 가능 (완료 아님)
+    print(f"=== Request Ledger · 완료 {completed}/{total} · 범위외 {out_of_scope} · 보류 {deferred} · 진행중 {pending} ===")
     for r in data["requests"]:
         if r["status"] == "completed":
             mark = "✓"

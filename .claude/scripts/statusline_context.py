@@ -1417,23 +1417,28 @@ def extra_gauges(cwd, data=None):
     # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
     control_line = ""
     try:
-        # 측정 소스 없음 — 모두 0 (실제 범위위반·임의변경 추적 미구현)
-        control_line = ("범위위반 [1;32m0[0m · "
-                        "임의변경 [1;32m0[0m · "
-                        "승인누락 [1;32m0[0m · "
-                        "추측수정 [1;32m0[0m · "
-                        "검증skip [1;32m0[0m")
+        # 2026-10-29 사용자 지적: 측정 소스 없음 → 0 X · ⏳ (미측정 청록). § 9 "미측정 ≠ 정상".
+        # 디자인 FROZEN 유지 (라벨·구분자·순서 동일) · 데이터 계층만 교정.
+        _unm = "[36m⏳[0m"
+        control_line = (f"범위위반 {_unm} · "
+                        f"임의변경 {_unm} · "
+                        f"승인누락 {_unm} · "
+                        f"추측수정 {_unm} · "
+                        f"검증skip {_unm}")
     except Exception:
         pass
 
     # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
     verify_line = ""
     try:
-        verify_line = ("test [90m⏳[0m · "
-                       "build [90m⏳[0m · "
-                       "lint [90m⏳[0m · "
-                       "type [90m⏳[0m · "
-                       "회귀 [1;32m0[0m")
+        # 2026-10-29: "회귀 0" 측정 소스 없음 → ⏳ (미측정 청록). test/build/lint/type ⏳ 유지 (실행 X).
+        _dim = "[90m⏳[0m"
+        _unm = "[36m⏳[0m"
+        verify_line = (f"test {_dim} · "
+                       f"build {_dim} · "
+                       f"lint {_dim} · "
+                       f"type {_dim} · "
+                       f"회귀 {_unm}")
     except Exception:
         pass
 
