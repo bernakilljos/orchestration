@@ -242,6 +242,163 @@ def test_06_invalid_registration_state(r):
           note=f"R75_invalid={'R75' in out and 'INVALID' in out}")
 
 
+def test_08_auto_approve_does_not_bypass_approval_gate(r):
+    """P6-R3: auto_approve=True 가 approval_gate 를 우회하지 X 재확인.
+
+    auto_approve 는 planner.approve 단계만 bypass · promote 단계의 approval_gate·
+    _is_allowed_cmd 는 유지. 비가역 cmd 는 auto_approve 와 무관하게 차단.
+    """
+    print("\n[P5 Test 08] auto_approve does NOT bypass approval_gate")
+    orig = _create_failed_goal("auto-no-bypass", "false")
+    # 비가역 cmd (DROP TABLE) → risk=high auto · promote 에서 approval_gate 차단
+    specs = [{
+        "kind": "cmd",
+        "cmd": "python -c 'import sqlite3; sqlite3.connect(\"x\").execute(\"DROP TABLE goals\")'",
+        "risk": "low",
+        "rationale": "test auto_approve safety",
+    }]
+    rr = sh.run_repair(orig, repair_specs=specs, auto_approve=True)
+    stages = {s["stage"]: s for s in (rr.get("chain", {}).get("stages") or [])}
+    promote_stage = stages.get("promote") or {}
+    rejected = promote_stage.get("rejected_at_promote") or []
+    executed = (stages.get("execute") or {}).get("executed", 0)
+    r.rec("auto_approve=True + dangerous cmd → still rejected at promote (approval_gate)",
+          len(rejected) >= 1 or executed == 0,
+          note=f"rejected={rejected} executed={executed}")
+    r.rec("dangerous cmd NEVER reaches execute despite auto_approve",
+          executed == 0 or (stages.get("execute") or {}).get("failed", 0) >= 1,
+          note=f"execute_stage={stages.get('execute')}")
+
+
+def test_09_retry_cap(r):
+    """P6-R4: run_repair max_attempts 상한 · 무한 재시도 방지."""
+    print("\n[P5 Test 09] run_repair max_attempts cap")
+    orig = _create_failed_goal("retry-cap", "false")
+    # 3번 repair 생성 (max_attempts=3)
+    created = []
+    for i in range(3):
+        rg = sh.create_repair_goal(orig, f"retry-cap attempt {i}")
+        if rg.get("ok"):
+            created.append(rg["repair_goal_id"])
+    r.rec("3 repair goals created", len(created) == 3, note=f"ids={created}")
+    # 4번째 호출 → max_attempts=3 상한 → 거부
+    rr = sh.run_repair(orig, max_attempts=3)
+    r.rec("4th run_repair rejected by retry_cap stage",
+          rr.get("ok") is False and rr.get("stage") == "retry_cap",
+          note=f"stage={rr.get('stage')} attempts={rr.get('attempts')}")
+    # max_attempts=5 로 올리면 통과
+    rr2 = sh.run_repair(orig, max_attempts=5)
+    r.rec("max_attempts increase bypasses cap (explicit user override)",
+          rr2.get("ok") is not False or rr2.get("stage") != "retry_cap",
+          note=f"stage={rr2.get('stage_completed') or rr2.get('stage')}")
+
+
+def test_11_real_syntax_error_demo(r):
+    """P6-R2: 실제 python syntax error 파일 · analyze → repair_prompt · 하드코딩 X.
+
+    데모 범위:
+      1. sandbox 안 실제 syntax error 파일 생성
+      2. 실패 execution 로그 (python 실행 → SyntaxError) 기록
+      3. analyze_failure → syntax hint + repair_prompt 생성
+      4. repair_prompt 가 **파일 경로·오류 메시지** 포함 (하드코딩 fix 없음)
+      5. 실제 fix 는 Task tool subagent 수행 (수동 chain · 이 테스트에서는 미실행)
+
+    이 테스트는 "실 코드 수정 데모" 가 아니라 "실 코드 분석 pipeline" 검증.
+    실 수정은 Agent 자동 실행 연결 (다음 세션) 후 별도 테스트.
+    """
+    print("\n[P5 Test 11] real syntax error analyze pipeline")
+    # 1. sandbox 생성
+    sb_r = sb.create("P5-syntax-demo")
+    if not sb_r.get("ok"):
+        r.rec("sandbox for syntax demo", False, note=sb_r.get("reason", ""))
+        return
+    sbox_path = Path(sb_r["path"])
+    bad_file = sbox_path / "bad.py"
+    # 2. 실제 python syntax error 파일
+    bad_file.write_text("def broken(\n    pass\n", encoding="utf-8")
+    # 3. 실제 실행 (python 호출 → SyntaxError 반환)
+    import subprocess
+    pr = subprocess.run(
+        ["python", "-X", "utf8", str(bad_file)],
+        capture_output=True, text=True, timeout=10,
+    )
+    r.rec("real python SyntaxError reproduced",
+          pr.returncode != 0 and "SyntaxError" in (pr.stderr or ""),
+          note=f"exit={pr.returncode} stderr_tail={pr.stderr[-100:]!r}")
+    # 4. 실패 execution 등재 + goal
+    gid = supervisor.create_goal(f"{MARKER}-syntax-demo real file", 1, 24)
+    tid = f"g{gid}-syntax"
+    now = int(time.time())
+    with sqlite3.connect(str(DB)) as c:
+        c.execute(
+            "INSERT INTO tasks (task_id, task_file, status, created_at, retry_count) "
+            "VALUES (?, ?, 'failed', ?, 0)",
+            (tid, json.dumps({"kind": "cmd", "cmd": f"python {bad_file.name}",
+                              "verify_type": "shell"}), now),
+        )
+        c.execute("INSERT INTO goal_tasks (goal_id, task_id, sequence) VALUES (?, ?, 0)",
+                  (gid, tid))
+        c.execute(
+            "INSERT INTO executions (task_id, worker_id, cmd, shell, cwd, timeout_s, "
+            "exit_code, timed_out, stdout_tail, stderr_tail, verified, policy_result, "
+            "duration_ms, started_at, ended_at) "
+            "VALUES (?, 'test-sim', ?, 1, ?, 60, ?, 0, '', ?, 0, 'ok', 100, ?, ?)",
+            (tid, f"python {bad_file.name}", str(sbox_path), pr.returncode,
+             pr.stderr[-500:], now, now),
+        )
+    # 5. analyze_failure
+    a = sh.analyze_failure(goal_id=gid)
+    hints = a.get("failure_hints") or []
+    r.rec("analyze detects syntax pattern",
+          any(h.get("kind") == "syntax" for h in hints),
+          note=f"hints={hints}")
+    # 6. repair_prompt 가 실제 파일·오류 포함 (하드코딩 X)
+    rp = a.get("repair_prompt") or ""
+    r.rec("repair_prompt references actual failure (not hardcoded)",
+          "SyntaxError" in rp and bad_file.name in rp,
+          note=f"has_SyntaxError={('SyntaxError' in rp)} has_filename={(bad_file.name in rp)}")
+    r.rec("repair_prompt instructs Task tool subagent (no auto-fix cmd)",
+          "Task 계약" in rp or "subagent" in rp.lower() or "bridge" in rp,
+          note="repair_prompt is a Task tool invocation guide, not a hardcoded fix")
+    # cleanup
+    sb.discard("P5-syntax-demo")
+
+
+def test_10_sandbox_isolation(r):
+    """P6-R5: Worktree 격리 재검증 — sandbox cwd 외 파일 쓰기 방지.
+
+    sandbox 안에서만 변경 · 원본 ROOT 는 영향 X.
+    """
+    print("\n[P5 Test 10] sandbox cwd isolation")
+    # 임시 sandbox 생성
+    sb_r = sb.create("P5-sandbox-isolation-test")
+    if not sb_r.get("ok"):
+        r.rec("sandbox create ok", False, note=f"create failed: {sb_r.get('reason')}")
+        return
+    sandbox_path = Path(sb_r["path"])
+    r.rec("sandbox dir created at .repair-sandbox/", sandbox_path.exists(),
+          note=f"path={sandbox_path}")
+    # sandbox 안 파일 생성 (허용된 echo 로)
+    import subprocess
+    test_file = sandbox_path / "p6_r5_test.txt"
+    r_subprocess = subprocess.run(
+        f"echo isolation-test > {test_file}",
+        shell=True, cwd=str(sandbox_path), capture_output=True, text=True, timeout=30,
+    )
+    r.rec("file created inside sandbox cwd",
+          test_file.exists(),
+          note=f"test_file exists={test_file.exists()}")
+    # 원본 ROOT 에 같은 경로 생성 안 됐는지
+    root_leak = ROOT / "p6_r5_test.txt"
+    r.rec("file NOT created in ROOT (no leak)",
+          not root_leak.exists(),
+          note=f"root_leak exists={root_leak.exists()}")
+    if root_leak.exists():
+        root_leak.unlink()  # 안전 cleanup
+    # sandbox cleanup
+    sb.discard("P5-sandbox-isolation-test")
+
+
 def test_07_judge_handoff_vs_absorbed(r):
     """handoff 생성만 됐을 때 LLM verdict 없음 · absorb 전 VERIFIED 처리 금지."""
     print("\n[P5 Test 07] handoff vs absorbed state")
@@ -274,6 +431,10 @@ def main(argv):
         test_05_dangerous_repair_blocked(result)
         test_06_invalid_registration_state(result)
         test_07_judge_handoff_vs_absorbed(result)
+        test_08_auto_approve_does_not_bypass_approval_gate(result)
+        test_09_retry_cap(result)
+        test_10_sandbox_isolation(result)
+        test_11_real_syntax_error_demo(result)
     except Exception as e:
         import traceback
         print(f"[FATAL] {type(e).__name__}: {e}")

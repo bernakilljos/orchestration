@@ -148,7 +148,7 @@ _HINT_PATTERNS = [
     (re.compile(r"FileNotFoundError.*'([^']+)'|No such file or directory.*'([^']+)'"), "missing_file"),
     (re.compile(r"PermissionError|Permission denied"), "permission"),
     (re.compile(r"TimeoutExpired|timeout"), "timeout"),
-    (re.compile(r"SyntaxError.*line (\d+)"), "syntax"),
+    (re.compile(r"SyntaxError|line \d+[^\n]*\n[^\n]*SyntaxError"), "syntax"),
     (re.compile(r"NameError.*name '([^']+)' is not defined"), "undefined_name"),
     (re.compile(r"TypeError.*(takes|got|argument)"), "type_mismatch"),
     (re.compile(r"AttributeError.*'(\w+)'\s*object has no attribute\s*'(\w+)'"), "missing_attribute"),
@@ -253,8 +253,23 @@ def create_repair_goal(original_goal_id: int,
     return {"ok": True, "repair_goal_id": gid, "original_goal_id": original_goal_id}
 
 
+def _count_repair_attempts(original_goal_id: int) -> int:
+    """해당 orig goal 대상 과거 repair goal 개수 (무한 루프 방지 · 2026-10-30 P6-R4)."""
+    if not DB.exists():
+        return 0
+    try:
+        with _conn() as c:
+            row = c.execute(
+                "SELECT COUNT(*) FROM goals WHERE source_ref LIKE ?",
+                (f"repair:orig_goal={original_goal_id}%",),
+            ).fetchone()
+            return int(row[0]) if row else 0
+    except Exception:
+        return 0
+
+
 def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
-               auto_approve: bool = False) -> Dict[str, Any]:
+               auto_approve: bool = False, max_attempts: int = 3) -> Dict[str, Any]:
     """Self-Healing 전체 chain orchestration (2026-10-30 P5-R2).
 
     사용자 지시: "Scaffold 상태 → 실제 자동복구 성공과 다르다 · 기존 자산 활용 종단 연결"
@@ -285,7 +300,20 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
     except Exception as e:
         return {"ok": False, "stage": "import", "error": str(e)}
 
-    chain = {"original_goal_id": original_goal_id, "stages": []}
+    # 2026-10-30 P6-R4: 무한 재시도 방지 — 같은 orig goal 대상 repair 횟수 상한
+    attempts = _count_repair_attempts(original_goal_id)
+    if attempts >= max_attempts:
+        return {
+            "ok": False,
+            "stage": "retry_cap",
+            "error": f"max_attempts ({max_attempts}) exceeded · {attempts} previous repair goals · 수동 조사 필요",
+            "original_goal_id": original_goal_id,
+            "attempts": attempts,
+            "hint": "repair chain 반복 실패 · 사용자 리뷰 또는 max_attempts 명시 증가",
+        }
+
+    chain = {"original_goal_id": original_goal_id, "stages": [],
+             "attempts_before": attempts, "max_attempts": max_attempts}
 
     # Stage 1: analyze
     analysis = analyze_failure(goal_id=original_goal_id)
@@ -436,10 +464,18 @@ def _cli_main(argv):
         return 0 if r.get("ok") else 1
     if cmd == "run-repair":
         if len(argv) < 3:
-            print("usage: self_healing.py run-repair <orig_goal_id> [--auto-approve] [--specs-stdin]")
+            print("usage: self_healing.py run-repair <orig_goal_id> [--auto-approve] [--specs-stdin] [--max-attempts N]")
             return 2
         orig = int(argv[2])
         auto_approve = "--auto-approve" in argv
+        max_attempts = 3
+        if "--max-attempts" in argv:
+            i = argv.index("--max-attempts")
+            if i + 1 < len(argv):
+                try:
+                    max_attempts = int(argv[i + 1])
+                except Exception:
+                    pass
         repair_specs = None
         if "--specs-stdin" in argv:
             try:
@@ -447,7 +483,8 @@ def _cli_main(argv):
             except Exception as e:
                 print(json.dumps({"error": f"stdin json parse: {e}"}))
                 return 2
-        r = run_repair(orig, repair_specs=repair_specs, auto_approve=auto_approve)
+        r = run_repair(orig, repair_specs=repair_specs, auto_approve=auto_approve,
+                       max_attempts=max_attempts)
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
     print(f"unknown cmd: {cmd}")
