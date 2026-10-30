@@ -221,9 +221,37 @@ def run(ctx):
                 pass  # noqa: BLE001
     ctx.mark("log-decision")
 
+    # Phase 3 (2026-10-30): 개발 요청 자동 Goal 등재 + investigate (opt-in default)
+    # 사용자 지시 "UserPromptSubmit → Planner 자동 연결 · 임의 개수 요청 보존 · 중복 방지".
+    # 안전 default: 명시 개발 트리거만 (좁은 패턴) · 질문·메타 skip · hash 중복 1h window.
+    # Opt-out: 환경변수 AUTO_GOAL_REGISTER=0 또는 .claude/state/no-auto-goal 파일.
+    auto_goal_guide = ""
+    try:
+        lib_path = root / ".claude" / "scripts" / "lib"
+        if str(lib_path) not in sys.path:
+            sys.path.insert(0, str(lib_path))
+        import auto_goal_from_prompt as _ag  # noqa: F401
+        _reg_result = _ag.register(prompt.strip(), source="user-prompt-hook")
+        if _reg_result.get("ok"):
+            auto_goal_guide = "\\n\\n" + _reg_result["systemMessage"].replace("\n", "\\n")
+        elif _reg_result.get("existing_goal_id"):
+            # 중복 — 기존 goal 재언급
+            auto_goal_guide = (
+                f"\\n\\n[AUTO-GOAL 중복] 최근 1h 안 같은 요청 감지 · 기존 goal #"
+                f"{_reg_result['existing_goal_id']} 이어서 진행 (중복 등재 X)"
+            )
+    except Exception as _age:
+        # 안전 default: 실패해도 메인 흐름 영향 X
+        try:
+            with (root / ".claude" / "logs" / "auto-goal-register-errors.log").open("a", encoding="utf-8") as _lf:
+                _lf.write(f"[{int(__import__('time').time())}] {type(_age).__name__}: {_age}\n")
+        except Exception:
+            pass
+    ctx.mark("auto-goal-register")
+
     out = (
         OUTPUT_TEMPLATE.replace("${PROJECT_ROOT}", msys_path(root))
-        .replace("${GUIDE}", guide)
+        .replace("${GUIDE}", guide + auto_goal_guide)
         .replace("${SUBAGENT_GUIDE}", subagent)
         .replace("${MEMORY_GUIDE}", memory_guide)
         .replace("${ALARM_GUIDE}", "")

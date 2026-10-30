@@ -262,11 +262,196 @@ def judge(evidence: Dict[str, Any]) -> Dict[str, Any]:
     return {"status": "UNVERIFIED", "reasons": reasons}
 
 
+JUDGE_QUEUE = ROOT / ".claude" / "state" / "judge-queue"
+
+
+def judge_handoff(goal_id: int,
+                  sandbox_cwd: Optional[str] = None,
+                  allow_paths: Optional[List[str]] = None,
+                  judge_notes: str = "") -> Dict[str, Any]:
+    """agent-01-judge subagent 호출용 context 생성 + judge-queue 저장.
+
+    Phase 3-R5 (사용자 지시 3307fcd 후속):
+      - Independent Judge 보완 · agent-01-judge 재사용
+      - 통계·evidence 기반 judge() 는 유지 · 그 위에 LLM 평가 연결
+      - LLM 결과가 PASS 라도 테스트 실패 시 VERIFIED 금지 (judge() 가 선 판정)
+      - Judge 미실행·근거 부족 → UNVERIFIED (안전 default)
+
+    사용 흐름:
+      1. supervisor.execute_goal 완료 후 이 함수 호출
+      2. judge-queue 에 goal 별 context JSON 저장 (handoff file)
+      3. 메인 Claude 가 Task tool 로 agent-01-judge subagent 호출 유도 (systemMessage)
+      4. subagent 결과 (JSON score) 를 judge_absorb() 로 저장
+      5. 최종 verdict = combine(statistical_judge, llm_judge, test_results)
+
+    반환:
+      - evidence · verdict (통계) · judge_prompt (subagent 호출용) · handoff_file 경로
+    """
+    JUDGE_QUEUE.mkdir(parents=True, exist_ok=True)
+    evidence = collect_evidence(goal_id, sandbox_cwd=sandbox_cwd, allow_paths=allow_paths)
+    stat_verdict = judge(evidence)
+
+    # 통계 verdict 가 이미 VERIFIED 가 아니면 LLM judge 로도 뒤집히지 않음 (안전 우선)
+    requires_llm = (stat_verdict.get("status") == "VERIFIED")
+
+    desc = evidence.get("description") or ""
+    tasks = evidence.get("tasks") or []
+    diff_stat = evidence.get("git_diff_stat") or "(no diff)"
+    diff_paths = evidence.get("git_diff_paths") or []
+    scope = evidence.get("scope") or {}
+
+    judge_prompt = (
+        f"# agent-01-judge · goal #{goal_id}\n\n"
+        f"## 요구사항 원문 (사용자 요청)\n{desc[:600]}\n\n"
+        f"## 실제 변경 (git diff)\n{diff_stat}\n\n"
+        f"변경 파일 ({len(diff_paths)}): {', '.join(diff_paths[:10])}\n\n"
+        f"## tasks 실행 결과\n"
+        + "\n".join(
+            f"  - {t['task_id']}: status={t['status']} verify={t.get('verify_type')} "
+            f"exec_verified={t.get('executions_verified')}"
+            for t in tasks
+        )
+        + f"\n\n## scope\n enforced={scope.get('enforced')} violations={scope.get('violations', [])[:5]}\n\n"
+        f"## 통계 판정 (사전)\n{json.dumps(stat_verdict, ensure_ascii=False)}\n\n"
+        f"## 요청\n"
+        f"다음을 평가해 JSON 으로 반환해라:\n"
+        f"  {{\n"
+        f"    \"satisfies_requirement\": true|false,  // 요구사항 충족\n"
+        f"    \"missing_requirements\": [\"<요구 사항 누락 목록>\"],\n"
+        f"    \"unexpected_side_effects\": [\"<예상 밖 부작용>\"],\n"
+        f"    \"scope_adequacy\": \"ok|too_narrow|too_broad\",\n"
+        f"    \"confidence\": 0-10,\n"
+        f"    \"recommendation\": \"VERIFIED|UNVERIFIED|REPAIRING|OUT_OF_SCOPE\",\n"
+        f"    \"reasoning\": \"<한 단락>\"\n"
+        f"  }}\n\n"
+        f"지켜라:\n"
+        f"  - 통계 판정이 VERIFIED 가 아니면 LLM 평가로 VERIFIED 승격 X (안전 우선)\n"
+        f"  - 테스트 실패·exec_verified!=task_count 는 VERIFIED 금지\n"
+        f"  - 근거 부족 (diff 비어있거나 요구사항 모호) → UNVERIFIED\n"
+        f"  - 범위 외 수정 발견 → OUT_OF_SCOPE\n"
+    )
+    if judge_notes:
+        judge_prompt += f"\n## 추가 노트\n{judge_notes}\n"
+
+    handoff_file = JUDGE_QUEUE / f"goal-{goal_id}.json"
+    handoff_data = {
+        "goal_id": goal_id,
+        "created_at": __import__("time").time(),
+        "stat_verdict": stat_verdict,
+        "evidence_summary": {
+            "task_count": evidence.get("task_count"),
+            "tasks_completed": evidence.get("tasks_completed"),
+            "tasks_exec_verified": evidence.get("tasks_exec_verified"),
+            "diff_file_count": evidence.get("git_diff_file_count"),
+            "scope_enforced": scope.get("enforced"),
+            "scope_violations": scope.get("violations", [])[:10],
+        },
+        "judge_prompt": judge_prompt,
+        "requires_llm_judge": requires_llm,
+        "status": "pending_llm_judge" if requires_llm else "stat_verdict_blocking",
+    }
+    handoff_file.write_text(json.dumps(handoff_data, ensure_ascii=False, indent=2),
+                            encoding="utf-8")
+    return {
+        "ok": True,
+        "goal_id": goal_id,
+        "handoff_file": str(handoff_file),
+        "stat_verdict": stat_verdict,
+        "requires_llm_judge": requires_llm,
+        "judge_prompt_head": judge_prompt[:600],
+    }
+
+
+def judge_absorb(goal_id: int, judge_result_json: str) -> Dict[str, Any]:
+    """agent-01-judge subagent 결과를 받아 최종 verdict 결합.
+
+    사용자 지시: "Judge 가 승인하더라도 필수 테스트 실패 시 VERIFIED 금지"
+                "Judge 미실행·근거 부족 → UNVERIFIED"
+    """
+    try:
+        llm_verdict = json.loads(judge_result_json)
+    except Exception as e:
+        return {"ok": False, "error": f"json parse: {e}"}
+    handoff_file = JUDGE_QUEUE / f"goal-{goal_id}.json"
+    if not handoff_file.exists():
+        return {"ok": False, "error": f"handoff file not found: {handoff_file}"}
+    try:
+        data = json.loads(handoff_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"ok": False, "error": f"handoff read: {e}"}
+    stat = data.get("stat_verdict") or {}
+    # 안전 결합 규칙:
+    #   - stat != VERIFIED → final = stat (LLM 으로 승격 X)
+    #   - stat == VERIFIED AND llm.satisfies AND llm.confidence>=7 → VERIFIED
+    #   - stat == VERIFIED AND NOT llm.satisfies → REPAIRING
+    #   - llm 결과 파싱 실패·confidence 부족 → UNVERIFIED
+    stat_status = stat.get("status")
+    reasons = list(stat.get("reasons") or [])
+    if stat_status != "VERIFIED":
+        final = {"status": stat_status, "reasons": reasons + ["statistical judgment blocks VERIFIED"]}
+    else:
+        satisfies = bool(llm_verdict.get("satisfies_requirement"))
+        confidence = int(llm_verdict.get("confidence", 0) or 0)
+        rec = llm_verdict.get("recommendation", "")
+        missing = llm_verdict.get("missing_requirements") or []
+        unexpected = llm_verdict.get("unexpected_side_effects") or []
+        if not satisfies:
+            final = {"status": "REPAIRING",
+                     "reasons": reasons + [f"llm judge: not satisfied ({len(missing)} missing)"]}
+        elif confidence < 7:
+            final = {"status": "UNVERIFIED",
+                     "reasons": reasons + [f"llm judge confidence {confidence} < 7"]}
+        elif rec == "OUT_OF_SCOPE":
+            final = {"status": "OUT_OF_SCOPE",
+                     "reasons": reasons + ["llm judge detected scope violation"]}
+        elif unexpected:
+            final = {"status": "REPAIRING",
+                     "reasons": reasons + [f"llm judge: {len(unexpected)} unexpected side effects"]}
+        else:
+            final = {"status": "VERIFIED",
+                     "reasons": reasons + [
+                         f"llm judge confirms (conf={confidence})",
+                         f"missing={len(missing)} unexpected={len(unexpected)}"]}
+    data["llm_verdict"] = llm_verdict
+    data["final_verdict"] = final
+    data["status"] = "completed"
+    handoff_file.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                            encoding="utf-8")
+    return {"ok": True, "goal_id": goal_id, "final_verdict": final,
+            "stat_verdict": stat, "llm_verdict": llm_verdict}
+
+
 def _cli_main(argv):
     """CLI: `independent_verifier.py <goal_id> [--sandbox PATH] [--allow PATH1,PATH2]`"""
     if len(argv) < 2:
         print("usage: independent_verifier.py <goal_id> [--sandbox PATH] [--allow P1,P2]")
+        print("       independent_verifier.py judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")
+        print("       independent_verifier.py judge-absorb <goal_id>  (stdin: LLM result JSON)")
         return 2
+    if argv[1] == "judge-handoff":
+        if len(argv) < 3:
+            print("usage: judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")
+            return 2
+        gid = int(argv[2])
+        sandbox_cwd = None
+        allow_paths = None
+        for i, a in enumerate(argv):
+            if a == "--sandbox" and i + 1 < len(argv):
+                sandbox_cwd = argv[i + 1]
+            elif a == "--allow" and i + 1 < len(argv):
+                allow_paths = [p.strip() for p in argv[i + 1].split(",") if p.strip()]
+        r = judge_handoff(gid, sandbox_cwd=sandbox_cwd, allow_paths=allow_paths)
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return 0 if r.get("ok") else 1
+    if argv[1] == "judge-absorb":
+        if len(argv) < 3:
+            print("usage: judge-absorb <goal_id>  (stdin: LLM JSON)")
+            return 2
+        gid = int(argv[2])
+        stdin_data = sys.stdin.read()
+        r = judge_absorb(gid, stdin_data)
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return 0 if r.get("ok") else 1
     try:
         gid = int(argv[1])
     except ValueError:

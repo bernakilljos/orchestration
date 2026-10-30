@@ -537,9 +537,61 @@ def show_proposal(proposal_id: int) -> Dict[str, Any]:
 
 # ========== CLI ==========
 
+def bridge(goal_id: int, stdin_json: str,
+           origin: str = "task-tool-bridge") -> Dict[str, Any]:
+    """Task tool bridge — Claude Code 세션 안 Task tool subagent 결과를 propose 로 safely absorb.
+
+    사용자 지시 (3307fcd 후속 · Phase 3-R3):
+      - Agent 기반 동적 Planner · LLM 결과 + 스키마 검증 + 정책 재평가 통과 후만 실행
+      - 외부 Anthropic API 재귀 호출 X · Claude Code 세션 안에서만
+
+    stdin_json: Task tool subagent 가 반환한 JSON array (planner.investigate prompt_template 스키마)
+
+    흐름:
+      1. JSON 파싱 + 스키마 검증 (kind·cmd·verify·risk·safe_mode)
+      2. 비가역 cmd 자동 risk=high 상향 (propose 와 동일)
+      3. propose 호출 (planner_proposals 등재)
+      4. 결과 요약 반환
+    """
+    try:
+        parsed = json.loads(stdin_json)
+    except Exception as e:
+        return {"ok": False, "error": f"json parse: {e}", "hint": "stdin must be JSON array"}
+    if not isinstance(parsed, list):
+        return {"ok": False, "error": "stdin must be a JSON array of Task specs"}
+    if not parsed:
+        return {"ok": False, "error": "empty array"}
+    # 스키마 검증 — 각 spec 에 kind 또는 cmd 둘 중 하나 필수
+    validated = []
+    skipped = []
+    for i, spec in enumerate(parsed):
+        if not isinstance(spec, dict):
+            skipped.append({"index": i, "reason": "not a dict"})
+            continue
+        if not (spec.get("cmd") or spec.get("kind")):
+            skipped.append({"index": i, "reason": "missing kind and cmd"})
+            continue
+        # 안전 default: safe_mode=True 강제
+        spec.setdefault("safe_mode", True)
+        spec.setdefault("kind", "cmd")
+        validated.append(spec)
+    if not validated:
+        return {"ok": False, "error": "no valid specs after schema check",
+                "skipped": skipped}
+    # propose 재사용 (중복 코드 X · 비가역 cmd 자동 risk 상향 포함)
+    r = propose(goal_id, validated, origin=origin)
+    if "error" in r:
+        return {"ok": False, **r, "skipped_schema": skipped}
+    return {"ok": True, "goal_id": goal_id,
+            "proposed": r.get("proposed", 0),
+            "proposals": r.get("proposals", []),
+            "skipped_schema": skipped,
+            "note": "proposals saved as 'pending' · 'planner.py approve <pid>' 후 'promote <goal_id>'"}
+
+
 def _cli_main(argv):
     if len(argv) < 2:
-        print("usage: planner.py {investigate|propose|list|show|approve|reject|promote} [...]")
+        print("usage: planner.py {investigate|propose|bridge|list|show|approve|reject|promote} [...]")
         return 2
     cmd = argv[1]
     try:
@@ -611,6 +663,20 @@ def _cli_main(argv):
             r = promote(int(argv[2]))
             print(json.dumps(r, ensure_ascii=False, indent=2))
             return 0
+        if cmd == "bridge":
+            if len(argv) < 3:
+                print("usage: planner.py bridge <goal_id>  (stdin: JSON array)")
+                return 2
+            goal_id = int(argv[2])
+            origin = "task-tool-bridge"
+            if "--origin" in argv:
+                i = argv.index("--origin")
+                if i + 1 < len(argv):
+                    origin = argv[i + 1]
+            stdin_data = sys.stdin.read()
+            r = bridge(goal_id, stdin_data, origin=origin)
+            print(json.dumps(r, ensure_ascii=False, indent=2))
+            return 0 if r.get("ok") else 1
         print(f"unknown cmd: {cmd}")
         return 2
     except Exception as e:
