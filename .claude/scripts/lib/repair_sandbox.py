@@ -25,6 +25,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[3])
 # 2026-10-30 Phase 10-R1: 테스트/운영 Sandbox Root 분리.
@@ -106,6 +107,87 @@ def _save_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _policy() -> dict:
+    p = ROOT / ".claude" / "config" / "sandbox-policy.json"
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _estimate_bytes(base_ref: str, sparse_exclude: list) -> int:
+    """base_ref 의 tracked 파일 크기 합 (sparse 제외 경로 빼고) = checkout 예상 크기."""
+    out = _git("ls-tree", "-r", "-l", base_ref, timeout=60).stdout
+    total = 0
+    excl = tuple(x.strip("/") + "/" for x in sparse_exclude)
+    for line in out.splitlines():
+        try:
+            meta, path = line.split("	", 1)
+            size = meta.split()[3]
+        except (ValueError, IndexError):
+            continue
+        if size.isdigit() and not path.startswith(excl):
+            total += int(size)
+    return total
+
+
+# 예약은 디스크 단위 → 운영·테스트 root 공통 파일 1개
+RESERVATION_FILE = OPERATIONAL_STATE_FILE.with_name("repair-sandbox-reservations.json")
+
+
+class _reservation_lock:
+    """프로세스 간 예약 파일 잠금 (O_EXCL lock file · 120초 지난 잠금은 죽은 것으로 간주)."""
+    def __enter__(self):
+        self.path = Path(str(RESERVATION_FILE) + ".lock")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        deadline = time.time() + 60
+        while True:
+            try:
+                fd = os.open(str(self.path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.write(fd, str(os.getpid()).encode()); os.close(fd)
+                return self
+            except FileExistsError:
+                try:
+                    if time.time() - self.path.stat().st_mtime > 120:
+                        self.path.unlink()
+                        continue
+                except FileNotFoundError:
+                    continue
+                if time.time() > deadline:
+                    raise TimeoutError("sandbox reservation lock timeout")
+                time.sleep(0.2)
+
+    def __exit__(self, *a):
+        try:
+            self.path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _live_reservations() -> dict:
+    """예약 중 죽은 프로세스·1시간 지난 예약은 제외."""
+    try:
+        res = json.loads(RESERVATION_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    live = {}
+    for k, v in res.items():
+        alive = True
+        try:
+            import psutil
+            alive = psutil.pid_exists(int(v.get("pid", 0)))
+        except Exception:
+            pass
+        if alive and time.time() - int(v.get("ts", 0)) < 3600:
+            live[k] = v
+    return live
+
+
+def _save_reservations(res: dict) -> None:
+    RESERVATION_FILE.parent.mkdir(parents=True, exist_ok=True)
+    RESERVATION_FILE.write_text(json.dumps(res), encoding="utf-8")
+
+
 def create(goal_id: str, base_ref: str = "HEAD") -> dict:
     """격리 sandbox 생성: git worktree add .repair-sandbox/<goal_id> (base_ref 기준 · 기본 HEAD)."""
     SANDBOX_ROOT.mkdir(parents=True, exist_ok=True)
@@ -115,17 +197,46 @@ def create(goal_id: str, base_ref: str = "HEAD") -> dict:
     if sandbox_path.exists():
         return {"ok": False, "reason": f"sandbox 이미 존재: {sandbox_path}", "path": str(sandbox_path)}
 
-    # 2026-10-30: sandbox 1개 = kit 전체 checkout (~2.5GB). 여유 공간 부족 시 생성 거부 (fail-closed).
-    # 실측 사고: sandbox 누적으로 C: 여유 1.85GB → worktree add 가 "No space left on device" 로 중단.
-    min_free_gb = float(os.environ.get("REPAIR_SANDBOX_MIN_FREE_GB", "10"))
-    free_gb = shutil.disk_usage(str(SANDBOX_ROOT)).free / 1024 ** 3
-    if free_gb < min_free_gb:
-        return {"ok": False, "reason": f"디스크 여유 {free_gb:.1f}GB < {min_free_gb:.0f}GB · sandbox 생성 거부",
-                "free_gb": round(free_gb, 2)}
-
-    # git worktree add -b <branch> <path> HEAD · timeout 600s (큰 kit · Windows)
-    # core.longpaths: 테스트 root(TEMP) 는 경로가 길어 kit 의 259자 파일이 MAX_PATH 초과 → 이 명령에만 적용
-    r = _git("-c", "core.longpaths=true", "worktree", "add", "-b", branch, str(sandbox_path), base_ref, timeout=600)
+    # 2026-10-30 자원 정책 (sandbox-policy.json): sparse checkout 으로 대용량 자산 제외 ·
+    # 예상 크기 + 다른 프로세스 예약분 + 활성 sandbox 총량을 보고 부족하면 생성 거부 (retryable · 대기).
+    pol = _policy()
+    sparse = list(pol.get("sparse_exclude") or [])
+    est = int(_estimate_bytes(base_ref, sparse) * float(pol.get("estimate_margin", 1.2)))
+    with _reservation_lock():
+        res = _live_reservations()
+        reserved = sum(r["bytes"] for r in res.values())
+        free = shutil.disk_usage(str(SANDBOX_ROOT)).free
+        min_free = float(os.environ.get("REPAIR_SANDBOX_MIN_FREE_GB", pol.get("min_free_gb", 10))) * 1024 ** 3
+        active = sum(int(e.get("est_bytes") or 0) for e in _load_state().values()
+                     if e.get("status") == "active" and Path(e.get("path", "")).exists())
+        cap = float(os.environ.get("REPAIR_SANDBOX_MAX_TOTAL_GB", pol.get("max_total_active_gb", 20))) * 1024 ** 3
+        gb = lambda b: round(b / 1024 ** 3, 2)
+        if free - reserved - est < min_free:
+            return {"ok": False, "retryable": True, "free_gb": gb(free), "reserved_gb": gb(reserved),
+                    "estimate_gb": gb(est), "reason": f"디스크 부족: 여유 {gb(free)}GB - 예약 {gb(reserved)}GB "
+                                                      f"- 예상 {gb(est)}GB < 최소 {gb(min_free)}GB · 생성 대기"}
+        if active + reserved + est > cap:
+            return {"ok": False, "retryable": True, "active_gb": gb(active), "reserved_gb": gb(reserved),
+                    "estimate_gb": gb(est), "reason": f"활성 sandbox 총량 상한 {gb(cap)}GB 초과 · 생성 대기"}
+        res[str(goal_id)] = {"bytes": est, "pid": os.getpid(), "ts": int(time.time())}
+        _save_reservations(res)
+    try:
+        # core.longpaths: 테스트 root(TEMP) 는 경로가 길어 kit 의 259자 파일이 MAX_PATH 초과 → 이 명령에만 적용
+        if sparse:
+            r = _git("-c", "core.longpaths=true", "worktree", "add", "--no-checkout", "-b", branch,
+                     str(sandbox_path), base_ref, timeout=600)
+            if r.returncode == 0:
+                _git("sparse-checkout", "set", "--no-cone", "/*", *[f"!/{x.strip('/')}/" for x in sparse],
+                     cwd=sandbox_path, timeout=60)
+                r = _git("-c", "core.longpaths=true", "checkout", cwd=sandbox_path, timeout=600)
+        else:
+            r = _git("-c", "core.longpaths=true", "worktree", "add", "-b", branch, str(sandbox_path),
+                     base_ref, timeout=600)
+    finally:
+        with _reservation_lock():
+            res = _live_reservations()
+            res.pop(str(goal_id), None)
+            _save_reservations(res)
 
     # 2026-10-26 fallback v2: 외부 AI 지적 수용 — .git 존재만 X · git 등록 상태까지 검증
     worktree_exists = False
@@ -147,6 +258,8 @@ def create(goal_id: str, base_ref: str = "HEAD") -> dict:
         "created_at": int(time.time()),
         "status": "active",
         "subprocess_rc": r.returncode,  # 디버깅 참조
+        "est_bytes": est,
+        "sparse_exclude": sparse,
     }
     _save_state(state)
     note = "" if r.returncode == 0 else " (subprocess timeout · worktree 실제 생성 확인됨)"
@@ -338,9 +451,47 @@ def list_sandboxes() -> list:
             "path": entry.get("path"),
             "branch": entry.get("branch"),
             "last_test_exit": (entry.get("last_test") or {}).get("exit_code"),
+            "lifecycle": lifecycle(entry),
             "created_at": datetime.fromtimestamp(entry.get("created_at", 0)).isoformat(timespec='seconds'),
         })
     return result
+
+
+TERMINAL_OK = ("applied",)
+TERMINAL_FAIL = ("discarded", "failed")
+
+
+def _settled_at(entry: dict, now: int) -> int:
+    return int(entry.get("applied_at") or entry.get("failed_at") or entry.get("discarded_at")
+               or entry.get("created_at") or now)
+
+
+def lifecycle(entry: dict, retention_sec: int = 86400, now: Optional[int] = None) -> str:
+    """ACTIVE / VERIFIED / FAILED / RETAINED / CLEANUP_ELIGIBLE / REMOVED."""
+    now = now or int(time.time())
+    st = entry.get("status") or ""
+    if st.endswith("_checkout_removed"):
+        return "REMOVED"
+    if entry.get("preserve"):
+        return "RETAINED"
+    if st in TERMINAL_OK or st in TERMINAL_FAIL:
+        if now - _settled_at(entry, now) > retention_sec:
+            return "CLEANUP_ELIGIBLE"
+        return "VERIFIED" if st in TERMINAL_OK else "FAILED"
+    return "ACTIVE"
+
+
+def mark(goal_id: str, status: str) -> dict:
+    """외부 흐름(self-healing 실패 등)이 sandbox 결과 상태를 기록 → 보존 기간 후 정리 대상."""
+    state = _load_state()
+    entry = state.get(str(goal_id))
+    if not entry:
+        return {"ok": False, "reason": "sandbox 없음"}
+    entry["status"] = status
+    entry[f"{status}_at"] = int(time.time())
+    state[str(goal_id)] = entry
+    _save_state(state)
+    return {"ok": True}
 
 
 def cleanup_orphans(max_age_sec: int = 86400) -> dict:
@@ -356,53 +507,44 @@ def cleanup_orphans(max_age_sec: int = 86400) -> dict:
     now = int(time.time())
 
     # 1. state 안 등록돼 있지만 디렉토리 없음 → state 삭제
+    stale_active = []
     for gid, entry in list(state.items()):
         path = Path(entry.get("path", ""))
         if path and not path.exists():
             del state[gid]
             removed_entries.append({"goal_id": gid, "reason": "path_missing"})
             continue
-        # 2. active 상태로 max_age 초과 → discard (preserve·다른 root 경로는 제외)
-        if entry.get("preserve") or not _inside_root(path):
+        if not _inside_root(path):
             continue
-        if entry.get("status") == "active":
-            age = now - int(entry.get("created_at", now))
-            if age > max_age_sec:
-                dr = discard(gid)
-                state[gid] = _load_state().get(gid, entry)   # discard() 가 저장한 최신 상태로 (덮어쓰기 방지)
-                stale_discarded.append({
-                    "goal_id": gid, "age_sec": age,
-                    "discard_ok": dr.get("ok", False),
-                })
-        # 2b. applied 후 max_age 지난 sandbox → checkout 폴더만 제거 (branch·commit 은 유지)
-        #     기존엔 applied 상태가 정리 대상이 아니어서 2.5GB checkout 이 영구 누적됐다.
-        elif entry.get("status") == "applied":
-            age = now - int(entry.get("applied_at") or entry.get("created_at", now))
-            if age > max_age_sec:
-                r = _git("worktree", "remove", "--force", str(path), timeout=120)
-                if r.returncode == 0:
-                    entry["status"] = "applied_checkout_removed"
-                    entry["checkout_removed_at"] = now
-                    stale_discarded.append({"goal_id": gid, "age_sec": age, "checkout_removed": True})
+        # 2. 생애주기 기준 정리 (2026-10-30 사용자 지시 "나이 기준만으로 운영 Sandbox 삭제 X")
+        #    ACTIVE·RETAINED 는 절대 제거 X (오래된 ACTIVE 는 보고만) · CLEANUP_ELIGIBLE 만 checkout 제거 · branch 유지
+        stage = lifecycle(entry, max_age_sec, now)
+        if stage == "ACTIVE" and now - int(entry.get("created_at", now)) > max_age_sec:
+            stale_active.append({"goal_id": gid, "age_sec": now - int(entry.get("created_at", now))})
+        elif stage == "CLEANUP_ELIGIBLE":
+            r = _git("worktree", "remove", "--force", str(path), timeout=120)
+            if r.returncode == 0:
+                entry["status"] = f"{entry.get('status')}_checkout_removed"
+                entry["checkout_removed_at"] = now
+                stale_discarded.append({"goal_id": gid, "checkout_removed": True,
+                                        "age_sec": now - _settled_at(entry, now)})
 
     _save_state(state)
 
-    # 3. .repair-sandbox/ 안 디렉토리인데 state 에 없음 → worktree remove
+    # 3. root 안 디렉토리인데 state 에 없음 → 운영 root 는 보고만 (출처 불명 자산 보호) · 테스트 root 는 제거
+    orphan_report = []
     if SANDBOX_ROOT.exists():
         state_paths = {str(Path(e.get("path", "")).resolve()) for e in state.values()
                        if e.get("path")}
         for child in SANDBOX_ROOT.iterdir():
-            if not child.is_dir():
+            if not child.is_dir() or str(child.resolve()) in state_paths:
                 continue
-            if str(child.resolve()) in state_paths:
+            if IS_OPERATIONAL_ROOT:
+                orphan_report.append(str(child))
                 continue
-            # 고아 디렉토리 → git worktree remove 시도 후 수동 삭제
             r = _git("worktree", "remove", "--force", str(child), timeout=30)
             if r.returncode != 0:
-                try:
-                    shutil.rmtree(child, ignore_errors=True)
-                except Exception:
-                    pass
+                shutil.rmtree(child, ignore_errors=True)
             removed_dirs.append({"path": str(child), "worktree_remove_rc": r.returncode})
 
     # 4. git worktree prune (끊어진 참조 정리)
@@ -412,7 +554,9 @@ def cleanup_orphans(max_age_sec: int = 86400) -> dict:
         "ok": True,
         "removed_state_entries": removed_entries,
         "removed_orphan_dirs": removed_dirs,
-        "stale_active_discarded": stale_discarded,
+        "cleanup_eligible_removed": stale_discarded,
+        "stale_active_retained": stale_active,
+        "orphan_dirs_reported": orphan_report,
     }
 
 

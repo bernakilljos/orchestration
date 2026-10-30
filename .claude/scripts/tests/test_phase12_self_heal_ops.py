@@ -135,3 +135,152 @@ def test_discovery_rejects_unsourced_and_requires_approval(tmp_path):
         c.execute("DELETE FROM tech_gaps WHERE project_path=?", (str(tmp_path.resolve()),))
         c.execute("DELETE FROM tech_evidence WHERE source_url='https://example.org/rel'")
         c.execute("DELETE FROM tech_discovery_runs WHERE run_id=?", (r["run_id"],))
+
+
+# ── 디스크 안전 (2026-10-30 C: 1.85GB 사고 재발 방지) ─────────────────────────────
+def _sb_test():
+    import repair_sandbox as sb
+    sb.use_test_root()
+    return sb
+
+
+def test_sparse_estimate_excludes_large_assets():
+    sb = _sb_test()
+    full = sb._estimate_bytes("HEAD", [])
+    sparse = sb._estimate_bytes("HEAD", sb._policy().get("sparse_exclude") or [])
+    assert sparse < full and sparse < 300 * 1024 ** 2
+
+
+def test_reservation_and_total_cap_block_creation(monkeypatch):
+    sb = _sb_test()
+    import shutil as _sh, os as _os
+    free = _sh.disk_usage(str(sb.SANDBOX_ROOT.parent)).free
+    with sb._reservation_lock():
+        res = sb._live_reservations()
+        res["other-process"] = {"bytes": free, "pid": _os.getpid(), "ts": int(time.time())}
+        sb._save_reservations(res)
+    try:
+        r = sb.create(f"resv-{time.time_ns()}")
+        assert r["ok"] is False and r["retryable"] and "예약" in r["reason"]
+    finally:
+        with sb._reservation_lock():
+            res = sb._live_reservations(); res.pop("other-process", None); sb._save_reservations(res)
+    monkeypatch.setenv("REPAIR_SANDBOX_MAX_TOTAL_GB", "0.001")
+    r = sb.create(f"cap-{time.time_ns()}")
+    assert r["ok"] is False and r["retryable"] and "상한" in r["reason"]
+
+
+def test_concurrent_creates_never_overcommit():
+    sb = _sb_test()
+    import shutil as _sh, os as _os
+    est = sb._estimate_bytes("HEAD", sb._policy().get("sparse_exclude") or []) * 1.2
+    free = _sh.disk_usage(str(sb.SANDBOX_ROOT.parent)).free
+    min_free_gb = (free - 1.5 * est) / 1024 ** 3          # 1개만 들어갈 예산
+    code = ("import sys,json;sys.path.insert(0,r'%s');import repair_sandbox as sb;sb.use_test_root();"
+            "print(json.dumps(sb.create(sys.argv[1])))") % (ROOT / ".claude" / "scripts" / "lib")
+    env = {**_os.environ, "REPAIR_SANDBOX_MIN_FREE_GB": str(min_free_gb)}
+    ids = [f"conc-{time.time_ns()}-{i}" for i in range(3)]
+    procs = [subprocess.Popen([sys.executable, "-X", "utf8", "-c", code, i], env=env, stdout=subprocess.PIPE,
+                              text=True, encoding="utf-8") for i in ids]
+    outs = [json.loads(p.communicate(timeout=600)[0].strip().splitlines()[-1]) for p in procs]
+    ok = [i for i, o in zip(ids, outs) if o["ok"]]
+    assert len(ok) <= 1 and all(o.get("retryable") for o in outs if not o["ok"])
+    for i in ok:
+        sb.discard(i, force=True)
+
+
+def test_lifecycle_protects_active_and_retained(monkeypatch):
+    sb = _sb_test()
+    a, k, v = (f"life-{x}-{time.time_ns()}" for x in ("active", "kept", "verified"))
+    for i in (a, k, v):
+        assert sb.create(i)["ok"]
+    st = sb._load_state()
+    old = int(time.time()) - 10 ** 6
+    st[a]["created_at"] = old
+    st[k].update(created_at=old, status="applied", applied_at=old, preserve=True)
+    st[v].update(created_at=old, status="applied", applied_at=old)
+    sb._save_state(st)
+    out = sb.cleanup_orphans(max_age_sec=86400)
+    st = sb._load_state()
+    assert (sb.SANDBOX_ROOT / a).exists() and a in [x["goal_id"] for x in out["stale_active_retained"]]
+    assert (sb.SANDBOX_ROOT / k).exists() and sb.lifecycle(st[k]) == "RETAINED"
+    assert not (sb.SANDBOX_ROOT / v).exists() and sb.lifecycle(st[v]) == "REMOVED"
+    assert subprocess.run(["git", "rev-parse", "--verify", "-q", f"refs/heads/repair/{v}"],
+                          capture_output=True).returncode == 0          # branch 는 유지
+    # 운영 root 처럼 동작할 때 출처 불명 폴더는 보고만
+    stray = sb.SANDBOX_ROOT / f"stray-{time.time_ns()}"; stray.mkdir()
+    monkeypatch.setattr(sb, "IS_OPERATIONAL_ROOT", True)
+    out = sb.cleanup_orphans(max_age_sec=86400)
+    assert str(stray) in out["orphan_dirs_reported"] and stray.exists()
+    monkeypatch.setattr(sb, "IS_OPERATIONAL_ROOT", False)
+    stray.rmdir()
+    for i in (a, k):
+        sb.discard(i, force=True)
+
+
+def test_dead_process_reservation_is_released():
+    sb = _sb_test()
+    dead = subprocess.Popen([sys.executable, "-c", "pass"]); dead.wait()
+    with sb._reservation_lock():
+        res = sb._live_reservations()
+        res["crashed"] = {"bytes": 10 ** 15, "pid": dead.pid, "ts": int(time.time())}
+        sb._save_reservations(res)
+    assert "crashed" not in sb._live_reservations()
+    sid = f"after-crash-{time.time_ns()}"
+    assert sb.create(sid)["ok"]
+    sb.discard(sid, force=True)
+
+
+# ── Multi-Agent DAG (스텁 Agent · 비용 0) ───────────────────────────────────────
+def _dag_env(tmp_path):
+    import agent_registry as ar
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    calls = []
+
+    def fake(prompt, cwd, model, tools, role="", **kw):
+        calls.append((role, time.time()))
+        time.sleep(0.2)
+        node = role.split(":", 1)[1]
+        if node == "fail":
+            return {"ok": False, "invocation": "fake"}
+        out = {"spawn": '{"followups":[{"id":"fixB","needs":["read","edit"],"allow_paths":["b.py"],"prompt":"fix b"},'
+                        '{"id":"evil","needs":["read","edit"],"allow_paths":["secret.py"],"prompt":"x"}]}'}.get(node, "{}")
+        return {"ok": True, "invocation": "fake", "agent_session_id": f"fake-{node}", "result": out, "cost_usd": 0.01}
+    return ar, fake, calls
+
+
+def test_dag_conflicts_cap_spawn_and_isolation(tmp_path):
+    ar, fake, calls = _dag_env(tmp_path)
+    T = lambda i, **k: {"id": i, "needs": ["read", "edit"], "skills": ["python"], "prompt": i, **k}
+    tasks = [T("a1", allow_paths=["a.py"]), T("a2", allow_paths=["a.py"]), T("b0", allow_paths=["c.py"]),
+             {"id": "spawn", "needs": ["read"], "skills": ["review"], "prompt": "r", "depends_on": ["a1", "a2"],
+              "may_spawn": True, "spawn_allow_paths": ["b.py"]},
+             {"id": "fail", "needs": ["read"], "prompt": "f"},
+             {"id": "after_fail", "needs": ["read"], "prompt": "x", "depends_on": ["fail"]},
+             {"id": "ghost_dep", "needs": ["read"], "prompt": "x", "depends_on": ["nope"]}]
+    r = ar.run_dag(tasks, str(tmp_path), max_parallel=3, dispatch=fake)
+    waves = r["waves"]
+    assert not any({"a1", "a2"} <= set(w) for w in waves)              # 같은 파일 → 다른 wave
+    assert any({"a1", "b0"} <= set(w) for w in waves)                   # 다른 파일 → 병렬
+    assert all(len(w) <= 3 for w in waves)
+    res = r["results"]
+    assert res["spawn"]["spawned"] == ["spawn.fixB"] and res["spawn.fixB"]["status"] == "ok"
+    assert any("edit without permitted paths" in x for x in res["spawn"]["spawn_rejected"])
+    assert res["fail"]["status"] == "failed" and res["after_fail"]["status"] == "skipped"
+    assert res["ghost_dep"]["status"] == "skipped" and res["a1"]["status"] == "ok"
+    m = r["metrics"]
+    assert m["failed"] == 1 and m["skipped"] == 2 and m["cost_usd"] > 0 and m["max_wave"] <= 3
+    r1 = ar.run_dag([T("x", allow_paths=["x.py"]), T("y", allow_paths=["y.py"])], str(tmp_path),
+                    max_parallel=1, dispatch=fake)
+    assert r1["waves"] == [["x"], ["y"]]                                 # 병렬 상한 1
+
+
+def test_dag_records_tasks_and_metrics(tmp_path):
+    ar, fake, _ = _dag_env(tmp_path)
+    gid = _goal({"kind": "cmd", "cmd": "x"})
+    ar.run_dag([{"id": "n1", "needs": ["read"], "prompt": "p"}], str(tmp_path), dispatch=fake, goal_id=gid)
+    with sqlite3.connect(str(DB)) as c:
+        assert c.execute("SELECT status FROM tasks WHERE task_id=?", (f"g{gid}-dag-n1",)).fetchone()[0] == "completed"
+        m = json.loads(c.execute("SELECT metrics FROM agent_dag_runs WHERE goal_id=?", (gid,)).fetchone()[0])
+        assert m["ok"] == 1 and m["success_rate"] == 1.0
+        c.execute("DELETE FROM agent_dag_runs WHERE goal_id=?", (gid,))

@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "purpose": "repair_sandbox 자원 정책 (2026-10-30 디스크 부족 사고 재발 방지)",
+    "근거": "sandbox = git worktree = HEAD 의 모든 tracked 파일 checkout. 2.45GB 중 2.44GB 가 docs/screens 디자인 참조 이미지 · 코드는 수 MB",
+    "변경 방법": "이 파일만 수정 · 코드 수정 X"
+  },
+  "sparse_exclude": ["docs/screens/"],
+  "min_free_gb": 10,
+  "max_total_active_gb": 20,
+  "estimate_margin": 1.2
+}

@@ -598,8 +598,12 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1
         sid = f"heal-e{eid}-a{ev['attempts']}"
         sbr = _sb.create(sid, base_ref=cfg.get("base_ref", "HEAD"))
         if not sbr.get("ok"):
-            _finish_event(eid, "pending", result={"sandbox_error": sbr.get("reason")})
-            rec.update(status="pending", error=sbr.get("reason"))
+            # 공간 부족 등 retryable → 이벤트를 pending 으로 되돌려 다음 tick 에 재시도 (시도 횟수는 차감 X)
+            with _conn() as c:
+                c.execute("UPDATE self_heal_events SET attempts=MAX(attempts-1,0) WHERE event_id=?", (eid,))
+            _finish_event(eid, "pending", result={"sandbox_error": sbr.get("reason"),
+                                                  "retryable": bool(sbr.get("retryable"))})
+            rec.update(status="waiting" if sbr.get("retryable") else "pending", error=sbr.get("reason"))
             results.append(rec)
             continue
         base_sha = _sb._git("rev-parse", cfg.get("base_ref", "HEAD")).stdout.strip()
@@ -630,6 +634,7 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1
             _sup.advance(gid, "BLOCKED", f"self-heal e{eid}: repair failed at "
                                          f"{summary['failed_stage'] or summary['stage']} · 수동 조사 필요",
                          actor=worker)
+            _sb.mark(sid, "failed")   # ACTIVE 로 영구 보호되지 않게 · 보존 기간 후 정리 대상
             _finish_event(eid, "failed", repair_goal_id=repair_gid, result=summary)
             rec["status"] = "failed"
         rec.update(summary)
