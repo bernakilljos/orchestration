@@ -106,8 +106,8 @@ def _save_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def create(goal_id: str) -> dict:
-    """격리 sandbox 생성: git worktree add .repair-sandbox/<goal_id>."""
+def create(goal_id: str, base_ref: str = "HEAD") -> dict:
+    """격리 sandbox 생성: git worktree add .repair-sandbox/<goal_id> (base_ref 기준 · 기본 HEAD)."""
     SANDBOX_ROOT.mkdir(parents=True, exist_ok=True)
     sandbox_path = SANDBOX_ROOT / str(goal_id)
     branch = f"repair/{goal_id}"
@@ -115,9 +115,17 @@ def create(goal_id: str) -> dict:
     if sandbox_path.exists():
         return {"ok": False, "reason": f"sandbox 이미 존재: {sandbox_path}", "path": str(sandbox_path)}
 
+    # 2026-10-30: sandbox 1개 = kit 전체 checkout (~2.5GB). 여유 공간 부족 시 생성 거부 (fail-closed).
+    # 실측 사고: sandbox 누적으로 C: 여유 1.85GB → worktree add 가 "No space left on device" 로 중단.
+    min_free_gb = float(os.environ.get("REPAIR_SANDBOX_MIN_FREE_GB", "10"))
+    free_gb = shutil.disk_usage(str(SANDBOX_ROOT)).free / 1024 ** 3
+    if free_gb < min_free_gb:
+        return {"ok": False, "reason": f"디스크 여유 {free_gb:.1f}GB < {min_free_gb:.0f}GB · sandbox 생성 거부",
+                "free_gb": round(free_gb, 2)}
+
     # git worktree add -b <branch> <path> HEAD · timeout 600s (큰 kit · Windows)
     # core.longpaths: 테스트 root(TEMP) 는 경로가 길어 kit 의 259자 파일이 MAX_PATH 초과 → 이 명령에만 적용
-    r = _git("-c", "core.longpaths=true", "worktree", "add", "-b", branch, str(sandbox_path), "HEAD", timeout=600)
+    r = _git("-c", "core.longpaths=true", "worktree", "add", "-b", branch, str(sandbox_path), base_ref, timeout=600)
 
     # 2026-10-26 fallback v2: 외부 AI 지적 수용 — .git 존재만 X · git 등록 상태까지 검증
     worktree_exists = False
@@ -361,10 +369,21 @@ def cleanup_orphans(max_age_sec: int = 86400) -> dict:
             age = now - int(entry.get("created_at", now))
             if age > max_age_sec:
                 dr = discard(gid)
+                state[gid] = _load_state().get(gid, entry)   # discard() 가 저장한 최신 상태로 (덮어쓰기 방지)
                 stale_discarded.append({
                     "goal_id": gid, "age_sec": age,
                     "discard_ok": dr.get("ok", False),
                 })
+        # 2b. applied 후 max_age 지난 sandbox → checkout 폴더만 제거 (branch·commit 은 유지)
+        #     기존엔 applied 상태가 정리 대상이 아니어서 2.5GB checkout 이 영구 누적됐다.
+        elif entry.get("status") == "applied":
+            age = now - int(entry.get("applied_at") or entry.get("created_at", now))
+            if age > max_age_sec:
+                r = _git("worktree", "remove", "--force", str(path), timeout=120)
+                if r.returncode == 0:
+                    entry["status"] = "applied_checkout_removed"
+                    entry["checkout_removed_at"] = now
+                    stale_discarded.append({"goal_id": gid, "age_sec": age, "checkout_removed": True})
 
     _save_state(state)
 

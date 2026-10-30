@@ -458,7 +458,205 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 12 (2026-10-30): 무인 운영 연결.
+#   supervisor 가 실패를 감지하면 enqueue_failure_event() 로 이벤트만 영속화 (빠름).
+#   Task Scheduler(Orca_10MinLoop) 가 heal-tick --trigger scheduler 로 process_events() 실행.
+#   opt-in: 실패 task spec 에 "self_heal" 설정이 있는 goal 만 대상 (임의 goal 자동 수정 X).
+#   이벤트 = 원자적 claim + lease · 중단된 claim 은 다음 tick 에서 복구.
+# ─────────────────────────────────────────────────────────────────────────────
+
+HEAL_ACTIVE = ("pending", "claimed")
+
+
+def _ensure_heal_schema() -> None:
+    with _conn() as c:
+        c.execute(
+            "CREATE TABLE IF NOT EXISTS self_heal_events ("
+            " event_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            " goal_id INTEGER NOT NULL, task_id TEXT, config TEXT NOT NULL,"
+            " status TEXT NOT NULL DEFAULT 'pending',"
+            " claimed_by TEXT, claimed_at INTEGER DEFAULT 0, attempts INTEGER DEFAULT 0,"
+            " repair_goal_id INTEGER, sandbox_id TEXT, trigger_source TEXT,"
+            " result TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
+        c.execute("CREATE INDEX IF NOT EXISTS ix_heal_goal ON self_heal_events(goal_id, status)")
+
+
+def has_active_event(goal_id: int) -> bool:
+    if not DB.exists():
+        return False
+    _ensure_heal_schema()
+    with _conn() as c:
+        row = c.execute("SELECT 1 FROM self_heal_events WHERE goal_id=? AND status IN (?, ?)",
+                        (goal_id, *HEAL_ACTIVE)).fetchone()
+    return bool(row)
+
+
+def enqueue_failure_event(goal_id: int) -> Dict[str, Any]:
+    """실패 goal 중 self_heal opt-in task 가 있으면 이벤트 1건 영속화 (goal 당 활성 1건 · 멱등)."""
+    _ensure_heal_schema()
+    now = int(time.time())
+    with _conn() as c:
+        if c.execute("SELECT 1 FROM self_heal_events WHERE goal_id=? AND status IN (?, ?)",
+                     (goal_id, *HEAL_ACTIVE)).fetchone():
+            return {"enqueued": False, "reason": "active event exists"}
+        rows = c.execute(
+            "SELECT t.task_id, t.task_file FROM tasks t JOIN goal_tasks gt ON gt.task_id=t.task_id "
+            "WHERE gt.goal_id=? AND t.status IN ('failed','executed_unverified')", (goal_id,)).fetchall()
+        for tid, tfile in rows:
+            try:
+                spec = json.loads(tfile) if tfile else {}
+            except Exception:
+                continue
+            cfg = spec.get("self_heal")
+            if not isinstance(cfg, dict) or not cfg.get("test_cmd") or not cfg.get("allow_paths"):
+                continue
+            cfg = {**cfg, "base_ref": cfg.get("base_ref") or spec.get("sandbox_base") or "HEAD"}
+            cur = c.execute(
+                "INSERT INTO self_heal_events (goal_id, task_id, config, status, created_at, updated_at) "
+                "VALUES (?, ?, ?, 'pending', ?, ?)", (goal_id, tid, json.dumps(cfg), now, now))
+            return {"enqueued": True, "event_id": cur.lastrowid, "task_id": tid}
+    return {"enqueued": False, "reason": "no self_heal opt-in task"}
+
+
+def _claim_event(worker: str, lease_s: int, event_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    """pending 또는 lease 만료된 claimed 1건을 원자적으로 claim (event_id 지정 시 그 건만)."""
+    now = int(time.time())
+    with sqlite3.connect(str(DB), timeout=10, isolation_level="IMMEDIATE") as c:
+        row = c.execute(
+            "SELECT event_id, goal_id, task_id, config, status, repair_goal_id, attempts "
+            "FROM self_heal_events WHERE (status='pending' OR (status='claimed' AND claimed_at < ?)) "
+            "AND (? IS NULL OR event_id=?) ORDER BY event_id LIMIT 1",
+            (now - lease_s, event_id, event_id)).fetchone()
+        if not row:
+            return None
+        cur = c.execute(
+            "UPDATE self_heal_events SET status='claimed', claimed_by=?, claimed_at=?, "
+            "attempts=attempts+1, updated_at=? WHERE event_id=? AND status=?",
+            (worker, now, now, row[0], row[4]))
+        if cur.rowcount != 1:
+            return None
+    return {"event_id": row[0], "goal_id": row[1], "task_id": row[2], "config": json.loads(row[3]),
+            "recovered_from": row[4] if row[4] == "claimed" else None,
+            "stale_repair_goal_id": row[5], "attempts": row[6] + 1}
+
+
+def _finish_event(event_id: int, status: str, **fields) -> None:
+    sets = ["status=?", "updated_at=?"]
+    vals: List[Any] = [status, int(time.time())]
+    for k, v in fields.items():
+        sets.append(f"{k}=?")
+        vals.append(json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v)
+    with _conn() as c:
+        c.execute(f"UPDATE self_heal_events SET {', '.join(sets)} WHERE event_id=?", (*vals, event_id))
+
+
+def close_stale_repair_goals(orig_goal_id: int, actor: str) -> List[int]:
+    sys.path.insert(0, str(LIB))
+    import supervisor as _sup
+    with _conn() as c:
+        rows = c.execute("SELECT goal_id FROM goals WHERE source_ref LIKE ? AND status NOT IN "
+                         "('VERIFIED','FAILED','BLOCKED')", (f"repair:orig_goal={orig_goal_id}%",)).fetchall()
+    closed = []
+    for (rg,) in rows:
+        if _sup.advance(rg, "FAILED", "interrupted · heal worker died · recovered by next tick", actor=actor):
+            closed.append(rg)
+    return closed
+
+
+def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1,
+                   max_event_attempts: int = 2) -> Dict[str, Any]:
+    """이벤트 → sandbox(base_ref) → run_repair(agent_fix) → 원 goal BLOCKED(사유) · 다른 goal·Ledger 무관."""
+    if not DB.exists():
+        return {"processed": 0, "error": "orca.db not found"}
+    _ensure_heal_schema()
+    sys.path.insert(0, str(LIB))
+    import supervisor as _sup
+    import repair_sandbox as _sb
+    worker = f"heal:{trigger_source}:{os.getpid()}"
+    results = []
+    for _ in range(max_events):
+        ev = _claim_event(worker, lease_s)
+        if not ev:
+            break
+        eid, gid, cfg = ev["event_id"], ev["goal_id"], ev["config"]
+        rec: Dict[str, Any] = {"event_id": eid, "goal_id": gid, "trigger_source": trigger_source,
+                               "attempt": ev["attempts"], "recovered_from": ev["recovered_from"]}
+        with _conn() as c:
+            c.execute("UPDATE self_heal_events SET trigger_source=? WHERE event_id=?", (trigger_source, eid))
+        # 재시작 복원: 중단된 이전 시도의 repair goal 은 FAILED(interrupted) 로 닫는다.
+        # repair_goal_id 는 시도 끝에야 기록되므로, 원 goal 의 미종결 repair goal 을 직접 찾는다
+        # (goal 당 활성 이벤트는 1건이라 이 goal 들은 모두 죽은 시도의 것).
+        if ev["recovered_from"]:
+            rec["closed_stale_repair_goals"] = close_stale_repair_goals(gid, worker)
+        if ev["attempts"] > max_event_attempts:
+            _sup.advance(gid, "BLOCKED", f"self-heal event {eid}: attempts exhausted", actor=worker)
+            _finish_event(eid, "blocked", result={"reason": "attempts exhausted"})
+            rec["status"] = "blocked"
+            results.append(rec)
+            continue
+        sid = f"heal-e{eid}-a{ev['attempts']}"
+        sbr = _sb.create(sid, base_ref=cfg.get("base_ref", "HEAD"))
+        if not sbr.get("ok"):
+            _finish_event(eid, "pending", result={"sandbox_error": sbr.get("reason")})
+            rec.update(status="pending", error=sbr.get("reason"))
+            results.append(rec)
+            continue
+        base_sha = _sb._git("rev-parse", cfg.get("base_ref", "HEAD")).stdout.strip()
+        target = cfg.get("apply_target") or f"self-heal/g{gid}-e{eid}"
+        if _sb._git("rev-parse", "--verify", "-q", f"refs/heads/{target}").returncode != 0:
+            _sb._git("branch", target, base_sha)
+        with _conn() as c:
+            c.execute("UPDATE self_heal_events SET sandbox_id=? WHERE event_id=?", (sid, eid))
+        rr = run_repair(gid, agent_fix={
+            "sandbox_id": sid, "test_cmd": cfg["test_cmd"], "allow_paths": cfg["allow_paths"],
+            "protected_paths": cfg.get("protected_paths") or [], "apply_target": target,
+            **{k: cfg[k] for k in ("fix_model", "judge_model", "max_fix_rounds") if k in cfg}})
+        repair_gid = rr.get("repair_goal_id")
+        ar = rr.get("agent_repair") or {}
+        summary = {"ok": rr.get("ok"), "stage": rr.get("stage"), "failed_stage": ar.get("failed_stage"),
+                   "repair_goal_id": repair_gid, "apply_target": target,
+                   "applied_sha": (ar.get("apply") or {}).get("to_sha"),
+                   "agent_sessions": [r.get("agent_session_id") for r in ar.get("agent_fix_rounds") or []],
+                   "judge_session": (ar.get("agent_judge") or {}).get("agent_session_id"),
+                   "final_verdict": ((ar.get("judge") or {}).get("final_verdict") or {}).get("status")}
+        if rr.get("ok"):
+            _sup.advance(gid, "BLOCKED", f"self-heal e{eid}: repair goal #{repair_gid} VERIFIED · "
+                                         f"fix on {target}@{(summary['applied_sha'] or '')[:7]} · merge 승인 대기",
+                         actor=worker)
+            _finish_event(eid, "repaired", repair_goal_id=repair_gid, result=summary)
+            rec["status"] = "repaired"
+        else:
+            _sup.advance(gid, "BLOCKED", f"self-heal e{eid}: repair failed at "
+                                         f"{summary['failed_stage'] or summary['stage']} · 수동 조사 필요",
+                         actor=worker)
+            _finish_event(eid, "failed", repair_goal_id=repair_gid, result=summary)
+            rec["status"] = "failed"
+        rec.update(summary)
+        results.append(rec)
+    return {"processed": len(results), "trigger_source": trigger_source, "events": results}
+
+
+def list_events(limit: int = 20) -> List[Dict[str, Any]]:
+    _ensure_heal_schema()
+    with _conn() as c:
+        rows = c.execute("SELECT event_id, goal_id, status, attempts, repair_goal_id, sandbox_id, "
+                         "trigger_source, claimed_by, result FROM self_heal_events "
+                         "ORDER BY event_id DESC LIMIT ?", (limit,)).fetchall()
+    keys = ("event_id", "goal_id", "status", "attempts", "repair_goal_id", "sandbox_id",
+            "trigger_source", "claimed_by", "result")
+    return [dict(zip(keys, r)) for r in rows]
+
+
 def _cli_main(argv):
+    if len(argv) >= 2 and argv[1] == "heal-tick":
+        trig = argv[argv.index("--trigger") + 1] if "--trigger" in argv else "manual"
+        lease = int(argv[argv.index("--lease-s") + 1]) if "--lease-s" in argv else 1800
+        print(json.dumps(process_events(trig, lease_s=lease), ensure_ascii=False, indent=2))
+        return 0
+    if len(argv) >= 2 and argv[1] == "heal-events":
+        print(json.dumps(list_events(), ensure_ascii=False, indent=2))
+        return 0
     if len(argv) < 2:
         print("usage: self_healing.py {analyze|create-repair|run-repair} [args]")
         print("  analyze --goal <id> | --task <task_id>")

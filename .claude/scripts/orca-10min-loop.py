@@ -350,6 +350,21 @@ def main():
         except Exception as e:
             log_msg(f"supervisor advance-all exception: {e}", "WARN")
 
+        # 3e. Self-Healing 이벤트 처리 (2026-10-30 Phase 12) — advance-all 이 영속화한 실패 이벤트를
+        #     Agent 수정 → runner pytest → Judge → 브랜치 반영. 시간이 길어 advance-all 과 분리.
+        try:
+            sh_py = PROJECT_ROOT / ".claude" / "scripts" / "lib" / "self_healing.py"
+            if sh_py.exists():
+                hres = subprocess.run(
+                    [sys.executable, str(sh_py), "heal-tick", "--trigger", "scheduler"],
+                    capture_output=True, text=True, timeout=1500,
+                    env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
+                    cwd=str(PROJECT_ROOT)
+                )
+                log_msg(f"self-heal tick rc={hres.returncode}: {(hres.stdout or hres.stderr)[:300]}")
+        except Exception as e:
+            log_msg(f"self-heal tick exception: {e}", "WARN")
+
         # 3d. Idle session info (list only)
         idle = detect_idle_sessions()
         if idle:

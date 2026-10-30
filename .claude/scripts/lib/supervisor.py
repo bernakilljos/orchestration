@@ -219,6 +219,10 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
             advanced["FAILED"] += 1
             details.append({"goal_id": goal_id, "action": "FAILED(timeout)"})
             continue
+        # 2026-10-30 Phase 12: self-heal 이벤트 진행 중인 REPAIRING goal 은 단순 재시도 X (heal-tick 이 처리)
+        if status == "REPAIRING" and _heal_active(goal_id):
+            details.append({"goal_id": goal_id, "action": "skip(self_heal_event_active)"})
+            continue
         next_status = _next_status_hook(status, wtype, source_ref, goal_id, dry_run)
         if next_status:
             if not dry_run:
@@ -245,7 +249,8 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
                 elif exec_result.get("failed", 0) > 0:
                     advance(goal_id, "REPAIRING", f"auto: {exec_result.get('failed')} tasks failed", "supervisor:auto")
                     details.append({"goal_id": goal_id, "from": "RUNNING", "to": "REPAIRING",
-                                    "failed_tasks": exec_result.get("failed")})
+                                    "failed_tasks": exec_result.get("failed"),
+                                    "self_heal": _heal_enqueue(goal_id)})
                 elif has_unverified:
                     # cmd exit=0 but verify fail (NOT OK · Traceback 등) → REPAIRING
                     advance(goal_id, "REPAIRING", "auto: verify failed (fail-closed)", "supervisor:auto")
@@ -271,6 +276,30 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
             "skipped_scheduler_only": skipped_scheduler_only,
             "trigger_source": trigger_source or "unspecified",
             "timestamp": now}
+
+
+def _heal_module():
+    import importlib.util as _ilu
+    p = ROOT / ".claude" / "scripts" / "lib" / "self_healing.py"
+    spec = _ilu.spec_from_file_location("_self_healing", p)
+    mod = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _heal_active(goal_id: int) -> bool:
+    try:
+        return _heal_module().has_active_event(goal_id)
+    except Exception:
+        return False
+
+
+def _heal_enqueue(goal_id: int) -> dict:
+    """실패 이벤트 영속화만 (수정 실행은 scheduler heal-tick). opt-in 없으면 no-op."""
+    try:
+        return _heal_module().enqueue_failure_event(goal_id)
+    except Exception as e:
+        return {"enqueued": False, "error": str(e)[:120]}
 
 
 def _try_claim_goal(goal_id: int, worker_id: str = "supervisor:auto", lease_s: int = 300) -> bool:
@@ -868,7 +897,7 @@ def execute_goal(goal_id: int) -> dict:
                     _spec_sb = _ilu2.spec_from_file_location("_sb", sb_path)
                     _sb = _ilu2.module_from_spec(_spec_sb)
                     _spec_sb.loader.exec_module(_sb)
-                    sb_result = _sb.create(f"g{goal_id}-safe")
+                    sb_result = _sb.create(f"g{goal_id}-safe", base_ref=spec_obj.get("sandbox_base") or "HEAD")
                     if sb_result.get("ok"):
                         _sandbox_cwd = sb_result["path"]
                         results.setdefault("sandboxes", []).append({

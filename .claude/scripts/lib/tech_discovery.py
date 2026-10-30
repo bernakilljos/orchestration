@@ -291,6 +291,157 @@ def trigger_discovery_prompt(project_path: str, max_queries: int = 5) -> Dict[st
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 12 (2026-10-30): 실제 조사 실행.
+#   AS-IS = 프로젝트 manifest 의존성 + 설치 버전 (기술명 하드코딩 X)
+#   조사 = headless Agent (WebSearch/WebFetch) · 근거(URL·확인일) 없는 결과는 저장 거부
+#   후보 = gap 마다 tech_candidates(proposed) · approve_candidate 한 것만 goal 큐로
+# ─────────────────────────────────────────────────────────────────────────────
+
+def project_inventory(project_path: str) -> List[Dict[str, str]]:
+    """requirements*.txt · pyproject [project].dependencies · package.json 에서 의존성 추출 + 설치 버전."""
+    import re as _re
+    pp = Path(project_path)
+    deps: Dict[str, Dict[str, str]] = {}
+
+    def add(name, spec, src):
+        name = name.strip().lower()
+        if name and name not in deps:
+            deps[name] = {"name": name, "declared": spec.strip(), "source": src}
+    for req in sorted(pp.glob("requirements*.txt")):
+        for line in req.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.split("#")[0].split(";")[0].strip()
+            m = _re.match(r"^([A-Za-z0-9_.\-\[\]]+)\s*(.*)$", line)
+            if m:
+                add(m.group(1).split("[")[0], m.group(2), req.name)
+    pj = pp / "package.json"
+    if pj.exists():
+        try:
+            d = json.loads(pj.read_text(encoding="utf-8"))
+            for sec in ("dependencies", "devDependencies"):
+                for k, v in (d.get(sec) or {}).items():
+                    add(k, str(v), f"package.json:{sec}")
+        except Exception:
+            pass
+    try:
+        from importlib import metadata as _md
+        for d in deps.values():
+            try:
+                d["installed"] = _md.version(d["name"])
+            except Exception:
+                d["installed"] = ""
+    except Exception:
+        pass
+    return list(deps.values())
+
+
+def _ensure_candidate_schema() -> None:
+    with sqlite3.connect(str(DB), timeout=10) as c:
+        c.execute("CREATE TABLE IF NOT EXISTS tech_candidates ("
+                  " candidate_id INTEGER PRIMARY KEY AUTOINCREMENT, run_id INTEGER, gap_id INTEGER,"
+                  " title TEXT NOT NULL, rationale TEXT, evidence_urls TEXT, priority TEXT,"
+                  " status TEXT NOT NULL DEFAULT 'proposed', goal_id INTEGER,"
+                  " created_at INTEGER NOT NULL, decided_at INTEGER, decided_by TEXT)")
+
+
+def run_discovery(project_path: str, max_items: int = 5, model: str = "claude-sonnet-5-5",
+                  dispatch=None) -> Dict[str, Any]:
+    """analyze → inventory → Agent 웹 조사 → 근거 검증 → evidence/gap/candidate 저장."""
+    sys.path.insert(0, str(ROOT / ".claude" / "scripts" / "lib"))
+    if dispatch is None:
+        import real_repair_chain as _rc
+        dispatch = _rc.dispatch_agent
+    _ensure_candidate_schema()
+    an = analyze_project(project_path)
+    if not an.get("ok"):
+        return an
+    run_id = an["run_id"]
+    inv = project_inventory(project_path)
+    today = datetime.now().strftime("%Y-%m-%d")
+    prompt = (
+        f"Today is {today}. You are researching a software project's dependencies.\n"
+        f"Detected domains: {an.get('detected_domains')}\n"
+        f"Dependency inventory (name, declared constraint, installed version):\n"
+        + "\n".join(f"- {d['name']} | {d['declared'] or '-'} | {d.get('installed') or 'not installed'}" for d in inv)
+        + f"\n\nPick at most {max_items} dependencies where a newer release, deprecation, security fix or major "
+        "capability change is most likely to matter. For each, use WebSearch/WebFetch to confirm from an official "
+        "source (project docs, release notes, changelog, PyPI/npm page, security advisory). Do not guess versions.\n"
+        "Reply with ONLY one JSON object:\n"
+        '{"findings":[{"domain":"...","technology":"<dependency name>","latest_version":"...",'
+        '"capability":"<what changed>","constraints":"<breaking changes / requirements>",'
+        '"source_url":"https://...","checked_at":"YYYY-MM-DD"}],'
+        '"gaps":[{"domain":"...","technology":"...","as_is":"<installed/declared>","to_be":"<target>",'
+        '"description":"<why it matters for this project>","priority":"low|medium|high|critical",'
+        '"evidence_urls":["<must be source_url values from findings>"]}]}'
+    )
+    ag = dispatch(prompt, str(ROOT), model, ["WebSearch", "WebFetch"], role="discovery",
+                  timeout=900, max_budget_usd=3.0)
+    m = __import__("re").search(r"\{.*\}", ag.get("result") or "", __import__("re").S)
+    try:
+        data = json.loads(m.group(0)) if m else {}
+    except Exception:
+        data = {}
+    saved, rejected, candidates = [], [], []
+    urls_ok = set()
+    for f in data.get("findings") or []:
+        url = (f.get("source_url") or "").strip()
+        if not url.startswith(("https://", "http://")) or not f.get("technology"):
+            rejected.append({"kind": "finding", "item": f, "reason": "no source_url/technology"})
+            continue
+        eid = save_evidence(f.get("domain") or "unknown", topic=f"dependency:{f['technology']}",
+                            technology=f["technology"], capability=f.get("capability", ""), source_url=url,
+                            version=f.get("latest_version", ""), confirmed_at=f.get("checked_at") or today,
+                            summary=f.get("constraints", ""))
+        urls_ok.add(url)
+        saved.append({"evidence_id": eid, "technology": f["technology"], "version": f.get("latest_version"),
+                      "source_url": url})
+    now = int(time.time())
+    for g in data.get("gaps") or []:
+        ev = [u for u in g.get("evidence_urls") or [] if u in urls_ok]
+        if not ev:
+            rejected.append({"kind": "gap", "item": g, "reason": "evidence_urls not in verified findings"})
+            continue
+        pr = g.get("priority") if g.get("priority") in ("low", "medium", "high", "critical") else "medium"
+        gid = save_gap(str(Path(project_path).resolve()), g.get("domain") or "unknown",
+                       g.get("as_is", ""), g.get("to_be", ""), g.get("description", ""), pr)
+        title = f"{g.get('technology')}: {g.get('as_is')} → {g.get('to_be')}"
+        with sqlite3.connect(str(DB), timeout=10) as c:
+            cid = c.execute("INSERT INTO tech_candidates (run_id, gap_id, title, rationale, evidence_urls, priority, "
+                            "status, created_at) VALUES (?,?,?,?,?,?, 'proposed', ?)",
+                            (run_id, gid, title, g.get("description", ""), json.dumps(ev), pr, now)).lastrowid
+        candidates.append({"candidate_id": cid, "gap_id": gid, "title": title, "priority": pr})
+    with sqlite3.connect(str(DB), timeout=10) as c:
+        c.execute("UPDATE tech_discovery_runs SET evidence_count=?, gaps_found=?, ended_at=?, status=? WHERE run_id=?",
+                  (len(saved), len(candidates), int(time.time()), "completed" if ag.get("ok") else "failed", run_id))
+    result = {"ok": bool(ag.get("ok")) and bool(saved), "run_id": run_id, "inventory_size": len(inv),
+              "agent_session_id": ag.get("agent_session_id"), "invocation": ag.get("invocation"),
+              "cost_usd": ag.get("cost_usd"), "num_turns": ag.get("num_turns"), "evidence": saved,
+              "candidates": candidates, "rejected": rejected, "agent_result_tail": (ag.get("result") or "")[-1500:]}
+    (STATE_DIR / f"discovery-{run_id}.json").write_text(json.dumps(result, ensure_ascii=False, indent=2),
+                                                        encoding="utf-8")
+    return result
+
+
+def approve_candidate(candidate_id: int, approved_by: str) -> Dict[str, Any]:
+    """승인된 후보만 goal 큐로 (source_ref=discovery:<id>). 이미 결정된 후보는 재처리 X."""
+    _ensure_candidate_schema()
+    sys.path.insert(0, str(ROOT / ".claude" / "scripts" / "lib"))
+    import supervisor as _sup
+    with sqlite3.connect(str(DB), timeout=10) as c:
+        row = c.execute("SELECT title, rationale, evidence_urls, status FROM tech_candidates WHERE candidate_id=?",
+                        (candidate_id,)).fetchone()
+    if not row:
+        return {"ok": False, "reason": "candidate not found"}
+    if row[3] != "proposed":
+        return {"ok": False, "reason": f"already {row[3]}"}
+    gid = _sup.create_goal(f"[discovery] {row[0]} · {row[1][:200]} · evidence: {row[2]}", max_retry=1,
+                           timeout_h=72, source_ref=f"discovery:{candidate_id}")
+    with sqlite3.connect(str(DB), timeout=10) as c:
+        c.execute("UPDATE tech_candidates SET status='approved', goal_id=?, decided_at=?, decided_by=? "
+                  "WHERE candidate_id=?", (gid, int(time.time()), approved_by, candidate_id))
+    return {"ok": True, "candidate_id": candidate_id, "goal_id": gid}
+
+
 def coverage_audit(run_id: int) -> Dict[str, Any]:
     """Coverage Gate: 조사가 상위 20 도메인 중 얼마나 포괄? 핵심 영역 누락?"""
     _ensure_schema()
@@ -352,6 +503,22 @@ def main(argv):
         print("usage: tech_discovery.py {analyze|domain-list|evidence|gap|coverage|summary|ensure}")
         return 2
     cmd = argv[1]
+    if cmd == "discover":
+        mx = int(argv[argv.index("--max") + 1]) if "--max" in argv else 5
+        print(json.dumps(run_discovery(argv[2] if len(argv) > 2 and not argv[2].startswith("--") else str(ROOT),
+                                       max_items=mx), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "approve-candidate":
+        by = argv[argv.index("--by") + 1] if "--by" in argv else "manual"
+        print(json.dumps(approve_candidate(int(argv[2]), by), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "candidates":
+        _ensure_candidate_schema()
+        with sqlite3.connect(str(DB), timeout=10) as c:
+            rows = c.execute("SELECT candidate_id, run_id, title, priority, status, goal_id FROM tech_candidates "
+                             "ORDER BY candidate_id DESC LIMIT 30").fetchall()
+        print(json.dumps(rows, ensure_ascii=False, indent=2))
+        return 0
     if cmd == "ensure":
         _ensure_schema()
         print("[tech_discovery] schema ensured · 20 seed domains loaded")

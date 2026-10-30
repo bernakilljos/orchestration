@@ -231,7 +231,7 @@ def _agent_env(use_login_auth: bool) -> Dict[str, str]:
 
 def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
                    role: str, timeout: int = 900, max_budget_usd: float = 3.0,
-                   use_login_auth: bool = True) -> Dict[str, Any]:
+                   use_login_auth: bool = True, system_prompt: str = "") -> Dict[str, Any]:
     """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user)."""
     import shutil
     exe = shutil.which("claude")
@@ -240,6 +240,8 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
     argv = [exe, "-p", prompt, "--model", model, "--output-format", "json",
             "--setting-sources", "user", "--permission-mode", "dontAsk",
             "--allowedTools", *allowed_tools, "--max-budget-usd", str(max_budget_usd)]
+    if system_prompt:
+        argv += ["--append-system-prompt", system_prompt]
     started = time.time()
     try:
         r = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout,
@@ -265,7 +267,7 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
         "cost_usd": data.get("total_cost_usd"),
         "duration_s": round(time.time() - started, 1),
         "exit_code": r.returncode,
-        "result": (data.get("result") or "")[-2000:],
+        "result": (data.get("result") or "")[-50000:],  # 구조화 JSON 응답이 잘리지 않게 (2000 자 절단으로 discovery JSON 파싱 실패 실측)
         "stderr_tail": (r.stderr or "")[-300:],
         "argv_shape": ["claude", "-p", "<prompt>"] + argv[3:],
     }
