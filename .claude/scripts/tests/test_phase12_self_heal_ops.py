@@ -214,7 +214,7 @@ def test_lifecycle_protects_active_and_retained(monkeypatch):
     assert str(stray) in out["orphan_dirs_reported"] and stray.exists()
     monkeypatch.setattr(sb, "IS_OPERATIONAL_ROOT", False)
     stray.rmdir()
-    for i in (a, k):
+    for i in (a, k, v):        # 테스트가 만든 branch 는 테스트가 정리 (v 는 checkout 만 제거된 상태)
         sb.discard(i, force=True)
 
 

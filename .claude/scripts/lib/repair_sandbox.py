@@ -510,6 +510,8 @@ def cleanup_orphans(max_age_sec: int = 86400) -> dict:
     stale_active = []
     for gid, entry in list(state.items()):
         path = Path(entry.get("path", ""))
+        if str(entry.get("status", "")).endswith("_checkout_removed"):
+            continue                      # checkout 만 제거된 기록은 branch 추적용으로 유지
         if path and not path.exists():
             del state[gid]
             removed_entries.append({"goal_id": gid, "reason": "path_missing"})

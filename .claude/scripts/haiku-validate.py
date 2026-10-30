@@ -176,8 +176,8 @@ def call_haiku(system: list, messages: list, project_root: Path) -> dict:
     usage = {
         "input_tokens": response.usage.input_tokens,
         "output_tokens": response.usage.output_tokens,
-        "cache_creation_tokens": getattr(response.usage, "cache_creation_input_tokens", 0),
-        "cache_read_tokens": getattr(response.usage, "cache_read_input_tokens", 0),
+        "cache_creation_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,  # null 이면 None → 비용 계산 TypeError
+        "cache_read_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
     }
 
     return {

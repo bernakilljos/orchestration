@@ -36,3 +36,37 @@
 ## 5. 테스트 브랜치 (삭제 안 함 · 승인 대기)
 37개 중 main 에 없는 commit 보유 22 · worktree 사용 중 7 · 둘 다 아님 15 (삭제 안전 후보).
 목록·기준: 세션 보고 표 참조 (`git rev-list --count main..<branch>` · `git worktree list --porcelain`).
+
+---
+
+# 결정 반영 검증 (fdf2556 이후 · 2026-10-30 오후)
+
+## A. Pillow 13.0.0 — 격리 검증 완료 · 운영 적용 가능 (설치는 승인 대기)
+- 영향 확인: CVE-2026-112403 (JPEG draft/thumbnail 축소 시 버퍼 오버플로) — Debian tracker 가 12.3.0 을 vulnerable · 13.0.0 fixed 로 표기. CVE-2026-112398 (FPX JPEG) 영향 범위 `< 13.0.0`. kit 의 `auto-optimize-image.py:95` 가 `thumbnail()` 사용 → **현재 12.3.0 영향 있음**.
+- 격리: `%LOCALAPPDATA%\Temppil13` venv (system-site-packages · Pillow 만 13.0.0) · 운영 Python 12.3.0 그대로.
+- 회귀 (12.3.0 vs 13.0.0 동일 입력): PNG/JPEG/TIFF/WEBP/GIF 왕복 · JPEG thumbnail · resize·convert 픽셀 해시 **동일** · verify-image-whitespace(2) · verify-render-coverage · auto-optimize-image 출력 **동일** · rapidocr OCR ok · python-pptx/python-docx 이미지 삽입 ok.
+- kit 안 RPA·OCR 직접 사용 코드 없음 (pyautogui·pytesseract·rapidocr import 0건).
+- 운영 적용 시: `pip install pillow==13.0.0` + requirements 하한 상향 → 승인 후.
+
+## B. Anthropic SDK 2.3.0 — 마이그레이션 검증 완료 · 실 API 호출 전 단계 (운영 교체 승인 대기)
+- 차단 원인 해소 경로: langchain-anthropic **1.7.7** = `anthropic>=0.120.0` (상한 없음) · `langchain-core>=1.6.10` 필요 (1.4.6 은 `anthropic<1.0.0`).
+- 격리 venv (`%LOCALAPPDATA%\Temp\sdk23lc`: anthropic 2.3.0 + langchain-anthropic 1.7.7 + langchain-core 1.7.3) 에서 stub 서버로 kit 실제 코드 3경로 실행:
+  score_task.call_haiku ✓ · haiku-validate.py ✓ · ChatAnthropic.invoke (exec_graph 경로) ✓ — 0.109.2 와 결과 동일.
+- 차이: 요청 헤더 `anthropic-version` 2023-06-01 → **2026-10-21**. 실 API 에서의 동작 (응답 필드·과금) 은 미검증 → 승인 시 1회 최소 호출로 확인.
+- 부수 발견·수정: haiku-validate.py 가 usage 의 cache 필드가 null 이면 `None * float` TypeError (SDK 버전 무관 · 기존 잠재 결함) → `or 0` 처리.
+- 시험 부작용: haiku-validate 가 운영 metrics 에 stub 행 2개 (id 188·189) 기록 → 해당 2행만 삭제.
+- 운영 적용 시 requirements: `anthropic>=2.3.0` · `langchain-anthropic>=1.7.7` · `langchain-core>=1.6.10`.
+
+## C. 테스트 브랜치 — 삭제 후보 23개 확정 (삭제 안 함)
+- 기준: main 에 없는 commit 0 · main 에서 도달 가능 · worktree 미사용 · sandbox state/self-heal 이벤트/증거 파일 미참조 · 기존 보존 대상(P8·g376·g394·g82·99·100) 제외.
+- 전체 repair*/self-heal* 65 중 보존: 미병합 commit 23 · worktree 15 · 증거 참조 17 · 기존 6.
+- 백업: `.claude/state/branch-backup-20261030-1611.txt` (이름·SHA · 복구 `git branch <name> <sha>`).
+- 발견·수정: 정리 후 checkout 이 없는 기록을 다음 정리가 state 에서 지워 branch 추적이 끊기던 결함 + 디스크 테스트가 실행마다 branch 1개를 남기던 누수.
+
+## D. 다음 단계 계획 — 플랫폼 API · 관측성 · 자원 관리
+| 영역 | 목표 | 측정 근거 |
+|---|---|---|
+| 관측성 | Scheduler tick 별 성공률·재시도·복구 시간·Agent 비용/토큰을 한 테이블로 집계 (self_heal_events · agent_dag_runs · executions 통합 조회) | N회 tick 성공률 · 장애 재발률 |
+| 자원 관리 | sandbox 예약·총량 상한을 Agent 동시 실행 수·토큰 예산과 같은 정책 파일로 통합 · 부족 시 대기열 | 자원 부족 상황 복구 증거 |
+| 플랫폼 API | goal 등록·이벤트 조회·승인(merge·candidate)을 CLI 하나로 노출 (기존 supervisor/self_healing/tech_discovery CLI 재사용) | 수동 SQL 없이 운영 가능 |
+| 장기 안정성 | 실 Scheduler 다회 실행 (예: 24h) 로 성공률·디스크 추세 기록 | 1회 성공이 아닌 반복 성공 |
