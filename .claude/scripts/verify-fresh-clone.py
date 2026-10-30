@@ -70,7 +70,10 @@ def main() -> int:
 
     # 1-b) 쓰는 컬럼이 DDL(또는 ALTER ADD COLUMN)에 있는가 — 2026-10-02 session_summary.updated_at 누락 사고
     ddl_cols: dict[str, set[str]] = {}
-    for m in re.finditer(r"CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\)\s*;", all_text, re.S):
+    # 2026-10-30: 파이썬 인접 문자열로 나눈 DDL("...," 줄바꿈 "...)") 과 `;` 없이 끝나는 DDL 도 읽는다
+    #   (agent_dag_runs.goal_id 를 'DDL 에 없음' 으로 잘못 잡았다).
+    ddl_text = re.sub(r"""["']\s*\n\s*["']""", "", all_text)
+    for m in re.finditer(r"""CREATE TABLE IF NOT EXISTS\s+(\w+)\s*\((.*?)\)\s*[;"']""", ddl_text, re.S):
         body = re.sub(r"--[^\n]*", "", m.group(2))   # SQL 주석 제거 (오탐 방지)
         cols = {c.strip().split()[0] for c in body.split(",") if c.strip()}
         ddl_cols.setdefault(m.group(1), set()).update(cols)

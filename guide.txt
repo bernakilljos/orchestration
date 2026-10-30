@@ -2328,6 +2328,10 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 
 사용자 지시 (952061f 후속 · 세션 재개 · "Hook 출력 실측 · Phase 2-E 확인"). Hook 실측: 전체 systemMessage 5078 bytes · 3346 chars · 16 섹션. Top 3: 재사용 해결책 877c (26%) · auto-planner 514c (15%) · 대상 확정 495c (15%). 매 턴 ~1250 토큰 (사용자 10KB 추정 → 실측 5KB 수정). 60턴 ~75000 토큰 전체 소비 760k 의 10% (대화·코드 R/W 90%). Phase 2-E 실측: UserPromptSubmit → Ledger 자동 등재 (R59·R60·R61 확인) → to-goals created=5 → advance_all_pending 31 goals dry-run · 이미 INTEGRATED 상태 · 신규 코드 X. 테스트 ledger R59-R61 OUT_OF_SCOPE 처리 (허위 완료 금지). 최적화 포인트: 재사용 해결책 top 3→1 · 2중 추천 축소 · 세션 요약 1건만 (~47% 축소 가능 · 다음 세션 사용자 결정). docs/HOOK_TOKEN_MEASUREMENT_2026-10-29.md 상세. 예산 NEW 1 코드 변경 0. Ledger R57 (55/57 범위외 5). Phase 2-B·C 보완·D·F 다음 세션.
 
+## 2026-10-30 verify-fresh-clone DDL 파싱 오탐 수정
+
+인접 파이썬 문자열로 나눈 DDL·세미콜론 없는 DDL 의 컬럼을 못 읽어 agent_dag_runs.goal_id 를 'DDL 에 없음' 으로 잘못 잡던 문제 수정 (SessionStart ensure-state FAIL 원인). PASS 위반 0 · 컬럼 제거 주입 시 FAIL 재현 확인.
+
 ## 2026-10-30 Phase 16 보안 패치 운영 적용 · SDK 실 API · 승인 오탐 수정 (unit+gate 44/44 · P5 39/39 · P3 26/26 · P2 20/20)
 
 상세 docs/OPERATIONS_REVIEW_2026-10-30.md § K~N. Pillow 13.0.0 + fastembed 0.9.1 동시 운영 적용 (격리 검증 → 백업 → 설치 → pip check 동일 · 다른 패키지 0 · 재검증 · 실 scheduler). SDK 2.3.0 실 API 1회 = 401 (유효 키 없음 · 비용 0) → BLOCKED · 운영 SDK 유지. 승인 오탐 1건 reject · 감지가 '언급'(파일 쓰기 heredoc·검색어) 을 실행으로 보던 문제 수정 (실행 heredoc·파이프·다른 명령 차단 유지 · 회귀 테스트). ops_metrics scheduler 실패/공백 분리 · Platform API 감사 로그.
