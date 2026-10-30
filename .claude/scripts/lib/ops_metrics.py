@@ -38,6 +38,8 @@ def scheduler(since: float) -> Dict[str, Any]:
     if not LOOP_LOG.exists():
         return {"status": UNKNOWN, "reason": "loop log 없음"}
     starts = ends = 0
+    start_ts = []
+    interval_s = 600            # Orca_10MinLoop 주기
     heal_rc: Dict[str, int] = {}
     pat = re.compile(r"^\[(\d{4}-\d\d-\d\dT[\d:.]+)\]")
     for line in LOOP_LOG.read_text(encoding="utf-8", errors="ignore").splitlines():
@@ -52,12 +54,21 @@ def scheduler(since: float) -> Dict[str, Any]:
             continue
         if "10-Min Loop START" in line:
             starts += 1
+            start_ts.append(ts)
         elif "10-Min Loop END" in line:
             ends += 1
         elif "self-heal tick rc=" in line:
             rc = line.split("self-heal tick rc=")[1].split(":")[0]
             heal_rc[rc] = heal_rc.get(rc, 0) + 1
-    return {"ticks_started": starts, "ticks_completed": ends, "tick_success_rate": _rate(ends, starts),
+    # 실제 실패 (START 후 END 없음) 와 미실행 공백 (PC 꺼짐·절전 · 주기×1.5 초과 간격) 을 분리
+    gaps = [b - a for a, b in zip(start_ts, start_ts[1:]) if b - a > interval_s * 1.5]
+    span = (start_ts[-1] - start_ts[0]) if len(start_ts) > 1 else 0
+    return {"ticks_started": starts, "ticks_completed": ends, "tick_failures": max(starts - ends, 0),
+            "tick_success_rate": _rate(ends, starts),
+            "observed_span_h": round(span / 3600, 2) if span else UNKNOWN,
+            "expected_ticks_in_span": int(span // interval_s) + 1 if span else UNKNOWN,
+            "coverage": _rate(starts, int(span // interval_s) + 1) if span else UNKNOWN,
+            "idle_gaps": len(gaps), "idle_gap_max_min": round(max(gaps) / 60) if gaps else 0,
             "self_heal_tick_rc": heal_rc or UNKNOWN}
 
 

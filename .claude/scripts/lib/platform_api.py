@@ -129,6 +129,30 @@ def resources(window_h: float = 24) -> Dict[str, Any]:
             "agent_cost_usd": (r.get("agents") or {}).get("dag_cost_usd")}
 
 
+AUDIT_LOG = ROOT / ".claude" / "logs" / "platform-api-audit.jsonl"
+
+
+def _audited(name, fn):
+    """요청별 감사 기록 (append-only): 시각·작업·인자(문자열 200자)·요청자·결과."""
+    def wrapper(**kw):
+        import time as _t
+        try:
+            out = fn(**kw)
+            ok = out.get("ok", True) if isinstance(out, dict) else True
+            err = out.get("error") if isinstance(out, dict) else None
+        except Exception as e:  # noqa: BLE001
+            out, ok, err = None, False, f"{type(e).__name__}: {e}"
+        AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(AUDIT_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": int(_t.time()), "op": name, "by": kw.get("by"),
+                                "args": {k: str(v)[:200] for k, v in kw.items()}, "ok": ok, "error": err},
+                               ensure_ascii=False) + "\n")
+        if out is None:
+            raise RuntimeError(err)
+        return out
+    return wrapper
+
+
 OPS = {"register_goal": register_goal, "goal_status": goal_status, "evidence": evidence, "approvals": approvals,
        "decide": decide, "agents": agents, "resources": resources}
 
@@ -138,7 +162,7 @@ def main(argv) -> int:
         print(json.dumps({"ops": sorted(OPS), "usage": "platform_api.py <op> '<json kwargs>'"}, ensure_ascii=False))
         return 2
     kwargs = json.loads(argv[2]) if len(argv) > 2 else {}
-    print(json.dumps(OPS[argv[1]](**kwargs), ensure_ascii=False, indent=2, default=str))
+    print(json.dumps(_audited(argv[1], OPS[argv[1]])(**kwargs), ensure_ascii=False, indent=2, default=str))
     return 0
 
 

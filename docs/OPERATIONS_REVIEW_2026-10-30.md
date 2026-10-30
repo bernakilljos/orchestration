@@ -101,3 +101,26 @@
 ## J. 반복 안정성 (scheduler 와 같은 명령 · 실측 시간만)
 - 1차 3 사이클 (134.6초): 2/3 · 실패 1 = policy 단계 ROOT 전체 git status 비교 오탐 (Agent 는 허용 파일만 수정 — 세션 기록 확인). 수정: Agent 가 건드릴 수 있는 경로만 비교 + 이벤트 결과에 policy 결과 저장.
 - 2차 3 사이클 (145.5초): **3/3** · 매 사이클 heal-tick 2개 동시 → 처리 [0,1] (중복 차단) · 1회차 디스크 부족 대기 → 재개 · 정상 goal VERIFIED · 기존 운영 sandbox 항목 불변 · 승인 대기 22→22 · P8 보존.
+
+---
+
+# 보안 패치 운영 적용 · SDK 실 API · 승인 오탐 (876932d 이후)
+
+## K. Pillow 13.0.0 + fastembed 0.9.1 — **운영 적용 완료**
+- dry-run: 두 패키지 외 변경 0. 격리 venv (system-site-packages): pip check 신규 충돌 0 (남은 semgrep↔opentelemetry · torchvision↔torch 는 운영에 원래 있던 것과 동일) · 이미지/OCR/pptx·docx/fastembed import · unit 41/41 · Phase 5 39/39.
+- 운영: 백업 `.claude/state/pillow-fastembed-upgrade-*` (pip freeze·pip check·pillow 12.3.0·fastembed 0.8.0 wheel) → 두 패키지만 설치 → pip check 변경 전과 동일 · 다른 패키지 변화 0 → 재검증 unit 41/41 · P5 39/39 · P3 26/26 · P2 20/20 · 실 Task Scheduler 1회 정상. 롤백 불필요.
+
+## L. Anthropic SDK 2.3.0 실 API 1회 — **BLOCKED (유효 키 없음)**
+- 사용 가능 자격 증명: 환경 변수 ANTHROPIC_API_KEY 1개 (10자 · 실제 키 아님) · .env 없음. 인증 변경 금지 → 새 키 발급 X.
+- 1회 호출 (격리 venv · 재시도 0 · max_tokens 5 · "ping" · 프로젝트 데이터 0): HTTP 401 authentication_error "invalid x-api-key" · request_id req_011CgY3oUm5muqHrt2zFrtkk · 전송 헤더 anthropic-version 2026-10-21 · 비용 $0.
+- 서버는 새 버전 헤더에 버전 오류가 아닌 인증 단계 응답 → 정상 응답·과금 검증은 유효 키 제공 후. 운영 SDK 0.109.2 유지.
+
+## M. 승인 오탐
+- appr-7195ea9e0833: 실행 0건 확인 후 approval-gate reject (사용자 결정).
+- 원인: 감지가 명령 문자열 전체를 보아 '언급' 도 차단 · hook 입력은 JSON 이라 줄바꿈이 문자로 들어와 기존 heredoc 판별도 동작하지 않았음 (실측).
+- 수정 (approval_gate_detect._strip_inert_text): cat 이 파일로만 쓰는 heredoc 본문 · 검색 명령의 따옴표 검색어만 제외 · 셸/python 실행 heredoc · 파이프 · 같은 줄 다른 명령은 그대로 검사. 회귀 test_approval_gate_mentions.py (실제 hook 입력 JSON 경로) + 실 hook 경로 재확인 (문서 heredoc 통과).
+- 이 세션이 추가로 만든 승인 대기 (실행 0 · 사용자 reject 필요): appr-4cb62e15545a (grep 검색어) · appr-8ef6fc12516a (python -c 안 문자열 — 코드 실행이라 차단 유지가 맞음) · appr-bf94f42db1b4 (수정 전 실 hook 확인) · appr-6c010e008077 (Phase 12 의 실제 브랜치 강제 삭제 시도 — 이후 일반 삭제로 대체됨).
+
+## N. 관측성·API 보강
+- scheduler: 실제 실패 (START 후 END 없음) 와 미실행 공백 분리 · 분모(관측 구간 기대 tick)·분자 표시 — 23.88h 동안 33/33 완주 · 실패 0 · 기대 144 대비 coverage 22.9% · 공백 3회 (최대 690분) → 연속 운영 증거 부족.
+- Platform API 요청별 감사 로그 `.claude/logs/platform-api-audit.jsonl` (시각·작업·요청자·인자·결과) · 자동화 식별자 승인 거부도 기록.

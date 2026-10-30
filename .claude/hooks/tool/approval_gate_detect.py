@@ -55,6 +55,33 @@ def _strip_git_commit_message(cmd: str) -> str:
     return cmd2
 
 
+_SEARCH_CMDS = ("grep", "egrep", "fgrep", "rg", "ag", "findstr")
+
+
+def _strip_inert_text(cmd: str) -> str:
+    """2026-10-30: 실행되지 않는 '언급' 만 제외 (위험 명령 차단 자체는 그대로).
+    ① cat 이 파일로만 쓰는 heredoc 본문 (`cat >> f <<'EOF' ... EOF`) — 파이프로 셸에 넘기면 제외 X
+    ② 검색 명령(grep·rg 등) 세그먼트의 따옴표 검색어 — 같은 줄의 다른 명령 세그먼트는 그대로 검사
+    bash/sh/python 등으로 실행되는 heredoc 은 손대지 않는다."""
+    # hook 입력은 JSON 이라 줄바꿈이 '\\n' 문자로 들어온다 → 실제 줄바꿈으로 (실측: 미변환 시 heredoc 인식 0)
+    cmd = cmd.replace("\\n", "\n").replace("\\t", "\t")
+
+    def _heredoc(m):
+        head = m.group(1)
+        if ">" in head and "|" not in head:
+            return f"{head}\n<DOC>\n{m.group(2)}"
+        return m.group(0)
+    cmd = re.sub(r"((?:^|(?<=[;&\n]))\s*cat\b[^\n]*?<<-?\s*['\"]?(\w+)['\"]?[^\n]*)\n.*?\n(\2)(?=\s*(?:\n|$))",
+                 lambda m: _heredoc(type("M", (), {"group": lambda s, i: (m.group(0), m.group(1), m.group(3))[i]})()),
+                 cmd, flags=re.S)
+    parts = re.split(r"(\s*(?:&&|\|\||;|\n)\s*)", cmd)
+    for i, seg in enumerate(parts):
+        words = seg.strip().split()
+        if words and os.path.basename(words[0]).lower() in _SEARCH_CMDS:
+            parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'<PATTERN>'", seg)
+    return "".join(parts)
+
+
 def run(ctx):
     log_dir = project_path(ctx, ".claude", "logs")
     ensure_dir(log_dir)
@@ -71,6 +98,7 @@ def run(ctx):
         return None
     # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
     cmd = _strip_git_commit_message(cmd)
+    cmd = _strip_inert_text(cmd)
     gate = project_path(ctx, ".claude", "scripts", "approval-gate.py")
     if not os.path.isfile(gate):
         return None
