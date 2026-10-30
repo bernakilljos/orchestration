@@ -26,6 +26,7 @@ import planner  # noqa: E402
 import independent_verifier as iv  # noqa: E402
 import self_healing as sh  # noqa: E402
 import repair_sandbox as sb  # noqa: E402
+sb.use_test_root()  # 테스트 전용 root — 운영 .repair-sandbox·state 접근 차단 (2026-10-30 Phase 10)
 
 DB = ROOT / ".claude" / "state" / "orca.db"
 MARKER = "PHASE5-TEST-2026-10-30"
@@ -455,7 +456,8 @@ def test_10_sandbox_isolation(r):
         r.rec("sandbox create ok", False, note=f"create failed: {sb_r.get('reason')}")
         return
     sandbox_path = Path(sb_r["path"])
-    r.rec("sandbox dir created at .repair-sandbox/", sandbox_path.exists(),
+    r.rec("sandbox dir created in test sandbox root",
+          sandbox_path.exists() and sb._inside_root(sandbox_path) and not sb.IS_OPERATIONAL_ROOT,
           note=f"path={sandbox_path}")
     # sandbox 안 파일 생성 (허용된 echo 로)
     import subprocess

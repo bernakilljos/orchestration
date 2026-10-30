@@ -207,6 +207,258 @@ def save_evidence(demo_id: str, chain_data: Dict[str, Any]) -> str:
     return str(path)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 10-R2 (2026-10-30): Agent 수정 경로 자동 연결.
+#   Python 은 Task tool 을 호출할 수 없다 → 이미 kit 이 쓰는 headless `claude -p`
+#   (claude-auto.bat 와 같은 경로) 를 subprocess 로 실행한다. 결과 JSON 의 session_id 가
+#   실제 Agent 실행 ID 이며 invocation="auto" 로 기록한다 (메인 Claude 수동 호출과 구분).
+# ─────────────────────────────────────────────────────────────────────────────
+
+FIX_TOOLS = ["Read", "Edit", "Glob", "Grep", "Bash(python -m pytest:*)", "Bash(pytest:*)",
+             "PowerShell(python -m pytest:*)", "PowerShell(pytest:*)"]  # Windows 기본 셸 = PowerShell · 2026-10-30 E2E 2회: 그래도 Agent 자체 pytest 실행은 차단됨 (원인 미규명 · 검증은 runner 의 독립 pytest 가 담당)
+JUDGE_TOOLS = ["Read", "Glob", "Grep"]
+
+
+def _agent_env(use_login_auth: bool) -> Dict[str, str]:
+    env = {**os.environ, "ALLOW_VISIBLE_WINDOW": "0"}
+    if use_login_auth:
+        # 자식 프로세스만: env 의 API key 대신 로그인(OAuth) 계정 사용 — 메인 세션과 같은 인증.
+        # 영구 설정(레지스트리·settings) 은 건드리지 않는다.
+        env.pop("ANTHROPIC_API_KEY", None)
+    return env
+
+
+def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
+                   role: str, timeout: int = 900, max_budget_usd: float = 3.0,
+                   use_login_auth: bool = True) -> Dict[str, Any]:
+    """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user)."""
+    import shutil
+    exe = shutil.which("claude")
+    if not exe:
+        return {"ok": False, "invocation": "auto", "role": role, "error": "claude CLI not found"}
+    argv = [exe, "-p", prompt, "--model", model, "--output-format", "json",
+            "--setting-sources", "user", "--permission-mode", "dontAsk",
+            "--allowedTools", *allowed_tools, "--max-budget-usd", str(max_budget_usd)]
+    started = time.time()
+    try:
+        r = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout,
+                           encoding="utf-8", errors="replace", env=_agent_env(use_login_auth),
+                           stdin=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "invocation": "auto", "role": role, "model": model,
+                "error": f"timeout ({timeout}s)"}
+    data = {}
+    for line in reversed((r.stdout or "").strip().splitlines()):
+        try:
+            data = json.loads(line)
+            break
+        except Exception:
+            continue
+    return {
+        "ok": r.returncode == 0 and bool(data) and not data.get("is_error"),
+        "invocation": "auto",
+        "role": role,
+        "model": model,
+        "agent_session_id": data.get("session_id"),
+        "num_turns": data.get("num_turns"),
+        "cost_usd": data.get("total_cost_usd"),
+        "duration_s": round(time.time() - started, 1),
+        "exit_code": r.returncode,
+        "result": (data.get("result") or "")[-2000:],
+        "stderr_tail": (r.stderr or "")[-300:],
+        "argv_shape": ["claude", "-p", "<prompt>"] + argv[3:],
+    }
+
+
+def _git_out(cwd: Path, *args: str) -> str:
+    r = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=60)
+    return r.stdout or ""
+
+
+def policy_check(sandbox_cwd: str, allow_paths: list, protected_paths: list,
+                 root_status_before: str) -> Dict[str, Any]:
+    """Agent 자기보고와 무관하게 실제 변경을 검사 (fail-closed)."""
+    cwd = Path(sandbox_cwd)
+    changed = []
+    for line in _git_out(cwd, "status", "--porcelain").splitlines():
+        p = line[3:].strip().strip('"')
+        if p:
+            changed.append(p.replace("\\", "/"))
+    out_of_scope = [p for p in changed
+                    if not any(p == a or p.startswith(a.rstrip("/") + "/") for a in allow_paths)]
+    touched_protected = [p for p in changed if p in protected_paths]
+    root_after = _git_out(ROOT, "status", "--porcelain")
+    issues = []
+    if not changed:
+        issues.append("no_change")
+    if out_of_scope:
+        issues.append("out_of_scope")
+    if touched_protected:
+        issues.append("protected_modified")
+    if root_after != root_status_before:
+        issues.append("root_modified")
+    return {"ok": not issues, "issues": issues, "changed": changed,
+            "out_of_scope": out_of_scope, "touched_protected": touched_protected}
+
+
+def _first_json_object(text: str) -> Optional[Dict[str, Any]]:
+    m = re.search(r"\{.*\}", text or "", re.S)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(0))
+    except Exception:
+        return None
+
+
+def _register_repair_task(repair_goal_id: int, test_cmd: str, agent_session_id: str) -> str:
+    import sqlite3
+    tid = f"g{repair_goal_id}-agent-fix"
+    spec = {"kind": "fix", "cmd": f"agent:claude-p session={agent_session_id}",
+            "verify": test_cmd, "verify_type": "shell", "safe_mode": True}
+    with sqlite3.connect(str(STATE / "orca.db")) as c:
+        c.execute("INSERT OR REPLACE INTO tasks (task_id, task_file, status, created_at, retry_count) "
+                  "VALUES (?, ?, 'running', ?, 0)", (tid, json.dumps(spec), int(time.time())))
+        c.execute("INSERT OR IGNORE INTO goal_tasks (goal_id, task_id, sequence) VALUES (?, ?, 0)",
+                  (repair_goal_id, tid))
+    return tid
+
+
+def _set_task_status(tid: str, status: str) -> None:
+    import sqlite3
+    with sqlite3.connect(str(STATE / "orca.db")) as c:
+        c.execute("UPDATE tasks SET status=?, completed_at=? WHERE task_id=?",
+                  (status, int(time.time()), tid))
+
+
+def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
+                       allow_paths: list, protected_paths: list,
+                       apply_target: str, failure_summary: str = "",
+                       fix_model: str = "claude-opus-5-5",
+                       judge_model: str = "claude-opus-5-5") -> Dict[str, Any]:
+    """재현 → Agent 자동 수정 → 정책 검사 → pytest → 통계+LLM Judge → commit → ff 반영."""
+    sys.path.insert(0, str(LIB))
+    import repair_sandbox as _sb
+    import runner as _rn
+    import supervisor as _sup
+    import independent_verifier as _iv
+
+    out: Dict[str, Any] = {"repair_goal_id": repair_goal_id, "sandbox_id": sandbox_id,
+                           "sandbox_root": str(_sb.SANDBOX_ROOT), "stages": []}
+
+    def fail(stage, **kw):
+        _sup.advance(repair_goal_id, "FAILED", f"agent_repair_chain:{stage}", actor="self-healing")
+        out.update({"ok": False, "failed_stage": stage, **kw})
+        return out
+
+    entry = _sb._load_state().get(sandbox_id)
+    if not entry or not Path(entry["path"]).exists():
+        return fail("sandbox", error=f"sandbox not found: {sandbox_id}")
+    cwd = entry["path"]
+    _sup.advance(repair_goal_id, "PLANNING", "agent repair start", actor="self-healing")
+    _sup.advance(repair_goal_id, "RUNNING", "agent repair start", actor="self-healing")
+
+    # 1. 실패 재현 (재현 못 하면 수정 근거 없음)
+    pre = reproduce_failure(cwd, test_cmd, timeout=180)
+    out["stages"].append({"stage": "reproduce", "exit_code": pre.get("exit_code"),
+                          "reproduced": pre.get("reproduced")})
+    if not pre.get("reproduced"):
+        return fail("reproduce", detail=pre)
+
+    root_before = _git_out(ROOT, "status", "--porcelain")
+
+    # 2. Agent 자동 수정
+    fix_prompt = (
+        f"A test is failing in this directory. Command: `{test_cmd}`\n"
+        f"Failure output (tail):\n{(pre.get('stdout_tail') or '')[-1200:]}\n{(pre.get('stderr_tail') or '')[-400:]}\n"
+        f"{failure_summary}\n"
+        f"Find the root cause in the source and fix it with the smallest change. "
+        f"You may edit only: {', '.join(allow_paths)}. Do NOT edit tests ({', '.join(protected_paths)}). "
+        f"Do not hardcode return values. Run the test command to confirm, then reply with one JSON line: "
+        f'{{"edit_file":"...","root_cause":"...","exit_code":N}}'
+    )
+    fix = dispatch_agent(fix_prompt, cwd, fix_model, FIX_TOOLS, role="fix")
+    out["agent_fix"] = fix
+    out["stages"].append({"stage": "agent_fix", "ok": fix.get("ok"),
+                          "agent_session_id": fix.get("agent_session_id")})
+    if not fix.get("ok"):
+        return fail("agent_fix")
+
+    # 3. 정책 검사 (실제 diff 기준)
+    pol = policy_check(cwd, allow_paths, protected_paths, root_before)
+    out["policy"] = pol
+    out["stages"].append({"stage": "policy", "ok": pol["ok"], "issues": pol["issues"]})
+    if not pol["ok"]:
+        return fail("policy")
+    out["diff"] = _git_out(Path(cwd), "diff")[:4000]
+
+    # 4. pytest (runner 경유 → executions 기록 · mark_verified)
+    tid = _register_repair_task(repair_goal_id, test_cmd, fix.get("agent_session_id") or "")
+    vr = _rn.run(test_cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd)
+    passed = vr.get("exit_code") == 0
+    if passed:
+        _rn.mark_verified(vr.get("exec_id"), True)
+    _set_task_status(tid, "completed" if passed else "failed")
+    m = re.search(r"(\d+)\s+passed", (vr.get("stdout") or ""))
+    out["stages"].append({"stage": "pytest", "exec_id": vr.get("exec_id"),
+                          "exit_code": vr.get("exit_code"),
+                          "passed_count": int(m.group(1)) if m else None})
+    out["test_before"] = {"exit_code": pre.get("exit_code"), "tail": (pre.get("stdout_tail") or "")[-300:]}
+    out["test_after"] = {"exit_code": vr.get("exit_code"), "tail": (vr.get("stdout") or "")[-300:]}
+    if not passed:
+        return fail("pytest")
+
+    # 5. 통계 judge → 독립 LLM Judge (별도 Agent 세션 · 읽기 전용 도구) → judge_absorb 결합
+    jh = _iv.judge_handoff(repair_goal_id, sandbox_cwd=cwd, allow_paths=allow_paths)
+    out["stages"].append({"stage": "stat_judge", "verdict": jh.get("stat_verdict")})
+    if not jh.get("requires_llm_judge"):
+        return fail("stat_judge")
+    judge_prompt = (
+        "You are an independent code-review judge. Do not trust the developer. "
+        "Base your verdict only on the diff, the test results and the files here.\n"
+        f"Original failure:\n{(pre.get('stdout_tail') or '')[-800:]}\n"
+        f"Diff:\n{out['diff'][:3000]}\n"
+        f"Tests after fix (exit {vr.get('exit_code')}):\n{(vr.get('stdout') or '')[-400:]}\n"
+        f"Allowed paths: {allow_paths}. Tests must not be modified: {protected_paths}.\n"
+        "Check: real root-cause fix (not hardcoded return / test bypass), scope, side effects. "
+        "Reply with ONLY a JSON object: "
+        '{"satisfies_requirement":bool,"missing_requirements":[],"unexpected_side_effects":[],'
+        '"scope_adequacy":"ok|too_narrow|too_broad","confidence":0-10,'
+        '"recommendation":"VERIFIED|UNVERIFIED|REPAIRING|OUT_OF_SCOPE","reasoning":"..."}'
+    )
+    jd = dispatch_agent(judge_prompt, cwd, judge_model, JUDGE_TOOLS, role="judge",
+                        timeout=600, max_budget_usd=2.0)
+    out["agent_judge"] = jd
+    verdict_json = _first_json_object(jd.get("result", "")) if jd.get("ok") else None
+    if not verdict_json:
+        return fail("llm_judge", error="judge 결과 JSON 없음")
+    ab = _iv.judge_absorb(repair_goal_id, json.dumps(verdict_json))
+    final = (ab.get("final_verdict") or {}).get("status")
+    out["judge"] = {"llm_verdict": verdict_json, "final_verdict": ab.get("final_verdict")}
+    out["stages"].append({"stage": "llm_judge", "agent_session_id": jd.get("agent_session_id"),
+                          "final": final})
+    if final != "VERIFIED":
+        return fail("judge_verdict")
+
+    # 6. 안전한 반영: sandbox commit → target branch fast-forward (작업 트리 무변경)
+    cm = _sb.commit_changes(sandbox_id, f"fix(self-healing): goal #{repair_goal_id} "
+                                        f"agent={fix.get('agent_session_id')}")
+    if not cm.get("ok") or not cm.get("committed"):
+        return fail("commit", detail=cm)
+    _sb.test(sandbox_id, test_cmd)  # apply_merge 전제: last_test exit 0 (재확인)
+    ap = _sb.apply_merge(sandbox_id, target_branch=apply_target)
+    out["apply"] = {**ap, "commit": cm.get("commit")}
+    out["stages"].append({"stage": "apply", "ok": ap.get("ok"), "target": apply_target})
+    if not ap.get("ok"):
+        return fail("apply")
+    _sup.advance(repair_goal_id, "VERIFIED",
+                 f"agent fix {fix.get('agent_session_id')} · judge {jd.get('agent_session_id')} · "
+                 f"applied {apply_target}@{cm.get('commit', '')[:7]}", actor="self-healing")
+    out["ok"] = True
+    return out
+
+
 def _cli_main(argv):
     if len(argv) < 2:
         print("usage: real_repair_chain.py {prepare|reproduce|verify|isolation|prompt} [args]")

@@ -269,7 +269,8 @@ def _count_repair_attempts(original_goal_id: int) -> int:
 
 
 def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
-               auto_approve: bool = False, max_attempts: int = 3) -> Dict[str, Any]:
+               auto_approve: bool = False, max_attempts: int = 3,
+               agent_fix: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Self-Healing 전체 chain orchestration (2026-10-30 P5-R2).
 
     사용자 지시: "Scaffold 상태 → 실제 자동복구 성공과 다르다 · 기존 자산 활용 종단 연결"
@@ -330,6 +331,28 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
         return {"ok": False, "stage": "create_repair", **rg}
     repair_gid = rg["repair_goal_id"]
     chain["stages"].append({"stage": "create_repair", "repair_goal_id": repair_gid})
+
+    # Stage 3a (2026-10-30 Phase 10-R2): agent_fix 지정 시 headless Agent 가 자동 수정
+    #   agent_fix = {sandbox_id, test_cmd, allow_paths, protected_paths, apply_target[, fix_model, judge_model]}
+    if agent_fix and not repair_specs:
+        import real_repair_chain as _rc
+        hints = "; ".join(f"{h['kind']}: {h['match']}" for h in (analysis.get("failure_hints") or [])[:5])
+        ac = _rc.agent_repair_chain(
+            repair_gid,
+            sandbox_id=agent_fix["sandbox_id"],
+            test_cmd=agent_fix["test_cmd"],
+            allow_paths=agent_fix["allow_paths"],
+            protected_paths=agent_fix.get("protected_paths") or [],
+            apply_target=agent_fix["apply_target"],
+            failure_summary=f"Failure hints from goal #{original_goal_id}: {hints}" if hints else "",
+            **{k: agent_fix[k] for k in ("fix_model", "judge_model") if k in agent_fix},
+        )
+        chain["stages"].append({"stage": "agent_repair_chain", "ok": ac.get("ok"),
+                                "failed_stage": ac.get("failed_stage"),
+                                "stages": ac.get("stages")})
+        return {"ok": bool(ac.get("ok")), "stage_completed": "agent_repair_chain",
+                "repair_goal_id": repair_gid, "original_goal_id": original_goal_id,
+                "invocation": "auto", "chain": chain, "agent_repair": ac}
 
     # Stage 3: proposal 등재 (repair_specs 주어진 경우만)
     if not repair_specs:
@@ -483,8 +506,16 @@ def _cli_main(argv):
             except Exception as e:
                 print(json.dumps({"error": f"stdin json parse: {e}"}))
                 return 2
+        agent_fix = None
+        if "--agent-fix-json" in argv:
+            i = argv.index("--agent-fix-json")
+            try:
+                agent_fix = json.loads(Path(argv[i + 1]).read_text(encoding="utf-8"))
+            except Exception as e:
+                print(json.dumps({"error": f"agent-fix json: {e}"}))
+                return 2
         r = run_repair(orig, repair_specs=repair_specs, auto_approve=auto_approve,
-                       max_attempts=max_attempts)
+                       max_attempts=max_attempts, agent_fix=agent_fix)
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
     print(f"unknown cmd: {cmd}")

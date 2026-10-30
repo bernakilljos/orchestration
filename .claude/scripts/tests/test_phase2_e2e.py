@@ -29,6 +29,7 @@ import supervisor  # noqa: E402
 import planner  # noqa: E402
 import independent_verifier as iverify  # noqa: E402
 import repair_sandbox as sb  # noqa: E402
+sb.use_test_root()  # 테스트 전용 root — 운영 .repair-sandbox·state 접근 차단 (2026-10-30 Phase 10)
 
 DB = ROOT / ".claude" / "state" / "orca.db"
 TEST_MARKER = "PHASE2-E2E-TEST-2026-10-29"
@@ -362,7 +363,7 @@ def test_10_cleanup_orphans(result: TestResult):
     # 2. state 에 가짜 등록 (디렉토리 없음)
     state = sb._load_state()
     state["e2e-orphan-ghost"] = {
-        "path": str(ROOT / ".repair-sandbox" / "nonexistent-xyz-12345"),
+        "path": str(sb.SANDBOX_ROOT / "nonexistent-xyz-12345"),
         "branch": "repair/orphan-ghost",
         "created_at": int(time.time()) - 999999,
         "status": "active",

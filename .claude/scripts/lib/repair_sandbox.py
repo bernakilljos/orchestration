@@ -22,12 +22,46 @@ import json
 import time
 import subprocess
 import shutil
+import tempfile
 from pathlib import Path
 from datetime import datetime
 
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[3])
-SANDBOX_ROOT = ROOT / ".repair-sandbox"
-STATE_FILE = ROOT / ".claude" / "state" / "repair-sandboxes.json"
+# 2026-10-30 Phase 10-R1: 테스트/운영 Sandbox Root 분리.
+#   운영 = ROOT/.repair-sandbox (state: .claude/state/repair-sandboxes.json)
+#   테스트 = REPAIR_SANDBOX_ROOT env (기본 TEMP 아래) · state 도 그 root 안 별도 파일
+#   → 테스트의 cleanup/discard 는 운영 state·worktree 를 볼 수조차 없다.
+OPERATIONAL_SANDBOX_ROOT = ROOT / ".repair-sandbox"
+OPERATIONAL_STATE_FILE = ROOT / ".claude" / "state" / "repair-sandboxes.json"
+TEST_SANDBOX_ROOT = Path(tempfile.gettempdir()) / "orca-repair-sandbox-test" / ROOT.name
+
+
+def _resolve_roots():
+    env_root = os.environ.get("REPAIR_SANDBOX_ROOT", "").strip()
+    root = Path(env_root).resolve() if env_root else OPERATIONAL_SANDBOX_ROOT
+    operational = root.resolve() == OPERATIONAL_SANDBOX_ROOT.resolve()
+    state = OPERATIONAL_STATE_FILE if operational else root / "_sandbox-state.json"
+    return root, state, operational
+
+
+SANDBOX_ROOT, STATE_FILE, IS_OPERATIONAL_ROOT = _resolve_roots()
+
+
+def use_test_root() -> Path:
+    """테스트 전용 root 로 전환. env 도 설정하므로 supervisor 가 파일로 재로딩한 사본도 같은 root 를 쓴다."""
+    global SANDBOX_ROOT, STATE_FILE, IS_OPERATIONAL_ROOT
+    os.environ["REPAIR_SANDBOX_ROOT"] = str(TEST_SANDBOX_ROOT)
+    SANDBOX_ROOT, STATE_FILE, IS_OPERATIONAL_ROOT = _resolve_roots()
+    return SANDBOX_ROOT
+
+
+def _inside_root(path: Path) -> bool:
+    """현재 SANDBOX_ROOT 아래 경로인지 — 다른 root(운영↔테스트) 의 worktree 삭제 차단."""
+    try:
+        Path(path).resolve().relative_to(SANDBOX_ROOT.resolve())
+        return True
+    except Exception:
+        return False
 
 
 def _git(*args: str, cwd: Path = None, check: bool = True, timeout: int = 300) -> subprocess.CompletedProcess:
@@ -82,7 +116,8 @@ def create(goal_id: str) -> dict:
         return {"ok": False, "reason": f"sandbox 이미 존재: {sandbox_path}", "path": str(sandbox_path)}
 
     # git worktree add -b <branch> <path> HEAD · timeout 600s (큰 kit · Windows)
-    r = _git("worktree", "add", "-b", branch, str(sandbox_path), "HEAD", timeout=600)
+    # core.longpaths: 테스트 root(TEMP) 는 경로가 길어 kit 의 259자 파일이 MAX_PATH 초과 → 이 명령에만 적용
+    r = _git("-c", "core.longpaths=true", "worktree", "add", "-b", branch, str(sandbox_path), "HEAD", timeout=600)
 
     # 2026-10-26 fallback v2: 외부 AI 지적 수용 — .git 존재만 X · git 등록 상태까지 검증
     worktree_exists = False
@@ -160,8 +195,35 @@ def test(goal_id: str, test_cmd: str = "") -> dict:
     }
 
 
-def apply_merge(goal_id: str) -> dict:
-    """테스트 PASS 한 변경만 main 에 fast-forward merge."""
+def commit_changes(goal_id: str, message: str) -> dict:
+    """sandbox 작업 트리 변경을 repair branch 에 commit (apply 전 단계).
+    worktree 수정은 commit 전엔 branch 에 없으므로 merge 해도 반영되지 않는다."""
+    entry = _load_state().get(str(goal_id))
+    if not entry:
+        return {"ok": False, "reason": f"sandbox 없음: goal {goal_id}"}
+    cwd = Path(entry["path"])
+    st = _git("status", "--porcelain", cwd=cwd, timeout=60)
+    if not st.stdout.strip():
+        return {"ok": True, "committed": False, "reason": "변경 없음"}
+    _git("add", "-A", cwd=cwd, timeout=60)
+    r = _git("commit", "-m", message, cwd=cwd, timeout=60)
+    if r.returncode != 0:
+        return {"ok": False, "reason": f"commit 실패: {r.stderr.strip()[:200]}"}
+    sha = _git("rev-parse", "HEAD", cwd=cwd, timeout=30).stdout.strip()
+    return {"ok": True, "committed": True, "commit": sha}
+
+
+def _branch_checked_out(branch: str) -> bool:
+    wl = _git("worktree", "list", "--porcelain", timeout=30)
+    return f"branch refs/heads/{branch}" in wl.stdout
+
+
+def apply_merge(goal_id: str, target_branch: str = "main") -> dict:
+    """테스트 PASS 한 변경만 target_branch 에 fast-forward merge.
+
+    target_branch="main" (기본) 은 기존 동작 그대로.
+    그 외 target 은 checkout 없이 ff 여부 확인 후 update-ref 로만 이동 (작업 트리 무변경).
+    """
     state = _load_state()
     entry = state.get(str(goal_id))
     if not entry:
@@ -172,6 +234,26 @@ def apply_merge(goal_id: str) -> dict:
         return {"ok": False, "reason": "테스트 미통과 — apply 불가 (먼저 test PASS 필요)"}
 
     branch = entry["branch"]
+    if target_branch != "main":
+        if _branch_checked_out(target_branch):
+            return {"ok": False, "reason": f"{target_branch} 가 worktree 에 checkout 됨 · update-ref 불가"}
+        new_sha = _git("rev-parse", branch).stdout.strip()
+        old = _git("rev-parse", "--verify", "-q", f"refs/heads/{target_branch}")
+        old_sha = old.stdout.strip() if old.returncode == 0 else ""
+        if old_sha:
+            anc = _git("merge-base", "--is-ancestor", old_sha, new_sha)
+            if anc.returncode != 0:
+                return {"ok": False, "reason": f"fast-forward 불가 ({target_branch} 가 {branch} 의 조상 아님) · 원본 보호"}
+        r = _git("update-ref", f"refs/heads/{target_branch}", new_sha, old_sha)
+        if r.returncode != 0:
+            return {"ok": False, "reason": f"update-ref 실패: {r.stderr.strip()[:200]}"}
+        entry["status"] = "applied"
+        entry["applied_at"] = int(time.time())
+        entry["applied_to"] = target_branch
+        state[str(goal_id)] = entry
+        _save_state(state)
+        return {"ok": True, "branch": branch, "merged_to": target_branch,
+                "from_sha": old_sha, "to_sha": new_sha}
     # 현재 branch 저장
     cur = _git("branch", "--show-current")
     original_branch = cur.stdout.strip()
@@ -194,13 +276,29 @@ def apply_merge(goal_id: str) -> dict:
             _git("checkout", original_branch, check=False)
 
 
-def discard(goal_id: str) -> dict:
+def preserve(goal_id: str, keep: bool = True) -> dict:
+    """보존 표시 — cleanup_orphans·discard 가 건드리지 않는다 (force 제외)."""
+    state = _load_state()
+    entry = state.get(str(goal_id))
+    if not entry:
+        return {"ok": False, "reason": f"sandbox 없음: goal {goal_id}"}
+    entry["preserve"] = bool(keep)
+    state[str(goal_id)] = entry
+    _save_state(state)
+    return {"ok": True, "goal_id": goal_id, "preserve": bool(keep)}
+
+
+def discard(goal_id: str, force: bool = False) -> dict:
     """sandbox 폐기 — worktree remove + branch 삭제. 원본 보호."""
     state = _load_state()
     entry = state.get(str(goal_id))
     if not entry:
         return {"ok": False, "reason": f"sandbox 없음: goal {goal_id}"}
+    if entry.get("preserve") and not force:
+        return {"ok": False, "reason": f"preserve 표시된 sandbox · discard 거부: {goal_id}"}
     sandbox_path = Path(entry["path"])
+    if not _inside_root(sandbox_path):
+        return {"ok": False, "reason": f"현재 root({SANDBOX_ROOT}) 밖 경로 · discard 거부: {sandbox_path}"}
     branch = entry["branch"]
 
     # worktree 제거
@@ -256,7 +354,9 @@ def cleanup_orphans(max_age_sec: int = 86400) -> dict:
             del state[gid]
             removed_entries.append({"goal_id": gid, "reason": "path_missing"})
             continue
-        # 2. active 상태로 max_age 초과 → discard
+        # 2. active 상태로 max_age 초과 → discard (preserve·다른 root 경로는 제외)
+        if entry.get("preserve") or not _inside_root(path):
+            continue
         if entry.get("status") == "active":
             age = now - int(entry.get("created_at", now))
             if age > max_age_sec:
@@ -332,7 +432,10 @@ def main(argv):
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
     elif cmd == "discard":
-        r = discard(goal_id)
+        r = discard(goal_id, force="--force" in argv)
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+    elif cmd == "preserve":
+        r = preserve(goal_id, keep="--off" not in argv)
         print(json.dumps(r, ensure_ascii=False, indent=2))
     else:
         print(f"unknown cmd: {cmd}")

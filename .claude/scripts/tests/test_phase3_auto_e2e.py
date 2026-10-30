@@ -30,6 +30,7 @@ import planner  # noqa: E402
 import independent_verifier as iverify  # noqa: E402
 import auto_goal_from_prompt as autogoal  # noqa: E402
 import repair_sandbox as sb  # noqa: E402
+sb.use_test_root()  # 테스트 전용 root — 운영 .repair-sandbox·state 접근 차단 (2026-10-30 Phase 10)
 
 DB = ROOT / ".claude" / "state" / "orca.db"
 TEST_MARKER = "PHASE3-AUTO-E2E-TEST-2026-10-30"
