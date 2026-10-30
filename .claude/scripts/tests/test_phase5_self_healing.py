@@ -68,7 +68,7 @@ def _cleanup():
                 c.execute("DELETE FROM goal_tasks WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goal_transitions WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goals WHERE goal_id=?", (gid,))
-        sb.cleanup_orphans(max_age_sec=0)
+        sb.cleanup_orphans()  # 기본 24h — max_age_sec=0 은 실운영 active sandbox(P8 등)까지 discard 했다 (2026-10-30)
     except Exception as e:
         print(f"[cleanup] {e}")
 
@@ -385,7 +385,8 @@ def test_11_real_syntax_error_demo(r):
     """
     print("\n[P5 Test 11] real syntax error analyze pipeline")
     # 1. sandbox 생성
-    sb_r = sb.create("P5-syntax-demo")
+    demo_sid = f"P5-syntax-demo-{int(time.time())}"  # 고유 id — 이전 실패 run 이 남긴 branch 와 충돌 방지
+    sb_r = sb.create(demo_sid)
     if not sb_r.get("ok"):
         r.rec("sandbox for syntax demo", False, note=sb_r.get("reason", ""))
         return
@@ -438,7 +439,7 @@ def test_11_real_syntax_error_demo(r):
           "Task 계약" in rp or "subagent" in rp.lower() or "bridge" in rp,
           note="repair_prompt is a Task tool invocation guide, not a hardcoded fix")
     # cleanup
-    sb.discard("P5-syntax-demo")
+    sb.discard(demo_sid)
 
 
 def test_10_sandbox_isolation(r):
@@ -448,7 +449,8 @@ def test_10_sandbox_isolation(r):
     """
     print("\n[P5 Test 10] sandbox cwd isolation")
     # 임시 sandbox 생성
-    sb_r = sb.create("P5-sandbox-isolation-test")
+    iso_sid = f"P5-sandbox-isolation-test-{int(time.time())}"
+    sb_r = sb.create(iso_sid)
     if not sb_r.get("ok"):
         r.rec("sandbox create ok", False, note=f"create failed: {sb_r.get('reason')}")
         return
@@ -473,7 +475,7 @@ def test_10_sandbox_isolation(r):
     if root_leak.exists():
         root_leak.unlink()  # 안전 cleanup
     # sandbox cleanup
-    sb.discard("P5-sandbox-isolation-test")
+    sb.discard(iso_sid)
 
 
 def test_07_judge_handoff_vs_absorbed(r):

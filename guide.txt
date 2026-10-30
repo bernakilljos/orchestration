@@ -264,7 +264,7 @@
   [토큰 최적화 환경변수 — install.bat 자동 설정]
     CLAUDE_CODE_MAX_THINKING_TOKENS=10000   thinking 과다 소비 차단
     CLAUDE_AUTOCOMPACT_THRESHOLD=50         컨텍스트 50%% 시 자동 압축
-    CLAUDE_CODE_SUBAGENT_MODEL=haiku        서브에이전트 저비용 모델 사용
+    (CLAUDE_CODE_SUBAGENT_MODEL 미설정)     서브에이전트 모델 상속 — haiku 강제 시 200K 창 초과 Prompt is too long (2026-10-30)
 
   [자체 토큰 감사 — audit-tokens.py (2026-05-15)]
     PYTHONIOENCODING=utf-8 python .claude/scripts/audit-tokens.py

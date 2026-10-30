@@ -100,9 +100,15 @@ def main() -> int:
     # hook 스크립트가 **실행하는** 스크립트까지 1단계 확장 (주석 언급은 제외)
     run_re = re.compile(r"^(?!\s*#).*?(?:bash|python3?|sh|\$PY)\b[^\n]*?([\w.-]+\.(?:sh|py))", re.M)
     reach = set(hooked)
+    # VAR=".../x.py" 로 경로를 담고 "$VAR" 로 실행하는 형식 (detect-artifact-staleness.sh 의 "$PY_BIN" "$REPORT")
+    var_re = re.compile(r"""^\s*(\w+)=["'][^"'\n]*?([\w.-]+\.(?:sh|py))["']""", re.M)
     for p, t in texts.items():
         if p.name in hooked:
             reach |= {m for m in run_re.findall(t)}
+            for var, script in var_re.findall(t):
+                # 인터프리터 바로 뒤 인자로 쓰일 때만 실행으로 본다 ([ -f "$VAR" ] 같은 존재 검사는 제외)
+                if re.search(r'^(?!\s*#).*(?:\bbash|\bsh|python3?|\$\{?PY\w*\}?)"?\s+"\$\{?' + var + r'\}?"', t, re.M):
+                    reach.add(script)
     # 2026-10-12 — prompt-dispatch.py 처럼 hook 이 모듈을 import 해 in-process 로 돌리면 실행 줄이 없다.
     #   hook 인 .py 안에 이름(stem)이 나오는 같은 트리의 .py 모듈도 실행 경로로 본다 (1단계 + 그 모듈의 실행 줄).
     mods = set()

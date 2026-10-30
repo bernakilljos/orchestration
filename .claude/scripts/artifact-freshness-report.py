@@ -107,6 +107,20 @@ def main() -> int:
     overdue = [f for f in findings if f.state == "OVERDUE"]
     stale = [f for f in findings if f.state == "STALE"]
 
+    # statusline_context.py 가 읽는 요약 (overdue 감점) — 이 스크립트가 유일한 생성기
+    try:
+        import json
+        out = ROOT / ".claude" / "state" / "artifact-freshness.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({
+            "overdue": len(overdue),
+            "stale": len(stale),
+            "scanned": len(findings),
+            "updated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }, ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+
     if overdue:
         print("[산출물 유통기한 초과 — 갱신 필요]")
         for f in sorted(overdue, key=lambda x: x.age_days - x.limit_days, reverse=True):

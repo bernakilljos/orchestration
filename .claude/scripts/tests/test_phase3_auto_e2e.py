@@ -83,7 +83,7 @@ def _cleanup():
                         pass
                 except Exception:
                     pass
-        sb.cleanup_orphans(max_age_sec=0)
+        sb.cleanup_orphans()  # 기본 24h — max_age_sec=0 은 실운영 active sandbox(P8 등)까지 discard 했다 (2026-10-30)
     except Exception as e:
         print(f"[cleanup] warning: {e}")
 
