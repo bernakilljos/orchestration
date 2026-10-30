@@ -29,26 +29,26 @@ ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().par
 DB = ROOT / ".claude" / "state" / "orca.db"
 LIB = ROOT / ".claude" / "scripts" / "lib"
 
-# 명시 개발 트리거 — 좁은 패턴 (질문·메타 명령·단순 조회 제외)
-# 과거 R58~R61 OUT_OF_SCOPE 반복 피해 "구체 개발·구현·자동화·종단" 어휘만
+# 2026-10-30 Phase 4: 트리거 축소 — 명시 "orca-register" 전용 토큰 OR 매우 좁은 패턴만.
+# 과거 R58~R61·R75 결함: 사용자 비판/보고 메시지에 "구현해줘" 포함되면 goal 자동 등재되는 과도 트리거.
+# 수정: 명시 토큰 (orca-register ·  ·  · [auto-goal]) 또는 "~ 바로 실행해줘" 등 매우 좁은 발동.
+# 그 외 자연어 "구현해줘" 는 등재 X · 사용자가 명시 토큰으로 활성.
 _DEV_TRIGGER = re.compile(
     r"("
-    r"구현해줘|구현해주|구현하자|구현해라|구현 완성|"
-    r"만들어줘|만들어주|만들어서|자동으로 만들"
-    r"|자동화해줘|자동화 완성|자동 종단|end[- ]to[- ]end|end2end"
-    r"|실행 연결|자동 연결"
-    r"|Phase ?[1-9][A-Z]?[- ]?.*(완성|실 연결|실 통합)"
-    r"|개발 완성|개발 종단|개발 자동화"
+    r"\[auto-goal\]|\borca-register\b|⚡orca|🤖orca"
+    r"|자동 등재해줘|자동 goal 등재|자동 요청 등재"
+    r"|바로 자동 실행해줘|무인 실행해줘"
     r")",
     re.IGNORECASE,
 )
-# skip 트리거 — 질문·요약·메타·테스트
+# skip 트리거 — 질문·요약·메타·테스트·보고/비판 메시지
 _SKIP_TRIGGER = re.compile(
     r"("
     r"뭐야\?|어때\?|어떻게.*있어\?|가능해\?|돼\?|되나\?"
-    r"|요약해줘|보고해줘|확인해줘"
+    r"|요약해줘|보고해줘|확인해줘|피드백"
     r"|^/[a-z\-]+"  # /loop·/brief 등 slash command
-    r"|debug test|PHASE3-TEST|sandbox-only|test request"
+    r"|debug test|PHASE3-TEST|PHASE4-TEST|sandbox-only|test request"
+    r"|보고를 보면|보고에 기반|보고에 근거|평가하겠|추정치|진전입니다"
     r")",
     re.IGNORECASE,
 )
@@ -68,54 +68,84 @@ def _prompt_hash(prompt: str) -> str:
     return hashlib.sha256(norm.encode("utf-8")).hexdigest()[:16]
 
 
-def _is_dup_recent(prompt_hash: str, window_sec: int = 3600) -> Optional[int]:
-    """최근 window 안 같은 hash 의 goal_id 반환 (중복)."""
+def _is_dup_recent(prompt_hash: str, attempt_id: Optional[str] = None,
+                   window_sec: int = 3600) -> Optional[int]:
+    """최근 window 안 같은 (hash, attempt_id) 의 goal_id 반환 (중복).
+
+    Phase 4-R3 (2026-10-30): attempt_id 분리.
+    - attempt_id 가 다르면 중복 아님 (의도적 재실행)
+    - attempt_id=None 이면 hash 만 체크 (기존 호환)
+    """
     if not DB.exists():
         return None
     try:
         with sqlite3.connect(str(DB)) as c:
-            # goals.source_ref 에 'auto:ph=<hash>' 로 저장했으면 재사용
             cutoff = int(time.time()) - window_sec
+            # source_ref 는 'auto:ph=<hash>:at=<attempt>:src=<source>' 포맷
+            pattern = f"auto:ph={prompt_hash}"
+            if attempt_id:
+                pattern += f":at={attempt_id}"
+            pattern += "%"
             row = c.execute(
                 "SELECT goal_id FROM goals "
                 "WHERE source_ref LIKE ? AND created_at > ? "
                 "ORDER BY created_at DESC LIMIT 1",
-                (f"auto:ph={prompt_hash}%", cutoff),
+                (pattern, cutoff),
             ).fetchone()
             return row[0] if row else None
     except Exception:
         return None
 
 
-def should_register(prompt: str) -> Dict[str, Any]:
-    """등재 여부 판정 · 자세한 사유 반환."""
+def _generate_event_id() -> str:
+    """event_id — 각 등재 attempt 마다 unique."""
+    import uuid
+    return uuid.uuid4().hex[:12]
+
+
+def should_register(prompt: str, attempt_id: Optional[str] = None,
+                    force: bool = False) -> Dict[str, Any]:
+    """등재 여부 판정 · 자세한 사유 반환.
+
+    Phase 4-R3 (2026-10-30):
+    - attempt_id: 사용자가 명시한 재시도 식별자 · 다르면 중복 아님 (의도적 반복)
+    - force=True: hash 중복 체크 bypass (하지만 skip 트리거·disabled 는 유지)
+    """
     if _is_disabled():
         return {"register": False, "reason": "disabled (AUTO_GOAL_REGISTER=0 or no-auto-goal file)"}
     if not prompt or len(prompt.strip()) < 10:
         return {"register": False, "reason": "too short (<10 chars)"}
     if _SKIP_TRIGGER.search(prompt):
-        return {"register": False, "reason": "skip trigger matched (question/meta/test)"}
+        return {"register": False, "reason": "skip trigger matched (question/meta/report/critique)"}
     if not _DEV_TRIGGER.search(prompt):
-        return {"register": False, "reason": "no dev trigger matched"}
+        return {"register": False, "reason": "no explicit dev trigger matched (orca-register·[auto-goal] 등 명시 토큰 필요)"}
     ph = _prompt_hash(prompt)
-    dup_gid = _is_dup_recent(ph)
+    if force:
+        return {"register": True, "prompt_hash": ph, "attempt_id": attempt_id,
+                "note": "force=True · dup check bypassed"}
+    dup_gid = _is_dup_recent(ph, attempt_id=attempt_id)
     if dup_gid:
-        return {"register": False, "reason": f"duplicate within 1h (goal #{dup_gid})",
-                "existing_goal_id": dup_gid, "prompt_hash": ph}
-    return {"register": True, "prompt_hash": ph}
+        return {"register": False, "reason": f"duplicate within 1h (goal #{dup_gid}, attempt_id={attempt_id})",
+                "existing_goal_id": dup_gid, "prompt_hash": ph, "attempt_id": attempt_id,
+                "hint": "의도적 재실행이면 attempt_id 변경 또는 force=True"}
+    return {"register": True, "prompt_hash": ph, "attempt_id": attempt_id}
 
 
-def register(prompt: str, source: str = "auto-planner") -> Dict[str, Any]:
+def register(prompt: str, source: str = "auto-planner",
+             attempt_id: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
     """Goal 등재 + investigate 자동 실행.
 
-    반환: {"ok", "goal_id", "investigate_result", "systemMessage"} 또는 {"ok": False, "reason"}
+    Phase 4-R3 (2026-10-30):
+      - attempt_id: 의도적 재실행 식별자 (유실 방지)
+      - force: hash 중복 bypass (사용자 명시 재제출)
+      - event_id: 각 등재마다 unique (추적성)
     """
-    verdict = should_register(prompt)
+    verdict = should_register(prompt, attempt_id=attempt_id, force=force)
     if not verdict.get("register"):
         return {"ok": False, **verdict}
 
     ph = verdict["prompt_hash"]
-    # supervisor + planner import
+    event_id = _generate_event_id()
     sys.path.insert(0, str(LIB))
     try:
         import supervisor  # noqa: F401
@@ -123,16 +153,16 @@ def register(prompt: str, source: str = "auto-planner") -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "reason": f"import failed: {e}"}
 
-    # Goal 생성 (원문 보존 · source_ref 로 hash + source 기록)
     try:
         desc = prompt.strip()
         gid = supervisor.create_goal(desc, max_retry=1, timeout_h=24)
-        # source_ref 업데이트 (중복 방지 + 추적성)
+        # source_ref: hash + attempt_id + source + event_id (모두 분리 추적)
+        src_ref = f"auto:ph={ph}"
+        if attempt_id:
+            src_ref += f":at={attempt_id}"
+        src_ref += f":src={source}:ev={event_id}"
         with sqlite3.connect(str(DB)) as c:
-            c.execute(
-                "UPDATE goals SET source_ref=? WHERE goal_id=?",
-                (f"auto:ph={ph}:src={source}", gid),
-            )
+            c.execute("UPDATE goals SET source_ref=? WHERE goal_id=?", (src_ref, gid))
     except Exception as e:
         return {"ok": False, "reason": f"create_goal failed: {e}"}
 
@@ -160,6 +190,8 @@ def register(prompt: str, source: str = "auto-planner") -> Dict[str, Any]:
         "ok": True,
         "goal_id": gid,
         "prompt_hash": ph,
+        "attempt_id": attempt_id,
+        "event_id": event_id,
         "investigate_keywords": kw[:8],
         "investigate_files_count": len(files),
         "systemMessage": system_msg,

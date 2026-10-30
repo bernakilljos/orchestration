@@ -57,9 +57,10 @@ class TestResult:
 def _cleanup():
     try:
         with sqlite3.connect(str(DB)) as c:
+            # 테스트 marker · Phase 4 테스트 prompt prefix 모두 cleanup
             gids = [r[0] for r in c.execute(
-                "SELECT goal_id FROM goals WHERE description LIKE ?",
-                (f"%{TEST_MARKER}%",),
+                "SELECT goal_id FROM goals WHERE description LIKE ? OR description LIKE ?",
+                (f"%{TEST_MARKER}%", "P4-%[auto-goal]%"),
             ).fetchall()]
             for gid in gids:
                 c.execute("DELETE FROM planner_proposals WHERE goal_id=?", (gid,))
@@ -88,17 +89,18 @@ def _cleanup():
 
 
 def _test_prompt(suffix: str) -> str:
-    # TEST_MARKER 는 autogoal._SKIP_TRIGGER 에 매칭 (PHASE3-TEST) → should_register False.
-    # 자동 등재 테스트는 marker 없는 prompt + "구현해줘" 트리거로.
-    return f"{TEST_MARKER}-{suffix} 추가 구현해줘 end-to-end 기능"
+    # 2026-10-30 Phase 4-R3: 트리거 축소 반영 — 명시 토큰 "[auto-goal]" 사용
+    # TEST_MARKER 는 marker 이고 skip 트리거이지만 [auto-goal] 토큰이 있으면 dev trigger 매치
+    # 하지만 PHASE4-TEST marker 는 skip 트리거에 포함돼 전체 skip 됨 → marker 제거 또는 별 marker 사용
+    return f"P4-{suffix}-auto 범용 기능 [auto-goal] 추가"
 
 
 def test_01_should_register_filters(result):
-    """should_register — 명시 트리거만 매치 · 질문/메타는 skip."""
+    """should_register — 명시 트리거만 매치 · 질문/메타는 skip (Phase 4-R3 트리거 축소)."""
     print("\n[Phase3 Test 01] should_register filter")
-    # OK: 명시 개발 트리거
-    r1 = autogoal.should_register("Phase2 자동화 완성 구현해줘 종단 테스트")
-    result.record("dev trigger: '구현해줘' matched", r1.get("register") is True,
+    # OK: 명시 토큰 [auto-goal] 2026-10-30 트리거 축소 반영
+    r1 = autogoal.should_register("범용 기능 추가 구현 전수조사 [auto-goal] 요청 등재")
+    result.record("dev trigger: '[auto-goal]' token matched", r1.get("register") is True,
                   note=json.dumps(r1)[:200])
     # SKIP: 질문
     r2 = autogoal.should_register("이거 뭐야?")
@@ -119,24 +121,35 @@ def test_01_should_register_filters(result):
 
 
 def test_02_duplicate_detection(result):
-    """중복 요청 감지 — 같은 prompt 1h 안 재등재 X."""
-    print("\n[Phase3 Test 02] duplicate detection")
-    prompt = f"{TEST_MARKER}-dup P3 중복 테스트 구현해줘"
+    """중복 요청 감지 — 같은 prompt 1h 안 재등재 X · attempt_id 다르면 별 요청."""
+    print("\n[Phase3 Test 02] duplicate detection + attempt_id")
+    prompt = f"P4-dup 중복 처리 범용 [auto-goal] 요청 등재"
     r1 = autogoal.register(prompt)
     result.record("first register ok", r1.get("ok") is True,
-                  note=f"goal_id={r1.get('goal_id')}")
+                  note=f"goal_id={r1.get('goal_id')} event_id={r1.get('event_id')}")
     gid1 = r1.get("goal_id")
+    # 같은 prompt + 같은 attempt_id (None) → 중복
     r2 = autogoal.register(prompt)
     result.record("second register detects duplicate",
                   r2.get("ok") is False and r2.get("existing_goal_id") == gid1,
                   note=json.dumps(r2)[:200])
+    # 같은 prompt + 다른 attempt_id → 별 요청 (Phase 4-R3)
+    r3 = autogoal.register(prompt, attempt_id="try-2")
+    result.record("different attempt_id → new goal (intentional retry preserved)",
+                  r3.get("ok") is True and r3.get("goal_id") != gid1,
+                  note=f"goal_id={r3.get('goal_id')} attempt_id={r3.get('attempt_id')}")
+    # force=True → 중복 bypass
+    r4 = autogoal.register(prompt, force=True)
+    result.record("force=True bypasses dup check",
+                  r4.get("ok") is True and r4.get("goal_id") not in (gid1, r3.get("goal_id")),
+                  note=f"goal_id={r4.get('goal_id')}")
 
 
 def test_03_opt_out(result):
     """opt-out — AUTO_GOAL_REGISTER=0 시 skip."""
     print("\n[Phase3 Test 03] opt-out")
     os.environ["AUTO_GOAL_REGISTER"] = "0"
-    r = autogoal.register(f"{TEST_MARKER}-optout 자동화 구현해줘")
+    r = autogoal.register("[auto-goal] P4 opt-out 테스트 범용 기능 추가")
     os.environ["AUTO_GOAL_REGISTER"] = ""
     result.record("AUTO_GOAL_REGISTER=0 blocks register",
                   r.get("ok") is False,
@@ -298,18 +311,21 @@ def test_08_independent_goals_not_blocked(result):
 def test_09_auto_goal_end_to_end(result):
     """자동 Goal 등재 → investigate 결과 포함 systemMessage 생성."""
     print("\n[Phase3 Test 09] auto goal e2e")
-    prompt = f"{TEST_MARKER}-e2e Phase 3 end-to-end 자동 구현해줘"
+    prompt = "P4-e2e-chain 종단 범용 기능 추가 [auto-goal] 요청 등재"
     r = autogoal.register(prompt)
     result.record("register returns systemMessage with next steps",
                   r.get("ok") is True
                   and "다음 단계" in r.get("systemMessage", "")
                   and "bridge" in r.get("systemMessage", ""),
                   note=f"gid={r.get('goal_id')} keywords={len(r.get('investigate_keywords', []))}")
-    # systemMessage 가 Task tool 호출 유도 문구 포함
     sm = r.get("systemMessage", "")
     result.record("systemMessage guides Task tool subagent",
                   "subagent" in sm and "safe_mode" in sm,
                   note=sm[:300])
+    # event_id 생성 확인 (Phase 4-R3)
+    result.record("event_id generated per registration",
+                  bool(r.get("event_id")) and len(r.get("event_id", "")) >= 8,
+                  note=f"event_id={r.get('event_id')}")
 
 
 def main(argv):
