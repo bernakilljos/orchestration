@@ -75,6 +75,35 @@ def reproduce_failure(sandbox_cwd: str, test_cmd: str,
     }
 
 
+def prepare_minimal_agent_prompt(sandbox_cwd: str, test_cmd: str,
+                                  error_file: str = "", error_line: str = "") -> str:
+    """Phase 8-R2: Subagent 호출용 **최소** prompt (prompt-too-long 방지).
+
+    사용자 지시 (be2d36a 후속):
+      - 전체 대화 대신 작업별 최소 컨텍스트 전달
+      - prompt-too-long · context-confusion 방지
+      - 작업별 독립 Agent 호출
+
+    설계:
+      - 400자 이내 (이전 1500+ 자 실패 사례 반영)
+      - 세션 맥락 무시 명시 ("지금 당장 1가지만")
+      - tool 명시 (Read·Edit·Bash)
+      - 반환 포맷 간결 (JSON 1줄)
+      - 세션 과거 요약 X · systemMessage 영향 X
+    """
+    err_info = ""
+    if error_file:
+        err_info = f" at {error_file}"
+        if error_line:
+            err_info += f":{error_line}"
+    return (
+        f"Fix code in {sandbox_cwd}{err_info}.\n"
+        f"Steps: 1) Read failing file. 2) Edit minimal fix. 3) Run `{test_cmd}` to confirm.\n"
+        f"Rules: Edit only files inside {sandbox_cwd}. Minimal change. Keep function signatures.\n"
+        f"Return 1 JSON line: {{\"edit_file\":\"\",\"edit_line\":N,\"exit_code\":N,\"passed\":\"X/Y\"}}"
+    )
+
+
 def prepare_fix_prompt(evidence: Dict[str, Any]) -> str:
     """Claude Task tool subagent 호출용 prompt 생성 (실 fix 는 사용자/메인 Claude).
 
