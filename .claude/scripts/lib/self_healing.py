@@ -345,14 +345,15 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
             protected_paths=agent_fix.get("protected_paths") or [],
             apply_target=agent_fix["apply_target"],
             failure_summary=f"Failure hints from goal #{original_goal_id}: {hints}" if hints else "",
-            **{k: agent_fix[k] for k in ("fix_model", "judge_model") if k in agent_fix},
+            **{k: agent_fix[k] for k in ("fix_model", "judge_model", "max_fix_rounds") if k in agent_fix},
         )
         chain["stages"].append({"stage": "agent_repair_chain", "ok": ac.get("ok"),
                                 "failed_stage": ac.get("failed_stage"),
                                 "stages": ac.get("stages")})
         return {"ok": bool(ac.get("ok")), "stage_completed": "agent_repair_chain",
                 "repair_goal_id": repair_gid, "original_goal_id": original_goal_id,
-                "invocation": "auto", "chain": chain, "agent_repair": ac}
+                "invocation": (ac.get("agent_fix") or {}).get("invocation", "auto"),
+                "chain": chain, "agent_repair": ac}
 
     # Stage 3: proposal 등재 (repair_specs 주어진 경우만)
     if not repair_specs:

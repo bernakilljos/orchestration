@@ -174,6 +174,8 @@ def cmd_invalid_registration(rid: str, reason: str = "",
         return 2
     for r in data["requests"]:
         if r["id"] == rid or r["id"].lower() == rid.lower():
+            # 이전 상태 보존 (completed 였던 항목의 evidence·verification 은 그대로 남는다)
+            r.setdefault("status_before_invalid", r.get("status"))
             r["status"] = "invalid_registration"
             r["invalid_at"] = datetime.now().isoformat(timespec="seconds")
             r["invalid_reason"] = reason[:300] if reason else "자동 등록 오탐"

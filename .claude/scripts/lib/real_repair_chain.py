@@ -214,8 +214,9 @@ def save_evidence(demo_id: str, chain_data: Dict[str, Any]) -> str:
 #   실제 Agent 실행 ID 이며 invocation="auto" 로 기록한다 (메인 Claude 수동 호출과 구분).
 # ─────────────────────────────────────────────────────────────────────────────
 
-FIX_TOOLS = ["Read", "Edit", "Glob", "Grep", "Bash(python -m pytest:*)", "Bash(pytest:*)",
-             "PowerShell(python -m pytest:*)", "PowerShell(pytest:*)"]  # Windows 기본 셸 = PowerShell · 2026-10-30 E2E 2회: 그래도 Agent 자체 pytest 실행은 차단됨 (원인 미규명 · 검증은 runner 의 독립 pytest 가 담당)
+# 역할 분리 (2026-10-30 Phase 11): fix Agent = 코드 수정만 (셸 없음) · 테스트 실행은 runner 가 격리 sandbox 에서
+# 수행하고 실패 출력을 다음 라운드 Agent 에 되돌려 준다. Agent 자기보고가 검증 근거가 되지 않는다.
+FIX_TOOLS = ["Read", "Edit", "Glob", "Grep"]
 JUDGE_TOOLS = ["Read", "Glob", "Grep"]
 
 
@@ -325,6 +326,16 @@ def _register_repair_task(repair_goal_id: int, test_cmd: str, agent_session_id: 
     return tid
 
 
+def _set_task_spec_sessions(tid: str, sessions: list) -> None:
+    import sqlite3
+    with sqlite3.connect(str(STATE / "orca.db")) as c:
+        row = c.execute("SELECT task_file FROM tasks WHERE task_id=?", (tid,)).fetchone()
+        spec = json.loads(row[0]) if row and row[0] else {}
+        spec["cmd"] = "agent:claude-p sessions=" + ",".join(s or "?" for s in sessions)
+        spec["agent_sessions"] = sessions
+        c.execute("UPDATE tasks SET task_file=? WHERE task_id=?", (json.dumps(spec), tid))
+
+
 def _set_task_status(tid: str, status: str) -> None:
     import sqlite3
     with sqlite3.connect(str(STATE / "orca.db")) as c:
@@ -336,8 +347,9 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                        allow_paths: list, protected_paths: list,
                        apply_target: str, failure_summary: str = "",
                        fix_model: str = "claude-opus-5-5",
-                       judge_model: str = "claude-opus-5-5") -> Dict[str, Any]:
-    """재현 → Agent 자동 수정 → 정책 검사 → pytest → 통계+LLM Judge → commit → ff 반영."""
+                       judge_model: str = "claude-opus-5-5",
+                       max_fix_rounds: int = 2) -> Dict[str, Any]:
+    """재현 → Agent 자동 수정 → 정책 검사 → runner pytest (실패 시 출력 되돌려 재수정) → 통계+LLM Judge → commit → ff 반영."""
     sys.path.insert(0, str(LIB))
     import repair_sandbox as _sb
     import runner as _rn
@@ -368,46 +380,59 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
 
     root_before = _git_out(ROOT, "status", "--porcelain")
 
-    # 2. Agent 자동 수정
-    fix_prompt = (
-        f"A test is failing in this directory. Command: `{test_cmd}`\n"
-        f"Failure output (tail):\n{(pre.get('stdout_tail') or '')[-1200:]}\n{(pre.get('stderr_tail') or '')[-400:]}\n"
-        f"{failure_summary}\n"
-        f"Find the root cause in the source and fix it with the smallest change. "
-        f"You may edit only: {', '.join(allow_paths)}. Do NOT edit tests ({', '.join(protected_paths)}). "
-        f"Do not hardcode return values. Run the test command to confirm, then reply with one JSON line: "
-        f'{{"edit_file":"...","root_cause":"...","exit_code":N}}'
-    )
-    fix = dispatch_agent(fix_prompt, cwd, fix_model, FIX_TOOLS, role="fix")
-    out["agent_fix"] = fix
-    out["stages"].append({"stage": "agent_fix", "ok": fix.get("ok"),
-                          "agent_session_id": fix.get("agent_session_id")})
-    if not fix.get("ok"):
-        return fail("agent_fix")
+    # 2~4. Agent 수정 → 정책 검사 → runner pytest. 실패 시 runner 출력을 다음 라운드 Agent 에 전달.
+    tid = _register_repair_task(repair_goal_id, test_cmd, "")
+    out["agent_fix_rounds"] = []
+    failure_out = (pre.get("stdout_tail") or "")[-1200:] + "\n" + (pre.get("stderr_tail") or "")[-400:]
+    vr: Dict[str, Any] = {}
+    for rnd in range(1, max_fix_rounds + 1):
+        fix_prompt = (
+            f"A test is failing in this directory. Command: `{test_cmd}`\n"
+            f"Latest test output from the runner (tail):\n{failure_out}\n"
+            f"{failure_summary}\n"
+            f"Find the root cause in the source and fix it with the smallest change. "
+            f"You may edit only: {', '.join(allow_paths)}. Do NOT edit tests ({', '.join(protected_paths)}). "
+            f"Do not hardcode return values. You cannot run commands: after you finish, an isolated runner "
+            f"executes the tests and reports back. Reply with one JSON line: "
+            f'{{"edit_file":"...","root_cause":"..."}}'
+        )
+        fix = dispatch_agent(fix_prompt, cwd, fix_model, FIX_TOOLS, role="fix")
+        rec = {"round": rnd, "agent_session_id": fix.get("agent_session_id"), "ok": fix.get("ok"),
+               "cost_usd": fix.get("cost_usd"), "duration_s": fix.get("duration_s"),
+               "result": (fix.get("result") or "")[-600:]}
+        out["agent_fix_rounds"].append(rec)
+        out["agent_fix"] = fix
+        out["stages"].append({"stage": "agent_fix", "round": rnd, "ok": fix.get("ok"),
+                              "agent_session_id": fix.get("agent_session_id")})
+        if not fix.get("ok"):
+            return fail("agent_fix")
 
-    # 3. 정책 검사 (실제 diff 기준)
-    pol = policy_check(cwd, allow_paths, protected_paths, root_before)
-    out["policy"] = pol
-    out["stages"].append({"stage": "policy", "ok": pol["ok"], "issues": pol["issues"]})
-    if not pol["ok"]:
-        return fail("policy")
-    out["diff"] = _git_out(Path(cwd), "diff")[:4000]
+        pol = policy_check(cwd, allow_paths, protected_paths, root_before)
+        out["policy"] = pol
+        out["stages"].append({"stage": "policy", "round": rnd, "ok": pol["ok"], "issues": pol["issues"]})
+        if not pol["ok"]:
+            return fail("policy")
 
-    # 4. pytest (runner 경유 → executions 기록 · mark_verified)
-    tid = _register_repair_task(repair_goal_id, test_cmd, fix.get("agent_session_id") or "")
-    vr = _rn.run(test_cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd)
+        vr = _rn.run(test_cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd)
+        m = re.search(r"(\d+)\s+passed", (vr.get("stdout") or ""))
+        rec.update({"runner_exec_id": vr.get("exec_id"), "runner_exit_code": vr.get("exit_code")})
+        out["stages"].append({"stage": "pytest", "round": rnd, "exec_id": vr.get("exec_id"),
+                              "exit_code": vr.get("exit_code"),
+                              "passed_count": int(m.group(1)) if m else None})
+        if vr.get("exit_code") == 0:
+            break
+        failure_out = (vr.get("stdout") or "")[-1200:] + "\n" + (vr.get("stderr") or "")[-400:]
+
     passed = vr.get("exit_code") == 0
     if passed:
         _rn.mark_verified(vr.get("exec_id"), True)
+    _set_task_spec_sessions(tid, [r["agent_session_id"] for r in out["agent_fix_rounds"]])
     _set_task_status(tid, "completed" if passed else "failed")
-    m = re.search(r"(\d+)\s+passed", (vr.get("stdout") or ""))
-    out["stages"].append({"stage": "pytest", "exec_id": vr.get("exec_id"),
-                          "exit_code": vr.get("exit_code"),
-                          "passed_count": int(m.group(1)) if m else None})
+    out["diff"] = _git_out(Path(cwd), "diff")[:4000]
     out["test_before"] = {"exit_code": pre.get("exit_code"), "tail": (pre.get("stdout_tail") or "")[-300:]}
     out["test_after"] = {"exit_code": vr.get("exit_code"), "tail": (vr.get("stdout") or "")[-300:]}
     if not passed:
-        return fail("pytest")
+        return fail("pytest", rounds=len(out["agent_fix_rounds"]))
 
     # 5. 통계 judge → 독립 LLM Judge (별도 Agent 세션 · 읽기 전용 도구) → judge_absorb 결합
     jh = _iv.judge_handoff(repair_goal_id, sandbox_cwd=cwd, allow_paths=allow_paths)

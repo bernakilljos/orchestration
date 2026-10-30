@@ -50,6 +50,11 @@ _REPORT_REQUEST_KEYWORDS = (
 )
 
 
+def _is_system_notification(text: str) -> bool:
+    """harness 자동 이벤트 (사용자 입력 아님) — task-notification 태그로 시작."""
+    return (text or "").lstrip().startswith("<task-notification>")
+
+
 def _classify(text: str) -> str:
     """사용자 메시지 유형 분류 → report_request / execute / question / status / cancel / redo / unknown.
 
@@ -240,6 +245,11 @@ def run(ctx) -> str:
         prompt = payload.get("user_prompt") or payload.get("prompt") or payload.get("message") or ""
         session_id = payload.get("session_id") or payload.get("sessionId") or "unknown"
         if not prompt:
+            return ""
+        # 2026-10-30 R116: 백그라운드 작업 완료 알림은 harness 가 prompt 로 전달 · 사용자 요청 아님.
+        # 요약문 안 "tests" 등이 execute 키워드에 매치돼 R112~R116 이 오등록됐다.
+        if _is_system_notification(prompt):
+            _append_raw(prompt, session_id, "system_notification", "skipped_non_user")
             return ""
         classification = _classify(prompt)
         # 모든 UserPromptSubmit → raw log 보존 (사용자 지시 "원본 이벤트 전부 append-only · 삭제 X")
