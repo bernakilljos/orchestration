@@ -230,10 +230,14 @@ def _agent_env(use_login_auth: bool) -> Dict[str, str]:
 
 
 def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
-                   role: str, timeout: int = 900, max_budget_usd: float = 3.0,
+                   role: str, timeout: int = 900, max_budget_usd: Optional[float] = None,
                    use_login_auth: bool = True, system_prompt: str = "") -> Dict[str, Any]:
     """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user)."""
     import shutil
+    if max_budget_usd is None:      # 자원 정책 단일 계층 (sandbox-policy.json)
+        sys.path.insert(0, str(LIB))
+        import repair_sandbox as _sbp
+        max_budget_usd = float(_sbp._policy().get("agent_max_budget_usd", 3.0))
     exe = shutil.which("claude")
     if not exe:
         return {"ok": False, "invocation": "auto", "role": role, "error": "claude CLI not found"}
@@ -257,9 +261,16 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
             break
         except Exception:
             continue
+    usage = data.get("usage") or {}
+    ok = r.returncode == 0 and bool(data) and not data.get("is_error")
+    tok_in = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_creation_input_tokens",
+                                                   "cache_read_input_tokens"))
+    _record_agent_usage(role, model, tok_in, int(usage.get("output_tokens") or 0), data.get("total_cost_usd"),
+                        int((time.time() - started) * 1000), ok, data.get("session_id"))
     return {
-        "ok": r.returncode == 0 and bool(data) and not data.get("is_error"),
+        "ok": ok,
         "invocation": "auto",
+        "tokens_in": tok_in, "tokens_out": usage.get("output_tokens"),
         "role": role,
         "model": model,
         "agent_session_id": data.get("session_id"),
@@ -271,6 +282,18 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
         "stderr_tail": (r.stderr or "")[-300:],
         "argv_shape": ["claude", "-p", "<prompt>"] + argv[3:],
     }
+
+
+def _record_agent_usage(role, model, tok_in, tok_out, cost, latency_ms, ok, session_id) -> None:
+    """Agent 1회 실행의 실제 토큰·비용을 metrics 에 기록 (Phase 15 · 기존 state_db.record_metric 재사용)."""
+    try:
+        sys.path.insert(0, str(LIB))
+        import state_db
+        state_db.record_metric(ai=f"claude-agent:{role.split(':')[0]}", model_id=model, tokens_in=tok_in,
+                               tokens_out=tok_out, cost_usd=cost, latency_ms=latency_ms, success=ok,
+                               task_id=session_id or None, error_class=None if ok else "agent_error")
+    except Exception:
+        pass
 
 
 def _git_out(cwd: Path, *args: str) -> str:
@@ -291,7 +314,11 @@ def policy_check(sandbox_cwd: str, allow_paths: list, protected_paths: list,
     out_of_scope = [p for p in changed
                     if not any(p == a or p.startswith(a.rstrip("/") + "/") for a in allow_paths)]
     touched_protected = [p for p in changed if p in protected_paths]
-    root_after = _git_out(ROOT, "status", "--porcelain")
+    # ROOT 는 로그·scheduler·다른 세션 때문에 늘 바뀐다 → Agent 가 건드릴 수 있는 경로만 비교 (전체 비교는 오탐)
+    watch = set(allow_paths) | set(protected_paths) | set(changed)
+    pick = lambda st: sorted(l for l in st.splitlines() if l[3:].strip().strip('"').replace("\\", "/") in watch)
+    root_after = "\n".join(pick(_git_out(ROOT, "status", "--porcelain")))
+    root_status_before = "\n".join(pick(root_status_before))
     issues = []
     if not changed:
         issues.append("no_change")

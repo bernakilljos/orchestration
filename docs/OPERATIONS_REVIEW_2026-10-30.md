@@ -70,3 +70,34 @@
 | 자원 관리 | sandbox 예약·총량 상한을 Agent 동시 실행 수·토큰 예산과 같은 정책 파일로 통합 · 부족 시 대기열 | 자원 부족 상황 복구 증거 |
 | 플랫폼 API | goal 등록·이벤트 조회·승인(merge·candidate)을 CLI 하나로 노출 (기존 supervisor/self_healing/tech_discovery CLI 재사용) | 수동 SQL 없이 운영 가능 |
 | 장기 안정성 | 실 Scheduler 다회 실행 (예: 24h) 로 성공률·디스크 추세 기록 | 1회 성공이 아닌 반복 성공 |
+
+---
+
+# 승인 실행 결과 (adde43a 이후)
+
+## E. Pillow 13.0.0 운영 적용 — **롤백 (미적용)**
+- 백업: `.claude/state/pillow-upgrade-20261030-1619/` (pip freeze · Python 3.14.2 · pillow-12.3.0 wheel).
+- Pillow 만 설치 (의존성 미설치 옵션) 후 pip check: **fastembed 0.8.0 이 `pillow<13.0` 요구** → 승인 조건 "종속 패키지 호환성" 불충족 → 즉시 12.3.0 복구. 복구 후 pip check 충돌 0 · 다른 패키지 변화 0 (freeze 비교).
+- 원인: 격리 검증이 fastembed 를 보지 않았음 (검증 누락). fastembed 는 kit 코드 미사용 · 다른 패키지도 의존 X · 최신 fastembed 0.9.1 은 `pillow<14.0` 허용.
+- 해결 선택지 (승인 필요): ① fastembed 0.9.1 동시 업그레이드 ② 미사용 fastembed 제거 ③ 12.3.0 유지 (CVE-2026-112403 노출 유지).
+
+## F. 테스트 브랜치 — 8개 삭제 · 15개 보존
+- 삭제 (일반 안전 삭제 옵션 · 직전 SHA·미병합 0·worktree·DB/state/evidence/ledger 재검증): P12-MA-1793341087 · applied-check-1793341272 · g103-safe · g95-safe · life-verified ×4. 기록 `.claude/state/branch-cleanup-20261030.json`.
+- 보존 15: Ledger·evidence 가 해당 SHA(모두 main 에 있는 commit) 를 언급 → "운영 기록 참조 없음" 조건 불충족으로 보수 보존.
+
+## G. 관측성 (`.claude/scripts/lib/ops_metrics.py` · 읽기 전용)
+- scheduler tick 완주율 · goal 상태·복구율 · self-heal 성공률·평균 시도 · Agent 별 성공률·DAG 비용 · 실행 exit0/검증·p50/p95 · 토큰·비용 · Judge 판정 분포 · 디스크·sandbox 생애주기·예약 · 복구 추적 ID.
+- 측정 없음 = UNKNOWN (기존 metrics 49건 토큰 0 기록 → UNKNOWN · 크기 정보 없는 옛 sandbox → `+UNKNOWN×n`).
+- Agent(headless claude) 1회마다 실제 토큰·비용·지연을 metrics 에 기록 (`claude-agent:<role>`) — 이전엔 미기록.
+- 실 scheduler (10/29 16:30 ~ 10/30 16:20): tick 32 시작·32 완주 · 15분+ 공백 3회 (최대 11.5h · PC 꺼짐 추정) → **24h 연속 검증 아님**.
+
+## H. 자원 정책 단일 계층 (`.claude/config/sandbox-policy.json`)
+- 디스크 (sparse·min_free·총량 상한·예약) + `agent_max_parallel` 3 · `agent_max_budget_usd` 3.0 · `heal_max_events_per_tick` 1 — 기존 값 그대로 이관 (완화 X). dispatch_agent·run_dag·process_events 가 이 파일을 읽음.
+
+## I. Platform API PoC (`.claude/scripts/lib/platform_api.py` · 로컬 · 서버 없음)
+- register_goal (PENDING 등록만) · goal_status · evidence · approvals (위험 task·planner·discovery·self-heal merge 대기) · decide (task·proposal·candidate → 기존 승인 함수 위임) · agents · resources.
+- 안전: 명령 실행 X · merge 등 운영 작업 미노출 · Agent/자동화 식별자 승인 거부 (시험: `claude-agent` 승인 거부 · `merge` 거부 · goal 등록 후 task 0).
+
+## J. 반복 안정성 (scheduler 와 같은 명령 · 실측 시간만)
+- 1차 3 사이클 (134.6초): 2/3 · 실패 1 = policy 단계 ROOT 전체 git status 비교 오탐 (Agent 는 허용 파일만 수정 — 세션 기록 확인). 수정: Agent 가 건드릴 수 있는 경로만 비교 + 이벤트 결과에 policy 결과 저장.
+- 2차 3 사이클 (145.5초): **3/3** · 매 사이클 heal-tick 2개 동시 → 처리 [0,1] (중복 차단) · 1회차 디스크 부족 대기 → 재개 · 정상 goal VERIFIED · 기존 운영 sandbox 항목 불변 · 승인 대기 22→22 · P8 보존.

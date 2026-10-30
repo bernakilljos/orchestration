@@ -284,3 +284,55 @@ def test_dag_records_tasks_and_metrics(tmp_path):
         m = json.loads(c.execute("SELECT metrics FROM agent_dag_runs WHERE goal_id=?", (gid,)).fetchone()[0])
         assert m["ok"] == 1 and m["success_rate"] == 1.0
         c.execute("DELETE FROM agent_dag_runs WHERE goal_id=?", (gid,))
+
+
+# ── Phase 15: 관측성 · Platform API · 자원 정책 ───────────────────────────────
+def test_ops_metrics_unknown_not_zero(tmp_path, monkeypatch):
+    import ops_metrics as om
+    monkeypatch.setattr(om, "LOOP_LOG", tmp_path / "missing.log")
+    assert om.scheduler(0)["status"] == "UNKNOWN"
+    r = om.report(0.0001)                              # 거의 빈 기간 → 측정 없음
+    assert r["self_heal"]["success_rate"] == "UNKNOWN"
+    assert r["goals"]["repair_success_rate"] == "UNKNOWN"
+
+
+def test_platform_api_safety_contract():
+    import platform_api as api
+    assert api.decide("candidate", 1, "approve", "claude-agent")["ok"] is False
+    assert api.decide("candidate", 1, "approve", "self-healing")["ok"] is False
+    assert api.decide("merge", 1, "approve", "human")["ok"] is False
+    assert api.decide("task", "x", "deploy", "human")["ok"] is False
+    r = api.register_goal(f"{MARK} api goal", source=MARK)
+    gid = r["goal_id"]
+    with sqlite3.connect(str(DB)) as c:
+        c.execute("UPDATE goals SET source_ref=? WHERE goal_id=?", (MARK, gid))       # 정리 대상 표시
+        assert c.execute("SELECT status FROM goals WHERE goal_id=?", (gid,)).fetchone()[0] == "PENDING"
+        assert c.execute("SELECT COUNT(*) FROM goal_tasks WHERE goal_id=?", (gid,)).fetchone()[0] == 0
+    assert api.goal_status(gid)["ok"] and api.evidence(gid)["executions"] == []
+
+
+def test_resource_policy_is_single_source(monkeypatch):
+    import repair_sandbox as sb, agent_registry as ar, real_repair_chain as rc
+    pol = sb._policy()
+    for k in ("agent_max_parallel", "agent_max_budget_usd", "heal_max_events_per_tick", "min_free_gb", "max_total_active_gb"):
+        assert k in pol
+    seen = {}
+    monkeypatch.setattr(sb, "_policy", lambda: {**pol, "agent_max_parallel": 1})
+    r = ar.run_dag([{"id": "p", "needs": ["read"], "prompt": "x"}, {"id": "q", "needs": ["read"], "prompt": "y"}],
+                   str(ROOT), dispatch=lambda *a, **k: {"ok": True, "result": "{}"})
+    assert r["waves"] == [["p"], ["q"]]                # 정책값 1 → 병렬 1
+
+
+def test_policy_ignores_unrelated_root_changes(tmp_path):
+    import real_repair_chain as rc
+    sbx = tmp_path / "sbx"; sbx.mkdir()
+    subprocess.run(["git", "init", "-q", str(sbx)], check=True)
+    (sbx / "a.py").write_text("x=1\n"); (sbx / "t.py").write_text("t\n")
+    subprocess.run(["git", "-C", str(sbx), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(sbx), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "b"], check=True)
+    (sbx / "a.py").write_text("x=2\n")
+    before = " M some/unrelated.log\n"                      # ROOT 의 무관한 변경은 판정에 영향 X
+    r = rc.policy_check(str(sbx), ["a.py"], ["t.py"], before)
+    assert r["ok"], r
+    (sbx / "t.py").write_text("hacked\n")
+    assert "protected_modified" in rc.policy_check(str(sbx), ["a.py"], ["t.py"], before)["issues"]

@@ -2328,6 +2328,10 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 
 사용자 지시 (952061f 후속 · 세션 재개 · "Hook 출력 실측 · Phase 2-E 확인"). Hook 실측: 전체 systemMessage 5078 bytes · 3346 chars · 16 섹션. Top 3: 재사용 해결책 877c (26%) · auto-planner 514c (15%) · 대상 확정 495c (15%). 매 턴 ~1250 토큰 (사용자 10KB 추정 → 실측 5KB 수정). 60턴 ~75000 토큰 전체 소비 760k 의 10% (대화·코드 R/W 90%). Phase 2-E 실측: UserPromptSubmit → Ledger 자동 등재 (R59·R60·R61 확인) → to-goals created=5 → advance_all_pending 31 goals dry-run · 이미 INTEGRATED 상태 · 신규 코드 X. 테스트 ledger R59-R61 OUT_OF_SCOPE 처리 (허위 완료 금지). 최적화 포인트: 재사용 해결책 top 3→1 · 2중 추천 축소 · 세션 요약 1건만 (~47% 축소 가능 · 다음 세션 사용자 결정). docs/HOOK_TOKEN_MEASUREMENT_2026-10-29.md 상세. 예산 NEW 1 코드 변경 0. Ledger R57 (55/57 범위외 5). Phase 2-B·C 보완·D·F 다음 세션.
 
+## 2026-10-30 Phase 15 승인 실행·관측성·자원 정책·Platform API·반복 안정성 (unit 41/41 · P5 39/39 · P3 26/26 · P2 20/20)
+
+상세 docs/OPERATIONS_REVIEW_2026-10-30.md § E~J. Pillow 13 운영 설치 → pip check 에서 fastembed 0.8.0 pillow<13 충돌 → 승인 조건대로 12.3.0 롤백 (다른 패키지 변화 0). 브랜치 8 삭제·15 보존 (ledger/evidence SHA 언급). ops_metrics.py (읽기 전용 지표 · 미측정 UNKNOWN · Agent 실행 토큰·비용 metrics 기록). sandbox-policy.json 에 agent_max_parallel·agent_max_budget_usd·heal_max_events_per_tick 이관 (값 유지). platform_api.py (로컬 · 실행 X · merge 미노출 · 자동화 식별자 승인 거부). 반복 안정성: policy ROOT 전체 비교 오탐 발견·수정 후 3/3 (145.5초 · 24h 아님). 실 scheduler 23.8h 동안 tick 32/32 완주 · 공백 3회.
+
 ## 2026-10-30 Phase 14 결정 반영 — Pillow 13·SDK 2.3.0 격리 검증 · 브랜치 후보 확정 (unit 37/37 · P5 39/39 · P3 26/26 · P2 20/20)
 
 상세 docs/OPERATIONS_REVIEW_2026-10-30.md § A~D. Pillow: 12.3.0 이 CVE-2026-112403 (JPEG thumbnail 축소) 영향 · auto-optimize-image.py thumbnail 사용 · 격리 venv 13.0.0 에서 kit 이미지 연산·스크립트·OCR·pptx/docx 결과 12.3.0 과 동일 → 운영 적용 가능 (승인 대기). SDK: langchain-anthropic 1.7.7 (anthropic>=0.120.0) 로 핀 해소 · 격리 venv 2.3.0 에서 score_task·haiku-validate·ChatAnthropic stub 시험 통과 · anthropic-version 2026-10-21 · 실 API 미호출 (승인 대기). haiku-validate cache 필드 null TypeError 수정. 브랜치: 삭제 후보 23 확정·백업 목록 · 삭제 안 함. 수정: 정리 후 checkout 제거 기록이 state 에서 지워지던 결함 · 테스트 branch 누수.

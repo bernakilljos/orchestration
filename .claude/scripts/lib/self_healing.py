@@ -564,7 +564,7 @@ def close_stale_repair_goals(orig_goal_id: int, actor: str) -> List[int]:
     return closed
 
 
-def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1,
+def process_events(trigger_source: str, lease_s: int = 1800, max_events: Optional[int] = None,
                    max_event_attempts: int = 2) -> Dict[str, Any]:
     """이벤트 → sandbox(base_ref) → run_repair(agent_fix) → 원 goal BLOCKED(사유) · 다른 goal·Ledger 무관."""
     if not DB.exists():
@@ -573,6 +573,8 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1
     sys.path.insert(0, str(LIB))
     import supervisor as _sup
     import repair_sandbox as _sb
+    if max_events is None:          # 자원 정책 단일 계층 (sandbox-policy.json)
+        max_events = int(_sb._policy().get("heal_max_events_per_tick", 1))
     worker = f"heal:{trigger_source}:{os.getpid()}"
     results = []
     for _ in range(max_events):
@@ -623,7 +625,8 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: int = 1
                    "applied_sha": (ar.get("apply") or {}).get("to_sha"),
                    "agent_sessions": [r.get("agent_session_id") for r in ar.get("agent_fix_rounds") or []],
                    "judge_session": (ar.get("agent_judge") or {}).get("agent_session_id"),
-                   "final_verdict": ((ar.get("judge") or {}).get("final_verdict") or {}).get("status")}
+                   "final_verdict": ((ar.get("judge") or {}).get("final_verdict") or {}).get("status"),
+                   "policy": ar.get("policy")}          # 실패 원인 추적 (어느 정책 검사가 막았나)
         if rr.get("ok"):
             _sup.advance(gid, "BLOCKED", f"self-heal e{eid}: repair goal #{repair_gid} VERIFIED · "
                                          f"fix on {target}@{(summary['applied_sha'] or '')[:7]} · merge 승인 대기",

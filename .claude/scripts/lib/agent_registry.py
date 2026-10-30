@@ -104,12 +104,15 @@ def _changed_files(cwd: str) -> List[str]:
     return [l[3:].strip().strip('"').replace("\\", "/") for l in out.splitlines() if l.strip()]
 
 
-def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: int = 3,
+def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] = None,
             dispatch=None, goal_id: Optional[int] = None, max_dynamic: int = 3) -> Dict[str, Any]:
     """tasks: [{id, needs, skills, depends_on, prompt, allow_paths, may_spawn, spawn_allow_paths}]
     → 결과·선택·wave·지표. may_spawn 작업의 JSON 결과 {"followups":[...]} 는 새 작업으로 추가된다
     (편집 범위는 spawn_allow_paths 안으로 제한)."""
     sys.path.insert(0, str(LIB))
+    if max_parallel is None:        # 자원 정책 단일 계층 (sandbox-policy.json)
+        import repair_sandbox as _sbp
+        max_parallel = int(_sbp._policy().get("agent_max_parallel", 3))
     if dispatch is None:
         import real_repair_chain as _rc
         dispatch = _rc.dispatch_agent
