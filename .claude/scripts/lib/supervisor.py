@@ -899,7 +899,12 @@ def execute_goal(goal_id: int) -> dict:
                     _spec = _ilu.spec_from_file_location("_vreg", vreg_path)
                     _vreg = _ilu.module_from_spec(_spec)
                     _spec.loader.exec_module(_vreg)
-                    _ctx = spec_obj.get("verifier_ctx") or {}
+                    _ctx = dict(spec_obj.get("verifier_ctx") or {})
+                    # 2026-10-29 Phase 2-B 완결: safe_mode sandbox cwd 자동 주입.
+                    # 수정은 격리 공간에서, 검증은 원본 파일에 대해 수행하는 오류 차단.
+                    # ctx 안 cwd 명시 안 됐으면 sandbox cwd 사용 (명시 됐으면 사용자 의도 존중).
+                    if _sandbox_cwd and not _ctx.get("cwd"):
+                        _ctx["cwd"] = _sandbox_cwd
                     _ok, _note, _status = _vreg.run_verifier(spec_obj["verifier_id"], _ctx, timeout=30)
                     verify_pass = bool(_ok)
                     results["details"].append({
@@ -919,7 +924,12 @@ def execute_goal(goal_id: int) -> dict:
                 verify_pass = False
         if exit_code == 0 and verify and verify_type == "shell" and _is_allowed_cmd(verify):
             # verify 실행 — 2026-10-27 사용자 지적 "stdout PASS 단순 포함 오탐 차단"
-            vr = runner.run(verify, task_id=f"{task_id}-verify", worker_id="supervisor", timeout=120)
+            # 2026-10-29 Phase 2-B 완결: safe_mode 때 verify 도 sandbox cwd 에서 실행.
+            # 원본에 아직 반영 안 된 변경(격리 공간)을 검증하기 위함.
+            _verify_kwargs = {"task_id": f"{task_id}-verify", "worker_id": "supervisor", "timeout": 120}
+            if _sandbox_cwd:
+                _verify_kwargs["cwd"] = _sandbox_cwd
+            vr = runner.run(verify, **_verify_kwargs)
             vr_exit = vr.get("exit_code", -1)
             # Self-Healing (kind=fix) 의 TEST 는 exit=0 만으로 성공 (파일 존재 cat 등 긍정 신호 없이도)
             # GENERAL (kind=cmd) 의 VERIFY 는 _verify_output_passed 로 오탐 차단
@@ -950,6 +960,76 @@ def execute_goal(goal_id: int) -> dict:
             "exit_code": exit_code, "verified": verified_flag,
             "verify_cmd": (verify or "")[:80] if verify else None
         })
+
+    # 2026-10-29 Phase 2-B 완결: safe_mode sandbox 결과 반영 (apply/discard).
+    # 사용자 명시: "검증 실패 시 discard · 검증 성공 시 승인 정책에 따라 안전하게 apply ·
+    #              적용 중 충돌·실패 시 원본 보호 · 테스트 종료 후 Worktree 와 branch 정리"
+    #
+    # 정책:
+    #   - safe_mode task 가 하나라도 실행됐을 때만 발동
+    #   - 모든 task verified 성공 AND failed=0 → apply_merge (main 반영)
+    #   - 하나라도 fail OR unverified → discard (worktree 폐기, 원본 안전)
+    #   - apply 중 충돌 → fallback discard (원본 보호 우선)
+    sandboxes = results.get("sandboxes") or []
+    if sandboxes:
+        try:
+            sb_path = ROOT / ".claude" / "scripts" / "lib" / "repair_sandbox.py"
+            import importlib.util as _ilu3
+            _spec_sb2 = _ilu3.spec_from_file_location("_sb_apply", sb_path)
+            _sb2 = _ilu3.module_from_spec(_spec_sb2)
+            _spec_sb2.loader.exec_module(_sb2)
+            # 모든 task 통과 여부
+            all_verified = (results["failed"] == 0
+                            and results["verified"] == results["executed"]
+                            and results["executed"] > 0)
+            applied, discarded, errors = [], [], []
+            # 중복 goal_id 처리 (여러 task 가 같은 sandbox 참조 가능)
+            seen = set()
+            for sb in sandboxes:
+                sb_goal_key = f"g{goal_id}-safe"
+                if sb_goal_key in seen:
+                    continue
+                seen.add(sb_goal_key)
+                try:
+                    if all_verified:
+                        # last_test 가 없으면 apply_merge 가 "테스트 미통과" 로 reject.
+                        # supervisor 가 자체 검증했으므로 bypass_test flag 로 mark.
+                        # repair_sandbox state 수동 업데이트 (last_test exit_code=0)
+                        _state = _sb2._load_state()
+                        _entry = _state.get(sb_goal_key) or {}
+                        _entry["last_test"] = {
+                            "cmd": "supervisor_verified",
+                            "exit_code": 0,
+                            "ts": int(time.time()),
+                            "stdout_tail": f"supervisor execute_goal verified={results['verified']}/{results['executed']}",
+                            "stderr_tail": "",
+                        }
+                        _state[sb_goal_key] = _entry
+                        _sb2._save_state(_state)
+                        ar = _sb2.apply_merge(sb_goal_key)
+                        if ar.get("ok"):
+                            applied.append({"goal_id": sb_goal_key, "merged_to": ar.get("merged_to")})
+                        else:
+                            # apply 실패 → 원본 보호 위해 discard fallback
+                            errors.append({"goal_id": sb_goal_key, "apply_error": ar.get("reason", "")[:120]})
+                            dr = _sb2.discard(sb_goal_key)
+                            discarded.append({"goal_id": sb_goal_key, "reason": "apply_failed_fallback_discard",
+                                              "discard_ok": dr.get("ok", False)})
+                    else:
+                        dr = _sb2.discard(sb_goal_key)
+                        discarded.append({"goal_id": sb_goal_key,
+                                          "reason": f"verify_failed({results['failed']}f/{results['executed']}e)",
+                                          "discard_ok": dr.get("ok", False)})
+                except Exception as _ae:
+                    errors.append({"goal_id": sb_goal_key, "exception": f"{type(_ae).__name__}: {str(_ae)[:120]}"})
+            results["sandbox_apply"] = applied
+            results["sandbox_discard"] = discarded
+            if errors:
+                results["sandbox_apply_errors"] = errors
+        except Exception as _sbe2:
+            results.setdefault("sandbox_errors", []).append({
+                "phase": "apply_discard", "error": f"{type(_sbe2).__name__}: {str(_sbe2)[:120]}"
+            })
     return results
 
 

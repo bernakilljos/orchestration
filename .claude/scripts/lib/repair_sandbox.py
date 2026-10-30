@@ -237,6 +237,66 @@ def list_sandboxes() -> list:
     return result
 
 
+def cleanup_orphans(max_age_sec: int = 86400) -> dict:
+    """고아 sandbox 정리 (2026-10-29 Phase 2-B 완결).
+    - state 에 등록됐지만 worktree 디렉토리 없음 → 상태만 삭제
+    - state 에 없지만 .repair-sandbox/ 안 디렉토리 있음 → worktree remove 시도
+    - active 상태로 N 시간+ 방치 → discard 호출 (안전 default)
+    """
+    state = _load_state()
+    removed_entries = []
+    removed_dirs = []
+    stale_discarded = []
+    now = int(time.time())
+
+    # 1. state 안 등록돼 있지만 디렉토리 없음 → state 삭제
+    for gid, entry in list(state.items()):
+        path = Path(entry.get("path", ""))
+        if path and not path.exists():
+            del state[gid]
+            removed_entries.append({"goal_id": gid, "reason": "path_missing"})
+            continue
+        # 2. active 상태로 max_age 초과 → discard
+        if entry.get("status") == "active":
+            age = now - int(entry.get("created_at", now))
+            if age > max_age_sec:
+                dr = discard(gid)
+                stale_discarded.append({
+                    "goal_id": gid, "age_sec": age,
+                    "discard_ok": dr.get("ok", False),
+                })
+
+    _save_state(state)
+
+    # 3. .repair-sandbox/ 안 디렉토리인데 state 에 없음 → worktree remove
+    if SANDBOX_ROOT.exists():
+        state_paths = {str(Path(e.get("path", "")).resolve()) for e in state.values()
+                       if e.get("path")}
+        for child in SANDBOX_ROOT.iterdir():
+            if not child.is_dir():
+                continue
+            if str(child.resolve()) in state_paths:
+                continue
+            # 고아 디렉토리 → git worktree remove 시도 후 수동 삭제
+            r = _git("worktree", "remove", "--force", str(child), timeout=30)
+            if r.returncode != 0:
+                try:
+                    shutil.rmtree(child, ignore_errors=True)
+                except Exception:
+                    pass
+            removed_dirs.append({"path": str(child), "worktree_remove_rc": r.returncode})
+
+    # 4. git worktree prune (끊어진 참조 정리)
+    _git("worktree", "prune", timeout=30, check=False)
+
+    return {
+        "ok": True,
+        "removed_state_entries": removed_entries,
+        "removed_orphan_dirs": removed_dirs,
+        "stale_active_discarded": stale_discarded,
+    }
+
+
 def main(argv):
     if len(argv) < 2:
         print("usage: repair_sandbox.py {create|test|apply|discard|list} [goal_id] [test_cmd]")
@@ -244,6 +304,17 @@ def main(argv):
     cmd = argv[1]
     if cmd == "list":
         print(json.dumps(list_sandboxes(), ensure_ascii=False, indent=2))
+        return 0
+    if cmd == "cleanup-orphans":
+        max_age = 86400
+        for i, a in enumerate(argv):
+            if a == "--max-age-sec" and i + 1 < len(argv):
+                try:
+                    max_age = int(argv[i + 1])
+                except Exception:
+                    pass
+        r = cleanup_orphans(max_age_sec=max_age)
+        print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0
     if len(argv) < 3:
         print(f"usage: repair_sandbox.py {cmd} <goal_id> [...]")
