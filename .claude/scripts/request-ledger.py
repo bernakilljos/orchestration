@@ -150,6 +150,42 @@ def cmd_out_of_scope(rid: str, target: str = "", reason: str = "") -> int:
     return 2
 
 
+def cmd_invalid_registration(rid: str, reason: str = "",
+                              detected_by: str = "manual") -> int:
+    """자동 등록 분류기 오탐 (false_positive) 처리 (2026-10-30 P5-R1 · 사용자 지시).
+
+    사용자 지적: "R75 는 범위 외 요청이 아니라 자동 등록 분류기가 잘못 생성한 요청.
+    OUT_OF_SCOPE 로 처리하면 범위 외 작업과 잘못 등록된 이벤트가 섞인다."
+
+    OUT_OF_SCOPE vs INVALID_REGISTRATION 분리:
+      - OUT_OF_SCOPE: 사용자가 명시 요청했으나 이 세션/프로젝트 범위 밖 (인계 필요)
+      - INVALID_REGISTRATION: autogoal/parser 오탐 · 애초에 사용자 요구사항 아님 (등재 자체가 결함)
+
+    기록 보존:
+      - 추적성 유지 (삭제 X · 상태 변경만)
+      - detected_by (manual·stop-gate·autogoal-review 등) 로 오탐 유형 분류
+      - 재발 방지 분석에 활용 가능
+
+    Stop gate 통과 조건에 포함 (완료는 아니지만 미완도 아님 · 사용자 작업 아님).
+    """
+    data = _load()
+    if not data:
+        print("[ledger] empty", file=sys.stderr)
+        return 2
+    for r in data["requests"]:
+        if r["id"] == rid or r["id"].lower() == rid.lower():
+            r["status"] = "invalid_registration"
+            r["invalid_at"] = datetime.now().isoformat(timespec="seconds")
+            r["invalid_reason"] = reason[:300] if reason else "자동 등록 오탐"
+            r["invalid_detected_by"] = detected_by[:50]
+            r["note"] = "⚠ 사용자 요구사항 아님 · 자동 등록 분류기 오탐 · completed·out_of_scope 와 분리 집계"
+            _save(data)
+            print(f"[ledger] ✗ {rid}: INVALID_REGISTRATION (reason={reason[:80]} · by={detected_by})")
+            return 0
+    print(f"[ledger] {rid} not found", file=sys.stderr)
+    return 2
+
+
 def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
     """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사)."""
     data = _load()
@@ -209,22 +245,28 @@ def cmd_status() -> int:
     implemented = sum(1 for r in data["requests"] if r["status"] == "implemented")
     out_of_scope = sum(1 for r in data["requests"] if r["status"] == "out_of_scope")
     deferred = sum(1 for r in data["requests"] if r["status"] == "deferred")
+    invalid_reg = sum(1 for r in data["requests"] if r["status"] == "invalid_registration")
     pending = sum(1 for r in data["requests"] if r["status"] == "pending")
-    # 데이터 계약: 완료(≠ 범위 외) · 진행 가능 · 미완료 분리
-    progressable = completed + out_of_scope + deferred  # Stop gate 통과 가능 (완료 아님)
-    print(f"=== Request Ledger · 완료 {completed}/{total} · 범위외 {out_of_scope} · 보류 {deferred} · 진행중 {pending} ===")
+    # 데이터 계약: 완료(≠ 범위 외 ≠ 오등록) · 진행 가능 · 미완료 분리 (2026-10-30 P5-R1)
+    progressable = completed + out_of_scope + deferred + invalid_reg  # Stop gate 통과 가능 (완료 아님)
+    print(f"=== Request Ledger · 완료 {completed}/{total} · 범위외 {out_of_scope} · 보류 {deferred} · 오등록 {invalid_reg} · 진행중 {pending} ===")
     for r in data["requests"]:
-        if r["status"] == "completed":
+        st = r["status"]
+        if st == "completed":
             mark = "✓"
-        elif r["status"] == "out_of_scope":
+        elif st == "out_of_scope":
             mark = "↷"  # 범위 외 인계 · completed X
-        elif r["status"] == "deferred":
+        elif st == "invalid_registration":
+            mark = "✗"  # 자동 등록 오탐 · 사용자 요구사항 아님 · completed X
+        elif st == "deferred":
             mark = "⏭"
         else:
             mark = "☐"
         suffix = ""
-        if r["status"] == "out_of_scope":
+        if st == "out_of_scope":
             suffix = f" [OUT_OF_SCOPE → {r.get('handoff_target','?')}]"
+        elif st == "invalid_registration":
+            suffix = f" [INVALID by={r.get('invalid_detected_by','?')}: {r.get('invalid_reason','?')[:60]}]"
         print(f"  {mark} {r['id']}: {r['desc'][:100]}{suffix}")
     return 0
 
@@ -244,7 +286,7 @@ def cmd_gate() -> int:
         print("[request-ledger] 시험·지난 작업 ledger — 이번 세션 기준 아님 · 통과", file=sys.stderr)
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29)
+    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope", "invalid_registration"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29) · invalid_registration = 자동 등록 분류기 오탐 (2026-10-30 P5-R1)
     if done == total:
         return 0  # 모두 완료 = 통과
     # 미완료 있음 — Claude 에게 알림
@@ -324,6 +366,14 @@ def main() -> int:
     p_oos.add_argument("--target", required=True, help="인계 대상 (예: C:/pjt/Project1.5)")
     p_oos.add_argument("--reason", default="", help="범위 외 사유")
 
+    # invalid-registration — 자동 등록 분류기 오탐 (2026-10-30 P5-R1 · 사용자 지시)
+    # OUT_OF_SCOPE 와 분리: OUT_OF_SCOPE 는 명시 요청·범위 밖 · INVALID 는 애초에 사용자 요구사항 아님
+    p_inv = sub.add_parser("invalid-registration")
+    p_inv.add_argument("rid")
+    p_inv.add_argument("--reason", default="", help="오탐 사유 (예: 사용자 비판 메시지 자동 등재)")
+    p_inv.add_argument("--detected-by", default="manual",
+                       help="감지 주체 (manual·stop-gate·autogoal-review·sweep 등)")
+
     sub.add_parser("status")
     sub.add_parser("gate")
     sub.add_parser("clear")
@@ -338,6 +388,8 @@ def main() -> int:
         return cmd_complete(args.rid, args.evidence, args.verification)
     if args.op == "out-of-scope":
         return cmd_out_of_scope(args.rid, args.target, args.reason)
+    if args.op == "invalid-registration":
+        return cmd_invalid_registration(args.rid, args.reason, args.detected_by)
     if args.op == "status":
         return cmd_status()
     if args.op == "gate":

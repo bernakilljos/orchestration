@@ -253,11 +253,165 @@ def create_repair_goal(original_goal_id: int,
     return {"ok": True, "repair_goal_id": gid, "original_goal_id": original_goal_id}
 
 
+def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
+               auto_approve: bool = False) -> Dict[str, Any]:
+    """Self-Healing 전체 chain orchestration (2026-10-30 P5-R2).
+
+    사용자 지시: "Scaffold 상태 → 실제 자동복구 성공과 다르다 · 기존 자산 활용 종단 연결"
+
+    흐름 (기존 자산 재사용 · 중복 X):
+      1. analyze_failure(original_goal_id) — 분석 보고서 (이미 scaffold)
+      2. create_repair_goal — repair goal 등재 (workflow_type=REPAIR)
+      3. repair_specs 가 주어지면 planner.bridge 로 proposal 등재
+         (주어지지 않으면 Claude Task tool subagent 호출 유도 systemMessage 반환)
+      4. auto_approve=True 면 approve · 아니면 사용자 승인 대기 상태
+      5. planner.promote → tasks 등재 (safe_mode=True 강제)
+      6. supervisor.execute_goal → sandbox 격리 실행 → apply/discard
+      7. independent_verifier.judge_handoff → final verdict
+
+    반환: 각 단계 결과·goal_id·판정·다음 단계 안내.
+
+    안전 원칙:
+      - repair_specs 가 없으면 execute 까지 가지 않음 (Task tool subagent 호출 유도만)
+      - auto_approve=False 가 default (HITL)
+      - 승인 정책·_is_allowed_cmd 는 promote 단계에서 이미 재확인
+      - 실패 시 discard 로 원본 보호 (supervisor.execute_goal 안 이미 통합됨)
+    """
+    sys.path.insert(0, str(LIB))
+    try:
+        import supervisor as _sup  # noqa: F401
+        import planner as _pl  # noqa: F401
+        import independent_verifier as _iv  # noqa: F401
+    except Exception as e:
+        return {"ok": False, "stage": "import", "error": str(e)}
+
+    chain = {"original_goal_id": original_goal_id, "stages": []}
+
+    # Stage 1: analyze
+    analysis = analyze_failure(goal_id=original_goal_id)
+    if "error" in analysis:
+        return {"ok": False, "stage": "analyze", "error": analysis["error"]}
+    chain["stages"].append({"stage": "analyze",
+                            "failure_hints": analysis.get("failure_hints"),
+                            "failed_execs": len(analysis.get("failed_executions") or [])})
+
+    # Stage 2: create repair goal
+    rg = create_repair_goal(original_goal_id,
+                            f"Self-Healing: goal #{original_goal_id} 복구")
+    if not rg.get("ok"):
+        return {"ok": False, "stage": "create_repair", **rg}
+    repair_gid = rg["repair_goal_id"]
+    chain["stages"].append({"stage": "create_repair", "repair_goal_id": repair_gid})
+
+    # Stage 3: proposal 등재 (repair_specs 주어진 경우만)
+    if not repair_specs:
+        # Task tool subagent 호출 유도만
+        chain["stages"].append({
+            "stage": "propose", "status": "pending_task_tool",
+            "note": "repair_specs 미제공 · Claude Task tool subagent 가 analysis.repair_prompt 로 "
+                    f"spec 생성 후 'planner.py bridge {repair_gid}' 로 등재해야.",
+            "repair_prompt_head": (analysis.get("repair_prompt") or "")[:400],
+        })
+        return {"ok": True, "stage_completed": "create_repair",
+                "repair_goal_id": repair_gid, "chain": chain,
+                "next_action": (
+                    f"Claude Task tool general-purpose subagent 호출 → "
+                    f"analyze_failure.repair_prompt 받아 spec 생성 → "
+                    f"'python .claude/scripts/lib/planner.py bridge {repair_gid}' pipe"
+                )}
+
+    # repair_specs 주어진 경우 — bridge 로 proposal 저장
+    import json as _json
+    bridge_r = _pl.bridge(repair_gid, _json.dumps(repair_specs),
+                          origin="self-healing-run_repair")
+    if not bridge_r.get("ok"):
+        return {"ok": False, "stage": "bridge", **bridge_r,
+                "repair_goal_id": repair_gid}
+    chain["stages"].append({"stage": "bridge",
+                            "proposed": bridge_r.get("proposed")})
+
+    # Stage 4: approve (auto_approve=True 만)
+    if not auto_approve:
+        chain["stages"].append({"stage": "approve", "status": "pending_user_approval",
+                                "note": "auto_approve=False · 사용자 승인 대기 · "
+                                        f"'planner.py approve <pid>' 후 promote"})
+        return {"ok": True, "stage_completed": "bridge",
+                "repair_goal_id": repair_gid, "chain": chain,
+                "proposals": bridge_r.get("proposals"),
+                "next_action": (
+                    f"사용자 승인: 'python .claude/scripts/lib/planner.py approve <pid>' "
+                    f"× {bridge_r.get('proposed')} → promote {repair_gid}"
+                )}
+
+    approved_ids = []
+    for p in (bridge_r.get("proposals") or []):
+        ar = _pl.approve(p["proposal_id"], approved_by="self-healing-auto")
+        if ar.get("status") == "approved":
+            approved_ids.append(p["proposal_id"])
+    chain["stages"].append({"stage": "approve", "approved": len(approved_ids)})
+
+    # Stage 5: promote
+    pr = _pl.promote(repair_gid)
+    chain["stages"].append({"stage": "promote", "promoted": pr.get("promoted"),
+                            "rejected_at_promote": pr.get("rejected")})
+    if pr.get("promoted", 0) == 0:
+        return {"ok": False, "stage": "promote",
+                "note": "0 proposals promoted (approval-gate 또는 _is_allowed_cmd 차단)",
+                "repair_goal_id": repair_gid, "chain": chain}
+
+    # Stage 6: execute (sandbox 자동)
+    ex_r = _sup.execute_goal(repair_gid)
+    chain["stages"].append({"stage": "execute",
+                            "executed": ex_r.get("executed"),
+                            "verified": ex_r.get("verified"),
+                            "failed": ex_r.get("failed"),
+                            "sandbox_apply": ex_r.get("sandbox_apply"),
+                            "sandbox_discard": ex_r.get("sandbox_discard")})
+
+    # Stage 7: judge_handoff
+    sandbox_cwd = None
+    for sb in (ex_r.get("sandboxes") or []):
+        sandbox_cwd = sb.get("path")
+        break
+    jh = _iv.judge_handoff(repair_gid, sandbox_cwd=sandbox_cwd)
+    chain["stages"].append({"stage": "judge_handoff",
+                            "stat_verdict": jh.get("stat_verdict"),
+                            "requires_llm_judge": jh.get("requires_llm_judge"),
+                            "handoff_file": jh.get("handoff_file")})
+
+    success = (ex_r.get("failed", 0) == 0
+               and ex_r.get("verified", 0) >= 1
+               and jh.get("stat_verdict", {}).get("status") == "VERIFIED")
+
+    return {
+        "ok": success,
+        "stage_completed": "judge_handoff",
+        "repair_goal_id": repair_gid,
+        "original_goal_id": original_goal_id,
+        "chain": chain,
+        "result_summary": {
+            "executed": ex_r.get("executed", 0),
+            "verified": ex_r.get("verified", 0),
+            "failed": ex_r.get("failed", 0),
+            "stat_verdict": jh.get("stat_verdict", {}).get("status"),
+            "applied": bool(ex_r.get("sandbox_apply")),
+            "discarded": bool(ex_r.get("sandbox_discard")),
+        },
+        "next_action": (
+            "메인 Claude turn 에서 Task tool agent-01-judge subagent 호출 → "
+            f"judge_absorb {repair_gid} 로 최종 verdict 저장"
+            if jh.get("requires_llm_judge")
+            else "stat verdict 가 VERIFIED 아님 · LLM judge 로 승격 X (안전 default)"
+        ),
+    }
+
+
 def _cli_main(argv):
     if len(argv) < 2:
-        print("usage: self_healing.py {analyze|create-repair} [args]")
+        print("usage: self_healing.py {analyze|create-repair|run-repair} [args]")
         print("  analyze --goal <id> | --task <task_id>")
         print("  create-repair <original_goal_id> [description]")
+        print("  run-repair <original_goal_id> [--auto-approve] [--specs-stdin]")
         return 2
     cmd = argv[1]
     if cmd == "analyze":
@@ -278,6 +432,22 @@ def _cli_main(argv):
         orig = int(argv[2])
         desc = argv[3] if len(argv) > 3 else ""
         r = create_repair_goal(orig, desc)
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return 0 if r.get("ok") else 1
+    if cmd == "run-repair":
+        if len(argv) < 3:
+            print("usage: self_healing.py run-repair <orig_goal_id> [--auto-approve] [--specs-stdin]")
+            return 2
+        orig = int(argv[2])
+        auto_approve = "--auto-approve" in argv
+        repair_specs = None
+        if "--specs-stdin" in argv:
+            try:
+                repair_specs = json.loads(sys.stdin.read())
+            except Exception as e:
+                print(json.dumps({"error": f"stdin json parse: {e}"}))
+                return 2
+        r = run_repair(orig, repair_specs=repair_specs, auto_approve=auto_approve)
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
     print(f"unknown cmd: {cmd}")
