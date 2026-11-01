@@ -148,3 +148,9 @@
 - 원인: "보류" 는 문서 지시뿐이고 DB 상태는 RUNNING 이었음. supervisor.advance_all 의 timeout 정책 (2bdc79c · 10-27) 은 PENDING/PLANNING/RUNNING/REPAIRING 만 대상 → 승인 대기라는 표시가 DB 에 없어 승인 필요 전이가 자동 수행됨. 보호 장치 우회가 아니라 보호 장치 부재.
 - 다른 goal: timeout FAILED 60건 (RUNNING 59 · PENDING 1) · 승인 대기 task 와 연결된 것 0 · BLOCKED 14건은 timeout 대상 제외 (코드) · BLOCKED 에서 자동 전이 0 (사람 CLI 2건 · 10-27).
 - 안전한 복구 방안 (승인 대기): ① 현 상태 유지 (실행 0 · R57 은 ledger 에서 별도 완료 · 이력 보존) ② 승인 시 supervisor advance 77 BLOCKED "user hold" (새 전이 추가 · 기존 이력 보존). 재발 방지는 보류 goal 을 BLOCKED 로 두는 운영 규칙 (BLOCKED 는 timeout 제외).
+
+## R. 결정·검증 후속 (2026-11-01 11:30)
+- Goal #77: 사용자 결정 ② — DB 상태 FAILED 유지 (FAILED 는 종결 · 상태 머신 변경 X · 직접 SQL X). 관리 결정 = 사용자 보류·재실행 금지. supervisor.advance(77, BLOCKED) 1회 시도 → False (변경 0). dry-run: 77 은 timeout·자동 실행 대상 아님.
+- 수정 후 실 Orca_10MinLoop: 11:00·11:10·11:20 3회 완주 · wrapper 실패 줄 0 · LastTaskResult 0. (3회 = 24h 검증 아님)
+- 실패 코드 전달 격리 시험 (임시 작업 · 현재 사용자 · 숨김 PowerShell `exit $LASTEXITCODE` · 시험 후 삭제): 스텁 exit 3 → LastTaskResult 3 · exit 0 → 0. 참고: conhost --headless 래핑은 항상 0 반환 (exit 7 → 0) 이라 판정 불가.
+- push: 비대화형 1회 성공 (abe725c..7c2399d) · GCM 창 생략 후 저장된 자격 증명 사용 · 인증 설정 변경 X.
