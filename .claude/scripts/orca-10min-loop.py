@@ -168,6 +168,7 @@ def run_cleanup_pollution():
             [bash_exe, str(cleanup_script)],
             capture_output=True,
             text=True,
+            encoding="utf-8", errors="replace",   # 2026-11-01: 기본 cp949 디코딩 실패 → stderr 유실 (종료 코드와는 무관 · 실측)
             timeout=30,
             shell=False  # More secure on Windows
         )

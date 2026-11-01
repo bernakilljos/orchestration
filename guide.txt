@@ -2328,6 +2328,10 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 
 사용자 지시 (952061f 후속 · 세션 재개 · "Hook 출력 실측 · Phase 2-E 확인"). Hook 실측: 전체 systemMessage 5078 bytes · 3346 chars · 16 섹션. Top 3: 재사용 해결책 877c (26%) · auto-planner 514c (15%) · 대상 확정 495c (15%). 매 턴 ~1250 토큰 (사용자 10KB 추정 → 실측 5KB 수정). 60턴 ~75000 토큰 전체 소비 760k 의 10% (대화·코드 R/W 90%). Phase 2-E 실측: UserPromptSubmit → Ledger 자동 등재 (R59·R60·R61 확인) → to-goals created=5 → advance_all_pending 31 goals dry-run · 이미 INTEGRATED 상태 · 신규 코드 X. 테스트 ledger R59-R61 OUT_OF_SCOPE 처리 (허위 완료 금지). 최적화 포인트: 재사용 해결책 top 3→1 · 2중 추천 축소 · 세션 요약 1건만 (~47% 축소 가능 · 다음 세션 사용자 결정). docs/HOOK_TOKEN_MEASUREMENT_2026-10-29.md 상세. 예산 NEW 1 코드 변경 0. Ledger R57 (55/57 범위외 5). Phase 2-B·C 보완·D·F 다음 세션.
 
+## 2026-11-01 24h 관찰 결함 3건 — 스케줄러 종료 코드 · Goal 지표 · Goal #77 (unit+gate 44/44 · P5 39/39 · P3 26/26 · P2 20/20)
+
+상세 docs/OPERATIONS_REVIEW_2026-10-30.md § O~Q. orca-10min-loop.bat: if 블록 안 '(FAIL)' 괄호가 블록을 닫아 exit /b 1 이 매번 실행 → Python rc 그대로 전달 (스텁 0→0 · 3→3 · 실 Task Scheduler LastTaskResult 1→0). cp949 decode 예외는 종료 코드와 무관 (utf-8 지정). ops_metrics goals.transitions 추가 (goal_transitions · 17건 원본 일치). Goal #77 = ledger:R57 orphan · 승인 대기 표시가 DB 에 없어 supervisor 24h timeout 이 RUNNING→FAILED (조사만 · 상태 변경 X).
+
 ## 2026-10-30 verify-fresh-clone DDL 파싱 오탐 수정
 
 인접 파이썬 문자열로 나눈 DDL·세미콜론 없는 DDL 의 컬럼을 못 읽어 agent_dag_runs.goal_id 를 'DDL 에 없음' 으로 잘못 잡던 문제 수정 (SessionStart ensure-state FAIL 원인). PASS 위반 0 · 컬럼 제거 주입 시 FAIL 재현 확인.

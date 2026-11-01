@@ -124,3 +124,27 @@
 ## N. 관측성·API 보강
 - scheduler: 실제 실패 (START 후 END 없음) 와 미실행 공백 분리 · 분모(관측 구간 기대 tick)·분자 표시 — 23.88h 동안 33/33 완주 · 실패 0 · 기대 144 대비 coverage 22.9% · 공백 3회 (최대 690분) → 연속 운영 증거 부족.
 - Platform API 요청별 감사 로그 `.claude/logs/platform-api-audit.jsonl` (시각·작업·요청자·인자·결과) · 자동화 식별자 승인 거부도 기록.
+
+---
+
+# 24h 관찰 후 결함 3건 (2026-11-01)
+
+관찰 (10-31 10:54 ~ 11-01 10:54): loop 144/144 시작·완주 · 공백 0 · 겹침 0 · 단계 오류 0 · self-heal 0 · Agent 0 (유휴 운영만 검증).
+
+## O. 스케줄러 종료 코드 1
+- 원인 (재현): orca-10min-loop.bat 의 `if errorlevel 1 (` 블록 안 `echo ... (FAIL)` 의 `)` 가 블록을 일찍 닫음 → 뒤의 로그·timeout·`exit /b 1` 이 조건 없이 매번 실행. Python 실제 종료 코드는 0 (직접 실행 rc=0).
+- cp949 UnicodeDecodeError: cleanup-pollution 호출 reader thread 예외 · 종료 코드와 무관 (오류가 나도 rc=0 실측). stderr 유실만 → encoding=utf-8 지정.
+- 수정: Python rc 를 PY_RC 로 저장 · 0 이 아니면 그 값 그대로 `exit /b !PY_RC!` · 괄호 이스케이프. 무조건 0 처리 X.
+- 검증: 스텁 exit 0 → bat rc 0 · 스텁 exit 3 → bat rc 3 · 실 loop → rc 0 · 실 Task Scheduler 11:00 실행 LastTaskResult=0 (수정 전 1). 스케줄러 수준 실패 경로: 임시 S4U 작업 등록이 권한 거부 (관리자 필요) → 미검증.
+
+## P. ops_metrics Goal 지표
+- 원인: goals 집계가 기간 안 생성된 goal 만 셈 · goal_transitions 를 읽지 않음 → 오래된 goal 의 timeout 전이 17건 미반영.
+- 수정: goals.transitions (count · from->to(actor) 별 goal_ids) 를 goal_transitions 에서 직접 · 조회 실패는 UNKNOWN.
+- 검증: 24h 17건 · goal_id 목록이 DB 원본과 일치.
+
+## Q. Goal #77 상태 무결성 (조사만 · 상태 변경 X)
+- 동일 goal 확인: goal_id 77 · source_ref ledger:R57 · 핸드오프의 "goal #77 orphan RUNNING cleanup (사용자 승인 후 BLOCKED/FAILED 전이)" 대상과 같음.
+- 이력: 10-29 18:07 PENDING→PLANNING · 20:47 →RUNNING · 10-30 18:10 RUNNING→FAILED (supervisor:auto · timeout 24h 초과).
+- 원인: "보류" 는 문서 지시뿐이고 DB 상태는 RUNNING 이었음. supervisor.advance_all 의 timeout 정책 (2bdc79c · 10-27) 은 PENDING/PLANNING/RUNNING/REPAIRING 만 대상 → 승인 대기라는 표시가 DB 에 없어 승인 필요 전이가 자동 수행됨. 보호 장치 우회가 아니라 보호 장치 부재.
+- 다른 goal: timeout FAILED 60건 (RUNNING 59 · PENDING 1) · 승인 대기 task 와 연결된 것 0 · BLOCKED 14건은 timeout 대상 제외 (코드) · BLOCKED 에서 자동 전이 0 (사람 CLI 2건 · 10-27).
+- 안전한 복구 방안 (승인 대기): ① 현 상태 유지 (실행 0 · R57 은 ledger 에서 별도 완료 · 이력 보존) ② 승인 시 supervisor advance 77 BLOCKED "user hold" (새 전이 추가 · 기존 이력 보존). 재발 방지는 보류 goal 을 BLOCKED 로 두는 운영 규칙 (BLOCKED 는 timeout 제외).

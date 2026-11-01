@@ -54,12 +54,14 @@ REM --- Python 실행 ---
 echo [STEP 3/3] 실행 중 (메모리 조회·orca.db VACUUM·cleanup-pollution)...
 echo [%date% %time%] Running: !PYTHON_EXE! !SCRIPT_PATH! >> "%USERPROFILE%\.claude\orca-10min-loop-wrapper.log"
 "!PYTHON_EXE!" "!SCRIPT_PATH!" >> "%USERPROFILE%\.claude\orca-10min-loop-wrapper.log" 2>&1
+set "PY_RC=!ERRORLEVEL!"
 
-if errorlevel 1 (
-  echo [DONE] Exit code: %ERRORLEVEL% (FAIL)
-  echo [%date% %time%] Exit code: %ERRORLEVEL% >> "%USERPROFILE%\.claude\orca-10min-loop-wrapper.log"
+REM 2026-11-01: 블록 안 echo 의 "(FAIL)" 닫는 괄호가 if 블록을 일찍 닫아 exit /b 1 이 매번 실행됐다 → 괄호는 ^ 로 이스케이프
+if not "!PY_RC!"=="0" (
+  echo [DONE] Exit code: !PY_RC! ^(FAIL^)
+  echo [%date% %time%] Exit code: !PY_RC! >> "%USERPROFILE%\.claude\orca-10min-loop-wrapper.log"
   timeout /t 5 /nobreak >nul
-  exit /b 1
+  exit /b !PY_RC!
 )
 
 echo [DONE] OK · log: %%USERPROFILE%%\.claude\orca-10min-loop-wrapper.log

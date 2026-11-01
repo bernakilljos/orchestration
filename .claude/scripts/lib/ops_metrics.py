@@ -89,6 +89,13 @@ def report(window_h: float = 24) -> Dict[str, Any]:
     rep_done = rep.get("VERIFIED", 0) + rep.get("FAILED", 0)
     out["goals"] = {"by_status": dist or UNKNOWN, "repair_goals": rep or UNKNOWN,
                     "repair_success_rate": _rate(rep.get("VERIFIED", 0), rep_done)}
+    # 2026-11-01: 기간 이전에 생성된 goal 의 상태 변화 (예: supervisor 24h timeout) 는 위 집계에 안 잡힌다 → goal_transitions 직접
+    gt = _q(c, "SELECT from_status, to_status, actor, COUNT(*), GROUP_CONCAT(goal_id) FROM goal_transitions "
+               "WHERE ts>=? GROUP BY 1,2,3", (since,))
+    out["goals"]["transitions"] = UNKNOWN if gt is None else {
+        "count": sum(r[3] for r in gt),
+        "by_kind": {f"{r[0]}->{r[1]} ({r[2]})": {"count": r[3], "goal_ids": sorted(int(g) for g in r[4].split(","))}
+                    for r in gt}}
     # self-heal 이벤트
     ev = _q(c, "SELECT status, attempts, trigger_source FROM self_heal_events WHERE created_at>=?", (since,))
     if ev is None or not ev:
