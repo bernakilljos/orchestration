@@ -273,6 +273,61 @@ def cmd_status() -> int:
     return 0
 
 
+GATE_LOOP_FILE = LEDGER.parent / "stop-gate-loop.json"
+GATE_LOOP_MAX = 3  # 같은 미완료 집합으로 stop_hook_active 차단이 이만큼 이어지면 루프로 본다
+
+
+def _stop_hook_payload() -> dict:
+    """Stop hook stdin JSON (stop_hook_active · session_id). 터미널·빈 입력 = {}."""
+    try:
+        if sys.stdin is None or sys.stdin.isatty():
+            return {}
+        raw = sys.stdin.read()
+        return json.loads(raw) if raw.strip() else {}
+    except Exception:
+        return {}
+
+
+def _gate_loop_reset() -> None:
+    try:
+        GATE_LOOP_FILE.unlink()
+    except Exception:
+        pass
+
+
+def _gate_loop_exceeded(blocking: list) -> bool:
+    """stop_hook_active=true 로 같은 미완료 집합이 연속 GATE_LOOP_MAX 회 막히면 True (통과 · 로그).
+    미완료 집합이 바뀌면(진행이 있으면) 카운터는 처음부터. stop_hook_active 없는 첫 차단은 항상 막는다."""
+    payload = _stop_hook_payload()
+    key = ",".join(sorted(r["id"] + ":" + r["status"] for r in blocking))
+    sid = payload.get("session_id", "")
+    try:
+        st = json.loads(GATE_LOOP_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        st = {}
+    if not payload.get("stop_hook_active") or st.get("key") != key or st.get("session_id") != sid:
+        st = {"key": key, "session_id": sid, "count": 0}
+    st["count"] = int(st.get("count", 0)) + 1
+    if st["count"] > GATE_LOOP_MAX:
+        _gate_loop_reset()
+        line = (f"[{datetime.now().isoformat(timespec='seconds')}] stop-gate loop 해제 · session={sid} · "
+                f"같은 미완료 {key} 로 {GATE_LOOP_MAX}회 연속 차단 후 진전 없음 → 이번 Stop 통과 (항목은 미완료 유지)\n")
+        try:
+            log = LEDGER.parent.parent / "logs" / "stop-gate-loop.log"
+            log.parent.mkdir(parents=True, exist_ok=True)
+            with open(log, "a", encoding="utf-8") as f:
+                f.write(line)
+        except Exception:
+            pass
+        print("[request-ledger] " + line.strip(), file=sys.stderr)
+        return True
+    try:
+        GATE_LOOP_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+    return False
+
+
 def cmd_gate() -> int:
     """Stop hook용. exit 0 = all done · exit 2 = incomplete (block Stop)."""
     data = _load()
@@ -290,9 +345,24 @@ def cmd_gate() -> int:
     total = len(data["requests"])
     done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope", "invalid_registration"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29) · invalid_registration = 자동 등록 분류기 오탐 (2026-10-30 P5-R1)
     if done == total:
+        _gate_loop_reset()
         return 0  # 모두 완료 = 통과
+    # 2026-11-02: approval_required = 사용자 승인 대기. Claude 가 계속 일해도 풀 수 없으므로 Stop 을 막지 않는다
+    #   (R126: 읽기 전용 분석 요청이 '운영' 단어로 승인 대기 등록 → Stop 9회 연속 차단 · 해결 수단 없음).
+    #   항목은 그대로 미완료로 남고 status·statusline 에 보인다 (완료 처리 X).
+    waiting = [r for r in data["requests"] if r["status"] == "approval_required"]
+    blocking = [r for r in data["requests"]
+                if r["status"] not in ("completed", "deferred", "out_of_scope", "invalid_registration", "approval_required")]
+    if not blocking:
+        _gate_loop_reset()
+        print(f"[request-ledger] 사용자 승인 대기 {len(waiting)}건 (Stop 차단 안 함 · 미완료 유지): "
+              + ", ".join(r["id"] for r in waiting), file=sys.stderr)
+        return 0
+    # stop_hook_active 반복 차단 해소: 같은 미완료 집합으로 연속 N 회 막혔으면 무한 루프 → 통과 + 로그
+    if _gate_loop_exceeded(blocking):
+        return 0
     # 미완료 있음 — Claude 에게 알림
-    pending = [r for r in data["requests"] if r["status"] != "completed"]
+    pending = blocking
     msg = f"[request-ledger] {done}/{total} 완료 · 미완료 {len(pending)}건:\n"
     for r in pending[:5]:
         msg += f"  ☐ {r['id']}: {r['desc'][:80]}\n"

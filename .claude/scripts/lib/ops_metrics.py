@@ -131,12 +131,19 @@ def report(window_h: float = 24) -> Dict[str, Any]:
     else:
         out["executions"] = {"count": 0 if ex is not None else UNKNOWN}
     # 토큰·비용 (metrics 기록분만 · Agent headless 비용은 dag_cost/self-heal evidence 에 별도)
-    mt = _q(c, "SELECT ai, SUM(tokens_in), SUM(tokens_out), SUM(cost_usd), COUNT(*) FROM metrics "
+    # 2026-11-02 행 단위 판정: 측정 = cost_usd 가 있고 (토큰 0·비용 0 동시) 가 아닌 행.
+    #   cost NULL = 기록자가 UNKNOWN 으로 저장 (record_call --usage-unknown) ·
+    #   토큰 0·비용 0 = 예전 hook 이 0 을 넘겨 추정한 행 (DB 는 그대로 두고 집계에서만 미측정으로 센다).
+    #   측정된 행의 0 비용은 0 으로 보인다 (예전 집계는 합계 0 을 UNKNOWN 으로 바꿨다).
+    measured = "(cost_usd IS NOT NULL AND NOT (tokens_in=0 AND tokens_out=0 AND cost_usd=0))"
+    mt = _q(c, f"SELECT ai, SUM(CASE WHEN {measured} THEN tokens_in END), "
+               f"SUM(CASE WHEN {measured} THEN tokens_out END), SUM(CASE WHEN {measured} THEN cost_usd END), "
+               f"COUNT(*), SUM(CASE WHEN {measured} THEN 1 ELSE 0 END) FROM metrics "
                "WHERE recorded_at>=? GROUP BY ai", (since,))
-    # 호출은 있는데 토큰 합 0 = 기록 안 된 것 → UNKNOWN (0 으로 위장 X)
-    out["tokens_cost"] = {r[0]: {"tokens_in": r[1] if (r[1] or r[2]) else UNKNOWN,
-                                 "tokens_out": r[2] if (r[1] or r[2]) else UNKNOWN,
-                                 "cost_usd": round(r[3], 4) if r[3] else UNKNOWN, "calls": r[4]}
+    out["tokens_cost"] = {r[0]: {"tokens_in": r[1] if r[5] else UNKNOWN,
+                                 "tokens_out": r[2] if r[5] else UNKNOWN,
+                                 "cost_usd": round(r[3], 4) if r[5] else UNKNOWN,
+                                 "calls": r[4], "measured_calls": r[5], "unmeasured_calls": r[4] - r[5]}
                           for r in mt} if mt else UNKNOWN
     # Judge 결과 (judge-queue 최종 판정)
     jq = ROOT / ".claude" / "state" / "judge-queue"

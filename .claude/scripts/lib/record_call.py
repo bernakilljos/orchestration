@@ -68,13 +68,24 @@ def record_api_call(
     error_class: str | None = None,
     retry: int = 0,
     cost_usd: float | None = None,
-) -> float:
+    usage_known: bool = True,
+) -> float | None:
     """
     Record API call to metrics table and update budget.
 
-    Returns: cost_usd of this call
+    usage_known=False: 토큰·비용을 호출자가 모른다 (예: SubagentStop hook 은 사용량을 받지 못함).
+      → cost_usd = NULL (UNKNOWN) 로 저장 · 0 토큰으로 비용을 추정하지 않음 · budget 에 더하지 않음.
+      2026-11-02 실측: hook 이 tokens 0 을 넘겨 estimate_cost 가 $0.0 을 만들어 "측정된 0" 으로 보였다.
+
+    Returns: cost_usd of this call (None = UNKNOWN)
     """
     check_daily_rollover()
+
+    if not usage_known:
+        record_metric(ai=ai, model_id=model, tokens_in=0, tokens_out=0, cost_usd=None,
+                      latency_ms=latency_ms, success=success, task_id=task_id, cache_hit=False,
+                      error_class=error_class if error_class and error_class != "none" else None)
+        return None
 
     # Estimate cost if not provided
     if cost_usd is None:
@@ -119,8 +130,10 @@ def main():
     ap = argparse.ArgumentParser(description="Record API call metrics")
     ap.add_argument("--ai", required=True, help="AI type (claude-opus, codex, gemini, etc)")
     ap.add_argument("--model", required=True, help="Model ID")
-    ap.add_argument("--tokens-in", type=int, required=True)
-    ap.add_argument("--tokens-out", type=int, required=True)
+    ap.add_argument("--tokens-in", type=int, default=0)
+    ap.add_argument("--tokens-out", type=int, default=0)
+    ap.add_argument("--usage-unknown", action="store_true",
+                    help="토큰·비용 미측정 — cost NULL(UNKNOWN) 저장 · 추정 X · budget 반영 X")
     ap.add_argument("--latency-ms", type=int, required=True)
     ap.add_argument("--success", type=int, required=True, help="1 or 0")
     ap.add_argument("--task-id", default=None)
@@ -145,8 +158,10 @@ def main():
         error_class=args.error_class,
         retry=args.retry,
         cost_usd=args.cost_usd,
+        usage_known=not args.usage_unknown,
     )
-    print(f"Recorded: {args.ai}/{args.model} in={args.tokens_in} out={args.tokens_out} cost=${cost:.6f}")
+    cost_txt = "UNKNOWN" if cost is None else f"${cost:.6f}"
+    print(f"Recorded: {args.ai}/{args.model} in={args.tokens_in} out={args.tokens_out} cost={cost_txt}")
 
 
 if __name__ == "__main__":

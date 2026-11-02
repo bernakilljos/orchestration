@@ -138,6 +138,8 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
         started = time.time()
         r = dispatch(prompt, cwd, ag["model"], tools, role=f"dag:{tid}",
                      system_prompt=ag["body"][:6000])
+        if r.get("deferred"):       # 자원 부족으로 시작 보류 — 실패가 아니다
+            return {"status": "skipped", "deferred": True, "agent": ag["name"], "reason": r.get("error")}
         return {"status": "ok" if r.get("ok") else "failed", "agent": ag["name"],
                 "selection": ag["selection"], "tools": tools, "model": ag["model"],
                 "agent_session_id": r.get("agent_session_id"), "invocation": r.get("invocation"),
@@ -252,6 +254,9 @@ def _metrics(results: Dict[str, Dict[str, Any]], waves: List[List[str]], wall_s:
     return {"nodes": len(results), "ok": st.count("ok"), "failed": st.count("failed"),
             "skipped": st.count("skipped"), "success_rate": round(st.count("ok") / max(1, len(st)), 3),
             "cost_usd": round(sum(float(r.get("cost_usd") or 0) for r in results.values()), 4),
+            # 실행됐지만 비용이 기록되지 않은 노드 수 — cost_usd 는 측정된 노드 합계일 뿐 (0 ≠ 미측정)
+            "cost_unknown_nodes": sum(1 for r in ran if r.get("cost_usd") is None),
+            "deferred": sum(1 for r in results.values() if r.get("deferred")),
             "wall_s": round(wall_s, 1), "agent_busy_s": round(busy, 1),
             "parallel_speedup": round(busy / wall_s, 2) if wall_s else None,
             "waves": len(waves), "max_wave": max((len(w) for w in waves), default=0)}

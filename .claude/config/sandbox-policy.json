@@ -8,6 +8,8 @@
     "docs/screens/"
   ],
   "min_free_gb": 10,
+  "min_commit_free_gb": 2,
+  "max_commit_percent": 90,
   "max_total_active_gb": 20,
   "estimate_margin": 1.2,
   "agent_max_parallel": 3,

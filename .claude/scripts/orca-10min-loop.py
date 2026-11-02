@@ -92,16 +92,49 @@ def get_system_metrics():
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass  # noqa: BLE001
 
+        # 2026-11-02: RAM % 만으로는 commit(가상 메모리) 고갈을 못 본다 (11-01 15:50 WinError 1455 · RAM 68%)
+        try:
+            sys.path.insert(0, str(PROJECT_ROOT / ".claude" / "scripts" / "lib"))
+            import repair_sandbox as _sb
+            commit = _sb.commit_memory()
+        except Exception as e:
+            commit = {"measured": False, "reason": f"{type(e).__name__}: {e}"[:200]}
+
         return {
             "ram_percent": round(ram_percent, 1),
             "cpu_percent": round(cpu_percent, 1),
             "claude_procs": claude_count,
             "vscode_procs": vscode_count,
+            "commit": commit,
+            "vscode_top_mb": top_vscode_mb(),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         log_msg(f"Metric query failed: {e}", "ERROR")
         return None
+
+def _sb_gate(commit: dict):
+    """repair_sandbox.memory_gate 재사용 (임계값 정본 = sandbox-policy.json)."""
+    sys.path.insert(0, str(PROJECT_ROOT / ".claude" / "scripts" / "lib"))
+    import repair_sandbox as _sb
+    return _sb.memory_gate(cm=commit)
+
+
+def top_vscode_mb():
+    """가장 큰 Code.exe 의 private 메모리(MB) — 관측만 (사용자 프로세스는 종료하지 않는다).
+    11-01 저메모리 경고 21건 전부 1위가 Code.exe (2.0→3.7GB). 측정 실패 = None."""
+    try:
+        best = 0
+        for p in psutil.process_iter(["name"]):
+            try:
+                if (p.info["name"] or "").lower() == "code.exe":
+                    best = max(best, p.memory_info().private)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        return round(best / 1024 ** 2) if best else None
+    except Exception:
+        return None
+
 
 # ============================================================================
 # Database Optimization
@@ -288,17 +321,29 @@ def main():
         log_msg("Failed to get metrics", "ERROR")
         return 1
 
+    cm = metrics.get("commit") or {}
+    commit_txt = (f"{cm['used_gb']}/{cm['limit_gb']}GB ({cm['percent']}%) free {cm['free_gb']}GB"
+                  if cm.get("measured") else f"UNKNOWN ({cm.get('reason', '')})")
     log_msg(
         f"Metrics: RAM {metrics['ram_percent']}% / "
         f"CPU {metrics['cpu_percent']}% / "
         f"claude {metrics['claude_procs']} / "
-        f"vscode {metrics['vscode_procs']}"
+        f"vscode {metrics['vscode_procs']} / "
+        f"commit {commit_txt} / "
+        f"Code.exe max {metrics.get('vscode_top_mb') if metrics.get('vscode_top_mb') is not None else 'UNKNOWN'}MB"
     )
 
     # 2. Check thresholds (warn only, no action)
     alerts = []
+    step_failures = []
     if metrics['ram_percent'] >= THRESHOLD_RAM_PERCENT:
         alerts.append(f"RAM HIGH: {metrics['ram_percent']}%")
+    try:
+        mg = _sb_gate(cm)
+    except Exception:
+        mg = None
+    if mg:
+        alerts.append(f"COMMIT LOW: {mg['reason']} (신규 Agent·worktree 시작 보류)")
     # 2026-10-16: 세션 여러 개는 평소 사용이다 — 3개 기준(근거 없음)으로 10분마다 WARN 420건이 쌓였다.
     #   조치할 일이 생기는 것은 메모리가 찰 때뿐이므로 RAM HIGH 와 겹칠 때만 경고한다.
     if metrics['claude_procs'] >= THRESHOLD_PROC_COUNT and metrics['ram_percent'] >= THRESHOLD_RAM_PERCENT:
@@ -310,26 +355,40 @@ def main():
     # 3. Execute cleanup if not dry-run
     if not DRY_RUN:
         # 3a. DB VACUUM
-        optimize_orca_db()
+        if not optimize_orca_db():
+            step_failures.append("DB VACUUM")
 
         # 3b. cleanup-pollution.sh
-        run_cleanup_pollution()
+        if not run_cleanup_pollution():
+            step_failures.append("cleanup-pollution.sh")
 
         # 3c. 멈춘 고아 python 정리 (2026-10-14 · 좀비 62개 사례)
-        reap_stuck_orphans()
+        # 2026-11-02: commit 고갈 시 psutil.process_iter 가 루프 바깥에서 OSError(WinError 1455) 를 던져
+        #   루프 전체가 exit 1 로 죽었다 (11-01 15:50). 이 단계만 실패로 기록하고 나머지 단계는 계속한다.
+        try:
+            reap_stuck_orphans()
+        except OSError as e:
+            step_failures.append(f"reap_stuck_orphans: {e}"[:200])
+            log_msg(f"reap_stuck_orphans FAIL (다음 단계 계속): {e}", "ERROR")
 
         # 3c-ledger. Ledger → Goal 자동 변환 (2026-10-28 사용자 지시 "자동 연결 필요")
         try:
             ledger_py = PROJECT_ROOT / ".claude" / "scripts" / "request-ledger.py"
             if ledger_py.exists():
+                # 2026-11-02: 자식은 PYTHONIOENCODING=utf-8 로 쓰는데 부모가 기본 cp949 로 읽어
+                #   144회 전부 _readerthread UnicodeDecodeError → 출력 유실. 3곳 모두 utf-8 로 읽는다.
                 lresult = subprocess.run(
                     [sys.executable, str(ledger_py), "to-goals"],
-                    capture_output=True, text=True, timeout=60,
+                    capture_output=True, text=True, encoding="utf-8", errors="backslashreplace", timeout=60,
                     env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
                     cwd=str(PROJECT_ROOT)
                 )
-                if lresult.returncode == 0 and lresult.stdout:
-                    log_msg(f"ledger to-goals: {lresult.stdout.strip()[:200]}")
+                if lresult.returncode == 0:
+                    if lresult.stdout:
+                        log_msg(f"ledger to-goals: {lresult.stdout.strip()[:200]}")
+                else:
+                    step_failures.append(f"ledger to-goals rc={lresult.returncode}")
+                    log_msg(f"ledger to-goals FAIL rc={lresult.returncode}: {(lresult.stderr or lresult.stdout)[:200]}", "WARN")
         except Exception as e:
             log_msg(f"ledger to-goals exception: {e}", "WARN")
 
@@ -340,14 +399,15 @@ def main():
                 # 2026-10-27 사용자 지시 "실행 주체 식별" — --trigger scheduler
                 result = subprocess.run(
                     [sys.executable, str(sup_py), "advance-all", "--trigger", "scheduler"],
-                    capture_output=True, text=True, timeout=120,
+                    capture_output=True, text=True, encoding="utf-8", errors="backslashreplace", timeout=120,
                     env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
                     cwd=str(PROJECT_ROOT)
                 )
                 if result.returncode == 0:
                     log_msg(f"supervisor advance-all: OK · {result.stdout[:200]}")
                 else:
-                    log_msg(f"supervisor advance-all FAIL: {result.stderr[:200]}", "WARN")
+                    step_failures.append(f"supervisor advance-all rc={result.returncode}")
+                    log_msg(f"supervisor advance-all FAIL rc={result.returncode}: {(result.stderr or result.stdout)[:200]}", "WARN")
         except Exception as e:
             log_msg(f"supervisor advance-all exception: {e}", "WARN")
 
@@ -358,11 +418,14 @@ def main():
             if sh_py.exists():
                 hres = subprocess.run(
                     [sys.executable, str(sh_py), "heal-tick", "--trigger", "scheduler"],
-                    capture_output=True, text=True, timeout=1500,
+                    capture_output=True, text=True, encoding="utf-8", errors="backslashreplace", timeout=1500,
                     env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"},
                     cwd=str(PROJECT_ROOT)
                 )
-                log_msg(f"self-heal tick rc={hres.returncode}: {(hres.stdout or hres.stderr)[:300]}")
+                if hres.returncode != 0:
+                    step_failures.append(f"self-heal tick rc={hres.returncode}")
+                log_msg(f"self-heal tick rc={hres.returncode}: {(hres.stdout or hres.stderr)[:300]}",
+                        "INFO" if hres.returncode == 0 else "WARN")
         except Exception as e:
             log_msg(f"self-heal tick exception: {e}", "WARN")
 
@@ -378,6 +441,7 @@ def main():
         "timestamp": datetime.now().isoformat(),
         "metrics": metrics,
         "alerts": alerts,
+        "step_failures": step_failures,
         "dry_run": DRY_RUN
     }
 
@@ -388,6 +452,10 @@ def main():
     except Exception as e:
         log_msg(f"State save failed: {e}", "ERROR")
 
+    # 2026-11-02: 하위 단계 실패를 성공(0)으로 숨기지 않는다 — 단계 실패 = 2 (wrapper 가 스케줄러에 그대로 전달)
+    if step_failures:
+        log_msg(f"=== 10-Min Loop END (단계 실패 {len(step_failures)}: {step_failures}) ===", "WARN")
+        return 2
     log_msg("=== 10-Min Loop END ===")
     return 0
 

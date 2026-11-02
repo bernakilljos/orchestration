@@ -15,5 +15,7 @@ set -eu
 PY="$(command -v python 2>/dev/null)"
 [ -n "$PY" ] || exit 0
 
-"$PY" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/request-ledger.py" gate 2>/dev/null
+# stdin(Stop payload · stop_hook_active) 를 gate 에 그대로 넘긴다. stderr 를 버리면 차단 사유가
+# "No stderr output" 으로만 보였다 (2026-11-02) → 사유를 그대로 보여 준다.
+"$PY" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/request-ledger.py" gate
 exit $?

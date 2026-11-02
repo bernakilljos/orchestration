@@ -115,6 +115,60 @@ def _policy() -> dict:
         return {}
 
 
+def commit_memory() -> dict:
+    """가상 메모리(Commit) 사용량·한도·여유 (GB). RAM % 와 별개 지표다.
+    2026-11-01 15:50 실측: RAM 68% 인데 commit 한도에 닿아 psutil 이 WinError 1455 (페이징 파일 부족) 로 실패.
+    측정 불가 = measured False (0 으로 채우지 않는다)."""
+    gb = lambda b: round(b / 1024 ** 3, 2)
+    try:
+        if os.name == "nt":
+            import ctypes
+
+            class _PI(ctypes.Structure):
+                _fields_ = [("cb", ctypes.c_ulong), ("CommitTotal", ctypes.c_size_t),
+                            ("CommitLimit", ctypes.c_size_t), ("CommitPeak", ctypes.c_size_t),
+                            ("PhysicalTotal", ctypes.c_size_t), ("PhysicalAvailable", ctypes.c_size_t),
+                            ("SystemCache", ctypes.c_size_t), ("KernelTotal", ctypes.c_size_t),
+                            ("KernelPaged", ctypes.c_size_t), ("KernelNonpaged", ctypes.c_size_t),
+                            ("PageSize", ctypes.c_size_t), ("HandleCount", ctypes.c_ulong),
+                            ("ProcessCount", ctypes.c_ulong), ("ThreadCount", ctypes.c_ulong)]
+            pi = _PI()
+            pi.cb = ctypes.sizeof(pi)
+            if not ctypes.windll.psapi.GetPerformanceInfo(ctypes.byref(pi), pi.cb):
+                return {"measured": False, "reason": "GetPerformanceInfo failed"}
+            used, limit = pi.CommitTotal * pi.PageSize, pi.CommitLimit * pi.PageSize
+        else:
+            info = {}
+            with open("/proc/meminfo", encoding="utf-8") as f:
+                for line in f:
+                    k, v = line.split(":", 1)
+                    info[k] = int(v.split()[0]) * 1024
+            used, limit = info["Committed_AS"], info["CommitLimit"]
+    except Exception as e:
+        return {"measured": False, "reason": f"{type(e).__name__}: {e}"[:200]}
+    if not limit:
+        return {"measured": False, "reason": "commit limit 0"}
+    return {"measured": True, "used_gb": gb(used), "limit_gb": gb(limit), "free_gb": gb(limit - used),
+            "percent": round(used * 100 / limit, 1)}
+
+
+def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None) -> Optional[dict]:
+    """신규 Agent·worktree 시작 전 commit 메모리 확인. 부족 = retryable 거부 dict · 충분/측정 불가 = None.
+    측정 불가는 막지 않는다 (막으면 측정 불가 환경에서 영구 정지) — 호출부가 결과를 기록한다.
+    임계값 = sandbox-policy.json (min_commit_free_gb · max_commit_percent)."""
+    pol = _policy() if pol is None else pol
+    cm = commit_memory() if cm is None else cm
+    if not cm.get("measured"):
+        return None
+    min_free = float(os.environ.get("ORCA_MIN_COMMIT_FREE_GB", pol.get("min_commit_free_gb", 2)))
+    max_pct = float(os.environ.get("ORCA_MAX_COMMIT_PERCENT", pol.get("max_commit_percent", 90)))
+    if cm["free_gb"] < min_free or cm["percent"] > max_pct:
+        return {"ok": False, "retryable": True, "deferred": True, "commit": cm,
+                "reason": f"가상 메모리(commit) 부족: {cm['used_gb']}/{cm['limit_gb']}GB ({cm['percent']}%) · "
+                          f"여유 {cm['free_gb']}GB < 최소 {min_free}GB 또는 > {max_pct}% · 시작 보류"}
+    return None
+
+
 def _estimate_bytes(base_ref: str, sparse_exclude: list) -> int:
     """base_ref 의 tracked 파일 크기 합 (sparse 제외 경로 빼고) = checkout 예상 크기."""
     out = _git("ls-tree", "-r", "-l", base_ref, timeout=60).stdout
@@ -200,6 +254,9 @@ def create(goal_id: str, base_ref: str = "HEAD") -> dict:
     # 2026-10-30 자원 정책 (sandbox-policy.json): sparse checkout 으로 대용량 자산 제외 ·
     # 예상 크기 + 다른 프로세스 예약분 + 활성 sandbox 총량을 보고 부족하면 생성 거부 (retryable · 대기).
     pol = _policy()
+    mg = memory_gate(pol)
+    if mg:
+        return mg
     sparse = list(pol.get("sparse_exclude") or [])
     est = int(_estimate_bytes(base_ref, sparse) * float(pol.get("estimate_margin", 1.2)))
     with _reservation_lock():

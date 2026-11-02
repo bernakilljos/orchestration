@@ -22,7 +22,11 @@ FAIL_MSGS=""
 FAIL_COUNT=0
 
 # 1. Completion Guard
-if "$PY" -X utf8 "$ROOT/.claude/scripts/request-ledger.py" gate >/dev/null 2>&1; then
+# 2026-11-02: stop-request-ledger-gate.sh 가 등록돼 있으면 그 hook 이 같은 gate 를 실행한다 (정본 1곳).
+#   여기서 또 실행하면 같은 사유로 Stop 이 두 번 막히고 (R126 · 9회 연속), gate 의 stop_hook_active 루프 카운터도 두 번 센다.
+if grep -q 'stop-request-ledger-gate.sh' "$ROOT/.claude/settings.json" 2>/dev/null; then
+  :  # 전용 hook 이 담당
+elif "$PY" -X utf8 "$ROOT/.claude/scripts/request-ledger.py" gate </dev/null >/dev/null 2>&1; then
   :  # pass
 else
   FAIL_COUNT=$((FAIL_COUNT + 1))

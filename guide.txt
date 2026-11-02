@@ -2395,3 +2395,10 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 ## 2026-10-29 R62 supervisor NoneType fix + Phase 2-B worktree 실 통합
 
 사용자 지시 (f17a8b8 후속 + 자동 감지 ERROR x19 orca-10min-loop.log 'NoneType object is not subscriptable'). ① supervisor L840 cmd[:80] → (cmd or '')[:80] 변경 (investigate kind cmd=None 안전 처리 · 자동 감지 ERROR 19회 재발 0). dry-run 18 goals 처리 exception 0 확인. ② Phase 2-B worktree 격리 실 통합: execute_goal 안 safe_mode=True task spec 분기 추가 · repair_sandbox.create 자동 호출 · runner.run 에 cwd 전달 (격리 cwd 실행). 실 테스트 goal 82 → sandboxes 리스트 생성 (.repair-sandbox/g82-safe/ · branch repair/g82-safe) · cmd exit=0 격리 cwd 작동. verifier_ctx cwd 자동 교체는 다음 세션 보완 (현재는 fixed 경로). 사용자 명시 "경로 격리와 OS 수준 격리 구분" 정합 (이번 통합 = 경로 격리만 · OS 수준 (파일 접근·네트워크) 격리는 다음 세션 결정). 회귀 golden 13/13·e2e 68/68·full-chain 51/51·phase1-e2e 23/23. 예산 CHANGE 2 (supervisor NoneType fix + safe_mode 분기). Ledger R62 (57/62 범위외 5). 다음: Phase 2-C LLM 평가 보완 · 2-D 범용 Planner · 2-F 운영 수직 종단 통합 테스트.
+
+## 2026-11-02 운영 결함 4건 수정 (24h 운영 보고서 · 11-01 09:00~11-02 09:00)
+- 가상 메모리(commit) 게이트: .claude/config/sandbox-policy.json 의 min_commit_free_gb(2)·max_commit_percent(90) 미달 시 신규 worktree·Agent 시작 보류 (재시도 가능 · 실행 중 작업·사용자 프로세스 건드리지 않음). 10분 루프 로그에 commit 사용량·Code.exe 최대 메모리 표시.
+- 10분 루프: 하위 명령 utf-8 디코딩 (cp949 UnicodeDecodeError 제거) · 단계 실패 시 exit 2 (스케줄러에 그대로 표시).
+- 비용: 사용량을 모르면 cost=UNKNOWN(NULL) 저장 · Agent 실측 비용은 budget 에 반영.
+- Stop gate: 사용자 승인 대기(approval_required) 항목은 종료를 막지 않음(미완료로 남음) · 진전 없이 3회 연속 차단되면 통과 후 .claude/logs/stop-gate-loop.log 기록.
+- 주의: Orca_10MinLoop 는 "배터리 사용 시 시작 안 함" 설정이라 노트북이 배터리 상태면 실행을 건너뛴다 (11-02 09:40 실측).

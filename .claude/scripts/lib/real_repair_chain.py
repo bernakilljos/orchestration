@@ -234,10 +234,15 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
                    use_login_auth: bool = True, system_prompt: str = "") -> Dict[str, Any]:
     """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user)."""
     import shutil
+    sys.path.insert(0, str(LIB))
+    import repair_sandbox as _sbp
     if max_budget_usd is None:      # 자원 정책 단일 계층 (sandbox-policy.json)
-        sys.path.insert(0, str(LIB))
-        import repair_sandbox as _sbp
         max_budget_usd = float(_sbp._policy().get("agent_max_budget_usd", 3.0))
+    # 2026-11-02: commit 메모리 부족이면 Agent 를 띄우지 않는다 (실행 중 작업은 건드리지 않음 · 재시도 가능)
+    mg = _sbp.memory_gate()
+    if mg:
+        return {"ok": False, "invocation": "auto", "role": role, "model": model, "retryable": True,
+                "deferred": True, "error": mg["reason"], "commit": mg["commit"]}
     exe = shutil.which("claude")
     if not exe:
         return {"ok": False, "invocation": "auto", "role": role, "error": "claude CLI not found"}
@@ -292,6 +297,10 @@ def _record_agent_usage(role, model, tok_in, tok_out, cost, latency_ms, ok, sess
         state_db.record_metric(ai=f"claude-agent:{role.split(':')[0]}", model_id=model, tokens_in=tok_in,
                                tokens_out=tok_out, cost_usd=cost, latency_ms=latency_ms, success=ok,
                                task_id=session_id or None, error_class=None if ok else "agent_error")
+        # 2026-11-02: Agent 실제 비용이 budget 에 더해지지 않아 일일 지출이 항상 $0.0 으로 보였다.
+        #   측정된 비용만 더한다 (None = UNKNOWN 은 더하지 않음).
+        if cost is not None:
+            state_db.add_spend(float(cost))
     except Exception:
         pass
 

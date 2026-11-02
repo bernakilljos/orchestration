@@ -37,8 +37,9 @@ def run(ctx):
     if event == "SubagentStop" and os.path.isfile(rec):
         kw = {"creationflags": 0x08000000} if os.name == "nt" else {}
         try:  # 기다리지 않는다 (훅 지연 방지) — 원본도 실패를 무시했다
+            # SubagentStop 은 사용량을 주지 않는다 → 0 이 아니라 UNKNOWN (2026-11-02)
             subprocess.Popen(["python", rec, "--ai", "claude", "--model", f"subagent-{atype}",
-                              "--tokens-in", "0", "--tokens-out", "0", "--latency-ms", str(dur_ms),
+                              "--usage-unknown", "--latency-ms", str(dur_ms),
                               "--success", "1", "--task-id", f"subagent-{aid}"],
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kw)
         except Exception:
