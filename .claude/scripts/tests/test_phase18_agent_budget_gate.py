@@ -262,6 +262,7 @@ def test_repair_chain_passes_chain_id_to_fix_and_judge():
     import inspect
     src = inspect.getsource(rc.agent_repair_chain)
     assert src.count("chain_id=chain") == 2
+    assert 'get("agent_judge_max_budget_usd", 2.0)' in src      # Judge 상한도 정책 (고정 2.0 X)
 
 
 # ---------- Judge 결합 규칙: Judge 가 거부·모순 판정을 내면 VERIFIED 로 새지 않는다 ----------

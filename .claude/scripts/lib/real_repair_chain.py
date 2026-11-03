@@ -515,8 +515,9 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         '"scope_adequacy":"ok|too_narrow|too_broad","confidence":0-10,'
         '"recommendation":"VERIFIED|UNVERIFIED|REPAIRING|OUT_OF_SCOPE","reasoning":"..."}'
     )
-    jd = dispatch_agent(judge_prompt, cwd, judge_model, JUDGE_TOOLS, role="judge",
-                        timeout=600, max_budget_usd=2.0, chain_id=chain)
+    # Judge 1회 상한 = 정책 (기본 2.0) · 고정값이면 체인 상한을 호출 경계에서 맞출 수 없다 (2026-11-03)
+    jd = dispatch_agent(judge_prompt, cwd, judge_model, JUDGE_TOOLS, role="judge", timeout=600,
+                        max_budget_usd=float(_sb._policy().get("agent_judge_max_budget_usd", 2.0)), chain_id=chain)
     out["agent_judge"] = jd
     verdict_json = _first_json_object(jd.get("result", "")) if jd.get("ok") else None
     if not verdict_json:

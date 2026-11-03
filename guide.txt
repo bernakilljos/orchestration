@@ -2415,3 +2415,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - (2026-11-03 보강) Agent 실행 중 과금 여부가 불명확한 실패 (프로세스 생성 외 예외 · 종료 코드 ≠ 0 + 사용량 없음 · timeout) 는 예약액을 그대로 차감 (UNKNOWN) · 프로세스 생성 자체 실패(OSError) 만 $0 해제.
 - T2 Judge 거부 시험 (실제 Judge 3회 · $0.85): 하드코딩·예외 숨김 수정안 REPAIRING (거부) · 올바른 수정안 VERIFIED · 준비물·결과 .claude/state/t2-judge-fixtures/.
 - T1 준비 (무료): 새 결함 3종 fixture (날짜 경계·유니코드 정규화·금액 반올림) · Mock 종단 12/12 · 다중 프로세스 동시 예약 회귀 추가 · 실행 절차 .claude/state/t1-fixtures/T1-README.md.
+- Judge 1회 비용 상한을 sandbox-policy.json agent_judge_max_budget_usd 로 조정 가능 (기본 2.0 · 이전 고정값). 시험별 총비용 상한을 결제 경계에서 맞추기 위함.
