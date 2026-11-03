@@ -106,3 +106,24 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 3. F8: `test_phase5_self_healing.py` R75 검사가 운영 Ledger 데이터에 의존 (깨끗한 환경에서 1건 실패)
 4. 테스트 실행 시 `ORCHESTRATION_ROOT` 를 강제로 주면 phase12 테스트 16건 ERROR (기본 실행은 정상)
 5. 시험 도중 Claude Code 가 메모리 부족으로 대기 중이던 백그라운드 명령 1개를 중단 (commit 여유 4.1GB · 물리 RAM 압박)
+
+## 11. 재현성 결함 수정 (2026-11-03 16:3x · 유료 $0)
+| 결함 | 원인 (실측) | 수정 | 검증 |
+|---|---|---|---|
+| phase5 38/39 (R75) | 운영 Ledger 에 R75 가 있다고 가정 | 임시 Ledger 에서 실제 `cmd_invalid_registration` 으로 오등록 처리 후 `cmd_status` 확인 (운영 Ledger md5 무변경) | 새 clone 39/39 |
+| phase12 16 ERROR | `ORCHESTRATION_ROOT` 가 아니라 **새 DB 에 goals 표가 없음** (phase2/3/5 가 먼저 돌아 표를 만든 뒤에는 통과해 순서 의존으로 보였음) | 테스트가 직접 SQL 전에 `supervisor.ensure_schema`·`runner._ensure_schema`·`_ensure_heal_schema` 호출 | 새 DB 16/16 |
+| 새 설치에서 executions·goals·self_heal_events 표 부재 | 표는 각 모듈 첫 사용 때 생성 → 그 전에 `platform_api.evidence`·`ops_metrics`·`independent_verifier` 가 읽으면 실패 | `init-state-db.py`·SessionStart `ensure-state.sh` 가 같은 ensure 함수 호출 (IF NOT EXISTS · 데이터 무변경) | 새 clone · 기본 env / 명시 ROOT 둘 다: pytest 94 · phase2 20/20 · phase3 26/26 · phase5 39/39 · golden 13/13 |
+- 남은 조건: DB 초기화(`init-state-db.py` 또는 SessionStart) 없이 바로 테스트하면 phase12 4건 실패 — 설치 절차의 초기화 단계가 전제
+
+## 12. F5 잔여 sandbox `heal-e100-a1` (읽기 전용 조사 · 삭제 안 함)
+- git worktree 로 등록 (브랜치 `repair/heal-e100-a1` = base `4c978e5`) · checkout 중 종료돼 파일 0개 (index 만 있어 전부 삭제로 보임)
+- `repair-sandboxes.json`·예약 기록에 없음 · 관련 이벤트 100 은 attempt 2 (`heal-e100-a2`) 로 완료 · 보존할 변경 0
+- 판정: **안전한 정리 후보** (`git worktree remove` + 브랜치 삭제) — 승인 사항
+- 원인 결함: sandbox 생성 도중 중단되면 기록 전에 worktree 가 남는다 (재시작 복원 자체는 정상)
+
+## 13. F4 실제 체인 Judge 거부 — 설계 (유료 실행 전)
+- 기존 T2 재사용 가능 범위: Judge 판별 능력·프롬프트·결합 규칙 (같은 함수·같은 문구) → 재사용 가능. 운영 체인의 "수정 Agent 결과 → Judge 거부 → 반영 0" 은 별도 실측 필요
+- 시나리오: 보이는 테스트 결함 A + docstring·REQUIREMENTS 에만 적힌 같은 함수의 요구 B (테스트 없음). 수정 프롬프트가 "smallest change" 라 Agent 가 A 만 고칠 가능성이 높음 → Judge 가 B 누락으로 거부하는지
+- 한계: LLM 이 B 까지 고치면 VERIFIED 로 끝나 거부 경로를 못 탄다 (결과 강제 불가) → 1회 실패 시 재시도 없이 "거부 경로 미발생" 으로 기록
+- 비용 상한: 수정 $0.9 + Judge $0.6 = $1.5 (1회) · 판정: Judge REPAIRING/UNVERIFIED + commit 0 + 결과 브랜치 = base + 재시도 0 이면 PASS
+- Mock 사전 검증: test_t1_mock_chain `test_judge_reject_blocks_apply` 3건 (실제 체인 코드 · 가짜 Agent)

@@ -2417,3 +2417,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - T1 준비 (무료): 새 결함 3종 fixture (날짜 경계·유니코드 정규화·금액 반올림) · Mock 종단 12/12 · 다중 프로세스 동시 예약 회귀 추가 · 실행 절차 .claude/state/t1-fixtures/T1-README.md.
 - Judge 1회 비용 상한을 sandbox-policy.json agent_judge_max_budget_usd 로 조정 가능 (기본 2.0 · 이전 고정값). 시험별 총비용 상한을 결제 경계에서 맞추기 위함.
 - F1~F8 안전성 시험 (2026-11-03): 고칠 수 없는 결함은 Agent 1회 후 정책에서 중단(재시도 0) · heal-tick 강제 종료 후 lease 만료 시 스케줄러가 회수 · 결과 docs/FINAL_AUDIT_PLAN_2026-11-03.md §9.
+- 새 설치 재현성 (2026-11-03): init-state-db.py·ensure-state.sh 가 supervisor·runner·self-heal 표까지 생성 · phase5/phase12 테스트의 운영 데이터·표 순서 의존 제거.

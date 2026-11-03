@@ -162,16 +162,28 @@ def check_existing_db() -> bool:
     return False
 
 
+def ensure_domain_schemas() -> list:
+  """supervisor(goals·goal_tasks)·runner(executions)·self-heal(self_heal_events) 스키마 (IF NOT EXISTS · 데이터 무변경).
+  2026-11-03 F8: 새 clone 에서는 이 표들이 첫 사용 전까지 없어 읽기 전용 경로(platform_api·ops_metrics·verifier)가 실패했다."""
+  import supervisor, runner, self_healing
+  supervisor.ensure_schema()
+  runner._ensure_schema()
+  self_healing._ensure_heal_schema()
+  return ["goals", "executions", "self_heal_events"]
+
+
 def main() -> int:
   """Initialize database and run migrations."""
   try:
     # Check if already initialized
     if check_existing_db():
+      ensure_domain_schemas()
       print("[OK] Database already initialized with schema v1")
       return 0
 
     print("[*] Initializing orca.db...")
     init_schema()
+    ensure_domain_schemas()
     print(f"[OK] Created database at {get_db_path()}")
 
     # Update Claude heartbeat

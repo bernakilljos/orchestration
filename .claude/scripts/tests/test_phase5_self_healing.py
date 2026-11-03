@@ -227,20 +227,29 @@ def test_06_invalid_registration_state(r):
           hasattr(rl, "cmd_invalid_registration"),
           note=f"func={hasattr(rl, 'cmd_invalid_registration')}")
     # Status print 포함 "오등록" 라벨 확인
+    # 2026-11-03 F8: 운영 Ledger 에 특정 요청(R75)이 있다고 가정하지 않는다 → 임시 Ledger 에서 실제 CLI 로 오등록 처리
     import io
+    import json as _json
+    import tempfile as _tf
+    tmp_ledger = Path(_tf.mkdtemp()) / "request-ledger.json"
+    tmp_ledger.write_text(_json.dumps({"session_id": "p5-test", "requests": [
+        {"id": "R1", "desc": "p5 fixture request", "status": "pending"}]}, ensure_ascii=False), encoding="utf-8")
+    real_ledger, rl.LEDGER = rl.LEDGER, tmp_ledger
     old_stdout = sys.stdout
     sys.stdout = io.StringIO()
     try:
+        rl.cmd_invalid_registration("R1", reason="p5 fixture", detected_by="test")
         rl.cmd_status()
         out = sys.stdout.getvalue()
     finally:
         sys.stdout = old_stdout
+        rl.LEDGER = real_ledger
     r.rec("status output includes '오등록' header",
           "오등록" in out,
           note=f"header_found={'오등록' in out}")
-    r.rec("status output includes INVALID label for R75",
-          "INVALID" in out and "R75" in out,
-          note=f"R75_invalid={'R75' in out and 'INVALID' in out}")
+    r.rec("status output includes INVALID label for the invalid-registered fixture request",
+          "INVALID" in out and "R1" in out,
+          note=f"fixture_invalid={'R1' in out and 'INVALID' in out}")
 
 
 def test_08_auto_approve_does_not_bypass_approval_gate(r):

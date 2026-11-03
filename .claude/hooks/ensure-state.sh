@@ -30,7 +30,7 @@ if [[ "$PY" != *WindowsApps* ]] && [ -n "$PY" ]; then
   done
 fi
 
-( cd "$PROJECT_DIR/.claude/scripts/lib" && "$PY" -X utf8 -c "import state_db; state_db.init_schema()" ) >>"$LOG" 2>&1 && echo "[$TS] schema ok" >>"$LOG" || echo "[$TS] schema FAIL" >>"$LOG"
+( cd "$PROJECT_DIR/.claude/scripts/lib" && "$PY" -X utf8 -c "import state_db, supervisor, runner, self_healing; state_db.init_schema(); supervisor.ensure_schema(); runner._ensure_schema(); self_healing._ensure_heal_schema()" ) >>"$LOG" 2>&1 && echo "[$TS] schema ok" >>"$LOG" || echo "[$TS] schema FAIL" >>"$LOG"
 
 AUD="$PROJECT_DIR/.claude/state/hardcoded-audit.json"
 if [ ! -f "$AUD" ] || [ $(( $(date +%s) - $(stat -c %Y "$AUD" 2>/dev/null || echo 0) )) -gt 21600 ]; then
