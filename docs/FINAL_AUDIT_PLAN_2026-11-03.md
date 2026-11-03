@@ -189,3 +189,10 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | F4 요구사항 전파·Judge 판정 코드 | `lib/self_healing.py` (enqueue·process_events·run_repair) · `lib/real_repair_chain.py` (load_requirements·find_unbound_requirements·agent_repair_chain) · `lib/independent_verifier.py` (judge_handoff·check_requirement_verdicts·judge_absorb) · `config/sandbox-policy.json` · `tests/test_phase18_agent_budget_gate.py` · `state/t1-fixtures/test_t1_mock_chain.py` |
 | 간헐 테스트 실패 원인·잔여 위험 | 이 문서 §18 · `lib/supervisor.py` (safe_mode fail-closed) · `tests/test_phase2_e2e.py` (Test 11) · 재현 로그 |
 - 새 clone 재검증 (d34495d): 같은 clone 에서 DB 삭제 → 전체 실행을 기본 Root·명시 Root 번갈아 2회씩 (예전엔 2회차부터 항상 FAIL) → 4회 모두 pytest 111 · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · 테스트 sandbox 잔여 0
+
+## 20. F6·F7 최종 판정·ZIP 준비 (2026-11-03 18:1x KST · 판정 전)
+- 도구: `.claude/state/final-audit/prepare_final_audit.py` (읽기 전용 · gitignore · ZIP 에 포함). `f6f7` 는 2026-11-04 16:11 KST 전에는 `NOT_YET` (rc 3) 만 반환 · `--interim` 은 "판정 아님" 표시
+- F6 비교: 기준선 18 Goal 의 status·updated_at 각각 · 104 ref 의 이름·sha 각각
+- F7 비교: 10분 슬롯별 START (누락 슬롯 목록) · START/END 짝 (창 시작 전 tick·창 끝 진행 중 tick 분리) · WARN/ERROR·COMMIT LOW · RAM/commit 최대·여유 최소 · 디스크 · budget 지출 = metrics 합 · 예약 정산 (예약 기능 도입 전 2회 $0.7458 별도 표시) · 열린 예약 0 · 무결성 verify · Ledger↔Goal · Goal #77 FAILED
+- ZIP: F6·F7 final 판정 파일이 없거나 시크릿 패턴이 1건이라도 있으면 생성 거부. 포함 = git 추적 소스 (docs/screens 제외) · fixture·증거·무결성 기준선·hardcoded-audit·10분 루프 로그·DB 감사 export (대화·요약·해결책·file_audit 표 제외 · 홈 경로·이메일 치환) · statusline 결정 memory 사본. 제외 = `.env`·settings.local.json·`.repair-sandbox/`·`.git/`·orca.db/sessions.db 원본·bash_commands.log
+- F4: 코드·Mock 회귀 PASS · 실제 Agent·Judge 재검증 **미실시** (별도 구분 기록)
