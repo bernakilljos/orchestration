@@ -271,9 +271,15 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
         _sdb.agent_budget_settle(rid, None, launched=True)
         return {"ok": False, "invocation": "auto", "role": role, "model": model,
                 "error": f"timeout ({timeout}s)", "cost_usd": None, "budget_status": "unknown"}
-    except Exception as e:
+    except OSError as e:
+        # 프로세스 생성 자체 실패 (실행 파일 없음·권한) = API 요청이 나갈 수 없었다 → 예약 해제
         _sdb.agent_budget_settle(rid, None, launched=False)
         return {"ok": False, "invocation": "auto", "role": role, "model": model, "error": f"launch failed: {e}"}
+    except Exception as e:
+        # 그 밖의 실패는 요청이 서버에 닿았는지 알 수 없다 → 예약액 그대로 차감 (UNKNOWN · $0 처리 X)
+        _sdb.agent_budget_settle(rid, None, launched=True)
+        return {"ok": False, "invocation": "auto", "role": role, "model": model,
+                "error": f"agent run failed: {e}", "cost_usd": None, "budget_status": "unknown"}
     data = {}
     for line in reversed((r.stdout or "").strip().splitlines()):
         try:

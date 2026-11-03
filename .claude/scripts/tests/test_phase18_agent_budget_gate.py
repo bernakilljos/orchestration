@@ -177,6 +177,25 @@ def test_launch_failure_releases_reservation(db, monkeypatch):
     assert _q(db, "SELECT status, charged_usd FROM agent_budget_reservations") == [("released", 0.0)]
 
 
+def test_unclear_failure_keeps_reserved_amount(db, monkeypatch):
+    _set(db, daily_limit_usd=10.0)
+    a = MockAgent(exc=RuntimeError("pipe broken after request"))   # 요청 도달 여부 불명
+    r = _dispatch(monkeypatch, a, max_budget_usd=3.0)
+    assert r["ok"] is False and r["budget_status"] == "unknown"
+    assert _q(db, "SELECT status, charged_usd FROM agent_budget_reservations") == [("unknown", 3.0)]
+
+
+def test_nonzero_exit_without_usage_is_unknown(db, monkeypatch):
+    _set(db, daily_limit_usd=10.0)
+
+    def crashed(argv, **kw):
+        return subprocess.CompletedProcess(argv, 1, stdout="", stderr="connection reset")
+    monkeypatch.setattr(rc.subprocess, "run", crashed)
+    r = rc.dispatch_agent("p", str(ROOT), "haiku", ["Read"], role="judge", max_budget_usd=2.0)
+    assert r["ok"] is False and r["budget_status"] == "unknown"
+    assert _q(db, "SELECT status, charged_usd FROM agent_budget_reservations") == [("unknown", 2.0)]
+
+
 def test_memory_deferred_makes_no_reservation(db, monkeypatch):
     _set(db, daily_limit_usd=10.0)
     monkeypatch.setattr(sb, "commit_memory", lambda: {**OK_MEM, "free_gb": 0.1, "percent": 99.5})

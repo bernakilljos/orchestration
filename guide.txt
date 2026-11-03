@@ -2412,3 +2412,5 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - check-sync-drift.sh / on-file-changed.sh: 출력 JSON 을 인코더로 생성 (Windows 경로 '\' 때문에 'Invalid \escape' 나던 결함).
 - 무결성 기준선: python .claude/scripts/sandbox-integrity-baseline.py baseline → .claude/state/integrity-baseline/ ·
   검증: ... verify <manifest> (기존 파일 변경·삭제 = 실패 · 새 sandbox·새 기록 항목 = 보고만). 읽기 전용.
+- (2026-11-03 보강) Agent 실행 중 과금 여부가 불명확한 실패 (프로세스 생성 외 예외 · 종료 코드 ≠ 0 + 사용량 없음 · timeout) 는 예약액을 그대로 차감 (UNKNOWN) · 프로세스 생성 자체 실패(OSError) 만 $0 해제.
+- T2 Judge 거부 시험 (실제 Judge 3회 · $0.85): 하드코딩·예외 숨김 수정안 REPAIRING (거부) · 올바른 수정안 VERIFIED · 준비물·결과 .claude/state/t2-judge-fixtures/.
