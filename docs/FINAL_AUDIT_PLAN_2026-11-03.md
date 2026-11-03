@@ -127,3 +127,30 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 한계: LLM 이 B 까지 고치면 VERIFIED 로 끝나 거부 경로를 못 탄다 (결과 강제 불가) → 1회 실패 시 재시도 없이 "거부 경로 미발생" 으로 기록
 - 비용 상한: 수정 $0.9 + Judge $0.6 = $1.5 (1회) · 판정: Judge REPAIRING/UNVERIFIED + commit 0 + 결과 브랜치 = base + 재시도 0 이면 PASS
 - Mock 사전 검증: test_t1_mock_chain `test_judge_reject_blocks_apply` 3건 (실제 체인 코드 · 가짜 Agent)
+
+## 14. F4 실제 운영 체인 결과 (2026-11-03 17:00 KST · 1회 · 재시도 0) — **FAIL (Judge 거짓 VERIFIED)**
+| 항목 | 값 |
+|---|---|
+| 실행 | Goal 1362 · 이벤트 107 (scheduler `heal:scheduler:20596`) · 수정 Agent `2b504d4c` · Judge `c1193537` · repair Goal 1363 VERIFIED |
+| 테스트 | Runner exec 548 실패 2 → exec 549 통과 3 |
+| 수정 diff | `>` → `>=` · `weight_kg` → `math.ceil(weight_kg)` (결함 A 만) |
+| Judge | VERIFIED · confidence 9 · 근거는 docstring·테스트만 · `REQUIREMENTS.md` R3 (무게 ≤0 → ValueError) 미확인 |
+| 숨은 검사 | **FAIL** — R3 weight=0 / -1.0 이 오류 없이 요금 계산 |
+| 반영 | `repair-apply/T1-t1e_ship-1793692348@169dd75` (격리 브랜치 · main 무변경 · 보존) |
+| 비용 | 수정 $0.3703 + Judge $0.3616 = **$0.7319** (상한 $1.50) · 정책 원복 |
+- 원인: Judge 프롬프트가 "diff·테스트 결과·이 폴더의 파일" 만 근거로 지정하고 요구사항 문서 위치를 주지 않는다 → Judge 는 docstring 과 테스트로만 판정 (T2 에서 거부한 2건은 결함이 diff 자체에 보였던 경우)
+- 영향: 테스트에 없는 요구사항을 Agent 가 빠뜨리면 Judge 도 놓칠 수 있다 (반영은 격리 브랜치 + merge 승인 대기라 main 피해 0)
+- 수정 후보 (미적용 · 승인 사항): self_heal 설정에 요구사항 파일 경로를 받아 수정 Agent·Judge 프롬프트 모두에 "이 요구사항을 기준으로" 를 넣고, Judge JSON 에 요구사항별 충족 여부를 요구
+
+## 15. 상태 기록
+- F8 설치 전제: `python .claude/scripts/init-state-db.py` (또는 Claude Code 세션 시작 hook `ensure-state.sh`) 후 테스트 · 초기화 없이 바로 실행하면 phase12 4건 실패 (§11)
+- 페이지 파일: 설정 10240/10240 MB (변경 전 7168/10240) · 재부팅 전까지 현재 할당 유지 · 자동 재부팅 안 함
+- `heal-e100-a1`: 정리 후보 · 최종 감사 전까지 보존 (§12)
+- F6·F7: 2026-11-04 16:11 KST 이후 기준선 (`integrity-baseline/f6-approval-wait-20261103-151915.json` · manifest) 과 비교 — 그 전에는 PARTIAL
+
+## 16. 최종 ZIP 에 반드시 포함 (감사 지정 3 항목)
+| 감사 항목 | 포함할 소스·문서 |
+|---|---|
+| 하드코딩 (경로·숫자·조건·문구) | `.claude/scripts/` 전체 · `.claude/hooks/` · `.claude/config/*.json` · `plugins/` · `setup/` · `.claude/state/hardcoded-audit.json` (자동 감사 결과) · `docs/HARDCODING_AUDIT_2026-10-28.md` |
+| 기능 실제 연결·미구현 Scaffold | `.claude/settings.json` (hook 등록) · `orca-10min-loop.py` · `lib/` (supervisor·runner·self_healing·real_repair_chain·independent_verifier·agent_registry·tech_discovery·platform_api) · 실행 증거 (§8) · `docs/ORCHESTRATION_AUDIT_2026-10-16.md` |
+| 서브 상태줄 라벨·세로줄 정렬 | `.claude/statusline.sh` · `.claude/scripts/statusline_*.py` (LABEL_WIDTH 등) · `.claude/rules/operational-freeze.md` (FROZEN 범위·서브 미검증 기록) · memory `feedback_statusline_*` 3건 사본 · 사용자 스크린샷 |
