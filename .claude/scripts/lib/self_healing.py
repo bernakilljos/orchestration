@@ -345,7 +345,7 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
             protected_paths=agent_fix.get("protected_paths") or [],
             apply_target=agent_fix["apply_target"],
             failure_summary=f"Failure hints from goal #{original_goal_id}: {hints}" if hints else "",
-            **{k: agent_fix[k] for k in ("fix_model", "judge_model", "max_fix_rounds") if k in agent_fix},
+            **{k: agent_fix[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id") if k in agent_fix},
         )
         chain["stages"].append({"stage": "agent_repair_chain", "ok": ac.get("ok"),
                                 "failed_stage": ac.get("failed_stage"),
@@ -598,7 +598,12 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: Optiona
             results.append(rec)
             continue
         sid = f"heal-e{eid}-a{ev['attempts']}"
-        sbr = _sb.create(sid, base_ref=cfg.get("base_ref", "HEAD"))
+        # 유료 Agent 예산이 없으면 sandbox 도 만들지 않고 이벤트를 대기로 되돌린다 (호출 0건 · 시도 횟수 차감 X)
+        import state_db as _sdb
+        pol = _sb._policy()
+        bg = _sdb.agent_budget_reserve(float(pol.get("agent_max_budget_usd", 3.0)), "heal-preflight",
+                                       chain_id=f"heal-event-{eid}", policy=pol, dry_run=True)
+        sbr = bg if not bg.get("ok") else _sb.create(sid, base_ref=cfg.get("base_ref", "HEAD"))
         if not sbr.get("ok"):
             # 공간 부족 등 retryable → 이벤트를 pending 으로 되돌려 다음 tick 에 재시도 (시도 횟수는 차감 X)
             with _conn() as c:
@@ -617,7 +622,8 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: Optiona
         rr = run_repair(gid, agent_fix={
             "sandbox_id": sid, "test_cmd": cfg["test_cmd"], "allow_paths": cfg["allow_paths"],
             "protected_paths": cfg.get("protected_paths") or [], "apply_target": target,
-            **{k: cfg[k] for k in ("fix_model", "judge_model", "max_fix_rounds") if k in cfg}})
+            "chain_id": f"heal-event-{eid}",       # 이벤트 재시도까지 한 예산 체인
+            **{k: cfg[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id") if k in cfg}})
         repair_gid = rr.get("repair_goal_id")
         ar = rr.get("agent_repair") or {}
         summary = {"ok": rr.get("ok"), "stage": rr.get("stage"), "failed_stage": ar.get("failed_stage"),

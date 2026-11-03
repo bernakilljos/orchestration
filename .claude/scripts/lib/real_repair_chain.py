@@ -231,13 +231,17 @@ def _agent_env(use_login_auth: bool) -> Dict[str, str]:
 
 def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
                    role: str, timeout: int = 900, max_budget_usd: Optional[float] = None,
-                   use_login_auth: bool = True, system_prompt: str = "") -> Dict[str, Any]:
-    """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user)."""
+                   use_login_auth: bool = True, system_prompt: str = "",
+                   chain_id: Optional[str] = None) -> Dict[str, Any]:
+    """headless Claude Agent 1회 자동 실행. 프로젝트 hook 은 로드하지 않는다 (--setting-sources user).
+    결제 경계: 실행 직전 state_db.agent_budget_reserve (차단기·일일·호출당·동시·체인) → 실행 후 정산."""
     import shutil
     sys.path.insert(0, str(LIB))
     import repair_sandbox as _sbp
+    import state_db as _sdb
+    pol = _sbp._policy()
     if max_budget_usd is None:      # 자원 정책 단일 계층 (sandbox-policy.json)
-        max_budget_usd = float(_sbp._policy().get("agent_max_budget_usd", 3.0))
+        max_budget_usd = float(pol.get("agent_max_budget_usd", 3.0))
     # 2026-11-02: commit 메모리 부족이면 Agent 를 띄우지 않는다 (실행 중 작업은 건드리지 않음 · 재시도 가능)
     mg = _sbp.memory_gate()
     if mg:
@@ -251,14 +255,25 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
             "--allowedTools", *allowed_tools, "--max-budget-usd", str(max_budget_usd)]
     if system_prompt:
         argv += ["--append-system-prompt", system_prompt]
+    bud = _sdb.agent_budget_reserve(max_budget_usd, role, chain_id=chain_id, policy=pol, ttl_s=timeout + 300)
+    if not bud.get("ok"):
+        return {"ok": False, "invocation": "auto", "role": role, "model": model,
+                "retryable": bud.get("retryable"), "deferred": bud.get("deferred"),
+                "budget_blocked": True, "error": bud.get("reason")}
+    rid = bud["reservation_id"]
     started = time.time()
     try:
         r = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=timeout,
                            encoding="utf-8", errors="replace", env=_agent_env(use_login_auth),
                            stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
+        # 실행은 됐고 사용량은 모른다 → 예약액 그대로 차감 (UNKNOWN 을 0 으로 두지 않음)
+        _sdb.agent_budget_settle(rid, None, launched=True)
         return {"ok": False, "invocation": "auto", "role": role, "model": model,
-                "error": f"timeout ({timeout}s)"}
+                "error": f"timeout ({timeout}s)", "cost_usd": None, "budget_status": "unknown"}
+    except Exception as e:
+        _sdb.agent_budget_settle(rid, None, launched=False)
+        return {"ok": False, "invocation": "auto", "role": role, "model": model, "error": f"launch failed: {e}"}
     data = {}
     for line in reversed((r.stdout or "").strip().splitlines()):
         try:
@@ -272,7 +287,9 @@ def dispatch_agent(prompt: str, cwd: str, model: str, allowed_tools: list,
                                                    "cache_read_input_tokens"))
     _record_agent_usage(role, model, tok_in, int(usage.get("output_tokens") or 0), data.get("total_cost_usd"),
                         int((time.time() - started) * 1000), ok, data.get("session_id"))
+    budget_status = _sdb.agent_budget_settle(rid, data.get("total_cost_usd"), launched=True)
     return {
+        "budget_status": budget_status,
         "ok": ok,
         "invocation": "auto",
         "tokens_in": tok_in, "tokens_out": usage.get("output_tokens"),
@@ -386,7 +403,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                        apply_target: str, failure_summary: str = "",
                        fix_model: str = "claude-opus-5-5",
                        judge_model: str = "claude-opus-5-5",
-                       max_fix_rounds: int = 2) -> Dict[str, Any]:
+                       max_fix_rounds: int = 2, chain_id: Optional[str] = None) -> Dict[str, Any]:
     """재현 → Agent 자동 수정 → 정책 검사 → runner pytest (실패 시 출력 되돌려 재수정) → 통계+LLM Judge → commit → ff 반영."""
     sys.path.insert(0, str(LIB))
     import repair_sandbox as _sb
@@ -394,8 +411,10 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     import supervisor as _sup
     import independent_verifier as _iv
 
+    # 수정 Agent + 독립 Judge 비용·호출 수는 한 체인으로 합산 (state_db.agent_budget_reserve)
+    chain = chain_id or f"repair-goal-{repair_goal_id}"
     out: Dict[str, Any] = {"repair_goal_id": repair_goal_id, "sandbox_id": sandbox_id,
-                           "sandbox_root": str(_sb.SANDBOX_ROOT), "stages": []}
+                           "sandbox_root": str(_sb.SANDBOX_ROOT), "stages": [], "budget_chain": chain}
 
     def fail(stage, **kw):
         _sup.advance(repair_goal_id, "FAILED", f"agent_repair_chain:{stage}", actor="self-healing")
@@ -434,7 +453,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
             f"executes the tests and reports back. Reply with one JSON line: "
             f'{{"edit_file":"...","root_cause":"..."}}'
         )
-        fix = dispatch_agent(fix_prompt, cwd, fix_model, FIX_TOOLS, role="fix")
+        fix = dispatch_agent(fix_prompt, cwd, fix_model, FIX_TOOLS, role="fix", chain_id=chain)
         rec = {"round": rnd, "agent_session_id": fix.get("agent_session_id"), "ok": fix.get("ok"),
                "cost_usd": fix.get("cost_usd"), "duration_s": fix.get("duration_s"),
                "result": (fix.get("result") or "")[-600:]}
@@ -491,7 +510,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         '"recommendation":"VERIFIED|UNVERIFIED|REPAIRING|OUT_OF_SCOPE","reasoning":"..."}'
     )
     jd = dispatch_agent(judge_prompt, cwd, judge_model, JUDGE_TOOLS, role="judge",
-                        timeout=600, max_budget_usd=2.0)
+                        timeout=600, max_budget_usd=2.0, chain_id=chain)
     out["agent_judge"] = jd
     verdict_json = _first_json_object(jd.get("result", "")) if jd.get("ok") else None
     if not verdict_json:

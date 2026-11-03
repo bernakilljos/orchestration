@@ -390,11 +390,18 @@ def judge_absorb(goal_id: int, judge_result_json: str) -> Dict[str, Any]:
     if stat_status != "VERIFIED":
         final = {"status": stat_status, "reasons": reasons + ["statistical judgment blocks VERIFIED"]}
     else:
-        satisfies = bool(llm_verdict.get("satisfies_requirement"))
-        confidence = int(llm_verdict.get("confidence", 0) or 0)
+        satisfies = llm_verdict.get("satisfies_requirement") is True
+        try:
+            confidence = int(llm_verdict.get("confidence", 0) or 0)
+        except (TypeError, ValueError):
+            confidence = 0          # 숫자가 아닌 confidence = 근거 부족 (예외로 체인을 죽이지 않음)
         rec = llm_verdict.get("recommendation", "")
         missing = llm_verdict.get("missing_requirements") or []
         unexpected = llm_verdict.get("unexpected_side_effects") or []
+        # 2026-11-03: Judge 가 스스로 VERIFIED 를 권고하지 않았거나(누락 포함) 누락 요구사항·범위 문제를 적었는데
+        #   satisfies=true·confidence≥7 만으로 VERIFIED 로 새던 5가지 경우를 막는다 (fail-closed).
+        if satisfies and (missing or llm_verdict.get("scope_adequacy", "ok") != "ok"):
+            satisfies = False
         if not satisfies:
             final = {"status": "REPAIRING",
                      "reasons": reasons + [f"llm judge: not satisfied ({len(missing)} missing)"]}
@@ -407,6 +414,9 @@ def judge_absorb(goal_id: int, judge_result_json: str) -> Dict[str, Any]:
         elif unexpected:
             final = {"status": "REPAIRING",
                      "reasons": reasons + [f"llm judge: {len(unexpected)} unexpected side effects"]}
+        elif rec != "VERIFIED":
+            final = {"status": rec if rec in ("UNVERIFIED", "REPAIRING") else "UNVERIFIED",
+                     "reasons": reasons + [f"llm judge recommendation {rec or 'missing'} (not VERIFIED)"]}
         else:
             final = {"status": "VERIFIED",
                      "reasons": reasons + [

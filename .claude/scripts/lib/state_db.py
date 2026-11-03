@@ -498,6 +498,110 @@ def reset_breaker() -> None:
     )
 
 
+# Agent 결제 경계 예산 (2026-11-03 · 유료 headless Agent 호출 직전 강제)
+#   예약(open) → 정산(settled 실측 / unknown 예약액 그대로 / released 미실행 0).
+#   실측 비용은 기존대로 add_spend 로 today_spent_usd 에 들어가고, 이 표는 미정산·UNKNOWN·체인 합계만 책임진다.
+def _ensure_agent_budget_table(conn) -> None:
+  conn.execute("""
+    CREATE TABLE IF NOT EXISTS agent_budget_reservations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      day TEXT NOT NULL,
+      chain_id TEXT,
+      role TEXT,
+      reserved_usd REAL NOT NULL,
+      charged_usd REAL,
+      status TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      settled_at INTEGER,
+      note TEXT
+    )""")
+
+
+def agent_budget_reserve(amount_usd: float, role: str, chain_id: str = None, policy: dict = None,
+                         ttl_s: int = 1800, dry_run: bool = False) -> Dict[str, Any]:
+  """유료 Agent 1회 시작 전 예산 예약. 하나라도 걸리면 {"ok": False, "reason": ...} · 호출 0건.
+  검사: 차단기 · 일일 예산(NULL=미설정=금지) · 호출당 상한 · 동시 실행 수 · 체인(수정+Judge) 호출 수·합계.
+  DB 오류도 차단 (fail-closed). dry_run=True 는 예약 없이 판정만."""
+  pol = policy or {}
+  def deny(reason, retryable):
+    return {"ok": False, "budget_blocked": True, "retryable": retryable, "deferred": retryable,
+            "reason": reason}
+  try:
+    check_daily_rollover()
+    now = int(time.time())
+    day = time.strftime("%Y-%m-%d", time.gmtime(now))
+    with tx() as conn:
+      _ensure_agent_budget_table(conn)
+      b = conn.execute(
+        "SELECT daily_limit_usd, today_spent_usd, breaker_tripped FROM budget WHERE id = 1"
+      ).fetchone()
+      if b is None:
+        return deny("budget 행 없음 · 유료 호출 금지", True)
+      if b["breaker_tripped"] == 1:
+        return deny("비용 차단기 작동 중 · 유료 호출 금지", True)
+      limits = [float(v) for v in (b["daily_limit_usd"], pol.get("agent_daily_budget_usd")) if v is not None]
+      if not limits:
+        return deny("일일 예산 미설정 (NULL) · 무제한으로 취급하지 않음 · 유료 호출 금지", True)
+      daily = min(limits)
+      per_call = float(pol.get("agent_max_budget_usd", 3.0))
+      if not 0 < float(amount_usd) <= per_call:
+        return deny(f"호출당 상한 위반: {amount_usd} (상한 {per_call})", False)
+      rows = conn.execute(
+        "SELECT status, reserved_usd, charged_usd, expires_at FROM agent_budget_reservations WHERE day = ?",
+        (day,)).fetchall()
+      open_rows = [r for r in rows if r["status"] == "open"]
+      unknown = sum(float(r["charged_usd"] or 0) for r in rows if r["status"] == "unknown")
+      committed = float(b["today_spent_usd"] or 0) + unknown + sum(float(r["reserved_usd"]) for r in open_rows)
+      if committed + float(amount_usd) > daily:
+        return deny(f"일일 예산 부족: 사용·예약 ${committed:.4f} + 요청 ${float(amount_usd):.2f} > 한도 ${daily:.2f}",
+                    True)
+      max_par = int(pol.get("agent_max_parallel", 3))
+      running = sum(1 for r in open_rows if r["expires_at"] > now)
+      if running >= max_par:
+        return deny(f"동시 실행 예산 초과: 실행 중 {running} ≥ {max_par}", True)
+      if chain_id:
+        ch = conn.execute(
+          "SELECT status, reserved_usd, charged_usd FROM agent_budget_reservations "
+          "WHERE chain_id = ? AND status != 'released'", (chain_id,)).fetchall()
+        max_calls = int(pol.get("agent_max_calls_per_chain", 3))
+        if len(ch) >= max_calls:
+          return deny(f"재시도 상한: 체인 {chain_id} 호출 {len(ch)} ≥ {max_calls}", False)
+        ch_spent = sum(float(r["reserved_usd"] if r["charged_usd"] is None else r["charged_usd"]) for r in ch)
+        ch_cap = float(pol.get("agent_chain_budget_usd", 5.0))
+        if ch_spent + float(amount_usd) > ch_cap:
+          return deny(f"체인 예산 초과 (수정+Judge 합산): ${ch_spent:.4f} + ${float(amount_usd):.2f} > ${ch_cap:.2f}",
+                      False)
+      if dry_run:
+        return {"ok": True, "dry_run": True, "daily_limit_usd": daily, "committed_usd": round(committed, 6)}
+      cur = conn.execute(
+        "INSERT INTO agent_budget_reservations (day, chain_id, role, reserved_usd, status, created_at, expires_at) "
+        "VALUES (?, ?, ?, ?, 'open', ?, ?)", (day, chain_id, role, float(amount_usd), now, now + int(ttl_s)))
+      return {"ok": True, "reservation_id": cur.lastrowid, "daily_limit_usd": daily,
+              "committed_usd": round(committed, 6)}
+  except Exception as e:
+    return deny(f"예산 확인 실패 (fail-closed): {e}", True)
+
+
+def agent_budget_settle(reservation_id: int, cost_usd: Optional[float], launched: bool) -> str:
+  """예약 정산. 미실행 = released(0) · 실측 = settled(실측) · 실행했는데 사용량 UNKNOWN = unknown(예약액 그대로 차감)."""
+  if launched and cost_usd is not None:
+    status, charged = "settled", float(cost_usd)
+  elif launched:
+    status, charged = "unknown", None
+  else:
+    status, charged = "released", 0.0
+  with tx() as conn:
+    _ensure_agent_budget_table(conn)
+    if status == "unknown":
+      conn.execute("UPDATE agent_budget_reservations SET status = ?, charged_usd = reserved_usd, settled_at = ? "
+                   "WHERE id = ? AND status = 'open'", (status, int(time.time()), reservation_id))
+    else:
+      conn.execute("UPDATE agent_budget_reservations SET status = ?, charged_usd = ?, settled_at = ? "
+                   "WHERE id = ? AND status = 'open'", (status, charged, int(time.time()), reservation_id))
+  return status
+
+
 def check_daily_rollover() -> None:
   """Reset today_spent_usd if date changed."""
   today = time.strftime("%Y-%m-%d", time.gmtime(int(time.time())))

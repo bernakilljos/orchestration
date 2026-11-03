@@ -14,5 +14,9 @@
   "estimate_margin": 1.2,
   "agent_max_parallel": 3,
   "agent_max_budget_usd": 3.0,
+  "agent_daily_budget_usd": null,
+  "agent_chain_budget_usd": 5.0,
+  "agent_max_calls_per_chain": 3,
+  "_agent_budget_note": "결제 경계(state_db.agent_budget_reserve): 일일 한도 = budget.daily_limit_usd 와 agent_daily_budget_usd 중 작은 값 · 둘 다 null 이면 유료 Agent 호출 금지 · 체인 = 수정 Agent + 독립 Judge 합산",
   "heal_max_events_per_tick": 1
 }
