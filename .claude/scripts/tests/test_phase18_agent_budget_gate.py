@@ -309,3 +309,37 @@ def test_multi_process_reservations_never_exceed_daily(db, tmp_path):
     oks = [json.loads(p.communicate(timeout=120)[0].strip().splitlines()[-1]) for p in procs]
     assert sum(oks) == 2
     assert _q(db, "SELECT COUNT(*), SUM(reserved_usd) FROM agent_budget_reservations WHERE status='open'") == [(2, 4.0)]
+
+
+def test_response_lost_exit0_without_json_is_unknown(db, monkeypatch):
+    """F3: 프로세스는 정상 종료했지만 결과 JSON 이 없음 (응답 유실) → 실패 · 예약액 그대로 차감."""
+    _set(db, daily_limit_usd=10.0)
+
+    def lost(argv, **kw):
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+    monkeypatch.setattr(rc.subprocess, "run", lost)
+    r = rc.dispatch_agent("p", str(ROOT), "haiku", ["Read"], role="fix", max_budget_usd=0.9)
+    assert r["ok"] is False and r["budget_status"] == "unknown"
+    assert _q(db, "SELECT status, charged_usd FROM agent_budget_reservations") == [("unknown", 0.9)]
+
+
+def test_heal_tick_waits_without_budget_then_proceeds_after_limit_set(db, monkeypatch):
+    """F2: 예산 없음 → 대기 (호출·sandbox 0 · 시도 차감 0) → 한도 설정 후 다음 tick 에서 sandbox 생성 단계로 진행."""
+    import self_healing as sh
+    monkeypatch.setattr(sh, "DB", db)
+    sh._ensure_heal_schema()
+    now = int(time.time())
+    with sqlite3.connect(str(db)) as c:
+        c.execute("INSERT INTO self_heal_events (goal_id, task_id, config, status, created_at, updated_at) "
+                  "VALUES (2, 't', ?, 'pending', ?, ?)",
+                  (json.dumps({"test_cmd": "pytest", "allow_paths": ["a.py"], "base_ref": "HEAD"}), now, now))
+    created = []
+    monkeypatch.setattr(sb, "create", lambda sid, base_ref="HEAD": (created.append(sid),
+                                                                    {"ok": False, "retryable": True,
+                                                                     "reason": "stop-here"})[1])
+    out1 = sh.process_events("scheduler", max_events=1)
+    assert out1["events"][0]["status"] == "waiting" and created == []
+    _set(db, daily_limit_usd=10.0)
+    out2 = sh.process_events("scheduler", max_events=1)
+    assert created == ["heal-e1-a1"]                       # 같은 이벤트 · 시도 번호 1 그대로 (대기 중 차감 0)
+    assert out2["events"][0]["error"] == "stop-here"
