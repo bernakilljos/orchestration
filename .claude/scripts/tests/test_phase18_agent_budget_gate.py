@@ -293,3 +293,18 @@ def test_judge_absorb_parse_failure_not_verified(tmp_path, monkeypatch):
     (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED"}}))
     r = iv.judge_absorb(1, "not json {")
     assert r["ok"] is False and "final_verdict" not in r
+
+
+def test_multi_process_reservations_never_exceed_daily(db, tmp_path):
+    """별도 프로세스 8개가 같은 DB 에 동시에 예약 → 한도(5) 안에서 2.0 x 2 만 성공 (중복 예약 0)."""
+    import os
+    _set(db, daily_limit_usd=5.0)
+    code = ("import sys,json;sys.path.insert(0,sys.argv[1]);import state_db;"
+            "r=state_db.agent_budget_reserve(2.0,'dag',policy={'agent_max_budget_usd':3.0,'agent_max_parallel':10});"
+            "print(json.dumps(r['ok']))")
+    env = {**os.environ, "ORCHESTRATION_ROOT": str(tmp_path)}
+    procs = [subprocess.Popen([sys.executable, "-c", code, str(LIB)], env=env, stdout=subprocess.PIPE, text=True)
+             for _ in range(8)]
+    oks = [json.loads(p.communicate(timeout=120)[0].strip().splitlines()[-1]) for p in procs]
+    assert sum(oks) == 2
+    assert _q(db, "SELECT COUNT(*), SUM(reserved_usd) FROM agent_budget_reservations WHERE status='open'") == [(2, 4.0)]
