@@ -345,7 +345,7 @@ def run_repair(original_goal_id: int, repair_specs: Optional[List[Dict]] = None,
             protected_paths=agent_fix.get("protected_paths") or [],
             apply_target=agent_fix["apply_target"],
             failure_summary=f"Failure hints from goal #{original_goal_id}: {hints}" if hints else "",
-            **{k: agent_fix[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id") if k in agent_fix},
+            **{k: agent_fix[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id", "requirements_path") if k in agent_fix},
         )
         chain["stages"].append({"stage": "agent_repair_chain", "ok": ac.get("ok"),
                                 "failed_stage": ac.get("failed_stage"),
@@ -623,7 +623,7 @@ def process_events(trigger_source: str, lease_s: int = 1800, max_events: Optiona
             "sandbox_id": sid, "test_cmd": cfg["test_cmd"], "allow_paths": cfg["allow_paths"],
             "protected_paths": cfg.get("protected_paths") or [], "apply_target": target,
             "chain_id": f"heal-event-{eid}",       # 이벤트 재시도까지 한 예산 체인
-            **{k: cfg[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id") if k in cfg}})
+            **{k: cfg[k] for k in ("fix_model", "judge_model", "max_fix_rounds", "chain_id", "requirements_path") if k in cfg}})
         repair_gid = rr.get("repair_goal_id")
         ar = rr.get("agent_repair") or {}
         summary = {"ok": rr.get("ok"), "stage": rr.get("stage"), "failed_stage": ar.get("failed_stage"),

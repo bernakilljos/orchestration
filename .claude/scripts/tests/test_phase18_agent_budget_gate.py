@@ -343,3 +343,55 @@ def test_heal_tick_waits_without_budget_then_proceeds_after_limit_set(db, monkey
     out2 = sh.process_events("scheduler", max_events=1)
     assert created == ["heal-e1-a1"]                       # 같은 이벤트 · 시도 번호 1 그대로 (대기 중 차감 0)
     assert out2["events"][0]["error"] == "stop-here"
+
+
+# ---------- F4: 요구사항별 판정 게이트 (judge_absorb · LLM 문장과 무관한 결정적 검사) ----------
+
+_REQ = ["R1", "R2", "R3"]
+
+
+def _ok_rows(**override):
+    rows = {rid: {"id": rid, "status": "met", "evidence": f"shipping.py:{i}"} for i, rid in enumerate(_REQ, 1)}
+    rows.update(override)
+    return [r for r in rows.values() if r is not None]
+
+
+@pytest.mark.parametrize("rows,want", [
+    (_ok_rows(), "VERIFIED"),
+    (_ok_rows(R3={"id": "R3", "status": "unmet", "evidence": "no ValueError for weight<=0"}), "REPAIRING"),
+    (_ok_rows(R3=None), "UNVERIFIED"),                                        # 필수 ID 누락
+    (_ok_rows(R3={"id": "R3", "status": "unverifiable", "evidence": "x"}), "UNVERIFIED"),
+    (_ok_rows(R3={"id": "R3", "status": "met", "evidence": ""}), "UNVERIFIED"),   # 근거 없음
+    (_ok_rows(R3={"id": "R9", "status": "met", "evidence": "x"}), "UNVERIFIED"),  # ID 불일치
+    ("missing", "UNVERIFIED"),                                                # 요구사항 목록 자체 없음 (F4 실제 응답 형태)
+])
+def test_judge_absorb_requirement_gate(tmp_path, monkeypatch, rows, want):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []}}))
+    v = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+         "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED", "reasoning": "x"}
+    if rows != "missing":
+        v["requirements"] = rows
+    assert iv.judge_absorb(1, json.dumps(v), required_ids=_REQ)["final_verdict"]["status"] == want
+
+
+def test_judge_absorb_without_required_ids_unchanged(tmp_path, monkeypatch):
+    """요구사항 미지정 작업은 기존 판정 그대로 (호환성)."""
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []}}))
+    v = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+         "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED", "reasoning": "x"}
+    assert iv.judge_absorb(1, json.dumps(v))["final_verdict"]["status"] == "VERIFIED"
+
+
+def test_load_requirements_ids_hash_and_sandbox_boundary(tmp_path):
+    (tmp_path / "pkg").mkdir()
+    (tmp_path / "pkg" / "REQ.md").write_text("# r\n1. a\n2. b\n", encoding="utf-8")
+    (tmp_path / "pkg" / "TAGGED.md").write_text("- R7 must x\n- REQ-2 must y\n", encoding="utf-8")
+    r = rc.load_requirements(str(tmp_path), "pkg/REQ.md")
+    assert r["ok"] and r["ids"] == ["R1", "R2"] and len(r["sha256"]) == 64
+    assert rc.load_requirements(str(tmp_path), "pkg/TAGGED.md")["ids"] == ["R7", "REQ-2"]
+    assert not rc.load_requirements(str(tmp_path), "../outside.md")["ok"]
+    assert not rc.load_requirements(str(tmp_path), "pkg/none.md")["ok"]

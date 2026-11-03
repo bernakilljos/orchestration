@@ -154,3 +154,12 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | 하드코딩 (경로·숫자·조건·문구) | `.claude/scripts/` 전체 · `.claude/hooks/` · `.claude/config/*.json` · `plugins/` · `setup/` · `.claude/state/hardcoded-audit.json` (자동 감사 결과) · `docs/HARDCODING_AUDIT_2026-10-28.md` |
 | 기능 실제 연결·미구현 Scaffold | `.claude/settings.json` (hook 등록) · `orca-10min-loop.py` · `lib/` (supervisor·runner·self_healing·real_repair_chain·independent_verifier·agent_registry·tech_discovery·platform_api) · 실행 증거 (§8) · `docs/ORCHESTRATION_AUDIT_2026-10-16.md` |
 | 서브 상태줄 라벨·세로줄 정렬 | `.claude/statusline.sh` · `.claude/scripts/statusline_*.py` (LABEL_WIDTH 등) · `.claude/rules/operational-freeze.md` (FROZEN 범위·서브 미검증 기록) · memory `feedback_statusline_*` 3건 사본 · 사용자 스크린샷 |
+
+## 17. F4 결함 수정 (2026-11-03 · 유료 $0 · 실제 재실행 없음)
+**수정 전**: 테스트 실패 출력 → 수정 Agent (요구사항 문서 언급 없음) → pytest → Judge (diff·테스트·폴더 파일만 근거) → `judge_absorb` (satisfies·confidence·권고만) → VERIFIED
+**수정 후**: self_heal 설정 `requirements_path` (Goal 의 task spec 에서 동적 지정 · 고정 경로 없음) → `load_requirements` 가 **sandbox 안에서만** 읽어 스냅샷 (경로·sha256·ID) → Evidence `requirements` 기록 → 수정 Agent·Judge 프롬프트에 **같은 스냅샷** (데이터로 표시 · 도구·허용 경로 불변) → Judge 직전 sha256 재확인 (다르면 `requirements_changed` 중단) → Judge JSON `requirements[{id,status,evidence}]` → `judge_absorb(required_ids)` 가 결정적으로 검사: 필수 ID 누락·ID 불일치·`unverifiable`·근거 없음 → UNVERIFIED · `unmet` → REPAIRING
+- 문서 지정됐는데 없음·sandbox 밖·ID 없음 → `requirements` 단계에서 유료 호출 전 중단
+- `requirements_path` 미지정 작업 → 기존 판정 그대로 · Evidence 에 `not_configured` 로 명시 (미검증 구분)
+- 검증 (무료): kit `test_phase18` 42 (요구사항 게이트 7 + 호환 1 + 로더 1) · Mock 체인 17 (F4 재현 4: F4 당시 응답 형태 차단 · R3 unmet 차단 · 정상 수정 VERIFIED + 같은 스냅샷 · 문서 없음 중단)
+- 잔여: Judge 가 실제로 미충족인데 `met` 라고 근거를 꾸며 쓰면 결정적 검사로는 못 막는다 (근거 존재까지만 강제) · 실제 Agent/Judge 재실행 미실시
+- **병합 승인 제외**: `repair-apply/T1-t1e_ship-1793692348@169dd75` (Goal 1362 · R3 누락 수정 · Judge 오승인) — 감사 증거로 보존 · merge 대상 아님

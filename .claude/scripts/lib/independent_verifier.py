@@ -362,7 +362,41 @@ def judge_handoff(goal_id: int,
     }
 
 
-def judge_absorb(goal_id: int, judge_result_json: str) -> Dict[str, Any]:
+def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[str]) -> Dict[str, Any]:
+    """Judge 의 요구사항별 판정을 LLM 문장과 무관하게 검사 (2026-11-03 F4).
+    필수 ID 마다 status=met + 근거(evidence) 가 있어야 ok. unmet → REPAIRING · 누락·ID 불일치·근거 없음·확인 불가 → UNVERIFIED."""
+    rows = llm_verdict.get("requirements")
+    if not isinstance(rows, list):
+        return {"ok": False, "status": "UNVERIFIED", "reason": "requirements verdict list missing"}
+    by_id = {}
+    for r in rows:
+        if isinstance(r, dict) and isinstance(r.get("id"), str):
+            by_id[r["id"].strip().upper()] = r
+    unmet, unverifiable, missing, no_evidence = [], [], [], []
+    for rid in required_ids:
+        r = by_id.get(rid.upper())
+        if r is None:
+            missing.append(rid)
+            continue
+        st = str(r.get("status", "")).strip().lower()
+        if st == "unmet":
+            unmet.append(rid)
+        elif st != "met":
+            unverifiable.append(rid)
+        elif not str(r.get("evidence") or "").strip():
+            no_evidence.append(rid)
+    unknown = sorted(set(by_id) - {i.upper() for i in required_ids})
+    if unmet:
+        return {"ok": False, "status": "REPAIRING", "reason": f"requirements unmet: {unmet}", "unmet": unmet}
+    if missing or unverifiable or no_evidence:
+        return {"ok": False, "status": "UNVERIFIED",
+                "reason": f"requirements not verified: missing={missing} unverifiable={unverifiable} "
+                          f"no_evidence={no_evidence}"}
+    return {"ok": True, "status": "VERIFIED", "checked": list(required_ids), "unknown_ids": unknown}
+
+
+def judge_absorb(goal_id: int, judge_result_json: str,
+                 required_ids: Optional[List[str]] = None) -> Dict[str, Any]:
     """agent-01-judge subagent 결과를 받아 최종 verdict 결합.
 
     사용자 지시: "Judge 가 승인하더라도 필수 테스트 실패 시 VERIFIED 금지"
@@ -417,6 +451,8 @@ def judge_absorb(goal_id: int, judge_result_json: str) -> Dict[str, Any]:
         elif rec != "VERIFIED":
             final = {"status": rec if rec in ("UNVERIFIED", "REPAIRING") else "UNVERIFIED",
                      "reasons": reasons + [f"llm judge recommendation {rec or 'missing'} (not VERIFIED)"]}
+        elif required_ids and not (rq := check_requirement_verdicts(llm_verdict, required_ids))["ok"]:
+            final = {"status": rq["status"], "reasons": reasons + [rq["reason"]]}
         else:
             final = {"status": "VERIFIED",
                      "reasons": reasons + [
