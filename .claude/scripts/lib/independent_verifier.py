@@ -268,8 +268,10 @@ JUDGE_QUEUE = ROOT / ".claude" / "state" / "judge-queue"
 def judge_handoff(goal_id: int,
                   sandbox_cwd: Optional[str] = None,
                   allow_paths: Optional[List[str]] = None,
-                  judge_notes: str = "") -> Dict[str, Any]:
+                  judge_notes: str = "",
+                  requirements: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """agent-01-judge subagent 호출용 context 생성 + judge-queue 저장.
+    requirements = 요구사항 스냅샷 {path, sha256, ids} · handoff 에 저장해 judge_absorb 가 호출자와 무관하게 강제.
 
     Phase 3-R5 (사용자 지시 3307fcd 후속):
       - Independent Judge 보완 · agent-01-judge 재사용
@@ -350,6 +352,8 @@ def judge_handoff(goal_id: int,
         "requires_llm_judge": requires_llm,
         "status": "pending_llm_judge" if requires_llm else "stat_verdict_blocking",
     }
+    if requirements:
+        handoff_data["requirements"] = requirements
     handoff_file.write_text(json.dumps(handoff_data, ensure_ascii=False, indent=2),
                             encoding="utf-8")
     return {
@@ -414,6 +418,9 @@ def judge_absorb(goal_id: int, judge_result_json: str,
     except Exception as e:
         return {"ok": False, "error": f"handoff read: {e}"}
     stat = data.get("stat_verdict") or {}
+    # handoff 에 요구사항 스냅샷이 있으면 호출자가 ID 를 넘기지 않아도 강제 (CLI judge-absorb 우회 차단)
+    if not required_ids:
+        required_ids = (data.get("requirements") or {}).get("ids") or None
     # 안전 결합 규칙:
     #   - stat != VERIFIED → final = stat (LLM 으로 승격 X)
     #   - stat == VERIFIED AND llm.satisfies AND llm.confidence>=7 → VERIFIED
@@ -458,6 +465,8 @@ def judge_absorb(goal_id: int, judge_result_json: str,
                      "reasons": reasons + [
                          f"llm judge confirms (conf={confidence})",
                          f"missing={len(missing)} unexpected={len(unexpected)}"]}
+    # 검증 범위 표시: 요구사항별로 확인했는지, 요구사항 없이 diff·테스트로만 판정했는지
+    final["requirements_scope"] = "checked" if required_ids else "not_configured"
     data["llm_verdict"] = llm_verdict
     data["final_verdict"] = final
     data["status"] = "completed"

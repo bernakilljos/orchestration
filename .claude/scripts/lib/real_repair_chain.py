@@ -408,6 +408,8 @@ def load_requirements(sandbox_cwd: str, rel_path: str) -> Dict[str, Any]:
     """self_heal 설정이 지정한 요구사항 문서를 sandbox 안에서만 읽어 스냅샷 (경로·sha256·ID) 을 만든다 (2026-11-03 F4).
     ID = 문서의 `R<n>`/`REQ-<n>` 표기, 없으면 번호 목록 `n.` → `R<n>`. 문서 내용은 지시가 아니라 검증 대상 데이터."""
     import hashlib
+    if not isinstance(rel_path, str) or not rel_path.strip():
+        return {"ok": False, "error": f"requirements path empty or not a string: {rel_path!r}"}
     base = Path(sandbox_cwd).resolve()
     p = (base / rel_path).resolve()
     if base not in p.parents:
@@ -423,6 +425,26 @@ def load_requirements(sandbox_cwd: str, rel_path: str) -> Dict[str, Any]:
     if not ids:
         return {"ok": False, "error": f"no requirement ids in {rel_path}"}
     return {"ok": True, "path": rel_path, "sha256": hashlib.sha256(raw).hexdigest(), "ids": ids, "text": text[:6000]}
+
+
+def find_unbound_requirements(sandbox_cwd: str, allow_paths: list, doc_names: list) -> list:
+    """요구사항 경로가 지정되지 않은 체인에서, 수정 대상 파일 옆(조상 폴더 · sandbox 루트 제외)에
+    정책(requirements_doc_names) 이 정한 요구사항 문서가 있으면 그 경로들을 돌려준다 (2026-11-03 F4 우회 차단)."""
+    base = Path(sandbox_cwd).resolve()
+    wanted = {str(n).lower() for n in doc_names or []}
+    found = []
+    if not wanted:
+        return found
+    for ap in allow_paths or []:
+        d = (base / ap).resolve().parent
+        while d != base and base in d.parents:
+            if d.is_dir():
+                for f in d.iterdir():
+                    rel = f.relative_to(base).as_posix()
+                    if f.is_file() and f.name.lower() in wanted and rel not in found:
+                        found.append(rel)
+            d = d.parent
+    return found
 
 
 def _requirements_block(req: Dict[str, Any]) -> str:
@@ -469,15 +491,21 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     if not pre.get("reproduced"):
         return fail("reproduce", detail=pre)
 
-    # 요구사항 스냅샷: 지정됐는데 못 읽으면 유료 호출 전에 중단 · 미지정은 기존 동작 (evidence 에 명시)
+    # 요구사항 스냅샷: 지정됐는데 못 읽으면(빈 값 포함) 유료 호출 전에 중단.
+    #   미지정인데 수정 대상 옆에 요구사항 문서가 있으면 연결 누락 → 중단 (기존 판정으로 새지 않게).
+    #   문서도 없는 일반 작업만 기존 판정 · 검증 범위를 evidence 와 최종 판정에 표시.
     req = None
-    if requirements_path:
+    if requirements_path is not None:
         req = load_requirements(cwd, requirements_path)
         if not req.get("ok"):
             out["requirements"] = {"status": "unreadable", **req}
             return fail("requirements", error=req.get("error"))
         out["requirements"] = {k: req[k] for k in ("path", "sha256", "ids")}
     else:
+        unbound = find_unbound_requirements(cwd, allow_paths, _sb._policy().get("requirements_doc_names"))
+        if unbound:
+            out["requirements"] = {"status": "unbound", "found": unbound}
+            return fail("requirements_unbound", error=f"requirements document present but not configured: {unbound}")
         out["requirements"] = {"status": "not_configured"}
 
     root_before = _git_out(ROOT, "status", "--porcelain")
@@ -539,7 +567,8 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         return fail("pytest", rounds=len(out["agent_fix_rounds"]))
 
     # 5. 통계 judge → 독립 LLM Judge (별도 Agent 세션 · 읽기 전용 도구) → judge_absorb 결합
-    jh = _iv.judge_handoff(repair_goal_id, sandbox_cwd=cwd, allow_paths=allow_paths)
+    jh = _iv.judge_handoff(repair_goal_id, sandbox_cwd=cwd, allow_paths=allow_paths,
+                           requirements=out["requirements"] if req else None)
     out["stages"].append({"stage": "stat_judge", "verdict": jh.get("stat_verdict")})
     if not jh.get("requires_llm_judge"):
         return fail("stat_judge")

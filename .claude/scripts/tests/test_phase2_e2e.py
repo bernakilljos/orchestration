@@ -14,6 +14,7 @@
 """
 from __future__ import annotations
 import json
+import shutil
 import os
 import sqlite3
 import sys
@@ -81,6 +82,9 @@ def _cleanup_test_artifacts():
                 c.execute("DELETE FROM goal_tasks WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goal_transitions WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goals WHERE goal_id=?", (gid,))
+                # 테스트 goal 이 만든 safe_mode sandbox 도 제거 (apply 후 checkout 이 남아 DB 재생성 시 같은 goal_id 와 충돌 · 2026-11-03)
+                if not sb.IS_OPERATIONAL_ROOT:
+                    sb.discard(f"g{gid}-safe", force=True)
         # sandboxes cleanup
         sb.cleanup_orphans()  # 기본 24h — max_age_sec=0 은 실운영 active sandbox(P8 등)까지 discard 했다 (2026-10-30)
     except Exception as e:
@@ -386,6 +390,29 @@ def test_10_cleanup_orphans(result: TestResult):
         sb.discard("e2e-live-sandbox")
 
 
+def test_11_safe_mode_without_sandbox_does_not_run(result: TestResult):
+    """safe_mode 인데 sandbox 생성 실패 (이미 존재) → 원본 작업 트리에서 실행하지 않음 (fail-closed · 2026-11-03)."""
+    print("\n[Test 11] safe_mode without sandbox → not executed")
+    gid = _create_test_goal("nosandbox")
+    blocker = sb.SANDBOX_ROOT / f"g{gid}-safe"
+    blocker.mkdir(parents=True, exist_ok=True)           # 같은 이름이 이미 있어 create 가 실패하는 상황
+    try:
+        pr = planner.propose(gid, [{"kind": "cmd", "cmd": "echo phase2-e2e-nosandbox", "verify": "echo PASS",
+                                    "verify_type": "shell", "safe_mode": True, "risk": "low",
+                                    "rationale": "fail-closed"}])
+        planner.approve(pr["proposals"][0]["proposal_id"])
+        planner.promote(gid)
+        r = supervisor.execute_goal(gid)
+        result.record("safe_mode without sandbox: not executed in working tree",
+                      r.get("executed", 0) == 0 and r.get("skipped_sandbox_unavailable") == 1
+                      and bool(r.get("sandbox_errors")),
+                      note=f"executed={r.get('executed')} skipped={r.get('skipped_sandbox_unavailable')} "
+                           f"err={json.dumps(r.get('sandbox_errors'), ensure_ascii=False)[:120]}")
+    finally:
+        if not sb.IS_OPERATIONAL_ROOT and sb._inside_root(blocker):
+            shutil.rmtree(blocker, ignore_errors=True)
+
+
 def main(argv):
     print(f"=== Phase 2 E2E Test · marker={TEST_MARKER} ===")
     quick = "--quick" in argv
@@ -402,6 +429,7 @@ def main(argv):
             test_04_happy_path_sandbox(result)
             test_05_verify_fail_discard(result)
             test_10_cleanup_orphans(result)
+            test_11_safe_mode_without_sandbox_does_not_run(result)
     except Exception as e:
         import traceback
         print(f"[FATAL] {type(e).__name__}: {e}")

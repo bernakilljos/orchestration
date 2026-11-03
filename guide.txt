@@ -2420,3 +2420,5 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - 새 설치 재현성 (2026-11-03): init-state-db.py·ensure-state.sh 가 supervisor·runner·self-heal 표까지 생성 · phase5/phase12 테스트의 운영 데이터·표 순서 의존 제거.
 - F4 (2026-11-03): 실제 운영 체인에서 Judge 가 REQUIREMENTS.md 의 테스트 없는 요구를 놓치고 VERIFIED (숨은 검사 FAIL · 격리 브랜치만 반영). 수정 후보는 docs/FINAL_AUDIT_PLAN §14 (미적용).
 - F4 수정 (2026-11-03): self_heal 설정 requirements_path 지정 시 수정 Agent·Judge 가 같은 요구사항 스냅샷(sha256) 사용 · judge_absorb 가 요구사항별 met/unmet/근거를 결정적으로 검사 (미충족·확인 불가 = VERIFIED 금지).
+- F4 운영 경로 (2026-11-03): requirements_path 빈 값·요구사항 문서가 있는데 경로 미지정·CLI judge-absorb 우회 차단 (sandbox-policy.json requirements_doc_names) · 문서 없는 일반 작업은 최종 판정에 requirements_scope=not_configured 표시.
+- safe_mode (2026-11-03): sandbox 생성 실패 시 원본 작업 트리에서 실행하지 않음 (pending 유지 · 사유 기록). 새 clone 반복 테스트 간헐 실패 원인 (DB 재생성 후 sandbox 이름 충돌) 해결.

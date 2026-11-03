@@ -395,3 +395,53 @@ def test_load_requirements_ids_hash_and_sandbox_boundary(tmp_path):
     assert rc.load_requirements(str(tmp_path), "pkg/TAGGED.md")["ids"] == ["R7", "REQ-2"]
     assert not rc.load_requirements(str(tmp_path), "../outside.md")["ok"]
     assert not rc.load_requirements(str(tmp_path), "pkg/none.md")["ok"]
+
+
+# ---------- F4 후속: 운영 경로에서 요구사항 검증이 빠지는 우회 차단 ----------
+
+_LEGACY_OK = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+              "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED", "reasoning": "x"}
+
+
+def test_judge_absorb_enforces_handoff_requirements_without_caller_ids(tmp_path, monkeypatch):
+    """CLI judge-absorb 처럼 호출자가 ID 를 안 넘겨도, handoff 에 스냅샷이 있으면 요구사항별 판정 강제."""
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []},
+                                                      "requirements": {"path": "p/REQUIREMENTS.md", "ids": _REQ}}))
+    fv = iv.judge_absorb(1, json.dumps(_LEGACY_OK))["final_verdict"]
+    assert fv["status"] == "UNVERIFIED" and fv["requirements_scope"] == "checked"
+    fv = iv.judge_absorb(1, json.dumps({**_LEGACY_OK, "requirements": _ok_rows()}))["final_verdict"]
+    assert fv["status"] == "VERIFIED"
+
+
+def test_judge_absorb_marks_scope_when_requirements_not_configured(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []}}))
+    fv = iv.judge_absorb(1, json.dumps(_LEGACY_OK))["final_verdict"]
+    assert fv["status"] == "VERIFIED" and fv["requirements_scope"] == "not_configured"
+
+
+@pytest.mark.parametrize("bad", ["", "   ", ["a.md"], 5])
+def test_load_requirements_rejects_empty_or_non_string(tmp_path, bad):
+    assert not rc.load_requirements(str(tmp_path), bad)["ok"]
+
+
+def test_find_unbound_requirements(tmp_path):
+    (tmp_path / "pkg" / "sub").mkdir(parents=True)
+    (tmp_path / "pkg" / "sub" / "mod.py").write_text("x = 1\n")
+    (tmp_path / "pkg" / "Requirements.md").write_text("1. a\n")       # 상위 폴더 · 대소문자 무관
+    (tmp_path / "REQUIREMENTS.md").write_text("1. root\n")            # sandbox 루트는 제외
+    (tmp_path / "other").mkdir()
+    (tmp_path / "other" / "REQUIREMENTS.md").write_text("1. b\n")     # 수정 대상과 무관한 폴더는 제외
+    names = ["REQUIREMENTS.md"]
+    assert rc.find_unbound_requirements(str(tmp_path), ["pkg/sub/mod.py"], names) == ["pkg/Requirements.md"]
+    assert rc.find_unbound_requirements(str(tmp_path), ["top.py"], names) == []
+    assert rc.find_unbound_requirements(str(tmp_path), ["pkg/sub/mod.py"], []) == []
+    assert rc.find_unbound_requirements(str(tmp_path), ["pkg/sub/mod.py"], None) == []
+
+
+def test_policy_file_declares_requirements_doc_names():
+    pol = json.loads((LIB.parent.parent / "config" / "sandbox-policy.json").read_text(encoding="utf-8"))
+    assert isinstance(pol.get("requirements_doc_names"), list) and pol["requirements_doc_names"]

@@ -904,10 +904,24 @@ def execute_goal(goal_id: int) -> dict:
                             "task_id": task_id, "path": _sandbox_cwd,
                             "branch": sb_result.get("branch"),
                         })
+                    else:
+                        results.setdefault("sandbox_errors", []).append({
+                            "task_id": task_id, "error": str(sb_result.get("reason", ""))[:160],
+                            "retryable": bool(sb_result.get("retryable")),
+                        })
             except Exception as _sbe:
                 results.setdefault("sandbox_errors", []).append({
                     "task_id": task_id, "error": str(_sbe)[:120],
                 })
+            # 2026-11-03: 격리를 요구했는데 sandbox 가 없으면 원본 작업 트리에서 실행하지 않는다 (fail-closed).
+            #   종전: 생성 실패(이미 존재·메모리·디스크 게이트) 시 조용히 원본 폴더에서 실행했다.
+            #   task 는 pending 유지 → 다음 주기에 재시도 · 사유는 details/sandbox_errors 에 남김.
+            if not _sandbox_cwd:
+                results.setdefault("skipped_sandbox_unavailable", 0)
+                results["skipped_sandbox_unavailable"] += 1
+                results["details"].append({"task_id": task_id, "status": "skipped_sandbox_unavailable",
+                                           "cmd": cmd[:80]})
+                continue
         # 실행 via runner (허용된 명령만 · shell=True 자동)
         # safe_mode=True 이고 sandbox 생성 성공 시 격리 cwd 전달 (runner.run 지원 시만)
         _run_kwargs = {"task_id": task_id, "worker_id": "supervisor", "timeout": 180}

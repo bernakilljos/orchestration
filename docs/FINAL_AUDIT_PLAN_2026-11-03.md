@@ -164,3 +164,27 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 잔여: Judge 가 실제로 미충족인데 `met` 라고 근거를 꾸며 쓰면 결정적 검사로는 못 막는다 (근거 존재까지만 강제) · 실제 Agent/Judge 재실행 미실시
 - **병합 승인 제외**: `repair-apply/T1-t1e_ship-1793692348@169dd75` (Goal 1362 · R3 누락 수정 · Judge 오승인) — 감사 증거로 보존 · merge 대상 아님
 - 새 clone 재검증 (9e403e7): 기본 Root·명시 `ORCHESTRATION_ROOT` 모두 pytest 103 · phase3 26/26 · golden 13/13. 명시 Root 첫 실행에서 phase5 1건·phase2 2건 실패 → 같은 환경 3회 재실행 모두 39/39·20/20 → **간헐 실패 (원인 미규명 · 잔여 위험)**
+
+## 18. F4 운영 경로 적용 확인 + 간헐 실패 원인 (2026-11-03 · 유료 $0)
+**전달 경로 (실측 추적)**: task spec `self_heal.requirements_path` → `enqueue_failure_event` (self_heal 설정 전체를 event config 로 저장) → `process_events` (키 전달) → `run_repair(agent_fix)` (키 전달) → `agent_repair_chain(requirements_path)` → 스냅샷 → 수정 Agent·Judge 프롬프트 → `judge_handoff(requirements=…)` (handoff 파일에 저장) → `judge_absorb` (호출자 ID 없으면 handoff 의 ID 로 강제)
+**발견한 우회 3건 → 차단**
+| # | 우회 | 수정 |
+|---|---|---|
+| 1 | `requirements_path: ""`(빈 값) 이 거짓으로 평가돼 기존 판정으로 감 | 키가 있으면 빈 값·문자열 아님도 `requirements` 단계에서 유료 호출 전 중단 |
+| 2 | 경로 미지정인데 수정 대상 옆에 요구사항 문서가 있음 (F4 Goal 1362 를 포함한 T1 6건이 실제로 이 상태였다) | 정책 `requirements_doc_names` (sandbox-policy.json) 로 수정 대상의 폴더·상위 폴더(sandbox 루트 제외) 탐색 → 있으면 `requirements_unbound` 로 유료 호출 전 중단 |
+| 3 | CLI `judge-absorb` 는 required_ids 없이 결합 → 기존 판정 | handoff 에 스냅샷 저장 · `judge_absorb` 가 handoff ID 로 강제 |
+- 문서 없는 일반 작업: 기존 판정 유지 · 최종 판정에 `requirements_scope: not_configured` 표시 (요구사항별 확인 시 `checked`)
+- 승인·예산·인증 정책 변경 없음 (차단만 추가) · 운영 활성 이벤트 0건이라 현재 운영 동작 변화 없음
+- 검증: `test_phase18` 50 · Mock 체인 22 (빈 경로·연결 누락·일반 작업 범위 표시·handoff 강제 추가 · mock 정책이 운영 정책 파일의 문서 이름을 그대로 사용)
+
+**간헐 실패 원인 (재현 확인)**: 같은 clone 에서 DB 를 지우고 다시 돌리면 2번째부터 항상 phase5 1건·phase2 2건 FAIL (Root 설정 무관 · 기본 Root 도 2번째엔 실패). 
+- 원인: safe_mode sandbox 이름 `g{goal_id}-safe` · apply 후 checkout 은 보존 정책상 남음 · 테스트 sandbox root (`%TEMP%/orca-repair-sandbox-test/<폴더명>`) 는 DB 와 함께 지워지지 않음 → DB 재생성으로 goal_id 가 1부터 다시 쓰이면 남은 sandbox 와 이름 충돌 → `create` 실패
+- 이때 **결함**: supervisor 가 sandbox 없이 원본 작업 트리에서 명령을 실행했다 (fail-open). 운영 DB 는 AUTOINCREMENT 라 충돌은 없지만, 메모리·디스크 게이트로 create 가 실패해도 같은 경로로 원본에서 실행됐다
+- 수정: ① supervisor — safe_mode 인데 sandbox 가 없으면 실행하지 않고 pending 유지 (`skipped_sandbox_unavailable` + 사유) ② phase2·phase5 테스트 정리 시 테스트 goal 의 sandbox 도 제거 (테스트 root 에서만)
+- 검증: phase2 신규 Test 11 (sandbox 이름 선점 → 실행 0) · 수정 전 코드로 돌리면 FAIL (executed=1) 확인 · 이전 "3회 재실행 통과" 는 DB 를 유지해 goal_id 가 겹치지 않았기 때문
+
+## 19. 최종 ZIP 감사 대상 추가 (§16 보강)
+| 항목 | 포함 |
+|---|---|
+| F4 요구사항 전파·Judge 판정 코드 | `lib/self_healing.py` (enqueue·process_events·run_repair) · `lib/real_repair_chain.py` (load_requirements·find_unbound_requirements·agent_repair_chain) · `lib/independent_verifier.py` (judge_handoff·check_requirement_verdicts·judge_absorb) · `config/sandbox-policy.json` · `tests/test_phase18_agent_budget_gate.py` · `state/t1-fixtures/test_t1_mock_chain.py` |
+| 간헐 테스트 실패 원인·잔여 위험 | 이 문서 §18 · `lib/supervisor.py` (safe_mode fail-closed) · `tests/test_phase2_e2e.py` (Test 11) · 재현 로그 |

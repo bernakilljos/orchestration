@@ -69,6 +69,9 @@ def _cleanup():
                 c.execute("DELETE FROM goal_tasks WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goal_transitions WHERE goal_id=?", (gid,))
                 c.execute("DELETE FROM goals WHERE goal_id=?", (gid,))
+                # 테스트 goal 이 만든 safe_mode sandbox 도 제거 (apply 후 checkout 이 남아 DB 재생성 시 같은 goal_id 와 충돌 · 2026-11-03)
+                if not sb.IS_OPERATIONAL_ROOT:
+                    sb.discard(f"g{gid}-safe", force=True)
         sb.cleanup_orphans()  # 기본 24h — max_age_sec=0 은 실운영 active sandbox(P8 등)까지 discard 했다 (2026-10-30)
     except Exception as e:
         print(f"[cleanup] {e}")

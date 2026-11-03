@@ -18,5 +18,9 @@
   "agent_chain_budget_usd": 5.0,
   "agent_max_calls_per_chain": 3,
   "_agent_budget_note": "결제 경계(state_db.agent_budget_reserve): 일일 한도 = budget.daily_limit_usd 와 agent_daily_budget_usd 중 작은 값 · 둘 다 null 이면 유료 Agent 호출 금지 · 체인 = 수정 Agent + 독립 Judge 합산",
-  "heal_max_events_per_tick": 1
+  "heal_max_events_per_tick": 1,
+  "requirements_doc_names": [
+    "REQUIREMENTS.md"
+  ],
+  "_requirements_note": "self_heal 설정에 requirements_path 가 없는데 수정 대상 파일의 폴더(또는 상위 폴더 · sandbox 루트 제외)에 이 이름의 문서가 있으면 유료 호출 전에 중단 (연결 누락) · 빈 목록 = 검사 안 함"
 }
