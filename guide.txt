@@ -2426,3 +2426,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - 최종 판정 연속성 (2026-11-04): 정본 절차 .claude/state/final-audit/RUNBOOK-FINAL.md (세션 예약이 사라져도 새 세션이 이어서 실행 · 판정·ZIP 중복 생성 방지). Plugin 드리프트 점검은 sync-plugins.sh --check (읽기 전용) · --prune 은 실제 사용 중인 agent 를 지우므로 금지.
 - 최종 판정 (2026-11-04 16:17): F6 PASS · F7 FAIL (Ledger R154 완료 vs Goal #1464 RUNNING — 10분 루프 to-goals 가 대화 지시를 Goal 로 승격) · 감사 ZIP orchestration_v1-final-audit-abde1da.zip (sha256 4471…72db) · 상세 docs/FINAL_AUDIT_PLAN_2026-11-03.md §21.
 - Ledger→Goal 승격 (2026-11-04): request-ledger.py to-goals 는 UserPromptSubmit 자동 등재와 같은 정책 (auto_goal_from_prompt.should_register · 명시 실행 토큰 필요) 만 Goal 로 만든다. Request 완료인데 Goal 이 미완이면 10분 루프 로그에 WARN 만 남기고 Goal 상태는 바꾸지 않는다.
+- 익명화 감사 ZIP (2026-11-04): orchestration_v1-final-audit-a3d88b7.zip (sha256 e7a5f7ff…4798) · 계정 식별자는 ZIP 사본만 치환 · 소스 커밋은 audit/SOURCE-SNAPSHOT.json. 상세 docs/FINAL_AUDIT_PLAN_2026-11-03.md §22.

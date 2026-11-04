@@ -249,3 +249,41 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 3. Plugin 드리프트 3 파일 (§20-1) — 런타임 `.claude/` 사본이 원본보다 이전 · sync 보류
 4. ZIP 안 git 추적 문서의 계정 이메일 8개 파일
 5. `heal-e100-a1` 정리 후보 (삭제 안 함)
+
+## 22. F7 FAIL 후속 — R154·Goal #1464 조사 · to-goals 수정 · 익명화 ZIP (2026-11-04 16:2x~16:4x KST · 유료 $0)
+**R154 · Goal #1464 (읽기 전용 · 상태 변경 없음)**
+| 항목 | 실측 |
+|---|---|
+| 승격 경로 | 09:47 R154 pending (분류 `redo`) → 09:50 10분 루프 `to-goals` (`request-ledger.py:381`) 가 **정책 확인 없이** pending 전부를 Goal 로 생성 → advance-all PENDING→PLANNING(09:50:17)→RUNNING(09:50:58) |
+| 실행 중 작업 | 없음 — goal_tasks 0 · plan/result NULL · executor claim 없음 · sandbox 없음 · 연결 Goal 없음. 매 tick `execute_goal` 이 0 task 실행 (`executed_goals: executed 0`) |
+| RUNNING 잔류 이유 | task 0 이라 VERIFIED/REPAIRING 조건 (`total_tasks>0`) 에 안 걸림 → 빈 RUNNING |
+| 작업 완료 증거 | 실제 작업 (분석 폴더 복사) 은 대화 세션이 수행 · 증거는 Ledger evidence (1777/1777 sha256 동일) — Goal 쪽 증거 0 |
+| 예정 변화 (기존 규칙) | timeout_h=24 → **2026-11-05 09:50 KST 이후 첫 tick 에서 supervisor 가 FAILED(timeout) 로 전환** (기존 상태머신 · 이번 작업으로 막거나 앞당기지 않음) |
+| 조사 중 사고 | 읽기 전용 의도로 `supervisor.py advance-all --dry-run` 실행 → CLI 는 `--dry` 만 인식해 **실제 1회 실행** · 상태 전이 0건 (goal_transitions 최대 id 2129 그대로) · 10분 tick 과 동일 동작 |
+
+**to-goals 수정 (a3d88b7)**
+- 승격 기준 = `auto_goal_from_prompt.should_register` (UserPromptSubmit 자동 등재와 같은 정본 · 명시 실행 토큰 필요 · 질문/보고 skip · `no-auto-goal`/`AUTO_GOAL_REGISTER=0` opt-out · 1h 중복). 미승격 항목은 원장에 그대로 둠
+- Request 완료 ≠ Goal 완료: `ledger_goal_integrity.check()` 불일치는 출력에 WARN 만 · Goal 상태 변경 X → 10분 루프는 WARN 레벨로 기록. 실측 16:30 tick: `[WARN] ledger to-goals: ... WARN ledger R154 completed but goal #1464 RUNNING (상태 변경 안 함)`
+- 실행 단계 승인 정책 (approval gate · 허용 명령 · safe_mode) 은 변경 없음
+
+**회귀 (무료)**: test_phase19 6/6 (대화·질문 미승격 · 명시 요청 1회 승격 · 중복 Request/반복 실행 Goal 1개 · 완료 Request + RUNNING Goal 경고만·상태 유지 · opt-out · 10분 루프 같은 경로·WARN) — 수정 전 코드로 되돌려 5/6 FAIL 확인 후 복원 · pytest 117 passed (기존 스크립트형 테스트 33건 fixture 오류는 변경 전과 동일 · 스크립트 실행 시 PASS) · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13
+
+**익명화 ZIP**
+| | 기존 | 신규 |
+|---|---|---|
+| 파일 | `orchestration_v1-final-audit-abde1da.zip` (보존 · 덮어쓰기 X) | `orchestration_v1-final-audit-a3d88b7.zip` |
+| 크기 | 24,444,218 B · 1,778 항목 | 24,458,422 B · 1,780 항목 |
+| sha256 | `44718636…0772db` | `e7a5f7ff…ef81a4798` (`e7a5f7fff14c0b6409ae3067db21587acadc377dd13a7c21975dc95ef81a4798`) |
+| manifest | `out/zip-manifest-abde1da.txt` | `out/zip-manifest-a3d88b7.txt` (+ test_phase19 · audit/SOURCE-SNAPSHOT.json) |
+- abde1da 의미 조사: 기존 ZIP 의 git 추적 1,662 항목 중 992 는 abde1da blob 과 동일 · 668 은 줄바꿈 (CRLF, core.autocrlf) 차이만 · 내용 차이 2 (`CLAUDE.md` 날짜 줄 · `common.log`) = 당시 미커밋 작업 트리. 665257c 는 ZIP 생성 **후** 판정 기록 (§21·guide·CLAUDE.md) 커밋이라 기존 ZIP 에 없음
+- 신규 ZIP 은 `audit/SOURCE-SNAPSHOT.json` 에 source_commit 전체 해시 · 작업 트리에서 들어간 미커밋 파일 (common.log + sha256) · 줄바꿈 주의 · 익명화 파일별 이전/이후 sha256 기록. 같은 HEAD ZIP 있으면 생성 거부
+- 익명화: 원본 Git 파일은 그대로 · ZIP 사본만 75 파일 치환 (Claude 로그인 계정 메일 · git 작성자 메일·이름 · 로컬 사용자명 · 호스트명 → `<ACCOUNT_EMAIL>`·`<ACCOUNT_NAME>`·`<USER>`·`<HOST>` · 홈 경로 `<HOME>`). 값은 코드에 박지 않고 실행 머신에서 동적 수집
+- 검사: 생성 도구 시크릿 0 · 계정 식별자 잔여 0 · 별도 재검사 시크릿 0 · 식별자 0 · 제외 대상 0
+- 이 §22 커밋은 ZIP 생성 **후** 기록이라 ZIP 에 없음 (ZIP 소스 = a3d88b7)
+
+**잔여 위험**
+1. Goal #1464: 11-05 09:50 KST 이후 기존 timeout 규칙으로 FAILED 전환 예정 — 결정 필요 (그대로 둘지)
+2. 이미 생성된 ledger 출처 Goal 31건은 전부 FAILED (과거 동일 경로) — 수정 없음
+3. 익명화 사본의 계정 이름 치환으로 `dashboard.py`·`install.bat` 등 GitHub 저장소 경로가 `<ACCOUNT_NAME>` 로 바뀜 — ZIP 에서 그 기능을 그대로 재실행하면 원격 저장소를 못 찾음 (감사 열람용)
+4. `team@itcen.com` (조직 대표 메일) 1건은 개인 계정 아님으로 유지
+5. 기존: F4 실제 재검증 미실시 · Plugin 드리프트 3 파일 · heal-e100-a1 정리 후보
