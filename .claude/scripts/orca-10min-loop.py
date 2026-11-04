@@ -262,12 +262,17 @@ def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
     (approval-gate.py 51 · 옛 check-mojibake 의 python -c 9 · `python --version` 까지 멈춤).
     `--version` 도 멈춘 것 = 원인은 스크립트가 아니라 이 PC 의 python 기동 단계(환경).
     → hook 이 python 을 덜 띄우게 고치고(예방), 그래도 남은 것은 여기서 치운다(정리).
-    안전 조건 (셋 다): 부모 프로세스 없음 · min_age_hours 이상 · kit hook/스크립트 흔적
-    (명령줄에 /.claude/ 또는 python -c / --version). 서버(run.py 등)·사용자 작업은 대상이 아니다.
+    안전 조건 (넷 다): 부모 프로세스 없음 · min_age_hours 이상 · 이 kit 소유 흔적
+    (명령줄에 이 프로젝트의 .claude 경로 · Claude 셸 스냅샷 · 또는 python -c / --version) ·
+    시작 후 CPU 를 거의 안 쓴 멈춘 상태 (누적 CPU < 1초).
+    2026-11-04 감사: 흔적이 없는 프로세스를 CPU 사용량만으로 죽이던 분기 · 다른 폴더의 /.claude/ 까지 잡던 조건 제거.
+    소유 흔적은 있지만 CPU 를 쓰는 (일하는) 프로세스는 죽이지 않고 경고만 남긴다.
     """
     import time as _t
     reaped = 0
     alive = set(psutil.pids())
+    _r = str(PROJECT_ROOT.resolve()).replace("\\", "/").rstrip("/").lower()          # c:/pjt/x
+    own_roots = (_r + "/.claude/", "/" + _r[0] + _r[2:] + "/.claude/")              # + Git Bash /c/pjt/x
     for proc in psutil.process_iter(["pid", "ppid", "name", "cmdline", "create_time"]):
         try:
             info = proc.info
@@ -280,17 +285,18 @@ def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
             if (_t.time() - (info["create_time"] or _t.time())) < min_age_hours * 3600:
                 continue
             cmd = " ".join(info["cmdline"] or []).replace("\\", "/")
-            kit_trace = ("/.claude/" in cmd or " -c " in f" {cmd} " or cmd.endswith("--version")
+            kit_trace = (any(r in cmd.lower() for r in own_roots) or " -c " in f" {cmd} " or cmd.endswith("--version")
                          or "shell-snapshots" in cmd or "export TEMP=" in cmd)
-            if not kit_trace and pname.startswith("python"):
+            if not kit_trace:
+                continue                                   # 소유 흔적 없는 프로세스는 대상 아님
+            try:
+                ct = proc.cpu_times()
+                busy = (ct.user + ct.system) >= 1.0
+            except Exception:
                 continue
-            if not pname.startswith("python") and not kit_trace:
-                # grep·find 등은 명령줄에 흔적이 없을 수 있다 — 부모 없음 + 1시간 + CPU 를 계속 쓰는 것만
-                try:
-                    if proc.cpu_percent(interval=0.5) < 5:
-                        continue
-                except Exception:
-                    continue
+            if busy:
+                log_msg(f"orphan (소유 흔적 있음 · CPU 사용 중) 종료 안 함: pid={info['pid']} cmd={cmd[:120]}", "WARN")
+                continue
             # 자식부터 정리 (bash 밑에서 도는 grep 등)
             for ch in proc.children(recursive=True):
                 try:

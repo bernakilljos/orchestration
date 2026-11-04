@@ -69,14 +69,15 @@ find "$PROJECT_ROOT/.claude/tasks/done" -maxdepth 2 -type f -mtime +30 2>/dev/nu
 done
 
 # 7. claude tool result 임시파일 (사용자 cache 안) 7일+
-TOOL_RESULTS="$HOME/.claude/projects/C--pjt-orchestration-v1/tool-results"
+PROJ_SLUG=$(printf '%s' "$(cygpath -w "$PROJECT_ROOT" 2>/dev/null || echo "$PROJECT_ROOT")" | sed 's/[^A-Za-z0-9]/-/g')   # 프로젝트 위치로 동적 계산
+TOOL_RESULTS="$HOME/.claude/projects/$PROJ_SLUG/tool-results"
 if [ -d "$TOOL_RESULTS" ]; then
   find "$TOOL_RESULTS" -maxdepth 2 -type f -mtime +7 2>/dev/null | while read -r f; do
     rm -f "$f"
   done
 fi
 
-# 8. [신규] 3일+ 미완료 task·lock·state tmp 요약 후 삭제 (쓰레기 데이터 자동 정리)
+# 8. [신규] 3일+ 미완료 task·lock·state tmp 요약 (미완료 작업은 보존 · 죽은 pid 의 lock 만 삭제)
 STALE_SUMMARY="$PROJECT_ROOT/.claude/state/cleanup-summary-$(date +%Y%m%d).md"
 STALE_FOUND=0
 STALE_HEADER_WRITTEN=0
@@ -85,7 +86,7 @@ write_stale_header() {
     {
       echo "# 쓰레기 데이터 정리 요약 ($(date +%Y-%m-%d))"
       echo ""
-      echo "3일+ 지난 미완료 task·lock·tmp 파일 요약 후 삭제."
+      echo "3일+ 지난 미완료 task·lock·tmp 파일 요약 · 미완료 작업은 보존 (자동 삭제 X) · 종료된 pid 의 lock 만 삭제."
       echo "복원 필요 시 이 파일 참고 (30일 보존)."
       echo ""
       echo "| 경로 | 크기 | 수정일 | 첫 줄 |"
@@ -95,16 +96,33 @@ write_stale_header() {
   fi
 }
 # 대상: pending·in_progress·locks·state 안 *.tmp·*.lock-test
+# 2026-11-04 감사 P0: 미완료 작업(pending·in_progress)은 3일 지났다는 것만으로 지우지 않는다 — 요약에 후보로만 남긴다.
+# lock 은 기록된 pid 가 더 이상 없을 때만 지운다 (file-locking-policy.md · pid 없거나 살아 있으면 보존).
+_pid_alive() {
+  [ -n "$1" ] || return 0
+  tasklist //FI "PID eq $1" 2>/dev/null | grep -q " $1 " && return 0
+  kill -0 "$1" 2>/dev/null
+}
 for sub in "tasks/pending" "tasks/in_progress" "tasks/locks"; do
-  find "$PROJECT_ROOT/.claude/$sub" -maxdepth 2 -type f -mtime +3 2>/dev/null | while read -r f; do
+  # process substitution: 헤더 플래그·건수가 서브셸에 갇혀 두 번째 폴더가 요약을 덮어쓰던 것 방지
+  while read -r f; do
     write_stale_header
     SIZE=$(stat -c "%s" "$f" 2>/dev/null || echo "?")
     MTIME=$(stat -c "%y" "$f" 2>/dev/null | cut -d'.' -f1 || echo "?")
     FIRST=$(head -1 "$f" 2>/dev/null | tr '\n' ' ' | cut -c1-80 || echo "")
     REL="${f#$PROJECT_ROOT/}"
-    echo "| \`$REL\` | ${SIZE}B | $MTIME | ${FIRST//|/\\|} |" >> "$STALE_SUMMARY"
-    rm -f "$f" && STALE_FOUND=$((STALE_FOUND+1)) && log "stale 3d+: $f"
-  done
+    ACTION="보존 (미완료 작업 · 자동 삭제 안 함)"
+    if [ "$sub" = "tasks/locks" ]; then
+      LPID=$(grep -o '"pid"[^0-9]*[0-9]*' "$f" 2>/dev/null | grep -o '[0-9]*$' || true)   # pid 없으면 빈 값 (set -e 종료 방지)
+      if [ -n "$LPID" ] && ! _pid_alive "$LPID"; then
+        rm -f "$f" && ACTION="삭제 (pid $LPID 종료됨)" && log "stale lock (pid $LPID dead): $f"
+      else
+        ACTION="보존 (pid ${LPID:-없음} · 소유자 확인 불가 또는 실행 중)"
+      fi
+    fi
+    echo "| \`$REL\` | ${SIZE}B | $MTIME | ${FIRST//|/\\|} · $ACTION |" >> "$STALE_SUMMARY"
+    STALE_FOUND=$((STALE_FOUND+1))
+  done < <(find "$PROJECT_ROOT/.claude/$sub" -maxdepth 2 -type f -mtime +3 2>/dev/null)
 done
 # state 안 *.tmp·*.lock-test (3일+)
 find "$PROJECT_ROOT/.claude/state" -maxdepth 2 -type f \( -name "*.tmp" -o -name "*.lock-test" \) -mtime +3 2>/dev/null | while read -r f; do
@@ -114,7 +132,7 @@ done
 find "$PROJECT_ROOT/.claude/state" -maxdepth 1 -type f -name "cleanup-summary-*.md" -mtime +30 2>/dev/null | while read -r f; do
   rm -f "$f" && log "cleanup-summary 30d+: $f"
 done
-[ "$STALE_FOUND" -gt 0 ] && echo "[cleanup-pollution] 3일+ 쓰레기 $STALE_FOUND 건 요약 저장: ${STALE_SUMMARY#$PROJECT_ROOT/}" >&2
+[ "$STALE_FOUND" -gt 0 ] && echo "[cleanup-pollution] 3일+ 미완료·lock 후보 $STALE_FOUND 건 요약 저장: ${STALE_SUMMARY#$PROJECT_ROOT/}" >&2
 
 # 9. 빈 디렉토리 정리 (carve-out: docs/screens, plugins, .claude 보존)
 # 임시 폴더만 (.claude/tasks/*/temp/ 등)

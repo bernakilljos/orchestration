@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sqlite3
 import sys
 from collections import Counter
@@ -26,7 +27,7 @@ from pathlib import Path
 # Dynamic paths (hardcoding X · feedback_no_hardcoded_paths 준수)
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
-MEMORY_DIR = Path.home() / ".claude" / "projects" / "C--pjt-orchestration-v1" / "memory"
+MEMORY_DIR = Path.home() / ".claude" / "projects" / re.sub(r"[^a-zA-Z0-9]", "-", str(ROOT)) / "memory"   # 프로젝트 위치로 동적 계산
 # Primary: 프로젝트 로컬 (install-to 자동 전파) · Fallback: user memory (원본)
 PROFILE_LOCAL = ROOT / ".claude" / "state" / "user_style_profile.md"
 PROFILE_USER = MEMORY_DIR / "user_style_profile.md"

@@ -3,6 +3,19 @@ name: route_dispatch
 description: |
   route_dispatch
 ---
+
+---
+> **Codex Routing SoT (2026-10-16 외부 감사 결과)**: `.claude/rules/execution-contract.md § 4` 가 SoT. 이 파일은 **참조·세부 적용 지침** 만 담는다. 충돌 시 execution-contract 가 우선.
+>
+> **SoT 요약**: Codex 자동 dispatch 트리거 (OR):
+> 1. 사용자가 Codex 명시
+> 2. 3+ 파일 동시 수정
+> 3. 300줄+ 예상
+> 4. 반복 패턴 (×4+)
+> 5. 독립 코드 리뷰 필요
+> 6. 대량·마이그레이션·공통화·중복제거
+---
+
 --
 name: route_dispatch
 description: |

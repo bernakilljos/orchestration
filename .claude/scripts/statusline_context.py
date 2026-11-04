@@ -45,6 +45,33 @@ DEFAULT_LIMIT = 200_000
 
 
 
+LEDGER_LABEL_CELLS = 40   # 요청 줄 '다음:' 문구 최대 표시 폭 (터미널 칸 · 한글 1자 = 2칸)
+
+
+def _ledger_label(desc: str, cells: int = LEDGER_LABEL_CELLS) -> str:
+    """요청 줄 '다음:' 문구 — 붙여넣기 태그·ANSI·개행·제어문자 제거 후 표시 폭 기준으로 자른다.
+    2026-11-04 감사: 글자 수 [:40] 만 잘라 개행·<pasted_content> 가 섞이고 한글 40자 = 80칸이라 상태줄이 여러 줄로 늘어났다."""
+    s = re.sub(r"</?pasted_content[^>]*>", " ", desc or "")
+    s = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", s)
+    s = re.sub(r"[\x00-\x1f\x7f]+", " ", s)
+    s = re.sub(r"\s+", " ", s.split("(")[0]).strip()
+    try:
+        from wcwidth import wcwidth as _wc
+    except Exception:
+        def _wc(ch):
+            return 2 if ord(ch) > 0x2E7F else 1
+    widths = [max(_wc(ch), 0) for ch in s]
+    if sum(widths) <= cells:
+        return s
+    out, used = [], 0
+    for ch, w in zip(s, widths):
+        if used + w > cells - 1:          # '…' 1칸 자리 남김
+            break
+        out.append(ch)
+        used += w
+    return "".join(out) + "…"
+
+
 def _project_root(start: str) -> str:
     """루트 표식(.git 또는 .claude+plugins)이 있는 조상 디렉터리를 돌려준다.
 
@@ -1365,7 +1392,7 @@ def extra_gauges(cwd, data=None):
                 done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
                 color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
                 mark = "✓" if done == total else "☐"
-                pending_first = next((r.get("desc", "").split("(")[0].strip()[:40] for r in reqs if r.get("status") not in ("completed", "deferred")), "")
+                pending_first = next((_ledger_label(r.get("desc", "")) for r in reqs if r.get("status") not in ("completed", "deferred")), "")
                 extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
                 ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
     except Exception:

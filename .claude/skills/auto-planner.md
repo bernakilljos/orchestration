@@ -23,9 +23,10 @@ description: 사용자 요청·결함 지적 받으면 즉시 자동 활성. 5�
 ## 5단계 자율 plan (사용자 노동 0)
 
 ### Step 1. 전수조사 (Inventory)
-- 작업 범위 파악 — 어느 파일·디렉토리·시스템 영향?
+- 작업 범위 파악 — **요청 대상 파일 + 직접 의존성 (import/require/call) 1-hop 만**
 - 관련 기존 코드·rule·memory feedback 검색
-- 사용자 명시 안 한 인접 시스템도 포함 (예: doc 만들면 → 빌더 + 검증 + 페이지 fit + 5중박기 위치)
+- **임의 범위 확대 금지** (execution-contract.md § 3) — 의존성 밖은 **발견사항 기록만**
+- "전수조사" = 요청 범위 안 전수 (범위 밖 전수 X · 2026-10-16 외부 감사 결함 #1 수정)
 
 ### Step 2. 분석 (Verification)
 - 인벤토리 결과 분류: 정상 / 누락 / 이상
@@ -59,31 +60,14 @@ python .claude/scripts/route.py --check claude-fable-5
 - 자동 검증 hook 발동 (verify-image-fit, hook-09 등)
 - 사용자가 짚을 필요 없게 — Claude 가 결과 확인 후 보고
 
-### Step 5. 보고 + 리스크 기반 A/B 플랜 (Reporting + Risk-Based Planning)
-- 표·목록으로 결과 명시
-- Before/After 비교
-- **A/B 플랜 제시** (보수 순차 vs 공격 병행) — 선택권 사용자에게
-  - A: 순차적·100% 검증·게이트 다중
-  - B: 병행 가능·시간 단축·리스크 등급 + 증명 근거
-- 남은 결정사항 (사용자만 답 가능한 것) 만 묻기
+### Step 5. 보고 (N/N 완료 후 1회만 · 2026-10-16 외부 감사 반영)
+- **중간보고 금지** — Request Ledger N/N 완료 전 보고 X (execution-contract § 2)
+- **A/B 플랜 제시 금지** — 사용자가 이미 지시했음. 가장 합리적 옵션 자동 선택 후 진행
+- **"남은 결정사항" 질문 금지** — 크리티컬 5가지 (시크릿·데이터손실·보안·비용·시스템손상) 외
+- 보고 포맷: 표·목록 · Before/After · 증명 (diff·test·실측)
+- 기존 "A/B 선택 요구" 는 사용자 "다 해줘" 와 매번 충돌 → 폐지
 
-**A/B 포맷**:
-```text
-## 플랜 A — 안전 (사용자 확인 후)
-- 단계별 순차
-- 일정: X분
-- 리스크: 0
-
-## 플랜 B — 병행 (리스크 등급 + 근거)
-- 병렬 단계
-- 일정: Y분
-- 리스크: N (공식 문서 기반 / 코드 분석 / 테스트 통과)
-- 롤백 계획: 명시 (Z분 내 역조작 가능)
-
-👉 선택: 사용자가 A 또는 B 결정
-```
-
-상세: `.claude/rules/risk-based-planning.md`
+상세: `.claude/rules/execution-contract.md` (SoT) · `.claude/rules/complete-output.md` (완전본 원칙)
 
 ## 자가 점검 — rule 위반 가능성 사전 확인
 

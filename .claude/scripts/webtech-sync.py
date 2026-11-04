@@ -5,6 +5,7 @@ webtech-sync.py — 주 1회 (일요일 05:00) 최신 기술 버전 fetch
 결과: .claude/state/webtech-updates.md
 """
 
+import re
 import json
 import subprocess
 from pathlib import Path
@@ -92,7 +93,7 @@ def main():
 
     # 없으면 홈 디렉토리 fallback
     if not state_dir.exists():
-        state_dir = Path.home() / ".claude" / "projects" / "C--pjt-orchestration-v1" / ".claude" / "state"
+        state_dir = Path.home() / ".claude" / "projects" / re.sub(r"[^a-zA-Z0-9]", "-", str(Path(__file__).resolve().parents[2])) / ".claude" / "state"
 
     state_dir.mkdir(parents=True, exist_ok=True)
 

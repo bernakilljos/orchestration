@@ -1188,7 +1188,14 @@ def main(argv):
         print(json.dumps(show_goal(int(argv[2])), ensure_ascii=False, indent=2))
         return 0
     if cmd == "advance-all":
-        dry = "--dry" in argv
+        # 2026-11-04: `--dry-run` 이 인식 안 돼 실제 실행된 사고 — 둘 다 받고, 모르는 옵션은 실행 전에 거부
+        known = {"--dry", "--dry-run", "--trigger"}
+        rest = argv[2:]
+        unknown = [a for a in rest if a.startswith("-") and a not in known]
+        if unknown:
+            print(json.dumps({"error": f"unknown option(s): {unknown}", "executed": False}, ensure_ascii=False))
+            return 2
+        dry = "--dry" in argv or "--dry-run" in argv
         trigger = ""
         if "--trigger" in argv:
             i = argv.index("--trigger")

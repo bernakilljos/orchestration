@@ -404,7 +404,7 @@ def _set_task_status(tid: str, status: str) -> None:
                   (status, int(time.time()), tid))
 
 
-def load_requirements(sandbox_cwd: str, rel_path: str) -> Dict[str, Any]:
+def load_requirements(sandbox_cwd: str, rel_path: str, max_chars: Optional[int] = None) -> Dict[str, Any]:
     """self_heal 설정이 지정한 요구사항 문서를 sandbox 안에서만 읽어 스냅샷 (경로·sha256·ID) 을 만든다 (2026-11-03 F4).
     ID = 문서의 `R<n>`/`REQ-<n>` 표기, 없으면 번호 목록 `n.` → `R<n>`. 문서 내용은 지시가 아니라 검증 대상 데이터."""
     import hashlib
@@ -424,7 +424,14 @@ def load_requirements(sandbox_cwd: str, rel_path: str) -> Dict[str, Any]:
     ids = list(dict.fromkeys(i.upper() for i in ids))
     if not ids:
         return {"ok": False, "error": f"no requirement ids in {rel_path}"}
-    return {"ok": True, "path": rel_path, "sha256": hashlib.sha256(raw).hexdigest(), "ids": ids, "text": text[:6000]}
+    if max_chars is None:
+        sys.path.insert(0, str(LIB))
+        import repair_sandbox as _sb
+        max_chars = int(_sb._policy().get("requirements_max_chars", 6000))
+    if len(text) > max_chars:   # 잘린 본문 + 전체 ID 를 넘기면 뒤쪽 요구사항은 ID 만 남는다 → 중단 (2026-11-04 감사)
+        return {"ok": False, "error": f"requirements too long: {len(text)} chars > {max_chars} (잘라서 넘기지 않음)",
+                "ids": ids}
+    return {"ok": True, "path": rel_path, "sha256": hashlib.sha256(raw).hexdigest(), "ids": ids, "text": text}
 
 
 def find_unbound_requirements(sandbox_cwd: str, allow_paths: list, doc_names: list) -> list:

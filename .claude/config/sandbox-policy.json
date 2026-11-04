@@ -22,5 +22,7 @@
   "requirements_doc_names": [
     "REQUIREMENTS.md"
   ],
+  "requirements_max_chars": 6000,
+  "_requirements_max_note": "요구사항 문서가 이 길이를 넘으면 잘라서 넘기지 않고 유료 호출 전에 중단 (잘린 본문 + 전체 ID 로 거짓 VERIFIED 방지 · 2026-11-04 감사)",
   "_requirements_note": "self_heal 설정에 requirements_path 가 없는데 수정 대상 파일의 폴더(또는 상위 폴더 · sandbox 루트 제외)에 이 이름의 문서가 있으면 유료 호출 전에 중단 (연결 누락) · 빈 목록 = 검사 안 함"
 }

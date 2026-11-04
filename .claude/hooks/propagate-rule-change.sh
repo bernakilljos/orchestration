@@ -51,7 +51,9 @@ if [ -n "$OTHER_RULES" ]; then
 fi
 
 # memory 파일에서 참조
-MEM_DIR="${HOME:-/tmp}/.claude/projects/C--pjt-orchestration-v1/memory"
+_PR="${CLAUDE_PROJECT_DIR:-$PWD}"
+PROJ_SLUG=$(printf '%s' "$(cygpath -w "$_PR" 2>/dev/null || echo "$_PR")" | sed 's/[^A-Za-z0-9]/-/g')   # 프로젝트 위치로 동적 계산
+MEM_DIR="${HOME:-/tmp}/.claude/projects/$PROJ_SLUG/memory"
 if [ -d "$MEM_DIR" ]; then
   MEM_MATCH=$(grep -l "$RULE_NAME" "$MEM_DIR/"*.md 2>/dev/null | head -3 || true)
   if [ -n "$MEM_MATCH" ]; then

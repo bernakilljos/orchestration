@@ -5,13 +5,14 @@ SessionStart hook 이 detect-project-language.json 읽은 후 이 스크립트 �
 결과는 systemMessage 로 Claude 에게 주입 가능
 """
 
+import re
 import json
 import os
 from pathlib import Path
 
 def load_project_language():
     """project-language.json 로드"""
-    state_file = Path.home() / ".claude" / "projects" / "C--pjt-orchestration-v1" / ".claude" / "state" / "project-language.json"
+    state_file = Path.home() / ".claude" / "projects" / re.sub(r"[^a-zA-Z0-9]", "-", str(Path(__file__).resolve().parents[2])) / ".claude" / "state" / "project-language.json"
 
     # local fallback
     if not state_file.exists():

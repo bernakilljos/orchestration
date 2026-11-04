@@ -49,7 +49,7 @@ for i in invalid[:5]: print(f"  FAIL {i}")
 
 # 14. Memory 참조
 print("\n[14] Memory 실제 존재")
-mem_dir = pathlib.Path.home()/".claude/projects/C--pjt-orchestration-v1/memory"
+mem_dir = pathlib.Path.home() / ".claude" / "projects" / re.sub(r"[^a-zA-Z0-9]", "-", str(pathlib.Path(__file__).resolve().parents[2])) / "memory"   # 프로젝트 위치로 동적 계산
 mem_md = mem_dir/"MEMORY.md"
 if mem_md.exists():
     text = mem_md.read_text(encoding="utf-8")

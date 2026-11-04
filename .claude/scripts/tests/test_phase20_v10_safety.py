@@ -1,0 +1,179 @@
+"""Phase 20 회귀 (2026-11-04 · a3d88b7 독립 코드 감사 V1.0 결함) — 임시 폴더·가짜 프로세스만 · 실 DB·유료 API X.
+
+1. cleanup-pollution: 3일 지난 미완료 task 는 보존 · lock 은 기록된 pid 가 죽었을 때만 삭제
+2. supervisor advance-all: --dry-run = --dry (상태 변경 X) · 모르는 옵션은 실행 전 거부
+3. promote-solutions: 같은 로그 재실행 시 중복 집계 X · 조회 횟수로 verified 를 바꾸지 않음
+4. load_requirements: 정책 길이 초과 문서는 잘라서 넘기지 않고 실패
+5. reap_stuck_orphans: 소유 흔적 없는 프로세스·CPU 를 쓰는 프로세스는 종료하지 않음
+"""
+import importlib.util
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import time
+from pathlib import Path
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[3]
+SCRIPTS = ROOT / ".claude" / "scripts"
+sys.path.insert(0, str(SCRIPTS / "lib"))
+import real_repair_chain as rc  # noqa: E402
+
+
+def _bash():
+    import shutil
+    return shutil.which("bash") or "bash"
+
+
+# ---------- 1. cleanup-pollution ----------
+
+def _old(p, text):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+    t = time.time() - 5 * 86400
+    os.utime(p, (t, t))
+
+
+def test_cleanup_keeps_unfinished_tasks_and_live_locks(tmp_path):
+    sc = tmp_path / ".claude" / "scripts" / "cleanup-pollution.sh"
+    sc.parent.mkdir(parents=True)
+    sc.write_bytes((SCRIPTS / "cleanup-pollution.sh").read_bytes())
+    (tmp_path / ".claude" / "state").mkdir()
+    tasks = tmp_path / ".claude" / "tasks"
+    _old(tasks / "pending" / "t1.md", "pending task")
+    _old(tasks / "in_progress" / "t2.md", "running task")
+    _old(tasks / "locks" / "alive.lock", json.dumps({"pid": os.getpid()}))
+    _old(tasks / "locks" / "dead.lock", json.dumps({"pid": 999999}))
+    _old(tasks / "locks" / "nopid.lock", "{}")
+    r = subprocess.run([_bash(), str(sc)], env={**os.environ, "HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+    assert r.returncode == 0, r.stderr
+    assert (tasks / "pending" / "t1.md").exists() and (tasks / "in_progress" / "t2.md").exists()
+    assert (tasks / "locks" / "alive.lock").exists() and (tasks / "locks" / "nopid.lock").exists()
+    assert not (tasks / "locks" / "dead.lock").exists()
+    summary = next((tmp_path / ".claude" / "state").glob("cleanup-summary-*.md")).read_text(encoding="utf-8")
+    assert "자동 삭제 안 함" in summary and "pid 999999 종료됨" in summary
+
+
+# ---------- 2. supervisor CLI ----------
+
+def _sup(tmp_path, *args):
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "ORCHESTRATION_ROOT": str(tmp_path), "PYTHONUTF8": "1"}
+    return subprocess.run([sys.executable, str(SCRIPTS / "lib" / "supervisor.py"), "advance-all", *args], env=env,
+                          capture_output=True, text=True, encoding="utf-8", timeout=120)
+
+
+def test_advance_all_unknown_option_rejected_before_running(tmp_path):
+    r = _sup(tmp_path, "--dryrun")
+    assert r.returncode == 2 and '"executed": false' in r.stdout
+
+
+def test_advance_all_dry_run_alias_changes_nothing(monkeypatch):
+    import supervisor
+    calls = {}
+    monkeypatch.setattr(supervisor, "advance_all_pending",
+                        lambda dry_run=False, trigger_source="": calls.update(dry=dry_run) or {"ok": True})
+    for flag in ("--dry-run", "--dry"):
+        assert supervisor.main(["supervisor.py", "advance-all", flag]) == 0
+        assert calls["dry"] is True
+    assert supervisor.main(["supervisor.py", "advance-all", "--trigger", "scheduler"]) == 0
+    assert calls["dry"] is False
+
+
+# ---------- 3. promote-solutions ----------
+
+def _promote(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("promote_p20", SCRIPTS / "promote-solutions.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "DB", tmp_path / "orca.db")
+    monkeypatch.setattr(m, "LOG", tmp_path / "lookup-history.log")
+    monkeypatch.setattr(m, "CURSOR", tmp_path / "cursor.json")
+    return m
+
+
+def test_promote_is_idempotent_and_never_sets_verified(tmp_path, monkeypatch):
+    m = _promote(tmp_path, monkeypatch)
+    with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+        c.execute("CREATE TABLE problem_solutions (id INTEGER PRIMARY KEY, problem_hash TEXT, hit_count INT,"
+                  " reusable_score INT, verified INT)")
+        c.execute("INSERT INTO problem_solutions VALUES (1, 'aaaa1111', 0, 5, 0)")    # 미검증
+        c.execute("INSERT INTO problem_solutions VALUES (2, 'bbbb2222', 0, 8, 1)")    # 수동 검증
+    log = tmp_path / "lookup-history.log"
+    log.write_text("head\n", encoding="utf-8")
+    m.main()                                                   # 첫 실행: 위치만 기록
+    log.write_text("head\n" + "solution #1\n" * 5, encoding="utf-8")
+    m.main()
+    m.main()                                                   # 같은 로그 재실행
+    with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+        rows = dict((r[0], r[1:]) for r in c.execute("SELECT id, hit_count, verified FROM problem_solutions"))
+    assert rows[1] == (5, 0)                                   # 5회 1번만 · 조회만으로 verified X
+    assert rows[2] == (0, 1)                                   # 수동 검증 행은 그대로
+
+
+# ---------- 4. requirements 길이 ----------
+
+def test_long_requirements_fail_instead_of_truncating(tmp_path):
+    body = "".join(f"R{i}. 요구사항 {i} " + "x" * 200 + "\n" for i in range(1, 60))
+    (tmp_path / "REQ.md").write_bytes(body.encode("utf-8"))
+    r = rc.load_requirements(str(tmp_path), "REQ.md", max_chars=6000)
+    assert not r["ok"] and "too long" in r["error"]
+    ok = rc.load_requirements(str(tmp_path), "REQ.md", max_chars=len(body) + 10)
+    assert ok["ok"] and ok["text"] == body and "R59" in ok["ids"]
+    pol = json.loads((ROOT / ".claude/config/sandbox-policy.json").read_text(encoding="utf-8"))
+    assert pol["requirements_max_chars"] > 0                   # 상한은 정책 1곳
+
+
+# ---------- 5. reap_stuck_orphans ----------
+
+class _P:
+    def __init__(self, pid, name, cmd, cpu):
+        self.info = {"pid": pid, "ppid": 0, "name": name, "cmdline": cmd.split(), "create_time": time.time() - 7200}
+        self._cpu = cpu
+        self.killed = False
+
+    def cpu_times(self):
+        return SimpleNamespace(user=self._cpu, system=0.0)
+
+    def children(self, recursive=False):
+        return []
+
+    def kill(self):
+        self.killed = True
+
+
+def test_reaper_only_kills_owned_stuck_processes(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("orca_loop_p20", SCRIPTS / "orca-10min-loop.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "LOG_FILE", tmp_path / "loop.log")
+    own = str(m.PROJECT_ROOT.resolve()).replace("\\", "/") + "/.claude/hooks/x.py"
+    procs = {
+        "owned_stuck": _P(11, "python.exe", f"python {own}", 0.1),
+        "owned_busy": _P(12, "python.exe", f"python {own}", 50.0),
+        "other_project": _P(13, "python.exe", "python D:/other/.claude/hooks/y.py", 0.1),
+        "user_grep_busy": _P(14, "grep.exe", "grep -r foo .", 80.0),
+        "user_server": _P(15, "python.exe", "python run.py", 0.1),
+    }
+    monkeypatch.setattr(m.psutil, "pids", lambda: [])
+    monkeypatch.setattr(m.psutil, "process_iter", lambda attrs=None: list(procs.values()))
+    assert m.reap_stuck_orphans() == 1
+    assert procs["owned_stuck"].killed
+    assert not any(p.killed for k, p in procs.items() if k != "owned_stuck")
+    assert "CPU 사용 중" in (tmp_path / "loop.log").read_text(encoding="utf-8")
+
+
+# ---------- V1.1 F. Statusline 요청 줄 (레이아웃·색상 FROZEN · 문구 정리·폭만) ----------
+
+def test_ledger_label_strips_control_and_fits_cells():
+    sys.path.insert(0, str(SCRIPTS))
+    import statusline_context as sl
+    from wcwidth import wcswidth
+    long_paste = '<pasted_content id="efcd">\n좋습니다. 이번에는 Claude Code가 V1.0의 발견된 결함을 수정하고, V1.1에 오늘까지'
+    for d in (long_paste, "abc\x1b[31mred\x1b[0m\tx\r\ny", "가" * 80, "A" * 100):
+        out = sl._ledger_label(d)
+        assert "\n" not in out and "\r" not in out and "\x1b" not in out and "pasted_content" not in out
+        assert wcswidth(out) <= sl.LEDGER_LABEL_CELLS
+    assert sl._ledger_label("짧은 요청 (부연)") == "짧은 요청"

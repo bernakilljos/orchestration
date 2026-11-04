@@ -7,7 +7,7 @@ try:
 except Exception:
     pass
 
-ROOT = r"C:\pjt\orchestration_v1"
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   # 프로젝트 위치로 동적 계산
 AG = os.path.join(ROOT, ".claude", "state", "active-agents.json")
 STATUS = os.path.join(ROOT, ".claude", "scripts", "statusline_context.py")
 

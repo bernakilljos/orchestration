@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cleanup-orphans.sh — 세션 종료 시 뒷처리
-# - 오래된 lock 파일 (30분 이상) 제거
+# - 오래된 lock 파일 (30분 이상 · 기록된 pid 가 종료된 것만) 제거
 # - heartbeat 끊긴 codex-auto/gemini-auto/claude-auto cmd 창 종료
 # - 좀비 Python 프로세스 리포트 (자동 종료는 하지 않음 — main.py 서버 보호)
 # Windows Git Bash 호환
@@ -21,12 +21,20 @@ log_line() { echo "[$TS] [cleanup-$EVENT] $*" >> "$LOG" 2>/dev/null; }
 # ─────────────────────────────────────────────
 if [ -d ".claude/tasks/locks" ]; then
   REMOVED=0
+  KEPT=0
   while IFS= read -r -d '' lock; do
     if [ -f "$lock" ]; then
-      rm -f "$lock" 2>/dev/null && REMOVED=$((REMOVED + 1))
+      # 2026-11-04 감사: 30분 경과만으로 지우지 않는다 — 기록된 pid 가 종료된 lock 만 삭제 (file-locking-policy.md)
+      LPID=$(grep -o '"pid"[^0-9]*[0-9]*' "$lock" 2>/dev/null | grep -o '[0-9]*$')
+      if [ -n "$LPID" ] && ! tasklist //FI "PID eq $LPID" 2>/dev/null | grep -q " $LPID " && ! kill -0 "$LPID" 2>/dev/null; then
+        rm -f "$lock" 2>/dev/null && REMOVED=$((REMOVED + 1))
+      else
+        KEPT=$((KEPT + 1))
+      fi
     fi
   done < <(find .claude/tasks/locks -name "*.lock" -type f -mmin +30 -print0 2>/dev/null)
-  [ "$REMOVED" -gt 0 ] && log_line "removed $REMOVED stale lock file(s)"
+  [ "$REMOVED" -gt 0 ] && log_line "removed $REMOVED stale lock file(s) (pid 종료 확인)"
+  [ "$KEPT" -gt 0 ] && log_line "kept $KEPT old lock file(s) (pid 실행 중 또는 기록 없음)"
 fi
 
 # ─────────────────────────────────────────────
