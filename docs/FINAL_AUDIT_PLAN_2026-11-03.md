@@ -372,3 +372,9 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - **같은 종류 추가 수정**: `dashboard.py` git URL 토큰 4곳 → `GIT_CONFIG_PARAMETERS` 로 helper 등록 (Windows 는 빈 환경변수를 지워 `GIT_CONFIG_COUNT` 방식 불가 — 실측) · 가짜 토큰 시험 통과
 - **미적용**: 실행 중 remote-agent (PID 18700) 는 구버전 (G 범위 밖 · 재시작 시 kit 수정본 복사 필요) · dashboard.py 는 이 PC 에서 실행 중 아님
 - **회귀**: test_phase20 14/14 · pytest 131 passed (스크립트형 33 기존) · golden 13/13
+
+## 28. remote-agent 교체·재시작 (2026-11-04 19:06 KST · 사용자 승인 · 서명 비밀 미설정 유지)
+- 사전 확인: PID 18700 시작 2026-11-02 09:11:56 · 소유자 = 로그인 사용자 · 부모 종료됨 (Run 키 → `remote-agent-silent.vbs` → `%USERPROFILE%\.claude\remote-agent.ps1`) · 설치본 896b61ba = 서명 검사 없음 (클릭·키·드래그를 받는 대로 실행 · 로그 파일 없음 → 실제 처리 이력은 확인 불가 [미확인])
+- 새 kit 본 (4bfd6ace): PowerShell 구문 오류 0 · 사용자 수준 `ORCH_REMOTE_CMD_SECRET` 미설정 → 자기 종료 `stop` 외 전부 차단
+- 적용: 백업 `remote-agent.ps1.bak-20261104` → 설치본 교체 → PID 18700 만 종료 → vbs 로 재시작 → **PID 21288** (실행 중 확인) · status-push PID 6072·다른 프로세스 미접촉 · Run 키 변경 없음 (vbs 가 설치본 경로를 실행하므로 다음 로그인도 새 버전)
+- 대시보드 (P0 유지): `/control/`·`/remote-cmd/` 요청 인증 없음 · 대시보드는 서명을 만들지 않으므로 인증 없는 요청은 클라이언트에서 `unsigned`/`no-secret` 로 차단 (fail-closed) · 서명 발급은 요청 인증 구현 전까지 BLOCKED
