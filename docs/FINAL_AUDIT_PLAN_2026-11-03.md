@@ -196,3 +196,19 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - F7 비교: 10분 슬롯별 START (누락 슬롯 목록) · START/END 짝 (창 시작 전 tick·창 끝 진행 중 tick 분리) · WARN/ERROR·COMMIT LOW · RAM/commit 최대·여유 최소 · 디스크 · budget 지출 = metrics 합 · 예약 정산 (예약 기능 도입 전 2회 $0.7458 별도 표시) · 열린 예약 0 · 무결성 verify · Ledger↔Goal · Goal #77 FAILED
 - ZIP: F6·F7 final 판정 파일이 없거나 시크릿 패턴이 1건이라도 있으면 생성 거부. 포함 = git 추적 소스 (docs/screens 제외) · fixture·증거·무결성 기준선·hardcoded-audit·10분 루프 로그·DB 감사 export (대화·요약·해결책·file_audit 표 제외 · 홈 경로·이메일 치환) · statusline 결정 memory 사본. 제외 = `.env`·settings.local.json·`.repair-sandbox/`·`.git/`·orca.db/sessions.db 원본·bash_commands.log
 - F4: 코드·Mock 회귀 PASS · 실제 Agent·Judge 재검증 **미실시** (별도 구분 기록)
+
+## 20-1. 실행 연속성·Plugin 드리프트 (2026-11-04 09:0x KST · 읽기 전용 · 동기화·이동·삭제·prune 미실행)
+**실행 연속성**
+- 세션 예약 (CronCreate) 은 세션 종료 시 사라짐 → 정본 절차는 `.claude/state/final-audit/RUNBOOK-FINAL.md` (hook 이 쓰지 않는 위치). next-actions.md 에는 포인터만 둠
+- 발견: next-actions.md 의 11-03 수동 절차 3줄이 사라짐 — `auto-save-next-actions.py:18-19,86` 가 응답에 "이어서 할 일"류 섹션이 있으면 파일 전체를 덮어씀 (stop-active-goals-resume.sh 는 `---` 뒤를 보존). 개발 금지라 코드는 그대로, 위치만 옮김
+- 중복 방지: `f6f7` 는 final 파일이 이미 있으면 `ALREADY_FINAL` 로 새 판정을 쓰지 않음 (2회 연속 실행 시험 → 파일 1개) · ZIP 이름은 HEAD 기준 고정 (재실행 = 덮어쓰기) · 예약 프롬프트는 auto-goal 등록 조건 불일치 확인 (`should_register` → register False · 명시 토큰 없음)
+
+**Plugin 드리프트 (SessionStart 경고: 변경 11 · 이름 충돌 23 · 드리프트 11 · Orphan 5)**
+| 항목 | 실측 | 실제 영향 | 판정 |
+|---|---|---|---|
+| 드리프트 11 | 실제 파일 3개: `skills/auto-planner.md` · `skills/route_dispatch.md` · `agents/agent-02-implementer.md` (agent-02 는 9 플러그인 원본이 같은 대상 1개) | **방향이 경고와 반대**: git 상 원본 `plugins/` 이 나중 (10-16 외부 감사 수정) · `.claude/` 런타임 사본이 이전 (10-13 · 04-12). 경고는 파일 mtime 기준이라 "`.claude/` 직접 수정 의심" 표시가 틀림 | 잔여 위험 (중) — Claude 가 실제 읽는 `.claude/` 사본에 범위 lock·중간보고 금지·A/B 폐지·Codex 자동 dispatch 수정이 빠짐. Python 실행 경로에서 이 3 파일을 읽는 코드 0 (지시 계층 영향만) |
+| 이름 충돌 23 | `sync-plugins.py` RENAME_MAP 23건 = 의도된 접두사 (`mcp_dev/install.md → mcp_dev-install.md` 등) · 23/23 대상 존재 · 내용 동일 | 없음 | 정상 (경고 문구가 오해 소지) |
+| 같은 대상에 원본 여러 개 | agent-01(3)·02(9)·03(3)·04(5)·05(3)·06(4) · 각각 원본 내용 1종 | 현재 없음 (마지막 원본이 이겨도 같은 내용) · 원본 하나만 바뀌면 순서에 따라 덮어씀 | 잔여 위험 (낮음) |
+| Orphan 5 | `skills/ai-finetune-pipeline.md` · `skills/vscode-java-lsp-fix.md` · `agents/brainstorming-partner.md` · `agents/coach.md` · `agents/pm.md` (plugins 원본 없음 · git 추적) | brainstorming-partner·coach 는 plugin 명령이 호출 (`design_ppt/ai-system-stages.md` · `exec_claude/generate-ideas.md`) · 3 agent 는 현재 세션에서 사용 가능 상태 → **prune 하면 기능 손상** | 잔여 위험 (낮음) · prune 금지 근거 |
+- 근거 자료 (ZIP 포함): `.claude/state/final-audit/out/drift/` sync-check·drift-detail·drift-diffs·rename-orphan
+- 정리 방법 (미실행 · 결정 필요): 드리프트 3 파일은 원본→런타임 sync 1회면 해소되나 지시 계층 변경 = FREEZE 범위라 별도 승인 필요

@@ -2423,3 +2423,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - F4 운영 경로 (2026-11-03): requirements_path 빈 값·요구사항 문서가 있는데 경로 미지정·CLI judge-absorb 우회 차단 (sandbox-policy.json requirements_doc_names) · 문서 없는 일반 작업은 최종 판정에 requirements_scope=not_configured 표시.
 - safe_mode (2026-11-03): sandbox 생성 실패 시 원본 작업 트리에서 실행하지 않음 (pending 유지 · 사유 기록). 새 clone 반복 테스트 간헐 실패 원인 (DB 재생성 후 sandbox 이름 충돌) 해결.
 - 최종 감사 준비 (2026-11-03): .claude/state/final-audit/prepare_final_audit.py — f6f7 (11-04 16:11 KST 이후만 판정) · zip --dry-run (포함 목록 + 시크릿 스캔) · zip (최종 판정 파일 있을 때만).
+- 최종 판정 연속성 (2026-11-04): 정본 절차 .claude/state/final-audit/RUNBOOK-FINAL.md (세션 예약이 사라져도 새 세션이 이어서 실행 · 판정·ZIP 중복 생성 방지). Plugin 드리프트 점검은 sync-plugins.sh --check (읽기 전용) · --prune 은 실제 사용 중인 agent 를 지우므로 금지.
