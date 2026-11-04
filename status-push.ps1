@@ -367,18 +367,50 @@ function Receive-IncomingTasks { param($dashUrl)
   }
 }
 
+# --- 원격 명령 검증 (2026-11-04 감사 H) ---
+# 서명(HMAC-SHA256 · 공유 비밀 ORCH_REMOTE_CMD_SECRET)·만료(10분 이내)·일회성 id 가 모두 맞는 명령만 실행.
+# 비밀이 설정되지 않았거나 서명이 없으면 실행하지 않고 기록만 한다 (대시보드 요청 인증이 생기기 전까지 기본 차단).
+# key·drag 는 서명이 맞아도 ORCH_REMOTE_ALLOW_KEYS=1 일 때만.
+function Test-RemoteCommand { param($cmd, [string]$action)
+  $secret = [System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_CMD_SECRET','User')
+  if (-not $secret) { $secret = $env:ORCH_REMOTE_CMD_SECRET }
+  if (-not $secret) { return 'no-secret' }
+  if (-not $cmd -or -not $cmd.id -or -not $cmd.sig -or -not $cmd.expires) { return 'unsigned' }
+  $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+  $exp = 0L; if (-not [int64]::TryParse([string]$cmd.expires, [ref]$exp)) { return 'expired' }
+  if ($exp -lt $now -or $exp -gt ($now + 600)) { return 'expired' }
+  $seenFile = Join-Path $env:USERPROFILE '.claude\remote-cmd-seen.txt'
+  if ((Test-Path $seenFile) -and ((Get-Content $seenFile -ErrorAction SilentlyContinue) -contains [string]$cmd.id)) { return 'replayed' }
+  $msg = "$($cmd.id)|$action|$exp|$($cmd.x)|$($cmd.y)|$($cmd.x0)|$($cmd.y0)|$($cmd.x1)|$($cmd.y1)|$($cmd.btn)|$($cmd.monitor)|$($cmd.key)"
+  $h = New-Object System.Security.Cryptography.HMACSHA256 (,[System.Text.Encoding]::UTF8.GetBytes($secret))
+  $expect = -join ($h.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($msg)) | ForEach-Object { $_.ToString('x2') })
+  if ($expect -ne ([string]$cmd.sig).ToLower()) { return 'bad-signature' }
+  if (($action -eq 'key' -or $action -eq 'drag') -and [System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_ALLOW_KEYS','User') -ne '1') { return 'disabled' }
+  Add-Content -Path $seenFile -Value ([string]$cmd.id) -Encoding UTF8
+  return 'ok'
+}
+# stop = kit 가 띄운 워커 창 (codex-auto·gemini-auto·claude-auto .bat) 과 그 자식만 · 이름이 같은 다른 프로세스는 건드리지 않음
+function Stop-OwnedWorkers {
+  Get-CimInstance Win32_Process -Filter "Name='cmd.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -match '(codex-auto|gemini-auto|claude-auto)\.bat' } |
+    ForEach-Object { taskkill /T /F /PID $_.ProcessId 2>&1 | Out-Null; Write-Host "[CTRL] stop worker tree pid=$($_.ProcessId)" }
+}
+
 # --- Control 명령 확인 (Dashboard) ---
 function Check-Control { param($dashUrl)
   $result = Invoke-Dashboard '/control-recv' @{ pc_id=$pcId } $dashUrl
   if (-not $result -or -not $result.ok -or -not $result.action) { return }
   $action = $result.action
+  $v = Test-RemoteCommand $result $action
+  if ($v -ne 'ok') { Write-Host "[CTRL BLOCKED] $action ($v)"; return }
   Write-Host "[CTRL] Action: $action"
   if ($action -eq 'stop') {
-    Get-Process -Name 'codex','gemini','claude' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Stop-OwnedWorkers
   } elseif ($action -eq 'pause') {
-    Disable-ScheduledTask -TaskName 'OrchestrationStatusPush' -ErrorAction SilentlyContinue | Out-Null
+    # 실행 방식 = Run 키 + 상주 루프 (예약 작업 아님) → 일시정지 표시 파일로 전송 중단
+    New-Item -ItemType File -Force -Path $script:pauseFlag | Out-Null
   } elseif ($action -eq 'resume') {
-    Enable-ScheduledTask -TaskName 'OrchestrationStatusPush' -ErrorAction SilentlyContinue | Out-Null
+    Remove-Item $script:pauseFlag -Force -ErrorAction SilentlyContinue
   }
 }
 
@@ -450,10 +482,12 @@ function Push-ViaGit { param($jsonStr)
       try {
         $cmdJson = Get-Content $cmdFile -Encoding UTF8 -Raw | ConvertFrom-Json
         $act = $cmdJson.action
-        if ($act) {
+        if ($act -and ($script:cmdVerdict = Test-RemoteCommand $cmdJson $act) -ne 'ok') {
+          Write-Host "[CMD BLOCKED] $act ($script:cmdVerdict)"
+        } elseif ($act) {
           Write-Host "[CMD] $act"
           if ($act -eq 'stop') {
-            Get-Process -Name 'codex','gemini','claude' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Stop-OwnedWorkers
           }
           elseif ($act -eq 'click' -or $act -eq 'dblclick') {
             Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
@@ -503,7 +537,9 @@ if (Test-DashboardUrl 'http://localhost:8787') {
 
 Write-Host "[status-push] Started (interval: ${PUSH_INTERVAL}s, pc: $pcId)"
 
+$script:pauseFlag = Join-Path $env:USERPROFILE '.claude\status-push.paused'
 while ($true) {
+  if (Test-Path $script:pauseFlag) { Start-Sleep -Seconds $PUSH_INTERVAL; continue }   # 원격 pause (서명된 명령만)
   $json = Collect-Status
   if (-not $json) {
     Write-Host "[WARN] No projects registered"

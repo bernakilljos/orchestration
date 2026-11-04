@@ -2431,3 +2431,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.0/V1.1 결과 (2026-11-04): docs/FINAL_AUDIT_PLAN_2026-11-03.md §23 (V1.0 6건 PASS · V1.1 A·B FAIL · C~G PARTIAL).
 - e462f9b 재감사 (2026-11-04): 학습 조회 집계 위치를 DB 트랜잭션에 저장 · 고아 프로세스는 이 프로젝트 경로 흔적만 · statusline 은 터미널 폭 초과 행만 잘라냄 (폭 모르면 그대로) · advance-all 인자 경계. 상세 §24.
 - bde283b 재감사 (2026-11-04): status-push 는 토큰을 git URL 에 넣지 않음 (ORCH_GH_PAT + credential helper) · 세션 종료 hook 은 프로세스를 죽이지 않고 백업도 지우지 않음 (후보 기록만) · daily-cleanup 은 후보 기록만 · 3일+ 정리는 sandbox·task·기준선 제외. 토큰 폐기는 사용자 처리. 상세 §25.
+- 원격 명령 (2026-11-04): status-push·remote-agent 는 서명(ORCH_REMOTE_CMD_SECRET)·만료·일회성 id 가 맞는 명령만 실행 · 비밀 미설정 = 전부 차단 · key/drag 는 ORCH_REMOTE_ALLOW_KEYS=1 추가 필요 · dashboard.py 는 토큰을 git URL 에 넣지 않음. 상세 §27.

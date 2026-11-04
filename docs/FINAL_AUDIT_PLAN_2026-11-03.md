@@ -361,3 +361,14 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
   | `pause`·`resume` | status-push | 예약 작업 `OrchestrationStatusPush` 켜기/끄기 — 그런 작업 없음 (Run 키로 실행) → 효과 없음 |
   | `stop` | remote-agent | 에이전트 자신만 종료 (안전) |
 - 최소 변경안 (미적용): ① `stop` 을 이름 전체 종료 → kit 가 띄운 워커 (명령줄에 프로젝트 경로·auto.bat) 만 · 소유 미확인은 로그 ② `key`·`drag` 는 기본 꺼 두고 설정으로만 허용 ③ 명령에 공유 비밀 기반 서명 + 만료 시각 (대시보드·cmd.json 공통) ④ `pause/resume` 은 실제 실행 방식(Run 키) 기준으로 정정 · 영향 = status-push.ps1·remote-agent.ps1 + 대시보드 쪽 서명 (대시보드 코드는 이 저장소 밖일 수 있음 [미확인])
+
+## 27. E 취소 · G 적용 · H 원격 명령 기본 차단 (2026-11-04 18:5x KST · F 사용자 제외)
+- **E**: 원격 `orchestration-status` 에 스크립트 push 안 함 (원격 → 이 PC 코드 실행 경로를 만들지 않음)
+- **G 적용됨**: 설치본 백업 `~/.claude/status-push.ps1.bak-20261104` (9775f030) → kit 수정본 복사 (607aac8d) · PID 23328 시작 시각 2026-11-02 09:11:28·경로 재확인 후 그 프로세스만 종료 → Run 키 명령 (`wscript status-push-silent.vbs`) 으로 재시작 → 새 PID 6072 · remote-agent PID 18700 및 다른 프로세스 미접촉 · 150초 관찰: 원격 HEAD 3bf4b74a → 21050b82 (상태 전송 정상) · git 프로세스 41회 표본 중 명령줄 토큰 0 · helper 변수 이름만 18
+- **H (kit · status-push.ps1·remote-agent.ps1)**: `Test-RemoteCommand` — 공유 비밀 `ORCH_REMOTE_CMD_SECRET` HMAC-SHA256 서명 + 만료 10분 + 일회성 id (`~/.claude/remote-cmd-seen.txt`) 모두 통과해야 실행 · `key`·`drag` 는 추가로 `ORCH_REMOTE_ALLOW_KEYS=1` · `stop` = kit 워커 창 (`*-auto.bat`) 트리만 · `pause/resume` = 예약 작업이 아니라 표시 파일 (`~/.claude/status-push.paused`) · remote-agent 는 자기 종료 `stop` 만 서명 없이 허용
+  - 차단 시험 (가짜 비밀·임시 USERPROFILE): no-secret · unsigned · 정상 서명 ok · 재사용 replayed · 값 변조 bad-signature · 만료 expired · key 미허용 disabled · 다른 명령 서명 bad-signature — 8/8 기대대로
+  - 현재 사용자 수준 비밀 미설정 → **운영에서 원격 클릭·키·드래그·stop·pause 전부 차단 (기록만)**
+- **H BLOCKED — 대시보드 서명**: `dashboard.py` 는 이 저장소에 있으나 `/control/`·`/remote-cmd/` 요청에 **인증이 없음** → 대시보드에서 서명하면 누구의 요청이든 서명됨 → 우회가 되므로 서명 발급 미구현 · 대시보드 요청 인증 (로그인·토큰) 이 먼저 필요
+- **같은 종류 추가 수정**: `dashboard.py` git URL 토큰 4곳 → `GIT_CONFIG_PARAMETERS` 로 helper 등록 (Windows 는 빈 환경변수를 지워 `GIT_CONFIG_COUNT` 방식 불가 — 실측) · 가짜 토큰 시험 통과
+- **미적용**: 실행 중 remote-agent (PID 18700) 는 구버전 (G 범위 밖 · 재시작 시 kit 수정본 복사 필요) · dashboard.py 는 이 PC 에서 실행 중 아님
+- **회귀**: test_phase20 14/14 · pytest 131 passed (스크립트형 33 기존) · golden 13/13

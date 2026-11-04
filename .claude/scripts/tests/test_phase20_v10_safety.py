@@ -286,3 +286,18 @@ def test_status_push_never_puts_token_in_git_url():
         assert not re.search(r"https://[^\s\"']*:\$\w+@", t), rel
         assert "credential.helper" in t and "ORCH_GH_PAT" in t
     assert "'!PAT!'" not in (ROOT / "status-push.bat").read_text(encoding="utf-8")   # 생성 스크립트에 토큰 원문 X
+
+
+def test_remote_commands_gated_and_dashboard_token_free():
+    import re
+    for rel in ("status-push.ps1", "remote-agent.ps1"):
+        t = (ROOT / rel).read_text(encoding="utf-8-sig")
+        assert "function Test-RemoteCommand" in t and "ORCH_REMOTE_CMD_SECRET" in t, rel
+        assert "Get-Process -Name 'codex','gemini','claude'" not in t, rel   # 이름 전체 종료 X
+    sp = (ROOT / "status-push.ps1").read_text(encoding="utf-8-sig")
+    assert "Disable-ScheduledTask -TaskName 'OrchestrationStatusPush'" not in sp   # 실제 실행 구조(Run 키)와 불일치
+    assert "Stop-OwnedWorkers" in sp
+    ra = (ROOT / "remote-agent.ps1").read_text(encoding="utf-8-sig")
+    assert ra.index("Test-RemoteCommand $cmd") < ra.index("switch ($cmd.action)")   # 실행 전에 검증
+    dash = (ROOT / "dashboard.py").read_text(encoding="utf-8")
+    assert not re.search(r"https://x:\{pat\}@", dash) and "GIT_CONFIG_PARAMETERS" in dash

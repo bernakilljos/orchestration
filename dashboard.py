@@ -48,6 +48,16 @@ def get_pat():
         except: pass
     return pat or _FALLBACK
 
+def use_git_credential(pat):
+    """git 이 토큰을 URL·명령줄 없이 쓰게 한다 (2026-11-04 감사 P0) — 이 프로세스 환경에만 helper 등록.
+    값은 ORCH_GH_PAT 환경변수로만 전달되고, git 명령줄에는 변수 이름만 보인다."""
+    if not pat:
+        return
+    os.environ["ORCH_GH_PAT"] = pat
+    # `git -c credential.helper= -c credential.helper=...` 와 같은 효과 (Windows 는 빈 환경변수 값을 지우므로 COUNT 방식 X)
+    os.environ["GIT_CONFIG_PARAMETERS"] = ("'credential.helper=' "
+                                          "'credential.helper=!f() { echo username=x; echo password=$ORCH_GH_PAT; }; f'")
+
 def gh_headers():
     return {"Authorization":f"token {get_pat()}","Accept":"application/vnd.github.v3+json"}
 
@@ -1169,7 +1179,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 pat = get_pat()
                 if not pat:
                     return
-                repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
+                use_git_credential(pat); repo_url = f"https://github.com/{OWNER}/{REPO}.git"
                 tmpdir = tempfile.mkdtemp(prefix="gh-del-")
                 try:
                     subprocess.run(["git","clone","--depth","1",repo_url,tmpdir],
@@ -1292,7 +1302,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         pat = get_pat()
                         if not pat:
                             return
-                        repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
+                        use_git_credential(pat); repo_url = f"https://github.com/{OWNER}/{REPO}.git"
                         tmpdir = tempfile.mkdtemp(prefix="gh-cmd-")
                         try:
                             subprocess.run(["git","clone","--depth","1",repo_url,tmpdir],
@@ -1458,7 +1468,7 @@ def _save_tunnel_url_to_gh():
         if not pat:
             print("[WARN] PAT not set — GitHub URL 저장 스킵")
             return
-        repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
+        use_git_credential(pat); repo_url = f"https://github.com/{OWNER}/{REPO}.git"
         tmpdir = tempfile.mkdtemp(prefix="gh-url-")
         try:
             subprocess.run(["git","clone","--depth","1",repo_url,tmpdir],
@@ -1812,7 +1822,7 @@ if __name__=="__main__":
         pat = get_pat()
         if not pat:
             return
-        repo_url = f"https://x:{pat}@github.com/{OWNER}/{REPO}.git"
+        use_git_credential(pat); repo_url = f"https://github.com/{OWNER}/{REPO}.git"
         tmpdir = tempfile.mkdtemp(prefix="gh-poll-")
         try:
             subprocess.run(["git","clone","--depth","1",repo_url,tmpdir],

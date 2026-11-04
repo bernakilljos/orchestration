@@ -180,7 +180,33 @@ function DoKey($key) {
     [System.Windows.Forms.SendKeys]::SendWait($key)
 }
 
+# --- 원격 명령 검증 (2026-11-04 감사 H) ---
+# 서명(HMAC-SHA256 · 공유 비밀 ORCH_REMOTE_CMD_SECRET)·만료(10분 이내)·일회성 id 가 모두 맞는 명령만 실행.
+# 비밀이 설정되지 않았거나 서명이 없으면 실행하지 않고 기록만 한다 (대시보드 요청 인증이 생기기 전까지 기본 차단).
+# key·drag 는 서명이 맞아도 ORCH_REMOTE_ALLOW_KEYS=1 일 때만.
+function Test-RemoteCommand { param($cmd, [string]$action)
+  $secret = [System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_CMD_SECRET','User')
+  if (-not $secret) { $secret = $env:ORCH_REMOTE_CMD_SECRET }
+  if (-not $secret) { return 'no-secret' }
+  if (-not $cmd -or -not $cmd.id -or -not $cmd.sig -or -not $cmd.expires) { return 'unsigned' }
+  $now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+  $exp = 0L; if (-not [int64]::TryParse([string]$cmd.expires, [ref]$exp)) { return 'expired' }
+  if ($exp -lt $now -or $exp -gt ($now + 600)) { return 'expired' }
+  $seenFile = Join-Path $env:USERPROFILE '.claude\remote-cmd-seen.txt'
+  if ((Test-Path $seenFile) -and ((Get-Content $seenFile -ErrorAction SilentlyContinue) -contains [string]$cmd.id)) { return 'replayed' }
+  $msg = "$($cmd.id)|$action|$exp|$($cmd.x)|$($cmd.y)|$($cmd.x0)|$($cmd.y0)|$($cmd.x1)|$($cmd.y1)|$($cmd.btn)|$($cmd.monitor)|$($cmd.key)"
+  $h = New-Object System.Security.Cryptography.HMACSHA256 (,[System.Text.Encoding]::UTF8.GetBytes($secret))
+  $expect = -join ($h.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($msg)) | ForEach-Object { $_.ToString('x2') })
+  if ($expect -ne ([string]$cmd.sig).ToLower()) { return 'bad-signature' }
+  if (($action -eq 'key' -or $action -eq 'drag') -and [System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_ALLOW_KEYS','User') -ne '1') { return 'disabled' }
+  Add-Content -Path $seenFile -Value ([string]$cmd.id) -Encoding UTF8
+  return 'ok'
+}
+
 function HandleCmd($cmd) {
+    # 자기 종료(stop)만 서명 없이 허용 · 클릭·키·드래그는 Test-RemoteCommand 통과 시만
+    $v = if ($cmd.action -eq 'stop') { 'ok' } else { Test-RemoteCommand $cmd ([string]$cmd.action) }
+    if ($v -ne 'ok') { Write-Host "[Remote] BLOCKED $($cmd.action) ($v)"; return }
     switch ($cmd.action) {
         'stop'     { Write-Host "[Remote] Stop"; PushScreensJson; exit }
         'click'    { DoClick $cmd.x $cmd.y $cmd.btn $cmd.monitor }
