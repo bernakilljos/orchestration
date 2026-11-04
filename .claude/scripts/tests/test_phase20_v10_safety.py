@@ -249,3 +249,40 @@ def test_statusline_rows_fit_terminal_and_keep_ansi(monkeypatch):
     assert sl._fit_cells("짧은 줄", 99) == "짧은 줄"           # 폭 안이면 그대로
     monkeypatch.setenv("STATUSLINE_COLUMNS", "130")
     assert sl._terminal_cols() == 130
+
+
+# ---------- bde283b 재감사: 정리·프로세스·토큰 ----------
+
+def test_cleanup_keeps_evidence_and_task_files_by_extension(tmp_path):
+    sc = tmp_path / ".claude" / "scripts" / "cleanup-pollution.sh"
+    sc.parent.mkdir(parents=True)
+    sc.write_bytes((SCRIPTS / "cleanup-pollution.sh").read_bytes())
+    (tmp_path / ".claude" / "state").mkdir()
+    keep = [tmp_path / ".repair-sandbox" / "g1" / "a.bak", tmp_path / ".claude" / "tasks" / "pending" / "t.tmp",
+            tmp_path / ".claude" / "state" / "integrity-baseline" / "m.orig"]
+    drop = tmp_path / "docs" / "old.tmp"
+    for p in keep + [drop]:
+        _old(p, "x")
+    r = subprocess.run([_bash(), str(sc)], env={**os.environ, "HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+    assert r.returncode == 0, r.stderr
+    assert all(p.exists() for p in keep) and not drop.exists()
+
+
+def test_orphan_hook_and_daily_cleanup_do_not_kill_or_delete():
+    for rel in ("plugins/exec_session_guard/hooks/cleanup-orphans.sh", ".claude/hooks/cleanup-orphans.sh"):
+        t = (ROOT / rel).read_text(encoding="utf-8")
+        assert "Stop-Process" not in t                       # heartbeat 만으로 종료 X
+        assert 'rm -f "$bak"' not in t                       # 확장자만으로 백업 삭제 X
+    bat = (SCRIPTS / "daily-cleanup.bat").read_bytes()
+    assert b"del /q \"%%F\" >nul 2>&1\r\n  echo [%date% %time%] Removed" not in bat
+    assert b"\r\n" in bat                                     # cmd 는 LF bat 을 잘못 읽음 (.gitattributes eol=crlf)
+
+
+def test_status_push_never_puts_token_in_git_url():
+    import re
+    for rel in ("status-push.ps1", "status-push.bat"):
+        t = (ROOT / rel).read_text(encoding="utf-8-sig")
+        assert not re.search(r"https://[^\s\"']*:\$\w+@", t), rel
+        assert "credential.helper" in t and "ORCH_GH_PAT" in t
+    assert "'!PAT!'" not in (ROOT / "status-push.bat").read_text(encoding="utf-8")   # 생성 스크립트에 토큰 원문 X

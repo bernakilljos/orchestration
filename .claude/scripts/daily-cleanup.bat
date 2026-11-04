@@ -37,18 +37,15 @@ if exist "%PROJECT_ROOT%\.claude\scripts\cleanup-pollution.sh" (
   )
 )
 
-REM 2) bak / tmp / orig 파일 삭제
+REM 2) bak / tmp / orig 파일 — 후보만 기록 (2026-11-04 감사: 확장자만으로 지우면 DB 백업·sandbox 증거·작업 중 임시까지 삭제 · 자동 삭제 X)
 for /f "delims=" %%F in ('dir /b /s "%PROJECT_ROOT%\*.bak" 2^>nul') do (
-  del /q "%%F" >nul 2>&1
-  echo [%date% %time%] Removed: %%F >> "%CLEANUP_LOG%"
+  echo [%date% %time%] Candidate - not deleted: %%F >> "%CLEANUP_LOG%"
 )
 for /f "delims=" %%F in ('dir /b /s "%PROJECT_ROOT%\*.tmp" 2^>nul') do (
-  del /q "%%F" >nul 2>&1
-  echo [%date% %time%] Removed: %%F >> "%CLEANUP_LOG%"
+  echo [%date% %time%] Candidate - not deleted: %%F >> "%CLEANUP_LOG%"
 )
 for /f "delims=" %%F in ('dir /b /s "%PROJECT_ROOT%\*.orig" 2^>nul') do (
-  del /q "%%F" >nul 2>&1
-  echo [%date% %time%] Removed: %%F >> "%CLEANUP_LOG%"
+  echo [%date% %time%] Candidate - not deleted: %%F >> "%CLEANUP_LOG%"
 )
 
 REM 3) 5MB 초과 log truncate (마지막 1000줄만 유지)

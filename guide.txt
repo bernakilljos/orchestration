@@ -2430,3 +2430,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.0 안정화 (2026-11-04 · a3d88b7 독립 감사): cleanup 은 미완료 task 보존·죽은 pid 의 lock 만 삭제 · supervisor advance-all 은 --dry-run 허용·모르는 옵션 거부 · promote-solutions 는 조회로 verified 를 바꾸지 않고 재실행 중복 집계 X · 요구사항 문서가 requirements_max_chars (sandbox-policy.json) 초과면 잘라 넘기지 않고 중단 · 고아 프로세스 정리는 이 kit 소유 + 멈춘 것만 · 요청 줄 '다음:' 문구는 개행·태그 제거 후 40칸 · 이 PC 전용 메모리 경로 7곳 동적 계산 · Plugin 드리프트 3 파일 원본 반영 (orphan·rename 그대로).
 - V1.0/V1.1 결과 (2026-11-04): docs/FINAL_AUDIT_PLAN_2026-11-03.md §23 (V1.0 6건 PASS · V1.1 A·B FAIL · C~G PARTIAL).
 - e462f9b 재감사 (2026-11-04): 학습 조회 집계 위치를 DB 트랜잭션에 저장 · 고아 프로세스는 이 프로젝트 경로 흔적만 · statusline 은 터미널 폭 초과 행만 잘라냄 (폭 모르면 그대로) · advance-all 인자 경계. 상세 §24.
+- bde283b 재감사 (2026-11-04): status-push 는 토큰을 git URL 에 넣지 않음 (ORCH_GH_PAT + credential helper) · 세션 종료 hook 은 프로세스를 죽이지 않고 백업도 지우지 않음 (후보 기록만) · daily-cleanup 은 후보 기록만 · 3일+ 정리는 sandbox·task·기준선 제외. 토큰 폐기는 사용자 처리. 상세 §25.

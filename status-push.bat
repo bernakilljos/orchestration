@@ -30,7 +30,7 @@ powershell -NoProfile -Command "Set-Content -Path '%TEMP%\status-push-cfg.txt' -
 
 (
 echo $ErrorActionPreference = 'SilentlyContinue'
-echo $pat     = '!PAT!'
+echo $pat     = [System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')
 echo $pcId    = '!PC_ID!'
 echo $pcName  = '!COMPUTERNAME!'
 echo $mac     = '!MAC!'
@@ -154,10 +154,12 @@ echo $tmpFile = "$env:TEMP\$pcId-status.json"
 echo [System.IO.File]::WriteAllText($tmpFile, $json, [System.Text.Encoding]::UTF8)
 echo.
 echo # --- Git Push (API rate limit 무관) ---
-echo $repoUrl = "https://x:$pat@github.com/$owner/$repo.git"
+echo $repoUrl = "https://github.com/$owner/$repo.git"
+echo $env:ORCH_GH_PAT = $pat
+echo $cred = @(); if ($pat) { $cred = @('-c', 'credential.helper=', '-c', ('credential.helper={0}f() {{ echo username=x; echo password=$ORCH_GH_PAT; }}; f' -f [char]33)) }
 echo $gitDir = "$env:TEMP\orch-push-$pcId"
 echo if (Test-Path $gitDir) { Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue }
-echo git clone --depth 1 $repoUrl $gitDir 2^>^&1 ^| Out-Null
+echo git @cred clone --depth 1 $repoUrl $gitDir 2^>^&1 ^| Out-Null
 echo if (-not (Test-Path $gitDir)) { Write-Host '[WARN] git clone failed'; exit 1 }
 echo.
 echo # 현재 상태 저장
@@ -221,7 +223,7 @@ echo git add -A 2^>^&1 ^| Out-Null
 echo $diff = git diff --cached --quiet 2^>^&1; $changed = $LASTEXITCODE
 echo if ($changed -ne 0) {
 echo   git -c user.name='status-push' -c user.email='auto@bot' commit -m "status: $pcId $ts" 2^>^&1 ^| Out-Null
-echo   git push 2^>^&1 ^| Out-Null
+echo   git @cred push 2^>^&1 ^| Out-Null
 echo }
 echo Set-Location $env:TEMP
 echo Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue

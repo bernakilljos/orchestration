@@ -49,7 +49,9 @@ DAYS=3
 find "$PROJECT_ROOT" -maxdepth 5 -type f \
   \( -name "*.bak" -o -name "*.orig" -o -name "*.tmp" -o -name "*.swp" -o -name "*~" \) \
   -not -path "*/node_modules/*" -not -path "*/.git/*" \
+  -not -path "*/.repair-sandbox/*" -not -path "*/.claude/tasks/*" -not -path "*/integrity-baseline/*" \
   -mtime +$DAYS 2>/dev/null | while read -r f; do
+  # 2026-11-04 감사: sandbox 증거·미완료 작업·무결성 기준선 안의 파일은 확장자가 같아도 보존
   rm -f "$f" && log "3일+ 임시: $f"
 done
 

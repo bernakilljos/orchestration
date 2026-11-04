@@ -334,3 +334,17 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **회귀**: test_phase20 10/10 · 직전 커밋 코드로 6/10 FAIL 확인 · pytest 127 passed (스크립트형 33 기존) · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · fresh clone 은 bb70da7 기준 (이번 변경 후 재실행 안 함)
 
 **보안 관찰 (조치 필요)**: 이 PC 프로세스 목록에서 상태 저장소 push (`orchestration-status`) 의 원격 URL 에 GitHub 토큰 원문이 들어 있음 (명령줄 노출) · 토큰 값은 기록하지 않음 · 토큰 교체 + URL 대신 자격 증명 도우미 사용 필요 (계정·인증 정책 — 미변경)
+
+## 25. bde283b 재감사 P0·P1 (2026-11-04 18:xx KST · 유료 $0)
+| 항목 | 실제 확인 | 수정 | 결과 |
+|---|---|---|---|
+| P0 토큰이 git URL 에 | `status-push.ps1:19`·`:416` + `status-push.bat:157` · **추가 발견** `status-push.bat:33` 이 생성 ps1 에 토큰 원문을 씀 (현재 디스크엔 그런 파일 없음) · 실행 중 사본 `~/.claude/status-push.ps1` (Run 키 · 57h) 은 시작 시 `orchestration-status` 원격에서 자기 자신을 내려받아 덮어씀 | kit 소스: URL 에서 토큰 제거 · 토큰은 환경변수 `ORCH_GH_PAT` + git credential helper (명령줄엔 변수 이름만) · 토큰 없으면 기존 자격 관리자 · bat 생성 스크립트는 실행 시 환경변수에서 읽음 | 소스 PASS (URL 토큰 0 · helper 가 가짜 토큰을 명령줄 노출 없이 전달 실측) · 실제 push 미시험 [미확인] · **실행 중 사본·원격 저장소 미반영** (E·G 승인 대기) |
+| P1 확장자 일괄 삭제 | `cleanup-orphans.sh` §4 (SessionEnd 마다) 저장소 전체 `*.bak/*.bak.*/*.orig` 삭제 · `daily-cleanup.bat` 프로젝트 전체 `*.bak/*.tmp/*.orig` 무조건 삭제 · `cleanup-pollution.sh` §3 3일+ 가 sandbox 증거·미완료 task 도 대상 | §4 = 후보 수만 기록 · daily-cleanup = "Candidate - not deleted" 기록만 · cleanup-pollution §3 = `.repair-sandbox`·`.claude/tasks`·`integrity-baseline` 제외 | PASS · 실제 SessionEnd hook 실행 rc 0 · 삭제 0 (저장소 백업 파일은 실행 전 이미 0개 — 과거 §4 삭제 결과로 보임 [추정]) |
+| P1 heartbeat 만으로 종료 | `cleanup-orphans.sh` §2 heartbeat 5분+ 면 `*-auto.bat` cmd 창 전부 Stop-Process | 종료 X · 후보 pid 만 기록 | PASS (작업별 PID 등록은 없음 — 정리는 사람 확인 후) |
+| 추가 발견 | 작업 폴더의 `.bat` 65개 전부 LF (`.gitattributes` 는 `eol=crlf`) · `daily-cleanup.bat` 는 LF+한글 주석으로 cmd 가 16곳 잘못 파싱 (한 번도 정상 실행 안 됐을 가능성) · 스케줄 미등록 | 수정한 bat 2개만 CRLF | 나머지 63개는 미변경 (orca-10min-loop.bat 등은 정상 동작 중) |
+| 추가 발견 | 원격 `cmd.json` 으로 클릭·`codex/gemini/claude` 강제 종료 실행 (`status-push.ps1`·`remote-agent.ps1`) — 원격 저장소 쓰기 권한 = 이 PC 원격 조작 | 미변경 | H 결정 대기 |
+
+**승인 구분**: A·B·C·D 진행 완료 · **E** 원격 `orchestration-status` 에 수정본 반영 (외부 push) · **G** 실행 중 status-push 재시작 · **H** 원격 명령(cmd.json) 기능 유지 여부 — 승인 대기 · **F 토큰 폐기·재발급 = 무시 (사용자가 나중에 직접 처리)**
+
+**회귀**: test_phase20 13/13 (이번 3 추가 · HEAD 코드로 3 FAIL 확인) · pytest 130 passed (스크립트형 33 기존) · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · fresh clone 미재실행 (bb70da7 기준)
+**시험 중 사고**: `daily-cleanup.bat` 를 `cmd //c` 로 시험할 때 실제 실행되지 않음 → PowerShell + 임시 `CLAUDE_PROJECT_DIR` 로 재시험 · 운영 폴더 변경 없음 확인

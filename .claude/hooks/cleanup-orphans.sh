@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cleanup-orphans.sh — 세션 종료 시 뒷처리
 # - 오래된 lock 파일 (30분 이상 · 기록된 pid 가 종료된 것만) 제거
-# - heartbeat 끊긴 codex-auto/gemini-auto/claude-auto cmd 창 종료
+# - heartbeat 끊긴 codex-auto/gemini-auto/claude-auto cmd 창 후보 기록 (종료 X)
 # - 좀비 Python 프로세스 리포트 (자동 종료는 하지 않음 — main.py 서버 보호)
 # Windows Git Bash 호환
 
@@ -43,17 +43,14 @@ fi
 if [ -f ".claude/orca-heartbeat" ]; then
   HB_AGE=$(( $(date +%s) - $(stat -c %Y .claude/orca-heartbeat 2>/dev/null || echo 0) ))
   if [ "$HB_AGE" -gt 300 ]; then
-    # heartbeat 5분 이상 안 갱신 -> 워커 좀비 상태로 간주 -> 관련 cmd 창 정리
-    KILLED=$(powershell -NoProfile -Command "
-      \$count = 0;
+    # heartbeat 5분 이상 안 갱신 -> 대상 cmd 창을 기록만 한다 (2026-11-04 감사: heartbeat·명령줄 패턴만으로는
+    # 어느 작업이 띄운 창인지 증명 못 함 → 다른 세션·작업 창까지 죽일 수 있어 자동 종료 X · 사람이 확인 후 정리)
+    FOUND=$(powershell -NoProfile -Command "
       Get-WmiObject Win32_Process -Filter \"Name='cmd.exe'\" 2>\$null |
         Where-Object { \$_.CommandLine -match '(codex-auto|gemini-auto|claude-auto)\.bat' } |
-        ForEach-Object {
-          try { Stop-Process -Id \$_.ProcessId -Force -ErrorAction Stop; \$count++ } catch {}
-        };
-      \$count
-    " 2>/dev/null | tr -d '\r\n ')
-    [ "${KILLED:-0}" -gt 0 ] && log_line "killed $KILLED orphan cmd.exe (heartbeat stale ${HB_AGE}s)"
+        ForEach-Object { 'pid=' + \$_.ProcessId }
+    " 2>/dev/null | tr -d '\r' | tr '\n' ' ')
+    [ -n "${FOUND// /}" ] && log_line "heartbeat stale ${HB_AGE}s · 워커 cmd 창 후보 (소유 미확인 · 종료 안 함): $FOUND"
   fi
 fi
 
@@ -80,14 +77,16 @@ if [ -n "$BIG_PY" ]; then
 fi
 
 # ─────────────────────────────────────────────
-# 4. .bak / .safe_bak / .bak_YYYYMMDD_* 파일 제거
-#    git 저장소 안에서는 백업 파일이 불필요 (git history 가 대체)
+# 4. .bak / .safe_bak / .bak_YYYYMMDD_* 파일 — 후보 수만 기록 (삭제 X)
+#    git 에 없는 백업 (DB 백업·sandbox 증거) 도 같은 확장자라 git history 로 대체되지 않는다
 #    .git/ 디렉터리와 node_modules 는 제외
 # ─────────────────────────────────────────────
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  BAK_REMOVED=0
+  # 2026-11-04 감사: 확장자만으로 지우면 git 에 없는 백업 (DB 백업 orca.db.bak.* · .repair-sandbox 증거) 까지 사라짐
+  # → 삭제하지 않고 후보 수만 기록 (정리는 사람이 확인 후 · 3일+ 임시는 cleanup-pollution 정책)
+  BAK_FOUND=0
   while IFS= read -r -d '' bak; do
-    rm -f "$bak" 2>/dev/null && BAK_REMOVED=$((BAK_REMOVED + 1))
+    BAK_FOUND=$((BAK_FOUND + 1))
   done < <(find . \
     -path ./.git -prune -o \
     -path ./node_modules -prune -o \
@@ -95,7 +94,7 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     -path ./.venv -prune -o \
     \( -name "*.bak" -o -name "*.safe_bak" -o -name "*.bak_*" -o -name "*.bak.*" -o -name "*.orig" \) \
     -type f -print0 2>/dev/null)
-  [ "$BAK_REMOVED" -gt 0 ] && log_line "removed $BAK_REMOVED backup file(s) (.bak/.safe_bak) — git history 대체"
+  [ "$BAK_FOUND" -gt 0 ] && log_line "backup file 후보 $BAK_FOUND 개 (.bak/.orig · 자동 삭제 안 함)"
 fi
 
 exit 0

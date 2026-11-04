@@ -5,6 +5,12 @@
 # 중요한 에러(git push 실패, Dashboard POST 실패 등)는 try/catch 블록에서 명시적으로 처리됨.
 $ErrorActionPreference = 'SilentlyContinue'
 
+# git 자격: 토큰이 있으면 환경변수 ORCH_GH_PAT 를 읽는 helper 만 쓰고 (명령줄엔 변수 이름만), 없으면 기존 자격 관리자(GCM) 그대로
+function Get-GitCredArgs { param($token)
+  if (-not $token) { return @() }
+  return @('-c', 'credential.helper=', '-c', ('credential.helper={0}f() {{ echo username=x; echo password=$ORCH_GH_PAT; }}; f' -f [char]33))
+}
+
 # --- 자동 업데이트 (시작 시 1회, 무한 루프 방지: 최대 1회만 재시작) ---
 try {
   $selfPath = $MyInvocation.MyCommand.Path
@@ -16,7 +22,9 @@ try {
     $updDir = "$env:TEMP\orch-self-update"
     if (Test-Path $updDir) { Remove-Item $updDir -Recurse -Force }
     # PAT 노출 방지 + timeout 30초
-    $gitJob = Start-Job -ScriptBlock { param($url,$dir) git clone --depth 1 $url $dir 2>&1 } -ArgumentList "https://x:$pat0@github.com/bernakilljos/orchestration-status.git",$updDir
+# 2026-11-04 감사 P0: 토큰을 URL 에 넣으면 git 명령줄(프로세스 목록)에 노출 → 환경변수 + credential helper (값은 명령줄에 안 나옴)
+    $env:ORCH_GH_PAT = $pat0
+    $gitJob = Start-Job -ScriptBlock { param($dir,$cred) git @cred clone --depth 1 "https://github.com/bernakilljos/orchestration-status.git" $dir 2>&1 } -ArgumentList $updDir,(Get-GitCredArgs $pat0)
     $null = Wait-Job $gitJob -Timeout 30
     Remove-Job $gitJob -Force -ErrorAction SilentlyContinue
     $remote = "$updDir\status-push.ps1"
@@ -413,9 +421,9 @@ function Push-ViaGit { param($jsonStr)
   $script:lastGitPush = [DateTime]::Now
   $tmpDir = "$env:TEMP\orch-git-push-$([guid]::NewGuid().ToString('N').Substring(0,8))"
   try {
-    $repoUrl = "https://x:$pat@github.com/$owner/$repo.git"
-    # PAT 노출 방지: stderr 포함 전체 출력 억제
-    $cloneJob2 = Start-Job -ScriptBlock { param($u,$d) git clone --depth 1 $u $d 2>&1 } -ArgumentList $repoUrl,$tmpDir
+    $repoUrl = "https://github.com/$owner/$repo.git"   # 토큰 없는 URL (자격은 credential helper)
+    $env:ORCH_GH_PAT = $pat
+    $cloneJob2 = Start-Job -ScriptBlock { param($u,$d,$cred) git @cred clone --depth 1 $u $d 2>&1 } -ArgumentList $repoUrl,$tmpDir,(Get-GitCredArgs $pat)
     $null = Wait-Job $cloneJob2 -Timeout 30
     Remove-Job $cloneJob2 -Force -ErrorAction SilentlyContinue
     if (-not (Test-Path $tmpDir)) { Write-Host "[WARN] git clone failed"; return }
@@ -474,7 +482,7 @@ function Push-ViaGit { param($jsonStr)
     if ($changed -ne 0) {
       $ts = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
       git -c user.name='status-push' -c user.email='auto@bot' commit -m "status: $pcId $ts" 2>&1 | Out-Null
-      git push 2>&1 | Out-Null
+      $cred = Get-GitCredArgs $pat; git @cred push 2>&1 | Out-Null
       Write-Host "[OK] → Git push (status+screen) at $([DateTime]::Now.ToString('HH:mm:ss'))"
     }
     Set-Location $env:TEMP
