@@ -212,3 +212,40 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | Orphan 5 | `skills/ai-finetune-pipeline.md` · `skills/vscode-java-lsp-fix.md` · `agents/brainstorming-partner.md` · `agents/coach.md` · `agents/pm.md` (plugins 원본 없음 · git 추적) | brainstorming-partner·coach 는 plugin 명령이 호출 (`design_ppt/ai-system-stages.md` · `exec_claude/generate-ideas.md`) · 3 agent 는 현재 세션에서 사용 가능 상태 → **prune 하면 기능 손상** | 잔여 위험 (낮음) · prune 금지 근거 |
 - 근거 자료 (ZIP 포함): `.claude/state/final-audit/out/drift/` sync-check·drift-detail·drift-diffs·rename-orphan
 - 정리 방법 (미실행 · 결정 필요): 드리프트 3 파일은 원본→런타임 sync 1회면 해소되나 지시 계층 변경 = FREEZE 범위라 별도 승인 필요
+
+## 21. F6·F7 최종 판정 + 감사 ZIP (2026-11-04 16:17 KST · 24h 창 11-03 16:11 → 11-04 16:11 · 유료 $0)
+판정 파일: `.claude/state/final-audit/out/f6f7-final-20261104-1617.json` (1회 · 중복 방지 가드 적용)
+
+| 항목 | 기준선 | 24h 실측 | 판정 |
+|---|---|---|---|
+| **F6 기존 Goal 보존** | 18 goals · 104 refs (11-03 16:11) | 18/18 상태·updated_at 동일 · 104/104 ref sha 동일 | **PASS** |
+| F7 10분 tick 누락 없음 | 144 슬롯 | START 144 · 누락 슬롯 0 · 스케줄러 LastTaskResult 0 · MissedRuns 0 | PASS |
+| F7 START/END 짝 | — | END 145 (창 시작 전 tick 1개 END 포함 → 제외 후 144=144) · 창 끝 진행 중 0 | PASS |
+| F7 WARN/ERROR | interim 0 | 0 (COMMIT LOW 0) | PASS |
+| F7 메모리·디스크 (관측) | interim RAM 79.7% · commit 84.3% | RAM 최대 79.7% · commit 최대 84.4% · commit 여유 최소 3.86GB · 디스크 21.2GB | 관측값 (게이트 아님) |
+| F7 예산 정산 | interim $5.5667 = metrics 합 | 창 안 11-04 지출 $0 · 열린 예약 0 · 지출=metrics | PASS |
+| F7 무결성 (sandbox·기록) | — | changed·missing·record 0 | PASS |
+| F7 Goal #77 | FAILED | FAILED 유지 | PASS |
+| **F7 Ledger↔Goal 일치** | interim PASS | **R154 ledger=completed · Goal #1464=RUNNING** | **FAIL** |
+| **F7 종합** | | 8 검사 중 7 PASS · 1 FAIL | **FAIL** |
+| F4 실제 Agent·Judge 체인 | — | 코드·Mock 회귀 PASS · 실제 재검증 **미실시** | 미검증 (PASS 아님) |
+
+**F7 FAIL 원인 (실측 · 수정 안 함)**
+- 11-04 09:47 사용자 지시 "분석 폴더로 복사" 가 Ledger R154 (pending) 로 기록 → 09:50 `orca-10min-loop.py:381` 의 `request-ledger.py to-goals` (`request-ledger.py:381-415`) 가 pending 항목을 Goal #1464 로 만들고 supervisor 가 PENDING→PLANNING→RUNNING 진행
+- 09:51 작업 완료 후 Ledger 는 `complete R154` 로 닫혔지만 Goal 쪽을 닫는 경로가 없음 → `ledger_goal_integrity.py` 가 `ledger_completed_but_goal_incomplete` 1건 (fail-closed)
+- 결함 성격: 감사 대상 기능의 실제 결함 (대화 지시가 Goal 로 자동 승격되고, Ledger 완료가 Goal 에 반영되지 않음). 판정 기간 중 "새 Goal 생성 금지" 조건과도 충돌. 이전 연속성 점검(§20-1)은 auto-goal hook 만 확인하고 10분 루프의 to-goals 경로는 확인하지 않았음
+- 조치: Goal·Ledger·DB 보존 원칙과 개발 금지에 따라 **Goal #1464 는 그대로 둠** (상태 변경·삭제 없음). 결정 필요: Goal #1464 처리 방법과 to-goals 의 Ledger 완료 반영 (또는 대화형 지시 제외) 수정 여부
+
+**감사 ZIP**
+- 파일: `.claude/state/final-audit/out/orchestration_v1-final-audit-abde1da.zip` · 24,444,218 bytes (23.3MB) · 압축 전 39,761,866 bytes · 1,778 항목
+- sha256 `44718636fbeb269a00053d21fe42b26d52e0bfa4b76494b3d7246f05ad0772db` (같은 HEAD ZIP 사전 없음 → 신규 1회 생성 · 덮어쓰기 없음)
+- 포함 목록: `out/zip-manifest.txt`
+- 시크릿 검사: 생성 도구 스캔 0건 · 별도 재검사 (Anthropic·OpenAI·GitHub·AWS·Google·Slack 키·개인키 패턴) 0건 · 제외 대상 (`.env`·settings.local.json·orca.db·sessions.db·bash_commands.log·`.repair-sandbox/`·`.git/`·docs/screens·exe) 0건 · DB export·로그의 계정명 치환 잔여 0건
+- 관찰: git 추적 문서 8개 (guide.txt·SECURITY.md·docs/CLAUDE_ACCOUNT_SEPARATION.md 등) 에 계정 이메일 원문 포함 — 비밀번호·토큰은 아니지만 "계정 정보 제외" 기준으로는 미충족 · ZIP 재생성 안 함 (결정 필요)
+
+**잔여 위험**
+1. F7 Ledger↔Goal 불일치 (위) — 10분 루프가 대화 지시를 Goal 로 승격
+2. F4 실제 Agent·Judge 재검증 미실시
+3. Plugin 드리프트 3 파일 (§20-1) — 런타임 `.claude/` 사본이 원본보다 이전 · sync 보류
+4. ZIP 안 git 추적 문서의 계정 이메일 8개 파일
+5. `heal-e100-a1` 정리 후보 (삭제 안 함)
