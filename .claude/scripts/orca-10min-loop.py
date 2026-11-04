@@ -385,7 +385,9 @@ def main():
                 )
                 if lresult.returncode == 0:
                     if lresult.stdout:
-                        log_msg(f"ledger to-goals: {lresult.stdout.strip()[:200]}")
+                        out = lresult.stdout.strip()
+                        # Request 완료 vs Goal 미완 불일치는 WARN 으로 남긴다 (Goal 상태는 바꾸지 않음)
+                        log_msg(f"ledger to-goals: {out[:600]}", "WARN" if " WARN " in out else "INFO")
                 else:
                     step_failures.append(f"ledger to-goals rc={lresult.returncode}")
                     log_msg(f"ledger to-goals FAIL rc={lresult.returncode}: {(lresult.stderr or lresult.stdout)[:200]}", "WARN")

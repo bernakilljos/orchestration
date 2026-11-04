@@ -387,15 +387,23 @@ def cmd_to_goals() -> int:
         print("[ledger→goal] no ledger")
         return 1
     import sqlite3
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+    # 2026-11-04 F7 FAIL (R154 → Goal #1464): 대화 지시가 전부 Goal 로 승격됐다.
+    # 승격 기준은 UserPromptSubmit 자동 등재와 같은 정본 정책 (명시 실행 토큰 · 질문/보고 skip · 1h 중복) 을 쓴다.
+    from auto_goal_from_prompt import should_register
     sup_db = ROOT / ".claude" / "state" / "orca.db"
     created = 0
     skipped = 0
+    not_promoted = 0
     with sqlite3.connect(str(sup_db)) as c:
         for r in data.get("requests", []):
             if r.get("status") != "pending":
                 continue
             rid = r.get("id")
             desc = r.get("desc") or ""
+            if not should_register(desc).get("register"):
+                not_promoted += 1          # ledger 항목은 그대로 둔다 (원장 수정 X)
+                continue
             source_ref = f"ledger:{rid}"
             # 기존 goal 중 같은 source_ref 있나 (idempotency)
             exist = c.execute("SELECT goal_id FROM goals WHERE source_ref=?",
@@ -412,7 +420,12 @@ def cmd_to_goals() -> int:
                 (f"[{rid}] {desc}", source_ref, now, now)
             )
             created += 1
-    print(f"[ledger→goal] created={created} skipped_existing={skipped}")
+    # Request 완료 ≠ Goal 완료. 불일치는 경고만 하고 Goal 상태는 바꾸지 않는다 (상태 전이는 supervisor 증거 기준).
+    from ledger_goal_integrity import check
+    mismatch = [i for i in check().get("issues", []) if i.get("kind") == "ledger_completed_but_goal_incomplete"]
+    warn = "".join(f" WARN ledger {i['rid']} completed but goal #{i['goal_id']} {i['goal_status']} (상태 변경 안 함)"
+                   for i in mismatch)
+    print(f"[ledger→goal] created={created} skipped_existing={skipped} not_promoted={not_promoted}{warn}")
     return 0
 
 
