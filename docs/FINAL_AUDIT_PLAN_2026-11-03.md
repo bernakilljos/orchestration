@@ -348,3 +348,16 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 **회귀**: test_phase20 13/13 (이번 3 추가 · HEAD 코드로 3 FAIL 확인) · pytest 130 passed (스크립트형 33 기존) · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · fresh clone 미재실행 (bb70da7 기준)
 **시험 중 사고**: `daily-cleanup.bat` 를 `cmd //c` 로 시험할 때 실제 실행되지 않음 → PowerShell + 임시 `CLAUDE_PROJECT_DIR` 로 재시험 · 운영 폴더 변경 없음 확인
+
+## 26. E·G·H 점검 (2026-11-04 · 읽기 전용 · push·재시작·코드 변경 없음 · F 는 사용자 제외)
+- **E**: 원격 `orchestration-status` (비공개 · 미인증 API 404) 에는 `status-push.ps1` 이 **없음** (`remote/`·`status/` 만 · 최근 커밋 = 상태 push) → 자기 업데이트는 내려받을 파일이 없어 아무것도 덮어쓰지 않음. 원격에 수정본을 올리면 오히려 "원격 저장소 → 이 PC 코드 실행" 경로가 새로 생김 → **원격 push 불필요 · 권장 안 함**. 실제 반영 = kit 수정본을 설치 사본 `~/.claude/status-push.ps1` 로 복사 (install.bat 과 같은 방식) — 현재 설치 사본 md5 9775f030 (구버전) · kit e0ba3c8 = 372eaa81
+- **G**: 실행 중 PID 23328 `powershell.exe -WindowStyle Hidden -File ~/.claude/status-push.ps1` · 시작 2026-11-02 09:11:28 · 부모 12236 (Run 키 `OrchestrationStatusPush` → wscript) · 같은 시각 PID 18700 `remote-agent.ps1` (Run 키 `OrchestrationRemoteAgent`) · 재시작 = 설치 사본 교체 후 PID 23328 만 종료 → `wscript ~/.claude/status-push-silent.vbs` 재실행 (승인 대기)
+- **H** (원격 명령 · 인증 없음): 명령 출처 = 대시보드 HTTP (`/control-recv`·`/pull-cmd/<pc>` · 헤더 인증 X · 대시보드 주소는 원격 저장소 `dashboard-url.json`/로컬 캐시) + 원격 `cmd.json` · 서명·만료·재사용 방지 없음
+  | 명령 | 위치 | 영향 |
+  |---|---|---|
+  | `stop` | status-push `Check-Control`·`cmd.json` | `codex`·`gemini`·`claude` 이름의 **모든** 프로세스 강제 종료 (소유권 X · 다른 세션·작업 포함) |
+  | `key` | status-push·remote-agent | `SendKeys` 임의 키 입력 = 사실상 원격 명령 실행 |
+  | `click`·`dblclick`·`drag` | status-push·remote-agent | 원격 마우스 조작 |
+  | `pause`·`resume` | status-push | 예약 작업 `OrchestrationStatusPush` 켜기/끄기 — 그런 작업 없음 (Run 키로 실행) → 효과 없음 |
+  | `stop` | remote-agent | 에이전트 자신만 종료 (안전) |
+- 최소 변경안 (미적용): ① `stop` 을 이름 전체 종료 → kit 가 띄운 워커 (명령줄에 프로젝트 경로·auto.bat) 만 · 소유 미확인은 로그 ② `key`·`drag` 는 기본 꺼 두고 설정으로만 허용 ③ 명령에 공유 비밀 기반 서명 + 만료 시각 (대시보드·cmd.json 공통) ④ `pause/resume` 은 실제 실행 방식(Run 키) 기준으로 정정 · 영향 = status-push.ps1·remote-agent.ps1 + 대시보드 쪽 서명 (대시보드 코드는 이 저장소 밖일 수 있음 [미확인])
