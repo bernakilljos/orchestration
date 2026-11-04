@@ -11,7 +11,6 @@
 """
 from __future__ import annotations
 import hashlib
-import json
 import os
 import re
 import sqlite3
@@ -26,44 +25,45 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
 LOG = ROOT / ".claude" / "logs" / "lookup-history.log"
-CURSOR = ROOT / ".claude" / "state" / "promote-solutions-cursor.json"
 
 
 def ensure_columns(c):
-    """hit_count · last_hit_ts 컬럼 추가 (없으면)."""
+    """hit_count · last_hit_ts 컬럼 + 진행 위치 표 (없으면)."""
     cols = [r[1] for r in c.execute("PRAGMA table_info(problem_solutions)").fetchall()]
     if "hit_count" not in cols:
         c.execute("ALTER TABLE problem_solutions ADD COLUMN hit_count INTEGER DEFAULT 0")
     if "last_hit_ts" not in cols:
         c.execute("ALTER TABLE problem_solutions ADD COLUMN last_hit_ts TIMESTAMP")
+    # 2026-11-04 감사 재현 (조회 1·2·3 → 집계 1·3·6): 진행 위치를 별도 파일에 두면 DB 반영과 어긋나고,
+    # 로그 앞 256B 해시는 짧은 로그에 줄이 붙을 때마다 바뀌어 처음부터 다시 셌다 → DB 안에 같은 트랜잭션으로 저장
+    c.execute("CREATE TABLE IF NOT EXISTS promote_cursor (log TEXT PRIMARY KEY, head_len INTEGER, head TEXT,"
+              " offset INTEGER)")
 
 
-def _load_cursor() -> dict:
-    try:
-        return json.loads(CURSOR.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def scan_hits():
-    """lookup-history.log 에서 지난 실행 이후 새로 쓰인 부분의 solution_id hit 카운트 (멱등).
-    로그가 정리·교체되면 (크기 감소 또는 첫 부분 변경) 처음부터 다시 읽는다. 반환: (hits, 새 cursor)."""
+def scan_hits(c):
+    """lookup-history.log 에서 지난 실행 이후 새로 붙은 '완성된 줄' 의 solution_id hit 카운트 (멱등).
+    같은 파일 판정 = 지난번에 기록한 길이(head_len)만큼의 앞부분 해시 · 다르거나 짧아지면 교체된 새 파일로 보고 처음부터.
+    반환: (hits, (head_len, head, offset)) · 진행 위치는 호출자가 DB 갱신과 같은 트랜잭션에 저장."""
     if not LOG.exists():
         return {}, None
     data = LOG.read_bytes()
-    head = hashlib.sha256(data[:256]).hexdigest()
-    cur = _load_cursor()
-    if not cur:                       # 첫 실행: 기존 hit_count 에 이미 로그 전체가 들어 있으므로 다시 세지 않고 위치만 기록
-        return {}, {"head": head, "offset": len(data)}
-    begin =cur.get("offset", 0) if cur.get("head") == head and cur.get("offset", 0) <= len(data) else 0
+    end = data.rfind(b"\n") + 1                    # 쓰는 중인 마지막 줄은 다음 실행에
+    hl = min(256, end)
+    new_cur = (hl, hashlib.sha256(data[:hl]).hexdigest(), end)
+    row = c.execute("SELECT head_len, head, offset FROM promote_cursor WHERE log=?", (LOG.name,)).fetchone()
+    if row is None:                                 # 첫 실행: 기존 hit_count 에 이미 로그가 들어 있으므로 위치만 기록
+        return {}, new_cur
+    head_len, head, offset = row
+    same = offset <= end and head_len <= len(data) and hashlib.sha256(data[:head_len]).hexdigest() == head
+    begin = offset if same else 0
     hits = {}
     pat = re.compile(r"solution[_\s#]*(\d+)|problem_hash[=:\s]+([a-f0-9]{8,})")
-    for line in data[begin:].decode("utf-8", errors="replace").splitlines():
+    for line in data[begin:end].decode("utf-8", errors="replace").splitlines():
         m = pat.search(line)
         if m:
             key = m.group(1) or m.group(2)
             hits[key] = hits.get(key, 0) + 1
-    return hits, {"head": head, "offset": len(data)}
+    return hits, new_cur
 
 
 def score_from_hits(hit_count: int) -> int:
@@ -84,7 +84,7 @@ def main():
         return 0
     c = sqlite3.connect(str(DB))
     ensure_columns(c)
-    hits_by_id, cursor = scan_hits()
+    hits_by_id, cursor = scan_hits(c)
     # 명시 등재된 solution (사용자가 save_solution.py manual · verified 지정) 은 유지
     updated = 0
     for row in c.execute(
@@ -101,9 +101,11 @@ def main():
                 (new_hit, new_score, sid)
             )
             updated += 1
+    if cursor:                                   # 점수 갱신과 진행 위치를 한 트랜잭션으로 (중간 실패 시 둘 다 롤백)
+        c.execute("INSERT INTO promote_cursor (log, head_len, head, offset) VALUES (?, ?, ?, ?) "
+                  "ON CONFLICT(log) DO UPDATE SET head_len=excluded.head_len, head=excluded.head, offset=excluded.offset",
+                  (LOG.name, *cursor))
     c.commit()
-    if cursor:                                   # DB 반영 뒤에 cursor 저장 (중간 실패 시 다음 실행이 같은 줄을 다시 셈)
-        CURSOR.write_text(json.dumps(cursor), encoding="utf-8")
     # 요약
     r = c.execute(
         "SELECT COUNT(*), AVG(reusable_score), SUM(verified), SUM(hit_count) "

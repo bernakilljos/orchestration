@@ -262,9 +262,9 @@ def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
     (approval-gate.py 51 · 옛 check-mojibake 의 python -c 9 · `python --version` 까지 멈춤).
     `--version` 도 멈춘 것 = 원인은 스크립트가 아니라 이 PC 의 python 기동 단계(환경).
     → hook 이 python 을 덜 띄우게 고치고(예방), 그래도 남은 것은 여기서 치운다(정리).
-    안전 조건 (넷 다): 부모 프로세스 없음 · min_age_hours 이상 · 이 kit 소유 흔적
-    (명령줄에 이 프로젝트의 .claude 경로 · Claude 셸 스냅샷 · 또는 python -c / --version) ·
-    시작 후 CPU 를 거의 안 쓴 멈춘 상태 (누적 CPU < 1초).
+    안전 조건 (넷 다): 부모 프로세스 없음 · min_age_hours 이상 · 명령줄에 이 프로젝트의 .claude 경로 ·
+    시작 후 CPU 를 거의 안 쓴 멈춘 상태 (누적 CPU < 1초). `python -c`·`--version`·셸 스냅샷처럼
+    어느 프로젝트에서나 나오는 흔적만 있는 것은 소유 미확인으로 로그만 남긴다 (작업별 PID 등록은 아직 없음).
     2026-11-04 감사: 흔적이 없는 프로세스를 CPU 사용량만으로 죽이던 분기 · 다른 폴더의 /.claude/ 까지 잡던 조건 제거.
     소유 흔적은 있지만 CPU 를 쓰는 (일하는) 프로세스는 죽이지 않고 경고만 남긴다.
     """
@@ -285,10 +285,13 @@ def reap_stuck_orphans(min_age_hours: float = 1.0) -> int:
             if (_t.time() - (info["create_time"] or _t.time())) < min_age_hours * 3600:
                 continue
             cmd = " ".join(info["cmdline"] or []).replace("\\", "/")
-            kit_trace = (any(r in cmd.lower() for r in own_roots) or " -c " in f" {cmd} " or cmd.endswith("--version")
-                         or "shell-snapshots" in cmd or "export TEMP=" in cmd)
+            # 2026-11-04 재감사: `-c`·`--version`·셸 스냅샷·`export TEMP=` 는 어느 프로젝트에서나 나오는 흔적 → 종료 근거 X (로그만)
+            kit_trace = any(r in cmd.lower() for r in own_roots)
             if not kit_trace:
-                continue                                   # 소유 흔적 없는 프로세스는 대상 아님
+                if (" -c " in f" {cmd} " or cmd.endswith("--version") or "shell-snapshots" in cmd
+                        or "export TEMP=" in cmd):
+                    log_msg(f"orphan (소유 미확인 · 종료 안 함): pid={info['pid']} cmd={cmd[:120]}")
+                continue                                   # 이 프로젝트 경로 없는 프로세스는 대상 아님
             try:
                 ct = proc.cpu_times()
                 busy = (ct.user + ct.system) >= 1.0

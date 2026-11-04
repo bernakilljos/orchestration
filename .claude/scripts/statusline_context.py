@@ -72,6 +72,45 @@ def _ledger_label(desc: str, cells: int = LEDGER_LABEL_CELLS) -> str:
     return "".join(out) + "…"
 
 
+def _terminal_cols() -> int:
+    """실제 터미널 폭 — STATUSLINE_COLUMNS·COLUMNS 환경변수 → Windows 콘솔(CONOUT$) 순. 모르면 0 (자르지 않음)."""
+    for k in ("STATUSLINE_COLUMNS", "COLUMNS"):
+        v = os.environ.get(k, "")
+        if v.isdigit() and int(v) >= 40:
+            return int(v)
+    if os.name == "nt":
+        try:
+            with open("CONOUT$", "w") as con:
+                return os.get_terminal_size(con.fileno()).columns
+        except Exception:
+            return 0
+    return 0
+
+
+def _fit_cells(line: str, cells: int) -> str:
+    """ANSI 는 그대로 두고 보이는 폭(wcwidth)만 세어 cells 를 넘으면 '…' 로 자른다."""
+    try:
+        from wcwidth import wcwidth as _wc
+    except Exception:
+        def _wc(ch):
+            return 2 if ord(ch) > 0x2E7F else 1
+    parts = re.split(r"(\x1b\[[0-9;]*[A-Za-z])", line)
+    if sum(max(_wc(ch), 0) for p in parts[::2] for ch in p) <= cells:
+        return line
+    out, used = [], 0
+    for i, p in enumerate(parts):
+        if i % 2:
+            out.append(p)
+            continue
+        for ch in p:
+            w = max(_wc(ch), 0)
+            if used + w > cells - 1:
+                return "".join(out) + "…\x1b[0m"
+            out.append(ch)
+            used += w
+    return "".join(out)
+
+
 def _project_root(start: str) -> str:
     """루트 표식(.git 또는 .claude+plugins)이 있는 조상 디렉터리를 돌려준다.
 
@@ -1954,6 +1993,11 @@ def main() -> None:
 
     if cost: out.append(_row("비용", cost.replace("AI 비용(이 프로젝트) ", "")))
 
+    # 2026-11-04 재감사: 행 전체가 터미널 폭을 넘으면 자동 줄바꿈으로 상태줄이 늘어난다 → 넘는 행만 끝을 '…' 로 자름.
+    # 배치·색·라벨 폭은 그대로 (FROZEN) · 터미널 폭을 알 수 없으면 자르지 않는다 (기존 출력 그대로).
+    _cols = _terminal_cols()
+    if _cols:
+        out = [_fit_cells(l, _cols - 1) for l in out]
     final = "\n".join(out)
     # 2026-10-26: debug save — Claude Code 가 실제 호출한 raw output 저장 (사용자 터미널 삐뚤 진단용)
     try:

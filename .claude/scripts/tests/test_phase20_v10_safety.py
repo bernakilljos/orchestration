@@ -66,8 +66,9 @@ def _sup(tmp_path, *args):
 
 
 def test_advance_all_unknown_option_rejected_before_running(tmp_path):
-    r = _sup(tmp_path, "--dryrun")
-    assert r.returncode == 2 and '"executed": false' in r.stdout
+    for args in (["--dryrun"], ["--trigger"], ["--trigger", "--dry"], ["dry-run"], ["--dry", "extra"]):
+        r = _sup(tmp_path, *args)
+        assert r.returncode == 2 and '"executed": false' in r.stdout, args
 
 
 def test_advance_all_dry_run_alias_changes_nothing(monkeypatch):
@@ -90,7 +91,6 @@ def _promote(tmp_path, monkeypatch):
     spec.loader.exec_module(m)
     monkeypatch.setattr(m, "DB", tmp_path / "orca.db")
     monkeypatch.setattr(m, "LOG", tmp_path / "lookup-history.log")
-    monkeypatch.setattr(m, "CURSOR", tmp_path / "cursor.json")
     return m
 
 
@@ -111,6 +111,62 @@ def test_promote_is_idempotent_and_never_sets_verified(tmp_path, monkeypatch):
         rows = dict((r[0], r[1:]) for r in c.execute("SELECT id, hit_count, verified FROM problem_solutions"))
     assert rows[1] == (5, 0)                                   # 5회 1번만 · 조회만으로 verified X
     assert rows[2] == (0, 1)                                   # 수동 검증 행은 그대로
+
+
+def test_promote_short_log_appends_counted_once_each(tmp_path, monkeypatch):
+    """감사 재현: 짧은 로그에 1줄씩 붙이면 1·3·6 으로 집계되던 것 → 1·2·3 · 쓰는 중인 줄은 다음 실행에 · 교체된 로그는 처음부터."""
+    m = _promote(tmp_path, monkeypatch)
+    with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+        c.execute("CREATE TABLE problem_solutions (id INTEGER PRIMARY KEY, problem_hash TEXT, hit_count INT,"
+                  " reusable_score INT, verified INT)")
+        c.execute("INSERT INTO problem_solutions VALUES (1, 'aaaa1111', 0, 5, 0)")
+    log = tmp_path / "lookup-history.log"
+    log.write_bytes(b"")
+    m.main()
+
+    def hits():
+        with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+            return c.execute("SELECT hit_count FROM problem_solutions").fetchone()[0]
+    seen = []
+    for _ in range(3):
+        with open(log, "ab") as fh:
+            fh.write(b"solution #1\n")
+        m.main()
+        seen.append(hits())
+    assert seen == [1, 2, 3]
+    with open(log, "ab") as fh:
+        fh.write(b"solution #1")                  # 줄바꿈 없는 쓰는 중인 줄
+    m.main()
+    assert hits() == 3
+    with open(log, "ab") as fh:
+        fh.write(b"\n")
+    m.main()
+    assert hits() == 4
+    log.write_bytes(b"new file\nsolution #1\n")   # 로그 교체 (정리 후 새 파일)
+    m.main()
+    assert hits() == 5
+
+
+def test_promote_failure_before_commit_does_not_double_count(tmp_path, monkeypatch):
+    m = _promote(tmp_path, monkeypatch)
+    with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+        c.execute("CREATE TABLE problem_solutions (id INTEGER PRIMARY KEY, problem_hash TEXT, hit_count INT,"
+                  " reusable_score INT, verified INT)")
+        c.execute("INSERT INTO problem_solutions VALUES (1, 'aaaa1111', 0, 5, 0)")
+    log = tmp_path / "lookup-history.log"
+    log.write_bytes(b"x\n")
+    m.main()
+    log.write_bytes(b"x\nsolution #1\nsolution #1\n")
+    real = m.score_from_hits
+    monkeypatch.setattr(m, "score_from_hits", lambda n: (_ for _ in ()).throw(RuntimeError("중간 실패")))
+    try:
+        m.main()
+    except RuntimeError:
+        pass
+    monkeypatch.setattr(m, "score_from_hits", real)
+    m.main()
+    with sqlite3.connect(str(tmp_path / "orca.db")) as c:
+        assert c.execute("SELECT hit_count FROM problem_solutions").fetchone()[0] == 2
 
 
 # ---------- 4. requirements 길이 ----------
@@ -156,13 +212,16 @@ def test_reaper_only_kills_owned_stuck_processes(tmp_path, monkeypatch):
         "other_project": _P(13, "python.exe", "python D:/other/.claude/hooks/y.py", 0.1),
         "user_grep_busy": _P(14, "grep.exe", "grep -r foo .", 80.0),
         "user_server": _P(15, "python.exe", "python run.py", 0.1),
+        "generic_dash_c": _P(16, "python.exe", "python -c import time;time.sleep(9999)", 0.1),
+        "generic_version": _P(17, "python.exe", "python --version", 0.0),
     }
     monkeypatch.setattr(m.psutil, "pids", lambda: [])
     monkeypatch.setattr(m.psutil, "process_iter", lambda attrs=None: list(procs.values()))
     assert m.reap_stuck_orphans() == 1
     assert procs["owned_stuck"].killed
     assert not any(p.killed for k, p in procs.items() if k != "owned_stuck")
-    assert "CPU 사용 중" in (tmp_path / "loop.log").read_text(encoding="utf-8")
+    log = (tmp_path / "loop.log").read_text(encoding="utf-8")
+    assert "CPU 사용 중" in log and "소유 미확인" in log
 
 
 # ---------- V1.1 F. Statusline 요청 줄 (레이아웃·색상 FROZEN · 문구 정리·폭만) ----------
@@ -177,3 +236,16 @@ def test_ledger_label_strips_control_and_fits_cells():
         assert "\n" not in out and "\r" not in out and "\x1b" not in out and "pasted_content" not in out
         assert wcswidth(out) <= sl.LEDGER_LABEL_CELLS
     assert sl._ledger_label("짧은 요청 (부연)") == "짧은 요청"
+
+
+def test_statusline_rows_fit_terminal_and_keep_ansi(monkeypatch):
+    sys.path.insert(0, str(SCRIPTS))
+    import statusline_context as sl
+    from wcwidth import wcswidth
+    row = "  \x1b[1;35m📊️ 품질추세\x1b[0m\x1b[90m│\x1b[0m " + "가" * 60 + " \x1b[36m▶\x1b[0m   요청 " + "B" * 50
+    out = sl._fit_cells(row, 99)
+    assert wcswidth(sl.re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", out)) <= 99 and out.endswith("…\x1b[0m")
+    assert "\x1b[1;35m" in out                               # 색 코드는 잘리지 않음
+    assert sl._fit_cells("짧은 줄", 99) == "짧은 줄"           # 폭 안이면 그대로
+    monkeypatch.setenv("STATUSLINE_COLUMNS", "130")
+    assert sl._terminal_cols() == 130

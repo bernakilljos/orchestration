@@ -1192,8 +1192,16 @@ def main(argv):
         known = {"--dry", "--dry-run", "--trigger"}
         rest = argv[2:]
         unknown = [a for a in rest if a.startswith("-") and a not in known]
-        if unknown:
-            print(json.dumps({"error": f"unknown option(s): {unknown}", "executed": False}, ensure_ascii=False))
+        # --trigger 는 값 1개 필수 · 그 외 위치 인자는 받지 않는다 (재감사 P2 · 오타가 조용히 실제 실행되지 않게)
+        ti = rest.index("--trigger") if "--trigger" in rest else -1
+        if ti >= 0 and (ti + 1 >= len(rest) or rest[ti + 1].startswith("-")):
+            unknown.append("--trigger <값 없음>")
+        stray = [a for i, a in enumerate(rest) if not a.startswith("-") and i != ti + 1]
+        if ti < 0:
+            stray = [a for a in rest if not a.startswith("-")]
+        if unknown or stray:
+            print(json.dumps({"error": f"unknown option(s): {unknown + stray}", "executed": False},
+                             ensure_ascii=False))
             return 2
         dry = "--dry" in argv or "--dry-run" in argv
         trigger = ""
