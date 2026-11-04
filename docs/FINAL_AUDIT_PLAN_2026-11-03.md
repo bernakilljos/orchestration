@@ -287,3 +287,35 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 3. 익명화 사본의 계정 이름 치환으로 `dashboard.py`·`install.bat` 등 GitHub 저장소 경로가 `<ACCOUNT_NAME>` 로 바뀜 — ZIP 에서 그 기능을 그대로 재실행하면 원격 저장소를 못 찾음 (감사 열람용)
 4. `team@itcen.com` (조직 대표 메일) 1건은 개인 계정 아님으로 유지
 5. 기존: F4 실제 재검증 미실시 · Plugin 드리프트 3 파일 · heal-e100-a1 정리 후보
+
+## 23. V1.0 안정화 + V1.1 점검 (2026-11-04 17:xx KST · a3d88b7 독립 감사 반영 · 유료 $0 · 커밋 bb70da7)
+**V1.0 결함 (감사 6건 · 코드로 원인 확인 후 수정)**
+| # | 항목 | 실제 원인 | 수정 | 수정 전 재현 | 결과 |
+|---|---|---|---|---|---|
+| 1 | 미완료 Task 자동 삭제 | `cleanup-pollution.sh` §8 이 pending·in_progress·locks 를 mtime +3 만으로 `rm` · 같은 유형 `cleanup-orphans.sh` 는 30분+ lock 을 pid 확인 없이 삭제 · 요약 표는 서브셸 때문에 앞 폴더 행이 덮어써짐 | 미완료 작업 보존 (요약에 후보만) · lock 은 기록된 pid 종료 확인 시만 · process substitution | HEAD 코드로 test_phase20 FAIL | **PASS** |
+| 2 | `--dry-run` 오실행 | `supervisor.py` advance-all 이 `--dry` 만 인식 · 모르는 옵션 무시하고 실제 실행 (§22 조사 중 사고) | `--dry-run` = `--dry` · 모르는 옵션 실행 전 rc 2 거부 · 호출처 (10분 루프·stop hook) 옵션 영향 없음 | FAIL | **PASS** |
+| 3 | 고아 프로세스 종료 | `python -c`·`/.claude/`(다른 폴더 포함)·CPU 5%+ grep 등 소유 확인 없이 kill (실제 종료 이력 0) | 이 프로젝트 `.claude` 경로·셸 스냅샷 흔적 + 누적 CPU<1초 (멈춤) 만 · 일하는 프로세스는 WARN 만 | HEAD 에선 5개 중 3개 종료 | **PASS** (작업별 PID 등록은 V1.1 D) |
+| 4 | 조회 → verified 승급 | `promote-solutions.py` 가 로그 전체를 매 실행 누적 + hit≥3 이면 verified=1 · hit<3 이면 수동 검증 행도 0 으로 덮음 | 로그 cursor 멱등 집계 (첫 실행은 위치만) · verified 는 건드리지 않음 | FAIL | **PASS** · 기존 verified=1 33행 (전부 hit≥3) 은 강등 안 함 — 감사 후 판단 필요 |
+| 5 | 요구사항 6,000자 절단 | `load_requirements` 가 ID 는 전체에서, 본문은 `[:6000]` | 정책 `requirements_max_chars` (sandbox-policy.json) 초과 시 실패 → 유료 Agent 전 중단 · 이하면 전문 | FAIL | **PASS** (기존 F4 요구사항 게이트 테스트 phase18 포함 통과) |
+| 6 | 요구사항 경로 하드코딩 | lib 에 고정 파일명·fixture 명 0 — `requirements_path` + 정책 `requirements_doc_names` 로만 연결 | 변경 없음 | — | **PASS** |
+
+**V1.1 요청 (실제 코드 연결 기준)**
+| 항목 | 현재 상태 (근거) | 판정 |
+|---|---|---|
+| A 긴급 요청 신속 처리 | hook·lib·route 에 긴급/urgent 처리 0곳 · 미구현 | **FAIL** (미착수) |
+| B [확인]/[예시]/[추정]/[미확인]/[판독불가] | 감정 감지 hook 2곳에만 문자열 · Agent·Runner·Judge 공통 강제 없음 | **FAIL** (미착수) |
+| C 연관 작업 자율 수행 | 이번 작업에서 같은 유형 (lock·하드코딩 7곳·요약 덮어쓰기) 함께 처리 · 하지만 `execution-contract.md §3` 범위 lock 규칙과 충돌 · 정책 문서화 없음 | **PARTIAL** |
+| D 프로세스·메모리 자동 관리 | 고아 정리 소유권 제한 (V1.0-3) · 작업별 PID 등록·runner 자식 트리 정리 없음 (`runner.py` kill/psutil 0) | **PARTIAL** |
+| E 파일 정리·manifest | 미완료 보존·죽은 pid lock 만 삭제 · manifest/index 통합 없음 | **PARTIAL** |
+| F Statusline | 요청 '다음:' 문구 개행·태그·ANSI 제거 + 40칸 (실측 요청 줄 166→152칸) · `_pair` 전체 폭 상한·서브 세로줄은 배치 변경이라 미수정 · VS Code 캡처 비교 미실시 | **PARTIAL** |
+| G 하드코딩·연결·드리프트 | `~/.claude/projects/<slug>` 7곳 동적화 · Plugin 드리프트 3 파일 원본 반영 (`--check` drift 0 · orphan 5·rename 23 그대로) · 모델·Agent 수·스케줄 전수 점검 미실시 | **PARTIAL** |
+
+**회귀**: test_phase20 7/7 (V1.0 6 + 요청 줄 1) · HEAD 코드로 6/6 FAIL 확인 · pytest 124 passed (스크립트형 33 fixture 오류 기존 동일) · phase5 39/39 · phase2 21/21 (1회 19/21 → 같은 순서 재실행·3회 반복 모두 21/21 · 재현 안 됨) · phase3 26/26 · golden 13/13 · test-10min-loop rc 0
+**Fresh clone (bb70da7 · docs/screens 제외 · ORCHESTRATION_ROOT·REPAIR_SANDBOX_ROOT 임시)**: verify-fresh-clone 위반 0 (466 파일) · pytest 124 · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · 하드 경로 0 · 임시 clone 삭제
+
+**관찰 · 잔여 위험**
+1. 17:00 tick 누락 (`NumberOfMissedRuns 1`) — 노트북 배터리 운전 (BatteryStatus 1) + 작업 설정 `DisallowStartIfOnBatteries` · 전원 연결 시 복구 · 설정 변경 안 함 (F7 창 이후)
+2. `test-10min-loop.sh` (DRY-RUN) 가 운영 로그 `orca-10min-loop.log` 에 기록 (17:04 COMMIT LOW 포함) — 시험이 운영 로그를 오염 · 미수정
+3. 17:04 commit 90.7% (여유 2.3GB) — 테스트 동시 실행 영향 추정 [추정]
+4. Goal #1464 — 11-05 09:50 KST 이후 timeout FAILED 예정 (기존 규칙)
+5. V1.1 A·B 미착수 · C·D·E·F·G 부분 · F4 실제 재검증 미실시
