@@ -324,7 +324,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|Bash|Agent",
+        "matcher": "Edit|Write|Bash|PowerShell|Agent",
         "hooks": [
           {
             "type": "command",

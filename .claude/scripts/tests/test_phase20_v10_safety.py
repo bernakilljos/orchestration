@@ -558,3 +558,107 @@ def test_cleanup_candidates_exclude_evidence_and_tasks(tmp_path):
     assert "work/a.tmp" in got
     assert ".repair-sandbox" not in got and ".claude/tasks" not in got
     assert (tmp_path / "work" / "a.tmp").exists()   # 후보 기록만 · 삭제 X
+
+
+# ---------- 2026-11-05 V1.1 3축 검증 · 화면 캡처 차단 ----------
+
+def _git_repo(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.email", "t@example.com"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "local_mod.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "app.py").write_text("import os\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "init"], cwd=tmp_path, check=True)
+
+
+def test_external_dependencies_only_new_third_party(tmp_path):
+    import independent_verifier as iv
+    _git_repo(tmp_path)
+    (tmp_path / "app.py").write_text("import os\nimport json\nimport local_mod\nimport requests\n", encoding="utf-8")
+    assert iv.external_dependencies(tmp_path) == ["requests"]        # 표준·내부 모듈 제외
+    (tmp_path / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    assert iv.external_dependencies(tmp_path) == ["requests", "requirements.txt"]
+
+
+def test_external_scope_requires_read_level(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "EXTERNAL_EVIDENCE", tmp_path / "e.jsonl")
+    assert iv.external_scope([])["scope"] == "none_needed"
+    assert iv.external_scope(["requests"])["scope"] == "not_checked"
+    assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "found")["ok"]
+    assert iv.external_scope(["requests"])["scope"] == "not_checked"  # 검색 결과만 = 미확인
+    assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read")["ok"]
+    assert iv.external_scope(["requests"])["scope"] == "checked"
+    assert not iv.record_external_evidence("x", "http://a", "1", "read")["ok"]
+
+
+def test_judge_blocks_verified_when_external_unchecked(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    monkeypatch.setattr(iv, "EXTERNAL_EVIDENCE", tmp_path / "e.jsonl")
+    ok = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+          "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED"}
+
+    def absorb():
+        (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []},
+                                                          "external_dependencies": ["requests"]}), encoding="utf-8")
+        return iv.judge_absorb(1, json.dumps(ok))["final_verdict"]
+    fv = absorb()
+    assert fv["status"] == "UNVERIFIED" and fv["external_scope"] == "not_checked"   # 테스트 통과여도 외부 축 미확인
+    iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read")
+    fv = absorb()
+    assert fv["status"] == "VERIFIED" and fv["external_scope"] == "checked"
+
+
+def _fake_runner(codes):
+    calls, marked = [], []
+
+    def run(cmd, **k):
+        calls.append(cmd)
+        return {"exit_code": codes.pop(0), "exec_id": len(calls), "stdout": ""}
+    return SimpleNamespace(run=run, mark_verified=lambda i, v: marked.append(i)), calls, marked
+
+
+def test_regression_runs_selected_tests_and_retries_once(tmp_path):
+    import independent_verifier as iv
+    _git_repo(tmp_path)
+    (tmp_path / "test_app.py").write_text("import app\n", encoding="utf-8")
+    (tmp_path / "test_script.py").write_text('import app\nif __name__ == "__main__":\n    pass\n', encoding="utf-8")
+    (tmp_path / "test_other.py").write_text("import nothing\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-qm", "t"], cwd=tmp_path, check=True)
+    (tmp_path / "app.py").write_text("import os\nX = 1\n", encoding="utf-8")
+    rn, calls, marked = _fake_runner([0, 1, 0])
+    r = rc.run_affected_regression(str(tmp_path), "pytest test_none.py", "t1", rn, iv)
+    assert r["ok"] and r["selected"] == ["test_app.py", "test_script.py"]
+    assert "pytest" in calls[0] and "pytest" not in calls[1]          # pytest 형·스크립트형 구분
+    assert len(calls) == 3 and r["results"][1]["retried"] and len(marked) == 2
+    rn, calls, _ = _fake_runner([1, 1, 0])
+    assert not rc.run_affected_regression(str(tmp_path), "pytest test_none.py", "t1", rn, iv)["ok"]
+    rn, calls, _ = _fake_runner([0])
+    r = rc.run_affected_regression(str(tmp_path), "pytest test_app.py", "t1", rn, iv)
+    assert r["selected"] == ["test_script.py"]                        # 이미 실행한 테스트 제외
+
+
+def _capture_hook(tmp_path, tool, command):
+    payload = json.dumps({"tool_name": tool, "tool_input": {"command": command}, "session_id": "t"})
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT), "PYTHONUTF8": "1"}
+    return subprocess.run([sys.executable, "-X", "utf8", str(ROOT / ".claude" / "hooks" / "tool-dispatch.py"), "pre"],
+                          input=payload, capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
+
+
+def test_screen_capture_blocked_for_bash_and_powershell(tmp_path):
+    grab = "$g.Copy" + "FromScreen($b.Location, $p, $b.Size)"
+    for tool in ("Bash", "PowerShell"):
+        r = _capture_hook(tmp_path, tool, grab)
+        assert r.returncode == 2 and "화면 캡처" in r.stderr, tool
+    assert _capture_hook(tmp_path, "PowerShell", "ALLOW_SCREEN_CAPTURE=1; " + grab).returncode == 0
+    assert _capture_hook(tmp_path, "PowerShell", "Get-Date").returncode == 0
+    assert _capture_hook(tmp_path, "Bash", "grep -rn Copy" + "FromScreen plugins").returncode == 0
+
+
+def test_settings_prehook_covers_powershell():
+    cfg = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    matchers = [e.get("matcher", "") for e in cfg["hooks"]["PreToolUse"]]
+    assert any("PowerShell" in m.split("|") for m in matchers)

@@ -460,6 +460,26 @@ def _requirements_block(req: Dict[str, Any]) -> str:
             f"REQUIREMENTS>>>\nRequirement ids: {', '.join(req['ids'])}.\n")
 
 
+def run_affected_regression(cwd: str, test_cmd: str, tid: str, runner, verifier) -> Dict[str, Any]:
+    """변경 모듈을 참조하는 테스트를 sandbox 에서 자동 실행 (V1.1 C · 무료) · 실패는 1회 재시도로 불안정 구분.
+    `__main__` 이 있는 스크립트형 테스트는 직접 실행, 나머지는 pytest."""
+    picked = [t for t in verifier.affected_tests(Path(cwd), verifier.changed_paths(Path(cwd)))
+              if t.endswith(".py") and Path(t).name not in test_cmd]
+    results = []
+    for t in picked:
+        script = "__main__" in (Path(cwd) / t).read_text(encoding="utf-8", errors="replace")
+        cmd = [sys.executable, t] if script else [sys.executable, "-m", "pytest", "-q", t]
+        r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd)
+        retried = r.get("exit_code") != 0
+        if retried:
+            r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd)
+        if r.get("exit_code") == 0:
+            runner.mark_verified(r.get("exec_id"), True)
+        results.append({"test": t, "exit_code": r.get("exit_code"), "retried": retried,
+                        "tail": (r.get("stdout") or "")[-200:]})
+    return {"ok": all(x["exit_code"] == 0 for x in results), "selected": picked, "results": results}
+
+
 def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                        allow_paths: list, protected_paths: list,
                        apply_target: str, failure_summary: str = "",
@@ -572,6 +592,11 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     out["test_after"] = {"exit_code": vr.get("exit_code"), "tail": (vr.get("stdout") or "")[-300:]}
     if not passed:
         return fail("pytest", rounds=len(out["agent_fix_rounds"]))
+
+    # 회귀 실패면 유료 Judge 전에 멈춘다
+    out["regression"] = run_affected_regression(cwd, test_cmd, tid, _rn, _iv)
+    if not out["regression"]["ok"]:
+        return fail("regression", rounds=len(out["agent_fix_rounds"]))
 
     # 5. 통계 judge → 독립 LLM Judge (별도 Agent 세션 · 읽기 전용 도구) → judge_absorb 결합
     jh = _iv.judge_handoff(repair_goal_id, sandbox_cwd=cwd, allow_paths=allow_paths,

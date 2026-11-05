@@ -182,7 +182,8 @@ def _reap_owned(owned: Dict[int, Any]) -> Tuple[List[int], List[int]]:
     alive = []
     for pr in owned.values():
         try:
-            if pr.is_running() and pr.status() != psutil.STATUS_ZOMBIE:
+            # Windows 엔 zombie 상태가 없고 7.2.2 status() 지연 보고가 있어 POSIX 에서만 조회 (상세는 감사 문서 32절 참조)
+            if pr.is_running() and (os.name == "nt" or pr.status() != psutil.STATUS_ZOMBIE):
                 pr.kill()
                 alive.append(pr)
         except psutil.Error:

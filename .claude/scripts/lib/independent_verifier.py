@@ -72,6 +72,57 @@ def _collect_diff_paths(cwd: Path) -> List[str]:
     return paths
 
 
+def changed_paths(cwd: Path) -> List[str]:
+    """추적 파일 변경 + 새 파일 (ignore 제외)."""
+    untracked = _run_git_in(cwd, ["ls-files", "--others", "--exclude-standard"]) or ""
+    return _collect_diff_paths(cwd) + [p.strip() for p in untracked.splitlines() if p.strip()]
+
+
+EXTERNAL_EVIDENCE = ROOT / ".claude" / "state" / "external-evidence.jsonl"
+_MANIFESTS = {"requirements.txt", "pyproject.toml", "package.json", "go.mod", "Cargo.toml", "pom.xml"}
+_IMPORT_LINE = re.compile(r"^\+\s*(?:import|from)\s+([A-Za-z_]\w*)", re.MULTILINE)
+
+
+def external_dependencies(cwd: Path) -> List[str]:
+    """이번 변경이 새로 쓰는 외부 패키지 (표준 라이브러리·저장소 내부 모듈 제외) + 변경된 의존성 파일. V1.1 B."""
+    diff = _run_git_in(cwd, ["diff", "-U0", "--", "*.py"]) or ""
+    tracked = _run_git_in(cwd, ["ls-files"]) or ""
+    local = {Path(p).stem for p in tracked.split()} | {part for p in tracked.split() for part in Path(p).parts}
+    found = {m for m in _IMPORT_LINE.findall(diff) if m not in sys.stdlib_module_names and m not in local}
+    found |= {Path(p).name for p in changed_paths(cwd) if Path(p).name in _MANIFESTS}
+    return sorted(found)
+
+
+def record_external_evidence(package: str, url: str, version: str, level: str, note: str = "") -> Dict[str, Any]:
+    """공식 자료 대조 기록. level: read = 본문 확인 · found = 검색 결과만 (대조로 인정 X).
+    패키지명·공개 URL·버전만 저장 — 코드·내부 데이터 금지."""
+    if level not in ("read", "found") or not url.startswith("https://"):
+        return {"ok": False, "reason": "level 은 read|found · url 은 https"}
+    row = {"package": package, "url": url, "version": version, "level": level, "note": note[:200],
+           "checked_at": __import__("time").strftime("%Y-%m-%d")}
+    EXTERNAL_EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
+    with EXTERNAL_EVIDENCE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return {"ok": True, **row}
+
+
+def external_scope(packages: List[str]) -> Dict[str, Any]:
+    """외부 근거 축 — none_needed | checked | not_checked. 본문 확인(read) 기록이 있는 패키지만 확인으로 센다."""
+    if not packages:
+        return {"scope": "none_needed", "unchecked": []}
+    read = set()
+    if EXTERNAL_EVIDENCE.exists():
+        for line in EXTERNAL_EVIDENCE.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("level") == "read":
+                read.add(row.get("package"))
+    unchecked = [p for p in packages if p not in read]
+    return {"scope": "not_checked" if unchecked else "checked", "unchecked": unchecked}
+
+
 def _verified_output(task_ids: List[str]) -> str:
     """goal 의 verified=1 실행 기록 (명령 + 출력 끝부분) — 개발 Agent 보고가 아닌 runner 기록."""
     if not task_ids or not DB.exists():
@@ -222,8 +273,8 @@ def collect_evidence(goal_id: int,
     diff_paths = _collect_diff_paths(diff_cwd)
     evidence["git_diff_paths"] = diff_paths
     evidence["git_diff_file_count"] = len(diff_paths)
-    untracked = _run_git_in(diff_cwd, ["ls-files", "--others", "--exclude-standard"]) or ""
-    evidence["changed_paths"] = diff_paths + [p.strip() for p in untracked.splitlines() if p.strip()]
+    evidence["changed_paths"] = changed_paths(diff_cwd)
+    evidence["external_dependencies"] = external_dependencies(diff_cwd)
     evidence["verified_output"] = _verified_output([t["task_id"] for t in task_specs])
     evidence["affected_tests"] = affected_tests(diff_cwd, evidence["changed_paths"])
     evidence["affected_tests_not_run"] = [t for t in evidence["affected_tests"]
@@ -348,6 +399,8 @@ def judge_handoff(goal_id: int,
         f"## 회귀 후보 (변경 모듈을 참조하는 테스트)\n"
         f"전체 {len(evidence.get('affected_tests') or [])} · "
         f"이번 검증 미실행: {', '.join((evidence.get('affected_tests_not_run') or [])[:10]) or '없음'}\n\n"
+        f"## 외부 의존 (새로 쓰는 패키지·의존성 파일)\n"
+        f"{', '.join(evidence.get('external_dependencies') or []) or '없음'} — 공식 자료 대조는 external-evidence 기록으로만 인정\n\n"
         f"## tasks 실행 결과\n"
         + "\n".join(
             f"  - {t['task_id']}: status={t['status']} verify={t.get('verify_type')} "
@@ -390,6 +443,7 @@ def judge_handoff(goal_id: int,
             "scope_violations": scope.get("violations", [])[:10],
         },
         "judge_prompt": judge_prompt,
+        "external_dependencies": evidence.get("external_dependencies") or [],
         "requires_llm_judge": requires_llm,
         "status": "pending_llm_judge" if requires_llm else "stat_verdict_blocking",
     }
@@ -567,6 +621,12 @@ def judge_absorb(goal_id: int, judge_result_json: str,
                      "reasons": reasons + [
                          f"llm judge confirms (conf={confidence})",
                          f"missing={len(missing)} unexpected={len(unexpected)}"]}
+    # V1.1 B: 외부 근거·내부 구현·실행 결과는 별개 축 — 외부 근거 미확인이면 테스트가 통과해도 VERIFIED 금지
+    ext = external_scope(data.get("external_dependencies") or [])
+    final["external_scope"] = ext["scope"]
+    if ext["unchecked"] and final["status"] == "VERIFIED":
+        final = {**final, "status": "UNVERIFIED",
+                 "reasons": final["reasons"] + [f"external source not checked: {ext['unchecked']}"]}
     # 검증 범위 표시: 요구사항별로 확인했는지, 요구사항 없이 diff·테스트로만 판정했는지
     final["requirements_scope"] = "checked" if required_ids else "not_configured"
     data["llm_verdict"] = llm_verdict
@@ -590,6 +650,17 @@ def _cli_main(argv):
         changed = (_run_git_in(ROOT, ["diff", "--name-only", "HEAD"]) or "").split()
         print("\n".join(affected_tests(ROOT, changed)))
         return 0
+    if argv[1] == "external-deps":
+        deps = external_dependencies(ROOT)
+        print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))
+        return 0
+    if argv[1] == "external-evidence":
+        if len(argv) < 6:
+            print("usage: external-evidence <package> <https url> <version> <read|found> [note]")
+            return 2
+        r = record_external_evidence(argv[2], argv[3], argv[4], argv[5], argv[6] if len(argv) > 6 else "")
+        print(json.dumps(r, ensure_ascii=False))
+        return 0 if r["ok"] else 2
     if argv[1] == "judge-handoff":
         if len(argv) < 3:
             print("usage: judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")

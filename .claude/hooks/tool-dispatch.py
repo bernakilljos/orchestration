@@ -55,6 +55,7 @@ PRE = [
     ("prevent-emoji-in-code", "prevent_emoji_in_code", "Edit|Write", 3, None),
     ("prevent-version-suffix", "prevent_version_suffix", "Edit|Write", 3, None),
     ("scope-lock", "scope_lock", "Edit|Write", 3, None),
+    ("block-screen-capture", "block_screen_capture", "Bash|PowerShell", 3, None),
     ("block-visible-windows", "block_visible_windows", "Bash", 60, None),
     ("block-file-deletion", "block_file_deletion", "Bash", 3, None),
     ("block_dangerous_bash", "block_dangerous_bash", "Bash", 3, None),

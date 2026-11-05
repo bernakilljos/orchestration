@@ -42,8 +42,11 @@ cargo build
 
 ### 4. Tests
 ```bash
-# 회귀 후보 선정 (변경 모듈을 참조하는 테스트 · kit·target 공통)
+# 회귀 후보 선정 → 선정된 테스트를 실제 실행 (변경 모듈을 참조하는 테스트 · kit·target 공통)
 python .claude/scripts/lib/independent_verifier.py affected-tests
+# 외부 의존 확인 → not_checked 면 공식 자료를 직접 찾아 본문 대조 후 기록 (execution-contract.md § 5)
+python .claude/scripts/lib/independent_verifier.py external-deps
+python .claude/scripts/lib/independent_verifier.py external-evidence <패키지> <url> <버전> read
 # Python
 pytest --tb=short -q <관련 test 파일>
 # Node
@@ -93,6 +96,7 @@ done
 | git diff | +X -Y lines (N files) | file:line 리스트 |
 | build | ✅ or ❌ | 명령 + stdout/stderr |
 | tests | X passed · Y failed | pytest 결과 |
+| 외부 근거 | checked / not_checked / none_needed | URL·확인일·버전 (본문 확인만) |
 | lint | N warnings | ruff/eslint 결과 |
 | 공통우회 | N 건 | grep 결과 |
 | 영향파일 | N 건 | 의존 그래프 |
