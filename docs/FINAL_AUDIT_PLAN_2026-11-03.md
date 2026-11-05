@@ -389,3 +389,15 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | E Statusline 서브 정렬 | — | VS Code 실제 화면 캡처 필요 · FROZEN 이력 (24+회 핑퐁) | **BLOCKED** (사용자 화면 캡처 필요) |
 
 **회귀**: test_phase20 17/17 · HEAD 코드로 신규 3 FAIL · phase3 26/26 · golden 13/13 · runner·Judge 관련 pytest 34 passed · **phase2 16/21 · phase5 25/30 · pytest phase12 3 FAIL = 전부 가상 메모리 부족 (commit 93.6% · 여유 1.6GB < 2GB) 으로 sandbox 생성이 정책대로 보류됨** — 직접 `repair_sandbox.create` 시험도 같은 보류 메시지 → 이번 변경 무관 · 메모리 여유 회복 후 재실행 필요 [미확인] · fresh clone 미실행 (같은 이유 + 디스크 4.6GB)
+
+## 30. V1.1 실제 동작·회귀 재확인 (2026-11-05 · 유료 $0 · 신규 기능 없음)
+**메모리 [확인]**: commit 24.4/25.7GB (95% · 여유 1.28~1.47GB) · 주 사용 = Code 22개 7.35GB · Edge·WebView 약 3.4GB · claude 1.66GB — 사용자 프로그램 (종료 안 함) · 이 프로젝트 테스트·runner·Agent 잔여 프로세스 (1시간+) **0개** · 디스크 C 20.2GB · 메모리 게이트·정책 변경 없음
+| 항목 | 실제 동작 확인 | 판정 |
+|---|---|---|
+| A 긴급 | 감지 → 첫 응답 지시 주입은 [확인] · **우선 처리 경로 없음** [확인] (supervisor·route·ledger·auto-dispatch 에 priority 0곳) · 첫 응답 시간 미측정 | **PARTIAL** (감지만 · 우선순위 처리 미구현) |
+| B 사실 표기 | Fix·Judge 프롬프트에 규칙 [확인] · 판정 보완: [확인] 근거 + 부연 [추정] = VERIFIED 허용 · [확인] 없이 [추정]·[예시]·[미확인]·[판독불가] 만 = UNVERIFIED (41a7492) · RPA·OCR 전용 Agent 코드 없음 | **PARTIAL** |
+| C 연관 작업 자율 | 자동 실행 [확인]: Stop 마다 요청 원장 게이트·상시 요구사항 게이트·golden (경고) · SessionEnd 정리 hook · **같은 유형 탐색·회귀 선택은 규칙 문서만** (자동 X) | **PARTIAL** |
+| D 프로세스·파일 | runner 타임아웃 = 자기 트리 정리 [확인] · 정상 완료·실패는 부모가 끝난 뒤 남은 손자를 찾을 방법 없음 (추적 수단 미구현) · 파일 = 미완료·증거·sandbox 보존 + 후보 기록 (§25) | **PARTIAL** (타임아웃 경로만 PASS) |
+| E Statusline 서브 | VS Code 실제 캡처 없음 | **BLOCKED** |
+
+**회귀 (41a7492)**: 운영 폴더 · fresh clone 기본 · fresh clone `ORCHESTRATION_ROOT` 명시 3곳 모두 동일 — verify-fresh-clone 위반 0 · pytest 131 passed / 3 failed (phase12 sandbox 계열) · phase3 26/26 · golden 13/13 · test_phase20 17/17 · **phase2 16/21 · phase5 25/30 = sandbox 생성이 commit 부족으로 보류 → BLOCKED (FAIL 아님 · 직접 create 시험 같은 보류 메시지)** · 기존 실패 기록 보존
