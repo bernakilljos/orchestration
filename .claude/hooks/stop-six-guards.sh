@@ -34,7 +34,10 @@ else
 fi
 
 # 2. Verification Guard — standing-requirements
-if "$PY" -X utf8 "$ROOT/.claude/scripts/standing-requirements.py" gate >/dev/null 2>&1; then
+# 2026-11-05: stop-standing-gate.sh 가 등록돼 있으면 그 hook 이 담당 (같은 조건 이중 차단·재진입 방지 · 1번과 같은 처리)
+if grep -q 'stop-standing-gate.sh' "$ROOT/.claude/settings.json" 2>/dev/null; then
+  :  # 전용 hook 이 담당
+elif "$PY" -X utf8 "$ROOT/.claude/scripts/standing-requirements.py" gate </dev/null >/dev/null 2>&1; then
   :
 else
   FAIL_COUNT=$((FAIL_COUNT + 1))

@@ -54,7 +54,14 @@ N/N 완료 확인 (Stop hook gate)
 
 ### 요청 처리 완료 ≠ 기능 검증 완료 (2026-11-05 R160)
 
-- Ledger 의 `verification=PASS` 는 **이 요청의 작업을 수행·확인했다** 는 뜻이다. 기능 판정 (PASS/PARTIAL/BLOCKED) 은 별도로 보고한다.
+| 개념 | 기록 | 질문 |
+|---|---|---|
+| 작업 수행 | `status` | 지시받은 일을 했나 |
+| 검증 결과 | `verification` = PASS·PARTIAL·BLOCKED·FAIL | 이 요청 결과가 무엇인가 |
+| 종료 허가 | Stop gate 판단 | 지금 멈춰도 사실이 보존되나 |
+
+- PARTIAL·BLOCKED + 증거 = 미완료 그대로 Stop 허용 (완료로 세지 않음). FAIL·증거 없음·임의 문장 = 허용 안 함.
+- Ledger 의 `verification=PASS` 는 이 요청의 결과이며, 기능 전체 판정은 별도로 보고한다.
 - Stop 을 통과시키려고 값을 바꾸지 않는다. 게이트가 막으면 왜 막혔는지 먼저 확인하고, 끝나지 않았으면 그대로 보고한다.
 - `approval_required` 는 Stop 을 막지 않으며 사용자 승인 원문 없이 상태를 바꾸지 않는다.
 

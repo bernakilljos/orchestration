@@ -188,6 +188,17 @@ def cmd_invalid_registration(rid: str, reason: str = "",
     return 2
 
 
+# 2026-11-05 작업 수행(status) · 검증 결과(verification) · 종료 허가(gate 판단) 는 별개다.
+# PARTIAL·BLOCKED + 증거 = 미완료 그대로 종료 허용 — 사실대로 적어도 막히지 않아야 PASS 로 바꿀 이유가 없다.
+VERIFICATION_VALUES = ("PASS", "PARTIAL", "BLOCKED", "FAIL")
+HONEST_OPEN = ("PARTIAL", "BLOCKED")
+
+
+def _honest_open(r: dict) -> bool:
+    return (r.get("status") == "verified" and r.get("verification") in HONEST_OPEN
+            and bool(str(r.get("evidence") or "").strip()))
+
+
 def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "") -> int:
     """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사).
     verification=PASS 는 이 요청의 작업을 수행·확인했다는 뜻이다 — 기능 검증 판정(PASS/PARTIAL)을 대신하지 않는다."""
@@ -205,6 +216,12 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
                           file=sys.stderr)
                     return 2
                 r["user_approved"] = user_approved[:300]
+            verification = verification.strip().upper() if verification.strip().upper() in VERIFICATION_VALUES \
+                else verification
+            if verification and verification not in VERIFICATION_VALUES:
+                print(f"[ledger] ✗ {rid}: verification 은 {VERIFICATION_VALUES} 중 하나 — 상태 변경 안 함 (설명은 --evidence)",
+                      file=sys.stderr)
+                return 2
             # 증거 없으면 implemented 로만 (completed 불허)
             if not evidence:
                 r["status"] = "implemented"
@@ -222,7 +239,7 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
                 _save(data)
                 print(f"[ledger] ⚠ {rid}: verified (verification 미제공 · UNKNOWN · completed 보류)", file=sys.stderr)
                 return 1
-            if verification.upper() != "PASS":
+            if verification != "PASS":
                 r["status"] = "verified"
                 r["evidence"] = evidence[:500]
                 r["verification"] = verification
@@ -361,11 +378,13 @@ def cmd_gate() -> int:
     #   항목은 그대로 미완료로 남고 status·statusline 에 보인다 (완료 처리 X).
     waiting = [r for r in data["requests"] if r["status"] == "approval_required"]
     blocking = [r for r in data["requests"]
-                if r["status"] not in ("completed", "deferred", "out_of_scope", "invalid_registration", "approval_required")]
+                if r["status"] not in ("completed", "deferred", "out_of_scope", "invalid_registration", "approval_required")
+                and not _honest_open(r)]
     if not blocking:
         _gate_loop_reset()
-        print(f"[request-ledger] 사용자 승인 대기 {len(waiting)}건 (Stop 차단 안 함 · 미완료 유지): "
-              + ", ".join(r["id"] for r in waiting), file=sys.stderr)
+        open_items = waiting + [r for r in data["requests"] if _honest_open(r)]
+        print(f"[request-ledger] 미완료 {len(open_items)}건 유지 · Stop 허용 (완료 처리 아님): "
+              + ", ".join(f"{r['id']}:{r.get('verification') or r['status']}" for r in open_items), file=sys.stderr)
         return 0
     # stop_hook_active 반복 차단 해소: 같은 미완료 집합으로 연속 N 회 막혔으면 무한 루프 → 통과 + 로그
     if _gate_loop_exceeded(blocking):
@@ -376,7 +395,7 @@ def cmd_gate() -> int:
     for r in pending[:5]:
         msg += f"  ☐ {r['id']}: {r['desc'][:80]}\n"
     msg += ("→ 미완료 request 계속 실행 후 보고 (execution-contract § 2 n/n 완료 전 보고 금지) · "
-            "실제로 끝나지 않았으면 종료를 위해 PASS 로 바꾸지 말고 사실대로 보고")
+            "끝나지 않았으면 PASS 로 바꾸지 말고 complete --evidence ... --verification PARTIAL 또는 BLOCKED 로 사실대로 기록")
     print(msg, file=sys.stderr)
     return 2
 
@@ -455,7 +474,7 @@ def main() -> int:
     p_comp = sub.add_parser("complete")
     p_comp.add_argument("rid")
     p_comp.add_argument("--evidence", default="", help="실제 수행 증거 (git diff·실행 결과·파일 경로)")
-    p_comp.add_argument("--verification", default="", help="이 요청의 수행 확인 (PASS·FAIL) · 기능 전체 판정 아님")
+    p_comp.add_argument("--verification", default="", help="PASS·PARTIAL·BLOCKED·FAIL 만 허용 · 이 요청의 결과이며 기능 전체 판정 아님")
     p_comp.add_argument("--user-approved", default="", help="승인 대기 항목의 사용자 승인 원문")
 
     # out-of-scope — 범위 외 요청 (completed 와 혼동 금지 · 2026-10-29 P0 fix)

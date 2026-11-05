@@ -818,3 +818,98 @@ def test_same_pattern_precision_and_known_misses(tmp_path):
     subprocess.run(["git", "checkout", "-q", "--", "a.py"], cwd=tmp_path, check=True)
     (tmp_path / "c.py").write_text("x = 2\n", encoding="utf-8")
     assert iv.same_pattern_candidates(tmp_path) == []       # 25곳 이상 일반 구문은 후보에서 제외
+
+
+# ---------- 2026-11-05 작업 수행·검증 결과·종료 허가 분리 (임시 Ledger · 운영 무관) ----------
+
+def _lg(tmp_path, status="pending"):
+    import shutil
+    (tmp_path / ".claude/scripts").mkdir(parents=True)
+    (tmp_path / ".claude/state").mkdir(parents=True)
+    (tmp_path / ".claude/logs").mkdir(parents=True)
+    (tmp_path / "plugins").mkdir()
+    shutil.copy(SCRIPTS / "request-ledger.py", tmp_path / ".claude/scripts/request-ledger.py")
+    led = tmp_path / ".claude/state/request-ledger.json"
+    led.write_text(json.dumps({"session_id": "s", "requests": [{"id": "R1", "desc": "x", "status": status}]}), encoding="utf-8")
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1"}
+
+    def run(*a, active=False):
+        return subprocess.run([sys.executable, "-X", "utf8", str(tmp_path / ".claude/scripts/request-ledger.py"), *a],
+                              input=json.dumps({"session_id": "s", "stop_hook_active": active}), capture_output=True,
+                              text=True, encoding="utf-8", env=env, timeout=30)
+    return run, lambda: json.loads(led.read_text(encoding="utf-8"))["requests"][0]
+
+
+def test_partial_and_blocked_stop_without_pass(tmp_path):
+    for v in ("PARTIAL", "blocked"):
+        d = tmp_path / v
+        d.mkdir()
+        run, rec = _lg(d)
+        assert run("complete", "R1", "--evidence", "미검증 항목 명시", "--verification", v).returncode == 1
+        r = run("gate")
+        assert r.returncode == 0 and "완료 처리 아님" in r.stderr
+        assert run("gate", active=True).returncode == 0                 # 재진입도 안전
+        assert rec()["status"] == "verified" and rec()["verification"] == v.upper()   # 완료로 바뀌지 않음
+
+
+def test_fail_and_unfinished_still_block_then_loop_release_keeps_state(tmp_path):
+    run, rec = _lg(tmp_path)
+    run("complete", "R1", "--evidence", "e", "--verification", "FAIL")
+    assert run("gate").returncode == 2
+    assert [run("gate", active=True).returncode for _ in range(3)] == [2, 2, 0]   # 진전 없는 반복은 풀되
+    assert rec()["status"] == "verified" and rec()["verification"] == "FAIL"      # 기록은 그대로
+
+
+def test_evidence_required_for_honest_stop(tmp_path):
+    run, rec = _lg(tmp_path)
+    run("complete", "R1", "--verification", "PARTIAL")
+    assert rec()["status"] == "implemented" and run("gate").returncode == 2
+
+
+def test_free_text_verification_rejected_without_state_change(tmp_path):
+    run, rec = _lg(tmp_path)
+    assert run("complete", "R1", "--evidence", "e", "--verification", "회귀 통과 문장").returncode == 2
+    assert rec()["status"] == "pending" and "verification" not in rec()
+
+
+def test_r160_replay_keeps_approval_and_allows_stop(tmp_path):
+    run, rec = _lg(tmp_path, "approval_required")
+    for args in (("--evidence", "e"), ("--evidence", "e", "--verification", "PASS"),
+                 ("--evidence", "e", "--verification", "PARTIAL")):
+        assert run("complete", "R1", *args).returncode == 2
+        assert rec()["status"] == "approval_required"
+    assert run("gate").returncode == 0
+
+
+def test_normal_pass_path_unchanged(tmp_path):
+    run, rec = _lg(tmp_path)
+    assert run("complete", "R1", "--evidence", "e", "--verification", "pass").returncode == 0
+    assert rec()["status"] == "completed" and rec()["verification"] == "PASS" and run("gate").returncode == 0
+
+
+def test_standing_gate_blocks_once_shows_reason_then_allows(tmp_path):
+    import shutil
+    for rel in (".claude/scripts/standing-requirements.py", ".claude/hooks/stop-standing-gate.sh"):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, tmp_path / rel)
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / ".claude/state").mkdir()
+    store = tmp_path / ".claude/state/standing-requirements.json"
+    store.write_text(json.dumps({"X1": {"status": "ACTIVE", "rule": "규칙", "verify_target": "none.txt", "verify_pattern": "z"}}),
+                     encoding="utf-8")
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1"}
+
+    def hook(active):
+        return subprocess.run([_bash(), str(tmp_path / ".claude/hooks/stop-standing-gate.sh")],
+                              input=json.dumps({"stop_hook_active": active}), capture_output=True, text=True,
+                              encoding="utf-8", env=env, timeout=30)
+    first = hook(False)
+    assert first.returncode == 2 and "X1" in first.stderr               # 사유가 Claude 에게 전달됨
+    second = hook(True)
+    assert second.returncode == 0 and "미해결" in second.stderr
+    assert json.loads(store.read_text(encoding="utf-8"))["X1"]["status"] == "ACTIVE"   # 해결로 바뀌지 않음
+
+
+def test_six_guards_does_not_rerun_standing_gate():
+    text = (ROOT / ".claude/hooks/stop-six-guards.sh").read_text(encoding="utf-8")
+    assert "stop-standing-gate.sh" in text

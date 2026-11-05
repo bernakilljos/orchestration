@@ -129,6 +129,16 @@ def cmd_replay() -> int:
     return 0
 
 
+def _stop_hook_active() -> bool:
+    try:
+        if sys.stdin is None or sys.stdin.isatty():
+            return False
+        raw = sys.stdin.read()
+        return bool(json.loads(raw).get("stop_hook_active")) if raw.strip() else False
+    except Exception:
+        return False
+
+
 def cmd_gate() -> int:
     """Stop hook 용. ACTIVE requirements 중 verify FAIL 있으면 exit 2."""
     data = _load()
@@ -158,6 +168,11 @@ def cmd_gate() -> int:
         msg += f"  ✗ {rid}: {r['rule'][:80]}\n"
     for rid, r in unknown[:3]:
         msg += f"  ⏳ {rid} (UNKNOWN · verify_pattern 추가 필요): {r['rule'][:70]}\n"
+    # 2026-11-05 재진입: 공식 문서 — stop_hook_active 를 확인해 풀리지 않는 조건으로 계속 막지 말 것.
+    # 한 번은 막아 알리고, 이어서 또 멈출 때는 미해결인 채 종료를 허용한다 (요구사항 상태는 그대로).
+    if _stop_hook_active():
+        print(msg + "→ 이미 한 번 차단함 · 미해결 유지 · 이번 Stop 허용", file=sys.stderr)
+        return 0
     msg += "→ ACTIVE standing requirement 복원 후 완료 (Stop 차단)"
     print(msg, file=sys.stderr)
     # FAIL 이 있거나 UNKNOWN 이 있어도 exit 2 (fail-closed)
