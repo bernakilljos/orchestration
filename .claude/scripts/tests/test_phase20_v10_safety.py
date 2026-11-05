@@ -329,6 +329,9 @@ def test_requirement_evidence_tags_block_verified():
         v = {"requirements": [{"id": "R1", "status": "met", "evidence": f"{tag} probably handled"}]}
         assert iv.check_requirement_verdicts(v, ["R1"])["status"] == "UNVERIFIED", tag
     assert "[확인]" in iv.FACT_TAG_RULE
+    mixed = {"requirements": [{"id": "R1", "status": "met",
+                               "evidence": "[확인] src/a.py:10 test_a passed · [추정] 다른 OS 도 같을 것"}]}
+    assert iv.check_requirement_verdicts(mixed, ["R1"])["status"] == "VERIFIED"   # 확인 근거 + 부연 추정은 허용
 
 
 def test_urgent_prompt_gets_first_answer_guidance():

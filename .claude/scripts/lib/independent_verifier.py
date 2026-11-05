@@ -395,8 +395,9 @@ def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[s
             unverifiable.append(rid)
         elif not str(r.get("evidence") or "").strip():
             no_evidence.append(rid)
-        elif NON_FACT_TAGS.search(str(r.get("evidence"))):
-            unverifiable.append(rid)          # 근거가 [추정]·[예시]·[미확인]·[판독불가] 면 met 이라도 확인된 사실 아님 (V1.1 B)
+        elif NON_FACT_TAGS.search(str(r.get("evidence"))) and "[확인]" not in str(r.get("evidence")):
+            # V1.1 B: 예시·추정 설명 자체는 허용 · [확인] 근거 없이 [추정]·[예시]·[미확인]·[판독불가] 만으로 met 을 주장하는 경우만 차단
+            unverifiable.append(rid)
     unknown = sorted(set(by_id) - {i.upper() for i in required_ids})
     if unmet:
         return {"ok": False, "status": "REPAIRING", "reason": f"requirements unmet: {unmet}", "unmet": unmet}

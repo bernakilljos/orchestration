@@ -2433,3 +2433,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - bde283b 재감사 (2026-11-04): status-push 는 토큰을 git URL 에 넣지 않음 (ORCH_GH_PAT + credential helper) · 세션 종료 hook 은 프로세스를 죽이지 않고 백업도 지우지 않음 (후보 기록만) · daily-cleanup 은 후보 기록만 · 3일+ 정리는 sandbox·task·기준선 제외. 토큰 폐기는 사용자 처리. 상세 §25.
 - 원격 명령 (2026-11-04): status-push·remote-agent 는 서명(ORCH_REMOTE_CMD_SECRET)·만료·일회성 id 가 맞는 명령만 실행 · 비밀 미설정 = 전부 차단 · key/drag 는 ORCH_REMOTE_ALLOW_KEYS=1 추가 필요 · dashboard.py 는 토큰을 git URL 에 넣지 않음. 상세 §27.
 - V1.1 (2026-11-05): 긴급 요청 감지 (detect_user_emotion) · 사실 표기 5종 (failure-mode.md · Judge 근거 태그 검사) · 연관 작업 자율 범위 (execution-contract §3) · runner 타임아웃 시 자기 프로세스 트리 정리. 상세 §29.
+- Judge 근거 (2026-11-05): [확인] 근거가 있으면 부연 [추정]·[예시] 허용 · [확인] 없이 추정·예시만으로 met 이면 UNVERIFIED.
