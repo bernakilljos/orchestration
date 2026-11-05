@@ -489,3 +489,28 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **C 재측정 (실제 fix 커밋 30건 재적용)**: 후보 10 → 5 (옮긴 줄·일반 구문 제외). 5건: 오탐 1 (`ORDER BY created_at` = 표시용 목록) · 일반 구문 2 · 미판정 2 · **정탐 확인 0** · 미탐: 이름이 다른 복사본 못 찾음 (시험으로 확인) · 재현율 미측정. 자동 실행: 회귀 선정·실행 (수정 체인) · 규칙만: 같은 유형 판단 · /verify 내 실행은 Claude 수행.
 **회귀 (1fb18a4 · fresh clone)**: 위반 0 · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 44/44 · phase3 26/26 · golden 13/13 · pytest 161 passed · 33 ERROR 기준선 동일 · 긴급 종단 PASS · PowerShell 38/38·21/21 · 미차단 10 유지 · lint 미측정
 **보존 [확인]**: goals 161 · tasks 155 (승인 대기 3건 그대로) · Goal #77 FAILED · ledger 해시 동일 · 로컬 커밋 ahead 9 · Statusline·토큰·원격 설정 변경 0 · 화면 캡처 0
+
+## 35. Stop 종료 허가와 검증 PASS 분리 (ca91ec2 · 2026-11-05 · 유료 $0 · push·삭제·캡처 0)
+**판정 유지**: V1.1 PASS 2 · PARTIAL 2 · BLOCKED 1 (A·D 범위 한정 · B·C PARTIAL · E BLOCKED)
+
+**선행 확인**: 1fb18a4 = 승인 대기 보호·게이트 문구·same-pattern 필터 · 05ad972 = 문서만. 재현: 6cc4793 은 R160 경로 재현 · 1fb18a4 이후 차단. 그러나 05ad972 까지 PARTIAL·BLOCKED 도 gate=2 — 사실대로 적으면 막히고 PASS 로 적어야 풀리는 구조가 남아 있었다.
+
+**상태 전이 (임시 Ledger · gate_matrix)**
+| 시나리오 | 6cc4793 | 05ad972 | ca91ec2 |
+|---|---|---|---|
+| 정상 PASS | completed · 0 | 같음 | 같음 |
+| 승인 대기에 complete | verified → gate 2 → PASS 로 통과 | 상태 유지 · 0 | 같음 |
+| PARTIAL·BLOCKED + 증거 | verified · 2 | verified · 2 | **verified 유지 · 0** (재진입도 0) |
+| FAIL | 2,2,2 후 루프 해제 | 같음 | 같음 · 기록 유지 |
+| 증거 없는 PARTIAL | implemented · 2 | 같음 | 같음 |
+| 임의 문장 | verified · 2 | 같음 | **거부 · 상태 유지** · 2 |
+| pending | 2 | 2 | 2 |
+
+**세 개념**: 작업 수행 = status · 검증 결과 = verification (PASS·PARTIAL·BLOCKED·FAIL) · 종료 허가 = gate 판단. 새 상태 없음. PARTIAL·BLOCKED 는 완료로 세지 않음.
+**호출 관계 [확인]**: Stop 1회 = hook 18개 · 차단 가능 = stop-request-ledger-gate · stop-standing-gate · stop-six-guards · 재진입 결함: Standing gate 가 stop_hook_active 를 안 보고 `2>/dev/null` 로 사유를 숨김 · six-guards 가 같은 검사를 또 수행. 수정: active 면 미해결 유지하고 허용 · 사유 표시 · six-guards 중복 제거 (측정 active=False standing=2 / True standing=0, six=0 · 요구사항 ACTIVE 유지).
+**공식 대조**: [Claude Code hooks](https://code.claude.com/docs/en/hooks) 2026-11-05 본문 확인 · 설치 2.1.318 · stop_hook_active 확인 권고 · 연속 8회 상한 · exit 2 stderr 전달 → 구현 정합. 문서는 최신판 기준이며 2.1.318 전용 판본은 확인 못 함.
+**운영 사례**: R161 PASS · R162 PARTIAL 기록 후 gate=0 · 미완료 5건 유지 (승인 대기 4 + R162).
+**회귀 (ca91ec2 · fresh clone)**: 위반 0 · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 52/52 · phase3 26/26 · golden 13/13 · 긴급 종단 PASS · PowerShell 38/38·21/21 · 거짓 근거 5종 UNVERIFIED · 같은 유형 후보 5건 유지.
+**pytest 전체**: 1회차 168 passed·1 failed (test_phase17 test_dag_deferred_is_skipped_not_failed) · 2회차 2 failed (+ test_loop_survives_winerror_1455) · 이후 ca91ec2 169 passed 2회 · 1fb18a4 161 passed 1회 · 단독 실행 통과 · 33 ERROR 동일. 실패 2회는 commit 약 90% 시점 · 재현 안 됨 · **원인 미확정 [미확인]** — 이번 변경과의 관련은 입증도 배제도 못 함.
+**남은 위험**: PARTIAL 도 문자열 신고라 작업 회피에 쓰일 수 있음 · 일반 PASS 는 증거 내용을 코드가 검증하지 않음 · Standing 미해결은 두 번째 Stop 부터 통과 · loop 해제는 FAIL 도 종료 허용 (기록은 유지) · six-guards 의 advance-all 은 15초 hook 제한 안에서 실행.
+**보존 [확인]**: R160 기록 무변경 · goals 161 · tasks 155 (승인 대기 3건 포함) · Goal #77 FAILED · 로컬 커밋 ahead 11 · Statusline 변경 0
