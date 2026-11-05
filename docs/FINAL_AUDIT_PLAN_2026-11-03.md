@@ -440,3 +440,20 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **화면 캡처**: `block_screen_capture` Bash·PowerShell 차단 (dispatcher 파이프 시험 PASS) · matcher 변경의 실제 세션 적용은 다음 세션 [미확인]
 **회귀 (c653a93 · fresh clone)**: verify-fresh-clone 위반 0 (467 파일) · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 36/36 · phase3 26/26 · golden 13/13 · pytest 153 passed · 33 ERROR 기준선 동일 · lint 미측정 (ruff 미설치)
 **보존 [확인]**: goals 161·tasks 152 · Goal #77 FAILED · 메모리 게이트·승인 정책 변경 0 · Statusline 변경 0 · 토큰 제외 · 유료·push·삭제 0
+
+## 33. PowerShell 차단 · B·C 실행 증거 · 승인 전 준비 (d7af789 · 2026-11-05 · 유료 $0 · push·삭제 0)
+**판정 유지**: A·D PASS (범위 한정) · B·C PARTIAL · E BLOCKED
+
+| 항목 | 외부 근거 | 내부 구현 | 실행 결과 | 판정 |
+|---|---|---|---|---|
+| PowerShell 차단 | Claude Code hooks · Remove-Item · about_PowerShell_exe · about_Pwsh · Invoke-Expression · about_Execution_Policies (본문 확인) | 기존 hook 재사용: block_dangerous_bash·block_file_deletion·approval-gate + matcher 확대 | 위험 38건 차단 1 → 38 · 정상 21 통과 · 실제 PowerShell 도구 차단 확인 · 설치 5.1 별칭 6종 실측 | **제한 범위 PASS** |
+| B 실물 경로 | 내부 로직 (외부 축 생략) | handoff anchors | 실제 git 변경·runner 기록·handoff: 거짓 근거 5종 UNVERIFIED · 실제 근거 VERIFIED (Judge 응답은 손으로 작성) | PARTIAL (실제 LLM Judge 미호출) |
+| C 회귀·같은 유형 | git grep·pathspec 문서 | run_affected_regression · same_pattern_candidates | 실제 runner·pytest: 회귀 실패 → 재시도 후 실패 → 수정 후 통과 · 남은 줄 위치 탐지 · 실제 체인 연결 | PARTIAL (유료 체인 실호출 없음 · 후보 판단은 사람·Judge) |
+
+**미차단 10건 [확인]**: 변수 호출 · 문자열 조립 · splatting · Set-Alias · 스크립트 파일 · python shutil.rmtree · 와일드카드 삭제 (`dir/*`) · `$_.Delete()` · `[IO.File]::Delete` · robocopy /MIR. 문자열 판정의 한계 — 실수 방지 장치이며 보안 경계가 아니다 (Microsoft 실행 정책 문서도 같은 구분).
+**오탐 2건 수정**: 승인 패턴이 `|iex` 문구만으로 매치 → 다운로드+실행일 때만 · same-pattern 부분 일치로 자기 자신 탐지 → 줄 전체 일치만.
+**회귀 (d7af789 · fresh clone)**: 위반 0 · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 41/41 · phase3 26/26 · golden 13/13 · pytest 158 passed · 33 ERROR 기준선 동일 · 긴급 종단 PASS · lint 미측정
+**Push 준비 [확인]**: origin/main 대비 ahead 7 · 23+ 파일 · 비밀 패턴 0 · 금지 경로 0 · 1MB+ 파일 0 · whitespace 오류 0 · gitleaks 미설치 (미측정) · 실제 push 안 함
+**유료 Judge 산정**: Opus 5.5 $4/$20 per MTok · 기존 Judge 8회 $0.25~$0.36 (평균 $0.32) · 수정 Agent 6회 $0.36~$0.39 · 일일 예산 NULL 이라 현재 호출 불가
+**임시 clone**: 사용 프로세스 0 · 모두 이 세션 생성 · alternates 없음 · 논리 24.45GB 이나 실제 회수 0.22GB (kit .git 과 하드링크 공유 4.85GB) · 이전 보고 "약 4.7GB" 는 잘못 · 삭제 안 함
+**운영 DB 흔적 [확인]**: 승인 대기 3건 (appr-e8dd1eed7181·appr-d62d0475d9cb·appr-d20e12957e0d) · tasks 152→155 · 작업 폴더 pytest 가 executions 에 시험 행 추가 → 테스트 임시 DB 로 격리 · 기존 행은 보존 · goals 161·Goal #77 FAILED 유지

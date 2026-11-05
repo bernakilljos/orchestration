@@ -502,8 +502,9 @@ def _gone(pid):
         return True
 
 
-def test_runner_reaps_owned_leftover_on_success_and_failure(tmp_path):
+def test_runner_reaps_owned_leftover_on_success_and_failure(tmp_path, monkeypatch):
     import runner
+    monkeypatch.setattr(runner, "DB", tmp_path / "exec.db")     # 운영 executions 에 시험 기록을 남기지 않는다
     for code in (0, 3):
         script, pidf = _child_script(tmp_path, code)
         r = runner.run([sys.executable, str(script)], timeout=30)
@@ -512,8 +513,9 @@ def test_runner_reaps_owned_leftover_on_success_and_failure(tmp_path):
         assert pid in r["reaped_pids"] and r["leftover_pids"] == [] and _gone(pid)
 
 
-def test_runner_never_touches_unowned_process():
+def test_runner_never_touches_unowned_process(tmp_path, monkeypatch):
     import runner
+    monkeypatch.setattr(runner, "DB", tmp_path / "exec.db")
     other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
     try:
         r = runner.run([sys.executable, "-c", "print('ok')"], timeout=20)
@@ -527,6 +529,7 @@ def test_runner_never_touches_unowned_process():
 def test_runner_interrupt_cleans_owned_process(tmp_path, monkeypatch):
     import pytest
     import runner
+    monkeypatch.setattr(runner, "DB", tmp_path / "exec.db")
     script, pidf = _child_script(tmp_path, 0)
 
     def interrupted(self, *a, **k):
@@ -748,10 +751,11 @@ def test_same_pattern_finds_unfixed_copy(tmp_path):
     assert iv.same_pattern_candidates(tmp_path) == []
 
 
-def test_regression_with_real_runner_and_real_pytest(tmp_path):
+def test_regression_with_real_runner_and_real_pytest(tmp_path, monkeypatch):
     """가짜 없음: 실제 git diff → 실제 선정 → runner → pytest. 회귀를 만들면 실패하고 고치면 통과."""
     import independent_verifier as iv
     import runner
+    monkeypatch.setattr(runner, "DB", tmp_path / "exec.db")
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "t@example.com"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)

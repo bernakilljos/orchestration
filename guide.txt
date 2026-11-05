@@ -2439,3 +2439,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 3축 검증 (2026-11-05): 외부 근거·내부 구현·실행 결과 분리 (execution-contract §5) · 외부 근거는 external-evidence 의 본문 확인(read) 만 인정 · 새 외부 의존이 미확인이면 Judge VERIFIED 금지 · 자동 수정 체인이 회귀 후보를 sandbox 에서 실행 · 화면 캡처는 Bash·PowerShell 모두 block_screen_capture 로 차단 (승인 시 ALLOW_SCREEN_CAPTURE=1). 상세 §32.
 - 자동 등재 관문 (2026-11-05): 작업 동사가 없어도 [auto-goal] 같은 명시 토큰은 UserPromptSubmit 관문을 통과해 goal 로 등재된다 (실제 hook 종단 시험에서 발견). 상세 §32.
 - PowerShell 차단 (2026-11-05): 위험 명령·파일 삭제·승인 게이트·커밋 전 검사를 PowerShell 도구까지 확대 · Remove-Item 별칭·-Recurse 축약·파이프 삭제·EncodedCommand·간접 실행 판정 · 변수·문자열 조립·스크립트 파일 우회는 못 막음 (실수 방지 장치 · 보안 경계 아님). 같은 유형 후보 = independent_verifier.py same-pattern. 상세 §33.
+- 시험 격리 (2026-11-05): runner 실행 시험은 임시 DB 를 쓴다 · 3축 절차에 버전 차이·API 별 동작·수정 전후 구분을 명시 (execution-contract §5). 상세 §33.
