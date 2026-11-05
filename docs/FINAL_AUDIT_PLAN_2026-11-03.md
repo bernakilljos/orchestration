@@ -415,3 +415,28 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **회귀 (fd95a68 · fresh clone · 운영 폴더·DB 무변경)**: verify-fresh-clone 위반 0 (466 파일) · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 29/29 · phase3 26/26 · golden 13/13 · pytest 146 passed (기준선 134 + 신규 12) · 33 ERROR = 스크립트형 테스트 수집 오류로 기준선과 동일 · 신규 12건은 9564a84 코드에서 FAIL (일부는 새 인자·키 부재로 인한 실패) · lint 미측정 (ruff 미설치)
 **보존 [확인]**: goals 161·tasks 152 유지 · `priority` 열 추가만 · Goal #77 FAILED 유지 · 원격 인증·서명 비밀 변경 0 · 토큰 교체 제외 · 유료 호출 0 · 삭제·병합·push 0
 **미처리**: changelog 알림 (v2.1.318 까지) 은 이번 지시가 신규 항목 금지라 평가·적용 안 함 · `changelog-new.md` 유지 · 임시 clone 4.6GB 는 scratchpad 에 남음 (rm -rf 차단 훅)
+
+## 32. V1.1 외부 근거·내부 구현·실행 결과 3축 검증 (c653a93 · 2026-11-05 · 유료 $0 · push 안 함)
+| 항목 | 판정 | 내부 구현 | 실행 결과 | 외부 근거 | 남은 공백 |
+|---|---|---|---|---|---|
+| A 긴급 | **PASS (Goal 처리 경로 한정)** | `priority` · advance-all · `_has_goal_token` | 실제 hook → 실제 Stop guard → 실제 runner: 일반 3건 RUNNING 뒤 등록한 긴급 goal 이 exec 첫 순서 · 4건 모두 VERIFIED · hook 2.3s · Stop guard 5.0s (clone) | SQLite ADD COLUMN [확인] | 명시 토큰 없는 긴급 문장은 goal 이 아니라 메인 응답 지시 · 사용자 첫 응답 시간 미측정 · Claude 세션이 아닌 스크립트로 hook 호출 |
+| B 사실 검증 | **PARTIAL** | evidence_anchors · external_scope · external-evidence (read 만 인정) | 시험 PASS (가짜 Judge 응답) | 설치 psutil 7.2.2 소스 대조 [확인] | 유료 Judge 실호출 미실행 · 외부 자료 대조는 메인 Claude 수행 (자동 수정 체인은 not_checked 로 멈춤) |
+| C 자율 연관 작업 | **PARTIAL** | run_affected_regression · /verify 3축 | 선정·재시도·스크립트형 구분 시험 PASS (가짜 runner) | pathspec `*` = `/` 매치 [확인] | 실제 체인에서 회귀 실패 재현 안 함 · 같은 유형 누락 확인은 규칙 |
+| D 프로세스·파일 | **PASS (runner 경로)** | 관측 기반 정리 · 불필요 status() 제거 | 정상·실패·중단 PASS · 무관 프로세스 생존 | psutil·Microsoft 대조 [확인] | 0.2초 미만 중간 부모의 자식 미관측 (psutil 문서가 같은 한계 명시) · Job Object 가 대안 |
+| E Statusline | **BLOCKED** | 변경 없음 | VS Code 캡처 없음 | 해당 없음 | 사용자가 VS Code 캡처 제공 필요 |
+
+**공식 자료 대조 (2026-11-05 · 본문 확인)**
+| 대상 | 자료 | 결과 |
+|---|---|---|
+| PID 재사용 | [psutil API](https://psutil.io/api/) (개발판 · 설치 7.2.2 소스 일치) | `is_running()`·`kill()` 재사용 안전 → 일치 |
+| 부모 소실 | 같은 문서 · [Win32_Process](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process) (2020-07-23) | 중간 부모가 없으면 자손 추적 불가 · PID 재사용 → 실행 중 관측 설계와 일치 |
+| 프로세스 묶음 | [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects) (2025-07-14) | 자식 자동 소속 · 미적용 (후속 후보) |
+| 타임아웃 | [Python subprocess](https://docs.python.org/3/library/subprocess.html) (문서 3.15 · 설치 3.14.2) | 타임아웃은 자식을 안 죽임 → 정리 코드 필요 일치 |
+| 스키마 | [SQLite ALTER TABLE](https://www.sqlite.org/lang_altertable.html) | 일반 ADD COLUMN 은 데이터 재작성 없음 |
+| 테스트 선정 | [gitglossary](https://git-scm.com/docs/gitglossary) · [git-ls-files](https://git-scm.com/docs/git-ls-files) (2.55 기준 · 설치 2.52) | `*` 가 하위 폴더까지 매치 · 일치 |
+| 미확정 | psutil Windows `status()` 지연 (제3자 저장소 이슈 · 검색 결과만) | 필요 없는 호출이라 제거 |
+
+**발견·수정**: ① 실제 hook 종단 시험 FAIL — 작업 동사 없는 `[auto-goal]` 이 관문에서 걸러짐 (mock 으로는 못 찾음) → 수정 후 PASS ② PowerShell 도구는 PreToolUse matcher 밖 → 화면 캡처 훅만 연결 · **block-dangerous·파일 삭제 등 Bash 훅은 PowerShell 에 여전히 미적용 [확인] (후속 승인 필요)**
+**화면 캡처**: `block_screen_capture` Bash·PowerShell 차단 (dispatcher 파이프 시험 PASS) · matcher 변경의 실제 세션 적용은 다음 세션 [미확인]
+**회귀 (c653a93 · fresh clone)**: verify-fresh-clone 위반 0 (467 파일) · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 36/36 · phase3 26/26 · golden 13/13 · pytest 153 passed · 33 ERROR 기준선 동일 · lint 미측정 (ruff 미설치)
+**보존 [확인]**: goals 161·tasks 152 · Goal #77 FAILED · 메모리 게이트·승인 정책 변경 0 · Statusline 변경 0 · 토큰 제외 · 유료·push·삭제 0
