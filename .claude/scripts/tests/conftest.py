@@ -11,11 +11,26 @@ Provides:
 
 import pytest
 import sqlite3
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, MagicMock
 import json
 from datetime import datetime
+
+
+@pytest.fixture(autouse=True)
+def _fixed_commit_memory(monkeypatch):
+    """시험 결과가 실행 PC 의 가상 메모리에 좌우되지 않게 고정 (2026-11-05: 90% 근처에서 게이트 의존 시험 18건이 갈렸다).
+    메모리 게이트 자체를 시험하는 경우는 각 시험이 commit_memory 를 다시 바꾸거나 cm 을 직접 넘긴다."""
+    lib = str(Path(__file__).resolve().parents[1] / "lib")
+    if lib not in sys.path:
+        sys.path.insert(0, lib)
+    import repair_sandbox as sb
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "used_gb": 8.0, "limit_gb": 32.0,
+                                                      "free_gb": 24.0, "percent": 25.0})
+    monkeypatch.delenv("ORCA_MIN_COMMIT_FREE_GB", raising=False)
+    monkeypatch.delenv("ORCA_MAX_COMMIT_PERCENT", raising=False)
 
 
 @pytest.fixture
