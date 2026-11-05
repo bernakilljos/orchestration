@@ -72,6 +72,38 @@ def _collect_diff_paths(cwd: Path) -> List[str]:
     return paths
 
 
+def _verified_output(task_ids: List[str]) -> str:
+    """goal 의 verified=1 실행 기록 (명령 + 출력 끝부분) — 개발 Agent 보고가 아닌 runner 기록."""
+    if not task_ids or not DB.exists():
+        return ""
+    try:
+        with sqlite3.connect(str(DB)) as c:
+            rows = c.execute(
+                f"SELECT cmd, stdout_tail, stderr_tail FROM executions WHERE verified=1 "
+                f"AND task_id IN ({','.join('?' * len(task_ids))})", task_ids).fetchall()
+    except sqlite3.Error:
+        return ""
+    return "\n".join(" ".join(x or "" for x in r) for r in rows)
+
+
+def affected_tests(cwd: Path, changed: List[str]) -> List[str]:
+    """변경 파일의 모듈명을 참조하는 테스트 파일 (회귀 후보) — 변경된 테스트 자신 포함. V1.1 C."""
+    out = _run_git_in(cwd, ["ls-files", "*test_*.py", "*_test.py", "*.test.ts", "*.test.js"]) or ""
+    tests = [t.strip() for t in out.splitlines() if t.strip()]
+    stems = {Path(p).stem for p in changed if Path(p).suffix in (".py", ".sh", ".ts", ".tsx", ".js")}
+    hits = [t for t in tests if t in changed]
+    for t in tests:
+        if t in hits or not stems:
+            continue
+        try:
+            text = (cwd / t).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(re.search(rf"\b{re.escape(s)}\b", text) for s in stems):
+            hits.append(t)
+    return hits
+
+
 def _check_scope(diff_paths: List[str], allow_paths: Optional[List[str]]) -> Dict[str, Any]:
     """scope-lock 통합 — allow_paths glob/prefix 외 수정 파일 탐지.
 
@@ -190,6 +222,12 @@ def collect_evidence(goal_id: int,
     diff_paths = _collect_diff_paths(diff_cwd)
     evidence["git_diff_paths"] = diff_paths
     evidence["git_diff_file_count"] = len(diff_paths)
+    untracked = _run_git_in(diff_cwd, ["ls-files", "--others", "--exclude-standard"]) or ""
+    evidence["changed_paths"] = diff_paths + [p.strip() for p in untracked.splitlines() if p.strip()]
+    evidence["verified_output"] = _verified_output([t["task_id"] for t in task_specs])
+    evidence["affected_tests"] = affected_tests(diff_cwd, evidence["changed_paths"])
+    evidence["affected_tests_not_run"] = [t for t in evidence["affected_tests"]
+                                          if Path(t).name not in evidence["verified_output"]]
 
     # scope 검사
     evidence["scope"] = _check_scope(diff_paths, allow_paths)
@@ -307,6 +345,9 @@ def judge_handoff(goal_id: int,
         f"## 요구사항 원문 (사용자 요청)\n{desc[:600]}\n\n"
         f"## 실제 변경 (git diff)\n{diff_stat}\n\n"
         f"변경 파일 ({len(diff_paths)}): {', '.join(diff_paths[:10])}\n\n"
+        f"## 회귀 후보 (변경 모듈을 참조하는 테스트)\n"
+        f"전체 {len(evidence.get('affected_tests') or [])} · "
+        f"이번 검증 미실행: {', '.join((evidence.get('affected_tests_not_run') or [])[:10]) or '없음'}\n\n"
         f"## tasks 실행 결과\n"
         + "\n".join(
             f"  - {t['task_id']}: status={t['status']} verify={t.get('verify_type')} "
@@ -354,6 +395,10 @@ def judge_handoff(goal_id: int,
     }
     if requirements:
         handoff_data["requirements"] = requirements
+        # judge_absorb 가 요구사항별 근거를 실물과 대조할 기준 (LLM 이 쓴 문장이 아니라 git·runner 기록)
+        handoff_data["evidence_anchors"] = {"root": evidence.get("diff_cwd"),
+                                            "paths": evidence.get("changed_paths") or [],
+                                            "verified_output": (evidence.get("verified_output") or "")[-8000:]}
     handoff_file.write_text(json.dumps(handoff_data, ensure_ascii=False, indent=2),
                             encoding="utf-8")
     return {
@@ -370,11 +415,56 @@ FACT_TAG_RULE = ("Label every factual claim: [확인] = observed here (file:line
                  "[추정] = inference, [미확인] = not verified, [판독불가] = unreadable. Never present [추정]/[예시] as [확인]; "
                  "a requirement is met only with [확인] evidence.")
 NON_FACT_TAGS = re.compile(r"\[(추정|예시|미확인|판독불가)\]")
+_FACT_SPLIT = re.compile(r"(\[(?:확인|추정|예시|미확인|판독불가)\])")
+_PATH_REF = re.compile(r"([\w./\\~-]+\.[A-Za-z]\w{0,7})(?::(\d+))?")
+_TEST_REF = re.compile(r"\btest_\w+")
 
 
-def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[str]) -> Dict[str, Any]:
+def _fact_text(evidence: str) -> str:
+    """근거 문장에서 [추정]·[예시]·[미확인]·[판독불가] 구간을 뺀 나머지 — 부연 설명은 근거로 세지 않는다."""
+    parts = _FACT_SPLIT.split(evidence)
+    kept, skip = [], False
+    for part in parts:
+        if _FACT_SPLIT.fullmatch(part):
+            skip = part != "[확인]"
+        elif not skip:
+            kept.append(part)
+    return " ".join(kept)
+
+
+def evidence_is_anchored(evidence: str, anchors: Dict[str, Any]) -> bool:
+    """V1.1 B: [확인] 글자가 아니라 실물로 판정. 사실 구간에 아래 중 하나가 있어야 True.
+    - 변경 파일 또는 verified 실행에 나온 파일의 실재 경로 (`:줄` 이 있으면 파일 줄 수 안)
+    - verified 실행 기록에 나온 테스트 이름"""
+    fact = _fact_text(evidence)
+    output = anchors.get("verified_output") or ""
+    if any(m.group(0) in output for m in _TEST_REF.finditer(fact)):
+        return True
+    root = Path(anchors.get("root") or ".")
+    changed = [p.replace("\\", "/") for p in anchors.get("paths") or []]
+    for m in _PATH_REF.finditer(fact):
+        ref = m.group(1).replace("\\", "/").lstrip("./")
+        rel = next((p for p in changed if p == ref or p.endswith("/" + ref)), None)
+        if rel is None and ref in output.replace("\\", "/"):
+            rel = ref
+        if rel is None:
+            continue
+        target = (root / rel).resolve()
+        if root.resolve() not in target.parents or not target.is_file():
+            continue
+        if m.group(2):
+            with target.open(encoding="utf-8", errors="replace") as f:
+                if not 1 <= int(m.group(2)) <= sum(1 for _ in f):
+                    continue
+        return True
+    return False
+
+
+def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[str],
+                               anchors: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Judge 의 요구사항별 판정을 LLM 문장과 무관하게 검사 (2026-11-03 F4).
-    필수 ID 마다 status=met + 근거(evidence) 가 있어야 ok. unmet → REPAIRING · 누락·ID 불일치·근거 없음·확인 불가 → UNVERIFIED."""
+    필수 ID 마다 status=met + 근거(evidence) 가 있어야 ok. unmet → REPAIRING · 누락·ID 불일치·근거 없음·확인 불가 → UNVERIFIED.
+    anchors (judge_handoff 스냅샷) 가 있으면 근거가 실제 변경·실행 기록에 닿는지도 요구한다."""
     rows = llm_verdict.get("requirements")
     if not isinstance(rows, list):
         return {"ok": False, "status": "UNVERIFIED", "reason": "requirements verdict list missing"}
@@ -382,7 +472,7 @@ def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[s
     for r in rows:
         if isinstance(r, dict) and isinstance(r.get("id"), str):
             by_id[r["id"].strip().upper()] = r
-    unmet, unverifiable, missing, no_evidence = [], [], [], []
+    unmet, unverifiable, missing, no_evidence, unanchored = [], [], [], [], []
     for rid in required_ids:
         r = by_id.get(rid.upper())
         if r is None:
@@ -398,13 +488,15 @@ def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[s
         elif NON_FACT_TAGS.search(str(r.get("evidence"))) and "[확인]" not in str(r.get("evidence")):
             # V1.1 B: 예시·추정 설명 자체는 허용 · [확인] 근거 없이 [추정]·[예시]·[미확인]·[판독불가] 만으로 met 을 주장하는 경우만 차단
             unverifiable.append(rid)
+        elif anchors is not None and not evidence_is_anchored(str(r.get("evidence")), anchors):
+            unanchored.append(rid)
     unknown = sorted(set(by_id) - {i.upper() for i in required_ids})
     if unmet:
         return {"ok": False, "status": "REPAIRING", "reason": f"requirements unmet: {unmet}", "unmet": unmet}
-    if missing or unverifiable or no_evidence:
+    if missing or unverifiable or no_evidence or unanchored:
         return {"ok": False, "status": "UNVERIFIED",
                 "reason": f"requirements not verified: missing={missing} unverifiable={unverifiable} "
-                          f"no_evidence={no_evidence}"}
+                          f"no_evidence={no_evidence} unanchored={unanchored}"}
     return {"ok": True, "status": "VERIFIED", "checked": list(required_ids), "unknown_ids": unknown}
 
 
@@ -467,7 +559,8 @@ def judge_absorb(goal_id: int, judge_result_json: str,
         elif rec != "VERIFIED":
             final = {"status": rec if rec in ("UNVERIFIED", "REPAIRING") else "UNVERIFIED",
                      "reasons": reasons + [f"llm judge recommendation {rec or 'missing'} (not VERIFIED)"]}
-        elif required_ids and not (rq := check_requirement_verdicts(llm_verdict, required_ids))["ok"]:
+        elif required_ids and not (rq := check_requirement_verdicts(llm_verdict, required_ids,
+                                                                    data.get("evidence_anchors")))["ok"]:
             final = {"status": rq["status"], "reasons": reasons + [rq["reason"]]}
         else:
             final = {"status": "VERIFIED",
@@ -491,7 +584,12 @@ def _cli_main(argv):
         print("usage: independent_verifier.py <goal_id> [--sandbox PATH] [--allow P1,P2]")
         print("       independent_verifier.py judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")
         print("       independent_verifier.py judge-absorb <goal_id>  (stdin: LLM result JSON)")
+        print("       independent_verifier.py affected-tests  (작업 트리 변경 기준 회귀 후보)")
         return 2
+    if argv[1] == "affected-tests":
+        changed = (_run_git_in(ROOT, ["diff", "--name-only", "HEAD"]) or "").split()
+        print("\n".join(affected_tests(ROOT, changed)))
+        return 0
     if argv[1] == "judge-handoff":
         if len(argv) < 3:
             print("usage: judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")

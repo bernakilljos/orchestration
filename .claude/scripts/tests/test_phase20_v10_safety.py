@@ -347,3 +347,214 @@ def test_urgent_prompt_gets_first_answer_guidance():
     assert "긴급 요청" in (d.run(C("긴급: 운영 서버 응답 없음")) or "")
     assert "긴급 요청" in (d.run(C("URGENT please check")) or "")
     assert "긴급 요청" not in (d.run(C("이건 천천히 정리해 줘")) or "")
+
+
+# ---------- 2026-11-05 V1.1 A: 긴급 goal 처리 순서 (무료 mock · 임시 DB) ----------
+
+def _urgent_sup(tmp_path, monkeypatch):
+    import supervisor as sup
+    monkeypatch.setattr(sup, "DB", tmp_path / "orca.db")
+    sup.ensure_schema()
+    order = []
+    monkeypatch.setattr(sup, "execute_goal", lambda gid: order.append((gid, time.perf_counter())) or
+                        {"executed": 0, "verified": 0, "failed": 0})
+    monkeypatch.setattr(sup, "_count_goal_tasks", lambda gid: 0)
+    monkeypatch.setattr(sup, "_all_tasks_verified", lambda gid: False)
+    monkeypatch.setattr(sup, "_any_task_unverified", lambda gid: False)
+    monkeypatch.setattr(sup, "_should_auto_execute", lambda gid: True)
+    return sup, order
+
+
+def test_urgent_goal_runs_first_in_same_tick(tmp_path, monkeypatch):
+    sup, order = _urgent_sup(tmp_path, monkeypatch)
+    old = sup.create_goal("일반 요청")
+    sup.advance_all_pending()           # PLANNING
+    sup.advance_all_pending()           # RUNNING
+    urgent = sup.create_goal("긴급 요청", priority=1)
+    t0 = time.perf_counter()
+    sup.advance_all_pending()
+    ids = [g for g, _ in order]
+    assert ids[0] == urgent and old in ids      # 긴급이 먼저 · 일반도 같은 주기에 유실 없이 처리
+    assert order[0][1] - t0 < 1.0
+
+
+def test_normal_goal_keeps_fifo_and_ticks(tmp_path, monkeypatch):
+    sup, order = _urgent_sup(tmp_path, monkeypatch)
+    a, b = sup.create_goal("A"), sup.create_goal("B")
+    sup.advance_all_pending()
+    sup.advance_all_pending()
+    assert not order                            # 일반 goal 은 기존대로 단계별 진행
+    sup.advance_all_pending()
+    assert [g for g, _ in order] == [a, b]
+
+
+def test_urgent_keeps_scheduler_only_and_dry_run(tmp_path, monkeypatch):
+    sup, order = _urgent_sup(tmp_path, monkeypatch)
+    g = sup.create_goal("긴급", source_ref="scheduler_only:x", priority=1)
+    sup.advance_all_pending()
+    assert sup.show_goal(g)["status"] == "PENDING" and not order    # 실행 주체 격리 유지
+    g2 = sup.create_goal("긴급2", priority=1)
+    sup.advance_all_pending(dry_run=True)
+    assert sup.show_goal(g2)["status"] == "PENDING" and not order   # dry-run 은 상태 변경 X
+
+
+def test_urgent_goal_still_passes_allowlist(tmp_path, monkeypatch):
+    """긴급이어도 whitelist 밖 명령은 실행되지 않는다 (execute_goal 정책 그대로)."""
+    import supervisor as sup
+    monkeypatch.setattr(sup, "DB", tmp_path / "orca.db")
+    sup.ensure_schema()
+    with sqlite3.connect(str(sup.DB)) as c:
+        c.execute("CREATE TABLE tasks (task_id TEXT PRIMARY KEY, task_file TEXT, status TEXT, "
+                  "created_at INTEGER, completed_at INTEGER, retry_count INTEGER)")
+    gid = sup.create_goal("긴급 [CMD: format c:]", priority=1)
+    r = sup.advance_all_pending()
+    assert r["executed_goals"][0]["executed"] == 0
+    with sqlite3.connect(str(sup.DB)) as c:
+        assert c.execute("SELECT status FROM tasks WHERE task_id=?", (f"g{gid}-t0",)).fetchone()[0] == "pending"
+
+
+def test_is_urgent_matches_hook_and_excludes_negation():
+    import auto_goal_from_prompt as ag
+    hook = (SCRIPTS.parent / "hooks" / "prompt" / "detect_user_emotion.py").read_text(encoding="utf-8")
+    assert f'("{ag.URGENT_PATTERN}", True,' in hook             # 판정 패턴 정본 일치
+    assert ag.is_urgent("이거 긴급이야 지금 당장 고쳐") and ag.is_urgent("ASAP please")
+    assert not ag.is_urgent("급하지 않아요 천천히") and not ag.is_urgent("이번 주 안에 정리")
+
+
+# ---------- 2026-11-05 V1.1 B: [확인] 글자가 아니라 실물 근거 ----------
+
+def _anchors(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "a.py").write_text("x = 1\ny = 2\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("doc\n", encoding="utf-8")
+    return {"root": str(tmp_path), "paths": ["src/a.py"],
+            "verified_output": "python -m pytest tests/test_a.py test_shipping_weight PASSED"}
+
+
+def test_fact_tag_alone_is_not_evidence(tmp_path):
+    import independent_verifier as iv
+    an = _anchors(tmp_path)
+
+    def st(ev):
+        return iv.check_requirement_verdicts({"requirements": [{"id": "R1", "status": "met", "evidence": ev}]},
+                                             ["R1"], an)["status"]
+    assert st("[확인] src/a.py:2 값 반영") == "VERIFIED"
+    assert st("[확인] a.py:1") == "VERIFIED"                        # 변경 파일 basename
+    assert st("[확인] test_shipping_weight 통과") == "VERIFIED"     # runner 기록의 테스트
+    assert st("[확인] src/a.py:2 · [추정] 다른 OS 도 같을 것") == "VERIFIED"   # 부연 추정 허용
+    assert st("[확인] 코드 확인했고 잘 동작함") == "UNVERIFIED"     # 글자만
+    assert st("[확인] src/a.py:999") == "UNVERIFIED"                # 없는 줄
+    assert st("[확인] src/ghost.py:1") == "UNVERIFIED"              # 없는 파일
+    assert st("[확인] README.md:1") == "UNVERIFIED"                 # 변경·실행과 무관한 파일
+    assert st("[확인] test_made_up 통과") == "UNVERIFIED"           # 실행 기록에 없는 테스트
+    assert st("[확인] 설명만 · [추정] src/a.py:1") == "UNVERIFIED"  # 추정 구간은 근거 아님
+    assert st("[확인] ../../etc/passwd.txt") == "UNVERIFIED"        # root 밖
+
+
+def test_judge_absorb_uses_handoff_anchors(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-1.json").write_text(json.dumps({
+        "stat_verdict": {"status": "VERIFIED", "reasons": []},
+        "requirements": {"path": "REQ.md", "ids": ["R1"]},
+        "evidence_anchors": _anchors(tmp_path)}), encoding="utf-8")
+    base = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+            "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED"}
+    fake = {**base, "requirements": [{"id": "R1", "status": "met", "evidence": "[확인] 전부 확인함"}]}
+    real = {**base, "requirements": [{"id": "R1", "status": "met", "evidence": "[확인] src/a.py:1"}]}
+    assert iv.judge_absorb(1, json.dumps(fake))["final_verdict"]["status"] == "UNVERIFIED"
+    assert iv.judge_absorb(1, json.dumps(real))["final_verdict"]["status"] == "VERIFIED"
+
+
+# ---------- 2026-11-05 V1.1 C: 회귀 후보 선정 ----------
+
+def test_affected_tests_selects_only_referencing_tests(tmp_path):
+    import independent_verifier as iv
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "shipping.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "test_shipping.py").write_text("import shipping\n", encoding="utf-8")
+    (tmp_path / "test_other.py").write_text("import other\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+    assert iv.affected_tests(tmp_path, ["shipping.py"]) == ["test_shipping.py"]
+    assert iv.affected_tests(tmp_path, ["docs/readme.md"]) == []
+
+
+# ---------- 2026-11-05 V1.1 D: 정상·실패·중단 경로 잔여 프로세스 (자기 프로세스만) ----------
+
+def _child_script(tmp_path, exit_code):
+    """부모는 분리된 자식을 남기고 먼저 끝난다 (파이프 미상속 · 트리로는 못 찾는 경우)."""
+    pidf = tmp_path / f"child{exit_code}.pid"
+    script = tmp_path / f"parent{exit_code}.py"
+    script.write_text(
+        "import subprocess, sys, time\n"
+        "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'],\n"
+        "                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
+        f"open(r'{pidf}', 'w').write(str(p.pid))\n"
+        f"time.sleep(1)\nsys.exit({exit_code})\n", encoding="utf-8")
+    return script, pidf
+
+
+def _gone(pid):
+    import psutil
+    try:
+        return not psutil.Process(pid).is_running()
+    except psutil.NoSuchProcess:
+        return True
+
+
+def test_runner_reaps_owned_leftover_on_success_and_failure(tmp_path):
+    import runner
+    for code in (0, 3):
+        script, pidf = _child_script(tmp_path, code)
+        r = runner.run([sys.executable, str(script)], timeout=30)
+        pid = int(pidf.read_text())
+        assert r["exit_code"] == code and r["leftover_checked"] is True
+        assert pid in r["reaped_pids"] and r["leftover_pids"] == [] and _gone(pid)
+
+
+def test_runner_never_touches_unowned_process():
+    import runner
+    other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        r = runner.run([sys.executable, "-c", "print('ok')"], timeout=20)
+        assert r["exit_code"] == 0 and other.pid not in r["reaped_pids"]
+        assert other.poll() is None                 # 관측되지 않은 프로세스는 살아 있음
+    finally:
+        other.kill()
+        other.wait()
+
+
+def test_runner_interrupt_cleans_owned_process(tmp_path, monkeypatch):
+    import pytest
+    import runner
+    script, pidf = _child_script(tmp_path, 0)
+
+    def interrupted(self, *a, **k):
+        for _ in range(100):
+            if pidf.exists() and pidf.read_text():
+                break
+            time.sleep(0.05)
+        time.sleep(0.4)             # 감시 스레드가 자식을 관측할 시간
+        raise KeyboardInterrupt
+    monkeypatch.setattr(subprocess.Popen, "communicate", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        runner.run([sys.executable, str(script)], timeout=30)
+    assert _gone(int(pidf.read_text()))
+
+
+def test_cleanup_candidates_exclude_evidence_and_tasks(tmp_path):
+    sc = tmp_path / "plugins" / "exec_session_guard" / "hooks" / "cleanup-orphans.sh"
+    sc.parent.mkdir(parents=True)
+    sc.write_bytes((ROOT / "plugins" / "exec_session_guard" / "hooks" / "cleanup-orphans.sh").read_bytes())
+    for d in (".claude/state", ".claude/context-cache"):
+        (tmp_path / d).mkdir(parents=True)
+    for rel in ("work/a.tmp", ".repair-sandbox/g1/evidence.bak", ".claude/tasks/pending/t.tmp"):
+        p = tmp_path / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("x", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run([_bash(), str(sc), "SessionEnd"], capture_output=True, timeout=120)
+    got = (tmp_path / ".claude" / "state" / "cleanup-candidates.txt").read_text(encoding="utf-8")
+    assert "work/a.tmp" in got
+    assert ".repair-sandbox" not in got and ".claude/tasks" not in got
+    assert (tmp_path / "work" / "a.tmp").exists()   # 후보 기록만 · 삭제 X

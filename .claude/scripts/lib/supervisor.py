@@ -99,6 +99,8 @@ def ensure_schema() -> None:
                 c.execute("ALTER TABLE goals ADD COLUMN workflow_type TEXT DEFAULT 'GENERAL'")
             if "source_ref" not in cols:
                 c.execute("ALTER TABLE goals ADD COLUMN source_ref TEXT")
+            if "priority" not in cols:   # 2026-11-05 V1.1 A: 0=일반 · 1=긴급 (처리 순서만 · 안전 정책 무관)
+                c.execute("ALTER TABLE goals ADD COLUMN priority INTEGER DEFAULT 0")
             # 컬럼 보장 후 index 생성
             c.execute("CREATE INDEX IF NOT EXISTS idx_goals_workflow ON goals(workflow_type, status)")
         except Exception:
@@ -106,17 +108,18 @@ def ensure_schema() -> None:
 
 
 def create_goal(description: str, max_retry: int = 3, timeout_h: int = 24,
-                workflow_type: str = "GENERAL", source_ref: str = "") -> int:
+                workflow_type: str = "GENERAL", source_ref: str = "", priority: int = 0) -> int:
     """workflow_type: GENERAL (일반 목표) | REPAIR (재발 자동 해결 · Diagnose→Repair→Verify)
-    source_ref: REPAIR 의 경우 rule_id · improvement_id 등 추적 ref."""
+    source_ref: REPAIR 의 경우 rule_id · improvement_id 등 추적 ref.
+    priority: 0=일반 · 1=긴급 — advance_all_pending 처리 순서에만 영향."""
     ensure_schema()
     now = int(time.time())
     with sqlite3.connect(str(DB)) as c:
         cur = c.execute(
             "INSERT INTO goals (description, status, workflow_type, source_ref, "
-            "max_retry, timeout_h, created_at, updated_at) "
-            "VALUES (?, 'PENDING', ?, ?, ?, ?, ?, ?)",
-            (description, workflow_type, source_ref, max_retry, timeout_h, now, now)
+            "max_retry, timeout_h, created_at, updated_at, priority) "
+            "VALUES (?, 'PENDING', ?, ?, ?, ?, ?, ?, ?)",
+            (description, workflow_type, source_ref, max_retry, timeout_h, now, now, priority)
         )
         goal_id = cur.lastrowid
         c.execute(
@@ -201,13 +204,14 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
     skipped_scheduler_only = 0  # scheduler_only goal 가 trigger != scheduler 로 skip 된 수
     with sqlite3.connect(str(DB)) as c:
         # BLOCKED 는 외부 의존 대기 — 자동 진행 스킵 (다른 goal 은 계속)
+        # 2026-11-05 V1.1 A: 긴급 goal 먼저 · 같은 등급은 등록순 (실행 중인 다른 goal 은 끊지 않음 · claim 그대로)
         rows = c.execute(
-            "SELECT goal_id, status, workflow_type, source_ref, timeout_h, created_at "
+            "SELECT goal_id, status, workflow_type, source_ref, timeout_h, created_at, priority "
             "FROM goals WHERE status IN ('PENDING', 'PLANNING', 'RUNNING', 'REPAIRING') "
-            "ORDER BY created_at"
+            "ORDER BY priority DESC, created_at"
         ).fetchall()
     now = int(time.time())
-    for goal_id, status, wtype, source_ref, timeout_h, created_at in rows:
+    for goal_id, status, wtype, source_ref, timeout_h, created_at, priority in rows:
         # 2026-10-27 trigger_source 격리 (사용자 지시 "실행 주체 식별 격리")
         if source_ref and source_ref.startswith("scheduler_only:"):
             if trigger_source != "scheduler":
@@ -219,6 +223,13 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
             advanced["FAILED"] += 1
             details.append({"goal_id": goal_id, "action": "FAILED(timeout)"})
             continue
+        # 긴급 goal 은 이 주기 안에 RUNNING 까지 진행 → 아래 실행 분기로 (whitelist·승인 게이트·claim 은 execute_goal 그대로)
+        while priority and not dry_run and status in ("PENDING", "PLANNING"):
+            next_status = _next_status_hook(status, wtype, source_ref, goal_id, dry_run)
+            advance(goal_id, next_status, f"urgent auto advance from {status}", "supervisor:auto")
+            advanced[status] = advanced.get(status, 0) + 1
+            details.append({"goal_id": goal_id, "from": status, "to": next_status, "urgent": True})
+            status = next_status
         # 2026-10-30 Phase 12: self-heal 이벤트 진행 중인 REPAIRING goal 은 단순 재시도 X (heal-tick 이 처리)
         if status == "REPAIRING" and _heal_active(goal_id):
             details.append({"goal_id": goal_id, "action": "skip(self_heal_event_active)"})

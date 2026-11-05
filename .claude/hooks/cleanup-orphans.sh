@@ -85,16 +85,23 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   # 2026-11-04 감사: 확장자만으로 지우면 git 에 없는 백업 (DB 백업 orca.db.bak.* · .repair-sandbox 증거) 까지 사라짐
   # → 삭제하지 않고 후보 수만 기록 (정리는 사람이 확인 후 · 3일+ 임시는 cleanup-pollution 정책)
   BAK_FOUND=0
+  # 2026-11-05 V1.1 D: 후보 경로 목록 기록 · 증거·미완료 작업 폴더는 후보에서 제외 (cleanup-pollution 과 같은 보호 범위)
+  CANDIDATES=".claude/state/cleanup-candidates.txt"
+  : > "$CANDIDATES" 2>/dev/null
   while IFS= read -r -d '' bak; do
     BAK_FOUND=$((BAK_FOUND + 1))
+    printf '%s\n' "$bak" >> "$CANDIDATES" 2>/dev/null
   done < <(find . \
     -path ./.git -prune -o \
     -path ./node_modules -prune -o \
     -path ./venv -prune -o \
     -path ./.venv -prune -o \
-    \( -name "*.bak" -o -name "*.safe_bak" -o -name "*.bak_*" -o -name "*.bak.*" -o -name "*.orig" \) \
+    -path ./.repair-sandbox -prune -o \
+    -path ./.claude/tasks -prune -o \
+    -path '*/integrity-baseline' -prune -o \
+    \( -name "*.bak" -o -name "*.safe_bak" -o -name "*.bak_*" -o -name "*.bak.*" -o -name "*.orig" -o -name "*.tmp" \) \
     -type f -print0 2>/dev/null)
-  [ "$BAK_FOUND" -gt 0 ] && log_line "backup file 후보 $BAK_FOUND 개 (.bak/.orig · 자동 삭제 안 함)"
+  [ "$BAK_FOUND" -gt 0 ] && log_line "정리 후보 $BAK_FOUND 개 → $CANDIDATES (자동 삭제 안 함)"
 fi
 
 exit 0

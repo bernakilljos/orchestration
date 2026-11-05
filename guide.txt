@@ -2435,3 +2435,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 (2026-11-05): 긴급 요청 감지 (detect_user_emotion) · 사실 표기 5종 (failure-mode.md · Judge 근거 태그 검사) · 연관 작업 자율 범위 (execution-contract §3) · runner 타임아웃 시 자기 프로세스 트리 정리. 상세 §29.
 - Judge 근거 (2026-11-05): [확인] 근거가 있으면 부연 [추정]·[예시] 허용 · [확인] 없이 추정·예시만으로 met 이면 UNVERIFIED.
 - V1.1 재확인 (2026-11-05): 긴급은 감지만 (우선 처리 경로 없음) · sandbox 계열 회귀는 메모리 부족으로 BLOCKED. 상세 §30.
+- V1.1 연결 (2026-11-05): 긴급 goal = goals.priority · advance-all 이 먼저 처리 (승인·whitelist·claim 유지) · Judge 근거는 [확인] 글자가 아니라 변경 파일·실행 기록 대조 · /verify 4단계 회귀 후보 (independent_verifier.py affected-tests) · runner 는 관측된 자기 하위 프로세스만 정리 · 정리 후보 목록 .claude/state/cleanup-candidates.txt (삭제 X). 상세 §31.

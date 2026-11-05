@@ -390,7 +390,9 @@ def cmd_to_goals() -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
     # 2026-11-04 F7 FAIL (R154 → Goal #1464): 대화 지시가 전부 Goal 로 승격됐다.
     # 승격 기준은 UserPromptSubmit 자동 등재와 같은 정본 정책 (명시 실행 토큰 · 질문/보고 skip · 1h 중복) 을 쓴다.
-    from auto_goal_from_prompt import should_register
+    from auto_goal_from_prompt import is_urgent, should_register
+    from supervisor import ensure_schema
+    ensure_schema()
     sup_db = ROOT / ".claude" / "state" / "orca.db"
     created = 0
     skipped = 0
@@ -415,9 +417,9 @@ def cmd_to_goals() -> int:
             now = int(_t.time())
             c.execute(
                 "INSERT INTO goals (description, status, workflow_type, source_ref, "
-                "max_retry, timeout_h, created_at, updated_at) "
-                "VALUES (?, 'PENDING', 'GENERAL', ?, 3, 24, ?, ?)",
-                (f"[{rid}] {desc}", source_ref, now, now)
+                "max_retry, timeout_h, created_at, updated_at, priority) "
+                "VALUES (?, 'PENDING', 'GENERAL', ?, 3, 24, ?, ?, ?)",
+                (f"[{rid}] {desc}", source_ref, now, now, 1 if is_urgent(desc) else 0)
             )
             created += 1
     # Request 완료 ≠ Goal 완료. 불일치는 경고만 하고 Goal 상태는 바꾸지 않는다 (상태 전이는 supervisor 증거 기준).

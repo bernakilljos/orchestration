@@ -42,6 +42,8 @@ cargo build
 
 ### 4. Tests
 ```bash
+# 회귀 후보 선정 (변경 모듈을 참조하는 테스트 · kit·target 공통)
+python .claude/scripts/lib/independent_verifier.py affected-tests
 # Python
 pytest --tb=short -q <관련 test 파일>
 # Node

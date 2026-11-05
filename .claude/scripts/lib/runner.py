@@ -26,8 +26,9 @@ import time
 import json
 import sqlite3
 import subprocess
+import threading
 from pathlib import Path
-from typing import Union, List, Dict, Any, Optional
+from typing import Union, List, Dict, Any, Optional, Tuple
 
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[3])
 DB = ROOT / ".claude" / "state" / "orca.db"
@@ -157,6 +158,39 @@ def _kill_own_tree(pid: int) -> List[int]:
         return []
 
 
+def _watch_descendants(pid: int, owned: Dict[int, Any], stop: threading.Event) -> None:
+    """실행 중 하위 프로세스를 관측해 owned 에 기록 — 부모가 끝나면 트리로 못 찾으므로 소유 근거를 미리 남긴다.
+    psutil.Process 는 생성 시각을 함께 보관해 is_running() 이 pid 재사용을 구분한다."""
+    import psutil
+    try:
+        owned[pid] = psutil.Process(pid)
+    except psutil.Error:
+        return
+    while not stop.is_set():
+        for pr in list(owned.values()):
+            try:
+                for ch in pr.children(recursive=True):
+                    owned.setdefault(ch.pid, ch)
+            except psutil.Error:
+                pass
+        stop.wait(0.2)
+
+
+def _reap_owned(owned: Dict[int, Any]) -> Tuple[List[int], List[int]]:
+    """관측된 이 실행의 프로세스 중 남은 것만 종료 → (종료한 pid, 그래도 남은 pid). 관측 안 된 프로세스는 대상 아님."""
+    import psutil
+    alive = []
+    for pr in owned.values():
+        try:
+            if pr.is_running() and pr.status() != psutil.STATUS_ZOMBIE:
+                pr.kill()
+                alive.append(pr)
+        except psutil.Error:
+            pass
+    _, still = psutil.wait_procs(alive, timeout=5)
+    return [pr.pid for pr in alive], [pr.pid for pr in still]
+
+
 def run(cmd: Union[str, List[str]],
         task_id: str = "",
         worker_id: str = "",
@@ -214,7 +248,9 @@ def run(cmd: Union[str, List[str]],
         except Exception:
             pass  # 지원 안 하면 skip (non-Windows fallback)
 
-    leftover = []
+    leftover, reaped, owned = [], [], {}
+    watch_stop = threading.Event()
+    watcher = None
     try:
         p = subprocess.Popen(
             cmd,
@@ -228,6 +264,13 @@ def run(cmd: Union[str, List[str]],
             env=env,
             **_popen_kwargs,
         )
+        # 2026-11-05 V1.1 D: 타임아웃 외 정상·실패·중단 경로도 남은 하위 프로세스 확인 (psutil 없으면 미측정)
+        try:
+            import psutil  # noqa: F401
+            watcher = threading.Thread(target=_watch_descendants, args=(p.pid, owned, watch_stop), daemon=True)
+            watcher.start()
+        except ImportError:
+            pass
         try:
             stdout, stderr = p.communicate(timeout=timeout)
             exit_code = p.returncode
@@ -237,17 +280,32 @@ def run(cmd: Union[str, List[str]],
             timed_out = True
             exit_code = -2
             leftover = _kill_own_tree(p.pid)
+            if watcher:   # 부모가 먼저 끝난 손자가 파이프를 쥐고 있으면 아래 communicate 가 멈춘다
+                reaped, _still = _reap_owned(owned)
+                leftover = sorted(set(leftover) | set(_still))
             try:
                 stdout, stderr = p.communicate(timeout=10)
             except Exception:  # noqa: BLE001
                 stdout, stderr = "", ""
             stderr = (stderr or "") + f"\nTimeoutExpired after {timeout}s: {str(e)[:200]}" + \
                 (f" · leftover={leftover}" if leftover else "")
+        except BaseException:   # 중단 (KeyboardInterrupt 등) — 아래 finally 가 남은 하위 프로세스를 정리
+            _kill_own_tree(p.pid)
+            raise
         stdout = stdout or ""
         stderr = stderr or ""
     except Exception as e:  # noqa: BLE001
         exit_code = -3
         stderr = f"[runner] exception {type(e).__name__}: {str(e)[:200]}"
+    finally:
+        if watcher:
+            watch_stop.set()
+            watcher.join(2)
+            _reaped, _still = _reap_owned(owned)
+            reaped = sorted(set(reaped) | set(_reaped))
+            leftover = sorted(set(leftover) | set(_still))
+            if reaped:
+                _log(f"[{time.strftime('%Y-%m-%dT%H:%M:%S')}] REAP  exec#{exec_id} owned={reaped} leftover={leftover}")
 
     duration_ms = int((time.time() - start) * 1000)
     _record_end(exec_id, exit_code, timed_out, stdout, stderr, duration_ms)
@@ -261,7 +319,9 @@ def run(cmd: Union[str, List[str]],
         "stderr": stderr,
         "duration_ms": duration_ms,
         "policy_result": policy,
-        "leftover_pids": leftover,   # 타임아웃 정리 후에도 남은 이 실행의 프로세스 (정상 = [])
+        "leftover_pids": leftover,   # 정리 후에도 남은 이 실행의 프로세스 (정상 = [])
+        "reaped_pids": reaped,       # 실행 종료 시 남아 있어 정리한 이 실행의 프로세스
+        "leftover_checked": watcher is not None,   # False = psutil 없음 → 미측정 ([] 를 정상으로 읽지 말 것)
         "verified": False,  # 외부 AI 원칙 6: 호출자가 mark_verified() 로 설정
     }
 

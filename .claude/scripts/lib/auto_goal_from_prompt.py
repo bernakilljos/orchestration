@@ -54,6 +54,17 @@ _SKIP_TRIGGER = re.compile(
 )
 
 
+# 2026-11-05 V1.1 A: 긴급 판정 — hook detect_user_emotion TABLE 의 긴급 행과 같은 패턴 (test_phase20 이 일치 검사)
+URGENT_PATTERN = "긴급|급해|급히|urgent|asap|지금 당장|당장"
+_URGENT = re.compile(URGENT_PATTERN, re.IGNORECASE)
+_NOT_URGENT = re.compile(r"(긴급|급|당장).{0,6}(않|아니|없)|not urgent", re.IGNORECASE)
+
+
+def is_urgent(text: str) -> bool:
+    """실제 긴급 요청만 True — '급하지 않아' 같은 부정은 제외."""
+    return bool(_URGENT.search(text or "")) and not _NOT_URGENT.search(text or "")
+
+
 def _is_disabled() -> bool:
     """Opt-out 체크."""
     if os.environ.get("AUTO_GOAL_REGISTER") == "0":
@@ -155,7 +166,7 @@ def register(prompt: str, source: str = "auto-planner",
 
     try:
         desc = prompt.strip()
-        gid = supervisor.create_goal(desc, max_retry=1, timeout_h=24)
+        gid = supervisor.create_goal(desc, max_retry=1, timeout_h=24, priority=1 if is_urgent(desc) else 0)
         # source_ref: hash + attempt_id + source + event_id (모두 분리 추적)
         src_ref = f"auto:ph={ph}"
         if attempt_id:
