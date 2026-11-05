@@ -401,3 +401,17 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | E Statusline 서브 | VS Code 실제 캡처 없음 | **BLOCKED** |
 
 **회귀 (41a7492)**: 운영 폴더 · fresh clone 기본 · fresh clone `ORCHESTRATION_ROOT` 명시 3곳 모두 동일 — verify-fresh-clone 위반 0 · pytest 131 passed / 3 failed (phase12 sandbox 계열) · phase3 26/26 · golden 13/13 · test_phase20 17/17 · **phase2 16/21 · phase5 25/30 = sandbox 생성이 commit 부족으로 보류 → BLOCKED (FAIL 아님 · 직접 create 시험 같은 보류 메시지)** · 기존 실패 기록 보존
+
+## 31. V1.1 A~E 실제 경로 연결 (fd95a68 · 2026-11-05 · 유료 $0 · push 안 함)
+**메모리 [확인]**: commit 85.3% · 여유 3.75GB (게이트 90%·2GB 통과) · 사용자 프로세스 종료 0 · 게이트 변경 0 → phase2·5·12·fresh clone 재검증 가능
+| 항목 | 수정 전 [확인] | 수정 | 증거 | 판정 |
+|---|---|---|---|---|
+| A 긴급 | `ORDER BY created_at` 고정 · 감지는 지시 주입만 | `goals.priority` · advance-all 긴급 우선 + 같은 주기 RUNNING · 자동 등재·Ledger→Goal 에서 설정 · `급하지 않아` 제외 · Router·Ledger 는 실행 순서를 정하지 않아 변경 없음 | Mock (일반 20건 대기·1건 50ms): 수정 전 3주기·61번째 → 긴급 1주기·1번째·첫 실행 62ms · 일반 goal 기존 순서 유지 · whitelist·scheduler_only·dry-run 유지 시험 | **PARTIAL** — 처리 순서·mock 측정 PASS · 등재 goal 도 다음 주기(Stop·10분 루프)까지 대기 · 실제 사용자 첫 응답 시간 미측정 · 실행 중 작업 선점 없음 (의도) |
+| B 사실 표기 | `[확인]` 글자만 있으면 통과 | handoff `evidence_anchors` (변경 파일·verified 실행 기록) · 요구사항별 근거 대조 · [추정] 구간은 근거에서 제외 | 글자만·없는 줄·없는 파일·무관 파일·실행 기록에 없는 테스트·root 밖 = UNVERIFIED · 실제 경로·기록된 테스트·[확인]+부연 [추정] = VERIFIED · judge_absorb 경유 시험 | **PARTIAL** — 인용 위치 실재까지 검사 · 그 줄이 요구사항을 실제 충족하는지는 Judge 판단 · 실제 유료 Judge 미실행 · 이전 handoff 는 anchors 없어 기존 규칙 |
+| C 연관 작업 | Stop 게이트·golden·SessionEnd 정리는 연결됨 · 회귀 선정 없음 | `affected_tests` — Judge 프롬프트 미실행 후보 표시 · `/verify` 4단계 · CLI | 참조 테스트만 선정 시험 · 이번 변경 8개 선정 · 승인 정책 변경 0 | **PARTIAL** — 회귀 선정 연결 · 미실행 후보는 표시만 (자동 실행·차단 X) · 같은 유형 누락 확인은 규칙 문서 (판단 필요 · 자동 X) |
+| D 프로세스·파일 | 타임아웃만 정리 · 부모 종료 후 손자 추적 불가 | 실행 중 하위 프로세스 관측 (pid + 생성 시각) · 정상·실패·중단·타임아웃 종료 시 관측된 것만 정리 · 후보 목록 `.claude/state/cleanup-candidates.txt` (`.repair-sandbox`·`.claude/tasks`·integrity-baseline 제외 · 삭제 X) | 정상·실패·중단 시험 PASS · 무관 프로세스 생존 · 후보 기록 시 원본 유지 · 기록된 실행 220건에 상주 명령 0 | **PASS** (runner 경로) — 관측 주기 0.2초보다 짧게 끝나는 중간 부모의 자식은 놓칠 수 있음 · psutil 없으면 `leftover_checked=False` (미측정) |
+| E Statusline | 서브 정렬·요청 문구 밀림 미해결 | 코드 변경 없음 (FROZEN) | 2026-11-05 화면 캡처에 VS Code 미표시 (사용자 Excel · 파일 즉시 삭제) · 출력 측정: 15줄 중 빈 줄 3개 (`statusline_context.py:1932·1944·1963`) · 폭 ≤ 119 (cols 120) | **BLOCKED** — 빈 줄 3개가 3줄 밀림 원인일 수 있음 [추정] · 수정 후 VS Code 캡처 없이는 판정 불가 |
+
+**회귀 (fd95a68 · fresh clone · 운영 폴더·DB 무변경)**: verify-fresh-clone 위반 0 (466 파일) · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 29/29 · phase3 26/26 · golden 13/13 · pytest 146 passed (기준선 134 + 신규 12) · 33 ERROR = 스크립트형 테스트 수집 오류로 기준선과 동일 · 신규 12건은 9564a84 코드에서 FAIL (일부는 새 인자·키 부재로 인한 실패) · lint 미측정 (ruff 미설치)
+**보존 [확인]**: goals 161·tasks 152 유지 · `priority` 열 추가만 · Goal #77 FAILED 유지 · 원격 인증·서명 비밀 변경 0 · 토큰 교체 제외 · 유료 호출 0 · 삭제·병합·push 0
+**미처리**: changelog 알림 (v2.1.318 까지) 은 이번 지시가 신규 항목 금지라 평가·적용 안 함 · `changelog-new.md` 유지 · 임시 clone 4.6GB 는 scratchpad 에 남음 (rm -rf 차단 훅)
