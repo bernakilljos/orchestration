@@ -770,3 +770,51 @@ def test_regression_with_real_runner_and_real_pytest(tmp_path, monkeypatch):
     (tmp_path / "shipping.py").write_text("def fee(w):\n    return w + w  # 같은 결과\n", encoding="utf-8")
     good = rc.run_affected_regression(str(tmp_path), "echo none", "t-real", runner, iv)
     assert good["ok"] and not good["results"][0]["retried"]
+
+
+# ---------- 2026-11-05 R160: 승인 대기 상태 보호 · 같은 유형 오탐 ----------
+
+def _ledger(tmp_path, monkeypatch, status):
+    mod = _load_script("request-ledger")
+    monkeypatch.setattr(mod, "LEDGER", tmp_path / "ledger.json")
+    (tmp_path / "ledger.json").write_text(json.dumps({"session_id": "s", "requests": [
+        {"id": "R1", "desc": "x", "status": status}]}), encoding="utf-8")
+    return mod, lambda: json.loads((tmp_path / "ledger.json").read_text(encoding="utf-8"))["requests"][0]
+
+
+def test_approval_required_not_changed_without_user_approval(tmp_path, monkeypatch):
+    mod, rec = _ledger(tmp_path, monkeypatch, "approval_required")
+    assert mod.cmd_complete("R1", "증거", "PASS") == 2
+    assert rec()["status"] == "approval_required" and "verification" not in rec()
+    assert mod.cmd_complete("R1", "증거", "문장") == 2 and rec()["status"] == "approval_required"
+    assert mod.cmd_complete("R1", "증거", "PASS", "진행해 승인") == 0
+    assert rec()["status"] == "completed" and rec()["user_approved"] == "진행해 승인"
+
+
+def test_normal_request_complete_unchanged(tmp_path, monkeypatch):
+    mod, rec = _ledger(tmp_path, monkeypatch, "pending")
+    assert mod.cmd_complete("R1", "증거", "PASS") == 0 and rec()["status"] == "completed"
+
+
+def _commit_all(cwd):
+    subprocess.run(["git", "add", "-A"], cwd=cwd, check=True)
+    subprocess.run(["git", "commit", "-qm", "x"], cwd=cwd, check=True)
+
+
+def test_same_pattern_precision_and_known_misses(tmp_path):
+    import independent_verifier as iv
+    for a in (["init", "-q"], ["config", "user.email", "t@example.com"], ["config", "user.name", "t"]):
+        subprocess.run(["git", *a], cwd=tmp_path, check=True)
+    line = "confidence = int(verdict.get('confidence', 0))"
+    (tmp_path / "a.py").write_text(line + "\n", encoding="utf-8")
+    (tmp_path / "b.py").write_text("generic_statement_here_long = 1\n" * 25, encoding="utf-8")
+    (tmp_path / "c.py").write_text("generic_statement_here_long = 1\n", encoding="utf-8")
+    (tmp_path / "d.py").write_text("conf = int(verdict.get('confidence', 0))\n", encoding="utf-8")   # 이름만 다른 복사본
+    _commit_all(tmp_path)
+    (tmp_path / "a.py").write_text("try:\n    " + line + "\nexcept ValueError:\n    pass\n", encoding="utf-8")
+    assert iv.same_pattern_candidates(tmp_path) == []       # 들여쓰기 이동 = 고친 줄 아님 (오탐 제거)
+    (tmp_path / "a.py").write_text("confidence = safe_int(verdict)\n", encoding="utf-8")
+    assert iv.same_pattern_candidates(tmp_path) == []       # d.py 는 이름이 달라 못 찾는다 (알려진 미탐)
+    subprocess.run(["git", "checkout", "-q", "--", "a.py"], cwd=tmp_path, check=True)
+    (tmp_path / "c.py").write_text("x = 2\n", encoding="utf-8")
+    assert iv.same_pattern_candidates(tmp_path) == []       # 25곳 이상 일반 구문은 후보에서 제외

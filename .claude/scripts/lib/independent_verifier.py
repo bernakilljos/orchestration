@@ -82,14 +82,16 @@ def same_pattern_candidates(cwd: Path, limit: int = 20) -> List[Dict[str, Any]]:
     """이번 변경에서 고친(지운) 줄이 저장소 다른 곳에 그대로 남은 위치 — 같은 유형 누락 후보. 판단은 사람·Judge 몫."""
     diff = _run_git_in(cwd, ["diff", "-U0"]) or ""
     removed = {ln[1:].strip() for ln in diff.splitlines() if ln.startswith("-") and not ln.startswith("---")}
-    code = sorted(x for x in removed if len(x) >= 20 and not x.startswith(("#", "//", "|", "*", "-")))
+    added = {ln[1:].strip() for ln in diff.splitlines() if ln.startswith("+") and not ln.startswith("+++")}
+    # 들여쓰기만 바뀌거나 옮긴 줄은 고친 줄이 아니다 (실제 fix 커밋 30건 측정에서 자기 자신을 잡았다)
+    code = sorted(x for x in removed - added if len(x) >= 20 and not x.startswith(("#", "//", "|", "*", "-")))
     found = []
     for line in code[:limit]:
         hits = _run_git_in(cwd, ["grep", "-n", "-F", "-e", line]) or ""
         # -F 는 부분 일치라 고친 줄의 새 형태도 잡힌다 → 줄 전체가 같은 것만
         where = [":".join(p[:2]) for p in (h.split(":", 2) for h in hits.splitlines())
                  if len(p) == 3 and p[2].strip() == line]
-        if where:
+        if 0 < len(where) <= 20:     # 20곳 초과 = `except Exception as e:` 같은 일반 구문
             found.append({"line": line[:120], "where": where[:5], "count": len(where)})
     return found
 

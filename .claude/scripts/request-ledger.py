@@ -188,14 +188,23 @@ def cmd_invalid_registration(rid: str, reason: str = "",
     return 2
 
 
-def cmd_complete(rid: str, evidence: str = "", verification: str = "") -> int:
-    """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사)."""
+def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "") -> int:
+    """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사).
+    verification=PASS 는 이 요청의 작업을 수행·확인했다는 뜻이다 — 기능 검증 판정(PASS/PARTIAL)을 대신하지 않는다."""
     data = _load()
     if not data:
         print("[ledger] empty", file=sys.stderr)
         return 2
     for r in data["requests"]:
         if r["id"] == rid or r["id"].lower() == rid.lower():
+            # 2026-11-05 R160: 승인 대기를 Claude 가 complete 로 풀어 상태가 바뀌고 Stop 까지 막았다.
+            # 승인 대기는 사용자 승인 원문 없이는 상태를 바꾸지 않는다 (Stop 도 막지 않는다).
+            if r.get("status") == "approval_required":
+                if not user_approved.strip():
+                    print(f"[ledger] ✗ {rid}: 사용자 승인 대기 — 상태 변경 안 함 (--user-approved 에 승인 원문 필요)",
+                          file=sys.stderr)
+                    return 2
+                r["user_approved"] = user_approved[:300]
             # 증거 없으면 implemented 로만 (completed 불허)
             if not evidence:
                 r["status"] = "implemented"
@@ -366,7 +375,8 @@ def cmd_gate() -> int:
     msg = f"[request-ledger] {done}/{total} 완료 · 미완료 {len(pending)}건:\n"
     for r in pending[:5]:
         msg += f"  ☐ {r['id']}: {r['desc'][:80]}\n"
-    msg += "→ 미완료 request 계속 실행 후 보고 (execution-contract § 2 n/n 완료 전 보고 금지)"
+    msg += ("→ 미완료 request 계속 실행 후 보고 (execution-contract § 2 n/n 완료 전 보고 금지) · "
+            "실제로 끝나지 않았으면 종료를 위해 PASS 로 바꾸지 말고 사실대로 보고")
     print(msg, file=sys.stderr)
     return 2
 
@@ -445,7 +455,8 @@ def main() -> int:
     p_comp = sub.add_parser("complete")
     p_comp.add_argument("rid")
     p_comp.add_argument("--evidence", default="", help="실제 수행 증거 (git diff·실행 결과·파일 경로)")
-    p_comp.add_argument("--verification", default="", help="검증 결과 (PASS·FAIL)")
+    p_comp.add_argument("--verification", default="", help="이 요청의 수행 확인 (PASS·FAIL) · 기능 전체 판정 아님")
+    p_comp.add_argument("--user-approved", default="", help="승인 대기 항목의 사용자 승인 원문")
 
     # out-of-scope — 범위 외 요청 (completed 와 혼동 금지 · 2026-10-29 P0 fix)
     p_oos = sub.add_parser("out-of-scope")
@@ -472,7 +483,7 @@ def main() -> int:
     if args.op == "add-batch":
         return cmd_add_batch(args.json_str)
     if args.op == "complete":
-        return cmd_complete(args.rid, args.evidence, args.verification)
+        return cmd_complete(args.rid, args.evidence, args.verification, args.user_approved)
     if args.op == "out-of-scope":
         return cmd_out_of_scope(args.rid, args.target, args.reason)
     if args.op == "invalid-registration":

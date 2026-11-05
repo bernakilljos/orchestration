@@ -52,6 +52,12 @@ N/N 완료 확인 (Stop hook gate)
 - **크리티컬 5가지** 긴급 알림 (시크릿·데이터손실·보안·비용·시스템손상)
 - N/N 완료 **후** 1회 최종 보고
 
+### 요청 처리 완료 ≠ 기능 검증 완료 (2026-11-05 R160)
+
+- Ledger 의 `verification=PASS` 는 **이 요청의 작업을 수행·확인했다** 는 뜻이다. 기능 판정 (PASS/PARTIAL/BLOCKED) 은 별도로 보고한다.
+- Stop 을 통과시키려고 값을 바꾸지 않는다. 게이트가 막으면 왜 막혔는지 먼저 확인하고, 끝나지 않았으면 그대로 보고한다.
+- `approval_required` 는 Stop 을 막지 않으며 사용자 승인 원문 없이 상태를 바꾸지 않는다.
+
 ### Stop hook Request Ledger Gate
 
 - Stop hook 이 `request-ledger.json` 읽음
