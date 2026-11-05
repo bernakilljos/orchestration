@@ -132,6 +132,18 @@ def _lines(rx: str, text: str, label: str, limit: int) -> list[str]:
     return [f"- ({label}) {m}" for m in re.findall(rx, text)][:limit]
 
 
+def _has_goal_token(root, prompt: str) -> bool:
+    """명시 등재 토큰 판정 — 정본은 auto_goal_from_prompt._DEV_TRIGGER."""
+    try:
+        lib_path = str(root / ".claude" / "scripts" / "lib")
+        if lib_path not in sys.path:
+            sys.path.insert(0, lib_path)
+        import auto_goal_from_prompt as _ag
+        return bool(_ag._DEV_TRIGGER.search(prompt))
+    except Exception:  # noqa: BLE001  (판정 실패 = 기존 동작 유지)
+        return False
+
+
 def run(ctx):
     # 2026-09-19: context-usage-pct.py 등 하위 프로세스가 이 세션 transcript 를 읽도록 stdin 의 transcript_path 를 환경에 둔다
     tp = ctx.payload.get("transcript_path") or ""
@@ -143,7 +155,8 @@ def run(ctx):
         p = str(p)
     prompt = bash_strip(p[:1000])
 
-    if not search(TRIGGER_PATTERN, prompt):
+    # 2026-11-05: 작업 동사가 없어도 [auto-goal] 같은 명시 토큰은 등재까지 가야 한다 (종단 시험에서 발견)
+    if not search(TRIGGER_PATTERN, prompt) and not _has_goal_token(ctx.root, prompt):
         return None
 
     root = ctx.root

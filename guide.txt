@@ -2437,3 +2437,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 재확인 (2026-11-05): 긴급은 감지만 (우선 처리 경로 없음) · sandbox 계열 회귀는 메모리 부족으로 BLOCKED. 상세 §30.
 - V1.1 연결 (2026-11-05): 긴급 goal = goals.priority · advance-all 이 먼저 처리 (승인·whitelist·claim 유지) · Judge 근거는 [확인] 글자가 아니라 변경 파일·실행 기록 대조 · /verify 4단계 회귀 후보 (independent_verifier.py affected-tests) · runner 는 관측된 자기 하위 프로세스만 정리 · 정리 후보 목록 .claude/state/cleanup-candidates.txt (삭제 X). 상세 §31.
 - V1.1 3축 검증 (2026-11-05): 외부 근거·내부 구현·실행 결과 분리 (execution-contract §5) · 외부 근거는 external-evidence 의 본문 확인(read) 만 인정 · 새 외부 의존이 미확인이면 Judge VERIFIED 금지 · 자동 수정 체인이 회귀 후보를 sandbox 에서 실행 · 화면 캡처는 Bash·PowerShell 모두 block_screen_capture 로 차단 (승인 시 ALLOW_SCREEN_CAPTURE=1). 상세 §32.
+- 자동 등재 관문 (2026-11-05): 작업 동사가 없어도 [auto-goal] 같은 명시 토큰은 UserPromptSubmit 관문을 통과해 goal 로 등재된다 (실제 hook 종단 시험에서 발견). 상세 §32.

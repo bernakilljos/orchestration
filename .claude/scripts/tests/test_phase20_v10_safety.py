@@ -662,3 +662,13 @@ def test_settings_prehook_covers_powershell():
     cfg = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     matchers = [e.get("matcher", "") for e in cfg["hooks"]["PreToolUse"]]
     assert any("PowerShell" in m.split("|") for m in matchers)
+
+
+def test_explicit_goal_token_passes_prompt_gate():
+    """작업 동사 없는 프롬프트도 명시 토큰이면 등재 단계까지 간다 (종단 시험에서 발견한 관문 결함)."""
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    import user_prompt_auto_planner as ap
+    token = "[auto-goal] 운영 응답 없음"
+    assert not __import__("re").search(ap.TRIGGER_PATTERN, token)     # 기존 관문만으로는 막히는 문장
+    assert ap._has_goal_token(ROOT, token)
+    assert not ap._has_goal_token(ROOT, "오늘 날씨 좋다")
