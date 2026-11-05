@@ -514,3 +514,31 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **pytest 전체**: 1회차 168 passed·1 failed (test_phase17 test_dag_deferred_is_skipped_not_failed) · 2회차 2 failed (+ test_loop_survives_winerror_1455) · 이후 ca91ec2 169 passed 2회 · 1fb18a4 161 passed 1회 · 단독 실행 통과 · 33 ERROR 동일. 실패 2회는 commit 약 90% 시점 · 재현 안 됨 · **원인 미확정 [미확인]** — 이번 변경과의 관련은 입증도 배제도 못 함.
 **남은 위험**: PARTIAL 도 문자열 신고라 작업 회피에 쓰일 수 있음 · 일반 PASS 는 증거 내용을 코드가 검증하지 않음 · Standing 미해결은 두 번째 Stop 부터 통과 · loop 해제는 FAIL 도 종료 허용 (기록은 유지) · six-guards 의 advance-all 은 15초 hook 제한 안에서 실행.
 **보존 [확인]**: R160 기록 무변경 · goals 161 · tasks 155 (승인 대기 3건 포함) · Goal #77 FAILED · 로컬 커밋 ahead 11 · Statusline 변경 0
+
+## 36. R160 감사 메모 · pytest 간헐 실패 조사 (450796d · 2026-11-05 · 유료 $0 · push·삭제·캡처 0)
+**판정 유지**: V1.1 PASS 2 · PARTIAL 2 · BLOCKED 1
+
+### R160 감사 메모 (Ledger 기록 무변경)
+| 구분 | 내용 |
+|---|---|
+| 현재 기록 | status=completed · verification=PASS · user_approved 없음 (수정 안 함) |
+| 등록 근거 [확인] | 프롬프트 hook 출력 `[ledger] + R160 (APPROVAL REQUIRED)` · approval_reasons 배포·운영·유료·운영 db = 실제 승인 대기로 등록된 요청 |
+| 경위 [확인] | Claude 가 complete 호출 → verified 로 전이되어 Stop 차단 발생 → verification 을 문장에서 PASS 로 재호출 → completed · 사용자 승인 없음 |
+| 이 기록의 의미 | 요청 작업 수행 완료만 뜻함. V1.1 기능 검증 완료가 아니다 (B·C PARTIAL · E BLOCKED) |
+| 승인 필요 작업 실행 여부 | push·삭제·유료 호출·배포 없음 [확인] · 승인 사유는 금지 문구의 단어 감지 |
+| 조치 | 기록 유지 · approval_required 복원 안 함 · 재발 방지는 1fb18a4·ca91ec2 |
+
+### §35 정정
+- §35 의 "1회차 test_dag_deferred_is_skipped_not_failed" 는 **잘못된 기록**이다. 1회차 로그는 tail -6 으로 잘려 실패 테스트 이름이 없다. 그 이름은 2회차 것이다.
+
+### 간헐 실패 조사
+| 회차 | 시각 | 원인 | 근거 |
+|---|---|---|---|
+| 2회차 (2 failed) | 17:2x | **Claude 절차 경합 [확인]** — 같은 clone 을 git reset 하는 동안 pytest 실행 | clone reflog 17:26:53~55 reset · 재현: reset 없음 0/6 실패 · reset 동시 6/16 실패, 같은 두 테스트 |
+| 1회차 (1 failed) | 17:21~23 | **[원인 미확인]** — 테스트 이름·traceback 없음 | 이 PC commit 90.0% 경계 시점 [확인] · 실제 메모리 의존 시험이 후보 [추정] |
+
+**발견한 실제 결함 [확인]**: pytest 일부가 실행 PC 메모리에 판정이 좌우됨. commit_memory 95% 재현: 수정 전 phase12 3건 실패 → conftest 고정 후 0건. 환경변수로 게이트만 닫으면 18건 실패 (phase18 14 · phase12 3 · phase17 1). 메모리 게이트 시험은 값을 직접 주입해 유지.
+**배제 [확인]**: 단독·phase17 파일·phase12+17 순서는 게이트 조건과 무관하게 통과 → 순서 의존 재현 안 됨. 임시 DB·프로세스 충돌은 재현 안 됨. skip·xfail·재시도 추가 없음.
+**공식 대조**: [pytest flaky](https://docs.pytest.org/en/stable/explanation/flaky.html) (본문 · 통제되지 않은 시스템 상태·공유 상태가 원인 · xfail 상시 격리는 위험) · [Win32 오류 1455](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--1300-1699-) (페이징 파일 부족 · 2025-07-14). 설치 pytest 9.1.1 · 문서는 stable 판.
+**회귀 (450796d · fresh clone 단독 실행)**: 위반 0 · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 52/52 · phase3 26/26 · golden 13/13 · pytest 169 passed · failed 0 · 33 ERROR (스크립트형 수집 오류 · 기존 동일) · 긴급 종단 PASS · PowerShell 38/38·21/21 · 실제 근거 VERIFIED. 전체 로그 보존 (실패 이름 유실 방지).
+**보존 [확인]**: R160 기록 무변경 · goals 161 · tasks 155 · 승인 대기 3건 · Goal #77 FAILED · 로컬 커밋 ahead 13 · Statusline 변경 0
