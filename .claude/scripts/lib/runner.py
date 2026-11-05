@@ -136,6 +136,27 @@ def mark_verified(exec_id: int, verified: bool = True) -> bool:
         return False
 
 
+def _kill_own_tree(pid: int) -> List[int]:
+    """runner 가 띄운 pid 와 그 하위 프로세스만 종료 · 종료 후에도 살아 있는 pid 목록 반환 (없으면 [])."""
+    try:
+        import psutil
+        root = psutil.Process(pid)
+        procs = root.children(recursive=True) + [root]
+        for pr in procs:
+            try:
+                pr.kill()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        _, alive = psutil.wait_procs(procs, timeout=5)
+        return [pr.pid for pr in alive]
+    except ImportError:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
+        return []
+    except Exception:  # noqa: BLE001  (이미 종료 등)
+        return []
+
+
 def run(cmd: Union[str, List[str]],
         task_id: str = "",
         worker_id: str = "",
@@ -193,27 +214,37 @@ def run(cmd: Union[str, List[str]],
         except Exception:
             pass  # 지원 안 하면 skip (non-Windows fallback)
 
+    leftover = []
     try:
-        r = subprocess.run(
+        p = subprocess.Popen(
             cmd,
             shell=shell,
-            capture_output=capture,
+            stdout=subprocess.PIPE if capture else None,
+            stderr=subprocess.PIPE if capture else None,
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=timeout,
             cwd=cwd_str or None,
             env=env,
             **_popen_kwargs,
         )
-        exit_code = r.returncode
-        stdout = r.stdout or ""
-        stderr = r.stderr or ""
-    except subprocess.TimeoutExpired as e:
-        timed_out = True
-        exit_code = -2
-        stderr = f"TimeoutExpired after {timeout}s: {str(e)[:200]}"
-        # 외부 AI 원칙 4: 타임아웃 시 자식 프로세스 정리 (subprocess.run 이 이미 처리하지만 확인)
+        try:
+            stdout, stderr = p.communicate(timeout=timeout)
+            exit_code = p.returncode
+        except subprocess.TimeoutExpired as e:
+            # 2026-11-04 V1.1 D: subprocess.run 은 직접 자식만 죽여 shell 밑 손자(pytest 등)가 남았다 →
+            # 이 실행이 띄운 프로세스 트리만 정리하고 남은 것을 기록 (다른 프로세스는 대상 아님)
+            timed_out = True
+            exit_code = -2
+            leftover = _kill_own_tree(p.pid)
+            try:
+                stdout, stderr = p.communicate(timeout=10)
+            except Exception:  # noqa: BLE001
+                stdout, stderr = "", ""
+            stderr = (stderr or "") + f"\nTimeoutExpired after {timeout}s: {str(e)[:200]}" + \
+                (f" · leftover={leftover}" if leftover else "")
+        stdout = stdout or ""
+        stderr = stderr or ""
     except Exception as e:  # noqa: BLE001
         exit_code = -3
         stderr = f"[runner] exception {type(e).__name__}: {str(e)[:200]}"
@@ -230,6 +261,7 @@ def run(cmd: Union[str, List[str]],
         "stderr": stderr,
         "duration_ms": duration_ms,
         "policy_result": policy,
+        "leftover_pids": leftover,   # 타임아웃 정리 후에도 남은 이 실행의 프로세스 (정상 = [])
         "verified": False,  # 외부 AI 원칙 6: 호출자가 mark_verified() 로 설정
     }
 

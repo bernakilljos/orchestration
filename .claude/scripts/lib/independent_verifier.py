@@ -366,6 +366,12 @@ def judge_handoff(goal_id: int,
     }
 
 
+FACT_TAG_RULE = ("Label every factual claim: [확인] = observed here (file:line, test output), [예시] = illustrative, "
+                 "[추정] = inference, [미확인] = not verified, [판독불가] = unreadable. Never present [추정]/[예시] as [확인]; "
+                 "a requirement is met only with [확인] evidence.")
+NON_FACT_TAGS = re.compile(r"\[(추정|예시|미확인|판독불가)\]")
+
+
 def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[str]) -> Dict[str, Any]:
     """Judge 의 요구사항별 판정을 LLM 문장과 무관하게 검사 (2026-11-03 F4).
     필수 ID 마다 status=met + 근거(evidence) 가 있어야 ok. unmet → REPAIRING · 누락·ID 불일치·근거 없음·확인 불가 → UNVERIFIED."""
@@ -389,6 +395,8 @@ def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[s
             unverifiable.append(rid)
         elif not str(r.get("evidence") or "").strip():
             no_evidence.append(rid)
+        elif NON_FACT_TAGS.search(str(r.get("evidence"))):
+            unverifiable.append(rid)          # 근거가 [추정]·[예시]·[미확인]·[판독불가] 면 met 이라도 확인된 사실 아님 (V1.1 B)
     unknown = sorted(set(by_id) - {i.upper() for i in required_ids})
     if unmet:
         return {"ok": False, "status": "REPAIRING", "reason": f"requirements unmet: {unmet}", "unmet": unmet}

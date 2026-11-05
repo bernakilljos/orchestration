@@ -531,7 +531,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                "files, including ones the tests do not cover.\n" if req else "")
             + f"Find the root cause in the source and fix it with the smallest change. "
             f"You may edit only: {', '.join(allow_paths)}. Do NOT edit tests ({', '.join(protected_paths)}). "
-            f"Do not hardcode return values. You cannot run commands: after you finish, an isolated runner "
+            f"Do not hardcode return values. {_iv.FACT_TAG_RULE} You cannot run commands: after you finish, an isolated runner "
             f"executes the tests and reports back. Reply with one JSON line: "
             f'{{"edit_file":"...","root_cause":"..."}}'
         )
@@ -581,7 +581,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         return fail("stat_judge")
     judge_prompt = (
         "You are an independent code-review judge. Do not trust the developer. "
-        "Base your verdict only on the diff, the test results and the files here.\n"
+        "Base your verdict only on the diff, the test results and the files here. " + _iv.FACT_TAG_RULE + "\n"
         f"Original failure:\n{(pre.get('stdout_tail') or '')[-800:]}\n"
         f"Diff:\n{out['diff'][:3000]}\n"
         f"Tests after fix (exit {vr.get('exit_code')}):\n{(vr.get('stdout') or '')[-400:]}\n"

@@ -10,6 +10,8 @@ HEADER = "[감정-상황 자동 매핑]\n"
 FOOTER = "\n★ 매핑 SoT: plugins/exec_orch/skills/user-emotion-auto-response.md\n★ 개별 감지 hook: detect-deflection.sh (회피), detect-repeat-request.sh (반복), detect-asset-creation.sh (자산 생성)"
 TABLE = [
     ("답답|빨리|빠르게|fast|서둘|급함", False, "[답답 감지] -> /fast 모드 권장 (Opus 4.7/4.8/5 Fast). 짧은 응답 우선.\n"),
+    # 2026-11-04 V1.1 A: 긴급 요청 — 진행 중 작업 뒤에 무기한 대기 X · 첫 응답에 핵심 답 먼저 · 시간 보장 약속 X
+    ("긴급|급해|급히|urgent|asap|지금 당장|당장", True, "[긴급 요청] -> 도구 호출·긴 조사 전에 첫 응답 1~3줄로 핵심 답(또는 확인된 현황)부터. 진행 중 백그라운드 작업은 멈추지 말고 그대로 두고, 이 요청을 먼저 처리. 외부 API·빌드처럼 시간이 걸리는 것은 '몇 분 안' 같은 보장 X — 지금 확인된 것만 [확인]/[미확인] 으로.\n"),
     ("짜증|짱나|엉망|대충|장난|매번이래|또 이래|하지말라", False, "[짜증 감지] -> 시스템 결함 신호. 자동 진단 5단계:\n  1) 관련 hook-rule-memory 실측 (grep 아닌 100% Read)\n  2) 놓친 부분 등재 (feedback + hook + rule + CLAUDE.md § 7)\n  3) 감지 시스템 강화\n  4) 원인 사용자에게 짧게 보고\n  5) 반복 방지 게이트 추가\n"),
     ("중복|또 요청|같은 지시|반복", False, "[반복 감지] -> /loop 자동 발동. 감지 hook: detect-repeat-request.sh (별도).\n"),
     ("design.*별로|디자인.*별로|UI.*이상|화면.*못생|design 이 별로|디자인이 별로", False, "[design 불만] -> 관련 command md 자동 수정. plugins/design_*/commands/*.md grep -> 사용자 지적 반영 후 sync-plugins.\n"),

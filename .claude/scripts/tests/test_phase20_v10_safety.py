@@ -301,3 +301,46 @@ def test_remote_commands_gated_and_dashboard_token_free():
     assert ra.index("Test-RemoteCommand $cmd") < ra.index("switch ($cmd.action)")   # 실행 전에 검증
     dash = (ROOT / "dashboard.py").read_text(encoding="utf-8")
     assert not re.search(r"https://x:\{pat\}@", dash) and "GIT_CONFIG_PARAMETERS" in dash
+
+
+# ---------- V1.1 A·B·D (2026-11-04) ----------
+
+def test_runner_timeout_kills_own_grandchild(tmp_path, monkeypatch):
+    import psutil
+    import runner
+    monkeypatch.setattr(runner, "DB", tmp_path / "orca.db")
+    monkeypatch.setattr(runner, "LOG", tmp_path / "runner.log")
+    monkeypatch.setattr(runner, "_policy_check", lambda c: "allow")
+    pidf = tmp_path / "grandchild.pid"
+    child = ("import subprocess,sys,time;"
+             "p=subprocess.Popen([sys.executable,'-c','import time;time.sleep(120)']);"
+             f"open(r'{pidf}','w').write(str(p.pid));time.sleep(120)")
+    r = runner.run([sys.executable, "-c", child], task_id="t", worker_id="w", timeout=4, cwd=str(tmp_path))
+    assert r["timed_out"] and r["leftover_pids"] == []
+    gpid = int(pidf.read_text())
+    assert not psutil.pid_exists(gpid) or psutil.Process(gpid).status() == psutil.STATUS_ZOMBIE
+
+
+def test_requirement_evidence_tags_block_verified():
+    import independent_verifier as iv
+    ok = {"requirements": [{"id": "R1", "status": "met", "evidence": "[확인] src/a.py:10 test_a passed"}]}
+    assert iv.check_requirement_verdicts(ok, ["R1"])["status"] == "VERIFIED"
+    for tag in ("[추정]", "[예시]", "[미확인]", "[판독불가]"):
+        v = {"requirements": [{"id": "R1", "status": "met", "evidence": f"{tag} probably handled"}]}
+        assert iv.check_requirement_verdicts(v, ["R1"])["status"] == "UNVERIFIED", tag
+    assert "[확인]" in iv.FACT_TAG_RULE
+
+
+def test_urgent_prompt_gets_first_answer_guidance():
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    import detect_user_emotion as d
+
+    class C:
+        def __init__(self, p):
+            self.p = p
+
+        def prompt_jq(self):
+            return self.p
+    assert "긴급 요청" in (d.run(C("긴급: 운영 서버 응답 없음")) or "")
+    assert "긴급 요청" in (d.run(C("URGENT please check")) or "")
+    assert "긴급 요청" not in (d.run(C("이건 천천히 정리해 줘")) or "")

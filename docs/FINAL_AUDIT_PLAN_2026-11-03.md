@@ -378,3 +378,14 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 새 kit 본 (4bfd6ace): PowerShell 구문 오류 0 · 사용자 수준 `ORCH_REMOTE_CMD_SECRET` 미설정 → 자기 종료 `stop` 외 전부 차단
 - 적용: 백업 `remote-agent.ps1.bak-20261104` → 설치본 교체 → PID 18700 만 종료 → vbs 로 재시작 → **PID 21288** (실행 중 확인) · status-push PID 6072·다른 프로세스 미접촉 · Run 키 변경 없음 (vbs 가 설치본 경로를 실행하므로 다음 로그인도 새 버전)
 - 대시보드 (P0 유지): `/control/`·`/remote-cmd/` 요청 인증 없음 · 대시보드는 서명을 만들지 않으므로 인증 없는 요청은 클라이언트에서 `unsigned`/`no-secret` 로 차단 (fail-closed) · 서명 발급은 요청 인증 구현 전까지 BLOCKED
+
+## 29. V1.1 미완료 5항목 (2026-11-05 · 유료 $0 · 기존 경로에 연결만)
+| 항목 | 연결한 실행 경로 | 증거 | 판정 |
+|---|---|---|---|
+| A 긴급 요청 | UserPromptSubmit `detect_user_emotion.py` TABLE 1행 (긴급·급해·urgent·ASAP·당장 → 첫 응답 1~3줄 핵심 · 백그라운드 유지 · 시간 보장 X) · SoT `user-emotion.md` 행 | 긴급 2문장 감지 · 일반 문장 미감지 · HEAD 코드 FAIL | **PARTIAL** — 응답 시간 실측 없음 (모델 행동은 지시 주입까지만) |
+| B 사실 표기 5종 | `failure-mode.md` (매 세션 로드) · 수정 Agent·Judge 프롬프트 `FACT_TAG_RULE` · `check_requirement_verdicts` 가 [추정]·[예시]·[미확인]·[판독불가] 근거를 met 이어도 UNVERIFIED | 4 태그 모두 차단 · [확인] 근거만 VERIFIED · HEAD FAIL | **PARTIAL** — RPA·OCR·API 개별 Agent 코드 경로는 이 kit 에 없음 (규칙 문서로만) |
+| C 연관 작업 자율 | `execution-contract.md` §3 — 확인·같은 유형·회귀·자기 산출물 정리는 묻지 않고 · 운영 DB·배포·재시작·push·삭제·유료·인증은 승인 | 문서 | **PARTIAL** (행동 규칙 · 자동 검증 수단 없음) |
+| D 소유 프로세스 정리 | `runner.run` 타임아웃 시 자기가 띄운 프로세스 트리만 종료 + `leftover_pids` 기록 (이전엔 shell 밑 손자 잔존) | 손자 프로세스 종료 시험 PASS · HEAD 코드에선 손자 남음 (시험 잔존 1개를 직접 확인 후 정리) | **PASS** (runner 경로) · 예약·임시파일은 기존 (예약 정산 F7 0 열림 · pytest tmp_path) |
+| E Statusline 서브 정렬 | — | VS Code 실제 화면 캡처 필요 · FROZEN 이력 (24+회 핑퐁) | **BLOCKED** (사용자 화면 캡처 필요) |
+
+**회귀**: test_phase20 17/17 · HEAD 코드로 신규 3 FAIL · phase3 26/26 · golden 13/13 · runner·Judge 관련 pytest 34 passed · **phase2 16/21 · phase5 25/30 · pytest phase12 3 FAIL = 전부 가상 메모리 부족 (commit 93.6% · 여유 1.6GB < 2GB) 으로 sandbox 생성이 정책대로 보류됨** — 직접 `repair_sandbox.create` 시험도 같은 보류 메시지 → 이번 변경 무관 · 메모리 여유 회복 후 재실행 필요 [미확인] · fresh clone 미실행 (같은 이유 + 디스크 4.6GB)
