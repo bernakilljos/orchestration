@@ -37,6 +37,11 @@ RISK_PATTERNS = {
         (r"\bwget\s+[^|]*\|\s*(bash|sh|python)", "wget | sh — 외부 코드 실행"),
         (r"\brunas\s+/user", "runas — 권한 상승"),
         (r"\bchmod\s+\+s\b", "chmod +s — setuid 부여"),
+        (r"\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm|curl|wget|DownloadString)\b[^;\n]*\|\s*(iex|Invoke-Expression)\b",
+         "다운로드 내용을 바로 실행 — 외부 코드 실행"),
+        (r"\b(iex|Invoke-Expression)\b[^;\n]*\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm|DownloadString)\b",
+         "다운로드 내용을 바로 실행 — 외부 코드 실행"),
+        (r"-Verb\s+RunAs\b", "Start-Process -Verb RunAs — 권한 상승"),
     ],
     "cost": [
         (r"messages\.batch\.create.*\[.{2000,}", "Batch API 1000+ requests"),
@@ -44,6 +49,8 @@ RISK_PATTERNS = {
     ],
     "system": [
         (r"\bsetx\s+\w+", "setx — 영구 환경변수"),
+        (r"SetEnvironmentVariable\([^)]*['\"](Machine|User)['\"]", "영구 환경변수 변경"),
+        (r"\bSet-ExecutionPolicy\b.*\b(Bypass|Unrestricted)\b", "실행 정책 완화"),
         (r"\breg\s+(add|delete)\s+", "registry 변경"),
         (r"\balembic\s+upgrade\s+head\b", "DB schema 마이그레이션 (운영 영향)"),
         (r"systemctl\s+(enable|disable|mask)", "systemd 서비스 영구 변경"),

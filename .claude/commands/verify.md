@@ -44,6 +44,8 @@ cargo build
 ```bash
 # 회귀 후보 선정 → 선정된 테스트를 실제 실행 (변경 모듈을 참조하는 테스트 · kit·target 공통)
 python .claude/scripts/lib/independent_verifier.py affected-tests
+# 같은 유형 누락 후보 (고친 줄이 다른 곳에 남았는지 · 판단은 직접)
+python .claude/scripts/lib/independent_verifier.py same-pattern
 # 외부 의존 확인 → not_checked 면 공식 자료를 직접 찾아 본문 대조 후 기록 (execution-contract.md § 5)
 python .claude/scripts/lib/independent_verifier.py external-deps
 python .claude/scripts/lib/independent_verifier.py external-evidence <패키지> <url> <버전> read

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from _common import Result, bash_cat, sed_json_value
+from _common import Result, bash_cat, sed_json_value, tool_name
 
 MSG_PLUGINS = """
 [X] [BLOCK] plugins/ 파일 삭제 명령 감지!
@@ -43,12 +43,22 @@ _RM_PLUGINS = re.compile(r"rm\s+.*(-r|-f|--recursive|--force).*plugins/|rm\s+.*p
 _RM_SCRIPTS = re.compile(
     r"rm\s+.*(-r|-f|--recursive|--force).*\.claude/scripts/|rm\s+.*\.claude/scripts/.*(-r|-f|--recursive|--force)")
 
+# 2026-11-05 PowerShell: Remove-Item 별칭은 -r/-f 없이도 삭제한다 · 경로 구분자 \ 포함
+_PS_RM = r"(?:^|[;|&({]\s*)(?:Remove-Item|ri|rm|rmdir|rd|del|erase)\s[^;|]*"
+_RM_PS_PLUGINS = re.compile(_PS_RM + r"plugins[\\/]", re.I)
+_RM_PS_SCRIPTS = re.compile(_PS_RM + r"\.claude[\\/]+scripts[\\/]", re.I)
+
 
 def run(ctx):
     cmd = sed_json_value(bash_cat(ctx.raw), "command")
     if not cmd:
         return None
     has_force = "--force-delete" in cmd
+    if tool_name(ctx) == "PowerShell" and not has_force:
+        if _RM_PS_PLUGINS.search(cmd):
+            return Result(2, MSG_PLUGINS, "")
+        if _RM_PS_SCRIPTS.search(cmd):
+            return Result(2, MSG_SCRIPTS, "")
     if _RM_PLUGINS.search(cmd) and not has_force:
         return Result(2, MSG_PLUGINS, "")
     if _RM_SCRIPTS.search(cmd) and not has_force:

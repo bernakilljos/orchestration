@@ -17,7 +17,8 @@ from _common import Result, append_text, bash_read, ensure_dir, load_script, pro
 _S = r"[ \t\n\r\f\v]"
 _RISKWORD = re.compile(
     r"drop|truncate|delete|rm" + _S + r"|git" + _S + r"+(push|reset|branch)|sudo|curl|wget|runas|chmod|batch|daily-limit|setx|"
-    r"reg" + _S + r"+(add|delete)|alembic|systemctl|npm" + _S + r"+publish|docker" + _S + r"+push|gh" + _S + r"+release|terraform",
+    r"reg" + _S + r"+(add|delete)|alembic|systemctl|npm" + _S + r"+publish|docker" + _S + r"+push|gh" + _S + r"+release|terraform|"
+    r"\biex\b|invoke-expression|set-executionpolicy|setenvironmentvariable|verb" + _S + r"+runas",
     re.I)
 
 

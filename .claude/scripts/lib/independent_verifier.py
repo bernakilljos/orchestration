@@ -78,6 +78,22 @@ def changed_paths(cwd: Path) -> List[str]:
     return _collect_diff_paths(cwd) + [p.strip() for p in untracked.splitlines() if p.strip()]
 
 
+def same_pattern_candidates(cwd: Path, limit: int = 20) -> List[Dict[str, Any]]:
+    """이번 변경에서 고친(지운) 줄이 저장소 다른 곳에 그대로 남은 위치 — 같은 유형 누락 후보. 판단은 사람·Judge 몫."""
+    diff = _run_git_in(cwd, ["diff", "-U0"]) or ""
+    removed = {ln[1:].strip() for ln in diff.splitlines() if ln.startswith("-") and not ln.startswith("---")}
+    code = sorted(x for x in removed if len(x) >= 20 and not x.startswith(("#", "//", "|", "*", "-")))
+    found = []
+    for line in code[:limit]:
+        hits = _run_git_in(cwd, ["grep", "-n", "-F", "-e", line]) or ""
+        # -F 는 부분 일치라 고친 줄의 새 형태도 잡힌다 → 줄 전체가 같은 것만
+        where = [":".join(p[:2]) for p in (h.split(":", 2) for h in hits.splitlines())
+                 if len(p) == 3 and p[2].strip() == line]
+        if where:
+            found.append({"line": line[:120], "where": where[:5], "count": len(where)})
+    return found
+
+
 EXTERNAL_EVIDENCE = ROOT / ".claude" / "state" / "external-evidence.jsonl"
 _MANIFESTS = {"requirements.txt", "pyproject.toml", "package.json", "go.mod", "Cargo.toml", "pom.xml"}
 _IMPORT_LINE = re.compile(r"^\+\s*(?:import|from)\s+([A-Za-z_]\w*)", re.MULTILINE)
@@ -275,6 +291,7 @@ def collect_evidence(goal_id: int,
     evidence["git_diff_file_count"] = len(diff_paths)
     evidence["changed_paths"] = changed_paths(diff_cwd)
     evidence["external_dependencies"] = external_dependencies(diff_cwd)
+    evidence["same_pattern_candidates"] = same_pattern_candidates(diff_cwd)
     evidence["verified_output"] = _verified_output([t["task_id"] for t in task_specs])
     evidence["affected_tests"] = affected_tests(diff_cwd, evidence["changed_paths"])
     evidence["affected_tests_not_run"] = [t for t in evidence["affected_tests"]
@@ -401,6 +418,9 @@ def judge_handoff(goal_id: int,
         f"이번 검증 미실행: {', '.join((evidence.get('affected_tests_not_run') or [])[:10]) or '없음'}\n\n"
         f"## 외부 의존 (새로 쓰는 패키지·의존성 파일)\n"
         f"{', '.join(evidence.get('external_dependencies') or []) or '없음'} — 공식 자료 대조는 external-evidence 기록으로만 인정\n\n"
+        f"## 같은 유형 누락 후보 (고친 줄이 남은 위치)\n"
+        + ("\n".join(f"- {c['line']} → {', '.join(c['where'])}" for c in (evidence.get("same_pattern_candidates") or [])[:5])
+           or "없음") + "\n\n"
         f"## tasks 실행 결과\n"
         + "\n".join(
             f"  - {t['task_id']}: status={t['status']} verify={t.get('verify_type')} "
@@ -649,6 +669,9 @@ def _cli_main(argv):
     if argv[1] == "affected-tests":
         changed = (_run_git_in(ROOT, ["diff", "--name-only", "HEAD"]) or "").split()
         print("\n".join(affected_tests(ROOT, changed)))
+        return 0
+    if argv[1] == "same-pattern":
+        print(json.dumps(same_pattern_candidates(ROOT), ensure_ascii=False, indent=2))
         return 0
     if argv[1] == "external-deps":
         deps = external_dependencies(ROOT)
