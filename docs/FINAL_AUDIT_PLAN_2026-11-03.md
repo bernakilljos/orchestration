@@ -612,3 +612,7 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 같은 유형 [확인]: approval-gate 출력을 subprocess 로 읽는 곳은 이 1곳 (platform_api 는 모듈 직접 import · hook 은 bash). supervisor 의 verify 실행 3곳(`text=True`)도 디코드 실패 시 출력이 비지만 판정이 REPAIRING 쪽(놓침)이라 위험 통과는 아님 → 기록만.
 - 부수 사건: 이 원인을 확인하던 명령 문자열에 위험 명령 예시가 들어가 PreToolUse 게이트가 승인 대기 `appr-4bccc37a5e51` 을 새로 만들었다 (실행 안 됨 · 승인·거부·삭제 안 함).
 - 1차 fresh clone pytest 1 failed 는 이름 미확보 (로그를 tail -2 로 잘라 저장 — §36 과 같은 실수) · 같은 clone 재실행 3/3 = 180 passed · failed 0 → [원인 미확인]. 1차 clone 은 긴 파일명으로 checkout 실패 (`core.longpaths` 필요) · 두 clone 모두 scratchpad 에 남김 (삭제 안 함).
+
+**회귀 (fresh clone e44422a · `core.longpaths` · PYTHONIOENCODING=utf-8 · 전체 로그 보존)** [확인]: verify-fresh-clone 위반 0 · phase3 26/26 · phase5 39/39 (Test 12 해소) · phase12 rc 0 · golden 13/13 · pytest 180 passed + 1 failed → 새 statusline 시험의 행 수 하한(≥8)이 상태 파일에 좌우돼 fresh clone(7행)에서 실패 → 하한을 ≥3 으로 고침 (정렬·폭·빈 줄 판정은 그대로 · clone 에서 │ 13번째 셀 동일) → test_phase20 60/60 (clone) · phase2 첫 실행 16/21 (sandbox 생성 단계 · 사유 로그 없음) → 같은 clone 재실행 2/2 = 21/21 · 직접 sandbox 생성 성공 → [원인 미확인] (디스크 여유 12GB 로 정책 하한 10GB 근처 [추정]). 33 수집 오류 기존 그대로.
+**보존 [확인]**: goals 161 · tasks 156 (155 + 승인 대기 appr-4bccc37a5e51 1건 · 위 부수 사건) · Goal #77 FAILED · Ledger R1~R172 무변경 (R167~R169·R172 approval_required) · Statusline 디자인·토큰·원격 설정 변경 0 · 유료 호출·push·삭제·화면 캡처 0.
+**판정 (이번 작업 후)**: A PASS · D PASS (유지) · B PARTIAL — 남은 것은 유료 Judge 실측 (승인 필요) 뿐 · C PARTIAL — 무료 종단 경로 완성 · 남은 것: 유료 Agent 실행 (승인 필요) + 문법이 다른 같은 유형 미탐 (대형 기능 필요 · 이번 범위 밖) · E BLOCKED — 문자열 검증 완료 · VS Code 실제 화면만 남음.
