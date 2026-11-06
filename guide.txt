@@ -2454,3 +2454,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - 실행 경로 안전성 (2026-11-06): Codex 는 codex-a·codex.bat 모두 `--sandbox workspace-write` (sandbox 우회 옵션 금지) · 개인 Google 계정의 Gemini CLI 는 2026-06-18 Antigravity CLI(agy) 이전으로 BLOCKED (전환은 승인 후). 상세 §44.
 - Codex 운영 경로 (2026-11-06): codex·gemini(.cmd) 호출에 call (후처리 복구 · 전체 인코딩 재저장은 CODEX_A_UTF8_CONVERT=1 일 때만) · codex-auto 는 repair_sandbox worktree(repair/codex-<task>) 에서 Codex 실행 · 못 만들면 실행 안 함 · main 반영은 승인 경로. 상세 §45.
 - Codex 워커 리허설 (2026-11-06): 형제 스크립트를 같은 폴더 경로(SELF_DIR)로 호출 · 처리 끝난 작업은 워커가 done 으로 · sandbox 실패 사유 기록·30초 대기 · post-impl-verify 문법 검사는 compile() · %APPDATA%\npm 의 예전 사본은 setup 04-commands 재실행 필요 (승인). 상세 §46.
+- 설치 사본 (2026-11-06): %APPDATA%\npm 의 codex-a 등 6개가 2026-08 사본 (codex-a 에 sandbox 우회 옵션) · 레지스트리 PATH 에서 npm 이 먼저라 이름 실행 시 사용됨 → setup 04-commands 재실행 필요 (승인) · 저장소 루트 codex-auto/gemini-auto 바로가기는 kit 사본을 경로로 호출. 상세 §47.

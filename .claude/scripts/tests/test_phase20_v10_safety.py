@@ -897,6 +897,9 @@ def test_worker_runs_codex_in_isolated_worktree(tmp_path):
         t = (SCRIPTS / (f + ".bat")).read_text(encoding="utf-8")
         assert not re.search(r'call (codex-a|gemini-a|codex-auto|gemini-auto)\b(?![.-]\w)', t), f
         assert 'call "%SELF_DIR%' in t and ('shift' not in t.lower() or t.index('set "SELF_DIR=%~dp0"') < t.lower().index('shift')), f
+    for f in ("codex-auto", "gemini-auto"):                     # 저장소 루트 바로가기도 kit 사본을 경로로
+        t = (SCRIPTS.parents[1] / (f + ".bat")).read_text(encoding="utf-8")
+        assert 'call "%PROJECT_ROOT%' in t and not re.search(r'^call (codex-a|gemini-a) ', t, re.M), f
 
 
 def _fake_runner(codes):

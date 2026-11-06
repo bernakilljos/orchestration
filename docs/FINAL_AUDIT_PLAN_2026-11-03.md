@@ -840,3 +840,23 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 남은 위험: `%APPDATA%\npm` 의 예전 사본(우회 옵션 포함)은 이름으로 `codex-auto` 등을 직접 실행하면 여전히 쓰인다 → setup `04-commands` 재실행으로 갱신 필요 (전역 파일 변경 · 승인 필요).
 
 **회귀 (운영 폴더 · pytest 만)** [확인]: 193 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13 · 커밋 메모리 89.8% (게이트 90% 바로 아래).
+
+## 47. Codex 최종 검증 준비 — 설치 사본·실행 전제 (2026-11-06 · 기준 ac70f50 · 읽기 전용 + 바로가기 2곳 수정 · 실제 Codex 0)
+
+**설치 사본 비교 [확인]** (`setup/modules/04-commands.bat` 가 kit `.claude/scripts` 9개를 `%APPDATA%\npm` 으로 복사 · 줄바꿈만 CRLF 로 정리 · 그 외 변경 없음)
+| 명령 | 설치본 | kit 과 동일 | 설치본 우회 옵션 | 비고 |
+|---|---|---|---|---|
+| codex-a | 있음 (2026-08-12) | 아니오 | **2** | 이름 호출 시 실행되는 실제 사본 |
+| codex-auto | 있음 (2026-08-12) | 아니오 | 0 | 내부에서 codex-a 를 이름으로 2곳 호출 → 위 우회 사본 |
+| gemini-a · gemini-auto · claude-auto | 있음 (2026-08-12) | 아니오 | 0 | gemini-auto 는 이름 호출 3곳 |
+| gemini-verify | 있음 (2026-05-07) | 아니오 | 0 | 이름 호출 1곳 |
+| codex-auto-global · gemini-auto-global · haiku-auto | 없음 | — | — | 04-commands 재실행 시 새로 설치 |
+- 실제 호출 경로: 레지스트리 PATH(사용자·시스템)에서 `codex-a.bat` 이 있는 첫 폴더 = `%APPDATA%\npm` · kit `.claude\scripts` 는 레지스트리 PATH 에 없음 → 일반 셸·스케줄러에서 이름으로 실행하면 설치본(우회 옵션) 이 쓰인다.
+- 같은 유형 추가 발견·수정: 저장소 루트 바로가기 `codex-auto.bat`·`gemini-auto.bat` 가 `call codex-a`·`call gemini-a` 를 이름으로 호출 (→ 설치본) → kit `.claude\scripts` 사본을 경로로 호출하도록 수정 · 시험 추가.
+- **갱신 절차 (승인 대기 · 미실행)**: ① `%APPDATA%\npm` 의 위 6개 파일을 scratchpad 로 복사 보관 ② `setup/modules/04-commands.bat` 를 TARGET=kit 로 실행 (9개 `.bat` 복사·CRLF 정리만 · 다른 전역 파일·개인 설정 무관) ③ 9개 모두 kit 과 내용 동일 · 우회 옵션 0 · `where codex-a` 첫 결과 확인 ④ 실패 시 보관본 복원. 설치본은 같은 폴더 형제를 SELF_DIR 로 부르므로 9개를 함께 갱신해야 일관됨.
+
+**실제 Codex 1회 실행 전제 [확인]**
+- 디스크 여유 17.07GB (sandbox 하한 10GB 충족).
+- 커밋 메모리 **91.3% — sandbox 메모리 게이트(90%) 초과** → 지금 실행하면 worktree 를 만들지 못하고 멈춘다 (실행 시점에 90% 미만 필요).
+- 리허설 worktree: `fresh8_clone` 안 27개 · 0.93GB (sparse) · 운영 저장소 worktree 목록과 무관 · 기존 `repair_sandbox` 수명 관리(cleanup-orphans · 보존 24h)는 그 clone 에서 실행해야 정리됨 → 삭제 안 함 (승인 필요).
+- 실행 계획은 §46 그대로 (fresh clone · `worker_rehearsal.py --real` · 작업 폴더 안 파일 1 · 지정 경로 밖 쓰기 1회 시도 · `curl https://example.com` 1회 · 우회·재시도 금지).
