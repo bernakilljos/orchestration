@@ -97,6 +97,7 @@ def run(name, fix_body):
             "regression": out.get("regression"), "policy": out.get("policy"),
             "judge_called": bool(judge_prompts),
             "judge_prompt_shows_label_copy": any("label.py" in p for p in judge_prompts),
+            "judge_prompt_shows_regression": any("demo/test_regress.py exit 0" in p for p in judge_prompts),
             "final": (handoff.get("final_verdict") or {}),
             "apply_target_file": git("show", "apply-target:demo/shipping.py").stdout}
 

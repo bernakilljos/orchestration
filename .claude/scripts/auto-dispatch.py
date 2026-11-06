@@ -46,6 +46,16 @@ def _register_task(task_file: str, ai: str) -> str:
         return ""  # noqa: BLE001
 
 
+def _evidence_rule() -> str:
+    """사실 표기 규칙 — 수정 Agent·Judge 와 같은 정본 (independent_verifier.FACT_TAG_RULE) 을 그대로 쓴다."""
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / ".claude" / "scripts" / "lib"))
+        from independent_verifier import FACT_TAG_RULE
+        return FACT_TAG_RULE
+    except Exception as e:  # noqa: BLE001 — 규칙을 못 읽어도 작업 지시서는 만든다 (사실대로 표기)
+        return f"[미확인] 사실 표기 규칙을 읽지 못함: {type(e).__name__}"
+
+
 def make_task_instruction(message: str, ai: str, task_type: str, reason: str, chunk_info: str = "") -> str:
     """task-instruction.md 자동 작성."""
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -69,6 +79,19 @@ def make_task_instruction(message: str, ai: str, task_type: str, reason: str, ch
 - {ai} 가 위 요청 분석 + 실행
 - 완료 시 결과 파일 또는 commit
 - 검증: verify-* 도구 자동 발동
+
+## 완료 증명 (근거가 없으면 완료 아님 · execution-contract.md § 5)
+
+{_evidence_rule()}
+
+결과 보고에 아래 7개를 모두 적는다. 확인하지 못한 항목은 [미확인] 으로 남긴다.
+1. 요구사항: 무엇을 해결해야 하는가
+2. 구현 근거: 파일:줄
+3. 실행 증거: 실제로 실행한 명령·테스트와 종료 코드 (Mock 실행이면 Mock 이라고 적는다)
+4. 회귀 검증: 관련 기존 테스트 결과
+5. 외부 근거: 외부 API·라이브러리에 의존하면 공식 문서 URL·버전·확인 날짜 (본문을 읽은 것만)
+6. 실패 분석: 남은 오류와 재현 조건
+7. 최종 판정: PASS / PARTIAL / BLOCKED / FAIL
 
 ## Auto-Dispatch Metadata
 

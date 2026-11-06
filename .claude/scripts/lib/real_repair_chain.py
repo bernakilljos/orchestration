@@ -611,12 +611,20 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                   + "\n".join(f"- {c['line']} -> {', '.join(c['where'])}" for c in same[:5])
                   + "\nIf any of them carries the same defect and is not fixed, list it in missing_requirements.\n"
                   if same else "")
+    # 2026-11-06 실검증: 자동 회귀를 실행·통과했는데 Judge 에 결과가 없어 [미확인] 으로 판정됨 → 실행 결과를 증거로 전달
+    reg = out["regression"]
+    reg_block = ("Related regression tests auto-selected and run by the pipeline after the fix: "
+                 + "; ".join(f"{x['test']} exit {x['exit_code']}" + (" (passed on retry)" if x.get("retried") else "")
+                             for x in reg["results"]) + "\n"
+                 if reg["selected"] else
+                 "Related regression tests: none selected (no other test references the changed files).\n")
     judge_prompt = (
         "You are an independent code-review judge. Do not trust the developer. "
         "Base your verdict only on the diff, the test results and the files here. " + _iv.FACT_TAG_RULE + "\n"
         f"Original failure:\n{(pre.get('stdout_tail') or '')[-800:]}\n"
         f"Diff:\n{out['diff'][:3000]}\n"
         f"Tests after fix (exit {vr.get('exit_code')}):\n{(vr.get('stdout') or '')[-400:]}\n"
+        + reg_block +
         f"Allowed paths: {allow_paths}. Tests must not be modified: {protected_paths}.\n"
         + same_block
         + "Check: real root-cause fix (not hardcoded return / test bypass), scope, side effects. "

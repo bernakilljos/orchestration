@@ -616,3 +616,42 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **회귀 (fresh clone e44422a · `core.longpaths` · PYTHONIOENCODING=utf-8 · 전체 로그 보존)** [확인]: verify-fresh-clone 위반 0 · phase3 26/26 · phase5 39/39 (Test 12 해소) · phase12 rc 0 · golden 13/13 · pytest 180 passed + 1 failed → 새 statusline 시험의 행 수 하한(≥8)이 상태 파일에 좌우돼 fresh clone(7행)에서 실패 → 하한을 ≥3 으로 고침 (정렬·폭·빈 줄 판정은 그대로 · clone 에서 │ 13번째 셀 동일) → test_phase20 60/60 (clone) · phase2 첫 실행 16/21 (sandbox 생성 단계 · 사유 로그 없음) → 같은 clone 재실행 2/2 = 21/21 · 직접 sandbox 생성 성공 → [원인 미확인] (디스크 여유 12GB 로 정책 하한 10GB 근처 [추정]). 33 수집 오류 기존 그대로.
 **보존 [확인]**: goals 161 · tasks 156 (155 + 승인 대기 appr-4bccc37a5e51 1건 · 위 부수 사건) · Goal #77 FAILED · Ledger R1~R172 무변경 (R167~R169·R172 approval_required) · Statusline 디자인·토큰·원격 설정 변경 0 · 유료 호출·push·삭제·화면 캡처 0.
 **판정 (이번 작업 후)**: A PASS · D PASS (유지) · B PARTIAL — 남은 것은 유료 Judge 실측 (승인 필요) 뿐 · C PARTIAL — 무료 종단 경로 완성 · 남은 것: 유료 Agent 실행 (승인 필요) + 문법이 다른 같은 유형 미탐 (대형 기능 필요 · 이번 범위 밖) · E BLOCKED — 문자열 검증 완료 · VS Code 실제 화면만 남음.
+
+## 40. V1.1 B·C 실제 유료 검증 · 개발·검증·증명 원칙 전파 (2026-11-06 · 기준 b2324c9 · 유료 $0.73 · push·삭제·캡처 0)
+
+**승인 범위**: C 실제 체인 1회로 B 통합 (Agent ≤2 + Judge 1 · 총 $5) · 이 검증용 일일 한도 $5. Push(b2324c9 까지)는 앞선 승인으로 완료 · 이번 커밋은 push 안 함.
+
+**격리 [확인]**: `chain_e2e_driver.py` 와 같은 구조를 scratchpad 1회용 드라이버로 (저장소 미포함) — 임시 git 저장소 · 임시 orca.db · 임시 sandbox root · `dispatch_agent` 만 실제 `claude -p`. 일일 한도 $5 는 공식 setter `route.py --set-daily-limit 5` 로 **임시 DB 에만** 설정 → 운영 DB 한도는 NULL 그대로라 다른 자동 작업(self-heal 등)은 계속 유료 호출 차단. 종료 후 임시 DB 도 NULL 로 복원.
+
+**실행 결과 [확인]** (goal 1 · chain `repair-goal-1`)
+| 단계 | 결과 |
+|---|---|
+| reproduce | `weight_fee(10)` 실패 재현 (exit 1) |
+| 수정 Agent (opus-5-5 · 1회 · $0.3711 · 25.4s) | `PER_KG_RATE = 3` 한 곳 정의 · `weight_fee`·`label_fee` 공용 (요구사항 R1~R3 · 같은 버그 복사본 label.py 까지 수정) |
+| 정책 | 허용 경로 2개만 변경 · 보호 파일(시험 2·REQUIREMENTS.md) 무변경 |
+| pytest · 자동 회귀 | 대상 시험 통과 · `demo/test_regress.py` 자동 선정 → exit 0 |
+| Judge (opus-5-5 · 1회 · $0.3608 · 31.6s · Bash 거부됨) | R1·R2·R3 모두 met · 근거 [확인] 파일:줄 + [추정]·[미확인] 구분 표기 · confidence 8 |
+| judge_absorb | VERIFIED · requirements_scope checked · external_scope none_needed · judge_source `llm_agent` (session 562b3286…) |
+| 반영 | sandbox commit → `apply-target` fast-forward · main 원본 버그 그대로 |
+| 예산 | 예약 fix $3.00 → 정산 $0.3711 · judge $2.00 → 정산 $0.3608 · 합계 **$0.7319** · 차단기 0 |
+- 독립 재확인 (Judge 말 대신 직접 실행): apply-target 에서 pytest 2 passed · `label_fee(10)=30` · 요금 숫자는 shipping.py:1 한 곳.
+- 운영 보존: 실행 전후 운영 DB 예산 NULL·예약 14·Agent 비용 기록 27·goals 161·tasks 156·Goal #77 FAILED·Ledger md5·HEAD·worktree 26 모두 동일.
+
+**실검증에서 발견한 누락 → 보완**: Judge 가 "test_regress.py 실행 증거 없음 [미확인]" 이라고 적음 — 체인은 회귀를 실행·통과했지만 결과를 Judge 프롬프트에 넣지 않았다. → `real_repair_chain` Judge 프롬프트에 자동 회귀 실행 결과(시험·종료 코드·재시도 여부) 추가. 무료 종단 시험에 단언 추가 (HEAD 코드 FAIL → 수정 후 PASS). **유료로 다시 돌리지는 않음** (승인 1회).
+
+**원칙 전파 (개발 경로별 실제 적용)**
+| 경로 | 적용 위치 [확인] | 판정 |
+|---|---|---|
+| 수정 Agent | `real_repair_chain` 프롬프트 FACT_TAG_RULE·요구사항 · 정책·pytest·자동 회귀·같은 유형 후보 | PASS (실검증) |
+| Judge | 프롬프트 + `check_requirement_verdicts` (근거 [확인]·변경 줄 연결) · external_scope · judge_source | PASS (실검증 · 이번 보완은 무료 시험만) |
+| Codex·Gemini 자동 위임 지시서 | `auto-dispatch.make_task_instruction` 에 같은 정본 FACT_TAG_RULE + 완료 증명 7항목 (신규 연결) | PARTIAL — 지시서까지 · Codex 결과 검사는 `post-impl-verify.sh` (문법·인코딩) 뿐이고 요구사항·근거 판정 경로 없음 |
+| Gemini 검증 | `gemini-a.bat` task 검증에 "실행 출력 없는 코드 읽기만 = UNVERIFIED" 기준 1줄 (신규) | PARTIAL — 프롬프트만 · 출력 기계 판정 없음 · Gemini 실행 안 함 [미확인] |
+| 메인 Claude | rules (execution-contract § 5 · failure-mode 사실 표기) + Stop Ledger gate (PASS/PARTIAL/BLOCKED + 증거) | 기존 유지 |
+| 공식 자료 확인 | 무인 체인은 외부 페이지를 읽지 않고 `external_scope not_checked` 면 반영 중단 (설계) · 이번 실검증은 외부 의존 없음 → 미사용 | PARTIAL (자동 검색은 없음) |
+- 시험 +3 (자동 위임 지시서·Gemini 기준·Judge 회귀 전달) · HEAD 코드에서 3 FAIL → 수정 후 3 PASS.
+- 회귀 (운영 폴더 · pytest 만 · 스크립트형 시험 제외) [확인]: 183 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13. `gemini-a.bat` 추가 줄은 cmd 단독 실행으로 출력 확인 (Gemini 호출 안 함).
+- 스크립트형 시험 (fresh clone 을 b2324c9 로 맞춘 뒤 이번 변경만 적용 · 운영 DB 무관) [확인]: phase3 26/26 · phase12 62 passed · phase5 첫 실행 38/39 — Test 13 `verify_fix` 가 `python -c "import fail"` 에서 60초 시간 초과 (exit=None · 이번 변경 밖의 함수) → 같은 clone 재실행 39/39 (exit 0) → [원인 미확인] · 변경 미적용 상태로 잘못 돈 1회는 증거에서 제외.
+
+**외부 근거 [확인 · https://code.claude.com/docs/en/cli-reference · 2026-11-06 본문]**: 사용한 `-p`·`--model`·`--output-format json`·`--setting-sources`·`--permission-mode dontAsk`·`--allowedTools`·`--max-budget-usd` 모두 문서화. 단 `--max-budget-usd` 는 "Spend can pass the cap, so leave headroom" (클라이언트 추정 · 상한 초과 가능) → 총액 상한은 실행 전 예약 게이트가 지킨다. 비용 필드 `total_cost_usd` 는 이 페이지에 없음 [미확인] (실제 출력에는 있음).
+
+**판정**: B PASS — 실제 LLM Judge 가 요구사항별 근거를 판정·출처 `llm_agent` 기록 · 허위 VERIFIED 차단은 이번 실행에서 발생 조건 없음 (무료 시험으로만 확인). C PASS (요구 범위) — 실제 Agent 수정·자동 회귀·같은 유형 수정·Judge·반영 종단 성공 · 남은 한계: 문법이 다른 같은 유형 미탐 (§37) · 공식 문서 자동 검색 없음. E BLOCKED (VS Code 캡처 대기).

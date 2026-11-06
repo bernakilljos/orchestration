@@ -2448,3 +2448,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 B·C·E (2026-11-06): Judge 판정 출처 기록 (실제 LLM Agent·mock·CLI 구분) · 자동 수정 체인이 같은 유형 후보를 Judge 에 전달 · 체인 무료 종단 시험 (chain_e2e_driver.py) · Statusline 출력 문자열 정렬 시험 (디자인 무변경). 상세 §39.
 - 승인 게이트 인코딩 (2026-11-06): supervisor 가 approval-gate.py 출력을 utf-8 로 읽음 · 일치 후 판독 실패는 차단 (-X utf8 아닌 실행에서 위험 명령이 통과하던 결함). 상세 §39.
 - V1.1 회귀 기록 (2026-11-06): fresh clone e44422a 결과·보존 상태 §39.
+- V1.1 실검증 (2026-11-06): C 실제 체인 1회로 B 통합 · Agent 1 + Judge 1 · $0.73 · VERIFIED · 임시 DB 에만 한도 설정 (운영 한도 NULL 유지). Judge 에 자동 회귀 결과 전달 · Codex·Gemini 자동 위임 지시서에 사실 표기·완료 증명 7항목 · Gemini 검증은 실행 증거 없으면 PASS 아님. 상세 §40.

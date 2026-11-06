@@ -984,8 +984,28 @@ def test_repair_chain_end_to_end_free(tmp_path):
     assert hard["regression"]["selected"] == ["demo/test_regress.py"] and hard["regression"]["results"][0]["retried"]
     assert ext["failed_stage"] == "judge_verdict" and ext["final"]["external_scope"] == "not_checked"
     assert good["ok"] and good["final"]["status"] == "VERIFIED" and good["judge_prompt_shows_label_copy"]
+    assert good["judge_prompt_shows_regression"]     # 2026-11-06 실검증: 실행한 회귀 결과를 Judge 가 증거로 받는다
     assert good["final"]["judge_source"]["kind"] == "agent_unattested"          # mock Judge 는 실제 Judge 로 안 셈
     assert "kg * 3" in good["apply_target_file"] and "kg * 2" in repo["main_branch_file"] and repo["main_source_unchanged"]
+
+
+def test_auto_dispatch_task_instruction_carries_evidence_rule():
+    """2026-11-06 원칙 전파: Codex·Gemini 자동 위임 지시서에 수정 Agent·Judge 와 같은 사실 표기 정본과 완료 증명 7항목."""
+    sys.path.insert(0, str(SCRIPTS / "lib"))
+    import independent_verifier as iv
+    spec = importlib.util.spec_from_file_location("auto_dispatch_p20", SCRIPTS / "auto-dispatch.py")
+    ad = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ad)
+    text = ad.make_task_instruction("demo", "codex", "impl", "test")
+    assert iv.FACT_TAG_RULE in text and "[미확인] 사실 표기 규칙을 읽지 못함" not in text
+    assert all(f"{n}. " in text for n in range(1, 8)) and "Mock" in text and "PASS / PARTIAL / BLOCKED / FAIL" in text
+
+
+def test_gemini_verify_requires_execution_evidence():
+    """2026-11-06 원칙 전파: Gemini 검증이 코드 읽기만으로 PASS 를 주지 않도록 (task 기반 검증 프롬프트)."""
+    text = (SCRIPTS / "gemini-a.bat").read_text(encoding="utf-8")
+    task_branch = text.split("rem --- Task-based verify")[1].split(":VERIFY_GENERAL")[0]
+    assert "Code reading alone is UNVERIFIED, not PASS" in task_branch and ">> \"!TEMPFILE!\"" in task_branch
 
 
 def test_statusline_output_rows_align_and_fit_columns():
