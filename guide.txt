@@ -2451,3 +2451,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 실검증 (2026-11-06): C 실제 체인 1회로 B 통합 · Agent 1 + Judge 1 · $0.73 · VERIFIED · 임시 DB 에만 한도 설정 (운영 한도 NULL 유지). Judge 에 자동 회귀 결과 전달 · Codex·Gemini 자동 위임 지시서에 사실 표기·완료 증명 7항목 · Gemini 검증은 실행 증거 없으면 PASS 아님. 상세 §40.
 - 검증 원칙 미연결 경로 (2026-11-06): Judge 는 관련 회귀 미실행이면 VERIFIED 금지 · Codex 결과는 관련 pytest 실행 + 보고서 판정 대조 (codex-check) · Gemini 는 줄 단위 판정 (FAIL 줄·실행 출력 없는 PASS 거부) · 외부 근거 read 는 본문 인용 필수 · 검색 실패 = failed → BLOCKED. 상세 §41.
 - 운영 안전 (2026-11-06): codex-auto 는 작업이 바꾼 파일만 커밋하고 push 는 승인 대기 (/approve push-<task>) 후 워커가 강제 없이 실행 (lib/worker_git.py) · 자동 체인 Judge 에 외부 패키지 공식 자료 기록 전달 · 디스크 여유 8.42GB < sandbox 하한 10GB (임시 clone 정리 승인 필요). 상세 §42.
+- 실행 경로 안전성 (2026-11-06): Codex 는 codex-a·codex.bat 모두 `--sandbox workspace-write` (sandbox 우회 옵션 금지) · 개인 Google 계정의 Gemini CLI 는 2026-06-18 Antigravity CLI(agy) 이전으로 BLOCKED (전환은 승인 후). 상세 §44.

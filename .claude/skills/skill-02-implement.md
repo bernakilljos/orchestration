@@ -32,8 +32,7 @@ Run in user terminal:
 Direct reference commands:
 
 ```bat
-codex exec --dangerously-bypass-approvals-and-sandbox "task"
-codex exec --full-auto "task"
+codex exec --sandbox workspace-write "task"   # 작업 폴더 안 쓰기만 · sandbox 우회 옵션 금지 (2026-11-06)
 ```
 
 ## Additional Procedure for UI Implementation

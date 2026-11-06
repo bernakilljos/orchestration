@@ -82,7 +82,8 @@ if "%MODE%"=="analyze" (
     echo - Follow all rules in CLAUDE.md.
     echo - Proceed automatically without asking for confirmation.
   ) > "!ANALYZE_TASK!"
-  codex exec --dangerously-bypass-approvals-and-sandbox "Read !ANALYZE_TASK! and execute every step in order."
+  rem 2026-11-06: sandbox 우회 금지 - 작업 폴더 안 쓰기만 허용 (네트워크·폴더 밖 쓰기 차단)
+  codex exec --sandbox workspace-write "Read !ANALYZE_TASK! and execute every step in order."
   goto END
 )
 
@@ -124,10 +125,11 @@ if not exist "%ROOT%\.claude\tasks\done" mkdir "%ROOT%\.claude\tasks\done"
 :RUN_CODEX
 if "%MODE%"=="full-auto" (
   echo [Codex-A] Full-auto mode...
-  codex exec --full-auto "!CODEX_PROMPT!"
+  codex exec --sandbox workspace-write "!CODEX_PROMPT!"
 ) else (
   echo [Codex-A] Auto mode...
-  codex exec --dangerously-bypass-approvals-and-sandbox "!CODEX_PROMPT!"
+  rem 2026-11-06: 종전 sandbox·승인 우회 옵션 대신 workspace-write (codex-auto 워커도 이 경로)
+  codex exec --sandbox workspace-write "!CODEX_PROMPT!"
 )
 
 set EXIT_CODE=%errorlevel%

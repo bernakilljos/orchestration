@@ -9,6 +9,7 @@
 import importlib.util
 import json
 import os
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -779,6 +780,49 @@ def test_worker_push_refuses_when_remote_moved_or_no_snapshot(tmp_path, monkeypa
     assert not [x for x in bat if "git" in x and " push" in x and "findstr" not in x and "worker_git" not in x
                 and not x.strip().startswith("rem")]
     assert sum("worker_git.py" in x for x in bat) == 3
+
+
+def test_codex_a_runs_codex_in_workspace_sandbox_not_bypass(tmp_path):
+    """2026-11-06: codex-a.bat (codex-auto 워커 경로) 가 sandbox·승인 우회 옵션 대신 `--sandbox workspace-write` 로 실행.
+    진짜 codex 대신 인자만 기록하는 가짜 codex.cmd 를 PATH 앞에 두고 배치를 실제 실행 (모델 호출 0)."""
+    if os.name != "nt":
+        import pytest
+        pytest.skip("Windows batch")
+    shim, root, log = tmp_path / "shim", tmp_path / "proj", tmp_path / "codex-args.log"
+    shim.mkdir()
+    (shim / "codex.cmd").write_text('@echo off\r\necho %*>> "%CODEX_SHIM_LOG%"\r\nexit /b 0\r\n', encoding="utf-8")
+    (root / ".claude" / "tasks").mkdir(parents=True)
+    (root / ".claude" / "tasks" / "task-instruction.md").write_text("# demo task\nfix demo\n", encoding="utf-8")
+    env = {**os.environ, "PATH": f"{shim};{os.environ['PATH']}", "PROJECT_ROOT": str(root),
+           "CODEX_SHIM_LOG": str(log)}
+    bat = str(SCRIPTS / ("codex-a" + ".bat"))
+    # 종료 코드는 판정하지 않음: codex(.cmd) 를 call 없이 부르면 배치가 거기서 끝나는 기존 동작 (HEAD 원본도 동일 · §44)
+    for mode in ("--auto", "--full-auto", "--analyze"):
+        subprocess.run(["cmd", "/c", bat, mode], cwd=str(root), env=env, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=120)
+    calls = log.read_text(encoding="utf-8", errors="replace").splitlines()
+    assert len(calls) == 3 and all(c.startswith("exec --sandbox workspace-write ") for c in calls)
+    bypass = "dangerously-bypass-approvals" + "-and-sandbox"
+    assert not any(bypass in c or "--full-auto" in c for c in calls)
+    # codex.bat (사람이 쓰는 대화형 진입점): 설치 Codex 에 없는 옵션으로 즉시 실패하던 것 → sandbox + 필요 시 승인 요청
+    log2 = tmp_path / "codex-bat-args.log"
+    env2 = {**env, "CODEX_SHIM_LOG": str(log2)}
+    # --auto·--analyze 는 머리글 뒤 바로 끝나는 기존 동작 (HEAD 원본도 동일 · §44) → Codex 까지 가는 대화형만 판정
+    subprocess.run(["cmd", "/c", str(SCRIPTS / ("codex" + ".bat"))], cwd=str(root), env=env2,
+                   capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, input="")
+    calls2 = log2.read_text(encoding="utf-8", errors="replace").splitlines()
+    assert calls2 == ["--sandbox workspace-write --ask-for-approval on-request"]
+    bat_text = (SCRIPTS / ("codex" + ".bat")).read_text(encoding="utf-8")
+    assert bat_text.count("codex --sandbox workspace-write --ask-for-approval on-request") == 4
+    assert not any("dangerously" in c or "--approval-mode" in c for c in calls2)
+    docs = list((SCRIPTS.parents[1] / "plugins").glob("*/agents/agent-02-implementer.md"))
+    assert docs and not [d for d in docs if bypass in d.read_text(encoding="utf-8")]
+    if shutil.which("codex"):                       # 설치 버전이 옵션을 실제로 받는지 (도움말 파싱 · 모델 호출 없음)
+        ok = subprocess.run(["codex", "exec", "-s", "workspace-write", "--help"], capture_output=True, text=True,
+                            timeout=60, shell=True)
+        bad = subprocess.run(["codex", "exec", "-s", "no-such-mode", "--help"], capture_output=True, text=True,
+                             timeout=60, shell=True)
+        assert ok.returncode == 0 and bad.returncode != 0
 
 
 def _fake_runner(codes):

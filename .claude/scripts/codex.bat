@@ -42,7 +42,7 @@ rem ─── Interactive mode ────────────────�
 if "%MODE%"=="interactive" (
   echo [Codex] Interactive session...
   echo [NOTE]  Codex may ask to modify files - review carefully
-  codex --dangerously-skip-permissions
+  codex --sandbox workspace-write --ask-for-approval on-request
   goto END
 )
 
@@ -84,7 +84,7 @@ if "%MODE%"=="analyze" (
     echo - Follow all rules in CLAUDE.md.
   ) > "%ANALYZE_TASK%"
 
-  codex --dangerously-skip-permissions "Read %ANALYZE_TASK% and execute every step in order."
+  codex --sandbox workspace-write --ask-for-approval on-request "Read %ANALYZE_TASK% and execute every step in order."
   goto END
 )
 
@@ -130,10 +130,10 @@ set PROMPT=Read the task instruction at %TASK_FILE% and implement everything des
 
 if "%MODE%"=="full-auto" (
   echo [Codex] Full-auto mode starting...
-  codex --dangerously-skip-permissions --approval-mode full-auto "%PROMPT%"
+  codex --sandbox workspace-write --ask-for-approval on-request "%PROMPT%"
 ) else (
   echo [Codex] Auto mode starting...
-  codex --dangerously-skip-permissions "%PROMPT%"
+  codex --sandbox workspace-write --ask-for-approval on-request "%PROMPT%"
 )
 
 echo.

@@ -758,3 +758,26 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | Judge 최신 증거 | 수정은 고정 편집(가짜) · Judge 만 실제 `claude -p opus-5-5` 1회 · 외부 패키지 공식 자료 기록 + 자동 회귀 포함 · 일일 한도는 임시 DB 에만 | Judge 1회 | 호출당 $2 (정책 기본) · 예상 약 $0.36 (과거 15회 평균 0.34·최대 0.36) | judge_source llm_agent · Judge 가 회귀 실행 결과를 근거로 인정 ([미확인] 아님) · 외부 자료 인용과 diff 사용 관련성 언급 · 최종 판정이 근거와 일치 |
 | Push | 일반 push 6커밋 | — | — | push 직전 원격 b2324c9 재확인 · 강제 없음 |
 | E Statusline | 사용자 VS Code 캡처 | — | — | 캡처에서 왼쪽 │ 정렬·빈 줄·폭 확인 (FROZEN 디자인 · 문자열 시험 유지) |
+
+## 44. 실행 경로 안전성 — Codex sandbox · Gemini 지원 상태 (2026-11-06 · 기준 94913ee · 유료 0 · Codex·Gemini 실제 호출 0)
+
+**Codex 실행 경로 [확인]**
+- 실제 Codex 호출 지점: `codex-a.bat` 3곳 (analyze · full-auto · auto) — `codex-auto`·`codex-auto-global` 워커 모두 `call codex-a --auto` 경유 · 종전 auto·analyze = sandbox·승인 우회 옵션 (운영 폴더에서 sandbox 없이 실행).
+- 설치 버전 확인 (도움말 파싱 · 모델 호출 0): Codex 0.130.0 `-s workspace-write` 수용 · 잘못된 값은 오류 (`read-only | workspace-write | danger-full-access`) · `-a on-request|never` 수용 · Windows sandbox(restricted token) 하위 명령 존재 · 이 PC 는 sandbox 최초 설정 완료 상태 (`CodexSandboxOffline/Online` 계정 · 오늘 사용 기록).
+- 수정: `codex-a.bat` 3곳 → `codex exec --sandbox workspace-write` (작업 폴더 안 쓰기만 · 네트워크·폴더 밖 쓰기 차단) · 문서상 미지원인 `--full-auto` 제거.
+- 같은 유형: `codex.bat` (사람용 대화형 진입점) 은 설치 Codex 에 없는 `--dangerously-skip-permissions`·`--approval-mode` 로 **모든 실행이 즉시 실패**하던 상태 → `--sandbox workspace-write --ask-for-approval on-request` · 플러그인 implementer 에이전트 문서 9개(내용 동일)와 레거시 `skill-02-implement.md` 의 우회 옵션 안내 → workspace-write 로 · 남은 우회 옵션 0.
+- 시험 (Mock: 인자만 기록하는 가짜 codex.cmd 를 PATH 앞에 두고 배치 실제 실행): codex-a 3모드 모두 `exec --sandbox workspace-write` · codex.bat 대화형 `--sandbox workspace-write --ask-for-approval on-request` · 우회 옵션 0 · 설치 Codex 옵션 수용 확인 · HEAD 원본에서는 FAIL.
+- 실제 sandbox 차단 동작 (폴더 밖 쓰기·네트워크) 은 **[미확인]** — `codex sandbox windows` 단독 시험은 Codex 전역 설정에 권한 표 추가가 필요해 중단 (전역 설정 변경 금지) · 실제 `codex exec` 1회로만 확인 가능 (승인 필요).
+- 기존 동작 발견 (수정 안 함 · HEAD 원본도 동일 재현): ① `codex-a.bat` 은 `codex`(Volta `codex.CMD`) 를 `call` 없이 실행 → Codex 가 끝나면 배치도 끝나 그 뒤 완료 처리·재시도·UTF-8 변환이 실행되지 않음 (`call` 을 붙이면 지금까지 안 돌던 "전체 .js·.vue 인코딩 재저장" 이 처음 돌게 되어 정상 흐름이 바뀌므로 보류) ② `codex.bat --auto/--analyze` 는 머리글 뒤 바로 끝남 (모드 값에 공백이 붙는 기존 문제 [추정]).
+- 남은 위험: workspace-write 도 작업 폴더(운영 저장소) 안에서는 자유롭게 쓴다 → 작업 전 사용자 미커밋 파일 보호는 커밋 단계(worker_git)까지만 · 완전 격리는 worktree 실행이 필요 (미구축).
+
+**Gemini 지원 상태 [확인 · 실행 0 · 재로그인 0]**
+- 활성 계정 도메인 = gmail.com (개인 계정 · 토큰 미열람) · CLI 0.39.1 · 인증 oauth-personal.
+- 공식 (github.com/google-gemini/gemini-cli README · 2026-11-06 본문): "Free individual access and Google AI Pro / Ultra (Google One) moved to Antigravity CLI on June 18, 2026" · Gemini CLI 는 "Gemini Code Assist Standard / Enterprise … (plus legacy paid API / Vertex keys)".
+- 판정: 현재 계정으로 Gemini CLI 경로 = **BLOCKED (서비스 지원 종료)** · 코드 결함 아님 · kit 의 review_verdict·프롬프트 연결은 Mock 시험 통과 상태 그대로.
+- Antigravity CLI 비교 (antigravity.google/docs · 2026-11-06): 실행 파일 `agy` (미설치) · `agy -p "prompt"` 비대화형 · 자동 승인 `--yolo` 없음 → `--mode=auto` (terminal sandbox 필요 · Windows v1.4.4+ · business/enterprise 계정 불가 · headless 에서 불가하면 default 로 계속) · 표준입력 파이프 문서 [미확인] · 설정 `~/.gemini/antigravity-cli/settings.json` · GEMINI.md·AGENTS.md·`~/.gemini/GEMINI.md` 는 계속 읽음.
+- kit 영향 범위: Gemini CLI 실제 호출 = `gemini.bat` 4 · `gemini-a.bat` 4 (3곳 표준입력 파이프) · `design.bat` 4 · 워커 토큰 확인 2 (`gemini-auto`·`gemini-auto-global`) · 설치 `setup/modules/06-prereqs.bat` · 점검 `init.bat`·`init.sh` · 전환하려면 설치(원격 스크립트 실행 = 승인 게이트 대상)·인증·호출 12곳+ 옵션 변경 필요 → **사용자 승인 전 전환 안 함**.
+
+**Judge 최신 증거**: 회귀 실행 결과·외부 공식 자료 기록이 Judge 입력에 들어가는 것은 무료 종단 시험으로 유지 확인 · 실제 Judge 가 그 증거를 올바르게 쓰는지만 실제 호출 1회 필요 (예상 ~$0.36 · 상한 $2 · 승인 대기).
+
+**회귀 (운영 폴더 · pytest 만 · 운영 디스크 하한 그대로 · 여유 18.23GB)** [확인]: 191 passed · failed 0 (phase12 sandbox 3건 디스크 회복으로 통과) · 33 수집 오류 기존 그대로 · golden 13/13 · 새 Mock 시험 1 (HEAD 원본 FAIL → 수정 후 PASS).

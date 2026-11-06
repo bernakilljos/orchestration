@@ -23,8 +23,7 @@ Claude 가 task-instruction.md 작성 → **orchestrator 가 자동 dispatch** (
 Commands (orchestrator 내부 사용 · 사용자 직접 호출 X):
 
 ```
-codex exec --dangerously-bypass-approvals-and-sandbox "[prompt]"
-codex exec --full-auto "[prompt]"
+codex exec --sandbox workspace-write "[prompt]"   # 작업 폴더 안 쓰기만 · 네트워크·폴더 밖 쓰기 차단 · sandbox 우회 옵션 금지 (2026-11-06)
 ```
 
 근거: `docs/ORCHESTRATION_AUDIT_2026-10-16.md` 결함 #3 · `.claude/rules/execution-contract.md § 4`
