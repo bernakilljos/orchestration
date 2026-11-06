@@ -732,3 +732,9 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 |---|---|
 | 운영 디스크 하한 그대로 | verify-fresh-clone 위반 0 · phase3 26/26 · phase12 스크립트 통과 · golden 13/13 · pytest 187 passed · **BLOCKED (디스크 8.37GB < 10GB)**: pytest phase12 sandbox 3건 · phase2 (sandbox 0) · phase5 sandbox 생성 · 33 수집 오류 기존 그대로 |
 | 하한만 낮춘 로직 확인 (운영 통과로 세지 않음) | phase12 pytest 16/16 · phase2 21/21 · phase5 39/39 |
+
+**임시 clone 정리 (사용자 승인 · 2026-11-06)** [확인]
+- 사전 점검: 4개 모두 scratchpad 바로 아래 · origin = 운영 저장소 · 사용 프로세스 0 (자기 검사 프로세스 제외) · 열린 핸들 없음 (이름 바꿨다 되돌리기 성공) · 운영 저장소 worktree·alternates 연결 없음.
+- 삭제: fresh_ed60f24 · fresh2_ed60f24 · fresh3_e44422a · fresh5_39b0574 만 (경로·origin 재확인 후 삭제하는 스크립트) · 시험 로그 폴더와 fresh6_clone 은 유지.
+- 결과: 디스크 여유 8.36GB → 18.23GB (+9.87GB · 계산 9.77GB) · 운영 저장소 `git fsck --connectivity-only` 오류 0 · worktree 26 그대로 · HEAD 79b8338 · 로컬 커밋 5 보존.
+- 게이트: 하한 `min_free_gb` 10 그대로 (환경 변수 덮어쓰기 없음) · 메모리 게이트 정상 · 디스크로 막혔던 phase12 pytest 운영 하한 그대로 16/16 통과 → 운영 sandbox 생성 가능 상태 복구.
