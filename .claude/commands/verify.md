@@ -48,7 +48,7 @@ python .claude/scripts/lib/independent_verifier.py affected-tests
 python .claude/scripts/lib/independent_verifier.py same-pattern
 # 외부 의존 확인 → not_checked 면 공식 자료를 직접 찾아 본문 대조 후 기록 (execution-contract.md § 5)
 python .claude/scripts/lib/independent_verifier.py external-deps
-python .claude/scripts/lib/independent_verifier.py external-evidence <패키지> <url> <버전> read
+python .claude/scripts/lib/independent_verifier.py external-evidence <패키지> <url> <버전> read "<본문 인용 20자+>"   # 검색·접속 실패면 failed "<사유>" (BLOCKED)
 # Python
 pytest --tb=short -q <관련 test 파일>
 # Node

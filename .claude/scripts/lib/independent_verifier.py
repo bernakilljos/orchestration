@@ -113,11 +113,17 @@ def external_dependencies(cwd: Path) -> List[str]:
 
 
 def record_external_evidence(package: str, url: str, version: str, level: str, note: str = "") -> Dict[str, Any]:
-    """공식 자료 대조 기록. level: read = 본문 확인 · found = 검색 결과만 (대조로 인정 X).
-    패키지명·공개 URL·버전만 저장 — 코드·내부 데이터 금지."""
-    if level not in ("read", "found") or not url.startswith("https://"):
-        return {"ok": False, "reason": "level 은 read|found · url 은 https"}
-    row = {"package": package, "url": url, "version": version, "level": level, "note": note[:200],
+    """공식 자료 대조 기록. level: read = 본문 확인 · found = 검색 결과만 (대조로 인정 X) ·
+    failed = 검색·접속 실패 (대조로 인정 X · 미확인과 구분해 BLOCKED 로 보고).
+    read 는 note 에 본문 인용(20자+), failed 는 note 에 실패 사유 필수 (2026-11-06 · 제목만 보고 확인 처리 방지).
+    패키지명·공개 URL·버전·공개 문서 인용만 저장 — 코드·내부 데이터 금지."""
+    if level not in ("read", "found", "failed") or not url.startswith("https://"):
+        return {"ok": False, "reason": "level 은 read|found|failed · url 은 https"}
+    if level == "read" and len(note.strip()) < 20:
+        return {"ok": False, "reason": "read 는 본문 인용(20자 이상)을 note 로 남겨야 함"}
+    if level == "failed" and not note.strip():
+        return {"ok": False, "reason": "failed 는 실패 사유를 note 로 남겨야 함"}
+    row = {"package": package, "url": url, "version": version, "level": level, "note": note[:300],
            "checked_at": __import__("time").strftime("%Y-%m-%d")}
     EXTERNAL_EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
     with EXTERNAL_EVIDENCE.open("a", encoding="utf-8") as f:
@@ -126,10 +132,11 @@ def record_external_evidence(package: str, url: str, version: str, level: str, n
 
 
 def external_scope(packages: List[str]) -> Dict[str, Any]:
-    """외부 근거 축 — none_needed | checked | not_checked. 본문 확인(read) 기록이 있는 패키지만 확인으로 센다."""
+    """외부 근거 축 — none_needed | checked | not_checked | blocked. 본문 확인(read) 기록이 있는 패키지만 확인으로 센다.
+    확인 못 한 패키지 중 검색·접속 실패(failed) 기록만 있는 것이 있으면 blocked (외부 사정으로 검증 불가 · PASS 아님)."""
     if not packages:
-        return {"scope": "none_needed", "unchecked": []}
-    read = set()
+        return {"scope": "none_needed", "unchecked": [], "blocked": []}
+    read, failed = set(), set()
     if EXTERNAL_EVIDENCE.exists():
         for line in EXTERNAL_EVIDENCE.read_text(encoding="utf-8").splitlines():
             try:
@@ -138,8 +145,12 @@ def external_scope(packages: List[str]) -> Dict[str, Any]:
                 continue
             if row.get("level") == "read":
                 read.add(row.get("package"))
+            elif row.get("level") == "failed":
+                failed.add(row.get("package"))
     unchecked = [p for p in packages if p not in read]
-    return {"scope": "not_checked" if unchecked else "checked", "unchecked": unchecked}
+    blocked = [p for p in unchecked if p in failed]
+    scope = "blocked" if blocked else ("not_checked" if unchecked else "checked")
+    return {"scope": scope, "unchecked": unchecked, "blocked": blocked}
 
 
 def _verified_output(task_ids: List[str]) -> str:
@@ -467,6 +478,7 @@ def judge_handoff(goal_id: int,
         },
         "judge_prompt": judge_prompt,
         "external_dependencies": evidence.get("external_dependencies") or [],
+        "affected_tests_not_run": evidence.get("affected_tests_not_run") or [],
         "requires_llm_judge": requires_llm,
         "status": "pending_llm_judge" if requires_llm else "stat_verdict_blocking",
     }
@@ -661,6 +673,12 @@ def judge_absorb(goal_id: int, judge_result_json: str,
     if ext["unchecked"] and final["status"] == "VERIFIED":
         final = {**final, "status": "UNVERIFIED",
                  "reasons": final["reasons"] + [f"external source not checked: {ext['unchecked']}"]}
+    # 2026-11-06: 변경을 참조하는 회귀 시험이 실행 기록(verified)에 없으면 실행 증거 누락 → VERIFIED 금지
+    not_run = data.get("affected_tests_not_run") or []
+    final["regression_scope"] = "not_run" if not_run else "run_or_none"
+    if not_run and final["status"] == "VERIFIED":
+        final = {**final, "status": "UNVERIFIED",
+                 "reasons": final["reasons"] + [f"affected regression tests not run: {not_run[:10]}"]}
     # 검증 범위 표시: 요구사항별로 확인했는지, 요구사항 없이 diff·테스트로만 판정했는지
     final["requirements_scope"] = "checked" if required_ids else "not_configured"
     # Mock·수동 판정과 실제 LLM Judge 를 분리 기록 (판정 결과는 바꾸지 않음 · 감사 시 구분용)
@@ -672,6 +690,69 @@ def judge_absorb(goal_id: int, judge_result_json: str,
                             encoding="utf-8")
     return {"ok": True, "goal_id": goal_id, "final_verdict": final,
             "stat_verdict": stat, "llm_verdict": llm_verdict}
+
+
+_REVIEW_LINE = re.compile(r"^\s*\[?(PASS|FAIL|WARN|BLOCK)\]?[\s:\-]+(.*)$", re.I | re.M)
+_EXEC_EVIDENCE = re.compile(r"\bexit(?:\s*code)?\s*[:=]?\s*\d+|\b\d+\s+passed\b|\breturncode\s*[:=]?\s*\d+", re.I)
+
+
+def review_verdict(text: str) -> Dict[str, Any]:
+    """Gemini 등 외부 검증 보고서 판정 (2026-11-06). 'PASS' 글자 존재가 아니라 줄 단위:
+    FAIL·BLOCK 줄 1개라도 → FAIL · PASS 줄 0개 → UNVERIFIED · 실행 출력(exit N · N passed) 없는 PASS 줄 → UNVERIFIED."""
+    rows = [(m.group(1).upper(), m.group(2)) for m in _REVIEW_LINE.finditer(text or "")]
+    fails = [r for r in rows if r[0] in ("FAIL", "BLOCK")]
+    passes = [r for r in rows if r[0] == "PASS"]
+    if fails:
+        return {"ok": False, "status": "FAIL", "reason": f"{len(fails)} FAIL/BLOCK line(s)"}
+    if not passes:
+        return {"ok": False, "status": "UNVERIFIED", "reason": "no PASS line"}
+    no_exec = [r[1][:80] for r in passes if not _EXEC_EVIDENCE.search(r[1]) or re.search(r"\bUNVERIFIED\b", r[1])]
+    if no_exec:
+        return {"ok": False, "status": "UNVERIFIED",
+                "reason": f"{len(no_exec)}/{len(passes)} PASS line(s) without execution output", "lines": no_exec[:5]}
+    return {"ok": True, "status": "VERIFIED", "passes": len(passes)}
+
+
+_FINAL_CLAIM = re.compile(r"(?:최종\s*판정|final\s*verdict)[^\n]*?\b(PASS|PARTIAL|BLOCKED|FAIL)\b", re.I)
+
+
+def codex_check(cwd: Path, report: Optional[Path] = None, timeout: int = 300) -> Dict[str, Any]:
+    """Codex 등 외부 구현 결과 대조 (2026-11-06): 변경을 참조하는 pytest 시험을 실제 실행 + 보고서 최종 판정과 비교.
+    스크립트형(`__main__`) 시험은 운영 상태에 쓸 수 있어 자동 실행하지 않고 미실행으로 남긴다.
+    FAIL = 회귀 실패 또는 보고서가 FAIL · PARTIAL = 보고서 없음·판정 없음·PASS 주장인데 실행 증거/미실행 시험 · PASS = 그 외."""
+    cwd = Path(cwd)
+    changed = changed_paths(cwd)
+    tests = [t for t in affected_tests(cwd, changed) if t.endswith(".py") and (cwd / t).is_file()]
+    results, not_run = [], []
+    for t in tests:
+        if "__main__" in (cwd / t).read_text(encoding="utf-8", errors="replace"):
+            not_run.append(t)
+            continue
+        try:
+            r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", t], cwd=str(cwd),
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+            results.append({"test": t, "exit_code": r.returncode, "tail": (r.stdout or "")[-200:]})
+        except subprocess.TimeoutExpired:
+            results.append({"test": t, "exit_code": None, "tail": f"timeout {timeout}s"})
+    failed = [x["test"] for x in results if x["exit_code"] != 0]
+    text = report.read_text(encoding="utf-8", errors="replace") if report and Path(report).is_file() else ""
+    m = _FINAL_CLAIM.search(text)
+    claimed = m.group(1).upper() if m else None
+    out = {"changed": changed, "tests": results, "not_run": not_run, "report": str(report) if report else None,
+           "claimed": claimed}
+    if failed:
+        return {**out, "status": "FAIL", "reason": f"regression failed: {failed}"}
+    if claimed == "FAIL":
+        return {**out, "status": "FAIL", "reason": "report final verdict FAIL"}
+    if not text:
+        return {**out, "status": "PARTIAL", "reason": "implementation report missing"}
+    if claimed is None:
+        return {**out, "status": "PARTIAL", "reason": "report has no final verdict (PASS/PARTIAL/BLOCKED/FAIL)"}
+    if claimed == "PASS" and not_run:
+        return {**out, "status": "PARTIAL", "reason": f"report claims PASS but related tests not run: {not_run}"}
+    if claimed == "PASS" and not _EXEC_EVIDENCE.search(text):
+        return {**out, "status": "PARTIAL", "reason": "report claims PASS without execution output (exit N / N passed)"}
+    return {**out, "status": claimed, "reason": "regression ok · report verdict consistent"}
 
 
 def _cli_main(argv):
@@ -693,9 +774,21 @@ def _cli_main(argv):
         deps = external_dependencies(ROOT)
         print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))
         return 0
+    if argv[1] == "review-verdict":      # gemini-auto.bat: exit 0 = VERIFIED 만
+        if len(argv) < 3:
+            print("usage: review-verdict <report file>")
+            return 2
+        p = Path(argv[2])
+        r = review_verdict(p.read_text(encoding="utf-8", errors="replace") if p.is_file() else "")
+        print(json.dumps(r, ensure_ascii=False))
+        return 0 if r["ok"] else 1
+    if argv[1] == "codex-check":         # codex-auto.bat: exit 2 = FAIL (완료 처리 안 함) · 1 = PARTIAL/BLOCKED · 0 = PASS
+        r = codex_check(ROOT, Path(argv[2]) if len(argv) > 2 else None)
+        print(json.dumps(r, ensure_ascii=False))
+        return 2 if r["status"] == "FAIL" else (0 if r["status"] == "PASS" else 1)
     if argv[1] == "external-evidence":
         if len(argv) < 6:
-            print("usage: external-evidence <package> <https url> <version> <read|found> [note]")
+            print("usage: external-evidence <package> <https url> <version> <read|found|failed> <본문 인용|실패 사유>")
             return 2
         r = record_external_evidence(argv[2], argv[3], argv[4], argv[5], argv[6] if len(argv) > 6 else "")
         print(json.dumps(r, ensure_ascii=False))

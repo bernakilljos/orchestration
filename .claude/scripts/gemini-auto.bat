@@ -295,8 +295,9 @@ if not errorlevel 1 (
 )
 
 rem Check result: gemini-a writes exit code or result to review-result.txt
+rem 2026-11-06: 'PASS' 글자 존재가 아니라 줄 단위 판정 - FAIL/BLOCK 줄 또는 실행 출력 없는 PASS 줄이면 통과 아님
 if exist "%PROJECT_ROOT%\docs\review-result.txt" (
-  findstr /i /c:"PASS" /c:"OK" /c:"passed" "%PROJECT_ROOT%\docs\review-result.txt" >nul 2>&1
+  python "%PROJECT_ROOT%\.claude\scripts\lib\independent_verifier.py" review-verdict "%PROJECT_ROOT%\docs\review-result.txt"
   if not errorlevel 1 (
     set "VERIFY_OK=true"
     goto VERIFY_DONE

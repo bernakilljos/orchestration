@@ -265,6 +265,19 @@ if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
   echo [Worker-%CHILD_ID%] [VERIFY OK] All checks passed
 )
 
+rem --- 2026-11-06 결과 대조: 관련 pytest 실제 실행 + implementation-report 최종 판정 (independent_verifier codex-check) ---
+rem     FAIL = 회귀 실패/보고 FAIL -> 완료 처리 안 함 - PARTIAL = 근거 부족 (기록만) - 결과 .claude\state\codex-check\<task>.json
+if not exist "%PROJECT_ROOT%\.claude\state\codex-check" mkdir "%PROJECT_ROOT%\.claude\state\codex-check" 2>nul
+python "%PROJECT_ROOT%\.claude\scripts\lib\independent_verifier.py" codex-check "%PROJECT_ROOT%\docs\implementation-report.md" > "%PROJECT_ROOT%\.claude\state\codex-check\%TASK_ID%.json" 2>&1
+set "CHECK_EXIT=!errorlevel!"
+if !CHECK_EXIT! EQU 2 (
+  echo [Worker-%CHILD_ID%] [CHECK FAIL] regression or report FAIL - task NOT marked as done
+  python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
+  for %%F in ("%PICKED_TASK%") do del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
+  goto LOOP
+)
+if !CHECK_EXIT! NEQ 0 echo [Worker-%CHILD_ID%] [CHECK PARTIAL] evidence incomplete - see .claude\state\codex-check\%TASK_ID%.json
+
 rem --- 지시서가 삭제/손상됐으면 백업에서 복원 ---
 for %%F in ("%PICKED_TASK%") do (
   if not exist "%%F" (

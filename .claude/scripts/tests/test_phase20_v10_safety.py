@@ -591,9 +591,11 @@ def test_external_scope_requires_read_level(tmp_path, monkeypatch):
     assert iv.external_scope(["requests"])["scope"] == "not_checked"
     assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "found")["ok"]
     assert iv.external_scope(["requests"])["scope"] == "not_checked"  # 검색 결과만 = 미확인
-    assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read")["ok"]
+    assert not iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read")["ok"]  # 본문 인용 없음
+    assert iv.external_scope(["requests"])["scope"] == "not_checked"
+    assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read", "Requests is an elegant and simple HTTP library for Python")["ok"]
     assert iv.external_scope(["requests"])["scope"] == "checked"
-    assert not iv.record_external_evidence("x", "http://a", "1", "read")["ok"]
+    assert not iv.record_external_evidence("x", "http://a", "1", "read", "Requests is an elegant and simple HTTP library for Python")["ok"]
 
 
 def test_judge_blocks_verified_when_external_unchecked(tmp_path, monkeypatch):
@@ -609,9 +611,97 @@ def test_judge_blocks_verified_when_external_unchecked(tmp_path, monkeypatch):
         return iv.judge_absorb(1, json.dumps(ok))["final_verdict"]
     fv = absorb()
     assert fv["status"] == "UNVERIFIED" and fv["external_scope"] == "not_checked"   # 테스트 통과여도 외부 축 미확인
-    iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read")
+    iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "read", "Requests is an elegant and simple HTTP library for Python")
     fv = absorb()
     assert fv["status"] == "VERIFIED" and fv["external_scope"] == "checked"
+
+
+def test_external_search_failure_is_blocked_not_pass(tmp_path, monkeypatch):
+    """2026-11-06: 검색·접속 실패는 failed 로 기록 → 외부 근거 blocked · VERIFIED 금지 (사유 없는 기록은 거부)."""
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    monkeypatch.setattr(iv, "EXTERNAL_EVIDENCE", tmp_path / "e.jsonl")
+    assert not iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "failed")["ok"]
+    assert iv.record_external_evidence("requests", "https://docs.example/x", "2.0", "failed", "HTTP 503")["ok"]
+    sc = iv.external_scope(["requests"])
+    assert sc["scope"] == "blocked" and sc["blocked"] == ["requests"]
+    (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []},
+                                                      "external_dependencies": ["requests"]}), encoding="utf-8")
+    ok = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+          "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED"}
+    fv = iv.judge_absorb(1, json.dumps(ok))["final_verdict"]
+    assert fv["status"] == "UNVERIFIED" and fv["external_scope"] == "blocked"
+    rows = [json.loads(x) for x in (tmp_path / "e.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert all(r["checked_at"] and r["url"].startswith("https://") and r["version"] for r in rows)
+
+
+def test_judge_blocks_verified_when_affected_tests_not_run(tmp_path, monkeypatch):
+    """2026-11-06: 변경을 참조하는 회귀 시험이 실행 기록에 없으면 (실행 증거 누락) Judge 가 VERIFIED 라 해도 UNVERIFIED."""
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    ok = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+          "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED"}
+
+    def absorb(not_run):
+        (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []},
+                                                          "affected_tests_not_run": not_run}), encoding="utf-8")
+        return iv.judge_absorb(1, json.dumps(ok))["final_verdict"]
+    fv = absorb(["demo/test_regress.py"])
+    assert fv["status"] == "UNVERIFIED" and fv["regression_scope"] == "not_run"
+    assert absorb([])["status"] == "VERIFIED"
+
+
+def test_requirement_evidence_must_cite_regression_that_actually_ran(tmp_path):
+    """2026-11-06: Judge 가 회귀 시험을 근거로 들 때 — 실행·통과(verified) 기록에 있는 시험만 인정, 실행 안 된 시험 이름은 불인정."""
+    import independent_verifier as iv
+    (tmp_path / "demo").mkdir()
+    (tmp_path / "demo" / "shipping.py").write_text("RATE = 3\n", encoding="utf-8")
+    anchors = {"root": str(tmp_path), "paths": ["demo/shipping.py"],
+               "verified_output": "python -m pytest -q demo/test_regress.py . 1 passed"}
+    ran = {"requirements": [{"id": "R1", "status": "met", "evidence": "[확인] demo/test_regress.py exit 0"}]}
+    ghost = {"requirements": [{"id": "R1", "status": "met", "evidence": "[확인] demo/test_label.py exit 0"}]}
+    assert iv.check_requirement_verdicts(ran, ["R1"], anchors)["ok"]
+    r = iv.check_requirement_verdicts(ghost, ["R1"], anchors)
+    assert not r["ok"] and r["status"] == "UNVERIFIED" and "unanchored=['R1']" in r["reason"]
+
+
+def test_gemini_review_verdict_requires_execution_output(tmp_path):
+    """2026-11-06: gemini-auto 가 'PASS' 글자만 있으면 통과시키던 findstr 판정 대체 — 줄 단위 · 실행 출력 없는 PASS 거부."""
+    import independent_verifier as iv
+    assert iv.review_verdict("[PASS] R1 - a.py:3 - pytest: 2 passed, exit 0")["status"] == "VERIFIED"
+    assert iv.review_verdict("[PASS] R1 looks correct - a.py:3")["status"] == "UNVERIFIED"         # 코드 읽기만
+    assert iv.review_verdict("[PASS] R1 - pytest 2 passed\n[FAIL] R2 missing - b.py:1")["status"] == "FAIL"
+    assert iv.review_verdict("TOKEN LOOK OK, nothing reviewed")["status"] == "UNVERIFIED"            # 옛 findstr 는 통과
+    assert iv.review_verdict("[PASS] R1 - exit 0 - UNVERIFIED")["status"] == "UNVERIFIED"
+    f = tmp_path / "review-result.txt"
+    f.write_text("[PASS] R1 looks correct - a.py:3\n", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "lib" / "independent_verifier.py"), "review-verdict", str(f)],
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 1                                                   # gemini-auto.bat 는 exit 0 만 통과
+    bat = (SCRIPTS / "gemini-auto.bat").read_text(encoding="utf-8")
+    assert "review-verdict" in bat and 'findstr /i /c:"PASS" /c:"OK"' not in bat
+
+
+def test_codex_check_runs_related_tests_and_compares_report(tmp_path):
+    """2026-11-06: Codex 결과 대조 — 관련 pytest 실제 실행 · 회귀 실패 = FAIL · 보고서 PASS 주장인데 실행 증거 없음 = PARTIAL."""
+    import independent_verifier as iv
+    _git_repo(tmp_path)
+    (tmp_path / "calc.py").write_text("def add(a, b):\n    return a + b\n", encoding="utf-8")
+    (tmp_path / "test_calc.py").write_text("from calc import add\n\ndef test_add():\n    assert add(2, 2) == 4\n",
+                                           encoding="utf-8")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "-A"], capture_output=True)
+    subprocess.run(["git", "-C", str(tmp_path), "commit", "-qm", "base"], capture_output=True)
+    rep = tmp_path / "implementation-report.md"
+    (tmp_path / "calc.py").write_text("def add(a, b):\n    return a - b\n", encoding="utf-8")       # 회귀 깨짐
+    rep.write_text("7. 최종 판정: PASS\n", encoding="utf-8")
+    r = iv.codex_check(tmp_path, rep)
+    assert r["status"] == "FAIL" and r["tests"][0]["test"] == "test_calc.py" and r["tests"][0]["exit_code"] != 0
+    (tmp_path / "calc.py").write_text("def add(a, b):\n    return b + a\n", encoding="utf-8")       # 회귀 통과
+    assert iv.codex_check(tmp_path, rep)["status"] == "PARTIAL"                 # PASS 주장 · 실행 출력 없음
+    assert iv.codex_check(tmp_path, tmp_path / "none.md")["status"] == "PARTIAL"
+    rep.write_text("3. 실행 증거: pytest test_calc.py -> 1 passed, exit 0\n7. 최종 판정: PASS\n", encoding="utf-8")
+    assert iv.codex_check(tmp_path, rep)["status"] == "PASS"
+    assert "codex-check" in (SCRIPTS / "codex-auto.bat").read_text(encoding="utf-8")
 
 
 def _fake_runner(codes):

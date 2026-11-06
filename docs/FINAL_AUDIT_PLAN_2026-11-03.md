@@ -655,3 +655,29 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **외부 근거 [확인 · https://code.claude.com/docs/en/cli-reference · 2026-11-06 본문]**: 사용한 `-p`·`--model`·`--output-format json`·`--setting-sources`·`--permission-mode dontAsk`·`--allowedTools`·`--max-budget-usd` 모두 문서화. 단 `--max-budget-usd` 는 "Spend can pass the cap, so leave headroom" (클라이언트 추정 · 상한 초과 가능) → 총액 상한은 실행 전 예약 게이트가 지킨다. 비용 필드 `total_cost_usd` 는 이 페이지에 없음 [미확인] (실제 출력에는 있음).
 
 **판정**: B PASS — 실제 LLM Judge 가 요구사항별 근거를 판정·출처 `llm_agent` 기록 · 허위 VERIFIED 차단은 이번 실행에서 발생 조건 없음 (무료 시험으로만 확인). C PASS (요구 범위) — 실제 Agent 수정·자동 회귀·같은 유형 수정·Judge·반영 종단 성공 · 남은 한계: 문법이 다른 같은 유형 미탐 (§37) · 공식 문서 자동 검색 없음. E BLOCKED (VS Code 캡처 대기).
+
+## 41. 검증 원칙 미연결 경로 마무리 (2026-11-06 · 기준 76a550b · 유료 $0 · push·삭제·캡처 0)
+
+**지시 범위**: 유료 반복 금지 · 기존 경로에 누락 연결만 · 대규모 탐색 엔진 추가 금지.
+
+| # | 경로 | 실제 상태 (수정 전) [확인] | 이번 연결 | 증거 |
+|---|---|---|---|---|
+| 1 | Judge ← 회귀 실행 증거 | 회귀는 runner 기록(verified=1)으로 근거 대조 자료에 들어감 · 단 **관련 시험이 실행 기록에 없어도 VERIFIED 가능** (`affected_tests_not_run` 은 안내문에만) | handoff 에 `affected_tests_not_run` 저장 · judge_absorb 가 비어 있지 않으면 UNVERIFIED (`regression_scope`) | 시험: 미실행 시 UNVERIFIED · 실행된 회귀 경로는 근거 인정, 실행 안 된 시험 이름은 불인정 (기존 anchor 동작 증명) |
+| 2 | Codex 결과 | `codex-auto.bat` 은 `post-impl-verify.sh` (문법·인코딩) 통과 = 완료 · 시험 실행·보고 대조 없음 | `independent_verifier.codex_check` + `codex-auto.bat` 연결: 변경을 참조하는 pytest 실제 실행 · `docs/implementation-report.md` 최종 판정 대조 · 회귀 실패/보고 FAIL → 완료 처리 안 함 · PASS 주장인데 실행 출력 없음/미실행 시험 → PARTIAL 기록 (`.claude/state/codex-check/<task>.json`) · 스크립트형 시험은 운영 상태에 쓸 수 있어 자동 실행 안 하고 미실행으로 표시 | 시험: 회귀 깨짐 FAIL · 실행 출력 없는 PASS 주장 PARTIAL · 보고 없음 PARTIAL · 근거 갖춘 PASS = PASS |
+| 3 | Gemini 판정 | `gemini-auto.bat` 이 `review-result.txt` 에 `PASS`·`OK`·`passed` 글자가 하나라도 있으면 통과 (`findstr`) — **FAIL 줄이 있어도 통과 · `TOKEN`·`LOOK` 같은 단어로도 통과** (거짓 PASS 경로) | `review_verdict` (줄 단위: FAIL/BLOCK 줄 → FAIL · 실행 출력 `exit N`/`N passed` 없는 PASS → UNVERIFIED) 로 교체 · `gemini-a.bat` 은 PASS 줄에 명령·결과를 같이 쓰도록 | 시험 (Mock 보고서 5종 + CLI 종료 코드) · `gemini-a.bat` 추가 줄 cmd 단독 실행 확인 · **Gemini 실제 호출 안 함** |
+| 4 | 외부 근거 기록 | URL·버전·날짜·read/found 구분은 있음 · `read` 에 본문 실물 없음 | `read` 는 본문 인용 20자+ 필수 (note) | 시험: 인용 없는 read 거부 |
+| 5 | 검색 실패 | 실패를 기록할 수단 없음 (미확인과 구분 불가) | level `failed` (사유 필수) → `external_scope = blocked` · VERIFIED 금지 | 시험: failed → blocked · UNVERIFIED |
+| 6 | 같은 유형 탐색 언어 간 한계 | 글자 그대로 비교 → 문법·언어가 다른 복사본 미탐 | **변경 없음** · 한계 기록 (§37) | — |
+| 7 | phase5 60초 시간 초과 | 아래 | 설정 변경 없음 · 실패 기록 유지 | — |
+
+- 문서 동기: `/verify` (plugins 원본 → sync) 와 `execution-contract.md § 5` 의 external-evidence 사용법을 read 인용·failed 로 갱신.
+- 역검증: 새 시험 4개는 수정 전 코드에서 FAIL → 수정 후 PASS · 기존 anchor 동작 증명 시험 1개는 수정 전에도 PASS (의도).
+- 회귀 (운영 폴더 · pytest 만) [확인]: 188 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13. fresh clone 결과는 아래.
+- 공식 근거 [확인 · 2026-11-06 본문]: Claude Code CLI `--allowedTools` = "Tools that execute without prompting … To restrict which tools are available, use `--tools` instead" (https://code.claude.com/docs/en/cli-reference) — 실검증 Judge 의 "Bash 거부" 는 `--permission-mode dontAsk` + 허용 목록 밖 도구 거부와 일치. Python `subprocess.run` 타임아웃 동작은 오늘 본문을 다시 읽지 않음 — execution-contract § 5 의 기존 기록 ("`subprocess.run` 타임아웃은 자식을 종료") 과 `verify_fix` 코드(`except subprocess.TimeoutExpired` → `exit=None`)로 판단 [기존 기록 · 오늘 미재확인].
+
+**phase5 60초 시간 초과 조사 [확인한 것 / 미확인]**
+- 실패: Test 13 `verify_fix(sb, 'python -X utf8 -c "import fail"')` → `TimeoutExpired` (60초 고정 · 재시도 없음 · `real_repair_chain.verify_fix`/`reproduce_failure` 기본값) · 로그 종료 15:18:48 · 같은 clone 재실행 15:21 → 39/39 · exit 0.
+- 확인: 그 시각 겹친 내 작업 없음 (운영 폴더 전체 pytest 는 그 전에 끝남) · 같은 PC 다른 Claude 세션 1개는 idle · 재실행 시 여유 메모리 6.9GB · 디스크 사용 95% · 시험 sandbox 는 `%TEMP%\orca-repair-sandbox-test\<clone 폴더명>` 공유하지만 시험별 시각 ID 라 충돌 근거 없음 · 증거 파일(`P7-RRC-test-*_evidence.json`)은 남아 있지 않음.
+- **원인 미확인**. 짧은 import 가 60초를 넘긴 이유(백신 검사·디스크 지연 등)는 근거 없이 단정하지 않음 [추정 금지].
+
+**발견 기록 (범위 밖 · 수정 안 함)**: `codex-auto.bat` 은 작업 완료 뒤 `git add . && commit && push` 를 자동 실행한다 (승인 게이트·push 정책과 별개 경로) — 운영 정책 판단 필요.
