@@ -860,3 +860,29 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 커밋 메모리 **91.3% — sandbox 메모리 게이트(90%) 초과** → 지금 실행하면 worktree 를 만들지 못하고 멈춘다 (실행 시점에 90% 미만 필요).
 - 리허설 worktree: `fresh8_clone` 안 27개 · 0.93GB (sparse) · 운영 저장소 worktree 목록과 무관 · 기존 `repair_sandbox` 수명 관리(cleanup-orphans · 보존 24h)는 그 clone 에서 실행해야 정리됨 → 삭제 안 함 (승인 필요).
 - 실행 계획은 §46 그대로 (fresh clone · `worker_rehearsal.py --real` · 작업 폴더 안 파일 1 · 지정 경로 밖 쓰기 1회 시도 · `curl https://example.com` 1회 · 우회·재시도 금지).
+
+## 48. Codex 설치본 안전성 반영 — %APPDATA%\npm 9개 갱신 (2026-11-06 · 기준 231d321 · 사용자 승인 · 실제 Codex 0 · 유료 0)
+
+**방법**: `setup/modules/04-commands.bat` 의 1·2단계(9개 복사 + 9개 CRLF 정리)와 같은 동작을 스크립트로 실행 · 3단계(kit `.claude/scripts/*.bat` 전체 CRLF 재저장)는 kit 작업 트리를 바꾸므로 제외 · 기존 6개 백업 후 설치 · 검사 실패 시 자동 복원.
+- 1·2차 시도는 검사 기준이 넓어 kit 소스에도 있는 문자열에 걸려 **자동 복원됨** (복원 후 6개 모두 백업과 바이트 동일 확인). 3차에서 기준을 "Codex 우회 0 · codex 호출 줄에 우회 계열 옵션 없음 · 그 밖의 옵션은 갱신 전보다 늘지 않음" 으로 나눠 설치.
+
+| 명령 | 갱신 전 → 후 (sha256 앞 16) | kit 과 동일 | Codex 우회 옵션 전→후 |
+|---|---|---|---|
+| codex-a | ab7c16d2… → dc9e1b90… | 예 | **2 → 0** |
+| codex-auto | 74228b21… → 301c4c01… | 예 | 0 → 0 |
+| codex-auto-global | (없음) → 65cfca3b… | 예 | — → 0 |
+| gemini-a | 87cd1089… → 503d1a13… | 예 | 0 → 0 |
+| gemini-auto | 2ed0e9d6… → 55a2ac25… | 예 | 0 → 0 |
+| gemini-auto-global | (없음) → 8c8cf87a… | 예 | — → 0 |
+| gemini-verify | b56ea4bf… → 9ce1b376… | 예 | 0 → 0 |
+| claude-auto | 3ad4f1b5… → f56f98e1… | 예 | 0 → 0 |
+| haiku-auto | (없음) → d76b78ee… | 예 | — → 0 |
+
+- 남은 옵션 [확인] (kit 소스와 예전 설치본에 같은 개수 · 이번 범위 밖 · 수정 안 함): `gemini-a` 의 `gemini --yolo` 4곳 (Gemini 도구 자동 승인 · Gemini 는 개인 계정 BLOCKED) · `claude-auto` 의 `--dangerously-skip-permissions` 3곳 (프로젝트 정책 bypassPermissions) · `codex-a --full-auto` 는 codex-a 자체 모드 이름이며 실제 codex 호출 3곳은 모두 `--sandbox workspace-write` · `codex exec "echo ok"` 가용성 확인은 옵션 없음 = 기본 read-only.
+- 실제 경로 [확인]: kit 밖 폴더에서 레지스트리 PATH 로 해석 → 9개 모두 `%APPDATA%\npm\*.bat` (kit 폴더 안에서는 cmd 가 현재 폴더를 먼저 찾아 kit 사본) · 어느 쪽이든 kit 과 내용 동일.
+- 무료 배치 호출 시험 [확인]: 임시 폴더에서 PATH 맨 앞에 인자만 기록하는 가짜 `codex.cmd` → 이름으로 `codex-a --auto <task>` 실행 → 종료 0 · codex 가 받은 인자 `exec --sandbox workspace-write "Read the task instruction …"` (실제 모델 호출 없음).
+- 백업: scratchpad `npm_backup_20261106_181714` (6개) · 복원은 같은 폴더에서 덮어쓰기.
+- 보존 [확인]: 운영 DB (예산 NULL · 예약 14 · goals 161 · tasks 158 · Goal #77 FAILED · 운영 worktree 26) · kit 작업 트리 변화 없음 · 실행 중 프로세스 종료 없음 · 메모리 게이트 그대로.
+- plugin check [확인]: copied 0 · drift 0 · orphan 5 (`--prune` 실행 안 함).
+- 리허설 worktree [확인]: `fresh8_clone` worktree 목록 27줄 = clone 본체 1 + sandbox **26** (§47 의 "27개" 는 목록 줄 수 · 정정) · 잠금 0 · 최종 수정 17:36~17:56 · 사용 중 작업 없음 · 삭제 안 함.
+- 실제 Codex 1회 실행 전제: 커밋 메모리 **92.0%** (게이트 90% 초과 · 아직 실행 불가) · 디스크 여유 18GB.
