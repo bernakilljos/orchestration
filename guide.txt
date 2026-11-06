@@ -2444,3 +2444,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - Stop 종료 판단 (2026-11-05): 작업 수행(status)·검증 결과(verification)·종료 허가(gate)를 분리 · PARTIAL·BLOCKED + 증거 = 미완료 유지하며 Stop 허용 · FAIL·증거 없음은 차단 · 임의 문장 verification 거부 · Standing gate 는 stop_hook_active 면 미해결 유지하고 허용 + 사유 표시. 상세 §35.
 - 시험 환경 고정 (2026-11-05): pytest 는 conftest 에서 commit 메모리를 고정해 실행 PC 메모리에 판정이 좌우되지 않는다 · 메모리 게이트 시험은 값을 직접 주입. 상세 §36.
 - B·C 검증 (2026-11-06): dashboard.py 는 공식 문서의 GIT_CONFIG_COUNT 사용 (GIT_CONFIG_PARAMETERS 는 문서에 없는 내부 변수) · 같은 유형 후보는 스테이징한 변경도 포함. 상세 §37.
+- Ledger 자동 등록 오탐 (2026-11-06): 붙여 넣은 상태 보고는 지시 표지(대상: 줄·명령형 문장)가 없으면 요청으로 등록하지 않음 · 승인 판정은 금지·부정 문장 제외 · Stop gate 는 오탐을 PASS 대신 invalid-registration 으로 안내 · 승인 대기 항목은 오등록 처리 거부. 상세 §38.

@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -52,7 +53,45 @@ _REPORT_REQUEST_KEYWORDS = (
 
 def _is_system_notification(text: str) -> bool:
     """harness 자동 이벤트 (사용자 입력 아님) — task-notification 태그로 시작."""
-    return (text or "").lstrip().startswith("<task-notification>")
+    t = (text or "").lstrip()
+    # 2026-11-06: 대화 요약 뒤 harness 가 넣는 이어가기 메시지도 사용자 지시가 아니다
+    return t.startswith("<task-notification>") or t.startswith("This session is being continued from a previous conversation")
+
+
+# 2026-11-06 R167~R170: 붙여 넣은 평가 보고가 안의 '해줘'·'유료'·'배포' 단어로 실행·승인 요청에 등록됐다.
+# 공식 hooks 문서: 붙여 넣은 글은 `<pasted_content id="…">` 줄과 `</pasted_content id="…">` 줄 사이로 온다.
+_PASTE_RE = re.compile(r"<pasted_content\b[^>]*>.*?(?:</pasted_content\b[^>]*>|\Z)", re.S)
+# 붙여 넣은 글만 온 메시지에서 '지금 하라는 지시' 표지 — 없으면 보고·인용으로 보고 등록하지 않는다.
+_DIRECTIVE_LINE_RE = re.compile(r"^\s*대상\s*[:：]", re.M)
+# 반말 명령형으로 끝나는 문장 ("다시 확인해.", "수정하지 마.") — 보고·평가 글은 "~습니다/~입니다" 로 끝난다
+_IMPERATIVE_END_RE = re.compile(r"(?:해|하라|해라|해줘|해 줘|하지 마|하지마|할 것|하세요|해주세요|하십시오)"
+                                r"(?:[.!](?=\s|$)|\s*$)", re.M)
+_DIRECTIVE_PHRASES = ("지시다", "지시한다", "승인한다", "전달할 승인 문구", "전달할 지시",
+                      "claude code에 지시할", "claude code에 전달할")
+# 금지·부정 문장 안의 위험 단어는 승인 요청이 아니다 ("유료 호출 금지", "배포는 승인하지 않는다").
+_NEGATION_MARKERS = ("금지", "하지 마", "하지마", "않", "말고", "말 것")
+
+
+def _split_pasted(text: str) -> tuple:
+    """(사용자가 직접 쓴 글, 붙여 넣은 글)."""
+    text = text or ""
+    pasted = "\n".join(_PASTE_RE.findall(text))
+    return _PASTE_RE.sub(" ", text).strip(), pasted
+
+
+def _intent_text(prompt: str) -> tuple:
+    """분류 대상 글과 종류 — own (직접 쓴 글) · pasted_directive · pasted_report.
+
+    직접 쓴 글이 있으면 그것만 본다 (붙여 넣은 글은 참고 자료).
+    붙여 넣은 글만 왔으면 그 글이 곧 사용자 메시지 — 지시 표지가 있을 때만 지시로 본다."""
+    own, pasted = _split_pasted(prompt)
+    if own or not pasted:
+        return own, "own"
+    low = pasted.lower()
+    if (_DIRECTIVE_LINE_RE.search(pasted) or _IMPERATIVE_END_RE.search(pasted)
+            or any(p in low for p in _DIRECTIVE_PHRASES)):
+        return pasted, "pasted_directive"
+    return pasted, "pasted_report"
 
 
 def _classify(text: str) -> str:
@@ -72,10 +111,11 @@ def _classify(text: str) -> str:
     for p in _REDO_PREFIXES:
         if p.lower() in low:
             return "redo"
-    # 명시적 취소
-    for k in _CANCEL_KEYWORDS:
-        if k in low:
-            return "cancel"
+    # 명시적 취소 — 짧은 메시지만. 긴 지시 안의 "삭제하지 마" 같은 제약 문장을 취소로 읽지 않는다 (2026-11-06)
+    if len(low) < 60:
+        for k in _CANCEL_KEYWORDS:
+            if k in low:
+                return "cancel"
     # 상태 조회 (짧은 메시지 + 조회 키워드)
     if len(low) < 60:
         for k in _STATUS_KEYWORDS:
@@ -181,13 +221,16 @@ _APPROVAL_PATTERNS = (
 
 def _needs_approval(prompt: str) -> list:
     """위험 패턴 매치 반환 (사용자 지시 "포괄 '전부 개발해' 를 무제한 실행 권한으로 해석 X")."""
-    low = (prompt or "").lower()
+    lines = [ln for ln in (prompt or "").lower().splitlines()
+             if not any(n in ln for n in _NEGATION_MARKERS)]
+    low = "\n".join(lines)
     matched = [p for p in _APPROVAL_PATTERNS if p in low]
     return matched
 
 
-def _append_ledger_entry(prompt: str, session_id: str, classification: str) -> dict:
-    """append-only · event_id 기반 중복 방지 (desc hash 는 참고만)."""
+def _append_ledger_entry(prompt: str, session_id: str, classification: str, intent: str = None) -> dict:
+    """append-only · event_id 기반 중복 방지 (desc hash 는 참고만).
+    intent = 승인 판정 대상 글 (직접 쓴 글 · 또는 지시로 판정된 붙여 넣은 글). desc 는 원문 그대로."""
     LEDGER = os.path.join(os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "request-ledger.json")
     try:
         if os.path.exists(LEDGER):
@@ -212,7 +255,7 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str) -> d
     event_id = _new_event_id(session_id, prompt)
     rid = f"R{len(existing) + 1}"
     # 승인 요구 패턴 매치 시 status=approval_required (실행 보류)
-    approval_matches = _needs_approval(prompt)
+    approval_matches = _needs_approval(prompt if intent is None else intent)
     initial_status = "approval_required" if approval_matches else "pending"
     entry = {
         "id": rid,
@@ -251,7 +294,15 @@ def run(ctx) -> str:
         if _is_system_notification(prompt):
             _append_raw(prompt, session_id, "system_notification", "skipped_non_user")
             return ""
-        classification = _classify(prompt)
+        intent, kind = _intent_text(prompt)
+        if kind == "pasted_report":
+            # 붙여 넣은 보고·인용만 있고 지시 표지가 없다 — 원문은 raw 에 남기고 요청으로 등록하지 않는다
+            _append_raw(prompt, session_id, "pasted_report", "skipped_non_exec")
+            return ""
+        classification = _classify(intent)
+        if kind == "pasted_directive" and classification in ("unknown", "status", "question"):
+            # 지시 표지가 확인된 붙여 넣은 지시 — 동사 목록에 없는 "확인해."·"유지해." 지시도 실행 요청이다
+            classification = "execute"
         # 모든 UserPromptSubmit → raw log 보존 (사용자 지시 "원본 이벤트 전부 append-only · 삭제 X")
         if classification == "unknown":
             # 분류 불확실 → raw + deferred (원문 2중 보존 · 실행 보류 · 사용자 재해석 가능)
@@ -262,7 +313,7 @@ def run(ctx) -> str:
             # 질문·조회·취소 — 원본만 raw 로그에 보존 (ledger 등록 X)
             _append_raw(prompt, session_id, classification, "skipped_non_exec")
             return ""
-        result = _append_ledger_entry(prompt, session_id, classification)
+        result = _append_ledger_entry(prompt, session_id, classification, intent)
         if result.get("status") == "registered":
             # 승인 요구 여부 확인 (ledger 안 entry 의 status 가 approval_required 인지)
             ledger_path = os.path.join(os.environ.get("CLAUDE_PROJECT_DIR", "."),

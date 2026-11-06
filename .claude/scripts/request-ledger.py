@@ -174,6 +174,11 @@ def cmd_invalid_registration(rid: str, reason: str = "",
         return 2
     for r in data["requests"]:
         if r["id"] == rid or r["id"].lower() == rid.lower():
+            # 2026-11-06: 승인 대기는 사용자 판단 대상 — 오등록으로 닫아 승인 기록을 지우지 않는다
+            if r.get("status") == "approval_required":
+                print(f"[ledger] ✗ {rid}: 승인 대기 항목 — invalid-registration 으로 바꾸지 않음 (Stop 을 막지도 않음)",
+                      file=sys.stderr)
+                return 2
             # 이전 상태 보존 (completed 였던 항목의 evidence·verification 은 그대로 남는다)
             r.setdefault("status_before_invalid", r.get("status"))
             r["status"] = "invalid_registration"
@@ -395,7 +400,9 @@ def cmd_gate() -> int:
     for r in pending[:5]:
         msg += f"  ☐ {r['id']}: {r['desc'][:80]}\n"
     msg += ("→ 미완료 request 계속 실행 후 보고 (execution-contract § 2 n/n 완료 전 보고 금지) · "
-            "끝나지 않았으면 PASS 로 바꾸지 말고 complete --evidence ... --verification PARTIAL 또는 BLOCKED 로 사실대로 기록")
+            "끝나지 않았으면 PASS 로 바꾸지 말고 complete --evidence ... --verification PARTIAL 또는 BLOCKED 로 사실대로 기록 · "
+            "사용자 지시가 아닌 자동 등록(상태 보고·인용·붙여 넣은 이전 대화)이면 PASS 로 닫지 말고 "
+            "invalid-registration <id> --reason ... --detected-by stop-gate")
     print(msg, file=sys.stderr)
     return 2
 
