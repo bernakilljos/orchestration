@@ -781,3 +781,8 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **Judge 최신 증거**: 회귀 실행 결과·외부 공식 자료 기록이 Judge 입력에 들어가는 것은 무료 종단 시험으로 유지 확인 · 실제 Judge 가 그 증거를 올바르게 쓰는지만 실제 호출 1회 필요 (예상 ~$0.36 · 상한 $2 · 승인 대기).
 
 **회귀 (운영 폴더 · pytest 만 · 운영 디스크 하한 그대로 · 여유 18.23GB)** [확인]: 191 passed · failed 0 (phase12 sandbox 3건 디스크 회복으로 통과) · 33 수집 오류 기존 그대로 · golden 13/13 · 새 Mock 시험 1 (HEAD 원본 FAIL → 수정 후 PASS).
+
+**fresh clone 5cae661 (sparse 적용 · 디스크 여유 18GB)** [확인]: verify-fresh-clone 위반 0 · pytest 191 passed (33 수집 오류 기존 그대로) · phase3 26/26 · phase5 39/39 · phase12 통과 · golden 13/13 · **phase2 첫 실행 16/21** (Test 04 `execute_goal executed=0 · sandbox_count=0` · 사유 로그 없음).
+- phase2 조사: 같은 clone 에서 운영 하한 그대로 sandbox 직접 생성 = 정상 · phase2 재실행 2회 = 21/21 · 재현 시도 ① 새 DB → pytest → phase2 = 21/21 ② 시험 sandbox 폴더가 없는 상태 = 21/21 → **디스크 원인 아님 · 원인 미확인 (fresh clone 첫 실행에서만 4/5회 발생 · 재현 실패)**. "이미 존재" 메시지는 통과 실행에도 나오는 의도된 시험 메시지라 근거 아님.
+- **정정 (§41·§42)**: fresh clone phase2 16/21 을 디스크 하한 탓으로 묶은 것은 근거 부족 — phase5·phase12 는 로그에 "디스크 부족" 사유가 있었지만 phase2 로그엔 사유가 없었고, "하한 낮춘 재실행 통과" 는 두 번째 실행이라 통과했을 수 있음. phase2 는 첫 실행 한정 [원인 미확인] 으로 정정.
+- 재현 시험 중 시험 sandbox 폴더 `%TEMP%\orca-repair-sandbox-test\fresh7_clone` 를 `…__moved` 로 옮겨 둠 (이 세션 clone 전용 시험 폴더 · 삭제 안 함).
