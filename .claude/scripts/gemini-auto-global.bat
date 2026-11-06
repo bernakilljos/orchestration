@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
+set "SELF_DIR=%~dp0"
 rem =====================================================
 rem gemini-auto-global - Gemini worker for global orca queue
 rem Mirrors codex-auto-global but calls gemini-a and picks
@@ -68,7 +69,7 @@ echo ============================================================
 for /L %%i in (1,1,%SPAWN_COUNT%) do (
   set /a CID=%ALIVE_COUNT% + %%i
   echo [+] Spawn gemini worker #!CID!
-  start "Gemini-Global-!CID!" /min cmd /c "gemini-auto-global --child !CID!"
+  start "Gemini-Global-!CID!" /min cmd /c call "%SELF_DIR%gemini-auto-global.bat" --child !CID!
 )
 
 exit /b 0
@@ -151,7 +152,7 @@ pushd "%TASK_PROJECT_ROOT%"
 attrib +r "%PICKED_TASK%" >nul 2>&1
 copy /Y "%PICKED_TASK%" "%ORCA_ROOT%\done\%PICKED_NAME%.bak" >nul 2>&1
 
-call gemini-a --verify "%PICKED_TASK%" 2>"%TEMP%\gemini-global-%CHILD_ID%-err.log"
+call "%SELF_DIR%gemini-a.bat" --verify "%PICKED_TASK%" 2>"%TEMP%\gemini-global-%CHILD_ID%-err.log"
 set "GEM_EXIT=!errorlevel!"
 
 if !GEM_EXIT! NEQ 0 (
@@ -164,7 +165,7 @@ if !GEM_EXIT! NEQ 0 (
     timeout /t 600 /nobreak >nul
     call gemini -p "echo ok" >nul 2>&1
     if errorlevel 1 goto GEM_TOKEN_WAIT
-    call gemini-a --verify "%PICKED_TASK%" 2>nul
+    call "%SELF_DIR%gemini-a.bat" --verify "%PICKED_TASK%" 2>nul
   )
 )
 

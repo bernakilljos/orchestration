@@ -11,7 +11,7 @@ ERRORS=0
 if command -v python &>/dev/null; then
   for f in $(git diff --name-only HEAD~1 2>/dev/null | grep '\.py$'); do
     if [ -f "$f" ]; then
-      python -c "import py_compile; py_compile.compile('$f', doraise=True)" 2>/dev/null
+      python -c "import sys; compile(open(sys.argv[1], encoding='utf-8', errors='replace').read(), sys.argv[1], 'exec')" "$f" 2>/dev/null
       if [ $? -ne 0 ]; then
         echo "[VERIFY FAIL] Python syntax error: $f"
         ERRORS=$((ERRORS+1))

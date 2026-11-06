@@ -8,6 +8,7 @@
 """
 import importlib.util
 import json
+import re
 import os
 import shutil
 import sqlite3
@@ -862,8 +863,9 @@ def test_worker_runs_codex_in_isolated_worktree(tmp_path):
     repo.mkdir()
     _git_repo(repo)
     (repo / ".claude" / "config").mkdir(parents=True)
-    (repo / ".claude" / "config" / "sandbox-policy.json").write_bytes(
-        (ROOT / ".claude" / "config" / "sandbox-policy.json").read_bytes())
+    pol = json.loads((ROOT / ".claude" / "config" / "sandbox-policy.json").read_text(encoding="utf-8"))
+    pol.update(max_commit_percent=100, min_commit_free_gb=0)   # 시험 결과가 실행 PC 메모리에 좌우되지 않게 (임시 저장소 정책만)
+    (repo / ".claude" / "config" / "sandbox-policy.json").write_text(json.dumps(pol), encoding="utf-8")
     (repo / ".gitignore").write_text(".claude/state/\n", encoding="utf-8")
     subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
     subprocess.run(["git", "-C", str(repo), "commit", "-qm", "policy"], check=True)
@@ -873,10 +875,10 @@ def test_worker_runs_codex_in_isolated_worktree(tmp_path):
     wg = [sys.executable, str(SCRIPTS / "lib" / "worker_git.py"), "sandbox", "t1"]
     r = subprocess.run(wg, env=env, capture_output=True, text=True, encoding="utf-8", timeout=300)
     path = Path(r.stdout.strip())
-    assert r.returncode == 0 and path.is_dir() and (tmp_path / "sbx") in path.parents
+    assert r.returncode == 0 and path.is_dir() and (tmp_path / "sbx") in path.parents, r.stderr[-600:]
     head = subprocess.run(["git", "-C", str(path), "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True,
                           text=True).stdout.strip()
-    assert head == "repair/codex-t1"
+    assert head.startswith("repair/codex-t1-")
     (path / "app.py").write_text("changed\n", encoding="utf-8")         # worktree 쓰기는 원본 작업 폴더에 안 보임
     assert (repo / "app.py").read_text(encoding="utf-8") == "import os\n"
     r2 = subprocess.run(wg[:-1] + ["t2"], env={**env, "REPAIR_SANDBOX_MIN_FREE_GB": "100000"}, capture_output=True,
@@ -884,10 +886,17 @@ def test_worker_runs_codex_in_isolated_worktree(tmp_path):
     assert r2.returncode == 1 and r2.stdout.strip() == "" and "디스크" in r2.stderr     # 게이트 = 경로 없음
     bat = (SCRIPTS / ("codex-auto" + ".bat")).read_text(encoding="utf-8")
     i_sbx, i_fail = bat.index('worker_git.py" sandbox'), bat.index("[ISOLATION] sandbox")
-    i_push, i_call = bat.index('pushd "%WORK_DIR%"'), bat.index('call codex-a --auto "%PICKED_TASK%" 2>"')
+    assert bat.index("timeout /t 30", i_fail) < bat.index("goto LOOP", i_fail)      # 실패 분기 대기 후 재시도
+    i_push, i_call = bat.index('pushd "%WORK_DIR%"'), bat.index('call "%SELF_DIR%codex-a.bat" --auto "%PICKED_TASK%" 2>"')
     assert i_sbx < i_fail < bat.index("goto LOOP", i_fail) < i_push < i_call
     assert 'codex-check "%WORK_DIR%\\docs\\implementation-report.md" --cwd "%WORK_DIR%"' in bat
     assert 'worker_git.py" commit "%WORK_DIR%"' in bat
+    assert 'move /Y "%PICKED_TASK%" "%PROJECT_ROOT%\\.claude\\tasks\\done\\"' in bat      # 처리 끝난 작업 재선택 방지
+    # 형제 스크립트는 PATH 이름이 아니라 같은 폴더 경로로 (APPDATA npm 의 예전 설치 사본 대신 · 리허설 실측)
+    for f in ("codex-auto", "codex-auto-global", "gemini-auto", "gemini-auto-global", "gemini-verify"):
+        t = (SCRIPTS / (f + ".bat")).read_text(encoding="utf-8")
+        assert not re.search(r'call (codex-a|gemini-a|codex-auto|gemini-auto)\b(?![.-]\w)', t), f
+        assert 'call "%SELF_DIR%' in t and ('shift' not in t.lower() or t.index('set "SELF_DIR=%~dp0"') < t.lower().index('shift')), f
 
 
 def _fake_runner(codes):

@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
+set "SELF_DIR=%~dp0"
 rem =====================================================
 rem codex-auto-global - Codex worker for global orca queue
 rem
@@ -85,7 +86,7 @@ echo ============================================================
 for /L %%i in (1,1,%SPAWN_COUNT%) do (
   set /a CID=%ALIVE_COUNT% + %%i
   echo [+] Spawn worker #!CID!
-  start "Codex-Global-!CID!" /min cmd /c "codex-auto-global --child !CID!"
+  start "Codex-Global-!CID!" /min cmd /c call "%SELF_DIR%codex-auto-global.bat" --child !CID!
 )
 
 echo [OK] %SPAWN_COUNT% workers launched ^(minimized windows^).
@@ -204,7 +205,7 @@ attrib +r "%PICKED_TASK%" >nul 2>&1
 copy /Y "%PICKED_TASK%" "%ORCA_ROOT%\done\%PICKED_NAME%.bak" >nul 2>&1
 
 rem --- Run codex-a ---
-call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-global-%CHILD_ID%-err.log"
+call "%SELF_DIR%codex-a.bat" --auto "%PICKED_TASK%" 2>"%TEMP%\codex-global-%CHILD_ID%-err.log"
 set "CODEX_EXIT=!errorlevel!"
 
 rem --- Token exhaustion handling ---
@@ -219,7 +220,7 @@ if !CODEX_EXIT! NEQ 0 (
     call codex exec "echo ok" >nul 2>&1
     if errorlevel 1 goto CODEX_TOKEN_WAIT
     echo [Worker-%CHILD_ID%] TOKEN RESTORED
-    call codex-a --auto "%PICKED_TASK%" 2>nul
+    call "%SELF_DIR%codex-a.bat" --auto "%PICKED_TASK%" 2>nul
   )
 )
 

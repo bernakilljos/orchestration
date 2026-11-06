@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
+set "SELF_DIR=%~dp0"
 rem =====================================================
 rem codex-auto - Codex parallel/continuous worker
 rem
@@ -73,7 +74,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting worker %%i / %WORKER_COUNT%
-  start "Codex-Worker-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call codex-auto --child %%i"
+  start "Codex-Worker-%%i" /D "%PROJECT_ROOT%" cmd /d /c call "%SELF_DIR%codex-auto.bat" --child %%i
 )
 
 echo.
@@ -227,12 +228,15 @@ for %%F in ("%PICKED_TASK%") do (
 rem --- 2026-11-06: Codex 는 운영 작업 폴더 대신 독립 worktree 에서 실행 - 기존 repair_sandbox · 디스크·메모리 게이트 그대로 ---
 rem     만들지 못하면 운영 폴더에서 실행하지 않고 작업 실패 처리 · 결과는 repair/codex-<task> 브랜치에만 (main 병합·push 는 승인 경로)
 set "WORK_DIR="
-for /f "usebackq delims=" %%W in (`python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" sandbox "%TASK_ID%" 2^>nul`) do set "WORK_DIR=%%W"
+if not exist "%PROJECT_ROOT%\.claude\state\worker-git" mkdir "%PROJECT_ROOT%\.claude\state\worker-git" 2>nul
+for /f "usebackq delims=" %%W in (`python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" sandbox "%TASK_ID%" 2^>"%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.sandbox-err.json"`) do set "WORK_DIR=%%W"
 if not defined WORK_DIR (
   echo [Worker-%CHILD_ID%] [ISOLATION] sandbox 생성 실패 - 운영 폴더에서 Codex 실행 안 함
   python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
   for %%F in ("%PICKED_TASK%") do attrib -r "%%F" >nul 2>&1
   for %%F in ("%PICKED_TASK%") do del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
+  echo [Worker-%CHILD_ID%] 사유: .claude\state\worker-git\%TASK_ID%.sandbox-err.json - 30초 후 재시도
+  timeout /t 30 /nobreak >nul
   goto LOOP
 )
 rem --- 실행 직전 상태 기록 (끝난 뒤 이 작업이 바꾼 파일만 커밋) ---
@@ -240,7 +244,7 @@ python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" snapshot "%WORK_DIR%" 
 set "OPS_ROOT=%PROJECT_ROOT%"
 pushd "%WORK_DIR%"
 set "PROJECT_ROOT=%WORK_DIR%"
-call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
+call "%SELF_DIR%codex-a.bat" --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
 set "CODEX_EXIT=!errorlevel!"
 set "PROJECT_ROOT=%OPS_ROOT%"
 
@@ -262,7 +266,7 @@ if !CODEX_EXIT! NEQ 0 (
     echo [Worker-%CHILD_ID%] TOKEN RESTORED — 재개!
     del "%PROJECT_ROOT%\.claude\codex-token-status" 2>nul
     rem 같은 태스크 다시 실행
-    set "PROJECT_ROOT=!WORK_DIR!" & call codex-a --auto "%PICKED_TASK%" 2>nul & set "PROJECT_ROOT=!OPS_ROOT!"
+    set "PROJECT_ROOT=!WORK_DIR!" & call "%SELF_DIR%codex-a.bat" --auto "%PICKED_TASK%" 2>nul & set "PROJECT_ROOT=!OPS_ROOT!"
   )
 )
 
@@ -326,8 +330,10 @@ rem     종전 add . / commit / push 는 승인 게이트 밖 원격 push + 작�
 if exist "%PROJECT_ROOT%\.git" (
   for %%F in ("%PICKED_TASK%") do set "COMMIT_MSG=codex: complete %%~nF"
   python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" commit "%WORK_DIR%" "%TASK_ID%" "!COMMIT_MSG!" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" > "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.commit.json" 2>&1
-  if not errorlevel 1 (
-    echo [Worker-%CHILD_ID%] Git commit 완료 - repair/codex-%TASK_ID% 브랜치 - main 반영은 승인 경로 ^(repair_sandbox apply^)
+  if errorlevel 3 (
+    echo [Worker-%CHILD_ID%] Git commit 없음 - 이 작업이 바꾼 파일 없음
+  ) else if not errorlevel 1 (
+    echo [Worker-%CHILD_ID%] Git commit 완료 - 작업 폴더 %WORK_DIR% 의 repair 브랜치 - main 반영은 승인 경로 ^(repair_sandbox apply^)
   ) else (
     echo [Worker-%CHILD_ID%] Git commit 안 함 - .claude\state\worker-git\%TASK_ID%.commit.json 참조
   )
@@ -370,6 +376,8 @@ for %%F in ("%PICKED_TASK%") do (
 )
 
 popd
+rem --- 2026-11-06: sandbox 안 Codex 는 작업 파일을 옮길 수 없음 - 처리 끝난 작업 파일은 워커가 done 으로 (같은 작업 재선택 방지) ---
+if exist "%PICKED_TASK%" move /Y "%PICKED_TASK%" "%PROJECT_ROOT%\.claude\tasks\done\" >nul 2>&1
 echo.
 echo [Worker-%CHILD_ID%] Task done. Next check in 30s...
 timeout /t 30 /nobreak >nul

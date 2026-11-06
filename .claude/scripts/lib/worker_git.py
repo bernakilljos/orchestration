@@ -146,7 +146,7 @@ def sandbox(task_id: str) -> Dict[str, Any]:
     실패하면 경로를 주지 않는다 → 호출자는 운영 폴더에서 실행하지 않고 작업을 멈춘다."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import repair_sandbox
-    r = repair_sandbox.create(f"codex-{task_id}")
+    r = repair_sandbox.create(f"codex-{task_id}-{int(time.time())}")    # 시도마다 새 이름 (재시도 충돌 방지)
     return {"ok": bool(r.get("ok")), "path": r.get("path"), "branch": r.get("branch"),
             "reason": r.get("reason") or r.get("error")}
 
@@ -170,7 +170,7 @@ def _main(argv) -> int:
             return 1
         r = commit_owned(argv[2], argv[3], argv[4], before)
         print(json.dumps(r, ensure_ascii=False))
-        return 0 if r["committed"] or not r["owned"] else 1
+        return 0 if r["committed"] else (3 if not r["owned"] else 1)    # 3 = 바뀐 파일 없음 (커밋 안 함)
     if len(argv) >= 3 and argv[1] == "push-approved":
         print(json.dumps(push_approved(argv[2]), ensure_ascii=False))
         return 0

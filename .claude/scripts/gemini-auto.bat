@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal enabledelayedexpansion
+set "SELF_DIR=%~dp0"
 rem =====================================================
 rem gemini-auto - Gemini parallel/continuous verifier
 rem
@@ -85,7 +86,7 @@ echo ============================================================
 
 for /L %%i in (1,1,%WORKER_COUNT%) do (
   echo [+] Starting verifier %%i / %WORKER_COUNT%
-  start "Gemini-Verifier-%%i" /D "%PROJECT_ROOT%" cmd /d /c "call gemini-auto --child %%i"
+  start "Gemini-Verifier-%%i" /D "%PROJECT_ROOT%" cmd /d /c call "%SELF_DIR%gemini-auto.bat" --child %%i
 )
 
 echo.
@@ -200,7 +201,7 @@ rem --- P1-1 상태머신 (2026-10-26): pending -> locked ---
 for %%F in ("%PICKED_RESEARCH%") do set "TASK_ID=%%~nF"
 python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" locked "gemini-%CHILD_ID%" >nul 2>&1
 
-call gemini-a --research "%PICKED_RESEARCH%"
+call "%SELF_DIR%gemini-a.bat" --research "%PICKED_RESEARCH%"
 set "GEMINI_EXIT=!errorlevel!"
 
 rem --- P1-1 상태머신: locked -> completed/failed (gemini-a exit code 기반) ---
@@ -272,7 +273,7 @@ if %RETRY% GEQ 3 goto ESCALATE
 
 set /a RETRY+=1
 echo [Verifier-%CHILD_ID%] Attempt %RETRY%/3...
-call gemini-a --verify "%PICKED_REPORT%" 2>"%TEMP%\gemini-last-err.log"
+call "%SELF_DIR%gemini-a.bat" --verify "%PICKED_REPORT%" 2>"%TEMP%\gemini-last-err.log"
 
 rem --- 토큰 소진 감지 -> 대기 -> 복구 시 재개 ---
 findstr /i /c:"rate" /c:"limit" /c:"quota" /c:"429" /c:"exceeded" "%TEMP%\gemini-last-err.log" >nul 2>&1

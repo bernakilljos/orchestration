@@ -807,3 +807,36 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **회귀 (운영 폴더 · pytest 만)** [확인]: 193 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13 · 새 시험 2 (후처리·격리) HEAD 원본 FAIL → 수정 후 PASS.
 
 **fresh clone 6a57cf9 (sparse · 운영 디스크 하한 그대로)** [확인]: verify-fresh-clone 위반 0 · pytest 193 passed (33 수집 오류 기존 그대로) · phase2 21/21 (이번엔 첫 실행 통과 · 이전 첫 실행 실패 원인은 계속 미확인) · phase3 26/26 · phase5 39/39 · phase12 통과 · golden 13/13.
+
+## 46. Codex 실제 실행 검증 준비 — 워커 리허설 (2026-11-06 · 기준 bc81fd6 · 유료 0 · 실제 Codex 실행 0)
+
+**리허설 방법**: fresh clone(`fresh8_clone`) 을 작업 위치로 · 진짜 codex 대신 인자만 기록하고 작업 폴더에 파일 1개·보고서만 쓰는 가짜 codex · 실제 `codex-auto --child 1` 워커 루프를 창 없이 1회 · 정지 파일로 종료 (스크립트 `worker_rehearsal.py` · `--real` 은 승인 후 실제 실행용).
+
+**리허설이 찾아낸 결함 (모두 수정) [확인]**
+| # | 결함 | 원인 | 수정 |
+|---|---|---|---|
+| 1 | 워커가 **예전 sandbox 우회 옵션**으로 Codex 호출 | 워커가 `call codex-a` 를 PATH 이름으로 찾아 `%APPDATA%\npm\codex-a.bat` (setup `04-commands` 가 복사한 예전 사본 · 우회 옵션 2곳) 실행 — §44·45 의 kit 수정이 운영 워커에 적용 안 될 수 있었음 (**§45 "운영 경로 연결 완료" 정정**) | 형제 스크립트 호출 13곳을 같은 폴더 경로로 |
+| 2 | 1 의 첫 수정(`%~dp0`)이 동작 안 함 (`codex-a.bat is not recognized`) | 인자 처리 `shift` 가 `%0` 을 밀어 `%~dp0` 가 현재 폴더(worktree) 로 바뀜 | 첫 `shift` 전에 `SELF_DIR` 저장 후 사용 (5개 파일) |
+| 3 | 처리 끝난 작업을 계속 다시 선택 → 시도마다 새 sandbox · Codex 반복 호출 (리허설 20회) | worktree 격리 후 sandbox 안 Codex 는 작업 파일(운영 `.claude/tasks`)을 옮길 수 없음 | 워커가 처리 끝난 작업 파일을 `done` 으로 · sandbox 이름에 시각 (재시도 충돌 방지) |
+| 4 | 정상 작업이 "문법 오류" 로 실패 | `post-impl-verify.sh` 가 `py_compile`(.pyc 쓰기) 사용 → 경로가 길면 쓰기 실패를 문법 오류로 오판 (검사 대상도 작업과 무관한 `HEAD~1` 변경) | 내장 `compile()` 로 문법만 검사 (plugins 원본·.claude 사본 동일) · 대상 범위(HEAD~1)는 기존 그대로 [기록] |
+| 5 | sandbox 생성 실패 시 대기 없이 즉시 재선택 (리허설 11회 연속) · 사유 미기록 | 실패 분기 대기 없음 | 사유를 `worker-git/<task>.sandbox-err.json` 에 저장 · 30초 대기 후 재시도 |
+| 6 | 바뀐 파일이 없어도 "Git commit 완료" 출력 | worker_git 이 변경 없음도 0 반환 | 종료 코드 3 = 변경 없음 · 문구 분리 |
+- 5 의 실패 사유 실측: "커밋 메모리 부족 23.22/25.69GB (90.4%) > 90%" — 기존 메모리 게이트가 정상 차단 (운영 폴더 실행 0) · 이 PC 의 현재 메모리 사용률이 게이트 근처.
+
+**리허설 최종 결과 (가짜 codex · 수정 반영) [확인]**
+| 확인 항목 (지시 1~8) | 정상 경로 | 실패 경로 (codex 종료 코드 1) |
+|---|---|---|
+| ① 기존 repair_sandbox 로 독립 worktree | 생성 | 생성 |
+| ② 지정 작업 폴더 안에서 실행 | Codex 호출 cwd = worktree · `exec --sandbox workspace-write` | 동일 |
+| ③ 폴더 밖 쓰기 실제 차단 | **[미확인]** (가짜 codex 는 증거 아님 · 실제 실행 필요) | — |
+| ④ 네트워크 제한 | **[미확인]** (실제 실행 필요 · 설정 파일에 별도 지정 없음) | — |
+| ⑤ Codex 종료 후 배치 복귀·완료 처리 | `[DONE] Codex-A complete` · 검증 통과 | 3회 재시도 후 `[ERROR] … Exit code: 1` |
+| ⑥ 실패 시 오류 보고·운영 main 영향 없음 | — | commit 없음 · 작업 `done` 이동 · clone main 에 결과 없음 |
+| ⑦ 테스트·변경 파일 Evidence | codex-check PASS · 변경 2파일 기록 | codex-check PARTIAL (보고서 없음) |
+| ⑧ 승인 없는 반영·merge·push 없음 | 작업 폴더 repair 브랜치에 2파일 commit · push 요청 없음 (원격 추적 없음) · 운영 저장소 브랜치 무변경 | 동일 |
+- 리허설 부산물 (삭제 안 함): `fresh8_clone` 안 worktree 약 28개 · 리허설 작업 파일 `done/*.rehearsal*`·`*.prev` · clone 로컬 git 사용자 설정(리허설 커밋용).
+
+**실제 Codex 1회 실행 계획 (승인 대기)**: 같은 스크립트 `--real` · fresh clone 안 · 작업 = worktree 안 파일 1개 생성 + 지정 경로(작업 폴더 밖 `rehearsal 출력 폴더\outside_probe.txt`) 쓰기 1회 시도 + `curl https://example.com` 1회 시도 (우회·재시도 금지 · 결과만 기록) · 판정: 파일 생성됨·밖 쓰기 거부됨·네트워크 결과 기록·후처리 완료·commit 범위·push 없음 · 비용: API $0 · ChatGPT 플랜 사용량 1회 · **전제: 커밋 메모리 90% 미만 (지금은 게이트에 걸림)**.
+- 남은 위험: `%APPDATA%\npm` 의 예전 사본(우회 옵션 포함)은 이름으로 `codex-auto` 등을 직접 실행하면 여전히 쓰인다 → setup `04-commands` 재실행으로 갱신 필요 (전역 파일 변경 · 승인 필요).
+
+**회귀 (운영 폴더 · pytest 만)** [확인]: 193 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13 · 커밋 메모리 89.8% (게이트 90% 바로 아래).
