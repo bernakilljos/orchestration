@@ -300,7 +300,7 @@ def test_remote_commands_gated_and_dashboard_token_free():
     ra = (ROOT / "remote-agent.ps1").read_text(encoding="utf-8-sig")
     assert ra.index("Test-RemoteCommand $cmd") < ra.index("switch ($cmd.action)")   # 실행 전에 검증
     dash = (ROOT / "dashboard.py").read_text(encoding="utf-8")
-    assert not re.search(r"https://x:\{pat\}@", dash) and "GIT_CONFIG_PARAMETERS" in dash
+    assert not re.search(r"https://x:\{pat\}@", dash) and 'os.environ["GIT_CONFIG_COUNT"]' in dash
 
 
 # ---------- V1.1 A·B·D (2026-11-04) ----------
@@ -913,3 +913,22 @@ def test_standing_gate_blocks_once_shows_reason_then_allows(tmp_path):
 def test_six_guards_does_not_rerun_standing_gate():
     text = (ROOT / ".claude/hooks/stop-six-guards.sh").read_text(encoding="utf-8")
     assert "stop-standing-gate.sh" in text
+
+
+def test_same_pattern_candidates_sees_staged_changes(tmp_path):
+    """2026-11-06 실측: `git add` 뒤 검증하면 후보 0건 → HEAD 기준 비교로 스테이징 포함."""
+    import independent_verifier as iv
+    run = lambda *a: subprocess.run(["git", "-C", str(tmp_path), *a], capture_output=True, text=True)
+    run("init", "-q"); run("config", "user.email", "t@t"); run("config", "user.name", "t")
+    body = "if [ -f lock ]; then rm -f \"$lock_file_path_value\"; fi\n"
+    (tmp_path / "a.sh").write_text(body, encoding="utf-8"); (tmp_path / "b.sh").write_text(body, encoding="utf-8")
+    run("add", "-A"); run("commit", "-qm", "init")
+    (tmp_path / "a.sh").write_text("echo safe\n", encoding="utf-8")
+    run("add", "a.sh")                                   # 스테이징된 수정
+    found = iv.same_pattern_candidates(tmp_path)
+    assert any("b.sh:1" in w for f in found for w in f["where"])
+
+
+def test_dashboard_uses_documented_git_config_env():
+    dash = (ROOT / "dashboard.py").read_text(encoding="utf-8")
+    assert 'os.environ["GIT_CONFIG_COUNT"]' in dash and 'os.environ["GIT_CONFIG_PARAMETERS"]' not in dash   # 문서에 없는 내부 변수 X

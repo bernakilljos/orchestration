@@ -542,3 +542,17 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **공식 대조**: [pytest flaky](https://docs.pytest.org/en/stable/explanation/flaky.html) (본문 · 통제되지 않은 시스템 상태·공유 상태가 원인 · xfail 상시 격리는 위험) · [Win32 오류 1455](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--1300-1699-) (페이징 파일 부족 · 2025-07-14). 설치 pytest 9.1.1 · 문서는 stable 판.
 **회귀 (450796d · fresh clone 단독 실행)**: 위반 0 · phase2 21/21 · phase5 39/39 · phase12 16/16 · phase20 52/52 · phase3 26/26 · golden 13/13 · pytest 169 passed · failed 0 · 33 ERROR (스크립트형 수집 오류 · 기존 동일) · 긴급 종단 PASS · PowerShell 38/38·21/21 · 실제 근거 VERIFIED. 전체 로그 보존 (실패 이름 유실 방지).
 **보존 [확인]**: R160 기록 무변경 · goals 161 · tasks 155 · 승인 대기 3건 · Goal #77 FAILED · 로컬 커밋 ahead 13 · Statusline 변경 0
+
+## 37. B·C 남은 검증 (2026-11-06 · 원래 세션 인수 · 기준 2fae615 · 유료 $0 · push 안 함)
+**B — 공식 근거 대조**: git-scm.com `git-config` ENVIRONMENT · `git` · `gitcredentials` 확인 — ① `GIT_CONFIG_COUNT`/`KEY_<n>`/`VALUE_<n>` 만 문서화 · **`GIT_CONFIG_PARAMETERS` 는 문서에 없음** (7694ecd 에서 dashboard.py 가 쓰던 내부 변수) ② "credential.helper 빈 문자열 = helper 목록 초기화" ③ "!" 로 시작하면 shell snippet ④ 빈 `GIT_CONFIG_VALUE_<n>` 허용 여부는 문서에 없음 (Windows `os.environ` 은 빈 값을 지움 — §27 실측)
+- 최소 수정: dashboard.py → 문서화된 `GIT_CONFIG_COUNT=1` + helper 를 기존 자격 관리자 뒤에 덧붙임 + `GCM_INTERACTIVE=never` (대화창 X) · 가짜 토큰·존재하지 않는 호스트 시험: 자격 관리자 비대화 실패 후 helper 가 전달 rc 0 [확인]
+- 실제 LLM Judge 근거 형식 측정 = 유료 호출 → **BLOCKED (승인 대기)**
+**C — 같은 유형 탐색 실측** (`same_pattern_candidates` · 이 세션의 실제 결함 2건을 임시 clone 에 재현):
+| 재현 | 결과 |
+|---|---|
+| lock 삭제 결함 · 사본만 고침 (원본 plugins 쪽 그대로) · 미스테이징 | 후보 6건 = 전부 정탐 (원본 쪽 같은 줄) [확인] |
+| 같은 경우 · **`git add` 후 검증** | **후보 0건 (미탐)** → `git diff HEAD` 기준으로 수정 · 시험 추가 |
+| 토큰 URL · ps1 만 고침 (bat·py 는 문법 다름) | 0건 — 글자 그대로 비교 방식의 한계 (미수정 · 기록) |
+- 자동 실행 여부: Stop 게이트·golden·SessionEnd 정리는 자동 [확인 §30] · 같은 유형 후보는 `/verify`·Judge 경로에서 호출 (d7af789) · 문서 규칙과 자동 실행 구분 유지
+**회귀 (commit 87% · 여유 3.2GB 회복 후)**: pytest 171 passed · failed 0 (33 수집 오류 기존) · phase5 39/39 · phase2 21/21 · phase3 26/26 · golden 13/13 · test_phase20 54/54 — §30 의 메모리 BLOCKED 는 이번에 해소 확인
+**판정**: B PARTIAL (공식 대조·수정 [확인] · 실제 Judge 측정 BLOCKED) · C PARTIAL (정탐 확인 · 스테이징 미탐 수정 · 문법 다른 같은 유형 미탐 남음)

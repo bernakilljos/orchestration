@@ -54,9 +54,13 @@ def use_git_credential(pat):
     if not pat:
         return
     os.environ["ORCH_GH_PAT"] = pat
-    # `git -c credential.helper= -c credential.helper=...` 와 같은 효과 (Windows 는 빈 환경변수 값을 지우므로 COUNT 방식 X)
-    os.environ["GIT_CONFIG_PARAMETERS"] = ("'credential.helper=' "
-                                          "'credential.helper=!f() { echo username=x; echo password=$ORCH_GH_PAT; }; f'")
+    # 공식 문서의 GIT_CONFIG_COUNT/KEY/VALUE 사용 (GIT_CONFIG_PARAMETERS 는 문서에 없는 내부 변수 · 2026-11-06 대조).
+    # Windows 는 빈 환경변수 값을 지워 helper 목록 초기화('' 값)를 못 하므로, 기존 자격 관리자 뒤에 helper 를 덧붙이고
+    # 자격 관리자 대화창은 끈다 (gitcredentials: helper 는 자격을 얻을 때까지 순서대로 호출)
+    os.environ["GIT_CONFIG_COUNT"] = "1"
+    os.environ["GIT_CONFIG_KEY_0"] = "credential.helper"
+    os.environ["GIT_CONFIG_VALUE_0"] = "!f() { echo username=x; echo password=$ORCH_GH_PAT; }; f"
+    os.environ["GCM_INTERACTIVE"] = "never"
 
 def gh_headers():
     return {"Authorization":f"token {get_pat()}","Accept":"application/vnd.github.v3+json"}

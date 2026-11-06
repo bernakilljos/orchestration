@@ -80,7 +80,8 @@ def changed_paths(cwd: Path) -> List[str]:
 
 def same_pattern_candidates(cwd: Path, limit: int = 20) -> List[Dict[str, Any]]:
     """이번 변경에서 고친(지운) 줄이 저장소 다른 곳에 그대로 남은 위치 — 같은 유형 누락 후보. 판단은 사람·Judge 몫."""
-    diff = _run_git_in(cwd, ["diff", "-U0"]) or ""
+    # HEAD 기준: 스테이징한 변경도 포함 (2026-11-06 실측 — `git add` 뒤 검증하면 후보 0건이었다)
+    diff = _run_git_in(cwd, ["diff", "HEAD", "-U0"]) or ""
     removed = {ln[1:].strip() for ln in diff.splitlines() if ln.startswith("-") and not ln.startswith("---")}
     added = {ln[1:].strip() for ln in diff.splitlines() if ln.startswith("+") and not ln.startswith("+++")}
     # 들여쓰기만 바뀌거나 옮긴 줄은 고친 줄이 아니다 (실제 fix 커밋 30건 측정에서 자기 자신을 잡았다)
