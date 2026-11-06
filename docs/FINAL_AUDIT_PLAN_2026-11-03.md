@@ -726,3 +726,9 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 디스크 차단 시험 분리: 운영 폴더 pytest 의 phase12 3건 (sandbox 생성) = 여유 8.42GB < 10GB 로 **BLOCKED (디스크)** · 하한을 낮춘 시험(§41 2차)은 로직 확인용으로만 별도 기록 · 운영 환경 통과로 세지 않음.
 
 **회귀 (운영 폴더 · pytest 만 · 운영 디스크 하한 그대로)** [확인]: 187 passed · 3 failed = phase12 sandbox 생성 3건 (사유 "여유 8.42GB < 최소 10.0GB" · **BLOCKED 디스크**) · 33 수집 오류 기존 그대로 (스크립트형 시험 파일이 pytest 수집 시 fixture 없음) · golden 13/13. 새 시험 2 (worker 커밋·push 승인) 통과 · 종단 시험 외부 근거 시나리오 통과.
+
+**fresh clone eb207af (sparse 실제 적용 확인: `/* !/docs/screens/` · checkout 후 `docs/screens` 없음 · clone 으로 디스크 0.05GB 감소)** [확인]
+| 구분 | 결과 |
+|---|---|
+| 운영 디스크 하한 그대로 | verify-fresh-clone 위반 0 · phase3 26/26 · phase12 스크립트 통과 · golden 13/13 · pytest 187 passed · **BLOCKED (디스크 8.37GB < 10GB)**: pytest phase12 sandbox 3건 · phase2 (sandbox 0) · phase5 sandbox 생성 · 33 수집 오류 기존 그대로 |
+| 하한만 낮춘 로직 확인 (운영 통과로 세지 않음) | phase12 pytest 16/16 · phase2 21/21 · phase5 39/39 |
