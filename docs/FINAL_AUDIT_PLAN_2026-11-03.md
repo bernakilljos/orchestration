@@ -738,3 +738,23 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 삭제: fresh_ed60f24 · fresh2_ed60f24 · fresh3_e44422a · fresh5_39b0574 만 (경로·origin 재확인 후 삭제하는 스크립트) · 시험 로그 폴더와 fresh6_clone 은 유지.
 - 결과: 디스크 여유 8.36GB → 18.23GB (+9.87GB · 계산 9.77GB) · 운영 저장소 `git fsck --connectivity-only` 오류 0 · worktree 26 그대로 · HEAD 79b8338 · 로컬 커밋 5 보존.
 - 게이트: 하한 `min_free_gb` 10 그대로 (환경 변수 덮어쓰기 없음) · 메모리 게이트 정상 · 디스크로 막혔던 phase12 pytest 운영 하한 그대로 16/16 통과 → 운영 sandbox 생성 가능 상태 복구.
+
+## 43. V1.1 최종 검증 준비 (2026-11-06 · 기준 c4736ec · 읽기 전용 · 실행·push·유료 0)
+
+**로컬 커밋 6개 [확인]**: 76a550b · 39b0574 · 6b40d5b · eb207af · 79b8338 · c4736ec · 14 파일 +685 −25 · 원격 origin/main = b2324c9 (fetch 후) · 원격에만 있는 커밋 0 · 추가 685줄 비밀정보·개인 경로 패턴 0 (자체 패턴 검사 · gitleaks 미설치 · push 시 kit 시크릿 hook 재검사).
+
+**Codex·Gemini 실행 조건 [확인 · 비밀값 미출력]**
+| CLI | 버전·모델 | 인증 | kit 실행 방식 | 공식 문서 [2026-11-06 본문] |
+|---|---|---|---|---|
+| Codex | 0.130.0 · gpt-5.3-codex · reasoning medium | ChatGPT 로그인 (API 키 없음) | `codex-a --auto` = `--dangerously-bypass-approvals-and-sandbox` (sandbox 없음 · 운영 폴더) | ChatGPT 플랜 사용 한도 적용 · "API token prices are separate from subscription usage" (learn.chatgpt.com/docs/pricing) · `codex exec` 기본 read-only sandbox · `--full-auto` 는 문서상 미지원 → 설치 버전은 아직 수용 (도움말 정상) |
+| Gemini | 0.39.1 | 개인 Google OAuth (API 키 없음) | `gemini --yolo` (도구 자동 승인 · 문서상 deprecated → `--approval-mode=yolo`) | 개인 로그인 1000 요청/일 · 단 "Unpaid tier … replaced by Antigravity CLI on June 18th, 2026" (geminicli.com/docs/resources/quota-and-pricing) → 개인 무료 계정으로 실제 동작 여부 [미확인] |
+- 위험 기록: kit Codex 워커는 sandbox 없이 운영 폴더에서 실행 → 실검증은 워커 대신 임시 저장소 + `-s workspace-write` 로.
+
+**최소 실검증 시나리오 (승인 대기 · 미실행)**
+| 작업 | 시나리오 | 호출 | 비용 상한 | PASS 조건 |
+|---|---|---|---|---|
+| Codex 실제 경로 | 임시 git 저장소(버그·시험·요구사항) · `codex exec -s workspace-write` 1회 → worker_git (임시 bare 원격) → codex_check | Codex 1회 | API $0 · ChatGPT 플랜 사용량 소모 | 허용 파일만 변경 · 관련 pytest 실제 실행 결과와 보고 판정 일치 (PASS 또는 근거 부족 시 PARTIAL 로 정확히) · 소유 파일만 커밋 · push 는 승인 대기 · 원격 무변경 |
+| Gemini 실제 경로 | 임시 폴더 · gemini-a 검증 프롬프트 1회 → review_verdict | Gemini 1회 | $0 (개인 OAuth 무료 한도) | 실제 보고서를 review_verdict 가 수동 판독과 같게 분류 (실행 출력 없는 PASS → UNVERIFIED) · 인증 실패 시 BLOCKED (Antigravity 이전) |
+| Judge 최신 증거 | 수정은 고정 편집(가짜) · Judge 만 실제 `claude -p opus-5-5` 1회 · 외부 패키지 공식 자료 기록 + 자동 회귀 포함 · 일일 한도는 임시 DB 에만 | Judge 1회 | 호출당 $2 (정책 기본) · 예상 약 $0.36 (과거 15회 평균 0.34·최대 0.36) | judge_source llm_agent · Judge 가 회귀 실행 결과를 근거로 인정 ([미확인] 아님) · 외부 자료 인용과 diff 사용 관련성 언급 · 최종 판정이 근거와 일치 |
+| Push | 일반 push 6커밋 | — | — | push 직전 원격 b2324c9 재확인 · 강제 없음 |
+| E Statusline | 사용자 VS Code 캡처 | — | — | 캡처에서 왼쪽 │ 정렬·빈 줄·폭 확인 (FROZEN 디자인 · 문자열 시험 유지) |
