@@ -574,3 +574,33 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **회귀**: pytest 175 passed (171 + 신규 4) · 33 수집 오류 기존 그대로 · golden 13/13.
 
 **한계 [추정]**: 표지 판정은 단어·문장 끝 규칙이라 완전하지 않다. 존댓말 평가문 안에 지시가 섞인 경우(예: "~확인 바랍니다")는 보고로 볼 수 있고, 감사 보고서처럼 "~함"으로 끝나는 결함 목록(78건 중 1건)은 지시로 등록되지 않는다. 그런 메시지는 직접 쓴 한 줄("이거 고쳐줘")을 붙이면 그 글로 판정한다.
+
+## 39. V1.1 B·C·E 승인 불필요 작업 (2026-11-06 · 기준 38d3d7b · 유료 $0 · push·삭제·캡처 0)
+
+**B — Mock·수동 판정과 실제 LLM Judge 분리**
+- 발견 [확인]: `judge_absorb` 는 판정 JSON 출처를 기록하지 않았다 → 실제 Agent Judge·CLI stdin 손 작성·시험 가짜 응답이 같은 VERIFIED 로 남음. 운영 judge-queue 208건: VERIFIED 19 · 실제 Judge Agent 실행 기록 (metrics `claude-agent:judge`) 14회 $4.72 → 최소 5건은 실제 Judge 가 아님. phase3 시험 test_06 이 손으로 쓴 응답을 운영 queue 에 기록하는 것이 원인 후보 [추정]. 요구사항별 판정이 있는 handoff 0건 (§34 와 동일).
+- 수정: `judge_source()` · `final_verdict.judge_source.kind` = `llm_agent` (Agent 세션 ID + 청구 비용 둘 다 있을 때만) · `agent_unattested` (mock Agent) · `cli_stdin` · `unattested` (직접 호출). 자동 체인은 실제 Agent 결과를 그대로 넘김. **판정 결과는 바꾸지 않음** (기록 분리만 · 과거 기록 무변경).
+- `[확인]` 글자만으로 통과하는 경로: anchors 가 있으면 차단 (§31) · anchors 없는 경로 = 요구사항 스냅샷 없는 handoff (현재 0건 · judge_handoff 는 요구사항이 있으면 항상 anchors 생성) [확인].
+- 시험 +3: 출처 4종 구분 · CLI 경로 `cli_stdin` · 체인이 Agent 결과 전달. HEAD 코드 3/3 FAIL → 수정 후 PASS.
+
+**C — 실제 수정 체인 종단 (무료)**
+- 발견 [확인]: 자동 체인(`agent_repair_chain`) 이 실제 Judge 에 보내는 프롬프트에는 같은 유형 후보가 없었다 (handoff 파일에만 있음) → 자동 수정에서 같은 유형 누락을 아무도 판단하지 않음.
+- 수정: 체인이 `same_pattern_candidates` 를 Judge 프롬프트에 넣고 남은 동일 결함은 `missing_requirements` 로 보고하게 함 (기존 필드 → REPAIRING).
+- 종단 시험 `chain_e2e_driver.py` (신규) + test_phase20: 임시 git 저장소 · ROOT·DB·sandbox root 모두 임시 · 유료 Agent 만 가짜 · sandbox·runner·pytest·회귀·통계 판정·judge_absorb·commit·fast-forward 반영은 실제 코드.
+  | 시나리오 | 결과 [확인] |
+  |---|---|
+  | 하드코딩 수정 (대상 시험만 통과) | 회귀 시험 자동 선정·실패 → 1회 재시도 후 실패 → **Judge 호출 전 중단** |
+  | 새 외부 패키지 import | Judge VERIFIED 응답에도 외부 자료 미확인 → UNVERIFIED · 반영 안 함 |
+  | 근본 수정 | 회귀 통과 · Judge 프롬프트에 같은 버그 복사본 `label.py` 전달 · VERIFIED · 대상 브랜치만 반영 · main 원본 무변경 · 출처 `agent_unattested` |
+  HEAD 체인 코드에서 FAIL (같은 유형 후보 미전달) → 수정 후 PASS.
+- 남은 공백: 실제 유료 Agent 로 이 체인을 돌린 기록 없음 (BLOCKED · 승인 필요) · 같은 유형 탐색은 글자 그대로 비교라 문법이 다른 복사본은 못 찾음 (§37 그대로) · 자동 체인은 공식 문서를 스스로 읽지 않고 미확인이면 멈춤 (설계상 · 외부 페이지를 무인 체인에 넣지 않음).
+
+**E — Statusline 문자열 검증 (디자인 무변경)**
+- 실제 설정 경로 `statusline-wrapper.sh → statusline_context.py` 출력 (COLUMNS=120) [확인]: 14행 · 빈 줄 3 (그룹 구분 · 코드 `out.append("")` 의도된 배치) · 모든 행 폭 ≤ 119 · 내용 11행 모두 왼쪽 `│` 가 13번째 셀 (wcwidth · 이모지+VS16=2셀) · 서브 보조 행도 같은 계산 (2+11).
+- 공식 문서 [확인 · https://code.claude.com/docs/en/statusline · 2026-11-06 · 날짜 표기 없음]: 출력 한 줄 = 한 행 · 폭은 `COLUMNS` 환경변수 · 이스케이프 코드가 있는 여러 줄 출력은 렌더 문제가 더 잘 생김. 빈 줄 처리·커서 이동 코드(CHA)·VS Code 렌더는 **문서에 없음** [미확인].
+- 문서·코드 불일치 [확인]: `operational-freeze.md` 는 CHA `ESC[18G` 를 필수 전제로 적었으나 96a0a0a (10-27 11:05) 에서 제거됐고 그 뒤 동결 상태에도 없음. 동결 대상이라 수정 안 함 · 기록만.
+- 시험 +1: 실제 출력의 정렬·폭·빈 줄 수. **실제 화면 판정은 이 시험으로 하지 않음** → VS Code 캡처로만.
+
+**운영 데이터 사고 방지 [확인]**: 스크립트형 시험 phase2·3·5·12 는 운영 DB 에 직접 쓴다 (sandbox 만 격리). 운영 폴더에서 회귀 묶음을 시작했다가 pytest 단계에서 중단 (스크립트형 시험 실행 0 · 소유 확인한 시험 프로세스만 종료) · goals 161 · tasks 155 · Goal #77 FAILED 유지. 스크립트형 시험은 fresh clone 에서만 실행.
+**Ledger 관찰 [확인]**: Push 승인 지시 = R171 `execute` 정상 등록 · 이번 개발 지시 = R172 `approval_required` (사유 '유료') — 부정문 아닌 "유료 Judge 실검증을 분리해 기록" 줄의 단어 감지 · 오분류 사례로 기록 · 상태 변경 안 함.
+**회귀 (운영 폴더 · pytest 만)**: 180 passed · failed 0 · 33 수집 오류 기존 그대로.

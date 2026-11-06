@@ -577,8 +577,19 @@ def check_requirement_verdicts(llm_verdict: Dict[str, Any], required_ids: List[s
     return {"ok": True, "status": "VERIFIED", "checked": list(required_ids), "unknown_ids": unknown}
 
 
+def judge_source(agent_run: Optional[Dict[str, Any]] = None, kind: str = "unattested") -> Dict[str, Any]:
+    """V1.1 B: Judge 판정이 어디서 왔는지. 실제 LLM 실행 = Agent 세션 ID 와 청구 비용이 둘 다 있을 때만.
+    그 외 (CLI stdin·손으로 쓴 JSON·mock) 는 내용이 같아도 실제 Judge 로 세지 않는다."""
+    run = agent_run or {}
+    if run.get("agent_session_id") and run.get("cost_usd") is not None:
+        return {"kind": "llm_agent", "agent_session_id": run.get("agent_session_id"),
+                "model": run.get("model"), "cost_usd": run.get("cost_usd")}
+    return {"kind": "agent_unattested" if agent_run is not None else kind}
+
+
 def judge_absorb(goal_id: int, judge_result_json: str,
-                 required_ids: Optional[List[str]] = None) -> Dict[str, Any]:
+                 required_ids: Optional[List[str]] = None,
+                 source: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """agent-01-judge subagent 결과를 받아 최종 verdict 결합.
 
     사용자 지시: "Judge 가 승인하더라도 필수 테스트 실패 시 VERIFIED 금지"
@@ -652,6 +663,8 @@ def judge_absorb(goal_id: int, judge_result_json: str,
                  "reasons": final["reasons"] + [f"external source not checked: {ext['unchecked']}"]}
     # 검증 범위 표시: 요구사항별로 확인했는지, 요구사항 없이 diff·테스트로만 판정했는지
     final["requirements_scope"] = "checked" if required_ids else "not_configured"
+    # Mock·수동 판정과 실제 LLM Judge 를 분리 기록 (판정 결과는 바꾸지 않음 · 감사 시 구분용)
+    final["judge_source"] = source or judge_source()
     data["llm_verdict"] = llm_verdict
     data["final_verdict"] = final
     data["status"] = "completed"
@@ -708,7 +721,7 @@ def _cli_main(argv):
             return 2
         gid = int(argv[2])
         stdin_data = sys.stdin.read()
-        r = judge_absorb(gid, stdin_data)
+        r = judge_absorb(gid, stdin_data, source=judge_source(kind="cli_stdin"))
         print(json.dumps(r, ensure_ascii=False, indent=2))
         return 0 if r.get("ok") else 1
     try:

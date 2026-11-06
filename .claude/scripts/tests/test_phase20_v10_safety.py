@@ -932,3 +932,76 @@ def test_same_pattern_candidates_sees_staged_changes(tmp_path):
 def test_dashboard_uses_documented_git_config_env():
     dash = (ROOT / "dashboard.py").read_text(encoding="utf-8")
     assert 'os.environ["GIT_CONFIG_COUNT"]' in dash and 'os.environ["GIT_CONFIG_PARAMETERS"]' not in dash   # 문서에 없는 내부 변수 X
+
+
+def test_judge_source_separates_real_llm_from_manual(tmp_path, monkeypatch):
+    """2026-11-06 V1.1 B: 판정 내용이 같아도 출처를 기록 — 실제 Agent 실행(세션 ID+청구 비용)만 llm_agent."""
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    ok = {"satisfies_requirement": True, "missing_requirements": [], "unexpected_side_effects": [],
+          "scope_adequacy": "ok", "confidence": 9, "recommendation": "VERIFIED"}
+
+    def absorb(source=None):
+        (tmp_path / "goal-1.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []}}),
+                                              encoding="utf-8")
+        return iv.judge_absorb(1, json.dumps(ok), source=source)["final_verdict"]["judge_source"]["kind"]
+    real_run = {"agent_session_id": "s-1", "cost_usd": 0.31, "model": "claude-opus-5-5"}
+    assert absorb(iv.judge_source(real_run)) == "llm_agent"
+    assert absorb(iv.judge_source({"ok": True, "result": "{}"})) == "agent_unattested"   # mock Agent
+    assert absorb(iv.judge_source({"agent_session_id": "s-1", "cost_usd": None})) == "agent_unattested"
+    assert absorb() == "unattested"                                                     # 직접 호출
+    saved = json.loads((tmp_path / "goal-1.json").read_text(encoding="utf-8"))
+    assert saved["final_verdict"]["status"] == "VERIFIED"                               # 판정 자체는 그대로
+
+
+def test_judge_absorb_cli_records_stdin_source(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    monkeypatch.setattr(iv, "JUDGE_QUEUE", tmp_path)
+    (tmp_path / "goal-7.json").write_text(json.dumps({"stat_verdict": {"status": "VERIFIED", "reasons": []}}),
+                                          encoding="utf-8")
+    monkeypatch.setattr(sys, "stdin", __import__("io").StringIO(json.dumps(
+        {"satisfies_requirement": True, "confidence": 9, "recommendation": "VERIFIED"})))
+    iv._cli_main(["iv", "judge-absorb", "7"])
+    saved = json.loads((tmp_path / "goal-7.json").read_text(encoding="utf-8"))
+    assert saved["final_verdict"]["judge_source"]["kind"] == "cli_stdin"
+
+
+def test_real_chain_passes_agent_run_as_judge_source():
+    src = (SCRIPTS / "lib" / "real_repair_chain.py").read_text(encoding="utf-8")
+    assert "source=_iv.judge_source(jd)" in src
+
+
+def test_repair_chain_end_to_end_free(tmp_path):
+    """2026-11-06 V1.1 C: 실제 agent_repair_chain 종단 (유료 Agent 만 가짜 · sandbox·runner·pytest·회귀·Judge 결합·반영 실제).
+    하드코딩 수정 → 자동 회귀 실패로 Judge 전 중단 · 새 외부 패키지 → 공식 자료 미확인으로 반영 X · 근본 수정 → 같은 유형
+    후보가 Judge 에 전달되고 반영 · main 원본 무변경."""
+    r = subprocess.run([sys.executable, str(SCRIPTS / "tests" / "chain_e2e_driver.py"), str(ROOT), str(tmp_path)],
+                       capture_output=True, text=True, encoding="utf-8", timeout=600,
+                       env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
+    hard, ext, good, repo = json.loads(r.stdout)
+    assert hard["failed_stage"] == "regression" and not hard["judge_called"]
+    assert hard["regression"]["selected"] == ["demo/test_regress.py"] and hard["regression"]["results"][0]["retried"]
+    assert ext["failed_stage"] == "judge_verdict" and ext["final"]["external_scope"] == "not_checked"
+    assert good["ok"] and good["final"]["status"] == "VERIFIED" and good["judge_prompt_shows_label_copy"]
+    assert good["final"]["judge_source"]["kind"] == "agent_unattested"          # mock Judge 는 실제 Judge 로 안 셈
+    assert "kg * 3" in good["apply_target_file"] and "kg * 2" in repo["main_branch_file"] and repo["main_source_unchanged"]
+
+
+def test_statusline_output_rows_align_and_fit_columns():
+    """2026-11-06 V1.1 E (문자열 검증 · FROZEN 디자인 무변경): 실제 출력에서 모든 내용 행의 왼쪽 │ 가 같은 셀 ·
+    폭 ≤ COLUMNS-1 · 그룹 구분 빈 줄 3개. 실제 VS Code 화면 렌더(이모지 폭·빈 줄 처리)는 이 시험으로 판정하지 않는다."""
+    import re
+    from wcwidth import wcswidth
+    inp = json.dumps({"session_id": "p20-sl", "cwd": str(ROOT), "model": {"id": "claude-opus-5-5"},
+                      "workspace": {"current_dir": str(ROOT), "project_dir": str(ROOT)}})
+    r = subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "statusline_context.py")], input=inp,
+                       capture_output=True, text=True, encoding="utf-8", timeout=60,
+                       env={**os.environ, "COLUMNS": "120", "CLAUDE_PROJECT_DIR": str(ROOT)})
+    strip = lambda s: re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", s)
+    rows = r.stdout.rstrip("\n").split("\n")
+    content = [x for x in rows if strip(x).strip()]
+    assert r.returncode == 0 and len(content) >= 8
+    assert sum(1 for x in rows if not strip(x).strip()) == 3
+    assert all(wcswidth(strip(x)) <= 119 for x in rows)
+    assert {wcswidth(strip(x.split("│")[0])) for x in content} == {13}

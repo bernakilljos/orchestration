@@ -604,6 +604,13 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     out["stages"].append({"stage": "stat_judge", "verdict": jh.get("stat_verdict")})
     if not jh.get("requires_llm_judge"):
         return fail("stat_judge")
+    # V1.1 C: 고친 줄이 그대로 남은 다른 위치 — 자동 체인의 Judge 도 같은 유형 누락을 판단하게 (handoff 에만 있던 정보)
+    same = _iv.same_pattern_candidates(Path(cwd))
+    out["same_pattern_candidates"] = same
+    same_block = ("Unchanged locations still containing a line this fix removed (same-defect candidates):\n"
+                  + "\n".join(f"- {c['line']} -> {', '.join(c['where'])}" for c in same[:5])
+                  + "\nIf any of them carries the same defect and is not fixed, list it in missing_requirements.\n"
+                  if same else "")
     judge_prompt = (
         "You are an independent code-review judge. Do not trust the developer. "
         "Base your verdict only on the diff, the test results and the files here. " + _iv.FACT_TAG_RULE + "\n"
@@ -611,7 +618,8 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         f"Diff:\n{out['diff'][:3000]}\n"
         f"Tests after fix (exit {vr.get('exit_code')}):\n{(vr.get('stdout') or '')[-400:]}\n"
         f"Allowed paths: {allow_paths}. Tests must not be modified: {protected_paths}.\n"
-        "Check: real root-cause fix (not hardcoded return / test bypass), scope, side effects. "
+        + same_block
+        + "Check: real root-cause fix (not hardcoded return / test bypass), scope, side effects. "
         + (_requirements_block(req) + "For EACH requirement id report met / unmet / unverifiable with concrete "
            "evidence (file:line or test). Requirements not covered by tests still count. " if req else "")
         + "Reply with ONLY a JSON object: "
@@ -632,7 +640,8 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     verdict_json = _first_json_object(jd.get("result", "")) if jd.get("ok") else None
     if not verdict_json:
         return fail("llm_judge", error="judge 결과 JSON 없음")
-    ab = _iv.judge_absorb(repair_goal_id, json.dumps(verdict_json), required_ids=req["ids"] if req else None)
+    ab = _iv.judge_absorb(repair_goal_id, json.dumps(verdict_json), required_ids=req["ids"] if req else None,
+                          source=_iv.judge_source(jd))
     final = (ab.get("final_verdict") or {}).get("status")
     out["judge"] = {"llm_verdict": verdict_json, "final_verdict": ab.get("final_verdict")}
     out["stages"].append({"stage": "llm_judge", "agent_session_id": jd.get("agent_session_id"),
