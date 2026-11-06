@@ -886,3 +886,29 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - plugin check [확인]: copied 0 · drift 0 · orphan 5 (`--prune` 실행 안 함).
 - 리허설 worktree [확인]: `fresh8_clone` worktree 목록 27줄 = clone 본체 1 + sandbox **26** (§47 의 "27개" 는 목록 줄 수 · 정정) · 잠금 0 · 최종 수정 17:36~17:56 · 사용 중 작업 없음 · 삭제 안 함.
 - 실제 Codex 1회 실행 전제: 커밋 메모리 **92.0%** (게이트 90% 초과 · 아직 실행 불가) · 디스크 여유 18GB.
+
+## §49 메모리 게이트 차단 원인 · R184 오탐 진단 (2026-11-07 · 무료·읽기 전용)
+
+**메모리 측정 기준 [확인]**
+- 게이트는 물리 RAM 이 아니라 커밋(가상 메모리)을 본다: `repair_sandbox.commit_memory()` = `GetPerformanceInfo` CommitTotal/CommitLimit · 차단 = 사용률 > 90% 또는 여유 < 2GB (`.claude/config/sandbox-policy.json`).
+- 01:09 측정: 커밋 23.3/25.69GB = **90.7%** (성능 카운터 `PercentCommittedBytesInUse` 90 · 같은 값) · 물리 RAM 67% (여유 5.1GB) · 페이징 파일 고정 10GB (`AutomaticManagedPagefile=False` · 사용 2.2GB · 최고 3.4GB).
+- 11-07 00:59 보고의 "98%" 는 성능 카운터 순간값 1회 · 10분 로그 최고치는 95.5% (11-03) · [추정] 일시 상승.
+- 프로세스 private 합 19.07GB · 나머지 약 4.2GB 는 커널·드라이버·공유 메모리 (프로세스별로 나뉘지 않음 · [미확인] 세부).
+- 이름별 상위: Code.exe 4.40GB(23개) · claude.exe 2.33GB(3개: 이 세션 0.94 · orchestration_v1 다른 세션 0.70 · IFRS_PJT 세션 0.69) · msedgewebview2 1.79 · msedge 1.72 · sqlservr 0.85 · node 0.66.
+- 이 세션의 자식 프로세스는 statusline·MCP filesystem 등 수십 MB · 남은 테스트·워커 없음.
+
+**지속 증가 여부 (`.claude/logs/orca-10min-loop.log` 반일 단위) [확인]**
+- 커밋 사용량 최저: 11-02 15.4GB → 11-04 17.1 → 11-05 20.4 → 11-06 21.8 → 11-07 22.7GB.
+- 같은 기간 claude 세션 1→3 · VS Code 프로세스 24→27 · 부팅 11-02 09:09 이후 재부팅 없음.
+- 한도는 19.69 → 25.69GB 로 커짐 (11-03~11-05 사이 · 페이징 파일 확장 [추정]) · 그래서 사용량이 늘어도 사용률은 78~95% 사이.
+- 결론: 사용량 증가는 열린 세션·창 수 증가와 시간상 겹친다 · 누수라고 단정하지 않는다 ([미확인]: 특정 프로세스의 단독 증가).
+
+**R184 등록 원인 (`.claude/hooks/prompt/ledger_auto_register.py` 재현) [확인]**
+- 메시지는 붙여 넣은 글만 있음 → `_intent_text` 가 지시 표지를 찾음 → `_IMPERATIVE_END_RE` 가 "…그대로 보존하세요." 의 `하세요.` 에 일치 → `pasted_directive` · `execute`.
+- 승인 판정 `_needs_approval`: 표 칸 "P1 최신 Judge 증거 평가 유료 1회 승인 대기" 줄에 `유료` 일치 (부정 표지 없음) → `approval_required` · reasons ['유료'].
+- 마지막 줄 "…유료 실행 … 승인한 것으로 취급하지 않겠습니다" 는 `않` 으로 제외됨 (정상).
+- 판정: **오탐 가능성 높음** — 평가 보고 안의 권고문(`~하세요`)과 상태표의 단어가 지시·승인 요청으로 읽혔다. R167~R170 과 같은 계열.
+- Ledger R184 는 변경하지 않음 (approval_required 그대로 · Stop 을 막지 않음).
+- 고칠 방향 (미적용 · 별도 승인): 붙여 넣은 글에서 `~하세요` 권고는 지시 표지에서 빼고 `대상:` 줄·`지시다/승인한다` 문구만 인정 · 표 줄(탭/4칸 공백 구분)의 `유료`·`승인 대기` 는 승인 요청에서 제외.
+
+**Codex 실행 조건 [확인]**: 게이트 90% 유지 · 실제 모델 호출·worktree 생성/삭제 안 함 · 지금 실행해도 `COMMIT LOW … 시작 보류` 로 거부된다 (로그 11-06 18:00~18:20 같은 사유).
