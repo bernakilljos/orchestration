@@ -805,3 +805,5 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **sandbox 실제 차단 [미확인]**: Codex 0.130.0 `-s workspace-write` 수용 확인 · 폴더 밖 쓰기·네트워크 차단은 실제 `codex exec` 로만 확인 가능 (가짜 CLI 시험은 차단 증거가 아님) · 네트워크는 `~/.codex/config.toml` 에 `sandbox_workspace_write.network_access` 설정 없음 → 기본값에 따름 (기본값 문서 본문 미확인).
 
 **회귀 (운영 폴더 · pytest 만)** [확인]: 193 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13 · 새 시험 2 (후처리·격리) HEAD 원본 FAIL → 수정 후 PASS.
+
+**fresh clone 6a57cf9 (sparse · 운영 디스크 하한 그대로)** [확인]: verify-fresh-clone 위반 0 · pytest 193 passed (33 수집 오류 기존 그대로) · phase2 21/21 (이번엔 첫 실행 통과 · 이전 첫 실행 실패 원인은 계속 미확인) · phase3 26/26 · phase5 39/39 · phase12 통과 · golden 13/13.
