@@ -611,6 +611,18 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
                   + "\n".join(f"- {c['line']} -> {', '.join(c['where'])}" for c in same[:5])
                   + "\nIf any of them carries the same defect and is not fixed, list it in missing_requirements.\n"
                   if same else "")
+    # 2026-11-06: 외부 패키지를 쓰는 변경이면 공식 자료 기록(URL·버전·날짜·본문 인용)을 Judge 에 — 인용 존재만으로는
+    #   공식 근거 입증이 아님 · 인용이 이 diff 의 사용 방식을 실제로 뒷받침하는지 Judge 가 비교
+    deps = _iv.external_dependencies(Path(cwd))
+    ev_rows = _iv.external_evidence_rows(deps)
+    ext_block = ("External packages used by this change and their official-source records (a quote alone is not proof: "
+                 "check that the quoted official text really supports how the diff uses the package; if it does not, "
+                 "or a package has no 'read' record, list it in missing_requirements):\n"
+                 + "\n".join(f"- {r['package']} {r.get('version')} {r['url']} [{r['level']} {r.get('checked_at')}]: "
+                             f"{r.get('note', '')[:300]}" for r in ev_rows[:10])
+                 + "".join(f"\n- {p}: no official-source record" for p in deps
+                           if p not in {r['package'] for r in ev_rows if r['level'] == 'read'})
+                 + "\n" if deps else "")
     # 2026-11-06 실검증: 자동 회귀를 실행·통과했는데 Judge 에 결과가 없어 [미확인] 으로 판정됨 → 실행 결과를 증거로 전달
     reg = out["regression"]
     reg_block = ("Related regression tests auto-selected and run by the pipeline after the fix: "
@@ -627,6 +639,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         + reg_block +
         f"Allowed paths: {allow_paths}. Tests must not be modified: {protected_paths}.\n"
         + same_block
+        + ext_block
         + "Check: real root-cause fix (not hardcoded return / test bypass), scope, side effects. "
         + (_requirements_block(req) + "For EACH requirement id report met / unmet / unverifiable with concrete "
            "evidence (file:line or test). Requirements not covered by tests still count. " if req else "")

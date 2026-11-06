@@ -153,6 +153,20 @@ def external_scope(packages: List[str]) -> Dict[str, Any]:
     return {"scope": scope, "unchecked": unchecked, "blocked": blocked}
 
 
+def external_evidence_rows(packages: List[str]) -> List[Dict[str, Any]]:
+    """패키지별 공식 자료 기록 (read·failed · 최신 순) — Judge 가 인용과 실제 코드 사용의 관련성을 비교하도록 넘긴다."""
+    rows = []
+    if packages and EXTERNAL_EVIDENCE.exists():
+        for line in EXTERNAL_EVIDENCE.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except ValueError:
+                continue
+            if row.get("package") in packages and row.get("level") in ("read", "failed"):
+                rows.append(row)
+    return rows[::-1]
+
+
 def _verified_output(task_ids: List[str]) -> str:
     """goal 의 verified=1 실행 기록 (명령 + 출력 끝부분) — 개발 Agent 보고가 아닌 runner 기록."""
     if not task_ids or not DB.exists():

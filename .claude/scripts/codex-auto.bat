@@ -108,6 +108,9 @@ powershell -NoProfile -Command "[int][double]::Parse((Get-Date -UFormat %%s)) | 
 rem --- Update SQLite heartbeat (watchdog integration) ---
 python "%PROJECT_ROOT%\.claude\scripts\lib\worker_heartbeat.py" "codex-%CHILD_ID%" "codex" >nul 2>&1
 
+rem --- 2026-11-06: 사용자가 승인(/approve push-<task>)한 push 만 실행 (등록한 커밋 · 강제 없음 · 원격이 바뀌었으면 안 함) ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" push-approved "%PROJECT_ROOT%" >nul 2>&1
+
 rem --- Pre-flight check: Budget breaker + Codex quota ---
 python "%PROJECT_ROOT%\.claude\scripts\lib\pre_task_check.py" codex >nul 2>&1
 if errorlevel 2 (
@@ -221,6 +224,9 @@ for %%F in ("%PICKED_TASK%") do (
   )
 )
 
+rem --- 2026-11-06: 실행 직전 미커밋 상태 기록 (끝난 뒤 이 작업이 바꾼 파일만 커밋하기 위해) ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" snapshot "%PROJECT_ROOT%" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" >nul 2>&1
+
 call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
 set "CODEX_EXIT=!errorlevel!"
 
@@ -296,16 +302,15 @@ for %%F in ("%PICKED_TASK%") do (
 rem --- P1-1 상태머신 (2026-10-26): locked -> completed ---
 python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" completed >nul 2>&1
 
-rem --- Git commit + push (git 설정된 경우) ---
+rem --- Git commit (git 설정된 경우) — 2026-11-06: 이 작업이 바꾼 파일만 커밋 · push 는 승인 대기 등록만 ---
+rem     종전 add . / commit / push 는 승인 게이트 밖 원격 push + 작업 전 미커밋 파일 혼입 (FINAL_AUDIT §42)
 if exist "%PROJECT_ROOT%\.git" (
   for %%F in ("%PICKED_TASK%") do set "COMMIT_MSG=codex: complete %%~nF"
-  git -C "%PROJECT_ROOT%" add . >nul 2>&1
-  git -C "%PROJECT_ROOT%" commit -m "!COMMIT_MSG!" >nul 2>&1
-  git -C "%PROJECT_ROOT%" push >nul 2>&1
+  python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" commit "%PROJECT_ROOT%" "%TASK_ID%" "!COMMIT_MSG!" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" > "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.commit.json" 2>&1
   if not errorlevel 1 (
-    echo [Worker-%CHILD_ID%] Git push 완료
+    echo [Worker-%CHILD_ID%] Git commit 완료 - push 는 승인 대기 /approve push-%TASK_ID%
   ) else (
-    echo [Worker-%CHILD_ID%] Git push 실패 (원격 없거나 인증 오류)
+    echo [Worker-%CHILD_ID%] Git commit 안 함 - .claude\state\worker-git\%TASK_ID%.commit.json 참조
   )
 )
 

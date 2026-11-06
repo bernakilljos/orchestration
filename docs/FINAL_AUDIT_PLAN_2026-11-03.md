@@ -682,8 +682,47 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 **발견 기록 (범위 밖 · 수정 안 함)**: `codex-auto.bat` 은 작업 완료 뒤 `git add . && commit && push` 를 자동 실행한다 (승인 게이트·push 정책과 별개 경로) — 운영 정책 판단 필요.
 
-**fresh clone 39b0574 (`core.longpaths` · `docs/screens` 제외 sparse — 정책 `sparse_exclude` 와 동일 · 시험별 전체 로그 보존)** [확인]
+**fresh clone 39b0574 (`core.longpaths` · 시험별 전체 로그 보존)** [확인] — 정정: `docs/screens` 제외 sparse 를 의도했으나 Git Bash 경로 변환이 `!/docs/screens/` 를 `!C:/Program Files/Git/docs/screens/` 로 바꿔 **제외가 적용되지 않은 전체 checkout** (clone 자체 2.44GB) · 디스크 11.4GB → 8.41GB 감소의 상당 부분이 이 clone (§42).
 - 1차: verify-fresh-clone 위반 0 · phase3 26/26 · phase12 스크립트 통과 · golden 13/13 · pytest 185 passed + 3 failed (phase12 sandbox 3건) · phase2 16/21 · phase5 38/39 — 실패 5묶음 모두 사유 "디스크 부족: 여유 8.41GB < 최소 10.0GB · 생성 대기" (sandbox 생성 하한) · 디스크 여유가 11.4GB → 8.41GB 로 줄어 하한 아래.
 - 2차 (같은 clone · 시험 환경 변수 `REPAIR_SANDBOX_MIN_FREE_GB=1` 만 변경): phase12 pytest 16/16 · phase2 21/21 · phase5 39/39 → **코드 결함 아님 · 디스크 용량 문제**.
 - 오전 fresh clone 의 phase2 첫 실행 16/21 (사유 로그 없음) 은 같은 증상 → 디스크 하한 [추정 · 당시 사유 미기록].
 - 운영 영향: 디스크 여유 8.41GB 는 운영 sandbox 하한(10GB) 아래 → 운영 self-heal 의 sandbox 생성도 대기 상태가 된다 (정책대로 차단 · 데이터 손상 없음). 임시 clone 정리(삭제 승인 필요)로 회복 가능.
+
+## 42. 운영 안전: codex-auto 승인 우회 · 디스크 (2026-11-06 · 기준 6b40d5b · 유료 $0 · push·삭제·캡처 0)
+
+**P0 — codex-auto 원격 push 승인 우회 [확인]**
+- 실제 경로: `codex-auto.bat` 작업 완료 후 `git add .` → `commit` → `push` (승인 게이트 밖). `add .` 는 작업 전부터 있던 미커밋 파일까지 담는다.
+- 같은 유형 전수: 자동 push 실행 = codex-auto 1곳 · `external-trends-sync.sh` 는 지정 파일만 기능 브랜치로 push (승인 정책 표 "feature branch push = 자동" 범위 · 단 운영 저장소에서 `git checkout -b` 로 브랜치를 바꾸는 점은 기록만) · `post-codex-verify.sh` 의 `git add -A`·commit 은 호출처 0 (휴면 · push 없음). 나머지 매치는 감지 규칙·hook 문자열.
+- 수정 (신규 1: `lib/worker_git.py` · 기존 게이트 `approval-gate.request_approval/approve/status` 재사용):
+  1. Codex 실행 직전 미커밋 경로·내용 해시 기록 (`.claude/state/worker-git/<task>.before.json`)
+  2. 완료 후 실행 중 새로 바뀐 경로만 커밋 (`git commit -- <paths>` · 다른 staged 내용 안 섞임) · 원래 미커밋이던 경로는 워커가 또 고쳤어도 제외·보고 · 민감 파일명(.env·키) 제외 · 실행 전 기록 없으면 커밋 안 함
+  3. push 는 실행하지 않고 `push-<task>` 승인 대기 등록 (커밋 sha·remote·branch 기록)
+  4. 워커 루프가 승인된 건만 push — 등록 커밋이 HEAD 조상이고 원격 브랜치가 그 커밋의 조상일 때만 (강제 없음) · 끝나면 executed/failed 기록
+- 시험 (임시 bare 원격 · 임시 DB · 실제 원격 push 0): 사용자 미커밋 파일·.env 제외 · 승인 전 원격 무변경 · 승인 후 push 정상 · 원격이 그사이 바뀌면 거부 · 실행 전 기록 없으면 커밋 안 함 · 워커 파일에 직접 push 줄 0.
+- 남은 것: 실제 Codex 워커 실행으로 이 경로를 돈 기록 없음 [미확인].
+
+**검증 원칙 전파 보완 — 외부 근거와 코드 관련성**
+- 본문 인용 20자 검사는 빈 기록 차단일 뿐 공식 문서 출처·이번 코드와의 관련성 증명이 아님 [확인 · 지적 수용].
+- 자동 체인 Judge 프롬프트에 외부 패키지별 공식 자료 기록(URL·버전·날짜·인용, 없으면 "no official-source record") 을 넣고, 인용이 이 diff 의 사용 방식을 뒷받침하는지 비교해 아니면 누락으로 적도록 연결. 무료 종단 시험: 기록 없음 → "no official-source record" 전달 · 기록 후 → URL·인용 전달 · external_scope checked. **실제 Judge 가 관련성을 올바르게 판단하는지는 유료 실행 없이 [미확인]**.
+
+**경로별 실제 적용 (구현 완료 ≠ 실제 실행 검증)**
+| 경로 | 구현·연결 | 실제 실행 검증 |
+|---|---|---|
+| 자동 수정 Agent·Judge (Claude) | 요구사항·정책·pytest·자동 회귀·같은 유형·회귀 결과 전달·외부 근거 기록 전달·회귀 미실행 차단 | 유료 실검증 1회 (§40) · 이후 보완분은 무료 시험만 |
+| Codex | 지시서 7항목 · codex-check (관련 pytest·보고 판정) · 소유 파일만 커밋 · push 승인 대기 | 실제 Codex 실행 0 [미확인] |
+| Gemini | 줄 단위 판정 (FAIL 줄·실행 출력 없는 PASS 거부) · 프롬프트 기준 | 실제 Gemini 실행 0 [미확인] |
+| 메인 Claude | rules + Stop Ledger gate (판정 + 증거) | 기존 운영 경로 |
+
+**P1 — 디스크 [확인]**
+- 현재 여유 8.42GB · 운영 sandbox 하한 `min_free_gb` 10 (정책 파일 · 완화 안 함) → 운영 self-heal sandbox 생성 대기 상태.
+- 원인 일부: 이번 fresh clone `fresh5_39b0574` 가 sparse 미적용 전체 checkout (자체 2.44GB · §41 정정).
+- 삭제 후보 (모두 이 세션이 scratchpad 에 만든 것 · 사용 프로세스 0 · 운영 저장소 worktree 연결 0 · 하드링크 계산):
+  | 대상 | 겉보기 | 지우면 실제 회수 |
+  |---|---|---|
+  | fresh_ed60f24 · fresh2_ed60f24 · fresh3_e44422a · fresh5_39b0574 | 각 6.96GB | 각 2.44GB (git 객체 4.52GB 는 원본 저장소와 하드링크 공유 → 회수 안 됨) |
+  | c_e2e_run1~3 · c_paid_run1 · fresh5_sbx | 수 MB | ~0 |
+  | 합계 | — | **9.77GB** → 여유 약 18.2GB (하한 10GB 회복) |
+- 삭제 안 함 (승인 필요). 정리 절차: 각 폴더 사용 프로세스 0 재확인 → 폴더 단위 삭제 → 여유 공간 재측정 → 운영 저장소 `git worktree list`·`git fsck` 로 원본 객체 무손상 확인. `%TEMP%\orca-repair-sandbox-test\` 의 11-03·11-05 폴더는 이 세션 소유가 아니라 후보에서 제외.
+- 디스크 차단 시험 분리: 운영 폴더 pytest 의 phase12 3건 (sandbox 생성) = 여유 8.42GB < 10GB 로 **BLOCKED (디스크)** · 하한을 낮춘 시험(§41 2차)은 로직 확인용으로만 별도 기록 · 운영 환경 통과로 세지 않음.
+
+**회귀 (운영 폴더 · pytest 만 · 운영 디스크 하한 그대로)** [확인]: 187 passed · 3 failed = phase12 sandbox 생성 3건 (사유 "여유 8.42GB < 최소 10.0GB" · **BLOCKED 디스크**) · 33 수집 오류 기존 그대로 (스크립트형 시험 파일이 pytest 수집 시 fixture 없음) · golden 13/13. 새 시험 2 (worker 커밋·push 승인) 통과 · 종단 시험 외부 근거 시나리오 통과.

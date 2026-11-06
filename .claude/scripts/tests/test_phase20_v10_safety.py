@@ -704,6 +704,83 @@ def test_codex_check_runs_related_tests_and_compares_report(tmp_path):
     assert "codex-check" in (SCRIPTS / "codex-auto.bat").read_text(encoding="utf-8")
 
 
+def _worker_git_env(tmp_path, monkeypatch):
+    """임시 원격(bare) + 작업 저장소(upstream 설정) + 임시 orca.db — 실제 원격·운영 DB 무관."""
+    remote, work, state = tmp_path / "remote.git", tmp_path / "work", tmp_path / "state_root"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(remote)], check=True)
+    subprocess.run(["git", "clone", "-q", str(remote), str(work)], check=True, capture_output=True)
+    for k, v in (("user.email", "t@example.com"), ("user.name", "t")):
+        subprocess.run(["git", "-C", str(work), "config", k, v], check=True)
+    (work / "a.txt").write_text("a\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(work), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(work), "commit", "-qm", "base"], check=True)
+    subprocess.run(["git", "-C", str(work), "push", "-q", "-u", "origin", "main"], check=True, capture_output=True)
+    state.mkdir()
+    monkeypatch.setenv("ORCHESTRATION_ROOT", str(state))
+    r = subprocess.run([sys.executable, str(SCRIPTS / "init-state-db.py")], capture_output=True, text=True,
+                       env={**os.environ, "ORCHESTRATION_ROOT": str(state)})
+    assert r.returncode == 0, r.stdout + r.stderr
+    sys.path.insert(0, str(SCRIPTS / "lib"))
+    import worker_git as wg
+    remote_head = lambda: subprocess.run(["git", "--git-dir", str(remote), "rev-parse", "main"], capture_output=True,
+                                         text=True).stdout.strip()
+    return wg, work, remote, remote_head
+
+
+def test_worker_commit_takes_only_task_owned_files_and_waits_for_push_approval(tmp_path, monkeypatch):
+    """2026-11-06 P0: codex-auto 의 `add . && commit && push` 대체 — 작업 전 미커밋·민감 파일 제외 · push 는 승인 대기만."""
+    wg, work, remote, remote_head = _worker_git_env(tmp_path, monkeypatch)
+    base = remote_head()
+    (work / "a.txt").write_text("user edit\n", encoding="utf-8")            # 작업 전부터 있던 사용자 미커밋 변경
+    before = wg.dirty(work)
+    (work / "a.txt").write_text("user edit + codex\n", encoding="utf-8")    # 워커가 같은 파일을 더 고침
+    (work / "b.py").write_text("x = 1\n", encoding="utf-8")                 # 워커가 만든 파일
+    (work / ".env").write_text("KEY=secret\n", encoding="utf-8")            # 민감 파일
+    r = wg.commit_owned(work, "t1", "codex: complete t1", before)
+    assert r["committed"] and r["owned"] == ["b.py"] and r["push"] == "waiting_approval"
+    assert r["skipped_preexisting_changed"] == ["a.txt"] and r["skipped_sensitive"] == [".env"]
+    shown = subprocess.run(["git", "-C", str(work), "show", "--name-only", "--format=", "HEAD"],
+                           capture_output=True, text=True).stdout.split()
+    assert shown == ["b.py"]
+    assert remote_head() == base                                           # 승인 전 원격 무변경
+    assert wg.push_approved(work) == [] and remote_head() == base          # 승인 없으면 push 안 함
+    wg._gate().approve("push-t1")
+    out = wg.push_approved(work)
+    assert out[0]["pushed"] and remote_head() == r["commit"]               # 승인된 push 는 정상 작동
+    assert wg._gate().status("push-t1")["approval_state"] == "executed"
+    assert wg.push_approved(work) == []                                    # 한 번만
+
+
+def test_worker_push_refuses_when_remote_moved_or_no_snapshot(tmp_path, monkeypatch):
+    """승인돼 있어도 원격이 그사이 바뀌었으면 (fast-forward 아님) push 안 함 · 실행 전 기록 없으면 커밋 안 함."""
+    wg, work, remote, remote_head = _worker_git_env(tmp_path, monkeypatch)
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", str(remote), str(other)], check=True, capture_output=True)
+    for k, v in (("user.email", "o@example.com"), ("user.name", "o")):
+        subprocess.run(["git", "-C", str(other), "config", k, v], check=True)
+    before = wg.dirty(work)
+    (work / "c.py").write_text("y = 2\n", encoding="utf-8")
+    r = wg.commit_owned(work, "t2", "codex: complete t2", before)
+    (other / "d.txt").write_text("d\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(other), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(other), "commit", "-qm", "other"], check=True)
+    subprocess.run(["git", "-C", str(other), "push", "-q"], check=True, capture_output=True)
+    moved = remote_head()
+    wg._gate().approve("push-t2")
+    out = wg.push_approved(work)
+    assert not out[0]["pushed"] and "not fast-forward" in out[0]["reason"] and remote_head() == moved
+    assert r["commit"] != moved
+    (work / "e.py").write_text("z = 3\n", encoding="utf-8")
+    cli = subprocess.run([sys.executable, str(SCRIPTS / "lib" / "worker_git.py"), "commit", str(work), "t3", "m",
+                          str(tmp_path / "missing.json")], capture_output=True, text=True, encoding="utf-8",
+                         env={**os.environ})
+    assert cli.returncode == 1 and "no pre-run snapshot" in cli.stdout
+    bat = (SCRIPTS / ("codex-auto" + ".bat")).read_text(encoding="utf-8").splitlines()
+    assert not [x for x in bat if "git" in x and " push" in x and "findstr" not in x and "worker_git" not in x
+                and not x.strip().startswith("rem")]
+    assert sum("worker_git.py" in x for x in bat) == 3
+
+
 def _fake_runner(codes):
     calls, marked = [], []
 
@@ -1069,7 +1146,10 @@ def test_repair_chain_end_to_end_free(tmp_path):
                        capture_output=True, text=True, encoding="utf-8", timeout=600,
                        env={**os.environ, "PYTHONIOENCODING": "utf-8"})
     assert r.returncode == 0, r.stdout[-2000:] + r.stderr[-2000:]
-    hard, ext, good, repo = json.loads(r.stdout)
+    hard, ext, good, ext_rec, repo = json.loads(r.stdout)
+    # 2026-11-06: 외부 패키지 변경이면 공식 자료 기록(없음/URL·인용)이 Judge 입력에 들어간다 (관련성 판단 자체는 실제 Judge 몫)
+    assert ext["judge_prompt_external_missing"] and not ext["judge_prompt_external_record"]
+    assert ext_rec["judge_prompt_external_record"] and ext_rec["final"]["external_scope"] == "checked"
     assert hard["failed_stage"] == "regression" and not hard["judge_called"]
     assert hard["regression"]["selected"] == ["demo/test_regress.py"] and hard["regression"]["results"][0]["retried"]
     assert ext["failed_stage"] == "judge_verdict" and ext["final"]["external_scope"] == "not_checked"

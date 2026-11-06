@@ -98,15 +98,23 @@ def run(name, fix_body):
             "judge_called": bool(judge_prompts),
             "judge_prompt_shows_label_copy": any("label.py" in p for p in judge_prompts),
             "judge_prompt_shows_regression": any("demo/test_regress.py exit 0" in p for p in judge_prompts),
+            "judge_prompt_external_missing": any("requests: no official-source record" in p for p in judge_prompts),
+            "judge_prompt_external_record": any(EV_URL in p and EV_QUOTE in p for p in judge_prompts),
             "final": (handoff.get("final_verdict") or {}),
             "apply_target_file": git("show", "apply-target:demo/shipping.py").stdout}
 
 
+EV_URL = "https://requests.readthedocs.io/en/latest/"
+EV_QUOTE = "Requests is an elegant and simple HTTP library for Python"
+EXT_BODY = "import requests  # noqa\n\ndef weight_fee(kg):\n    return kg * 3  # rate\n"
 results = [
     run("hardcoded-fix", "def weight_fee(kg):\n    return 30 if kg == 10 else kg * 2  # rate\n"),
-    run("external-dep", "import requests  # noqa\n\ndef weight_fee(kg):\n    return kg * 3  # rate\n"),
+    run("external-dep", EXT_BODY),
     run("root-cause-fix", "def weight_fee(kg):\n    return kg * 3  # rate\n"),
 ]
+# 공식 자료 기록 후 같은 외부 의존 변경 (근본 수정이 대상 브랜치에 먼저 반영돼 이 건의 apply 는 판정 대상 아님)
+iv.record_external_evidence("requests", EV_URL, "2.32", "read", EV_QUOTE)
+results.append(run("external-dep-recorded", EXT_BODY))
 results.append({"main_source_unchanged": git("status", "--porcelain", "demo").stdout == "",
                 "main_branch_file": git("show", "main:demo/shipping.py").stdout})
 print(json.dumps(results, ensure_ascii=False, indent=1, default=str))
