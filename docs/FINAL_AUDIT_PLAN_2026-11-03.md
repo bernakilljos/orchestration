@@ -681,3 +681,9 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - **원인 미확인**. 짧은 import 가 60초를 넘긴 이유(백신 검사·디스크 지연 등)는 근거 없이 단정하지 않음 [추정 금지].
 
 **발견 기록 (범위 밖 · 수정 안 함)**: `codex-auto.bat` 은 작업 완료 뒤 `git add . && commit && push` 를 자동 실행한다 (승인 게이트·push 정책과 별개 경로) — 운영 정책 판단 필요.
+
+**fresh clone 39b0574 (`core.longpaths` · `docs/screens` 제외 sparse — 정책 `sparse_exclude` 와 동일 · 시험별 전체 로그 보존)** [확인]
+- 1차: verify-fresh-clone 위반 0 · phase3 26/26 · phase12 스크립트 통과 · golden 13/13 · pytest 185 passed + 3 failed (phase12 sandbox 3건) · phase2 16/21 · phase5 38/39 — 실패 5묶음 모두 사유 "디스크 부족: 여유 8.41GB < 최소 10.0GB · 생성 대기" (sandbox 생성 하한) · 디스크 여유가 11.4GB → 8.41GB 로 줄어 하한 아래.
+- 2차 (같은 clone · 시험 환경 변수 `REPAIR_SANDBOX_MIN_FREE_GB=1` 만 변경): phase12 pytest 16/16 · phase2 21/21 · phase5 39/39 → **코드 결함 아님 · 디스크 용량 문제**.
+- 오전 fresh clone 의 phase2 첫 실행 16/21 (사유 로그 없음) 은 같은 증상 → 디스크 하한 [추정 · 당시 사유 미기록].
+- 운영 영향: 디스크 여유 8.41GB 는 운영 sandbox 하한(10GB) 아래 → 운영 self-heal 의 sandbox 생성도 대기 상태가 된다 (정책대로 차단 · 데이터 손상 없음). 임시 clone 정리(삭제 승인 필요)로 회복 가능.
