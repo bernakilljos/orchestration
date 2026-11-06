@@ -604,3 +604,11 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 **운영 데이터 사고 방지 [확인]**: 스크립트형 시험 phase2·3·5·12 는 운영 DB 에 직접 쓴다 (sandbox 만 격리). 운영 폴더에서 회귀 묶음을 시작했다가 pytest 단계에서 중단 (스크립트형 시험 실행 0 · 소유 확인한 시험 프로세스만 종료) · goals 161 · tasks 155 · Goal #77 FAILED 유지. 스크립트형 시험은 fresh clone 에서만 실행.
 **Ledger 관찰 [확인]**: Push 승인 지시 = R171 `execute` 정상 등록 · 이번 개발 지시 = R172 `approval_required` (사유 '유료') — 부정문 아닌 "유료 Judge 실검증을 분리해 기록" 줄의 단어 감지 · 오분류 사례로 기록 · 상태 변경 안 함.
 **회귀 (운영 폴더 · pytest 만)**: 180 passed · failed 0 · 33 수집 오류 기존 그대로.
+
+**fresh clone 회귀에서 발견한 승인 게이트 fail-open (같은 날 · 1차 fresh clone ed60f24)** [확인]
+- 증상: phase5 Test 12 `categorized=0/4` (38d3d7b 에서도 동일 → 이번 B·C·E 변경 무관). 위험 명령 4건은 다른 경로(허용 목록)로 거부돼 실행은 안 됐다.
+- 원인: `approval-gate.py:224` 는 stdout 을 utf-8 로 고정 · `supervisor._check_approval_gate` 는 locale(cp949) 로 읽음 → 디코드 실패 → stdout 비어 `blocked=False`. 실측: 기본 실행·`PYTHONIOENCODING=utf-8` = 통과(위험) · `PYTHONUTF8=1` 만 차단. 운영 Stop 경로(`stop-six-guards.sh:64`)는 `-X utf8` 이라 정상 · 그 외 호출(planner.promote·직접 실행·스크립트 시험)이 영향.
+- 수정 (최소): 같은 인코딩(utf-8)으로 읽음 · 게이트가 일치(exit 10)를 보고했는데 출력을 못 읽으면 차단 (fail-closed). 수정 후 세 환경 모두 차단 · 시험 +1 (HEAD 코드 FAIL → 수정 후 PASS).
+- 같은 유형 [확인]: approval-gate 출력을 subprocess 로 읽는 곳은 이 1곳 (platform_api 는 모듈 직접 import · hook 은 bash). supervisor 의 verify 실행 3곳(`text=True`)도 디코드 실패 시 출력이 비지만 판정이 REPAIRING 쪽(놓침)이라 위험 통과는 아님 → 기록만.
+- 부수 사건: 이 원인을 확인하던 명령 문자열에 위험 명령 예시가 들어가 PreToolUse 게이트가 승인 대기 `appr-4bccc37a5e51` 을 새로 만들었다 (실행 안 됨 · 승인·거부·삭제 안 함).
+- 1차 fresh clone pytest 1 failed 는 이름 미확보 (로그를 tail -2 로 잘라 저장 — §36 과 같은 실수) · 같은 clone 재실행 3/3 = 180 passed · failed 0 → [원인 미확인]. 1차 clone 은 긴 파일명으로 checkout 실패 (`core.longpaths` 필요) · 두 clone 모두 scratchpad 에 남김 (삭제 안 함).

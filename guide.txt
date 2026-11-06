@@ -2446,3 +2446,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - B·C 검증 (2026-11-06): dashboard.py 는 공식 문서의 GIT_CONFIG_COUNT 사용 (GIT_CONFIG_PARAMETERS 는 문서에 없는 내부 변수) · 같은 유형 후보는 스테이징한 변경도 포함. 상세 §37.
 - Ledger 자동 등록 오탐 (2026-11-06): 붙여 넣은 상태 보고는 지시 표지(대상: 줄·명령형 문장)가 없으면 요청으로 등록하지 않음 · 승인 판정은 금지·부정 문장 제외 · Stop gate 는 오탐을 PASS 대신 invalid-registration 으로 안내 · 승인 대기 항목은 오등록 처리 거부. 상세 §38.
 - V1.1 B·C·E (2026-11-06): Judge 판정 출처 기록 (실제 LLM Agent·mock·CLI 구분) · 자동 수정 체인이 같은 유형 후보를 Judge 에 전달 · 체인 무료 종단 시험 (chain_e2e_driver.py) · Statusline 출력 문자열 정렬 시험 (디자인 무변경). 상세 §39.
+- 승인 게이트 인코딩 (2026-11-06): supervisor 가 approval-gate.py 출력을 utf-8 로 읽음 · 일치 후 판독 실패는 차단 (-X utf8 아닌 실행에서 위험 명령이 통과하던 결함). 상세 §39.

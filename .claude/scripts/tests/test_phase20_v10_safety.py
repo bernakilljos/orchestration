@@ -1005,3 +1005,16 @@ def test_statusline_output_rows_align_and_fit_columns():
     assert sum(1 for x in rows if not strip(x).strip()) == 3
     assert all(wcswidth(strip(x)) <= 119 for x in rows)
     assert {wcswidth(strip(x.split("│")[0])) for x in content} == {13}
+
+
+def test_supervisor_approval_gate_blocks_outside_utf8_mode():
+    """2026-11-06 fresh clone 회귀에서 발견: approval-gate.py 는 utf-8 로 출력하는데 supervisor 가 locale(cp949) 로 읽어
+    디코드 실패 → 위험 명령도 blocked=False. -X utf8 이 아닌 실행 (기본·PYTHONIOENCODING) 에서도 차단해야 한다."""
+    code = ("import sys;sys.path.insert(0,sys.argv[1]);import supervisor as s;"
+            "r=s._check_approval_gate('r'+'m -'+'rf /var/data/x');print(r['blocked'],r.get('category'))")
+    for extra in ({}, {"PYTHONIOENCODING": "utf-8"}, {"PYTHONUTF8": "1"}):
+        env = {k: v for k, v in os.environ.items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
+        env.update(extra)
+        r = subprocess.run([sys.executable, "-c", code, str(SCRIPTS / "lib")], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", env=env, timeout=60)
+        assert r.stdout.split()[:2] == ["True", "data_loss"], (extra, r.stdout, r.stderr[-300:])

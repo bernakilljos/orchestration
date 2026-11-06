@@ -558,15 +558,21 @@ def _check_approval_gate(cmd: str) -> dict:
         # sys.executable 우선 (supervisor 가 Python 으로 돌고 있으므로 가장 확실)
         # python-path.txt 캐시는 Unix 스타일 (/c/...) 경로일 수 있어 Windows subprocess 불가
         py = sys.executable
-        r = _sp.run([py, str(gate), "detect", cmd], capture_output=True, text=True, timeout=10)
+        # approval-gate.py 는 stdout 을 utf-8 로 고정 (approval-gate.py:224) → 같은 인코딩으로 읽는다.
+        #   locale(cp949) 로 읽으면 디코드 실패로 stdout 이 비어 위험 명령도 blocked=False 가 됐다 (2026-11-06 · -X utf8 아닌 호출 경로)
+        r = _sp.run([py, str(gate), "detect", cmd], capture_output=True, text=True, timeout=10,
+                    encoding="utf-8", errors="replace")
         # approval-gate.py 는 match 시 exit code 10 반환 · 둘 다 stdout 파싱 필요
         out = (r.stdout or "").strip()
+        matched = r.returncode == 10      # 게이트가 일치를 보고했는데 출력을 못 읽으면 통과시키지 않는다
         if not out or out in ("null", "{}", ""):
-            return {"blocked": False}
+            return {"blocked": True, "category": "unknown", "reason": "gate matched but output empty"} if matched \
+                else {"blocked": False}
         try:
             data = json.loads(out)
         except Exception:
-            return {"blocked": False, "reason": "parse_error"}
+            return {"blocked": True, "category": "unknown", "reason": "parse_error"} if matched \
+                else {"blocked": False, "reason": "parse_error"}
         if data and data.get("category"):
             return {"blocked": True, "category": data.get("category"),
                     "description": data.get("description", ""),
