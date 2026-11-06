@@ -141,7 +141,24 @@ def push_approved(root) -> List[Dict[str, Any]]:
     return done
 
 
+def sandbox(task_id: str) -> Dict[str, Any]:
+    """Codex 를 운영 작업 폴더 대신 실행할 독립 worktree (기존 repair_sandbox.create · 디스크·메모리 게이트 그대로).
+    실패하면 경로를 주지 않는다 → 호출자는 운영 폴더에서 실행하지 않고 작업을 멈춘다."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import repair_sandbox
+    r = repair_sandbox.create(f"codex-{task_id}")
+    return {"ok": bool(r.get("ok")), "path": r.get("path"), "branch": r.get("branch"),
+            "reason": r.get("reason") or r.get("error")}
+
+
 def _main(argv) -> int:
+    if len(argv) >= 3 and argv[1] == "sandbox":      # stdout = 경로 한 줄 (배치 for /f 용) · 실패 시 stdout 비움
+        r = sandbox(argv[2])
+        if r["ok"] and r["path"]:
+            print(r["path"])
+            return 0
+        print(json.dumps(r, ensure_ascii=False), file=sys.stderr)
+        return 1
     if len(argv) >= 4 and argv[1] == "snapshot":
         print(json.dumps(snapshot(argv[2], argv[3]), ensure_ascii=False))
         return 0

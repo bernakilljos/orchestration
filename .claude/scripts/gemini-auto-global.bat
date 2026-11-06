@@ -162,7 +162,7 @@ if !GEM_EXIT! NEQ 0 (
     if exist "%ORCA_ROOT%\stop" goto UNREGISTER_POP
     echo alive %DATE% %TIME%> "%HB_FILE%"
     timeout /t 600 /nobreak >nul
-    gemini -p "echo ok" >nul 2>&1
+    call gemini -p "echo ok" >nul 2>&1
     if errorlevel 1 goto GEM_TOKEN_WAIT
     call gemini-a --verify "%PICKED_TASK%" 2>nul
   )

@@ -216,7 +216,7 @@ if !CODEX_EXIT! NEQ 0 (
     if exist "%ORCA_ROOT%\stop" goto UNREGISTER_POP
     echo alive %DATE% %TIME%> "%HB_FILE%"
     timeout /t 600 /nobreak >nul
-    codex exec "echo ok" >nul 2>&1
+    call codex exec "echo ok" >nul 2>&1
     if errorlevel 1 goto CODEX_TOKEN_WAIT
     echo [Worker-%CHILD_ID%] TOKEN RESTORED
     call codex-a --auto "%PICKED_TASK%" 2>nul

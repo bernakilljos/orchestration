@@ -63,7 +63,7 @@ if "%MODE%"=="interactive" (
 rem --- Canva mode ---
 if "%MODE%"=="canva" (
   echo [Design] Canva design generation via Gemini...
-  gemini --yolo -p "Help me create a design using Canva. Read docs\design-system\ for brand context if available. Use the Canva MCP tools to: (1) generate a design, (2) export it as PNG, (3) save to docs\screens\. Ask me what type of design I need."
+  call gemini --yolo -p "Help me create a design using Canva. Read docs\design-system\ for brand context if available. Use the Canva MCP tools to: (1) generate a design, (2) export it as PNG, (3) save to docs\screens\. Ask me what type of design I need."
   goto END
 )
 
@@ -74,7 +74,7 @@ if "%MODE%"=="image" (
     exit /b 1
   )
   echo [Design] Generating DALL-E image prompt for: %DESC%
-  gemini --yolo -p "Write a detailed English image generation prompt for DALL-E 3 based on this description: %DESC%. Output only the prompt text, max 400 characters. Consider the brand style in docs\design-system\ if available."
+  call gemini --yolo -p "Write a detailed English image generation prompt for DALL-E 3 based on this description: %DESC%. Output only the prompt text, max 400 characters. Consider the brand style in docs\design-system\ if available."
   echo.
   echo [Next] Use the prompt above with OpenAI Images API (OPENAI_API_KEY required)
   echo        Save result to docs\screens\
@@ -89,7 +89,7 @@ if "%MODE%"=="video" (
   )
   echo [Design] Generating video prompt for: %DESC%
   echo          VIDEO_PROVIDER=%VIDEO_PROVIDER%
-  gemini --yolo -p "Write a concise video generation prompt for %VIDEO_PROVIDER% based on: %DESC%. Output only the prompt, max 200 characters. Focus on visual style, motion, and mood."
+  call gemini --yolo -p "Write a concise video generation prompt for %VIDEO_PROVIDER% based on: %DESC%. Output only the prompt, max 200 characters. Focus on visual style, motion, and mood."
   echo.
   echo [Next] Use the prompt above with your video API (VIDEO_API_KEY required)
   echo        Save result to docs\screens\videos\

@@ -786,3 +786,22 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - phase2 조사: 같은 clone 에서 운영 하한 그대로 sandbox 직접 생성 = 정상 · phase2 재실행 2회 = 21/21 · 재현 시도 ① 새 DB → pytest → phase2 = 21/21 ② 시험 sandbox 폴더가 없는 상태 = 21/21 → **디스크 원인 아님 · 원인 미확인 (fresh clone 첫 실행에서만 4/5회 발생 · 재현 실패)**. "이미 존재" 메시지는 통과 실행에도 나오는 의도된 시험 메시지라 근거 아님.
 - **정정 (§41·§42)**: fresh clone phase2 16/21 을 디스크 하한 탓으로 묶은 것은 근거 부족 — phase5·phase12 는 로그에 "디스크 부족" 사유가 있었지만 phase2 로그엔 사유가 없었고, "하한 낮춘 재실행 통과" 는 두 번째 실행이라 통과했을 수 있음. phase2 는 첫 실행 한정 [원인 미확인] 으로 정정.
 - 재현 시험 중 시험 sandbox 폴더 `%TEMP%\orca-repair-sandbox-test\fresh7_clone` 를 `…__moved` 로 옮겨 둠 (이 세션 clone 전용 시험 폴더 · 삭제 안 함).
+
+## 45. Codex 운영 경로 — 후처리 복구 · worktree 격리 (2026-11-06 · 기준 1d2d9da · 유료 0 · Codex 실제 실행 0)
+
+**후처리 결함 [확인]**: `codex`·`gemini` 는 Volta 의 `.cmd` (`where codex` → `codex.cmd`) · cmd.exe 는 배치에서 다른 배치를 `call` 없이 실행하면 돌아오지 않는다 (사용자 제공 근거: Microsoft Learn `call` · 실측: 가짜 codex.cmd 로 HEAD 원본 재현 — 완료 처리·재시도 미실행).
+- 수정: 후처리가 있는 실행 줄에 `call` — `codex-a.bat` 3 · `codex-auto`·`codex-auto-global` 토큰 확인 2 · `gemini-auto`·`gemini-auto-global` 토큰 확인 2 · `gemini.bat` 3 · `design.bat` 3 (대화형 실행 줄은 바로 뒤가 종료라 변경 없음).
+- `call` 로 처음 실행되게 될 "전체 .js/.vue/.ts 인코딩 재저장" 은 기본 꺼짐 (`CODEX_A_UTF8_CONVERT=1` 일 때만) · 재시도 대기 300초는 시험용 `CODEX_A_RETRY_DELAY` 로만 덮어씀.
+- 시험 (Mock · 모델 호출 0): 정상 → 완료 처리 · 인코딩 재저장 안 함 · 켜면 실행 / 실패(1)·시간 초과 종료 코드(124) → 3회 재시도 후 오류 보고 (호출 4회) · HEAD 원본 FAIL.
+- 한계: codex-a 자체에는 실행 시간 제한이 없다 (시간 초과는 Codex 가 비정상 종료 코드를 낼 때만 재시도 경로) [기록].
+
+**worktree 격리 [확인]**: codex-auto 가 Codex 실행 전 기존 `repair_sandbox.create` (디스크·메모리 게이트 · `.repair-sandbox` git worktree · `docs/screens` 제외) 로 `repair/codex-<task>` 작업 폴더를 만들고 그 안에서 `codex-a` 실행 → post-impl-verify · codex-check(`--cwd`) · 소유 파일 커밋 모두 그 폴더에서.
+- sandbox 를 못 만들면 운영 폴더에서 실행하지 않고 작업 실패 처리 (`[ISOLATION]`).
+- 결과는 `repair/codex-<task>` 브랜치에만 · 원격 추적 없음 → push 요청 생성 안 함 · main 반영은 기존 승인 경로(`repair_sandbox apply`) · 자동 병합·push 없음.
+- 운영 작업 폴더의 사용자 미커밋 파일·운영 DB·Ledger·Evidence 는 Codex 쓰기 범위(worktree) 밖.
+- 시험: 임시 저장소에서 sandbox 명령 → 실제 worktree (`repair/codex-t1`) 생성 · worktree 쓰기가 원본 작업 폴더에 안 보임 · 디스크 게이트에 걸리면 경로 없음(exit 1) · 워커 순서 (sandbox → 실패 시 goto LOOP → pushd → codex-a) · HEAD 원본 FAIL.
+- **운영 경로 연결 여부 구분**: 배치 코드 연결 = 완료 · 실제 codex-auto 워커 루프 실행 = 0 [미확인] (워커는 보이는 창으로 자식 프로세스를 띄워 시험 환경에서 실행 안 함 · 실제 Codex 호출 필요).
+
+**sandbox 실제 차단 [미확인]**: Codex 0.130.0 `-s workspace-write` 수용 확인 · 폴더 밖 쓰기·네트워크 차단은 실제 `codex exec` 로만 확인 가능 (가짜 CLI 시험은 차단 증거가 아님) · 네트워크는 `~/.codex/config.toml` 에 `sandbox_workspace_write.network_access` 설정 없음 → 기본값에 따름 (기본값 문서 본문 미확인).
+
+**회귀 (운영 폴더 · pytest 만)** [확인]: 193 passed · failed 0 · 33 수집 오류 기존 그대로 · golden 13/13 · 새 시험 2 (후처리·격리) HEAD 원본 FAIL → 수정 후 PASS.

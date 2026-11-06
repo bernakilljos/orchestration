@@ -61,7 +61,7 @@ if "%MODE%"=="analyze" (
 
   set ANALYZE_PROMPT=Analyze the project in the current directory. Read docs\project-analysis.md for stack context. Perform the following analysis and write results to docs\gemini-analysis.md: SECTION 1 - FRONTEND REVIEW: Check each component/page file. Rate each: PASS/WARN/FAIL. List specific bugs and anti-patterns with file+line references. SECTION 2 - BACKEND REVIEW: Check controllers, services, repositories. Look for: missing validation, exception handling gaps, N+1 queries, security holes. SECTION 3 - SECURITY SCAN: Check for: hardcoded credentials, SQL injection risk, XSS vectors, insecure API endpoints. SECTION 4 - DB AND QUERY ANALYSIS (READ ONLY - DO NOT MODIFY ANY .sql OR MAPPER FILES): Read all SQL files and mapper files. For each query, suggest: optimized version, missing indexes, potential performance issues. Write all DB suggestions to docs\query-suggestions.md. SECTION 5 - IMPROVEMENT SUMMARY: List top 10 most impactful improvements, ordered by priority. IMPORTANT RULE: Before modifying any existing source file, display exactly what you plan to change and ask the user 'OK to apply this change? (Y/N)'. NEVER modify .sql files or any DB migration files.
 
-  gemini --yolo "%ANALYZE_PROMPT%"
+  call gemini --yolo "%ANALYZE_PROMPT%"
   goto DONE_MSG
 )
 
@@ -80,9 +80,9 @@ if "%MODE%"=="verify" (
   :RUN_GEMINI_VERIFY
   echo.
   if "%MODE%"=="full-auto" (
-    gemini --yolo -p "%VERIFY_PROMPT%"
+    call gemini --yolo -p "%VERIFY_PROMPT%"
   ) else (
-    gemini --yolo "%VERIFY_PROMPT%"
+    call gemini --yolo "%VERIFY_PROMPT%"
   )
 
   echo.

@@ -797,7 +797,9 @@ def _cli_main(argv):
         print(json.dumps(r, ensure_ascii=False))
         return 0 if r["ok"] else 1
     if argv[1] == "codex-check":         # codex-auto.bat: exit 2 = FAIL (완료 처리 안 함) · 1 = PARTIAL/BLOCKED · 0 = PASS
-        r = codex_check(ROOT, Path(argv[2]) if len(argv) > 2 else None)
+        cwd = Path(argv[argv.index("--cwd") + 1]) if "--cwd" in argv else ROOT      # 격리 worktree 에서 대조
+        rest = [a for i, a in enumerate(argv[2:], 2) if a != "--cwd" and argv[i - 1] != "--cwd"]
+        r = codex_check(cwd, Path(rest[0]) if rest else None)
         print(json.dumps(r, ensure_ascii=False))
         return 2 if r["status"] == "FAIL" else (0 if r["status"] == "PASS" else 1)
     if argv[1] == "external-evidence":

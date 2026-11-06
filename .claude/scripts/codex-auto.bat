@@ -224,11 +224,25 @@ for %%F in ("%PICKED_TASK%") do (
   )
 )
 
-rem --- 2026-11-06: 실행 직전 미커밋 상태 기록 (끝난 뒤 이 작업이 바꾼 파일만 커밋하기 위해) ---
-python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" snapshot "%PROJECT_ROOT%" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" >nul 2>&1
-
+rem --- 2026-11-06: Codex 는 운영 작업 폴더 대신 독립 worktree 에서 실행 - 기존 repair_sandbox · 디스크·메모리 게이트 그대로 ---
+rem     만들지 못하면 운영 폴더에서 실행하지 않고 작업 실패 처리 · 결과는 repair/codex-<task> 브랜치에만 (main 병합·push 는 승인 경로)
+set "WORK_DIR="
+for /f "usebackq delims=" %%W in (`python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" sandbox "%TASK_ID%" 2^>nul`) do set "WORK_DIR=%%W"
+if not defined WORK_DIR (
+  echo [Worker-%CHILD_ID%] [ISOLATION] sandbox 생성 실패 - 운영 폴더에서 Codex 실행 안 함
+  python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
+  for %%F in ("%PICKED_TASK%") do attrib -r "%%F" >nul 2>&1
+  for %%F in ("%PICKED_TASK%") do del "%PROJECT_ROOT%\.claude\tasks\locks\%%~nF.lock" 2>nul
+  goto LOOP
+)
+rem --- 실행 직전 상태 기록 (끝난 뒤 이 작업이 바꾼 파일만 커밋) ---
+python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" snapshot "%WORK_DIR%" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" >nul 2>&1
+set "OPS_ROOT=%PROJECT_ROOT%"
+pushd "%WORK_DIR%"
+set "PROJECT_ROOT=%WORK_DIR%"
 call codex-a --auto "%PICKED_TASK%" 2>"%TEMP%\codex-last-err.log"
 set "CODEX_EXIT=!errorlevel!"
+set "PROJECT_ROOT=%OPS_ROOT%"
 
 rem --- 토큰 소진 감지 -> 대기 -> 복구 시 재개 ---
 if !CODEX_EXIT! NEQ 0 (
@@ -240,7 +254,7 @@ if !CODEX_EXIT! NEQ 0 (
     if exist "%PROJECT_ROOT%\.claude\tasks\stop" goto END
     timeout /t 600 /nobreak >nul
     echo [Worker-%CHILD_ID%] Token check...
-    codex exec "echo ok" >nul 2>&1
+    call codex exec "echo ok" >nul 2>&1
     if errorlevel 1 (
       echo [Worker-%CHILD_ID%] Still exhausted. Waiting 10m more...
       goto CODEX_TOKEN_WAIT
@@ -248,9 +262,11 @@ if !CODEX_EXIT! NEQ 0 (
     echo [Worker-%CHILD_ID%] TOKEN RESTORED — 재개!
     del "%PROJECT_ROOT%\.claude\codex-token-status" 2>nul
     rem 같은 태스크 다시 실행
-    call codex-a --auto "%PICKED_TASK%" 2>nul
+    set "PROJECT_ROOT=!WORK_DIR!" & call codex-a --auto "%PICKED_TASK%" 2>nul & set "PROJECT_ROOT=!OPS_ROOT!"
   )
 )
+
+popd
 
 rem --- 읽기 전용 해제 ---
 for %%F in ("%PICKED_TASK%") do (
@@ -260,8 +276,11 @@ for %%F in ("%PICKED_TASK%") do (
 rem --- 필수 검증 (Stage 1,2,3) — 실패 시 완료 처리 안 함 ---
 echo [Worker-%CHILD_ID%] Running mandatory verification...
 if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
+  pushd "%WORK_DIR%"
   bash "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" 2>&1
-  if errorlevel 1 (
+  set "VERIFY_EXIT=!errorlevel!"
+  popd
+  if !VERIFY_EXIT! NEQ 0 (
     echo [Worker-%CHILD_ID%] [VERIFY FAIL] Errors found — task NOT marked as done
     rem --- P1-1 상태머신: locked -> failed ---
     python "%PROJECT_ROOT%\.claude\scripts\lib\task_state.py" update "%TASK_ID%" failed >nul 2>&1
@@ -274,7 +293,7 @@ if exist "%PROJECT_ROOT%\.claude\hooks\post-impl-verify.sh" (
 rem --- 2026-11-06 결과 대조: 관련 pytest 실제 실행 + implementation-report 최종 판정 (independent_verifier codex-check) ---
 rem     FAIL = 회귀 실패/보고 FAIL -> 완료 처리 안 함 - PARTIAL = 근거 부족 (기록만) - 결과 .claude\state\codex-check\<task>.json
 if not exist "%PROJECT_ROOT%\.claude\state\codex-check" mkdir "%PROJECT_ROOT%\.claude\state\codex-check" 2>nul
-python "%PROJECT_ROOT%\.claude\scripts\lib\independent_verifier.py" codex-check "%PROJECT_ROOT%\docs\implementation-report.md" > "%PROJECT_ROOT%\.claude\state\codex-check\%TASK_ID%.json" 2>&1
+python "%PROJECT_ROOT%\.claude\scripts\lib\independent_verifier.py" codex-check "%WORK_DIR%\docs\implementation-report.md" --cwd "%WORK_DIR%" > "%PROJECT_ROOT%\.claude\state\codex-check\%TASK_ID%.json" 2>&1
 set "CHECK_EXIT=!errorlevel!"
 if !CHECK_EXIT! EQU 2 (
   echo [Worker-%CHILD_ID%] [CHECK FAIL] regression or report FAIL - task NOT marked as done
@@ -306,9 +325,9 @@ rem --- Git commit (git 설정된 경우) — 2026-11-06: 이 작업이 바꾼 �
 rem     종전 add . / commit / push 는 승인 게이트 밖 원격 push + 작업 전 미커밋 파일 혼입 (FINAL_AUDIT §42)
 if exist "%PROJECT_ROOT%\.git" (
   for %%F in ("%PICKED_TASK%") do set "COMMIT_MSG=codex: complete %%~nF"
-  python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" commit "%PROJECT_ROOT%" "%TASK_ID%" "!COMMIT_MSG!" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" > "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.commit.json" 2>&1
+  python "%PROJECT_ROOT%\.claude\scripts\lib\worker_git.py" commit "%WORK_DIR%" "%TASK_ID%" "!COMMIT_MSG!" "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.before.json" > "%PROJECT_ROOT%\.claude\state\worker-git\%TASK_ID%.commit.json" 2>&1
   if not errorlevel 1 (
-    echo [Worker-%CHILD_ID%] Git commit 완료 - push 는 승인 대기 /approve push-%TASK_ID%
+    echo [Worker-%CHILD_ID%] Git commit 완료 - repair/codex-%TASK_ID% 브랜치 - main 반영은 승인 경로 ^(repair_sandbox apply^)
   ) else (
     echo [Worker-%CHILD_ID%] Git commit 안 함 - .claude\state\worker-git\%TASK_ID%.commit.json 참조
   )

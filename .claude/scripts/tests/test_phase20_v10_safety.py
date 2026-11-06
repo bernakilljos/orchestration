@@ -779,7 +779,7 @@ def test_worker_push_refuses_when_remote_moved_or_no_snapshot(tmp_path, monkeypa
     bat = (SCRIPTS / ("codex-auto" + ".bat")).read_text(encoding="utf-8").splitlines()
     assert not [x for x in bat if "git" in x and " push" in x and "findstr" not in x and "worker_git" not in x
                 and not x.strip().startswith("rem")]
-    assert sum("worker_git.py" in x for x in bat) == 3
+    assert sum("worker_git.py" in x for x in bat) == 4                       # push-approved·sandbox·snapshot·commit
 
 
 def test_codex_a_runs_codex_in_workspace_sandbox_not_bypass(tmp_path):
@@ -823,6 +823,71 @@ def test_codex_a_runs_codex_in_workspace_sandbox_not_bypass(tmp_path):
         bad = subprocess.run(["codex", "exec", "-s", "no-such-mode", "--help"], capture_output=True, text=True,
                              timeout=60, shell=True)
         assert ok.returncode == 0 and bad.returncode != 0
+
+
+def test_codex_a_post_processing_returns_after_codex(tmp_path):
+    """2026-11-06: codex(.cmd) 를 call 없이 부르면 배치가 거기서 끝나 완료 처리·재시도가 안 돌던 결함 (cmd.exe 동작).
+    정상 = 완료 처리 · 전체 인코딩 재저장은 기본 꺼짐 · 실패·시간 초과(124) = 3회 재시도 후 오류 보고 (모델 호출 0)."""
+    if os.name != "nt":
+        import pytest
+        pytest.skip("Windows batch")
+    shim, root = tmp_path / "shim", tmp_path / "proj"
+    shim.mkdir()
+    (shim / "codex.cmd").write_text('@echo off\r\necho %*>> "%CODEX_SHIM_LOG%"\r\nexit /b %CODEX_SHIM_EXIT%\r\n',
+                                    encoding="utf-8")
+    (root / ".claude" / "tasks").mkdir(parents=True)
+    (root / ".claude" / "tasks" / "task-instruction.md").write_text("# demo task\n", encoding="utf-8")
+    bat = str(SCRIPTS / ("codex-a" + ".bat"))
+
+    def run(code, extra=None):
+        log = tmp_path / f"log-{code}-{bool(extra)}.txt"
+        env = {**os.environ, "PATH": f"{shim};{os.environ['PATH']}", "PROJECT_ROOT": str(root),
+               "CODEX_SHIM_LOG": str(log), "CODEX_SHIM_EXIT": str(code), "CODEX_A_RETRY_DELAY": "0", **(extra or {})}
+        env.pop("CODEX_A_UTF8_CONVERT", None) if not extra else None
+        r = subprocess.run(["cmd", "/c", bat, "--auto"], cwd=str(root), env=env, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=120, stdin=subprocess.DEVNULL)
+        return r.stdout, len(log.read_text(encoding="utf-8").splitlines())
+    out, n = run(0)
+    assert n == 1 and "[DONE] Codex-A complete" in out and "Converting source files" not in out
+    out, n = run(0, {"CODEX_A_UTF8_CONVERT": "1"})
+    assert n == 1 and "Converting source files" in out
+    for code in (1, 124):                                   # 실패 · 시간 초과 종료 코드 → 재시도 경로
+        out, n = run(code)
+        assert n == 4 and "failed after 3 retries" in out and f"Exit code: {code}" in out
+
+
+def test_worker_runs_codex_in_isolated_worktree(tmp_path):
+    """2026-11-06: codex-auto 는 기존 repair_sandbox worktree 에서 Codex 실행 · 만들지 못하면 운영 폴더에서 실행하지 않음."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git_repo(repo)
+    (repo / ".claude" / "config").mkdir(parents=True)
+    (repo / ".claude" / "config" / "sandbox-policy.json").write_bytes(
+        (ROOT / ".claude" / "config" / "sandbox-policy.json").read_bytes())
+    (repo / ".gitignore").write_text(".claude/state/\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "policy"], check=True)
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(repo), "ORCHESTRATION_ROOT": str(repo),
+           "REPAIR_SANDBOX_ROOT": str(tmp_path / "sbx"), "REPAIR_SANDBOX_MIN_FREE_GB": "1", "PYTHONIOENCODING": "utf-8"}
+    subprocess.run([sys.executable, str(SCRIPTS / "init-state-db.py")], env=env, capture_output=True, check=True)
+    wg = [sys.executable, str(SCRIPTS / "lib" / "worker_git.py"), "sandbox", "t1"]
+    r = subprocess.run(wg, env=env, capture_output=True, text=True, encoding="utf-8", timeout=300)
+    path = Path(r.stdout.strip())
+    assert r.returncode == 0 and path.is_dir() and (tmp_path / "sbx") in path.parents
+    head = subprocess.run(["git", "-C", str(path), "rev-parse", "--abbrev-ref", "HEAD"], capture_output=True,
+                          text=True).stdout.strip()
+    assert head == "repair/codex-t1"
+    (path / "app.py").write_text("changed\n", encoding="utf-8")         # worktree 쓰기는 원본 작업 폴더에 안 보임
+    assert (repo / "app.py").read_text(encoding="utf-8") == "import os\n"
+    r2 = subprocess.run(wg[:-1] + ["t2"], env={**env, "REPAIR_SANDBOX_MIN_FREE_GB": "100000"}, capture_output=True,
+                        text=True, encoding="utf-8", timeout=300)
+    assert r2.returncode == 1 and r2.stdout.strip() == "" and "디스크" in r2.stderr     # 게이트 = 경로 없음
+    bat = (SCRIPTS / ("codex-auto" + ".bat")).read_text(encoding="utf-8")
+    i_sbx, i_fail = bat.index('worker_git.py" sandbox'), bat.index("[ISOLATION] sandbox")
+    i_push, i_call = bat.index('pushd "%WORK_DIR%"'), bat.index('call codex-a --auto "%PICKED_TASK%" 2>"')
+    assert i_sbx < i_fail < bat.index("goto LOOP", i_fail) < i_push < i_call
+    assert 'codex-check "%WORK_DIR%\\docs\\implementation-report.md" --cwd "%WORK_DIR%"' in bat
+    assert 'worker_git.py" commit "%WORK_DIR%"' in bat
 
 
 def _fake_runner(codes):

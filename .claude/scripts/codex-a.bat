@@ -83,7 +83,7 @@ if "%MODE%"=="analyze" (
     echo - Proceed automatically without asking for confirmation.
   ) > "!ANALYZE_TASK!"
   rem 2026-11-06: sandbox 우회 금지 - 작업 폴더 안 쓰기만 허용 (네트워크·폴더 밖 쓰기 차단)
-  codex exec --sandbox workspace-write "Read !ANALYZE_TASK! and execute every step in order."
+  call codex exec --sandbox workspace-write "Read !ANALYZE_TASK! and execute every step in order."
   goto END
 )
 
@@ -117,6 +117,7 @@ echo.
 set CODEX_PROMPT=Read the task instruction at %TASK_FILE% and implement everything described. If context\rules.md exists, follow all rules there too. Before modifying any existing file, log what you are changing and why - then proceed without waiting for input (auto mode). If referenced files do not exist, create them. New files can be created freely. After implementation: (1) write docs\implementation-report.md, (2) move %TASK_FILE% to .claude\tasks\done\ folder.
 
 set RETRY_DELAY=300
+if defined CODEX_A_RETRY_DELAY set "RETRY_DELAY=%CODEX_A_RETRY_DELAY%"
 set MAX_RETRIES=3
 set RETRY_COUNT=0
 
@@ -125,19 +126,22 @@ if not exist "%ROOT%\.claude\tasks\done" mkdir "%ROOT%\.claude\tasks\done"
 :RUN_CODEX
 if "%MODE%"=="full-auto" (
   echo [Codex-A] Full-auto mode...
-  codex exec --sandbox workspace-write "!CODEX_PROMPT!"
+  call codex exec --sandbox workspace-write "!CODEX_PROMPT!"
 ) else (
   echo [Codex-A] Auto mode...
   rem 2026-11-06: 종전 sandbox·승인 우회 옵션 대신 workspace-write (codex-auto 워커도 이 경로)
-  codex exec --sandbox workspace-write "!CODEX_PROMPT!"
+  call codex exec --sandbox workspace-write "!CODEX_PROMPT!"
 )
 
 set EXIT_CODE=%errorlevel%
 
 if %EXIT_CODE% EQU 0 (
   echo.
-  echo [+] Converting source files to UTF-8...
-  powershell -NoProfile -Command "Get-ChildItem '%ROOT%' -Recurse -Include '*.vue','*.js','*.ts','*.jsx','*.tsx' -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '%UTF8_EXCLUDE%' } | ForEach-Object { try { $c = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::Default); [System.IO.File]::WriteAllText($_.FullName, $c, [System.Text.Encoding]::UTF8) } catch {} }" >nul 2>&1
+  rem 2026-11-06: 전체 .js/.vue 인코딩 재저장은 call 누락으로 실행된 적이 없었음 - 기본 꺼짐 · CODEX_A_UTF8_CONVERT=1 일 때만
+  if "%CODEX_A_UTF8_CONVERT%"=="1" (
+    echo [+] Converting source files to UTF-8...
+    powershell -NoProfile -Command "Get-ChildItem '%ROOT%' -Recurse -Include '*.vue','*.js','*.ts','*.jsx','*.tsx' -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notmatch '%UTF8_EXCLUDE%' } | ForEach-Object { try { $c = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::Default); [System.IO.File]::WriteAllText($_.FullName, $c, [System.Text.Encoding]::UTF8) } catch {} }" >nul 2>&1
+  )
   echo [DONE] Codex-A complete
   echo        Next: gemini-a --verify
   goto END

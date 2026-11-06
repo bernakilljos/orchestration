@@ -283,7 +283,7 @@ if not errorlevel 1 (
   if exist "%PROJECT_ROOT%\.claude\tasks\stop" goto END
   timeout /t 600 /nobreak >nul
   echo [Verifier-%CHILD_ID%] Token check...
-  gemini -p "test" >nul 2>&1
+  call gemini -p "test" >nul 2>&1
   if errorlevel 1 (
     echo [Verifier-%CHILD_ID%] Still exhausted. Waiting 10m...
     goto GEMINI_TOKEN_WAIT
