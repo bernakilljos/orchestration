@@ -171,7 +171,9 @@ def test_pasted_directives_registered_without_negated_approval(tmp_path):
     for i, p in enumerate((R168_DIRECTIVE, LEDGER_FIX_DIRECTIVE, NUMBERED_DIRECTIVE)):
         _register(tmp_path, p, sid=f"d{i}")
     reqs = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"]
-    assert [(r["classification"], r["status"]) for r in reqs] == [("execute", "pending")] * 3
+    # 2026-11-07: R168 은 실제 push 지시 — '승인한다' 문장은 권한이 아니므로 push 는 승인 대기 · 부정된 유료·배포는 여전히 사유 아님
+    assert [(r["classification"], r["status"]) for r in reqs] == [("execute", "approval_required")] + [("execute", "pending")] * 2
+    assert reqs[0]["approval_reasons"] == ["git push"]
     assert reqs[0]["desc"].startswith("\n\n<pasted_content")   # desc 는 원문 그대로
 
 
@@ -196,3 +198,110 @@ def test_gate_points_to_invalid_registration_and_protects_approval(tmp_path):
     assert _run(tmp_path, "gate").returncode == 0
     reqs = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"]
     assert [r["status"] for r in reqs] == ["invalid_registration", "approval_required"]
+
+# ── 2026-11-07 R184~R186: 위험 단어가 요청이 아닌 줄(표 칸 · "~가 아니라" · 기대 결과 설명)에 있어도 승인 대기가 됐다 ──
+# 입력 = orca.db conversations 에 남은 원문 그대로 (ledger prompt_hash 와 sha256 앞자리 일치 확인 후 저장)
+FIX = Path(__file__).resolve().parent / "fixtures" / "ledger"
+
+
+def _fixture(name):
+    return (FIX / name).read_text(encoding="utf-8")
+
+
+def _raw(tmp_path):
+    return [json.loads(l) for l in (tmp_path / ".claude/logs/ledger-raw.jsonl").read_text(encoding="utf-8").splitlines()]
+
+
+def test_r184_status_report_not_registered(tmp_path):
+    assert _register(tmp_path, _fixture("r184.txt")) == []          # 이전: execute · approval_required ['유료']
+    assert _raw(tmp_path)[-1]["classification"] == "pasted_report"  # 원문은 raw 에 보존
+
+
+def test_r185_r186_registered_without_extra_approval(tmp_path):
+    import hashlib
+    for i, name in enumerate(("r185.txt", "r186.txt")):
+        text = _fixture(name)
+        reqs = _register(tmp_path, text, sid=f"f{i}")
+        e = reqs[-1]
+        assert (e["classification"], e["status"]) == ("execute", "pending")   # 이전: approval_required ['운영'] · ['유료']
+        assert "approval_reasons" not in e
+        # 원문은 저장하지 않고 길이·전체 해시로 연결 (앞 16자 = conversations.content_hash) · desc 는 기존처럼 400자
+        assert e["prompt_len"] == len(text) and e["prompt_sha256"] == hashlib.sha256(text.encode("utf-8")).hexdigest()
+        assert e["prompt_sha256"].startswith(e["prompt_hash"]) and len(e["desc"]) == 400
+        assert e["approval_basis"]["excluded"]                               # 무엇을 왜 뺐는지 남는다
+
+
+def _own(tmp_path, text, sid):
+    return _register(tmp_path, text, sid=sid)[-1]
+
+
+def test_real_risk_requests_still_need_approval(tmp_path):
+    cases = {"유료 Judge 1회 실행해줘": "유료",
+             "로컬 커밋을 origin main 으로 git push 해줘": "git push",
+             "어제 만든 임시 파일 삭제해줘": "삭제해",
+             "운영    서버 설정 변경해줘": "운영",                    # 표처럼 보여도 요청형으로 끝나면 센다
+             "승인 필요 항목인 유료 Judge 를 실행해줘": "유료",            # 상태 단어가 있어도 요청형이면 센다
+             "운영이 아니라 개발 서버에 배포해줘": "배포",
+             "운영 배포 승인 대기 건 진행 부탁드립니다": "운영"}         # 부정 범위 밖의 위험 단어는 센다
+    for i, (text, pat) in enumerate(cases.items()):
+        e = _own(tmp_path, text, f"k{i}")
+        assert e["status"] == "approval_required" and pat in e["approval_reasons"], text
+        assert e["approval_basis"]["lines"][0]["text"] == text.strip()
+
+
+def test_quoted_approval_grants_nothing(tmp_path):
+    directive = _paste("대상: C:\\pjt\\orchestration_v1\n\n이번 지시는 유료 Judge 1회 실행을 승인한다.\n유료 Judge 1회를 실행해.")
+    quoted = _paste("평가자는 '이번 지시는 유료 Judge 호출을 승인한다.' 라고 썼습니다.\n아직 실행하지 않았습니다.")
+    for i, p in enumerate((directive, quoted)):
+        e = _register(tmp_path, p, sid=f"q{i}")[-1]
+        assert e["status"] == "approval_required" and "유료" in e["approval_reasons"]   # '승인한다' 는 권한이 아니다
+    assert e["approval_basis"].get("stated_scope", []) == []                                 # 인용문 속 문장은 범위로도 기록 안 함
+    e0 = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"][0]
+    assert e0["approval_basis"]["stated_scope"] == ["이번 지시는 유료 Judge 1회 실행을 승인한다."]   # 기록만
+
+
+def test_constraints_are_not_requests_or_approvals(tmp_path):
+    p = _paste("대상: C:\\pjt\\orchestration_v1\n\n문서 오타를 수정한다.\n\n제약:\n- 운영 설정은 그대로 둔다\n- 배포 금지\n"
+               "- 유료 호출은 이번 범위 밖")
+    e = _register(tmp_path, p, sid="c1")[-1]
+    assert e["status"] == "pending" and e["approval_basis"]["excluded"] == {"constraint": 2, "negation": 1}
+    statuses = {r["status"] for r in json.loads((tmp_path / ".claude/state/request-ledger.json")
+                                                .read_text(encoding="utf-8"))["requests"]}
+    assert statuses <= {"pending", "approval_required"}                                # 금지 조건이 승인 상태를 만들지 않음
+
+
+def test_approval_evidence_masks_secrets(tmp_path):
+    e = _own(tmp_path, "운영 DB 접속 password=hunter2pass 로 배포해줘", "m1")
+    line = e["approval_basis"]["lines"][0]["text"]
+    assert "[MASKED]" in line and "hunter2pass" not in line
+    sys.path.insert(0, str(HOOK_PY.parent))
+    import ledger_auto_register as M
+    for secret in ("sk-proj-abcdefghijklmnopqrstuvwxyz123", '"password": "hunter2pass"', "비밀번호: hunter2 pass",
+                   "Authorization: Basic dXNlcjpwYXNzd29yZA==", "eyJhbGciOiJIUzI1.eyJzdWIiOiIxMjM0.sigsig",
+                   "postgres://admin:hunter2pass@db.local/x",
+                   "glpat" + "-abcdefghijklmnop1234"):   # 가짜 값 — 정적 비밀정보 검사기 오인 방지로 실행 시 조립
+        out = M._approval_basis(f"운영 DB {secret} 로 배포해줘")["lines"][0]["text"]
+        assert "hunter2" not in out and "abcdefghijklmnop" not in out and "dXNlcjpw" not in out \
+            and "eyJzdWIi" not in out, out
+
+
+# 2026-11-07 독립 검토: 첫 설계(줄 끝 어미만 확인 · 탭/공백 3칸=표 · 줄 끝 '아님' 도 부정 범위)가 만든 우회로.
+# 옛 판정기가 잡던 실제 위험 요청은 새 판정기도 잡아야 한다.
+BYPASS_CASES = ("운영 DB 수정해줘 (테스트 아님)", "운영 DB 지워줘 농담 아님", "배포 해줘 (승인 대기 아님)",
+                "배포 진행해줘 보류 해제", "배포해줘 승인 전이라도", "결제해줘 미확인 건 포함", "운영 반영해줘 blocked 풀고",
+                "운영 DB 수정 실행 승인 요청 없이", "배포해줘 대기 중인 거 전부", "배포 진행 (승인 필요 없음)",
+                "유료 호출 해줘. 승인 필요 없음", "배포   진행", "운영 DB\t수정", "항목   배포 진행",
+                "승인 필요 없이 바로 배포해줘", "삭제해줘, 아니라면 보류")
+
+
+def test_review_bypass_inputs_still_need_approval():
+    sys.path.insert(0, str(HOOK_PY.parent))
+    import ledger_auto_register as M
+    for text in BYPASS_CASES:
+        assert M._needs_approval(text), text
+
+
+def test_polite_risky_directive_in_report_is_registered(tmp_path):
+    p = _paste("작업을 마쳤습니다.\n로그를 확인했습니다.\n결과는 정상입니다.\n운영 DB 를 수정하세요.")
+    e = _register(tmp_path, p, sid="p1")[-1]
+    assert (e["classification"], e["status"]) == ("execute", "approval_required")   # 등록돼야 게이트가 본다

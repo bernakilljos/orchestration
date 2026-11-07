@@ -64,8 +64,12 @@ _PASTE_RE = re.compile(r"<pasted_content\b[^>]*>.*?(?:</pasted_content\b[^>]*>|\
 # 붙여 넣은 글만 온 메시지에서 '지금 하라는 지시' 표지 — 없으면 보고·인용으로 보고 등록하지 않는다.
 _DIRECTIVE_LINE_RE = re.compile(r"^\s*대상\s*[:：]", re.M)
 # 반말 명령형으로 끝나는 문장 ("다시 확인해.", "수정하지 마.") — 보고·평가 글은 "~습니다/~입니다" 로 끝난다
-_IMPERATIVE_END_RE = re.compile(r"(?:해|하라|해라|해줘|해 줘|하지 마|하지마|할 것|하세요|해주세요|하십시오)"
+_IMPERATIVE_END_RE = re.compile(r"(?:해|하라|해라|해줘|해 줘|하지 마|하지마|할 것)"
                                 r"(?:[.!](?=\s|$)|\s*$)", re.M)
+# 2026-11-07 R184: 평가 보고 안의 권고 "…보존하세요." 한 줄로 보고 전체가 지시가 됐다.
+# 존댓말 권고는 약한 표지 — 보고 문장("~습니다")보다 많을 때만 지시로 본다.
+_POLITE_END_RE = re.compile(r"(?:하세요|해주세요|해 주세요|하십시오)(?:[.!](?=\s|$)|\s*$)", re.M)
+_REPORT_END_RE = re.compile(r"니다[.!]?(?=\s|$)", re.M)
 _DIRECTIVE_PHRASES = ("지시다", "지시한다", "승인한다", "전달할 승인 문구", "전달할 지시",
                       "claude code에 지시할", "claude code에 전달할")
 # 금지·부정 문장 안의 위험 단어는 승인 요청이 아니다 ("유료 호출 금지", "배포는 승인하지 않는다").
@@ -90,6 +94,11 @@ def _intent_text(prompt: str) -> tuple:
     low = pasted.lower()
     if (_DIRECTIVE_LINE_RE.search(pasted) or _IMPERATIVE_END_RE.search(pasted)
             or any(p in low for p in _DIRECTIVE_PHRASES)):
+        return pasted, "pasted_directive"
+    # 위험 단어가 든 존댓말 지시 ("운영 DB 를 수정하세요.") 는 보고 문장이 많아도 지시 — 등록돼야 승인 게이트가 본다
+    polite = [ln.lower() for ln in pasted.splitlines() if _POLITE_END_RE.search(ln)]
+    if polite and (any(p in ln for ln in polite for p in _APPROVAL_PATTERNS)
+                   or len(polite) >= len(_REPORT_END_RE.findall(pasted))):
         return pasted, "pasted_directive"
     return pasted, "pasted_report"
 
@@ -207,6 +216,8 @@ _APPROVAL_PATTERNS = (
     "rm -rf", "git reset --hard", "git clean -fd",
     # 배포·외부 push
     "배포", "deploy", "git push --force", "force push",
+    # 2026-11-07: 일반 push 도 승인 대상 (execution-contract § 3) — 명사 "Push" 가 아니라 하라는 말만
+    "git push", "push해", "push 해", "푸시해", "푸시 해",
     "production", "운영", "실배포", "publish",
     # 권한 상승
     "sudo", "chmod 777", "권한 상승", "admin 권한",
@@ -219,13 +230,76 @@ _APPROVAL_PATTERNS = (
 )
 
 
+# 2026-11-07 R184~R186: 위험 단어가 '요청' 이 아닌 줄에 있어도 승인 대기가 됐다.
+#   R184 표 칸 "유료 1회 승인 대기" · R185 "운영 게이트를 바꾸는 것이 아니라" · R186 "유료 호출 요청 → 승인 필요".
+# 그래서 줄을 먼저 나눈다: 표 줄 · 제약 목록 · 상태/게이트 설명 · "A가 아니라 B" 의 A 는 위험 단어를 세지 않는다.
+# 단, 줄 어디에든 요청·행동 표지가 있으면 ("…배포해줘 승인 전이라도", "배포   진행") 그대로 센다 —
+# 구조만으로 실제 요청을 빼지 않는다 (독립 검토에서 줄 끝만 보던 첫 설계가 우회로 4건을 만들었다).
+_TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$|\S(?:\t| {3,})\S.*\S(?:\t| {3,})\S")   # | 표 · 칸 3개 이상
+_CONSTRAINT_HEAD_RE = re.compile(r"^\s*(?:제약|금지|금지 사항|하지 말 것)\s*(?:사항)?\s*[:：]\s*$")
+_BULLET_RE = re.compile(r"^\s*(?:[-*·•]|\d+[.)])\s")
+_NEGATED_SCOPE_RE = re.compile(r"(?:아니라(?!면)|아니고)\s*(?=\S)")              # 문장 중간 "A가 아니라 B" 만
+_STATUS_RE = re.compile(r"승인\s*(?:대기|필요|요청|전|여부)|대기\s*중|미확인|보류|blocked|approval_required")
+_ACTION_RE = re.compile(r"해줘|해 줘|해라|하라|해(?=[\s.!,]|$)|한다|하세요|해주세요|하십시오|할 것|줘|주세요|주십시오"
+                        r"|바랍니다|부탁|진행|실행|시작|반영|수정|삭제|지워|제거|변경|교체|적용|올려")  # push 는 승인 패턴(동사형)만 — 표 칸 명사 오인 방지
+# 판정 근거에 남기는 발췌의 비밀정보 가림 — secret-scan.sh · tool/block_tricks.py 와 같은 계열 (키=값 은 줄 끝까지)
+_SECRET_RE = re.compile(r"(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,}|glpat-[A-Za-z0-9_-]{16,}"
+                        r"|AIza[0-9A-Za-z_-]{30,}|npm_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}"
+                        r"|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*|(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"
+                        r"|[a-z][a-z0-9+.-]*://[^\s:/@]+:[^\s@]+@"
+                        r"|[\"']?(?:password|passwd|pwd|token|secret|api[_-]?key|비밀번호|암호)[\"']?\s*[:=]\s*.+)", re.I)
+# "…를 승인한다" — 기록만 한다. 이 문장으로 위험 작업 승인을 대신하지 않는다 (권한 판단은 사용자·실행 게이트).
+_STATED_SCOPE_RE = re.compile(r"^[^\n]*승인한다[.]?[ \t]*$", re.M)
+
+
+def _approval_basis(prompt: str) -> dict:
+    """승인 판정과 근거 — matched(위험 패턴) · lines(판정에 쓴 줄 · 가림 · 200자) · excluded(제외 사유별 줄 수)."""
+    matched, lines, excluded = [], [], {}
+    in_constraints = False
+    for no, raw in enumerate((prompt or "").splitlines(), 1):
+        ln = raw.lower().strip()
+        if not ln:
+            in_constraints = False
+            continue
+        if _CONSTRAINT_HEAD_RE.match(ln):
+            in_constraints = True
+            continue
+        if in_constraints and not _BULLET_RE.match(raw):
+            in_constraints = False
+        hits = [p for p in _APPROVAL_PATTERNS if p in ln]
+        if not hits:
+            continue
+        reason = None
+        if any(n in ln for n in _NEGATION_MARKERS):
+            reason = "negation"
+        else:
+            body = ln
+            # "A 가 아니라 B" — A 에 요청·행동 표지가 없을 때만 A 를 빼고 B 를 본다
+            m = _NEGATED_SCOPE_RE.search(ln)
+            if m and not _ACTION_RE.search(ln[:m.start()]):
+                body = ln[m.end():]
+                hits = [p for p in _APPROVAL_PATTERNS if p in body]
+                if not hits:
+                    reason = "negated_scope"
+            if reason is None and not _ACTION_RE.search(body):
+                if in_constraints:
+                    reason = "constraint"
+                elif _TABLE_ROW_RE.search(raw):
+                    reason = "table"
+                elif _STATUS_RE.search(body):
+                    reason = "status"
+        if reason:
+            excluded[reason] = excluded.get(reason, 0) + 1
+            continue
+        matched += [p for p in hits if p not in matched]
+        lines.append({"line": no, "text": _SECRET_RE.sub("[MASKED]", raw.strip())[:200]})
+    scope = [_SECRET_RE.sub("[MASKED]", s.strip())[:200] for s in _STATED_SCOPE_RE.findall(prompt or "")][:3]
+    return {"matched": matched, "lines": lines[:5], "excluded": excluded, "stated_scope": scope}
+
+
 def _needs_approval(prompt: str) -> list:
     """위험 패턴 매치 반환 (사용자 지시 "포괄 '전부 개발해' 를 무제한 실행 권한으로 해석 X")."""
-    lines = [ln for ln in (prompt or "").lower().splitlines()
-             if not any(n in ln for n in _NEGATION_MARKERS)]
-    low = "\n".join(lines)
-    matched = [p for p in _APPROVAL_PATTERNS if p in low]
-    return matched
+    return _approval_basis(prompt)["matched"]
 
 
 def _append_ledger_entry(prompt: str, session_id: str, classification: str, intent: str = None) -> dict:
@@ -255,7 +329,8 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
     event_id = _new_event_id(session_id, prompt)
     rid = f"R{len(existing) + 1}"
     # 승인 요구 패턴 매치 시 status=approval_required (실행 보류)
-    approval_matches = _needs_approval(prompt if intent is None else intent)
+    basis = _approval_basis(prompt if intent is None else intent)
+    approval_matches = basis["matched"]
     initial_status = "approval_required" if approval_matches else "pending"
     entry = {
         "id": rid,
@@ -267,6 +342,12 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
         "ts": datetime.now().isoformat(timespec="seconds"),
         "ts_epoch": time.time(),
         "prompt_hash": _prompt_hash(prompt),
+        # 2026-11-07: desc 는 400자에서 잘려 판정에 쓴 줄이 빠질 수 있었다 (R185).
+        # 원문 전체는 저장하지 않는다 — 길이·전체 해시(앞 16자 = orca.db conversations.content_hash)와
+        # 판정에 쓴 줄(가림 · 200자)만 남긴다.
+        "prompt_len": len(prompt or ""),
+        "prompt_sha256": hashlib.sha256((prompt or "").encode("utf-8", errors="replace")).hexdigest(),
+        "approval_basis": {k: v for k, v in basis.items() if k != "matched" and v},
     }
     if approval_matches:
         entry["approval_reasons"] = approval_matches[:5]
