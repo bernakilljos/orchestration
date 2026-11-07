@@ -893,9 +893,21 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 게이트는 물리 RAM 이 아니라 커밋(가상 메모리)을 본다: `repair_sandbox.commit_memory()` = `GetPerformanceInfo` CommitTotal/CommitLimit · 차단 = 사용률 > 90% 또는 여유 < 2GB (`.claude/config/sandbox-policy.json`).
 - 01:09 측정: 커밋 23.3/25.69GB = **90.7%** (성능 카운터 `PercentCommittedBytesInUse` 90 · 같은 값) · 물리 RAM 67% (여유 5.1GB) · 페이징 파일 고정 10GB (`AutomaticManagedPagefile=False` · 사용 2.2GB · 최고 3.4GB).
 - 11-07 00:59 보고의 "98%" 는 성능 카운터 순간값 1회 · 10분 로그 최고치는 95.5% (11-03) · [추정] 일시 상승.
-- 프로세스 private 합 19.07GB · 나머지 약 4.2GB 는 커널·드라이버·공유 메모리 (프로세스별로 나뉘지 않음 · [미확인] 세부).
-- 이름별 상위: Code.exe 4.40GB(23개) · claude.exe 2.33GB(3개: 이 세션 0.94 · orchestration_v1 다른 세션 0.70 · IFRS_PJT 세션 0.69) · msedgewebview2 1.79 · msedge 1.72 · sqlservr 0.85 · node 0.66.
+- 프로세스 private 합 19.07GB · 나머지 약 4.2GB 의 구성은 아래 「정정」 참고 (전부 커널·드라이버로 단정하지 않음).
+- 이름별 상위: Code.exe 4.40GB(23개) · claude.exe 2.33GB(3개 · 본체만: 이 세션 0.94 · orchestration_v1 다른 세션 0.70 · IFRS_PJT 세션 0.69) · msedgewebview2 1.79 · msedge 1.72 · sqlservr 0.85 · node 0.66.
 - 이 세션의 자식 프로세스는 statusline·MCP filesystem 등 수십 MB · 남은 테스트·워커 없음.
+
+**정정 (11-07 09:3x 재측정 · 읽기 전용)**
+- 보고에서 "Claude 세션 2개 종료 시 약 2.2GB 감소" 라고 쓴 것은 본체 값과 자식 포함 값을 섞은 표현이라 정정한다.
+  - 두 세션(IFRS_PJT 0.69 · orchestration_v1 다른 세션 0.66) claude.exe 본체 합계: **1.35GB** [확인]
+  - 자식 프로세스 포함 합계: **2.21GB** [확인] (IFRS_PJT 1.41 = 자식 39개 0.72 포함 · 다른 세션 0.80 = 자식 6개 0.14 포함)
+  - 실제 종료 후 회수량: [미확인] — 2.21GB 는 현재 사용량이며 보장되는 회수량이 아니다.
+- 기존 "나머지 약 4.2GB 는 커널·드라이버" 표현을 정정한다.
+  - 시스템 커밋 23.80GB [확인] · 프로세스 private 합계 19.59GB [확인] · 차이 4.21GB [확인]
+  - 커널 페이지 풀 1.32 + 비페이지 풀 0.78 = 2.10GB [확인]
+  - 나머지 약 2.11GB: 원인 [미확인]
+- 사용률 기준을 구분한다: 현재 커밋 사용률 **92%** [확인] · 기존 차단 게이트 **90%** (`sandbox-policy.json` · 변경 안 함) · 권장 실행 목표 **약 85%** (실행 전 여유 기준일 뿐 게이트 변경 아님).
+- `claude.exe mcp list` (pid 14100 · 11-07 09:26 시작 · 자식 포함 약 0.60GB) 가 실행 중인 것을 관찰 [확인] · 소유 세션·멈춤 여부·종료 필요성 [미확인] · 종료하지 않음.
 
 **지속 증가 여부 (`.claude/logs/orca-10min-loop.log` 반일 단위) [확인]**
 - 커밋 사용량 최저: 11-02 15.4GB → 11-04 17.1 → 11-05 20.4 → 11-06 21.8 → 11-07 22.7GB.
