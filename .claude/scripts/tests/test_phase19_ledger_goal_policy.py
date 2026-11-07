@@ -305,3 +305,136 @@ def test_polite_risky_directive_in_report_is_registered(tmp_path):
     p = _paste("작업을 마쳤습니다.\n로그를 확인했습니다.\n결과는 정상입니다.\n운영 DB 를 수정하세요.")
     e = _register(tmp_path, p, sid="p1")[-1]
     assert (e["classification"], e["status"]) == ("execute", "approval_required")   # 등록돼야 게이트가 본다
+
+
+# ── 2026-11-07 잔여 위험 (5814754 후속): push 표현 누락 · 시험 설명 속 push 문자열 · '없이' 부정 범위 (R187) · 원문 평문 저장 ──
+def _M():
+    sys.path.insert(0, str(HOOK_PY.parent))
+    import ledger_auto_register as M
+    return M
+
+
+DT, RF, FP = "drop" + " table", "rm" + " -rf", "git push " + "--force"   # 위험 문구는 실행 시 조립 (명령 승인 게이트·검사기 오인 방지)
+
+
+def test_push_variants_need_approval():
+    M = _M()
+    for text in ("git  push origin main 해줘", "push origin main", "푸시 진행", "push origin main 해줘", "PUSH origin main 해줘",
+                 "`git push origin main` 실행해줘", "git push -u origin feature 해줘", "다음 항목 처리:\n- 운영 DB 삭제\n- 배포 진행",
+                 "백업 없이 운영 DB 삭제해줘", "아래 표현을 시험한다:\n- git push origin main 해줘"):
+        assert M._needs_approval(text), text
+
+
+# 2026-11-07 독립 검토 2차: 예시 목록 · '없이' · '아니라' · 인용 규칙이 만든 우회로 (직전 판정기는 모두 잡았다)
+BYPASS_CASES_2 = ("다음 사례 처리해:\n- 운영 DB 삭제\n- 배포", "다음 케이스 진행:\n- 배포 진행", "아래 문장 실행:\n- git push origin main",
+                  "다음 예시 반영:\n- 운영 DB 삭제", "다음 사례를 처리해라:\n- 운영 DB 삭제",
+                  "다음 문장 그대로 실행해라\n1. git push origin main\n2. 배포 진행", f"아래 입력 순서대로 수행:\n- {FP} origin main",
+                  f"- {RF} /data\n위 입력 처리", "- git push origin main\n위 사례를 실행한다", "- 배포 진행\n위 사례처럼 처리",
+                  "git push 확인 없이 진행", "운영 db 삭제 승인 없이 진행", "배포 승인 없이 바로 실행", "삭제 후 배포 — 확인 없이 진행",
+                  "배포 확인 없이 진행 바람", "git push 진행 후 결과는 로그가 아니라 요약으로 알려줘",
+                  "운영 db 삭제 진행하고 로그가 아니라 요약만 남겨", "`git push origin main`을 처리", "`git push origin main` 를 돌려",
+                  f"`{RF} /data` 날려", f"'{RF} /' 를 돌려", '이거 해: "운영 db 삭제해줘"', f"let's {RF} /data and it's fine",
+                  f"`{DT} users`", f"`{FP}`")
+
+
+def test_review2_bypass_inputs_still_need_approval():
+    M = _M()
+    for text in BYPASS_CASES_2:
+        assert M._needs_approval(text), text
+    assert DT in M._needs_approval(f"다음 입력 값을 운영 DB 에 반영:\n- {DT} users")
+
+
+def test_push_mentions_are_not_requests(tmp_path):
+    M = _M()
+    for text in ("push origin main 은 하지 마", "- push origin main → 승인 필요", "Git  Push    origin main    완료",
+                 "유료 실행 없이 검증한다", "배포 진행 없이 문서만 고친다"):
+        assert M._needs_approval(text) == [], text
+    assert _register(tmp_path, _paste("작업을 마쳤습니다.\ngit  push origin main 완료했습니다.\n결과는 정상입니다.")) == []
+    # 의도한 과잉 판정 — 인용·예시 목록 속 push 문자열은 실제 요청과 글자로 구분할 수 없어 승인 필요로 남긴다 (독립 검토 2·3차)
+    for text in ("평가에서 'push origin main' 표현을 지적했습니다",
+                 "현재 판정기가 아래 표현을 놓친다고 보고했습니다.\n- git  push — 공백 두 칸\n- push origin main"):
+        assert M._needs_approval(text), text
+
+
+# 2026-11-07 독립 검토 3차: '없이' 창 · 인용 · 예시 목록 규칙의 우회로 (직전 판정기는 모두 잡았다)
+BYPASS_CASES_3 = ("force push 경고 없이 실행해", f"{DT} 예외 없이 실행해줘", "sudo 비밀번호 없이 실행해줘", "git push 경고 없이 바로 해줘",
+                  "git push 에러 없이 완료", "배포 지연 없이 해줘", "배포 사고 없이 하자", f"{RF} 흔적 없이 하자",
+                  f"run `{RF} /tmp/x`", "Please run `git push`", f"just `{FP}`", f"do `{DT} users`", "`git push` 하자",
+                  f"`{RF} x` 때려", "`배포` 가즈아", "'production' 으로 ㄱ", f"사용자가 `{RF} x` 라고 했어 그대로 하자",
+                  f"다음 케이스 순서대로 가자:\n- {RF} build\n- push origin main", f"아래 입력 차례로 돌리자\n1. {RF} dist\n2. {DT} users",
+                  f"다음 사례 순서로 하나씩 하자\n- {RF} a", f"아래 문자열 그대로 하자\n- {FP}", "다음 사례 순서로 가자\n- production 배포",
+                  f"- {RF} x\n- {FP}\n\n위 사례 쭉 가자")
+
+
+def test_review3_bypass_inputs_still_need_approval():
+    M = _M()
+    for text in BYPASS_CASES_3:
+        assert M._needs_approval(text), text
+    assert FP in M._needs_approval(f"{FP} 오류 없이 하자")                        # force 사유도 유지
+
+
+def test_r187_paid_false_positive_fixed_push_list_kept(tmp_path):
+    # R187 의 '유료 실행 없이' 오탐은 해결 · 시험 대상으로 나열한 "- 푸시 진행" 등은 실제 작업 목록과 글자로 구분할 수 없어 승인 필요 유지
+    e = _register(tmp_path, _fixture("r187.txt"), sid="r187")[-1]
+    assert (e["classification"], e["status"]) == ("execute", "approval_required")
+    assert "유료" not in e["approval_reasons"] and set(e["approval_reasons"]) <= {"git push", "push origin", "push 진행"}
+
+
+def test_stored_text_is_masked_and_hash_uses_original(tmp_path):
+    import hashlib
+    secret = "hunter2pass"
+    prompt = f"운영 DB 접속 password={secret} 로 배포해줘\n이번 지시는 비번 {secret} 사용을 승인한다."
+    e = _register(tmp_path, prompt, sid="s1")[-1]
+    assert e["prompt_sha256"] == hashlib.sha256(prompt.encode("utf-8")).hexdigest()   # 감사 연결은 원문 해시
+    assert e["prompt_sha256"].startswith(e["prompt_hash"])
+    basis = json.dumps(e["approval_basis"], ensure_ascii=False)
+    assert secret not in basis and "[MASKED]" in basis                             # 판정 줄 · stated_scope 도 가림
+    _register(tmp_path, f"token={secret}AAAA 참고 메모", sid="s2")                 # 분류 불확실 → deferred
+    for f in (".claude/state/request-ledger.json", ".claude/logs/ledger-raw.jsonl", ".claude/logs/ledger-deferred.jsonl"):
+        text = (tmp_path / f).read_text(encoding="utf-8")
+        assert secret not in text and "[MASKED]" in text, f
+    M = _M()
+    for s in ("비번 hunter2", "pw: hunter2", "passphrase=hunter2", "Authorization: Token hunter2abcdef", "sk_live_" + "hunter2abcdefghijk",
+              "ghs_" + "hunter2abcdefghijklmn", "aws_secret_access_key = hunter2", "apikey hunter2", "key=hunter2",
+              "dbPassword=hunter2", "accessToken=hunter2", "clientSecret=hunter2", "myApiKey=hunter2", "userPwd=hunter2",
+              "--password hunter2", "credential=hunter2", "pw：hunter2", "xoxs-" + "hunter2abcdefg", "ya29." + "hunter2abcdefg"):
+        assert "hunter2" not in M._mask(s), s
+    assert M._mask("token 사용량 확인해줘") == "token 사용량 확인해줘"            # 일반 문장은 그대로
+
+
+def test_dispatch_entrypoint_isolated(tmp_path):
+    """settings.json 이 부르는 prompt-dispatch.py 전체 경로 — hooks · scripts/lib 를 임시 프로젝트로 복사해 실행.
+    save_user_prompt 의 DB 기록까지 임시 orca.db 로 가고 운영 Ledger·DB 에는 남지 않는다."""
+    import hashlib
+    import shutil
+    hooks = tmp_path / ".claude" / "hooks"
+    shutil.copytree(HOOK_PY.parents[1], hooks, ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(ROOT / ".claude" / "scripts" / "lib", tmp_path / ".claude" / "scripts" / "lib",
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    (tmp_path / ".claude" / "state").mkdir(parents=True)
+    copied = hooks / "prompt" / "ledger_auto_register.py"
+    assert hashlib.sha256(copied.read_bytes()).hexdigest() == hashlib.sha256(HOOK_PY.read_bytes()).hexdigest()
+    sid = "phase19-dispatch-isolated"
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1", "PROMPT_DISPATCH_NO_SPAWN": "1"}
+    inputs = [_fixture(n) for n in ("r184.txt", "r185.txt", "r186.txt")] + ["로컬 커밋을 origin main 으로 git push 해줘"]
+    for i, p in enumerate(inputs):
+        subprocess.run([sys.executable, "-X", "utf8", str(hooks / "prompt-dispatch.py")],
+                       input=json.dumps({"prompt": p, "session_id": f"{sid}-{i}"}), text=True, encoding="utf-8",
+                       env=env, capture_output=True, check=True, timeout=120, cwd=str(tmp_path))
+    reqs = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"]
+    assert [(r["session_id"][-1], r["status"]) for r in reqs] == [("1", "pending"), ("2", "pending"), ("3", "approval_required")]
+    assert reqs[-1]["approval_reasons"][0] == "git push" and all("approval_basis" in r for r in reqs)
+    log = (tmp_path / ".claude/logs/prompt-dispatch.log").read_text(encoding="utf-8")
+    assert "ERROR ledger-auto-register" not in log and "TIMEOUT ledger-auto-register" not in log
+    with sqlite3.connect(str(tmp_path / ".claude/state/orca.db")) as c:               # 다른 훅(save_user_prompt)도 임시 DB 로
+        assert c.execute("SELECT COUNT(*) FROM conversations WHERE session_id LIKE ?", (sid + "%",)).fetchone()[0] == len(inputs)
+    # 운영 저장소에는 이 세션 id 가 없어야 한다
+    real = ROOT / ".claude" / "state"
+    for f in (real / "request-ledger.json", ROOT / ".claude/logs/ledger-raw.jsonl"):
+        if f.exists():
+            assert sid not in f.read_text(encoding="utf-8", errors="replace"), f
+    if (real / "orca.db").exists():
+        with sqlite3.connect(f"file:{real / 'orca.db'}?mode=ro", uri=True) as c:
+            assert c.execute("SELECT COUNT(*) FROM conversations WHERE session_id LIKE ?", (sid + "%",)).fetchone()[0] == 0
+
+

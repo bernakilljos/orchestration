@@ -97,7 +97,7 @@ def _intent_text(prompt: str) -> tuple:
         return pasted, "pasted_directive"
     # 위험 단어가 든 존댓말 지시 ("운영 DB 를 수정하세요.") 는 보고 문장이 많아도 지시 — 등록돼야 승인 게이트가 본다
     polite = [ln.lower() for ln in pasted.splitlines() if _POLITE_END_RE.search(ln)]
-    if polite and (any(p in ln for ln in polite for p in _APPROVAL_PATTERNS)
+    if polite and (any(_risk_hits(ln) for ln in polite)
                    or len(polite) >= len(_REPORT_END_RE.findall(pasted))):
         return pasted, "pasted_directive"
     return pasted, "pasted_report"
@@ -188,7 +188,7 @@ def _append_raw(prompt: str, session_id: str, classification: str, status: str) 
                 "session_id": session_id,
                 "classification": classification,
                 "status": status,  # registered·duplicate_skipped·deferred·approval_required
-                "prompt": (prompt or "")[:800],
+                "prompt": _mask(prompt)[:800],   # 2026-11-07: 원문 발췌도 비밀정보 가림 (해시는 원문 기준)
                 "prompt_hash": _prompt_hash(prompt),
             }, ensure_ascii=False) + "\n")
     except Exception:
@@ -203,7 +203,7 @@ def _append_deferred(prompt: str, session_id: str) -> None:
         os.makedirs(os.path.dirname(deferred_log), exist_ok=True)
         with open(deferred_log, "a", encoding="utf-8") as f:
             f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"),
-                                "session_id": session_id, "prompt": (prompt or "")[:400]},
+                                "session_id": session_id, "prompt": _mask(prompt)[:400]},
                                ensure_ascii=False) + "\n")
     except Exception:
         pass
@@ -238,18 +238,69 @@ _APPROVAL_PATTERNS = (
 _TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$|\S(?:\t| {3,})\S.*\S(?:\t| {3,})\S")   # | 표 · 칸 3개 이상
 _CONSTRAINT_HEAD_RE = re.compile(r"^\s*(?:제약|금지|금지 사항|하지 말 것)\s*(?:사항)?\s*[:：]\s*$")
 _BULLET_RE = re.compile(r"^\s*(?:[-*·•]|\d+[.)])\s")
-_NEGATED_SCOPE_RE = re.compile(r"(?:아니라(?!면)|아니고)\s*(?=\S)")              # 문장 중간 "A가 아니라 B" 만
+# 문장 중간 "A가 아니라 B" 만 (줄 끝 "아님" 은 범위를 자르지 않는다) — A 에 요청·행동 표지가 있으면 자르지 않는다
+_NEGATED_SCOPE_RE = re.compile(r"(?:아니라(?!면)|아니고)\s*(?=\S)")
+# 2026-11-07 R187: "유료 실행 없이 … 검증한다" 의 '유료' 가 승인 사유가 됐다.
+# '없이' 는 근거가 드러날 때만 뺀다 — 위험 단어 바로 뒤에 실행·호출·사용·과금·진행 이 붙고 곧바로 '없이' 인 경우
+# ("유료 실행 없이", "배포 진행 없이"). "push 경고 없이"·"배포 지연 없이"·"drop table 예외 없이" 처럼
+# 다른 말이 끼면 위험 작업을 그대로 하라는 뜻일 수 있어 빼지 않는다 (독립 검토 3차 우회 사례).
+_WITHOUT_RE = re.compile(r"\S+\s*(?:실행|호출|사용|과금|진행)\s+없이(?=\s*\S)")
+# 2026-11-07 독립 검토 2·3차 교훈: "이 줄에 행동 표지가 없다" 를 근거로 줄을 빼는 규칙은 행동 표지 어휘가
+# 끝이 없어서 (하자·가자·ㄱ·때려·run …) 계속 뚫린다. 그래서 예시 목록·인용 제외는 넣지 않았다 —
+# 시험 설명 속 "- push origin main" 같은 줄은 승인 필요로 남는다 (안전한 쪽 과잉 판정).
+# 표·상태·제약 제외(5814754)는 유지하되 행동 표지에 청유·명령 어미와 영어 명령어를 넣어 좁힌다.
+# push 는 띄어쓰기·순서가 다양하다 ("git  push", "push origin main", "푸시 진행") — 문자열 대신 정규식
+_RISK_REGEX = (
+    ("git push", re.compile(r"git\s+push")),
+    ("push origin", re.compile(r"(?<![a-z])push\s+(?:-{1,2}\S+\s+)*origin(?![a-z])")),
+    ("push 진행", re.compile(r"(?<![a-z])push\s*(?:진행|실행)|푸시\s*(?:진행|실행)")),
+)
+
+
+def _risk_hits(text: str) -> list:
+    """위험 패턴 — 문자열 목록 + 정규식 (소문자 입력)."""
+    hits = [p for p in _APPROVAL_PATTERNS if p in text]
+    return hits + [name for name, rx in _RISK_REGEX if name not in hits and rx.search(text)]
 _STATUS_RE = re.compile(r"승인\s*(?:대기|필요|요청|전|여부)|대기\s*중|미확인|보류|blocked|approval_required")
-_ACTION_RE = re.compile(r"해줘|해 줘|해라|하라|해(?=[\s.!,]|$)|한다|하세요|해주세요|하십시오|할 것|줘|주세요|주십시오"
-                        r"|바랍니다|부탁|진행|실행|시작|반영|수정|삭제|지워|제거|변경|교체|적용|올려")  # push 는 승인 패턴(동사형)만 — 표 칸 명사 오인 방지
+_ACTION_RE = re.compile(r"해줘|해 줘|해라|하라|해(?=[\s.!,:：]|$)|한다|하세요|해주세요|하십시오|할 것|줘|주세요|주십시오"
+                        r"|바랍니다|바람|부탁|진행|실행|시작|반영|수정|삭제|지워|제거|변경|교체|적용|올려"
+                        r"|돌려|돌리|처리|수행|날려|때려|밀어|하자|합시다|하셈|해요|하죠|가자|고고|ㄱ"
+                        r"|(?<![a-z])(?:run|do|go|execute|exec|apply|perform|start|please|just|let's)(?![a-z])")  # push 는 승인 패턴(동사형)만 — 표 칸 명사 오인 방지
 # 판정 근거에 남기는 발췌의 비밀정보 가림 — secret-scan.sh · tool/block_tricks.py 와 같은 계열 (키=값 은 줄 끝까지)
 _SECRET_RE = re.compile(r"(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,}|glpat-[A-Za-z0-9_-]{16,}"
                         r"|AIza[0-9A-Za-z_-]{30,}|npm_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}"
                         r"|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*|(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"
                         r"|[a-z][a-z0-9+.-]*://[^\s:/@]+:[^\s@]+@"
-                        r"|[\"']?(?:password|passwd|pwd|token|secret|api[_-]?key|비밀번호|암호)[\"']?\s*[:=]\s*.+)", re.I)
+                        r"|sk_(?:live|test)_[A-Za-z0-9]{16,}|[rp]k_live_[A-Za-z0-9]{16,}|gh[soru]_[A-Za-z0-9]{20,}"
+                        r"|(?:bearer|basic|token)\s+[A-Za-z0-9._~+/=-]{8,}|xox[a-z]-[A-Za-z0-9-]{10,}|ya29\.[A-Za-z0-9._-]{10,}"
+                        r"|hf_[A-Za-z0-9]{20,}|pypi-[A-Za-z0-9_-]{20,}|dckr_pat_[A-Za-z0-9_-]{16,}|shpat_[A-Za-z0-9]{16,}"
+                        r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+                        r"|[\"']?(?:password|passwd|passphrase|pwd|pw|token|secret|api[_-]?key|apikey|key|credential|auth"
+                        r"|authorization|aws_secret_access_key|비밀번호|비번|암호)[\"']?\s*[:=：＝]\s*\S.*"
+                        r"|--(?:password|passwd|token|api-key)[\s=]+\S+"
+                        r"|(?<![A-Za-z])(?:passphrase|apikey|비밀번호|비번)\s+\S.*)", re.I)
+
+
+def _mask(text: str) -> str:
+    """Ledger·raw·deferred 에 남기는 글의 비밀정보 가림 (원문 해시·판정은 가리기 전 원문으로)."""
+    return _SECRET_RE.sub("[MASKED]", text or "")
+
+
 # "…를 승인한다" — 기록만 한다. 이 문장으로 위험 작업 승인을 대신하지 않는다 (권한 판단은 사용자·실행 게이트).
 _STATED_SCOPE_RE = re.compile(r"^[^\n]*승인한다[.]?[ \t]*$", re.M)
+
+
+# 2026-11-07 R187: 시험 대상으로 나열한 "- git  push" · "- push origin main" 목록이 push 요청으로 읽혔다.
+# 시도했다가 뺀 규칙 (독립 검토 2·3차에서 우회로 확인):
+#   예시 목록 = 바로 앞 줄이 "아래/다음 표현·입력·사례…" 또는 바로 뒤 줄이 "위 입력·표현…" 인 글머리 묶음을 빼는 규칙.
+#   가리키는 줄이 지시인지 ("다음 사례 처리해:", "위 입력 처리", "다음 케이스 순서대로 가자:") 글자로 다 가릴 수 없었다.
+#   인용 = 따옴표·백틱 안에만 위험 문자열이 있으면 빼는 규칙 — "run `…`", "`git push` 하자" 가 빠졌다.
+#   목록 줄 "- 푸시 진행" 은 실제 작업 목록과 글자로 구분할 수 없다 → 승인 필요로 남긴다.
+
+
+def _drop_without(text: str) -> str:
+    """'<위험 단어> 실행·호출·사용·과금·진행 없이' 만 지운 글 — 다른 말이 끼어 있으면 지우지 않는다."""
+    return _WITHOUT_RE.sub(lambda m: " " * len(m.group(0)), text)
 
 
 def _approval_basis(prompt: str) -> dict:
@@ -266,7 +317,7 @@ def _approval_basis(prompt: str) -> dict:
             continue
         if in_constraints and not _BULLET_RE.match(raw):
             in_constraints = False
-        hits = [p for p in _APPROVAL_PATTERNS if p in ln]
+        hits = _risk_hits(ln)
         if not hits:
             continue
         reason = None
@@ -278,9 +329,12 @@ def _approval_basis(prompt: str) -> dict:
             m = _NEGATED_SCOPE_RE.search(ln)
             if m and not _ACTION_RE.search(ln[:m.start()]):
                 body = ln[m.end():]
-                hits = [p for p in _APPROVAL_PATTERNS if p in body]
-                if not hits:
-                    reason = "negated_scope"
+            # "X 없이" — X 안의 위험 단어만 뺀다
+            body = _drop_without(body)
+            hits = _risk_hits(body)
+            if not hits:
+                reason = "negated_scope"
+            # (예시 목록·인용 제외는 두지 않는다 — 위 '시도했다가 뺀 규칙' 참고 · 인용된 '승인' 문장도 따옴표 안 위험 문자열도 그대로 센다)
             if reason is None and not _ACTION_RE.search(body):
                 if in_constraints:
                     reason = "constraint"
@@ -292,8 +346,8 @@ def _approval_basis(prompt: str) -> dict:
             excluded[reason] = excluded.get(reason, 0) + 1
             continue
         matched += [p for p in hits if p not in matched]
-        lines.append({"line": no, "text": _SECRET_RE.sub("[MASKED]", raw.strip())[:200]})
-    scope = [_SECRET_RE.sub("[MASKED]", s.strip())[:200] for s in _STATED_SCOPE_RE.findall(prompt or "")][:3]
+        lines.append({"line": no, "text": _mask(raw.strip())[:200]})
+    scope = [_mask(s.strip())[:200] for s in _STATED_SCOPE_RE.findall(prompt or "")][:3]
     return {"matched": matched, "lines": lines[:5], "excluded": excluded, "stated_scope": scope}
 
 
@@ -334,7 +388,7 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
     initial_status = "approval_required" if approval_matches else "pending"
     entry = {
         "id": rid,
-        "desc": (prompt or "")[:400],
+        "desc": _mask(prompt)[:400],
         "classification": classification,
         "status": initial_status,
         "event_id": event_id,
