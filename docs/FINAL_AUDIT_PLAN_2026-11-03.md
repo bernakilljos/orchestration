@@ -924,3 +924,57 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 고칠 방향 (미적용 · 별도 승인): 붙여 넣은 글에서 `~하세요` 권고는 지시 표지에서 빼고 `대상:` 줄·`지시다/승인한다` 문구만 인정 · 표 줄(탭/4칸 공백 구분)의 `유료`·`승인 대기` 는 승인 요청에서 제외.
 
 **Codex 실행 조건 [확인]**: 게이트 90% 유지 · 실제 모델 호출·worktree 생성/삭제 안 함 · 지금 실행해도 `COMMIT LOW … 시작 보류` 로 거부된다 (로그 11-06 18:00~18:20 같은 사유).
+
+
+## §50 실행 단계 승인 게이트 P0 보완 (2026-11-08 · 5ef9672 · 격리 Mock · 실제 위험 작업 0)
+
+- 문자열 게이트 확장: push 전 변형 · 자기 승인 · 직접 유료 호출 · 삭제·배포·DB·설정 덮어쓰기 · `_extract_cmd` JSON 파싱 (`\"}` 절단 우회 수정).
+- 승인 확정 = 사용자 프롬프트 `/approve <id>` 한 줄 (`prompt/user_approval.py`) · 명령줄 approve·reject 비활성 · 요청 번호 = 명령+폴더 지문 · 승인 후 30분 1회.
+- 격리 91건: ALLOW 61 → 10 · 종단 9단계 · pytest 282 passed (기존 33 오류 동일) [확인].
+- 운영 관찰: 이 세션의 내 명령이 실제 게이트에 4회 차단 → 승인 대기 29 → 33 (`appr-a450aa9a9a11` · `appr-2230b5ee4f5c` · `appr-1c66b83e187a` · `appr-ff71ca756283`). 2건은 과대 패턴(py_compile · 파일 이름 나열) → 패턴 축소·회귀 추가. `appr-ff71ca756283` 은 기존 `curl | python` 규칙의 정상 차단. 대기 행은 삭제·승인 안 함.
+- 한계: 같은 Windows 계정 권한이라 스크립트 파일 경유·DB 직접 쓰기는 못 막는다 → P0-1·2·3 PARTIAL.
+
+## §51 P0 권한 분리 설계 (2026-11-08 · 기준 5ef9672 · 읽기 전용 조사 + 격리 Mock · 운영 계정·ACL·인증정보·GitHub 설정 변경 0)
+
+**현재 권한 실측 [확인]** (값 출력 없음)
+
+| 대상 | 실측 | 의미 |
+|---|---|---|
+| 실행 계정 | claude.exe·codex.exe·node.exe 전부 `ja205` | Agent = 사용자와 같은 권한 |
+| `orca.db` ACL | 소유 ja205 · **Authenticated Users Modify (상속)** · CodexSandboxUsers Modify · 미확인 SID 1개 Modify | 별도 계정을 만들어도 이 상속 ACL 을 끊지 않으면 그 계정도·Agent 도 수정 가능 |
+| approval-gate.py · settings.json | 소유 ja205 | 게이트 코드·hook 설정도 Agent 가 수정 가능 |
+| Git 인증 | credential.helper=manager · 대상 4개 (github.com · x-access-token@github.com · 사용자 id@github.com · 사내 1) | Agent 가 사용자 토큰으로 push |
+| GitHub | 공개 저장소 · main 보호 없음 · ruleset 0 | 원격 측 제한 없음 · ruleset 은 공개 저장소에서 사용 가능 |
+| ANTHROPIC_API_KEY | Process·**User** 환경 변수 설정 · Machine 없음 | 사용자 로그인 세션의 모든 프로세스가 상속 |
+| 모델 진입점 | `real_repair_chain` 은 실행 전 키를 **제거**하고 구독 로그인으로 `claude -p` + `agent_budget_reserve` (fail-closed) · `self_healing` 예산 확인 · `codex-auto`·`gemini-auto` 사전 예산 차단기 | 주 체인은 키 없이 동작 |
+| 예산 게이트 없는 진입점 | `haiku-validate.py` · `test-haiku.py` · `plugins/eval_quality/scripts/score_task.py` · `web-cli-auto-bridge.py` (키 직접 사용) · `claude-auto.bat` · `codex-a.bat` | 키를 빼면 앞 4개는 실패, 뒤 2개는 구독·로그인 사용 |
+| 기존 격리 자산 | Windows 로컬 그룹 `CodexSandboxUsers` (CodexSandboxOffline·CodexSandboxOnline 계정) | Codex 는 이미 별도 계정으로 격리 가능 — 같은 방식 재사용 후보 |
+
+**설계 (4분리 · 기존 코드 재사용)**
+
+| 역할 | 실행 주체 | 보유 권한 | 재사용 |
+|---|---|---|---|
+| A Agent | 사용자 계정 (현행) | 개발·테스트·로컬 commit·승인 요청 생성 · **push 인증정보·API 키·승인 저장소 쓰기 없음** | 기존 PreToolUse 게이트 = 1차 필터로 유지 |
+| B 사용자 승인 | 사용자 프롬프트 `/approve <id> <TOTP 6자리>` → UserPromptSubmit 훅이 **모델보다 먼저** 브로커에 전달 | TOTP 시드는 브로커 계정만 보유 · 코드 1회 사용 | `prompt/user_approval.py` |
+| C 승인 저장소 | 브로커 서비스 계정 소유 폴더 (Agent 읽기만 또는 없음) | 승인 행 쓰기는 브로커만 | `approval-gate.py` request·approve·consume_approval 그대로 (ORCHESTRATION_ROOT=브로커 폴더) |
+| D 실행 브로커 | 별도 Windows 서비스 계정 · localhost 소켓/네임드 파이프 API | git push 토큰 (해당 저장소 contents 쓰기만) · API 키 · 예산 확인 | `worker_git.push_approved` 검증(커밋 조상·fast-forward·저장소 일치) · `state_db.agent_budget_reserve` |
+
+- 브로커가 확인: 작업 종류 · 대상 저장소 · 원격 · 브랜치 · 커밋 · 작업 폴더 → 지문 · 사용자 승인자 · TTL 30분 · 1회 사용.
+- Agent 가 `/approve` 문자열을 출력해도 프롬프트 훅은 실제 사용자 입력에서만 실행되고, 훅을 직접 흉내 내도 TOTP 코드를 만들 수 없다 (시드가 Agent 가 못 읽는 계정에 있을 때만 성립).
+- GitHub: ruleset 은 저장소 admin 이 수정·삭제 가능 → Agent 가 사용자(소유자) 토큰을 쥐면 ruleset 도 무력. **브로커용 토큰은 해당 저장소 contents 쓰기만 (administration 권한 없음)** 이어야 한다 [추정 — fine-grained PAT 권한 세부는 미확인]. main·태그에 ruleset (삭제·강제 push 금지) 은 2차 방어.
+
+**격리 Mock 결과 (scratchpad `broker_mock.py` · `broker_test.py` · 15/15 PASS · Mock 한정)**
+- 가짜 인증정보 Agent 환경 없음 · 승인 없는 push·유료 호출 거부 · Agent 용 승인 API 없음 · 틀린 TOTP 거부
+- 사용자 TOTP 승인 → 지정 push 1회 (로컬 bare 원격) · 중복 실행·같은 코드 재사용·다른 브랜치 전용·만료 거부
+- 만료 뒤 같은 작업 재요청·재승인 · 승인돼도 예산 NULL 이면 거부 (kit 예산 게이트) · 정상 무료 작업 유지
+- 미검증: 별도 Windows 계정·ACL 로 Agent 가 저장소·시드·토큰을 실제로 못 읽는지 (같은 계정 실행).
+
+**운영 전환 영향·복구 (실행 안 함 · 사용자 승인 필요)**
+
+| 단계 | 영향 | 복구 |
+|---|---|---|
+| 1 브로커 서비스 계정 생성 + 폴더 ACL (상속 끊기 · Authenticated Users 제거) | 기존 hook·스크립트가 `orca.db` 를 쓰므로 승인 행만 별도 DB 로 분리해야 함 (전체 DB 를 막으면 kit 전체 정지) | 계정 삭제 · ACL 원복 (`icacls /restore` 백업) |
+| 2 ANTHROPIC_API_KEY 를 User 환경에서 제거 → 브로커만 | 키 직접 쓰는 4개 스크립트 실패 · Claude Code 본체 인증 방식 영향 [미확인] | User 환경 변수 재설정 |
+| 3 브로커 전용 GitHub 토큰 발급 · 사용자 토큰을 Agent 세션 자격 증명에서 제거 | Agent 의 일반 push 불가 (의도) · 워커 push 는 브로커 경유로 변경 | 자격 증명 재등록 |
+| 4 main·태그 ruleset | 소유자 직접 push 도 규칙 적용 (bypass 설정에 따라) | ruleset 비활성화 |
+| 5 settings.json·hook 폴더 쓰기 권한 분리 | Claude 의 kit 유지보수 편집 불가 → 변경은 사용자/브로커 경유 | ACL 원복 |
