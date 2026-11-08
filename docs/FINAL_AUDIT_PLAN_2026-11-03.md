@@ -1036,3 +1036,87 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | 6 | main·태그 ruleset (삭제·강제 push 금지 · 우회 목록 비움) | ruleset 비활성 | 브로커 정상 push 통과 · 강제 push 거부 |
 | 7 | (선택) Agent 를 비관리자 계정으로 · hook·settings 쓰기 분리 | 그룹 원복 | UAC 상승 경로 제거 |
 | 8 | 회귀: pytest·golden · 무료 개발 흐름 · 위험 작업 차단 | 단계별 되돌림 | 이전 결과와 동일 |
+
+> §53 이 이 표를 대체한다 (표준 계정 필수화 · 프롬프트 TOTP 제외 · ruleset 사전 검증).
+
+## §53 P0 권한 분리 전환 계획 최종 확정 (2026-11-08 · 기준 9a89ca7 · 읽기 전용 + 격리 Mock · 운영 변경 0)
+
+§52 시험은 재실행하지 않음. 새로 한 것: 계정 전환 영향 실측 · 인증정보 노출 구분 · 대역 외 승인 채널 Mock 12/12 · GitHub 문서 재확인.
+
+**1. Agent 실행 계정**
+- 현재 한계 [확인]: ja205 = 로컬 Administrators · UAC 는 MSRC 기준 보안 경계 아님 → 같은 계정·관리자 계정의 Agent 에게는 어떤 ACL 도 최종 경계가 못 된다.
+- 설계: `Agent 계정` = 비관리자 표준 사용자 (Administrators·CodexSandboxUsers 비구성원) · `브로커 계정` = 비관리자 서비스 계정 (대화형 로그인 거부) · ja205 = 사람 관리자 (Agent 실행 안 함).
+- 별도 로그온 세션 필수: Agent 를 ja205 데스크톱에서 `runas` 로 띄우면 같은 데스크톱 창에 입력을 보낼 수 있어 (UIPI 는 계정이 아니라 무결성 수준 기준) ja205 터미널을 조작할 위험 [추정] → 사용자 전환 또는 RDP 로 Agent 세션을 분리.
+- 프로필 ACL [확인]: `%USERPROFILE%` = SYSTEM·Administrators·ja205 만 → Agent 계정은 ja205 의 자격 증명 관리자 vault·`.claude.json`·HKCU 환경 변수·`.codex`·`.gemini` 를 **읽을 수 없다** (삭제 없이 경로 차단).
+- 영향 [확인]:
+  | 대상 | 현재 위치 | Agent 계정에서 |
+  |---|---|---|
+  | python (3.14) · claude · uv · codex · gemini · VS Code | ja205 프로필 안 | 사용 불가 → Agent 프로필에 별도 설치 또는 컴퓨터 전체 설치 |
+  | git · bash · node·npm (Volta) | Program Files | 사용 가능 |
+  | Claude Code 로그인 · 전역 `~/.claude` 설정 · transcript | ja205 프로필 | Agent 계정에서 따로 로그인 · `setup/templates` 로 전역 설정 설치 (kit install 경로) |
+  | Codex·Gemini OAuth | ja205 프로필 | 쓰려면 Agent 계정에서 따로 로그인 (유료 호출 경계는 브로커 정책 따름) |
+  | worktree 26개 | kit `.repair-sandbox` 21 · `C:\pjt` 1 · **ja205 프로필 4** | 프로필 4개는 접근 불가 → 전환 전 목록화·필요 시 재생성 |
+  | kit 스크립트 51개 | `Path.home()`·`%USERPROFILE%` 사용 | Agent 프로필 기준으로 자동 전환 (하드 경로 없음) |
+- kit 폴더 ACL 설계: Agent = 개발 트리 Modify · `.claude/hooks`·`.claude/settings.json`·`approval-gate.py`·보호 hook = 읽기·실행만 (변경은 ja205 가 검토 후 반영) · 승인 저장소·예산·브로커 비밀 = kit 밖 브로커 소유 폴더 (Agent ACE 없음). 기존 Authenticated Users Modify 상속은 보호 경로에서 끊는다.
+
+**2. 사용자 승인 채널 (프롬프트 TOTP 최종안 제외)**
+- 원칙: 승인 비밀은 Agent 세션 (모델·프롬프트 훅·transcript·history) 에 절대 들어오지 않는다. 같은 데스크톱 입력도 Agent 가 관찰·주입할 수 있으므로 PC 화면 입력도 쓰지 않는다.
+- 설계: 브로커 → 휴대폰으로 승인 요청 {task_id · 작업 지문 · 대상 요약 · 만료 · nonce} → 사용자가 휴대폰에서 확인·승인 → 기기 키로 그 문안 전체 서명 → 브로커가 공개키로 검증 → kit `approval-gate` 정본으로 승인·1회 소비. Agent 는 상태 조회만.
+- Mock `oob_channel_mock.py` 12/12 (같은 계정·휴대폰과 푸시는 모의): 승인 없음 거부 · 다른 키 서명 거부 · 문안 변조 거부 · A 승인을 B 에 재사용 거부 · 사용자 승인 기록 · nonce 재전송 거부 · 승인 후 대상 변경 거부 · 1회 실행 · 2회차 거부 · 만료 거부 · 채널 장애 fail-closed · 브로커 저장소에 공개키만.
+- 실제 구현 후보: (A) 메신저 봇 승인 버튼 (봇 토큰·허용 채팅 ID 는 브로커만 · 콜백에 nonce+지문) — 구현 쉬움, 신뢰 근거 = 메신저 계정 · (B) 기기 키 서명 (passkey·서명 앱) — Mock 과 같은 구조, 가장 강함. 둘 다 외부 서비스·기기 등록 = 사용자 승인.
+- fail-closed: 채널 불통·서명 실패·지문 불일치·만료·nonce 재사용·브로커 다운 → 전부 "승인 없음" · 요청은 waiting 유지 후 만료 · 자동 재시도·대체 승인 없음 · 사용자는 새 요청을 다시 승인.
+- 코드 영향 (전환 시): `prompt/user_approval.py` 의 `/approve` 경로 제거 · 승인자 표시 `user-prompt` → 기기 승인 표시로 · `consume_approval` 조건 동일 유지.
+
+**3. 인증정보 보호 [확인 · 값 출력 없음]**
+| # | 경로 | Agent 계정 전환 후 |
+|---|---|---|
+| 1 | Windows 자격 증명 관리자 GitHub 대상 3개 (credential.helper=manager) | ja205 vault → 접근 불가 |
+| 2 | HKCU 환경 변수 `GITHUB_PERSONAL_ACCESS_TOKEN` (classic) | ja205 전용 → 상속 안 됨 |
+| 3 | 프로세스 환경 (2 상속) | 없음 |
+| 4 | `~/.claude.json` github MCP env 평문 | ja205 프로필 → 접근 불가 |
+| 5~7 | 현재 토큰 값 사본: `orca.db` 대화 기록 · Claude transcript · prompt history | 5 는 orca.db 이므로 **승인 저장소 분리와 별도로 대화 기록 가림 필요** · 6·7 은 ja205 프로필 |
+- 노출 구분: git 전 이력·추적 파일·`origin/main` 에 토큰 패턴 0 → **공개 저장소 노출 증거 없음**. 현재 토큰 값이 프롬프트 기록에 있다 = 대화로 입력된 적이 있어 모델 제공자에게 전송됐을 가능성 [추정] · 공개 노출과는 구분. `.claude/logs/bash_commands.log` (git 무시) 의 Anthropic 키 패턴 2줄은 현재 키 아님.
+- 순서: ① Agent 계정 생성 → 1~4·6·7 차단을 Agent 계정으로 읽기 시도해 확인 (삭제 없음) ② orca.db 대화 기록의 토큰 사본 가림 (백업 후) ③ 브로커 자격 증명을 브로커 폴더에 설치 ④ 기존 토큰 재발급·폐기는 사용자 소관 (이 계획에서 실행하지 않음). 복구 = Agent 계정 사용 중단 → 지금 상태로 복귀 (기존 자격 증명 그대로).
+
+**4. GitHub 보호 정책 [문서 확인 2026-11-08]**
+| 항목 | Deploy key (쓰기) | GitHub App (Contents 쓰기만) |
+|---|---|---|
+| 범위 | 단일 저장소 · SSH | 설치한 저장소 · HTTPS `x-access-token` |
+| 수명 | 만료 없음 (수동 교체) | 설치 토큰 1시간 |
+| ruleset 관리 | 권한 없음 (ruleset 쓰기 = Administration write) | Administration 미부여 시 없음 |
+| 우회 목록 | REST enum 에 DeployKey 있으나 UI 목록에 없음 · 개인 저장소 지원 NOT FOUND | UI 목록에 GitHub Apps 있음 |
+| 판단 | 단순 · 장기 비밀 | **권장** — 단기 토큰 · 신원 분리 |
+- 확인된 규칙 동작: Restrict updates·Restrict deletions·Restrict creations = 우회 권한자만 · Require PR = 모든 변경이 PR 경유 · Block force pushes. Evaluate 모드는 GitHub Enterprise 전용 → 개인 저장소는 사전 시험 모드 없음.
+- 따라서 main 규칙 = **강제 push 금지 + 삭제 금지만** (승인 통제는 브로커가 담당 · Require PR·Restrict updates 는 브로커 직접 push 를 막으므로 넣지 않음) · 태그 = 삭제·갱신 금지 · 우회 목록 비움.
+- 사전 검증 절차 (실행은 승인 후): 시험 패턴 `ruleset-probe/*` 에 같은 규칙 → ⓐ 브로커 fast-forward push 통과 ⓑ 강제 push 거부 ⓒ 삭제 거부 ⓓ Agent (자격 없음) push 401/403 ⓔ 브로커 자격으로 ruleset API 403 → 전부 통과 시 main·태그로 확대 · 실패 시 ruleset 비활성.
+
+**5. 승인 DB·예산 이전**
+- 대상 [확인]: 승인 행 38 (waiting 33 · rejected 5 · 전부 stub · FK·참조 0) · 예산 한도 NULL · 예약 14 **전부 settled** (진행 중 예약 없음 → 이동 중 예약 유실 위험 없음). 예산 표 사용 코드: `state_db` · `route.py` · `record_call.py` · `statusline_context.py` · `kit-stats.py` (+ 시험 3개).
+- 순서: 복사 (sqlite backup · 원본 그대로) → 검증 (행 수·행별 해시·33/5·보호 2건·NULL·14 settled) → 전환 (승인·예산 읽기·쓰기 경로를 브로커 API 로 · 원본 행은 동결 사본) → 확인 (list 33 · statusline · golden · pytest).
+- 복구: 경로 설정을 orca.db 로 되돌림 · 원본 미삭제. 전환 후 원본에 새 쓰기가 생기면 즉시 중단 (이중 기록 = 실패 조건).
+
+**6. 실행 순서·단계별 승인·실패 조건**
+| 단계 | 내용 | 필요한 사용자 승인 | 진행 조건 | 실패 시 |
+|---|---|---|---|---|
+| 0 | orca.db·kit ACL·설정 백업 · 기준선 기록 (대기 33 · R184~R189 · Goal #77) | 없음 (읽기·백업) | 백업 복원 시험 통과 | 중단 |
+| 1 | Agent 표준 계정 생성 · 별도 세션 · 도구 설치 · Claude Code 로그인 · 전역 설정 install | 계정 생성·도구 설치 | Agent 계정에서 pytest·golden·무료 개발 통과 | 계정 사용 중단 (ja205 그대로) |
+| 2 | Agent 계정으로 ja205 자격 증명 경로 1~4·6·7 읽기 시도 | 없음 (확인만) | 전부 거부 | 1 로 되돌림 |
+| 3 | 브로커 계정·브로커 폴더 (소유자=브로커 · Agent ACE 없음) | 계정 생성·ACL | Agent 계정에서 읽기·쓰기 거부 = **다른 계정 OS PASS** | 계정·폴더 삭제 |
+| 4 | 승인 행·예산 복사→검증 (§53-5) | 없음 (복사) | 검증 전 항목 일치 | 복사본 폐기 |
+| 5 | 대역 외 채널 등록 (봇 또는 기기 키) | 외부 서비스·기기 | 실제 승인 1회 → 지정 작업 1회 · 재사용·만료 거부 | 채널 해제 (승인 불가 = 안전) |
+| 6 | kit 코드 전환 (승인·예산 경로 · `/approve` 제거 · 보호 경로 읽기 전용) | 코드 변경 (CHANGE 5 초과 → 상한 해제) | pytest·golden·위험 명령 차단 회귀 | 이전 커밋으로 |
+| 7 | API 키를 브로커에만 · haiku 검증은 브로커 경유 또는 비활성 · install 문구 | 키 이동 | Agent 계정 키 없음 · Claude Code 정상 · 브로커 유료 호출은 예산 NULL 이면 거부 | 키 복원 |
+| 8 | GitHub App (Contents 쓰기만) · `ruleset-probe/*` 사전 검증 → main·태그 | App 설치·ruleset | §53-4 ⓐ~ⓔ | ruleset 비활성 · App 제거 |
+| 9 | 종단 회귀 + 출시 조건 증거 수집 | 없음 | §53-7 전부 | 해당 단계 복구 |
+
+**7. 출시 승인 조건 (실제 완료 판정 · Mock 은 인정 안 함)**
+| 조건 | 인정되는 증거 | 현재 |
+|---|---|---|
+| 다른 Windows 계정 사이 접근 거부 | Agent 계정 프로세스의 승인 저장소·브로커 비밀·ja205 자격 증명 접근 거부 원문 | 미검증 (Mock·같은 계정 OS 시험만) |
+| 자기 승인 불가 | Agent 계정에서 승인 상태 쓰기 거부 + 채널 서명 위조 거부 | Mock |
+| 승인 없는 push 불가 | Agent 계정 push 401/403 · 브로커 미승인 push 거부 | 미분리 |
+| 승인 없는 과금 불가 | Agent 계정에 키 없음 · 브로커 미승인·예산 NULL 거부 | 미분리 |
+| 독립 채널 실제 승인 후 1회 실행 | 실제 휴대폰 승인 기록 → 실행 1회 → 재시도 거부 | Mock 12/12 |
+| 기존 개발·검증·Golden 회귀 | Agent 계정에서 pytest·golden 결과 | 미측정 |
+| 실패 시 복구 | 단계별 복구 1회 실연 | 미검증 |
+| Statusline | 실제 VS Code 캡처 | BLOCKED |
