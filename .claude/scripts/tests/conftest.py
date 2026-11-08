@@ -18,6 +18,9 @@ from unittest.mock import Mock, MagicMock
 import json
 from datetime import datetime
 
+# 자체 main() 러너 스크립트 (test_*(result) 형식) — 직접 실행으로 검증 · pytest 수집 시 fixture 'result' 없음 오류 33건
+collect_ignore = ["test_phase2_e2e.py", "test_phase3_auto_e2e.py", "test_phase5_self_healing.py"]
+
 
 @pytest.fixture(autouse=True)
 def _fixed_commit_memory(monkeypatch):

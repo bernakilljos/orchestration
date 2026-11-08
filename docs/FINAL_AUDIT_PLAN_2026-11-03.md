@@ -1182,3 +1182,17 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - Stage 1 실행 승인 전 금지: Windows 계정 생성 · 프로그램 설치·인증 · ACL·시스템 설정 변경 · Git push · 토큰 이동·삭제·교체 · 운영 DB·Ledger 변경 · 유료 호출·배포·파일 삭제.
 - 보존: 로컬 미push 커밋(이 절 커밋 포함) · Goal #77 FAILED · `common.log` · `out.txt`.
 - Stage 1 이 PASS 여도 P0-1·P0-2·P0-3 은 자동 PASS 아님 — 브로커 권한 분리(3단계)·승인 저장소 이관·독립 승인 채널(5단계)·실제 인증정보 격리 검증이 남는다.
+
+## §56 회귀 기준선 · pytest 오류 33건 원인 수정 (2026-11-08 · 기준 7d16915 · 무료 범위)
+
+| 항목 | 결과 [확인] | 판정 |
+|---|---|---|
+| pytest 오류 33건 | 원인: phase2·3·5 는 자체 `main()` 러너 스크립트(`test_*(result)`)인데 pytest 가 함께 수집 → `fixture 'result' not found`. 수정: `tests/conftest.py` `collect_ignore` 3파일 (직접 실행으로 계속 검증) | 수정 전 288 passed·33 errors → 수정 후 **288 passed·0 errors** |
+| phase3 | 26/26 | PASS |
+| golden | 13/13 | PASS |
+| phase2 | 16/21 · 실패 5건 모두 sandbox 미생성 | **환경 BLOCKED** (메모리 게이트) |
+| phase5 | 25/30 · 실패 5건 "가상 메모리(commit) 부족 91.5% > 90% · 시작 보류" | **환경 BLOCKED** (메모리 게이트) |
+
+- 커밋 메모리 92.9% (23.9/25.7GB) — 게이트 90% 미하향 · 다른 세션 종료 안 함. 회복 후 phase2·5 재실행 필요.
+- Stage 1 검사 스크립트: 미작성 (이전 작성 시도가 안전 필터로 중단) — Stage 1 실측은 §55 기준표로 수행.
+- 미승인으로 BLOCKED: Stage 1 계정 생성·Agent 세션 실측 · 브로커 분리 · 대역 외 채널 · GitHub App/ruleset · API 키 이동 · 실제 Codex/Judge 호출 · Statusline 캡처.
