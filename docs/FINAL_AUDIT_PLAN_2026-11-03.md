@@ -925,7 +925,6 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 **Codex 실행 조건 [확인]**: 게이트 90% 유지 · 실제 모델 호출·worktree 생성/삭제 안 함 · 지금 실행해도 `COMMIT LOW … 시작 보류` 로 거부된다 (로그 11-06 18:00~18:20 같은 사유).
 
-
 ## §50 실행 단계 승인 게이트 P0 보완 (2026-11-08 · 5ef9672 · 격리 Mock · 실제 위험 작업 0)
 
 - 문자열 게이트 확장: push 전 변형 · 자기 승인 · 직접 유료 호출 · 삭제·배포·DB·설정 덮어쓰기 · `_extract_cmd` JSON 파싱 (`\"}` 절단 우회 수정).
@@ -978,3 +977,62 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | 3 브로커 전용 GitHub 토큰 발급 · 사용자 토큰을 Agent 세션 자격 증명에서 제거 | Agent 의 일반 push 불가 (의도) · 워커 push 는 브로커 경유로 변경 | 자격 증명 재등록 |
 | 4 main·태그 ruleset | 소유자 직접 push 도 규칙 적용 (bypass 설정에 따라) | ruleset 비활성화 |
 | 5 settings.json·hook 폴더 쓰기 권한 분리 | Claude 의 kit 유지보수 편집 불가 → 변경은 사용자/브로커 경유 | ACL 원복 |
+
+## §52 P0 권한 분리 운영 전환 사전 검증 (2026-11-08 · 기준 cf7eaa7 · 읽기 전용 + 임시 데이터 무료 검증 · 운영 변경 0)
+
+**판정 구분**: Mock PASS (같은 계정 논리) · OS PASS (scratchpad 가짜 저장소에 Windows 가 실제 거부) · 미검증 (별도 계정 필요). 별도 계정 간 거부는 **미검증** — 계정 생성 금지.
+
+**1. 승인 저장소 분리 (`split_sim.py` 17/17 · 운영 DB 는 `mode=ro` 로 임시 복사만) [확인]**
+- 승인 행 38 (waiting 33 · rejected 5) **전부** `task_file='<approval-gate>'` stub · 실제 작업 행과 섞인 승인 행 0 · tasks 를 가리키는 FK 0 · `executions`·`goal_tasks`·`metrics`·`self_heal_events` 의 task_id 참조 0 → 행 단위로 깨끗이 분리 가능.
+- 이관 후 kit 정본 `approval-gate.py` 를 새 저장소로 호출: list_waiting 33 · 보호 행 2건 waiting · 대기 행 consume=`waiting`(불변) · `user` 승인은 소비 불가 · 사용자 승인 1회 소비 · 재소비 거부 · TTL 초과 거부 · 예산 NULL → `agent_budget_reserve` 거부 · 운영 DB 대기 33 불변.
+- 승인 행 읽기·쓰기 경로 (전환 시 새 저장소로 돌릴 곳): `approval-gate.py` (get_db_path) · `worker_git._mark`·`push_approved` (tasks 직접 SELECT/UPDATE) · `platform_api.approvals/decide` · `codex-auto.bat:212`·`codex.bat:115` (request) · `statusline_context.py:1096` (waiting_approval 개수 — 분리 후 표시 수 감소). 다른 승인 저장소: `planner_proposals` (대기 0) · `tech_candidates` (대기 2) — P0 범위 밖, 같은 orca.db 에 남음.
+- 예산: `budget` (일일 한도 NULL) 와 `agent_budget_reservations` (14행) 은 유료 실행 주체가 소유해야 한다 → 브로커로 이동. `route.py --set-daily-limit`·`codex-auto` 차단기·`real_repair_chain` 은 kit DB 를 읽으므로 전환 시 읽기 경로 변경 필요.
+
+**2. Windows 권한 경계 [확인]**
+| 실측 | 값 | 의미 |
+|---|---|---|
+| ja205 | **로컬 Administrators 구성원** · Agent 토큰은 UAC 필터 (Administrators 거부 전용 · Medium IL) · 특권 없음 | 상승하면 브로커 소유 저장소도 소유권 가져가기 가능 |
+| UAC | EnableLUA=1 · ConsentPromptBehaviorAdmin=5 (기본) · 보안 데스크톱 | 상승은 사용자 클릭 필요. 단 MSRC 는 UAC 를 **보안 경계가 아닌 심층 방어** 로 분류 (우회 기본 미수정) |
+| kit 폴더 | Authenticated Users Modify (상속) · **CodexSandboxUsers Modify (명시)** · 미확인 SID Modify | Codex 샌드박스 계정도 승인 저장소 수정 가능 |
+- scratchpad 가짜 저장소 (`acl_sim.py` 8/8 OS PASS): 상속 끊고 SYSTEM·Administrators 만 두면 Agent 의 비밀 파일 읽기·DB 쓰기를 **Windows 가 실제 거부** · Administrators ACE 로도 못 들어감 (거부 전용). 그러나 **저장소 소유자가 Agent 계정이면 Agent 가 스스로 권한 복구** 됨 · 비관리자 토큰으로는 소유자를 다른 주체로 못 넘김.
+- 최소 ACL 설계: 승인 저장소 폴더 = 소유자 브로커 계정 · 상속 끊기 · ACE = 브로커 F · SYSTEM F · Administrators F · **Agent·Authenticated Users·CodexSandboxUsers 없음** (읽기도 없음 — 행 열람은 브로커 API `list/status`). 생성·소유자 지정은 관리자 1회 작업.
+- 남는 경로: Agent 계정이 관리자 그룹이라 UAC 상승 (사용자 클릭) 또는 UAC 우회 시 무력. 완전 분리 = Agent 를 **비관리자 표준 계정** 으로 실행 (또는 ja205 를 Administrators 에서 빼고 별도 관리자 계정 사용).
+
+**3. 승인 채널 [확인·문서]**
+- 현재 `/approve` 프롬프트는 모델에 그대로 전달되고 `prompt-dispatch` 20개 훅이 모두 실행 · `save-user-prompt` (orca.db conversations) · `ledger-auto-register` (request-ledger.json) 이 원문 저장 · 차단 경로 없음.
+- Claude Code 문서: UserPromptSubmit `decision:block` 은 프롬프트를 모델에 보내지 않지만 **원문은 transcript·prompt history 에 남는다** ("a blocking hook isn't a way to keep a secret off disk" — 문서 요약본 기준 [추정]). 훅은 Claude Code 환경 (같은 계정) 에서 실행 → 브로커는 훅과 Agent 를 구별할 수 없다.
+- 따라서 TOTP 는 "제출 후 비밀 유지" 에 기대면 안 됨 → 설계: ① 훅이 **모델보다 먼저** 브로커에 제출 → 브로커는 시도 즉시 코드 소각 (성공·실패 무관) ② 코드+task_id 묶음 · 30초 창 · 시계 허용 오차 제거 · 1회 ③ 훅은 항상 block + 후속 훅 저장 중단 ④ 브로커 불통이면 실패 닫힘 (다음 코드로 재시도). 잔여: 브로커 불통 중 디스크의 코드를 Agent 가 창 안에 재제출 (수십 초). 더 강한 대안 = 대역 외 채널 (브로커만 토큰을 가진 휴대폰 알림 승인) — 코드가 Agent 세션에 들어오지 않음.
+
+**4. GitHub 인증 경계 [확인·문서]**
+- Agent 가 닿는 고권한 경로 3개: Windows 자격 증명 관리자 GitHub 대상 3개 (credential.helper=manager) · **프로세스 환경의 `GITHUB_PERSONAL_ACCESS_TOKEN` (classic `ghp_`)** · 같은 값이 `~/.claude.json` mcp github env 에 평문 저장. 원격 URL 에 자격 정보 없음 · `~/.git-credentials`·`~/.ssh` 없음. classic PAT 범위는 API 호출 없이 확인 불가 [미확인].
+- 문서: fine-grained PAT push = `contents=write` (워크플로 파일 수정은 `workflows=write` 추가 예시) · "토큰은 소유자의 능력을 갖고 권한으로 더 제한" · ruleset 우회 대상 = repo admin·maintain/write 역할·팀·GitHub App·Dependabot (API 는 DeployKey 도) · 쓰기 deploy key = 단일 저장소 · "개인 저장소 협력자와 같은 동작". 저장소 ruleset 관리에 필요한 권한은 문서 본문이 잘려 직접 확인 못 함 [미확인 — 평가자 인용은 Administration: write].
+- 설계: 브로커는 **소유자 PAT 대신 쓰기 deploy key (또는 GitHub App contents:write)** — 소유자 신원이 아니라 admin 역할 우회에 걸리지 않음 · ruleset 우회 목록에 deploy key 를 넣지 않음. 소유자 PAT 를 쓰면 bypass 가 소유자 역할로 판정되는지 [미확인].
+
+**5. API 인증 경계 [확인]**
+- `~/.claude.json customApiKeyResponses`: approved 0 · rejected 1 이고 rejected 항목이 현재 환경 키와 일치 → **Claude Code 본체는 이 키를 쓰지 않음 (구독 로그인 · `.credentials.json` 존재)**. §51 의 "본체 영향 [미확인]" 해소 → 영향 없음.
+- 키 제거 영향: `haiku-validate.py` (→ `haiku-auto.bat` 검증 워커 auth 실패) · `score_task.py` (error 반환) · `test-haiku.py` (SKIP) · `web-cli-auto-bridge.py` (exit 1) · `examples/cached_claude_call.py` — 전부 **네트워크 전** 종료 · `install.bat:556`·`08-plugins.bat:71` 은 키 없음 경고 + `setx` 안내 (전환 후 문구 변경 필요). 4개 중 3개는 예산 게이트가 없었으므로 제거가 P0-3 구멍을 닫는다.
+- `keyless_test.py` 5/5 Mock: 키·PAT 를 뺀 Agent 프로세스 → haiku-validate auth 종료 · 승인 없는 유료 실행 거부 · Agent 승인 API 없음. 같은 계정이라 Agent 가 브로커 비밀 파일을 **읽을 수 있음** (Mock 한계 그대로 기록).
+- 원 브로커 시험 `broker_test.py` 재실행 15/15 유지.
+
+**6. 접근 제어 전후**
+| 자원 | 현재 Agent | 전환 후 Agent | 전환 후 브로커 |
+|---|---|---|---|
+| 승인 행 | 읽기·쓰기 (orca.db) | 없음 (API 요청·조회만) | 쓰기 |
+| TOTP 시드 | — | 없음 | 읽기 |
+| git 쓰기 자격 | GCM 3개 + env PAT + `.claude.json` PAT | 없음 | deploy key |
+| API 키 | env (User) | 없음 | 읽기 |
+| 예산 행 | 쓰기 | 읽기 전용 표시 | 쓰기 |
+| hook·settings | 쓰기 | (단계 7 승인 시) 읽기 | — |
+
+**7. 운영 전환 절차·복구 (실행 안 함)**
+| # | 단계 | 실패 시 복구 | 확인 |
+|---|---|---|---|
+| 0 | `orca.db` 백업 (sqlite backup) · `icacls /save` 로 kit ACL 백업 | 백업에서 복원 | 대기 33 · R184~R189 · Goal #77 대조 |
+| 1 | 브로커 계정 (비관리자 서비스 계정) 생성 · 승인 저장소 폴더 생성·소유자=브로커 · 위 최소 ACL | 계정·폴더 삭제 | Agent 로 읽기·쓰기 시도 → 거부 (OS) |
+| 2 | 승인 행 38 이관 (§52-1 절차) · 승인 경로 6곳을 브로커 API 로 | 경로를 orca.db 로 되돌림 (행은 원본 유지) | list 33 · 보호 2건 · 1회·TTL |
+| 3 | 사용자 TOTP 등록 (시드는 브로커만) · 훅 = 제출 후 block·후속 저장 중단 | 훅 이전판 복원 | 틀린 코드·재사용·다른 task 거부 |
+| 4 | API 키: User 환경 → 브로커 · haiku-auto·score_task 는 브로커 경유 또는 비활성 · install 문구 | `setx` 로 User 환경 복원 | Agent env 키 없음 · Claude Code 정상 |
+| 5 | GitHub: 브로커 deploy key · GCM GitHub 대상 3개·env PAT·`.claude.json` PAT 를 Agent 에서 제거 (github MCP 는 브로커 경유 또는 읽기 전용 토큰) | 자격 증명 재등록 | Agent push 401 · 브로커 push 1회 |
+| 6 | main·태그 ruleset (삭제·강제 push 금지 · 우회 목록 비움) | ruleset 비활성 | 브로커 정상 push 통과 · 강제 push 거부 |
+| 7 | (선택) Agent 를 비관리자 계정으로 · hook·settings 쓰기 분리 | 그룹 원복 | UAC 상승 경로 제거 |
+| 8 | 회귀: pytest·golden · 무료 개발 흐름 · 위험 작업 차단 | 단계별 되돌림 | 이전 결과와 동일 |
