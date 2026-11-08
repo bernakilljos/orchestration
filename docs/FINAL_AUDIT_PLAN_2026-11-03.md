@@ -1196,3 +1196,9 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 커밋 메모리 92.9% (23.9/25.7GB) — 게이트 90% 미하향 · 다른 세션 종료 안 함. 회복 후 phase2·5 재실행 필요.
 - Stage 1 검사 스크립트: 미작성 (이전 작성 시도가 안전 필터로 중단) — Stage 1 실측은 §55 기준표로 수행.
 - 미승인으로 BLOCKED: Stage 1 계정 생성·Agent 세션 실측 · 브로커 분리 · 대역 외 채널 · GitHub App/ruleset · API 키 이동 · 실제 Codex/Judge 호출 · Statusline 캡처.
+
+**§56-2 phase2·5 재실행 (2026-11-08 · 메모리 회복 후)**
+- 사용자 지시로 Teams 종료 → 커밋 메모리 93.8% → **84.6%** (게이트 90% 미변경 · 다른 Claude 세션 종료 안 함).
+- phase2: **21/21 PASS** (sandbox 생성·apply/discard·원본 ROOT 오염 0·orphan 정리) [확인] · 환경 BLOCKED 해제.
+- phase5: **39/39 PASS** (위험 명령 4/4 승격·promote 거부 · retry_cap · sandbox 격리 ROOT 누출 0 · 실제 SyntaxError 재현·수정 검증) [확인] · 환경 BLOCKED 해제. (이전 25/30 표기는 게이트 보류로 일부 시험이 집계 전 중단된 수치)
+- 재실행 후 git 작업 트리 변경 없음 (common.log·out.txt 외).
