@@ -20,6 +20,8 @@ def run(ctx):
             or norm in (".claude/settings.json", ".claude/settings.local.json")):
         return None
     base = norm[norm.rfind("/") + 1:]
-    if base in ("config.py", "settings.json", "main.py", ".env", ".env.local", "deploy-config.env"):
+    # 2026-11-08: 승인 상태 DB·Ledger 를 Write/Edit 로 직접 고치는 경로 (스크립트 경유만)
+    if base in ("config.py", "settings.json", "main.py", ".env", ".env.local", "deploy-config.env",
+                "orca.db", "sessions.db", "request-ledger.json"):
         return Result(2, "", "BLOCKED: %s is a protected file. Do not modify.\n" % base)
     return None

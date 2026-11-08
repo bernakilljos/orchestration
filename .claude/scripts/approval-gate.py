@@ -3,8 +3,7 @@
 사용 방법:
   python approval-gate.py detect <command>       # 위험 패턴 매치 -> JSON
   python approval-gate.py request <task_id> <command> <category> <detail>
-  python approval-gate.py approve <task_id> [by]
-  python approval-gate.py reject  <task_id> [by] [reason]
+  (승인·거부는 명령줄 X — 사용자가 프롬프트에 '/approve <id>' · '/reject <id> [사유]' 입력)
   python approval-gate.py list                   # waiting 만
   python approval-gate.py status <task_id>
 """
@@ -23,12 +22,23 @@ RISK_PATTERNS = {
     "data_loss": [
         (r"\bDROP\s+TABLE\b", "DROP TABLE — 영구 데이터 삭제"),
         (r"\bTRUNCATE\b", "TRUNCATE — 테이블 비우기"),
-        (r"\bDELETE\s+FROM\s+\w+\s*;?\s*$", "DELETE FROM (WHERE 없음) — 전체 삭제"),
+        # 2026-11-08 P1: 줄 끝 고정($) 이라 닫는 따옴표가 붙으면 못 잡던 것 → 표 이름 뒤 WHERE 유무로 판정
+        (r"\bDELETE\s+FROM\s+[\w.\[\]\"`]+(?![\w.\]\"`])(?!\s+WHERE\b)", "DELETE FROM (WHERE 없음) — 전체 삭제"),
+        (r"\b(DELETE|UPDATE)\b[^;]*\bWHERE\s+(1\s*=\s*1|true)\b", "WHERE 1=1 — 전체 행 변경"),
+        (r"\bUPDATE\s+[\w.\[\]\"`]+\s+SET\b(?![^;]*\bWHERE\b)", "UPDATE (WHERE 없음) — 전체 행 변경"),
         (r"\brm\s+-rf?\s+/\S*", "rm -rf <절대경로> — 시스템/운영 데이터 삭제"),
         (r"\brm\s+-rf?\s+~\S*", "rm -rf ~ — 홈 디렉터리 삭제"),
         (r"\brm\s+-rf?\s+\$\{?HOME\}?", "rm -rf $HOME — 홈 삭제"),
+        (r"\brm\s+-[a-zA-Z]*[rR][a-zA-Z]*\s", "rm -r — 폴더 삭제"),
+        (r"\bfind\b[^;&|\n]*\s-delete\b", "find -delete — 일괄 삭제"),
+        (r"\brmtree\s*\(", "shutil.rmtree — 폴더 삭제"),
+        (r"\bRemove-Item\b[^;\n]*-Recurse\b", "Remove-Item -Recurse — 폴더 삭제"),
         (r"\bgit\s+push\s+--force\b", "force push — 원격 history 덮어쓰기"),
-        (r"\bgit\s+reset\s+--hard\s+(origin|upstream)/", "git reset --hard remote — 로컬 변경 손실"),
+        (r"\bgit\s+reset\s+--hard\b", "git reset --hard — 로컬 변경 손실"),
+        (r"\bgit\s+clean\s+-[a-zA-Z]*f", "git clean -f — 추적 안 된 파일 삭제"),
+        (r"\bgit\s+checkout\s+--\s+\.(?=\s|$|[\"'])", "git checkout -- . — 작업 중 변경 폐기"),
+        (r"\bgit\s+restore\s+(?:--\S+\s+)*\.(?=\s|$|[\"'])", "git restore . — 작업 중 변경 폐기"),
+        (r"\bgit\s+stash\s+(drop|clear)\b", "git stash drop/clear — 보관 변경 삭제"),
         (r"\bgit\s+branch\s+-D\b", "git branch -D — 강제 브랜치 삭제"),
     ],
     "security": [
@@ -42,10 +52,26 @@ RISK_PATTERNS = {
         (r"\b(iex|Invoke-Expression)\b[^;\n]*\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm|DownloadString)\b",
          "다운로드 내용을 바로 실행 — 외부 코드 실행"),
         (r"-Verb\s+RunAs\b", "Start-Process -Verb RunAs — 권한 상승"),
+        # 2026-11-08 P0-2: 승인 확정은 사용자 프롬프트(/approve) 훅만 한다 — 도구 호출로 승인·DB 변경 X
+        # 하위 명령 자리만 (파일 이름 나열 — git add approval-gate.py approve.md — 은 제외 · 2026-11-08 자기 오탐)
+        (r"\bapproval[-_]gate(?:\.py)?[\"']?\s+(approve|reject)\b", "자기 승인 — approval-gate approve/reject 직접 호출"),
+        (r"\.(approve|reject)\s*\(", "자기 승인 — 승인 함수 직접 호출"),
+        (r"\bplatform_api\b[^\n]*\bdecide\b", "자기 승인 — platform_api.decide 직접 호출"),
+        (r"\b(UPDATE|INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO|DELETE\s+FROM)\s+[\"`\[]?tasks\b", "승인 상태 DB(tasks) 직접 변경"),
+        (r"\bapproval_state\s*=\s*['\"]?(approved|executed)", "승인 상태 직접 변경"),
+        # 실행·import 만 (컴파일·읽기·검색처럼 파일 이름만 나오는 것은 제외 — 2026-11-08 자기 py_compile 오탐)
+        (r"\bpython[\w.]*(?:\s+-[a-zA-Z]+(?:\s+utf8)?)*\s+[\"']?\S*prompt[-_]dispatch\.py|(?:import|from)\s+user_approval\b",
+         "사용자 프롬프트 훅 직접 실행 — 승인 위조 경로"),
     ],
     "cost": [
         (r"messages\.batch\.create.*\[.{2000,}", "Batch API 1000+ requests"),
-        (r"--daily-limit\s+\d{3,}", "daily limit 100+ USD"),
+        (r"--(?:set-)?daily-limit\s+\d+", "일일 예산 상한 변경"),
+        # 2026-11-08 P0-3: 내부 예산 게이트(dispatch_agent) 밖에서 유료 모델을 직접 부르는 경로
+        (r"(?:^|[\s;&|(\"'])codex(?:-a)?(?:\.cmd|\.exe)?\s+(?:exec|e)\b", "codex exec — 유료 모델 직접 호출"),
+        (r"(?:^|[\s;&|(\"'])gemini(?:-a)?(?:\.cmd)?\s[^;&|\n]*(?:-p|--prompt)\b", "gemini -p — 유료 모델 직접 호출"),
+        (r"(?:^|[\s;&|(\"'])claude(?:\.exe|\.cmd)?\s[^;&|\n]*(?:-p|--print)\b", "claude -p — 유료 모델 직접 호출"),
+        (r"\b(api\.anthropic\.com|api\.openai\.com|generativelanguage\.googleapis\.com)\b", "유료 모델 API 직접 호출"),
+        (r"\b(anthropic|openai)\b[^\n]*\b(messages|completions|responses)\.create\b", "유료 모델 SDK 직접 호출"),
     ],
     "system": [
         (r"\bsetx\s+\w+", "setx — 영구 환경변수"),
@@ -54,15 +80,27 @@ RISK_PATTERNS = {
         (r"\breg\s+(add|delete)\s+", "registry 변경"),
         (r"\balembic\s+upgrade\s+head\b", "DB schema 마이그레이션 (운영 영향)"),
         (r"systemctl\s+(enable|disable|mask)", "systemd 서비스 영구 변경"),
+        (r">{1,2}\s*[\"']?[^\s;&|\"']*(?:settings(?:\.local)?\.json|(?<![\w-])\.env)(?![\w.-])", "보호 설정 파일 덮어쓰기"),
+        (r"\b(cp|mv|copy|move|Copy-Item|Move-Item)\b[^;&|\n]*\s[\"']?\S*(?:settings(?:\.local)?\.json|(?<![\w-])\.env)[\"']?\s*(?:$|[;&|\n])",
+         "보호 설정 파일 덮어쓰기"),
+        (r"\b(Set-Content|Add-Content|Out-File|tee)\b[^;&|\n]*(?:settings(?:\.local)?\.json|(?<![\w-])\.env)(?![\w.-])", "보호 설정 파일 덮어쓰기"),
     ],
     "irreversible": [
         (r"\bnpm\s+publish\b", "npm publish — 패키지 공개"),
-        (r"\bdocker\s+push\s+.*:(prod|latest)\b", "docker push prod — 운영 image 갱신"),
-        (r"\bgh\s+release\s+create\b", "github release 생성"),
-        (r"\bgit\s+push\s+(origin|upstream)\s+--tags", "tag push — 버전 publish"),
-        (r"\bterraform\s+apply\b.*-auto-approve", "terraform apply -auto-approve — 인프라 변경"),
+        (r"\bdocker\s+push\b", "docker push — 원격 image 갱신"),
+        (r"\bgh\s+(release\s+create|pr\s+merge|repo\s+delete)\b", "github release·merge·repo 삭제"),
+        # 2026-11-08 P0-1: 일반 push·-f·+refspec·:branch·--delete·git -C 도 전부 (stash push 는 로컬이라 제외)
+        (r"\bgit\b(?![^;&|\n]*\bstash\b)[^;&|\n]*?(?:^|[\s'\"(\[,])push(?=[\s'\"\]),]|$)", "git push — 원격 저장소 변경"),
+        (r"\bterraform\s+(apply|destroy)\b", "terraform apply/destroy — 인프라 변경"),
+        (r"\bkubectl\s+(apply|delete|replace|patch|rollout|scale)\b", "kubectl — 클러스터 변경"),
+        (r"\bvercel\b[^;&|\n]*--prod\b|\b(netlify|firebase)\s+deploy\b", "운영 배포"),
+        (r"\bscp\b[^;&|\n]*\s[\w.@-]+:\S*", "scp — 원격 서버로 전송"),
     ],
 }
+
+# 승인 1회 사용 유효 시간 (승인 후 이 안에 같은 명령을 실행해야 한다)
+APPROVAL_TTL_SEC = 1800
+USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 
 
 def detect_risk(command: str) -> dict | None:
@@ -166,6 +204,32 @@ def reject(task_id: str, by: str = "user", reason: str = "") -> dict:
         conn.close()
 
 
+def consume_approval(task_id: str, ttl: int = APPROVAL_TTL_SEC) -> str:
+    """같은 명령·같은 위치(task_id 가 그 지문)에 대한 사용자 승인 1회 사용.
+
+    'consumed' = 사용자 프롬프트로 승인됐고 ttl 안 → executed 로 바꾸고 1회 통과
+    'waiting'  = 아직 승인 대기 (새 요청 번호 만들지 않음)
+    'none'     = 행 없음·거부·만료·이미 사용 → 호출자가 새로 요청 (기존 행 재사용)
+    """
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        row = conn.execute("SELECT approval_state FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
+        if not row:
+            return "none"
+        if row[0] == "waiting":
+            return "waiting"
+        now = int(time.time())
+        n = conn.execute(
+            "UPDATE tasks SET approval_state = 'executed', status = 'done', completed_at = ? "
+            "WHERE task_id = ? AND approval_state = 'approved' AND approved_by = ? AND approved_at >= ?",
+            (now, task_id, USER_APPROVER, now - ttl),
+        ).rowcount
+        conn.commit()
+        return "consumed" if n == 1 else "none"
+    finally:
+        conn.close()
+
+
 def list_waiting() -> list:
     db_path = get_db_path()
     conn = sqlite3.connect(str(db_path))
@@ -238,14 +302,12 @@ def main():
         detail = sys.argv[5] if len(sys.argv) > 5 else ""
         result = request_approval(task_id, command, category, detail)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-    elif cmd == "approve" and len(sys.argv) >= 3:
-        result = approve(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "user")
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-    elif cmd == "reject" and len(sys.argv) >= 3:
-        by = sys.argv[3] if len(sys.argv) > 3 else "user"
-        reason = " ".join(sys.argv[4:]) if len(sys.argv) > 4 else ""
-        result = reject(sys.argv[2], by, reason)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+    elif cmd in ("approve", "reject"):
+        # 2026-11-08 P0-2: 명령줄 승인은 누가 실행했는지 알 수 없다 (Agent 도 같은 권한) → 사용자 프롬프트 /approve 로만
+        print(json.dumps({"error": "명령줄 승인·거부 비활성 — 사용자가 프롬프트에 직접 '/approve <id>' 또는 "
+                                   "'/reject <id> [사유]' 를 입력해야 기록된다 (prompt/user_approval.py)"},
+                         ensure_ascii=False, indent=2))
+        sys.exit(3)
     elif cmd == "list":
         print(json.dumps(list_waiting(), ensure_ascii=False, indent=2))
     elif cmd == "status" and len(sys.argv) >= 3:

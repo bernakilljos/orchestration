@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.join(HOOKS_DIR, "prompt"))
 
 # (훅 이름 = 원본 .sh 파일명, 모듈명) — .claude/settings.json UserPromptSubmit 순서
 HOOKS = [
+    ("user-approval", "user_approval"),  # 2026-11-08 P0-2 사용자 프롬프트 /approve·/reject 만 승인 기록
     ("user-prompt-auto-planner", "user_prompt_auto_planner"),
     ("detect-repeat-request", "detect_repeat_request"),
     ("detect-user-emotion", "detect_user_emotion"),

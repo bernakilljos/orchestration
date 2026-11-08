@@ -287,6 +287,15 @@
     → 매치 시 approval-gate.py request 호출 + lock 해제 + LOOP 재진입
     → 사용자가 /approve <task_id> 후 재처리
 
+  [실행 단계 승인 게이트 (2026-11-08 · P0)]
+    Claude Bash·PowerShell 호출을 PreToolUse 에서 검사 (Ledger 판정과 별개):
+      git push 전 변형 · 자기 승인 · codex exec / gemini -p / claude -p / 모델 API 직접 호출
+      rm -r · git clean·reset --hard · docker push · terraform · kubectl · WHERE 없는 DELETE/UPDATE · 설정 덮어쓰기
+    승인 확정 = 사용자가 프롬프트에 '/approve <id>' 한 줄 입력할 때만 (prompt/user_approval.py)
+      명령줄 approval-gate approve·reject 비활성 · 도구로 승인 함수·tasks 직접 변경 = 차단
+    요청 번호 = 명령+폴더 지문 → 승인 후 같은 명령 30분 안 1회 통과 · 다른 명령·폴더 X
+    한계: 문자열 감지 (스크립트 파일 경유는 못 막음) · Agent 와 같은 OS 계정 권한 분리는 별도 승인 필요
+
   [화면·기능 검증 자동 (CLAUDE.md §7-24)]
     DB schema / API controller / 프론트 (HTML·JSX·TSX) 변경 후
     "사용자가 확인해 주세요" 떠넘김 금지. AI 가 직접 자동 smoke test:

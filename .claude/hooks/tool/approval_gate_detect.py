@@ -18,11 +18,24 @@ _S = r"[ \t\n\r\f\v]"
 _RISKWORD = re.compile(
     r"drop|truncate|delete|rm" + _S + r"|git" + _S + r"+(push|reset|branch)|sudo|curl|wget|runas|chmod|batch|daily-limit|setx|"
     r"reg" + _S + r"+(add|delete)|alembic|systemctl|npm" + _S + r"+publish|docker" + _S + r"+push|gh" + _S + r"+release|terraform|"
-    r"\biex\b|invoke-expression|set-executionpolicy|setenvironmentvariable|verb" + _S + r"+runas",
+    r"\biex\b|invoke-expression|set-executionpolicy|setenvironmentvariable|verb" + _S + r"+runas|"
+    # 2026-11-08 P0·P1 확장 (push 변형·자기 승인·직접 유료 호출·삭제·배포·DB·설정)
+    r"push|clean|checkout|restore|stash|rmtree|remove-item|find|kubectl|vercel|netlify|firebase|scp|"
+    r"codex|gemini|claude|anthropic|openai|googleapis|approv|reject|decide|update|insert|replace|dispatch|"
+    r"settings|\.env|set-content|add-content|out-file|tee|cp" + _S + r"|mv" + _S + r"|copy|move",
     re.I)
 
 
 def _extract_cmd(inp: str) -> str:
+    # 2026-11-08: JSON 으로 읽는다 — 문자열 자르기는 명령 안의 \"} 에서 끊겨 뒷부분(실제 위험 명령)이 검사에서 빠졌다
+    try:
+        d = json.loads(inp)
+    except ValueError:
+        d = None
+    if isinstance(d, dict):
+        ti = d.get("tool_input") if isinstance(d.get("tool_input"), dict) else d
+        if isinstance(ti.get("command"), str):
+            return ti["command"]
     tag = '"command":'
     i = inp.find(tag)
     cmd = inp[i + len(tag):] if i >= 0 else inp
@@ -118,17 +131,34 @@ def run(ctx):
     desc = risk.get("description") or ""
     if not category:
         return None
-    task_id = "appr-" + hashlib.sha256((cmd + str(int(time.time()))).encode("utf-8", "surrogateescape")).hexdigest()[:12]
-    # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true)
+    # 2026-11-08: 요청 번호 = 명령·작업 위치 지문 (시각 X) → 승인 후 같은 명령을 다시 내면 그 승인을 1회만 쓴다.
+    # 다른 명령·다른 폴더는 지문이 달라 그 승인을 전용할 수 없다.
     try:
-        res = mod.request_approval(task_id, cmd, category, desc)
-        append_text(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
-    except Exception as e:  # noqa: BLE001
+        cwd = str(json.loads(ctx.raw or "{}").get("cwd") or "")
+    except (ValueError, AttributeError):
+        cwd = ""
+    cwd = cwd.replace("\\", "/").rstrip("/").lower()
+    task_id = "appr-" + hashlib.sha256((cwd + "\n" + cmd).encode("utf-8", "surrogateescape")).hexdigest()[:12]
+    state = "none"
+    try:
+        state = mod.consume_approval(task_id)
+    except Exception as e:  # noqa: BLE001 — 확인 실패 = 차단 유지 (fail-closed)
         append_text(log, "".join(traceback.format_exception_only(type(e), e)))
+    if state == "consumed":
+        append_text(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
+        return None
+    # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true). 대기 중이면 새로 쓰지 않는다.
+    if state != "waiting":
+        try:
+            res = mod.request_approval(task_id, cmd, category, desc)
+            append_text(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
+        except Exception as e:  # noqa: BLE001
+            append_text(log, "".join(traceback.format_exception_only(type(e), e)))
     append_text(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
     err = ('{\n'
            '  "decision": "block",\n'
-           '  "reason": " 위험 명령 감지 (%s): %s. /approve %s 또는 /reject %s [reason]",\n'
-           '  "systemMessage": "HITL Approval Gate — task_id=%s | category=%s | /approve <id> 로 승인 후 진행"\n'
+           '  "reason": " 위험 명령 감지 (%s): %s. 사용자가 프롬프트에 /approve %s 또는 /reject %s [reason] 입력 — '
+           'Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)",\n'
+           '  "systemMessage": "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회"\n'
            '}\n') % (category, desc, task_id, task_id, task_id, category)
     return Result(2, "", err)
