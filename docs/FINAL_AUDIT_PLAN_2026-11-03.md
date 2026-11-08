@@ -1088,7 +1088,7 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | 판단 | 단순 · 장기 비밀 | **권장** — 단기 토큰 · 신원 분리 |
 - 확인된 규칙 동작: Restrict updates·Restrict deletions·Restrict creations = 우회 권한자만 · Require PR = 모든 변경이 PR 경유 · Block force pushes. Evaluate 모드는 GitHub Enterprise 전용 → 개인 저장소는 사전 시험 모드 없음.
 - 따라서 main 규칙 = **강제 push 금지 + 삭제 금지만** (승인 통제는 브로커가 담당 · Require PR·Restrict updates 는 브로커 직접 push 를 막으므로 넣지 않음) · 태그 = 삭제·갱신 금지 · 우회 목록 비움.
-- 사전 검증 절차 (실행은 승인 후): 시험 패턴 `ruleset-probe/*` 에 같은 규칙 → ⓐ 브로커 fast-forward push 통과 ⓑ 강제 push 거부 ⓒ 삭제 거부 ⓓ Agent (자격 없음) push 401/403 ⓔ 브로커 자격으로 ruleset API 403 → 전부 통과 시 main·태그로 확대 · 실패 시 ruleset 비활성.
+- 사전 검증 절차 (실행은 승인 후): 시험 패턴 `ruleset-probe/*` 에 같은 규칙 → ⓐ 브로커 fast-forward push 통과 ⓑ 강제 push 거부 ⓒ 삭제 거부 ⓓ Agent (자격 없음) push 실패 + 원격 불변 (§55-2) ⓔ 브로커 자격으로 ruleset API 403 → 전부 통과 시 main·태그로 확대 · 실패 시 ruleset 비활성.
 
 **5. 승인 DB·예산 이전**
 - 대상 [확인]: 승인 행 38 (waiting 33 · rejected 5 · 전부 stub · FK·참조 0) · 예산 한도 NULL · 예약 14 **전부 settled** (진행 중 예약 없음 → 이동 중 예약 유실 위험 없음). 예산 표 사용 코드: `state_db` · `route.py` · `record_call.py` · `statusline_context.py` · `kit-stats.py` (+ 시험 3개).
@@ -1114,7 +1114,7 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 |---|---|---|
 | 다른 Windows 계정 사이 접근 거부 | Agent 계정 프로세스의 승인 저장소·브로커 비밀·ja205 자격 증명 접근 거부 원문 | 미검증 (Mock·같은 계정 OS 시험만) |
 | 자기 승인 불가 | Agent 계정에서 승인 상태 쓰기 거부 + 채널 서명 위조 거부 | Mock |
-| 승인 없는 push 불가 | Agent 계정 push 401/403 · 브로커 미승인 push 거부 | 미분리 |
+| 승인 없는 push 불가 | Agent 계정 HTTPS·SSH push 실패 + 원격 불변 + 직접·간접 인증 경로 쓰기 자격 0 (§55) · 브로커 미승인 push 거부 | 미분리 |
 | 승인 없는 과금 불가 | Agent 계정에 키 없음 · 브로커 미승인·예산 NULL 거부 | 미분리 |
 | 독립 채널 실제 승인 후 1회 실행 | 실제 휴대폰 승인 기록 → 실행 1회 → 재시도 거부 | Mock 12/12 |
 | 기존 개발·검증·Golden 회귀 | Agent 계정에서 pytest·golden 결과 | 미측정 |
@@ -1140,8 +1140,45 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 |---|---|
 | 새 계정 검증 전 현재 세션 대체 금지 | 1단계 진행 조건에 "기존 ja205 환경 그대로 병행 · Agent 계정 pytest·golden 통과 전 운영 연결 0" 명시 |
 | 휴대폰 승인 화면 표시 항목 | 저장소·브랜치·커밋·작업 종류·대상 요약·만료 시각 표시 + 개인키 실제 보관 위치(기기 보안 영역) 확인을 5단계 진행 조건에 추가. Mock 은 문안 서명만 검증 — 화면·키 보관은 [미확인] |
-| Ruleset 2규칙은 일반 FF push 를 막지 않음 | 맞음. §53-4 ruleset 은 강제 push·삭제만 막는다. 무단 일반 push 차단 근거 = Agent 계정에 원격 쓰기 자격 증명 없음(§53-4 ⓓ 401/403) — 별도 실측 필수 |
+| Ruleset 2규칙은 일반 FF push 를 막지 않음 | 맞음. §53-4 ruleset 은 강제 push·삭제만 막는다. 무단 일반 push 차단 근거 = Agent 계정에 원격 쓰기 자격 증명 없음(§53-4 ⓓ · 판정 기준 §55-2) — 별도 실측 필수 |
 
 **4. 다음 단계 범위 (평가 제안 · 미승인)**
 - 평가가 제시한 "권한 분리 1단계 운영 전환"(비관리자 Agent 계정 생성·도구 설치·계정 간 접근 거부 실측)은 이번 메시지에서 승인되지 않았다. 계정 생성·설치·ACL·인증 변경 0.
 - 1단계 승인 시 완료 조건 = Mock PASS 가 아니라 실제 Windows 보안 주체 간 거부 증거 + Agent 계정 원격 쓰기 자격 증명 없음.
+
+## §55 Stage 1 보안 검증 기준 확정 (2026-11-08 · 기준 efbfeb0 · 문서만 · 실행 승인 아님 · 운영 변경 0)
+
+§53-3·§53-6 1~2단계에 이미 있는 항목(자격 증명 관리자 GitHub 대상·HKCU `GITHUB_PERSONAL_ACCESS_TOKEN`·프로세스 환경·`.claude.json`·프로필 ACL·pytest·golden·복구)은 다시 적지 않는다. 아래는 **빠져 있던 조건만** 추가한다. §52-5 의 "Agent push 401" 과 §53-4 ⓓ·§53-7·§54 의 401/403 표현은 이 절의 판정 기준으로 대체한다.
+
+**1. 추가 인증 경로 (Agent 계정에서 확인 · 값 출력·복사·기록 0 · 존재 여부와 거부 원문만)**
+| # | 경로 | PASS 조건 |
+|---|---|---|
+| 8 | Git credential helper — system·global·local (`git config --show-origin --get-all credential.helper` 와 `credential.<url>.helper`) | 설정 없음, 또는 `git credential fill` 이 자격 증명을 돌려주지 않음 |
+| 9 | ja205 의 `.git-credentials`·`.gitconfig`·`.config/git/` | Windows 권한으로 읽기 거부 |
+| 10 | ja205 의 `.ssh` (개인키·`config`·`known_hosts`) 와 Agent 자신의 `.ssh` | ja205 쪽 읽기 거부 · Agent 쪽 쓰기 가능한 키 없음 · ssh-agent 에 등록된 키 0 |
+| 11 | `gh` CLI 로그인·설정 (`gh auth status` · ja205 `AppData\Roaming\GitHub CLI`) | 로그인 없음 · ja205 설정 폴더 읽기 거부 |
+| 12 | 환경 변수 `GITHUB_*`·`GH_TOKEN`·`GH_ENTERPRISE_TOKEN`·`GIT_ASKPASS`·`SSH_ASKPASS`·`GIT_SSH`·`GIT_SSH_COMMAND`·`GIT_CONFIG_*` (사용자·시스템·프로세스 3 범위) | 설정 없음 (시스템 범위에 있으면 FAIL — 모든 계정이 상속) |
+| 13 | 간접 경로 — `includeIf`·`include.path`·`core.askPass`·`core.sshCommand`·`url.<base>.insteadOf` (저장소·전역·시스템 config) | ja205 파일을 가리키는 항목 없음 · 자격 증명을 가진 askpass·ssh 명령 없음 |
+| 14 | 저장소 원격 URL 에 박힌 자격 증명 (`https://<값>@github.com/...`) | 없음 (`git remote -v` 는 값 대신 "포함 여부"만 기록) |
+
+**2. 원격 쓰기 차단 판정 (HTTP 상태 코드가 아니라 결과)**
+- 시험 대상: 사용자가 승인한 테스트 저장소·브랜치만. 보호된 실제 브랜치(main·태그)에 시험 push 금지.
+- HTTPS 와 SSH 를 각각 시도. 실패 형태(자격 증명 없음·로그인 미완료·인증 오류·401/403)는 무엇이든 인정하되, 시도 전후 `git ls-remote` 로 원격 ref 해시가 같아야 한다.
+- 대화형 로그인 창이 뜨면 입력하지 않고 닫은 것을 실패로 기록 (GCM 이 Agent 계정에 새 자격 증명을 만들지 않았는지 자격 증명 관리자 재확인).
+- FAIL: push 성공 · 원격 ref 변경 · 1~14 중 어느 경로에서든 쓰기 가능한 자격 증명 발견.
+- push 한 번 실패만으로 PASS 처리 금지 — 1~14 전부 확인된 뒤에만 PASS.
+
+**3. Stage 1 완료 기준 (전부 충족 · 하나라도 미확인이면 PARTIAL/BLOCKED)**
+| # | 조건 | 인정되는 증거 |
+|---|---|---|
+| 1 | Agent 계정이 실제 비관리자 | `whoami /groups` 에 Administrators 없음 · 토큰 무결성 수준 Medium · `net localgroup Administrators` 비구성원 |
+| 2 | 기존 사용자 인증정보 접근이 Windows 권한으로 거부 | §53-3 1~4·6·7 + 위 9·10·11 의 읽기 시도 거부 원문 (Access is denied) |
+| 3 | 직접·간접 인증 경로에 원격 쓰기 자격 증명 없음 | 위 8·12·13·14 결과 |
+| 4 | 승인 없는 HTTPS·SSH push 실패 + 원격 불변 | 위 2 의 시도 기록과 전후 ref 해시 |
+| 5 | 정상 무료 개발·테스트 동작 | Agent 계정에서 pytest·golden·무료 명령 결과 |
+| 6 | 기존 사용자 환경·운영 데이터 보존 | 시작 전후 orca.db 대기 33·거절 5·Goal #77 FAILED·Ledger 해시·ja205 자격 증명 개수 동일 |
+
+**4. 승인 경계 (이 절은 기준 확정만)**
+- Stage 1 실행 승인 전 금지: Windows 계정 생성 · 프로그램 설치·인증 · ACL·시스템 설정 변경 · Git push · 토큰 이동·삭제·교체 · 운영 DB·Ledger 변경 · 유료 호출·배포·파일 삭제.
+- 보존: 로컬 미push 커밋(이 절 커밋 포함) · Goal #77 FAILED · `common.log` · `out.txt`.
+- Stage 1 이 PASS 여도 P0-1·P0-2·P0-3 은 자동 PASS 아님 — 브로커 권한 분리(3단계)·승인 저장소 이관·독립 승인 채널(5단계)·실제 인증정보 격리 검증이 남는다.
