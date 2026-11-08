@@ -2448,3 +2448,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - V1.1 B·C·E (2026-11-06): Judge 판정 출처 기록 (실제 LLM Agent·mock·CLI 구분) · 자동 수정 체인이 같은 유형 후보를 Judge 에 전달 · 체인 무료 종단 시험 (chain_e2e_driver.py) · Statusline 출력 문자열 정렬 시험 (디자인 무변경). 상세 §39.
 - 승인 게이트 인코딩 (2026-11-06): supervisor 가 approval-gate.py 출력을 utf-8 로 읽음 · 일치 후 판독 실패는 차단 (-X utf8 아닌 실행에서 위험 명령이 통과하던 결함). 상세 §39.
 - V1.1 회귀 기록 (2026-11-06): fresh clone e44422a 결과·보존 상태 §39.
+- VS Code 비응답 재발 방지 (2026-11-08): main.log 의 '비응답 감지' 2건(11-05 72초 · 11-08 7초) 모두 lottoclaude 창의 그리기 대기열(workbench rAF 큐 · 항목마다 sort) 멈춤이고 메모리 아님(여유 15GB·commit 48%) · kit sync 가 대상 .claude/ 에 파일을 쓰면 숨은 창에 감시 이벤트가 쌓이므로 vscode-settings.template 의 files.watcherExclude 에 **/.claude/**·**/logs/** 추가 · git.untrackedChanges hidden · 대화 상자는 '계속 기다리기' 가 안전(수 초 뒤 자동 복구 · 터미널은 pty-host 라 유지).
