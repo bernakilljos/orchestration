@@ -464,3 +464,19 @@ def test_waiting_request_never_modified_on_scope_change(tmp_root):
     assert r is not None and r.rc == 2 and _tid(r) == t2
     gate.approve(t2, gate.USER_APPROVER)
     assert agd.run(_hook(cmd, str(repo))) is None
+
+
+def test_waiting_request_expires_after_24h_without_modification(tmp_root):   # approval-gate-rules § 승인 만료
+    repo = tmp_root / "repo6"
+    _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    t1 = _tid(agd.run(_hook(cmd, str(repo))))
+    with sqlite3.connect(gate.get_db_path()) as c:                     # 25시간 전 요청으로 만듦
+        c.execute("UPDATE tasks SET created_at = created_at - ? WHERE task_id = ?", (gate.REQUEST_TTL_SEC + 3600, t1))
+    before = _row(t1)
+    res = gate.approve(t1, gate.USER_APPROVER)
+    assert "만료" in res.get("error", "") and _row(t1) == before        # 승인 거부 · 기록 그대로
+    t2 = _tid(agd.run(_hook(cmd, str(repo))))
+    assert t2 != t1 and _row(t1) == before                             # 만료 요청 재안내 X · 새 번호
+    gate.approve(t2, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(repo))) is None

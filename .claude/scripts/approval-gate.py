@@ -101,6 +101,7 @@ RISK_PATTERNS = {
 
 # 승인 1회 사용 유효 시간 (승인 후 이 안에 같은 명령을 실행해야 한다)
 APPROVAL_TTL_SEC = 1800
+REQUEST_TTL_SEC = 86400   # 대기 요청 유효 기간 (approval-gate-rules.md § 승인 만료 24시간) — 지나면 승인 거부·재요청
 CONSUMED_RESULT_WAIT_SEC = 660   # 도구 최대 실행 600초 + 여유 — 이 안에는 실행 중인 행을 새 요청으로 덮지 않는다
 USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 
@@ -143,9 +144,12 @@ def find_request(field: str, value: str, states: tuple) -> str | None:
     conn = sqlite3.connect(str(get_db_path()))
     try:
         rows = conn.execute(
-            "SELECT task_id, risk_detail FROM tasks WHERE task_file = '<approval-gate>' AND approval_state IN (%s) "
-            "AND risk_detail LIKE ? ORDER BY created_at DESC, rowid DESC" % ",".join("?" * len(states)),
-            (*states, "%" + value + "%")).fetchall()
+            "SELECT task_id, risk_detail, approval_state, created_at FROM tasks WHERE task_file = '<approval-gate>' "
+            "AND approval_state IN (%s) AND risk_detail LIKE ? ORDER BY created_at DESC, rowid DESC"
+            % ",".join("?" * len(states)), (*states, "%" + value + "%")).fetchall()
+        now = int(time.time())
+        rows = [(t, d) for t, d, st, c in rows   # 만료된 대기 요청은 다시 안내하지 않는다 (새 요청)
+                if not (st == "waiting" and c and now - int(c) > REQUEST_TTL_SEC)]
     finally:
         conn.close()
     for tid, detail in rows:
@@ -228,7 +232,7 @@ def approve(task_id: str, by: str = "user") -> dict:
     conn = sqlite3.connect(str(db_path))
     try:
         cur = conn.execute(
-            "SELECT approval_state, risk_category, risk_detail FROM tasks WHERE task_id = ?",
+            "SELECT approval_state, risk_category, risk_detail, created_at FROM tasks WHERE task_id = ?",
             (task_id,),
         )
         row = cur.fetchone()
@@ -237,6 +241,10 @@ def approve(task_id: str, by: str = "user") -> dict:
         if row[0] != "waiting":
             return {"error": f"task_id {task_id} not waiting (current: {row[0]})"}
         now = int(time.time())
+        # 2026-11-09: 24시간 지난 대기 요청은 승인하지 않는다 (기록은 그대로 · 같은 명령을 다시 내면 새 요청)
+        if row[3] and now - int(row[3]) > REQUEST_TTL_SEC:
+            return {"error": f"task_id {task_id} 대기 {(now - int(row[3])) // 3600}시간 — 24시간 지난 요청은 만료 · "
+                             "같은 명령을 다시 실행해 새 요청을 확인한 뒤 승인"}
         conn.execute(
             "UPDATE tasks SET approval_state = 'approved', status = 'pending', "
             "approved_at = ?, approved_by = ? WHERE task_id = ?",
