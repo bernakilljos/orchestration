@@ -127,15 +127,20 @@ def main():
     header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
     # 2026-10-14 — compact·clear 직후 새 세션이 «무엇을 이어서 할지» 몰라 사용자에게 다시 물었다
     #   (요약은 최근 프롬프트 나열뿐). 세션이 남긴 «다음에 할 일» 을 맨 위에 «바로 시작» 으로 붙인다.
-    _na = Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()) / ".claude" / "state" / "next-actions.md"
+    # 2026-11-09: 정본 writer(auto-save-next-actions.py) 로 읽는다 — 수동 지시는 나이 무관 항상 ·
+    #   자동 블록은 CUTOFF 안일 때만 · 인코딩이 섞여도 읽는다 (종전: strict utf-8 실패 → 조용히 주입 0)
     try:
-        if _na.is_file() and (time.time() - _na.stat().st_mtime) < CUTOFF_HOURS * 3600:
-            _txt = _na.read_text(encoding="utf-8").strip()
-            if _txt:
-                header += ("\n## ★ 이어서 할 일 — 사용자 첫 메시지가 무엇이든 확인 질문 없이 이것부터 바로 시작\n"
-                           + _txt[:3000] + "\n(다 끝내면 .claude/state/next-actions.md 를 비운다)\n\n")
-    except Exception:
-        pass
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_next_actions", Path(__file__).resolve().parent / "auto-save-next-actions.py")
+        _nam = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_nam)
+        _txt = _nam.resume_text(CUTOFF_HOURS * 3600).strip()
+        if _txt:
+            header += ("\n## ★ 이어서 할 일 — 사용자 첫 메시지가 무엇이든 확인 질문 없이 이것부터 바로 시작\n"
+                       + _txt[:4000] + "\n(끝낸 자동 항목은 갱신 시 사라진다 · 수동 지시는 사용자 지시가 있을 때만 "
+                       "`python .claude/scripts/auto-save-next-actions.py manual-clear`)\n\n")
+    except Exception as _e:
+        header += f"\n## ★ 이어서 할 일 읽기 실패 — .claude/state/next-actions.md 직접 확인 ({type(_e).__name__})\n\n"
     # 사용자 지시 '--json' 시 SessionStart hook JSON 직접 반환 (shell escape 우회)
     if "--json" in sys.argv:
         import json as _j
