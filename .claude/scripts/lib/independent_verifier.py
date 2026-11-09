@@ -182,21 +182,163 @@ def _verified_output(task_ids: List[str]) -> str:
 
 
 def affected_tests(cwd: Path, changed: List[str]) -> List[str]:
-    """변경 파일의 모듈명을 참조하는 테스트 파일 (회귀 후보) — 변경된 테스트 자신 포함. V1.1 C."""
+    """변경 파일의 모듈명을 참조하는 테스트 파일 (회귀 후보) — 변경된 테스트 자신 포함. V1.1 C.
+    2026-11-09: impact_selection 으로 확장 (이름 변형·호출 관계 2단계·과거 동반 수정)."""
+    return impact_selection(cwd, changed)["tests"]
+
+
+# 2026-11-09 회귀 게이트가 영향 시험을 너무 적게 고르던 결함 (실측: 2ae76b1 은 새 시험 1개만 · 107654b 는
+#   pre_commit_full_check(_) ↔ pre-commit-full-check(-) 이름 차이·호출하는 쪽 미추적).
+#   공통 모듈·판단 불가 → 전체 회귀. 새 검사 엔진 X — 기존 선정 함수 안에서 넓힌다.
+_SRC_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".ts", ".tsx", ".js")
+_FULL_ALWAYS = re.compile(r"(^|/)(conftest\.py|pytest\.ini|tool-dispatch\.py|_common\.py|settings\.json)$")
+_FANOUT_FULL = 8          # 직접 참조하는 파일 수가 이 이상이면 공통 모듈로 보고 전체 회귀
+_COCHANGE_COMMITS = 40
+_COCHANGE_MAX_FILES = 20
+_BULK_CODE_FILES = 40
+
+
+def _name_variants(path: str) -> set:
+    s = Path(path).stem
+    if s in ("__init__", "__main__", "index", "main"):   # 패키지 진입 파일은 폴더 이름으로 참조된다
+        s = Path(path).parent.name
+    return {s, s.replace("-", "_"), s.replace("_", "-")} if len(s) >= 3 else set()
+
+
+def _mentions(text: str, names: set) -> bool:
+    return any(re.search(rf"(?<![\w-]){re.escape(n)}(?![\w-])", text) for n in names)
+
+
+def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
+    """{"tests": [...], "full": 사유|None, "why": {시험: 사유}} — 회귀 게이트·self-healing 공용."""
     out = _run_git_in(cwd, ["ls-files", "*test_*.py", "*_test.py", "*.test.ts", "*.test.js"]) or ""
     tests = [t.strip() for t in out.splitlines() if t.strip()]
-    stems = {Path(p).stem for p in changed if Path(p).suffix in (".py", ".sh", ".ts", ".tsx", ".js")}
-    hits = [t for t in tests if t in changed]
+    tset = set(tests)
+    code = [p for p in changed if Path(p).suffix in _SRC_EXT and p not in tset]
+    why: Dict[str, str] = {t: "변경된 시험" for t in tests if t in changed}
+    full = None
+    for p in changed:
+        if _FULL_ALWAYS.search(p.replace("\\", "/")):
+            full = "공통 설정·실행 기반 변경 (%s)" % p
+            break
+    if not code:
+        return {"tests": list(why), "full": full, "why": why}
+    short = [p for p in code if not _name_variants(p)]
+    if short and not full:          # 이름으로 참조를 찾을 수 없는 파일 (db.py 등) — 범위 판단 불가 (리뷰 SHOULD 8)
+        full = "이름이 짧아 참조를 추적할 수 없는 변경 (%s)" % ", ".join(short[:3])
+    if len(code) > _BULK_CODE_FILES and not full:   # 대량 변경 — 추적 비용 > 전체 회귀 (리뷰 SHOULD 9)
+        full = "대량 코드 변경 %d개" % len(code)
+    if full and len(code) > _BULK_CODE_FILES:
+        return {"tests": [t for t in tests if t in why], "full": full, "why": why}
+    corpus = [p.strip() for p in (_run_git_in(cwd, ["ls-files"]) or "").splitlines()
+              if p.strip().endswith(_SRC_EXT) and p.strip() not in tset]
+    texts: Dict[str, str] = {}
+
+    def _text(p):
+        if p not in texts:
+            try:
+                texts[p] = (cwd / p).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                texts[p] = ""
+        return texts[p]
+
+    # 호출 관계 2단계: 바뀐 파일 → 그것을 부르는 파일 → 그것을 부르는 파일
+    names = set().union(*(_name_variants(p) for p in code))
+    frontier, seen = list(code), set(code)
+    for hop in (1, 2):
+        nxt = []
+        for src in frontier:
+            v = _name_variants(src)
+            if not v:
+                continue
+            users = [p for p in corpus if p not in seen and p != src and _mentions(_text(p), v)]
+            if hop == 1 and len(users) >= _FANOUT_FULL and not full:
+                full = "공통 모듈 %s 를 %d개 파일이 참조" % (src, len(users))
+            nxt += users
+            seen.update(users)
+        if full:      # 이미 전체 회귀 — 더 넓히는 계산은 버려진다 (리뷰 재공격 SHOULD 성능)
+            return {"tests": [t for t in tests if t in why], "full": full, "why": why}
+        names |= set().union(*(_name_variants(p) for p in nxt)) if nxt else set()
+        frontier = nxt
     for t in tests:
-        if t in hits or not stems:
+        if t not in why and names:
+            try:
+                txt = (cwd / t).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if _mentions(txt, names):
+                why[t] = "변경 파일 또는 그 호출자를 참조"
+    # 과거 결함 기록: 같은 파일을 고칠 때 함께 고쳐진 시험 (git 이력)
+    log = _run_git_in(cwd, ["log", "-n", str(_COCHANGE_COMMITS), "--full-diff", "--format=%x01", "--name-only",
+                            "--", *code], timeout=30)
+    if log is None:
+        why_skipped = "git 이력 조회 실패 (동반 수정 근거 미사용)"
+        log = ""
+    else:
+        why_skipped = None
+    for chunk in log.split("\x01"):
+        files = {x.strip() for x in chunk.splitlines() if x.strip()}
+        if len(files) > _COCHANGE_MAX_FILES:      # 일괄 커밋(초기·병합·대량 정리)은 근거로 쓰지 않는다
             continue
+        for t in files & tset:
+            why.setdefault(t, "과거 같은 파일과 함께 수정됨")
+    if not any(t.endswith(".py") for t in why) and not full:   # .ts 등만 잡히면 게이트가 실행할 시험 0 (리뷰 NIT)
+        full = "영향 시험을 찾지 못함 — 범위를 안전하게 정할 수 없어 전체 회귀"
+    out = {"tests": [t for t in tests if t in why], "full": full, "why": why}
+    if why_skipped:
+        out["cochange"] = why_skipped
+    return out
+
+
+def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
+    """STD-MEMORY-001: 무거운 전체 회귀 전 commit 메모리 80%↑면 75% 이하까지 대기 · 90%↑가 계속되면 실행 보류(blocked).
+    측정 불가는 막지 않는다 (기록만). 메모리 부족을 이유로 시험을 생략·PASS 처리하지 않는다."""
+    import time as _t
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import repair_sandbox as _sb
+        probe = _sb.commit_memory
+    except Exception:  # noqa: BLE001
+        return None
+    try:
+        wait_max = float(os.environ.get("ORCA_GATE_MEM_WAIT_SEC", "300"))
+    except ValueError:                      # 잘못된 값으로 게이트가 죽지 않게 (리뷰 SHOULD 10)
+        wait_max = 300.0
+    t0 = _t.time()
+    while True:
+        cm = probe() or {}
+        if not cm.get("measured") or cm.get("percent") is None:
+            res["memory_wait"] = "측정 불가"
+            return None
+        pct, waited = cm["percent"], _t.time() - t0
+        res["memory_wait"] = {"waited_sec": round(waited), "percent": pct}
+        if pct < (75 if waited > 0 else 80):        # 대기에 들어가면 75% 이하에서 재개
+            return None
+        if waited >= wait_max:
+            if pct >= 90:
+                return "메모리 %s%% — %d초 대기 후에도 90%% 이상 · 전체 회귀 보류 (메모리 회복 후 다시 실행)" % (pct, wait_max)
+            return None                              # 80~90%: 병렬 없이 순차 실행 (pytest 단일 프로세스)
+        _t.sleep(min(15.0, max(0.2, wait_max / 20)))
+
+
+def _configured_test_dirs(cwd: Path) -> List[str]:
+    """pytest.ini 의 testpaths (저장소에 등록된 설정 전부) → 상대 폴더 목록. 설정이 없으면 시험 파일 폴더."""
+    dirs = set()
+    for ini in (_run_git_in(cwd, ["ls-files", "*pytest.ini"]) or "").split():
         try:
-            text = (cwd / t).read_text(encoding="utf-8", errors="replace")
+            txt = (cwd / ini).read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        if any(re.search(rf"\b{re.escape(s)}\b", text) for s in stems):
-            hits.append(t)
-    return hits
+        m = re.search(r"^\s*testpaths\s*=([^\n]*(?:\n[ \t]+[^\n]+)*)", txt, re.M)   # 들여쓴 이어지는 줄 포함
+        base = Path(ini).parent
+        for d in (m.group(1).split() if m else ["."]):
+            for hit in sorted((cwd / base).glob(d)) if any(ch in d for ch in "*?[") else [cwd / base / d]:
+                if hit.is_dir():
+                    dirs.add(str(hit.relative_to(cwd)).replace("\\", "/"))
+    if not dirs:
+        dirs = {str(Path(t).parent).replace("\\", "/") for t in
+                (_run_git_in(cwd, ["ls-files", "*test_*.py"]) or "").split() if t.strip()}
+    return sorted(dirs)
 
 
 REGRESSION_STAMP = ".claude/state/regression-gate.json"
@@ -246,7 +388,10 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
         unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
         dirty = sorted(set(code) & unstaged)
         tests, runners = [], []
-        for t in affected_tests(cwd, staged):
+        sel = impact_selection(cwd, staged)
+        res["full"] = sel["full"]
+        res["why"] = sel["why"]
+        for t in sel["tests"]:
             if not t.endswith(".py"):
                 continue
             # 파일을 직접 넘기면 pytest 가 conftest collect_ignore 를 적용하지 않아 자체 main() 러너가 오류로 잡힌다
@@ -259,10 +404,23 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
             except OSError:
                 ignored = False
             (runners if ignored else tests).append(t)
+        if sel["full"]:
+            # 전체 회귀 = 공식 시험 범위 (pytest.ini testpaths) · 없으면 시험 파일 폴더 단위
+            #   (폴더를 넘겨야 conftest collect_ignore 가 적용된다 · 범위 밖 잔여 파일은 실행하지 않는다)
+            tests = _configured_test_dirs(cwd)
+            res["runners_not_run"] = []
+            runners = []
         res["tests"] = tests
         res["runners_not_run"] = runners
         res["same_pattern"] = same_pattern_candidates(cwd, limit=10)
-        if dirty:
+        mem_block = _wait_memory_for_heavy(res) if (sel["full"] and tests and not dirty) else None
+        if sel["full"] and not tests and not dirty:
+            res["status"] = "blocked"
+            res["reason"] = "전체 회귀가 필요하지만 실행할 시험 폴더를 찾지 못함 (pytest.ini testpaths 확인)"
+        elif mem_block:
+            res["status"] = "blocked"
+            res["reason"] = mem_block
+        elif dirty:
             res["status"] = "blocked"
             res["reason"] = "스테이징 안 된 수정이 남은 코드 파일 — 시험 대상과 커밋 내용이 다름: %s" % ", ".join(dirty[:5])
         elif not tests:

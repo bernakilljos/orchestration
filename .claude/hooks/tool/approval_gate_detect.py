@@ -93,7 +93,89 @@ def _strip_inert_text(cmd: str) -> str:
         words = seg.strip().split()
         if words and os.path.basename(words[0]).lower() in _SEARCH_CMDS:
             parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'<PATTERN>'", seg)
+        elif words and _inert_args_segment(seg):
+            parts[i] = _RX_QUOTED.sub(_mask_inert_quote, seg)
     return "".join(parts)
+
+
+# 2026-11-09: 실행되지 않는 인자 안의 '언급' (예: manual-add "… git push 승인 대기") 오탐.
+#   문자열 제외가 아니라 «이 세그먼트는 인자를 실행하지 않는다» 가 확정될 때만 따옴표 안을 가린다:
+#   ① 첫 명령이 출력 전용(echo·printf·Write-Host·Write-Output) 또는 허용 목록 kit 스크립트(HEAD 와 같은 내용)
+#   ② 따옴표 밖에 파이프·리다이렉트·heredoc·명령 치환이 없음 ③ 따옴표 안에 명령 치환($( · `) 없음
+#   셸·인터프리터 래퍼(bash -c · eval · python -c · cmd /c · powershell -Command · xargs) 는 해당 없음 → 그대로 검사.
+_RX_QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
+_INERT_LEADERS = {"echo", "printf", "write-host", "write-output"}
+_INERT_KIT_SCRIPTS = {("auto-save-next-actions.py", "manual-add")}   # 인자를 파일에 글로만 적는 kit 스크립트
+_RX_PY = re.compile(r"^(?:py|python(?:3(?:\.\d+)?)?)(?:w)?(?:\.exe)?$", re.I)
+
+
+def _mask_inert_quote(m):
+    q = m.group(0)
+    if q.startswith('"') and ("$(" in q or "`" in q):
+        return q
+    return "'<TEXT>'"
+
+
+_KIT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+_PY_SAFE_FLAGS = {"-u", "-B", "-I", "-E", "-s", "-Xutf8"}
+
+
+def _kit_script_unchanged(path: str) -> bool:
+    """허용 kit 스크립트는 «이 kit 저장소의 그 파일» 이고 kit HEAD 와 내용이 같을 때만 (2026-11-09 리뷰 MUST 3:
+    경로 끝만 보면 다른 저장소에 커밋한 같은 이름 스크립트가 통과). 확인 실패 = 해당 없음 (fail-closed)."""
+    import subprocess
+    try:
+        name = os.path.basename(path)
+        want = os.path.realpath(os.path.join(_KIT_ROOT, ".claude", "scripts", name))
+        if os.path.normcase(os.path.realpath(path)) != os.path.normcase(want):
+            return False
+        kw = dict(cwd=_KIT_ROOT, capture_output=True, text=True, timeout=2)
+        rel = ".claude/scripts/" + name
+        head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
+        work = subprocess.run(["git", "hash-object", rel], **kw).stdout.strip()
+        return bool(head) and head == work
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _inert_args_segment(seg: str) -> bool:
+    skeleton = _RX_QUOTED.sub("''", seg)
+    # 2026-11-09 리뷰 MUST 1·2: 셸이 따옴표 짝을 정규식과 다르게 읽는 문자(\ ^ $' $")·백그라운드 & ·
+    #   짝 안 맞는 따옴표가 따옴표 밖에 있으면 판정하지 않는다 (가리지 않음 → 그대로 검사)
+    if (re.search(r"[|<>`&^]|\$\(|\$'|\$\"", skeleton) or "\\" in skeleton   # 리뷰 재공격 MUST: ' 우회
+            or skeleton.count("'") % 2 or '"' in skeleton):
+        return False
+    words = skeleton.split()
+    env_prefix = False
+    while words and re.match(r"^\w+=", words[0]):     # VAR=값 접두
+        words = words[1:]
+        env_prefix = True
+    if not words:
+        return False
+    lead = words[0].lower()                            # 경로 붙은 ./echo · 가짜 python 은 해당 없음 (리뷰 재공격 SHOULD)
+    if lead in _INERT_LEADERS:
+        return True
+    if not _RX_PY.match(lead) or env_prefix:          # PYTHONPATH= 등은 인자를 볼 코드를 바꿀 수 있음 (리뷰 SHOULD 4)
+        return False
+    raw_words = seg.split()
+    while raw_words and re.match(r"^\w+=", raw_words[0]):
+        raw_words = raw_words[1:]
+    rest = raw_words[1:]
+    while rest and rest[0].startswith("-"):           # 허용 옵션만 (리뷰 SHOULD 5) · -c·-m 등 나머지는 해당 없음
+        if rest[0] == "-X" and len(rest) > 1 and rest[1] == "utf8":
+            rest = rest[2:]
+        elif rest[0] in _PY_SAFE_FLAGS:
+            rest = rest[1:]
+        else:
+            return False
+    if len(rest) < 2:
+        return False
+    script = re.sub(r"^/([a-zA-Z])/", r"\1:/", rest[0])
+    name = os.path.basename(script).lower()
+    if (name, rest[1].lower()) not in _INERT_KIT_SCRIPTS:
+        return False
+    # 상대 경로는 셸과 훅의 작업 위치가 다를 수 있어 해당 없음 (리뷰 SHOULD 6)
+    return os.path.isabs(script) and os.path.isfile(script) and _kit_script_unchanged(script)
 
 
 _RX_SCRIPT = re.compile(r"""(?:"([^"]+\.(?:ps[dm]?1|py|sh|bat|cmd))"|'([^']+\.(?:ps[dm]?1|py|sh|bat|cmd))'|"""

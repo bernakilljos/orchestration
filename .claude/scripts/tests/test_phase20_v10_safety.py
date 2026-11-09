@@ -1601,3 +1601,106 @@ def test_regression_gate_skips_collect_ignore_runners(tmp_path):
     _git(r, "add", "src/mod.py")
     res = iv.regression_gate(r)
     assert res["status"] == "pass" and res["runners_not_run"] == ["tests/test_runner_mod.py"], res
+
+
+# ---------- 2026-11-09 회귀 게이트 영향 시험 선정 확장 (A 수정 → B 깨짐 누락 차단) ----------
+
+def _impact_repo(tmp_path):
+    r = tmp_path / "imp"
+    (r / "lib").mkdir(parents=True)
+    (r / "tests").mkdir()
+    (r / "lib" / "core_util.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+    (r / "lib" / "mid-layer.py").write_text("import core_util\n", encoding="utf-8")         # 1단계 호출자
+    (r / "app_entry.py").write_text("# runs lib/mid-layer.py\n", encoding="utf-8")        # 2단계 호출자 (이름 변형 -)
+    (r / "tests" / "test_app.py").write_text("# exercises app_entry\n", encoding="utf-8")
+    (r / "tests" / "test_unrelated.py").write_text("x = 1\n", encoding="utf-8")
+    _git(r, "init", "-q")
+    _git(r, "add", "-A")
+    _git(r, "commit", "-q", "-m", "base")
+    return r
+
+
+def test_impact_selection_follows_callers_and_name_variants(tmp_path):
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    sel = iv.impact_selection(r, ["lib/core_util.py"])
+    assert sel["full"] is None and sel["why"]["tests/test_app.py"] == "변경 파일 또는 그 호출자를 참조", sel  # 2단계 호출자
+    assert sel["why"].get("tests/test_unrelated.py", "과거") .startswith("과거")   # 무관 시험은 이력 근거로만
+    assert iv.impact_selection(r, ["lib/mid_layer.py"])["tests"] == ["tests/test_app.py"]   # _ ↔ - 이름 변형
+    assert iv.impact_selection(r, ["lib/ghost_mod.py"])["full"]                # 아무도 참조 안 함 → 전체 회귀
+
+
+def test_impact_selection_full_for_common_module_and_unknown(tmp_path):
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    for i in range(iv._FANOUT_FULL):
+        (r / f"user{i}.py").write_text("import core_util\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    assert "공통 모듈" in (iv.impact_selection(r, ["lib/core_util.py"])["full"] or "")
+    assert iv.impact_selection(r, ["tests/conftest.py"])["full"]                # 실행 기반 변경
+    (r / "lonely.py").write_text("y = 2\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    assert "전체 회귀" in iv.impact_selection(r, ["lonely.py"])["full"]          # 범위 판단 불가
+    assert iv.impact_selection(r, ["docs/readme.md"]) == {"tests": [], "full": None, "why": {}}
+
+
+def test_impact_selection_uses_cochange_history(tmp_path):
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    (r / "solo.py").write_text("z = 3\n", encoding="utf-8")
+    (r / "tests" / "test_unrelated.py").write_text("x = 2\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    _git(r, "commit", "-q", "-m", "solo with its test")
+    sel = iv.impact_selection(r, ["solo.py"])
+    assert sel["tests"] == ["tests/test_unrelated.py"] and "과거" in sel["why"]["tests/test_unrelated.py"]
+
+
+def test_full_regression_waits_on_memory(monkeypatch):
+    import independent_verifier as iv
+    import repair_sandbox as sb
+    seq = iter([85, 82, 74])
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": next(seq)})
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "5")
+    res = {}
+    assert iv._wait_memory_for_heavy(res) is None and res["memory_wait"]["percent"] == 74
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": 95})
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "0.5")
+    assert "보류" in (iv._wait_memory_for_heavy({}) or "")                    # 생략·PASS 아님 → blocked
+
+
+def test_impact_selection_review_fixes(tmp_path, monkeypatch):   # 2026-11-09 독립 리뷰 SHOULD 7·8·9·10 · NIT
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    assert "이름이 짧아" in iv.impact_selection(r, ["lib/db.py"])["full"]          # 짧은 이름 → 전체
+    (r / "pkgx").mkdir()
+    (r / "pkgx" / "__init__.py").write_text("", encoding="utf-8")
+    (r / "tests" / "test_pkg.py").write_text("import pkgx\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    assert "tests/test_pkg.py" in iv.impact_selection(r, ["pkgx/__init__.py"])["tests"]   # __init__ → 폴더 이름
+    many = [f"module_{i}.py" for i in range(iv._BULK_CODE_FILES + 1)]
+    assert "대량" in iv.impact_selection(r, many)["full"]
+    (r / "web.test.ts").write_text("import './core_util'\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    (r / "solo2.py").write_text("q = 1\n", encoding="utf-8")
+    (r / "tests2").mkdir()
+    (r / "tests2" / "web2.test.ts").write_text("solo2\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    assert iv.impact_selection(r, ["solo2.py"])["full"]                            # .ts 만 잡힘 → 전체
+    (r / "pytest.ini").write_text("[pytest]\ntestpaths =\n    tests\n    plug*/tests\n", encoding="utf-8")
+    (r / "plugA" / "tests").mkdir(parents=True)
+    _git(r, "add", "-A")
+    assert iv._configured_test_dirs(r) == ["plugA/tests", "tests"]                 # 글롭 · 여러 줄
+    import repair_sandbox as sb
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": 10})
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "abc")
+    assert iv._wait_memory_for_heavy({}) is None                                    # 잘못된 값으로 죽지 않음
+
+
+def test_regression_gate_full_with_no_test_dirs_is_blocked(tmp_path, monkeypatch):
+    import independent_verifier as iv
+    r = _regress_repo(tmp_path)
+    _edit_a(r, "7")
+    monkeypatch.setattr(iv, "impact_selection", lambda c, ch: {"tests": [], "full": "강제", "why": {}})
+    monkeypatch.setattr(iv, "_configured_test_dirs", lambda c: [])
+    res = iv.regression_gate(r)
+    assert res["status"] == "blocked" and "시험 폴더" in res["reason"], res

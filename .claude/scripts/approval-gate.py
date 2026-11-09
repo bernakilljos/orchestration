@@ -105,10 +105,16 @@ USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approva
 
 
 def detect_risk(command: str) -> dict | None:
-    """명령 문자열 -> 매치된 위험 dict 반환 (또는 None)."""
+    """명령 문자열 -> 매치된 위험 dict 반환 (또는 None).
+    2026-11-09: 셸은 따옴표·이스케이프를 지운 뒤 실행한다 ("gi"t · g\\it · gi''t · ^git → git) →
+    따옴표·이스케이프 문자를 뺀 형태도 같이 검사 (원문에서 패턴이 끊겨 통과하던 우회)."""
+    variants = [command]
+    dequoted = re.sub(r"[\"'\\^`]", "", command)
+    if dequoted != command:
+        variants.append(dequoted)
     for category, patterns in RISK_PATTERNS.items():
         for pattern, desc in patterns:
-            if re.search(pattern, command, re.IGNORECASE | re.MULTILINE):
+            if any(re.search(pattern, v, re.IGNORECASE | re.MULTILINE) for v in variants):
                 return {
                     "category": category,
                     "pattern": pattern,
