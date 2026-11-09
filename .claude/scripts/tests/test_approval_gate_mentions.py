@@ -86,7 +86,7 @@ def test_review_bypasses_stay_blocked(tmp_path):   # 2026-11-09 독립 리뷰 �
     assert flagged('"gi"t pu' + 'sh origin main')                   # 따옴표로 쪼갠 명령어 (기존 우회 · 같이 수정)
     assert flagged("g'i't pu" + "sh origin main")
     assert flagged("gi''t pu" + "sh origin main")
-    assert flagged('g\it pu' + 'sh origin main')
+    assert flagged('g' + chr(92) + 'it pu' + 'sh origin main')
     assert flagged('^gi^t pu' + 'sh origin main')
     assert flagged(f'echo "x" & {_P}')
     evil = tmp_path / "evil" / ".claude" / "scripts" / "auto-save-next-actions.py"   # 다른 저장소의 같은 이름 (커밋됨)
