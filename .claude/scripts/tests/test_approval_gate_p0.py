@@ -226,27 +226,6 @@ def _hook(cmd, cwd, resp=None):
     return ctx
 
 
-def test_hook_end_to_end_binds_script_content(tmp_root):
-    import re
-    s = tmp_root / "create.ps1"
-    s.write_text("Write-Host 'approved'\n", encoding="utf-8")
-    cmd = f"Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File','{s}'"
-    r = agd.run(_hook(cmd, str(tmp_root)))
-    assert r is not None and r.rc == 2
-    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
-    gate.approve(tid, gate.USER_APPROVER)
-    s.write_text("Write-Host 'changed after approval'\n", encoding="utf-8")       # 승인 뒤 변경
-    r = agd.run(_hook(cmd, str(tmp_root)))
-    assert r is not None and r.rc == 2 and "스크립트 내용이 바뀌어" in r.err
-    assert gate.status(tid)["approval_state"] == "waiting"            # 바뀐 내용으로 새 승인 대기
-    gate.approve(tid, gate.USER_APPROVER)
-    assert agd.run(_hook(cmd, str(tmp_root))) is None                 # 바뀐 내용 그대로면 1회 통과
-    assert gate.status(tid)["status"] == "running"
-    assert agd.run_action(_hook(cmd, str(tmp_root), {"stdout": "ok", "interrupted": False}), "post") is None
-    st = gate.status(tid)
-    assert (st["approval_state"], st["status"]) == ("executed", "done")
-    r = agd.run(_hook(cmd, str(tmp_root)))
-    assert r is not None and r.rc == 2                                # 1회 사용 유지
 
 
 # ── 2026-11-09 독립 리뷰 MUST/SHOULD 재발 방지 ──
@@ -362,37 +341,8 @@ def _git_repo(path):
     return commit
 
 
-def test_push_approval_bound_to_head(tmp_root):
-    import re
-    repo = tmp_root / "repo"
-    commit = _git_repo(repo)
-    cmd = f"{G} {P} origin main"
-    r = agd.run(_hook(cmd, str(repo)))
-    assert r is not None and r.rc == 2 and "올라갈 HEAD" in r.err
-    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
-    gate.approve(tid, gate.USER_APPROVER)
-    commit("two")                                                     # 승인 뒤 커밋 추가 → 범위 바뀜
-    r = agd.run(_hook(cmd, str(repo)))
-    assert r is not None and r.rc == 2 and "바뀌어" in r.err
-    assert gate.status(tid)["approval_state"] == "waiting"            # 새 HEAD 로 다시 승인 대기
-    gate.approve(tid, gate.USER_APPROVER)
-    assert agd.run(_hook(cmd, str(repo))) is None                     # 같은 HEAD 면 1회 통과
-    r = agd.run(_hook(cmd, str(repo)))
-    assert r is not None and r.rc == 2                                # 1회성 유지
 
 
-def test_old_push_approval_without_head_not_used(tmp_root):
-    import re
-    repo = tmp_root / "repo2"
-    _git_repo(repo)
-    cmd = f"{G} {P} origin main"
-    r = agd.run(_hook(cmd, str(repo)))
-    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
-    with sqlite3.connect(gate.get_db_path()) as c:                     # HEAD 기록이 없던 옛 승인 재현
-        c.execute("UPDATE tasks SET risk_detail = ? WHERE task_id = ?", (json.dumps({"command": cmd}), tid))
-    gate.approve(tid, gate.USER_APPROVER)
-    r = agd.run(_hook(cmd, str(repo)))
-    assert r is not None and r.rc == 2 and "바뀌어" in r.err
 
 
 def test_push_with_repo_switch_refused(tmp_root):
@@ -403,20 +353,6 @@ def test_push_with_repo_switch_refused(tmp_root):
         assert r is not None and r.rc == 2 and "확정할 수 없" in r.err, cmd
 
 
-def test_waiting_push_request_refreshed_to_current_head(tmp_root):   # 옛 대기 요청을 승인해도 두 번 막히지 않게
-    import re
-    repo = tmp_root / "repo4"
-    commit = _git_repo(repo)
-    cmd = f"{G} {P} origin main"
-    tid = re.search(r"appr-[0-9a-f]{12}", agd.run(_hook(cmd, str(repo))).err).group(0)
-    commit("two")                                                     # 대기 중에 커밋 추가
-    r = agd.run(_hook(cmd, str(repo)))
-    assert r is not None and r.rc == 2
-    import subprocess
-    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
-    assert gate.status(tid)["risk_detail"]["artifacts"]["git:HEAD"] == head   # 대기 요청이 지금 HEAD 로 갱신
-    gate.approve(tid, gate.USER_APPROVER)
-    assert agd.run(_hook(cmd, str(repo))) is None                     # 승인 1번으로 통과
 
 
 def test_push_of_other_refs_bound_or_refused(tmp_root):            # HEAD 가 아닌 것을 올리는 push
@@ -438,3 +374,93 @@ def test_push_of_other_refs_bound_or_refused(tmp_root):            # HEAD 가 �
     for c in (f"{G} {P} origin {head[:10]}:main", f"{G} {P} --all origin", f"{G} {P} --mirror origin"):
         r = agd.run(_hook(c, str(repo)))
         assert r is not None and r.rc == 2 and "확정할 수 없" in r.err, c
+
+
+# ── 2026-11-09 승인 요청 불변성: 범위가 바뀌면 새 번호 · 기존 행은 상태 전이 외 수정 없음 ──
+def _row(tid):
+    with sqlite3.connect(gate.get_db_path()) as c:
+        return c.execute("SELECT approval_state, status, risk_detail, approved_at FROM tasks WHERE task_id=?",
+                         (tid,)).fetchone()
+
+
+def _tid(r):
+    import re
+    return re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
+
+
+def test_hook_end_to_end_binds_script_content(tmp_root):
+    s = tmp_root / "create.ps1"
+    s.write_text("Write-Host 'approved'\n", encoding="utf-8")
+    cmd = f"Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File','{s}'"
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2
+    t1 = _tid(r)
+    assert _tid(agd.run(_hook(cmd, str(tmp_root)))) == t1               # 같은 범위 대기 중 → 같은 번호 안내
+    gate.approve(t1, gate.USER_APPROVER)
+    before = _row(t1)
+    s.write_text("Write-Host 'changed after approval'\n", encoding="utf-8")       # 승인 뒤 변경
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    t2 = _tid(r)
+    assert r.rc == 2 and t2 != t1 and "바뀌어" in r.err                  # 새 번호 · 이전 요청 미사용
+    assert _row(t1) == before                                          # 이전 승인 행은 그대로 (수정 없음)
+    gate.approve(t2, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(tmp_root))) is None                 # 바뀐 내용 그대로면 1회 통과
+    assert gate.status(t2)["status"] == "running"
+    assert agd.run_action(_hook(cmd, str(tmp_root), {"stdout": "ok", "interrupted": False}), "post") is None
+    done = _row(t2)
+    assert (done[0], done[1]) == ("executed", "done")
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2 and _tid(r) not in (t1, t2)    # 1회 사용 · 다음은 새 번호
+    assert _row(t2) == done                                            # 실행 기록 덮어쓰기 없음
+
+
+def test_push_approval_bound_to_head(tmp_root):
+    repo = tmp_root / "repo"
+    commit = _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and "올라갈 HEAD" in r.err and "브랜치" in r.err
+    t1 = _tid(r)
+    art1 = json.loads(_row(t1)[2])["artifacts"]
+    assert {"git:HEAD", "git:refs", "git:branch", "git:remotes"} <= set(art1)
+    gate.approve(t1, gate.USER_APPROVER)
+    before = _row(t1)
+    commit("two")                                                     # 승인 뒤 커밋 추가 → 범위 바뀜
+    r = agd.run(_hook(cmd, str(repo)))
+    t2 = _tid(r)
+    assert r.rc == 2 and t2 != t1 and "바뀌어" in r.err
+    assert _row(t1) == before                                          # 승인된 옛 요청(옛 HEAD) 그대로
+    assert json.loads(_row(t2)[2])["artifacts"]["git:HEAD"] != art1["git:HEAD"]
+    gate.approve(t2, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(repo))) is None                     # 새 HEAD 승인으로 1회 통과
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2                                # 1회성 유지
+
+
+def test_old_push_approval_without_scope_not_used(tmp_root):
+    repo = tmp_root / "repo2"
+    _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    old = "appr-0000000000aa"                                         # 범위 지문 없는 옛 방식 승인 행
+    gate.request_approval(old, cmd, "irreversible", "old", None)
+    gate.approve(old, gate.USER_APPROVER)
+    before = _row(old)
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and _tid(r) != old
+    assert _row(old) == before
+
+
+def test_waiting_request_never_modified_on_scope_change(tmp_root):
+    repo = tmp_root / "repo4"
+    commit = _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    t1 = _tid(agd.run(_hook(cmd, str(repo))))
+    before = _row(t1)
+    commit("two")                                                     # 대기 중에 커밋 추가
+    t2 = _tid(agd.run(_hook(cmd, str(repo))))
+    assert t2 != t1 and _row(t1) == before                             # 대기 요청 수정 없음 · 새 번호
+    gate.approve(t1, gate.USER_APPROVER)                              # 옛 범위 승인은 지금 HEAD 에 못 씀
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and _tid(r) == t2
+    gate.approve(t2, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(repo))) is None

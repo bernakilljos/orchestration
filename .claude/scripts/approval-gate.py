@@ -8,6 +8,7 @@
   python approval-gate.py status <task_id>
 """
 import json
+import os
 import re
 import sqlite3
 import sys
@@ -122,6 +123,57 @@ def detect_risk(command: str) -> dict | None:
                     "command": command[:500],
                 }
     return None
+
+
+# ── 2026-11-09 승인 요청 불변성 ──────────────────────────────────────────
+# 요청 번호를 명령+폴더 지문으로만 정하면, 범위(HEAD·스크립트 내용)가 달라져도 같은 행을 덮어쓰고
+# 실행 완료·만료 기록도 다시 요청할 때 덮였다. → 범위 지문(scope)을 저장하고, 범위가 다르거나
+# 이전 요청이 끝났으면 항상 새 번호로 새 행을 만든다. 기존 행은 상태 전이(승인·소비·결과·만료) 외에 고치지 않는다.
+def scope_key(base: str, artifacts: dict | None) -> str:
+    """명령·폴더 지문(base) + 실행 대상(스크립트 해시·push HEAD·ref·브랜치·원격) → 범위 지문."""
+    import hashlib as _h
+    body = base + "\n" + json.dumps(artifacts or {}, sort_keys=True, ensure_ascii=True)
+    return _h.sha256(body.encode("utf-8")).hexdigest()[:16]
+
+
+def find_request(field: str, value: str, states: tuple) -> str | None:
+    """risk_detail[field] == value 이고 approval_state 가 states 중인 가장 최근 승인 게이트 행."""
+    if not value or not states:
+        return None
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        rows = conn.execute(
+            "SELECT task_id, risk_detail FROM tasks WHERE task_file = '<approval-gate>' AND approval_state IN (%s) "
+            "AND risk_detail LIKE ? ORDER BY created_at DESC, rowid DESC" % ",".join("?" * len(states)),
+            (*states, "%" + value + "%")).fetchall()
+    finally:
+        conn.close()
+    for tid, detail in rows:
+        try:
+            if (json.loads(detail or "{}") or {}).get(field) == value:
+                return tid
+        except (json.JSONDecodeError, AttributeError):
+            continue
+    return None
+
+
+def new_request(command: str, category: str, detail: str, artifacts: dict | None, base: str, scope: str) -> str:
+    """항상 새 번호로 새 대기 요청 행을 만든다 (기존 행 수정 없음)."""
+    import hashlib as _h
+    task_id = "appr-" + _h.sha256(("%s\n%s\n%s" % (scope, time.time_ns(), os.urandom(8).hex())).encode()).hexdigest()[:12]
+    risk = {"command": command, "detail": detail, "base": base, "scope": scope}
+    if artifacts:
+        risk["artifacts"] = artifacts
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        conn.execute(
+            "INSERT INTO tasks (task_id, task_file, status, created_at, approval_state, risk_category, risk_detail) "
+            "VALUES (?, '<approval-gate>', 'waiting_approval', ?, 'waiting', ?, ?)",
+            (task_id, int(time.time()), category, json.dumps(risk, ensure_ascii=False)))
+        conn.commit()
+    finally:
+        conn.close()
+    return task_id
 
 
 def request_approval(task_id: str, command: str, category: str, detail: str, artifacts: dict | None = None) -> dict:

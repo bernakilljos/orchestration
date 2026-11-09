@@ -269,6 +269,23 @@ def _push_head(cmd: str, raw_cwd: str):
     return head
 
 
+def _push_scope(raw_cwd: str, head: str) -> dict:
+    """push 승인 범위: HEAD · 로컬 브랜치·태그 전체 · 현재 브랜치 · 원격 설정(URL 은 해시만)."""
+    import subprocess
+    out = {"git:HEAD": head, "git:refs": _local_refs(raw_cwd)}
+    try:
+        br = subprocess.run(["git", "symbolic-ref", "-q", "--short", "HEAD"], cwd=raw_cwd or None,
+                            capture_output=True, text=True, timeout=3).stdout.strip()
+        rem = subprocess.run(["git", "remote", "-v"], cwd=raw_cwd or None, capture_output=True, text=True, timeout=3)
+    except Exception as e:  # noqa: BLE001
+        raise _ArtifactRefused("브랜치·원격 확인 실패: %s" % type(e).__name__)
+    if rem.returncode != 0:
+        raise _ArtifactRefused("원격 설정 확인 실패")
+    out["git:branch"] = br or "(detached)"
+    out["git:remotes"] = hashlib.sha256(rem.stdout.encode("utf-8")).hexdigest()
+    return out
+
+
 def _local_refs(raw_cwd: str) -> str:
     """승인 때 로컬 브랜치·태그 전체 상태 (다른브랜치:main · --tags 처럼 HEAD 가 아닌 ref 를 올리는 push 대비)."""
     import subprocess
@@ -331,8 +348,9 @@ def run_action(ctx, action):
             "output_chars": len(text)}  # 출력 원문은 저장하지 않는다 (비밀값 섞임 방지)
     log = project_path(ctx, ".claude", "logs", "approval-gate.log")
     try:
-        if mod.record_result(fp[3], outcome, info):
-            append_text(log, "[%s] RESULT: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), outcome, fp[3]))
+        tid = mod.find_request("base", fp[3], ("consumed",)) if hasattr(mod, "find_request") else None
+        if tid and mod.record_result(tid, outcome, info):
+            append_text(log, "[%s] RESULT: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), outcome, tid))
     except Exception as e:  # noqa: BLE001 — 기록 실패는 근거만 남긴다 (상태는 consumed/running = 결과 미확인 그대로)
         append_text(log, "RESULT-FAIL " + "".join(traceback.format_exception_only(type(e), e)))
     return None
@@ -394,44 +412,37 @@ def _run(ctx, box):
         arts = _artifacts(raw_cmd, raw_cwd)
         head = _push_head(raw_cmd, raw_cwd)
         if head:
-            arts["git:HEAD"] = head
-            arts["git:refs"] = _local_refs(raw_cwd)
-            desc += " · 올라갈 HEAD %s" % head[:7]
+            arts.update(_push_scope(raw_cwd, head))
+            desc += " · 올라갈 HEAD %s · 브랜치 %s" % (head[:7], arts.get("git:branch"))
     except _ArtifactRefused as e:
         _safe_log(log, "[%s] REFUSED: %s | %s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, e, cmd))
         return _block(" 위험 명령 감지 (%s): %s. 실행할 스크립트 내용을 확정할 수 없어 승인으로도 실행하지 않음 — %s"
                       % (category, desc, e), "HITL Approval Gate — 스크립트 확정 불가로 차단 (승인 요청 없음)")
-    state = "none"
+    # 2026-11-09 승인 불변성: 범위 지문(명령·폴더 + 스크립트 해시·HEAD·ref·브랜치·원격)이 같은 «승인된» 행만 소비한다.
+    #   같은 범위의 대기 행이 있으면 그 번호를 그대로 안내 (수정 X) · 그 밖에는 항상 새 번호로 새 행 (기존 행 덮어쓰기 X).
+    scope = mod.scope_key(task_id, arts)
     try:
-        state = mod.consume_approval(task_id, artifacts=arts)
+        approved = mod.find_request("scope", scope, ("approved",))
+        if approved and mod.consume_approval(approved, artifacts=arts) == "consumed":
+            _safe_log(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n"
+                      % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, approved, cmd))
+            return None
     except Exception as e:  # noqa: BLE001 — 확인 실패 = 차단 유지 (fail-closed)
         _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
-    if state == "consumed":
-        _safe_log(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
-        return None
-    if state == "changed":
-        _safe_log(log, "[%s] SCRIPT-CHANGED: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
-        desc = "승인 뒤 실행할 스크립트 내용이 바뀌어 이전 승인을 쓰지 않음 — 바뀐 내용 확인 후 다시 승인 필요 · " + desc
-    # 2026-11-09: 대기 중 요청의 범위(스크립트 내용·push HEAD)가 지금과 다르면 지금 범위로 갱신한다.
-    #   종전: 옛 범위로 승인 → 실행 때 '바뀜' 으로 다시 막혀 승인을 두 번 받아야 했다 (예: HEAD 기록 없는 옛 push 요청).
-    if state == "waiting":
-        try:
-            stored = ((mod.status(task_id) or {}).get("risk_detail") or {}).get("artifacts") or {}
-        except Exception:  # noqa: BLE001
-            stored = None
-        if stored is not None and stored != arts:
-            state = "refresh"
-            _safe_log(log, "[%s] REFRESH: %s | task_id=%s | 대기 요청 범위 갱신\n"
-                      % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
-    # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true). 대기 중이면 새로 쓰지 않는다.
-    if state != "waiting":
-        try:
-            res = mod.request_approval(task_id, cmd, category, desc, artifacts=arts)
-            _safe_log(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
-        except Exception as e:  # noqa: BLE001
-            _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
-    _safe_log(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
+    req_id = None
+    try:
+        req_id = mod.find_request("scope", scope, ("waiting",))
+        if not req_id:
+            if mod.find_request("base", task_id, ("approved", "waiting")):
+                desc = "승인 뒤 실행 대상(스크립트 내용·올라갈 커밋 등)이 바뀌어 이전 요청을 쓰지 않음 — 새 요청 확인 후 승인 · " + desc
+            req_id = mod.new_request(cmd, category, desc, arts, task_id, scope)
+            _safe_log(log, "[%s] REQUEST: %s | task_id=%s | scope=%s\n"
+                      % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, req_id, scope))
+    except Exception as e:  # noqa: BLE001
+        _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
+    shown = req_id or "(요청 등록 실패)"
+    _safe_log(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, shown, cmd))
     return _block(" 위험 명령 감지 (%s): %s. 사용자가 프롬프트에 /approve %s 또는 /reject %s [reason] 입력 — "
                   "Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)"
-                  % (category, desc, task_id, task_id),
-                  "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회" % (task_id, category))
+                  % (category, desc, shown, shown),
+                  "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회" % (shown, category))
