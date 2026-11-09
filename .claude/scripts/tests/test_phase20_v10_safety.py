@@ -6,6 +6,7 @@
 4. load_requirements: 정책 길이 초과 문서는 잘라서 넘기지 않고 실패
 5. reap_stuck_orphans: 소유 흔적 없는 프로세스·CPU 를 쓰는 프로세스는 종료하지 않음
 """
+import functools
 import importlib.util
 import json
 import re
@@ -24,9 +25,14 @@ sys.path.insert(0, str(SCRIPTS / "lib"))
 import real_repair_chain as rc  # noqa: E402
 
 
+@functools.lru_cache(maxsize=1)
 def _bash():
-    import shutil
-    return shutil.which("bash") or "bash"
+    # PowerShell 에서 pytest 를 돌리면 PATH 에 bash 가 없다 (2026-11-09 · 4건 WinError 2) — Git 위치에서 찾는 정본 재사용
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("orca_10min_loop", ROOT / ".claude" / "scripts" / "orca-10min-loop.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.find_bash() or "bash"
 
 
 # ---------- 1. cleanup-pollution ----------

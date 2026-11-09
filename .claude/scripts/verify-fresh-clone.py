@@ -30,7 +30,9 @@ except Exception:
 def files():
     for d in SCAN_DIRS:
         for p in d.rglob("*"):
-            if p.suffix in EXTS and "__pycache__" not in p.parts and p.name != Path(__file__).name:
+            # 2026-11-09: tests/ 는 임시 DB 를 쓰거나 위험 명령 문자열("UPDATE logs SET")을 데이터로 담는다 — 쓰는 곳·컬럼 검사 대상 아님
+            #   (그 안의 DDL 은 아래 저장소 전체 DDL 수집에서 그대로 모인다)
+            if p.suffix in EXTS and "__pycache__" not in p.parts and "tests" not in p.parts and p.name != Path(__file__).name:
                 yield p
 
 
@@ -64,6 +66,7 @@ def main() -> int:
                 pass
     written: dict[str, set[str]] = {}
     for p, t in texts.items():
+        # 2026-11-09: 시험 파일은 임시 DB 를 쓰거나 위험 명령 문자열("UPDATE logs SET")을 데이터로 담는다 — 새 PC 에 필요한 DDL 이 아니다 (files() 에서 제외)
         for tbl in re.findall(r"(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|UPDATE)\s+(\w+)\s*(?:\(|SET)", t):
             written.setdefault(tbl, set()).add(str(p.relative_to(ROOT)))
     no_ddl = {t: w for t, w in written.items() if t not in created}

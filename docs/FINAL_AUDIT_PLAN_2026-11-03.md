@@ -1202,3 +1202,24 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - phase2: **21/21 PASS** (sandbox 생성·apply/discard·원본 ROOT 오염 0·orphan 정리) [확인] · 환경 BLOCKED 해제.
 - phase5: **39/39 PASS** (위험 명령 4/4 승격·promote 거부 · retry_cap · sandbox 격리 ROOT 누출 0 · 실제 SyntaxError 재현·수정 검증) [확인] · 환경 BLOCKED 해제. (이전 25/30 표기는 게이트 보류로 일부 시험이 집계 전 중단된 수치)
 - 재실행 후 git 작업 트리 변경 없음 (common.log·out.txt 외).
+
+## §57 무료 실증 마무리 (2026-11-09 · 결함 2건 수정 · 원격 차이 읽기 전용 분석 · 운영 변경 0)
+
+**1. 원격 `96a6557` vs 로컬 26 커밋 (읽기 전용 · 병합·리베이스·push 안 함)**
+- 공통 조상 `b2324c9`. 원격 1 커밋 = VS Code 숨은 창 비응답 방지 (`setup/templates/vscode-settings.template.json` · `guide.txt` 1줄 · `CLAUDE.md` 통계 날짜) [확인].
+- 겹치는 파일 2: `CLAUDE.md` 는 양쪽 변경이 글자까지 같음 (충돌 없음) · `guide.txt` 는 양쪽이 끝(2448행 뒤)에 줄을 덧붙여 충돌 1 (`git merge-tree` 모의 결과) [확인].
+- 해결 방법(승인 후): 두 줄을 모두 남기는 수동 병합 1회. 자동 `--ours/--theirs` 금지 (기능 손실 위험). 템플릿 파일은 로컬 변경이 없어 그대로 들어온다.
+
+**2. `verify-fresh-clone` FAIL ×5 (ensure-state.log · 11-08 20:12~23:38)**
+- 재현: `테이블 logs: DDL 없음 (쓰는 곳 tests/test_approval_gate_p0.py)` · 종료 코드 1 [확인].
+- 원인: 승인 게이트 시험이 위험 명령 문자열(`UPDATE logs SET v=1`)을 데이터로 담는데, 검증기가 시험 폴더까지 "표에 쓰는 코드"로 셌다. 실제 표가 아님.
+- 수정: 검사 파일 목록(`files()`)에서 `tests` 폴더 제외 → 쓰는 곳·컬럼·state 검사가 같은 범위 (DDL 수집은 저장소 전체 그대로 · 시험 파일에만 있는 DDL 0건 실측).
+- 검증: 수정 후 PASS(검사 파일 471→456 · 쓰는 표 38→36) · 운영 폴더에 DDL 없는 표 쓰기를 주입하면 FAIL · 정리 후 PASS [확인].
+- 독립 검토(code-reviewer): 결함 없음 · 제안 3건 중 2건 반영(컬럼 검사 범위 일치 · `_bash()` lru_cache), 1건(DRY_RUN 불러오기 시점)은 영향 없음.
+
+**3. PowerShell 에서 pytest 4건 실패 (`test_phase20_v10_safety.py`)**
+- 재현: 4건 모두 `FileNotFoundError [WinError 2]` — PowerShell PATH 에 bash 없음 (`shutil.which("bash") = None`). 11-08 288 통과는 Bash 도구에서 실행한 결과 [확인].
+- 수정: 시험의 `_bash()` 가 정본 `orca-10min-loop.py:find_bash()` (Git 위치 기준 탐색 · 2026-10 작업 스케줄러 같은 오류 453건 대응) 를 재사용.
+- 검증: 4건 통과 · PowerShell 전체 pytest **288 passed · 0 failed** · golden 13/13 [확인]. 같은 유형 다른 곳: `test_hooks.py:156` 은 모의 실행이라 해당 없음.
+
+**4. 남은 승인 필요 항목 (변경 없음)** — Stage 1 계정 생성·Agent 세션 실측 · 시험 저장소·브랜치 지정 · 브로커 분리·승인 저장소·독립 승인 채널 · 실제 Codex/Judge · Statusline 캡처 · 원격 병합·push. Stage 1 경로 점검은 §55 표 기준 수동 실측(점검 스크립트는 작성하지 않음).
