@@ -1233,3 +1233,23 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 수정: 요청 시 명령이 실행하는 스크립트(.ps1·.py·.sh·.bat·.cmd) sha256 을 `risk_detail.artifacts` 에 저장 → 소비 시 다르면 그 승인 `expired`(script_changed) 후 새 승인 요청 · 해시 미제공도 차단. 해시 계산 실패는 차단 유지(예외를 밖으로 내면 디스패처가 통과시키므로 내부 처리). BOM 훅은 저장 단계에서만 붙이고 실행 직전엔 알리기만 · 쓰기 실패 메시지.
 **3. P1 `fix-s4u-task-actions.ps1`** — `Add-Content -ForegroundColor` 로 결과 줄 대신 예외 → catch 도 같은 예외 → 로그에 start 만 [재현: 예약 작업 cmdlet 을 가짜 함수로 가린 실제 실행]. 수정: 색 옵션 제거(숨김 실행) · 확인 표도 로그로. 실제 예약 작업 변경 없음. PowerShell 7 은 이 PC 에 없어 5.1 만 확인.
 **4. 검증** — 회귀 6개 추가 (이전 코드에서 승인 4개·S4U 1개 실패 역검증) · pytest 299 passed · golden 13/13 · verify-fresh-clone PASS · 실행 후 훅 평균 61ms. Stage 1: orca-agent 생성·비관리자 확인만 실측 — 14경로·접근 거부는 미실행(로그인 필요).
+
+## §59 독립 리뷰 반영 · 회귀 방지 게이트 · 확정 기준 영속 (2026-11-09)
+
+**1. 9aa2803 독립 리뷰 MUST 2·SHOULD 반영** — 재현은 리뷰어와 같은 방식(임시 ORCHESTRATION_ROOT).
+- MUST: 위험 명령 뒤 닿지 않는 UNC 경로(`\host\s\a.ps1`)를 붙이면 해시 계산이 42초 걸려 훅 시간 초과 → 디스패처가 결과를 버려 **승인 없이 통과** (9aa2803 이 만든 결함) [재현]. 수정: UNC·장치 경로는 열지 않고 거부 · 해시 계산 2.5초 상한 · 실제 디스패처로 3종(따옴표·맨 경로·슬래시) 모두 rc=2·요청 0건 [확인].
+- MUST: 로그 쓰기 실패·내부 예외가 run() 밖으로 나가면 통과 (기존 결함) → run() 전체를 감싸 위험 단어가 있는 명령은 차단 · 일반 명령은 그대로.
+- SHOULD: 21개 이상 스크립트 조용히 잘라냄 → 거부 · `cd` 뒤 상대 경로 → 거부 · 실행 중(consumed) 행을 새 요청이 덮던 경합 → 660초 안에는 유지 · 출력 원문 저장 중단(해시·길이만) · s4u 스크립트 kit 절대 경로 → `$PSScriptRoot`.
+- 한계(문서화): 문자열 조립으로 만든 스크립트 이름·확장자 없는 실행·스크립트가 안에서 부르는 다른 파일은 내용 고정 대상이 아님.
+- 검증: 새 시험 7개 — 9aa2803 코드에서 7개 모두 실패(UNC 시험 44초로 원래 결함 재현) · 수정 후 통과.
+
+**2. 회귀 방지 게이트 (A 수정으로 B·C 가 깨지는 것 차단)** — 기존 `independent_verifier.affected_tests` 재사용.
+- `independent_verifier.py regression-gate`: 스테이징 코드 → 영향 시험 실행 → 실패 시 HEAD 사본(git worktree)에서 같은 시험 → 신규 회귀(regression)·원래 실패(preexisting) 구분 · 스테이징 트리 해시와 함께 `.claude/state/regression-gate.json` 기록 · 스테이징 안 된 수정이 섞이면 blocked.
+- `pre-commit-full-check.sh` 6번: 코드 커밋은 기록의 트리 해시가 지금 스테이징과 같고 상태가 pass·preexisting·skip 일 때만 통과 (훅 5초 제한 → 시험은 게이트가 돌리고 훅은 기록만 확인).
+- 시험: 임시 저장소에서 pass·regression(A 수정이 B 를 깨뜨림)·preexisting·blocked 4종 + 훅(기록 없음·회귀·일치·스테이징 변경 후 낡음) 4종.
+- 자동화 못 한 것: "수정 전 기존 소스 분석·재사용" 은 기계 판정 불가 → STD-REUSE-001 (사람·독립 검토 판단) 으로 매 세션 재주입.
+
+**3. 확정 개발 기준 영속** — 원인: 기준 저장소 `.claude/state/standing-requirements.json` 이 git·merge-to-target 에서 빠져 다른 노트북·새 설치에 하나도 안 따라감 [확인].
+- 수정: git 추적 정본 `.claude/scripts/standing-requirements.seed.json` (ID·등급 security/quality/advisory·판정 auto/human·버전·확정일·범위·검증 패턴) → `_load` 가 로컬에 없거나 더 낮은 버전이면 채움 · 로컬에서 끈 기준은 유지 · 세션 시작 재주입·Stop 게이트는 기존 그대로 재사용.
+- DB 판단: 실제 DB 는 `.claude/state/orca.db`(승인 대기 tasks 포함)·`sessions.db` 두 개 · 개발 기준을 orca.db 에 넣으면 승인 DB 와 권한 분리가 안 되고 git·전파에서 빠지므로 새 테이블을 만들지 않음 · 해결책 재사용은 기존 `problem_solutions` 그대로.
+- 시험: 상태 파일 없는 새 프로젝트(새 노트북 흉내)에서 기준 6개 재주입 · 기준 위반 코드(회귀 게이트 제거) → Stop 게이트 차단 · 로컬 resolve 유지.

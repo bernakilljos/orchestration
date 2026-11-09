@@ -199,6 +199,114 @@ def affected_tests(cwd: Path, changed: List[str]) -> List[str]:
     return hits
 
 
+REGRESSION_STAMP = ".claude/state/regression-gate.json"
+_CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx")
+_RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (\S+?)(?: - .*)?$", re.M)
+
+
+def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
+    """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류."""
+    env = {**os.environ, "PYTHONUTF8": "1"}
+    env.pop("CLAUDE_PROJECT_DIR", None)   # 기준선 사본(worktree)에서 시험이 자기 위치를 ROOT 로 쓰게
+    r = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE",
+                        *tests], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       timeout=timeout, env=env)
+    out = r.stdout + r.stderr
+    fails = {m.replace("\\", "/") for m in _RX_FAILED.findall(out)}
+    summary = (out.strip().splitlines() or [""])[-1][:200]
+    return fails, summary, r.returncode
+
+
+def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
+    """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
+
+    스테이징된 코드 변경 → affected_tests 로 영향 시험 선정 → 실행.
+    실패가 있으면 수정 전(HEAD) 사본(git worktree)에서 같은 시험을 돌려 '원래 있던 실패' 와 '이번 변경으로 생긴 회귀' 를 가른다.
+    결과는 스테이징 트리 해시와 함께 REGRESSION_STAMP 에 기록 → pre-commit-full-check.sh 가 해시 일치·상태만 확인 (훅 5초 제한).
+    status: skip(코드 변경 없음) · pass · preexisting(실패 전부 HEAD 에서도 실패) · regression(신규 실패 · 커밋 차단) · blocked(실행 불가)."""
+    import tempfile
+    import time as _t
+    tree = (_run_git_in(cwd, ["write-tree"]) or "").strip()
+    staged = [p.strip() for p in (_run_git_in(cwd, ["diff", "--cached", "--name-only"]) or "").splitlines() if p.strip()]
+    code = [p for p in staged if p.lower().endswith(_CODE_EXT)]
+    res: Dict[str, Any] = {"tree": tree, "at": int(_t.time()), "changed_code": code, "tests": [], "failures": [],
+                           "baseline_failures": [], "new_failures": []}
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import repair_sandbox as _sb
+        res["commit_memory_pct"] = (_sb.commit_memory() or {}).get("percent")
+    except Exception:  # noqa: BLE001 — 측정 실패는 기록만 (시험 생략 사유로 쓰지 않는다)
+        res["commit_memory_pct"] = None
+    if not tree:
+        res["status"] = "blocked"
+        res["reason"] = "스테이징 트리 해시를 못 얻음 (병합 충돌 중?)"
+    elif not code:
+        res["status"] = "skip"
+    else:
+        unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
+        dirty = sorted(set(code) & unstaged)
+        tests, runners = [], []
+        for t in affected_tests(cwd, staged):
+            if not t.endswith(".py"):
+                continue
+            # 파일을 직접 넘기면 pytest 가 conftest collect_ignore 를 적용하지 않아 자체 main() 러너가 오류로 잡힌다
+            #   (2026-11-09 실측: phase2·3·5 러너 33 errors) → 같은 폴더 conftest 의 collect_ignore 는 따로 표시
+            conf = cwd / Path(t).parent / "conftest.py"
+            try:
+                ignored = Path(t).name in conf.read_text(encoding="utf-8", errors="replace") and re.search(
+                    r"collect_ignore\s*=\s*\[[^\]]*['\"]%s['\"]" % re.escape(Path(t).name),
+                    conf.read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                ignored = False
+            (runners if ignored else tests).append(t)
+        res["tests"] = tests
+        res["runners_not_run"] = runners
+        res["same_pattern"] = same_pattern_candidates(cwd, limit=10)
+        if dirty:
+            res["status"] = "blocked"
+            res["reason"] = "스테이징 안 된 수정이 남은 코드 파일 — 시험 대상과 커밋 내용이 다름: %s" % ", ".join(dirty[:5])
+        elif not tests:
+            res["status"] = "pass"
+            res["reason"] = "영향 시험 없음 (affected_tests 0건) — 새 시험 필요 여부는 독립 검토로 판단"
+        else:
+            try:
+                fails, summary, rc = _pytest_failures(cwd, tests, timeout)
+            except subprocess.TimeoutExpired:
+                fails, summary, rc = set(), "시간 초과 %ds" % timeout, -1
+            res["summary"] = summary
+            res["failures"] = sorted(fails)
+            if rc not in (0, 1, 5) or (rc == 1 and not fails):
+                res["status"] = "blocked"
+                res["reason"] = "시험 실행 오류 (rc=%s) — %s" % (rc, summary)
+            elif not fails:
+                res["status"] = "pass"
+            else:
+                base_dir = Path(tempfile.mkdtemp(prefix="regress-base-"))
+                wt = base_dir / "wt"
+                try:
+                    if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=120) is None:
+                        raise RuntimeError("worktree 생성 실패")
+                    base_tests = [t for t in tests if (wt / t).exists()]
+                    bfails, bsummary, _brc = _pytest_failures(wt, base_tests, timeout) if base_tests else (set(), "", 5)
+                    res["baseline_summary"] = bsummary
+                    res["baseline_failures"] = sorted(bfails)
+                    res["new_failures"] = sorted(fails - bfails)
+                    res["status"] = "regression" if res["new_failures"] else "preexisting"
+                except Exception as e:  # noqa: BLE001 — 기준선 못 돌리면 신규 여부를 모른다 → 차단
+                    res["status"] = "blocked"
+                    res["reason"] = "기준선(HEAD) 시험 실행 불가: %s" % e
+                finally:
+                    _run_git_in(cwd, ["worktree", "remove", "--force", str(wt)], timeout=120)
+                    try:
+                        base_dir.rmdir()
+                    except OSError:
+                        pass
+    stamp = cwd / REGRESSION_STAMP
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
+
+
 def _check_scope(diff_paths: List[str], allow_paths: Optional[List[str]]) -> Dict[str, Any]:
     """scope-lock 통합 — allow_paths glob/prefix 외 수정 파일 탐지.
 
@@ -786,6 +894,12 @@ def _cli_main(argv):
     if argv[1] == "same-pattern":
         print(json.dumps(same_pattern_candidates(ROOT), ensure_ascii=False, indent=2))
         return 0
+    if argv[1] == "regression-gate":     # 커밋 전: exit 0 = pass·preexisting·skip · 2 = regression · 1 = blocked
+        res = regression_gate(ROOT)
+        brief = {k: res.get(k) for k in ("status", "reason", "summary", "tests", "new_failures", "baseline_failures",
+                                         "commit_memory_pct")}
+        print(json.dumps(brief, ensure_ascii=False, indent=1))
+        return {"regression": 2, "blocked": 1}.get(res["status"], 0)
     if argv[1] == "external-deps":
         deps = external_dependencies(ROOT)
         print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))

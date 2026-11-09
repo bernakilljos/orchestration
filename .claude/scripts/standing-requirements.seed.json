@@ -1,0 +1,72 @@
+{
+  "version": "1.5.0",
+  "note": "사용자 확정 개발 기준 정본 (git 추적 · merge-to-target 으로 각 솔루션에 전파). grade: security=위반 차단 · quality=증거 없으면 완료 보류 · advisory=경고. judge: auto=verify_pattern 자동 검사 · human=사람·독립 검토 판단",
+  "requirements": {
+    "STD-APPROVAL-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "security",
+      "judge": "auto",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit+targets",
+      "rule": "승인은 1회·사용자 프롬프트만 · 소비(consumed)는 실행 성공이 아님 · 승인 뒤 실행 스크립트가 바뀌면 재승인 · 내부 오류는 차단(fail-closed)",
+      "verify_pattern": "script_changed",
+      "verify_target": ".claude/scripts/approval-gate.py"
+    },
+    "STD-REGRESS-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "quality",
+      "judge": "auto",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit+targets",
+      "rule": "코드 커밋 전 회귀 방지 게이트 (영향 시험 실행 · 실패는 HEAD 기준선과 비교해 신규 회귀면 커밋 차단) · 테스트 하나 통과로 완료 처리 금지",
+      "verify_pattern": "regression-gate.json",
+      "verify_target": ".claude/hooks/pre-commit-full-check.sh"
+    },
+    "STD-REUSE-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "quality",
+      "judge": "human",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit+targets",
+      "rule": "수정 전 기존 소스·호출 관계·과거 해결책(problem_solutions) 확인 후 기존 구현 재사용·최소 변경 · 근거 없이 새 파일·함수·서비스 생성 금지 · 설계 결정 변경은 기존 결정·사유·영향 먼저",
+      "verify_pattern": "",
+      "verify_target": ""
+    },
+    "STD-PROPAGATE-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "quality",
+      "judge": "auto",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit",
+      "rule": "버전 관리형 독립 설치 복사 배포 (Git·중앙 연결 불필요 · manifest·해시 · 미리보기 · 대상 고유 설정 보존 · 비밀·승인DB·Ledger 미전파 · 롤백) — 기존 merge-to-target.py 고도화",
+      "verify_pattern": "kit-merge-manifest",
+      "verify_target": ".claude/scripts/merge-to-target.py"
+    },
+    "STD-MEMORY-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "quality",
+      "judge": "auto",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit+targets",
+      "rule": "메모리 80%부터 병렬 축소·무거운 작업 대기 · 90% 신규 Sandbox 차단 유지 · 75% 이하 점진 재개 · 메모리 부족을 이유로 시험 생략·PASS 금지 · 다른 세션·VS Code 종료 금지",
+      "verify_pattern": "commit_memory",
+      "verify_target": ".claude/scripts/lib/repair_sandbox.py"
+    },
+    "STD-KOREAN-001": {
+      "type": "STANDING_REQUIREMENT",
+      "grade": "advisory",
+      "judge": "auto",
+      "version": "1.0",
+      "confirmed": "2026-11-09",
+      "scope": "kit+targets",
+      "rule": "사용자 대상 보고는 한글 (헌장 D22) · 한글 .ps1 은 저장 시 UTF-8 BOM",
+      "verify_pattern": "| D22 |",
+      "verify_target": "CLAUDE.md"
+    }
+  }
+}

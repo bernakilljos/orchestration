@@ -43,13 +43,33 @@ ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().par
 STORE = ROOT / ".claude" / "state" / "standing-requirements.json"
 
 
+# 2026-11-09: 확정 개발 기준의 정본 = git 추적 파일 (이 스크립트 옆) — .claude/state 는 git·전파에서 빠져
+#   다른 노트북·새 설치 프로젝트에 기준이 하나도 안 따라갔다. 기준은 로컬 기록에 없을 때 여기서 채운다
+#   (로컬 status 변경은 유지 · 승인·예산 DB(orca.db)와 분리).
+SEED = Path(__file__).resolve().parent / "standing-requirements.seed.json"
+
+
 def _load() -> dict:
-    if not STORE.exists():
-        return {}
+    data: dict = {}
+    if STORE.exists():
+        try:
+            data = json.loads(STORE.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
     try:
-        return json.loads(STORE.read_text(encoding="utf-8"))
+        seed = json.loads(SEED.read_text(encoding="utf-8")) if SEED.exists() else {}
     except Exception:
-        return {}
+        seed = {}
+    for rid, r in (seed.get("requirements") or {}).items():
+        cur = data.get(rid)
+        if cur is None or str(cur.get("version", "")) < str(r.get("version", "")):
+            merged = dict(r)
+            if cur is not None and cur.get("status") in ("RESOLVED", "DISABLED"):
+                merged["status"] = cur["status"]    # 로컬에서 끈 기준은 유지 (새 버전이어도 임의 재활성 X)
+            merged.setdefault("status", "ACTIVE")
+            merged["source"] = "KIT_SEED v%s" % seed.get("version", "?")
+            data[rid] = merged
+    return data
 
 
 def _save(data: dict) -> None:
@@ -94,6 +114,8 @@ def _verify(r: dict) -> "str":
     이제 3-state 반환: 'PASS' / 'FAIL' / 'UNKNOWN'.
     UNKNOWN 은 gate 에서 PASS 로 간주 X · 수동 검증 요구 flag 로 처리.
     """
+    if r.get("judge") == "human":
+        return "HUMAN"    # 사람·독립 검토가 판단하는 기준 (2026-11-09) — 자동 PASS 로 세지 않고 차단 사유로도 쓰지 않는다
     tgt = r.get("verify_target", "")
     pat = r.get("verify_pattern", "")
     if not tgt or not pat:
@@ -116,7 +138,9 @@ def cmd_replay() -> int:
     lines = ["# ACTIVE Standing Requirements (매 세션 재주입 · 작업 전 대조)"]
     lines.append("")
     for rid, r in active:
-        lines.append(f"- **{rid}** ({r['type']}): {r['rule']}")
+        tag = " · ".join(x for x in (r.get("grade"), ("v" + r["version"]) if r.get("version") else "",
+                                     r.get("confirmed"), "사람 판단" if r.get("judge") == "human" else "") if x)
+        lines.append(f"- **{rid}** ({r['type']}{' · ' + tag if tag else ''}): {r['rule']}")
     lines.append("")
     lines.append("**금지**: 이 중 하나라도 생략한 채 작업 완료 보고 X. Stop gate 가 재검사.")
     msg = "\n".join(lines)
@@ -153,6 +177,8 @@ def cmd_gate() -> int:
             r["last_verified_at"] = datetime.now().isoformat(timespec="seconds")
         elif result == "FAIL":
             failed.append((rid, r))
+        elif result == "HUMAN":
+            continue
         else:  # UNKNOWN — verify_pattern 미제공 (P0a-C fix: 자동 True X)
             unknown.append((rid, r))
     _save(data)

@@ -1401,6 +1401,7 @@ def test_s4u_fix_script_logs_results_with_mocked_tasks(tmp_path):
     script = ROOT / ".claude" / "scripts" / "fix-s4u-task-actions.ps1"
     code = [ln for ln in script.read_text(encoding="utf-8-sig").splitlines() if not ln.lstrip().startswith("#")]
     assert not [ln for ln in code if re.search(r"(Add|Set)-Content\b.*-ForegroundColor", ln)]
+    assert not [ln for ln in code if "orchestration_v1" in ln], "kit 절대 경로 하드코딩 (헌장 A1 · 전파 대상에서 깨짐)"
     runner = tmp_path / "run.ps1"
     runner.write_bytes(b"\xef\xbb\xbf" + (
         "param($Script,$TempDir)\n$env:TEMP=$TempDir\n"
@@ -1464,3 +1465,139 @@ def test_windows_powershell51_keeps_korean_only_with_bom(tmp_path):
         out[name] = r.stdout.decode("utf-8", "replace").strip()
     assert out["nobom"].startswith("errors=0 kept=False"), out
     assert out["bom"] == "errors=0 kept=True 출력=정상", out
+
+
+# ---------- 2026-11-09 회귀 방지 게이트 (A 수정으로 B·C 깨짐 차단) ----------
+
+def _git(cwd, *a):
+    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *a], cwd=cwd, capture_output=True,
+                          text=True, encoding="utf-8")
+
+
+def _regress_repo(tmp_path, b_ok=True):
+    r = tmp_path / "repo"
+    (r / "src").mkdir(parents=True)
+    (r / "tests").mkdir()
+    (r / "src" / "mod.py").write_text("def a():\n    return 1\n\ndef b():\n    return %s\n" % ("2" if b_ok else "0"),
+                                      encoding="utf-8")
+    (r / "tests" / "test_mod.py").write_text(
+        "import sys, pathlib\nsys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'src'))\n"
+        "import mod\n\ndef test_a():\n    assert mod.a() == 1\n\ndef test_b():\n    assert mod.b() == 2\n",
+        encoding="utf-8")
+    _git(r, "init", "-q")
+    _git(r, "add", "-A")
+    _git(r, "commit", "-q", "-m", "base")
+    return r
+
+
+def _edit_a(r, a_ret, b_ret=None):
+    b = "2" if b_ret is None else b_ret
+    (r / "src" / "mod.py").write_text("def a():\n    return %s\n\ndef b():\n    return %s\n" % (a_ret, b), encoding="utf-8")
+    _git(r, "add", "src/mod.py")
+
+
+def test_regression_gate_pass_regression_preexisting_and_dirty(tmp_path):
+    import independent_verifier as iv
+    r = _regress_repo(tmp_path)
+    _edit_a(r, "1")                                      # 동작 그대로 (주석 수준) → 통과
+    (r / "src" / "mod.py").write_text((r / "src" / "mod.py").read_text(encoding="utf-8") + "# note\n", encoding="utf-8")
+    _git(r, "add", "src/mod.py")
+    res = iv.regression_gate(r)
+    assert res["status"] == "pass" and res["tests"] == ["tests/test_mod.py"], res
+    assert json.loads((r / iv.REGRESSION_STAMP).read_text(encoding="utf-8"))["tree"] == res["tree"]
+
+    _edit_a(r, "1", b_ret="3")                           # A 를 고치다 B 를 깨뜨림 → 신규 회귀
+    res = iv.regression_gate(r)
+    assert res["status"] == "regression" and any("test_b" in f for f in res["new_failures"]), res
+    assert not list((r / ".git" / "worktrees").glob("*")) if (r / ".git" / "worktrees").exists() else True
+
+    r2 = _regress_repo(tmp_path / "pre", b_ok=False)      # B 는 원래 실패
+    _edit_a(r2, "1", b_ret="0")
+    (r2 / "src" / "mod.py").write_text((r2 / "src" / "mod.py").read_text(encoding="utf-8") + "# x\n", encoding="utf-8")
+    _git(r2, "add", "src/mod.py")
+    res = iv.regression_gate(r2)
+    assert res["status"] == "preexisting" and res["new_failures"] == [] and res["baseline_failures"], res
+
+    (r2 / "src" / "mod.py").write_text("def a():\n    return 9\n", encoding="utf-8")   # 스테이징 안 된 수정
+    assert iv.regression_gate(r2)["status"] == "blocked"
+
+
+def test_pre_commit_hook_requires_matching_gate_stamp(tmp_path):
+    r = _regress_repo(tmp_path)
+    (r / "plugins").mkdir()
+    (r / ".claude" / "scripts" / "lib").mkdir(parents=True)
+    (r / ".claude" / "scripts" / "lib" / "independent_verifier.py").write_text("", encoding="utf-8")
+    _edit_a(r, "5")
+    hook = ROOT / ".claude" / "hooks" / "pre-commit-full-check.sh"
+    payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": "git commit -m x"}})
+
+    def run_hook():
+        return subprocess.run([_bash(), str(hook)], input=payload, capture_output=True, text=True, encoding="utf-8",
+                              env={**os.environ, "CLAUDE_PROJECT_DIR": str(r)}, cwd=str(r), timeout=60)
+    h = run_hook()
+    assert h.returncode == 2 and "회귀 방지 게이트" in h.stderr, h.stderr          # 기록 없음 → 차단
+    tree = _git(r, "write-tree").stdout.strip()
+    stamp = r / ".claude" / "state" / "regression-gate.json"
+    stamp.parent.mkdir(parents=True)
+    stamp.write_text(json.dumps({"tree": tree, "status": "regression"}), encoding="utf-8")
+    h = run_hook()
+    assert h.returncode == 2 and "회귀 발견" in h.stderr, h.stderr
+    stamp.write_text(json.dumps({"tree": tree, "status": "pass"}), encoding="utf-8")
+    assert run_hook().returncode == 0
+    _edit_a(r, "6")                                                                  # 스테이징을 바꾸면 기록이 낡음
+    h = run_hook()
+    assert h.returncode == 2 and "stale" in h.stderr, h.stderr
+
+
+# ---------- 2026-11-09 확정 개발 기준 영속 (새 세션·다른 노트북에서도 같은 기준) ----------
+
+def _std_project(tmp_path):
+    p = tmp_path / "newpc"
+    (p / ".claude" / "scripts" / "lib").mkdir(parents=True)
+    (p / ".claude" / "hooks").mkdir(parents=True)
+    for rel in (".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
+                ".claude/scripts/approval-gate.py", ".claude/scripts/merge-to-target.py",
+                ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md"):
+        (p / rel).write_bytes((ROOT / rel).read_bytes())
+    return p                                              # .claude/state 없음 = 새 노트북·새 설치
+
+
+def _std(p, *args):
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(p), "PYTHONUTF8": "1"}
+    return subprocess.run([sys.executable, "-X", "utf8", str(p / ".claude/scripts/standing-requirements.py"), *args],
+                          capture_output=True, text=True, encoding="utf-8", env=env, input="{}", timeout=60)
+
+
+def test_confirmed_standards_replayed_without_local_state(tmp_path):
+    p = _std_project(tmp_path)
+    r = _std(p, "replay")
+    ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    seed = json.loads((ROOT / ".claude/scripts/standing-requirements.seed.json").read_text(encoding="utf-8"))
+    for rid in seed["requirements"]:
+        assert rid in ctx, rid
+    assert "security" in ctx and "사람 판단" in ctx
+    assert _std(p, "gate").returncode == 0                # 기준 모두 충족 · 사람 판단 기준은 차단 사유 X
+
+
+def test_standard_violation_blocks_gate_and_local_resolve_kept(tmp_path):
+    p = _std_project(tmp_path)
+    hook = p / ".claude/hooks/pre-commit-full-check.sh"
+    hook.write_text(hook.read_text(encoding="utf-8").replace("regression-gate.json", "removed"), encoding="utf-8")
+    r = _std(p, "gate")
+    assert r.returncode == 2 and "STD-REGRESS-001" in r.stderr, r.stderr   # 기준을 어긴 코드는 완료 차단
+    assert _std(p, "resolve", "STD-KOREAN-001").returncode == 0
+    assert "STD-KOREAN-001" not in json.loads(_std(p, "replay").stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+def test_regression_gate_skips_collect_ignore_runners(tmp_path):
+    import independent_verifier as iv
+    r = _regress_repo(tmp_path)
+    (r / "tests" / "conftest.py").write_text("collect_ignore = ['test_runner_mod.py']\n", encoding="utf-8")
+    (r / "tests" / "test_runner_mod.py").write_text("import mod\n\ndef test_x(result):\n    pass\n", encoding="utf-8")
+    _git(r, "add", "-A")
+    _git(r, "commit", "-q", "-m", "runner")
+    _edit_a(r, "1")
+    (r / "src" / "mod.py").write_text((r / "src" / "mod.py").read_text(encoding="utf-8") + "# y\n", encoding="utf-8")
+    _git(r, "add", "src/mod.py")
+    res = iv.regression_gate(r)
+    assert res["status"] == "pass" and res["runners_not_run"] == ["tests/test_runner_mod.py"], res

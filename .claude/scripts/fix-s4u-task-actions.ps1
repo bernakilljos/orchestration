@@ -8,8 +8,9 @@ $log = "$env:TEMP\fix-s4u-task-actions.log"
 "$([DateTime]::Now) start" | Out-File $log -Encoding utf8 -Append
 
 $fixes = @(
-    @{Name='Orca_WeeklyAudit'; Bat='C:\pjt\orchestration_v1\.claude\scripts\weekly-audit.bat'},
-    @{Name='Orca_NightlyOptimize'; Bat='C:\pjt\orchestration_v1\.claude\scripts\nightly-optimize.bat'}
+    # 2026-11-09: kit 절대 경로 대신 이 스크립트 위치 기준 (다른 PC·대상 프로젝트로 전파돼도 동작 · 헌장 A1)
+    @{Name='Orca_WeeklyAudit'; Bat=(Join-Path $PSScriptRoot 'weekly-audit.bat')},
+    @{Name='Orca_NightlyOptimize'; Bat=(Join-Path $PSScriptRoot 'nightly-optimize.bat')}
 )
 
 foreach ($f in $fixes) {

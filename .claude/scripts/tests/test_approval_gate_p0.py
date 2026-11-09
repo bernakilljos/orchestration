@@ -247,3 +247,101 @@ def test_hook_end_to_end_binds_script_content(tmp_root):
     assert (st["approval_state"], st["status"]) == ("executed", "done")
     r = agd.run(_hook(cmd, str(tmp_root)))
     assert r is not None and r.rc == 2                                # 1회 사용 유지
+
+
+# ── 2026-11-09 독립 리뷰 MUST/SHOULD 재발 방지 ──
+def _risky_ps(extra):
+    return "Start-Process powershell -Verb RunAs -Wait " + extra
+
+
+def test_unc_script_refused_fast_without_request(tmp_root):
+    t0 = time.time()
+    bs = chr(92)
+    unc = bs * 2 + "10.255.255.1" + bs + "s" + bs + "a.ps1"            # \\10.255.255.1\s\a.ps1 (닿지 않는 호스트)
+    r = agd.run(_hook(_risky_ps("-ArgumentList '-File','%s'" % unc), str(tmp_root)))
+    assert time.time() - t0 < 5, "UNC open 대기로 훅 시간 초과 → 디스패처 통과 (리뷰 MUST)"
+    assert r is not None and r.rc == 2 and "확정할 수 없어" in r.err
+    with sqlite3.connect(gate.get_db_path()) as c:
+        assert c.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0     # 승인으로 풀 수 없는 차단 → 요청 X
+
+
+def test_chdir_with_relative_script_refused(tmp_root):
+    r = agd.run(_hook("cd sub; " + _risky_ps("-ArgumentList '-File','x.ps1'"), str(tmp_root)))
+    assert r is not None and r.rc == 2 and "cd 등" in r.err
+
+
+def test_too_many_scripts_refused(tmp_root):
+    files = " ".join(f"'{tmp_root / ('d%02d.ps1' % i)}'" for i in range(agd._ART_MAX_FILES + 1))
+    r = agd.run(_hook(_risky_ps("-ArgumentList " + files), str(tmp_root)))
+    assert r is not None and r.rc == 2 and "상한" in r.err
+
+
+def test_log_write_failure_still_blocks(tmp_root, monkeypatch):
+    def boom(*a, **k):
+        raise PermissionError("log is a directory")
+    monkeypatch.setattr(agd, "append_text", boom)
+    r = agd.run(_hook("cla" + "ude -p hello", str(tmp_root)))
+    assert r is not None and r.rc == 2
+
+
+def test_internal_error_fails_closed(tmp_root, monkeypatch):
+    class Broken:
+        def detect_risk(self, c):
+            raise RuntimeError("x")
+    monkeypatch.setattr(agd, "load_script", lambda name: Broken())
+    r = agd.run(_hook("cla" + "ude -p hello", str(tmp_root)))
+    assert r is not None and r.rc == 2 and "내부 오류" in r.err
+    assert agd.run(_hook("echo hi", str(tmp_root))) is None                  # 위험 단어 없는 일반 명령은 그대로 통과
+
+
+def test_request_does_not_clobber_running_row(tmp_root):
+    tid = "appr-000000000008"
+    gate.request_approval(tid, "x", "security", "d")
+    gate.approve(tid, gate.USER_APPROVER)
+    assert gate.consume_approval(tid) == "consumed"
+    assert gate.request_approval(tid, "x", "security", "d")["state"] == "consumed"   # 실행 중 → 덮지 않음
+    assert gate.status(tid)["approval_state"] == "consumed"
+    with sqlite3.connect(gate.get_db_path()) as c:
+        d = json.loads(c.execute("SELECT risk_detail FROM tasks WHERE task_id=?", (tid,)).fetchone()[0])
+        d["consumed_at"] = int(time.time()) - gate.CONSUMED_RESULT_WAIT_SEC - 5
+        c.execute("UPDATE tasks SET risk_detail=? WHERE task_id=?", (json.dumps(d), tid))
+    gate.request_approval(tid, "x", "security", "d")                       # 결과 없이 오래 지남 → 다시 요청 가능
+    assert gate.status(tid)["approval_state"] == "waiting"
+
+
+def test_result_does_not_store_raw_output(tmp_root):
+    tid = "appr-000000000009"
+    gate.request_approval(tid, "x", "security", "d")
+    gate.approve(tid, gate.USER_APPROVER)
+    gate.consume_approval(tid)
+    ctx = _hook("x", str(tmp_root), {"stdout": "TOKEN=abc123secret", "interrupted": False})
+    gate.record_result(tid, "finished", {"output_sha256": "h", "output_chars": 18})
+    with sqlite3.connect(gate.get_db_path()) as c:
+        assert "abc123secret" not in c.execute("SELECT risk_detail FROM tasks WHERE task_id=?", (tid,)).fetchone()[0]
+    src = (ROOT / ".claude" / "hooks" / "tool" / "approval_gate_detect.py").read_text(encoding="utf-8")
+    assert "output_tail" not in src
+
+
+# 2026-11-09: pre-commit 게이트는 실행 위치의 git commit 만 커밋으로 인정 (본문 언급 오인 차단)
+import pre_commit_full_check as pcf  # noqa: E402
+
+_C = "com" + "mit"
+
+
+@pytest.mark.parametrize("cmd,expected", [
+    (f'{G} {_C} -m "x"', True),
+    (f"cd /c/pjt && {G} {_C} -m x", True),
+    (f"{G} -C /c/pjt {_C} -m x", True),
+    (f"{G} add -A; {G} {_C}", True),
+    (f"GIT_EDITOR=true {G} {_C} --amend", True),
+    (f"{G} status\n{G} {_C} -m y", True),
+    (f'echo "{G} {_C} later"', False),
+    (f'grep -n "{G} {_C}" file', False),
+    (f'python x.py --msg "run {G} {_C}"', False),
+    (f"{G} log --grep={_C}", False),
+    (f"{G} {_C}-tree abc", False),
+    (f"cat > f <<EOF\n{G} {_C} -m z\nEOF", False),
+    ("echo 커밋 했음", False),
+])
+def test_pre_commit_gate_only_real_invocation(cmd, expected):
+    assert pcf.is_git_commit_invocation(cmd) is expected

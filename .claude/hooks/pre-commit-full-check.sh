@@ -49,6 +49,24 @@ fi
 # 5. 레퍼런스 추가 -> sync 실행 확인 (sync 는 commit 전 수동)
 # (placeholder — no-op)
 
+# 6. 코드 변경 -> 회귀 방지 게이트 기록이 지금 스테이징 내용과 같아야 (2026-11-09 · A 수정으로 B·C 가 깨지는 것 차단)
+#    시험은 훅 시간(5초) 안에 못 돌리므로 regression-gate 가 남긴 기록의 트리 해시·상태만 확인한다.
+if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
+  TREE=$(git write-tree 2>/dev/null || echo "")
+  PYBIN=$(command -v python || command -v python3 || echo "")
+  if [ -n "$TREE" ] && [ -n "$PYBIN" ]; then
+    GATE=$("$PYBIN" -X utf8 -c "import json,sys
+try: d=json.load(open('.claude/state/regression-gate.json',encoding='utf-8'))
+except Exception: print('none'); sys.exit()
+print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/dev/null || echo "none")
+    case "$GATE" in
+      pass|preexisting|skip) ;;
+      regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;
+      *) MISSING="$MISSING\n  - 회귀 방지 게이트 ($GATE): python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate 실행 후 커밋 (스테이징을 바꾸면 다시)" ;;
+    esac
+  fi
+fi
+
 if [ -n "$MISSING" ]; then
   # 사유는 stderr 로 — exit 2 일 때 Claude 에게 돌아가는 것은 stderr 뿐 (2026-10-16, stdout 이라 사유가 사라졌다)
   cat >&2 <<MSG

@@ -100,26 +100,64 @@ _RX_SCRIPT = re.compile(r"""(?:"([^"]+\.(?:ps[dm]?1|py|sh|bat|cmd))"|'([^']+\.(?
                         r"""([^\s"'`;|&<>()]+\.(?:ps[dm]?1|py|sh|bat|cmd)))(?![\w.])""", re.I)
 
 
+class _ArtifactRefused(Exception):
+    """스크립트 내용을 확정할 수 없는 명령 — 승인으로 풀지 않고 차단 (사유를 사용자에게 그대로 보인다)."""
+
+
+_RX_CHDIR = re.compile(r"(?:^|[;&|\n(]\s*)(?:cd|pushd|chdir|set-location|push-location|sl)\b|-workingdirectory\b", re.I)
+_ART_MAX_FILES = 20
+_ART_TIMEOUT_SEC = 2.5
+
+
 def _artifacts(cmd: str, raw_cwd: str) -> dict:
     """명령이 실행하는 스크립트 파일의 sha256 (2026-11-09 · 승인 후 내용 변경 차단).
-    없는 파일은 'missing' — 승인 때 없던 파일이 실행 때 생겨도 다름으로 잡힌다."""
+    없는 파일은 'missing' — 승인 때 없던 파일이 실행 때 생겨도 다름으로 잡힌다.
+    확정할 수 없으면 _ArtifactRefused (2026-11-09 리뷰: UNC 경로 open 이 42초 걸려 훅 시간 초과 → 디스패처가 통과시킴 ·
+    20개 초과를 조용히 버림 · cd 뒤 상대 경로는 다른 파일을 가리킴)."""
     import importlib.util  # Git Bash /c/… 경로·환경 변수·상대 경로 정규화 정본(ensure_ps1_bom._norm) 재사용
+    import threading
     spec = importlib.util.spec_from_file_location(
         "_agd_ps1_bom", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ensure_ps1_bom.py"))
     bom = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bom)
-    _norm = bom._norm
-    out: dict = {}
+    paths: list = []
+    chdir = bool(_RX_CHDIR.search(cmd))
     for m in _RX_SCRIPT.finditer(cmd):
-        p = os.path.normcase(os.path.abspath(_norm(next(g for g in m.groups() if g), raw_cwd or os.getcwd())))
-        if p in out or len(out) >= 20:
-            continue
-        try:
-            with open(p, "rb") as f:
-                out[p] = hashlib.sha256(f.read()).hexdigest()
-        except OSError:
-            out[p] = "missing"
-    return out
+        raw = next(g for g in m.groups() if g).strip()
+        expanded = os.path.expandvars(os.path.expanduser(raw))
+        if expanded.startswith(("\\\\", "//")):  # UNC·\\?\·\\.\ 장치 경로 모두 여기 해당 — 열지 않는다
+            raise _ArtifactRefused("네트워크·장치 경로 스크립트(%s)는 내용을 확정할 수 없음" % raw)
+        if chdir and not (os.path.isabs(expanded) or re.match(r"^/[a-zA-Z]/", expanded)):
+            raise _ArtifactRefused("작업 위치를 바꾸는 명령(cd 등)과 상대 경로 스크립트(%s)가 함께 있음 — 절대 경로로 실행" % raw)
+        p = os.path.normcase(os.path.abspath(bom._norm(raw, raw_cwd or os.getcwd())))
+        if p not in paths:
+            paths.append(p)
+    if len(paths) > _ART_MAX_FILES:
+        raise _ArtifactRefused("실행 스크립트가 %d개로 상한 %d개 초과" % (len(paths), _ART_MAX_FILES))
+    out: dict = {}
+
+    def _hash_all():
+        for p in paths:
+            try:
+                with open(p, "rb") as f:
+                    out[p] = hashlib.sha256(f.read()).hexdigest()
+            except OSError:
+                out[p] = "missing"
+        out["__done__"] = "1"
+
+    th = threading.Thread(target=_hash_all, daemon=True)
+    th.start()
+    th.join(_ART_TIMEOUT_SEC)
+    if out.pop("__done__", None) is None:
+        raise _ArtifactRefused("스크립트 내용 확인이 %.1f초 안에 끝나지 않음 (네트워크 드라이브 등)" % _ART_TIMEOUT_SEC)
+    return dict(out)
+
+
+def _safe_log(log, text):
+    try:
+        append_text(log, text)
+    except Exception:  # noqa: BLE001 — 로그 실패가 차단 결과를 지우지 않게 (2026-11-09 리뷰: 로그가 폴더면 통과하던 결함)
+        pass
 
 
 def _fingerprint(ctx):
@@ -160,7 +198,8 @@ def run_action(ctx, action):
     resp = resp if isinstance(resp, dict) else {}
     outcome = "interrupted" if resp.get("interrupted") else "finished"
     text = "%s%s" % (resp.get("stdout") or "", resp.get("stderr") or "")
-    info = {"output_sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16], "output_tail": text[-300:]}
+    info = {"output_sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16],
+            "output_chars": len(text)}  # 출력 원문은 저장하지 않는다 (비밀값 섞임 방지)
     log = project_path(ctx, ".claude", "logs", "approval-gate.log")
     try:
         if mod.record_result(fp[3], outcome, info):
@@ -170,15 +209,39 @@ def run_action(ctx, action):
     return None
 
 
+def _block(reason: str, sysmsg: str):
+    err = json.dumps({"decision": "block", "reason": reason, "systemMessage": sysmsg}, ensure_ascii=False, indent=2) + "\n"
+    return Result(2, "", err)
+
+
 def run(ctx):
+    """2026-11-09 리뷰: 예외가 밖으로 나가면 tool-dispatch 가 결과를 버리고 통과시킨다 → 위험 단어가 있는 명령에서
+    내부 오류가 나면 차단한다 (fail-closed)."""
+    box: dict = {}
+    try:
+        return _run(ctx, box)
+    except Exception as e:  # noqa: BLE001
+        if not box.get("fp"):
+            return None   # 위험 단어조차 없는 명령 — 일반 명령을 막지 않는다
+        _safe_log(box.get("log") or "", "GATE-ERROR " + "".join(traceback.format_exception_only(type(e), e)))
+        return _block(" 승인 게이트 내부 오류 (%s) — 안전을 위해 차단. 원인 확인 후 다시 실행" % type(e).__name__,
+                      "HITL Approval Gate — 내부 오류로 차단 (fail-closed)")
+
+
+def _run(ctx, box):
     log_dir = project_path(ctx, ".claude", "logs")
-    ensure_dir(log_dir)
     log = os.path.join(log_dir, "approval-gate.log")
+    box["log"] = log
+    try:
+        ensure_dir(log_dir)
+    except OSError:
+        pass
     if not project_guard(ctx):
         return None
     fp = _fingerprint(ctx)
     if fp is None:
         return None
+    box["fp"] = fp
     raw_cmd, cmd, raw_cwd, task_id = fp
     gate = project_path(ctx, ".claude", "scripts", "approval-gate.py")
     if not os.path.isfile(gate):
@@ -198,31 +261,32 @@ def run(ctx):
     desc = risk.get("description") or ""
     if not category:
         return None
-    state = "none"
     try:
         arts = _artifacts(raw_cmd, raw_cwd)
+    except _ArtifactRefused as e:
+        _safe_log(log, "[%s] REFUSED: %s | %s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, e, cmd))
+        return _block(" 위험 명령 감지 (%s): %s. 실행할 스크립트 내용을 확정할 수 없어 승인으로도 실행하지 않음 — %s"
+                      % (category, desc, e), "HITL Approval Gate — 스크립트 확정 불가로 차단 (승인 요청 없음)")
+    state = "none"
+    try:
         state = mod.consume_approval(task_id, artifacts=arts)
-    except Exception as e:  # noqa: BLE001 — 해시 계산·확인 실패 = 차단 유지 (fail-closed · 예외를 밖으로 내면 디스패처가 통과시킨다)
-        arts = None
-        append_text(log, "".join(traceback.format_exception_only(type(e), e)))
+    except Exception as e:  # noqa: BLE001 — 확인 실패 = 차단 유지 (fail-closed)
+        _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
     if state == "consumed":
-        append_text(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
+        _safe_log(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
         return None
     if state == "changed":
-        append_text(log, "[%s] SCRIPT-CHANGED: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
+        _safe_log(log, "[%s] SCRIPT-CHANGED: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
         desc = "승인 뒤 실행할 스크립트 내용이 바뀌어 이전 승인을 쓰지 않음 — 바뀐 내용 확인 후 다시 승인 필요 · " + desc
     # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true). 대기 중이면 새로 쓰지 않는다.
     if state != "waiting":
         try:
             res = mod.request_approval(task_id, cmd, category, desc, artifacts=arts)
-            append_text(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
+            _safe_log(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
         except Exception as e:  # noqa: BLE001
-            append_text(log, "".join(traceback.format_exception_only(type(e), e)))
-    append_text(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
-    err = ('{\n'
-           '  "decision": "block",\n'
-           '  "reason": " 위험 명령 감지 (%s): %s. 사용자가 프롬프트에 /approve %s 또는 /reject %s [reason] 입력 — '
-           'Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)",\n'
-           '  "systemMessage": "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회"\n'
-           '}\n') % (category, desc, task_id, task_id, task_id, category)
-    return Result(2, "", err)
+            _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
+    _safe_log(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
+    return _block(" 위험 명령 감지 (%s): %s. 사용자가 프롬프트에 /approve %s 또는 /reject %s [reason] 입력 — "
+                  "Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)"
+                  % (category, desc, task_id, task_id),
+                  "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회" % (task_id, category))

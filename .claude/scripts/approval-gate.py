@@ -100,6 +100,7 @@ RISK_PATTERNS = {
 
 # 승인 1회 사용 유효 시간 (승인 후 이 안에 같은 명령을 실행해야 한다)
 APPROVAL_TTL_SEC = 1800
+CONSUMED_RESULT_WAIT_SEC = 660   # 도구 최대 실행 600초 + 여유 — 이 안에는 실행 중인 행을 새 요청으로 덮지 않는다
 USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 
 
@@ -142,6 +143,16 @@ def request_approval(task_id: str, command: str, category: str, detail: str, art
                  "waiting", category, risk_json),
             )
         else:
+            # 실행 중(consumed)인 행은 덮지 않는다 — 동시 실행 때 결과 기록(record_result)이 사라지던 경합 (2026-11-09 리뷰).
+            # 단 도구 최대 실행 시간이 지나도 결과가 없으면(실패·중단) 다시 요청할 수 있어야 한다 → 그때만 덮는다.
+            cur_row = conn.execute("SELECT approval_state, risk_detail FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
+            if cur_row and cur_row[0] == "consumed":
+                try:
+                    consumed_at = int((json.loads(cur_row[1] or "{}") or {}).get("consumed_at") or 0)
+                except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
+                    consumed_at = 0
+                if now - consumed_at < CONSUMED_RESULT_WAIT_SEC:
+                    return {"task_id": task_id, "state": "consumed", "category": category}
             conn.execute(
                 "UPDATE tasks SET status = 'waiting_approval', "
                 "approval_state = 'waiting', risk_category = ?, risk_detail = ? "
