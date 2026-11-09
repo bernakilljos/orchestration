@@ -37,7 +37,9 @@
     "**/.pytest_cache/**": true,
     "**/.mypy_cache/**": true,
     "**/.ruff_cache/**": true,
-    "**/image-cache/**": true
+    "**/image-cache/**": true,
+    "**/.claude/**": true,
+    "**/logs/**": true
   },
   "files.exclude": {
     "**/__pycache__": true,
@@ -90,5 +92,6 @@
   "files.maxMemoryForLargeFilesMB": 2048,
   "terminal.integrated.gpuAcceleration": "off",
   "python.analysis.userFileIndexingLimit": 500,
-  "git.autoRepositoryDetection": false
+  "git.autoRepositoryDetection": false,
+  "git.untrackedChanges": "hidden"
 }
