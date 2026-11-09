@@ -81,6 +81,8 @@ POST = [
     ("check-html-balance", "check_html_balance", "Edit|Write", 5, None),
     ("enforce-file-naming", "enforce_file_naming", "Edit|Write", 60, None),
     ("hook-09-ocr-verify", "hook_09_ocr_verify", "Bash", 60, None),
+    # 2026-11-09: 소비된 승인의 실행 결과 기록 (승인 소비 ≠ 실행 성공) · 실패·중단은 PostToolUse 가 안 와 consumed/running = 결과 미확인
+    ("approval-gate-result", "approval_gate_detect", "Bash|PowerShell", 5, "post"),
     ("orca-heartbeat", "heartbeat", ".*", 60, None),
     ("periodic-snapshot", "periodic_snapshot", ".*", 5, None),
     ("propagate-rule-change", "propagate_rule_change", "Edit|Write", 60, None),

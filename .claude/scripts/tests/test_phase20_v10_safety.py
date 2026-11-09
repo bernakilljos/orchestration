@@ -1364,14 +1364,57 @@ def test_ps1_bom_added_after_write_and_only_when_needed(tmp_path):
     assert cp.read_bytes() == _KO_PS1.encode("cp949")
 
 
-def test_ps1_bom_added_before_run_from_shell_command(tmp_path):
+def test_ps1_not_modified_before_run_only_warned(tmp_path):
+    """2026-11-09: 실행 직전에는 고치지 않는다 (승인 때 해시 = 실제 실행 파일 해시) · BOM 없음은 알리기만."""
     f = tmp_path / "run me.ps1"
-    f.write_bytes(_KO_PS1.encode("utf-8"))
+    data = _KO_PS1.encode("utf-8")
+    f.write_bytes(data)
     for tool, cmd in (("PowerShell", "& \"%s\"" % f), ("Bash", "powershell.exe -File '%s'" % f.as_posix())):
-        f.write_bytes(_KO_PS1.encode("utf-8"))
         r = _dispatch("pre", {"tool_name": tool, "tool_input": {"command": cmd}, "cwd": str(tmp_path),
                               "session_id": "t"})
-        assert r.returncode == 0 and f.read_bytes().startswith(b"\xef\xbb\xbf"), (tool, r.stderr)
+        assert r.returncode == 0 and f.read_bytes() == data, (tool, r.stderr)
+        assert "실행 직전에는 고치지 않음" in r.stderr, (tool, r.stderr)
+
+
+def test_ps1_bom_write_failure_is_reported(tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "tool"))
+    import builtins
+    import _common
+    import ensure_ps1_bom as eb
+    f = tmp_path / "ko.ps1"
+    f.write_bytes(_KO_PS1.encode("utf-8"))
+    real_open = builtins.open
+    monkeypatch.setattr(builtins, "open", lambda p, m="r", *a, **k: (_ for _ in ()).throw(PermissionError("locked"))
+                        if "w" in m else real_open(p, m, *a, **k))
+    r = eb.run(_common.Ctx(json.dumps({"tool_name": "Write", "tool_input": {"file_path": str(f)}})))
+    assert r is not None and "BOM 부착 실패" in r.err and "locked" in r.err
+
+
+def test_s4u_fix_script_logs_results_with_mocked_tasks(tmp_path):
+    """fix-s4u-task-actions.ps1: Add-Content -ForegroundColor 로 결과 줄 대신 예외가 나 로그에 start 만 남던 결함.
+    예약 작업 cmdlet 을 가짜 함수로 가려 시스템 변경 없이 실제 스크립트 전체를 실행한다."""
+    exe = shutil.which("powershell.exe") or shutil.which("powershell")
+    if not exe:
+        import pytest
+        pytest.skip("Windows PowerShell 5.1 없음")
+    script = ROOT / ".claude" / "scripts" / "fix-s4u-task-actions.ps1"
+    code = [ln for ln in script.read_text(encoding="utf-8-sig").splitlines() if not ln.lstrip().startswith("#")]
+    assert not [ln for ln in code if re.search(r"(Add|Set)-Content\b.*-ForegroundColor", ln)]
+    runner = tmp_path / "run.ps1"
+    runner.write_bytes(b"\xef\xbb\xbf" + (
+        "param($Script,$TempDir)\n$env:TEMP=$TempDir\n"
+        "function Get-ScheduledTask { param([string]$TaskName) $n= if ($TaskName) {$TaskName} else {'Orca_WeeklyAudit'};"
+        " [pscustomobject]@{TaskName=$n; Actions=@([pscustomobject]@{Execute='python.exe'})} }\n"
+        "function New-ScheduledTaskAction { param([string]$Execute) [pscustomobject]@{Execute=$Execute} }\n"
+        "function Set-ScheduledTask { param([string]$TaskName,$Action) }\n"
+        "function Start-Sleep { param($Seconds) }\n"
+        "$e=''; try { . $Script } catch { $e=$_.Exception.Message }; \"script_error=$e\"\n").encode("utf-8"))
+    r = subprocess.run([exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(runner), "-Script", str(script),
+                        "-TempDir", str(tmp_path)], capture_output=True, timeout=120)
+    assert r.stdout.decode("utf-8", "replace").strip().endswith("script_error="), r.stdout + r.stderr
+    log = (tmp_path / "fix-s4u-task-actions.log").read_text(encoding="utf-8-sig")
+    assert log.count("[OK]") == 2 and "재확인" in log and "Orca_WeeklyAudit" in log, log
 
 
 def test_tracked_ps1_with_korean_code_have_bom():

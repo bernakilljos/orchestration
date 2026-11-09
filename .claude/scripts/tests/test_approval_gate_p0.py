@@ -169,3 +169,81 @@ def test_user_prompt_reject(tmp_root):
     gate.request_approval(tid, "x", "irreversible", "d")
     assert "거부 기록됨" in _prompt(tmp_root, f"/reject {tid} 위험")
     assert gate.status(tid)["approval_state"] == "rejected"
+
+
+# ── 2026-11-09 승인 소비 ≠ 실행 성공 · 승인 후 스크립트 변경 차단 ──
+def test_consume_is_not_success_until_result_recorded(tmp_root):
+    tid = "appr-000000000005"
+    gate.request_approval(tid, "x", "security", "d")
+    gate.approve(tid, gate.USER_APPROVER)
+    assert gate.consume_approval(tid) == "consumed"
+    with sqlite3.connect(gate.get_db_path()) as c:
+        st, ap, done_at, detail = c.execute("SELECT status, approval_state, completed_at, risk_detail FROM tasks "
+                                            "WHERE task_id=?", (tid,)).fetchone()
+    assert (st, ap, done_at) == ("running", "consumed", None)      # 실행 전 = 결과 미확인 (예전: executed/done)
+    assert "consumed_at" in json.loads(detail)
+    assert gate.consume_approval(tid) == "none"                      # 실행 결과가 없어도 재사용 X
+    assert gate.record_result(tid, "finished", {"output_tail": "ok"}) is True
+    with sqlite3.connect(gate.get_db_path()) as c:
+        st, ap, detail = c.execute("SELECT status, approval_state, risk_detail FROM tasks WHERE task_id=?",
+                                   (tid,)).fetchone()
+    assert (st, ap) == ("done", "executed") and json.loads(detail)["result"]["outcome"] == "finished"
+    assert gate.record_result(tid, "finished") is False              # 두 번 기록 X
+    assert gate.consume_approval(tid) == "none"
+
+
+def test_interrupted_result_is_failed(tmp_root):
+    tid = "appr-000000000006"
+    gate.request_approval(tid, "x", "security", "d")
+    gate.approve(tid, gate.USER_APPROVER)
+    gate.consume_approval(tid)
+    gate.record_result(tid, "interrupted")
+    assert gate.status(tid)["status"] == "failed"
+
+
+def test_script_changed_after_approval_is_refused(tmp_root):
+    tid = "appr-000000000007"
+    gate.request_approval(tid, "x", "security", "d", artifacts={"c:/s.ps1": "a" * 64})
+    gate.approve(tid, gate.USER_APPROVER)
+    assert gate.consume_approval(tid, artifacts={"c:/s.ps1": "b" * 64}) == "changed"
+    assert gate.status(tid)["approval_state"] == "expired"
+    assert gate.consume_approval(tid, artifacts={"c:/s.ps1": "a" * 64}) == "none"   # 만료된 승인은 원래 내용으로도 X
+    gate.request_approval(tid, "x", "security", "d", artifacts={"c:/s.ps1": "b" * 64})
+    gate.approve(tid, gate.USER_APPROVER)
+    assert gate.consume_approval(tid) == "changed"                   # 해시를 안 넘기면(옛 호출자) fail-closed
+    gate.request_approval(tid, "x", "security", "d", artifacts={"c:/s.ps1": "b" * 64})
+    gate.approve(tid, gate.USER_APPROVER)
+    assert gate.consume_approval(tid, artifacts={"c:/s.ps1": "b" * 64}) == "consumed"
+
+
+def _hook(cmd, cwd, resp=None):
+    import _common
+    payload = {"tool_name": "PowerShell", "tool_input": {"command": cmd}, "cwd": cwd}
+    if resp is not None:
+        payload["tool_response"] = resp
+    ctx = _common.Ctx(json.dumps(payload, ensure_ascii=False))
+    ctx.project_dir = str(ROOT)
+    return ctx
+
+
+def test_hook_end_to_end_binds_script_content(tmp_root):
+    import re
+    s = tmp_root / "create.ps1"
+    s.write_text("Write-Host 'approved'\n", encoding="utf-8")
+    cmd = f"Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File','{s}'"
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2
+    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
+    gate.approve(tid, gate.USER_APPROVER)
+    s.write_text("Write-Host 'changed after approval'\n", encoding="utf-8")       # 승인 뒤 변경
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2 and "스크립트 내용이 바뀌어" in r.err
+    assert gate.status(tid)["approval_state"] == "waiting"            # 바뀐 내용으로 새 승인 대기
+    gate.approve(tid, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(tmp_root))) is None                 # 바뀐 내용 그대로면 1회 통과
+    assert gate.status(tid)["status"] == "running"
+    assert agd.run_action(_hook(cmd, str(tmp_root), {"stdout": "ok", "interrupted": False}), "post") is None
+    st = gate.status(tid)
+    assert (st["approval_state"], st["status"]) == ("executed", "done")
+    r = agd.run(_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2                                # 1회 사용 유지

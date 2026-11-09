@@ -117,8 +117,11 @@ def detect_risk(command: str) -> dict | None:
     return None
 
 
-def request_approval(task_id: str, command: str, category: str, detail: str) -> dict:
-    """task 를 waiting_approval state 로 전환."""
+def request_approval(task_id: str, command: str, category: str, detail: str, artifacts: dict | None = None) -> dict:
+    """task 를 waiting_approval state 로 전환.
+
+    artifacts = {스크립트 경로: sha256} — 명령이 실행하는 파일의 승인 시점 내용 (2026-11-09).
+    소비할 때 다시 계산해 다르면 그 승인은 쓰지 않는다 (승인 후 스크립트 변경 차단)."""
     db_path = get_db_path()
     conn = sqlite3.connect(str(db_path))
     try:
@@ -126,7 +129,10 @@ def request_approval(task_id: str, command: str, category: str, detail: str) -> 
         cur = conn.execute("SELECT task_id FROM tasks WHERE task_id = ?", (task_id,))
         row = cur.fetchone()
         now = int(time.time())
-        risk_json = json.dumps({"command": command, "detail": detail}, ensure_ascii=False)
+        risk = {"command": command, "detail": detail}
+        if artifacts:
+            risk["artifacts"] = artifacts
+        risk_json = json.dumps(risk, ensure_ascii=False)
         if not row:
             conn.execute(
                 "INSERT INTO tasks (task_id, task_file, status, created_at, "
@@ -204,28 +210,84 @@ def reject(task_id: str, by: str = "user", reason: str = "") -> dict:
         conn.close()
 
 
-def consume_approval(task_id: str, ttl: int = APPROVAL_TTL_SEC) -> str:
+def _merge_detail(raw, **kv) -> str:
+    try:
+        d = json.loads(raw) if raw else {}
+    except json.JSONDecodeError:
+        d = {"raw": raw}
+    if not isinstance(d, dict):
+        d = {"raw": d}
+    d.update(kv)
+    return json.dumps(d, ensure_ascii=False)
+
+
+def consume_approval(task_id: str, ttl: int = APPROVAL_TTL_SEC, artifacts: dict | None = None) -> str:
     """같은 명령·같은 위치(task_id 가 그 지문)에 대한 사용자 승인 1회 사용.
 
-    'consumed' = 사용자 프롬프트로 승인됐고 ttl 안 → executed 로 바꾸고 1회 통과
-    'waiting'  = 아직 승인 대기 (새 요청 번호 만들지 않음)
-    'none'     = 행 없음·거부·만료·이미 사용 → 호출자가 새로 요청 (기존 행 재사용)
+    상태 뜻 (2026-11-09 · 소비 ≠ 실행 결과):
+      approval_state 'consumed' + status 'running' = 승인 1회 사용됨 · 명령 실행 허가 · 결과는 아직 모름
+      approval_state 'executed' = 도구 실행이 끝남 (record_result) · 성공/실패는 status 와 risk_detail.result
+      실패·중단으로 결과를 못 받으면 'consumed'/'running' 그대로 = 결과 미확인 (성공으로 세지 않는다)
+    반환:
+      'consumed' = 사용자 프롬프트 승인 · ttl 안 · 승인 때 스크립트 내용과 같음 → 1회 통과
+      'changed'  = 승인 뒤 스크립트 내용이 바뀜 → 그 승인 만료 · 호출자가 새로 요청 (fail-closed)
+      'waiting'  = 아직 승인 대기 (새 요청 번호 만들지 않음)
+      'none'     = 행 없음·거부·만료·이미 사용 → 호출자가 새로 요청 (기존 행 재사용)
     """
     conn = sqlite3.connect(str(get_db_path()))
     try:
-        row = conn.execute("SELECT approval_state FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
+        row = conn.execute("SELECT approval_state, risk_detail FROM tasks WHERE task_id = ?", (task_id,)).fetchone()
         if not row:
             return "none"
         if row[0] == "waiting":
             return "waiting"
         now = int(time.time())
+        cond = "WHERE task_id = ? AND approval_state = 'approved' AND approved_by = ? AND approved_at >= ?"
+        args = (task_id, USER_APPROVER, now - ttl)
+        try:
+            approved_arts = (json.loads(row[1]) if row[1] else {}).get("artifacts")
+        except (json.JSONDecodeError, AttributeError):
+            approved_arts = None
+        if approved_arts and approved_arts != (artifacts or {}):
+            changed = sorted(p for p in set(approved_arts) | set(artifacts or {})
+                             if approved_arts.get(p) != (artifacts or {}).get(p))
+            n = conn.execute(
+                "UPDATE tasks SET approval_state = 'expired', status = 'cancelled', risk_detail = ? " + cond,
+                (_merge_detail(row[1], expire_reason="script_changed", changed=changed, checked_at=now),) + args,
+            ).rowcount
+            conn.commit()
+            return "changed" if n == 1 else "none"
         n = conn.execute(
-            "UPDATE tasks SET approval_state = 'executed', status = 'done', completed_at = ? "
-            "WHERE task_id = ? AND approval_state = 'approved' AND approved_by = ? AND approved_at >= ?",
-            (now, task_id, USER_APPROVER, now - ttl),
+            "UPDATE tasks SET approval_state = 'consumed', status = 'running', risk_detail = ? " + cond,
+            (_merge_detail(row[1], consumed_at=now),) + args,
         ).rowcount
         conn.commit()
         return "consumed" if n == 1 else "none"
+    finally:
+        conn.close()
+
+
+def record_result(task_id: str, outcome: str, info: dict | None = None) -> bool:
+    """소비된 승인의 실행 결과 기록 (PostToolUse). outcome: 'finished' | 'interrupted' | 'error'.
+
+    'finished' 는 도구가 정상 반환했다는 뜻이다 — 명령 자체의 성공 판정은 info(출력 요약)로 남긴다.
+    consumed 가 아닌 행(이미 기록·만료·없음)은 건드리지 않는다."""
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        row = conn.execute("SELECT risk_detail FROM tasks WHERE task_id = ? AND approval_state = 'consumed'",
+                           (task_id,)).fetchone()
+        if not row:
+            return False
+        now = int(time.time())
+        result = {"outcome": outcome, "finished_at": now}
+        result.update(info or {})
+        n = conn.execute(
+            "UPDATE tasks SET approval_state = 'executed', status = ?, completed_at = ?, risk_detail = ? "
+            "WHERE task_id = ? AND approval_state = 'consumed'",
+            ("done" if outcome == "finished" else "failed", now, _merge_detail(row[0], result=result), task_id),
+        ).rowcount
+        conn.commit()
+        return n == 1
     finally:
         conn.close()
 

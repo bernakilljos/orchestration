@@ -19,16 +19,17 @@ foreach ($f in $fixes) {
         $newAction = New-ScheduledTaskAction -Execute $f.Bat
         Set-ScheduledTask -TaskName $f.Name -Action $newAction | Out-Null
         $after = (Get-ScheduledTask -TaskName $f.Name).Actions[0].Execute
-        Add-Content -Path $log -Value ("  [OK]   {0} · {1} -> {2}" -f $f.Name, $before, $after) -ForegroundColor Green
+        # Add-Content 에는 -ForegroundColor 가 없다 (2026-11-09 · 결과 줄 대신 예외 → 로그에 start 만 남음) · 숨김 실행이라 색은 쓰지 않는다
+        Add-Content -Path $log -Encoding utf8 -Value ("  [OK]   {0} · {1} -> {2}" -f $f.Name, $before, $after)
     } catch {
-        Add-Content -Path $log -Value ("  [FAIL] {0} · {1}" -f $f.Name, $_.Exception.Message) -ForegroundColor Red
+        Add-Content -Path $log -Encoding utf8 -Value ("  [FAIL] {0} · {1}" -f $f.Name, $_.Exception.Message)
     }
 }
 
-Add-Content -Path $log -Value "`n재확인:" -ForegroundColor Cyan
+Add-Content -Path $log -Encoding utf8 -Value "`n재확인:"
 Get-ScheduledTask | Where-Object { $_.TaskName -in @('Orca_WeeklyAudit','Orca_NightlyOptimize') } | ForEach-Object {
     [PSCustomObject]@{Task=$_.TaskName; Exec=$_.Actions[0].Execute}
-} | Format-Table -AutoSize
+} | Format-Table -AutoSize | Out-String | Add-Content -Path $log -Encoding utf8
 
-Add-Content -Path $log -Value "`n5초 후 자동 종료..."
+Add-Content -Path $log -Encoding utf8 -Value "`n5초 후 자동 종료..."
 Start-Sleep -Seconds 5

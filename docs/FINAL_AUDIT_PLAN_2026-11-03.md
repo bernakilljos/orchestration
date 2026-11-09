@@ -1223,3 +1223,13 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 검증: 4건 통과 · PowerShell 전체 pytest **288 passed · 0 failed** · golden 13/13 [확인]. 같은 유형 다른 곳: `test_hooks.py:156` 은 모의 실행이라 해당 없음.
 
 **4. 남은 승인 필요 항목 (변경 없음)** — Stage 1 계정 생성·Agent 세션 실측 · 시험 저장소·브랜치 지정 · 브로커 분리·승인 저장소·독립 승인 채널 · 실제 Codex/Judge · Statusline 캡처 · 원격 병합·push. Stage 1 경로 점검은 §55 표 기준 수동 실측(점검 스크립트는 작성하지 않음).
+
+## §58 승인 상태·스크립트 변경·PowerShell 결함 수정 (2026-11-09 · 기준 ebd985d · 운영 DB 미접촉)
+
+**1. P0 승인 소비 ≠ 실행 성공** — `appr-fddcf2a23034` 실측: 요청 09:39:37 → 사용자 승인 09:42:49 → `executed`/`done` 09:43:30 (실행 직전 훅에서 소비) → 실제 계정 생성 결과 09:44:29 (UAC·비밀번호 입력 약 1분) [확인].
+- 원인: `consume_approval` 이 소비 순간 `approval_state='executed'`·`status='done'` 기록 — 결과 칸 없음. `worker_git.py` 는 같은 `executed` 를 실제 push 성공 뒤에만 쓴다 (같은 이름 다른 뜻).
+- 수정: 소비 = `consumed`/`running`(결과 미확인) · 실행 후 단계 `record_result` 가 `executed` + `done`(정상 반환)/`failed`(중단) + `risk_detail.result` 기록. 실패·중단으로 실행 후 이벤트가 안 오면 `running` 그대로 (성공으로 세지 않음). 1회 사용·TTL·자기 승인 차단·fail-closed 유지. 운영 행 소급 변경 없음.
+**2. P1 승인 후 스크립트 변경** — 게이트는 명령 문자열·위치만 지문으로 써서 실행 파일 내용이 바뀌어도 통과 [재현]. 또 실행 직전 `ensure-ps1-bom`(PRE 58번)이 `approval-gate-detect`(67번)보다 먼저 파일을 고쳤다 [재현].
+- 수정: 요청 시 명령이 실행하는 스크립트(.ps1·.py·.sh·.bat·.cmd) sha256 을 `risk_detail.artifacts` 에 저장 → 소비 시 다르면 그 승인 `expired`(script_changed) 후 새 승인 요청 · 해시 미제공도 차단. 해시 계산 실패는 차단 유지(예외를 밖으로 내면 디스패처가 통과시키므로 내부 처리). BOM 훅은 저장 단계에서만 붙이고 실행 직전엔 알리기만 · 쓰기 실패 메시지.
+**3. P1 `fix-s4u-task-actions.ps1`** — `Add-Content -ForegroundColor` 로 결과 줄 대신 예외 → catch 도 같은 예외 → 로그에 start 만 [재현: 예약 작업 cmdlet 을 가짜 함수로 가린 실제 실행]. 수정: 색 옵션 제거(숨김 실행) · 확인 표도 로그로. 실제 예약 작업 변경 없음. PowerShell 7 은 이 PC 에 없어 5.1 만 확인.
+**4. 검증** — 회귀 6개 추가 (이전 코드에서 승인 4개·S4U 1개 실패 역검증) · pytest 299 passed · golden 13/13 · verify-fresh-clone PASS · 실행 후 훅 평균 61ms. Stage 1: orca-agent 생성·비관리자 확인만 실측 — 14경로·접근 거부는 미실행(로그인 필요).

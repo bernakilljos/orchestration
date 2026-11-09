@@ -96,23 +96,90 @@ def _strip_inert_text(cmd: str) -> str:
     return "".join(parts)
 
 
+_RX_SCRIPT = re.compile(r"""(?:"([^"]+\.(?:ps[dm]?1|py|sh|bat|cmd))"|'([^']+\.(?:ps[dm]?1|py|sh|bat|cmd))'|"""
+                        r"""([^\s"'`;|&<>()]+\.(?:ps[dm]?1|py|sh|bat|cmd)))(?![\w.])""", re.I)
+
+
+def _artifacts(cmd: str, raw_cwd: str) -> dict:
+    """명령이 실행하는 스크립트 파일의 sha256 (2026-11-09 · 승인 후 내용 변경 차단).
+    없는 파일은 'missing' — 승인 때 없던 파일이 실행 때 생겨도 다름으로 잡힌다."""
+    import importlib.util  # Git Bash /c/… 경로·환경 변수·상대 경로 정규화 정본(ensure_ps1_bom._norm) 재사용
+    spec = importlib.util.spec_from_file_location(
+        "_agd_ps1_bom", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ensure_ps1_bom.py"))
+    bom = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bom)
+    _norm = bom._norm
+    out: dict = {}
+    for m in _RX_SCRIPT.finditer(cmd):
+        p = os.path.normcase(os.path.abspath(_norm(next(g for g in m.groups() if g), raw_cwd or os.getcwd())))
+        if p in out or len(out) >= 20:
+            continue
+        try:
+            with open(p, "rb") as f:
+                out[p] = hashlib.sha256(f.read()).hexdigest()
+        except OSError:
+            out[p] = "missing"
+    return out
+
+
+def _fingerprint(ctx):
+    """(원문 명령, 검사용 명령, 작업 위치, 요청 번호) — 승인 요청·소비·결과 기록이 같은 번호를 쓰게 한 곳에서 계산."""
+    inp = bash_read(ctx.raw)
+    if not inp or not _RISKWORD.search(inp):
+        return None
+    raw_cmd = _extract_cmd(inp)
+    if not raw_cmd:
+        return None
+    # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
+    cmd = _strip_inert_text(_strip_git_commit_message(raw_cmd))
+    # 2026-11-08: 요청 번호 = 명령·작업 위치 지문 (시각 X) → 승인 후 같은 명령을 다시 내면 그 승인을 1회만 쓴다.
+    # 다른 명령·다른 폴더는 지문이 달라 그 승인을 전용할 수 없다.
+    try:
+        raw_cwd = str(json.loads(ctx.raw or "{}").get("cwd") or "")
+    except (ValueError, AttributeError):
+        raw_cwd = ""
+    cwd = raw_cwd.replace("\\", "/").rstrip("/").lower()
+    task_id = "appr-" + hashlib.sha256((cwd + "\n" + cmd).encode("utf-8", "surrogateescape")).hexdigest()[:12]
+    return raw_cmd, cmd, raw_cwd, task_id
+
+
+def run_action(ctx, action):
+    """PostToolUse: 이 명령으로 소비된 승인이 있으면 실행 결과를 기록한다 (차단·출력 없음)."""
+    if action != "post" or not project_guard(ctx):
+        return None
+    fp = _fingerprint(ctx)
+    if fp is None:
+        return None
+    mod = load_script("approval-gate")
+    if mod is None or not hasattr(mod, "record_result"):
+        return None
+    try:
+        resp = json.loads(ctx.raw or "{}").get("tool_response")
+    except (ValueError, AttributeError):
+        resp = None
+    resp = resp if isinstance(resp, dict) else {}
+    outcome = "interrupted" if resp.get("interrupted") else "finished"
+    text = "%s%s" % (resp.get("stdout") or "", resp.get("stderr") or "")
+    info = {"output_sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16], "output_tail": text[-300:]}
+    log = project_path(ctx, ".claude", "logs", "approval-gate.log")
+    try:
+        if mod.record_result(fp[3], outcome, info):
+            append_text(log, "[%s] RESULT: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), outcome, fp[3]))
+    except Exception as e:  # noqa: BLE001 — 기록 실패는 근거만 남긴다 (상태는 consumed/running = 결과 미확인 그대로)
+        append_text(log, "RESULT-FAIL " + "".join(traceback.format_exception_only(type(e), e)))
+    return None
+
+
 def run(ctx):
     log_dir = project_path(ctx, ".claude", "logs")
     ensure_dir(log_dir)
     log = os.path.join(log_dir, "approval-gate.log")
     if not project_guard(ctx):
         return None
-    inp = bash_read(ctx.raw)
-    if not inp:
+    fp = _fingerprint(ctx)
+    if fp is None:
         return None
-    if not _RISKWORD.search(inp):
-        return None
-    cmd = _extract_cmd(inp)
-    if not cmd:
-        return None
-    # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
-    cmd = _strip_git_commit_message(cmd)
-    cmd = _strip_inert_text(cmd)
+    raw_cmd, cmd, raw_cwd, task_id = fp
     gate = project_path(ctx, ".claude", "scripts", "approval-gate.py")
     if not os.path.isfile(gate):
         return None
@@ -131,26 +198,23 @@ def run(ctx):
     desc = risk.get("description") or ""
     if not category:
         return None
-    # 2026-11-08: 요청 번호 = 명령·작업 위치 지문 (시각 X) → 승인 후 같은 명령을 다시 내면 그 승인을 1회만 쓴다.
-    # 다른 명령·다른 폴더는 지문이 달라 그 승인을 전용할 수 없다.
-    try:
-        cwd = str(json.loads(ctx.raw or "{}").get("cwd") or "")
-    except (ValueError, AttributeError):
-        cwd = ""
-    cwd = cwd.replace("\\", "/").rstrip("/").lower()
-    task_id = "appr-" + hashlib.sha256((cwd + "\n" + cmd).encode("utf-8", "surrogateescape")).hexdigest()[:12]
     state = "none"
     try:
-        state = mod.consume_approval(task_id)
-    except Exception as e:  # noqa: BLE001 — 확인 실패 = 차단 유지 (fail-closed)
+        arts = _artifacts(raw_cmd, raw_cwd)
+        state = mod.consume_approval(task_id, artifacts=arts)
+    except Exception as e:  # noqa: BLE001 — 해시 계산·확인 실패 = 차단 유지 (fail-closed · 예외를 밖으로 내면 디스패처가 통과시킨다)
+        arts = None
         append_text(log, "".join(traceback.format_exception_only(type(e), e)))
     if state == "consumed":
         append_text(log, "[%s] ALLOW-ONCE: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id, cmd))
         return None
+    if state == "changed":
+        append_text(log, "[%s] SCRIPT-CHANGED: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
+        desc = "승인 뒤 실행할 스크립트 내용이 바뀌어 이전 승인을 쓰지 않음 — 바뀐 내용 확인 후 다시 승인 필요 · " + desc
     # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true). 대기 중이면 새로 쓰지 않는다.
     if state != "waiting":
         try:
-            res = mod.request_approval(task_id, cmd, category, desc)
+            res = mod.request_approval(task_id, cmd, category, desc, artifacts=arts)
             append_text(log, json.dumps(res, ensure_ascii=False, indent=2) + "\n")
         except Exception as e:  # noqa: BLE001
             append_text(log, "".join(traceback.format_exception_only(type(e), e)))

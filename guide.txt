@@ -498,6 +498,7 @@
     pytest 수집 오류 33건 해소 (1108)    phase2·3·5 는 자체 main() 러너 → tests/conftest.py collect_ignore · 직접 실행: python .claude/scripts/tests/test_phase{2_e2e,3_auto_e2e,5_self_healing}.py · pytest 288 passed·0 errors
     phase2·5 재실행 (1108)    메모리 회복(84.6%) 후 phase2 21/21 · phase5 39/39 PASS
     무료 실증 마무리 (1109)    verify-fresh-clone 오탐(시험 문자열 UPDATE logs) 수정 · PowerShell pytest bash 탐색 4건 수정 → 288 passed · 원격 96a6557 차이 분석 (guide.txt 1곳 충돌) · 상세 §57
+    승인 소비≠실행 결과 (1109)    consumed/running → 실행 후 executed+done/failed · 승인 시 스크립트 sha256 저장, 바뀌면 재승인 · BOM 은 저장 시에만 · s4u 로그 결함 · 상세 §58
     statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)
     statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
     서브 4개+ 축약 (1016)                   top 3 full + 「...」 + 등급별 색상+모델첫글자+개수 (예: ... 🟣O+2 🟢H+1) · 섞여 보이던 색 없는 +N 제거
