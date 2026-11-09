@@ -1253,3 +1253,37 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 수정: git 추적 정본 `.claude/scripts/standing-requirements.seed.json` (ID·등급 security/quality/advisory·판정 auto/human·버전·확정일·범위·검증 패턴) → `_load` 가 로컬에 없거나 더 낮은 버전이면 채움 · 로컬에서 끈 기준은 유지 · 세션 시작 재주입·Stop 게이트는 기존 그대로 재사용.
 - DB 판단: 실제 DB 는 `.claude/state/orca.db`(승인 대기 tasks 포함)·`sessions.db` 두 개 · 개발 기준을 orca.db 에 넣으면 승인 DB 와 권한 분리가 안 되고 git·전파에서 빠지므로 새 테이블을 만들지 않음 · 해결책 재사용은 기존 `problem_solutions` 그대로.
 - 시험: 상태 파일 없는 새 프로젝트(새 노트북 흉내)에서 기준 6개 재주입 · 기준 위반 코드(회귀 게이트 제거) → Stop 게이트 차단 · 로컬 resolve 유지.
+
+## §60 보안·회귀 품질 최종 안정화 (2026-11-09 · 기준 f93d70e · 운영 변경 0 · 권한·인증 변경 0 · push 0)
+
+**1. 승인 게이트 우회의 실제 위험도 — 높음 [확인]**
+- 이 세션은 ja205 계정으로 실행 · Git Credential Manager(시스템·사용자 gitconfig `credential.helper=manager`) · `GIT_ASKPASS` 설정됨 [확인] · GCM 에 GitHub 자격이 저장돼 있는지는 대상 이름 조회로 확인 안 됨 [미확인].
+- 따라서 명령 문자열 검사를 우회하면 실제 push 가 가능한 구성이다. 알려진 우회 (HEAD 에도 있던 것): 빈 확장으로 쪼갠 명령어 (`gi${E}t`) · `$IFS` · 줄 이음 · 글롭 · 변수 간접 실행 · `$'\x67it'`.
+- 결론: 정규식 판정은 «실수 방지» 이지 보안 경계가 아니다. 셸 문법 전체를 정규식으로 막을 수 있다고 주장하지 않는다.
+- 근본 통제 (§53~55 설계 그대로 · 이번 작업에서 실행 안 함): Agent 는 GitHub 쓰기 자격이 없는 표준 사용자 계정 · 승인된 push 만 Broker 계정이 수행 · Agent 가 문자열 검사를 우회해도 push 할 자격이 없다. Windows 계정·ACL·자격 증명 변경은 별도 승인 후 §55 순서로.
+
+**2. 이번에 고친 것 (Broker 전까지의 보완 · 운영 권한 무변경)**
+- push 승인이 명령 글자와 폴더만 묶어, 승인 뒤 커밋이 늘어도 그대로 올라가던 결함 → 승인 요청 때 HEAD 와 로컬 브랜치·태그 전체 상태를 기록하고 (다른브랜치:main 대비) · 커밋 해시 직접 지정·--all·--mirror push 는 범위를 확정할 수 없어 실행 안 함 · 실행 때 다르면 재승인 · HEAD 기록 없는 옛 승인은 쓰지 않음 · `cd`·`git -C`·`--git-dir` 와 함께면 커밋을 확정할 수 없어 승인으로도 실행 안 함 · 대기 중인 요청은 지금 범위로 갱신 (승인 2번 방지).
+- 승인 게이트 4성질 시험 대조: 실패 차단 (`internal_error_fails_closed` · `log_write_failure_still_blocks` · `unc_script_refused_fast` · `too_many_scripts` · `chdir_with_relative_script`) · 1회성 (`approval_consumed_once` · `approval_expires` · `hook_end_to_end` · `push_approval_bound_to_head`) · 작업 지문 (`user_prompt_approval_only_exact_line` · `cli_approve_disabled` · `script_changed_after_approval` · `old_push_approval_without_head`) · 실행 결과 증거 (`consume_is_not_success_until_result_recorded` · `interrupted_result_is_failed` · `result_does_not_store_raw_output`).
+
+- 커밋 메시지 판정 (같은 종류 · 같이 수정): `-m "$(…)"` 큰따옴표 안 명령 치환을 메시지로 보고 가려 **실제 원격 반영 명령이 통과하던 기존 우회** [확인 · HEAD 재현] → 치환이 있으면 가리지 않음 · 따옴표 없는 heredoc(`<<EOF`)도 본문이 확장되므로 가리지 않음 · `-F - <<'EOF'` 메시지 본문의 위험 문구 언급은 오탐이었으므로 가림.
+
+**3. 회귀 게이트 — 계약·과거 결함 반영**
+- 계약 파일 (`state_db.py` · `*schema*.json/.py` · `plugin.json` · 마이그레이션 · `*.sql`) 변경 → 전체 회귀.
+- 과거 결함: 기존 `orca.db problem_solutions.files_modified` 읽기 전용 재사용 · 같은 파일 수정 기록 3건 이상 → 전체 회귀 (실측: supervisor.py 11 · independent_verifier.py 6 · approval_gate_detect.py 3) · 1~2건이면 그때 함께 고쳐진 시험 추가.
+- 범위를 정할 수 없으면 전체 회귀 · 전체 회귀 대상이 0이면 blocked (PASS 아님).
+
+**4. lib/test_async_http.py**
+- 원인 2겹 [확인]: ① `lib` 가 패키지라 lib 안에서 `from async_http import` 실패 (수집 오류) ② `pytest-asyncio` 미설치로 async 시험 10개가 실행되지 않음. 공식 범위(`pytest.ini testpaths = tests`) 밖이라 전체 회귀에서도 빠져 있었다.
+- 조치: `tests/` 로 이동해 공식 범위 포함 · import 경로 수정 · 플러그인 없이 `asyncio.run` 으로 실행 (노트북마다 설치 여부로 결과가 갈리지 않게) · 10/10 실제 실행·통과. 숨김·제외 없음.
+
+**5. 메모리 80% 부하 조절 — 격리 재현**
+- 실제 메모리를 80% 이상으로 올리는 재현은 하지 않음 (OOM 재부팅 이력 · 다른 세션·VS Code 보호).
+- 임시 저장소에서 회귀 게이트 전체를 실제 pytest 하위 프로세스로 실행 · 센서만 주입: 85→85→74% 에서 대기 후 실제 시험 2개 실행 · 95% 지속 시 시험 실행 없이 blocked 기록 (커밋 훅이 막음) · 실제 센서 값 읽힘 [확인].
+- 실제 80% 이상 상황에서의 동작은 [미확인].
+
+**6. push 전 검토 (34 커밋 · 71 파일 · 원문 미기재)**
+- 저장소는 **공개** (GitHub API 무인증 200) [확인] → push = 전체 공개.
+- 비밀정보 패턴 (GitHub·Anthropic·AWS 키 · 개인키) 0 · 이메일 형식 8건 모두 코드·시험 문자열 · 사용자 경로·호스트명·회사명 0 · 사설 IP 1건은 시험용 도달 불가 주소.
+- `tests/fixtures/ledger/r184~r187.txt` 4개 전부 읽음: 비밀정보·개인정보·고객 데이터 없음 · kit 개발 평가·지시문 (내부 경로·메모리 측정값·Goal 번호·커밋 해시·점수 등 내부 개발 정보) 포함 → 공개 여부는 사용자 판단.
+- 이전 push 승인 요청은 HEAD 를 묶지 않았음 → 이번 수정으로 현재 HEAD 로 갱신된 요청에만 승인 가능.

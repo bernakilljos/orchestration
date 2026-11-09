@@ -265,7 +265,9 @@ def consume_approval(task_id: str, ttl: int = APPROVAL_TTL_SEC, artifacts: dict 
             approved_arts = (json.loads(row[1]) if row[1] else {}).get("artifacts")
         except (json.JSONDecodeError, AttributeError):
             approved_arts = None
-        if approved_arts and approved_arts != (artifacts or {}):
+        # 2026-11-09: 양쪽 비교 — 승인 때 없던 항목(예: push 의 git:HEAD)이 실행 때 생겨도 '다름' (종전: 승인 쪽이 비면 통과)
+        approved_arts = approved_arts or {}
+        if approved_arts != (artifacts or {}):
             changed = sorted(p for p in set(approved_arts) | set(artifacts or {})
                              if approved_arts.get(p) != (artifacts or {}).get(p))
             n = conn.execute(

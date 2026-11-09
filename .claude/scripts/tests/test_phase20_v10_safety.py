@@ -1704,3 +1704,52 @@ def test_regression_gate_full_with_no_test_dirs_is_blocked(tmp_path, monkeypatch
     monkeypatch.setattr(iv, "_configured_test_dirs", lambda c: [])
     res = iv.regression_gate(r)
     assert res["status"] == "blocked" and "시험 폴더" in res["reason"], res
+
+
+def test_impact_selection_contracts_and_past_defects(tmp_path):   # 2026-11-09 계약·과거 결함 고려
+    import sqlite3
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    for p in ("lib/state_db.py", "db/001_init.sql", "plugins/x/plugin.json", "lib/plugin-schema.json"):
+        assert "계약" in (iv.impact_selection(r, [p])["full"] or ""), p
+    (r / ".claude" / "state").mkdir(parents=True)
+    db = r / ".claude" / "state" / "orca.db"
+    with sqlite3.connect(db) as c:
+        c.execute("CREATE TABLE problem_solutions (id INTEGER PRIMARY KEY, files_modified TEXT)")
+        root = str(r).replace("\\", "/")
+        for i in range(iv._DEFECT_FULL):
+            c.execute("INSERT INTO problem_solutions (files_modified) VALUES (?)",
+                      (f"{root}/lib/core_util.py,{root}/tests/test_unrelated.py",))
+        c.execute("INSERT INTO problem_solutions (files_modified) VALUES (?)",
+                  (f"{root}/app_entry.py,{root}/tests/test_unrelated.py",))
+    sel = iv.impact_selection(r, ["lib/core_util.py"])
+    assert "과거 결함" in (sel["full"] or ""), sel                                  # 3건 → 전체 회귀
+    sel = iv.impact_selection(r, ["app_entry.py"])
+    assert sel["why"].get("tests/test_unrelated.py") == "과거 결함 수정 때 함께 고쳐진 시험", sel   # 1건 → 시험 추가
+
+
+def test_regression_gate_memory_throttle_end_to_end(tmp_path, monkeypatch):
+    """격리 재현: 임시 저장소에서 회귀 게이트 전체 실행 (실제 pytest 하위 프로세스) · 센서 값만 주입.
+    실제 메모리를 80% 이상으로 올리는 재현은 하지 않는다 (OOM 재부팅 이력 · 다른 세션 보호)."""
+    import repair_sandbox as sb
+    import independent_verifier as iv
+    real = sb.commit_memory()
+    assert real.get("measured") is False or 0 < real["percent"] < 100      # 실제 센서는 읽힌다 (값만 기록)
+    r = _regress_repo(tmp_path)
+    (r / "src" / "mod.py").write_text((r / "src" / "mod.py").read_text(encoding="utf-8") + "# note\n", encoding="utf-8")
+    _git(r, "add", "src/mod.py")
+    monkeypatch.setattr(iv, "impact_selection", lambda c, ch: {"tests": [], "full": "전체 회귀 강제", "why": {}})
+    monkeypatch.setattr(iv, "_configured_test_dirs", lambda c: ["tests"])
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "6")
+    seq = iter([85, 85, 74] + [74] * 50)
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": next(seq)})
+    t0 = time.time()
+    res = iv.regression_gate(r)
+    assert res["status"] == "pass" and "2 passed" in res["summary"], res     # 대기 후 실제 시험 실행
+    assert res["memory_wait"]["percent"] == 74 and time.time() - t0 >= 0.5
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": 95})
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "1")
+    res = iv.regression_gate(r)
+    assert res["status"] == "blocked" and "보류" in res["reason"] and not res.get("summary"), res   # 시험 생략 PASS 아님
+    stamp = json.loads((r / iv.REGRESSION_STAMP).read_text(encoding="utf-8"))
+    assert stamp["status"] == "blocked"                                        # 커밋 훅이 막는 기록

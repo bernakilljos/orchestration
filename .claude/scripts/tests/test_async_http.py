@@ -11,27 +11,41 @@ try:
 except ImportError:
     pytest.skip("aiohttp not installed", allow_module_level=True)
 
-from async_http import AsyncHTTPClient, fetch_urls_concurrent
+import functools
+import sys
+from pathlib import Path
+
+# 2026-11-09: lib/ 에 있던 시험을 공식 범위(tests/)로 이동 · lib 가 패키지라 lib/ 안에서는 `async_http` import 실패
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from async_http import AsyncHTTPClient, fetch_urls_concurrent  # noqa: E402
+
+
+def _run_async(fn):
+    """pytest-asyncio 없이도 실행 (노트북마다 플러그인 설치 여부로 결과가 갈리지 않게)."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(fn(*args, **kwargs))
+    return wrapper
 
 
 class TestAsyncHTTPClient:
     """Test AsyncHTTPClient class."""
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_init(self) -> None:
         """Test AsyncHTTPClient initialization."""
         client = AsyncHTTPClient(timeout=15.0, max_retries=2)
         assert client.max_retries == 2
         assert client.backoff_factor == 0.5
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_context_manager(self) -> None:
         """Test AsyncHTTPClient context manager."""
         async with AsyncHTTPClient(timeout=10.0) as client:
             assert client.session is not None
             assert isinstance(client.session, aiohttp.ClientSession)
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_backoff_delay(self) -> None:
         """Test exponential backoff calculation."""
         async with AsyncHTTPClient() as client:
@@ -44,7 +58,7 @@ class TestAsyncHTTPClient:
             assert 0 <= delay2 <= 4.5  # 0.5 * 2^2 + jitter
             assert delay0 <= delay1 <= delay2 or (delay0 + 1 > delay1)  # Roughly increasing
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_fetch_json(self) -> None:
         """Test fetch_json method."""
         mock_response = MagicMock()
@@ -58,7 +72,7 @@ class TestAsyncHTTPClient:
                 assert result == {"key": "value"}
                 mock_response.json.assert_called_once()
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_fetch_text(self) -> None:
         """Test fetch_text method."""
         mock_response = MagicMock()
@@ -71,7 +85,7 @@ class TestAsyncHTTPClient:
                 result = await client.fetch_text("http://example.com/api")
                 assert result == "Hello, World!"
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_fetch_bytes(self) -> None:
         """Test fetch_bytes method."""
         content = b"binary data"
@@ -85,14 +99,14 @@ class TestAsyncHTTPClient:
                 result = await client.fetch_bytes("http://example.com/image.png")
                 assert result == content
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_get_without_context_raises(self) -> None:
         """Test that get() raises if not in context manager."""
         client = AsyncHTTPClient()
         with pytest.raises(RuntimeError, match="not initialized"):
             await client.get("http://example.com")
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_post_without_context_raises(self) -> None:
         """Test that post() raises if not in context manager."""
         client = AsyncHTTPClient()
@@ -103,7 +117,7 @@ class TestAsyncHTTPClient:
 class TestFetchUrlsConcurrent:
     """Test fetch_urls_concurrent function."""
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_empty_urls(self) -> None:
         """Test with empty URL list."""
         results = []
@@ -111,7 +125,7 @@ class TestFetchUrlsConcurrent:
             results.append((url, data, exc))
         assert results == []
 
-    @pytest.mark.asyncio
+    @_run_async
     async def test_single_url(self) -> None:
         """Test with single URL."""
         mock_data = {"result": "success"}

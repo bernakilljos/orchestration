@@ -193,6 +193,31 @@ def affected_tests(cwd: Path, changed: List[str]) -> List[str]:
 _SRC_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".ts", ".tsx", ".js")
 _FULL_ALWAYS = re.compile(r"(^|/)(conftest\.py|pytest\.ini|tool-dispatch\.py|_common\.py|settings\.json)$")
 _FANOUT_FULL = 8          # 직접 참조하는 파일 수가 이 이상이면 공통 모듈로 보고 전체 회귀
+# 계약(다른 코드가 형식에 의존하는 파일): DB 스키마·마이그레이션·플러그인 스키마 → 전체 회귀
+_CONTRACT = re.compile(r"(^|/)(state_db\.py|[^/]*schema[^/]*\.(json|py)|plugin\.json|[^/]*migrat[^/]*\.py|[^/]*\.sql)$", re.I)
+_DEFECT_FULL = 3          # orca.db problem_solutions 에 이 파일이 고쳐진 기록이 이 이상이면 재발 위험 → 전체 회귀
+
+
+def _past_defects(cwd: Path, code: List[str]) -> Dict[str, Any]:
+    """기존 결함 기록(orca.db problem_solutions.files_modified · 읽기 전용) 재사용 — 파일별 기록 수와 함께 고쳐진 시험."""
+    import sqlite3
+    db = cwd / ".claude" / "state" / "orca.db"
+    out: Dict[str, Any] = {"counts": {}, "tests": set(), "error": None}
+    if not db.is_file():
+        return out
+    try:
+        with sqlite3.connect("file:%s?mode=ro" % db.as_posix(), uri=True, timeout=2) as c:
+            rows = [(r[0] or "").replace("\\", "/") for r in c.execute("SELECT files_modified FROM problem_solutions")]
+    except sqlite3.Error as e:
+        out["error"] = "결함 기록 조회 실패: %s" % e
+        return out
+    for p in code:
+        hits = [r for r in rows if re.search(r"(^|[/,])%s(,|$)" % re.escape(p.replace("\\", "/")), r)]
+        if hits:
+            out["counts"][p] = len(hits)
+            for r in hits:
+                out["tests"].update(x for x in r.split(",") if re.search(r"/(test_[^/]+\.py|[^/]+_test\.py)$", x))
+    return out
 _COCHANGE_COMMITS = 40
 _COCHANGE_MAX_FILES = 20
 _BULK_CODE_FILES = 40
@@ -221,8 +246,18 @@ def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
         if _FULL_ALWAYS.search(p.replace("\\", "/")):
             full = "공통 설정·실행 기반 변경 (%s)" % p
             break
+    contract = [p for p in changed if _CONTRACT.search(p.replace("\\", "/"))]
+    if contract and not full:
+        full = "계약 파일 변경 (%s)" % ", ".join(contract[:3])
     if not code:
         return {"tests": list(why), "full": full, "why": why}
+    defects = _past_defects(cwd, code)
+    risky = {p: n for p, n in defects["counts"].items() if n >= _DEFECT_FULL}
+    if risky and not full:
+        full = "과거 결함 기록이 많은 파일 변경 (%s)" % ", ".join("%s %d건" % (Path(p).name, n) for p, n in risky.items())
+    for t in tests:   # 결함 기록에서 함께 고쳐진 시험 (절대 경로로 저장돼 있어 끝 경로로 대조)
+        if any(x.endswith("/" + t) for x in defects["tests"]):
+            why.setdefault(t, "과거 결함 수정 때 함께 고쳐진 시험")
     short = [p for p in code if not _name_variants(p)]
     if short and not full:          # 이름으로 참조를 찾을 수 없는 파일 (db.py 등) — 범위 판단 불가 (리뷰 SHOULD 8)
         full = "이름이 짧아 참조를 추적할 수 없는 변경 (%s)" % ", ".join(short[:3])

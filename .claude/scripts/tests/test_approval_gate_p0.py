@@ -345,3 +345,96 @@ _C = "com" + "mit"
 ])
 def test_pre_commit_gate_only_real_invocation(cmd, expected):
     assert pcf.is_git_commit_invocation(cmd) is expected
+
+
+# ── 2026-11-09 push 승인은 올라갈 커밋(HEAD)에 묶인다 (승인 뒤 커밋이 늘면 재승인) ──
+def _git_repo(path):
+    import subprocess
+    path.mkdir(parents=True, exist_ok=True)
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(g + ["init", "-q"], cwd=path, check=True)
+
+    def commit(msg):
+        (path / "f.txt").write_text(msg, encoding="utf-8")
+        subprocess.run(g + ["add", "-A"], cwd=path, check=True)
+        subprocess.run(g + ["commit", "-q", "-m", msg], cwd=path, check=True)
+    commit("one")
+    return commit
+
+
+def test_push_approval_bound_to_head(tmp_root):
+    import re
+    repo = tmp_root / "repo"
+    commit = _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and "올라갈 HEAD" in r.err
+    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
+    gate.approve(tid, gate.USER_APPROVER)
+    commit("two")                                                     # 승인 뒤 커밋 추가 → 범위 바뀜
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and "바뀌어" in r.err
+    assert gate.status(tid)["approval_state"] == "waiting"            # 새 HEAD 로 다시 승인 대기
+    gate.approve(tid, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(repo))) is None                     # 같은 HEAD 면 1회 통과
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2                                # 1회성 유지
+
+
+def test_old_push_approval_without_head_not_used(tmp_root):
+    import re
+    repo = tmp_root / "repo2"
+    _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    r = agd.run(_hook(cmd, str(repo)))
+    tid = re.search(r"appr-[0-9a-f]{12}", r.err).group(0)
+    with sqlite3.connect(gate.get_db_path()) as c:                     # HEAD 기록이 없던 옛 승인 재현
+        c.execute("UPDATE tasks SET risk_detail = ? WHERE task_id = ?", (json.dumps({"command": cmd}), tid))
+    gate.approve(tid, gate.USER_APPROVER)
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and "바뀌어" in r.err
+
+
+def test_push_with_repo_switch_refused(tmp_root):
+    repo = tmp_root / "repo3"
+    _git_repo(repo)
+    for cmd in (f"cd {repo} && {G} {P}", f"{G} -C {repo} {P}", f"{G} --git-dir=x {P}"):
+        r = agd.run(_hook(cmd, str(tmp_root)))
+        assert r is not None and r.rc == 2 and "확정할 수 없" in r.err, cmd
+
+
+def test_waiting_push_request_refreshed_to_current_head(tmp_root):   # 옛 대기 요청을 승인해도 두 번 막히지 않게
+    import re
+    repo = tmp_root / "repo4"
+    commit = _git_repo(repo)
+    cmd = f"{G} {P} origin main"
+    tid = re.search(r"appr-[0-9a-f]{12}", agd.run(_hook(cmd, str(repo))).err).group(0)
+    commit("two")                                                     # 대기 중에 커밋 추가
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2
+    import subprocess
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    assert gate.status(tid)["risk_detail"]["artifacts"]["git:HEAD"] == head   # 대기 요청이 지금 HEAD 로 갱신
+    gate.approve(tid, gate.USER_APPROVER)
+    assert agd.run(_hook(cmd, str(repo))) is None                     # 승인 1번으로 통과
+
+
+def test_push_of_other_refs_bound_or_refused(tmp_root):            # HEAD 가 아닌 것을 올리는 push
+    import re
+    import subprocess
+    repo = tmp_root / "repo5"
+    commit = _git_repo(repo)
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(g + ["branch", "other"], cwd=repo, check=True)
+    cmd = f"{G} {P} origin other:main"
+    tid = re.search(r"appr-[0-9a-f]{12}", agd.run(_hook(cmd, str(repo))).err).group(0)
+    gate.approve(tid, gate.USER_APPROVER)
+    subprocess.run(g + ["checkout", "-q", "other"], cwd=repo, check=True)
+    commit("on-other")                                                # HEAD 아닌 브랜치가 바뀜 → 재승인
+    subprocess.run(g + ["checkout", "-q", "-"], cwd=repo, check=True)
+    r = agd.run(_hook(cmd, str(repo)))
+    assert r is not None and r.rc == 2 and "바뀌어" in r.err
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True).stdout.strip()
+    for c in (f"{G} {P} origin {head[:10]}:main", f"{G} {P} --all origin", f"{G} {P} --mirror origin"):
+        r = agd.run(_hook(c, str(repo)))
+        assert r is not None and r.rc == 2 and "확정할 수 없" in r.err, c

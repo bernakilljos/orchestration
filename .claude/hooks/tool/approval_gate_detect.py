@@ -58,13 +58,20 @@ def _strip_git_commit_message(cmd: str) -> str:
     "DROP TABLE DB 실행" (위험) vs "feat: DROP TABLE 패턴 fix" (문서 기록) 구분."""
     if not re.search(r'\bgit\s+commit\b', cmd):
         return cmd
+    # 2026-11-09: 따옴표 친 구분자(<<'EOF')만 — 따옴표 없는 heredoc·큰따옴표 안의 $( ) ` 는 셸이 실행하므로 가리지 않는다
     # heredoc: -m "$(cat <<'EOF' ... EOF\n)"
     cmd2 = re.sub(
-        r'-m\s+"\$\(cat\s+<<[\'"]?([A-Z0-9_]+)[\'"]?\s*\n.*?\n\1\s*\n\s*\)"',
+        r'-m\s+"\$\(cat\s+<<-?\s*([\'"])([A-Za-z0-9_]+)\1\s*\n.*?\n\2\s*\n\s*\)"',
         '-m "<MSG>"', cmd, flags=re.S
     )
+    # heredoc: -F - <<'EOF' ... EOF (표준 입력으로 메시지)
+    cmd2 = re.sub(
+        r"(-F\s*-\s*)<<-?\s*(['\"])([A-Za-z0-9_]+)\2[^\n]*\n.*?\n\3(?=\s*(?:\n|$))",
+        r"\1<<'MSG'\n<MSG>\nMSG", cmd2, flags=re.S
+    )
     # 단순 -m "..." 또는 -m '...'
-    cmd2 = re.sub(r'-m\s+"[^"]*"', '-m "<MSG>"', cmd2)
+    cmd2 = re.sub(r'-m\s+"([^"]*)"', lambda m: m.group(0) if ("$(" in m.group(1) or "`" in m.group(1))
+                  else '-m "<MSG>"', cmd2)
     cmd2 = re.sub(r"-m\s+'[^']*'", "-m '<MSG>'", cmd2)
     return cmd2
 
@@ -235,6 +242,46 @@ def _artifacts(cmd: str, raw_cwd: str) -> dict:
     return dict(out)
 
 
+_RX_GIT_PUSH = re.compile(r"\bgit\b[^;&|\n]*\bpush\b", re.I)
+_RX_GIT_C = re.compile(r"\bgit\b(?:\s+-[^\s]+(?:\s+\S+)?)*?\s+(?:-C\b|--git-dir\b|--work-tree\b)", re.I)
+
+
+def _push_head(cmd: str, raw_cwd: str):
+    """push 명령이면 지금 HEAD (2026-11-09: 승인이 명령 글자만 묶어, 승인 뒤 커밋이 늘어도 그대로 올라가던 결함).
+    저장소를 확정할 수 없으면(cd·git -C·--git-dir) _ArtifactRefused — 승인으로도 실행하지 않는다."""
+    import subprocess
+    plain = re.sub(r"[\"'\\^`]", "", cmd)
+    if not _RX_GIT_PUSH.search(plain) or re.search(r"\bstash\s+push\b", plain, re.I):
+        return None
+    if _RX_CHDIR.search(plain) or _RX_GIT_C.search(plain):
+        raise _ArtifactRefused("작업 위치를 바꾸는 명령(cd·git -C 등)과 push 가 함께 있어 올라갈 커밋을 확정할 수 없음")
+    try:
+        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=raw_cwd or None, capture_output=True, text=True, timeout=3)
+    except Exception as e:  # noqa: BLE001
+        raise _ArtifactRefused("올라갈 커밋(HEAD) 확인 실패: %s" % type(e).__name__)
+    head = r.stdout.strip()
+    if r.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40,64}", head):
+        raise _ArtifactRefused("올라갈 커밋(HEAD) 확인 실패")
+    # HEAD 가 아닌 것을 올리는 push (커밋 해시 직접 지정 · 전체 ref · 미러) 는 범위를 확정할 수 없다
+    tail = plain[_RX_GIT_PUSH.search(plain).end():]
+    if re.search(r"(?<![\w-])[0-9a-f]{7,64}(?![\w-])|--all\b|--mirror\b|(?<![\w/])@\{", tail, re.I):
+        raise _ArtifactRefused("커밋 해시·--all·--mirror 로 올릴 대상을 지정해 승인 범위를 확정할 수 없음 — Broker 경로로")
+    return head
+
+
+def _local_refs(raw_cwd: str) -> str:
+    """승인 때 로컬 브랜치·태그 전체 상태 (다른브랜치:main · --tags 처럼 HEAD 가 아닌 ref 를 올리는 push 대비)."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads", "refs/tags"],
+                           cwd=raw_cwd or None, capture_output=True, text=True, timeout=3)
+    except Exception as e:  # noqa: BLE001
+        raise _ArtifactRefused("로컬 ref 확인 실패: %s" % type(e).__name__)
+    if r.returncode != 0:
+        raise _ArtifactRefused("로컬 ref 확인 실패")
+    return hashlib.sha256(r.stdout.encode("utf-8")).hexdigest()
+
+
 def _safe_log(log, text):
     try:
         append_text(log, text)
@@ -345,6 +392,11 @@ def _run(ctx, box):
         return None
     try:
         arts = _artifacts(raw_cmd, raw_cwd)
+        head = _push_head(raw_cmd, raw_cwd)
+        if head:
+            arts["git:HEAD"] = head
+            arts["git:refs"] = _local_refs(raw_cwd)
+            desc += " · 올라갈 HEAD %s" % head[:7]
     except _ArtifactRefused as e:
         _safe_log(log, "[%s] REFUSED: %s | %s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, e, cmd))
         return _block(" 위험 명령 감지 (%s): %s. 실행할 스크립트 내용을 확정할 수 없어 승인으로도 실행하지 않음 — %s"
@@ -360,6 +412,17 @@ def _run(ctx, box):
     if state == "changed":
         _safe_log(log, "[%s] SCRIPT-CHANGED: %s | task_id=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
         desc = "승인 뒤 실행할 스크립트 내용이 바뀌어 이전 승인을 쓰지 않음 — 바뀐 내용 확인 후 다시 승인 필요 · " + desc
+    # 2026-11-09: 대기 중 요청의 범위(스크립트 내용·push HEAD)가 지금과 다르면 지금 범위로 갱신한다.
+    #   종전: 옛 범위로 승인 → 실행 때 '바뀜' 으로 다시 막혀 승인을 두 번 받아야 했다 (예: HEAD 기록 없는 옛 push 요청).
+    if state == "waiting":
+        try:
+            stored = ((mod.status(task_id) or {}).get("risk_detail") or {}).get("artifacts") or {}
+        except Exception:  # noqa: BLE001
+            stored = None
+        if stored is not None and stored != arts:
+            state = "refresh"
+            _safe_log(log, "[%s] REFRESH: %s | task_id=%s | 대기 요청 범위 갱신\n"
+                      % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, task_id))
     # request 등록 - 출력(JSON)·오류는 로그로, 실패해도 계속 (원본: >>"$LOG" 2>&1 || true). 대기 중이면 새로 쓰지 않는다.
     if state != "waiting":
         try:

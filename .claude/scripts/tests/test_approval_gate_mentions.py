@@ -115,3 +115,15 @@ def test_reattack_bypasses_stay_blocked():          # 2026-11-09 독립 리뷰 �
     assert flagged(f'/tmp/x/echo "{_P}"')
     assert flagged(f'./python {_NOTE} manual-add "{_P}"')
     assert not flagged(f'echo "{_P} 대기"')                     # 정상 언급은 통과 유지
+
+
+def test_commit_message_heredoc_mention_and_substitution():   # 2026-11-09 커밋 메시지 언급 vs 실행
+    C = "gi" + "t com" + "mit"
+    assert not flagged(f"{C} -q -F - <<'EOF'\n- 설명: {_P} 는 승인 필요\nEOF")      # -F - 따옴표 heredoc = 메시지
+    assert not flagged(f'{C} -m "$(cat <<\'EOF\'\n{_P} 설명\nEOF\n)"')
+    assert not flagged(f'{C} -m "fix: {_P} 오탐"')
+    assert flagged(f'{C} -m "$({_P})"')                                            # 큰따옴표 안 치환은 실행됨
+    assert flagged(f'{C} -m "`{_P}`"')
+    assert flagged(f"{C} -F - <<EOF\n$({_P})\nEOF")                                  # 따옴표 없는 heredoc 은 확장됨
+    assert flagged(f'{C} -m "$(cat <<EOF\n$({_P})\nEOF\n)"')
+    assert flagged(f"{C} -F - <<'EOF'\nmsg\nEOF\n{_P}")                              # heredoc 뒤 실제 실행
