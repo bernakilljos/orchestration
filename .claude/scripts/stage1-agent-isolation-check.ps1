@@ -1,7 +1,9 @@
 ﻿# stage1-agent-isolation-check.ps1 — Stage 1 Agent 계정 인증정보 격리 실측 (§53-3 1~7 · §55 8~14 · 완료 기준 1·2·3)
 #
 # 실행: orca-agent 로 Windows 에 로그인한 뒤 (별도 세션 · runas 아님)
-#   powershell -NoProfile -File <kit>\.claude\scripts\stage1-agent-isolation-check.ps1
+#   powershell -NoProfile -ExecutionPolicy Bypass -File <kit>\.claude\scripts\stage1-agent-isolation-check.ps1
+#   (-ExecutionPolicy Bypass = 이 프로세스만 · 시스템 정책 변경 없음. 새 계정은 LocalMachine 미정의 → Restricted 라 빼면 실행 거부)
+#   실행 전 원래 사용자가 기록한 SHA256 과 대조한다 (kit 은 Authenticated Users 수정 가능 → 실행 전 변조 확인 필요).
 #
 # 원칙 (§55): 읽기 전용 · 값 출력·복사·기록 0 (존재 여부와 거부 원문만) · 계정·ACL·자격 증명 변경 0 · push 0
 #   원격 쓰기 시험(§55-2 · 완료 기준 4)은 승인된 시험 저장소가 필요해 이 스크립트에서 하지 않는다 → BLOCKED 로 기록.
@@ -93,10 +95,17 @@ Test-WriteDenied "5g" "승인 게이트 코드 쓰기 (approval-gate.py)" (Join-
 Test-WriteDenied "5h" "승인 감지 훅 쓰기 (approval_gate_detect.py)" (Join-Path $Kit ".claude\hooks\tool\approval_gate_detect.py")
 
 # ── §55 8~14 ──
+# Agent 계정에서는 kit 소유자가 달라 git 이 저장소를 거부한다 (dubious ownership · exit 128) → 오류를 버리면 0건 = 거짓 PASS.
+# 명령줄 -c safe.directory 는 보호 설정이라 이 프로세스에서만 허용 (설정 파일 변경 없음) · 그래도 못 읽으면 BLOCKED.
+$gitOk = [bool](Get-Command git -ErrorAction SilentlyContinue)
+$kitGit = $Kit -replace "\\", "/"
+$repoOk = $false
+if ($gitOk) { git -c "safe.directory=$kitGit" -C $Kit rev-parse --git-dir *> $null; $repoOk = ($LASTEXITCODE -eq 0) }
 $helpers = @(git config --show-origin --get-all credential.helper 2>$null)
 $fillEvidence = "자가 점검 모드 — 원래 사용자 자격 증명 조회 안 함"
 $fillStatus = "BLOCKED"
-if (-not $selfTest) {
+if (-not $gitOk) { $fillEvidence = "git 없음 — 확인 불가" }
+elseif (-not $selfTest) {
     $env:GIT_TERMINAL_PROMPT = "0"; $env:GCM_INTERACTIVE = "Never"; $env:GIT_ASKPASS = ""; $env:SSH_ASKPASS = ""
     $fill = "protocol=https`nhost=github.com`n`n" | git credential fill 2>$null
     $has = [bool]($fill | Select-String -Pattern "^password=" -Quiet)
@@ -132,11 +141,17 @@ $ind = @()
 foreach ($sc in "--system", "--global") {
     $ind += @(git config $sc --name-only --get-regexp "^(includeif\..*\.path|include\.path|core\.askpass|core\.sshcommand|url\..*\.insteadof)$" 2>$null | ForEach-Object { $sc + ":" + $_ })
 }
-$ind += @(git -C $Kit config --local --name-only --get-regexp "^(includeif\..*\.path|include\.path|core\.askpass|core\.sshcommand|url\..*\.insteadof)$" 2>$null | ForEach-Object { "--local:" + $_ })
-Add-Result "13" "간접 인증 경로 설정 (include·askPass·sshCommand·insteadOf)" ($(if ($ind.Count -eq 0) { "PASS" } else { "FAIL" })) ("설정 키: " + ($ind -join ", "))
-$urls = @(git -C $Kit remote -v 2>$null)
-$embedded = @($urls | Where-Object { $_ -match "://[^/\s]+@" }).Count
-Add-Result "14" "원격 URL 내장 자격 증명" ($(if ($embedded -eq 0) { "PASS" } else { "FAIL" })) ("내장 " + $embedded + "개 (URL 미기록)")
+if ($repoOk) {
+    $ind += @(git -c "safe.directory=$kitGit" -C $Kit config --local --name-only --get-regexp "^(includeif\..*\.path|include\.path|core\.askpass|core\.sshcommand|url\..*\.insteadof)$" 2>$null | ForEach-Object { "--local:" + $_ })
+    Add-Result "13" "간접 인증 경로 설정 (include·askPass·sshCommand·insteadOf)" ($(if ($ind.Count -eq 0) { "PASS" } else { "FAIL" })) ("설정 키: " + ($ind -join ", "))
+    $urls = @(git -c "safe.directory=$kitGit" -C $Kit remote -v 2>$null)
+    $embedded = @($urls | Where-Object { $_ -match "://[^/\s]+@" }).Count
+    Add-Result "14" "원격 URL 내장 자격 증명" ($(if ($embedded -eq 0) { "PASS" } else { "FAIL" })) ("원격 " + $urls.Count + "줄 확인 · 내장 " + $embedded + "개 (URL 미기록)")
+} else {
+    $why = $(if ($gitOk) { "kit 저장소를 git 으로 열지 못함 — 확인 불가" } else { "git 없음 — 확인 불가" })
+    Add-Result "13" "간접 인증 경로 설정 (include·askPass·sshCommand·insteadOf)" "BLOCKED" ($why + " · system/global 설정 키: " + ($ind -join ", "))
+    Add-Result "14" "원격 URL 내장 자격 증명" "BLOCKED" $why
+}
 Add-Result "C4" "승인 없는 HTTPS·SSH push 실패 + 원격 불변 (§55-2)" "BLOCKED" "승인된 시험 저장소·브랜치 필요 — 이 스크립트 범위 밖"
 
 $summary = [pscustomobject]@{

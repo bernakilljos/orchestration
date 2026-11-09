@@ -1319,3 +1319,53 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 결함 [확인]: 룰(§ 승인 만료 24시간)과 달리 대기 요청에 만료가 없어 174일 된 요청까지 승인 가능 상태였다 (대기 목록 44건 중 대부분 24시간 초과).
 - 수정: 24시간 지난 대기 요청은 승인 거부(기록은 그대로 · 사용자에게 «만료 — 다시 요청» 안내) · 훅도 만료된 대기 요청을 다시 안내하지 않고 새 번호로 요청. 기존 승인 기록 일괄 변경 없음 (운영 승인 기록 보존).
 - 사본 DB 로 실측하려던 승인 호출은 승인 게이트가 «자기 승인» 으로 차단 [확인] → 만료 동작은 격리 DB 시험으로만 확인.
+
+## §62 Stage 1 권한 격리 후속 — kit 권한 원인·보호 대상 구분·검사 스크립트 실행 경로 (2026-11-09 · 기준 cc9155f · 읽기 전용 · 권한·인증·계정 변경 0 · 원격 반영 0)
+
+**1. 수정 권한이 어디서 오는가 [확인 · icacls]**
+| 경로 | Authenticated Users | 기타 쓰기 주체 |
+|---|---|---|
+| `C:\` | `(OI)(CI)(IO)(M)` — Windows 기본: 루트에 새로 만든 폴더의 하위 전체가 상속 | — |
+| `C:\pjt` · kit · `.claude` · `orca.db` · 훅 · `approval-gate.py` · `settings.json` · 검사 스크립트 | `(I)(M)` 상속 | `CodexSandboxUsers (M,DC)` 명시 · 미해석 SID `S-1-5-21-269658924-…-3113354717 (M,DC)` 명시 (Codex 샌드박스 작업 SID 로 보임 [추정] · `.git` 에는 같은 SID 쓰기 DENY) · `BUILTIN\Users (RX)` |
+| `C:\IFRS_PJT` · `C:\ICMAI_PJT` · `C:\pjt\calc` | 같은 상속 | — 전파 대상도 같은 구조 |
+| `%USERPROFILE%` (ja205) | 없음 (SYSTEM·Administrators·ja205 만) | Python·claude.exe·자격 증명은 여기 → orca-agent 접근 불가 |
+- 결론: kit 고유 설정이 아니라 **루트 기본 상속**. orca-agent(Users 구성원 = Authenticated Users) 는 kit 전체 수정 가능 · `BUILTIN\Users RX` 때문에 `orca.db` **읽기도 가능**.
+- `DC`(하위 삭제) 가 있는 명시 ACE 는 하위 파일 권한과 무관하게 삭제·교체를 허용 → 보호 경로는 상속 끊기와 함께 이 명시 ACE 도 정리해야 한다.
+- ja205 는 kit 에 명시 ACE 가 없고 평소(비승격 토큰 · Administrators 거부 전용) **Authenticated Users M 으로 쓰고 있다** → AU 를 빼려면 ja205 명시 쓰기 ACE 를 먼저 넣어야 개발이 깨지지 않는다.
+- 별건 [확인]: 로컬 계정 `rdpuser` = **활성 Administrators + Remote Desktop Users** (마지막 로그인 2026-10-07). orca-agent 격리와 무관하지만 관리자 계정이 하나 더 있다는 사실을 기록 (변경 없음).
+
+**2. 보호 대상 구분 (게이트 실행 경로 기준 · tool-dispatch.py → hooks/tool/*.py·_common.py → hooks/prompt/ → approval-gate.py → scripts/lib/state_db.py → orca.db)**
+| 구분 | 경로 | orca-agent |
+|---|---|---|
+| 개발 소스 (수정 필요) | `plugins/` · `docs/` · `setup/` · `.claude/scripts/`(아래 제외) · `.claude/commands·skills·agents` (sync 결과) · `tests` · `.repair-sandbox/` | Modify |
+| 자기 승인을 결정하는 코드·설정 (쓰기 금지) | `.claude/hooks/` 전체 · `.claude/settings.json` · `.claude/settings.local.json` · `.claude/scripts/approval-gate.py` · `.claude/scripts/lib/state_db.py` · 검사 스크립트 | 읽기·실행만 |
+| 승인 원본·예산·브로커 비밀 (접근 금지) | 현재 `orca.db` 승인·예산 표 → §53-5 대로 kit 밖 브로커 소유 저장소 | ACE 없음 |
+| 작업 상태 (쓰기 필요) | `.claude/state/`(승인 저장소 제외) · `.claude/logs/` | Modify |
+
+**3. 같은 폴더 안 ACL 조정만으로 충분한가 → 불충분**
+| # | 이유 | 근거 |
+|---|---|---|
+| 1 | `/approve` 는 Agent 자신의 Claude 프로세스(UserPromptSubmit 훅)가 `orca.db` 에 기록 → DB 를 읽기 전용으로 하면 승인 기록 불가 · 쓰기 가능하면 자기 승인. 승인 기록 주체가 Agent 와 다른 계정이어야 한다 | 구조 [확인] · §53-2 |
+| 2 | 훅을 실행하는 Python 이 ja205 프로필에 있어 orca-agent 는 쓸 수 없다 → Agent 프로필에 따로 설치 = **Agent 소유 인터프리터**. Agent 는 표준 라이브러리·`sitecustomize`·`PYTHONPATH` 로 게이트 동작을 바꿀 수 있어 `.py` 를 읽기 전용으로 해도 실행 결과는 보장되지 않는다 | 인터프리터 위치 [확인] · 변조 기전 [추정 · 이 PC 미실연] |
+| 3 | 훅 등록은 설정에 있다: Agent 프로필 `~/.claude/settings.json` 은 Agent 소유 · kit `settings.local.json` 존재 · 관리자 정책 `managed-settings.json` 없음 | 존재 여부 [확인] · 설정으로 훅을 끄는 경로는 Claude Code 문서 기준 [미확인] |
+| 4 | `.claude` 폴더 자체를 이름 바꾸고 새로 만드는 경로·`DC` 명시 ACE 가 있어 파일 단위 ACL 만으로는 교체를 못 막는다 | ACL [확인] |
+- 따라서 kit 안 ACL 은 **실수 방지 장치**이지 보안 경계가 아니다. 경계는 §53 그대로: ① 원격·유료 자격 증명은 브로커 계정에만 ② 승인 저장소는 kit 밖 브로커 소유 ③ 승인 채널은 대역 외. Stage 1 이 증명할 것은 "orca-agent 에 쓰기 자격 증명이 없음" 이다.
+
+**4. 권한 변경 제안 (승인 전 미실행)**
+| 안 | 변경 | 변경 전 → 후 | 영향 | 복구 |
+|---|---|---|---|---|
+| A (권장 · 새 계정 0) | 브로커 = ja205 세션 (사람 관리자 · Agent 아님) · 승인 저장소를 ja205 프로필 아래 브로커 폴더로 복사 (§53-5 절차) | 신규 폴더 · 프로필 ACL 그대로 (SYSTEM·Administrators·ja205) → **ACL 변경 0** | 코드 전환(§53-6 단계 6) 전까지 기능 영향 0 · 전환 후 orca-agent 는 승인 상태 조회 API 만 | 경로 설정을 orca.db 로 되돌림 · 원본 미삭제 |
+| A-2 (실수 방지) | 2절 "쓰기 금지" 경로만 상속 끊기 → AU·CodexSandboxUsers·미해석 SID 쓰기 제거 (RX 로) · **ja205 명시 F 먼저 추가** | `(I)AU:M · CSU:M,DC · SID:M,DC` → `ja205:F · Administrators:F · SYSTEM:F · Users:RX · AU:RX` | ja205 개발 그대로 · Codex 샌드박스와 orca-agent 는 훅·설정 수정 불가 (의도) · `sync-plugins.sh` 는 `.claude/hooks` 를 읽기만 함 [확인] · install·merge-to-target 이 kit 자신의 보호 경로를 쓰는지는 [미확인 — 적용 전 dry-run] | 변경 전 `icacls <경로> /save` 백업 → `/restore` · 또는 `icacls <경로> /reset /t` 로 상속 복원 |
+| B | 전용 브로커 서비스 계정 (§53-1 · 대화형 로그인 거부) | 새 계정·새 폴더 | 위와 같음 + 브로커가 관리자 아님 | 계정·폴더 삭제 |
+- `orca.db` 대화 기록 속 토큰 사본 (§53-3 5 · §54): `BUILTIN\Users RX` 라 orca-agent 가 읽을 수 있다 [확인 · ACL] → Stage 1 검사 5번은 FAIL 로 나오는 것이 정상. 해결은 (가) 그 행 가림 (운영 DB 변경) 또는 (나) orca.db 읽기 차단 (Agent 쪽 기록 훅 동작 영향) — 둘 다 운영 데이터·권한 변경이라 사용자 결정. 토큰 교체 여부는 §54 대로 사용자 소관 (실행 순서에 넣지 않음).
+
+**5. 검사 스크립트 실행 경로 [확인 · 수정]**
+- 실행 정책: LocalMachine·MachinePolicy 미정의 · ja205 만 CurrentUser RemoteSigned → 새 계정은 Windows 기본 **Restricted** → 기존 안내 `powershell -NoProfile -File …` 는 orca-agent 에서 **실행 거부**. 안내를 `-ExecutionPolicy Bypass` (이 프로세스만 · 시스템 정책 변경 없음) 로 수정.
+- 거짓 PASS 결함 [확인 · 재현]: orca-agent 에게 kit 은 소유자가 다른 저장소 → git 이 `dubious ownership` 으로 거부 (exit 128). 스크립트가 오류를 버려 원격 0줄로 읽고 13·14 를 PASS 로 기록했다 (`GIT_TEST_ASSUME_DIFFERENT_OWNER=1` 로 수정 전 스크립트 재현: 13 PASS · 14 PASS "내장 0개"). 수정: 명령줄 `-c safe.directory=<kit>` (보호 설정 · 이 프로세스만 · 설정 파일 변경 없음) 로 열고, 그래도 못 열면 13·14 BLOCKED · git 없으면 8 BLOCKED. 시험 2개 추가 (다른 소유자에서 원격 줄 실제 확인 · 저장소 아님 → BLOCKED).
+- 무결성: kit 이 Authenticated Users 수정 가능 → 실행 전 원래 사용자가 기록한 해시와 대조. 수정본 SHA256 = `FF1A1770235924EE3F8E709895127F5582FDEBEE7B609BA49BFB614405060E8A`.
+- 시스템 git 설정에 `credential.helper=manager` → orca-agent 에서도 GCM 이 동작. 8번은 `GCM_INTERACTIVE=Never`·`GIT_TERMINAL_PROMPT=0` 으로 창 없이 조회 · 창이 뜨면 입력하지 말고 닫는다 (§55-2).
+- 시스템 범위 `GIT_*`·`GH_*`·`GITHUB_*` 환경 변수 0 · 시스템 gitconfig 간접 경로(include·askpass·sshCommand·insteadOf) 0 · `.git/config` URL 내장 자격 증명 없음 · kit 안 실제 비밀값 파일 0 (`.env` 없음 · 예시·검출 패턴만) · `gh` 미설치 [확인].
+- 예상 결과 (판정 전 예측 · 실측 아님): 1·2·3·4·6·7·9·10a·11a 는 프로필 차단으로 PASS 예상 · **5(orca.db 읽기)·5w·5g·5h 는 FAIL 예상** (위 1절) · C4 BLOCKED → 판정 FAIL. 이것은 Stage 1 을 PASS 로 만들 근거가 아니라 4절 결정이 필요하다는 증거다.
+
+**6. 전파 원칙 (변경 없음 · 재확인)**: install·merge-to-target 은 공통 개발 기능만 복사 · `orca.db`·승인 기록·Ledger·인증정보·`next-actions.md`(프로젝트별 작업 기억) 는 전파하지 않는다 (STD-PROPAGATE-001). 대상 폴더(`C:\IFRS_PJT` 등) 도 같은 루트 상속이라 같은 권한 설계가 필요하다 — 대상별 적용은 별도 승인.
+- plugin sync 보고의 `renamed(conflict) 23 · orphan 5` 는 별도 관리 · `--prune` 일괄 삭제 안 함.

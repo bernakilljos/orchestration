@@ -48,3 +48,32 @@ def test_self_test_runs_covers_all_items_and_prints_no_values(tmp_path):
             assert v not in blob                                                  # 값은 어디에도 없어야 한다
     for f in (ROOT / ".claude" / "state" / "stage1").glob(files[0].name):        # 시험이 만든 kit 사본 정리
         f.unlink()
+
+
+def _run(tmp_path, extra_env=None, kit=None):
+    env = dict(os.environ, **(extra_env or {}))
+    args = [PS, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT), "-OutDir", str(tmp_path)]
+    if kit:
+        args += ["-Kit", str(kit)]
+    subprocess.run(args, capture_output=True, timeout=120, env=env)
+    f = sorted(tmp_path.glob("stage1-isolation-*.json"))[-1]
+    d = json.loads(f.read_text(encoding="utf-8-sig"))
+    for c in (ROOT / ".claude" / "state" / "stage1").glob(f.name):
+        c.unlink()
+    return {x["id"]: x for x in d["results"]}
+
+
+def test_other_owner_repo_still_read_not_false_pass(tmp_path):
+    # orca-agent 실행 = kit 소유자 다름 → git dubious ownership (exit 128). 오류를 버리면 원격 0줄 = 거짓 PASS 였다 (2026-11-09).
+    r = _run(tmp_path, {"GIT_TEST_ASSUME_DIFFERENT_OWNER": "1"})
+    assert r["14"]["status"] == "PASS" and "원격 0줄" not in r["14"]["evidence"], r["14"]
+    assert re.search(r"원격 [1-9]\d*줄", r["14"]["evidence"]), r["14"]
+
+
+def test_unreadable_repo_is_blocked_not_pass(tmp_path):
+    kit = tmp_path / "not-a-repo"
+    kit.mkdir()
+    out = tmp_path / "out"
+    out.mkdir()
+    r = _run(out, {"GIT_CEILING_DIRECTORIES": str(tmp_path)}, kit=kit)
+    assert r["13"]["status"] == "BLOCKED" and r["14"]["status"] == "BLOCKED", (r["13"], r["14"])
