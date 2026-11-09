@@ -516,7 +516,9 @@ def judge_handoff(goal_id: int,
 
 FACT_TAG_RULE = ("Label every factual claim: [확인] = observed here (file:line, test output), [예시] = illustrative, "
                  "[추정] = inference, [미확인] = not verified, [판독불가] = unreadable. Never present [추정]/[예시] as [확인]; "
-                 "a requirement is met only with [확인] evidence.")
+                 "a requirement is met only with [확인] evidence. "
+                 "Write every explanation, reason and report in Korean (한국어); keep code, commands, file paths, "
+                 "identifiers, JSON keys and enum values in their original form.")
 NON_FACT_TAGS = re.compile(r"\[(추정|예시|미확인|판독불가)\]")
 _FACT_SPLIT = re.compile(r"(\[(?:확인|추정|예시|미확인|판독불가)\])")
 _PATH_REF = re.compile(r"([\w./\\~-]+\.[A-Za-z]\w{0,7})(?::(\d+))?")

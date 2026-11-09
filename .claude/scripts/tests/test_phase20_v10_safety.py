@@ -1335,3 +1335,89 @@ def test_supervisor_approval_gate_blocks_outside_utf8_mode():
         r = subprocess.run([sys.executable, "-c", code, str(SCRIPTS / "lib")], capture_output=True, text=True,
                            encoding="utf-8", errors="replace", env=env, timeout=60)
         assert r.stdout.split()[:2] == ["True", "data_loss"], (extra, r.stdout, r.stderr[-300:])
+
+
+# ---------- 2026-11-09 한글 출력·PowerShell 인코딩 (헌장 D22) ----------
+
+_KO_PS1 = "Write-Host '관리자 권한 필요'\n"
+
+
+def _dispatch(event, payload):
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT), "PYTHONUTF8": "1"}
+    return subprocess.run([sys.executable, "-X", "utf8", str(ROOT / ".claude" / "hooks" / "tool-dispatch.py"), event],
+                          input=json.dumps(payload), capture_output=True, text=True, encoding="utf-8", env=env,
+                          timeout=60)
+
+
+def test_ps1_bom_added_after_write_and_only_when_needed(tmp_path):
+    ko, asc, has, cp = (tmp_path / n for n in ("ko.ps1", "ascii.ps1", "has.ps1", "cp949.ps1"))
+    ko.write_bytes(_KO_PS1.encode("utf-8"))
+    asc.write_bytes(b"Write-Host 'ok'\n")
+    has.write_bytes(b"\xef\xbb\xbf" + _KO_PS1.encode("utf-8"))
+    cp.write_bytes(_KO_PS1.encode("cp949"))           # UTF-8 아님 → BOM 붙이면 더 깨지므로 건드리지 않아야
+    for f in (ko, asc, has, cp):
+        r = _dispatch("post", {"tool_name": "Write", "tool_input": {"file_path": str(f)}, "session_id": "t"})
+        assert r.returncode == 0, r.stderr
+    assert ko.read_bytes() == b"\xef\xbb\xbf" + _KO_PS1.encode("utf-8")
+    assert asc.read_bytes() == b"Write-Host 'ok'\n"
+    assert has.read_bytes().count(b"\xef\xbb\xbf") == 1
+    assert cp.read_bytes() == _KO_PS1.encode("cp949")
+
+
+def test_ps1_bom_added_before_run_from_shell_command(tmp_path):
+    f = tmp_path / "run me.ps1"
+    f.write_bytes(_KO_PS1.encode("utf-8"))
+    for tool, cmd in (("PowerShell", "& \"%s\"" % f), ("Bash", "powershell.exe -File '%s'" % f.as_posix())):
+        f.write_bytes(_KO_PS1.encode("utf-8"))
+        r = _dispatch("pre", {"tool_name": tool, "tool_input": {"command": cmd}, "cwd": str(tmp_path),
+                              "session_id": "t"})
+        assert r.returncode == 0 and f.read_bytes().startswith(b"\xef\xbb\xbf"), (tool, r.stderr)
+
+
+def test_tracked_ps1_with_korean_code_have_bom():
+    """화면 출력·기록 문자열에 한글이 있는 저장소 .ps1 은 모두 BOM (주석에만 한글이면 실행 결과 무관 → 제외)."""
+    files = subprocess.run(["git", "ls-files", "*.ps1", "*.psm1", "*.psd1"], cwd=ROOT, capture_output=True,
+                           text=True, encoding="utf-8").stdout.split()
+    assert files
+    bad = []
+    for rel in files:
+        b = (ROOT / rel).read_bytes()
+        if b.startswith(b"\xef\xbb\xbf"):
+            continue
+        code = [ln for ln in b.decode("utf-8", "replace").splitlines() if not ln.lstrip().startswith("#")]
+        if any(re.search(r"[가-힣]", ln.split(" #")[0]) for ln in code):
+            bad.append(rel)
+    assert not bad, bad
+
+
+def test_korean_output_rule_in_shared_prompt_and_claude_md():
+    import independent_verifier as iv
+    assert "Korean (한국어)" in iv.FACT_TAG_RULE and "JSON keys" in iv.FACT_TAG_RULE
+    assert "| D22 |" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def test_windows_powershell51_keeps_korean_only_with_bom(tmp_path):
+    """실제 Windows PowerShell 5.1 해석 — BOM 없으면 한글 손실, BOM 있으면 보존."""
+    exe = shutil.which("powershell.exe") or shutil.which("powershell")
+    if not exe:
+        import pytest
+        pytest.skip("Windows PowerShell 5.1 없음 (비 Windows 환경)")
+    needle = tmp_path / "needle.txt"
+    needle.write_text("관리자 권한 필요", encoding="utf-8")
+    probe = tmp_path / "probe.ps1"
+    probe.write_bytes(b"\xef\xbb\xbf" + (
+        "param([string]$Path,[string]$NeedleFile)\n"
+        "[Console]::OutputEncoding = [Text.Encoding]::UTF8\n"
+        "$n = [IO.File]::ReadAllText($NeedleFile,[Text.Encoding]::UTF8).Trim()\n"
+        "$t=$null; $e=$null\n"
+        "$a=[System.Management.Automation.Language.Parser]::ParseFile($Path,[ref]$t,[ref]$e)\n"
+        "\"errors=$($e.Count) kept=$($a.Extent.Text.Contains($n)) 출력=정상\"\n").encode("utf-8"))
+    out = {}
+    for name, data in (("nobom", _KO_PS1.encode("utf-8")), ("bom", b"\xef\xbb\xbf" + _KO_PS1.encode("utf-8"))):
+        target = tmp_path / (name + ".ps1")
+        target.write_bytes(data)
+        r = subprocess.run([exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(probe), "-Path",
+                            str(target), "-NeedleFile", str(needle)], capture_output=True, timeout=120)
+        out[name] = r.stdout.decode("utf-8", "replace").strip()
+    assert out["nobom"].startswith("errors=0 kept=False"), out
+    assert out["bom"] == "errors=0 kept=True 출력=정상", out

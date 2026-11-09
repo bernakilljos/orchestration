@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$Start = '2026-10-27T15:30:00',
   [string]$End = '2026-10-27T19:10:00'
 )

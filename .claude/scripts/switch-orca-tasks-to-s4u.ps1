@@ -1,4 +1,4 @@
-# switch-orca-tasks-to-s4u.ps1 — Orca Task Scheduler 작업을 백그라운드 (S4U) 로 전환
+﻿# switch-orca-tasks-to-s4u.ps1 — Orca Task Scheduler 작업을 백그라운드 (S4U) 로 전환
 # 근거: 2026-10-27 사용자 "창 뜨는 거 왜 그래 · 관리자 권한 주면 되자나"
 # S4U (Service for User) = 비밀번호 저장 X · 사용자 자격 · 창 안 뜸
 # 반드시 관리자 권한으로 실행 (Set-ScheduledTask Principal 변경 요구)

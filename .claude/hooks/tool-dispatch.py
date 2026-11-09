@@ -55,6 +55,7 @@ PRE = [
     ("prevent-emoji-in-code", "prevent_emoji_in_code", "Edit|Write", 3, None),
     ("prevent-version-suffix", "prevent_version_suffix", "Edit|Write", 3, None),
     ("scope-lock", "scope_lock", "Edit|Write", 3, None),
+    ("ensure-ps1-bom", "ensure_ps1_bom", "Bash|PowerShell", 3, None),
     ("block-screen-capture", "block_screen_capture", "Bash|PowerShell", 3, None),
     ("block-visible-windows", "block_visible_windows", "Bash", 60, None),
     ("block-file-deletion", "block_file_deletion", "Bash|PowerShell", 3, None),
@@ -70,6 +71,7 @@ PRE = [
 ]
 POST = [
     ("check-korean-only", "check_korean_only", "Edit|Write", 60, None),
+    ("ensure-ps1-bom", "ensure_ps1_bom", "Edit|Write", 3, None),
     ("detect-demo-pattern", "detect_demo_pattern", "Edit|Write", 3, None),
     ("post_write_pycheck", "post_write_pycheck", "Edit|Write", 30, None),
     ("markdown_formatter", "markdown_formatter", "Edit|Write", 5, None),

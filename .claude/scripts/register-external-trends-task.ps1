@@ -1,4 +1,4 @@
-# register-external-trends-task.ps1 — Windows Task Scheduler 등록
+﻿# register-external-trends-task.ps1 — Windows Task Scheduler 등록
 # 매시간 17분에 external-trends-sync.bat 실행 (cron :00 회피)
 
 param(

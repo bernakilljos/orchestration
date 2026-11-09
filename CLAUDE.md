@@ -389,6 +389,7 @@ SQLite 기반 quota·budget 관리 → 자동 fallback + 지수 backoff.
 | D19 | **이력 먼저** — 가설 세우기 전 재현 가능한 기록 (git log · .claude/logs · state · tasks/done · SWEEP_LOG) 훑기 · 1분 조회가 3시간 헛짚기 예방 | `investigation-discipline.md` · 같은 postmortem |
 | D20 | **30초 실측 > 30분 추론** — 코드 읽기·spec·정황으로 결론 X · bash·curl·Playwright headed·브라우저 F12 로 실제 재현 후 결론 | `investigation-discipline.md` · 같은 postmortem |
 | D21 | **완전본 원칙** — 달라고 한 것은 무엇이든 (명령·SQL·설정·코드·문서) 전부·받은 형식 그대로·한 블록으로 바로 · 일부만·생략·대상별 재구성·"원하시면" 되묻기 X · 예시로 지적하면 그 하나가 아니라 같은 종류 전체를 고친다 | `complete-output.md` · 2026-10-14 서버 점검 문구 핑퐁 사례 |
+| D22 | **한글 출력·인코딩** — 사용자 대상 설명·보고·경고·승인 안내·Agent/Judge 판단은 한글 (명령·경로·식별자·도구 원문 출력만 원문 유지 · 중국어·일본어·영어 일반 설명 X) · 한글이 한자처럼 깨지면 문자열을 고치지 말고 파일 인코딩·콘솔 코드페이지·출력 인코딩을 구분해 원인 해결 · 한글 든 .ps1 = UTF-8 BOM (hook `ensure_ps1_bom` 자동) · Windows 그룹은 이름 말고 SID | `language-standards.md § PowerShell 한글 인코딩` · 2026-11-09 Stage 1 관리자 창 한자 깨짐 |
 
 ### E. UI/UX 표준
 | # | 규칙 | 근거 · 상세 |

@@ -1,4 +1,4 @@
-# fix-s4u-task-actions.ps1 — Weekly/Nightly Task Action 을 bat wrapper 로 변경
+﻿# fix-s4u-task-actions.ps1 — Weekly/Nightly Task Action 을 bat wrapper 로 변경
 # 근거: 2026-10-27 S4U 전환 후 LastResult 0x80070002 (python PATH 없음) 수정
 # 반드시 관리자 권한 실행
 # 2026-10-27 사용자 "백그라운드로 해줘 파워셀 말고" → Start-Process -WindowStyle Hidden 사용
