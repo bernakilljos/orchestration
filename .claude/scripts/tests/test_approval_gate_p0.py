@@ -538,7 +538,7 @@ def test_heredoc_text_naming_scripts_not_blocked(tmp_root):
 @pytest.mark.parametrize("cmd", [
     'G="$HOME/.claude/commands"; cp a.md "$G/a.md"',
     "cp a.md ~/.claude/commands/a.md",
-    "Copy-Item a.md $env:USERPROFILE\.claude\skills\a\SKILL.md",
+    r"Copy-Item a.md $env:USERPROFILE\.claude\skills\a\SKILL.md",
     "python -c \"import shutil,pathlib;shutil.copy('a', pathlib.Path.home()/'.claude'/'agents'/'a.md')\"",
 ])
 def test_user_global_claude_write_flagged(cmd):
