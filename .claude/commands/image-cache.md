@@ -6,7 +6,7 @@ allowed-tools: Bash(python:*)
 ## Context
 
 캐시 통계:
-!`PYTHONIOENCODING=utf-8 python "$CLAUDE_PROJECT_DIR/.claude/scripts/lib/pollinations_client.py" --stats`
+!`PYTHONIOENCODING=utf-8 python "${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/lib/pollinations_client.py" --stats`
 
 ## Your task
 
@@ -17,7 +17,7 @@ allowed-tools: Bash(python:*)
 
 기본 동작:
 ```bash
-PYTHONIOENCODING=utf-8 python "$CLAUDE_PROJECT_DIR/.claude/scripts/lib/pollinations_client.py" --list
+PYTHONIOENCODING=utf-8 python "${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/lib/pollinations_client.py" --list
 ```
 
 ## 위치

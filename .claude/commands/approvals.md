@@ -6,7 +6,7 @@ allowed-tools: Bash(python:*)
 ## Context
 
 전체 대기 list:
-!`PYTHONIOENCODING=utf-8 python "$CLAUDE_PROJECT_DIR/.claude/scripts/approval-gate.py" list`
+!`PYTHONIOENCODING=utf-8 python "${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/approval-gate.py" list`
 
 ## Your task
 
