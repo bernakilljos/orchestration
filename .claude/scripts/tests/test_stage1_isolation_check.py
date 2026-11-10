@@ -36,7 +36,8 @@ def test_self_test_runs_covers_all_items_and_prints_no_values(tmp_path):
     assert files, out
     d = json.loads(files[0].read_text(encoding="utf-8-sig"))
     ids = {x["id"] for x in d["results"]}
-    assert {"C1a", "C1b", "1", "2", "3", "4", "5", "5s", "5w", "6", "7", "8", "10b", "12", "13", "14", "C4"} <= ids
+    assert {"C1a", "C1b", "1", "2", "3", "4", "5", "5s", "5r", "5w", "5g", "5h", "6", "7", "8", "10b", "12", "13", "14",
+            "C4"} <= ids
     assert d["self_test"] is True and d["verdict"].startswith("SELF-TEST")       # 원래 사용자 = 판정 아님
     assert next(x for x in d["results"] if x["id"] == "8")["status"] == "BLOCKED"  # 자격 증명 조회 안 함
     assert next(x for x in d["results"] if x["id"] == "C4")["status"] == "BLOCKED"
@@ -50,11 +51,12 @@ def test_self_test_runs_covers_all_items_and_prints_no_values(tmp_path):
         f.unlink()
 
 
-def _run(tmp_path, extra_env=None, kit=None):
+def _run(tmp_path, extra_env=None, kit=None, extra=None):
     env = dict(os.environ, **(extra_env or {}))
     args = [PS, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPT), "-OutDir", str(tmp_path)]
     if kit:
         args += ["-Kit", str(kit)]
+    args += extra or []
     subprocess.run(args, capture_output=True, timeout=120, env=env)
     f = sorted(tmp_path.glob("stage1-isolation-*.json"))[-1]
     d = json.loads(f.read_text(encoding="utf-8-sig"))
@@ -68,6 +70,19 @@ def test_other_owner_repo_still_read_not_false_pass(tmp_path):
     r = _run(tmp_path, {"GIT_TEST_ASSUME_DIFFERENT_OWNER": "1"})
     assert r["14"]["status"] == "PASS" and "원격 0줄" not in r["14"]["evidence"], r["14"]
     assert re.search(r"원격 [1-9]\d*줄", r["14"]["evidence"]), r["14"]
+
+
+def test_broker_absent_is_blocked_and_token_bytes_counted(tmp_path):
+    """S4 이후 기준 (§69): Broker 폴더가 없으면 5r·5w·5g·5h = BLOCKED (NA 로 통과 X) · kit DB 토큰 원시 바이트 검사."""
+    kit = tmp_path / "kit"
+    (kit / ".claude" / "state").mkdir(parents=True)
+    (kit / ".claude" / "state" / "orca.db").write_bytes(b"x" * 100 + ("ghp_" + "A1b" * 12).encode() + b"y")
+    (kit / ".claude" / "state" / "sessions.db").write_bytes(b"clean")
+    out = tmp_path / "out"
+    out.mkdir()
+    r = _run(out, {"GIT_CEILING_DIRECTORIES": str(tmp_path)}, kit=kit, extra=["-Broker", str(tmp_path / "no-broker")])
+    assert r["5"]["status"] == "FAIL" and r["5s"]["status"] == "PASS"
+    assert all(r[i]["status"] == "BLOCKED" for i in ("5r", "5w", "5g", "5h")), [r[i] for i in ("5r", "5w", "5g", "5h")]
 
 
 def test_unreadable_repo_is_blocked_not_pass(tmp_path):

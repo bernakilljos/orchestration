@@ -1583,3 +1583,15 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 사본: Python 표준 라이브러리 (site-packages·Scripts·캐시 제외 · §67-1) · `approval-gate.py`·`lib/broker.py`·`lib/state_db.py`·`lib/repair_sandbox.py` + 해시 기록 · `broker-config.json` (BOM 없는 UTF-8 · kit 원격 · 허용 브랜치 main).
 - 검증: orca-broker 로 `preflight` → ok True · orca-agent 로 Broker 폴더 목록 → 거부 · kit·DB·계정 변화 0. 복구: 두 폴더 삭제 (관리자).
 - S3 로 FAIL 5 는 해소되지 않는다 (kit 쪽 권한) — 5·5s·5w 는 S4(DB 3분할·보관본 이동)·5g·5h 는 Broker 전환 후 Agent 쪽 게이트가 권한 근거가 아니게 되는 것으로 해소 · 검사 기준도 S4 때 Broker DB 경로로 갱신.
+
+## §69 S3·S4 실행 결과 + Stage 1 검사 기준 갱신 (2026-11-10 · 사용자 실행 · 승인 단계별)
+
+**S3 (보호 폴더) — PASS [확인]**: `C:\ProgramData\orca-broker`·`orca-broker-io` 생성 · 상속 끊음 · ACL = SYSTEM F·Administrators F·orca-broker M·ja205 RX (inbox +orca-agent M · outbox +orca-agent RX) · Python 표준 라이브러리 사본 139MB · 코드 사본 4개 kit 원본과 해시 일치 · 설정(원격·main). orca-broker 로 `preflight` → `{"verified": true, "unsafe": {}, "ok": true}` · orca-agent 로 `broker-config.json` 읽기 → **액세스가 거부되었습니다** · 폴더 목록도 실패.
+- 진행 중 결함 2: ① 붙여 넣은 긴 runas 한 줄이 줄바꿈돼 인자가 잘림(3번째 같은 원인) → 짧은 줄로 변수 조립하는 방식으로 교체 ② 내 확인 스크립트의 `$b` 가 `$B` 를 덮음 (PowerShell 변수 대소문자 무시) → 거짓 "해시 불일치" · 재확인으로 정정.
+
+**S4 (DB 3분할·토큰 사본) — PASS [확인]**: 사본 시험(dry-run) 후 실행 · 스크립트 해시 대조 후 관리자 실행.
+- 원본 보관 (`C:\ProgramData\orca-broker\archive\*.original-20261110-135503` · Agent 접근 불가): orca.db(토큰 4행)·sessions.db(2)·sandbox sessions.db(1)·bash_commands.log(2)·ledger-raw.jsonl(1)·dashboard pyc(1) + 보고서.
+- Broker DB `C:\ProgramData\orca-broker\.claude\state\orca.db` = 승인 51행 + budget·quota·reservations · 토큰 0 · integrity ok · ACL 상속 (orca-broker M · ja205 RX).
+- kit 쪽: 토큰 필드 가림 (orca.db 4 · sessions.db 2 · sandbox 1 · 로그 3) · pyc 삭제 · **승인 기록은 kit 에서도 지우지 않음**. 독립 재확인: 표 단위 토큰 0 · **원시 바이트(빈 페이지·WAL 포함) 토큰 0** · 로그 0.
+
+**Stage 1 검사 기준 갱신 (5 계열)**: kit DB 는 Agent 작업 DB 라 읽기·쓰기 자체는 정상 → 5·5s = kit DB 원시 바이트 토큰 0 · 5r = Broker 설정 읽기 거부 · 5w = Broker 승인 DB 쓰기 거부 · 5g·5h = Broker 코드(approval-gate·broker.py) 쓰기 거부 · Broker 폴더가 없거나 대상이 없으면 BLOCKED (NA 로 통과 금지). ja205 자가 점검: 5·5s·5w·5g·5h PASS · 5r FAIL(ja205 RX 설계) — orca-agent 실측 필요. 새 스크립트 SHA256 = `FC5BF5685E8FFA81CF5C0560B7E452DF2B805E7EDC8275D9CF457EA895BDA893` (§63 의 CF3A… 대체).

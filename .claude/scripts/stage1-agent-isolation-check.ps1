@@ -10,7 +10,8 @@
 # 원래 사용자로 실행하면 자가 점검 모드: 자격 증명 조회(git credential fill)를 하지 않고, 결과는 «격리 전 기준선» 이다.
 param(
     [string]$Kit = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
-    [string]$OutDir = $env:TEMP
+    [string]$OutDir = $env:TEMP,
+    [string]$Broker = (Join-Path $env:ProgramData "orca-broker")
 )
 $ErrorActionPreference = "Continue"
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -88,12 +89,38 @@ if ($ownerProfile) {
     Test-ReadDenied "6" "원래 사용자 Claude transcript" (Join-Path $ownerProfile ".claude\projects")
     Test-ReadDenied "7" "원래 사용자 prompt history" (Join-Path $ownerProfile ".claude\history.jsonl")
 } else { foreach ($i in "4", "6", "7") { Add-Result $i "원래 사용자 프로필" "BLOCKED" "프로필 경로를 찾지 못함" } }
-$db = Join-Path $Kit ".claude\state\orca.db"
-Test-ReadDenied "5" "kit orca.db 읽기 (대화 기록 속 토큰 사본 · §53-3 5)" $db
-Test-ReadDenied "5s" "kit sessions.db 읽기 (transcript 적재본 속 토큰 사본 · §63)" (Join-Path $Kit ".claude\state\sessions.db")
-Test-WriteDenied "5w" "kit orca.db 쓰기 (승인 행 자기 승인 위험)" $db
-Test-WriteDenied "5g" "승인 게이트 코드 쓰기 (approval-gate.py)" (Join-Path $Kit ".claude\scripts\approval-gate.py")
-Test-WriteDenied "5h" "승인 감지 훅 쓰기 (approval_gate_detect.py)" (Join-Path $Kit ".claude\hooks\tool\approval_gate_detect.py")
+# 2026-11-10 S4 이후 기준 (§69): kit DB 는 Agent 의 작업 DB 라 읽기·쓰기는 정상 → 토큰 사본이 남았는지(원시 바이트 · 빈 페이지·WAL 포함)
+# 승인 정본·승인 코드는 Broker 폴더 → Agent 의 읽기·쓰기 거부를 본다. Broker 폴더가 없으면 BLOCKED (NA 로 통과시키지 않음).
+function Test-NoTokenBytes($id, $item, $paths) {
+    $n = 0; $seen = 0
+    foreach ($p in $paths) {
+        if (-not (Test-Path -LiteralPath $p)) { continue }
+        try {
+            $fs = [IO.File]::Open($p, 'Open', 'Read', 'ReadWrite'); $buf = New-Object byte[] $fs.Length
+            [void]$fs.Read($buf, 0, $buf.Length); $fs.Close(); $seen++
+            $n += [regex]::Matches([Text.Encoding]::ASCII.GetString($buf),
+                '(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{30,}|gho_[A-Za-z0-9]{36}|sk-ant-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16})').Count
+        } catch [UnauthorizedAccessException] { $seen++ }       # 읽을 수 없음 = 노출 아님
+        catch { Add-Result $id $item "BLOCKED" ("확인 실패: " + $_.Exception.GetType().Name); return }
+    }
+    if ($seen -eq 0) { Add-Result $id $item "BLOCKED" "대상 파일 없음"; return }
+    Add-Result $id $item ($(if ($n -eq 0) { "PASS" } else { "FAIL" })) ("토큰 형태 " + $n + "개 (값 미기록 · 파일 " + $seen + "개)")
+}
+function Test-BrokerDenied($id, $item, $path, [switch]$Write) {
+    if (-not (Test-Path -LiteralPath (Split-Path $path -Parent) -ErrorAction SilentlyContinue) -and -not (Test-Path -LiteralPath $Broker)) {
+        Add-Result $id $item "BLOCKED" ("Broker 폴더 없음: " + $Broker); return
+    }
+    if ($Write) { Test-WriteDenied $id $item $path } else { Test-ReadDenied $id $item $path }
+    $last = $results[$results.Count - 1]
+    if ($last.status -eq "NA") { $last.status = "BLOCKED"; $last.evidence = "확인 대상 없음 (Broker 미설치?): " + $path }
+}
+$st = Join-Path $Kit ".claude\state"
+Test-NoTokenBytes "5" "kit orca.db 토큰 사본 (원시 바이트 · WAL 포함)" @("$st\orca.db", "$st\orca.db-wal")
+Test-NoTokenBytes "5s" "kit sessions.db 토큰 사본 (원시 바이트 · WAL 포함)" @("$st\sessions.db", "$st\sessions.db-wal")
+Test-BrokerDenied "5r" "Broker 설정·DB 읽기 (broker-config.json)" (Join-Path $Broker "broker-config.json")
+Test-BrokerDenied "5w" "Broker 승인 DB 쓰기 (자기 승인 위험)" (Join-Path $Broker ".claude\state\orca.db") -Write
+Test-BrokerDenied "5g" "Broker 승인 게이트 코드 쓰기 (approval-gate.py)" (Join-Path $Broker "scripts\approval-gate.py") -Write
+Test-BrokerDenied "5h" "Broker 실행기 코드 쓰기 (broker.py)" (Join-Path $Broker "scripts\lib\broker.py") -Write
 
 # ── §55 8~14 ──
 # Agent 계정에서는 kit 소유자가 달라 git 이 저장소를 거부한다 (dubious ownership · exit 128) → 오류를 버리면 0건 = 거짓 PASS.
