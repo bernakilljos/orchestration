@@ -480,3 +480,75 @@ def test_waiting_request_expires_after_24h_without_modification(tmp_root):   # a
     assert t2 != t1 and _row(t1) == before                             # 만료 요청 재안내 X · 새 번호
     gate.approve(t2, gate.USER_APPROVER)
     assert agd.run(_hook(cmd, str(repo))) is None
+
+
+# ── 2026-11-10 §75: 스크립트 파일 안의 위험 동작 · 사용자 전역 Claude 설정 변경 ──
+CL = "clau" + "de -p"
+
+
+def _bash_hook(cmd, cwd):
+    import _common
+    ctx = _common.Ctx(json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}, "cwd": cwd}, ensure_ascii=False))
+    ctx.project_dir = str(ROOT)
+    return ctx
+
+
+def _n_requests():
+    with sqlite3.connect(gate.get_db_path()) as c:
+        return c.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+
+
+def test_risk_inside_shell_script_blocked(tmp_root):
+    s = tmp_root / "새 폴더" / "probe.sh"
+    s.parent.mkdir()
+    s.write_text("#!/usr/bin/env bash\ncd /c/x && " + CL + " hi --model haiku\n", encoding="utf-8")
+    r = agd.run(_bash_hook('bash "%s"' % s.as_posix(), str(tmp_root)))
+    assert r is not None and r.rc == 2 and "probe.sh" in r.err and _n_requests() == 1
+
+
+def test_risk_in_nested_script_blocked(tmp_root):
+    inner = tmp_root / "inner.sh"
+    inner.write_text(CL + " x\n", encoding="utf-8")
+    outer = tmp_root / "outer.sh"
+    outer.write_text('echo start\nbash "%s"\n' % inner.as_posix(), encoding="utf-8")
+    r = agd.run(_bash_hook('bash "%s"' % outer.as_posix(), str(tmp_root)))
+    assert r is not None and r.rc == 2 and "inner.sh" in r.err
+
+
+def test_benign_shell_script_not_blocked(tmp_root):
+    s = tmp_root / "ok.sh"
+    s.write_text("echo hello\nls -la\n", encoding="utf-8")
+    assert agd.run(_bash_hook('bash "%s"' % s.as_posix(), str(tmp_root))) is None
+    assert _n_requests() == 0
+
+
+def test_script_created_in_same_command_blocked(tmp_root):
+    s = (tmp_root / "made.sh").as_posix()
+    cmd = "cat > \"%s\" <<'EOF'\n%s hi\nEOF\nbash \"%s\"" % (s, CL, s)
+    r = agd.run(_bash_hook(cmd, str(tmp_root)))
+    assert r is not None and r.rc == 2
+
+
+def test_heredoc_text_naming_scripts_not_blocked(tmp_root):
+    """파일로만 쓰는 heredoc 안에 스크립트 이름·전역 경로가 글로 있어도 실행이 아니다 (§75 오탐 재발 방지)."""
+    cmd = "cat >> notes.md <<'EOF'\nbash probe.sh 와 cp a ~/.claude/commands/ 는 예시\nEOF"
+    assert agd.run(_bash_hook(cmd, str(tmp_root))) is None
+
+
+@pytest.mark.parametrize("cmd", [
+    'G="$HOME/.claude/commands"; cp a.md "$G/a.md"',
+    "cp a.md ~/.claude/commands/a.md",
+    "Copy-Item a.md $env:USERPROFILE\.claude\skills\a\SKILL.md",
+    "python -c \"import shutil,pathlib;shutil.copy('a', pathlib.Path.home()/'.claude'/'agents'/'a.md')\"",
+])
+def test_user_global_claude_write_flagged(cmd):
+    assert flagged(cmd)
+
+
+@pytest.mark.parametrize("cmd", [
+    "ls ~/.claude/commands",
+    "md5sum ~/.claude/commands/approve.md",
+    "cp a.md .claude/commands/a.md",
+])
+def test_user_global_read_or_project_write_not_flagged(cmd):
+    assert not flagged(cmd)

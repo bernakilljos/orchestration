@@ -242,6 +242,117 @@ def _artifacts(cmd: str, raw_cwd: str) -> dict:
     return dict(out)
 
 
+#: 2026-11-10 §75 — 실행하는 셸 스크립트의 «내용» 도 위험 판정 (종전엔 해시만 계산 · 명령줄이 `bash /abs/x.sh` 면
+#:   1차 필터에서 바로 통과 → 스크립트 안 `claude -p`·전역 명령 덮어쓰기가 승인 없이 실행된 사고).
+#:   .py 는 대상 아님 (시험 데이터 오탐 · 문자열 차단은 보안 근거 아님 — 알려진 한계) · $VAR 로 조립한 경로는 따라가지 못함.
+_RX_SHELL_SCRIPT = re.compile(r"""(?:"([^"]+\.(?:ps[dm]?1|sh|bash|bat|cmd))"|'([^']+\.(?:ps[dm]?1|sh|bash|bat|cmd))'|"""
+                              r"""([^\s"'`;|&<>()$]+\.(?:ps[dm]?1|sh|bash|bat|cmd)))(?![\w.])""", re.I)
+_RX_CD_TARGET = re.compile(r"""(?:^|[;&|\n(]\s*)(?:cd|pushd|chdir|set-location|sl)\s+(?:"([^"]+)"|'([^']+)'|([^\s;&|)]+))""", re.I)
+_SCAN_MAX_BYTES = 512 * 1024
+_SCAN_DEPTH = 2
+
+
+def _kit_tracked_unchanged(path: str) -> bool:
+    """kit 저장소 안의 파일이 HEAD 커밋 내용 그대로인가 (확인 실패 = 아님 · fail-closed)."""
+    import subprocess
+    try:
+        real = os.path.normcase(os.path.realpath(path))
+        root = os.path.normcase(os.path.realpath(_KIT_ROOT))
+        if not real.startswith(root + os.sep):
+            return False
+        rel = os.path.relpath(os.path.realpath(path), os.path.realpath(_KIT_ROOT)).replace("\\", "/")
+        kw = dict(cwd=_KIT_ROOT, capture_output=True, text=True, timeout=2)
+        head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
+        work = subprocess.run(["git", "hash-object", rel], **kw).stdout.strip()
+        return bool(head) and head == work
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _script_contents(raw_cmd: str, raw_cwd: str) -> tuple:
+    """명령이 실행하는 셸 스크립트 본문 [(경로, 내용)] + 아직 없는 스크립트 여부.
+    중첩 호출은 _SCAN_DEPTH 단계까지 · kit 에 커밋된 그대로인 스크립트는 제외 · 확정 불가 = _ArtifactRefused."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_agd_ps1_bom2", os.path.join(os.path.dirname(os.path.abspath(__file__)), "ensure_ps1_bom.py"))
+    bom = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bom)
+    found: list = []
+    missing = False
+    seen: set = set()
+    queue = [(raw_cmd, raw_cwd or os.getcwd(), 0, bool(_RX_CHDIR.search(raw_cmd)))]
+    while queue:
+        text, base, depth, chdir = queue.pop(0)
+        for m in _RX_SHELL_SCRIPT.finditer(text.replace("\\n", "\n")):
+            raw = next(g for g in m.groups() if g).strip()
+            expanded = os.path.expandvars(os.path.expanduser(raw))
+            if "$" in expanded or "%" in expanded:
+                continue   # 셸 변수로 조립한 경로 — 따라갈 수 없음 (한계)
+            if expanded.startswith(("\\\\", "//")):
+                raise _ArtifactRefused("네트워크·장치 경로 스크립트(%s)는 내용을 확정할 수 없음" % raw)
+            relative = not (os.path.isabs(expanded) or re.match(r"^/[a-zA-Z]/", expanded))
+            bases = [base]
+            if chdir and relative:   # cd 뒤 상대 경로 — 셸이 어느 폴더 기준으로 읽을지 모르므로 후보 폴더 전부 검사 (보수적)
+                for t in _RX_CD_TARGET.findall(text.replace("\\n", "\n")):
+                    t = next(x for x in t if x)
+                    if "$" not in t and "%" not in t:
+                        bases.append(bom._norm(t, base))
+            cands = [os.path.normcase(os.path.abspath(bom._norm(raw, b))) for b in bases]
+            exist = [p for p in cands if os.path.isfile(p)]
+            if not exist:
+                missing = missing or depth == 0
+                continue
+            for p in exist:
+                if p in seen:
+                    continue
+                seen.add(p)
+                if len(seen) > _ART_MAX_FILES:
+                    raise _ArtifactRefused("실행 스크립트가 상한 %d개 초과" % _ART_MAX_FILES)
+                if _kit_tracked_unchanged(p):
+                    continue
+                with open(p, "rb") as f:
+                    body = f.read(_SCAN_MAX_BYTES + 1)
+                if len(body) > _SCAN_MAX_BYTES:
+                    raise _ArtifactRefused("스크립트(%s)가 %dKB 를 넘어 내용 검사 불가" % (raw, _SCAN_MAX_BYTES // 1024))
+                content = body.decode("utf-8", "replace")
+                found.append((p, content))
+                if depth + 1 < _SCAN_DEPTH:
+                    queue.append((content, os.path.dirname(p), depth + 1, bool(_RX_CHDIR.search(content))))
+    return found, missing
+
+
+def _scan_scripts(raw_cmd: str, cmd: str, raw_cwd: str, detect) -> tuple:
+    """(위험 dict 또는 None, {경로: sha256}) — 시간 제한 안에서. 시간 초과 = _ArtifactRefused.
+    스크립트 참조는 실행되지 않는 글(파일로만 쓰는 heredoc·검색어)을 걷어 낸 cmd 에서만 찾는다 (오탐 방지)."""
+    import threading
+    box: dict = {}
+
+    def _work():
+        try:
+            box["r"] = _script_contents(cmd, raw_cwd)
+        except BaseException as e:  # noqa: BLE001
+            box["e"] = e
+    th = threading.Thread(target=_work, daemon=True)
+    th.start()
+    th.join(_ART_TIMEOUT_SEC * 2)
+    if "e" in box:
+        raise box["e"]
+    if "r" not in box:
+        raise _ArtifactRefused("스크립트 내용 검사가 %.1f초 안에 끝나지 않음" % (_ART_TIMEOUT_SEC * 2))
+    found, missing = box["r"]
+    hashes = {p: hashlib.sha256(c.encode("utf-8", "surrogateescape")).hexdigest() for p, c in found}
+    if missing:   # 같은 명령 안에서 만드는 스크립트 (cat > x.sh <<EOF …; bash x.sh) — 가리기 전 원문 전체를 검사
+        r = detect(raw_cmd.replace("\\n", "\n"))
+        if r:
+            r = dict(r, description="아직 없는 스크립트를 만들어 실행 · " + (r.get("description") or ""))
+            return r, hashes
+    for p, content in found:
+        r = detect(content)
+        if r:
+            return dict(r, description="스크립트 %s 안: %s" % (os.path.basename(p), r.get("description") or "")), hashes
+    return None, hashes
+
+
 _RX_GIT_PUSH = re.compile(r"\bgit\b[^;&|\n]*\bpush\b", re.I)
 _RX_GIT_C = re.compile(r"\bgit\b(?:\s+-[^\s]+(?:\s+\S+)?)*?\s+(?:-C\b|--git-dir\b|--work-tree\b)", re.I)
 
@@ -309,7 +420,7 @@ def _safe_log(log, text):
 def _fingerprint(ctx):
     """(원문 명령, 검사용 명령, 작업 위치, 요청 번호) — 승인 요청·소비·결과 기록이 같은 번호를 쓰게 한 곳에서 계산."""
     inp = bash_read(ctx.raw)
-    if not inp or not _RISKWORD.search(inp):
+    if not inp or not (_RISKWORD.search(inp) or _RX_SHELL_SCRIPT.search(inp)):   # §75: 셸 스크립트 실행은 내용 검사로
         return None
     raw_cmd = _extract_cmd(inp)
     if not raw_cmd:
@@ -402,6 +513,14 @@ def _run(ctx, box):
     if mod is None:
         return None
     risk = mod.detect_risk(cmd)
+    nested: dict = {}
+    if risk is None:   # §75: 명령줄이 무해해 보여도 실행하는 셸 스크립트 안을 검사
+        try:
+            risk, nested = _scan_scripts(raw_cmd, cmd, raw_cwd, mod.detect_risk)
+        except _ArtifactRefused as e:
+            _safe_log(log, "[%s] REFUSED-SCAN: %s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), e, cmd))
+            return _block(" 실행할 스크립트 내용을 확인할 수 없어 차단 — %s" % e,
+                          "HITL Approval Gate — 스크립트 내용 확인 불가로 차단 (승인 요청 없음)")
     if risk is None:
         return None
     category = risk.get("category") or ""
@@ -410,6 +529,7 @@ def _run(ctx, box):
         return None
     try:
         arts = _artifacts(raw_cmd, raw_cwd)
+        arts.update({"scan:" + p: h for p, h in nested.items()})   # 중첩 스크립트 내용도 승인 범위에 포함
         head = _push_head(raw_cmd, raw_cwd)
         if head:
             arts.update(_push_scope(raw_cwd, head))

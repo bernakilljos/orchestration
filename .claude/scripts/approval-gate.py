@@ -85,6 +85,13 @@ RISK_PATTERNS = {
         (r"\b(cp|mv|copy|move|Copy-Item|Move-Item)\b[^;&|\n]*\s[\"']?\S*(?:settings(?:\.local)?\.json|(?<![\w-])\.env)[\"']?\s*(?:$|[;&|\n])",
          "보호 설정 파일 덮어쓰기"),
         (r"\b(Set-Content|Add-Content|Out-File|tee)\b[^;&|\n]*(?:settings(?:\.local)?\.json|(?<![\w-])\.env)(?![\w.-])", "보호 설정 파일 덮어쓰기"),
+        # 2026-11-10 §75: 사용자 전역 Claude 설정(명령·스킬·에이전트·CLAUDE.md·settings) 변경 — 전 프로젝트에 영향.
+        #   변수로 경로를 나눠도(G="$HOME/.claude/commands"; cp x "$G/") 같은 글 안에 쓰기 동작과 전역 경로가 함께 있으면 잡는다.
+        (r"(?s)\A(?=.*(?:\b(?:cp|mv|rsync|install|robocopy|xcopy|copy|ln|Copy-Item|Move-Item|New-Item|Set-Content|Add-Content"
+         r"|Out-File|tee)\b|shutil\.(?:copy|move)|write_(?:text|bytes)\())"
+         r"(?=.*(?:\$\{?HOME\}?|~|%USERPROFILE%|%REAL_USERPROFILE%|!REAL_USERPROFILE!|\$env:USERPROFILE|Path\.home\(\)"
+         r"|[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s\"']+)[\\/\"' ,]+\.claude[\\/\"' ,]+(?:commands|skills|agents|CLAUDE\.md|settings\.json)\b)",
+         "사용자 전역 Claude 설정·명령 변경 (모든 프로젝트 영향)"),
     ],
     "irreversible": [
         (r"\bnpm\s+publish\b", "npm publish — 패키지 공개"),
