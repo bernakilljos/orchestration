@@ -1541,3 +1541,6 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | S8 | 대역 외 승인 채널 (§53-2) — 그 전까지 승인은 Broker 콘솔(`describe` → `approve <id> <커밋 앞 8자리>`) | 실제 승인 1회 → 1회 실행 · 재사용 거부 | 채널 해제 |
 | 주기 실행 | 작업 스케줄러: orca-broker 로 `"C:\Program Files\Python314\python.exe" -I C:\ProgramData\orca-broker\lib\broker.py process C:\ProgramData\orca-broker` 5분마다 | 실행 기록 · 잠금 | 작업 삭제 |
 - 각 단계 완료 판정 = `preflight` ok + Stage 1 검사 + 이 표의 확인 항목 실측. Mock·시험 PASS 로 대신하지 않는다.
+- Broker 콘솔 승인(`describe` → 커밋 앞 8자리)은 **독립 사용자 승인의 증명이 아니다** (사용자 지적 2026-11-10) — 같은 PC 의 Broker 계정 세션 입력일 뿐 승인 주체·채널이 분리되지 않는다. 오입력 방지 장치로만 쓰고, 출시 조건 "독립 채널 실제 승인 후 1회 실행"(§53-7)은 S8(보호된 별도 승인 주체·채널) 실측 전까지 미충족.
+- 검사 스크립트 신뢰 기준 [확인 2026-11-10]: 디스크 SHA256 = HEAD 커밋본 = 4db520c 커밋본 = `CF3A642F…D48C` · 작업 트리 변경 0. 단 4db520c 는 원격에 없는 로컬 커밋이고 kit·`.git` 이 Authenticated Users 수정 가능 → orca-agent 가 한 번이라도 실행된 뒤에는 git 도 신뢰 근거가 아니다. 지금(orca-agent 미실행 상태) 값을 kit 밖에 따로 적어 두고 그 값과 대조한다.
+- `appr-5bbb3aa035ac` [확인]: 대기 4시간(24시간 유효) · 등록된 명령 = 작업 기억 기록(manual-add) + `Remove-Item -Recurse` 가 한 명령으로 묶임 → 승인 후 재실행하면 작업 기억 9번이 중복 기록됨. 삭제만 원하면 이 요청은 거절하고 삭제 명령만 새로 요청하는 것이 맞다.
