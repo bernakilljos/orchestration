@@ -19,6 +19,9 @@ CLAUDE.md     : kit 사본 그대로(자동 통계 줄 제외)면 교체·백업
 
 사용: python merge-to-target.py <TARGET> [--apply]   (기본 = 미리보기)
       python merge-to-target.py --all --apply           (.claude/state/merge-targets.txt 전부 · git post-merge 가 호출)
+      python merge-to-target.py <TARGET> --only <상대경로> [--only ...] [--apply]
+          제한 전파 (1110 §73): 지정 파일만 같은 판정(옛 kit 사본=교체·백업 · 대상 수정본=보존) ·
+          settings·.mcp.json·메모리·CLAUDE.md·guide.txt·대상 목록 등록은 건드리지 않음 · 파일별 판정·해시 출력
 백업: <TARGET>/.claude/backups/kit-merge-<ts>/ (교체되는 파일만)
 """
 from __future__ import annotations
@@ -302,6 +305,7 @@ def main() -> int:
         return rc
     target = Path(sys.argv[1]).resolve()
     apply = "--apply" in sys.argv
+    only = {sys.argv[i + 1].replace("\\", "/") for i, a in enumerate(sys.argv[:-1]) if a == "--only"}
     if not target.is_dir():
         print(f"대상 없음: {target}")
         return 2
@@ -324,6 +328,8 @@ def main() -> int:
 
     for tree in TREES:
         for rel in walk(KIT, tree):
+            if only and rel not in only:
+                continue
             src, dst = KIT / rel, target / rel
             sb = src.read_bytes()
             if not dst.exists():
@@ -355,6 +361,8 @@ def main() -> int:
                     stats["target-custom"].append(rel)
 
     for rel in ("CLAUDE.md", "guide.txt"):
+        if only and rel not in only:
+            continue
         src, dst = KIT / rel, target / rel
         if not src.exists():
             continue
@@ -374,6 +382,8 @@ def main() -> int:
             stats["target-custom"].append(rel)
 
     report: list[str] = []
+    if only:
+        return _report_only(target, only, stats, manifest, man_p, backup, apply)
     # settings.json
     sp = target / ".claude" / "settings.json"
     kit_s = load_json(KIT / ".claude" / "settings.json")
@@ -451,6 +461,26 @@ def main() -> int:
     if apply:
         print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
     return 0
+
+
+def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Path, backup: Path, apply: bool) -> int:
+    """--only 제한 전파 결과: 파일별 판정 + kit·대상 해시 (전후 비교 증거)."""
+    kind = {rel: k for k, v in stats.items() for rel in v}
+    print(f"=== merge-to-target [{'APPLY' if apply else 'DRY-RUN'} · --only {len(only)}] {target}")
+    rc = 0
+    for rel in sorted(only):
+        src, dst = KIT / rel, target / rel
+        k = kind.get(rel, "kit에 없음" if not src.exists() else "제외(캐시·백업 등)")
+        hs = md5(norm(src.read_bytes()))[:12] if src.exists() else "-"
+        hd = md5(norm(dst.read_bytes()))[:12] if dst.exists() else "-"
+        print(f"  {k:14} kit={hs} 대상={hd}  {rel}")
+        if k in ("target-custom", "kit에 없음", "제외(캐시·백업 등)"):
+            rc = 1   # 보류·불일치는 성공으로 숨기지 않는다
+    if apply:
+        man_p.parent.mkdir(parents=True, exist_ok=True)
+        man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
+        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+    return rc
 
 
 if __name__ == "__main__":

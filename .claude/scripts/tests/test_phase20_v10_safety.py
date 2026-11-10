@@ -1861,3 +1861,26 @@ def test_command_root_resolver_keeps_worktrees_and_dot_claude_parent_paths(tmp_p
     for cwd, want in ((wt, "WORKTREE"), (wt / ".claude", "WORKTREE"), (nested, "NESTED"), (main, "MAIN")):
         r = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
         assert r.returncode == 0 and r.stdout.strip() == want, (cwd, want, r.stdout, r.stderr)
+
+
+def test_merge_to_target_only_option_limits_changes(tmp_path):
+    """§73 --only 제한 전파: 지정 파일만 · settings·등록 목록 불변 · 대상 수정본은 보류(rc=1)."""
+    m2t = ROOT / ".claude" / "scripts" / "merge-to-target.py"
+    reg = ROOT / ".claude" / "state" / "merge-targets.txt"
+    reg_before = reg.read_bytes() if reg.exists() else None
+    tgt = tmp_path / "대상 프로젝트"
+    (tgt / ".claude" / "commands").mkdir(parents=True)
+    (tgt / ".claude" / "settings.json").write_text('{"x": 1}\n', encoding="utf-8")
+    (tgt / ".claude" / "commands" / "reject.md").write_text("대상에서 고친 내용\n", encoding="utf-8")
+    run = lambda *a: subprocess.run([sys.executable, "-X", "utf8", str(m2t), str(tgt), *a],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=120)
+    r = run("--only", ".claude/commands/approvals.md", "--apply")
+    assert r.returncode == 0 and "kit-only" in r.stdout, r.stdout + r.stderr
+    files = sorted(p.relative_to(tgt).as_posix() for p in tgt.rglob("*") if p.is_file() and "backups" not in p.parts)
+    assert files == [".claude/commands/approvals.md", ".claude/commands/reject.md", ".claude/settings.json",
+                     ".claude/state/kit-merge-manifest.json"], files
+    assert (tgt / ".claude" / "settings.json").read_text(encoding="utf-8") == '{"x": 1}\n'
+    r2 = run("--only", ".claude/commands/reject.md", "--apply")
+    assert r2.returncode == 1 and "target-custom" in r2.stdout
+    assert (tgt / ".claude" / "commands" / "reject.md").read_text(encoding="utf-8") == "대상에서 고친 내용\n"
+    assert (reg.read_bytes() if reg.exists() else None) == reg_before
