@@ -518,6 +518,7 @@
     Broker 안정화 (1110)           소비 직후 종료 = 다음 process 가 원격과 대조해 결과 확정 (모호하면 needs_review · 재push 없음) · gc = 끝난 요청 7일 뒤 미러 ref·작업 사본만 (하루 1회 · 메모리 80%↑ 미룸) · 메모리 90%↑ 새 요청 접수 보류 · preflight = Broker 코드·설정·DB 를 다른 계정이 쓸 수 있으면 실행 거부 (kit 실측 = 거부) · 적용 절차 §65
     Broker 전파·뒷정리 (1110)      powershell.exe -File .claude\scripts\broker-setup.ps1 -Action Plan|Install|Verify|RunAs|Cleanup|Uninstall (변경은 -Apply 일 때만) · 다른 PC 는 kit 전파 후 관리자 창에서 Install -Apply · RunAs = 다른 계정 창이 결과 남기고 스스로 닫힘 · Uninstall 은 운영 데이터·계정 기본 보존 · 상세 §70
     명령 프로젝트 경로 (1110)      /approve 등 5개 명령은 CLAUDE_PROJECT_DIR(명령 셸에선 비어 있음) → 현재 폴더 → 상위 순으로 루트 탐색 · 못 찾으면 다른 폴더 접근 없이 오류 · 전역 명령 설치 원본 경로 수정(03-settings) · 상세 §71
+    전파 검증 (1110)              merge-to-target 은 시험 캐시(.pytest_cache 등) 미전파 · 명령 루트 탐색은 .claude/backups 안 옛 사본 무시 · 상세 §72
     신규 기록 토큰 가림 (1110)     대화(orca.db)·sessions.db·bash 명령 로그·Ledger 가 lib\redact.py 정본으로 저장 전 가림 · 해시는 원문 기준 · 모듈 없으면 [MASKED] 만 저장 · 기존 기록은 변경 없음
     대기 요청 만료 (1109)          24시간 지난 대기 요청은 /approve 거부 (기록 보존 · 같은 명령을 다시 내면 새 요청) · 승인 후 실행 허용은 30분
     statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)

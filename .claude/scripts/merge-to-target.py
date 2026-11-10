@@ -15,7 +15,7 @@ settings.json : hook 은 command 문자열 기준 합집합 · permissions.allow
                 없는 최상위 키만 추가 · statusLine 은 없거나 전역(~/.claude) 옛 스크립트일 때만 kit 포인터로.
 .mcp.json     : 없는 서버만 추가.
 메모리        : setup/templates/user_style_profile.md → 대상 프로젝트 memory + .claude/state (없을 때).
-CLAUDE.md     : 건드리지 않음 (프로젝트 헌장).
+CLAUDE.md     : kit 사본 그대로(자동 통계 줄 제외)면 교체·백업 · 대상에서 고쳤으면 보존(target-custom).
 
 사용: python merge-to-target.py <TARGET> [--apply]   (기본 = 미리보기)
       python merge-to-target.py --all --apply           (.claude/state/merge-targets.txt 전부 · git post-merge 가 호출)
@@ -43,7 +43,8 @@ TREES = [
     ".claude/rules", ".claude/hooks", ".claude/scripts", ".claude/commands",
     ".claude/skills", ".claude/agents", "plugins", ".claude-plugin",
 ]
-SKIP_PARTS = {"__pycache__", "backups", "state", "logs", "tasks", "context-cache", "learning"}
+SKIP_PARTS = {"__pycache__", "backups", "state", "logs", "tasks", "context-cache", "learning",
+              ".pytest_cache", ".mypy_cache", ".ruff_cache"}   # 캐시 = 공통 기능 아님 (1110 §72: IFRS·ICMAI 로 전파됐던 결함)
 SKIP_SUFFIX = {".pyc", ".bak", ".orig", ".log"}
 
 

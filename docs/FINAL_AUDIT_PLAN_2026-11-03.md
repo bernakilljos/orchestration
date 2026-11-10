@@ -1632,3 +1632,15 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 검증 [확인]: 수정 전 실패 2종 재현 → 수정 후 7 조건 PASS (변수 없음+kit · kit 하위 · Git 설치 폴더=명확한 오류 rc 1 · 공백·한글·무Git 경로 · 없는 변수 경로+하위 폴더 · 빈 변수 · 변수 우선) · 승인 상태 읽기 경로 PASS · **실제 Claude Code `/approvals` 호출로 대기 목록 46건 표시** (수정 전 같은 호출 = 사고와 같은 오류).
 - 승인 정책 변화 없음 (만료·불변·1회·HEAD 지문 그대로 · 승인 기록 조작 없음). 이전 승인 번호는 쓰지 않고 새 HEAD 로 새로 발급.
 - 전파: 전역 사본 5개를 kit 사본으로 교체(설치 스크립트와 같은 결과) · 다른 프로젝트(IFRS_PJT·ICMAI_PJT·calc·llm·teamclaude·orchestration)는 옛 사본 그대로 → merge-to-target 전파 대상.
+
+
+## §72 경로 수정·다중 솔루션 전파 최종 검증 (2026-11-10 · 기준 7a04c06)
+
+- 테스트 수 차이 [확인]: 303 = 회귀 게이트가 영향 시험 파일 9개만 실행 (`regression-gate.json` tests 9개) · 전체 공식 범위(pytest.ini testpaths) = **399 수집 · 399 통과** (종전 396 + §71 신규 3) → 누락 없음.
+- IFRS_PJT·ICMAI_PJT 전파 대조 [확인]: 백업 원본 111개를 kit 전체 이력 blob 과 해시 대조 → IFRS 108 일치 · 불일치 3 = `CLAUDE.md`(자동 통계 줄만 다름 → kit 사본 판정 정상 · 고유 내용 손실 0) + `.claude/scripts/.pytest_cache` 2개 · 교체 시각 14:55~15:10 에 kit 영역 밖 변경 파일 0 (두 대상 · 업무 소스 무변경) · 두 대상 모두 Git 없음 · 로컬 설정(settings.local.json·deploy-config.env)은 전파 범위(TREES) 밖이라 대상에 없음.
+- 결함 1 [확인 · 수정]: `merge-to-target` 이 작업 폴더를 그대로 돌아 git 무시 대상인 `.pytest_cache`(시험 캐시 · 공통 기능 아님)를 전파 → `SKIP_PARTS` 에 `.pytest_cache`·`.mypy_cache`·`.ruff_cache` 추가 · 설명문 "CLAUDE.md 건드리지 않음" 을 실제 동작(kit 사본이면 교체·백업, 대상 수정본이면 보존)으로 정정.
+- 결함 2 [확인 · 수정]: 명령 루트 탐색이 가장 가까운 `.claude/scripts/<파일>` 을 집어, 현재 폴더가 merge 백업(`.claude/backups/kit-merge-*/`) 안이면 **백업에 남은 옛 approval-gate.py 를 실행** (IFRS·ICMAI 백업에 각 3개 존재 · 재현 출력 `C:\IFRS_PJT\.claude\backups\kit-merge-20261110-145839\.claude\scripts\approval-gate.py`) → 후보 중 `.claude/backups/` 아래 것만 건너뜀 (1차안 '경로에 .claude 포함 전부 제외' 는 독립 검증에서 결함 확인: `.claude/worktrees/<w>` 에서 본 저장소 스크립트를 집고 `~/.claude/projects/<p>` 류 프로젝트는 실패 → 백업만 제외로 좁힘 · 시험 추가) · 남은 한계: `CLAUDE_PROJECT_DIR` 이 `<proj>/.claude` 를 가리키고 현재 폴더가 밖이면 중단 (7a04c06 과 같은 동작 · 회귀 아님).
+- 검증 [확인]: 대상 2 × 명령 5 × 조건 5(루트·하위·백업 안·프로젝트 밖=차단·변수 우선) — kit 수정본 50/50 PASS · 대상 현재본 44/50 (실패 6 = 백업 안 approve·approvals·reject = 결함 2, 미전파) · 격리 시험 프로젝트에서 /approvals·/approve·/reject·status 줄이 격리 DB 로 실행 · 실제 대기 49건 지문 전후 동일 · 회귀 시험 2개 추가(되돌리면 각각 실패 확인) · 골든 13/13 · 메모리 72.2%.
+- 범위 판단: 이번 전파 136건 중 `.pytest_cache` 는 "공통 개발 기능만 전파" 범위 밖 → 지시대로 **추가 전파 중단 · 롤백 안 함**. 복구 방법(미실행): 대상 `.claude/scripts/.pytest_cache` 는 캐시라 삭제해도 pytest 가 재생성 · IFRS 고유 캐시 원본은 `.claude/backups/kit-merge-20261110-145839/` 에 보존.
+- 남은 것 [미확인/미실행]: 수정본의 IFRS·ICMAI 전파 (사용자 결정 후) · 전역 `~/.claude/commands` 5개는 §71 사본 그대로 · 다른 노트북 실기 설치 · 실행 중인 다른 Claude 세션의 명령 재로드(파일 변경 시 Claude Code 가 목록을 다시 읽음을 이 세션에서만 관찰).
+- 새 설치 참고 [확인]: 표 없는 빈 orca.db 에서 `/approvals` = `no such table: tasks` · 정상 설치는 SessionStart `ensure-state.sh` 가 먼저 표를 만들어 발생 안 함.

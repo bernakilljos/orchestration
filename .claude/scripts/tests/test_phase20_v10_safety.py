@@ -1819,3 +1819,45 @@ def test_global_command_installer_points_at_existing_source():
     assert m, "CMD_SRC 없음"
     src = (ROOT / "setup" / "modules" / m.group(1).replace("\\", "/")).resolve()
     assert src.is_dir() and (src / "approve.md").is_file(), src
+
+
+# --- §72 백업 폴더 안의 옛 승인 프로그램을 집지 않음 · 캐시 미전파 (2026-11-10) ---
+def test_command_root_resolver_skips_copies_inside_dot_claude(tmp_path):
+    """merge 백업(.claude/backups/kit-merge-*/.claude/scripts/approval-gate.py) 안에서 실행해도 진짜 루트를 찾는다."""
+    argv = _resolver_argv(ROOT / "plugins" / "exec_orch" / "commands" / "approvals.md")
+    proj = tmp_path / "proj"
+    (proj / ".claude" / "scripts").mkdir(parents=True)
+    (proj / ".claude" / "scripts" / "approval-gate.py").write_text("print('REAL')\n", encoding="utf-8")
+    bk = proj / ".claude" / "backups" / "kit-merge-1" / ".claude" / "scripts"
+    bk.mkdir(parents=True)
+    (bk / "approval-gate.py").write_text("print('OLD-BACKUP')\n", encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+    for cwd in (bk, bk.parent.parent, proj / ".claude"):
+        r = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert r.returncode == 0 and "REAL" in r.stdout and "OLD-BACKUP" not in r.stdout, (cwd, r.stdout, r.stderr)
+
+
+def test_merge_to_target_does_not_propagate_cache_dirs(tmp_path):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("m2t", ROOT / ".claude" / "scripts" / "merge-to-target.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    (tmp_path / ".claude" / "scripts" / ".pytest_cache" / "v").mkdir(parents=True)
+    (tmp_path / ".claude" / "scripts" / ".pytest_cache" / "v" / "nodeids").write_text("[]", encoding="utf-8")
+    (tmp_path / ".claude" / "scripts" / "keep.py").write_text("x=1\n", encoding="utf-8")
+    got = list(m.walk(tmp_path, ".claude/scripts"))
+    assert got == [".claude/scripts/keep.py"], got
+
+def test_command_root_resolver_keeps_worktrees_and_dot_claude_parent_paths(tmp_path):
+    """백업만 제외 — .claude/worktrees/<w> 와 ~/.claude/projects/<p> 같은 진짜 프로젝트는 자기 스크립트를 쓴다 (독립 검증 지적)."""
+    argv = _resolver_argv(ROOT / "plugins" / "exec_orch" / "commands" / "approvals.md")
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+    main = tmp_path / "repo"
+    wt = main / ".claude" / "worktrees" / "w1"
+    nested = tmp_path / "home" / ".claude" / "projects" / "p"
+    for root, tag in ((main, "MAIN"), (wt, "WORKTREE"), (nested, "NESTED")):
+        (root / ".claude" / "scripts").mkdir(parents=True)
+        (root / ".claude" / "scripts" / "approval-gate.py").write_text(f"print('{tag}')" + chr(10), encoding="utf-8")
+    for cwd, want in ((wt, "WORKTREE"), (wt / ".claude", "WORKTREE"), (nested, "NESTED"), (main, "MAIN")):
+        r = subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert r.returncode == 0 and r.stdout.strip() == want, (cwd, want, r.stdout, r.stderr)
