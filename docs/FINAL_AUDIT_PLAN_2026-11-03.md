@@ -1557,3 +1557,16 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | **FAIL 5** | 5 `orca.db` 읽기 · 5s `sessions.db` 읽기 (토큰 사본) · 5w `orca.db` 쓰기 (자기 승인) · 5g `approval-gate.py` 쓰기 · 5h `approval_gate_detect.py` 쓰기 — 모두 kit 상속 권한 (§62-1) · 예상과 일치 |
 | BLOCKED | C4 승인 없는 push 실측 (승인된 시험 저장소 필요) |
 - 결론: **원격 쓰기 자격 증명 격리는 성립** (orca-agent 는 ja205 인증정보에 닿지 못하고 자기 자격 증명도 없음 → 문자열 우회로 push 해도 인증 불가 [추정 · C4 실측 전]). **승인 저장소·승인 코드·토큰 사본 격리는 불성립** (FAIL 5 전부 kit 안) → S3(보호 폴더)·S4(DB 3분할·보관본 이동) 범위 = 바로 이 5개 경로 + §63-1 토큰 사본 6파일.
+
+## §67 S2 확정 — orca-broker 계정 (2026-11-10 · 기준 fc5343b · 승인 대상 · 이 시점 미실행)
+
+**1. Python 판단 [확인 · 실측]**: 컴퓨터 전체 설치 **불필요**. Broker 가 쓰는 모듈(`broker.py`·`approval-gate.py`·`state_db`·`repair_sandbox`)은 표준 라이브러리만 씀 (psutil 은 선택 경로). 기존 Python 3.14 (2,722MB 중 site-packages 2,446MB) 에서 site-packages·Scripts·캐시를 뺀 **138MB 사본**을 다른 폴더에 두고 `-I` 로 실행 → 레지스트리·사용자 site 없이 Broker 로드·메모리 측정·git·sqlite 정상. → S3 에서 이 사본을 Broker 보호 폴더(`C:\ProgramData\orca-broker\python`)에 복사 (설치 프로그램·PATH·레지스트리 변경 없음 · 권한 범위 최소). §65 S2 의 "컴퓨터 전체 Python" 은 이 방식으로 대체.
+
+**2. S2 범위 = 계정만** (폴더·ACL·Python 사본은 S3 · DB 는 S4 · 자격 증명은 S6 — 자동 진행 안 함)
+- 비관리자 · Users 그룹만 (로컬 로그온 가능 = S6 자격 증명 등록에 필요 · Remote Desktop Users 아님 = 원격 로그온 불가 · 정책 변경 없음).
+- 이 세션(ja205 비승격)은 계정을 만들 수 없다 → 사용자가 관리자 PowerShell 에서 실행 = S2 승인.
+
+**3. 기준선 (S2 전 · 2026-11-10 13:39) [확인]**: 로컬 사용자 9 (orca-broker 없음) · Administrators = Administrator·ja205·rdpuser · Users = CodexSandboxOffline·Online·ja205·orca-agent·Authenticated Users·INTERACTIVE · ja205 GitHub 자격 증명 대상 3 · 프로필 폴더 4.
+
+**4. 검증 (S2 후)**: ① 계정 존재·활성 · Administrators 비구성원 · Users 구성원 (SID 기준) ② 기준선의 다른 계정·그룹·ja205 자격 증명 수·orca-agent 불변 ③ orca-broker 로 Stage 1 검사 실행 (runas) → C1a·C1b·1~4·6·7·8~14 PASS 기대 (5 계열 FAIL 은 kit 권한 — S3·S4 범위) · 결과 비밀값 0.
+**5. 복구**: `Remove-LocalUser orca-broker` (프로필이 생겼으면 설정 → 계정 → 기타 사용자에서 삭제). 다른 계정·kit·DB 영향 없음.
