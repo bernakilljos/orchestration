@@ -90,6 +90,7 @@ if ($ownerProfile) {
 } else { foreach ($i in "4", "6", "7") { Add-Result $i "원래 사용자 프로필" "BLOCKED" "프로필 경로를 찾지 못함" } }
 $db = Join-Path $Kit ".claude\state\orca.db"
 Test-ReadDenied "5" "kit orca.db 읽기 (대화 기록 속 토큰 사본 · §53-3 5)" $db
+Test-ReadDenied "5s" "kit sessions.db 읽기 (transcript 적재본 속 토큰 사본 · §63)" (Join-Path $Kit ".claude\state\sessions.db")
 Test-WriteDenied "5w" "kit orca.db 쓰기 (승인 행 자기 승인 위험)" $db
 Test-WriteDenied "5g" "승인 게이트 코드 쓰기 (approval-gate.py)" (Join-Path $Kit ".claude\scripts\approval-gate.py")
 Test-WriteDenied "5h" "승인 감지 훅 쓰기 (approval_gate_detect.py)" (Join-Path $Kit ".claude\hooks\tool\approval_gate_detect.py")

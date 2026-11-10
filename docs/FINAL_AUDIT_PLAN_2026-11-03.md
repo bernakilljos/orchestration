@@ -1369,3 +1369,74 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 **6. 전파 원칙 (변경 없음 · 재확인)**: install·merge-to-target 은 공통 개발 기능만 복사 · `orca.db`·승인 기록·Ledger·인증정보·`next-actions.md`(프로젝트별 작업 기억) 는 전파하지 않는다 (STD-PROPAGATE-001). 대상 폴더(`C:\IFRS_PJT` 등) 도 같은 루트 상속이라 같은 권한 설계가 필요하다 — 대상별 적용은 별도 승인.
 - plugin sync 보고의 `renamed(conflict) 23 · orphan 5` 는 별도 관리 · `--prune` 일괄 삭제 안 함.
+
+## §63 권한 분리 방향 확정 — B(독립 Broker) · 데이터 사용 경로 · 재사용 설계 · 격리 이전 검증 (2026-11-10 · 기준 7a9b0a5 · 읽기 전용 + 격리 사본 · 계정·ACL·DB·인증 변경 0 · push 0)
+
+**0. 결정 (사용자 · 2026-11-10)**: 최종 구조 = **B 독립 Broker 계정**. A(ja205 세션을 Broker 로) 는 최종 구조로 채택하지 않음 · A-2(kit ACL 강화) 는 보조 장치 (같은 폴더 ACL 로 자기 승인이 막힌다고 판단하지 않음 · Agent 개발 권한 유지 · 상위 폴더 삭제·폴더 교체까지 검증). orca-agent 재사용. 이 결정은 아키텍처 선택이며 계정 생성·ACL·DB 이동·인증 변경·서비스 설치의 일괄 승인이 아니다 (작업별 별도 승인). GitHub 토큰 재발급·교체 제외 방침 유지 (§54).
+
+**1. 데이터 실제 사용 경로 [확인 · 읽기 전용 집계 · 값 출력 0]**
+| 데이터 | 위치 | 쓰는 코드 (주요) | 규모 | 귀속 |
+|---|---|---|---|---|
+| 승인 요청 | `orca.db` `tasks` 중 `approval_state` ≠ not_required | `approval-gate.py` (17곳) · `hooks/tool/approval_gate_detect.py` · `hooks/prompt/user_approval.py` · `lib/worker_git.py` (push-* 등록·`push_approved`) | 50행 (대기 44 · 거절 5 · 실행 1) | **Broker** |
+| 일반 작업 | 같은 `tasks` 표 (not_required) | supervisor·task_state·auto-dispatch·worker | 126행 | Agent |
+| 예산·쿼터·예약 | `budget` · `quota` · `agent_budget_reservations` | `state_db` · `route.py` · `lib/record_call.py` · `lib/router.py` · `statusline_context.py` · `kit-stats.py` | 1 · 6 · 14 (전부 settled) | **Broker** (Agent 는 조회만) |
+| Goal | `goals` · `goal_tasks` · `goal_transitions` | `lib/supervisor.py` · planner · self_healing | 161 (BLOCKED 21 · FAILED 96 · VERIFIED 44) | Agent |
+| Ledger | `.claude/state/request-ledger.json` | `request-ledger.py` · `hooks/prompt/ledger_auto_register.py` · `stop-request-ledger-gate.sh` | 파일 | Agent (작업 기억 · 권한 근거 아님) |
+| 대화·세션 기록 | `orca.db` `conversations` · `sessions.db` | `conversation_logger` · `session-history-db.py` | 3,994 · 4,157 프롬프트 | Agent (토큰 사본 제외 사본) |
+| 인증정보 | ja205 프로필 (자격 증명 관리자 3 · HKCU 토큰 변수 · `.claude.json`) | git(GCM) · `haiku-validate.py` · `lib/real_repair_chain.py` · `web-cli-auto-bridge.py` · `lib/secrets_vault.py` (keyring) | — | **Broker 계정 keyring 만** |
+- 토큰 형태 값 위치 [확인 · 개수만]: `orca.db` `conversations` 4행 · `sessions.db` `prompts` 1행·`tool_calls` 1행 · 나머지 33개 표 0. 둘 다 kit `.claude/state` 아래라 `BUILTIN\Users RX` → **orca-agent 가 읽을 수 있다**.
+- kit 전체 파일 검사 (53,456개 · `.git` 제외 · 값 출력 0) — 토큰 형태 값이 있는 파일 6개: `.claude/state/orca.db` 4 · `.claude/state/sessions.db` 2 · `.claude/logs/bash_commands.log` 2 (§53-3: 현재 키 아님) · `.claude/logs/ledger-raw.jsonl` 1 (R187 가림 이전 기록으로 보임 [추정]) · `.repair-sandbox/P8-AGENT-REAL-CALL/.claude/state/sessions.db` 1 · **`__pycache__/dashboard.cpython-311.pyc` 1** (2026-04-10 생성 · 현재 `dashboard.py` 에는 가림 코드만 · 값이 orca.db 의 GitHub 토큰과 **같음** · gitignore 대상 · git 전체 이력·`origin/main` 0 커밋 [확인]). 전부 kit 안이라 orca-agent 읽기 가능 → 4절 이전 대상에 포함 (DB 2 = 보관본 + 가린 사본 · 로그·캐시·sandbox 사본 = 원본을 ja205/Broker 전용 보관 위치로 옮긴 뒤 Agent 쪽은 가린 사본 또는 재생성). 삭제·가림 실행은 승인 후.
+
+**2. 재사용 설계 (변경 최소)**
+| 역할 | 기존 구현 (재사용) | Broker 에서 필요한 것 |
+|---|---|---|
+| 승인 저장·불변·24h 만료·1회 소비·지문 | `approval-gate.py` (`scope_key`·`find_request`·`new_request`·`approve`·`consume_approval`) | **코드 변경 0** — `state_db._get_project_root` 가 이미 `ORCHESTRATION_ROOT` 를 따름 → Broker 프로세스 환경에서 Broker 폴더를 가리키면 그 DB 사용 (격리 실측: 사본에서 `list` 정상 · 대기 44 표시) |
+| 승인된 push 실행 | `lib/worker_git.push_approved` (승인 행만 · 등록 커밋이 HEAD 조상 · 원격 이동 시 중단 · 강제 없음) | **변경 1**: Agent 저장소 안에서 git 을 돌리지 않는다 — Agent 가 `.git/hooks`·`core.fsmonitor`·`core.sshCommand` 등을 심으면 Broker 계정으로 코드가 실행된다 [추정 · Git 동작 기준]. Broker 소유 bare 미러로 지정 커밋만 가져와(`-c core.hooksPath=` 비움 · fsmonitor 끔) 지문을 Broker 가 직접 계산한 뒤 push |
+| 비밀 저장 | `lib/secrets_vault.SecretVault` (OS keyring = 계정별 자격 증명 관리자) | Broker 계정으로 실행 · `fallback_to_env=False` 고정 (`.env.vault` 대체 경로 금지) |
+| 예산 | `state_db` budget·reservations · `record_call` | 유료 호출이 Broker 경유가 된 뒤 (§53-6 단계 7) Broker DB 로 |
+| 승인 채널 | `hooks/prompt/user_approval.py` (`/approve` — Agent 세션 안) | §53-2 대역 외 채널로 교체 · 과도기에도 승인 기록 주체는 Agent 가 아니어야 함 |
+| Agent→Broker 요청 | 없음 | **신규 1**: 요청 함(Agent 쓰기 · Broker 읽기) — 요청 내용은 믿지 않고 Broker 가 미러에서 저장소·브랜치·커밋·지문을 다시 계산 |
+- 신규 = 요청 함 + Broker 실행기(위 재사용 부품 호출) 2개 (Change Budget NEW 2 안) · 기존 수정 = `worker_git` 미러 경로 1 · `secrets_vault` 설정 1.
+- 핵심 판정: Agent 가 `git push` 문자열 검사를 우회해도 **Agent 계정에 쓰기 자격 증명이 없으면 push 불가** — Stage 1 이 증명할 대상. Agent 쪽 승인 훅은 안내·이중 확인 역할로 남는다.
+
+**3. Broker 배치 (Agent 수정 가능 경로 밖)**
+| 항목 | 위치 (제안) | ACL (제안) |
+|---|---|---|
+| Broker 실행 코드 | kit 밖 Broker 폴더 (kit 해시 고정 사본 · 갱신은 ja205 검토 후 복사) | 소유자 SYSTEM/Administrators · Broker RX · ja205 F · Users·Authenticated Users·Codex 샌드박스 ACE 없음 · 상속 끊음 |
+| 승인·예산 DB | Broker 폴더 `\.claude\state\orca.db` | Broker M · ja205 F · Agent 없음 |
+| 미러 저장소 | Broker 폴더 `\mirror\<repo>.git` | Broker M |
+| 비밀 | Broker 계정 keyring | 계정별 (Agent·ja205 프로필과 분리) |
+| 요청 함 | Broker 폴더 `\inbox` | Agent 쓰기(생성)만 · 읽기·삭제는 Broker |
+- 폴더는 `C:\` 루트 아래 두면 기본 상속(Authenticated Users M)을 받으므로 생성 직후 상속을 끊어야 한다 (§62-1). 상위 폴더 교체 방지: Broker 폴더 자신의 삭제·이름 변경 권한은 Administrators·SYSTEM 만.
+- Broker 계정: 비관리자 · 대화형·원격 로그인 거부 · 실행은 작업 스케줄러 또는 서비스 (설치 방식은 승인 시 결정).
+
+**4. 기존 orca.db 단계적 이전 — 격리 사본 검증 [확인 · scratchpad · 운영 원본 불변]**
+- 방법: sqlite backup 으로 사본 → ① 원본 보관본(토큰 사본 포함 · ja205/Broker 전용 위치로 · Agent 접근 없음) ② Broker DB (승인 50행 + budget·quota·reservations) ③ Agent DB (승인·예산 제외 · 토큰 형태 4개 필드 가림 · 행 수·id 유지).
+- 결과: 승인 행 50 → Broker 50 / Agent 0 · 승인 행·예산 3표 내용 해시 원본과 동일 · 일반 작업 126행 해시 동일 · 다른 표 행 수 전부 동일 · `integrity_check` 3개 ok · 토큰 형태 행: 보관본 4 · Broker 0 · Agent 0 · 운영 원본 해시 전후 동일.
+- 승인 게이트를 Broker 사본에 연결: `ORCHESTRATION_ROOT=<사본 폴더>` 로 `approval-gate.py list` exit 0 · 대기 44 (코드 변경 0).
+- 실제 전환 순서 (승인 후): 백업 → 위 3분할 → Broker 전환 → 운영 확인 (§53-5) · 복구 = 경로를 원래 orca.db 로 되돌림 (원본 보관본 미삭제). 전환 후 원본에 새 승인 쓰기가 생기면 즉시 중단 (이중 기록 = 실패).
+- 같은 종류 남은 것: `sessions.db` 토큰 사본 2행 → 같은 방식(보관본 + 가린 사본) · 이후 새 기록: 대화 저장 시 비밀정보 가림이 아직 없다 (`conversation-history.md` "마스킹 예정") — 새로 입력된 토큰은 다시 저장된다 [확인 · 미구현] → 가림 적용은 제안 (기존 ledger 가림 함수 재사용 후보).
+
+**5. Stage 1 검사 절차 (확정 · 사용자 실행)**
+1. ja205 에서 로그아웃하지 말고 Windows "사용자 전환" 으로 orca-agent 로그인 (runas 아님 · 별도 세션 §53-1).
+2. Windows PowerShell 을 연다 (관리자 아님).
+3. `(Get-FileHash C:\pjt\orchestration_v1\.claude\scripts\stage1-agent-isolation-check.ps1).Hash` 가 기록된 SHA256 과 같은지 확인 — 다르면 실행하지 않는다.
+4. `powershell -NoProfile -ExecutionPolicy Bypass -File C:\pjt\orchestration_v1\.claude\scripts\stage1-agent-isolation-check.ps1`
+5. 로그인·자격 증명 창이 뜨면 입력하지 않고 닫는다.
+6. 끝에 표시되는 결과 파일 경로를 확인하고 ja205 로 돌아온다 (kit 사본은 `.claude\state\stage1\`).
+- 예상 (실측 전 예측): 프로필 차단 항목 PASS · **5·5s(DB 읽기)·5w·5g·5h FAIL** (kit 상속 권한) · C4 BLOCKED → 판정 FAIL. 이 FAIL 목록이 Broker 분리·A-2 범위를 확정하는 실측 근거다.
+- 검사 추가: `5s` sessions.db 읽기 (토큰 사본이 orca.db 밖에도 있음 [확인]). 현재 스크립트 SHA256 = `CF3A642F7D172E3A917DC441879BF6CC5BAEF74065D9CD547E45D5D1333CD48C` (§62 의 FF1A… 는 대체됨).
+
+**6. 승인 대상 작업 (작업별 · 미실행)**
+| # | 작업 | 영향 | 보호 대상 | 복구 |
+|---|---|---|---|---|
+| S1 | orca-agent 에 Agent 도구 설치 (Python·Claude Code 등 · 프로필 안) | 시스템 변경 없음 · Agent 프로필만 | ja205 환경 그대로 (병행) | 프로필 폴더 정리 |
+| S2 | Broker 계정 생성 (비관리자 · 대화형 로그인 거부) | 로컬 계정 1 추가 | — | 계정 삭제 |
+| S3 | Broker 폴더 생성 + 상속 끊기 ACL | 신규 폴더만 | 3절 | 폴더 삭제 |
+| S4 | orca.db 3분할 실제 전환 (4절) | 승인·예산 경로가 Broker 로 | 원본 보관본 | 경로 되돌림 |
+| S5 | `worker_git` 미러 경로 · 요청 함 · Broker 실행기 코드 (kit 커밋 · 무료) | kit 코드 | pytest·golden 회귀 | 이전 커밋 |
+| S6 | Broker keyring 에 GitHub 쓰기 자격 증명 등록 | 인증 정보 위치 | ja205 자격 증명 그대로 | 등록 삭제 |
+| S7 | A-2 kit 보호 경로 ACL (§62-4 · ja205 명시 F 선행 · `.claude` 폴더 자체 삭제·이름 변경 차단 포함) | kit ACL | 개발 경로 Modify 유지 | `icacls /restore` |
+| S8 | 대역 외 승인 채널 (§53-2) | 외부 서비스·기기 | — | 채널 해제 (승인 불가 = 안전) |
+
+**7. 전파 원칙**: 프로젝트별 복사 전파 시 Broker 코드 사본·Broker 인증정보·승인 원본 DB·원본 보관본·운영 기록(conversations·sessions)·사용자별 상태(next-actions·Ledger·Goal) 는 복사하지 않는다 (STD-PROPAGATE-001). Broker 는 컴퓨터당 1개 · 대상 프로젝트는 요청 함으로만 연결 (설계 · 미구현).

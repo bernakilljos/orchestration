@@ -36,7 +36,7 @@ def test_self_test_runs_covers_all_items_and_prints_no_values(tmp_path):
     assert files, out
     d = json.loads(files[0].read_text(encoding="utf-8-sig"))
     ids = {x["id"] for x in d["results"]}
-    assert {"C1a", "C1b", "1", "2", "3", "4", "5", "5w", "6", "7", "8", "10b", "12", "13", "14", "C4"} <= ids
+    assert {"C1a", "C1b", "1", "2", "3", "4", "5", "5s", "5w", "6", "7", "8", "10b", "12", "13", "14", "C4"} <= ids
     assert d["self_test"] is True and d["verdict"].startswith("SELF-TEST")       # 원래 사용자 = 판정 아님
     assert next(x for x in d["results"] if x["id"] == "8")["status"] == "BLOCKED"  # 자격 증명 조회 안 함
     assert next(x for x in d["results"] if x["id"] == "C4")["status"] == "BLOCKED"

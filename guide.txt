@@ -510,6 +510,7 @@
     승인 요청 불변 (1109)          범위 지문(명령·폴더·스크립트 해시·HEAD·ref·브랜치·원격) 이 같은 승인 행만 1회 소비 · 범위가 다르거나 끝난 요청이면 항상 새 번호 · 기존 행은 상태 전이 외 수정 없음 · 옛 방식 행은 사용 안 함
     Stage 1 격리 검사 (1109)       orca-agent 로 로그인 후 powershell -NoProfile -ExecutionPolicy Bypass -File .claude\scripts\stage1-agent-isolation-check.ps1 (새 계정은 실행 정책 Restricted → Bypass 는 이 프로세스만 · 실행 전 SHA256 대조) · 읽기 전용 · 값 출력 0 · §53-3·§55 항목 · 원래 사용자로 실행하면 자가 점검 · 상세 §61·§62
     Stage 1 권한 분석 (1109)       kit 수정 권한 = C:\ 루트 기본 상속 (C:\pjt·IFRS_PJT·ICMAI_PJT 동일) · 같은 폴더 ACL 만으로는 자기 승인 차단 불가 (승인 기록·훅 인터프리터·설정이 Agent 소유) · 다른 소유자 저장소 git 거부(exit 128)로 13·14 거짓 PASS 였던 것 수정 · 상세 §62
+    Broker 분리 설계 (1110)        최종 구조 B 독립 Broker (사용자 결정 · 계정·ACL·DB 이동은 작업별 승인) · 승인 게이트는 ORCHESTRATION_ROOT 로 Broker DB 사용 (코드 변경 0) · 승인된 push = worker_git.push_approved 재사용 (Agent 저장소 대신 Broker 미러에서) · 비밀 = secrets_vault keyring (Broker 계정) · orca.db 3분할(보관본·Broker·Agent) 격리 사본 검증 · 토큰 사본 6파일 · Stage 1 검사 5s 추가 · 상세 §63
     대기 요청 만료 (1109)          24시간 지난 대기 요청은 /approve 거부 (기록 보존 · 같은 명령을 다시 내면 새 요청) · 승인 후 실행 허용은 30분
     statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)
     statusline 🤖 서브 줄                   색=등급(haiku 녹·sonnet 청·opus/inherit 보라·fable 빨강) · 설명·경과·도구 수·컨텍스트 토큰·마지막 동작 · 끝에 긴급도(정상 / 주의 10분+ / 긴급 기록 3분+ 정지) · 이 프로젝트 세션 기록만 읽음
