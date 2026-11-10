@@ -1570,3 +1570,16 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 **4. 검증 (S2 후)**: ① 계정 존재·활성 · Administrators 비구성원 · Users 구성원 (SID 기준) ② 기준선의 다른 계정·그룹·ja205 자격 증명 수·orca-agent 불변 ③ orca-broker 로 Stage 1 검사 실행 (runas) → C1a·C1b·1~4·6·7·8~14 PASS 기대 (5 계열 FAIL 은 kit 권한 — S3·S4 범위) · 결과 비밀값 0.
 **5. 복구**: `Remove-LocalUser orca-broker` (프로필이 생겼으면 설정 → 계정 → 기타 사용자에서 삭제). 다른 계정·kit·DB 영향 없음.
+
+**6. S2 실행 결과 (2026-11-10 13:4x · 사용자 실행) [확인]**
+- 첫 시도 실패: 붙여 넣기 중 긴 줄이 터미널에서 줄바꿈돼 설명 문자열이 49자(상한 48)가 됨 → 계정 미생성 · 이후 줄이 따로 실행돼 "완료" 가 잘못 표시됨 (변경 0 확인) → 짧은 줄·`& { }` 블록·실패 시 중단으로 재작성.
+- 재실행 성공: orca-broker (SID …-1008) 활성 · Users 만 · Administrators·Remote Desktop Users·기타 그룹 비구성원 · 기준선 대비 변화 = 계정 1 추가뿐 (Administrators 3 · ja205 GitHub 자격 증명 3 · orca-agent 그대로).
+- orca-broker Stage 1 (`stage1-isolation-20261110-134626.json` · 비밀값 0): PASS 16 · FAIL 5 · BLOCKED 1 · NA 4 — 비관리자·ja205 인증정보 차단·자기 자격 증명 0 PASS · FAIL 5 는 kit 권한 (S3·S4).
+- S2 판정: **PASS** (계정 분리) · 승인 주체 분리는 S3(Broker 보호 폴더)·S8(채널) 후.
+
+## §68 S3 요청 — Broker 보호 폴더·Python 사본·코드 사본 (승인 대상 · 이 시점 미실행)
+- 폴더: `C:\ProgramData\orca-broker` (코드·Python·DB·미러) · `C:\ProgramData\orca-broker-io\inbox|outbox`.
+- ACL (상속 끊음): Broker 폴더 = SYSTEM F · Administrators F · orca-broker M · ja205 RX (확인용 읽기만) · 요청 함 inbox = + orca-agent M (내용은 Broker 가 검증) · outbox = orca-agent RX.
+- 사본: Python 표준 라이브러리 (site-packages·Scripts·캐시 제외 · §67-1) · `approval-gate.py`·`lib/broker.py`·`lib/state_db.py`·`lib/repair_sandbox.py` + 해시 기록 · `broker-config.json` (BOM 없는 UTF-8 · kit 원격 · 허용 브랜치 main).
+- 검증: orca-broker 로 `preflight` → ok True · orca-agent 로 Broker 폴더 목록 → 거부 · kit·DB·계정 변화 0. 복구: 두 폴더 삭제 (관리자).
+- S3 로 FAIL 5 는 해소되지 않는다 (kit 쪽 권한) — 5·5s·5w 는 S4(DB 3분할·보관본 이동)·5g·5h 는 Broker 전환 후 Agent 쪽 게이트가 권한 근거가 아니게 되는 것으로 해소 · 검사 기준도 S4 때 Broker DB 경로로 갱신.
