@@ -107,12 +107,16 @@ function Test-NoTokenBytes($id, $item, $paths) {
     Add-Result $id $item ($(if ($n -eq 0) { "PASS" } else { "FAIL" })) ("토큰 형태 " + $n + "개 (값 미기록 · 파일 " + $seen + "개)")
 }
 function Test-BrokerDenied($id, $item, $path, [switch]$Write) {
-    if (-not (Test-Path -LiteralPath (Split-Path $path -Parent) -ErrorAction SilentlyContinue) -and -not (Test-Path -LiteralPath $Broker)) {
-        Add-Result $id $item "BLOCKED" ("Broker 폴더 없음: " + $Broker); return
-    }
-    if ($Write) { Test-WriteDenied $id $item $path } else { Test-ReadDenied $id $item $path }
-    $last = $results[$results.Count - 1]
-    if ($last.status -eq "NA") { $last.status = "BLOCKED"; $last.evidence = "확인 대상 없음 (Broker 미설치?): " + $path }
+    # 존재 확인(Test-Path)을 먼저 하지 않는다: 접근이 막힌 계정에는 '없음' 으로 보여 거부를 미설치로 오판했다 (2026-11-10 실측).
+    # 바로 열어 본다 — 거부 = PASS · 열림 = FAIL · 없음 = BLOCKED (내용 변경 없음: 열었다가 바로 닫음)
+    $mode = $(if ($Write) { 'ReadWrite' } else { 'Read' })
+    try {
+        $fs = [IO.File]::Open($path, 'Open', $mode, 'ReadWrite'); $fs.Close()
+        Add-Result $id $item "FAIL" ($(if ($Write) { "쓰기 가능: " } else { "읽기 가능: " }) + $path)
+    } catch [UnauthorizedAccessException] { Add-Result $id $item "PASS" ("거부: " + $_.Exception.Message) }
+    catch [IO.FileNotFoundException] { Add-Result $id $item "BLOCKED" ("대상 없음 (Broker 미설치?): " + $path) }
+    catch [IO.DirectoryNotFoundException] { Add-Result $id $item "BLOCKED" ("Broker 폴더 없음: " + $path) }
+    catch { Add-Result $id $item "BLOCKED" ("확인 실패: " + $_.Exception.GetType().Name) }
 }
 $st = Join-Path $Kit ".claude\state"
 Test-NoTokenBytes "5" "kit orca.db 토큰 사본 (원시 바이트 · WAL 포함)" @("$st\orca.db", "$st\orca.db-wal")
