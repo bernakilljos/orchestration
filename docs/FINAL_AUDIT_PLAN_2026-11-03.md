@@ -1599,3 +1599,26 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 사고 기록: 해시 기록을 PowerShell `Get-Content`(인코딩 미지정 = cp949)로 고치다 이 문서 전체가 깨진 채 스테이징됨 → 커밋 전 발견 · HEAD 에서 복구 · 깨짐 문자 0 확인 (D22: 한글 파일은 인코딩 명시 · 편집 도구 사용).
 
 - **orca-agent 재검사 (14:12 · `stage1-isolation-20261110-141212.json` · 비밀값 0) [확인]**: PASS 22 · **FAIL 0** · BLOCKED 1 (C4) · NA 4 · 판정 PARTIAL. 5·5s(kit DB 토큰 0)·5r(Broker 설정 읽기 거부)·5w(Broker 승인 DB 쓰기 거부)·5g·5h(Broker 코드 쓰기 거부) 전부 PASS → **§66 FAIL 5 전부 해소**. 남은 것: C4 승인 없는 push 실측 · S6 Broker 자격 증명 · S8 독립 승인 채널 · 보안 출시 판정 FAIL 유지.
+
+
+## §70 Broker 분리 구성 전파·뒷정리 — `.claude/scripts/broker-setup.ps1` (2026-11-10 · 사용자 지시 "전파할 수 있게 · 뒷정리까지 · 창 닫아")
+
+**왜**: S2~S4 를 이 PC 에서 손으로 했기 때문에 다른 PC(RPA·OCR·노트북 3대)에 같은 구성을 만들 방법이 없었고, 제가 다른 계정으로 띄운 창이 스스로 닫히지 않아 사용자가 닫아야 했다(PID 34736 · orca-agent 계정 셸 잔류 · 일반 권한으론 종료 거부 [확인]).
+
+**전파 경로**: `.claude/scripts/` 는 merge-to-target.py TREES 에 포함·`state`·`logs` 제외 → 이 스크립트는 기존 전파로 따라가고 승인 DB·토큰 원본 보관본(Broker `.claude\state`·`archive`)은 가지 않는다 (STD-PROPAGATE-001).
+
+| 동작 | 내용 | 권한 |
+|---|---|---|
+| Plan | 상태 JSON + Install 할 일 (읽기 전용) | 일반 |
+| Install `-Apply` | 폴더·보호 ACL(SID)·Python 표준 라이브러리 사본·코드 4개·해시 목록·설정(원격 주소만, 인증정보 자동 제거) · 계정 없으면 `-CreateAccounts`(암호는 사용자가 입력 · Users 만) · 설정은 대상 고유면 보존(`-Force` 로 교체) · 끝나면 Verify | 관리자 |
+| Verify | 계정 비관리자 · ACL 신원·수준 · 코드=kit · 해시 목록 · 설정 인증정보 0 · Broker Python 동작 → PASS/FAIL JSON | 일반 |
+| RunAs `-As <계정> -Script <ps1> -Apply` | 운영자 전용 `stage\` 에 스크립트 배치 → runas 창(암호만 입력) → 결과는 그 계정이 쓸 수 있는 곳(Agent=inbox · Broker=outbox) → **창 스스로 닫힘(-NoExit 금지 · 5초 표시)** → 단계 파일 즉시 정리 · 잔류 셸 프로세스 보고 | 일반 |
+| Cleanup `-Apply` | 뒷정리: inbox·outbox·stage 의 run-·result-·probe·c4- 파일 + Agent/Broker 계정 잔류 프로세스 종료 | 관리자 |
+| Uninstall `-Apply` | 코드·Python·설정·요청 함 제거 · 운영 데이터는 `-PurgeData PURGE` 일 때만 · 계정은 `-RemoveAccounts` 일 때만 · 처리 안 된 요청 수 경고 | 관리자 |
+
+- 보안 전제: 어떤 계정도 Agent 가 쓸 수 있는 inbox 의 코드를 실행하지 않는다 → 실행 스크립트는 `stage\`(운영자 M · Agent RX) 에만. 변경 동작은 전부 `-Apply` 없으면 미리보기.
+- 이 PC 실측 [확인]: Verify = `stage` 폴더 없음 1건만 FAIL (나머지 ACL·해시·설정·Python PASS) · Cleanup 미리보기 = probe 2파일 · Uninstall 미리보기 = 데이터 보존 표시 · 파서 오류 0 · UTF-8 BOM.
+- ACL 검사기 역검증 [확인]: 임시 폴더에 위반 주입 → 쓰기 권한 과다·Users 추가·상속 보호 꺼짐·SYSTEM 누락 4/4 검출 · 정상 통과 · 시험 폴더 정리 확인.
+- 진행 중 발견·수정: ① PS 5.1 은 param 기본값 시점에 `$PSScriptRoot` 가 빔 ② 네이티브 인자 속 큰따옴표 제거(`print("ok")`→NameError) ③ `Set-Acl`+새 보안 객체는 SACL 까지 쓰려다 SeSecurityPrivilege 오류 → `SetAccessControl` 로 DACL 만 ④ 첫 역검증이 제 권한을 빼 시험 폴더가 남음 → 소유자 권한으로 복구 후 삭제.
+- 창 사고 원인 2: `C:\Windows\System32\powershell` (확장자 없는 0바이트 · 2026-04-08 생성 · 과거 출력 리다이렉트 찌꺼기 [추정]) 때문에 PowerShell 안에서 `powershell` 을 부르면 "앱을 선택해 여세요" 창이 뜸 → 항상 `powershell.exe` 로 호출 · 파일 삭제는 시스템 변경이라 사용자 승인 대상.
+- 남은 것 (승인 대상): 이 PC `Install -Apply`(stage 폴더 추가) · `Cleanup -Apply`(PID 34736 종료·probe 2파일) — 둘 다 관리자 창 1회.
