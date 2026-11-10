@@ -1544,3 +1544,16 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - Broker 콘솔 승인(`describe` → 커밋 앞 8자리)은 **독립 사용자 승인의 증명이 아니다** (사용자 지적 2026-11-10) — 같은 PC 의 Broker 계정 세션 입력일 뿐 승인 주체·채널이 분리되지 않는다. 오입력 방지 장치로만 쓰고, 출시 조건 "독립 채널 실제 승인 후 1회 실행"(§53-7)은 S8(보호된 별도 승인 주체·채널) 실측 전까지 미충족.
 - 검사 스크립트 신뢰 기준 [확인 2026-11-10]: 디스크 SHA256 = HEAD 커밋본 = 4db520c 커밋본 = `CF3A642F…D48C` · 작업 트리 변경 0. 단 4db520c 는 원격에 없는 로컬 커밋이고 kit·`.git` 이 Authenticated Users 수정 가능 → orca-agent 가 한 번이라도 실행된 뒤에는 git 도 신뢰 근거가 아니다. 지금(orca-agent 미실행 상태) 값을 kit 밖에 따로 적어 두고 그 값과 대조한다.
 - `appr-5bbb3aa035ac` [확인]: 대기 4시간(24시간 유효) · 등록된 명령 = 작업 기억 기록(manual-add) + `Remove-Item -Recurse` 가 한 명령으로 묶임 → 승인 후 재실행하면 작업 기억 9번이 중복 기록됨. 삭제만 원하면 이 요청은 거절하고 삭제 명령만 새로 요청하는 것이 맞다.
+
+## §66 Stage 1 실측 결과 — orca-agent (2026-11-10 13:34 · 사용자 실행 · 결과 `.claude/state/stage1/stage1-isolation-20261110-133433.json`)
+
+검사 파일 해시 일치 확인 후 실행 (사용자) · 결과 파일 비밀형 값 0 [확인] · 판정 **FAIL** (PASS 16 · FAIL 5 · BLOCKED 1 · NA 4).
+| 구분 | 결과 [확인] |
+|---|---|
+| 비관리자·무결성 | C1a Administrators 비구성원 · C1b Medium → PASS |
+| ja205 인증정보 차단 | 자격 증명 관리자 GitHub 0 · HKCU/프로세스 토큰 변수 없음 · `.claude.json`·transcript·prompt history·`.gitconfig`·`.config\git` **Access is denied** → PASS |
+| 직접·간접 인증 경로 | `git credential fill` 반환 없음 · 인증 환경 변수 0 · include·askPass·sshCommand·insteadOf 0 · 원격 URL 내장 0 (원격 2줄 실제 확인 = §62 수정 효과) · 개인키·ssh-agent 키 0 → PASS |
+| NA 4 | `.git-credentials`·`.ssh`·GitHub CLI 설정은 ja205 에도 없음 (ja205 에서 확인) · gh 미설치 — 정상 |
+| **FAIL 5** | 5 `orca.db` 읽기 · 5s `sessions.db` 읽기 (토큰 사본) · 5w `orca.db` 쓰기 (자기 승인) · 5g `approval-gate.py` 쓰기 · 5h `approval_gate_detect.py` 쓰기 — 모두 kit 상속 권한 (§62-1) · 예상과 일치 |
+| BLOCKED | C4 승인 없는 push 실측 (승인된 시험 저장소 필요) |
+- 결론: **원격 쓰기 자격 증명 격리는 성립** (orca-agent 는 ja205 인증정보에 닿지 못하고 자기 자격 증명도 없음 → 문자열 우회로 push 해도 인증 불가 [추정 · C4 실측 전]). **승인 저장소·승인 코드·토큰 사본 격리는 불성립** (FAIL 5 전부 kit 안) → S3(보호 폴더)·S4(DB 3분할·보관본 이동) 범위 = 바로 이 5개 경로 + §63-1 토큰 사본 6파일.
