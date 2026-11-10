@@ -1644,3 +1644,15 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 범위 판단: 이번 전파 136건 중 `.pytest_cache` 는 "공통 개발 기능만 전파" 범위 밖 → 지시대로 **추가 전파 중단 · 롤백 안 함**. 복구 방법(미실행): 대상 `.claude/scripts/.pytest_cache` 는 캐시라 삭제해도 pytest 가 재생성 · IFRS 고유 캐시 원본은 `.claude/backups/kit-merge-20261110-145839/` 에 보존.
 - 남은 것 [미확인/미실행]: 수정본의 IFRS·ICMAI 전파 (사용자 결정 후) · 전역 `~/.claude/commands` 5개는 §71 사본 그대로 · 다른 노트북 실기 설치 · 실행 중인 다른 Claude 세션의 명령 재로드(파일 변경 시 Claude Code 가 목록을 다시 읽음을 이 세션에서만 관찰).
 - 새 설치 참고 [확인]: 표 없는 빈 orca.db 에서 `/approvals` = `no such table: tasks` · 정상 설치는 SessionStart `ensure-state.sh` 가 먼저 표를 만들어 발생 안 함.
+
+
+## §73 IFRS·ICMAI 제한 전파 + 대상 실측 (2026-11-10 · 기준 db23c91 → 07ba636)
+
+- 사용자 승인 범위: IFRS_PJT·ICMAI_PJT 에 이번 수정 공통 기능만 제한 전파 (다른 솔루션·전역 설정·push·관리자·인증정보·Broker·운영 DB 제외).
+- 도구 [확인]: 새 배포 엔진 없이 기존 `merge-to-target` 에 `--only <경로>` 추가 (07ba636) — 지정 파일만 같은 판정(옛 kit 사본=교체·백업 · 대상 수정본=보류 rc=1) · settings·.mcp.json·메모리·CLAUDE.md·guide.txt·대상 목록 등록 불변 · 파일별 판정·해시 출력 · 시험 1개.
+- 적용 전 [확인]: 미리보기 10파일 × 2 대상 전부 stale-kit (대상 = 7a04c06 kit 버전과 동일 · 충돌·대상 수정본 0) · 보호 대상 해시 스냅샷 IFRS 352·ICMAI 150 항목 (settings·CLAUDE.md·guide·.mcp·state 전부(manifest 제외)·프로젝트 메모리).
+- 적용 [확인]: 두 대상 각 10파일 (plugins/exec_orch/commands/{approve,approvals,reject}.md · plugins/mcp_image/commands/{image-cache,image-generate}.md · .claude/commands 동명 5) · kit 일치 10/10 · 보호 대상 해시 전후 동일 · 대상 orca.db 해시 전후 동일 · 백업 kit-merge-20261110-163523 / -163524 각 10개 (캐시·비밀 0).
+- 동작 [확인]: 대상 실제 명령 줄로 30/30 (루트 실제 /approvals 조회 2건씩 · 5명령 백업 안 → 진짜 루트 · 프로젝트 밖 → 차단 · Worktree → 자기 Worktree · 공백·한글·Git 없음 · 격리 DB) + 매트릭스 100/100 (kit·대상 × 5명령 × 5조건) · 실제 승인·거절·push 0 · kit 대기 49 → 49.
+- 대상 시험 [확인]: 대상 안 test_phase20_v10_safety.py — 전파 전 사본(명령 10개 백업으로 되돌림) 9 실패/86 통과 = 전파 후 9/86 · 신규 실패 0 (9건은 대상에 없는 setup/·시험 저장소 등 요구 = 기존 실패).
+- kit 전체 pytest 399 기준 유지 (§72) · 이번 게이트는 영향 시험 부분 실행 132 통과 · 신규 실패 0.
+- 남은 차이 [확인/미확인]: ① 전역 `~/.claude/commands` 5개는 지시대로 미변경(§71 사본 · 백업 제외 없음) — 공식 문서상 skills 는 개인(~/.claude) 이 프로젝트보다 우선, commands 끼리는 문서에 없음 · 이 세션 1b759d4 후 오류가 전역 4월 사본 형태였던 점은 개인 우선을 시사 [추정] → 새 세션에서 전역 사본이 실행되면: 프로젝트 루트에서는 정상(대상 자신의 승인 프로그램 · 실측) · 현재 폴더가 백업 안일 때만 옛 프로그램 ② 새 Claude 세션 실제 실행은 모델 호출이 필요해 미실행 [미확인] ③ 시험용 임시 사본(scratchpad · 대상 state 복사 포함 96MB) 삭제는 승인 게이트 대기 appr-dd90f16bca9e ④ CLAUDE_PROJECT_DIR=<proj>/.claude · 빈 DB /approvals 는 별도 개선 대상(이번 범위 밖).
