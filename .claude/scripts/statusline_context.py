@@ -244,7 +244,8 @@ def recent_log_issues(cwd: str):
     cutoff = _t.time() - 86400
     ts_re = _re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
     crit_re = _re.compile(r"\b(CRITICAL|FATAL)\b", _re.I)
-    err_re = _re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", _re.I)
+    err_re = _re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])",
+                         _re.I)   # 끝 경계 (surface_log_errors 와 같은 판정 · 파일 이름 errors/error_* 오탐 방지)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
     # 반복 집계용 — 메시지의 「동사+대상」 부분만 뽑는다 (경로·숫자 제외)
     msg_key_re = _re.compile(r"[\w\-.]+\.(sh|py|bat|js|ts)[^:]*(?::\s*(.{0,40}))?", _re.I)

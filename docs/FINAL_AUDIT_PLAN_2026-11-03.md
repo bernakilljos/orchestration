@@ -1513,3 +1513,31 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | 네트워크 없음 | 요청은 쌓이고 Broker 승인 후에도 연결될 때까지 실행 보류 (승인 유효 30분 · 지나면 만료 · 새 요청) · 원격 불변 |
 - 전파 대상: `lib/broker.py`·`lib/redact.py` (코드) 만. Broker 폴더·Broker DB·Broker 자격 증명·요청 함 설정·승인 기록·Ledger·대화 기록은 전파하지 않는다 (기존 merge-to-target 규칙으로 확인).
 - 중앙 Broker 연결(다른 PC 의 Broker) 은 요청 함을 공유 폴더로 두면 같은 구조로 가능하나 네트워크 공유 ACL·인증이 새로 필요 → 설계만 · 미구현.
+
+## §65 S5 안정화 (종료 복구·수명 관리·메모리·배치 점검) + S1~S4·S6~S8 적용 절차 (2026-11-10 · 기준 a48cc67 · 계정·ACL·DB·인증 변경 0 · push 0)
+
+**1. 구현 [확인 · 시험]**
+| 항목 | 동작 | 시험 |
+|---|---|---|
+| 승인 소비 직후 종료 복구 | push 직전에 `broker_push.before`(원격 상태) 기록 → 다음 실행(잠금 안)에서 `consumed` 행을 원격과 대조: 승인 커밋 포함 → 성공 확정 `pushed_recovered` · push 전 기록과 같음/기록 없음 → 미실행 확정 `not_pushed_recovered`(실패) · 연결 불가·다른 커밋 → `needs_review` 로 남김. **어떤 경우에도 다시 push 하지 않음** | push 후 중단·push 전 중단·복구 시 원격 불가(→증거 회복 후 확정)·그사이 다른 커밋 4개 PASS |
+| 수명 관리 `gc` | 실행·거부·만료 후 7일 지난 요청의 미러 ref · 원격 캐시 ref · 1시간 지난 작업 사본 정리 → `git gc` · 하루 1회 · `process` 끝에 자동 | 대기 요청 ref 유지 · 승인 DB 행 수 불변 · 처리 기록(번호 재사용 방지) 유지 PASS |
+| 메모리 (기존 `repair_sandbox.commit_memory` 재사용) | 80% 이상: 한 번 처리 5건 · gc 미룸 / 90% 이상: 새 요청 접수 보류(요청 함 그대로) · 측정 불가는 막지 않음 | 85% gc 미룸 · 93% 접수 보류 후 회복 시 처리 PASS |
+| 배치 점검 `preflight` (검토 S6 코드화) | Broker 가 신뢰하는 코드(`approval-gate.py`·`lib`·`broker.py`·`state_db`·`repair_sandbox`)·설정·DB 경로에 신뢰 밖 계정(SYSTEM·Administrators·Broker 본인·설정의 `trusted_accounts` 외) 쓰기 권한이 있거나 조회 실패면 `process`·`approve` 거부 | 임시 파일 실 ACL: 본인만 → 안전 · Users 수정 추가 → 위험 · 없는 파일 → 안전으로 안 셈 PASS |
+- 실측 [확인]: kit 에서 `preflight` = **거부** (위험 경로 8 · Authenticated Users·CodexSandboxUsers·샌드박스 SID 쓰기). 즉 Agent 가 수정 가능한 kit 코드로는 Broker 가 돌지 않는다. 시험은 `ORCA_BROKER_DEV=1` 로만 우회 (Broker 계정 환경에는 두지 않음).
+- 이번에 고친 거짓 안전 [확인]: ACL 조회가 실패하면 빈 목록 = "쓰기 계정 없음" 으로 읽혔다 (PowerShell `-Command` 뒤 인자는 `$args` 로 안 들어감) → 조회 실패·결과 없음은 확인 불가로.
+- 시험: `test_broker.py` 26개 (§64 16 + 종료 복구 4 · gc 1 · gc 뒤 번호 재사용 1 · 예상 못 한 예외 격리 1 · 메모리 1 · ACL 2). 역검증: 방어를 하나씩 뺀 변형 13개 → 처음 실행에서 3개(번호 재사용 처리 기록·건별 예외 격리·ACL 조회 실패)를 놓쳐 시험 3개를 보강 → **13/13 검출**.
+- 로그 오류 오탐 수정: 정리 기록의 파일 이름 `errors/error_*.log` 가 ERROR 로 세어졌다 (`surface_log_errors` · 상태줄 같은 판정) → 끝 경계 · FAILED·FAILURE 유지 · 9사례 오판 0.
+
+**2. 적용 절차 (승인 후 · 명령은 제안 · 이번에 실행 안 함)**
+실측 전제 [확인]: `orca-broker` 계정 없음 · `C:\ProgramData` = Users 가 하위 폴더에 파일·폴더 생성 가능 (`(CI)(WD,AD)`) → 만든 직후 상속 끊기 필수 · Python 은 ja205 프로필에만 있음 → **Broker 용 컴퓨터 전체 Python (Program Files) 이 선행 조건** · git = Program Files · 작업 스케줄러 동작.
+| 단계 | 작업 (관리자 PowerShell) | 확인 | 복구 |
+|---|---|---|---|
+| S1 | orca-agent 로그인 → 개발 도구(Python·Claude Code) 프로필에 설치 → Stage 1 검사 | 검사 JSON (예상 FAIL 목록) | 프로필 정리 |
+| S2 | Python 컴퓨터 전체 설치 (Program Files) · `New-LocalUser orca-broker -NoPassword` 대신 강한 암호 + `Users` 그룹만 · 로컬 보안 정책 "로컬 로그온 거부"·"원격 데스크톱 로그온 거부" 에 추가 | `Get-LocalGroupMember Administrators` 에 없음 | `Remove-LocalUser orca-broker` |
+| S3 | `C:\ProgramData\orca-broker` 생성 → `icacls <폴더> /save acl-before.txt` → `icacls <폴더> /inheritance:r /grant:r SYSTEM:(OI)(CI)F Administrators:(OI)(CI)F orca-broker:(OI)(CI)M` → kit 의 `approval-gate.py`·`lib\`(broker·state_db·repair_sandbox·redact) 해시 고정 사본 복사 · 요청 함 `C:\ProgramData\orca-broker-io\inbox` = 상속 끊고 orca-broker M · orca-agent 쓰기(파일 생성)만 · outbox = orca-agent 읽기만 | orca-broker 로 `broker.py preflight` → ok=True · orca-agent 로 Broker 폴더 읽기·쓰기 거부 | 폴더 삭제 · `icacls /restore` |
+| S4 | §63-4 3분할 실제 전환 (백업 → Broker DB 를 Broker 폴더로 · 원본 보관본은 ja205·Broker 전용 · Agent 쪽은 가린 사본) | 승인 50행·해시·무결성 · Agent 쪽 토큰 형태 0 | 경로 되돌림 (원본 미삭제) |
+| S6 | orca-broker 로 로그인 1회 → GitHub 쓰기 자격 증명을 그 계정 자격 증명 관리자에만 등록 (Agent·ja205 와 분리) · `broker-config.json` 에 저장소·허용 브랜치·원격 주소 | orca-agent 에서 `git credential fill` 반환 없음 (Stage 1 8번) | 자격 증명 삭제 |
+| S7 | (보조) kit 보호 경로 ACL (§62-4 A-2) | preflight 와 무관 · 실수 방지 | `icacls /restore` |
+| S8 | 대역 외 승인 채널 (§53-2) — 그 전까지 승인은 Broker 콘솔(`describe` → `approve <id> <커밋 앞 8자리>`) | 실제 승인 1회 → 1회 실행 · 재사용 거부 | 채널 해제 |
+| 주기 실행 | 작업 스케줄러: orca-broker 로 `"C:\Program Files\Python314\python.exe" -I C:\ProgramData\orca-broker\lib\broker.py process C:\ProgramData\orca-broker` 5분마다 | 실행 기록 · 잠금 | 작업 삭제 |
+- 각 단계 완료 판정 = `preflight` ok + Stage 1 검사 + 이 표의 확인 항목 실측. Mock·시험 PASS 로 대신하지 않는다.

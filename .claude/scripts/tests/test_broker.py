@@ -39,6 +39,7 @@ def remote_tip(remote):
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("ORCHESTRATION_ROOT", str(tmp_path / "unused"))   # 시험 뒤 원래 값으로 복원
     monkeypatch.delenv("ORCA_BROKER_INBOX", raising=False)
+    monkeypatch.setenv("ORCA_BROKER_DEV", "1")        # 시험 코드는 kit(Authenticated Users 수정 가능)에서 돈다 — 사전 점검은 별도 시험
     remote = tmp_path / "remote.git"
     git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remote))
     agent = tmp_path / "agent"
@@ -55,6 +56,7 @@ def env(tmp_path, monkeypatch):
     (broker / "broker-config.json").write_text(json.dumps(
         {"inbox": str(inbox), "repos": {"kit": {"remote_url": str(remote), "branches": ["main"]}}}), encoding="utf-8")
     b = _load()
+    b._memory_pct = lambda: 50                          # 메모리 판정 고정 (메모리 시험은 따로 값 지정)
     return {"b": b, "remote": remote, "agent": agent, "inbox": inbox, "broker": broker, "tmp": tmp_path}
 
 
@@ -317,6 +319,193 @@ def test_concurrent_process_locked(env):
     assert len(list(env["inbox"].glob("*.json"))) == 1                      # 요청 그대로
     (env["broker"] / "process.lock").unlink()
     assert b.process(env["broker"])[0]["result"] == "waiting"
+
+
+def _approved_waiting(env, name):
+    b = env["b"]
+    sha = _commit(env["agent"], name, name)
+    b.submit_push(env["agent"], "kit", "main", env["inbox"])
+    tid = b.process(env["broker"])[0]["task_id"]
+    _ok(b, env, tid)
+    return sha, tid
+
+
+def _crash(b, after_push: bool):
+    real = b._push
+
+    def boom(*a, **k):
+        if after_push:
+            real(*a, **k)
+        raise KeyboardInterrupt("broker killed")       # Exception 이 아니라 프로세스 중단처럼 빠져나감
+    b._push = boom
+    with pytest.raises(KeyboardInterrupt):
+        b.process(b._env_root)
+    b._push = real
+
+
+def test_crash_after_push_recovered_from_remote_without_repush(env):
+    b = env["b"]
+    b._env_root = env["broker"]
+    sha, tid = _approved_waiting(env, "r1.txt")
+    _crash(b, after_push=True)
+    assert b.status(env["broker"], tid)["approval_state"] == "consumed"            # 결과 미기록 상태 재현
+    assert not (env["broker"] / "process.lock").exists()                          # 잠금은 풀림
+    log = b.process(env["broker"])
+    assert [x["result"] for x in log] == ["recovered_pushed"] and remote_tip(env["remote"]) == sha
+    st = b.status(env["broker"], tid)
+    assert st["approval_state"] == "executed" and st["risk_detail"]["result"]["code"] == "pushed_recovered"
+    assert b.process(env["broker"]) == []
+
+
+def test_crash_before_push_recovered_as_not_pushed_no_retry(env):
+    b = env["b"]
+    b._env_root = env["broker"]
+    before = remote_tip(env["remote"])
+    sha, tid = _approved_waiting(env, "r2.txt")
+    _crash(b, after_push=False)
+    log = b.process(env["broker"])
+    assert [x["result"] for x in log] == ["recovered_not_pushed"] and remote_tip(env["remote"]) == before
+    st = b.status(env["broker"], tid)
+    assert st["approval_state"] == "executed" and st["status"] == "failed"         # 실패로 기록 · 성공으로 안 셈
+    assert b.process(env["broker"]) == [] and remote_tip(env["remote"]) == before  # 같은 승인으로 재시도 없음
+
+
+def test_crash_ambiguous_stays_consumed_for_review(env):
+    b = env["b"]
+    b._env_root = env["broker"]
+    sha, tid = _approved_waiting(env, "r3.txt")
+    _crash(b, after_push=True)
+    p = env["broker"] / "broker-config.json"
+    good = p.read_text(encoding="utf-8")
+    cfg = json.loads(good)
+    cfg["repos"]["kit"]["remote_url"] = str(env["tmp"] / "offline.git")
+    p.write_text(json.dumps(cfg), encoding="utf-8")
+    log = b.process(env["broker"])                                                 # 원격 확인 불가 = 모호
+    assert log[0]["result"] == "needs_review" and log[0]["reason"] == "remote_unreachable"
+    assert b.status(env["broker"], tid)["approval_state"] == "consumed"
+    p.write_text(good, encoding="utf-8")                                           # 증거가 다시 보이면 확정
+    assert b.process(env["broker"])[0]["result"] == "recovered_pushed"
+
+
+def test_crash_then_remote_moved_by_other_needs_review(env):
+    b = env["b"]
+    b._env_root = env["broker"]
+    sha, tid = _approved_waiting(env, "r4.txt")
+    _crash(b, after_push=False)
+    other = env["tmp"] / "o2"
+    git(env["tmp"], "clone", "-q", str(env["remote"]), str(other))
+    _commit(other, "zz.txt", "zz")
+    git(other, "push", "-q", "origin", "main")                                     # 다른 커밋이 올라감
+    log = b.process(env["broker"])
+    assert log[0]["result"] == "needs_review" and log[0]["reason"] == "remote_changed_other"
+    assert b.status(env["broker"], tid)["approval_state"] == "consumed"            # 자동 판정·재시도 안 함
+
+
+def test_gc_removes_only_finished_broker_temp_data(env):
+    b = env["b"]
+    sha, tid_done = _approved_waiting(env, "g1.txt")
+    b.process(env["broker"])                                                       # 실행 완료
+    _commit(env["agent"], "g2.txt", "g2")
+    b.submit_push(env["agent"], "kit", "main", env["inbox"])
+    tid_wait = b.process(env["broker"])[0]["task_id"]                              # 대기 (오래돼도 지우면 안 됨)
+    old = int(time.time()) - 9 * 86400
+    with _db(env) as c:
+        c.execute("UPDATE tasks SET created_at=?, approved_at=?, completed_at=?", (old, old, old))
+        n_rows = c.execute("SELECT count(*) FROM tasks").fetchone()[0]
+    stray = env["broker"] / "work" / "req-00000000000000ff.bundle"
+    stray.write_bytes(b"x")
+    os.utime(stray, (old, old))
+    mirror = env["broker"] / "mirror" / "kit.git"
+    refs = lambda: set(subprocess.run(["git", "--git-dir", str(mirror), "for-each-ref", "--format=%(refname)",
+                                       "refs/incoming/"], capture_output=True, text=True).stdout.split())
+    assert len(refs()) == 2
+    b._memory_pct = lambda: 85
+    assert b.gc(env["broker"], force=True) == {"ran": False, "reason": "memory 85%"}   # 80% 이상 = 미룸
+    b._memory_pct = lambda: 50
+    g = b.gc(env["broker"], force=True)
+    assert g["ran"] and g["removed_refs"] == 1 and g["removed_work"] == 1
+    st_wait = b.status(env["broker"], tid_wait)
+    left = refs()
+    assert len(left) == 1 and any(st_wait["risk_detail"]["detail"].count(r.rsplit("/", 1)[-1]) for r in left)
+    with _db(env) as c:
+        assert c.execute("SELECT count(*) FROM tasks").fetchone()[0] == n_rows      # 승인 기록은 그대로
+    assert len(list((env["broker"] / "processed").glob("*.json"))) == 2             # 번호 재사용 방지 기록 유지
+    assert remote_tip(env["remote"]) == sha
+
+
+def test_reused_id_rejected_even_after_gc_removed_ref(env):
+    """gc 가 끝난 요청의 미러 ref 를 지운 뒤에도 같은 번호는 처리 기록으로 거부 (번호 재사용 방지 1차 근거)."""
+    b = env["b"]
+    sha, tid = _approved_waiting(env, "q1.txt")
+    b.process(env["broker"])
+    rid = b.status(env["broker"], tid)["risk_detail"]["detail"].split('"request_id": "')[1][:20]
+    old = int(time.time()) - 9 * 86400
+    with _db(env) as c:
+        c.execute("UPDATE tasks SET created_at=?, approved_at=?, completed_at=?", (old, old, old))
+    assert b.gc(env["broker"], force=True)["removed_refs"] == 1
+    shutil.copy(env["broker"] / "processed" / f"{rid}.json", env["inbox"] / f"{rid}.json")
+    git(env["agent"], "bundle", "create", str(env["inbox"] / f"{rid}.bundle"), "HEAD")
+    log = b.process(env["broker"])
+    assert log[0]["result"] == "rejected" and log[0]["code"] == "reused_id"
+
+
+def test_unexpected_error_in_one_request_isolated(env, monkeypatch):
+    """예상 못 한 예외(파일 경합 등)도 그 건만 실패 · 다른 요청과 승인 실행은 계속."""
+    b = env["b"]
+    real = b._regular_file
+    bad = env["inbox"] / "req-00000000000000cc.json"
+    bad.write_text("{}", encoding="utf-8")
+
+    def flaky(p, limit):
+        if Path(p) == bad:
+            raise PermissionError("locked by another process")
+        return real(p, limit)
+    monkeypatch.setattr(b, "_regular_file", flaky)
+    sha = _commit(env["agent"], "q2.txt", "q2")
+    b.submit_push(env["agent"], "kit", "main", env["inbox"])
+    log = b.process(env["broker"])
+    assert {x["result"] for x in log} - {"gc"} == {"error", "waiting"}          # gc = 하루 첫 실행 정리 기록
+
+
+def test_acl_query_failure_is_not_safe(env, monkeypatch):
+    b = env["b"]
+    monkeypatch.setattr(b, "_run", lambda *a, **k: subprocess.CompletedProcess(a, 1, "", "boom"))
+    r = b.acl_writers([env["broker"]])
+    assert r["verified"] is False
+    monkeypatch.setattr(b, "acl_writers", lambda *a, **k: {"verified": False, "unsafe": {}})
+    assert b.preflight(env["broker"])["ok"] is False                                # 확인 불가 = 실행 거부
+
+
+def test_memory_90_defers_intake_keeps_inbox(env):
+    b = env["b"]
+    _commit(env["agent"], "mm.txt", "m")
+    b.submit_push(env["agent"], "kit", "main", env["inbox"])
+    b._memory_pct = lambda: 93
+    log = b.process(env["broker"])
+    assert log[0]["result"] == "deferred" and len(list(env["inbox"].glob("*.json"))) == 1
+    b._memory_pct = lambda: 50
+    assert b.process(env["broker"])[0]["result"] == "waiting"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL")
+def test_preflight_detects_other_account_write_and_refuses(env, tmp_path, monkeypatch):
+    b = env["b"]
+    f = tmp_path / "acl-probe.txt"
+    f.write_text("x")
+    inherited = b.acl_writers([f])                                                 # 임시 폴더 상속 그대로 (실측: 샌드박스 그룹 M)
+    assert inherited["verified"]
+    me = b.acl_writers([f])["broker_sid"]
+    subprocess.run(["icacls", str(f), "/inheritance:r", "/grant:r", f"*{me}:(F)", "*S-1-5-18:(F)"],
+                   capture_output=True)                                            # 시험 파일에만: 본인·SYSTEM 만
+    assert b.acl_writers([f]) == {"verified": True, "unsafe": {}, "broker_sid": me}
+    subprocess.run(["icacls", str(f), "/grant", "*S-1-5-32-545:(M)"], capture_output=True)   # Users 수정 추가
+    r = b.acl_writers([f])
+    assert r["verified"] and "S-1-5-32-545" in r["unsafe"].get(str(f), [])
+    assert b.acl_writers([tmp_path / "없는파일.txt"])["unsafe"]                       # 결과 없음 = 안전으로 안 셈
+    monkeypatch.delenv("ORCA_BROKER_DEV")
+    monkeypatch.setattr(b, "preflight", lambda root: {"ok": False, "verified": True, "unsafe": {"x": ["S-1-5-11"]}})
+    assert b.process(env["broker"])[0]["result"] == "refused"                      # 안전하지 않으면 처리 0
+    assert "error" in b.approve(env["broker"], "appr-x", "deadbeef")
 
 
 def test_propagation_copies_client_code_but_not_broker_state(tmp_path):

@@ -20,6 +20,7 @@ usage (Agent):  broker.py submit <repo_dir> <repo_id> <branch> [--inbox <dir>]
                 broker.py client-status <request_id> [--inbox <dir>]
       (Broker): broker.py process <broker_root> | describe <broker_root> <task_id>
                 | approve <broker_root> <task_id> <커밋 앞 8자리> | status <broker_root> <task_id>
+                | preflight <broker_root> (코드·설정·DB 를 다른 계정이 쓸 수 있는지) | gc <broker_root>
 """
 from __future__ import annotations
 
@@ -318,9 +319,97 @@ def _lock(broker_root: Path):
         return None
 
 
+# ── 배치 사전 점검 (검토 S6 · 2026-11-10) ───────────────────────────────────
+_TRUSTED_SIDS = {"S-1-5-18", "S-1-5-32-544", "S-1-3-0", "S-1-3-1",      # SYSTEM · Administrators · CREATOR OWNER/GROUP
+                 "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"}   # TrustedInstaller
+_WRITE_MASK = 0x2 | 0x4 | 0x40 | 0x10000 | 0x40000 | 0x80000 | 0x40000000 | 0x10000000
+_ACL_PS = r"""$ErrorActionPreference='Stop'; $out=@()
+foreach($p in ($env:ORCA_ACL_PATHS -split "`n")){ if(-not $p){continue}; try { $a=Get-Acl -LiteralPath $p
+  foreach($e in $a.Access){ if($e.AccessControlType -ne 'Allow'){continue}
+    try{$sid=$e.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value}catch{$sid=[string]$e.IdentityReference}
+    $out+=[pscustomobject]@{path=$p;sid=$sid;rights=[int64]$e.FileSystemRights} } }
+  catch { $out+=[pscustomobject]@{path=$p;sid='?';rights=-1} } }
+[Console]::OutputEncoding=[Text.Encoding]::UTF8; ConvertTo-Json -InputObject @($out) -Compress"""
+
+
+def acl_writers(paths, trusted=()) -> dict:
+    """경로별로 '쓰기 가능한 신뢰 밖 계정 SID' 목록. Windows 외·조회 실패 = verified False (안전으로 세지 않음)."""
+    if os.name != "nt":
+        return {"verified": False, "reason": "Windows 아님 — ACL 확인 불가", "unsafe": {}}
+    ps = shutil.which("powershell.exe") or shutil.which("powershell")
+    me = _run(["whoami", "/user", "/fo", "csv", "/nh"]).stdout.strip().split(",")[-1].strip('"')
+    allow = _TRUSTED_SIDS | {me} | set(trusted)
+    paths = [str(p) for p in paths]
+    env = {**os.environ, "ORCA_ACL_PATHS": "\n".join(paths)}      # 명령줄 인자는 -Command 에서 $args 로 안 들어간다
+    r = _run([ps, "-NoProfile", "-NonInteractive", "-Command", _ACL_PS], env=env, timeout=60)
+    try:
+        rows = json.loads(r.stdout) if r.returncode == 0 and r.stdout.strip() else None
+    except ValueError:
+        rows = None
+    if rows is None:            # 조회 실패를 '쓰기 가능한 계정 없음' 으로 읽으면 거짓 안전 (2026-11-10 실측)
+        return {"verified": False, "reason": "ACL 조회 실패", "unsafe": {}}
+    unsafe: dict = {}
+    seen = {x.get("path") for x in rows}
+    for p in paths:
+        if p not in seen:
+            unsafe.setdefault(p, []).append("조회 결과 없음")
+    for x in rows:
+        if x.get("rights") == -1 or x.get("sid") == "?":
+            unsafe.setdefault(x["path"], []).append("조회 실패")
+        elif x["sid"] not in allow and int(x["rights"]) & _WRITE_MASK:
+            unsafe.setdefault(x["path"], []).append(x["sid"])
+    return {"verified": True, "unsafe": unsafe, "broker_sid": me}
+
+
+def preflight(broker_root) -> dict:
+    """Broker 가 신뢰하는 코드·설정·DB 를 Agent(신뢰 밖 계정)가 쓸 수 있으면 실행하지 않는다."""
+    broker_root = Path(broker_root)
+    try:
+        trusted = [_sid_of(n) for n in (_config(broker_root).get("trusted_accounts") or [])]
+    except (OSError, ValueError):
+        trusted = []
+    paths = [SCRIPTS, SCRIPTS / "approval-gate.py", SCRIPTS / "lib", Path(__file__).resolve(),
+             SCRIPTS / "lib" / "state_db.py", SCRIPTS / "lib" / "repair_sandbox.py", broker_root,
+             broker_root / "broker-config.json", broker_root / ".claude" / "state"]
+    res = acl_writers([p for p in paths if p.exists()], [t for t in trusted if t])
+    res["ok"] = bool(res["verified"] and not res["unsafe"])
+    return res
+
+
+def _sid_of(name: str) -> str:
+    r = _run(["powershell", "-NoProfile", "-Command",
+              f"(New-Object Security.Principal.NTAccount('{name}')).Translate([Security.Principal.SecurityIdentifier]).Value"])
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _guard(broker_root: Path):
+    """실행 전 점검 — 개발·시험 전용 우회 ORCA_BROKER_DEV=1 (Broker 계정 환경에는 두지 않는다)."""
+    if os.environ.get("ORCA_BROKER_DEV") == "1":
+        return None
+    pf = preflight(broker_root)
+    if not pf["ok"]:
+        return {"result": "refused", "reason": "Broker 코드·설정·DB 를 다른 계정이 쓸 수 있음 — 보호 폴더 사본으로 실행",
+                "unsafe": pf["unsafe"], "verified": pf["verified"]}
+    return None
+
+
+# ── 메모리 (STD-MEMORY-001 · 기존 repair_sandbox.commit_memory 재사용) ──────────
+def _memory_pct():
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import repair_sandbox
+        cm = repair_sandbox.commit_memory() or {}
+        return cm.get("percent") if cm.get("measured") else None
+    except Exception:  # noqa: BLE001 — 측정 불가는 막지 않는다
+        return None
+
+
 def process(broker_root) -> list:
     """요청 함을 한 번 처리하고, Broker 채널로 승인된 요청을 실행한다. 반환 = 처리 기록."""
     broker_root = Path(broker_root)
+    refused = _guard(broker_root)
+    if refused:
+        return [refused]
     lock = _lock(broker_root)
     if not lock:
         return [{"result": "locked", "reason": "다른 Broker 처리가 실행 중"}]
@@ -329,7 +418,15 @@ def process(broker_root) -> list:
         gate = _gate(broker_root)
         git = _Git(broker_root)
         log: list = []
-        for src in sorted(Path(cfg["inbox"]).glob("*.json"))[:MAX_PER_RUN]:
+        try:
+            log.extend(_recover(broker_root, cfg, gate, git))      # 지난 실행이 소비 직후 죽었으면 결과 확정
+        except Exception as e:  # noqa: BLE001
+            log.append({"result": "error", "reason": "recover:" + type(e).__name__})
+        pct = _memory_pct()
+        cap = MAX_PER_RUN if pct is None or pct < 80 else (5 if pct < 90 else 0)
+        if cap == 0:
+            log.append({"result": "deferred", "reason": f"메모리 {pct}% ≥ 90% — 새 요청 접수 보류 (요청 함에 그대로)"})
+        for src in sorted(Path(cfg["inbox"]).glob("*.json"))[:cap]:
             try:
                 _intake(broker_root, cfg, gate, git, src, log)
             except Exception as e:  # noqa: BLE001 — 한 건이 실패해도 나머지·승인 실행은 계속
@@ -338,12 +435,141 @@ def process(broker_root) -> list:
             log.extend(_execute_approved(broker_root, cfg, gate, git))
         except Exception as e:  # noqa: BLE001
             log.append({"result": "error", "reason": "execute:" + type(e).__name__})
+        try:
+            g = gc(broker_root, gate, git, pct)
+            if g.get("ran"):
+                log.append({"result": "gc", **g})
+        except Exception as e:  # noqa: BLE001
+            log.append({"result": "error", "reason": "gc:" + type(e).__name__})
         return log
     finally:
         try:
             lock.unlink()
         except OSError:
             pass
+
+
+# ── 소비 직후 종료 복구 (원격 대조 · 모호하면 재실행 없음) ─────────────────────
+def _broker_rows(gate, states) -> list:
+    import sqlite3
+    with sqlite3.connect(str(gate.get_db_path())) as c:
+        rows = c.execute("SELECT task_id, approval_state, risk_detail, created_at, approved_at, completed_at FROM tasks "
+                         "WHERE task_file = '<approval-gate>' AND approval_state IN (%s)" % ",".join("?" * len(states)),
+                         tuple(states)).fetchall()
+    out = []
+    for tid, st, raw, created, approved, completed in rows:
+        try:
+            risk = json.loads(raw or "{}")
+            if not str(risk.get("base", "")).startswith("broker-push\n"):
+                continue
+            out.append({"task_id": tid, "state": st, "risk": risk, "d": json.loads(risk.get("detail") or "{}"),
+                        "t": max(int(created or 0), int(approved or 0), int(completed or 0))})
+        except (ValueError, TypeError, AttributeError, RecursionError):
+            continue
+    return out
+
+
+def _note(gate, tid: str, **kv) -> None:
+    """risk_detail 에 실행 증거를 덧붙인다 (상태는 바꾸지 않음)."""
+    import sqlite3
+    with sqlite3.connect(str(gate.get_db_path())) as c:
+        row = c.execute("SELECT risk_detail FROM tasks WHERE task_id=?", (tid,)).fetchone()
+        if row:
+            c.execute("UPDATE tasks SET risk_detail=? WHERE task_id=?", (gate._merge_detail(row[0], **kv), tid))
+
+
+def _contains(git: _Git, mirror: Path, remote_url: str, branch: str, tip: str, sha: str) -> bool:
+    if tip == sha:
+        return True
+    if git(mirror, "fetch", "-q", "--no-tags", remote_url, f"+refs/heads/{branch}:refs/remote-tip/{branch}").returncode:
+        return False
+    return git(mirror, "merge-base", "--is-ancestor", sha, f"refs/remote-tip/{branch}").returncode == 0
+
+
+def _recover(broker_root: Path, cfg: dict, gate, git: _Git) -> list:
+    """잠금을 쥔 상태에서 'consumed' 인 Broker 행 = 지난 실행이 결과를 남기기 전에 끝남.
+    원격에 승인 커밋이 있으면 성공 · push 전 기록과 같으면 미실행 · 그 외(연결 불가·다른 커밋)는 검토 필요로 남긴다.
+    어떤 경우에도 다시 push 하지 않는다 (승인 1회)."""
+    out = []
+    for r in _broker_rows(gate, ("consumed",)):
+        tid, d, risk = r["task_id"], r["d"], r["risk"]
+        rid, repo_id, branch, sha = d.get("request_id"), d.get("repo_id"), d.get("branch"), d.get("sha")
+        repo = (cfg.get("repos") or {}).get(repo_id)
+        started = risk.get("broker_push") or {}
+        if not repo:
+            _note(gate, tid, recover={"state": "needs_review", "why": "repo_not_configured", "at": int(time.time())})
+            out.append({"task_id": tid, "result": "needs_review", "reason": "repo_not_configured"})
+            continue
+        mirror = broker_root / "mirror" / f"{repo_id}.git"
+        ok, tip = _remote_tip(git, mirror, repo["remote_url"], branch)
+        if not ok:
+            _note(gate, tid, recover={"state": "needs_review", "why": "remote_unreachable", "at": int(time.time())})
+            out.append({"task_id": tid, "result": "needs_review", "reason": "remote_unreachable"})
+            continue
+        if tip and _contains(git, mirror, repo["remote_url"], branch, tip, sha):
+            gate.record_result(tid, "finished", {"pushed": True, "code": "pushed_recovered", "recovered": True,
+                                                 "remote_after": tip, "remote_before": started.get("before")})
+            out.append({"task_id": tid, "request_id": rid, "result": "recovered_pushed"})
+            _outbox(cfg, rid, {"task_id": tid, "state": "executed", "pushed": True, "code": "pushed_recovered"})
+        elif not started or tip == started.get("before"):
+            gate.record_result(tid, "error", {"pushed": False, "code": "not_pushed_recovered", "recovered": True,
+                                              "remote_after": tip})
+            out.append({"task_id": tid, "request_id": rid, "result": "recovered_not_pushed"})
+            _outbox(cfg, rid, {"task_id": tid, "state": "executed", "pushed": False, "code": "not_pushed_recovered"})
+        else:
+            _note(gate, tid, recover={"state": "needs_review", "why": "remote_changed_other", "remote": tip,
+                                      "at": int(time.time())})
+            out.append({"task_id": tid, "result": "needs_review", "reason": "remote_changed_other"})
+    return out
+
+
+# ── 수명 관리 (Broker 소유 임시 자료만) ───────────────────────────────────────
+GC_KEEP_SEC = 7 * 86400
+GC_INTERVAL_SEC = 86400
+_TERMINAL = ("executed", "rejected", "expired")
+
+
+def gc(broker_root, gate=None, git=None, pct=None, force=False) -> dict:
+    """끝난 요청(실행·거부·만료 후 7일)의 미러 ref · 원격 캐시 ref · 남은 작업 사본만 정리.
+    대기·승인·실행 중 요청, Broker DB 행, 처리 기록(번호 재사용 방지), 설정은 지우지 않는다.
+    메모리 80% 이상이면 미룬다 (git gc 가 무거움) · 하루 1회."""
+    broker_root = Path(broker_root)
+    stamp = broker_root / "gc.stamp"
+    now = time.time()
+    if not force and stamp.exists() and now - stamp.stat().st_mtime < GC_INTERVAL_SEC:
+        return {"ran": False, "reason": "interval"}
+    if pct is None:
+        pct = _memory_pct()
+    if pct is not None and pct >= 80:
+        return {"ran": False, "reason": f"memory {pct}%"}
+    gate = gate or _gate(broker_root)
+    git = git or _Git(broker_root)
+    rows = {r["d"].get("request_id"): r for r in _broker_rows(gate, ("waiting", "approved", "consumed") + _TERMINAL)}
+    removed_refs = removed_work = 0
+    for b in (broker_root / "work").glob("*.bundle"):
+        if now - b.stat().st_mtime > 3600:                   # 처리는 잠금 안에서만 → 1시간 지난 사본은 고아
+            b.unlink()
+            removed_work += 1
+    for mirror in (broker_root / "mirror").glob("*.git"):
+        refs = git(mirror, "for-each-ref", "--format=%(refname)", "refs/incoming/", "refs/remote-tip/").stdout.split()
+        for ref in refs:
+            if ref.startswith("refs/remote-tip/"):
+                git(mirror, "update-ref", "-d", ref)
+                continue
+            rid = ref.rsplit("/", 1)[-1]
+            r = rows.get(rid)
+            proc = broker_root / "processed" / f"{rid}.json"
+            if r is None:
+                old = proc.exists() and now - proc.stat().st_mtime > GC_KEEP_SEC
+            else:
+                old = r["state"] in _TERMINAL and now - r["t"] > GC_KEEP_SEC
+            if old:
+                git(mirror, "update-ref", "-d", ref)
+                removed_refs += 1
+        git(mirror, "reflog", "expire", "--expire=now", "--all")
+        git(mirror, "gc", "--quiet", "--prune=now", timeout=900)
+    stamp.write_text(str(int(now)))
+    return {"ran": True, "removed_refs": removed_refs, "removed_work": removed_work}
 
 
 def _expire(gate, tid: str, reason: str) -> None:
@@ -405,6 +631,7 @@ def _execute_approved(broker_root: Path, cfg: dict, gate, git: _Git) -> list:
         if state != "consumed":
             out.append({"request_id": rid, "task_id": tid, "result": "not_executed", "reason": state})
             continue
+        _note(gate, tid, broker_push={"before": tip, "started_at": int(time.time())})   # 복구용 실행 직전 증거
         res = _push(git, mirror, repo["remote_url"], sha, branch, tip)
         gate.record_result(tid, "finished" if res["pushed"] else "error", res)
         out.append({"request_id": rid, "task_id": tid, "result": "pushed" if res["pushed"] else "failed", **res})
@@ -450,6 +677,9 @@ def describe(broker_root, task_id: str) -> dict:
 
 def approve(broker_root, task_id: str, confirm: str = "") -> dict:
     """Broker 승인 채널 (과도기: Broker 콘솔 · 이후 §53-2 대역 외 채널로 교체). 커밋 앞 8자리 확인 필수."""
+    refused = _guard(Path(broker_root))
+    if refused:
+        return {"error": refused["reason"], **refused}
     info = describe(broker_root, task_id)
     if "error" in info:
         return info
@@ -487,6 +717,10 @@ def _main(argv) -> int:
         r = approve(a[1], a[2], a[3])
     elif len(a) == 3 and a[0] == "status":
         r = status(a[1], a[2])
+    elif len(a) == 2 and a[0] == "preflight":
+        r = preflight(a[1])
+    elif len(a) == 2 and a[0] == "gc":
+        r = gc(a[1], force=True)
     else:
         print(__doc__)
         return 2

@@ -24,7 +24,8 @@ SKIP = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log", "c
         "deflection-detect.log", "emotion-response.log", "mcp-health.log", "prompt-dispatch.log", "hook-trace.log",
         "tool-dispatch.log"}
 TS_RE = re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
-ERR_RE = re.compile(r"\b(ERROR|FAIL|Traceback|\[err\]|\[!!\])", re.I)
+# 끝 경계 필수 (2026-11-10): 정리 기록의 파일 이름 "errors/error_2026….log" 가 ERROR 로 세어졌다 · FAILED·FAILURE 는 유지
+ERR_RE = re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])", re.I)
 WARN_RE = re.compile(r"\b(WARN|\[skip\])", re.I)
 WARN_REPEAT_MIN = 20       # BASIS: agreed(2026-10-16, 10분 주기 작업이 24h 에 144회 → 20회+ 반복이면 일회성이 아니다)
 RENOTIFY_SEC = 6 * 3600    # BASIS: agreed(2026-10-16, 같은 오류를 매 프롬프트 넣으면 잡음 — 하루 4번 이내)
