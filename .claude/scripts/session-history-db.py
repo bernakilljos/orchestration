@@ -169,6 +169,14 @@ def parse_ts(s):
         return None
 
 
+try:  # 2026-11-10: 프롬프트·도구 입력 저장 전 비밀정보 가림 (정본 lib/redact · §64)
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+    from redact import mask as _mask
+except Exception:  # noqa: BLE001 — 가림 모듈이 없으면 원문을 저장하지 않는다
+    def _mask(text):
+        return "[MASKED]" if text else text
+
+
 def brief(obj, cap=TEXT_CAP):
     if obj is None:
         return None
@@ -179,7 +187,7 @@ def brief(obj, cap=TEXT_CAP):
             s = json.dumps(obj, ensure_ascii=False)
         except Exception:
             s = str(obj)
-    return s[:cap]
+    return _mask(s)[:cap]
 
 
 def full_len(obj):

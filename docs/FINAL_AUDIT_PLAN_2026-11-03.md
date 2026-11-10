@@ -1440,3 +1440,76 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 | S8 | 대역 외 승인 채널 (§53-2) | 외부 서비스·기기 | — | 채널 해제 (승인 불가 = 안전) |
 
 **7. 전파 원칙**: 프로젝트별 복사 전파 시 Broker 코드 사본·Broker 인증정보·승인 원본 DB·원본 보관본·운영 기록(conversations·sessions)·사용자별 상태(next-actions·Ledger·Goal) 는 복사하지 않는다 (STD-PROPAGATE-001). Broker 는 컴퓨터당 1개 · 대상 프로젝트는 요청 함으로만 연결 (설계 · 미구현).
+
+## §64 S5 구현 — 요청 함 + 독립 Broker 실행기 · 신규 기록 토큰 가림 · 복사 설치·오프라인 동작 (2026-11-10 · 기준 4db520c · 격리 시험 · 운영 DB·계정·ACL·인증 변경 0 · push 0)
+
+**1. 구현 (`.claude/scripts/lib/broker.py` · 신규)**
+| 쪽 | 함수 | 동작 |
+|---|---|---|
+| Agent (클라이언트 · 표준 라이브러리만) | `submit_push(repo, repo_id, branch)` | HEAD 를 git 묶음(bundle)으로 만들어 요청 함에 `req-<16hex>.json`·`.bundle` 저장 · push 안 함 · 요청 함 위치 = 인자 → `ORCA_BROKER_INBOX` → 솔루션 루트 `.claude/broker-client.json` (상위 폴더까지 탐색) |
+| | `client_status(id)` | outbox 안내만 (판정 정본 아님) |
+| Broker | `process(root)` | ① 요청 형식 엄격 검사 (키 6개 정확히 · type=push · 등록 저장소·허용 브랜치 · 커밋 40hex) ② 묶음을 Broker 소유 bare 미러 `refs/incoming/<id>` 로 가져와 커밋이 요청과 같은지 확인 ③ 지문(저장소·브랜치·커밋·원격 주소 해시)을 Broker 가 계산해 **approval-gate 그대로** 새 요청(불변·24h 만료) ④ Broker 채널로 승인된 행만 미러에 보관한 커밋으로 1회 실행 → `record_result` |
+| | `approve(root, id)` | Broker 승인 채널 (과도기 = Broker 콘솔 · 이후 §53-2 대역 외 채널) · 표시 `broker-console` |
+| | `status(root, id)` | Broker DB 상태 = 판정 정본 |
+- 재사용: `approval-gate.py` 코드 변경 0 (`ORCHESTRATION_ROOT` = Broker 폴더 · Broker 프로세스만 `USER_APPROVER` 를 `broker-console` 로 → Agent 세션의 `user-prompt` 승인은 소비 불가) · push 조건은 `worker_git.push_approved` 와 같음 (fast-forward 만 · 원격 이동 시 중단 · 강제 없음).
+- Agent 저장소를 신뢰하지 않음: Broker 는 Agent 저장소 안에서 git 을 실행하지 않는다 (묶음 = 데이터) · 미러 git 은 `core.hooksPath=<빈 폴더>` · `core.fsmonitor=false` · `core.sshCommand=ssh` 고정 · 원격 주소는 요청이 아니라 `broker-config.json`.
+- 미설치 부분 (승인 대상): Broker 계정·폴더·ACL (S2·S3) · 요청 함 ACL (Agent 생성만) · Broker 자격 증명 (S6) · 주기 실행 (작업 스케줄러) · 대역 외 승인 채널 (S8).
+
+**1-1. 독립 보안 검토 (구현자 ≠ 검토자 · code-reviewer) 반영 [확인]**
+- 검토 결론: 승인 안 된 커밋 push · Agent 의 Broker 권한 코드 실행 경로 = 찾지 못함. 결함 MUST 2 · SHOULD 11 · NIT 다수.
+| 지적 | 반영 |
+|---|---|
+| M1 비정상 JSON(깊은 중첩 → RecursionError) 한 개로 처리 영구 중단 | 요청 한 건씩 예외 격리 · 승인 실행은 항상 진행 · 요청 4KB 상한 · `RecursionError` 처리 |
+| M2 묶음 자리에 디렉터리·junction → 로컬 저장소 전송(Agent 저장소에서 git) 유도 | 일반 파일만 (lstat·junction·재분석 지점 거부) · 머리말 `# v2/v3 git bundle` 확인 · Broker 사본(`work/`, O_EXCL)에서만 fetch · `shutil.move` 제거 |
+| S1 요청 번호 재사용으로 승인 무효화 | 처리·거부 기록이나 미러 ref 가 있으면 거부 |
+| S2 유효 시간 지난 승인이 중복 판정에 영구 고착 | 실행 단계에서 만료 처리 → 같은 커밋 새 요청 가능 |
+| S3 승인 뒤 허용 목록에서 뺀 브랜치로 push | 실행 직전 허용 목록·형식 재확인 → 만료 |
+| S4 동시 실행 | `process.lock` (O_EXCL · 1시간 지나면 정리) |
+| S5 git 탐색 경로·작업 폴더·환경 | git 절대 경로 · 작업 폴더 = Broker 폴더 · 최소 환경 (`GIT_*` 상속 제거 · 프롬프트 끔) · `protocol.ext.allow=never` |
+| S7 git 오류 문구(URL·경로)가 Agent 가 읽는 outbox 로 | outbox = 고정 코드만 · 상세는 Broker DB |
+| S8 크기·개수 | 묶음 512MB · 한 번에 50건 상한 (정리 주기 작업은 미구현) |
+| S9 객체 검사 | `fetch/transfer.fsckObjects=true` · `--no-recurse-submodules` |
+| S10 무엇을 승인하는지 안 보임 | `describe` = 저장소·브랜치·커밋·원격 주소·원격에 없는 커밋 목록(최대 50) · `approve` 는 커밋 앞 8자리 확인 필수 |
+| S11 한국어 Windows cp949 파이프에서 BLOCKED 안내 출력 중 비정상 종료 | 출력 UTF-8 고정 · 시험을 `PYTHONIOENCODING` 없이 실행해 확인 (내 시험 환경이 이 결함을 가렸었다) |
+| NIT 정규식 `$` 개행 통과 · `"v": true` · ls-remote 뒷부분 매칭 · 연결 실패 시 승인 낭비 · 클라이언트 임시 파일 | `fullmatch` · `type is int` · 정확한 ref 비교 · 연결 확인을 소비 전에 (승인 그대로) · 임시 파일 확장자 `.partial` |
+- 남은 한계 (코드로 강제 안 됨 · 기록): S6 Broker 코드·`approval-gate.py`·`lib` 를 Agent 가 쓸 수 없는 Broker 폴더 사본으로 `python -I` 실행해야 보호가 성립 (S2·S3 설치 조건) · 처리 끝난 ref·파일 정리 주기 작업 없음 · 소비 직후 프로세스가 죽으면 `consumed` 로 남음 (재실행 없음 · 결과 미기록) · `find_request` LIKE 미이스케이프 (현재 값은 hex 라 영향 없음).
+- 역검증 (격리 사본에서 방어 하나씩 제거): 9개 변형 (Agent 승인 허용·임의 필드·묶음 커밋 확인·번호 재사용·디렉터리 묶음·건별 격리·브랜치 재확인·유효 시간 만료·잠금) 전부 시험이 실패로 잡음.
+
+**2. 공격 시험 (`tests/test_broker.py` 16개 · 임시 bare 저장소를 원격으로) [확인]**
+| 시나리오 | 결과 |
+|---|---|
+| 정상: 요청 → 대기(원격 불변) → Broker 승인 → push 1회 → 재처리해도 재실행 없음 | PASS |
+| 요청 위조: 원격 주소 지정·승인 표시·미등록 저장소·허용 안 된 브랜치·결과 위조(type=result)·번호 형식 아님 | 6건 전부 거부 · 요청 행 0 · 원격 불변 |
+| 묶음과 다른 커밋 주장 | 거부 |
+| 승인 뒤 커밋 변경(amend 후 재요청) | 새 요청(대기) · 승인된 원래 커밋만 push |
+| 승인 뒤 Broker 설정의 원격 변경 | 지문 불일치 → 승인 만료 · 실행 안 함 |
+| Agent 세션 승인(`user-prompt`)으로 바꿔 놓기 + 결과 파일 위조 | 실행 안 함 · 승인 소비 안 됨 · 원격 불변 |
+| Agent 저장소 훅 4종·`core.fsmonitor`·`core.sshCommand` 심기 | Broker 단계에서 실행 0 (표식 파일 없음) · push 정상 |
+| 원격 연결 불가 (오프라인) | 승인 소비 안 함 (유효 시간 안 재시도) · outbox 고정 코드만 · 유효 시간 지나면 만료 → 같은 커밋 새 요청 |
+| 깊은 중첩·과대 요청 + 정상 요청 | 나쁜 2건 거부 · 정상 요청은 대기 → 승인 → push |
+| 묶음 자리에 저장소 디렉터리 · 처리한 번호 재사용 | 거부 (`not_regular_file` · `reused_id`) |
+| 승인 뒤 허용 브랜치에서 제외 | 만료 · 원격 불변 |
+| 동시 실행 | 잠금 중 처리 0 · 해제 후 정상 |
+| 승인 확인값 없음·틀림 | 승인 거부 · `describe` 의 커밋 목록·원격 주소 확인 |
+| 그사이 원격 이동 (fast-forward 아님) | 거부 · 원격 그대로 |
+| 대기 24시간 초과 | 승인 거부 |
+| 전파 규칙 (기존 merge-to-target `walk`) | 클라이언트 코드·가림 정본은 전파 · `broker-client.json`·state·DB·캐시는 전파 안 함 |
+| 복사 설치 클라이언트 (승인 게이트·orca.db 없이 파일 1개) | Broker 없음 → BLOCKED(exit 3) · git 없음 → BLOCKED · 설정 있으면 SUBMITTED |
+- 역검증 (격리 사본에서 방어 하나씩 제거): Agent 세션 승인 허용 → 7개 실패 · 임의 필드 허용 → 1개 실패 · 묶음 커밋 확인 제거 → 1개 실패 = 시험이 결함을 잡는다.
+
+**3. 신규 기록 토큰 가림 (기존 Ledger 가림 정규식 재사용 · 정본 1곳)**
+- 정본: `.claude/scripts/lib/redact.py` (Ledger 훅 `_SECRET_RE` 를 그대로 옮김 · Ledger 는 정본에 위임 = 복제 0).
+- 적용: `conversation_logger.save_turn` (orca.db 대화 · 해시는 원문 기준 유지 = Ledger `prompt_sha256` 대조 그대로) · `session-history-db.py brief()` (sessions.db 프롬프트·도구 입력) · `hooks/tool/log_bash_command.py` (bash 명령 로그) · Ledger (기존).
+- 가림 모듈을 못 불러오면 원문 대신 `[MASKED]` 만 저장 (fail-closed) · 훅은 `sys.path` 를 건드리지 않고 파일 경로로 로드 (훅 모듈 이름 충돌 방지).
+- 역검증 [확인]: 수정 전(HEAD) 코드는 대화·세션 DB 에 토큰을 원문 저장 · 수정 후 시험 5개 PASS (Ledger 회귀 25개 함께 PASS).
+- 기존 기록의 토큰 사본(§63 6파일)은 이번에 바꾸지 않음 — 이전(S4)·보관 위치 이동은 승인 대상.
+
+**4. 복사 설치 솔루션 (RPA·OCR · 노트북 3대) 동작**
+| 상황 | 동작 |
+|---|---|
+| Broker 가 그 노트북에 설치되어 있음 | 솔루션 루트 `.claude/broker-client.json` 의 요청 함으로 요청 → 그 노트북 Broker 가 승인·실행 |
+| Broker 없음 / 설정 없음 | 원격 반영 등 위험 작업 BLOCKED · 일반 개발·시험·커밋은 계속 |
+| git 없음 | 요청 자체 BLOCKED (묶음 생성 불가) · 나머지 기능 영향 없음 |
+| 네트워크 없음 | 요청은 쌓이고 Broker 승인 후에도 연결될 때까지 실행 보류 (승인 유효 30분 · 지나면 만료 · 새 요청) · 원격 불변 |
+- 전파 대상: `lib/broker.py`·`lib/redact.py` (코드) 만. Broker 폴더·Broker DB·Broker 자격 증명·요청 함 설정·승인 기록·Ledger·대화 기록은 전파하지 않는다 (기존 merge-to-target 규칙으로 확인).
+- 중앙 Broker 연결(다른 PC 의 Broker) 은 요청 함을 공유 폴더로 두면 같은 구조로 가능하나 네트워크 공유 ACL·인증이 새로 필요 → 설계만 · 미구현.

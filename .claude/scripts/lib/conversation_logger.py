@@ -15,6 +15,13 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DB_PATH = PROJECT_ROOT / ".claude" / "state" / "orca.db"
 
+try:  # 2026-11-10: 저장 전 비밀정보 가림 (정본 redact · 해시는 원문 기준 — Ledger prompt_sha256 과 대조)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from redact import mask as _mask
+except Exception:  # noqa: BLE001 — 가림 모듈이 없으면 원문을 저장하지 않는다
+    def _mask(text):
+        return "[MASKED]" if text else text
+
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS conversations (
@@ -129,7 +136,7 @@ def save_turn(role: str, content: str, tags: str | None = None) -> None:
         c.execute(
             """INSERT INTO conversations(session_id,turn,role,content,content_hash,tokens,tags)
                VALUES(?,?,?,?,?,?,?)""",
-            (sid, turn, role, content[:8000], ch, tokens, tags),
+            (sid, turn, role, _mask(content)[:8000], ch, tokens, tags),
         )
         c.commit()
 

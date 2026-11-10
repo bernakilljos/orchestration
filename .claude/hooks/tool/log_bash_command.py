@@ -11,6 +11,17 @@ from datetime import datetime
 
 from _common import py_stdin_text
 
+try:  # 2026-11-10: 명령·설명 기록 전 비밀정보 가림 (정본 scripts/lib/redact · §64 · sys.path 오염 없이 파일로 로드)
+    import importlib.util as _ilu
+    _spec = _ilu.spec_from_file_location("redact_tool", os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "scripts", "lib", "redact.py"))
+    _sm = _ilu.module_from_spec(_spec)
+    _spec.loader.exec_module(_sm)
+    _mask = _sm.mask
+except Exception:  # noqa: BLE001 — 가림 모듈이 없으면 원문을 남기지 않는다
+    def _mask(text):
+        return "[MASKED]" if text else text
+
 
 def run(ctx):
     try:
@@ -27,7 +38,7 @@ def run(ctx):
         path = os.path.join(log_dir, "bash_commands.log")
         ts = datetime.now().isoformat(timespec="seconds")
         with open(path, "a", encoding="utf-8") as f:  # 텍스트 모드 - 원본과 같은 개행 변환
-            f.write(f"{ts}\t{cmd}\t{desc}\n")
+            f.write(f"{ts}\t{_mask(cmd)}\t{_mask(desc)}\n")
     except Exception:
         pass  # noqa: BLE001
     return None

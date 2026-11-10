@@ -266,24 +266,23 @@ _ACTION_RE = re.compile(r"해줘|해 줘|해라|하라|해(?=[\s.!,:：]|$)|한�
                         r"|바랍니다|바람|부탁|진행|실행|시작|반영|수정|삭제|지워|제거|변경|교체|적용|올려"
                         r"|돌려|돌리|처리|수행|날려|때려|밀어|하자|합시다|하셈|해요|하죠|가자|고고|ㄱ"
                         r"|(?<![a-z])(?:run|do|go|execute|exec|apply|perform|start|please|just|let's)(?![a-z])")  # push 는 승인 패턴(동사형)만 — 표 칸 명사 오인 방지
-# 판정 근거에 남기는 발췌의 비밀정보 가림 — secret-scan.sh · tool/block_tricks.py 와 같은 계열 (키=값 은 줄 끝까지)
-_SECRET_RE = re.compile(r"(sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,}|glpat-[A-Za-z0-9_-]{16,}"
-                        r"|AIza[0-9A-Za-z_-]{30,}|npm_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}"
-                        r"|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*|(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"
-                        r"|[a-z][a-z0-9+.-]*://[^\s:/@]+:[^\s@]+@"
-                        r"|sk_(?:live|test)_[A-Za-z0-9]{16,}|[rp]k_live_[A-Za-z0-9]{16,}|gh[soru]_[A-Za-z0-9]{20,}"
-                        r"|(?:bearer|basic|token)\s+[A-Za-z0-9._~+/=-]{8,}|xox[a-z]-[A-Za-z0-9-]{10,}|ya29\.[A-Za-z0-9._-]{10,}"
-                        r"|hf_[A-Za-z0-9]{20,}|pypi-[A-Za-z0-9_-]{20,}|dckr_pat_[A-Za-z0-9_-]{16,}|shpat_[A-Za-z0-9]{16,}"
-                        r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
-                        r"|[\"']?(?:password|passwd|passphrase|pwd|pw|token|secret|api[_-]?key|apikey|key|credential|auth"
-                        r"|authorization|aws_secret_access_key|비밀번호|비번|암호)[\"']?\s*[:=：＝]\s*\S.*"
-                        r"|--(?:password|passwd|token|api-key)[\s=]+\S+"
-                        r"|(?<![A-Za-z])(?:passphrase|apikey|비밀번호|비번)\s+\S.*)", re.I)
+# 판정 근거에 남기는 발췌의 비밀정보 가림 — 정본은 scripts/lib/redact.py (2026-11-10 · 대화·세션 DB·bash 로그와 공용)
+try:  # sys.path 오염 없이 파일로 로드 (훅의 _common 등과 이름 충돌 방지)
+    import importlib.util as _ilu
+    _spec = _ilu.spec_from_file_location("redact_ledger", os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "scripts", "lib", "redact.py"))
+    _sm = _ilu.module_from_spec(_spec)
+    _spec.loader.exec_module(_sm)
+    _SECRET_RE, _mask_impl = _sm.SECRET_RE, _sm.mask
+except Exception:  # noqa: BLE001 — 가림 모듈이 없으면 원문을 남기지 않는다 (fail-closed)
+    _SECRET_RE, _mask_impl = None, None
 
 
 def _mask(text: str) -> str:
     """Ledger·raw·deferred 에 남기는 글의 비밀정보 가림 (원문 해시·판정은 가리기 전 원문으로)."""
-    return _SECRET_RE.sub("[MASKED]", text or "")
+    if _mask_impl is None:
+        return "[MASKED]" if text else ""
+    return _mask_impl(text or "")
 
 
 # "…를 승인한다" — 기록만 한다. 이 문장으로 위험 작업 승인을 대신하지 않는다 (권한 판단은 사용자·실행 게이트).
