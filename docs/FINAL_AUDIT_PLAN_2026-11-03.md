@@ -1622,3 +1622,13 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 진행 중 발견·수정: ① PS 5.1 은 param 기본값 시점에 `$PSScriptRoot` 가 빔 ② 네이티브 인자 속 큰따옴표 제거(`print("ok")`→NameError) ③ `Set-Acl`+새 보안 객체는 SACL 까지 쓰려다 SeSecurityPrivilege 오류 → `SetAccessControl` 로 DACL 만 ④ 첫 역검증이 제 권한을 빼 시험 폴더가 남음 → 소유자 권한으로 복구 후 삭제.
 - 창 사고 원인 2: `C:\Windows\System32\powershell` (확장자 없는 0바이트 · 2026-04-08 생성 · 과거 출력 리다이렉트 찌꺼기 [추정]) 때문에 PowerShell 안에서 `powershell` 을 부르면 "앱을 선택해 여세요" 창이 뜸 → 항상 `powershell.exe` 로 호출 · 파일 삭제는 시스템 변경이라 사용자 승인 대상.
 - 남은 것 (승인 대상): 이 PC `Install -Apply`(stage 폴더 추가) · `Cleanup -Apply`(PID 34736 종료·probe 2파일) — 둘 다 관리자 창 1회.
+
+
+## §71 `/approve`·`/approvals`·`/reject`·`/image-cache`·`/image-generate` 프로젝트 경로 결함 근본 수정 (2026-11-10)
+
+- 증상: `/approve` 3회 모두 "can't open file 'C:\\Program Files\\Git\\.claude\\scripts\\approval-gate.py'" (승인 기록 자체는 사용자 입력 훅이 남겨 3건 모두 approved [확인] · 실패한 것은 대기 목록 표시 줄).
+- 원인 실측 [확인]: ① 명령 `!` 셸에는 `CLAUDE_PROJECT_DIR` 가 **비어 있음** (훅에만 주어짐 · 현재 폴더 = 프로젝트) → `"$CLAUDE_PROJECT_DIR/.claude/..."` = `/.claude/...` → Git Bash 가 `/` 를 Git 설치 폴더로 변환 ② 1b759d4 의 `${CLAUDE_PROJECT_DIR:-.}` 도 현재 폴더가 프로젝트가 아니면 같은 실패 (재현) · `image-generate.md` 는 1b759d4 에서 누락 ③ 전역 `~/.claude/commands` 4월 사본이 옛 형태 — `setup/modules/03-settings.bat` 이 원본을 없는 폴더(`setup\.claude\commands`)에서 찾아 **매번 SKIP** ④ 실행 중 세션은 시작 때 읽은 명령 내용을 씀 (파일 변경 후 목록 재로드 알림 뒤 반영).
+- 수정: 5개 명령의 경로 결정을 공통 한 줄로 교체 — `CLAUDE_PROJECT_DIR` → 현재 폴더 → 상위 폴더 순으로 `.claude/scripts/<파일>` 이 있는 루트를 찾고, 없으면 다른 폴더로 접근하지 않고 원인(변수 값·현재 폴더)을 적어 종료 코드 1. 파이썬 pathlib 이라 Git·셸 경로 변환·공백·한글 무관. `03-settings.bat` 원본 경로를 `%~dp0..\..\.claude\commands` 로 수정.
+- 검증 [확인]: 수정 전 실패 2종 재현 → 수정 후 7 조건 PASS (변수 없음+kit · kit 하위 · Git 설치 폴더=명확한 오류 rc 1 · 공백·한글·무Git 경로 · 없는 변수 경로+하위 폴더 · 빈 변수 · 변수 우선) · 승인 상태 읽기 경로 PASS · **실제 Claude Code `/approvals` 호출로 대기 목록 46건 표시** (수정 전 같은 호출 = 사고와 같은 오류).
+- 승인 정책 변화 없음 (만료·불변·1회·HEAD 지문 그대로 · 승인 기록 조작 없음). 이전 승인 번호는 쓰지 않고 새 HEAD 로 새로 발급.
+- 전파: 전역 사본 5개를 kit 사본으로 교체(설치 스크립트와 같은 결과) · 다른 프로젝트(IFRS_PJT·ICMAI_PJT·calc·llm·teamclaude·orchestration)는 옛 사본 그대로 → merge-to-target 전파 대상.

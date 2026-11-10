@@ -1753,3 +1753,69 @@ def test_regression_gate_memory_throttle_end_to_end(tmp_path, monkeypatch):
     assert res["status"] == "blocked" and "보류" in res["reason"] and not res.get("summary"), res   # 시험 생략 PASS 아님
     stamp = json.loads((r / iv.REGRESSION_STAMP).read_text(encoding="utf-8"))
     assert stamp["status"] == "blocked"                                        # 커밋 훅이 막는 기록
+
+
+# --- §71 명령 프로젝트 경로 (2026-11-10 · /approve 가 Git 설치 폴더로 풀리던 결함) ---
+_CMD_ROOT_FILES = ["exec_orch/commands/approve.md", "exec_orch/commands/approvals.md", "exec_orch/commands/reject.md",
+                   "mcp_image/commands/image-cache.md", "mcp_image/commands/image-generate.md"]
+
+
+def _resolver_argv(md: Path) -> list:
+    import shlex
+    line = next(l for l in md.read_text(encoding="utf-8").splitlines() if l.startswith("!`"))
+    parts = shlex.split(line[2:-1], posix=True)
+    assert parts[0] == "PYTHONIOENCODING=utf-8" and parts[1] == "python" and parts[2] == "-c", parts[:3]
+    return [sys.executable, "-c", parts[3], *parts[4:]]
+
+
+def test_command_files_never_build_path_from_bare_project_dir():
+    """명령 셸에는 CLAUDE_PROJECT_DIR 가 비어 있다(훅에만 주어짐) → '$CLAUDE_PROJECT_DIR/.claude' 는 '/.claude' = Git 설치 폴더."""
+    bad = re.compile(r'(\$CLAUDE_PROJECT_DIR|\$\{CLAUDE_PROJECT_DIR:-\.\})/\.claude/scripts')
+    hits = []
+    for base in (ROOT / "plugins", ROOT / ".claude" / "commands"):
+        for md in base.rglob("*.md"):
+            if "commands" in md.parts and bad.search(md.read_text(encoding="utf-8", errors="replace")):
+                hits.append(str(md.relative_to(ROOT)))
+    assert not hits, hits
+    for rel in _CMD_ROOT_FILES:                                   # 원본 = sync 사본 (같은 공통 한 줄)
+        src = (ROOT / "plugins" / rel).read_text(encoding="utf-8")
+        dst = (ROOT / ".claude" / "commands" / Path(rel).name).read_text(encoding="utf-8")
+        assert src.replace("\r\n", "\n") == dst.replace("\r\n", "\n"), rel
+        assert "프로젝트 루트를 찾지 못했습니다" in src, rel
+
+
+def test_command_root_resolver_finds_root_or_stops_safely(tmp_path):
+    argv = _resolver_argv(ROOT / "plugins" / "exec_orch" / "commands" / "approvals.md")
+    proj = tmp_path / "시험 프로젝트 공백"                       # 공백·한글 · Git 없음
+    (proj / ".claude" / "scripts").mkdir(parents=True)
+    (proj / ".claude" / "scripts" / "approval-gate.py").write_text(
+        "import sys,os\nprint('STUB', sys.argv[1:], os.path.basename(__file__))\n", encoding="utf-8")
+    deep = proj / "하위 폴더" / "깊은"
+    deep.mkdir(parents=True)
+    outside = tmp_path / "바깥"
+    outside.mkdir()
+    base_env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+    base_env["PYTHONUTF8"] = "1"
+
+    def run(cwd, var=None):
+        env = dict(base_env)
+        if var is not None:
+            env["CLAUDE_PROJECT_DIR"] = var
+        return subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
+
+    for cwd, var in ((proj, None), (deep, None), (outside, str(proj)), (deep, str(tmp_path / "없는 경로"))):
+        r = run(cwd, var)
+        assert r.returncode == 0 and "STUB ['list'] approval-gate.py" in r.stdout, (cwd, var, r.stdout, r.stderr)
+    for var in (None, ""):                                        # 못 찾으면 다른 폴더로 가지 않고 원인을 적어 중단
+        r = run(outside, var)
+        assert r.returncode == 1 and "프로젝트 루트를 찾지 못했습니다" in r.stderr and "STUB" not in r.stdout, r.stderr
+        assert str(outside) in r.stderr
+
+
+def test_global_command_installer_points_at_existing_source():
+    """03-settings.bat 전역 명령 원본 = 루트 .claude/commands (종전 setup\\.claude\\commands 는 없는 폴더 → 매번 SKIP)."""
+    bat = (ROOT / "setup" / "modules" / "03-settings.bat").read_text(encoding="utf-8")
+    m = re.search(r'set "CMD_SRC=%~dp0([^"]+)"', bat)
+    assert m, "CMD_SRC 없음"
+    src = (ROOT / "setup" / "modules" / m.group(1).replace("\\", "/")).resolve()
+    assert src.is_dir() and (src / "approve.md").is_file(), src

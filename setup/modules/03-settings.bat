@@ -22,7 +22,8 @@ echo       Done
 rem --- 글로벌 커맨드 설치 (godmode, devil, 10x 등 13개) ---
 echo [+] Installing global slash commands...
 if not exist "!REAL_USERPROFILE!\.claude\commands" mkdir "!REAL_USERPROFILE!\.claude\commands" >nul 2>&1
-set "CMD_SRC=%~dp0..\.claude\commands"
+set "CMD_SRC=%~dp0..\..\.claude\commands"
+rem (1110 §71) 종전 %~dp0..\.claude\commands 는 setup\.claude\commands = 없는 폴더 → 매번 SKIP 되어 전역 명령이 옛 사본으로 고착
 if exist "!CMD_SRC!" (
   robocopy "!CMD_SRC!" "!REAL_USERPROFILE!\.claude\commands" /E /NFL /NDL /NJH /NJS /NP >nul 2>&1
   echo       Done ^(godmode, devil, 10x, pitch, ghost, compare, scout, artifacts, ooda, critique, explainlikeim5, brief, teacher^)
