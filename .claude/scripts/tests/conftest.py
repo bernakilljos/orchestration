@@ -21,6 +21,48 @@ from datetime import datetime
 # 자체 main() 러너 스크립트 (test_*(result) 형식) — 직접 실행으로 검증 · pytest 수집 시 fixture 'result' 없음 오류 33건
 collect_ignore = ["test_phase2_e2e.py", "test_phase3_auto_e2e.py", "test_phase5_self_healing.py"]
 
+# §86 전파 대상(kit-merge-manifest.json 있음 · kit 에는 없음)에서만 «해당 없음» 을 SKIP 으로 구분.
+# kit 에서는 이 규칙이 적용되지 않는다 — 파일이 사라지거나 git 이 깨지면 그대로 FAIL.
+_ROOT = Path(__file__).resolve().parents[3]
+_KIT_ONLY = {   # 시험 이름 → kit 에만 있고 전파하지 않는 파일
+    "test_status_push_never_puts_token_in_git_url": "status-push.ps1",
+    "test_remote_commands_gated_and_dashboard_token_free": "status-push.ps1",
+    "test_worker_runs_codex_in_isolated_worktree": "codex-auto.bat",
+    "test_dashboard_uses_documented_git_config_env": "dashboard.py",
+    "test_global_command_installer_points_at_existing_source": "setup/modules/03-settings.bat",
+}
+_NEEDS_GIT = {  # git 저장소(HEAD·worktree·ls-files)가 있어야 의미 있는 시험
+    "test_sparse_estimate_excludes_large_assets", "test_reservation_and_total_cap_block_creation",
+    "test_concurrent_creates_never_overcommit", "test_lifecycle_protects_active_and_retained",
+    "test_dead_process_reservation_is_released", "test_tracked_ps1_with_korean_code_have_bom",
+    "test_other_owner_repo_still_read_not_false_pass",
+}
+
+
+def _is_git_repo(root):
+    import subprocess
+    try:
+        return subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+                              capture_output=True, text=True, timeout=10).stdout.strip() == "true"
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def pytest_collection_modifyitems(config, items):
+    if not (_ROOT / ".claude" / "state" / "kit-merge-manifest.json").is_file():
+        return                                    # kit 또는 전파 대상 아님 → 기존 판정 그대로
+    git_ok = None
+    for item in items:
+        name = item.name.split("[")[0]
+        need = _KIT_ONLY.get(name)
+        if need and not (_ROOT / need).exists():
+            item.add_marker(pytest.mark.skip(reason=f"해당 없음: kit 전용 파일 {need} 은 전파 대상에 없음"))
+        elif name in _NEEDS_GIT:
+            if git_ok is None:
+                git_ok = _is_git_repo(_ROOT)
+            if not git_ok:
+                item.add_marker(pytest.mark.skip(reason="해당 없음: 전파 대상이 git 저장소가 아님"))
+
 
 @pytest.fixture(autouse=True)
 def _fixed_commit_memory(monkeypatch):
