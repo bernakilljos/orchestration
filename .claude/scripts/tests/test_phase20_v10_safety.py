@@ -1437,7 +1437,8 @@ def test_tracked_ps1_with_korean_code_have_bom():
 def test_korean_output_rule_in_shared_prompt_and_claude_md():
     import independent_verifier as iv
     assert "Korean (한국어)" in iv.FACT_TAG_RULE and "JSON keys" in iv.FACT_TAG_RULE
-    assert "| D22 |" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    # 대상 CLAUDE.md 는 고유본이라 전파되지 않는다 — kit·대상 공통으로 전파되는 룰 파일에서 확인 (2026-11-11)
+    assert "헌장 D22" in (ROOT / ".claude/rules/language-standards.md").read_text(encoding="utf-8")
 
 
 def test_windows_powershell51_keeps_korean_only_with_bom(tmp_path):
@@ -1557,7 +1558,9 @@ def _std_project(tmp_path):
     (p / ".claude" / "hooks").mkdir(parents=True)
     for rel in (".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
                 ".claude/scripts/approval-gate.py", ".claude/scripts/merge-to-target.py",
-                ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md"):
+                ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md",
+                ".claude/rules/language-standards.md"):
+        (p / rel).parent.mkdir(parents=True, exist_ok=True)
         (p / rel).write_bytes((ROOT / rel).read_bytes())
     return p                                              # .claude/state 없음 = 새 노트북·새 설치
 

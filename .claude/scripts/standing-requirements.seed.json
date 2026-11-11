@@ -61,12 +61,12 @@
       "type": "STANDING_REQUIREMENT",
       "grade": "advisory",
       "judge": "auto",
-      "version": "1.0",
+      "version": "1.1",
       "confirmed": "2026-11-09",
       "scope": "kit+targets",
       "rule": "사용자 대상 보고는 한글 (헌장 D22) · 한글 .ps1 은 저장 시 UTF-8 BOM",
-      "verify_pattern": "| D22 |",
-      "verify_target": "CLAUDE.md"
+      "verify_pattern": "헌장 D22",
+      "verify_target": ".claude/rules/language-standards.md"
     }
   }
 }
