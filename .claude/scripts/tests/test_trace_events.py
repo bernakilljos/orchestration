@@ -390,3 +390,28 @@ def test_lang_check_is_incremental_and_records_to_trace(proj, tm):
     assert _lang(proj, pl).returncode == 0
     ev = [e for e in tm.events("tid-lang") if e.get("step") == "STD-KOREAN-001"]
     assert [e["status"] for e in ev] == ["fail", "success"] and "정정" in (ev[-1].get("evidence") or "")
+
+
+def test_post_tool_drift_reminds_once_on_english_mid_turn_report(proj):
+    """§83 턴 중간 영어 보고 → 다음 도구 실행 직후 한 줄 안내 (같은 보고엔 1회 · 한국어면 출력 없음)."""
+    (proj / ".claude" / "scripts").mkdir(parents=True, exist_ok=True)
+    (proj / ".claude" / "scripts" / "standing-requirements.py").write_bytes((SCRIPTS / "standing-requirements.py").read_bytes())
+    sys.path.insert(0, str(HOOKS / "prompt"))
+    try:
+        mod = _load("krd", HOOKS / "tool" / "korean_report_drift.py")
+    finally:
+        sys.path.remove(str(HOOKS / "prompt"))
+    tr = proj / "t4.jsonl"
+
+    def write(rows):
+        tr.write_text(chr(10).join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+
+    class C:
+        raw = json.dumps({"transcript_path": str(tr), "session_id": "s4"})
+    base = [{"type": "user", "message": {"content": "고쳐줘"}}]
+    write(base + [{"type": "assistant", "uuid": "k1", "message": {"content": [{"type": "text", "text": "수정을 계속합니다. 다음으로 시험을 실행하고 결과를 확인한 뒤 한 번에 보고하겠습니다."}]}}])
+    assert mod.run(C) is None
+    write(base + [{"type": "assistant", "uuid": "e1", "message": {"content": [{"type": "text", "text": "Memory is updated. Not yet verified, when it passes I will commit and report the results."}]}}])
+    r = mod.run(C)
+    assert r is not None and "STD-KOREAN-001" in r.out and json.loads(r.out)["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    assert mod.run(C) is None                                  # 같은 보고에 두 번 안내하지 않음
