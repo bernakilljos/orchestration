@@ -149,3 +149,33 @@ _K84 = "/" + str(ROOT)[0].lower() + str(ROOT)[2:].replace(chr(92), "/")
 def test_cd_relative_record_script_inert_but_bypass_blocked(cmd, blocked):
     risk = gate.detect_risk(agd._strip_inert_text(agd._strip_git_commit_message(cmd)))
     assert (risk is not None) == blocked, cmd
+
+
+def test_non_git_target_uses_propagation_manifest(tmp_path):
+    """§84 전파 대상(IFRS·ICMAI)은 git 저장소가 아니라 «kit HEAD 와 같은 내용» 조건이 늘 실패 → 정상 기록 명령도 늘 차단.
+    git 이 아니면 전파 매니페스트 해시로 확인 · 스크립트가 바뀌면 다시 차단."""
+    import hashlib
+    import json as _j
+    import shutil
+    t = tmp_path / "tgt"
+    for rel in (".claude/hooks/tool/approval_gate_detect.py", ".claude/scripts/auto-save-next-actions.py"):
+        (t / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, t / rel)
+    note = t / ".claude/scripts/auto-save-next-actions.py"
+    h = hashlib.md5(note.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    (t / ".claude/state").mkdir(parents=True)
+    (t / ".claude/state/kit-merge-manifest.json").write_text(_j.dumps({".claude/scripts/auto-save-next-actions.py": h}),
+                                                             encoding="utf-8")
+    spec = importlib.util.spec_from_file_location("agd_tgt", t / ".claude/hooks/tool/approval_gate_detect.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    p = "gi" + "t pu" + "sh origin main"
+    cmd = f'python -X utf8 {str(note).replace(chr(92), "/")} manual-add "{p} 하지 않음"'
+
+    def flagged(c):
+        return gate.detect_risk(m._strip_inert_text(m._strip_git_commit_message(c))) is not None
+    assert not flagged(cmd)                                     # 매니페스트와 같은 kit 사본 = 글로 판정
+    note.write_text(note.read_text(encoding="utf-8") + "\n# 변조\n", encoding="utf-8")
+    assert flagged(cmd)                                         # 내용이 바뀌면 다시 차단
+    (t / ".claude/state/kit-merge-manifest.json").unlink()
+    assert flagged(cmd)                                         # 매니페스트 없음 = 확인 불가 = 차단

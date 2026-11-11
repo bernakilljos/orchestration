@@ -130,6 +130,9 @@ def run_one(target: Path, pytest_args: list[str], home: Path) -> int:
             print("     ", c)
         return 2
     print(f"   보호 대상 {len(before)}개 파일 해시 불변")
+    if r.returncode == 5:
+        print("   BLOCKED: 시험 0건 실행 — 검증 아님 (헌장 B1 · 시험 경로 확인)")
+        return 3
     return r.returncode
 
 
@@ -139,6 +142,9 @@ def main(argv: list[str]) -> int:
         targets, pytest_args = argv[:i], argv[i + 1:]
     else:
         targets, pytest_args = argv, []
+    if not pytest_args:
+        # §84 pytest 기본 설정은 '.' 로 시작하는 폴더(.claude)를 건너뛴다 → 인자 없이 실행하면 시험 0건 (실측 rc=5)
+        pytest_args = [".claude/scripts/tests"]
     if not targets:
         print(__doc__)
         return 64

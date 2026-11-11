@@ -154,6 +154,18 @@ def _kit_script_unchanged(path: str) -> bool:
             return False
         kw = dict(cwd=_KIT_ROOT, capture_output=True, text=True, timeout=2)
         rel = ".claude/scripts/" + name
+        inside = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], **kw).stdout.strip() == "true"
+        if not inside:
+            # §84 전파 대상은 git 저장소가 아닐 수 있다 (IFRS·ICMAI 실측) → 전파 매니페스트(merge-to-target 이 기록한
+            #   kit 사본 해시 · 줄끝 LF 통일 md5)와 같을 때만 «kit 의 그 파일» 로 인정. 매니페스트 없음·불일치 = 해당 없음
+            import hashlib
+            import json
+            man = os.path.join(_KIT_ROOT, ".claude", "state", "kit-merge-manifest.json")
+            with open(man, "r", encoding="utf-8") as f:
+                want_h = json.load(f).get(rel)
+            with open(want, "rb") as f:
+                got_h = hashlib.md5(f.read().replace(b"\r\n", b"\n")).hexdigest()
+            return bool(want_h) and want_h == got_h
         head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
         work = subprocess.run(["git", "hash-object", rel], **kw).stdout.strip()
         return bool(head) and head == work

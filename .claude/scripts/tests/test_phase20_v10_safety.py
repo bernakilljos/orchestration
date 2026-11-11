@@ -1959,3 +1959,13 @@ def test_target_isolated_runner_removes_read_only_copy_files(tmp_path):
     os.chmod(f, 0o444)
     assert m.remove_copy(w) is True
     assert not w.exists()
+
+
+def test_target_isolated_runner_zero_tests_is_blocked_not_pass(tmp_path):
+    """§84 실측: 시험 경로 없이 실행 → pytest 가 '.' 폴더(.claude)를 건너뛰어 0건(rc=5) · 검사 0건 ≠ 통과 (헌장 B1)."""
+    t, home = _tgt_iso_target(tmp_path, "X = 1\n")            # test_ 함수 없음 = 0건
+    env = dict(os.environ, TGT_ISO_HOME=str(home))
+    r = subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "target-test-isolated.py"), str(t),
+                        "--", PROBE.as_posix()], capture_output=True, text=True, encoding="utf-8",
+                       errors="replace", env=env, timeout=300)
+    assert r.returncode == 3 and "BLOCKED" in r.stdout, r.stdout + r.stderr

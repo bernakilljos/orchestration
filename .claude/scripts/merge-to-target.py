@@ -45,6 +45,7 @@ KIT = Path(__file__).resolve().parents[2]
 TREES = [
     ".claude/rules", ".claude/hooks", ".claude/scripts", ".claude/commands",
     ".claude/skills", ".claude/agents", "plugins", ".claude-plugin",
+    ".claude/config",   # §84 공통 정책(자원 상한·자동 실행 허용 목록·검증 패턴·모델 등록) — 대상 스크립트가 읽는데 전파 안 돼 기본값으로 동작
 ]
 SKIP_PARTS = {"__pycache__", "backups", "state", "logs", "tasks", "context-cache", "learning",
               ".pytest_cache", ".mypy_cache", ".ruff_cache"}   # 캐시 = 공통 기능 아님 (1110 §72: IFRS·ICMAI 로 전파됐던 결함)

@@ -1828,3 +1828,12 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 
 ### 미검증
 - 새 세션·전파 대상 새 세션의 실제 한국어 출력 (사용자 새 창 확인 필요) · Windows 화면 캡처 정렬 (받은 캡처는 상태줄 화면이 아님).
+
+### 전파 검증에서 찾은 결함 (§84 계속)
+- 전파 [확인]: IFRS·ICMAI 에 `--only` 13개 (stale-kit 12 · kit-only 1 · target-custom 0) · 백업 kit-merge-20261111-163441/163442 · 대상 CLAUDE.md·settings.json 해시 불변.
+- 대상 실효 language [확인]: 두 대상 모두 `Korean` (전역 settings 에서) · STD-KOREAN-001 PASS · 기준 게이트 rc=0.
+- 격리 시험 0건 [확인]: 시험 경로 없이 실행하면 pytest 가 '.' 폴더(.claude)를 건너뛰어 `no tests ran`(rc=5) 인데 실행기가 «해시 불변» 만 찍었다 → 기본 경로 `.claude/scripts/tests` · 0건 = BLOCKED(rc 3) · 시험 추가.
+- 대상 격리 시험 [확인] 443건: 422 통과·21 실패 (두 대상 동일 · 보호 대상 해시 불변). 신규 실패 원인 3갈래:
+  1. 승인 게이트 2건 — **실제 결함**: 기록 명령 인자를 글로 보는 조건이 «kit HEAD 와 같은 내용» 인데 IFRS·ICMAI 는 git 저장소가 아니라 늘 실패 → 대상에서는 정상 기록 명령이 늘 차단. 수정: git 이 아니면 전파 매니페스트(kit-merge-manifest.json · LF md5)와 같을 때만 인정 · 변조·매니페스트 없음 = 차단 (시험 추가).
+  2. phase12·phase18 — `.claude/config/` 가 전파 목록(TREES)에 없어 대상에 sandbox-policy.json 등 4개가 없음 (대상 스크립트는 읽는데 기본값으로 동작). 수정: TREES 에 `.claude/config` 추가 (공통 정책 · 승인 기록·비밀 아님 · target-custom 보호 유지).
+  3. stage1 — 격리 사본이 git 저장소가 아니라 확인 불가(BLOCKED) = 환경 의존 · 코드 결함 아님.
