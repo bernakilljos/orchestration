@@ -72,6 +72,72 @@ def _ledger_label(desc: str, cells: int = LEDGER_LABEL_CELLS) -> str:
     return "".join(out) + "…"
 
 
+_MEMO = {}
+
+
+def _memo(key, fn):
+    """§81 렌더 1회 안에서 같은 조회를 다시 하지 않는다 (git status·Ledger 집계 등)."""
+    if key not in _MEMO:
+        try:
+            _MEMO[key] = fn()
+        except Exception:
+            _MEMO[key] = None
+    return _MEMO[key]
+
+
+def _git_changes(cwd):
+    """§81 git status 1회 — 성공: 바뀐 경로 목록(빈 목록 = 깨끗) · 실패(저장소 아님·git 없음·시간 초과): None.
+    종전: 실패해도 빈 출력 = 깨끗(✅) · 영향은 0 으로 표시."""
+    def _run():
+        import subprocess as _sp
+        r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
+                    text=True, encoding="utf-8", errors="replace", timeout=3)
+        if r.returncode != 0:
+            return None
+        out = []
+        for ln in r.stdout.splitlines():
+            if len(ln) > 3:
+                out.append(ln[3:].split(" -> ")[-1].strip().strip('"'))
+        return out
+    return _memo(("git", cwd), _run)
+
+
+def _cached_cmd(cwd, key, argv, ttl):
+    """§81 무거운 진단 스크립트(standing·drift·health) 결과를 ttl 초 동안 재사용 — 성공한 결과만 저장.
+    반환 (rc, stdout, 나이초) · 실패 = (None, "", 0)."""
+    import time as _t
+    import subprocess as _sp
+    f = os.path.join(cwd, ".claude", "state", "statusline-cmd-cache.json")
+    try:
+        with open(f, "r", encoding="utf-8") as _f:
+            c = json.load(_f)
+    except Exception:
+        c = {}
+    e = c.get(key) or {}
+    now = _t.time()
+    if e and now - float(e.get("ts", 0)) < ttl and e.get("argv") == argv:
+        return e.get("rc"), e.get("out", ""), now - float(e["ts"])
+    try:
+        r = _sp.run(argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
+    except Exception:
+        return None, "", 0
+    if r.returncode == 0:
+        c[key] = {"ts": now, "rc": r.returncode, "out": r.stdout, "argv": argv}
+        try:
+            with open(f, "w", encoding="utf-8") as _f:
+                json.dump(c, _f, ensure_ascii=False)
+        except Exception:
+            pass
+    return r.returncode, r.stdout, 0
+
+
+def _age_txt(sec):
+    """측정 시각 표시 — 1시간 미만은 표시 안 함."""
+    if sec is None or sec < 3600:
+        return ""
+    return f" ({int(sec // 86400)}일 전)" if sec >= 86400 else f" ({int(sec // 3600)}시간 전)"
+
+
 def _ledger_summary(cwd: str):
     """§80 요청 줄·READY 상한 공용 — 정본 request-ledger.summarize 사용 (집계 규칙 복제 X).
     현재 요청 = current-trace.json 의 rid (없으면 UNKNOWN). 실패 시 None."""
@@ -99,6 +165,13 @@ def _ledger_summary(cwd: str):
         return _m.summarize(_reqs, str(_cur.get("rid") or ""))
     except Exception:
         return None
+
+
+_ledger_summary_raw = _ledger_summary
+
+
+def _ledger_summary(cwd: str):  # noqa: F811 — 렌더 1회당 1번 (READY·요청 줄 공용)
+    return _memo(("ledger", cwd), lambda: _ledger_summary_raw(cwd))
 
 
 def _terminal_cols() -> int:
@@ -540,7 +613,7 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 #   호출하는 곳도 없었다. Anthropic 실제 한도는 이 스크립트가 읽을 수 없다 —
 #   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
 
-def _compute_readiness(cwd, crits, errs, warns, hc_total):
+def _compute_readiness(cwd, crits, errs, warns, hc_total, logs_unmeasured=False):
     """🎯 READY 재설계 — 2026-10-16 사용자 명시.
 
     원칙 (사용자 "이거 너가 만들어서 해"):
@@ -580,6 +653,13 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
                 tc = json.load(f)
             passed = int(tc.get("passed", 0))
             total = int(tc.get("total", 0))
+            # §81: 골든과 같은 7일 기준 — 오래된 성공을 현재 검증 ✅ 로 쓰지 않는다
+            from datetime import datetime as _rdt
+            try:
+                if (_rdt.now() - _rdt.fromisoformat(str(tc.get("ts")))).days >= 7:
+                    total = 0
+            except Exception:
+                total = 0   # 측정 시각 없음 = 최신성 확인 불가
             if total:
                 rate = passed / total * 100
                 verify_icon = "✅" if rate >= 95 else ("⚠" if rate >= 80 else "❌")
@@ -634,6 +714,8 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
     _caps = []
     if verify_icon == "⏳":
         _caps.append(85)
+    if logs_unmeasured:
+        _caps.append(85)   # §81 오류 로그를 못 읽음 = 감점 0 이 아니라 미측정
     elif verify_icon == "❌":
         _caps.append(60)
     # Request Ledger → cap 50 (§80: 지난 승인대기·오등록·범위외가 아니라 현재 요청이 미완료일 때만 ·
@@ -687,33 +769,16 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
 
 
 def _compute_impact(cwd):
-    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳」.
-    2026-10-16: Phase 2 설계 선행 필요 (영향 그래프 · API/DB/breaking 패턴).
-    지금은 수정 파일 수만 정확히 · 나머지는 placeholder.
-    """
-    import subprocess as _sp
-    mod = 0
-    api = 0
-    db = 0
-    try:
-        # --no-optional-locks: git diff 도 index 를 새로 쓰려고 잠근다 — 3초에 잘리면 .git/index.lock 이 남는다(2026-10-17 실측)
-        r = _sp.run(["git", "--no-optional-locks", "diff", "--name-only", "HEAD"], cwd=cwd,
-                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3)
-        if r.returncode == 0:
-            files = [f for f in r.stdout.splitlines() if f.strip()]
-            mod = len(files)
-            # API 변경 heuristic: 경로 안 'api', 'router', 'route', 'endpoint', 'controller'
-            api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "endpoint", "controller")))
-            # DB 변경 heuristic: migration · schema · *.sql
-            db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
-    except Exception:
-        pass  # noqa: BLE001
-    parts = [f"수정 {mod}"]
-    parts.append(f"영향 \033[90m⏳\033[0m")
-    parts.append(f"API {api}" if api else "API 0")
-    parts.append(f"DB {db}" if db else "DB 0")
-    parts.append(f"breaking \033[90m⏳\033[0m")
-    return " · ".join(parts)
+    """🧪 영향 — §81: git status 1회(증명 줄과 공용) · 실패 = 미측정 (종전: 수정 0 · API 0 · DB 0).
+    API·DB = 바뀐 파일 경로에 들어간 단어로 센 «경로 추정» (실제 호출 영향 분석 아님) · 영향·breaking = 미구현."""
+    files = _git_changes(cwd)
+    _u = "[36m⏳[0m"
+    _n = "[90m미구현[0m"
+    if files is None:
+        return f"수정 {_u} · 영향 {_n} · API {_u} · DB {_u} · breaking {_n} [90m(git 조회 실패)[0m"
+    api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "route", "endpoint", "controller")))
+    db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
+    return f"수정 {len(files)} · 경로추정 API {api} DB {db} · 영향 {_n}"
 
 
 def extra_gauges(cwd, data=None):
@@ -732,106 +797,8 @@ def extra_gauges(cwd, data=None):
             if _u0 == _p0:
                 break
             _p0 = _u0
-    budget_str = ""
-    solutions_str = ""
-    sessions_str = ""
-    files_str = ""
-    tasks_str = ""
-    try:
-        import sqlite3
-        db = os.path.join(cwd, ".claude", "state", "orca.db")
-        if os.path.exists(db):
-            with sqlite3.connect(db) as c:
-                # 예산 (일간-주간-월간)
-                try:
-                    b = c.execute(
-                        "SELECT COALESCE(today_spent_usd,0), COALESCE(daily_limit_usd,0), "
-                        "COALESCE(weekly_spent_usd,0), COALESCE(weekly_limit_usd,0), "
-                        "COALESCE(monthly_spent_usd,0), COALESCE(monthly_limit_usd,0) "
-                        "FROM budget LIMIT 1"
-                    ).fetchone()
-                    if b:
-                        ds, dl, ws, wl, ms, ml = b
-                        d_lim = f"${dl:.0f}" if dl else "∞"
-                        w_lim = f"${wl:.0f}" if wl else "∞"
-                        m_lim = f"${ml:.0f}" if ml else "∞"
-                        db_bar = mini_bar(ds*100, (dl or 1)*100, 4) if dl else "────"
-                        wb_bar = mini_bar(ws*100, (wl or 1)*100, 4) if wl else "────"
-                        mb_bar = mini_bar(ms*100, (ml or 1)*100, 4) if ml else "────"
-                        budget_str = (
-                            f"일간 {db_bar} ${ds:.2f}/{d_lim}\n"
-                            f"주간 {wb_bar} ${ws:.2f}/{w_lim}\n"
-                            f"월간 {mb_bar} ${ms:.2f}/{m_lim}"
-                        )
-                except Exception:
-                    pass  # noqa: BLE001
-                # 재사용 solutions
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*), COALESCE(SUM(verified),0), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
-                    ).fetchone()
-                    if r and r[0]:
-                        cnt = int(r[0]); ver = int(r[1] or 0)
-                        rate = (ver * 100.0 / cnt) if cnt else 0.0
-                        solutions_str = f"재사용 {cnt}건 - 검증 {ver}({rate:.0f}%) - 평균점수 {r[2]:.1f}"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 세션
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*), COALESCE(SUM(turns),0), COALESCE(SUM(tokens_total),0) "
-                        "FROM session_summary"
-                    ).fetchone()
-                    if r:
-                        sessions_str = f"세션 {r[0]} - 턴 {r[1]}"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 오늘 파일 변경
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*) FROM file_audit "
-                        "WHERE ts >= datetime('now','-1 day')"
-                    ).fetchone()
-                    if r and r[0]:
-                        files_str = f"오늘 파일 {r[0]}건"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 진행 중 task
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*) FROM tasks WHERE status IN ('pending','in_progress')"
-                    ).fetchone()
-                    if r and r[0]:
-                        tasks_str = f"task {r[0]}"
-                except Exception:
-                    pass  # noqa: BLE001
-    except Exception:
-        pass  # noqa: BLE001
-    # MCP - Headroom proxy 헬스체크
-    try:
-        import urllib.request
-        urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
-        mcp = "MCP on"
-    except Exception:
-        mcp = "MCP off"
-    # git branch + uncommitted
-    git_str = ""
-    try:
-        import subprocess
-        b = subprocess.run(
-            ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
-        )
-        branch = b.stdout.strip() if b.returncode == 0 else ""
-        s = subprocess.run(
-            ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
-        )
-        dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
-        if branch:
-            git_str = f"git {branch}" + (f" ({dirty} 변경)" if dirty else " clean")
-    except Exception:
-        pass  # noqa: BLE001
+    # §81: 결과를 화면에 쓰지 않던 조회 제거 (budget·solutions·sessions·file_audit·tasks sqlite 5종 ·
+    #   폐기된 Headroom :8787 확인 0.3초 · git rev-parse/status 2회) — 쓰는 곳 0건 확인 후 삭제
 
     # Agent 진행 섹션 (2026-10-12 · 10-16 등급별 색으로 교체)
     #   기록: .claude/hooks/tool/track_agent_dispatch.py (SubagentStart/Stop · 키=agent_id)
@@ -839,6 +806,8 @@ def extra_gauges(cwd, data=None):
     agent_str = ""
     try:
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
+        if not os.path.exists(active_agents_file):
+            agent_str = "[36m⏳ 상태 기록 없음[0m (실행 여부 UNKNOWN)"   # §81
         if os.path.exists(active_agents_file):
             with open(active_agents_file, "r", encoding="utf-8") as f:
                 raw = json.load(f)
@@ -1028,7 +997,7 @@ def extra_gauges(cwd, data=None):
             else:
                 agent_str = ""
     except Exception:
-        pass  # noqa: BLE001
+        agent_str = "[36m⏳ 상태 읽기 실패[0m (실행 여부 UNKNOWN)"   # §81
 
     # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용 + agent
     import datetime as _dt
@@ -1093,12 +1062,8 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass  # noqa: BLE001
     if not mcp_shown:
-        try:
-            import urllib.request
-            urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
-            tail.append("MCP on")
-        except Exception:
-            tail.append("MCP off")
+        # §81: 폐기된 Headroom(:8787) 확인으로 «MCP off» 를 만들던 것 제거 — 측정 파일 없음 = 미측정
+        tail.append("MCP [36m⏳[0m 미측정")
     # git 표시 제거 (사용자 요청 2026-09-03)
     try:
         import sqlite3
@@ -1112,7 +1077,7 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     ver = int(r[1] or 0)
                     rate = (ver * 100.0 / cnt) if cnt else 0.0
-                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
+                    tail.append(f"해결책 {cnt} (검증 {rate:.0f}%)")  # §81 재사용 빈도 아님
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
@@ -1148,6 +1113,7 @@ def extra_gauges(cwd, data=None):
         # P0a-D (2026-10-28): None 반환 시 미측정 (log_dir 없음) · 하위호환 0 fallback
         _c, _e, _w, _rpt, _top = recent_log_issues(cwd)
         _unmeasured = (_c is None)
+        _log_unmeasured = _unmeasured
         if _unmeasured:
             _c, _e, _w, _rpt = 0, 0, 0, 0
             _top = _top or "unmeasured"
@@ -1205,10 +1171,12 @@ def extra_gauges(cwd, data=None):
         #   (statusline_context.py 의 monthly_cost(cwd) 참고). 그래서 창마다 값이 다르다 —
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
+        # §81: 월·연은 이 프로젝트 대화 기록으로 계산한 추정 (실제 청구액 아님) · 환율 기본값이면 표시
+        _fx = "" if os.environ.get("USD_KRW_RATE") else " · 환율 1350 기본"
         line3 = (
             f"세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
-            f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
-            f"연간 ${yearly:,.2f} ({_krw(yearly)})"
+            f"{cur_m}월 추정 ${monthly:,.2f} ({_krw(monthly)}) · "
+            f"연간 추정 ${yearly:,.2f} ({_krw(yearly)}){_fx}"
         )
     else:
         line3 = ""
@@ -1280,15 +1248,9 @@ def extra_gauges(cwd, data=None):
     rl_age = max([now - key_ts[k] for k in key_ts if k not in fresh] or [0.0])
     rl = rl or None
 
-    if rl:
-        try:
-            os.makedirs(os.path.dirname(_rl_cache), exist_ok=True)
-            import time as _time
-            with open(_rl_cache, "w", encoding="utf-8") as _f:
-                json.dump({"rate_limits": rl, "ts": _time.time()}, _f)
-        except Exception:
-            pass  # noqa: BLE001
-    else:
+    # §81: 종전엔 렌더마다 캐시를 {rate_limits, ts=지금} 으로 다시 써 key_ts 가 사라지고 «30분 넘음 ~» 표시가 안 떴다.
+    #   위에서 새 값이 왔을 때만 key_ts 와 함께 저장한다 · 아래는 새 값도 캐시 병합도 없을 때의 옛 형식 읽기
+    if not rl:
         try:
             import time as _time
             with open(_rl_cache, "r", encoding="utf-8") as _f:
@@ -1359,14 +1321,16 @@ def extra_gauges(cwd, data=None):
             fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
             fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+        elif not rl:
+            fast_badge = ""   # §81 사용량을 모르면 권고도 하지 않는다 (종전: 0% 로 보고 fast ON)
         elif _wp >= 80:
-            fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+            fast_badge = (f"{_RED}[!!] fast OFF 권고{_RST}")
         elif _sp >= 70:
-            fast_badge = (f"{_YEL}fast OFF (세션 {_sp:.0f}% quota 임박){_RST}")
+            fast_badge = (f"{_YEL}fast OFF 권고{_RST}")
         elif _wp >= 50:
-            fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
+            fast_badge = (f"{_YEL}fast OFF 권고{_RST}")
         else:
-            fast_badge = "\033[1;32mfast ON\033[0m"
+            fast_badge = "\033[32mfast 가능(권고)\033[0m"   # §81 실제 모드 상태가 아니라 권고
     except Exception:
         pass  # noqa: BLE001
 
@@ -1495,12 +1459,15 @@ def extra_gauges(cwd, data=None):
     if _top_safe:
         err_parts.append(f"\033[90m최근 {_top_safe}\033[0m")
     errors_line = " · ".join(err_parts)
+    if locals().get("_log_unmeasured"):
+        errors_line = "[36m⏳ 미측정[0m (.claude/logs 없음 · 0 아님)"
     infra_line = " · ".join(infra_parts)
 
     # 🎯 READY (2026-10-16 · 가중 공식 — 테스트 소스 없으면 「⏳」 축 제외하고 재가중)
     #   test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%
     _ready_score, _ready_grade, _verify_icon, _deploy_icon = _compute_readiness(
         cwd, _c_safe, _e_safe, _w_safe, locals().get("_hc_total", 0),
+        logs_unmeasured=bool(locals().get("_log_unmeasured")),
     )
     ready_line = f"{_ready_score} · 검증 {_verify_icon} · 배포 {_deploy_icon} · 품질 {_ready_grade}"
 
@@ -1509,31 +1476,38 @@ def extra_gauges(cwd, data=None):
 
     # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
     control_line = ""
-    try:
-        # 2026-10-29 사용자 지적: 측정 소스 없음 → 0 X · ⏳ (미측정 청록). § 9 "미측정 ≠ 정상".
-        # 디자인 FROZEN 유지 (라벨·구분자·순서 동일) · 데이터 계층만 교정.
-        _unm = "[36m⏳[0m"
-        control_line = (f"범위위반 {_unm} · "
-                        f"임의변경 {_unm} · "
-                        f"승인누락 {_unm} · "
-                        f"추측수정 {_unm} · "
-                        f"검증skip {_unm}")
-    except Exception:
-        pass
+    # §81: 범위위반·임의변경·승인누락·추측수정·검증skip 을 세는 기록이 없다 — ⏳(측정 대기)가 아니라 미구현
+    control_line = "[90m5개 항목 계측 미구현[0m"
 
     # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
     verify_line = ""
+    # §81: test·회귀 = 회귀 게이트 기록(.claude/state/regression-gate.json · 정본 independent_verifier) ·
+    #   7일 넘으면 ⏳ · build·lint·type 은 기록 없음 = 미구현
     try:
-        # 2026-10-29: "회귀 0" 측정 소스 없음 → ⏳ (미측정 청록). test/build/lint/type ⏳ 유지 (실행 X).
-        _dim = "[90m⏳[0m"
-        _unm = "[36m⏳[0m"
-        verify_line = (f"test {_dim} · "
-                       f"build {_dim} · "
-                       f"lint {_dim} · "
-                       f"type {_dim} · "
-                       f"회귀 {_unm}")
+        import re as _vre, time as _vt
+        _u = "[36m⏳[0m"
+        _n = "[90m미구현[0m"
+        _tv, _rv = _u, _u
+        _gf = os.path.join(cwd, ".claude", "state", "regression-gate.json")
+        if os.path.exists(_gf):
+            with open(_gf, "r", encoding="utf-8") as f:
+                _g = json.load(f)
+            _age = _vt.time() - float(_g.get("at") or 0)
+            if _age < 7 * 86400:
+                _m = _vre.search(r"(\d+) passed", _g.get("summary") or "")
+                _fl = _vre.search(r"(\d+) failed", _g.get("summary") or "")
+                _ok = _g.get("status") == "pass"
+                _col = "32" if _ok else "31"
+                _tv = (f"[1;{_col}m{_m.group(1) if _m else '?'}통과"
+                       + (f" {_fl.group(1)}실패" if _fl else "") + f"[0m"
+                       + f"[90m({_vt.strftime('%m/%d %H:%M', _vt.localtime(float(_g.get('at') or 0)))} 기록)[0m")
+                _nf = len(_g.get("new_failures") or [])
+                _rv = f"[1;{'31' if _nf else '32'}m신규실패 {_nf}[0m"
+            else:
+                _tv = f"{_u}{_age_txt(_age)}"
+        verify_line = f"test {_tv} · 회귀 {_rv} · build·lint·type {_n}"
     except Exception:
-        pass
+        verify_line = "test [36m⏳[0m · 회귀 [36m⏳[0m (기록 읽기 실패)"
 
     # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
     trend_line = ""
@@ -1544,84 +1518,69 @@ def extra_gauges(cwd, data=None):
             with open(_ra_f, "r", encoding="utf-8") as f:
                 _ra = _tj.load(f)
             rec = _ra.get("recurrence", {}).get("by_category", {})
-            d = rec.get("design") or {}
-            v = rec.get("dev") or {}
-            d_pct = float(d.get("recur_rate_pct", 0) if d else _ra.get("design", {}).get("recur_rate_pct", 0))
-            v_pct = float(v.get("recur_rate_pct", 0) if v else _ra.get("dev", {}).get("recur_rate_pct", 0))
-            d_tr = d.get("trend", "→") if d else "→"
-            v_tr = v.get("trend", "→") if v else "→"
-            d_col = "32" if d_pct < 20 else ("33" if d_pct < 40 else "31")
-            v_col = "32" if v_pct < 20 else ("33" if v_pct < 40 else "31")
-            trend_line = (f"디자인 재발 \033[1;{d_col}m{d_pct:.0f}%{d_tr}\033[0m · "
-                          f"개발 재발 \033[1;{v_col}m{v_pct:.0f}%{v_tr}\033[0m")
+            # §81: 재발 기록 없는 축은 0% 가 아니라 ⏳ · 표본 수(n) · 측정 시각
+            def _tr(d):
+                if not d or "recur_rate_pct" not in d:
+                    return "[36m⏳[0m"
+                _pct = float(d["recur_rate_pct"])
+                _col = "32" if _pct < 20 else ("33" if _pct < 40 else "31")
+                return f"[1;{_col}m{_pct:.0f}%{d.get('trend', '→')}[0m(n{d.get('n', '?')})"
+            _gen_age = None
+            try:
+                from datetime import datetime as _qdt
+                _gen_age = (_qdt.now() - _qdt.fromisoformat(str(_ra.get("generated_at")))).total_seconds()
+            except Exception:
+                pass
+            trend_line = (f"디자인 재발 {_tr(rec.get('design'))} · 개발 재발 {_tr(rec.get('dev'))}"
+                          + _age_txt(_gen_age))
     except Exception:
         pass
 
     # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 ⏳ · 하드코딩만 실측)
     reuse_line = ""
-    try:
-        _hc = int(locals().get("_hc_total", 0) or 0)
-        # 측정 소스 없음 — ⏳ 명시 (operating-principles § 9)
-        reuse_line = ("컴포넌트 재사용 [90m?[0m · "
-                      "우회 [90m?[0m · "
-                      "CSS중복 [90m—[0m · "
-                      "신규공통 [90m?[0m · "
-                      f"하드코딩 [1;33m{_hc}[0m")
-    except Exception:
-        pass
+    # §81: 컴포넌트 재사용·우회·CSS중복·신규공통 = 집계 미구현 (종전 ?·— 표시) · 하드코딩만 감사 파일 실측
+    _aud_ok = os.path.exists(os.path.join(cwd, ".claude", "state", "hardcoded-audit.json"))
+    _hc_txt = (f"[1;33m{int(locals().get('_hc_total', 0) or 0)}[0m" if _aud_ok else "[36m⏳[0m")
+    reuse_line = f"하드코딩 {_hc_txt} · [90m4개 항목 미구현[0m"
 
     # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
     proof_line = ""
     try:
-        import subprocess as _sp
-        # git clean
-        # --no-optional-locks: 3초에 잘려 죽은 git status 가 .git/index.lock 을 남겨 그 뒤 git add·commit 이 전부 막혔다
-        #   (2026-10-17 lottoclaude 하루 2번 · 재현 15/15 → 이 옵션이면 0/15). 상태줄은 읽기만 하므로 index 를 고쳐 쓸 이유가 없다.
-        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd).stdout.strip() == ""
-        _git_icon = "✅" if _git_clean else "⚠"
-        # standing requirements gate
+        _u = "[36m⏳[0m"
+        # §81 git: 실패(저장소 아님·git 없음·시간 초과) = ⏳ · 깨끗 = ✅ · 변경 있음 = ⚠ N (종전: 실패도 ✅)
+        _gch = _git_changes(cwd)
+        _git_icon = f"{_u}(조회 실패)" if _gch is None else ("✅" if not _gch else f"⚠ {len(_gch)}")
+        # §81 standing: 결과별 집계 (종전 stats 는 늘 만점) · 60초 재사용 · 실패 = ⏳
+        _sr_txt = _u
         _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
-        _sr_ok = _sr_total = 0
         if os.path.exists(_sr):
-            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, cwd=cwd)
+            _rc, _out, _ = _cached_cmd(cwd, "standing", [sys.executable, "-X", "utf8", _sr, "stats"], 60)
             try:
-                import json as _pj
-                _s = _pj.loads(_r.stdout)
-                _sr_ok, _sr_total = _s.get("ok",0), _s.get("active",0)
-            except: pass
-        # golden test — 2026-10-17: 예전엔 파일이 있기만 하면 늘 ⚠ 였다(13/13 PASS 여도). golden-test.py 가 남기는
-        #   test-cache.json 의 결과를 읽는다 · 없거나 7일 넘게 묵으면 ⏳(미측정 ≠ 정상)
-        _gt = os.path.join(cwd, ".claude", "scripts", "golden-test.py")
-        _gt_icon = "❌"
-        if os.path.exists(_gt):
-            _gt_icon = "[90m⏳[0m"
+                _s = json.loads(_out) if _rc == 0 else None
+            except Exception:
+                _s = None
+            if _s:
+                _bad = int(_s.get("failed", 0)) + int(_s.get("unknown", 0))
+                _sr_txt = (f"[1;{'31' if _bad else '32'}m{_s.get('ok', 0)}/{_s.get('active', 0)}[0m"
+                           + (f" 사람{_s['human']}" if _s.get("human") else "")
+                           + (f" [1;31m실패{_bad}[0m" if _bad else ""))
+        # golden: test-cache.json (golden-test.py 기록) · 7일 넘거나 없으면 ⏳ · 스크립트 없음도 ⏳(종전 ❌)
+        _gt_icon = _u
+        if os.path.exists(os.path.join(cwd, ".claude", "scripts", "golden-test.py")):
             try:
-                import json as _gj
                 from datetime import datetime as _gdt
                 with open(os.path.join(cwd, ".claude", "state", "test-cache.json"), encoding="utf-8") as _gf:
-                    _g = _gj.load(_gf)
-                if (_gdt.now() - _gdt.fromisoformat(_g["ts"])).days < 7:
+                    _g = json.load(_gf)
+                _gage = (_gdt.now() - _gdt.fromisoformat(_g["ts"])).total_seconds()
+                if _gage < 7 * 86400:
                     _gp, _gt_n = int(_g.get("passed", 0)), int(_g.get("total", 0))
-                    _gt_icon = (f"[1;32m✅ {_gp}/{_gt_n}[0m" if _gt_n and _gp == _gt_n
-                                else f"[1;31m❌ {_gp}/{_gt_n}[0m")
+                    _gt_icon = ((f"[1;32m✅ {_gp}/{_gt_n}[0m" if _gt_n and _gp == _gt_n
+                                 else f"[1;31m❌ {_gp}/{_gt_n}[0m") + _age_txt(_gage))
             except Exception:
                 pass
-        # request ledger
-        _rl_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        _rl_done = _rl_total = 0
-        if os.path.exists(_rl_file):
-            try:
-                with open(_rl_file, "r", encoding="utf-8") as _f:
-                    import json as _jj
-                    _rl = _jj.load(_f)
-                    _rl_total = len(_rl.get("requests",[]))
-                    _rl_done = sum(1 for _r in _rl.get("requests",[]) if _r.get("status")=="completed")
-            except: pass
-        proof_line = (f"git {_git_icon} · "
-                      f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
-                      f"golden {_gt_icon} · test [90m⏳[0m")
+        proof_line = f"git {_git_icon} · standing {_sr_txt} · golden {_gt_icon}"
     except Exception:
-        pass
+        proof_line = "git [36m⏳[0m · standing [36m⏳[0m · golden [36m⏳[0m (읽기 실패)"
 
     # 💾 이력 (orca.db · 2026-10-16 사용자 요청)
     history_line = ""
@@ -1653,20 +1612,18 @@ def extra_gauges(cwd, data=None):
         import subprocess as _sp_d
         _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
         if os.path.exists(_dd):
-            _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
-            if _r.returncode == 0 and _r.stdout.strip():
-                drift_line = _r.stdout.strip()
+            _rc, _out, _ = _cached_cmd(cwd, "drift", [sys.executable, "-X", "utf8", _dd, "status"], 60)
+            if _rc == 0 and _out.strip():
+                drift_line = _out.strip()
     except Exception:
         pass
     try:
         import subprocess as _sp_h
         _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
         if os.path.exists(_hc):
-            _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
-            if _r.returncode == 0 and _r.stdout.strip():
-                health_line = _r.stdout.strip()
+            _rc, _out, _ = _cached_cmd(cwd, "health", [sys.executable, "-X", "utf8", _hc, "status"], 600)
+            if _rc == 0 and _out.strip():
+                health_line = _out.strip()
     except Exception:
         pass
 
@@ -1789,7 +1746,6 @@ def main() -> None:
             _MONTHLY_COST = monthly_cost(cwd, model_id)
             _YEARLY_COST = yearly_cost(cwd, model_id)
             _CACHE_HIT_RATE = cache_hit_rate(jsonl)
-            _ERROR_COUNT = recent_error_count(cwd)
         except Exception:
             pass  # noqa: BLE001
 

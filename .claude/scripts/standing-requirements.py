@@ -229,11 +229,140 @@ def cmd_disable(rid: str) -> int:
 
 
 def cmd_stats() -> dict:
+    """§81 (2026-11-11): 종전엔 `not _verify(r)` 로 실패를 셌는데 _verify 는 'PASS'/'FAIL'/'UNKNOWN'/'HUMAN'
+    문자열을 돌려줘 늘 참 → failed 0 · ok == active (항상 만점). 결과별로 따로 센다.
+    ok = 자동 검증 PASS 만 · human = 사람 판단 기준(자동 PASS 아님) · unknown = 검증 패턴 없음."""
     data = _load()
     total = len(data)
-    active = sum(1 for r in data.values() if r.get("status") == "ACTIVE")
-    failed = sum(1 for r in data.values() if r.get("status") == "ACTIVE" and not _verify(r))
-    return {"total": total, "active": active, "failed": failed, "ok": active - failed}
+    res = [_verify(r) for r in data.values() if r.get("status") == "ACTIVE"]
+    return {"total": total, "active": len(res), "ok": res.count("PASS"), "failed": res.count("FAIL"),
+            "unknown": res.count("UNKNOWN"), "human": res.count("HUMAN")}
+
+
+LANG_LOG = ROOT / ".claude" / "logs" / "language-violations.log"
+LANG_MIN_LETTERS = 60      # 짧은 한 줄(명령·경로만 있는 답)은 판정하지 않는다
+LANG_MIN_HANGUL = 0.30     # 글자(한글+영문) 중 한글 비율이 이보다 낮으면 영어 보고로 본다
+
+
+def _hangul_ratio(text: str) -> "tuple[float, int]":
+    import re as _re
+    body = _re.sub(r"```.*?```", " ", text or "", flags=_re.S)          # 코드 블록 제외
+    body = _re.sub(r"`[^`]*`", " ", body)                              # 인라인 식별자 제외
+    body = _re.sub(r"(https?://|[A-Za-z]:\\|/)[^\s]*", " ", body)      # URL·경로 제외
+    ko = len(_re.findall(r"[\uac00-\ud7a3]", body))
+    en = len(_re.findall(r"[A-Za-z]", body))
+    n = ko + en
+    return ((ko / n) if n else 1.0), n
+
+
+def _turn_assistant_texts(transcript: str) -> list:
+    """이번 턴(마지막 사람 입력·Stop 지적 이후) 메인 스레드 보고 [{uuid, text}] — 중간 진행 보고 포함 · 서브에이전트 제외."""
+    try:
+        p = Path(transcript)
+        with open(p, "rb") as f:
+            f.seek(max(0, p.stat().st_size - 1048576))
+            lines = f.read().decode("utf-8", "replace").splitlines()
+    except Exception:
+        return []
+    out = []
+    for ln in reversed(lines):
+        try:
+            e = json.loads(ln)
+        except Exception:
+            continue
+        if e.get("isSidechain"):
+            continue
+        parts = (e.get("message") or {}).get("content")
+        if e.get("type") == "user":
+            if isinstance(parts, str) or any(isinstance(c, dict) and c.get("type") == "text" for c in (parts or [])):
+                break                                  # 사람 입력 또는 Stop 훅 지적 = 이번 턴 시작
+            continue                                   # tool_result 는 건너뜀
+        if e.get("type") == "assistant":
+            txt = "\n".join(c.get("text", "") for c in (parts or []) if isinstance(c, dict) and c.get("type") == "text")
+            if txt.strip():
+                out.append({"uuid": e.get("uuid"), "text": txt})
+    return list(reversed(out))
+
+
+LANG_STATE = ROOT / ".claude" / "state" / "lang-check.json"
+
+
+def _lang_trace(status: str, error: str = "", evidence: str = "", detail=None) -> str:
+    """§82 위반·정정 기록 = 기존 요청 추적(trace) · 현재 요청이 없으면 옛 로그 파일에 덧붙임 (지우지 않음)."""
+    try:
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_lang_trace_mod", str(Path(__file__).resolve().parent / "lib" / "trace.py"))
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        where = _m.emit("policy", step="STD-KOREAN-001", status=status, error=error or None,
+                        evidence=evidence or None, detail=detail)
+        if where != "none":
+            return where
+    except Exception:
+        pass
+    try:
+        LANG_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(LANG_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), "rule": "STD-KOREAN-001",
+                                "status": status, "error": error, "evidence": evidence, "detail": detail},
+                               ensure_ascii=False) + "\n")
+        return "log"
+    except Exception:
+        return "none"
+
+
+def cmd_lang_check() -> int:
+    """§81·§82 Stop 훅: 사용자에게 보인 보고 중 «아직 검사하지 않은 것»(증분)만 검사.
+    영어가 있으면 1회 차단(한국어로 다시 보고) · stop_hook_active 면 기록만 · 이미 검사한 보고는 다시 세지 않음 ·
+    차단 뒤 새 보고가 한국어면 «정정됨» 기록. 기록 = 요청 추적(trace) · 위반 이력은 지우지 않는다."""
+    try:
+        payload = json.loads(sys.stdin.read() or "{}")
+    except Exception:
+        payload = {}
+    sid = str(payload.get("session_id") or "nosession")
+    try:
+        state = json.loads(LANG_STATE.read_text(encoding="utf-8"))
+    except Exception:
+        state = {}
+    mine = state.get(sid) or {}
+    items = _turn_assistant_texts(payload.get("transcript_path") or "")
+    seen = mine.get("last_uuid")
+    if seen:
+        pos = next((k for k, it in enumerate(items) if it.get("uuid") == seen), None)
+        if pos is not None:
+            items = items[pos + 1:]                    # 이미 검사한 보고는 건너뜀 (증분)
+    if not items and payload.get("last_assistant_message") and not payload.get("transcript_path"):
+        items = [{"uuid": None, "text": payload["last_assistant_message"]}]
+    bad = []
+    for it in items:
+        ratio, n = _hangul_ratio(it["text"])
+        if n >= LANG_MIN_LETTERS and ratio < LANG_MIN_HANGUL:
+            bad.append((it, ratio, n))
+    was_pending = bool(mine.get("pending"))
+    if items and items[-1].get("uuid"):
+        mine["last_uuid"] = items[-1]["uuid"]
+    if items:                                          # 새 보고가 없으면 미정정 상태를 그대로 둔다
+        mine["pending"] = bool(bad)
+    mine["checked_at"] = datetime.now().isoformat(timespec="seconds")
+    state[sid] = mine
+    try:
+        LANG_STATE.parent.mkdir(parents=True, exist_ok=True)
+        LANG_STATE.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+    if not bad:
+        if was_pending and items:
+            _lang_trace("success", evidence=f"차단 뒤 보고 {len(items)}건 한국어로 정정됨")
+        return 0
+    it, ratio, n = bad[-1]
+    _lang_trace("fail", error=f"영어 보고 {len(bad)}건 (마지막 한글 비율 {ratio:.0%})",
+                detail={"session": sid, "letters": n, "head": it["text"].strip()[:120],
+                        "blocked": not payload.get("stop_hook_active")})
+    if payload.get("stop_hook_active"):
+        return 0
+    print(f"[STD-KOREAN-001] 새 보고 {len(bad)}건이 영어입니다 (마지막 한글 비율 {ratio:.0%}) — 같은 내용을 한국어로 다시 보고하세요 "
+          "(식별자·명령·경로·원문 오류만 원문 유지 · 백그라운드 Agent 결과도 한국어로 옮겨 보고).", file=sys.stderr)
+    return 2
 
 
 def main() -> int:
@@ -250,6 +379,7 @@ def main() -> int:
     sub.add_parser("replay")
     sub.add_parser("gate")
     sub.add_parser("stats")
+    sub.add_parser("lang-check")
     p_res = sub.add_parser("resolve")
     p_res.add_argument("rid")
     p_dis = sub.add_parser("disable")
@@ -263,6 +393,8 @@ def main() -> int:
         return cmd_replay()
     if args.op == "gate":
         return cmd_gate()
+    if args.op == "lang-check":
+        return cmd_lang_check()
     if args.op == "stats":
         print(json.dumps(cmd_stats(), ensure_ascii=False))
         return 0

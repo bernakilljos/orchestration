@@ -1,5 +1,6 @@
 {
   "_comment": "install 배포용 settings template. setup/modules/03-settings.bat 가 $HOME/.claude/settings.json 과 target/.claude/settings.json 로 배포. 2026-10-13 생성 (15축 audit MISSING fix)",
+  "language": "Korean",
   "permissions": {
     "allow": [
       "Write",

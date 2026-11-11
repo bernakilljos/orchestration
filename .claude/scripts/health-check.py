@@ -122,7 +122,10 @@ def check_standing() -> dict:
         d = json.loads(out) if out else {}
         ok = int(d.get("ok", 0))
         active = int(d.get("active", 0))
-        return {"ok": ok == active and active > 0, "value": f"{ok}/{active}"}
+        # §81 stats 가 결과별로 센다 — 사람 판단 기준(human)은 실패가 아님 · 실패·검증 패턴 없음이 0 이어야 통과
+        failed, unknown, human = int(d.get("failed", 0)), int(d.get("unknown", 0)), int(d.get("human", 0))
+        return {"ok": active > 0 and failed == 0 and unknown == 0, "value": f"{ok}/{active}",
+                "detail": f"실패 {failed} · 패턴없음 {unknown} · 사람판단 {human}"}
     except Exception:
         return {"ok": False, "value": "?"}
 

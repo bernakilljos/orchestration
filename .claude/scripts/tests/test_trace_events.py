@@ -196,12 +196,197 @@ def test_statusline_line_and_ready_cap_follow_current_request(proj):
     assert sl._ledger_summary(str(proj)) is None        # 정본 스크립트 없음 = 집계 불가 (상한 유지 쪽)
     (proj / ".claude" / "scripts").mkdir(parents=True, exist_ok=True)
     (proj / ".claude" / "scripts" / "request-ledger.py").write_bytes((SCRIPTS / "request-ledger.py").read_bytes())
+    sl._MEMO.clear()                                      # 렌더 1회 메모 — 실제는 렌더마다 새 프로세스
     c = sl._ledger_summary(str(proj))
     assert c["completed"] == 1 and c["current_rid"] == "R1" and c["blocking"] == 1
     # 현재 요청 완료 → 지난 미완료가 있어도 상한 대상 아님 · 현재 요청 미완료 → 대상
     assert not c["current_blocking"]
     _ledger(proj, _MIX + [{"id": "R7", "status": "pending"}], "R7")
+    sl._MEMO.clear()
     assert sl._ledger_summary(str(proj))["current_blocking"]
     hc = _load("hc80", SCRIPTS / "health-check.py")
     hc.STATE_DIR = str(proj / ".claude" / "state")
     assert hc.check_request_ledger()["value"] == "1/7"
+
+
+# ── §81 사용자 보고 한글 고정 (STD-KOREAN-001) — 원인: 사용자 전역 settings language=English ──
+def test_project_settings_force_korean_language():
+    for p in (ROOT / ".claude" / "settings.json", ROOT / "setup" / "templates" / "settings.template.json"):
+        assert json.loads(p.read_text(encoding="utf-8")).get("language") == "Korean", p
+    local = ROOT / ".claude" / "settings.local.json"
+    if local.exists():
+        assert json.loads(local.read_text(encoding="utf-8")).get("language", "Korean") == "Korean"
+    seed = json.loads((SCRIPTS / "standing-requirements.seed.json").read_text(encoding="utf-8"))["requirements"]
+    assert seed["STD-KOREAN-001"]["verify_target"] == ".claude/settings.json"
+    assert seed["STD-KOREAN-001"]["verify_pattern"] == '"language": "Korean"'
+
+
+def _lang(proj, payload):
+    return subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "standing-requirements.py"), "lang-check"],
+                          input=json.dumps(payload, ensure_ascii=False), text=True, encoding="utf-8",
+                          capture_output=True, env=dict(os.environ))
+
+
+def test_lang_check_blocks_english_report_once_and_logs(proj):
+    en = "I'll report when finished. The regression gate passed and the statusline audit is still running now."
+    ko = "회귀 게이트를 통과했습니다. `statusline_context.py` 수정을 계속하고 끝나면 한 번에 보고합니다. 아직 진행 중입니다."
+    r = _lang(proj, {"last_assistant_message": en})
+    assert r.returncode == 2 and "STD-KOREAN-001" in r.stderr
+    assert _lang(proj, {"last_assistant_message": en, "stop_hook_active": True}).returncode == 0   # 무한 차단 X
+    assert _lang(proj, {"last_assistant_message": ko}).returncode == 0
+    assert _lang(proj, {"last_assistant_message": "```bash\ngit status --porcelain && python -m pytest -q tests/\n```"}).returncode == 0
+    log = (proj / ".claude" / "logs" / "language-violations.log").read_text(encoding="utf-8").splitlines()
+    st = [json.loads(x)["status"] for x in log]          # 현재 요청 추적이 없으면 옛 로그 파일에 덧붙임
+    assert st == ["fail", "fail", "success"]              # 차단 · 두 번째(기록만) · 한국어 정정 기록
+
+
+def test_lang_check_reads_transcript_main_thread_only(proj):
+    tr = proj / "t.jsonl"
+    rows = [{"type": "assistant", "message": {"content": [{"type": "text", "text": "작업을 마쳤습니다. 결과를 한국어로 보고드립니다. 회귀 시험은 모두 통과했습니다."}]}},
+            {"type": "assistant", "isSidechain": True, "message": {"content": [{"type": "text", "text": "Background agent finished the inventory and all nine claims hold true here."}]}}]
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+    assert _lang(proj, {"transcript_path": str(tr)}).returncode == 0     # 서브에이전트 영어 원문은 사용자 보고가 아님
+
+
+def test_standing_stats_counts_real_failures(proj):
+    st = proj / ".claude" / "state"
+    (proj / "a.txt").write_text("OK-MARK", encoding="utf-8")
+    reqs = {"A": {"status": "ACTIVE", "verify_target": "a.txt", "verify_pattern": "OK-MARK"},
+            "B": {"status": "ACTIVE", "verify_target": "a.txt", "verify_pattern": "NOPE"},
+            "C": {"status": "ACTIVE", "judge": "human"},
+            "D": {"status": "ACTIVE"}}
+    (st / "standing-requirements.json").write_text(json.dumps(reqs), encoding="utf-8")
+    out = subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "standing-requirements.py"), "stats"],
+                         capture_output=True, text=True, encoding="utf-8", env=dict(os.environ)).stdout
+    s = json.loads(out)
+    # 시드(STD-*)가 함께 합쳐진다 — 결과별 합 = 전체 · 실패가 있으면 만점 아님 (종전: 항상 ok == active)
+    assert s["ok"] + s["failed"] + s["human"] + s["unknown"] == s["active"]
+    assert s["failed"] >= 1 and s["human"] >= 1 and s["unknown"] >= 1 and s["ok"] < s["active"]
+
+
+# ── §81 상태줄 데이터 계층 — 미측정·조회 실패·오래된 값이 0·✅ 로 보이지 않는다 (격리 폴더 · 저장소 아님) ──
+import re as _re81
+
+
+def _plain(x):
+    return _re81.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", x or "")
+
+
+@pytest.fixture
+def sl(proj):
+    (proj / "plugins").mkdir()
+    m = _load("sl81", SCRIPTS / "statusline_context.py")
+    m._MEMO.clear()
+    return m
+
+
+def test_no_git_no_logs_no_agents_are_unmeasured_not_zero(sl, proj):
+    import shutil as _sh
+    _sh.rmtree(proj / ".claude" / "logs")
+    g = sl.extra_gauges(str(proj), {})
+    assert "git 조회 실패" in _plain(g["impact"]) and "API 0" not in _plain(g["impact"])
+    assert "git ⏳" in _plain(g["proof"]) and "git ✅" not in _plain(g["proof"])
+    assert "미측정" in _plain(g["errors"]) and "error 0" not in _plain(g["errors"])
+    assert "UNKNOWN" in _plain(g["agents"])
+    assert "미구현" in _plain(g["control"]) and "미구현" in _plain(g["reuse"])
+
+
+def test_stale_test_cache_is_not_current_success(sl, proj):
+    (proj / ".claude" / "state" / "test-cache.json").write_text(
+        json.dumps({"passed": 13, "total": 13, "ts": "2023-01-01T00:00:00"}), encoding="utf-8")
+    score, grade, icon, _ = sl._compute_readiness(str(proj), 0, 0, 0, 0)
+    assert icon == "⏳"
+    (proj / ".claude" / "state" / "test-cache.json").write_text(
+        json.dumps({"passed": 13, "total": 13, "ts": datetime_now_iso()}), encoding="utf-8")
+    assert sl._compute_readiness(str(proj), 0, 0, 0, 0)[2] == "✅"
+    assert int(_plain(str(sl._compute_readiness(str(proj), 0, 0, 0, 0, logs_unmeasured=True)[0])).split("/")[0]) <= 85
+
+
+def datetime_now_iso():
+    from datetime import datetime
+    return datetime.now().isoformat(timespec="seconds")
+
+
+def test_verify_line_reads_regression_record_with_age(sl, proj):
+    import time as _t
+    f = proj / ".claude" / "state" / "regression-gate.json"
+    f.write_text(json.dumps({"status": "pass", "at": _t.time(), "summary": "== 447 passed in 3s ==", "new_failures": []}), encoding="utf-8")
+    v = _plain(sl.extra_gauges(str(proj), {})["verify"])
+    assert "447통과" in v and "신규실패 0" in v
+    f.write_text(json.dumps({"status": "pass", "at": _t.time() - 9 * 86400, "summary": "== 447 passed ==", "new_failures": []}), encoding="utf-8")
+    sl._MEMO.clear()
+    v = _plain(sl.extra_gauges(str(proj), {})["verify"])
+    assert "447통과" not in v and "9일 전" in v
+
+
+def test_rate_limit_cache_keeps_collection_time(sl, proj, monkeypatch):
+    home = proj / "home"
+    home.mkdir()
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.setenv("HOME", str(home))
+    rl = {"rate_limits": {"five_hour": {"used_percentage": 10}, "seven_day": {"used_percentage": 20}}}
+    sl.extra_gauges(str(proj), rl)
+    sl._MEMO.clear()
+    sl.extra_gauges(str(proj), {})          # 새 값 없는 렌더 — 종전엔 여기서 ts=지금·key_ts 삭제
+    d = json.loads((home / ".claude" / "state" / "rate-limits.json").read_text(encoding="utf-8"))
+    assert "key_ts" in d and set(d["key_ts"]) == {"five_hour", "seven_day"}
+
+
+def test_stop_standing_hook_runs_lang_check_with_same_stdin(tmp_path):
+    import shutil
+    for rel in (".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
+                ".claude/hooks/stop-standing-gate.sh", ".claude/settings.json"):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, tmp_path / rel)
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "CLAUDE.md").write_text("| D22 |", encoding="utf-8")
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1"}
+    bash = shutil.which("bash") or "bash"
+    en = "The audit finished and all checks passed so I will report the final results when everything is done here."
+
+    def hook(payload):
+        return subprocess.run([bash, str(tmp_path / ".claude/hooks/stop-standing-gate.sh")], input=json.dumps(payload),
+                              capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
+    r = hook({"stop_hook_active": False, "last_assistant_message": en})
+    assert r.returncode == 2 and "STD-KOREAN-001" in r.stderr
+    assert hook({"stop_hook_active": True, "last_assistant_message": en}).returncode == 0
+    ko = hook({"stop_hook_active": False, "last_assistant_message": "점검을 마쳤고 모든 검사가 통과했습니다. 최종 결과를 한 번에 보고드립니다."})
+    assert "STD-KOREAN-001" not in ko.stderr      # 한글 보고는 언어 검사에 걸리지 않음 (기준 게이트 차단은 격리 폴더 시드 대상 부재)
+
+
+def test_lang_check_catches_english_mid_turn_report(proj):
+    """§81 실측: 이 세션 보고 132건 중 45건 영어 — 대부분 턴 중간 진행 보고. 마지막 보고만 보면 놓친다."""
+    tr = proj / "t2.jsonl"
+    rows = [{"type": "user", "message": {"content": "상태줄 고쳐줘"}},
+            {"type": "assistant", "message": {"content": [{"type": "text", "text": "It compiles. Next I'll render on the same data and compare before and after output."}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "content": "ok"}]}},
+            {"type": "assistant", "message": {"content": [{"type": "text", "text": "수정을 마쳤습니다. 같은 데이터로 수정 전후를 비교했고 모든 시험이 통과했습니다."}]}}]
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+    r = _lang(proj, {"transcript_path": str(tr)})
+    assert r.returncode == 2 and "1건" in r.stderr
+    rows[1]["message"]["content"][0]["text"] = "컴파일했습니다. 같은 데이터로 전후 출력을 비교합니다. 잠시만 기다려 주세요 진행 중입니다."
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+    assert _lang(proj, {"transcript_path": str(tr)}).returncode == 0
+    # 이전 턴(사람 입력 이전)의 영어는 이번 턴 판정에 넣지 않는다
+    rows2 = [{"type": "assistant", "message": {"content": [{"type": "text", "text": "Old English report from a previous turn that was already handled before."}]}}] + rows
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows2), encoding="utf-8")
+    assert _lang(proj, {"transcript_path": str(tr)}).returncode == 0
+
+
+
+def test_lang_check_is_incremental_and_records_to_trace(proj, tm):
+    """§82 이미 검사·지적한 영어 보고는 다시 세지 않는다 · 위반·정정 = 요청 추적(trace)."""
+    tm.set_current("tid-lang", "R9", "상태줄")
+    tr = proj / "t3.jsonl"
+    rows = [{"type": "user", "message": {"content": "고쳐줘"}},
+            {"type": "assistant", "uuid": "a1", "message": {"content": [{"type": "text", "text": "Now I'm reading the assembly code for the remaining areas before editing anything."}]}}]
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+    pl = {"transcript_path": str(tr), "session_id": "s1"}
+    assert _lang(proj, pl).returncode == 2
+    assert _lang(proj, pl).returncode == 0                 # 같은 보고 재검사 X (stop_hook_active 없어도)
+    rows += [{"type": "user", "message": {"content": "Stop hook feedback: [STD-KOREAN-001] ..."}},
+             {"type": "assistant", "uuid": "a2", "message": {"content": [{"type": "text", "text": "남은 영역의 조립 코드를 읽고 있습니다. 수정 전에 전부 확인하고 한 번에 고치겠습니다."}]}}]
+    tr.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows), encoding="utf-8")
+    assert _lang(proj, pl).returncode == 0
+    ev = [e for e in tm.events("tid-lang") if e.get("step") == "STD-KOREAN-001"]
+    assert [e["status"] for e in ev] == ["fail", "success"] and "정정" in (ev[-1].get("evidence") or "")
