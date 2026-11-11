@@ -211,11 +211,13 @@ def test_statusline_line_and_ready_cap_follow_current_request(proj):
 
 # ── §81 사용자 보고 한글 고정 (STD-KOREAN-001) — 원인: 사용자 전역 settings language=English ──
 def test_project_settings_force_korean_language():
-    for p in (ROOT / ".claude" / "settings.json", ROOT / "setup" / "templates" / "settings.template.json"):
-        assert json.loads(p.read_text(encoding="utf-8")).get("language") == "Korean", p
-    local = ROOT / ".claude" / "settings.local.json"
-    if local.exists():
-        assert json.loads(local.read_text(encoding="utf-8")).get("language", "Korean") == "Korean"
+    # 전파 대상은 고유 settings.json 을 보존하고 전역에서 language 를 받는다 → «실제 적용 값» 으로 확인 (§84)
+    m = _load("sr_eff", SCRIPTS / "standing-requirements.py")
+    val, src = m._effective_setting("language")
+    assert str(val).lower() == "korean", (val, src)
+    tpl = ROOT / "setup" / "templates" / "settings.template.json"
+    if tpl.exists():                                             # 설치 템플릿은 kit 에만 있다
+        assert json.loads(tpl.read_text(encoding="utf-8")).get("language") == "Korean", tpl
     seed = json.loads((SCRIPTS / "standing-requirements.seed.json").read_text(encoding="utf-8"))["requirements"]
     k = seed["STD-KOREAN-001"]                                   # §84 문자열 유무가 아니라 실효 설정
     assert k["verify_kind"] == "effective_setting" and k["setting_key"] == "language" and k["expect"] == "Korean"
