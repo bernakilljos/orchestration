@@ -440,3 +440,14 @@ def test_post_tool_drift_reminds_once_on_english_mid_turn_report(proj):
     r = mod.run(C)
     assert r is not None and "STD-KOREAN-001" in r.out and json.loads(r.out)["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
     assert mod.run(C) is None                                  # 같은 보고에 두 번 안내하지 않음
+
+
+# ── §87 개발 줄 오른쪽 진행 표시 (R237) — 완료 아닌 것을 «개발완료» 로 보이면 거짓 ──
+def test_dev_progress_never_shows_done_for_unfinished():
+    sl = _load("sl87", SCRIPTS / "statusline_context.py")
+    assert sl._dev_progress("pending") == ("34", "개발중") == sl._dev_progress("implemented")
+    assert sl._dev_progress("completed") == ("32", "개발완료")
+    for st in ("verified", "approval_required"):          # PARTIAL·BLOCKED·승인대기
+        assert sl._dev_progress(st) == ("33", "확인필요")
+    for st in ("deferred", "out_of_scope", "invalid_registration", "UNKNOWN", ""):
+        assert sl._dev_progress(st) is None

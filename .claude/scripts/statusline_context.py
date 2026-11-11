@@ -170,6 +170,12 @@ def _ledger_summary(cwd: str):
 _ledger_summary_raw = _ledger_summary
 
 
+def _dev_progress(status: str):
+    """§87 개발 줄 오른쪽 진행 표시 (색, 글자) · 완료가 아닌 것을 «개발완료» 로 보이지 않게 · 그 밖 = None(표시 안 함)."""
+    return {"pending": ("34", "개발중"), "implemented": ("34", "개발중"), "completed": ("32", "개발완료"),
+            "verified": ("33", "확인필요"), "approval_required": ("33", "확인필요")}.get(status)
+
+
 def _ledger_summary(cwd: str):  # noqa: F811 — 렌더 1회당 1번 (READY·요청 줄 공용)
     return _memo(("ledger", cwd), lambda: _ledger_summary_raw(cwd))
 
@@ -1425,6 +1431,11 @@ def extra_gauges(cwd, data=None):
                 if _ls[_k]:
                     _cnt.append(f"{_lab}{_ls[_k]}")
             ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt) + " · 다음 UNKNOWN"
+            # §87 (2026-11-11 사용자 지시 R237 · 개발 줄 오른쪽 값만 일시 동결 해제 후 재동결): 현재 요청 진행 표시 ·
+            #   PARTIAL·BLOCKED(verified)·승인대기 를 «개발완료» 로 보이면 거짓 → 확인필요 · 현재 요청 없음 = 표시 안 함
+            _dev_st = _dev_progress(_cs)   # 개발중(파랑)·개발완료(초록)·확인필요(노랑) 대응표 정본 = _dev_progress
+            if _dev_st and _ls["current_rid"] and dev_line:
+                dev_line = f"{dev_line} · \033[1;{_dev_st[0]}m{_dev_st[1]}\033[0m"
     except Exception:
         pass
 

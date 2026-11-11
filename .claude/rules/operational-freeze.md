@@ -47,6 +47,8 @@
 
 **요청 줄 값 의미 재정의 (2026-11-11 §80 · 사용자 지시 "일시적으로 요청부분만 동결 풀고 하고 동결해")**: 라벨·폭·위치 불변 · 값만 `현재 R<n> <상태> · 완료 <completed>/<전체> · 승인·검증·진행·범위외·오등록·보류 · 다음 UNKNOWN` · 집계 정본 = `request-ledger.py summarize` · READY 상한 50 = 현재 요청이 Stop 을 막는 미완료일 때만 · **재동결 완료**.
 
+**개발 줄 오른쪽 진행 표시 (2026-11-11 §87 · 사용자 지시 R237 "개발중 개발완료 이렇게 표시하자")**: 라벨·폭·위치 불변 · 개발 줄 값 끝에 현재 요청 상태만 추가 = pending·implemented `개발중`(파랑) · completed `개발완료`(초록) · verified(PARTIAL·BLOCKED)·approval_required `확인필요`(노랑) · 현재 요청 없음 = 표시 안 함 · 집계 정본 = `request-ledger.py summarize` · **재동결 완료**.
+
 **SoT**: `.claude/scripts/statusline_context.py` LABEL_WIDTH dict · memory `feedback_statusline_frozen_1027.md`.
 
 - Operating Principles · Execution Contract · Request Ledger · recurrence-tracker · scope-lock 모두 정상 작동
