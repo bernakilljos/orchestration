@@ -552,3 +552,25 @@ def test_user_global_claude_write_flagged(cmd):
 ])
 def test_user_global_read_or_project_write_not_flagged(cmd):
     assert not flagged(cmd)
+
+
+# ── §77 오탐: 스크립트를 지우거나 읽기만 하는 명령은 실행으로 보지 않는다 (막아야 할 것은 그대로) ──
+def _risky_script(tmp_root):
+    s = tmp_root / "risky.sh"
+    s.write_text("#!/usr/bin/env bash\n" + CL + " hi --model haiku\n", encoding="utf-8")
+    return s.as_posix()
+
+
+@pytest.mark.parametrize("tpl", ['rm -f "{s}"', 'cat "{s}"', 'md5sum {s}', 'git add {s}', 'ls -la {s}'])
+def test_script_operand_of_non_exec_command_not_blocked(tmp_root, tpl):
+    s = _risky_script(tmp_root)
+    r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
+    assert r is None or r.rc != 2, r.err if r else ""
+
+
+@pytest.mark.parametrize("tpl", ['bash "{s}"', 'cat "{s}" | bash', 'eval "$(cat {s})"', 'cp "{s}" "{s}.bak.sh"',
+                                 'rm -f /tmp/none.txt; bash "{s}"', 'sh {s}', '"{s}"'])
+def test_script_execution_still_blocked(tmp_root, tpl):
+    s = _risky_script(tmp_root)
+    r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
+    assert r is not None and r.rc == 2, tpl

@@ -1699,3 +1699,14 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 잔여 사본 결함 [확인] (실제 대상 실행 후 발견): Windows 읽기 전용 파일(대상 안 `voltagent-clone/.git` pack·`mcp-status.json`)이 폴더 삭제 시 오류 무시로 조용히 남음 (IFRS 4·ICMAI 3 파일 · DB 사본은 삭제됨) → 읽기 전용 해제 후 재삭제 · 남으면 경고 출력 · 회귀 시험 1개 추가 (격리 실행기 시험 4/4). 이미 남은 2개 폴더(`%TEMP%\tgt-iso-*` · 약 1.1MB) 삭제는 승인 대기.
 - 전체 회귀 [확인] (2026-11-11 · 잔여 사본 수정 전 스테이징 기준): 418 수집 · 415 통과 · 3 실패 (`test_phase12_self_heal_ops` 3건) · 원인 = C: 디스크 여유 5.79GB < 정책 최소 10GB (`repair_sandbox.py:266` · 디스크 98% 사용) · `REPAIR_SANDBOX_MIN_FREE_GB=1` 로 그 파일 16/16 통과 → 이번 변경과 무관한 환경 실패 · 골든 13/13.
 - 한계: 기능 회귀 시험 통과 수는 승인 통제 정상의 증거가 아님 · 새 Claude 세션 명령 선택은 여전히 BLOCKED (사용자 확인 대기).
+
+
+## §77 승인 게이트 오탐 최소 수정 · 정리 승인 감사 · 보존 사본 민감정보 (2026-11-11)
+
+- 오탐 [확인]: §75 스크립트 검사가 명령에 `.sh` 경로가 나오기만 해도 실행으로 보고 본문 검사 → `rm -f x.sh`(파일 삭제)가 승인 요청(appr-1bbd718d5d1d) · 정리 스크립트의 `ls -d s74.sh` 도 중첩 검사 대상이 됨.
+- 수정 [확인] (`approval_gate_detect._non_exec_operand`): 실행하지 않는 명령(rm·del·ls·cat·stat·md5sum·wc·grep·Get-FileHash·Remove-Item·git add/rm/diff/log/show 등)의 피연산자일 때만 제외 · 파이프로 넘기거나 eval·source·xargs·iex·$()·백틱이 있으면 제외 안 함 · cp·mv 는 그대로 검사 · 파일 삭제 자체의 위험 판정(rm -r 등)은 기존 경로 그대로.
+- 시험 [확인]: 12개 추가 (통과해야 할 5: rm·cat·md5sum·git add·ls / 계속 막을 7: bash·`cat | bash`·eval·cp·`; bash`·sh·직접 실행) · 수정 끈 역검증 = 통과해야 할 5 실패 · 막을 7 유지 · 게이트 시험 전체 142 통과.
+- 정리 승인 감사 [확인]: appr-fca4e4457c8d (TEMP 임시 사본 22개 · 작업 사본 등록 5개 해제 · C: 5.2→25GB) · appr-961017962ae0 (scratchpad 31개 · 629→35MB) 모두 `approved_by=user-prompt` · 스크립트 해시 묶음 · 1회 소비(`consumed_at`·`outcome finished`). 불필요 요청 2건(appr-1bbd718d5d1d 오탐 · appr-c1e83de143f9 내 명령에 붙인 폴더 삭제) 은 미승인.
+- 보존 사본 민감정보 [확인]: `db-preserve-75` 의 IFRS `sessions.db` 사본과 **원본 `C:\IFRS_PJT\.claude\state\sessions.db`** 에 가짜 표시 없는 GitHub 토큰 형태(`ghp_` · 40자) 1건 (나머지 4건 = 시험용 가짜 표시) · orca.db 사본 2개 = 0건 · 값은 출력·기록하지 않음 · 대상 운영 DB 이므로 수정 안 함 (가림·삭제는 별도 승인 · 토큰 교체는 사용자 소유 결정).
+- 권한 [확인]: `%TEMP%` 전체에 `CodexSandboxUsers`(구성원 CodexSandboxOffline·Online) 와 이름 없는 SID(…-3017980525) 수정(M) 권한 · 보존 사본·scratchpad 도 상속 · `orca-agent` 는 그 그룹 구성원 아님 · 설정 시점은 Codex 샌드박스 설치로 추정 [추정] · ACL 변경 안 함 (별도 승인 · S2~S4 와 함께 검토).
+- 한계: 문자열 판정 = 보안 PASS 근거 아님 · 보안 출시 FAIL 유지 · 대상 미전파.

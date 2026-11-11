@@ -250,6 +250,37 @@ _RX_SHELL_SCRIPT = re.compile(r"""(?:"([^"]+\.(?:ps[dm]?1|sh|bash|bat|cmd))"|'([
 _RX_CD_TARGET = re.compile(r"""(?:^|[;&|\n(]\s*)(?:cd|pushd|chdir|set-location|sl)\s+(?:"([^"]+)"|'([^']+)'|([^\s;&|)]+))""", re.I)
 _SCAN_MAX_BYTES = 512 * 1024
 _SCAN_DEPTH = 2
+#: 2026-11-11 §77 오탐: `rm -f x.sh` (스크립트 파일 삭제) 를 실행으로 보고 본문을 검사함.
+#:   실행하지 않는 명령의 피연산자일 때만 제외 — 파이프로 넘기거나 eval·source·xargs·$()·백틱이 있으면 제외 안 함 (보수적).
+#:   cp·mv 는 옮긴 뒤 실행될 수 있어 그대로 검사.
+_NON_EXEC_CMDS = {"rm", "del", "erase", "ls", "dir", "cat", "type", "head", "tail", "stat", "wc", "file", "du",
+                  "md5sum", "sha1sum", "sha256sum", "grep", "remove-item", "ri", "get-filehash", "get-item",
+                  "test-path", "get-content", "gc"}
+_NON_EXEC_GIT = {"add", "rm", "diff", "log", "show", "status", "blame"}
+_RX_INDIRECT_EXEC = re.compile(r"\b(?:eval|source|xargs|iex|invoke-expression)\b|\$\(|`", re.I)
+
+
+def _non_exec_operand(text: str, pos: int) -> bool:
+    """pos 의 스크립트 경로가 «실행하지 않는 명령의 피연산자» 인가 (확실할 때만 True)."""
+    if _RX_INDIRECT_EXEC.search(text):
+        return False
+    starts = [text.rfind(c, 0, pos) for c in ";&|\n("]
+    seg_start = max(starts) + 1
+    ends = [i for i in (text.find(c, pos) for c in ";&|\n)") if i != -1]
+    seg_end = min(ends) if ends else len(text)
+    if seg_end < len(text) and text[seg_end] == "|" and text[seg_end:seg_end + 2] != "||":
+        return False   # 출력이 다음 명령으로 넘어감 (cat x.sh | bash)
+    words = [w for w in re.split(r"\s+", text[seg_start:pos].strip()) if w]
+    while words and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0]):
+        words.pop(0)   # VAR=x 접두
+    if not words:
+        return False   # 경로가 첫 단어 = 직접 실행
+    first = os.path.basename(words[0].strip("\"'")).lower()
+    if first.endswith(".exe"):
+        first = first[:-4]
+    if first == "git":
+        return len(words) > 1 and words[1].lower() in _NON_EXEC_GIT
+    return first in _NON_EXEC_CMDS
 
 
 def _kit_tracked_unchanged(path: str) -> bool:
@@ -283,7 +314,10 @@ def _script_contents(raw_cmd: str, raw_cwd: str) -> tuple:
     queue = [(raw_cmd, raw_cwd or os.getcwd(), 0, bool(_RX_CHDIR.search(raw_cmd)))]
     while queue:
         text, base, depth, chdir = queue.pop(0)
-        for m in _RX_SHELL_SCRIPT.finditer(text.replace("\\n", "\n")):
+        tn = text.replace("\\n", "\n")
+        for m in _RX_SHELL_SCRIPT.finditer(tn):
+            if _non_exec_operand(tn, m.start()):
+                continue   # §77 삭제·조회 대상일 뿐 실행 아님
             raw = next(g for g in m.groups() if g).strip()
             expanded = os.path.expandvars(os.path.expanduser(raw))
             if "$" in expanded or "%" in expanded:
