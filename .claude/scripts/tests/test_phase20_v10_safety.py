@@ -1969,3 +1969,74 @@ def test_target_isolated_runner_zero_tests_is_blocked_not_pass(tmp_path):
                         "--", PROBE.as_posix()], capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env=env, timeout=300)
     assert r.returncode == 3 and "BLOCKED" in r.stdout, r.stdout + r.stderr
+
+
+# ── §88 hook matcher 전파 누락 (R238) — 같은 command 면 matcher 변경을 건너뛰던 결함 ──
+def _m2t_mod():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("m2t88", ROOT / ".claude" / "scripts" / "merge-to-target.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+_TD = 'python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py" pre'
+_LOG = 'bash -c "python .claude/scripts/verify-after-edit-logger.py $1"'
+
+
+def _hooks(cfg, ev="PreToolUse"):
+    return [(mm.get("matcher", ""), h["command"]) for mm in cfg["hooks"][ev] for h in mm["hooks"]]
+
+
+def test_merge_settings_widens_existing_hook_matcher_only_adds():
+    m = _m2t_mod()
+    kit = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|PowerShell|Agent", "hooks": [{"command": _TD}]}]}}
+    tgt = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|Agent|NotebookEdit", "hooks": [{"command": _TD}]}]},
+           "custom": 1}
+    rep = []
+    out = m.merge_settings(kit, tgt, rep)
+    assert _hooks(out) == [("Edit|Write|Bash|Agent|NotebookEdit|PowerShell", _TD)]   # 대상 추가분 보존 · 중복 등록 X
+    assert out["custom"] == 1 and "settings.hooks matcher 보강 1" in rep
+    assert m.merge_settings(kit, out, []) == out                                      # 두 번 돌려도 같음
+
+
+def test_merge_settings_splits_mixed_entry_without_widening_other_hook():
+    m = _m2t_mod()
+    kit = {"hooks": {"PreToolUse": [{"matcher": "Bash|PowerShell", "hooks": [{"command": _TD}]},
+                                    {"matcher": "Bash", "hooks": [{"command": _LOG}]}]}}
+    tgt = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"command": _TD}, {"command": _LOG}]}]}}
+    out = m.merge_settings(kit, tgt, [])
+    assert sorted(_hooks(out)) == sorted([("Bash", _LOG), ("Bash|PowerShell", _TD)])     # 로그 hook 은 Bash 그대로
+
+
+def test_merge_settings_keeps_empty_matcher():
+    m = _m2t_mod()
+    kit = {"hooks": {"Stop": [{"matcher": "x", "hooks": [{"command": _LOG}]}]}}
+    tgt = {"hooks": {"Stop": [{"hooks": [{"command": _LOG}]}]}}
+    assert m.merge_settings(kit, tgt, [])["hooks"]["Stop"] == [{"hooks": [{"command": _LOG}]}]   # 빈 = 전부 매칭
+
+
+def test_merge_to_target_only_settings_merges_with_backup(tmp_path):
+    """--only .claude/settings.json = 통째 교체 X · 병합 + 백업 · 대상 고유 키 보존 (종전: --only 는 settings 를 아예 안 봄)."""
+    m2t = ROOT / ".claude" / "scripts" / "merge-to-target.py"
+    reg = ROOT / ".claude" / "state" / "merge-targets.txt"
+    reg_before = reg.read_bytes() if reg.exists() else None
+    tgt = tmp_path / "대상"
+    (tgt / ".claude").mkdir(parents=True)
+    own = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|Agent", "hooks": [{"command": _TD}]}]},
+           "permissions": {"defaultMode": "bypassPermissions", "allow": []}, "mine": "keep"}
+    (tgt / ".claude" / "settings.json").write_text(json.dumps(own), encoding="utf-8")
+    run = lambda *a: subprocess.run([sys.executable, "-X", "utf8", str(m2t), str(tgt), *a],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=120)
+    r = run("--only", ".claude/settings.json")                                     # 미리보기 = 파일 불변
+    assert r.returncode == 0 and "PowerShell" in r.stdout, r.stdout + r.stderr
+    assert json.loads((tgt / ".claude" / "settings.json").read_text(encoding="utf-8")) == own
+    r = run("--only", ".claude/settings.json", "--apply")
+    assert r.returncode == 0, r.stdout + r.stderr
+    got = json.loads((tgt / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    td = [mm["matcher"] for mm in got["hooks"]["PreToolUse"] for h in mm["hooks"] if "tool-dispatch" in h["command"]]
+    assert td and all("PowerShell" in x.split("|") for x in td) and len(td) == 1
+    assert got["mine"] == "keep" and got["permissions"]["defaultMode"] == "bypassPermissions"
+    baks = list((tgt / ".claude" / "backups").rglob("settings.json"))
+    assert baks and json.loads(baks[0].read_text(encoding="utf-8")) == own
+    assert (reg.read_bytes() if reg.exists() else None) == reg_before

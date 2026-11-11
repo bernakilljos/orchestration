@@ -11,7 +11,7 @@ commands·skills·agents·settings hook 은 아예 안 갔다. 이 스크립트�
   kit-only       → 추가
   target-only    → 보존
 
-settings.json : hook 은 command 문자열 기준 합집합 · permissions.allow 합집합 ·
+settings.json : hook 은 command 문자열 기준 합집합 (이미 있으면 matcher 도구 이름만 보강 · §88) · permissions.allow 합집합 ·
                 없는 최상위 키만 추가 · statusLine 은 없거나 전역(~/.claude) 옛 스크립트일 때만 kit 포인터로.
 .mcp.json     : 없는 서버만 추가.
 메모리        : setup/templates/user_style_profile.md → 대상 프로젝트 memory + .claude/state (없을 때).
@@ -272,6 +272,48 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
                         h[k] = v
                         synced += 1
     report.append(f"settings.hooks 속성 동기화 {synced} (timeout 하한 {HOOK_TIMEOUT_MIN}s 보정 {floored})")
+    # §88 (2026-11-11 R238) 이미 있는 kit hook 의 matcher 는 kit 도구 이름을 더한다 (빼지 않음 = 대상 추가분 보존).
+    #   종전: command 가 같으면 건너뛰어 kit 의 'Edit|Write|Bash|PowerShell|Agent' 가 대상에 'Edit|Write|Bash|Agent'
+    #   로 남았다 → 대상에서 PowerShell 명령에 승인 게이트(tool-dispatch pre)가 걸리지 않았다.
+    #   빈 matcher = 전부 매칭이라 그대로 · 한 묶음에 다른 hook 이 섞여 있으면 그 hook 까지 넓히지 않게 따로 뗀다.
+    kit_match = {}
+    for ev, kmatchers in kh.items():
+        for km in kmatchers or []:
+            toks = [t for t in (km.get("matcher") or "").split("|") if t]
+            for h in km.get("hooks", []):
+                lst = kit_match.setdefault((ev, hook_key(h.get("command", ""))), [])
+                lst.extend(t for t in toks if t not in lst)
+    widened = 0
+    for ev, tmatchers in th.items():
+        split_out = []
+        for tm in tmatchers or []:
+            cur = [t for t in (tm.get("matcher") or "").split("|") if t]
+            hooks = tm.get("hooks", [])
+            if not cur or not hooks:
+                continue
+            miss = []
+            for h in hooks:
+                want = kit_match.get((ev, hook_key(h.get("command", "")))) or []
+                miss.append([t for t in want if t not in cur])
+            if not any(miss):
+                continue
+            if all(m == miss[0] for m in miss):                  # 묶음 전체가 같은 도구를 원함 → 그대로 넓힘
+                tm["matcher"] = "|".join(cur + miss[0])
+                widened += 1
+                continue
+            keep = []
+            for h, m in zip(hooks, miss):
+                if m:
+                    split_out.append({**{k: v for k, v in tm.items() if k != "hooks"},
+                                      "matcher": "|".join(cur + m), "hooks": [h]})
+                    widened += 1
+                else:
+                    keep.append(h)
+            tm["hooks"] = keep
+        if split_out:
+            tmatchers.extend(split_out)
+            th[ev] = [tm for tm in tmatchers if tm.get("hooks")]
+    report.append(f"settings.hooks matcher 보강 {widened}")
     # permissions.allow 합집합
     ka = (kit.get("permissions") or {}).get("allow") or []
     perm = out.setdefault("permissions", {})
@@ -384,18 +426,19 @@ def main() -> int:
 
     report: list[str] = []
     if only:
+        # §88 --only 는 settings 병합을 건너뛰어 matcher·hook 변경이 대상에 영영 안 갔다 → 명시하면 같은 병합 실행
+        if ".claude/settings.json" in only:
+            only = only - {".claude/settings.json"}
+            _merge_settings_file(target, backup, apply, report, show=True)
+            print("  settings: " + " · ".join(report))
+            if not only:
+                if apply:
+                    man_p.parent.mkdir(parents=True, exist_ok=True)
+                    man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
+                    print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+                return 0
         return _report_only(target, only, stats, manifest, man_p, backup, apply)
-    # settings.json
-    sp = target / ".claude" / "settings.json"
-    kit_s = load_json(KIT / ".claude" / "settings.json")
-    tgt_s = load_json(sp)
-    merged = merge_settings(kit_s, tgt_s, report)
-    if apply and merged != tgt_s:
-        if sp.exists():
-            (backup / ".claude").mkdir(parents=True, exist_ok=True)
-            shutil.copy2(sp, backup / ".claude" / "settings.json")
-        sp.parent.mkdir(parents=True, exist_ok=True)
-        sp.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _merge_settings_file(target, backup, apply, report)
     # .mcp.json
     km, tm_p = load_json(KIT / ".mcp.json"), target / ".mcp.json"
     tm = load_json(tm_p)
@@ -462,6 +505,39 @@ def main() -> int:
     if apply:
         print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
     return 0
+
+
+def _settings_delta(before: dict, after: dict) -> list:
+    """병합 전후 settings 차이 (사람이 읽는 줄) — hook 은 (event, matcher, command 끝) 단위."""
+    def hk(cfg):
+        return {(ev, mm.get("matcher", ""), hook_key(h.get("command", "")))
+                for ev, ms in (cfg.get("hooks") or {}).items() for mm in ms or [] for h in mm.get("hooks", [])}
+    hb, ha = hk(before), hk(after)
+    out = [f"    + hook {ev} [{m}] {c[-50:]}" for ev, m, c in sorted(ha - hb)]
+    out += [f"    - hook {ev} [{m}] {c[-50:]}" for ev, m, c in sorted(hb - ha)]
+    for k in sorted(set(before) | set(after)):
+        if k != "hooks" and before.get(k) != after.get(k):
+            out.append(f"    ~ {k}")
+    return out
+
+
+def _merge_settings_file(target: Path, backup: Path, apply: bool, report: list, show: bool = False) -> bool:
+    """대상 settings.json 병합 (통째 교체 X · merge_settings) · 바꾸기 전 백업 · show = 변경 항목 출력."""
+    sp = target / ".claude" / "settings.json"
+    kit_s = load_json(KIT / ".claude" / "settings.json")
+    tgt_s = load_json(sp)
+    merged = merge_settings(kit_s, tgt_s, report)
+    changed = merged != tgt_s
+    if show:
+        for ln in (_settings_delta(tgt_s, merged) if changed else ["    (변경 없음)"]):
+            print(ln)
+    if apply and changed:
+        if sp.exists():
+            (backup / ".claude").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(sp, backup / ".claude" / "settings.json")
+        sp.parent.mkdir(parents=True, exist_ok=True)
+        sp.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return changed
 
 
 def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Path, backup: Path, apply: bool) -> int:
