@@ -1884,3 +1884,76 @@ def test_merge_to_target_only_option_limits_changes(tmp_path):
     assert r2.returncode == 1 and "target-custom" in r2.stdout
     assert (tgt / ".claude" / "commands" / "reject.md").read_text(encoding="utf-8") == "대상에서 고친 내용\n"
     assert (reg.read_bytes() if reg.exists() else None) == reg_before
+
+
+# ── §76 대상 시험 격리 실행기 — 운영 기록이 바뀌면 FAIL ─────────────────────
+PROBE = Path(".claude/scripts/tests/test_probe.py")
+
+
+def _tgt_iso_target(tmp_path, body):
+    t = tmp_path / "tgt"
+    (t / ".claude" / "state").mkdir(parents=True)
+    (t / ".claude" / "state" / "orca.db").write_bytes(b"ORIGINAL")
+    (t / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
+    (t / PROBE).parent.mkdir(parents=True)
+    (t / PROBE).write_text(body, encoding="utf-8")
+    home = tmp_path / "home"
+    (home / ".claude" / "commands").mkdir(parents=True)
+    (home / ".claude" / "commands" / "approve.md").write_text("g", encoding="utf-8")
+    return t, home
+
+
+def _tgt_iso_run(t, home):
+    env = dict(os.environ, TGT_ISO_HOME=str(home))
+    return subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "target-test-isolated.py"), str(t),
+                           "--", PROBE.as_posix()], capture_output=True, text=True, encoding="utf-8",
+                          errors="replace", env=env, timeout=300)
+
+
+def test_target_isolated_runner_writes_only_to_copy(tmp_path):
+    body = ("import os, pathlib\n"
+            "def test_w():\n"
+            "    p = pathlib.Path(os.environ['CLAUDE_PROJECT_DIR']) / '.claude' / 'state' / 'orca.db'\n"
+            "    p.write_bytes(b'CHANGED')\n")
+    t, home = _tgt_iso_target(tmp_path, body)
+    r = _tgt_iso_run(t, home)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (t / ".claude" / "state" / "orca.db").read_bytes() == b"ORIGINAL"
+    assert "해시 불변" in r.stdout
+    assert not list(Path(os.environ.get("TEMP", "/tmp")).glob("tgt-iso-*/tgt/.claude"))
+
+
+def test_target_isolated_runner_fails_when_original_db_written(tmp_path):
+    t, home = _tgt_iso_target(tmp_path, "")
+    (t / PROBE).write_text(
+        "import pathlib\n"
+        f"def test_w():\n    pathlib.Path({str(t / '.claude' / 'state' / 'orca.db')!r}).write_bytes(b'X')\n",
+        encoding="utf-8")
+    r = _tgt_iso_run(t, home)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "운영 기록 변경" in r.stdout and "orca.db" in r.stdout
+
+
+def test_target_isolated_runner_fails_when_user_global_command_written(tmp_path):
+    t, home = _tgt_iso_target(tmp_path, "")
+    g = home / ".claude" / "commands" / "approve.md"
+    (t / PROBE).write_text(
+        f"import pathlib\ndef test_w():\n    pathlib.Path({str(g)!r}).write_text('new')\n", encoding="utf-8")
+    r = _tgt_iso_run(t, home)
+    assert r.returncode == 2, r.stdout + r.stderr
+    assert "approve.md" in r.stdout
+
+
+def test_target_isolated_runner_removes_read_only_copy_files(tmp_path):
+    """§76 잔여 사본: 대상 안 읽기 전용 파일(.git pack)도 격리 사본에서 지워져야 한다."""
+    import importlib.util as _u
+    spec = _u.spec_from_file_location("tti", SCRIPTS / "target-test-isolated.py")
+    m = _u.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    w = tmp_path / "work"
+    f = w / "t" / ".claude" / "state" / "clone" / ".git" / "objects" / "pack" / "p.pack"
+    f.parent.mkdir(parents=True)
+    f.write_bytes(b"x")
+    os.chmod(f, 0o444)
+    assert m.remove_copy(w) is True
+    assert not w.exists()

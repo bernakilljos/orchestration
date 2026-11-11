@@ -521,6 +521,7 @@
     전파 검증 (1110)              merge-to-target 은 시험 캐시(.pytest_cache 등) 미전파 · 명령 루트 탐색은 .claude/backups 안 옛 사본 무시 · 상세 §72
     제한 전파 (1110)              merge-to-target <대상> --only <경로> [--apply] — 지정 파일만 같은 판정 · settings·메모리·CLAUDE.md 불변 · 대상 수정본 보류 · 상세 §73
     승인 게이트 스크립트 검사 (1110) 실행하는 셸 스크립트 본문·중첩 2단계도 위험 판정 · 전역 ~/.claude 명령·설정 쓰기 = system · .py 본문은 미검사 · 회귀 시험 test_approval_gate_p0 §75 12개 · 상세 §75
+    대상 시험 격리 (1111) python .claude/scripts/target-test-isolated.py <대상> -- <시험> · 사본에서만 실행 · 대상 state·전역 ~/.claude 해시가 바뀌면 FAIL(2) · 상세 §76
     신규 기록 토큰 가림 (1110)     대화(orca.db)·sessions.db·bash 명령 로그·Ledger 가 lib\redact.py 정본으로 저장 전 가림 · 해시는 원문 기준 · 모듈 없으면 [MASKED] 만 저장 · 기존 기록은 변경 없음
     대기 요청 만료 (1109)          24시간 지난 대기 요청은 /approve 거부 (기록 보존 · 같은 명령을 다시 내면 새 요청) · 승인 후 실행 허용은 30분
     statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)
