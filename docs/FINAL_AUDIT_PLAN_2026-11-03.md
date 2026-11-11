@@ -1837,3 +1837,12 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
   1. 승인 게이트 2건 — **실제 결함**: 기록 명령 인자를 글로 보는 조건이 «kit HEAD 와 같은 내용» 인데 IFRS·ICMAI 는 git 저장소가 아니라 늘 실패 → 대상에서는 정상 기록 명령이 늘 차단. 수정: git 이 아니면 전파 매니페스트(kit-merge-manifest.json · LF md5)와 같을 때만 인정 · 변조·매니페스트 없음 = 차단 (시험 추가).
   2. phase12·phase18 — `.claude/config/` 가 전파 목록(TREES)에 없어 대상에 sandbox-policy.json 등 4개가 없음 (대상 스크립트는 읽는데 기본값으로 동작). 수정: TREES 에 `.claude/config` 추가 (공통 정책 · 승인 기록·비밀 아님 · target-custom 보호 유지).
   3. stage1 — 격리 사본이 git 저장소가 아니라 확인 불가(BLOCKED) = 환경 의존 · 코드 결함 아님.
+
+### §85~§88 골든 지문 · 대상 실패 분류 · 개발 진행 표시 · matcher 전파 (2026-11-11)
+- §85 `cba952c` [확인]: six-guards 골든 재사용 지문에 미추적 파일 내용·기준 상태(last_verified_at 제외 — 판정 미사용 확인)·local·전역 settings 포함 · 재사용 1.5~1.6초.
+- §86 `535f699` [확인]: 전파 대상 실패 14건 분류 — kit 전용 파일 부재 5·비git 7 = SKIP (conftest · 매니페스트 있는 전파 대상에서만 · kit 은 FAIL 유지) · 실제 FAIL 1 = 대상 PreToolUse 에 PowerShell 없음 · 한국어 설정 1 = §84 에서 해결.
+- §87 `5294764` [확인]: 상태줄 개발 줄 오른쪽 개발중(파랑)·개발완료(초록)·확인필요(노랑) · Ledger summarize 정본 · 동결 예외 기록 후 재동결. 개발중 화면 표시 = 시험으로만 [확인] · 실제 화면 [미확인].
+- §88 `42a5492` [확인]: merge-to-target 원인 2개 — ① 같은 command hook 이면 matcher 를 안 맞춤 ② --only 는 settings 를 안 봄 → 빠진 도구 이름만 보강(대상 추가분 보존·중복 X) · --only .claude/settings.json = 병합+백업.
+- 전파 (2026-11-11 18:16 · 자동 전파 정책 첫 적용 · R238·R239) [확인]: IFRS·ICMAI 에 settings + 공통 파일 8개 (stale-kit 8 · target-custom 0) · 백업 kit-merge-20261111-181639 / -181641 · 공통 파일 해시 kit 과 일치 · matcher 누락 0 · hook 중복 증가 0 (kit 과 같은 1건) · bypassPermissions 유지 · CLAUDE.md·settings.local·state 해시 불변.
+- 전파 후 검증 [확인]: 게이트 판정 사본 5/5×2 (PowerShell·powershell.exe·Bash 위험 차단 · 정상 통과) · 대상 격리 전체 시험 466 passed · 12 skipped · 실패 0 (두 대상) · 보호 대상 1713·1177 해시 불변.
+- 남은 [미확인]: 대상 폴더 실제 Claude 세션에서 PowerShell 명령에 승인 게이트 hook 이 호출되는지 (격리 시험은 hook 스크립트 판정까지).
