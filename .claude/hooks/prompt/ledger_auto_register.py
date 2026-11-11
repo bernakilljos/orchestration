@@ -414,6 +414,12 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
         from _common import trace_mod
         tm = trace_mod()
         if tm:
+            prev = tm.get_current()   # §79 연결 끊김 등으로 종료 기록 없이 끝난 이전 요청 = unknown (성공으로 치지 않음)
+            if prev and prev.get("trace_id") != event_id:
+                ends = [e for e in tm.events(prev["trace_id"]) if e.get("kind") == "request" and e.get("status") != "start"]
+                if not ends:
+                    tm.emit("request", step=prev.get("rid", ""), status="unknown", trace_id=prev["trace_id"],
+                            error="다음 요청 시작 시까지 종료 기록 없음 (응답 끊김·미완료 가능)")
             tm.set_current(event_id, rid, prompt)
             tm.emit("request", step=rid, status="start", trace_id=event_id,
                     detail={"classification": classification, "approval_required": bool(approval_matches),

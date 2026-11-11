@@ -72,6 +72,35 @@ def _ledger_label(desc: str, cells: int = LEDGER_LABEL_CELLS) -> str:
     return "".join(out) + "…"
 
 
+def _ledger_summary(cwd: str):
+    """§80 요청 줄·READY 상한 공용 — 정본 request-ledger.summarize 사용 (집계 규칙 복제 X).
+    현재 요청 = current-trace.json 의 rid (없으면 UNKNOWN). 실패 시 None."""
+    try:
+        import importlib.util as _ilu
+        _p = os.path.join(cwd, ".claude", "scripts", "request-ledger.py")
+        _lf = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if not (os.path.exists(_p) and os.path.exists(_lf)):
+            return None
+        _sp = _ilu.spec_from_file_location("_sl_request_ledger", _p)
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        with open(_lf, "r", encoding="utf-8") as _f:
+            _reqs = json.load(_f).get("requests", [])
+        if not _reqs:
+            return None
+        _cur = {}
+        _cf = os.path.join(cwd, ".claude", "state", "current-trace.json")
+        if os.path.exists(_cf):
+            try:
+                with open(_cf, "r", encoding="utf-8") as _f:
+                    _cur = json.load(_f)
+            except Exception:
+                _cur = {}
+        return _m.summarize(_reqs, str(_cur.get("rid") or ""))
+    except Exception:
+        return None
+
+
 def _terminal_cols() -> int:
     """실제 터미널 폭 — STATUSLINE_COLUMNS·COLUMNS 환경변수 → Windows 콘솔(CONOUT$) 순. 모르면 0 (자르지 않음)."""
     for k in ("STATUSLINE_COLUMNS", "COLUMNS"):
@@ -607,19 +636,14 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
         _caps.append(85)
     elif verify_icon == "❌":
         _caps.append(60)
-    # Request Ledger 미완료 → cap 50
-    try:
-        _rl_f = _os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        if _os.path.exists(_rl_f):
-            with open(_rl_f, "r", encoding="utf-8") as _f:
-                _rl = json.load(_f)
-            _reqs = _rl.get("requests", [])
-            if _reqs:
-                _done = sum(1 for r in _reqs if r.get("status") in ("completed", "deferred"))
-                if _done < len(_reqs):
-                    _caps.append(50)
-    except Exception:
-        pass
+    # Request Ledger → cap 50 (§80: 지난 승인대기·오등록·범위외가 아니라 현재 요청이 미완료일 때만 ·
+    #   현재 요청을 모르면 Stop 을 막는 미완료가 하나라도 있을 때 · 집계 실패 = 상한 적용(높이지 않음))
+    if _os.path.exists(_os.path.join(cwd, ".claude", "state", "request-ledger.json")):
+        _ls = _ledger_summary(cwd)
+        if _ls is None:
+            _caps.append(50)
+        elif (_ls["current_blocking"] if _ls["current_status"] != "UNKNOWN" else _ls["blocking"] > 0):
+            _caps.append(50)
     if _caps:
         final = min(final, min(_caps))
 
@@ -1421,20 +1445,22 @@ def extra_gauges(cwd, data=None):
     # Request Ledger 표시 (2026-10-16 외부 감사 · execution-contract § 1 n/n 완료 강제)
     ledger_line = ""
     try:
-        import json as _json
-        ledger_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        if os.path.exists(ledger_file):
-            with open(ledger_file, "r", encoding="utf-8") as f:
-                _lg = _json.load(f)
-            reqs = _lg.get("requests", [])
-            if reqs:
-                total = len(reqs)
-                done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
-                color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
-                mark = "✓" if done == total else "☐"
-                pending_first = next((_ledger_label(r.get("desc", "")) for r in reqs if r.get("status") not in ("completed", "deferred")), "")
-                extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
-                ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
+        # §80 (2026-11-11 사용자 지시 · 요청 줄만 일시 동결 해제 후 재동결): 완료 = completed 만 ·
+        #   승인대기·검증중·범위외·오등록 따로 · 현재 요청 = 추적(current-trace) 기준 · 다음 단계 기록 없음 = UNKNOWN
+        _ls = _ledger_summary(cwd)
+        if _ls:
+            _st_ko = {"completed": "완료", "approval_required": "승인대기", "verified": "검증중",
+                      "out_of_scope": "범위외", "invalid_registration": "오등록", "deferred": "보류",
+                      "pending": "진행중", "implemented": "구현됨", "UNKNOWN": "UNKNOWN"}
+            _cs = _ls["current_status"]
+            color = "31" if _ls["current_blocking"] else ("33" if _cs in ("approval_required", "verified", "UNKNOWN") else "32")
+            _cur = (f"현재 {_ls['current_rid']} {_st_ko.get(_cs, _cs)}" if _ls["current_rid"] else "현재 UNKNOWN")
+            _cnt = [f"완료 {_ls['completed']}/{_ls['total']}"]
+            for _k, _lab in (("approval_required", "승인"), ("verified", "검증"), ("open", "진행"),
+                             ("out_of_scope", "범위외"), ("invalid_registration", "오등록"), ("deferred", "보류")):
+                if _ls[_k]:
+                    _cnt.append(f"{_lab}{_ls[_k]}")
+            ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt) + " · 다음 UNKNOWN"
     except Exception:
         pass
 

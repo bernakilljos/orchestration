@@ -15,7 +15,7 @@ SessionStart hook 가 호출 → stdout → systemMessage 로 주입
 from __future__ import annotations
 import time
 import os
-import json, os, sqlite3, subprocess, sys
+import json, os, re, sqlite3, subprocess, sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -129,6 +129,12 @@ def section_current_trace() -> str:
             lines.append("- " + tm._fmt(e))
         for ch in tm.chains(evs)[-3:]:
             lines.append(f"- 실패 {len(ch['failures'])}회 → {'대체 성공' if ch['success'] else '아직 성공 기록 없음'} [{ch['kind']}:{ch['step']}]")
+        if not any(e.get("kind") == "request" and e.get("status") not in ("start",) for e in evs):
+            lines.append("- 종료 기록 없음 = 완료 여부 불명 (성공으로 보지 않음) · 아래 마지막 도구부터 상태 확인 후 이어서")
+            risky = re.compile(r"git\s+push|git\s+commit|--apply|rm\s+-|Remove-Item|merge-to-target|DROP|DELETE", re.I)
+            for e in [e for e in evs if e.get("kind") == "tool"][-3:]:
+                mark = " ⚠ 비멱등 — 재실행 전 결과 확인 (git log·대상 상태)" if risky.search(e.get("detail") or "") else ""
+                lines.append("- 마지막 도구: " + tm._fmt(e) + mark)
         return _h("진행 중 요청 추적 (§78)") + "\n".join(lines)
     except Exception:
         return ""

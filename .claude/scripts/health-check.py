@@ -102,9 +102,15 @@ def check_request_ledger() -> dict:
         with open(f, "r", encoding="utf-8") as fp:
             d = json.load(fp)
         reqs = d.get("requests", [])
-        total = len(reqs)
-        done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
-        return {"ok": done == total, "value": f"{done}/{total}"}
+        # §80 정본 집계 (request-ledger.summarize) — 완료 = completed 만 · ok = Stop 을 막는 미완료 0
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_hc_request_ledger",
+                                           os.path.join(os.path.dirname(os.path.abspath(__file__)), "request-ledger.py"))
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        c = _m.summarize(reqs)
+        return {"ok": c["blocking"] == 0, "value": f"{c['completed']}/{c['total']}",
+                "detail": f"승인대기 {c['approval_required']} · 검증중 {c['verified']} · 진행 {c['open']}"}
     except Exception:
         return {"ok": False, "value": "?"}
 

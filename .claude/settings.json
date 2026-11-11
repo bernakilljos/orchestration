@@ -279,7 +279,7 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/sync-to-team.sh\"",
+            "command": "SYNC_IF_CHANGED=1 bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/sync-to-team.sh\"",
             "timeout": 30,
             "async": true
           },

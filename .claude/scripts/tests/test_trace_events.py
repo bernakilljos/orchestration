@@ -129,3 +129,79 @@ def test_index_rule_on_edit_windows_paths(tmp_path, path, expect):
             break
         time.sleep(0.1)
     assert marker.exists() == expect
+
+
+def test_interrupted_request_marked_unknown_and_risky_tool_flagged(proj):
+    """§79 응답이 끊겨 종료 기록 없이 다음 요청이 오면 이전 요청 = unknown · 마지막 비멱등 도구 표시."""
+    tm = _load("trace_int", SCRIPTS / "lib" / "trace.py")
+    tm.set_current("tid-old", "R7", "push 해줘")
+    tm.emit("request", step="R7", status="start", trace_id="tid-old")
+    tm.emit("tool", step="Bash", status="success", detail={"input": "git push origin main"})
+    rs = _load("resume_int", SCRIPTS / "resume-last-24h.py")
+    sec = rs.section_current_trace()
+    assert "완료 여부 불명" in sec and "비멱등" in sec
+    sys.path.insert(0, str(HOOKS / "prompt"))
+    try:
+        lar = _load("lar_int", HOOKS / "prompt" / "ledger_auto_register.py")
+        r = lar._append_ledger_entry("다음 작업 해줘", "sess-x", "execute")
+    finally:
+        sys.path.remove(str(HOOKS / "prompt"))
+    old = tm.events("tid-old")
+    assert old[-1]["status"] == "unknown" and "종료 기록 없음" in old[-1]["error"]
+    assert tm.get_current()["trace_id"] == r["event_id"]
+
+
+def test_completed_request_not_marked_unknown(proj):
+    tm = _load("trace_done", SCRIPTS / "lib" / "trace.py")
+    tm.set_current("tid-done", "R8", "x")
+    tm.emit("request", step="R8", status="start", trace_id="tid-done")
+    tm.emit("request", step="R8", status="success", trace_id="tid-done")
+    sys.path.insert(0, str(HOOKS / "prompt"))
+    try:
+        lar = _load("lar_done", HOOKS / "prompt" / "ledger_auto_register.py")
+        lar._append_ledger_entry("새 작업", "sess-y", "execute")
+    finally:
+        sys.path.remove(str(HOOKS / "prompt"))
+    assert [e["status"] for e in tm.events("tid-done")] == ["start", "success"]
+
+
+# ── §80 요청 집계 정본 — 상태줄·READY 상한·health-check·Stop 게이트가 같은 함수 ──
+def _ledger(proj, reqs, rid=""):
+    (proj / ".claude" / "state" / "request-ledger.json").write_text(
+        json.dumps({"session_id": "s", "requests": reqs}, ensure_ascii=False), encoding="utf-8")
+    if rid:
+        (proj / ".claude" / "state" / "current-trace.json").write_text(
+            json.dumps({"trace_id": "t", "rid": rid, "desc": "x"}), encoding="utf-8")
+
+
+_MIX = [{"id": "R1", "status": "completed"}, {"id": "R2", "status": "approval_required"},
+        {"id": "R3", "status": "invalid_registration"}, {"id": "R4", "status": "out_of_scope"},
+        {"id": "R5", "status": "verified", "verification": "PARTIAL", "evidence": "e"},
+        {"id": "R6", "status": "deferred"}]
+
+
+def test_summarize_counts_only_completed_as_done(proj):
+    rl = _load("rl80", SCRIPTS / "request-ledger.py")
+    c = rl.summarize(_MIX, "R2")
+    assert (c["completed"], c["total"], c["approval_required"], c["invalid_registration"],
+            c["out_of_scope"], c["verified"], c["deferred"], c["blocking"]) == (1, 6, 1, 1, 1, 1, 1, 0)
+    assert c["current_status"] == "approval_required" and c["current_blocking"] is False
+    assert rl.summarize(_MIX, "R99")["current_status"] == "UNKNOWN"
+    assert rl.summarize(_MIX + [{"id": "R7", "status": "pending"}], "R7")["current_blocking"] is True
+
+
+def test_statusline_line_and_ready_cap_follow_current_request(proj):
+    _ledger(proj, _MIX + [{"id": "R7", "status": "pending"}], "R1")
+    sl = _load("sl80", SCRIPTS / "statusline_context.py")
+    assert sl._ledger_summary(str(proj)) is None        # 정본 스크립트 없음 = 집계 불가 (상한 유지 쪽)
+    (proj / ".claude" / "scripts").mkdir(parents=True, exist_ok=True)
+    (proj / ".claude" / "scripts" / "request-ledger.py").write_bytes((SCRIPTS / "request-ledger.py").read_bytes())
+    c = sl._ledger_summary(str(proj))
+    assert c["completed"] == 1 and c["current_rid"] == "R1" and c["blocking"] == 1
+    # 현재 요청 완료 → 지난 미완료가 있어도 상한 대상 아님 · 현재 요청 미완료 → 대상
+    assert not c["current_blocking"]
+    _ledger(proj, _MIX + [{"id": "R7", "status": "pending"}], "R7")
+    assert sl._ledger_summary(str(proj))["current_blocking"]
+    hc = _load("hc80", SCRIPTS / "health-check.py")
+    hc.STATE_DIR = str(proj / ".claude" / "state")
+    assert hc.check_request_ledger()["value"] == "1/7"

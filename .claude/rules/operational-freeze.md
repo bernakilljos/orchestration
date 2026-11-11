@@ -45,6 +45,8 @@
 
 **조정 금지** (10 동결 라인): wcwidth 수치 일치 이론 · 자동 개선 · 리팩터링 X · 사용자 실측 우선. 서브는 사용자 재검증 지시 시 조정 가능.
 
+**요청 줄 값 의미 재정의 (2026-11-11 §80 · 사용자 지시 "일시적으로 요청부분만 동결 풀고 하고 동결해")**: 라벨·폭·위치 불변 · 값만 `현재 R<n> <상태> · 완료 <completed>/<전체> · 승인·검증·진행·범위외·오등록·보류 · 다음 UNKNOWN` · 집계 정본 = `request-ledger.py summarize` · READY 상한 50 = 현재 요청이 Stop 을 막는 미완료일 때만 · **재동결 완료**.
+
 **SoT**: `.claude/scripts/statusline_context.py` LABEL_WIDTH dict · memory `feedback_statusline_frozen_1027.md`.
 
 - Operating Principles · Execution Contract · Request Ledger · recurrence-tracker · scope-lock 모두 정상 작동

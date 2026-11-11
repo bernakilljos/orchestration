@@ -204,6 +204,34 @@ def _honest_open(r: dict) -> bool:
             and bool(str(r.get("evidence") or "").strip()))
 
 
+GATE_PASS_STATUS = ("completed", "deferred", "out_of_scope", "invalid_registration")
+
+
+def is_blocking(r: dict) -> bool:
+    """정본 — Stop 을 막는 미완료인가 (cmd_gate·statusline 공용 · 2026-11-11 §80)."""
+    return (r.get("status") not in GATE_PASS_STATUS + ("approval_required",)) and not _honest_open(r)
+
+
+def summarize(reqs: list, current_rid: str = "") -> dict:
+    """정본 집계 — 완료(completed)만 완료로 센다 · 승인대기·검증중·범위외·오등록·보류·진행중 분리.
+    current_rid 가 주어지면 그 요청의 상태(UNKNOWN = Ledger 에 없음)."""
+    c = {"total": len(reqs), "completed": 0, "approval_required": 0, "verified": 0, "out_of_scope": 0,
+         "invalid_registration": 0, "deferred": 0, "open": 0, "blocking": 0}
+    for r in reqs:
+        st = r.get("status")
+        if st in c and st != "total":
+            c[st] += 1
+        else:
+            c["open"] += 1          # pending·implemented 등 진행 중
+        if is_blocking(r):
+            c["blocking"] += 1
+    cur = next((r for r in reqs if current_rid and r.get("id") == current_rid), None)
+    c["current_rid"] = current_rid or ""
+    c["current_status"] = (cur.get("status") if cur else "UNKNOWN")
+    c["current_blocking"] = bool(cur and is_blocking(cur))
+    return c
+
+
 def _trace_end(r: dict, verification: str, evidence: str) -> None:
     """§78 요청 종료를 추적에 (PASS→success · PARTIAL→partial · BLOCKED→blocked · FAIL→fail) — 실패해도 Ledger 는 그대로."""
     if not r.get("event_id"):
@@ -392,7 +420,7 @@ def cmd_gate() -> int:
         print("[request-ledger] 시험·지난 작업 ledger — 이번 세션 기준 아님 · 통과", file=sys.stderr)
         return 0
     total = len(data["requests"])
-    done = sum(1 for r in data["requests"] if r["status"] in ("completed", "deferred", "out_of_scope", "invalid_registration"))  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29) · invalid_registration = 자동 등록 분류기 오탐 (2026-10-30 P5-R1)
+    done = sum(1 for r in data["requests"] if r["status"] in GATE_PASS_STATUS)  # deferred = 다음 세션 지연 · out_of_scope = 범위 외 인계 (2026-10-29) · invalid_registration = 자동 등록 분류기 오탐 (2026-10-30 P5-R1)
     if done == total:
         _gate_loop_reset()
         return 0  # 모두 완료 = 통과
@@ -400,9 +428,7 @@ def cmd_gate() -> int:
     #   (R126: 읽기 전용 분석 요청이 '운영' 단어로 승인 대기 등록 → Stop 9회 연속 차단 · 해결 수단 없음).
     #   항목은 그대로 미완료로 남고 status·statusline 에 보인다 (완료 처리 X).
     waiting = [r for r in data["requests"] if r["status"] == "approval_required"]
-    blocking = [r for r in data["requests"]
-                if r["status"] not in ("completed", "deferred", "out_of_scope", "invalid_registration", "approval_required")
-                and not _honest_open(r)]
+    blocking = [r for r in data["requests"] if is_blocking(r)]
     if not blocking:
         _gate_loop_reset()
         open_items = waiting + [r for r in data["requests"] if _honest_open(r)]
