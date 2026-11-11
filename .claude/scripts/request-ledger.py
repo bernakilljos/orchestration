@@ -204,6 +204,22 @@ def _honest_open(r: dict) -> bool:
             and bool(str(r.get("evidence") or "").strip()))
 
 
+def _trace_end(r: dict, verification: str, evidence: str) -> None:
+    """§78 요청 종료를 추적에 (PASS→success · PARTIAL→partial · BLOCKED→blocked · FAIL→fail) — 실패해도 Ledger 는 그대로."""
+    if not r.get("event_id"):
+        return
+    try:
+        import importlib.util as ilu
+        spec = ilu.spec_from_file_location("_ledger_trace", str(Path(__file__).resolve().parent / "lib" / "trace.py"))
+        m = ilu.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        st = {"PASS": "success", "PARTIAL": "partial", "BLOCKED": "blocked", "FAIL": "fail"}.get(verification, "unknown")
+        m.emit("request", step=r.get("id", ""), status=st, trace_id=r["event_id"], evidence=(evidence or "")[:300],
+               detail={"verification": verification or "UNKNOWN"})
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "") -> int:
     """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사).
     verification=PASS 는 이 요청의 작업을 수행·확인했다는 뜻이다 — 기능 검증 판정(PASS/PARTIAL)을 대신하지 않는다."""
@@ -249,6 +265,7 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
                 r["evidence"] = evidence[:500]
                 r["verification"] = verification
                 _save(data)
+                _trace_end(r, verification, evidence)
                 print(f"[ledger] ⚠ {rid}: verified (verification={verification} · PASS 아님)", file=sys.stderr)
                 return 1
             r["status"] = "completed"
@@ -256,6 +273,7 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
             r["evidence"] = evidence[:500]
             r["verification"] = verification  # 명시된 PASS 값만 저장
             _save(data)
+            _trace_end(r, verification, evidence)
             print(f"[ledger] ✓ {rid}: {r['desc'][:60]} · evidence 확보")
             return 0
     print(f"[ledger] {rid} not found", file=sys.stderr)

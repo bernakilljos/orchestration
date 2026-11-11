@@ -7,6 +7,10 @@ set -uo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_DIR"
+# §78 실패 시도를 요청 추적에 (훅 입력 JSON = stdin · 인자로 부를 땐 stdin 이 터미널이라 건너뜀)
+if [ ! -t 0 ]; then
+  python -X utf8 "$PROJECT_DIR/.claude/scripts/lib/trace.py" hook-failure >/dev/null 2>&1 || true
+fi
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ERROR_MSG="${1:-Unknown error}"

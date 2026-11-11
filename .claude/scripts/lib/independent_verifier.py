@@ -497,6 +497,17 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
     stamp = cwd / REGRESSION_STAMP
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    try:  # §78 회귀 결과를 현재 요청 추적에 (근거 = regression-gate.json)
+        import importlib.util as ilu
+        spec = ilu.spec_from_file_location("_gate_trace", str(Path(__file__).resolve().with_name("trace.py")))
+        tm = ilu.module_from_spec(spec)
+        spec.loader.exec_module(tm)
+        st = {"pass": "success", "fail": "fail", "blocked": "blocked"}.get(str(res.get("status")), "unknown")
+        tm.emit("test", step="regression-gate", status=st, error=res.get("reason"), evidence=str(REGRESSION_STAMP),
+                detail={"summary": res.get("summary"), "new_failures": (res.get("new_failures") or [])[:10],
+                        "tests": len(res.get("tests") or []), "memory_pct": res.get("commit_memory_pct")})
+    except Exception:  # noqa: BLE001
+        pass
     return res
 
 

@@ -279,7 +279,10 @@ def _non_exec_operand(text: str, pos: int) -> bool:
     if first.endswith(".exe"):
         first = first[:-4]
     if first == "git":
-        return len(words) > 1 and words[1].lower() in _NON_EXEC_GIT
+        rest = words[1:]
+        while len(rest) >= 2 and rest[0] in ("-C", "-c"):   # git -C <폴더> / -c k=v 다음이 하위 명령 (§78 오탐)
+            rest = rest[2:]
+        return bool(rest) and rest[0].lower() in _NON_EXEC_GIT
     return first in _NON_EXEC_CMDS
 
 

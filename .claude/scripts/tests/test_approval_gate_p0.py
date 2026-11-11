@@ -561,7 +561,8 @@ def _risky_script(tmp_root):
     return s.as_posix()
 
 
-@pytest.mark.parametrize("tpl", ['rm -f "{s}"', 'cat "{s}"', 'md5sum {s}', 'git add {s}', 'ls -la {s}'])
+@pytest.mark.parametrize("tpl", ['rm -f "{s}"', 'cat "{s}"', 'md5sum {s}', 'git add {s}', 'ls -la {s}',
+                                 'git -C /c/x add {s}', 'git -c core.x=1 -C /c/x diff {s}'])
 def test_script_operand_of_non_exec_command_not_blocked(tmp_root, tpl):
     s = _risky_script(tmp_root)
     r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))

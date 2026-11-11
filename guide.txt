@@ -263,7 +263,7 @@
 
   [토큰 최적화 환경변수 — install.bat 자동 설정]
     CLAUDE_CODE_MAX_THINKING_TOKENS=10000   thinking 과다 소비 차단
-    CLAUDE_AUTOCOMPACT_THRESHOLD=50         컨텍스트 50%% 시 자동 압축
+    CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80      컨텍스트 80% 시 자동 압축 (공식 변수 · .claude/settings.json env · 종전 THRESHOLD=50 은 공식 문서에 없는 변수라 효과 없었음 §78)
     (CLAUDE_CODE_SUBAGENT_MODEL 미설정)     서브에이전트 모델 상속 — haiku 강제 시 200K 창 초과 Prompt is too long (2026-10-30)
 
   [자체 토큰 감사 — audit-tokens.py (2026-05-15)]
@@ -523,6 +523,7 @@
     승인 게이트 스크립트 검사 (1110) 실행하는 셸 스크립트 본문·중첩 2단계도 위험 판정 · 전역 ~/.claude 명령·설정 쓰기 = system · .py 본문은 미검사 · 회귀 시험 test_approval_gate_p0 §75 12개 · 상세 §75
     대상 시험 격리 (1111) python .claude/scripts/target-test-isolated.py <대상> -- <시험> · 사본에서만 실행 · 대상 state·전역 ~/.claude 해시가 바뀌면 FAIL(2) · 상세 §76
     게이트 피연산자 오탐 (1111) rm·cat·ls·git add 등 실행 안 하는 명령의 .sh 대상은 내용 검사 제외 · 파이프·eval·$() 있으면 그대로 검사 · 상세 §77
+    요청 추적 (1111) python .claude/scripts/lib/trace.py show [R번호|추적번호] · 접수·도구 성공/실패/차단·회귀·종료가 같은 번호로 · 자동 Compact 80% (settings env) · 상세 §78
     신규 기록 토큰 가림 (1110)     대화(orca.db)·sessions.db·bash 명령 로그·Ledger 가 lib\redact.py 정본으로 저장 전 가림 · 해시는 원문 기준 · 모듈 없으면 [MASKED] 만 저장 · 기존 기록은 변경 없음
     대기 요청 만료 (1109)          24시간 지난 대기 요청은 /approve 거부 (기록 보존 · 같은 명령을 다시 내면 새 요청) · 승인 후 실행 허용은 30분
     statusline 9줄 재설계 (1016 2차)        🧠 토큰(+세션/주간+시계+fast 통합) / 🎨 디자인+💻 개발 한 줄 / 🧪 영향 / 📡 인프라 / 🚨 오류 / 🤖 서브 / 🎯 READY / 💰 비용(맨 끝)

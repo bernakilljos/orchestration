@@ -1710,3 +1710,18 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 보존 사본 민감정보 [확인]: `db-preserve-75` 의 IFRS `sessions.db` 사본과 **원본 `C:\IFRS_PJT\.claude\state\sessions.db`** 에 가짜 표시 없는 GitHub 토큰 형태(`ghp_` · 40자) 1건 (나머지 4건 = 시험용 가짜 표시) · orca.db 사본 2개 = 0건 · 값은 출력·기록하지 않음 · 대상 운영 DB 이므로 수정 안 함 (가림·삭제는 별도 승인 · 토큰 교체는 사용자 소유 결정).
 - 권한 [확인]: `%TEMP%` 전체에 `CodexSandboxUsers`(구성원 CodexSandboxOffline·Online) 와 이름 없는 SID(…-3017980525) 수정(M) 권한 · 보존 사본·scratchpad 도 상속 · `orca-agent` 는 그 그룹 구성원 아님 · 설정 시점은 Codex 샌드박스 설치로 추정 [추정] · ACL 변경 안 함 (별도 승인 · S2~S4 와 함께 검토).
 - 한계: 문자열 판정 = 보안 PASS 근거 아님 · 보안 출시 FAIL 유지 · 대상 미전파.
+
+
+## §78 요청 단위 추적 · 훅 비용 실측 · 자동 Compact 80% (2026-11-11)
+
+- 기존 자산 조사 [확인]: 요청 하나를 끝까지 잇는 id 없음 · R 번호는 `request-ledger cmd_clear` 후 R1 재사용 (정본 부적합) · `lib/trace.py`·`structured_logger.py` 사용처 0 · 훅 ms 는 `logs/prompt-dispatch.log`·`tool-dispatch.log` 텍스트에만 · `hook_profile` 표 없음 · sessions.db 에 소요시간 없음.
+- 재사용 설계 [확인]: 추적번호 = Ledger 등록 때 만드는 `event_id` (R 번호는 별칭) · 기록 = 기존 `lib/trace.py` 에 `emit`·`set_current`·`events`·`chains`·`show` 추가 · 가림 = `redact.mask` · 저장 = orca.db `trace_events` 표가 있을 때만, 없으면 `logs/trace-events.jsonl` (운영 orca.db 표 생성은 `trace.py init-db` — 별도 승인 · 격리 시험만 실행) · 기록 실패는 본 작업을 멈추지 않음.
+- 연결 지점 [확인]: 요청 접수(`ledger_auto_register` → start) · 요청 종료(`request-ledger complete` → success/partial/blocked/fail) · 사용자 입력 훅 비용(`prompt-dispatch`) · 도구 성공(`tool-dispatch post`)·차단(pre rc 2) · 도구 실패(`on_error.sh` → `trace.py hook-failure`) · 회귀 게이트(`regression_gate` → test · 근거 regression-gate.json) · compact·재시작 복원(`resume-last-24h` 맨 위 «진행 중 요청 추적»).
+- 실패→대체→성공 [확인]: `chains()` 가 같은 단계의 실패 뒤 성공을 기록에서 계산 · 성공 기록 없으면 «UNKNOWN» (연결을 만들지 않음) · 시험: UIA 대기 실패 → win32 실패 → 성공 시나리오.
+- 훅 비용 기준선 [확인] (격리 사본 · 3회 중앙값 · 순차 합): Stop 18개 13.5초 (최대 stop-six-guards 2.7초) · PostToolUse(Edit) 7개 5.9초 (post-impl-verify 1.6초) · UserPromptSubmit 1.0초 (실운영 로그 684건 중앙 0.75초·p90 1.9초) · PreToolUse 0.4초 (실운영 2634건 중앙 0.07초) · bash 1회 기동 47ms·python 62ms. 같은 시점 훅의 병렬 실행 여부는 문서로 미확인.
+- 최적화 1차 [확인] (같은 입력 10회 중앙값): `index-rule-on-edit.sh` 관련 없는 편집 278→147ms · `auto-smoke-test.sh` 484→207ms (입력에 대상 이름이 없으면 jq·grep 없이 종료 · 판정 불변).
+- 결함 수정 [확인]: `index-rule-on-edit.sh` 가 Windows 역슬래시 경로(jq 없음 → JSON `\\` 가 `//` 로 남음)를 `*/.claude/rules/*` 와 비교해 **룰·메모리 재색인이 실행되지 않았음** → 수정 전 «안 됨» · 수정 후 «실행됨» (역검증).
+- 자동 Compact [확인]: 설치 모듈의 `CLAUDE_AUTOCOMPACT_THRESHOLD=50` 은 공식 문서에 없는 변수 (효과 없음) → 이전 값 삭제로 교체 · 공식 `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80` 을 `.claude/settings.json env` 에 (문서: 1~100 · 기본보다 높으면 무시 · settings env 는 실행 방식 무관 적용). 실제 세션 80% 자동 압축 발생은 **미검증 (BLOCKED: 다음 세션·압축 발생 시 확인)**.
+- 시험 [확인]: `test_trace_events.py` 10개 (기록 없음·파일/DB·연결·가림·DB 손상 대체·Ledger 시작/종료·실패 훅·복원·Windows 경로 3) 통과.
+- 미검증: 실제 kit 세션에서의 추적 기록(수정 hook 은 다음 요청부터) · 80% 자동 압축 실제 발생 · Stop 훅 18개 정리(효과 큰 다음 단계) · 운영 orca.db `trace_events` 표 생성(승인).
+- 개인용 범위 (사용자 결정 2026-11-11): Broker S2~S8 은 선택 기능 · 1차 목표 = 품질(자율·속도·이력·복구·Compact).

@@ -46,11 +46,13 @@ if exist "!GCLAUDE_SRC!" (
 rem --- 토큰 최적화 환경변수 설정 ---
 echo [+] Setting token optimization env vars...
 setx CLAUDE_CODE_MAX_THINKING_TOKENS 10000 >nul 2>&1
-setx CLAUDE_AUTOCOMPACT_THRESHOLD 50 >nul 2>&1
+rem CLAUDE_AUTOCOMPACT_THRESHOLD 는 공식 문서에 없는 변수 (효과 없음 · 2026-11-11 §78) — 이전 install 이 남긴 값만 지운다.
+rem  자동 압축 시점은 프로젝트 .claude/settings.json env 의 공식 변수 CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80 이 정한다 (전파로 대상에도 적용).
+reg delete HKCU\Environment /v CLAUDE_AUTOCOMPACT_THRESHOLD /f >nul 2>&1
 rem CLAUDE_CODE_SUBAGENT_MODEL=haiku 강제 제거 (2026-10-30): Haiku 200K 창 < subagent 기본 context ~194K
 rem  -> 첫 tool 결과에서 Prompt is too long. 이전 install 이 남긴 값도 지운다 (모델은 Agent 정의/상속에 맡김)
 reg delete HKCU\Environment /v CLAUDE_CODE_SUBAGENT_MODEL /f >nul 2>&1
-echo       Done (MAX_THINKING=10000, AUTOCOMPACT=50%%, SUBAGENT=inherit)
+echo       Done (MAX_THINKING=10000, AUTOCOMPACT=80%% via settings.json env, SUBAGENT=inherit)
 
 rem --- 프로젝트 레벨 settings.json 도 bypassPermissions 강제 ---
 rem (글로벌 ~/.claude/settings.json 에 bypassPermissions 두어도 프로젝트 레벨이 우선이라 override 됨)

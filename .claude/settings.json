@@ -604,7 +604,8 @@
   "env": {
     "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
     "TOOL_DISPATCH_PY_STDIN_FIX": "1",
-    "GIT_OPTIONAL_LOCKS": "0"
+    "GIT_OPTIONAL_LOCKS": "0",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   },
   "outputStyle": "concise",
   "keybindingFlavor": "readline",

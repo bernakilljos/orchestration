@@ -399,3 +399,30 @@ def py_stdin_text(ctx) -> str:
     if data is None:
         return ctx.raw
     return data.decode(py_child_encoding(), "surrogateescape").replace("\r\n", "\n").replace("\r", "\n")
+
+
+_TRACE_MOD = None
+
+
+def trace_mod():
+    """요청 추적 모듈 (scripts/lib/trace.py) — 한 번만 파일로 로드 · 실패 = None (§78 · 기록 실패가 훅을 막지 않음)."""
+    global _TRACE_MOD
+    if _TRACE_MOD is None:
+        try:
+            spec = importlib.util.spec_from_file_location("_hooks_trace", str(SCRIPTS_DIR / "lib" / "trace.py"))
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            _TRACE_MOD = m
+        except Exception:  # noqa: BLE001
+            _TRACE_MOD = False
+    return _TRACE_MOD or None
+
+
+def trace_emit(*a, **kw) -> str:
+    m = trace_mod()
+    if not m:
+        return "none"
+    try:
+        return m.emit(*a, **kw)
+    except Exception:  # noqa: BLE001
+        return "none"

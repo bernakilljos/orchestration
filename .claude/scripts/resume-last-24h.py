@@ -112,8 +112,31 @@ def _sanitize(s: str) -> str:
     if not isinstance(s, str): return s
     return s.encode("utf-8", "replace").decode("utf-8", "replace")
 
+def section_current_trace() -> str:
+    """§78 compact·재시작 뒤 진행 중 요청의 추적번호·최근 단계·실패를 복원 (기록에 없는 것은 만들지 않음)."""
+    try:
+        import importlib.util as _ilu
+        sp = _ilu.spec_from_file_location("_resume_trace", Path(__file__).resolve().parent / "lib" / "trace.py")
+        tm = _ilu.module_from_spec(sp)
+        sp.loader.exec_module(tm)
+        cur = tm.get_current()
+        if not cur:
+            return ""
+        evs = tm.events(cur["trace_id"])
+        lines = [f"- 추적번호 {cur['trace_id']} ({cur.get('rid', '')}) · {cur.get('desc', '')[:100]}",
+                 f"- 조회: `python .claude/scripts/lib/trace.py show {cur['trace_id']}` · 이벤트 {len(evs)}건"]
+        for e in [e for e in evs if e.get("status") not in ("success", "info")][-5:]:
+            lines.append("- " + tm._fmt(e))
+        for ch in tm.chains(evs)[-3:]:
+            lines.append(f"- 실패 {len(ch['failures'])}회 → {'대체 성공' if ch['success'] else '아직 성공 기록 없음'} [{ch['kind']}:{ch['step']}]")
+        return _h("진행 중 요청 추적 (§78)") + "\n".join(lines)
+    except Exception:
+        return ""
+
+
 def main():
     parts = [
+        section_current_trace(),
         section_session_summary(),
         section_pending_tasks(),
         section_recent_commits(),

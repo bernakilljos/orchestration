@@ -377,6 +377,16 @@ def main(argv) -> int:
         lines.append(f"[{ts_iso_tz()}]   plain-stdout(JSON 과 병합 불가로 로그만): " + " | ".join(
             s.strip().replace("\n", " / ")[:200] for s in plain))
     write_dispatch_log(os.path.join(ROOT, ".claude", "logs", "tool-dispatch.log"), lines)
+    if event == "post" or (event == "pre" and rc == 2):   # §78 도구 시도 기록 (성공 = post · 차단 = pre rc 2 · 실패 = PostToolUseFailure)
+        try:
+            from _common import trace_emit
+            ti = (json.loads(raw or "{}").get("tool_input") or {}) if raw else {}
+            brief = ti.get("command") or ti.get("file_path") or ti.get("description") or ""
+            trace_emit("tool", step=tname, status="success" if event == "post" else "blocked", duration_ms=total,
+                       detail={"input": str(brief)[:200], "hooks_ms": round(total)},
+                       error="; ".join(problems)[:300] if problems else None)
+        except Exception:  # noqa: BLE001
+            pass
 
     if any(t.is_alive() for t in threading.enumerate() if t is not threading.current_thread()):
         sys.stdout.flush()

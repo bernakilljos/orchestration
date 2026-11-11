@@ -170,6 +170,14 @@ def main(argv) -> int:
         lines = [f"[{ts_iso_tz()}] total={total:.0f}ms {parts}" + (f" | {marks}" if marks else "")]
         lines += [f"[{ts_iso_tz()}]   {p}" for p in problems]
         _write_log(lines)
+        try:  # §78 훅 비용을 요청 추적에 (텍스트 로그만으로는 요청별 집계 불가)
+            from _common import trace_emit
+            slow = sorted(timings, key=lambda x: -x[1])[:5]
+            trace_emit("hook", step="UserPromptSubmit", status="fail" if problems else "success", duration_ms=total,
+                       error="; ".join(problems)[:500] if problems else None,
+                       detail={n: round(ms) for n, ms in slow}, evidence=".claude/logs/prompt-dispatch.log")
+        except Exception:  # noqa: BLE001
+            pass
 
     # 타임아웃으로 남은 daemon 스레드가 있어도 즉시 종료
     if any(t.is_alive() for t in threading.enumerate() if t is not threading.current_thread()):

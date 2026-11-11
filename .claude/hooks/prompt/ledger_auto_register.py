@@ -410,6 +410,16 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         return {"status": "write_error", "error": str(e)[:100]}
+    try:  # §78 요청 접수 = 추적 시작 (추적번호 = event_id · R 번호는 별칭)
+        from _common import trace_mod
+        tm = trace_mod()
+        if tm:
+            tm.set_current(event_id, rid, prompt)
+            tm.emit("request", step=rid, status="start", trace_id=event_id,
+                    detail={"classification": classification, "approval_required": bool(approval_matches),
+                            "session": (session_id or "unknown")[:8]})
+    except Exception:  # noqa: BLE001 — 추적 실패가 등록을 막지 않음
+        pass
     return {"status": "registered", "request_id": rid, "event_id": event_id,
             "classification": classification}
 
