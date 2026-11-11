@@ -46,7 +46,19 @@ fi
 
 # 3. Verification Guard — golden-test (warn only · block 하면 overload)
 # 사용자 명시 지시 시만 block
-GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null | tail -3 | grep -oE "[0-9]+/[0-9]+" | head -1 || echo "")
+# §84 골든 테스트는 응답마다 3초 — 코드가 안 바뀌었으면 결과도 같다: HEAD + 작업 트리 변경 내용(로그 제외) 지문이
+#   직전과 같을 때만 저장 결과 재사용 · 하나라도 바뀌면 다시 실행 (SIX_GUARDS_GOLDEN_FORCE=1 이면 항상 실행)
+GFP="$( { git -C "$ROOT" rev-parse HEAD 2>/dev/null; git -C "$ROOT" diff HEAD -- . ':(exclude)*.log' 2>/dev/null; \
+          git -C "$ROOT" ls-files --others --exclude-standard 2>/dev/null; } | md5sum 2>/dev/null | cut -c1-32)"
+GCACHE="$ROOT/.claude/state/six-guards-golden.txt"
+GOLDEN_RESULT=""
+if [ -z "${SIX_GUARDS_GOLDEN_FORCE:-}" ] && [ -n "$GFP" ] && [ -f "$GCACHE" ] && [ "$(head -1 "$GCACHE")" = "$GFP" ]; then
+  GOLDEN_RESULT="$(sed -n 2p "$GCACHE")"
+fi
+if [ -z "$GOLDEN_RESULT" ]; then
+  GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null | tail -3 | grep -oE "[0-9]+/[0-9]+" | head -1 || echo "")
+  [ -n "$GFP" ] && [ -n "$GOLDEN_RESULT" ] && printf '%s\n%s\n' "$GFP" "$GOLDEN_RESULT" > "$GCACHE" 2>/dev/null || true
+fi
 GOLDEN_PASS=$(echo "$GOLDEN_RESULT" | cut -d/ -f1)
 GOLDEN_TOTAL=$(echo "$GOLDEN_RESULT" | cut -d/ -f2)
 if [ -n "$GOLDEN_RESULT" ] && [ "$GOLDEN_PASS" != "$GOLDEN_TOTAL" ]; then

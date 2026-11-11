@@ -79,6 +79,21 @@ def _strip_git_commit_message(cmd: str) -> str:
 _SEARCH_CMDS = ("grep", "egrep", "fgrep", "rg", "ag", "findstr")
 
 
+def _leading_cd_base(parts: list) -> str:
+    """§84 첫 세그먼트가 `cd <절대 경로>` 이고 그 뒤에 작업 위치를 바꾸는 명령이 더 없으며 폴더가 실제로 있을 때만 그 경로.
+    (2026-11-11 재현: `cd /c/pjt/orchestration_v1; python .claude/scripts/auto-save-next-actions.py manual-add "…Git…push…"`
+     → 상대 경로라 인자를 글로 보지 못해 git push 로 판정)"""
+    segs = [p for p in parts if p.strip() and not re.fullmatch(r"\s*(?:&&|\|\||;|\n)\s*", p)]
+    if not segs:
+        return ""
+    m = re.fullmatch(r"\s*cd\s+(\"[^\"]+\"|'[^']+'|[^\s;&|]+)\s*", segs[0])
+    if not m or any(_RX_CHDIR.search(x) for x in segs[1:]):
+        return ""
+    d = m.group(1).strip("\"'")
+    d = re.sub(r"^/([a-zA-Z])/", r"\1:/", d)
+    return d if os.path.isabs(d) and os.path.isdir(d) else ""
+
+
 def _strip_inert_text(cmd: str) -> str:
     """2026-10-30: 실행되지 않는 '언급' 만 제외 (위험 명령 차단 자체는 그대로).
     ① cat 이 파일로만 쓰는 heredoc 본문 (`cat >> f <<'EOF' ... EOF`) — 파이프로 셸에 넘기면 제외 X
@@ -96,11 +111,12 @@ def _strip_inert_text(cmd: str) -> str:
                  lambda m: _heredoc(type("M", (), {"group": lambda s, i: (m.group(0), m.group(1), m.group(3))[i]})()),
                  cmd, flags=re.S)
     parts = re.split(r"(\s*(?:&&|\|\||;|\n)\s*)", cmd)
+    base = _leading_cd_base(parts)
     for i, seg in enumerate(parts):
         words = seg.strip().split()
         if words and os.path.basename(words[0]).lower() in _SEARCH_CMDS:
             parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'<PATTERN>'", seg)
-        elif words and _inert_args_segment(seg):
+        elif words and _inert_args_segment(seg, base):
             parts[i] = _RX_QUOTED.sub(_mask_inert_quote, seg)
     return "".join(parts)
 
@@ -145,7 +161,9 @@ def _kit_script_unchanged(path: str) -> bool:
         return False
 
 
-def _inert_args_segment(seg: str) -> bool:
+def _inert_args_segment(seg: str, base: str = "") -> bool:
+    # §84 맨 끝 출력 다듬기(2>&1 · | tail/head -N)는 인자를 실행하지 않는다 — 그것만 떼고 판정 (다른 파이프는 그대로 불허)
+    seg = re.sub(r"(?:\s+2>&1)?(?:\s*\|\s*(?:tail|head)(?:\s+-n)?\s+-?\d+)?\s*$", "", seg)
     skeleton = _RX_QUOTED.sub("''", seg)
     # 2026-11-09 리뷰 MUST 1·2: 셸이 따옴표 짝을 정규식과 다르게 읽는 문자(\ ^ $' $")·백그라운드 & ·
     #   짝 안 맞는 따옴표가 따옴표 밖에 있으면 판정하지 않는다 (가리지 않음 → 그대로 검사)
@@ -182,6 +200,9 @@ def _inert_args_segment(seg: str) -> bool:
     if (name, rest[1].lower()) not in _INERT_KIT_SCRIPTS:
         return False
     # 상대 경로는 셸과 훅의 작업 위치가 다를 수 있어 해당 없음 (리뷰 SHOULD 6)
+    #   §84: 명령 맨 앞 `cd <절대 경로>` 1회로 기준 폴더가 확정되면 그 기준으로 해석 (kit HEAD 내용 일치 조건 유지)
+    if not os.path.isabs(script) and base:
+        script = os.path.join(base, script)
     return os.path.isabs(script) and os.path.isfile(script) and _kit_script_unchanged(script)
 
 

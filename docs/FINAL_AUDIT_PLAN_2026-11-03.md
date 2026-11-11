@@ -1807,3 +1807,24 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 자동 Compact 80% [확인]: 최근 자동 압축 784,185 토큰(1M 의 78.4%) · 이전 자동 압축은 42~45% · 압축 직후 요청 번호(R229)·추적번호·이어서 할 일 복원 확인.
 - 남은 것: 사용자 환경변수 `CLAUDE_AUTOCOMPACT_THRESHOLD=50` (레지스트리 · 별도 승인) · 새 세션 한국어 실제 확인 (사용자 새 창) · Windows 화면 캡처 정렬 (캡처 창 지정 필요).
 - 상태줄 렌더 단계별 [확인] (메모리 74.9% · 7회): bash 빈 실행 중앙 84ms · python 빈 실행 122ms · python 본체 513ms · wrapper 전체 725ms (최악 775ms) · 수정 전 2572~3486ms · 앞선 1.0~2.5초 변동은 회귀 게이트 시험과 겹친 시각 [추정].
+
+## §84 전파 뒤 재발 결함 — D22 실효 설정 검사 · 기록 명령 오탐 · Stop 병목 (2026-11-11)
+
+### D22 (STD-KOREAN-001 v1.2)
+- 원인 [확인]: 기준이 «파일에 특정 문자열이 있는가» 였다 — 대상(IFRS·ICMAI·검토 사본) 시드 v1.0 = `CLAUDE.md` 의 `| D22 |` · kit v1.1 = `.claude/settings.json` 의 `"language": "Korean"`. 문자열 유무는 실제 적용 여부가 아니고, 프로젝트 고유 CLAUDE.md·settings 를 보존하는 전파와 충돌한다.
+- 대상 상태 [확인]: IFRS·ICMAI CLAUDE.md 는 프로젝트 고유본이 아니라 11-10 kit 사본(두 대상 해시 동일 eb8ac623…) · `| D22 |` 행 있음 — 이번에 대상 CLAUDE.md 는 건드리지 않음.
+- 캡처의 위반 판정 세션 [미확인]: 최근 90분 대화 기록 중 D22 를 언급한 세션은 이 세션뿐 → 다른 PC 이거나 기록이 남지 않은 세션.
+- 수정: `verify_kind: effective_setting` — Claude Code 공식 우선순위(.claude/settings.local.json > .claude/settings.json > ~/.claude/settings.json · code.claude.com/docs/en/settings.md)로 실제 적용되는 `language` 가 Korean 인지 판정. 어디에도 없으면 FAIL · 대소문자 무관. CLAUDE.md 문자열로 판정하지 않음 · 문구 중복 추가 없음.
+- 한글 .ps1 UTF-8 BOM 은 별도로 `ensure_ps1_bom` 훅이 저장·실행 직전 강제 (기존 시험 유지).
+
+### 승인 게이트 기록 명령 오탐
+- 재현 [확인]: `cd /c/pjt/orchestration_v1; python -X utf8 .claude/scripts/auto-save-next-actions.py manual-add "…Git…push…" 2>&1 | tail -1` → 인자를 글로 보는 처리가 «절대 경로» 일 때만이라 인자 속 글이 push 실행으로 판정 · 끝의 `| tail -1` 도 불허.
+- 수정: 명령 맨 앞 `cd <절대 경로>` 1회 + 실제 폴더일 때만 상대 경로를 그 기준으로 해석 (kit 의 그 파일 · HEAD 와 같은 내용 조건 유지) · 맨 끝 `2>&1`·`| tail|head -N` 만 떼고 판정.
+- 우회 차단 유지 [확인] 10/10: cd 뒤 실제 push · 인자 안 명령 치환 · 다른 폴더 cd · cd 두 번 · 뒤에 push 연결 · 끝이 `| bash` · tail 뒤 `| sh` 모두 차단 · 정상 기록 3종 허용.
+
+### Stop 병목
+- 실측 [확인] (대화 기록의 Stop 훅 요약 86회 · 훅은 병렬 → 대기 = 가장 느린 훅): §79 이전 중앙 3278ms·최악 16681ms → §79 이후 중앙 3283ms·최악 8559ms · 병목 `stop-six-guards.sh` 중앙 3.3초 = 응답마다 골든 테스트 13개 재실행.
+- 수정: HEAD + 작업 트리 변경 내용(로그 제외) + 미추적 파일 목록 지문이 직전과 같을 때만 저장 결과 재사용 · 바뀌면 재실행 · 실측 2009ms(최초·재실행) → 1337~1398ms.
+
+### 미검증
+- 새 세션·전파 대상 새 세션의 실제 한국어 출력 (사용자 새 창 확인 필요) · Windows 화면 캡처 정렬 (받은 캡처는 상태줄 화면이 아님).

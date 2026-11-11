@@ -217,8 +217,31 @@ def test_project_settings_force_korean_language():
     if local.exists():
         assert json.loads(local.read_text(encoding="utf-8")).get("language", "Korean") == "Korean"
     seed = json.loads((SCRIPTS / "standing-requirements.seed.json").read_text(encoding="utf-8"))["requirements"]
-    assert seed["STD-KOREAN-001"]["verify_target"] == ".claude/settings.json"
-    assert seed["STD-KOREAN-001"]["verify_pattern"] == '"language": "Korean"'
+    k = seed["STD-KOREAN-001"]                                   # §84 문자열 유무가 아니라 실효 설정
+    assert k["verify_kind"] == "effective_setting" and k["setting_key"] == "language" and k["expect"] == "Korean"
+    assert "verify_target" not in k
+
+
+@pytest.mark.parametrize("local,proj_,user,want", [
+    (None, {"language": "Korean"}, {"language": "English"}, "PASS"),      # 프로젝트가 사용자 전역을 덮음
+    ({"language": "English"}, {"language": "Korean"}, None, "FAIL"),      # local 이 프로젝트를 덮음
+    (None, None, {"language": "korean"}, "PASS"),                         # 전역만 (대소문자 무관)
+    (None, {"model": "x"}, None, "FAIL"),                                 # 어디에도 없음 = 미적용
+])
+def test_effective_language_follows_official_precedence(tmp_path, monkeypatch, local, proj_, user, want):
+    proj = tmp_path / "p"
+    home = tmp_path / "h"
+    (proj / ".claude").mkdir(parents=True)
+    (home / ".claude").mkdir(parents=True)
+    for d, f in ((local, proj / ".claude" / "settings.local.json"), (proj_, proj / ".claude" / "settings.json"),
+                 (user, home / ".claude" / "settings.json")):
+        if d is not None:
+            f.write_text(json.dumps(d), encoding="utf-8")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    monkeypatch.setenv("HOME", str(home))
+    m = _load("sr84", SCRIPTS / "standing-requirements.py")
+    assert m._verify({"verify_kind": "effective_setting", "setting_key": "language", "expect": "Korean"}) == want
 
 
 def _lang(proj, payload):

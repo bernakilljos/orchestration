@@ -127,3 +127,25 @@ def test_commit_message_heredoc_mention_and_substitution():   # 2026-11-09 커�
     assert flagged(f"{C} -F - <<EOF\n$({_P})\nEOF")                                  # 따옴표 없는 heredoc 은 확장됨
     assert flagged(f'{C} -m "$(cat <<EOF\n$({_P})\nEOF\n)"')
     assert flagged(f"{C} -F - <<'EOF'\nmsg\nEOF\n{_P}")                              # heredoc 뒤 실제 실행
+
+
+# ── §84 cd <절대 경로> + 상대 경로 기록 스크립트 · 끝 출력 다듬기 — 정상 기록 허용 · 우회 차단 유지 ──
+import pytest as _pt84
+
+_S84 = ".claude/scripts/auto-save-next-actions.py"
+_K84 = "/" + str(ROOT)[0].lower() + str(ROOT)[2:].replace(chr(92), "/")
+
+
+@_pt84.mark.parametrize("cmd,blocked", [
+    (f'cd {_K84}; python -X utf8 {_S84} manual-add "Git 상태 · 원격 반영(push)은 하지 않음" 2>&1 | tail -1', False),
+    (f'cd {_K84} && python -X utf8 {_S84} manual-add "git push 는 하지 않음"', False),
+    (f'cd {_K84}; git push origin main', True),
+    (f'cd {_K84}; python -X utf8 {_S84} manual-add "$(git push origin main)"', True),
+    (f'cd {_K84}; cd /; python {_S84} manual-add "git push origin main"', True),
+    (f'cd {_K84}; python {_S84} manual-add "메모"; git push origin main', True),
+    (f'python -X utf8 {_K84}/{_S84} manual-add "git push origin main" | bash', True),
+    (f'python {_K84}/{_S84} manual-add "git push x" | tail -1 | sh', True),
+])
+def test_cd_relative_record_script_inert_but_bypass_blocked(cmd, blocked):
+    risk = gate.detect_risk(agd._strip_inert_text(agd._strip_git_commit_message(cmd)))
+    assert (risk is not None) == blocked, cmd

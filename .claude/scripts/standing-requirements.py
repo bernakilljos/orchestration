@@ -106,6 +106,26 @@ def cmd_list(active_only: bool = False) -> int:
     return 0
 
 
+def _effective_setting(key: str):
+    """§84 Claude Code 공식 설정 우선순위로 실제 적용 값 — .claude/settings.local.json > .claude/settings.json >
+    ~/.claude/settings.json (code.claude.com/docs/en/settings.md · Settings precedence). (값, 파일) · 없으면 (None, None)."""
+    for p in (ROOT / ".claude" / "settings.local.json", ROOT / ".claude" / "settings.json",
+              Path.home() / ".claude" / "settings.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(d, dict) and key in d:
+            return d[key], str(p)
+    return None, None
+
+
+def _effective_setting_ok(r: dict) -> str:
+    val, _src = _effective_setting(r.get("setting_key", ""))
+    want = str(r.get("expect", ""))
+    return "PASS" if val is not None and str(val).strip().lower() == want.strip().lower() else "FAIL"
+
+
 def _verify(r: dict) -> "str":
     """verify_pattern 이 verify_target 안에 존재하는지.
 
@@ -115,7 +135,9 @@ def _verify(r: dict) -> "str":
     UNKNOWN 은 gate 에서 PASS 로 간주 X · 수동 검증 요구 flag 로 처리.
     """
     if r.get("judge") == "human":
-        return "HUMAN"    # 사람·독립 검토가 판단하는 기준 (2026-11-09) — 자동 PASS 로 세지 않고 차단 사유로도 쓰지 않는다
+        return "HUMAN"
+    if r.get("verify_kind") == "effective_setting":
+        return _effective_setting_ok(r)    # 사람·독립 검토가 판단하는 기준 (2026-11-09) — 자동 PASS 로 세지 않고 차단 사유로도 쓰지 않는다
     tgt = r.get("verify_target", "")
     pat = r.get("verify_pattern", "")
     if not tgt or not pat:
