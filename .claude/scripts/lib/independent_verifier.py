@@ -379,6 +379,7 @@ def _configured_test_dirs(cwd: Path) -> List[str]:
 REGRESSION_STAMP = ".claude/state/regression-gate.json"
 _CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx")
 _RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (\S+?)(?: - .*)?$", re.M)
+_RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
 
 
 def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
@@ -386,9 +387,9 @@ def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     env = {**os.environ, "PYTHONUTF8": "1"}
     env.pop("CLAUDE_PROJECT_DIR", None)   # 기준선 사본(worktree)에서 시험이 자기 위치를 ROOT 로 쓰게
     r = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE",
-                        *tests], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
+                        "--color=no", *tests], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
                        timeout=timeout, env=env)
-    out = r.stdout + r.stderr
+    out = _RX_ANSI.sub("", r.stdout + r.stderr)
     fails = {m.replace("\\", "/") for m in _RX_FAILED.findall(out)}
     summary = (out.strip().splitlines() or [""])[-1][:200]
     return fails, summary, r.returncode
@@ -479,7 +480,11 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
                 try:
                     if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=120) is None:
                         raise RuntimeError("worktree 생성 실패")
-                    base_tests = [t for t in tests if (wt / t).exists()]
+                    # 기준선은 '작업 트리에서 실패한 시험' 만 다시 돌린다 — 비교는 fails - bfails 뿐이다(11-13: 범위 전체를
+                    #   돌리다 HEAD 쪽 conftest 에 없는 옵트인 탓에 e2e 161개까지 돌아 900초 시간 초과로 커밋이 막혔다).
+                    #   200개를 넘으면 명령줄 길이 때문에 파일 단위로 묶는다.
+                    picks = sorted(fails) if len(fails) <= 200 else sorted({f.split("::")[0] for f in fails})
+                    base_tests = [t for t in picks if (wt / t.split("::")[0]).exists()]
                     bfails, bsummary, _brc = _pytest_failures(wt, base_tests, timeout) if base_tests else (set(), "", 5)
                     res["baseline_summary"] = bsummary
                     res["baseline_failures"] = sorted(bfails)
