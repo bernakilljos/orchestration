@@ -99,8 +99,8 @@ def _get_or_create_logger(name: str) -> StructuredLogger:
     logger.setLevel(logging.DEBUG)
 
     # Determine log directory
-    log_dir = Path(__file__).parent.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
+    log_dir = Path(__file__).resolve().parents[2] / "logs"  # .claude/logs (lib -> scripts -> .claude)
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     # Console handler (INFO+)
     console_handler = logging.StreamHandler(sys.stdout)

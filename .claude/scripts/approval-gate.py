@@ -44,8 +44,11 @@ RISK_PATTERNS = {
     ],
     "security": [
         (r"^\s*sudo\s+", "sudo — 권한 상승"),
-        (r"\bcurl\s+[^|]*\|\s*(bash|sh|python)", "curl | bash — 외부 신뢰 못 한 코드 실행"),
-        (r"\bwget\s+[^|]*\|\s*(bash|sh|python)", "wget | sh — 외부 코드 실행"),
+        # 2026-11-12 (lottoclaude 10-03 수정 kit 반영): 예전 식 [^|]* 는 ; && 줄바꿈을 건너 앞 명령의 curl 과 뒤 명령의
+        #   `| bash x.sh` 를 이어 붙였고, `curl .. | python -c "json 파싱"`(데이터 해석)도 막아 루프 점검이 하루 세 번 멈췄다.
+        #   같은 파이프라인 안에서, 셸로 넘기거나 python 이 stdin 을 **프로그램으로** 읽을 때만 잡는다.
+        (r"\b(curl|wget)\s+[^|;&\n]*\|\s*(sudo\s+)?(bash|sh|zsh|pwsh|powershell)\b", "curl | bash — 외부 신뢰 못 한 코드 실행"),
+        (r"\b(curl|wget)\s+[^|;&\n]*\|\s*(sudo\s+)?python3?(\s+-)?\s*($|[;&|)\n])", "curl | python — 내려받은 코드를 python 으로 실행"),
         (r"\brunas\s+/user", "runas — 권한 상승"),
         (r"\bchmod\s+\+s\b", "chmod +s — setuid 부여"),
         (r"\b(Invoke-WebRequest|Invoke-RestMethod|iwr|irm|curl|wget|DownloadString)\b[^;\n]*\|\s*(iex|Invoke-Expression)\b",
@@ -75,7 +78,9 @@ RISK_PATTERNS = {
         (r"\b(anthropic|openai)\b[^\n]*\b(messages|completions|responses)\.create\b", "유료 모델 SDK 직접 호출"),
     ],
     "system": [
-        (r"\bsetx\s+\w+", "setx — 영구 환경변수"),
+        # 2026-11-12 (lottoclaude 10-04 수정 kit 반영): 예전 식 \bsetx\s+\w+ 는 대소문자 무시 + \w 가 한글까지 받아, 명령 속 글
+        #   (커밋 메시지·진행로그 문장의 'setx 로')을 영구 환경변수 명령으로 봤다 — 이 세션 kit 커밋도 1회 차단. 영문 변수명이 뒤따를 때만.
+        (r"(?<![A-Za-z0-9_])setx\s+[A-Za-z_][A-Za-z0-9_]*(\s|$)", "setx — 영구 환경변수"),
         (r"SetEnvironmentVariable\([^)]*['\"](Machine|User)['\"]", "영구 환경변수 변경"),
         (r"\bSet-ExecutionPolicy\b.*\b(Bypass|Unrestricted)\b", "실행 정책 완화"),
         (r"\breg\s+(add|delete)\s+", "registry 변경"),

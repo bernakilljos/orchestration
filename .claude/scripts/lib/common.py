@@ -35,8 +35,8 @@ def _get_logger():
         _logger.setLevel(logging.DEBUG)
 
         # Log directory
-        log_dir = Path(__file__).parent.parent / "logs"
-        log_dir.mkdir(exist_ok=True)
+        log_dir = Path(__file__).resolve().parents[2] / "logs"  # .claude/logs (lib -> scripts -> .claude)
+        log_dir.mkdir(parents=True, exist_ok=True)
 
         # Console handler
         ch = logging.StreamHandler(sys.stdout)
