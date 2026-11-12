@@ -45,6 +45,14 @@ PATTERN = re.compile(
     r"^(#{1,3})\s*(Next Actions?|다음\s*세션|다음에\s*할\s*일|이어서\s*할\s*일|이어서|Phase\s+\d+[^\n]*)[^\n]*\n(.+?)(?=\n#{1,3}\s|\Z)",
     re.MULTILINE | re.DOTALL | re.IGNORECASE,
 )
+# 2026-11-12 (R245): 제목을 '#' 대신 굵은 글씨 한 줄로 쓴 경우 — «**남은 후속 항목 (아직 고치지 않음)**»
+#   이 저장되지 않아 재부팅 뒤 복원 목록에서 빠졌다. 굵은 줄 제목 + 남은/후속/미완료 이름도 받는다.
+#   본문은 다음 굵은 줄 제목 · '#' 제목 · 빈 줄 2개 · 끝 전까지.
+BOLD_PATTERN = re.compile(
+    r"^\*\*\s*((?:남은|후속|미완료|미완|이어서|다음에?)[^*\n]{0,40}?(?:항목|작업|할\s*일|과제|일))[^*\n]*\*\*[^\n]*\n(.+?)"
+    r"(?=\n\*\*[^\n]+\*\*\s*\n|\n#{1,3}\s|\n\s*\n\s*\n|\Z)",
+    re.MULTILINE | re.DOTALL,
+)
 EMPTY_MARKERS = re.compile(r"\b(완료|done|끝|empty|없음|비움|clear)\b", re.IGNORECASE)
 
 _RX_BLOCK = re.compile(r"<!-- AUTO:(\w+) BEGIN -->\n?(.*?)<!-- AUTO:\1 END -->\n?", re.S)
@@ -193,7 +201,13 @@ def resume_text(max_age_sec: float) -> str:
     if fresh:
         for name in BLOCK_ORDER:
             if blocks.get(name):
-                out.append(blocks[name].strip())
+                body = blocks[name].strip()
+                if name == "answer":   # 2026-11-12 (R245): 기억만 하고 "진행해" 를 기다리던 결함
+                    body = ("### 자동 재개 대상 — 직전 세션이 남긴 미완료 작업\n"
+                            "일반 개발·기록·시험·로컬 커밋은 사용자 확인 없이 바로 이어서 실행한다. "
+                            "실행 전 git log·trace·Ledger 로 이미 끝난 것인지 확인해 중복 실행하지 않는다. "
+                            "push·인증정보·Windows 권한·운영 데이터 파괴 변경만 건너뛰고 보고한다.\n\n" + body)
+                out.append(body)
     return "\n\n".join(out)
 
 
@@ -215,6 +229,10 @@ def _extract_sections(text: str) -> str | None:
     matches = []
     for m in PATTERN.finditer(text):
         matches.append(f"{m.group(1)} {m.group(2).strip()}\n{m.group(3).strip()}")
+    for m in BOLD_PATTERN.finditer(text):
+        body = m.group(2).strip()
+        if body:
+            matches.append(f"### {m.group(1).strip()}\n{body}")
     return "\n\n".join(matches) if matches else None
 
 

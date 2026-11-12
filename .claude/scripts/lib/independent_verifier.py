@@ -394,7 +394,16 @@ def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     return fails, summary, r.returncode
 
 
-def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
+def _gate_timeout() -> int:
+    """2026-11-12 (R245): 900초 고정이던 상한이 영향 시험 14개(이 PC 부하 시 1,527초 실측)보다 짧아
+    실패 0건인데도 늘 시간 초과 BLOCKED → 커밋 불가 순환. 검사 범위·통과 기준은 그대로, 상한만 늘리고 조정 가능하게."""
+    try:
+        return max(60, int(os.environ.get("REGRESSION_GATE_TIMEOUT_SEC", "2400")))
+    except ValueError:
+        return 2400
+
+
+def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
     """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
 
     스테이징된 코드 변경 → affected_tests 로 영향 시험 선정 → 실행.
@@ -403,6 +412,8 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
     status: skip(코드 변경 없음) · pass · preexisting(실패 전부 HEAD 에서도 실패) · regression(신규 실패 · 커밋 차단) · blocked(실행 불가)."""
     import tempfile
     import time as _t
+    if timeout is None:
+        timeout = _gate_timeout()
     tree = (_run_git_in(cwd, ["write-tree"]) or "").strip()
     staged = [p.strip() for p in (_run_git_in(cwd, ["diff", "--cached", "--name-only"]) or "").splitlines() if p.strip()]
     code = [p for p in staged if p.lower().endswith(_CODE_EXT)]

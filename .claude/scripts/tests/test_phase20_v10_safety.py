@@ -1437,7 +1437,8 @@ def test_tracked_ps1_with_korean_code_have_bom():
 def test_korean_output_rule_in_shared_prompt_and_claude_md():
     import independent_verifier as iv
     assert "Korean (한국어)" in iv.FACT_TAG_RULE and "JSON keys" in iv.FACT_TAG_RULE
-    assert "| D22 |" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    # 대상 CLAUDE.md 는 고유본이라 전파되지 않는다 — kit·대상 공통으로 전파되는 룰 파일에서 확인 (2026-11-11)
+    assert "헌장 D22" in (ROOT / ".claude/rules/language-standards.md").read_text(encoding="utf-8")
 
 
 def test_windows_powershell51_keeps_korean_only_with_bom(tmp_path):
@@ -2040,3 +2041,82 @@ def test_merge_to_target_only_settings_merges_with_backup(tmp_path):
     baks = list((tgt / ".claude" / "backups").rglob("settings.json"))
     assert baks and json.loads(baks[0].read_text(encoding="utf-8")) == own
     assert (reg.read_bytes() if reg.exists() else None) == reg_before
+
+
+def _load_periodic_snapshot(root):
+    import importlib.util as ilu
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "tool"))
+    spec = ilu.spec_from_file_location("ps_t", ROOT / ".claude" / "hooks" / "tool" / "periodic_snapshot.py")
+    ps = ilu.module_from_spec(spec)
+    spec.loader.exec_module(ps)
+    return ps
+
+
+def test_periodic_snapshot_detaches_instead_of_blocking(tmp_path, monkeypatch):
+    """2026-11-12 (R245): 동기 Spawn 이 5초 상한에 걸리면 디스패처가 하위 트리를 죽여 스냅샷이 저장되지 않았다
+    (IFRS 77회 중 7회) — 5분 게이트를 통과하면 분리 실행 · 실행 중 재호출은 띄우지 않음 · 진단용 동기 경로 유지."""
+    import subprocess as sp
+    ps = _load_periodic_snapshot(tmp_path)
+    calls = []
+
+    class _P:
+        def __init__(self, argv, **kw):
+            calls.append((argv, kw))
+    monkeypatch.setattr(sp, "Popen", _P)
+    monkeypatch.setattr(ps, "project_guard", lambda ctx: True)
+    monkeypatch.setattr(ps, "root_path", lambda *a: str(tmp_path.joinpath(*a)))
+    monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
+    assert ps.run(None) is None and len(calls) == 1                  # 기다리지 않음 (Spawn 반환 X)
+    assert calls[0][0][:2] == ["bash", "-c"] and calls[0][0][4].replace("\\", "/").endswith(ps.REL)
+    assert calls[0][1]["stdin"] is sp.DEVNULL
+    assert ps.run(None) is None and len(calls) == 1                  # 실행 표시 파일이 있으면 중복 실행 X
+    running = tmp_path / ".claude" / "context-cache" / ".periodic-snapshot.running"
+    old = __import__("time").time() - ps.RUNNING_STALE_SEC - 5
+    os.utime(running, (old, old))
+    assert ps.run(None) is None and len(calls) == 2                  # 죽은 실행 표시는 다시 잡음
+    running.unlink()
+    (tmp_path / ".claude" / "context-cache" / ".last-periodic-snapshot").write_text(str(int(__import__("time").time())))
+    assert ps.run(None) is None and len(calls) == 2                  # 5분 안 = 실행 안 함
+    monkeypatch.setenv("PERIODIC_SNAPSHOT_SYNC", "1")
+    (tmp_path / ".claude" / "context-cache" / ".last-periodic-snapshot").write_text("0")
+    assert isinstance(ps.run(None), ps.Spawn)                         # 진단용 동기 경로 유지
+
+
+def test_periodic_snapshot_real_detached_run_saves_and_logs(tmp_path, monkeypatch):
+    """실제 분리 실행 종단 — 격리 사본 프로젝트에서 원본 .sh 가 스냅샷을 저장하고 rc·저장 여부를 1줄 기록하는지.
+    운영 kit·대상 프로젝트의 로그·스냅샷은 건드리지 않는다."""
+    import shutil
+    import time as _t
+    proj = tmp_path / "proj"
+    for rel in ("plugins/exec_session_guard/hooks/periodic-snapshot.sh", ".claude/scripts/session-snapshot-save.py"):
+        (proj / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, proj / rel)
+    ps = _load_periodic_snapshot(proj)
+    monkeypatch.setattr(ps, "project_guard", lambda ctx: True)
+    monkeypatch.setattr(ps, "root_path", lambda *a: str(proj.joinpath(*a)))
+    monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
+    assert ps.run(None) is None
+    assert ps.run(None) is None                                       # 같은 창의 두 번째 호출
+    log = proj / ".claude" / "logs" / "periodic-snapshot.log"
+    deadline = _t.time() + 60
+    while _t.time() < deadline and not (log.is_file() and log.read_text(encoding="utf-8").strip()):
+        _t.sleep(0.5)
+    lines = log.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1, lines                                     # 1회만 실행
+    assert "rc=0" in lines[0] and "snapshot=saved" in lines[0], lines
+    assert (proj / ".claude" / "context-cache" / "session-snapshot.md").is_file()
+    assert not (proj / ".claude" / "context-cache" / ".periodic-snapshot.running").exists()   # 실행 표시 해제
+
+
+def test_regression_gate_timeout_default_and_env(monkeypatch):
+    """2026-11-12 (R245): 900초 고정 상한 < 영향 시험 실측(1,527초) → 실패 0건인데 늘 BLOCKED. 기본 2400 · 환경변수 조정."""
+    import independent_verifier as iv
+    monkeypatch.delenv("REGRESSION_GATE_TIMEOUT_SEC", raising=False)
+    assert iv._gate_timeout() == 2400
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "3600")
+    assert iv._gate_timeout() == 3600
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "5")
+    assert iv._gate_timeout() == 60          # 너무 짧은 값은 하한
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "x")
+    assert iv._gate_timeout() == 2400

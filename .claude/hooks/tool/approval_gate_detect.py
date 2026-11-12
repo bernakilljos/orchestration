@@ -115,7 +115,9 @@ def _strip_inert_text(cmd: str) -> str:
     for i, seg in enumerate(parts):
         words = seg.strip().split()
         if words and os.path.basename(words[0]).lower() in _SEARCH_CMDS:
-            parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'<PATTERN>'", seg)
+            # 2026-11-12 (R245): 자리표시자에 '<' '>' 를 쓰면 따옴표를 뺀 검사형이 «> settings.json» 리다이렉트로
+            #   읽혀 `grep '…' .claude/settings.json` 같은 조회를 «보호 설정 파일 덮어쓰기» 로 차단했다.
+            parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'__PATTERN__'", seg)
         elif words and _inert_args_segment(seg, base):
             parts[i] = _RX_QUOTED.sub(_mask_inert_quote, seg)
     return "".join(parts)

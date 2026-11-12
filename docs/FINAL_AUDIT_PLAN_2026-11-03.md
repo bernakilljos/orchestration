@@ -1846,3 +1846,15 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 전파 (2026-11-11 18:16 · 자동 전파 정책 첫 적용 · R238·R239) [확인]: IFRS·ICMAI 에 settings + 공통 파일 8개 (stale-kit 8 · target-custom 0) · 백업 kit-merge-20261111-181639 / -181641 · 공통 파일 해시 kit 과 일치 · matcher 누락 0 · hook 중복 증가 0 (kit 과 같은 1건) · bypassPermissions 유지 · CLAUDE.md·settings.local·state 해시 불변.
 - 전파 후 검증 [확인]: 게이트 판정 사본 5/5×2 (PowerShell·powershell.exe·Bash 위험 차단 · 정상 통과) · 대상 격리 전체 시험 466 passed · 12 skipped · 실패 0 (두 대상) · 보호 대상 1713·1177 해시 불변.
 - 남은 [미확인]: 대상 폴더 실제 Claude 세션에서 PowerShell 명령에 승인 게이트 hook 이 호출되는지 (격리 시험은 hook 스크립트 판정까지).
+
+### §89 재부팅 뒤 자동 재개 연결 · 후속 3건 · 게이트 자리표시자 오탐 (2026-11-12 · R245)
+- 원인 [확인]: 11-11 최종 보고의 후속 항목이 `**남은 후속 항목**` 굵은 줄 제목이라 auto-save-next-actions 패턴('#' 제목만)에 안 걸려 next-actions 에 저장 안 됨 → 재부팅 뒤 주입 목록엔 승인 대기 항목뿐 → "진행해" 대기. 추가로 resume-last-24h 는 이력 본문이 비면 next-actions 가 있어도 아무것도 주입하지 않았음 (새 DB·다른 머신).
+- 수정 [확인]: 굵은 줄 제목(남은·후속·미완료…) 도 저장 · 재개 블록에 «일반 개발·기록·시험·로컬 커밋은 확인 없이 이어서 · git log·trace·Ledger 로 중복 확인 · push·인증·권한·운영 파괴만 건너뜀» 지시 · 본문이 비어도 next-actions 있으면 주입. 시험: 11-11 실제 응답 형식 저장·재개 + resume-last-24h --json 종단.
+- 후속 1 drift 기준 [확인]: core 3 (CLAUDE.md·execution-contract·operational-freeze) 10-26 이후 변경 전부 커밋·요청번호 기록 (미기록 0) → 기준 재저장 · frozen ✅ · 이전 기준 백업 %TEMP%\release-manifest.before-rebaseline.json.
+- 후속 2 periodic-snapshot [확인]: IFRS 77회 중 7회 5초 초과(최대 15.3초) → 디스패처가 하위 트리 종료 = 스냅샷 미저장. 직접 실행 0.5초 → 분리 실행(DETACHED · 기다리지 않음) · 중복 방지 = 실행 표시 파일 원자 잡기(120초 지나면 죽은 실행으로 회수) · 매 실행 `.claude/logs/periodic-snapshot.log` 에 rc·snapshot=saved|unchanged 1줄 · 진단용 PERIODIC_SNAPSHOT_SYNC=1. 격리 사본 실제 실행 시험: 2회 호출 → 1회 실행 · rc=0 saved · 표시 해제.
+- 후속 3 bash_commands.log [미확인 → 계측]: IFRS 실제 세션 18:57~ 기록 0건 · 같은 훅을 IFRS 에서 직접 실행하면 기록됨 (ASCII·한글·특수문자·인코딩 변수 유무 모두) → 원인 재현 실패. surrogate 글자는 ? 로 바꿔 기록 · 쓰기 실패는 log_bash_command.errors.log 에 남김 (조용한 누락 제거).
+- 커밋 전 검증 순환 의존 [확인]: 기록 전용 스크립트 허용은 «kit HEAD 와 같은 내용» 조건 → 작업본 수정 중 회귀 4건 실패(커밋해야 통과·통과해야 커밋). 무결성 검사는 그대로 두고 시험 파일이 현재 작업본을 커밋한 격리 git 저장소의 게이트로 판정 · ①커밋 전 수정본=차단 ②격리 커밋 후=허용 시험 분리 · 운영 kit 이력·승인 기록 불변. 첫 게이트 BLOCKED(작업본 467 통과·4 실패=이 항목 · HEAD 기준선 900초 초과).
+- 회귀 게이트 상한 [확인]: 영향 시험 14개가 부하 시 1,527초(실측 · repair_chain 272초·phase18 준비 196초) > 고정 900초 → 실패 0건인데도 BLOCKED 3회(1회는 메모리 부족 강제 종료). 검사 범위·통과 기준 불변 · 상한만 기본 2400초 + REGRESSION_GATE_TIMEOUT_SEC. 부하 중 실측에서 찾은 내 변경의 결함 2건 수정: 스냅샷 표시 해제·로그 순서 경쟁 · 격리 kit 의 sys.path 잔류로 가림 모듈 fail-closed 시험 간섭.
+- 게이트 오탐 [확인]: 검색어 자리표시자 `'<PATTERN>'` 의 '>' 가 따옴표 뺀 검사형에서 «> settings.json» 리다이렉트로 읽혀 `grep … settings.json` 조회를 «보호 설정 파일 덮어쓰기» 로 차단 (appr-ffee00945d69 · appr-2bf916ac4b7a — 불필요 요청) → `'__PATTERN__'` · 실제 덮어쓰기 4종 차단 유지 시험.
+- 운영 로그 수정 (반성): 재현 시험을 IFRS 실제 로그에서 해 4줄을 남겼다가 백업 후 지움 — 앞으로 대상 로그 시험은 격리 사본에서만.
+- 남은 [미확인]: IFRS 명령 로그 누락의 실제 원인 (다음 발생 시 errors.log 로 판별) · 상태줄 11줄 화면 캡처 · out.txt(7바이트 'hello' · 미추적 · 09:07:53 갱신)의 작성 주체.

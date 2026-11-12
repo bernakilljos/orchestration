@@ -125,3 +125,58 @@ def test_stop_hook_end_to_end_keeps_manual_and_utf8(tmp_path):
 def test_state_not_propagated_to_targets():
     src = (ROOT / ".claude" / "scripts" / "merge-to-target.py").read_text(encoding="utf-8")
     assert '"state"' in src.split("SKIP_PARTS", 1)[1].split("\n", 1)[0]
+
+
+# ---------- 2026-11-12 (R245): 재부팅 뒤 자동 재개 — 굵은 줄 제목 후속 항목 저장 + 재개 지시 ----------
+_R244_ANSWER = (
+    "IFRS 세션 회신을 정리했습니다.\n\n"
+    "**남은 후속 항목 (아직 고치지 않음)**\n"
+    "1. `drift-detect.py baseline` 으로 기준을 다시 저장\n"
+    "2. periodic-snapshot 훅 7.9초 타임아웃\n"
+    "3. bash_commands.log 미기록\n\n"
+    "1~3번도 이어서 처리할지 말씀해 주세요.\n"
+)
+
+
+def test_bold_followup_heading_is_saved_and_resumed(tmp_path):
+    """11-11 실제 응답 형식 — '#' 제목이 아니라 굵은 줄이라 저장되지 않아 재부팅 뒤 목록에서 빠졌다."""
+    m = _load(tmp_path)
+    sec = m._extract_sections(_R244_ANSWER)
+    assert sec and "drift-detect.py baseline" in sec and "bash_commands.log" in sec
+    m.set_block("answer", sec)
+    r = m.resume_text(3600)
+    assert "periodic-snapshot" in r
+    assert "사용자 확인 없이 바로 이어서 실행" in r          # 재개 지시
+    assert "중복 실행하지 않는다" in r                      # 이미 끝난 일 재실행 방지
+    assert "push" in r                                      # 승인 경계는 그대로 남김
+
+
+def test_bold_unrelated_heading_not_saved(tmp_path):
+    m = _load(tmp_path)
+    assert m._extract_sections("**확인됨:** 6줄 정렬\n- 내용\n\n**결론**\n끝\n") is None
+
+
+def test_resume_hook_end_to_end_injects_followups(tmp_path):
+    """실제 SessionStart 경로 (resume-last-24h.py --json) 가 저장된 후속 항목과 재개 지시를 주입하는지."""
+    import shutil
+    proj = tmp_path / "proj"
+    sd = proj / ".claude" / "scripts"
+    sd.mkdir(parents=True)
+    for name in ("resume-last-24h.py", "auto-save-next-actions.py"):
+        shutil.copy(ROOT / ".claude" / "scripts" / name, sd / name)
+    if (ROOT / ".claude" / "scripts" / "lib").is_dir():
+        shutil.copytree(ROOT / ".claude" / "scripts" / "lib", sd / "lib",
+                        ignore=shutil.ignore_patterns("__pycache__", "*.db"))
+    (proj / ".claude" / "state").mkdir(parents=True)
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(proj), PYTHONIOENCODING="utf-8")
+    spec = importlib.util.spec_from_file_location("_na_e2e", sd / "auto-save-next-actions.py")
+    na = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(na)
+    na.OUT = proj / ".claude" / "state" / "next-actions.md"
+    na.set_block("answer", na._extract_sections(_R244_ANSWER))
+    p = subprocess.run([sys.executable, "-X", "utf8", str(sd / "resume-last-24h.py"), "--json"], cwd=proj, env=env,
+                       capture_output=True, timeout=60)
+    assert p.returncode == 0, p.stderr.decode("utf-8", "replace")[-500:]
+    out = json.loads(p.stdout.decode("utf-8"))["hookSpecificOutput"]["additionalContext"]
+    assert "drift-detect.py baseline" in out and "사용자 확인 없이 바로 이어서 실행" in out
+    assert "확인 질문 없이 이것부터 바로 시작" in out

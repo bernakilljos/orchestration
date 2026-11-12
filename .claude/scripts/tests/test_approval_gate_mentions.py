@@ -3,14 +3,47 @@ import importlib.util
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))   # _common
-sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "tool"))
-import approval_gate_detect as agd  # noqa: E402
+KIT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(KIT / ".claude" / "hooks" / "prompt"))   # _common
+sys.path.insert(0, str(KIT / ".claude" / "hooks" / "tool"))
+
+
+def _isolated_kit() -> Path:
+    """2026-11-12 (R245): 기록 전용 스크립트 허용은 «kit HEAD 와 같은 내용» 일 때만이라, kit 작업본을 고친 채
+    커밋 전 회귀를 돌리면 허용 시험이 늘 실패했다 (커밋해야 통과 · 통과해야 커밋 = 순환).
+    무결성 검사는 그대로 두고, 현재 작업본을 커밋한 격리 git 저장소를 만들어 그 사본의 게이트로 시험한다.
+    운영 kit 의 git 이력·승인 기록은 건드리지 않는다."""
+    import atexit
+    import shutil
+    import subprocess
+    import tempfile
+    d = Path(tempfile.mkdtemp(prefix="agd-kit-"))
+    atexit.register(shutil.rmtree, d, True)
+    for rel in (".claude/hooks/tool", ".claude/scripts/lib", ".claude/scripts/auto-save-next-actions.py",
+                ".claude/scripts/approval-gate.py"):
+        src, dst = KIT / rel, d / rel
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.db", "*.db-*", "*.sqlite*"))
+        else:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(src, dst)
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+    for args in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "isolated kit"]):
+        subprocess.run(g + args, cwd=d, check=True, capture_output=True)
+    return d
+
+
+ROOT = _isolated_kit()
+_SYS_PATH = list(sys.path)   # 격리 사본이 자기 scripts/lib 를 sys.path 에 남기면 다른 시험이 그 모듈을 찾는다 → 아래에서 복원
+_spec_agd = importlib.util.spec_from_file_location("agd_isolated", ROOT / ".claude" / "hooks" / "tool" / "approval_gate_detect.py")
+agd = importlib.util.module_from_spec(_spec_agd)
+_spec_agd.loader.exec_module(agd)
+assert Path(agd._KIT_ROOT).resolve() == ROOT.resolve()   # 격리 저장소 기준으로 판정
 
 _spec = importlib.util.spec_from_file_location("_gate", ROOT / ".claude" / "scripts" / "approval-gate.py")
 gate = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gate)
+sys.path[:] = _SYS_PATH   # 격리 사본의 lib 경로 제거 (test_redact_writers fail-closed 시험 간섭 · R245 실측)
 DANGER = "git branch -D old-feature"
 
 
@@ -179,3 +212,39 @@ def test_non_git_target_uses_propagation_manifest(tmp_path):
     assert flagged(cmd)                                         # 내용이 바뀌면 다시 차단
     (t / ".claude/state/kit-merge-manifest.json").unlink()
     assert flagged(cmd)                                         # 매니페스트 없음 = 확인 불가 = 차단
+
+
+# ---------- 2026-11-12 (R245): 검색어 자리표시자의 '>' 가 리다이렉트로 읽혀 설정 파일 조회가 차단됨 ----------
+_SJ = ".claude/" + "settings.json"
+
+
+def test_search_on_settings_file_not_flagged():          # appr-ffee00945d69 · appr-2bf916ac4b7a 재현
+    assert not flagged(f'grep -n "auto-save-next-actions" {_SJ} .claude/hooks/*.sh | head')
+    assert not flagged(f'sed -n 1,5p a.py; grep -n "PYTHONIOENCODING" /c/x/{_SJ} /c/y/.claude/settings.local.json 2>/dev/null | head')
+    assert not flagged(f"rg 'x' {_SJ}")
+
+
+def test_settings_overwrite_still_blocked():
+    assert flagged(f"echo x > {_SJ}")
+    assert flagged(f"cp a.json {_SJ}")
+    assert flagged(f"cat a.json | tee {_SJ}")
+    assert flagged(f'grep -n "x" a.txt > {_SJ}')                           # 검색 결과로 덮어쓰기는 차단 유지
+
+
+def test_uncommitted_record_script_is_blocked_until_committed():
+    """R245 순환 의존 분리 — ① 커밋 전(작업본 ≠ HEAD) 은 기록 전용으로 인정하지 않고 차단 ② 커밋하면 허용.
+    격리 저장소에서만 커밋한다 (운영 kit 이력 불변)."""
+    import subprocess
+    note = ROOT / ".claude" / "scripts" / "auto-save-next-actions.py"
+    cmd = f'python -X utf8 {str(note).replace(chr(92), "/")} manual-add "{_P} 하지 않음"'
+    orig = note.read_bytes()
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+    try:
+        assert not flagged(cmd)                                   # 커밋된 그대로 = 글로 판정
+        note.write_bytes(orig + b"\n# uncommitted change\n")
+        assert flagged(cmd)                                       # 커밋 전 수정본 = 차단 (무결성 검사 유지)
+        subprocess.run(g + ["commit", "-q", "-am", "edit"], cwd=ROOT, check=True, capture_output=True)
+        assert not flagged(cmd)                                   # 커밋 후 = 다시 허용
+    finally:
+        note.write_bytes(orig)
+        subprocess.run(g + ["commit", "-q", "-am", "restore"], cwd=ROOT, capture_output=True)

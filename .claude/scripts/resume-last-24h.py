@@ -150,7 +150,10 @@ def main():
         section_snapshot(),
     ]
     body = "\n".join(p for p in parts if p).strip()
-    if not body: return  # 복구할 거 없음
+    # 2026-11-12 (R245): 이력이 비어 있으면(새 DB·다른 머신) next-actions 에 할 일이 있어도 아무것도 주입하지 않고
+    #   끝났다 — 이어서 할 일이 있으면 본문이 없어도 진행한다.
+    if not body and not (ROOT / ".claude" / "state" / "next-actions.md").is_file():
+        return  # 복구할 거 없음
     body = _sanitize(body)[:MAX_CHARS]
     header = f"# 자동 복구 (최근 {CUTOFF_HOURS}h · resume-last-24h.py)\n"
     header += "재부팅·메모리 종료 전 작업 상태. 사용자 설명 요구 X · 바로 이어서.\n"
