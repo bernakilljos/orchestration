@@ -704,7 +704,9 @@ def test_codex_check_runs_related_tests_and_compares_report(tmp_path):
     rep.write_text("7. 최종 판정: PASS\n", encoding="utf-8")
     r = iv.codex_check(tmp_path, rep)
     assert r["status"] == "FAIL" and r["tests"][0]["test"] == "test_calc.py" and r["tests"][0]["exit_code"] != 0
+    stamp = (tmp_path / "calc.py").stat().st_mtime_ns
     (tmp_path / "calc.py").write_text("def add(a, b):\n    return b + a\n", encoding="utf-8")       # 회귀 통과
+    os.utime(tmp_path / "calc.py", ns=(stamp, stamp))   # 11-13: 같은 초·같은 크기 = 옛 .pyc 가 쓰이던 조건을 늘 재현
     assert iv.codex_check(tmp_path, rep)["status"] == "PARTIAL"                 # PASS 주장 · 실행 출력 없음
     assert iv.codex_check(tmp_path, tmp_path / "none.md")["status"] == "PARTIAL"
     rep.write_text("3. 실행 증거: pytest test_calc.py -> 1 passed, exit 0\n7. 최종 판정: PASS\n", encoding="utf-8")

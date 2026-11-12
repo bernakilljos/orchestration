@@ -1062,8 +1062,14 @@ def codex_check(cwd: Path, report: Optional[Path] = None, timeout: int = 300) ->
             not_run.append(t)
             continue
         try:
-            r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", t], cwd=str(cwd),
-                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+            # 11-13: 같은 초에 같은 크기로 고친 파일은 옛 __pycache__ 가 그대로 쓰여(파이썬은 시각(초)·크기로만 비교)
+            #   고친 코드가 아닌 옛 코드로 판정했다 — 쓰지 않고(-B), 읽는 곳도 빈 임시 폴더로 돌려 늘 현재 소스로 돌린다.
+            import tempfile as _tf
+            env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1",
+                   "PYTHONPYCACHEPREFIX": os.path.join(_tf.gettempdir(), "codex-check-nopyc-%d" % os.getpid())}
+            r = subprocess.run([sys.executable, "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider", t], cwd=str(cwd),
+                               capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
+                               env=env)
             results.append({"test": t, "exit_code": r.returncode, "tail": (r.stdout or "")[-200:]})
         except subprocess.TimeoutExpired:
             results.append({"test": t, "exit_code": None, "tail": f"timeout {timeout}s"})
