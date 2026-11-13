@@ -105,7 +105,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
@@ -120,7 +121,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-sync-drift.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
