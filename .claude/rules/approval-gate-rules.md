@@ -101,6 +101,9 @@ PATTERNS = {
 | `git push` (origin feature branch) |  자동 진행 |
 | `git push` / `git push origin <브랜치>` 단독 (일반 push · 2026-11-13 R250 사용자 위임) |  자동 진행 (비밀값 검사는 유지) |
 | 강제 push (`-f`·`--force`·`+refspec`) · 원격 브랜치 삭제 (`:branch`·`--delete`) · `--mirror`·`--all`·`--tags` · origin 외 원격 · 다른 명령과 연결한 push |  approval-gate |
+| SVN 일반 작업 `svn update`·`status`·`diff`·`add`·`delete <작업본 파일>`·`commit`·`revert <파일>`·`cleanup` (2026-11-13 R251 · IFRS = SVN) |  자동 진행 (캐시 인증 `--non-interactive`) |
+| SVN 파괴 작업 `svn revert -R`·`cleanup --remove-unversioned`·`svn delete <URL>`(원격 직접 삭제)·`svnadmin` |  approval-gate |
+| GitHub 인증: 저장소 로컬 `credential.https://github.com.username` 고정 + `credential.interactive never` (계정 선택 창 대신 즉시 실패·기록) · 다른 계정·전역 설정 변경 X |  (설정 · 2026-11-13) |
 
 CLAUDE.md § 7-11 (Zero-touch 자동화) 와 정합:
 - 알림 = 위 5가지만

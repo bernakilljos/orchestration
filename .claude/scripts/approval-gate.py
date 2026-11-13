@@ -41,6 +41,12 @@ RISK_PATTERNS = {
         (r"\bgit\s+restore\s+(?:--\S+\s+)*\.(?=\s|$|[\"'])", "git restore . — 작업 중 변경 폐기"),
         (r"\bgit\s+stash\s+(drop|clear)\b", "git stash drop/clear — 보관 변경 삭제"),
         (r"\bgit\s+branch\s+-D\b", "git branch -D — 강제 브랜치 삭제"),
+        # 2026-11-13 (R251): SVN — 일반 update·commit 은 자동 (IFRS = SVN · 캐시 인증 비대화 동작 확인) ·
+        #   작업 변경 일괄 폐기·버전 안 된 파일 삭제·원격 직접 삭제·저장소 관리만 승인 (git reset --hard·clean -f 와 같은 기준)
+        (r"\bsvn\s+revert\b[^;&|\n]*(?:\s-R\b|--recursive\b|--depth[=\s]+infinity\b)", "svn revert -R — 작업 중 변경 일괄 폐기"),
+        (r"\bsvn\s+cleanup\b[^;&|\n]*--remove-(?:unversioned|ignored)\b", "svn cleanup --remove-unversioned — 버전 안 된 파일 삭제"),
+        (r"\bsvn\s+(?:delete|del|remove|rm)\b[^;&|\n]*\b(?:https?|svn(?:\+ssh)?|file)://", "svn delete <URL> — 원격 저장소에서 직접 삭제"),
+        (r"\bsvnadmin\s+(?:create|rmtxns|setrevprop|setlog|load|recover|hotcopy|upgrade|pack|dump)\b", "svnadmin — 저장소 관리·변경"),
     ],
     "security": [
         (r"^\s*sudo\s+", "sudo — 권한 상승"),

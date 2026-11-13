@@ -22,7 +22,8 @@ _RISKWORD = re.compile(
     # 2026-11-08 P0·P1 확장 (push 변형·자기 승인·직접 유료 호출·삭제·배포·DB·설정)
     r"push|clean|checkout|restore|stash|rmtree|remove-item|find|kubectl|vercel|netlify|firebase|scp|"
     r"codex|gemini|claude|anthropic|openai|googleapis|approv|reject|decide|update|insert|replace|dispatch|"
-    r"settings|\.env|set-content|add-content|out-file|tee|cp" + _S + r"|mv" + _S + r"|copy|move",
+    r"settings|\.env|set-content|add-content|out-file|tee|cp" + _S + r"|mv" + _S + r"|copy|move|"
+    r"revert|svnadmin",   # 2026-11-13 R251 SVN 파괴 작업 (svn revert -R · svnadmin)
     re.I)
 
 

@@ -61,6 +61,9 @@ BLOCK = [
     "rm -r build", "find . -name '*.py' -delete", "python -c \"import shutil;shutil.rmtree('build')\"",
     f"{G} clean -fdx", f"{G} reset --hard HEAD~3", f"{G} checkout -- .", f"{G} stash drop",
     "Remove-Item -Recurse build",
+    # 2026-11-13 R251 SVN 파괴 작업 (일반 update·commit 은 ALLOW)
+    "svn revert -R .", "svn revert --recursive src", "svn cleanup --remove-unversioned",
+    "svn delete http://srv/svn/repo/trunk/a -m x", "svn rm https://srv/svn/repo/branches/b -m x", "svnadmin create C:/repo",
     # P1 배포
     "docker push app:v1", "terraform apply", "kubectl apply -f prod.yaml", "vercel --prod",
     "scp dist/app.zip user@server:/var/www",
@@ -78,6 +81,8 @@ ALLOW = [
     f"{G} config --get {P}.default", f"{G} add -A", f"{G} commit -m \"fix: {P} pattern\"",
     f"{G} fetch origin", f"{G} pull --rebase",
     f"{G} {P}", f"{G} {P} origin main", f"{G}  {P}  origin main", f"{G} {P} -u origin feature/x", f"{G} {P} -q",   # R250
+    "svn update", "svn up --non-interactive", "svn status", "svn diff", "svn add src/A.vue", "svn delete src/old.vue",
+    "svn commit -m \"fix: 화면 수정\" --non-interactive", "svn ci src/A.vue -m x", "svn revert src/A.vue", "svn cleanup",   # R251
     "python -m pytest -q .claude/scripts/tests", "python .claude/scripts/approval-gate.py list",
     "python .claude/scripts/approval-gate.py status appr-x",
     "sqlite3 x.db \"select approval_state from tasks\"",
@@ -579,3 +584,26 @@ def test_script_execution_still_blocked(tmp_root, tpl):
     s = _risky_script(tmp_root)
     r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
     assert r is not None and r.rc == 2, tpl
+
+
+# ── 2026-11-13 R251 SVN 일반 작업 종단 (IFRS = SVN) — 임시 로컬 저장소에서 checkout→add→commit→update→log ──
+def test_svn_plain_commit_flow_end_to_end_and_not_gated(tmp_path):
+    import shutil
+    import subprocess
+    if not shutil.which("svn") or not shutil.which("svnadmin"):
+        pytest.skip("svn 없음")
+    repo, wc = tmp_path / "repo", tmp_path / "wc"
+    subprocess.run(["svnadmin", "create", str(repo)], check=True, capture_output=True)   # 시험 준비 (게이트 대상 명령 아님)
+    url = repo.as_uri()
+    run = lambda *a, cwd=None: subprocess.run(["svn", *a, "--non-interactive"], cwd=cwd, check=True,  # noqa: E731
+                                              capture_output=True, text=True, encoding="utf-8", errors="replace")
+    # svn 출력은 콘솔 코드페이지(cp949 · 한글 요일) — 글자는 판정에 안 쓰므로 replace
+    run("checkout", url, str(wc))
+    (wc / "A.vue").write_text("<template><div/></template>\n", encoding="utf-8")
+    steps = [("add", "A.vue"), ("commit", "-m", "fix: 화면 수정"), ("update",)]
+    for s in steps:
+        assert not flagged("svn " + " ".join(f'"{x}"' if " " in x else x for x in s)), s   # 실제로 쓰는 일반 명령 = 게이트 통과
+        run(*s, cwd=wc)
+    log = run("log", "-l", "1", "-q", cwd=wc).stdout
+    assert "r1 |" in log                                                                  # 원격(로컬 저장소)에 실제 반영
+    assert flagged(f"svn delete {url}/A.vue -m x") and flagged("svn revert -R .")         # 파괴 작업은 계속 승인
