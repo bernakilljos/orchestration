@@ -492,9 +492,32 @@ def test_subagents_always_one_line(sl, proj, n):
         assert f"실행 {n}" in _plain(a) and "/tasks" in _plain(a)
 
 
-def test_row_width_capped_even_when_columns_wide(sl, proj, monkeypatch):
-    monkeypatch.setenv("COLUMNS", "186")                               # 실제 호출 값 (last-statusline-cols.txt)
-    monkeypatch.delenv("STATUSLINE_MAX_COLS", raising=False)
-    long = "가" * 200
-    cut = sl._fit_cells(long, min(sl._terminal_cols(), 130) - 1)
-    assert "…" in cut and len(cut) < 80                        # 130칸 상한 (한글 2칸)
+def _cells_independent(s: str) -> int:
+    """구현(_fit_cells·wcwidth)과 독립된 폭 계산 — ANSI 제거 · 동아시아 W/F = 2 · 결합 문자·VS-16 = 0."""
+    import re as _r
+    import unicodedata as _u
+    n = 0
+    for ch in _r.sub(r"\[[0-9;]*[A-Za-z]", "", s):
+        if _u.combining(ch) or ch in ("️", "‍"):
+            continue
+        n += 2 if _u.east_asian_width(ch) in ("W", "F") else 1
+    return n
+
+
+@pytest.mark.parametrize("cols,cap,limit", [("186", None, 129), ("186", "100", 99), ("80", None, 79)])
+def test_every_rendered_row_fits_independent_limit(proj, cols, cap, limit):
+    """실제 상태줄 프로그램 출력 전체를 독립 기대값으로 판정 (예전 시험은 상한을 구현과 같은 식으로 계산해 결함을 함께 놓칠 수 있었다)."""
+    (proj / "plugins").mkdir(exist_ok=True)
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(proj), COLUMNS=cols, PYTHONIOENCODING="utf-8")
+    env.pop("STATUSLINE_COLUMNS", None)
+    env.pop("STATUSLINE_MAX_COLS", None)
+    if cap:
+        env["STATUSLINE_MAX_COLS"] = cap
+    data = json.dumps({"session_id": "s", "cwd": str(proj), "workspace": {"current_dir": str(proj)},
+                       "model": {"display_name": "Opus"}, "context_window": {"used_percentage": 40}})
+    p = subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "statusline_context.py")], input=data.encode("utf-8"),
+                       capture_output=True, env=env, timeout=120, cwd=str(proj))
+    rows = [r for r in p.stdout.decode("utf-8", "replace").splitlines() if r.strip()]   # CRLF 의 \r 제외
+    assert len(rows) >= 5, p.stderr.decode("utf-8", "replace")[-400:]
+    wide = [(w, r) for r in rows if (w := _cells_independent(r)) > limit]
+    assert not wide, wide[:2]
