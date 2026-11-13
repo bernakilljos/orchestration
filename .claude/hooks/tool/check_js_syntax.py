@@ -17,6 +17,6 @@ def run(ctx):
     fp = grep_key_value_a(bash_cat(ctx.raw), "file_path")
     if not os.path.isfile(fp):
         return None
-    if glob_any(fp, "*.js", "*.mjs", "*.cjs", "*.jsx", "*.ts", "*.tsx"):
+    if glob_any(fp, "*.js", "*.mjs", "*.cjs", "*.jsx", "*.ts", "*.tsx", "*.vue"):   # .vue 2026-11-13 R249
         return Spawn(REL)
     return None

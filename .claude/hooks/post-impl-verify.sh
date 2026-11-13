@@ -5,6 +5,10 @@
 
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 
+# 2026-11-13 (R249): 실패 문구를 stdout 에 쓰고 exit 2 로 끝나 Claude 는 무엇이 실패했는지 못 받았다
+#   (공식 hooks 문서: PostToolUse exit 2 = "Shows stderr to Claude" · exit 2 의 stdout 은 전달 안 됨) → 출력 전부 stderr 로.
+exec 1>&2
+
 ERRORS=0
 
 # 1. Python 문법 검사 (변경된 .py 파일)
