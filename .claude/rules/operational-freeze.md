@@ -49,6 +49,8 @@
 
 **개발 줄 오른쪽 진행 표시 (2026-11-11 §87 · 사용자 지시 R237 "개발중 개발완료 이렇게 표시하자")**: 라벨·폭·위치 불변 · 개발 줄 값 끝에 현재 요청 상태만 추가 = pending·implemented `개발중`(파랑) · completed `개발완료`(초록) · verified(PARTIAL·BLOCKED)·approval_required `확인필요`(노랑) · 현재 요청 없음 = 표시 안 함 · 집계 정본 = `request-ledger.py summarize` · **재동결 완료**.
 
+**개발 진행률·서브 1줄·줄 길이 상한 (2026-11-13 R252 · 사용자 지시 "상태줄 디자인 및 현재 작업 진행률 개선" · 실제 VS Code 캡처 판정)**: 라벨·폭·`│` 위치·11개 영역·색 체계 불변 · 개발 줄 값 **맨 앞** = `R<n> 완료단계/6(%) 마지막단계 상태` (단계 = 수정·시험·커밋·원격·전파·대상검증 · 정본 = §78 요청 추적의 성공한 도구 호출 `_req_progress` · 기록 없으면 `미계측`) · 서브 = 항상 1줄 요약 (`실행 N · 등급 · 최장 · 상세 /tasks`) · 요청 줄 «다음 UNKNOWN»·검증 줄 «build·lint·type 미구현» 제거 · 한 줄 최대 130칸 (`STATUSLINE_MAX_COLS` · Claude Code 가 COLUMNS=186 을 줘 161칸 줄이 그대로 나가던 것) · **재동결 완료**.
+
 **SoT**: `.claude/scripts/statusline_context.py` LABEL_WIDTH dict · memory `feedback_statusline_frozen_1027.md`.
 
 - Operating Principles · Execution Contract · Request Ledger · recurrence-tracker · scope-lock 모두 정상 작동

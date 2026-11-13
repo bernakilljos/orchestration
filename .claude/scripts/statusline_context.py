@@ -176,6 +176,50 @@ def _dev_progress(status: str):
             "verified": ("33", "확인필요"), "approval_required": ("33", "확인필요")}.get(status)
 
 
+# 2026-11-13 (R252 · 사용자 지시 "개발 진행률 표시 · 상태줄 디자인 바로잡기" — 개발 줄 값만 일시 동결 해제 후 재동결):
+#   현재 요청의 실제 완료 단계 = §78 요청 추적(trace) 의 성공한 도구 호출에서 계산 (추정 X · 기록 없으면 «미계측»).
+#   단계 = 개발 흐름 그대로: 수정 → 시험 → 커밋 → 원격 → 전파 → 대상검증. pytest 가 만든 가짜 이벤트(임시 폴더)는 제외.
+_STAGES = (
+    ("수정", lambda k, s: k in ("Edit", "Write", "MultiEdit") and "pytest-of-" not in s),
+    ("시험", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bpytest\b|regression-gate|golden-test", s)),
+    ("커밋", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+commit\b|\bsvn\s+(?:commit|ci)\b", s)),
+    ("원격", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+push\b|\bsvn\s+(?:commit|ci)\b", s)),
+    ("전파", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"merge-to-target\.py\S*\s.*--apply", s)),
+    ("대상검증", lambda k, s: k in ("Bash", "PowerShell") and "target-test-isolated" in s),
+)
+
+
+def _req_progress(cwd: str):
+    """(rid, 완료 단계 수, 전체, 마지막 완료 단계명) · 추적 기록 없음 = None."""
+    try:
+        # §78 정본을 파일 경로로 로드 — 'import trace' 는 표준 라이브러리 trace 와 이름이 같아 엉뚱한 모듈이 올 수 있다
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("orca_trace_sl", os.path.join(cwd, ".claude", "scripts", "lib", "trace.py"))
+        _tr = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_tr)
+        cur = _tr.get_current() or {}
+        if not cur.get("trace_id"):
+            return None
+        done = set()
+        for e in _tr.events(cur["trace_id"]):
+            if e.get("kind") != "tool" or e.get("status") != "success":
+                continue
+            d = e.get("detail")
+            if isinstance(d, str):
+                try:
+                    d = json.loads(d)
+                except Exception:
+                    d = {}
+            inp = str((d or {}).get("input", ""))
+            for name, ok in _STAGES:
+                if ok(e.get("step"), inp):
+                    done.add(name)
+        last = next((n for n, _ in reversed(_STAGES) if n in done), None)
+        return cur.get("rid"), len(done), len(_STAGES), last
+    except Exception:
+        return None
+
+
 def _ledger_summary(cwd: str):  # noqa: F811 — 렌더 1회당 1번 (READY·요청 줄 공용)
     return _memo(("ledger", cwd), lambda: _ledger_summary_raw(cwd))
 
@@ -994,12 +1038,13 @@ def extra_gauges(cwd, data=None):
                 summary_counts[key] = summary_counts.get(key, 0) + 1
             summary_parts = [f"{a}{m}{n}×{c}\033[0m" for (a, m, n), c in summary_counts.items()]
             summary_line = f"총 {len(rows)} · " + " ".join(summary_parts) + " · " + urgency
-            # \n 로 라인 분리 (main 에서 split 후 각 줄을 _row 로 렌더)
-            # 최소 2 lines 보장 (사용자 명시) · 요약 1 line
+            # 2026-11-13 (R252 · 사용자 캡처 "서브에이전트가 여러 줄로 펼쳐져 11줄 레이아웃이 깨짐"):
+            #   여러 줄(에이전트 2줄 + 요약) → 항상 1줄 요약 = 실행 수 · 가장 오래 돈 1개 · 상세는 /tasks
             if parts:
-                while len(parts) < 2 and len(parts) < len(rows):
-                    parts.append("")
-                agent_str = "\n".join(parts) + "\n" + summary_line
+                _g0, a0, d0, _i0, _t0 = max(rows, key=lambda r: r[2])   # 실행 시간 가장 긴 것
+                top = (a0.get("description") or (a0.get("type") or "agent").split(":")[-1])[:16]
+                agent_str = (f"\033[1m실행 {len(rows)}\033[0m · " + " ".join(summary_parts)
+                             + f" · 최장 {top} {_dur(d0)} · {urgency} · 상세 /tasks")
             else:
                 agent_str = ""
     except Exception:
@@ -1430,12 +1475,19 @@ def extra_gauges(cwd, data=None):
                              ("out_of_scope", "범위외"), ("invalid_registration", "오등록"), ("deferred", "보류")):
                 if _ls[_k]:
                     _cnt.append(f"{_lab}{_ls[_k]}")
-            ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt) + " · 다음 UNKNOWN"
+            ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt)   # R252: 늘 UNKNOWN 이던 «다음» 제외
             # §87 (2026-11-11 사용자 지시 R237 · 개발 줄 오른쪽 값만 일시 동결 해제 후 재동결): 현재 요청 진행 표시 ·
             #   PARTIAL·BLOCKED(verified)·승인대기 를 «개발완료» 로 보이면 거짓 → 확인필요 · 현재 요청 없음 = 표시 안 함
             _dev_st = _dev_progress(_cs)   # 개발중(파랑)·개발완료(초록)·확인필요(노랑) 대응표 정본 = _dev_progress
             if _dev_st and _ls["current_rid"] and dev_line:
-                dev_line = f"{dev_line} · \033[1;{_dev_st[0]}m{_dev_st[1]}\033[0m"
+                # R252: 진행률을 값 맨 앞에 (오른쪽이 잘려도 남게) · 통계는 뒤로 · 기록 없으면 «미계측»
+                _pg = _req_progress(cwd)
+                if _pg and _pg[0] == _ls["current_rid"] and _pg[1]:
+                    _pct = round(_pg[1] * 100 / _pg[2])
+                    _prog = f"{_pg[0]} {_pg[1]}/{_pg[2]}({_pct}%) {_pg[3]}"
+                else:
+                    _prog = f"{_ls['current_rid']} 미계측"
+                dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_dev_st[1]}\033[0m · {dev_line}"
     except Exception:
         pass
 
@@ -1516,7 +1568,7 @@ def extra_gauges(cwd, data=None):
                 _rv = f"[1;{'31' if _nf else '32'}m신규실패 {_nf}[0m"
             else:
                 _tv = f"{_u}{_age_txt(_age)}"
-        verify_line = f"test {_tv} · 회귀 {_rv} · build·lint·type {_n}"
+        verify_line = f"test {_tv} · 회귀 {_rv}"   # R252: 늘 같던 «build·lint·type 미구현» 제외 (오른쪽 잘림 완화)
     except Exception:
         verify_line = "test [36m⏳[0m · 회귀 [36m⏳[0m (기록 읽기 실패)"
 
@@ -1990,6 +2042,16 @@ def main() -> None:
     # 2026-11-04 재감사: 행 전체가 터미널 폭을 넘으면 자동 줄바꿈으로 상태줄이 늘어난다 → 넘는 행만 끝을 '…' 로 자름.
     # 배치·색·라벨 폭은 그대로 (FROZEN) · 터미널 폭을 알 수 없으면 자르지 않는다 (기존 출력 그대로).
     _cols = _terminal_cols()
+    # R252 (사용자 캡처 "오른쪽 잘림"): 실제 Claude Code 호출에선 폭을 못 얻어(0) 176칸 줄이 그대로 나갔다 [확인 last-statusline.txt]
+    #   → 폭을 모르면 120칸 상한 (STATUSLINE_MAX_COLS 로 조정 · 0 = 끔) · 진행률·현재 상태는 값 앞쪽이라 남는다
+    #   실제 호출 진단 [확인 last-statusline-cols.txt]: Claude Code 가 COLUMNS=186 을 주어 161칸 줄이 그대로 나가 «빽빽·잘림»
+    #   → 폭을 알아도 한 줄 최대 130칸 (STATUSLINE_MAX_COLS · 0 = 상한 없음) · 폭을 모르면 같은 상한
+    try:
+        _cap = int(os.environ.get("STATUSLINE_MAX_COLS", "130"))
+    except ValueError:
+        _cap = 130
+    if _cap > 0:
+        _cols = min(_cols, _cap) if _cols else _cap
     if _cols:
         out = [_fit_cells(l, _cols - 1) for l in out]
     final = "\n".join(out)
@@ -1999,6 +2061,9 @@ def main() -> None:
         dbg = _os.path.join(_os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "last-statusline.txt")
         with open(dbg, "w", encoding="utf-8") as _f:
             _f.write(final)
+        with open(dbg.replace(".txt", "-cols.txt"), "w", encoding="utf-8") as _f:   # R252 실제 호출 폭 진단
+            _f.write("detected=%s env_COLUMNS=%s env_STATUSLINE_COLUMNS=%s used=%s\n" % (
+                _terminal_cols(), os.environ.get("COLUMNS"), os.environ.get("STATUSLINE_COLUMNS"), _cols))
     except Exception:
         pass
     print(final)

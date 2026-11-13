@@ -451,3 +451,50 @@ def test_dev_progress_never_shows_done_for_unfinished():
         assert sl._dev_progress(st) == ("33", "확인필요")
     for st in ("deferred", "out_of_scope", "invalid_registration", "UNKNOWN", ""):
         assert sl._dev_progress(st) is None
+
+
+# ---------- 2026-11-13 R252 상태줄: 개발 진행률 = 실제 완료 단계 · 서브에이전트 1줄 · 폭 상한 ----------
+def _put_trace_lib(proj):
+    lib = proj / ".claude" / "scripts" / "lib"
+    lib.mkdir(parents=True, exist_ok=True)
+    for n in ("trace.py", "structured_logger.py"):   # trace.py 가 같은 폴더 structured_logger 를 읽는다
+        (lib / n).write_bytes((SCRIPTS / "lib" / n).read_bytes())
+
+
+def test_dev_progress_counts_only_real_successful_stages(sl, tm, proj):
+    _put_trace_lib(proj)
+    assert sl._req_progress(str(proj)) is None                        # 현재 요청 없음 = 계산 안 함 (미계측)
+    tm.set_current("t252", rid="R900", desc="x")
+    tm.emit("tool", step="Edit", status="success", detail={"input": r"C:\pjt\demo\src\a.py"})   # tmp_path 는 pytest-of- 라 제외됨
+    tm.emit("tool", step="Write", status="success", detail={"input": r"C:\Users\u\AppData\Local\Temp\pytest-of-u\x.py"})  # 시험 잡음 제외
+    tm.emit("tool", step="Bash", status="success", detail={"input": "python -m pytest -q tests"})
+    tm.emit("tool", step="Bash", status="blocked", detail={"input": "git commit -m x"})          # 실패·차단은 완료 아님
+    assert sl._req_progress(str(proj)) == ("R900", 2, 6, "시험")
+    tm.emit("tool", step="Bash", status="success", detail={"input": "git commit -m x"})
+    tm.emit("tool", step="Bash", status="success", detail={"input": "svn commit -m x --non-interactive"})   # SVN 커밋 = 커밋+원격
+    assert sl._req_progress(str(proj)) == ("R900", 4, 6, "원격")
+
+
+def _agents(proj, n):
+    import datetime as _d
+    st = (_d.datetime.now(_d.timezone.utc) - _d.timedelta(minutes=3)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    rows = [{"id": f"a{i}", "type": "Explore", "description": f"긴 작업 설명 이름 {i} 번째 조사", "model": "opus",
+             "start_ts": st} for i in range(n)]
+    (proj / ".claude" / "state" / "active-agents.json").write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+
+
+@pytest.mark.parametrize("n", [0, 1, 4])
+def test_subagents_always_one_line(sl, proj, n):
+    _agents(proj, n)
+    a = sl.extra_gauges(str(proj), {})["agents"]
+    assert "\n" not in a                                               # 예전: 에이전트 2줄 + 요약 = 3줄로 펼쳐짐
+    if n:
+        assert f"실행 {n}" in _plain(a) and "/tasks" in _plain(a)
+
+
+def test_row_width_capped_even_when_columns_wide(sl, proj, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "186")                               # 실제 호출 값 (last-statusline-cols.txt)
+    monkeypatch.delenv("STATUSLINE_MAX_COLS", raising=False)
+    long = "가" * 200
+    cut = sl._fit_cells(long, min(sl._terminal_cols(), 130) - 1)
+    assert "…" in cut and len(cut) < 80                        # 130칸 상한 (한글 2칸)
