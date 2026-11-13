@@ -1893,3 +1893,21 @@ T1 결과 브랜치 6 (`repair/t1-*` · `repair-apply/T1-*`) · Evidence · 무�
 - 최종 완료: **아님** — 완성도 100%(2/2) · 품질 75점(9/12) · 남은 필수 = 품질 실환경 검증 3건: Q1 실제 재부팅 뒤 자동 재개 · Q11 새 세션 첫 보고부터 한국어(R232) · Q12 실제 세션 시작 훅 5초 이내.
 - 범위 (R248 · 2026-11-13): 사용자 1명 · Windows PC 1대 · 중앙 kit + 같은 PC 의 IFRS·ICMAI 등 여러 프로젝트 · 제외 = 노트북 3대·다중 사용자·기업용 Broker·분산 서버·다중 PC 배포.
 - 범위 최종 확정 (R249 · 2026-11-13): 여러 AI 세션(Claude·Codex·Gemini)과 여러 프로젝트 = **같은 PC 1대 안** 의 역할 분담 (여러 PC 로 해석 X) · 세션 수는 CPU·메모리·토큰을 보고 필요한 만큼만 · 현재 단계 = 1단계(단일 PC 안정화)·2단계(실전 속도·품질·자동화 검증) · 3단계(확장)는 평가 대상 아님 · 사용자가 따로 결정할 때까지 확장 요구사항을 자동으로 추가하지 않음 · 평가표 유지: 품질 12개(현재 9/12) · 요구사항 2개(현재 2/2).
+
+## §91 실전 소스 문법 오류 — 검사는 했지만 Claude 에게 안 돌아갔다 (2026-11-13 · R249 · 9546533)
+
+- 사용자 관찰: 실전 소스 작성 약 10회 중 3회 문법 오류.
+- 원인 [확인] (공식 hooks 문서 https://code.claude.com/docs/en/hooks 본문 대조 · 실측): 편집 직후 검사는 있었지만 결과가 Claude 가 받는 형식이 아니었다 — PostToolUse 에서 Claude 가 받는 것 = `decision:"block"`+`reason` · `additionalContext` · exit 2 의 stderr. `systemMessage` = 사용자에게만 · 파싱 안 되는 JSON = 오류 알림만.
+  | 대상 | 결함 | 수정 |
+  |---|---|---|
+  | 파이썬 py_compile | 실패를 systemMessage 로만 | 실패 = decision block + reason |
+  | JS node --check | 오류 원문(줄바꿈·따옴표·C:\)을 heredoc 으로 JSON 에 → Invalid \escape | JSON 인코더 · 파이썬 없으면 exit 2 + stderr |
+  | TS tsc | `| head -5` 뒤 $? = head 종료 코드(늘 0) → 한 번도 보고 안 됨 · 전역 tsc 만 | 종료 코드 바로잡음 · 프로젝트 node_modules/.bin/tsc |
+  | .vue | 검사 없음 (IFRS Claude 편집 1위 109건 · .java 7 · .js 3) | 프로젝트에 이미 있는 vue/compiler-sfc 로 템플릿·스크립트 (`vue-sfc-check.js`) |
+  | post-impl-verify | 실패 문구 stdout + exit 2 → Claude 는 stderr 만 받음 | 출력 전부 stderr |
+- Vue 검사 중 찾은 함정 [확인]: ① Git Bash → Windows node 에 여러 줄 `node -e` 는 첫 줄만 실행 → 별도 파일 ② Vue 2.7 parse 는 `parse({source})` 형식 — Vue 3 형식으로 부르면 오류 없이 빈 결과(검사 0 = 통과) ③ Vue 2 구조 단계 «<br>·<input> 닫는 태그 없음» 은 경고 — 실제 빌드되는 IFRS 파일 10개 오탐 → Vue 2 는 템플릿 컴파일·스크립트 구문 오류만 차단.
+- 검증 [확인]: 새 시험 `test_edit_syntax_feedback.py` 10/10 (수정 전 원본으로 4건 FAIL · Vue 2 경고 처리 제거 시 1건 FAIL 역검증) · 회귀 게이트 469 통과·신규 실패 0 · 골든 13/13 · IFRS 실제 Vue 285개 차단 0 · 망가뜨린 표본(템플릿·스크립트) 2/2 차단 (IFRS 전파본으로도 2/2).
+- 전파 [확인]: IFRS·ICMAI 낡음 6·kit 전용 2·대상 고유 0 · 백업 kit-merge-20261113-141811 / -141813 · 6개 파일 해시 일치 · 격리 시험 각 수집 498 · 통과 486 · 실패 0 · SKIP 12 · rc 0 · 보호 1722/1177 해시 불변.
+- 미구현·한계: Java 편집 직후 컴파일 (이 PC PATH 에 Maven·Gradle 없음) · ruff 미설치(린트 미실행) · 같은 유형 4건 = check_html_balance·check_indentation·detect_demo_pattern·hook_09_ocr_verify 도 systemMessage 만 (문법 검사 아님 · check_html_balance 는 jq 있으면 101초 걸리는 원본 셸이 돌아 5초 제한에 늘 끊김) → 발견 기록만.
+- 실전 측정: 최초 생성 코드 문법 오류율·자동 수정 성공률 = 이전 기록 없음 [미측정] (IFRS 편집에 검사 자체가 없었음) · 이제 편집 직후 차단이 대화 기록에 남아 다음 실제 개발 작업부터 측정 가능.
+- 품질 평가표 반영: Q2 자율 개발·Q6 회귀 방지 근거 보강 (점수 기준 불변 · 9/12 유지 · 남은 3건 그대로).
