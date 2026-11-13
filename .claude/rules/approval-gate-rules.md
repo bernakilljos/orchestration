@@ -99,7 +99,8 @@ PATTERNS = {
 | 외부 API call (read-only) |  자동 진행 |
 | `git commit` (local) |  자동 진행 |
 | `git push` (origin feature branch) |  자동 진행 |
-| `git push` (origin main) |  approval-gate |
+| `git push` / `git push origin <브랜치>` 단독 (일반 push · 2026-11-13 R250 사용자 위임) |  자동 진행 (비밀값 검사는 유지) |
+| 강제 push (`-f`·`--force`·`+refspec`) · 원격 브랜치 삭제 (`:branch`·`--delete`) · `--mirror`·`--all`·`--tags` · origin 외 원격 · 다른 명령과 연결한 push |  approval-gate |
 
 CLAUDE.md § 7-11 (Zero-touch 자동화) 와 정합:
 - 알림 = 위 5가지만

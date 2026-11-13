@@ -1559,7 +1559,9 @@ def _std_project(tmp_path):
     seed = json.loads((ROOT / ".claude/scripts/standing-requirements.seed.json").read_text(encoding="utf-8"))
     targets = {r["verify_target"] for r in seed["requirements"].values() if r.get("verify_target")}  # §82 시드 대상에서 도출
     for rel in sorted({".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
-                       ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md"} | targets):
+                       ".claude/scripts/approval-gate.py", ".claude/scripts/merge-to-target.py",
+                       ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md",
+                       ".claude/rules/language-standards.md"} | targets):   # 원격 c2bbf91 복사 목록 병합
         (p / rel).parent.mkdir(parents=True, exist_ok=True)
         (p / rel).write_bytes((ROOT / rel).read_bytes())
     return p                                              # .claude/state 없음 = 새 노트북·새 설치

@@ -113,10 +113,27 @@ CONSUMED_RESULT_WAIT_SEC = 660   # 도구 최대 실행 600초 + 여유 — 이 
 USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 
 
+# 2026-11-13 (R250): 사용자 위임 — 기존 원격(origin)으로의 일반 push 는 승인 없이 실행
+#   (사용자 원문: "git push나 이런것도 나한테 거치지말고 알아서해" · "일반 Push는 더 이상 승인 대기 작업이 아니다.
+#    다만 강제 Push, 원격 저장소 변경 … 파괴적인 이력 재작성은 자동 실행하지 않는다").
+#   명령 '전체' 가 이 형태와 정확히 같을 때만 — 따옴표·이스케이프·;&| 연결·$()·콜론 refspec·+강제·-f·--force·
+#   --delete·--mirror·--all·--tags·-C·다른 원격 이름은 전부 형태가 달라 아래 RISK_PATTERNS 로 그대로 간다.
+#   비밀값 검사(secret_scan·pre_commit_secrets) 는 push 에도 그대로 돈다.
+_PLAIN_PUSH_RE = re.compile(
+    r"\s*git\s+push(?:\s+(?:-q|--quiet|-u|--set-upstream))*"
+    r"(?:\s+origin(?:\s+(?:HEAD|[A-Za-z0-9][A-Za-z0-9._/-]*))?)?\s*")
+
+
+def is_plain_push(command: str) -> bool:
+    return bool(_PLAIN_PUSH_RE.fullmatch(command or ""))
+
+
 def detect_risk(command: str) -> dict | None:
     """명령 문자열 -> 매치된 위험 dict 반환 (또는 None).
     2026-11-09: 셸은 따옴표·이스케이프를 지운 뒤 실행한다 ("gi"t · g\\it · gi''t · ^git → git) →
     따옴표·이스케이프 문자를 뺀 형태도 같이 검사 (원문에서 패턴이 끊겨 통과하던 우회)."""
+    if is_plain_push(command):
+        return None   # 2026-11-13 R250 사용자 위임 (위 _PLAIN_PUSH_RE 설명)
     variants = [command]
     dequoted = re.sub(r"[\"'\\^`]", "", command)
     if dequoted != command:

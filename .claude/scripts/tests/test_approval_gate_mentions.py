@@ -90,7 +90,8 @@ def test_quoted_mention_in_inert_argument_not_flagged():      # 2026-11-09 manua
 
 
 def test_quoted_push_bypass_paths_still_blocked():
-    assert flagged(_P)
+    assert not flagged(_P)                                      # 2026-11-13 R250: origin 일반 push 단독 = 사용자 위임으로 허용
+    assert flagged(f'"{_P}"')                                   # 따옴표로 감싼 형태는 단독이어도 계속 판정
     assert flagged(f'echo "x" && {_P}')                         # 다른 세그먼트의 실제 실행
     assert flagged(f'echo "{_P}" | bash')                       # 셸로 넘김
     assert flagged(f'echo "{_P}" | sh -s')
