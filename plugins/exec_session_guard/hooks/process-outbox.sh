@@ -17,11 +17,38 @@ cd "$PROJECT" 2>/dev/null || exit 0
 NOTION_DIR="$PROJECT/.claude/state/notion-outbox"
 SLACK_DIR="$PROJECT/.claude/state/slack-outbox"
 
+# R253 재측정: 소비자가 없어 2026-05 부터 1,892개가 쌓였고 (Notion 1579 · Slack 313) 디스크 캐시가
+#   식은 첫 실행이 27.6초 → 시간 제한 10초에 끊겨(hook_cancelled) 한 번도 끝나지 못했다.
+#   3일 넘은 대기 파일은 (하루 ~50개 · 소비자 없음 · 같은 요약은 orca.db 에도 저장) archive/ 로 옮겨(삭제 X · 되돌릴 수 있음) 폴더를 작게 유지하고,
+#   겹쳐 실행되지 않게 잠그고, 끝날 때마다 한 줄 기록해 비동기 실행의 정상 종료를 확인할 수 있게 한다.
+LOG="$PROJECT/.claude/logs/process-outbox.log"
+LOCK="$PROJECT/.claude/state/process-outbox.lock"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+T0=$(date +%s%N 2>/dev/null || echo 0)
+if ! mkdir "$LOCK" 2>/dev/null; then
+  # 10분 넘은 잠금은 끊긴 실행의 잔여로 보고 회수
+  if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
+    rmdir "$LOCK" 2>/dev/null; mkdir "$LOCK" 2>/dev/null || exit 0
+  else
+    echo "$(date '+%F %T') skip 이미 실행 중" >> "$LOG"; exit 0
+  fi
+fi
+trap 'rmdir "$LOCK" 2>/dev/null' EXIT
+
+ARCHIVED=0
+for d in "$NOTION_DIR" "$SLACK_DIR"; do
+  [ -d "$d" ] || continue
+  mkdir -p "$d/archive" 2>/dev/null
+  n=$(find "$d" -maxdepth 1 -type f \( -name '*.md' -o -name '*.json' \) -mtime +3 -print -exec mv -n {} "$d/archive/" \; 2>/dev/null | wc -l | tr -d ' ')
+  ARCHIVED=$((ARCHIVED + ${n:-0}))
+done
+
 NOTION_COUNT=0
 SLACK_COUNT=0
-
-[ -d "$NOTION_DIR" ] && NOTION_COUNT=$(ls "$NOTION_DIR"/*.md 2>/dev/null | wc -l | tr -d ' ')
-[ -d "$SLACK_DIR" ]  && SLACK_COUNT=$(ls "$SLACK_DIR"/*.json 2>/dev/null | wc -l | tr -d ' ')
+[ -d "$NOTION_DIR" ] && NOTION_COUNT=$(find "$NOTION_DIR" -maxdepth 1 -type f -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+[ -d "$SLACK_DIR" ]  && SLACK_COUNT=$(find "$SLACK_DIR" -maxdepth 1 -type f -name '*.json' 2>/dev/null | wc -l | tr -d ' ')
+T1=$(date +%s%N 2>/dev/null || echo 0)
+echo "$(date '+%F %T') done notion=$NOTION_COUNT slack=$SLACK_COUNT archived=$ARCHIVED ms=$(( (T1 - T0) / 1000000 ))" >> "$LOG"
 
 if [ "$NOTION_COUNT" = "0" ] && [ "$SLACK_COUNT" = "0" ]; then
   exit 0  # 조용히 통과

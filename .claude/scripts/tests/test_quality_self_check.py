@@ -52,7 +52,7 @@ def test_korean_pass_needs_enough_reports():
 def test_korean_one_english_or_one_correction_is_partial():
     r = qsc.check_korean([_say(KO)] * 12 + [_say(EN)])
     assert r["result"] == "PARTIAL" and r["english"] == 1
-    corr = {"type": "user", "message": {"content": "[STD-KOREAN-001] 마지막 보고가 영어입니다"}}
+    corr = {"type": "system", "subtype": "stop_hook_summary", "hookInfos": [{"x": "[STD-KOREAN-001] 마지막 보고가 영어입니다"}]}
     r2 = qsc.check_korean([_say(KO)] * 12 + [corr])
     assert r2["result"] == "PARTIAL" and r2["corrections"] == 1
 
@@ -114,3 +114,51 @@ def test_main_withdraws_pass_on_same_session_recheck(tmp_path, monkeypatch):
     tp.write_text(json.dumps(_hook(9000)), encoding="utf-8")      # 같은 세션 재판정 FAIL → 이전 PASS 철회
     qsc.main()
     assert "Q12_startup" not in json.loads(state.read_text(encoding="utf-8"))["last_pass"]
+
+
+def test_korean_counts_each_hook_event_once_not_quotes():
+    # R253 재측정: 26 = 같은 사건 이중 기록 + 소스 읽기·요약 인용 → 실제 사건만 센다
+    msg = "[STD-KOREAN-001] 새 보고 1건이 영어입니다"
+    stop = {"type": "system", "subtype": "stop_hook_summary", "hookInfos": [{"x": msg}]}
+    stop_dup = {"type": "user", "message": {"content": "Stop hook feedback:\n" + msg}}
+    adv = {"type": "attachment", "attachment": {"type": "hook_additional_context", "content": [msg]}}
+    adv_dup = {"type": "attachment", "attachment": {"type": "hook_success", "stdout": msg}}
+    grep_result = {"type": "user", "message": {"content": [{"type": "tool_result", "content": 'if "[STD-KOREAN-001]" in s'}]}}
+    file_quote = {"type": "attachment", "attachment": {"type": "file", "content": msg}}
+    r = qsc.check_korean([_say(KO)] * 12 + [stop, stop_dup, adv, adv_dup, grep_result, file_quote])
+    assert (r["stop_blocks"], r["advisories"], r["corrections"]) == (1, 1, 2)
+    assert qsc.check_korean([_say(KO)] * 12 + [grep_result, file_quote, stop_dup])["result"] == "PASS"
+
+
+def test_startup_cancelled_hook_is_fail_even_if_fast():
+    ev = [_hook(900, "a.sh")]
+    c = _hook(4000, "process-outbox.sh")
+    c["attachment"]["type"] = "hook_cancelled"
+    r = qsc.check_startup(ev + [c])
+    assert r["result"] == "FAIL" and r["cancelled"] == ["process-outbox.sh"]
+
+
+def test_process_outbox_archives_old_locks_and_logs(tmp_path):
+    import os, shutil, subprocess, time
+    bash = shutil.which("bash")
+    if not bash:
+        import pytest
+        pytest.skip("bash 없음")
+    proj = tmp_path / "p"
+    (proj / "plugins").mkdir(parents=True)
+    nd = proj / ".claude" / "state" / "notion-outbox"
+    nd.mkdir(parents=True)
+    old, new = nd / "old.md", nd / "new.md"
+    old.write_text("x", encoding="utf-8"); new.write_text("y", encoding="utf-8")
+    t = time.time() - 10 * 86400
+    os.utime(old, (t, t))
+    hook = ROOT / "plugins" / "exec_session_guard" / "hooks" / "process-outbox.sh"
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(proj))
+    subprocess.run([bash, str(hook)], env=env, capture_output=True, timeout=60)
+    assert (nd / "archive" / "old.md").exists() and new.exists() and not old.exists()
+    log = (proj / ".claude" / "logs" / "process-outbox.log").read_text(encoding="utf-8")
+    assert "done notion=1" in log and "archived=1" in log
+    assert not (proj / ".claude" / "state" / "process-outbox.lock").exists()
+    (proj / ".claude" / "state" / "process-outbox.lock").mkdir()       # 실행 중인 잠금 → 겹쳐 실행 안 함
+    subprocess.run([bash, str(hook)], env=env, capture_output=True, timeout=60)
+    assert "skip" in (proj / ".claude" / "logs" / "process-outbox.log").read_text(encoding="utf-8").splitlines()[-1]

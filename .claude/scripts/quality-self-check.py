@@ -61,18 +61,25 @@ def _walk(x):
 
 def check_startup(events: list) -> dict:
     hooks = {}
+    cancelled = []          # 시간 초과로 끊긴 훅 = 기능 실패 (11-13 process-outbox 11187ms hook_cancelled 실제 사례)
     for e in events:
         for d in _walk(e):
             if d.get("hookName") == "SessionStart:startup" and "durationMs" in d:
                 cmd = str(d.get("command", ""))
                 name = os.path.basename(cmd.split('"')[-2]) if '"' in cmd else cmd[-40:]
                 hooks[name] = max(hooks.get(name, 0), int(d.get("durationMs") or 0))
+                if d.get("type") == "hook_cancelled" and name not in cancelled:
+                    cancelled.append(name)
     if not hooks:
         return {"result": "미측정", "why": "이 세션에 SessionStart:startup 기록 없음 (compact·resume 로 시작)"}
     slow = max(hooks, key=hooks.get)
     wait = hooks[slow]
-    return {"result": "PASS" if wait <= START_LIMIT_MS else "FAIL", "wait_ms": wait, "slowest": slow, "hooks": len(hooks),
-            "why": f"가장 늦은 훅 {slow} {wait}ms (기준 {START_LIMIT_MS}ms)"}
+    ok = wait <= START_LIMIT_MS and not cancelled
+    why = f"가장 늦은 훅 {slow} {wait}ms (기준 {START_LIMIT_MS}ms)"
+    if cancelled:
+        why += f" · 시간 초과로 끊김 {', '.join(cancelled)}"
+    return {"result": "PASS" if ok else "FAIL", "wait_ms": wait, "slowest": slow, "hooks": len(hooks),
+            "cancelled": cancelled, "why": why}
 
 
 def check_korean(events: list) -> dict:
@@ -96,16 +103,26 @@ def check_korean(events: list) -> dict:
                 english += 1
                 if len(samples) < 3:
                     samples.append(t[:60].replace("\n", " "))
-    corrected = sum(1 for e in events if "[STD-KOREAN-001]" in json.dumps(e, ensure_ascii=False)
-                    and e.get("type") in ("user", "attachment", "system"))
+    # 교정은 훅이 실제로 낸 사건만 센다 (R253 재측정: 26 = 같은 사건 이중 기록 10 + 소스 읽기·grep·요약 인용 15 오탐)
+    #   Stop 차단 = system/stop_hook_summary 1건 (같은 내용의 user "Stop hook feedback" 은 중복)
+    #   도구 뒤 안내 = attachment/hook_additional_context 1건 (같은 내용의 hook_success 는 중복)
+    def _has(e):
+        return "[STD-KOREAN-001]" in json.dumps(e, ensure_ascii=False)
+    stop_blocks = sum(1 for e in events if e.get("type") == "system" and e.get("subtype") == "stop_hook_summary"
+                      and _has(e))
+    advisories = sum(1 for e in events if e.get("type") == "attachment"
+                     and (e.get("attachment") or {}).get("type") == "hook_additional_context" and _has(e))
+    corrected = stop_blocks + advisories
     if reports < MIN_REPORTS:
         res = "미측정"
     elif english == 0 and corrected == 0:
         res = "PASS"
     else:
         res = "PARTIAL"
-    return {"result": res, "reports": reports, "english": english, "corrections": corrected, "samples": samples,
-            "why": f"보고 {reports} · 영어 {english} · 훅 교정 {corrected} (PASS = 영어 0·교정 0·보고 {MIN_REPORTS}+)"}
+    return {"result": res, "reports": reports, "english": english, "corrections": corrected,
+            "stop_blocks": stop_blocks, "advisories": advisories, "samples": samples,
+            "why": f"보고 {reports} · 영어 {english} · Stop 차단 {stop_blocks} · 안내 {advisories}"
+                   f" (PASS = 영어 0·교정 0·보고 {MIN_REPORTS}+)"}
 
 
 def _boot_epoch() -> float | None:
