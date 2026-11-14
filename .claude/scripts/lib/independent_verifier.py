@@ -403,7 +403,12 @@ def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
         ext = p.suffix.lower()
         try:
             if ext == ".py":
-                compile(p.read_bytes(), rel, "exec")
+                # SyntaxWarning(잘못된 이스케이프 "\s" 등)도 오류로 — 이후 버전에서 SyntaxError 가 될 예정이고
+                #   R255 커밋에서 실제로 게이트를 통과한 사례 (Windows 경로 "\scripts\tests" → 탭 문자로 바뀐 시험)
+                import warnings as _w
+                with _w.catch_warnings():
+                    _w.simplefilter("error", SyntaxWarning)
+                    compile(p.read_bytes(), rel, "exec")
                 checked.append(rel)
             elif ext == ".json":
                 if _JSON_LENIENT.search(rel.replace("\\", "/")):

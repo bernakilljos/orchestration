@@ -157,7 +157,12 @@ def test_gate_pytest_exit5_is_not_pass(tmp_path, monkeypatch):
 
 def test_failed_line_with_spaces_in_param_id_is_parsed():
     # 실제 사례: 매개변수 id 안 공백 때문에 실패 0건으로 집계 → 신규 회귀 판정 불가
-    out = ("FAILED .claude\scripts\tests\test_a.py::test_x[cd /c/x; run main-True]\n"
-           "FAILED tests/test_b.py::test_y - AssertionError: boom\n2 failed, 5 passed")
-    assert set(iv._RX_FAILED.findall(out)) == {
-        ".claude\scripts\tests\test_a.py::test_x[cd /c/x; run main-True]", "tests/test_b.py::test_y"}
+    win = r".claude\scripts\tests\test_a.py::test_x[cd /c/x; run main-True]"
+    out = "FAILED " + win + "\nFAILED tests/test_b.py::test_y - AssertionError: boom\n2 failed, 5 passed"
+    assert set(iv._RX_FAILED.findall(out)) == {win, "tests/test_b.py::test_y"}
+
+
+def test_syntax_check_treats_invalid_escape_warning_as_error(tmp_path):
+    (tmp_path / "w.py").write_text('p = "C:' + chr(92) + 'scripts"\n', encoding="utf-8")   # "\s" 잘못된 이스케이프
+    r = iv.staged_syntax_check(tmp_path, ["w.py"])
+    assert [e["file"] for e in r["errors"]] == ["w.py"]
