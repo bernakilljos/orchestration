@@ -100,6 +100,7 @@ PATTERNS = {
 | `git commit` (local) |  자동 진행 |
 | `git push` (origin feature branch) |  자동 진행 |
 | `git push` / `git push origin <브랜치>` 단독 (일반 push · 2026-11-13 R250 사용자 위임) |  자동 진행 (비밀값 검사는 유지) |
+| 위 일반 push 뒤의 `2>&1`·`\| tail -N`·`\| head -N` (2026-11-14 R255 · 같은 push 인데 형태만 달라 생기던 불필요 요청 제거 · 앞에 `cd` 를 붙이면 저장소·HEAD 확정 불가로 그대로 차단) |  자동 진행 |
 | 강제 push (`-f`·`--force`·`+refspec`) · 원격 브랜치 삭제 (`:branch`·`--delete`) · `--mirror`·`--all`·`--tags` · origin 외 원격 · 다른 명령과 연결한 push |  approval-gate |
 | SVN 일반 작업 `svn update`·`status`·`diff`·`add`·`delete <작업본 파일>`·`commit`·`revert <파일>`·`cleanup` (2026-11-13 R251 · IFRS = SVN) |  자동 진행 (캐시 인증 `--non-interactive`) |
 | SVN 파괴 작업 `svn revert -R`·`cleanup --remove-unversioned`·`svn delete <URL>`(원격 직접 삭제)·`svnadmin` |  approval-gate |
@@ -111,7 +112,7 @@ CLAUDE.md § 7-11 (Zero-touch 자동화) 와 정합:
 
 ## 승인 만료
 
-기본 24시간 — 그 후 `expired` 상태로 자동 변경. 사용자 재요청 필요.
+기본 24시간 — 그 후 `expired` 상태로 자동 변경. 사용자 재요청 필요. (2026-11-14 R255: 실제로는 상태가 안 바뀌어 61건이 대기로 남았음 → `list` 조회 때 `expire_stale()` 이 24시간 넘은 대기 요청을 expired 로 바꾼다)
 
 ## 금지
 

@@ -130,8 +130,16 @@ _PLAIN_PUSH_RE = re.compile(
     r"(?:\s+origin(?:\s+(?:HEAD|[A-Za-z0-9][A-Za-z0-9._/-]*))?)?\s*")
 
 
+# 2026-11-14 사용자 지시 ("승인 요청 appr-b4baf8033922 같은 건 … 없애버려"): 같은 일반 push 인데
+#   뒤의 `2>&1` · `| tail -N` · `| head -N` 때문에 형태가 달라져 승인 요청이 생겼다
+#   (appr-b4baf8033922 · appr-9b7f21b155e1 · appr-8871d366a04e = 'git push origin main 2>&1 | tail -N').
+#   이 출력 꼬리만 떼어 낸 뒤 같은 형태인지 본다. `cd <폴더> && git push` 는 올라갈 저장소·HEAD 를 확정할 수 없어
+#   그대로 차단 (HEAD 무결성 · test_approval_gate_p0/mentions) — 강제·삭제·미러·다른 원격·연결도 그대로 승인 대상.
+_PUSH_OUT_SUFFIX = re.compile(r"""(?:\s+2>&1)?(?:\s*\|\s*(?:tail|head)(?:\s+-n)?\s+-?\d+)?\s*$""")
+
+
 def is_plain_push(command: str) -> bool:
-    return bool(_PLAIN_PUSH_RE.fullmatch(command or ""))
+    return bool(_PLAIN_PUSH_RE.fullmatch(_PUSH_OUT_SUFFIX.sub("", command or "", count=1)))
 
 
 def detect_risk(command: str) -> dict | None:
@@ -401,7 +409,30 @@ def record_result(task_id: str, outcome: str, info: dict | None = None) -> bool:
         conn.close()
 
 
+def expire_stale(now: int | None = None) -> int:
+    """24시간 넘은 대기 요청을 'expired' 로 (approval-gate-rules.md § 승인 만료: "그 후 expired 상태로 자동 변경").
+    2026-11-14 실측: 만료는 승인 시점에만 검사하고 상태는 안 바꿔 61건 중 50건+가 waiting 으로 남았다 (최장 4294시간).
+    대기 → 만료 는 실행을 허용하지 않는 쪽 변화라 안전하다 (승인·실행 경로는 그대로)."""
+    now = int(now if now is not None else time.time())
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        rows = conn.execute("SELECT task_id, risk_detail FROM tasks WHERE approval_state = 'waiting' "
+                            "AND created_at IS NOT NULL AND created_at < ?", (now - REQUEST_TTL_SEC,)).fetchall()
+        for tid, detail in rows:
+            conn.execute("UPDATE tasks SET approval_state = 'expired', status = 'cancelled', risk_detail = ? "
+                         "WHERE task_id = ? AND approval_state = 'waiting'",
+                         (_merge_detail(detail, expire_reason="request_ttl", expired_at=now), tid))
+        conn.commit()
+        return len(rows)
+    finally:
+        conn.close()
+
+
 def list_waiting() -> list:
+    try:
+        expire_stale()
+    except sqlite3.Error:
+        pass   # 만료 정리 실패가 목록 조회를 막지 않는다
     db_path = get_db_path()
     conn = sqlite3.connect(str(db_path))
     try:

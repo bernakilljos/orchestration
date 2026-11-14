@@ -61,6 +61,7 @@ except Exception: print('none'); sys.exit()
 print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/dev/null || echo "none")
     case "$GATE" in
       pass|preexisting|skip) ;;
+      syntax_error) MISSING="$MISSING\n  - 변경 소스 문법 오류: .claude/state/regression-gate.json 의 syntax_errors 파일을 고친 뒤 regression-gate 다시 실행" ;;
       regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;
       *) MISSING="$MISSING\n  - 회귀 방지 게이트 ($GATE): python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate 실행 후 커밋 (스테이징을 바꾸면 다시)" ;;
     esac

@@ -377,8 +377,84 @@ def _configured_test_dirs(cwd: Path) -> List[str]:
 
 
 REGRESSION_STAMP = ".claude/state/regression-gate.json"
-_CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx")
-_RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (\S+?)(?: - .*)?$", re.M)
+# 2026-11-14: .vue·.jsx·.mjs·.cjs·.json 이 빠져 Vue 만 바꾼 커밋은 'skip' = 아무 검사 없이 커밋됐다
+_CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx",
+             ".vue", ".jsx", ".mjs", ".cjs", ".json")
+_JSON_LENIENT = re.compile(r"(^|/)(tsconfig[^/]*|jsconfig[^/]*|\.eslintrc[^/]*)\.json$|(^|/)\.vscode/", re.I)
+
+
+def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
+    """커밋할 소스 파일 자체의 문법 검사 (2026-11-14 · 사용자: "테스트 몇 개 통과보다 변경한 소스가 실제로 검사됐나").
+    회귀 시험은 영향 시험만 돌려 바뀐 파일의 문법 오류를 놓칠 수 있었다. 검사기는 기존 것 재사용:
+      .py compile() · .json json.loads (주석 허용 설정 파일 제외) · .sh bash -n ·
+      .js/.mjs/.cjs/.jsx/.ts/.tsx/.vue = 편집 직후 훅 check-js-syntax.sh (프로젝트 node·tsc·Vue 컴파일러)
+    도구가 없어 못 본 파일은 통과로 세지 않고 unchecked 로 남긴다."""
+    import shutil as _sh
+    errors, checked, unchecked = [], [], []
+    hook = cwd / ".claude" / "hooks" / "check-js-syntax.sh"
+    if not hook.is_file():
+        hook = Path(__file__).resolve().parents[2] / "hooks" / "check-js-syntax.sh"
+    bash, node = _sh.which("bash"), _sh.which("node")
+    tsc = _sh.which("tsc") or ((cwd / "node_modules" / ".bin" / "tsc").exists() and "local")
+    for rel in files:
+        p = cwd / rel
+        if not p.is_file():
+            continue   # 삭제된 파일
+        ext = p.suffix.lower()
+        try:
+            if ext == ".py":
+                compile(p.read_bytes(), rel, "exec")
+                checked.append(rel)
+            elif ext == ".json":
+                if _JSON_LENIENT.search(rel.replace("\\", "/")):
+                    unchecked.append(rel + " (주석 허용 설정)")
+                    continue
+                json.loads(p.read_text(encoding="utf-8-sig"))
+                checked.append(rel)
+            elif ext == ".sh":
+                if not bash:
+                    unchecked.append(rel + " (bash 없음)")
+                    continue
+                r = subprocess.run([bash, "-n", str(p)], capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace", timeout=30)
+                (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
+            elif ext in (".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".vue"):
+                need = {"node": node, "ts": tsc, "jsx": _sh.which("esbuild")}
+                key = "ts" if ext in (".ts", ".tsx") else ("jsx" if ext == ".jsx" else "node")
+                if not (bash and hook.is_file() and node and need[key]):
+                    unchecked.append(rel + " (%s 없음)" % ("tsc" if key == "ts" else "esbuild" if key == "jsx" else "node"))
+                    continue
+                if ext == ".vue":
+                    probe = subprocess.run([node, "-e", "const r=require('module').createRequire(process.argv[1]);"
+                                            "for(const m of ['vue/compiler-sfc','@vue/compiler-sfc']){try{r.resolve(m);process.exit(0)}catch(e){}}process.exit(3)",
+                                            str(p.resolve())], capture_output=True, timeout=30)
+                    if probe.returncode != 0:
+                        unchecked.append(rel + " (Vue 컴파일러 없음)")
+                        continue
+                r = subprocess.run([bash, str(hook)], input=json.dumps({"tool_input": {"file_path": str(p.resolve())}}),
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+                                   env={**os.environ, "CLAUDE_PROJECT_DIR": str(cwd)})
+                out = (r.stdout or "").strip()
+                if r.returncode == 2 or '"decision"' in out:
+                    try:
+                        msg = json.loads(out.splitlines()[-1]).get("reason", out)
+                    except (ValueError, IndexError):
+                        msg = out or r.stderr
+                    errors.append({"file": rel, "error": str(msg).strip()[:600]})
+                else:
+                    checked.append(rel)
+            else:
+                unchecked.append(rel + " (문법 검사기 없음)")
+        except SyntaxError as e:
+            errors.append({"file": rel, "error": "%s:%s %s" % (rel, e.lineno, e.msg)})
+        except ValueError as e:   # json.JSONDecodeError 포함
+            errors.append({"file": rel, "error": "%s %s" % (rel, e)})
+        except (OSError, subprocess.TimeoutExpired) as e:
+            unchecked.append("%s (%s)" % (rel, type(e).__name__))
+    return {"errors": errors, "checked": checked, "unchecked": unchecked}
+# 2026-11-14: 매개변수 id 에 공백이 있으면 (예: [cd /c/x; git push origin main-True]) \S+ 가 못 읽어
+#   실패 0건으로 집계 → rc=1 '실행 오류' blocked 로 오분류되고 기준선 비교(신규 회귀 판정)를 못 했다
+_RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
 
 
 def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
@@ -425,11 +501,17 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
         res["commit_memory_pct"] = (_sb.commit_memory() or {}).get("percent")
     except Exception:  # noqa: BLE001 — 측정 실패는 기록만 (시험 생략 사유로 쓰지 않는다)
         res["commit_memory_pct"] = None
+    syn = staged_syntax_check(cwd, code) if (tree and code) else {"errors": [], "checked": [], "unchecked": []}
+    res["syntax_checked"], res["syntax_unchecked"], res["syntax_errors"] = syn["checked"], syn["unchecked"], syn["errors"]
     if not tree:
         res["status"] = "blocked"
         res["reason"] = "스테이징 트리 해시를 못 얻음 (병합 충돌 중?)"
     elif not code:
         res["status"] = "skip"
+    elif syn["errors"]:
+        res["status"] = "syntax_error"   # 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
+        res["reason"] = "변경 소스 문법 오류 %d건: %s" % (len(syn["errors"]), "; ".join(
+            "%s — %s" % (e["file"], e["error"].splitlines()[0] if e["error"] else "") for e in syn["errors"][:3]))
     else:
         unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
         dirty = sorted(set(code) & unstaged)
@@ -479,7 +561,11 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
                 fails, summary, rc = set(), "시간 초과 %ds" % timeout, -1
             res["summary"] = summary
             res["failures"] = sorted(fails)
-            if rc not in (0, 1, 5) or (rc == 1 and not fails):
+            if rc == 5:
+                # pytest 종료 코드 5 = 시험 0건 수집 (공식 문서 · Exit codes) — 아무것도 검사 안 했으므로 통과 아님
+                res["status"] = "blocked"
+                res["reason"] = "선정된 시험이 하나도 수집되지 않음 (pytest rc=5) — %s" % summary
+            elif rc not in (0, 1) or (rc == 1 and not fails):
                 res["status"] = "blocked"
                 res["reason"] = "시험 실행 오류 (rc=%s) — %s" % (rc, summary)
             elif not fails:
