@@ -1649,6 +1649,18 @@ def test_impact_selection_full_for_common_module_and_unknown(tmp_path):
     assert iv.impact_selection(r, ["docs/readme.md"]) == {"tests": [], "full": None, "why": {}}
 
 
+def test_impact_selection_full_when_second_hop_caller_is_common(tmp_path):
+    """2026-11-15: 1단계 호출자가 공통 모듈(많은 파일이 참조)이면 그 이름으로 시험을 넓히지 말고 전체 회귀.
+    전엔 web/app.py 가 2단계에서 'app' 이름으로 시험 278개를 파일 단위로 골라 900초 초과 → 커밋 blocked."""
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    for i in range(iv._FANOUT_FULL):
+        (r / f"user{i}.py").write_text("import mid_layer\n", encoding="utf-8")   # 1단계 호출자 mid-layer 를 많이 참조
+    _git(r, "add", "-A")
+    sel = iv.impact_selection(r, ["lib/core_util.py"])
+    assert "2단계" in (sel["full"] or ""), sel
+
+
 def test_impact_selection_uses_cochange_history(tmp_path):
     import independent_verifier as iv
     r = _impact_repo(tmp_path)

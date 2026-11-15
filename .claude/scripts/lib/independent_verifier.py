@@ -314,8 +314,11 @@ def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
             if not v:
                 continue
             users = [p for p in corpus if p not in seen and p != src and _mentions(_text(p), v)]
-            if hop == 1 and len(users) >= _FANOUT_FULL and not full:
-                full = "공통 모듈 %s 를 %d개 파일이 참조" % (src, len(users))
+            # 2단계도 같은 상한 (2026-11-15): 죽은 web 멘션 모듈 삭제 → 1단계 호출자 web/app.py(같은 낱말) →
+            #   2단계에서 'app' 이름으로 넓혀 시험 278개를 파일 단위로 골랐고(e2e 포함) 900초 초과로 blocked ·
+            #   dev 회차가 61분에 끊겼다. 공통 모듈을 거치면 전체 회귀(405초)가 더 빠르고 정확하다.
+            if len(users) >= _FANOUT_FULL and not full:
+                full = "공통 모듈 %s 를 %d개 파일이 참조%s" % (src, len(users), "" if hop == 1 else " (2단계 호출자)")
             nxt += users
             seen.update(users)
         if full:      # 이미 전체 회귀 — 더 넓히는 계산은 버려진다 (리뷰 재공격 SHOULD 성능)
