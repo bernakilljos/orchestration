@@ -95,30 +95,155 @@ def _leading_cd_base(parts: list) -> str:
     return d if os.path.isabs(d) and os.path.isdir(d) else ""
 
 
-def _strip_inert_text(cmd: str) -> str:
+def _shell_quote_spans(seg: str):
+    """셸과 같은 규칙으로 따옴표 구간 [(시작, 끝)] — 짝이 안 맞으면 None (2026-11-15 R256 · appr-7d5799dacb11:
+    정규식 '[^']*'|"[^"]*" 는 큰따옴표 안의 \\" 를 끝으로 읽어 `grep -n "a\\|\\"git push\\|'git push" f` 의 뒷부분이
+    따옴표 밖으로 드러났다). 작은따옴표 안은 이스케이프 없음 · 큰따옴표 안은 \\ 다음 글자를 건너뛴다."""
+    spans, i, n = [], 0, len(seg)
+    while i < n:
+        c = seg[i]
+        if c == "\\":
+            i += 2
+            continue
+        if c == "'":
+            j = seg.find("'", i + 1)
+            if j < 0:
+                return None
+            spans.append((i, j + 1))
+            i = j + 1
+            continue
+        if c == '"':
+            j = i + 1
+            while j < n and seg[j] != '"':
+                j += 2 if seg[j] == "\\" else 1
+            if j >= n:
+                return None
+            spans.append((i, j + 1))
+            i = j + 1
+            continue
+        i += 1
+    return spans
+
+
+#: 검색 결과를 받아도 그것을 실행하지 않는 파이프 뒤 명령 (그 밖 — bash·sh·xargs·python 등 — 으로 넘기면 가리지 않는다)
+_PIPE_INERT = set(_SEARCH_CMDS) | {"head", "tail", "wc", "sort", "uniq", "cut", "tr", "less", "more", "column", "nl"}
+
+
+def _mask_search_segment(seg: str) -> str:
+    """검색 명령 세그먼트의 검색어만 '__PATTERN__' 으로 — 따옴표 짝 불일치·실행되는 파이프 뒤 명령이면 그대로."""
+    spans = _shell_quote_spans(seg)
+    if spans is None:
+        return seg
+    skel, last = [], 0
+    for a, b in spans:
+        skel.append(seg[last:a] + "''")
+        last = b
+    skel.append(seg[last:])
+    stages = re.split(r"(?<!\|)\|(?!\|)", "".join(skel))
+    for st in stages[1:]:
+        w = st.strip().split()
+        if not w or os.path.basename(w[0]).lower() not in _PIPE_INERT:
+            return seg   # 검색 결과를 다른 명령이 받아 실행할 수 있음 (grep … | bash)
+    out, last = [], 0
+    for a, b in spans:
+        q = seg[a:b]
+        # 큰따옴표 안 명령 치환은 셸이 실행한다 — 가리지 않는다 (2026-11-15 이전에는 이것까지 가렸다)
+        out.append(seg[last:a] + (q if q.startswith('"') and ("$(" in q or "`" in q) else "'__PATTERN__'"))
+        last = b
+    out.append(seg[last:])
+    return "".join(out)
+
+
+# 2026-11-15 (R256 · appr-2b6e593318ef): `python - <<'EOF'` 본문이 guide.txt 문장을 고치는 데이터 처리일 뿐인데,
+#   문자열 안의 'git push' 를 실제 push 로 판정했다. 본문이 «명령을 실행할 수 없는 코드» 로 확정될 때만 본문의 push 단어를
+#   무력화한다 (다른 위험 패턴 판정에는 본문을 그대로 쓴다). 확정 조건 = 문법 트리 허용 목록:
+#   import 는 아래 모듈만 · eval/exec/__import__/getattr 등 금지 · 밑줄 시작 이름·속성(dunder) 금지 · os/sys.modules/
+#   subprocess 같은 모듈 속성 금지 · .git/hooks·core.hooksPath 문자열 금지 (훅 파일에 push 를 써서 나중에 실행하는 경로).
+_PY_SAFE_MODULES = {"re", "json", "sys", "pathlib", "collections", "itertools", "functools", "textwrap", "datetime",
+                    "time", "math", "hashlib", "io", "string", "difflib", "csv", "glob", "fnmatch", "unicodedata",
+                    "statistics", "dataclasses", "typing", "codecs", "operator", "enum", "bisect", "heapq", "copy",
+                    "pprint", "decimal", "fractions", "random", "struct", "base64", "html", "__future__"}
+_PY_BAD_NAMES = {"eval", "exec", "compile", "__import__", "getattr", "setattr", "delattr", "globals", "locals", "vars",
+                 "breakpoint", "help", "open_code"}
+_PY_BAD_ATTRS = {"os", "sys", "subprocess", "shutil", "importlib", "builtins", "ctypes", "posix", "nt", "pty", "socket",
+                 "modules", "system", "popen", "startfile", "spawnl", "spawnv", "execv", "execl", "execvp", "execlp",
+                 "run", "call", "check_call", "check_output", "Popen", "loader", "load_module", "exec_module"}
+_RX_GIT_HOOK_TEXT = re.compile(r"\.git[\\/]+hooks|hooksPath", re.I)
+
+
+def _py_data_only(src: str) -> bool:
+    import ast
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            if any(a.name.split(".")[0] not in _PY_SAFE_MODULES for a in node.names):
+                return False
+        elif isinstance(node, ast.ImportFrom):
+            if node.level or (node.module or "").split(".")[0] not in _PY_SAFE_MODULES:
+                return False
+            if any(a.name in _PY_BAD_ATTRS or a.name.startswith("_") or a.name == "*" for a in node.names):
+                return False
+        elif isinstance(node, ast.Name):
+            if node.id in _PY_BAD_NAMES or node.id.startswith("__"):
+                return False
+        elif isinstance(node, ast.Attribute):
+            if node.attr.startswith("_") or node.attr in _PY_BAD_ATTRS:
+                return False
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if _RX_GIT_HOOK_TEXT.search(node.value):
+                return False
+    return True
+
+
+_RX_PY_HEREDOC = re.compile(
+    r"((?:^|(?<=[;&\n]))[ \t]*(?:py|python(?:3(?:\.\d+)?)?)(?:\.exe)?(?:[ \t]+(?:-X[ \t]+utf8|-Xutf8|-[uBIEs]))*"
+    r"[ \t]+-(?:[ \t]+[^\n<>|;&`]*?)?[ \t]*<<-?[ \t]*(['\"])(\w+)\2([^\n]*))\n(.*?)\n(\3)(?=[ \t]*(?:\n|$))", re.S)
+_RX_OUT_TAIL = re.compile(r"\s*(?:2>&1)?\s*(?:\|\s*(?:tail|head)(?:\s+-n)?\s+-?\d+)?\s*")
+
+
+def _neutralize_py_data_heredoc(cmd: str) -> str:
+    def _sub(m):
+        head, tail_after, body = m.group(1), m.group(4), m.group(5)
+        if "$(" in head or not _RX_OUT_TAIL.fullmatch(tail_after or "") or not _py_data_only(body):
+            return m.group(0)
+        return "%s\n%s\n%s" % (head, re.sub(r"(?i)push", "pu_sh", body), m.group(6))
+    return _RX_PY_HEREDOC.sub(_sub, cmd)
+
+
+def _strip_inert_text(cmd: str, cwd: str = "") -> str:
     """2026-10-30: 실행되지 않는 '언급' 만 제외 (위험 명령 차단 자체는 그대로).
     ① cat 이 파일로만 쓰는 heredoc 본문 (`cat >> f <<'EOF' ... EOF`) — 파이프로 셸에 넘기면 제외 X
     ② 검색 명령(grep·rg 등) 세그먼트의 따옴표 검색어 — 같은 줄의 다른 명령 세그먼트는 그대로 검사
-    bash/sh/python 등으로 실행되는 heredoc 은 손대지 않는다."""
+    ③ (R256) 명령을 실행할 수 없는 `python - <<'EOF'` 본문의 push 단어
+    bash/sh 등으로 실행되는 heredoc 은 손대지 않는다.
+    cwd = 훅이 받은 세션 작업 위치 — 명령에 작업 위치 변경(cd 등)이 전혀 없을 때만 상대 경로 해석 기준 (R256)."""
     # hook 입력은 JSON 이라 줄바꿈이 '\\n' 문자로 들어온다 → 실제 줄바꿈으로 (실측: 미변환 시 heredoc 인식 0)
     cmd = cmd.replace("\\n", "\n").replace("\\t", "\t")
 
     def _heredoc(m):
         head = m.group(1)
-        if ">" in head and "|" not in head:
+        # .git/hooks 로 쓰는 본문은 나중에 git 이 실행한다 (R256) — 가리지 않는다
+        if ">" in head and "|" not in head and not _RX_GIT_HOOK_TEXT.search(head):
             return f"{head}\n<DOC>\n{m.group(2)}"
         return m.group(0)
     cmd = re.sub(r"((?:^|(?<=[;&\n]))\s*cat\b[^\n]*?<<-?\s*['\"]?(\w+)['\"]?[^\n]*)\n.*?\n(\2)(?=\s*(?:\n|$))",
                  lambda m: _heredoc(type("M", (), {"group": lambda s, i: (m.group(0), m.group(1), m.group(3))[i]})()),
                  cmd, flags=re.S)
+    cmd = _neutralize_py_data_heredoc(cmd)
     parts = re.split(r"(\s*(?:&&|\|\||;|\n)\s*)", cmd)
     base = _leading_cd_base(parts)
+    if not base and cwd and not _RX_CHDIR.search(cmd):
+        c = re.sub(r"^/([a-zA-Z])/", r"\1:/", cwd.replace("\\", "/"))
+        base = c if os.path.isabs(c) and os.path.isdir(c) else ""
     for i, seg in enumerate(parts):
         words = seg.strip().split()
         if words and os.path.basename(words[0]).lower() in _SEARCH_CMDS:
             # 2026-11-12 (R245): 자리표시자에 '<' '>' 를 쓰면 따옴표를 뺀 검사형이 «> settings.json» 리다이렉트로
             #   읽혀 `grep '…' .claude/settings.json` 같은 조회를 «보호 설정 파일 덮어쓰기» 로 차단했다.
-            parts[i] = re.sub(r"'[^']*'|\"[^\"]*\"", "'__PATTERN__'", seg)
+            parts[i] = _mask_search_segment(seg)
         elif words and _inert_args_segment(seg, base):
             parts[i] = _RX_QUOTED.sub(_mask_inert_quote, seg)
     return "".join(parts)
@@ -131,7 +256,10 @@ def _strip_inert_text(cmd: str) -> str:
 #   셸·인터프리터 래퍼(bash -c · eval · python -c · cmd /c · powershell -Command · xargs) 는 해당 없음 → 그대로 검사.
 _RX_QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
 _INERT_LEADERS = {"echo", "printf", "write-host", "write-output"}
-_INERT_KIT_SCRIPTS = {("auto-save-next-actions.py", "manual-add")}   # 인자를 파일에 글로만 적는 kit 스크립트
+#: 인자를 파일에 글로만 적는 kit 스크립트 — 2026-11-15 (R256 · appr-04a492249c3f) request-ledger.py add·complete 추가
+#:   (cmd_add·cmd_complete 는 인자를 Ledger JSON·추적 기록에 문자열로만 저장 · subprocess·exec 없음 · HEAD 와 같은 내용일 때만)
+_INERT_KIT_SCRIPTS = {("auto-save-next-actions.py", "manual-add"),
+                      ("request-ledger.py", "add"), ("request-ledger.py", "complete")}
 _RX_PY = re.compile(r"^(?:py|python(?:3(?:\.\d+)?)?)(?:w)?(?:\.exe)?$", re.I)
 
 
@@ -498,14 +626,14 @@ def _fingerprint(ctx):
     raw_cmd = _extract_cmd(inp)
     if not raw_cmd:
         return None
-    # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
-    cmd = _strip_inert_text(_strip_git_commit_message(raw_cmd))
-    # 2026-11-08: 요청 번호 = 명령·작업 위치 지문 (시각 X) → 승인 후 같은 명령을 다시 내면 그 승인을 1회만 쓴다.
-    # 다른 명령·다른 폴더는 지문이 달라 그 승인을 전용할 수 없다.
     try:
         raw_cwd = str(json.loads(ctx.raw or "{}").get("cwd") or "")
     except (ValueError, AttributeError):
         raw_cwd = ""
+    # 2026-10-26: 실행 vs 언급 구분 — git commit message body 안 위험 문자열은 매칭 제외
+    cmd = _strip_inert_text(_strip_git_commit_message(raw_cmd), raw_cwd)
+    # 2026-11-08: 요청 번호 = 명령·작업 위치 지문 (시각 X) → 승인 후 같은 명령을 다시 내면 그 승인을 1회만 쓴다.
+    # 다른 명령·다른 폴더는 지문이 달라 그 승인을 전용할 수 없다.
     cwd = raw_cwd.replace("\\", "/").rstrip("/").lower()
     task_id = "appr-" + hashlib.sha256((cwd + "\n" + cmd).encode("utf-8", "surrogateescape")).hexdigest()[:12]
     return raw_cmd, cmd, raw_cwd, task_id

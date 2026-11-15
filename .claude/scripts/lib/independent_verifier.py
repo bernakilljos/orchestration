@@ -378,19 +378,157 @@ def _configured_test_dirs(cwd: Path) -> List[str]:
 
 REGRESSION_STAMP = ".claude/state/regression-gate.json"
 # 2026-11-14: .vue·.jsx·.mjs·.cjs·.json 이 빠져 Vue 만 바꾼 커밋은 'skip' = 아무 검사 없이 커밋됐다
+# 2026-11-15 (R256): 실제 개발 프로젝트(IFRS = SVN · 최근 200 커밋 변경 파일 java 604 · vue 470 · js 47 · yml 9 · xml 9)
+#   의 java·xml·yml 이 검사 대상에 없어 Java 변경은 아무 검사 없이 들어갔다 → 추가. (css 4건은 문법 검사기 없음 · 대상 외)
+#   이 목록은 커밋 훅(pre_commit_full_check.py · pre-commit-full-check.sh)과 같아야 한다 — 시험이 대조.
 _CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx",
-             ".vue", ".jsx", ".mjs", ".cjs", ".json")
+             ".vue", ".jsx", ".mjs", ".cjs", ".json", ".java", ".xml", ".yml", ".yaml", ".go")
 _JSON_LENIENT = re.compile(r"(^|/)(tsconfig[^/]*|jsconfig[^/]*|\.eslintrc[^/]*)\.json$|(^|/)\.vscode/", re.I)
+SYNTAX_STAMP = ".claude/state/syntax-gate.json"   # git 이 아닌 작업본(SVN·버전 관리 없음)용 기록
+
+
+def _jsonc_to_json(text: str) -> str:
+    """주석(// · /* */)과 끝 쉼표를 문자열 밖에서만 걷어 낸다 — tsconfig·.vscode 설정 (2026-11-15 R256:
+    전에는 이 파일들을 아예 '미검사' 로 남겼다). 문자열 안의 // 나 , 는 건드리지 않는다."""
+    out, i, n, in_str = [], 0, len(text), False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(text[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                in_str = False
+            i += 1
+        elif c == '"':
+            in_str = True
+            out.append(c)
+            i += 1
+        elif text.startswith("//", i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+        elif text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            if j < 0:
+                raise ValueError("닫히지 않은 /* 주석")
+            i = j + 2
+        else:
+            out.append(c)
+            i += 1
+    s, res, in_str, esc = "".join(out), [], False, False
+    for k, c in enumerate(s):
+        if in_str:
+            res.append(c)
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == ",":
+            rest = s[k + 1:].lstrip()
+            if rest[:1] in ("}", "]"):
+                continue   # 끝 쉼표
+        res.append(c)
+    return "".join(res)
+
+
+# PowerShell 공식 구문 분석기 (실행하지 않음) — 오류가 있으면 줄:열 메시지를 찍고 exit 1
+_PS_PARSE = ("[Console]::OutputEncoding=[Text.Encoding]::UTF8; $e=$null; $t=$null; "
+             "[void][System.Management.Automation.Language.Parser]::ParseFile($env:ORCA_PSF,[ref]$t,[ref]$e); "
+             "if($e -and $e.Count){ foreach($x in $e){ '{0}:{1} {2}' -f $x.Extent.StartLineNumber,"
+             "$x.Extent.StartColumnNumber,$x.Message }; exit 1 }; exit 0")
+
+# Java 구문 분석만 (클래스경로 없이) — 공식 컴파일러 API JavacTask.parse(). javac 를 그냥 돌리면 import·심볼 해석
+#   오류(package does not exist)가 섞이고, JDK 8 은 -XDshould-stop 계열로 구문 단계에서 멈추지 않는다 (2026-11-15 실측).
+#   JavacTask 는 com.sun.source.util (JDK 9+ 공개 모듈 · JDK 8 tools.jar) — 반영(reflection)으로 불러 컴파일 의존 없음.
+_JAVA_HELPER = r"""import javax.tools.*; import java.util.*; import java.nio.charset.Charset;
+public class OrcaJavaParse { public static void main(String[] a) throws Exception {
+  JavaCompiler c = ToolProvider.getSystemJavaCompiler();
+  if (c == null) { System.out.println("NOCOMPILER"); System.exit(3); }
+  DiagnosticCollector<JavaFileObject> d = new DiagnosticCollector<JavaFileObject>();
+  StandardJavaFileManager fm = c.getStandardFileManager(d, Locale.ENGLISH, Charset.forName(a[0]));
+  List<String> files = Arrays.asList(a).subList(1, a.length);
+  Object t = c.getTask(null, fm, d, Arrays.asList("-proc:none", "-encoding", a[0]), null, fm.getJavaFileObjectsFromStrings(files));
+  Class.forName("com.sun.source.util.JavacTask").getMethod("parse").invoke(t);
+  int n = 0;
+  for (Diagnostic<? extends JavaFileObject> x : d.getDiagnostics()) {
+    if (x.getKind() != Diagnostic.Kind.ERROR) continue;
+    n++;
+    System.out.println("ERR\t" + (x.getSource() == null ? "" : x.getSource().getName()) + "\t" + x.getLineNumber()
+        + "\t" + x.getMessage(Locale.ENGLISH).replace('\n', ' ').replace('\r', ' '));
+  }
+  System.exit(n > 0 ? 1 : 0);
+} }
+"""
+
+
+def _java_parse(cwd: Path, rels: List[str]):
+    """(오류 [{file,error}], 검사한 rel, 미검사 rel+사유) — JDK 없으면 전부 미검사."""
+    import hashlib
+    import shutil as _sh
+    import tempfile
+    javac = _sh.which("javac")
+    if not javac:
+        return [], [], [r + " (javac 없음)" for r in rels]
+    jbin = Path(javac).resolve().parent
+    java = next((str(p) for p in (jbin / "java.exe", jbin / "java") if p.is_file()), None)
+    if not java:
+        return [], [], [r + " (JDK java 없음)" for r in rels]
+    key = hashlib.sha256((_JAVA_HELPER + str(jbin)).encode("utf-8")).hexdigest()[:12]
+    cache = Path(tempfile.gettempdir()) / ("orca-javaparse-" + key)
+    tools = jbin.parent / "lib" / "tools.jar"   # JDK 8 만 있음 (9+ 는 모듈)
+    cp = str(cache) + (os.pathsep + str(tools) if tools.is_file() else "")
+    try:
+        if not (cache / "OrcaJavaParse.class").is_file():
+            cache.mkdir(parents=True, exist_ok=True)
+            (cache / "OrcaJavaParse.java").write_text(_JAVA_HELPER, encoding="utf-8")
+            r = subprocess.run([javac, "-encoding", "UTF-8", "-d", str(cache), str(cache / "OrcaJavaParse.java")],
+                               capture_output=True, text=True, errors="replace", timeout=120)
+            if r.returncode != 0:
+                return [], [], [x + " (Java 검사기 준비 실패)" for x in rels]
+        enc = "UTF-8"
+        for pom in (cwd / "pom.xml", *sorted(cwd.glob("*/pom.xml")), *sorted(cwd.glob("*/*/pom.xml"))):
+            try:
+                m = re.search(r"<project\.build\.sourceEncoding>\s*([\w-]+)\s*<", pom.read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                continue
+            if m:
+                enc = m.group(1)
+                break
+        r = subprocess.run([java, "-Duser.language=en", "-cp", cp, "OrcaJavaParse", enc, *[str(cwd / x) for x in rels]],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return [], [], [x + " (%s)" % type(e).__name__ for x in rels]
+    if r.returncode not in (0, 1):
+        return [], [], [x + " (Java 검사기 실행 실패 rc=%s)" % r.returncode for x in rels]
+    by_abs = {os.path.normcase(str((cwd / x).resolve())): x for x in rels}
+    errors: Dict[str, List[str]] = {}
+    for line in r.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 4 and parts[0] == "ERR":
+            rel = by_abs.get(os.path.normcase(str(Path(parts[1]).resolve())), parts[1])
+            errors.setdefault(rel, []).append("%s:%s %s" % (rel, parts[2], parts[3]))
+    if r.returncode == 1 and not errors:
+        return [], [], [x + " (Java 검사기 출력 판독 불가)" for x in rels]
+    return ([{"file": f, "error": "\n".join(v)[:600]} for f, v in errors.items()],
+            [x for x in rels if x not in errors], [])
 
 
 def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
     """커밋할 소스 파일 자체의 문법 검사 (2026-11-14 · 사용자: "테스트 몇 개 통과보다 변경한 소스가 실제로 검사됐나").
-    회귀 시험은 영향 시험만 돌려 바뀐 파일의 문법 오류를 놓칠 수 있었다. 검사기는 기존 것 재사용:
-      .py compile() · .json json.loads (주석 허용 설정 파일 제외) · .sh bash -n ·
-      .js/.mjs/.cjs/.jsx/.ts/.tsx/.vue = 편집 직후 훅 check-js-syntax.sh (프로젝트 node·tsc·Vue 컴파일러)
-    도구가 없어 못 본 파일은 통과로 세지 않고 unchecked 로 남긴다."""
+    회귀 시험은 영향 시험만 돌려 바뀐 파일의 문법 오류를 놓칠 수 있었다. 검사기는 기존·공식 도구만:
+      .py compile() (SyntaxWarning 도 오류) · .json json.loads (주석 허용 설정은 주석·끝 쉼표 제거 후) · .sh bash -n ·
+      .js/.mjs/.cjs/.jsx/.ts/.tsx/.vue = 편집 직후 훅 check-js-syntax.sh (프로젝트 node·tsc·Vue 컴파일러) ·
+      .ps1/.psm1 PowerShell Parser.ParseFile · .java JavacTask.parse · .xml ElementTree · .yml yaml.compose · .go gofmt -e
+    도구가 없어 못 본 파일은 통과로 세지 않고 unchecked 로 남긴다 → 게이트가 unverified 로 커밋 차단 (R256)."""
     import shutil as _sh
-    errors, checked, unchecked = [], [], []
+    errors, checked, unchecked, java = [], [], [], []
     hook = cwd / ".claude" / "hooks" / "check-js-syntax.sh"
     if not hook.is_file():
         hook = Path(__file__).resolve().parents[2] / "hooks" / "check-js-syntax.sh"
@@ -411,16 +549,57 @@ def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
                     compile(p.read_bytes(), rel, "exec")
                 checked.append(rel)
             elif ext == ".json":
-                if _JSON_LENIENT.search(rel.replace("\\", "/")):
-                    unchecked.append(rel + " (주석 허용 설정)")
-                    continue
-                json.loads(p.read_text(encoding="utf-8-sig"))
+                text = p.read_text(encoding="utf-8-sig")
+                json.loads(_jsonc_to_json(text) if _JSON_LENIENT.search(rel.replace("\\", "/")) else text)
                 checked.append(rel)
             elif ext == ".sh":
                 if not bash:
                     unchecked.append(rel + " (bash 없음)")
                     continue
                 r = subprocess.run([bash, "-n", str(p)], capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace", timeout=30)
+                (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
+            elif ext in (".ps1", ".psm1"):
+                ps = _sh.which("powershell") or _sh.which("pwsh")
+                if not ps:
+                    unchecked.append(rel + " (PowerShell 없음)")
+                    continue
+                r = subprocess.run([ps, "-NoProfile", "-NonInteractive", "-Command", _PS_PARSE], capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace", timeout=60,
+                                   env={**os.environ, "ORCA_PSF": str(p.resolve())})
+                if r.returncode == 0:
+                    checked.append(rel)
+                elif r.returncode == 1 and r.stdout.strip():
+                    errors.append({"file": rel, "error": "\n".join("%s:%s" % (rel, x) for x in r.stdout.strip().splitlines())[:600]})
+                else:
+                    unchecked.append(rel + " (PowerShell 구문 분석 실행 실패 rc=%s)" % r.returncode)
+            elif ext == ".java":
+                java.append(rel)   # JVM 기동 1회로 모아서 검사 (아래)
+            elif ext == ".xml":
+                import xml.etree.ElementTree as _ET
+                try:
+                    _ET.parse(str(p))   # 정형성(well-formed) 검사 · 외부 DTD 는 가져오지 않음
+                    checked.append(rel)
+                except _ET.ParseError as e:
+                    errors.append({"file": rel, "error": "%s %s" % (rel, e)})
+            elif ext in (".yml", ".yaml"):
+                try:
+                    import yaml as _yaml
+                except ImportError:
+                    unchecked.append(rel + " (PyYAML 없음)")
+                    continue
+                try:   # compose = 구문만 (사용자 태그 !Ref 등은 객체로 만들지 않으므로 오류 아님)
+                    for _ in _yaml.compose_all(p.read_text(encoding="utf-8-sig"), Loader=_yaml.SafeLoader):
+                        pass
+                    checked.append(rel)
+                except _yaml.YAMLError as e:
+                    errors.append({"file": rel, "error": ("%s %s" % (rel, e))[:600]})
+            elif ext == ".go":
+                gofmt = _sh.which("gofmt")
+                if not gofmt:
+                    unchecked.append(rel + " (gofmt 없음)")
+                    continue
+                r = subprocess.run([gofmt, "-e", "-l", str(p)], capture_output=True, text=True, encoding="utf-8",
                                    errors="replace", timeout=30)
                 (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
             elif ext in (".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".vue"):
@@ -456,7 +635,87 @@ def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
             errors.append({"file": rel, "error": "%s %s" % (rel, e)})
         except (OSError, subprocess.TimeoutExpired) as e:
             unchecked.append("%s (%s)" % (rel, type(e).__name__))
+    if java:
+        je, jc, ju = _java_parse(cwd, java)
+        errors += je
+        checked += jc
+        unchecked += ju
     return {"errors": errors, "checked": checked, "unchecked": unchecked}
+
+
+def _syntax_verdict(res: Dict[str, Any], syn: Dict[str, Any]) -> bool:
+    """문법 검사 결과로 상태를 정하면 True (오류 = syntax_error · 미검사 = unverified · 둘 다 커밋 차단)."""
+    res["syntax_checked"], res["syntax_unchecked"], res["syntax_errors"] = syn["checked"], syn["unchecked"], syn["errors"]
+    if syn["errors"]:
+        res["status"] = "syntax_error"   # 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
+        res["reason"] = "변경 소스 문법 오류 %d건: %s" % (len(syn["errors"]), "; ".join(
+            "%s — %s" % (e["file"], e["error"].splitlines()[0] if e["error"] else "") for e in syn["errors"][:3]))
+        return True
+    if syn["unchecked"]:
+        # 2026-11-15 (R256) 사용자: "검사기 없음 → 미검증, 검증 완료로 판단하거나 자동 커밋하지 않음" —
+        #   전에는 unchecked 로 적기만 하고 pass 가 나와 그대로 커밋됐다
+        res["status"] = "unverified"
+        res["reason"] = "문법 검사기가 없어 확인 못 한 변경 파일 %d건 — 검증 완료로 보지 않고 자동 커밋하지 않음: %s" % (
+            len(syn["unchecked"]), ", ".join(syn["unchecked"][:5]))
+        return True
+    return False
+
+
+def _svn_changed(cwd: Path, timeout: int = 60) -> Optional[List[str]]:
+    """SVN 작업본의 수정·추가·교체 파일 (커밋 대상 후보 · 경로 '/' 통일). svn 아님·실패 = None.
+    timeout: 커밋 훅(5초 제한)은 짧게 넘긴다 · 넘으면 None → 훅이 차단 (fail-closed)."""
+    import shutil as _sh
+    svn = _sh.which("svn")
+    if not svn or not (cwd / ".svn").is_dir():
+        return None
+    try:
+        r = subprocess.run([svn, "status", "-q", "--non-interactive"], cwd=str(cwd), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0:
+        return None
+    out = []
+    for line in r.stdout.splitlines():
+        if len(line) > 8 and line[0] in "MAR":
+            rel = line[8:].strip().replace("\\", "/")
+            if (cwd / rel).is_file():
+                out.append(rel)
+    return out
+
+
+def file_hashes(cwd: Path, rels: List[str]) -> Dict[str, str]:
+    import hashlib
+    out = {}
+    for rel in rels:
+        try:
+            out[rel] = hashlib.sha256((cwd / rel).read_bytes()).hexdigest()
+        except OSError:
+            out[rel] = ""
+    return out
+
+
+def syntax_gate(cwd: Path) -> Dict[str, Any]:
+    """git 이 아닌 작업본(IFRS = SVN)의 커밋 전 문법 게이트 (2026-11-15 R256 · 커밋 훅이 git commit 에만 반응해
+    실제 개발 프로젝트의 svn commit 은 문법 검사를 한 번도 거치지 않았다). 수정 파일 내용 해시와 함께 SYNTAX_STAMP 에 기록 →
+    커밋 훅(pre_commit_full_check.py)이 지금 수정 파일 해시가 같고 상태가 pass/skip 일 때만 svn commit 을 통과시킨다."""
+    import time as _t
+    changed = _svn_changed(cwd)
+    res: Dict[str, Any] = {"at": int(_t.time()), "vcs": "svn" if changed is not None else "none"}
+    if changed is None:
+        res.update(status="blocked", reason="SVN 작업본이 아니거나 svn status 실패 — 수정 파일을 확정할 수 없음", files={})
+    else:
+        code = [p for p in changed if p.lower().endswith(_CODE_EXT)]
+        res["changed_code"] = code
+        res["files"] = file_hashes(cwd, code)
+        if not code:
+            res["status"] = "skip"
+        elif not _syntax_verdict(res, staged_syntax_check(cwd, code)):
+            res["status"] = "pass"
+    stamp = cwd / SYNTAX_STAMP
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
 # 2026-11-14: 매개변수 id 에 공백이 있으면 (예: [cd /c/x; git push origin main-True]) \S+ 가 못 읽어
 #   실패 0건으로 집계 → rc=1 '실행 오류' blocked 로 오분류되고 기준선 비교(신규 회귀 판정)를 못 했다
 _RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
@@ -507,16 +766,15 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
     except Exception:  # noqa: BLE001 — 측정 실패는 기록만 (시험 생략 사유로 쓰지 않는다)
         res["commit_memory_pct"] = None
     syn = staged_syntax_check(cwd, code) if (tree and code) else {"errors": [], "checked": [], "unchecked": []}
-    res["syntax_checked"], res["syntax_unchecked"], res["syntax_errors"] = syn["checked"], syn["unchecked"], syn["errors"]
     if not tree:
         res["status"] = "blocked"
         res["reason"] = "스테이징 트리 해시를 못 얻음 (병합 충돌 중?)"
+        _syntax_verdict(res, {"errors": [], "checked": [], "unchecked": []})
     elif not code:
         res["status"] = "skip"
-    elif syn["errors"]:
-        res["status"] = "syntax_error"   # 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
-        res["reason"] = "변경 소스 문법 오류 %d건: %s" % (len(syn["errors"]), "; ".join(
-            "%s — %s" % (e["file"], e["error"].splitlines()[0] if e["error"] else "") for e in syn["errors"][:3]))
+        _syntax_verdict(res, syn)
+    elif _syntax_verdict(res, syn):
+        pass   # syntax_error · unverified = 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
     else:
         unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
         dirty = sorted(set(code) & unstaged)
@@ -604,7 +862,8 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
         spec = ilu.spec_from_file_location("_gate_trace", str(Path(__file__).resolve().with_name("trace.py")))
         tm = ilu.module_from_spec(spec)
         spec.loader.exec_module(tm)
-        st = {"pass": "success", "fail": "fail", "blocked": "blocked"}.get(str(res.get("status")), "unknown")
+        st = {"pass": "success", "fail": "fail", "blocked": "blocked", "syntax_error": "fail", "regression": "fail",
+              "unverified": "blocked", "preexisting": "success", "skip": "success"}.get(str(res.get("status")), "unknown")
         tm.emit("test", step="regression-gate", status=st, error=res.get("reason"), evidence=str(REGRESSION_STAMP),
                 detail={"summary": res.get("summary"), "new_failures": (res.get("new_failures") or [])[:10],
                         "tests": len(res.get("tests") or []), "memory_pct": res.get("commit_memory_pct")})
@@ -1205,7 +1464,13 @@ def _cli_main(argv):
         brief = {k: res.get(k) for k in ("status", "reason", "summary", "tests", "new_failures", "baseline_failures",
                                          "commit_memory_pct")}
         print(json.dumps(brief, ensure_ascii=False, indent=1))
-        return {"regression": 2, "blocked": 1}.get(res["status"], 0)
+        # 2026-11-15 (R256): syntax_error 가 0(통과)으로 나가던 것 — 문법 오류·미검증도 실패 종료
+        return {"regression": 2, "syntax_error": 2, "blocked": 1, "unverified": 1}.get(res["status"], 0)
+    if argv[1] == "syntax-gate":         # git 이 아닌 작업본(SVN) 커밋 전: exit 0 = pass·skip · 2 = 문법 오류 · 1 = 미검증·확정 불가
+        res = syntax_gate(ROOT)
+        print(json.dumps({k: res.get(k) for k in ("status", "reason", "vcs", "changed_code", "syntax_errors",
+                                                   "syntax_unchecked")}, ensure_ascii=False, indent=1))
+        return {"syntax_error": 2, "blocked": 1, "unverified": 1}.get(res["status"], 0)
     if argv[1] == "external-deps":
         deps = external_dependencies(ROOT)
         print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))

@@ -51,7 +51,9 @@ fi
 
 # 6. 코드 변경 -> 회귀 방지 게이트 기록이 지금 스테이징 내용과 같아야 (2026-11-09 · A 수정으로 B·C 가 깨지는 것 차단)
 #    시험은 훅 시간(5초) 안에 못 돌리므로 regression-gate 가 남긴 기록의 트리 해시·상태만 확인한다.
-if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
+#    확장자 목록 = independent_verifier._CODE_EXT (2026-11-15 R256: vue·jsx·mjs·cjs·json·java·xml·yml·go 가 빠져
+#    게이트가 검사 대상으로 보는 파일만 바꾼 커밋은 이 훅이 게이트를 요구하지 않았다 · 시험이 두 목록을 대조)
+if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx|vue|jsx|mjs|cjs|json|java|xml|yml|yaml|go)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
   TREE=$(git write-tree 2>/dev/null || echo "")
   PYBIN=$(command -v python || command -v python3 || echo "")
   if [ -n "$TREE" ] && [ -n "$PYBIN" ]; then
@@ -62,6 +64,7 @@ print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/de
     case "$GATE" in
       pass|preexisting|skip) ;;
       syntax_error) MISSING="$MISSING\n  - 변경 소스 문법 오류: .claude/state/regression-gate.json 의 syntax_errors 파일을 고친 뒤 regression-gate 다시 실행" ;;
+      unverified) MISSING="$MISSING\n  - 문법 검사기가 없어 확인 못 한 변경 파일 (.claude/state/regression-gate.json 의 syntax_unchecked) — 검증 완료로 보지 않아 자동 커밋하지 않음 · 사용자가 직접 확인 후 커밋" ;;
       regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;
       *) MISSING="$MISSING\n  - 회귀 방지 게이트 ($GATE): python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate 실행 후 커밋 (스테이징을 바꾸면 다시)" ;;
     esac

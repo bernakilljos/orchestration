@@ -87,8 +87,8 @@ def test_syntax_check_catches_injected_errors(tmp_path):
     (tmp_path / "bad.py").write_text("def f(:\n    pass\n", encoding="utf-8")
     (tmp_path / "bad.json").write_text('{"a": 1,}', encoding="utf-8")
     (tmp_path / "tsconfig.json").write_text('{ // 주석\n "a": 1 }', encoding="utf-8")
-    (tmp_path / "x.ps1").write_text("Write-Host 1", encoding="utf-8")
-    files = ["ok.py", "bad.py", "bad.json", "tsconfig.json", "x.ps1"]
+    (tmp_path / "x.bat").write_text("@echo off\n", encoding="utf-8")   # R256: tsconfig·.ps1 은 이제 실제 검사 → 검사기 없는 .bat
+    files = ["ok.py", "bad.py", "bad.json", "tsconfig.json", "x.bat"]
     if shutil.which("bash"):
         (tmp_path / "bad.sh").write_text("if [ 1 ; then\n", encoding="utf-8")
         files.append("bad.sh")
@@ -98,8 +98,8 @@ def test_syntax_check_catches_injected_errors(tmp_path):
     assert "ok.py" not in bad
     if shutil.which("bash"):
         assert "bad.sh" in bad
-    assert any(u.startswith("tsconfig.json") for u in r["unchecked"])   # 못 본 것은 통과로 세지 않음
-    assert any(u.startswith("x.ps1") for u in r["unchecked"])
+    assert "tsconfig.json" in r["checked"]                               # R256: 주석·끝 쉼표 제거 후 실제 파싱
+    assert any(u.startswith("x.bat") for u in r["unchecked"])           # 못 본 것은 통과로 세지 않음
 
 
 @pytest.mark.skipif(not (shutil.which("node") and shutil.which("bash")), reason="node·bash 없음")
