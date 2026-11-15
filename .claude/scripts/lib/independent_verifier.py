@@ -34,6 +34,7 @@ Judge agent 는 **옵션** · LLM 호출 없이도 판정 (안전 default).
   # verdict: {"status": "VERIFIED"|"UNVERIFIED"|"REPAIRING"|"OUT_OF_SCOPE", "reasons": [...]}
 """
 from __future__ import annotations
+import fnmatch
 import json
 import os
 import re
@@ -234,10 +235,36 @@ def _mentions(text: str, names: set) -> bool:
     return any(re.search(rf"(?<![\w-]){re.escape(n)}(?![\w-])", text) for n in names)
 
 
+_COLLECT_CACHE: Dict[str, Any] = {}
+
+
+def _collectable(cwd: Path, t: str) -> bool:
+    """pytest 가 실제로 모으는 시험 파일인가 (pytest.ini 의 testpaths 폴더 안 + python_files 이름).
+    2026-11-15: 'git ls-files *_test.py' 가 tools/playwright_sidebar_test.py 같은 실행 스크립트(가져오면 바로 브라우저 로그인 후
+    sys.exit)까지 골라 pytest 에 파일로 직접 넘겼고 → 'mainloop: caught unexpected SystemExit' rc=3 로 게이트가 blocked."""
+    if not t.endswith(".py"):
+        return True
+    key = str(cwd)
+    if key not in _COLLECT_CACHE:
+        pats = set()
+        for ini in (_run_git_in(cwd, ["ls-files", "*pytest.ini"]) or "").split():
+            try:
+                txt = (cwd / ini).read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            m = re.search(r"^\s*python_files\s*=([^\n]*)", txt, re.M)
+            pats.update(m.group(1).split() if m else ["test_*.py", "*_test.py"])
+        _COLLECT_CACHE[key] = (_configured_test_dirs(cwd), sorted(pats) or ["test_*.py", "*_test.py"])
+    dirs, pats = _COLLECT_CACHE[key]
+    t = t.replace("\\", "/")
+    in_dir = (not dirs) or any(d in (".", "") or t.startswith(d.rstrip("/") + "/") for d in dirs)
+    return in_dir and any(fnmatch.fnmatch(Path(t).name, p) for p in pats)
+
+
 def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
     """{"tests": [...], "full": 사유|None, "why": {시험: 사유}} — 회귀 게이트·self-healing 공용."""
     out = _run_git_in(cwd, ["ls-files", "*test_*.py", "*_test.py", "*.test.ts", "*.test.js"]) or ""
-    tests = [t.strip() for t in out.splitlines() if t.strip()]
+    tests = [t.strip() for t in out.splitlines() if t.strip() and _collectable(cwd, t.strip())]
     tset = set(tests)
     code = [p for p in changed if Path(p).suffix in _SRC_EXT and p not in tset]
     why: Dict[str, str] = {t: "변경된 시험" for t in tests if t in changed}

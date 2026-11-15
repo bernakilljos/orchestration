@@ -6,20 +6,14 @@ from __future__ import annotations
 
 import re
 
-from _common import Spawn, bash_cat, grep_o_first, project_guard
+from _common import Spawn, bash_cat, grep_o_first, project_guard, tool_command
 
-_SED_A = re.compile(r'"command"[ \t\r\f\v]*:[ \t\r\f\v]*"')
 
 
 def run(ctx):
     if not project_guard(ctx):
         return None
-    m = grep_o_first(bash_cat(ctx.raw), r'"command"[ \t\r\f\v]*:[ \t\r\f\v]*"[^"]*"')
-    cmd = ""
-    if m is not None:
-        cmd = _SED_A.sub("", m, count=1)
-        if cmd.endswith('"'):
-            cmd = cmd[:-1]
+    cmd = tool_command(ctx)
     if is_git_commit_invocation(cmd):
         return Spawn(".claude/hooks/pre-commit-full-check.sh")
     return None

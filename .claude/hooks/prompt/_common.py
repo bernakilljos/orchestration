@@ -218,6 +218,20 @@ def tool_input(ctx) -> dict:
     return ti if isinstance(ti, dict) else {}
 
 
+def tool_command(ctx) -> str:
+    """실행할 명령 본문. 2026-11-15: 세 훅이 원시 JSON 에서 '"command":"[^"]*"' 로 뽑아, 명령 안의 첫 \\" 에서 잘렸다 —
+    git commit 앞에 따옴표가 하나라도 있으면 커밋 검사(회귀 게이트)가 통째로 건너뛰어졌다. 파싱된 tool_input 이 정본,
+    JSON 이 깨졌을 때만 옛 방식으로 뽑는다."""
+    cmd = tool_input(ctx).get("command")
+    if isinstance(cmd, str):
+        return cmd
+    m = grep_o_first(bash_cat(ctx.raw), r'"command"[ \t\r\f\v]*:[ \t\r\f\v]*"(?:[^"\x5c]|\x5c.)*"')
+    if m is None:
+        return ""
+    m = re.sub(r'^"command"[ \t\r\f\v]*:[ \t\r\f\v]*"', "", m, count=1)
+    return m[:-1] if m.endswith('"') else m
+
+
 def bash_cat(raw: str) -> str:
     """INPUT=$(cat) — 끝의 개행만 제거."""
     return raw.rstrip("\n")

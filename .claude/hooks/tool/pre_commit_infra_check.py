@@ -6,18 +6,12 @@ from __future__ import annotations
 
 import re
 
-from _common import Spawn, bash_cat, grep_o_first
+from _common import Spawn, bash_cat, grep_o_first, tool_command
 
-_SED_A = re.compile(r'"command"[ \t\r\f\v]*:[ \t\r\f\v]*"')
 
 
 def run(ctx):
-    m = grep_o_first(bash_cat(ctx.raw), r'"command"[ \t\r\f\v]*:[ \t\r\f\v]*"[^"]*"')
-    cmd = ""
-    if m is not None:
-        cmd = _SED_A.sub("", m, count=1)
-        if cmd.endswith('"'):
-            cmd = cmd[:-1]
+    cmd = tool_command(ctx)
     if re.search(r"git\s+commit", cmd):
         return Spawn(".claude/hooks/pre-commit-infra-check.sh")
     return None
