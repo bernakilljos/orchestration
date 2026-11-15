@@ -36,3 +36,32 @@ def test_infra_check_fires_when_quote_precedes_commit():
 def test_broken_json_falls_back_past_escaped_quotes():
     raw = '{"tool_input":{"command":"grep \\"a\\" x; git commit -m y"'
     assert _common.tool_command(_common.Ctx(raw)).endswith("git commit -m y")
+
+
+# 11-15(사이클 1038): 'timeout 590 git commit' 처럼 감싸는 명령이 앞에 붙으면 커밋으로 못 봐 회귀 게이트를 건너뛰었다
+#   (c4d9e9e3d 가 게이트 기록 없이 들어감) — 그리고 파이썬 쪽이 넘겨도 sh 가 첫 \" 에서 명령을 잘라 다시 exit 0 했다.
+import subprocess  # noqa: E402
+
+WRAPPED = ["timeout 590 git commit -q -m y", "cd /x; timeout -k 5 590 git commit -m y", "time git commit -m y",
+           "nice -n 5 git commit -m y", "nohup git commit -m y", "env A=1 git commit -m y", "FOO=1 timeout 9 git commit -m y"]
+
+
+def test_full_check_sees_commit_behind_wrapper(monkeypatch):
+    monkeypatch.setattr(pre_commit_full_check, "project_guard", lambda ctx: True)
+    for c in WRAPPED:
+        assert pre_commit_full_check.run(_ctx(c)) is not None, c
+    assert pre_commit_full_check.run(_ctx("timeout 9 echo git commit")) is None
+
+
+def _sh_reaches_staged_check(script, cmd):
+    """sh 가 명령을 커밋으로 알아보고 본 검사(git diff --cached)까지 가는가 — bash -x 흔적으로 본다."""
+    root = Path(__file__).resolve().parents[3]
+    inp = json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}})
+    r = subprocess.run(["bash", "-x", str(root / ".claude" / "hooks" / script)], input=inp, capture_output=True,
+                       text=True, encoding="utf-8", errors="replace", env={**__import__("os").environ, "CLAUDE_PROJECT_DIR": str(root)}, timeout=60)
+    return "diff --cached" in r.stderr
+
+
+def test_sh_keeps_command_after_quotes():
+    for script in ("pre-commit-full-check.sh", "pre-commit-infra-check.sh"):
+        assert _sh_reaches_staged_check(script, CMD), script

@@ -23,8 +23,11 @@ def run(ctx):
 # 커밋으로 오인해 회귀 게이트가 막던 결함. 실행 위치(명령 시작)에 있는 git commit 만 인정한다.
 _RX_HEREDOC = re.compile(r"<<-?\s*['\"]?(\w+)['\"]?[^\n]*\n.*?\n\1(?=\s*(?:\n|$))", re.S)
 _RX_QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
+# 11-15(사이클 1038): 'timeout 590 git commit' 처럼 감싸는 명령이 앞에 붙으면 못 봐 회귀 게이트를 건너뛰었다 → 흔한 감싸개 허용.
+_WRAP = (r"(?:(?:timeout(?:\s+-{1,2}[\w-]+(?:[=\s]\S+)?)*\s+\d+\S*|time(?:\s+-p)?|nice(?:\s+-n\s*-?\d+)?"
+         r"|nohup|env(?:\s+\w+=\S*)*|stdbuf(?:\s+-\S+)*|command|exec)\s+(?:\w+=\S*\s+)*)*")
 _RX_COMMIT_AT_CMD = re.compile(
-    r"(?:^|[;&|(\n{]|\$\()\s*(?:\w+=\S*\s+)*(?:command\s+|exec\s+)?git(?:\.exe)?"
+    r"(?:^|[;&|(\n{]|\$\()\s*(?:\w+=\S*\s+)*" + _WRAP + r"git(?:\.exe)?"
     r"(?:\s+(?:-[Cc]\s+\S+|--[\w-]+(?:=\S+)?))*\s+commit(?![\w-])",
     re.I,
 )

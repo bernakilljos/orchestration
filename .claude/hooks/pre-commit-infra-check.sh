@@ -9,7 +9,13 @@ set -uo pipefail
 
 # stdin 에서 tool_input 읽기 (PreToolUse hook 용)
 INPUT=$(cat 2>/dev/null || echo '{}')
-CMD=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"command"[[:space:]]*:[[:space:]]*"//;s/"$//' 2>/dev/null || echo "")
+# 11-15(사이클 1038): 옛 방식('"command":"[^"]*"')은 명령 안의 첫 \" 에서 잘려 git commit 앞에 따옴표가 있으면 exit 0 — JSON 파싱이 정본.
+CMD=""
+command -v jq >/dev/null 2>&1 && CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""' 2>/dev/null)
+[ -z "$CMD" ] && CMD=$(printf '%s' "$INPUT" | python -X utf8 -c "import json,sys
+try: print(json.load(sys.stdin).get('tool_input',{}).get('command',''))
+except Exception: pass" 2>/dev/null)
+[ -z "$CMD" ] && CMD=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"command"[[:space:]]*:[[:space:]]*"//;s/"$//' 2>/dev/null || echo "")
 
 # git commit 명령이 아니면 skip
 echo "$CMD" | grep -qE 'git\s+commit' || exit 0
