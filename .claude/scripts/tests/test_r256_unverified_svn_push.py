@@ -209,7 +209,9 @@ def _isolated_kit() -> Path:
         else:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src, dst)
-    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+    # core.autocrlf 는 지정하지 않는다 — 훅의 내용 비교(git hash-object)가 저장소 기본 설정으로 돌기 때문에 커밋도 같은 설정이어야
+    #   (2026-11-15 대상 실측: 시스템 autocrlf=true · 대상 사본 CRLF → false 로 커밋하면 같은 파일인데 해시가 달라 실패)
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
     for a in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "isolated"]):
         subprocess.run(g + a, cwd=d, check=True, capture_output=True)
     return d
