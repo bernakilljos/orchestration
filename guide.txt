@@ -2484,6 +2484,8 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - bde283b 재감사 (2026-11-04): status-push 는 토큰을 git URL 에 넣지 않음 (ORCH_GH_PAT + credential helper) · 세션 종료 hook 은 프로세스를 죽이지 않고 백업도 지우지 않음 (후보 기록만) · daily-cleanup 은 후보 기록만 · 3일+ 정리는 sandbox·task·기준선 제외. 토큰 폐기는 사용자 처리. 상세 §25.
 - 원격 명령 (2026-11-04): status-push·remote-agent 는 서명(ORCH_REMOTE_CMD_SECRET)·만료·일회성 id 가 맞는 명령만 실행 · 비밀 미설정 = 전부 차단 · key/drag 는 ORCH_REMOTE_ALLOW_KEYS=1 추가 필요 · dashboard.py 는 토큰을 git URL 에 넣지 않음. 상세 §27.
 - 원격 화면 (2026-11-16 R266): remote-agent 는 평상시 화면 캡처 0회 · ORCH_REMOTE_ALLOW_SCREEN=1 과 ORCH_REMOTE_CAPTURE_WINDOW=<창 제목>(사용자 환경변수) + 대시보드 주소가 있을 때만 원격 명령 직후 그 창만 10장 × 0.2초 · 주소 없을 때 GitHub 조회 5초 간격. 끄기 = HKCU Run 의 OrchestrationRemoteAgent 값 삭제 · 되살리기 = 05-services.bat 재실행.
+- VS Code 성능 (2026-11-16 R267): 작업공간 템플릿 터미널 GPU 가속 off→auto (공식 문서: off 의 DOM 렌더러는 훨씬 느림 · 실측 VS Code 합계 코어 CPU 83.7%→39.1%) · .repair-sandbox(kit 사본 18개) 파일 감시·검색·Python 분석 제외 · 상태줄은 실제 터미널 폭(COLUMNS)-4 에 맞춰 자름 (폭 모를 때만 130칸) · fast 표시 on/off.
+- 상태줄 정확성 (2026-11-16 R268~R271): 개발 줄 시간 표기 «개발중(≈N분)» · READY 오류 감점은 같은 메시지 반복을 1건으로 · 통제 줄 = 승인차단(approval-gate.log BLOCK)·검증skip(회귀 게이트 blocked·unknown)·범위(lock 꺼짐이면 lock꺼짐)·임의변경·추측수정 미계측 (최근 24시간) · 배포 표시 원천 = merge-to-target --apply 가 남기는 logs/merge-to-target.log · 시험이 운영 approval-gate.log 에 쓰던 오염 수정 (ORCHESTRATION_ROOT 따름).
 - V1.1 (2026-11-05): 긴급 요청 감지 (detect_user_emotion) · 사실 표기 5종 (failure-mode.md · Judge 근거 태그 검사) · 연관 작업 자율 범위 (execution-contract §3) · runner 타임아웃 시 자기 프로세스 트리 정리. 상세 §29.
 - Judge 근거 (2026-11-05): [확인] 근거가 있으면 부연 [추정]·[예시] 허용 · [확인] 없이 추정·예시만으로 met 이면 UNVERIFIED.
 - V1.1 재확인 (2026-11-05): 긴급은 감지만 (우선 처리 경로 없음) · sandbox 계열 회귀는 메모리 부족으로 BLOCKED. 상세 §30.

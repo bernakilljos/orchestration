@@ -140,7 +140,7 @@ def test_r261_eta_only_from_measured_stages():
     assert sl._eta_min(0.0, {"수정": 60.0, "시험": 240.0}, 6) == 8                  # 단계당 120초 × 남은 4 = 8분
     assert sl._eta_min(0.0, {n: 60.0 * i for i, n in enumerate("abcdef", 1)}, 6) == 0
     src = (KIT / ".claude/scripts/statusline_context.py").read_text(encoding="utf-8")
-    assert '남은시간 산정중' in src and "요구{_it[0]}/{_it[1]}" in src
+    assert '(산정중)' in src and '(≈{_eta}분)' in src and "요구{_it[0]}/{_it[1]}" in src   # R269 표기: 상태 뒤 괄호
 
 
 def test_r262_scan_cache_tmp_removed_on_failure_and_stale_swept(tmp_path, monkeypatch):
@@ -210,3 +210,52 @@ def test_r264_plain_declarative_directive_is_registered_but_report_is_not():
     assert R._intent_text(report)[1] == "pasted_report"
     two = "<pasted_content id=\"3\">\n결과를 확인한다.\n기록을 남긴다.\n</pasted_content id=\"3\">"   # 평서 2줄 = 약한 표지 부족
     assert R._intent_text(two)[1] == "pasted_report"
+
+
+def test_r268_ready_penalty_counts_unique_errors(tmp_path):
+    """R268: 같은 오류가 시각만 바뀌어 10줄 기록돼도 READY 감점은 고유 1건 · 다른 오류는 따로 센다 · 표시 건수는 그대로."""
+    import time as _t
+    sl = _load("sl_r268", KIT / ".claude/scripts/statusline_context.py")
+    logs = tmp_path / ".claude" / "logs"
+    logs.mkdir(parents=True)
+    now = _t.strftime("%Y-%m-%d %H:%M:", _t.localtime())
+    rows = [f"{now}{i:02d} 740899f3 Q12_startup=FAIL · Q11=PARTIAL" for i in range(10)]
+    rows.append(f"{now}30 abcdef12 other.py: Traceback boom")
+    (logs / "q.log").write_text("\n".join(rows) + "\n", encoding="utf-8")
+    c, e, w, rpt, top = sl.recent_log_issues(str(tmp_path))
+    assert e == 11 and sl._LOG_UNIQUE_ERRS == 2
+
+
+def test_r270_control_line_counts_existing_records(tmp_path):
+    """R270 통제 줄: 승인 차단·검증 미완료를 기존 기록에서 센다 · 시험 임시 폴더 명령은 제외 · 기록 없는 항목은 «미계측»(0 아님)."""
+    import json as _j
+    import time as _t
+    sl = _load("sl_r270", KIT / ".claude/scripts/statusline_context.py")
+    logs = tmp_path / ".claude" / "logs"
+    logs.mkdir(parents=True)
+    now = _t.strftime("%Y-%m-%d_%H:%M:%S")
+    old = _t.strftime("%Y-%m-%d_%H:%M:%S", _t.localtime(_t.time() - 3 * 86400))
+    (logs / "approval-gate.log").write_text("\n".join([
+        f"[{now}] BLOCK: irreversible | task_id=a1 | cmd=git push --force origin main",          # 실제 차단
+        f"[{now}] BLOCK: cost | task_id=a2 | cmd=sh C:/x/Temp/pytest-of-u/pytest-1/t/risky.sh",  # 시험 명령 → 제외
+        f"[{old}] BLOCK: data_loss | task_id=a3 | cmd=rm -rf x",                                  # 24시간 지남 → 제외
+        f"[{now}] REQUEST: cost | task_id=a4"]) + "\n", encoding="utf-8")
+    ev = lambda st, ts: _j.dumps({"kind": "test", "step": "regression-gate", "status": st, "ts": ts})
+    (logs / "trace-events.jsonl").write_text("\n".join([
+        ev("blocked", _t.time()), ev("unknown", _t.time()), ev("success", _t.time()), ev("blocked", _t.time() - 3 * 86400)]) + "\n",
+        encoding="utf-8")
+    line = sl._control_line(str(tmp_path))
+    assert "승인차단 1" in line and "검증skip 2" in line and "범위 lock꺼짐" in line and "임의변경·추측수정 미계측" in line
+    empty = tmp_path / "none"
+    (empty / ".claude").mkdir(parents=True)
+    line2 = sl._control_line(str(empty))
+    assert "승인차단 미측정" in line2 and "검증skip 미측정" in line2   # 기록 파일 없음 = 0 이 아니라 미측정
+
+
+def test_r270_merge_apply_records_deploy_log(tmp_path, monkeypatch):
+    """R270: 전파 반영 1회 = kit 로그 1줄 (READY «배포» 원천) · 기록 위치는 kit (시험은 임시 폴더로 돌림)."""
+    mt = _load("mt_r270", KIT / ".claude/scripts/merge-to-target.py")
+    monkeypatch.setattr(mt, "KIT", tmp_path)
+    mt._record_apply(tmp_path / "T", "--only 2개 · 판정 정상")
+    t = (tmp_path / ".claude" / "logs" / "merge-to-target.log").read_text(encoding="utf-8")
+    assert "APPLY" in t and "--only 2개" in t and t.count("\n") == 1

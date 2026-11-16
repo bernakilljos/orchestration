@@ -393,6 +393,66 @@ def recent_error_count(cwd: str) -> int:
     return r[0] + r[1]
 
 
+_LOG_UNIQUE_ERRS = None   # R268 recent_log_issues 가 채움 (READY 감점용 고유 오류 수)
+
+
+def _tail_lines(path: str, nbytes: int = 400_000) -> list:
+    """큰 기록 파일의 끝부분만 읽는다 (렌더 속도 보호 · 최근 24시간 판정에 충분한 양)."""
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(max(0, size - nbytes))
+        return f.read().decode("utf-8", "replace").splitlines()[1 if size > nbytes else 0:]
+
+
+def _control_line(cwd: str) -> str:
+    """R270 통제 줄 — 기존 기록만 사용 (새 훅·감시 X) · 최근 24시간.
+      승인차단 = logs/approval-gate.log 의 BLOCK 줄 (pytest 임시 폴더 시험 명령 제외)
+      검증skip = logs/trace-events.jsonl 의 regression-gate 가 blocked·unknown 으로 끝난 횟수 (검증이 완료되지 않은 채 끝남)
+      범위위반 = scope-lock 이 꺼져 있으면 «lock꺼짐» (위반을 셀 기준 없음 · 0 아님) · 켜져 있어도 위반 기록이 없어 «미계측»
+      임의변경·추측수정 = 구분 가능한 기록 없음 → «미계측»
+    기록 파일을 못 읽으면 그 항목은 «미측정» (0 으로 보이지 않게)."""
+    import time as _t
+    from datetime import datetime as _dt
+    cut = _t.time() - 86400
+    parts = []
+    gl = os.path.join(cwd, ".claude", "logs", "approval-gate.log")
+    try:
+        n = 0
+        for ln in _tail_lines(gl):
+            if "] BLOCK:" not in ln or "pytest-of-" in ln or "pytest-" in ln and "Temp" in ln:
+                continue
+            m = re.match(r"\[(\d{4}-\d\d-\d\d)_(\d\d:\d\d:\d\d)\]", ln)
+            if m and _dt.strptime(m.group(1) + " " + m.group(2), "%Y-%m-%d %H:%M:%S").timestamp() >= cut:
+                n += 1
+        parts.append(f"승인차단 {n}")
+    except OSError:
+        parts.append("승인차단 미측정")
+    tl = os.path.join(cwd, ".claude", "logs", "trace-events.jsonl")
+    try:
+        n = 0
+        for ln in _tail_lines(tl, 1_500_000):
+            if '"regression-gate"' not in ln:
+                continue
+            try:
+                ev = json.loads(ln)
+            except ValueError:
+                continue
+            if ev.get("kind") == "test" and ev.get("step") == "regression-gate" and ev.get("status") in ("blocked", "unknown") \
+                    and float(ev.get("ts") or 0) >= cut:
+                n += 1
+        parts.append(f"검증skip {n}")
+    except OSError:
+        parts.append("검증skip 미측정")
+    try:
+        with open(os.path.join(cwd, ".claude", "state", "scope-lock.json"), encoding="utf-8") as f:
+            parts.append("범위 미계측" if json.load(f).get("active") else "범위 lock꺼짐")
+    except (OSError, ValueError):
+        parts.append("범위 lock꺼짐")
+    parts.append("임의변경·추측수정 미계측")
+    return "[90m" + " · ".join(parts) + "[0m"
+
+
 def recent_log_issues(cwd: str):
     """(critical, error, warn, repeat_max, top_source) — 줄 안 시각이 최근 24h 인 것만 센다.
 
@@ -424,6 +484,8 @@ def recent_log_issues(cwd: str):
     msg_key_re = _re.compile(r"[\w\-.]+\.(sh|py|bat|js|ts)[^:]*(?::\s*(.{0,40}))?", _re.I)
     errs, warns, crits = _co.Counter(), 0, 0
     repeat_cnt = _co.Counter()
+    global _LOG_UNIQUE_ERRS
+    _uniq_err = set()
     # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
     # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
@@ -454,6 +516,8 @@ def recent_log_issues(cwd: str):
                     crits += 1
                 elif e:
                     errs[base] += 1
+                    # R268: 같은 메시지 반복(시각·세션ID·숫자만 다름)은 결함 1건 — READY 감점은 고유 건수로 (표시 건수는 그대로)
+                    _uniq_err.add((base, _re.sub(r"20\d\d-\d\d-\d\d[ T][\d:.]+|\b[0-9a-f]{8,}\b|\d+", "#", ln).strip()[:120]))
                 else:
                     warns += 1
                 # 반복 집계 — 같은 (log, msg key) 몇 번
@@ -467,6 +531,7 @@ def recent_log_issues(cwd: str):
     # .log 확장자 떼서 짧게
     top_short = top[:-4] if top.endswith(".log") else top
     repeat_max = repeat_cnt.most_common(1)[0][1] if repeat_cnt else 0
+    _LOG_UNIQUE_ERRS = len(_uniq_err)
     return crits, sum(errs.values()), warns, repeat_max, top_short
 
 
@@ -762,7 +827,8 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total, logs_unmeasured=False)
     # 2) 실제 실패 감점 (강한)
     penalty = 0
     penalty += crits * 15  # critical 실제 오류
-    penalty += errs * 5    # error 실제 오류
+    # R268: 같은 오류가 반복 기록된 줄 수가 아니라 고유 오류 수로 감점 (11-16 실측: Q12 FAIL 1건이 10줄 → -50)
+    penalty += (_LOG_UNIQUE_ERRS if _LOG_UNIQUE_ERRS is not None else errs) * 5
     penalty += test_penalty  # test ❌
     # warns 는 감점 X (관측용) · 재발률도 감점 X
 
@@ -1416,13 +1482,13 @@ def extra_gauges(cwd, data=None):
         elif not rl:
             fast_badge = ""   # §81 사용량을 모르면 권고도 하지 않는다 (종전: 0% 로 보고 fast ON)
         elif _wp >= 80:
-            fast_badge = (f"{_RED}[!!] fast OFF 권고{_RST}")
+            fast_badge = (f"{_RED}[!!] fast off{_RST}")   # R267 사용자 "fast on 혹은 fast off 로"
         elif _sp >= 70:
-            fast_badge = (f"{_YEL}fast OFF 권고{_RST}")
+            fast_badge = (f"{_YEL}fast off{_RST}")
         elif _wp >= 50:
-            fast_badge = (f"{_YEL}fast OFF 권고{_RST}")
+            fast_badge = (f"{_YEL}fast off{_RST}")
         else:
-            fast_badge = "\033[32mfast 가능(권고)\033[0m"   # §81 실제 모드 상태가 아니라 권고
+            fast_badge = "\033[32mfast on\033[0m"   # §81 사용량 기준 권장값 (실제 /fast 상태 아님) · R267 표기 on/off
     except Exception:
         pass  # noqa: BLE001
 
@@ -1544,10 +1610,12 @@ def extra_gauges(cwd, data=None):
                 _it = _ls.get("current_items") or (0, 0)
                 if _it[1]:
                     _prog += f" 요구{_it[0]}/{_it[1]}"
+                # R269 사용자 지시: "R267 2/6(33%) 시험 남은≈3분 개발중" → "R267 2/6(33%) 시험 개발중(≈3분)" (시간은 상태 뒤 괄호)
+                _st_txt = _dev_st[1]
                 if _cs not in ("completed",):
                     _eta = _pg[4] if (_pg and len(_pg) > 4 and _pg[0] == _ls["current_rid"]) else None
-                    _prog += (" 남은시간 산정중" if _eta is None else f" 남은≈{_eta}분")
-                dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_dev_st[1]}\033[0m · {dev_line}"
+                    _st_txt += ("(산정중)" if _eta is None else f"(≈{_eta}분)")
+                dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_st_txt}\033[0m · {dev_line}"
     except Exception:
         pass
 
@@ -1598,9 +1666,9 @@ def extra_gauges(cwd, data=None):
     impact_line = _compute_impact(cwd)
 
     # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
-    control_line = ""
+    # R270 (11-16 전수조사): 기존 기록으로 셀 수 있는 것만 실제 계측 · 기록이 없는 항목은 «미계측» 유지 (0 으로 위장 X)
+    control_line = _control_line(cwd)
     # §81: 범위위반·임의변경·승인누락·추측수정·검증skip 을 세는 기록이 없다 — ⏳(측정 대기)가 아니라 미구현
-    control_line = "[90m5개 항목 계측 미구현[0m"
 
     # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
     verify_line = ""
@@ -1664,7 +1732,7 @@ def extra_gauges(cwd, data=None):
     # §81: 컴포넌트 재사용·우회·CSS중복·신규공통 = 집계 미구현 (종전 ?·— 표시) · 하드코딩만 감사 파일 실측
     _aud_ok = os.path.exists(os.path.join(cwd, ".claude", "state", "hardcoded-audit.json"))
     _hc_txt = (f"[1;33m{int(locals().get('_hc_total', 0) or 0)}[0m" if _aud_ok else "[36m⏳[0m")
-    reuse_line = f"하드코딩 {_hc_txt} · [90m4개 항목 미구현[0m"
+    reuse_line = f"하드코딩 {_hc_txt} · [90m재사용·우회·CSS중복·신규공통 미구현[0m"
 
     # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
     proof_line = ""
@@ -2106,10 +2174,16 @@ def main() -> None:
     #   → 폭을 모르면 120칸 상한 (STATUSLINE_MAX_COLS 로 조정 · 0 = 끔) · 진행률·현재 상태는 값 앞쪽이라 남는다
     #   실제 호출 진단 [확인 last-statusline-cols.txt]: Claude Code 가 COLUMNS=186 을 주어 161칸 줄이 그대로 나가 «빽빽·잘림»
     #   → 폭을 알아도 한 줄 최대 130칸 (STATUSLINE_MAX_COLS · 0 = 상한 없음) · 폭을 모르면 같은 상한
+    #   R267 (사용자 캡처 11-16 "우측에 여백이 있는데 … 로 나와 · 모니터마다 반응형"): COLUMNS=181 을 받고도 130 으로 잘랐다
+    #   → 폭을 알면 그 폭에 맞춘다 (Claude Code 가 상태줄을 2칸 들여 그리므로 여유 4칸) · 창·모니터 폭이 바뀌면 다음 호출에 새 COLUMNS 로 반영
+    #   → 폭을 모를 때만 130칸 상한 · STATUSLINE_MAX_COLS 를 명시하면 그 값이 상한 (0 = 상한 없음)
+    _cap_env = os.environ.get("STATUSLINE_MAX_COLS", "")
     try:
-        _cap = int(os.environ.get("STATUSLINE_MAX_COLS", "130"))
+        _cap = int(_cap_env) if _cap_env else (0 if _cols else 130)
     except ValueError:
-        _cap = 130
+        _cap = 0 if _cols else 130
+    if _cols:
+        _cols = max(40, _cols - 4)
     if _cap > 0:
         _cols = min(_cols, _cap) if _cols else _cap
     if _cols:

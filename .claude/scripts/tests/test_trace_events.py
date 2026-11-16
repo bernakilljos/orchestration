@@ -313,7 +313,10 @@ def test_no_git_no_logs_no_agents_are_unmeasured_not_zero(sl, proj):
     assert "git ⏳" in _plain(g["proof"]) and "git ✅" not in _plain(g["proof"])
     assert "미측정" in _plain(g["errors"]) and "error 0" not in _plain(g["errors"])
     assert "UNKNOWN" in _plain(g["agents"])
-    assert "미구현" in _plain(g["control"]) and "미구현" in _plain(g["reuse"])
+    # R270: 통제는 기록이 없으면 «미측정»·«미계측» (0 으로 위장 X) · 공통화 4항목은 여전히 미구현
+    _ctl = _plain(g["control"])
+    assert "승인차단 미측정" in _ctl and "검증skip 미측정" in _ctl and "미계측" in _ctl and " 0" not in _ctl
+    assert "미구현" in _plain(g["reuse"])
 
 
 def test_stale_test_cache_is_not_current_success(sl, proj):
@@ -505,7 +508,7 @@ def _cells_independent(s: str) -> int:
     return n
 
 
-@pytest.mark.parametrize("cols,cap,limit", [("186", None, 129), ("186", "100", 99), ("80", None, 79)])
+@pytest.mark.parametrize("cols,cap,limit", [("186", None, 182), ("186", "100", 99), ("80", None, 76), ("250", "130", 129)])   # R267: 폭을 알면 그 폭 - 4 (Claude Code 2칸 들여쓰기 여유) · 명시 상한 우선
 def test_every_rendered_row_fits_independent_limit(proj, cols, cap, limit):
     """실제 상태줄 프로그램 출력 전체를 독립 기대값으로 판정 (예전 시험은 상한을 구현과 같은 식으로 계산해 결함을 함께 놓칠 수 있었다)."""
     (proj / "plugins").mkdir(exist_ok=True)

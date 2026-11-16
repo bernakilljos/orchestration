@@ -660,7 +660,7 @@ def run_action(ctx, action):
     text = "%s%s" % (resp.get("stdout") or "", resp.get("stderr") or "")
     info = {"output_sha256": hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16],
             "output_chars": len(text)}  # 출력 원문은 저장하지 않는다 (비밀값 섞임 방지)
-    log = project_path(ctx, ".claude", "logs", "approval-gate.log")
+    log = os.path.join(_gate_log_dir(ctx), "approval-gate.log")
     try:
         tid = mod.find_request("base", fp[3], ("consumed",)) if hasattr(mod, "find_request") else None
         if tid and mod.record_result(tid, outcome, info):
@@ -689,8 +689,15 @@ def run(ctx):
                       "HITL Approval Gate — 내부 오류로 차단 (fail-closed)")
 
 
+def _gate_log_dir(ctx):
+    """R270: 승인 기록은 승인 DB 와 같은 루트에 — ORCHESTRATION_ROOT(시험 임시 폴더·Broker 폴더)가 있으면 그쪽 ·
+    없으면(평상시) 프로젝트 .claude/logs. 시험이 운영 approval-gate.log 에 차단 기록 143건을 남기던 오염 수정 (11-16 실측)."""
+    alt = os.environ.get("ORCHESTRATION_ROOT")
+    return os.path.join(alt, ".claude", "logs") if alt else project_path(ctx, ".claude", "logs")
+
+
 def _run(ctx, box):
-    log_dir = project_path(ctx, ".claude", "logs")
+    log_dir = _gate_log_dir(ctx)
     log = os.path.join(log_dir, "approval-gate.log")
     box["log"] = log
     try:

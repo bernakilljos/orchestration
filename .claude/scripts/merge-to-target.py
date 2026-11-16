@@ -489,6 +489,8 @@ def main() -> int:
                 f.write(str(target) + chr(10))
             report.append(f"자동 병합 목록 등록 → {reg}")
 
+    if apply:
+        _record_apply(target, "전체 병합")
     mode = "APPLY" if apply else "DRY-RUN"
     print(f"=== merge-to-target [{mode}] {target}")
     for k, v in stats.items():
@@ -540,6 +542,18 @@ def _merge_settings_file(target: Path, backup: Path, apply: bool, report: list, 
     return changed
 
 
+def _record_apply(target: Path, note: str) -> None:
+    """R270: 실제 반영(--apply)마다 kit 로그에 1줄 — 상태줄 READY 의 «배포» 표시 원천 (종전엔 git post-merge 자동 병합만 기록해
+    수동·제한 전파는 늘 ❌ 로 보였다). 기록 실패는 전파 결과를 바꾸지 않는다."""
+    try:
+        lp = KIT / ".claude" / "logs" / "merge-to-target.log"
+        lp.parent.mkdir(parents=True, exist_ok=True)
+        with open(lp, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] APPLY {target} · {note}" + chr(10))
+    except OSError:
+        pass
+
+
 def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Path, backup: Path, apply: bool) -> int:
     """--only 제한 전파 결과: 파일별 판정 + kit·대상 해시 (전후 비교 증거)."""
     kind = {rel: k for k, v in stats.items() for rel in v}
@@ -557,6 +571,7 @@ def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Pa
         man_p.parent.mkdir(parents=True, exist_ok=True)
         man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
         print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+        _record_apply(target, f"--only {len(only)}개 · 판정 {'보류 있음' if rc else '정상'}")
     return rc
 
 
