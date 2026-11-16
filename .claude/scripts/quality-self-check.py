@@ -59,6 +59,22 @@ def _walk(x):
             yield from _walk(v)
 
 
+def _hook_name(cmd: str) -> str:
+    return os.path.basename(cmd.split('"')[-2]) if '"' in cmd else cmd[-40:]
+
+
+def _async_hooks() -> set:
+    """settings.json 에서 async: true 로 등록된 SessionStart 훅 이름 (시작을 기다리게 하지 않음).
+    R257: 기준은 «동기 훅 최대 ≤5000ms» 인데 비동기 훅 시간까지 대기로 세어 FAIL 이 나던 것 (11-15 실측: 동기 최대 4494ms ·
+    비동기 check-sync-drift 7916ms). 읽기 실패면 빈 집합 = 전부 동기로 보는 보수적 판정."""
+    try:
+        s = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        return {_hook_name(str(h.get("command", ""))) for g in s.get("hooks", {}).get("SessionStart", [])
+                for h in g.get("hooks", []) if h.get("async") is True}
+    except (OSError, ValueError, AttributeError):
+        return set()
+
+
 def check_startup(events: list) -> dict:
     hooks = {}
     cancelled = []          # 시간 초과로 끊긴 훅 = 기능 실패 (11-13 process-outbox 11187ms hook_cancelled 실제 사례)
@@ -66,20 +82,26 @@ def check_startup(events: list) -> dict:
         for d in _walk(e):
             if d.get("hookName") == "SessionStart:startup" and "durationMs" in d:
                 cmd = str(d.get("command", ""))
-                name = os.path.basename(cmd.split('"')[-2]) if '"' in cmd else cmd[-40:]
+                name = _hook_name(cmd)
                 hooks[name] = max(hooks.get(name, 0), int(d.get("durationMs") or 0))
                 if d.get("type") == "hook_cancelled" and name not in cancelled:
                     cancelled.append(name)
     if not hooks:
         return {"result": "미측정", "why": "이 세션에 SessionStart:startup 기록 없음 (compact·resume 로 시작)"}
-    slow = max(hooks, key=hooks.get)
-    wait = hooks[slow]
+    asyn = _async_hooks()
+    sync = {k: v for k, v in hooks.items() if k not in asyn}
+    bg = {k: v for k, v in hooks.items() if k in asyn}
+    slow = max(sync, key=sync.get) if sync else max(hooks, key=hooks.get)
+    wait = (sync or hooks)[slow]
     ok = wait <= START_LIMIT_MS and not cancelled
-    why = f"가장 늦은 훅 {slow} {wait}ms (기준 {START_LIMIT_MS}ms)"
+    why = f"가장 늦은 동기 훅 {slow} {wait}ms (기준 {START_LIMIT_MS}ms)"
+    bg_slow = max(bg, key=bg.get) if bg else ""
+    if bg_slow:
+        why += f" · 비동기 최장 {bg_slow} {bg[bg_slow]}ms (대기 아님)"
     if cancelled:
         why += f" · 시간 초과로 끊김 {', '.join(cancelled)}"
     return {"result": "PASS" if ok else "FAIL", "wait_ms": wait, "slowest": slow, "hooks": len(hooks),
-            "cancelled": cancelled, "why": why}
+            "async_slowest": bg_slow, "async_ms": bg.get(bg_slow, 0), "cancelled": cancelled, "why": why}
 
 
 def check_korean(events: list) -> dict:

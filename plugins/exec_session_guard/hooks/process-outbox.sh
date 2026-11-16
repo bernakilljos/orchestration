@@ -39,7 +39,9 @@ ARCHIVED=0
 for d in "$NOTION_DIR" "$SLACK_DIR"; do
   [ -d "$d" ] || continue
   mkdir -p "$d/archive" 2>/dev/null
-  n=$(find "$d" -maxdepth 1 -type f \( -name '*.md' -o -name '*.json' \) -mtime +3 -print -exec mv -n {} "$d/archive/" \; 2>/dev/null | wc -l | tr -d ' ')
+  # R257: 파일마다 mv 를 띄우면(-exec … \;) Windows 에서 프로세스 생성만 87개 11.4초 → 10초 제한에 끊김(11-15 실측).
+  #   한 번에 묶어 옮긴다(-exec mv -t … {} +) · 같은 87개 격리 재현 4081ms → 421ms.
+  n=$(find "$d" -maxdepth 1 -type f \( -name '*.md' -o -name '*.json' \) -mtime +3 -print -exec mv -n -t "$d/archive/" {} + 2>/dev/null | wc -l | tr -d ' ')
   ARCHIVED=$((ARCHIVED + ${n:-0}))
 done
 

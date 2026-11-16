@@ -105,7 +105,7 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"",
-            "timeout": 10,
+            "timeout": 30,
             "async": true
           },
           {

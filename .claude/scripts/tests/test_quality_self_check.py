@@ -34,8 +34,8 @@ def test_samples_are_long_enough_to_be_judged():
 
 def test_startup_pass_fail_and_unmeasured():
     assert qsc.check_startup([_hook(1200, "a.sh"), _hook(4999, "b.sh")])["result"] == "PASS"
-    r = qsc.check_startup([_hook(1200, "a.sh"), _hook(10988, "process-outbox.sh")])
-    assert r["result"] == "FAIL" and r["slowest"] == "process-outbox.sh" and r["wait_ms"] == 10988
+    r = qsc.check_startup([_hook(1200, "a.sh"), _hook(10988, "hook-00-init.sh")])     # 동기 훅이 느림
+    assert r["result"] == "FAIL" and r["slowest"] == "hook-00-init.sh" and r["wait_ms"] == 10988
     assert qsc.check_startup([])["result"] == "미측정"     # compact·resume 시작은 판정하지 않음
 
 
@@ -136,6 +136,57 @@ def test_startup_cancelled_hook_is_fail_even_if_fast():
     c["attachment"]["type"] = "hook_cancelled"
     r = qsc.check_startup(ev + [c])
     assert r["result"] == "FAIL" and r["cancelled"] == ["process-outbox.sh"]
+
+
+def test_startup_async_hook_time_is_not_wait_but_its_cancel_is_fail(monkeypatch):
+    """R257: 기준은 동기 훅 최대 — 11-15 실측 동기 최대 4494ms · 비동기 check-sync-drift 7916ms 가 FAIL 로 세어지던 것."""
+    monkeypatch.setattr(qsc, "_async_hooks", lambda: {"check-sync-drift.sh", "process-outbox.sh"})
+    ev = [_hook(4494, "hook-00-init.sh"), _hook(7916, "check-sync-drift.sh")]
+    r = qsc.check_startup(ev)
+    assert r["result"] == "PASS" and r["slowest"] == "hook-00-init.sh" and r["wait_ms"] == 4494
+    assert r["async_slowest"] == "check-sync-drift.sh" and r["async_ms"] == 7916
+    c = _hook(10988, "process-outbox.sh")
+    c["attachment"]["type"] = "hook_cancelled"
+    r = qsc.check_startup(ev + [c])                     # 비동기여도 끊기면 기능 실패
+    assert r["result"] == "FAIL" and r["cancelled"] == ["process-outbox.sh"] and r["wait_ms"] == 4494
+    monkeypatch.setattr(qsc, "_async_hooks", lambda: set())  # 설정을 못 읽으면 전부 동기 (보수적)
+    assert qsc.check_startup(ev)["result"] == "FAIL"
+
+
+def test_async_hooks_read_from_real_settings():
+    a = qsc._async_hooks()
+    assert "process-outbox.sh" in a and "check-sync-drift.sh" in a and "hook-00-init.sh" not in a
+
+
+def test_process_outbox_moves_many_files_in_one_batch(tmp_path):
+    """R257: 파일마다 mv 를 띄워 87개 11.4초 → 10초 제한에 끊김. 한 번에 옮겨야 함 (본문 + 실제 실행)."""
+    import os, shutil, subprocess, time
+    hook = ROOT / "plugins" / "exec_session_guard" / "hooks" / "process-outbox.sh"
+    body = hook.read_text(encoding="utf-8")
+    assert "-exec mv -n -t" in body and "{} +" in body and '{} "$d/archive/" \\;' not in body
+    bash = shutil.which("bash")
+    if not bash:
+        import pytest
+        pytest.skip("bash 없음")
+    proj = tmp_path / "p"
+    (proj / "plugins").mkdir(parents=True)
+    nd = proj / ".claude" / "state" / "notion-outbox"
+    sd = proj / ".claude" / "state" / "slack-outbox"
+    nd.mkdir(parents=True); sd.mkdir(parents=True)
+    t = time.time() - 10 * 86400
+    for i in range(120):
+        f = nd / f"n{i}.md"; f.write_text("x", encoding="utf-8"); os.utime(f, (t, t))
+    for i in range(30):
+        f = sd / f"s{i}.json"; f.write_text("{}", encoding="utf-8"); os.utime(f, (t, t))
+    (nd / "keep.md").write_text("y", encoding="utf-8")
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(proj))
+    t0 = time.time()
+    subprocess.run([bash, str(hook)], env=env, capture_output=True, timeout=60)
+    took = time.time() - t0
+    assert len(list((nd / "archive").iterdir())) == 120 and len(list((sd / "archive").iterdir())) == 30
+    assert [p.name for p in nd.glob("*.md")] == ["keep.md"]
+    assert "archived=150" in (proj / ".claude" / "logs" / "process-outbox.log").read_text(encoding="utf-8")
+    assert took < 8, f"150개 보관 {took:.1f}s — 훅 제한 10초에 가까움"
 
 
 def test_process_outbox_archives_old_locks_and_logs(tmp_path):

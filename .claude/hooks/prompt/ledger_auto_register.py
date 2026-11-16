@@ -218,7 +218,7 @@ _APPROVAL_PATTERNS = (
     "배포", "deploy", "git push --force", "force push",
     # 2026-11-07: 일반 push 도 승인 대상 (execution-contract § 3) — 명사 "Push" 가 아니라 하라는 말만
     "git push", "push해", "push 해", "푸시해", "푸시 해",
-    "production", "운영", "실배포", "publish",
+    "production", "실배포", "publish",   # "운영" 단독은 아래 _RISK_REGEX (R257: 명사 "운영 환경·운영 자동화" 오분류)
     # 권한 상승
     "sudo", "chmod 777", "권한 상승", "admin 권한",
     # 비용
@@ -254,6 +254,9 @@ _RISK_REGEX = (
     ("git push", re.compile(r"git\s+push")),
     ("push origin", re.compile(r"(?<![a-z])push\s+(?:-{1,2}\S+\s+)*origin(?![a-z])")),
     ("push 진행", re.compile(r"(?<![a-z])push\s*(?:진행|실행)|푸시\s*(?:진행|실행)")),
+    # R257: "운영" 단독 → 위험 대상이 붙을 때만 (R126·R185·R257 같은 단어 오분류 반복: "운영 환경은 사용자 1명" · "운영 자동화").
+    #   "운영 DB·서버·반영·배포·데이터…" 와 "운영에 반영·배포·적용" 은 그대로 센다 · 사유 이름은 기존과 같은 "운영".
+    ("운영", re.compile(r"운영\s*(?:db|서버|반영|배포|데이터|테이블|계정|장비|시스템에|환경에|에\s*(?:반영|배포|적용|올려))")),
 )
 
 

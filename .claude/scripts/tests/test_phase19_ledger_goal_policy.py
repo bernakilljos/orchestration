@@ -264,7 +264,8 @@ def test_constraints_are_not_requests_or_approvals(tmp_path):
     p = _paste("대상: C:\\pjt\\orchestration_v1\n\n문서 오타를 수정한다.\n\n제약:\n- 운영 설정은 그대로 둔다\n- 배포 금지\n"
                "- 유료 호출은 이번 범위 밖")
     e = _register(tmp_path, p, sid="c1")[-1]
-    assert e["status"] == "pending" and e["approval_basis"]["excluded"] == {"constraint": 2, "negation": 1}
+    # R257: "운영 설정" 은 이제 위험 줄이 아니라(운영 + DB·서버·반영·배포… 만 셈) 제외 집계에서 빠짐 → constraint 2→1 · 결과는 같은 pending
+    assert e["status"] == "pending" and e["approval_basis"]["excluded"] == {"constraint": 1, "negation": 1}
     statuses = {r["status"] for r in json.loads((tmp_path / ".claude/state/request-ledger.json")
                                                 .read_text(encoding="utf-8"))["requests"]}
     assert statuses <= {"pending", "approval_required"}                                # 금지 조건이 승인 상태를 만들지 않음
@@ -438,3 +439,15 @@ def test_dispatch_entrypoint_isolated(tmp_path):
             assert c.execute("SELECT COUNT(*) FROM conversations WHERE session_id LIKE ?", (sid + "%",)).fetchone()[0] == 0
 
 
+
+
+def test_r257_operation_noun_alone_is_not_approval_but_targets_are():
+    """R257: '운영 환경은 사용자 1명' · '운영 자동화' 같은 명사가 승인 필요로 분류되던 것 (R126·R185 같은 단어 반복)."""
+    sys.path.insert(0, str(HOOK_PY.parent))
+    import ledger_auto_register as M
+    for s in ("운영 환경은 사용자 1명, Windows PC 1대다.", "6. 운영 자동화·기억 유지·안전한 완료",
+              "운영 자동화·기억·안정성", "실운영 프로젝트 하드코딩 실측해줘", "운영 원칙을 문서로 정리해줘"):
+        assert M._needs_approval(s) == [], s
+    for s in ("운영 DB 수정해줘", "운영    서버 설정 변경해줘", "운영 반영해줘", "운영에 배포해줘",
+              "운영 환경에 적용해줘", "운영 데이터 지워줘", "운영에 올려줘"):
+        assert "운영" in M._needs_approval(s), s
