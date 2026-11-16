@@ -259,3 +259,33 @@ def test_r270_merge_apply_records_deploy_log(tmp_path, monkeypatch):
     mt._record_apply(tmp_path / "T", "--only 2개 · 판정 정상")
     t = (tmp_path / ".claude" / "logs" / "merge-to-target.log").read_text(encoding="utf-8")
     assert "APPLY" in t and "--only 2개" in t and t.count("\n") == 1
+
+
+def test_r273_queue_running_only_while_processing():
+    """R273: 최신 요청 ≠ 실행 중. 처리 중(pending·implemented)만 실행 · PARTIAL·BLOCKED·승인대기로 끝나면 «최근» · 미완료 수는 그대로."""
+    rl = _load("rl_r273", KIT / ".claude/scripts/request-ledger.py")
+    mk = lambda rid, st, ver="": {"id": rid, "session_id": "s", "status": st, "verification": ver}
+    base = [mk("R1", "approval_required"), mk("R2", "pending")]
+    cases = [  # (현재 요청 상태, 검증, 기대 실행, 기대 최근)
+        ("pending", "", "R9", ""),                       # 요청 실행 중
+        ("implemented", "", "R9", ""),                   # 수정·시험·push·해시 확인 중 (아직 종료 기록 전)
+        ("verified", "PARTIAL", "", "R9부분"),           # 대상 격리 시험 미검증 → PARTIAL 로 보고 종료
+        ("verified", "BLOCKED", "", "R9차단"),
+        ("approval_required", "", "", "R9확인필요"),
+    ]
+    for st, ver, run, last in cases:
+        cur = mk("R9", st, ver)
+        q = rl.queue_view(base + [cur], cur)
+        assert q["running"] == run and q["last"] == last, (st, ver, q)
+        assert q["remaining"] == 3                        # 끝난 현재 요청도 미완료로 남음 (숨기지 않음)
+    done = mk("R9", "completed", "PASS")                  # 모든 실행 종료 · 미완료만 남음
+    q = rl.queue_view(base + [done], done)
+    assert q["running"] == "" and q["last"] == "R9완료" and q["remaining"] == 2 and q["next"] == ["R2"]
+    s = rl.summarize(base + [mk("R9", "verified", "PARTIAL")], "R9")
+    assert s["current_verification"] == "PARTIAL"
+
+
+def test_r273_dev_line_eta_only_while_processing():
+    """R273: 개발 줄 남은 시간은 처리 중일 때만 · PARTIAL 은 «부분완료» (소스 계약)."""
+    src = (KIT / ".claude/scripts/statusline_context.py").read_text(encoding="utf-8")
+    assert 'if _cs in ("pending", "implemented"):' in src and '"PARTIAL": "부분완료"' in src and "최근{_q['last']}" in src

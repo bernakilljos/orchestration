@@ -229,6 +229,7 @@ def summarize(reqs: list, current_rid: str = "") -> dict:
     cur = next((r for r in reqs if current_rid and r.get("id") == current_rid), None)
     c["current_rid"] = current_rid or ""
     c["current_status"] = (cur.get("status") if cur else "UNKNOWN")
+    c["current_verification"] = (cur.get("verification") or "") if cur else ""   # R273 개발 줄 PARTIAL·BLOCKED 구분
     c["current_blocking"] = bool(cur and is_blocking(cur))
     c["current_items"] = item_counts(cur) if cur else (0, 0)
     c["queue"] = queue_view(reqs, cur)
@@ -254,8 +255,18 @@ def queue_view(reqs: list, cur) -> dict:
     def _tag(r):
         d, t = item_counts(r)
         return r["id"] + (f"({d}/{t})" if t else "") + ("부분" if r.get("verification") == "PARTIAL" else "")
-    running = cur["id"] if cur in open_ else ""
-    return {"remaining": len(open_), "running": running,
+    # R273 (11-16 사용자 캡처 "보고까지 끝났는데 실행R272 · ≈16분"): 최신 요청 = 실행 중이 아니다.
+    #   실행 = 현재 요청이 아직 처리 중(pending·implemented)일 때만 · PARTIAL·BLOCKED·승인대기로 끝난 현재 요청은
+    #   «최근» 으로 따로 보이고 실행은 비운다 (미완료 상태는 그대로 · 숨기지 않음)
+    live = bool(cur in open_ and cur.get("status") in ("pending", "implemented"))
+    running = cur["id"] if live else ""
+    last = ""
+    if cur is not None and not live:
+        _lab = {"completed": "완료", "approval_required": "확인필요"}.get(cur.get("status"), "")
+        if cur.get("status") == "verified":
+            _lab = {"PARTIAL": "부분", "BLOCKED": "차단", "FAIL": "실패"}.get(cur.get("verification"), "검증")
+        last = cur["id"] + _lab
+    return {"remaining": len(open_), "running": running, "last": last,
             "next": [_tag(r) for r in open_ if r is not cur and not _why(r)],
             "waiting": [f"{r['id']} {_why(r)}" for r in open_ if r is not cur and _why(r)],
             "oldest": open_[0]["id"] if open_ else ""}

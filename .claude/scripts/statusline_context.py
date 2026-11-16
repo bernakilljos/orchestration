@@ -1589,6 +1589,8 @@ def extra_gauges(cwd, data=None):
             if _q.get("remaining"):
                 # 요청 줄은 오른쪽 절반이라 실제 폭(186칸)에서 45칸 안팎만 보인다 → 짧게 · 중요한 순 (남은·실행·대기·다음)
                 _qp = [f"남은{_q['remaining']}", f"실행{_q['running'] or '-'}"]
+                if not _q.get("running") and _q.get("last"):
+                    _qp.append(f"최근{_q['last']}")   # R273: 처리 끝난 현재 요청 (부분·차단·확인필요) — 실행 중으로 보이지 않게
                 if _q.get("waiting"):
                     _qp.append(f"대기{len(_q['waiting'])}({_q['waiting'][0].split()[0]})")
                 if _q.get("next"):
@@ -1612,7 +1614,10 @@ def extra_gauges(cwd, data=None):
                     _prog += f" 요구{_it[0]}/{_it[1]}"
                 # R269 사용자 지시: "R267 2/6(33%) 시험 남은≈3분 개발중" → "R267 2/6(33%) 시험 개발중(≈3분)" (시간은 상태 뒤 괄호)
                 _st_txt = _dev_st[1]
-                if _cs not in ("completed",):
+                # R273: verified 는 PARTIAL(부분완료)·BLOCKED(차단)를 구분 · 남은 시간은 처리 중(pending·implemented)일 때만
+                if _cs == "verified":
+                    _st_txt = {"PARTIAL": "부분완료", "BLOCKED": "차단", "FAIL": "실패"}.get(_ls.get("current_verification") or "", _st_txt)
+                if _cs in ("pending", "implemented"):
                     _eta = _pg[4] if (_pg and len(_pg) > 4 and _pg[0] == _ls["current_rid"]) else None
                     _st_txt += ("(산정중)" if _eta is None else f"(≈{_eta}분)")
                 dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_st_txt}\033[0m · {dev_line}"
