@@ -1517,6 +1517,18 @@ def extra_gauges(cwd, data=None):
                 if _ls[_k]:
                     _cnt.append(f"{_lab}{_ls[_k]}")
             ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt)   # R252: 늘 UNKNOWN 이던 «다음» 제외
+            # R264 (사용자 지시 "묻지 않아도 상태줄만 보고 알 수 있어야"): 같은 세션 미완료 현황을 맨 앞에 —
+            #   잘려도 남게 · 원장에서 동적으로 (번호 고정 X) · 대기(승인 필요·차단)는 «다음» 과 분리 · 누적 완료 수는 뒤로
+            _q = _ls.get("queue") or {}
+            if _q.get("remaining"):
+                # 요청 줄은 오른쪽 절반이라 실제 폭(186칸)에서 45칸 안팎만 보인다 → 짧게 · 중요한 순 (남은·실행·대기·다음)
+                _qp = [f"남은{_q['remaining']}", f"실행{_q['running'] or '-'}"]
+                if _q.get("waiting"):
+                    _qp.append(f"대기{len(_q['waiting'])}({_q['waiting'][0].split()[0]})")
+                if _q.get("next"):
+                    _nx = [n.replace("부분", "") for n in _q["next"]]
+                    _qp.append("다음" + "→".join(_nx[:2]) + (f"+{len(_nx) - 2}" if len(_nx) > 2 else ""))
+                ledger_line = f"\033[1;{color}m" + " · ".join(_qp) + "\033[0m · " + " ".join(_cnt)
             # §87 (2026-11-11 사용자 지시 R237 · 개발 줄 오른쪽 값만 일시 동결 해제 후 재동결): 현재 요청 진행 표시 ·
             #   PARTIAL·BLOCKED(verified)·승인대기 를 «개발완료» 로 보이면 거짓 → 확인필요 · 현재 요청 없음 = 표시 안 함
             _dev_st = _dev_progress(_cs)   # 개발중(파랑)·개발완료(초록)·확인필요(노랑) 대응표 정본 = _dev_progress

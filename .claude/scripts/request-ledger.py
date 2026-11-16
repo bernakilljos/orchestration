@@ -231,7 +231,34 @@ def summarize(reqs: list, current_rid: str = "") -> dict:
     c["current_status"] = (cur.get("status") if cur else "UNKNOWN")
     c["current_blocking"] = bool(cur and is_blocking(cur))
     c["current_items"] = item_counts(cur) if cur else (0, 0)
+    c["queue"] = queue_view(reqs, cur)
     return c
+
+
+def queue_view(reqs: list, cur) -> dict:
+    """R264 작업 현황 (상태줄 요청 줄) — 현재 요청과 같은 세션의 미완료를 FIFO 순으로.
+    실행 = 현재 요청 · 대기 = 지금 진행할 수 없음(승인 필요·BLOCKED) · 다음 = 실행 가능한 나머지 (대기 요청이 앞에 있어도
+    뒤의 독립 요청은 «다음» 에 보인다) · 가장 오래된 미완료(oldest)와 실행 중 요청을 따로 둔다."""
+    sess = (cur or {}).get("session_id")
+    if not sess:
+        return {"remaining": 0, "running": "", "next": [], "waiting": [], "oldest": ""}
+    open_ = [r for r in reqs if r.get("session_id") == sess and r.get("status") not in GATE_PASS_STATUS]
+
+    def _why(r):
+        if r.get("status") == "approval_required":
+            return "확인필요"
+        if r.get("status") == "verified" and r.get("verification") == "BLOCKED":
+            return "차단"
+        return ""
+
+    def _tag(r):
+        d, t = item_counts(r)
+        return r["id"] + (f"({d}/{t})" if t else "") + ("부분" if r.get("verification") == "PARTIAL" else "")
+    running = cur["id"] if cur in open_ else ""
+    return {"remaining": len(open_), "running": running,
+            "next": [_tag(r) for r in open_ if r is not cur and not _why(r)],
+            "waiting": [f"{r['id']} {_why(r)}" for r in open_ if r is not cur and _why(r)],
+            "oldest": open_[0]["id"] if open_ else ""}
 
 
 def _trace_end(r: dict, verification: str, evidence: str) -> None:

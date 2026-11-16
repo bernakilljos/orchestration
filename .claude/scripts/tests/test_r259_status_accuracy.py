@@ -164,3 +164,49 @@ def test_r262_scan_cache_tmp_removed_on_failure_and_stale_swept(tmp_path, monkey
     sl._scan_save()
     assert not (tmp_path / f"jsonl-scan-cache.json.{_os.getpid()}.tmp").exists()   # 실패한 자기 임시 파일 제거
     assert not old.exists() and new.exists() and other.exists()
+
+
+# ── R264 상태줄 작업 현황 (원장 동적 · FIFO 와 실행 구분) ─────────────────
+def _q(L, reqs, cur_id):
+    return L.summarize(reqs, cur_id)["queue"]
+
+
+def test_r264_queue_oldest_waiting_later_running_and_counts_change():
+    L = _load("L_r264", KIT / ".claude/scripts/request-ledger.py")
+    S = "sess-a"
+    reqs = [{"id": "R1", "session_id": S, "status": "approval_required"},            # 가장 오래된 = 실환경·승인 대기
+            {"id": "R2", "session_id": S, "status": "verified", "verification": "PARTIAL",
+             "items": [{"i": 1, "state": "done"}, {"i": 2, "state": "open"}]},       # 게이트 통과 후 커밋·전파 대기 = 부분
+            {"id": "R3", "session_id": S, "status": "pending"},                          # 실제 실행 중
+            {"id": "R4", "session_id": "other", "status": "pending"},                    # 다른 세션 = 제외
+            {"id": "R5", "session_id": S, "status": "completed"}]                        # 완료 = 남은 수 제외
+    q = _q(L, reqs, "R3")
+    assert q["remaining"] == 3 and q["running"] == "R3" and q["oldest"] == "R1"
+    assert q["waiting"] == ["R1 확인필요"] and q["next"] == ["R2(1/2)부분"]        # 앞의 대기 때문에 뒤가 막혀 보이지 않음
+    reqs[1]["status"], reqs[1]["verification"] = "completed", "PASS"                  # R2 완료 → 남은 수 감소
+    q = _q(L, reqs, "R3")
+    assert q["remaining"] == 2 and q["next"] == []
+    reqs.append({"id": "R6", "session_id": S, "status": "verified", "verification": "BLOCKED"})
+    assert "R6 차단" in _q(L, reqs, "R3")["waiting"]
+    assert _q(L, reqs, "R9")["remaining"] == 0                                        # 원장에 없는 현재 요청 = 표시 안 함
+
+
+def test_r264_statusline_request_line_shows_queue_first():
+    src = (KIT / ".claude/scripts/statusline_context.py").read_text(encoding="utf-8")
+    i = src.index('_qp = [f"남은{_q[\'remaining\']}"')
+    assert i > 0 and 'f"대기{len(_q[\'waiting\'])}' in src and '"다음" + "→".join(_nx[:2])' in src
+
+
+def test_r264_plain_declarative_directive_is_registered_but_report_is_not():
+    """11-16 «전체 요구사항 복원» 지시(평서형 '~확인한다.')가 pasted_report 로 분류돼 미등록되던 것."""
+    import sys as _s
+    _s.path.insert(0, str(KIT / ".claude/hooks/prompt"))
+    R = _load("R_r264", KIT / ".claude/hooks/prompt/ledger_auto_register.py")
+    spec = ("<pasted_content id=\"1\">\n# 작업\n\n## 1. 대조\n원문을 시간순으로 조사한다.\n추측하지 않는다.\n"
+            "## 2. 검증\n변경 파일이 실제 검증됐는지 확인한다.\n모든 보고는 한국어로 작성한다.\n</pasted_content id=\"1\">")
+    assert R._intent_text(spec)[1] == "pasted_directive"
+    report = ("<pasted_content id=\"2\">\n이번 작업은 완료됐습니다.\n시험 640건이 통과했습니다.\n전파도 끝났습니다.\n"
+              "다음 실행 때 측정된다.\n</pasted_content id=\"2\">")                    # 보고 문장이 더 많음 → 보고
+    assert R._intent_text(report)[1] == "pasted_report"
+    two = "<pasted_content id=\"3\">\n결과를 확인한다.\n기록을 남긴다.\n</pasted_content id=\"3\">"   # 평서 2줄 = 약한 표지 부족
+    assert R._intent_text(two)[1] == "pasted_report"

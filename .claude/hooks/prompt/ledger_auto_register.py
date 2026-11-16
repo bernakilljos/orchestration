@@ -70,6 +70,9 @@ _IMPERATIVE_END_RE = re.compile(r"(?:해|하라|해라|해줘|해 줘|하지 마
 # 존댓말 권고는 약한 표지 — 보고 문장("~습니다")보다 많을 때만 지시로 본다.
 _POLITE_END_RE = re.compile(r"(?:하세요|해주세요|해 주세요|하십시오)(?:[.!](?=\s|$)|\s*$)", re.M)
 _REPORT_END_RE = re.compile(r"니다[.!]?(?=\s|$)", re.M)
+# R264: 사양서형 평서 지시 ("…확인한다.", "…추측하지 않는다.") 만으로 된 붙여 넣은 지시가 보고서로 분류돼 등록되지 않았다
+#   (11-16 «전체 요구사항 복원» 지시 · ledger-raw pasted_report). 존댓말 규칙처럼 약한 표지 — 3줄 이상이고 보고 문장보다 많을 때만.
+_PLAIN_END_RE = re.compile(r"(?:한다|않는다|는다|된다)[.!]?(?=\s|$)", re.M)
 _DIRECTIVE_PHRASES = ("지시다", "지시한다", "승인한다", "전달할 승인 문구", "전달할 지시",
                       "claude code에 지시할", "claude code에 전달할")
 # 금지·부정 문장 안의 위험 단어는 승인 요청이 아니다 ("유료 호출 금지", "배포는 승인하지 않는다").
@@ -99,6 +102,9 @@ def _intent_text(prompt: str) -> tuple:
     polite = [ln.lower() for ln in pasted.splitlines() if _POLITE_END_RE.search(ln)]
     if polite and (any(_risk_hits(ln) for ln in polite)
                    or len(polite) >= len(_REPORT_END_RE.findall(pasted))):
+        return pasted, "pasted_directive"
+    plain = len(_PLAIN_END_RE.findall(pasted))
+    if plain >= 3 and plain > len(_REPORT_END_RE.findall(pasted)):
         return pasted, "pasted_directive"
     return pasted, "pasted_report"
 
