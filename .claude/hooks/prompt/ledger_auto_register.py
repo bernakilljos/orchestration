@@ -222,8 +222,9 @@ _APPROVAL_PATTERNS = (
     "rm -rf", "git reset --hard", "git clean -fd",
     # 배포·외부 push
     "배포", "deploy", "git push --force", "force push",
-    # 2026-11-07: 일반 push 도 승인 대상 (execution-contract § 3) — 명사 "Push" 가 아니라 하라는 말만
-    "git push", "push해", "push 해", "푸시해", "푸시 해",
+    # 2026-11-07 에는 일반 push 도 승인 대상이었다 → 2026-11-16 R274: 2026-11-13 R250 사용자 위임 ("git push 나 이런 것도
+    #   나한테 거치지 말고 알아서") · approval-gate-rules.md 의 일반 push 자동 진행과 맞춘다 — 일반 push 는 승인 사유 아님.
+    #   강제 push·원격 이력 삭제·mirror 는 아래 _RISK_REGEX "git push --force" 로 계속 승인 대상
     "production", "실배포", "publish",   # "운영" 단독은 아래 _RISK_REGEX (R257: 명사 "운영 환경·운영 자동화" 오분류)
     # 권한 상승
     "sudo", "chmod 777", "권한 상승", "admin 권한",
@@ -257,9 +258,8 @@ _WITHOUT_RE = re.compile(r"\S+\s*(?:실행|호출|사용|과금|진행)\s+없이
 # 표·상태·제약 제외(5814754)는 유지하되 행동 표지에 청유·명령 어미와 영어 명령어를 넣어 좁힌다.
 # push 는 띄어쓰기·순서가 다양하다 ("git  push", "push origin main", "푸시 진행") — 문자열 대신 정규식
 _RISK_REGEX = (
-    ("git push", re.compile(r"git\s+push")),
-    ("push origin", re.compile(r"(?<![a-z])push\s+(?:-{1,2}\S+\s+)*origin(?![a-z])")),
-    ("push 진행", re.compile(r"(?<![a-z])push\s*(?:진행|실행)|푸시\s*(?:진행|실행)")),
+    # R274: 일반 push 는 위임됨 → 강제·이력 삭제·전체 복제 push 만 (-f · --force · --force-with-lease · --delete · --mirror · --all · +refspec · :branch)
+    ("git push --force", re.compile(r"push\b[^\n]*?(?:\s-f\b|--force|--delete|--mirror|--all\b|\s\+\S|\s:\S)")),
     # R257: "운영" 단독 → 위험 대상이 붙을 때만 (R126·R185·R257 같은 단어 오분류 반복: "운영 환경은 사용자 1명" · "운영 자동화").
     #   "운영 DB·서버·반영·배포·데이터…" 와 "운영에 반영·배포·적용" 은 그대로 센다 · 사유 이름은 기존과 같은 "운영".
     ("운영", re.compile(r"운영\s*(?:db|서버|반영|배포|데이터|테이블|계정|장비|시스템에|환경에|에\s*(?:반영|배포|적용|올려))")),

@@ -171,9 +171,9 @@ def test_pasted_directives_registered_without_negated_approval(tmp_path):
     for i, p in enumerate((R168_DIRECTIVE, LEDGER_FIX_DIRECTIVE, NUMBERED_DIRECTIVE)):
         _register(tmp_path, p, sid=f"d{i}")
     reqs = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"]
-    # 2026-11-07: R168 은 실제 push 지시 — '승인한다' 문장은 권한이 아니므로 push 는 승인 대기 · 부정된 유료·배포는 여전히 사유 아님
-    assert [(r["classification"], r["status"]) for r in reqs] == [("execute", "approval_required")] + [("execute", "pending")] * 2
-    assert reqs[0]["approval_reasons"] == ["git push"]
+    # R274 (2026-11-16): R168 은 일반 push 지시 — 2026-11-13 R250 사용자 위임으로 승인 사유 아님 · 부정된 유료·배포도 사유 아님
+    assert [(r["classification"], r["status"]) for r in reqs] == [("execute", "pending")] * 3
+    assert not reqs[0].get("approval_reasons")
     assert reqs[0]["desc"].startswith("\n\n<pasted_content")   # desc 는 원문 그대로
 
 
@@ -237,7 +237,7 @@ def _own(tmp_path, text, sid):
 
 def test_real_risk_requests_still_need_approval(tmp_path):
     cases = {"유료 Judge 1회 실행해줘": "유료",
-             "로컬 커밋을 origin main 으로 git push 해줘": "git push",
+             "로컬 커밋을 origin main 으로 git push --for" "ce 해줘": "git push --force",   # R274: 일반 push 는 위임 · 강제만 승인
              "어제 만든 임시 파일 삭제해줘": "삭제해",
              "운영    서버 설정 변경해줘": "운영",                    # 표처럼 보여도 요청형으로 끝나면 센다
              "승인 필요 항목인 유료 Judge 를 실행해줘": "유료",            # 상태 단어가 있어도 요청형이면 센다
@@ -319,22 +319,23 @@ DT, RF, FP = "drop" + " table", "rm" + " -rf", "git push " + "--force"   # 위�
 
 
 def test_push_variants_need_approval():
+    """R274: 일반 push 는 위임 (승인 사유 아님) · 강제·원격 삭제·mirror·+refspec·:branch 는 계속 승인 필요."""
     M = _M()
     for text in ("git  push origin main 해줘", "push origin main", "푸시 진행", "push origin main 해줘", "PUSH origin main 해줘",
-                 "`git push origin main` 실행해줘", "git push -u origin feature 해줘", "다음 항목 처리:\n- 운영 DB 삭제\n- 배포 진행",
-                 "백업 없이 운영 DB 삭제해줘", "아래 표현을 시험한다:\n- git push origin main 해줘"):
+                 "`git push origin main` 실행해줘", "git push -u origin feature 해줘"):
+        assert M._needs_approval(text) == [], text
+    for text in (f"{FP} origin main 해줘", "git push -f 해줘", "git push origin +main 해줘", "git push origin :old 해줘",
+                 "git push --mir" + "ror 해줘", "git push --del" + "ete origin x 해줘", "다음 항목 처리:\n- 운영 DB 삭제\n- 배포 진행",
+                 "백업 없이 운영 DB 삭제해줘", f"아래 표현을 시험한다:\n- {FP} origin main 해줘"):
         assert M._needs_approval(text), text
 
 
 # 2026-11-07 독립 검토 2차: 예시 목록 · '없이' · '아니라' · 인용 규칙이 만든 우회로 (직전 판정기는 모두 잡았다)
-BYPASS_CASES_2 = ("다음 사례 처리해:\n- 운영 DB 삭제\n- 배포", "다음 케이스 진행:\n- 배포 진행", "아래 문장 실행:\n- git push origin main",
-                  "다음 예시 반영:\n- 운영 DB 삭제", "다음 사례를 처리해라:\n- 운영 DB 삭제",
+BYPASS_CASES_2 = ("다음 사례 처리해:\n- 운영 DB 삭제\n- 배포", "다음 케이스 진행:\n- 배포 진행", "다음 예시 반영:\n- 운영 DB 삭제", "다음 사례를 처리해라:\n- 운영 DB 삭제",
                   "다음 문장 그대로 실행해라\n1. git push origin main\n2. 배포 진행", f"아래 입력 순서대로 수행:\n- {FP} origin main",
-                  f"- {RF} /data\n위 입력 처리", "- git push origin main\n위 사례를 실행한다", "- 배포 진행\n위 사례처럼 처리",
-                  "git push 확인 없이 진행", "운영 db 삭제 승인 없이 진행", "배포 승인 없이 바로 실행", "삭제 후 배포 — 확인 없이 진행",
-                  "배포 확인 없이 진행 바람", "git push 진행 후 결과는 로그가 아니라 요약으로 알려줘",
-                  "운영 db 삭제 진행하고 로그가 아니라 요약만 남겨", "`git push origin main`을 처리", "`git push origin main` 를 돌려",
-                  f"`{RF} /data` 날려", f"'{RF} /' 를 돌려", '이거 해: "운영 db 삭제해줘"', f"let's {RF} /data and it's fine",
+                  f"- {RF} /data\n위 입력 처리", "- 배포 진행\n위 사례처럼 처리",
+                  "운영 db 삭제 승인 없이 진행", "배포 승인 없이 바로 실행", "삭제 후 배포 — 확인 없이 진행",
+                  "배포 확인 없이 진행 바람", "운영 db 삭제 진행하고 로그가 아니라 요약만 남겨", f"`{RF} /data` 날려", f"'{RF} /' 를 돌려", '이거 해: "운영 db 삭제해줘"', f"let's {RF} /data and it's fine",
                   f"`{DT} users`", f"`{FP}`")
 
 
@@ -351,17 +352,15 @@ def test_push_mentions_are_not_requests(tmp_path):
                  "유료 실행 없이 검증한다", "배포 진행 없이 문서만 고친다"):
         assert M._needs_approval(text) == [], text
     assert _register(tmp_path, _paste("작업을 마쳤습니다.\ngit  push origin main 완료했습니다.\n결과는 정상입니다.")) == []
-    # 의도한 과잉 판정 — 인용·예시 목록 속 push 문자열은 실제 요청과 글자로 구분할 수 없어 승인 필요로 남긴다 (독립 검토 2·3차)
+    # R274: 일반 push 는 위임돼 인용·예시 속 push 문자열도 승인 사유가 아니다 (종전 의도한 과잉 판정 해소)
     for text in ("평가에서 'push origin main' 표현을 지적했습니다",
                  "현재 판정기가 아래 표현을 놓친다고 보고했습니다.\n- git  push — 공백 두 칸\n- push origin main"):
-        assert M._needs_approval(text), text
+        assert M._needs_approval(text) == [], text
 
 
 # 2026-11-07 독립 검토 3차: '없이' 창 · 인용 · 예시 목록 규칙의 우회로 (직전 판정기는 모두 잡았다)
-BYPASS_CASES_3 = ("force push 경고 없이 실행해", f"{DT} 예외 없이 실행해줘", "sudo 비밀번호 없이 실행해줘", "git push 경고 없이 바로 해줘",
-                  "git push 에러 없이 완료", "배포 지연 없이 해줘", "배포 사고 없이 하자", f"{RF} 흔적 없이 하자",
-                  f"run `{RF} /tmp/x`", "Please run `git push`", f"just `{FP}`", f"do `{DT} users`", "`git push` 하자",
-                  f"`{RF} x` 때려", "`배포` 가즈아", "'production' 으로 ㄱ", f"사용자가 `{RF} x` 라고 했어 그대로 하자",
+BYPASS_CASES_3 = ("force push 경고 없이 실행해", f"{DT} 예외 없이 실행해줘", "sudo 비밀번호 없이 실행해줘", "배포 지연 없이 해줘", "배포 사고 없이 하자", f"{RF} 흔적 없이 하자",
+                  f"run `{RF} /tmp/x`", f"just `{FP}`", f"do `{DT} users`", f"`{RF} x` 때려", "`배포` 가즈아", "'production' 으로 ㄱ", f"사용자가 `{RF} x` 라고 했어 그대로 하자",
                   f"다음 케이스 순서대로 가자:\n- {RF} build\n- push origin main", f"아래 입력 차례로 돌리자\n1. {RF} dist\n2. {DT} users",
                   f"다음 사례 순서로 하나씩 하자\n- {RF} a", f"아래 문자열 그대로 하자\n- {FP}", "다음 사례 순서로 가자\n- production 배포",
                   f"- {RF} x\n- {FP}\n\n위 사례 쭉 가자")
@@ -377,8 +376,8 @@ def test_review3_bypass_inputs_still_need_approval():
 def test_r187_paid_false_positive_fixed_push_list_kept(tmp_path):
     # R187 의 '유료 실행 없이' 오탐은 해결 · 시험 대상으로 나열한 "- 푸시 진행" 등은 실제 작업 목록과 글자로 구분할 수 없어 승인 필요 유지
     e = _register(tmp_path, _fixture("r187.txt"), sid="r187")[-1]
-    assert (e["classification"], e["status"]) == ("execute", "approval_required")
-    assert "유료" not in e["approval_reasons"] and set(e["approval_reasons"]) <= {"git push", "push origin", "push 진행"}
+    # R274: 시험 대상으로 나열한 일반 push 는 위임돼 승인 사유가 아니다 · '유료 실행 없이' 오탐도 해결 유지
+    assert e["classification"] == "execute" and not (set(e.get("approval_reasons") or []) & {"유료", "git push", "push origin", "push 진행"})
 
 
 def test_stored_text_is_masked_and_hash_uses_original(tmp_path):
@@ -423,8 +422,8 @@ def test_dispatch_entrypoint_isolated(tmp_path):
                        input=json.dumps({"prompt": p, "session_id": f"{sid}-{i}"}), text=True, encoding="utf-8",
                        env=env, capture_output=True, check=True, timeout=120, cwd=str(tmp_path))
     reqs = json.loads((tmp_path / ".claude/state/request-ledger.json").read_text(encoding="utf-8"))["requests"]
-    assert [(r["session_id"][-1], r["status"]) for r in reqs] == [("1", "pending"), ("2", "pending"), ("3", "approval_required")]
-    assert reqs[-1]["approval_reasons"][0] == "git push" and all("approval_basis" in r for r in reqs)
+    assert [(r["session_id"][-1], r["status"]) for r in reqs] == [("1", "pending"), ("2", "pending"), ("3", "pending")]   # R274 일반 push 위임
+    assert not reqs[-1].get("approval_reasons") and all("approval_basis" in r for r in reqs)
     log = (tmp_path / ".claude/logs/prompt-dispatch.log").read_text(encoding="utf-8")
     assert "ERROR ledger-auto-register" not in log and "TIMEOUT ledger-auto-register" not in log
     with sqlite3.connect(str(tmp_path / ".claude/state/orca.db")) as c:               # 다른 훅(save_user_prompt)도 임시 DB 로
