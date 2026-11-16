@@ -15,10 +15,10 @@ $fixes = @(
 
 foreach ($f in $fixes) {
     try {
-        $t = Get-ScheduledTask -TaskName $f.Name
+        $t = Get-ScheduledTask -TaskName $f.Name -ErrorAction Stop
         $before = $t.Actions[0].Execute
         $newAction = New-ScheduledTaskAction -Execute $f.Bat
-        Set-ScheduledTask -TaskName $f.Name -Action $newAction | Out-Null
+        Set-ScheduledTask -TaskName $f.Name -Action $newAction -ErrorAction Stop | Out-Null
         $after = (Get-ScheduledTask -TaskName $f.Name).Actions[0].Execute
         # Add-Content 에는 -ForegroundColor 가 없다 (2026-11-09 · 결과 줄 대신 예외 → 로그에 start 만 남음) · 숨김 실행이라 색은 쓰지 않는다
         Add-Content -Path $log -Encoding utf8 -Value ("  [OK]   {0} · {1} -> {2}" -f $f.Name, $before, $after)

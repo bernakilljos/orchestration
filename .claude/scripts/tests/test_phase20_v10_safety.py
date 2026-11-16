@@ -2122,3 +2122,31 @@ def test_regression_gate_timeout_default_and_env(monkeypatch):
     assert iv._gate_timeout() == 60          # 너무 짧은 값은 하한
     monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "x")
     assert iv._gate_timeout() == 2400
+
+
+def test_remote_agent_capture_event_gated_r266():
+    """R266: 평상시 캡처 0회 · 승인 환경변수 + 대상 창 + 대시보드 주소 있을 때 명령 직후에만 짧게."""
+    import re
+    ra = (ROOT / "remote-agent.ps1").read_text(encoding="utf-8-sig")
+    loop = ra[ra.index("while ($true)"):]
+    # 메인 루프 끝의 무조건 캡처 없음 · 캡처는 명령 처리 뒤 Run-CaptureBurst 로만
+    assert "TakeAllScreenshots" not in loop
+    assert loop.count("Run-CaptureBurst") == 2
+    init = ra[ra.index("# 초기"):ra.index("while ($true)")]
+    assert "TakeAllScreenshots\n" not in init.replace("try { TakeAllScreenshots }", "")
+    # 승인·대상 창 게이트 · 모든 모니터 대신 대상 창 영역
+    take = ra[ra.index("function TakeAllScreenshots"):ra.index("function PushScreensJson")]
+    assert "Get-CaptureTarget" in take and "Screen]::AllScreens" not in take and "CaptureRect" in take
+    assert "if (-not $script:dashUrl) { return }" in take
+    gate = ra[ra.index("function Get-CaptureTarget"):]
+    assert "ORCH_REMOTE_ALLOW_SCREEN" in gate and "ORCH_REMOTE_CAPTURE_WINDOW" in gate
+    assert re.search(r"\$CaptureBurstFrames = 10\b", ra) and re.search(r"\$CaptureIntervalMs = 200\b", ra)
+    # 주소 없을 때 GitHub 조회는 5초 간격 (0.2초 X)
+    assert "Start-Sleep -Milliseconds 5000" in loop
+
+
+def test_fix_task_actions_failure_not_logged_as_ok_r266():
+    """R266: Set-ScheduledTask 의 '액세스 거부' 는 종료되지 않는 오류라 catch 를 건너뛰고 [OK] 가 기록됐다 (실측 11-16)."""
+    t = (ROOT / ".claude" / "scripts" / "fix-s4u-task-actions.ps1").read_text(encoding="utf-8-sig")
+    assert "Set-ScheduledTask -TaskName $f.Name -Action $newAction -ErrorAction Stop" in t
+    assert "Get-ScheduledTask -TaskName $f.Name -ErrorAction Stop" in t
