@@ -201,7 +201,10 @@ def _req_progress(cwd: str):
         if not cur.get("trace_id"):
             return None
         done = set()
+        start_ts, stage_ts = None, {}
         for e in _tr.events(cur["trace_id"]):
+            if e.get("kind") == "request" and e.get("status") == "start" and start_ts is None:
+                start_ts = e.get("ts")
             if e.get("kind") != "tool" or e.get("status") != "success":
                 continue
             d = e.get("detail")
@@ -214,9 +217,27 @@ def _req_progress(cwd: str):
             for name, ok in _STAGES:
                 if ok(e.get("step"), inp):
                     done.add(name)
+                    if name not in stage_ts:
+                        stage_ts[name] = e.get("ts")
         last = next((n for n, _ in reversed(_STAGES) if n in done), None)
-        return cur.get("rid"), len(done), len(_STAGES), last
+        return cur.get("rid"), len(done), len(_STAGES), last, _eta_min(start_ts, stage_ts, len(_STAGES))
     except Exception:
+        return None
+
+
+def _eta_min(start_ts, stage_ts: dict, total: int):
+    """R261 예상 남은 시간(분) = 이 요청에서 실제로 걸린 단계당 평균 × 남은 단계 · 근거 부족(끝난 단계 2개 미만·시각 없음) = None.
+    추정치 근거는 이 요청의 추적 기록뿐 (새 훅·AI 호출 X) · 6단계 다 끝나면 0."""
+    try:
+        ts = [float(t) for t in stage_ts.values() if t]
+        if start_ts is None or len(ts) < 2:
+            return None
+        left = total - len(stage_ts)
+        if left <= 0:
+            return 0
+        per = (max(ts) - float(start_ts)) / len(ts)
+        return max(1, round(per * left / 60))
+    except (TypeError, ValueError):
         return None
 
 
@@ -478,7 +499,27 @@ def _scan_save() -> None:
             json.dump(_SCAN, f, separators=(",", ":"))
         os.replace(tmp, _SCAN_PATH)
     except Exception:
-        pass  # noqa: BLE001
+        # R262: Windows 는 다른 렌더가 캐시를 읽는 중이면 os.replace 가 실패 → 임시 파일이 남아 11-12 부터 99개 누적
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass  # noqa: BLE001
+    _scan_tmp_sweep()
+
+
+def _scan_tmp_sweep(max_age: float = 600.0) -> int:
+    """끊긴 렌더(시간 제한 종료)가 남긴 10분 넘은 캐시 임시 파일 정리 — 이 캐시의 자기 임시 파일만 (이름 일치)."""
+    import glob as _gl
+    import time as _tm
+    n = 0
+    for p in _gl.glob(_SCAN_PATH + ".*.tmp"):
+        try:
+            if re.fullmatch(r"\d+", p[len(_SCAN_PATH) + 1:-4]) and _tm.time() - os.path.getmtime(p) > max_age:
+                os.remove(p)
+                n += 1
+        except Exception:
+            pass  # noqa: BLE001
+    return n
 
 
 import atexit as _atexit
@@ -1487,6 +1528,13 @@ def extra_gauges(cwd, data=None):
                     _prog = f"{_pg[0]} {_pg[1]}/{_pg[2]}({_pct}%) {_pg[3]}"
                 else:
                     _prog = f"{_ls['current_rid']} 미계측"
+                # R261: 하위 요구사항(원문 번호 항목) 진행 · 예상 남은 시간 (근거 없으면 «산정중» · 임의 값 X · 완료 상태면 생략)
+                _it = _ls.get("current_items") or (0, 0)
+                if _it[1]:
+                    _prog += f" 요구{_it[0]}/{_it[1]}"
+                if _cs not in ("completed",):
+                    _eta = _pg[4] if (_pg and len(_pg) > 4 and _pg[0] == _ls["current_rid"]) else None
+                    _prog += (" 남은시간 산정중" if _eta is None else f" 남은≈{_eta}분")
                 dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_dev_st[1]}\033[0m · {dev_line}"
     except Exception:
         pass

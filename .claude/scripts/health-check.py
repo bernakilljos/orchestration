@@ -219,9 +219,9 @@ def check_codex() -> dict:
 
 def run_all_checks() -> dict:
     """10 축 전체 점검."""
+    # R259: "충돌"·"중복" 이 같은 검사를 두 번 세서 10축 문서와 달리 11축 · 중복 1건 실패가 두 번 감점됐다 → 한 번만
     return {
-        "충돌": check_duplicates(),
-        "중복": check_duplicates(),  # alias
+        "중복": check_duplicates(),
         "orphan": check_orphan(),
         "drift": check_drift(),
         "golden": check_golden(),

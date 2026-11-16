@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -229,6 +230,7 @@ def summarize(reqs: list, current_rid: str = "") -> dict:
     c["current_rid"] = current_rid or ""
     c["current_status"] = (cur.get("status") if cur else "UNKNOWN")
     c["current_blocking"] = bool(cur and is_blocking(cur))
+    c["current_items"] = item_counts(cur) if cur else (0, 0)
     return c
 
 
@@ -246,6 +248,67 @@ def _trace_end(r: dict, verification: str, evidence: str) -> None:
                detail={"verification": verification or "UNKNOWN"})
     except Exception:  # noqa: BLE001
         pass
+
+
+# R261 (2026-11-16 · 사용자 지시 "요구사항 10개를 주면 2개만 등록해 2/2=100% 가 되는 구조"):
+#   메시지 1개 = 원장 1행이라 원문 안 번호 붙은 요구사항이 저장되지 않았고, 자유 문장 증거 하나로 PASS 가 됐다.
+#   → 등록 때 번호 붙은 줄을 하위 항목으로 저장 (넓게 · 설명 절도 포함 → 해당 없음은 사유와 함께 na) ·
+#     열린 항목이 있으면 PASS 거부 (상태 그대로 · PARTIAL 은 그대로 허용 = 사실대로 기록).
+_ITEM_RE = re.compile(r"^\s{0,8}(\d{1,2})[.)]\s+(\S.*)$")
+ITEM_STATES = ("open", "done", "partial", "na")
+
+
+def extract_items(text: str, limit: int = 60) -> list:
+    out, fence = [], False
+    for ln in (text or "").splitlines():
+        if ln.strip().startswith("```"):
+            fence = not fence
+            continue
+        m = None if fence else _ITEM_RE.match(ln)
+        if m:
+            out.append({"i": len(out) + 1, "n": int(m.group(1)), "text": m.group(2).strip()[:150], "state": "open"})
+            if len(out) >= limit:
+                break
+    return out
+
+
+def item_counts(r: dict) -> tuple:
+    """(끝난 항목 = done·na, 전체) · 항목 없으면 (0, 0)."""
+    items = r.get("items") or []
+    return sum(1 for x in items if x.get("state") in ("done", "na")), len(items)
+
+
+def cmd_item(rid: str, idx: str, state: str, evidence: str = "") -> int:
+    """하위 항목 상태 기록 · idx = 항목 번호(i) 1개 또는 쉼표·범위 (예: 1,3,5-7) · done·na 는 근거 필수."""
+    if state not in ITEM_STATES[1:]:
+        print(f"[ledger] ✗ 상태는 done·partial·na 중 하나", file=sys.stderr)
+        return 2
+    if state in ("done", "na") and not evidence.strip():
+        print(f"[ledger] ✗ {state} 는 근거(--evidence) 필수 — 해당 없음도 사유를 적는다", file=sys.stderr)
+        return 2
+    want = set()
+    for part in str(idx).split(","):
+        part = part.strip()
+        if re.fullmatch(r"\d+-\d+", part):
+            a, b = map(int, part.split("-"))
+            want |= set(range(a, b + 1))
+        elif part.isdigit():
+            want.add(int(part))
+    data = _load()
+    for r in (data or {}).get("requests", []):
+        if r["id"].lower() == rid.lower():
+            hit = [x for x in r.get("items") or [] if x.get("i") in want]
+            if not hit:
+                print(f"[ledger] ✗ {rid}: 항목 {idx} 없음", file=sys.stderr)
+                return 2
+            for x in hit:
+                x["state"], x["evidence"] = state, evidence[:200]
+            _save(data)
+            d, t = item_counts(r)
+            print(f"[ledger] {rid} 항목 {sorted(want)} → {state} · {d}/{t}")
+            return 0
+    print(f"[ledger] {rid} not found", file=sys.stderr)
+    return 2
 
 
 def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "") -> int:
@@ -296,6 +359,13 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
                 _trace_end(r, verification, evidence)
                 print(f"[ledger] ⚠ {rid}: verified (verification={verification} · PASS 아님)", file=sys.stderr)
                 return 1
+            done_n, total_n = item_counts(r)
+            if done_n < total_n:   # R261: 열린 하위 요구사항이 있으면 전체 완료 불가
+                left = [f"{x['i']}:{x['text'][:30]}" for x in r.get("items") or [] if x.get("state") not in ("done", "na")]
+                print(f"[ledger] ✗ {rid}: 하위 요구사항 {done_n}/{total_n} — PASS 거부 (상태 그대로) · 남은 항목: "
+                      + " | ".join(left[:8]) + " · item <rid> <번호> done|na --evidence … 로 하나씩 근거를 남기거나 "
+                      "--verification PARTIAL 로 사실대로 기록", file=sys.stderr)
+                return 2
             r["status"] = "completed"
             r["completed_at"] = datetime.now().isoformat(timespec="seconds")
             r["evidence"] = evidence[:500]
@@ -542,6 +612,14 @@ def main() -> int:
     p_inv.add_argument("--detected-by", default="manual",
                        help="감지 주체 (manual·stop-gate·autogoal-review·sweep 등)")
 
+    p_item = sub.add_parser("item")      # R261 하위 요구사항 상태
+    p_item.add_argument("rid")
+    p_item.add_argument("idx", help="항목 번호 (예: 3 · 1,4 · 2-5)")
+    p_item.add_argument("state", help="done · partial · na")
+    p_item.add_argument("--evidence", default="", help="done=실행 증거 · na=해당 없음 사유")
+    p_items = sub.add_parser("items")
+    p_items.add_argument("rid")
+
     sub.add_parser("status")
     sub.add_parser("gate")
     sub.add_parser("clear")
@@ -558,6 +636,17 @@ def main() -> int:
         return cmd_out_of_scope(args.rid, args.target, args.reason)
     if args.op == "invalid-registration":
         return cmd_invalid_registration(args.rid, args.reason, args.detected_by)
+    if args.op == "item":
+        return cmd_item(args.rid, args.idx, args.state, args.evidence)
+    if args.op == "items":
+        for r in (_load() or {}).get("requests", []):
+            if r["id"].lower() == args.rid.lower():
+                d, t = item_counts(r)
+                print(f"{r['id']} 하위 요구사항 {d}/{t}")
+                for x in r.get("items") or []:
+                    print(f"  {x['i']:>2} [{x['state']:7s}] {x['text'][:90]}" + (f"  ← {x['evidence'][:60]}" if x.get("evidence") else ""))
+                return 0
+        return 2
     if args.op == "status":
         return cmd_status()
     if args.op == "gate":

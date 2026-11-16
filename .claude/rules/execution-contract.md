@@ -32,6 +32,7 @@ N/N 완료 확인 (Stop hook gate)
 - 명령형 동사 (`해줘`·`수정`·`만들어`·`확인`·`전파`·`커밋`) · 각 1 request
 - 1 턴 메시지 안 여러 지시 → 각 1 request
 - "다 해"·"전부"·"계속" = 이전 ledger 미완료 request 전부 실행
+- **하위 요구사항 (2026-11-16 R261)**: 원문 안 번호 붙은 줄(코드 블록 제외)을 원장 항목 `items` 로 함께 저장 · `request-ledger.py item <rid> <번호> done|partial|na --evidence …` (done·na 근거 필수) · 열린 항목이 하나라도 있으면 `complete --verification PASS` 거부 (상태 그대로 · PARTIAL 기록은 허용) · 상태줄 개발 줄 `요구 a/b` · 근거: 메시지 1개 = 원장 1행이라 요구사항 10개를 줘도 1건으로 PASS 되던 구조
 
 ### SoT
 

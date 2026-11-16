@@ -469,10 +469,11 @@ def test_dev_progress_counts_only_real_successful_stages(sl, tm, proj):
     tm.emit("tool", step="Write", status="success", detail={"input": r"C:\Users\u\AppData\Local\Temp\pytest-of-u\x.py"})  # 시험 잡음 제외
     tm.emit("tool", step="Bash", status="success", detail={"input": "python -m pytest -q tests"})
     tm.emit("tool", step="Bash", status="blocked", detail={"input": "git commit -m x"})          # 실패·차단은 완료 아님
-    assert sl._req_progress(str(proj)) == ("R900", 2, 6, "시험")
+    pg = sl._req_progress(str(proj))      # R261: 5번째 = 예상 남은 시간 (요청 시작 기록 없음 → None)
+    assert pg[:4] == ("R900", 2, 6, "시험") and pg[4] is None
     tm.emit("tool", step="Bash", status="success", detail={"input": "git commit -m x"})
     tm.emit("tool", step="Bash", status="success", detail={"input": "svn commit -m x --non-interactive"})   # SVN 커밋 = 커밋+원격
-    assert sl._req_progress(str(proj)) == ("R900", 4, 6, "원격")
+    assert sl._req_progress(str(proj))[:4] == ("R900", 4, 6, "원격")
 
 
 def _agents(proj, n):

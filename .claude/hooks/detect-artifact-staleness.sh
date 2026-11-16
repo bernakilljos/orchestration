@@ -19,6 +19,12 @@ LOG_FILE="$LOG_DIR/artifact-freshness.log"
 
 mkdir -p "$LOG_DIR"
 
+# R259: 월간 health-check 가 «30일 지나면 자동» 설계인데 부르는 곳이 없어 10/16 점수가 한 달 넘게 상태줄에 남았다.
+#   monthly 는 스스로 30일 제한 (1.4초 실측) · 이 훅은 비동기 등록이라 시작을 기다리게 하지 않음.
+PY_H="$(command -v python 2>/dev/null)"
+[ -n "$PY_H" ] && [ -f "$PROJECT_ROOT/.claude/scripts/health-check.py" ] && \
+  "$PY_H" -X utf8 "$PROJECT_ROOT/.claude/scripts/health-check.py" monthly >> "$LOG_DIR/health-check.log" 2>&1
+
 # 1시간 throttle — SessionStart 폭주 방지
 THROTTLE_FILE="$PROJECT_ROOT/.claude/state/artifact-freshness.last"
 mkdir -p "$(dirname "$THROTTLE_FILE")"

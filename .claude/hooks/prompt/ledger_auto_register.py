@@ -407,6 +407,20 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
     }
     if approval_matches:
         entry["approval_reasons"] = approval_matches[:5]
+    # R261: 원문 안 번호 붙은 요구사항을 하위 항목으로 (정본 = request-ledger.extract_items) — 열린 항목이 있으면 PASS 불가
+    try:
+        import importlib.util as _ilu2
+        _sp = _ilu2.spec_from_file_location("ledger_items", os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "scripts", "request-ledger.py"))
+        _lm = _ilu2.module_from_spec(_sp)
+        _sp.loader.exec_module(_lm)
+        items = _lm.extract_items(prompt)
+        for x in items:
+            x["text"] = _mask(x["text"])
+        if items:
+            entry["items"] = items
+    except Exception:  # noqa: BLE001 — 항목 추출 실패가 등록을 막지 않음 (항목 0 = 기존 동작)
+        pass
     data.setdefault("requests", []).append(entry)
     try:
         with open(LEDGER, "w", encoding="utf-8") as f:

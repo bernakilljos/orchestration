@@ -213,3 +213,22 @@ def test_process_outbox_archives_old_locks_and_logs(tmp_path):
     (proj / ".claude" / "state" / "process-outbox.lock").mkdir()       # 실행 중인 잠금 → 겹쳐 실행 안 함
     subprocess.run([bash, str(hook)], env=env, capture_output=True, timeout=60)
     assert "skip" in (proj / ".claude" / "logs" / "process-outbox.log").read_text(encoding="utf-8").splitlines()[-1]
+
+
+def test_same_verdict_same_session_logged_once(tmp_path, monkeypatch):
+    """R259: Stop 마다 같은 FAIL 을 다시 적어 24h error 14 · READY 0 이 되던 것 — 판정이 바뀔 때만 기록."""
+    import sys as _s
+    monkeypatch.setattr(qsc, "STATE", tmp_path / "q.json")
+    monkeypatch.setattr(qsc, "LOG", tmp_path / "q.log")
+    tr = tmp_path / "sess1.jsonl"
+    tr.write_text(json.dumps(_hook(10988, "hook-00-init.sh")) + "\n", encoding="utf-8")
+    monkeypatch.setattr(qsc, "_async_hooks", lambda: set())
+    monkeypatch.setattr(_s, "argv", ["q", "--transcript", str(tr)])
+    for _ in range(3):
+        qsc.main()
+    assert len((tmp_path / "q.log").read_text(encoding="utf-8").splitlines()) == 1
+    tr.write_text(json.dumps(_hook(1200, "hook-00-init.sh")) + "\n", encoding="utf-8")   # 판정 바뀜 → 새 줄
+    qsc.main()
+    lines = (tmp_path / "q.log").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2 and "Q12_startup=PASS" in lines[-1]
+    assert json.loads((tmp_path / "q.json").read_text(encoding="utf-8"))["latest"]["Q12_startup"]["result"] == "PASS"

@@ -251,9 +251,14 @@ def main() -> int:
     STATE.write_text(json.dumps({"checked_at": now, "session": sid, "latest": res, "last_pass": last_pass},
                                 ensure_ascii=False, indent=1), encoding="utf-8")
     LOG.parent.mkdir(parents=True, exist_ok=True)
-    line = f"{now} {sid[:8]} " + " · ".join(f"{k}={v['result']}" for k, v in res.items())
-    with open(LOG, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    body = " · ".join(f"{k}={v['result']}" for k, v in res.items())
+    # R259: 같은 세션의 같은 판정을 Stop 마다 다시 적어 FAIL 1건이 «24h error 14» 로 부풀고 READY 를 0 으로 끌어내렸다
+    #   → 판정(세션·결과)이 바뀔 때만 한 줄 · 최신 판정은 위 STATE 에 매번 저장
+    if not (prev.get("session") == sid and
+            {k: (v or {}).get("result") for k, v in (prev.get("latest") or {}).items()} ==
+            {k: v["result"] for k, v in res.items()} and LOG.exists()):
+        with open(LOG, "a", encoding="utf-8") as f:
+            f.write(f"{now} {sid[:8]} {body}\n")
     for k, v in res.items():
         print(f"{k}: {v['result']} — {v['why']}")
     return 0
