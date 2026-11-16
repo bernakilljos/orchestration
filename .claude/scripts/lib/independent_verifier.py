@@ -222,6 +222,9 @@ def _past_defects(cwd: Path, code: List[str]) -> Dict[str, Any]:
 _COCHANGE_COMMITS = 40
 _COCHANGE_MAX_FILES = 20
 _BULK_CODE_FILES = 40
+# 고른 시험 파일 수 상한 (2026-11-16): 단계마다 참조 수는 _FANOUT_FULL 미만이어도 합치면 시험 221개(e2e 포함)를
+#   파일 단위로 골라 900초 시간 초과 → 커밋 blocked(사이클 1048 saju_match). 전체 회귀(약 7분)가 더 빠르고 넓다.
+_TESTS_FULL = 80
 
 
 def _name_variants(path: str) -> set:
@@ -347,6 +350,9 @@ def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
             continue
         for t in files & tset:
             why.setdefault(t, "과거 같은 파일과 함께 수정됨")
+    n_sel = sum(1 for t in why if t.endswith(".py"))
+    if n_sel > _TESTS_FULL and not full:
+        full = "영향 시험 %d개 — 파일 단위 실행보다 전체 회귀가 빠름" % n_sel
     if not any(t.endswith(".py") for t in why) and not full:   # .ts 등만 잡히면 게이트가 실행할 시험 0 (리뷰 NIT)
         full = "영향 시험을 찾지 못함 — 범위를 안전하게 정할 수 없어 전체 회귀"
     out = {"tests": [t for t in tests if t in why], "full": full, "why": why}
@@ -425,6 +431,16 @@ def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     return fails, summary, r.returncode
 
 
+def code_fingerprint(cwd: Path) -> str:
+    """스테이징(index)된 코드 파일만의 지문 — 문서(CLAUDE.md AUTO-STATS·guide.txt)만 더 stage 해도 그대로다.
+    lottoclaude 11-16 21:40: 전체 회귀(7분 15초) 통과 직후 커밋 훅이 CLAUDE.md 날짜 한 줄 stage 를 요구 → 트리 해시가 바뀌어
+    stale → 재실행 중 dev 회차 61분 시간 초과. pre-commit-full-check.sh 가 같은 식으로 계산해 비교한다."""
+    import hashlib
+    rows = [ln for ln in (_run_git_in(cwd, ["-c", "core.quotepath=off", "ls-files", "-s"]) or "").splitlines()
+            if ln.split("\t")[-1].lower().endswith(_CODE_EXT)]
+    return hashlib.sha1("\n".join(rows).encode("utf-8")).hexdigest() if rows else ""
+
+
 def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
     """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
 
@@ -437,8 +453,8 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
     tree = (_run_git_in(cwd, ["write-tree"]) or "").strip()
     staged = [p.strip() for p in (_run_git_in(cwd, ["diff", "--cached", "--name-only"]) or "").splitlines() if p.strip()]
     code = [p for p in staged if p.lower().endswith(_CODE_EXT)]
-    res: Dict[str, Any] = {"tree": tree, "at": int(_t.time()), "changed_code": code, "tests": [], "failures": [],
-                           "baseline_failures": [], "new_failures": []}
+    res: Dict[str, Any] = {"tree": tree, "code_tree": code_fingerprint(cwd), "at": int(_t.time()), "changed_code": code,
+                           "tests": [], "failures": [], "baseline_failures": [], "new_failures": []}
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import repair_sandbox as _sb

@@ -62,10 +62,17 @@ if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx)$' && [ -f .c
   TREE=$(git write-tree 2>/dev/null || echo "")
   PYBIN=$(command -v python || command -v python3 || echo "")
   if [ -n "$TREE" ] && [ -n "$PYBIN" ]; then
-    GATE=$("$PYBIN" -X utf8 -c "import json,sys
+    # 트리가 달라도 코드 파일 지문(code_tree)이 같으면 문서만 더 stage 한 것 — 시험을 다시 돌릴 이유가 없다
+    #   (lottoclaude 11-16 21:40: CLAUDE.md AUTO-STATS 날짜 한 줄 때문에 7분 전체 회귀를 재실행하다 dev 회차 61분 시간 초과).
+    GATE=$("$PYBIN" -X utf8 -c "import json,sys,subprocess,hashlib
 try: d=json.load(open('.claude/state/regression-gate.json',encoding='utf-8'))
 except Exception: print('none'); sys.exit()
-print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/dev/null || echo "none")
+if d.get('tree')==sys.argv[1]: print(d.get('status')); sys.exit()
+ext=('.py','.sh','.ps1','.psm1','.bat','.cmd','.js','.ts','.tsx')
+out=subprocess.run(['git','-c','core.quotepath=off','ls-files','-s'],capture_output=True,text=True,encoding='utf-8',errors='replace').stdout
+rows=[l for l in out.splitlines() if l.split('\t')[-1].lower().endswith(ext)]
+fp=hashlib.sha1('\n'.join(rows).encode('utf-8')).hexdigest() if rows else ''
+print(d.get('status') if fp and d.get('code_tree')==fp else 'stale')" "$TREE" 2>/dev/null || echo "none")
     case "$GATE" in
       pass|preexisting|skip) ;;
       regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;

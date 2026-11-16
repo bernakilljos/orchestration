@@ -1661,6 +1661,18 @@ def test_impact_selection_full_when_second_hop_caller_is_common(tmp_path):
     assert "2단계" in (sel["full"] or ""), sel
 
 
+def test_impact_selection_full_when_too_many_tests(tmp_path):
+    """2026-11-16: 단계별 참조 수는 상한 미만이어도 고른 시험이 많으면 전체 회귀.
+    전엔 saju_match 변경에 시험 221개를 파일 단위로 골라 900초 초과 → 커밋 blocked."""
+    import independent_verifier as iv
+    r = _impact_repo(tmp_path)
+    for i in range(iv._TESTS_FULL + 1):
+        (r / "tests" / f"test_many{i}.py").write_text("# exercises app_entry" + chr(10), encoding="utf-8")
+    _git(r, "add", "-A")
+    sel = iv.impact_selection(r, ["lib/core_util.py"])
+    assert "영향 시험" in (sel["full"] or ""), sel
+
+
 def test_impact_selection_uses_cochange_history(tmp_path):
     import independent_verifier as iv
     r = _impact_repo(tmp_path)
