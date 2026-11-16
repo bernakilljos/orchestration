@@ -109,6 +109,11 @@ def _intent_text(prompt: str) -> tuple:
     return pasted, "pasted_report"
 
 
+_QUESTION_FORM_RE = re.compile(r"\?|뭐야|뭔가요|어떻게\s*(?:돼|되|해야)|이유|왜\s|맞아|인가요|일까|었나|었어\s*$")
+_DO_FIRST_RE = re.compile(r"(?:해서|하고|끝내고|마치고|끝나면|다\s*되면)\s*\S{0,12}\s*(?:다시\s*)?보고"
+                          r"|다\s*하고|다\s*해\s*(?:줘|라|$)|다\s*끝내|하라고\s*(?:몇|했|말)")
+
+
 def _classify(text: str) -> str:
     """사용자 메시지 유형 분류 → report_request / execute / question / status / cancel / redo / unknown.
 
@@ -118,6 +123,10 @@ def _classify(text: str) -> str:
     low = (text or "").lower().strip()
     if not low:
         return "unknown"
+    # R274 (11-16 실측 미등록 2건): "이것까지 해서 다시 보고해" → report_request · "이거 다하고 한번에 보고하라고 몇번이나 말해"
+    #   → status("몇") 로 빠져 원장에 안 올라갔다. «먼저 작업하고 → 보고» 형태와 «다 하라» 는 실행 지시다.
+    if _DO_FIRST_RE.search(low) and not _QUESTION_FORM_RE.search(low):   # 리뷰: "다 하고 나면 어떻게 돼?" 는 질문
+        return "execute"
     # 보고 재출력 요청 (R24 재발 방지 · execute 보다 우선 · "다시보고해줘" 에 "해줘" 포함되어도 report_request)
     for k in _REPORT_REQUEST_KEYWORDS:
         if k.lower() in low:
@@ -259,7 +268,8 @@ _WITHOUT_RE = re.compile(r"\S+\s*(?:실행|호출|사용|과금|진행)\s+없이
 # push 는 띄어쓰기·순서가 다양하다 ("git  push", "push origin main", "푸시 진행") — 문자열 대신 정규식
 _RISK_REGEX = (
     # R274: 일반 push 는 위임됨 → 강제·이력 삭제·전체 복제 push 만 (-f · --force · --force-with-lease · --delete · --mirror · --all · +refspec · :branch)
-    ("git push --force", re.compile(r"push\b[^\n]*?(?:\s-f\b|--force|--delete|--mirror|--all\b|\s\+\S|\s:\S)")),
+    # 리뷰 반영: 묶음 옵션(-uf·-fu)·-d·--tags·--prune 포함 · "git push" 또는 "push origin/--force" 형태만 (산문 오탐 축소)
+    ("git push --force", re.compile(r"(?:git\s+push|(?<![a-z])push\s+(?=origin|-))\b[^\n]*?(?:\s-[a-z]*[fd][a-z]*\b|--force|--delete|--mirror|--all\b|--tags\b|--prune\b|\s\+\S|\s:\S)")),
     # R257: "운영" 단독 → 위험 대상이 붙을 때만 (R126·R185·R257 같은 단어 오분류 반복: "운영 환경은 사용자 1명" · "운영 자동화").
     #   "운영 DB·서버·반영·배포·데이터…" 와 "운영에 반영·배포·적용" 은 그대로 센다 · 사유 이름은 기존과 같은 "운영".
     ("운영", re.compile(r"운영\s*(?:db|서버|반영|배포|데이터|테이블|계정|장비|시스템에|환경에|에\s*(?:반영|배포|적용|올려))")),

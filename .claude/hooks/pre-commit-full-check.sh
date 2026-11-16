@@ -71,6 +71,16 @@ print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/de
   fi
 fi
 
+# 7. 상태줄 코드 변경 -> Design Ownership Lock (R275 · 승인 구조 = .claude/design-baseline/statusline.json)
+#    구조가 바뀌었는데 해제(design-gate.py unlock statusline <사유>) 기록이 없으면 커밋 차단 · 렌더 실패는 미측정(차단 X)
+if echo "$STAGED" | grep -qE '(^|/)statusline_context\.py$' && [ -f .claude/scripts/design-gate.py ] && [ -f .claude/design-baseline/statusline.json ]; then
+  PYBIN=$(command -v python || command -v python3 || echo "")
+  if [ -n "$PYBIN" ]; then
+    DG_OUT=$("$PYBIN" -X utf8 .claude/scripts/design-gate.py check statusline 2>&1)
+    [ $? -eq 2 ] && MISSING="$MISSING\n  - 상태줄 승인 구조와 다름 (해제 없이 바뀜 = 임의변경): $(echo "$DG_OUT" | head -3 | tr '\n' ' ')"
+  fi
+fi
+
 if [ -n "$MISSING" ]; then
   # 사유는 stderr 로 — exit 2 일 때 Claude 에게 돌아가는 것은 stderr 뿐 (2026-10-16, stdout 이라 사유가 사라졌다)
   cat >&2 <<MSG

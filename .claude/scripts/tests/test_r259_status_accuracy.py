@@ -245,7 +245,7 @@ def test_r270_control_line_counts_existing_records(tmp_path):
         ev("blocked", _t.time()), ev("unknown", _t.time()), ev("success", _t.time()), ev("blocked", _t.time() - 3 * 86400)]) + "\n",
         encoding="utf-8")
     line = sl._control_line(str(tmp_path))
-    assert "승인차단 1" in line and "검증skip 2" in line and "범위 lock꺼짐" in line and "임의변경·추측수정 미계측" in line
+    assert "승인차단 1" in line and "검증skip 2" in line and "범위 lock꺼짐" in line and "임의변경 미측정" in line and "추측수정 미측정" in line   # R275 개별 계측
     empty = tmp_path / "none"
     (empty / ".claude").mkdir(parents=True)
     line2 = sl._control_line(str(empty))

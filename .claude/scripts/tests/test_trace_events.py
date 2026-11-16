@@ -315,8 +315,9 @@ def test_no_git_no_logs_no_agents_are_unmeasured_not_zero(sl, proj):
     assert "UNKNOWN" in _plain(g["agents"])
     # R270: 통제는 기록이 없으면 «미측정»·«미계측» (0 으로 위장 X) · 공통화 4항목은 여전히 미구현
     _ctl = _plain(g["control"])
-    assert "승인차단 미측정" in _ctl and "검증skip 미측정" in _ctl and "미계측" in _ctl and " 0" not in _ctl
-    assert "미구현" in _plain(g["reuse"])
+    assert "승인차단 미측정" in _ctl and "검증skip 미측정" in _ctl and "임의변경 미측정" in _ctl and "추측수정 미측정" in _ctl \
+        and " 0" not in _ctl
+    assert "⏳" in _plain(g["reuse"])   # R275: git 없음 = 공통화 4항목 미측정 (0 아님)
 
 
 def test_stale_test_cache_is_not_current_success(sl, proj):

@@ -2488,6 +2488,7 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - 상태줄 정확성 (2026-11-16 R268~R271): 개발 줄 시간 표기 «개발중(≈N분)» · READY 오류 감점은 같은 메시지 반복을 1건으로 · 통제 줄 = 승인차단(approval-gate.log BLOCK)·검증skip(회귀 게이트 blocked·unknown)·범위(lock 꺼짐이면 lock꺼짐)·임의변경·추측수정 미계측 (최근 24시간) · 배포 표시 원천 = merge-to-target --apply 가 남기는 logs/merge-to-target.log · 시험이 운영 approval-gate.log 에 쓰던 오염 수정 (ORCHESTRATION_ROOT 따름).
 - 요청 줄 실행 표시 (2026-11-16 R273): «실행» 은 현재 요청이 처리 중(pending·implemented)일 때만 · PARTIAL·BLOCKED·승인대기로 끝난 요청은 «최근Rn부분» 으로 따로 · 개발 줄 남은 시간은 처리 중일 때만 · verified 는 부분완료/차단/실패 구분.
 - 원장 승인 분류 (2026-11-16 R274): 일반 push 는 승인 사유에서 제외 (2026-11-13 R250 위임 · approval-gate-rules 와 일치) · 강제·원격 삭제·mirror·+refspec·:branch push 는 계속 승인 필요.
+- 계측·디자인 검증 (2026-11-16 R274·R275): 원장 «하고/해서 → 보고»·«다 하고» 지시를 실행으로 등록 · 영향 줄 = 바뀐 코드 파일 이름을 참조하는 파일 수(의존 N · 10분 캐시) · 공통화 = 바뀐 UI 파일 기준 재사용·우회·CSS중복·신규공통 · 통제 = 임의변경(design-gate UNAUTHORIZED)·추측수정(수정 전 2시간 안 읽기·검색 기록 없음) · design-gate.py = Golden Baseline(.claude/design-baseline/)·Visual Quality Gate(상태줄 구조·서비스 UI 이미지 차이)·Design Ownership Lock(unlock 1시간)·Anti-Ping-Pong 연결.
 - V1.1 (2026-11-05): 긴급 요청 감지 (detect_user_emotion) · 사실 표기 5종 (failure-mode.md · Judge 근거 태그 검사) · 연관 작업 자율 범위 (execution-contract §3) · runner 타임아웃 시 자기 프로세스 트리 정리. 상세 §29.
 - Judge 근거 (2026-11-05): [확인] 근거가 있으면 부연 [추정]·[예시] 허용 · [확인] 없이 추정·예시만으로 met 이면 UNVERIFIED.
 - V1.1 재확인 (2026-11-05): 긴급은 감지만 (우선 처리 경로 없음) · sandbox 계열 회귀는 메모리 부족으로 BLOCKED. 상세 §30.

@@ -1,0 +1,77 @@
+{
+ "ts": "2026-11-16 16:22:51",
+ "columns": 250,
+ "rows": 10,
+ "items": [
+  {
+   "label": "🧠️토큰",
+   "bar": 13,
+   "cha": null,
+   "right": null,
+   "rbar": null
+  },
+  {
+   "label": "🎨️디자인",
+   "bar": 13,
+   "cha": null,
+   "right": "💻️개발",
+   "rbar": 14
+  },
+  {
+   "label": "🧪️영향",
+   "bar": 13,
+   "cha": null,
+   "right": "🧩️공통화",
+   "rbar": 14
+  },
+  {
+   "label": "📊️품질추세",
+   "bar": 13,
+   "cha": null,
+   "right": "📋️요청",
+   "rbar": 14
+  },
+  {
+   "label": "🛑️통제",
+   "bar": 13,
+   "cha": null,
+   "right": "✅️검증",
+   "rbar": 14
+  },
+  {
+   "label": "🔐️증명",
+   "bar": 13,
+   "cha": null,
+   "right": "🎯️READY",
+   "rbar": 14
+  },
+  {
+   "label": "📡️인프라",
+   "bar": 13,
+   "cha": null,
+   "right": "🚨️오류",
+   "rbar": 14
+  },
+  {
+   "label": "🤖️서브",
+   "bar": 13,
+   "cha": null,
+   "right": null,
+   "rbar": null
+  },
+  {
+   "label": "🔒️이력",
+   "bar": 13,
+   "cha": null,
+   "right": null,
+   "rbar": null
+  },
+  {
+   "label": "🧭️기준룰",
+   "bar": 13,
+   "cha": null,
+   "right": "💚️HEALTH",
+   "rbar": 14
+  }
+ ]
+}

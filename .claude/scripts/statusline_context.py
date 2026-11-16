@@ -405,6 +405,48 @@ def _tail_lines(path: str, nbytes: int = 400_000) -> list:
         return f.read().decode("utf-8", "replace").splitlines()[1 if size > nbytes else 0:]
 
 
+def _guess_edits(lines, cut: float, window: float = 7200):
+    """R275 추측수정 = 수정(Edit·Write·MultiEdit) 직전 2시간 안에 그 파일을 Read 한 기록도, 검색·셸 입력에 그 파일 이름이
+    나온 기록도 없는 수정 수 (최근 24시간) · 근거 = trace-events 의 도구 입력 (R259 부터 1800자 보존 · 그 전 자료는 판정 안 함)."""
+    evs = []
+    _ts_rx = re.compile(r'"ts": ([0-9.]+)')
+    for ln in lines:
+        if '"kind": "tool"' not in ln:
+            continue
+        m = _ts_rx.search(ln)
+        if not m or float(m.group(1)) < cut - window:   # 판정 창 밖은 JSON 을 풀지 않는다 (렌더 속도)
+            continue
+        try:
+            e = json.loads(ln)
+            d = json.loads(e.get("detail") or "{}")
+        except ValueError:
+            continue
+        evs.append((float(e.get("ts") or 0), e.get("step"), str(d.get("input") or "")))
+    if not evs:
+        return None
+    import bisect as _bs
+    evs.sort()
+    tss = [e[0] for e in evs]
+    lows = [e[2].replace("\\", "/").lower() for e in evs]
+    n = 0
+    for i, (ts, step, inp) in enumerate(evs):
+        if ts < cut or step not in ("Edit", "MultiEdit") or not inp:   # Write 는 새 파일·덮어쓰기 구분 불가 → 제외
+            continue
+        path = lows[i]
+        base = os.path.basename(path)
+        seen = False
+        for j in range(_bs.bisect_left(tss, ts - window), i):   # 창 안의 앞선 사건만
+            s2, low = evs[j][1], lows[j]
+            if (s2 == "Read" and low == path) or (s2 in ("Bash", "PowerShell", "Grep", "Glob") and base
+                                                    and re.search(r"(?<![\w.-])" + re.escape(base) + r"(?![\w-])", low)) \
+                    or (s2 in ("Edit", "Write", "MultiEdit") and low == path):
+                seen = True
+                break
+        if not seen:
+            n += 1
+    return n
+
+
 def _control_line(cwd: str) -> str:
     """R270 통제 줄 — 기존 기록만 사용 (새 훅·감시 X) · 최근 24시간.
       승인차단 = logs/approval-gate.log 의 BLOCK 줄 (pytest 임시 폴더 시험 명령 제외)
@@ -429,9 +471,11 @@ def _control_line(cwd: str) -> str:
     except OSError:
         parts.append("승인차단 미측정")
     tl = os.path.join(cwd, ".claude", "logs", "trace-events.jsonl")
+    _tl_lines = None
     try:
         n = 0
-        for ln in _tail_lines(tl, 1_500_000):
+        _tl_lines = _tail_lines(tl, 1_500_000)
+        for ln in _tl_lines:
             if '"regression-gate"' not in ln:
                 continue
             try:
@@ -449,7 +493,22 @@ def _control_line(cwd: str) -> str:
             parts.append("범위 미계측" if json.load(f).get("active") else "범위 lock꺼짐")
     except (OSError, ValueError):
         parts.append("범위 lock꺼짐")
-    parts.append("임의변경·추측수정 미계측")
+    # R275 임의변경 = design-gate UNAUTHORIZED (승인 디자인 구조를 해제 없이 바꿈) · 기록 없음 = 미측정
+    try:
+        seen_v, checked = set(), False
+        dl = os.path.join(cwd, ".claude", "logs", "design-gate.log")
+        for ln in _tail_lines(dl, 200_000):
+            m = re.match(r"\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\] (PASS|FAIL|UNAUTHORIZED|PINGPONG) (\S+)(?: · (#\w+))?", ln)
+            if not m or _dt.strptime(m.group(1), "%Y-%m-%d %H:%M:%S").timestamp() < cut:
+                continue
+            checked = True
+            if m.group(2) == "UNAUTHORIZED":
+                seen_v.add((m.group(3), m.group(4) or ln[-40:]))   # 같은 위반 반복 검사 = 1건
+        parts.append(f"임의변경 {len(seen_v)}" if checked else "임의변경 미검사")
+    except OSError:
+        parts.append("임의변경 미측정")
+    g = _guess_edits(_tl_lines, cut) if _tl_lines is not None else None
+    parts.append("추측수정 미측정" if g is None else f"추측수정 {g}")
     return "[90m" + " · ".join(parts) + "[0m"
 
 
@@ -935,7 +994,144 @@ def _compute_impact(cwd):
         return f"수정 {_u} · 영향 {_n} · API {_u} · DB {_u} · breaking {_n} [90m(git 조회 실패)[0m"
     api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "route", "endpoint", "controller")))
     db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
-    return f"수정 {len(files)} · 경로추정 API {api} DB {db} · 영향 {_n}"
+    return f"수정 {len(files)} · 경로추정 API {api} DB {db} · 영향 {_impact_dependents(cwd, files)}"
+
+
+_CODE_EXT = (".py", ".js", ".ts", ".tsx", ".vue", ".java", ".sh", ".ps1")
+_UI_EXT = (".css", ".scss", ".less", ".vue", ".tsx", ".jsx", ".html", ".svelte")
+_COMMON_DIR_RE = re.compile(r"(?:^|/)(?:common|shared|components?|ui)/", re.I)
+
+
+def _git_new_files(cwd):
+    """R275 신규 파일 (git status 의 ?? · A) — 신규공통 판정용 · 실패 = None."""
+    def _run():
+        import subprocess as _sp
+        r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
+                    text=True, encoding="utf-8", errors="replace", timeout=3)
+        if r.returncode != 0:
+            return None
+        return {ln[3:].strip().strip('"') for ln in r.stdout.splitlines() if ln[:2] in ("??", "A ", "AM")}
+    return _memo(("gitnew", cwd), _run)
+
+
+def _common_names(cwd: str) -> set:
+    """R275 공통 폴더(common·shared·components·ui) 안 UI 파일 이름 — 10분 캐시 (렌더마다 저장소 전체를 훑지 않게)."""
+    import time as _t
+    cp = os.path.join(cwd, ".claude", "state", "common-names-cache.json")
+    try:
+        with open(cp, encoding="utf-8") as fh:
+            c = json.load(fh)
+        if _t.time() - float(c.get("ts", 0)) < 600:
+            return set(c.get("names") or [])
+    except (OSError, ValueError, TypeError):
+        pass
+    names, t0, partial = set(), _t.time(), False
+    for dp, dns, fns in os.walk(cwd):
+        dns[:] = [x for x in dns if x not in ("node_modules", ".git", "dist", "build", "__pycache__", ".repair-sandbox", "backups")]
+        if _t.time() - t0 > 1.5:
+            partial = True
+            break
+        rel = os.path.relpath(dp, cwd).replace(chr(92), "/") + "/"
+        if _COMMON_DIR_RE.search(rel):
+            names.update(os.path.splitext(fn)[0].lower() for fn in fns if fn.lower().endswith(_UI_EXT))
+    if not partial:   # 불완전 목록을 10분 캐시하면 우회가 «0» 으로 보인다
+        try:
+            with open(cp, "w", encoding="utf-8") as fh:
+                json.dump({"ts": _t.time(), "names": sorted(names)}, fh, ensure_ascii=False)
+        except OSError:
+            pass
+    return names
+
+
+def _reuse_metrics(cwd: str, files) -> str:
+    """R275 공통화 4항목 — 바뀐 UI 파일만 대상 (실제 소스 본문 기준 · 과거 미계측 자료는 만들지 않음).
+      재사용 = 바뀐 UI 파일 중 common·shared·components·ui 경로를 import 하는 파일 수
+      우회   = 공통 폴더 밖 바뀐 UI 파일 중 이름이 기존 공통 컴포넌트와 같은 파일 (같은 것을 따로 만듦)
+      CSS중복 = 바뀐 스타일 안에서 같은 선언 묶음({...})이 2번 이상 나온 묶음 수
+      신규공통 = 공통 폴더에 새로 생긴 파일 수
+    UI 파일 변경이 없으면 «UI 변경 없음» (0 아님 · 해당 없음) · git 실패 = ⏳."""
+    if files is None:
+        return "재사용·우회·CSS중복·신규공통 \033[36m⏳\033[0m"
+    ui = [f.replace("\\", "/") for f in files if f.lower().endswith(_UI_EXT)]
+    if not ui:
+        return "\033[90mUI 변경 없음 (재사용·우회·CSS중복·신규공통 해당없음)\033[0m"
+    new = _git_new_files(cwd) or set()
+    reuse = bypass = 0
+    common_names = _common_names(cwd)
+    blocks = {}
+    for f in ui:
+        p = os.path.join(cwd, f)
+        try:
+            with open(p, encoding="utf-8", errors="ignore") as fh:
+                txt = fh.read()
+        except OSError:
+            continue
+        if re.search(r"(?:import|from|require\()\s*[^\n]*?['\"][^'\"]*(?:common|shared|components?|/ui)/", txt, re.I):
+            reuse += 1
+        if not _COMMON_DIR_RE.search(f) and os.path.splitext(os.path.basename(f))[0].lower() in common_names:
+            bypass += 1
+        for b in re.findall(r"\{([^{}]{12,400})\}", txt):
+            k = ";".join(sorted(x.strip() for x in b.split(";") if ":" in x))
+            if k:
+                blocks[k] = blocks.get(k, 0) + 1
+    dup = sum(1 for v in blocks.values() if v >= 2)
+    newc = sum(1 for f in new if _COMMON_DIR_RE.search(f.replace("\\", "/")))
+    return f"재사용 {reuse} · 우회 {bypass} · CSS중복 {dup} · 신규공통 {newc} (UI {len(ui)}파일)"
+
+
+def _impact_dependents(cwd: str, files) -> str:
+    """R275 영향 = 바뀐 코드 파일의 이름(모듈명)을 참조하는 다른 코드 파일 수 (1단계 의존 · 실제 소스 본문 기준).
+    캐시: 바뀐 파일 목록+수정시각이 같으면 재사용 (.claude/state/impact-deps-cache.json) · 계산 상한 1.5초 넘으면 «⏳»(0 아님).
+    한계: 이름 문자열 참조 기준이라 동적 import·같은 이름 다른 모듈은 구분 못 함 — 표시는 «의존 N»(추정 아님·이름 참조 실측)."""
+    import time as _t
+    code = sorted(f for f in files if f.lower().endswith(_CODE_EXT))
+    if not code:
+        return "의존 해당없음"
+    try:
+        key = "|".join(f"{f}:{int(os.path.getmtime(os.path.join(cwd, f)))}" for f in code if os.path.exists(os.path.join(cwd, f)))
+    except OSError:
+        key = "|".join(code)
+    cp = os.path.join(cwd, ".claude", "state", "impact-deps-cache.json")
+    try:
+        with open(cp, encoding="utf-8") as fh:
+            c = json.load(fh)
+        if c.get("key") == key and _t.time() - float(c.get("ts", 0)) < 600:
+            return f"의존 {c['n']}"
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    names = {}
+    for f in code:
+        base = os.path.splitext(os.path.basename(f))[0]
+        if len(base) >= 4:                       # 너무 짧은 이름은 오탐이 커서 제외
+            names[base] = f.replace("\\", "/")
+    if not names:
+        return "의존 해당없음"
+    rx = re.compile(r"(?<![\w-])(" + "|".join(re.escape(b) for b in names) + r")(?![\w-])")
+    roots = [os.path.join(cwd, d) for d in (".claude/scripts", ".claude/hooks", "plugins", "src", "app", "web") if os.path.isdir(os.path.join(cwd, d))]
+    deps, t0 = set(), _t.time()
+    for root in roots:
+        for dp, dns, fns in os.walk(root):
+            dns[:] = [d for d in dns if d not in ("__pycache__", "node_modules", ".git", "tests", "backups")]
+            for fn in fns:
+                if not fn.lower().endswith(_CODE_EXT):
+                    continue
+                if _t.time() - t0 > 1.5:
+                    return "\033[36m⏳\033[0m"   # 계산 상한 초과 = 미측정 (0 으로 보이지 않게)
+                p = os.path.join(dp, fn)
+                rel = os.path.relpath(p, cwd).replace("\\", "/")
+                try:
+                    with open(p, encoding="utf-8", errors="ignore") as fh:
+                        hit = rx.search(fh.read())
+                except OSError:
+                    continue
+                if hit and names.get(hit.group(1)) != rel:
+                    deps.add(rel)
+    try:
+        with open(cp, "w", encoding="utf-8") as fh:
+            json.dump({"key": key, "ts": _t.time(), "n": len(deps), "sample": sorted(deps)[:20]}, fh, ensure_ascii=False)
+    except OSError:
+        pass
+    return f"의존 {len(deps)}"
 
 
 def extra_gauges(cwd, data=None):
@@ -1737,7 +1933,7 @@ def extra_gauges(cwd, data=None):
     # §81: 컴포넌트 재사용·우회·CSS중복·신규공통 = 집계 미구현 (종전 ?·— 표시) · 하드코딩만 감사 파일 실측
     _aud_ok = os.path.exists(os.path.join(cwd, ".claude", "state", "hardcoded-audit.json"))
     _hc_txt = (f"[1;33m{int(locals().get('_hc_total', 0) or 0)}[0m" if _aud_ok else "[36m⏳[0m")
-    reuse_line = f"하드코딩 {_hc_txt} · [90m재사용·우회·CSS중복·신규공통 미구현[0m"
+    reuse_line = f"하드코딩 {_hc_txt} · {_reuse_metrics(cwd, _git_changes(cwd))}"   # R275 실제 계측
 
     # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
     proof_line = ""
