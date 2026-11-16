@@ -4,6 +4,7 @@
   python approval-gate.py detect <command>       # 위험 패턴 매치 -> JSON
   python approval-gate.py request <task_id> <command> <category> <detail>
   (승인·거부는 명령줄 X — 사용자가 프롬프트에 '/approve <id>' · '/reject <id> [사유]' 입력)
+  python approval-gate.py withdraw <task_id> <사유>  # 자기 대기 요청 취소 (대기 → 만료 · 승인 아님)
   python approval-gate.py list                   # waiting 만
   python approval-gate.py status <task_id>
 """
@@ -428,6 +429,35 @@ def expire_stale(now: int | None = None) -> int:
         conn.close()
 
 
+def withdraw(task_id: str, reason: str, by: str = "requester") -> dict:
+    """요청한 쪽(Claude)이 자기 대기 요청을 거둬들인다 (2026-11-16 R258 · 사용자 지시 "자동 승인 X · 자기 요청 자동 취소 O").
+    대기 → 만료 만 한다 = expire_stale 과 같은 «실행을 허용하지 않는 쪽» 변화 · 승인·실행 경로는 그대로.
+    승인된·소비된·거부된 행은 건드리지 않는다 · 게이트가 만든 행만 · 사유 필수 · 기록(명령·사유·시각)은 보존.
+    다시 필요하면 같은 명령을 내면 새 번호로 새 요청이 생긴다."""
+    reason = (reason or "").strip()
+    if not reason:
+        return {"error": "취소 사유 필요"}
+    now = int(time.time())
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        row = conn.execute("SELECT approval_state, task_file, risk_detail FROM tasks WHERE task_id = ?",
+                           (task_id,)).fetchone()
+        if not row:
+            return {"error": f"task_id {task_id} not found"}
+        if row[1] != "<approval-gate>":
+            return {"error": f"task_id {task_id} 는 승인 게이트가 만든 요청이 아님 — 취소 안 함"}
+        if row[0] != "waiting":
+            return {"error": f"task_id {task_id} not waiting (current: {row[0]}) — 대기 요청만 취소"}
+        n = conn.execute("UPDATE tasks SET approval_state = 'expired', status = 'cancelled', risk_detail = ? "
+                         "WHERE task_id = ? AND approval_state = 'waiting'",
+                         (_merge_detail(row[2], expire_reason="withdrawn_by_requester", withdrawn_by=by,
+                                        withdraw_reason=reason[:300], withdrawn_at=now), task_id)).rowcount
+        conn.commit()
+        return {"task_id": task_id, "state": "expired" if n == 1 else "unchanged", "reason": reason[:300]}
+    finally:
+        conn.close()
+
+
 def list_waiting() -> list:
     try:
         expire_stale()
@@ -510,6 +540,11 @@ def main():
                                    "'/reject <id> [사유]' 를 입력해야 기록된다 (prompt/user_approval.py)"},
                          ensure_ascii=False, indent=2))
         sys.exit(3)
+    elif cmd == "withdraw" and len(sys.argv) >= 4:
+        # 자기 대기 요청 취소 (대기 → 만료) — 승인이 아니다 · 실행을 허용하지 않는 쪽 변화
+        res = withdraw(sys.argv[2], " ".join(sys.argv[3:]))
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        sys.exit(1 if "error" in res else 0)
     elif cmd == "list":
         print(json.dumps(list_waiting(), ensure_ascii=False, indent=2))
     elif cmd == "status" and len(sys.argv) >= 3:

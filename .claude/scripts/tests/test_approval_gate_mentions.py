@@ -18,7 +18,15 @@ def _isolated_kit() -> Path:
     import subprocess
     import tempfile
     d = Path(tempfile.mkdtemp(prefix="agd-kit-"))
-    atexit.register(shutil.rmtree, d, True)
+    def _force(func, p, _exc):   # R258: 읽기 전용 git 객체 때문에 오류 무시 삭제가 조용히 실패해 agd-kit 55개 누적
+        import os
+        import stat
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+    atexit.register(lambda: shutil.rmtree(d, onexc=_force))
     for rel in (".claude/hooks/tool", ".claude/scripts/lib", ".claude/scripts/auto-save-next-actions.py",
                 ".claude/scripts/approval-gate.py"):
         src, dst = KIT / rel, d / rel

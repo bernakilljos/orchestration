@@ -102,6 +102,7 @@ PATTERNS = {
 | `git push` / `git push origin <브랜치>` 단독 (일반 push · 2026-11-13 R250 사용자 위임) |  자동 진행 (비밀값 검사는 유지) |
 | 위 일반 push 뒤의 `2>&1`·`\| tail -N`·`\| head -N` (2026-11-14 R255 · 같은 push 인데 형태만 달라 생기던 불필요 요청 제거 · 앞에 `cd` 를 붙이면 저장소·HEAD 확정 불가로 그대로 차단) |  자동 진행 |
 | 실행되지 않는 언급 (2026-11-15 R256): grep 검색어(셸 따옴표 규칙 · 큰따옴표 안 `$(…)` 와 셸로 넘기는 파이프는 제외) · 명령 실행 불가로 확정된 `python - <<'EOF'` 본문의 push 단어 (import 허용 목록 · eval/exec/getattr/dunder/os 속성/git 훅 경로 문자열 금지) · request-ledger.py add/complete 인자 (HEAD 와 같은 내용 · 명령에 cd 가 없을 때만 세션 작업 위치 기준) |  자동 진행 |
+| 자기 대기 요청 취소 (2026-11-16 R258): `approval-gate.py withdraw <id> <사유>` = 대기 → 만료 (승인 아님 · 게이트가 만든 대기 행만 · 사유·원래 명령 기록 보존) · 작업 종료(Stop)마다 `own-cleanup.py` 가 임시 폴더 안만 지우는 자기 요청을 자동 취소 · 그 밖의 요청은 남은 승인으로 기록만 · 사유 인자는 기록 전용 (HEAD 와 같은 내용일 때만) |  자동 진행 |
 | 강제 push (`-f`·`--force`·`+refspec`) · 원격 브랜치 삭제 (`:branch`·`--delete`) · `--mirror`·`--all`·`--tags` · origin 외 원격 · 다른 명령과 연결한 push |  approval-gate |
 | SVN 일반 작업 `svn update`·`status`·`diff`·`add`·`delete <작업본 파일>`·`commit`·`revert <파일>`·`cleanup` (2026-11-13 R251 · IFRS = SVN) |  자동 진행 (캐시 인증 `--non-interactive`) |
 | SVN 파괴 작업 `svn revert -R`·`cleanup --remove-unversioned`·`svn delete <URL>`(원격 직접 삭제)·`svnadmin` |  approval-gate |

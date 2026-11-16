@@ -195,11 +195,30 @@ def test_svn_gate_not_applied_outside_svn(tmp_path):
     assert pcc._svn_syntax_gate(ctx) is None
 
 
-# ── 3) push 오탐 ───────────────────────────────────────────────────────
+def _rm_tree(d):
+    """읽기 전용 파일(git 객체)까지 지운다 — R258: 오류 무시 옵션으로 등록한 삭제가 Windows 에서 조용히 실패해
+    임시 폴더가 쌓였다 (r256-kit 28 · agd-kit 55)."""
+    import stat as _st
+
+    def _force(func, p, _exc):
+        try:
+            os.chmod(p, _st.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+    try:
+        shutil.rmtree(d, onexc=_force)
+    except TypeError:               # 3.12 미만
+        shutil.rmtree(d, onerror=_force)
+    except OSError:
+        pass
+
+
+# ── 3) push 오탐───────────────────────────────────────────────────────
 def _isolated_kit() -> Path:
     """기록 전용 스크립트 허용은 «kit HEAD 와 같은 내용» 일 때만 → 현재 작업본을 커밋한 격리 저장소에서 판정 (운영 kit 이력 불변)."""
     d = Path(tempfile.mkdtemp(prefix="r256-kit-"))
-    atexit.register(shutil.rmtree, d, True)
+    atexit.register(_rm_tree, d)
     for rel in (".claude/hooks/tool", ".claude/hooks/prompt/_common.py", ".claude/scripts/lib",
                 ".claude/scripts/approval-gate.py", ".claude/scripts/request-ledger.py",
                 ".claude/scripts/auto-save-next-actions.py"):
@@ -291,3 +310,12 @@ def test_execution_paths_still_blocked(cmd):
 def test_plain_push_still_allowed_and_detect_unchanged():
     assert not flagged(PUSH, CWD)                   # R250 사용자 위임 그대로
     assert flagged("cd /c/x && " + PUSH, CWD)        # HEAD 무결성 그대로
+
+
+def test_real_false_positive_withdraw_reason():   # appr-739c70c388b5 원문 형태 (R258) — 취소 사유는 문자열로만 저장
+    cmd = ('python -X utf8 .claude/scripts/approval-gate.py withdraw appr-cf3a3fa5d5b4 '
+           '"R256 guide.txt 문장 수정의 git 훅 경로 글자 오탐 - ' + P + ' 아님"')
+    assert not flagged(cmd, CWD)
+    assert flagged(cmd.replace("withdraw", "approve"), CWD)                    # 자기 승인은 그대로 차단
+    assert flagged(cmd + " ; " + PUSH, CWD)                                    # 연결 명령은 그대로 검사
+    assert flagged('python -X utf8 .claude/scripts/approval-gate.py withdraw x "$(' + PUSH + ')"', CWD)   # 명령 치환은 가리지 않음

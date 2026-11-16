@@ -258,8 +258,10 @@ _RX_QUOTED = re.compile(r"'[^']*'|\"(?:[^\"\\]|\\.)*\"")
 _INERT_LEADERS = {"echo", "printf", "write-host", "write-output"}
 #: 인자를 파일에 글로만 적는 kit 스크립트 — 2026-11-15 (R256 · appr-04a492249c3f) request-ledger.py add·complete 추가
 #:   (cmd_add·cmd_complete 는 인자를 Ledger JSON·추적 기록에 문자열로만 저장 · subprocess·exec 없음 · HEAD 와 같은 내용일 때만)
+#:   2026-11-16 (R258 · appr-739c70c388b5) approval-gate.py withdraw — 사유를 승인 기록에 문자열로만 저장 (대기 → 만료 · 실행 없음)
 _INERT_KIT_SCRIPTS = {("auto-save-next-actions.py", "manual-add"),
-                      ("request-ledger.py", "add"), ("request-ledger.py", "complete")}
+                      ("request-ledger.py", "add"), ("request-ledger.py", "complete"),
+                      ("approval-gate.py", "withdraw")}
 _RX_PY = re.compile(r"^(?:py|python(?:3(?:\.\d+)?)?)(?:w)?(?:\.exe)?$", re.I)
 
 
