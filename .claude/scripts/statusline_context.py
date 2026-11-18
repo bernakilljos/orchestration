@@ -1156,19 +1156,29 @@ def _reuse_metrics(cwd: str, files) -> str:
     return f"재사용 {reuse} · 우회 {bypass} · CSS중복 {dup} · 신규공통 {newc} (UI {len(ui)}파일)"
 
 
+def _impact_key(cwd: str, code) -> str:
+    try:
+        return "|".join(f"{f}:{int(os.path.getmtime(os.path.join(cwd, f)))}" for f in code if os.path.exists(os.path.join(cwd, f)))
+    except OSError:
+        return "|".join(code)
+
+
 def _impact_dependents(cwd: str, files) -> str:
     """R275 영향 = 바뀐 코드 파일의 이름(모듈명)을 참조하는 다른 코드 파일 수 (1단계 의존 · 실제 소스 본문 기준).
-    캐시: 바뀐 파일 목록+수정시각이 같으면 재사용 (.claude/state/impact-deps-cache.json) · 계산 상한 1.5초 넘으면 «⏳»(0 아님).
+    캐시: 바뀐 파일 목록+수정시각이 같으면 재사용 (.claude/state/impact-deps-cache.json · 10분).
+    2026-11-18 성능: 종전엔 렌더 안에서 계산하다 1.5초 상한을 넘으면 캐시 없이 «⏳» 만 돌려줘, 바뀐 코드가 많으면
+    (83개 × 2,182파일) 렌더마다 1.5초를 다시 써 상태줄 1회가 1.8~2.0초였다 (상한 900ms) — 이제 렌더는 캐시만 읽고,
+    없으면 창 없는 백그라운드 계산 1개(_impact_worker · 2분 잠금)를 띄우고 «⏳»(미측정 · 0 아님) 를 바로 돌려준다.
     한계: 이름 문자열 참조 기준이라 동적 import·같은 이름 다른 모듈은 구분 못 함 — 표시는 «의존 N»(추정 아님·이름 참조 실측)."""
     import time as _t
     code = sorted(f for f in files if f.lower().endswith(_CODE_EXT))
     if not code:
         return "의존 해당없음"
-    try:
-        key = "|".join(f"{f}:{int(os.path.getmtime(os.path.join(cwd, f)))}" for f in code if os.path.exists(os.path.join(cwd, f)))
-    except OSError:
-        key = "|".join(code)
-    cp = os.path.join(cwd, ".claude", "state", "impact-deps-cache.json")
+    if not any(len(os.path.splitext(os.path.basename(f))[0]) >= 4 for f in code):
+        return "의존 해당없음"
+    key = _impact_key(cwd, code)
+    st = os.path.join(cwd, ".claude", "state")
+    cp = os.path.join(st, "impact-deps-cache.json")
     try:
         with open(cp, encoding="utf-8") as fh:
             c = json.load(fh)
@@ -1176,13 +1186,35 @@ def _impact_dependents(cwd: str, files) -> str:
             return f"의존 {c['n']}"
     except (OSError, ValueError, KeyError, TypeError):
         pass
+    lk = os.path.join(st, "impact-deps-running")
+    try:
+        if os.path.exists(lk) and _t.time() - os.path.getmtime(lk) < 120:
+            return "[36m⏳[0m"   # 계산 중 = 미측정
+        with open(lk, "w", encoding="utf-8") as fh:
+            fh.write(str(os.getpid()))
+        import subprocess as _sp
+        kw = {"stdin": _sp.DEVNULL, "stdout": _sp.DEVNULL, "stderr": _sp.DEVNULL, "close_fds": True, "cwd": cwd}
+        if os.name == "nt":
+            kw["creationflags"] = 0x08000000 | 0x00000200   # CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
+        else:
+            kw["start_new_session"] = True
+        _sp.Popen([sys.executable, "-X", "utf8", os.path.abspath(__file__), "--impact-worker", cwd], **kw)
+    except OSError:
+        pass
+    return "[36m⏳[0m"
+
+
+def _impact_compute(cwd: str, code, limit_s: float = 60.0):
+    """의존 파일 수를 세어 캐시에 쓴다 · 상한 초과 = None (캐시 안 씀 · 미측정 유지 · 0 으로 보이지 않게)."""
+    import time as _t
+    key = _impact_key(cwd, code)
     names = {}
     for f in code:
         base = os.path.splitext(os.path.basename(f))[0]
         if len(base) >= 4:                       # 너무 짧은 이름은 오탐이 커서 제외
             names[base] = f.replace("\\", "/")
     if not names:
-        return "의존 해당없음"
+        return None
     rx = re.compile(r"(?<![\w-])(" + "|".join(re.escape(b) for b in names) + r")(?![\w-])")
     roots = [os.path.join(cwd, d) for d in (".claude/scripts", ".claude/hooks", "plugins", "src", "app", "web") if os.path.isdir(os.path.join(cwd, d))]
     deps, t0 = set(), _t.time()
@@ -1192,8 +1224,8 @@ def _impact_dependents(cwd: str, files) -> str:
             for fn in fns:
                 if not fn.lower().endswith(_CODE_EXT):
                     continue
-                if _t.time() - t0 > 1.5:
-                    return "\033[36m⏳\033[0m"   # 계산 상한 초과 = 미측정 (0 으로 보이지 않게)
+                if _t.time() - t0 > limit_s:
+                    return None
                 p = os.path.join(dp, fn)
                 rel = os.path.relpath(p, cwd).replace("\\", "/")
                 try:
@@ -1203,12 +1235,31 @@ def _impact_dependents(cwd: str, files) -> str:
                     continue
                 if hit and names.get(hit.group(1)) != rel:
                     deps.add(rel)
+    cp = os.path.join(cwd, ".claude", "state", "impact-deps-cache.json")
+    tmp = cp + ".tmp"
     try:
-        with open(cp, "w", encoding="utf-8") as fh:
+        with open(tmp, "w", encoding="utf-8") as fh:
             json.dump({"key": key, "ts": _t.time(), "n": len(deps), "sample": sorted(deps)[:20]}, fh, ensure_ascii=False)
+        os.replace(tmp, cp)
     except OSError:
         pass
-    return f"의존 {len(deps)}"
+    return len(deps)
+
+
+def _impact_worker(cwd: str) -> int:
+    """백그라운드 계산 — 렌더와 같은 git 결과로 바뀐 코드 파일을 다시 얻어 _impact_compute (상한 60초) · 끝나면 잠금 해제."""
+    lk = os.path.join(cwd, ".claude", "state", "impact-deps-running")
+    try:
+        files = _git_changes(cwd)
+        if files is None:
+            return 1
+        code = sorted(f for f in files if f.lower().endswith(_CODE_EXT))
+        return 0 if _impact_compute(cwd, code) is not None else 1
+    finally:
+        try:
+            os.remove(lk)
+        except OSError:
+            pass
 
 
 def extra_gauges(cwd, data=None):
@@ -2494,6 +2545,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) >= 3 and sys.argv[1] == "--impact-worker":
+        try:
+            sys.exit(_impact_worker(sys.argv[2]))
+        except Exception:
+            sys.exit(1)
     try:
         main()
     except Exception:

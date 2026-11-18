@@ -40,9 +40,25 @@ def test_r275_impact_counts_real_references(tmp_path):
     (s / "user_b.sh").write_text("python core_mod.py\n", encoding="utf-8")
     (s / "other.py").write_text("print('core_modx')\n", encoding="utf-8")   # 다른 이름 (경계) → 제외
     (tmp_path / ".claude" / "state").mkdir()
-    assert SL._impact_dependents(str(tmp_path), [".claude/scripts/core_mod.py"]) == "의존 2"
+    assert SL._impact_compute(str(tmp_path), [".claude/scripts/core_mod.py"]) == 2
     assert SL._impact_dependents(str(tmp_path), [".claude/scripts/core_mod.py"]) == "의존 2"   # 캐시 경로
     assert SL._impact_dependents(str(tmp_path), ["docs/a.md"]) == "의존 해당없음"
+
+
+def test_impact_cache_miss_returns_fast_and_spawns_once(tmp_path, monkeypatch):
+    """2026-11-18: 캐시가 없으면 렌더 안에서 세지 않고 백그라운드 1개만 띄우고 «⏳» (종전: 렌더마다 1.5초 · 상태줄 1.8~2.0초)."""
+    s = tmp_path / ".claude" / "scripts"
+    s.mkdir(parents=True)
+    (s / "core_mod.py").write_text("X = 1\n", encoding="utf-8")
+    (tmp_path / ".claude" / "state").mkdir()
+    calls = []
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: calls.append(a))
+    t0 = time.time()
+    r1 = SL._impact_dependents(str(tmp_path), [".claude/scripts/core_mod.py"])
+    r2 = SL._impact_dependents(str(tmp_path), [".claude/scripts/core_mod.py"])   # 잠금 중 → 다시 안 띄움
+    assert "⏳" in r1 and "⏳" in r2 and "의존" not in r1
+    assert len(calls) == 1 and "--impact-worker" in calls[0][0]
+    assert time.time() - t0 < 0.5
 
 
 def test_r275_reuse_metrics_detect_reuse_bypass_dup_new(tmp_path, monkeypatch):
