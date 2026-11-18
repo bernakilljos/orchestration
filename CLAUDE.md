@@ -68,7 +68,9 @@
 
 ---
 
-<!-- AUTO-STATS -->> **현재 상태** (2026-11-18): plugins 37 stable + 0 spec-only - rules 55 - hooks 32 - scripts 202<!-- AUTO-STATS -->
+<!-- AUTO-STATS -->
+> **현재 상태** (2026-11-18): plugins 37 stable + 0 spec-only - rules 55 - hooks 32 - scripts 202
+<!-- AUTO-STATS -->
 
 ## 2. WHY — 왜 이 구조인가
 
@@ -163,7 +165,9 @@ kit 이 SoT 이므로 세션 가드 교정은 반드시 kit 에도 반영할 것
 | 보안 패턴 검사 | security-guidance plugin | Anthropic 공식 `/plugin install security-guidance@claude-plugins-official` — Write/Edit/MultiEdit pre-hook, 모델 호출 0회 |
 | 데이터 시각화·차트·대시보드 | `/dataviz` (v2.1.198 내장) | color-palette validator 포함 · 우리 arch-*/chart 스킬과 병존 (built-in 우선) |
 | PPT·디자인 | Claude + MCP | Gamma/Canva/Figma |
+
 **가격·Claude Code 버전별 변경·API 신규 기능**: `.claude/rules/model-release-notes.md` (라우팅·가격 파일을 다룰 때 자동 로드)
+
 Fable 5 활용 전략·승격 트리거·예산 게이트 상세: `~/.claude/projects/C--pjt-orchestration-v1/memory/project_fable_5_usage_strategy.md`
 
 라우팅 로직: `plugins/exec_orch/skills/route_dispatch.md` (AI 단가·특성·quota 매트릭스)

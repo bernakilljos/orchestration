@@ -5,6 +5,7 @@ git commit 명령이 아니면 즉시 통과. 해당될 때만 (git 조회 포�
 from __future__ import annotations
 
 import re
+
 from _common import Result, Spawn, bash_cat, grep_o_first, project_guard, tool_command
 
 

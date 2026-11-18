@@ -412,7 +412,8 @@ def _configured_test_dirs(cwd: Path) -> List[str]:
     return sorted(dirs)
 
 
-REGRESSION_STAMP = ".claude/state/regression-gate.json"# 2026-11-14: .vue·.jsx·.mjs·.cjs·.json 이 빠져 Vue 만 바꾼 커밋은 'skip' = 아무 검사 없이 커밋됐다
+REGRESSION_STAMP = ".claude/state/regression-gate.json"
+# 2026-11-14: .vue·.jsx·.mjs·.cjs·.json 이 빠져 Vue 만 바꾼 커밋은 'skip' = 아무 검사 없이 커밋됐다
 # 2026-11-15 (R256): 실제 개발 프로젝트(IFRS = SVN · 최근 200 커밋 변경 파일 java 604 · vue 470 · js 47 · yml 9 · xml 9)
 #   의 java·xml·yml 이 검사 대상에 없어 Java 변경은 아무 검사 없이 들어갔다 → 추가. (css 4건은 문법 검사기 없음 · 대상 외)
 #   이 목록은 커밋 훅(pre_commit_full_check.py · pre-commit-full-check.sh)과 같아야 한다 — 시험이 대조.
@@ -769,6 +770,7 @@ def syntax_gate(cwd: Path) -> Dict[str, Any]:
 #   실패 0건으로 집계 → rc=1 '실행 오류' blocked 로 오분류되고 기준선 비교(신규 회귀 판정)를 못 했다
 _RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
 _RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
+
 
 def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류."""
