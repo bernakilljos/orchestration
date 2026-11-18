@@ -60,3 +60,12 @@ def test_own_text_with_paste_counts_only_own(monkeypatch, tmp_path):
 def test_harness_notification_does_not_count(monkeypatch, tmp_path):
     p = "<task-notification>\n<summary>시험 검증해 완료 · 대충</summary>\n</task-notification>"
     assert _detect(p, monkeypatch, tmp_path) == []
+
+
+def test_copied_statusline_lines_do_not_count(monkeypatch, tmp_path):
+    """R309 상태줄을 복사해 붙인 줄의 라벨(이모지·여백·하드코딩)은 재발이 아님 · 같은 메시지의 직접 쓴 불만은 그대로 셈."""
+    p = ("  🎨 디자인  │ 기한 17 · 이모지 33 · 여백 15 · 버전 2 · 재발 48%\n"
+         "  📡 인프라  │ cache 98% · [!] 하드코딩 17\n"
+         "이거 또 이모지 넣었네")
+    assert _detect(p, monkeypatch, tmp_path) == ["이모지"]
+    assert _detect("  🎨 디자인  │ 이모지 33 · 여백 15", monkeypatch, tmp_path) == []

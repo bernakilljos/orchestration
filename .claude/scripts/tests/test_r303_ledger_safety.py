@@ -249,3 +249,19 @@ def test_live_lock_owner_is_not_stolen(tmp_path, monkeypatch):
         p.kill()
         p.wait(timeout=30)
     assert _lock_free(tmp_path) is True               # 죽으면 바로 풀림
+
+
+def test_test_session_ledger_outside_temp_still_gates(tmp_path, monkeypatch, capsys):
+    """R309 fail-open 제거: 옛 골든 결함으로 session_id=test 가 된 운영 원장도 실제 미완료가 있으면 Stop 을 막는다 · 시험 틀 T_R1 은 제외."""
+    p = _ledger(tmp_path)
+    p.parent.mkdir(parents=True)
+    p.write_text(json.dumps({"session_id": "test", "created_at": "t", "requests": [
+        {"id": "T_R1", "desc": "test", "status": "pending", "ts": "t"},
+        {"id": "R2", "desc": "실제 요청", "status": "pending", "ts": "2026-11-18T09:00:00"}]}, ensure_ascii=False), encoding="utf-8")
+    m = _lock_mod(tmp_path)
+    monkeypatch.setattr(m, "_stop_hook_payload", lambda: {})
+    monkeypatch.setattr(m, "_ledger_in_temp", lambda: False)      # 운영 원장 (TEMP 밖) 상황
+    assert m.cmd_gate() == 2 and "R2" in capsys.readouterr().err
+    assert m.is_blocking({"id": "T_R1", "status": "pending", "ts": "t"}) is False
+    monkeypatch.setattr(m, "_ledger_in_temp", lambda: True)       # 시험 영역 원장은 예전처럼 통과
+    assert m.cmd_gate() == 0

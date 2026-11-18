@@ -395,9 +395,23 @@ def _honest_open(r: dict) -> bool:
 GATE_PASS_STATUS = ("completed", "deferred", "out_of_scope", "invalid_registration")
 
 
+def _is_golden_template(r: dict) -> bool:
+    """옛 golden-test 가 운영 원장에 남긴 시험 틀 항목 (id T_R* · ts "t") — 실제 요청 아님 (IFRS 실측 2026-11-18)."""
+    return str(r.get("id", "")).startswith("T_R") and r.get("ts") == "t"
+
+
+def _ledger_in_temp() -> bool:
+    import tempfile
+    try:
+        return LEDGER.resolve().is_relative_to(Path(tempfile.gettempdir()).resolve())
+    except (OSError, ValueError):
+        return False
+
+
 def is_blocking(r: dict) -> bool:
     """정본 — Stop 을 막는 미완료인가 (cmd_gate·statusline 공용 · 2026-11-11 §80)."""
-    return (r.get("status") not in GATE_PASS_STATUS + ("approval_required",)) and not _honest_open(r)
+    return ((r.get("status") not in GATE_PASS_STATUS + ("approval_required",)) and not _honest_open(r)
+            and not _is_golden_template(r))
 
 
 def summarize(reqs: list, current_rid: str = "") -> dict:
@@ -711,7 +725,9 @@ def cmd_gate() -> int:
     #   한계: 6시간 넘게 이어지는 긴 작업의 미완은 놓친다. 그때는 시각이 아니라 세션 id 대조로 바꾼다.)
     STALE_SEC = 6 * 3600
     import time as _t
-    if data.get("session_id") == "test" or _t.time() - LEDGER.stat().st_mtime > STALE_SEC:
+    # 2026-11-18 R309 fail-open 제거: "test" 통과는 시험 영역(TEMP) 원장일 때만 — 옛 골든 결함으로 덮인 운영 원장
+    #   (IFRS: session_id=test · 11-04 이후 실제 요청 R2~R5) 의 완료 게이트가 통째로 꺼져 있었다. 시험 틀 항목은 is_blocking 에서 제외.
+    if (data.get("session_id") == "test" and _ledger_in_temp()) or _t.time() - LEDGER.stat().st_mtime > STALE_SEC:
         print("[request-ledger] 시험·지난 작업 ledger — 이번 세션 기준 아님 · 통과", file=sys.stderr)
         return 0
     total = len(data["requests"])

@@ -507,11 +507,13 @@ def _guess_edits(lines, cut: float, window: float = 7200):
             continue
         path = lows[i]
         base = os.path.basename(path)
+        # R309 속도: 수정 1건당 패턴 1번 컴파일 · 이름이 문자열에 없으면 정규식 생략 (정규식은 이름이 있어야만 일치 → 결과 동일)
+        _brx = re.compile(r"(?<![\w.-])" + re.escape(base) + r"(?![\w-])") if base else None
         seen = False
         for j in range(_bs.bisect_left(tss, ts - window), i):   # 창 안의 앞선 사건만
             s2, low = evs[j][1], lows[j]
-            if (s2 == "Read" and low == path) or (s2 in ("Bash", "PowerShell", "Grep", "Glob") and base
-                                                    and re.search(r"(?<![\w.-])" + re.escape(base) + r"(?![\w-])", low)) \
+            if (s2 == "Read" and low == path) or (s2 in ("Bash", "PowerShell", "Grep", "Glob") and _brx
+                                                    and base in low and _brx.search(low)) \
                     or (s2 in ("Edit", "Write", "MultiEdit") and low == path):
                 seen = True
                 break
