@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/logs/**"
+  - ".claude/state/**"
+  - "**/*.log"
+  - "docs/postmortem/**"
+---
+
 # 조사 규율 룰 (Investigation Discipline)
 
 > **근거**: 2026-08-20 postmortem — claude.ai 첨부 실패 6가설 헛짚음. 이력 조회를 마지막에 함 · Playwright 새 창으로 재인증 실패 · 코드 추론만 하다 30초 실측이 30분 추론 이김.

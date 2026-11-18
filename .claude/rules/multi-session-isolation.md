@@ -1,3 +1,11 @@
+---
+paths:
+  - "docs/SETUP_OTHER_PC.md"
+  - "**/ask_web*"
+  - "**/ask-web*"
+  - ".claude/scripts/lib/repair_sandbox.py"
+---
+
 # 다중 세션 격리 룰 (Multi-Session Isolation)
 
 > **근거**: 2026-08-13 `docs/SETUP_OTHER_PC.md` 실전 검증 패턴. 두 세션 (개발·검증) 이 같은 폴더에서 같은 파일 편집 → **조용한 유실** (에러도 안 남).

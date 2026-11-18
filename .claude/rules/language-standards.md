@@ -1,3 +1,17 @@
+---
+paths:
+  - "**/*.ps1"
+  - "**/*.psm1"
+  - "**/pom.xml"
+  - "**/build.gradle*"
+  - "**/*.csproj"
+  - "**/Cargo.toml"
+  - "**/go.mod"
+  - "**/pyproject.toml"
+  - "**/package.json"
+  - ".claude/hooks/tool/ensure_ps1_bom.py"
+---
+
 # 개발 언어별 표준 룰 (Language Standards)
 
 > **근거**: 2026-09-02 사용자 지적 — "개발언어에 따라서 처리".

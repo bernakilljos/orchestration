@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/CLAUDE.md"
+---
+
 # CLAUDE.md 설계 규칙
 
 > **출처**: Brij Kishore Pandey — "How to Design a CLAUDE.md That Actually Works"

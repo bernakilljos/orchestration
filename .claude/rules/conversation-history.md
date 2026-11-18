@@ -1,3 +1,10 @@
+---
+paths:
+  - ".claude/scripts/lib/conversation_logger.py"
+  - ".claude/hooks/save-*"
+  - ".claude/hooks/load-recent-conversations.sh"
+---
+
 # 세션 대화 히스토리 DB 룰
 
 > **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.

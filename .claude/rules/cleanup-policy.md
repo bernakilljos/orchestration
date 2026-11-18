@@ -1,3 +1,10 @@
+---
+paths:
+  - ".claude/scripts/cleanup*"
+  - ".claude/config/retention*"
+  - ".claude/logs/**"
+---
+
 # 오염 파일 정리 정책
 
 > **목적**: Windows redirect 잔재 · 임시 파일 · nested 폴더 등 자동 정리

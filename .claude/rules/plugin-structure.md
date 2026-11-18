@@ -1,3 +1,9 @@
+---
+paths:
+  - "plugins/**"
+  - ".claude-plugin/**"
+---
+
 # 플러그인 구조 규칙
 
 > **적용 범위**: `plugins/<name>/` 모든 플러그인

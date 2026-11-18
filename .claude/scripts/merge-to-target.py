@@ -334,6 +334,22 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     return out
 
 
+def _prune_backups(target: Path, keep: int = 1) -> str:
+    """2026-11-18 R293: 전파마다 kit-merge-<ts> 백업이 쌓이기만 했다 (IFRS 114개·ICMAI 46개 · 지우는 곳 없음).
+    롤백에 쓰는 가장 최근 keep 개만 남기고 이 도구가 만든 이전 백업을 지운다 (이름 형식이 정확히 맞는 폴더만)."""
+    root = target / ".claude" / "backups"
+    try:
+        mine = sorted((d for d in root.iterdir() if d.is_dir() and re.fullmatch(r"kit-merge-\d{8}-\d{6}", d.name)),
+                      key=lambda d: d.name)
+    except OSError:
+        return ""
+    gone = 0
+    for d in mine[:-keep] if keep > 0 else mine:
+        shutil.rmtree(d, ignore_errors=True)
+        gone += not d.exists()
+    return f" · 이전 백업 {gone}개 정리" if gone else ""
+
+
 def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
@@ -435,7 +451,7 @@ def main() -> int:
                 if apply:
                     man_p.parent.mkdir(parents=True, exist_ok=True)
                     man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
-                    print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+                    print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
                 return 0
         return _report_only(target, only, stats, manifest, man_p, backup, apply)
     _merge_settings_file(target, backup, apply, report)
@@ -505,7 +521,7 @@ def main() -> int:
     for r in report:
         print(f"  {r}")
     if apply:
-        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
     return 0
 
 
@@ -570,7 +586,7 @@ def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Pa
     if apply:
         man_p.parent.mkdir(parents=True, exist_ok=True)
         man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
-        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}")
+        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
         _record_apply(target, f"--only {len(only)}개 · 판정 {'보류 있음' if rc else '정상'}")
     return rc
 

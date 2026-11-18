@@ -1,3 +1,17 @@
+---
+paths:
+  - "**/*anthropic*"
+  - "**/*llm*"
+  - "**/*embedding*"
+  - "**/*semantic*"
+  - "**/*batch*"
+  - "plugins/eval_quality/**"
+  - "plugins/ai_rag/**"
+  - ".claude/scripts/lookup-rule.py"
+  - ".claude/scripts/route.py"
+  - ".claude/scripts/lib/router.py"
+---
+
 # Semantic Caching 룰 (Task 37)
 
 > **근거**: 2026-09-02 · 유사 프롬프트 재사용 · 원가 절감.

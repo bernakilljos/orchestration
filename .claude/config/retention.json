@@ -1,0 +1,19 @@
+{
+  "_doc": "R297·R298 쌓이는 것 정리 규칙 — cleanup-pollution.sh(세션 시작마다 · 하루 1번)가 읽어 실행한다. kit 이 설치된 프로젝트는 전파 목록에 없어도 스스로 정리된다. 경로는 base(PROJECT=프로젝트 루트 · TEMP=시스템 임시 폴더) 기준 glob 이며 base 밖은 지우지 않는다. 대상 고유 규칙은 retention.local.json (같은 형식 · 전파 안 됨).",
+  "rules": [
+    {"name": "전파 백업", "type": "keep_newest", "base": "PROJECT", "glob": ".claude/backups/kit-merge-*", "keep": 1},
+    {"name": "세션 종료 스냅샷", "type": "keep_newest", "base": "PROJECT", "glob": ".claude/state/session-snapshot-*.md", "keep": 20},
+    {"name": "끝난 자동 수정 사본", "type": "command", "if_exists": ".repair-sandbox",
+     "cmd": ["python", "-X", "utf8", ".claude/scripts/lib/repair_sandbox.py", "cleanup-orphans"]},
+    {"name": "골든 시험 옛 임시 백업", "type": "max_age_days", "base": "TEMP", "glob": "tmp*.json", "days": 1,
+     "content_has": "\"requests\""},
+    {"name": "회귀 게이트 남은 기준선 사본", "type": "command", "cmd": ["git", "worktree", "prune"], "if_exists": ".git"}
+  ],
+  "discover": {
+    "_doc": "규칙에 없지만 이름이 백업·사본처럼 보이고 커진 폴더를 찾아 기록만 한다 (지우지 않음) · .claude/state/retention-report.json",
+    "name_regex": "(?i)(backup|\\.bak|_bak|sandbox|snapshot|archive|_old|\\.old|tmp|temp|cache)",
+    "min_mb": 100,
+    "max_depth": 3,
+    "skip": ["node_modules", ".git", "docs/screens"]
+  }
+}

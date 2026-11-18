@@ -1,3 +1,12 @@
+---
+paths:
+  - "docs/ssj/**"
+  - "docs/**/*.pptx"
+  - "docs/**/*.docx"
+  - ".claude/scripts/artifact-freshness*"
+  - ".claude/scripts/daily-artifact-refresh*"
+---
+
 # 산출물 신선도 자동 점검 룰 (Artifact Freshness)
 
 > **근거**: 2026-08-18 사용자 지적 — "신기술 업데이트 할 때 문서도 업데이트하고 확인도 해야겠다". Claude Code changelog 는 자동 감지되나 (`.claude/state/changelog-new.md`) 산출물 (pptx·docx·catalog md) 은 사용자가 매번 지적해야 반영. 재발 방지.

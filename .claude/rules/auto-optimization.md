@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/scripts/*optimiz*"
+  - ".claude/scripts/nightly*"
+  - ".claude/scripts/weekly*"
+  - ".claude/scripts/hook-profile.py"
+---
+
 # 자동 최적화 룰 (Auto Optimization)
 
 > **DEPRECATION 2026-10-12**: 이 파일 안 **Headroom** / **claude-mem** / **mcp-autostart** / **mcp-integration** 참조는 모두 무시. 완전 삭제됨 (설치만 되고 실제 동작 X · RAM 2.5GB 낭비). Anthropic 네이티브 prompt caching 만 사용.

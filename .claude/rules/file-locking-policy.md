@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/tasks/**"
+  - "plugins/exec_orch/codex/**"
+  - "plugins/exec_orch/skills/route_dispatch.md"
+  - ".claude/agents/**"
+---
+
 # 파일 잠금 정책 (Writer = 1)
 
 > **근거**: CLAUDE.md § 7-3 (`같은 파일 동시 수정 금지 (Writer=1)`).

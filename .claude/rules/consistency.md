@@ -1,3 +1,10 @@
+---
+paths:
+  - ".claude/rules/**"
+  - "plugins/**"
+  - ".claude/hooks/**"
+---
+
 # 기준 일관성 룰 (Standards Drift Prevention)
 
 > **근거**: 2026-06-16 사용자 지적 — "개발이랑 기준자체가 개발할대마다 흔들리면 안돼".

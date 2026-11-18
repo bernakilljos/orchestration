@@ -1,3 +1,11 @@
+---
+paths:
+  - ".mcp.json"
+  - "plugins/mcp_*/**"
+  - "plugins/plug_*/**"
+  - ".claude/scripts/*mcp*"
+---
+
 # MCP 설치 룰
 
 > **근거**: CLAUDE.md § 7-9 (`거짓 npm 패키지명 커맨드 (실측 없이) — npm view 검증 필수`).

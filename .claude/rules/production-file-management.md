@@ -1,3 +1,11 @@
+---
+paths:
+  - "docs/**"
+  - ".claude/scripts/cleanup*"
+  - ".claude/config/retention*"
+  - ".claude/scripts/audit-file-write.py"
+---
+
 # 운영 grade 파일 관리 룰 (Production File Management)
 
 > **근거**: 2026-09-02 사용자 지적 — "100% 운영이라 운영스럽게 파일 관리 필요 · 1.jpg 2.jpg 무분별 사용 · 현행화 안 됨".

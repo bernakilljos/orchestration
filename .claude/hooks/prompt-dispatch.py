@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -95,6 +96,54 @@ def _write_log(line_list):
         pass  # noqa: BLE001
 
 
+DEDUPE_TTL_SEC = 1200
+
+
+def _dedupe_session(text: str, ctx) -> str:
+    """R300 같은 세션에서 20분 안에 이미 넣은 문단은 다시 넣지 않는다 (2026-11-18 실측: 프롬프트마다 중앙 5.3KB ·
+    한 세션 106회 747KB 가 대화 기록에 쌓여 문맥을 키웠다 — 대상 확정·5단계 안내·같은 '관련 경험' 3건이 매번 반복).
+    처음 1번과 20분 지난 뒤는 그대로 넣는다 (compact 뒤에도 되살아남) · 문단 = 빈 줄로 나눈 덩어리 · 실패 = 원문 그대로.
+    끄기: PROMPT_INJECT_DEDUPE=0."""
+    if not text or os.environ.get("PROMPT_INJECT_DEDUPE", "1") == "0":
+        return text
+    try:
+        import hashlib
+        sid = ""
+        try:
+            sid = str(json.loads(ctx.raw or "{}").get("session_id") or "")
+        except (ValueError, AttributeError):
+            pass
+        if not re.fullmatch(r"[\w-]{6,80}", sid):
+            return text
+        d = os.path.join(ROOT, ".claude", "state", "prompt-inject.d")
+        os.makedirs(d, exist_ok=True)
+        f = os.path.join(d, sid + ".json")
+        try:
+            with open(f, encoding="utf-8") as fh:
+                seen = json.load(fh)
+        except (OSError, ValueError):
+            seen = {}
+        now = time.time()
+        keep = []
+        for para in re.split(r"\n\s*\n", text):
+            p = para.strip()
+            if not p:
+                continue
+            h = hashlib.sha256(p.encode("utf-8", "replace")).hexdigest()[:16]
+            if now - float(seen.get(h, 0)) < DEDUPE_TTL_SEC:
+                continue
+            seen[h] = now
+            keep.append(p)
+        seen = {k: v for k, v in seen.items() if now - float(v) < DEDUPE_TTL_SEC * 3}
+        tmp = f + ".%d.tmp" % os.getpid()
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(seen, fh)
+        os.replace(tmp, f)
+        return "\n\n".join(keep)
+    except Exception:  # noqa: BLE001 — 줄이기 실패가 안내를 지우면 안 된다
+        return text
+
+
 def main(argv) -> int:
     if "--rag-worker" in argv:
         from user_prompt_auto_planner import rag_worker
@@ -149,7 +198,7 @@ def main(argv) -> int:
         out_bytes = json.dumps(texts, ensure_ascii=False).encode("utf-8")
     else:
         pieces = [t.strip("\r\n") for t in texts.values()]
-        joined = "\n\n".join(p for p in pieces if p)
+        joined = _dedupe_session("\n\n".join(p for p in pieces if p), ctx)
         obj: dict = {}
         for k, vs in extras.items():
             obj[k] = "\n\n".join(str(v) for v in vs) if k == "systemMessage" else vs[-1]

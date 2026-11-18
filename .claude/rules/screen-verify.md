@@ -1,3 +1,15 @@
+---
+paths:
+  - "**/*.sql"
+  - "**/*.java"
+  - "**/mapper/**"
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/*.html"
+  - ".claude/scripts/smoke-test-screen.sh"
+---
+
 # 화면·기능 검증 룰 (Smoke Test 의무)
 
 > **근거**: CLAUDE.md § 7-24. 사용자 지적 (2026-06-10): "화면 검증·기능 검증은 너가 해, 난 최종만 할 거야".

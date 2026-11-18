@@ -1,3 +1,9 @@
+---
+paths:
+  - ".claude/hooks/**"
+  - "plugins/exec_orch/skills/user-emotion*"
+---
+
 # 사용자 감정·상황 자동 대응 룰
 
 > **근거**: 2026-08-12 사용자 지적 — "짜증나면 hook 에게 등록하세요"·"답답하시면 fast"·"design 별로면 command 수정"·"loop 말고 뭐있어".

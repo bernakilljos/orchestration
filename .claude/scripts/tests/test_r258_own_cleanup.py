@@ -237,3 +237,76 @@ def test_time_budget_defers_rest_to_next_run(env, monkeypatch):
     monkeypatch.setattr(oc, "BUDGET_SEC", 6.0)
     r = oc.run(SID)
     assert r["deferred"] == 0 and not any(p.exists() for p in olds)
+
+
+# R297·R298 쌓이는 것 규칙 정리 — 규칙 파일(base+glob) 로만 판정 · base 밖 불가 · 규칙 밖 큰 폴더는 기록만
+def test_retention_rules_from_config_only(tmp_path):
+    import json, shutil, subprocess
+    proj, temp = tmp_path / "proj", tmp_path / "T"
+    (proj / ".claude" / "scripts").mkdir(parents=True)
+    (proj / ".claude" / "config").mkdir(parents=True)
+    temp.mkdir()
+    shutil.copy(KIT / ".claude/scripts/cleanup-pollution.sh", proj / ".claude/scripts/cleanup-pollution.sh")
+    bk = proj / ".claude" / "backups"
+    for i, ts in enumerate(("20261101-000000", "20261102-000000", "20261103-000000")):
+        d = bk / ("kit-merge-" + ts)
+        d.mkdir(parents=True)
+        (d / "f.txt").write_text("x", encoding="utf-8")
+        os.utime(d, (time.time() - 1000 + i, time.time() - 1000 + i))
+    old = time.time() - 3 * 86400
+    for n, body in (("tmpaaa.json", '{"session_id":"t","requests":[]}'), ("tmpbbb.json", '{"other":1}')):
+        (temp / n).write_text(body, encoding="utf-8")
+        os.utime(temp / n, (old, old))
+    (temp / "tmpccc.json").write_text('{"requests":[]}', encoding="utf-8")   # 새것 — 1일 안 지남
+    big = proj / "work" / "old_backup"
+    big.mkdir(parents=True)
+    (big / "blob.bin").write_bytes(b"0" * (2 * 2 ** 20))
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"requests":[]}', encoding="utf-8")
+    os.utime(outside, (old, old))
+    (proj / ".claude/config/retention.json").write_text(json.dumps({
+        "rules": [{"name": "전파 백업", "type": "keep_newest", "base": "PROJECT", "glob": ".claude/backups/kit-merge-*", "keep": 1},
+                  {"name": "옛 임시", "type": "max_age_days", "base": "TEMP", "glob": "tmp*.json", "days": 1, "content_has": "\"requests\""},
+                  {"name": "밖으로 탈출", "type": "max_age_days", "base": "TEMP", "glob": "../outside.json", "days": 1}],
+        "discover": {"name_regex": "(?i)backup", "min_mb": 1, "max_depth": 3, "skip": []}}), encoding="utf-8")
+    env = dict(os.environ, RETENTION_FORCE="1", TEMP=str(temp), TMP=str(temp), TMPDIR=str(temp))
+    r = subprocess.run(["bash", str(proj / ".claude/scripts/cleanup-pollution.sh")], env=env, capture_output=True,
+                       text=True, encoding="utf-8", errors="replace", timeout=120)
+    assert r.returncode == 0, r.stderr
+    assert sorted(p.name for p in bk.iterdir()) == ["kit-merge-20261103-000000"]          # 가장 최근 1개만
+    assert not (temp / "tmpaaa.json").exists() and (temp / "tmpbbb.json").exists()          # 내용 조건
+    assert (temp / "tmpccc.json").exists()                                                  # 1일 안 지남
+    assert outside.exists()                                                                 # base 밖은 지우지 않음
+    rep = json.loads((proj / ".claude/state/retention-report.json").read_text(encoding="utf-8"))
+    assert [f["path"] for f in rep["large_unruled"]] == ["work/old_backup"] and big.exists()  # 기록만
+    assert (proj / ".claude/state/retention.stamp").exists()
+
+
+def test_merge_to_target_keeps_only_latest_backup(tmp_path):
+    mt = _load("mt_r297", KIT / ".claude/scripts/merge-to-target.py")
+    bk = tmp_path / ".claude" / "backups"
+    for ts in ("20261101-000000", "20261102-000000", "20261103-000000"):
+        (bk / ("kit-merge-" + ts)).mkdir(parents=True)
+    (bk / "user-own-backup").mkdir()                       # 이 도구가 만든 이름이 아니면 건드리지 않음
+    assert "2개 정리" in mt._prune_backups(tmp_path)
+    assert sorted(p.name for p in bk.iterdir()) == ["kit-merge-20261103-000000", "user-own-backup"]
+    assert mt._prune_backups(tmp_path) == ""
+
+
+def test_prompt_inject_dedupe_per_session(tmp_path, monkeypatch):
+    """R300 같은 세션 20분 안 같은 문단은 다시 넣지 않음 · 다른 세션·새 문단·끄기·TTL 지남은 그대로."""
+    import json, types
+    pd = _load("pd_r300", KIT / ".claude/hooks/prompt-dispatch.py")
+    monkeypatch.setattr(pd, "ROOT", str(tmp_path))
+    ctx = lambda sid: types.SimpleNamespace(raw=json.dumps({"session_id": sid}))
+    a = "[대상 확정 REQUIRED]\n규칙 문단"
+    b = "[ledger] + R1"
+    assert pd._dedupe_session(a + "\n\n" + b, ctx("sess-aaaa1")) == a + "\n\n" + b
+    assert pd._dedupe_session(a + "\n\n[ledger] + R2", ctx("sess-aaaa1")) == "[ledger] + R2"   # 반복 문단만 빠짐
+    assert pd._dedupe_session(a, ctx("sess-bbbb2")) == a                                          # 다른 세션은 처음
+    monkeypatch.setenv("PROMPT_INJECT_DEDUPE", "0")
+    assert pd._dedupe_session(a, ctx("sess-aaaa1")) == a                                          # 끄기
+    monkeypatch.delenv("PROMPT_INJECT_DEDUPE")
+    monkeypatch.setattr(pd, "DEDUPE_TTL_SEC", -1)
+    assert pd._dedupe_session(a, ctx("sess-aaaa1")) == a                                          # 시간 지나면 다시
+    assert pd._dedupe_session(a, types.SimpleNamespace(raw="not json")) == a                       # 세션 모름 = 원문

@@ -1,3 +1,10 @@
+---
+paths:
+  - "plugins/**"
+  - ".claude/scripts/**"
+  - "docs/**"
+---
+
 # 파일 명명 규칙
 
 ## 플러그인 디렉토리

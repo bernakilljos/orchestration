@@ -1,3 +1,12 @@
+---
+paths:
+  - ".claude/scripts/statusline*"
+  - ".claude/statusline.sh"
+  - ".claude/rules/**"
+  - ".claude/hooks/**"
+  - ".claude/design-baseline/**"
+---
+
 # 운영 동결 룰 (Operational Freeze · SoT)
 
 > **근거**: 2026-10-16 사용자 지시 — "1차 감사 → 2차 안정화 → 골든 테스트 → **FREEZE** → 실제 개발 시만 수정".

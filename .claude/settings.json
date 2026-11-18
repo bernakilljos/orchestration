@@ -227,7 +227,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
@@ -238,27 +239,32 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
-            "timeout": 10
+            "timeout": 10,
+            "async": true
           },
           {
             "type": "command",
@@ -286,7 +292,8 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\"",
+            "async": true
           },
           {
             "type": "command",
@@ -313,7 +320,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-active-goals-resume.sh\"",
-            "timeout": 15
+            "timeout": 15,
+            "async": true
           },
           {
             "type": "command",

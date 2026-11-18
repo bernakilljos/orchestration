@@ -221,7 +221,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -232,27 +233,32 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -292,7 +298,8 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\"",
+            "async": true
           },
           {
             "type": "command",

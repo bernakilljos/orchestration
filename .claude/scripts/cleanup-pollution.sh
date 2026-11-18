@@ -142,6 +142,103 @@ find "$PROJECT_ROOT/.claude/tasks" -maxdepth 3 -type d -empty 2>/dev/null | whil
   rmdir "$d" 2>/dev/null && log "empty task dir: $d"
 done
 
+# 10. 쌓이는 것 규칙 정리 (2026-11-18 R297·R298 · 하루 1번) — 규칙 = .claude/config/retention.json (+ retention.local.json)
+#     프로젝트·폴더 이름을 코드에 박지 않는다: 규칙 파일의 base(PROJECT·TEMP)+glob 로 판정 · base 밖은 지우지 않음
+#     규칙에 없는 커진 백업·사본 폴더는 찾아서 기록만 (.claude/state/retention-report.json)
+PYR="$(command -v python 2>/dev/null || command -v python3 2>/dev/null || true)"
+RSTAMP="$PROJECT_ROOT/.claude/state/retention.stamp"
+if [ -n "$PYR" ] && [ -f "$PROJECT_ROOT/.claude/config/retention.json" ] \
+   && { [ ! -f "$RSTAMP" ] || [ -n "$(find "$RSTAMP" -mmin +1440 2>/dev/null)" ] || [ -n "${RETENTION_FORCE:-}" ]; }; then
+  mkdir -p "$PROJECT_ROOT/.claude/state"
+  RES="$("$PYR" -X utf8 - "$PROJECT_ROOT" <<'PYEOF' 2>>"$LOG"
+import fnmatch, glob, json, os, re, shutil, subprocess, sys, tempfile, time
+root = os.path.realpath(sys.argv[1])
+bases = {"PROJECT": root, "TEMP": os.path.realpath(tempfile.gettempdir())}
+rules, disc = [], {}
+for name in ("retention.json", "retention.local.json"):
+    try:
+        d = json.load(open(os.path.join(root, ".claude", "config", name), encoding="utf-8"))
+        rules += d.get("rules", [])
+        disc = d.get("discover") or disc
+    except (OSError, ValueError):
+        pass
+def inside(p, base):
+    rp = os.path.realpath(p)
+    return rp != base and rp.startswith(base + os.sep)
+def remove(p):
+    if os.path.isdir(p) and not os.path.islink(p):
+        shutil.rmtree(p, ignore_errors=True)
+    else:
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+    return not os.path.exists(p)
+out, now = [], time.time()
+for r in rules:
+    base = bases.get(r.get("base", "PROJECT"), root)
+    gone = 0
+    try:
+        if r.get("type") == "command":
+            if r.get("if_exists") and not os.path.exists(os.path.join(root, r["if_exists"])):
+                continue
+            p = subprocess.run(r["cmd"], cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+            out.append("%s: 실행 rc=%s" % (r.get("name"), p.returncode))
+            continue
+        hits = [p for p in glob.glob(os.path.join(base, r["glob"])) if inside(p, base)]
+        if r.get("type") == "keep_newest":
+            hits.sort(key=os.path.getmtime, reverse=True)
+            victims = hits[int(r.get("keep", 1)):]
+        elif r.get("type") == "max_age_days":
+            victims = [p for p in hits if now - os.path.getmtime(p) > float(r["days"]) * 86400]
+            if r.get("content_has"):
+                def has(p, s=r["content_has"]):
+                    try:
+                        with open(p, encoding="utf-8", errors="replace") as fh:
+                            return s in fh.read(4096)
+                    except OSError:
+                        return False
+                victims = [p for p in victims if os.path.isfile(p) and has(p)]
+        else:
+            continue
+        gone = sum(1 for p in victims if remove(p))
+        if gone:
+            out.append("%s: %d개 정리" % (r.get("name"), gone))
+    except Exception as e:  # noqa: BLE001 — 한 규칙 실패가 다른 규칙을 막지 않게
+        out.append("%s: 오류 %s" % (r.get("name"), type(e).__name__))
+found = []
+if disc.get("name_regex"):
+    rx, skip = re.compile(disc["name_regex"]), set(disc.get("skip") or [])
+    covered = [r.get("glob", "") for r in rules]
+    for dp, dns, _ in os.walk(root):
+        rel = os.path.relpath(dp, root).replace("\\", "/")
+        depth = 0 if rel == "." else rel.count("/") + 1
+        dns[:] = [x for x in dns if x not in skip and (rel + "/" + x).lstrip("./") not in skip]
+        if depth >= int(disc.get("max_depth", 3)):
+            dns[:] = []
+        for x in list(dns):
+            sub = (rel + "/" + x).lstrip("./") if rel != "." else x
+            if not rx.search(x) or any(fnmatch.fnmatch(sub, g) or fnmatch.fnmatch(sub + "/x", g) for g in covered):
+                continue
+            size = 0
+            for a, _, fs in os.walk(os.path.join(dp, x)):
+                for f in fs:
+                    try:
+                        size += os.path.getsize(os.path.join(a, f))
+                    except OSError:
+                        pass
+            if size >= float(disc.get("min_mb", 100)) * 2 ** 20:
+                found.append({"path": sub, "mb": round(size / 2 ** 20)})
+            dns.remove(x)
+json.dump({"at": int(now), "actions": out, "large_unruled": sorted(found, key=lambda f: -f["mb"])},
+          open(os.path.join(root, ".claude", "state", "retention-report.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+print(" · ".join(out + ["규칙 밖 큰 폴더 %d개 (retention-report.json)" % len(found)] if found else out))
+PYEOF
+)" || true
+  touch "$RSTAMP"
+  [ -n "$RES" ] && log "retention: $RES"
+fi
+
 # 결과
 if [ $REMOVED -gt 0 ]; then
   echo "[cleanup-pollution] 정리: $REMOVED 항목 ($NOW)" >&2

@@ -1,3 +1,8 @@
+---
+paths:
+  - "setup/**"
+---
+
 # 터미널·검색 도구 룰
 
 > **근거**: 2026-09-02 · fzf·rga·bat·eza·lazygit·git-delta 통합.

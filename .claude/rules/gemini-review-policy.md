@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/tasks/**"
+  - "plugins/exec_orch/codex/**"
+  - "plugins/exec_orch/skills/route_dispatch.md"
+  - ".claude/agents/**"
+---
+
 # Gemini 리뷰 정책
 
 > **근거**: CLAUDE.md § 7-2 (`Gemini 리뷰 자동 채택 금지` — Claude 가 결정).
