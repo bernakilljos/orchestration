@@ -83,6 +83,14 @@ def ensure_schema() -> None:
       ON recurrence_events(rule_id, detected_at);
     CREATE INDEX IF NOT EXISTS idx_rec_rule_cat
       ON recurrence_rules(category, total_occurrences DESC);
+    CREATE TABLE IF NOT EXISTS recurrence_improvements (
+      improvement_id INTEGER PRIMARY KEY AUTOINCREMENT, rule_id TEXT NOT NULL, category TEXT,
+      problem_summary TEXT, root_cause TEXT, improvement_plan TEXT, pre_metric REAL, post_metric REAL,
+      pre_sample_size INTEGER, post_sample_size INTEGER, pre_measured_at TEXT, post_measured_at TEXT,
+      verified INTEGER DEFAULT 0, status TEXT DEFAULT 'OBSERVING',
+      ts_created TEXT DEFAULT (datetime('now')), ts_updated TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (rule_id) REFERENCES recurrence_rules(rule_id)
+    );
     """)
     # 기존 테이블에 archived 컬럼 없으면 추가 (idempotent)
     try:
@@ -246,10 +254,10 @@ def record(rule_id: str, category: str = "misc", snippet: str = "", session_id: 
             (rule_id, category, now, now, snippet[:200] if snippet else rule_id),
         )
 
-    c.execute(
+    event_id = c.execute(
         "INSERT INTO recurrence_events(rule_id, session_id, user_prompt_snippet) VALUES (?,?,?)",
         (rule_id, session_id, (snippet or "")[:300]),
-    )
+    ).lastrowid
 
     new_lvl = _check_promotion(c, rule_id, total)
     if new_lvl:
@@ -262,7 +270,77 @@ def record(rule_id: str, category: str = "misc", snippet: str = "", session_id: 
     if new_lvl >= 2 and new_lvl > old_promoted:
         _trigger_improvement_start(rule_id, category or "misc", total, snippet or rule_id)
 
-    return {"rule_id": rule_id, "total": total, "promoted_level": new_lvl}
+    return {"rule_id": rule_id, "total": total, "promoted_level": new_lvl, "event_id": event_id}
+
+
+# 2026-11-18 R310 근본 원인 기록 — recurrence_events.root_cause 가 312건 중 0건 (채우는 흐름 없음).
+#   증상(사용자 문장)과 원인을 분리 · 증거 없는 원인은 [추정] 으로만 · 같은 규칙의 확정 원인은 재사용 · 해결 실패 시 상태 갱신.
+CAUSE_STATUS = ("confirmed", "suspected")
+
+
+def _latest_event(c, rule_id):
+    row = c.execute("SELECT id FROM recurrence_events WHERE rule_id=? ORDER BY id DESC LIMIT 1", (rule_id,)).fetchone()
+    return row[0] if row else None
+
+
+def set_root_cause(target: str, cause: str, evidence: str, status: str, fix: str = "") -> dict:
+    """target = 이벤트 번호 또는 rule_id(그 규칙의 최신 이벤트). confirmed 는 증거 필수 (코드 파일:줄·로그·실행 출력)."""
+    if status not in CAUSE_STATUS:
+        raise ValueError(f"status 는 {CAUSE_STATUS} 중 하나")
+    if not cause.strip():
+        raise ValueError("cause 비어 있음")
+    if status == "confirmed" and len(evidence.strip()) < 10:
+        raise ValueError("confirmed 는 증거 필수 (파일:줄·로그·실행 출력 · 10자 이상) — 없으면 suspected 로 기록")
+    ensure_schema()
+    c = sqlite3.connect(DB)
+    try:
+        eid = int(target) if target.isdigit() else _latest_event(c, target)
+        row = c.execute("SELECT rule_id FROM recurrence_events WHERE id=?", (eid,)).fetchone() if eid else None
+        if not row:
+            raise ValueError(f"이벤트 없음: {target}")
+        rule_id = row[0]
+        tag = "[확인]" if status == "confirmed" else "[추정]"
+        text = f"{tag} {cause.strip()} · 근거: {evidence.strip() or '없음'}"
+        # 같은 규칙에서 같은 원인으로 이미 확정된 기록이 있으면 그 개선 기록을 재사용 (새로 만들지 않음)
+        reused = c.execute(
+            "SELECT improvement_id FROM recurrence_improvements WHERE rule_id=? AND root_cause LIKE ? "
+            "ORDER BY improvement_id DESC LIMIT 1", (rule_id, f"%{cause.strip()[:40]}%")).fetchone()
+        imp_id = reused[0] if reused else None
+        if imp_id is None and status == "confirmed":
+            imp_id = c.execute(
+                "INSERT INTO recurrence_improvements(rule_id, problem_summary, root_cause, improvement_plan, status) "
+                "VALUES (?,?,?,?, 'OBSERVING')", (rule_id, f"event {eid}", text, fix or "")).lastrowid
+        c.execute("UPDATE recurrence_events SET root_cause=?, auto_fix_status=?, improvement_id=? WHERE id=?",
+                  (text, "open" if status == "confirmed" else "suspected", imp_id, eid))
+        c.commit()
+        return {"event_id": eid, "rule_id": rule_id, "root_cause": text, "improvement_id": imp_id, "reused": bool(reused)}
+    finally:
+        c.close()
+
+
+def set_fix_result(target: str, result: str, evidence: str) -> dict:
+    """해결책 검증 결과 — passed 는 증거 필수 · failed 는 연결된 개선 기록을 FIX_FAILED 로 되돌림 (검증 안 된 채 남지 않게)."""
+    if result not in ("passed", "failed"):
+        raise ValueError("result 는 passed|failed")
+    if result == "passed" and len(evidence.strip()) < 10:
+        raise ValueError("passed 는 증거 필수 (회귀 시험 이름·실행 출력)")
+    c = sqlite3.connect(DB)
+    try:
+        eid = int(target) if target.isdigit() else _latest_event(c, target)
+        row = c.execute("SELECT improvement_id FROM recurrence_events WHERE id=?", (eid,)).fetchone() if eid else None
+        if not row:
+            raise ValueError(f"이벤트 없음: {target}")
+        c.execute("UPDATE recurrence_events SET auto_fix_status=? WHERE id=?",
+                  ("verified" if result == "passed" else "fix_failed", eid))
+        if row[0]:
+            c.execute("UPDATE recurrence_improvements SET verified=?, status=?, ts_updated=datetime('now'), "
+                      "improvement_plan=COALESCE(improvement_plan,'') || ? WHERE improvement_id=?",
+                      (1 if result == "passed" else 0, "VERIFIED" if result == "passed" else "FIX_FAILED",
+                       f" | {result}: {evidence.strip()}", row[0]))
+        c.commit()
+        return {"event_id": eid, "result": result, "improvement_id": row[0]}
+    finally:
+        c.close()
 
 
 def _avg_hours_between(c, rule_id: str) -> float:
@@ -360,6 +438,68 @@ def stats() -> dict:
     return out
 
 
+# 2026-11-18 R310 개발 품질 실측 — 추정치 대신 원장·대화 기록으로 분자/분모를 그대로 보인다 (과거 기록 수정 X).
+#   재발 새 기준 시작 = R308 감지 범위 수정 커밋 3c316f16 (붙여 넣은 글·알림 제외) · 시각은 DB 와 같은 UTC.
+NEW_BASIS_UTC = "2026-11-18 10:46:53"
+
+
+MIN_SAMPLE = 30   # 헌장 B1 표본 하한 — 분모가 이보다 작으면 비율을 정상 수치처럼 보이지 않는다
+
+
+def _ratio(num, den):
+    state = "미측정" if not den else ("표본 부족" if den < MIN_SAMPLE else "측정")
+    return {"num": num, "den": den, "pct": round(num / den * 100, 1) if den >= MIN_SAMPLE else None, "state": state}
+
+
+def quality() -> dict:
+    out = {"basis": {"recurrence_new_since_utc": NEW_BASIS_UTC,
+                     "first_attempt": "실행 요청 다음의 같은 세션 요청이 redo(다시 지시)가 아닌 비율 "
+                                      "(한계: redo 는 분류기 판정 · 다른 세션에서 다시 지시하면 못 셈 → 상한값)",
+                     "reinstruct": "redo ÷ (execute + redo) · 오등록(invalid_registration) 제외",
+                     "recurrence_per_100": "재발 이벤트 ÷ 사용자 프롬프트 × 100 (알림 제외)",
+                     "same_cause": "확정([확인]) 원인 중 같은 원인이 2번+ 기록된 비율"}}
+    led = ROOT / ".claude" / "state" / "request-ledger.json"
+    try:
+        reqs = [r for r in json.loads(led.read_text(encoding="utf-8")).get("requests", [])
+                if r.get("status") != "invalid_registration" and r.get("classification") in ("execute", "redo")]
+    except Exception:  # noqa: BLE001 — 원장 없음·손상 = 미측정 (0 아님)
+        reqs = []
+    redo = sum(1 for r in reqs if r["classification"] == "redo")
+    out["reinstruct"] = _ratio(redo, len(reqs))
+    by_sid = {}
+    for r in reqs:
+        by_sid.setdefault(r.get("session_id") or "?", []).append(r)
+    ok = den = 0
+    for lst in by_sid.values():
+        for a, b in zip(lst, lst[1:]):
+            if a["classification"] == "execute":
+                den += 1
+                ok += b["classification"] != "redo"
+    out["first_attempt"] = _ratio(ok, den)
+    c = sqlite3.connect(DB)
+    try:
+        def prompts(where, args=()):
+            try:
+                return c.execute("SELECT COUNT(*) FROM conversations WHERE role='user' AND content NOT LIKE '<task-notification>%' "
+                                 + where, args).fetchone()[0]
+            except sqlite3.Error:
+                return 0
+        ev_old = c.execute("SELECT COUNT(*) FROM recurrence_events WHERE detected_at < ?", (NEW_BASIS_UTC,)).fetchone()[0]
+        ev_new = c.execute("SELECT COUNT(*) FROM recurrence_events WHERE detected_at >= ?", (NEW_BASIS_UTC,)).fetchone()[0]
+        old = _ratio(ev_old, prompts("AND ts < ?", (NEW_BASIS_UTC,)))
+        new = _ratio(ev_new, prompts("AND ts >= ?", (NEW_BASIS_UTC,)))
+        old["label"] = "이전 기준 (붙여 넣은 글·상태줄 복사 포함 · 그대로 보존)"
+        new["label"] = "새 기준 (직접 쓴 글만)"
+        out["recurrence_per_100"] = {"old": old, "new": new}
+        causes = [r[0] for r in c.execute("SELECT root_cause FROM recurrence_events WHERE root_cause LIKE '[확인]%'")]
+        keys = [x.split(" · 근거:")[0] for x in causes]
+        dup = sum(1 for k in set(keys) if keys.count(k) >= 2)
+        out["same_cause"] = _ratio(dup, len(set(keys)))
+    finally:
+        c.close()
+    return out
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print(json.dumps(stats(), ensure_ascii=False, indent=2))
@@ -385,6 +525,30 @@ def main(argv: list[str]) -> int:
         return 0
     if op == "stats":
         print(json.dumps(stats(), ensure_ascii=False, indent=2))
+        return 0
+    if op == "quality":
+        print(json.dumps(quality(), ensure_ascii=False, indent=2))
+        return 0
+    if op in ("root-cause", "fix-result"):
+        import argparse
+        ap = argparse.ArgumentParser(prog=f"recurrence-tracker.py {op}")
+        ap.add_argument("target", help="이벤트 번호 또는 rule_id (최신 이벤트)")
+        if op == "root-cause":
+            ap.add_argument("--cause", required=True)
+            ap.add_argument("--evidence", default="")
+            ap.add_argument("--status", choices=CAUSE_STATUS, default="suspected")
+            ap.add_argument("--fix", default="", help="확인된 해결책·회귀 시험")
+        else:
+            ap.add_argument("result", choices=("passed", "failed"))
+            ap.add_argument("--evidence", default="")
+        a = ap.parse_args(argv[2:])
+        try:
+            res = (set_root_cause(a.target, a.cause, a.evidence, a.status, a.fix) if op == "root-cause"
+                   else set_fix_result(a.target, a.result, a.evidence))
+        except ValueError as e:
+            print(f"[recurrence-tracker] 거부: {e}", file=sys.stderr)
+            return 2
+        print(json.dumps(res, ensure_ascii=False))
         return 0
     print(f"unknown op: {op}", file=sys.stderr)
     return 2

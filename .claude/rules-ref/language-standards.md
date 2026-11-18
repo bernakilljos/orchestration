@@ -1,0 +1,240 @@
+---
+paths:
+  - "**/*.ps1"
+  - "**/*.psm1"
+  - "**/pom.xml"
+  - "**/build.gradle*"
+  - "**/*.csproj"
+  - "**/Cargo.toml"
+  - "**/go.mod"
+  - "**/pyproject.toml"
+  - "**/package.json"
+  - ".claude/hooks/tool/ensure_ps1_bom.py"
+---
+
+# 개발 언어별 표준 룰 (Language Standards)
+
+> **근거**: 2026-09-02 사용자 지적 — "개발언어에 따라서 처리".
+> **이유**: 언어별 lint·format·test·구조 표준 자동 적용 · 아마추어 코드 X.
+
+## 절대 룰
+
+**언어 감지 → 언어별 표준 자동 적용 (lint·format·test 규칙 · 파일 구조 · 빌드·배포 명령).**
+
+---
+
+## 🆕 배포 포맷 매트릭스 (2026-10-13 신설)
+
+| 언어 | 빌드 도구 | 빌드 명령 | 배포 포맷 | 주의사항 |
+|---|---|---|---|---|
+| **Java** | Maven | `mvn clean package` | `.jar` / `.war` / `.ear` | pom.xml 확인 · assembly plugin |
+| **Java** | Gradle | `gradle build` | `.jar` / `.war` | build.gradle(kts) 확인 |
+| **.NET** | dotnet | `dotnet build` | `.dll` / `.nupkg` | *.csproj 또는 .sln |
+| **.NET Release** | dotnet | `dotnet publish -c Release` | `.exe` / Docker | net6.0+ LTS 권장 |
+| **Python** | uv | `uv build` | `.whl` / `.tar.gz` | 10배 빠름 · pyproject.toml |
+| **Python** | pip | `python -m build` | `.whl` / `.tar.gz` | setup.py 또는 pyproject.toml |
+| **Go** | go | `go build ./...` | **binary** | 멀티스테이지 빌드·cross-compile 가능 |
+| **Go Release** | go | `GOOS=linux GOARCH=amd64 go build` | binary+zip | ldflags 로 버전 정보 삽입 |
+| **Rust** | cargo | `cargo build --release` | **binary** / `.rlib` | target/release/ 생성 · Cargo.toml 메타 필수 |
+| **Node.js** | npm | `npm run build` | npm package / `.tgz` | package.json 확인 · webpack/esbuild 설정 |
+| **Node.js** | pnpm | `pnpm build` | npm package / `.tgz` | pnpm-lock.yaml 확인 · npm 대비 10% 빠름 |
+| **TypeScript** | npm/pnpm | `npm run build` | `.js` / npm package | tsconfig.json strict mode · tsc --build |
+| **Ruby** | bundler | `bundle exec rake build` | **.gem** | ruby 3.0+ · *.gemspec 필수 |
+| **Dart (Flutter)** | flutter | `flutter build apk` | **.apk** / `.ipa` / `.aab` | pubspec.yaml 확인 · Flutter 3.0+ |
+| **Dart (CLI)** | dart | `dart compile exe lib/main.dart` | **binary** | Dart CLI · standalone 실행 파일 |
+
+## 언어별 매트릭스
+
+| 언어 | Linter | Formatter | Test | Type | 패키지 관리 | 파일 확장자 |
+|---|---|---|---|---|---|---|
+| **Python** | **ruff** (rustic·빠름) + mypy | **ruff format** (black 대체·빠름) | pytest + coverage | mypy strict | uv·pip | `.py` |
+| **JavaScript** | **ESLint 9** + eslint-config-standard | **Prettier** | vitest · jest | JSDoc | pnpm·npm | `.js` `.mjs` |
+| **TypeScript** | **ESLint 9** + typescript-eslint | **Prettier** | vitest | tsc strict | pnpm | `.ts` `.tsx` |
+| **Java** | **Checkstyle** + SpotBugs + PMD | google-java-format | JUnit 5 + Mockito | 기본 | maven·gradle | `.java` |
+| **Kotlin** | **detekt** | ktlint | JUnit 5 | 기본 | gradle | `.kt` |
+| **Go** | **golangci-lint** | gofmt · gofumpt | go test | 기본 | go modules | `.go` |
+| **Rust** | **clippy** | rustfmt | cargo test | 기본 | cargo | `.rs` |
+| **C/C++** | clang-tidy | clang-format | GoogleTest · Catch2 | 기본 | CMake·Conan | `.c` `.cpp` `.h` |
+| **C#** | **Roslyn analyzers** | dotnet format | xUnit · NUnit | 기본 | NuGet | `.cs` |
+| **Ruby** | **RuboCop** | RuboCop | RSpec · Minitest | Sorbet | Bundler | `.rb` |
+| **PHP** | **PHPStan** + PHP_CodeSniffer | php-cs-fixer | PHPUnit · Pest | 기본 | Composer | `.php` |
+| **Swift** | SwiftLint | swift-format | XCTest | 기본 | SPM | `.swift` |
+| **Dart/Flutter** | dart analyze | dart format | flutter test | 기본 | pub | `.dart` |
+| **Scala** | Scalafix | Scalafmt | ScalaTest · MUnit | 기본 | sbt | `.scala` |
+| **Elixir** | Credo | mix format | ExUnit | Dialyxir | mix | `.ex` `.exs` |
+| **Haskell** | HLint | ormolu · fourmolu | Hspec | GHC | cabal · stack | `.hs` |
+| **Zig** | zig fmt | zig fmt | zig test | 기본 | zig | `.zig` |
+| **SQL** | sqlfluff | sqlfluff | tSQLt · pgTAP | 기본 | flyway·alembic | `.sql` |
+| **Shell (bash)** | shellcheck | shfmt | bats | 기본 | apt·brew | `.sh` |
+| **PowerShell** | PSScriptAnalyzer | Invoke-Formatter | Pester | 기본 | PSGallery | `.ps1` |
+
+## 프로젝트 구조 표준
+
+| 언어 | 필수 파일 |
+|---|---|
+| Python | `pyproject.toml` (ruff+mypy 설정) · `requirements.txt` or `uv.lock` · `.python-version` |
+| Node.js | `package.json` · `pnpm-lock.yaml`·`.nvmrc` · `.eslintrc.json` · `.prettierrc` · `tsconfig.json` (TS 시) |
+| Go | `go.mod` · `go.sum` · `.golangci.yml` |
+| Rust | `Cargo.toml` · `Cargo.lock` · `rust-toolchain.toml` |
+| Java | `pom.xml` (Maven) or `build.gradle` (Gradle) · `.editorconfig` |
+| SQL | `migrations/` (Alembic·Flyway·Prisma) |
+
+## 자동 감지 (SessionStart hook · 2026-10-13 신설)
+
+`.claude/hooks/detect-project-language.sh`:
+- **감지 대상**: `pom.xml`(Maven) · `build.gradle`(Gradle) · `*.csproj`(.NET) · `Cargo.toml`(Rust) · `go.mod`(Go) · `pyproject.toml`(Python) · `package.json`(Node) · `Gemfile`(Ruby) · `pubspec.yaml`(Flutter/Dart)
+- **결과 저장**: `.claude/state/project-language.json`
+- **예시**:
+  ```json
+  {
+    "language": "java",
+    "build_tool": "maven",
+    "deploy_format": "jar/war",
+    "detected_at": "2026-10-13T05:00:00Z"
+  }
+  ```
+
+## 빌드·배포 자동 제안 (SystemMessage 주입)
+
+`.claude/scripts/suggest-build-deploy.py`:
+- SessionStart 후 project-language.json 읽음
+- 해당 언어의 빌드·배포 명령 매트릭스를 systemMessage 로 Claude 에게 주입
+- **사용자 질문 전에 자동 노출** (Z 축 첫 우선순위)
+
+예 (Java Maven):
+```text
+## 감지된 프로젝트 언어: JAVA · maven
+
+### MAVEN 명령
+
+| 작업 | 명령 |
+|-----|------|
+| build | `mvn clean package` |
+| test | `mvn test` |
+| package | `mvn assembly:assembly` |
+| publish | `mvn deploy -DrepositoryId=central` |
+
+**배포 포맷**: .jar, .war, .ear
+
+**주의**: pom.xml 확인 · assembly plugin 설정
+```
+
+## WebTech 버전 동기화 (주 1회)
+
+`.claude/scripts/webtech-sync.py`:
+- **스케줄**: 일요일 05:00 (Task Scheduler `Orca_WebTechSync`)
+- **역할**: Java LTS · .NET LTS · Python · Node LTS · Go · Rust 최신 버전 fetch
+- **결과**: `.claude/state/webtech-updates.md` (마크다운 형식)
+
+### 현재 SoT (2026-10-13)
+
+| 언어 | 현재 버전 | 권장 | 주요 업데이트 |
+|---|---|---|---|
+| **Java** | 21 LTS | 21 | 25 LTS 2026-09 예정 |
+| **.NET** | 8.0 LTS | 8.0 | 9.0 2026-11 예정 |
+| **Python** | 3.13 | 3.12+ | 3.14 2026-10 예정 |
+| **Node.js** | 22 LTS | 22 | 24 LTS 2026-04 예정 |
+| **Go** | 1.23 | 1.23+ | 6개월 주기 release |
+| **Rust** | 1.84 | 1.84+ | 6주 주기 release |
+
+---
+
+## 자동 hook 확장 (PostToolUse Edit|Write)
+
+우리 kit 이미 있음:
+- Python: `post_write_pycheck.py` (syntax check)
+
+신규 (예정):
+- **JS/TS**: `check-js-syntax.sh` (기존 확장 · eslint·prettier 실행)
+- **Go**: `.claude/hooks/check-go-fmt.sh` (gofmt 자동)
+- **Rust**: `.claude/hooks/check-rust-fmt.sh` (rustfmt 자동)
+- **Java**: `.claude/hooks/check-java-fmt.sh` (google-java-format)
+- **SQL**: `.claude/hooks/check-sql-lint.sh` (sqlfluff)
+- **Shell**: 이미 shellcheck 하는 hook 있음
+
+## 언어 감지 로직
+
+파일 확장자 기준:
+```python
+LANG_MAP = {
+    '.py': 'python', '.pyi': 'python',
+    '.js': 'js', '.mjs': 'js', '.cjs': 'js', '.jsx': 'js',
+    '.ts': 'ts', '.tsx': 'ts',
+    '.java': 'java',
+    '.kt': 'kotlin', '.kts': 'kotlin',
+    '.go': 'go',
+    '.rs': 'rust',
+    '.rb': 'ruby',
+    '.php': 'php',
+    '.swift': 'swift',
+    '.dart': 'dart',
+    '.scala': 'scala',
+    '.sql': 'sql',
+    '.sh': 'bash', '.bash': 'bash',
+    '.ps1': 'powershell',
+    '.c': 'c', '.cpp': 'cpp', '.h': 'c', '.hpp': 'cpp',
+    '.cs': 'csharp',
+    '.ex': 'elixir', '.exs': 'elixir',
+    '.hs': 'haskell',
+    '.zig': 'zig',
+}
+```
+
+## 언어별 특화 룰
+
+### Python
+- **ruff 우선**: `ruff check` + `ruff format` (black 대체 · 10~100x 빠름)
+- **mypy strict**: `--strict` 모드
+- **uv 우선**: pip 대체 (10x 빠름 · 2024 최신)
+- `pyproject.toml` 표준
+- 함수 · 클래스 docstring (Google style)
+- Type hint 필수
+
+### TypeScript
+- **strict mode** 필수
+- **ES2024+** target
+- Never use `any` · `unknown` 필수
+- ESLint 9 flat config (`eslint.config.js`)
+
+### Go
+- **표준 layout**: `cmd/·internal/·pkg/`
+- Error handling 명시 (`if err != nil`)
+- Go 1.22+ (range over int·slices)
+
+### Rust
+- **Edition 2024**
+- `clippy::pedantic` 활용
+- `unsafe` 최소화 · 사유 명시
+
+### PowerShell 한글 인코딩 (2026-11-09 · 헌장 D22)
+한글이 한자처럼 보이면 문자열을 바꾸지 말고 아래 세 층을 따로 확인한다.
+
+| 층 | 증상 | 기준 |
+|---|---|---|
+| 파일 인코딩 | PS 5.1 이 BOM 없는 .ps1 을 cp949 로 읽어 문자열·정규식이 깨짐 | 한글 든 .ps1/.psm1/.psd1 = **UTF-8 BOM** (pwsh 7 은 BOM 없어도 UTF-8 · 둘 다 되게 BOM) · hook `ensure_ps1_bom` 이 저장·실행 직전 자동 부착 |
+| 콘솔 출력 | 파이프·캡처된 출력이 cp949 바이트 | 캡처할 스크립트는 `[Console]::OutputEncoding = [Text.Encoding]::UTF8` 명시 · 아니면 받는 쪽에서 cp949 로 디코딩 |
+| 파일 기록 | PS 5.1 `Set-Content`·`Add-Content` 기본 = ANSI | 항상 `-Encoding utf8` 명시 |
+| 외부 프로그램 | `net`·`schtasks` 등 출력 = OEM 코드페이지 | 문자열 비교·정규식으로 판정 X → cmdlet 객체·SID 로 판정 |
+
+- Windows 그룹은 표시 이름(Administrators·관리자) 말고 **SID** 로 확인 (`S-1-5-32-544` 관리자 · `S-1-5-32-545` 사용자). 조회 실패는 성공이 아니라 실패로 기록.
+- 검증: PS 5.1 `Parser.ParseFile` 로 한글 문자열 보존 여부를 BOM 유무별로 확인 (`test_phase20_v10_safety.py` 회귀).
+
+### Java
+- **Java 21 LTS** default
+- Records·Sealed classes 활용
+- Spring Boot 3+ (Java 17+)
+
+## 금지
+
+1. **언어 감지 없이 lint·format X**
+2. **한 프로젝트에 여러 formatter 설정 X** (혼란)
+3. **버전 오래된 도구 X** (Python 3.8 이하·Node 18 이하·Java 8 등)
+4. **CI 없이 lint 요구 X** (자동 hook 활용)
+5. **표준 무시 · 자체 스타일 X** (팀 확장성)
+
+## 관련
+
+- `.claude/hooks/check-*.sh` (언어별 자동 hook)
+- `.claude/rules/indentation.md` (들여쓰기 표준)
+- `.claude/rules/file-naming.md` (파일 명명)
+- `.claude/rules/production-file-management.md` (2026-09-02)

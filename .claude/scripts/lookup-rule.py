@@ -46,6 +46,7 @@ CHROMA_DIR = INDEX_DIR / "chroma"
 # === 인덱싱 대상 디렉토리 ===
 TARGETS = [
     ("rule", PROJECT_ROOT / ".claude" / "rules", "*.md"),
+    ("rule", PROJECT_ROOT / ".claude" / "rules-ref", "*.md"),   # R310 규칙 전문 (자동 로딩 밖)
     ("memory", Path.home() / ".claude" / "projects", "**/memory/*.md"),
     ("script", PROJECT_ROOT / ".claude" / "scripts", "*.py"),
     ("script", PROJECT_ROOT / ".claude" / "scripts", "*.sh"),

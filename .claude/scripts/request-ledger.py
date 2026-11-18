@@ -716,7 +716,18 @@ def _gate_loop_exceeded(blocking: list) -> bool:
 
 def cmd_gate() -> int:
     """Stop hook용. exit 0 = all done · exit 2 = incomplete (block Stop)."""
-    data = _load()
+    # 2026-11-18 R310 fail-closed: 원장이 깨지고 복구본도 없으면 예전엔 main 의 LedgerError 처리가 0 을 돌려
+    #   미완료가 있어도 Stop 이 통과했다 (격리 사본 실측 rc=0). 읽지 못한 원장 = 완료 확인 불가 → 막고 복구 안내.
+    #   무한 차단은 기존 반복 해제(_gate_loop_exceeded) 가 같은 기준으로 푼다.
+    try:
+        data = _load()
+    except LedgerError as e:
+        if _gate_loop_exceeded([{"id": "__ledger_unreadable__", "status": "corrupt"}]):
+            return 0
+        print(f"[request-ledger] 원장을 읽을 수 없어 완료 여부 확인 불가 — Stop 차단: {e}\n"
+              f"→ 손상 파일 {LEDGER.name} 은 지우지 말고 보존 · 같은 폴더 request-ledger.cleared-*.json·"
+              f"{BACKUP.name} 확인 후 복구 · 복구 못 하면 사실대로 보고", file=sys.stderr)
+        return 2
     if not data or not data.get("requests"):
         return 0  # ledger 없음 = 통과
     # 2026-10-16: 시험이 남긴 ledger(session_id "test") 하나가 모든 세션의 Stop 을 막았다.
