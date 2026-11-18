@@ -85,17 +85,53 @@ def _memo(key, fn):
     return _MEMO[key]
 
 
-def _git_changes(cwd):
-    """§81 git status 1회 — 성공: 바뀐 경로 목록(빈 목록 = 깨끗) · 실패(저장소 아님·git 없음·시간 초과): None.
-    종전: 실패해도 빈 출력 = 깨끗(✅) · 영향은 0 으로 표시."""
+_GIT_CACHE_TTL = 3.0
+
+
+def _git_porcelain(cwd):
+    """R289 git status --porcelain 원문 줄 목록 · 렌더 1회 1번 + 세션 간 공유 캐시(3초) · 실패 = None.
+    종전: _git_changes·_git_new_files 가 각자 git 을 띄워 렌더당 프로세스 2개(~140ms).
+    캐시는 성공 결과만 · 임시 파일 + os.replace 원자 쓰기 · 캐시 읽기·쓰기 실패 = 직접 호출 (값을 지어내지 않음)."""
     def _run():
+        import time as _t
+        f = os.path.join(cwd, ".claude", "state", "statusline-git-cache.json")
+        now = _t.time()
+        try:
+            with open(f, "r", encoding="utf-8") as _f:
+                c = json.load(_f)
+            if c.get("cwd") == cwd and 0 <= now - float(c.get("ts", 0)) < _GIT_CACHE_TTL and isinstance(c.get("lines"), list):
+                return c["lines"]
+        except (OSError, ValueError, TypeError):
+            pass
         import subprocess as _sp
         r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
                     text=True, encoding="utf-8", errors="replace", timeout=3)
         if r.returncode != 0:
             return None
+        lines = r.stdout.splitlines()
+        try:
+            _tmp = f"{f}.{os.getpid()}.tmp"
+            with open(_tmp, "w", encoding="utf-8") as _f:
+                json.dump({"cwd": cwd, "ts": now, "lines": lines}, _f, ensure_ascii=False)
+            os.replace(_tmp, f)
+        except OSError:
+            try:
+                os.remove(_tmp)
+            except OSError:
+                pass
+        return lines
+    return _memo(("gitraw", cwd), _run)
+
+
+def _git_changes(cwd):
+    """§81 git status 1회 — 성공: 바뀐 경로 목록(빈 목록 = 깨끗) · 실패(저장소 아님·git 없음·시간 초과): None.
+    종전: 실패해도 빈 출력 = 깨끗(✅) · 영향은 0 으로 표시."""
+    def _run():
+        raw = _git_porcelain(cwd)
+        if raw is None:
+            return None
         out = []
-        for ln in r.stdout.splitlines():
+        for ln in raw:
             if len(ln) > 3:
                 out.append(ln[3:].split(" -> ")[-1].strip().strip('"'))
         return out
@@ -1034,12 +1070,10 @@ _COMMON_DIR_RE = re.compile(r"(?:^|/)(?:common|shared|components?|ui)/", re.I)
 def _git_new_files(cwd):
     """R275 신규 파일 (git status 의 ?? · A) — 신규공통 판정용 · 실패 = None."""
     def _run():
-        import subprocess as _sp
-        r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
-                    text=True, encoding="utf-8", errors="replace", timeout=3)
-        if r.returncode != 0:
+        raw = _git_porcelain(cwd)   # R289 _git_changes 와 같은 1회 결과 공용
+        if raw is None:
             return None
-        return {ln[3:].strip().strip('"') for ln in r.stdout.splitlines() if ln[:2] in ("??", "A ", "AM")}
+        return {ln[3:].strip().strip('"') for ln in raw if ln[:2] in ("??", "A ", "AM")}
     return _memo(("gitnew", cwd), _run)
 
 

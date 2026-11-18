@@ -337,6 +337,8 @@ def events(ref: str) -> list:
     p = _root() / ".claude" / "logs" / "trace-events.jsonl"
     if p.is_file():
         for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
+            if tid not in line:   # R289 선필터: 다른 요청 줄은 json 파싱 생략 (일치 판정은 아래에서 그대로)
+                continue
             try:
                 r = json.loads(line)
             except ValueError:
