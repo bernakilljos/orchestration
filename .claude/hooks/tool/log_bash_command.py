@@ -37,8 +37,18 @@ def run(ctx):
         os.makedirs(log_dir, exist_ok=True)
         path = os.path.join(log_dir, "bash_commands.log")
         ts = datetime.now().isoformat(timespec="seconds")
+        line = f"{ts}\t{_mask(cmd)}\t{_mask(desc)}\n"
+        # 2026-11-12 (R245): 해석 못 한 글자(surrogate)가 섞이면 utf-8 쓰기가 실패해 줄 전체가 조용히 빠졌다
+        #   (IFRS 11-11 18:57~ 기록 0건) — 그 글자만 ? 로 바꿔 기록은 남긴다.
+        line = line.encode("utf-8", "replace").decode("utf-8")
         with open(path, "a", encoding="utf-8") as f:  # 텍스트 모드 - 원본과 같은 개행 변환
-            f.write(f"{ts}\t{_mask(cmd)}\t{_mask(desc)}\n")
-    except Exception:
-        pass  # noqa: BLE001
+            f.write(line)
+    except Exception as e:  # noqa: BLE001 — 기록 실패를 숨기지 않는다 (계측 침묵 방지)
+        try:
+            project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+            with open(os.path.join(project_dir, ".claude", "logs", "log_bash_command.errors.log"), "a",
+                      encoding="utf-8") as f:
+                f.write(f"{datetime.now().isoformat(timespec='seconds')}\t{type(e).__name__}: {str(e)[:200]}\n")
+        except Exception:  # noqa: BLE001
+            pass
     return None

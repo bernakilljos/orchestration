@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/logs/**"
+  - ".claude/state/**"
+  - "**/*.log"
+  - "docs/postmortem/**"
+---
+
 # 환경 의존 결함 룰 (Environment-Dependent Bug)
 
 > **근거**: 2026-08-20 postmortem — claude.ai 첨부는 「탭 포커스」 라는 조작자 행동이 성공 여부를 결정. "같은 입력 → 같은 출력" 가정으로 6가설 헛짚음. 수석의 「이게 내가 익스플로러 포커스를 해야 전송이 되는구나」 한 문장으로 해결.

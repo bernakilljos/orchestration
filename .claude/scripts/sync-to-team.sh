@@ -27,6 +27,16 @@ if [ ! -d "$TARGET" ]; then
   exit 1
 fi
 
+# 2026-11-11 §79: Stop 훅(SYNC_IF_CHANGED=1)은 HEAD 가 바뀌었을 때만 복사
+#   종전: 응답마다 kit 전체 robocopy 31.5초 (훅 제한 30초) · 커밋 안 된 편집 중간 상태까지 팀 폴더로 퍼짐 (C10 순서 위반)
+#   직접 실행(bash sync-to-team.sh)은 종전대로 항상 복사
+STAMP="$SOURCE/.claude/state/sync-to-team.last-head"
+HEAD_NOW="$(git -C "$SOURCE" rev-parse HEAD 2>/dev/null || echo unknown)"
+if [ "${SYNC_IF_CHANGED:-}" = "1" ] && [ "$HEAD_NOW" != "unknown" ] && [ "$(cat "$STAMP" 2>/dev/null)" = "$HEAD_NOW" ]; then
+  echo "[SKIP] HEAD $HEAD_NOW 이미 동기화됨 (커밋이 바뀌면 다음 응답 끝에 복사)"
+  exit 0
+fi
+trap '[ $? -eq 0 ] && [ "$HEAD_NOW" != "unknown" ] && printf "%s" "$HEAD_NOW" > "$STAMP"' EXIT
 echo "=== sync $SOURCE -> $TARGET ==="
 
 # rsync 있으면 우선

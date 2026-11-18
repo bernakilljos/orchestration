@@ -3,14 +3,62 @@ import importlib.util
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))   # _common
-sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "tool"))
-import approval_gate_detect as agd  # noqa: E402
+KIT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(KIT / ".claude" / "hooks" / "prompt"))   # _common
+sys.path.insert(0, str(KIT / ".claude" / "hooks" / "tool"))
+
+
+def _isolated_kit() -> Path:
+    """2026-11-12 (R245): 기록 전용 스크립트 허용은 «kit HEAD 와 같은 내용» 일 때만이라, kit 작업본을 고친 채
+    커밋 전 회귀를 돌리면 허용 시험이 늘 실패했다 (커밋해야 통과 · 통과해야 커밋 = 순환).
+    무결성 검사는 그대로 두고, 현재 작업본을 커밋한 격리 git 저장소를 만들어 그 사본의 게이트로 시험한다.
+    운영 kit 의 git 이력·승인 기록은 건드리지 않는다."""
+    import atexit
+    import shutil
+    import subprocess
+    import tempfile
+    d = Path(tempfile.mkdtemp(prefix="agd-kit-"))
+    def _force(func, p, _exc):   # R258: 읽기 전용 git 객체 때문에 오류 무시 삭제가 조용히 실패해 agd-kit 55개 누적
+        import os
+        import stat
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+    def _rm():
+        try:
+            shutil.rmtree(d, onexc=_force)
+        except TypeError:               # 3.12 미만 (이 머신 3.11.9 · 2026-11-18 병합 때 TypeError 로 확인) — r256 시험과 같은 처리
+            shutil.rmtree(d, onerror=_force)
+        except OSError:
+            pass
+    atexit.register(_rm)
+    for rel in (".claude/hooks/tool", ".claude/scripts/lib", ".claude/scripts/auto-save-next-actions.py",
+                ".claude/scripts/approval-gate.py"):
+        src, dst = KIT / rel, d / rel
+        if src.is_dir():
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.db", "*.db-*", "*.sqlite*"))
+        else:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(src, dst)
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+    for args in (["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "isolated kit"]):
+        subprocess.run(g + args, cwd=d, check=True, capture_output=True)
+    return d
+
+
+ROOT = _isolated_kit()
+_SYS_PATH = list(sys.path)   # 격리 사본이 자기 scripts/lib 를 sys.path 에 남기면 다른 시험이 그 모듈을 찾는다 → 아래에서 복원
+_spec_agd = importlib.util.spec_from_file_location("agd_isolated", ROOT / ".claude" / "hooks" / "tool" / "approval_gate_detect.py")
+agd = importlib.util.module_from_spec(_spec_agd)
+_spec_agd.loader.exec_module(agd)
+assert Path(agd._KIT_ROOT).resolve() == ROOT.resolve()   # 격리 저장소 기준으로 판정
 
 _spec = importlib.util.spec_from_file_location("_gate", ROOT / ".claude" / "scripts" / "approval-gate.py")
 gate = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gate)
+sys.path[:] = _SYS_PATH   # 격리 사본의 lib 경로 제거 (test_redact_writers fail-closed 시험 간섭 · R245 실측)
 DANGER = "git branch -D old-feature"
 
 
@@ -57,7 +105,8 @@ def test_quoted_mention_in_inert_argument_not_flagged():      # 2026-11-09 manua
 
 
 def test_quoted_push_bypass_paths_still_blocked():
-    assert flagged(_P)
+    assert not flagged(_P)                                      # 2026-11-13 R250: origin 일반 push 단독 = 사용자 위임으로 허용
+    assert flagged(f'"{_P}"')                                   # 따옴표로 감싼 형태는 단독이어도 계속 판정
     assert flagged(f'echo "x" && {_P}')                         # 다른 세그먼트의 실제 실행
     assert flagged(f'echo "{_P}" | bash')                       # 셸로 넘김
     assert flagged(f'echo "{_P}" | sh -s')
@@ -127,3 +176,104 @@ def test_commit_message_heredoc_mention_and_substitution():   # 2026-11-09 커�
     assert flagged(f"{C} -F - <<EOF\n$({_P})\nEOF")                                  # 따옴표 없는 heredoc 은 확장됨
     assert flagged(f'{C} -m "$(cat <<EOF\n$({_P})\nEOF\n)"')
     assert flagged(f"{C} -F - <<'EOF'\nmsg\nEOF\n{_P}")                              # heredoc 뒤 실제 실행
+
+
+# ── §84 cd <절대 경로> + 상대 경로 기록 스크립트 · 끝 출력 다듬기 — 정상 기록 허용 · 우회 차단 유지 ──
+import pytest as _pt84
+
+_S84 = ".claude/scripts/auto-save-next-actions.py"
+_K84 = "/" + str(ROOT)[0].lower() + str(ROOT)[2:].replace(chr(92), "/")
+
+
+@_pt84.mark.parametrize("cmd,blocked", [
+    (f'cd {_K84}; python -X utf8 {_S84} manual-add "Git 상태 · 원격 반영(push)은 하지 않음" 2>&1 | tail -1', False),
+    (f'cd {_K84} && python -X utf8 {_S84} manual-add "git push 는 하지 않음"', False),
+    (f'cd {_K84}; git push origin main', True),
+    (f'cd {_K84}; python -X utf8 {_S84} manual-add "$(git push origin main)"', True),
+    (f'cd {_K84}; cd /; python {_S84} manual-add "git push origin main"', True),
+    (f'cd {_K84}; python {_S84} manual-add "메모"; git push origin main', True),
+    (f'python -X utf8 {_K84}/{_S84} manual-add "git push origin main" | bash', True),
+    (f'python {_K84}/{_S84} manual-add "git push x" | tail -1 | sh', True),
+])
+def test_cd_relative_record_script_inert_but_bypass_blocked(cmd, blocked):
+    risk = gate.detect_risk(agd._strip_inert_text(agd._strip_git_commit_message(cmd)))
+    assert (risk is not None) == blocked, cmd
+
+
+def test_non_git_target_uses_propagation_manifest(tmp_path):
+    """§84 전파 대상(IFRS·ICMAI)은 git 저장소가 아니라 «kit HEAD 와 같은 내용» 조건이 늘 실패 → 정상 기록 명령도 늘 차단.
+    git 이 아니면 전파 매니페스트 해시로 확인 · 스크립트가 바뀌면 다시 차단."""
+    import hashlib
+    import json as _j
+    import shutil
+    t = tmp_path / "tgt"
+    for rel in (".claude/hooks/tool/approval_gate_detect.py", ".claude/scripts/auto-save-next-actions.py"):
+        (t / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, t / rel)
+    note = t / ".claude/scripts/auto-save-next-actions.py"
+    h = hashlib.md5(note.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+    (t / ".claude/state").mkdir(parents=True)
+    (t / ".claude/state/kit-merge-manifest.json").write_text(_j.dumps({".claude/scripts/auto-save-next-actions.py": h}),
+                                                             encoding="utf-8")
+    spec = importlib.util.spec_from_file_location("agd_tgt", t / ".claude/hooks/tool/approval_gate_detect.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    p = "gi" + "t pu" + "sh origin main"
+    cmd = f'python -X utf8 {str(note).replace(chr(92), "/")} manual-add "{p} 하지 않음"'
+
+    def flagged(c):
+        return gate.detect_risk(m._strip_inert_text(m._strip_git_commit_message(c))) is not None
+    assert not flagged(cmd)                                     # 매니페스트와 같은 kit 사본 = 글로 판정
+    note.write_text(note.read_text(encoding="utf-8") + "\n# 변조\n", encoding="utf-8")
+    assert flagged(cmd)                                         # 내용이 바뀌면 다시 차단
+    (t / ".claude/state/kit-merge-manifest.json").unlink()
+    assert flagged(cmd)                                         # 매니페스트 없음 = 확인 불가 = 차단
+
+
+# ---------- 2026-11-12 (R245): 검색어 자리표시자의 '>' 가 리다이렉트로 읽혀 설정 파일 조회가 차단됨 ----------
+_SJ = ".claude/" + "settings.json"
+
+
+def test_search_on_settings_file_not_flagged():          # appr-ffee00945d69 · appr-2bf916ac4b7a 재현
+    assert not flagged(f'grep -n "auto-save-next-actions" {_SJ} .claude/hooks/*.sh | head')
+    assert not flagged(f'sed -n 1,5p a.py; grep -n "PYTHONIOENCODING" /c/x/{_SJ} /c/y/.claude/settings.local.json 2>/dev/null | head')
+    assert not flagged(f"rg 'x' {_SJ}")
+
+
+def test_settings_overwrite_still_blocked():
+    assert flagged(f"echo x > {_SJ}")
+    assert flagged(f"cp a.json {_SJ}")
+    assert flagged(f"cat a.json | tee {_SJ}")
+    assert flagged(f'grep -n "x" a.txt > {_SJ}')                           # 검색 결과로 덮어쓰기는 차단 유지
+
+
+def test_uncommitted_record_script_is_blocked_until_committed():
+    """R245 순환 의존 분리 — ① 커밋 전(작업본 ≠ HEAD) 은 기록 전용으로 인정하지 않고 차단 ② 커밋하면 허용.
+    격리 저장소에서만 커밋한다 (운영 kit 이력 불변)."""
+    import subprocess
+    note = ROOT / ".claude" / "scripts" / "auto-save-next-actions.py"
+    cmd = f'python -X utf8 {str(note).replace(chr(92), "/")} manual-add "{_P} 하지 않음"'
+    orig = note.read_bytes()
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false"]
+    try:
+        assert not flagged(cmd)                                   # 커밋된 그대로 = 글로 판정
+        note.write_bytes(orig + b"\n# uncommitted change\n")
+        assert flagged(cmd)                                       # 커밋 전 수정본 = 차단 (무결성 검사 유지)
+        subprocess.run(g + ["commit", "-q", "-am", "edit"], cwd=ROOT, check=True, capture_output=True)
+        assert not flagged(cmd)                                   # 커밋 후 = 다시 허용
+    finally:
+        note.write_bytes(orig)
+        subprocess.run(g + ["commit", "-q", "-am", "restore"], cwd=ROOT, capture_output=True)
+
+
+_GATE = str(ROOT / ".claude" / "scripts" / "approval-gate.py").replace("\\", "/")
+_PF = "gi" + "t pu" + "sh -f origin main"
+
+
+def test_detect_argument_is_mention_but_bypass_blocked():   # R293 detect 인자의 위험 단어 오탐 재현
+    assert not flagged(f'python -X utf8 {_GATE} detect "{_PF}"')       # detect 는 판정·출력만 = 언급
+    assert not flagged(f"python {_GATE} detect '{_PF}'")
+    assert flagged(f'python -X utf8 {_GATE} detect "$({_PF})"')        # 치환은 실행
+    assert flagged(f'python -X utf8 {_GATE} detect "x" && {_PF}')      # 뒤에 붙인 실제 실행
+    assert flagged(f'python -X utf8 {_GATE} detect "{_PF}" | bash')    # 셸로 넘김
+    assert flagged(f'python -X utf8 {_GATE} request t1 "{_PF}" irreversible x')   # detect 외 하위 명령은 해당 없음

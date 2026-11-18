@@ -1,3 +1,17 @@
+---
+paths:
+  - "**/*anthropic*"
+  - "**/*llm*"
+  - "**/*embedding*"
+  - "**/*semantic*"
+  - "**/*batch*"
+  - "plugins/eval_quality/**"
+  - "plugins/ai_rag/**"
+  - ".claude/scripts/lookup-rule.py"
+  - ".claude/scripts/route.py"
+  - ".claude/scripts/lib/router.py"
+---
+
 # Batch API 야간 배치 룰 (Task 36)
 
 > **근거**: 2026-09-02 · Anthropic Batch API 50% 할인 · 대량 비긴급 태스크 야간 처리.

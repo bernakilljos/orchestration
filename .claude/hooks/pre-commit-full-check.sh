@@ -58,7 +58,9 @@ fi
 
 # 6. 코드 변경 -> 회귀 방지 게이트 기록이 지금 스테이징 내용과 같아야 (2026-11-09 · A 수정으로 B·C 가 깨지는 것 차단)
 #    시험은 훅 시간(5초) 안에 못 돌리므로 regression-gate 가 남긴 기록의 트리 해시·상태만 확인한다.
-if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
+#    확장자 목록 = independent_verifier._CODE_EXT (2026-11-15 R256: vue·jsx·mjs·cjs·json·java·xml·yml·go 가 빠져
+#    게이트가 검사 대상으로 보는 파일만 바꾼 커밋은 이 훅이 게이트를 요구하지 않았다 · 시험이 두 목록을 대조)
+if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx|vue|jsx|mjs|cjs|json|java|xml|yml|yaml|go)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
   TREE=$(git write-tree 2>/dev/null || echo "")
   PYBIN=$(command -v python || command -v python3 || echo "")
   if [ -n "$TREE" ] && [ -n "$PYBIN" ]; then
@@ -68,16 +70,29 @@ if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx)$' && [ -f .c
 try: d=json.load(open('.claude/state/regression-gate.json',encoding='utf-8'))
 except Exception: print('none'); sys.exit()
 if d.get('tree')==sys.argv[1]: print(d.get('status')); sys.exit()
-ext=('.py','.sh','.ps1','.psm1','.bat','.cmd','.js','.ts','.tsx')
+ext=('.py','.sh','.ps1','.psm1','.bat','.cmd','.js','.ts','.tsx','.vue','.jsx','.mjs','.cjs','.json','.java','.xml','.yml','.yaml','.go')
 out=subprocess.run(['git','-c','core.quotepath=off','ls-files','-s'],capture_output=True,text=True,encoding='utf-8',errors='replace').stdout
 rows=[l for l in out.splitlines() if l.split('\t')[-1].lower().endswith(ext)]
 fp=hashlib.sha1('\n'.join(rows).encode('utf-8')).hexdigest() if rows else ''
 print(d.get('status') if fp and d.get('code_tree')==fp else 'stale')" "$TREE" 2>/dev/null || echo "none")
     case "$GATE" in
       pass|preexisting|skip) ;;
+      syntax_error) MISSING="$MISSING\n  - 변경 소스 문법 오류: .claude/state/regression-gate.json 의 syntax_errors 파일을 고친 뒤 regression-gate 다시 실행" ;;
+      unverified) MISSING="$MISSING\n  - 문법 검사기가 없어 확인 못 한 변경 파일 (.claude/state/regression-gate.json 의 syntax_unchecked) — 검증 완료로 보지 않아 자동 커밋하지 않음 · 사용자가 직접 확인 후 커밋" ;;
       regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;
+      perf_regression|perf_unmeasured) MISSING="$MISSING\n  - 속도 검사 실패 ($GATE): .claude/state/regression-gate.json 의 perf.items 에서 느려진 항목(기준선·상한) 확인 → 원인 고친 뒤 regression-gate 다시 실행" ;;
       *) MISSING="$MISSING\n  - 회귀 방지 게이트 ($GATE): python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate 실행 후 커밋 (스테이징을 바꾸면 다시)" ;;
     esac
+  fi
+fi
+
+# 7. 상태줄 코드 변경 -> Design Ownership Lock (R275 · 승인 구조 = .claude/design-baseline/statusline.json)
+#    구조가 바뀌었는데 해제(design-gate.py unlock statusline <사유>) 기록이 없으면 커밋 차단 · 렌더 실패는 미측정(차단 X)
+if echo "$STAGED" | grep -qE '(^|/)statusline_context\.py$' && [ -f .claude/scripts/design-gate.py ] && [ -f .claude/design-baseline/statusline.json ]; then
+  PYBIN=$(command -v python || command -v python3 || echo "")
+  if [ -n "$PYBIN" ]; then
+    DG_OUT=$("$PYBIN" -X utf8 .claude/scripts/design-gate.py check statusline 2>&1)
+    [ $? -eq 2 ] && MISSING="$MISSING\n  - 상태줄 승인 구조와 다름 (해제 없이 바뀜 = 임의변경): $(echo "$DG_OUT" | head -3 | tr '\n' ' ')"
   fi
 fi
 

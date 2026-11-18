@@ -1,3 +1,12 @@
+---
+paths:
+  - ".claude/hooks/**"
+  - ".claude/scripts/**"
+  - ".claude/settings.json"
+  - "plugins/**"
+  - "setup/**"
+---
+
 # Best Practices — Claude Code 프로젝트
 
 > **출처**: docs/upgrade § 이미지 6 (Brij Kishore Pandey)

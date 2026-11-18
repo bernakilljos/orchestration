@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/tasks/**"
+  - "plugins/exec_orch/codex/**"
+  - "plugins/exec_orch/skills/route_dispatch.md"
+  - ".claude/agents/**"
+---
+
 # Sub-agent 자동 위임 룰
 
 > **근거**: 2026-09-02 · 컨텍스트 절약·병렬화. v2.1.232 subagent forking·nesting depth 3.

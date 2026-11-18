@@ -171,7 +171,7 @@ def axis3_duplicates():
 
 # =========== 축 4: 적용 전후 비교 ===========
 def axis4_before_after():
-    """Phase 0 baseline (ADAPTIVE_BASELINE_2026-10-19.md) vs 현재 측정."""
+    """Phase 0 baseline (2026-10-19 측정 · 문서는 docs/adaptive-audit-20261019-102459.zip 안) vs 현재 측정."""
     rc, out, _ = _run(["python", "-X", "utf8", str(ROOT / ".claude/scripts/adaptive-measure.py"), "json"])
     try:
         current = json.loads(out)

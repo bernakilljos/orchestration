@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 # statusline-wrapper — Windows/Mac/Linux 호환 - python 자동 검색
 # 근거: v2.1.152 등 구 버전에서 python env var expansion 실패 우회
+# 2026-11-18 (R288 성능 1차): 렌더마다 떠 있던 자식 프로세스 4개($(cd..) 2 · cat · tr)를 bash 내장으로 대체 — 출력 동일.
 set -eu
-SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$SELF/../.." && pwd)"
+SELF="${BASH_SOURCE[0]%/*}"
+case "$SELF" in /*|[A-Za-z]:*) ;; *) SELF="$PWD/$SELF" ;; esac
+ROOT="$SELF/../.."
 
 # python 자동 검색 - WindowsApps stub 회피 (Microsoft Store Install Manager 뜨는 문제 fix)
-PY=$(cat "$ROOT/.claude/state/python-path.txt" 2>/dev/null | tr -d '\r\n')
-if [ -z "$PY" ] || [ ! -x "$(command -v "$PY" 2>/dev/null)" ]; then
+PY=""
+if [ -r "$ROOT/.claude/state/python-path.txt" ]; then
+  IFS= read -r PY < "$ROOT/.claude/state/python-path.txt" || true
+  PY="${PY%$'\r'}"
+fi
+if [ -z "$PY" ] || ! command -v "$PY" >/dev/null 2>&1; then
   # fallback - find-python.sh 로 WindowsApps stub 제외하고 검색
   if [ -r "$ROOT/.claude/hooks/find-python.sh" ]; then
     . "$ROOT/.claude/hooks/find-python.sh"

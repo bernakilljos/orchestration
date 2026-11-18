@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/logs/**"
+  - ".claude/state/**"
+  - "**/*.log"
+  - "docs/postmortem/**"
+---
+
 # 계측 두 가지 죽음 룰 (Measurement Two Deaths)
 
 > **근거**: 2026-08-20 postmortem — 계측 두 번 침묵으로 원인 규명 지연. ① 계측이 "가장 느린 단계 뒤" 라 몇 분 지연됨 → 로그 0건 오독. ② 계측이 메모리에만 있어 재기동에 3번 소실. § 4 게이트도 누적 vs 증분 혼동으로 실패 통과.

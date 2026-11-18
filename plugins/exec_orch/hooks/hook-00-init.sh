@@ -35,6 +35,21 @@ fi
 [ -f "$PROJECT/pom.xml" ] && echo "[HOOK-00] Detected: Spring Boot"
 
 # === 전수조사 위반 방지 reminder (매 세션 강제 노출 — 5중 박기 중 1) ===
+# 2026-11-18 R302: /clear·/compact 때도 SessionStart 가 다시 돌아 이 8.5KB 배너가 매번 다시 실렸다 (내용 = 매 요청 자동 로드되는
+#   CLAUDE.md § 7 과 같음 · compact 뒤에도 CLAUDE.md 는 다시 실림) → 실제 세션 시작(startup·resume)에서만 출력
+HOOK_IN=""
+[ -t 0 ] || HOOK_IN="$(cat 2>/dev/null || true)"
+case "$HOOK_IN" in
+  *'"source":"clear"'*|*'"source": "clear"'*|*'"source":"compact"'*|*'"source": "compact"'*)
+    # 2026-11-18 R303: compact 는 세션 ID 가 그대로라, 요약으로 대화에서 사라진 안내 문단(대상 확정 등)을
+    #   prompt-dispatch 중복 방지가 20분간 다시 넣지 않았다 → 이 세션의 «이미 넣은 문단» 기록을 지워 다음 프롬프트에 다시 실림
+    SID="${HOOK_IN#*\"session_id\"}"; SID="${SID#*\"}"; SID="${SID%%\"*}"
+    case "$SID" in
+      *[!A-Za-z0-9_-]*|'') ;;
+      *) rm -f "${CLAUDE_PROJECT_DIR:-$PROJECT}/.claude/state/prompt-inject.d/$SID.json" 2>/dev/null ;;
+    esac
+    exit 0 ;;
+esac
 cat <<'REMINDER'
 
 ==============================

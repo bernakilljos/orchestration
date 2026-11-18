@@ -1,0 +1,238 @@
+"""R255 (2026-11-14) — 커밋 게이트 보완 시험.
+
+1) 변경 소스 자체 문법 검사 (회귀 시험 통과와 별개) · 오류 표본을 넣으면 반드시 잡고 커밋 차단
+2) pytest 종료 코드 5 (시험 0건 수집) 는 통과 아님
+3) 일반 push 에 붙은 cd 접두·출력 파이프 때문에 생기던 불필요한 승인 요청 제거 (강제·삭제·연결은 그대로 차단)
+4) 24시간 넘은 대기 승인 요청은 expired 로 자동 변경
+"""
+from __future__ import annotations
+
+import importlib.util
+import json
+import shutil
+import sys
+import sqlite3
+import subprocess
+import time
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+def _load(name, rel):
+    spec = importlib.util.spec_from_file_location(name, ROOT / rel)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+iv = _load("iv_r255", ".claude/scripts/lib/independent_verifier.py")
+ag = _load("ag_r255", ".claude/scripts/approval-gate.py")
+
+
+# ── 3) 일반 push ─────────────────────────────────────────────
+@pytest.mark.parametrize("cmd", [
+    "git push origin main 2>&1 | tail -2",          # appr-b4baf8033922 실제 명령
+    "git push origin main 2>&1 | tail -8",
+    "git push origin main | head -n 5",
+    "git push -q 2>&1",
+    "git push",
+])
+def test_plain_push_variants_need_no_approval(cmd):
+    assert ag.is_plain_push(cmd)
+    assert ag.detect_risk(cmd) is None
+
+
+@pytest.mark.parametrize("cmd", [
+    "git push --force origin main 2>&1 | tail -2",
+    "git push -f origin main | tail -2",
+    "git push origin :main 2>&1",
+    "git push origin +main | tail -1",
+    "git push origin main; rm -rf build",
+    "git push origin main | sh",
+    "cd $(echo /tmp) && git push origin main",
+    "cd x && git push --mirror",
+    "cd /c/pjt/orchestration_v1 && git push origin main",   # 저장소·HEAD 확정 불가 → 그대로 차단 (HEAD 무결성)
+    'cd "C:\\pjt\\orchestration_v1"; git push -q',
+    "git push upstream main | tail -2",
+    "git commit -m x && git push origin main",
+])
+def test_dangerous_or_chained_push_still_gated(cmd):
+    assert not ag.is_plain_push(cmd)
+
+
+# ── 4) 만료 ────────────────────────────────────────────────
+def test_expire_stale_marks_only_old_waiting(tmp_path, monkeypatch):
+    db = tmp_path / "orca.db"
+    c = sqlite3.connect(db)
+    c.execute("CREATE TABLE tasks (task_id TEXT PRIMARY KEY, approval_state TEXT, status TEXT, "
+              "risk_category TEXT, risk_detail TEXT, created_at INTEGER)")
+    now = int(time.time())
+    c.executemany("INSERT INTO tasks VALUES (?,?,?,?,?,?)", [
+        ("old", "waiting", "pending", "irreversible", "{}", now - 90000),
+        ("new", "waiting", "pending", "irreversible", "{}", now - 60),
+        ("appr", "approved", "pending", "irreversible", "{}", now - 90000),
+    ])
+    c.commit(); c.close()
+    monkeypatch.setattr(ag, "get_db_path", lambda: db)
+    assert ag.expire_stale(now) == 1
+    rows = dict(sqlite3.connect(db).execute("SELECT task_id, approval_state FROM tasks").fetchall())
+    assert rows == {"old": "expired", "new": "waiting", "appr": "approved"}
+    assert [x["task_id"] for x in ag.list_waiting()] == ["new"]
+
+
+# ── 1) 변경 소스 문법 검사 ───────────────────────────────────
+def test_syntax_check_catches_injected_errors(tmp_path):
+    (tmp_path / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "bad.py").write_text("def f(:\n    pass\n", encoding="utf-8")
+    (tmp_path / "bad.json").write_text('{"a": 1,}', encoding="utf-8")
+    (tmp_path / "tsconfig.json").write_text('{ // 주석\n "a": 1 }', encoding="utf-8")
+    (tmp_path / "x.bat").write_text("@echo off\n", encoding="utf-8")   # R256: tsconfig·.ps1 은 이제 실제 검사 → 검사기 없는 .bat
+    files = ["ok.py", "bad.py", "bad.json", "tsconfig.json", "x.bat"]
+    if shutil.which("bash"):
+        (tmp_path / "bad.sh").write_text("if [ 1 ; then\n", encoding="utf-8")
+        files.append("bad.sh")
+    r = iv.staged_syntax_check(tmp_path, files)
+    bad = {e["file"] for e in r["errors"]}
+    assert {"bad.py", "bad.json"} <= bad and "ok.py" in r["checked"]
+    assert "ok.py" not in bad
+    if shutil.which("bash"):
+        assert "bad.sh" in bad
+    assert "tsconfig.json" in r["checked"]                               # R256: 주석·끝 쉼표 제거 후 실제 파싱
+    assert any(u.startswith("x.bat") for u in r["unchecked"])           # 못 본 것은 통과로 세지 않음
+
+
+@pytest.mark.skipif(not (shutil.which("node") and shutil.which("bash")), reason="node·bash 없음")
+def test_syntax_check_js_uses_existing_hook(tmp_path):
+    (tmp_path / "bad.js").write_text("function (\n", encoding="utf-8")
+    (tmp_path / "ok.js").write_text("const a = 1;\n", encoding="utf-8")
+    r = iv.staged_syntax_check(tmp_path, ["bad.js", "ok.js"])
+    assert [e["file"] for e in r["errors"]] == ["bad.js"] and r["checked"] == ["ok.js"]
+
+
+# ── 게이트 연결 (실제 git 저장소) ─────────────────────────────
+def _repo(tmp_path):
+    g = shutil.which("git")
+    if not g:
+        pytest.skip("git 없음")
+    d = tmp_path / "repo"
+    d.mkdir()
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        subprocess.run([g, *a], cwd=d, check=True)
+    (d / "base.txt").write_text("b", encoding="utf-8")
+    subprocess.run([g, "add", "."], cwd=d, check=True)
+    subprocess.run([g, "commit", "-qm", "base"], cwd=d, check=True)
+    return d, g
+
+
+def test_gate_blocks_commit_on_syntax_error_even_without_tests(tmp_path, monkeypatch):
+    d, g = _repo(tmp_path)
+    (d / "src.py").write_text("print(\n", encoding="utf-8")
+    subprocess.run([g, "add", "src.py"], cwd=d, check=True)
+    monkeypatch.setattr(iv, "impact_selection", lambda cwd, staged: {"full": False, "why": "", "tests": []})
+    res = iv.regression_gate(d, timeout=60)
+    assert res["status"] == "syntax_error" and res["syntax_errors"][0]["file"] == "src.py"
+
+
+def test_gate_vue_only_change_is_no_longer_skip(tmp_path, monkeypatch):
+    d, g = _repo(tmp_path)
+    (d / "A.vue").write_text("<template><div></div></template>\n", encoding="utf-8")
+    subprocess.run([g, "add", "A.vue"], cwd=d, check=True)
+    monkeypatch.setattr(iv, "impact_selection", lambda cwd, staged: {"full": False, "why": "", "tests": []})
+    res = iv.regression_gate(d, timeout=60)
+    assert res["status"] != "skip" and res["changed_code"] == ["A.vue"]
+    assert res["syntax_checked"] == ["A.vue"] or res["syntax_unchecked"]   # 검사했거나 못 본 사유를 남김
+
+
+def test_gate_pytest_exit5_is_not_pass(tmp_path, monkeypatch):
+    d, g = _repo(tmp_path)
+    (d / "src.py").write_text("x = 1\n", encoding="utf-8")
+    subprocess.run([g, "add", "src.py"], cwd=d, check=True)
+    monkeypatch.setattr(iv, "impact_selection",
+                        lambda cwd, staged: {"full": False, "why": "", "tests": ["tests/test_x.py"]})
+    monkeypatch.setattr(iv, "_pytest_failures", lambda cwd, tests, timeout: (set(), "no tests ran in 0.01s", 5))
+    res = iv.regression_gate(d, timeout=60)
+    assert res["status"] == "blocked" and "수집되지 않음" in res["reason"]
+
+
+def test_failed_line_with_spaces_in_param_id_is_parsed():
+    # 실제 사례: 매개변수 id 안 공백 때문에 실패 0건으로 집계 → 신규 회귀 판정 불가
+    win = r".claude\scripts\tests\test_a.py::test_x[cd /c/x; run main-True]"
+    out = "FAILED " + win + "\nFAILED tests/test_b.py::test_y - AssertionError: boom\n2 failed, 5 passed"
+    assert set(iv._RX_FAILED.findall(out)) == {win, "tests/test_b.py::test_y"}
+
+
+def test_syntax_check_treats_invalid_escape_warning_as_error(tmp_path):
+    (tmp_path / "w.py").write_text('p = "C:' + chr(92) + 'scripts"\n', encoding="utf-8")   # "\s" 잘못된 이스케이프
+    r = iv.staged_syntax_check(tmp_path, ["w.py"])
+    assert [e["file"] for e in r["errors"]] == ["w.py"]
+
+
+# R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목만 재고 느려지면 차단
+def _perf_repo(tmp_path, items, baseline=None):
+    (tmp_path / ".claude" / "config").mkdir(parents=True)
+    (tmp_path / ".claude" / "config" / "perf-budget.json").write_text(json.dumps({"items": items}), encoding="utf-8")
+    if baseline is not None:
+        (tmp_path / ".claude" / "state").mkdir(parents=True)
+        (tmp_path / ".claude" / "state" / "perf-baseline.json").write_text(json.dumps(baseline), encoding="utf-8")
+    return tmp_path
+
+
+_PY = [sys.executable, "-c"]
+
+
+def test_perf_gate_skips_items_not_triggered(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느린것", "cmd": _PY + ["import time;time.sleep(0.3)"], "triggers": ["src/*"], "budget_ms": 1}])
+    assert iv.perf_gate(d, ["docs/a.md"])["status"] == "not_triggered"
+
+
+def test_perf_gate_blocks_over_budget_and_passes_under(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느린것", "cmd": _PY + ["import time;time.sleep(0.25)"], "triggers": ["src/*"],
+                               "budget_ms": 100, "runs": 3, "warmup": 1}])
+    r = iv.perf_gate(d, ["src/x.py"])
+    assert r["status"] == "perf_regression" and "상한" in r["items"][0]["reason"]
+    assert not (d / ".claude" / "state" / "perf-baseline.json").exists()      # 실패는 기준선으로 남기지 않음
+    d2 = _perf_repo(tmp_path / "b", [{"name": "빠른것", "cmd": _PY + ["pass"], "budget_ms": 5000, "runs": 3}])
+    assert iv.perf_gate(d2, ["any"])["status"] == "pass"
+    assert json.loads((d2 / ".claude" / "state" / "perf-baseline.json").read_text(encoding="utf-8"))["빠른것"]["ms"] > 0
+
+
+def test_perf_gate_blocks_regression_against_baseline(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느려짐", "cmd": _PY + ["import time;time.sleep(0.3)"], "max_regress_pct": 30, "runs": 3}],
+                   baseline={"느려짐": {"ms": 50, "at": 0}})
+    r = iv.perf_gate(d, ["x"])
+    assert r["status"] == "perf_regression" and "기준선" in r["items"][0]["reason"] and "ms_retry" in r["items"][0]
+
+
+def test_perf_gate_failed_command_is_unmeasured_not_pass(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "깨짐", "cmd": _PY + ["import sys;sys.exit(3)"], "runs": 3}])
+    assert iv.perf_gate(d, ["x"])["status"] == "perf_unmeasured"
+
+
+def test_perf_gate_local_items_are_read(tmp_path):
+    d = _perf_repo(tmp_path, [])
+    (d / ".claude" / "config" / "perf-budget.local.json").write_text(
+        json.dumps({"items": [{"name": "페이지", "cmd": _PY + ["pass"], "budget_ms": 5000, "runs": 3}]}), encoding="utf-8")
+    r = iv.perf_gate(d, ["x"])
+    assert r["status"] == "pass" and r["items"][0]["name"] == "페이지"
+
+
+def test_perf_gate_baseline_is_median_and_needs_absolute_margin(tmp_path, monkeypatch):
+    """R303 일시 변동으로 정상 커밋이 막히지 않게 — 기준선 = 최근 통과 7개 중앙값 · 비율과 절대 폭(60ms) 둘 다 넘어야 차단."""
+    assert iv._perf_baseline_ms({"samples": [450, 440, 300, 460, 455]}) == 450   # 빠른 1회(300)에 끌려가지 않음
+    assert iv._perf_baseline_ms({"ms": 373, "at": 0}) == 373                       # 옛 형식 읽기
+    assert iv._perf_baseline_ms(None) is None
+    items = [{"name": "항목", "cmd": _PY + ["pass"], "runs": 3}]
+    seq = iter([524.0, 100.0, 700.0, 690.0])   # 통과는 재측정 없음 · 차단 후보만 1번 더
+    monkeypatch.setattr(iv, "_perf_measure", lambda cwd, it: next(seq))
+    d = _perf_repo(tmp_path, items, baseline={"항목": {"samples": [443, 433, 434, 387, 470, 446, 485]}})
+    assert iv.perf_gate(d, ["x"])["status"] == "pass"            # 실측 변동 범위(387~524) 안 = 통과
+    d2 = _perf_repo(tmp_path / "b", items, baseline={"항목": {"ms": 60, "at": 0}})
+    assert iv.perf_gate(d2, ["x"])["status"] == "pass"           # 60→100 은 67% 지만 40ms = 잡음 폭 안
+    d3 = _perf_repo(tmp_path / "c", items, baseline={"항목": {"samples": [450] * 7}})
+    r = iv.perf_gate(d3, ["x"])
+    assert r["status"] == "perf_regression" and r["items"][0]["ms"] == 690.0   # 진짜 느려짐은 그대로 차단
+    b = json.loads((d / ".claude" / "state" / "perf-baseline.json").read_text(encoding="utf-8"))["항목"]
+    assert b["samples"][-1] == 524.0 and len(b["samples"]) == 7 and b["ms"] == 446.0

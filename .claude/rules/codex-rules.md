@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/tasks/**"
+  - "plugins/exec_orch/codex/**"
+  - "plugins/exec_orch/skills/route_dispatch.md"
+  - ".claude/agents/**"
+---
+
 # Codex 위임 룰
 
 > **근거**: CLAUDE.md § 7-1 (`task-instruction.md 없이 Codex 호출 금지`).

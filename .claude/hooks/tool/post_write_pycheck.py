@@ -80,6 +80,13 @@ def run(ctx):
                         lines.append(out2[-1200:])
                     if err2:
                         lines.append(err2[-1200:])
-        return _emit({"systemMessage": "\n".join(lines).strip()})
+        msg = "\n".join(lines).strip()
+        # 2026-11-13 (R249): 실패를 systemMessage 로만 내면 사용자에게만 보이고 Claude 는 못 받는다 (공식 hooks 문서:
+        #   systemMessage = "Warning message shown to the user" · PostToolUse 의 decision "block" = "adds the reason next to
+        #   the tool result") → 문법 오류인데 고치지 않고 완료로 넘어갔다. 실패면 reason 으로 Claude 에게 되돌린다.
+        if any(ln.startswith("[FAIL]") for ln in lines):
+            return _emit({"decision": "block", "systemMessage": msg,
+                          "reason": msg[:3000] + "\n\n이 파일을 고친 뒤 같은 검사를 다시 통과시키고 나서 완료로 보고한다."})
+        return _emit({"systemMessage": msg})
     except Exception as e:
         return _emit({"systemMessage": f"Hook error: {e}"})

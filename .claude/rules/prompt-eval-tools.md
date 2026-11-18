@@ -1,3 +1,17 @@
+---
+paths:
+  - "**/*anthropic*"
+  - "**/*llm*"
+  - "**/*embedding*"
+  - "**/*semantic*"
+  - "**/*batch*"
+  - "plugins/eval_quality/**"
+  - "plugins/ai_rag/**"
+  - ".claude/scripts/lookup-rule.py"
+  - ".claude/scripts/route.py"
+  - ".claude/scripts/lib/router.py"
+---
+
 # 프롬프트 테스트·평가 도구 룰
 
 > **근거**: 2026-09-02 · Promptfoo·DeepEval·Ragas·LangSmith 통합.

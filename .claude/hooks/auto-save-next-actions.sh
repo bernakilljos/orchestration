@@ -9,5 +9,13 @@ set -eu
 PY="$(command -v python 2>/dev/null)"
 [ -n "$PY" ] || exit 0
 
-"$PY" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/auto-save-next-actions.py" 2>/dev/null || true
+INPUT="$(cat 2>/dev/null || true)"
+"$PY" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/auto-save-next-actions.py" </dev/null 2>/dev/null || true
+
+# R258: 작업 종료(Stop · 비동기 등록)마다 자기 산출물 정리 + 불필요한 자기 승인 요청 취소 + 남은 승인 요청 기록.
+#   SessionEnd 는 같은 훅이 동기로 등록돼 있어 실행하지 않는다 (종료를 기다리게 하지 않음 · 다음 Stop 이 처리).
+case "$INPUT" in
+  *'"hook_event_name"'*'"Stop"'*|*'"hook_event_name":"Stop"'*)
+    printf '%s' "$INPUT" | "$PY" -X utf8 "${CLAUDE_PROJECT_DIR:-$PWD}/.claude/scripts/own-cleanup.py" run >/dev/null 2>&1 || true ;;
+esac
 exit 0

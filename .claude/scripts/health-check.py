@@ -22,7 +22,7 @@ health-check — Orchestration Health 자동 점검 (사용자 명시 2026-10-16
   10. 재발률 (recurrence by category)
 
 사용:
-  python health-check.py status   # statusline 용 (96/100 · last 10/16 · next 11/16)
+  python health-check.py status   # statusline 용 (96/100 · 최근 10/16 · 다음 11/16)
   python health-check.py scan     # 전체 점검 → JSON
   python health-check.py report   # 월간 ORCHESTRATION_HEALTH_YYYY-MM-DD.md 생성
   python health-check.py monthly  # 지난 점검으로부터 30일 지났으면 report 자동
@@ -102,9 +102,15 @@ def check_request_ledger() -> dict:
         with open(f, "r", encoding="utf-8") as fp:
             d = json.load(fp)
         reqs = d.get("requests", [])
-        total = len(reqs)
-        done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
-        return {"ok": done == total, "value": f"{done}/{total}"}
+        # §80 정본 집계 (request-ledger.summarize) — 완료 = completed 만 · ok = Stop 을 막는 미완료 0
+        import importlib.util as _ilu
+        _sp = _ilu.spec_from_file_location("_hc_request_ledger",
+                                           os.path.join(os.path.dirname(os.path.abspath(__file__)), "request-ledger.py"))
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        c = _m.summarize(reqs)
+        return {"ok": c["blocking"] == 0, "value": f"{c['completed']}/{c['total']}",
+                "detail": f"승인대기 {c['approval_required']} · 검증중 {c['verified']} · 진행 {c['open']}"}
     except Exception:
         return {"ok": False, "value": "?"}
 
@@ -116,7 +122,10 @@ def check_standing() -> dict:
         d = json.loads(out) if out else {}
         ok = int(d.get("ok", 0))
         active = int(d.get("active", 0))
-        return {"ok": ok == active and active > 0, "value": f"{ok}/{active}"}
+        # §81 stats 가 결과별로 센다 — 사람 판단 기준(human)은 실패가 아님 · 실패·검증 패턴 없음이 0 이어야 통과
+        failed, unknown, human = int(d.get("failed", 0)), int(d.get("unknown", 0)), int(d.get("human", 0))
+        return {"ok": active > 0 and failed == 0 and unknown == 0, "value": f"{ok}/{active}",
+                "detail": f"실패 {failed} · 패턴없음 {unknown} · 사람판단 {human}"}
     except Exception:
         return {"ok": False, "value": "?"}
 
@@ -210,9 +219,9 @@ def check_codex() -> dict:
 
 def run_all_checks() -> dict:
     """10 축 전체 점검."""
+    # R259: "충돌"·"중복" 이 같은 검사를 두 번 세서 10축 문서와 달리 11축 · 중복 1건 실패가 두 번 감점됐다 → 한 번만
     return {
-        "충돌": check_duplicates(),
-        "중복": check_duplicates(),  # alias
+        "중복": check_duplicates(),
         "orphan": check_orphan(),
         "drift": check_drift(),
         "golden": check_golden(),
@@ -249,7 +258,7 @@ def _save_state(d: dict) -> None:
 
 
 def status_line() -> str:
-    """statusline 용 짧은 한 줄: 96/100 · last 10/16 · next 11/16"""
+    """statusline 용 짧은 한 줄: 96/100 · 최근 10/16 · 다음 11/16"""
     state = _load_state()
     score = state.get("last_score", 0)
     last_ts = state.get("last_check")
@@ -277,7 +286,7 @@ def status_line() -> str:
     if last_ts and days_left <= 0:
         due = " \033[1;33m[점검 필요]\033[0m"
     score_s = f"\033[{c}m{score}/100\033[0m" if score else f"\033[90m⏳\033[0m"
-    return f"{score_s} · last {last_str} · next {next_str}{due}"
+    return f"{score_s} · 최근 {last_str} · 다음 {next_str}{due}"   # 2026-11-18 사용자 "last·next 뭐야 어렵네 영어"
 
 
 def scan_and_save() -> dict:
@@ -345,5 +354,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\033[90m⏳\033[0m · last ? · next ?", file=sys.stderr)
+        print(f"\033[90m⏳\033[0m · 최근 ? · 다음 ?", file=sys.stderr)
         sys.exit(1)

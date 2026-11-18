@@ -1,3 +1,11 @@
+---
+paths:
+  - "plugins/**"
+  - ".claude/commands/**"
+  - ".claude/skills/**"
+  - ".claude/scripts/sync-*"
+---
+
 # Sync 워크플로우 규칙
 
 > **핵심 원칙**: `plugins/` 가 Source of Truth. `.claude/` 는 sync 결과물.

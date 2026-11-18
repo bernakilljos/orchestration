@@ -1558,10 +1558,15 @@ def _std_project(tmp_path):
     p = tmp_path / "newpc"
     (p / ".claude" / "scripts" / "lib").mkdir(parents=True)
     (p / ".claude" / "hooks").mkdir(parents=True)
-    for rel in (".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
-                ".claude/scripts/approval-gate.py", ".claude/scripts/merge-to-target.py",
-                ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md",
-                ".claude/rules/language-standards.md"):
+    seed = json.loads((ROOT / ".claude/scripts/standing-requirements.seed.json").read_text(encoding="utf-8"))
+    targets = {r["verify_target"] for r in seed["requirements"].values() if r.get("verify_target")}  # §82 시드 대상에서 도출
+    for rel in sorted({".claude/scripts/standing-requirements.py", ".claude/scripts/standing-requirements.seed.json",
+                       ".claude/scripts/approval-gate.py", ".claude/scripts/merge-to-target.py",
+                       ".claude/scripts/lib/repair_sandbox.py", ".claude/hooks/pre-commit-full-check.sh", "CLAUDE.md",
+                       ".claude/rules/language-standards.md",
+                       # STD-KOREAN-001 은 실효 language 설정(local > project > user)을 본다 — 프로젝트 설정을 안 옮기면
+                       #   이 PC 사용자 전역 설정에 따라 결과가 달라졌다 (2026-11-18: 전역에 language 없음 → gate rc=2)
+                       ".claude/settings.json"} | targets):   # 원격 c2bbf91 복사 목록 병합
         (p / rel).parent.mkdir(parents=True, exist_ok=True)
         (p / rel).write_bytes((ROOT / rel).read_bytes())
     return p                                              # .claude/state 없음 = 새 노트북·새 설치
@@ -1986,3 +1991,191 @@ def test_target_isolated_runner_removes_read_only_copy_files(tmp_path):
     os.chmod(f, 0o444)
     assert m.remove_copy(w) is True
     assert not w.exists()
+
+
+def test_target_isolated_runner_zero_tests_is_blocked_not_pass(tmp_path):
+    """§84 실측: 시험 경로 없이 실행 → pytest 가 '.' 폴더(.claude)를 건너뛰어 0건(rc=5) · 검사 0건 ≠ 통과 (헌장 B1)."""
+    t, home = _tgt_iso_target(tmp_path, "X = 1\n")            # test_ 함수 없음 = 0건
+    env = dict(os.environ, TGT_ISO_HOME=str(home))
+    r = subprocess.run([sys.executable, "-X", "utf8", str(SCRIPTS / "target-test-isolated.py"), str(t),
+                        "--", PROBE.as_posix()], capture_output=True, text=True, encoding="utf-8",
+                       errors="replace", env=env, timeout=300)
+    assert r.returncode == 3 and "BLOCKED" in r.stdout, r.stdout + r.stderr
+
+
+# ── §88 hook matcher 전파 누락 (R238) — 같은 command 면 matcher 변경을 건너뛰던 결함 ──
+def _m2t_mod():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("m2t88", ROOT / ".claude" / "scripts" / "merge-to-target.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+_TD = 'python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py" pre'
+_LOG = 'bash -c "python .claude/scripts/verify-after-edit-logger.py $1"'
+
+
+def _hooks(cfg, ev="PreToolUse"):
+    return [(mm.get("matcher", ""), h["command"]) for mm in cfg["hooks"][ev] for h in mm["hooks"]]
+
+
+def test_merge_settings_widens_existing_hook_matcher_only_adds():
+    m = _m2t_mod()
+    kit = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|PowerShell|Agent", "hooks": [{"command": _TD}]}]}}
+    tgt = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|Agent|NotebookEdit", "hooks": [{"command": _TD}]}]},
+           "custom": 1}
+    rep = []
+    out = m.merge_settings(kit, tgt, rep)
+    assert _hooks(out) == [("Edit|Write|Bash|Agent|NotebookEdit|PowerShell", _TD)]   # 대상 추가분 보존 · 중복 등록 X
+    assert out["custom"] == 1 and "settings.hooks matcher 보강 1" in rep
+    assert m.merge_settings(kit, out, []) == out                                      # 두 번 돌려도 같음
+
+
+def test_merge_settings_splits_mixed_entry_without_widening_other_hook():
+    m = _m2t_mod()
+    kit = {"hooks": {"PreToolUse": [{"matcher": "Bash|PowerShell", "hooks": [{"command": _TD}]},
+                                    {"matcher": "Bash", "hooks": [{"command": _LOG}]}]}}
+    tgt = {"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"command": _TD}, {"command": _LOG}]}]}}
+    out = m.merge_settings(kit, tgt, [])
+    assert sorted(_hooks(out)) == sorted([("Bash", _LOG), ("Bash|PowerShell", _TD)])     # 로그 hook 은 Bash 그대로
+
+
+def test_merge_settings_keeps_empty_matcher():
+    m = _m2t_mod()
+    kit = {"hooks": {"Stop": [{"matcher": "x", "hooks": [{"command": _LOG}]}]}}
+    tgt = {"hooks": {"Stop": [{"hooks": [{"command": _LOG}]}]}}
+    assert m.merge_settings(kit, tgt, [])["hooks"]["Stop"] == [{"hooks": [{"command": _LOG}]}]   # 빈 = 전부 매칭
+
+
+def test_merge_to_target_only_settings_merges_with_backup(tmp_path):
+    """--only .claude/settings.json = 통째 교체 X · 병합 + 백업 · 대상 고유 키 보존 (종전: --only 는 settings 를 아예 안 봄)."""
+    m2t = ROOT / ".claude" / "scripts" / "merge-to-target.py"
+    reg = ROOT / ".claude" / "state" / "merge-targets.txt"
+    reg_before = reg.read_bytes() if reg.exists() else None
+    tgt = tmp_path / "대상"
+    (tgt / ".claude").mkdir(parents=True)
+    own = {"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash|Agent", "hooks": [{"command": _TD}]}]},
+           "permissions": {"defaultMode": "bypassPermissions", "allow": []}, "mine": "keep"}
+    (tgt / ".claude" / "settings.json").write_text(json.dumps(own), encoding="utf-8")
+    run = lambda *a: subprocess.run([sys.executable, "-X", "utf8", str(m2t), str(tgt), *a],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=120)
+    r = run("--only", ".claude/settings.json")                                     # 미리보기 = 파일 불변
+    assert r.returncode == 0 and "PowerShell" in r.stdout, r.stdout + r.stderr
+    assert json.loads((tgt / ".claude" / "settings.json").read_text(encoding="utf-8")) == own
+    r = run("--only", ".claude/settings.json", "--apply")
+    assert r.returncode == 0, r.stdout + r.stderr
+    got = json.loads((tgt / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    td = [mm["matcher"] for mm in got["hooks"]["PreToolUse"] for h in mm["hooks"] if "tool-dispatch" in h["command"]]
+    assert td and all("PowerShell" in x.split("|") for x in td) and len(td) == 1
+    assert got["mine"] == "keep" and got["permissions"]["defaultMode"] == "bypassPermissions"
+    baks = list((tgt / ".claude" / "backups").rglob("settings.json"))
+    assert baks and json.loads(baks[0].read_text(encoding="utf-8")) == own
+    assert (reg.read_bytes() if reg.exists() else None) == reg_before
+
+
+def _load_periodic_snapshot(root):
+    import importlib.util as ilu
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "tool"))
+    spec = ilu.spec_from_file_location("ps_t", ROOT / ".claude" / "hooks" / "tool" / "periodic_snapshot.py")
+    ps = ilu.module_from_spec(spec)
+    spec.loader.exec_module(ps)
+    return ps
+
+
+def test_periodic_snapshot_detaches_instead_of_blocking(tmp_path, monkeypatch):
+    """2026-11-12 (R245): 동기 Spawn 이 5초 상한에 걸리면 디스패처가 하위 트리를 죽여 스냅샷이 저장되지 않았다
+    (IFRS 77회 중 7회) — 5분 게이트를 통과하면 분리 실행 · 실행 중 재호출은 띄우지 않음 · 진단용 동기 경로 유지."""
+    import subprocess as sp
+    ps = _load_periodic_snapshot(tmp_path)
+    calls = []
+
+    class _P:
+        def __init__(self, argv, **kw):
+            calls.append((argv, kw))
+    monkeypatch.setattr(sp, "Popen", _P)
+    monkeypatch.setattr(ps, "project_guard", lambda ctx: True)
+    monkeypatch.setattr(ps, "root_path", lambda *a: str(tmp_path.joinpath(*a)))
+    monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
+    assert ps.run(None) is None and len(calls) == 1                  # 기다리지 않음 (Spawn 반환 X)
+    assert calls[0][0][:2] == ["bash", "-c"] and calls[0][0][4].replace("\\", "/").endswith(ps.REL)
+    assert calls[0][1]["stdin"] is sp.DEVNULL
+    assert ps.run(None) is None and len(calls) == 1                  # 실행 표시 파일이 있으면 중복 실행 X
+    running = tmp_path / ".claude" / "context-cache" / ".periodic-snapshot.running"
+    old = __import__("time").time() - ps.RUNNING_STALE_SEC - 5
+    os.utime(running, (old, old))
+    assert ps.run(None) is None and len(calls) == 2                  # 죽은 실행 표시는 다시 잡음
+    running.unlink()
+    (tmp_path / ".claude" / "context-cache" / ".last-periodic-snapshot").write_text(str(int(__import__("time").time())))
+    assert ps.run(None) is None and len(calls) == 2                  # 5분 안 = 실행 안 함
+    monkeypatch.setenv("PERIODIC_SNAPSHOT_SYNC", "1")
+    (tmp_path / ".claude" / "context-cache" / ".last-periodic-snapshot").write_text("0")
+    assert isinstance(ps.run(None), ps.Spawn)                         # 진단용 동기 경로 유지
+
+
+def test_periodic_snapshot_real_detached_run_saves_and_logs(tmp_path, monkeypatch):
+    """실제 분리 실행 종단 — 격리 사본 프로젝트에서 원본 .sh 가 스냅샷을 저장하고 rc·저장 여부를 1줄 기록하는지.
+    운영 kit·대상 프로젝트의 로그·스냅샷은 건드리지 않는다."""
+    import shutil
+    import time as _t
+    proj = tmp_path / "proj"
+    for rel in ("plugins/exec_session_guard/hooks/periodic-snapshot.sh", ".claude/scripts/session-snapshot-save.py"):
+        (proj / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ROOT / rel, proj / rel)
+    ps = _load_periodic_snapshot(proj)
+    monkeypatch.setattr(ps, "project_guard", lambda ctx: True)
+    monkeypatch.setattr(ps, "root_path", lambda *a: str(proj.joinpath(*a)))
+    monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
+    assert ps.run(None) is None
+    assert ps.run(None) is None                                       # 같은 창의 두 번째 호출
+    log = proj / ".claude" / "logs" / "periodic-snapshot.log"
+    deadline = _t.time() + 60
+    while _t.time() < deadline and not (log.is_file() and log.read_text(encoding="utf-8").strip()):
+        _t.sleep(0.5)
+    lines = log.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1, lines                                     # 1회만 실행
+    assert "rc=0" in lines[0] and "snapshot=saved" in lines[0], lines
+    assert (proj / ".claude" / "context-cache" / "session-snapshot.md").is_file()
+    assert not (proj / ".claude" / "context-cache" / ".periodic-snapshot.running").exists()   # 실행 표시 해제
+
+
+def test_regression_gate_timeout_default_and_env(monkeypatch):
+    """2026-11-12 (R245): 900초 고정 상한 < 영향 시험 실측(1,527초) → 실패 0건인데 늘 BLOCKED. 기본 2400 · 환경변수 조정."""
+    import independent_verifier as iv
+    monkeypatch.delenv("REGRESSION_GATE_TIMEOUT_SEC", raising=False)
+    assert iv._gate_timeout() == 2400
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "3600")
+    assert iv._gate_timeout() == 3600
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "5")
+    assert iv._gate_timeout() == 60          # 너무 짧은 값은 하한
+    monkeypatch.setenv("REGRESSION_GATE_TIMEOUT_SEC", "x")
+    assert iv._gate_timeout() == 2400
+
+
+def test_remote_agent_capture_event_gated_r266():
+    """R266: 평상시 캡처 0회 · 승인 환경변수 + 대상 창 + 대시보드 주소 있을 때 명령 직후에만 짧게."""
+    import re
+    ra = (ROOT / "remote-agent.ps1").read_text(encoding="utf-8-sig")
+    loop = ra[ra.index("while ($true)"):]
+    # 메인 루프 끝의 무조건 캡처 없음 · 캡처는 명령 처리 뒤 Run-CaptureBurst 로만
+    assert "TakeAllScreenshots" not in loop
+    assert loop.count("Run-CaptureBurst") == 2
+    init = ra[ra.index("# 초기"):ra.index("while ($true)")]
+    assert "TakeAllScreenshots\n" not in init.replace("try { TakeAllScreenshots }", "")
+    # 승인·대상 창 게이트 · 모든 모니터 대신 대상 창 영역
+    take = ra[ra.index("function TakeAllScreenshots"):ra.index("function PushScreensJson")]
+    assert "Get-CaptureTarget" in take and "Screen]::AllScreens" not in take and "CaptureRect" in take
+    assert "if (-not $script:dashUrl) { return }" in take
+    gate = ra[ra.index("function Get-CaptureTarget"):]
+    assert "ORCH_REMOTE_ALLOW_SCREEN" in gate and "ORCH_REMOTE_CAPTURE_WINDOW" in gate
+    assert re.search(r"\$CaptureBurstFrames = 10\b", ra) and re.search(r"\$CaptureIntervalMs = 200\b", ra)
+    # 주소 없을 때 GitHub 조회는 5초 간격 (0.2초 X)
+    assert "Start-Sleep -Milliseconds 5000" in loop
+
+
+def test_fix_task_actions_failure_not_logged_as_ok_r266():
+    """R266: Set-ScheduledTask 의 '액세스 거부' 는 종료되지 않는 오류라 catch 를 건너뛰고 [OK] 가 기록됐다 (실측 11-16)."""
+    t = (ROOT / ".claude" / "scripts" / "fix-s4u-task-actions.ps1").read_text(encoding="utf-8-sig")
+    assert "Set-ScheduledTask -TaskName $f.Name -Action $newAction -ErrorAction Stop" in t
+    assert "Get-ScheduledTask -TaskName $f.Name -ErrorAction Stop" in t

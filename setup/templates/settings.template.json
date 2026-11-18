@@ -1,5 +1,6 @@
 {
   "_comment": "install 배포용 settings template. setup/modules/03-settings.bat 가 $HOME/.claude/settings.json 과 target/.claude/settings.json 로 배포. 2026-10-13 생성 (15축 audit MISSING fix)",
+  "language": "Korean",
   "permissions": {
     "allow": [
       "Write",
@@ -7,7 +8,6 @@
       "Read",
       "Glob",
       "Grep",
-      "Edit(*)",
       "Edit(**)",
       "Edit(.claude/**)",
       "Edit(plugins/**)",
@@ -104,7 +104,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/process-outbox.sh\"",
-            "timeout": 5
+            "timeout": 30,
+            "async": true
           },
           {
             "type": "command",
@@ -119,13 +120,6 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-sync-drift.sh\"",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "true",
-            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/install-sec-tools.sh\"",
-            "_disabled_reason": "2026-06-08 leak (auto re-install spawn pile-up)",
             "timeout": 5,
             "async": true
           },
@@ -227,7 +221,8 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/hook-08-ai-handoff.sh\" auto",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -238,27 +233,32 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/outbox-write.sh\" Stop",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/auto-compact-check.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/stop-doc-summary.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-infra-sync.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/auto-update-stats.sh\"",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           },
           {
             "type": "command",
@@ -298,7 +298,8 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/save-session-summary.sh\"",
+            "async": true
           },
           {
             "type": "command",
@@ -491,33 +492,6 @@
           },
           {
             "type": "command",
-            "command": "true",
-            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/test_gen/hooks/post-edit-test-gen.sh\"",
-            "_disabled_reason": "2026-06-08 leak — ai-native-chain unbounded parallel (each file edit spawns chain + slow semgrep, pile-up)",
-            "timeout": 5,
-            "continueOnBlock": true,
-            "async": true
-          },
-          {
-            "type": "command",
-            "command": "true",
-            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/doc_auto/hooks/post-sec-doc.sh\"",
-            "_disabled_reason": "2026-06-08 leak chain step",
-            "timeout": 5,
-            "continueOnBlock": true,
-            "async": true
-          },
-          {
-            "type": "command",
-            "command": "true",
-            "_disabled_command": "bash \"$CLAUDE_PROJECT_DIR/plugins/sec_scan/hooks/post-test-sec-scan.sh\"",
-            "_disabled_reason": "2026-06-08 leak chain step (slow semgrep parallel pile-up)",
-            "timeout": 5,
-            "continueOnBlock": true,
-            "async": true
-          },
-          {
-            "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
             "timeout": 30,
             "continueOnBlock": true,
@@ -647,7 +621,8 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd",
+            "async": true
           },
           {
             "type": "command",

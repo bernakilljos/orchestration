@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'SilentlyContinue'
+﻿$ErrorActionPreference = 'SilentlyContinue'
 
 $pat    = [System.Environment]::GetEnvironmentVariable('GITHUB_PERSONAL_ACCESS_TOKEN','User')
 if (-not $pat) { $pat = '' }
@@ -15,7 +15,30 @@ Add-Type -MemberDefinition @"
 [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 [DllImport("user32.dll")] public static extern void mouse_event(uint f, int x, int y, uint d, int e);
 [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte sc, uint f, int e);
+[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 "@ -Name "Win32" -Namespace "PInvoke"
+
+# --- 화면 캡처 정책 (2026-11-16 R266 · 사용자 지시 "평상시 캡처 0회 · 승인된 순간에만 짧게 · 끝나면 즉시 중단") ---
+#   이전: 메인 루프가 명령이 없어도 0.2초마다 모든 모니터를 캡처 (상주 CPU 코어 약 9~13%) · 화면 캡처 정책(지정 창만·승인 시) 충돌
+#   지금: 사용자 환경변수 두 개가 모두 있을 때만 캡처·전송한다 (없으면 캡처 0회)
+#     ORCH_REMOTE_ALLOW_SCREEN=1        화면을 대시보드로 보내도 된다는 사용자 승인
+#     ORCH_REMOTE_CAPTURE_WINDOW=<제목>  승인된 대상 창 제목 일부 — 이 창 영역만 캡처 (모든 모니터·다른 업무 창 X)
+#   캡처 시점 = 원격 명령을 처리한 직후 한 번의 짧은 구간 (0.2초 간격 · 최대 2초 · 10장) → 자동 종료
+$script:CaptureCount = 0
+$CaptureBurstFrames = 10
+$CaptureIntervalMs = 200
+function Get-CaptureTarget {
+    if ([System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_ALLOW_SCREEN','User') -ne '1') { return $null }
+    $title = [System.Environment]::GetEnvironmentVariable('ORCH_REMOTE_CAPTURE_WINDOW','User')
+    if (-not $title) { return $null }
+    $p = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -like "*$title*" } | Select-Object -First 1
+    if (-not $p) { return $null }
+    $r = New-Object PInvoke.Win32+RECT
+    if (-not [PInvoke.Win32]::GetWindowRect($p.MainWindowHandle, [ref]$r)) { return $null }
+    if (($r.Right - $r.Left) -le 0 -or ($r.Bottom - $r.Top) -le 0) { return $null }
+    return $r
+}
 
 # --- Dashboard URL ---
 $dashUrl = ''
@@ -83,10 +106,29 @@ function CaptureScreen($idx) {
 }
 
 # --- Upload Screenshots: Dashboard 직접 → GitHub fallback ---
+function CaptureRect($r) {
+    $w = $r.Right - $r.Left; $h = $r.Bottom - $r.Top
+    $bmp = New-Object System.Drawing.Bitmap($w, $h)
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.CopyFromScreen($r.Left, $r.Top, 0, 0, (New-Object System.Drawing.Size($w, $h)))
+    $g.Dispose()
+    $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object {$_.MimeType -eq 'image/jpeg'}
+    $ep = New-Object System.Drawing.Imaging.EncoderParameters(1)
+    $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, 50L)
+    $ms = New-Object System.IO.MemoryStream
+    $bmp.Save($ms, $codec, $ep)
+    $bmp.Dispose()
+    return $ms.ToArray()
+}
+
 function TakeAllScreenshots {
-    $screens = [System.Windows.Forms.Screen]::AllScreens
-    for ($i = 0; $i -lt $screens.Count; $i++) {
-        $imgBytes = CaptureScreen $i
+    # R266: 승인(ORCH_REMOTE_ALLOW_SCREEN=1) + 대상 창(ORCH_REMOTE_CAPTURE_WINDOW) + 전송 주소가 모두 있을 때만 · 대상 창 영역만
+    if (-not $script:dashUrl) { return }
+    $target = Get-CaptureTarget
+    if (-not $target) { return }
+    for ($i = 0; $i -lt 1; $i++) {
+        $imgBytes = CaptureRect $target
+        $script:CaptureCount++
         $sent = $false
         if ($script:dashUrl) {
             try {
@@ -244,31 +286,40 @@ Write-Host "[Remote] Agent started for $pcId"
 $dashUrl = Get-DashUrl
 Write-Host "[Remote] Dashboard: $(if ($dashUrl) { $dashUrl } else { 'not found (GitHub fallback)' })"
 
-# 초기
-TakeAllScreenshots
+# 초기: 화면 목록(메타데이터)만 · 화면 캡처는 하지 않음 (R266)
 PushScreensJson
 
 $lastCmdSha = ''
 $urlTick = 0
 
-while ($true) {
-    Start-Sleep -Milliseconds 200
+function Run-CaptureBurst {
+    # 명령 처리 직후에만 짧게 (10장 × 0.2초) 찍고 멈춤 · 대상 창·승인·주소 없으면 0장
+    for ($b = 0; $b -lt $CaptureBurstFrames; $b++) {
+        try { TakeAllScreenshots } catch { break }
+        Start-Sleep -Milliseconds $CaptureIntervalMs
+    }
+}
 
-    # Dashboard URL 주기적 갱신 (5분마다)
+while ($true) {
+    # 평상시: 주소 있으면 0.2초 명령 확인 · 없으면 5초 (GitHub 조회 과다 방지)
+    if ($dashUrl) { Start-Sleep -Milliseconds 200 } else { Start-Sleep -Milliseconds 5000 }
+
+    # Dashboard URL 주기적 갱신 (주소 없을 때 약 5분마다)
     $urlTick++
-    if ($urlTick -ge 1500 -and -not $dashUrl) {
+    if ($urlTick -ge 60 -and -not $dashUrl) {
         $dashUrl = Get-DashUrl
+        $script:dashUrl = $dashUrl
         $urlTick = 0
     }
 
     # 1) Dashboard에서 명령 polling
-    $cmd = PullDashboardCmd
-    if ($cmd) {
-        HandleCmd $cmd
-        Start-Sleep -Milliseconds 300
-        TakeAllScreenshots
-        $urlTick = 0
-        continue
+    if ($dashUrl) {
+        $cmd = PullDashboardCmd
+        if ($cmd) {
+            HandleCmd $cmd
+            Run-CaptureBurst
+            continue
+        }
     }
 
     # 2) GitHub fallback 명령 확인
@@ -278,12 +329,8 @@ while ($true) {
             $lastCmdSha = $cmdFile.sha
             $cmd2 = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($cmdFile.content)) | ConvertFrom-Json
             HandleCmd $cmd2
-            Start-Sleep -Milliseconds 300
-            TakeAllScreenshots
-            $urlTick = 0
+            Run-CaptureBurst
             continue
         }
     }
-
-    TakeAllScreenshots
 }

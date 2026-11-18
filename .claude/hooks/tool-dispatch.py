@@ -84,6 +84,7 @@ POST = [
     # 2026-11-09: 소비된 승인의 실행 결과 기록 (승인 소비 ≠ 실행 성공) · 실패·중단은 PostToolUse 가 안 와 consumed/running = 결과 미확인
     ("approval-gate-result", "approval_gate_detect", "Bash|PowerShell", 5, "post"),
     ("orca-heartbeat", "heartbeat", ".*", 60, None),
+    ("korean-report-drift", "korean_report_drift", ".*", 3, None),   # §83 턴 중간 영어 보고 즉시 교정 안내
     ("periodic-snapshot", "periodic_snapshot", ".*", 5, None),
     ("propagate-rule-change", "propagate_rule_change", "Edit|Write", 60, None),
 ]
@@ -383,7 +384,9 @@ def main(argv) -> int:
             ti = (json.loads(raw or "{}").get("tool_input") or {}) if raw else {}
             brief = ti.get("command") or ti.get("file_path") or ti.get("description") or ""
             trace_emit("tool", step=tname, status="success" if event == "post" else "blocked", duration_ms=total,
-                       detail={"input": str(brief)[:200], "hooks_ms": round(total)},
+                       # R259: 200자로 자르면 앞이 긴 명령의 뒤쪽 git commit·merge-to-target --apply 가 사라져
+                       #   상태줄 개발 단계가 실제로 한 커밋·전파를 «안 함» 으로 셌다 (R257·R258 4/6) · 기록 상한(2000) 안에서 1800
+                       detail={"input": str(brief)[:1800], "hooks_ms": round(total)},
                        error="; ".join(problems)[:300] if problems else None)
         except Exception:  # noqa: BLE001
             pass

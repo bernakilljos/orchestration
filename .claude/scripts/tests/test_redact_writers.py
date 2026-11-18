@@ -72,3 +72,15 @@ def test_fail_closed_when_mask_module_missing(tmp_path, monkeypatch):
     cl.save_turn("user", TEXT)
     content = sqlite3.connect(tmp_path / "orca.db").execute("SELECT content FROM conversations").fetchone()[0]
     assert content == "[MASKED]"                                         # 가림 모듈이 없으면 원문 저장 안 함
+
+
+def test_bash_command_log_keeps_line_with_undecodable_chars(tmp_path, monkeypatch):
+    """2026-11-12 (R245): 해석 못 한 글자(surrogate)가 섞이면 줄 전체가 조용히 빠지던 결함."""
+    lb = _load(HOOKS / "tool" / "log_bash_command.py", "lb_sur", HOOKS / "tool")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    bad = "echo r245 " + b"\xe2\x80\x94".decode("cp949", "surrogateescape")
+    monkeypatch.setattr(lb, "py_stdin_text", lambda ctx: json.dumps({"tool_input": {"command": bad, "description": "d"}},
+                                                                     ensure_ascii=False))
+    lb.run(None)
+    log = (tmp_path / ".claude" / "logs" / "bash_commands.log").read_text(encoding="utf-8")
+    assert "echo r245" in log

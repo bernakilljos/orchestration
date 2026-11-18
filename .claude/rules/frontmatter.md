@@ -1,3 +1,11 @@
+---
+paths:
+  - "plugins/**/plugin.json"
+  - "plugins/**/commands/**"
+  - "plugins/**/skills/**"
+  - ".claude-plugin/**"
+---
+
 # Frontmatter 표준
 
 > **적용 범위**: `plugin.json`, 커맨드 `.md`, 스킬 `.md`

@@ -33,7 +33,10 @@ def flagged(cmd: str) -> bool:
 # ── 감지: 이전에 통과하던 위험 명령 (gate_probe 91건 중 ALLOW 였던 것) ──
 BLOCK = [
     # P0-1 push 변형
-    f"{G} {P} origin main", f"{G}  {P}  origin main", f"{G} -C repo {P}", f"{G} {P}",
+    # 2026-11-13 R250: origin 으로의 일반 push 는 사용자 위임으로 허용 (ALLOW 로 이동) — 나머지 변형은 계속 차단
+    f"{G} -C repo {P}", f"{G} {P} upstream main", f"{G} {P} origin HEAD:main", f"{G} {P} --all origin",
+    f"{G} {P} --tags", f"{G} {P} --mirror origin", f"\"{G}\" {P} origin main", f"{G} {P} origin main; echo x",
+    f"{G} {P} origin main && rm -r build", f"{G} {P} origin $(cat b)",
     f"{G} {P} -f origin main", f"{G} {P} origin +main", f"{G} {P} origin :main",
     f"{G} {P} --delete origin feature", f"cd repo && {G} {P} origin main", f"{G} {P} {F} origin main",
     f"python -c \"import subprocess;subprocess.run(['{G}','{P}'])\"",
@@ -58,6 +61,9 @@ BLOCK = [
     "rm -r build", "find . -name '*.py' -delete", "python -c \"import shutil;shutil.rmtree('build')\"",
     f"{G} clean -fdx", f"{G} reset --hard HEAD~3", f"{G} checkout -- .", f"{G} stash drop",
     "Remove-Item -Recurse build",
+    # 2026-11-13 R251 SVN 파괴 작업 (일반 update·commit 은 ALLOW)
+    "svn revert -R .", "svn revert --recursive src", "svn cleanup --remove-unversioned",
+    "svn delete http://srv/svn/repo/trunk/a -m x", "svn rm https://srv/svn/repo/branches/b -m x", "svnadmin create C:/repo",
     # P1 배포
     "docker push app:v1", "terraform apply", "kubectl apply -f prod.yaml", "vercel --prod",
     "scp dist/app.zip user@server:/var/www",
@@ -74,6 +80,9 @@ ALLOW = [
     f"{G} status", f"{G} diff HEAD --stat", f"{G} log --oneline -5", f"{G} stash push -m wip",
     f"{G} config --get {P}.default", f"{G} add -A", f"{G} commit -m \"fix: {P} pattern\"",
     f"{G} fetch origin", f"{G} pull --rebase",
+    f"{G} {P}", f"{G} {P} origin main", f"{G}  {P}  origin main", f"{G} {P} -u origin feature/x", f"{G} {P} -q",   # R250
+    "svn update", "svn up --non-interactive", "svn status", "svn diff", "svn add src/A.vue", "svn delete src/old.vue",
+    "svn commit -m \"fix: 화면 수정\" --non-interactive", "svn ci src/A.vue -m x", "svn revert src/A.vue", "svn cleanup",   # R251
     "python -m pytest -q .claude/scripts/tests", "python .claude/scripts/approval-gate.py list",
     "python .claude/scripts/approval-gate.py status appr-x",
     "sqlite3 x.db \"select approval_state from tasks\"",
@@ -417,7 +426,7 @@ def test_hook_end_to_end_binds_script_content(tmp_root):
 def test_push_approval_bound_to_head(tmp_root):
     repo = tmp_root / "repo"
     commit = _git_repo(repo)
-    cmd = f"{G} {P} origin main"
+    cmd = f"{G} {P} upstream main"   # R250: origin 일반 push 는 자동 허용 → 승인 필요한 push(다른 원격)로 승인 범위 시험
     r = agd.run(_hook(cmd, str(repo)))
     assert r is not None and r.rc == 2 and "올라갈 HEAD" in r.err and "브랜치" in r.err
     t1 = _tid(r)
@@ -440,7 +449,7 @@ def test_push_approval_bound_to_head(tmp_root):
 def test_old_push_approval_without_scope_not_used(tmp_root):
     repo = tmp_root / "repo2"
     _git_repo(repo)
-    cmd = f"{G} {P} origin main"
+    cmd = f"{G} {P} upstream main"   # R250: origin 일반 push 는 자동 허용 → 승인 필요한 push(다른 원격)로 승인 범위 시험
     old = "appr-0000000000aa"                                         # 범위 지문 없는 옛 방식 승인 행
     gate.request_approval(old, cmd, "irreversible", "old", None)
     gate.approve(old, gate.USER_APPROVER)
@@ -453,7 +462,7 @@ def test_old_push_approval_without_scope_not_used(tmp_root):
 def test_waiting_request_never_modified_on_scope_change(tmp_root):
     repo = tmp_root / "repo4"
     commit = _git_repo(repo)
-    cmd = f"{G} {P} origin main"
+    cmd = f"{G} {P} upstream main"   # R250: origin 일반 push 는 자동 허용 → 승인 필요한 push(다른 원격)로 승인 범위 시험
     t1 = _tid(agd.run(_hook(cmd, str(repo))))
     before = _row(t1)
     commit("two")                                                     # 대기 중에 커밋 추가
@@ -469,7 +478,7 @@ def test_waiting_request_never_modified_on_scope_change(tmp_root):
 def test_waiting_request_expires_after_24h_without_modification(tmp_root):   # approval-gate-rules § 승인 만료
     repo = tmp_root / "repo6"
     _git_repo(repo)
-    cmd = f"{G} {P} origin main"
+    cmd = f"{G} {P} upstream main"   # R250: origin 일반 push 는 자동 허용 → 승인 필요한 push(다른 원격)로 승인 범위 시험
     t1 = _tid(agd.run(_hook(cmd, str(repo))))
     with sqlite3.connect(gate.get_db_path()) as c:                     # 25시간 전 요청으로 만듦
         c.execute("UPDATE tasks SET created_at = created_at - ? WHERE task_id = ?", (gate.REQUEST_TTL_SEC + 3600, t1))
@@ -575,3 +584,26 @@ def test_script_execution_still_blocked(tmp_root, tpl):
     s = _risky_script(tmp_root)
     r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
     assert r is not None and r.rc == 2, tpl
+
+
+# ── 2026-11-13 R251 SVN 일반 작업 종단 (IFRS = SVN) — 임시 로컬 저장소에서 checkout→add→commit→update→log ──
+def test_svn_plain_commit_flow_end_to_end_and_not_gated(tmp_path):
+    import shutil
+    import subprocess
+    if not shutil.which("svn") or not shutil.which("svnadmin"):
+        pytest.skip("svn 없음")
+    repo, wc = tmp_path / "repo", tmp_path / "wc"
+    subprocess.run(["svnadmin", "create", str(repo)], check=True, capture_output=True)   # 시험 준비 (게이트 대상 명령 아님)
+    url = repo.as_uri()
+    run = lambda *a, cwd=None: subprocess.run(["svn", *a, "--non-interactive"], cwd=cwd, check=True,  # noqa: E731
+                                              capture_output=True, text=True, encoding="utf-8", errors="replace")
+    # svn 출력은 콘솔 코드페이지(cp949 · 한글 요일) — 글자는 판정에 안 쓰므로 replace
+    run("checkout", url, str(wc))
+    (wc / "A.vue").write_text("<template><div/></template>\n", encoding="utf-8")
+    steps = [("add", "A.vue"), ("commit", "-m", "fix: 화면 수정"), ("update",)]
+    for s in steps:
+        assert not flagged("svn " + " ".join(f'"{x}"' if " " in x else x for x in s)), s   # 실제로 쓰는 일반 명령 = 게이트 통과
+        run(*s, cwd=wc)
+    log = run("log", "-l", "1", "-q", cwd=wc).stdout
+    assert "r1 |" in log                                                                  # 원격(로컬 저장소)에 실제 반영
+    assert flagged(f"svn delete {url}/A.vue -m x") and flagged("svn revert -R .")         # 파괴 작업은 계속 승인

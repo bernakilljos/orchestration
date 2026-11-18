@@ -412,11 +412,363 @@ def _configured_test_dirs(cwd: Path) -> List[str]:
     return sorted(dirs)
 
 
-REGRESSION_STAMP = ".claude/state/regression-gate.json"
-_CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx")
-_RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (\S+?)(?: - .*)?$", re.M)
-_RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
+REGRESSION_STAMP = ".claude/state/regression-gate.json"# 2026-11-14: .vue·.jsx·.mjs·.cjs·.json 이 빠져 Vue 만 바꾼 커밋은 'skip' = 아무 검사 없이 커밋됐다
+# 2026-11-15 (R256): 실제 개발 프로젝트(IFRS = SVN · 최근 200 커밋 변경 파일 java 604 · vue 470 · js 47 · yml 9 · xml 9)
+#   의 java·xml·yml 이 검사 대상에 없어 Java 변경은 아무 검사 없이 들어갔다 → 추가. (css 4건은 문법 검사기 없음 · 대상 외)
+#   이 목록은 커밋 훅(pre_commit_full_check.py · pre-commit-full-check.sh)과 같아야 한다 — 시험이 대조.
+_CODE_EXT = (".py", ".sh", ".ps1", ".psm1", ".bat", ".cmd", ".js", ".ts", ".tsx",
+             ".vue", ".jsx", ".mjs", ".cjs", ".json", ".java", ".xml", ".yml", ".yaml", ".go")
+_JSON_LENIENT = re.compile(r"(^|/)(tsconfig[^/]*|jsconfig[^/]*|\.eslintrc[^/]*)\.json$|(^|/)\.vscode/", re.I)
+SYNTAX_STAMP = ".claude/state/syntax-gate.json"   # git 이 아닌 작업본(SVN·버전 관리 없음)용 기록
 
+
+def _jsonc_to_json(text: str) -> str:
+    """주석(// · /* */)과 끝 쉼표를 문자열 밖에서만 걷어 낸다 — tsconfig·.vscode 설정 (2026-11-15 R256:
+    전에는 이 파일들을 아예 '미검사' 로 남겼다). 문자열 안의 // 나 , 는 건드리지 않는다."""
+    out, i, n, in_str = [], 0, len(text), False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(text[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                in_str = False
+            i += 1
+        elif c == '"':
+            in_str = True
+            out.append(c)
+            i += 1
+        elif text.startswith("//", i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+        elif text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            if j < 0:
+                raise ValueError("닫히지 않은 /* 주석")
+            i = j + 2
+        else:
+            out.append(c)
+            i += 1
+    s, res, in_str, esc = "".join(out), [], False, False
+    for k, c in enumerate(s):
+        if in_str:
+            res.append(c)
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == ",":
+            rest = s[k + 1:].lstrip()
+            if rest[:1] in ("}", "]"):
+                continue   # 끝 쉼표
+        res.append(c)
+    return "".join(res)
+
+
+# PowerShell 공식 구문 분석기 (실행하지 않음) — 오류가 있으면 줄:열 메시지를 찍고 exit 1
+_PS_PARSE = ("[Console]::OutputEncoding=[Text.Encoding]::UTF8; $e=$null; $t=$null; "
+             "[void][System.Management.Automation.Language.Parser]::ParseFile($env:ORCA_PSF,[ref]$t,[ref]$e); "
+             "if($e -and $e.Count){ foreach($x in $e){ '{0}:{1} {2}' -f $x.Extent.StartLineNumber,"
+             "$x.Extent.StartColumnNumber,$x.Message }; exit 1 }; exit 0")
+
+# Java 구문 분석만 (클래스경로 없이) — 공식 컴파일러 API JavacTask.parse(). javac 를 그냥 돌리면 import·심볼 해석
+#   오류(package does not exist)가 섞이고, JDK 8 은 -XDshould-stop 계열로 구문 단계에서 멈추지 않는다 (2026-11-15 실측).
+#   JavacTask 는 com.sun.source.util (JDK 9+ 공개 모듈 · JDK 8 tools.jar) — 반영(reflection)으로 불러 컴파일 의존 없음.
+_JAVA_HELPER = r"""import javax.tools.*; import java.util.*; import java.nio.charset.Charset;
+public class OrcaJavaParse { public static void main(String[] a) throws Exception {
+  JavaCompiler c = ToolProvider.getSystemJavaCompiler();
+  if (c == null) { System.out.println("NOCOMPILER"); System.exit(3); }
+  DiagnosticCollector<JavaFileObject> d = new DiagnosticCollector<JavaFileObject>();
+  StandardJavaFileManager fm = c.getStandardFileManager(d, Locale.ENGLISH, Charset.forName(a[0]));
+  List<String> files = Arrays.asList(a).subList(1, a.length);
+  Object t = c.getTask(null, fm, d, Arrays.asList("-proc:none", "-encoding", a[0]), null, fm.getJavaFileObjectsFromStrings(files));
+  Class.forName("com.sun.source.util.JavacTask").getMethod("parse").invoke(t);
+  int n = 0;
+  for (Diagnostic<? extends JavaFileObject> x : d.getDiagnostics()) {
+    if (x.getKind() != Diagnostic.Kind.ERROR) continue;
+    n++;
+    System.out.println("ERR\t" + (x.getSource() == null ? "" : x.getSource().getName()) + "\t" + x.getLineNumber()
+        + "\t" + x.getMessage(Locale.ENGLISH).replace('\n', ' ').replace('\r', ' '));
+  }
+  System.exit(n > 0 ? 1 : 0);
+} }
+"""
+
+
+def _java_parse(cwd: Path, rels: List[str]):
+    """(오류 [{file,error}], 검사한 rel, 미검사 rel+사유) — JDK 없으면 전부 미검사."""
+    import hashlib
+    import shutil as _sh
+    import tempfile
+    javac = _sh.which("javac")
+    if not javac:
+        return [], [], [r + " (javac 없음)" for r in rels]
+    jbin = Path(javac).resolve().parent
+    java = next((str(p) for p in (jbin / "java.exe", jbin / "java") if p.is_file()), None)
+    if not java:
+        return [], [], [r + " (JDK java 없음)" for r in rels]
+    key = hashlib.sha256((_JAVA_HELPER + str(jbin)).encode("utf-8")).hexdigest()[:12]
+    cache = Path(tempfile.gettempdir()) / ("orca-javaparse-" + key)
+    tools = jbin.parent / "lib" / "tools.jar"   # JDK 8 만 있음 (9+ 는 모듈)
+    cp = str(cache) + (os.pathsep + str(tools) if tools.is_file() else "")
+    try:
+        if not (cache / "OrcaJavaParse.class").is_file():
+            cache.mkdir(parents=True, exist_ok=True)
+            (cache / "OrcaJavaParse.java").write_text(_JAVA_HELPER, encoding="utf-8")
+            r = subprocess.run([javac, "-encoding", "UTF-8", "-d", str(cache), str(cache / "OrcaJavaParse.java")],
+                               capture_output=True, text=True, errors="replace", timeout=120)
+            if r.returncode != 0:
+                return [], [], [x + " (Java 검사기 준비 실패)" for x in rels]
+        enc = "UTF-8"
+        for pom in (cwd / "pom.xml", *sorted(cwd.glob("*/pom.xml")), *sorted(cwd.glob("*/*/pom.xml"))):
+            try:
+                m = re.search(r"<project\.build\.sourceEncoding>\s*([\w-]+)\s*<", pom.read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                continue
+            if m:
+                enc = m.group(1)
+                break
+        r = subprocess.run([java, "-Duser.language=en", "-cp", cp, "OrcaJavaParse", enc, *[str(cwd / x) for x in rels]],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return [], [], [x + " (%s)" % type(e).__name__ for x in rels]
+    if r.returncode not in (0, 1):
+        return [], [], [x + " (Java 검사기 실행 실패 rc=%s)" % r.returncode for x in rels]
+    by_abs = {os.path.normcase(str((cwd / x).resolve())): x for x in rels}
+    errors: Dict[str, List[str]] = {}
+    for line in r.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 4 and parts[0] == "ERR":
+            rel = by_abs.get(os.path.normcase(str(Path(parts[1]).resolve())), parts[1])
+            errors.setdefault(rel, []).append("%s:%s %s" % (rel, parts[2], parts[3]))
+    if r.returncode == 1 and not errors:
+        return [], [], [x + " (Java 검사기 출력 판독 불가)" for x in rels]
+    return ([{"file": f, "error": "\n".join(v)[:600]} for f, v in errors.items()],
+            [x for x in rels if x not in errors], [])
+
+
+def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
+    """커밋할 소스 파일 자체의 문법 검사 (2026-11-14 · 사용자: "테스트 몇 개 통과보다 변경한 소스가 실제로 검사됐나").
+    회귀 시험은 영향 시험만 돌려 바뀐 파일의 문법 오류를 놓칠 수 있었다. 검사기는 기존·공식 도구만:
+      .py compile() (SyntaxWarning 도 오류) · .json json.loads (주석 허용 설정은 주석·끝 쉼표 제거 후) · .sh bash -n ·
+      .js/.mjs/.cjs/.jsx/.ts/.tsx/.vue = 편집 직후 훅 check-js-syntax.sh (프로젝트 node·tsc·Vue 컴파일러) ·
+      .ps1/.psm1 PowerShell Parser.ParseFile · .java JavacTask.parse · .xml ElementTree · .yml yaml.compose · .go gofmt -e
+    도구가 없어 못 본 파일은 통과로 세지 않고 unchecked 로 남긴다 → 게이트가 unverified 로 커밋 차단 (R256)."""
+    import shutil as _sh
+    errors, checked, unchecked, java = [], [], [], []
+    hook = cwd / ".claude" / "hooks" / "check-js-syntax.sh"
+    if not hook.is_file():
+        hook = Path(__file__).resolve().parents[2] / "hooks" / "check-js-syntax.sh"
+    bash, node = _sh.which("bash"), _sh.which("node")
+    tsc = _sh.which("tsc") or ((cwd / "node_modules" / ".bin" / "tsc").exists() and "local")
+    for rel in files:
+        p = cwd / rel
+        if not p.is_file():
+            continue   # 삭제된 파일
+        ext = p.suffix.lower()
+        try:
+            if ext == ".py":
+                # SyntaxWarning(잘못된 이스케이프 "\s" 등)도 오류로 — 이후 버전에서 SyntaxError 가 될 예정이고
+                #   R255 커밋에서 실제로 게이트를 통과한 사례 (Windows 경로 "\scripts\tests" → 탭 문자로 바뀐 시험)
+                import warnings as _w
+                with _w.catch_warnings():
+                    _w.simplefilter("error", SyntaxWarning)
+                    # Python 3.11 이하는 같은 잘못된 이스케이프를 DeprecationWarning 으로 낸다 (3.12 부터 SyntaxWarning) —
+                    #   이 머신(3.11.9)에서 test_syntax_check_treats_invalid_escape_warning_as_error 가 실패해 확인 (2026-11-18 병합)
+                    _w.filterwarnings("error", message=r"invalid escape sequence", category=DeprecationWarning)
+                    compile(p.read_bytes(), rel, "exec")
+                checked.append(rel)
+            elif ext == ".json":
+                text = p.read_text(encoding="utf-8-sig")
+                json.loads(_jsonc_to_json(text) if _JSON_LENIENT.search(rel.replace("\\", "/")) else text)
+                checked.append(rel)
+            elif ext == ".sh":
+                if not bash:
+                    unchecked.append(rel + " (bash 없음)")
+                    continue
+                r = subprocess.run([bash, "-n", str(p)], capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace", timeout=30)
+                (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
+            elif ext in (".ps1", ".psm1"):
+                ps = _sh.which("powershell") or _sh.which("pwsh")
+                if not ps:
+                    unchecked.append(rel + " (PowerShell 없음)")
+                    continue
+                r = subprocess.run([ps, "-NoProfile", "-NonInteractive", "-Command", _PS_PARSE], capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace", timeout=60,
+                                   env={**os.environ, "ORCA_PSF": str(p.resolve())})
+                if r.returncode == 0:
+                    checked.append(rel)
+                elif r.returncode == 1 and r.stdout.strip():
+                    errors.append({"file": rel, "error": "\n".join("%s:%s" % (rel, x) for x in r.stdout.strip().splitlines())[:600]})
+                else:
+                    unchecked.append(rel + " (PowerShell 구문 분석 실행 실패 rc=%s)" % r.returncode)
+            elif ext == ".java":
+                java.append(rel)   # JVM 기동 1회로 모아서 검사 (아래)
+            elif ext == ".xml":
+                import xml.etree.ElementTree as _ET
+                try:
+                    _ET.parse(str(p))   # 정형성(well-formed) 검사 · 외부 DTD 는 가져오지 않음
+                    checked.append(rel)
+                except _ET.ParseError as e:
+                    errors.append({"file": rel, "error": "%s %s" % (rel, e)})
+            elif ext in (".yml", ".yaml"):
+                try:
+                    import yaml as _yaml
+                except ImportError:
+                    unchecked.append(rel + " (PyYAML 없음)")
+                    continue
+                try:   # compose = 구문만 (사용자 태그 !Ref 등은 객체로 만들지 않으므로 오류 아님)
+                    for _ in _yaml.compose_all(p.read_text(encoding="utf-8-sig"), Loader=_yaml.SafeLoader):
+                        pass
+                    checked.append(rel)
+                except _yaml.YAMLError as e:
+                    errors.append({"file": rel, "error": ("%s %s" % (rel, e))[:600]})
+            elif ext == ".go":
+                gofmt = _sh.which("gofmt")
+                if not gofmt:
+                    unchecked.append(rel + " (gofmt 없음)")
+                    continue
+                r = subprocess.run([gofmt, "-e", "-l", str(p)], capture_output=True, text=True, encoding="utf-8",
+                                   errors="replace", timeout=30)
+                (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
+            elif ext in (".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".vue"):
+                need = {"node": node, "ts": tsc, "jsx": _sh.which("esbuild")}
+                key = "ts" if ext in (".ts", ".tsx") else ("jsx" if ext == ".jsx" else "node")
+                if not (bash and hook.is_file() and node and need[key]):
+                    unchecked.append(rel + " (%s 없음)" % ("tsc" if key == "ts" else "esbuild" if key == "jsx" else "node"))
+                    continue
+                if ext == ".vue":
+                    probe = subprocess.run([node, "-e", "const r=require('module').createRequire(process.argv[1]);"
+                                            "for(const m of ['vue/compiler-sfc','@vue/compiler-sfc']){try{r.resolve(m);process.exit(0)}catch(e){}}process.exit(3)",
+                                            str(p.resolve())], capture_output=True, timeout=30)
+                    if probe.returncode != 0:
+                        unchecked.append(rel + " (Vue 컴파일러 없음)")
+                        continue
+                r = subprocess.run([bash, str(hook)], input=json.dumps({"tool_input": {"file_path": str(p.resolve())}}),
+                                   capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+                                   env={**os.environ, "CLAUDE_PROJECT_DIR": str(cwd)})
+                out = (r.stdout or "").strip()
+                if r.returncode == 2 or '"decision"' in out:
+                    try:
+                        msg = json.loads(out.splitlines()[-1]).get("reason", out)
+                    except (ValueError, IndexError):
+                        msg = out or r.stderr
+                    errors.append({"file": rel, "error": str(msg).strip()[:600]})
+                else:
+                    checked.append(rel)
+            else:
+                unchecked.append(rel + " (문법 검사기 없음)")
+        except SyntaxError as e:
+            errors.append({"file": rel, "error": "%s:%s %s" % (rel, e.lineno, e.msg)})
+        except ValueError as e:   # json.JSONDecodeError 포함
+            errors.append({"file": rel, "error": "%s %s" % (rel, e)})
+        except (OSError, subprocess.TimeoutExpired) as e:
+            unchecked.append("%s (%s)" % (rel, type(e).__name__))
+    if java:
+        je, jc, ju = _java_parse(cwd, java)
+        errors += je
+        checked += jc
+        unchecked += ju
+    return {"errors": errors, "checked": checked, "unchecked": unchecked}
+
+
+def _syntax_verdict(res: Dict[str, Any], syn: Dict[str, Any]) -> bool:
+    """문법 검사 결과로 상태를 정하면 True (오류 = syntax_error · 미검사 = unverified · 둘 다 커밋 차단)."""
+    res["syntax_checked"], res["syntax_unchecked"], res["syntax_errors"] = syn["checked"], syn["unchecked"], syn["errors"]
+    if syn["errors"]:
+        res["status"] = "syntax_error"   # 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
+        res["reason"] = "변경 소스 문법 오류 %d건: %s" % (len(syn["errors"]), "; ".join(
+            "%s — %s" % (e["file"], e["error"].splitlines()[0] if e["error"] else "") for e in syn["errors"][:3]))
+        return True
+    if syn["unchecked"]:
+        # 2026-11-15 (R256) 사용자: "검사기 없음 → 미검증, 검증 완료로 판단하거나 자동 커밋하지 않음" —
+        #   전에는 unchecked 로 적기만 하고 pass 가 나와 그대로 커밋됐다
+        res["status"] = "unverified"
+        res["reason"] = "문법 검사기가 없어 확인 못 한 변경 파일 %d건 — 검증 완료로 보지 않고 자동 커밋하지 않음: %s" % (
+            len(syn["unchecked"]), ", ".join(syn["unchecked"][:5]))
+        return True
+    return False
+
+
+def _svn_changed(cwd: Path, timeout: int = 60) -> Optional[List[str]]:
+    """SVN 작업본의 수정·추가·교체 파일 (커밋 대상 후보 · 경로 '/' 통일). svn 아님·실패 = None.
+    timeout: 커밋 훅(5초 제한)은 짧게 넘긴다 · 넘으면 None → 훅이 차단 (fail-closed)."""
+    import shutil as _sh
+    svn = _sh.which("svn")
+    if not svn or not (cwd / ".svn").is_dir():
+        return None
+    try:
+        r = subprocess.run([svn, "status", "-q", "--non-interactive"], cwd=str(cwd), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0:
+        return None
+    out = []
+    for line in r.stdout.splitlines():
+        if len(line) > 8 and line[0] in "MAR":
+            rel = line[8:].strip().replace("\\", "/")
+            if (cwd / rel).is_file():
+                out.append(rel)
+    return out
+
+
+def file_hashes(cwd: Path, rels: List[str]) -> Dict[str, str]:
+    import hashlib
+    out = {}
+    for rel in rels:
+        try:
+            out[rel] = hashlib.sha256((cwd / rel).read_bytes()).hexdigest()
+        except OSError:
+            out[rel] = ""
+    return out
+
+
+def syntax_gate(cwd: Path) -> Dict[str, Any]:
+    """git 이 아닌 작업본(IFRS = SVN)의 커밋 전 문법 게이트 (2026-11-15 R256 · 커밋 훅이 git commit 에만 반응해
+    실제 개발 프로젝트의 svn commit 은 문법 검사를 한 번도 거치지 않았다). 수정 파일 내용 해시와 함께 SYNTAX_STAMP 에 기록 →
+    커밋 훅(pre_commit_full_check.py)이 지금 수정 파일 해시가 같고 상태가 pass/skip 일 때만 svn commit 을 통과시킨다."""
+    import time as _t
+    changed = _svn_changed(cwd)
+    res: Dict[str, Any] = {"at": int(_t.time()), "vcs": "svn" if changed is not None else "none"}
+    if changed is None:
+        res.update(status="blocked", reason="SVN 작업본이 아니거나 svn status 실패 — 수정 파일을 확정할 수 없음", files={})
+    else:
+        code = [p for p in changed if p.lower().endswith(_CODE_EXT)]
+        res["changed_code"] = code
+        res["files"] = file_hashes(cwd, code)
+        if not code:
+            res["status"] = "skip"
+        elif not _syntax_verdict(res, staged_syntax_check(cwd, code)):
+            res["status"] = "pass"
+        if res.get("status") in ("pass", "skip"):   # R296 SVN 작업본도 페이지·DB 속도 검사 (SQL·매퍼만 바뀐 경우 포함)
+            try:
+                perf = perf_gate(cwd, changed)
+            except Exception as e:  # noqa: BLE001
+                perf = {"status": "perf_unmeasured", "items": [], "reason": "성능 검사 오류: %s" % e}
+            res["perf"] = perf
+            if perf.get("status") in ("perf_regression", "perf_unmeasured"):
+                res["status"] = perf["status"]
+                res["reason"] = "속도 검사 실패: " + " · ".join(
+                    "%s %sms (%s)" % (r["name"], r.get("ms"), r.get("reason") or "측정 실패")
+                    for r in perf.get("items", []) if r.get("verdict") != "pass")
+    stamp = cwd / SYNTAX_STAMP
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
+# 2026-11-14: 매개변수 id 에 공백이 있으면 (예: [cd /c/x; git push origin main-True]) \S+ 가 못 읽어
+#   실패 0건으로 집계 → rc=1 '실행 오류' blocked 로 오분류되고 기준선 비교(신규 회귀 판정)를 못 했다
+_RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
+_RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
 
 def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류."""
@@ -430,7 +782,6 @@ def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
     summary = (out.strip().splitlines() or [""])[-1][:200]
     return fails, summary, r.returncode
 
-
 def code_fingerprint(cwd: Path) -> str:
     """스테이징(index)된 코드 파일만의 지문 — 문서(CLAUDE.md AUTO-STATS·guide.txt)만 더 stage 해도 그대로다.
     lottoclaude 11-16 21:40: 전체 회귀(7분 15초) 통과 직후 커밋 훅이 CLAUDE.md 날짜 한 줄 stage 를 요구 → 트리 해시가 바뀌어
@@ -441,7 +792,147 @@ def code_fingerprint(cwd: Path) -> str:
     return hashlib.sha1("\n".join(rows).encode("utf-8")).hexdigest() if rows else ""
 
 
-def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
+def _gate_timeout() -> int:
+    """2026-11-12 (R245): 900초 고정이던 상한이 영향 시험 14개(이 PC 부하 시 1,527초 실측)보다 짧아
+    실패 0건인데도 늘 시간 초과 BLOCKED → 커밋 불가 순환. 검사 범위·통과 기준은 그대로, 상한만 늘리고 조정 가능하게."""
+    try:
+        return max(60, int(os.environ.get("REGRESSION_GATE_TIMEOUT_SEC", "2400")))
+    except ValueError:
+        return 2400
+
+
+PERF_BUDGET = ".claude/config/perf-budget.json"          # kit 공통 항목 (전파됨)
+PERF_BUDGET_LOCAL = ".claude/config/perf-budget.local.json"   # 대상 프로젝트 고유 항목 (페이지·DB · 전파 안 됨)
+PERF_BASELINE = ".claude/state/perf-baseline.json"
+
+
+def _perf_items(cwd: Path) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    for rel in (PERF_BUDGET, PERF_BUDGET_LOCAL):
+        try:
+            items += json.loads((cwd / rel).read_text(encoding="utf-8")).get("items", [])
+        except (OSError, ValueError, AttributeError):
+            continue
+    return [i for i in items if isinstance(i, dict) and i.get("name") and i.get("cmd")]
+
+
+def _perf_measure(cwd: Path, item: Dict[str, Any]) -> Optional[float]:
+    """명령을 runs 회 실행한 실행 시간 중앙값(ms) · 실패(종료 코드≠0·시간 초과) = None (측정 실패 = 통과 아님)."""
+    import statistics
+    import time as _t
+    shell = isinstance(item["cmd"], str)
+    times = []
+    for _ in range(max(1, int(item.get("warmup", 1)))):
+        try:
+            subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
+        except (OSError, subprocess.SubprocessError):
+            return None
+    for _ in range(max(3, int(item.get("runs", 5)))):
+        t0 = _t.perf_counter()
+        try:
+            r = subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if r.returncode != 0:
+            return None
+        times.append((_t.perf_counter() - t0) * 1000)
+    return round(statistics.median(times), 1)
+
+
+PERF_SAMPLES = 7          # 기준선 = 최근 통과 측정 7개의 중앙값 (2026-11-18 R303 실측: 상태줄 같은 방식 8회 387~524ms · 폭 35%)
+PERF_MIN_REGRESS_MS = 60  # 기준선 대비 이만큼 이상 느려져야 차단 (비율만 보면 작은 값은 잡음으로 넘음)
+
+
+def _perf_baseline_ms(entry: Optional[Dict[str, Any]]) -> Optional[float]:
+    """기준선 = 최근 통과 측정값들의 중앙값 · 옛 형식 {"ms"} 도 읽음 · 운 좋게 빨랐던 1회에 기준이 끌려 내려가지 않게."""
+    import statistics
+    if not entry:
+        return None
+    vals = [float(v) for v in (entry.get("samples") or []) if v]
+    if not vals and entry.get("ms"):
+        vals = [float(entry["ms"])]
+    return round(statistics.median(vals), 1) if vals else None
+
+
+def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
+    """R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목(상태줄·페이지·DB 등)만 재서 느려지면 커밋 차단.
+
+    항목 = perf-budget.json(kit) + perf-budget.local.json(대상 고유) 의 items:
+      {"name", "cmd"(문자열=셸·목록=직접 실행), "triggers"(바뀐 파일 glob 목록 · 없으면 항상), "budget_ms"(절대 상한),
+       "max_regress_pct"(기준선 대비 허용 · 기본 30), "min_regress_ms"(절대 허용 폭 · 기본 60), "runs", "warmup", "stdin", "timeout_s"}
+    판정: 상한 초과 또는 기준선 대비 허용 초과 → 1번 다시 재서 그래도 초과면 perf_regression · 측정 실패 = perf_unmeasured(차단).
+    기준선 = 최근 통과 측정 7개 중앙값 (R303 · 옛 방식은 마지막 통과값 1개라 빠른 1회에 끌려 내려가 거짓 차단) (.claude/state/perf-baseline.json · 통과할 때만 갱신 · 기계 부하로 흔들리는 값을 그대로 기준 삼지 않게
+    처음 측정은 기준선만 저장)."""
+    import fnmatch
+    out: Dict[str, Any] = {"items": [], "status": "pass"}
+    items = _perf_items(cwd)
+    if not items:
+        out["status"] = "none"
+        return out
+    try:
+        base = json.loads((cwd / PERF_BASELINE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        base = {}
+    for it in items:
+        trig = it.get("triggers") or []
+        hit = not trig or any(fnmatch.fnmatch(p, g) for p in staged for g in trig)
+        if not hit:
+            continue
+        ms = _perf_measure(cwd, it)
+        rec: Dict[str, Any] = {"name": it["name"], "ms": ms, "baseline_ms": _perf_baseline_ms(base.get(it["name"])),
+                               "budget_ms": it.get("budget_ms")}
+        if ms is None:
+            rec["verdict"] = "unmeasured"
+            out["items"].append(rec)
+            continue
+        pct = float(it.get("max_regress_pct", 30))
+        min_abs = float(it.get("min_regress_ms", PERF_MIN_REGRESS_MS))
+
+        def _over(v: float) -> Optional[str]:
+            if it.get("budget_ms") and v > float(it["budget_ms"]):
+                return "상한 %sms 초과" % it["budget_ms"]
+            b = float(rec["baseline_ms"] or 0)
+            if b and v > b * (1 + pct / 100) and v - b > min_abs:   # 비율과 절대 폭 둘 다 넘어야 (작은 값의 잡음 차단 방지)
+                return "기준선 %sms 대비 %d%%·%dms 초과" % (rec["baseline_ms"], pct, min_abs)
+            return None
+        why = _over(ms)
+        if why:   # 기계 부하로 한 번 튄 값일 수 있어 1번 더 잰다 · 둘 중 작은 값으로 판정
+            ms2 = _perf_measure(cwd, it)
+            if ms2 is not None:
+                rec["ms_retry"] = ms2
+                ms = min(ms, ms2)
+                why = _over(ms)
+        rec["ms"] = ms
+        rec["verdict"] = "regression" if why else "pass"
+        if why:
+            rec["reason"] = why
+        out["items"].append(rec)
+    if any(r["verdict"] == "regression" for r in out["items"]):
+        out["status"] = "perf_regression"
+    elif any(r["verdict"] == "unmeasured" for r in out["items"]):
+        out["status"] = "perf_unmeasured"
+    else:
+        import time as _t
+        for r in out["items"]:
+            prev = base.get(r["name"]) or {}
+            samples = (list(prev.get("samples") or ([prev["ms"]] if prev.get("ms") else [])) + [r["ms"]])[-PERF_SAMPLES:]
+            base[r["name"]] = {"ms": _perf_baseline_ms({"samples": samples}), "samples": samples, "at": int(_t.time())}
+        try:
+            p = cwd / PERF_BASELINE
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_suffix(".tmp")
+            tmp.write_text(json.dumps(base, ensure_ascii=False, indent=1), encoding="utf-8")
+            os.replace(tmp, p)
+        except OSError:
+            pass
+    if not out["items"]:
+        out["status"] = "not_triggered"
+    return out
+
+
+def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
     """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
 
     스테이징된 코드 변경 → affected_tests 로 영향 시험 선정 → 실행.
@@ -450,6 +941,8 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
     status: skip(코드 변경 없음) · pass · preexisting(실패 전부 HEAD 에서도 실패) · regression(신규 실패 · 커밋 차단) · blocked(실행 불가)."""
     import tempfile
     import time as _t
+    if timeout is None:
+        timeout = _gate_timeout()
     tree = (_run_git_in(cwd, ["write-tree"]) or "").strip()
     staged = [p.strip() for p in (_run_git_in(cwd, ["diff", "--cached", "--name-only"]) or "").splitlines() if p.strip()]
     code = [p for p in staged if p.lower().endswith(_CODE_EXT)]
@@ -461,11 +954,16 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
         res["commit_memory_pct"] = (_sb.commit_memory() or {}).get("percent")
     except Exception:  # noqa: BLE001 — 측정 실패는 기록만 (시험 생략 사유로 쓰지 않는다)
         res["commit_memory_pct"] = None
+    syn = staged_syntax_check(cwd, code) if (tree and code) else {"errors": [], "checked": [], "unchecked": []}
     if not tree:
         res["status"] = "blocked"
         res["reason"] = "스테이징 트리 해시를 못 얻음 (병합 충돌 중?)"
+        _syntax_verdict(res, {"errors": [], "checked": [], "unchecked": []})
     elif not code:
         res["status"] = "skip"
+        _syntax_verdict(res, syn)
+    elif _syntax_verdict(res, syn):
+        pass   # syntax_error · unverified = 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
     else:
         unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
         dirty = sorted(set(code) & unstaged)
@@ -515,7 +1013,11 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
                 fails, summary, rc = set(), "시간 초과 %ds" % timeout, -1
             res["summary"] = summary
             res["failures"] = sorted(fails)
-            if rc not in (0, 1, 5) or (rc == 1 and not fails):
+            if rc == 5:
+                # pytest 종료 코드 5 = 시험 0건 수집 (공식 문서 · Exit codes) — 아무것도 검사 안 했으므로 통과 아님
+                res["status"] = "blocked"
+                res["reason"] = "선정된 시험이 하나도 수집되지 않음 (pytest rc=5) — %s" % summary
+            elif rc not in (0, 1) or (rc == 1 and not fails):
                 res["status"] = "blocked"
                 res["reason"] = "시험 실행 오류 (rc=%s) — %s" % (rc, summary)
             elif not fails:
@@ -524,7 +1026,7 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
                 base_dir = Path(tempfile.mkdtemp(prefix="regress-base-"))
                 wt = base_dir / "wt"
                 try:
-                    if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=120) is None:
+                    if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=600) is None:
                         raise RuntimeError("worktree 생성 실패")
                     # 기준선은 '작업 트리에서 실패한 시험' 만 다시 돌린다 — 비교는 fails - bfails 뿐이다(11-13: 범위 전체를
                     #   돌리다 HEAD 쪽 conftest 에 없는 옵트인 탓에 e2e 161개까지 돌아 900초 시간 초과로 커밋이 막혔다).
@@ -540,11 +1042,22 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
                     res["status"] = "blocked"
                     res["reason"] = "기준선(HEAD) 시험 실행 불가: %s" % e
                 finally:
-                    _run_git_in(cwd, ["worktree", "remove", "--force", str(wt)], timeout=120)
+                    _run_git_in(cwd, ["worktree", "remove", "--force", str(wt)], timeout=600)
                     try:
                         base_dir.rmdir()
                     except OSError:
                         pass
+    if res.get("status") in ("pass", "preexisting"):   # R295·R296 시험이 통과한 변경만 속도 검사 (실패는 이미 차단)
+        try:
+            perf = perf_gate(cwd, staged)
+        except Exception as e:  # noqa: BLE001 — 검사 자체가 깨지면 통과로 보지 않는다
+            perf = {"status": "perf_unmeasured", "items": [], "reason": "성능 검사 오류: %s" % e}
+        res["perf"] = perf
+        if perf.get("status") in ("perf_regression", "perf_unmeasured"):
+            res["status"] = perf["status"]
+            bad = [r for r in perf.get("items", []) if r.get("verdict") != "pass"]
+            res["reason"] = "속도 검사 실패: " + " · ".join(
+                "%s %sms (%s)" % (r["name"], r.get("ms"), r.get("reason") or "측정 실패") for r in bad)
     stamp = cwd / REGRESSION_STAMP
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -553,7 +1066,8 @@ def regression_gate(cwd: Path, timeout: int = 900) -> Dict[str, Any]:
         spec = ilu.spec_from_file_location("_gate_trace", str(Path(__file__).resolve().with_name("trace.py")))
         tm = ilu.module_from_spec(spec)
         spec.loader.exec_module(tm)
-        st = {"pass": "success", "fail": "fail", "blocked": "blocked"}.get(str(res.get("status")), "unknown")
+        st = {"pass": "success", "fail": "fail", "blocked": "blocked", "syntax_error": "fail", "regression": "fail",
+              "unverified": "blocked", "preexisting": "success", "skip": "success"}.get(str(res.get("status")), "unknown")
         tm.emit("test", step="regression-gate", status=st, error=res.get("reason"), evidence=str(REGRESSION_STAMP),
                 detail={"summary": res.get("summary"), "new_failures": (res.get("new_failures") or [])[:10],
                         "tests": len(res.get("tests") or []), "memory_pct": res.get("commit_memory_pct")})
@@ -1158,9 +1672,17 @@ def _cli_main(argv):
     if argv[1] == "regression-gate":     # 커밋 전: exit 0 = pass·preexisting·skip · 2 = regression · 1 = blocked
         res = regression_gate(ROOT)
         brief = {k: res.get(k) for k in ("status", "reason", "summary", "tests", "new_failures", "baseline_failures",
-                                         "commit_memory_pct")}
+                                         "commit_memory_pct", "perf")}
         print(json.dumps(brief, ensure_ascii=False, indent=1))
-        return {"regression": 2, "blocked": 1}.get(res["status"], 0)
+        # 2026-11-15 (R256): syntax_error 가 0(통과)으로 나가던 것 — 문법 오류·미검증도 실패 종료
+        return {"regression": 2, "syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
+                "perf_unmeasured": 1}.get(res["status"], 0)
+    if argv[1] == "syntax-gate":         # git 이 아닌 작업본(SVN) 커밋 전: exit 0 = pass·skip · 2 = 문법 오류 · 1 = 미검증·확정 불가
+        res = syntax_gate(ROOT)
+        print(json.dumps({k: res.get(k) for k in ("status", "reason", "vcs", "changed_code", "syntax_errors",
+                                                   "syntax_unchecked")}, ensure_ascii=False, indent=1))
+        return {"syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
+                "perf_unmeasured": 1}.get(res["status"], 0)
     if argv[1] == "external-deps":
         deps = external_dependencies(ROOT)
         print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))

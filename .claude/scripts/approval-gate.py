@@ -4,6 +4,7 @@
   python approval-gate.py detect <command>       # 위험 패턴 매치 -> JSON
   python approval-gate.py request <task_id> <command> <category> <detail>
   (승인·거부는 명령줄 X — 사용자가 프롬프트에 '/approve <id>' · '/reject <id> [사유]' 입력)
+  python approval-gate.py withdraw <task_id> <사유>  # 자기 대기 요청 취소 (대기 → 만료 · 승인 아님)
   python approval-gate.py list                   # waiting 만
   python approval-gate.py status <task_id>
 """
@@ -41,6 +42,12 @@ RISK_PATTERNS = {
         (r"\bgit\s+restore\s+(?:--\S+\s+)*\.(?=\s|$|[\"'])", "git restore . — 작업 중 변경 폐기"),
         (r"\bgit\s+stash\s+(drop|clear)\b", "git stash drop/clear — 보관 변경 삭제"),
         (r"\bgit\s+branch\s+-D\b", "git branch -D — 강제 브랜치 삭제"),
+        # 2026-11-13 (R251): SVN — 일반 update·commit 은 자동 (IFRS = SVN · 캐시 인증 비대화 동작 확인) ·
+        #   작업 변경 일괄 폐기·버전 안 된 파일 삭제·원격 직접 삭제·저장소 관리만 승인 (git reset --hard·clean -f 와 같은 기준)
+        (r"\bsvn\s+revert\b[^;&|\n]*(?:\s-R\b|--recursive\b|--depth[=\s]+infinity\b)", "svn revert -R — 작업 중 변경 일괄 폐기"),
+        (r"\bsvn\s+cleanup\b[^;&|\n]*--remove-(?:unversioned|ignored)\b", "svn cleanup --remove-unversioned — 버전 안 된 파일 삭제"),
+        (r"\bsvn\s+(?:delete|del|remove|rm)\b[^;&|\n]*\b(?:https?|svn(?:\+ssh)?|file)://", "svn delete <URL> — 원격 저장소에서 직접 삭제"),
+        (r"\bsvnadmin\s+(?:create|rmtxns|setrevprop|setlog|load|recover|hotcopy|upgrade|pack|dump)\b", "svnadmin — 저장소 관리·변경"),
     ],
     "security": [
         (r"^\s*sudo\s+", "sudo — 권한 상승"),
@@ -118,10 +125,35 @@ CONSUMED_RESULT_WAIT_SEC = 660   # 도구 최대 실행 600초 + 여유 — 이 
 USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 
 
+# 2026-11-13 (R250): 사용자 위임 — 기존 원격(origin)으로의 일반 push 는 승인 없이 실행
+#   (사용자 원문: "git push나 이런것도 나한테 거치지말고 알아서해" · "일반 Push는 더 이상 승인 대기 작업이 아니다.
+#    다만 강제 Push, 원격 저장소 변경 … 파괴적인 이력 재작성은 자동 실행하지 않는다").
+#   명령 '전체' 가 이 형태와 정확히 같을 때만 — 따옴표·이스케이프·;&| 연결·$()·콜론 refspec·+강제·-f·--force·
+#   --delete·--mirror·--all·--tags·-C·다른 원격 이름은 전부 형태가 달라 아래 RISK_PATTERNS 로 그대로 간다.
+#   비밀값 검사(secret_scan·pre_commit_secrets) 는 push 에도 그대로 돈다.
+_PLAIN_PUSH_RE = re.compile(
+    r"\s*git\s+push(?:\s+(?:-q|--quiet|-u|--set-upstream))*"
+    r"(?:\s+origin(?:\s+(?:HEAD|[A-Za-z0-9][A-Za-z0-9._/-]*))?)?\s*")
+
+
+# 2026-11-14 사용자 지시 ("승인 요청 appr-b4baf8033922 같은 건 … 없애버려"): 같은 일반 push 인데
+#   뒤의 `2>&1` · `| tail -N` · `| head -N` 때문에 형태가 달라져 승인 요청이 생겼다
+#   (appr-b4baf8033922 · appr-9b7f21b155e1 · appr-8871d366a04e = 'git push origin main 2>&1 | tail -N').
+#   이 출력 꼬리만 떼어 낸 뒤 같은 형태인지 본다. `cd <폴더> && git push` 는 올라갈 저장소·HEAD 를 확정할 수 없어
+#   그대로 차단 (HEAD 무결성 · test_approval_gate_p0/mentions) — 강제·삭제·미러·다른 원격·연결도 그대로 승인 대상.
+_PUSH_OUT_SUFFIX = re.compile(r"""(?:\s+2>&1)?(?:\s*\|\s*(?:tail|head)(?:\s+-n)?\s+-?\d+)?\s*$""")
+
+
+def is_plain_push(command: str) -> bool:
+    return bool(_PLAIN_PUSH_RE.fullmatch(_PUSH_OUT_SUFFIX.sub("", command or "", count=1)))
+
+
 def detect_risk(command: str) -> dict | None:
     """명령 문자열 -> 매치된 위험 dict 반환 (또는 None).
     2026-11-09: 셸은 따옴표·이스케이프를 지운 뒤 실행한다 ("gi"t · g\\it · gi''t · ^git → git) →
     따옴표·이스케이프 문자를 뺀 형태도 같이 검사 (원문에서 패턴이 끊겨 통과하던 우회)."""
+    if is_plain_push(command):
+        return None   # 2026-11-13 R250 사용자 위임 (위 _PLAIN_PUSH_RE 설명)
     variants = [command]
     dequoted = re.sub(r"[\"'\\^`]", "", command)
     if dequoted != command:
@@ -383,7 +415,59 @@ def record_result(task_id: str, outcome: str, info: dict | None = None) -> bool:
         conn.close()
 
 
+def expire_stale(now: int | None = None) -> int:
+    """24시간 넘은 대기 요청을 'expired' 로 (approval-gate-rules.md § 승인 만료: "그 후 expired 상태로 자동 변경").
+    2026-11-14 실측: 만료는 승인 시점에만 검사하고 상태는 안 바꿔 61건 중 50건+가 waiting 으로 남았다 (최장 4294시간).
+    대기 → 만료 는 실행을 허용하지 않는 쪽 변화라 안전하다 (승인·실행 경로는 그대로)."""
+    now = int(now if now is not None else time.time())
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        rows = conn.execute("SELECT task_id, risk_detail FROM tasks WHERE approval_state = 'waiting' "
+                            "AND created_at IS NOT NULL AND created_at < ?", (now - REQUEST_TTL_SEC,)).fetchall()
+        for tid, detail in rows:
+            conn.execute("UPDATE tasks SET approval_state = 'expired', status = 'cancelled', risk_detail = ? "
+                         "WHERE task_id = ? AND approval_state = 'waiting'",
+                         (_merge_detail(detail, expire_reason="request_ttl", expired_at=now), tid))
+        conn.commit()
+        return len(rows)
+    finally:
+        conn.close()
+
+
+def withdraw(task_id: str, reason: str, by: str = "requester") -> dict:
+    """요청한 쪽(Claude)이 자기 대기 요청을 거둬들인다 (2026-11-16 R258 · 사용자 지시 "자동 승인 X · 자기 요청 자동 취소 O").
+    대기 → 만료 만 한다 = expire_stale 과 같은 «실행을 허용하지 않는 쪽» 변화 · 승인·실행 경로는 그대로.
+    승인된·소비된·거부된 행은 건드리지 않는다 · 게이트가 만든 행만 · 사유 필수 · 기록(명령·사유·시각)은 보존.
+    다시 필요하면 같은 명령을 내면 새 번호로 새 요청이 생긴다."""
+    reason = (reason or "").strip()
+    if not reason:
+        return {"error": "취소 사유 필요"}
+    now = int(time.time())
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        row = conn.execute("SELECT approval_state, task_file, risk_detail FROM tasks WHERE task_id = ?",
+                           (task_id,)).fetchone()
+        if not row:
+            return {"error": f"task_id {task_id} not found"}
+        if row[1] != "<approval-gate>":
+            return {"error": f"task_id {task_id} 는 승인 게이트가 만든 요청이 아님 — 취소 안 함"}
+        if row[0] != "waiting":
+            return {"error": f"task_id {task_id} not waiting (current: {row[0]}) — 대기 요청만 취소"}
+        n = conn.execute("UPDATE tasks SET approval_state = 'expired', status = 'cancelled', risk_detail = ? "
+                         "WHERE task_id = ? AND approval_state = 'waiting'",
+                         (_merge_detail(row[2], expire_reason="withdrawn_by_requester", withdrawn_by=by,
+                                        withdraw_reason=reason[:300], withdrawn_at=now), task_id)).rowcount
+        conn.commit()
+        return {"task_id": task_id, "state": "expired" if n == 1 else "unchanged", "reason": reason[:300]}
+    finally:
+        conn.close()
+
+
 def list_waiting() -> list:
+    try:
+        expire_stale()
+    except sqlite3.Error:
+        pass   # 만료 정리 실패가 목록 조회를 막지 않는다
     db_path = get_db_path()
     conn = sqlite3.connect(str(db_path))
     try:
@@ -461,6 +545,11 @@ def main():
                                    "'/reject <id> [사유]' 를 입력해야 기록된다 (prompt/user_approval.py)"},
                          ensure_ascii=False, indent=2))
         sys.exit(3)
+    elif cmd == "withdraw" and len(sys.argv) >= 4:
+        # 자기 대기 요청 취소 (대기 → 만료) — 승인이 아니다 · 실행을 허용하지 않는 쪽 변화
+        res = withdraw(sys.argv[2], " ".join(sys.argv[3:]))
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        sys.exit(1 if "error" in res else 0)
     elif cmd == "list":
         print(json.dumps(list_waiting(), ensure_ascii=False, indent=2))
     elif cmd == "status" and len(sys.argv) >= 3:

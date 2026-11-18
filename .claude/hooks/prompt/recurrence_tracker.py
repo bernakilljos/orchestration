@@ -13,6 +13,8 @@ from pathlib import Path
 
 from _common import is_loop_prompt_raw
 
+_STATUSLINE_LINE = re.compile(r"[│▒█]")
+
 # 재발 패턴 (디자인·개발·인프라)
 PATTERNS = {
     "design": {
@@ -52,6 +54,21 @@ def run(ctx):
     if is_loop_prompt_raw(ctx.raw):
         return None
     prompt = ctx.prompt_jq()
+    if not prompt or len(prompt) < 3:
+        return None
+    # 2026-11-18 R308: 재발은 «사용자가 직접 쓴 글» 에서만 센다 — 붙여 넣은 검토·지시 글 안의 "검증해야 합니다"·"대충" 과
+    #   harness 알림까지 증명지시·전수조사skip 재발로 기록돼 지표가 부풀었다 (실측: ChatGPT 평가문 붙여 넣기 1회 = 증명지시 +1).
+    #   정본 = ledger_auto_register 의 붙여 넣은 글 구분 (같은 기준 재사용 · 새 판정 X)
+    try:
+        import ledger_auto_register as _lar
+        if _lar._is_system_notification(prompt):
+            return None
+        prompt = _lar._split_pasted(prompt)[0]
+    except Exception:  # noqa: BLE001 — 구분 실패 시 원래대로 전체를 본다
+        pass
+    # R309: 복사해 붙인 상태줄 줄은 제외 — 상태줄이 "이모지 33 · 여백 15" 를 보여 주고 그 줄을 붙이면 이모지·여백 재발이 +1 되는
+    #   자기 증폭 (소급 실측: 재발 312건 중 68건 · 이모지 18/39 · 여백 18/31 이 상태줄 문구). 구분 문자 │ · 게이지 ▒█ 가 든 줄 = 상태줄
+    prompt = "\n".join(ln for ln in prompt.splitlines() if not _STATUSLINE_LINE.search(ln))
     if not prompt or len(prompt) < 3:
         return None
     session_id = ctx.field("session_id", "sessionId", "id")

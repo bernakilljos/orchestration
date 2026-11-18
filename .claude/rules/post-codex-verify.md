@@ -1,3 +1,11 @@
+---
+paths:
+  - ".claude/tasks/**"
+  - "plugins/exec_orch/codex/**"
+  - "plugins/exec_orch/skills/route_dispatch.md"
+  - ".claude/agents/**"
+---
+
 # Codex 보고 후 사후 검증 룰
 
 > **출처**: 2026-05-30 사용자 발견 — codex 가 "DB 반영 완료, 더 채웠다" 보고했으나 실측 0건. 보고만 그럴듯한 hallucination.

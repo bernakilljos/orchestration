@@ -1,0 +1,37 @@
+{
+  "_doc": "R295·R296 성능 회귀 게이트 항목 (independent_verifier.py regression-gate 가 시험 통과 뒤 실행). 바뀐 파일이 triggers 에 걸린 항목만 재서 budget_ms(절대 상한) 또는 기준선 대비 max_regress_pct 를 넘으면 커밋 차단. 대상 프로젝트 고유 항목(페이지·DB)은 같은 형식으로 .claude/config/perf-budget.local.json 에 둔다 (전파되지 않음). 형식 예시는 examples.",
+  "items": [
+    {
+      "name": "상태줄 1회",
+      "cmd": ["bash", ".claude/scripts/statusline-wrapper.sh"],
+      "stdin": "{}",
+      "triggers": [".claude/scripts/statusline*", ".claude/scripts/lib/*.py"],
+      "budget_ms": 900,
+      "max_regress_pct": 30,
+      "runs": 5
+    },
+    {
+      "name": "도구 호출 직전 검사",
+      "cmd": ["python", "-X", "utf8", ".claude/hooks/tool-dispatch.py", "pre"],
+      "stdin": "{\"session_id\":\"perf-gate\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo perf-gate\",\"description\":\"x\"}}",
+      "triggers": [".claude/hooks/tool-dispatch.py", ".claude/hooks/tool/*.py", ".claude/scripts/approval-gate.py"],
+      "budget_ms": 600,
+      "max_regress_pct": 30,
+      "runs": 5
+    }
+  ],
+  "examples": [
+    {
+      "name": "페이지 /login 응답",
+      "cmd": "curl -s -o /dev/null --max-time 10 -w \"%{http_code}\" http://127.0.0.1:8080/login",
+      "triggers": ["src/main/resources/templates/login*", "src/main/java/**/LoginController*", "frontend/src/pages/login*"],
+      "budget_ms": 800
+    },
+    {
+      "name": "DB 사용자 목록 쿼리",
+      "cmd": "python -X utf8 scripts/db-probe.py \"SELECT * FROM users ORDER BY id LIMIT 100\"",
+      "triggers": ["**/*.sql", "**/mapper/*.xml", "src/**/repository/*"],
+      "budget_ms": 300
+    }
+  ]
+}

@@ -1,3 +1,15 @@
+---
+paths:
+  - "**/*.sql"
+  - "**/*.java"
+  - "**/mapper/**"
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/*.html"
+  - ".claude/scripts/smoke-test-screen.sh"
+---
+
 # 화면·기능 검증 룰 (Smoke Test 의무)
 
 > **근거**: CLAUDE.md § 7-24. 사용자 지적 (2026-06-10): "화면 검증·기능 검증은 너가 해, 난 최종만 할 거야".
@@ -167,6 +179,7 @@ AI 가 **직접 검증 못 하는 유일한 경우** = 외부 의존 (사용자 
 - 다른 업무 화면이 찍히면 분석·인용·저장하지 말고 즉시 삭제하고 사실을 보고한다.
 - 강제: `block_screen_capture` (Bash·PowerShell) · 승인 시에만 `ALLOW_SCREEN_CAPTURE=1`.
 - 웹 화면 검증은 대상이 정해진 Playwright 페이지 캡처를 쓴다.
+- 원격 에이전트(`remote-agent.ps1`, 2026-11-16 R266): 평상시 캡처 0회. 사용자 환경변수 `ORCH_REMOTE_ALLOW_SCREEN=1` + `ORCH_REMOTE_CAPTURE_WINDOW=<창 제목>` + 대시보드 주소가 모두 있을 때만, 원격 명령 직후 그 창 영역만 10장 × 0.2초 찍고 멈춘다 (이전: 0.2초마다 모든 모니터 상시 캡처 · CPU 코어 13%).
 
 ## 참조
 

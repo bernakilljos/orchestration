@@ -1,3 +1,8 @@
+---
+paths:
+  - ".claude/hooks/**"
+---
+
 # WebSearch 자동 발동 룰 (Auto WebSearch)
 
 > **근거**: 2026-09-02 사용자 지시 — "내가 요청하면 설렁설렁 해주지말고 web search를 기본으로 해서 해. 그것도 분명 있을텐데 발동을 안해".

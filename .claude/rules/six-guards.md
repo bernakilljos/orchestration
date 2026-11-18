@@ -1,3 +1,13 @@
+---
+paths:
+  - ".claude/hooks/stop-*"
+  - ".claude/scripts/request-ledger.py"
+  - ".claude/scripts/standing-requirements.py"
+  - ".claude/scripts/golden-test.py"
+  - ".claude/scripts/recurrence-tracker.py"
+  - ".claude/scripts/scope-lock.py"
+---
+
 # Six Guards — 반복 지시 → 시스템 규칙 승격 (SoT)
 
 > **근거**: 2026-10-16 사용자 지시 — "statusline 만 아니라 반복해서 답답한 모든 문제를 Guard 로 묶자".

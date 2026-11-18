@@ -72,6 +72,228 @@ def _ledger_label(desc: str, cells: int = LEDGER_LABEL_CELLS) -> str:
     return "".join(out) + "…"
 
 
+_MEMO = {}
+
+
+def _memo(key, fn):
+    """§81 렌더 1회 안에서 같은 조회를 다시 하지 않는다 (git status·Ledger 집계 등)."""
+    if key not in _MEMO:
+        try:
+            _MEMO[key] = fn()
+        except Exception:
+            _MEMO[key] = None
+    return _MEMO[key]
+
+
+_GIT_CACHE_TTL = 3.0
+
+
+def _git_porcelain(cwd):
+    """R289 git status --porcelain 원문 줄 목록 · 렌더 1회 1번 + 세션 간 공유 캐시(3초) · 실패 = None.
+    종전: _git_changes·_git_new_files 가 각자 git 을 띄워 렌더당 프로세스 2개(~140ms).
+    캐시는 성공 결과만 · 임시 파일 + os.replace 원자 쓰기 · 캐시 읽기·쓰기 실패 = 직접 호출 (값을 지어내지 않음)."""
+    def _run():
+        import time as _t
+        f = os.path.join(cwd, ".claude", "state", "statusline-git-cache.json")
+        now = _t.time()
+        try:
+            with open(f, "r", encoding="utf-8") as _f:
+                c = json.load(_f)
+            if c.get("cwd") == cwd and 0 <= now - float(c.get("ts", 0)) < _GIT_CACHE_TTL and isinstance(c.get("lines"), list):
+                return c["lines"]
+        except (OSError, ValueError, TypeError):
+            pass
+        import subprocess as _sp
+        r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
+                    text=True, encoding="utf-8", errors="replace", timeout=3)
+        if r.returncode != 0:
+            return None
+        lines = r.stdout.splitlines()
+        try:
+            _tmp = f"{f}.{os.getpid()}.tmp"
+            with open(_tmp, "w", encoding="utf-8") as _f:
+                json.dump({"cwd": cwd, "ts": now, "lines": lines}, _f, ensure_ascii=False)
+            os.replace(_tmp, f)
+        except OSError:
+            try:
+                os.remove(_tmp)
+            except OSError:
+                pass
+        return lines
+    return _memo(("gitraw", cwd), _run)
+
+
+def _git_changes(cwd):
+    """§81 git status 1회 — 성공: 바뀐 경로 목록(빈 목록 = 깨끗) · 실패(저장소 아님·git 없음·시간 초과): None.
+    종전: 실패해도 빈 출력 = 깨끗(✅) · 영향은 0 으로 표시."""
+    def _run():
+        raw = _git_porcelain(cwd)
+        if raw is None:
+            return None
+        out = []
+        for ln in raw:
+            if len(ln) > 3:
+                out.append(ln[3:].split(" -> ")[-1].strip().strip('"'))
+        return out
+    return _memo(("git", cwd), _run)
+
+
+def _cached_cmd(cwd, key, argv, ttl):
+    """§81 무거운 진단 스크립트(standing·drift·health) 결과를 ttl 초 동안 재사용 — 성공한 결과만 저장.
+    반환 (rc, stdout, 나이초) · 실패 = (None, "", 0)."""
+    import time as _t
+    import subprocess as _sp
+    f = os.path.join(cwd, ".claude", "state", "statusline-cmd-cache.json")
+    try:
+        with open(f, "r", encoding="utf-8") as _f:
+            c = json.load(_f)
+    except Exception:
+        c = {}
+    e = c.get(key) or {}
+    now = _t.time()
+    if e and now - float(e.get("ts", 0)) < ttl and e.get("argv") == argv:
+        return e.get("rc"), e.get("out", ""), now - float(e["ts"])
+    try:
+        r = _sp.run(argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
+    except Exception:
+        return None, "", 0
+    if r.returncode == 0:
+        c[key] = {"ts": now, "rc": r.returncode, "out": r.stdout, "argv": argv}
+        try:   # 2026-11-18 R288: 세션 여러 개가 같은 캐시를 동시에 쓰면 반쪽 JSON 이 남던 것 → 임시 파일 + os.replace (원자적)
+            _tmp = f"{f}.{os.getpid()}.tmp"
+            with open(_tmp, "w", encoding="utf-8") as _f:
+                json.dump(c, _f, ensure_ascii=False)
+            os.replace(_tmp, f)
+        except Exception:
+            try:
+                os.remove(_tmp)
+            except Exception:
+                pass  # noqa: BLE001
+    return r.returncode, r.stdout, 0
+
+
+def _age_txt(sec):
+    """측정 시각 표시 — 1시간 미만은 표시 안 함."""
+    if sec is None or sec < 3600:
+        return ""
+    return f" ({int(sec // 86400)}일 전)" if sec >= 86400 else f" ({int(sec // 3600)}시간 전)"
+
+
+def _ledger_summary(cwd: str):
+    """§80 요청 줄·READY 상한 공용 — 정본 request-ledger.summarize 사용 (집계 규칙 복제 X).
+    현재 요청 = current-trace.json 의 rid (없으면 UNKNOWN). 실패 시 None."""
+    try:
+        import importlib.util as _ilu
+        _p = os.path.join(cwd, ".claude", "scripts", "request-ledger.py")
+        _lf = os.path.join(cwd, ".claude", "state", "request-ledger.json")
+        if not (os.path.exists(_p) and os.path.exists(_lf)):
+            return None
+        _sp = _ilu.spec_from_file_location("_sl_request_ledger", _p)
+        _m = _ilu.module_from_spec(_sp)
+        _sp.loader.exec_module(_m)
+        with open(_lf, "r", encoding="utf-8") as _f:
+            _reqs = json.load(_f).get("requests", [])
+        if not _reqs:
+            return None
+        _cur = {}
+        _cf = os.path.join(cwd, ".claude", "state", "current-trace.json")
+        if os.path.exists(_cf):
+            try:
+                with open(_cf, "r", encoding="utf-8") as _f:
+                    _cur = json.load(_f)
+            except Exception:
+                _cur = {}
+        return _m.summarize(_reqs, str(_cur.get("rid") or ""))
+    except Exception:
+        return None
+
+
+_ledger_summary_raw = _ledger_summary
+
+
+def _dev_progress(status: str):
+    """§87 개발 줄 오른쪽 진행 표시 (색, 글자) · 완료가 아닌 것을 «개발완료» 로 보이지 않게 · 그 밖 = None(표시 안 함)."""
+    return {"pending": ("34", "개발중"), "implemented": ("34", "개발중"), "completed": ("32", "개발완료"),
+            "verified": ("33", "확인필요"), "approval_required": ("33", "확인필요")}.get(status)
+
+
+def _progress_tone(pct):
+    """R307 개발 줄 진행률(완료단계/6) 색 정본 — 높을수록 좋음 (토큰·주간 사용량 색은 높을수록 나쁨이라 따로).
+    0~32 빨강 · 33~65 노랑 · 66~99 파랑 · 100 초록 · 미계측(None) 청록 (색 체계: 청록 = 미측정)."""
+    if pct is None:
+        return "36"
+    return "32" if pct >= 100 else "34" if pct >= 66 else "33" if pct >= 33 else "31"
+
+
+# 2026-11-13 (R252 · 사용자 지시 "개발 진행률 표시 · 상태줄 디자인 바로잡기" — 개발 줄 값만 일시 동결 해제 후 재동결):
+#   현재 요청의 실제 완료 단계 = §78 요청 추적(trace) 의 성공한 도구 호출에서 계산 (추정 X · 기록 없으면 «미계측»).
+#   단계 = 개발 흐름 그대로: 수정 → 시험 → 커밋 → 원격 → 전파 → 대상검증. pytest 가 만든 가짜 이벤트(임시 폴더)는 제외.
+_STAGES = (
+    ("수정", lambda k, s: k in ("Edit", "Write", "MultiEdit") and "pytest-of-" not in s),
+    ("시험", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bpytest\b|regression-gate|golden-test", s)),
+    ("커밋", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+commit\b|\bsvn\s+(?:commit|ci)\b", s)),
+    ("원격", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+push\b|\bsvn\s+(?:commit|ci)\b", s)),
+    ("전파", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"merge-to-target\.py\S*\s.*--apply", s)),
+    ("대상검증", lambda k, s: k in ("Bash", "PowerShell") and "target-test-isolated" in s),
+)
+
+
+def _req_progress(cwd: str):
+    """(rid, 완료 단계 수, 전체, 마지막 완료 단계명) · 추적 기록 없음 = None."""
+    try:
+        # §78 정본을 파일 경로로 로드 — 'import trace' 는 표준 라이브러리 trace 와 이름이 같아 엉뚱한 모듈이 올 수 있다
+        import importlib.util as _ilu
+        _spec = _ilu.spec_from_file_location("orca_trace_sl", os.path.join(cwd, ".claude", "scripts", "lib", "trace.py"))
+        _tr = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_tr)
+        cur = _tr.get_current() or {}
+        if not cur.get("trace_id"):
+            return None
+        done = set()
+        start_ts, stage_ts = None, {}
+        for e in _tr.events(cur["trace_id"]):
+            if e.get("kind") == "request" and e.get("status") == "start" and start_ts is None:
+                start_ts = e.get("ts")
+            if e.get("kind") != "tool" or e.get("status") != "success":
+                continue
+            d = e.get("detail")
+            if isinstance(d, str):
+                try:
+                    d = json.loads(d)
+                except Exception:
+                    d = {}
+            inp = str((d or {}).get("input", ""))
+            for name, ok in _STAGES:
+                if ok(e.get("step"), inp):
+                    done.add(name)
+                    if name not in stage_ts:
+                        stage_ts[name] = e.get("ts")
+        last = next((n for n, _ in reversed(_STAGES) if n in done), None)
+        return cur.get("rid"), len(done), len(_STAGES), last, _eta_min(start_ts, stage_ts, len(_STAGES))
+    except Exception:
+        return None
+
+
+def _eta_min(start_ts, stage_ts: dict, total: int):
+    """R261 예상 남은 시간(분) = 이 요청에서 실제로 걸린 단계당 평균 × 남은 단계 · 근거 부족(끝난 단계 2개 미만·시각 없음) = None.
+    추정치 근거는 이 요청의 추적 기록뿐 (새 훅·AI 호출 X) · 6단계 다 끝나면 0."""
+    try:
+        ts = [float(t) for t in stage_ts.values() if t]
+        if start_ts is None or len(ts) < 2:
+            return None
+        left = total - len(stage_ts)
+        if left <= 0:
+            return 0
+        per = (max(ts) - float(start_ts)) / len(ts)
+        return max(1, round(per * left / 60))
+    except (TypeError, ValueError):
+        return None
+
+
+def _ledger_summary(cwd: str):  # noqa: F811 — 렌더 1회당 1번 (READY·요청 줄 공용)
+    return _memo(("ledger", cwd), lambda: _ledger_summary_raw(cwd))
+
+
 def _terminal_cols() -> int:
     """실제 터미널 폭 — STATUSLINE_COLUMNS·COLUMNS 환경변수 → Windows 콘솔(CONOUT$) 순. 모르면 0 (자르지 않음)."""
     for k in ("STATUSLINE_COLUMNS", "COLUMNS"):
@@ -147,10 +369,13 @@ def pick_limit(model_id: str) -> tuple[int, bool]:
 
 
 def cwd_to_proj_dir(cwd: str) -> str:
-    """cwd -> ~/.claude/projects/<safe>/ 폴더명."""
+    """cwd -> <CLAUDE_CONFIG_DIR 또는 ~/.claude>/projects/<safe>/ 폴더명.
+
+    2026-11-18 (사용자 "토큰이 안 나와"): 이 세션은 CLAUDE_CONFIG_DIR=~/.claude-personal 인데 ~/.claude 로 고정 계산해
+    전사(jsonl)를 못 찾아 토큰·세션 비용이 늘 ⏳ 였다 → 설정 폴더 환경변수를 먼저 본다."""
     safe = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
-    home = os.path.expanduser("~")
-    return os.path.join(home, ".claude", "projects", safe)
+    cfg = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+    return os.path.join(cfg, "projects", safe)
 
 
 def last_assistant_usage(jsonl_path: str) -> dict | None:
@@ -220,6 +445,148 @@ def recent_error_count(cwd: str) -> int:
     return r[0] + r[1]
 
 
+_LOG_UNIQUE_ERRS = None   # R268 recent_log_issues 가 채움 (READY 감점용 고유 오류 수)
+
+
+def _tail_n_lines(path: str, n: int = 500, chunk: int = 65536) -> list:
+    """파일 끝에서 거꾸로 읽어 마지막 n 줄 — readlines()[-n:] 과 같은 결과 (줄끝 보존) · 파일 전체를 메모리에 올리지 않는다.
+    2026-11-18 R288: 상태줄이 렌더마다 orca-10min-loop.log 3.5MB · cleanup-pollution.log 3.4MB 를 통째로 읽던 것."""
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        pos = f.tell()
+        buf = b""
+        while pos > 0 and buf.count(b"\n") <= n:
+            step = min(chunk, pos)
+            pos -= step
+            f.seek(pos)
+            buf = f.read(step) + buf
+    # 텍스트 모드 readlines() 와 같은 규칙: universal newline (\r\n·\r → \n) · \n 에서만 나눔 (splitlines 의 \x0c 등 X)
+    text = buf.decode("utf-8", "replace").replace("\r\n", "\n").replace("\r", "\n")
+    parts = text.split("\n")
+    lines = [s + "\n" for s in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
+    if pos > 0 and lines:
+        lines = lines[1:]   # 앞 조각은 잘린 줄일 수 있다 (n 줄은 이미 확보)
+    return lines[-n:]
+
+
+def _tail_lines(path: str, nbytes: int = 400_000) -> list:
+    """큰 기록 파일의 끝부분만 읽는다 (렌더 속도 보호 · 최근 24시간 판정에 충분한 양)."""
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(max(0, size - nbytes))
+        return f.read().decode("utf-8", "replace").splitlines()[1 if size > nbytes else 0:]
+
+
+def _guess_edits(lines, cut: float, window: float = 7200):
+    """R275 추측수정 = 수정(Edit·Write·MultiEdit) 직전 2시간 안에 그 파일을 Read 한 기록도, 검색·셸 입력에 그 파일 이름이
+    나온 기록도 없는 수정 수 (최근 24시간) · 근거 = trace-events 의 도구 입력 (R259 부터 1800자 보존 · 그 전 자료는 판정 안 함)."""
+    evs = []
+    _ts_rx = re.compile(r'"ts": ([0-9.]+)')
+    for ln in lines:
+        if '"kind": "tool"' not in ln:
+            continue
+        m = _ts_rx.search(ln)
+        if not m or float(m.group(1)) < cut - window:   # 판정 창 밖은 JSON 을 풀지 않는다 (렌더 속도)
+            continue
+        try:
+            e = json.loads(ln)
+            d = json.loads(e.get("detail") or "{}")
+        except ValueError:
+            continue
+        evs.append((float(e.get("ts") or 0), e.get("step"), str(d.get("input") or "")))
+    if not evs:
+        return None
+    import bisect as _bs
+    evs.sort()
+    tss = [e[0] for e in evs]
+    lows = [e[2].replace("\\", "/").lower() for e in evs]
+    n = 0
+    for i, (ts, step, inp) in enumerate(evs):
+        if ts < cut or step not in ("Edit", "MultiEdit") or not inp:   # Write 는 새 파일·덮어쓰기 구분 불가 → 제외
+            continue
+        path = lows[i]
+        base = os.path.basename(path)
+        # R309 속도: 수정 1건당 패턴 1번 컴파일 · 이름이 문자열에 없으면 정규식 생략 (정규식은 이름이 있어야만 일치 → 결과 동일)
+        _brx = re.compile(r"(?<![\w.-])" + re.escape(base) + r"(?![\w-])") if base else None
+        seen = False
+        for j in range(_bs.bisect_left(tss, ts - window), i):   # 창 안의 앞선 사건만
+            s2, low = evs[j][1], lows[j]
+            if (s2 == "Read" and low == path) or (s2 in ("Bash", "PowerShell", "Grep", "Glob") and _brx
+                                                    and base in low and _brx.search(low)) \
+                    or (s2 in ("Edit", "Write", "MultiEdit") and low == path):
+                seen = True
+                break
+        if not seen:
+            n += 1
+    return n
+
+
+def _control_line(cwd: str) -> str:
+    """R270 통제 줄 — 기존 기록만 사용 (새 훅·감시 X) · 최근 24시간.
+      승인차단 = logs/approval-gate.log 의 BLOCK 줄 (pytest 임시 폴더 시험 명령 제외)
+      검증skip = logs/trace-events.jsonl 의 regression-gate 가 blocked·unknown 으로 끝난 횟수 (검증이 완료되지 않은 채 끝남)
+      범위위반 = scope-lock 이 꺼져 있으면 «lock꺼짐» (위반을 셀 기준 없음 · 0 아님) · 켜져 있어도 위반 기록이 없어 «미계측»
+      임의변경·추측수정 = 구분 가능한 기록 없음 → «미계측»
+    기록 파일을 못 읽으면 그 항목은 «미측정» (0 으로 보이지 않게)."""
+    import time as _t
+    from datetime import datetime as _dt
+    cut = _t.time() - 86400
+    parts = []
+    gl = os.path.join(cwd, ".claude", "logs", "approval-gate.log")
+    try:
+        n = 0
+        for ln in _tail_lines(gl):
+            if "] BLOCK:" not in ln or "pytest-of-" in ln or "pytest-" in ln and "Temp" in ln:
+                continue
+            m = re.match(r"\[(\d{4}-\d\d-\d\d)_(\d\d:\d\d:\d\d)\]", ln)
+            if m and _dt.strptime(m.group(1) + " " + m.group(2), "%Y-%m-%d %H:%M:%S").timestamp() >= cut:
+                n += 1
+        parts.append(f"승인차단 {n}")
+    except OSError:
+        parts.append("승인차단 미측정")
+    tl = os.path.join(cwd, ".claude", "logs", "trace-events.jsonl")
+    _tl_lines = None
+    try:
+        n = 0
+        _tl_lines = _tail_lines(tl, 1_500_000)
+        for ln in _tl_lines:
+            if '"regression-gate"' not in ln:
+                continue
+            try:
+                ev = json.loads(ln)
+            except ValueError:
+                continue
+            if ev.get("kind") == "test" and ev.get("step") == "regression-gate" and ev.get("status") in ("blocked", "unknown") \
+                    and float(ev.get("ts") or 0) >= cut:
+                n += 1
+        parts.append(f"검증skip {n}")
+    except OSError:
+        parts.append("검증skip 미측정")
+    try:
+        with open(os.path.join(cwd, ".claude", "state", "scope-lock.json"), encoding="utf-8") as f:
+            parts.append("범위 미계측" if json.load(f).get("active") else "범위 lock꺼짐")
+    except (OSError, ValueError):
+        parts.append("범위 lock꺼짐")
+    # R275 임의변경 = design-gate UNAUTHORIZED (승인 디자인 구조를 해제 없이 바꿈) · 기록 없음 = 미측정
+    try:
+        seen_v, checked = set(), False
+        dl = os.path.join(cwd, ".claude", "logs", "design-gate.log")
+        for ln in _tail_lines(dl, 200_000):
+            m = re.match(r"\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\] (PASS|FAIL|UNAUTHORIZED|PINGPONG) (\S+)(?: · (#\w+))?", ln)
+            if not m or _dt.strptime(m.group(1), "%Y-%m-%d %H:%M:%S").timestamp() < cut:
+                continue
+            checked = True
+            if m.group(2) == "UNAUTHORIZED":
+                seen_v.add((m.group(3), m.group(4) or ln[-40:]))   # 같은 위반 반복 검사 = 1건
+        parts.append(f"임의변경 {len(seen_v)}" if checked else "임의변경 미검사")
+    except OSError:
+        parts.append("임의변경 미측정")
+    g = _guess_edits(_tl_lines, cut) if _tl_lines is not None else None
+    parts.append("추측수정 미측정" if g is None else f"추측수정 {g}")
+    return "[90m" + " · ".join(parts) + "[0m"
+
+
 def recent_log_issues(cwd: str):
     """(critical, error, warn, repeat_max, top_source) — 줄 안 시각이 최근 24h 인 것만 센다.
 
@@ -247,10 +614,14 @@ def recent_log_issues(cwd: str):
     err_re = _re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])",
                          _re.I)   # 끝 경계 (surface_log_errors 와 같은 판정 · 파일 이름 errors/error_* 오탐 방지)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
+    # 위 세 판정의 상위 집합 · 소문자로 바꾼 줄에 대소문자 구분 검색 (re.I 보다 5배 빠름 · re.I 가 's' 로 보는 'ſ' 포함)
+    any_re = _re.compile(r"critical|fatal|error|fail|traceback|\[err\]|\[!!\]|warn|\[[sſ]kip\]")
     # 반복 집계용 — 메시지의 「동사+대상」 부분만 뽑는다 (경로·숫자 제외)
     msg_key_re = _re.compile(r"[\w\-.]+\.(sh|py|bat|js|ts)[^:]*(?::\s*(.{0,40}))?", _re.I)
     errs, warns, crits = _co.Counter(), 0, 0
     repeat_cnt = _co.Counter()
+    global _LOG_UNIQUE_ERRS
+    _uniq_err = set()
     # 2026-09-23: 명령·프롬프트·조회를 그대로 적는 기록용 로그는 뺀다. 명령 문자열에 "error" 가 있으면
     # 오류로 세어 90건 중 65건이 bash_commands.log 였다(실제 오류 아님).
     skip = {"bash_commands.log", "lookup-history.log", "user-prompt-history.log",
@@ -265,9 +636,10 @@ def recent_log_issues(cwd: str):
         try:
             if os.path.getmtime(lp) < cutoff:
                 continue
-            with open(lp, encoding="utf-8", errors="replace") as f:
-                lines = f.readlines()[-500:]
+            lines = _tail_n_lines(lp, 500)   # 2026-11-18 R288: 3~4MB 로그를 통째로 읽고 뒤 500줄만 쓰던 것 → 끝에서 거꾸로 읽기 (결과 동일)
             for ln in lines:
+                if not any_re.search(ln.lower()):   # R293 세 판정어 중 어느 것도 없는 줄 = 정규식 3번 대신 1번으로 건너뜀 (판정 동일)
+                    continue
                 c, e, w = crit_re.search(ln), err_re.search(ln), warn_re.search(ln)
                 if not (c or e or w):
                     continue
@@ -281,6 +653,8 @@ def recent_log_issues(cwd: str):
                     crits += 1
                 elif e:
                     errs[base] += 1
+                    # R268: 같은 메시지 반복(시각·세션ID·숫자만 다름)은 결함 1건 — READY 감점은 고유 건수로 (표시 건수는 그대로)
+                    _uniq_err.add((base, _re.sub(r"20\d\d-\d\d-\d\d[ T][\d:.]+|\b[0-9a-f]{8,}\b|\d+", "#", ln).strip()[:120]))
                 else:
                     warns += 1
                 # 반복 집계 — 같은 (log, msg key) 몇 번
@@ -294,6 +668,7 @@ def recent_log_issues(cwd: str):
     # .log 확장자 떼서 짧게
     top_short = top[:-4] if top.endswith(".log") else top
     repeat_max = repeat_cnt.most_common(1)[0][1] if repeat_cnt else 0
+    _LOG_UNIQUE_ERRS = len(_uniq_err)
     return crits, sum(errs.values()), warns, repeat_max, top_short
 
 
@@ -326,7 +701,27 @@ def _scan_save() -> None:
             json.dump(_SCAN, f, separators=(",", ":"))
         os.replace(tmp, _SCAN_PATH)
     except Exception:
-        pass  # noqa: BLE001
+        # R262: Windows 는 다른 렌더가 캐시를 읽는 중이면 os.replace 가 실패 → 임시 파일이 남아 11-12 부터 99개 누적
+        try:
+            os.remove(tmp)
+        except Exception:
+            pass  # noqa: BLE001
+    _scan_tmp_sweep()
+
+
+def _scan_tmp_sweep(max_age: float = 600.0) -> int:
+    """끊긴 렌더(시간 제한 종료)가 남긴 10분 넘은 캐시 임시 파일 정리 — 이 캐시의 자기 임시 파일만 (이름 일치)."""
+    import glob as _gl
+    import time as _tm
+    n = 0
+    for p in _gl.glob(_SCAN_PATH + ".*.tmp"):
+        try:
+            if re.fullmatch(r"\d+", p[len(_SCAN_PATH) + 1:-4]) and _tm.time() - os.path.getmtime(p) > max_age:
+                os.remove(p)
+                n += 1
+        except Exception:
+            pass  # noqa: BLE001
+    return n
 
 
 import atexit as _atexit
@@ -511,7 +906,7 @@ _ERROR_COUNT = 0     # 최근 24h .claude/logs 안 error·warn 카운트
 #   호출하는 곳도 없었다. Anthropic 실제 한도는 이 스크립트가 읽을 수 없다 —
 #   못 읽는 값을 지어내느니 안 띄운다 (헌장 A2).
 
-def _compute_readiness(cwd, crits, errs, warns, hc_total):
+def _compute_readiness(cwd, crits, errs, warns, hc_total, logs_unmeasured=False):
     """🎯 READY 재설계 — 2026-10-16 사용자 명시.
 
     원칙 (사용자 "이거 너가 만들어서 해"):
@@ -551,6 +946,13 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
                 tc = json.load(f)
             passed = int(tc.get("passed", 0))
             total = int(tc.get("total", 0))
+            # §81: 골든과 같은 7일 기준 — 오래된 성공을 현재 검증 ✅ 로 쓰지 않는다
+            from datetime import datetime as _rdt
+            try:
+                if (_rdt.now() - _rdt.fromisoformat(str(tc.get("ts")))).days >= 7:
+                    total = 0
+            except Exception:
+                total = 0   # 측정 시각 없음 = 최신성 확인 불가
             if total:
                 rate = passed / total * 100
                 verify_icon = "✅" if rate >= 95 else ("⚠" if rate >= 80 else "❌")
@@ -562,7 +964,8 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
     # 2) 실제 실패 감점 (강한)
     penalty = 0
     penalty += crits * 15  # critical 실제 오류
-    penalty += errs * 5    # error 실제 오류
+    # R268: 같은 오류가 반복 기록된 줄 수가 아니라 고유 오류 수로 감점 (11-16 실측: Q12 FAIL 1건이 10줄 → -50)
+    penalty += (_LOG_UNIQUE_ERRS if _LOG_UNIQUE_ERRS is not None else errs) * 5
     penalty += test_penalty  # test ❌
     # warns 는 감점 X (관측용) · 재발률도 감점 X
 
@@ -605,21 +1008,18 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
     _caps = []
     if verify_icon == "⏳":
         _caps.append(85)
+    if logs_unmeasured:
+        _caps.append(85)   # §81 오류 로그를 못 읽음 = 감점 0 이 아니라 미측정
     elif verify_icon == "❌":
         _caps.append(60)
-    # Request Ledger 미완료 → cap 50
-    try:
-        _rl_f = _os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        if _os.path.exists(_rl_f):
-            with open(_rl_f, "r", encoding="utf-8") as _f:
-                _rl = json.load(_f)
-            _reqs = _rl.get("requests", [])
-            if _reqs:
-                _done = sum(1 for r in _reqs if r.get("status") in ("completed", "deferred"))
-                if _done < len(_reqs):
-                    _caps.append(50)
-    except Exception:
-        pass
+    # Request Ledger → cap 50 (§80: 지난 승인대기·오등록·범위외가 아니라 현재 요청이 미완료일 때만 ·
+    #   현재 요청을 모르면 Stop 을 막는 미완료가 하나라도 있을 때 · 집계 실패 = 상한 적용(높이지 않음))
+    if _os.path.exists(_os.path.join(cwd, ".claude", "state", "request-ledger.json")):
+        _ls = _ledger_summary(cwd)
+        if _ls is None:
+            _caps.append(50)
+        elif (_ls["current_blocking"] if _ls["current_status"] != "UNKNOWN" else _ls["blocking"] > 0):
+            _caps.append(50)
     if _caps:
         final = min(final, min(_caps))
 
@@ -663,33 +1063,152 @@ def _compute_readiness(cwd, crits, errs, warns, hc_total):
 
 
 def _compute_impact(cwd):
-    """🧪 영향 — 수정 파일 수 (git diff --stat) · 다른 축은 「⏳」.
-    2026-10-16: Phase 2 설계 선행 필요 (영향 그래프 · API/DB/breaking 패턴).
-    지금은 수정 파일 수만 정확히 · 나머지는 placeholder.
-    """
-    import subprocess as _sp
-    mod = 0
-    api = 0
-    db = 0
+    """🧪 영향 — §81: git status 1회(증명 줄과 공용) · 실패 = 미측정 (종전: 수정 0 · API 0 · DB 0).
+    API·DB = 바뀐 파일 경로에 들어간 단어로 센 «경로 추정» (실제 호출 영향 분석 아님) · 영향·breaking = 미구현."""
+    files = _git_changes(cwd)
+    _u = "[36m⏳[0m"
+    _n = "[90m미구현[0m"
+    if files is None:
+        return f"수정 {_u} · API {_u} · DB {_u} (경로추정) · 영향 {_u} [90m(git 조회 실패)[0m"
+    api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "route", "endpoint", "controller")))
+    db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
+    # 2026-11-18 사용자 "수정은 4, 경로추정 API는 0 이거야?": 값마다 구분자 · 추정 표기는 뒤 괄호로
+    return f"수정 {len(files)} · API {api} · DB {db} (경로추정) · 영향 {_impact_dependents(cwd, files)}"
+
+
+_CODE_EXT = (".py", ".js", ".ts", ".tsx", ".vue", ".java", ".sh", ".ps1")
+_UI_EXT = (".css", ".scss", ".less", ".vue", ".tsx", ".jsx", ".html", ".svelte")
+_COMMON_DIR_RE = re.compile(r"(?:^|/)(?:common|shared|components?|ui)/", re.I)
+
+
+def _git_new_files(cwd):
+    """R275 신규 파일 (git status 의 ?? · A) — 신규공통 판정용 · 실패 = None."""
+    def _run():
+        raw = _git_porcelain(cwd)   # R289 _git_changes 와 같은 1회 결과 공용
+        if raw is None:
+            return None
+        return {ln[3:].strip().strip('"') for ln in raw if ln[:2] in ("??", "A ", "AM")}
+    return _memo(("gitnew", cwd), _run)
+
+
+def _common_names(cwd: str) -> set:
+    """R275 공통 폴더(common·shared·components·ui) 안 UI 파일 이름 — 10분 캐시 (렌더마다 저장소 전체를 훑지 않게)."""
+    import time as _t
+    cp = os.path.join(cwd, ".claude", "state", "common-names-cache.json")
     try:
-        # --no-optional-locks: git diff 도 index 를 새로 쓰려고 잠근다 — 3초에 잘리면 .git/index.lock 이 남는다(2026-10-17 실측)
-        r = _sp.run(["git", "--no-optional-locks", "diff", "--name-only", "HEAD"], cwd=cwd,
-                    capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3)
-        if r.returncode == 0:
-            files = [f for f in r.stdout.splitlines() if f.strip()]
-            mod = len(files)
-            # API 변경 heuristic: 경로 안 'api', 'router', 'route', 'endpoint', 'controller'
-            api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "endpoint", "controller")))
-            # DB 변경 heuristic: migration · schema · *.sql
-            db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
-    except Exception:
-        pass  # noqa: BLE001
-    parts = [f"수정 {mod}"]
-    parts.append(f"영향 \033[90m⏳\033[0m")
-    parts.append(f"API {api}" if api else "API 0")
-    parts.append(f"DB {db}" if db else "DB 0")
-    parts.append(f"breaking \033[90m⏳\033[0m")
-    return " · ".join(parts)
+        with open(cp, encoding="utf-8") as fh:
+            c = json.load(fh)
+        if _t.time() - float(c.get("ts", 0)) < 600:
+            return set(c.get("names") or [])
+    except (OSError, ValueError, TypeError):
+        pass
+    names, t0, partial = set(), _t.time(), False
+    for dp, dns, fns in os.walk(cwd):
+        dns[:] = [x for x in dns if x not in ("node_modules", ".git", "dist", "build", "__pycache__", ".repair-sandbox", "backups")]
+        if _t.time() - t0 > 1.5:
+            partial = True
+            break
+        rel = os.path.relpath(dp, cwd).replace(chr(92), "/") + "/"
+        if _COMMON_DIR_RE.search(rel):
+            names.update(os.path.splitext(fn)[0].lower() for fn in fns if fn.lower().endswith(_UI_EXT))
+    if not partial:   # 불완전 목록을 10분 캐시하면 우회가 «0» 으로 보인다
+        try:
+            with open(cp, "w", encoding="utf-8") as fh:
+                json.dump({"ts": _t.time(), "names": sorted(names)}, fh, ensure_ascii=False)
+        except OSError:
+            pass
+    return names
+
+
+def _reuse_metrics(cwd: str, files) -> str:
+    """R275 공통화 4항목 — 바뀐 UI 파일만 대상 (실제 소스 본문 기준 · 과거 미계측 자료는 만들지 않음).
+      재사용 = 바뀐 UI 파일 중 common·shared·components·ui 경로를 import 하는 파일 수
+      우회   = 공통 폴더 밖 바뀐 UI 파일 중 이름이 기존 공통 컴포넌트와 같은 파일 (같은 것을 따로 만듦)
+      CSS중복 = 바뀐 스타일 안에서 같은 선언 묶음({...})이 2번 이상 나온 묶음 수
+      신규공통 = 공통 폴더에 새로 생긴 파일 수
+    UI 파일 변경이 없으면 «UI 변경 없음» (0 아님 · 해당 없음) · git 실패 = ⏳."""
+    if files is None:
+        return "재사용·우회·CSS중복·신규공통 \033[36m⏳\033[0m"
+    ui = [f.replace("\\", "/") for f in files if f.lower().endswith(_UI_EXT)]
+    if not ui:
+        return "\033[90mUI 변경 없음 (재사용·우회·CSS중복·신규공통 해당없음)\033[0m"
+    new = _git_new_files(cwd) or set()
+    reuse = bypass = 0
+    common_names = _common_names(cwd)
+    blocks = {}
+    for f in ui:
+        p = os.path.join(cwd, f)
+        try:
+            with open(p, encoding="utf-8", errors="ignore") as fh:
+                txt = fh.read()
+        except OSError:
+            continue
+        if re.search(r"(?:import|from|require\()\s*[^\n]*?['\"][^'\"]*(?:common|shared|components?|/ui)/", txt, re.I):
+            reuse += 1
+        if not _COMMON_DIR_RE.search(f) and os.path.splitext(os.path.basename(f))[0].lower() in common_names:
+            bypass += 1
+        for b in re.findall(r"\{([^{}]{12,400})\}", txt):
+            k = ";".join(sorted(x.strip() for x in b.split(";") if ":" in x))
+            if k:
+                blocks[k] = blocks.get(k, 0) + 1
+    dup = sum(1 for v in blocks.values() if v >= 2)
+    newc = sum(1 for f in new if _COMMON_DIR_RE.search(f.replace("\\", "/")))
+    return f"재사용 {reuse} · 우회 {bypass} · CSS중복 {dup} · 신규공통 {newc} (UI {len(ui)}파일)"
+
+
+def _impact_dependents(cwd: str, files) -> str:
+    """R275 영향 = 바뀐 코드 파일의 이름(모듈명)을 참조하는 다른 코드 파일 수 (1단계 의존 · 실제 소스 본문 기준).
+    캐시: 바뀐 파일 목록+수정시각이 같으면 재사용 (.claude/state/impact-deps-cache.json) · 계산 상한 1.5초 넘으면 «⏳»(0 아님).
+    한계: 이름 문자열 참조 기준이라 동적 import·같은 이름 다른 모듈은 구분 못 함 — 표시는 «의존 N»(추정 아님·이름 참조 실측)."""
+    import time as _t
+    code = sorted(f for f in files if f.lower().endswith(_CODE_EXT))
+    if not code:
+        return "의존 해당없음"
+    try:
+        key = "|".join(f"{f}:{int(os.path.getmtime(os.path.join(cwd, f)))}" for f in code if os.path.exists(os.path.join(cwd, f)))
+    except OSError:
+        key = "|".join(code)
+    cp = os.path.join(cwd, ".claude", "state", "impact-deps-cache.json")
+    try:
+        with open(cp, encoding="utf-8") as fh:
+            c = json.load(fh)
+        if c.get("key") == key and _t.time() - float(c.get("ts", 0)) < 600:
+            return f"의존 {c['n']}"
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    names = {}
+    for f in code:
+        base = os.path.splitext(os.path.basename(f))[0]
+        if len(base) >= 4:                       # 너무 짧은 이름은 오탐이 커서 제외
+            names[base] = f.replace("\\", "/")
+    if not names:
+        return "의존 해당없음"
+    rx = re.compile(r"(?<![\w-])(" + "|".join(re.escape(b) for b in names) + r")(?![\w-])")
+    roots = [os.path.join(cwd, d) for d in (".claude/scripts", ".claude/hooks", "plugins", "src", "app", "web") if os.path.isdir(os.path.join(cwd, d))]
+    deps, t0 = set(), _t.time()
+    for root in roots:
+        for dp, dns, fns in os.walk(root):
+            dns[:] = [d for d in dns if d not in ("__pycache__", "node_modules", ".git", "tests", "backups")]
+            for fn in fns:
+                if not fn.lower().endswith(_CODE_EXT):
+                    continue
+                if _t.time() - t0 > 1.5:
+                    return "\033[36m⏳\033[0m"   # 계산 상한 초과 = 미측정 (0 으로 보이지 않게)
+                p = os.path.join(dp, fn)
+                rel = os.path.relpath(p, cwd).replace("\\", "/")
+                try:
+                    with open(p, encoding="utf-8", errors="ignore") as fh:
+                        hit = rx.search(fh.read())
+                except OSError:
+                    continue
+                if hit and names.get(hit.group(1)) != rel:
+                    deps.add(rel)
+    try:
+        with open(cp, "w", encoding="utf-8") as fh:
+            json.dump({"key": key, "ts": _t.time(), "n": len(deps), "sample": sorted(deps)[:20]}, fh, ensure_ascii=False)
+    except OSError:
+        pass
+    return f"의존 {len(deps)}"
 
 
 def extra_gauges(cwd, data=None):
@@ -708,106 +1227,8 @@ def extra_gauges(cwd, data=None):
             if _u0 == _p0:
                 break
             _p0 = _u0
-    budget_str = ""
-    solutions_str = ""
-    sessions_str = ""
-    files_str = ""
-    tasks_str = ""
-    try:
-        import sqlite3
-        db = os.path.join(cwd, ".claude", "state", "orca.db")
-        if os.path.exists(db):
-            with sqlite3.connect(db) as c:
-                # 예산 (일간-주간-월간)
-                try:
-                    b = c.execute(
-                        "SELECT COALESCE(today_spent_usd,0), COALESCE(daily_limit_usd,0), "
-                        "COALESCE(weekly_spent_usd,0), COALESCE(weekly_limit_usd,0), "
-                        "COALESCE(monthly_spent_usd,0), COALESCE(monthly_limit_usd,0) "
-                        "FROM budget LIMIT 1"
-                    ).fetchone()
-                    if b:
-                        ds, dl, ws, wl, ms, ml = b
-                        d_lim = f"${dl:.0f}" if dl else "∞"
-                        w_lim = f"${wl:.0f}" if wl else "∞"
-                        m_lim = f"${ml:.0f}" if ml else "∞"
-                        db_bar = mini_bar(ds*100, (dl or 1)*100, 4) if dl else "────"
-                        wb_bar = mini_bar(ws*100, (wl or 1)*100, 4) if wl else "────"
-                        mb_bar = mini_bar(ms*100, (ml or 1)*100, 4) if ml else "────"
-                        budget_str = (
-                            f"일간 {db_bar} ${ds:.2f}/{d_lim}\n"
-                            f"주간 {wb_bar} ${ws:.2f}/{w_lim}\n"
-                            f"월간 {mb_bar} ${ms:.2f}/{m_lim}"
-                        )
-                except Exception:
-                    pass  # noqa: BLE001
-                # 재사용 solutions
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*), COALESCE(SUM(verified),0), COALESCE(AVG(reusable_score),0) FROM problem_solutions"
-                    ).fetchone()
-                    if r and r[0]:
-                        cnt = int(r[0]); ver = int(r[1] or 0)
-                        rate = (ver * 100.0 / cnt) if cnt else 0.0
-                        solutions_str = f"재사용 {cnt}건 - 검증 {ver}({rate:.0f}%) - 평균점수 {r[2]:.1f}"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 세션
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*), COALESCE(SUM(turns),0), COALESCE(SUM(tokens_total),0) "
-                        "FROM session_summary"
-                    ).fetchone()
-                    if r:
-                        sessions_str = f"세션 {r[0]} - 턴 {r[1]}"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 오늘 파일 변경
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*) FROM file_audit "
-                        "WHERE ts >= datetime('now','-1 day')"
-                    ).fetchone()
-                    if r and r[0]:
-                        files_str = f"오늘 파일 {r[0]}건"
-                except Exception:
-                    pass  # noqa: BLE001
-                # 진행 중 task
-                try:
-                    r = c.execute(
-                        "SELECT COUNT(*) FROM tasks WHERE status IN ('pending','in_progress')"
-                    ).fetchone()
-                    if r and r[0]:
-                        tasks_str = f"task {r[0]}"
-                except Exception:
-                    pass  # noqa: BLE001
-    except Exception:
-        pass  # noqa: BLE001
-    # MCP - Headroom proxy 헬스체크
-    try:
-        import urllib.request
-        urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
-        mcp = "MCP on"
-    except Exception:
-        mcp = "MCP off"
-    # git branch + uncommitted
-    git_str = ""
-    try:
-        import subprocess
-        b = subprocess.run(
-            ["git", "--no-optional-locks", "-C", cwd, "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
-        )
-        branch = b.stdout.strip() if b.returncode == 0 else ""
-        s = subprocess.run(
-            ["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1
-        )
-        dirty = len([x for x in s.stdout.splitlines() if x.strip()]) if s.returncode == 0 else 0
-        if branch:
-            git_str = f"git {branch}" + (f" ({dirty} 변경)" if dirty else " clean")
-    except Exception:
-        pass  # noqa: BLE001
+    # §81: 결과를 화면에 쓰지 않던 조회 제거 (budget·solutions·sessions·file_audit·tasks sqlite 5종 ·
+    #   폐기된 Headroom :8787 확인 0.3초 · git rev-parse/status 2회) — 쓰는 곳 0건 확인 후 삭제
 
     # Agent 진행 섹션 (2026-10-12 · 10-16 등급별 색으로 교체)
     #   기록: .claude/hooks/tool/track_agent_dispatch.py (SubagentStart/Stop · 키=agent_id)
@@ -815,6 +1236,8 @@ def extra_gauges(cwd, data=None):
     agent_str = ""
     try:
         active_agents_file = os.path.join(cwd, ".claude", "state", "active-agents.json")
+        if not os.path.exists(active_agents_file):
+            agent_str = "[36m⏳ 상태 기록 없음[0m (실행 여부 UNKNOWN)"   # §81
         if os.path.exists(active_agents_file):
             with open(active_agents_file, "r", encoding="utf-8") as f:
                 raw = json.load(f)
@@ -822,10 +1245,10 @@ def extra_gauges(cwd, data=None):
             import datetime as _dt_mod
             now_ts = _dt_mod.datetime.now(_dt_mod.timezone.utc).replace(tzinfo=None)
             _GRADES = [  # (판정 키워드, 순위, ANSI, 표식, 이름)
-                (("fable", "mythos"), 4, "[1;31m", "🔴", "F"),
-                (("opus", "inherit"), 3, "[1;35m", "🟣", "O"),
-                (("sonnet",), 2, "[1;36m", "🔵", "S"),
-                (("haiku",), 1, "[1;32m", "🟢", "H"),
+                (("fable", "mythos"), 4, "[1;31m", "🔴", "특"),   # 2026-11-18 사용자 지시 "등급이면 하중상특": "등급이면 하중상특 · 그냥 상으로 가자": F·O·S·H → 특·상·중·하
+                (("opus", "inherit"), 3, "[1;35m", "🟣", "상"),
+                (("sonnet",), 2, "[1;36m", "🔵", "중"),
+                (("haiku",), 1, "[1;32m", "🟢", "하"),
             ]
 
             def _grade(model):
@@ -833,7 +1256,7 @@ def extra_gauges(cwd, data=None):
                 for keys, rank, ansi, mark, nm in _GRADES:
                     if any(k in m for k in keys):
                         return rank, ansi, mark, nm
-                return 3, "[1;35m", "🟣", "O"  # 모르는 값 = 메인 모델 상속으로 본다
+                return 3, "[1;35m", "🟣", "상"  # 모르는 값 = 메인 모델 상속으로 본다
 
             def _dur(sec):
                 return f"{sec // 60}m{sec % 60:02d}s" if sec >= 60 else f"{sec}s"
@@ -995,16 +1418,17 @@ def extra_gauges(cwd, data=None):
                 summary_counts[key] = summary_counts.get(key, 0) + 1
             summary_parts = [f"{a}{m}{n}×{c}\033[0m" for (a, m, n), c in summary_counts.items()]
             summary_line = f"총 {len(rows)} · " + " ".join(summary_parts) + " · " + urgency
-            # \n 로 라인 분리 (main 에서 split 후 각 줄을 _row 로 렌더)
-            # 최소 2 lines 보장 (사용자 명시) · 요약 1 line
+            # 2026-11-13 (R252 · 사용자 캡처 "서브에이전트가 여러 줄로 펼쳐져 11줄 레이아웃이 깨짐"):
+            #   여러 줄(에이전트 2줄 + 요약) → 항상 1줄 요약 = 실행 수 · 가장 오래 돈 1개 · 상세는 /tasks
             if parts:
-                while len(parts) < 2 and len(parts) < len(rows):
-                    parts.append("")
-                agent_str = "\n".join(parts) + "\n" + summary_line
+                _g0, a0, d0, _i0, _t0 = max(rows, key=lambda r: r[2])   # 실행 시간 가장 긴 것
+                top = (a0.get("description") or (a0.get("type") or "agent").split(":")[-1])[:16]
+                agent_str = (f"\033[1m실행 {len(rows)}\033[0m · " + " ".join(summary_parts)
+                             + f" · 최장 {top} {_dur(d0)} · {urgency} · 상세 /tasks")
             else:
                 agent_str = ""
     except Exception:
-        pass  # noqa: BLE001
+        agent_str = "[36m⏳ 상태 읽기 실패[0m (실행 여부 UNKNOWN)"   # §81
 
     # 두 줄 구조 - line 1: 세션(토큰과 합쳐짐 in main) · line 2: 주간 + MCP + 재사용 + agent
     import datetime as _dt
@@ -1069,12 +1493,8 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass  # noqa: BLE001
     if not mcp_shown:
-        try:
-            import urllib.request
-            urllib.request.urlopen("http://127.0.0.1:8787/health", timeout=0.3)
-            tail.append("MCP on")
-        except Exception:
-            tail.append("MCP off")
+        # §81: 폐기된 Headroom(:8787) 확인으로 «MCP off» 를 만들던 것 제거 — 측정 파일 없음 = 미측정
+        tail.append("MCP [36m⏳[0m 미측정")
     # git 표시 제거 (사용자 요청 2026-09-03)
     try:
         import sqlite3
@@ -1088,7 +1508,7 @@ def extra_gauges(cwd, data=None):
                     cnt = int(r[0])
                     ver = int(r[1] or 0)
                     rate = (ver * 100.0 / cnt) if cnt else 0.0
-                    tail.append(f"재사용 {cnt} ({rate:.0f}%)")
+                    tail.append(f"해결책 {cnt} (검증 {rate:.0f}%)")  # §81 재사용 빈도 아님
                 # orca hit 카운터 (activations · tasks)
                 try:
                     a = c.execute("SELECT COUNT(*) FROM activations").fetchone()
@@ -1124,6 +1544,7 @@ def extra_gauges(cwd, data=None):
         # P0a-D (2026-10-28): None 반환 시 미측정 (log_dir 없음) · 하위호환 0 fallback
         _c, _e, _w, _rpt, _top = recent_log_issues(cwd)
         _unmeasured = (_c is None)
+        _log_unmeasured = _unmeasured
         if _unmeasured:
             _c, _e, _w, _rpt = 0, 0, 0, 0
             _top = _top or "unmeasured"
@@ -1181,10 +1602,12 @@ def extra_gauges(cwd, data=None):
         #   (statusline_context.py 의 monthly_cost(cwd) 참고). 그래서 창마다 값이 다르다 —
         #   lottoclaude 는 9월 $2,306, orchestration_v1 은 같은 날 $14. 둘 다 맞는 값인데
         #   라벨이 없어서 계정 전체 청구액으로 읽혔다. 범위를 적어 둔다.
+        # §81: 월·연은 이 프로젝트 대화 기록으로 계산한 추정 (실제 청구액 아님) · 환율 기본값이면 표시
+        _fx = "" if os.environ.get("USD_KRW_RATE") else " · 환율 1350 기본"
         line3 = (
             f"세션 ${_SESSION_COST:,.2f} ({_krw(_SESSION_COST)}) · "
-            f"{cur_m}월 ${monthly:,.2f} ({_krw(monthly)}) · "
-            f"연간 ${yearly:,.2f} ({_krw(yearly)})"
+            f"{cur_m}월 추정 ${monthly:,.2f} ({_krw(monthly)}) · "
+            f"연간 추정 ${yearly:,.2f} ({_krw(yearly)}){_fx}"
         )
     else:
         line3 = ""
@@ -1205,7 +1628,7 @@ def extra_gauges(cwd, data=None):
         clock = dt.strftime("%I:%M%p").lstrip("0").lower()
         if dt.date() == today:
             return clock
-        return dt.strftime("%b ") + str(dt.day) + " " + clock
+        return f"{dt.month}/{dt.day} {clock}"   # 2026-11-18 사용자 지시: "Nov 19 8:00am" → "11/19 8:00am"
 
     # 2026-09-07: rate_limits 가 **매 렌더마다 오는 것이 아니다** (실측).
     #   세션 첫 렌더(첫 API 응답 전)·일부 렌더에서는 키 자체가 없다. 그때 아래 자체 계산으로
@@ -1256,15 +1679,9 @@ def extra_gauges(cwd, data=None):
     rl_age = max([now - key_ts[k] for k in key_ts if k not in fresh] or [0.0])
     rl = rl or None
 
-    if rl:
-        try:
-            os.makedirs(os.path.dirname(_rl_cache), exist_ok=True)
-            import time as _time
-            with open(_rl_cache, "w", encoding="utf-8") as _f:
-                json.dump({"rate_limits": rl, "ts": _time.time()}, _f)
-        except Exception:
-            pass  # noqa: BLE001
-    else:
+    # §81: 종전엔 렌더마다 캐시를 {rate_limits, ts=지금} 으로 다시 써 key_ts 가 사라지고 «30분 넘음 ~» 표시가 안 떴다.
+    #   위에서 새 값이 왔을 때만 key_ts 와 함께 저장한다 · 아래는 새 값도 캐시 병합도 없을 때의 옛 형식 읽기
+    if not rl:
         try:
             import time as _time
             with open(_rl_cache, "r", encoding="utf-8") as _f:
@@ -1335,14 +1752,16 @@ def extra_gauges(cwd, data=None):
             fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
             fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
+        elif not rl:
+            fast_badge = ""   # §81 사용량을 모르면 권고도 하지 않는다 (종전: 0% 로 보고 fast ON)
         elif _wp >= 80:
-            fast_badge = (f"{_RED}[!!] fast OFF (주간 {_wp:.0f}%){_RST}")
+            fast_badge = (f"{_RED}[!!] fast off{_RST}")   # R267 사용자 "fast on 혹은 fast off 로"
         elif _sp >= 70:
-            fast_badge = (f"{_YEL}fast OFF (세션 {_sp:.0f}% quota 임박){_RST}")
+            fast_badge = (f"{_YEL}fast off{_RST}")
         elif _wp >= 50:
-            fast_badge = (f"{_YEL}fast OFF (주간 {_wp:.0f}% 보호){_RST}")
+            fast_badge = (f"{_YEL}fast off{_RST}")
         else:
-            fast_badge = "\033[1;32mfast ON\033[0m"
+            fast_badge = "\033[32mfast on\033[0m"   # §81 사용량 기준 권장값 (실제 /fast 상태 아님) · R267 표기 on/off
     except Exception:
         pass  # noqa: BLE001
 
@@ -1421,20 +1840,61 @@ def extra_gauges(cwd, data=None):
     # Request Ledger 표시 (2026-10-16 외부 감사 · execution-contract § 1 n/n 완료 강제)
     ledger_line = ""
     try:
-        import json as _json
-        ledger_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        if os.path.exists(ledger_file):
-            with open(ledger_file, "r", encoding="utf-8") as f:
-                _lg = _json.load(f)
-            reqs = _lg.get("requests", [])
-            if reqs:
-                total = len(reqs)
-                done = sum(1 for r in reqs if r.get("status") in ("completed", "deferred"))
-                color = "32" if done == total else ("33" if done >= total * 0.5 else "31")
-                mark = "✓" if done == total else "☐"
-                pending_first = next((_ledger_label(r.get("desc", "")) for r in reqs if r.get("status") not in ("completed", "deferred")), "")
-                extra = f" · 다음: {pending_first}" if pending_first and done < total else ""
-                ledger_line = f"\033[1;{color}m{done}/{total} {mark}\033[0m{extra}"
+        # §80 (2026-11-11 사용자 지시 · 요청 줄만 일시 동결 해제 후 재동결): 완료 = completed 만 ·
+        #   승인대기·검증중·범위외·오등록 따로 · 현재 요청 = 추적(current-trace) 기준 · 다음 단계 기록 없음 = UNKNOWN
+        _ls = _ledger_summary(cwd)
+        if _ls:
+            _st_ko = {"completed": "완료", "approval_required": "승인대기", "verified": "검증중",
+                      "out_of_scope": "범위외", "invalid_registration": "오등록", "deferred": "보류",
+                      "pending": "진행중", "implemented": "구현됨", "UNKNOWN": "UNKNOWN"}
+            _cs = _ls["current_status"]
+            color = "31" if _ls["current_blocking"] else ("33" if _cs in ("approval_required", "verified", "UNKNOWN") else "32")
+            _cur = (f"현재 {_ls['current_rid']} {_st_ko.get(_cs, _cs)}" if _ls["current_rid"] else "현재 UNKNOWN")
+            _cnt = [f"완료 {_ls['completed']}/{_ls['total']}"]
+            for _k, _lab in (("approval_required", "승인"), ("verified", "검증"), ("open", "진행"),
+                             ("out_of_scope", "범위외"), ("invalid_registration", "오등록"), ("deferred", "보류")):
+                if _ls[_k]:
+                    _cnt.append(f"{_lab}{_ls[_k]}")
+            ledger_line = f"\033[1;{color}m{_cur}\033[0m · " + " ".join(_cnt)   # R252: 늘 UNKNOWN 이던 «다음» 제외
+            # R264 (사용자 지시 "묻지 않아도 상태줄만 보고 알 수 있어야"): 같은 세션 미완료 현황을 맨 앞에 —
+            #   잘려도 남게 · 원장에서 동적으로 (번호 고정 X) · 대기(승인 필요·차단)는 «다음» 과 분리 · 누적 완료 수는 뒤로
+            _q = _ls.get("queue") or {}
+            if _q.get("remaining"):
+                # 요청 줄은 오른쪽 절반이라 실제 폭(186칸)에서 45칸 안팎만 보인다 → 짧게 · 중요한 순 (남은·실행·대기·다음)
+                _qp = [f"남은{_q['remaining']}", f"실행{_q['running'] or '-'}"]
+                if not _q.get("running") and _q.get("last"):
+                    _qp.append(f"최근{_q['last']}")   # R273: 처리 끝난 현재 요청 (부분·차단·확인필요) — 실행 중으로 보이지 않게
+                if _q.get("waiting"):
+                    _qp.append(f"대기{len(_q['waiting'])}({_q['waiting'][0].split()[0]})")
+                if _q.get("next"):
+                    _nx = [n.replace("부분", "") for n in _q["next"]]
+                    _qp.append("다음" + "→".join(_nx[:2]) + (f"+{len(_nx) - 2}" if len(_nx) > 2 else ""))
+                ledger_line = f"\033[1;{color}m" + " · ".join(_qp) + "\033[0m · " + " ".join(_cnt)
+            # §87 (2026-11-11 사용자 지시 R237 · 개발 줄 오른쪽 값만 일시 동결 해제 후 재동결): 현재 요청 진행 표시 ·
+            #   PARTIAL·BLOCKED(verified)·승인대기 를 «개발완료» 로 보이면 거짓 → 확인필요 · 현재 요청 없음 = 표시 안 함
+            _dev_st = _dev_progress(_cs)   # 개발중(파랑)·개발완료(초록)·확인필요(노랑) 대응표 정본 = _dev_progress
+            if _dev_st and _ls["current_rid"] and dev_line:
+                # R252: 진행률을 값 맨 앞에 (오른쪽이 잘려도 남게) · 통계는 뒤로 · 기록 없으면 «미계측»
+                _pg = _req_progress(cwd)
+                if _pg and _pg[0] == _ls["current_rid"] and _pg[1]:
+                    _pct = round(_pg[1] * 100 / _pg[2])
+                    # R307 사용자 지시 "2/6(33%) 이것도 %별로 색상 표시" — 진행률 부분만 비율 색 · 뒤 글자는 상태 색 그대로
+                    _prog = f"[1;{_progress_tone(_pct)}m{_pg[0]} {_pg[1]}/{_pg[2]}({_pct}%)[0m[1;{_dev_st[0]}m {_pg[3]}"
+                else:
+                    _prog = f"[1;{_progress_tone(None)}m{_ls['current_rid']} 미계측[0m[1;{_dev_st[0]}m"
+                # R261: 하위 요구사항(원문 번호 항목) 진행 · 예상 남은 시간 (근거 없으면 «산정중» · 임의 값 X · 완료 상태면 생략)
+                _it = _ls.get("current_items") or (0, 0)
+                if _it[1]:
+                    _prog += f" 요구{_it[0]}/{_it[1]}"
+                # R269 사용자 지시: "R267 2/6(33%) 시험 남은≈3분 개발중" → "R267 2/6(33%) 시험 개발중(≈3분)" (시간은 상태 뒤 괄호)
+                _st_txt = _dev_st[1]
+                # R273: verified 는 PARTIAL(부분완료)·BLOCKED(차단)를 구분 · 남은 시간은 처리 중(pending·implemented)일 때만
+                if _cs == "verified":
+                    _st_txt = {"PARTIAL": "부분완료", "BLOCKED": "차단", "FAIL": "실패"}.get(_ls.get("current_verification") or "", _st_txt)
+                if _cs in ("pending", "implemented"):
+                    _eta = _pg[4] if (_pg and len(_pg) > 4 and _pg[0] == _ls["current_rid"]) else None
+                    _st_txt += ("(산정중)" if _eta is None else f"(≈{_eta}분)")
+                dev_line = f"\033[1;{_dev_st[0]}m{_prog} {_st_txt}\033[0m · {dev_line}"
     except Exception:
         pass
 
@@ -1469,12 +1929,15 @@ def extra_gauges(cwd, data=None):
     if _top_safe:
         err_parts.append(f"\033[90m최근 {_top_safe}\033[0m")
     errors_line = " · ".join(err_parts)
+    if locals().get("_log_unmeasured"):
+        errors_line = "[36m⏳ 미측정[0m (.claude/logs 없음 · 0 아님)"
     infra_line = " · ".join(infra_parts)
 
     # 🎯 READY (2026-10-16 · 가중 공식 — 테스트 소스 없으면 「⏳」 축 제외하고 재가중)
     #   test 30% · 오류 25% · 재발률 20% · 하드코딩 10% · MCP 10% · 신선도 5%
     _ready_score, _ready_grade, _verify_icon, _deploy_icon = _compute_readiness(
         cwd, _c_safe, _e_safe, _w_safe, locals().get("_hc_total", 0),
+        logs_unmeasured=bool(locals().get("_log_unmeasured")),
     )
     ready_line = f"{_ready_score} · 검증 {_verify_icon} · 배포 {_deploy_icon} · 품질 {_ready_grade}"
 
@@ -1482,32 +1945,39 @@ def extra_gauges(cwd, data=None):
     impact_line = _compute_impact(cwd)
 
     # 🛡 통제 라인 (2026-10-16 사용자 명시 — 행동 위반 통합)
-    control_line = ""
-    try:
-        # 2026-10-29 사용자 지적: 측정 소스 없음 → 0 X · ⏳ (미측정 청록). § 9 "미측정 ≠ 정상".
-        # 디자인 FROZEN 유지 (라벨·구분자·순서 동일) · 데이터 계층만 교정.
-        _unm = "[36m⏳[0m"
-        control_line = (f"범위위반 {_unm} · "
-                        f"임의변경 {_unm} · "
-                        f"승인누락 {_unm} · "
-                        f"추측수정 {_unm} · "
-                        f"검증skip {_unm}")
-    except Exception:
-        pass
+    # R270 (11-16 전수조사): 기존 기록으로 셀 수 있는 것만 실제 계측 · 기록이 없는 항목은 «미계측» 유지 (0 으로 위장 X)
+    control_line = _control_line(cwd)
+    # §81: 범위위반·임의변경·승인누락·추측수정·검증skip 을 세는 기록이 없다 — ⏳(측정 대기)가 아니라 미구현
 
     # ✅ 검증 라인 (2026-10-16 사용자 명시 — 실제 실행 검증 분리)
     verify_line = ""
+    # §81: test·회귀 = 회귀 게이트 기록(.claude/state/regression-gate.json · 정본 independent_verifier) ·
+    #   7일 넘으면 ⏳ · build·lint·type 은 기록 없음 = 미구현
     try:
-        # 2026-10-29: "회귀 0" 측정 소스 없음 → ⏳ (미측정 청록). test/build/lint/type ⏳ 유지 (실행 X).
-        _dim = "[90m⏳[0m"
-        _unm = "[36m⏳[0m"
-        verify_line = (f"test {_dim} · "
-                       f"build {_dim} · "
-                       f"lint {_dim} · "
-                       f"type {_dim} · "
-                       f"회귀 {_unm}")
+        import re as _vre, time as _vt
+        _u = "[36m⏳[0m"
+        _n = "[90m미구현[0m"
+        _tv, _rv = _u, _u
+        _gf = os.path.join(cwd, ".claude", "state", "regression-gate.json")
+        if os.path.exists(_gf):
+            with open(_gf, "r", encoding="utf-8") as f:
+                _g = json.load(f)
+            _age = _vt.time() - float(_g.get("at") or 0)
+            if _age < 7 * 86400:
+                _m = _vre.search(r"(\d+) passed", _g.get("summary") or "")
+                _fl = _vre.search(r"(\d+) failed", _g.get("summary") or "")
+                _ok = _g.get("status") == "pass"
+                _col = "32" if _ok else "31"
+                _tv = (f"[1;{_col}m{_m.group(1) if _m else '?'}통과"
+                       + (f" {_fl.group(1)}실패" if _fl else "") + f"[0m"
+                       + f"[90m({_vt.strftime('%m/%d %H:%M', _vt.localtime(float(_g.get('at') or 0)))} 기록)[0m")
+                _nf = len(_g.get("new_failures") or [])
+                _rv = f"[1;{'31' if _nf else '32'}m신규실패 {_nf}[0m"
+            else:
+                _tv = f"{_u}{_age_txt(_age)}"
+        verify_line = f"test {_tv} · 회귀 {_rv}"   # R252: 늘 같던 «build·lint·type 미구현» 제외 (오른쪽 잘림 완화)
     except Exception:
-        pass
+        verify_line = "test [36m⏳[0m · 회귀 [36m⏳[0m (기록 읽기 실패)"
 
     # 📊 품질추세 (2026-10-16 사용자 명시 — 디자인·개발 각각 재발률 + 추세 화살표)
     trend_line = ""
@@ -1518,84 +1988,69 @@ def extra_gauges(cwd, data=None):
             with open(_ra_f, "r", encoding="utf-8") as f:
                 _ra = _tj.load(f)
             rec = _ra.get("recurrence", {}).get("by_category", {})
-            d = rec.get("design") or {}
-            v = rec.get("dev") or {}
-            d_pct = float(d.get("recur_rate_pct", 0) if d else _ra.get("design", {}).get("recur_rate_pct", 0))
-            v_pct = float(v.get("recur_rate_pct", 0) if v else _ra.get("dev", {}).get("recur_rate_pct", 0))
-            d_tr = d.get("trend", "→") if d else "→"
-            v_tr = v.get("trend", "→") if v else "→"
-            d_col = "32" if d_pct < 20 else ("33" if d_pct < 40 else "31")
-            v_col = "32" if v_pct < 20 else ("33" if v_pct < 40 else "31")
-            trend_line = (f"디자인 재발 \033[1;{d_col}m{d_pct:.0f}%{d_tr}\033[0m · "
-                          f"개발 재발 \033[1;{v_col}m{v_pct:.0f}%{v_tr}\033[0m")
+            # §81: 재발 기록 없는 축은 0% 가 아니라 ⏳ · 표본 수(n) · 측정 시각
+            def _tr(d):
+                if not d or "recur_rate_pct" not in d:
+                    return "[36m⏳[0m"
+                _pct = float(d["recur_rate_pct"])
+                _col = "32" if _pct < 20 else ("33" if _pct < 40 else "31")
+                return f"[1;{_col}m{_pct:.0f}%{d.get('trend', '→')}[0m(n{d.get('n', '?')})"
+            _gen_age = None
+            try:
+                from datetime import datetime as _qdt
+                _gen_age = (_qdt.now() - _qdt.fromisoformat(str(_ra.get("generated_at")))).total_seconds()
+            except Exception:
+                pass
+            trend_line = (f"디자인 재발 {_tr(rec.get('design'))} · 개발 재발 {_tr(rec.get('dev'))}"
+                          + _age_txt(_gen_age))
     except Exception:
         pass
 
     # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 ⏳ · 하드코딩만 실측)
     reuse_line = ""
-    try:
-        _hc = int(locals().get("_hc_total", 0) or 0)
-        # 측정 소스 없음 — ⏳ 명시 (operating-principles § 9)
-        reuse_line = ("컴포넌트 재사용 [90m?[0m · "
-                      "우회 [90m?[0m · "
-                      "CSS중복 [90m—[0m · "
-                      "신규공통 [90m?[0m · "
-                      f"하드코딩 [1;33m{_hc}[0m")
-    except Exception:
-        pass
+    # §81: 컴포넌트 재사용·우회·CSS중복·신규공통 = 집계 미구현 (종전 ?·— 표시) · 하드코딩만 감사 파일 실측
+    _aud_ok = os.path.exists(os.path.join(cwd, ".claude", "state", "hardcoded-audit.json"))
+    _hc_txt = (f"[1;33m{int(locals().get('_hc_total', 0) or 0)}[0m" if _aud_ok else "[36m⏳[0m")
+    reuse_line = f"하드코딩 {_hc_txt} · {_reuse_metrics(cwd, _git_changes(cwd))}"   # R275 실제 계측
 
     # 🔐 증명 (외부 증거 기반 · 2026-10-16 사용자 명시 "뻥치지 마")
     proof_line = ""
     try:
-        import subprocess as _sp
-        # git clean
-        # --no-optional-locks: 3초에 잘려 죽은 git status 가 .git/index.lock 을 남겨 그 뒤 git add·commit 이 전부 막혔다
-        #   (2026-10-17 lottoclaude 하루 2번 · 재현 15/15 → 이 옵션이면 0/15). 상태줄은 읽기만 하므로 index 를 고쳐 쓸 이유가 없다.
-        _git_clean = _sp.run(["git","--no-optional-locks","status","--porcelain"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd).stdout.strip() == ""
-        _git_icon = "✅" if _git_clean else "⚠"
-        # standing requirements gate
+        _u = "[36m⏳[0m"
+        # §81 git: 실패(저장소 아님·git 없음·시간 초과) = ⏳ · 깨끗 = ✅ · 변경 있음 = ⚠ N (종전: 실패도 ✅)
+        _gch = _git_changes(cwd)
+        _git_icon = f"{_u}(조회 실패)" if _gch is None else ("✅" if not _gch else f"⚠ {len(_gch)}")
+        # §81 standing: 결과별 집계 (종전 stats 는 늘 만점) · 60초 재사용 · 실패 = ⏳
+        _sr_txt = _u
         _sr = os.path.join(cwd, ".claude", "scripts", "standing-requirements.py")
-        _sr_ok = _sr_total = 0
         if os.path.exists(_sr):
-            _r = _sp.run(["python","-X","utf8",_sr,"stats"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, cwd=cwd)
+            _rc, _out, _ = _cached_cmd(cwd, "standing", [sys.executable, "-X", "utf8", _sr, "stats"], 60)
             try:
-                import json as _pj
-                _s = _pj.loads(_r.stdout)
-                _sr_ok, _sr_total = _s.get("ok",0), _s.get("active",0)
-            except: pass
-        # golden test — 2026-10-17: 예전엔 파일이 있기만 하면 늘 ⚠ 였다(13/13 PASS 여도). golden-test.py 가 남기는
-        #   test-cache.json 의 결과를 읽는다 · 없거나 7일 넘게 묵으면 ⏳(미측정 ≠ 정상)
-        _gt = os.path.join(cwd, ".claude", "scripts", "golden-test.py")
-        _gt_icon = "❌"
-        if os.path.exists(_gt):
-            _gt_icon = "[90m⏳[0m"
+                _s = json.loads(_out) if _rc == 0 else None
+            except Exception:
+                _s = None
+            if _s:
+                _bad = int(_s.get("failed", 0)) + int(_s.get("unknown", 0))
+                _sr_txt = (f"[1;{'31' if _bad else '32'}m{_s.get('ok', 0)}/{_s.get('active', 0)}[0m"
+                           + (f" 사람{_s['human']}" if _s.get("human") else "")
+                           + (f" [1;31m실패{_bad}[0m" if _bad else ""))
+        # golden: test-cache.json (golden-test.py 기록) · 7일 넘거나 없으면 ⏳ · 스크립트 없음도 ⏳(종전 ❌)
+        _gt_icon = _u
+        if os.path.exists(os.path.join(cwd, ".claude", "scripts", "golden-test.py")):
             try:
-                import json as _gj
                 from datetime import datetime as _gdt
                 with open(os.path.join(cwd, ".claude", "state", "test-cache.json"), encoding="utf-8") as _gf:
-                    _g = _gj.load(_gf)
-                if (_gdt.now() - _gdt.fromisoformat(_g["ts"])).days < 7:
+                    _g = json.load(_gf)
+                _gage = (_gdt.now() - _gdt.fromisoformat(_g["ts"])).total_seconds()
+                if _gage < 7 * 86400:
                     _gp, _gt_n = int(_g.get("passed", 0)), int(_g.get("total", 0))
-                    _gt_icon = (f"[1;32m✅ {_gp}/{_gt_n}[0m" if _gt_n and _gp == _gt_n
-                                else f"[1;31m❌ {_gp}/{_gt_n}[0m")
+                    _gt_icon = ((f"[1;32m✅ {_gp}/{_gt_n}[0m" if _gt_n and _gp == _gt_n
+                                 else f"[1;31m❌ {_gp}/{_gt_n}[0m") + _age_txt(_gage))
             except Exception:
                 pass
-        # request ledger
-        _rl_file = os.path.join(cwd, ".claude", "state", "request-ledger.json")
-        _rl_done = _rl_total = 0
-        if os.path.exists(_rl_file):
-            try:
-                with open(_rl_file, "r", encoding="utf-8") as _f:
-                    import json as _jj
-                    _rl = _jj.load(_f)
-                    _rl_total = len(_rl.get("requests",[]))
-                    _rl_done = sum(1 for _r in _rl.get("requests",[]) if _r.get("status")=="completed")
-            except: pass
-        proof_line = (f"git {_git_icon} · "
-                      f"standing [1;32m{_sr_ok}/{_sr_total}[0m · "
-                      f"golden {_gt_icon} · test [90m⏳[0m")
+        proof_line = f"git {_git_icon} · 지속요구 {_sr_txt} · 기준시험 {_gt_icon}"   # 2026-11-18 사용자 "standing·golden 영어라 모르겠어"
     except Exception:
-        pass
+        proof_line = "git [36m⏳[0m · 지속요구 [36m⏳[0m · 기준시험 [36m⏳[0m (읽기 실패)"
 
     # 💾 이력 (orca.db · 2026-10-16 사용자 요청)
     history_line = ""
@@ -1627,20 +2082,18 @@ def extra_gauges(cwd, data=None):
         import subprocess as _sp_d
         _dd = os.path.join(cwd, ".claude", "scripts", "drift-detect.py")
         if os.path.exists(_dd):
-            _r = _sp_d.run([sys.executable, "-X", "utf8", _dd, "status"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
-            if _r.returncode == 0 and _r.stdout.strip():
-                drift_line = _r.stdout.strip()
+            _rc, _out, _ = _cached_cmd(cwd, "drift", [sys.executable, "-X", "utf8", _dd, "status"], 60)
+            if _rc == 0 and _out.strip():
+                drift_line = _out.strip()
     except Exception:
         pass
     try:
         import subprocess as _sp_h
         _hc = os.path.join(cwd, ".claude", "scripts", "health-check.py")
         if os.path.exists(_hc):
-            _r = _sp_h.run([sys.executable, "-X", "utf8", _hc, "status"],
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=3, cwd=cwd)
-            if _r.returncode == 0 and _r.stdout.strip():
-                health_line = _r.stdout.strip()
+            _rc, _out, _ = _cached_cmd(cwd, "health", [sys.executable, "-X", "utf8", _hc, "status"], 600)
+            if _rc == 0 and _out.strip():
+                health_line = _out.strip()
     except Exception:
         pass
 
@@ -1744,11 +2197,22 @@ def main() -> None:
     tokens = 0
     no_usage = True
 
+    # 2026-11-18: Claude Code 가 stdin 으로 주는 공식 context_window.current_usage 를 1순위로 (파일 읽기 0) ·
+    #   전사 파일은 stdin 의 transcript_path 를 1순위로 (설정 폴더가 ~/.claude 가 아닐 때도 맞는 경로)
+    try:
+        _cu = ((data.get("context_window") or {}).get("current_usage") or {}) if isinstance(data, dict) else {}
+        if _cu:
+            tokens = int((_cu.get("input_tokens") or 0) + (_cu.get("cache_read_input_tokens") or 0)
+                         + (_cu.get("cache_creation_input_tokens") or 0))
+            no_usage = tokens <= 0
+    except Exception:
+        pass  # noqa: BLE001
     if session_id and cwd:
         try:
             proj_dir = cwd_to_proj_dir(cwd)
-            jsonl = os.path.join(proj_dir, f"{session_id}.jsonl")
-            usage = last_assistant_usage(jsonl)
+            _tp = data.get("transcript_path") if isinstance(data, dict) else None
+            jsonl = _tp if (_tp and os.path.exists(_tp)) else os.path.join(proj_dir, f"{session_id}.jsonl")
+            usage = last_assistant_usage(jsonl) if no_usage else None
             if usage:
                 tokens = int(
                     (usage.get("input_tokens") or 0)
@@ -1763,7 +2227,6 @@ def main() -> None:
             _MONTHLY_COST = monthly_cost(cwd, model_id)
             _YEARLY_COST = yearly_cost(cwd, model_id)
             _CACHE_HIT_RATE = cache_hit_rate(jsonl)
-            _ERROR_COUNT = recent_error_count(cwd)
         except Exception:
             pass  # noqa: BLE001
 
@@ -1997,6 +2460,22 @@ def main() -> None:
     # 2026-11-04 재감사: 행 전체가 터미널 폭을 넘으면 자동 줄바꿈으로 상태줄이 늘어난다 → 넘는 행만 끝을 '…' 로 자름.
     # 배치·색·라벨 폭은 그대로 (FROZEN) · 터미널 폭을 알 수 없으면 자르지 않는다 (기존 출력 그대로).
     _cols = _terminal_cols()
+    # R252 (사용자 캡처 "오른쪽 잘림"): 실제 Claude Code 호출에선 폭을 못 얻어(0) 176칸 줄이 그대로 나갔다 [확인 last-statusline.txt]
+    #   → 폭을 모르면 120칸 상한 (STATUSLINE_MAX_COLS 로 조정 · 0 = 끔) · 진행률·현재 상태는 값 앞쪽이라 남는다
+    #   실제 호출 진단 [확인 last-statusline-cols.txt]: Claude Code 가 COLUMNS=186 을 주어 161칸 줄이 그대로 나가 «빽빽·잘림»
+    #   → 폭을 알아도 한 줄 최대 130칸 (STATUSLINE_MAX_COLS · 0 = 상한 없음) · 폭을 모르면 같은 상한
+    #   R267 (사용자 캡처 11-16 "우측에 여백이 있는데 … 로 나와 · 모니터마다 반응형"): COLUMNS=181 을 받고도 130 으로 잘랐다
+    #   → 폭을 알면 그 폭에 맞춘다 (Claude Code 가 상태줄을 2칸 들여 그리므로 여유 4칸) · 창·모니터 폭이 바뀌면 다음 호출에 새 COLUMNS 로 반영
+    #   → 폭을 모를 때만 130칸 상한 · STATUSLINE_MAX_COLS 를 명시하면 그 값이 상한 (0 = 상한 없음)
+    _cap_env = os.environ.get("STATUSLINE_MAX_COLS", "")
+    try:
+        _cap = int(_cap_env) if _cap_env else (0 if _cols else 130)
+    except ValueError:
+        _cap = 0 if _cols else 130
+    if _cols:
+        _cols = max(40, _cols - 4)
+    if _cap > 0:
+        _cols = min(_cols, _cap) if _cols else _cap
     if _cols:
         out = [_fit_cells(l, _cols - 1) for l in out]
     final = "\n".join(out)
@@ -2006,6 +2485,9 @@ def main() -> None:
         dbg = _os.path.join(_os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "last-statusline.txt")
         with open(dbg, "w", encoding="utf-8") as _f:
             _f.write(final)
+        with open(dbg.replace(".txt", "-cols.txt"), "w", encoding="utf-8") as _f:   # R252 실제 호출 폭 진단
+            _f.write("detected=%s env_COLUMNS=%s env_STATUSLINE_COLUMNS=%s used=%s\n" % (
+                _terminal_cols(), os.environ.get("COLUMNS"), os.environ.get("STATUSLINE_COLUMNS"), _cols))
     except Exception:
         pass
     print(final)

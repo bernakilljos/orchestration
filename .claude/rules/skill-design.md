@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/skills/**"
+  - "**/SKILL.md"
+  - "plugins/_template/**"
+---
+
 # Skill 설계 규칙 (Anthropic 공식 표준)
 
 > **출처**: docs/upgrade/클로드 스킬 만들기 완벽 가이드 (2026 Anthropic 번역본, 34쪽)

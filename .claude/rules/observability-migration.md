@@ -1,3 +1,9 @@
+---
+paths:
+  - ".claude/scripts/lib/structured_logger.py"
+  - ".claude/scripts/lib/trace.py"
+---
+
 # Observability + Structured Logging 마이그레이션 가이드
 
 ## ✓ 완료: 기초 구성
