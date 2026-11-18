@@ -53,9 +53,9 @@ LEDGER = ROOT / ".claude" / "state" / "request-ledger.json"
 BACKUP = LEDGER.with_name("request-ledger.prev.json")  # *.bak 은 cleanup-pollution 이 3일 뒤 지운다 → 정리 대상 아닌 이름
 LOCK = LEDGER.with_name(LEDGER.name + ".lock")
 LOCK_WAIT_SEC = 30.0  # 교체 재시도(최대 10초)를 기다리는 다른 쓰기까지 감안
-LOCK_STALE_SEC = 60.0
 REPLACE_WAIT_SEC = 10.0
 _lock_depth = 0
+_lock_fh = None
 
 
 class LedgerError(RuntimeError):
@@ -80,77 +80,56 @@ def _guard_operational() -> None:
         raise LedgerError("시험 실행 중 운영 원장 쓰기 차단 — CLAUDE_PROJECT_DIR 를 임시 폴더로 지정할 것: " + str(LEDGER))
 
 
-def _pid_alive(pid: int) -> bool:
-    """프로세스가 살아 있나 (Windows 는 OpenProcess — os.kill(pid, 0) 은 Windows 에서 CTRL_C 를 보내므로 쓰지 않음)."""
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        import ctypes
-        k = ctypes.windll.kernel32
-        h = k.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
-        if not h:
-            return ctypes.GetLastError() == 5  # 접근 거부 = 존재함
-        code = ctypes.c_ulong()
-        ok = k.GetExitCodeProcess(h, ctypes.byref(code))
-        k.CloseHandle(h)
-        return bool(ok) and code.value == 259  # STILL_ACTIVE
-    try:
-        os.kill(pid, 0)
-        return True
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-
-
-def _lock_owner_alive() -> bool:
-    """잠금 파일의 PID 가 살아 있나 · 읽기 실패·형식 불명 = 살아 있다고 본다 (모르면 회수하지 않음)."""
-    try:
-        pid = int(LOCK.read_text(encoding="utf-8", errors="replace").split()[0])
-    except (OSError, ValueError, IndexError):
-        return True
-    return _pid_alive(pid)
-
-
 class _Lock:
-    """프로세스 사이 잠금 (O_EXCL 잠금 파일 · 같은 프로세스 안 중첩 허용 · 60초 넘은 잠금은 죽은 것으로 보고 제거)."""
+    """프로세스 사이 잠금 — OS 파일 잠금 (Windows msvcrt.locking · 그 외 fcntl.flock) · 같은 프로세스 안 중첩 허용.
+    2026-11-18 R308: «잠금 파일 생성·삭제 + 죽은 PID 회수» 방식은 A 가 풀고 끝난 직후 C 가 새로 잡은 잠금을 B 가 A 의 죽은 PID 로
+    보고 지워 B·C 가 동시에 저장하는 경쟁이 있었다 (IFRS 격리 사본 실측: 동시 24건 중 2건 손실). OS 잠금은 프로세스가 죽으면
+    운영체제가 자동으로 풀어 «죽은 잠금 판정» 자체가 필요 없다 · 잠금 파일은 지우지 않는다 (지우면 같은 경쟁이 다시 생김)."""
 
     def __enter__(self):
-        global _lock_depth
+        global _lock_depth, _lock_fh
         if _lock_depth:
             _lock_depth += 1
             return self
         import time as _t
         LOCK.parent.mkdir(parents=True, exist_ok=True)
+        fh = open(LOCK, "a+b")
         t0 = _t.time()
         while True:
             try:
-                fd = os.open(str(LOCK), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                os.write(fd, f"{os.getpid()} {_t.time():.0f}".encode())
-                os.close(fd)
+                if os.name == "nt":
+                    import msvcrt
+                    fh.seek(0)
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 break
-            except FileExistsError:
-                try:
-                    # R303: 잠금을 쥔 프로세스가 강제 종료됐으면 60초를 기다리지 않고 바로 회수 (대기 한도 30초보다 먼저)
-                    if _t.time() - LOCK.stat().st_mtime > LOCK_STALE_SEC or not _lock_owner_alive():
-                        LOCK.unlink()
-                        continue
-                except OSError:
-                    pass
+            except OSError:
                 if _t.time() - t0 > LOCK_WAIT_SEC:
+                    fh.close()
                     raise LedgerError(f"원장 잠금 {LOCK_WAIT_SEC:.0f}초 대기 초과 — 저장하지 않음 ({LOCK})")
                 _t.sleep(0.05)
+        _lock_fh = fh
         _lock_depth = 1
         return self
 
     def __exit__(self, *exc):
-        global _lock_depth
+        global _lock_depth, _lock_fh
         _lock_depth -= 1
-        if _lock_depth == 0:
+        if _lock_depth == 0 and _lock_fh is not None:
             try:
-                LOCK.unlink()
+                if os.name == "nt":
+                    import msvcrt
+                    _lock_fh.seek(0)
+                    msvcrt.locking(_lock_fh.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(_lock_fh.fileno(), fcntl.LOCK_UN)
             except OSError:
                 pass
+            _lock_fh.close()
+            _lock_fh = None
         return False
 
 

@@ -140,7 +140,7 @@ def test_concurrent_cli_and_hook_writes_lose_nothing(tmp_path):
     assert len(ids) == 34 and len(set(ids)) == 34
     descs = [r["desc"] for r in json.loads(_ledger(tmp_path).read_text(encoding="utf-8"))["requests"]]
     assert sum(d.startswith("동시 CLI") for d in descs) == 12 and sum(d.startswith("동시 hook") for d in descs) == 12
-    assert not (tmp_path / ".claude" / "state" / "request-ledger.json.lock").exists()
+    assert _lock_free(tmp_path)                       # 모두 끝난 뒤 잠금이 풀려 있음 (잠금 파일은 남겨 둔다 · OS 잠금)
 
 
 def test_stale_lock_is_reclaimed(tmp_path):
@@ -180,7 +180,8 @@ def test_golden_gate_concurrent_does_not_touch_operational_ledger():
     with ThreadPoolExecutor(max_workers=3) as ex:
         list(ex.map(lambda _: g._run_gate_test(), range(3)))
     after = ids()
-    assert after[:len(before)] == before and "T_R1" not in after
+    # 기존 ID 전부 유지 · 시험 데이터(T_R1)가 새로 늘지 않음 (옛 결함으로 이미 T_R1 이 든 대상 원장도 있음 — IFRS 실측)
+    assert after[:len(before)] == before and after.count("T_R1") == before.count("T_R1")
 
 
 def test_killed_writer_mid_save_recovers_fast_without_loss(tmp_path):
@@ -203,19 +204,48 @@ def test_killed_writer_mid_save_recovers_fast_without_loss(tmp_path):
     t0 = time.time()
     r = _run(tmp_path, "add", "강제 종료 뒤 등록")
     assert r.returncode == 0, r.stderr
-    assert time.time() - t0 < 10                      # 죽은 잠금 즉시 회수 (예전: 60초 지나야 회수 · 대기 한도 초과로 실패)
+    assert time.time() - t0 < 10                      # 죽으면 OS 가 잠금을 바로 풀어 줌 (예전: 60초 지나야 회수 · 대기 한도 초과로 실패)
     ids = _ids(tmp_path)
     assert ids == [f"R{i}" for i in range(1, 52)]      # 기존 50건 + 새 1건 · 반쪽 임시 파일은 원장에 섞이지 않음
-    assert not lock.exists()
+    assert _lock_free(tmp_path)
 
 
-def test_live_lock_owner_is_not_stolen(tmp_path):
-    """살아 있는 프로세스의 잠금은 회수하지 않는다 (회수 판정이 너무 공격적이면 동시 저장이 깨짐)."""
+def _lock_mod(tmp_path, wait=None):
     import importlib.util
-    spec = importlib.util.spec_from_file_location("rl303b", LEDGER_PY)
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    assert m._pid_alive(os.getpid()) is True
-    p = subprocess.Popen([sys.executable, "-c", "pass"])
-    p.wait(timeout=30)
-    assert m._pid_alive(p.pid) is False
+    os.environ["CLAUDE_PROJECT_DIR"] = str(tmp_path)
+    try:
+        spec = importlib.util.spec_from_file_location("rl303lk", LEDGER_PY)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+    finally:
+        os.environ.pop("CLAUDE_PROJECT_DIR", None)
+    if wait is not None:
+        m.LOCK_WAIT_SEC = wait
+    return m
+
+
+def _lock_free(tmp_path) -> bool:
+    m = _lock_mod(tmp_path, wait=0.5)
+    try:
+        with m._Lock():
+            return True
+    except m.LedgerError:
+        return False
+
+
+def test_live_lock_owner_is_not_stolen(tmp_path, monkeypatch):
+    """살아 있는 프로세스의 잠금은 뺏지 않는다 · 그 프로세스가 죽으면 바로 잡힌다 (R308 경쟁 조건 재발 방지)."""
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    _seed(tmp_path, 1)
+    code = ("import importlib.util,sys,time;sp=importlib.util.spec_from_file_location('rl',sys.argv[1]);"
+            "m=importlib.util.module_from_spec(sp);sp.loader.exec_module(m);m._Lock().__enter__();"
+            "print('locked',flush=True);time.sleep(60)")
+    p = subprocess.Popen([sys.executable, "-X", "utf8", "-c", code, str(LEDGER_PY)], env=_env(tmp_path),
+                         stdout=subprocess.PIPE, text=True)
+    try:
+        assert p.stdout.readline().strip() == "locked"
+        assert _lock_free(tmp_path) is False          # 살아 있는 동안 못 잡음
+    finally:
+        p.kill()
+        p.wait(timeout=30)
+    assert _lock_free(tmp_path) is True               # 죽으면 바로 풀림
