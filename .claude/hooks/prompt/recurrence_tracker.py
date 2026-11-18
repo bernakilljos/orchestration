@@ -102,11 +102,21 @@ def run(ctx):
 
     # 승격된 것 (promoted_level >= 2 = CLAUDE.md 후보) 만 systemMessage 로 알림
     promoted = [d for d in detected if d[2].get("promoted_level", 0) >= 2]
-    if not promoted:
+    # R310 근본 원인 기록 연결: 같은 유형 2회+ 재발 = 원인 미해결 신호 → 이번 이벤트 번호로 원인 기록을 요구 (증상과 원인 분리)
+    repeated = [d for d in detected if (d[2].get("total") or 0) >= 2 and d[2].get("event_id")]
+    if not promoted and not repeated:
         return None
 
-    lines = ["[recurrence] 3회+ 재발 감지 — CLAUDE.md 규칙 승격 후보 자동 추가:"]
-    for rid, cat, res in promoted:
-        lines.append(f"  - [{cat}] {rid} · {res.get('total')}회 · level={res.get('promoted_level')}")
-    lines.append("  → .claude/state/rule-promotion-candidates.md 참고")
+    lines = []
+    if promoted:
+        lines.append("[recurrence] 3회+ 재발 감지 — CLAUDE.md 규칙 승격 후보 자동 추가:")
+        for rid, cat, res in promoted:
+            lines.append(f"  - [{cat}] {rid} · {res.get('total')}회 · level={res.get('promoted_level')}")
+        lines.append("  → .claude/state/rule-promotion-candidates.md 참고")
+    if repeated:
+        lines.append("[recurrence] 재발 — 이번 작업에서 원인을 찾으면 기록 (증상 ≠ 원인 · 증거 없으면 suspected):")
+        for rid, cat, res in repeated:
+            lines.append(f"  - {rid} {res.get('total')}회 → python .claude/scripts/recurrence-tracker.py root-cause "
+                         f"{res['event_id']} --cause \"…\" --evidence \"파일:줄·로그·실행 출력\" --status confirmed --fix \"해결·회귀 시험\"")
+        lines.append("  · 해결 검증 뒤: recurrence-tracker.py fix-result <번호> passed|failed --evidence \"…\"")
     return {"systemMessage": "\n".join(lines)}

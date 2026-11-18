@@ -43,7 +43,8 @@ except Exception:
 
 KIT = Path(__file__).resolve().parents[2]
 TREES = [
-    ".claude/rules", ".claude/hooks", ".claude/scripts", ".claude/commands",
+    ".claude/rules", ".claude/rules-ref",   # R310 조건부 규칙 전문 (자동 로딩 밖 · 규칙 요약본이 가리킴)
+    ".claude/hooks", ".claude/scripts", ".claude/commands",
     ".claude/skills", ".claude/agents", "plugins", ".claude-plugin",
     ".claude/config",   # §84 공통 정책(자원 상한·자동 실행 허용 목록·검증 패턴·모델 등록) — 대상 스크립트가 읽는데 전파 안 돼 기본값으로 동작
 ]

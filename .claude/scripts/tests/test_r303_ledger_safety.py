@@ -27,9 +27,9 @@ def _env(tmp_path, **extra):
     return env
 
 
-def _run(tmp_path, *args, **extra):
+def _run(tmp_path, *args, input=None, **extra):
     return subprocess.run([sys.executable, "-X", "utf8", str(LEDGER_PY), *args], env=_env(tmp_path, **extra),
-                          capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+                          input=input, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
 
 
 def _ledger(tmp_path):
@@ -265,3 +265,16 @@ def test_test_session_ledger_outside_temp_still_gates(tmp_path, monkeypatch, cap
     assert m.is_blocking({"id": "T_R1", "status": "pending", "ts": "t"}) is False
     monkeypatch.setattr(m, "_ledger_in_temp", lambda: True)       # 시험 영역 원장은 예전처럼 통과
     assert m.cmd_gate() == 0
+
+
+def test_unreadable_ledger_blocks_stop_instead_of_passing(tmp_path):
+    """R310 fail-closed: 원장이 깨지고 복구본도 없으면 gate 가 0(통과)을 돌려 미완료가 있어도 Stop 이 됐다 → 2(차단).
+    정상 입력(전부 완료)은 그대로 통과 — 양방향 확인."""
+    p = _seed(tmp_path, 2)
+    ok = _run(tmp_path, "gate", input='{"session_id":"x","stop_hook_active":false}')
+    assert ok.returncode == 0, ok.stderr
+    p.write_text('{"requests":[{"id":"R1",', encoding="utf-8")
+    bad = _run(tmp_path, "gate", input='{"session_id":"x","stop_hook_active":false}')
+    assert bad.returncode == 2, bad.stderr
+    assert "확인 불가" in bad.stderr
+    assert p.read_text(encoding="utf-8") == '{"requests":[{"id":"R1",'  # 손상본 보존 (덮어쓰기 X)

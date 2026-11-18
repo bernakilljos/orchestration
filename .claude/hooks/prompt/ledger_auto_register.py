@@ -468,6 +468,20 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
             "classification": classification}
 
 
+COUNTEREXAMPLE_MIN_ITEMS = 3
+
+
+def _counterexample_hint(entry: dict) -> str:
+    """R310 개발 전 반례 — 하위 요구 3개+ 실행 요청에만 (간단한 변경은 생략 · 새 hook·상주 프로세스 X).
+    정본 원칙 = complete-output.md § 예시 일반화 3단계(경계 조건·반례) · 6단계(대표+변형 함께 검증) 를 착수 시점에 연결."""
+    n = len(entry.get("items") or [])
+    if n < COUNTEREXAMPLE_MIN_ITEMS:
+        return ""
+    return (f"\n[반례 · 착수 전 · 요구 {n}개] 요구마다 ①경계(0·1·중복·NULL·범위 밖) ②예상 실패(동시 실행·강제 종료·손상 입력·권한) "
+            "③기존 기능 충돌(같은 파일·공유 상태·호출자) 를 1줄씩 정하고, 깨지면 손해가 큰 것만 회귀 시험으로 만든다 "
+            "(정상 입력 통과 + 잘못된 입력 거부 양방향)")
+
+
 def run(ctx) -> str:
     """UserPromptSubmit 시점 호출 · 사용자 메시지 → 분류 → 실행 요청만 Ledger 등록."""
     try:
@@ -510,12 +524,13 @@ def run(ctx) -> str:
                 d = json.load(f)
             # R303: 마지막 항목이 아니라 방금 등록한 ID 로 (그 사이 다른 세션이 추가했을 수 있음)
             latest = next((r for r in reversed(d.get("requests", [])) if r.get("id") == result["request_id"]), {})
+            cx = _counterexample_hint(latest)
             if latest.get("status") == "approval_required":
                 _append_raw(prompt, session_id, classification, "approval_required")
                 reasons = latest.get("approval_reasons", [])[:3]
-                return f"[ledger] + {result['request_id']} (APPROVAL REQUIRED · reasons={reasons} · class={classification})"
+                return f"[ledger] + {result['request_id']} (APPROVAL REQUIRED · reasons={reasons} · class={classification})" + cx
             _append_raw(prompt, session_id, classification, "registered")
-            return f"[ledger] + {result['request_id']} (event_id={result['event_id']} · class={classification})"
+            return f"[ledger] + {result['request_id']} (event_id={result['event_id']} · class={classification})" + cx
         if result.get("status") == "duplicate_within_window":
             # 중복 의심이지만 원본은 raw 로그에 보존됨 · 실행만 보류 (사용자 지시 "원본 삭제 X")
             _append_raw(prompt, session_id, classification, "duplicate_skipped_but_logged")
