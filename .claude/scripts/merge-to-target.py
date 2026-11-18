@@ -379,6 +379,17 @@ def main() -> int:
     except Exception:
         manifest = {}
 
+    # 2026-11-19: 다른 세션이 대상의 미커밋 수정을 kit 작업 트리에도 똑같이 넣어 두면 '동일' 로 분류돼 그 내용이 kit 소유로
+    #   기록됐고, kit 이 커밋본으로 돌아간 다음 전파가 대상의 미커밋 수정을 덮었다 (11-18 23:56 request-ledger.py ·
+    #   11-19 00:48 check-js-syntax.sh 실측 — 백업에서 복구). 같다는 것은 kit 이 썼다는 뜻이 아니다 → kit 작업 트리에서
+    #   커밋되지 않은 경로는 '동일' 이어도 소유 기록을 하지 않는다 (put = 이 도구가 직접 쓴 것은 종전대로 기록).
+    try:
+        _kit_dirty = {ln[3:].strip().strip('"') for ln in subprocess.run(
+            ["git", "-C", str(KIT), "-c", "core.quotepath=off", "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60).stdout.splitlines() if len(ln) > 3}
+    except Exception:
+        _kit_dirty = None   # 확인 실패 = 모두 미확정으로 보고 동일 기록을 하지 않음 (덮지 않는 쪽)
+
     def owned(rel: str, db: bytes) -> bool:
         return manifest.get(rel) == md5(norm(db)) or md5(db) in git_history_hashes(rel)
 
@@ -401,7 +412,8 @@ def main() -> int:
             db = dst.read_bytes()
             if norm(sb) == norm(db):
                 stats["identical"].append(rel)
-                manifest[rel] = md5(norm(db))
+                if _kit_dirty is not None and rel not in _kit_dirty:
+                    manifest[rel] = md5(norm(db))
                 continue
             if owned(rel, db):
                 stats["stale-kit"].append(rel)

@@ -2179,3 +2179,29 @@ def test_fix_task_actions_failure_not_logged_as_ok_r266():
     t = (ROOT / ".claude" / "scripts" / "fix-s4u-task-actions.ps1").read_text(encoding="utf-8-sig")
     assert "Set-ScheduledTask -TaskName $f.Name -Action $newAction -ErrorAction Stop" in t
     assert "Get-ScheduledTask -TaskName $f.Name -ErrorAction Stop" in t
+
+
+def test_merge_to_target_identical_to_uncommitted_kit_is_not_kit_owned(tmp_path):
+    """2026-11-19: 다른 세션이 대상의 미커밋 수정을 kit 작업 트리에도 똑같이 넣어 두면 '동일' 로 분류돼 kit 소유로 기록되고,
+    kit 이 커밋본으로 돌아간 뒤 전파가 대상의 미커밋 수정을 덮었다 (11-18 23:56 · 11-19 00:48 실측). 동일 ≠ kit 이 씀."""
+    kit, tgt = tmp_path / "kit", tmp_path / "tgt"
+    (kit / ".claude" / "scripts").mkdir(parents=True)
+    (kit / ".claude" / "hooks").mkdir(parents=True)
+    shutil.copy2(ROOT / ".claude" / "scripts" / "merge-to-target.py", kit / ".claude" / "scripts" / "merge-to-target.py")
+    hook = kit / ".claude" / "hooks" / "x.sh"
+    hook.write_text("echo v1\n", encoding="utf-8")
+    g = lambda *a: subprocess.run(["git", "-C", str(kit), *a], capture_output=True, text=True, timeout=60)
+    g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+    g("add", "-A"); g("commit", "-q", "-m", "v1")
+    run = lambda: subprocess.run([sys.executable, "-X", "utf8", str(kit / ".claude" / "scripts" / "merge-to-target.py"),
+                                  str(tgt), "--apply"], capture_output=True, text=True, encoding="utf-8", timeout=120)
+    (tgt / ".claude").mkdir(parents=True)
+    assert run().returncode == 0 and (tgt / ".claude" / "hooks" / "x.sh").read_text(encoding="utf-8") == "echo v1\n"
+    # 대상 세션의 미커밋 수정이 kit 작업 트리에도 같은 내용으로 들어옴 → 이 상태로 전파 = 동일
+    (tgt / ".claude" / "hooks" / "x.sh").write_text("echo wip\n", encoding="utf-8")
+    hook.write_text("echo wip\n", encoding="utf-8")
+    assert run().returncode == 0
+    hook.write_text("echo v1\n", encoding="utf-8")          # kit 은 커밋본으로 (보관·되돌림)
+    r = run()
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert (tgt / ".claude" / "hooks" / "x.sh").read_text(encoding="utf-8") == "echo wip\n", r.stdout   # 대상 수정 보존
