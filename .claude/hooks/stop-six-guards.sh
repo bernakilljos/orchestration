@@ -45,10 +45,11 @@ else
 fi
 
 # 3. Verification Guard — golden-test (warn only · block 하면 overload)
+#   R313 (11-19 실측): 지문의 git diff 가 로컬 재압축 이미지 4,526장을 매 Stop 마다 읽어 1.72초 → 이미지 확장자 제외 0.12초 (골든 시험은 이미지를 읽지 않음 · html·md 는 유지)
 # 사용자 명시 지시 시만 block
 # §84 골든 테스트는 응답마다 3초 — 코드가 안 바뀌었으면 결과도 같다: HEAD + 작업 트리 변경 내용(로그 제외) 지문이
 #   직전과 같을 때만 저장 결과 재사용 (git 무시 파일 중 골든 입력 = 기준 상태·local·전역 settings 포함 · 시험이 스스로 갈아 끼우는 ledger · 매 검사마다 바뀌는 last_verified_at 은 제외) · 하나라도 바뀌면 다시 실행 (SIX_GUARDS_GOLDEN_FORCE=1 이면 항상 실행)
-GFP="$( { git -C "$ROOT" rev-parse HEAD 2>/dev/null; git -C "$ROOT" diff HEAD -- . ':(exclude)*.log' 2>/dev/null; \
+GFP="$( { git -C "$ROOT" rev-parse HEAD 2>/dev/null; git -C "$ROOT" diff HEAD -- . ':(exclude)*.log' ':(exclude)*.jpg' ':(exclude)*.jpeg' ':(exclude)*.png' ':(exclude)*.webp' ':(exclude)*.gif' 2>/dev/null; \
           git -C "$ROOT" ls-files --others --exclude-standard -z 2>/dev/null | (cd "$ROOT" && xargs -0 -r md5sum 2>/dev/null); grep -v '"last_verified_at"' "$ROOT/.claude/state/standing-requirements.json" 2>/dev/null; md5sum "$ROOT/.claude/settings.local.json" "$HOME/.claude/settings.json" 2>/dev/null; }         | md5sum 2>/dev/null | cut -c1-32)"   # 미추적 파일은 이름이 아니라 내용까지
 GCACHE="$ROOT/.claude/state/six-guards-golden.txt"
 GOLDEN_RESULT=""

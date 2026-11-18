@@ -550,7 +550,139 @@ def cmd_item(rid: str, idx: str, state: str, evidence: str = "") -> int:
     return 2
 
 
-def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "") -> int:
+# 2026-11-19 R312: 반례를 안내문이 아니라 원장 항목으로 — 요구 문장에서 규칙으로 후보 생성 (모델 호출 0 · 하위 요구 3개+ 만)
+#   → 시험(pytest nodeid)에 연결하거나 해당 없음 사유 → complete PASS 때 연결된 시험을 지금 다시 실행 (옛 결과·다른 커밋 결과 불인정).
+COUNTEREXAMPLE_MIN_ITEMS = 3
+_CX_RULES = (
+    (r"동시|병렬|여러\s*세션|다중|경쟁|잠금", "동시 실행: 두 세션이 같은 파일·원장을 동시에 쓸 때 손실·덮어쓰기가 없나"),
+    (r"삭제|정리|지우|제거|해제", "삭제 범위: 보존 대상(운영 기록·사용자 수정)이 함께 지워지지 않나 · 대상 0건이면 정상 종료하나"),
+    (r"입력|파싱|분류|추출|인식|요구사항", "잘못된 입력: 빈 값·NULL·깨진 인코딩·아주 긴 입력을 거부하거나 안전하게 처리하나"),
+    (r"파일|경로|폴더", "경로 경계: 공백·한글 경로·없는 파일·권한 없음에서 동작하나"),
+    (r"강제\s*종료|kill|복구|재시작|손상|중단", "중단 복구: 쓰는 도중 강제 종료돼도 원본이 보존되고 다음 실행이 복구하나"),
+    (r"승인|보안|권한|우회|차단", "우회 시도: 승인·차단 없이 같은 결과를 내는 다른 경로(다른 명령 형태·시험용 id)가 막히나"),
+    (r"성능|속도|지연|캐시", "캐시 경계: 오래된 캐시·동시 갱신에서 틀린 값을 보여주지 않나"),
+    (r"전파|배포|install|대상\s*프로젝트", "전파 충돌: 대상의 사용자 수정·고유 설정을 덮지 않나"),
+    (r"\d+\s*(?:개|건|회|초|%|자)|이상|이하|최대|최소|상한|하한", "숫자 경계: 기준값 바로 아래·같음·바로 위에서 판정이 맞나"),
+    (r"테스트|시험|검증|PASS", "검증 역방향: 결함을 일부러 넣으면 그 시험이 실패하나 (통과만 보는 시험 X)"),
+    (r"기존|재사용|연결|중복", "기존 기능 충돌: 같은 파일·공유 상태를 쓰는 기존 호출자가 그대로 동작하나"),
+)
+CX_LIMIT = 8
+CX_TEST_TIMEOUT = 600
+
+
+def extract_counterexamples(items: list) -> list:
+    """하위 요구 문장 → 반례 후보 (같은 규칙에 걸린 요구는 한 반례로 묶음 = 중복 제거) · 3개 미만이면 [] (간단한 작업 비용 0)."""
+    if len(items or []) < COUNTEREXAMPLE_MIN_ITEMS:
+        return []
+    out = []
+    for pat, text in _CX_RULES:
+        hit = [x.get("i") for x in items if re.search(pat, x.get("text") or "", re.I)]
+        if hit:
+            out.append({"c": len(out) + 1, "text": text, "items": hit[:12], "state": "open"})
+        if len(out) >= CX_LIMIT:
+            break
+    return out
+
+
+def cx_counts(r: dict) -> tuple:
+    cx = r.get("counterexamples") or []
+    return sum(1 for x in cx if x.get("state") in ("tested", "na")), len(cx)
+
+
+def _cx_nodeid_ok(nodeid: str) -> str:
+    """시험 연결 검사 — 'path.py::name' 형식 · 파일 존재 · 그 이름의 시험 함수 존재 (관련 없는·없는 시험을 근거로 못 쓰게). 오류면 사유."""
+    m = re.fullmatch(r"([\w./\\-]+\.py)::([\w\[\]:.-]+)", nodeid.strip())
+    if not m:
+        return "시험은 pytest nodeid (파일.py::시험이름) 형식"
+    p = Path(m.group(1)) if Path(m.group(1)).is_absolute() else _project_root() / m.group(1)
+    if not p.is_file():
+        return f"시험 파일 없음: {m.group(1)}"
+    fn = m.group(2).split("::")[-1].split("[")[0]
+    if not re.search(rf"^\s*(?:async\s+)?def\s+{re.escape(fn)}\s*\(", p.read_text(encoding="utf-8", errors="replace"), re.M):
+        return f"시험 함수 없음: {fn} ({m.group(1)})"
+    return ""
+
+
+def _project_root() -> Path:
+    return Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
+
+
+def _head() -> str:
+    import subprocess
+    try:
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=str(_project_root()), capture_output=True,
+                              text=True, timeout=10).stdout.strip()
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def run_cx_tests(r: dict) -> dict:
+    """연결된 반례 시험을 지금 실행 → {c: (ok, 요약)} · 잠금 밖에서 부른다 (시험 몇 분 동안 다른 세션 원장 쓰기를 막지 않게)."""
+    tests = {x["c"]: x["test"] for x in r.get("counterexamples") or [] if x.get("state") == "tested" and x.get("test")}
+    if not tests:
+        return {}
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+    from independent_verifier import _pytest_failures   # 회귀 게이트와 같은 실행기 (재구현 X)
+    res = {}
+    for c, nodeid in tests.items():
+        try:
+            fails, summary, rc = _pytest_failures(_project_root(), [nodeid], CX_TEST_TIMEOUT)
+            res[c] = (rc == 0 and not fails, f"rc={rc} {summary}"[:160])
+        except Exception as e:  # noqa: BLE001 — 실행 실패 = 통과 아님
+            res[c] = (False, f"실행 실패: {e}"[:160])
+    return res
+
+
+def cmd_cx(rid: str, c: str = "", state: str = "", test: str = "", evidence: str = "") -> int:
+    """반례 조회(인자 1개) · 연결 (tested --test nodeid · na --evidence 사유) · gen = 기존 요청에 후보 생성."""
+    data = _load()
+    r = next((x for x in (data or {}).get("requests", []) if x["id"].lower() == rid.lower()), None)
+    if not r:
+        print(f"[ledger] {rid} not found", file=sys.stderr)
+        return 2
+    if not c:
+        d, t = cx_counts(r)
+        print(f"{r['id']} 반례 {d}/{t}" + ("" if t else " (하위 요구 3개 미만 또는 해당 규칙 없음 — 생략)"))
+        for x in r.get("counterexamples") or []:
+            tail = x.get("test") or x.get("evidence") or ""
+            last = x.get("last_run") or {}
+            print(f"  c{x['c']} [{x['state']:6s}] 요구{x['items']} {x['text']}" + (f"  ← {tail[:70]}" if tail else "")
+                  + (f"  · 최근 {'통과' if last.get('ok') else '실패'} {last.get('head','')}" if last else ""))
+        return 0
+    if c == "gen":
+        if r.get("counterexamples"):
+            print(f"[ledger] {rid}: 반례 이미 있음 — 덮지 않음", file=sys.stderr)
+            return 2
+        r["counterexamples"] = extract_counterexamples(r.get("items") or [])
+        _save(data)
+        print(f"[ledger] {rid} 반례 {len(r['counterexamples'])}개 생성")
+        return 0
+    x = next((y for y in r.get("counterexamples") or [] if str(y["c"]) == c.lstrip("c")), None)
+    if not x:
+        print(f"[ledger] ✗ {rid}: 반례 {c} 없음", file=sys.stderr)
+        return 2
+    if state == "tested":
+        why = _cx_nodeid_ok(test) if test else "tested 는 --test 파일.py::시험이름 필수"
+        if why:
+            print(f"[ledger] ✗ {rid} c{x['c']}: {why} — 연결 안 함", file=sys.stderr)
+            return 2
+        x.update({"state": "tested", "test": test.strip()})
+    elif state == "na":
+        if len(evidence.strip()) < 10:
+            print(f"[ledger] ✗ na 는 해당 없음 사유 10자+ (--evidence)", file=sys.stderr)
+            return 2
+        x.update({"state": "na", "evidence": evidence.strip()[:200]})
+    else:
+        print("[ledger] ✗ 상태는 tested · na", file=sys.stderr)
+        return 2
+    _save(data)
+    d, t = cx_counts(r)
+    print(f"[ledger] {rid} c{x['c']} → {state} · 반례 {d}/{t}")
+    return 0
+
+
+def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_approved: str = "",
+                 cx_results: dict = None) -> int:
     """4단계: pending → implemented → verified → completed · 증거 필수 (2026-10-16 외부 감사).
     verification=PASS 는 이 요청의 작업을 수행·확인했다는 뜻이다 — 기능 검증 판정(PASS/PARTIAL)을 대신하지 않는다."""
     data = _load()
@@ -605,6 +737,29 @@ def cmd_complete(rid: str, evidence: str = "", verification: str = "", user_appr
                       + " | ".join(left[:8]) + " · item <rid> <번호> done|na --evidence … 로 하나씩 근거를 남기거나 "
                       "--verification PARTIAL 로 사실대로 기록", file=sys.stderr)
                 return 2
+            # R312: 반례 — 열린 반례가 있거나 연결된 시험이 지금 실패하면 PASS 거부 (PARTIAL 로 사실대로 기록은 허용)
+            cd, ct = cx_counts(r)
+            if cd < ct:
+                left = [f"c{x['c']}:{x['text'][:24]}" for x in r.get("counterexamples") or [] if x.get("state") == "open"]
+                print(f"[ledger] ✗ {rid}: 반례 {cd}/{ct} — PASS 거부 (상태 그대로) · 남은 반례: " + " | ".join(left)
+                      + f" · cx {rid} <c번호> tested --test 파일.py::시험 또는 na --evidence 사유", file=sys.stderr)
+                return 2
+            if any(x.get("state") == "tested" for x in r.get("counterexamples") or []):
+                cx_results = cx_results or {}
+                for x in r.get("counterexamples") or []:   # 실행 결과가 없는 연결 시험 = 통과 아님 (옛 결과 불인정)
+                    if x.get("state") == "tested" and x["c"] not in cx_results:
+                        cx_results[x["c"]] = (False, "이번 완료 처리에서 실행 안 됨")
+                head = _head()
+                for x in r.get("counterexamples") or []:
+                    if x["c"] in cx_results:
+                        ok, summ = cx_results[x["c"]]
+                        x["last_run"] = {"ok": ok, "summary": summ, "head": head,
+                                         "at": datetime.now().isoformat(timespec="seconds")}
+                bad = [f"c{c}({s})" for c, (ok, s) in cx_results.items() if not ok]
+                if bad:
+                    _save(data)   # 실패 기록은 남긴다 (숨기지 않음)
+                    print(f"[ledger] ✗ {rid}: 반례 시험 실패 {len(bad)}건 — PASS 거부: " + " | ".join(bad), file=sys.stderr)
+                    return 2
             r["status"] = "completed"
             r["completed_at"] = datetime.now().isoformat(timespec="seconds")
             r["evidence"] = evidence[:500]
@@ -893,6 +1048,12 @@ def main() -> int:
     p_item.add_argument("--evidence", default="", help="done=실행 증거 · na=해당 없음 사유")
     p_items = sub.add_parser("items")
     p_items.add_argument("rid")
+    p_cx = sub.add_parser("cx")          # R312 반례 (조회 · gen · tested/na 연결)
+    p_cx.add_argument("rid")
+    p_cx.add_argument("c", nargs="?", default="", help="반례 번호 (예: 2 · c2) 또는 gen")
+    p_cx.add_argument("state", nargs="?", default="", help="tested · na")
+    p_cx.add_argument("--test", default="", help="pytest nodeid (파일.py::시험이름)")
+    p_cx.add_argument("--evidence", default="", help="na 사유")
 
     sub.add_parser("status")
     sub.add_parser("gate")
@@ -900,13 +1061,20 @@ def main() -> int:
     sub.add_parser("to-goals")
 
     args = ap.parse_args()
+    if args.op == "complete" and args.verification.strip().upper() == "PASS":
+        # R312: 반례 시험은 잠금 밖에서 먼저 실행 (몇 분 걸려도 다른 세션 원장 쓰기를 막지 않게) → 결과를 잠금 안 판정에 넘김
+        try:
+            r0 = next((x for x in (_load() or {}).get("requests", []) if x["id"].lower() == args.rid.lower()), None)
+        except LedgerError:
+            r0 = None
+        args.cx_results = run_cx_tests(r0) if r0 and cx_counts(r0)[0] == cx_counts(r0)[1] else None
     if args.op in _MUTATING:
         with _Lock():  # 읽기→수정→저장 전체를 한 잠금 안에서 (세션 여러 개·프롬프트 hook 동시 접근)
             return _dispatch(ap, args)
     return _dispatch(ap, args)
 
 
-_MUTATING = {"add", "add-batch", "complete", "out-of-scope", "invalid-registration", "item", "clear"}
+_MUTATING = {"add", "add-batch", "complete", "out-of-scope", "invalid-registration", "item", "cx", "clear"}
 
 
 def _dispatch(ap, args) -> int:
@@ -915,7 +1083,10 @@ def _dispatch(ap, args) -> int:
     if args.op == "add-batch":
         return cmd_add_batch(args.json_str)
     if args.op == "complete":
-        return cmd_complete(args.rid, args.evidence, args.verification, args.user_approved)
+        return cmd_complete(args.rid, args.evidence, args.verification, args.user_approved,
+                            getattr(args, "cx_results", None))
+    if args.op == "cx":
+        return cmd_cx(args.rid, args.c, args.state, args.test, args.evidence)
     if args.op == "out-of-scope":
         return cmd_out_of_scope(args.rid, args.target, args.reason)
     if args.op == "invalid-registration":

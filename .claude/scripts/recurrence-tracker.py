@@ -306,6 +306,15 @@ def set_root_cause(target: str, cause: str, evidence: str, status: str, fix: str
             "SELECT improvement_id FROM recurrence_improvements WHERE rule_id=? AND root_cause LIKE ? "
             "ORDER BY improvement_id DESC LIMIT 1", (rule_id, f"%{cause.strip()[:40]}%")).fetchone()
         imp_id = reused[0] if reused else None
+        prior = None
+        if reused:
+            # R312: 같은 원인이 다시 발생 = 기존 해결책이 재발을 못 막았다 → 검증 표시를 풀고 재검증 대상으로 (원인 분석부터 다시)
+            prior = c.execute("SELECT status, verified, improvement_plan FROM recurrence_improvements WHERE improvement_id=?",
+                              (imp_id,)).fetchone()
+            if prior and prior[0] == "VERIFIED":
+                c.execute("UPDATE recurrence_improvements SET verified=0, status='REOPENED', ts_updated=datetime('now'), "
+                          "improvement_plan=COALESCE(improvement_plan,'') || ? WHERE improvement_id=?",
+                          (f" | reopened: event {eid} 같은 원인 재발", imp_id))
         if imp_id is None and status == "confirmed":
             imp_id = c.execute(
                 "INSERT INTO recurrence_improvements(rule_id, problem_summary, root_cause, improvement_plan, status) "
@@ -313,17 +322,43 @@ def set_root_cause(target: str, cause: str, evidence: str, status: str, fix: str
         c.execute("UPDATE recurrence_events SET root_cause=?, auto_fix_status=?, improvement_id=? WHERE id=?",
                   (text, "open" if status == "confirmed" else "suspected", imp_id, eid))
         c.commit()
-        return {"event_id": eid, "rule_id": rule_id, "root_cause": text, "improvement_id": imp_id, "reused": bool(reused)}
+        out = {"event_id": eid, "rule_id": rule_id, "root_cause": text, "improvement_id": imp_id, "reused": bool(reused)}
+        if prior:
+            out["prior_fix"] = {"status": prior[0], "plan": (prior[2] or "")[-300:],
+                                "next": "기존 해결책을 그대로 쓰지 말고 이번 재현으로 다시 검증 — fix-result <id> passed --test 파일.py::시험"}
+        return out
     finally:
         c.close()
 
 
-def set_fix_result(target: str, result: str, evidence: str) -> dict:
-    """해결책 검증 결과 — passed 는 증거 필수 · failed 는 연결된 개선 기록을 FIX_FAILED 로 되돌림 (검증 안 된 채 남지 않게)."""
+def _run_regression_test(nodeid: str) -> tuple:
+    """회귀 시험을 지금 실행 (회귀 게이트와 같은 실행기 independent_verifier._pytest_failures · 재구현 X) → (통과, 요약)."""
+    import re as _re
+    if not _re.fullmatch(r"[\w./\-]+\.py::[\w\[\]:.-]+", nodeid.strip()):
+        raise ValueError("--test 는 pytest nodeid (파일.py::시험이름)")
+    root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+    from independent_verifier import _pytest_failures
+    fails, summary, rc = _pytest_failures(root, [nodeid.strip()], 600)
+    return rc == 0 and not fails, f"rc={rc} {summary}"[:200]
+
+
+def set_fix_result(target: str, result: str, evidence: str, test: str = "") -> dict:
+    """해결책 검증 결과 — passed 는 증거 필수 · failed 는 연결된 개선 기록을 FIX_FAILED 로 되돌림 (검증 안 된 채 남지 않게).
+    R312: passed 는 회귀 시험(--test) 필수 · 지금 실행해 실패하면 passed 가 아니라 failed 로 기록 (자기 보고 PASS 차단)."""
     if result not in ("passed", "failed"):
         raise ValueError("result 는 passed|failed")
     if result == "passed" and len(evidence.strip()) < 10:
         raise ValueError("passed 는 증거 필수 (회귀 시험 이름·실행 출력)")
+    test_run = None
+    if result == "passed":
+        if not test.strip():
+            raise ValueError("passed 는 --test 파일.py::시험 필수 — 지금 실행해 통과해야 VERIFIED")
+        ok, summ = _run_regression_test(test)
+        test_run = {"test": test.strip(), "ok": ok, "summary": summ}
+        evidence = f"{evidence.strip()} · 시험 {test.strip()} {summ}"
+        if not ok:
+            result = "failed"
     c = sqlite3.connect(DB)
     try:
         eid = int(target) if target.isdigit() else _latest_event(c, target)
@@ -338,7 +373,7 @@ def set_fix_result(target: str, result: str, evidence: str) -> dict:
                       (1 if result == "passed" else 0, "VERIFIED" if result == "passed" else "FIX_FAILED",
                        f" | {result}: {evidence.strip()}", row[0]))
         c.commit()
-        return {"event_id": eid, "result": result, "improvement_id": row[0]}
+        return {"event_id": eid, "result": result, "improvement_id": row[0], "test_run": test_run}
     finally:
         c.close()
 
@@ -541,14 +576,18 @@ def main(argv: list[str]) -> int:
         else:
             ap.add_argument("result", choices=("passed", "failed"))
             ap.add_argument("--evidence", default="")
+            ap.add_argument("--test", default="", help="passed 필수 · pytest nodeid (지금 실행)")
         a = ap.parse_args(argv[2:])
         try:
             res = (set_root_cause(a.target, a.cause, a.evidence, a.status, a.fix) if op == "root-cause"
-                   else set_fix_result(a.target, a.result, a.evidence))
+                   else set_fix_result(a.target, a.result, a.evidence, a.test))
         except ValueError as e:
             print(f"[recurrence-tracker] 거부: {e}", file=sys.stderr)
             return 2
         print(json.dumps(res, ensure_ascii=False))
+        if op == "fix-result" and a.result == "passed" and res.get("result") != "passed":
+            print("[recurrence-tracker] 시험 실패 — passed 대신 failed(FIX_FAILED) 로 기록함", file=sys.stderr)
+            return 2
         return 0
     print(f"unknown op: {op}", file=sys.stderr)
     return 2

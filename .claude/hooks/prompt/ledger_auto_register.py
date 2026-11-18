@@ -34,6 +34,8 @@ _EXEC_KEYWORDS = (
     "전부", "모두", "같이 해", "함께 해", "통째로", "다 처리", "전부 처리", "다 끝내",
     # 조사·분석 (실행 성격)
     "조사해", "분석해", "검증해", "실행해", "실측",
+    # R312 (11-19 실측 미등록 2건): "이거하고 git push해야지" · "이것도 하고 push해" 가 unknown 으로 보류됐다
+    "push해", "푸시해", "커밋해", "commit해", "반영해", "전파해", "올려",
     # 자연 지시 패턴
     "~~ 좀", "좀 봐", "좀 해",
 )
@@ -111,7 +113,8 @@ def _intent_text(prompt: str) -> tuple:
 
 _QUESTION_FORM_RE = re.compile(r"\?|뭐야|뭔가요|어떻게\s*(?:돼|되|해야)|이유|왜\s|맞아|인가요|일까|었나|었어\s*$")
 _DO_FIRST_RE = re.compile(r"(?:해서|하고|끝내고|마치고|끝나면|다\s*되면)\s*\S{0,12}\s*(?:다시\s*)?보고"
-                          r"|다\s*하고|다\s*해\s*(?:줘|라|$)|다\s*끝내|하라고\s*(?:몇|했|말)")
+                          r"|다\s*하고|다\s*해\s*(?:줘|라|$)|다\s*끝내|하라고\s*(?:몇|했|말)"
+                          r"|(?:이거|이것|그거|그것)\s*(?:도|까지)?\s*하고")   # R312 "이거하고 push" · "이것도 하고"
 
 
 def _classify(text: str) -> str:
@@ -437,6 +440,12 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
         # R261: 원문 안 번호 붙은 요구사항을 하위 항목으로 — 열린 항목이 있으면 PASS 불가
         if items:
             entry["items"] = items
+            try:   # R312 반례 후보 (하위 요구 3개+ 만 · 규칙 기반 · 실패해도 등록은 계속)
+                cx = _lm.extract_counterexamples(items)
+                if cx:
+                    entry["counterexamples"] = cx
+            except Exception:  # noqa: BLE001
+                pass
         existing.append(entry)
         box.update({"status": "registered", "request_id": rid, "event_id": event_id})
         return True
@@ -477,6 +486,13 @@ def _counterexample_hint(entry: dict) -> str:
     n = len(entry.get("items") or [])
     if n < COUNTEREXAMPLE_MIN_ITEMS:
         return ""
+    cx = entry.get("counterexamples") or []   # R312: 원장에 실제 생성된 반례 — PASS 전 시험 연결 또는 해당 없음 사유 필수
+    if cx:
+        rid = entry.get("id", "")
+        lines = "".join(f"\n  c{x['c']} 요구{x['items'][:6]} {x['text']}" for x in cx)
+        return (f"\n[반례 {len(cx)}개 · 원장 {rid} 에 생성됨 · 착수 전 확인]{lines}"
+                f"\n  → 깨지면 손해 큰 것은 시험으로: request-ledger.py cx {rid} <번호> tested --test 파일.py::시험 "
+                f"(완료 PASS 때 다시 실행) · 해당 없으면 na --evidence 사유 · 열린 반례가 있으면 PASS 거부")
     return (f"\n[반례 · 착수 전 · 요구 {n}개] 요구마다 ①경계(0·1·중복·NULL·범위 밖) ②예상 실패(동시 실행·강제 종료·손상 입력·권한) "
             "③기존 기능 충돌(같은 파일·공유 상태·호출자) 를 1줄씩 정하고, 깨지면 손해가 큰 것만 회귀 시험으로 만든다 "
             "(정상 입력 통과 + 잘못된 입력 거부 양방향)")

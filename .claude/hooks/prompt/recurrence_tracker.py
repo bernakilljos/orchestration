@@ -118,5 +118,5 @@ def run(ctx):
         for rid, cat, res in repeated:
             lines.append(f"  - {rid} {res.get('total')}회 → python .claude/scripts/recurrence-tracker.py root-cause "
                          f"{res['event_id']} --cause \"…\" --evidence \"파일:줄·로그·실행 출력\" --status confirmed --fix \"해결·회귀 시험\"")
-        lines.append("  · 해결 검증 뒤: recurrence-tracker.py fix-result <번호> passed|failed --evidence \"…\"")
+        lines.append("  · 해결 검증 뒤: recurrence-tracker.py fix-result <번호> passed --test 파일.py::시험 --evidence \"…\" (시험을 지금 실행 · 실패하면 FIX_FAILED) 또는 failed")
     return {"systemMessage": "\n".join(lines)}
