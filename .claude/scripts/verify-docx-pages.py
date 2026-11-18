@@ -7,6 +7,11 @@ verify-docx-structure.py 는 paragraph 만 보고 빈 페이지 못 찾음.
 빈 페이지 (0자) 또는 자투리 (<100자) 검출 시 FAIL.
 """
 import sys
+try:  # 한글 콘솔(cp949) 에서 비 cp949 문자 출력 시 UnicodeEncodeError 로 죽던 것 — 출력을 UTF-8 로 고정 (2026-11-18 R277)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 import os
 from pathlib import Path
 

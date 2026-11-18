@@ -19,6 +19,11 @@ import os
 import re
 import subprocess
 import sys
+try:  # 한글 콘솔(cp949) 에서 비 cp949 문자 출력 시 UnicodeEncodeError 로 죽던 것 — 출력을 UTF-8 로 고정 (2026-11-18 R277)
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
 from pathlib import Path
 
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
