@@ -217,3 +217,22 @@ def test_perf_gate_local_items_are_read(tmp_path):
         json.dumps({"items": [{"name": "페이지", "cmd": _PY + ["pass"], "budget_ms": 5000, "runs": 3}]}), encoding="utf-8")
     r = iv.perf_gate(d, ["x"])
     assert r["status"] == "pass" and r["items"][0]["name"] == "페이지"
+
+
+def test_perf_gate_baseline_is_median_and_needs_absolute_margin(tmp_path, monkeypatch):
+    """R303 일시 변동으로 정상 커밋이 막히지 않게 — 기준선 = 최근 통과 7개 중앙값 · 비율과 절대 폭(60ms) 둘 다 넘어야 차단."""
+    assert iv._perf_baseline_ms({"samples": [450, 440, 300, 460, 455]}) == 450   # 빠른 1회(300)에 끌려가지 않음
+    assert iv._perf_baseline_ms({"ms": 373, "at": 0}) == 373                       # 옛 형식 읽기
+    assert iv._perf_baseline_ms(None) is None
+    items = [{"name": "항목", "cmd": _PY + ["pass"], "runs": 3}]
+    seq = iter([524.0, 100.0, 700.0, 690.0])   # 통과는 재측정 없음 · 차단 후보만 1번 더
+    monkeypatch.setattr(iv, "_perf_measure", lambda cwd, it: next(seq))
+    d = _perf_repo(tmp_path, items, baseline={"항목": {"samples": [443, 433, 434, 387, 470, 446, 485]}})
+    assert iv.perf_gate(d, ["x"])["status"] == "pass"            # 실측 변동 범위(387~524) 안 = 통과
+    d2 = _perf_repo(tmp_path / "b", items, baseline={"항목": {"ms": 60, "at": 0}})
+    assert iv.perf_gate(d2, ["x"])["status"] == "pass"           # 60→100 은 67% 지만 40ms = 잡음 폭 안
+    d3 = _perf_repo(tmp_path / "c", items, baseline={"항목": {"samples": [450] * 7}})
+    r = iv.perf_gate(d3, ["x"])
+    assert r["status"] == "perf_regression" and r["items"][0]["ms"] == 690.0   # 진짜 느려짐은 그대로 차단
+    b = json.loads((d / ".claude" / "state" / "perf-baseline.json").read_text(encoding="utf-8"))["항목"]
+    assert b["samples"][-1] == 524.0 and len(b["samples"]) == 7 and b["ms"] == 446.0

@@ -412,6 +412,7 @@ def test_dispatch_entrypoint_isolated(tmp_path):
     shutil.copytree(ROOT / ".claude" / "scripts" / "lib", tmp_path / ".claude" / "scripts" / "lib",
                     ignore=shutil.ignore_patterns("__pycache__"))
     (tmp_path / ".claude" / "state").mkdir(parents=True)
+    shutil.copy(ROOT / ".claude" / "scripts" / "request-ledger.py", tmp_path / ".claude" / "scripts" / "request-ledger.py")  # R303 hook 이 안전 저장(locked_update)을 여기서 씀
     copied = hooks / "prompt" / "ledger_auto_register.py"
     assert hashlib.sha256(copied.read_bytes()).hexdigest() == hashlib.sha256(HOOK_PY.read_bytes()).hexdigest()
     sid = "phase19-dispatch-isolated"

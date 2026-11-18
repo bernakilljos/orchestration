@@ -3,7 +3,7 @@ paths:
   - "docs/**"
   - ".claude/scripts/cleanup*"
   - ".claude/config/retention*"
-  - ".claude/scripts/audit-file-write.py"
+  - ".claude/scripts/audit_file_write.py"
 ---
 
 # 운영 grade 파일 관리 룰 (Production File Management)
@@ -131,6 +131,6 @@ CREATE TABLE file_audit (
 - `.claude/rules/artifact-freshness-check.md` (기존 · 현행화)
 - `.claude/rules/conversation-history.md` (2026-09-02 신설 · retention 통합)
 - `.claude/hooks/enforce-file-naming.sh` (신설 · PostToolUse Write)
-- `.claude/scripts/audit-file-write.py` (신설 · audit trail 기록)
+- `.claude/scripts/audit_file_write.py` (신설 · audit trail 기록)
 - `orca.db.file_audit` (신설 · audit trail 저장)
 - CLAUDE.md § 7 C·E 산출물 명명·파일 정리 조항

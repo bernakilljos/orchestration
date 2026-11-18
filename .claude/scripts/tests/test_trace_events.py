@@ -526,3 +526,11 @@ def test_every_rendered_row_fits_independent_limit(proj, cols, cap, limit):
     assert len(rows) >= 5, p.stderr.decode("utf-8", "replace")[-400:]
     wide = [(w, r) for r in rows if (w := _cells_independent(r)) > limit]
     assert not wide, wide[:2]
+
+
+def test_progress_tone_by_percent():
+    """R307 개발 줄 진행률 색 — 높을수록 좋음 · 경계값 포함 · 미계측은 청록."""
+    sl = _load("sl307", SCRIPTS / "statusline_context.py")
+    assert [sl._progress_tone(p) for p in (0, 17, 32, 33, 50, 65, 66, 83, 99, 100)] == \
+        ["31", "31", "31", "33", "33", "33", "34", "34", "34", "32"]
+    assert sl._progress_tone(None) == "36"

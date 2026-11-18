@@ -217,6 +217,14 @@ def _dev_progress(status: str):
             "verified": ("33", "확인필요"), "approval_required": ("33", "확인필요")}.get(status)
 
 
+def _progress_tone(pct):
+    """R307 개발 줄 진행률(완료단계/6) 색 정본 — 높을수록 좋음 (토큰·주간 사용량 색은 높을수록 나쁨이라 따로).
+    0~32 빨강 · 33~65 노랑 · 66~99 파랑 · 100 초록 · 미계측(None) 청록 (색 체계: 청록 = 미측정)."""
+    if pct is None:
+        return "36"
+    return "32" if pct >= 100 else "34" if pct >= 66 else "33" if pct >= 33 else "31"
+
+
 # 2026-11-13 (R252 · 사용자 지시 "개발 진행률 표시 · 상태줄 디자인 바로잡기" — 개발 줄 값만 일시 동결 해제 후 재동결):
 #   현재 요청의 실제 완료 단계 = §78 요청 추적(trace) 의 성공한 도구 호출에서 계산 (추정 X · 기록 없으면 «미계측»).
 #   단계 = 개발 흐름 그대로: 수정 → 시험 → 커밋 → 원격 → 전파 → 대상검증. pytest 가 만든 가짜 이벤트(임시 폴더)는 제외.
@@ -1868,9 +1876,10 @@ def extra_gauges(cwd, data=None):
                 _pg = _req_progress(cwd)
                 if _pg and _pg[0] == _ls["current_rid"] and _pg[1]:
                     _pct = round(_pg[1] * 100 / _pg[2])
-                    _prog = f"{_pg[0]} {_pg[1]}/{_pg[2]}({_pct}%) {_pg[3]}"
+                    # R307 사용자 지시 "2/6(33%) 이것도 %별로 색상 표시" — 진행률 부분만 비율 색 · 뒤 글자는 상태 색 그대로
+                    _prog = f"[1;{_progress_tone(_pct)}m{_pg[0]} {_pg[1]}/{_pg[2]}({_pct}%)[0m[1;{_dev_st[0]}m {_pg[3]}"
                 else:
-                    _prog = f"{_ls['current_rid']} 미계측"
+                    _prog = f"[1;{_progress_tone(None)}m{_ls['current_rid']} 미계측[0m[1;{_dev_st[0]}m"
                 # R261: 하위 요구사항(원문 번호 항목) 진행 · 예상 남은 시간 (근거 없으면 «산정중» · 임의 값 X · 완료 상태면 생략)
                 _it = _ls.get("current_items") or (0, 0)
                 if _it[1]:

@@ -374,75 +374,80 @@ def _needs_approval(prompt: str) -> list:
     return _approval_basis(prompt)["matched"]
 
 
+def _ledger_module():
+    import importlib.util as _ilu2
+    _sp = _ilu2.spec_from_file_location("ledger_items", os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "scripts", "request-ledger.py"))
+    _lm = _ilu2.module_from_spec(_sp)
+    _sp.loader.exec_module(_lm)
+    return _lm
+
+
 def _append_ledger_entry(prompt: str, session_id: str, classification: str, intent: str = None) -> dict:
     """append-only · event_id 기반 중복 방지 (desc hash 는 참고만).
-    intent = 승인 판정 대상 글 (직접 쓴 글 · 또는 지시로 판정된 붙여 넣은 글). desc 는 원문 그대로."""
-    LEDGER = os.path.join(os.environ.get("CLAUDE_PROJECT_DIR", "."), ".claude", "state", "request-ledger.json")
+    intent = 승인 판정 대상 글 (직접 쓴 글 · 또는 지시로 판정된 붙여 넣은 글). desc 는 원문 그대로.
+    2026-11-18 R303: 직접 읽고 쓰던 것을 request-ledger.locked_update 로 — 잠금 · 원자 저장 · 직전본 보관 ·
+    읽기 실패 시 빈 원장으로 덮어쓰지 않음 (읽기 실패를 빈 원장으로 다시 시작해 기존 기록 전체를 덮던 경로 제거)."""
     try:
-        if os.path.exists(LEDGER):
-            with open(LEDGER, "r", encoding="utf-8", errors="replace") as f:
-                data = json.load(f)
-        else:
-            data = {"session_id": session_id or "unknown",
-                    "created_at": datetime.now().isoformat(timespec="seconds"),
-                    "requests": []}
-    except Exception:
-        data = {"session_id": session_id or "unknown",
-                "created_at": datetime.now().isoformat(timespec="seconds"),
-                "requests": []}
-
-    # 2026-10-28 재설계 — 윈도우 기반 중복 감지 (분 bucket 폐기 · 사용자 지적 반영)
-    existing = data.get("requests", [])
-    dup = _is_recent_duplicate(session_id, prompt, existing, window_s=10)
-    if dup.get("duplicate"):
-        # 원본은 raw log 에 이미 보존 (삭제 X · 사용자 지시 반영)
-        return {"status": "duplicate_within_window", "request_id": dup.get("existing_id"),
-                "event_id": dup.get("event_id")}
-    event_id = _new_event_id(session_id, prompt)
-    rid = f"R{len(existing) + 1}"
-    # 승인 요구 패턴 매치 시 status=approval_required (실행 보류)
+        _lm = _ledger_module()
+    except Exception as e:  # noqa: BLE001 — 안전한 저장 경로가 없으면 쓰지 않는다 (원문은 raw 로그에 남음)
+        return {"status": "write_error", "error": f"ledger 모듈 로드 실패: {e}"[:100]}
     basis = _approval_basis(prompt if intent is None else intent)
     approval_matches = basis["matched"]
-    initial_status = "approval_required" if approval_matches else "pending"
-    entry = {
-        "id": rid,
-        "desc": _mask(prompt)[:400],
-        "classification": classification,
-        "status": initial_status,
-        "event_id": event_id,
-        "session_id": session_id or "unknown",
-        "ts": datetime.now().isoformat(timespec="seconds"),
-        "ts_epoch": time.time(),
-        "prompt_hash": _prompt_hash(prompt),
-        # 2026-11-07: desc 는 400자에서 잘려 판정에 쓴 줄이 빠질 수 있었다 (R185).
-        # 원문 전체는 저장하지 않는다 — 길이·전체 해시(앞 16자 = orca.db conversations.content_hash)와
-        # 판정에 쓴 줄(가림 · 200자)만 남긴다.
-        "prompt_len": len(prompt or ""),
-        "prompt_sha256": hashlib.sha256((prompt or "").encode("utf-8", errors="replace")).hexdigest(),
-        "approval_basis": {k: v for k, v in basis.items() if k != "matched" and v},
-    }
-    if approval_matches:
-        entry["approval_reasons"] = approval_matches[:5]
-    # R261: 원문 안 번호 붙은 요구사항을 하위 항목으로 (정본 = request-ledger.extract_items) — 열린 항목이 있으면 PASS 불가
     try:
-        import importlib.util as _ilu2
-        _sp = _ilu2.spec_from_file_location("ledger_items", os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "..", "..", "scripts", "request-ledger.py"))
-        _lm = _ilu2.module_from_spec(_sp)
-        _sp.loader.exec_module(_lm)
         items = _lm.extract_items(prompt)
         for x in items:
             x["text"] = _mask(x["text"])
+    except Exception:  # noqa: BLE001 — 항목 추출 실패가 등록을 막지 않음 (항목 0 = 기존 동작)
+        items = []
+    box = {}
+
+    def _apply(data):
+        if not data:
+            data.update({"session_id": session_id or "unknown",
+                         "created_at": datetime.now().isoformat(timespec="seconds"), "requests": []})
+        existing = data.setdefault("requests", [])
+        # 2026-10-28 재설계 — 윈도우 기반 중복 감지 (분 bucket 폐기 · 사용자 지적 반영)
+        dup = _is_recent_duplicate(session_id, prompt, existing, window_s=10)
+        if dup.get("duplicate"):
+            box.update({"status": "duplicate_within_window", "request_id": dup.get("existing_id"),
+                        "event_id": dup.get("event_id")})
+            return None  # 저장 안 함
+        event_id = _new_event_id(session_id, prompt)
+        rid = _lm._next_id(existing)
+        entry = {
+            "id": rid,
+            "desc": _mask(prompt)[:400],
+            "classification": classification,
+            "status": "approval_required" if approval_matches else "pending",
+            "event_id": event_id,
+            "session_id": session_id or "unknown",
+            "ts": datetime.now().isoformat(timespec="seconds"),
+            "ts_epoch": time.time(),
+            "prompt_hash": _prompt_hash(prompt),
+            # 2026-11-07: desc 는 400자에서 잘려 판정에 쓴 줄이 빠질 수 있었다 (R185).
+            # 원문 전체는 저장하지 않는다 — 길이·전체 해시(앞 16자 = orca.db conversations.content_hash)와
+            # 판정에 쓴 줄(가림 · 200자)만 남긴다.
+            "prompt_len": len(prompt or ""),
+            "prompt_sha256": hashlib.sha256((prompt or "").encode("utf-8", errors="replace")).hexdigest(),
+            "approval_basis": {k: v for k, v in basis.items() if k != "matched" and v},
+        }
+        if approval_matches:
+            entry["approval_reasons"] = approval_matches[:5]
+        # R261: 원문 안 번호 붙은 요구사항을 하위 항목으로 — 열린 항목이 있으면 PASS 불가
         if items:
             entry["items"] = items
-    except Exception:  # noqa: BLE001 — 항목 추출 실패가 등록을 막지 않음 (항목 0 = 기존 동작)
-        pass
-    data.setdefault("requests", []).append(entry)
+        existing.append(entry)
+        box.update({"status": "registered", "request_id": rid, "event_id": event_id})
+        return True
+
     try:
-        with open(LEDGER, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        return {"status": "write_error", "error": str(e)[:100]}
+        _lm.locked_update(_apply)
+    except Exception as e:  # noqa: BLE001 — LedgerError 포함 · 기존 원장은 그대로
+        return {"status": "write_error", "error": str(e)[:200]}
+    if box.get("status") != "registered":
+        return box
+    rid, event_id = box["request_id"], box["event_id"]
     try:  # §78 요청 접수 = 추적 시작 (추적번호 = event_id · R 번호는 별칭)
         from _common import trace_mod
         tm = trace_mod()
@@ -503,7 +508,8 @@ def run(ctx) -> str:
                                        ".claude", "state", "request-ledger.json")
             with open(ledger_path, "r", encoding="utf-8") as f:
                 d = json.load(f)
-            latest = d.get("requests", [])[-1] if d.get("requests") else {}
+            # R303: 마지막 항목이 아니라 방금 등록한 ID 로 (그 사이 다른 세션이 추가했을 수 있음)
+            latest = next((r for r in reversed(d.get("requests", [])) if r.get("id") == result["request_id"]), {})
             if latest.get("status") == "approval_required":
                 _append_raw(prompt, session_id, classification, "approval_required")
                 reasons = latest.get("approval_reasons", [])[:3]

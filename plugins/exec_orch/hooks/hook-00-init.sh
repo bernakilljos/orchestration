@@ -40,7 +40,15 @@ fi
 HOOK_IN=""
 [ -t 0 ] || HOOK_IN="$(cat 2>/dev/null || true)"
 case "$HOOK_IN" in
-  *'"source":"clear"'*|*'"source": "clear"'*|*'"source":"compact"'*|*'"source": "compact"'*) exit 0 ;;
+  *'"source":"clear"'*|*'"source": "clear"'*|*'"source":"compact"'*|*'"source": "compact"'*)
+    # 2026-11-18 R303: compact 는 세션 ID 가 그대로라, 요약으로 대화에서 사라진 안내 문단(대상 확정 등)을
+    #   prompt-dispatch 중복 방지가 20분간 다시 넣지 않았다 → 이 세션의 «이미 넣은 문단» 기록을 지워 다음 프롬프트에 다시 실림
+    SID="${HOOK_IN#*\"session_id\"}"; SID="${SID#*\"}"; SID="${SID%%\"*}"
+    case "$SID" in
+      *[!A-Za-z0-9_-]*|'') ;;
+      *) rm -f "${CLAUDE_PROJECT_DIR:-$PROJECT}/.claude/state/prompt-inject.d/$SID.json" 2>/dev/null ;;
+    esac
+    exit 0 ;;
 esac
 cat <<'REMINDER'
 

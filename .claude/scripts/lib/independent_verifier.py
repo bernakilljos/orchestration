@@ -794,14 +794,29 @@ def _perf_measure(cwd: Path, item: Dict[str, Any]) -> Optional[float]:
     return round(statistics.median(times), 1)
 
 
+PERF_SAMPLES = 7          # 기준선 = 최근 통과 측정 7개의 중앙값 (2026-11-18 R303 실측: 상태줄 같은 방식 8회 387~524ms · 폭 35%)
+PERF_MIN_REGRESS_MS = 60  # 기준선 대비 이만큼 이상 느려져야 차단 (비율만 보면 작은 값은 잡음으로 넘음)
+
+
+def _perf_baseline_ms(entry: Optional[Dict[str, Any]]) -> Optional[float]:
+    """기준선 = 최근 통과 측정값들의 중앙값 · 옛 형식 {"ms"} 도 읽음 · 운 좋게 빨랐던 1회에 기준이 끌려 내려가지 않게."""
+    import statistics
+    if not entry:
+        return None
+    vals = [float(v) for v in (entry.get("samples") or []) if v]
+    if not vals and entry.get("ms"):
+        vals = [float(entry["ms"])]
+    return round(statistics.median(vals), 1) if vals else None
+
+
 def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
     """R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목(상태줄·페이지·DB 등)만 재서 느려지면 커밋 차단.
 
     항목 = perf-budget.json(kit) + perf-budget.local.json(대상 고유) 의 items:
       {"name", "cmd"(문자열=셸·목록=직접 실행), "triggers"(바뀐 파일 glob 목록 · 없으면 항상), "budget_ms"(절대 상한),
-       "max_regress_pct"(기준선 대비 허용 · 기본 30), "runs", "warmup", "stdin", "timeout_s"}
+       "max_regress_pct"(기준선 대비 허용 · 기본 30), "min_regress_ms"(절대 허용 폭 · 기본 60), "runs", "warmup", "stdin", "timeout_s"}
     판정: 상한 초과 또는 기준선 대비 허용 초과 → 1번 다시 재서 그래도 초과면 perf_regression · 측정 실패 = perf_unmeasured(차단).
-    기준선 = 마지막 통과 측정값 (.claude/state/perf-baseline.json · 통과할 때만 갱신 · 기계 부하로 흔들리는 값을 그대로 기준 삼지 않게
+    기준선 = 최근 통과 측정 7개 중앙값 (R303 · 옛 방식은 마지막 통과값 1개라 빠른 1회에 끌려 내려가 거짓 차단) (.claude/state/perf-baseline.json · 통과할 때만 갱신 · 기계 부하로 흔들리는 값을 그대로 기준 삼지 않게
     처음 측정은 기준선만 저장)."""
     import fnmatch
     out: Dict[str, Any] = {"items": [], "status": "pass"}
@@ -819,19 +834,21 @@ def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
         if not hit:
             continue
         ms = _perf_measure(cwd, it)
-        rec: Dict[str, Any] = {"name": it["name"], "ms": ms, "baseline_ms": (base.get(it["name"]) or {}).get("ms"),
+        rec: Dict[str, Any] = {"name": it["name"], "ms": ms, "baseline_ms": _perf_baseline_ms(base.get(it["name"])),
                                "budget_ms": it.get("budget_ms")}
         if ms is None:
             rec["verdict"] = "unmeasured"
             out["items"].append(rec)
             continue
         pct = float(it.get("max_regress_pct", 30))
+        min_abs = float(it.get("min_regress_ms", PERF_MIN_REGRESS_MS))
 
         def _over(v: float) -> Optional[str]:
             if it.get("budget_ms") and v > float(it["budget_ms"]):
                 return "상한 %sms 초과" % it["budget_ms"]
-            if rec["baseline_ms"] and v > float(rec["baseline_ms"]) * (1 + pct / 100):
-                return "기준선 %sms 대비 %d%% 초과" % (rec["baseline_ms"], pct)
+            b = float(rec["baseline_ms"] or 0)
+            if b and v > b * (1 + pct / 100) and v - b > min_abs:   # 비율과 절대 폭 둘 다 넘어야 (작은 값의 잡음 차단 방지)
+                return "기준선 %sms 대비 %d%%·%dms 초과" % (rec["baseline_ms"], pct, min_abs)
             return None
         why = _over(ms)
         if why:   # 기계 부하로 한 번 튄 값일 수 있어 1번 더 잰다 · 둘 중 작은 값으로 판정
@@ -852,7 +869,9 @@ def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
     else:
         import time as _t
         for r in out["items"]:
-            base[r["name"]] = {"ms": r["ms"], "at": int(_t.time())}
+            prev = base.get(r["name"]) or {}
+            samples = (list(prev.get("samples") or ([prev["ms"]] if prev.get("ms") else [])) + [r["ms"]])[-PERF_SAMPLES:]
+            base[r["name"]] = {"ms": _perf_baseline_ms({"samples": samples}), "samples": samples, "at": int(_t.time())}
         try:
             p = cwd / PERF_BASELINE
             p.parent.mkdir(parents=True, exist_ok=True)

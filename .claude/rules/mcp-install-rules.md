@@ -2,7 +2,8 @@
 paths:
   - ".mcp.json"
   - "plugins/mcp_*/**"
-  - "plugins/plug_*/**"
+  - "plugins/exec_orch/commands/plug_*"
+  - ".claude/commands/plug_*"
   - ".claude/scripts/*mcp*"
 ---
 

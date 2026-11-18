@@ -40,7 +40,7 @@ def _run_gate_test():
         # evidence 없이 complete
         subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/request-ledger.py'),'complete','T_R1'],
                        capture_output=True, text=True, timeout=5, encoding='utf-8',
-                       env=dict(_os.environ, CLAUDE_PROJECT_DIR=td))
+                       env=dict(_os.environ, CLAUDE_PROJECT_DIR=td, ORCA_TEST_MODE='1'))  # R303 시험 표시 — 임시 폴더 밖 원장이면 request-ledger 가 쓰기 거부
         import json as _j
         data = _j.loads(test_rl.read_text(encoding='utf-8'))
         # 뻥 방지 확인: evidence 없으면 completed 되면 안됨

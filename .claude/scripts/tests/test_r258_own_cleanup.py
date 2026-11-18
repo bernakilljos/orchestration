@@ -310,3 +310,20 @@ def test_prompt_inject_dedupe_per_session(tmp_path, monkeypatch):
     monkeypatch.setattr(pd, "DEDUPE_TTL_SEC", -1)
     assert pd._dedupe_session(a, ctx("sess-aaaa1")) == a                                          # 시간 지나면 다시
     assert pd._dedupe_session(a, types.SimpleNamespace(raw="not json")) == a                       # 세션 모름 = 원문
+
+
+def test_compact_resets_prompt_inject_dedupe_for_that_session_only(tmp_path):
+    """R303 compact 는 세션 ID 가 그대로라 요약으로 사라진 안내가 20분간 다시 안 실렸다 → compact·clear 때 그 세션 기록만 지움."""
+    import shutil, subprocess
+    d = tmp_path / ".claude/state/prompt-inject.d"
+    d.mkdir(parents=True)
+    for n in ("abc-123", "other-9"):
+        (d / f"{n}.json").write_text("{}", encoding="utf-8")
+    bash = shutil.which("bash") or "bash"
+    hook = str(KIT / "plugins/exec_orch/hooks/hook-00-init.sh")
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path)}
+    for stdin in ('{"session_id":"../../x","source":"clear"}', '{"session_id":"abc-123","source":"compact"}'):
+        r = subprocess.run([bash, hook, str(tmp_path)], input=stdin, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", env=env, timeout=60)
+        assert r.returncode == 0 and "재발 방지 헌장" not in r.stdout
+    assert sorted(p.name for p in d.iterdir()) == ["other-9.json"]

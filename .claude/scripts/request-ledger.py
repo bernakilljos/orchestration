@@ -44,22 +44,192 @@ ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().par
 LEDGER = ROOT / ".claude" / "state" / "request-ledger.json"
 
 
+# ── 저장 안전장치 (2026-11-18 R303 P0) ─────────────────────────────────────────
+# 사고: 시험이 운영 원장을 바꿔 끼워 292건이 1건으로 덮였다. 구조 원인 4가지를 여기서 막는다.
+#  ① 읽기 실패(쓰는 도중·깨짐) = 빈 원장으로 다시 시작 → 다음 저장이 전체를 덮음  → prev.json 복구 또는 거부
+#  ② 잠금 없는 읽기→수정→저장 (세션 여러 개 · 프롬프트 hook 과 CLI 동시)          → 잠금 파일
+#  ③ write_text 직접 덮어쓰기 (중간에 죽으면 반쪽 파일)                            → 임시 파일 + os.replace
+#  ④ 기존 ID 가 사라지는 저장·ID 중복·시험 프로세스의 운영 원장 쓰기             → 저장 전 검사로 거부
+BACKUP = LEDGER.with_name("request-ledger.prev.json")  # *.bak 은 cleanup-pollution 이 3일 뒤 지운다 → 정리 대상 아닌 이름
+LOCK = LEDGER.with_name(LEDGER.name + ".lock")
+LOCK_WAIT_SEC = 30.0  # 교체 재시도(최대 10초)를 기다리는 다른 쓰기까지 감안
+LOCK_STALE_SEC = 60.0
+REPLACE_WAIT_SEC = 10.0
+_lock_depth = 0
+
+
+class LedgerError(RuntimeError):
+    """원장을 안전하게 읽거나 쓸 수 없음 — 저장하지 않고 멈춘다 (기존 기록 보호)."""
+
+
+def _is_test_process() -> bool:
+    return bool(os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("ORCA_TEST_MODE"))
+
+
+def _guard_operational() -> None:
+    """시험 프로세스는 시스템 임시 폴더 아래 원장에만 쓴다 (실제 프로젝트 원장은 TEMP 아래에 없다 · 사본 스크립트로 도는 시험도 같은 기준)."""
+    if not _is_test_process() or os.environ.get("LEDGER_ALLOW_OPERATIONAL_WRITE") == "1":
+        return
+    import tempfile
+    try:
+        tmp = Path(tempfile.gettempdir()).resolve()
+        ok = LEDGER.resolve().is_relative_to(tmp)
+    except (OSError, ValueError):
+        ok = False
+    if not ok:
+        raise LedgerError("시험 실행 중 운영 원장 쓰기 차단 — CLAUDE_PROJECT_DIR 를 임시 폴더로 지정할 것: " + str(LEDGER))
+
+
+class _Lock:
+    """프로세스 사이 잠금 (O_EXCL 잠금 파일 · 같은 프로세스 안 중첩 허용 · 60초 넘은 잠금은 죽은 것으로 보고 제거)."""
+
+    def __enter__(self):
+        global _lock_depth
+        if _lock_depth:
+            _lock_depth += 1
+            return self
+        import time as _t
+        LOCK.parent.mkdir(parents=True, exist_ok=True)
+        t0 = _t.time()
+        while True:
+            try:
+                fd = os.open(str(LOCK), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                os.write(fd, f"{os.getpid()} {_t.time():.0f}".encode())
+                os.close(fd)
+                break
+            except FileExistsError:
+                try:
+                    if _t.time() - LOCK.stat().st_mtime > LOCK_STALE_SEC:
+                        LOCK.unlink()
+                        continue
+                except OSError:
+                    pass
+                if _t.time() - t0 > LOCK_WAIT_SEC:
+                    raise LedgerError(f"원장 잠금 {LOCK_WAIT_SEC:.0f}초 대기 초과 — 저장하지 않음 ({LOCK})")
+                _t.sleep(0.05)
+        _lock_depth = 1
+        return self
+
+    def __exit__(self, *exc):
+        global _lock_depth
+        _lock_depth -= 1
+        if _lock_depth == 0:
+            try:
+                LOCK.unlink()
+            except OSError:
+                pass
+        return False
+
+
+def _parse(p: Path):
+    d = json.loads(p.read_text(encoding="utf-8"))
+    if not isinstance(d, dict) or not isinstance(d.get("requests", []), list):
+        raise ValueError("원장 형식 아님")
+    return d
+
+
 def _load() -> dict:
+    """없으면 {} · 깨졌으면 prev.json 으로 복구 · 둘 다 안 되면 LedgerError (빈 원장으로 다시 시작해 덮어쓰지 않는다)."""
     if not LEDGER.exists():
         return {}
-    try:
-        return json.loads(LEDGER.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+    err = None
+    for _ in range(3):  # 다른 프로세스가 교체하는 순간을 피해 다시 읽기
+        try:
+            return _parse(LEDGER)
+        except Exception as e:  # noqa: BLE001
+            err = e
+            import time as _t
+            _t.sleep(0.05)
+    if BACKUP.exists():
+        try:
+            d = _parse(BACKUP)
+            print(f"[ledger] 원장 읽기 실패({type(err).__name__}) → 직전 정상본 prev.json 으로 복구해 읽음", file=sys.stderr)
+            return d
+        except Exception:  # noqa: BLE001
+            pass
+    raise LedgerError(f"원장 읽기 실패·백업 없음 — 저장 중단 ({type(err).__name__}: {err})")
+
+
+def check_integrity(data: dict, before: dict | None = None) -> list:
+    """저장 전 검사 — ID 중복 · 비어 있는 ID · 기존 ID 사라짐. 문제 목록 반환 (빈 목록 = 통과)."""
+    probs = []
+    reqs = data.get("requests", [])
+    ids = [r.get("id") for r in reqs]
+    if any(not i for i in ids):
+        probs.append("ID 없는 항목")
+    dup = sorted({i for i in ids if i and ids.count(i) > 1})
+    if dup:
+        probs.append("ID 중복 " + ",".join(dup[:10]))
+    if before:
+        gone = [r.get("id") for r in before.get("requests", []) if r.get("id") not in set(ids)]
+        if gone:
+            probs.append(f"기존 {len(gone)}건 사라짐 ({','.join(map(str, gone[:10]))}) — 원장은 추가만 허용")
+    return probs
 
 
 def _save(data: dict) -> None:
+    _guard_operational()
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    LEDGER.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    with _Lock():
+        before = None
+        if LEDGER.exists():
+            try:
+                before = _parse(LEDGER)
+            except Exception:  # noqa: BLE001 — 깨진 현재본은 비교 대상에서 빼고 prev.json 과 비교
+                before = _parse(BACKUP) if BACKUP.exists() else None
+        probs = check_integrity(data, before)
+        if probs:
+            raise LedgerError("원장 저장 거부 — " + " · ".join(probs))
+        body = json.dumps(data, ensure_ascii=False, indent=2)
+        json.loads(body)  # 쓰기 전 직렬화 결과 재확인
+        raw = body.encode("utf-8")
+        _atomic_write(LEDGER, raw)
+        try:  # 검사를 통과해 저장된 최신 정상본 = 복구본 (원장이 나중에 깨져도 0건 손실로 되살림)
+            _atomic_write(BACKUP, raw)
+        except LedgerError:
+            pass
+
+
+def _atomic_write(path: Path, raw: bytes) -> None:
+    import time as _t
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    with open(tmp, "wb") as f:
+        f.write(raw)
+        f.flush()
+        os.fsync(f.fileno())
+    # Windows: 다른 프로세스가 읽는 중이거나 백신이 방금 쓴 파일을 검사하는 중이면 교체가 잠시 거부됨
+    #   (2026-11-18 R303 실측: 전체 시험 부하 중 2초 재시도로는 드물게 실패 → 최대 10초 · 간격 점점 늘림)
+    t0, i = _t.time(), 0
+    while True:
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if _t.time() - t0 > REPLACE_WAIT_SEC:
+                break
+            _t.sleep(min(0.05 * (2 ** min(i, 4)), 0.5))
+            i += 1
+    try:
+        tmp.unlink()
+    except OSError:
+        pass
+    raise LedgerError(f"원장 교체 {REPLACE_WAIT_SEC:.0f}초 재시도 실패 — 저장하지 않음 ({path})")
+
+
+def locked_update(fn):
+    """잠금 안에서 읽기→fn(data)→저장. fn 이 None 반환 = 저장 안 함. 프롬프트 hook 도 이것만 쓴다."""
+    _guard_operational()
+    with _Lock():
+        data = _load()
+        result = fn(data)
+        if result is not None:
+            _save(data)
+        return result
 
 
 def _next_id(requests: list) -> str:
-    return f"R{len(requests) + 1}"
+    nums = [int(m.group(1)) for r in requests for m in [re.fullmatch(r"R(\d+)", str(r.get("id", "")))] if m]
+    return f"R{max(nums, default=0) + 1}"
 
 
 def _idempotency_key(desc: str, session: str = "") -> str:
@@ -565,8 +735,14 @@ def cmd_gate() -> int:
 
 
 def cmd_clear() -> int:
-    if LEDGER.exists():
-        LEDGER.unlink()
+    """비우기 = 지우지 않고 보관 이름으로 옮김 (2026-11-18 R303 · 되돌릴 수 있게)."""
+    _guard_operational()
+    with _Lock():
+        if LEDGER.exists():
+            dst = LEDGER.with_name(f"request-ledger.cleared-{datetime.now():%Y%m%d-%H%M%S}.json")
+            os.replace(LEDGER, dst)
+            print(f"[ledger] cleared · 보관 {dst.name}")
+            return 0
     print("[ledger] cleared")
     return 0
 
@@ -669,6 +845,16 @@ def main() -> int:
     sub.add_parser("to-goals")
 
     args = ap.parse_args()
+    if args.op in _MUTATING:
+        with _Lock():  # 읽기→수정→저장 전체를 한 잠금 안에서 (세션 여러 개·프롬프트 hook 동시 접근)
+            return _dispatch(ap, args)
+    return _dispatch(ap, args)
+
+
+_MUTATING = {"add", "add-batch", "complete", "out-of-scope", "invalid-registration", "item", "clear"}
+
+
+def _dispatch(ap, args) -> int:
     if args.op == "add":
         return cmd_add(args.desc, args.session)
     if args.op == "add-batch":
@@ -705,6 +891,9 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
+    except LedgerError as e:  # 저장 거부·잠금 실패 = 기록 안 됨을 숨기지 않는다 (gate·status 는 아래 0 유지)
+        print(f"[request-ledger] 저장 안 함: {e}", file=sys.stderr)
+        sys.exit(3 if len(sys.argv) > 1 and sys.argv[1] in _MUTATING else 0)
     except Exception as e:
         print(f"[request-ledger] fatal: {e}", file=sys.stderr)
         sys.exit(0)
