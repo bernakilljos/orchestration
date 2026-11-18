@@ -467,7 +467,8 @@
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_session_guard/hooks/cleanup-orphans.sh\" SessionEnd",
+            "async": true
           },
           {
             "type": "command",
