@@ -6,7 +6,6 @@
       "Read",
       "Glob",
       "Grep",
-      "Edit(*)",
       "Edit(**)",
       "Edit(.claude/**)",
       "Edit(plugins/**)",

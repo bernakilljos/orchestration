@@ -837,7 +837,7 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
                 base_dir = Path(tempfile.mkdtemp(prefix="regress-base-"))
                 wt = base_dir / "wt"
                 try:
-                    if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=120) is None:
+                    if _run_git_in(cwd, ["worktree", "add", "--detach", str(wt), "HEAD"], timeout=600) is None:
                         raise RuntimeError("worktree 생성 실패")
                     base_tests = [t for t in tests if (wt / t).exists()]
                     bfails, bsummary, _brc = _pytest_failures(wt, base_tests, timeout) if base_tests else (set(), "", 5)
@@ -849,7 +849,7 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
                     res["status"] = "blocked"
                     res["reason"] = "기준선(HEAD) 시험 실행 불가: %s" % e
                 finally:
-                    _run_git_in(cwd, ["worktree", "remove", "--force", str(wt)], timeout=120)
+                    _run_git_in(cwd, ["worktree", "remove", "--force", str(wt)], timeout=600)
                     try:
                         base_dir.rmdir()
                     except OSError:

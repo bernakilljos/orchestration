@@ -742,6 +742,8 @@
                     voice dictation 무한 retry 차단
     2.1.201 (7/3): Sonnet 5 세션에서 mid-conversation harness reminder 제거
     2.1.200 (7/3): 기본 permission mode 를 Manual 로 변경 (우리는 bypassPermissions — 무관)
+    2.1.326 (11/17): 권한 규칙 `Edit(*)` 는 작업 폴더 안만 허용 · `Read(*)`·`Glob(*)`·`Grep(*)` 는 효과 없음 경고 → kit·template·IFRS·ICMAI 설정을 괄호 없는 `Edit`·`Read` 등으로 교체 (R276)
+    회귀 게이트 기준선 worktree 생성 시간 제한 120→600초 (R276 · 메모리 부하 중 체크아웃 4분 17초 실측 → 매번 blocked 로 커밋 차단되던 것)
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)
     2.1.198 (7/1): Fable 5 / Mythos 5 RESTORED · subagent 기본 background 실행 ·
