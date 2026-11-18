@@ -49,6 +49,18 @@ def _ids(tmp_path):
     return [r["id"] for r in json.loads(_ledger(tmp_path).read_text(encoding="utf-8"))["requests"]]
 
 
+def _root_in_temp() -> bool:
+    import tempfile
+    try:
+        return ROOT.resolve().is_relative_to(Path(tempfile.gettempdir()).resolve())
+    except (OSError, ValueError):
+        return False
+
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.skipif(_root_in_temp(), reason="격리 사본(TEMP 안) 실행 — 사본 원장 자체가 시험 영역이라 '운영 원장 차단' 전제가 성립하지 않음")
 def test_operational_ledger_write_blocked_in_test_process():
     """② 시험 프로세스(ORCA_TEST_MODE)가 CLAUDE_PROJECT_DIR 없이 돌면 운영 원장에 못 쓴다."""
     before = _sha(REAL)
@@ -169,3 +181,41 @@ def test_golden_gate_concurrent_does_not_touch_operational_ledger():
         list(ex.map(lambda _: g._run_gate_test(), range(3)))
     after = ids()
     assert after[:len(before)] == before and "T_R1" not in after
+
+
+def test_killed_writer_mid_save_recovers_fast_without_loss(tmp_path):
+    """강제 종료 재현: 잠금을 쥐고 임시 파일까지 쓴 프로세스를 kill → 다음 저장이 60초 기다리지 않고 성공 · 기존 기록 그대로."""
+    import time
+    _seed(tmp_path, 50)
+    code = (
+        "import importlib.util,sys,time,os;"
+        "sp=importlib.util.spec_from_file_location('rl',sys.argv[1]);m=importlib.util.module_from_spec(sp);sp.loader.exec_module(m);"
+        "lk=m._Lock();lk.__enter__();"
+        "open(str(m.LEDGER)+'.%d.tmp'%os.getpid(),'w').write('{\"requests\": [');"   # 쓰는 도중 상태
+        "print('locked',flush=True);time.sleep(60)")
+    p = subprocess.Popen([sys.executable, "-X", "utf8", "-c", code, str(LEDGER_PY)], env=_env(tmp_path),
+                         stdout=subprocess.PIPE, text=True)
+    assert p.stdout.readline().strip() == "locked"
+    lock = tmp_path / ".claude" / "state" / "request-ledger.json.lock"
+    assert lock.exists()
+    p.kill()
+    p.wait(timeout=30)
+    t0 = time.time()
+    r = _run(tmp_path, "add", "강제 종료 뒤 등록")
+    assert r.returncode == 0, r.stderr
+    assert time.time() - t0 < 10                      # 죽은 잠금 즉시 회수 (예전: 60초 지나야 회수 · 대기 한도 초과로 실패)
+    ids = _ids(tmp_path)
+    assert ids == [f"R{i}" for i in range(1, 52)]      # 기존 50건 + 새 1건 · 반쪽 임시 파일은 원장에 섞이지 않음
+    assert not lock.exists()
+
+
+def test_live_lock_owner_is_not_stolen(tmp_path):
+    """살아 있는 프로세스의 잠금은 회수하지 않는다 (회수 판정이 너무 공격적이면 동시 저장이 깨짐)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("rl303b", LEDGER_PY)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    assert m._pid_alive(os.getpid()) is True
+    p = subprocess.Popen([sys.executable, "-c", "pass"])
+    p.wait(timeout=30)
+    assert m._pid_alive(p.pid) is False

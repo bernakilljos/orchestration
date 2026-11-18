@@ -39,7 +39,7 @@ def _run_gate_test():
         test_rl.write_text('{"session_id":"test","created_at":"t","requests":[{"id":"T_R1","desc":"test","status":"pending","ts":"t"}]}', encoding='utf-8')
         # evidence 없이 complete
         subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/request-ledger.py'),'complete','T_R1'],
-                       capture_output=True, text=True, timeout=5, encoding='utf-8',
+                       capture_output=True, text=True, timeout=30, encoding='utf-8',  # R303 5초 → 30초 (동시 Stop·부하 때 거짓 FAIL)
                        env=dict(_os.environ, CLAUDE_PROJECT_DIR=td, ORCA_TEST_MODE='1'))  # R303 시험 표시 — 임시 폴더 밖 원장이면 request-ledger 가 쓰기 거부
         import json as _j
         data = _j.loads(test_rl.read_text(encoding='utf-8'))

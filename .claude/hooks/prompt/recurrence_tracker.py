@@ -54,6 +54,18 @@ def run(ctx):
     prompt = ctx.prompt_jq()
     if not prompt or len(prompt) < 3:
         return None
+    # 2026-11-18 R308: 재발은 «사용자가 직접 쓴 글» 에서만 센다 — 붙여 넣은 검토·지시 글 안의 "검증해야 합니다"·"대충" 과
+    #   harness 알림까지 증명지시·전수조사skip 재발로 기록돼 지표가 부풀었다 (실측: ChatGPT 평가문 붙여 넣기 1회 = 증명지시 +1).
+    #   정본 = ledger_auto_register 의 붙여 넣은 글 구분 (같은 기준 재사용 · 새 판정 X)
+    try:
+        import ledger_auto_register as _lar
+        if _lar._is_system_notification(prompt):
+            return None
+        prompt = _lar._split_pasted(prompt)[0]
+    except Exception:  # noqa: BLE001 — 구분 실패 시 원래대로 전체를 본다
+        pass
+    if not prompt or len(prompt) < 3:
+        return None
     session_id = ctx.field("session_id", "sessionId", "id")
 
     # recurrence-tracker.py 동적 import

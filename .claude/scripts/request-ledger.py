@@ -80,6 +80,38 @@ def _guard_operational() -> None:
         raise LedgerError("시험 실행 중 운영 원장 쓰기 차단 — CLAUDE_PROJECT_DIR 를 임시 폴더로 지정할 것: " + str(LEDGER))
 
 
+def _pid_alive(pid: int) -> bool:
+    """프로세스가 살아 있나 (Windows 는 OpenProcess — os.kill(pid, 0) 은 Windows 에서 CTRL_C 를 보내므로 쓰지 않음)."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        k = ctypes.windll.kernel32
+        h = k.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not h:
+            return ctypes.GetLastError() == 5  # 접근 거부 = 존재함
+        code = ctypes.c_ulong()
+        ok = k.GetExitCodeProcess(h, ctypes.byref(code))
+        k.CloseHandle(h)
+        return bool(ok) and code.value == 259  # STILL_ACTIVE
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def _lock_owner_alive() -> bool:
+    """잠금 파일의 PID 가 살아 있나 · 읽기 실패·형식 불명 = 살아 있다고 본다 (모르면 회수하지 않음)."""
+    try:
+        pid = int(LOCK.read_text(encoding="utf-8", errors="replace").split()[0])
+    except (OSError, ValueError, IndexError):
+        return True
+    return _pid_alive(pid)
+
+
 class _Lock:
     """프로세스 사이 잠금 (O_EXCL 잠금 파일 · 같은 프로세스 안 중첩 허용 · 60초 넘은 잠금은 죽은 것으로 보고 제거)."""
 
@@ -99,7 +131,8 @@ class _Lock:
                 break
             except FileExistsError:
                 try:
-                    if _t.time() - LOCK.stat().st_mtime > LOCK_STALE_SEC:
+                    # R303: 잠금을 쥔 프로세스가 강제 종료됐으면 60초를 기다리지 않고 바로 회수 (대기 한도 30초보다 먼저)
+                    if _t.time() - LOCK.stat().st_mtime > LOCK_STALE_SEC or not _lock_owner_alive():
                         LOCK.unlink()
                         continue
                 except OSError:
