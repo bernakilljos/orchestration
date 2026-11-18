@@ -663,15 +663,25 @@ GATE_LOOP_FILE = LEDGER.parent / "stop-gate-loop.json"
 GATE_LOOP_MAX = 3  # 같은 미완료 집합으로 stop_hook_active 차단이 이만큼 이어지면 루프로 본다
 
 
+_STOP_PAYLOAD = None
+
+
 def _stop_hook_payload() -> dict:
-    """Stop hook stdin JSON (stop_hook_active · session_id). 터미널·빈 입력 = {}."""
+    """Stop hook stdin JSON (stop_hook_active · session_id). 터미널·빈 입력 = {}. stdin 은 한 번만 읽히므로 결과를 기억한다."""
+    global _STOP_PAYLOAD
+    if _STOP_PAYLOAD is not None:
+        return _STOP_PAYLOAD
     try:
         if sys.stdin is None or sys.stdin.isatty():
-            return {}
-        raw = sys.stdin.read()
-        return json.loads(raw) if raw.strip() else {}
+            _STOP_PAYLOAD = {}
+        else:
+            raw = sys.stdin.read()
+            _STOP_PAYLOAD = json.loads(raw) if raw.strip() else {}
     except Exception:
-        return {}
+        _STOP_PAYLOAD = {}
+    if not isinstance(_STOP_PAYLOAD, dict):
+        _STOP_PAYLOAD = {}
+    return _STOP_PAYLOAD
 
 
 def _gate_loop_reset() -> None:
@@ -751,6 +761,12 @@ def cmd_gate() -> int:
     #   항목은 그대로 미완료로 남고 status·statusline 에 보인다 (완료 처리 X).
     waiting = [r for r in data["requests"] if r["status"] == "approval_required"]
     blocking = [r for r in data["requests"] if is_blocking(r)]
+    # 2026-11-18: 원장은 모든 세션이 같이 쓴다 — 다른 세션이 남긴 옛 미완료(459건)로 이 세션의 Stop 이 매 회차 막혔다.
+    #   Stop payload 의 session_id 가 있으면 다른 세션 id 가 적힌 항목은 막지 않는다 (남의 미완료는 그대로 미완료 · 상태줄·status 에 보임).
+    #   session_id 를 못 받으면(터미널 실행 등) 종전대로 전체.
+    _sid = str(_stop_hook_payload().get("session_id") or "")
+    if _sid:
+        blocking = [r for r in blocking if not r.get("session_id") or r.get("session_id") == _sid]   # 세션 id 없는 옛 항목은 종전대로 막음
     if not blocking:
         _gate_loop_reset()
         open_items = waiting + [r for r in data["requests"] if _honest_open(r)]

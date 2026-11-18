@@ -234,3 +234,12 @@ def test_six_guards_does_not_rerun_ledger_gate():
     assert "stop-request-ledger-gate.sh" in txt and "</dev/null" in txt
     hook = (ROOT / ".claude" / "hooks" / "stop-request-ledger-gate.sh").read_text(encoding="utf-8")
     assert "gate 2>/dev/null" not in hook
+
+
+def test_gate_ignores_other_sessions_pending(tmp_path):
+    """2026-11-18: 다른 세션이 남긴 옛 미완료로 이 세션 Stop 이 매 회차 막혔다 — 남의 것은 안 막고 자기 것·세션 없는 것은 막는다."""
+    other = dict(_r("R1", "pending"), session_id="s-old")
+    mine = dict(_r("R2", "pending"), session_id="s1")
+    assert _gate(tmp_path, [other, _r("R3", "completed")], {"session_id": "s1"}).returncode == 0
+    assert _gate(tmp_path, [other, mine], {"session_id": "s1"}).returncode == 2
+    assert _gate(tmp_path, [other], {}).returncode == 2          # 세션 id 를 못 받으면 종전대로 전체
