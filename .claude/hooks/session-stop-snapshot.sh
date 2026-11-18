@@ -68,6 +68,8 @@ EOF
   } > "$SNAPSHOT_FILE"
 
   echo "[$(date -Iseconds)] Snapshot saved: $SNAPSHOT_FILE"
+  # 2026-11-18 (R288): Stop 마다 새 파일이 쌓여 761개(0.77MB)가 됐다 — 읽는 쪽이 없는 자기 산출물이라 최신 20개만 남긴다
+  ls -1t "${STATE_DIR}"/session-snapshot-????????-??????.md 2>/dev/null | tail -n +21 | while IFS= read -r _old; do rm -f -- "$_old"; done
 
 } >> "$LOG_FILE" 2>&1
 

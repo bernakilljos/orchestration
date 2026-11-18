@@ -123,11 +123,16 @@ def _cached_cmd(cwd, key, argv, ttl):
         return None, "", 0
     if r.returncode == 0:
         c[key] = {"ts": now, "rc": r.returncode, "out": r.stdout, "argv": argv}
-        try:
-            with open(f, "w", encoding="utf-8") as _f:
+        try:   # 2026-11-18 R288: 세션 여러 개가 같은 캐시를 동시에 쓰면 반쪽 JSON 이 남던 것 → 임시 파일 + os.replace (원자적)
+            _tmp = f"{f}.{os.getpid()}.tmp"
+            with open(_tmp, "w", encoding="utf-8") as _f:
                 json.dump(c, _f, ensure_ascii=False)
+            os.replace(_tmp, f)
         except Exception:
-            pass
+            try:
+                os.remove(_tmp)
+            except Exception:
+                pass  # noqa: BLE001
     return r.returncode, r.stdout, 0
 
 
@@ -399,6 +404,27 @@ def recent_error_count(cwd: str) -> int:
 _LOG_UNIQUE_ERRS = None   # R268 recent_log_issues 가 채움 (READY 감점용 고유 오류 수)
 
 
+def _tail_n_lines(path: str, n: int = 500, chunk: int = 65536) -> list:
+    """파일 끝에서 거꾸로 읽어 마지막 n 줄 — readlines()[-n:] 과 같은 결과 (줄끝 보존) · 파일 전체를 메모리에 올리지 않는다.
+    2026-11-18 R288: 상태줄이 렌더마다 orca-10min-loop.log 3.5MB · cleanup-pollution.log 3.4MB 를 통째로 읽던 것."""
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        pos = f.tell()
+        buf = b""
+        while pos > 0 and buf.count(b"\n") <= n:
+            step = min(chunk, pos)
+            pos -= step
+            f.seek(pos)
+            buf = f.read(step) + buf
+    # 텍스트 모드 readlines() 와 같은 규칙: universal newline (\r\n·\r → \n) · \n 에서만 나눔 (splitlines 의 \x0c 등 X)
+    text = buf.decode("utf-8", "replace").replace("\r\n", "\n").replace("\r", "\n")
+    parts = text.split("\n")
+    lines = [s + "\n" for s in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
+    if pos > 0 and lines:
+        lines = lines[1:]   # 앞 조각은 잘린 줄일 수 있다 (n 줄은 이미 확보)
+    return lines[-n:]
+
+
 def _tail_lines(path: str, nbytes: int = 400_000) -> list:
     """큰 기록 파일의 끝부분만 읽는다 (렌더 속도 보호 · 최근 24시간 판정에 충분한 양)."""
     with open(path, "rb") as f:
@@ -562,8 +588,7 @@ def recent_log_issues(cwd: str):
         try:
             if os.path.getmtime(lp) < cutoff:
                 continue
-            with open(lp, encoding="utf-8", errors="replace") as f:
-                lines = f.readlines()[-500:]
+            lines = _tail_n_lines(lp, 500)   # 2026-11-18 R288: 3~4MB 로그를 통째로 읽고 뒤 500줄만 쓰던 것 → 끝에서 거꾸로 읽기 (결과 동일)
             for ln in lines:
                 c, e, w = crit_re.search(ln), err_re.search(ln), warn_re.search(ln)
                 if not (c or e or w):

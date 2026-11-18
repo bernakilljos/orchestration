@@ -8,6 +8,7 @@
 방식 1 만으로는 사용자가 본 install.bat:658 같은 누적 컨텍스트 깨짐을 못 잡음.
 방식 2 추가로 진짜 전수 검증.
 """
+import os
 import subprocess
 import re
 import sys
@@ -18,7 +19,6 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # 대상·스탬프가 모두 상대경로라 저장소 루트로 옮긴다 — 다른 폴더에서 불리면 그 폴더에 .claude/state/ 가 생겼다(10-26 nextjs/.claude)
-import os
 os.chdir(Path(__file__).resolve().parents[2])
 
 TARGETS = [
@@ -31,7 +31,8 @@ TARGETS = [
 
 # OS-agnostic 임시 디렉토리 (Windows TEMP / Unix /tmp 자동)
 _TMP = Path(tempfile.gettempdir())
-TMP_LINE = _TMP / '_audit_line.bat'
+# 2026-11-18 (R288): 고정 이름(_audit_line.bat·_audit_ctx.bat) → 프로세스 고유 (세션 2~3개가 같은 Stop 에 겹쳐 서로 덮어쓰던 것)
+TMP_LINE = _TMP / f'_audit_line_{os.getpid()}.bat'
 
 # 2026-10-06 — Stop hook 으로 매 턴 254초(실측) 돌며 CPU 를 먹어 응답이 느려졌다.
 #   대상 .bat 이 마지막 감사 이후 안 바뀌었으면 건너뛴다 (--force 로 강제).
@@ -40,7 +41,10 @@ if '--force' not in sys.argv and _STAMP.exists():
     _last = _STAMP.stat().st_mtime
     if all(Path(t).stat().st_mtime <= _last for t in TARGETS if Path(t).exists()):
         sys.exit(0)
-TMP_CTX = _TMP / '_audit_ctx.bat'
+TMP_CTX = _TMP / f'_audit_ctx_{os.getpid()}.bat'
+
+import atexit
+atexit.register(lambda: [f.unlink(missing_ok=True) for f in (TMP_LINE, TMP_CTX)])   # 예외 종료에도 임시 파일 정리
 
 errors = []
 
