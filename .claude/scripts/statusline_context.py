@@ -1168,10 +1168,10 @@ def extra_gauges(cwd, data=None):
             import datetime as _dt_mod
             now_ts = _dt_mod.datetime.now(_dt_mod.timezone.utc).replace(tzinfo=None)
             _GRADES = [  # (판정 키워드, 순위, ANSI, 표식, 이름)
-                (("fable", "mythos"), 4, "[1;31m", "🔴", "F"),
-                (("opus", "inherit"), 3, "[1;35m", "🟣", "O"),
-                (("sonnet",), 2, "[1;36m", "🔵", "S"),
-                (("haiku",), 1, "[1;32m", "🟢", "H"),
+                (("fable", "mythos"), 4, "[1;31m", "🔴", "특"),   # 2026-11-18 사용자 지시 "등급이면 하중상특": "등급이면 하중상특 · 그냥 상으로 가자": F·O·S·H → 특·상·중·하
+                (("opus", "inherit"), 3, "[1;35m", "🟣", "상"),
+                (("sonnet",), 2, "[1;36m", "🔵", "중"),
+                (("haiku",), 1, "[1;32m", "🟢", "하"),
             ]
 
             def _grade(model):
@@ -1179,7 +1179,7 @@ def extra_gauges(cwd, data=None):
                 for keys, rank, ansi, mark, nm in _GRADES:
                     if any(k in m for k in keys):
                         return rank, ansi, mark, nm
-                return 3, "[1;35m", "🟣", "O"  # 모르는 값 = 메인 모델 상속으로 본다
+                return 3, "[1;35m", "🟣", "상"  # 모르는 값 = 메인 모델 상속으로 본다
 
             def _dur(sec):
                 return f"{sec // 60}m{sec % 60:02d}s" if sec >= 60 else f"{sec}s"
@@ -1551,7 +1551,7 @@ def extra_gauges(cwd, data=None):
         clock = dt.strftime("%I:%M%p").lstrip("0").lower()
         if dt.date() == today:
             return clock
-        return dt.strftime("%b ") + str(dt.day) + " " + clock
+        return f"{dt.month}/{dt.day} {clock}"   # 2026-11-18 사용자 지시: "Nov 19 8:00am" → "11/19 8:00am"
 
     # 2026-09-07: rate_limits 가 **매 렌더마다 오는 것이 아니다** (실측).
     #   세션 첫 렌더(첫 API 응답 전)·일부 렌더에서는 키 자체가 없다. 그때 아래 자체 계산으로
