@@ -31,19 +31,39 @@ from datetime import datetime
 import threading
 from contextlib import contextmanager
 
-try:
-    from .structured_logger import (
-        get_trace_id,
-        set_trace_id,
-        new_trace_id,
-        get_logger
-    )
-except ImportError:   # 명령줄 직접 실행 (python lib/trace.py show …) · 훅의 파일 로드
-    import importlib.util as _ilu
-    _sl_spec = _ilu.spec_from_file_location("_trace_structured_logger", str(Path(__file__).with_name("structured_logger.py")))
-    _sl = _ilu.module_from_spec(_sl_spec)
-    _sl_spec.loader.exec_module(_sl)
-    get_trace_id, set_trace_id, new_trace_id, get_logger = _sl.get_trace_id, _sl.set_trace_id, _sl.new_trace_id, _sl.get_logger
+_SL = None
+
+
+def _structured_logger():
+    """R293 structured_logger(logging 포함 ~24ms) 는 Tracer·trace_id 함수를 실제로 쓸 때만 불러온다.
+    상태줄은 get_current·events 만 쓰는데 렌더마다 logging 까지 불러왔다 · 공개 이름·동작은 그대로."""
+    global _SL
+    if _SL is None:
+        try:
+            from . import structured_logger as _m
+        except ImportError:   # 명령줄 직접 실행 (python lib/trace.py show …) · 훅의 파일 로드
+            import importlib.util as _ilu
+            _sl_spec = _ilu.spec_from_file_location("_trace_structured_logger", str(Path(__file__).with_name("structured_logger.py")))
+            _m = _ilu.module_from_spec(_sl_spec)
+            _sl_spec.loader.exec_module(_m)
+        _SL = _m
+    return _SL
+
+
+def get_trace_id(*a, **k):
+    return _structured_logger().get_trace_id(*a, **k)
+
+
+def set_trace_id(*a, **k):
+    return _structured_logger().set_trace_id(*a, **k)
+
+
+def new_trace_id(*a, **k):
+    return _structured_logger().new_trace_id(*a, **k)
+
+
+def get_logger(*a, **k):
+    return _structured_logger().get_logger(*a, **k)
 
 class Span:
     """Represents a single span (unit of work)."""

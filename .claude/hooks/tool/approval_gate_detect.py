@@ -261,7 +261,8 @@ _INERT_LEADERS = {"echo", "printf", "write-host", "write-output"}
 #:   2026-11-16 (R258 · appr-739c70c388b5) approval-gate.py withdraw — 사유를 승인 기록에 문자열로만 저장 (대기 → 만료 · 실행 없음)
 _INERT_KIT_SCRIPTS = {("auto-save-next-actions.py", "manual-add"),
                       ("request-ledger.py", "add"), ("request-ledger.py", "complete"),
-                      ("approval-gate.py", "withdraw")}
+                      ("approval-gate.py", "withdraw"),
+                      ("approval-gate.py", "detect")}   # R293 detect 는 문자열 판정·출력만 (실행·기록 X) — 인자의 위험 단어 = 언급
 _RX_PY = re.compile(r"^(?:py|python(?:3(?:\.\d+)?)?)(?:w)?(?:\.exe)?$", re.I)
 
 

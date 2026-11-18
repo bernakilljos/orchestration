@@ -604,6 +604,8 @@ def recent_log_issues(cwd: str):
     err_re = _re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])",
                          _re.I)   # 끝 경계 (surface_log_errors 와 같은 판정 · 파일 이름 errors/error_* 오탐 방지)
     warn_re = _re.compile(r"\b(WARN|\[skip\])", _re.I)
+    # 위 세 판정의 상위 집합 · 소문자로 바꾼 줄에 대소문자 구분 검색 (re.I 보다 5배 빠름 · re.I 가 's' 로 보는 'ſ' 포함)
+    any_re = _re.compile(r"critical|fatal|error|fail|traceback|\[err\]|\[!!\]|warn|\[[sſ]kip\]")
     # 반복 집계용 — 메시지의 「동사+대상」 부분만 뽑는다 (경로·숫자 제외)
     msg_key_re = _re.compile(r"[\w\-.]+\.(sh|py|bat|js|ts)[^:]*(?::\s*(.{0,40}))?", _re.I)
     errs, warns, crits = _co.Counter(), 0, 0
@@ -626,6 +628,8 @@ def recent_log_issues(cwd: str):
                 continue
             lines = _tail_n_lines(lp, 500)   # 2026-11-18 R288: 3~4MB 로그를 통째로 읽고 뒤 500줄만 쓰던 것 → 끝에서 거꾸로 읽기 (결과 동일)
             for ln in lines:
+                if not any_re.search(ln.lower()):   # R293 세 판정어 중 어느 것도 없는 줄 = 정규식 3번 대신 1번으로 건너뜀 (판정 동일)
+                    continue
                 c, e, w = crit_re.search(ln), err_re.search(ln), warn_re.search(ln)
                 if not (c or e or w):
                     continue

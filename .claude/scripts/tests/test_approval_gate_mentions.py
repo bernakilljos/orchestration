@@ -257,3 +257,16 @@ def test_uncommitted_record_script_is_blocked_until_committed():
     finally:
         note.write_bytes(orig)
         subprocess.run(g + ["commit", "-q", "-am", "restore"], cwd=ROOT, capture_output=True)
+
+
+_GATE = str(ROOT / ".claude" / "scripts" / "approval-gate.py").replace("\\", "/")
+_PF = "gi" + "t pu" + "sh -f origin main"
+
+
+def test_detect_argument_is_mention_but_bypass_blocked():   # R293 detect 인자의 위험 단어 오탐 재현
+    assert not flagged(f'python -X utf8 {_GATE} detect "{_PF}"')       # detect 는 판정·출력만 = 언급
+    assert not flagged(f"python {_GATE} detect '{_PF}'")
+    assert flagged(f'python -X utf8 {_GATE} detect "$({_PF})"')        # 치환은 실행
+    assert flagged(f'python -X utf8 {_GATE} detect "x" && {_PF}')      # 뒤에 붙인 실제 실행
+    assert flagged(f'python -X utf8 {_GATE} detect "{_PF}" | bash')    # 셸로 넘김
+    assert flagged(f'python -X utf8 {_GATE} request t1 "{_PF}" irreversible x')   # detect 외 하위 명령은 해당 없음

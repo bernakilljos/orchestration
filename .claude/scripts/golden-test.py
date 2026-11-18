@@ -29,22 +29,22 @@ def _ct(p, s):
 
 def _run_gate_test():
     # evidence 없이 complete 시도 → status != completed 확인 (뻥 방지)
-    import tempfile, shutil, subprocess
-    orig = ROOT/'.claude/state/request-ledger.json'
-    backup = tempfile.mktemp(suffix='.json')
-    if orig.exists(): shutil.copy(orig, backup)
-    try:
-        test_rl = ROOT/'.claude/state/request-ledger.json'
+    # 2026-11-18 R293: 운영 원장을 시험 원장으로 바꿔 끼웠다가 되돌리던 것 → Claude 창 여러 개가 동시에 Stop 하면
+    #   서로의 «백업» 이 시험 원장이 되어 운영 원장 292건이 1건으로 덮였다 (실측 사고 · 임시 백업도 안 지워 %TEMP% 누적).
+    #   이제 임시 폴더를 프로젝트 루트로 삼아 실행 (CLAUDE_PROJECT_DIR) — 운영 원장은 읽지도 쓰지도 않는다.
+    import tempfile, subprocess, os as _os
+    with tempfile.TemporaryDirectory(prefix='golden-ledger-') as td:
+        test_rl = Path(td)/'.claude'/'state'/'request-ledger.json'
+        test_rl.parent.mkdir(parents=True)
         test_rl.write_text('{"session_id":"test","created_at":"t","requests":[{"id":"T_R1","desc":"test","status":"pending","ts":"t"}]}', encoding='utf-8')
         # evidence 없이 complete
-        r = subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/request-ledger.py'),'complete','T_R1'],
-                         capture_output=True, text=True, timeout=5, encoding='utf-8')
+        subprocess.run(['python','-X','utf8',str(ROOT/'.claude/scripts/request-ledger.py'),'complete','T_R1'],
+                       capture_output=True, text=True, timeout=5, encoding='utf-8',
+                       env=dict(_os.environ, CLAUDE_PROJECT_DIR=td))
         import json as _j
         data = _j.loads(test_rl.read_text(encoding='utf-8'))
         # 뻥 방지 확인: evidence 없으면 completed 되면 안됨
         return data['requests'][0]['status'] != 'completed'
-    finally:
-        if Path(backup).exists(): shutil.copy(backup, orig)
 
 def _run_sr_gate():
     import subprocess
