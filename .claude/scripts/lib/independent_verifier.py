@@ -642,7 +642,7 @@ def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
                                    errors="replace", timeout=30)
                 (checked.append(rel) if r.returncode == 0 else errors.append({"file": rel, "error": r.stderr.strip()[:400]}))
             elif ext in (".js", ".mjs", ".cjs", ".jsx", ".ts", ".tsx", ".vue"):
-                need = {"node": node, "ts": tsc, "jsx": _sh.which("esbuild")}
+                need = {"node": node, "ts": tsc or _nearest_ts_pkg(p), "jsx": _sh.which("esbuild")}
                 key = "ts" if ext in (".ts", ".tsx") else ("jsx" if ext == ".jsx" else "node")
                 if not (bash and hook.is_file() and node and need[key]):
                     unchecked.append(rel + " (%s 없음)" % ("tsc" if key == "ts" else "esbuild" if key == "jsx" else "node"))
@@ -680,6 +680,16 @@ def staged_syntax_check(cwd: Path, files: List[str]) -> Dict[str, Any]:
         checked += jc
         unchecked += ju
     return {"errors": errors, "checked": checked, "unchecked": unchecked}
+
+
+def _nearest_ts_pkg(p: Path) -> Optional[Path]:
+    """파일에서 가장 가까운 node_modules/typescript — 훅 check-js-syntax.sh 가 이것으로 문법만 본다(2026-11-19:
+    TS 패키지가 하위 폴더 nextjs/ 에만 있는 대상에서 .tsx 가 늘 'tsc 없음' 미검증이 되어 커밋이 막혔다)."""
+    for d in p.resolve().parents:
+        cand = d / "node_modules" / "typescript"
+        if (cand / "lib" / "typescript.js").is_file():
+            return cand
+    return None
 
 
 def _syntax_verdict(res: Dict[str, Any], syn: Dict[str, Any]) -> bool:

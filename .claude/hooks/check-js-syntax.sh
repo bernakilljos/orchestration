@@ -56,6 +56,16 @@ if [ "$CHECKER" = "js" ]; then
       ;;
   esac
   EC=$?
+elif [ "$CHECKER" = "ts" ] && TSPKG="$(
+    # 2026-11-19: 파일에서 가장 가까운 node_modules/typescript 로 문법만 본다 — TS 패키지가 하위 폴더(nextjs/ 등)에만
+    #   있는 대상에서 전엔 'tsc 없음' 으로 건너뛰었고, 설정 없이 부른 tsc 는 형 검사까지 해 문법과 무관한 오류(TS1259)를 냈다
+    D="$(dirname "$(printf '%s' "$FILE_PATH" | tr '\\' '/')")"
+    while :; do
+      [ -f "$D/node_modules/typescript/lib/typescript.js" ] && { printf '%s' "$D/node_modules/typescript"; break; }
+      N="$(dirname "$D")"; [ "$N" = "$D" ] && break; D="$N"
+    done)" && [ -n "$TSPKG" ] && command -v node >/dev/null 2>&1; then
+  ERR="$(node -e 'const ts=require(process.argv[1]),f=process.argv[2];const r=ts.transpileModule(require("fs").readFileSync(f,"utf8"),{fileName:f,reportDiagnostics:true,compilerOptions:{jsx:ts.JsxEmit.Preserve,target:ts.ScriptTarget.ESNext}});const d=r.diagnostics||[];for(const x of d.slice(0,20)){const p=x.file&&x.start!=null?x.file.getLineAndCharacterOfPosition(x.start):null;console.log((p?f+"("+(p.line+1)+","+(p.character+1)+"): ":"")+ts.flattenDiagnosticMessageText(x.messageText," "))}process.exit(d.length?2:0)' "$TSPKG" "$FILE_PATH" 2>&1)"
+  EC=$?
 elif [ "$CHECKER" = "ts" ]; then
   # tsc 가 있으면 syntax-only 검사 — 전역 tsc 가 없으면 프로젝트의 node_modules/.bin/tsc (2026-11-13 R249)
   TSC="$(command -v tsc 2>/dev/null)"
