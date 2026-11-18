@@ -66,6 +66,7 @@ print(d.get('status') if d.get('tree')==sys.argv[1] else 'stale')" "$TREE" 2>/de
       syntax_error) MISSING="$MISSING\n  - 변경 소스 문법 오류: .claude/state/regression-gate.json 의 syntax_errors 파일을 고친 뒤 regression-gate 다시 실행" ;;
       unverified) MISSING="$MISSING\n  - 문법 검사기가 없어 확인 못 한 변경 파일 (.claude/state/regression-gate.json 의 syntax_unchecked) — 검증 완료로 보지 않아 자동 커밋하지 않음 · 사용자가 직접 확인 후 커밋" ;;
       regression) MISSING="$MISSING\n  - 회귀 발견: 수정 전 통과하던 시험이 실패 — .claude/state/regression-gate.json 의 new_failures 원인 수정 후 다시 실행" ;;
+      perf_regression|perf_unmeasured) MISSING="$MISSING\n  - 속도 검사 실패 ($GATE): .claude/state/regression-gate.json 의 perf.items 에서 느려진 항목(기준선·상한) 확인 → 원인 고친 뒤 regression-gate 다시 실행" ;;
       *) MISSING="$MISSING\n  - 회귀 방지 게이트 ($GATE): python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate 실행 후 커밋 (스테이징을 바꾸면 다시)" ;;
     esac
   fi

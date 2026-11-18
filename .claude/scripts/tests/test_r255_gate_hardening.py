@@ -8,7 +8,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
+import sys
 import sqlite3
 import subprocess
 import time
@@ -166,3 +168,52 @@ def test_syntax_check_treats_invalid_escape_warning_as_error(tmp_path):
     (tmp_path / "w.py").write_text('p = "C:' + chr(92) + 'scripts"\n', encoding="utf-8")   # "\s" 잘못된 이스케이프
     r = iv.staged_syntax_check(tmp_path, ["w.py"])
     assert [e["file"] for e in r["errors"]] == ["w.py"]
+
+
+# R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목만 재고 느려지면 차단
+def _perf_repo(tmp_path, items, baseline=None):
+    (tmp_path / ".claude" / "config").mkdir(parents=True)
+    (tmp_path / ".claude" / "config" / "perf-budget.json").write_text(json.dumps({"items": items}), encoding="utf-8")
+    if baseline is not None:
+        (tmp_path / ".claude" / "state").mkdir(parents=True)
+        (tmp_path / ".claude" / "state" / "perf-baseline.json").write_text(json.dumps(baseline), encoding="utf-8")
+    return tmp_path
+
+
+_PY = [sys.executable, "-c"]
+
+
+def test_perf_gate_skips_items_not_triggered(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느린것", "cmd": _PY + ["import time;time.sleep(0.3)"], "triggers": ["src/*"], "budget_ms": 1}])
+    assert iv.perf_gate(d, ["docs/a.md"])["status"] == "not_triggered"
+
+
+def test_perf_gate_blocks_over_budget_and_passes_under(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느린것", "cmd": _PY + ["import time;time.sleep(0.25)"], "triggers": ["src/*"],
+                               "budget_ms": 100, "runs": 3, "warmup": 1}])
+    r = iv.perf_gate(d, ["src/x.py"])
+    assert r["status"] == "perf_regression" and "상한" in r["items"][0]["reason"]
+    assert not (d / ".claude" / "state" / "perf-baseline.json").exists()      # 실패는 기준선으로 남기지 않음
+    d2 = _perf_repo(tmp_path / "b", [{"name": "빠른것", "cmd": _PY + ["pass"], "budget_ms": 5000, "runs": 3}])
+    assert iv.perf_gate(d2, ["any"])["status"] == "pass"
+    assert json.loads((d2 / ".claude" / "state" / "perf-baseline.json").read_text(encoding="utf-8"))["빠른것"]["ms"] > 0
+
+
+def test_perf_gate_blocks_regression_against_baseline(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "느려짐", "cmd": _PY + ["import time;time.sleep(0.3)"], "max_regress_pct": 30, "runs": 3}],
+                   baseline={"느려짐": {"ms": 50, "at": 0}})
+    r = iv.perf_gate(d, ["x"])
+    assert r["status"] == "perf_regression" and "기준선" in r["items"][0]["reason"] and "ms_retry" in r["items"][0]
+
+
+def test_perf_gate_failed_command_is_unmeasured_not_pass(tmp_path):
+    d = _perf_repo(tmp_path, [{"name": "깨짐", "cmd": _PY + ["import sys;sys.exit(3)"], "runs": 3}])
+    assert iv.perf_gate(d, ["x"])["status"] == "perf_unmeasured"
+
+
+def test_perf_gate_local_items_are_read(tmp_path):
+    d = _perf_repo(tmp_path, [])
+    (d / ".claude" / "config" / "perf-budget.local.json").write_text(
+        json.dumps({"items": [{"name": "페이지", "cmd": _PY + ["pass"], "budget_ms": 5000, "runs": 3}]}), encoding="utf-8")
+    r = iv.perf_gate(d, ["x"])
+    assert r["status"] == "pass" and r["items"][0]["name"] == "페이지"

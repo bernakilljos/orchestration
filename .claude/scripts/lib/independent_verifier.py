@@ -712,6 +712,17 @@ def syntax_gate(cwd: Path) -> Dict[str, Any]:
             res["status"] = "skip"
         elif not _syntax_verdict(res, staged_syntax_check(cwd, code)):
             res["status"] = "pass"
+        if res.get("status") in ("pass", "skip"):   # R296 SVN 작업본도 페이지·DB 속도 검사 (SQL·매퍼만 바뀐 경우 포함)
+            try:
+                perf = perf_gate(cwd, changed)
+            except Exception as e:  # noqa: BLE001
+                perf = {"status": "perf_unmeasured", "items": [], "reason": "성능 검사 오류: %s" % e}
+            res["perf"] = perf
+            if perf.get("status") in ("perf_regression", "perf_unmeasured"):
+                res["status"] = perf["status"]
+                res["reason"] = "속도 검사 실패: " + " · ".join(
+                    "%s %sms (%s)" % (r["name"], r.get("ms"), r.get("reason") or "측정 실패")
+                    for r in perf.get("items", []) if r.get("verdict") != "pass")
     stamp = cwd / SYNTAX_STAMP
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -741,6 +752,118 @@ def _gate_timeout() -> int:
         return max(60, int(os.environ.get("REGRESSION_GATE_TIMEOUT_SEC", "2400")))
     except ValueError:
         return 2400
+
+
+PERF_BUDGET = ".claude/config/perf-budget.json"          # kit 공통 항목 (전파됨)
+PERF_BUDGET_LOCAL = ".claude/config/perf-budget.local.json"   # 대상 프로젝트 고유 항목 (페이지·DB · 전파 안 됨)
+PERF_BASELINE = ".claude/state/perf-baseline.json"
+
+
+def _perf_items(cwd: Path) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    for rel in (PERF_BUDGET, PERF_BUDGET_LOCAL):
+        try:
+            items += json.loads((cwd / rel).read_text(encoding="utf-8")).get("items", [])
+        except (OSError, ValueError, AttributeError):
+            continue
+    return [i for i in items if isinstance(i, dict) and i.get("name") and i.get("cmd")]
+
+
+def _perf_measure(cwd: Path, item: Dict[str, Any]) -> Optional[float]:
+    """명령을 runs 회 실행한 실행 시간 중앙값(ms) · 실패(종료 코드≠0·시간 초과) = None (측정 실패 = 통과 아님)."""
+    import statistics
+    import time as _t
+    shell = isinstance(item["cmd"], str)
+    times = []
+    for _ in range(max(1, int(item.get("warmup", 1)))):
+        try:
+            subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
+        except (OSError, subprocess.SubprocessError):
+            return None
+    for _ in range(max(3, int(item.get("runs", 5)))):
+        t0 = _t.perf_counter()
+        try:
+            r = subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+                               text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if r.returncode != 0:
+            return None
+        times.append((_t.perf_counter() - t0) * 1000)
+    return round(statistics.median(times), 1)
+
+
+def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
+    """R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목(상태줄·페이지·DB 등)만 재서 느려지면 커밋 차단.
+
+    항목 = perf-budget.json(kit) + perf-budget.local.json(대상 고유) 의 items:
+      {"name", "cmd"(문자열=셸·목록=직접 실행), "triggers"(바뀐 파일 glob 목록 · 없으면 항상), "budget_ms"(절대 상한),
+       "max_regress_pct"(기준선 대비 허용 · 기본 30), "runs", "warmup", "stdin", "timeout_s"}
+    판정: 상한 초과 또는 기준선 대비 허용 초과 → 1번 다시 재서 그래도 초과면 perf_regression · 측정 실패 = perf_unmeasured(차단).
+    기준선 = 마지막 통과 측정값 (.claude/state/perf-baseline.json · 통과할 때만 갱신 · 기계 부하로 흔들리는 값을 그대로 기준 삼지 않게
+    처음 측정은 기준선만 저장)."""
+    import fnmatch
+    out: Dict[str, Any] = {"items": [], "status": "pass"}
+    items = _perf_items(cwd)
+    if not items:
+        out["status"] = "none"
+        return out
+    try:
+        base = json.loads((cwd / PERF_BASELINE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        base = {}
+    for it in items:
+        trig = it.get("triggers") or []
+        hit = not trig or any(fnmatch.fnmatch(p, g) for p in staged for g in trig)
+        if not hit:
+            continue
+        ms = _perf_measure(cwd, it)
+        rec: Dict[str, Any] = {"name": it["name"], "ms": ms, "baseline_ms": (base.get(it["name"]) or {}).get("ms"),
+                               "budget_ms": it.get("budget_ms")}
+        if ms is None:
+            rec["verdict"] = "unmeasured"
+            out["items"].append(rec)
+            continue
+        pct = float(it.get("max_regress_pct", 30))
+
+        def _over(v: float) -> Optional[str]:
+            if it.get("budget_ms") and v > float(it["budget_ms"]):
+                return "상한 %sms 초과" % it["budget_ms"]
+            if rec["baseline_ms"] and v > float(rec["baseline_ms"]) * (1 + pct / 100):
+                return "기준선 %sms 대비 %d%% 초과" % (rec["baseline_ms"], pct)
+            return None
+        why = _over(ms)
+        if why:   # 기계 부하로 한 번 튄 값일 수 있어 1번 더 잰다 · 둘 중 작은 값으로 판정
+            ms2 = _perf_measure(cwd, it)
+            if ms2 is not None:
+                rec["ms_retry"] = ms2
+                ms = min(ms, ms2)
+                why = _over(ms)
+        rec["ms"] = ms
+        rec["verdict"] = "regression" if why else "pass"
+        if why:
+            rec["reason"] = why
+        out["items"].append(rec)
+    if any(r["verdict"] == "regression" for r in out["items"]):
+        out["status"] = "perf_regression"
+    elif any(r["verdict"] == "unmeasured" for r in out["items"]):
+        out["status"] = "perf_unmeasured"
+    else:
+        import time as _t
+        for r in out["items"]:
+            base[r["name"]] = {"ms": r["ms"], "at": int(_t.time())}
+        try:
+            p = cwd / PERF_BASELINE
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_suffix(".tmp")
+            tmp.write_text(json.dumps(base, ensure_ascii=False, indent=1), encoding="utf-8")
+            os.replace(tmp, p)
+        except OSError:
+            pass
+    if not out["items"]:
+        out["status"] = "not_triggered"
+    return out
 
 
 def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
@@ -854,6 +977,17 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
                         base_dir.rmdir()
                     except OSError:
                         pass
+    if res.get("status") in ("pass", "preexisting"):   # R295·R296 시험이 통과한 변경만 속도 검사 (실패는 이미 차단)
+        try:
+            perf = perf_gate(cwd, staged)
+        except Exception as e:  # noqa: BLE001 — 검사 자체가 깨지면 통과로 보지 않는다
+            perf = {"status": "perf_unmeasured", "items": [], "reason": "성능 검사 오류: %s" % e}
+        res["perf"] = perf
+        if perf.get("status") in ("perf_regression", "perf_unmeasured"):
+            res["status"] = perf["status"]
+            bad = [r for r in perf.get("items", []) if r.get("verdict") != "pass"]
+            res["reason"] = "속도 검사 실패: " + " · ".join(
+                "%s %sms (%s)" % (r["name"], r.get("ms"), r.get("reason") or "측정 실패") for r in bad)
     stamp = cwd / REGRESSION_STAMP
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -1462,15 +1596,17 @@ def _cli_main(argv):
     if argv[1] == "regression-gate":     # 커밋 전: exit 0 = pass·preexisting·skip · 2 = regression · 1 = blocked
         res = regression_gate(ROOT)
         brief = {k: res.get(k) for k in ("status", "reason", "summary", "tests", "new_failures", "baseline_failures",
-                                         "commit_memory_pct")}
+                                         "commit_memory_pct", "perf")}
         print(json.dumps(brief, ensure_ascii=False, indent=1))
         # 2026-11-15 (R256): syntax_error 가 0(통과)으로 나가던 것 — 문법 오류·미검증도 실패 종료
-        return {"regression": 2, "syntax_error": 2, "blocked": 1, "unverified": 1}.get(res["status"], 0)
+        return {"regression": 2, "syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
+                "perf_unmeasured": 1}.get(res["status"], 0)
     if argv[1] == "syntax-gate":         # git 이 아닌 작업본(SVN) 커밋 전: exit 0 = pass·skip · 2 = 문법 오류 · 1 = 미검증·확정 불가
         res = syntax_gate(ROOT)
         print(json.dumps({k: res.get(k) for k in ("status", "reason", "vcs", "changed_code", "syntax_errors",
                                                    "syntax_unchecked")}, ensure_ascii=False, indent=1))
-        return {"syntax_error": 2, "blocked": 1, "unverified": 1}.get(res["status"], 0)
+        return {"syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
+                "perf_unmeasured": 1}.get(res["status"], 0)
     if argv[1] == "external-deps":
         deps = external_dependencies(ROOT)
         print(json.dumps({"packages": deps, **external_scope(deps)}, ensure_ascii=False))
