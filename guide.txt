@@ -746,6 +746,7 @@
     회귀 게이트 기준선 worktree 생성 시간 제한 120→600초 (R276 · 메모리 부하 중 체크아웃 4분 17초 실측 → 매번 blocked 로 커밋 차단되던 것)
     한글 콘솔(PowerShell 5.1 · cp949) 에서 request-ledger.py status 가 'cp949' codec can't encode character '✓' 로 죽던 것 → 엔트리 스크립트 20개 (print 에 비 cp949 문자) stdout·stderr 를 UTF-8 로 고정 (R277 · 같은 패턴 전수 grep 후 함께 수정 D21)
     상태줄 값 문구 2건 (2026-11-18 사용자 지시 · 레이아웃·폭·색 불변): 세션·주간 reset 날짜 "Nov 19 8:00am" → "11/19 8:00am" · 서브 줄 등급 표식 F·O·S·H → 특·상·중·하 (fable=특 · opus=상 · sonnet=중 · haiku=하 · 사용자 "O는 뭐고 S는 뭐야 · 등급이면 하중상특")
+    상태줄 결함·문구 6건 (2026-11-18 사용자 지시 · 레이아웃·폭·색 불변): ① 토큰 줄 ⏳ — 전사 경로를 ~/.claude 로 고정 계산해 CLAUDE_CONFIG_DIR(~/.claude-personal) 세션에서 못 찾던 것 → stdin 공식 context_window.current_usage 1순위 · transcript_path 2순위 · 설정 폴더 환경변수 존중 ② 영향 줄 "경로추정 API 0 DB 0" → "API 0 · DB 0 (경로추정)" · git 실패 분기의 낡은 문구(영향·breaking 미구현) 제거 ③ 증명 줄 standing·golden → 지속요구·기준시험 ④ HEALTH last·next → 최근·다음 (health-check.py) ⑤ MCP 실패 1 = context7 · 원인 npx 캐시 불완전 설치(dist/lib/code-tools.js 없음) → 캐시 폴더 이름 변경 후 재설치로 복구 (환경 조치 · kit 변경 X) ⑥ 기준룰 frozen 위반 = release-manifest baseline(11-16) 이후 core(CLAUDE.md AUTO-STATS)·hook(pre-commit-full-check.sh) 변경 감지 → 원격 반영 뒤 baseline 재저장
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)
     2.1.198 (7/1): Fable 5 / Mythos 5 RESTORED · subagent 기본 background 실행 ·

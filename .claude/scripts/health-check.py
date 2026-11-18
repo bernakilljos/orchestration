@@ -22,7 +22,7 @@ health-check — Orchestration Health 자동 점검 (사용자 명시 2026-10-16
   10. 재발률 (recurrence by category)
 
 사용:
-  python health-check.py status   # statusline 용 (96/100 · last 10/16 · next 11/16)
+  python health-check.py status   # statusline 용 (96/100 · 최근 10/16 · 다음 11/16)
   python health-check.py scan     # 전체 점검 → JSON
   python health-check.py report   # 월간 ORCHESTRATION_HEALTH_YYYY-MM-DD.md 생성
   python health-check.py monthly  # 지난 점검으로부터 30일 지났으면 report 자동
@@ -258,7 +258,7 @@ def _save_state(d: dict) -> None:
 
 
 def status_line() -> str:
-    """statusline 용 짧은 한 줄: 96/100 · last 10/16 · next 11/16"""
+    """statusline 용 짧은 한 줄: 96/100 · 최근 10/16 · 다음 11/16"""
     state = _load_state()
     score = state.get("last_score", 0)
     last_ts = state.get("last_check")
@@ -286,7 +286,7 @@ def status_line() -> str:
     if last_ts and days_left <= 0:
         due = " \033[1;33m[점검 필요]\033[0m"
     score_s = f"\033[{c}m{score}/100\033[0m" if score else f"\033[90m⏳\033[0m"
-    return f"{score_s} · last {last_str} · next {next_str}{due}"
+    return f"{score_s} · 최근 {last_str} · 다음 {next_str}{due}"   # 2026-11-18 사용자 "last·next 뭐야 어렵네 영어"
 
 
 def scan_and_save() -> dict:
@@ -354,5 +354,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\033[90m⏳\033[0m · last ? · next ?", file=sys.stderr)
+        print(f"\033[90m⏳\033[0m · 최근 ? · 다음 ?", file=sys.stderr)
         sys.exit(1)

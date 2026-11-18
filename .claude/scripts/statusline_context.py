@@ -320,10 +320,13 @@ def pick_limit(model_id: str) -> tuple[int, bool]:
 
 
 def cwd_to_proj_dir(cwd: str) -> str:
-    """cwd -> ~/.claude/projects/<safe>/ 폴더명."""
+    """cwd -> <CLAUDE_CONFIG_DIR 또는 ~/.claude>/projects/<safe>/ 폴더명.
+
+    2026-11-18 (사용자 "토큰이 안 나와"): 이 세션은 CLAUDE_CONFIG_DIR=~/.claude-personal 인데 ~/.claude 로 고정 계산해
+    전사(jsonl)를 못 찾아 토큰·세션 비용이 늘 ⏳ 였다 → 설정 폴더 환경변수를 먼저 본다."""
     safe = re.sub(r"[^a-zA-Z0-9]", "-", cwd)
-    home = os.path.expanduser("~")
-    return os.path.join(home, ".claude", "projects", safe)
+    cfg = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+    return os.path.join(cfg, "projects", safe)
 
 
 def last_assistant_usage(jsonl_path: str) -> dict | None:
@@ -991,10 +994,11 @@ def _compute_impact(cwd):
     _u = "[36m⏳[0m"
     _n = "[90m미구현[0m"
     if files is None:
-        return f"수정 {_u} · 영향 {_n} · API {_u} · DB {_u} · breaking {_n} [90m(git 조회 실패)[0m"
+        return f"수정 {_u} · API {_u} · DB {_u} (경로추정) · 영향 {_u} [90m(git 조회 실패)[0m"
     api = sum(1 for f in files if any(k in f.lower() for k in ("api/", "router", "route", "endpoint", "controller")))
     db = sum(1 for f in files if any(k in f.lower() for k in ("migration", "schema.", ".sql")))
-    return f"수정 {len(files)} · 경로추정 API {api} DB {db} · 영향 {_impact_dependents(cwd, files)}"
+    # 2026-11-18 사용자 "수정은 4, 경로추정 API는 0 이거야?": 값마다 구분자 · 추정 표기는 뒤 괄호로
+    return f"수정 {len(files)} · API {api} · DB {db} (경로추정) · 영향 {_impact_dependents(cwd, files)}"
 
 
 _CODE_EXT = (".py", ".js", ".ts", ".tsx", ".vue", ".java", ".sh", ".ps1")
@@ -1970,9 +1974,9 @@ def extra_gauges(cwd, data=None):
                                  else f"[1;31m❌ {_gp}/{_gt_n}[0m") + _age_txt(_gage))
             except Exception:
                 pass
-        proof_line = f"git {_git_icon} · standing {_sr_txt} · golden {_gt_icon}"
+        proof_line = f"git {_git_icon} · 지속요구 {_sr_txt} · 기준시험 {_gt_icon}"   # 2026-11-18 사용자 "standing·golden 영어라 모르겠어"
     except Exception:
-        proof_line = "git [36m⏳[0m · standing [36m⏳[0m · golden [36m⏳[0m (읽기 실패)"
+        proof_line = "git [36m⏳[0m · 지속요구 [36m⏳[0m · 기준시험 [36m⏳[0m (읽기 실패)"
 
     # 💾 이력 (orca.db · 2026-10-16 사용자 요청)
     history_line = ""
@@ -2119,11 +2123,22 @@ def main() -> None:
     tokens = 0
     no_usage = True
 
+    # 2026-11-18: Claude Code 가 stdin 으로 주는 공식 context_window.current_usage 를 1순위로 (파일 읽기 0) ·
+    #   전사 파일은 stdin 의 transcript_path 를 1순위로 (설정 폴더가 ~/.claude 가 아닐 때도 맞는 경로)
+    try:
+        _cu = ((data.get("context_window") or {}).get("current_usage") or {}) if isinstance(data, dict) else {}
+        if _cu:
+            tokens = int((_cu.get("input_tokens") or 0) + (_cu.get("cache_read_input_tokens") or 0)
+                         + (_cu.get("cache_creation_input_tokens") or 0))
+            no_usage = tokens <= 0
+    except Exception:
+        pass  # noqa: BLE001
     if session_id and cwd:
         try:
             proj_dir = cwd_to_proj_dir(cwd)
-            jsonl = os.path.join(proj_dir, f"{session_id}.jsonl")
-            usage = last_assistant_usage(jsonl)
+            _tp = data.get("transcript_path") if isinstance(data, dict) else None
+            jsonl = _tp if (_tp and os.path.exists(_tp)) else os.path.join(proj_dir, f"{session_id}.jsonl")
+            usage = last_assistant_usage(jsonl) if no_usage else None
             if usage:
                 tokens = int(
                     (usage.get("input_tokens") or 0)
