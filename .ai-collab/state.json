@@ -1,0 +1,22 @@
+{
+  "repository": "bernakilljos/orchestration",
+  "requests": {
+    "R325": {
+      "head_commit": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71",
+      "base_commit": "34065c13dd8dfed14fa8274439ea7165dc8ef5d9",
+      "status": "PASS",
+      "report": "reports/R325.md",
+      "reported_at": "2026-11-19T08:07:09+00:00",
+      "reviewed": false
+    },
+    "R326": {
+      "head_commit": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71",
+      "base_commit": "34065c13dd8dfed14fa8274439ea7165dc8ef5d9",
+      "status": "PASS",
+      "report": "reports/R326.md",
+      "reported_at": "2026-11-19T08:07:09+00:00",
+      "reviewed": false
+    }
+  },
+  "last_head": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71"
+}
