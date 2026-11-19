@@ -120,12 +120,13 @@ def test_each_request_reports_only_its_commits(tmp_path):
     _commit_msg(r, "both.txt", "x", "feat: 공통 (R10·R11)")
     _commit_msg(r, "only10.txt", "y", "fix: R10 만")
     _commit_msg(r, "r100.txt", "z", "fix: R100 은 다른 요청")
+    _commit_msg(r, "body.txt", "b", "fix: 정리 (R10)\n\n본문 설명: R11 과 같은 범위였던 문제")   # 본문 언급은 R11 커밋 아님
     for rid in ("R10", "R11"):
         assert _run(r, "report", rid, "--base", base).returncode == 0
     r10 = (r / ".ai-collab" / "reports" / "R10.md").read_text(encoding="utf-8")
     r11 = (r / ".ai-collab" / "reports" / "R11.md").read_text(encoding="utf-8")
     assert "only10.txt" in r10 and "both.txt" in r10 and "r100.txt" not in r10
-    assert "both.txt" in r11 and "only10.txt" not in r11 and "r100.txt" not in r11
+    assert "both.txt" in r11 and "only10.txt" not in r11 and "r100.txt" not in r11 and "body.txt" not in r11
 
 
 def test_publication_commit_is_not_work_head(tmp_path):

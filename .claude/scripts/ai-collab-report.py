@@ -55,8 +55,8 @@ def _commits_for(rid: str, base: str, tip: str) -> list:
     out = []
     for blk in _git("log", "--format=%H%x1f%s%x1f%b%x1e", f"{base}..{tip}").split("\x1e"):
         parts = blk.strip("\n").split("\x1f")
-        if len(parts) >= 2 and pat.search(parts[1] + "\n" + (parts[2] if len(parts) > 2 else "")) \
-                and not _publication_only(parts[0]):
+        # 제목 줄만 본다 — 본문은 다른 요청을 «설명» 하며 언급하기도 한다 (실측: 365ff8ec 본문의 "R325·R326 이 같은 범위" → R326 오분류)
+        if len(parts) >= 2 and pat.search(parts[1]) and not _publication_only(parts[0]):
             out.append((parts[0], parts[1]))
     return out
 
