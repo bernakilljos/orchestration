@@ -27,7 +27,16 @@
       "report": "reports/R327.md",
       "reported_at": "2026-11-19T08:19:45+00:00",
       "reviewed": false
+    },
+    "R328": {
+      "head_commit": "ac926fbcffb1c1725f0a1682bba7906d0270207f",
+      "base_commit": "e25778f2",
+      "range_tip": "ac926fbcffb1c1725f0a1682bba7906d0270207f",
+      "status": "PASS",
+      "report": "reports/R328.md",
+      "reported_at": "2026-11-19T08:24:32+00:00",
+      "reviewed": false
     }
   },
-  "last_head": "07c6edb94f96a9bd739e27ad78b23435e9c23253"
+  "last_head": "ac926fbcffb1c1725f0a1682bba7906d0270207f"
 }
