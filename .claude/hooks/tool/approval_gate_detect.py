@@ -57,7 +57,9 @@ def _strip_git_commit_message(cmd: str) -> str:
     """2026-10-26 외부 AI 지적: git commit -m 안 message body (문자열 '언급') 는 실행 대상 X.
     실행 vs 언급 구분 — msg body 안 위험 문자열은 매칭 제외.
     "DROP TABLE DB 실행" (위험) vs "feat: DROP TABLE 패턴 fix" (문서 기록) 구분."""
-    if not re.search(r'\bgit\s+commit\b', cmd):
+    # R323 (11-19 IFRS·ICMAI 사본 재현): IFRS 는 SVN — `svn commit -m "… git push 정책 …"` 메시지가 push 실행으로 판정돼
+    #   «승인으로도 실행하지 않음» 차단. 메시지 걷어 내기를 svn commit·ci 에도 같게 적용 (메시지 밖 명령은 그대로 판정)
+    if not re.search(r'\bgit\s+commit\b|\bsvn\s+(?:commit|ci)\b', cmd):
         return cmd
     # 2026-11-09: 따옴표 친 구분자(<<'EOF')만 — 따옴표 없는 heredoc·큰따옴표 안의 $( ) ` 는 셸이 실행하므로 가리지 않는다
     # heredoc: -m "$(cat <<'EOF' ... EOF\n)"
@@ -221,7 +223,11 @@ def _strip_inert_text(cmd: str, cwd: str = "") -> str:
     bash/sh 등으로 실행되는 heredoc 은 손대지 않는다.
     cwd = 훅이 받은 세션 작업 위치 — 명령에 작업 위치 변경(cd 등)이 전혀 없을 때만 상대 경로 해석 기준 (R256)."""
     # hook 입력은 JSON 이라 줄바꿈이 '\\n' 문자로 들어온다 → 실제 줄바꿈으로 (실측: 미변환 시 heredoc 인식 0)
-    cmd = cmd.replace("\\n", "\n").replace("\\t", "\t")
+    # R323 (11-19 실측): 실제 줄바꿈이 이미 있는 명령까지 바꾸면 python 본문의 '\r\n'·'\n' 문자열 표기가 줄바꿈으로 깨져
+    #   문법 오류 → «데이터 전용» 판정 실패 → 본문 속 push 언급이 실행으로 남아 문서 수정 명령이 «승인으로도 못 푸는» 차단.
+    #   이스케이프만 있고 실제 줄바꿈이 하나도 없을 때만 바꾼다 (원래 목적: 한 줄로 들어온 heredoc 인식)
+    if "\n" not in cmd:
+        cmd = cmd.replace("\\n", "\n").replace("\\t", "\t")
 
     def _heredoc(m):
         head = m.group(1)
