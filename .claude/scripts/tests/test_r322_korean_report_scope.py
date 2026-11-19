@@ -105,3 +105,11 @@ def test_pasted_eval_without_directive_stays_report():
     m = _lar()
     p = "<pasted_content id=\"a2\">\n" + _EVAL + "\nClaude CLI 결과를 확인했습니다.\n</pasted_content id=\"a2\">"
     assert m._intent_text(p)[1] == "pasted_report"
+
+
+def test_loop_prompt_is_not_a_user_request():
+    """R331: 세션 cron 반복 프롬프트([LOOP] 로 시작)는 원장에 사용자 요청으로 쌓지 않는다 · 같은 낱말의 사용자 지시는 그대로."""
+    m = _lar()
+    assert m._is_system_notification("[LOOP] ai-collab 5분 주기 확인 — poll 실행 · 새 파일이면 주기 작업 해제")
+    assert not m._is_system_notification("ai-collab poll 실행하고 주기 작업 해제해")
+    assert not m._is_system_notification("[LOOP]없이 붙은 글")

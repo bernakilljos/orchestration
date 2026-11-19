@@ -57,6 +57,7 @@ reviewed_commit: "<검토한 보고서의 head_commit SHA>"
 - Claude CLI가 보고서를 push하면 5분마다 `python .claude/scripts/ai-collab-report.py poll`로 `requests/`와 `reviews/`의 새 파일을 확인합니다.
 - 새 파일을 읽으면 주기 확인을 끄고 그 내용을 처리합니다. 다음 보고서를 push하면 다시 켭니다.
 - 주기 확인은 Claude Code 세션이 열려 있는 동안만 돕니다. 상주 프로세스가 아니며, 세션을 닫으면 멈춥니다.
+- 주기 확인 프롬프트는 `[LOOP] `로 시작합니다. 그래야 사용자 요청으로 원장에 쌓이지 않습니다.
 - 읽은 파일은 `state.json`의 `seen`에 파일 해시로 기록합니다. 같은 내용은 다시 알리지 않고, 내용이 바뀌면 다시 알립니다.
 
 ## 정리 규칙

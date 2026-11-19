@@ -59,7 +59,10 @@ def _is_system_notification(text: str) -> bool:
     """harness 자동 이벤트 (사용자 입력 아님) — task-notification 태그로 시작."""
     t = (text or "").lstrip()
     # 2026-11-06: 대화 요약 뒤 harness 가 넣는 이어가기 메시지도 사용자 지시가 아니다
-    return t.startswith("<task-notification>") or t.startswith("This session is being continued from a previous conversation")
+    # R331 (11-19 실측): 세션 cron 5분 주기 확인 프롬프트가 매번 새 요청(승인 필요)으로 쌓였다 → kit 반복 표지 «[LOOP] »
+    #   (_common.LOOP_RE · 재발 감지 등 다른 훅과 같은 기준) 로 시작하면 사용자 지시가 아니다
+    return (t.startswith("<task-notification>") or t.startswith("[LOOP] ")
+            or t.startswith("This session is being continued from a previous conversation"))
 
 
 # 2026-11-06 R167~R170: 붙여 넣은 평가 보고가 안의 '해줘'·'유료'·'배포' 단어로 실행·승인 요청에 등록됐다.
