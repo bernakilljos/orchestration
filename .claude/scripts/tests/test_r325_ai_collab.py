@@ -180,5 +180,54 @@ def test_prune_needs_explicit_approval_of_same_commit(tmp_path):
                  '---\nverdict: "approved"\n---\n'):                                      # 커밋 없음
         (rev / "R1.md").write_text(body, encoding="utf-8")
         assert "정리 0건" in _run(r, "prune").stdout and rep.exists(), body
-    (rev / "R1.md").write_text(f'---\nverdict: "approved"\nreviewed_commit: "{h[:8]}"\n---\n', encoding="utf-8")
+    for body in (f'---\nverdict: "approved"\nreviewed_commit: "{h[:8]}"\n---\n',             # 짧은 SHA = 정확 일치 아님
+                 f'---\nverdict: "PENDING"\nreviewed_commit: "{h}"\n---\n'):              # 검토 대기
+        (rev / "R1.md").write_text(body, encoding="utf-8")
+        assert "정리 0건" in _run(r, "prune").stdout and rep.exists(), body
+    (rev / "R1.md").write_text(f'---\nverdict: "APPROVED"\nreviewed_commit: "{h}"\n---\n', encoding="utf-8")
     assert "정리 1건: R1" in _run(r, "prune").stdout and not rep.exists()                # 같은 커밋 명시 승인만
+    assert "정리 0건" in _run(r, "prune").stdout                                          # 중복 정리 X
+
+
+def test_prune_never_leaves_reports_folder(tmp_path):
+    """R329 요구 5: state.json 의 보고서 경로가 reports/ 밖이면 승인돼도 지우지 않는다 (경로 이탈 방지)."""
+    r = _repo(tmp_path)
+    _run(r, "report", "R1")
+    st = _state(r)
+    h = st["requests"]["R1"]["head_commit"]
+    victim = r / "a.txt"
+    st["requests"]["R1"]["report"] = "../a.txt"
+    (r / ".ai-collab" / "state.json").write_text(json.dumps(st), encoding="utf-8")
+    (r / ".ai-collab" / "reviews").mkdir(parents=True, exist_ok=True)
+    (r / ".ai-collab" / "reviews" / "R1.md").write_text(f'---\nverdict: "approved"\nreviewed_commit: "{h}"\n---\n', encoding="utf-8")
+    _run(r, "prune")
+    assert victim.exists()
+
+
+def test_poll_reports_only_unread_requests(tmp_path):
+    """R330 5분 주기 확인 1회분: 원격에 새 요청이 있으면 0 + 내용 · 다시 확인하면 3 (이미 읽음) · 내용이 바뀌면 다시 0."""
+    r = _repo(tmp_path)
+    bare = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+    subprocess.run(["git", "-C", str(r), "remote", "add", "origin", str(bare)], check=True)
+    subprocess.run(["git", "-C", str(r), "push", "-q", "origin", "main"], check=True)
+    assert _run(r, "poll").returncode == 3                                  # 아직 아무 요청 없음
+    other = tmp_path / "chatgpt"
+    subprocess.run(["git", "clone", "-q", str(bare), str(other)], check=True)
+    for a in (["config", "user.email", "g@g"], ["config", "user.name", "g"]):
+        subprocess.run(["git", "-C", str(other), *a], check=True)
+    q = other / ".ai-collab" / "requests"
+    q.mkdir(parents=True)
+    (q / "R7.md").write_text('---\nrequest_id: "R7"\n---\n개선 지시\n', encoding="utf-8")
+    (q / ".gitkeep").write_text("", encoding="utf-8")
+    subprocess.run(["git", "-C", str(other), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(other), "commit", "-q", "-m", "req"], check=True)
+    subprocess.run(["git", "-C", str(other), "push", "-q", "origin", "main"], check=True)
+    hit = _run(r, "poll")
+    assert hit.returncode == 0 and "개선 지시" in hit.stdout and ".gitkeep" not in hit.stdout
+    assert _run(r, "poll").returncode == 3                                  # 읽은 것은 다시 알리지 않음
+    (q / "R7.md").write_text('---\nrequest_id: "R7"\n---\n수정된 지시\n', encoding="utf-8")
+    subprocess.run(["git", "-C", str(other), "commit", "-qam", "req2"], check=True)
+    subprocess.run(["git", "-C", str(other), "push", "-q", "origin", "main"], check=True)
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "수정된 지시" in again.stdout

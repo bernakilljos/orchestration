@@ -5,6 +5,7 @@
   report <요청ID> [--base <커밋>] [--status PASS|PARTIAL|BLOCKED]   커밋 직후 실행 → reports/<요청ID>.md + state.json 갱신
   check-requests                                                   requests/*.md 검증만 (실행 안 함 · GitHub 문서 ≠ 사용자 승인)
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
+  poll                                                             5분 주기 확인 1회 — 안 읽은 requests·reviews 만 출력 (새것 0 · 없음 3)
 
 원칙: 같은 (요청ID, head 커밋) 은 다시 만들지 않는다 · 요청 1건 = 보고서 1개 (누적 복사 X) · 파일을 최소한으로.
 """
@@ -69,6 +70,7 @@ def _load(p: Path, default):
 
 
 def _save_state(st: dict) -> None:
+    STATE.parent.mkdir(parents=True, exist_ok=True)   # 첫 poll 이 보고서보다 먼저 와도 (.ai-collab 없음) 실패하지 않게
     tmp = STATE.with_suffix(".tmp")
     tmp.write_text(json.dumps(st, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(tmp, STATE)                      # 쓰는 도중 끊겨도 원본 state.json 보존
@@ -182,10 +184,10 @@ def _review_approves(rid: str, head: str) -> bool:
     except OSError:
         return False
     v = re.search(r"^verdict:\s*\"?([A-Za-z_]+)", txt, re.M)
-    c = re.search(r"^reviewed_commit:\s*\"?([0-9a-f]{7,40})", txt, re.M)
-    if not (v and c and head) or v.group(1).lower() != "approved":
+    c = re.search(r"^reviewed_commit:\s*\"?([0-9a-f]{40})\b", txt, re.M)   # R329 요구: 정확히 일치 (전체 40자 SHA)
+    if not (v and c and head) or v.group(1).lower() != "approved":         # changes_requested·pending 등 = 보존
         return False
-    return head.startswith(c.group(1)) or c.group(1).startswith(head)
+    return c.group(1) == head
 
 
 def cmd_prune() -> int:
@@ -206,6 +208,32 @@ def cmd_prune() -> int:
     return 0
 
 
+def cmd_poll() -> int:
+    """R330 5분 주기 확인 1회분 — origin 을 받아 requests/·reviews/ 에서 아직 안 읽은 파일만 알린다.
+    새 파일 있음 = 0 (내용 출력 · 읽음 기록) · 없음 = 3 · fetch 실패 = 2. 실행·승인으로 간주하지 않는다 (읽기만)."""
+    r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        print(f"[ai-collab] fetch 실패: {(r.stderr or '').strip()[:160]}", file=sys.stderr)
+        return 2
+    st = _state()
+    seen = st.setdefault("seen", {})
+    new = []
+    for ln in _git("ls-tree", "-r", "origin/main", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
+        meta, _, path = ln.partition("\t")
+        blob = meta.split()[-1] if meta else ""
+        if not path or path.endswith(".gitkeep") or seen.get(path) == blob:
+            continue
+        new.append({"path": path, "blob": blob, "text": _git("cat-file", "-p", blob)[:4000]})
+        seen[path] = blob
+    if not new:
+        print("[ai-collab] 새 요청·검토 없음")
+        return 3
+    st["last_poll_hit"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    _save_state(st)
+    print(json.dumps(new, ensure_ascii=False, indent=1))
+    return 0
+
+
 def main(argv: list) -> int:
     if not argv:
         print(__doc__)
@@ -218,6 +246,8 @@ def main(argv: list) -> int:
         return cmd_check_requests()
     if op == "prune":
         return cmd_prune()
+    if op == "poll":
+        return cmd_poll()
     print(__doc__)
     return 2
 
