@@ -89,6 +89,16 @@ def test_check_requests_validates_only(tmp_path):
     assert rows["R5.md"]["ok"] and "승인 아님" in rows["R5.md"]["next"]
     assert not rows["bad.md"]["ok"] and len(rows["bad.md"]["why"]) == 2
     assert (r / "a.txt").exists()                                          # 지시문 내용은 실행되지 않는다
+    # 같은 ID 지시를 처리한 작업 커밋을 보고하면 처리됨으로 기록 → 다시 검사하면 중복
+    led = json.loads((r / ".claude" / "state" / "request-ledger.json").read_text(encoding="utf-8"))
+    led["requests"].append({"id": "R5", "status": "completed"})
+    (r / ".claude" / "state" / "request-ledger.json").write_text(json.dumps(led), encoding="utf-8")
+    (r / "r5.txt").write_text("x", encoding="utf-8")
+    subprocess.run(["git", "-C", str(r), "add", "r5.txt"], check=True)
+    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", "fix: 지시 처리 (R5)"], check=True)
+    assert _run(r, "report", "R5").returncode == 0
+    rows = {x["file"]: x for x in json.loads(_run(r, "check-requests").stdout)}
+    assert not rows["R5.md"]["ok"] and "이미 처리됨 (중복)" in rows["R5.md"]["why"]
 
 
 def test_same_commit_status_change_rewrites_report(tmp_path):

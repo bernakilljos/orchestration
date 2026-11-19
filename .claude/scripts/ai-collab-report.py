@@ -148,6 +148,8 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
                            "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False}
     st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
+    if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
+        st.setdefault("handled", {})[rid] = head
     _save_state(st)
     print(f"[ai-collab] {out.relative_to(ROOT)} · {base[:8]}..{head[:8]} · 파일 {len(files)} · 상태 {status}")
     return 0
