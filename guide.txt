@@ -765,6 +765,7 @@
 - 2026-11-19 R315: 성능 — git status 0.9초의 원인 = 커밋 안 된 재압축 사진 4,526장(R293 요청 결과) → 커밋(955fab0f) 후 0.12초 · 상태줄 git 캐시 만료 시 1.29→0.52초 · Stop six-guards RPA 검사 이미지 제외 1.8~2.6→1.2~1.4초 · 사용 0건 MCP 6개 정리는 전역 설정이라 승인(appr-r315-mcp-unused) 대기 · 바이트코드 재현 시험이 캐시 차단 환경에서 실패하던 것 수정
 - 2026-11-19 R317: 실전 자동 복구 — 재발 REPAIR 5건이 0% 였던 원인 = supervisor 가 verify-improvement.py 에 없는 인자(--source-ref)를 넘겨 항상 실패 판정 → 재시도만 소진하고 FAILED (수리 0회) · self-heal 수리 goal 도 같은 판정이 끼어들어 성공을 FAILED 로 덮음 → 해결 시험 통과 기록(VERIFIED)만 인정 · 없으면 BLOCKED 대기 · self-heal goal 은 가로채지 않음 · 대상 시험 1건 실패 = kit 전용 파일 목록 등록 누락 · 프롬프트 로그 점검이 큰 로그를 통째로 읽던 것 85→53ms
 - 2026-11-19 R318: 실전 REPAIR 판정을 규칙 단위 → goal 단위로 (그 goal 을 만든 재발 기록에 연결된 해결이 시험 통과했을 때만 VERIFIED · 같은 규칙의 다른 원인 해결로 통과 X) · 공통우회개발 감지가 지시문 금지 조항("중복 구현 금지")을 재발로 세던 것 수정 (운영 기록 13/13 금지 문구) · DB 사본 검증 5건 중 3건 VERIFIED (37·44·2945) · 2건 BLOCKED (3 증명지시 · 7 미반영 — 해결 기록 없음)
+- 2026-11-19 R320: 화면 캡처 차단(2026-11-05 Excel 문서 촬영 사고로 도입)을 기본 허용으로 — 사용자 결정 "개발하는데 너무 불편해 · 나만 쓸 건데" · 다시 막기: .claude/state/screen-capture.block 파일 생성 · 풀기: 그 파일 삭제
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)
     2.1.198 (7/1): Fable 5 / Mythos 5 RESTORED · subagent 기본 background 실행 ·

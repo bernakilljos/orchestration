@@ -942,13 +942,26 @@ def test_regression_runs_selected_tests_and_retries_once(tmp_path):
 
 def _capture_hook(tmp_path, tool, command):
     payload = json.dumps({"tool_name": tool, "tool_input": {"command": command}, "session_id": "t"})
-    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT), "PYTHONUTF8": "1"}
+    (tmp_path / "plugins").mkdir(exist_ok=True)
+    (tmp_path / ".claude" / "state").mkdir(parents=True, exist_ok=True)
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1"}
     return subprocess.run([sys.executable, "-X", "utf8", str(ROOT / ".claude" / "hooks" / "tool-dispatch.py"), "pre"],
                           input=payload, capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
 
 
-def test_screen_capture_blocked_for_bash_and_powershell(tmp_path):
+def test_screen_capture_allowed_by_default_r320(tmp_path):
+    """R320 사용자 결정 (개인 PC 전용 · "개발하는데 너무 불편해"): 켜기 파일이 없으면 화면 캡처를 막지 않는다."""
     grab = "$g.Copy" + "FromScreen($b.Location, $p, $b.Size)"
+    for tool in ("Bash", "PowerShell"):
+        r = _capture_hook(tmp_path, tool, grab)
+        assert r.returncode == 0 and "화면 캡처" not in r.stderr, (tool, r.stderr)
+
+
+def test_screen_capture_blocked_for_bash_and_powershell(tmp_path):
+    """켜기 파일(.claude/state/screen-capture.block)이 있으면 2026-11-05 차단이 그대로 동작한다."""
+    grab = "$g.Copy" + "FromScreen($b.Location, $p, $b.Size)"
+    (tmp_path / ".claude" / "state").mkdir(parents=True, exist_ok=True)
+    (tmp_path / ".claude" / "state" / "screen-capture.block").write_text("", encoding="utf-8")
     for tool in ("Bash", "PowerShell"):
         r = _capture_hook(tmp_path, tool, grab)
         assert r.returncode == 2 and "화면 캡처" in r.stderr, tool
