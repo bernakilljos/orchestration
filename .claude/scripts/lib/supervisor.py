@@ -210,7 +210,16 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
             "FROM goals WHERE status IN ('PENDING', 'PLANNING', 'RUNNING', 'REPAIRING') "
             "ORDER BY priority DESC, created_at"
         ).fetchall()
+        blocked_repair = c.execute(
+            "SELECT goal_id, source_ref FROM goals WHERE status='BLOCKED' AND workflow_type='REPAIR' "
+            "AND source_ref LIKE 'rule:%'").fetchall()
     now = int(time.time())
+    # R317: 해결 시험이 통과된 재발 REPAIR 는 대기(BLOCKED)에서 재개해 같은 주기에 VERIFIED (대기 중 12h 시간 초과로 버리지 않음)
+    for goal_id, source_ref in blocked_repair:
+        imp = _repair_rule_verdict(source_ref[len("rule:"):])
+        if imp and not dry_run and advance(goal_id, "RUNNING", f"개선 #{imp} 해결 시험 통과 → 재개", "supervisor:auto"):
+            advance(goal_id, "VERIFIED", f"개선 #{imp} 해결 시험 통과 기록(VERIFIED) 확인", "supervisor:auto")
+            details.append({"goal_id": goal_id, "from": "BLOCKED", "to": "VERIFIED", "improvement": imp})
     for goal_id, status, wtype, source_ref, timeout_h, created_at, priority in rows:
         # 2026-10-27 trigger_source 격리 (사용자 지시 "실행 주체 식별 격리")
         if source_ref and source_ref.startswith("scheduler_only:"):
@@ -237,7 +246,8 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
         next_status = _next_status_hook(status, wtype, source_ref, goal_id, dry_run)
         if next_status:
             if not dry_run:
-                advance(goal_id, next_status, f"auto advance from {status}", "supervisor:auto")
+                advance(goal_id, next_status,
+                        _HOOK_REASON.pop(goal_id, "") or f"auto advance from {status}", "supervisor:auto")
             advanced[status] = advanced.get(status, 0) + 1
             details.append({"goal_id": goal_id, "from": status, "to": next_status})
             continue
@@ -406,6 +416,23 @@ def _reset_tasks_for_retry(goal_id: int) -> None:
         )
 
 
+_HOOK_REASON: dict = {}   # goal_id → 판정 사유 (전이 기록에 남김 · 일반 문구 대신)
+
+
+def _repair_rule_verdict(rule_id: str):
+    """재발 규칙 REPAIR 해결 판정 — 시험을 실제로 돌려 통과한 개선(VERIFIED · verified=1)만 인정.
+    같은 원인이 재발하면 recurrence-tracker 가 verified=0 · REOPENED 로 내리므로 옛 통과는 남지 않는다."""
+    try:
+        with sqlite3.connect(str(DB)) as c:
+            row = c.execute(
+                "SELECT improvement_id FROM recurrence_improvements "
+                "WHERE rule_id=? AND status='VERIFIED' AND verified=1 "
+                "ORDER BY improvement_id DESC LIMIT 1", (rule_id,)).fetchone()
+        return row[0] if row else None
+    except sqlite3.Error:
+        return None
+
+
 def _next_status_hook(status: str, workflow_type: str, source_ref: str,
                        goal_id: int, dry_run: bool):
     """현재 상태에서 다음 자동 전환 상태 결정 (훅 호출)."""
@@ -425,19 +452,19 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
         return "RUNNING"
     if status == "RUNNING":
         if workflow_type == "REPAIR":
-            try:
-                import subprocess
-                vf = ROOT / ".claude" / "scripts" / "verify-improvement.py"
-                if vf.exists() and not dry_run:
-                    result = subprocess.run(
-                        [sys.executable, str(vf), "--source-ref", source_ref or ""],
-                        capture_output=True, text=True, timeout=60,
-                        env={**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
-                    )
-                    return "VERIFIED" if result.returncode == 0 else "REPAIRING"
-            except Exception:
-                pass
-            return None  # verify 못하면 수동
+            # R317 (실전 REPAIR 5건 0% 실측): 예전엔 verify-improvement.py 에 없는 인자(--source-ref)를 넘겨
+            #   항상 exit 2 → REPAIRING ↔ RUNNING 왕복만 하다 재시도 상한 FAILED (수리 작업은 한 번도 안 돎).
+            #   self-heal 수리 goal 도 Agent 수리 중에 이 판정이 끼어들어 복구 성공(e43·e52)을 FAILED 로 덮었다.
+            sr = source_ref or ""
+            if sr.startswith("rule:"):
+                imp = _repair_rule_verdict(sr[len("rule:"):])
+                if imp:
+                    _HOOK_REASON[goal_id] = f"개선 #{imp} 해결 시험 통과 기록(VERIFIED) 확인"
+                    return "VERIFIED"
+                _HOOK_REASON[goal_id] = ("근본 원인 확정·해결 시험 통과 기록 없음 — 재시도로 바뀌지 않으므로 대기 "
+                                         "(recurrence-tracker root-cause → fix-result --test 통과 시 자동 재개)")
+                return "BLOCKED"
+            return None  # repair:orig_goal=… 은 self_healing 이 직접 상태를 옮긴다 (가로채지 않음)
         # GENERAL workflow: verify_target 자동 verify (2026-10-27 사용자 지적 "오검증 우회 경로" fix)
         # 지원 패턴 (3가지 · flag 단독은 더 이상 VERIFIED 로 자동 전환 X):
         #   verify:cmd:<shell_command>              — exit=0 요구 · stdout 비어있지 않아야 함

@@ -39,6 +39,26 @@ def _sig(line: str) -> str:
     return " ".join(s.split())[:120]
 
 
+def _tail_lines(path: str, n: int) -> list:
+    """파일 끝 n 줄만 (R317 실측: 매 프롬프트 3.6MB·3.4MB 로그를 통째 readlines 해 스캔 85ms — 끝에서부터 블록을 늘려 읽는다).
+    결과는 readlines()[-n:] 와 같다 (줄바꿈 포함 · 마지막 줄 줄바꿈 없어도 동일)."""
+    with open(path, "rb") as f:
+        f.seek(0, os.SEEK_END)
+        size = f.tell()
+        block = 64 * 1024
+        while True:
+            start = max(0, size - block)
+            f.seek(start)
+            data = f.read(size - start)
+            if start == 0 or data.count(b"\n") > n:
+                break
+            block *= 4
+    lines = data.decode("utf-8", errors="replace").splitlines(keepends=True)
+    if start > 0:
+        lines = lines[1:]          # 블록 첫 줄은 중간에서 잘린 줄
+    return lines[-n:]
+
+
 def _scan(log_dir: str):
     cutoff = time.time() - 86400
     found: dict[str, dict] = {}
@@ -49,8 +69,7 @@ def _scan(log_dir: str):
         try:
             if os.path.getmtime(lp) < cutoff:
                 continue
-            with open(lp, encoding="utf-8", errors="replace") as f:
-                lines = f.readlines()[-500:]
+            lines = _tail_lines(lp, 500)
         except OSError:
             continue
         for ln in lines:

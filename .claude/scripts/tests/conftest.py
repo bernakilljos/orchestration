@@ -27,6 +27,7 @@ _ROOT = Path(__file__).resolve().parents[3]
 _KIT_ONLY = {   # 시험 이름 → kit 에만 있고 전파하지 않는 파일
     "test_status_push_never_puts_token_in_git_url": "status-push.ps1",
     "test_remote_commands_gated_and_dashboard_token_free": "status-push.ps1",
+    "test_remote_agent_capture_event_gated_r266": "remote-agent.ps1",   # R317: 등록 누락으로 IFRS·ICMAI 에서만 FAIL (R266 이후)
     "test_worker_runs_codex_in_isolated_worktree": "codex-auto.bat",
     "test_dashboard_uses_documented_git_config_env": "dashboard.py",
     "test_global_command_installer_points_at_existing_source": "setup/modules/03-settings.bat",
