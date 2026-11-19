@@ -95,6 +95,53 @@ def test_same_commit_status_change_rewrites_report(tmp_path):
     assert _run(r, "report", "R2").returncode == 0
     assert _state(r)["requests"]["R2"]["status"] == "PARTIAL"
     assert "중복 생성 X" in _run(r, "report", "R2").stdout
-    assert _run(r, "report", "R2", "--status", "PASS").returncode == 0
+    led = json.loads((r / ".claude" / "state" / "request-ledger.json").read_text(encoding="utf-8"))
+    led["requests"][1].update(status="completed", verification="PASS")    # 원장이 PASS 로 바뀜
+    (r / ".claude" / "state" / "request-ledger.json").write_text(json.dumps(led, ensure_ascii=False), encoding="utf-8")
+    assert _run(r, "report", "R2").returncode == 0
     assert _state(r)["requests"]["R2"]["status"] == "PASS"
     assert 'status: "PASS"' in (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8")
+
+
+# ---------- 외부 검토 지적 3건 (11-19 ChatGPT): 요청별 범위 · 게시 커밋 · 원장보다 좋은 상태 거부 ----------
+
+def _commit_msg(r, name, body, msg):
+    (r / name).write_text(body, encoding="utf-8")
+    subprocess.run(["git", "-C", str(r), "add", "--", name], check=True)
+    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", msg], check=True)
+
+
+def test_each_request_reports_only_its_commits(tmp_path):
+    r = _repo(tmp_path)
+    led = json.loads((r / ".claude" / "state" / "request-ledger.json").read_text(encoding="utf-8"))
+    led["requests"] += [{"id": "R10", "status": "completed"}, {"id": "R11", "status": "completed"}, {"id": "R1", "status": "completed"}]
+    (r / ".claude" / "state" / "request-ledger.json").write_text(json.dumps(led), encoding="utf-8")
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    _commit_msg(r, "both.txt", "x", "feat: 공통 (R10·R11)")
+    _commit_msg(r, "only10.txt", "y", "fix: R10 만")
+    _commit_msg(r, "r100.txt", "z", "fix: R100 은 다른 요청")
+    for rid in ("R10", "R11"):
+        assert _run(r, "report", rid, "--base", base).returncode == 0
+    r10 = (r / ".ai-collab" / "reports" / "R10.md").read_text(encoding="utf-8")
+    r11 = (r / ".ai-collab" / "reports" / "R11.md").read_text(encoding="utf-8")
+    assert "only10.txt" in r10 and "both.txt" in r10 and "r100.txt" not in r10
+    assert "both.txt" in r11 and "only10.txt" not in r11 and "r100.txt" not in r11
+
+
+def test_publication_commit_is_not_work_head(tmp_path):
+    r = _repo(tmp_path)
+    _commit_msg(r, "w.txt", "w", "feat: 작업 R1")
+    work = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    assert _run(r, "report", "R1").returncode == 0
+    subprocess.run(["git", "-C", str(r), "add", ".ai-collab"], check=True)
+    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", "docs: 보고서 게시 R1"], check=True)   # .ai-collab 만
+    assert _state(r)["last_head"] == work
+    again = _run(r, "report", "R1")
+    assert "중복 생성 X" in again.stdout                                  # 게시 커밋 때문에 다시 만들지 않는다
+
+
+def test_status_cannot_exceed_ledger(tmp_path):
+    r = _repo(tmp_path)
+    bad = _run(r, "report", "R2", "--status", "PASS")                    # 원장 R2 = PARTIAL
+    assert bad.returncode == 2 and "상태 거부" in bad.stderr
+    assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0  # 낮게 적는 것은 허용

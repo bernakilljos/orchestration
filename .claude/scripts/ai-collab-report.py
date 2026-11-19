@@ -32,6 +32,35 @@ def _git(*args: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+_RANK = {"BLOCKED": 0, "FAIL": 0, "PARTIAL": 1, "PASS": 2}
+
+
+def _publication_only(commit: str) -> bool:
+    """이 커밋이 .ai-collab/ 아래만 바꿨나 (보고서 게시 커밋)."""
+    names = [n for n in _git("show", "--name-only", "--format=", commit).splitlines() if n]
+    return bool(names) and all(n.startswith(".ai-collab/") for n in names)
+
+
+def _work_head() -> str:
+    """HEAD 에서 거슬러 올라가 보고서 게시 커밋을 건너뛴 첫 작업 커밋."""
+    for c in _git("rev-list", "--max-count=50", "HEAD").splitlines():
+        if not _publication_only(c):
+            return c
+    return _git("rev-parse", "HEAD")
+
+
+def _commits_for(rid: str, base: str, tip: str) -> list:
+    """base..tip 작업 커밋 중 메시지에 rid 가 낱말로 든 것 [(전체 해시, 제목)] 최신순 (R32 ≠ R325)."""
+    pat = re.compile(r"(?<![A-Za-z0-9])" + re.escape(rid) + r"(?!\d)")
+    out = []
+    for blk in _git("log", "--format=%H%x1f%s%x1f%b%x1e", f"{base}..{tip}").split("\x1e"):
+        parts = blk.strip("\n").split("\x1f")
+        if len(parts) >= 2 and pat.search(parts[1] + "\n" + (parts[2] if len(parts) > 2 else "")) \
+                and not _publication_only(parts[0]):
+            out.append((parts[0], parts[1]))
+    return out
+
+
 def _load(p: Path, default):
     try:
         return json.loads(p.read_text(encoding="utf-8"))
@@ -60,24 +89,33 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
     if req is None:
         print(f"[ai-collab] 원장에 없는 요청: {rid}", file=sys.stderr)
         return 2
-    head = _git("rev-parse", "HEAD")
-    if not head:
+    tip = _work_head()                                 # 보고서 게시 커밋(.ai-collab/ 만 바꾼 것)은 작업 커밋이 아니다
+    if not tip:
         print("[ai-collab] git HEAD 확인 실패", file=sys.stderr)
         return 2
     st = _state()
     ent = st["requests"].get(rid) or {}
-    status = status or {"completed": "PASS"}.get(req.get("status"), req.get("verification") or "PARTIAL")
-    if ent.get("head_commit") == head and ent.get("status") == status:
-        print(f"[ai-collab] 변경 없음 — {rid} 는 이미 {head[:8]}·{status} 로 보고됨 (중복 생성 X)")
-        return 0
-    if ent.get("head_commit") == head:                 # 같은 커밋 · 상태만 바뀜 (예: PARTIAL → PASS) → 같은 범위로 다시 씀
-        base = base or ent.get("base_commit", "")
-    base = base or ent.get("head_commit") or _git("rev-parse", "HEAD~1")
+    ledger_status = {"completed": "PASS"}.get(req.get("status"), req.get("verification") or "PARTIAL")
+    # 원장보다 좋은 상태로는 올리지 못한다 (예: 원장 PARTIAL 인데 --status PASS) · 더 낮게 적는 것만 허용
+    if status and _RANK.get(status, -1) > _RANK.get(ledger_status, -1):
+        print(f"[ai-collab] 상태 거부: 원장 {rid} = {ledger_status} 인데 {status} 로 보고할 수 없음", file=sys.stderr)
+        return 2
+    status = status or ledger_status
+    base = base or ent.get("base_commit" if ent.get("range_tip") == tip else "range_tip") or _git("rev-parse", f"{tip}~1")
     if base and not _git("cat-file", "-t", base):
         print(f"[ai-collab] 기준 커밋 없음: {base}", file=sys.stderr)
         return 2
-    files = [ln for ln in _git("diff", "--name-status", f"{base}..{head}").splitlines() if ln][:80]
-    commits = _git("log", "--format=%h %s", f"{base}..{head}").splitlines()[:20]
+    mine = _commits_for(rid, base, tip)                # 이 요청 ID 를 메시지에 적은 작업 커밋만 (요청별 증거 분리)
+    head = mine[0][0] if mine else tip
+    if ent.get("head_commit") == head and ent.get("status") == status:
+        print(f"[ai-collab] 변경 없음 — {rid} 는 이미 {head[:8]}·{status} 로 보고됨 (중복 생성 X)")
+        return 0
+    if mine:
+        files = sorted({ln for c, _ in mine for ln in _git("show", "--name-status", "--format=", c).splitlines() if ln})[:80]
+        commits = [f"{c[:8]} {s}" for c, s in mine][:20]
+    else:
+        files = [ln for ln in _git("diff", "--name-status", f"{base}..{tip}").splitlines() if ln][:80]
+        commits = [f"(커밋 메시지에 {rid} 없음 — 범위 전체)"] + _git("log", "--format=%h %s", f"{base}..{tip}").splitlines()[:20]
     gate = _load(GATE, {})
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "main"
@@ -98,9 +136,9 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
     COLLAB.joinpath("reports").mkdir(parents=True, exist_ok=True)
     out = COLLAB / "reports" / f"{rid}.md"
     out.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
-    st["requests"][rid] = {"head_commit": head, "base_commit": base, "status": status, "report": f"reports/{rid}.md",
-                           "reported_at": now, "reviewed": False}
-    st["last_head"] = head
+    st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
+                           "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False}
+    st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
     _save_state(st)
     print(f"[ai-collab] {out.relative_to(ROOT)} · {base[:8]}..{head[:8]} · 파일 {len(files)} · 상태 {status}")
     return 0
