@@ -78,3 +78,30 @@ def test_window_capture_allowed_even_when_block_on(tmp_path):
     assert ok.returncode == 0, ok.stderr
     full = _capture_pre(tmp_path, "$g.Copy" + "FromScreen($b.Location, $p, $b.Size)")
     assert full.returncode == 2 and "capture-window.ps1" in full.stderr   # 화면 전체는 막고 창 캡처 명령을 바로 안내
+
+
+# ---------- R322 «Claude CLI 지시문» 을 담은 붙여넣기 = 지시 (보고 문장이 많아도) ----------
+
+def _lar():
+    import sys
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    sp = importlib.util.spec_from_file_location("lar322", ROOT / ".claude" / "hooks" / "prompt" / "ledger_auto_register.py")
+    m = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    return m
+
+
+_EVAL = "\n".join(f"{i}번 결과는 좋은 진전입니다. 다만 아직 확정할 단계는 아닙니다." for i in range(9))
+
+
+def test_pasted_eval_with_cli_directive_is_directive():
+    m = _lar()
+    p = ("<pasted_content id=\"a1\">\n" + _EVAL + "\n4. 다음 Claude CLI 지시문\nR321 후속 — 개인용 오케스트레이션 개선\n"
+         "현재 구현을 기준으로 작업한다.\nP0. 사용자 명시 지시 우선 정책 검증\n- 단순 인용문 오탐 제거\n</pasted_content id=\"a1\">")
+    assert m._intent_text(p)[1] == "pasted_directive"
+
+
+def test_pasted_eval_without_directive_stays_report():
+    m = _lar()
+    p = "<pasted_content id=\"a2\">\n" + _EVAL + "\nClaude CLI 결과를 확인했습니다.\n</pasted_content id=\"a2\">"
+    assert m._intent_text(p)[1] == "pasted_report"

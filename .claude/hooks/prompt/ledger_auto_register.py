@@ -78,7 +78,9 @@ _REPORT_END_RE = re.compile(r"니다[.!]?(?=\s|$)", re.M)
 #   (11-16 «전체 요구사항 복원» 지시 · ledger-raw pasted_report). 존댓말 규칙처럼 약한 표지 — 3줄 이상이고 보고 문장보다 많을 때만.
 _PLAIN_END_RE = re.compile(r"(?:한다|않는다|는다|된다)[.!]?(?=\s|$)", re.M)
 _DIRECTIVE_PHRASES = ("지시다", "지시한다", "승인한다", "전달할 승인 문구", "전달할 지시",
-                      "claude code에 지시할", "claude code에 전달할")
+                      "claude code에 지시할", "claude code에 전달할",
+                      # R322 (11-19 실측 미등록): "다음 Claude CLI 지시문" 을 담은 평가+지시 붙여넣기가 보고 문장 17개에 밀려 pasted_report
+                      "claude cli 지시문", "claude cli에 전달", "claude cli에게 전달", "claude cli에 지시")
 # 금지·부정 문장 안의 위험 단어는 승인 요청이 아니다 ("유료 호출 금지", "배포는 승인하지 않는다").
 _NEGATION_MARKERS = ("금지", "하지 마", "하지마", "않", "말고", "말 것")
 
