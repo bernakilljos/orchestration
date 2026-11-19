@@ -114,13 +114,20 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
         files = sorted({ln for c, _ in mine for ln in _git("show", "--name-status", "--format=", c).splitlines() if ln})[:80]
         commits = [f"{c[:8]} {s}" for c, s in mine][:20]
     else:
-        files = [ln for ln in _git("diff", "--name-status", f"{base}..{tip}").splitlines() if ln][:80]
-        commits = [f"(커밋 메시지에 {rid} 없음 — 범위 전체)"] + _git("log", "--format=%h %s", f"{base}..{tip}").splitlines()[:20]
+        # R328 (외부 검토): 연결 커밋이 없을 때 범위 전체로 돌아가면 다른 작업의 변경이 섞인다 → 추측하지 않고 «검증 불가»
+        files, commits = [], []
+        if _RANK.get(status, -1) > _RANK["PARTIAL"]:
+            status = "PARTIAL"
     gate = _load(GATE, {})
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "main"
     meta = {"request_id": rid, "repository": st["repository"], "branch": branch, "base_commit": base,
-            "head_commit": head, "status": status, "created_at": now, "review_required": True}
+            "head_commit": head, "status": status, "created_at": now, "review_required": True,
+            "commit_link": "verified" if mine else "unverified"}
+    if not mine:
+        commits = [f"연결 커밋 없음 · 변경 내역 검증 불가 — {base[:8]}..{tip[:8]} 안에 제목에 {rid} 를 적은 작업 커밋이 없음 "
+                   "(다른 작업과 섞이지 않게 범위 전체를 추측해 적지 않음)"]
+        files = ["(검증 불가 — 위 참고)"]
     desc = " ".join(re.sub(r"<[^>]+>", " ", req.get("desc") or "").split())   # 붙여 넣은 원문 줄바꿈 → 한 줄 요약
     lines = ["---"] + [f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in meta.items()] + ["---", "",
              f"# {rid} 작업 보고", "", f"- 요청 요약: {desc[:240]}", f"- 상태: {status}",

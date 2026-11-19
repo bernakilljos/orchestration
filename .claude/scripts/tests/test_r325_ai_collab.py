@@ -26,7 +26,7 @@ def _repo(tmp: Path) -> Path:
 def _commit(r: Path, name: str, body: str):
     (r / name).write_text(body, encoding="utf-8")
     subprocess.run(["git", "-C", str(r), "add", name], check=True)
-    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", body], check=True)
+    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", f"{body} (R1)"], check=True)   # 제목에 요청 ID
 
 
 def _run(r: Path, *args):
@@ -92,6 +92,7 @@ def test_check_requests_validates_only(tmp_path):
 def test_same_commit_status_change_rewrites_report(tmp_path):
     """같은 커밋이라도 원장 상태가 PARTIAL → PASS 로 바뀌면 보고서를 다시 쓴다 (그대로면 중복 생성 X)."""
     r = _repo(tmp_path)
+    _commit_msg(r, "r2.txt", "r2", "feat: 부분 작업 (R2)")                 # 제목에 요청 ID 가 든 작업 커밋
     assert _run(r, "report", "R2").returncode == 0
     assert _state(r)["requests"]["R2"]["status"] == "PARTIAL"
     assert "중복 생성 X" in _run(r, "report", "R2").stdout
@@ -146,3 +147,18 @@ def test_status_cannot_exceed_ledger(tmp_path):
     bad = _run(r, "report", "R2", "--status", "PASS")                    # 원장 R2 = PARTIAL
     assert bad.returncode == 2 and "상태 거부" in bad.stderr
     assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0  # 낮게 적는 것은 허용
+
+
+def test_no_linked_commit_is_unverified_not_whole_range(tmp_path):
+    """R328 (외부 검토): 제목에 요청 ID 가 든 커밋이 없으면 범위 전체를 추측해 적지 않고 «검증 불가» · 상태는 PARTIAL 이하."""
+    r = _repo(tmp_path)
+    led = json.loads((r / ".claude" / "state" / "request-ledger.json").read_text(encoding="utf-8"))
+    led["requests"].append({"id": "R9", "status": "completed", "verification": "PASS"})
+    (r / ".claude" / "state" / "request-ledger.json").write_text(json.dumps(led), encoding="utf-8")
+    assert _run(r, "report", "R9").returncode == 0
+    rep = (r / ".ai-collab" / "reports" / "R9.md").read_text(encoding="utf-8")
+    assert 'commit_link: "unverified"' in rep and "검증 불가" in rep
+    assert "a.txt" not in rep                                            # 다른 작업(R1) 변경이 섞이지 않는다
+    assert 'status: "PARTIAL"' in rep and _state(r)["requests"]["R9"]["status"] == "PARTIAL"
+    ok = (r / ".ai-collab" / "reports").glob("R9.md")
+    assert list(ok)
