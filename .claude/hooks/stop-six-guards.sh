@@ -85,8 +85,10 @@ fi
 # 8. RPA/Desktop UI Verification Guard (2026-10-27 P0-2 fix · screen-verify.md § RPA/C/S 반영)
 # RPA/.vbs/desktop/winforms/wpf/sap 파일 수정 감지 시 smoke test 증거 요구
 RPA_PATTERN='\.(rpa|vbs|xaml)$|/(rpa|RPA|SAP|desktop|winforms|wpf)/|_rpa\.|_desktop\.'
-RPA_CHANGES=$(git diff --cached --name-only 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)
-RPA_CHANGES+="$(git diff --name-only 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)"
+# R315 (11-19 실측): 작업 트리 diff 가 로컬 재압축 이미지 4,528장 때문에 462ms → 이미지 확장자 제외 106ms (이미지는 RPA 코드가 아님 · 추적 이미지 중 패턴 일치 0건 확인 · 위 R313 지문과 같은 제외)
+RPA_IMG_X=(':(exclude)*.jpg' ':(exclude)*.jpeg' ':(exclude)*.png' ':(exclude)*.webp' ':(exclude)*.gif')
+RPA_CHANGES=$(git diff --cached --name-only -- . "${RPA_IMG_X[@]}" 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)
+RPA_CHANGES+="$(git diff --name-only -- . "${RPA_IMG_X[@]}" 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)"
 if [ -n "$RPA_CHANGES" ]; then
   # 자체 smoke test 증거 확인 — .claude/state/rpa-verify-*.flag or logs/rpa-smoke-test.log 최근 1h 내
   RPA_EVIDENCE=0

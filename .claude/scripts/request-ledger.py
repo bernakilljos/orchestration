@@ -269,16 +269,37 @@ def cmd_add(desc: str, session: str = "", idempotency_window_h: int = 24) -> int
             print(f"[ledger] = {r.get('id')} (duplicate · idempotency_key · skipped)")
             return 0
     rid = _next_id(data["requests"])
-    data["requests"].append({
+    entry = {
         "id": rid,
         "desc": desc[:200],
         "status": "pending",
         "ts": datetime.now().isoformat(timespec="seconds"),
         "idempotency_key": key,
-    })
+    }
+    if session:
+        entry["session_id"] = session      # R315: 손 등록도 세션 기록 (상태줄·게이트가 자동 등록과 같은 기준으로 봄)
+    data["requests"].append(entry)
     _save(data)
     print(f"[ledger] + {rid}: {desc[:80]}")
+    _start_trace(rid, desc, session)
     return 0
+
+
+def _start_trace(rid: str, desc: str, session: str = "") -> None:
+    """R315: 자동 등록이 놓친 지시를 손으로 등록하면 상태줄 개발·요청 줄이 직전 요청(R314)에 멈춰 있던 것 —
+    자동 등록(ledger_auto_register)과 같게 §78 현재 요청 추적을 시작한다 · 추적 실패가 등록을 막지 않음."""
+    try:
+        import importlib.util as _ilu
+        import uuid as _uuid
+        sp = _ilu.spec_from_file_location("orca_trace_ledger", Path(__file__).resolve().parent / "lib" / "trace.py")
+        tm = _ilu.module_from_spec(sp)
+        sp.loader.exec_module(tm)
+        tid = _uuid.uuid4().hex[:16]
+        tm.set_current(tid, rid, desc)
+        tm.emit("request", step=rid, status="start", trace_id=tid,
+                detail={"classification": "manual_add", "session": (session or "unknown")[:8]})
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def cmd_add_batch(json_str: str) -> int:

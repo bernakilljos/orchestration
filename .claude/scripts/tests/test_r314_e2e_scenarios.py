@@ -123,8 +123,11 @@ def test_s5_corrupt_ledger_blocks_stop(tmp_path):
     assert _cli(tmp_path, LEDGER_PY, "gate", stdin=json.dumps({"session_id": "other"})).returncode == 0
 
 
-def test_cx_rerun_ignores_stale_bytecode(tmp_path):
+def test_cx_rerun_ignores_stale_bytecode(tmp_path, monkeypatch):
     """R314: 같은 크기로 고친 시험(kg * 3 → kg * 2 · 실패하게)을 완료 시점 재실행이 옛 .pyc(통과) 로 판정하지 않음."""
+    # R315: 결함 재현 전제 = 바이트코드 캐시 쓰기 허용 — 실행 환경에 캐시 차단 변수가 있으면 재현 단계가 성립하지 않아 실패하던 것 (환경 의존 · D15)
+    monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+    monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
     t = tmp_path / "t_pyc.py"
     t.write_text("def test_x():\n    assert 'kg' * 3 == 'kgkgkg'\n", encoding="utf-8")
     subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "t_pyc.py"], cwd=str(tmp_path),
@@ -138,3 +141,16 @@ def test_cx_rerun_ignores_stale_bytecode(tmp_path):
     fresh = _pytest_failures(tmp_path, ["t_pyc.py::test_x"], 120, nopyc=True)
     assert fresh[2] == 1 and fresh[0]                                         # 지금 코드 기준 실패
     assert stale[2] == 0                                                      # 캐시 차단 없으면 옛 결과로 통과 (결함 재현)
+
+
+def test_manual_add_moves_current_request(tmp_path):
+    """R315: 자동 등록이 놓친 지시를 손으로 add 하면 상태줄 현재 요청이 직전 요청에 멈춰 있던 것 → add 도 현재 요청·세션 기록."""
+    st = tmp_path / ".claude" / "state"
+    st.mkdir(parents=True, exist_ok=True)
+    (st / "current-trace.json").write_text(json.dumps({"trace_id": "old", "rid": "R1"}), encoding="utf-8")   # 직전 요청
+    r = _cli(tmp_path, LEDGER_PY, "add", "--session", "s1", "놓친 지시 손 등록")
+    assert r.returncode == 0, r.stderr
+    cur = json.loads((st / "current-trace.json").read_text(encoding="utf-8"))
+    rec = _reqs(tmp_path)[-1]
+    assert cur["rid"] == rec["id"] and cur["trace_id"] != "old" and rec["session_id"] == "s1"   # 상태줄이 새 요청을 가리킴
+    assert "duplicate" in _cli(tmp_path, LEDGER_PY, "add", "--session", "s1", "놓친 지시 손 등록").stdout   # 중복은 그대로 건너뜀

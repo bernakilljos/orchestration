@@ -134,9 +134,10 @@ def test_git_directives_register_and_questions_do_not():
     sp = importlib.util.spec_from_file_location("lar312", ROOT / ".claude" / "hooks" / "prompt" / "ledger_auto_register.py")
     m = importlib.util.module_from_spec(sp)
     sp.loader.exec_module(m)
-    for p in ("이거하고 git push해야지", "이것도 하고 push해 이미지같은건 다른곳에서도 서야지", "push해", "다하고 git push하고"):
+    for p in ("이거하고 git push해야지", "이것도 하고 push해 이미지같은건 다른곳에서도 서야지", "push해", "다하고 git push하고",
+              "이건 꼭 제대로 보고해주고 git push하도록", "정리하도록", "결과 확인해주고 커밋"):   # R315 실측 미등록 + 같은 어미 변형
         assert m._classify(p) == "execute", p
-    for p in ("push했어?", "커밋했어?", "이거하고 나면 어떻게 돼?"):
+    for p in ("push했어?", "커밋했어?", "이거하고 나면 어떻게 돼?", "push하도록 돼 있어?", "보고해주고 나면 뭐해?"):
         assert m._classify(p) == "question", p
 
 
