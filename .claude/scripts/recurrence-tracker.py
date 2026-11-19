@@ -339,7 +339,7 @@ def _run_regression_test(nodeid: str) -> tuple:
     root = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
     sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
     from independent_verifier import _pytest_failures
-    fails, summary, rc = _pytest_failures(root, [nodeid.strip()], 600)
+    fails, summary, rc = _pytest_failures(root, [nodeid.strip()], 600, nopyc=True)
     return rc == 0 and not fails, f"rc={rc} {summary}"[:200]
 
 

@@ -782,9 +782,15 @@ _RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
 _RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
 
 
-def _pytest_failures(cwd: Path, tests: List[str], timeout: int):
-    """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류."""
+def _pytest_failures(cwd: Path, tests: List[str], timeout: int, nopyc: bool = False):
+    """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류.
+    nopyc=True (R314): 바이트코드 캐시를 쓰지도 읽지도 않음 — 같은 초·같은 크기로 고친 시험을 옛 .pyc 로 판정하지 않게
+    (반례 재실행·해결 시험처럼 '지금 실행한 결과' 만 증거로 인정하는 호출 · real_repair_chain._nopyc_env 와 같은 방식)."""
     env = {**os.environ, "PYTHONUTF8": "1"}
+    if nopyc:
+        import tempfile as _tf, time as _time
+        env.update({"PYTHONDONTWRITEBYTECODE": "1",   # 쓰기 금지라 아래 폴더는 생기지 않음 (임시 폴더 잔여 0)
+                    "PYTHONPYCACHEPREFIX": os.path.join(_tf.gettempdir(), "pytest-nopyc-%d-%d" % (os.getpid(), _time.time_ns()))})
     env.pop("CLAUDE_PROJECT_DIR", None)   # 기준선 사본(worktree)에서 시험이 자기 위치를 ROOT 로 쓰게
     r = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE",
                         "--color=no", *tests], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",

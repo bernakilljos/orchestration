@@ -626,7 +626,7 @@ def run_cx_tests(r: dict) -> dict:
     res = {}
     for c, nodeid in tests.items():
         try:
-            fails, summary, rc = _pytest_failures(_project_root(), [nodeid], CX_TEST_TIMEOUT)
+            fails, summary, rc = _pytest_failures(_project_root(), [nodeid], CX_TEST_TIMEOUT, nopyc=True)
             res[c] = (rc == 0 and not fails, f"rc={rc} {summary}"[:160])
         except Exception as e:  # noqa: BLE001 — 실행 실패 = 통과 아님
             res[c] = (False, f"실행 실패: {e}"[:160])

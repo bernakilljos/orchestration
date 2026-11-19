@@ -192,6 +192,9 @@ def _new_event_id(session_id: str, prompt: str) -> str:
     return hashlib.sha256(f"{session_id}|{phash}|{ns}".encode("utf-8")).hexdigest()[:16]
 
 
+RAW_PROMPT_MAX = 20000   # R314: 원본 기록에서 요청을 다시 등록할 수 있게 긴 지시문도 보존 (붙여넣기 2만 자 상한)
+
+
 def _append_raw(prompt: str, session_id: str, classification: str, status: str) -> None:
     """사용자 지시 2026-10-28: 모든 UserPromptSubmit 원본 이벤트 append-only 보존.
     분류 결과·중복 여부 무관하게 전부 기록 · 삭제 X · 추적용."""
@@ -206,7 +209,7 @@ def _append_raw(prompt: str, session_id: str, classification: str, status: str) 
                 "session_id": session_id,
                 "classification": classification,
                 "status": status,  # registered·duplicate_skipped·deferred·approval_required
-                "prompt": _mask(prompt)[:800],   # 2026-11-07: 원문 발췌도 비밀정보 가림 (해시는 원문 기준)
+                "prompt": _mask(prompt)[:RAW_PROMPT_MAX],   # 2026-11-07: 원문 발췌도 비밀정보 가림 (해시는 원문 기준) · R314: 800자 → 20000자 (R313 하위 요구가 잘려 2개만 복구됨)
                 "prompt_hash": _prompt_hash(prompt),
             }, ensure_ascii=False) + "\n")
     except Exception:

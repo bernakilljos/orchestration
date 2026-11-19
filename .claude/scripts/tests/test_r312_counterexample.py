@@ -138,3 +138,19 @@ def test_git_directives_register_and_questions_do_not():
         assert m._classify(p) == "execute", p
     for p in ("push했어?", "커밋했어?", "이거하고 나면 어떻게 돼?"):
         assert m._classify(p) == "question", p
+
+
+def test_raw_log_keeps_long_prompt(tmp_path, monkeypatch):
+    """R314: 원본 기록이 800자에서 잘려 R313 하위 요구 2개만 복구되던 것 → 긴 지시문도 보존 (비밀 가림은 그대로)."""
+    import importlib.util
+    sp = importlib.util.spec_from_file_location("lar314", ROOT / ".claude" / "hooks" / "prompt" / "ledger_auto_register.py")
+    m = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    body = "\n".join(f"{i}. 요구사항 {i} 처리하고 검증해" for i in range(1, 200))
+    m._append_raw(body + "\n끝줄 확인", "s", "execute", "registered")
+    rec = json.loads((tmp_path / ".claude" / "logs" / "ledger-raw.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+    assert len(body) > 800 and rec["prompt"].endswith("끝줄 확인")
+    m._append_raw("가" * (m.RAW_PROMPT_MAX + 50), "s", "execute", "registered")
+    rec = json.loads((tmp_path / ".claude" / "logs" / "ledger-raw.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+    assert len(rec["prompt"]) == m.RAW_PROMPT_MAX          # 상한은 유지 (기록 폭주 방지)
