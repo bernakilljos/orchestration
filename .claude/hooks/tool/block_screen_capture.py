@@ -28,5 +28,7 @@ def run(ctx):
     if "ALLOW_SCREEN_CAPTURE=1" in cmd or _READ_ONLY.match(cmd) or not _CAPTURE.search(cmd):
         return None
     return Result(2, "", "BLOCKED(화면 캡처): 승인되지 않은 화면 수집 금지 — 다른 업무 화면이 찍힐 수 있다.\n"
+                         "  → 창 하나만 캡처 (R322 · 겹친 다른 창 안 섞임): powershell -NoProfile -ExecutionPolicy Bypass -File "
+                         ".claude\\scripts\\capture-window.ps1 -Title \"Visual Studio Code\" -Out <경로.png>\n"
                          "  → 웹 화면은 Playwright 페이지 캡처 · 그 외는 사용자에게 대상 창 지정·승인을 받는다\n"
                          "  → 다른 업무 화면이 찍히면 분석하지 말고 즉시 삭제 (screen-verify.md)\n")

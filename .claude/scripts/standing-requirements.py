@@ -271,11 +271,21 @@ LANG_MIN_LETTERS = 60      # 짧은 한 줄(명령·경로만 있는 답)은 판
 LANG_MIN_HANGUL = 0.30     # 글자(한글+영문) 중 한글 비율이 이보다 낮으면 영어 보고로 본다
 
 
+_LANG_RAW_LINE = __import__("re").compile(   # 사람이 쓴 문장이 아니라 도구 원문으로 보이는 줄
+    r"^\s*(?:>|\||E\s{2,}|Traceback|File \"|\$ |PS |[-+]{3}|@@|=+ |\[[A-Za-z-]+\])|[A-Za-z]+(?:Error|Exception)\b|==|->|=>")
+
+
 def _hangul_ratio(text: str) -> "tuple[float, int]":
     import re as _re
     body = _re.sub(r"```.*?```", " ", text or "", flags=_re.S)          # 코드 블록 제외
     body = _re.sub(r"`[^`]*`", " ", body)                              # 인라인 식별자 제외
     body = _re.sub(r"(https?://|[A-Za-z]:\\|/)[^\s]*", " ", body)      # URL·경로 제외
+    # R322 (실측 오탐 3종): 한국어 보고 안에 백틱 없이 붙인 오류 원문 줄 · > 인용 출력 · 영문 시험명 표가 섞이면 27%·16%·22% 로 차단됐다.
+    #   식별자(밑줄·숫자 섞인 낱말)는 늘 제외 · 한글 없는 원문 줄(인용·표·오류·diff·프롬프트)은 «한국어 본문(8자+)이 있을 때만» 제외 → 순수 영어 보고는 그대로 차단
+    body = _re.sub(r"\b[A-Za-z]*(?:_|\d)[\w.-]*\b", " ", body)
+    if len(_re.findall(r"[가-힣]", body)) >= 8:
+        body = "\n".join(ln for ln in body.splitlines()
+                         if _re.search(r"[가-힣]", ln) or not _LANG_RAW_LINE.search(ln))
     ko = len(_re.findall(r"[\uac00-\ud7a3]", body))
     en = len(_re.findall(r"[A-Za-z]", body))
     n = ko + en

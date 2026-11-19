@@ -179,6 +179,7 @@ AI 가 **직접 검증 못 하는 유일한 경우** = 외부 의존 (사용자 
 - 다른 업무 화면이 찍히면 분석·인용·저장하지 말고 즉시 삭제하고 사실을 보고한다.
 - 강제: `block_screen_capture` (Bash·PowerShell) · 승인 시에만 `ALLOW_SCREEN_CAPTURE=1`.
 - **2026-11-19 R320 변경 (사용자 결정 "개발하는데 너무 불편해 · 나만 쓸 건데")**: 기본은 캡처 허용 (개인 PC 1대 전용). 다시 막기 = `.claude/state/screen-capture.block` 파일 생성 · 풀기 = 그 파일 삭제. 허용 상태에서도 다른 업무 화면이 찍히면 분석·인용하지 않고 지운다.
+- **창 하나만 캡처 (2026-11-19 R322 · 기본 방법)**: `.claude/scripts/capture-window.ps1 -Title "Visual Studio Code" -Out <경로.png>` — PrintWindow 로 그 창이 그린 내용만 찍어 위에 겹친 다른 창(Excel 등)이 섞이지 않는다 · 화면 전체·모니터 캡처 대신 이것을 쓴다 · 차단 파일이 켜져 있어도 동작 · 최소화된 창은 실패로 끝낸다
 - 웹 화면 검증은 대상이 정해진 Playwright 페이지 캡처를 쓴다.
 - 원격 에이전트(`remote-agent.ps1`, 2026-11-16 R266): 평상시 캡처 0회. 사용자 환경변수 `ORCH_REMOTE_ALLOW_SCREEN=1` + `ORCH_REMOTE_CAPTURE_WINDOW=<창 제목>` + 대시보드 주소가 모두 있을 때만, 원격 명령 직후 그 창 영역만 10장 × 0.2초 찍고 멈춘다 (이전: 0.2초마다 모든 모니터 상시 캡처 · CPU 코어 13%).
 
