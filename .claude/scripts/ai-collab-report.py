@@ -173,13 +173,28 @@ def cmd_check_requests() -> int:
     return 0
 
 
+def _review_approves(rid: str, head: str) -> bool:
+    """reviews/<rid>.md 머리에 verdict: approved 와 reviewed_commit(7자+ · 보고서 head_commit 과 같은 커밋)이 있을 때만 True.
+    changes_requested·형식 오류·다른(이전) 커밋 검토·파일 없음 = False (보고서 유지)."""
+    p = COLLAB / "reviews" / f"{rid}.md"
+    try:
+        txt = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    v = re.search(r"^verdict:\s*\"?([A-Za-z_]+)", txt, re.M)
+    c = re.search(r"^reviewed_commit:\s*\"?([0-9a-f]{7,40})", txt, re.M)
+    if not (v and c and head) or v.group(1).lower() != "approved":
+        return False
+    return head.startswith(c.group(1)) or c.group(1).startswith(head)
+
+
 def cmd_prune() -> int:
     """검토 끝난(reviewed) 완료(PASS) 보고서만 지운다 · 미완료·승인 대기·검토 전은 남긴다 · 내용은 Git 이력에 보존."""
     st = _state()
     gone = []
     for rid, ent in list(st["requests"].items()):
-        reviewed = ent.get("reviewed") or (COLLAB / "reviews" / f"{rid}.md").is_file()   # ChatGPT 가 검토 결과를 남김
-        if reviewed and ent.get("status") == "PASS" and ent.get("report"):
+        # R329 (외부 검토): 검토 파일이 «있기만» 하면 지우던 것 → 명시 승인 + 승인한 커밋 = 이 보고서 커밋일 때만
+        if _review_approves(rid, ent.get("head_commit", "")) and ent.get("status") == "PASS" and ent.get("report"):
             p = COLLAB / ent.get("report", f"reports/{rid}.md")
             if p.is_file() and p.resolve().is_relative_to((COLLAB / "reports").resolve()):
                 p.unlink()

@@ -69,7 +69,9 @@ def test_prune_only_reviewed_pass(tmp_path):
     assert "정리 0건" in _run(r, "prune").stdout                         # 검토 전이면 아무것도 지우지 않음
     (r / ".ai-collab" / "reviews").mkdir(parents=True, exist_ok=True)
     for rid in ("R1", "R2"):
-        (r / ".ai-collab" / "reviews" / f"{rid}.md").write_text("ok", encoding="utf-8")
+        h = _state(r)["requests"][rid]["head_commit"]
+        (r / ".ai-collab" / "reviews" / f"{rid}.md").write_text(
+            f'---\nverdict: "approved"\nreviewed_commit: "{h}"\n---\n', encoding="utf-8")
     out = _run(r, "prune").stdout
     assert "정리 1건: R1" in out
     assert not (r / ".ai-collab" / "reports" / "R1.md").exists()          # 검토 끝난 PASS
@@ -162,3 +164,21 @@ def test_no_linked_commit_is_unverified_not_whole_range(tmp_path):
     assert 'status: "PARTIAL"' in rep and _state(r)["requests"]["R9"]["status"] == "PARTIAL"
     ok = (r / ".ai-collab" / "reports").glob("R9.md")
     assert list(ok)
+
+
+def test_prune_needs_explicit_approval_of_same_commit(tmp_path):
+    """R329 (외부 검토): 검토 파일이 있기만 하면 지우던 것 — 수정 요청·형식 없음·이전 커밋 승인은 보고서 유지."""
+    r = _repo(tmp_path)
+    _run(r, "report", "R1")
+    h = _state(r)["requests"]["R1"]["head_commit"]
+    rev = r / ".ai-collab" / "reviews"
+    rev.mkdir(parents=True, exist_ok=True)
+    rep = r / ".ai-collab" / "reports" / "R1.md"
+    for body in ("ok",                                                                      # 형식 없음
+                 f'---\nverdict: "changes_requested"\nreviewed_commit: "{h}"\n---\n',      # 수정 요청
+                 '---\nverdict: "approved"\nreviewed_commit: "0123456789abcdef"\n---\n',    # 다른(이전) 커밋
+                 '---\nverdict: "approved"\n---\n'):                                      # 커밋 없음
+        (rev / "R1.md").write_text(body, encoding="utf-8")
+        assert "정리 0건" in _run(r, "prune").stdout and rep.exists(), body
+    (rev / "R1.md").write_text(f'---\nverdict: "approved"\nreviewed_commit: "{h[:8]}"\n---\n', encoding="utf-8")
+    assert "정리 1건: R1" in _run(r, "prune").stdout and not rep.exists()                # 같은 커밋 명시 승인만
