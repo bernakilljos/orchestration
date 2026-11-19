@@ -2,21 +2,32 @@
   "repository": "bernakilljos/orchestration",
   "requests": {
     "R325": {
-      "head_commit": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71",
-      "base_commit": "34065c13dd8dfed14fa8274439ea7165dc8ef5d9",
+      "head_commit": "365ff8ec6b5fbdb4208ac38fc6c1ba36fb73ce51",
+      "base_commit": "9b2fd89d",
+      "range_tip": "365ff8ec6b5fbdb4208ac38fc6c1ba36fb73ce51",
       "status": "PASS",
       "report": "reports/R325.md",
-      "reported_at": "2026-11-19T08:07:09+00:00",
+      "reported_at": "2026-11-19T08:17:40+00:00",
       "reviewed": false
     },
     "R326": {
-      "head_commit": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71",
-      "base_commit": "34065c13dd8dfed14fa8274439ea7165dc8ef5d9",
+      "head_commit": "34065c13dd8dfed14fa8274439ea7165dc8ef5d9",
+      "base_commit": "9b2fd89d",
+      "range_tip": "07c6edb94f96a9bd739e27ad78b23435e9c23253",
       "status": "PASS",
       "report": "reports/R326.md",
-      "reported_at": "2026-11-19T08:07:09+00:00",
+      "reported_at": "2026-11-19T08:19:44+00:00",
+      "reviewed": false
+    },
+    "R327": {
+      "head_commit": "07c6edb94f96a9bd739e27ad78b23435e9c23253",
+      "base_commit": "9b2fd89d",
+      "range_tip": "07c6edb94f96a9bd739e27ad78b23435e9c23253",
+      "status": "PASS",
+      "report": "reports/R327.md",
+      "reported_at": "2026-11-19T08:19:45+00:00",
       "reviewed": false
     }
   },
-  "last_head": "a8e5a09d66442d57e2cd1c4eac33c15dae107d71"
+  "last_head": "07c6edb94f96a9bd739e27ad78b23435e9c23253"
 }
