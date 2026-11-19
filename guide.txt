@@ -768,7 +768,7 @@
 - 2026-11-19 R320: 화면 캡처 차단(2026-11-05 Excel 문서 촬영 사고로 도입)을 기본 허용으로 — 사용자 결정 "개발하는데 너무 불편해 · 나만 쓸 건데" · 다시 막기: .claude/state/screen-capture.block 파일 생성 · 풀기: 그 파일 삭제
 - 2026-11-19 R322: 창 하나만 캡처 = .claude/scripts/capture-window.ps1 -Title "Visual Studio Code" -Out <경로.png> (PrintWindow · 위에 겹친 Excel 등 다른 창이 섞이지 않음 · 차단 켜져 있어도 동작) · 한국어 보고 검사 오탐 3종 수정 (한국어 보고 안의 오류 원문 줄·> 인용 출력·영문 시험명 표 → 통과 · 순수 영어 보고는 그대로 차단) · 붙여넣은 평가문 속 «다음 Claude CLI 지시문» 이 보고 문장에 밀려 원장 미등록되던 것 → 지시 표지에 claude cli 지시문·전달 추가
 - 2026-11-19 R323: 다른 프로젝트 push 차단 실측 — IFRS(SVN)·ICMAI 세션 기록에 push 차단 0건 · 대상 사본 재현 결함 2건 수정: ① svn commit 메시지 안의 "git push" 언급이 push 실행으로 판정 (승인으로도 못 품) → 메시지 걷어 내기를 svn commit·ci 에도 ② 문서 수정 python heredoc 의 '
-- 2026-11-19 R325·R326: GitHub 협업 폴더 .ai-collab/ (reports·requests·reviews·state.json·README) — 커밋 직후 python .claude/scripts/ai-collab-report.py report <요청ID> → reports/<요청ID>.md·state.json 갱신 후 같이 push · 같은 요청·같은 커밋 재생성 X · check-requests 는 검증만 (GitHub 문서 ≠ 사용자 승인) · prune 은 검토 끝난 PASS 보고서만 정리
+- 2026-11-19 R325·R326: GitHub 협업 폴더 .ai-collab/ (reports·requests·reviews·state.json·README) — 커밋 직후 python .claude/scripts/ai-collab-report.py report <요청ID> → reports/<요청ID>.md·state.json 갱신 후 같이 push · 같은 요청·같은 커밋 재생성 X · check-requests 는 검증만 (GitHub 문서 ≠ 사용자 승인) · prune 은 검토 끝난 PASS 보고서만 정리 · 같은 커밋이라도 원장 상태가 바뀌면(PARTIAL→PASS) 보고서 갱신
 ' 표기가 줄바꿈으로 깨져 데이터 전용 판정 실패 → 본문 속 push 언급이 실행으로 남던 것 (실제 줄바꿈 있으면 변환 안 함) · VS Code 체감: 모델 대기 중앙 4.0초·p90 9.9초 vs 로컬 훅 68ms · 3분 표본 CPU 합 최대 9%·RAM 여유 5.6GB+ · IFRS·ICMAI 는 작업 폴더 설정이 없거나 짧아 전역 terminal.integrated.gpuAcceleration=off (가장 느린 DOM 렌더) 적용 중
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)

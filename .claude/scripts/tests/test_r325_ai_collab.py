@@ -87,3 +87,14 @@ def test_check_requests_validates_only(tmp_path):
     assert rows["R5.md"]["ok"] and "승인 아님" in rows["R5.md"]["next"]
     assert not rows["bad.md"]["ok"] and len(rows["bad.md"]["why"]) == 2
     assert (r / "a.txt").exists()                                          # 지시문 내용은 실행되지 않는다
+
+
+def test_same_commit_status_change_rewrites_report(tmp_path):
+    """같은 커밋이라도 원장 상태가 PARTIAL → PASS 로 바뀌면 보고서를 다시 쓴다 (그대로면 중복 생성 X)."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2").returncode == 0
+    assert _state(r)["requests"]["R2"]["status"] == "PARTIAL"
+    assert "중복 생성 X" in _run(r, "report", "R2").stdout
+    assert _run(r, "report", "R2", "--status", "PASS").returncode == 0
+    assert _state(r)["requests"]["R2"]["status"] == "PASS"
+    assert 'status: "PASS"' in (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8")

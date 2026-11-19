@@ -66,22 +66,24 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
         return 2
     st = _state()
     ent = st["requests"].get(rid) or {}
-    if ent.get("head_commit") == head:
-        print(f"[ai-collab] 변경 없음 — {rid} 는 이미 {head[:8]} 기준 보고됨 (중복 생성 X)")
+    status = status or {"completed": "PASS"}.get(req.get("status"), req.get("verification") or "PARTIAL")
+    if ent.get("head_commit") == head and ent.get("status") == status:
+        print(f"[ai-collab] 변경 없음 — {rid} 는 이미 {head[:8]}·{status} 로 보고됨 (중복 생성 X)")
         return 0
+    if ent.get("head_commit") == head:                 # 같은 커밋 · 상태만 바뀜 (예: PARTIAL → PASS) → 같은 범위로 다시 씀
+        base = base or ent.get("base_commit", "")
     base = base or ent.get("head_commit") or _git("rev-parse", "HEAD~1")
     if base and not _git("cat-file", "-t", base):
         print(f"[ai-collab] 기준 커밋 없음: {base}", file=sys.stderr)
         return 2
     files = [ln for ln in _git("diff", "--name-status", f"{base}..{head}").splitlines() if ln][:80]
     commits = _git("log", "--format=%h %s", f"{base}..{head}").splitlines()[:20]
-    status = status or {"completed": "PASS"}.get(req.get("status"), req.get("verification") or "PARTIAL")
     gate = _load(GATE, {})
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "main"
     meta = {"request_id": rid, "repository": st["repository"], "branch": branch, "base_commit": base,
             "head_commit": head, "status": status, "created_at": now, "review_required": True}
-    desc = re.sub(r"<[^>]+>", " ", req.get("desc") or "").strip()
+    desc = " ".join(re.sub(r"<[^>]+>", " ", req.get("desc") or "").split())   # 붙여 넣은 원문 줄바꿈 → 한 줄 요약
     lines = ["---"] + [f"{k}: {json.dumps(v, ensure_ascii=False)}" for k, v in meta.items()] + ["---", "",
              f"# {rid} 작업 보고", "", f"- 요청 요약: {desc[:240]}", f"- 상태: {status}",
              f"- 근거(원장): {(req.get('evidence') or '기록 없음')[:600]}", "",
