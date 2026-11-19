@@ -216,7 +216,7 @@ def advance_all_pending(dry_run: bool = False, auto_execute: bool = True,
     now = int(time.time())
     # R317: 해결 시험이 통과된 재발 REPAIR 는 대기(BLOCKED)에서 재개해 같은 주기에 VERIFIED (대기 중 12h 시간 초과로 버리지 않음)
     for goal_id, source_ref in blocked_repair:
-        imp = _repair_rule_verdict(source_ref[len("rule:"):])
+        imp = _repair_rule_verdict(source_ref[len("rule:"):], goal_id)
         if imp and not dry_run and advance(goal_id, "RUNNING", f"개선 #{imp} 해결 시험 통과 → 재개", "supervisor:auto"):
             advance(goal_id, "VERIFIED", f"개선 #{imp} 해결 시험 통과 기록(VERIFIED) 확인", "supervisor:auto")
             details.append({"goal_id": goal_id, "from": "BLOCKED", "to": "VERIFIED", "improvement": imp})
@@ -419,15 +419,20 @@ def _reset_tasks_for_retry(goal_id: int) -> None:
 _HOOK_REASON: dict = {}   # goal_id → 판정 사유 (전이 기록에 남김 · 일반 문구 대신)
 
 
-def _repair_rule_verdict(rule_id: str):
-    """재발 규칙 REPAIR 해결 판정 — 시험을 실제로 돌려 통과한 개선(VERIFIED · verified=1)만 인정.
+def _repair_rule_verdict(rule_id: str, goal_id: int):
+    """재발 규칙 REPAIR 해결 판정 — 이 goal 을 만든 재발 기록(같은 규칙 · goal 생성 ±5초)에 연결된 개선이
+    시험을 실제로 돌려 통과(VERIFIED · verified=1)했을 때만 인정.
+    R318: 규칙 단위로 보면 같은 규칙의 다른 원인(예: 미반영 중 붙여넣기 오탐 해결)이 진짜 지적에서 생긴 goal 까지 통과시켰다.
     같은 원인이 재발하면 recurrence-tracker 가 verified=0 · REOPENED 로 내리므로 옛 통과는 남지 않는다."""
     try:
         with sqlite3.connect(str(DB)) as c:
             row = c.execute(
-                "SELECT improvement_id FROM recurrence_improvements "
-                "WHERE rule_id=? AND status='VERIFIED' AND verified=1 "
-                "ORDER BY improvement_id DESC LIMIT 1", (rule_id,)).fetchone()
+                "SELECT i.improvement_id FROM goals g "
+                "JOIN recurrence_events e ON e.rule_id=? "
+                " AND abs(CAST(strftime('%s', e.detected_at) AS INTEGER) - g.created_at) <= 5 "
+                "JOIN recurrence_improvements i ON i.improvement_id=e.improvement_id "
+                "WHERE g.goal_id=? AND i.status='VERIFIED' AND i.verified=1 "
+                "ORDER BY i.improvement_id DESC LIMIT 1", (rule_id, goal_id)).fetchone()
         return row[0] if row else None
     except sqlite3.Error:
         return None
@@ -457,7 +462,7 @@ def _next_status_hook(status: str, workflow_type: str, source_ref: str,
             #   self-heal 수리 goal 도 Agent 수리 중에 이 판정이 끼어들어 복구 성공(e43·e52)을 FAILED 로 덮었다.
             sr = source_ref or ""
             if sr.startswith("rule:"):
-                imp = _repair_rule_verdict(sr[len("rule:"):])
+                imp = _repair_rule_verdict(sr[len("rule:"):], goal_id)
                 if imp:
                     _HOOK_REASON[goal_id] = f"개선 #{imp} 해결 시험 통과 기록(VERIFIED) 확인"
                     return "VERIFIED"
