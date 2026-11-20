@@ -1009,6 +1009,29 @@ def risk_tier(sel: Dict[str, Any]) -> str:
     return "medium" if any(v != "변경된 시험" for v in why.values()) else "low"
 
 
+def staging_preflight(cwd: Path) -> Optional[List[str]]:
+    """R350: 시험 전에 커밋 훅(pre-commit-full-check.sh)을 미리보기로 돌려 동반 파일 누락을 한 번에 받는다.
+
+    종전: 회귀 게이트(수 분) → 커밋 → 훅이 그제야 marketplace·guide 누락 발견 → stage → 지문 바뀜 → 게이트 재실행 (세션 실측 3회).
+    정본은 훅 하나 (같은 규칙을 여기 다시 쓰지 않음) · None = 훅 없음/bash 없음/실행 실패 (판정 안 함 · 커밋 때 훅이 그대로 검사)."""
+    import shutil
+    hook = Path(cwd) / ".claude" / "hooks" / "pre-commit-full-check.sh"
+    bash = shutil.which("bash")
+    if not hook.is_file() or not bash:
+        return None
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(cwd), "PRECOMMIT_PREFLIGHT": "1"}
+    try:
+        r = subprocess.run([bash, hook.as_posix()], input=json.dumps({"tool_input": {"command": "git commit"}}),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, cwd=str(cwd), timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode == 0:
+        return []
+    if r.returncode != 2:
+        return None
+    return [ln.strip()[2:] for ln in (r.stderr or "").splitlines() if ln.strip().startswith("- ")]
+
+
 def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool = False) -> Dict[str, Any]:
     """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
 
@@ -1041,6 +1064,11 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool =
         _syntax_verdict(res, syn)
     elif _syntax_verdict(res, syn):
         pass   # syntax_error · unverified = 시험 결과와 무관하게 커밋 차단 — 고친 뒤 게이트 재실행
+    elif os.environ.get("REGRESSION_GATE_NO_PREFLIGHT") != "1" and (missing := staging_preflight(cwd)):
+        # R350: 동반 파일이 빠진 스테이징으로 시험을 돌리면, 채워 넣는 순간 지문이 바뀌어 같은 시험을 또 돌린다 → 시험 전에 한 번에 알림
+        res["status"] = "incomplete_staging"
+        res["missing"] = missing
+        res["reason"] = "커밋 동반 파일 누락 — 모두 stage 한 뒤 게이트를 한 번만 실행: " + " · ".join(missing)
     else:
         unstaged = set((_run_git_in(cwd, ["diff", "--name-only"]) or "").split())
         dirty = sorted(set(code) & unstaged)
@@ -1763,7 +1791,7 @@ def _cli_main(argv):
         print(json.dumps(brief, ensure_ascii=False, indent=1))
         # 2026-11-15 (R256): syntax_error 가 0(통과)으로 나가던 것 — 문법 오류·미검증도 실패 종료
         return {"regression": 2, "syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
-                "perf_unmeasured": 1}.get(res["status"], 0)
+                "perf_unmeasured": 1, "incomplete_staging": 1}.get(res["status"], 0)   # R350: 동반 파일 누락 = 미실행 (통과 아님)
     if argv[1] == "syntax-gate":         # git 이 아닌 작업본(SVN) 커밋 전: exit 0 = pass·skip · 2 = 문법 오류 · 1 = 미검증·확정 불가
         res = syntax_gate(ROOT)
         print(json.dumps({k: res.get(k) for k in ("status", "reason", "vcs", "changed_code", "syntax_errors",

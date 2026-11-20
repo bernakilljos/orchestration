@@ -36,10 +36,24 @@ if echo "$STAGED" | grep -qE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup
   fi
 fi
 
-# 2. 새 플러그인 -> marketplace.json
-NEW_PLUGIN=$(echo "$STAGED" | grep -oP '^plugins/[^/]+/plugin\.json$' | head -1)
-if [ -n "$NEW_PLUGIN" ]; then
-  echo "$STAGED" | grep -q "marketplace.json" || MISSING="$MISSING\n  - .claude-plugin/marketplace.json"
+# 2. 플러그인 manifest -> marketplace.json (R350 · 2026-11-20: 종전엔 plugin.json 이 조금만 바뀌어도 marketplace 를 요구해
+#    버전을 억지로 올리게 만들었고, 그 JSON 변경이 회귀 게이트를 다시 돌게 했다 → 스테이징된 manifest 와 marketplace 항목을
+#    대조해 실제로 어긋날 때(미등록·버전 다름)만 요구 · 둘 다 index(스테이징) 내용으로 비교)
+PLUGINS_CHANGED=$(echo "$STAGED" | grep -E '^plugins/[^/]+/plugin\.json$')
+if [ -n "$PLUGINS_CHANGED" ]; then
+  MP_ISSUES=$(printf '%s\n' "$PLUGINS_CHANGED" | python -X utf8 -c "import json,subprocess,sys
+def show(p):
+    r=subprocess.run(['git','show',':'+p],capture_output=True,text=True,encoding='utf-8',errors='replace')
+    return json.loads(r.stdout) if r.returncode==0 else None
+mp=show('.claude-plugin/marketplace.json') or {}
+idx={x.get('name'):x for x in mp.get('plugins',[]) if isinstance(x,dict)}
+for p in sys.stdin.read().split():
+    m=show(p)
+    if not m: continue
+    e=idx.get(m.get('name'))
+    if e is None: print('%s 미등록'%m.get('name'))
+    elif str(e.get('version'))!=str(m.get('version')): print('%s 버전 %s != manifest %s'%(m.get('name'),e.get('version'),m.get('version')))" 2>/dev/null)
+  [ -n "$MP_ISSUES" ] && MISSING="$MISSING\n  - .claude-plugin/marketplace.json ($(echo "$MP_ISSUES" | tr -d '\r' | tr '\n' ' ' | sed 's/ $//'))"
 fi
 
 # 3. 새 hook (Added only — Modified bug-fixes 는 settings.json 등록 불필요) -> settings.json
@@ -60,7 +74,8 @@ fi
 #    시험은 훅 시간(5초) 안에 못 돌리므로 regression-gate 가 남긴 기록의 트리 해시·상태만 확인한다.
 #    확장자 목록 = independent_verifier._CODE_EXT (2026-11-15 R256: vue·jsx·mjs·cjs·json·java·xml·yml·go 가 빠져
 #    게이트가 검사 대상으로 보는 파일만 바꾼 커밋은 이 훅이 게이트를 요구하지 않았다 · 시험이 두 목록을 대조)
-if echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx|vue|jsx|mjs|cjs|json|java|xml|yml|yaml|go)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
+#    PRECOMMIT_PREFLIGHT=1 (R350): 회귀 게이트가 시험 전에 이 훅을 미리보기로 불러 동반 파일 누락을 먼저 한 번에 받는다 — 이때는 게이트 자신을 검사하지 않음
+if [ "${PRECOMMIT_PREFLIGHT:-0}" != 1 ] && echo "$STAGED" | grep -qiE '\.(py|sh|ps1|psm1|bat|cmd|js|ts|tsx|vue|jsx|mjs|cjs|json|java|xml|yml|yaml|go)$' && [ -f .claude/scripts/lib/independent_verifier.py ]; then
   TREE=$(git write-tree 2>/dev/null || echo "")
   PYBIN=$(command -v python || command -v python3 || echo "")
   if [ -n "$TREE" ] && [ -n "$PYBIN" ]; then
