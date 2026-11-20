@@ -2,7 +2,7 @@
 # Optimized for production deployment with security hardening
 
 # ============ Stage 1: Builder ============
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 WORKDIR /build
 
@@ -20,7 +20,7 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
 
 # ============ Stage 2: Runtime ============
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 LABEL maintainer="Claude <noreply@anthropic.com>"
 LABEL org.opencontainers.image.title="Orchestration Kit v1"
