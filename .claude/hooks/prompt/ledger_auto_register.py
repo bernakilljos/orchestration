@@ -458,6 +458,11 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
             except Exception:  # noqa: BLE001
                 pass
         existing.append(entry)
+        try:   # R335 보고 시점 지시 (정본 request-ledger.detect_report_mode · 지시로 판정된 글만 · 최신 명시 지시가 같은 세션 열린 요청에도 적용)
+            box["report_mode_changed"] = _lm.apply_report_mode(
+                data, entry, _lm.detect_report_mode(prompt if intent is None else intent))
+        except Exception:  # noqa: BLE001 — 판정 실패 = 기존 기본 동작
+            pass
         box.update({"status": "registered", "request_id": rid, "event_id": event_id})
         return True
 
@@ -486,6 +491,26 @@ def _append_ledger_entry(prompt: str, session_id: str, classification: str, inte
         pass
     return {"status": "registered", "request_id": rid, "event_id": event_id,
             "classification": classification}
+
+
+def _apply_mode_only(text: str, session_id: str) -> list:
+    """R335: 요청으로 등록되지 않는 짧은 지시('멈춰'·'이제 하나씩 보고해') 도 같은 세션 열린 요청의 보고 방식을 바꾼다."""
+    try:
+        _lm = _ledger_module()
+        mode = _lm.detect_report_mode(text)
+        if not mode:
+            return []
+        box = {}
+
+        def _apply(data):
+            if not data or not data.get("requests"):
+                return None
+            box["changed"] = _lm.apply_report_mode(data, {"id": "(지시)", "session_id": session_id}, mode)
+            return True if box["changed"] else None
+        _lm.locked_update(_apply)
+        return box.get("changed") or []
+    except Exception:  # noqa: BLE001
+        return []
 
 
 COUNTEREXAMPLE_MIN_ITEMS = 3
@@ -537,11 +562,13 @@ def run(ctx) -> str:
             # 분류 불확실 → raw + deferred (원문 2중 보존 · 실행 보류 · 사용자 재해석 가능)
             _append_raw(prompt, session_id, "unknown", "deferred")
             _append_deferred(prompt, session_id)
-            return ""
+            changed = _apply_mode_only(intent, session_id) if kind == "own" else []   # R335
+            return (f"[ledger] 보고 방식 변경 (사용자 최신 지시) → {','.join(changed)}" if changed else "")
         if classification not in ("execute", "redo"):
             # 질문·조회·취소 — 원본만 raw 로그에 보존 (ledger 등록 X)
             _append_raw(prompt, session_id, classification, "skipped_non_exec")
-            return ""
+            changed = _apply_mode_only(intent, session_id) if kind == "own" else []   # R335 '멈춰'·'하나씩 보고해'
+            return (f"[ledger] 보고 방식 변경 (사용자 최신 지시) → {','.join(changed)}" if changed else "")
         result = _append_ledger_entry(prompt, session_id, classification, intent)
         if result.get("status") == "registered":
             # 승인 요구 여부 확인 (ledger 안 entry 의 status 가 approval_required 인지)

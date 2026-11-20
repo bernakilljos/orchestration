@@ -252,6 +252,50 @@ def _idempotency_key(desc: str, session: str = "") -> str:
     return hashlib.sha256(base.encode("utf-8")).hexdigest()[:16]
 
 
+# R335: 사용자 원문의 보고 시점 지시 — 원장에 적고 Stop 게이트가 따른다 (최신 명시 지시로만 바뀜 · Hook 이 임의로 바꾸지 않음)
+#   final_once = '전부 끝내고 마지막에 한 번 보고' · each = '하나씩·단계마다 보고' · stop = '멈춰·중단' · 없음 = 기존 기본 동작
+REPORT_MODES = ("final_once", "each", "stop")
+_RM_FINAL = re.compile(
+    r"(?:전부|모두|다|전체|모든\s*\S{0,6})\s*\S{0,10}\s*(?:끝내|끝낸|마치|마친|완료하|완료한|처리하|처리한|하)\S{0,4}\s*"
+    r"(?:고|뒤|다음|후|뒤에|다음에|후에)\s*\S{0,30}?(?:마지막에\s*)?(?:한\s*번|1\s*회|한번)?\s*(?:만\s*)?(?:보고|알려)"
+    r"|마지막에\s*(?:한\s*번|1\s*회|한번)?\s*(?:만\s*)?(?:보고|알려)"
+    r"|중간\s*보고\s*(?:는\s*)?(?:하지\s*마|하지\s*말|하지마|하지말|금지|없이|말고)")
+_RM_EACH = re.compile(r"(?:하나씩|하나\s*끝날\s*때마다|단계마다|단계별로|항목마다|항목별로|끝날\s*때마다|중간\s*중간|중간마다)\s*\S{0,6}\s*(?:보고|알려|확인)"
+                      r"|중간\s*(?:에|에도)?\s*(?:보고|확인)\s*(?:해|하면서|받)")
+_RM_STOP = re.compile(r"(?:^|[\s.,!])(?:멈춰|멈춰라|중단해|중단하고|중지해|그만해|그만\s*하고|스톱|stop)(?:[\s.,!]|$)", re.I)
+
+
+def detect_report_mode(text: str) -> str:
+    """사용자 글 → 'final_once' | 'each' | 'stop' | '' (지시 없음). 붙여 넣은 참고 자료가 아니라 지시로 판정된 글만 넘긴다."""
+    t = text or ""
+    if _RM_STOP.search(t) and not re.search(r"멈추지|중단하지|그만두지", t):
+        return "stop"
+    if _RM_FINAL.search(t):
+        return "final_once"
+    if _RM_EACH.search(t):
+        return "each"
+    return ""
+
+
+def apply_report_mode(data: dict, entry: dict, mode: str) -> list:
+    """새 요청에 보고 방식을 적고, 같은 세션의 열린 요청도 최신 명시 지시로 바꾼다 (바뀐 id 목록).
+    지시가 없으면(mode '') 아무것도 바꾸지 않는다 — 이전 계약 유지 · 기본 동작."""
+    if mode not in REPORT_MODES:
+        return []
+    entry["report_mode"] = mode
+    changed = []
+    sid = entry.get("session_id") or ""
+    for r in data.get("requests", []):
+        if r is entry or r.get("id") == entry.get("id"):
+            continue
+        if sid and r.get("session_id") == sid and r.get("status") not in GATE_PASS_STATUS:
+            if r.get("report_mode") != mode:
+                r["report_mode"] = mode
+                r["report_mode_by"] = entry.get("id", "")
+                changed.append(r.get("id"))
+    return changed
+
+
 def cmd_add(desc: str, session: str = "", idempotency_window_h: int = 24) -> int:
     """사용자 지시 등록 — append-only + 멱등성 체크 (중복 skip)."""
     data = _load()
@@ -279,8 +323,10 @@ def cmd_add(desc: str, session: str = "", idempotency_window_h: int = 24) -> int
     if session:
         entry["session_id"] = session      # R315: 손 등록도 세션 기록 (상태줄·게이트가 자동 등록과 같은 기준으로 봄)
     data["requests"].append(entry)
+    changed = apply_report_mode(data, entry, detect_report_mode(desc))   # R335
     _save(data)
-    print(f"[ledger] + {rid}: {desc[:80]}")
+    print(f"[ledger] + {rid}: {desc[:80]}" + (f" · 보고 방식 {entry['report_mode']}" if entry.get("report_mode") else "")
+          + (f" (같은 세션 열린 요청 {','.join(changed)} 도 변경)" if changed else ""))
     _start_trace(rid, desc, session)
     return 0
 
@@ -409,8 +455,18 @@ HONEST_OPEN = ("PARTIAL", "BLOCKED")
 
 
 def _honest_open(r: dict) -> bool:
-    return (r.get("status") == "verified" and r.get("verification") in HONEST_OPEN
+    """사실대로 적은 미완료라 Stop 을 막지 않는 항목.
+    R335: 사용자가 '전부 끝내고 마지막에 한 번 보고'(final_once) 라고 했으면 PARTIAL 은 진행 중일 뿐이다 —
+    실행 가능한 남은 일을 계속하도록 막는다. 진행할 수 없는 BLOCKED(승인·보안·자원·환경 오류) 만 멈춤 허용.
+    무한 반복은 기존 _gate_loop_exceeded(같은 미완료 3회 연속) 가 같은 기준으로 끊는다."""
+    allowed = ("BLOCKED",) if r.get("report_mode") == "final_once" else HONEST_OPEN
+    return (r.get("status") == "verified" and r.get("verification") in allowed
             and bool(str(r.get("evidence") or "").strip()))
+
+
+def _user_allows_stop(r: dict) -> bool:
+    """R335: 사용자가 '하나씩 보고'(each) · '멈춰'(stop) 라고 했으면 미완료여도 중간 보고·멈춤을 막지 않는다 (완료 처리 아님)."""
+    return r.get("report_mode") in ("each", "stop")
 
 
 GATE_PASS_STATUS = ("completed", "deferred", "out_of_scope", "invalid_registration")
@@ -432,7 +488,7 @@ def _ledger_in_temp() -> bool:
 def is_blocking(r: dict) -> bool:
     """정본 — Stop 을 막는 미완료인가 (cmd_gate·statusline 공용 · 2026-11-11 §80)."""
     return ((r.get("status") not in GATE_PASS_STATUS + ("approval_required",)) and not _honest_open(r)
-            and not _is_golden_template(r))
+            and not _is_golden_template(r) and not _user_allows_stop(r))
 
 
 def summarize(reqs: list, current_rid: str = "") -> dict:
@@ -945,7 +1001,8 @@ def cmd_gate() -> int:
         blocking = [r for r in blocking if not r.get("session_id") or r.get("session_id") == _sid]   # 세션 id 없는 옛 항목은 종전대로 막음
     if not blocking:
         _gate_loop_reset()
-        open_items = waiting + [r for r in data["requests"] if _honest_open(r)]
+        open_items = waiting + [r for r in data["requests"] if _honest_open(r) or
+                                (_user_allows_stop(r) and r["status"] not in GATE_PASS_STATUS)]
         print(f"[request-ledger] 미완료 {len(open_items)}건 유지 · Stop 허용 (완료 처리 아님): "
               + ", ".join(f"{r['id']}:{r.get('verification') or r['status']}" for r in open_items), file=sys.stderr)
         return 0
@@ -957,6 +1014,10 @@ def cmd_gate() -> int:
     msg = f"[request-ledger] {done}/{total} 완료 · 미완료 {len(pending)}건:\n"
     for r in pending[:5]:
         msg += f"  ☐ {r['id']}: {r['desc'][:80]}\n"
+    fin = [r["id"] for r in pending if r.get("report_mode") == "final_once"]
+    if fin:   # R335: 사용자 지시가 Hook 기본 정책보다 우선 — 하위 1/N 완료·PARTIAL 은 최종 보고 사유가 아님
+        msg += (f"[사용자 지시] {','.join(fin[:5])} = '전부 끝내고 마지막에 한 번 보고' — 남은 실행 가능한 일을 이어서 진행 · "
+                "PARTIAL 은 진행 중으로 봄 · 진행할 수 없으면(승인·보안·자원·환경 오류) --verification BLOCKED + 사유\n")
     msg += ("→ 미완료 request 계속 실행 후 보고 (execution-contract § 2 n/n 완료 전 보고 금지) · "
             "끝나지 않았으면 PASS 로 바꾸지 말고 complete --evidence ... --verification PARTIAL 또는 BLOCKED 로 사실대로 기록 · "
             "사용자 지시가 아닌 자동 등록(상태 보고·인용·붙여 넣은 이전 대화)이면 PASS 로 닫지 말고 "

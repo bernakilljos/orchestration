@@ -18,44 +18,36 @@ paths:
 - 아래 표는 «위임해도 되는 상황» 목록이지 «반드시 위임» 기준이 아니다 (5+ 파일·500줄 같은 숫자만으로 위임하지 않는다).
 **실행 방식 결정 (직접·병렬·worktree·Codex·순차) 은 `execution-contract.md § 7 상황 적응형 실행` 매트릭스 참조.**
 
-## 위임 매트릭스
+## 역할별 Agent (위임을 «고려할 수 있는» 상황 · 자동 아님 · R337 2026-11-20)
 
-| 상황 | Agent | 이유 |
-|---|---|---|
-| 대량 파일 검색 (5+ 파일 read) | **Explore** | 읽기 전용·컨텍스트 격리·결과 요약만 |
-| 코드 설계·플랜 | **Plan** | Edit X·설계만·안전 |
-| 검증·채점 (0~10) | **Judge** (Haiku 4.5) | 빠름·저비용·객관 |
-| 복잡 리서치 (3+ 쿼리) | **general-purpose** | 병렬 dispatch |
-| **코드 500줄+ 구현** [NEW 2026-10-12] | **general-purpose (×N 병렬)** | Tools:* · Edit·Write 가능 · Opus 상속 · codex-auto 대체 1순위 |
-| 코드 리뷰 | **code-reviewer / superpowers:code-reviewer** | 격리·구조화 반환 |
-| 테스트 실행 | **test-runner** | stack trace 격리 |
+파일 수·줄 수·단어 같은 숫자 하나로 위임하지 않는다. 판단 축은 `execution-contract.md § 7` (규모·의존성·쓰기 충돌·위험·비용) 하나다.
 
-## codex-auto 대체 매트릭스 (2026-10-12 명시)
-
-사용자 지적 — codex CLI 환경 세팅 어려움 · subagent 가 더 빠른 대안.
-
-| 작업 | 1순위 | 2순위 (fallback) | 3순위 |
+| 상황 | 고를 수 있는 Agent | 위임이 이득일 때 | 메인 직접이 나을 때 |
 |---|---|---|---|
-| 코드 500줄+ 구현 | **general-purpose 병렬** | codex-auto (CLI 가용 시) | Claude 직접 |
-| 반복 패턴 (×4+ 유사) | **general-purpose ×4 병렬** | codex-auto ×4 | — |
-| 격리 리서치·탐색 | **Explore ×N 병렬** | — | — |
-| 테스트 코드 생성 | **general-purpose** | codex `/test-gen` | — |
+| 넓은 읽기 조사 | **Explore** (가벼운 모델) | 서로 독립인 여러 영역 · 결론만 필요 | 대상 위치를 알거나 파일 수십 개 이하 (Grep·Read 가 더 빠름) |
+| 설계·플랜 | **Plan** | 큰 구조 결정 · 구현자와 다른 시각 필요 | 작은 변경 |
+| 검증·채점 | **Judge** (Haiku) | 결과를 독립적으로 다시 볼 때 | 실행 결과로 바로 판정 가능할 때 |
+| 독립 구현 여러 건 | **general-purpose** (적은 수부터) | 결과 결합이 명확하고 쓰기 충돌 없음 | 같은 파일·공유 상태 · 순차 의존 |
+| 코드 리뷰 | **code-reviewer** | 구현자와 분리된 결함 찾기 | — |
+| 테스트 실행 | **test-runner** | 긴 실패 출력 격리 | 짧은 관련 시험 |
 
-**장점 (codex-auto 대비)**:
-- CLI 세팅 X (즉시 호출)
-- 격리 컨텍스트 (메인 오염 방지)
-- Opus 상속 (품질 유지)
-- 한 메시지 내 병렬 가능 (`Agent(A)` + `Agent(B)` + `Agent(C)`)
+- 사용자가 «Codex 써»·«병렬로 해» 라고 명시하면 그대로 따른다 (가용성·위험만 확인).
+- 위임해도 통합·검증·최종 보고 책임은 메인 (§ 7 «메인 Claude 책임»).
+
+## Codex·멀티 AI
+
+- 호출 가능 여부(CLI·키) · 작업 적합성 · 총 비용(지시서 작성·대기·회수·재검증 포함) · 사용자 지시로 정한다 (SoT `execution-contract.md § 4`).
+- 토큰 절약만을 이유로 검증 품질을 낮추지 않는다.
 
 ## 병렬 dispatch (v2.1.232)
 
-**독립 작업 여러 개** = 단일 메시지에서 여러 Agent 병렬 호출.
+독립 작업 여러 개는 한 메시지에서 여러 Agent 를 병렬로 부를 수 있다.
 
 ```text
-Agent(Explore, "kit rule 분석") + Agent(Explore, "install 자산 분석") + Agent(Explore, "MCP 상태") 병렬
+Agent(Explore, "kit rule 분석") + Agent(Explore, "MCP 상태") 병렬
 ```
 
-= 3배 속도.
+N 개를 병렬로 돌려도 N 배 빨라진다고 적지 않는다 — 최종 완료 시간에는 시작·설명·대기·통합·검증·재작업이 들어간다 (R333 실측: 읽기 조사 1건 280초 · 입력 155만 토큰).
 
 ## Fork subagent (v2.1.232)
 
@@ -75,12 +67,10 @@ Agent(Explore, "kit rule 분석") + Agent(Explore, "install 자산 분석") + Ag
 | 상태 유지 필요한 편집 | 메인 세션 |
 | 확실치 않은 결과 | 스스로 확인 |
 
-## 자동 트리거
+## 단어 감지 (판단 재료일 뿐 · R337)
 
-- "전수조사" · "100% Read" · "모든 파일" → Explore 병렬
-- "설계" · "플랜" · "계획" · EnterPlanMode 전 → Plan
-- "검증" · "채점" · "리뷰" → Judge
-- 대량 리서치 (`Grep` 결과 20+ hits) → Explore
+- 프롬프트 훅이 «전수조사»·«100% read» 같은 단어를 보면 위임을 «검토» 하라는 힌트만 준다 — 위임 지시가 아니다.
+- 실제 선택은 위 표와 § 7 로 한다. 단어만 보고 Agent 를 띄우지 않는다.
 
 ## 관련
 

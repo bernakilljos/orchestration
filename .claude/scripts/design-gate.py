@@ -3,7 +3,7 @@
 Visual Quality Gate · Anti-Ping-Pong 연결 · 서비스 UI 와 상태줄은 다른 검증 대상").
 
 대상 두 종류 (섞지 않는다):
-  statusline  — 상태줄 11줄의 «구조» (줄 수 · 줄별 라벨 · 왼쪽/오른쪽 │ 칸 위치). 값은 비교하지 않는다.
+  statusline  — 상태줄의 «구조» (기준선 줄 수 · 2026-11-16 기준 10줄 · operational-freeze.md 의 11줄 표와 달리 «비용» 줄이 기준선·출력에 없음 · R336 확인) (줄 수 · 줄별 라벨 · 왼쪽/오른쪽 │ 칸 위치). 값은 비교하지 않는다.
   image:<이름> — 서비스 UI 화면 캡처 PNG. 승인된 기준 PNG 와 픽셀 차이 비율을 비교한다.
 
   Golden Baseline       baseline statusline | image-baseline <이름> <png>  → .claude/design-baseline/ (git 추적 · 승인 기준)

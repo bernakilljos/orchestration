@@ -58,8 +58,8 @@ if _m "답답|짜증|짱나|엉망|대충|장난"; then
   matches="$matches\n  - fast mode - 시스템 결함 진단 5단계 (user-emotion.md)"
 fi
 # 전수조사/전부/모든
-if _m "전수조사|모든|다|전부|100"; then
-  matches="$matches\n  - Explore agent 병렬 dispatch (subagent-delegation.md)"
+if _m "전수 ?조사|100% ?read|모든 ?파일"; then   # R337: «다» 가 거의 모든 문장에 걸리던 패턴 축소 (미등록 셸판 · 정본 prompt/suggest_skills.py)
+  matches="$matches\n  - 넓은 읽기 조사면 위임 검토 (execution-contract §7 · 수십 파일 이하는 Grep·Read 직접)"
 fi
 # 검증/테스트/smoke
 if _m "검증|smoke|테스트|test|확인"; then

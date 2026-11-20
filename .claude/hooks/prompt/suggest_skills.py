@@ -9,8 +9,8 @@ import os
 
 from _common import append_text, search, ts_iso_tz
 
-HEAD = "[SUGGEST] 관련 skill/tool 자동 활성 (즉시 실행):"
-TAIL = "\n\n(위 skill/rule 은 지금 즉시 반영-실행. Skill tool 로 호출 가능한 것은 바로 Skill 호출.)"
+HEAD = "[SUGGEST] 관련 skill/tool 참고 (R337 · 자동 실행 아님):"
+TAIL = "\n\n(관련 있을 때만 적용 · 단어 일치만으로 실행·위임하지 않음 — execution-contract §7 · R337 · 종전 '지금 즉시 반영-실행')"
 TABLE = [
     ("ppt|슬라이드|프레젠테이션|발표자료|deck", False, "\n  - /ppt-make - plugins/design_ppt/ (기업 PPT 자동)"),
     ("docx|워드|word|보고서|리포트|report", False, "\n  - plugins/design_web/ - docx 빌더 스킬"),
@@ -22,7 +22,8 @@ TABLE = [
     ("배포|deploy|install|setup|배치", False, "\n  - setup/setup.bat - install 순서 (kit->commit->sync->install->검증)"),
     ("커밋|commit|push|git", False, "\n  - guide.txt + CLAUDE.md + settings.json 3-set 준수"),
     ("답답|짜증|짱나|엉망|대충|장난", False, "\n  - fast mode - 시스템 결함 진단 5단계 (user-emotion.md)"),
-    ("전수조사|모든|다|전부|100", False, "\n  - Explore agent 병렬 dispatch (subagent-delegation.md)"),
+    # R337: 종전 패턴 "전수조사|모든|다|전부|100" 은 «다»(합니다·했다) 때문에 실제 요청 120건 중 75건에 붙었다 (위임 권고 과잉)
+    (r"전수\s*조사|100%\s*read|모든\s*파일", False, "\n  - 넓은 읽기 조사면 위임 검토 (execution-contract §7 · 수십 파일 이하는 Grep·Read 직접)"),
     ("검증|smoke|테스트|test|확인", False, "\n  - smoke-test-screen.sh - verify-*.py (screen-verify.md)"),
     ("(^|[^a-z0-9_])db([^a-z0-9_]|$)|데이터베이스|sqlite|테이블|orca", False, "\n  - .claude/state/orca.db - kit-stats.py db"),
     ("통계|시각|dashboard|현황|상태|보여", False, "\n  - kit-stats.py all - kit-view.bat - dashboard.html"),

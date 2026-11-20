@@ -1512,6 +1512,30 @@ def _edit_a(r, a_ret, b_ret=None):
     _git(r, "add", "src/mod.py")
 
 
+def test_regression_gate_risk_tier_and_user_forced_full(tmp_path):
+    """R336: 위험 등급 표기 (선택 규칙은 그대로) — 바뀐 시험만 = low · 소스 변경으로 호출 시험 = medium · 실행 기반·사용자 명시 = high(전체)."""
+    import independent_verifier as iv
+    r = _regress_repo(tmp_path)
+    (r / "tests" / "test_mod.py").write_text((r / "tests" / "test_mod.py").read_text(encoding="utf-8") + "# t\n",
+                                             encoding="utf-8")
+    _git(r, "add", "tests/test_mod.py")
+    res = iv.regression_gate(r)
+    assert res["risk_tier"] == "low" and res["tests"] == ["tests/test_mod.py"] and not res["full"], res
+    _git(r, "commit", "-q", "-m", "t")
+    _edit_a(r, "1")
+    (r / "src" / "mod.py").write_text((r / "src" / "mod.py").read_text(encoding="utf-8") + "# n\n", encoding="utf-8")
+    _git(r, "add", "src/mod.py")
+    res = iv.regression_gate(r)
+    assert res["risk_tier"] == "medium" and res["tests"] == ["tests/test_mod.py"] and res["status"] == "pass", res
+    res = iv.regression_gate(r, force_full=True)            # 사용자 '전체 테스트' — 예외 없이 전체 범위
+    assert res["risk_tier"] == "high" and "사용자 명시" in res["full"] and res["tests"] == ["tests"], res
+    assert res["status"] == "pass"
+    (r / "tests" / "conftest.py").write_text("# 공통 설정\n", encoding="utf-8")
+    _git(r, "add", "tests/conftest.py")
+    res = iv.regression_gate(r)
+    assert res["risk_tier"] == "high" and "공통 설정" in res["full"], res   # 실행 기반 변경은 자동으로 전체
+
+
 def test_regression_gate_pass_regression_preexisting_and_dirty(tmp_path):
     import independent_verifier as iv
     r = _regress_repo(tmp_path)

@@ -198,9 +198,9 @@ def run(ctx):
 
     subagent = ""
     if search(SUBAGENT_BIG_PATTERN, prompt):
-        subagent = "\\n\\n[Subagent 자동] '큰 코드베이스 탐색' 감지 -> Task tool 로 Explore subagent 자동 호출 권장 (메인 컨텍스트 격리)"
+        subagent = "\\n\\n[Subagent 검토] '넓은 탐색' 표현 감지 -> 독립 영역·결론만 필요하면 Explore 검토 · 위치를 알면 Grep·Read 직접 (execution-contract §7 · R337)"
     elif search(SUBAGENT_REVIEW_PATTERN, prompt):
-        subagent = "\\n\\n[Subagent 자동] '코드 리뷰' 감지 -> Task tool 로 code-reviewer subagent 자동 호출 권장"
+        subagent = "\\n\\n[Subagent 검토] '코드 리뷰' 표현 감지 -> 구현과 분리된 결함 찾기가 필요하면 code-reviewer 검토 (§7 · R337)"
 
     # 활동 로그 (원본: background python) — orca.db.activations + hook-trace.log
     la = load_script("log-activation")

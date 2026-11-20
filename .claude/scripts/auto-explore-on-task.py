@@ -14,15 +14,13 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOGS_DIR / 'auto-explore-on-task.log'
 
 # 트리거 키워드 (전수조사 신호)
+# R337 (2026-11-20): '전체'·'모든'·'전부'·'다…확인' 은 일반 지시문 대부분에 걸려 위임 권고가 과잉이었다 → 명시적 전수 읽기 표현만
 EXPLORE_TRIGGERS = [
-    r'\b전체\b',
-    r'\b모든\b',
-    r'\b전수조사\b',
-    r'\ball\s+(files|plugins|hooks)',
-    r'\b전부\b',
-    r'\b다\b.*\b확인',
-    r'\bscan\s+everything\b',
-    r'\b100%\s+(read|survey)',
+    r'전수\s*조사',
+    r'all\s+(files|plugins|hooks)',
+    r'scan\s+everything',
+    r'100%\s+(read|survey)',
+    r'모든\s*파일',
 ]
 
 def log(msg: str):
@@ -44,16 +42,12 @@ def generate_system_message_injection() -> str:
     (Claude Code v2.1+ 는 systemMessage 수정 지원 · PostToolUse 로 inject)
     """
     return """
-## ⚡ Explore Agent Recommendation
+## 읽기 조사 위임 검토 (R337 · 자동 위임 아님)
 
-Your prompt includes full-survey keywords ("전체", "모든", "전수조사"). Consider delegating to **Explore agent** for:
-- Parallel file reading (5+ files)
-- Breadth-first pattern discovery
-- Quick indexing before deep analysis
-
-**Usage**: Prefix your detailed request with `Agent(Explore, "...")`
-
-This keeps main context clean and speeds up analysis 3-5x.
+전수 읽기 표현이 보입니다. 위임 여부는 `execution-contract.md § 7` 로 판단하세요:
+- 대상 위치를 알거나 파일 수십 개 이하 → Grep·Read 직접이 보통 더 빠름
+- 서로 독립인 여러 영역 · 결론만 필요 → Explore (가벼운 모델) · 적은 수부터
+- 병렬로 돌려도 N 배 빨라진다고 가정하지 않음 (시작·통합·검증 시간 포함 · R333 실측: 읽기 조사 1건 280초)
 """
 
 if __name__ == '__main__':

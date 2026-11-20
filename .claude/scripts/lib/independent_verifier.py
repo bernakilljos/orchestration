@@ -979,7 +979,16 @@ def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
     return out
 
 
-def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
+def risk_tier(sel: Dict[str, Any]) -> str:
+    """R336 위험 등급 (표기 · 선택 규칙은 impact_selection 그대로): high = 전체 회귀 (고위험 파일·공통 모듈·실행 기반·계약·
+    범위 불명·사용자 명시) · medium = 호출자·동반 수정 근거로 고른 시험 · low = 바뀐 시험 자신만 / 영향 시험 없음."""
+    if sel.get("full"):
+        return "high"
+    why = sel.get("why") or {}
+    return "medium" if any(v != "변경된 시험" for v in why.values()) else "low"
+
+
+def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool = False) -> Dict[str, Any]:
     """회귀 방지 게이트 (2026-11-09 · 사용자 지시: A 를 고쳐 B·C 가 깨지는 것을 커밋 전에 막는다).
 
     스테이징된 코드 변경 → affected_tests 로 영향 시험 선정 → 실행.
@@ -1016,8 +1025,11 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None) -> Dict[str, Any]:
         dirty = sorted(set(code) & unstaged)
         tests, runners = [], []
         sel = impact_selection(cwd, staged)
+        if force_full and not sel["full"]:   # R336: 사용자 명시 '전체 테스트' (--full · REGRESSION_GATE_FULL=1) 는 예외 없이 전체
+            sel["full"] = "사용자 명시 전체 회귀 (--full)"
         res["full"] = sel["full"]
         res["why"] = sel["why"]
+        res["risk_tier"] = risk_tier(sel)
         for t in sel["tests"]:
             if not t.endswith(".py"):
                 continue
@@ -1715,9 +1727,9 @@ def _cli_main(argv):
         print(json.dumps(same_pattern_candidates(ROOT), ensure_ascii=False, indent=2))
         return 0
     if argv[1] == "regression-gate":     # 커밋 전: exit 0 = pass·preexisting·skip · 2 = regression · 1 = blocked
-        res = regression_gate(ROOT)
-        brief = {k: res.get(k) for k in ("status", "reason", "summary", "tests", "new_failures", "baseline_failures",
-                                         "commit_memory_pct", "perf")}
+        res = regression_gate(ROOT, force_full=("--full" in argv[2:] or os.environ.get("REGRESSION_GATE_FULL") == "1"))
+        brief = {k: res.get(k) for k in ("status", "reason", "risk_tier", "full", "summary", "tests", "new_failures",
+                                         "baseline_failures", "commit_memory_pct", "perf")}
         print(json.dumps(brief, ensure_ascii=False, indent=1))
         # 2026-11-15 (R256): syntax_error 가 0(통과)으로 나가던 것 — 문법 오류·미검증도 실패 종료
         return {"regression": 2, "syntax_error": 2, "perf_regression": 2, "blocked": 1, "unverified": 1,
