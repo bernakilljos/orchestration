@@ -627,6 +627,37 @@ def cmd_item(rid: str, idx: str, state: str, evidence: str = "") -> int:
     return 2
 
 
+ITEM_OWNERS = ("claude", "external")
+
+
+def cmd_item_add(rid: str, text: str, owner: str = "claude") -> int:
+    """R354: 보고 뒤 남은 일을 하위 항목으로 추가 — 등록 원문에 번호 줄이 없던 요청은 남은 일이 보고서 본문(자유 글)에만 있어
+    어떤 큐·재개·게이트도 읽지 못했다 (PARTIAL 18/19 건 items 0개). owner: claude = 지금 실행 가능 ·
+    external = 사용자 캡처·결정·운영 증거가 있어야 진행 (실행하지 않고 차단 사유로 보고). 같은 글은 다시 넣지 않는다."""
+    text = " ".join((text or "").split())[:150]
+    if not text:
+        print("[ledger] ✗ 항목 글이 비었음", file=sys.stderr)
+        return 2
+    if owner not in ITEM_OWNERS:
+        print(f"[ledger] ✗ owner 는 {'·'.join(ITEM_OWNERS)} 중 하나", file=sys.stderr)
+        return 2
+    data = _load()
+    for r in (data or {}).get("requests", []):
+        if r["id"].lower() == rid.lower():
+            items = r.setdefault("items", [])
+            if any(x.get("text") == text for x in items):
+                print(f"[ledger] {rid}: 같은 항목 이미 있음 (추가 X)")
+                return 0
+            items.append({"i": max([x.get("i", 0) for x in items] or [0]) + 1, "n": 0, "text": text,
+                          "state": "open", "owner": owner})
+            _save(data)
+            d, t = item_counts(r)
+            print(f"[ledger] {rid} 항목 {items[-1]['i']} 추가 ({owner}) · {d}/{t}")
+            return 0
+    print(f"[ledger] {rid} not found", file=sys.stderr)
+    return 2
+
+
 # 2026-11-19 R312: 반례를 안내문이 아니라 원장 항목으로 — 요구 문장에서 규칙으로 후보 생성 (모델 호출 0 · 하위 요구 3개+ 만)
 #   → 시험(pytest nodeid)에 연결하거나 해당 없음 사유 → complete PASS 때 연결된 시험을 지금 다시 실행 (옛 결과·다른 커밋 결과 불인정).
 COUNTEREXAMPLE_MIN_ITEMS = 3
@@ -1193,6 +1224,10 @@ def main() -> int:
     p_item.add_argument("idx", help="항목 번호 (예: 3 · 1,4 · 2-5)")
     p_item.add_argument("state", help="done · partial · na")
     p_item.add_argument("--evidence", default="", help="done=실행 증거 · na=해당 없음 사유")
+    p_ia = sub.add_parser("item-add")    # R354 보고 뒤 남은 일 (owner claude·external)
+    p_ia.add_argument("rid")
+    p_ia.add_argument("text")
+    p_ia.add_argument("--owner", default="claude", help="claude = 지금 실행 가능 · external = 사용자·외부 증거 필요")
     p_items = sub.add_parser("items")
     p_items.add_argument("rid")
     p_cx = sub.add_parser("cx")          # R312 반례 (조회 · gen · tested/na 연결)
@@ -1221,7 +1256,7 @@ def main() -> int:
     return _dispatch(ap, args)
 
 
-_MUTATING = {"add", "add-batch", "complete", "out-of-scope", "invalid-registration", "item", "cx", "clear"}
+_MUTATING = {"add", "add-batch", "complete", "out-of-scope", "invalid-registration", "item", "item-add", "cx", "clear"}
 
 
 def _dispatch(ap, args) -> int:
@@ -1240,13 +1275,15 @@ def _dispatch(ap, args) -> int:
         return cmd_invalid_registration(args.rid, args.reason, args.detected_by)
     if args.op == "item":
         return cmd_item(args.rid, args.idx, args.state, args.evidence)
+    if args.op == "item-add":
+        return cmd_item_add(args.rid, args.text, args.owner)
     if args.op == "items":
         for r in (_load() or {}).get("requests", []):
             if r["id"].lower() == args.rid.lower():
                 d, t = item_counts(r)
                 print(f"{r['id']} 하위 요구사항 {d}/{t}")
                 for x in r.get("items") or []:
-                    print(f"  {x['i']:>2} [{x['state']:7s}] {x['text'][:90]}" + (f"  ← {x['evidence'][:60]}" if x.get("evidence") else ""))
+                    print(f"  {x['i']:>2} [{x['state']:7s}]{' [external]' if x.get('owner') == 'external' else ''} {x['text'][:90]}" + (f"  ← {x['evidence'][:60]}" if x.get("evidence") else ""))
                 return 0
         return 2
     if args.op == "status":

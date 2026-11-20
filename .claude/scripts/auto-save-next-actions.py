@@ -21,6 +21,7 @@ auto-save-next-actions.py — .claude/state/next-actions.md 의 유일한 writer
 CLI:
   answer                 (기본 · Stop/SessionEnd) 마지막 응답에서 섹션 추출 → answer 블록
   goals                  stdin JSON(supervisor active) → goals 블록 (0건이면 블록 제거)
+  collab                 stdin 본문 → collab 블록 (R354 · ai-collab-report.py queue · 빈 본문 = 제거 · 재개 때 나이 무관)
   manual-add "<글>"      수동 지시에 한 줄 추가
   manual-clear           수동 지시 비움 (사용자 명시 지시 시만)
   show                   현재 파일 (복구 읽기)
@@ -62,7 +63,7 @@ EMPTY_MARKERS = re.compile(r"\b(완료|done|끝|empty|없음|비움|clear)\b", r
 
 _RX_BLOCK = re.compile(r"<!-- AUTO:(\w+) BEGIN -->\n?(.*?)<!-- AUTO:\1 END -->\n?", re.S)
 _LEGACY_MARK = "# 이어서 할 일 — 자동 재기록"
-BLOCK_ORDER = ("goals", "answer")
+BLOCK_ORDER = ("collab", "goals", "answer")   # R354: collab = PARTIAL 보고 뒤 남은 큐 (ai-collab-report.py queue)
 LOCK_WAIT_SEC = 8.0
 LOCK_STALE_SEC = 30.0
 
@@ -203,8 +204,16 @@ def resume_text(max_age_sec: float) -> str:
         fresh = (time.time() - OUT.stat().st_mtime) < max_age_sec
     except OSError:
         fresh = False
+    if blocks.get("collab", "").strip():   # R354: 원장에서 다시 만드는 큐 사본 → 나이 무관 항상 (며칠 닫혀 있어도 남은 일이 사라지지 않게)
+        out.append("### 자동 재개 대상 — 보고는 했지만 끝나지 않은 협업 요청 (정본: 원장 하위 항목)\n"
+                   "[claude] 항목은 확인 질문 없이 이어서 실행하고 끝나면 "
+                   "`python .claude/scripts/request-ledger.py item <rid> <번호> done --evidence …` · "
+                   "[external] 항목은 실행하지 말고 차단 사유만 보고 (사용자 캡처·결정·운영 증거 필요).\n\n"
+                   + blocks["collab"].strip())
     if fresh:
         for name in BLOCK_ORDER:
+            if name == "collab":
+                continue
             if blocks.get(name):
                 body = blocks[name].strip()
                 if name == "answer":   # 2026-11-12 (R245): 기억만 하고 "진행해" 를 기다리던 결함
@@ -282,6 +291,8 @@ def main(argv) -> int:
         return cmd_answer()
     if cmd == "goals":
         return cmd_goals(sys.stdin.buffer.read().decode("utf-8", "replace"))
+    if cmd == "collab":   # R354: ai-collab-report.py queue 가 stdin 으로 본문 전달 (빈 본문 = 블록 제거)
+        return 0 if set_block("collab", sys.stdin.buffer.read().decode("utf-8", "replace")) else 1
     if cmd == "manual-add":
         line = " ".join(argv[2:]).strip()
         if not line:

@@ -7,6 +7,7 @@
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
   poll                                                             5분 주기 확인 1회 — 처리 확정 안 된 requests·reviews 만 출력 (새것 0 · 없음 3)
   ack <요청ID|경로>                                                 처리 확정 (검증·보고 뒤 · report 는 연결 커밋 있는 지시를 자동 확정)
+  queue [--no-write]                                               남은 PARTIAL 하위 항목 큐 → next-actions collab 블록 (R354 · 재개 주입)
   wait [--interval 300] [--max-sec 604800]                          셸이 poll 반복 → 새 파일 있을 때만 끝남 (Bash 백그라운드 · 대기 중 모델 호출 0)
 
 원칙: 같은 (요청ID, head 커밋) 은 다시 만들지 않는다 · 요청 1건 = 보고서 1개 (누적 복사 X) · 파일을 최소한으로.
@@ -141,7 +142,10 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
              f"- 새 실패: {len(gate.get('new_failures') or [])}건", ""]
     open_items = [i for i in (req.get("items") or []) if i.get("state") not in ("done", "na")]
     if open_items or status != "PASS":
-        lines += ["## 남은 문제", *[f"- [{i.get('i')}] {(i.get('text') or '')[:120]} ({i.get('state')})" for i in open_items[:20]]]
+        lines += ["## 남은 문제", *[f"- [{i.get('i')}] {(i.get('text') or '')[:120]} ({i.get('state')}"
+                                     f"{' · 외부 증거 필요' if i.get('owner') == 'external' else ''})" for i in open_items[:30]]]
+        if not req.get("items"):   # R354: 남은 일이 원장에 없으면 큐·재개가 못 읽는다 — 빈 제목만 두지 않고 사실대로
+            lines.append("- (원장 하위 항목 없음 — 남은 일 미정리 · `request-ledger.py item-add` 로 등록 필요)")
         if req.get("status") == "approval_required":
             lines.append("- 사용자 승인(/approve) 필요")
     COLLAB.joinpath("reports").mkdir(parents=True, exist_ok=True)
@@ -157,6 +161,7 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
         if rblob:
             _ack(st, rpath, rblob)
     _save_state(st)
+    cmd_queue(quiet=True)    # R354: 보고 직후 남은 일 큐 갱신
     print(f"[ai-collab] {out.relative_to(ROOT)} · {base[:8]}..{head[:8]} · 파일 {len(files)} · 상태 {status}")
     return 0
 
@@ -326,12 +331,60 @@ def cmd_poll() -> int:
         st["last_poll_hit"] = now.isoformat(timespec="seconds")
     if changed:
         _save_state(st)
+    left = cmd_queue(quiet=True) if reported else 0   # R354: 다시 깨우지 않는 대신 남은 일을 재개 큐에 남김
     if not new:
         print(f"[ai-collab] 새 요청·검토 없음{f' (처리 중 {len(busy)}건: ' + ' '.join(busy) + ')' if busy else ''}"
-              f"{f' (보고됨·미확정 {len(reported)}건)' if reported else ''}")
+              f"{f' (보고됨·미확정 {len(reported)}건 · 남은 실행 가능 항목 {left} → next-actions collab)' if reported else ''}")
         return 3
     print(json.dumps(new, ensure_ascii=False, indent=1))
     return 0
+
+
+def _open_queue() -> list:
+    """R354: 보고(PARTIAL·BLOCKED)는 했지만 끝나지 않은 협업 요청의 열린 하위 항목 — 정본은 원장 items.
+    [(rid, status, [항목…], 항목 없음 여부)] · 협업 보고서가 있는 요청만 (사용자 대화 요청과 섞지 않음)."""
+    reqs = (_state().get("requests") or {})
+    out = []
+    for r in _load(LEDGER, {}).get("requests", []):
+        rid = r.get("id") or ""
+        ent = reqs.get(rid)
+        if not ent or ent.get("pruned_at") or r.get("status") == "completed":
+            continue
+        if r.get("verification") not in ("PARTIAL", "BLOCKED") and r.get("status") != "approval_required":
+            continue
+        items = [x for x in (r.get("items") or []) if x.get("state") not in ("done", "na")]
+        out.append((rid, r.get("verification") or r.get("status"), items, not (r.get("items") or [])))
+    return out
+
+
+def cmd_queue(write: bool = True, quiet: bool = False) -> int:
+    """R354: 남은 일 큐를 출력하고 next-actions 의 collab 블록에 적는다 (세션 재시작·compact 뒤 재개 주입 · 나이 무관).
+    poll 이 보고된 PARTIAL 을 다시 깨우지 않는 것(R346 후속 9)은 유지 — 대신 남은 일이 여기 남아 조용히 정체하지 않는다.
+    항목 없는 PARTIAL 은 «남은 일 미정리» 로 따로 표시 (조용히 빠지지 않게 · item-add 로 정리할 대상)."""
+    q = _open_queue()
+    lines, n_claude, n_ext = [], 0, 0
+    for rid, status, items, unlisted in q:
+        if unlisted:
+            lines.append(f"- {rid} ({status}) — 남은 일 미정리: 보고서 «남은 것» 을 `request-ledger.py item-add {rid} …` 로 등록")
+            continue
+        for x in items:
+            ext = x.get("owner") == "external"
+            n_ext += ext
+            n_claude += not ext
+            lines.append(f"- {rid}#{x.get('i')} [{'external' if ext else 'claude'}] {(x.get('text') or '')[:140]}")
+    head = (f"협업 요청 {len(q)}건 · 실행 가능 [claude] {n_claude} · 외부 증거 필요 [external] {n_ext}"
+            f" · 미정리 {sum(1 for *_, u in q if u)} (정본: request-ledger.json items · 갱신: ai-collab-report.py queue)")
+    body = (head + "\n" + "\n".join(lines)) if q else ""
+    if not quiet:
+        print(body or "[ai-collab] 남은 협업 요청 없음")
+    if write:
+        na = Path(__file__).resolve().parent / "auto-save-next-actions.py"
+        try:
+            subprocess.run([sys.executable, "-X", "utf8", str(na), "collab"], input=body.encode("utf-8"),
+                           env={**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT)}, capture_output=True, timeout=30)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"[ai-collab] next-actions 기록 실패: {type(e).__name__}", file=sys.stderr)
+    return n_claude
 
 
 _ACK_PATH = re.compile(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md")
@@ -440,6 +493,9 @@ def main(argv: list) -> int:
         return cmd_prune()
     if op == "poll":
         return cmd_poll()
+    if op == "queue":
+        cmd_queue(write="--no-write" not in argv[1:])
+        return 0
     if op == "ack" and len(argv) >= 2:
         return cmd_ack(argv[1])
     if op == "wait":
