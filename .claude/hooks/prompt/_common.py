@@ -139,14 +139,18 @@ def bash_exe() -> str:
         return not ((win and n.startswith(win + os.sep)) or (os.sep + "windowsapps" + os.sep) in n)
 
     cands = [shutil.which("bash")]
+    # 2026-11-21 (R354): PATH 에서 못 찾아 역산할 때(작업 스케줄러 등)는 Git\bin\bash.exe 런처를 먼저 —
+    #   usr\bin\bash.exe 는 자기 폴더가 PATH 에 없으면 dirname·grep 등 coreutils 를 못 찾는다
+    #   (orca-10min-loop 의 cleanup-pollution.sh 'dirname: command not found' 71회 · R346 후속 8 이후 · 최소 PATH 재현).
+    #   런처는 /usr/bin 을 PATH 에 넣고 usr\bin\bash 를 띄운다. PATH 에서 찾은 bash 는 그 폴더가 이미 PATH 에 있어 그대로.
     g = shutil.which("git")
     if g:
         root = Path(g).resolve().parent.parent            # ...\Git\cmd\git.exe -> ...\Git
-        cands += [root / "usr" / "bin" / "bash.exe", root / "bin" / "bash.exe"]
+        cands += [root / "bin" / "bash.exe", root / "usr" / "bin" / "bash.exe"]
     for k in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
         base = os.environ.get(k)
         if base:
-            cands += [Path(base) / "Git" / "usr" / "bin" / "bash.exe", Path(base) / "Git" / "bin" / "bash.exe",
+            cands += [Path(base) / "Git" / "bin" / "bash.exe", Path(base) / "Git" / "usr" / "bin" / "bash.exe",
                       Path(base) / "Programs" / "Git" / "bin" / "bash.exe"]
     found = next((str(c) for c in cands if _ok(str(c) if c else "")), "bash")
     _BASH_CACHE.append(found)

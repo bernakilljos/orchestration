@@ -129,3 +129,42 @@ def test_poll_keeps_quiet_but_refreshes_queue(tmp_path):
     assert "남은 실행 가능 항목 1" in quiet.stdout
     assert "R2#1 [claude]" in _na(r)                                           # 큐는 다시 채워짐
     assert _run(r, "poll").returncode == 3                                     # 두 번째도 조용 (중복 소비 X)
+
+
+def test_fault_github_unreachable_then_recover_exactly_once(tmp_path):
+    """R346 P1 장애 실험 (격리 저장소): 원격 접속 실패 → poll 2·상태 무변경 · wait 는 연속 3회 실패에서만 2 (무한 재시도 X) ·
+    원격 복구 뒤 새 요청을 한 번만 전달 (임대 안 중복 X) · 복구 시간 측정."""
+    import shutil as _sh
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R2.md", '---\nrequest_id: "R2"\n---\n지시 C\n')
+    bare = tmp_path / "origin.git"
+    moved = tmp_path / "origin-offline.git"
+    bare.rename(moved)                                                         # 원격 접속 불가 흉내
+    st_before = (r / ".ai-collab" / "state.json").read_text(encoding="utf-8") if (r / ".ai-collab" / "state.json").exists() else ""
+    bad = _run(r, "poll")
+    assert bad.returncode == 2 and "fetch 실패" in bad.stderr
+    st_after = (r / ".ai-collab" / "state.json").read_text(encoding="utf-8") if (r / ".ai-collab" / "state.json").exists() else ""
+    assert st_after == st_before                                               # 실패가 상태를 바꾸지 않음
+    t0 = time.time()
+    w = _run(r, "wait", "--interval", "0.2", "--max-sec", "30")
+    assert w.returncode == 2 and time.time() - t0 < 25                         # 연속 3회 실패에서 끝남 (재시도 상한)
+    moved.rename(bare)                                                         # 복구
+    t1 = time.time()
+    hit = _run(r, "poll")
+    rto = time.time() - t1
+    assert hit.returncode == 0 and "지시 C" in hit.stdout and rto < 30
+    assert _run(r, "poll").returncode == 3                                     # 임대 안 = 다시 전달 안 함 (중복 0)
+
+
+def test_fault_crash_before_state_replace_keeps_original(tmp_path):
+    """저장 도중 끊김 흉내: 쓰다 만 state.tmp 가 남아도 원본 state.json 은 그대로 읽히고 다음 저장이 덮어써 정리된다."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    good = _state(r)
+    (r / ".ai-collab" / "state.tmp").write_text('{"requests": {"R2": ', encoding="utf-8")   # 깨진 반쪽 파일
+    assert _state(r) == good                                                   # 원본 보존
+    q = _run(r, "queue", "--no-write")
+    assert q.returncode == 0 and "R2#1" in q.stdout
+    assert _run(r, "report", "R1").returncode == 0                             # 다음 저장 정상
+    assert not (r / ".ai-collab" / "state.tmp").exists() and "R1" in _state(r)["requests"]

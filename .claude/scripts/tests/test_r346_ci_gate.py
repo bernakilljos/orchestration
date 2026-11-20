@@ -115,3 +115,42 @@ def test_bash_exe_skips_wsl_launcher_and_honors_override(tmp_path, monkeypatch):
     assert _common.bash_exe() == "bash"                          # 대안 없으면 종전 동작 (조용히 WSL 을 고르지 않음)
     monkeypatch.setenv("BASH_EXE", "X:/custom/bash.exe")
     assert _common.bash_exe() == "X:/custom/bash.exe"            # 명시 지정 우선
+
+
+def test_bash_exe_prefers_git_launcher_when_not_on_path(tmp_path, monkeypatch):
+    """R354: PATH 에서 bash 를 못 찾아 git.exe 위치로 역산할 때(작업 스케줄러) usr\bin\bash.exe 를 고르면
+    자기 폴더가 PATH 에 없어 dirname·grep 을 못 찾는다 (cleanup-pollution.sh 71회 실패) → Git\bin\bash.exe 런처 우선.
+    PATH 에서 찾은 bash 는 그대로 (그 폴더가 이미 PATH 에 있음)."""
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    import _common
+    git_root = tmp_path / "Git"
+    for d in ("cmd", "bin", "usr/bin"):
+        (git_root / d).mkdir(parents=True)
+    (git_root / "cmd" / "git.exe").write_text("")
+    launcher, inner = git_root / "bin" / "bash.exe", git_root / "usr" / "bin" / "bash.exe"
+    launcher.write_text(""); inner.write_text("")
+    monkeypatch.setattr(_common, "_BASH_CACHE", [])
+    monkeypatch.setattr(_common.os, "name", "nt")
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "Windows")); monkeypatch.delenv("BASH_EXE", raising=False)
+    for k in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(shutil, "which", lambda n, *a, **k: {"git": str(git_root / "cmd" / "git.exe")}.get(n))
+    assert Path(_common.bash_exe()) == launcher                  # 역산 = 런처
+    monkeypatch.setattr(_common, "_BASH_CACHE", [])
+    monkeypatch.setattr(shutil, "which", lambda n, *a, **k: {"bash": str(inner), "git": str(git_root / "cmd" / "git.exe")}.get(n))
+    assert Path(_common.bash_exe()) == inner                     # PATH 에서 찾은 것은 그대로
+
+
+@pytest.mark.skipif(os.name != "nt" or not shutil.which("git"), reason="Windows + Git for Windows 전용 실측")
+def test_bash_exe_runs_coreutils_with_scheduler_like_path():
+    """실측: 작업 스케줄러처럼 PATH = 시스템 폴더 + git.exe 폴더만일 때 정본이 고른 bash 로 dirname 이 동작해야 한다."""
+    sysroot = os.environ.get("SystemRoot", r"C:\Windows")
+    env = {**os.environ, "PATH": os.pathsep.join([str(Path(sysroot) / "System32"), sysroot,
+                                                     str(Path(shutil.which("git")).parent)])}
+    env.pop("BASH_EXE", None)
+    code = ("import sys,subprocess; sys.path.insert(0, sys.argv[1]); from _common import bash_exe; b = bash_exe(); "
+            "r = subprocess.run([b, '-c', 'dirname /a/b'], capture_output=True, text=True); print(b); print(r.stdout.strip(), r.stderr.strip())")
+    r = subprocess.run([sys.executable, "-c", code, str(ROOT / ".claude" / "hooks" / "prompt")], env=env,
+                       capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert "/a" in r.stdout.splitlines()[-1] and "command not found" not in r.stdout, r.stdout
