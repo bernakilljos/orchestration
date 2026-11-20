@@ -436,7 +436,9 @@ def test_dispatch_entrypoint_isolated(tmp_path):
             assert sid not in f.read_text(encoding="utf-8", errors="replace"), f
     if (real / "orca.db").exists():
         with sqlite3.connect(f"file:{real / 'orca.db'}?mode=ro", uri=True) as c:
-            assert c.execute("SELECT COUNT(*) FROM conversations WHERE session_id LIKE ?", (sid + "%",)).fetchone()[0] == 0
+            # R346: 새 clone(CI)의 운영 DB 에는 conversations 표가 없을 수 있다 — 표가 없으면 기록도 없음
+            if c.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='conversations'").fetchone():
+                assert c.execute("SELECT COUNT(*) FROM conversations WHERE session_id LIKE ?", (sid + "%",)).fetchone()[0] == 0
 
 
 

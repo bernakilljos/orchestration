@@ -22,6 +22,8 @@ MARK = "P12-OPS-TEST"
 # 2026-11-03 F8: 새 clone 의 orca.db 에는 goals 등이 아직 없다 (운영은 supervisor 진입점마다 ensure_schema) →
 #   이 테스트가 직접 SQL 을 쓰기 전에 같은 함수로 스키마를 보장한다 (데이터 변경 없음 · IF NOT EXISTS)
 import runner  # noqa: E402
+import state_db  # noqa: E402
+state_db.init_schema()      # R346: 기본 표(tasks 등)는 SessionStart ensure-state 가 만든다 — 새 clone(CI)에는 없어 'no such table: tasks'
 supervisor.ensure_schema()
 runner._ensure_schema()
 sh._ensure_heal_schema()

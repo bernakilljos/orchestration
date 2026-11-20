@@ -3,7 +3,7 @@
   "name": "mcp_media",
   "display": "미디어 설치 — Whisper(STT)·TTS·FFmpeg",
   "prefix": "mcp_",
-  "version": "1.0",
+  "version": "1.0.1",
   "status": "stable",
   "phase": 0,
   "commands": "commands/",
@@ -20,7 +20,6 @@
   "entry_points": {
     "default_command": "install",
     "core_skills": [
-      "skill-22-remotion",
       "skill-25-media-enhance"
     ]
   },
@@ -36,7 +35,7 @@
     ],
     "author": "bernakilljos",
     "created": "2026-04-10",
-    "updated": "2026-04-23",
+    "updated": "2026-11-20",
     "precedence": 10,
     "token_estimate": 2000,
     "triggers": [

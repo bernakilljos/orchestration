@@ -61,7 +61,7 @@
       "name": "mcp_media",
       "source": "./plugins/mcp_media",
       "description": "미디어 MCP (Whisper·TTS·FFmpeg)",
-      "version": "1.0"
+      "version": "1.0.1"
     },
     {
       "name": "mcp_web",
