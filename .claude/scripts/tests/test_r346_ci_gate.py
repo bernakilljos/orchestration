@@ -32,6 +32,12 @@ def test_workflow_uses_gate_and_does_not_mask_pytest():
         if "pytest" in line and "pip install" not in line and not line.lstrip().startswith("#"):   # 주석 속 옛 문구 인용 제외
             assert "|| true" not in line and "|| echo" not in line, line
     assert "validate-plugin-schema.py --strict || true" not in wf      # 스키마 검증은 필수
+    # R346 후속 4: pytest -r 은 기본값(fE)을 대체 — '-rs' 만 주면 FAILED·ERROR 요약 줄이 사라져 실패 시험 주석이 0건이 된다
+    import re
+    for line in wf.splitlines():
+        if "ci-pytest-gate.sh" in line and not line.lstrip().startswith("#"):
+            for m in re.findall(r"\s-r([A-Za-z]+)", line):
+                assert "f" in m and "E" in m, line
 
 
 def test_init_schema_completes_db_that_only_has_schema_version(tmp_path, monkeypatch):
