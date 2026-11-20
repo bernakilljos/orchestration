@@ -2297,3 +2297,72 @@ def test_merge_to_target_identical_to_uncommitted_kit_is_not_kit_owned(tmp_path)
     r = run()
     assert r.returncode == 0, r.stdout + r.stderr
     assert (tgt / ".claude" / "hooks" / "x.sh").read_text(encoding="utf-8") == "echo wip\n", r.stdout   # 대상 수정 보존
+
+
+def test_r352_memory_need_from_measured_history_and_watch(monkeypatch):
+    """R352 (사용자 결정 '기본 OFF 유지 · 고정 수치 단일 조건 X'): commit 기준 = 실측 '게이트 중 commit 증가량' 이력 기반 ·
+    여유 충분이면 대기 없음 · 이력상 부족하면 대기 · 90%+ 보류 · 기본 꺼짐은 그대로 · 측정 불가는 0 으로 만들지 않음."""
+    import repair_sandbox as sb
+    import independent_verifier as iv
+    for k in ("ORCA_GATE_MEM_FREE_GB", "ORCA_GATE_PHYS_FREE_GB", "ORCA_GATE_MEM_MARGIN_X", "ORCA_GATE_MEM_MARGIN_GB",
+              "ORCA_GATE_MEM_MIN_GB"):
+        monkeypatch.delenv(k, raising=False)
+    assert iv._gate_mem_need(None) == (2.0, 3.0)                       # 이력 없음 = 종전 기본값
+    assert iv._gate_mem_need([1.2, 3.0]) == (5.0, 3.0)                 # 최대 3.0 × 1.5 + 0.5
+    assert iv._gate_mem_need([0.1])[0] == 1.0                          # 하한
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "1")
+    monkeypatch.setenv("ORCA_GATE_MEM_ABSOLUTE", "1")
+
+    def run(cm, hist):
+        monkeypatch.setattr(sb, "commit_memory", lambda: dict(cm, measured=True))
+        res = {"memory_history": hist}
+        t0 = time.time()
+        return iv._wait_memory_for_heavy(res), res, time.time() - t0
+
+    out, res, dt = run({"percent": 85.0, "free_gb": 6.0, "phys_free_gb": 8.0}, [3.0])    # 여유 6 ≥ 필요 5 → 즉시
+    assert out is None and dt < 0.5 and "여유 충분" in res["memory_wait"]["reason"]
+    out, res, dt = run({"percent": 85.0, "free_gb": 4.0, "phys_free_gb": 8.0}, [3.0])    # 고정 2.0 이면 통과했을 값 → 이력상 부족 → 대기
+    assert out is None and dt >= 0.9 and "reason" not in res["memory_wait"]
+    out, res, dt = run({"percent": 92.0, "free_gb": 9.0, "phys_free_gb": 9.0}, [0.5])    # 90%+ = 여유와 무관하게 보류
+    assert out and "보류" in out
+    monkeypatch.delenv("ORCA_GATE_MEM_ABSOLUTE", raising=False)
+    out, res, dt = run({"percent": 85.0, "free_gb": 9.0, "phys_free_gb": 9.0}, [0.5])    # 기본 꺼짐 = STD-MEMORY-001 대기
+    assert out is None and dt >= 0.9
+
+    seq = iter([{"measured": True, "percent": 87.7, "free_gb": 3.0}, {"measured": True, "percent": 95.0, "free_gb": 1.27},
+                {"measured": True, "percent": 90.0, "free_gb": 2.2}])
+    monkeypatch.setattr(sb, "commit_memory", lambda: next(seq, {"measured": True, "percent": 90.0, "free_gb": 2.2}))
+    w = iv._CommitWatch(interval=0.05)
+    with w:
+        time.sleep(0.2)
+    s = w.summary()
+    assert s["peak_pct"] == 95.0 and s["min_free_gb"] == 1.27 and s["used_gb"] == 1.73
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": False})
+    w = iv._CommitWatch(interval=0.05)
+    with w:
+        time.sleep(0.1)
+    assert w.summary() is None                                          # 측정 불가 = 기록 없음 (0 아님)
+
+
+def test_r349_watch_records_cpu_saturation_only_when_high(monkeypatch):
+    """R349: 게이트 실행 중 측정 스레드가 CPU 도 기록 — 90% 이상 표본에서만 상위 프로세스 (주입한 센서 값 · 실제 부하 없음)."""
+    import psutil
+    import repair_sandbox as sb
+    import independent_verifier as iv
+    monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "percent": 80.0, "free_gb": 4.0})
+    vals = iter([0.0, 95.0, 30.0, 97.0])
+    monkeypatch.setattr(psutil, "cpu_percent", lambda *a, **k: next(vals, 20.0))
+    w = iv._CommitWatch(interval=10)
+    w._probe = sb.commit_memory
+    for _ in range(4):
+        w._take()
+    s = w.summary()
+    assert s["cpu_max"] == 97.0 and s["cpu_ge90"] == 2 and len(s["cpu_top_when_saturated"]) == 2
+    assert all(len(x["top"]) <= 3 for x in s["cpu_top_when_saturated"])
+    vals2 = iter([0.0, 20.0, 25.0])
+    monkeypatch.setattr(psutil, "cpu_percent", lambda *a, **k: next(vals2, 20.0))
+    w = iv._CommitWatch(interval=10)
+    w._probe = sb.commit_memory
+    for _ in range(3):
+        w._take()
+    assert w.summary()["cpu_ge90"] == 0 and w.summary()["cpu_top_when_saturated"] == []

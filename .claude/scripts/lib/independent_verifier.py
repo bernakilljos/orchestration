@@ -361,15 +361,110 @@ def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
     return out
 
 
-def _gate_mem_need() -> tuple:
-    """R339 전체 회귀를 바로 시작해도 되는 절대 여유 (GB) — commit 2.0 (pytest 최대 0.5GB 의 4배) · 물리 3.0
-    (2026-11-20 메모리 부족으로 백그라운드 작업이 강제 종료된 시점 물리 여유 2.3GB 보다 위). 환경 변수로 조정."""
+def _gate_mem_need(history: Optional[List[float]] = None) -> tuple:
+    """R339 전체 회귀를 바로 시작해도 되는 절대 여유 (GB) — (commit, 물리).
+
+    R352 (2026-11-20 · 사용자 결정 '기본 OFF 유지 · 고정 수치·단일 조건 X'): commit 기준을 고정 2.0GB 가정이 아니라
+    실측한 '게이트 실행 중 commit 증가량' 최근 이력의 최대치 × 여유 배수 + 여유분 으로 정한다 (이력 없으면 종전 기본값).
+    실측 근거: 전체 회귀 중 commit 87.7→95.0% · 최저 여유 1.27GB · 물리 여유는 4.3GB 이상 → 묶이는 쪽은 commit.
+    물리 기준은 강제 종료 시점 물리 여유 2.3GB 보다 위 (3.0). 모두 환경 변수로 조정 (이름 붙인 안전 상수)."""
     def _f(name, default):
         try:
             return max(0.0, float(os.environ.get(name, default)))
         except ValueError:
             return float(default)
-    return _f("ORCA_GATE_MEM_FREE_GB", "2.0"), _f("ORCA_GATE_PHYS_FREE_GB", "3.0")
+    floor = _f("ORCA_GATE_MEM_FREE_GB", "2.0")
+    used = [float(x) for x in (history or []) if isinstance(x, (int, float)) and x >= 0]
+    if used:
+        need = max(used) * _f("ORCA_GATE_MEM_MARGIN_X", "1.5") + _f("ORCA_GATE_MEM_MARGIN_GB", "0.5")
+        floor = max(need, _f("ORCA_GATE_MEM_MIN_GB", "1.0"))
+    return floor, _f("ORCA_GATE_PHYS_FREE_GB", "3.0")
+
+
+class _CommitWatch:
+    """R352: 시험 실행 동안 commit 메모리를 5초마다 재서 '이 작업이 추가로 쓴 양' 을 실측 (스레드 · 실측 오버헤드 780초 중 0.14초).
+    측정 불가면 아무것도 기록하지 않는다 (0 으로 만들지 않음)."""
+
+    def __init__(self, interval: float = 5.0):
+        self.interval, self.samples = interval, []
+        self._stop = None
+        self._th = None
+
+    def __enter__(self):
+        import threading
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import repair_sandbox as _sb
+            self._probe = _sb.commit_memory
+        except Exception:  # noqa: BLE001
+            return self
+        self._stop = threading.Event()
+        self._take()
+        self._th = threading.Thread(target=self._loop, daemon=True)
+        self._th.start()
+        return self
+
+    def _take(self):
+        try:
+            cm = self._probe() or {}
+        except Exception:  # noqa: BLE001
+            return
+        if cm.get("measured") and cm.get("free_gb") is not None:
+            self.samples.append((cm.get("percent"), cm.get("free_gb")))
+        self._take_cpu()
+
+    def _take_cpu(self):
+        """R349: 같은 스레드에서 전체 CPU 도 기록 · 90% 이상일 때만 상위 프로세스 3개 (기계 전체 대비 % · 코어 수로 나눔).
+        psutil 첫 호출은 기준점이라 버림 · psutil 없으면 기록 안 함 (0 으로 만들지 않음)."""
+        try:
+            import psutil
+        except ImportError:
+            return
+        if not hasattr(self, "cpu"):
+            self.cpu, self.cpu_top = [], []
+            psutil.cpu_percent(None)
+            return
+        v = psutil.cpu_percent(None)
+        self.cpu.append(v)
+        if v >= 90 and len(self.cpu_top) < 5:
+            import time as _t
+            n = psutil.cpu_count() or 1
+            plist = list(psutil.process_iter(["name"]))
+            for p in plist:              # 기준점 한 번 → 0.5초 뒤 한 번에 읽음 (프로세스마다 기다리면 300개 × 0.1초 = 30초)
+                try:
+                    p.cpu_percent(None)
+                except Exception:  # noqa: BLE001
+                    pass
+            _t.sleep(0.5)
+            procs = []
+            for p in plist:
+                try:
+                    procs.append((round(p.cpu_percent(None) / n, 1), p.info["name"]))
+                except Exception:  # noqa: BLE001
+                    pass
+            self.cpu_top.append({"cpu": v, "top": sorted(procs, reverse=True)[:3]})
+
+    def _loop(self):
+        while not self._stop.wait(self.interval):
+            self._take()
+
+    def __exit__(self, *exc):
+        if self._stop:
+            self._stop.set()
+            self._th.join(2)
+            self._take()
+        return False
+
+    def summary(self) -> Optional[Dict[str, Any]]:
+        if len(self.samples) < 2:
+            return None
+        start_pct, start_free = self.samples[0]
+        cpu = getattr(self, "cpu", [])
+        cpu_info = ({"cpu_avg": round(sum(cpu) / len(cpu), 1), "cpu_max": max(cpu), "cpu_ge90": sum(1 for c in cpu if c >= 90),
+                     "cpu_samples": len(cpu), "cpu_top_when_saturated": getattr(self, "cpu_top", [])} if cpu else {})
+        return {**cpu_info, "start_pct": start_pct, "peak_pct": max(p for p, _ in self.samples if p is not None),
+                "start_free_gb": start_free, "min_free_gb": min(f for _, f in self.samples),
+                "used_gb": round(max(0.0, start_free - min(f for _, f in self.samples)), 2), "samples": len(self.samples)}
 
 
 def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
@@ -400,7 +495,7 @@ def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
         # R339: % 만으로 기다리면 commit 이 85~87% 에 머무는 PC 에선 300초 뒤 결국 그대로 진행해 대기가 순수 낭비였다
         #   (2026-11-20 실측 3회: 86.7·85.6% · commit 여유 3.5GB · 물리 여유 5.7GB · pytest 최대 0.5GB).
         #   90% 미만이고 commit 여유·물리 여유가 둘 다 넉넉하면 바로 진행 · 하나라도 부족하면 종전대로 대기 · 90%+ 는 종전대로 보류.
-        need_commit, need_phys = _gate_mem_need()
+        need_commit, need_phys = _gate_mem_need(res.get("memory_history"))
         # 기본 꺼짐: STD-MEMORY-001(사용자 확정 2026-11-09 '80%부터 무거운 작업 대기') 을 바꾸는 판정이라 사용자 결정 전까지 opt-in
         if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < 90 and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
             res["memory_wait"]["reason"] = "여유 충분 (commit %.2fGB ≥ %.1f · 물리 %.2fGB ≥ %.1f)" % (
@@ -1048,6 +1143,12 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool =
     code = [p for p in staged if p.lower().endswith(_CODE_EXT)]
     res: Dict[str, Any] = {"tree": tree, "code_tree": code_fingerprint(cwd), "at": int(_t.time()), "changed_code": code,
                            "tests": [], "failures": [], "baseline_failures": [], "new_failures": []}
+    try:   # R352: 직전 게이트들의 '실행 중 commit 증가량' 이력을 이어받음 (메모리 판정의 예상 사용량 근거)
+        _prev = json.loads((cwd / REGRESSION_STAMP).read_text(encoding="utf-8"))
+        if isinstance(_prev.get("memory_history"), list):
+            res["memory_history"] = [x for x in _prev["memory_history"] if isinstance(x, (int, float))][-5:]
+    except (OSError, ValueError, AttributeError):
+        pass
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import repair_sandbox as _sb
@@ -1115,10 +1216,17 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool =
             res["status"] = "pass"
             res["reason"] = "영향 시험 없음 (affected_tests 0건) — 새 시험 필요 여부는 독립 검토로 판단"
         else:
+            watch = _CommitWatch()
             try:
-                fails, summary, rc = _pytest_failures(cwd, tests, timeout)
+                with watch:
+                    fails, summary, rc = _pytest_failures(cwd, tests, timeout)
             except subprocess.TimeoutExpired:
                 fails, summary, rc = set(), "시간 초과 %ds" % timeout, -1
+            mem = watch.summary()
+            if mem:   # R352: 예상 추가 사용량 실측 (전체 회귀만 이력에 남김 — 부분 시험과 섞지 않음)
+                res["memory_during"] = mem
+                if sel["full"]:
+                    res["memory_history"] = (res.get("memory_history") or [])[-4:] + [mem["used_gb"]]
             res["summary"] = summary
             res["failures"] = sorted(fails)
             if rc == 5:
