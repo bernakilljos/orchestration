@@ -782,15 +782,44 @@ _RX_FAILED = re.compile(r"^(?:FAILED|ERROR) (.+?\.py::.+?)(?: - .*)?$", re.M)
 _RX_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")   # 대상 pytest.ini 의 --color=yes 가 'FAILED' 앞에 색 코드를 붙였다(11-13: 60 failed 인데 failures [])
 
 
+FRESH_PYC_DIR = "orca-fresh-pyc"
+
+
+def fresh_source_env(cwd) -> Dict[str, str]:
+    """시험 대상 소스는 늘 새로 컴파일하고, 표준 라이브러리·pytest 는 캐시를 재사용하는 환경 변수 (R334).
+    종전(11-13·11-18): 쓰기 금지 + 매번 빈 캐시 폴더 → 대상 코드뿐 아니라 pytest·표준 라이브러리까지 매 실행 다시 컴파일해
+    가장 느린 시험 2개(94초)의 대부분이 이 컴파일이었다. 이제 공유 캐시 폴더(PYTHONPYCACHEPREFIX)를 쓰되, 실행 직전에
+    그 안의 대상 폴더(cwd) 사본 부분만 지운다 → '같은 초·같은 크기로 고친 파일을 옛 .pyc 로 판정' 하던 조건은 그대로 막힌다
+    (캐시 폴더를 지정하면 파이썬은 소스 옆 __pycache__ 를 읽지 않는다 · 공식 문서 PYTHONPYCACHEPREFIX).
+    지우는 곳은 임시 폴더 아래 이 함수가 만든 캐시뿐이다 (대상 저장소 파일은 건드리지 않음)."""
+    import shutil
+    import tempfile as _tf
+    prefix = os.path.join(_tf.gettempdir(), FRESH_PYC_DIR)
+    stamp = os.path.join(prefix, ".created")
+    try:   # 상한: 시험 임시 폴더 사본이 쌓이므로 7일마다 통째로 비운다 (다음 실행이 캐시를 한 번 다시 만든다)
+        import time as _time
+        if os.path.isfile(stamp) and _time.time() - os.path.getmtime(stamp) > 7 * 86400:
+            shutil.rmtree(prefix, ignore_errors=True)
+        if not os.path.isfile(stamp):
+            os.makedirs(prefix, exist_ok=True)
+            open(stamp, "w").close()
+    except OSError:
+        pass
+    rel = os.path.splitdrive(os.path.abspath(str(cwd)))[1].lstrip("\\/")   # 파이썬이 캐시 경로를 만들 때 드라이브를 뗀다
+    mirror = os.path.join(prefix, rel) if rel else ""
+    if mirror and os.path.isdir(mirror):
+        shutil.rmtree(mirror, ignore_errors=True)
+    return {"PYTHONPYCACHEPREFIX": prefix}
+
+
 def _pytest_failures(cwd: Path, tests: List[str], timeout: int, nopyc: bool = False):
     """(실패 nodeid 집합, 요약 줄, 종료 코드) — 시험 파일만 넘긴다. 0 통과 · 1 실패 · 5 수집 0 · 그 외 실행 오류.
     nopyc=True (R314): 바이트코드 캐시를 쓰지도 읽지도 않음 — 같은 초·같은 크기로 고친 시험을 옛 .pyc 로 판정하지 않게
     (반례 재실행·해결 시험처럼 '지금 실행한 결과' 만 증거로 인정하는 호출 · real_repair_chain._nopyc_env 와 같은 방식)."""
     env = {**os.environ, "PYTHONUTF8": "1"}
     if nopyc:
-        import tempfile as _tf, time as _time
-        env.update({"PYTHONDONTWRITEBYTECODE": "1",   # 쓰기 금지라 아래 폴더는 생기지 않음 (임시 폴더 잔여 0)
-                    "PYTHONPYCACHEPREFIX": os.path.join(_tf.gettempdir(), "pytest-nopyc-%d-%d" % (os.getpid(), _time.time_ns()))})
+        # R334: 종전 '쓰기 금지 + 매번 빈 폴더' (임시 폴더 잔여 0) 대신 대상 사본만 지우는 공유 캐시
+        env.update(fresh_source_env(cwd))
     env.pop("CLAUDE_PROJECT_DIR", None)   # 기준선 사본(worktree)에서 시험이 자기 위치를 ROOT 로 쓰게
     r = subprocess.run([sys.executable, "-X", "utf8", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=no", "-rfE",
                         "--color=no", *tests], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -1642,10 +1671,8 @@ def codex_check(cwd: Path, report: Optional[Path] = None, timeout: int = 300) ->
         try:
             # 11-13: 같은 초에 같은 크기로 고친 파일은 옛 __pycache__ 가 그대로 쓰여(파이썬은 시각(초)·크기로만 비교)
             #   고친 코드가 아닌 옛 코드로 판정했다 — 쓰지 않고(-B), 읽는 곳도 빈 임시 폴더로 돌려 늘 현재 소스로 돌린다.
-            import tempfile as _tf
-            env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1",
-                   "PYTHONPYCACHEPREFIX": os.path.join(_tf.gettempdir(), "codex-check-nopyc-%d" % os.getpid())}
-            r = subprocess.run([sys.executable, "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider", t], cwd=str(cwd),
+            env = {**os.environ, **fresh_source_env(cwd)}   # R334: 대상만 새로 컴파일 · pytest·표준 라이브러리는 캐시
+            r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", t], cwd=str(cwd),
                                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
                                env=env)
             results.append({"test": t, "exit_code": r.returncode, "tail": (r.stdout or "")[-200:]})

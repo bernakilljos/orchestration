@@ -45,14 +45,13 @@ def prepare_sandbox(demo_id: str) -> Dict[str, Any]:
     return {**r, "stage": "prepare_sandbox"}
 
 
-def _nopyc_env() -> Dict[str, str]:
-    """시험 실행용 바이트코드 캐시 차단 — 쓰지 않고(PYTHONDONTWRITEBYTECODE), 읽는 곳도 빈 임시 폴더(PYTHONPYCACHEPREFIX).
+def _nopyc_env(cwd) -> Dict[str, str]:
+    """시험 실행용 바이트코드 캐시 — 대상(cwd) 소스는 늘 새로 컴파일 (정본: independent_verifier.fresh_source_env · R334).
     2026-11-18: 재현 단계가 남긴 __pycache__ 를, 같은 초에 같은 크기로 고친 파일(kg * 2 → kg * 3)의 검증 pytest 가 그대로 읽어
     고치기 전 코드로 판정 → 맞는 수정이 'pytest' 단계 실패 (파이썬은 수정 시각(초)·크기로만 비교 · 실측: 끄면 3/3 통과 · 켜면 4/4 실패).
-    independent_verifier.codex_check 11-13 수정과 같은 방식."""
-    import tempfile as _tf
-    return {"PYTHONDONTWRITEBYTECODE": "1",
-            "PYTHONPYCACHEPREFIX": os.path.join(_tf.gettempdir(), "repair-chain-nopyc-%d" % os.getpid())}
+    R334: 종전 '쓰기 금지 + 빈 폴더' 는 pytest·표준 라이브러리까지 매번 다시 컴파일해 느렸다 → 대상 사본만 지우는 공유 캐시."""
+    import independent_verifier as _iv
+    return _iv.fresh_source_env(cwd)
 
 
 def reproduce_failure(sandbox_cwd: str, test_cmd: str,
@@ -66,7 +65,7 @@ def reproduce_failure(sandbox_cwd: str, test_cmd: str,
             test_cmd, shell=True, cwd=str(cwd),
             capture_output=True, text=True, timeout=timeout,
             encoding="utf-8", errors="replace",
-            env={**os.environ, "ALLOW_VISIBLE_WINDOW": "1", **_nopyc_env()},
+            env={**os.environ, "ALLOW_VISIBLE_WINDOW": "1", **_nopyc_env(cwd)},
         )
     except subprocess.TimeoutExpired:
         return {"ok": False, "stage": "reproduce_failure",
@@ -479,10 +478,10 @@ def run_affected_regression(cwd: str, test_cmd: str, tid: str, runner, verifier)
     for t in picked:
         script = "__main__" in (Path(cwd) / t).read_text(encoding="utf-8", errors="replace")
         cmd = [sys.executable, t] if script else [sys.executable, "-m", "pytest", "-q", t]
-        r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env())
+        r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env(cwd))
         retried = r.get("exit_code") != 0
         if retried:
-            r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env())
+            r = runner.run(cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env(cwd))
         if r.get("exit_code") == 0:
             runner.mark_verified(r.get("exec_id"), True)
         results.append({"test": t, "exit_code": r.get("exit_code"), "retried": retried,
@@ -582,7 +581,7 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
         if not pol["ok"]:
             return fail("policy")
 
-        vr = _rn.run(test_cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env())
+        vr = _rn.run(test_cmd, task_id=tid, worker_id="self-healing", timeout=300, cwd=cwd, env_override=_nopyc_env(cwd))
         m = re.search(r"(\d+)\s+passed", (vr.get("stdout") or ""))
         rec.update({"runner_exec_id": vr.get("exec_id"), "runner_exit_code": vr.get("exit_code")})
         out["stages"].append({"stage": "pytest", "round": rnd, "exec_id": vr.get("exec_id"),

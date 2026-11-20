@@ -143,6 +143,25 @@ def test_cx_rerun_ignores_stale_bytecode(tmp_path, monkeypatch):
     assert stale[2] == 0                                                      # 캐시 차단 없으면 옛 결과로 통과 (결함 재현)
 
 
+def test_fresh_source_cache_not_reused_between_runs(tmp_path, monkeypatch):
+    """R334: 공유 캐시 폴더로 바꾼 뒤에도, 신선 실행 → 같은 크기·같은 시각으로 수정 → 신선 실행이 옛 .pyc 를 쓰지 않음
+    (공유 캐시에 남은 대상 사본을 실행 직전에 지우는지) · 대상 폴더 소스 옆에는 __pycache__ 를 만들지 않음."""
+    monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
+    monkeypatch.delenv("PYTHONPYCACHEPREFIX", raising=False)
+    sys.path.insert(0, str(ROOT / ".claude" / "scripts" / "lib"))
+    from independent_verifier import _pytest_failures
+    t = tmp_path / "t_pyc.py"
+    t.write_text("def test_x():\n    assert 'kg' * 3 == 'kgkgkg'\n", encoding="utf-8")
+    first = _pytest_failures(tmp_path, ["t_pyc.py::test_x"], 120, nopyc=True)
+    assert first[2] == 0
+    st = t.stat()
+    t.write_text("def test_x():\n    assert 'kg' * 2 == 'kgkgkg'\n", encoding="utf-8")
+    os.utime(t, ns=(st.st_atime_ns, st.st_mtime_ns))
+    second = _pytest_failures(tmp_path, ["t_pyc.py::test_x"], 120, nopyc=True)
+    assert second[2] == 1 and second[0]                                       # 지금 코드 기준 실패
+    assert not (tmp_path / "__pycache__").exists()                            # 캐시는 임시 폴더 쪽에만
+
+
 def test_manual_add_moves_current_request(tmp_path):
     """R315: 자동 등록이 놓친 지시를 손으로 add 하면 상태줄 현재 요청이 직전 요청에 멈춰 있던 것 → add 도 현재 요청·세션 기록."""
     st = tmp_path / ".claude" / "state"
