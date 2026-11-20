@@ -361,6 +361,17 @@ def impact_selection(cwd: Path, changed: List[str]) -> Dict[str, Any]:
     return out
 
 
+def _gate_mem_need() -> tuple:
+    """R339 전체 회귀를 바로 시작해도 되는 절대 여유 (GB) — commit 2.0 (pytest 최대 0.5GB 의 4배) · 물리 3.0
+    (2026-11-20 메모리 부족으로 백그라운드 작업이 강제 종료된 시점 물리 여유 2.3GB 보다 위). 환경 변수로 조정."""
+    def _f(name, default):
+        try:
+            return max(0.0, float(os.environ.get(name, default)))
+        except ValueError:
+            return float(default)
+    return _f("ORCA_GATE_MEM_FREE_GB", "2.0"), _f("ORCA_GATE_PHYS_FREE_GB", "3.0")
+
+
 def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
     """STD-MEMORY-001: 무거운 전체 회귀 전 commit 메모리 80%↑면 75% 이하까지 대기 · 90%↑가 계속되면 실행 보류(blocked).
     측정 불가는 막지 않는다 (기록만). 메모리 부족을 이유로 시험을 생략·PASS 처리하지 않는다."""
@@ -382,8 +393,18 @@ def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
             res["memory_wait"] = "측정 불가"
             return None
         pct, waited = cm["percent"], _t.time() - t0
-        res["memory_wait"] = {"waited_sec": round(waited), "percent": pct}
+        res["memory_wait"] = {"waited_sec": round(waited), "percent": pct, "free_gb": cm.get("free_gb"),
+                              "phys_free_gb": cm.get("phys_free_gb")}
         if pct < (75 if waited > 0 else 80):        # 대기에 들어가면 75% 이하에서 재개
+            return None
+        # R339: % 만으로 기다리면 commit 이 85~87% 에 머무는 PC 에선 300초 뒤 결국 그대로 진행해 대기가 순수 낭비였다
+        #   (2026-11-20 실측 3회: 86.7·85.6% · commit 여유 3.5GB · 물리 여유 5.7GB · pytest 최대 0.5GB).
+        #   90% 미만이고 commit 여유·물리 여유가 둘 다 넉넉하면 바로 진행 · 하나라도 부족하면 종전대로 대기 · 90%+ 는 종전대로 보류.
+        need_commit, need_phys = _gate_mem_need()
+        # 기본 꺼짐: STD-MEMORY-001(사용자 확정 2026-11-09 '80%부터 무거운 작업 대기') 을 바꾸는 판정이라 사용자 결정 전까지 opt-in
+        if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < 90 and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
+            res["memory_wait"]["reason"] = "여유 충분 (commit %.2fGB ≥ %.1f · 물리 %.2fGB ≥ %.1f)" % (
+                cm["free_gb"], need_commit, cm["phys_free_gb"], need_phys)
             return None
         if waited >= wait_max:
             if pct >= 90:

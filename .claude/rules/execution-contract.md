@@ -77,6 +77,7 @@ N/N 완료 확인 (Stop hook gate)
   | 지시 없음 | (없음) | 기존 기본 동작 |
 - 바뀌는 때는 사용자 최신 명시 지시뿐 — 같은 세션의 열린 요청에 함께 적용 (등록되지 않는 짧은 지시 '멈춰'·'이제 하나씩 보고해' 포함) · Hook·Claude 가 임의로 바꾸지 않는다.
 - 같은 미완료로 3회 연속 막히면 통과하는 반복 해제(`_gate_loop_exceeded`)는 그대로 — 모델 비용 무한 소모 방지.
+- 백그라운드 작업이 아직 돌고 있으면 Stop 허용 — 정본은 공식 Stop 입력 `background_tasks` (shell·subagent·workflow 등 running · monitor 제외 · Claude Code hooks 문서 Stop input) · 필드가 없는 옛 버전만 대화 기록에서 '완료 알림 없는 Bash 백그라운드(90분 이내)' 를 찾음 — 결과를 기다리는 중이고 완료 알림이 오면 이어서 진행한다 (완료 처리 아님 · Monitor·본문 인용은 제외 · R338: 대기 중 '대기 중' 답만 반복하던 턴 18회).
 
 ### Stop hook Request Ledger Gate
 

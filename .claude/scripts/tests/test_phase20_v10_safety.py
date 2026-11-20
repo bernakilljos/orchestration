@@ -1826,6 +1826,37 @@ def test_regression_gate_memory_throttle_end_to_end(tmp_path, monkeypatch):
     assert stamp["status"] == "blocked"                                        # 커밋 훅이 막는 기록
 
 
+def test_memory_wait_skips_only_when_absolute_headroom_is_enough(monkeypatch):
+    """R339: commit % 가 80~90% 에 머물러도 commit·물리 여유가 둘 다 넉넉하면 바로 진행 (300초 대기 후 결국 진행하던 낭비) ·
+    하나라도 부족하면 종전대로 대기 · 90%+ 는 대기 후 보류. 센서 값만 주입 (실제 메모리를 올리지 않음)."""
+    import repair_sandbox as sb
+    import independent_verifier as iv
+    monkeypatch.setenv("ORCA_GATE_MEM_WAIT_SEC", "1")
+    monkeypatch.delenv("ORCA_GATE_MEM_FREE_GB", raising=False)
+    monkeypatch.delenv("ORCA_GATE_PHYS_FREE_GB", raising=False)
+    monkeypatch.delenv("ORCA_GATE_MEM_ABSOLUTE", raising=False)
+    sb_cm = {"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 4.66}
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(sb_cm, measured=True))
+    t0 = time.time()
+    assert iv._wait_memory_for_heavy({}) is None and time.time() - t0 >= 0.9    # 기본 꺼짐 = STD-MEMORY-001 그대로 대기
+    monkeypatch.setenv("ORCA_GATE_MEM_ABSOLUTE", "1")
+
+    def run(cm):
+        monkeypatch.setattr(sb, "commit_memory", lambda: dict(cm, measured=True))
+        res = {}
+        t0 = time.time()
+        return iv._wait_memory_for_heavy(res), res, time.time() - t0
+
+    out, res, dt = run({"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 4.66})       # 2026-11-20 실측값
+    assert out is None and dt < 0.5 and "여유 충분" in res["memory_wait"]["reason"]
+    for low in ({"percent": 87.5, "free_gb": 1.2, "phys_free_gb": 4.66},              # commit 여유 부족
+                {"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 2.3}):             # 물리 여유 부족 (강제 종료 시점 값)
+        out, res, dt = run(low)
+        assert out is None and dt >= 0.9 and "reason" not in res["memory_wait"], low   # 기다린 뒤 순차 진행 (종전)
+    out, res, dt = run({"percent": 92.0, "free_gb": 2.5, "phys_free_gb": 6.0})         # 90%+ = 여유 GB 와 무관하게 보류
+    assert out and "보류" in out and dt >= 0.9
+
+
 # --- §71 명령 프로젝트 경로 (2026-11-10 · /approve 가 Git 설치 폴더로 풀리던 결함) ---
 _CMD_ROOT_FILES = ["exec_orch/commands/approve.md", "exec_orch/commands/approvals.md", "exec_orch/commands/reject.md",
                    "mcp_image/commands/image-cache.md", "mcp_image/commands/image-generate.md"]

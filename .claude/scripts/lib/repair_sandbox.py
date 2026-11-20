@@ -137,6 +137,7 @@ def commit_memory() -> dict:
             if not ctypes.windll.psapi.GetPerformanceInfo(ctypes.byref(pi), pi.cb):
                 return {"measured": False, "reason": "GetPerformanceInfo failed"}
             used, limit = pi.CommitTotal * pi.PageSize, pi.CommitLimit * pi.PageSize
+            phys = pi.PhysicalAvailable * pi.PageSize          # R339: 물리 RAM 여유 (commit 과 별개 지표)
         else:
             info = {}
             with open("/proc/meminfo", encoding="utf-8") as f:
@@ -144,12 +145,16 @@ def commit_memory() -> dict:
                     k, v = line.split(":", 1)
                     info[k] = int(v.split()[0]) * 1024
             used, limit = info["Committed_AS"], info["CommitLimit"]
+            phys = info.get("MemAvailable")
     except Exception as e:
         return {"measured": False, "reason": f"{type(e).__name__}: {e}"[:200]}
     if not limit:
         return {"measured": False, "reason": "commit limit 0"}
-    return {"measured": True, "used_gb": gb(used), "limit_gb": gb(limit), "free_gb": gb(limit - used),
-            "percent": round(used * 100 / limit, 1)}
+    out = {"measured": True, "used_gb": gb(used), "limit_gb": gb(limit), "free_gb": gb(limit - used),
+           "percent": round(used * 100 / limit, 1)}
+    if phys is not None:
+        out["phys_free_gb"] = gb(phys)
+    return out
 
 
 def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None) -> Optional[dict]:

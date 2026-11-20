@@ -956,6 +956,66 @@ def _gate_loop_exceeded(blocking: list) -> bool:
     return False
 
 
+# R338: 이 세션이 띄운 백그라운드 명령이 아직 돌고 있으면 Stop 을 막지 않는다 (완료 처리 아님).
+#   Claude 는 그 결과가 나올 때까지 할 일이 없고, 끝나면 하네스가 완료 알림으로 다시 깨운다 — 막아 봐야
+#   '대기 중' 답만 반복된다 (2026-11-20 실측: R334 수신 뒤 게이트 차단 피드백 턴 18회).
+#   대상은 Bash 백그라운드 명령뿐 (Monitor 는 제외 · 감시만 걸어 두고 빠져나가는 우회 방지) · 시작 후 BG_MAX_MIN 분 이내만.
+BG_MAX_MIN = 90
+_RX_BG_START = re.compile(r"Command running in background with ID: ([A-Za-z0-9]+)")
+_RX_BG_DONE = re.compile(r"<task-id>([A-Za-z0-9]+)</task-id>")
+
+
+def background_running(transcript_path: str, now: float | None = None, tail_bytes: int = 4_000_000) -> list:
+    """Stop payload 의 transcript_path 끝부분에서 '시작됐지만 완료 알림이 없는' 백그라운드 명령 id 목록."""
+    import time as _t
+    if not transcript_path:
+        return []
+    try:
+        p = Path(transcript_path)
+        size = p.stat().st_size
+        with open(p, "rb") as f:
+            if size > tail_bytes:
+                f.seek(size - tail_bytes)
+            raw = f.read().decode("utf-8", errors="replace")
+    except OSError:
+        return []
+    now = now if now is not None else _t.time()
+    started, done = {}, set()
+    for ln in raw.splitlines():
+        if "<task-id>" in ln and "<status>" in ln:
+            done.update(_RX_BG_DONE.findall(ln))
+            continue
+        m = _RX_BG_START.search(ln)
+        if not m or '"tool_result"' not in ln:   # 도구 결과 기록만 (대화 본문에 같은 문장을 인용한 경우 제외)
+            continue
+        try:
+            e = json.loads(ln)
+            if e.get("type") != "user" or not any(
+                    isinstance(c, dict) and c.get("type") == "tool_result" and _RX_BG_START.search(str(c.get("content")))
+                    for c in ((e.get("message") or {}).get("content") or [])):
+                continue
+            ts = e.get("timestamp", "")
+            t = datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp() if ts else now
+        except Exception:  # noqa: BLE001 — 시각을 못 읽으면 지금으로 (상한 판정만 느슨해짐)
+            t = now
+        started[m.group(1)] = t
+    return sorted(i for i, t in started.items() if i not in done and now - t <= BG_MAX_MIN * 60)
+
+
+BG_TASK_TYPES = ("shell", "subagent", "workflow", "teammate", "cloud session", "MCP task")   # monitor 제외 (감시만)
+
+
+def stop_background_tasks(payload: dict) -> list:
+    """진행 중인 백그라운드 작업 id — 정본은 공식 Stop 입력 `background_tasks` (Claude Code hooks 문서 · Stop input ·
+    2026-11-20 본문 확인: 'session is paused waiting for background work to wake it back up' 구분용).
+    필드가 없는 옛 버전에서만 대화 기록(transcript_path)을 읽는다 (문서: 기록은 비동기라 늦을 수 있음 → 보조)."""
+    tasks = payload.get("background_tasks")
+    if isinstance(tasks, list):
+        return sorted(str(x.get("id")) for x in tasks if isinstance(x, dict)
+                      and x.get("type") in BG_TASK_TYPES and str(x.get("status", "running")).lower() in ("running", "pending"))
+    return background_running(str(payload.get("transcript_path") or ""))
+
+
 def cmd_gate() -> int:
     """Stop hook용. exit 0 = all done · exit 2 = incomplete (block Stop)."""
     # 2026-11-18 R310 fail-closed: 원장이 깨지고 복구본도 없으면 예전엔 main 의 LedgerError 처리가 0 을 돌려
@@ -1005,6 +1065,11 @@ def cmd_gate() -> int:
                                 (_user_allows_stop(r) and r["status"] not in GATE_PASS_STATUS)]
         print(f"[request-ledger] 미완료 {len(open_items)}건 유지 · Stop 허용 (완료 처리 아님): "
               + ", ".join(f"{r['id']}:{r.get('verification') or r['status']}" for r in open_items), file=sys.stderr)
+        return 0
+    bg = stop_background_tasks(_stop_hook_payload())
+    if bg:   # R338 — 결과를 기다리는 중 · 완료 알림이 오면 이어서 진행 (완료 처리 아님)
+        print(f"[request-ledger] 백그라운드 작업 {','.join(bg[:3])} 진행 중 — 끝나면 알림으로 이어서 진행 · Stop 허용 (미완료 "
+              f"{len(blocking)}건 그대로: {','.join(r['id'] for r in blocking[:5])})", file=sys.stderr)
         return 0
     # stop_hook_active 반복 차단 해소: 같은 미완료 집합으로 연속 N 회 막혔으면 무한 루프 → 통과 + 로그
     if _gate_loop_exceeded(blocking):
