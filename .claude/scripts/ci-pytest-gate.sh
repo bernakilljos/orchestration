@@ -12,7 +12,8 @@ set -o pipefail
 ${PYTEST_CMD:-python -m pytest} "$@" 2>&1 | tee "$OUT"
 rc=$?
 set +o pipefail
-grep -E '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -20 | while IFS= read -r line; do
+# R346 후속 5: -a = 로그에 NUL 등이 섞여도 텍스트로 읽음 (없으면 grep 이 줄 대신 "Binary file … matches" 만 냄 · Windows 러너 실측)
+grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -20 | while IFS= read -r line; do
   echo "::error title=pytest::${line}"
 done
 rm -f "$OUT" 2>/dev/null

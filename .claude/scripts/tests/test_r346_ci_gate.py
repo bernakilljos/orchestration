@@ -66,9 +66,11 @@ def test_init_schema_completes_db_that_only_has_schema_version(tmp_path, monkeyp
 def test_failed_test_names_emitted_as_ci_annotations(tmp_path):
     """러너 전용 실패를 진단하려고 실패 시험 이름을 ::error:: 주석으로 낸다 (공개 API 로 보임) · 종료 코드는 그대로."""
     fake = tmp_path / "fake.py"
-    fake.write_text("import sys\nprint('FAILED tests/x.py::test_a - AssertionError')\nprint('ERROR tests/y.py')\nsys.exit(1)\n",
-                    encoding="utf-8")
+    # R346 후속 5: 러너 로그에 NUL 등 바이너리 바이트가 섞이면 grep 이 줄 대신 'Binary file … matches' 만 냄 (10331b98 Windows run 실측)
+    fake.write_text("import sys\nsys.stdout.write('noise\\x00bin\\n')\nprint('FAILED tests/x.py::test_a - AssertionError')\n"
+                    "print('ERROR tests/y.py')\nsys.exit(1)\n", encoding="utf-8")
     env = {**os.environ, "PYTEST_CMD": f"{Path(sys.executable).as_posix()} {fake.as_posix()}"}
     r = subprocess.run([BASH, GATE.as_posix()], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
     assert r.returncode == 1
+    assert "Binary file" not in r.stdout
     assert "::error title=pytest::FAILED tests/x.py::test_a" in r.stdout and "::error title=pytest::ERROR tests/y.py" in r.stdout
