@@ -251,6 +251,18 @@ def _lease_sec() -> int:
         return 1200
 
 
+def _reported_after_change(st: dict, rid: str, path: str) -> bool:
+    """이 요청의 보고서가 요청 파일의 마지막 변경(origin/main 커밋 시각) 뒤에 만들어졌나. 확인 불가 = False (다시 알림 쪽)."""
+    at = ((st.get("requests") or {}).get(rid) or {}).get("reported_at")
+    changed = _git("log", "-1", "--format=%cI", "origin/main", "--", path).strip()
+    if not at or not changed:
+        return False
+    try:
+        return datetime.fromisoformat(changed) < datetime.fromisoformat(at)       # 같은 초 = 다시 알림 쪽
+    except ValueError:
+        return False
+
+
 def _remote_files() -> dict:
     """origin/main 의 requests/·reviews/ 파일 {경로: blob} (.gitkeep 제외)."""
     out = {}
@@ -282,7 +294,7 @@ def cmd_poll() -> int:
     inflight = st.setdefault("inflight", {})
     handled = st.get("handled", {})
     now = datetime.now(timezone.utc)
-    new, busy, changed = [], [], False
+    new, busy, reported, changed = [], [], [], False
     for path, blob in _remote_files().items():
         if seen.get(path) == blob:
             continue
@@ -290,6 +302,12 @@ def cmd_poll() -> int:
         if m and m.group(1) in handled and path not in seen:   # R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
             _ack(st, path, blob)
             changed = True
+            continue
+        # R346 후속 9 (2026-11-20): 보고서(PARTIAL·BLOCKED)를 이미 올린 요청이 임대 시간마다 영원히 다시 전달돼
+        #   (처리 확정은 연결 커밋·완료가 있어야 함 · R347~R349 = 20분마다 대기가 깨어나 할 일 없이 모델 호출) →
+        #   요청 파일의 마지막 변경 뒤에 보고서가 있으면 «이 판은 보고됨» (열린 상태 유지 · 확정 X · 요청이 바뀌면 다시 전달).
+        if m and _reported_after_change(st, m.group(1), path):
+            reported.append(path)
             continue
         cur = inflight.get(path) or {}
         if cur.get("blob") == blob:
@@ -309,7 +327,8 @@ def cmd_poll() -> int:
     if changed:
         _save_state(st)
     if not new:
-        print(f"[ai-collab] 새 요청·검토 없음{f' (처리 중 {len(busy)}건: ' + ' '.join(busy) + ')' if busy else ''}")
+        print(f"[ai-collab] 새 요청·검토 없음{f' (처리 중 {len(busy)}건: ' + ' '.join(busy) + ')' if busy else ''}"
+              f"{f' (보고됨·미확정 {len(reported)}건)' if reported else ''}")
         return 3
     print(json.dumps(new, ensure_ascii=False, indent=1))
     return 0

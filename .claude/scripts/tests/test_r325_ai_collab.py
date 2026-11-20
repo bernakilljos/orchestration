@@ -404,3 +404,24 @@ def test_ack_review_needs_explicit_verdict(tmp_path):
     assert _run(r, "poll").returncode == 0
     assert _run(r, "ack", ".ai-collab/reviews/R6.md").returncode == 0           # 명시 판정
     assert ".ai-collab/reviews/R6.md" in _state(r)["seen"] and ".ai-collab/reviews/R5.md" not in _state(r)["seen"]
+
+
+def test_poll_does_not_redeliver_reported_partial_until_request_changes(tmp_path):
+    """R346 후속 9: PARTIAL 보고서를 올린(연결 커밋 없어 처리 확정 안 된) 요청이 임대가 끝날 때마다 영원히 다시 전달되던 것
+    (R347~R349 · 20분마다 대기가 깨어나 할 일 없이 모델 호출) → 요청의 마지막 변경 뒤 보고서가 있으면 다시 알리지 않음.
+    열린 상태(확정 X)는 유지 · 요청이 바뀌면 다시 전달 · 보고서 없는 중단은 종전대로 복구 전달."""
+    import time as _t
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A\n')
+    _t.sleep(1.1)
+    assert _run(r, "poll").returncode == 0
+    assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0
+    assert ".ai-collab/requests/R1.md" not in _state(r).get("seen", {})       # PARTIAL·연결 커밋 없음 = 확정 X (종전 계약)
+    _age_inflight(r)
+    quiet = _run(r, "poll")
+    assert quiet.returncode == 3 and "보고됨·미확정 1건" in quiet.stdout, quiet.stdout   # 임대가 끝나도 다시 안 깨움
+    _t.sleep(1.1)
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A 보완\n')
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "지시 A 보완" in again.stdout             # 요청이 바뀌면 다시 전달
