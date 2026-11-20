@@ -171,7 +171,8 @@ def test_sparse_estimate_excludes_large_assets():
 def test_reservation_and_total_cap_block_creation(monkeypatch):
     sb = _sb_test()
     import shutil as _sh, os as _os
-    free = _sh.disk_usage(str(sb.SANDBOX_ROOT.parent)).free
+    sb.SANDBOX_ROOT.mkdir(parents=True, exist_ok=True)    # R346 후속 8: create() 와 같은 순서 — 새 러너엔 폴더가 없어 WinError 3
+    free = _sh.disk_usage(str(sb.SANDBOX_ROOT)).free
     with sb._reservation_lock():
         res = sb._live_reservations()
         res["other-process"] = {"bytes": free, "pid": _os.getpid(), "ts": int(time.time())}
@@ -191,7 +192,8 @@ def test_concurrent_creates_never_overcommit():
     sb = _sb_test()
     import shutil as _sh, os as _os
     est = sb._estimate_bytes("HEAD", sb._policy().get("sparse_exclude") or []) * 1.2
-    free = _sh.disk_usage(str(sb.SANDBOX_ROOT.parent)).free
+    sb.SANDBOX_ROOT.mkdir(parents=True, exist_ok=True)    # R346 후속 8: create() 와 같은 순서 — 새 러너엔 폴더가 없어 WinError 3
+    free = _sh.disk_usage(str(sb.SANDBOX_ROOT)).free
     min_free_gb = (free - 1.5 * est) / 1024 ** 3          # 1개만 들어갈 예산
     code = ("import sys,json;sys.path.insert(0,r'%s');import repair_sandbox as sb;sb.use_test_root();"
             "print(json.dumps(sb.create(sys.argv[1])))") % (ROOT / ".claude" / "scripts" / "lib")

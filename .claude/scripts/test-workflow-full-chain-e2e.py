@@ -28,6 +28,9 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
 PY = sys.executable
 PASS = 0
 FAIL = 0
@@ -163,7 +166,7 @@ def main() -> int:
         for a in args:
             a = a.replace("{goal_id}", "46").replace("{outcome}", "success")
             resolved.append(a)
-        cmd_prefix = [PY, "-X", "utf8", str(sp)] if script.endswith(".py") else ["bash", str(sp)]
+        cmd_prefix = [PY, "-X", "utf8", str(sp)] if script.endswith(".py") else [bash_exe(), str(sp)]
         rc, out, err = _run(cmd_prefix + resolved, timeout=15)
         combined = (out + err).lower()
         invalid = "invalid choice" in combined or "unrecognized" in combined

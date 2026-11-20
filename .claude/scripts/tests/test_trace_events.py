@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hooks" / "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
 SCRIPTS = ROOT / ".claude" / "scripts"
 HOOKS = ROOT / ".claude" / "hooks"
 
@@ -122,7 +124,7 @@ def test_index_rule_on_edit_windows_paths(tmp_path, path, expect):
     payload = '{"tool_name":"Edit","tool_input":{"file_path":"%s"}}' % path
     env = dict(os.environ, CLAUDE_PROJECT_DIR=str(tmp_path))
     env.pop("RULE_INDEX_ACTIVE", None)
-    subprocess.run(["bash", str(HOOKS / "index-rule-on-edit.sh")], input=payload, text=True, env=env, timeout=60)
+    subprocess.run([bash_exe(), str(HOOKS / "index-rule-on-edit.sh")], input=payload, text=True, env=env, timeout=60)
     import time
     for _ in range(50):
         if marker.exists():

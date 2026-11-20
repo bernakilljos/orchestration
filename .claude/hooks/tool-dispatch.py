@@ -129,7 +129,8 @@ def _spawn_start(sp, raw_bytes: bytes) -> dict:
         kw["creationflags"] = CREATE_NO_WINDOW
     box: dict = {"t0": time.perf_counter()}
     try:
-        proc = subprocess.Popen(["bash", path] + list(sp.args), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        from _common import bash_exe   # R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 PATH 보다 먼저
+        proc = subprocess.Popen([bash_exe(), path] + list(sp.args), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, **kw)
     except Exception as e:  # noqa: BLE001
         box["err"] = f"SPAWN-FAIL: {type(e).__name__}: {e}"

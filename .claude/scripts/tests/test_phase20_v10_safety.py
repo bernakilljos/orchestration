@@ -2191,7 +2191,7 @@ def test_periodic_snapshot_detaches_instead_of_blocking(tmp_path, monkeypatch):
     monkeypatch.setattr(ps, "root_path", lambda *a: str(tmp_path.joinpath(*a)))
     monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
     assert ps.run(None) is None and len(calls) == 1                  # 기다리지 않음 (Spawn 반환 X)
-    assert calls[0][0][:2] == ["bash", "-c"] and calls[0][0][4].replace("\\", "/").endswith(ps.REL)
+    assert calls[0][0][1] == "-c" and Path(calls[0][0][0]).stem.lower() == "bash" and calls[0][0][4].replace("\\", "/").endswith(ps.REL)
     assert calls[0][1]["stdin"] is sp.DEVNULL
     assert ps.run(None) is None and len(calls) == 1                  # 실행 표시 파일이 있으면 중복 실행 X
     running = tmp_path / ".claude" / "context-cache" / ".periodic-snapshot.running"

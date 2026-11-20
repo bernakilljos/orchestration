@@ -551,3 +551,26 @@ def test_copied_client_without_broker_or_git_blocks_only_risky_work(tmp_path):
                         capture_output=True, text=True, encoding="utf-8", env=base_env, cwd=str(sol))
     assert r3.returncode == 0 and json.loads(r3.stdout)["status"] == "SUBMITTED"   # 설정만 있으면 요청 가능
     assert not (sol / "tools" / "approval-gate.py").exists()                       # 승인 DB·게이트 없이 동작
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL")
+def test_owner_rights_sid_judged_as_actual_owner(env, tmp_path, monkeypatch):
+    """R346 후속 8: S-1-3-4 (OWNER RIGHTS) 는 '현재 소유자' — 소유자가 Broker·신뢰 계정이면 안전, 다른 계정·미확인이면 위험.
+    GitHub Windows 러너 TEMP 파일에만 이 ACE 가 있어, 소유자=Broker 인데도 위험으로 읽혀 사전 점검이 거부되던 것."""
+    b = env["b"]
+    f = tmp_path / "owner-rights.txt"
+    f.write_text("x")
+    me = b.acl_writers([f])["broker_sid"]
+    subprocess.run(["icacls", str(f), "/inheritance:r", "/grant:r", f"*{me}:(F)", "*S-1-5-18:(F)", "*S-1-3-4:(M)"],
+                   capture_output=True)                                            # 러너와 같은 상태를 시험 파일에만 재현
+    assert b.acl_writers([f]) == {"verified": True, "unsafe": {}, "broker_sid": me}
+    # 역검증: 소유자가 다른 계정 / 소유자 미확인 → 그대로 위험
+    other = "S-1-5-21-1-2-3-1001"
+    for owner, expect in ((other, other), ("?", "조회 실패")):
+        rows = json.dumps([{"path": str(f), "sid": "S-1-3-4", "owner": owner, "rights": 0x1301BF}])
+        real = b._run
+        monkeypatch.setattr(b, "_run", lambda cmd, *a, **k: (subprocess.CompletedProcess(cmd, 0, rows, "")
+                                                             if "powershell" in str(cmd[0]).lower() else real(cmd, *a, **k)))
+        r = b.acl_writers([f])
+        assert r["verified"] and expect in r["unsafe"].get(str(f), []), r
+        monkeypatch.setattr(b, "_run", real)

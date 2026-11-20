@@ -12,6 +12,16 @@ import os
 import re
 import sys
 
+
+def _bash_exe() -> str:
+    """R346 후속 8: 정본 hooks/prompt/_common.bash_exe (["bash",…] 는 Windows 에서 WSL 실행기가 먼저) · 실패 시 종전 "bash"."""
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "prompt"))
+        from _common import bash_exe
+        return bash_exe()
+    except Exception:  # noqa: BLE001
+        return "bash"
+
 # [함정 1] CP949 stdout 회피
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -1512,7 +1522,7 @@ def extra_gauges(cwd, data=None):
                     os.makedirs(os.path.dirname(mk0), exist_ok=True)
                     open(mk0, "w").close()
                     import subprocess as _sp0
-                    _sp0.Popen(["bash", scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
+                    _sp0.Popen([_bash_exe(), scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
                                creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
             except Exception:
                 pass  # noqa: BLE001
@@ -1531,7 +1541,7 @@ def extra_gauges(cwd, data=None):
                     if not os.path.exists(mk) or _time.time() - os.path.getmtime(mk) > 600:
                         open(mk, "w").close()
                         import subprocess as _sp
-                        _sp.Popen(["bash", os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
+                        _sp.Popen([_bash_exe(), os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
                                   stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
                                   creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
                 except Exception:

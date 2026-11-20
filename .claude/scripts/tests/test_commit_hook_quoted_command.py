@@ -57,7 +57,7 @@ def _sh_reaches_staged_check(script, cmd):
     """sh 가 명령을 커밋으로 알아보고 본 검사(git diff --cached)까지 가는가 — bash -x 흔적으로 본다."""
     root = Path(__file__).resolve().parents[3]
     inp = json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}})
-    r = subprocess.run(["bash", "-x", str(root / ".claude" / "hooks" / script)], input=inp, capture_output=True,
+    r = subprocess.run([_common.bash_exe(), "-x", str(root / ".claude" / "hooks" / script)], input=inp, capture_output=True,
                        text=True, encoding="utf-8", errors="replace", env={**__import__("os").environ, "CLAUDE_PROJECT_DIR": str(root)}, timeout=60)
     return "diff --cached" in r.stderr
 

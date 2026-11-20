@@ -139,8 +139,14 @@ def test_cx_rerun_ignores_stale_bytecode(tmp_path, monkeypatch):
     from independent_verifier import _pytest_failures
     stale = _pytest_failures(tmp_path, ["t_pyc.py::test_x"], 120)
     fresh = _pytest_failures(tmp_path, ["t_pyc.py::test_x"], 120, nopyc=True)
-    assert fresh[2] == 1 and fresh[0]                                         # 지금 코드 기준 실패
-    assert stale[2] == 0                                                      # 캐시 차단 없으면 옛 결과로 통과 (결함 재현)
+    assert fresh[2] == 1 and fresh[0]                                         # 지금 코드 기준 실패 (어느 pytest 든)
+    # R346 후속 8: pytest 9.2.0 (#13292 · #11418 · 공식 changelog) 이 rewrite 캐시를 소스 해시로 바꿔 이 결함을 고쳤다 —
+    #   CI 는 최신 pytest 라 재현 전제가 성립하지 않아 실패했다 (2026-11-20 Windows run). 버전별 기대값으로 둘 다 검증.
+    import pytest as _pt
+    if tuple(int(x) for x in _pt.__version__.split(".")[:2]) >= (9, 2):
+        assert stale[2] == 1                                                  # pytest 자체가 옛 캐시를 버림
+    else:
+        assert stale[2] == 0                                                  # 캐시 차단 없으면 옛 결과로 통과 (결함 재현)
 
 
 def test_fresh_source_cache_not_reused_between_runs(tmp_path, monkeypatch):

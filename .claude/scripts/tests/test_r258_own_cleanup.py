@@ -15,6 +15,10 @@ from pathlib import Path
 
 import pytest
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hooks" / "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
+
 KIT = Path(__file__).resolve().parents[3]
 
 
@@ -272,7 +276,7 @@ def test_retention_rules_from_config_only(tmp_path):
                   {"name": "밖으로 탈출", "type": "max_age_days", "base": "TEMP", "glob": "../outside.json", "days": 1}],
         "discover": {"name_regex": "(?i)backup", "min_mb": 1, "max_depth": 3, "skip": []}}), encoding="utf-8")
     env = dict(os.environ, RETENTION_FORCE="1", TEMP=str(temp), TMP=str(temp), TMPDIR=str(temp))
-    r = subprocess.run(["bash", str(proj / ".claude/scripts/cleanup-pollution.sh")], env=env, capture_output=True,
+    r = subprocess.run([bash_exe(), str(proj / ".claude/scripts/cleanup-pollution.sh")], env=env, capture_output=True,
                        text=True, encoding="utf-8", errors="replace", timeout=120)
     assert r.returncode == 0, r.stderr
     assert sorted(p.name for p in bk.iterdir()) == ["kit-merge-20261103-000000"]          # 가장 최근 1개만

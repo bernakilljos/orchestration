@@ -325,9 +325,10 @@ _TRUSTED_SIDS = {"S-1-5-18", "S-1-5-32-544", "S-1-3-0", "S-1-3-1",      # SYSTEM
 _WRITE_MASK = 0x2 | 0x4 | 0x40 | 0x10000 | 0x40000 | 0x80000 | 0x40000000 | 0x10000000
 _ACL_PS = r"""$ErrorActionPreference='Stop'; $out=@()
 foreach($p in ($env:ORCA_ACL_PATHS -split "`n")){ if(-not $p){continue}; try { $a=Get-Acl -LiteralPath $p
+  try{$own=([Security.Principal.NTAccount]$a.Owner).Translate([Security.Principal.SecurityIdentifier]).Value}catch{$own='?'}
   foreach($e in $a.Access){ if($e.AccessControlType -ne 'Allow'){continue}
     try{$sid=$e.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value}catch{$sid=[string]$e.IdentityReference}
-    $out+=[pscustomobject]@{path=$p;sid=$sid;rights=[int64]$e.FileSystemRights} } }
+    $out+=[pscustomobject]@{path=$p;sid=$sid;owner=$own;rights=[int64]$e.FileSystemRights} } }
   catch { $out+=[pscustomobject]@{path=$p;sid='?';rights=-1} } }
 [Console]::OutputEncoding=[Text.Encoding]::UTF8; ConvertTo-Json -InputObject @($out) -Compress"""
 
@@ -354,6 +355,10 @@ def acl_writers(paths, trusted=()) -> dict:
         if p not in seen:
             unsafe.setdefault(p, []).append("조회 결과 없음")
     for x in rows:
+        # R346 후속 8: S-1-3-4 (OWNER RIGHTS) = '이 개체의 현재 소유자' (Microsoft well-known SID) → 실제 소유자로 판정
+        #   (GitHub Windows 러너 TEMP 파일에만 이 ACE 가 있어 소유자=Broker 인데도 위험으로 읽혔다) · 소유자 미확인은 조회 실패로
+        if x.get("sid") == "S-1-3-4":
+            x = {**x, "sid": x.get("owner") or "?"}
         if x.get("rights") == -1 or x.get("sid") == "?":
             unsafe.setdefault(x["path"], []).append("조회 실패")
         elif x["sid"] not in allow and int(x["rights"]) & _WRITE_MASK:

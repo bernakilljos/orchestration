@@ -161,25 +161,13 @@ def optimize_orca_db():
 # ============================================================================
 
 def find_bash():
-    """Git Bash 경로. 작업 스케줄러는 사용자 PATH 를 못 받아 shutil.which("bash") 가 None →
-    "bash.exe" 로 실행해 [WinError 2] 가 10분마다 났다 (2026-10-13~16 · 453건).
-    PATH → git.exe 위치에서 역산 → Program Files 기본 위치 순으로 찾는다 (하드코딩 X · 환경변수 기준)."""
-    b = shutil.which("bash")
-    if b:
-        return b
-    cands = []
-    g = shutil.which("git")
-    if g:
-        root = Path(g).resolve().parent.parent  # ...\Git\cmd\git.exe -> ...\Git
-        cands += [root / "bin" / "bash.exe", root / "usr" / "bin" / "bash.exe"]
-    for env in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
-        base = os.environ.get(env)
-        if base:
-            cands += [Path(base) / "Git" / "bin" / "bash.exe", Path(base) / "Programs" / "Git" / "bin" / "bash.exe"]
-    for c in cands:
-        if c.is_file():
-            return str(c)
-    return None
+    """Git Bash 경로 — 정본 hooks/prompt/_common.bash_exe 에 위임 (R346 후속 8 · 중복 제거).
+    종전: 작업 스케줄러는 사용자 PATH 를 못 받아 "bash.exe" 실행이 [WinError 2] (2026-10-13~16 · 453건) → git.exe 역산·Program Files 탐색.
+    정본은 여기에 더해 System32 WSL 실행기·WindowsApps 별칭을 제외한다. 못 찾으면 None (종전 계약)."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "hooks" / "prompt"))
+    from _common import bash_exe
+    b = bash_exe()
+    return None if b == "bash" else b
 
 
 def run_cleanup_pollution():

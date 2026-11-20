@@ -92,3 +92,26 @@ def test_detail_annotation_split_under_message_limit(tmp_path):
     assert 2 <= len(parts) <= 8, len(parts)
     assert all(len(l.split("::", 2)[2]) <= 3700 for l in parts)
     assert "FAILED tests/t0.py::test_0" in parts[0] and r.returncode == 1
+
+
+def test_bash_exe_skips_wsl_launcher_and_honors_override(tmp_path, monkeypatch):
+    """R346 후속 8: GitHub Windows 러너 실측 — ["bash",…] 가 System32\bash.exe (WSL 실행기) 로 가 'wsl.exe --install' 안내만 출력.
+    정본 bash_exe 는 Windows 폴더·WindowsApps 별칭 bash 를 건너뛰고 git.exe 위치의 Git Bash 를 고른다."""
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    import _common
+    win = tmp_path / "Windows"; (win / "System32").mkdir(parents=True)
+    wsl = win / "System32" / "bash.exe"; wsl.write_text("")
+    git_root = tmp_path / "Git"; (git_root / "cmd").mkdir(parents=True); (git_root / "usr" / "bin").mkdir(parents=True)
+    (git_root / "cmd" / "git.exe").write_text(""); gb = git_root / "usr" / "bin" / "bash.exe"; gb.write_text("")
+    monkeypatch.setattr(_common, "_BASH_CACHE", [])
+    monkeypatch.setattr(_common.os, "name", "nt")
+    monkeypatch.setenv("SystemRoot", str(win)); monkeypatch.delenv("BASH_EXE", raising=False)
+    for k in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setattr(shutil, "which", lambda n, *a, **k: {"bash": str(wsl), "git": str(git_root / "cmd" / "git.exe")}.get(n))
+    assert Path(_common.bash_exe()) == gb                       # WSL 실행기 건너뜀
+    monkeypatch.setattr(_common, "_BASH_CACHE", [])
+    monkeypatch.setattr(shutil, "which", lambda n, *a, **k: {"bash": str(wsl)}.get(n))
+    assert _common.bash_exe() == "bash"                          # 대안 없으면 종전 동작 (조용히 WSL 을 고르지 않음)
+    monkeypatch.setenv("BASH_EXE", "X:/custom/bash.exe")
+    assert _common.bash_exe() == "X:/custom/bash.exe"            # 명시 지정 우선

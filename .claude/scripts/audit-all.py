@@ -24,6 +24,10 @@ import json
 import shutil
 import tempfile
 from pathlib import Path
+import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 REPLACEMENT_CHAR = chr(0xFFFD)
@@ -117,7 +121,7 @@ TMP.unlink(missing_ok=True)
 has_shellcheck = shutil.which('shellcheck') is not None
 for t in SH_TARGETS:
     progress(t + ' [sh syntax]')
-    r = subprocess.run(['bash', '-n', t], capture_output=True, text=True,
+    r = subprocess.run([bash_exe(), '-n', t], capture_output=True, text=True,
                        encoding='utf-8', errors='replace')
     if r.returncode != 0:
         add('sh_syntax', t, (r.stderr or r.stdout).strip()[:200])

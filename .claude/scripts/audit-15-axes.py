@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # 11-25축 추가 전수조사
-import pathlib, subprocess, json, re, os, sqlite3
+import pathlib, subprocess, json, re, os, sqlite3, sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
 R = pathlib.Path(".")
 
 print("=" * 60)
@@ -21,7 +24,7 @@ print(f"  setup/modules: {len(modules)}")
 # 12. sync drift
 print("\n[12] sync-plugins drift")
 try:
-    r = subprocess.run(["bash", ".claude/scripts/sync-plugins.sh", "--check"],
+    r = subprocess.run([bash_exe(), ".claude/scripts/sync-plugins.sh", "--check"],
                        capture_output=True, text=True, timeout=30)
     for l in r.stdout.split("\n")[-8:]:
         s = l.strip()

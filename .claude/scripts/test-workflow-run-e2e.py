@@ -22,6 +22,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
 sys.path.insert(0, str(ROOT / ".claude" / "scripts" / "lib"))
 
 PASS = 0
@@ -87,7 +90,7 @@ def main() -> int:
                     if script.endswith(".py"):
                         cmd = [PY, "-X", "utf8", str(script_abs), "--help"]
                     else:
-                        cmd = ["bash", str(script_abs), "--help"]
+                        cmd = [bash_exe(), str(script_abs), "--help"]
                     rc, out, err = _run(cmd, timeout=10)
                     full = (out + err).lower()
                     if sub.lower() not in full and "usage" in full and "choice" not in full:

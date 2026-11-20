@@ -15,8 +15,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / ".claude" / "scripts" / "auto-save-next-actions.py"
-BASH = os.environ.get("BASH_EXE") or (
-    r"C:\Program Files\Git\bin\bash.exe" if os.name == "nt" and Path(r"C:\Program Files\Git\bin\bash.exe").exists() else "bash")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hooks" / "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
+BASH = bash_exe()   # 종전: Program Files 고정 경로 (하드코딩) · BASH_EXE 우선은 정본이 유지
 
 
 def _load(tmp_path):

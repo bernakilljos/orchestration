@@ -22,6 +22,9 @@ from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "hooks" / "prompt"))
+from _common import bash_exe  # noqa: E402  R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 먼저 잡힘
+
 KIT = Path(__file__).resolve().parents[3]
 
 
@@ -115,7 +118,7 @@ def test_new_checkers_catch_errors_and_pass_valid(tmp_path):
 
 # ── 2) 종단 간: git 커밋 훅 ────────────────────────────────────────────
 def _hook(d: Path, cmd: str):
-    return subprocess.run(["bash", str(d / ".claude/hooks/pre-commit-full-check.sh")],
+    return subprocess.run([bash_exe(), str(d / ".claude/hooks/pre-commit-full-check.sh")],
                           input=json.dumps({"tool_input": {"command": cmd}}), capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=60, env={**os.environ, "CLAUDE_PROJECT_DIR": str(d)})
 

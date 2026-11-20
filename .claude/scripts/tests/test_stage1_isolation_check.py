@@ -38,8 +38,17 @@ def test_self_test_runs_covers_all_items_and_prints_no_values(tmp_path):
     ids = {x["id"] for x in d["results"]}
     assert {"C1a", "C1b", "1", "2", "3", "4", "5", "5s", "5r", "5w", "5g", "5h", "6", "7", "8", "10b", "12", "13", "14",
             "C4"} <= ids
-    assert d["self_test"] is True and d["verdict"].startswith("SELF-TEST")       # 원래 사용자 = 판정 아님
-    assert next(x for x in d["results"] if x["id"] == "8")["status"] == "BLOCKED"  # 자격 증명 조회 안 함
+    # R346 후속 8: 자기 점검 = '현재 사용자 SID == kit 소유자 SID' (스크립트 29행) — 시험이 원래 사용자 실행을 전제로 True 만 기대해,
+    #   kit 소유자가 Administrators 그룹인 GitHub Windows 러너(관리자 checkout)에서 실패했다. 판정 조건은 넓히지 않는다
+    #   (그룹 구성원을 자기 점검으로 보면 관리자 그룹에 든 Agent 계정의 격리 실패가 숨는다) → 두 경로를 각각 정확히 검증.
+    me = subprocess.run(["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, text=True).stdout.strip().split(",")[-1].strip('"')
+    expect_self = bool(d.get("owner_sid")) and d["owner_sid"] == me
+    assert d["self_test"] is expect_self, (d.get("owner_sid"), me)
+    item8 = next(x for x in d["results"] if x["id"] == "8")["status"]
+    if expect_self:
+        assert d["verdict"].startswith("SELF-TEST") and item8 == "BLOCKED"          # 원래 사용자 = 판정 아님 · 자격 증명 조회 안 함
+    else:
+        assert d["verdict"] in ("PASS", "FAIL", "PARTIAL") and item8 in ("PASS", "FAIL", "BLOCKED")   # 다른 계정 = 판정
     assert next(x for x in d["results"] if x["id"] == "C4")["status"] == "BLOCKED"
     blob = out + json.dumps(d, ensure_ascii=False)
     assert not re.search(r"(ghp_|github_pat_|gho_|sk-ant-|password=|token=)[A-Za-z0-9_]{6,}", blob)

@@ -112,6 +112,47 @@ def msys_path(p) -> str:
     return s
 
 
+_BASH_CACHE: list = []
+
+
+def bash_exe() -> str:
+    """bash 실행 파일 정본 (R346 후속 8 · 2026-11-20). Python 이 ["bash", …] 를 띄우면 Windows CreateProcess 는
+    PATH 보다 시스템 폴더를 먼저 찾아 (Microsoft CreateProcessW 문서 · 검색 순서 ③ 시스템 디렉터리 > ⑥ PATH)
+    WSL 실행기 System32\\bash.exe 가 Git Bash 대신 실행된다 (GitHub Windows 러너 실측: 'wsl.exe --install' 안내만 출력).
+    순서: BASH_EXE 환경 변수 → PATH 의 bash (Windows 폴더·WindowsApps 별칭 제외) → git.exe 위치에서 역산 → Program Files.
+    못 찾으면 "bash" (종전 동작)."""
+    env = os.environ.get("BASH_EXE", "").strip()
+    if env:
+        return env
+    if _BASH_CACHE:
+        return _BASH_CACHE[0]
+    import shutil
+    if os.name != "nt":
+        _BASH_CACHE.append(shutil.which("bash") or "bash")
+        return _BASH_CACHE[0]
+    win = os.path.normcase(os.environ.get("SystemRoot") or os.environ.get("WINDIR") or "")
+
+    def _ok(p) -> bool:
+        if not p or not os.path.isfile(p):
+            return False
+        n = os.path.normcase(os.path.abspath(p))
+        return not ((win and n.startswith(win + os.sep)) or (os.sep + "windowsapps" + os.sep) in n)
+
+    cands = [shutil.which("bash")]
+    g = shutil.which("git")
+    if g:
+        root = Path(g).resolve().parent.parent            # ...\Git\cmd\git.exe -> ...\Git
+        cands += [root / "usr" / "bin" / "bash.exe", root / "bin" / "bash.exe"]
+    for k in ("ProgramFiles", "ProgramW6432", "ProgramFiles(x86)", "LOCALAPPDATA"):
+        base = os.environ.get(k)
+        if base:
+            cands += [Path(base) / "Git" / "usr" / "bin" / "bash.exe", Path(base) / "Git" / "bin" / "bash.exe",
+                      Path(base) / "Programs" / "Git" / "bin" / "bash.exe"]
+    found = next((str(c) for c in cands if _ok(str(c) if c else "")), "bash")
+    _BASH_CACHE.append(found)
+    return found
+
+
 def search(pattern: str, text: str, ignorecase: bool = False) -> bool:
     """bash [[ =~ ]] (POSIX ERE · . 가 개행도 매치) 대응 불리언 매치."""
     return re.search(pattern, text, re.S | (re.I if ignorecase else 0)) is not None

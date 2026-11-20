@@ -9,7 +9,7 @@ import os
 import re
 import time
 
-from _common import Spawn, ensure_dir, project_guard, root_path
+from _common import Spawn, bash_exe, ensure_dir, project_guard, root_path
 
 REL = "plugins/exec_session_guard/hooks/periodic-snapshot.sh"
 INTERVAL = 300
@@ -85,7 +85,7 @@ def _detach(path, running, log) -> None:
               'rm -f "$r"; mkdir -p "$(dirname "$l")"; echo "$(date "+%Y-%m-%dT%H:%M:%S") rc=$c snapshot=$w" >> "$l"')
     try:
         ensure_dir(os.path.dirname(log))
-        subprocess.Popen(["bash", "-c", script, "periodic-snapshot", str(path), running, log, snap],
+        subprocess.Popen([bash_exe(), "-c", script, "periodic-snapshot", str(path), running, log, snap],
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          close_fds=True, **kw)
     except Exception:  # noqa: BLE001
