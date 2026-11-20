@@ -5,7 +5,8 @@
   report <요청ID> [--base <커밋>] [--status PASS|PARTIAL|BLOCKED]   커밋 직후 실행 → reports/<요청ID>.md + state.json 갱신
   check-requests                                                   requests/*.md 검증만 (실행 안 함 · GitHub 문서 ≠ 사용자 승인)
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
-  poll                                                             5분 주기 확인 1회 — 안 읽은 requests·reviews 만 출력 (새것 0 · 없음 3)
+  poll                                                             5분 주기 확인 1회 — 처리 확정 안 된 requests·reviews 만 출력 (새것 0 · 없음 3)
+  ack <요청ID|경로>                                                 처리 확정 (검증·보고 뒤 · report 는 연결 커밋 있는 지시를 자동 확정)
 
 원칙: 같은 (요청ID, head 커밋) 은 다시 만들지 않는다 · 요청 1건 = 보고서 1개 (누적 복사 X) · 파일을 최소한으로.
 """
@@ -150,6 +151,10 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
     st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
     if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
         st.setdefault("handled", {})[rid] = head
+        rpath = f".ai-collab/requests/{rid}.md"   # R332: 처리 확정은 poll 이 아니라 여기 (연결 커밋이 있는 보고 뒤)
+        rblob = (st.get("inflight", {}).get(rpath) or {}).get("blob") or _remote_files().get(rpath)
+        if rblob:
+            _ack(st, rpath, rblob)
     _save_state(st)
     print(f"[ai-collab] {out.relative_to(ROOT)} · {base[:8]}..{head[:8]} · 파일 {len(files)} · 상태 {status}")
     return 0
@@ -177,19 +182,47 @@ def cmd_check_requests() -> int:
     return 0
 
 
+_VERDICTS = {"approved", "changes_requested"}
+_SHA40 = re.compile(r"[0-9a-f]{40}")
+
+
+def _frontmatter(txt: str):
+    """문서 맨 앞의 YAML 머리 하나만 {키: 값} 으로 · 머리 없음·닫는 줄 없음·중복 키·형식 밖 줄 = None.
+    R332 (외부 검토): 본문·인용문에 쓴 «verdict: approved» 를 승인으로 읽던 것 — 머리 밖은 보지 않는다."""
+    lines = txt.lstrip("﻿").replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        return None
+    out = {}
+    for ln in lines[1:]:
+        if ln.strip() == "---":
+            return out
+        if not ln.strip() or ln.lstrip().startswith("#"):
+            continue
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):[ \t]*(.*?)[ \t]*(?:#.*)?$", ln)
+        if not m or m.group(1) in out:            # 들여쓴 줄·목록·중복 키 = 판정 불가
+            return None
+        val = m.group(2)
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+            val = val[1:-1]
+        out[m.group(1)] = val
+    return None                                    # 닫는 --- 없음
+
+
 def _review_approves(rid: str, head: str) -> bool:
-    """reviews/<rid>.md 머리에 verdict: approved 와 reviewed_commit(7자+ · 보고서 head_commit 과 같은 커밋)이 있을 때만 True.
-    changes_requested·형식 오류·다른(이전) 커밋 검토·파일 없음 = False (보고서 유지)."""
+    """reviews/<rid>.md 맨 앞 YAML 머리의 verdict 가 approved 이고 reviewed_commit(40자 SHA)이 보고서 head_commit 과 같을 때만 True.
+    본문·인용문 값·중복 키·누락·잘못된 값·다른(이전) 커밋 검토·파일 없음 = False (보고서 유지)."""
     p = COLLAB / "reviews" / f"{rid}.md"
     try:
-        txt = p.read_text(encoding="utf-8", errors="replace")
+        fm = _frontmatter(p.read_text(encoding="utf-8", errors="replace"))
     except OSError:
         return False
-    v = re.search(r"^verdict:\s*\"?([A-Za-z_]+)", txt, re.M)
-    c = re.search(r"^reviewed_commit:\s*\"?([0-9a-f]{40})\b", txt, re.M)   # R329 요구: 정확히 일치 (전체 40자 SHA)
-    if not (v and c and head) or v.group(1).lower() != "approved":         # changes_requested·pending 등 = 보존
+    if not fm or not head:
         return False
-    return c.group(1) == head
+    verdict = fm.get("verdict", "").lower()
+    commit = fm.get("reviewed_commit", "")
+    if verdict not in _VERDICTS or verdict != "approved":   # changes_requested·pending·오타 = 보존
+        return False
+    return bool(_SHA40.fullmatch(commit)) and commit == head   # R329: 전체 40자 SHA 정확 일치
 
 
 def cmd_prune() -> int:
@@ -210,29 +243,98 @@ def cmd_prune() -> int:
     return 0
 
 
+def _lease_sec() -> int:
+    try:
+        return max(60, int(os.environ.get("AI_COLLAB_LEASE_SEC", "1200")))
+    except ValueError:
+        return 1200
+
+
+def _remote_files() -> dict:
+    """origin/main 의 requests/·reviews/ 파일 {경로: blob} (.gitkeep 제외)."""
+    out = {}
+    for ln in _git("ls-tree", "-r", "origin/main", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
+        meta, _, path = ln.partition("\t")
+        if path and not path.endswith(".gitkeep") and meta:
+            out[path] = meta.split()[-1]
+    return out
+
+
+def _ack(st: dict, path: str, blob: str) -> None:
+    """처리 확정 — 이 내용(blob)은 다시 알리지 않는다. 처리 중 표시는 지운다."""
+    st.setdefault("seen", {})[path] = blob
+    st.setdefault("inflight", {}).pop(path, None)
+
+
 def cmd_poll() -> int:
-    """R330 5분 주기 확인 1회분 — origin 을 받아 requests/·reviews/ 에서 아직 안 읽은 파일만 알린다.
-    새 파일 있음 = 0 (내용 출력 · 읽음 기록) · 없음 = 3 · fetch 실패 = 2. 실행·승인으로 간주하지 않는다 (읽기만)."""
+    """R330 5분 주기 확인 1회분 — origin 을 받아 requests/·reviews/ 에서 아직 처리 확정 안 된 파일만 알린다.
+    새 파일 있음 = 0 (내용 출력 · «처리 중» 표시) · 없음·처리 중만 = 3 · fetch 실패 = 2. 실행·승인으로 간주하지 않는다.
+    R332 (외부 검토): 알리기만 해도 seen(처리 확정)으로 적어, 세션이 처리 도중 끊기면 다음 주기에 사라지던 것 →
+    poll 은 inflight(처리 중 · 임대 시간)만 적고, 처리 확정(seen)은 보고(report)·ack 가 적는다.
+    임대 시간 안 = 다른 주기·세션이 같은 요청을 겹쳐 받지 않음 · 지나면 다시 전달 (중단·재시작 복구)."""
     r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True, timeout=60)
     if r.returncode != 0:
         print(f"[ai-collab] fetch 실패: {(r.stderr or '').strip()[:160]}", file=sys.stderr)
         return 2
     st = _state()
     seen = st.setdefault("seen", {})
-    new = []
-    for ln in _git("ls-tree", "-r", "origin/main", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
-        meta, _, path = ln.partition("\t")
-        blob = meta.split()[-1] if meta else ""
-        if not path or path.endswith(".gitkeep") or seen.get(path) == blob:
+    inflight = st.setdefault("inflight", {})
+    handled = st.get("handled", {})
+    now = datetime.now(timezone.utc)
+    new, busy, changed = [], [], False
+    for path, blob in _remote_files().items():
+        if seen.get(path) == blob:
             continue
-        new.append({"path": path, "blob": blob, "text": _git("cat-file", "-p", blob)[:4000]})
-        seen[path] = blob
+        m = re.fullmatch(r"\.ai-collab/requests/(R\d{1,6})\.md", path)
+        if m and m.group(1) in handled and path not in seen:   # R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
+            _ack(st, path, blob)
+            changed = True
+            continue
+        cur = inflight.get(path) or {}
+        if cur.get("blob") == blob:
+            try:
+                age = (now - datetime.fromisoformat(cur.get("at", ""))).total_seconds()
+            except ValueError:
+                age = _lease_sec()
+            if age < _lease_sec():
+                busy.append(path)
+                continue
+        new.append({"path": path, "blob": blob, "text": _git("cat-file", "-p", blob)[:4000],
+                    "redelivery": bool(cur)})
+        inflight[path] = {"blob": blob, "at": now.isoformat(timespec="seconds")}
+        changed = True
+    if new:
+        st["last_poll_hit"] = now.isoformat(timespec="seconds")
+    if changed:
+        _save_state(st)
     if not new:
-        print("[ai-collab] 새 요청·검토 없음")
+        print(f"[ai-collab] 새 요청·검토 없음{f' (처리 중 {len(busy)}건: ' + ' '.join(busy) + ')' if busy else ''}")
         return 3
-    st["last_poll_hit"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    _save_state(st)
     print(json.dumps(new, ensure_ascii=False, indent=1))
+    return 0
+
+
+def cmd_ack(target: str) -> int:
+    """처리 확정 — 경로(.ai-collab/requests/R332.md) 또는 요청 ID(R332 = 그 ID 의 requests·reviews 중 처리 중인 것).
+    검증·보고를 마친 뒤에만 부른다. origin 의 현재 내용(blob)으로 확정 → 그 뒤 바뀐 내용은 다시 알린다."""
+    st = _state()
+    remote = _remote_files()
+    if _RID.match(target):
+        paths = [p for p in (f".ai-collab/requests/{target}.md", f".ai-collab/reviews/{target}.md")
+                 if p in st.get("inflight", {}) or (p in remote and st.get("seen", {}).get(p) != remote[p])]
+    else:
+        paths = [target]
+    done = []
+    for p in paths:
+        blob = (st.get("inflight", {}).get(p) or {}).get("blob") or remote.get(p)
+        if blob:
+            _ack(st, p, blob)
+            done.append(p)
+    if not done:
+        print(f"[ai-collab] 확정할 것 없음: {target}", file=sys.stderr)
+        return 2
+    _save_state(st)
+    print(f"[ai-collab] 처리 확정 {len(done)}건: {' '.join(done)}")
     return 0
 
 
@@ -250,6 +352,8 @@ def main(argv: list) -> int:
         return cmd_prune()
     if op == "poll":
         return cmd_poll()
+    if op == "ack" and len(argv) >= 2:
+        return cmd_ack(argv[1])
     print(__doc__)
     return 2
 

@@ -241,3 +241,102 @@ def test_poll_reports_only_unread_requests(tmp_path):
     subprocess.run(["git", "-C", str(other), "push", "-q", "origin", "main"], check=True)
     again = _run(r, "poll")
     assert again.returncode == 0 and "수정된 지시" in again.stdout
+
+
+# ---------- R332 (외부 검토) P0 알림(inflight)과 처리 확정(seen) 분리 · P1 승인은 YAML 머리에서만 ----------
+
+def _origin(tmp_path, r):
+    """r 에 origin(bare) 을 붙이고 ChatGPT 역할 clone 을 돌려준다."""
+    bare = tmp_path / "origin.git"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(bare)], check=True)
+    subprocess.run(["git", "-C", str(r), "remote", "add", "origin", str(bare)], check=True)
+    subprocess.run(["git", "-C", str(r), "push", "-q", "origin", "main"], check=True)
+    other = tmp_path / "chatgpt"
+    subprocess.run(["git", "clone", "-q", str(bare), str(other)], check=True)
+    for a in (["config", "user.email", "g@g"], ["config", "user.name", "g"]):
+        subprocess.run(["git", "-C", str(other), *a], check=True)
+    return other
+
+
+def _push_file(other, rel, body):
+    p = other / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(body, encoding="utf-8")
+    subprocess.run(["git", "-C", str(other), "add", "."], check=True)
+    subprocess.run(["git", "-C", str(other), "commit", "-q", "-m", "upd"], check=True)
+    subprocess.run(["git", "-C", str(other), "push", "-q", "origin", "main"], check=True)
+
+
+def _age_inflight(r, sec=3600):
+    st = _state(r)
+    from datetime import datetime, timedelta, timezone
+    old = (datetime.now(timezone.utc) - timedelta(seconds=sec)).isoformat(timespec="seconds")
+    for v in st.get("inflight", {}).values():
+        v["at"] = old
+    (r / ".ai-collab" / "state.json").write_text(json.dumps(st), encoding="utf-8")
+
+
+def test_poll_redelivers_after_interrupted_processing(tmp_path):
+    """알림 직후 처리 실패·세션 중단 → 임대 시간 안에는 겹쳐 받지 않고(중복 방지), 지나면 다시 전달(복구)."""
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R7.md", '---\nrequest_id: "R7"\n---\n개선 지시\n')
+    assert _run(r, "poll").returncode == 0
+    busy = _run(r, "poll")
+    assert busy.returncode == 3 and "처리 중 1건" in busy.stdout             # 같은 요청 동시 실행 X
+    assert ".ai-collab/requests/R7.md" not in _state(r).get("seen", {})     # 알림 ≠ 처리 확정
+    _age_inflight(r)                                                       # 세션이 끊기고 임대 시간이 지남
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "개선 지시" in again.stdout and '"redelivery": true' in again.stdout
+
+
+def test_ack_and_report_confirm_processing(tmp_path):
+    """처리 확정은 ack 또는 연결 커밋이 있는 report 뒤에만 · 확정 뒤에는 임대가 끝나도 다시 알리지 않음."""
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R7.md", '---\nrequest_id: "R7"\n---\nA\n')
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\nB\n')
+    assert _run(r, "poll").returncode == 0
+    assert _run(r, "ack", "R7").returncode == 0                             # 명시 확정
+    subprocess.run(["git", "-C", str(r), "pull", "-q", "origin", "main"], check=True)
+    assert _run(r, "report", "R1").returncode == 0                          # 제목에 R1 인 작업 커밋 있음 → 자동 확정
+    st = _state(r)
+    assert set(st["seen"]) >= {".ai-collab/requests/R7.md", ".ai-collab/requests/R1.md"} and not st.get("inflight")
+    _age_inflight(r)
+    assert _run(r, "poll").returncode == 3                                  # 처리한 것은 재실행 X
+    assert _run(r, "ack", "R99").returncode == 2                            # 확정할 것 없음
+
+
+def test_poll_keeps_legacy_handled_requests_done(tmp_path):
+    """R332 이전에 처리해 handled 만 남은 지시(R329 등)는 다시 전달하지 않는다 (기존 state 호환)."""
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n옛 지시\n')
+    (r / ".ai-collab").mkdir(exist_ok=True)
+    (r / ".ai-collab" / "state.json").write_text(json.dumps({"requests": {}, "handled": {"R1": "abc"}}), encoding="utf-8")
+    assert _run(r, "poll").returncode == 3
+    assert ".ai-collab/requests/R1.md" in _state(r)["seen"]
+
+
+def test_review_approval_only_from_frontmatter(tmp_path):
+    """본문·인용문의 가짜 승인 · 중복 키 · 닫는 줄 없음 · 오래된 커밋 · 비승인 = 보존 · 정확한 머리 승인만 정리."""
+    r = _repo(tmp_path)
+    _run(r, "report", "R1")
+    h = _state(r)["requests"]["R1"]["head_commit"]
+    rev = r / ".ai-collab" / "reviews"
+    rev.mkdir(parents=True, exist_ok=True)
+    rep = r / ".ai-collab" / "reports" / "R1.md"
+    fake = (f'---\nrequest_id: "R1"\n---\n예시:\nverdict: approved\nreviewed_commit: {h}\n',               # 본문 가짜
+            f'---\nrequest_id: "R1"\n---\n> verdict: approved\n> reviewed_commit: {h}\n',                 # 인용문
+            f'---\nverdict: "changes_requested"\nverdict: "approved"\nreviewed_commit: "{h}"\n---\n',    # 중복 키
+            f'---\nverdict: "approved"\nreviewed_commit: "{h}"\n',                                       # 닫는 줄 없음
+            f'본문 먼저\n---\nverdict: "approved"\nreviewed_commit: "{h}"\n---\n',                         # 맨 앞 아님
+            f'---\nverdict: "approved"\nreviewed_commit: "{"0" * 40}"\n---\n',                           # 오래된 커밋
+            f'---\nverdict: "PARTIAL"\nreviewed_commit: "{h}"\n---\n',                                   # 비승인
+            f'---\nverdict: "BLOCKED"\nreviewed_commit: "{h}"\n---\nverdict: approved\n')                # 머리 비승인 + 본문 승인
+    for body in fake:
+        (rev / "R1.md").write_text(body, encoding="utf-8")
+        assert "정리 0건" in _run(r, "prune").stdout and rep.exists(), body
+    (rev / "R1.md").write_bytes(("﻿---\r\nverdict: approved  # 검토 끝\r\nreviewed_commit: "
+                                 f"'{h}'\r\n---\r\n본문\r\n").encode("utf-8"))           # BOM·CRLF·주석·작은따옴표
+    assert "정리 1건: R1" in _run(r, "prune").stdout and not rep.exists()
