@@ -13,7 +13,21 @@ ${PYTEST_CMD:-python -m pytest} "$@" 2>&1 | tee "$OUT"
 rc=$?
 set +o pipefail
 # R346 후속 5: -a = 로그에 NUL 등이 섞여도 텍스트로 읽음 (없으면 grep 이 줄 대신 "Binary file … matches" 만 냄 · Windows 러너 실측)
-grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -20 | while IFS= read -r line; do
+# R346 후속 6: GitHub 는 step 당 error 주석을 10개까지만 보여 준다 (실측: 실패 주석이 정확히 10건에서 잘림) →
+#   ① 실패 전체·오류 줄·러너 환경을 여러 줄 주석 1건(::notice · 줄바꿈 %0A)으로 ② 줄별 error 는 7건까지 (+ 종료 코드 줄 + 러너 줄 = 한도 안)
+if [ "$rc" -ne 0 ]; then
+  {
+    echo "[환경] bash=$(command -v bash) · $(bash --version 2>/dev/null | head -1)"
+    echo "[환경] python=$(command -v python) · $(python --version 2>&1) · pwd=$(pwd) · TEMP=${TEMP:-} · HOME=${HOME:-}"
+    echo "[환경] git user.name=$(git config user.name 2>/dev/null || echo 없음) · core.longpaths=$(git config core.longpaths 2>/dev/null || echo 없음)"
+    grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -60
+    grep -aE '^(E  |_{3,} .+ _{3,}$|[^ ]+\.py:[0-9]+: )' "$OUT" 2>/dev/null | cut -c1-300 | head -200
+  } > "$OUT.detail"
+  msg=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$OUT.detail" | awk 'BEGIN{ORS="%0A"} {print}')
+  echo "::notice title=pytest-detail::${msg}"
+  rm -f "$OUT.detail" 2>/dev/null
+fi
+grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -7 | while IFS= read -r line; do
   echo "::error title=pytest::${line}"
 done
 rm -f "$OUT" 2>/dev/null

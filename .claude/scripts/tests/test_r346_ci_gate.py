@@ -73,4 +73,8 @@ def test_failed_test_names_emitted_as_ci_annotations(tmp_path):
     r = subprocess.run([BASH, GATE.as_posix()], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
     assert r.returncode == 1
     assert "Binary file" not in r.stdout
+    # R346 후속 6: 주석 10개 한도에 안 잘리게 실패 전체·러너 환경을 여러 줄 주석 1건으로 (한 줄 · %0A 줄바꿈)
+    detail = [l for l in r.stdout.splitlines() if l.startswith("::notice title=pytest-detail::")]
+    assert len(detail) == 1 and "[환경] bash=" in detail[0] and "%0AFAILED tests/x.py::test_a" in detail[0], r.stdout
+    assert sum(l.startswith("::error title=pytest::") for l in r.stdout.splitlines()) <= 7
     assert "::error title=pytest::FAILED tests/x.py::test_a" in r.stdout and "::error title=pytest::ERROR tests/y.py" in r.stdout
