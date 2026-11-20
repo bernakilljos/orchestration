@@ -67,10 +67,10 @@
     "R333": {
       "head_commit": "81440f8009dfaf185bd2e09328f24da27ae250fe",
       "base_commit": "55e4e82d841a067f03ee655a1712d2655ac4248b",
-      "range_tip": "81440f8009dfaf185bd2e09328f24da27ae250fe",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "BLOCKED",
       "report": "reports/R333.md",
-      "reported_at": "2026-11-20T00:48:40+00:00",
+      "reported_at": "2026-11-20T23:30:06+00:00",
       "reviewed": false
     },
     "R334": {
@@ -94,10 +94,10 @@
     "R336": {
       "head_commit": "75f42639a2c4963e244c39ef59862e7b7e5e87a2",
       "base_commit": "38929aa5",
-      "range_tip": "cca64186e95ed0d02fe27a279dbd68cdb5ec3941",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "BLOCKED",
       "report": "reports/R336.md",
-      "reported_at": "2026-11-20T04:28:44+00:00",
+      "reported_at": "2026-11-20T23:30:07+00:00",
       "reviewed": false
     },
     "R337": {
@@ -112,10 +112,10 @@
     "R338": {
       "head_commit": "cca64186e95ed0d02fe27a279dbd68cdb5ec3941",
       "base_commit": "c3207890ed8922188b75b7928cac3d7771939338",
-      "range_tip": "cca64186e95ed0d02fe27a279dbd68cdb5ec3941",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "BLOCKED",
       "report": "reports/R338.md",
-      "reported_at": "2026-11-20T04:28:16+00:00",
+      "reported_at": "2026-11-20T23:30:08+00:00",
       "reviewed": false
     },
     "R339": {
@@ -139,10 +139,10 @@
     "R341": {
       "head_commit": "cd1cbc382159b27ebe62baca3c2a734f7d173c44",
       "base_commit": "8fdd3d59",
-      "range_tip": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "BLOCKED",
       "report": "reports/R341.md",
-      "reported_at": "2026-11-20T04:48:13+00:00",
+      "reported_at": "2026-11-20T23:30:09+00:00",
       "reviewed": false
     },
     "R342": {
@@ -173,12 +173,12 @@
       "reviewed": false
     },
     "R345": {
-      "head_commit": "6340c16eafdddda977170edc73a81ff67b47ca97",
+      "head_commit": "d0c9b8e3ccf32f66ce83b2ff07a1bf72eb076266",
       "base_commit": "5a994c23",
-      "range_tip": "1d8ce07613cadf7905e49d43491ec87400d3c810",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "PASS",
       "report": "reports/R345.md",
-      "reported_at": "2026-11-20T05:20:47+00:00",
+      "reported_at": "2026-11-20T23:30:10+00:00",
       "reviewed": false
     },
     "R347": {
@@ -200,12 +200,12 @@
       "reviewed": false
     },
     "R346": {
-      "head_commit": "d0c9b8e3ccf32f66ce83b2ff07a1bf72eb076266",
+      "head_commit": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
       "base_commit": "5a994c23",
-      "range_tip": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "PASS",
       "report": "reports/R346.md",
-      "reported_at": "2026-11-20T07:03:27+00:00",
+      "reported_at": "2026-11-20T23:30:14+00:00",
       "reviewed": false
     },
     "R349": {
@@ -220,10 +220,10 @@
     "R350": {
       "head_commit": "ce106b06be24b678bfd580598507881fc0dfff58",
       "base_commit": "5a994c23",
-      "range_tip": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "PASS",
       "report": "reports/R350.md",
-      "reported_at": "2026-11-20T07:03:28+00:00",
+      "reported_at": "2026-11-20T23:30:15+00:00",
       "reviewed": false
     },
     "R351": {
@@ -238,10 +238,10 @@
     "R352": {
       "head_commit": "cd8120a395a7be20f371846898dc3082627d45e2",
       "base_commit": "93a4cbae",
-      "range_tip": "c839445a89b6943ee02158de3075848c1f6dd940",
-      "status": "PARTIAL",
+      "range_tip": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
+      "status": "PASS",
       "report": "reports/R352.md",
-      "reported_at": "2026-11-20T09:15:16+00:00",
+      "reported_at": "2026-11-20T23:30:16+00:00",
       "reviewed": false
     },
     "R353": {
@@ -252,9 +252,19 @@
       "report": "reports/R353.md",
       "reported_at": "2026-11-20T09:15:39+00:00",
       "reviewed": false
+    },
+    "R354": {
+      "head_commit": "bf1f3f7c0d46d6e62888f36ef0a927a701f8eebd",
+      "base_commit": "f0fc440f69ecc21dddcde9c60577b065a966d716",
+      "range_tip": "bf1f3f7c0d46d6e62888f36ef0a927a701f8eebd",
+      "status": "PARTIAL",
+      "report": "reports/R354.md",
+      "reported_at": "2026-11-20T23:44:25+00:00",
+      "reviewed": false,
+      "items_sig": "5450c9cab7f7"
     }
   },
-  "last_head": "c839445a89b6943ee02158de3075848c1f6dd940",
+  "last_head": "bf1f3f7c0d46d6e62888f36ef0a927a701f8eebd",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -273,9 +283,11 @@
     ".ai-collab/requests/R345.md": "d80453ca9f7a2973d656cc7d9f45798f6efffb17",
     ".ai-collab/requests/R346.md": "fde2ad2b63fbac80342f2b0d9d50515165aadb5b",
     ".ai-collab/requests/R350.md": "d510884109bf4f9a251e50b9d6ba93144cd65ac1",
-    ".ai-collab/requests/R351.md": "20ed9079189a1b63bebd0de166784ddacc3840a6"
+    ".ai-collab/requests/R351.md": "20ed9079189a1b63bebd0de166784ddacc3840a6",
+    ".ai-collab/requests/R353.md": "5905c8b27a96fa2565421e1089e947e4243906e3",
+    ".ai-collab/requests/R354.md": "ebe0383ff95063df29d6d936dc1825f71e17d656"
   },
-  "last_poll_hit": "2026-11-20T07:24:42+00:00",
+  "last_poll_hit": "2026-11-20T22:32:02+00:00",
   "handled": {
     "R329": "703ce80215855a633f672d57273c1b35a4c71764",
     "R332": "53d2c02baea4d2b525ac293cecc413c0342c74fe",
@@ -291,24 +303,25 @@
     "R342": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
     "R343": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
     "R344": "6340c16eafdddda977170edc73a81ff67b47ca97",
-    "R345": "6340c16eafdddda977170edc73a81ff67b47ca97",
-    "R346": "d0c9b8e3ccf32f66ce83b2ff07a1bf72eb076266",
+    "R345": "d0c9b8e3ccf32f66ce83b2ff07a1bf72eb076266",
+    "R346": "66152be81e2731d0c3f19ab54f45c5302e4c6f33",
     "R350": "ce106b06be24b678bfd580598507881fc0dfff58",
     "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
-    "R353": "c839445a89b6943ee02158de3075848c1f6dd940"
+    "R353": "c839445a89b6943ee02158de3075848c1f6dd940",
+    "R354": "bf1f3f7c0d46d6e62888f36ef0a927a701f8eebd"
   },
   "inflight": {
     ".ai-collab/requests/R347.md": {
       "blob": "8c84c43978fd7913eceb5da6d276456f69f1d75c",
-      "at": "2026-11-20T07:24:42+00:00"
+      "at": "2026-11-20T11:33:28+00:00"
     },
     ".ai-collab/requests/R348.md": {
       "blob": "3f79d584a5357e08231bf6902ea87650314acfcf",
-      "at": "2026-11-20T07:24:42+00:00"
+      "at": "2026-11-20T11:33:28+00:00"
     },
     ".ai-collab/requests/R349.md": {
       "blob": "76433d519bce7cdfa57983b40a8e895635421023",
-      "at": "2026-11-20T07:24:42+00:00"
+      "at": "2026-11-20T11:33:28+00:00"
     }
   }
 }
