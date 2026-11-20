@@ -434,13 +434,32 @@ _RX_INDIRECT_EXEC = re.compile(r"\b(?:eval|source|xargs|iex|invoke-expression)\b
 
 
 def _non_exec_operand(text: str, pos: int) -> bool:
-    """pos 의 스크립트 경로가 «실행하지 않는 명령의 피연산자» 인가 (확실할 때만 True)."""
-    if _RX_INDIRECT_EXEC.search(text):
-        return False
+    """pos 의 스크립트 경로가 «실행하지 않는 명령의 피연산자» 인가 (확실할 때만 True).
+
+    R351 (2026-11-20): 종전엔 명령 '어딘가' 에 $( · 백틱 · eval 이 하나만 있어도 모든 피연산자 예외를 껐다 →
+    `git add hook.sh; s=$(date +%s)` 가 hook.sh 실행으로 판정돼 본문 검사·승인 요청 (세션 실측 2건).
+    이제 그 피연산자가 $( ) · 백틱 안에 있거나, 같은 명령 구간에 간접 실행이 있을 때만 예외를 끈다 (보수적 유지)."""
+    prefix = text[:pos]
+    if prefix.count("`") % 2 == 1:
+        return False   # 백틱 안
+    depth = 0
+    i = 0
+    while i < len(prefix):
+        if prefix.startswith("$(", i):
+            depth += 1
+            i += 2
+            continue
+        if prefix[i] == ")" and depth:
+            depth -= 1
+        i += 1
+    if depth:
+        return False   # $( … ) 안 — 출력이 실행될 수 있음
     starts = [text.rfind(c, 0, pos) for c in ";&|\n("]
     seg_start = max(starts) + 1
     ends = [i for i in (text.find(c, pos) for c in ";&|\n)") if i != -1]
     seg_end = min(ends) if ends else len(text)
+    if _RX_INDIRECT_EXEC.search(text[seg_start:seg_end]):
+        return False   # 같은 명령 구간의 eval·source·xargs·$()·백틱
     if seg_end < len(text) and text[seg_end] == "|" and text[seg_end:seg_end + 2] != "||":
         return False   # 출력이 다음 명령으로 넘어감 (cat x.sh | bash)
     words = [w for w in re.split(r"\s+", text[seg_start:pos].strip()) if w]
@@ -557,7 +576,8 @@ def _scan_scripts(raw_cmd: str, cmd: str, raw_cwd: str, detect) -> tuple:
             r = dict(r, description="아직 없는 스크립트를 만들어 실행 · " + (r.get("description") or ""))
             return r, hashes
     for p, content in found:
-        r = detect(content)
+        # R351: 줄 전체 주석(# …)은 실행되지 않음 — 주석 속 '-> settings.json' 이 '설정 파일 덮어쓰기' 로 판정되던 오탐 · 줄 끝 주석은 그대로 검사
+        r = detect("\n".join(ln for ln in content.splitlines() if not ln.lstrip().startswith("#")))
         if r:
             return dict(r, description="스크립트 %s 안: %s" % (os.path.basename(p), r.get("description") or "")), hashes
     return None, hashes

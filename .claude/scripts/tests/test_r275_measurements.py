@@ -149,10 +149,50 @@ def test_r275_visual_quality_gate_image(dg, tmp_path):
     assert dg.cmd_image("home", str(c)) == 2                                      # 9% 바뀜 → 해제 없이 = UNAUTHORIZED
 
 
+# R275 후속 (2026-11-20 · 사용자 조건부 승인): 운영 데이터(요청 원장·대화 이력 등)가 없는 CI 에서는 디자인·개발·품질추세·요청·이력
+#   게이지가 비어 상태줄이 7줄로 나와 실제 렌더 비교가 늘 실패했다 (새 clone 재현: '줄 수 10 → 7').
+#   → ① 계약 시험(항상 실행): extra_gauges 만 결정적 fixture 로 바꾸고 실제 상태줄 코드로 렌더 → 기준선과 구조 비교 + 역검증
+#     ② 운영 통합 시험: 운영 데이터가 있을 때만 판정 · 없으면 NOT_VERIFIED 사유로 넘김 (CI 는 -rs 로 사유 표시 · PASS 로 세지 않음)
+_GAUGE_FIXTURE = {k: f"fixture-{k}" for k in ("design", "dev", "impact", "reuse", "trend", "ledger", "control", "verify",
+                                                "proof", "ready", "infra", "errors", "history", "drift", "health")}
+_GAUGE_FIXTURE.update({"agents": "실행 중 없음", "cost": "", "fast": "", "session": "", "week": "", "line2": "", "line3": ""})
+
+
+def _render_with_gauges(monkeypatch, capsys, gauges, columns):
+    m = _load("sl_contract", KIT / ".claude/scripts/statusline_context.py")
+    monkeypatch.setattr(m, "extra_gauges", lambda *a, **k: dict(gauges))
+    monkeypatch.setenv("COLUMNS", str(columns))
+    monkeypatch.setattr(sys, "stdin", __import__("io").StringIO("{}"))
+    capsys.readouterr()
+    m.main()
+    return capsys.readouterr().out
+
+
+def test_r275_statusline_layout_contract_with_fixture(monkeypatch, capsys):
+    """운영 데이터 없이도 항상 실행 — 실제 상태줄 조립·라벨·│ 위치가 승인 기준과 같은지 (값만 fixture)."""
+    m = _load("dg_contract", KIT / ".claude/scripts/design-gate.py")
+    base = json.loads((KIT / ".claude/design-baseline/statusline.json").read_text(encoding="utf-8"))
+    out = _render_with_gauges(monkeypatch, capsys, _GAUGE_FIXTURE, base.get("columns", 250))
+    assert not m.compare(base, m.signature(out)), m.compare(base, m.signature(out))
+    # 역검증: 게이지 하나가 비면 줄 구조가 달라져 탐지돼야 한다 (통과만 보는 시험 X)
+    broken = dict(_GAUGE_FIXTURE, design="", dev="")
+    assert m.compare(base, m.signature(_render_with_gauges(monkeypatch, capsys, broken, base.get("columns", 250))))
+
+
+def _has_operational_data() -> str:
+    """운영 통합 판정 가능 여부 — 실사용에서만 생기는 요청 원장이 있어야 한다 (시험은 임시 폴더를 쓴다). 없으면 사유."""
+    if not (KIT / ".claude" / "state" / "request-ledger.json").exists():
+        return "요청 원장(.claude/state/request-ledger.json) 없음 — 새 clone·CI"
+    return ""
+
+
 def test_r275_real_statusline_matches_committed_baseline():
     """Design Ownership Lock 실제 적용 — 지금 상태줄 구조가 승인 기준(.claude/design-baseline/statusline.json)과 같아야 한다."""
     if not (KIT / ".claude" / "design-baseline" / "statusline.json").exists():
         pytest.skip("승인 기준 없음 (이 프로젝트는 상태줄 기준 미등록)")
+    why = _has_operational_data()
+    if why:
+        pytest.skip(f"NOT_VERIFIED 운영 통합: {why} · 구조 계약은 test_r275_statusline_layout_contract_with_fixture 가 검증")
     env = dict(os.environ, CLAUDE_PROJECT_DIR=str(KIT), PYTHONIOENCODING="utf-8")
     m = _load("dg_real", KIT / ".claude/scripts/design-gate.py")
     base = json.loads((KIT / ".claude/design-baseline/statusline.json").read_text(encoding="utf-8"))

@@ -26,6 +26,12 @@ if [ "$MARKS" != "2" ]; then
   echo "[auto-stats] skip — AUTO-STATS 표시가 각자 한 줄로 2개가 아님 ($MARKS) · CLAUDE.md 를 덮지 않음" >&2
   exit 0
 fi
+# --check (R351 F2 · 2026-11-20): 쓰지 않고 바뀔지만 판정 — exit 0 = 최신 · 1 = 갱신 필요 (커밋 훅은 읽기 전용으로 이것만 쓴다)
+if [ "${1:-}" = "--check" ]; then
+  CUR=$(sed -n '/<!-- AUTO-STATS -->/,/<!-- AUTO-STATS -->/{/<!-- AUTO-STATS -->/!p}' "$CLAUDE_MD" | tr -d '\r')
+  [ "$CUR" = "$NEW_LINE" ] && exit 0
+  exit 1
+fi
 sed -i "/<!-- AUTO-STATS -->/,/<!-- AUTO-STATS -->/{
   /<!-- AUTO-STATS -->/!{
     /<!-- AUTO-STATS -->/!s|.*|$NEW_LINE|

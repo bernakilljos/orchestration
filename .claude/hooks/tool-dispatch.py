@@ -66,7 +66,8 @@ PRE = [
     ("pre-commit-secrets", "pre_commit_secrets", "Bash|PowerShell", 30, None),
     ("approval-gate-detect", "approval_gate_detect", "Bash|PowerShell", 5, None),
     ("pre-commit-full-check", "pre_commit_full_check", "Bash|PowerShell", 5, None),
-    ("pre-commit-infra-check", "pre_commit_infra_check", "Bash|PowerShell", 5, None),
+    # R351 F1 (2026-11-20): pre-commit-infra-check 등록 제거 — 판정 경로가 full-check 와 같고 막는 경우가 그 부분 집합
+    #   (문서 3종 모두 없음 ⊂ guide.txt 없음) 이라 매 커밋마다 같은 검사를 한 번 더 돌릴 뿐이었다 · 파일은 보존 (test_r351_commit_hooks_dedup)
     ("track-agent-dispatch", "track_agent_dispatch", "Agent", 5, "pending"),
 ]
 POST = [

@@ -571,7 +571,9 @@ def _risky_script(tmp_root):
 
 
 @pytest.mark.parametrize("tpl", ['rm -f "{s}"', 'cat "{s}"', 'md5sum {s}', 'git add {s}', 'ls -la {s}',
-                                 'git -C /c/x add {s}', 'git -c core.x=1 -C /c/x diff {s}'])
+                                 'git -C /c/x add {s}', 'git -c core.x=1 -C /c/x diff {s}',
+                                 'git add {s}; t=$(date +%s); echo $t',             # R351: 다른 구간의 $( ) 때문에 예외가 꺼지던 오탐
+                                 'git add {s} && echo "`date`"'])
 def test_script_operand_of_non_exec_command_not_blocked(tmp_root, tpl):
     s = _risky_script(tmp_root)
     r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
@@ -579,7 +581,9 @@ def test_script_operand_of_non_exec_command_not_blocked(tmp_root, tpl):
 
 
 @pytest.mark.parametrize("tpl", ['bash "{s}"', 'cat "{s}" | bash', 'eval "$(cat {s})"', 'cp "{s}" "{s}.bak.sh"',
-                                 'rm -f /tmp/none.txt; bash "{s}"', 'sh {s}', '"{s}"'])
+                                 'rm -f /tmp/none.txt; bash "{s}"', 'sh {s}', '"{s}"',
+                                 'git add {s}; $(cat {s})', 'echo `cat {s}`', 'x=$(cat {s} | head -1); bash {s}',   # R351 역검증
+                                 'git add {s} | xargs bash'])
 def test_script_execution_still_blocked(tmp_root, tpl):
     s = _risky_script(tmp_root)
     r = agd.run(_bash_hook(tpl.format(s=s), str(tmp_root)))
@@ -607,3 +611,14 @@ def test_svn_plain_commit_flow_end_to_end_and_not_gated(tmp_path):
     log = run("log", "-l", "1", "-q", cwd=wc).stdout
     assert "r1 |" in log                                                                  # 원격(로컬 저장소)에 실제 반영
     assert flagged(f"svn delete {url}/A.vue -m x") and flagged("svn revert -R .")         # 파괴 작업은 계속 승인
+
+
+# ── R351: 스크립트 본문의 줄 전체 주석은 실행되지 않음 — 주석만 위험하면 통과 · 실제 줄이 위험하면 그대로 차단 ──
+def test_script_comment_only_risk_not_blocked_but_real_line_blocked(tmp_root):
+    s = tmp_root / "doc.sh"
+    s.write_text("#!/usr/bin/env bash\n# 예전엔 " + CL + " hi --model haiku 를 불렀다 (설명)\necho ok\n", encoding="utf-8")
+    r = agd.run(_bash_hook('bash "%s"' % s.as_posix(), str(tmp_root)))
+    assert r is None or r.rc != 2, r.err if r else ""
+    s.write_text("#!/usr/bin/env bash\n# 설명\n" + CL + " hi --model haiku\n", encoding="utf-8")
+    r = agd.run(_bash_hook('bash "%s"' % s.as_posix(), str(tmp_root)))
+    assert r is not None and r.rc == 2

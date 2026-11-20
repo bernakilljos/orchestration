@@ -30,9 +30,15 @@ if echo "$STAGED" | grep -qE '^(plugins/|\.claude/hooks/|\.claude/scripts/|setup
   echo "$STAGED" | grep -q "^guide.txt" || MISSING="$MISSING\n  - guide.txt (§6-§12-§17)"
   # 2026-10-09: 통계가 이미 최신이면 CLAUDE.md 는 바뀔 게 없어 stage 할 수 없는데도 늘 요구해, 같은 날 두 번째
   #   스크립트 수정 커밋이 매번 막혔다. 통계를 다시 계산해 CLAUDE.md 가 실제로 바뀔 때(또는 바뀐 채 stage 안 됐을 때)만 요구한다.
-  if ! echo "$STAGED" | grep -q "^CLAUDE.md"; then
-    [ -f .claude/scripts/auto-update-stats.sh ] && bash .claude/scripts/auto-update-stats.sh >/dev/null 2>&1
-    git diff --quiet -- CLAUDE.md 2>/dev/null || MISSING="$MISSING\n  - CLAUDE.md (AUTO-STATS 라인 — 방금 auto-update-stats.sh 로 갱신했으니 git add CLAUDE.md)"
+  # R351 F2 (2026-11-20): 종전엔 커밋 검사 도중 auto-update-stats.sh 가 CLAUDE.md 를 고쳤다 (검사가 파일을 쓰는 구조) →
+  #   갱신은 사전 준비 단계(PRECOMMIT_PREFLIGHT=1 · 회귀 게이트 시작 시)에서만 · 실제 커밋 검사는 --check 로 읽기만 한다.
+  if ! echo "$STAGED" | grep -q "^CLAUDE.md" && [ -f .claude/scripts/auto-update-stats.sh ]; then
+    if [ "${PRECOMMIT_PREFLIGHT:-0}" = 1 ]; then
+      bash .claude/scripts/auto-update-stats.sh >/dev/null 2>&1
+      git diff --quiet -- CLAUDE.md 2>/dev/null || MISSING="$MISSING\n  - CLAUDE.md (AUTO-STATS 라인 — 사전 준비에서 방금 갱신했으니 git add CLAUDE.md)"
+    elif ! bash .claude/scripts/auto-update-stats.sh --check >/dev/null 2>&1 || ! git diff --quiet -- CLAUDE.md 2>/dev/null; then
+      MISSING="$MISSING\n  - CLAUDE.md (AUTO-STATS 라인 갱신 필요 — bash .claude/scripts/auto-update-stats.sh 실행 후 git add CLAUDE.md · 이 검사는 파일을 고치지 않음)"
+    fi
   fi
 fi
 

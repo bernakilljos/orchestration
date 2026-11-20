@@ -56,7 +56,7 @@ jobs:
       #   ('Run pytest' 1초 실측) · ubuntu 는 사용자 실행 환경(Windows)이 아니라 참고용 — 결과는 그대로 보이되 이 job 실패로 막지 않음
       - name: Run pytest (참고 · ubuntu · 단일 실행 + coverage)
         continue-on-error: true
-        run: bash .claude/scripts/ci-pytest-gate.sh .claude/scripts/tests -q --tb=short -p no:cacheprovider --cov=.claude/scripts --cov-report=xml
+        run: bash .claude/scripts/ci-pytest-gate.sh .claude/scripts/tests -q -rs --tb=short -p no:cacheprovider --cov=.claude/scripts --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -101,7 +101,7 @@ jobs:
         run: |
           git config --global user.email ci@example.com
           git config --global user.name ci
-          bash .claude/scripts/ci-pytest-gate.sh .claude/scripts/tests -q --tb=short -p no:cacheprovider
+          bash .claude/scripts/ci-pytest-gate.sh .claude/scripts/tests -q -rs --tb=short -p no:cacheprovider
 
   lint:
     name: Lint & Format
