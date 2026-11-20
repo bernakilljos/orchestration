@@ -32,3 +32,25 @@ def test_workflow_uses_gate_and_does_not_mask_pytest():
         if "pytest" in line and "pip install" not in line and not line.lstrip().startswith("#"):   # 주석 속 옛 문구 인용 제외
             assert "|| true" not in line and "|| echo" not in line, line
     assert "validate-plugin-schema.py --strict || true" not in wf      # 스키마 검증은 필수
+
+
+def test_init_schema_completes_db_that_only_has_schema_version(tmp_path, monkeypatch):
+    """R346 후속: 새 clone 전체 시험에서 다른 모듈이 schema_version 만 먼저 만든 orca.db 를 init_schema 가 '초기화됨' 으로 보고
+    tasks 를 만들지 않던 것 (Windows CI 필수 실패 4건 원인) — 임시 루트에서만 (운영 DB 미접촉)."""
+    import importlib
+    import sqlite3
+    lib = ROOT / ".claude" / "scripts" / "lib"
+    sys.path.insert(0, str(lib))
+    (tmp_path / ".claude" / "scripts").mkdir(parents=True)
+    monkeypatch.setenv("ORCHESTRATION_ROOT", str(tmp_path))
+    import state_db
+    importlib.reload(state_db)
+    db = state_db.get_db_path()
+    with sqlite3.connect(db) as c:
+        c.execute("CREATE TABLE schema_version (version INTEGER PRIMARY KEY, applied_at INTEGER)")
+        c.execute("INSERT INTO schema_version VALUES (1, 0)")
+    state_db.init_schema()
+    with sqlite3.connect(db) as c:
+        have = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert {"tasks", "workers", "metrics", "quota", "budget", "session"} <= have, have
+    assert str(db).startswith(str(tmp_path))

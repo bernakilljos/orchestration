@@ -196,3 +196,25 @@ def mock_structured_logger(tmp_project):
     
     logger_state["log"] = log
     return logger_state
+
+
+# R346 후속 (2026-11-20): 시험 모듈이 임시 kit 사본에서 불러온 모듈이 sys.modules 에 남으면, 뒤에 수집되는 시험의
+#   `import state_db` 가 그 사본을 받아 엉뚱한 DB 를 쓴다 (새 clone 전체 실행에서만 · 단독 실행은 통과 → Windows CI 필수 실패).
+#   모듈 하나의 수집이 끝날 때마다, kit 밖 임시 폴더에서 온 모듈을 sys.modules 에서 뺀다 (이미 잡은 참조는 그대로라 그 시험엔 영향 없음).
+def pytest_collectreport(report):
+    import os
+    try:
+        tmp = Path(tempfile.gettempdir()).resolve()
+        root = _ROOT.resolve()
+    except OSError:
+        return
+    for name, mod in list(sys.modules.items()):
+        f = getattr(mod, "__file__", None)
+        if not f:
+            continue
+        try:
+            p = Path(f).resolve()
+        except (OSError, ValueError):
+            continue
+        if p.is_relative_to(tmp) and not p.is_relative_to(root) and os.sep + ".claude" + os.sep in str(p):
+            sys.modules.pop(name, None)

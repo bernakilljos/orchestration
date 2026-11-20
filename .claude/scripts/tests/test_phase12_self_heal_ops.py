@@ -23,10 +23,19 @@ MARK = "P12-OPS-TEST"
 #   이 테스트가 직접 SQL 을 쓰기 전에 같은 함수로 스키마를 보장한다 (데이터 변경 없음 · IF NOT EXISTS)
 import runner  # noqa: E402
 import state_db  # noqa: E402
-state_db.init_schema()      # R346: 기본 표(tasks 등)는 SessionStart ensure-state 가 만든다 — 새 clone(CI)에는 없어 'no such table: tasks'
-supervisor.ensure_schema()
-runner._ensure_schema()
-sh._ensure_heal_schema()
+
+
+def _ensure_all_schema():
+    # R346: 기본 표(tasks 등)는 SessionStart ensure-state 가 만든다 — 새 clone(CI)에는 없어 'no such table: tasks'
+    #   수집(import) 시점에만 만들면 전체 실행에서 앞선 시험들이 돈 뒤 실행 시점엔 표가 없었다 (단독 실행은 통과 · clone 전체 4 실패 재현)
+    #   → 이 모듈 시험 직전(setup_module)에 다시 보장 (IF NOT EXISTS · 데이터 변경 없음)
+    state_db.init_schema()
+    supervisor.ensure_schema()
+    runner._ensure_schema()
+    sh._ensure_heal_schema()
+
+
+_ensure_all_schema()
 
 
 def _goal(spec, status="REPAIRING"):
@@ -60,7 +69,7 @@ HEAL = {"test_cmd": "python -m pytest x -q", "allow_paths": ["x/a.py"]}
 
 
 def setup_module(_):
-    sh._ensure_heal_schema()
+    _ensure_all_schema()
     _cleanup()
 
 

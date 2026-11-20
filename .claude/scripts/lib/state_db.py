@@ -127,9 +127,13 @@ def init_schema() -> None:
   with tx() as conn:
     ensure_history_tables(conn)
     # Check schema version
+    # 2026-11-20 (R346 후속): schema_version 행만 보고 '초기화됨' 으로 돌아가, 다른 모듈이 schema_version 만 먼저 만든 DB 에서는
+    #   tasks 등 기본 표가 끝내 생기지 않았다 (새 clone 전체 시험에서 'no such table: tasks' 4건 · Windows CI 필수 실패 원인).
+    #   아래 구문은 전부 IF NOT EXISTS · INSERT OR IGNORE 라 다시 돌려도 안전 → 핵심 표가 모두 있을 때만 건너뛴다.
     try:
       cur = conn.execute("SELECT version FROM schema_version LIMIT 1")
-      if cur.fetchone():
+      have = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+      if cur.fetchone() and {"workers", "tasks", "metrics", "quota", "budget", "session"} <= have:
         return  # Already initialized
     except sqlite3.OperationalError:
       pass  # noqa: BLE001

@@ -50,6 +50,8 @@ def _isolated_kit() -> Path:
 
 ROOT = _isolated_kit()
 _SYS_PATH = list(sys.path)   # 격리 사본이 자기 scripts/lib 를 sys.path 에 남기면 다른 시험이 그 모듈을 찾는다 → 아래에서 복원
+_SYS_MODULES = set(sys.modules)   # R346 후속: sys.path 만 복원하고 사본에서 불러온 모듈(state_db 등)은 sys.modules 에 남아,
+#   뒤 시험의 `import state_db` 가 임시 사본을 받아 표를 엉뚱한 DB 에 만들었다 (새 clone 전체 실행 phase12 4 실패 · Windows CI)
 _spec_agd = importlib.util.spec_from_file_location("agd_isolated", ROOT / ".claude" / "hooks" / "tool" / "approval_gate_detect.py")
 agd = importlib.util.module_from_spec(_spec_agd)
 _spec_agd.loader.exec_module(agd)
@@ -59,6 +61,10 @@ _spec = importlib.util.spec_from_file_location("_gate", ROOT / ".claude" / "scri
 gate = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(gate)
 sys.path[:] = _SYS_PATH   # 격리 사본의 lib 경로 제거 (test_redact_writers fail-closed 시험 간섭 · R245 실측)
+for _n in set(sys.modules) - _SYS_MODULES:   # 사본에서 새로 불러온 모듈도 제거 (agd·gate 는 이미 참조를 잡고 있어 영향 없음)
+    _f = getattr(sys.modules.get(_n), "__file__", None) or ""
+    if _f and Path(_f).resolve().is_relative_to(ROOT.resolve()):
+        del sys.modules[_n]
 DANGER = "git branch -D old-feature"
 
 
