@@ -16,9 +16,10 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 ## 빠른 사용
 
-```
+```text
 /design_ppt "Claude Code 설계" 40
 ```
+
 - 주제 + 분량 지정 → HTML 슬라이드 자동 생성 → Playwright 렌더 → PPTX 조립
 - 모든 PNG OCR 검증 → 잘림 0건까지 iterate
 - 결과: `outputs/ppt/orchestration-v1-FINAL.pptx`
@@ -56,7 +57,7 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 ## 1. 워크플로우 (5 단계 + 검증 루프)
 
-```
+```text
 [1] 구조 설계 → [2] HTML 작성 → [3] 렌더링 → [4] OCR 검증 → [5] 수정·재렌더
                                                          ↓ (잘림 0건)
                                                     [완료] git commit
@@ -64,8 +65,12 @@ allowed-tools: Bash(python:*), Bash(playwright:*), Read, Write, Edit, Grep, Glob
 
 ### Step 1 — 슬라이드 구조 설계
 
+> **기술 아키텍처 문서면 먼저** (R342 · 2026-11-20): 구조·흐름·배포·데이터·보안 경계·AI 연동을 표·문장으로만 나열하지 않는다 →
+> `/arch-auto` Step 0~1 로 독자·관점별 도식(C4 Context/Container/Component · Dynamic · Deployment · DFD · Trust boundary · Provider fallback) 선택 ·
+> 화살표 방향·프로토콜·조건 · 경계 · 범례 · 근거 없는 연결 금지 · 렌더 이미지 검수 = `skill-ppt-pitfalls.md` § 15 (100점 평가표 포함).
+
 표준 골격 (40장 기준 권장):
-```
+```text
 01    Cover                  (제목·메트릭)
 02    TOC 목차                (5 PART · 페이지 인덱스)
 03    PART 0 인트로 (선택)
@@ -184,7 +189,7 @@ Read(slide-01.png), Read(slide-02.png), Read(slide-03.png), Read(slide-04.png), 
 ## 2. 새 슬라이드 끼워넣기 (파일명 정렬 룰)
 
 **알파벳 순 정렬 활용**:
-```
+```text
 기존: slide-04.html, slide-05.html
 사이에 끼워넣기:
   slide-04a.html  ← slide-04 다음, slide-05 이전
@@ -218,7 +223,7 @@ python .claude/scripts/update-ppt-page-numbers.py
 **기존**: 1 슬라이드에 코드 14줄 + 사이드 박스 → 잘림.
 
 **분할**:
-```
+```text
 slide-08.html  → settings.json · 권한 (1/2)
                   · permissions 코드 9줄 + 4 mode 카드 + 우측 3 박스
                   · 페이지 13/40
@@ -398,7 +403,7 @@ PPT 가 단조로워 보이면 다음 4 패턴 적용. 자세한 코드는 `skil
 PPT 외에 **README · 블로그 · 깃 리포 표지** 용 단독 이미지가 필요할 때.
 
 ### 폴더 구조
-```
+```text
 docs/screens/
 ├── our-html/
 │   ├── _styles.css        ← 공통 (canvas / eyebrow / h1 / footer)

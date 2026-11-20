@@ -1,0 +1,59 @@
+{
+ "title": "주문 API",
+ "views": [
+  {
+   "type": "container",
+   "title": "C4 Container — 모바일 주문은 API 서버가 받아 큐로 넘긴다",
+   "subtitle": "합성 예시 A · 클라우드 API 설계",
+   "nodes": [
+    {
+     "id": "app",
+     "label": "모바일 앱",
+     "kind": "person",
+     "source": "요구서 A §2"
+    },
+    {
+     "id": "api",
+     "label": "주문 API\n:7443 HTTPS",
+     "kind": "container",
+     "boundary": "클라우드 VPC",
+     "source": "api/openapi.yaml v3"
+    },
+    {
+     "id": "mq",
+     "label": "주문 큐\nRabbitMQ",
+     "kind": "store",
+     "boundary": "클라우드 VPC",
+     "source": "infra/mq.tf L12"
+    },
+    {
+     "id": "pay",
+     "label": "결제 대행사\n(외부)",
+     "kind": "external",
+     "source": "계약서 A-3"
+    }
+   ],
+   "edges": [
+    {
+     "from": "app",
+     "to": "api",
+     "label": "HTTPS 주문",
+     "source": "api/openapi.yaml /orders"
+    },
+    {
+     "from": "api",
+     "to": "mq",
+     "label": "AMQP 발행",
+     "source": "api/publisher.py L40"
+    },
+    {
+     "from": "api",
+     "to": "pay",
+     "label": "결제 시 · HTTPS",
+     "optional": true,
+     "source": "api/pay.py L10"
+    }
+   ]
+  }
+ ]
+}

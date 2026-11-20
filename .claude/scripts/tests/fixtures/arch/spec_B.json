@@ -1,0 +1,110 @@
+{
+ "title": "야간 배치",
+ "views": [
+  {
+   "type": "container",
+   "title": "C4 Container — 야간 배치가 원천 DB 를 읽어 분석 DB 에 적재",
+   "subtitle": "합성 예시 B · 배치/DB",
+   "nodes": [
+    {
+     "id": "sch",
+     "label": "스케줄러\ncron 02:00",
+     "kind": "container",
+     "boundary": "분석 서버",
+     "source": "ops/cron.txt"
+    },
+    {
+     "id": "etl",
+     "label": "적재 작업\nPython",
+     "kind": "container",
+     "boundary": "분석 서버",
+     "source": "etl/main.py"
+    },
+    {
+     "id": "src",
+     "label": "원천 DB\nOracle 19c",
+     "kind": "store",
+     "source": "db/conn.md"
+    },
+    {
+     "id": "dw",
+     "label": "분석 DB\nPostgreSQL 16",
+     "kind": "store",
+     "boundary": "분석 서버",
+     "source": "db/dw.md"
+    },
+    {
+     "id": "mail",
+     "label": "실패 알림 메일",
+     "kind": "optional",
+     "source": "etl/notify.py"
+    }
+   ],
+   "edges": [
+    {
+     "from": "sch",
+     "to": "etl",
+     "label": "매일 실행",
+     "source": "ops/cron.txt L3"
+    },
+    {
+     "from": "etl",
+     "to": "src",
+     "label": "JDBC 읽기",
+     "source": "etl/main.py L22"
+    },
+    {
+     "from": "etl",
+     "to": "dw",
+     "label": "COPY 적재",
+     "source": "etl/main.py L58"
+    },
+    {
+     "from": "etl",
+     "to": "mail",
+     "label": "실패 시만",
+     "optional": true,
+     "source": "etl/notify.py L5"
+    }
+   ]
+  },
+  {
+   "type": "dynamic",
+   "title": "Dynamic — 하룻밤 적재 순서",
+   "participants": [
+    "sch",
+    "etl",
+    "src",
+    "dw",
+    "mail"
+   ],
+   "steps": [
+    {
+     "from": "sch",
+     "to": "etl",
+     "label": "02:00 시작",
+     "source": "ops/cron.txt"
+    },
+    {
+     "from": "etl",
+     "to": "src",
+     "label": "전일 변경분 조회",
+     "source": "etl/main.py L22"
+    },
+    {
+     "from": "etl",
+     "to": "dw",
+     "label": "적재",
+     "source": "etl/main.py L58"
+    },
+    {
+     "from": "etl",
+     "to": "mail",
+     "label": "실패면 알림",
+     "optional": true,
+     "source": "etl/notify.py"
+    }
+   ]
+  }
+ ]
+}

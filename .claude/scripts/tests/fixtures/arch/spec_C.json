@@ -1,0 +1,70 @@
+{
+ "title": "보안 배포",
+ "views": [
+  {
+   "type": "container",
+   "title": "C4 Container — 관리자는 VPN 을 거쳐서만 운영 콘솔에 들어온다",
+   "subtitle": "합성 예시 C · 보안/배포 운영",
+   "nodes": [
+    {
+     "id": "adm",
+     "label": "운영 관리자",
+     "kind": "person",
+     "source": "보안정책 C §1"
+    },
+    {
+     "id": "vpn",
+     "label": "VPN 게이트웨이\nUDP 51820",
+     "kind": "container",
+     "boundary": "DMZ",
+     "source": "net/vpn.conf"
+    },
+    {
+     "id": "con",
+     "label": "운영 콘솔\n:6006",
+     "kind": "container",
+     "boundary": "내부망",
+     "source": "console/README"
+    },
+    {
+     "id": "kms",
+     "label": "키 관리 서버",
+     "kind": "store",
+     "boundary": "내부망",
+     "source": "보안정책 C §4"
+    },
+    {
+     "id": "siem",
+     "label": "보안 로그 수집",
+     "kind": "external"
+    }
+   ],
+   "edges": [
+    {
+     "from": "adm",
+     "to": "vpn",
+     "label": "WireGuard",
+     "source": "net/vpn.conf"
+    },
+    {
+     "from": "vpn",
+     "to": "con",
+     "label": "HTTPS 6006",
+     "source": "net/fw.rules L8"
+    },
+    {
+     "from": "con",
+     "to": "kms",
+     "label": "키 요청 mTLS",
+     "source": "console/kms.go L31"
+    },
+    {
+     "from": "con",
+     "to": "siem",
+     "label": "syslog 전송",
+     "optional": true
+    }
+   ]
+  }
+ ]
+}
