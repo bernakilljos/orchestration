@@ -1148,6 +1148,15 @@ def regression_gate(cwd: Path, timeout: Optional[int] = None, force_full: bool =
         spec.loader.exec_module(tm)
         st = {"pass": "success", "fail": "fail", "blocked": "blocked", "syntax_error": "fail", "regression": "fail",
               "unverified": "blocked", "preexisting": "success", "skip": "success"}.get(str(res.get("status")), "unknown")
+        # R341: 시험이 임시 저장소에서 부른 게이트도 운영 추적(kit logs/trace-events.jsonl)에 쌓여 상태줄 «검증skip» 이 부풀었다
+        #   (24시간 blocked·unknown 609건 중 거의 전부가 src/mod.py·deploy.bat·메모리 95% 1초 같은 시험 기록) →
+        #   게이트를 돌린 저장소가 추적 대상 프로젝트일 때만 기록한다.
+        try:
+            same = Path(cwd).resolve() == Path(tm._root()).resolve()
+        except Exception:  # noqa: BLE001
+            same = False
+        if not same:
+            return res
         tm.emit("test", step="regression-gate", status=st, error=res.get("reason"), evidence=str(REGRESSION_STAMP),
                 detail={"summary": res.get("summary"), "new_failures": (res.get("new_failures") or [])[:10],
                         "tests": len(res.get("tests") or []), "memory_pct": res.get("commit_memory_pct")})

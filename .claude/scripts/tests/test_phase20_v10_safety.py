@@ -1536,6 +1536,30 @@ def test_regression_gate_risk_tier_and_user_forced_full(tmp_path):
     assert res["risk_tier"] == "high" and "공통 설정" in res["full"], res   # 실행 기반 변경은 자동으로 전체
 
 
+def test_regression_gate_trace_only_for_project_repo(tmp_path, monkeypatch):
+    """R341: 시험이 임시 저장소에서 부른 게이트가 운영 추적 로그에 쌓여 상태줄 «검증skip» 을 부풀리던 것 —
+    추적 대상 프로젝트(CLAUDE_PROJECT_DIR)와 같은 저장소일 때만 기록."""
+    import independent_verifier as iv
+    proj = tmp_path / "proj"
+    (proj / ".claude" / "logs").mkdir(parents=True)
+    (proj / ".claude" / "state").mkdir(parents=True)
+    (proj / ".claude" / "state" / "current-trace.json").write_text('{"trace_id": "t341", "rid": "R1"}', encoding="utf-8")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))   # 운영처럼 현재 요청 추적이 켜진 프로젝트
+    log = proj / ".claude" / "logs" / "trace-events.jsonl"
+    r = _regress_repo(tmp_path)                                   # 다른 저장소 (시험용)
+    (r / "src" / "mod.py").write_text("def a():\n    return 9\n", encoding="utf-8")   # 스테이징 안 된 수정 → blocked
+    _git(r, "add", "src/mod.py")
+    (r / "src" / "mod.py").write_text("def a():\n    return 8\n", encoding="utf-8")
+    assert iv.regression_gate(r)["status"] == "blocked"
+    assert not log.exists() or "regression-gate" not in log.read_text(encoding="utf-8")
+    (r / ".claude" / "state").mkdir(parents=True, exist_ok=True)
+    (r / ".claude" / "state" / "current-trace.json").write_text('{"trace_id": "t341", "rid": "R1"}', encoding="utf-8")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(r))              # 같은 저장소 = 기록
+    iv.regression_gate(r)
+    rlog = r / ".claude" / "logs" / "trace-events.jsonl"
+    assert rlog.exists() and "regression-gate" in rlog.read_text(encoding="utf-8")
+
+
 def test_regression_gate_pass_regression_preexisting_and_dirty(tmp_path):
     import independent_verifier as iv
     r = _regress_repo(tmp_path)
