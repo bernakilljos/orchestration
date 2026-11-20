@@ -7,6 +7,7 @@
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
   poll                                                             5분 주기 확인 1회 — 처리 확정 안 된 requests·reviews 만 출력 (새것 0 · 없음 3)
   ack <요청ID|경로>                                                 처리 확정 (검증·보고 뒤 · report 는 연결 커밋 있는 지시를 자동 확정)
+  wait [--interval 300] [--max-sec 604800]                          셸이 poll 반복 → 새 파일 있을 때만 끝남 (Bash 백그라운드 · 대기 중 모델 호출 0)
 
 원칙: 같은 (요청ID, head 커밋) 은 다시 만들지 않는다 · 요청 1건 = 보고서 1개 (누적 복사 X) · 파일을 최소한으로.
 """
@@ -152,7 +153,7 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
     if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
         st.setdefault("handled", {})[rid] = head
         rpath = f".ai-collab/requests/{rid}.md"   # R332: 처리 확정은 poll 이 아니라 여기 (연결 커밋이 있는 보고 뒤)
-        rblob = (st.get("inflight", {}).get(rpath) or {}).get("blob") or _remote_files().get(rpath)
+        rblob = (st.get("inflight", {}).get(rpath) or {}).get("blob")   # R333: 전달받은(inflight) 판만 · 못 받은 판을 확정하지 않음
         if rblob:
             _ack(st, rpath, rblob)
     _save_state(st)
@@ -314,28 +315,96 @@ def cmd_poll() -> int:
     return 0
 
 
+_ACK_PATH = re.compile(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md")
+
+
+def _request_done(rid: str) -> str:
+    """지시 처리 완료 증거 — 제목에 rid 를 적은 작업 커밋(보고서 게시 커밋 제외) 또는 원장 completed+근거. 없으면 ''.
+    원장이 승인 대기·미완료(PARTIAL·BLOCKED)면 커밋이 있어도 '' (끝나지 않은 일을 확정하지 않음)."""
+    req = next((r for r in _load(LEDGER, {}).get("requests", []) if r.get("id") == rid), None)
+    if req and (req.get("status") == "approval_required" or
+                (req.get("status") != "completed" and req.get("verification") in ("PARTIAL", "BLOCKED", "FAIL"))):
+        return ""
+    pat = re.compile(r"(?<![A-Za-z0-9])" + re.escape(rid) + r"(?!\d)")
+    for blk in _git("log", "-n", "300", "--format=%H%x1f%s%x1e").split("\x1e"):
+        parts = blk.strip("\n").split("\x1f")
+        if len(parts) == 2 and pat.search(parts[1]) and not _publication_only(parts[0]):
+            return f"커밋 {parts[0][:8]}"
+    if req and req.get("status") == "completed" and (req.get("evidence") or "").strip():
+        return "원장 completed"
+    return ""
+
+
+def _review_verdict(blob: str) -> str:
+    """검토 파일(blob) 머리의 명시 판정 — verdict 가 approved·changes_requested 이고 reviewed_commit 이 저장소에 있는 40자 SHA 일 때만."""
+    fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
+    if not fm:
+        return ""
+    v, c = fm.get("verdict", "").lower(), fm.get("reviewed_commit", "")
+    if v in _VERDICTS and _SHA40.fullmatch(c) and _git("cat-file", "-t", c) == "commit":
+        return f"판정 {v}"
+    return ""
+
+
+def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
+    """R333: 세션 cron 이 5분마다 모델 턴을 깨워 poll 하던 것 (실측 192턴 · 모델 호출 397 · 캐시 읽기 1.37억 토큰이 모두 «없음») →
+    셸이 혼자 poll 을 반복하고 새 파일이 있을 때(0)만 끝나 Claude 를 한 번 깨운다. Bash run_in_background 로 실행 (세션과 수명 같음 · 상주 서비스 X).
+    fetch 실패는 연속 3회일 때만 2 로 끝냄 (일시 장애로 확인이 멈추지 않게) · 시간 초과 = 3."""
+    import time as _t
+    t0 = _t.time()
+    fails = 0
+    while True:
+        rc = cmd_poll()
+        if rc == 0:
+            return 0
+        fails = fails + 1 if rc == 2 else 0
+        if fails >= 3:
+            return 2
+        if _t.time() - t0 + interval > max_sec:
+            print("[ai-collab] 대기 시간 끝 — 새 요청·검토 없음")
+            return 3
+        sys.stdout.flush()
+        _t.sleep(interval)
+
+
 def cmd_ack(target: str) -> int:
     """처리 확정 — 경로(.ai-collab/requests/R332.md) 또는 요청 ID(R332 = 그 ID 의 requests·reviews 중 처리 중인 것).
-    검증·보고를 마친 뒤에만 부른다. origin 의 현재 내용(blob)으로 확정 → 그 뒤 바뀐 내용은 다시 알린다."""
+    R333 (외부 검토): 검증 없이 아무 경로·아무 판이나 확정하던 것 → 아래를 모두 만족할 때만 확정한다.
+      ① 협업 폴더의 requests/·reviews/ 경로 ② poll 로 전달받은(inflight) 파일 ③ 전달받은 판 = origin 의 지금 판(바뀌었으면 새 판을 다시 받아 처리)
+      ④ 지시 = 처리 완료 증거(연결 작업 커밋·원장 completed · 승인 대기·미완료 X) / 검토 = 머리의 명시 판정."""
     st = _state()
-    remote = _remote_files()
+    inflight = st.get("inflight", {})
     if _RID.match(target):
-        paths = [p for p in (f".ai-collab/requests/{target}.md", f".ai-collab/reviews/{target}.md")
-                 if p in st.get("inflight", {}) or (p in remote and st.get("seen", {}).get(p) != remote[p])]
+        paths = [p for p in (f".ai-collab/requests/{target}.md", f".ai-collab/reviews/{target}.md") if p in inflight]
+        if not paths:
+            print(f"[ai-collab] 확정 거부: {target} 는 전달받아 처리 중인 파일이 없음 (poll 로 먼저 받아야 함)", file=sys.stderr)
+            return 2
     else:
-        paths = [target]
-    done = []
+        paths = [target.replace("\\", "/")]
+    remote = _remote_files()
+    done, refused = [], []
     for p in paths:
-        blob = (st.get("inflight", {}).get(p) or {}).get("blob") or remote.get(p)
-        if blob:
-            _ack(st, p, blob)
-            done.append(p)
-    if not done:
-        print(f"[ai-collab] 확정할 것 없음: {target}", file=sys.stderr)
-        return 2
-    _save_state(st)
-    print(f"[ai-collab] 처리 확정 {len(done)}건: {' '.join(done)}")
-    return 0
+        m = _ACK_PATH.fullmatch(p)
+        cur = inflight.get(p) or {}
+        if not m:
+            refused.append(f"{p}: 협업 폴더 requests/·reviews/ 경로 아님")
+        elif not cur.get("blob"):
+            refused.append(f"{p}: 전달받지 않음 (poll 로 먼저 받아야 함)")
+        elif remote.get(p) != cur["blob"]:
+            refused.append(f"{p}: 전달 뒤 내용이 바뀜 — 새 판을 다시 받아 처리해야 함")
+        else:
+            why = _request_done(m.group(2)) if m.group(1) == "requests" else _review_verdict(cur["blob"])
+            if not why:
+                refused.append(f"{p}: 처리 완료 증거 없음 (지시 = 제목에 ID 를 적은 작업 커밋·원장 completed · 검토 = 머리의 명시 판정)")
+            else:
+                _ack(st, p, cur["blob"])
+                done.append(f"{p} ({why})")
+    if done:
+        _save_state(st)
+        print(f"[ai-collab] 처리 확정 {len(done)}건: {' · '.join(done)}")
+    for r in refused:
+        print(f"[ai-collab] 확정 거부 — {r}", file=sys.stderr)
+    return 0 if done and not refused else 2
 
 
 def main(argv: list) -> int:
@@ -354,6 +423,13 @@ def main(argv: list) -> int:
         return cmd_poll()
     if op == "ack" and len(argv) >= 2:
         return cmd_ack(argv[1])
+    if op == "wait":
+        opts = dict(zip(argv[1::2], argv[2::2]))
+        try:
+            return cmd_wait(float(opts.get("--interval", 300)), float(opts.get("--max-sec", 7 * 86400)))
+        except ValueError:
+            print("[ai-collab] --interval·--max-sec 는 초 단위 숫자", file=sys.stderr)
+            return 2
     print(__doc__)
     return 2
 

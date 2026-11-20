@@ -297,8 +297,11 @@ def test_ack_and_report_confirm_processing(tmp_path):
     _push_file(other, ".ai-collab/requests/R7.md", '---\nrequest_id: "R7"\n---\nA\n')
     _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\nB\n')
     assert _run(r, "poll").returncode == 0
-    assert _run(r, "ack", "R7").returncode == 0                             # 명시 확정
-    subprocess.run(["git", "-C", str(r), "pull", "-q", "origin", "main"], check=True)
+    assert _run(r, "ack", "R7").returncode == 2                             # R333: 처리 증거(제목에 R7 인 작업 커밋) 없음 → 거부
+    assert ".ai-collab/requests/R7.md" in _state(r)["inflight"]             # 거부돼도 처리 중 유지 (재시도 가능)
+    _commit(r, "c.txt", "R7 처리")                                          # 제목 "R7 처리 (R1)"
+    assert _run(r, "ack", "R7").returncode == 0                             # 증거 생긴 뒤 명시 확정
+    subprocess.run(["git", "-C", str(r), "pull", "-q", "--rebase", "origin", "main"], check=True)
     assert _run(r, "report", "R1").returncode == 0                          # 제목에 R1 인 작업 커밋 있음 → 자동 확정
     st = _state(r)
     assert set(st["seen"]) >= {".ai-collab/requests/R7.md", ".ai-collab/requests/R1.md"} and not st.get("inflight")
@@ -340,3 +343,64 @@ def test_review_approval_only_from_frontmatter(tmp_path):
     (rev / "R1.md").write_bytes(("﻿---\r\nverdict: approved  # 검토 끝\r\nreviewed_commit: "
                                  f"'{h}'\r\n---\r\n본문\r\n").encode("utf-8"))           # BOM·CRLF·주석·작은따옴표
     assert "정리 1건: R1" in _run(r, "prune").stdout and not rep.exists()
+
+
+# ---------- R333 (외부 검토) P2 ack 는 경로·전달·판·처리 증거를 확인한 뒤에만 ----------
+
+def test_ack_refuses_without_proof(tmp_path):
+    """임의 경로 · 전달받지 않은 파일 · 전달 뒤 바뀐 판 · 승인 대기 · 미완료 = 거부 · 상태 그대로."""
+    r = _repo(tmp_path)
+    led = json.loads((r / ".claude" / "state" / "request-ledger.json").read_text(encoding="utf-8"))
+    led["requests"].append({"id": "R3", "desc": "승인 대기", "status": "approval_required"})
+    (r / ".claude" / "state" / "request-ledger.json").write_text(json.dumps(led, ensure_ascii=False), encoding="utf-8")
+    other = _origin(tmp_path, r)
+    for rid in ("R2", "R3", "R8"):
+        _push_file(other, f".ai-collab/requests/{rid}.md", f'---\nrequest_id: "{rid}"\n---\n지시\n')
+    assert _run(r, "ack", ".ai-collab/requests/R8.md").returncode == 2          # 아직 전달 안 받음
+    assert _run(r, "poll").returncode == 0
+    for c in ("R2", "R3"):                                                       # 커밋 제목에 넣어도
+        _commit(r, f"{c}.txt", f"{c} 작업")
+    before = _state(r)
+    for bad in ("../a.txt", ".ai-collab/state.json", ".ai-collab/reports/R1.md",  # 임의 경로
+                "R2",                                                            # 원장 PARTIAL (미완료)
+                "R3",                                                            # 원장 승인 대기
+                "R8", "R99"):                                                    # 증거 없음 · 처리 중 아님
+        assert _run(r, "ack", bad).returncode == 2, bad
+    _push_file(other, ".ai-collab/requests/R8.md", '---\nrequest_id: "R8"\n---\n바뀐 지시\n')
+    subprocess.run(["git", "-C", str(r), "fetch", "-q", "origin"], check=True)
+    _commit(r, "r8.txt", "R8 처리")
+    assert _run(r, "ack", "R8").returncode == 2                                  # 전달 뒤 판이 바뀜 → 옛 처리로 새 판 확정 X
+    after = _state(r)
+    assert after.get("seen", {}) == before.get("seen", {}) and set(after["inflight"]) == set(before["inflight"])
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "바뀐 지시" in again.stdout                 # 새 판은 다시 전달
+    assert _run(r, "ack", "R8").returncode == 0                                  # 새 판을 받은 뒤 증거와 함께 확정
+
+
+def test_wait_returns_only_when_new_file_arrives(tmp_path):
+    """R333: 셸이 poll 을 반복하다 새 파일이 생기면 0 으로 끝남 · 끝까지 없으면 3 (대기 중 모델 턴 0)."""
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    quiet = _run(r, "wait", "--interval", "1", "--max-sec", "2")
+    assert quiet.returncode == 3 and "대기 시간 끝" in quiet.stdout
+    import threading
+    import time
+    threading.Thread(target=lambda: (time.sleep(2), _push_file(other, ".ai-collab/requests/R9.md",
+                                                                '---\nrequest_id: "R9"\n---\n새 지시\n'))).start()
+    hit = _run(r, "wait", "--interval", "1", "--max-sec", "40")
+    assert hit.returncode == 0 and "새 지시" in hit.stdout
+    assert _run(r, "wait", "--interval", "x").returncode == 2
+
+
+def test_ack_review_needs_explicit_verdict(tmp_path):
+    """검토 파일은 머리의 명시 판정(approved·changes_requested + 저장소에 있는 40자 커밋)일 때만 확정."""
+    r = _repo(tmp_path)
+    h = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/reviews/R5.md", f'---\nrequest_id: "R5"\n---\nverdict: approved\nreviewed_commit: {h}\n')
+    assert _run(r, "poll").returncode == 0
+    assert _run(r, "ack", "R5").returncode == 2                                  # 본문의 판정 = 증거 아님
+    _push_file(other, ".ai-collab/reviews/R6.md", f'---\nverdict: "changes_requested"\nreviewed_commit: "{h}"\n---\n수정 필요\n')
+    assert _run(r, "poll").returncode == 0
+    assert _run(r, "ack", ".ai-collab/reviews/R6.md").returncode == 0           # 명시 판정
+    assert ".ai-collab/reviews/R6.md" in _state(r)["seen"] and ".ai-collab/reviews/R5.md" not in _state(r)["seen"]
