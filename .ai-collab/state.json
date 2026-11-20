@@ -234,16 +234,48 @@
       "report": "reports/R351.md",
       "reported_at": "2026-11-20T07:03:29+00:00",
       "reviewed": false
+    },
+    "R352": {
+      "head_commit": "cd8120a395a7be20f371846898dc3082627d45e2",
+      "base_commit": "93a4cbae",
+      "range_tip": "c839445a89b6943ee02158de3075848c1f6dd940",
+      "status": "PARTIAL",
+      "report": "reports/R352.md",
+      "reported_at": "2026-11-20T09:15:16+00:00",
+      "reviewed": false
+    },
+    "R353": {
+      "head_commit": "c839445a89b6943ee02158de3075848c1f6dd940",
+      "base_commit": "cd8120a3",
+      "range_tip": "c839445a89b6943ee02158de3075848c1f6dd940",
+      "status": "PARTIAL",
+      "report": "reports/R353.md",
+      "reported_at": "2026-11-20T09:15:39+00:00",
+      "reviewed": false
     }
   },
-  "last_head": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
+  "last_head": "c839445a89b6943ee02158de3075848c1f6dd940",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
     ".ai-collab/requests/R333.md": "8dc3233353c682acc770a663da7d2143b2caf4ea",
-    ".ai-collab/requests/R334.md": "dea8ab9022059de8de6858afdb2d8eb0eb01dd12"
+    ".ai-collab/requests/R334.md": "dea8ab9022059de8de6858afdb2d8eb0eb01dd12",
+    ".ai-collab/requests/R335.md": "583904461f5f840603798eb0f91cc967946d74ce",
+    ".ai-collab/requests/R336.md": "874d9d2aa7072ba4d467f41968c3231aeaef36f3",
+    ".ai-collab/requests/R337.md": "9fdfb90a1f537ab0c265ede18c6cedf74c1c5c52",
+    ".ai-collab/requests/R338.md": "ba4a0c109897f08b28f9fd05a4524a09d56c76d8",
+    ".ai-collab/requests/R339.md": "aa74e72ad126b81506d3f1ad70dc7eb07b9789cf",
+    ".ai-collab/requests/R340.md": "94b9d2df247672c673704c3a2a2a2b37f54e735c",
+    ".ai-collab/requests/R341.md": "c61d45f202663adae4da96c6a98566e5766544b1",
+    ".ai-collab/requests/R342.md": "c1c583288040cf5536620ffe9e5fb35867401098",
+    ".ai-collab/requests/R343.md": "bcd4e91470b683663264b9950f170c2e647f50aa",
+    ".ai-collab/requests/R344.md": "8184004a81c0e7c2aa5a26732856854fe542f4db",
+    ".ai-collab/requests/R345.md": "d80453ca9f7a2973d656cc7d9f45798f6efffb17",
+    ".ai-collab/requests/R346.md": "fde2ad2b63fbac80342f2b0d9d50515165aadb5b",
+    ".ai-collab/requests/R350.md": "d510884109bf4f9a251e50b9d6ba93144cd65ac1",
+    ".ai-collab/requests/R351.md": "20ed9079189a1b63bebd0de166784ddacc3840a6"
   },
-  "last_poll_hit": "2026-11-20T01:59:30+00:00",
+  "last_poll_hit": "2026-11-20T07:24:42+00:00",
   "handled": {
     "R329": "703ce80215855a633f672d57273c1b35a4c71764",
     "R332": "53d2c02baea4d2b525ac293cecc413c0342c74fe",
@@ -262,7 +294,21 @@
     "R345": "6340c16eafdddda977170edc73a81ff67b47ca97",
     "R346": "d0c9b8e3ccf32f66ce83b2ff07a1bf72eb076266",
     "R350": "ce106b06be24b678bfd580598507881fc0dfff58",
-    "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83"
+    "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
+    "R353": "c839445a89b6943ee02158de3075848c1f6dd940"
   },
-  "inflight": {}
+  "inflight": {
+    ".ai-collab/requests/R347.md": {
+      "blob": "8c84c43978fd7913eceb5da6d276456f69f1d75c",
+      "at": "2026-11-20T07:24:42+00:00"
+    },
+    ".ai-collab/requests/R348.md": {
+      "blob": "3f79d584a5357e08231bf6902ea87650314acfcf",
+      "at": "2026-11-20T07:24:42+00:00"
+    },
+    ".ai-collab/requests/R349.md": {
+      "blob": "76433d519bce7cdfa57983b40a8e895635421023",
+      "at": "2026-11-20T07:24:42+00:00"
+    }
+  }
 }
