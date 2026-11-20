@@ -135,9 +135,36 @@
       "report": "reports/R340.md",
       "reported_at": "2026-11-20T04:28:18+00:00",
       "reviewed": false
+    },
+    "R341": {
+      "head_commit": "cd1cbc382159b27ebe62baca3c2a734f7d173c44",
+      "base_commit": "8fdd3d59",
+      "range_tip": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+      "status": "PARTIAL",
+      "report": "reports/R341.md",
+      "reported_at": "2026-11-20T04:48:13+00:00",
+      "reviewed": false
+    },
+    "R342": {
+      "head_commit": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+      "base_commit": "8fdd3d59",
+      "range_tip": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+      "status": "PARTIAL",
+      "report": "reports/R342.md",
+      "reported_at": "2026-11-20T04:48:14+00:00",
+      "reviewed": false
+    },
+    "R343": {
+      "head_commit": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+      "base_commit": "8fdd3d59",
+      "range_tip": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+      "status": "PARTIAL",
+      "report": "reports/R343.md",
+      "reported_at": "2026-11-20T04:48:14+00:00",
+      "reviewed": false
     }
   },
-  "last_head": "cca64186e95ed0d02fe27a279dbd68cdb5ec3941",
+  "last_head": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -155,7 +182,10 @@
     "R340": "cca64186e95ed0d02fe27a279dbd68cdb5ec3941",
     "R335": "75f42639a2c4963e244c39ef59862e7b7e5e87a2",
     "R336": "75f42639a2c4963e244c39ef59862e7b7e5e87a2",
-    "R337": "75f42639a2c4963e244c39ef59862e7b7e5e87a2"
+    "R337": "75f42639a2c4963e244c39ef59862e7b7e5e87a2",
+    "R341": "cd1cbc382159b27ebe62baca3c2a734f7d173c44",
+    "R342": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9",
+    "R343": "a50ddc07038f6b3cbe94b4cec749047b2ba48eb9"
   },
   "inflight": {}
 }
