@@ -9,6 +9,7 @@
 #   bash .claude/scripts/sync-plugins.sh --check        드리프트-orphan 점검만
 #   bash .claude/scripts/sync-plugins.sh --verbose      상세
 #   bash .claude/scripts/sync-plugins.sh --prune        orphan 자동 삭제
+#   bash .claude/scripts/sync-plugins.sh --force        커밋 안 된 .claude/ 수정본도 덮어씀 (R351)
 #
 # 종료 코드: drift 또는 orphan 있으면 2, 정상 0.
 

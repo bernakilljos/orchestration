@@ -117,12 +117,23 @@ def is_legacy_skill(name: str) -> bool:
     return any(name.startswith(p) for p in LEGACY_SKILL_PATTERNS)
 
 
+def _uncommitted_paths() -> set[str]:
+    """R351: .claude/{commands,skills,agents} 중 커밋 안 된 수정(스테이징 포함)이 있는 파일 · git 이 없으면 빈 집합 (종전 동작)."""
+    try:
+        out = subprocess.run(["git", "-c", "core.quotepath=off", "status", "--porcelain", "--", *(f".claude/{d}" for d in SUBDIRS)],
+                             cwd=str(REPO_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30).stdout
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    return {ln[3:].strip().strip('"') for ln in out.splitlines() if len(ln) > 3 and ln[:2].strip() and not ln.startswith("??")}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="plugins/ → .claude/ 동기화 (Python 2026-10-13)")
     ap.add_argument("--dry", "--dry-run", action="store_true", help="미리보기")
     ap.add_argument("--check", action="store_true", help="드리프트-orphan 점검만")
     ap.add_argument("--prune", action="store_true", help="orphan 자동 삭제")
     ap.add_argument("--verbose", "-v", action="store_true")
+    ap.add_argument("--force", action="store_true", help="커밋 안 된 .claude/ 수정본도 덮어씀 (R351)")
     args = ap.parse_args()
 
     mode = "check" if args.check else ("dry" if args.dry else "sync")
@@ -132,6 +143,8 @@ def main() -> int:
     reverse_map: dict[str, Path] = {}  # ".claude/<sub>/<name>" -> plugins src
 
     order = resolve_plugin_order()
+    local_edits = _uncommitted_paths() if mode == "sync" and not args.force else set()
+    protected: list[str] = []
 
     for plugin in order:
         plugin_dir = REPO_ROOT / "plugins" / plugin
@@ -175,6 +188,12 @@ def main() -> int:
                     print(f"[DRY] {rel_src} -> {rel_dst}")
                     copied += 1
                 elif mode == "sync":
+                    if dst.exists() and rel_dst.as_posix() in local_edits:
+                        # R351: 종전엔 .claude/ 를 직접 고친 뒤 커밋 전에 sync 하면 조용히 덮어써 수정본이 사라졌다
+                        #   (drift 경고는 --check·--verbose 때만) → 커밋 안 된 수정이 있는 대상은 건너뛰고 drift 로 알림 · --force 로 덮어씀
+                        protected.append(rel_dst.as_posix())
+                        drift += 1
+                        continue
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src, dst)
                     if args.verbose:
@@ -220,6 +239,11 @@ def main() -> int:
             print("   해결: plugins/<name>/commands/<name>.md 로 이동 또는 --prune 으로 일괄 삭제")
     else:
         print("✓ Orphan 없음")
+
+    if protected:
+        print(f"\n[WARN]  커밋 안 된 .claude/ 수정본 {len(protected)}개 — 덮어쓰지 않음 (원본 plugins/ 로 옮기거나 --force):")
+        for x in protected:
+            print(f"   - {x}")
 
     print("\n=== Summary ===")
     print(f"  copied/changed: {copied}")
