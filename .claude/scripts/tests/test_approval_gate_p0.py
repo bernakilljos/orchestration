@@ -35,7 +35,8 @@ BLOCK = [
     # P0-1 push 변형
     # 2026-11-13 R250: origin 으로의 일반 push 는 사용자 위임으로 허용 (ALLOW 로 이동) — 나머지 변형은 계속 차단
     f"{G} -C repo {P}", f"{G} {P} upstream main", f"{G} {P} origin HEAD:main", f"{G} {P} --all origin",
-    f"{G} {P} --tags", f"{G} {P} --mirror origin", f"\"{G}\" {P} origin main", f"{G} {P} origin main; echo x",
+    f"{G} {P} --tags", f"{G} {P} --mirror origin", f"\"{G}\" {P} origin main",
+    f"{G} {P} origin main; echo $(id)",   # R353: 무해한 `; echo x` 는 위임 범위로 이동 (test_r353_*) · 명령 치환이 붙은 연결은 계속 차단
     f"{G} {P} origin main && rm -r build", f"{G} {P} origin $(cat b)",
     f"{G} {P} -f origin main", f"{G} {P} origin +main", f"{G} {P} origin :main",
     f"{G} {P} --delete origin feature", f"cd repo && {G} {P} origin main", f"{G} {P} {F} origin main",
@@ -622,3 +623,35 @@ def test_script_comment_only_risk_not_blocked_but_real_line_blocked(tmp_root):
     s.write_text("#!/usr/bin/env bash\n# 설명\n" + CL + " hi --model haiku\n", encoding="utf-8")
     r = agd.run(_bash_hook('bash "%s"' % s.as_posix(), str(tmp_root)))
     assert r is not None and r.rc == 2
+
+
+# ── R353: 이미 위임된 일반 push 는 앞뒤 읽기 전용 명령이 붙어도 같은 판정 · HEAD 를 바꾸는 연결·비일반 push 는 그대로 승인 대상 ──
+_PUSH = f"{G} {P} origin main"
+
+
+@pytest.mark.parametrize("cmd", [
+    f"{_PUSH} && {G} rev-list --left-right --count origin/main...HEAD",   # appr-58d5cfe406f7 실제 형태
+    f"{_PUSH} 2>&1 | tail -1; {G} log --oneline -1",
+    f"{G} status --short; {_PUSH}",
+    f"{_PUSH} && echo done",
+    f"{_PUSH} || {G} status",
+    f"{_PUSH}; echo x", f"echo x && {_PUSH}",            # 종전 BLOCK 목록에 있던 형태 (R250 '단독만') → R353 사용자 범위 재정의
+])
+def test_r353_plain_push_with_read_only_neighbors_not_flagged(cmd):
+    assert not flagged(cmd), cmd
+
+
+@pytest.mark.parametrize("cmd", [
+    f"{G} commit -qm x; {_PUSH}",                        # HEAD 가 실행 중 바뀜 (사용자 규칙: 커밋·원격 반영 독립)
+    f"{G} pull -q --rebase origin main; {_PUSH}",
+    f"cd /c/other && {_PUSH}",
+    f"{_PUSH}; {G} {P} {F} origin main",                 # 두 번째 push 가 강제
+    f"{_PUSH} && {G} branch -D old",                     # 브랜치 삭제는 읽기 전용 아님
+    f"{_PUSH}; {G} log --output=x.txt -1",               # 파일 쓰기
+    f"{_PUSH} && echo $(whoami)",                        # 명령 치환
+    f"{_PUSH} & {G} status",                             # 백그라운드
+    f"{G} {P} upstream main && {G} status",              # 다른 원격
+    f"{_PUSH} && {G} diff > d.txt",
+])
+def test_r353_risky_push_chains_still_flagged(cmd):
+    assert flagged(cmd), cmd

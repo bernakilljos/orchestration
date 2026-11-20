@@ -54,3 +54,15 @@ def test_init_schema_completes_db_that_only_has_schema_version(tmp_path, monkeyp
         have = {r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {"tasks", "workers", "metrics", "quota", "budget", "session"} <= have, have
     assert str(db).startswith(str(tmp_path))
+
+
+@pytest.mark.skipif(not BASH, reason="bash 없음")
+def test_failed_test_names_emitted_as_ci_annotations(tmp_path):
+    """러너 전용 실패를 진단하려고 실패 시험 이름을 ::error:: 주석으로 낸다 (공개 API 로 보임) · 종료 코드는 그대로."""
+    fake = tmp_path / "fake.py"
+    fake.write_text("import sys\nprint('FAILED tests/x.py::test_a - AssertionError')\nprint('ERROR tests/y.py')\nsys.exit(1)\n",
+                    encoding="utf-8")
+    env = {**os.environ, "PYTEST_CMD": f"{Path(sys.executable).as_posix()} {fake.as_posix()}"}
+    r = subprocess.run([BASH, GATE.as_posix()], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
+    assert r.returncode == 1
+    assert "::error title=pytest::FAILED tests/x.py::test_a" in r.stdout and "::error title=pytest::ERROR tests/y.py" in r.stdout

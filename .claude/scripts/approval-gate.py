@@ -144,8 +144,31 @@ _PLAIN_PUSH_RE = re.compile(
 _PUSH_OUT_SUFFIX = re.compile(r"""(?:\s+2>&1)?(?:\s*\|\s*(?:tail|head)(?:\s+-n)?\s+-?\d+)?\s*$""")
 
 
+# 2026-11-20 (R353 · 사용자 지시 '이미 지시한 일반 push 를 표기만 달라 매번 /approve 하게 하지 말 것'):
+#   `git push origin main && git rev-list --count origin/main...HEAD` (appr-58d5cfe406f7) 처럼 push 앞뒤가 HEAD·작업 위치를
+#   바꾸지 않는 읽기 전용 명령뿐이면 실제 효과는 단독 일반 push 와 같다 → 같은 판정.
+#   그대로 승인 대상: commit·pull·fetch·cd·checkout 등 HEAD/위치를 바꾸는 명령이 같이 있음 (올라갈 커밋을 실행 전에 확정 못함 ·
+#   사용자 규칙 '커밋과 원격 반영은 독립 명령') · 따옴표·$·백틱·괄호·리다이렉션·& 백그라운드 · push 2개 이상 · 강제·삭제 등 비일반 push.
+_RO_SEG_RE = re.compile(
+    r"\s*(?:git\s+(?:log|rev-list|status|show|rev-parse)(?:\s+[A-Za-z0-9_./:=@^~%+,-]+)*|git\s+branch\s+--show-current"
+    r"|echo(?:\s+[A-Za-z0-9_./:=@%+,-]+)*)"
+    r"(?:\s*\|\s*(?:tail|head|grep|wc)(?:\s+[A-Za-z0-9_.=-]+)*)*\s*")
+
+
 def is_plain_push(command: str) -> bool:
-    return bool(_PLAIN_PUSH_RE.fullmatch(_PUSH_OUT_SUFFIX.sub("", command or "", count=1)))
+    c = command or ""
+    if _PLAIN_PUSH_RE.fullmatch(_PUSH_OUT_SUFFIX.sub("", c, count=1)):
+        return True
+    c2 = c.replace("2>&1", " ")
+    if re.search(r"[\"'`$<>\n\r\\()]", c2) or re.search(r"(?<!&)&(?!&)", c2) or "--output" in c2:
+        return False   # --output: git log/show 가 파일을 씀 (읽기 전용 아님)
+    segs = [s for s in re.split(r"&&|\|\||;", c2)]
+    if any(not s.strip() for s in segs) or len(segs) < 2:
+        return False
+    pushes = [s for s in segs if _PLAIN_PUSH_RE.fullmatch(_PUSH_OUT_SUFFIX.sub("", s, count=1))]
+    if len(pushes) != 1:
+        return False
+    return all(s is pushes[0] or _RO_SEG_RE.fullmatch(s) for s in segs)
 
 
 def detect_risk(command: str) -> dict | None:

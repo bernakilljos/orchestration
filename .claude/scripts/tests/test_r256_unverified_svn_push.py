@@ -301,7 +301,7 @@ def test_ledger_script_changed_after_commit_is_blocked():
     "python - <<'EOF'\nprint('x')\nEOF\n" + PUSH + " --force",            # heredoc 뒤 실제 실행
     "cat > .git/hooks/pre-push <<'EOF'\n" + PUSH + " --force\nEOF",      # 훅 파일 = 나중에 git 이 실행 (전에는 가려짐)
     PUSH + " --force",
-    "echo x && " + PUSH,
+    "echo `id` && " + PUSH,                                                # R353: `echo x && push` 는 위임 범위(읽기 전용 이웃) · 백틱 치환은 계속 차단
 ])
 def test_execution_paths_still_blocked(cmd):
     assert flagged(cmd, CWD), cmd

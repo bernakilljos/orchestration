@@ -33,13 +33,11 @@ python .claude/scripts/approval-gate.py request \
   --category data_loss \
   --reason "DB 마이그레이션 후 staging 정리"
 
-# 3. 사용자 승인
+# 3. 사용자 승인 — 사용자가 프롬프트에 직접 입력할 때만 기록 (prompt/user_approval.py · Claude 가 대신 실행 X)
 /approve <task_id>
-# 또는
-python .claude/scripts/approval-gate.py approve <task_id>
 
-# 4. 실행 (승인 후만)
-python .claude/scripts/approval-gate.py execute <task_id>
+# 4. 실행 — 승인 뒤 같은 명령을 같은 폴더에서 1회 (30분 · 스크립트·HEAD 가 바뀌면 재승인)
+#    (2026-11-20 R353: 예전 예시 `approval-gate.py approve|execute` 는 CLI 에 없는 명령이라 삭제 · 현재 CLI = detect·request·withdraw·list·status)
 ```
 
 ## DB schema (v2)
@@ -101,6 +99,7 @@ PATTERNS = {
 | `git push` (origin feature branch) |  자동 진행 |
 | `git push` / `git push origin <브랜치>` 단독 (일반 push · 2026-11-13 R250 사용자 위임) |  자동 진행 (비밀값 검사는 유지) |
 | 위 일반 push 뒤의 `2>&1`·`\| tail -N`·`\| head -N` (2026-11-14 R255 · 같은 push 인데 형태만 달라 생기던 불필요 요청 제거 · 앞에 `cd` 를 붙이면 저장소·HEAD 확정 불가로 그대로 차단) |  자동 진행 |
+| 위 일반 push 앞뒤에 `;`·`&&`·`\|\|` 로 붙은 **읽기 전용** 명령 (`git log·rev-list·status·show·rev-parse`·`git branch --show-current`·`echo` · 뒤의 `\| tail·head·grep·wc`) (2026-11-20 R353 · 실제 효과가 단독 push 와 같음 · `appr-58d5cfe406f7` 형태) — commit·pull·fetch·cd·checkout 이 같이 있으면(올라갈 커밋 확정 불가 · 커밋·원격 반영 독립 규칙) · 따옴표·`$`·백틱·괄호·리다이렉션·`&`·`--output`·push 2개 이상·비일반 push 는 그대로 승인 대상 |  자동 진행 |
 | 실행되지 않는 언급 (2026-11-15 R256): grep 검색어(셸 따옴표 규칙 · 큰따옴표 안 `$(…)` 와 셸로 넘기는 파이프는 제외) · 명령 실행 불가로 확정된 `python - <<'EOF'` 본문의 push 단어 (import 허용 목록 · eval/exec/getattr/dunder/os 속성/git 훅 경로 문자열 금지) · request-ledger.py add/complete 인자 (HEAD 와 같은 내용 · 명령에 cd 가 없을 때만 세션 작업 위치 기준) |  자동 진행 |
 | 자기 대기 요청 취소 (2026-11-16 R258): `approval-gate.py withdraw <id> <사유>` = 대기 → 만료 (승인 아님 · 게이트가 만든 대기 행만 · 사유·원래 명령 기록 보존) · 작업 종료(Stop)마다 `own-cleanup.py` 가 임시 폴더 안만 지우는 자기 요청을 자동 취소 · 그 밖의 요청은 남은 승인으로 기록만 · 사유 인자는 기록 전용 (HEAD 와 같은 내용일 때만) |  자동 진행 |
 | 강제 push (`-f`·`--force`·`+refspec`) · 원격 브랜치 삭제 (`:branch`·`--delete`) · `--mirror`·`--all`·`--tags` · origin 외 원격 · 다른 명령과 연결한 push |  approval-gate |
