@@ -168,3 +168,20 @@ def test_fault_crash_before_state_replace_keeps_original(tmp_path):
     assert q.returncode == 0 and "R2#1" in q.stdout
     assert _run(r, "report", "R1").returncode == 0                             # 다음 저장 정상
     assert not (r / ".ai-collab" / "state.tmp").exists() and "R1" in _state(r)["requests"]
+
+
+def test_report_refreshes_when_items_change_and_keeps_human_sections(tmp_path):
+    """R354: head·상태가 같아도 남은 일(하위 항목)이 바뀌면 보고서 갱신 · 다시 만들 때 사람이 쓴 절은 그대로 · 자동 절은 한 번만."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    p = r / ".ai-collab" / "reports" / "R2.md"
+    p.write_text(p.read_text(encoding="utf-8") + "\n## 판정 근거 (사람이 씀)\n\n- 상세 분석 표 A\n", encoding="utf-8")
+    _ledger(r, "item-add", "R2", "새로 찾은 남은 일", "--owner", "external")
+    again = _run(r, "report", "R2", "--status", "PARTIAL")
+    assert again.returncode == 0 and "변경 없음" not in again.stdout, again.stdout   # 항목 변화 = 갱신
+    t = p.read_text(encoding="utf-8")
+    assert "새로 찾은 남은 일" in t and "외부 증거 필요" in t
+    assert "## 판정 근거 (사람이 씀)" in t and "상세 분석 표 A" in t                  # 사람이 쓴 절 보존
+    assert t.count("## 남은 문제") == 1 and t.count("## 커밋") == 1                 # 자동 절 중복 X
+    same = _run(r, "report", "R2", "--status", "PARTIAL")
+    assert "변경 없음" in same.stdout                                               # 아무것도 안 바뀌면 그대로 건너뜀

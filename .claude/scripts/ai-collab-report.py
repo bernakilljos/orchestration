@@ -112,7 +112,12 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
         return 2
     mine = _commits_for(rid, base, tip)                # 이 요청 ID 를 메시지에 적은 작업 커밋만 (요청별 증거 분리)
     head = mine[0][0] if mine else tip
-    if ent.get("head_commit") == head and ent.get("status") == status:
+    # R354: 하위 항목(남은 일)·근거가 바뀌어도 head·상태가 같으면 «변경 없음» 으로 건너뛰어 보고서가 옛 남은 일을 보여 줬다 → 지문에 포함
+    sig = json.dumps([[i.get("i"), i.get("state"), i.get("owner"), i.get("text")] for i in (req.get("items") or [])] +
+                     [req.get("evidence") or ""], ensure_ascii=False)
+    import hashlib as _h
+    sig = _h.sha1(sig.encode("utf-8")).hexdigest()[:12]
+    if ent.get("head_commit") == head and ent.get("status") == status and ent.get("items_sig", sig) == sig:
         print(f"[ai-collab] 변경 없음 — {rid} 는 이미 {head[:8]}·{status} 로 보고됨 (중복 생성 X)")
         return 0
     if mine:
@@ -150,9 +155,17 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
             lines.append("- 사용자 승인(/approve) 필요")
     COLLAB.joinpath("reports").mkdir(parents=True, exist_ok=True)
     out = COLLAB / "reports" / f"{rid}.md"
-    out.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    # R354: 다시 만들 때 자동 생성 절(머리·커밋·변경 파일·시험·남은 문제)만 교체하고 사람이 쓴 절(판정·분석·표)은 원문 그대로 보존
+    #   (종전: 통째로 다시 써서 상세 분석이 사라짐 → 항목만 갱신해도 보고서가 빈약해지던 것)
+    kept = []
+    if out.is_file():
+        for sec in re.split(r"(?m)^(?=## )", out.read_text(encoding="utf-8", errors="replace")):
+            title = sec[3:].split("\n", 1)[0].strip() if sec.startswith("## ") else ""
+            if title and title not in _GENERATED_SECTIONS:
+                kept.append(sec.rstrip())
+    out.write_text("\n".join(lines).rstrip() + "\n" + ("\n" + "\n\n".join(kept) + "\n" if kept else ""), encoding="utf-8")
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
-                           "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False}
+                           "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig}
     st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
     if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
         st.setdefault("handled", {})[rid] = head
@@ -247,6 +260,9 @@ def cmd_prune() -> int:
     _save_state(st)
     print(f"[ai-collab] 정리 {len(gone)}건: {' '.join(gone) or '없음'}")
     return 0
+
+
+_GENERATED_SECTIONS = {"커밋", "변경 파일", "시험", "남은 문제"}   # report 가 매번 다시 만드는 절 (나머지는 보존)
 
 
 def _lease_sec() -> int:

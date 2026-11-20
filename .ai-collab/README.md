@@ -76,6 +76,31 @@ reviewed_commit: "<검토한 보고서의 head_commit SHA>"
     - 처리 완료 증거가 있을 것. 지시는 제목에 그 ID를 적은 작업 커밋이나 원장의 completed 기록이 있어야 하고, 승인 대기나 미완료면 확정하지 않습니다. 검토는 머리에 명시 판정(`approved`·`changes_requested`와 저장소에 있는 40자 커밋)이 있어야 합니다.
   - 이전에 처리해 `handled`에만 남은 지시(R329 등)는 다시 넘기지 않습니다.
 
+## 보고 뒤 남은 일 (R354)
+
+- PARTIAL·BLOCKED 보고 뒤 남은 일은 보고서 본문이 아니라 **원장 하위 항목**에 둡니다: `python .claude/scripts/request-ledger.py item-add <요청ID> "<남은 일>" --owner claude|external`.
+  - `claude` = Claude 가 지금 실행할 수 있는 일 · `external` = 사용자 화면 캡처·결정·운영 증거가 있어야 진행 (실행하지 않고 차단 사유로 보고).
+  - 외부 증거만 남은 요청은 원장에 BLOCKED 로 기록합니다 (PASS 로 맞추지 않음).
+- `python .claude/scripts/ai-collab-report.py queue` 가 열린 항목을 모아 `.claude/state/next-actions.md` 의 collab 블록에 적습니다. `report`·`poll` 이 자동으로 갱신합니다.
+  - 세션을 다시 열면(compact·clear·재부팅 포함) 이 큐가 나이와 무관하게 맨 위에 주입되어 [claude] 항목부터 이어서 합니다.
+  - 보고된 PARTIAL 을 poll 이 다시 깨우지 않는 규칙(R346 후속 9)은 그대로입니다. 깨우는 대신 큐에 남깁니다.
+- 한계: 세션이 닫혀 있는 동안에는 아무것도 실행되지 않습니다. 다음 세션이 열릴 때 이어서 합니다(상주 실행 X).
+
+## 상태 의미 구분 (서로 대신하지 않음)
+
+| 상태 | 뜻 | 기록 위치 |
+|---|---|---|
+| 수신 (inflight) | poll 이 지시를 전달함 | state.json `inflight` |
+| 처리 확정 (seen) | 지시를 처리한 작업 커밋 보고 또는 ack | state.json `seen` |
+| push | 원격에 반영됨 | Git |
+| CI success | 원격 시험 통과 | GitHub Actions |
+| 작업 PASS | 원장 하위 항목 전부 done·na + 검증 | request-ledger.json |
+| 독립 검토 승인 | ChatGPT 가 `reviews/<ID>.md` 에 `verdict: approved` 를 씀 | reviews/ |
+
+- `reviews/` 가 비어 있고 `reviewed: false` 인 것은 ChatGPT 쪽이 지금까지 `requests/` 만 쓰고 `reviews/` 문서를 만든 적이 없기 때문입니다 (2026-11-21 확인: `.gitkeep` 외 0건).
+  예약된 ChatGPT 검토가 실행돼도 그 결과를 이 폴더에 파일로 쓰지 않으면 저장소에는 남지 않습니다.
+- Claude 는 `reviews/` 를 대신 쓰거나 승인으로 간주하지 않습니다. 독립 검토가 필요하면 보고서에 «검토 대기» 로 적고, 다른 실행 가능한 일은 멈추지 않고 계속합니다.
+
 ## 정리 규칙
 
 - 같은 요청, 같은 head 커밋으로는 보고서를 다시 만들지 않습니다.
