@@ -74,7 +74,21 @@ def test_failed_test_names_emitted_as_ci_annotations(tmp_path):
     assert r.returncode == 1
     assert "Binary file" not in r.stdout
     # R346 후속 6: 주석 10개 한도에 안 잘리게 실패 전체·러너 환경을 여러 줄 주석 1건으로 (한 줄 · %0A 줄바꿈)
-    detail = [l for l in r.stdout.splitlines() if l.startswith("::notice title=pytest-detail::")]
+    detail = [l for l in r.stdout.splitlines() if l.startswith("::notice title=pytest-detail 1::")]
     assert len(detail) == 1 and "[환경] bash=" in detail[0] and "%0AFAILED tests/x.py::test_a" in detail[0], r.stdout
     assert sum(l.startswith("::error title=pytest::") for l in r.stdout.splitlines()) <= 7
     assert "::error title=pytest::FAILED tests/x.py::test_a" in r.stdout and "::error title=pytest::ERROR tests/y.py" in r.stdout
+
+
+@pytest.mark.skipif(not BASH, reason="bash 없음")
+def test_detail_annotation_split_under_message_limit(tmp_path):
+    """후속 7: 주석 메시지는 약 4KB 에서 잘림 → 3,500자 이하 조각 · 최대 8건 (실패가 많아도 앞부분은 남음)."""
+    fake = tmp_path / "fake.py"
+    fake.write_text("import sys\nfor i in range(300):\n    print(f'FAILED tests/t{i}.py::test_{i} - AssertionError ' + 'x' * 80)\n"
+                    "    print('E   assert ' + 'y' * 120)\nsys.exit(1)\n", encoding="utf-8")
+    env = {**os.environ, "PYTEST_CMD": f"{Path(sys.executable).as_posix()} {fake.as_posix()}"}
+    r = subprocess.run([BASH, GATE.as_posix()], capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
+    parts = [l for l in r.stdout.splitlines() if l.startswith("::notice title=pytest-detail ")]
+    assert 2 <= len(parts) <= 8, len(parts)
+    assert all(len(l.split("::", 2)[2]) <= 3700 for l in parts)
+    assert "FAILED tests/t0.py::test_0" in parts[0] and r.returncode == 1

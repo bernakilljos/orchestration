@@ -23,8 +23,10 @@ if [ "$rc" -ne 0 ]; then
     grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -60
     grep -aE '^(E  |_{3,} .+ _{3,}$|[^ ]+\.py:[0-9]+: )' "$OUT" 2>/dev/null | cut -c1-300 | head -200
   } > "$OUT.detail"
-  msg=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$OUT.detail" | awk 'BEGIN{ORS="%0A"} {print}')
-  echo "::notice title=pytest-detail::${msg}"
+  # 후속 7: 주석 메시지는 약 4KB 에서 잘림 (f2bc6458 run 실측) → 3,500자 조각 최대 8건 (notice 도 step 당 10건 한도)
+  sed -e 's/%/%25/g' -e 's/\r//g' "$OUT.detail" | awk -v max=3500 '
+    { line = $0 "%0A"; if (length(buf) + length(line) > max && buf != "") { print buf; buf = "" } buf = buf line }
+    END { if (buf != "") print buf }' | head -8 | awk '{ printf "::notice title=pytest-detail %d::%s\n", NR, $0 }'
   rm -f "$OUT.detail" 2>/dev/null
 fi
 grep -aE '^(FAILED|ERROR) ' "$OUT" 2>/dev/null | head -7 | while IFS= read -r line; do
