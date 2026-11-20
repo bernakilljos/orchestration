@@ -166,22 +166,6 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
             gy = min(1.3, (5.0 - nrow * H) / max(1, nrow - 1)) if nrow > 1 else 0
             x0, y0 = 0.6, 1.9
             xy = {i: (x0 + c * (W + gx), y0 + r * (H + gy)) for i, (c, r) in pos.items()}
-            # 경계 (spec 의 boundary 이름별 · 노드 바깥 여백)
-            groups = defaultdict(list)
-            for n in vn:
-                if n.get("boundary"):
-                    groups[n["boundary"]].append(n["id"])
-            for name, members in groups.items():
-                xs = [xy[m][0] for m in members]
-                ys = [xy[m][1] for m in members]
-                bx, by = min(xs) - 0.25, min(ys) - 0.5
-                bh = max(ys) - min(ys) + H + 0.5 + 0.45          # 위 0.5 (연결 라벨) · 아래 0.45 (경계 이름)
-                b = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(bx), Inches(by), Inches(max(xs) - min(xs) + W + 0.5),
-                                       Inches(bh))
-                b.fill.background()
-                b.line.color.rgb, b.line.width, b.line.dash_style = BLUE, Pt(1.5), 7
-                t = s.shapes.add_textbox(Inches(bx + 0.1), Inches(max(ys) + H + 0.05), Inches(3.5), Inches(0.35))   # 경계 이름은 아래 안쪽 (위는 연결 라벨 자리)
-                txt(t, name, 11, True, BLUE, PP_ALIGN.LEFT)
             shp = {n["id"]: box(s, n["id"], *xy[n["id"]], W, H, f"container:{n['id']}") for n in vn}
             for e in ve:
                 a, b = e["from"], e["to"]
@@ -211,6 +195,23 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
                 t = s.shapes.add_textbox(Inches(lx), Inches(ly), Inches(lw), Inches(0.35))
                 txt(t, e.get("label", "") + (" [미확인]" if ref in unverified else ""), 10, False,
                     WARN if ref in unverified else MUTED, PP_ALIGN.CENTER if (ca != cb and abs(p1[1] - p2[1]) < 0.05) else PP_ALIGN.LEFT)
+            # 경계 (spec 의 boundary 이름별 · 노드 바깥 여백) — R345: 노드·연결 뒤에 만들어 읽기 순서 = 제목 → 노드 → 연결 → 경계 → 범례
+            #   (화면낭독기는 개체 순서대로 읽음 · Microsoft «Reading Order pane» · 채우기 없는 상자라 화면 모양은 같음)
+            groups = defaultdict(list)
+            for n in vn:
+                if n.get("boundary"):
+                    groups[n["boundary"]].append(n["id"])
+            for name, members in groups.items():
+                xs = [xy[m][0] for m in members]
+                ys = [xy[m][1] for m in members]
+                bx, by = min(xs) - 0.25, min(ys) - 0.5
+                bh = max(ys) - min(ys) + H + 0.5 + 0.45          # 위 0.5 (연결 라벨) · 아래 0.45 (경계 이름)
+                b = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(bx), Inches(by), Inches(max(xs) - min(xs) + W + 0.5),
+                                       Inches(bh))
+                b.fill.background()
+                b.line.color.rgb, b.line.width, b.line.dash_style = BLUE, Pt(1.5), 7
+                t = s.shapes.add_textbox(Inches(bx + 0.1), Inches(max(ys) + H + 0.05), Inches(3.5), Inches(0.35))   # 경계 이름은 아래 안쪽 (위는 연결 라벨 자리)
+                txt(t, name, 11, True, BLUE, PP_ALIGN.LEFT)
             legend = []
             if any(e.get("optional") for e in ve) or any(n.get("kind") == "optional" for n in vn):
                 legend.append("실선 = 항상 · 점선 = 선택·조건부")

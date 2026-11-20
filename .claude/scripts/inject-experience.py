@@ -53,7 +53,7 @@ def _find_experiences(keywords: list, top: int = 3) -> list:
         return []
     with sqlite3.connect(DB) as c:
         rows = c.execute(
-            "SELECT id, problem, solution, category, reusable_score, verified, hit_count "
+            "SELECT id, problem, solution, category, reusable_score, verified, hit_count, COALESCE(apply_count, 0) "
             "FROM problem_solutions "
             "WHERE verified=1 OR reusable_score >= 8"
         ).fetchall()
@@ -62,9 +62,9 @@ def _find_experiences(keywords: list, top: int = 3) -> list:
     for r in rows:
         text = ((r[1] or "") + " " + (r[2] or "") + " " + (r[3] or "")).lower()
         score = sum(1 for kw in keywords if kw in text)
-        if score > 0:
+        if score >= min(2, len(keywords)):   # R344 관련성 하한 (훅판 inject_experience 와 같은 기준)
             scored.append((score, r))
-    scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][6] or 0)))
+    scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][7] or 0)))   # R344: 노출 수(hit) 말고 적용 수(apply)
     return [r for _, r in scored[:top]]
 
 

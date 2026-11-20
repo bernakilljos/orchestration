@@ -62,3 +62,13 @@ def test_layout_follows_edges_not_fixed_positions():
     assert pos == {"x": (0, 0), "y": (1, 0), "z": (2, 0)}
     pos = ad.layout([{"id": i} for i in "abc"], [{"from": "a", "to": "b"}, {"from": "a", "to": "c"}])
     assert pos["a"][0] == 0 and pos["b"][0] == pos["c"][0] == 1 and pos["b"][1] != pos["c"][1]
+
+
+def test_reading_order_title_nodes_edges_then_boundary(tmp_path):
+    """R345 (Microsoft «Reading Order pane» · 화면낭독기는 개체 순서대로 읽음): 제목 → 노드 → 연결 라벨 → 경계 → 범례."""
+    ad.render(_load("A"), str(tmp_path / "a.pptx"))
+    names = [sh.text_frame.text.split("\n")[0] for sh in pptx.Presentation(str(tmp_path / "a.pptx")).slides[0].shapes
+             if sh.has_text_frame and sh.text_frame.text.strip()]
+    i_title, i_node, i_edge = 0, names.index("모바일 앱"), names.index("HTTPS 주문")
+    i_bound, i_legend = names.index("클라우드 VPC"), next(i for i, n in enumerate(names) if n.startswith("범례"))
+    assert i_title < i_node < i_edge < i_bound < i_legend, names

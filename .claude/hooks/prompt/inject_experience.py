@@ -36,7 +36,8 @@ def _find_experiences(keywords, top=3, current_project=None):
     try:
         with sqlite3.connect(str(DB)) as c:
             rows = c.execute(
-                "SELECT id, problem, solution, category, reusable_score, verified, hit_count, session_id, experience_type "
+                "SELECT id, problem, solution, category, reusable_score, verified, hit_count, session_id, experience_type, "
+                "COALESCE(apply_count, 0) "
                 "FROM problem_solutions "
                 "WHERE (verified=1 OR reusable_score >= 8) "
                 "AND (experience_type IS NULL OR experience_type NOT IN ('ARCHIVED','STALE'))"
@@ -66,7 +67,7 @@ def _find_experiences(keywords, top=3, current_project=None):
     for r in rows:
         text = ((r[1] or "") + " " + (r[2] or "") + " " + (r[3] or "")).lower()
         s = sum(1 for kw in keywords if kw in text)
-        if s == 0:
+        if s < min(2, len(keywords)):   # R344: 낱말 1개만 겹쳐도 통과해 무관한 기록(붙여 넣은 인계문 등)이 매번 주입됐다
             continue
         exp_type = r[8] or ""
         session = (r[7] or "").lower()
@@ -94,7 +95,9 @@ def _find_experiences(keywords, top=3, current_project=None):
             continue
         # 소속 불명 (own_markers 매치 X · other 매치 X) → skip (defect #2 fix)
         continue
-    scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][6] or 0)))
+    # R344: 동점 정렬을 hit_count(주입될 때마다 +1 = 노출 수)로 하면 한 번 뽑힌 기록이 계속 뽑히는 자기 강화 고리 →
+    #   실제 적용 기록(apply_count · mark-applied) 으로
+    scored.sort(key=lambda x: (-x[0], -(x[1][4] or 0), -(x[1][9] if len(x[1]) > 9 else 0)))
     return [r for _, r in scored[:top]]
 
 
@@ -117,6 +120,8 @@ def run(ctx: Ctx):
     prompt = ctx.payload.get("prompt", "") or ctx.payload.get("user_prompt", "")
     if not prompt or len(prompt) < 10:
         return None
+    if prompt.lstrip().startswith("<task-notification>") or "[SYSTEM NOTIFICATION" in prompt[:200]:
+        return None   # R344: 백그라운드 완료 알림은 사용자 작업이 아님 — 주입·노출 수 갱신 안 함
     kws = _extract_keywords(prompt)
     # 프로젝트 격리: 현재 project_dir 전달
     exps = _find_experiences(kws, top=3, current_project=ctx.project_dir)
