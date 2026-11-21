@@ -25,7 +25,8 @@ def _loaded():
 
 def test_statusline_trigger_covers_every_loaded_repo_module():
     loaded = _loaded()
-    assert ".claude/scripts/statusline_context.py" in loaded and ".claude/scripts/lib/trace.py" in loaded, loaded
+    # trace.py 는 추적·원장 상태가 있을 때만 열린다 (CI 러너엔 없음 · a2d5cb83 Windows 필수 잡 실패 원인) → 상태줄 자신만 필수
+    assert ".claude/scripts/statusline_context.py" in loaded, loaded
     trig = _item("상태줄 1회")["triggers"]
     missing = [p for p in loaded if not any(fnmatch.fnmatch(p, g) for g in trig)]
     assert not missing, f"상태줄이 여는데 성능 트리거에 없는 파일: {missing}"
