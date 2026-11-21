@@ -12,6 +12,7 @@
 해소 표시 (R354 4차 검토 P2): 같은 로그에서 나중에 «[RESOLVED] <문구>» 줄이 나오면, 그보다 앞서 기록된 «<문구>» 포함 오류는 주입하지 않는다.
   (복구가 끝난 오류를 다음 세션에 다시 알리던 문제 · 문구가 다른 오류와 해소 뒤 재발한 오류는 그대로 알림)
   R354 7차: 표시에 «(ref=<상관 ID>)» 가 있으면 같은 ID 오류만 해소 · ID 없는 옛 표시는 «[ERROR] <문구>» 로 시작하는 오류가 한 종류일 때만
+  R354 8차: ref 는 완전 일치로 비교 · ref 가 다르면 (숫자만 달라도) 다른 오류로 센다
 """
 from __future__ import annotations
 
@@ -93,8 +94,11 @@ def _scan(log_dir: str):
             m = TS_RE.search(ln)
             if not m or time.mktime(tuple(map(int, m.groups())) + (0, 0, -1)) < cutoff:
                 continue
-            key = name + " | " + _sig(ln)
-            d = found.setdefault(key, {"kind": "ERROR" if e else "WARN", "n": 0, "file": name, "sample": ""})
+            # R354 8차 검토 P2: _sig 가 숫자를 지워 숫자만 다른 ref 오류가 한 key 로 합쳐졌다 → ref 를 key 에 넣어 따로 센다
+            em = REF_RE.search(ln)
+            eref = em.group(1) if em else ""
+            key = name + " | " + _sig(ln) + (f" | ref={eref}" if eref else "")
+            d = found.setdefault(key, {"kind": "ERROR" if e else "WARN", "n": 0, "file": name, "sample": "", "ref": eref})
             d["n"] += 1
             d["sample"] = ln.strip()[:200]
             last_at[key] = idx
@@ -104,7 +108,8 @@ def _scan(log_dir: str):
             before = [k for k, idx in last_at.items() if idx < r_idx]
             if ref:
                 # R354 7차 검토 P2: 상관 ID 가 있으면 그 ID 를 가진 오류만 (같은 접두어·다른 원인 오류는 그대로 알림)
-                drop.update(k for k in before if f"ref={ref.group(1)}" in found[k]["sample"])
+                # R354 8차: 부분 문자열(aaaa1111 ⊂ aaaa1111-extra) 아니라 완전 일치
+                drop.update(k for k in before if found[k]["ref"] == ref.group(1))
                 continue
             # 옛 형식 (ID 없음): «[ERROR] <문구>» 로 시작하는 오류만 (R354 6차) · 그런 오류 종류가 둘 이상이면 어느 것인지 모르므로 숨기지 않음
             hits = [k for k in before if re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[k]["sample"], re.I)]

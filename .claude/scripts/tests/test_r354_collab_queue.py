@@ -448,3 +448,29 @@ def test_queue_error_lines_carry_one_ref_per_episode(tmp_path):
     m = _scanner()
     s = [v["sample"] for v in m._scan(str(r / ".claude" / "logs")).values() if v["kind"] == "ERROR"]
     assert len(s) == 1 and refs[3] in s[0]                                    # 해소된 장애는 숨기고 새 장애만
+
+
+def test_resolved_ref_must_match_exactly_and_not_merge_by_digits(tmp_path):
+    """R354 8차 검토 P2: ① 해소 ref 가 다른 오류 ref 의 접두어일 때(aaaa1111 ⊂ aaaa1111-extra) 그 오류까지 숨겼다 (부분 문자열 비교)
+    ② _sig 가 숫자를 # 로 지워 숫자만 다른 ref 두 오류가 한 key 로 합쳐져 하나만 해소해도 둘 다 사라졌다 →
+    ref 는 완전 일치 · ref 가 다르면 별도 오류로 센다 · 같은 ID 재발과 옛 형식은 그대로."""
+    m = _scanner()
+    d = tmp_path / "logs"; d.mkdir()
+    log = d / "a.log"
+    log.write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 작업 실패 (ref=aaaa1111-extra) — disk full",
+        f"[{_ts(490)}] [ERROR] 백업 작업 실패 (ref=aaaa1111) — disk full",
+        f"[{_ts(480)}] [ERROR] 큐 기록 실패 (ref=abc1234567) — rc=1",
+        f"[{_ts(470)}] [ERROR] 큐 기록 실패 (ref=abc7654321) — rc=1",           # 같은 메시지 · 숫자만 다른 ID
+        f"[{_ts(300)}] [RESOLVED] 백업 작업 실패 (ref=aaaa1111) — 복구됨",
+        f"[{_ts(290)}] [RESOLVED] 큐 기록 실패 (ref=abc7654321) — 복구됨",
+    ]) + "\n", encoding="utf-8")
+    s = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert any("aaaa1111-extra" in x for x in s), s                          # 접두어 관계 ID 는 남음
+    assert not any("(ref=aaaa1111)" in x for x in s), s
+    assert any("abc1234567" in x for x in s), s                              # 숫자만 다른 ID 는 남음
+    assert not any("abc7654321" in x for x in s), s
+    with log.open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(60)}] [ERROR] 큐 기록 실패 (ref=abc7654321) — rc=1 again\n")
+    s = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert any("abc7654321" in x and "again" in x for x in s), s             # 해소 뒤 같은 ID 재발은 다시 알림
