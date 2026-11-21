@@ -60,7 +60,7 @@ allowed-tools: Bash(where:*), Bash(claude mcp list:*), Write, Bash(python:*)
 ### Step 3 — 선택된 패턴 실행
 
 - 개념 패턴: mindmap → `skill-arch-mindmap` + Mermaid · layered → `skill-arch-layered` · cheatsheet → `skill-arch-cheatsheet`
-- 기술 패턴 (Container · Dynamic): **`python .claude/scripts/arch-diagram-pptx.py <spec.json> <out.pptx>`** (R343 정본 엔진 · native shape·connector 편집 가능)
+- 기술 패턴 (Container · Dynamic · Deployment · DFD): **`python .claude/scripts/arch-diagram-pptx.py <spec.json> <out.pptx>`** (R343 정본 엔진 · native shape·connector 편집 가능) · Deployment·DFD 는 `"type": "deployment"|"dfd"` — 경계(boundary)마다 열을 따로 둬 겹치지 않음 · 경계 통과 흐름은 굵은 선 + 결과 `crossings` · DFD 는 저장소·외부끼리 직접 연결 거부 (R343#1)
   - spec = 사실 원본: 노드(id·label·kind·boundary·**source**) · 연결(from·to·label·optional·**source**) · Dynamic 은 participants·steps.
   - source 없는 요소 = 거부 (`--allow-unverified` 면 그림에 «[미확인]» 표시 · 범례 자동) · 끝점 없는 연결·id 중복 = 거부 · 배치는 연결 관계로 자동 (고정 좌표 없음).
   - 출력 JSON 의 `claims` = 요소 → 근거 대조표 (보고서에 그대로) · 검증만: `--check <spec.json>`.

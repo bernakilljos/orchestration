@@ -104,3 +104,86 @@ def test_dynamic_person_flow_requires_response_arrow(tmp_path):
     ad.validate(_person_flow(go, no_response="비동기 접수 — 결과는 메일 (notify.py)"))   # 단방향 근거 = 허용
     for n in "ABC":                                                              # 사람 시작이 아닌 기존 샘플은 그대로
         ad.validate(_load(n), allow_unverified=True)
+
+
+# ── R343#1 (R354 13차 큐): Deployment·DFD·Trust boundary 전용 배치 ─────────────────────────────
+#   깊이 기반 배치는 경계를 무시해 서로 다른 경계의 노드가 같은 열에 섞이고, 경계 상자가 겹치거나 남의 노드를 감싼다.
+#   Microsoft Threat Modeling Tool·OWASP Threat Dragon 의 DFD 는 신뢰 경계를 지나는 데이터 흐름을 위협 분석 대상으로 본다.
+def _zoned(vtype):
+    n = lambda i, z=None, k="container": {"id": i, "label": i.upper(), "kind": k, "source": "s", **({"boundary": z} if z else {})}
+    nodes = [n("user", None, "person"), n("web", "DMZ"), n("api", "내부망"), n("db", "내부망", "store"),
+             n("waf", "DMZ"), n("auth", "내부망"), n("idp", None, "external")]
+    e = lambda a, b: {"from": a, "to": b, "label": f"{a}-{b}", "source": "s"}
+    edges = [e("user", "waf"), e("waf", "web"), e("web", "api"), e("user", "auth"), e("api", "db"), e("auth", "idp")]
+    return {"views": [{"type": vtype, "title": vtype, "nodes": nodes, "edges": edges}]}
+
+
+def _geom(path):
+    s = pptx.Presentation(str(path)).slides[0]
+    rects, boxes = [], {}
+    for sh in s.shapes:
+        if sh.shape_type != 1:
+            continue
+        if sh.auto_shape_type == 1:                       # RECTANGLE = 경계 상자
+            rects.append((sh.left, sh.top, sh.left + sh.width, sh.top + sh.height))
+        elif sh.has_text_frame and sh.text_frame.text.strip():
+            boxes[sh.text_frame.text.split("\n")[0]] = (sh.left + sh.width // 2, sh.top + sh.height // 2)
+    return rects, boxes
+
+
+def _inside(pt, r):
+    return r[0] < pt[0] < r[2] and r[1] < pt[1] < r[3]
+
+
+def _bad_boundaries(spec, path):
+    rects, boxes = _geom(path)
+    members = defaultdict_list(spec)
+    overlap = any(not (a[2] <= b[0] or b[2] <= a[0] or a[3] <= b[1] or b[3] <= a[1])
+                  for i, a in enumerate(rects) for b in rects[i + 1:])
+    foreign = [lbl for lbl, c in boxes.items() for r in rects
+               if _inside(c, r) and not any(all(_inside(boxes[m], r) for m in ms) and lbl in ms for ms in members.values())]
+    return overlap, foreign, len(rects)
+
+
+def defaultdict_list(spec):
+    g = {}
+    for nd in spec["views"][0]["nodes"]:
+        if nd.get("boundary"):
+            g.setdefault(nd["boundary"], []).append(nd["label"])
+    return g
+
+
+def test_depth_layout_mixes_boundaries_repro(tmp_path):
+    """수정 전 결함 재현: container(깊이 기반)는 DMZ·내부망 상자가 겹치거나 남의 노드를 감싼다."""
+    sp = _zoned("container")
+    ad.render(sp, str(tmp_path / "c.pptx"))
+    overlap, foreign, _ = _bad_boundaries(sp, tmp_path / "c.pptx")
+    assert overlap or foreign
+
+
+@pytest.mark.parametrize("vtype", ["deployment", "dfd"])
+def test_zone_layout_keeps_boundaries_exclusive(tmp_path, vtype):
+    sp = _zoned(vtype)
+    r = ad.render(sp, str(tmp_path / "z.pptx"))
+    overlap, foreign, nrect = _bad_boundaries(sp, tmp_path / "z.pptx")
+    assert nrect == 2 and not overlap and not foreign, (overlap, foreign)
+    pos = ad.zone_layout(sp["views"][0]["nodes"], sp["views"][0]["edges"])
+    cols = {}
+    for nd in sp["views"][0]["nodes"]:
+        cols.setdefault(nd.get("boundary") or nd["id"], set()).add(pos[nd["id"]][0])
+    keys = list(cols)
+    assert all(not (cols[a] & cols[b]) for i, a in enumerate(keys) for b in keys[i + 1:])   # 경계마다 열을 따로 가짐
+    assert pos["user"][0] < pos["waf"][0] < pos["api"][0] < pos["idp"][0]                    # 흐름 방향 왼→오
+    # 경계를 지나는 흐름만 crossings 로 보고 (경계 안 흐름 waf→web · api→db 제외)
+    assert sorted(r["crossings"]) == sorted(["user→waf", "web→api", "user→auth", "auth→idp"])
+    assert "신뢰 경계 통과" in _text(tmp_path / "z.pptx")
+
+
+def test_dfd_rule_store_and_external_only_via_process():
+    """DFD 규칙 (Yourdon·Gane-Sarson): 저장소·외부 개체끼리 직접 연결하지 않고 처리(process)를 거친다."""
+    sp = _zoned("dfd")
+    sp["views"][0]["edges"].append({"from": "idp", "to": "db", "label": "직접", "source": "s"})
+    with pytest.raises(ad.SpecError, match="DFD 흐름 규칙.*idp→db"):
+        ad.validate(sp)
+    sp["views"][0]["type"] = "deployment"                 # 배포도에는 이 규칙을 적용하지 않음
+    ad.validate(sp)

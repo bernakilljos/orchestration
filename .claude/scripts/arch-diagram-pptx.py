@@ -14,13 +14,20 @@ spec:
       "nodes": [{"id","label","kind":"person|container|store|optional|external","boundary":"이름","source":"..."}],
       "edges": [{"from","to","label","optional":bool,"source":"..."}]},
      {"type": "dynamic", "title": "...", "participants": ["id",...] (nodes 는 같은 문서의 container view 에서 찾음),
-      "steps": [{"from","to","label","optional":bool,"source":"..."}]}]}
+      "steps": [{"from","to","label","optional":bool,"source":"..."}]},
+     {"type": "deployment" | "dfd", ... container 와 같은 nodes·edges · boundary = 배포 노드 / 신뢰 경계}]}
+
+  deployment·dfd (R343#1): 경계(boundary)마다 열을 따로 주어 경계 상자가 겹치거나 남의 노드를 감싸지 않는다 (zone_layout).
+    경계를 지나는 흐름은 굵은 선 + 결과 "crossings" 로 보고 (위협 분석 대상 · Microsoft Threat Modeling Tool·OWASP Threat Dragon).
+    dfd 는 DFD 흐름 규칙도 검사: 저장소(store)·외부 개체(external·person)끼리 직접 연결 금지 — 처리(container)를 거친다.
 """
 import json
 import sys
 from collections import defaultdict, deque
 
 KINDS = ("person", "container", "store", "optional", "external")
+ZONED = ("deployment", "dfd")          # 경계 우선 배치 (R343#1)
+BOXED = ("container",) + ZONED
 
 
 class SpecError(ValueError):
@@ -41,7 +48,7 @@ def validate(spec: dict, allow_unverified: bool = False) -> dict:
     if not nodes:
         errors.append("노드 없음")
     for v in spec.get("views") or []:
-        if v.get("type") not in ("container", "dynamic"):
+        if v.get("type") not in BOXED + ("dynamic",):
             errors.append(f"view 종류 오류: {v.get('type')}")
         items = [("node", n) for n in v.get("nodes") or []] + [("edge", e) for e in (v.get("edges") or v.get("steps") or [])]
         for p in v.get("participants") or []:
@@ -57,6 +64,13 @@ def validate(spec: dict, allow_unverified: bool = False) -> dict:
             claims.append({"view": v.get("type"), "element": ref, "label": it.get("label"), "source": src or "미확인"})
             if not src:
                 unverified.append(ref)
+    for v in spec.get("views") or []:
+        if v.get("type") != "dfd":
+            continue
+        for e in v.get("edges") or []:     # DFD 흐름 규칙 (Yourdon·Gane-Sarson) — 처리 없이 저장소·외부끼리 연결 X
+            ka, kb = ((nodes.get(e.get(k)) or {}).get("kind", "container") for k in ("from", "to"))
+            if ka in ("store", "external", "person") and kb in ("store", "external", "person"):
+                errors.append(f"DFD 흐름 규칙: {e.get('from')}→{e.get('to')} ({ka}→{kb}) 는 처리(container)를 거쳐야 함")
     for v in spec.get("views") or []:
         # R342 (Azure «양방향 흐름은 두 흐름» · c4model Dynamic): 사람이 시작한 요청 흐름이 요청자에게 돌아오지 않으면
         #   응답 화살표가 빠진 그림이 된다 (격리 샘플 Dynamic 장이 게이트웨이에서 끝남) → 돌아오는 단계 또는 단방향 근거(no_response) 필수
@@ -103,6 +117,28 @@ def layout(nodes: list, edges: list) -> dict:
         pos[i] = (c, rows[c])
         rows[c] += 1
     return pos
+
+
+def zone_layout(nodes: list, edges: list) -> dict:
+    """경계 우선 배치 (R343#1) → {id: (col, row)}.
+    경계(없으면 노드 자신)를 한 묶음으로 보고 묶음 사이 흐름으로 묶음 순서를 정한 뒤 (layout 재사용),
+    묶음 안은 묶음 안 흐름으로 다시 배치 → 묶음마다 열이 겹치지 않는다."""
+    zone = {n["id"]: (n.get("boundary") or "@node:" + n["id"]) for n in nodes}
+    zids = list(dict.fromkeys(zone[n["id"]] for n in nodes))
+    zedges = [{"from": zone[e["from"]], "to": zone[e["to"]]} for e in edges
+              if e["from"] in zone and e["to"] in zone and zone[e["from"]] != zone[e["to"]]]
+    zpos = layout([{"id": z} for z in zids], zedges)
+    inner = {}
+    for z in zids:
+        mem = [n for n in nodes if zone[n["id"]] == z]
+        inner[z] = layout(mem, [e for e in edges if zone.get(e["from"]) == z and zone.get(e["to"]) == z])
+    width = {z: max(c for c, _ in inner[z].values()) + 1 for z in zids}
+    order = sorted(zids, key=lambda z: (zpos[z][0], zpos[z][1]))      # 흐름 깊이 → 같은 깊이는 등장 순서
+    off, x = {}, 0
+    for z in order:
+        off[z] = x
+        x += width[z]
+    return {i: (off[zone[i]] + c, r) for z in zids for i, (c, r) in inner[z].items()}
 
 
 def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
@@ -157,21 +193,26 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
         if kind == "optional":
             shp.line.dash_style = 4
         label = n.get("label", nid) + ("\n[미확인]" if ref in unverified else "")
-        txt(shp, label, 13, True, WARN if ref in unverified else INK)
+        txt(shp, label, 13 if w >= 1.1 else 11, True, WARN if ref in unverified else INK)
         return shp
 
+    all_cross = []
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
     for v in spec["views"]:
         s = prs.slides.add_slide(prs.slide_layouts[6])
         head(s, v.get("title", ""), v.get("subtitle", ""))
-        if v["type"] == "container":
+        crossings = []
+        if v["type"] in BOXED:
             vn, ve = v.get("nodes") or [], v.get("edges") or []
-            pos = layout(vn, ve)
+            zoned = v["type"] in ZONED
+            pos = zone_layout(vn, ve) if zoned else layout(vn, ve)
+            bnd = {n["id"]: n.get("boundary") for n in vn}
             ncol = max(c for c, _ in pos.values()) + 1
             nrow = max(r for _, r in pos.values()) + 1
             H = 1.0
-            W = min(2.3, (11.8 - (ncol - 1) * 1.6) / ncol) if ncol > 1 else 2.3   # 라벨 칸 최소 1.6in 확보
+            mingap = min(1.6, max(0.9, 7.0 / ncol))   # 라벨 칸 1.6in · 열이 5개 이상이면 줄여 상자 폭 확보 (R343#1: 6열에서 «USE R» 줄바꿈)
+            W = min(2.3, (11.8 - (ncol - 1) * mingap) / ncol) if ncol > 1 else 2.3
             gx = min(2.0, (11.8 - ncol * W) / max(1, ncol - 1)) if ncol > 1 else 0
             gy = min(1.3, (5.0 - nrow * H) / max(1, nrow - 1)) if nrow > 1 else 0
             x0, y0 = 0.6, 1.9
@@ -188,6 +229,9 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
                 c.begin_connect(shp[a], sa)
                 c.end_connect(shp[b], sb)
                 arrowhead(c, e.get("optional"))
+                if zoned and bnd.get(a) != bnd.get(b):       # 신뢰 경계·배포 노드를 지나는 흐름 = 굵은 선
+                    c.line.width = Pt(3)
+                    crossings.append(f"{a}→{b}")
                 ref = f"container:{a}→{b}"
                 ax, ay = xy[a]
                 bxx, byy = xy[b]
@@ -226,7 +270,9 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
             if any(e.get("optional") for e in ve) or any(n.get("kind") == "optional" for n in vn):
                 legend.append("실선 = 항상 · 점선 = 선택·조건부")
             if groups:
-                legend.append("파란 점선 상자 = 경계")
+                legend.append("파란 점선 상자 = " + ("신뢰 경계" if v["type"] == "dfd" else "배포 노드" if zoned else "경계"))
+            if crossings:
+                legend.append("굵은 선 = 신뢰 경계 통과 %d건" % len(crossings))
             if unverified:
                 legend.append("[미확인] = 근거 없음")
             if legend:
@@ -260,8 +306,10 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
                     txt(t, label, 11, False, WARN if ref in unverified else INK,
                         PP_ALIGN.LEFT if abs(xs[b] - xs[a]) > step_w + 0.1 else PP_ALIGN.CENTER)
                 y += gap
+        all_cross += crossings
     prs.save(out_path)
-    return {"out": out_path, "slides": len(spec["views"]), "claims": rep["claims"], "unverified": rep["unverified"]}
+    return {"out": out_path, "slides": len(spec["views"]), "claims": rep["claims"], "unverified": rep["unverified"],
+            "crossings": all_cross}
 
 
 def main(argv):
