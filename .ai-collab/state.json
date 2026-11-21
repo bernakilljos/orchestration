@@ -254,17 +254,17 @@
       "reviewed": false
     },
     "R354": {
-      "head_commit": "82fdc4bf5446087966eb7181abfdf5e46b107dfe",
+      "head_commit": "d8ef64076da1155d14a6cd10547ac2e4a0a11851",
       "base_commit": "f0fc440f69ecc21dddcde9c60577b065a966d716",
-      "range_tip": "82fdc4bf5446087966eb7181abfdf5e46b107dfe",
+      "range_tip": "d8ef64076da1155d14a6cd10547ac2e4a0a11851",
       "status": "PARTIAL",
       "report": "reports/R354.md",
-      "reported_at": "2026-11-21T18:02:02+00:00",
+      "reported_at": "2026-11-21T19:08:26+00:00",
       "reviewed": false,
-      "items_sig": "c0d9f6c9e4f1"
+      "items_sig": "c83cd696d9c1"
     }
   },
-  "last_head": "82fdc4bf5446087966eb7181abfdf5e46b107dfe",
+  "last_head": "d8ef64076da1155d14a6cd10547ac2e4a0a11851",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -309,7 +309,7 @@
     "R350": "ce106b06be24b678bfd580598507881fc0dfff58",
     "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
     "R353": "c839445a89b6943ee02158de3075848c1f6dd940",
-    "R354": "82fdc4bf5446087966eb7181abfdf5e46b107dfe"
+    "R354": "d8ef64076da1155d14a6cd10547ac2e4a0a11851"
   },
   "inflight": {
     ".ai-collab/requests/R347.md": {
