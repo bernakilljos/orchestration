@@ -594,17 +594,17 @@ def test_report_head_override_for_followup_fix_without_id(tmp_path):
     pub = _c(r, ".ai-collab/reports/R2.md", "r", "docs(collab): 게시")
     assert _run(r, "report", "R2", "--base", base).returncode == 0
     assert _state(r)["requests"]["R2"]["head_commit"] == impl                     # 수정 전 동작 그대로 (재현)
-    bad = _run(r, "report", "R2", "--base", base, "--head", pub)                  # 게시 전용 커밋 거부
+    bad = _run(r, "report", "R2", "--base", base, "--head", pub, "--reason", "ID 없는 후속 수정 반영")                  # 게시 전용 커밋 거부
     assert bad.returncode == 2 and "게시" in bad.stderr, bad.stderr
-    assert _run(r, "report", "R2", "--base", base, "--head", base).returncode == 2   # 범위 밖(기준 자신) 거부
-    assert _run(r, "report", "R2", "--base", base, "--head", "deadbeef" * 5).returncode == 2
-    ok = _run(r, "report", "R2", "--base", base, "--head", follow)
+    assert _run(r, "report", "R2", "--base", base, "--head", base, "--reason", "ID 없는 후속 수정 반영").returncode == 2   # 범위 밖(기준 자신) 거부
+    assert _run(r, "report", "R2", "--base", base, "--head", "deadbeef" * 5, "--reason", "ID 없는 후속 수정 반영").returncode == 2
+    ok = _run(r, "report", "R2", "--base", base, "--head", follow, "--reason", "ID 없는 후속 수정 반영")
     assert ok.returncode == 0, ok.stderr
     ent = _state(r)["requests"]["R2"]
     assert ent["head_commit"] == follow and ent.get("head_override")             # 지정 사실을 기록
     rep = (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8")
     assert f'head_commit: "{follow}"' in rep
-    old = _run(r, "report", "R2", "--base", base, "--head", impl)                 # 자동 선택과 같거나 옛 SHA 로 되돌리기 X
+    old = _run(r, "report", "R2", "--base", base, "--head", impl, "--reason", "ID 없는 후속 수정 반영")                 # 자동 선택과 같거나 옛 SHA 로 되돌리기 X
     assert old.returncode == 2
 
 
@@ -616,7 +616,7 @@ def test_report_head_override_survives_later_report_without_flag(tmp_path):
     base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     _c(r, "x.py", "1", "fix: 구현 (R2)")
     follow = _c(r, "tests/t.py", "2", "fix(test): ID 없는 후속 수정")
-    assert _run(r, "report", "R2", "--base", base, "--head", follow).returncode == 0
+    assert _run(r, "report", "R2", "--base", base, "--head", follow, "--reason", "ID 없는 후속 수정 반영").returncode == 0
     _ledger(r, "item-add", "R2", "남은 일 하나 더")                                   # 항목이 바뀌어 보고서가 다시 써지는 경우
     again = _run(r, "report", "R2", "--base", base)
     assert again.returncode == 0, again.stderr
@@ -635,7 +635,7 @@ def test_report_head_override_edges_do_not_keep_stale_base(tmp_path):
     base = g("rev-parse", "HEAD")
     impl = _c(r, "x.py", "1", "fix: 구현 (R2)")
     f1 = _c(r, "t1.py", "1", "fix(test): ID 없는 후속 1")
-    assert _run(r, "report", "R2", "--base", base, "--head", f1).returncode == 0
+    assert _run(r, "report", "R2", "--base", base, "--head", f1, "--reason", "ID 없는 후속 수정 반영").returncode == 0
     # 1) 재보고(같은 상태) — 지정 유지·중복 생성 X
     same = _run(r, "report", "R2", "--base", base)
     assert same.returncode == 0 and _state(r)["requests"]["R2"]["head_commit"] == f1
@@ -643,11 +643,11 @@ def test_report_head_override_edges_do_not_keep_stale_base(tmp_path):
     f2 = _c(r, "t2.py", "2", "fix(test): ID 없는 후속 2")
     assert _run(r, "report", "R2", "--base", base).returncode == 0
     assert _state(r)["requests"]["R2"]["head_commit"] == f1                      # 몰래 f2 로 옮기지 않음 (지정한 것만)
-    assert _run(r, "report", "R2", "--base", base, "--head", f2).returncode == 0
+    assert _run(r, "report", "R2", "--base", base, "--head", f2, "--reason", "ID 없는 후속 수정 반영").returncode == 0
     assert _state(r)["requests"]["R2"]["head_commit"] == f2
     # 3) 직계가 아닌 커밋(다른 가지) 지정 거부
     side = g("commit-tree", impl + "^{tree}", "-p", impl, "-m", "fix: 옆 가지 (R2)")   # main 이력에 없는 커밋 (작업 트리 무변경)
-    bad = _run(r, "report", "R2", "--base", base, "--head", side)
+    bad = _run(r, "report", "R2", "--base", base, "--head", side, "--reason", "ID 없는 후속 수정 반영")
     assert bad.returncode == 2 and "범위 밖" in bad.stderr, bad.stderr
     assert _state(r)["requests"]["R2"]["head_commit"] == f2                      # 거부 뒤 기존 값 그대로
     # 4) 범위 변경 — 기준을 지정 head 뒤로 옮기면 그 head 는 범위 밖 → 유지하지 않고 새 범위의 자동 선택
@@ -655,3 +655,27 @@ def test_report_head_override_edges_do_not_keep_stale_base(tmp_path):
     assert _run(r, "report", "R2", "--base", f2).returncode == 0
     ent = _state(r)["requests"]["R2"]
     assert ent["head_commit"] == new_impl and not ent.get("head_override") and ent["base_commit"] == f2, ent
+
+
+def test_report_head_requires_reason_and_keeps_it(tmp_path):
+    """R354 18차 P2: 기준 SHA 를 수동 지정할 때 근거를 남기지 않았다 → --head 는 --reason(8자 이상) 필수 ·
+    state 의 head_override_reason 과 보고서 머리 head_override 줄에 남고 · 지정 유지(재보고) 때도 그대로."""
+    r = _repo(tmp_path)
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    _c(r, "x.py", "1", "fix: 구현 (R2)")
+    follow = _c(r, "t.py", "2", "fix(test): ID 없는 후속")
+    no = _run(r, "report", "R2", "--base", base, "--head", follow)
+    assert no.returncode == 2 and "--reason" in no.stderr, no.stderr
+    short = _run(r, "report", "R2", "--base", base, "--head", follow, "--reason", "짧음")
+    assert short.returncode == 2
+    why = "후속 시험 수정 0cf9163f 가 ID 를 빠뜨림 · CI 초록 SHA"
+    assert _run(r, "report", "R2", "--base", base, "--head", follow, "--reason", why).returncode == 0
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_override_reason"] == why
+    rep = (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8")
+    assert "head_override:" in rep.split("---")[1] and why in rep.split("---")[1]
+    _ledger(r, "item-add", "R2", "다시 보고되게 항목 추가")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0                 # 지정 유지 재보고
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == follow and ent["head_override_reason"] == why
+    assert why in (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8").split("---")[1]
