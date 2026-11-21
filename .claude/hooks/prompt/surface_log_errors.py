@@ -13,6 +13,7 @@
   (복구가 끝난 오류를 다음 세션에 다시 알리던 문제 · 문구가 다른 오류와 해소 뒤 재발한 오류는 그대로 알림)
   R354 7차: 표시에 «(ref=<상관 ID>)» 가 있으면 같은 ID 오류만 해소 · ID 없는 옛 표시는 «[ERROR] <문구>» 로 시작하는 오류가 한 종류일 때만
   R354 8차: ref 는 완전 일치로 비교 · ref 가 다르면 (숫자만 달라도) 다른 오류로 센다
+  R354 9차: ref 가 같아도 «[ERROR] <해소 문구>» 로 시작하는 오류만 해소 (같은 ref 를 공유한 다른 오류는 알림)
 """
 from __future__ import annotations
 
@@ -109,7 +110,9 @@ def _scan(log_dir: str):
             if ref:
                 # R354 7차 검토 P2: 상관 ID 가 있으면 그 ID 를 가진 오류만 (같은 접두어·다른 원인 오류는 그대로 알림)
                 # R354 8차: 부분 문자열(aaaa1111 ⊂ aaaa1111-extra) 아니라 완전 일치
-                drop.update(k for k in before if found[k]["ref"] == ref.group(1))
+                # R354 9차: 같은 ref 를 공유한 다른 오류는 남긴다 → «[ERROR] <해소 문구>» 로 시작하는 것만
+                head = re.compile(r"\[ERROR\]\s*" + re.escape(phrase), re.I)
+                drop.update(k for k in before if found[k]["ref"] == ref.group(1) and head.search(found[k]["sample"]))
                 continue
             # 옛 형식 (ID 없음): «[ERROR] <문구>» 로 시작하는 오류만 (R354 6차) · 그런 오류 종류가 둘 이상이면 어느 것인지 모르므로 숨기지 않음
             hits = [k for k in before if re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[k]["sample"], re.I)]

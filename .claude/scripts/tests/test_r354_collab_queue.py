@@ -474,3 +474,29 @@ def test_resolved_ref_must_match_exactly_and_not_merge_by_digits(tmp_path):
         f.write(f"[{_ts(60)}] [ERROR] 큐 기록 실패 (ref=abc7654321) — rc=1 again\n")
     s = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
     assert any("abc7654321" in x and "again" in x for x in s), s             # 해소 뒤 같은 ID 재발은 다시 알림
+
+
+def test_shared_ref_different_messages_and_boundaries_reach_real_prompt(tmp_path):
+    """R354 9차 검토 P2: ① 서로 다른 오류가 같은 ref 를 공유할 때 «[RESOLVED] A (ref=X)» 가 B 까지 숨겼다 (ref 만 비교) →
+    ref 일치 + «[ERROR] <해소 문구>» 로 시작하는 오류만 · ② ID 없는 옛 줄 · ③ 해소 표시가 끝 500줄 밖이면 숨기지 않음 ·
+    ④ 실제 프롬프트 분배기 주입에서 미해소 오류만 보임."""
+    r = _repo(tmp_path)
+    d = r / ".claude" / "logs"; d.mkdir(parents=True, exist_ok=True)
+    (d / "s.log").write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 작업 실패 (ref=shared01) — disk full",
+        f"[{_ts(490)}] [ERROR] 업로드 실패 (ref=shared01) — timeout upl",           # 같은 ref · 다른 오류
+        f"[{_ts(480)}] [ERROR] 정리 작업 실패 — 옛 형식 cln",                       # ID 없는 옛 줄 (해소 표시 없음)
+        f"[{_ts(300)}] [RESOLVED] 백업 작업 실패 (ref=shared01) — 복구됨",
+    ]) + "\n", encoding="utf-8")
+    lines = [f"[{_ts(900)}] [ERROR] 배치 실패 (ref=tail0001) — 범위 안 bat"]
+    lines += [f"[{_ts(800)}] [INFO] filler {i}" for i in range(520)]
+    lines += [f"[{_ts(100)}] [ERROR] 배치 실패 (ref=tail0002) — 범위 안 bat2"]
+    (d / "t.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with (d / "t.log").open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(50)}] [RESOLVED] 배치 실패 (ref=tail0001) — 복구됨\n")      # 대상 오류가 500줄 밖 → 숨길 것 없음
+    s = [v["sample"] for v in _scanner()._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert not any("disk full" in x for x in s), s
+    assert any("timeout upl" in x for x in s), s                                # 같은 ref 다른 오류는 남음
+    assert any("cln" in x for x in s) and any("bat2" in x for x in s), s
+    ctx = _dispatch_scan_only(r)
+    assert "timeout upl" in ctx and "bat2" in ctx and "disk full" not in ctx, ctx
