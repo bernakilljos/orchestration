@@ -380,3 +380,24 @@ def test_resolved_marker_tail_boundary_and_unreadable_logs(tmp_path):
     ctx = type("C", (), {"raw_stripped": "확인", "project_dir": str(proj)})()
     out = m.run(ctx)
     assert out and "indep" in out["additionalContext"]                       # 기록 실패가 알림을 막지 않음
+
+
+def test_resolved_marker_does_not_suppress_partial_matches_or_other_files(tmp_path):
+    """R354 6차 검토 P2: 8자 이상 일반 문구도 다른 오류와 부분 일치하면 과도하게 숨겼다 →
+    «[ERROR] <문구>» 로 시작하는 같은 파일의 앞선 오류만 숨김 · 문구가 메시지 중간에 든 다른 오류 · 다른 파일 · 해소 뒤 재발은 알림."""
+    m = _scanner()
+    d = tmp_path / "logs"; d.mkdir()
+    (d / "a.log").write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 작업 실패 — disk full",
+        f"[{_ts(450)}] [ERROR] 야간 배치: 백업 작업 실패 원인 추적 중 nightly",   # 같은 단어가 중간에 든 다른 오류
+        f"[{_ts(440)}] [ERROR] 업로드 실패 (백업 작업 실패 이후) upl",            # 같은 단어 · 다른 원인
+        f"[{_ts(300)}] [RESOLVED] 백업 작업 실패 — 복구됨",
+    ]) + "\n", encoding="utf-8")
+    (d / "b.log").write_text(f"[{_ts(400)}] [ERROR] 백업 작업 실패 — 다른 파일 bfile\n", encoding="utf-8")
+    samples = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert not any("disk full" in s for s in samples)                         # 자기 오류만 숨김
+    for mark in ("nightly", "upl", "bfile"):
+        assert any(mark in s for s in samples), (mark, samples)
+    with (d / "a.log").open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(60)}] [ERROR] 백업 작업 실패 — disk full again\n")
+    assert any("again" in v["sample"] for v in m._scan(str(d)).values())     # 해소 뒤 재발

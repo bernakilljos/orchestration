@@ -97,7 +97,9 @@ def _scan(log_dir: str):
             d["sample"] = ln.strip()[:200]
             last_at[key] = idx
         for key, idx in last_at.items():
-            if any(r_idx > idx and phrase in found[key]["sample"] for r_idx, phrase in resolved):
+            # R354 6차 검토 P2: 부분 일치(문구가 메시지 중간에 들어 있는 다른 오류)까지 숨기지 않도록 «[ERROR] <문구>» 로 시작하는 오류만
+            if any(r_idx > idx and re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[key]["sample"], re.I)
+                   for r_idx, phrase in resolved):
                 found.pop(key, None)
     return found
 
