@@ -57,6 +57,16 @@ def validate(spec: dict, allow_unverified: bool = False) -> dict:
             claims.append({"view": v.get("type"), "element": ref, "label": it.get("label"), "source": src or "미확인"})
             if not src:
                 unverified.append(ref)
+    for v in spec.get("views") or []:
+        # R342 (Azure «양방향 흐름은 두 흐름» · c4model Dynamic): 사람이 시작한 요청 흐름이 요청자에게 돌아오지 않으면
+        #   응답 화살표가 빠진 그림이 된다 (격리 샘플 Dynamic 장이 게이트웨이에서 끝남) → 돌아오는 단계 또는 단방향 근거(no_response) 필수
+        steps = v.get("steps") or []
+        if v.get("type") != "dynamic" or not steps or v.get("no_response"):
+            continue
+        who = steps[0].get("from")
+        if (nodes.get(who) or {}).get("kind") == "person" and not any(st.get("to") == who for st in steps[1:]):
+            errors.append(f"Dynamic «{v.get('title', '')}» 응답 흐름 없음: 요청자 {who} 에게 돌아오는 단계를 넣거나 "
+                          f"단방향이면 view 에 \"no_response\": \"근거\" 를 적는다")
     if unverified and not allow_unverified:
         errors.append("근거(source) 없는 요소 %d개: %s — 원본 문서·코드·설정에서 찾아 적거나 --allow-unverified (미확인 표시)"
                       % (len(unverified), ", ".join(unverified[:8])))
