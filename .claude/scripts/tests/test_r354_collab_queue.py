@@ -251,3 +251,73 @@ def test_double_failure_surfaces_in_next_session_via_log_scanner(tmp_path):
     found = m._scan(str(log.parent))
     hit = [d for d in found.values() if d["file"] == "ai-collab.log" and d["kind"] == "ERROR"]
     assert hit and "재개 큐 기록 실패" in hit[0]["sample"]                     # 다음 세션 주입 경로가 실제로 잡음
+
+
+def _dispatch_scan_only(r: Path) -> str:
+    """실제 UserPromptSubmit 분배기(prompt-dispatch.py main)를 로그 스캐너 1개로만 돌려 additionalContext 를 얻는다.
+    분배기의 로그·요청 추적·세션 중복 제거는 kit 운영 폴더에 쓰므로 막는다 (시험 입력이 운영 기록에 남지 않게)."""
+    runner = (
+        "import importlib.util,io,sys,_common\n"
+        f"spec=importlib.util.spec_from_file_location('pd',{str(ROOT / '.claude' / 'hooks' / 'prompt-dispatch.py')!r})\n"
+        "m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)\n"
+        "m.HOOKS=[('surface-log-errors','surface_log_errors')];m._write_log=lambda lines:None\n"
+        "_common.trace_emit=lambda *a,**k:None\n"
+        "sys.stdin=io.TextIOWrapper(io.BytesIO('{\"prompt\":\"상태 확인\"}'.encode()),encoding='utf-8')\n"
+        "m.main([])\n")
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(r), "PYTHONUTF8": "1", "PROMPT_INJECT_DEDUPE": "0",
+           "PYTHONPATH": str(ROOT / ".claude" / "hooks" / "prompt")}
+    p = subprocess.run([sys.executable, "-X", "utf8", "-c", runner], env=env, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=60, cwd=str(r))
+    assert p.returncode == 0, p.stderr
+    if not p.stdout.strip():
+        return ""
+    return json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+def test_triple_failure_stderr_only_no_crash_then_recover(tmp_path):
+    """R354 4차 검토 P2: 재개 큐 · state.json · 운영 로그 셋 다 못 쓰는 삼중 장애 →
+    예외 없이 queue rc 1 · 세 실패가 모두 stderr 에 · 기존 state.json 보존 · 원인 해소 뒤 다음 queue 가 복구."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    st_path = r / ".ai-collab" / "state.json"
+    before = st_path.read_bytes()
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True); na.mkdir()
+    (r / ".ai-collab" / "state.tmp").mkdir()
+    log = r / ".claude" / "logs" / "ai-collab.log"
+    log.unlink(missing_ok=True); log.mkdir(parents=True)                        # 운영 로그 자리에 폴더 = 기록 불가
+    q = _run(r, "queue")
+    assert q.returncode == 1 and "Traceback" not in q.stderr, q.stderr
+    for msg in ("collab 큐 기록 실패", "queue_error 기록 실패", "운영 로그 기록도 실패"):
+        assert msg in q.stderr, (msg, q.stderr)
+    assert st_path.read_bytes() == before
+    log.rmdir(); (r / ".ai-collab" / "state.tmp").rmdir(); na.rmdir()
+    ok = _run(r, "queue")
+    assert ok.returncode == 0 and "R2#1 [claude]" in _resume(r)
+    assert not log.exists() or "[ERROR]" not in log.read_text(encoding="utf-8")  # 기록 못 한 오류를 지어내지 않음
+
+
+def test_log_error_reaches_real_prompt_then_resolved_not_repeated(tmp_path):
+    """R354 4차 검토 P2: 이중 장애 ERROR 가 실제 프롬프트 분배기 출력(additionalContext)에 들어가고,
+    복구 뒤에는 해소 표시로 같은 ERROR 가 다시 주입되지 않으며 재개 큐가 재생성된다. 해소 뒤 재발은 다시 알림."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True); na.mkdir()
+    (r / ".ai-collab" / "state.tmp").mkdir()
+    assert _run(r, "queue").returncode == 1
+    ctx1 = _dispatch_scan_only(r)
+    assert "로그 오류 자동 점검" in ctx1 and "재개 큐 기록 실패" in ctx1, ctx1   # 다음 프롬프트에 실제 주입
+    (r / ".ai-collab" / "state.tmp").rmdir(); na.rmdir()
+    assert _run(r, "queue").returncode == 0                                     # 복구 → 해소 표시
+    log = r / ".claude" / "logs" / "ai-collab.log"
+    tail = log.read_text(encoding="utf-8").strip().splitlines()
+    assert tail[-1].count("[RESOLVED]") == 1 and "R2#1 [claude]" in _resume(r)
+    assert _run(r, "queue").returncode == 0                                     # 이미 해소됐으면 해소 줄 중복 X
+    assert log.read_text(encoding="utf-8").count("[RESOLVED]") == 1
+    (r / ".claude" / "state" / "log-errors-seen.json").unlink(missing_ok=True)  # 새 PC·seen 없는 새 세션 가정
+    assert "재개 큐 기록 실패" not in _dispatch_scan_only(r)                  # 해소된 오류는 다시 안 알림
+    na.unlink(missing_ok=True); na.mkdir()                                      # 해소 뒤 재발
+    assert _run(r, "queue").returncode == 1
+    (r / ".claude" / "state" / "log-errors-seen.json").unlink(missing_ok=True)
+    assert "재개 큐 기록 실패" in _dispatch_scan_only(r)                      # 재발은 다시 알림

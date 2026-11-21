@@ -9,6 +9,8 @@
   - 경고: 같은 종류가 24h 에 20건 넘게 반복되면 주입 (일회성 경고는 잡음)
   - 이미 알린 종류는 건수가 2배 이상 늘고 6시간 지났을 때만 다시 알린다
 상태: .claude/state/log-errors-seen.json
+해소 표시 (R354 4차 검토 P2): 같은 로그에서 나중에 «[RESOLVED] <문구>» 줄이 나오면, 그보다 앞서 기록된 «<문구>» 포함 오류는 주입하지 않는다.
+  (복구가 끝난 오류를 다음 세션에 다시 알리던 문제 · 문구가 다른 오류와 해소 뒤 재발한 오류는 그대로 알림)
 """
 from __future__ import annotations
 
@@ -27,6 +29,7 @@ TS_RE = re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
 # 끝 경계 필수 (2026-11-10): 정리 기록의 파일 이름 "errors/error_2026….log" 가 ERROR 로 세어졌다 · FAILED·FAILURE 는 유지
 ERR_RE = re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])", re.I)
 WARN_RE = re.compile(r"\b(WARN|\[skip\])", re.I)
+RESOLVED_RE = re.compile(r"\[RESOLVED\]\s*(.+?)\s*(?:—|$)")
 WARN_REPEAT_MIN = 20       # BASIS: agreed(2026-10-16, 10분 주기 작업이 24h 에 144회 → 20회+ 반복이면 일회성이 아니다)
 RENOTIFY_SEC = 6 * 3600    # BASIS: agreed(2026-10-16, 같은 오류를 매 프롬프트 넣으면 잡음 — 하루 4번 이내)
 
@@ -72,7 +75,13 @@ def _scan(log_dir: str):
             lines = _tail_lines(lp, 500)
         except OSError:
             continue
-        for ln in lines:
+        resolved = []                      # (줄 순서, 해소 문구)
+        last_at: dict = {}                 # 오류 key → 이 파일에서 마지막으로 나온 줄 순서
+        for idx, ln in enumerate(lines):
+            rm = RESOLVED_RE.search(ln)
+            if rm:
+                resolved.append((idx, rm.group(1)))
+                continue
             e, w = ERR_RE.search(ln), WARN_RE.search(ln)
             if not (e or w):
                 continue
@@ -83,6 +92,10 @@ def _scan(log_dir: str):
             d = found.setdefault(key, {"kind": "ERROR" if e else "WARN", "n": 0, "file": name, "sample": ""})
             d["n"] += 1
             d["sample"] = ln.strip()[:200]
+            last_at[key] = idx
+        for key, idx in last_at.items():
+            if any(r_idx > idx and phrase in found[key]["sample"] for r_idx, phrase in resolved):
+                found.pop(key, None)
     return found
 
 

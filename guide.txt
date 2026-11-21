@@ -803,6 +803,7 @@
 - 2026-11-21 R354 검토 반영 (reviews/R354 changes_requested P1): ai-collab-report.py queue 가 next-actions 기록 자식의 종료 코드를 안 봐 실패가 성공처럼 지나가던 것 → rc·stderr 검사 · 실패 = queue rc 1 · report·poll 은 본 작업 유지 + stderr 경고 + state.json queue_error (성공 시 해제 · 재시도 루프 X) · auto-save-next-actions.py 치명 오류 종료 코드: Stop 훅(answer·goals) 만 0 · collab·manual-* 는 1 · test_periodic_snapshot 시험이 실행 폴더에 따라 실패하던 환경 의존 제거
 - 2026-11-21 R354 2차 검토 반영: queue_error 를 적는 state 저장 자체가 실패하면 예외가 원래 오류(재개 큐 기록 실패)를 덮던 것 → _save_state_quiet: 두 실패 모두 stderr · queue rc 1 · 원자 교체라 기존 state.json 보존 · 임시 파일 정리 · 다음 queue·report·poll 이 다시 시도 (재시도 루프 X)
 - 2026-11-21 R354 3차 검토 반영: 재개 큐 기록 실패를 state.json 과 별개로 .claude/logs/ai-collab.log 에 시각 있는 ERROR 1줄 (queue_error 저장마저 실패해도 기존 «로그 오류 자동 점검» surface_log_errors 가 다음 세션에 주입 · 로그도 못 쓰면 stderr 만)
+- 2026-11-21 R354 4차 검토 반영: 복구 뒤에도 24h 안 ERROR 줄이 다음 세션에 다시 주입되던 것 → queue 성공 시 로그 끝의 미해소 ERROR 가 있으면 «[RESOLVED] collab 재개 큐 기록 실패» 1줄 (중복 X) · surface_log_errors 는 같은 로그에서 나중의 «[RESOLVED] 문구» 보다 앞선 같은 문구 오류를 주입 안 함 (해소 뒤 재발은 다시 알림) · 삼중 장애(큐·state·로그 모두 기록 불가)·실제 프롬프트 분배기 주입 시험
 ' 표기가 줄바꿈으로 깨져 데이터 전용 판정 실패 → 본문 속 push 언급이 실행으로 남던 것 (실제 줄바꿈 있으면 변환 안 함) · VS Code 체감: 모델 대기 중앙 4.0초·p90 9.9초 vs 로컬 훅 68ms · 3분 표본 CPU 합 최대 9%·RAM 여유 5.6GB+ · IFRS·ICMAI 는 작업 폴더 설정이 없거나 짧아 전역 terminal.integrated.gpuAcceleration=off (가장 느린 DOM 렌더) 적용 중
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)

@@ -417,19 +417,49 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
             #   (기존 SessionStart·프롬프트 «로그 오류 자동 점검» surface_log_errors 가 .claude/logs/*.log 를 읽어 다음 세션에 주입)
             _log_queue_error(err if saved else f"{err} · state.json queue_error 기록도 실패")
             return -1
-        if st.pop("queue_error", None) is not None and not _save_state_quiet(st, "queue_error 해제"):
+        had = st.pop("queue_error", None) is not None
+        if _log_tail_has_queue_error():
+            # R354 4차 검토 P2: 복구한 뒤에도 24시간 안의 ERROR 줄이 다음 세션에 다시 주입됐다 → 해소 표시 1줄을 남긴다 (스캐너가 이전 ERROR 를 뺀다)
+            _log_queue_line(f"[RESOLVED] {_QUEUE_LOG_MARK} — 다음 queue 에서 복구됨 (재개 큐 재생성 완료)")
+        if had and not _save_state_quiet(st, "queue_error 해제"):
             return -1
     return n_claude
 
 
+_QUEUE_LOG_MARK = "collab 재개 큐 기록 실패"
+
+
+def _queue_log_path() -> Path:
+    return ROOT / ".claude" / "logs" / "ai-collab.log"
+
+
+def _log_tail_has_queue_error() -> bool:
+    """운영 로그 끝부분에서 재개 큐에 관한 마지막 줄이 아직 해소되지 않은 ERROR 인지 본다 (끝 16KB 만 읽음 · 읽기 실패면 False)."""
+    try:
+        with _queue_log_path().open("rb") as f:
+            f.seek(0, os.SEEK_END)
+            f.seek(max(0, f.tell() - 16384))
+            tail = f.read().decode("utf-8", "replace").splitlines()
+    except OSError:
+        return False
+    for ln in reversed(tail):
+        if _QUEUE_LOG_MARK in ln:
+            return "[ERROR]" in ln and "[RESOLVED]" not in ln
+    return False
+
+
 def _log_queue_error(detail: str) -> bool:
     """재개 큐 기록 실패를 .claude/logs/ai-collab.log 에 남김 (state.json 과 별개 통로). 로그도 못 쓰면 stderr 만 (False)."""
+    return _log_queue_line(f"[ERROR] {_QUEUE_LOG_MARK} — {detail[:300]} "
+                           f"(다음 세션 재개 큐가 낡았을 수 있음 · python .claude/scripts/ai-collab-report.py queue 로 재확인)")
+
+
+def _log_queue_line(text: str) -> bool:
     try:
-        p = ROOT / ".claude" / "logs" / "ai-collab.log"
+        p = _queue_log_path()
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] collab 재개 큐 기록 실패 — {detail[:300]} "
-                    f"(다음 세션 재개 큐가 낡았을 수 있음 · python .claude/scripts/ai-collab-report.py queue 로 재확인)\n")
+            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {text}\n")
         return True
     except OSError as e:
         print(f"[ai-collab] 운영 로그 기록도 실패 — {type(e).__name__} (stderr 가 유일한 기록)", file=sys.stderr)
