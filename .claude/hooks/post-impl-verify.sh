@@ -95,6 +95,19 @@ for pptx in $CHANGED_PPTX; do
   fi
 done
 
+# R347#1: 파일 단위 패키지 검증 (pptx·xlsx·hwpx — 관계 대상·XML 문법·슬라이드 밖 도형·수식 오류 값·없는 시트·hwpx 필수 파트)
+CHANGED_PKG=$(git diff --name-only HEAD~1 2>/dev/null | grep -E '\.(pptx|xlsx|hwpx)$' || true)
+if [ -n "$CHANGED_PKG" ] && [ -f "$PROJECT_ROOT/.claude/scripts/verify-office-package.py" ]; then
+  for pkg in $CHANGED_PKG; do
+    [ -f "$PROJECT_ROOT/$pkg" ] || continue
+    if ! RESULT=$(python -X utf8 "$PROJECT_ROOT/.claude/scripts/verify-office-package.py" "$PROJECT_ROOT/$pkg" 2>&1); then
+      echo "[VERIFY FAIL] office package: $pkg"
+      echo "$RESULT" | grep -A3 '"fails"' | head -5
+      ERRORS=$((ERRORS+1))
+    fi
+  done
+fi
+
 if [ -n "$CHANGED_PNG" ] && [ -f "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" ]; then
   PNG_DIRS=$(echo "$CHANGED_PNG" | xargs -I{} dirname {} 2>/dev/null | sort -u)
   for dir in $PNG_DIRS; do
