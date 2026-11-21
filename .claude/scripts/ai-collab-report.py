@@ -350,7 +350,7 @@ def cmd_poll() -> int:
     left = cmd_queue(quiet=True) if reported else 0   # R354: 다시 깨우지 않는 대신 남은 일을 재개 큐에 남김
     if not new:
         print(f"[ai-collab] 새 요청·검토 없음{f' (처리 중 {len(busy)}건: ' + ' '.join(busy) + ')' if busy else ''}"
-              f"{f' (보고됨·미확정 {len(reported)}건 · 남은 실행 가능 항목 {left} → next-actions collab)' if reported else ''}")
+              f"{f' (보고됨·미확정 {len(reported)}건 · ' + (f'남은 실행 가능 항목 {left} → next-actions collab)' if left >= 0 else '재개 큐 기록 실패 — stderr·state.json queue_error)') if reported else ''}")
         return 3
     print(json.dumps(new, ensure_ascii=False, indent=1))
     return 0
@@ -394,12 +394,28 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
     if not quiet:
         print(body or "[ai-collab] 남은 협업 요청 없음")
     if write:
+        # R354 검토 P1: 자식 종료 코드를 보지 않아 기록 실패(권한·잠금·폴더 충돌)가 성공처럼 지나가 재개 큐가 낡은 채 남았다 →
+        #   rc·stderr 검사 · 실패는 stderr + state.json queue_error (다음 성공 때 해제) · 재시도 1회 없음 (다음 report·poll 이 다시 시도)
         na = Path(__file__).resolve().parent / "auto-save-next-actions.py"
+        err = ""
         try:
-            subprocess.run([sys.executable, "-X", "utf8", str(na), "collab"], input=body.encode("utf-8"),
-                           env={**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT)}, capture_output=True, timeout=30)
+            r = subprocess.run([sys.executable, "-X", "utf8", str(na), "collab"], input=body.encode("utf-8"),
+                               env={**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT)}, capture_output=True, timeout=30)
+            if r.returncode != 0:
+                tail = (r.stderr or b"").decode("utf-8", "replace").strip().splitlines()[-1:] or [""]
+                err = f"rc={r.returncode} {tail[0][:200]}"
         except (OSError, subprocess.SubprocessError) as e:
-            print(f"[ai-collab] next-actions 기록 실패: {type(e).__name__}", file=sys.stderr)
+            err = f"{type(e).__name__}: {str(e)[:200]}"
+        st = _state()
+        if err:
+            print(f"[ai-collab] collab 큐 기록 실패 — {err} (다음 세션 재개 큐가 낡았을 수 있음 · "
+                  f".claude/state/next-actions.md 확인)", file=sys.stderr)
+            st["queue_error"] = {"rc": err.split()[0], "detail": err,
+                                 "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            _save_state(st)
+            return -1
+        if st.pop("queue_error", None) is not None:
+            _save_state(st)
     return n_claude
 
 
@@ -510,8 +526,7 @@ def main(argv: list) -> int:
     if op == "poll":
         return cmd_poll()
     if op == "queue":
-        cmd_queue(write="--no-write" not in argv[1:])
-        return 0
+        return 1 if cmd_queue(write="--no-write" not in argv[1:]) < 0 else 0
     if op == "ack" and len(argv) >= 2:
         return cmd_ack(argv[1])
     if op == "wait":

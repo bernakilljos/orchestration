@@ -2219,6 +2219,9 @@ def test_periodic_snapshot_real_detached_run_saves_and_logs(tmp_path, monkeypatc
     monkeypatch.setattr(ps, "project_guard", lambda ctx: True)
     monkeypatch.setattr(ps, "root_path", lambda *a: str(proj.joinpath(*a)))
     monkeypatch.delenv("PERIODIC_SNAPSHOT_SYNC", raising=False)
+    # R354: .sh 의 프로젝트 확인 `${CLAUDE_PROJECT_DIR:-$PWD}/plugins` 가 pytest 를 실행한 폴더를 따라가
+    #   .claude/scripts 에서 돌리면 조용히 exit 0 → 'snapshot=unchanged' 로 실패하던 환경 의존 (루트에서는 통과) → 격리 프로젝트를 명시
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))
     assert ps.run(None) is None
     assert ps.run(None) is None                                       # 같은 창의 두 번째 호출
     log = proj / ".claude" / "logs" / "periodic-snapshot.log"

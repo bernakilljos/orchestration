@@ -312,4 +312,7 @@ if __name__ == "__main__":
         sys.exit(main(sys.argv))
     except Exception as e:
         print(f"[auto-save-next-actions] fatal: {e}", file=sys.stderr)
-        sys.exit(0)
+        # R354 검토 P1: Stop·SessionEnd 훅(answer·goals) 은 세션을 막지 않게 0 유지 ·
+        #   collab·manual-* 는 호출자가 실패를 알아야 하므로 1 (종전: 전부 0 → 재개 큐 기록 실패가 성공처럼 보임)
+        _cmd = sys.argv[1] if len(sys.argv) > 1 else "answer"
+        sys.exit(0 if _cmd in ("answer", "goals") else 1)

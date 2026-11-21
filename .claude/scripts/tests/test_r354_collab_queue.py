@@ -185,3 +185,27 @@ def test_report_refreshes_when_items_change_and_keeps_human_sections(tmp_path):
     assert t.count("## 남은 문제") == 1 and t.count("## 커밋") == 1                 # 자동 절 중복 X
     same = _run(r, "report", "R2", "--status", "PARTIAL")
     assert "변경 없음" in same.stdout                                               # 아무것도 안 바뀌면 그대로 건너뜀
+
+
+def test_queue_write_failure_is_visible_and_recovers(tmp_path):
+    """R354 검토 P1: next-actions 기록이 실패해도(자식 exit 1 · 기록 불가) queue 가 성공처럼 끝나던 것 →
+    queue rc 1 + stderr 원인 · report·poll 은 본 작업은 끝내되 경고와 state.json queue_error 로 관찰 가능 ·
+    원인 해소 뒤 다음 queue 가 복구하고 재개 주입까지 이어짐 (무한 재시도 X · 기존 상태 보존)."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True)
+    na.mkdir(parents=True)                                                     # 파일 자리에 폴더 = 기록 불가 주입
+    q = _run(r, "queue")
+    assert q.returncode == 1 and "collab 큐 기록 실패" in q.stderr, (q.returncode, q.stderr)
+    _ledger(r, "item-add", "R2", "기록 실패 중 새 항목")                         # 보고서를 다시 만들 변화
+    rep = _run(r, "report", "R2", "--status", "PARTIAL")
+    assert rep.returncode == 0 and "collab 큐 기록 실패" in rep.stderr, rep.stderr   # 보고는 끝내되 경고
+    st = _state(r)
+    assert st.get("queue_error", {}).get("rc") not in (None, 0)                 # 관찰 가능한 기록
+    assert (r / ".ai-collab" / "reports" / "R2.md").is_file()                   # 본 작업(보고서) 보존
+    na.rmdir()                                                                  # 원인 해소
+    ok = _run(r, "queue")
+    assert ok.returncode == 0 and "R2#1" in ok.stdout
+    assert "queue_error" not in _state(r)                                       # 복구되면 오류 기록 해제
+    assert "R2#1 [claude]" in _resume(r)                                        # 다음 세션 재개까지 이어짐
