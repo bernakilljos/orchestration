@@ -500,3 +500,37 @@ def test_shared_ref_different_messages_and_boundaries_reach_real_prompt(tmp_path
     assert any("cln" in x for x in s) and any("bat2" in x for x in s), s
     ctx = _dispatch_scan_only(r)
     assert "timeout upl" in ctx and "bat2" in ctx and "disk full" not in ctx, ctx
+
+
+def test_resolved_phrase_must_equal_error_head_not_prefix(tmp_path):
+    """R354 10차 검토 P2: «[RESOLVED] 백업 실패 (ref=X)» 가 같은 ref 의 «[ERROR] 백업 실패 (ref=X) - 추가 장애» 까지 숨겼다
+    (해소 문구를 앞부분만 비교) → 오류 머리(«[ERROR]» 뒤 ~ «—» 앞, 해소 표시와 같은 경계)가 해소 문구와 완전히 같을 때만 ·
+    머리는 200자로 잘린 표본이 아니라 원래 줄에서 뽑는다 · 서로 다른 ref·같은 메시지 · 해소 뒤 재발 · 500줄 경계 · 실제 주입."""
+    r = _repo(tmp_path)
+    d = r / ".claude" / "logs"; d.mkdir(parents=True, exist_ok=True)
+    long_a = "가" * 230 + " 끝A"
+    long_b = "가" * 230 + " 끝B"                                                # 200자 안에서는 같은 두 오류
+    lines = [
+        f"[{_ts(600)}] [ERROR] 백업 실패 (ref=pfx00001) — disk full",
+        f"[{_ts(590)}] [ERROR] 백업 실패 (ref=pfx00001) - 추가 장애 extra",         # 같은 ref · 공통 접두어 · 다른 원인
+        f"[{_ts(580)}] [ERROR] 동기화 실패 (ref=dif00001) — x",
+        f"[{_ts(570)}] [ERROR] 동기화 실패 (ref=dif00002) — y sync2",               # 같은 메시지 · 다른 ref
+        f"[{_ts(560)}] [ERROR] {long_a} (ref=lng00001) — la",
+        f"[{_ts(550)}] [ERROR] {long_b} (ref=lng00001) — lb",
+        f"[{_ts(400)}] [RESOLVED] 백업 실패 (ref=pfx00001) — 복구됨",
+        f"[{_ts(390)}] [RESOLVED] 동기화 실패 (ref=dif00001) — 복구됨",
+        f"[{_ts(380)}] [RESOLVED] {long_a} (ref=lng00001) — 복구됨",
+    ]
+    lines += [f"[{_ts(300)}] [INFO] filler {i}" for i in range(480)]            # 위 오류·표시가 끝 500줄 안에 남는 범위
+    (d / "p.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    found = [v for v in _scanner()._scan(str(d)).values() if v["kind"] == "ERROR"]
+    s = [v["sample"] for v in found]
+    assert not any("disk full" in x for x in s), s
+    assert any("extra" in x for x in s), s                                     # 공통 접두어 다른 원인은 남음
+    assert any("sync2" in x for x in s) and not any("dif00001" in x for x in s), s
+    lng = [v.get("head", "") for v in found if v.get("ref") == "lng00001"]     # 표본은 200자로 잘려 끝이 안 보임
+    assert len(lng) == 1 and lng[0].endswith("끝b (ref=lng00001)"), lng       # 긴 머리 A 만 해소 · 200자 안에서 같은 B 는 남음
+    with (d / "p.log").open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(60)}] [ERROR] 백업 실패 (ref=pfx00001) — disk full again\n")
+    ctx = _dispatch_scan_only(r)
+    assert "again" in ctx and "extra" in ctx and "sync2" in ctx, ctx           # 실제 주입: 재발·미해소만

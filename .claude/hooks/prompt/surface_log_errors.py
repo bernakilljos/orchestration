@@ -14,6 +14,7 @@
   R354 7차: 표시에 «(ref=<상관 ID>)» 가 있으면 같은 ID 오류만 해소 · ID 없는 옛 표시는 «[ERROR] <문구>» 로 시작하는 오류가 한 종류일 때만
   R354 8차: ref 는 완전 일치로 비교 · ref 가 다르면 (숫자만 달라도) 다른 오류로 센다
   R354 9차: ref 가 같아도 «[ERROR] <해소 문구>» 로 시작하는 오류만 해소 (같은 ref 를 공유한 다른 오류는 알림)
+  R354 10차: «시작» 이 아니라 오류 머리(«[ERROR]» 뒤 ~ «—» 앞)와 해소 문구가 완전히 같을 때만 · 머리는 원래 줄에서 뽑는다
 """
 from __future__ import annotations
 
@@ -34,6 +35,8 @@ ERR_RE = re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\
 WARN_RE = re.compile(r"\b(WARN|\[skip\])", re.I)
 RESOLVED_RE = re.compile(r"\[RESOLVED\]\s*(.+?)\s*(?:—|$)")
 REF_RE = re.compile(r"\(ref=([\w-]{6,})\)")
+# 오류 머리 = «[ERROR]» 뒤 ~ «—» 앞 (해소 표시 RESOLVED_RE 와 같은 경계 · R354 10차)
+ERR_HEAD_RE = re.compile(r"\[ERROR\]\s*(.+?)\s*(?:—|$)", re.I)
 WARN_REPEAT_MIN = 20       # BASIS: agreed(2026-10-16, 10분 주기 작업이 24h 에 144회 → 20회+ 반복이면 일회성이 아니다)
 RENOTIFY_SEC = 6 * 3600    # BASIS: agreed(2026-10-16, 같은 오류를 매 프롬프트 넣으면 잡음 — 하루 4번 이내)
 
@@ -98,8 +101,12 @@ def _scan(log_dir: str):
             # R354 8차 검토 P2: _sig 가 숫자를 지워 숫자만 다른 ref 오류가 한 key 로 합쳐졌다 → ref 를 key 에 넣어 따로 센다
             em = REF_RE.search(ln)
             eref = em.group(1) if em else ""
-            key = name + " | " + _sig(ln) + (f" | ref={eref}" if eref else "")
-            d = found.setdefault(key, {"kind": "ERROR" if e else "WARN", "n": 0, "file": name, "sample": "", "ref": eref})
+            # R354 10차: 머리는 200자 잘린 표본이 아니라 원래 줄에서 · ref 오류는 머리까지 키에 (지문은 앞 120자·숫자 지움)
+            hm = ERR_HEAD_RE.search(ln)
+            ehead = hm.group(1).strip().casefold() if hm else ""
+            key = name + " | " + _sig(ln) + (f" | ref={eref} | head={ehead}" if eref else "")
+            d = found.setdefault(key, {"kind": "ERROR" if e else "WARN", "n": 0, "file": name, "sample": "", "ref": eref,
+                                       "head": ehead})
             d["n"] += 1
             d["sample"] = ln.strip()[:200]
             last_at[key] = idx
@@ -110,12 +117,11 @@ def _scan(log_dir: str):
             if ref:
                 # R354 7차 검토 P2: 상관 ID 가 있으면 그 ID 를 가진 오류만 (같은 접두어·다른 원인 오류는 그대로 알림)
                 # R354 8차: 부분 문자열(aaaa1111 ⊂ aaaa1111-extra) 아니라 완전 일치
-                # R354 9차: 같은 ref 를 공유한 다른 오류는 남긴다 → «[ERROR] <해소 문구>» 로 시작하는 것만
-                head = re.compile(r"\[ERROR\]\s*" + re.escape(phrase), re.I)
-                drop.update(k for k in before if found[k]["ref"] == ref.group(1) and head.search(found[k]["sample"]))
+                # R354 9차: 같은 ref 를 공유한 다른 오류는 남긴다 · 10차: 앞부분 일치가 아니라 오류 머리 = 해소 문구 완전 일치
+                drop.update(k for k in before if found[k]["ref"] == ref.group(1) and found[k]["head"] == phrase.casefold())
                 continue
             # 옛 형식 (ID 없음): «[ERROR] <문구>» 로 시작하는 오류만 (R354 6차) · 그런 오류 종류가 둘 이상이면 어느 것인지 모르므로 숨기지 않음
-            hits = [k for k in before if re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[k]["sample"], re.I)]
+            hits = [k for k in before if found[k]["head"] == phrase.casefold()]          # 10차: 머리 완전 일치
             if len(hits) == 1:
                 drop.update(hits)
         for key in drop:
