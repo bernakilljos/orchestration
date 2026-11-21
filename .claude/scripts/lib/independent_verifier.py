@@ -98,6 +98,117 @@ def same_pattern_candidates(cwd: Path, limit: int = 20) -> List[Dict[str, Any]]:
     return found
 
 
+# ── R348#1 의미 기반 동일 원인 후보 (줄 전체 일치 밖) ──
+_SEM_STR = re.compile(r"""(["'])((?:\\.|(?!\1).){8,200}?)\1""")
+_SEM_DEF = re.compile(r"^\s*(?:def|function|async\s+def)\s+([A-Za-z_]\w{3,})|^\s*([A-Za-z_]\w{3,})\s*\(\)\s*\{")
+_SEM_HUNK = re.compile(r"^@@[^@]*@@\s*(?:.*?\b(?:def|function)\s+)?([A-Za-z_]\w{3,})?")
+_SEM_CODE = (".py", ".sh", ".ps1", ".js", ".ts", ".bat", ".cmd", ".vue", ".java")
+_SEM_MAX_HITS = 20     # 이보다 많이 걸리면 일반 구문 — 신호로 쓰지 않음
+
+
+def _sem_git(cwd, args):
+    import subprocess
+    r = subprocess.run(["git", *args], capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(cwd))
+    return r.stdout if r.returncode in (0, 1) else ""
+
+
+def _sem_stem(path):
+    from pathlib import PurePosixPath
+    s = PurePosixPath(path).stem.lower().replace("-", "_")
+    return re.sub(r"^(hook_\d+_|user_prompt_|pre_|post_)", "", s)
+
+
+def semantic_same_cause(cwd, diff=None, rev=None, methods=None, limit=20):
+    """R348#1 동일 원인 후보 (파일 단위) — 줄 전체 일치만 보던 same_pattern_candidates 를 넓힌다.
+    신호: line(지운 줄 전체 일치) · literal(지운 줄의 문자열 리터럴 — 언어가 달라도 같은 정규식·메시지) ·
+          sibling(이름 줄기가 같은 짝 파일 — x_y.py ↔ x-y.sh) · caller(바꾼 함수를 부르는 곳 · 호출 1단계).
+    rev 를 주면 그 커밋 시점 저장소에서 찾는다 (평가용 · 작업본 무관). 판단은 사람·Judge 몫 — 후보일 뿐."""
+    methods = set(methods or ("line", "literal", "sibling", "caller"))
+    diff = diff if diff is not None else _sem_git(cwd, ["diff", "HEAD", "-U0"])
+    tail = [rev] if rev else []
+    changed, removed, added, funcs, cur = set(), [], set(), set(), None
+    for ln in diff.splitlines():
+        if ln.startswith("+++ "):
+            cur = ln[6:] if ln.startswith("+++ b/") else None
+            if cur:
+                changed.add(cur)
+        elif ln.startswith("--- "):
+            continue
+        elif ln.startswith("@@"):
+            m = _SEM_HUNK.match(ln)
+            if m and m.group(1) and cur and cur.endswith(_SEM_CODE):
+                funcs.add(m.group(1))
+        elif ln.startswith("-"):
+            removed.append(ln[1:].strip())
+            m = _SEM_DEF.match(ln[1:])
+            if m:
+                funcs.add(m.group(1) or m.group(2))
+        elif ln.startswith("+"):
+            added.add(ln[1:].strip())
+            m = _SEM_DEF.match(ln[1:])
+            if m:
+                funcs.add(m.group(1) or m.group(2))
+    cand = {}
+
+    def hit(args, reason, key, must=None):
+        out = _sem_git(cwd, ["grep", "-n", *args, *tail])
+        rows = []
+        for h in out.splitlines():
+            if rev and h.startswith(rev + ":"):
+                h = h[len(rev) + 1:]
+            p = h.split(":", 2)
+            if len(p) == 3 and (must is None or re.search(must, p[2])):
+                rows.append(p)
+        files = {p[0] for p in rows}
+        if not rows or len(files) > _SEM_MAX_HITS:
+            return
+        for p in rows:
+            if p[0] in changed or not p[0].endswith(_SEM_CODE) or "/tests/" in p[0]:
+                continue
+            c = cand.setdefault(p[0], {"path": p[0], "reasons": set(), "where": []})
+            c["reasons"].add(reason)
+            if len(c["where"]) < 3:
+                c["where"].append(f"{p[0]}:{p[1]} ({reason}: {key[:40]})")
+
+    gone = [x for x in removed if x not in added and len(x) >= 20 and not x.startswith(("#", "//", "|", "*", "-"))]
+    if "line" in methods:
+        for line in gone[:limit]:
+            out = _sem_git(cwd, ["grep", "-n", "-F", "-e", line, *tail])
+            for h in out.splitlines():
+                if rev and h.startswith(rev + ":"):
+                    h = h[len(rev) + 1:]
+                p = h.split(":", 2)
+                if len(p) == 3 and p[2].strip() == line and p[0] not in changed and p[0].endswith(_SEM_CODE) and "/tests/" not in p[0]:
+                    c = cand.setdefault(p[0], {"path": p[0], "reasons": set(), "where": []})
+                    c["reasons"].add("line")
+    if "literal" in methods:
+        lits = []
+        for line in removed:
+            for _, s in _SEM_STR.findall(line):
+                if len(re.findall(r"[A-Za-z가-힣]", s)) >= 3 and s not in lits and not re.fullmatch(r"[\w./-]+\.\w{1,4}", s):
+                    lits.append(s)
+        for s in lits[:limit]:
+            hit(["-F", "-e", s], "literal", s)
+    if "caller" in methods:
+        for f in sorted(funcs)[:limit]:
+            if f.startswith("_") and f.endswith("_") or f in ("main", "test", "init", "self"):
+                continue
+            hit(["-w", "-e", f], "caller", f, must=r"(?<!\w)%s\s*\(" % re.escape(f))   # -w 는 «f(» 뒤 단어 문자에서 깨짐 → 이름으로 찾고 괄호 줄만
+    if "sibling" in methods:
+        tracked = (_sem_git(cwd, ["ls-tree", "-r", "--name-only", rev]) if rev else _sem_git(cwd, ["ls-files"])).split("\n")
+        stems = {}
+        for t in tracked:
+            if t.endswith(_SEM_CODE) and "/tests/" not in t and "sandbox" not in t:
+                stems.setdefault(_sem_stem(t), []).append(t)
+        for p in changed:
+            for t in stems.get(_sem_stem(p), []):
+                if t not in changed:
+                    c = cand.setdefault(t, {"path": t, "reasons": set(), "where": []})
+                    c["reasons"].add("sibling")
+    out = [dict(c, reasons=sorted(c["reasons"])) for c in cand.values()]
+    return sorted(out, key=lambda c: (-len(c["reasons"]), c["path"]))[:limit * 2]
+
+
 EXTERNAL_EVIDENCE = ROOT / ".claude" / "state" / "external-evidence.jsonl"
 _MANIFESTS = {"requirements.txt", "pyproject.toml", "package.json", "go.mod", "Cargo.toml", "pom.xml"}
 _IMPORT_LINE = re.compile(r"^\+\s*(?:import|from)\s+([A-Za-z_]\w*)", re.MULTILINE)
@@ -1884,6 +1995,7 @@ def _cli_main(argv):
         print("       independent_verifier.py judge-handoff <goal_id> [--sandbox PATH] [--allow P1,P2]")
         print("       independent_verifier.py judge-absorb <goal_id>  (stdin: LLM result JSON)")
         print("       independent_verifier.py affected-tests  (작업 트리 변경 기준 회귀 후보)")
+        print("       independent_verifier.py same-cause  (R348 · 같은 원인 후보 파일: 줄·리터럴·짝 파일·호출)")
         return 2
     if argv[1] == "affected-tests":
         changed = (_run_git_in(ROOT, ["diff", "--name-only", "HEAD"]) or "").split()
@@ -1891,6 +2003,9 @@ def _cli_main(argv):
         return 0
     if argv[1] == "same-pattern":
         print(json.dumps(same_pattern_candidates(ROOT), ensure_ascii=False, indent=2))
+        return 0
+    if argv[1] == "same-cause":          # R348#1: 줄 일치 + 리터럴·짝 파일·호출 1단계 (후보일 뿐 · precision 낮음 — 보고서 R348)
+        print(json.dumps(semantic_same_cause(ROOT), ensure_ascii=False, indent=2))
         return 0
     if argv[1] == "regression-gate":     # 커밋 전: exit 0 = pass·preexisting·skip · 2 = regression · 1 = blocked
         res = regression_gate(ROOT, force_full=("--full" in argv[2:] or os.environ.get("REGRESSION_GATE_FULL") == "1"))

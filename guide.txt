@@ -814,6 +814,8 @@
 - 2026-11-21 R354 11차 검토 반영: ref 계약 명문화 (ref = 장애 에피소드 하나 · 작성자는 ai-collab-report._log_queue_error 하나뿐 · 따로 해소할 장애는 다른 ID) · 해소 표시를 먼저 남긴 뒤 queue_error 해제가 실패하면 «다 복구» 가 아닌데 해소로 보이던 순서 → 해제 성공 뒤에만 해소 표시
 - 2026-11-21 R354 13차 큐 R343#1: arch-diagram-pptx 에 deployment·dfd view — 깊이 기반 배치는 경계를 무시해 상자가 겹치거나 남의 노드를 감쌌다 → 경계 우선 배치(zone_layout · 경계마다 열 따로) · 신뢰 경계 통과 흐름 굵은 선·crossings 보고 · DFD 흐름 규칙(저장소·외부 직접 연결 거부) · 열 5개 이상이면 간격·글자 줄여 라벨 줄바꿈 방지
 - 2026-11-21 R354 13차 큐 R347#1: verify-office-package.py (pptx·xlsx·hwpx 파일 단위 검증 · 읽기 전용) — 공통: zip CRC·XML 문법·OPC 관계 대상 파트 · pptx: 슬라이드 밖 도형(2% 초과 실패)·10pt 미만 경고 · xlsx: 수식 결과 캐시 없음 경고·캐시 오류 값·없는 시트 참조 실패 · hwpx: mimetype·header·section·content.hpf · 실렌더는 미검증 표시 · post-impl-verify 훅 5번 절에 연결
+- 2026-11-21 R354 13차 큐 R348#1: independent_verifier.semantic_same_cause + CLI same-cause — 줄 전체 일치만 보던 동일 원인 탐색에 문자열 리터럴(언어 달라도)·이름 줄기 짝 파일(x_y.py↔x-y.sh)·호출 1단계 신호 추가 · 후보일 뿐(실제 수정 커밋 precision/recall 은 보고서 R354) · 자동 주입 안 함
+- 2026-11-22 R354 13차 큐 중 발견: 성능 게이트 «상태줄 1회» 트리거가 lib/*.py 전체라 상태줄이 열지도 않는 모듈 변경에도 측정·차단(HEAD·변경 교대 측정 범위 겹침) · 반대로 실제로 여는 request-ledger.py 는 빠져 있었음 → 트리거 = 상태줄이 여는 파일만 · test_r348_perf_trigger 가 감사 훅으로 실제 연 파일을 잡아 누락 검사
 ' 표기가 줄바꿈으로 깨져 데이터 전용 판정 실패 → 본문 속 push 언급이 실행으로 남던 것 (실제 줄바꿈 있으면 변환 안 함) · VS Code 체감: 모델 대기 중앙 4.0초·p90 9.9초 vs 로컬 훅 68ms · 3분 표본 CPU 합 최대 9%·RAM 여유 5.6GB+ · IFRS·ICMAI 는 작업 폴더 설정이 없거나 짧아 전역 terminal.integrated.gpuAcceleration=off (가장 느린 DOM 렌더) 적용 중
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
                     SSL 인증서 오류 즉시 fail-fast (retries 낭비 X)
