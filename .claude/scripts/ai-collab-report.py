@@ -412,11 +412,27 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
                   f".claude/state/next-actions.md 확인)", file=sys.stderr)
             st["queue_error"] = {"rc": err.split()[0], "detail": err,
                                  "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-            _save_state(st)
+            _save_state_quiet(st, err)
             return -1
-        if st.pop("queue_error", None) is not None:
-            _save_state(st)
+        if st.pop("queue_error", None) is not None and not _save_state_quiet(st, "queue_error 해제"):
+            return -1
     return n_claude
+
+
+def _save_state_quiet(st: dict, context: str) -> bool:
+    """R354 2차 검토: queue_error 를 적는 저장 자체가 실패하면 예외가 원래 오류를 덮었다 →
+    실패도 stderr 에 따로 남기고 False (원자 교체라 기존 state.json 은 그대로 · 다음 queue·report·poll 이 다시 시도 · 재시도 루프 X)."""
+    try:
+        _save_state(st)
+        return True
+    except OSError as e:
+        print(f"[ai-collab] queue_error 기록 실패 — {type(e).__name__}: {str(e)[:160]} "
+              f"(기존 state.json 유지 · 원래 상황: {context[:120]})", file=sys.stderr)
+        try:
+            STATE.with_suffix(".tmp").unlink()
+        except OSError:
+            pass
+        return False
 
 
 _ACK_PATH = re.compile(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md")

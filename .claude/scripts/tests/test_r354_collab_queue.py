@@ -209,3 +209,24 @@ def test_queue_write_failure_is_visible_and_recovers(tmp_path):
     assert ok.returncode == 0 and "R2#1" in ok.stdout
     assert "queue_error" not in _state(r)                                       # 복구되면 오류 기록 해제
     assert "R2#1 [claude]" in _resume(r)                                        # 다음 세션 재개까지 이어짐
+
+
+def test_queue_error_record_failure_keeps_original_error_and_state(tmp_path):
+    """R354 2차 검토 P1: queue_error 를 적는 state 저장 자체가 실패(원자 교체 전 임시 파일 쓰기 실패)하면
+    예외가 원래 오류(next-actions 기록 실패)를 덮었다 → 두 실패를 모두 stderr 에 · queue rc 1 · 기존 state.json 보존 ·
+    원인 해소 뒤 다음 queue 가 복구 (무한 재시도·원장 삭제 X)."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    st_path = r / ".ai-collab" / "state.json"
+    before = st_path.read_bytes()
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True); na.mkdir()                                     # 원래 오류: 재개 큐 기록 불가
+    (r / ".ai-collab" / "state.tmp").mkdir()                                   # 2차 오류: state 저장 불가
+    q = _run(r, "queue")
+    assert q.returncode == 1, (q.returncode, q.stderr)
+    assert "collab 큐 기록 실패" in q.stderr and "queue_error 기록 실패" in q.stderr, q.stderr   # 원래 오류가 덮이지 않음
+    assert "Traceback" not in q.stderr
+    assert st_path.read_bytes() == before                                       # 기존 state 보존
+    (r / ".ai-collab" / "state.tmp").rmdir(); na.rmdir()                        # 원인 해소
+    ok = _run(r, "queue")
+    assert ok.returncode == 0 and "queue_error" not in _state(r) and "R2#1 [claude]" in _resume(r)
