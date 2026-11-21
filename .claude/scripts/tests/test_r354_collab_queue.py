@@ -626,3 +626,32 @@ def test_report_head_override_survives_later_report_without_flag(tmp_path):
     assert _run(r, "report", "R2", "--base", base).returncode == 0
     ent = _state(r)["requests"]["R2"]
     assert ent["head_commit"] == newer and not ent.get("head_override"), ent        # 더 새 ID 커밋이면 자동 선택
+
+
+def test_report_head_override_edges_do_not_keep_stale_base(tmp_path):
+    """R354 17차 P2: --head 유지가 범위 변경·직계 아닌 커밋·재보고·ID 없는 추가 후속에서 오래된 기준을 붙잡지 않는지."""
+    r = _repo(tmp_path)
+    g = lambda *a: subprocess.run(["git", "-C", str(r), *a], capture_output=True, text=True, check=True).stdout.strip()
+    base = g("rev-parse", "HEAD")
+    impl = _c(r, "x.py", "1", "fix: 구현 (R2)")
+    f1 = _c(r, "t1.py", "1", "fix(test): ID 없는 후속 1")
+    assert _run(r, "report", "R2", "--base", base, "--head", f1).returncode == 0
+    # 1) 재보고(같은 상태) — 지정 유지·중복 생성 X
+    same = _run(r, "report", "R2", "--base", base)
+    assert same.returncode == 0 and _state(r)["requests"]["R2"]["head_commit"] == f1
+    # 2) ID 없는 후속이 하나 더 — 자동 선택(impl)보다 최신인 f1 유지 · 더 새 f2 로 다시 지정 가능
+    f2 = _c(r, "t2.py", "2", "fix(test): ID 없는 후속 2")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == f1                      # 몰래 f2 로 옮기지 않음 (지정한 것만)
+    assert _run(r, "report", "R2", "--base", base, "--head", f2).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == f2
+    # 3) 직계가 아닌 커밋(다른 가지) 지정 거부
+    side = g("commit-tree", impl + "^{tree}", "-p", impl, "-m", "fix: 옆 가지 (R2)")   # main 이력에 없는 커밋 (작업 트리 무변경)
+    bad = _run(r, "report", "R2", "--base", base, "--head", side)
+    assert bad.returncode == 2 and "범위 밖" in bad.stderr, bad.stderr
+    assert _state(r)["requests"]["R2"]["head_commit"] == f2                      # 거부 뒤 기존 값 그대로
+    # 4) 범위 변경 — 기준을 지정 head 뒤로 옮기면 그 head 는 범위 밖 → 유지하지 않고 새 범위의 자동 선택
+    new_impl = _c(r, "z.py", "3", "fix: 새 범위 구현 (R2)")
+    assert _run(r, "report", "R2", "--base", f2).returncode == 0
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == new_impl and not ent.get("head_override") and ent["base_commit"] == f2, ent
