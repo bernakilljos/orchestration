@@ -11,6 +11,7 @@
 상태: .claude/state/log-errors-seen.json
 해소 표시 (R354 4차 검토 P2): 같은 로그에서 나중에 «[RESOLVED] <문구>» 줄이 나오면, 그보다 앞서 기록된 «<문구>» 포함 오류는 주입하지 않는다.
   (복구가 끝난 오류를 다음 세션에 다시 알리던 문제 · 문구가 다른 오류와 해소 뒤 재발한 오류는 그대로 알림)
+  R354 7차: 표시에 «(ref=<상관 ID>)» 가 있으면 같은 ID 오류만 해소 · ID 없는 옛 표시는 «[ERROR] <문구>» 로 시작하는 오류가 한 종류일 때만
 """
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ TS_RE = re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
 ERR_RE = re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])", re.I)
 WARN_RE = re.compile(r"\b(WARN|\[skip\])", re.I)
 RESOLVED_RE = re.compile(r"\[RESOLVED\]\s*(.+?)\s*(?:—|$)")
+REF_RE = re.compile(r"\(ref=([\w-]{6,})\)")
 WARN_REPEAT_MIN = 20       # BASIS: agreed(2026-10-16, 10분 주기 작업이 24h 에 144회 → 20회+ 반복이면 일회성이 아니다)
 RENOTIFY_SEC = 6 * 3600    # BASIS: agreed(2026-10-16, 같은 오류를 매 프롬프트 넣으면 잡음 — 하루 4번 이내)
 
@@ -96,11 +98,20 @@ def _scan(log_dir: str):
             d["n"] += 1
             d["sample"] = ln.strip()[:200]
             last_at[key] = idx
-        for key, idx in last_at.items():
-            # R354 6차 검토 P2: 부분 일치(문구가 메시지 중간에 들어 있는 다른 오류)까지 숨기지 않도록 «[ERROR] <문구>» 로 시작하는 오류만
-            if any(r_idx > idx and re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[key]["sample"], re.I)
-                   for r_idx, phrase in resolved):
-                found.pop(key, None)
+        drop = set()
+        for r_idx, phrase in resolved:
+            ref = REF_RE.search(phrase)
+            before = [k for k, idx in last_at.items() if idx < r_idx]
+            if ref:
+                # R354 7차 검토 P2: 상관 ID 가 있으면 그 ID 를 가진 오류만 (같은 접두어·다른 원인 오류는 그대로 알림)
+                drop.update(k for k in before if f"ref={ref.group(1)}" in found[k]["sample"])
+                continue
+            # 옛 형식 (ID 없음): «[ERROR] <문구>» 로 시작하는 오류만 (R354 6차) · 그런 오류 종류가 둘 이상이면 어느 것인지 모르므로 숨기지 않음
+            hits = [k for k in before if re.search(r"\[ERROR\]\s*" + re.escape(phrase), found[k]["sample"], re.I)]
+            if len(hits) == 1:
+                drop.update(hits)
+        for key in drop:
+            found.pop(key, None)
     return found
 
 

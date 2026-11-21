@@ -401,3 +401,50 @@ def test_resolved_marker_does_not_suppress_partial_matches_or_other_files(tmp_pa
     with (d / "a.log").open("a", encoding="utf-8") as f:
         f.write(f"[{_ts(60)}] [ERROR] 백업 작업 실패 — disk full again\n")
     assert any("again" in v["sample"] for v in m._scan(str(d)).values())     # 해소 뒤 재발
+
+
+def test_resolved_marker_same_prefix_different_cause(tmp_path):
+    """R354 7차 검토 P2: 같은 접두어·다른 원인 오류 2건(disk full · permission denied)을 해소 표시 하나가 둘 다 숨길 수 있었다 →
+    상관 ID(ref) 가 있으면 같은 ID 오류만 해소 · ID 없는 옛 표시는 같은 접두어 오류 종류가 둘 이상이면 아무것도 숨기지 않음 ·
+    해소 뒤 재발은 다시 알림."""
+    m = _scanner()
+    d = tmp_path / "logs"; d.mkdir()
+    log = d / "a.log"
+    log.write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 작업 실패 — disk full",
+        f"[{_ts(450)}] [ERROR] 백업 작업 실패 — permission denied",
+        f"[{_ts(300)}] [RESOLVED] 백업 작업 실패 — 복구됨",                    # 옛 형식 · 어느 것인지 모름
+    ]) + "\n", encoding="utf-8")
+    s = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert any("disk full" in x for x in s) and any("permission denied" in x for x in s), s
+    log.write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 작업 실패 (ref=aaaa1111) — disk full",
+        f"[{_ts(450)}] [ERROR] 백업 작업 실패 (ref=bbbb2222) — permission denied",
+        f"[{_ts(300)}] [RESOLVED] 백업 작업 실패 (ref=aaaa1111) — 복구됨",
+    ]) + "\n", encoding="utf-8")
+    s = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert not any("disk full" in x for x in s) and any("permission denied" in x for x in s), s
+    with log.open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(60)}] [ERROR] 백업 작업 실패 (ref=aaaa1111) — disk full again\n")
+    assert any("again" in v["sample"] for v in m._scan(str(d)).values())     # 해소 뒤 같은 ID 재발도 알림
+
+
+def test_queue_error_lines_carry_one_ref_per_episode(tmp_path):
+    """재개 큐 기록 실패가 이어지면 같은 상관 ID · 복구 표시도 그 ID · 다음 장애는 새 ID (실제 ai-collab-report 경로)."""
+    import re as _re
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True); na.mkdir()
+    assert _run(r, "queue").returncode == 1 and _run(r, "queue").returncode == 1
+    na.rmdir()
+    assert _run(r, "queue").returncode == 0
+    na.unlink(missing_ok=True); na.mkdir()
+    assert _run(r, "queue").returncode == 1
+    lines = (r / ".claude" / "logs" / "ai-collab.log").read_text(encoding="utf-8").strip().splitlines()
+    refs = [_re.search(r"\(ref=(\w+)\)", ln).group(1) for ln in lines]
+    assert len(lines) == 4 and "[RESOLVED]" in lines[2]
+    assert refs[0] == refs[1] == refs[2] and refs[3] != refs[0], lines
+    m = _scanner()
+    s = [v["sample"] for v in m._scan(str(r / ".claude" / "logs")).values() if v["kind"] == "ERROR"]
+    assert len(s) == 1 and refs[3] in s[0]                                    # 해소된 장애는 숨기고 새 장애만

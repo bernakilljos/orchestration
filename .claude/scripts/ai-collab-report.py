@@ -418,9 +418,11 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
             _log_queue_error(err if saved else f"{err} · state.json queue_error 기록도 실패")
             return -1
         had = st.pop("queue_error", None) is not None
-        if _log_tail_has_queue_error():
+        ref = _log_tail_queue_error_ref()
+        if ref is not None:
             # R354 4차 검토 P2: 복구한 뒤에도 24시간 안의 ERROR 줄이 다음 세션에 다시 주입됐다 → 해소 표시 1줄을 남긴다 (스캐너가 이전 ERROR 를 뺀다)
-            _log_queue_line(f"[RESOLVED] {_QUEUE_LOG_MARK} — 다음 queue 에서 복구됨 (재개 큐 재생성 완료)")
+            # R354 7차 검토 P2: 같은 접두어·다른 원인 오류까지 해소하지 않도록 같은 상관 ID(ref) 를 적는다 (ID 없는 옛 줄은 옛 형식 그대로)
+            _log_queue_line(f"[RESOLVED] {_QUEUE_LOG_MARK}{f' (ref={ref})' if ref else ''} — 다음 queue 에서 복구됨 (재개 큐 재생성 완료)")
         if had and not _save_state_quiet(st, "queue_error 해제"):
             return -1
     return n_claude
@@ -433,24 +435,31 @@ def _queue_log_path() -> Path:
     return ROOT / ".claude" / "logs" / "ai-collab.log"
 
 
-def _log_tail_has_queue_error() -> bool:
-    """운영 로그 끝부분에서 재개 큐에 관한 마지막 줄이 아직 해소되지 않은 ERROR 인지 본다 (끝 16KB 만 읽음 · 읽기 실패면 False)."""
+def _log_tail_queue_error_ref():
+    """운영 로그 끝부분에서 재개 큐에 관한 마지막 줄이 아직 해소되지 않은 ERROR 면 그 상관 ID (ID 없는 옛 줄 = "") ·
+    해소됐거나 없으면 None (끝 16KB 만 읽음 · 읽기 실패면 None)."""
     try:
         with _queue_log_path().open("rb") as f:
             f.seek(0, os.SEEK_END)
             f.seek(max(0, f.tell() - 16384))
             tail = f.read().decode("utf-8", "replace").splitlines()
     except OSError:
-        return False
+        return None
     for ln in reversed(tail):
         if _QUEUE_LOG_MARK in ln:
-            return "[ERROR]" in ln and "[RESOLVED]" not in ln
-    return False
+            if "[ERROR]" not in ln or "[RESOLVED]" in ln:
+                return None
+            m = re.search(r"\(ref=([\w-]{6,})\)", ln)
+            return m.group(1) if m else ""
+    return None
 
 
 def _log_queue_error(detail: str) -> bool:
-    """재개 큐 기록 실패를 .claude/logs/ai-collab.log 에 남김 (state.json 과 별개 통로). 로그도 못 쓰면 stderr 만 (False)."""
-    return _log_queue_line(f"[ERROR] {_QUEUE_LOG_MARK} — {detail[:300]} "
+    """재개 큐 기록 실패를 .claude/logs/ai-collab.log 에 남김 (state.json 과 별개 통로). 로그도 못 쓰면 stderr 만 (False).
+    상관 ID: 아직 해소 안 된 같은 장애가 이어지면 같은 ID · 새 장애면 새 ID (해소 표시가 이 장애만 정확히 가리키게)."""
+    import uuid
+    ref = _log_tail_queue_error_ref() or uuid.uuid4().hex[:10]
+    return _log_queue_line(f"[ERROR] {_QUEUE_LOG_MARK} (ref={ref}) — {detail[:300]} "
                            f"(다음 세션 재개 큐가 낡았을 수 있음 · python .claude/scripts/ai-collab-report.py queue 로 재확인)")
 
 
