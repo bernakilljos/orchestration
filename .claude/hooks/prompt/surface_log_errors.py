@@ -80,7 +80,10 @@ def _scan(log_dir: str):
         for idx, ln in enumerate(lines):
             rm = RESOLVED_RE.search(ln)
             if rm:
-                resolved.append((idx, rm.group(1)))
+                phrase = rm.group(1).strip()
+                # R354 5차 검토 P2: 짧거나 오류 단어뿐인 문구(«[RESOLVED] ERROR»)는 다른 미해소 오류까지 숨긴다 → 무시
+                if len(phrase) >= 8 and not ERR_RE.fullmatch(phrase):
+                    resolved.append((idx, phrase))
                 continue
             e, w = ERR_RE.search(ln), WARN_RE.search(ln)
             if not (e or w):

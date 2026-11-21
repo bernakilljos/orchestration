@@ -321,3 +321,62 @@ def test_log_error_reaches_real_prompt_then_resolved_not_repeated(tmp_path):
     assert _run(r, "queue").returncode == 1
     (r / ".claude" / "state" / "log-errors-seen.json").unlink(missing_ok=True)
     assert "재개 큐 기록 실패" in _dispatch_scan_only(r)                      # 재발은 다시 알림
+
+
+def _scanner():
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    spec = importlib.util.spec_from_file_location("_sle_r354b", ROOT / ".claude" / "hooks" / "prompt" / "surface_log_errors.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def _ts(sec_ago: int = 60) -> str:
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() - sec_ago))
+
+
+def test_resolved_marker_hides_only_its_own_earlier_errors(tmp_path):
+    """R354 5차 검토 P2: 같은 로그에 다른 오류·해소 표시가 섞여도 해소 표시는 자기 문구의 앞선 오류만 숨긴다 ·
+    표시 뒤 재발은 다시 알림 · 짧거나 오류 단어뿐인 표시는 무시 (다른 미해소 오류를 숨기지 않음)."""
+    m = _scanner()
+    d = tmp_path / "logs"; d.mkdir()
+    (d / "mix.log").write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] collab 재개 큐 기록 실패 — rc=1 a",
+        f"[{_ts(400)}] [ERROR] DB 연결 실패 db_timeout",                    # 다른 오류 (해소 안 됨)
+        f"[{_ts(300)}] [RESOLVED] collab 재개 큐 기록 실패 — 복구됨",
+        f"[{_ts(200)}] [ERROR] 다른 작업 실패 job_x",                       # 표시 뒤 다른 오류
+        f"[{_ts(150)}] [RESOLVED] ERROR",                                    # 너무 넓은 표시 = 무시
+        f"[{_ts(140)}] [RESOLVED] 실패",                                     # 8자 미만 = 무시
+    ]) + "\n", encoding="utf-8")
+    samples = [v["sample"] for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert not any("재개 큐" in s for s in samples)
+    assert any("db_timeout" in s for s in samples) and any("job_x" in s for s in samples), samples
+    with (d / "mix.log").open("a", encoding="utf-8") as f:                   # 해소 뒤 재발
+        f.write(f"[{_ts(60)}] [ERROR] collab 재개 큐 기록 실패 — rc=1 b\n")
+    assert any("재개 큐" in v["sample"] for v in m._scan(str(d)).values())
+
+
+def test_resolved_marker_tail_boundary_and_unreadable_logs(tmp_path):
+    """500줄 끝 범위 경계: 범위 밖 오류는 원래 안 셈 · 범위 안 오류는 범위 안 해소 표시로만 숨겨짐 ·
+    읽을 수 없는 로그(폴더)·seen 기록 실패가 다른 로그의 알림을 막지 않음."""
+    m = _scanner()
+    d = tmp_path / "logs"; d.mkdir()
+    lines = [f"[{_ts(900)}] [ERROR] collab 재개 큐 기록 실패 — 범위 밖"]
+    lines += [f"[{_ts(800)}] [INFO] filler {i}" for i in range(520)]          # 끝 500줄 밖으로 밀어냄
+    lines += [f"[{_ts(100)}] [ERROR] collab 재개 큐 기록 실패 — 범위 안"]
+    (d / "tail.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    hit = [v for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    assert len(hit) == 1 and hit[0]["n"] == 1 and "범위 안" in hit[0]["sample"]
+    with (d / "tail.log").open("a", encoding="utf-8") as f:
+        f.write(f"[{_ts(50)}] [RESOLVED] collab 재개 큐 기록 실패 — 복구됨\n")
+    assert not [v for v in m._scan(str(d)).values() if v["kind"] == "ERROR"]
+    (d / "broken.log").mkdir()                                               # 읽기 실패 로그
+    (d / "other.log").write_text(f"[{_ts(30)}] [ERROR] 독립 오류 indep\n", encoding="utf-8")
+    assert any("indep" in v["sample"] for v in m._scan(str(d)).values())
+    proj = tmp_path / "proj"; (proj / ".claude").mkdir(parents=True)
+    os.replace(str(d), str(proj / ".claude" / "logs"))
+    (proj / ".claude" / "state").mkdir()
+    (proj / ".claude" / "state" / "log-errors-seen.json").mkdir()            # seen 읽기·쓰기 실패
+    ctx = type("C", (), {"raw_stripped": "확인", "project_dir": str(proj)})()
+    out = m.run(ctx)
+    assert out and "indep" in out["additionalContext"]                       # 기록 실패가 알림을 막지 않음
