@@ -701,3 +701,36 @@ def test_publication_commit_with_guide_line_is_not_work_head(tmp_path):
     mixed = _c(r, ".ai-collab/reports/R2.md", "r2", "fix: 코드와 게시 섞임 (R2)")   # 코드가 섞이면 작업 커밋
     assert _run(r, "report", "R2", "--base", base).returncode == 0
     assert _state(r)["requests"]["R2"]["head_commit"] == mixed
+
+
+def test_publication_boundaries_repeated_publish_head_reason_and_other_docs(tmp_path):
+    """R354 21차 P1: 게시/작업 분류 경계 — 여러 후속 게시(guide 포함·미포함), --head --reason 지정 유지 재보고,
+    게시 커밋 지정 거부, 특례 확대 금지(guide.txt 외 문서가 섞인 .ai-collab 커밋은 작업 커밋)."""
+    r = _repo(tmp_path)
+    _c(r, ".gitignore", ".claude/state/" + chr(10), "chore: 실제 저장소처럼 state 무시")    # 보고·원장이 쓰는 state 가 게시 커밋에 섞이지 않게
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    impl = _c(r, "x.py", "1", "fix: 구현 (R2)")
+    follow = _c(r, "tests/t.py", "2", "fix(test): ID 없는 후속")
+    pubs = []
+    for k in range(3):                                                              # 연속 게시 3회 (guide 포함 2·미포함 1)
+        if k != 1:
+            (r / "guide.txt").write_text(f"- R2 게시 {k}\n", encoding="utf-8")
+        pubs.append(_c(r, ".ai-collab/reports/R2.md", f"r{k}", f"docs(collab): R2 {k}차 게시"))
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == impl                      # 게시 3개 모두 건너뜀
+    for p in pubs:
+        bad = _run(r, "report", "R2", "--base", base, "--head", p, "--reason", "게시 커밋 지정 시도 검증")
+        assert bad.returncode == 2 and "게시" in bad.stderr, bad.stderr            # guide 포함 게시도 지정 거부
+    ok = _run(r, "report", "R2", "--base", base, "--head", follow, "--reason", "ID 없는 후속 수정 반영")
+    assert ok.returncode == 0, ok.stderr
+    (r / "guide.txt").write_text("- R2 게시 3\n", encoding="utf-8")
+    _c(r, ".ai-collab/reports/R2.md", "r3", "docs(collab): R2 3차 게시")           # 지정 뒤 guide 포함 게시가 또 생김
+    _ledger(r, "item-add", "R2", "재보고되게 항목 추가")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == follow and ent.get("head_override") and ent.get("head_override_reason"), ent
+    (r / "docs").mkdir(exist_ok=True)
+    (r / "docs" / "note.md").write_text("설명", encoding="utf-8")
+    other = _c(r, ".ai-collab/reports/R2.md", "r4", "docs(collab): R2 게시와 다른 문서 (R2)")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == other                     # guide.txt 외 문서는 특례 아님 → 작업 커밋
