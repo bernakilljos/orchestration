@@ -81,3 +81,27 @@ def test_no_upstream_falls_back_to_last_commit_and_clean_tree_passes(tmp_path):
     _git(r, "commit", "-q", "-m", "c")
     rc, out = _run(r)
     assert rc == 2 and "office package: x y.pptx" in out, out
+
+
+def _verify_stub(r):
+    """PNG 절은 verify-image-whitespace.py 가 있을 때만 돈다 — 받은 폴더를 기록하고 항상 WARN 을 내는 대역."""
+    p = r / ".claude" / "scripts" / "verify-image-whitespace.py"
+    p.write_text("import sys\nopen(sys.argv[1] + '/.seen', 'w').write('1')\nprint('WARN x')\n", encoding="utf-8")
+
+
+def test_png_dirs_space_and_newline_names(tmp_path):
+    """R354 15차 P2: PNG 경로는 NUL 을 줄바꿈으로 바꾼 뒤 줄 단위로 폴더를 구해 줄바꿈 든 파일명이 폴더를 잘못 나눴다."""
+    r = _repo(tmp_path)
+    _verify_stub(r)
+    (r / "docs" / "월간 화면").mkdir(parents=True)
+    (r / "docs" / "월간 화면" / "a b.png").write_bytes(b"x")
+    rc, out = _run(r)
+    assert "PNG whitespace in docs/월간 화면 " in out, out                   # 공백 폴더 1개로 인식
+    try:
+        (r / "docs" / "줄\n바꿈").mkdir()
+        (r / "docs" / "줄\n바꿈" / "p.png").write_bytes(b"x")
+    except OSError:
+        pytest.skip("이 파일 시스템은 파일명에 줄바꿈 불가 (Windows NTFS) — Linux CI 에서 확인")
+    rc, out = _run(r)
+    assert (r / "docs" / "줄\n바꿈" / ".seen").exists(), out                   # 줄바꿈 폴더를 그대로 받아 검사함
+    assert not (r / "docs" / "줄").exists() and "PNG whitespace in 바꿈" not in out

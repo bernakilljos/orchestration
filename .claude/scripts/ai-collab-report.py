@@ -2,7 +2,8 @@
 """ai-collab-report — Claude CLI ↔ ChatGPT GitHub 협업 (.ai-collab/) 보고서·요청 처리 (R325·R326 · 상주 X · 훅 X).
 
 명령:
-  report <요청ID> [--base <커밋>] [--status PASS|PARTIAL|BLOCKED]   커밋 직후 실행 → reports/<요청ID>.md + state.json 갱신
+  report <요청ID> [--base <커밋>] [--status PASS|PARTIAL|BLOCKED] [--head <커밋>]   커밋 직후 실행 → reports/<요청ID>.md + state.json 갱신
+        (--head: 메시지에 요청 ID 를 빠뜨린 후속 수정 커밋을 기준 SHA 로 · base..tip 안 · 게시 전용 아님 · 자동 선택보다 최신만)
   check-requests                                                   requests/*.md 검증만 (실행 안 함 · GitHub 문서 ≠ 사용자 승인)
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
   poll                                                             5분 주기 확인 1회 — 처리 확정 안 된 requests·reviews 만 출력 (새것 0 · 없음 3)
@@ -86,7 +87,7 @@ def _state() -> dict:
     return st
 
 
-def cmd_report(rid: str, base: str = "", status: str = "") -> int:
+def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = "") -> int:
     if not _RID.match(rid):
         print(f"[ai-collab] 요청 ID 형식 아님: {rid!r} (예: R325)", file=sys.stderr)
         return 2
@@ -112,6 +113,17 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
         return 2
     mine = _commits_for(rid, base, tip)                # 이 요청 ID 를 메시지에 적은 작업 커밋만 (요청별 증거 분리)
     head = mine[0][0] if mine else tip
+    if head_override:      # R354 15차: 0cf9163f 처럼 ID 를 빠뜨린 후속 수정이 빠져 head 가 CI 실패한 앞 SHA 에 남았다
+        full = _git("rev-parse", "--verify", "-q", head_override + "^{commit}")
+        span = _git("rev-list", f"{base}..{tip}").split()
+        why = ("커밋 없음" if not full else "보고서 게시 전용 커밋" if _publication_only(full)
+               else "범위 밖 (base..tip 아님)" if full not in span
+               else "자동 선택 head 보다 최신이 아님" if head not in _git("rev-list", f"{base}..{full}").split() or full == head
+               else "")
+        if why:
+            print(f"[ai-collab] --head 거부: {head_override} — {why}", file=sys.stderr)
+            return 2
+        head = full
     # R354: 하위 항목(남은 일)·근거가 바뀌어도 head·상태가 같으면 «변경 없음» 으로 건너뛰어 보고서가 옛 남은 일을 보여 줬다 → 지문에 포함
     sig = json.dumps([[i.get("i"), i.get("state"), i.get("owner"), i.get("text")] for i in (req.get("items") or [])] +
                      [req.get("evidence") or ""], ensure_ascii=False)
@@ -165,7 +177,8 @@ def cmd_report(rid: str, base: str = "", status: str = "") -> int:
                 kept.append(sec.rstrip())
     out.write_text("\n".join(lines).rstrip() + "\n" + ("\n" + "\n\n".join(kept) + "\n" if kept else ""), encoding="utf-8")
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
-                           "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig}
+                           "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig,
+                           **({"head_override": True} if head_override else {})}
     st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
     if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
         st.setdefault("handled", {})[rid] = head
@@ -592,7 +605,7 @@ def main(argv: list) -> int:
     op = argv[0]
     if op == "report" and len(argv) >= 2:
         opts = dict(zip(argv[2::2], argv[3::2]))
-        return cmd_report(argv[1], opts.get("--base", ""), opts.get("--status", ""))
+        return cmd_report(argv[1], opts.get("--base", ""), opts.get("--status", ""), opts.get("--head", ""))
     if op == "check-requests":
         return cmd_check_requests()
     if op == "prune":

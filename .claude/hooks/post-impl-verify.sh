@@ -77,7 +77,6 @@ for protected in config.py .claude/settings.json .env; do
 done
 
 # 5. 빌드 산출물 visual 검증 (codex 자식 프로세스 안 빌드 명령은 hook-09 우회 — 여기서 보강)
-CHANGED_PNG=$(changed_files '^docs/.*\.png$' | tr '\0' '\n')
 
 while IFS= read -r -d '' docx; do
   [ -f "$PROJECT_ROOT/$docx" ] || continue
@@ -121,14 +120,15 @@ if [ -f "$PROJECT_ROOT/.claude/scripts/verify-office-package.py" ]; then
   done < <(changed_files '\.(pptx|xlsx|hwpx)$')
 fi
 
-if [ -n "$CHANGED_PNG" ] && [ -f "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" ]; then
-  while IFS= read -r dir; do
+# R354 15차: PNG 폴더 목록도 NUL 로 끝까지 (줄바꿈 든 파일명이 줄 단위 처리에서 폴더를 잘못 나누던 것)
+if [ -f "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" ]; then
+  while IFS= read -r -d '' dir; do
     [ -d "$PROJECT_ROOT/$dir" ] || continue
     RESULT=$(python "$PROJECT_ROOT/.claude/scripts/verify-image-whitespace.py" "$PROJECT_ROOT/$dir" 2>&1 || true)
     if echo "$RESULT" | grep -q 'WARN'; then
       echo "[VERIFY WARN] PNG whitespace in $dir (≥5% blank)"
     fi
-  done < <(printf '%s\n' "$CHANGED_PNG" | while IFS= read -r f; do dirname "$f"; done | sort -u)
+  done < <(changed_files '^docs/.*\.png$' | while IFS= read -r -d '' f; do d="${f%/*}"; [ "$d" = "$f" ] && d=.; printf '%s\0' "$d"; done | sort -zu)
 fi
 
 if [ $ERRORS -gt 0 ]; then

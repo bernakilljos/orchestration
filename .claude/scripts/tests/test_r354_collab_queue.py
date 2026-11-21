@@ -574,3 +574,35 @@ def test_ref_is_one_failure_episode_and_resolved_only_when_fully_clean(tmp_path)
     ]) + "\n", encoding="utf-8")
     s = [v["sample"] for v in _scanner()._scan(str(logs)).values() if v["kind"] == "ERROR"]
     assert any("permission denied" in x for x in s) and not any("disk full" in x for x in s), s
+
+
+def _c(r: Path, name: str, body: str, msg: str):
+    (r / name).parent.mkdir(parents=True, exist_ok=True)
+    (r / name).write_text(body, encoding="utf-8")
+    subprocess.run(["git", "-C", str(r), "add", "-A"], check=True)
+    subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", msg], check=True)
+    return subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+
+
+def test_report_head_override_for_followup_fix_without_id(tmp_path):
+    """R354 15차 P1: 후속 수정 커밋(0cf9163f)이 메시지에 요청 ID 를 안 적어 head_commit 이 CI 실패한 앞 SHA(5f9e90d9)에 남았다.
+    --head 로 최신 실제 코드 SHA 를 지정 — base..tip 안·게시 전용 아님·자동 선택보다 최신일 때만 허용."""
+    r = _repo(tmp_path)
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    impl = _c(r, "x.py", "1", "fix: 구현 (R2)")
+    follow = _c(r, "tests/t.py", "2", "fix(test): CI 환경 의존 단언 제거")     # ID 없음
+    pub = _c(r, ".ai-collab/reports/R2.md", "r", "docs(collab): 게시")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == impl                     # 수정 전 동작 그대로 (재현)
+    bad = _run(r, "report", "R2", "--base", base, "--head", pub)                  # 게시 전용 커밋 거부
+    assert bad.returncode == 2 and "게시" in bad.stderr, bad.stderr
+    assert _run(r, "report", "R2", "--base", base, "--head", base).returncode == 2   # 범위 밖(기준 자신) 거부
+    assert _run(r, "report", "R2", "--base", base, "--head", "deadbeef" * 5).returncode == 2
+    ok = _run(r, "report", "R2", "--base", base, "--head", follow)
+    assert ok.returncode == 0, ok.stderr
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == follow and ent.get("head_override")             # 지정 사실을 기록
+    rep = (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8")
+    assert f'head_commit: "{follow}"' in rep
+    old = _run(r, "report", "R2", "--base", base, "--head", impl)                 # 자동 선택과 같거나 옛 SHA 로 되돌리기 X
+    assert old.returncode == 2
