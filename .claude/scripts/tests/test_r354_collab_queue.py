@@ -679,3 +679,25 @@ def test_report_head_requires_reason_and_keeps_it(tmp_path):
     ent = _state(r)["requests"]["R2"]
     assert ent["head_commit"] == follow and ent["head_override_reason"] == why
     assert why in (r / ".ai-collab" / "reports" / "R2.md").read_text(encoding="utf-8").split("---")[1]
+
+
+def test_publication_commit_with_guide_line_is_not_work_head(tmp_path):
+    """R354 20차: 구현 변경 없는 회차의 게시 커밋 c50557d4 가 보고서와 함께 guide.txt 한 줄을 실어
+    «.ai-collab/ 만 바꾼 게시 커밋» 판정을 벗어났다 → 제목에 요청 ID 가 있어 자동 head 로 뽑혔고
+    --head 로 실제 구현 SHA(2cfba51c)를 지정하려 해도 «자동 선택보다 최신 아님» 으로 거부됐다.
+    게시 커밋 = .ai-collab/ 변경이 있고 나머지는 guide.txt 뿐 · guide.txt 만 바꾼 커밋·코드가 섞인 커밋은 작업 커밋 그대로."""
+    r = _repo(tmp_path)
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    impl = _c(r, "x.py", "1", "fix: 구현 (R2)")
+    (r / "guide.txt").write_text("- R2 반영 한 줄\n", encoding="utf-8")
+    _c(r, ".ai-collab/reports/R2.md", "r", "docs(collab): R2 검토 반영 게시")   # 보고서 + guide.txt 함께
+    rep = _run(r, "report", "R2", "--base", base)
+    assert rep.returncode == 0, rep.stderr
+    assert _state(r)["requests"]["R2"]["head_commit"] == impl                      # 게시 커밋을 구현으로 뽑지 않음
+    doc = _c(r, "guide.txt", "- R2 문서만 고침\n", "docs: guide 갱신 (R2)")         # .ai-collab 없는 문서 커밋 = 작업 커밋
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == doc
+    (r / "y.py").write_text("2", encoding="utf-8")
+    mixed = _c(r, ".ai-collab/reports/R2.md", "r2", "fix: 코드와 게시 섞임 (R2)")   # 코드가 섞이면 작업 커밋
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    assert _state(r)["requests"]["R2"]["head_commit"] == mixed

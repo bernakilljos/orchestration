@@ -41,10 +41,16 @@ def _git(*args: str) -> str:
 _RANK = {"BLOCKED": 0, "FAIL": 0, "PARTIAL": 1, "PASS": 2}
 
 
+_PUBLICATION_EXTRA = {"guide.txt"}   # 게시 커밋에 함께 실리는 변경 기록 한 줄 (README 절차 3 · 구현 없는 회차)
+
+
 def _publication_only(commit: str) -> bool:
-    """이 커밋이 .ai-collab/ 아래만 바꿨나 (보고서 게시 커밋)."""
+    """이 커밋이 보고서 게시 커밋인가 — .ai-collab/ 변경이 있고 나머지는 guide.txt 뿐.
+    R354 20차: 게시 커밋 c50557d4 가 guide.txt 한 줄을 실어 작업 커밋으로 판정 → 자동 head 로 뽑혔다.
+    guide.txt 만 바꾼 커밋·코드가 섞인 커밋은 작업 커밋 그대로."""
     names = [n for n in _git("show", "--name-only", "--format=", commit).splitlines() if n]
-    return bool(names) and all(n.startswith(".ai-collab/") for n in names)
+    pub = [n for n in names if n.startswith(".ai-collab/")]
+    return bool(pub) and all(n.startswith(".ai-collab/") or n in _PUBLICATION_EXTRA for n in names)
 
 
 def _work_head() -> str:
