@@ -254,17 +254,17 @@
       "reviewed": false
     },
     "R354": {
-      "head_commit": "06a96f7477064caa42f2d8f36e9e4e68c4a1f1b0",
+      "head_commit": "bae1e5707c383b222633ec8b6a5bc1ad071a576c",
       "base_commit": "f0fc440f69ecc21dddcde9c60577b065a966d716",
-      "range_tip": "06a96f7477064caa42f2d8f36e9e4e68c4a1f1b0",
+      "range_tip": "bae1e5707c383b222633ec8b6a5bc1ad071a576c",
       "status": "PARTIAL",
       "report": "reports/R354.md",
-      "reported_at": "2026-11-21T06:07:14+00:00",
+      "reported_at": "2026-11-21T08:01:11+00:00",
       "reviewed": false,
-      "items_sig": "52e0c726f03a"
+      "items_sig": "9586055921a6"
     }
   },
-  "last_head": "06a96f7477064caa42f2d8f36e9e4e68c4a1f1b0",
+  "last_head": "bae1e5707c383b222633ec8b6a5bc1ad071a576c",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -286,9 +286,9 @@
     ".ai-collab/requests/R351.md": "20ed9079189a1b63bebd0de166784ddacc3840a6",
     ".ai-collab/requests/R353.md": "5905c8b27a96fa2565421e1089e947e4243906e3",
     ".ai-collab/requests/R354.md": "ebe0383ff95063df29d6d936dc1825f71e17d656",
-    ".ai-collab/reviews/R354.md": "7e12809b05ff56f35f5f7f8e7773b8a5472dd7ab"
+    ".ai-collab/reviews/R354.md": "5b7ccc6fa5e5acafc85dfb92d8a5b5b418588ae9"
   },
-  "last_poll_hit": "2026-11-21T05:38:06+00:00",
+  "last_poll_hit": "2026-11-21T07:13:22+00:00",
   "handled": {
     "R329": "703ce80215855a633f672d57273c1b35a4c71764",
     "R332": "53d2c02baea4d2b525ac293cecc413c0342c74fe",
@@ -309,7 +309,7 @@
     "R350": "ce106b06be24b678bfd580598507881fc0dfff58",
     "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
     "R353": "c839445a89b6943ee02158de3075848c1f6dd940",
-    "R354": "06a96f7477064caa42f2d8f36e9e4e68c4a1f1b0"
+    "R354": "bae1e5707c383b222633ec8b6a5bc1ad071a576c"
   },
   "inflight": {
     ".ai-collab/requests/R347.md": {
