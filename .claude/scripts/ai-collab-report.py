@@ -412,11 +412,28 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
                   f".claude/state/next-actions.md 확인)", file=sys.stderr)
             st["queue_error"] = {"rc": err.split()[0], "detail": err,
                                  "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-            _save_state_quiet(st, err)
+            saved = _save_state_quiet(st, err)
+            # R354 3차 검토 P2: state 저장마저 실패하면 stderr 에만 남아 다음 세션이 놓친다 → 운영 로그에도 시각 있는 ERROR 1줄
+            #   (기존 SessionStart·프롬프트 «로그 오류 자동 점검» surface_log_errors 가 .claude/logs/*.log 를 읽어 다음 세션에 주입)
+            _log_queue_error(err if saved else f"{err} · state.json queue_error 기록도 실패")
             return -1
         if st.pop("queue_error", None) is not None and not _save_state_quiet(st, "queue_error 해제"):
             return -1
     return n_claude
+
+
+def _log_queue_error(detail: str) -> bool:
+    """재개 큐 기록 실패를 .claude/logs/ai-collab.log 에 남김 (state.json 과 별개 통로). 로그도 못 쓰면 stderr 만 (False)."""
+    try:
+        p = ROOT / ".claude" / "logs" / "ai-collab.log"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [ERROR] collab 재개 큐 기록 실패 — {detail[:300]} "
+                    f"(다음 세션 재개 큐가 낡았을 수 있음 · python .claude/scripts/ai-collab-report.py queue 로 재확인)\n")
+        return True
+    except OSError as e:
+        print(f"[ai-collab] 운영 로그 기록도 실패 — {type(e).__name__} (stderr 가 유일한 기록)", file=sys.stderr)
+        return False
 
 
 def _save_state_quiet(st: dict, context: str) -> bool:

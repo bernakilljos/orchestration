@@ -230,3 +230,24 @@ def test_queue_error_record_failure_keeps_original_error_and_state(tmp_path):
     (r / ".ai-collab" / "state.tmp").rmdir(); na.rmdir()                        # 원인 해소
     ok = _run(r, "queue")
     assert ok.returncode == 0 and "queue_error" not in _state(r) and "R2#1 [claude]" in _resume(r)
+
+
+def test_double_failure_surfaces_in_next_session_via_log_scanner(tmp_path):
+    """R354 3차 검토 P2: 재개 큐 기록 실패 + queue_error 저장 실패면 stderr 에만 남아 다음 세션이 놓쳤다 →
+    .claude/logs/ai-collab.log 에 시각 있는 ERROR 1줄 · 기존 «로그 오류 자동 점검»(surface_log_errors._scan) 이 실제로 찾아냄."""
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    na = r / ".claude" / "state" / "next-actions.md"
+    na.unlink(missing_ok=True); na.mkdir()
+    (r / ".ai-collab" / "state.tmp").mkdir()
+    assert _run(r, "queue").returncode == 1
+    log = r / ".claude" / "logs" / "ai-collab.log"
+    line = log.read_text(encoding="utf-8").strip().splitlines()[-1]
+    assert "[ERROR]" in line and "state.json queue_error 기록도 실패" in line, line
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    spec = importlib.util.spec_from_file_location("_sle_r354", ROOT / ".claude" / "hooks" / "prompt" / "surface_log_errors.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    found = m._scan(str(log.parent))
+    hit = [d for d in found.values() if d["file"] == "ai-collab.log" and d["kind"] == "ERROR"]
+    assert hit and "재개 큐 기록 실패" in hit[0]["sample"]                     # 다음 세션 주입 경로가 실제로 잡음
