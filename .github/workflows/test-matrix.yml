@@ -58,6 +58,19 @@ jobs:
         continue-on-error: true
         run: bash .claude/scripts/ci-pytest-gate.sh .claude/scripts/tests -q -rfEs --tb=short -p no:cacheprovider --cov=.claude/scripts --cov-report=xml
 
+      # R354 16차: 위 참고 단계는 실패해도 success 라 «Linux 잡 success» 가 시험 통과 증거가 아니었다 · 줄바꿈 든 파일명은
+      #   Windows(NTFS) 에서 만들 수 없어 post-impl-verify NUL 처리 시험이 Windows 에선 건너뛴다 → Linux 에서 이 시험만 필수로 돌리고
+      #   시험별 결과(PASSED·SKIPPED·FAILED)를 공개 주석으로 남긴다 (잡 로그 원문은 인증이 필요해 외부 검토가 못 봄)
+      - name: post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)
+        run: |
+          set +e
+          out=$(python -m pytest .claude/scripts/tests/test_r354_post_impl_scope.py -q -rA -p no:cacheprovider 2>&1)
+          rc=$?
+          echo "$out" | tail -25
+          res=$(printf '%s\n' "$out" | grep -E '^(PASSED|FAILED|SKIPPED|ERROR) ' | sed 's/ - .*//' | tr '\n' ';' | head -c 900)
+          echo "::notice title=R354 post-impl-verify 파일명 경계 (py ${{ matrix.python-version }})::rc=$rc · $res"
+          exit $rc
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: matrix.python-version == '3.13'

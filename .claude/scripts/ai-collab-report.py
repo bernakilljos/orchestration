@@ -124,6 +124,12 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
             print(f"[ai-collab] --head 거부: {head_override} — {why}", file=sys.stderr)
             return 2
         head = full
+    elif ent.get("head_override") and ent.get("head_commit") and ent["head_commit"] != head:
+        # R354 16차: --head 로 맞춘 뒤 생략하고 다시 보고하면 예전 ID 커밋으로 되돌아갔다 →
+        #   지정 head 가 아직 base..tip 안이고 자동 선택보다 최신이면 그대로 둔다 (더 새 ID 커밋이 생기면 자동 선택)
+        prev = ent["head_commit"]
+        if prev in _git("rev-list", f"{base}..{tip}").split() and head in _git("rev-list", f"{base}..{prev}").split():
+            head, head_override = prev, prev
     # R354: 하위 항목(남은 일)·근거가 바뀌어도 head·상태가 같으면 «변경 없음» 으로 건너뛰어 보고서가 옛 남은 일을 보여 줬다 → 지문에 포함
     sig = json.dumps([[i.get("i"), i.get("state"), i.get("owner"), i.get("text")] for i in (req.get("items") or [])] +
                      [req.get("evidence") or ""], ensure_ascii=False)

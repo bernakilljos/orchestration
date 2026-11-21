@@ -606,3 +606,23 @@ def test_report_head_override_for_followup_fix_without_id(tmp_path):
     assert f'head_commit: "{follow}"' in rep
     old = _run(r, "report", "R2", "--base", base, "--head", impl)                 # 자동 선택과 같거나 옛 SHA 로 되돌리기 X
     assert old.returncode == 2
+
+
+def test_report_head_override_survives_later_report_without_flag(tmp_path):
+    """R354 16차 P1: --head 로 맞춘 뒤 다음 report(또는 큐 갱신 뒤 보고)에서 --head 를 생략하면 자동 선택이
+    예전 ID 포함 커밋으로 되돌아갔다 → 지정 head 가 아직 범위 안이고 자동 선택보다 최신이면 유지 ·
+    ID 를 적은 더 새 작업 커밋이 생기면 자동 선택으로 돌아가고 지정 표식은 지움."""
+    r = _repo(tmp_path)
+    base = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    _c(r, "x.py", "1", "fix: 구현 (R2)")
+    follow = _c(r, "tests/t.py", "2", "fix(test): ID 없는 후속 수정")
+    assert _run(r, "report", "R2", "--base", base, "--head", follow).returncode == 0
+    _ledger(r, "item-add", "R2", "남은 일 하나 더")                                   # 항목이 바뀌어 보고서가 다시 써지는 경우
+    again = _run(r, "report", "R2", "--base", base)
+    assert again.returncode == 0, again.stderr
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == follow and ent.get("head_override"), ent           # 되돌아가지 않음
+    newer = _c(r, "y.py", "3", "fix: 다음 구현 (R2)")
+    assert _run(r, "report", "R2", "--base", base).returncode == 0
+    ent = _state(r)["requests"]["R2"]
+    assert ent["head_commit"] == newer and not ent.get("head_override"), ent        # 더 새 ID 커밋이면 자동 선택
