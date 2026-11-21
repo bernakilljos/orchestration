@@ -418,13 +418,15 @@ def cmd_queue(write: bool = True, quiet: bool = False) -> int:
             _log_queue_error(err if saved else f"{err} · state.json queue_error 기록도 실패")
             return -1
         had = st.pop("queue_error", None) is not None
+        # R354 11차 검토: 해소 표시를 먼저 남기고 queue_error 해제가 실패하면 «다 복구» 가 아닌데 해소로 보였다 → 해제 성공 뒤에만
+        if had and not _save_state_quiet(st, "queue_error 해제"):
+            return -1
         ref = _log_tail_queue_error_ref()
         if ref is not None:
             # R354 4차 검토 P2: 복구한 뒤에도 24시간 안의 ERROR 줄이 다음 세션에 다시 주입됐다 → 해소 표시 1줄을 남긴다 (스캐너가 이전 ERROR 를 뺀다)
             # R354 7차 검토 P2: 같은 접두어·다른 원인 오류까지 해소하지 않도록 같은 상관 ID(ref) 를 적는다 (ID 없는 옛 줄은 옛 형식 그대로)
             _log_queue_line(f"[RESOLVED] {_QUEUE_LOG_MARK}{f' (ref={ref})' if ref else ''} — 다음 queue 에서 복구됨 (재개 큐 재생성 완료)")
-        if had and not _save_state_quiet(st, "queue_error 해제"):
-            return -1
+        # (queue_error 해제 저장은 해소 표시 앞으로 옮김 · R354 11차)
     return n_claude
 
 

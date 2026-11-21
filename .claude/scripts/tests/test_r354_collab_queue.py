@@ -534,3 +534,43 @@ def test_resolved_phrase_must_equal_error_head_not_prefix(tmp_path):
         f.write(f"[{_ts(60)}] [ERROR] 백업 실패 (ref=pfx00001) — disk full again\n")
     ctx = _dispatch_scan_only(r)
     assert "again" in ctx and "extra" in ctx and "sync2" in ctx, ctx           # 실제 주입: 재발·미해소만
+
+
+def test_ref_is_one_failure_episode_and_resolved_only_when_fully_clean(tmp_path):
+    """R354 11차 검토 P2: 같은 ref·같은 머리·다른 상세 원인. ref 를 만드는 곳은 ai-collab-report._log_queue_error 하나뿐 (전수 조사) —
+    해소 안 된 장애가 이어지는 동안만 같은 ID → 같은 ID = 한 장애 에피소드 (상세 원인이 달라도) · 해소 표시는 그 에피소드 전체 복구.
+    단 해소 표시를 남긴 뒤 state.json queue_error 해제가 실패하면 «다 복구» 가 아니었는데 해소로 보였다 → 해제 성공 뒤에만 표시.
+    서로 다른 장애는 서로 다른 ID 라서 하나만 해소해도 다른 것은 남는다."""
+    import re as _re
+    r = _repo(tmp_path)
+    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    na = r / ".claude" / "state" / "next-actions.md"
+    tmp = r / ".ai-collab" / "state.tmp"
+    log = r / ".claude" / "logs" / "ai-collab.log"
+    logs = r / ".claude" / "logs"
+    na.unlink(missing_ok=True); na.mkdir()
+    assert _run(r, "queue").returncode == 1                                     # 원인 1: 재개 큐 기록 실패
+    tmp.mkdir()
+    assert _run(r, "queue").returncode == 1                                     # 원인 2 추가: state 기록도 실패 (상세 다름)
+    tmp.rmdir()
+    na.rmdir(); tmp.mkdir()
+    assert _run(r, "queue").returncode == 1                                     # 큐는 복구 · queue_error 해제 실패 = 아직 안 끝남
+    text = log.read_text(encoding="utf-8")
+    refs = _re.findall(r"\(ref=(\w+)\)", text)
+    assert len(set(refs)) == 1 and text.count("[ERROR]") == 2, text            # 상세가 달라도 같은 에피소드 = 같은 ID
+    assert "[RESOLVED]" not in text, text                                       # 해제 실패 중에는 해소 표시 없음
+    assert "재개 큐 기록 실패" in _dispatch_scan_only(r)                        # 그래서 다음 세션에 계속 알림
+    tmp.rmdir()
+    assert _run(r, "queue").returncode == 0
+    text = log.read_text(encoding="utf-8")
+    assert text.count("[RESOLVED]") == 1 and f"(ref={refs[0]})" in text.splitlines()[-1], text
+    (r / ".claude" / "state" / "log-errors-seen.json").unlink(missing_ok=True)
+    assert "재개 큐 기록 실패" not in _dispatch_scan_only(r)                    # 에피소드 전체 해소 (두 상세 모두)
+    # 스캐너 규칙: 서로 다른 장애에 서로 다른 ID → 하나만 해소해도 다른 것은 남음 (같은 머리·다른 상세)
+    (logs / "z.log").write_text("\n".join([
+        f"[{_ts(500)}] [ERROR] 백업 실패 (ref=ep000001) — disk full",
+        f"[{_ts(490)}] [ERROR] 백업 실패 (ref=ep000002) — permission denied",
+        f"[{_ts(300)}] [RESOLVED] 백업 실패 (ref=ep000001) — disk full 복구",
+    ]) + "\n", encoding="utf-8")
+    s = [v["sample"] for v in _scanner()._scan(str(logs)).values() if v["kind"] == "ERROR"]
+    assert any("permission denied" in x for x in s) and not any("disk full" in x for x in s), s
