@@ -187,3 +187,19 @@ def test_dfd_rule_store_and_external_only_via_process():
         ad.validate(sp)
     sp["views"][0]["type"] = "deployment"                 # 배포도에는 이 규칙을 적용하지 않음
     ad.validate(sp)
+
+
+@pytest.mark.parametrize("vtype", ["deployment", "dfd"])
+def test_zoned_views_mark_unverified_nodes_and_edges(tmp_path, vtype):
+    """R354 14차 P1: validate 의 미확인 ref 는 «deployment:x»·«dfd:a→b» 인데 render 가 «container:» 로 찾아
+    --allow-unverified 로 만든 deployment·dfd 의 근거 없는 노드·선이 [미확인] 표시 없이 그려졌다."""
+    sp = _zoned(vtype)
+    v = sp["views"][0]
+    next(n for n in v["nodes"] if n["id"] == "api").pop("source")
+    next(e for e in v["edges"] if e["from"] == "web").pop("source")
+    r = ad.render(sp, str(tmp_path / "u.pptx"), allow_unverified=True)
+    assert set(r["unverified"]) == {f"{vtype}:api", f"{vtype}:web→api"}
+    shapes = [sh.text_frame.text for sh in pptx.Presentation(str(tmp_path / "u.pptx")).slides[0].shapes if sh.has_text_frame]
+    assert any(t.startswith("API") and "[미확인]" in t for t in shapes), shapes          # 노드
+    assert any(t.startswith("web-api") and "[미확인]" in t for t in shapes), shapes      # 연결 라벨
+    assert sum("[미확인]" in t for t in shapes if not t.startswith("범례")) == 2

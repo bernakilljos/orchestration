@@ -183,3 +183,21 @@ def test_cli_exit_codes_and_unknown_format(tmp_path):
     (tmp_path / "z.pptx").write_bytes(b"not a zip")
     r = vop.verify(str(tmp_path / "z.pptx"))
     assert not r["ok"] and "zip" in r["fails"][0]
+
+
+def test_hwpx_spine_idref_must_exist_and_scope_is_structure_only(tmp_path):
+    """R354 14차 P3: spine itemref 가 manifest 에 없는 id 를 가리켜도 통과했다 (구역 순서를 못 정하는 파일) ·
+    결과에 검사 범위(패키지 구조)를 명시해 «구조 통과 = 문서 품질 통과» 로 읽히지 않게."""
+    good = _hwpx(tmp_path / "g.hwpx", ["가"])
+    r = vop.verify(str(good))
+    assert r["ok"] and r["scope"] == "package-structure"
+    bad = tmp_path / "s.hwpx"
+    with zipfile.ZipFile(good) as z:
+        hpf = z.read("Contents/content.hpf").replace(b'idref="section0"', b'idref="ghost"')
+    _rewrite(good, bad, {"Contents/content.hpf": hpf})
+    r = vop.verify(str(bad))
+    assert not r["ok"] and any("spine" in m and "ghost" in m for m in r["fails"]), r
+    empty = tmp_path / "e.hwpx"
+    _rewrite(good, empty, {"Contents/content.hpf": hpf.replace(b'<opf:itemref idref="ghost"/>', b"")})
+    r = vop.verify(str(empty))
+    assert not r["ok"] and any("spine" in m and "비어" in m for m in r["fails"]), r

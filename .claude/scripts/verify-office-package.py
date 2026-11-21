@@ -6,7 +6,8 @@
   pptx   : 슬라이드 밖으로 나간 도형(크기 2% 초과 실패 · 이하 경고) · 10pt 미만 글자(경고)
   xlsx   : 수식 결과 캐시 없음(경고 · 한 번도 계산 안 된 파일) · 캐시된 오류 값 #REF!·#DIV/0! 등(실패) · 없는 시트 참조(실패)
   hwpx   : mimetype = application/hwp+zip (다르면 실패 · 없으면 경고) · Contents/header.xml · Contents/section*.xml ·
-           Contents/content.hpf (manifest·spine) · 문단 수 — 공식 KS X 6101 본문 미확인, 오픈소스 파서 구현 기준
+           Contents/content.hpf (manifest 대상 존재 · spine 비어 있지 않음 · spine idref 가 manifest id) · 문단 수 — 공식 KS X 6101 본문 미확인, 오픈소스 파서 구현 기준
+  범위   : 결과의 "scope": "package-structure" — 패키지 구조 통과일 뿐 문서 품질·조판 통과가 아님 (R354 14차)
   미검증 : 실제 프로그램 렌더(PowerPoint·Excel·한컴)·내용 사실 정확성은 이 도구가 판정하지 않음 (unverified 로 표시)
 
 usage: python verify-office-package.py <파일> [<파일> ...]   → stdout JSON 목록 · 하나라도 실패면 종료 1
@@ -106,7 +107,14 @@ def _hwpx(z, names, fails, warns, stats, unverified):
     else:
         try:
             hpf = ET.fromstring(z.read("Contents/content.hpf"))
-            hrefs = {e.get("href") for e in hpf.iter() if e.tag.endswith("item")}
+            items = {e.get("id"): e.get("href") for e in hpf.iter() if e.tag.endswith("}item") or e.tag == "item"}
+            hrefs = set(items.values())
+            refs = [e.get("idref") for e in hpf.iter() if e.tag.endswith("itemref")]
+            if not refs:          # R354 14차 P3: 구역 순서를 정할 spine 이 비면 판독기가 본문 순서를 모름
+                fails.append("content.hpf spine 이 비어 있음 (구역 순서 없음)")
+            for ref in refs:
+                if ref not in items:
+                    fails.append(f"content.hpf spine itemref «{ref}» 가 manifest 에 없음")
             for s in secs:
                 if s not in hrefs:
                     warns.append(f"content.hpf manifest 에 없는 구역: {s}")
@@ -128,7 +136,7 @@ def _hwpx(z, names, fails, warns, stats, unverified):
 def verify(path: str) -> dict:
     ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
     fails, warns, unverified, stats = [], [], [], {}
-    res = {"file": path, "format": ext, "ok": False, "fails": fails, "warns": warns, "unverified": unverified, "stats": stats}
+    res = {"file": path, "format": ext, "scope": "package-structure", "ok": False, "fails": fails, "warns": warns, "unverified": unverified, "stats": stats}
     if ext not in ("pptx", "xlsx", "hwpx"):
         fails.append(f"지원하지 않는 형식: .{ext} (pptx·xlsx·hwpx)")
         return res

@@ -153,6 +153,8 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
     rep = validate(spec, allow_unverified)
     nodes = rep["nodes"]
     unverified = set(rep["unverified"])
+    # 노드 ref = 그 노드를 정의한 view 종류 (validate 와 같은 규칙 · R354 14차 P1: «container:» 고정이라 deployment·dfd 의 미확인 표시 누락)
+    nref = {n.get("id"): f"{v.get('type')}:{n.get('id')}" for v in spec.get("views") or [] for n in v.get("nodes") or []}
     FONT = spec.get("font", "맑은 고딕")
     INK, MUTED, LINE = RGBColor(0x1F, 0x29, 0x37), RGBColor(0x6B, 0x72, 0x80), RGBColor(0x37, 0x41, 0x51)
     WARN, BLUE = RGBColor(0xB4, 0x53, 0x09), RGBColor(0x1D, 0x4E, 0xD8)
@@ -217,7 +219,7 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
             gy = min(1.3, (5.0 - nrow * H) / max(1, nrow - 1)) if nrow > 1 else 0
             x0, y0 = 0.6, 1.9
             xy = {i: (x0 + c * (W + gx), y0 + r * (H + gy)) for i, (c, r) in pos.items()}
-            shp = {n["id"]: box(s, n["id"], *xy[n["id"]], W, H, f"container:{n['id']}") for n in vn}
+            shp = {n["id"]: box(s, n["id"], *xy[n["id"]], W, H, nref[n["id"]]) for n in vn}
             for e in ve:
                 a, b = e["from"], e["to"]
                 (ca, ra), (cb, rb) = pos[a], pos[b]
@@ -232,7 +234,7 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
                 if zoned and bnd.get(a) != bnd.get(b):       # 신뢰 경계·배포 노드를 지나는 흐름 = 굵은 선
                     c.line.width = Pt(3)
                     crossings.append(f"{a}→{b}")
-                ref = f"container:{a}→{b}"
+                ref = f"{v['type']}:{a}→{b}"
                 ax, ay = xy[a]
                 bxx, byy = xy[b]
                 pt = {0: (W / 2, 0), 1: (0, H / 2), 2: (W / 2, H), 3: (W, H / 2)}   # 연결점 (위·왼·아래·오른)
@@ -284,7 +286,7 @@ def render(spec: dict, out_path: str, allow_unverified: bool = False) -> dict:
             xs = {}
             for i, p in enumerate(parts):
                 x = 0.5 + i * step_w
-                box(s, p, x, 1.5, step_w - 0.3, 0.8, f"container:{p}")
+                box(s, p, x, 1.5, step_w - 0.3, 0.8, nref[p])
                 xs[p] = x + (step_w - 0.3) / 2
                 ln = s.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(xs[p]), Inches(2.3), Inches(xs[p]), Inches(7.0))
                 ln.line.color.rgb, ln.line.dash_style = RGBColor(0x9C, 0xA3, 0xAF), 4
