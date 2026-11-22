@@ -28,10 +28,19 @@ _skip() {   # $1 = 사유 · $2 = 기록 폴더(있으면)
   echo "[SKIP] 메모리 가드 점검 안 함 — $1"
   echo "[MEMORY-GUARD] SKIP: $1" >&2
   local logdir="${2:-${TMPDIR:-${TEMP:-/tmp}}}"
-  mkdir -p "$logdir" 2>/dev/null &&     echo "$(date '+%Y-%m-%d %H:%M:%S') SKIP $1" >> "$logdir/memory-guard.log" 2>/dev/null
+  # R354 24차: 기록 실패도 보이게 (종료 코드는 0 유지 — 호출자가 SessionStart async 훅뿐이라 호환 우선)
+  if ! { mkdir -p "$logdir" 2>/dev/null && \
+         echo "$(date '+%Y-%m-%d %H:%M:%S') SKIP $1" >> "$logdir/memory-guard.log" 2>/dev/null; }; then
+    echo "[SKIP] SKIP 기록 실패: $logdir/memory-guard.log"
+    echo "[MEMORY-GUARD] SKIP 기록 실패: $logdir/memory-guard.log" >&2
+  fi
   exit 0
 }
+# R354 24차 식별 계약: 표식은 '프로젝트 폴더다' 만 증명하고 '호출자가 의도한 프로젝트' 는 증명하지 않는다.
+#   유효한 CLAUDE_PROJECT_DIR(Claude Code 가 훅 실행 때 넣는 값)은 그대로 우선하되,
+#   고른 프로젝트·근거를 출력하고 스크립트 위치로 찾은 프로젝트와 다르면(심볼릭 링크는 실제 경로로 비교) 경고한다.
 PROJECT_DIR=""
+PROJECT_SRC="스크립트 위치"
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
   if [ ! -d "$CLAUDE_PROJECT_DIR" ]; then
     echo "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: $CLAUDE_PROJECT_DIR — 스크립트 위치 기준으로 찾음" >&2
@@ -39,16 +48,24 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     echo "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 에 프로젝트 표식(.claude/settings*.json) 없음: $CLAUDE_PROJECT_DIR — 스크립트 위치 기준으로 찾음" >&2
   else
     PROJECT_DIR="$(cd "$CLAUDE_PROJECT_DIR" && pwd)"
+    PROJECT_SRC="CLAUDE_PROJECT_DIR"
   fi
 fi
-[ -n "$PROJECT_DIR" ] || PROJECT_DIR="$(_find_project)" || PROJECT_DIR=""
+SCRIPT_PROJECT="$(_find_project)" || SCRIPT_PROJECT=""
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$SCRIPT_PROJECT"
+elif [ -n "$SCRIPT_PROJECT" ] && \
+     [ "$(cd "$PROJECT_DIR" && pwd -P)" != "$(cd "$SCRIPT_PROJECT" && pwd -P)" ]; then
+  echo "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR($PROJECT_DIR) 가 스크립트 위치 프로젝트와 다름($SCRIPT_PROJECT) — CLAUDE_PROJECT_DIR 기준으로 점검" >&2
+fi
 if [ -z "$PROJECT_DIR" ] || ! cd "$PROJECT_DIR"; then
   _skip "프로젝트 폴더를 찾지 못함 (.claude/settings*.json) — 점검 건너뜀"
 fi
+echo "[INFO] 대상 프로젝트: $PROJECT_DIR (근거: $PROJECT_SRC)"
 
 SM="$PROJECT_DIR/data/strategy_memory.json"
 # Windows 파이썬용 경로: cygpath 우선 (/tmp 같은 마운트도 변환) · 없으면 /c/ → C:/
-SM_PY=$(cygpath -m "$SM" 2>/dev/null || echo "$SM" | sed -E 's|^/([a-zA-Z])/|:/|')
+SM_PY=$(cygpath -m "$SM" 2>/dev/null || echo "$SM" | sed -E 's|^/([a-zA-Z])/|\1:/|')
 WARN_SIZE_MB=100
 CRITICAL_SIZE_MB=200
 

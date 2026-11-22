@@ -162,3 +162,75 @@ def test_project_without_strategy_file_is_skip_and_logged(tmp_path):
     assert SKIP_MARK in out and DONE_MARK not in out
     log = proj / ".claude" / "logs" / "memory-guard.log"
     assert log.is_file() and "SKIP" in log.read_text(encoding="utf-8")
+
+
+# ── R354 24차 검토: 식별 계약의 한계(P1) · SKIP 가시성(P2) ──
+# 계약: 표식(.claude/settings*.json)은 '프로젝트 폴더다' 만 증명하고 '호출자가 의도한 프로젝트' 는 증명하지 않는다.
+#   유효한 CLAUDE_PROJECT_DIR 은 Claude Code 가 훅 실행 때 넣는 값이라 그대로 우선한다 (선택 동작 불변).
+#   대신 고른 프로젝트와 근거를 출력하고, 스크립트 위치로 찾은 프로젝트와 다르면 경고해 오대상을 관찰 가능하게 한다.
+# 호출자: SessionStart async 훅 4곳(kit·template·IFRS·ICMAI 설정)뿐 — 종료 코드를 PASS 로 집계하는 코드 없음 (전수 검색).
+#   → 종료 코드는 0 유지 (호환) · 기록 실패를 stderr·stdout 에 남긴다.
+SRC_LABEL = "대상 프로젝트:"
+MISMATCH = "스크립트 위치 프로젝트와 다름"
+
+
+def test_selected_project_and_source_are_printed(tmp_path):
+    proj = _project(tmp_path / "home" / "proj")
+    _data(proj)
+    rc, out, _ = _run(_place(proj, ".claude/hooks"), tmp_path / "home")
+    assert rc == 0 and SRC_LABEL in out and "근거: 스크립트 위치" in out
+
+
+def test_env_other_valid_project_is_used_but_mismatch_warned(tmp_path):
+    here = _project(tmp_path / "home" / "here")
+    _data(here)
+    other = _project(tmp_path / "home" / "other")
+    (other / "data").mkdir()
+    (other / "data" / "strategy_memory.json").write_text('[{"id":"o1"},{"id":"o2"}]', encoding="utf-8")
+    rc, out, err = _run(_place(here, "plugins/exec_orch/hooks"), tmp_path / "home", str(other))
+    assert rc == 0
+    assert "전략 수: 2개" in out          # 계약대로 env 프로젝트(other) 데이터를 읽음
+    assert "근거: CLAUDE_PROJECT_DIR" in out
+    assert MISMATCH in err               # 오대상 가능성을 숨기지 않음
+
+
+def test_nested_install_env_outer_warns(tmp_path):
+    outer = _project(tmp_path / "home" / "outer")
+    _data(outer)
+    inner = _project(outer / "inner")
+    rc, out, err = _run(_place(inner, ".claude/hooks"), tmp_path / "home", str(outer))
+    assert rc == 0 and READ_MARK in out and MISMATCH in err
+
+
+def test_same_project_via_env_no_warning(tmp_path):
+    proj = _project(tmp_path / "home" / "proj")
+    _data(proj)
+    rc, out, err = _run(_place(proj, "plugins/exec_orch/hooks"), tmp_path / "home", str(proj))
+    assert rc == 0 and READ_MARK in out and MISMATCH not in err
+
+
+def test_symlinked_env_same_project_no_warning(tmp_path):
+    proj = _project(tmp_path / "home" / "proj")
+    _data(proj)
+    link = tmp_path / "home" / "link"
+    try:
+        os.symlink(proj, link, target_is_directory=True)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"심볼릭 링크 생성 불가 (SKIP · 통과 아님): {e}")
+    rc, out, err = _run(_place(proj, ".claude/hooks"), tmp_path / "home", str(link))
+    assert rc == 0 and READ_MARK in out and MISMATCH not in err
+
+
+def test_skip_log_write_failure_is_visible(tmp_path):
+    proj = _project(tmp_path / "home" / "proj")
+    (proj / ".claude" / "logs").write_text("not a dir", encoding="utf-8")   # 기록 폴더 생성 실패 유도
+    rc, out, err = _run(_place(proj, ".claude/hooks"), tmp_path / "home")
+    assert rc == 0                       # 호환: 종료 코드 불변
+    assert SKIP_MARK in out and DONE_MARK not in out
+    assert "기록 실패" in err and "기록 실패" in out
+
+
+def test_drive_path_fallback_has_backreference():
+    body = SRC.read_bytes()
+    assert b"\x01" not in body           # sed 치환의 \1 이 제어문자로 깨지면 cygpath 없는 환경에서 경로가 망가짐
+    assert rb"|\1:/|" in body
