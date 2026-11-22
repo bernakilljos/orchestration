@@ -1,0 +1,81 @@
+{
+ "command": "python -X utf8 .claude/scripts/lib/independent_verifier.py regression-gate",
+ "environment": {
+  "os": "Windows-11-10.0.26300-SP0",
+  "python": "3.14.2",
+  "bash": "Git Bash (_common.bash_exe)"
+ },
+ "base_head_before": "42e09c5e43dcf570d6b6fdae3dda47f123793cbc",
+ "published_commit": "4af1866cd0758c32f14f305a680f7823172cea52",
+ "published_commit_tree": "4af271e1b08cb9ac066720f6d059a6534d9f8e00",
+ "gate_stamp_tree": "4af271e1b08cb9ac066720f6d059a6534d9f8e00",
+ "tree_match": true,
+ "gate_stdout": "{\n \"status\": \"pass\",\n \"reason\": null,\n \"risk_tier\": \"high\",\n \"full\": \"영향 시험을 찾지 못함 — 범위를 안전하게 정할 수 없어 전체 회귀\",\n \"summary\": \"================= 923 passed, 1 skipped in 1119.09s (0:18:39) =================\",\n \"tests\": [\n  \".claude/scripts/tests\"\n ],\n \"new_failures\": [],\n \"baseline_failures\": [],\n \"commit_memory_pct\": 71.8,\n \"perf\": {\n  \"items\": [],\n  \"status\": \"not_triggered\"\n }\n}\n",
+ "gate_stamp": {
+  "tree": "4af271e1b08cb9ac066720f6d059a6534d9f8e00",
+  "code_tree": "91546156bbe02c987726a35f8c64a1bd2a42dedd",
+  "at": 1795327887,
+  "changed_code": [
+   ".ai-collab/evidence/R354-ci-crosscheck.json",
+   ".ai-collab/evidence/R354-ci-crosscheck.py",
+   ".ai-collab/evidence/R354-guard-operational-runs.json",
+   ".ai-collab/evidence/R354-guard-operational-runs.py",
+   ".ai-collab/state.json"
+  ],
+  "tests": [
+   ".claude/scripts/tests"
+  ],
+  "failures": [],
+  "baseline_failures": [],
+  "new_failures": [],
+  "memory_history": [
+   0.89,
+   1.2,
+   1.02,
+   2.02,
+   0.85
+  ],
+  "commit_memory_pct": 71.8,
+  "syntax_checked": [
+   ".ai-collab/evidence/R354-ci-crosscheck.json",
+   ".ai-collab/evidence/R354-ci-crosscheck.py",
+   ".ai-collab/evidence/R354-guard-operational-runs.json",
+   ".ai-collab/evidence/R354-guard-operational-runs.py",
+   ".ai-collab/state.json"
+  ],
+  "syntax_unchecked": [],
+  "syntax_errors": [],
+  "full": "영향 시험을 찾지 못함 — 범위를 안전하게 정할 수 없어 전체 회귀",
+  "why": {},
+  "risk_tier": "high",
+  "runners_not_run": [],
+  "same_pattern": [],
+  "memory_wait": {
+   "waited_sec": 0,
+   "percent": 72.2,
+   "free_gb": 7.15,
+   "phys_free_gb": 6.68
+  },
+  "memory_during": {
+   "cpu_avg": 29.6,
+   "cpu_max": 45.2,
+   "cpu_ge90": 0,
+   "cpu_samples": 225,
+   "cpu_top_when_saturated": [],
+   "start_pct": 72.2,
+   "peak_pct": 75.5,
+   "start_free_gb": 7.15,
+   "min_free_gb": 6.3,
+   "used_gb": 0.85,
+   "samples": 226
+  },
+  "summary": "================= 923 passed, 1 skipped in 1119.09s (0:18:39) =================",
+  "status": "pass",
+  "perf": {
+   "items": [],
+   "status": "not_triggered"
+  }
+ },
+ "ci_for_published_commit": "없음 — test-matrix.yml·security-scan.yml 의 push paths 필터(pyproject.toml·requirements.txt·.claude/scripts/**/*.py·plugins/**/*.py 등)에 .ai-collab/ 가 없어 실행되지 않음 (Actions API head_sha 조회 0건: 4af1866c·de7c11a3)",
+ "note": "로컬 실행 기록. 게이트는 pytest 줄 단위 로그를 남기지 않아 요약 줄과 기록 파일(regression-gate.json)만 보존된다. 같은 명령을 4af1866c 체크아웃에서 다시 실행하면 재현할 수 있다."
+}
