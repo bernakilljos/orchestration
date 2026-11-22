@@ -214,14 +214,25 @@ def test_same_project_via_env_no_warning(tmp_path):
     assert rc == 0 and READ_MARK in out and MISMATCH not in err
 
 
+def _dir_link(target: Path, link: Path) -> None:
+    """디렉터리 링크 — symlink 권한이 없으면(Windows WinError 1314) 관리자 권한이 필요 없는 junction 으로 (R354 26차)."""
+    try:
+        os.symlink(target, link, target_is_directory=True)
+        return
+    except (OSError, NotImplementedError) as e:
+        err = e
+    if os.name == "nt":
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], capture_output=True)
+        if r.returncode == 0:
+            return
+    pytest.skip(f"디렉터리 링크 생성 불가 (SKIP · 통과 아님): {err}")
+
+
 def test_symlinked_env_same_project_no_warning(tmp_path):
     proj = _project(tmp_path / "home" / "proj")
     _data(proj)
     link = tmp_path / "home" / "link"
-    try:
-        os.symlink(proj, link, target_is_directory=True)
-    except (OSError, NotImplementedError) as e:
-        pytest.skip(f"심볼릭 링크 생성 불가 (SKIP · 통과 아님): {e}")
+    _dir_link(proj, link)
     rc, out, err = _run(_place(proj, ".claude/hooks"), tmp_path / "home", str(link))
     assert rc == 0 and READ_MARK in out and MISMATCH not in err
 
@@ -311,3 +322,14 @@ def test_no_consumer_aggregates_guard_output():
         if "memory-guard.log" in t or "MEMORY-GUARD" in t:
             hits.append(rel)
     assert hits == []
+
+
+# ── R354 26차: 링크로 다른 프로젝트를 가리키는 env 도 실제 경로로 판정해 차단 ──
+def test_linked_env_to_foreign_project_is_skipped(tmp_path):
+    here = _project(tmp_path / "home" / "here")
+    other = _project(tmp_path / "home" / "other")
+    _data(other)
+    link = tmp_path / "home" / "here-alias"   # 이름은 here 처럼 보이지만 실제는 other
+    _dir_link(other, link)
+    rc, out, err = _run(_place(here, ".claude/hooks"), tmp_path / "home", str(link))
+    assert rc == 0 and READ_MARK not in out and SKIP_MARK in out and MISMATCH in err
