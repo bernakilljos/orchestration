@@ -7,20 +7,35 @@ set -uo pipefail
 
 # 프로젝트 폴더: CLAUDE_PROJECT_DIR 우선 · 없으면 위로 올라가며 .claude/settings.json 이 있는 폴더
 # (2026-11-22: plugins/exec_orch/hooks 와 .claude/hooks 는 깊이가 달라 ../../.. 고정이면 .claude/hooks 판이 상위 폴더를 잡았다)
+# (R354 22차: 못 찾으면 ../.. 로 짐작하지 않고 건너뜀 — plugins/exec_orch/hooks 에서 plugins/ 를 잡던 오대상 ·
+#  사용자 홈의 ~/.claude/settings.json 은 전역 설정이라 프로젝트로 보지 않고 홈에서 멈춤 ·
+#  CLAUDE_PROJECT_DIR 가 없는 폴더면 경고 후 위치 기준 탐색)
 _find_project() {
-  local d; d="$(cd "$(dirname "$0")" && pwd)"
-  while [ -n "$d" ] && [ "$d" != "/" ]; do
-    [ -f "$d/.claude/settings.json" ] && { echo "$d"; return; }
+  local d home; d="$(cd "$(dirname "$0")" && pwd)"
+  home="$(cd "${HOME:-/nonexistent}" 2>/dev/null && pwd)"
+  while [ -n "$d" ] && [ "$d" != "/" ] && [ "$d" != "$home" ]; do
+    [ -f "$d/.claude/settings.json" ] && { echo "$d"; return 0; }
     d="$(dirname "$d")"
   done
-  cd "$(dirname "$0")/../.." && pwd
+  return 1
 }
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(_find_project)}"
-cd "$PROJECT_DIR"
+PROJECT_DIR=""
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  if [ -d "$CLAUDE_PROJECT_DIR" ]; then
+    PROJECT_DIR="$CLAUDE_PROJECT_DIR"
+  else
+    echo "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: $CLAUDE_PROJECT_DIR — 스크립트 위치 기준으로 찾음" >&2
+  fi
+fi
+[ -n "$PROJECT_DIR" ] || PROJECT_DIR="$(_find_project)" || PROJECT_DIR=""
+if [ -z "$PROJECT_DIR" ] || ! cd "$PROJECT_DIR"; then
+  echo "[MEMORY-GUARD] 프로젝트 폴더를 찾지 못함 (.claude/settings.json) — 점검 건너뜀" >&2
+  exit 0
+fi
 
 SM="$PROJECT_DIR/data/strategy_memory.json"
-# Convert Git Bash /c/ paths to C:/ for Python on Windows
-SM_PY=$(echo "$SM" | sed -E 's|^/([a-zA-Z])/|\1:/|')
+# Windows 파이썬용 경로: cygpath 우선 (/tmp 같은 마운트도 변환) · 없으면 /c/ → C:/
+SM_PY=$(cygpath -m "$SM" 2>/dev/null || echo "$SM" | sed -E 's|^/([a-zA-Z])/|\1:/|')
 WARN_SIZE_MB=100
 CRITICAL_SIZE_MB=200
 
