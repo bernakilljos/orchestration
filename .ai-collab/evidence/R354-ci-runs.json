@@ -1,1581 +1,2292 @@
 {
- "fetched_at": "2026-11-22T10:56:08+09:00",
- "note": "GitHub Actions 공개 REST API 응답에서 판정 필드만 원문 값 그대로 추출 (가공·요약 없음). 재조회: 각 query_url·jobs_url",
- "commits": {
-  "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0": {
-   "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-   "runs": [
-    {
-     "id": 44962565446,
-     "name": "Security Scan",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-21T23:35:43Z",
-     "updated_at": "2026-11-21T23:38:09Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44962565446/jobs",
-     "jobs": [
-      {
-       "id": 137024365076,
-       "run_id": 44962565446,
-       "name": "Security Analysis",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:38:08Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024365076",
-       "steps": [
+  "fetched_at": "2026-11-22T03:33:10+00:00",
+  "note": "GitHub Actions 공개 REST API 응답에서 판정 필드만 원문 값 그대로 추출 (가공·요약 없음). 재조회: 각 query_url·jobs_url",
+  "commits": {
+    "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0": {
+      "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+      "runs": [
         {
-         "name": "Set up job",
-         "conclusion": "success"
+          "id": 44962565446,
+          "name": "Security Scan",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-21T23:35:43Z",
+          "updated_at": "2026-11-21T23:38:09Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44962565446/jobs",
+          "jobs": [
+            {
+              "id": 137024365076,
+              "run_id": 44962565446,
+              "name": "Security Analysis",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:38:08Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024365076",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install security tools",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run bandit (Python security)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run semgrep (SAST)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for hardcoded secrets",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload reports",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365302,
+              "run_id": 44962565446,
+              "name": "Check dependencies",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:46Z",
+              "completed_at": "2026-11-21T23:36:19Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024365302",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for outdated packages",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Verify requirements.txt integrity",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024961761,
+              "run_id": 44962565446,
+              "name": "PR Security Comment",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "skipped",
+              "started_at": "2026-11-21T23:38:09Z",
+              "completed_at": "2026-11-21T23:38:08Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024961761",
+              "steps": []
+            }
+          ]
         },
         {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install security tools",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run bandit (Python security)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run semgrep (SAST)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for hardcoded secrets",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload reports",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
+          "id": 44962565494,
+          "name": "Test Matrix (Python 3.11—3.14)",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-21T23:35:43Z",
+          "updated_at": "2026-11-21T23:43:04Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44962565494/jobs",
+          "jobs": [
+            {
+              "id": 137024365555,
+              "run_id": 44962565494,
+              "name": "Test (필수) Windows · Python 3.14",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:43:04Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365555",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365748,
+              "run_id": 44962565494,
+              "name": "Lint & Format",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:36:02Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365748",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install linters",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Format check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Comment on PR",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365756,
+              "run_id": 44962565494,
+              "name": "Test Python 3.12",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:46Z",
+              "completed_at": "2026-11-21T23:41:29Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365756",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365780,
+              "run_id": 44962565494,
+              "name": "Test Python 3.14",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:40:53Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365780",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365831,
+              "run_id": 44962565494,
+              "name": "Test Python 3.13",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:40:14Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365831",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137024365867,
+              "run_id": 44962565494,
+              "name": "Test Python 3.11",
+              "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-21T23:35:45Z",
+              "completed_at": "2026-11-21T23:39:35Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365867",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
         }
-       ]
-      },
-      {
-       "id": 137024365302,
-       "run_id": 44962565446,
-       "name": "Check dependencies",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:46Z",
-       "completed_at": "2026-11-21T23:36:19Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024365302",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for outdated packages",
-         "conclusion": "success"
-        },
-        {
-         "name": "Verify requirements.txt integrity",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137024961761,
-       "run_id": 44962565446,
-       "name": "PR Security Comment",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "skipped",
-       "started_at": "2026-11-21T23:38:09Z",
-       "completed_at": "2026-11-21T23:38:08Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565446/job/137024961761",
-       "steps": []
-      }
-     ]
+      ]
     },
-    {
-     "id": 44962565494,
-     "name": "Test Matrix (Python 3.11—3.14)",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-21T23:35:43Z",
-     "updated_at": "2026-11-21T23:43:04Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44962565494/jobs",
-     "jobs": [
-      {
-       "id": 137024365555,
-       "run_id": 44962565494,
-       "name": "Test (필수) Windows · Python 3.14",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:43:04Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365555",
-       "steps": [
+    "9633fc312008b028af6d0c5a359c6a472ec2cb5e": {
+      "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+      "runs": [
         {
-         "name": "Set up job",
-         "conclusion": "success"
+          "id": 44970994060,
+          "name": "Security Scan",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T01:20:26Z",
+          "updated_at": "2026-11-22T01:22:22Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44970994060/jobs",
+          "jobs": [
+            {
+              "id": 137050510395,
+              "run_id": 44970994060,
+              "name": "Check dependencies",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:20:54Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050510395",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for outdated packages",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Verify requirements.txt integrity",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510657,
+              "run_id": 44970994060,
+              "name": "Security Analysis",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:22:21Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050510657",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install security tools",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run bandit (Python security)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run semgrep (SAST)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for hardcoded secrets",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload reports",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050997879,
+              "run_id": 44970994060,
+              "name": "PR Security Comment",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "skipped",
+              "started_at": "2026-11-22T01:22:22Z",
+              "completed_at": "2026-11-22T01:22:21Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050997879",
+              "steps": []
+            }
+          ]
         },
         {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
+          "id": 44970993829,
+          "name": "Test Matrix (Python 3.11—3.14)",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T01:20:26Z",
+          "updated_at": "2026-11-22T01:30:44Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44970993829/jobs",
+          "jobs": [
+            {
+              "id": 137050510134,
+              "run_id": 44970993829,
+              "name": "Test (필수) Windows · Python 3.14",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:30:43Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510134",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510314,
+              "run_id": 44970993829,
+              "name": "Lint & Format",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:21:01Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510314",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install linters",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Format check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Comment on PR",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510357,
+              "run_id": 44970993829,
+              "name": "Test Python 3.14",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:27:06Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510357",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510451,
+              "run_id": 44970993829,
+              "name": "Test Python 3.11",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:24:53Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510451",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510509,
+              "run_id": 44970993829,
+              "name": "Test Python 3.13",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:25:56Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510509",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137050510535,
+              "run_id": 44970993829,
+              "name": "Test Python 3.12",
+              "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:20:28Z",
+              "completed_at": "2026-11-22T01:25:15Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510535",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
         }
-       ]
-      },
-      {
-       "id": 137024365748,
-       "run_id": 44962565494,
-       "name": "Lint & Format",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:36:02Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365748",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install linters",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Format check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Comment on PR",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137024365756,
-       "run_id": 44962565494,
-       "name": "Test Python 3.12",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:46Z",
-       "completed_at": "2026-11-21T23:41:29Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365756",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137024365780,
-       "run_id": 44962565494,
-       "name": "Test Python 3.14",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:40:53Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365780",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137024365831,
-       "run_id": 44962565494,
-       "name": "Test Python 3.13",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:40:14Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365831",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "success"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137024365867,
-       "run_id": 44962565494,
-       "name": "Test Python 3.11",
-       "head_sha": "a3fe59ea1fa9b5bd090ba33ede87fb2ae8bf2ab0",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-21T23:35:45Z",
-       "completed_at": "2026-11-21T23:39:35Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44962565494/job/137024365867",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  "9633fc312008b028af6d0c5a359c6a472ec2cb5e": {
-   "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-   "runs": [
-    {
-     "id": 44970994060,
-     "name": "Security Scan",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-22T01:20:26Z",
-     "updated_at": "2026-11-22T01:22:22Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44970994060/jobs",
-     "jobs": [
-      {
-       "id": 137050510395,
-       "run_id": 44970994060,
-       "name": "Check dependencies",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:20:54Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050510395",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for outdated packages",
-         "conclusion": "success"
-        },
-        {
-         "name": "Verify requirements.txt integrity",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050510657,
-       "run_id": 44970994060,
-       "name": "Security Analysis",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:22:21Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050510657",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install security tools",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run bandit (Python security)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run semgrep (SAST)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for hardcoded secrets",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload reports",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050997879,
-       "run_id": 44970994060,
-       "name": "PR Security Comment",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "skipped",
-       "started_at": "2026-11-22T01:22:22Z",
-       "completed_at": "2026-11-22T01:22:21Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970994060/job/137050997879",
-       "steps": []
-      }
-     ]
+      ]
     },
-    {
-     "id": 44970993829,
-     "name": "Test Matrix (Python 3.11—3.14)",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-22T01:20:26Z",
-     "updated_at": "2026-11-22T01:30:44Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44970993829/jobs",
-     "jobs": [
-      {
-       "id": 137050510134,
-       "run_id": 44970993829,
-       "name": "Test (필수) Windows · Python 3.14",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:30:43Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510134",
-       "steps": [
+    "ec8594a8a2203caaeab31f76497329473faf18bf": {
+      "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=ec8594a8a2203caaeab31f76497329473faf18bf",
+      "runs": [
         {
-         "name": "Set up job",
-         "conclusion": "success"
+          "id": 44973038866,
+          "name": "Test Matrix (Python 3.11—3.14)",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T01:46:48Z",
+          "updated_at": "2026-11-22T01:55:17Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44973038866/jobs",
+          "jobs": [
+            {
+              "id": 137056755377,
+              "run_id": 44973038866,
+              "name": "Test (필수) Windows · Python 3.14",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:55:16Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755377",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755569,
+              "run_id": 44973038866,
+              "name": "Test Python 3.14",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:52:36Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755569",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755586,
+              "run_id": 44973038866,
+              "name": "Test Python 3.13",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:51:48Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755586",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.13",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755676,
+              "run_id": 44973038866,
+              "name": "Test Python 3.11",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:52:07Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755676",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.11",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755680,
+              "run_id": 44973038866,
+              "name": "Lint & Format",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:47:09Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755680",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install linters",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Format check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Comment on PR",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755681,
+              "run_id": 44973038866,
+              "name": "Test Python 3.12",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:53:14Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755681",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install dependencies",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Lint with ruff",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Type check with mypy",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "conclusion": "skipped"
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Dry-run install check",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python 3.12",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            }
+          ]
         },
         {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
+          "id": 44973038835,
+          "name": "Security Scan",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T01:46:47Z",
+          "updated_at": "2026-11-22T01:49:09Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44973038835/jobs",
+          "jobs": [
+            {
+              "id": 137056755117,
+              "run_id": 44973038835,
+              "name": "Security Analysis",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:49:08Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137056755117",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Install security tools",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run bandit (Python security)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Run semgrep (SAST)",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for hardcoded secrets",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Upload reports",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137056755235,
+              "run_id": 44973038835,
+              "name": "Check dependencies",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T01:46:50Z",
+              "completed_at": "2026-11-22T01:47:23Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137056755235",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Check for outdated packages",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Verify requirements.txt integrity",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Set up Python",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Post Checkout code",
+                  "conclusion": "success"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success"
+                }
+              ]
+            },
+            {
+              "id": 137057301228,
+              "run_id": 44973038835,
+              "name": "PR Security Comment",
+              "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
+              "status": "completed",
+              "conclusion": "skipped",
+              "started_at": "2026-11-22T01:49:09Z",
+              "completed_at": "2026-11-22T01:49:08Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137057301228",
+              "steps": []
+            }
+          ]
         }
-       ]
-      },
-      {
-       "id": 137050510314,
-       "run_id": 44970993829,
-       "name": "Lint & Format",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:21:01Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510314",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install linters",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Format check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Comment on PR",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050510357,
-       "run_id": 44970993829,
-       "name": "Test Python 3.14",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:27:06Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510357",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050510451,
-       "run_id": 44970993829,
-       "name": "Test Python 3.11",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:24:53Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510451",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050510509,
-       "run_id": 44970993829,
-       "name": "Test Python 3.13",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:25:56Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510509",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "success"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137050510535,
-       "run_id": 44970993829,
-       "name": "Test Python 3.12",
-       "head_sha": "9633fc312008b028af6d0c5a359c6a472ec2cb5e",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:20:28Z",
-       "completed_at": "2026-11-22T01:25:15Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44970993829/job/137050510535",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  "ec8594a8a2203caaeab31f76497329473faf18bf": {
-   "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=ec8594a8a2203caaeab31f76497329473faf18bf",
-   "runs": [
-    {
-     "id": 44973038866,
-     "name": "Test Matrix (Python 3.11—3.14)",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-22T01:46:48Z",
-     "updated_at": "2026-11-22T01:55:17Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44973038866/jobs",
-     "jobs": [
-      {
-       "id": 137056755377,
-       "run_id": 44973038866,
-       "name": "Test (필수) Windows · Python 3.14",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:55:16Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755377",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137056755569,
-       "run_id": 44973038866,
-       "name": "Test Python 3.14",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:52:36Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755569",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.14",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137056755586,
-       "run_id": 44973038866,
-       "name": "Test Python 3.13",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:51:48Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755586",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "success"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.13",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137056755676,
-       "run_id": 44973038866,
-       "name": "Test Python 3.11",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:52:07Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755676",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.11",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137056755680,
-       "run_id": 44973038866,
-       "name": "Lint & Format",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:47:09Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755680",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install linters",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Format check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Comment on PR",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137056755681,
-       "run_id": 44973038866,
-       "name": "Test Python 3.12",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:53:14Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038866/job/137056755681",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install dependencies",
-         "conclusion": "success"
-        },
-        {
-         "name": "Lint with ruff",
-         "conclusion": "success"
-        },
-        {
-         "name": "Type check with mypy",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
-         "conclusion": "success"
-        },
-        {
-         "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload coverage to Codecov",
-         "conclusion": "skipped"
-        },
-        {
-         "name": "Validate plugin schemas (필수)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Dry-run install check",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python 3.12",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      }
-     ]
+      ]
     },
-    {
-     "id": 44973038835,
-     "name": "Security Scan",
-     "event": "push",
-     "head_branch": "main",
-     "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-     "status": "completed",
-     "conclusion": "success",
-     "run_attempt": 1,
-     "created_at": "2026-11-22T01:46:47Z",
-     "updated_at": "2026-11-22T01:49:09Z",
-     "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835",
-     "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44973038835/jobs",
-     "jobs": [
-      {
-       "id": 137056755117,
-       "run_id": 44973038835,
-       "name": "Security Analysis",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:49:08Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137056755117",
-       "steps": [
+    "c68e43762a11713993da7bd523479fda65c07b62": {
+      "query_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs?head_sha=c68e43762a11713993da7bd523479fda65c07b62",
+      "runs": [
         {
-         "name": "Set up job",
-         "conclusion": "success"
+          "id": 44980327791,
+          "name": "Security Scan",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T03:22:27Z",
+          "updated_at": "2026-11-22T03:24:53Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327791",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44980327791/jobs",
+          "jobs": [
+            {
+              "id": 137079214696,
+              "run_id": 44980327791,
+              "name": "Security Analysis",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:24:52Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327791/job/137079214696",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install security tools",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Run bandit (Python security)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Run semgrep (SAST)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Check for hardcoded secrets",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 7
+                },
+                {
+                  "name": "Upload reports",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 8
+                },
+                {
+                  "name": "Post Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 15
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 16
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 17
+                }
+              ]
+            },
+            {
+              "id": 137079214933,
+              "run_id": 44980327791,
+              "name": "Check dependencies",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:23:05Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327791/job/137079214933",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Check for outdated packages",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Verify requirements.txt integrity",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Post Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 9
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                }
+              ]
+            },
+            {
+              "id": 137079788429,
+              "run_id": 44980327791,
+              "name": "PR Security Comment",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "skipped",
+              "started_at": "2026-11-22T03:24:53Z",
+              "completed_at": "2026-11-22T03:24:52Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327791/job/137079788429",
+              "steps": []
+            }
+          ]
         },
         {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Install security tools",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run bandit (Python security)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Run semgrep (SAST)",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for hardcoded secrets",
-         "conclusion": "success"
-        },
-        {
-         "name": "Upload reports",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
+          "id": 44980327672,
+          "name": "Test Matrix (Python 3.11—3.14)",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "created_at": "2026-11-22T03:22:27Z",
+          "updated_at": "2026-11-22T03:31:25Z",
+          "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672",
+          "jobs_url": "https://api.github.com/repos/bernakilljos/orchestration/actions/runs/44980327672/jobs",
+          "jobs": [
+            {
+              "id": 137079214430,
+              "run_id": 44980327672,
+              "name": "Test (필수) Windows · Python 3.14",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:28Z",
+              "completed_at": "2026-11-22T03:31:24Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214430",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install dependencies",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Run pytest (필수)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 9
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                }
+              ]
+            },
+            {
+              "id": 137079214650,
+              "run_id": 44980327672,
+              "name": "Test Python 3.14",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:29:10Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214650",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python 3.14",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install dependencies",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Lint with ruff",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Type check with mypy",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 7
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 8
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "status": "completed",
+                  "conclusion": "skipped",
+                  "number": 9
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Dry-run install check",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                },
+                {
+                  "name": "Post Set up Python 3.14",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 21
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 22
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 23
+                }
+              ]
+            },
+            {
+              "id": 137079214684,
+              "run_id": 44980327672,
+              "name": "Test Python 3.12",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:27:00Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214684",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python 3.12",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install dependencies",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Lint with ruff",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Type check with mypy",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 7
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 8
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "status": "completed",
+                  "conclusion": "skipped",
+                  "number": 9
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Dry-run install check",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                },
+                {
+                  "name": "Post Set up Python 3.12",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 21
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 22
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 23
+                }
+              ]
+            },
+            {
+              "id": 137079214692,
+              "run_id": 44980327672,
+              "name": "Lint & Format",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:22:57Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214692",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install linters",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Check with ruff",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Format check",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Comment on PR",
+                  "status": "completed",
+                  "conclusion": "skipped",
+                  "number": 7
+                },
+                {
+                  "name": "Post Set up Python",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 13
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 14
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 15
+                }
+              ]
+            },
+            {
+              "id": 137079214698,
+              "run_id": 44980327672,
+              "name": "Test Python 3.11",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:30:46Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214698",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python 3.11",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install dependencies",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Lint with ruff",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Type check with mypy",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 7
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 8
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "status": "completed",
+                  "conclusion": "skipped",
+                  "number": 9
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Dry-run install check",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                },
+                {
+                  "name": "Post Set up Python 3.11",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 21
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 22
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 23
+                }
+              ]
+            },
+            {
+              "id": 137079214715,
+              "run_id": 44980327672,
+              "name": "Test Python 3.13",
+              "head_sha": "c68e43762a11713993da7bd523479fda65c07b62",
+              "status": "completed",
+              "conclusion": "success",
+              "started_at": "2026-11-22T03:22:29Z",
+              "completed_at": "2026-11-22T03:27:11Z",
+              "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44980327672/job/137079214715",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 1
+                },
+                {
+                  "name": "Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 2
+                },
+                {
+                  "name": "Set up Python 3.13",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 3
+                },
+                {
+                  "name": "Install dependencies",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 4
+                },
+                {
+                  "name": "Lint with ruff",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 5
+                },
+                {
+                  "name": "Type check with mypy",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 6
+                },
+                {
+                  "name": "Run pytest (참고 · ubuntu · 단일 실행 + coverage)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 7
+                },
+                {
+                  "name": "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 8
+                },
+                {
+                  "name": "Upload coverage to Codecov",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 9
+                },
+                {
+                  "name": "Validate plugin schemas (필수)",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 10
+                },
+                {
+                  "name": "Dry-run install check",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 11
+                },
+                {
+                  "name": "Post Set up Python 3.13",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 21
+                },
+                {
+                  "name": "Post Checkout code",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 22
+                },
+                {
+                  "name": "Complete job",
+                  "status": "completed",
+                  "conclusion": "success",
+                  "number": 23
+                }
+              ]
+            }
+          ]
         }
-       ]
-      },
-      {
-       "id": 137056755235,
-       "run_id": 44973038835,
-       "name": "Check dependencies",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "success",
-       "started_at": "2026-11-22T01:46:50Z",
-       "completed_at": "2026-11-22T01:47:23Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137056755235",
-       "steps": [
-        {
-         "name": "Set up job",
-         "conclusion": "success"
-        },
-        {
-         "name": "Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Check for outdated packages",
-         "conclusion": "success"
-        },
-        {
-         "name": "Verify requirements.txt integrity",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Set up Python",
-         "conclusion": "success"
-        },
-        {
-         "name": "Post Checkout code",
-         "conclusion": "success"
-        },
-        {
-         "name": "Complete job",
-         "conclusion": "success"
-        }
-       ]
-      },
-      {
-       "id": 137057301228,
-       "run_id": 44973038835,
-       "name": "PR Security Comment",
-       "head_sha": "ec8594a8a2203caaeab31f76497329473faf18bf",
-       "status": "completed",
-       "conclusion": "skipped",
-       "started_at": "2026-11-22T01:49:09Z",
-       "completed_at": "2026-11-22T01:49:08Z",
-       "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44973038835/job/137057301228",
-       "steps": []
-      }
-     ]
+      ]
     }
-   ]
   }
- }
 }
