@@ -1,0 +1,213 @@
+{
+  "fetched_at": "2026-11-22T13:51:26+09:00",
+  "bash": "Git Bash (_common.bash_exe)",
+  "targets": {
+    "C:/pjt/orchestration_v1": {
+      "registration": {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+        "timeout": 10,
+        "async": true
+      },
+      "script_md5_12": "400f02f3a939",
+      "ops_signature_before": [
+        "b8599859b9580921",
+        5
+      ],
+      "ops_signature_after": [
+        "b8599859b9580921",
+        5
+      ],
+      "ops_unchanged": true,
+      "ops_memory_guard_log_lines": 2,
+      "runs": {
+        "1_정상_데이터없음(운영과 같은 상태)": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 1
+        },
+        "2_env_다른_프로젝트": {
+          "rc": 0,
+          "stdout": "[SKIP] 메모리 가드 점검 안 함 — CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpj9avtfz1/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpj9avtfz1/home/copy)\n[MEMORY-GUARD] SKIP: CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "copy_log_lines": 2
+        },
+        "3_env_다른_프로젝트+명시적허용": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/other (근거: CLAUDE_PROJECT_DIR · 명시적 허용 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 1개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:26\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpj9avtfz1/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpj9avtfz1/home/copy)\n",
+          "copy_log_lines": 2
+        },
+        "4_env_누락": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 3
+        },
+        "5_env_없는_폴더": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: %USERPROFILE%\\AppData\\Local\\Temp\\tmpj9avtfz1\\home\\no-such — 스크립트 위치 기준으로 찾음\n[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 4
+        },
+        "6_기록_실패": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[SKIP] SKIP 기록 실패: /tmp/tmpj9avtfz1/home/copy/.claude/logs/memory-guard.log\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[MEMORY-GUARD] SKIP 기록 실패: /tmp/tmpj9avtfz1/home/copy/.claude/logs/memory-guard.log\n",
+          "copy_log_lines": 0
+        },
+        "7_정상_데이터있음": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpj9avtfz1/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 3개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:32\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "",
+          "copy_log_lines": 0
+        }
+      }
+    },
+    "C:/IFRS_PJT": {
+      "registration": {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+        "timeout": 10,
+        "async": true
+      },
+      "script_md5_12": "400f02f3a939",
+      "ops_signature_before": [
+        "9e1660be00127ae0",
+        4
+      ],
+      "ops_signature_after": [
+        "9e1660be00127ae0",
+        4
+      ],
+      "ops_unchanged": true,
+      "ops_memory_guard_log_lines": 1,
+      "runs": {
+        "1_정상_데이터없음(운영과 같은 상태)": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 1
+        },
+        "2_env_다른_프로젝트": {
+          "rc": 0,
+          "stdout": "[SKIP] 메모리 가드 점검 안 함 — CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpzstfgji8/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpzstfgji8/home/copy)\n[MEMORY-GUARD] SKIP: CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "copy_log_lines": 2
+        },
+        "3_env_다른_프로젝트+명시적허용": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/other (근거: CLAUDE_PROJECT_DIR · 명시적 허용 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 1개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:34\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpzstfgji8/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpzstfgji8/home/copy)\n",
+          "copy_log_lines": 2
+        },
+        "4_env_누락": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 3
+        },
+        "5_env_없는_폴더": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: %USERPROFILE%\\AppData\\Local\\Temp\\tmpzstfgji8\\home\\no-such — 스크립트 위치 기준으로 찾음\n[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 4
+        },
+        "6_기록_실패": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[SKIP] SKIP 기록 실패: /tmp/tmpzstfgji8/home/copy/.claude/logs/memory-guard.log\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[MEMORY-GUARD] SKIP 기록 실패: /tmp/tmpzstfgji8/home/copy/.claude/logs/memory-guard.log\n",
+          "copy_log_lines": 0
+        },
+        "7_정상_데이터있음": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpzstfgji8/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 3개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:39\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "",
+          "copy_log_lines": 0
+        }
+      }
+    },
+    "C:/ICMAI_PJT": {
+      "registration": {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+        "timeout": 10,
+        "async": true
+      },
+      "script_md5_12": "400f02f3a939",
+      "ops_signature_before": [
+        "a775b60017a42fc4",
+        4
+      ],
+      "ops_signature_after": [
+        "a775b60017a42fc4",
+        4
+      ],
+      "ops_unchanged": true,
+      "ops_memory_guard_log_lines": 1,
+      "runs": {
+        "1_정상_데이터없음(운영과 같은 상태)": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 1
+        },
+        "2_env_다른_프로젝트": {
+          "rc": 0,
+          "stdout": "[SKIP] 메모리 가드 점검 안 함 — CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpbm1h64k0/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpbm1h64k0/home/copy)\n[MEMORY-GUARD] SKIP: CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n",
+          "copy_log_lines": 2
+        },
+        "3_env_다른_프로젝트+명시적허용": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/other (근거: CLAUDE_PROJECT_DIR · 명시적 허용 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 1개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:42\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR(/tmp/tmpbm1h64k0/home/other) 가 스크립트 위치 프로젝트와 다름(/tmp/tmpbm1h64k0/home/copy)\n",
+          "copy_log_lines": 2
+        },
+        "4_env_누락": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 3
+        },
+        "5_env_없는_폴더": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/copy (근거: 스크립트 위치)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "stderr": "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: %USERPROFILE%\\AppData\\Local\\Temp\\tmpbm1h64k0\\home\\no-such — 스크립트 위치 기준으로 찾음\n[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+          "copy_log_lines": 4
+        },
+        "6_기록_실패": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[SKIP] SKIP 기록 실패: /tmp/tmpbm1h64k0/home/copy/.claude/logs/memory-guard.log\n",
+          "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n[MEMORY-GUARD] SKIP 기록 실패: /tmp/tmpbm1h64k0/home/copy/.claude/logs/memory-guard.log\n",
+          "copy_log_lines": 0
+        },
+        "7_정상_데이터있음": {
+          "rc": 0,
+          "stdout": "[INFO] 대상 프로젝트: /tmp/tmpbm1h64k0/home/copy (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[INFO] 파일 크기: 0KB (0MB)\n[OK]   크기 정상 (임계값: 100MB)\n[INFO] 전략 수: 3개\n[OK]   JSON 구조 유효\n[OK]   중복 전략 없음 (식별자 0 · 내용 0)\n[INFO] 마지막 수정: 2026-11-22 13:51:47\n=== [MEMORY-GUARD] 점검 완료 ===\n",
+          "stderr": "",
+          "copy_log_lines": 0
+        }
+      }
+    }
+  },
+  "operational_scan": {
+    "C--pjt-orchestration-v1": 1,
+    "C--IFRS-PJT": 0,
+    "C--ICMAI-PJT": 0
+  },
+  "operational_records": [
+    {
+      "project_log_dir": "C--pjt-orchestration-v1",
+      "session": "98d78b71",
+      "timestamp": "2026-11-22T03:17:59.660Z",
+      "hookName": "SessionStart:compact",
+      "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+      "exitCode": 0,
+      "stdout": "=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+      "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n"
+    }
+  ],
+  "operational_note": "Claude Code 세션 기록(~/.claude/projects/<proj>/*.jsonl)의 async_hook_response 첨부 중 memory_guard 명령 · 읽기 전용 추출 · 대상 훅을 새로 실행하지 않음 · 명령(command)에 memory_guard 가 든 레코드만 (다른 훅 출력 안의 파일명 언급 제외)"
+}
