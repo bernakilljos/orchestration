@@ -10,40 +10,52 @@ set -uo pipefail
 # (R354 22차: 못 찾으면 ../.. 로 짐작하지 않고 건너뜀 — plugins/exec_orch/hooks 에서 plugins/ 를 잡던 오대상 ·
 #  사용자 홈의 ~/.claude/settings.json 은 전역 설정이라 프로젝트로 보지 않고 홈에서 멈춤 ·
 #  CLAUDE_PROJECT_DIR 가 없는 폴더면 경고 후 위치 기준 탐색)
+#  (R354 23차: 신뢰 계약 = 이 훅은 kit 이 설치된 프로젝트의 .claude/settings*.json 에 등록돼 실행된다 →
+#   프로젝트 표식 = .claude/settings.json 또는 .claude/settings.local.json · 표식 없는 CLAUDE_PROJECT_DIR 은
+#   실재 폴더여도 쓰지 않고 경고 후 위치 기준 탐색 · 상대 경로는 절대 경로로 정규화 ·
+#   건너뜀은 [SKIP] 으로 출력하고 기록해 점검 통과([OK]·점검 완료)와 구분)
+_has_marker() { [ -f "$1/.claude/settings.json" ] || [ -f "$1/.claude/settings.local.json" ]; }
 _find_project() {
   local d home; d="$(cd "$(dirname "$0")" && pwd)"
   home="$(cd "${HOME:-/nonexistent}" 2>/dev/null && pwd)"
   while [ -n "$d" ] && [ "$d" != "/" ] && [ "$d" != "$home" ]; do
-    [ -f "$d/.claude/settings.json" ] && { echo "$d"; return 0; }
+    _has_marker "$d" && { echo "$d"; return 0; }
     d="$(dirname "$d")"
   done
   return 1
 }
+_skip() {   # $1 = 사유 · $2 = 기록 폴더(있으면)
+  echo "[SKIP] 메모리 가드 점검 안 함 — $1"
+  echo "[MEMORY-GUARD] SKIP: $1" >&2
+  local logdir="${2:-${TMPDIR:-${TEMP:-/tmp}}}"
+  mkdir -p "$logdir" 2>/dev/null &&     echo "$(date '+%Y-%m-%d %H:%M:%S') SKIP $1" >> "$logdir/memory-guard.log" 2>/dev/null
+  exit 0
+}
 PROJECT_DIR=""
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
-  if [ -d "$CLAUDE_PROJECT_DIR" ]; then
-    PROJECT_DIR="$CLAUDE_PROJECT_DIR"
-  else
+  if [ ! -d "$CLAUDE_PROJECT_DIR" ]; then
     echo "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 폴더 없음: $CLAUDE_PROJECT_DIR — 스크립트 위치 기준으로 찾음" >&2
+  elif ! _has_marker "$CLAUDE_PROJECT_DIR"; then
+    echo "[MEMORY-GUARD] CLAUDE_PROJECT_DIR 에 프로젝트 표식(.claude/settings*.json) 없음: $CLAUDE_PROJECT_DIR — 스크립트 위치 기준으로 찾음" >&2
+  else
+    PROJECT_DIR="$(cd "$CLAUDE_PROJECT_DIR" && pwd)"
   fi
 fi
 [ -n "$PROJECT_DIR" ] || PROJECT_DIR="$(_find_project)" || PROJECT_DIR=""
 if [ -z "$PROJECT_DIR" ] || ! cd "$PROJECT_DIR"; then
-  echo "[MEMORY-GUARD] 프로젝트 폴더를 찾지 못함 (.claude/settings.json) — 점검 건너뜀" >&2
-  exit 0
+  _skip "프로젝트 폴더를 찾지 못함 (.claude/settings*.json) — 점검 건너뜀"
 fi
 
 SM="$PROJECT_DIR/data/strategy_memory.json"
 # Windows 파이썬용 경로: cygpath 우선 (/tmp 같은 마운트도 변환) · 없으면 /c/ → C:/
-SM_PY=$(cygpath -m "$SM" 2>/dev/null || echo "$SM" | sed -E 's|^/([a-zA-Z])/|\1:/|')
+SM_PY=$(cygpath -m "$SM" 2>/dev/null || echo "$SM" | sed -E 's|^/([a-zA-Z])/|:/|')
 WARN_SIZE_MB=100
 CRITICAL_SIZE_MB=200
 
 echo "=== [MEMORY-GUARD] strategy_memory.json 모니터링 ==="
 
 if [ ! -f "$SM" ]; then
-    echo "[WARN] strategy_memory.json 파일 없음"
-    exit 0
+    _skip "data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)" "$PROJECT_DIR/.claude/logs"
 fi
 
 # 1. 파일 크기 확인

@@ -826,6 +826,7 @@
 - 2026-11-22 R354 20차 검토 반영: ai-collab-report 게시 커밋 판정에 guide.txt 기록 한 줄 허용 (구현 없는 회차 게시 커밋이 자동 head 로 뽑히던 것) · A/B 재측정 = 조건별 독립 격리·매 실행 seed 복원·실행별 원시 80행·부트스트랩 95% 구간 (지연 차이 0 포함 · 주입 -15.0% 문자) · 토큰 집계 중복 id 검산 (값 동일 505개 · 합산 시 2.15배 과대)
 - 2026-11-22 R354 21차 검토 반영: 게시/작업 분류 경계 회귀 시험 — 연속 게시 3회(guide 포함·미포함)·게시 커밋 --head 지정 거부·--head --reason 지정 뒤 guide 게시가 또 생겨도 지정 유지·guide.txt 외 문서가 섞인 .ai-collab 커밋은 작업 커밋(특례 확대 금지) · 수정 전 스크립트로 실패·수정 후 통과 대조
 - 2026-11-22 R354 22차 검토 반영: memory_guard.sh 프로젝트 판정 경계 — 설정 파일 못 찾으면 ../.. 로 짐작하지 않고 건너뜀(plugins/ 오대상 차단)·홈 ~/.claude/settings.json(전역)은 프로젝트로 안 봄·없는 CLAUDE_PROJECT_DIR 은 경고 후 위치 기준 탐색·파이썬 경로 cygpath 변환 · 시험 test_r354_memory_guard_project 7건 (수정 전 3건 실패)
+- 2026-11-22 R354 23차 검토 반영: memory_guard.sh 신뢰 계약 — 프로젝트 표식 = .claude/settings.json 또는 settings.local.json · 실재해도 표식 없는 CLAUDE_PROJECT_DIR 은 쓰지 않고 경고 후 위치 기준 탐색 · 상대 경로 정규화 · 건너뜀은 [SKIP] 출력+.claude/logs/memory-guard.log 기록(점검 통과와 구분) · 시험 12건 (추가 5건 중 수정 전 4건 실패)
 - 2026-11-22 memory_guard.sh 프로젝트 폴더 판정: ../../.. 고정이라 .claude/hooks 판(깊이 2)이 상위 폴더를 잡고 대상 판과 갈라져 전파 때 «kit 이 더 최근 — 수동 병합» 으로 계속 남던 것 → CLAUDE_PROJECT_DIR 우선 · 없으면 위로 올라가며 .claude/settings.json 있는 폴더 · plugins/exec_orch/hooks 와 .claude/hooks 두 벌 동일
 ' 표기가 줄바꿈으로 깨져 데이터 전용 판정 실패 → 본문 속 push 언급이 실행으로 남던 것 (실제 줄바꿈 있으면 변환 안 함) · VS Code 체감: 모델 대기 중앙 4.0초·p90 9.9초 vs 로컬 훅 68ms · 3분 표본 CPU 합 최대 9%·RAM 여유 5.6GB+ · IFRS·ICMAI 는 작업 폴더 설정이 없거나 짧아 전역 terminal.integrated.gpuAcceleration=off (가장 느린 DOM 렌더) 적용 중
     2.1.199 (7/2): stacked slash-skill `/skill-a /skill-b …` 최대 5개 동시 로드 ·
