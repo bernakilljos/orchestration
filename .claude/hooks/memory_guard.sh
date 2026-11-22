@@ -51,12 +51,23 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     PROJECT_SRC="CLAUDE_PROJECT_DIR"
   fi
 fi
+# R354 25차 오대상 방지 계약 (경고만 → 기본 차단 + 명시적 허용):
+#   등록 명령은 `bash "$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh"` 이므로 정상 실행에서
+#   스크립트는 항상 CLAUDE_PROJECT_DIR 안에 있다 (실행 경로 = 대상 증명 · CLAUDE_PROJECT_DIR = 세션을 시작한 프로젝트 루트).
+#   env 프로젝트가 스크립트 위치 프로젝트와 다르거나 스크립트 주변에 프로젝트가 없으면 출처를 증명할 수 없어 SKIP.
+#   다른 프로젝트를 일부러 점검할 때만 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1 (경고는 그대로 남김).
 SCRIPT_PROJECT="$(_find_project)" || SCRIPT_PROJECT=""
 if [ -z "$PROJECT_DIR" ]; then
   PROJECT_DIR="$SCRIPT_PROJECT"
-elif [ -n "$SCRIPT_PROJECT" ] && \
+elif [ -z "$SCRIPT_PROJECT" ] || \
      [ "$(cd "$PROJECT_DIR" && pwd -P)" != "$(cd "$SCRIPT_PROJECT" && pwd -P)" ]; then
-  echo "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR($PROJECT_DIR) 가 스크립트 위치 프로젝트와 다름($SCRIPT_PROJECT) — CLAUDE_PROJECT_DIR 기준으로 점검" >&2
+  echo "[MEMORY-GUARD] 주의: CLAUDE_PROJECT_DIR($PROJECT_DIR) 가 스크립트 위치 프로젝트와 다름(${SCRIPT_PROJECT:-없음})" >&2
+  if [ "${MEMORY_GUARD_ALLOW_FOREIGN_PROJECT:-}" = "1" ]; then
+    PROJECT_SRC="CLAUDE_PROJECT_DIR · 명시적 허용 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1"
+  else
+    _skip "CLAUDE_PROJECT_DIR 와 스크립트 위치 프로젝트 불일치 — 오대상 방지로 점검 건너뜀 (의도한 점검이면 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)" \
+      "${SCRIPT_PROJECT:+$SCRIPT_PROJECT/.claude/logs}"
+  fi
 fi
 if [ -z "$PROJECT_DIR" ] || ! cd "$PROJECT_DIR"; then
   _skip "프로젝트 폴더를 찾지 못함 (.claude/settings*.json) — 점검 건너뜀"

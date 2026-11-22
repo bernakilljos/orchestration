@@ -42,8 +42,10 @@ def _place(base: Path, rel: str) -> Path:
     return dst
 
 
-def _run(script: Path, home: Path, project_env=None):
-    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+def _run(script: Path, home: Path, project_env=None, extra=None):
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("CLAUDE_PROJECT_DIR", "MEMORY_GUARD_ALLOW_FOREIGN_PROJECT")}
+    env.update(extra or {})
     env["HOME"] = str(home)
     env["TMPDIR"] = str(home)   # 프로젝트 못 찾음 SKIP 기록이 실제 %TEMP% 에 쌓이지 않게
     if project_env is not None:
@@ -69,11 +71,11 @@ def test_nested_project_picks_nearest(tmp_path):
     assert rc == 0 and READ_MARK in out
 
 
-def test_valid_env_wins_over_script_location(tmp_path):
-    here = _project(tmp_path / "home" / "here")
+def test_valid_env_same_as_script_project_is_used(tmp_path):
+    # R354 25차: 종전 '다른 유효 프로젝트 env 가 이김' 계약은 fail-safe 로 바뀜 (아래 25차 절) — 같은 프로젝트면 그대로 사용
     other = _project(tmp_path / "home" / "other")
     _data(other)
-    rc, out, _ = _run(_place(here, ".claude/hooks"), tmp_path / "home", str(other))
+    rc, out, _ = _run(_place(other, ".claude/hooks"), tmp_path / "home", str(other))
     assert rc == 0 and READ_MARK in out
 
 
@@ -134,7 +136,7 @@ def test_env_dir_with_settings_local_only_is_accepted(tmp_path):
     (other / ".claude").mkdir(parents=True)
     (other / ".claude" / "settings.local.json").write_text("{}", encoding="utf-8")
     _data(other)
-    rc, out, err = _run(_place(here, ".claude/hooks"), tmp_path / "home", str(other))
+    rc, out, err = _run(_place(other, ".claude/hooks"), tmp_path / "home", str(other))
     assert rc == 0 and READ_MARK in out and "표식" not in err
 
 
@@ -143,7 +145,7 @@ def test_relative_env_dir_resolves_from_cwd(tmp_path):
     here = _project(home / "here")
     other = _project(home / "other")
     _data(other)
-    rc, out, _ = _run(_place(here, ".claude/hooks"), home, "other")   # cwd = home
+    rc, out, _ = _run(_place(other, ".claude/hooks"), home, "other")   # cwd = home
     assert rc == 0 and READ_MARK in out
 
 
@@ -182,24 +184,27 @@ def test_selected_project_and_source_are_printed(tmp_path):
 
 
 def test_env_other_valid_project_is_used_but_mismatch_warned(tmp_path):
+    # R354 25차: 다른 프로젝트 점검은 명시적 허용(MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1)일 때만 · 경고는 그대로
     here = _project(tmp_path / "home" / "here")
     _data(here)
     other = _project(tmp_path / "home" / "other")
     (other / "data").mkdir()
     (other / "data" / "strategy_memory.json").write_text('[{"id":"o1"},{"id":"o2"}]', encoding="utf-8")
-    rc, out, err = _run(_place(here, "plugins/exec_orch/hooks"), tmp_path / "home", str(other))
+    rc, out, err = _run(_place(here, "plugins/exec_orch/hooks"), tmp_path / "home", str(other),
+                        {"MEMORY_GUARD_ALLOW_FOREIGN_PROJECT": "1"})
     assert rc == 0
     assert "전략 수: 2개" in out          # 계약대로 env 프로젝트(other) 데이터를 읽음
     assert "근거: CLAUDE_PROJECT_DIR" in out
     assert MISMATCH in err               # 오대상 가능성을 숨기지 않음
 
 
-def test_nested_install_env_outer_warns(tmp_path):
+def test_nested_install_env_outer_is_skipped(tmp_path):
+    # R354 25차: 중첩 설치에서 env=outer · 스크립트=inner → 기본은 어느 쪽도 읽지 않고 SKIP (오대상 차단)
     outer = _project(tmp_path / "home" / "outer")
     _data(outer)
     inner = _project(outer / "inner")
     rc, out, err = _run(_place(inner, ".claude/hooks"), tmp_path / "home", str(outer))
-    assert rc == 0 and READ_MARK in out and MISMATCH in err
+    assert rc == 0 and READ_MARK not in out and SKIP_MARK in out and MISMATCH in err
 
 
 def test_same_project_via_env_no_warning(tmp_path):
@@ -234,3 +239,75 @@ def test_drive_path_fallback_has_backreference():
     body = SRC.read_bytes()
     assert b"\x01" not in body           # sed 치환의 \1 이 제어문자로 깨지면 cygpath 없는 환경에서 경로가 망가짐
     assert rb"|\1:/|" in body
+
+
+# ── R354 25차 검토 P1: 오대상 방지 계약 (경고 → 기본 차단 + 명시적 허용) ──
+# provenance: 등록 명령은 4곳 모두 `bash "$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh"` →
+#   정상 실행에서 스크립트는 항상 CLAUDE_PROJECT_DIR 안에 있다 (= 실행 경로가 대상 증명).
+#   공식 문서: CLAUDE_PROJECT_DIR = "the project root where the session started" (code.claude.com/docs/en/hooks).
+#   그러므로 env 프로젝트와 스크립트 위치 프로젝트가 다르면(또는 스크립트 주변에 프로젝트가 없으면) 출처를 증명할 수 없어
+#   기본은 SKIP · 다른 프로젝트를 일부러 점검할 때만 MEMORY_GUARD_ALLOW_FOREIGN_PROJECT=1.
+ALLOW = {"MEMORY_GUARD_ALLOW_FOREIGN_PROJECT": "1"}
+
+
+def test_foreign_env_project_is_skipped_by_default(tmp_path):
+    here = _project(tmp_path / "home" / "here")
+    other = _project(tmp_path / "home" / "other")
+    _data(other)
+    rc, out, err = _run(_place(here, ".claude/hooks"), tmp_path / "home", str(other))
+    assert rc == 0
+    assert READ_MARK not in out and SKIP_MARK in out and DONE_MARK not in out
+    assert MISMATCH in err
+    log = here / ".claude" / "logs" / "memory-guard.log"   # 기록은 스크립트 자신의 프로젝트에 (env 쪽에 쓰지 않음)
+    assert log.is_file() and not (other / ".claude" / "logs").exists()
+
+
+def test_script_outside_project_with_env_is_skipped(tmp_path):
+    home = tmp_path / "home"
+    other = _project(home / "other")
+    _data(other)
+    rc, out, err = _run(_place(home / "loose", "hooks"), home, str(other))
+    assert rc == 0 and READ_MARK not in out and SKIP_MARK in out
+
+
+def test_script_outside_project_with_env_allowed(tmp_path):
+    home = tmp_path / "home"
+    other = _project(home / "other")
+    _data(other)
+    rc, out, _ = _run(_place(home / "loose", "hooks"), home, str(other), ALLOW)
+    assert rc == 0 and READ_MARK in out and "명시적 허용" in out
+
+
+# ── R354 25차 검토 P2: 등록·소비자 증거 (저장소 안 2곳은 시험 · IFRS/ICMAI 는 보고서에 읽기 전용 실측) ──
+REG_CMD = 'bash "$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh"'
+
+
+@pytest.mark.parametrize("rel", [".claude/settings.json", "setup/templates/settings.template.json"])
+def test_registration_is_async_sessionstart_inside_project(rel):
+    import json
+    cfg = json.loads((ROOT / rel).read_text(encoding="utf-8"))
+    found = [(ev, h) for ev, groups in cfg.get("hooks", {}).items() for g in groups
+             for h in g.get("hooks", []) if "memory_guard" in h.get("command", "")]
+    assert len(found) == 1
+    ev, h = found[0]
+    assert ev == "SessionStart" and h.get("async") is True and h["command"] == REG_CMD
+
+
+def test_no_consumer_aggregates_guard_output():
+    # 출력·기록(memory-guard.log)을 읽어 PASS 로 집계하는 소비자가 생기면 이 시험이 먼저 알린다
+    hits = []
+    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True,
+                             encoding="utf-8", timeout=60).stdout.splitlines()
+    for rel in tracked:
+        f = ROOT / rel
+        if f.suffix not in (".py", ".sh", ".ps1", ".bat", ".js") or not f.is_file():
+            continue
+        if rel.startswith((".git/", ".repair-sandbox/", ".ai-collab/", "node_modules/")) or "/logs/" in rel                 or rel.endswith("test_r354_memory_guard_project.py") or rel.endswith("memory_guard.sh"):
+            continue
+        try:
+            t = f.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if "memory-guard.log" in t or "MEMORY-GUARD" in t:
+            hits.append(rel)
+    assert hits == []
