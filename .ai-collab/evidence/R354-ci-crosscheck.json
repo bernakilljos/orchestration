@@ -1,0 +1,155 @@
+{
+ "be25922efa600c839e07676bd6e40396773dcd7b": {
+  "runs": 2,
+  "jobs": [
+   {
+    "workflow": "Security Scan",
+    "run_id": 44987063963,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Check dependencies",
+    "job_id": 137099841403,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Dependency",
+    "test_steps": [],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063963/job/137099841403"
+   },
+   {
+    "workflow": "Security Scan",
+    "run_id": 44987063963,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "PR Security Comment",
+    "job_id": 137100336993,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "skipped",
+    "category": "PR 코멘트 (push 에선 실행 안 함)",
+    "test_steps": [],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063963/job/137100336993"
+   },
+   {
+    "workflow": "Security Scan",
+    "run_id": 44987063963,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Security Analysis",
+    "job_id": 137099841237,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Security",
+    "test_steps": [],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063963/job/137099841237"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Lint & Format",
+    "job_id": 137099841306,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Lint",
+    "test_steps": [],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841306"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Test (필수) Windows · Python 3.14",
+    "job_id": 137099841270,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Windows 필수",
+    "test_steps": [
+     "Run pytest (필수)=success"
+    ],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841270"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Test Python 3.11",
+    "job_id": 137099841129,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Linux 3.11",
+    "test_steps": [
+     "Run pytest (참고 · ubuntu · 단일 실행 + coverage)=success",
+     "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)=success"
+    ],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841129"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Test Python 3.12",
+    "job_id": 137099841304,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Linux 3.12",
+    "test_steps": [
+     "Run pytest (참고 · ubuntu · 단일 실행 + coverage)=success",
+     "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)=success"
+    ],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841304"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Test Python 3.13",
+    "job_id": 137099841365,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Linux 3.13",
+    "test_steps": [
+     "Run pytest (참고 · ubuntu · 단일 실행 + coverage)=success",
+     "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)=success"
+    ],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841365"
+   },
+   {
+    "workflow": "Test Matrix (Python 3.11—3.14)",
+    "run_id": 44987063883,
+    "event": "push",
+    "run_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "job": "Test Python 3.14",
+    "job_id": 137099841250,
+    "job_head_sha": "be25922efa600c839e07676bd6e40396773dcd7b",
+    "conclusion": "success",
+    "category": "Linux 3.14",
+    "test_steps": [
+     "Run pytest (참고 · ubuntu · 단일 실행 + coverage)=success",
+     "post-impl-verify 파일명 경계 시험 (필수 · Linux 전용 증거)=success"
+    ],
+    "html_url": "https://github.com/bernakilljos/orchestration/actions/runs/44987063883/job/137099841250"
+   }
+  ],
+  "by_conclusion": {
+   "success": [
+    "Dependency",
+    "Security",
+    "Lint",
+    "Windows 필수",
+    "Linux 3.11",
+    "Linux 3.12",
+    "Linux 3.13",
+    "Linux 3.14"
+   ],
+   "skipped": [
+    "PR 코멘트 (push 에선 실행 안 함)"
+   ]
+  },
+  "mismatches": [],
+  "verdict": "게시본 = 원본"
+ }
+}

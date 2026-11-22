@@ -1,0 +1,74 @@
+{
+ "fetched_at": "2026-11-22T15:09:13+09:00",
+ "targets": {
+  "orchestration_v1": {
+   "installed_script": {
+    "sha256_12": "5567d3204f85",
+    "mtime_utc": "2026-11-22T03:53:54+00:00"
+   },
+   "session_dir_exists": true,
+   "records_total": 2,
+   "records_current_script": 1,
+   "status": "관측",
+   "records": [
+    {
+     "timestamp": "2026-11-22T03:17:59.660Z",
+     "session": "98d78b71",
+     "cli_version": "2.1.327",
+     "hookName": "SessionStart:compact",
+     "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+     "exitCode": 0,
+     "target_project_line": null,
+     "stdout": "=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+     "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+     "script": "이전 설치본 (그 시점 해시 미관측)"
+    },
+    {
+     "timestamp": "2026-11-22T06:08:06.985Z",
+     "session": "98d78b71",
+     "cli_version": "2.1.327",
+     "hookName": "SessionStart:compact",
+     "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/exec_orch/hooks/memory_guard.sh\"",
+     "exitCode": 0,
+     "target_project_line": "/c/pjt/orchestration_v1",
+     "stdout": "[INFO] 대상 프로젝트: /c/pjt/orchestration_v1 (근거: CLAUDE_PROJECT_DIR)\n=== [MEMORY-GUARD] strategy_memory.json 모니터링 ===\n[SKIP] 메모리 가드 점검 안 함 — data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+     "stderr": "[MEMORY-GUARD] SKIP: data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)\n",
+     "script": "현재 설치본 5567d3204f85"
+    }
+   ],
+   "memory_guard_log_tail": [
+    "2026-11-22 10:45:47 SKIP data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)",
+    "2026-11-22 11:52:10 SKIP data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)",
+    "2026-11-22 15:02:34 SKIP data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)"
+   ]
+  },
+  "IFRS_PJT": {
+   "installed_script": {
+    "sha256_12": "5567d3204f85",
+    "mtime_utc": "2026-11-22T03:53:54+00:00"
+   },
+   "session_dir_exists": true,
+   "records_total": 0,
+   "records_current_script": 0,
+   "status": "미관측 (활성 세션 기록 0건 · 오류 없음/정상의 근거 아님)",
+   "records": [],
+   "memory_guard_log_tail": [
+    "2026-11-22 10:46:58 SKIP data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)"
+   ]
+  },
+  "ICMAI_PJT": {
+   "installed_script": {
+    "sha256_12": "5567d3204f85",
+    "mtime_utc": "2026-11-22T03:53:54+00:00"
+   },
+   "session_dir_exists": true,
+   "records_total": 0,
+   "records_current_script": 0,
+   "status": "미관측 (활성 세션 기록 0건 · 오류 없음/정상의 근거 아님)",
+   "records": [],
+   "memory_guard_log_tail": [
+    "2026-11-22 10:46:59 SKIP data/strategy_memory.json 없음 (점검 대상 없음 · 통과 아님)"
+   ]
+  }
+ }
+}

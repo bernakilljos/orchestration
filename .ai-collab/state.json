@@ -259,9 +259,9 @@
       "range_tip": "be25922efa600c839e07676bd6e40396773dcd7b",
       "status": "PARTIAL",
       "report": "reports/R354.md",
-      "reported_at": "2026-11-22T05:06:34+00:00",
+      "reported_at": "2026-11-22T06:10:48+00:00",
       "reviewed": false,
-      "items_sig": "5a4d358d3f90"
+      "items_sig": "08fccc6512dc"
     }
   },
   "last_head": "be25922efa600c839e07676bd6e40396773dcd7b",
@@ -286,9 +286,9 @@
     ".ai-collab/requests/R351.md": "20ed9079189a1b63bebd0de166784ddacc3840a6",
     ".ai-collab/requests/R353.md": "5905c8b27a96fa2565421e1089e947e4243906e3",
     ".ai-collab/requests/R354.md": "ebe0383ff95063df29d6d936dc1825f71e17d656",
-    ".ai-collab/reviews/R354.md": "e0f7dc2ad34fd484b8b58d9f4f120c4815ec44a7"
+    ".ai-collab/reviews/R354.md": "7c7532a13330e58198058016308a5c023f7fd2dc"
   },
-  "last_poll_hit": "2026-11-22T04:47:23+00:00",
+  "last_poll_hit": "2026-11-22T06:07:52+00:00",
   "handled": {
     "R329": "703ce80215855a633f672d57273c1b35a4c71764",
     "R332": "53d2c02baea4d2b525ac293cecc413c0342c74fe",
