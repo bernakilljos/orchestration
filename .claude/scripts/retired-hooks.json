@@ -20,54 +20,76 @@
       "auto-explore-on-task.py"
     ]
   },
-  "PreToolUse": {
-    "replaced_by": "tool-dispatch.py",
-    "since": "2026-10-14",
-    "hooks": [
-      "approval-gate-detect.sh",
-      "block-file-deletion.sh",
-      "block-korean-removal.sh",
-      "block-tricks.sh",
-      "block-version-suffix.sh",
-      "block-visible-windows.sh",
-      "block_dangerous_bash.py",
-      "check-claude-md-size.sh",
-      "check-hardcoded-paths.sh",
-      "check-mojibake.sh",
-      "detect-asset-creation.sh",
-      "hook-01-pre-task.sh",
-      "log_bash_command.py",
-      "pre-build-reminder.sh",
-      "pre-commit-full-check.sh",
-      "pre-commit-infra-check.sh",
-      "pre-commit-secrets.sh",
-      "prevent-emoji-in-code.sh",
-      "prevent-version-suffix.sh",
-      "protect-critical-files.sh",
-      "secret-scan.sh",
-      "track-agent-dispatch.sh"
-    ]
-  },
-  "PostToolUse": {
-    "replaced_by": "tool-dispatch.py",
-    "since": "2026-10-14",
-    "hooks": [
-      "check-html-balance.sh",
-      "check-indentation.sh",
-      "check-js-syntax.sh",
-      "check-korean-only.sh",
-      "detect-demo-pattern.sh",
-      "enforce-file-naming.sh",
-      "hook-09-ocr-verify.sh",
-      "markdown_formatter.py",
-      "periodic-snapshot.sh",
-      "post_write_pycheck.py",
-      "prevent-whitespace-png.sh",
-      "propagate-rule-change.sh",
-      "track-agent-dispatch.sh",
-      "orca-heartbeat"
-    ]
-  },
+  "PreToolUse": [
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-10-14",
+      "hooks": [
+        "approval-gate-detect.sh",
+        "block-file-deletion.sh",
+        "block-korean-removal.sh",
+        "block-tricks.sh",
+        "block-version-suffix.sh",
+        "block-visible-windows.sh",
+        "block_dangerous_bash.py",
+        "check-claude-md-size.sh",
+        "check-hardcoded-paths.sh",
+        "check-mojibake.sh",
+        "detect-asset-creation.sh",
+        "hook-01-pre-task.sh",
+        "log_bash_command.py",
+        "pre-build-reminder.sh",
+        "pre-commit-full-check.sh",
+        "pre-commit-infra-check.sh",
+        "pre-commit-secrets.sh",
+        "prevent-emoji-in-code.sh",
+        "prevent-version-suffix.sh",
+        "protect-critical-files.sh",
+        "secret-scan.sh",
+        "track-agent-dispatch.sh"
+      ]
+    },
+    {
+      "replaced_by": "verify-after-edit-logger.py\" ''",
+      "since": "2026-11-23",
+      "_why": "R357 bash 한 겹 제거 — 옛 인라인 형식(파일명이 새 형식과 같아 표식으로 구분)",
+      "hooks": [
+        "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/"
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-10-14",
+      "hooks": [
+        "check-html-balance.sh",
+        "check-indentation.sh",
+        "check-js-syntax.sh",
+        "check-korean-only.sh",
+        "detect-demo-pattern.sh",
+        "enforce-file-naming.sh",
+        "hook-09-ocr-verify.sh",
+        "markdown_formatter.py",
+        "periodic-snapshot.sh",
+        "post_write_pycheck.py",
+        "prevent-whitespace-png.sh",
+        "propagate-rule-change.sh",
+        "track-agent-dispatch.sh",
+        "orca-heartbeat"
+      ]
+    },
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-11-23",
+      "_why": "R357 Edit 후 별도 훅 → tool-dispatch 안 판정(post_edit_ping_pong · post_edit_bg)",
+      "hooks": [
+        "post-edit-ping-pong.sh",
+        "auto-smoke-test.sh",
+        "index-rule-on-edit.sh"
+      ]
+    }
+  ],
   "Stop": [
     {
       "replaced_by": "",

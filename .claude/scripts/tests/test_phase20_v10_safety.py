@@ -2370,3 +2370,28 @@ def test_r349_watch_records_cpu_saturation_only_when_high(monkeypatch):
     for _ in range(3):
         w._take()
     assert w.summary()["cpu_ge90"] == 0 and w.summary()["cpu_top_when_saturated"] == []
+
+
+def test_r357_merge_settings_retires_folded_edit_hooks():
+    """R357: kit 가 Edit 후 별도 훅 3개를 tool-dispatch 로 옮기고 logger 의 bash 한 겹을 뺐는데, 전파 병합은 «추가만» 이라
+    대상(IFRS·ICMAI)에 옛 등록이 남아 같은 일을 두 번 했다 (logger 는 옛·새 형식 둘 다) → retired-hooks.json 으로 대상에서도 뺀다."""
+    m = _m2t_mod()
+    kit = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    old_log = 'bash -c "python \\"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-after-edit-logger.py\\" \'$1\'" 2>/dev/null || true'
+    tgt = {"hooks": {
+        "PreToolUse": [{"matcher": "Edit|Write|Bash|PowerShell|Agent", "hooks": [{"command": _TD}]},
+                       {"matcher": "Edit|Write", "hooks": [{"command": old_log, "async": True}]}],
+        "PostToolUse": [{"matcher": ".*", "hooks": [{"command": 'python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py" post'}]},
+                        {"matcher": "Edit|Write", "hooks": [{"command": 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-smoke-test.sh"'},
+                                                            {"command": 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/index-rule-on-edit.sh"'},
+                                                            {"command": 'bash "$CLAUDE_PROJECT_DIR/target-only.sh"'}]},
+                        {"matcher": "Edit|Write|MultiEdit", "hooks": [{"command": 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-ping-pong.sh"'}]}]}}
+    rep = []
+    out = m.merge_settings(kit, tgt, rep)
+    cmds = [h["command"] for ev in out["hooks"].values() for g in ev for h in g["hooks"]]
+    for gone in ("post-edit-ping-pong.sh", "auto-smoke-test.sh", "index-rule-on-edit.sh"):
+        assert not any(gone in c for c in cmds), gone
+    logs = [c for c in cmds if "verify-after-edit-logger" in c]
+    assert len(logs) == 1 and "bash -c" not in logs[0]                             # 새 형식 1개만
+    assert any("target-only.sh" in c for c in cmds)                                # 대상 고유 훅은 유지
+    assert "settings.hooks 대체로 제거 4" in rep
