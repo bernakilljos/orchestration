@@ -385,6 +385,11 @@ def _terminal_cols() -> int:
 
 def _fit_cells(line: str, cells: int) -> str:
     """ANSI 는 그대로 두고 보이는 폭(wcwidth)만 세어 cells 를 넘으면 '…' 로 자른다."""
+    # R357: 넓은 글자는 U+1100 부터이고 한 글자 최대 2칸이라 (U+1100 미만 1칸 · 이상 2칸) 으로 센 값은 실제 폭의 상한
+    #   → 그 상한이 cells 안이면 자를 일이 없어 글자마다 wcwidth 로 세지 않고 그대로 반환 (결과 동일 · 폭 181·140·100·60 대조)
+    #   참고: wcwidth 가져오기 자체(렌더당 약 59ms)는 아래 칸 맞춤 계산이 늘 쓰므로 여기서 줄어들지 않는다 (11-23 프로파일)
+    if sum(1 if ord(ch) < 0x1100 else 2 for ch in re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line)) <= cells:
+        return line
     try:
         from wcwidth import wcwidth as _wc
     except Exception:
@@ -2617,6 +2622,77 @@ def main() -> None:
     print(final)
 
 
+_RENDER_VOLATILE = (("cost", "total_duration_ms"), ("cost", "total_api_duration_ms"))
+_RENDER_STATE_FILES = (".claude/state/request-ledger.json", ".claude/state/regression-gate.json",
+                       ".claude/state/mcp-status.json", ".git/index", ".git/HEAD", ".git/FETCH_HEAD")
+
+
+def _render_key(raw: str):
+    """R357: 같은 입력·같은 상태면 같은 출력 — 매번 바뀌는 경과 시간 2개만 빼고, 화면 값을 바꾸는 상태 파일·대화 기록 수정 시각을 함께 넣는다.
+    (11-23 실측: 세션 1개에서 75초에 상태줄 56회 · 회당 Python 본체 ≈270ms)"""
+    import hashlib
+    try:
+        d = json.loads(raw) if raw.strip() else {}
+    except Exception:  # noqa: BLE001
+        return None
+    for a, b in _RENDER_VOLATILE:
+        if isinstance(d.get(a), dict):
+            d[a].pop(b, None)
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    mt = []
+    for f in (d.get("transcript_path") or "",) + tuple(os.path.join(root, p) for p in _RENDER_STATE_FILES):
+        try:
+            mt.append(os.stat(f).st_mtime_ns if f else 0)
+        except OSError:
+            mt.append(0)
+    # 창 폭이 바뀌면 줄 자르기가 달라진다 → 폭 관련 환경 변수도 키에 넣는다
+    env = [os.environ.get(k, "") for k in ("COLUMNS", "STATUSLINE_COLUMNS", "STATUSLINE_MAX_COLS", "CLAUDE_PROJECT_DIR")]
+    return hashlib.sha1(json.dumps([d, mt, env], sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def _render_cache_path() -> str:
+    import hashlib
+    import tempfile
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    # 저장소 밖 임시 폴더 — .claude/state 안에 두면 쓰기마다 상태가 바뀐 것처럼 보인다
+    return os.path.join(tempfile.gettempdir(), "statusline-render-%s.json" % hashlib.sha1(root.lower().encode("utf-8")).hexdigest()[:12])
+
+
+def _render_cached(raw: str):
+    """R357: 직전 렌더와 키가 같고 STATUSLINE_CACHE_SEC(기본 5초) 안이면 그 출력을 돌려준다 · 0 이면 끔."""
+    import time
+    try:
+        ttl = float(os.environ.get("STATUSLINE_CACHE_SEC", "5"))
+    except ValueError:
+        ttl = 5.0
+    key = _render_key(raw) if ttl > 0 else None
+    if not key:
+        return None, None
+    try:
+        with open(_render_cache_path(), encoding="utf-8") as f:
+            c = json.load(f)
+        if c.get("key") == key and 0 <= time.time() - float(c.get("ts", 0)) < ttl and c.get("out"):
+            return key, c["out"]
+    except Exception:  # noqa: BLE001
+        pass
+    return key, None
+
+
+def _render_store(key: str, out: str) -> None:
+    import time
+    p = _render_cache_path()
+    tmp = "%s.%d.tmp" % (p, os.getpid())
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"key": key, "ts": time.time(), "out": out}, f, ensure_ascii=False)
+        os.replace(tmp, p)
+    except Exception:  # noqa: BLE001
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def _cli() -> None:
     """R356: 진입점 — 래퍼가 모듈로 import 해 부른다 (스크립트 직접 실행은 .pyc 를 못 써 렌더마다 2,600줄 컴파일 ≈95ms · 11-23 실측)."""
     if len(sys.argv) >= 3 and sys.argv[1] == "--impact-worker":
@@ -2624,14 +2700,39 @@ def _cli() -> None:
             sys.exit(_impact_worker(sys.argv[2]))
         except Exception:
             sys.exit(1)
+    # R357: 같은 입력·상태의 연속 렌더는 직전 출력 재사용 (본체 ≈270ms 생략)
+    import io
+    try:
+        raw = sys.stdin.read()
+    except Exception:  # noqa: BLE001
+        raw = ""
+    key, hit = _render_cached(raw)
+    if hit is not None:
+        sys.stdout.write(hit)
+        sys.stdout.flush()
+        sys.exit(0)
+    real_out = sys.stdout
+    buf = io.StringIO()
+    sys.stdin, sys.stdout = io.StringIO(raw), buf
+    failed = False
     try:
         main()
-    except Exception:
-        # 최후 fallback
+    except Exception:  # noqa: BLE001
+        failed = True
+    finally:
+        sys.stdout = real_out
+    out = buf.getvalue()
+    if out:
+        real_out.write(out)
+        real_out.flush()
+    if failed:
+        # 최후 fallback (실패한 출력은 재사용하지 않는다)
         try:
             print(EMPTY * WIDTH + " ⏳")
         except Exception:
             print("⏳")
+    elif key and out.strip():
+        _render_store(key, out)
     sys.exit(0)
 
 

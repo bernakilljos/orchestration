@@ -1095,17 +1095,19 @@ def _perf_measure(cwd: Path, item: Dict[str, Any]) -> Optional[float]:
     import statistics
     import time as _t
     shell = isinstance(item["cmd"], str)
+    # R357: 항목별 환경 변수 (예: 상태줄 STATUSLINE_CACHE_SEC=0 — 같은 입력 반복 측정이 재사용 출력을 재서 124ms 로 낮게 나왔다)
+    env = {**os.environ, **{str(k): str(v) for k, v in (item.get("env") or {}).items()}} if item.get("env") else None
     times = []
     for _ in range(max(1, int(item.get("warmup", 1)))):
         try:
-            subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+            subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True, env=env,
                            text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
         except (OSError, subprocess.SubprocessError):
             return None
     for _ in range(max(3, int(item.get("runs", 5)))):
         t0 = _t.perf_counter()
         try:
-            r = subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True,
+            r = subprocess.run(item["cmd"], cwd=str(cwd), shell=shell, input=item.get("stdin", ""), capture_output=True, env=env,
                                text=True, encoding="utf-8", errors="replace", timeout=float(item.get("timeout_s", 30)))
         except (OSError, subprocess.SubprocessError):
             return None

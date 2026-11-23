@@ -320,3 +320,176 @@ def test_r356_standing_gate_parallel_checks_and_shell_path_parse(tmp_path):
     assert rec.read_text(encoding="utf-8") == path                                 # 셸 추출 경로 = 원래 경로
     assert hook(RC_GATE="2")[0].returncode == 2                                    # gate 차단 그대로
     assert hook(RC_LANG_CHECK="1")[0].returncode == 2                              # 언어 검사 실패 = 2 (종전 계약)
+
+
+# ---------- R357: Edit 마다 뜨던 훅 프로세스 줄이기 (판정·기록은 같게) ----------
+def _tool_mod(name, monkeypatch, proj):
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    spec = importlib.util.spec_from_file_location("r357_" + name, ROOT / ".claude" / "hooks" / "tool" / (name + ".py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    from _common import Ctx
+    return m, Ctx
+
+
+@pytest.mark.parametrize("path,smoke,index", [
+    (r"C:\x\.claude\rules\a.md", False, True),          # 역슬래시 경로 (index-rule-on-edit 시험과 같은 사례 · 입력은 json.dumps)
+    (r"C:\x\\.claude\rules\a.md", False, True),         # 연속 구분자 → 하나로
+    ("C:/x/.claude/rules/a.md", False, True),
+    ("C:/x/CLAUDE.md", False, True),
+    ("C:/u/memory/m.md", False, True),
+    (r"C:\x\guide.txt", False, False),
+    ("C:/app/UserController.java", True, False),
+    ("C:/app/api/router_v1.py", True, False),
+    ("C:/app/page.vue", True, False),
+    ("C:/app/Page.VUE", False, False),                             # 원본 case 는 대소문자 구분
+    ("C:/app/util.py", False, False),
+])
+def test_r357_post_edit_bg_same_filters_and_detaches(tmp_path, monkeypatch, path, smoke, index):
+    """R357: auto-smoke-test.sh · index-rule-on-edit.sh (Edit 마다 bash 2벌) → 디스패처 안 판정 · 대상일 때만 분리 실행."""
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / ".claude" / "scripts").mkdir(parents=True)
+    (tmp_path / ".claude" / "logs").mkdir()
+    (tmp_path / ".claude" / "state").mkdir()
+    mi, ms = tmp_path / "rebuilt.txt", tmp_path / "smoked.txt"
+    (tmp_path / ".claude" / "scripts" / "lookup-rule.py").write_text(
+        "import pathlib,os\npathlib.Path(%r).write_text(os.environ.get('RULE_INDEX_ACTIVE',''))\n" % str(mi), encoding="utf-8")
+    (tmp_path / ".claude" / "scripts" / "smoke-test-screen.sh").write_text(
+        '#!/usr/bin/env bash\nprintf "%%s|%%s" "$1" "$SMOKE_TEST_ACTIVE" > "%s"\n' % ms.as_posix(), encoding="utf-8")
+    (tmp_path / ".claude" / "state" / "python-path.txt").write_text(sys.executable, encoding="utf-8")
+    monkeypatch.delenv("RULE_INDEX_ACTIVE", raising=False)
+    monkeypatch.delenv("SMOKE_TEST_ACTIVE", raising=False)
+    m, Ctx = _tool_mod("post_edit_bg", monkeypatch, tmp_path)
+    ctx = Ctx(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": path}}))
+    assert m.run(ctx) is None                                      # 결과는 로그 전용 — 디스패처 출력 없음
+    for _ in range(80):
+        if mi.exists() == index and ms.exists() == smoke:
+            break
+        time.sleep(0.1)
+    time.sleep(0.3)
+    assert mi.exists() == index and ms.exists() == smoke
+    if index:
+        assert mi.read_text() == "1"                               # 재귀 가드 환경 변수 전달
+    if smoke:
+        assert ms.read_text().endswith("|1") and "\\" not in ms.read_text()   # 경로 / 정규화 · 가드 전달
+
+
+def test_r357_post_edit_bg_respects_recursion_guard(tmp_path, monkeypatch):
+    (tmp_path / ".claude" / "scripts").mkdir(parents=True)
+    mi = tmp_path / "rebuilt.txt"
+    (tmp_path / ".claude" / "scripts" / "lookup-rule.py").write_text(
+        "import pathlib\npathlib.Path(%r).write_text('x')\n" % str(mi), encoding="utf-8")
+    monkeypatch.setenv("RULE_INDEX_ACTIVE", "1")
+    m, Ctx = _tool_mod("post_edit_bg", monkeypatch, tmp_path)
+    m.run(Ctx('{"tool_name":"Edit","tool_input":{"file_path":"C:/x/.claude/rules/a.md"}}'))
+    time.sleep(1.0)
+    assert not mi.exists()
+
+
+def test_r357_post_edit_ping_pong_in_process_keeps_korean(tmp_path, monkeypatch):
+    """R357: post-edit-ping-pong.sh (동기 · bash 1 + python 3) → 디스패처 안 record · 종전 셸 경로는 한국어 미리보기를 깨뜨려 저장했다."""
+    import shutil
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / ".claude" / "scripts").mkdir(parents=True)
+    (tmp_path / ".claude" / "state").mkdir()
+    (tmp_path / ".claude" / "logs").mkdir()
+    shutil.copy(ROOT / ".claude" / "scripts" / "anti-ping-pong.py", tmp_path / ".claude" / "scripts" / "anti-ping-pong.py")
+    monkeypatch.setenv("CLAUDE_SESSION_ID", "sess-r357")
+    m, Ctx = _tool_mod("post_edit_ping_pong", monkeypatch, tmp_path)
+    pl = {"tool_name": "Edit", "tool_input": {"file_path": "C:/x/a.py", "new_string": "한글 수정\n" + "x" * 300}}
+    assert m.run(Ctx(json.dumps(pl, ensure_ascii=False))) is None
+    assert m.run(Ctx(json.dumps(pl, ensure_ascii=False))) is None
+    c = sqlite3.connect(str(tmp_path / ".claude" / "state" / "orca.db"))
+    rows = c.execute("select path, session_id, diff_preview from ping_pong_tracker").fetchall()
+    c.close()
+    assert len(rows) == 2 and rows[0] == ("C:/x/a.py", "sess-r357", ("한글 수정\n" + "x" * 300)[:200])
+    assert m.run(Ctx('{"tool_name":"Edit","tool_input":{}}')) is None   # 경로 없음 = 기록 안 함
+
+
+def test_r357_post_impl_verify_skips_unrelated_edit_and_batches(tmp_path):
+    """R357: post-impl-verify.sh 가 Edit 마다 변경 파일 전체를 다시 검사 (kit 실측 3.7초) →
+    검사 대상 종류가 아닌 파일 수정이면 바로 끝 · 대상이면 종전과 같은 문구·순서 (파일마다 띄우던 python·file·grep 은 한 번씩)."""
+    sh = ROOT / "plugins" / "review_qa" / "hooks" / "post-impl-verify.sh"
+    r = tmp_path / "repo"
+    r.mkdir()
+    g = lambda *a: subprocess.run(["git", *a], cwd=r, capture_output=True)   # noqa: E731
+    g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+    (r / "base.py").write_text("x=1\n"); g("add", "."); g("commit", "-qm", "i")
+    (r / "base.py").write_text("x=2\n"); g("commit", "-qam", "c")
+    (r / "good.py").write_text("ok=1\n")
+    (r / "bad.py").write_text("def (:\n")
+    (r / "sp ace.py").write_text("def (:\n")
+    (r / "u16.md").write_bytes("한글".encode("utf-16"))
+    (r / "fine.md").write_text("fine\n")
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    from _common import bash_exe  # noqa: E402
+
+    def run(inp):
+        p = subprocess.run([bash_exe(), str(sh)], input=inp.encode(), cwd=r, capture_output=True, timeout=120)
+        return p.returncode, (p.stdout + p.stderr).decode("utf-8", "replace")
+    rc, out = run('{"tool_input":{"file_path":"C:\\x\\a.json"}}')
+    assert (rc, out) == (0, "")                                    # 대상 아님 = 바로 끝
+    want = ["[VERIFY FAIL] Python syntax error: bad.py", "[VERIFY FAIL] Python syntax error: sp ace.py",
+            "[VERIFY FAIL] Wrong encoding (not UTF-8): u16.md", "[VERIFY] 3 errors found — task NOT complete"]
+    for inp in ('{"tool_input":{"file_path":"C:\\x\\a.PY"}}', "{}", ""):
+        rc, out = run(inp)
+        assert rc == 2 and [l for l in out.splitlines() if l.strip()] == want, (inp, out)
+
+
+def test_r357_settings_edit_hooks_folded_into_dispatcher():
+    s = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    cmds = [h["command"] for ev in s["hooks"].values() for g in ev for h in g["hooks"]]
+    for gone in ("post-edit-ping-pong.sh", "auto-smoke-test.sh", "index-rule-on-edit.sh"):
+        assert not any(gone in c for c in cmds), gone
+    assert not any("verify-after-edit-logger" in c and "bash -c" in c for c in cmds)   # bash 한 겹 제거
+    src = (ROOT / ".claude" / "hooks" / "tool-dispatch.py").read_text(encoding="utf-8")
+    assert '"post_edit_ping_pong", "Edit|Write|MultiEdit"' in src and '"post_edit_bg", "Edit|Write"' in src
+
+
+def _mdl():
+    spec = importlib.util.spec_from_file_location("mdl_r357", ROOT / ".claude" / "scripts" / "mcp-direct-launch.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def test_r357_mcp_direct_parse_and_entry(tmp_path):
+    """R357: cmd /c npx -y <패키지> 등록 → 패키지·나머지 인자 해석 · package.json bin 으로 진입 파일 (npx 캐시 해시 폴더는 쓰지 않음)."""
+    m = _mdl()
+    P = m.parse_npx
+    assert P({"command": "cmd", "args": ["/c", "npx", "-y", "@playwright/mcp"]}) == ("@playwright/mcp", "@playwright/mcp", [])
+    assert P({"command": "cmd", "args": ["/c", "npx", "-y", "@canva/cli@latest", "mcp"]}) == ("@canva/cli@latest", "@canva/cli", ["mcp"])
+    assert P({"command": "cmd", "args": ["/c", "npx", "pkg-a@1.2", "C:/x", "C:/y"]}) == ("pkg-a@1.2", "pkg-a", ["C:/x", "C:/y"])
+    assert P({"command": "npx", "args": ["--yes", "mermaid-mcp-server"]}) == ("mermaid-mcp-server", "mermaid-mcp-server", [])
+    for not_npx in ({"command": "uvx", "args": ["mcp-server-fetch"]}, {"command": "node", "args": ["x.js"]},
+                    {"command": "cmd", "args": ["/c", "npx", "-y"]}, {"command": "cmd", "args": ["/c", "npx", "--flag"]}):
+        assert P(not_npx) is None
+    b = tmp_path / "orca-mcp"
+    d = b / "node_modules" / "@canva" / "cli"
+    d.mkdir(parents=True)
+    (d / "cli.js").write_text("//")
+    (d / "package.json").write_text('{"bin": {"canva": "./cli.js"}}')
+    assert m.entry_file(b, "@canva/cli") == (d / "cli.js").resolve()
+    d2 = b / "node_modules" / "mermaid-mcp-server"
+    (d2 / "build").mkdir(parents=True)
+    (d2 / "build" / "index.js").write_text("//")
+    (d2 / "package.json").write_text('{"bin": "build/index.js"}')
+    assert m.entry_file(b, "mermaid-mcp-server") == (d2 / "build" / "index.js").resolve()
+    assert m.entry_file(b, "none-pkg") is None
+
+
+def test_r357_mcp_direct_plan_user_and_local_scope(tmp_path, monkeypatch):
+    m = _mdl()
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    cfg = {"mcpServers": {"a": {"command": "cmd", "args": ["/c", "npx", "-y", "pkg-a"]},
+                          "f": {"command": "uvx", "args": ["mcp-server-fetch"]},
+                          "done": {"command": "node", "args": ["C:/orca-mcp/x.js"]}},
+           "projects": {str(proj).replace("\\", "/"): {"mcpServers": {"fs": {"command": "cmd", "args": ["/c", "npx", "pkg-fs", "C:/d"]}}},
+                        "C:/other": {"mcpServers": {"o": {"command": "cmd", "args": ["/c", "npx", "pkg-o"]}}}}}
+    (tmp_path / ".claude.json").write_text(json.dumps(cfg), encoding="utf-8")
+    monkeypatch.setattr(m.Path, "home", classmethod(lambda cls: tmp_path))
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))
+    got = sorted((s, n, spec, rest) for s, n, _e, spec, _p, rest in m.plan())
+    assert got == [("local", "fs", "pkg-fs", ["C:/d"]), ("user", "a", "pkg-a", [])]   # uvx·이미 node·다른 프로젝트 = 제외

@@ -57,7 +57,19 @@ fi
 
 # ---- 2) Core MCP servers (claude CLI required) ----
 if command -v claude >/dev/null 2>&1; then
-  MCP_LIST="$(claude mcp list 2>&1 || echo '')"
+  # R357 (2026-11-23): 등록 명령 문자열만 필요한데 `claude mcp list` 는 MCP 서버 전부를 한 번씩 띄워 연결을 확인하고
+  #   그 CLI 가 프로젝트 SessionEnd 훅까지 띄웠다 (세션 시작마다 · 60초 뒤 check-mcp-health 가 같은 일을 또 함)
+  #   → ~/.claude.json 의 사용자 범위 등록을 «이름: 명령 인자» 줄로 읽는다 (아래 비교 형식 그대로) · 읽기 실패 시 종전 방식
+  MCP_LIST="$(python -X utf8 -c "
+import json, os, sys
+try:
+    d = json.load(open(os.path.join(os.path.expanduser('~'), '.claude.json'), encoding='utf-8'))
+except Exception:
+    sys.exit(3)
+for n, e in (d.get('mcpServers') or {}).items():
+    if isinstance(e, dict):
+        print(n + ': ' + ' '.join([str(e.get('command') or e.get('url') or '')] + [str(a) for a in (e.get('args') or [])]))
+" 2>/dev/null)" || MCP_LIST="$(claude mcp list 2>&1 || echo '')"
 
   # name : install command (cmd /c npx for Windows shell-cross-compat)
   CORE_MCP=(
@@ -77,12 +89,24 @@ if command -v claude >/dev/null 2>&1; then
     if [ -n "$LINE" ] && echo "$LINE" | grep -qF "$WANT"; then
       continue   # 이미 kit 정의대로 등록됨
     fi
+    # R357: mcp-direct-launch.py 가 같은 패키지를 고정 위치(orca-mcp) 의 node 직접 실행으로 바꾼 등록도 정상 (npx 로 되돌리지 않음)
+    #   경로 구분자는 / 로 맞춰 비교 (Windows 경로 @playwright\mcp ↔ 패키지 이름 @playwright/mcp)
+    PKG="$(echo "$WANT" | sed -E 's/.*npx (-y )?//; s/ .*//; s/(.)@[^/]*$/\1/')"
+    LINE_FWD="${LINE//\\//}"
+    if [ -n "$LINE" ] && [[ "$LINE_FWD" == *orca-mcp* && "$LINE_FWD" == *"$PKG"* ]]; then
+      continue
+    fi
     echo "[$TS] installing MCP: $NAME ${LINE:+(정의와 다름 → 재등록)}" >> "$LOG"
     [ -n "$LINE" ] && claude mcp remove "$NAME" -s user >> "$LOG" 2>&1
     # MSYS_NO_PATHCONV: /c 경로 변환 차단 (이게 없으면 cmd /c → cmd C:/)
     MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" nohup bash -c "$CMD" >> "$LOG" 2>&1 &
     disown 2>/dev/null || true
   done
+  # R357: cmd /c npx 로 등록된 MCP → 고정 위치 node 직접 실행 (서버당 약 100MB·프로세스 3개 절약 · 하루 1번 · 응답 확인된 것만)
+  if [ -f "$PROJECT_DIR/.claude/scripts/mcp-direct-launch.py" ]; then
+    nohup python -X utf8 "$PROJECT_DIR/.claude/scripts/mcp-direct-launch.py" --auto >> "$LOG" 2>&1 &
+    disown 2>/dev/null || true
+  fi
 fi
 
 exit 0

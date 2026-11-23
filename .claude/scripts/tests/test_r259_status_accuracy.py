@@ -473,3 +473,68 @@ def test_r356_req_progress_incremental_equals_full(tmp_path, monkeypatch):
     log.write_text("", encoding="utf-8")
     add("t2", "Edit", "b.py", 5.0)
     assert sl._req_progress(str(r))[:4] == ("R2", 1, 6, "수정")                     # 파일 축소(교체) = 처음부터
+
+
+def test_r357_render_reuse_same_input_and_state(tmp_path):
+    """R357: 세션 1개에서 상태줄이 75초에 56회 (11-23 실측 · 회당 Python 본체 ≈270ms) →
+    경과 시간만 다른 연속 렌더는 직전 출력 재사용 · 토큰·원장·git·대화 기록·창 폭이 바뀌면 다시 계산 · 0 = 끔."""
+    import os
+    import shutil
+    import subprocess
+    import sys
+    import time
+    r = tmp_path / "kit"
+    (r / ".claude/scripts").mkdir(parents=True)
+    (r / ".claude/state").mkdir()
+    (r / "plugins").mkdir()
+    shutil.copy(KIT / ".claude/scripts/statusline_context.py", r / ".claude/scripts/statusline_context.py")
+    tmpd = tmp_path / "tmp"
+    tmpd.mkdir()
+    tr = r / "t.jsonl"
+    tr.write_text("{}\n", encoding="utf-8")
+    led = r / ".claude/state/request-ledger.json"
+    led.write_text('{"requests": []}', encoding="utf-8")
+    base = {"session_id": "s", "cwd": str(r), "transcript_path": str(tr), "model": {"id": "claude-opus-5-5"},
+            "cost": {"total_cost_usd": 1.0, "total_duration_ms": 1000, "total_api_duration_ms": 10},
+            "context_window": {"total_input_tokens": 100, "context_window_size": 1000000}}
+
+    def render(d, **env):
+        e = {k: v for k, v in os.environ.items() if k not in ("COLUMNS", "STATUSLINE_COLUMNS", "STATUSLINE_MAX_COLS")}
+        e.update(TEMP=str(tmpd), TMP=str(tmpd), CLAUDE_PROJECT_DIR=str(r), **env)
+        p = subprocess.run([sys.executable, "-X", "utf8", "-c",
+                            "import sys;sys.path.insert(0,sys.argv[1]);import statusline_context as m;m._cli()",
+                            str(r / ".claude/scripts")], input=json.dumps(d).encode(), capture_output=True, env=e, timeout=60)
+        assert p.returncode == 0
+        return p.stdout
+
+    def stamp():
+        fs = list(tmpd.glob("statusline-render-*.json"))
+        return json.loads(fs[0].read_text(encoding="utf-8"))["ts"] if fs else None
+
+    first = render(base)
+    t1 = stamp()
+    assert first.strip() and t1                                                   # 첫 렌더 = 계산 후 저장
+    d2 = json.loads(json.dumps(base))
+    d2["cost"]["total_duration_ms"] += 7000
+    assert render(d2) == first and stamp() == t1                                  # 경과 시간만 다름 = 재사용
+    d3 = json.loads(json.dumps(base))
+    d3["context_window"]["total_input_tokens"] += 5000
+    render(d3)
+    t3 = stamp()
+    assert t3 != t1                                                               # 토큰 바뀜 = 다시 계산
+    st = led.stat()
+    os.utime(led, ns=(st.st_atime_ns, st.st_mtime_ns + 10_000_000))
+    render(d3)
+    t4 = stamp()
+    assert t4 != t3                                                               # 원장 수정 = 다시 계산
+    tr.write_text("{}\n{}\n", encoding="utf-8")
+    os.utime(tr, ns=(st.st_atime_ns, st.st_mtime_ns + 20_000_000))
+    render(d3)
+    t5 = stamp()
+    assert t5 != t4                                                               # 대화 기록 바뀜 = 다시 계산
+    render(d3, COLUMNS="90")
+    assert stamp() != t5                                                          # 창 폭 바뀜 = 다시 계산
+    for f in tmpd.glob("statusline-render-*.json"):
+        f.unlink()
+    time.sleep(0.01)
+    assert render(base, STATUSLINE_CACHE_SEC="0").strip() and stamp() is None    # 끔 = 저장 안 함

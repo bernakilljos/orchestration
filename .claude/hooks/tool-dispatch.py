@@ -88,6 +88,10 @@ POST = [
     ("korean-report-drift", "korean_report_drift", ".*", 3, None),   # §83 턴 중간 영어 보고 즉시 교정 안내
     ("periodic-snapshot", "periodic_snapshot", ".*", 5, None),
     ("propagate-rule-change", "propagate_rule_change", "Edit|Write", 60, None),
+    # R357: 종전 settings 의 별도 동기 훅 (bash 1 + python 3 · Edit 마다 응답 대기) → in-process 기록
+    ("post-edit-ping-pong", "post_edit_ping_pong", "Edit|Write|MultiEdit", 10, None),
+    # R357: 종전 settings 비동기 훅 auto-smoke-test.sh · index-rule-on-edit.sh — 판정은 여기서 · 대상일 때만 분리 실행
+    ("post-edit-bg", "post_edit_bg", "Edit|Write", 5, None),
 ]
 # SubagentStart / SubagentStop (2026-10-16) — 백그라운드 서브에이전트의 실제 시작·종료는 여기로만 온다
 #   (PostToolUse Agent 는 백그라운드면 «실행 직후» 에 와서 종료 신호로 쓸 수 없다)

@@ -6,6 +6,8 @@
       "_triggers_doc": "상태줄이 실제로 여는 파일만 (R354 13차: lib/*.py 전체는 무관 모듈 변경에도 측정·차단 · request-ledger.py 는 빠져 있었음) · test_r348_perf_trigger 가 실제 실행으로 누락 검사",
       "cmd": ["bash", ".claude/scripts/statusline-wrapper.sh"],
       "stdin": "{}",
+      "env": {"STATUSLINE_CACHE_SEC": "0"},
+      "_env_doc": "R357: 같은 입력 반복 측정이 렌더 재사용 출력을 재지 않게 끔 (실제 렌더 비용)",
       "triggers": [".claude/scripts/statusline*", ".claude/scripts/lib/pricing.py", ".claude/scripts/lib/trace.py", ".claude/scripts/lib/redact.py", ".claude/scripts/lib/structured_logger.py", ".claude/scripts/request-ledger.py", ".claude/hooks/prompt/_common.py"],
       "budget_ms": 900,
       "max_regress_pct": 30,

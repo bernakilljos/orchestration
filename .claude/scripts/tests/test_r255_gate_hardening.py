@@ -266,3 +266,15 @@ def test_r356_perf_gate_compares_head_under_same_conditions(tmp_path):
     assert r["status"] == "perf_regression" and r["items"][0]["head_ms"] < 500
     assert v.read_text(encoding="utf-8") == "0.70"
     assert not (d / ".claude/state/perf-head-swap").exists()                 # 임시 백업 정리
+
+
+def test_r357_perf_item_env_is_applied(tmp_path):
+    """R357: 속도 항목의 env 가 측정 명령에 전달 (상태줄은 STATUSLINE_CACHE_SEC=0 — 같은 입력 반복 측정이 재사용 출력을 재면 124ms 로 낮게 나옴)."""
+    import sys as _s
+    code = "import os,sys; sys.exit(0 if os.environ.get('R357_PERF_ENV') == 'on' else 3)"
+    item = {"name": "x", "cmd": [_s.executable, "-c", code], "runs": 3, "warmup": 1}
+    assert iv._perf_measure(tmp_path, item) is None                                # env 없으면 실패 = 측정 실패
+    assert iv._perf_measure(tmp_path, {**item, "env": {"R357_PERF_ENV": "on"}}) is not None
+    cfg = json.loads((ROOT / ".claude/config/perf-budget.json").read_text(encoding="utf-8"))
+    sl = next(i for i in cfg["items"] if i["name"] == "상태줄 1회")
+    assert sl.get("env", {}).get("STATUSLINE_CACHE_SEC") == "0"
