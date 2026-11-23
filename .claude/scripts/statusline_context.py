@@ -128,6 +128,15 @@ def _git_porcelain(cwd):
                 return c["lines"]
         except (OSError, ValueError, TypeError):
             pass
+        # 1119 — 저장소가 아니면 git 을 띄우지 않는다(결과는 종전과 같은 None). 실패는 캐시하지 않아
+        #   git 저장소가 아닌 폴더에서는 그릴 때마다 git 을 띄워 실패했다(실측 118ms · 렌더의 68%).
+        if not os.environ.get("GIT_DIR"):
+            _p = os.path.abspath(cwd)
+            while not os.path.exists(os.path.join(_p, ".git")):
+                _up = os.path.dirname(_p)
+                if _up == _p:
+                    return None
+                _p = _up
         import subprocess as _sp
         r = _sp.run(["git", "--no-optional-locks", "status", "--porcelain"], cwd=cwd, capture_output=True,
                     text=True, encoding="utf-8", errors="replace", timeout=3)
@@ -255,7 +264,10 @@ def _progress_tone(pct):
 #   단계 = 개발 흐름 그대로: 수정 → 시험 → 커밋 → 원격 → 전파 → 대상검증. pytest 가 만든 가짜 이벤트(임시 폴더)는 제외.
 _STAGES = (
     ("수정", lambda k, s: k in ("Edit", "Write", "MultiEdit") and "pytest-of-" not in s),
-    ("시험", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bpytest\b|regression-gate|golden-test", s)),
+    # 1119 사용자 지시(동결 해제 · «검사 스크립트 실행도 시험으로»): pytest·회귀 게이트 외에 프로젝트 검사기도 센다
+    ("시험", lambda k, s: k in ("Bash", "PowerShell") and re.search(
+        r"\bpytest\b|regression-gate|golden-test|\bverify_\w+\.py|\bcheck_\w+\.py|\bsmoke_test\b|\bfullset\.py"
+        r"|\bself_test\(|node\s+--check|bash\s+-n\b|py_compile", s)),
     ("커밋", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+commit\b|\bsvn\s+(?:commit|ci)\b", s)),
     ("원격", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"\bgit\s+push\b|\bsvn\s+(?:commit|ci)\b", s)),
     ("전파", lambda k, s: k in ("Bash", "PowerShell") and re.search(r"merge-to-target\.py\S*\s.*--apply", s)),
@@ -263,11 +275,17 @@ _STAGES = (
 )
 
 
+#: 1119 사용자 지시(동결 해제): kit 를 다른 폴더로 옮기는 요청에만 해당하는 단계 — 그 요청 기록에 merge-to-target 이
+#:   없으면 분모에서 뺀다(안 빼면 프로젝트 작업은 다 끝나도 4/6 에서 멈춰 «개발완료인데 67%»가 됐다).
+_KIT_ONLY = ("전파", "대상검증")
+
+
 def _progress_fold(st: dict, evs) -> None:
     """R356: trace 사건들을 진행 상태(done·start_ts·stage_ts)에 접는다 — 시각은 최솟값이라 나눠 접어도 한 번에 접은 것과 같다."""
     done = set(st.get("done") or [])
     stage_ts = dict(st.get("stage_ts") or {})
     start_ts = st.get("start_ts")
+    kit_req = bool(st.get("kit_req"))
     _mn = lambda a, b: b if a is None else (a if b is None else min(a, b))
     for e in evs:
         if e.get("kind") == "request" and e.get("status") == "start":
@@ -275,21 +293,25 @@ def _progress_fold(st: dict, evs) -> None:
         if e.get("kind") != "tool" or e.get("status") != "success":
             continue
         d = e.get("detail")
+        raw = d if isinstance(d, str) else ""
         if isinstance(d, str):
             try:
                 d = json.loads(d)
             except Exception:
                 d = {}
-        inp = str((d or {}).get("input", ""))
+        # 1119 — 기록이 길이 제한으로 잘려 JSON 이 깨지면 원문 글자로 판정한다(종전: 빈 값 → 그 호출의 단계 누락)
+        inp = str(d.get("input", "")) if isinstance(d, dict) and d else raw
+        if "merge-to-target" in inp:
+            kit_req = True
         for name, ok in _STAGES:
             if ok(e.get("step"), inp):
                 done.add(name)
                 stage_ts[name] = _mn(stage_ts.get(name), e.get("ts"))
-    st["done"], st["stage_ts"], st["start_ts"] = sorted(done), stage_ts, start_ts
+    st["done"], st["stage_ts"], st["start_ts"], st["kit_req"] = sorted(done), stage_ts, start_ts, kit_req
 
 
 def _req_progress(cwd: str):
-    """(rid, 완료 단계 수, 전체, 마지막 완료 단계명) · 추적 기록 없음 = None."""
+    """(rid, 완료 단계 수, 전체, 마지막 완료 단계명, 남은 분) · 추적 기록 없음 = None."""
     try:
         # §78 정본을 파일 경로로 로드 — 'import trace' 는 표준 라이브러리 trace 와 이름이 같아 엉뚱한 모듈이 올 수 있다
         import importlib.util as _ilu
@@ -300,7 +322,7 @@ def _req_progress(cwd: str):
         tid = cur.get("trace_id")
         if not tid:
             return None
-        st = {"done": [], "start_ts": None, "stage_ts": {}}
+        st = {"done": [], "start_ts": None, "stage_ts": {}, "kit_req": False}
         root = _tr._root()
         if _tr._db_has_table(root / ".claude" / "state" / "orca.db"):
             _progress_fold(st, _tr.events(tid))          # DB 기록이 있으면 종전대로 전체 (증분 위치를 둘 수 없음)
@@ -314,8 +336,8 @@ def _req_progress(cwd: str):
             except Exception:
                 c = {}
             size = p.stat().st_size if p.is_file() else 0
-            if c.get("v") != 1 or c.get("tid") != tid or size < int(c.get("offset", 0)):
-                c = {"v": 1, "tid": tid, "offset": 0, "done": [], "start_ts": None, "stage_ts": {}}
+            if c.get("v") != 2 or c.get("tid") != tid or size < int(c.get("offset", 0)):
+                c = {"v": 2, "tid": tid, "offset": 0, "done": [], "start_ts": None, "stage_ts": {}, "kit_req": False}
             evs, old_off = [], (c["offset"] if cp.exists() else -1)
             if size > c["offset"]:
                 with open(p, "rb") as fh:
@@ -342,8 +364,13 @@ def _req_progress(cwd: str):
                     pass
             st = c
         done, start_ts, stage_ts = set(st["done"]), st["start_ts"], st["stage_ts"]
-        last = next((n for n, _ in reversed(_STAGES) if n in done), None)
-        return cur.get("rid"), len(done), len(_STAGES), last, _eta_min(start_ts, stage_ts, len(_STAGES))
+        # kit 자체 작업은 전파·대상검증까지가 한 세트라 6단계 유지 · 대상 폴더에서만 전파 없는 요청의 분모에서 뺀다
+        _is_kit = os.path.isdir(os.path.join(cwd, "plugins", "exec_orch")) and os.path.isfile(os.path.join(cwd, ".claude-plugin", "plugin.json"))
+        stages = [n for n, _ in _STAGES if _is_kit or st.get("kit_req") or n not in _KIT_ONLY]
+        done &= set(stages)
+        stage_ts = {k: v for k, v in stage_ts.items() if k in done}
+        last = next((n for n in reversed(stages) if n in done), None)
+        return cur.get("rid"), len(done), len(stages), last, _eta_min(start_ts, stage_ts, len(stages))
     except Exception:
         return None
 
@@ -1197,13 +1224,64 @@ def _common_names(cwd: str) -> set:
     return names
 
 
+def _common_metrics_cached(cwd: str):
+    """2026-11-19 🧩 공통화 4지표 — .claude/state/common-metrics.json (common-metrics.py 산출 · 산식·BASIS 는 그 파일 머리말).
+    캐시 없음 = None (호출부가 종전 계측·⏳) · TTL(900초) 경과 = 값은 그대로 보이고 백그라운드 재측정 1개(2분 잠금)
+    항목 실패(null) = «미측정» (0 으로 보이지 않게)."""
+    import time as _t
+    st = os.path.join(cwd, ".claude", "state")
+    c = None
+    try:
+        with open(os.path.join(st, "common-metrics.json"), encoding="utf-8") as fh:
+            c = json.load(fh)
+    except (OSError, ValueError):
+        c = None
+    try:
+        ttl = int(os.environ.get("COMMON_METRICS_TTL", "900") or 900)
+    except ValueError:
+        ttl = 900
+    if c is None or not (0 <= _t.time() - float(c.get("ts", 0) or 0) < ttl):
+        lk = os.path.join(st, "common-metrics-running")
+        scr = os.path.join(cwd, ".claude", "scripts", "common-metrics.py")
+        try:
+            if os.path.exists(scr) and not (os.path.exists(lk) and _t.time() - os.path.getmtime(lk) < 120):
+                with open(lk, "w", encoding="utf-8") as fh:
+                    fh.write(str(os.getpid()))
+                import subprocess as _sp
+                kw = {"stdin": _sp.DEVNULL, "stdout": _sp.DEVNULL, "stderr": _sp.DEVNULL, "close_fds": True, "cwd": cwd}
+                if os.name == "nt":
+                    kw["creationflags"] = 0x08000000 | 0x00000200   # CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
+                else:
+                    kw["start_new_session"] = True
+                _sp.Popen([sys.executable, "-X", "utf8", scr, "--if-stale"], **kw)
+        except OSError:
+            pass
+    if not isinstance(c, dict):
+        return None
+    _u = "[90m미측정[0m"
+    r, b, d, n = c.get("reuse"), c.get("bypass"), c.get("css_dup"), c.get("new_common")
+    try:
+        nf = n.get("functions") if isinstance(n, dict) else None
+        return ("재사용 " + (f"{r['value']}/{r['total']}" if r else _u)
+                + " · 우회 " + (str(b["value"]) if b else _u)
+                + " · CSS중복 " + (str(d["value"]) if d else _u)
+                + " · 신규공통 " + ((f"{n['value']}·함수 " + (str(nf) if nf is not None else _u)) if n else _u))
+    except (KeyError, TypeError):
+        return None
+
+
 def _reuse_metrics(cwd: str, files) -> str:
     """R275 공통화 4항목 — 바뀐 UI 파일만 대상 (실제 소스 본문 기준 · 과거 미계측 자료는 만들지 않음).
       재사용 = 바뀐 UI 파일 중 common·shared·components·ui 경로를 import 하는 파일 수
       우회   = 공통 폴더 밖 바뀐 UI 파일 중 이름이 기존 공통 컴포넌트와 같은 파일 (같은 것을 따로 만듦)
       CSS중복 = 바뀐 스타일 안에서 같은 선언 묶음({...})이 2번 이상 나온 묶음 수
       신규공통 = 공통 폴더에 새로 생긴 파일 수
-    UI 파일 변경이 없으면 «UI 변경 없음» (0 아님 · 해당 없음) · git 실패 = ⏳."""
+    UI 파일 변경이 없으면 «UI 변경 없음» (0 아님 · 해당 없음) · git 실패 = ⏳.
+    2026-11-19 «공통화를 생활화» — 대상 프로젝트 전체 실측 캐시(common-metrics.py)가 있으면 그 값을 우선 쓴다
+    (렌더는 JSON 1개 읽기만 · 오래되면 창 없는 백그라운드 재측정 1개). 캐시가 없을 때만 아래 R275 계측 그대로."""
+    _cm = _common_metrics_cached(cwd)
+    if _cm:
+        return _cm
     if files is None:
         return "재사용·우회·CSS중복·신규공통 \033[36m⏳\033[0m"
     ui = [f.replace("\\", "/") for f in files if f.lower().endswith(_UI_EXT)]
@@ -1872,7 +1950,18 @@ def extra_gauges(cwd, data=None):
         _wp = float((rl or {}).get("seven_day", {}).get("used_percentage", 0))
         _sp = float((rl or {}).get("five_hour", {}).get("used_percentage", 0))
         _tp = float((data or {}).get("_ctx_pct", 0))
-        if _tp >= 95:
+        # 2026-10-22 사용자 지시 — 그날 하루만 조건 없이 fast ON(.claude/state/fast-override.json 의 date 가 오늘이면).
+        #   날짜가 지나면 저절로 위 기준으로 돌아간다(파일을 지울 필요 없음).
+        _fo = False
+        try:
+            import json as _jfo, datetime as _dfo
+            _fop = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "state", "fast-override.json")
+            _fo = (_jfo.load(open(_fop, encoding="utf-8")) or {}).get("date") == _dfo.date.today().isoformat()
+        except Exception:
+            _fo = False
+        if _fo:
+            fast_badge = "\033[1;32mfast ON (오늘 예외 · 조건 없음)\033[0m"
+        elif _tp >= 95:
             fast_badge = (f"{_RED}[!!] /clear 권장 (토큰 {_tp:.0f}% · 작업 끝났으면 즉시){_RST}")
         elif _tp >= 80:
             fast_badge = (f"{_YEL}[!] /clear 권장 (토큰 {_tp:.0f}% · compact 임박){_RST}")
@@ -2130,7 +2219,7 @@ def extra_gauges(cwd, data=None):
     except Exception:
         pass
 
-    # 🧩 공통화 (사용자 명시 2026-10-16 · 대부분 ⏳ · 하드코딩만 실측)
+    # 🧩 공통화 (사용자 명시 2026-10-16 · 2026-11-19 재사용·우회·CSS중복·신규공통 실측 = common-metrics.py 캐시)
     reuse_line = ""
     # §81: 컴포넌트 재사용·우회·CSS중복·신규공통 = 집계 미구현 (종전 ?·— 표시) · 하드코딩만 감사 파일 실측
     _aud_ok = os.path.exists(os.path.join(cwd, ".claude", "state", "hardcoded-audit.json"))
@@ -2516,8 +2605,7 @@ def main() -> None:
 
     # 그룹 1: 토큰 (단독) · 이미 out[0] 에 있음
 
-    # 빈 줄
-    out.append("")
+    # (2026-10-23 빈 줄 제거 — 14줄 넘으면 맨 끝 비용 줄이 잘렸다)
 
     # 그룹 2: 디자인+개발 · 영향+공통화 (쌍 2개 연속)
     if _d and _dv: out.append(_pair("디자인", _d, "개발", _dv))
@@ -2528,8 +2616,7 @@ def main() -> None:
     elif _impact: out.append(_row("영향", _impact))
     elif _reuse: out.append(_row("공통화", _reuse))
 
-    # 빈 줄
-    out.append("")
+    # (2026-10-23 빈 줄 제거 — 14줄 넘으면 맨 끝 비용 줄이 잘렸다)
 
     # 그룹 3: 품질추세+요청 (쌍) + 증명+READY (쌍)
     if _trend and _ledger: out.append(_pair("품질추세", _trend, "요청", _ledger))
@@ -2547,8 +2634,7 @@ def main() -> None:
     elif _proof: out.append(_row("증명", _proof))
     elif _rdy: out.append(_row("READY", _rdy))
 
-    # 빈 줄
-    out.append("")
+    # (2026-10-23 빈 줄 제거 — 14줄 넘으면 맨 끝 비용 줄이 잘렸다)
 
     # 그룹 4: 인프라+오류 (쌍) + 서브+이력 (쌍)
     if _infra and _err: out.append(_pair("인프라", _infra, "오류", _err))

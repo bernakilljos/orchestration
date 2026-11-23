@@ -437,6 +437,9 @@ def test_r356_req_progress_incremental_equals_full(tmp_path, monkeypatch):
     (r / ".claude/scripts/lib").mkdir(parents=True)
     (r / ".claude/state").mkdir()
     (r / ".claude/logs").mkdir()
+    (r / "plugins/exec_orch").mkdir(parents=True)                                  # kit 표지 = 6단계 고정
+    (r / ".claude-plugin").mkdir()
+    (r / ".claude-plugin/plugin.json").write_text("{}", encoding="utf-8")
     shutil.copy(KIT / ".claude/scripts/lib/trace.py", r / ".claude/scripts/lib/trace.py")
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(r))
     log = r / ".claude/logs/trace-events.jsonl"
