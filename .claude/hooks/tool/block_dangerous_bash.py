@@ -72,6 +72,52 @@ def _ps_danger(cmd: str, depth: int = 0) -> bool:
     return False
 
 
+# R370 (2026-11-23): C:\Windows\System32\powershell (확장자 없는 0바이트 · 2026-04-08 생성 · 생성 주체 UNKNOWN) 같은
+#   «시스템 폴더에 생긴 잔여 파일» 재발 방지 — 작업 폴더가 Windows 폴더이거나 대상이 Windows 폴더인 출력 리디렉션·파일 쓰기를
+#   실행 전에 막는다. 읽기·실행·버림(>nul·$null·/dev/null·&1)은 그대로 통과 (정상 시스템 명령 차단 X).
+_SYSROOT = (__import__("os").environ.get("SystemRoot") or r"C:\Windows").replace("/", "\\").rstrip("\\").lower()
+_CD = re.compile(r"(?:^|[;&|]\s*)(?:cd|chdir|Set-Location|sl|pushd)\s+(?:/d\s+)?['\"]?([^'\";&|\s]+)", re.I)
+_REDIR = re.compile(r"(?<![<>&\w-])(?:[12*]?>>?)\s*['\"]?([^\s'\";|&)]+)")
+_WRITE_CMD = re.compile(r"\b(?:Out-File|Set-Content|Add-Content|New-Item|Tee-Object)\b[^;|\n]*?(?:-(?:FilePath|Path|LiteralPath)\s+)?['\"]?([A-Za-z]:\\[^\s'\";|]+|[^\s'\";|-][^\s'\";|]*)", re.I)
+_DISCARD = {"nul", "$null", "/dev/null", "null", "&1", "&2"}
+
+
+def _norm_win(p: str) -> str:
+    p = p.strip().strip("'\"")
+    m = re.match(r"^/([a-zA-Z])/(.*)$", p)               # Git Bash /c/Windows → C:\Windows
+    if m:
+        p = m.group(1) + ":\\" + m.group(2)
+    p = re.sub(r"(?i)%SystemRoot%|%windir%|\$env:SystemRoot|\$env:windir|\$SYSTEMROOT|\$WINDIR", lambda _m: _SYSROOT, p)   # 치환 문자열의 \ 를 정규식 이스케이프로 읽지 않게
+    return p.replace("/", "\\").lower()
+
+
+def _in_sysroot(p: str) -> bool:
+    p = _norm_win(p)
+    return p == _SYSROOT or p.startswith(_SYSROOT + "\\")
+
+
+def _system_dir_write(cmd: str, cwd: str) -> str | None:
+    """작업 폴더(또는 명령 안 cd 대상)가 Windows 폴더인데 상대 경로로 쓰거나, 쓰기 대상이 Windows 폴더면 그 대상."""
+    if sys.platform != "win32":
+        return None
+    eff = cwd or ""
+    for m in _CD.finditer(cmd):
+        eff = m.group(1)
+    in_sys = bool(eff) and _in_sysroot(eff)
+    targets = [m.group(1) for m in _REDIR.finditer(_strip_quoted(cmd))]   # 따옴표 안의 > (비교 연산자·문자열)는 리디렉션 아님
+    targets += [m.group(1) for m in _WRITE_CMD.finditer(cmd)]
+    for t in targets:
+        tl = t.strip("'\"").lower()
+        if not tl or tl in _DISCARD or tl.startswith("&"):
+            continue
+        absolute = bool(re.match(r"^(?:[a-z]:[\\/]|/[a-z]/|\\\\|%systemroot%|%windir%|\$env:)", tl))
+        if absolute and _in_sysroot(t):
+            return t
+        if not absolute and in_sys:
+            return t
+    return None
+
+
 def run(ctx):
     try:
         payload = json.loads(py_stdin_text(ctx))
@@ -83,6 +129,12 @@ def run(ctx):
     cmd = ti.get("command") or ""
     if not isinstance(cmd, str) or not cmd.strip():
         return None
+    sysw = _system_dir_write(cmd, str(payload.get("cwd") or ""))
+    if sysw:
+        out = {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                      "permissionDecisionReason": "[BLOCK] Windows 시스템 폴더에 파일을 만드는 쓰기/리디렉션 차단 (R370 · 대상: %s) — "
+                                                                  "작업 폴더를 프로젝트·임시 폴더로 바꾸거나 출력 경로를 절대 경로로 지정" % sysw[:120]}}
+        return Result(0, json.dumps(out, ensure_ascii=False), "")
     target = _strip_quoted(cmd)
     is_ps = payload.get("tool_name") == "PowerShell" or _PS_HOST.search(cmd)
     for pat in _patterns():

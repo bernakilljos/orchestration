@@ -74,7 +74,7 @@ switch ($Action) {
     $allow = [ordered]@{ 'remove-shadow-command' = @{ path_regex = '(?i)^' + $sys + '\\[a-z0-9_-]{1,64}$' } }
     [IO.File]::WriteAllText((Join-Path $Root 'allow.json'), ($allow | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding($false)))
     $act = New-ScheduledTaskAction -Execute $PS -Argument ('-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $Root 'elevated-runner.ps1') + '"')
-    $pr = New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -LogonType ServiceAccount -RunLevel Highest
+    $pr = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
     $st = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -MultipleInstances Queue
     Register-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName -Action $act -Principal $pr -Settings $st -Force | Out-Null
     # 작업 보안: SYSTEM·관리자 전체 · 인증된 사용자(AU) 읽기·실행만 → 일반 권한으로 실행 요청 가능, 수정·삭제 불가
@@ -98,7 +98,7 @@ switch ($Action) {
       $o.hashes_ok = $ok
     }
     $al = Join-Path $Root 'audit.log'
-    if (Test-Path -LiteralPath $al) { $o.last_audit = @(Get-Content -LiteralPath $al -Tail 5 -Encoding utf8) }
+    if (Test-Path -LiteralPath $al) { $o.last_audit = @(Get-Content -LiteralPath $al -Tail 5 -Encoding utf8 | ForEach-Object { [string]$_ }) }
     $o | ConvertTo-Json -Compress
     exit 0
   }
