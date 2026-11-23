@@ -493,3 +493,104 @@ def test_r357_mcp_direct_plan_user_and_local_scope(tmp_path, monkeypatch):
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(proj))
     got = sorted((s, n, spec, rest) for s, n, _e, spec, _p, rest in m.plan())
     assert got == [("local", "fs", "pkg-fs", ["C:/d"]), ("user", "a", "pkg-a", [])]   # uvx·이미 node·다른 프로젝트 = 제외
+
+
+def _stop_kit(tmp_path):
+    import shutil
+    w = tmp_path / "kit"
+    (w / ".claude" / "hooks").mkdir(parents=True)
+    shutil.copy(ROOT / ".claude" / "hooks" / "tool-dispatch.py", w / ".claude" / "hooks" / "tool-dispatch.py")
+    shutil.copytree(ROOT / ".claude" / "hooks" / "prompt", w / ".claude" / "hooks" / "prompt",
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    (w / ".claude" / "logs").mkdir()
+    (w / "plugins").mkdir()
+    spec = importlib.util.spec_from_file_location("td_r363", w / ".claude" / "hooks" / "tool-dispatch.py")
+    sys.path.insert(0, str(w / ".claude" / "hooks" / "prompt"))
+    td = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(td)
+    return w, td
+
+
+def test_r363_stop_dispatcher_blocks_runs_async_and_kills_timeout(tmp_path):
+    """R363: Stop 훅 18개(각각 Git 실행기+bash+conhost) → tool-dispatch stop 1개 · 동기 3개 차단 사유(exit 2·JSON block) 설정 순서로 보존 ·
+    비동기 15개는 분리 실행기가 병렬 실행(응답 안 붙잡음 · 환경 변수·인자 전달) · timeout 넘으면 종료."""
+    w, td = _stop_kit(tmp_path)
+    m = (tmp_path / "marks")
+    m.mkdir()
+    M = m.as_posix()
+
+    def put(rel, body):
+        p = w.joinpath(*rel.split("/"))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(body, encoding="utf-8", newline="\n")
+    for name, interp, rel, args, tmo, env in td.STOP_ASYNC:
+        if interp == "python":
+            put(rel, "import sys\nd=sys.stdin.read()\nopen(r'%s/%s','w').write('ok:'+str(len(d)))\n" % (M, name))
+        elif name == "auto-compact-check":
+            put(rel, '#!/usr/bin/env bash\ncat >/dev/null\necho s > "%s/%s.start"\nsleep 25\necho d > "%s/%s"\n' % (M, name, M, name))
+        else:
+            put(rel, '#!/usr/bin/env bash\nd="$(cat)"\nprintf "ok|%%s|%%s|%%s" "${#d}" "${SYNC_IF_CHANGED:-}" "$*" > "%s/%s"\n' % (M, name))
+    put(".claude/hooks/stop-request-ledger-gate.sh", '#!/usr/bin/env bash\ncat >/dev/null\necho "LEDGER-BLOCK 미완료" >&2\nexit 2\n')
+    put(".claude/hooks/stop-standing-gate.sh", '#!/usr/bin/env bash\ncat >/dev/null\necho \'{"decision":"block","reason":"STANDING-REASON"}\'\n')
+    put(".claude/hooks/stop-six-guards.sh", '#!/usr/bin/env bash\ncat >/dev/null\necho "[six-guards] WARN 참고" >&2\nexit 0\n')
+    t0 = time.perf_counter()
+    r = subprocess.run([sys.executable, "-X", "utf8", str(w / ".claude" / "hooks" / "tool-dispatch.py"), "stop"],
+                       input=b'{"hook_event_name":"Stop","stop_hook_active":false}', capture_output=True, timeout=60)
+    dt = time.perf_counter() - t0
+    err = r.stderr.decode("utf-8", "replace")
+    assert r.returncode == 2 and err.index("LEDGER-BLOCK") < err.index("STANDING-REASON") and "WARN 참고" not in err
+    assert dt < 8                                                                   # 25초 잠드는 비동기 훅을 기다리지 않음
+    names = [e[0] for e in td.STOP_ASYNC if e[0] != "auto-compact-check"]
+    for _ in range(100):
+        if all((m / n).exists() for n in names):
+            break
+        time.sleep(0.1)
+    assert all((m / n).exists() for n in names), [n for n in names if not (m / n).exists()]
+    assert (m / "sync-to-team").read_text().split("|")[2] == "1" and (m / "hook-08-ai-handoff").read_text().endswith("|auto")
+    for _ in range(150):
+        if "auto-compact-check: TIMEOUT" in ((w / ".claude" / "logs" / "tool-dispatch.log").read_text(encoding="utf-8")
+                                             if (w / ".claude" / "logs" / "tool-dispatch.log").exists() else ""):
+            break
+        time.sleep(0.1)
+    assert (m / "auto-compact-check.start").exists() and not (m / "auto-compact-check").exists()
+    assert "auto-compact-check: TIMEOUT" in (w / ".claude" / "logs" / "tool-dispatch.log").read_text(encoding="utf-8")
+
+
+def test_r363_stop_dispatcher_passes_when_no_block(tmp_path):
+    w, td = _stop_kit(tmp_path)
+    for name, interp, rel, args, tmo, env in td.STOP_SYNC + td.STOP_ASYNC:
+        p = w.joinpath(*rel.split("/"))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("import sys\nsys.stdin.read()\n" if interp == "python" else "#!/usr/bin/env bash\ncat >/dev/null\nexit 0\n",
+                     encoding="utf-8", newline="\n")
+    r = subprocess.run([sys.executable, "-X", "utf8", str(w / ".claude" / "hooks" / "tool-dispatch.py"), "stop"],
+                       input=b"{}", capture_output=True, timeout=60)
+    assert r.returncode == 0 and r.stdout == b"" and r.stderr == b""
+
+
+def test_r363_settings_stop_is_single_dispatcher_and_retired_for_targets():
+    s = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    cmds = [h["command"] for g in s["hooks"]["Stop"] for h in g["hooks"]]
+    assert cmds == ['python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py" stop']
+    t = json.loads((ROOT / "setup" / "templates" / "settings.template.json").read_text(encoding="utf-8"))
+    assert [h["command"] for g in t["hooks"]["Stop"] for h in g["hooks"]] == cmds
+    ret = json.loads((ROOT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))["Stop"]
+    gone = set().union(*[set(x.get("hooks") or []) for x in (ret if isinstance(ret, list) else [ret])])
+    sys.path.insert(0, str(ROOT / ".claude" / "hooks" / "prompt"))
+    spec = importlib.util.spec_from_file_location("td_r363c", ROOT / ".claude" / "hooks" / "tool-dispatch.py")
+    td = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(td)
+    assert {e[2].rsplit("/", 1)[-1] for e in td.STOP_SYNC + td.STOP_ASYNC} <= gone   # 대상에서도 옛 18개 제거
+
+
+def test_r363_child_creationflags_inherits_console_when_present():
+    """R363: 콘솔이 붙은 부모 = 0 (자식이 숨은 콘솔 상속 → conhost 안 생김) · 콘솔 없는 부모 = CREATE_NO_WINDOW (창 안 뜸)."""
+    if os.name != "nt":
+        pytest.skip("Windows 전용")
+    code = ("import sys;sys.path.insert(0,sys.argv[1]);import _common as c;print(c.child_creationflags())")
+    pdir = str(ROOT / ".claude" / "hooks" / "prompt")
+    no_console = subprocess.run([sys.executable, "-c", code, pdir], capture_output=True, text=True,
+                                creationflags=0x08000000 | 0x00000008).stdout.strip()      # DETACHED = 콘솔 없음
+    with_console = subprocess.run([sys.executable, "-c", code, pdir], capture_output=True, text=True,
+                                  creationflags=0x08000000).stdout.strip()                 # 숨은 새 콘솔
+    assert no_console == str(0x08000000) and with_console == "0"

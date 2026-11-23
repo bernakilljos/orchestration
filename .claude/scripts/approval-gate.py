@@ -228,6 +228,29 @@ def find_request(field: str, value: str, states: tuple) -> str | None:
     return None
 
 
+def recent_waiting(category: str, within_sec: int = 1800, exclude_scope: str = "") -> list:
+    """R363: 같은 위험 범주로 최근 within_sec 안에 만든 «대기» 요청 (가장 최근 순 · 범위가 같은 행 제외).
+    명령 글자를 바꿔 다시 실행하면 범위 지문이 달라 새 번호가 생기고, 사용자가 옛 번호를 승인해도 쓰이지 않는 교착이 생겼다."""
+    conn = sqlite3.connect(str(get_db_path()))
+    try:
+        rows = conn.execute(
+            "SELECT task_id, risk_detail, created_at FROM tasks WHERE task_file = '<approval-gate>' "
+            "AND approval_state = 'waiting' AND risk_category = ? AND created_at >= ? "
+            "ORDER BY created_at DESC, rowid DESC", (category, int(time.time()) - within_sec)).fetchall()
+    finally:
+        conn.close()
+    out = []
+    for tid, detail, _c in rows:
+        try:
+            d = json.loads(detail or "{}") or {}
+        except (json.JSONDecodeError, AttributeError):
+            d = {}
+        if exclude_scope and d.get("scope") == exclude_scope:
+            continue
+        out.append({"task_id": tid, "command": (d.get("command") or "")[:200]})
+    return out
+
+
 def new_request(command: str, category: str, detail: str, artifacts: dict | None, base: str, scope: str) -> str:
     """항상 새 번호로 새 대기 요청 행을 만든다 (기존 행 수정 없음)."""
     import hashlib as _h

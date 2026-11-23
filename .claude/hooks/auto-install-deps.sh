@@ -107,6 +107,11 @@ for n, e in (d.get('mcpServers') or {}).items():
     nohup python -X utf8 "$PROJECT_DIR/.claude/scripts/mcp-direct-launch.py" --auto >> "$LOG" 2>&1 &
     disown 2>/dev/null || true
   fi
+  # R363: git pull 로 받은 kit 의 status 전송 서비스가 설치본(%USERPROFILE%\.claude)과 다르면 교체·재시작 (서비스 설치 PC 만 · Windows 만)
+  if [ -f "$PROJECT_DIR/.claude/scripts/sync-status-service.ps1" ] && command -v powershell >/dev/null 2>&1; then
+    nohup powershell -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "$PROJECT_DIR/.claude/scripts/sync-status-service.ps1" >> "$LOG" 2>&1 &
+    disown 2>/dev/null || true
+  fi
 fi
 
 exit 0

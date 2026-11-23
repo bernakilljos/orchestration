@@ -115,6 +115,21 @@ def msys_path(p) -> str:
 _BASH_CACHE: list = []
 
 
+def child_creationflags() -> int:
+    """자식 프로세스 생성 플래그 (R363 · 2026-11-23). 부모에게 콘솔이 붙어 있으면 0 (자식이 그 숨은 콘솔을 물려받아 conhost 가 새로 안 생김)
+    · 콘솔이 없으면 CREATE_NO_WINDOW (콘솔 앱이 새 콘솔을 만들며 창이 보이는 것 방지).
+    근거 실측: Stop 훅 18개를 CREATE_NO_WINDOW 로 띄우면 훅마다 conhost 1개(평균 6.7MB)씩 새로 생겼다.
+    판정 = GetConsoleProcessList (숨은 콘솔은 GetConsoleWindow 가 NULL 일 수 있어 쓰지 않음)."""
+    if os.name != "nt":
+        return 0
+    try:
+        import ctypes
+        buf = (ctypes.c_uint32 * 1)()
+        return 0 if ctypes.windll.kernel32.GetConsoleProcessList(buf, 1) > 0 else 0x08000000
+    except Exception:  # noqa: BLE001
+        return 0x08000000
+
+
 def bash_exe() -> str:
     """bash 실행 파일 정본 (R346 후속 8 · 2026-11-20). Python 이 ["bash", …] 를 띄우면 Windows CreateProcess 는
     PATH 보다 시스템 폴더를 먼저 찾아 (Microsoft CreateProcessW 문서 · 검색 순서 ③ 시스템 디렉터리 > ⑥ PATH)

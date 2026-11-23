@@ -84,6 +84,25 @@ def run(ctx):
         limit = 1_000_000 if ("[1m]" in (model_id or "") or tokens > 200_000) else 200_000
     pct = tokens / limit * 100
 
+    # R364 (2026-11-23): 60% 넘으면 매 프롬프트 같은 경고를 반복 주입 → 구간(60·75·90)이 바뀔 때만 (세션별 기록)
+    band = 90 if pct >= 90 else 75 if pct >= 75 else 60 if pct >= 60 else 0
+    sid = re.sub(r"[^A-Za-z0-9_-]", "", str(ctx.payload.get("session_id") or "nosession"))[:64] or "nosession"
+    bfile = os.path.join(cwd, ".claude", "state", "compact-band.d", sid + ".txt")
+    try:
+        with open(bfile, encoding="utf-8") as f:
+            prev = int(f.read().strip() or -1)
+    except (OSError, ValueError):
+        prev = -1
+    if band != prev:
+        try:
+            os.makedirs(os.path.dirname(bfile), exist_ok=True)
+            with open(bfile, "w", encoding="utf-8") as f:
+                f.write(str(band))
+        except OSError:
+            pass
+    elif band:
+        return None
+
     RED = "\033[1;31m"
     YEL = "\033[1;33m"
     RST = "\033[0m"

@@ -655,3 +655,42 @@ def test_r353_plain_push_with_read_only_neighbors_not_flagged(cmd):
 ])
 def test_r353_risky_push_chains_still_flagged(cmd):
     assert flagged(cmd), cmd
+
+
+# ── R363 (2026-11-23) 승인 교착 안내: 명령 글자를 바꿔 새 번호가 생길 때 옛 대기 번호를 알린다 ──
+def test_r363_changed_command_mentions_waiting_request(tmp_root):
+    s = tmp_root / "fix.ps1"
+    s.write_text("Write-Host 'x'\n", encoding="utf-8")
+    cmd1 = f"Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File','{s}'"
+    r1 = agd.run(_hook(cmd1, str(tmp_root)))
+    t1 = _tid(r1)
+    assert r1.rc == 2 and "승인 교착" not in r1.err                     # 첫 요청 = 안내 없음
+    r1b = agd.run(_hook(cmd1, str(tmp_root)))
+    assert _tid(r1b) == t1 and "승인 교착" not in r1b.err               # 같은 명령 = 같은 번호 · 안내 없음
+    cmd2 = f"Start-Process -FilePath powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-File','{s}'"
+    r2 = agd.run(_hook(cmd2, str(tmp_root)))
+    t2 = _tid(r2)                                                       # 첫 번호 = 새 요청 번호 (안내는 뒤쪽)
+    assert r2.rc == 2 and t2 != t1 and "승인 교착" in r2.err and t1 in r2.err
+    assert r2.err.index(t2) < r2.err.index("승인 교착")
+    gate.approve(t1, gate.USER_APPROVER)                               # 옛 번호 승인은 바뀐 명령에 쓰이지 않음 (교착 원인 그대로 고정)
+    assert agd.run(_hook(cmd2, str(tmp_root))).rc == 2
+    assert agd.run(_hook(cmd1, str(tmp_root))) is None                 # 옛 명령 글자 그대로면 1회 통과 (안내한 해결 경로)
+
+
+def test_r363_no_notice_for_withdrawn_other_category_or_old(tmp_root):
+    s = tmp_root / "fix2.ps1"
+    s.write_text("Write-Host 'y'\n", encoding="utf-8")
+    cmd1 = f"Start-Process powershell -Verb RunAs -Wait -ArgumentList '-File','{s}'"
+    t1 = _tid(agd.run(_hook(cmd1, str(tmp_root))))
+    gate.withdraw(t1, "시험 취소")
+    cmd2 = f"Start-Process -FilePath powershell -Verb RunAs -ArgumentList '-File','{s}'"
+    r2 = agd.run(_hook(cmd2, str(tmp_root)))
+    assert "승인 교착" not in r2.err                                     # 취소한 요청은 안내 안 함
+    t2 = _tid(r2)
+    with sqlite3.connect(gate.get_db_path()) as c:                     # 31분 전 요청 = 범위 밖
+        c.execute("UPDATE tasks SET created_at=created_at-1860 WHERE task_id=?", (t2,))
+    cmd3 = f"Start-Process -FilePath powershell.exe -Verb RunAs -ArgumentList '-File','{s}'"
+    assert "승인 교착" not in agd.run(_hook(cmd3, str(tmp_root))).err
+    cat3 = gate.status(_tid(agd.run(_hook(cmd3, str(tmp_root)))))["risk_category"] if hasattr(gate, "status") else None
+    other = gate.recent_waiting("cost" if cat3 != "cost" else "data_loss")
+    assert other == []                                                 # 다른 범주 대기 요청은 섞이지 않음

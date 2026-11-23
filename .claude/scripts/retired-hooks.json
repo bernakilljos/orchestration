@@ -99,6 +99,33 @@
         "hook-04-pre-deploy.sh",
         "hook-05-post-deploy.sh"
       ]
+    },
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-11-23",
+      "_why": "R363 Stop 훅 18개 → tool-dispatch stop (동기 3 차단 판정 · 비동기 15 분리 실행기)",
+      "hooks": [
+        "audit-bat-lines.py",
+        "audit-install-dryrun.py",
+        "auto-compact-check.sh",
+        "auto-save-next-actions.sh",
+        "auto-update-stats.sh",
+        "check-infra-sync.sh",
+        "hook-04-pre-deploy.sh",
+        "hook-05-post-deploy.sh",
+        "hook-06-notify.sh",
+        "hook-08-ai-handoff.sh",
+        "outbox-write.sh",
+        "save-session-summary.sh",
+        "session-stop-snapshot.sh",
+        "stop-active-goals-resume.sh",
+        "stop-doc-summary.sh",
+        "stop-request-ledger-gate.sh",
+        "stop-six-guards.sh",
+        "stop-snapshot.sh",
+        "stop-standing-gate.sh",
+        "sync-to-team.sh"
+      ]
     }
   ],
   "SessionStart": [

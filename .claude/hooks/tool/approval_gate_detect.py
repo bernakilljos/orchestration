@@ -402,7 +402,9 @@ def _artifacts(cmd: str, raw_cwd: str) -> dict:
         for p in paths:
             try:
                 with open(p, "rb") as f:
-                    out[p] = hashlib.sha256(f.read()).hexdigest()
+                    # R364 (2026-11-23): 줄바꿈만 LF 로 맞춰 해시 — .gitattributes(eol=crlf)로 git pull·stash·checkout 이
+                    #   LF↔CRLF 를 바꿀 때마다 같은 스크립트의 승인이 조용히 무효가 되던 교착 원인 (내용 변경은 그대로 차단)
+                    out[p] = hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()
             except OSError:
                 out[p] = "missing"
         out["__done__"] = "1"
@@ -787,9 +789,19 @@ def _run(ctx, box):
     except Exception as e:  # noqa: BLE001 — 확인 실패 = 차단 유지 (fail-closed)
         _safe_log(log, "".join(traceback.format_exception_only(type(e), e)))
     req_id = None
+    note = ""
     try:
         req_id = mod.find_request("scope", scope, ("waiting",))
         if not req_id:
+            # R363 승인 교착 방지: 같은 범주 대기 요청이 이미 있으면 (명령을 바꿔 새 번호가 생기는 경우) 그 사실과 옛 번호를 함께 안내
+            try:
+                prev = [r["task_id"] for r in mod.recent_waiting(category, 1800, scope)][:3]
+            except Exception:  # noqa: BLE001 — 안내 보조 정보일 뿐 · 실패해도 차단은 그대로
+                prev = []
+            if prev:
+                note = (" · [승인 교착 주의] 같은 범주 대기 요청(%s)이 이미 있다 — 명령 글자를 바꾸면 범위가 달라져 옛 번호를 승인해도 "
+                        "이 명령에는 쓰이지 않는다. 옛 요청의 명령을 글자 그대로 다시 실행하거나, 옛 요청은 withdraw 하고 위 새 번호 하나만 안내할 것"
+                        % ", ".join(prev))
             if mod.find_request("base", task_id, ("approved", "waiting")):
                 desc = "승인 뒤 실행 대상(스크립트 내용·올라갈 커밋 등)이 바뀌어 이전 요청을 쓰지 않음 — 새 요청 확인 후 승인 · " + desc
             req_id = mod.new_request(cmd, category, desc, arts, task_id, scope)
@@ -800,6 +812,6 @@ def _run(ctx, box):
     shown = req_id or "(요청 등록 실패)"
     _safe_log(log, "[%s] BLOCK: %s | task_id=%s | cmd=%s\n" % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, shown, cmd))
     return _block(" 위험 명령 감지 (%s): %s. 사용자가 프롬프트에 /approve %s 또는 /reject %s [reason] 입력 — "
-                  "Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)"
-                  % (category, desc, shown, shown),
+                  "Claude 는 승인 명령을 실행하지 않는다. 승인 후 같은 명령을 같은 폴더에서 1회 실행 가능 (30분)%s"
+                  % (category, desc, shown, shown, note),
                   "HITL Approval Gate — task_id=%s | category=%s | 사용자 /approve <id> 후 같은 명령 1회" % (shown, category))

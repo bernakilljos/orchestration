@@ -101,6 +101,34 @@ SUB = [
 ]
 TABLE = {"pre": PRE, "post": POST, "sub": SUB}
 
+# R363 (2026-11-23): Stop 훅 18개가 응답 끝마다 각각 Git 실행기 + bash(-c) + bash 스크립트(+conhost) 로 떠 프로세스 약 70개 (추적 실측)
+#   → settings 에는 이 디스패처 1개만 · 원본 스크립트는 그대로 실행 (로직 이식 없음 · 훅마다 실행기·bash 2단계 절약)
+#   (이름, 실행기 bash|python, 원본 경로, 인자, settings timeout 초, 추가 환경 변수) · 순서 = 종전 settings Stop 순서
+#   동기 3개 = 응답을 붙잡고 차단 판정 (병렬 실행 · exit 2 / JSON decision=block 사유 모두 보존 · 설정 순서로 이어 붙임)
+#   비동기 15개 = 분리 실행기(stop-async) 1개가 병렬로 돌리고 각자 timeout 을 지킨다 (넘으면 하위 트리 종료) · 응답을 붙잡지 않음
+STOP_ASYNC = [
+    ("hook-08-ai-handoff", "bash", "plugins/exec_orch/hooks/hook-08-ai-handoff.sh", ("auto",), 10, None),
+    ("stop-snapshot", "bash", "plugins/exec_session_guard/hooks/stop-snapshot.sh", ("Stop",), 10, None),
+    ("outbox-write", "bash", "plugins/exec_session_guard/hooks/outbox-write.sh", ("Stop",), 10, None),
+    ("auto-compact-check", "bash", "plugins/exec_session_guard/hooks/auto-compact-check.sh", (), 10, None),
+    ("stop-doc-summary", "bash", "plugins/doc_auto/hooks/stop-doc-summary.sh", (), 10, None),
+    ("check-infra-sync", "bash", ".claude/hooks/check-infra-sync.sh", (), 10, None),
+    ("auto-update-stats", "bash", ".claude/scripts/auto-update-stats.sh", (), 10, None),
+    ("hook-06-notify", "bash", "plugins/exec_orch/hooks/hook-06-notify.sh", (), 10, None),
+    ("audit-bat-lines", "python", ".claude/scripts/audit-bat-lines.py", (), 60, None),
+    ("audit-install-dryrun", "python", ".claude/scripts/audit-install-dryrun.py", (), 90, None),
+    ("sync-to-team", "bash", ".claude/scripts/sync-to-team.sh", (), 30, {"SYNC_IF_CHANGED": "1"}),
+    ("save-session-summary", "bash", ".claude/hooks/save-session-summary.sh", (), 60, None),
+    ("session-stop-snapshot", "bash", ".claude/hooks/session-stop-snapshot.sh", (), 10, None),
+    ("auto-save-next-actions", "bash", ".claude/hooks/auto-save-next-actions.sh", (), 10, None),
+    ("stop-active-goals-resume", "bash", ".claude/hooks/stop-active-goals-resume.sh", (), 15, None),
+]
+STOP_SYNC = [
+    ("stop-request-ledger-gate", "bash", ".claude/hooks/stop-request-ledger-gate.sh", (), 10, None),
+    ("stop-standing-gate", "bash", ".claude/hooks/stop-standing-gate.sh", (), 10, None),
+    ("stop-six-guards", "bash", ".claude/hooks/stop-six-guards.sh", (), 15, None),
+]
+
 TOTAL_BUDGET_SEC = 55.0  # 전체 상한 - 넘으면 남은 훅은 건너뛴다
 SPAWN_MIN_SEC = float(os.environ.get("TOOL_DISPATCH_SPAWN_MIN_SEC") or 0.0)  # 테스트 부하용 하한 (기본 0 = 원본 settings timeout 그대로)
 CREATE_NO_WINDOW = 0x08000000
@@ -130,7 +158,8 @@ def _spawn_start(sp, raw_bytes: bytes) -> dict:
     path = ROOT + "/" + sp.rel
     kw = {}
     if os.name == "nt":
-        kw["creationflags"] = CREATE_NO_WINDOW
+        from _common import child_creationflags   # R363: 콘솔이 있으면 물려받음 (자식마다 conhost 생성 방지)
+        kw["creationflags"] = child_creationflags()
     box: dict = {"t0": time.perf_counter()}
     try:
         from _common import bash_exe   # R346 후속 8: ["bash",…] 는 Windows 에서 System32 WSL 실행기가 PATH 보다 먼저
@@ -297,7 +326,140 @@ def _merge(results):
     return 0, "".join(plain), err, []
 
 
+def _stop_spawn(entry, raw_bytes: bytes) -> dict:
+    """STOP_* 항목 1개를 원본 그대로 띄운다 (bash <경로> <인자> 또는 python <경로>) · 입출력은 스레드가 수거."""
+    import subprocess
+
+    name, interp, rel, args, _tmo, env_add = entry
+    path = os.path.join(ROOT, *rel.split("/"))
+    box: dict = {"t0": time.perf_counter()}
+    if not os.path.isfile(path):
+        box["err"] = "MISSING"
+        return box
+    try:
+        from _common import bash_exe
+        exe = bash_exe() if interp == "bash" else sys.executable
+        from _common import child_creationflags   # R363: 콘솔이 있으면 물려받음 (훅마다 conhost 1개씩 생기던 것)
+        kw = {"creationflags": child_creationflags()} if os.name == "nt" else {}
+        env = {**os.environ, **env_add} if env_add else None
+        proc = subprocess.Popen([exe, path, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, cwd=ROOT, env=env, **kw)
+    except Exception as e:  # noqa: BLE001
+        box["err"] = f"SPAWN-FAIL: {type(e).__name__}: {e}"
+        return box
+    box["proc"] = proc
+
+    def _comm():
+        try:
+            o, e = proc.communicate(raw_bytes)
+            box["res"] = (proc.returncode, o, e)
+        except BaseException as ex:  # noqa: BLE001
+            box["err"] = f"COMM-FAIL: {type(ex).__name__}: {ex}"
+
+    th = threading.Thread(target=_comm, daemon=True)
+    th.start()
+    box["th"] = th
+    return box
+
+
+def _stop_run(entries, raw_bytes: bytes):
+    """병렬로 띄우고 각자 timeout 으로 수거 → ([(name, Result|None)], timings, problems)."""
+    boxes = [(e, _stop_spawn(e, raw_bytes)) for e in entries]
+    results, timings, problems = [], [], []
+    for e, b in boxes:
+        name, tmo = e[0], float(e[4] or 60)
+        if b.get("err") == "MISSING":
+            results.append((name, None))
+            continue
+        remain = max(0.1, tmo - (time.perf_counter() - b.get("t0", time.perf_counter())))
+        res, perr = _spawn_collect(b, remain)
+        timings.append((name, (time.perf_counter() - b.get("t0", time.perf_counter())) * 1000))
+        if perr:
+            problems.append(f"{name}: {perr}")
+        results.append((name, res))
+    return results, timings, problems
+
+
+def _stop_detach_async(raw_bytes: bytes) -> bool:
+    """비동기 Stop 훅 실행기(stop-async)를 분리 실행 — 작업 묶음 밖(BREAKAWAY)으로 · 막힌 환경이면 종전 플래그로 한 번 더."""
+    import subprocess
+
+    # R363: DETACHED_PROCESS 는 콘솔이 없어 자식 15개가 각자 conhost 를 만들었다 (실측 16~19개/응답) → 콘솔을 물려받게
+    #   (분배기에 콘솔이 있으면 0 · 없으면 CREATE_NO_WINDOW 로 숨은 콘솔 1개) · 작업 묶음 밖(BREAKAWAY)은 그대로
+    from _common import child_creationflags
+    base = child_creationflags() if os.name == "nt" else 0
+    for flags in ((base | 0x01000000, base) if os.name == "nt" else (0,)):   # 0x01000000 = CREATE_BREAKAWAY_FROM_JOB
+        try:
+            kw = {"creationflags": flags} if os.name == "nt" else {"start_new_session": True}
+            p = subprocess.Popen([sys.executable, "-X", "utf8", os.path.abspath(__file__), "stop-async"],
+                                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 cwd=ROOT, close_fds=True, **kw)
+            try:
+                p.stdin.write(raw_bytes)
+                p.stdin.close()
+            except OSError:
+                pass
+            return True
+        except OSError:
+            continue
+    return False
+
+
+def _stop_main(event: str) -> int:
+    """stop = 비동기 실행기 분리 + 동기 3개 차단 판정 · stop-async = 비동기 15개 실행 (출력 없음)."""
+    from _common import ts_iso_tz, write_dispatch_log
+
+    t_start = time.perf_counter()
+    raw_bytes = sys.stdin.buffer.read()
+    log = os.path.join(ROOT, ".claude", "logs", "tool-dispatch.log")
+    if event == "stop-async":
+        results, timings, problems = _stop_run(STOP_ASYNC, raw_bytes)
+        lines = [f"[{ts_iso_tz()}] stop-async total={(time.perf_counter() - t_start) * 1000:.0f}ms "
+                 + " ".join(f"{n}={ms:.0f}" for n, ms in timings)]
+        lines += [f"[{ts_iso_tz()}]   {p}" for p in problems]
+        lines += [f"[{ts_iso_tz()}]   rc {n}={r.rc}" for n, r in results if r is not None and r.rc not in (0,)]
+        write_dispatch_log(log, lines)
+        return 0
+    detached = _stop_detach_async(raw_bytes)
+    results, timings, problems = _stop_run(STOP_SYNC, raw_bytes)
+    if not detached:   # 분리 실행이 막힌 환경: 응답이 늦어지더라도 비동기 훅이 빠지지 않게 여기서 돌린다
+        r2, t2, p2 = _stop_run(STOP_ASYNC, raw_bytes)
+        timings += t2
+        problems += p2
+    reasons, others = [], []
+    for name, r in results:
+        if r is None:
+            continue
+        if r.rc == 2:
+            reasons.append((r.err if r.err.strip() else r.out).rstrip("\n"))
+            continue
+        if r.rc == 0 and r.out.strip():
+            j = _as_json(r.out)
+            if isinstance(j, dict) and j.get("decision") == "block":
+                reasons.append(str(j.get("reason") or "").rstrip("\n"))
+            elif isinstance(j, dict):
+                others.append((name, r))
+    rc, out = 0, ""
+    if reasons:
+        sys.stderr.buffer.write(_enc("\n".join(x for x in reasons if x) + "\n"))
+        sys.stderr.buffer.flush()
+        rc = 2
+    elif others:
+        mrc, mout, _merr, _plain = _merge(others)
+        out = mout
+    if out:
+        sys.stdout.buffer.write(_enc(out))
+        sys.stdout.buffer.flush()
+    lines = [f"[{ts_iso_tz()}] stop total={(time.perf_counter() - t_start) * 1000:.0f}ms async={'detached' if detached else 'inline'} rc={rc} "
+             + " ".join(f"{n}={ms:.0f}" for n, ms in timings)]
+    lines += [f"[{ts_iso_tz()}]   {p}" for p in problems]
+    write_dispatch_log(log, lines)
+    return rc
+
+
 def main(argv) -> int:
+    if argv and argv[0] in ("stop", "stop-async"):
+        return _stop_main(argv[0])
     if not argv or argv[0] not in TABLE:
         sys.stderr.write("usage: tool-dispatch.py pre|post|sub [--debug-per-hook]\n")
         return 0

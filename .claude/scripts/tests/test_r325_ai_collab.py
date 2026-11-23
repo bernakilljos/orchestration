@@ -464,3 +464,22 @@ def test_git_helper_timeout_returns_empty(monkeypatch):
         raise subprocess.TimeoutExpired(a[0], 30)
     monkeypatch.setattr(mod.subprocess, "run", boom)
     assert mod._git("log", "-1") == ""
+
+
+def test_r364_redelivery_backs_off_when_content_unchanged(tmp_path):
+    """R364: 내용이 그대로인 요청은 재전달마다 임대 간격이 2배 (20분 → 40분 → 80분 …) — 무기한 20분 재전달 방지 · 내용이 바뀌면 즉시."""
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R8.md", '---\nrequest_id: "R8"\n---\n지시 A\n')
+    assert _run(r, "poll").returncode == 0                                  # 첫 전달 (n=0)
+    _age_inflight(r, 1500)                                                  # 25분 > 20분
+    assert _run(r, "poll").returncode == 0                                  # 1차 재전달 (n=1)
+    _age_inflight(r, 1500)                                                  # 25분 < 40분
+    assert _run(r, "poll").returncode == 3                                  # 대기 (백오프)
+    _age_inflight(r, 2500)                                                  # 41분 > 40분
+    assert _run(r, "poll").returncode == 0                                  # 2차 재전달 (n=2)
+    _age_inflight(r, 2500)                                                  # 41분 < 80분
+    assert _run(r, "poll").returncode == 3
+    _push_file(other, ".ai-collab/requests/R8.md", '---\nrequest_id: "R8"\n---\n지시 B (바뀜)\n')
+    out = _run(r, "poll")
+    assert out.returncode == 0 and "지시 B" in out.stdout                   # 내용 변경 = 백오프 초기화 · 즉시 전달

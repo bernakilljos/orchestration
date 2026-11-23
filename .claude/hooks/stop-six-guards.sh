@@ -51,7 +51,10 @@ FAIL_COUNT=0
 # 1. Completion Guard
 # 2026-11-02: stop-request-ledger-gate.sh 가 등록돼 있으면 그 hook 이 같은 gate 를 실행한다 (정본 1곳).
 #   여기서 또 실행하면 같은 사유로 Stop 이 두 번 막히고 (R126 · 9회 연속), gate 의 stop_hook_active 루프 카운터도 두 번 센다.
-if grep -q 'stop-request-ledger-gate.sh' "$ROOT/.claude/settings.json" 2>/dev/null; then
+# R363: Stop 훅이 tool-dispatch stop 1개로 묶이면 settings 에 전용 훅 이름이 없다 — 디스패처 등록 + 동기 표 등록도 «전용 훅이 담당» 으로 본다
+#   (빠뜨리면 이 스크립트가 같은 gate 를 입력 없이 한 번 더 돌려, 백그라운드 작업 대기 중에도 Stop 을 반복 차단했다 · 11-23 실측)
+_dedicated() { grep -q "$1" "$ROOT/.claude/settings.json" 2>/dev/null || { grep -q 'tool-dispatch.py\\" stop' "$ROOT/.claude/settings.json" 2>/dev/null && grep -q "\".claude/hooks/$1\"" "$ROOT/.claude/hooks/tool-dispatch.py" 2>/dev/null; }; }
+if _dedicated stop-request-ledger-gate.sh; then
   :  # 전용 hook 이 담당
 elif "$PY" -X utf8 "$ROOT/.claude/scripts/request-ledger.py" gate </dev/null >/dev/null 2>&1; then
   :  # pass
@@ -62,7 +65,7 @@ fi
 
 # 2. Verification Guard — standing-requirements
 # 2026-11-05: stop-standing-gate.sh 가 등록돼 있으면 그 hook 이 담당 (같은 조건 이중 차단·재진입 방지 · 1번과 같은 처리)
-if grep -q 'stop-standing-gate.sh' "$ROOT/.claude/settings.json" 2>/dev/null; then
+if _dedicated stop-standing-gate.sh; then
   :  # 전용 hook 이 담당
 elif "$PY" -X utf8 "$ROOT/.claude/scripts/standing-requirements.py" gate </dev/null >/dev/null 2>&1; then
   :

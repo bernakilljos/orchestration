@@ -1898,7 +1898,7 @@ def extra_gauges(cwd, data=None):
     _est = cost_estimates(_COST_DAYS, delta=_delta) if _COST_DAYS else {}
     if _est:   # R361: 월 = 누적 + 일평균×남은 날 · 연 = 일평균×365 (종전 연간 = 1월~오늘 남은 기록 합계)
         monthly, yearly = _est["month_est"], _est["annual_est"]
-        _basis = f" ({_est['span']}일 평균)"
+        _basis = ""   # 사용자 지시(11-23): «(30일 평균)» 표기는 헷갈림 → 화면에서 뺌 · 산식은 cost_estimates 주석
     import datetime as _dt2
     cur_m = _dt2.datetime.now().month
     if _SESSION_COST > 0.001 or monthly > 0.001 or yearly > 0.001:

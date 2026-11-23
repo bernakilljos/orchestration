@@ -373,17 +373,20 @@ def cmd_poll() -> int:
             reported.append(path)
             continue
         cur = inflight.get(path) or {}
-        if cur.get("blob") == blob:
+        same = cur.get("blob") == blob
+        n = int(cur.get("n", 0) or 0) if same else 0
+        if same:
             try:
                 age = (now - datetime.fromisoformat(cur.get("at", ""))).total_seconds()
             except ValueError:
                 age = _lease_sec()
-            if age < _lease_sec():
+            # R364 (2026-11-23): 내용이 그대로인데 20분마다 무기한 재전달(백오프 없음) → 재전달할 때마다 간격 2배 (최대 16배)
+            if age < _lease_sec() * (2 ** min(n, 4)):
                 busy.append(path)
                 continue
         new.append({"path": path, "blob": blob, "text": _git("cat-file", "-p", blob)[:4000],
                     "redelivery": bool(cur)})
-        inflight[path] = {"blob": blob, "at": now.isoformat(timespec="seconds")}
+        inflight[path] = {"blob": blob, "at": now.isoformat(timespec="seconds"), "n": (n + 1) if same else 0}
         changed = True
     if new:
         st["last_poll_hit"] = now.isoformat(timespec="seconds")

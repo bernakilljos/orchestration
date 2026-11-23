@@ -181,3 +181,22 @@ def test_resume_hook_end_to_end_injects_followups(tmp_path):
     out = json.loads(p.stdout.decode("utf-8"))["hookSpecificOutput"]["additionalContext"]
     assert "drift-detect.py baseline" in out and "사용자 확인 없이 바로 이어서 실행" in out
     assert "확인 질문 없이 이것부터 바로 시작" in out
+
+
+def test_r364_blocked_goals_not_resumed_and_block_stable(tmp_path):
+    """R364: BLOCKED goal 은 재개 지시 없이 건수 1줄 · 같은 목록이면 파일을 다시 쓰지 않음 (mtime 고정 → 24h 조건 유효)."""
+    m = _load(tmp_path)
+    goals = [{"goal_id": 1, "status": "RUNNING", "description": "진행 목표"},
+             {"goal_id": 2, "status": "BLOCKED", "description": "외부 대기 목표"},
+             {"goal_id": 3, "status": "blocked", "description": "외부 대기 2"}]
+    m.cmd_goals(json.dumps(goals, ensure_ascii=False))
+    t = _utf8(m.OUT)
+    assert "진행 목표" in t and "외부 대기 목표" not in t and "BLOCKED goal 2 건" in t
+    before = m.OUT.stat().st_mtime_ns
+    old = before - 10**12
+    os.utime(m.OUT, ns=(old, old))
+    m.cmd_goals(json.dumps(goals, ensure_ascii=False))      # 같은 목록 → 내용 동일 → 다시 쓰지 않음
+    assert m.OUT.stat().st_mtime_ns == old
+    m.cmd_goals(json.dumps(goals[1:], ensure_ascii=False))  # BLOCKED 만 → 재개 지시 문구 없음
+    t = _utf8(m.OUT)
+    assert "확인 질문 없이 이어서 진행" not in t and "BLOCKED goal 2 건" in t

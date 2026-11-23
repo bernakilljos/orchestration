@@ -55,7 +55,9 @@ def _run_sr_gate():
 TESTS = [
     ("T01","Request Ledger n/n gate",
      lambda: _ex(".claude/scripts/request-ledger.py") and _ex(".claude/hooks/stop-request-ledger-gate.sh")
-     and _ct(".claude/settings.json","stop-request-ledger-gate.sh")),
+     # R363: Stop 훅은 tool-dispatch stop 1개로 묶였다 — settings 직접 등록 또는 디스패처 동기 표(STOP_SYNC) 등록 둘 다 인정
+     and (_ct(".claude/settings.json","stop-request-ledger-gate.sh")
+          or (_ct(".claude/settings.json",'tool-dispatch.py\\" stop') and _ct(".claude/hooks/tool-dispatch.py",'".claude/hooks/stop-request-ledger-gate.sh"')))),
     ("T02","Codex 명시 라우팅",
      lambda: _classify("codex로 리뷰해줘").get("ai")=="codex"),
     ("T03","디자인 임의 변경 X",

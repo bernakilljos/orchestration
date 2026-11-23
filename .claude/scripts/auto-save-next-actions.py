@@ -170,7 +170,7 @@ def update(mutate) -> bool:
             if _sha(now) != _sha(before):   # 잠금 밖 쓰기가 끼어듦 → 버리고 최신 위에 다시
                 tmp.unlink(missing_ok=True)
                 continue
-            if new == read_robust():
+            if new.replace("\r\n", "\n") == read_robust().replace("\r\n", "\n"):   # R364: write_text 가 Windows 에서 CRLF 로 써 늘 «다름» → 매번 재기록·mtime 최신 (24h 조건 무력화)
                 tmp.unlink(missing_ok=True)
                 return True
             os.replace(tmp, OUT)
@@ -274,14 +274,21 @@ def cmd_goals(raw: str) -> int:
     if not goals:
         set_block("goals", None)
         return 0
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    body = (
-        f"### 미완 Goals {len(goals)} 건 — 자동 재기록 ({ts} · 정본 orca.db supervisor)\n\n"
-        "next-actions.md 저장만으로 완료 선언 X (2026-10-27). 다음 세션은 확인 질문 없이 이어서 진행.\n\n"
-        "```json\n" + json.dumps(goals, ensure_ascii=False, indent=2) + "\n```\n\n"
-        "복구: `python .claude/scripts/lib/supervisor.py active` · `... advance-all`"
-    )
-    set_block("goals", body)
+    # R364 (2026-11-23): BLOCKED goal 은 «확인 질문 없이 이어서 진행» 대상이 아니다 (외부 입력·권한 대기) — 21건이 매 세션
+    #   재개 지시와 함께 주입되던 결함 → 건수 1줄만. 시각도 본문에 넣지 않는다 (매번 내용이 달라져 파일 mtime 이 늘 최신 →
+    #   resume 의 24시간 조건이 무력화되던 원인 · 목록이 바뀔 때만 다시 쓴다).
+    active = [g for g in goals if str(g.get("status", "")).upper() != "BLOCKED"]
+    blocked = len(goals) - len(active)
+    parts = []
+    if active:
+        parts.append(
+            f"### 미완 Goals {len(active)} 건 — 자동 재기록 (정본 orca.db supervisor)\n\n"
+            "next-actions.md 저장만으로 완료 선언 X (2026-10-27). 다음 세션은 확인 질문 없이 이어서 진행.\n\n"
+            "```json\n" + json.dumps(active, ensure_ascii=False, indent=2) + "\n```")
+    if blocked:
+        parts.append(f"BLOCKED goal {blocked} 건 — 외부 입력·권한 대기라 자동 재개 대상 아님 (목록: `python .claude/scripts/lib/supervisor.py active`)")
+    parts.append("복구: `python .claude/scripts/lib/supervisor.py active` · `... advance-all`")
+    set_block("goals", "\n\n".join(parts))
     return 0
 
 
