@@ -467,8 +467,16 @@ def _put_trace_lib(proj):
         (lib / n).write_bytes((SCRIPTS / "lib" / n).read_bytes())
 
 
+def _kit_marker(root):
+    """kit 표지(plugins/exec_orch + .claude-plugin/plugin.json) — 있으면 진행 단계 6개 고정 · 없으면 대상 폴더."""
+    (root / "plugins" / "exec_orch").mkdir(parents=True, exist_ok=True)
+    (root / ".claude-plugin").mkdir(exist_ok=True)
+    (root / ".claude-plugin" / "plugin.json").write_text("{}", encoding="utf-8")
+
+
 def test_dev_progress_counts_only_real_successful_stages(sl, tm, proj):
     _put_trace_lib(proj)
+    _kit_marker(proj)
     assert sl._req_progress(str(proj)) is None                        # 현재 요청 없음 = 계산 안 함 (미계측)
     tm.set_current("t252", rid="R900", desc="x")
     tm.emit("tool", step="Edit", status="success", detail={"input": r"C:\pjt\demo\src\a.py"})   # tmp_path 는 pytest-of- 라 제외됨
@@ -480,6 +488,11 @@ def test_dev_progress_counts_only_real_successful_stages(sl, tm, proj):
     tm.emit("tool", step="Bash", status="success", detail={"input": "git commit -m x"})
     tm.emit("tool", step="Bash", status="success", detail={"input": "svn commit -m x --non-interactive"})   # SVN 커밋 = 커밋+원격
     assert sl._req_progress(str(proj))[:4] == ("R900", 4, 6, "원격")
+    # 대상 폴더(kit 표지 없음): 전파하지 않은 요청은 전파·대상검증을 분모에서 뺀다 (ICM 1119 사용자 지시)
+    (proj / ".claude-plugin" / "plugin.json").unlink()
+    assert sl._req_progress(str(proj))[:4] == ("R900", 4, 4, "원격")
+    tm.emit("tool", step="Bash", status="success", detail={"input": "python merge-to-target.py C:/x --apply"})
+    assert sl._req_progress(str(proj))[:4] == ("R900", 5, 6, "전파")
 
 
 def _agents(proj, n):

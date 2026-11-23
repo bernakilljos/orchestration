@@ -437,6 +437,9 @@ def test_r356_req_progress_incremental_equals_full(tmp_path, monkeypatch):
     (r / ".claude/scripts/lib").mkdir(parents=True)
     (r / ".claude/state").mkdir()
     (r / ".claude/logs").mkdir()
+    (r / "plugins/exec_orch").mkdir(parents=True)                                  # kit 표지 = 6단계 고정
+    (r / ".claude-plugin").mkdir()
+    (r / ".claude-plugin/plugin.json").write_text("{}", encoding="utf-8")
     shutil.copy(KIT / ".claude/scripts/lib/trace.py", r / ".claude/scripts/lib/trace.py")
     monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(r))
     log = r / ".claude/logs/trace-events.jsonl"
@@ -538,3 +541,46 @@ def test_r357_render_reuse_same_input_and_state(tmp_path):
         f.unlink()
     time.sleep(0.01)
     assert render(base, STATUSLINE_CACHE_SEC="0").strip() and stamp() is None    # 끔 = 저장 안 함
+
+
+def test_r361_cost_estimates_annualize_recent_average():
+    """R361: «연간 추정» 이 1월~오늘 남은 기록 합계($1,721)였다 → 최근 30일 일평균 × 365 · 월 = 누적 + 일평균 × 남은 날."""
+    import datetime as _d
+    sl = _load("sl_r361a", KIT / ".claude/scripts/statusline_context.py")
+    t = _d.date(2026, 11, 23)
+    days = {(t - _d.timedelta(days=i)).isoformat(): 10.0 for i in range(40)}       # 40일 동안 매일 $10
+    e = sl.cost_estimates(days, today=t)
+    assert e["span"] == 30 and abs(e["avg"] - 10.0) < 1e-9 and abs(e["annual_est"] - 3650.0) < 1e-6
+    assert abs(e["mtd"] - 230.0) < 1e-6 and abs(e["month_est"] - 300.0) < 1e-6   # 11/1~23 누적 230 + 남은 7일×10
+    short = {(t - _d.timedelta(days=i)).isoformat(): 20.0 for i in range(5)}       # 기록 5일뿐 = 5일로 나눔
+    e2 = sl.cost_estimates(short, today=t)
+    assert e2["span"] == 5 and abs(e2["annual_est"] - 20.0 * 365) < 1e-6
+    e3 = sl.cost_estimates(days, today=t, delta=30.0)                              # 세션 공식값 보정
+    assert abs(e3["avg"] - 11.0) < 1e-9 and abs(e3["mtd"] - 260.0) < 1e-6
+    assert sl.cost_estimates({}, today=t) == {}
+
+
+def test_r361_cost_daily_ledger_keeps_days_after_jsonl_cleanup(tmp_path, monkeypatch):
+    """R361: 대화 기록(jsonl)이 지워져도 장부에 남긴 날은 줄지 않음 · 같은 메시지 id 는 1번만 (모델별 캐시 키 중복)."""
+    import json as _j
+    sl = _load("sl_r361b", KIT / ".claude/scripts/statusline_context.py")
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    monkeypatch.setattr(sl, "cwd_to_proj_dir", lambda cwd: str(proj))
+    monkeypatch.setattr(sl, "_COST_DAILY_PATH", str(tmp_path / "cost-daily.json"))
+    monkeypatch.setattr(sl, "_SCAN_PATH", str(tmp_path / "scan.json"))
+    monkeypatch.setattr(sl, "_SCAN", None)
+
+    def rec(mid, day, inp):
+        return _j.dumps({"type": "assistant", "timestamp": day + "T01:00:00Z",
+                         "message": {"id": mid, "model": "claude-opus-5-5", "usage": {"input_tokens": inp, "output_tokens": 0}}}) + "\n"
+    a = proj / "a.jsonl"
+    a.write_text(rec("m1", "2026-11-01", 1_000_000) + rec("m2", "2026-11-02", 2_000_000), encoding="utf-8")
+    d1 = sl.cost_daily_ledger(str(tmp_path), "claude-opus-5-5")
+    sl.cost_daily_ledger(str(tmp_path), "other-model")                             # 같은 파일 다른 캐시 키 → 중복 안 셈
+    d2 = _j.loads((tmp_path / "cost-daily.json").read_text(encoding="utf-8"))["days"]
+    assert set(d1) == {"2026-11-01", "2026-11-02"} and d2 == d1 and d1["2026-11-02"] > d1["2026-11-01"] > 0
+    monkeypatch.setattr(sl, "_SCAN", {})                                           # 캐시 초기화 + 파일 삭제 = 다시 세면 0
+    a.unlink()
+    d3 = sl.cost_daily_ledger(str(tmp_path), "claude-opus-5-5")
+    assert d3 == d1                                                                # 장부 값은 줄지 않음

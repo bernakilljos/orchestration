@@ -1322,7 +1322,8 @@ def test_gemini_verify_requires_execution_evidence():
 
 def test_statusline_output_rows_align_and_fit_columns():
     """2026-11-06 V1.1 E (문자열 검증 · FROZEN 디자인 무변경): 실제 출력에서 모든 내용 행의 왼쪽 │ 가 같은 셀 ·
-    폭 ≤ COLUMNS-1 · 그룹 구분 빈 줄 3개. 실제 VS Code 화면 렌더(이모지 폭·빈 줄 처리)는 이 시험으로 판정하지 않는다."""
+    폭 ≤ COLUMNS-1 · 빈 줄 0개 (2026-11-23 cadd1143: 그룹 구분 빈 줄 3개 제거 — 14줄 넘으면 맨 끝 비용 줄이 잘렸다 · ICM 사용자 지시 병합).
+    실제 VS Code 화면 렌더(이모지 폭·빈 줄 처리)는 이 시험으로 판정하지 않는다."""
     import re
     from wcwidth import wcswidth
     inp = json.dumps({"session_id": "p20-sl", "cwd": str(ROOT), "model": {"id": "claude-opus-5-5"},
@@ -1334,7 +1335,7 @@ def test_statusline_output_rows_align_and_fit_columns():
     rows = r.stdout.rstrip("\n").split("\n")
     content = [x for x in rows if strip(x).strip()]
     assert r.returncode == 0 and len(content) >= 3          # 행 수는 상태 파일에 따라 다름 (fresh clone 7 · 운영 11)
-    assert sum(1 for x in rows if not strip(x).strip()) == 3
+    assert sum(1 for x in rows if not strip(x).strip()) == 0
     assert all(wcswidth(strip(x)) <= 119 for x in rows)
     assert {wcswidth(strip(x.split("│")[0])) for x in content} == {13}
 
