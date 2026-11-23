@@ -417,6 +417,8 @@ function Check-Control { param($dashUrl)
 # --- Git Push Fallback (터널 안 될 때) ---
 $script:gitPushInterval = 60  # git push 최소 간격 (초)
 $script:lastGitPush = [DateTime]::MinValue
+# R359: git push 경로가 재사용하는 받아 둔 폴더 (LOCALAPPDATA 없으면 TEMP)
+$script:gitRepoDir = Join-Path $(if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { $env:TEMP }) 'orch-status-push\repo'
 
 function Capture-Screen {
   # 스크린 캡처 → JPEG (품질 25, 50% 리사이즈)
@@ -451,14 +453,26 @@ function Push-ViaGit { param($jsonStr)
   $elapsed = ([DateTime]::Now - $script:lastGitPush).TotalSeconds
   if ($elapsed -lt $script:gitPushInterval) { return }
   $script:lastGitPush = [DateTime]::Now
-  $tmpDir = "$env:TEMP\orch-git-push-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+  # R359 (2026-11-23): 매분 새 폴더에 clone + Start-Job(시간 제한용 PowerShell 프로세스 70~113MB) 이던 것 →
+  #   받아 둔 폴더를 재사용 (fetch --depth 1 + reset --hard · 실패하면 지우고 다시 clone) · 시간 제한은 .NET Process
+  $tmpDir = $script:gitRepoDir
+  $gitFailed = $false
   try {
     $repoUrl = "https://github.com/$owner/$repo.git"   # 토큰 없는 URL (자격은 credential helper)
     $env:ORCH_GH_PAT = $pat
-    $cloneJob2 = Start-Job -ScriptBlock { param($u,$d,$cred) git @cred clone --depth 1 $u $d 2>&1 } -ArgumentList $repoUrl,$tmpDir,(Get-GitCredArgs $pat)
-    $null = Wait-Job $cloneJob2 -Timeout 30
-    Remove-Job $cloneJob2 -Force -ErrorAction SilentlyContinue
-    if (-not (Test-Path $tmpDir)) { Write-Host "[WARN] git clone failed"; return }
+    $cred = @(Get-GitCredArgs $pat)
+    $ok = $false
+    if (Test-Path "$tmpDir\.git") {
+      $ok = ((Invoke-GitTimed (@('-C', $tmpDir) + $cred + @('fetch', '--depth', '1', 'origin')) 30) -eq 0) -and
+            ((Invoke-GitTimed @('-C', $tmpDir, 'reset', '--hard', 'FETCH_HEAD') 30) -eq 0)
+      if ($ok) { $null = Invoke-GitTimed @('-C', $tmpDir, 'clean', '-fdq') 30 }
+    }
+    if (-not $ok) {
+      if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }
+      New-Item (Split-Path $tmpDir) -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+      $ok = (Invoke-GitTimed ($cred + @('clone', '--depth', '1', $repoUrl, $tmpDir)) 30) -eq 0
+    }
+    if (-not $ok -or -not (Test-Path $tmpDir)) { $gitFailed = $true; Write-Host "[WARN] git clone failed"; return }
 
     # 상태 JSON 저장
     $statusDir = "$tmpDir\status"
@@ -521,8 +535,29 @@ function Push-ViaGit { param($jsonStr)
     }
     Set-Location $env:TEMP
   } catch {
+    $gitFailed = $true
     Write-Host "[WARN] git push failed"
-  } finally { if (Test-Path $tmpDir) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue } }
+  } finally {
+    # R359: 받아 둔 폴더는 남겨 다음 주기에 재사용 · 실패했을 때만 지워 다음에 새로 clone
+    Set-Location $env:TEMP
+    if ($gitFailed -and (Test-Path $tmpDir)) { Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue }
+  }
+}
+
+function Invoke-GitTimed { param([string[]]$GitArgs, [int]$TimeoutSec = 30)
+  # R359: Start-Job(별도 PowerShell 프로세스) 대신 git 을 직접 띄우고 시간 제한 — 넘으면 종료 · 반환 = 종료 코드 (-1 실행 실패 · -2 시간 초과)
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = 'git'
+  $psi.Arguments = (($GitArgs | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' ')
+  $psi.UseShellExecute = $false
+  $psi.CreateNoWindow = $true
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  try { $p = [System.Diagnostics.Process]::Start($psi) } catch { return -1 }
+  $null = $p.StandardOutput.ReadToEndAsync()
+  $null = $p.StandardError.ReadToEndAsync()
+  if (-not $p.WaitForExit($TimeoutSec * 1000)) { try { $p.Kill() } catch {}; return -2 }
+  return $p.ExitCode
 }
 
 # ══════════════════════════════════════════
