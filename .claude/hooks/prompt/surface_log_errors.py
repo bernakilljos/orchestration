@@ -36,6 +36,7 @@ TS_RE = re.compile(r"(20\d\d)-(\d\d)-(\d\d)[ T](\d\d):(\d\d):(\d\d)")
 # 끝 경계 필수 (2026-11-10): 정리 기록의 파일 이름 "errors/error_2026….log" 가 ERROR 로 세어졌다 · FAILED·FAILURE 는 유지
 ERR_RE = re.compile(r"(?<![A-Za-z0-9_])(ERROR|FAIL(?:ED|URE|S)?|Traceback|\[err\]|\[!!\])(?![A-Za-z0-9_])", re.I)
 WARN_RE = re.compile(r"\b(WARN|\[skip\])", re.I)
+DEBUG_RE = re.compile(r"^\s*\[[^\]]*\]\s*DEBUG\b")   # R355: 수준 DEBUG 줄은 오류·경고 아님 (상태줄 _DEBUG_LINE_RE 와 같은 판정)
 RESOLVED_RE = re.compile(r"\[RESOLVED\]\s*(.+?)\s*(?:—|$)")
 REF_RE = re.compile(r"\(ref=([\w-]{6,})\)")
 # 오류 머리 = «[ERROR]» 뒤 ~ «—» 앞 (해소 표시 RESOLVED_RE 와 같은 경계 · R354 10차)
@@ -94,6 +95,8 @@ def _scan(log_dir: str):
                 # R354 5차 검토 P2: 짧거나 오류 단어뿐인 문구(«[RESOLVED] ERROR»)는 다른 미해소 오류까지 숨긴다 → 무시
                 if len(phrase) >= 8 and not ERR_RE.fullmatch(phrase):
                     resolved.append((idx, phrase))
+                continue
+            if DEBUG_RE.match(ln):
                 continue
             e, w = ERR_RE.search(ln), WARN_RE.search(ln)
             if not (e or w):

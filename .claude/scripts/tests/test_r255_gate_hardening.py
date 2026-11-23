@@ -236,3 +236,33 @@ def test_perf_gate_baseline_is_median_and_needs_absolute_margin(tmp_path, monkey
     assert r["status"] == "perf_regression" and r["items"][0]["ms"] == 690.0   # 진짜 느려짐은 그대로 차단
     b = json.loads((d / ".claude" / "state" / "perf-baseline.json").read_text(encoding="utf-8"))["항목"]
     assert b["samples"][-1] == 524.0 and len(b["samples"]) == 7 and b["ms"] == 446.0
+
+
+def test_r356_perf_gate_compares_head_under_same_conditions(tmp_path):
+    """R356: 기준선(11-18 391ms)이 데이터 증가로 낡아 아무것도 안 바꾼 HEAD 도 720ms 인데, 상태줄을 더 빠르게 한 커밋까지
+    '회귀' 로 막던 것 → 기준선을 넘으면 같은 시점에 HEAD 판(바뀐 trigger 파일만 HEAD 내용으로 잠시 바꿔)도 재서
+    HEAD 대비 허용 안이면 통과(기준선은 실측으로 갱신) · HEAD 보다 느려졌으면 그대로 차단 · 작업 파일은 원래대로 복원."""
+    g = lambda *a: subprocess.run(["git", "-C", str(tmp_path), *a], capture_output=True, text=True, check=True)
+    g("init", "-q"); g("config", "user.email", "t@t"); g("config", "user.name", "t")
+    (tmp_path / "src").mkdir()
+    v = tmp_path / "src" / "v.txt"
+    v.write_text("0.30", encoding="utf-8")
+    g("add", "-A"); g("commit", "-qm", "head")
+    cmd = _PY + ["import time;time.sleep(float(open('src/v.txt').read()))"]
+    d = _perf_repo(tmp_path, [{"name": "항목", "cmd": cmd, "triggers": ["src/*"], "runs": 3, "warmup": 1}],
+                   baseline={"항목": {"samples": [50] * 7}})
+    v.write_text("0.31", encoding="utf-8")                                   # HEAD 와 같은 수준 (기준선 50ms 보다는 훨씬 느림)
+    g("add", "-A")
+    r = iv.perf_gate(d, ["src/v.txt"])
+    it = r["items"][0]
+    assert r["status"] == "pass" and it["head_ms"] >= 280 and "HEAD" in it.get("note", ""), r
+    assert v.read_text(encoding="utf-8") == "0.31"                           # 작업 파일 복원
+    b = json.loads((d / ".claude/state/perf-baseline.json").read_text(encoding="utf-8"))["항목"]
+    assert b["samples"][-1] >= 280                                            # 기준선이 실측으로 따라감
+    v.write_text("0.70", encoding="utf-8")                                    # HEAD(0.30) 보다 확실히 느림
+    g("add", "-A")
+    (d / ".claude/state/perf-baseline.json").write_text(json.dumps({"항목": {"samples": [50] * 7}}), encoding="utf-8")
+    r = iv.perf_gate(d, ["src/v.txt"])
+    assert r["status"] == "perf_regression" and r["items"][0]["head_ms"] < 500
+    assert v.read_text(encoding="utf-8") == "0.70"
+    assert not (d / ".claude/state/perf-head-swap").exists()                 # 임시 백업 정리

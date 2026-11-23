@@ -1130,6 +1130,51 @@ def _perf_baseline_ms(entry: Optional[Dict[str, Any]]) -> Optional[float]:
     return round(statistics.median(vals), 1) if vals else None
 
 
+_PERF_SWAP = ".claude/state/perf-head-swap"
+
+
+def _perf_swap_restore(cwd: Path) -> None:
+    """HEAD 비교 측정 중 끊겨 남은 백업이 있으면 작업 파일을 원래대로 되돌린다 (다음 게이트 시작 때 · 복구 후 백업 삭제)."""
+    import shutil
+    sw = cwd / _PERF_SWAP
+    man = sw / "manifest.json"
+    if not man.is_file():
+        shutil.rmtree(sw, ignore_errors=True)
+        return
+    try:
+        for i, rel in enumerate(json.loads(man.read_text(encoding="utf-8"))):
+            b = sw / str(i)
+            if b.is_file():
+                (cwd / rel).write_bytes(b.read_bytes())
+        shutil.rmtree(sw, ignore_errors=True)
+    except (OSError, ValueError):
+        pass
+
+
+def _perf_measure_head(cwd: Path, item: Dict[str, Any], files: List[str]) -> Optional[float]:
+    """R356 동일 조건 HEAD 측정 — 바뀐 trigger 파일만 잠시 HEAD 내용으로 바꿔 같은 명령을 잰 뒤 원래대로 복원.
+    git 이 아니거나 HEAD 에 없는 파일이 있으면 None (비교 불가 = 종전 판정 유지). 백업은 끊김 복구용으로 state 에 남긴다."""
+    heads = []
+    for rel in files:
+        r = subprocess.run(["git", "-C", str(cwd), "show", f"HEAD:{rel}"], capture_output=True, timeout=30)
+        if r.returncode != 0:
+            return None
+        heads.append(r.stdout)
+    sw = cwd / _PERF_SWAP
+    try:
+        sw.mkdir(parents=True, exist_ok=True)
+        for i, rel in enumerate(files):
+            (sw / str(i)).write_bytes((cwd / rel).read_bytes())
+        (sw / "manifest.json").write_text(json.dumps(files, ensure_ascii=False), encoding="utf-8")
+        for rel, body in zip(files, heads):
+            (cwd / rel).write_bytes(body)
+        return _perf_measure(cwd, item)
+    except OSError:
+        return None
+    finally:
+        _perf_swap_restore(cwd)
+
+
 def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
     """R295·R296 성능 회귀 게이트 — 바뀐 파일과 관련된 속도 항목(상태줄·페이지·DB 등)만 재서 느려지면 커밋 차단.
 
@@ -1141,6 +1186,7 @@ def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
     처음 측정은 기준선만 저장)."""
     import fnmatch
     out: Dict[str, Any] = {"items": [], "status": "pass"}
+    _perf_swap_restore(cwd)   # R356: 앞선 HEAD 비교 측정이 끊겨 남긴 백업이 있으면 작업 파일부터 복원
     items = _perf_items(cwd)
     if not items:
         out["status"] = "none"
@@ -1178,6 +1224,16 @@ def perf_gate(cwd: Path, staged: List[str]) -> Dict[str, Any]:
                 rec["ms_retry"] = ms2
                 ms = min(ms, ms2)
                 why = _over(ms)
+        if why and "기준선" in why:
+            # R356: 기준선이 데이터 증가·환경 변화로 낡으면(11-23 실측: 기준선 391ms · 아무것도 안 바꾼 HEAD 720ms) 이 변경과 무관하게
+            #   모든 커밋이 막힌다 → 같은 시점에 HEAD 판을 재서, HEAD 대비 허용(비율 또는 절대 폭) 안이면 이 변경의 회귀가 아님.
+            files = [p for p in staged if any(fnmatch.fnmatch(p, g) for g in trig)] if trig else []
+            hm = _perf_measure_head(cwd, it, files) if files else None
+            if hm is not None:
+                rec["head_ms"] = hm
+                if ms <= hm * (1 + pct / 100) or ms - hm <= min_abs:
+                    rec["note"] = "기준선 %sms 초과지만 같은 시점 HEAD %sms 대비 회귀 아님 (기준선 갱신)" % (rec["baseline_ms"], hm)
+                    why = None
         rec["ms"] = ms
         rec["verdict"] = "regression" if why else "pass"
         if why:

@@ -289,3 +289,187 @@ def test_r273_dev_line_eta_only_while_processing():
     """R273: 개발 줄 남은 시간은 처리 중일 때만 · PARTIAL 은 «부분완료» (소스 계약)."""
     src = (KIT / ".claude/scripts/statusline_context.py").read_text(encoding="utf-8")
     assert 'if _cs in ("pending", "implemented"):' in src and '"PARTIAL": "부분완료"' in src and "최근{_q['last']}" in src
+
+
+def test_r355_debug_lines_are_not_errors(tmp_path):
+    """R355: 'DEBUG: Search for 'error: 숫자' ...' 처럼 검색어에 error 글자가 든 DEBUG 기록이 상태줄 «error 1»·
+    프롬프트 오류 알림으로 세지던 것 (11-23 실측 common.log) → 수준이 DEBUG 인 줄은 오류·경고 판정에서 뺀다 · 실제 ERROR 는 그대로."""
+    import sys as _s
+    import time as _t
+    sl = _load("sl_r355", KIT / ".claude/scripts/statusline_context.py")
+    logs = tmp_path / ".claude" / "logs"
+    logs.mkdir(parents=True)
+    now = _t.strftime("%Y-%m-%d %H:%M:%S", _t.localtime())
+    (logs / "common.log").write_text(
+        f"[{now}] DEBUG: Search for 'error: \\d+' in 1 files: 2 matches\n"
+        f"[{now}] DEBUG: retry after FAILED fetch (warn)\n", encoding="utf-8")
+    c, e, w, rpt, top = sl.recent_log_issues(str(tmp_path))
+    assert (c, e, w) == (0, 0, 0)
+    _s.path.insert(0, str(KIT / ".claude" / "hooks" / "prompt"))
+    m = _load("sle_r355", KIT / ".claude/hooks/prompt/surface_log_errors.py")
+    assert m._scan(str(logs)) == {}
+    (logs / "common.log").write_text(f"[{now}] ERROR: real failure in x.py\n", encoding="utf-8")
+    assert sl.recent_log_issues(str(tmp_path))[1] == 1                  # 실제 ERROR 는 그대로 센다
+    assert any(d["kind"] == "ERROR" for d in m._scan(str(logs)).values())
+
+
+def test_r355_mcp_refresh_retries_transient_failure(tmp_path):
+    """R355: 일시 연결 시간 초과가 실패로 굳던 것 → 실패가 보이면 재확인 1번 · 결과·시작을 mcp-health.log 에 남김."""
+    import os as _o
+    import subprocess as _sp
+    import sys as _s
+    root = tmp_path / "kit"
+    (root / ".claude" / "scripts").mkdir(parents=True)
+    src = (KIT / ".claude/scripts/refresh-mcp-status.sh").read_text(encoding="utf-8")
+    (root / ".claude/scripts/refresh-mcp-status.sh").write_text(src, encoding="utf-8", newline="\n")
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    cnt = tmp_path / "n"
+    (fake / "claude").write_text(                                  # 첫 호출 = 1개 실패 · 두 번째 = 모두 연결
+        f'#!/usr/bin/env bash\nn=$(cat "{cnt.as_posix()}" 2>/dev/null || echo 0); echo $((n+1)) > "{cnt.as_posix()}"\n'
+        'echo "a: x - ✔ Connected"\nif [ "$n" = 0 ]; then echo "b: y - ✗ Failed to connect"; else echo "b: y - ✔ Connected"; fi\n',
+        encoding="utf-8", newline="\n")
+    _s.path.insert(0, str(KIT / ".claude" / "hooks" / "prompt"))
+    from _common import bash_exe
+    env = {**_o.environ, "MCP_REFRESH_RETRY_SEC": "0"}
+    r = _sp.run([bash_exe(), "-c", f'export PATH="$(cygpath -u "{fake}" 2>/dev/null || echo "{fake.as_posix()}"):$PATH"; chmod +x "$(dirname "$0")/../../bin/claude" 2>/dev/null; bash "$0"',
+                 str(root / ".claude/scripts/refresh-mcp-status.sh")], env=env, capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=60)
+    assert r.returncode == 0, r.stderr
+    st = json.loads((root / ".claude/state/mcp-status.json").read_text(encoding="utf-8"))
+    assert (st["connected"], st["failed"]) == (2, 0)              # 재확인 결과가 기록됨
+    log = (root / ".claude/logs/mcp-health.log").read_text(encoding="utf-8")
+    assert "start" in log and "재확인" in log and "connected=2 failed=0" in log
+
+
+def test_r355_spawn_refresh_falls_back_without_breakaway(monkeypatch):
+    """R355: 작업 묶음 밖 실행(BREAKAWAY)이 막힌 환경이면 종전 플래그로 한 번 더 띄운다."""
+    import subprocess as _sp
+    sl = _load("sl_r355s", KIT / ".claude/scripts/statusline_context.py")
+    seen = []
+
+    def fake(args, **kw):
+        seen.append(kw.get("creationflags", 0))
+        if len(seen) == 1 and sl.os.name == "nt":
+            raise OSError("access denied")
+        return None
+    monkeypatch.setattr(_sp, "Popen", fake)
+    sl._spawn_refresh("x.sh")
+    if sl.os.name == "nt":
+        assert seen[0] & 0x01000000 and not (seen[1] & 0x01000000) and len(seen) == 2
+    else:
+        assert len(seen) == 1
+
+
+def test_r355_drift_baseline_follows_gated_commit(tmp_path):
+    """R355: 핵심 파일 기준선이 수동 'baseline' 에만 의존해 회귀 게이트를 통과해 커밋된 승인 변경까지 'frozen ⚠ 위반' 으로
+    영구 표시되던 것 (11-23 실측: 11-18 기준선 · 핵심 4개 모두 커밋됨) → 핵심·규칙·훅·agent 에 미커밋 변경이 없고
+    회귀 게이트 기록(status pass·tree = HEAD tree)이 있을 때만 기준선을 자동 갱신 · 미커밋 핵심 수정은 계속 위반."""
+    import os as _o
+    import subprocess as _sp
+    import sys as _s
+    r = tmp_path / "kit"
+    (r / ".claude" / "rules").mkdir(parents=True)
+    (r / ".claude" / "scripts").mkdir()
+    (r / ".claude" / "state").mkdir()
+    (r / ".claude/scripts/drift-detect.py").write_bytes((KIT / ".claude/scripts/drift-detect.py").read_bytes())
+    for p in ("CLAUDE.md", ".claude/rules/operational-freeze.md"):
+        (r / p).write_text("v1\n", encoding="utf-8")
+
+    def git(*a):
+        return _sp.run(["git", "-C", str(r), *a], capture_output=True, text=True, check=True).stdout.strip()
+    for a in (["init", "-q", "-b", "main"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        git(*a)
+    git("add", "-A"); git("commit", "-qm", "v1")
+    env = {**_o.environ, "CLAUDE_PROJECT_DIR": str(r)}
+
+    def status():
+        return _sp.run([_s.executable, "-X", "utf8", str(r / ".claude/scripts/drift-detect.py"), "status"], env=env,
+                       capture_output=True, text=True, encoding="utf-8").stdout
+
+    def stamp(tree, st="pass"):
+        (r / ".claude/state/regression-gate.json").write_text(json.dumps({"tree": tree, "status": st}), encoding="utf-8")
+    assert "✅" in status()                                                  # 첫 실행 = 기준선 저장
+    (r / "CLAUDE.md").write_text("v2\n", encoding="utf-8")
+    assert "위반" in status()                                                # 미커밋 핵심 수정 = 위반
+    git("add", "-A"); git("commit", "-qm", "v2")
+    stamp("0" * 40)
+    assert "위반" in status()                                                # 게이트 기록이 이 커밋 tree 가 아님 = 위반 유지
+    stamp(git("rev-parse", "HEAD^{tree}"), "regression")
+    assert "위반" in status()                                                # 게이트 실패 기록 = 위반 유지
+    stamp(git("rev-parse", "HEAD^{tree}"))
+    assert "✅" in status()                                                  # 게이트 통과 커밋 = 기준선 자동 갱신
+    assert "✅" in status()
+
+
+def test_r355_health_orphan_and_duplicate_use_real_checks(monkeypatch, tmp_path):
+    """R355: HEALTH 'orphan 37' 은 sync 가 이름을 바꿔 복사한 명령(mcp_dev-install.md 등)까지 원본 없음으로 셌고
+    (sync 점검 실측 5 → 원본 이동 뒤 0), '중복 8' 은 이름 앞부분(check-*·detect-*) 묶음 수였다 (내용 동일 파일 실측 0)
+    → orphan = sync-plugins --check 의 수 (SoT) · 중복 = 규칙·훅 중 내용이 완전히 같은 파일 수."""
+    hc = _load("hc_r355", KIT / ".claude/scripts/health-check.py")
+    monkeypatch.setattr(hc, "_run_py", lambda s, a: (2, "  orphan: 3\n  (check mode)") if s == "sync-plugins.py" else (1, ""))
+    o = hc.check_orphan()
+    assert (o["ok"], o["value"]) == (False, 3)
+    monkeypatch.setattr(hc, "_run_py", lambda s, a: (0, "  orphan: 0\n"))
+    assert (hc.check_orphan()["ok"], hc.check_orphan()["value"]) == (True, 0)
+    monkeypatch.setattr(hc, "_run_py", lambda s, a: (1, ""))
+    assert hc.check_orphan()["ok"] is False and hc.check_orphan()["value"] == "?"     # 점검 실패 = 미측정 (0 아님)
+    r = tmp_path / "kit"
+    (r / ".claude" / "rules").mkdir(parents=True)
+    (r / ".claude" / "hooks").mkdir()
+    for n in ("check-a.sh", "check-b.sh", "check-c.sh", "check-d.sh", "check-e.sh"):    # 이름만 비슷 · 내용 다름
+        (r / ".claude/hooks" / n).write_text(n, encoding="utf-8")
+    monkeypatch.setattr(hc, "ROOT", str(r))
+    assert (hc.check_duplicates()["ok"], hc.check_duplicates()["value"]) == (True, 0)
+    (r / ".claude/rules/x.md").write_text("same", encoding="utf-8")
+    (r / ".claude/rules/y.md").write_text("same", encoding="utf-8")
+    d = hc.check_duplicates()
+    assert (d["ok"], d["value"]) == (False, 1) and sorted(d["detail"][0]) == [".claude/rules/x.md", ".claude/rules/y.md"]
+
+
+def test_r356_req_progress_incremental_equals_full(tmp_path, monkeypatch):
+    """R356: 상태줄이 렌더마다 trace-events.jsonl(11-23 실측 5MB·9,524줄)을 처음부터 읽어 진행률 계산에 0.12초 →
+    같은 요청이면 지난번 읽은 위치부터 늘어난 줄만 읽음 · 결과는 전체 재계산과 같아야 함 · 요청 변경·파일 축소 = 처음부터."""
+    import json as _j
+    import shutil
+    sl = _load("sl_r356", KIT / ".claude/scripts/statusline_context.py")
+    r = tmp_path / "kit"
+    (r / ".claude/scripts/lib").mkdir(parents=True)
+    (r / ".claude/state").mkdir()
+    (r / ".claude/logs").mkdir()
+    shutil.copy(KIT / ".claude/scripts/lib/trace.py", r / ".claude/scripts/lib/trace.py")
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(r))
+    log = r / ".claude/logs/trace-events.jsonl"
+
+    def cur(tid, rid):
+        (r / ".claude/state/current-trace.json").write_text(_j.dumps({"trace_id": tid, "rid": rid}), encoding="utf-8")
+
+    def add(tid, step, inp, ts, status="success", kind="tool"):
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(_j.dumps({"trace_id": tid, "kind": kind, "status": status, "step": step, "ts": ts,
+                              "detail": _j.dumps({"input": inp})}, ensure_ascii=False) + "\n")
+    cache = r / ".claude/state/req-progress-cache.json"
+
+    def full():
+        cache.unlink(missing_ok=True)
+        return sl._req_progress(str(r))
+    cur("t1", "R1")
+    add("t1", "", "", 1.0, status="start", kind="request")
+    add("t1", "Edit", "a.py", 2.0)
+    add("t2", "Bash", "git commit -m x", 2.5)                                       # 다른 요청 = 무시
+    first = sl._req_progress(str(r))
+    assert first[:4] == ("R1", 1, 6, "수정") and cache.exists()
+    add("t1", "Bash", "python -m pytest -q", 3.0)
+    with open(log, "a", encoding="utf-8") as f:
+        f.write('{"trace_id": "t1", "kind": "tool", "sta')                         # 쓰는 중인 반쪽 줄
+    inc = sl._req_progress(str(r))
+    assert inc[:4] == ("R1", 2, 6, "시험")
+    with open(log, "a", encoding="utf-8") as f:
+        f.write('tus": "success", "step": "Bash", "ts": 4.0, "detail": "{\\"input\\": \\"git commit -m y\\"}"}\n')
+    inc = sl._req_progress(str(r))
+    assert inc == full() and inc[:4] == ("R1", 3, 6, "커밋")                       # 반쪽 줄을 이어 읽음 · 전체 재계산과 같음
+    cur("t2", "R2")
+    assert sl._req_progress(str(r))[:4] == ("R2", 1, 6, "커밋")                     # 요청 변경 = 처음부터
+    log.write_text("", encoding="utf-8")
+    add("t2", "Edit", "b.py", 5.0)
+    assert sl._req_progress(str(r))[:4] == ("R2", 1, 6, "수정")                     # 파일 축소(교체) = 처음부터

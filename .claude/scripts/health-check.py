@@ -131,36 +131,33 @@ def check_standing() -> dict:
 
 
 def check_orphan() -> dict:
-    """plugins/ 밖 .claude/ 자산 (sync-plugins drift)."""
-    rc, out = _run_py("sync-plugins.sh" if False else "sync-plugins-check.py", [])
-    # 간단 heuristic: .claude/commands 와 plugins/*/commands 일치?
-    cmd_dir = os.path.join(ROOT, ".claude", "commands")
-    plugin_cmd_dirs = glob.glob(os.path.join(ROOT, "plugins", "*", "commands"))
-    if not os.path.isdir(cmd_dir):
-        return {"ok": True, "value": "0"}
-    # orphan 검사는 복잡 - 간단히 .claude/commands 수 vs plugins 합계
-    claude_cmds = set(os.path.basename(p) for p in glob.glob(os.path.join(cmd_dir, "*.md")))
-    plugin_cmds = set()
-    for d in plugin_cmd_dirs:
-        for p in glob.glob(os.path.join(d, "*.md")):
-            plugin_cmds.add(os.path.basename(p))
-    orphan = claude_cmds - plugin_cmds
-    return {"ok": len(orphan) == 0, "value": len(orphan),
-            "detail": sorted(list(orphan))[:5]}
+    """plugins/ 원본 없는 .claude/ 자산 — sync-plugins.py --check 의 orphan 수 (SoT).
+    R355: 종전엔 .claude/commands 와 plugins 명령의 파일 이름만 비교해, sync 가 이름을 바꿔 복사한 명령
+    (RENAME_MAP · mcp_dev-install.md 등)까지 원본 없음으로 셌다 (실측 37 vs sync 5). 점검 실패 = 미측정 (0 아님)."""
+    import re
+    rc, out = _run_py("sync-plugins.py", ["--check"])
+    m = re.search(r"orphan:\s*(\d+)", out or "")
+    if not m:
+        return {"ok": False, "value": "?", "detail": "sync-plugins --check 실패"}
+    n = int(m.group(1))
+    return {"ok": n == 0, "value": n}
 
 
 def check_duplicates() -> dict:
-    """중복 hook/rule heuristic (파일명 유사)."""
+    """규칙·훅 중 내용이 완전히 같은 파일 묶음 수.
+    R355: 종전엔 이름 앞부분(check-*·detect-*) 이 같은 파일 묶음 수를 세어, 내용이 다른 훅 묶음도 '중복 8' 로 실패했다 (실측 동일 내용 0)."""
     import collections
-    rule_files = [os.path.basename(p) for p in glob.glob(os.path.join(ROOT, ".claude", "rules", "*.md"))]
-    hook_files = [os.path.basename(p) for p in glob.glob(os.path.join(ROOT, ".claude", "hooks", "*.sh"))]
-    # 간단 검사: 같은 topic 접두어 (post-codex-verify / codex-rules 등)
-    rule_prefixes = collections.Counter(r.split("-")[0] for r in rule_files if "-" in r)
-    hook_prefixes = collections.Counter(h.split("-")[0] for h in hook_files if "-" in h)
-    dup = sum(1 for v in rule_prefixes.values() if v >= 3) + sum(1 for v in hook_prefixes.values() if v >= 4)
-    return {"ok": dup < 5, "value": dup,
-            "detail": {"rule": {k: v for k, v in rule_prefixes.most_common(3)},
-                       "hook": {k: v for k, v in hook_prefixes.most_common(3)}}}
+    import hashlib
+    groups = collections.defaultdict(list)
+    for pat in (os.path.join(ROOT, ".claude", "rules", "*.md"), os.path.join(ROOT, ".claude", "hooks", "*.sh")):
+        for f in glob.glob(pat):
+            try:
+                with open(f, "rb") as fh:
+                    groups[hashlib.sha256(fh.read()).hexdigest()].append(os.path.relpath(f, ROOT).replace("\\", "/"))
+            except OSError:
+                continue
+    dup = [sorted(v) for v in groups.values() if len(v) > 1]
+    return {"ok": not dup, "value": len(dup), "detail": dup[:5]}
 
 
 def check_recurrence() -> dict:

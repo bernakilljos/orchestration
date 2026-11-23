@@ -22,6 +22,21 @@ def _bash_exe() -> str:
     except Exception:  # noqa: BLE001
         return "bash"
 
+
+def _spawn_refresh(script: str) -> None:
+    """R355: 상태줄이 끝나면 함께 정리되는 작업 묶음 안에서 띄운 MCP 재측정(claude mcp list ~11초)이 결과를 못 쓰고 사라지던 것
+    (11-23 실측: 마커 09:46 · 결과 파일 08:39 그대로 · 직접 실행은 8/8 성공) → Windows 는 작업 묶음 밖(BREAKAWAY)으로 띄우고,
+    그것이 막힌 환경이면 종전 방식으로 한 번 더."""
+    import subprocess as _sp
+    base = 0x08000000 | 0x00000008 if os.name == "nt" else 0   # CREATE_NO_WINDOW | DETACHED_PROCESS
+    for flags in ((base | 0x01000000, base) if os.name == "nt" else (0,)):   # 0x01000000 = CREATE_BREAKAWAY_FROM_JOB
+        try:
+            _sp.Popen([_bash_exe(), script], stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
+                      creationflags=flags, start_new_session=(os.name != "nt"))
+            return
+        except OSError:
+            continue
+
 # [함정 1] CP949 stdout 회피
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -248,6 +263,31 @@ _STAGES = (
 )
 
 
+def _progress_fold(st: dict, evs) -> None:
+    """R356: trace 사건들을 진행 상태(done·start_ts·stage_ts)에 접는다 — 시각은 최솟값이라 나눠 접어도 한 번에 접은 것과 같다."""
+    done = set(st.get("done") or [])
+    stage_ts = dict(st.get("stage_ts") or {})
+    start_ts = st.get("start_ts")
+    _mn = lambda a, b: b if a is None else (a if b is None else min(a, b))
+    for e in evs:
+        if e.get("kind") == "request" and e.get("status") == "start":
+            start_ts = _mn(start_ts, e.get("ts"))
+        if e.get("kind") != "tool" or e.get("status") != "success":
+            continue
+        d = e.get("detail")
+        if isinstance(d, str):
+            try:
+                d = json.loads(d)
+            except Exception:
+                d = {}
+        inp = str((d or {}).get("input", ""))
+        for name, ok in _STAGES:
+            if ok(e.get("step"), inp):
+                done.add(name)
+                stage_ts[name] = _mn(stage_ts.get(name), e.get("ts"))
+    st["done"], st["stage_ts"], st["start_ts"] = sorted(done), stage_ts, start_ts
+
+
 def _req_progress(cwd: str):
     """(rid, 완료 단계 수, 전체, 마지막 완료 단계명) · 추적 기록 없음 = None."""
     try:
@@ -257,27 +297,51 @@ def _req_progress(cwd: str):
         _tr = _ilu.module_from_spec(_spec)
         _spec.loader.exec_module(_tr)
         cur = _tr.get_current() or {}
-        if not cur.get("trace_id"):
+        tid = cur.get("trace_id")
+        if not tid:
             return None
-        done = set()
-        start_ts, stage_ts = None, {}
-        for e in _tr.events(cur["trace_id"]):
-            if e.get("kind") == "request" and e.get("status") == "start" and start_ts is None:
-                start_ts = e.get("ts")
-            if e.get("kind") != "tool" or e.get("status") != "success":
-                continue
-            d = e.get("detail")
-            if isinstance(d, str):
+        st = {"done": [], "start_ts": None, "stage_ts": {}}
+        root = _tr._root()
+        if _tr._db_has_table(root / ".claude" / "state" / "orca.db"):
+            _progress_fold(st, _tr.events(tid))          # DB 기록이 있으면 종전대로 전체 (증분 위치를 둘 수 없음)
+        else:
+            # R356: 렌더마다 trace-events.jsonl 전체(11-23 실측 5MB·9,524줄)를 읽던 것 → 같은 요청이면 지난번 위치부터 늘어난 줄만
+            #   (결과 = 전체 재계산: 시작·단계 시각은 최솟값으로 접음 · 요청 변경·파일 축소·형식 변경 = 처음부터 · 쓰는 중인 반쪽 줄은 다음에)
+            p = root / ".claude" / "logs" / "trace-events.jsonl"
+            cp = root / ".claude" / "state" / "req-progress-cache.json"
+            try:
+                c = json.loads(cp.read_text(encoding="utf-8"))
+            except Exception:
+                c = {}
+            size = p.stat().st_size if p.is_file() else 0
+            if c.get("v") != 1 or c.get("tid") != tid or size < int(c.get("offset", 0)):
+                c = {"v": 1, "tid": tid, "offset": 0, "done": [], "start_ts": None, "stage_ts": {}}
+            evs, old_off = [], (c["offset"] if cp.exists() else -1)
+            if size > c["offset"]:
+                with open(p, "rb") as fh:
+                    fh.seek(c["offset"])
+                    chunk = fh.read()
+                end = chunk.rfind(b"\n") + 1
+                c["offset"] += end
+                for line in chunk[:end].decode("utf-8", errors="replace").splitlines():
+                    if tid not in line:
+                        continue
+                    try:
+                        r = json.loads(line)
+                    except ValueError:
+                        continue
+                    if r.get("trace_id") == tid:
+                        evs.append(r)
+            _progress_fold(c, evs)
+            if c["offset"] != old_off:                   # 읽은 위치가 바뀐 때만 저장 (변화 없는 렌더는 쓰기 0)
                 try:
-                    d = json.loads(d)
-                except Exception:
-                    d = {}
-            inp = str((d or {}).get("input", ""))
-            for name, ok in _STAGES:
-                if ok(e.get("step"), inp):
-                    done.add(name)
-                    if name not in stage_ts:
-                        stage_ts[name] = e.get("ts")
+                    tmp = cp.with_name(cp.name + f".{os.getpid()}.tmp")
+                    tmp.write_text(json.dumps(c, ensure_ascii=False), encoding="utf-8")
+                    os.replace(tmp, cp)
+                except OSError:
+                    pass
+            st = c
+        done, start_ts, stage_ts = set(st["done"]), st["start_ts"], st["stage_ts"]
         last = next((n for n, _ in reversed(_STAGES) if n in done), None)
         return cur.get("rid"), len(done), len(_STAGES), last, _eta_min(start_ts, stage_ts, len(_STAGES))
     except Exception:
@@ -455,6 +519,7 @@ def recent_error_count(cwd: str) -> int:
     return r[0] + r[1]
 
 
+_DEBUG_LINE_RE = re.compile(r"^\s*\[[^\]]*\]\s*DEBUG\b")   # R355 surface_log_errors.DEBUG_RE 와 같은 판정
 _LOG_UNIQUE_ERRS = None   # R268 recent_log_issues 가 채움 (READY 감점용 고유 오류 수)
 
 
@@ -648,6 +713,8 @@ def recent_log_issues(cwd: str):
                 continue
             lines = _tail_n_lines(lp, 500)   # 2026-11-18 R288: 3~4MB 로그를 통째로 읽고 뒤 500줄만 쓰던 것 → 끝에서 거꾸로 읽기 (결과 동일)
             for ln in lines:
+                if _DEBUG_LINE_RE.match(ln):   # R355: 수준 DEBUG 줄 = 오류·경고 아님 (검색어 'error: \d+' 를 적은 기록이 error 1 로 세지던 것)
+                    continue
                 if not any_re.search(ln.lower()):   # R293 세 판정어 중 어느 것도 없는 줄 = 정규식 3번 대신 1번으로 건너뜀 (판정 동일)
                     continue
                 c, e, w = crit_re.search(ln), err_re.search(ln), warn_re.search(ln)
@@ -1521,9 +1588,7 @@ def extra_gauges(cwd, data=None):
                 if os.path.exists(scr0) and (not os.path.exists(mk0) or _time0.time() - os.path.getmtime(mk0) > 600):
                     os.makedirs(os.path.dirname(mk0), exist_ok=True)
                     open(mk0, "w").close()
-                    import subprocess as _sp0
-                    _sp0.Popen([_bash_exe(), scr0], stdout=_sp0.DEVNULL, stderr=_sp0.DEVNULL, stdin=_sp0.DEVNULL,
-                               creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+                    _spawn_refresh(scr0)
             except Exception:
                 pass  # noqa: BLE001
         if os.path.exists(mcp_cache):
@@ -1535,15 +1600,13 @@ def extra_gauges(cwd, data=None):
             fail = int(ms.get("failed", 0))
             # 1h 넘으면 백그라운드 재측정 (SessionStart 에서만 갱신돼 며칠 세션엔 91h 전 값이 떴다)
             #   창 없음 · 10분 안 재실행 방지 마커 · 렌더는 기다리지 않음 (claude mcp list ~30s)
-            if age > 3600:
+            # R355: 실패가 기록돼 있으면 10분마다 재측정 (일시 연결 시간 초과가 복구된 뒤에도 1시간 '[!] 3 실패' 로 남던 것 · 11-23 실측 8/8 연결)
+            if age > 3600 or (fail and age > 600):
                 try:
                     mk = os.path.join(cwd, ".claude", "state", "mcp-refresh.started")
                     if not os.path.exists(mk) or _time.time() - os.path.getmtime(mk) > 600:
                         open(mk, "w").close()
-                        import subprocess as _sp
-                        _sp.Popen([_bash_exe(), os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh")],
-                                  stdout=_sp.DEVNULL, stderr=_sp.DEVNULL, stdin=_sp.DEVNULL,
-                                  creationflags=(0x08000000 | 0x00000008) if os.name == "nt" else 0)
+                        _spawn_refresh(os.path.join(cwd, ".claude", "scripts", "refresh-mcp-status.sh"))
                 except Exception:
                     pass  # noqa: BLE001
             # 4h 넘으면 몇 시간 전 값인지 적는다 (예전 "?" 는 뜻이 안 보였다)
@@ -2554,7 +2617,8 @@ def main() -> None:
     print(final)
 
 
-if __name__ == "__main__":
+def _cli() -> None:
+    """R356: 진입점 — 래퍼가 모듈로 import 해 부른다 (스크립트 직접 실행은 .pyc 를 못 써 렌더마다 2,600줄 컴파일 ≈95ms · 11-23 실측)."""
     if len(sys.argv) >= 3 and sys.argv[1] == "--impact-worker":
         try:
             sys.exit(_impact_worker(sys.argv[2]))
@@ -2569,3 +2633,7 @@ if __name__ == "__main__":
         except Exception:
             print("⏳")
     sys.exit(0)
+
+
+if __name__ == "__main__":
+    _cli()

@@ -33,8 +33,12 @@ _RID = re.compile(r"^R\d{1,6}$")
 
 
 def _git(*args: str) -> str:
-    r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", timeout=30)
+    try:   # R355: 시간 초과·실행 실패 예외 = 실패(반환 코드≠0)와 같게 빈 값 (예외로 대기 전체가 죽던 것)
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=30)
+    except (subprocess.SubprocessError, OSError) as e:
+        print(f"[ai-collab] git {' '.join(args[:2])} 실패: {type(e).__name__}", file=sys.stderr)
+        return ""
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
@@ -340,7 +344,11 @@ def cmd_poll() -> int:
     R332 (외부 검토): 알리기만 해도 seen(처리 확정)으로 적어, 세션이 처리 도중 끊기면 다음 주기에 사라지던 것 →
     poll 은 inflight(처리 중 · 임대 시간)만 적고, 처리 확정(seen)은 보고(report)·ack 가 적는다.
     임대 시간 안 = 다른 주기·세션이 같은 요청을 겹쳐 받지 않음 · 지나면 다시 전달 (중단·재시작 복구)."""
-    r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True, timeout=60)
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True, timeout=60)
+    except (subprocess.SubprocessError, OSError) as e:   # R355: 시간 초과 = fetch 실패 (2)
+        print(f"[ai-collab] fetch 실패: {type(e).__name__}", file=sys.stderr)
+        return 2
     if r.returncode != 0:
         print(f"[ai-collab] fetch 실패: {(r.stderr or '').strip()[:160]}", file=sys.stderr)
         return 2
@@ -566,7 +574,11 @@ def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
     t0 = _t.time()
     fails = 0
     while True:
-        rc = cmd_poll()
+        try:
+            rc = cmd_poll()
+        except (subprocess.SubprocessError, OSError) as e:   # R355: 일시 조회 실패 예외 = fetch 실패와 같이 세고 다음 주기에 재시도
+            print(f"[ai-collab] 확인 실패 (다음 주기 재시도): {type(e).__name__}", file=sys.stderr)
+            rc = 2
         if rc == 0:
             return 0
         fails = fails + 1 if rc == 2 else 0

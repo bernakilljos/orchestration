@@ -18,6 +18,33 @@ PY="$(command -v python 2>/dev/null)"
 [ -n "$PY" ] || exit 0
 
 ROOT="${CLAUDE_PROJECT_DIR:-$PWD}"
+GCACHE="$ROOT/.claude/state/six-guards-golden.txt"
+
+# R356: 골든 지문·시험 = 응답마다 약 1.2초 동기 대기 (11-23 실측 지문 0.4초 + 시험 0.8초) → 차단 플래그가 없으면(기본 경고 전용)
+#   이 함수를 백그라운드로 돌려 캐시만 갱신하고, 이번 경고는 직전 결과로 낸다 (경고가 한 응답 늦을 수 있음 · 판정 기준은 그대로).
+golden_refresh() {
+  GFP="$( { git -C "$ROOT" rev-parse HEAD 2>/dev/null; git -C "$ROOT" diff HEAD -- . ':(exclude)*.log' ':(exclude)*.jpg' ':(exclude)*.jpeg' ':(exclude)*.png' ':(exclude)*.webp' ':(exclude)*.gif' 2>/dev/null; \
+          git -C "$ROOT" ls-files --others --exclude-standard -z 2>/dev/null | (cd "$ROOT" && xargs -0 -r md5sum 2>/dev/null); grep -v '"last_verified_at"' "$ROOT/.claude/state/standing-requirements.json" 2>/dev/null; md5sum "$ROOT/.claude/settings.local.json" "$HOME/.claude/settings.json" 2>/dev/null; }         | md5sum 2>/dev/null | cut -c1-32)"   # 미추적 파일은 이름이 아니라 내용까지
+  GOLDEN_RESULT=""
+  if [ -z "${SIX_GUARDS_GOLDEN_FORCE:-}" ] && [ -n "$GFP" ] && [ -f "$GCACHE" ] && [ "$(head -1 "$GCACHE")" = "$GFP" ]; then
+    GOLDEN_RESULT="$(sed -n 2p "$GCACHE")"
+  fi
+  if [ -z "$GOLDEN_RESULT" ]; then
+    GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null | tail -3 | grep -oE "[0-9]+/[0-9]+" | head -1 || echo "")
+    [ -n "$GFP" ] && [ -n "$GOLDEN_RESULT" ] && printf '%s\n%s\n' "$GFP" "$GOLDEN_RESULT" > "$GCACHE.tmp.$$" 2>/dev/null && mv -f "$GCACHE.tmp.$$" "$GCACHE" 2>/dev/null || true
+  fi
+}
+if [ "${1:-}" = "--supervisor" ]; then
+  SUP_ADV=$("$PY" -X utf8 "$ROOT/.claude/scripts/lib/supervisor.py" advance-all 2>/dev/null | grep -oE '"(PENDING|PLANNING|RUNNING)":[[:space:]]*[1-9][0-9]*' | head -1 || true)
+  [ -n "$SUP_ADV" ] && echo "[$(date '+%F %T')] Supervisor 자동 전환 $SUP_ADV" >> "$ROOT/.claude/logs/six-guards.log" 2>/dev/null
+  exit 0
+fi
+if [ "${1:-}" = "--golden-refresh" ]; then
+  LK="$ROOT/.claude/state/six-guards-golden.running"
+  # 앞선 갱신이 2분 안에 시작돼 아직 도는 중이면 겹쳐 띄우지 않음
+  if [ -f "$LK" ] && [ $(( $(date +%s) - $(stat -c %Y "$LK" 2>/dev/null || echo 0) )) -lt 120 ]; then exit 0; fi
+  : > "$LK"; golden_refresh; rm -f "$LK"; exit 0
+fi
 FAIL_MSGS=""
 FAIL_COUNT=0
 
@@ -49,16 +76,11 @@ fi
 # 사용자 명시 지시 시만 block
 # §84 골든 테스트는 응답마다 3초 — 코드가 안 바뀌었으면 결과도 같다: HEAD + 작업 트리 변경 내용(로그 제외) 지문이
 #   직전과 같을 때만 저장 결과 재사용 (git 무시 파일 중 골든 입력 = 기준 상태·local·전역 settings 포함 · 시험이 스스로 갈아 끼우는 ledger · 매 검사마다 바뀌는 last_verified_at 은 제외) · 하나라도 바뀌면 다시 실행 (SIX_GUARDS_GOLDEN_FORCE=1 이면 항상 실행)
-GFP="$( { git -C "$ROOT" rev-parse HEAD 2>/dev/null; git -C "$ROOT" diff HEAD -- . ':(exclude)*.log' ':(exclude)*.jpg' ':(exclude)*.jpeg' ':(exclude)*.png' ':(exclude)*.webp' ':(exclude)*.gif' 2>/dev/null; \
-          git -C "$ROOT" ls-files --others --exclude-standard -z 2>/dev/null | (cd "$ROOT" && xargs -0 -r md5sum 2>/dev/null); grep -v '"last_verified_at"' "$ROOT/.claude/state/standing-requirements.json" 2>/dev/null; md5sum "$ROOT/.claude/settings.local.json" "$HOME/.claude/settings.json" 2>/dev/null; }         | md5sum 2>/dev/null | cut -c1-32)"   # 미추적 파일은 이름이 아니라 내용까지
-GCACHE="$ROOT/.claude/state/six-guards-golden.txt"
-GOLDEN_RESULT=""
-if [ -z "${SIX_GUARDS_GOLDEN_FORCE:-}" ] && [ -n "$GFP" ] && [ -f "$GCACHE" ] && [ "$(head -1 "$GCACHE")" = "$GFP" ]; then
-  GOLDEN_RESULT="$(sed -n 2p "$GCACHE")"
-fi
-if [ -z "$GOLDEN_RESULT" ]; then
-  GOLDEN_RESULT=$("$PY" -X utf8 "$ROOT/.claude/scripts/golden-test.py" 2>/dev/null | tail -3 | grep -oE "[0-9]+/[0-9]+" | head -1 || echo "")
-  [ -n "$GFP" ] && [ -n "$GOLDEN_RESULT" ] && printf '%s\n%s\n' "$GFP" "$GOLDEN_RESULT" > "$GCACHE" 2>/dev/null || true
+if [ -f "$ROOT/.claude/state/golden-test.block-on-fail" ] || [ -n "${SIX_GUARDS_GOLDEN_FORCE:-}" ]; then
+  golden_refresh                                     # 차단 플래그 = 종전대로 동기 실행 (차단 판정에 지금 결과가 필요)
+else
+  GOLDEN_RESULT="$(sed -n 2p "$GCACHE" 2>/dev/null || true)"   # R356: 직전 결과로 경고 · 갱신은 뒤에서
+  nohup bash "$0" --golden-refresh >/dev/null 2>&1 &
 fi
 GOLDEN_PASS=$(echo "$GOLDEN_RESULT" | cut -d/ -f1)
 GOLDEN_TOTAL=$(echo "$GOLDEN_RESULT" | cut -d/ -f2)
@@ -74,21 +96,16 @@ fi
 
 # 7. Supervisor Guard — 미완료 goal 자동 advance (2026-10-27 사용자 "10개 중 2개 멈추지 마" fix)
 # supervisor.advance_all_pending() 호출 · PENDING→PLANNING→RUNNING 자동 진행 · 결과 로그만 (block 안 함)
-SUP_OUT=$("$PY" -X utf8 "$ROOT/.claude/scripts/lib/supervisor.py" advance-all 2>/dev/null || echo "")
-if [ -n "$SUP_OUT" ]; then
-  SUP_ADV=$(echo "$SUP_OUT" | grep -oE '"PENDING":[[:space:]]*[1-9][0-9]*|"PLANNING":[[:space:]]*[1-9][0-9]*|"RUNNING":[[:space:]]*[1-9][0-9]*' | head -1 || echo "")
-  if [ -n "$SUP_ADV" ]; then
-    echo "[six-guards] Supervisor: $SUP_ADV goal 자동 전환" >&2
-  fi
-fi
+# R356: 차단하지 않는 기록 전용 단계라 응답을 붙잡지 않게 뒤에서 실행 (11-23 실측 0.19초) · 결과는 .claude/logs/six-guards.log
+nohup bash "$0" --supervisor >/dev/null 2>&1 &
 
 # 8. RPA/Desktop UI Verification Guard (2026-10-27 P0-2 fix · screen-verify.md § RPA/C/S 반영)
 # RPA/.vbs/desktop/winforms/wpf/sap 파일 수정 감지 시 smoke test 증거 요구
 RPA_PATTERN='\.(rpa|vbs|xaml)$|/(rpa|RPA|SAP|desktop|winforms|wpf)/|_rpa\.|_desktop\.'
 # R315 (11-19 실측): 작업 트리 diff 가 로컬 재압축 이미지 4,528장 때문에 462ms → 이미지 확장자 제외 106ms (이미지는 RPA 코드가 아님 · 추적 이미지 중 패턴 일치 0건 확인 · 위 R313 지문과 같은 제외)
 RPA_IMG_X=(':(exclude)*.jpg' ':(exclude)*.jpeg' ':(exclude)*.png' ':(exclude)*.webp' ':(exclude)*.gif')
-RPA_CHANGES=$(git diff --cached --name-only -- . "${RPA_IMG_X[@]}" 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)
-RPA_CHANGES+="$(git diff --name-only -- . "${RPA_IMG_X[@]}" 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)"
+# R356: 스테이징·작업 트리 2번 → HEAD 대비 1번 (둘의 합집합과 같음 · git 기동 1회 절약 ≈0.1초)
+RPA_CHANGES=$(git -C "$ROOT" diff HEAD --name-only -- . "${RPA_IMG_X[@]}" 2>/dev/null | grep -E "$RPA_PATTERN" | head -5)
 if [ -n "$RPA_CHANGES" ]; then
   # 자체 smoke test 증거 확인 — .claude/state/rpa-verify-*.flag or logs/rpa-smoke-test.log 최근 1h 내
   RPA_EVIDENCE=0

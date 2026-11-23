@@ -243,3 +243,80 @@ def test_gate_ignores_other_sessions_pending(tmp_path):
     assert _gate(tmp_path, [other, _r("R3", "completed")], {"session_id": "s1"}).returncode == 0
     assert _gate(tmp_path, [other, mine], {"session_id": "s1"}).returncode == 2
     assert _gate(tmp_path, [other], {}).returncode == 2          # 세션 id 를 못 받으면 종전대로 전체
+
+
+def test_r356_six_guards_golden_runs_in_background_unless_block_flag(tmp_path):
+    """R356: 골든 시험(0.8초)+지문(0.4초)+supervisor(0.2초)가 응답마다 Stop 을 동기로 붙잡던 것 (11-23 실측 six-guards ≈1.6초)
+    → 골든은 기본이 경고 전용이라 백그라운드 갱신 + 직전 결과로 경고 · 차단 플래그가 있으면 종전대로 동기 실행·차단."""
+    import shutil
+    import time
+    (tmp_path / "plugins").mkdir()
+    for d in (".claude/hooks", ".claude/scripts/lib", ".claude/state", ".claude/logs"):
+        (tmp_path / d).mkdir(parents=True, exist_ok=True)
+    shutil.copy(ROOT / ".claude/hooks/stop-six-guards.sh", tmp_path / ".claude/hooks/stop-six-guards.sh")
+    (tmp_path / ".claude/settings.json").write_text('{"x":"stop-request-ledger-gate.sh stop-standing-gate.sh"}', encoding="utf-8")
+    (tmp_path / ".claude/scripts/golden-test.py").write_text(
+        "import time,sys\ntime.sleep(3)\nprint('총 1/2 PASS')\n", encoding="utf-8")
+    (tmp_path / ".claude/scripts/lib/supervisor.py").write_text("import time\ntime.sleep(2)\n", encoding="utf-8")
+    for a in (["init", "-q"], ["config", "user.email", "t@t"], ["config", "user.name", "t"]):
+        subprocess.run(["git", "-C", str(tmp_path), *a], check=True)
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1"}
+    bash = shutil.which("bash") or "bash"
+
+    def hook():
+        t = time.time()
+        r = subprocess.run([bash, str(tmp_path / ".claude/hooks/stop-six-guards.sh")], input="{}", capture_output=True,
+                           text=True, encoding="utf-8", env=env, timeout=60, cwd=tmp_path)
+        return r, time.time() - t
+    r, dt = hook()
+    assert r.returncode == 0 and dt < 2.5, (dt, r.stderr)                   # 3초 골든·2초 supervisor 를 기다리지 않음
+    cache = tmp_path / ".claude/state/six-guards-golden.txt"
+    for _ in range(40):
+        if cache.exists() and "1/2" in cache.read_text(encoding="utf-8"):
+            break
+        time.sleep(0.25)
+    assert "1/2" in cache.read_text(encoding="utf-8")                       # 백그라운드가 결과를 남김
+    r, _ = hook()
+    assert r.returncode == 0 and "Golden Test 1/2" in r.stderr               # 직전 결과로 경고 (차단 X)
+    (tmp_path / ".claude/state/golden-test.block-on-fail").write_text("", encoding="utf-8")
+    cache.unlink()
+    r, dt = hook()
+    assert r.returncode == 2 and "block-on-fail" in r.stderr and dt >= 3     # 차단 플래그 = 동기 실행·차단 (종전 계약)
+
+
+def test_r356_standing_gate_parallel_checks_and_shell_path_parse(tmp_path):
+    """R356: gate·lang-check 동시 실행(종료 코드·출력 순서 종전과 같음) · transcript_path 를 python 없이 셸로 추출
+    (공백·백슬래시 든 Windows 경로가 그대로 전달돼야 함)."""
+    import shutil
+    import time
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / ".claude/hooks").mkdir(parents=True)
+    (tmp_path / ".claude/scripts").mkdir()
+    shutil.copy(ROOT / ".claude/hooks/stop-standing-gate.sh", tmp_path / ".claude/hooks/stop-standing-gate.sh")
+    rec = tmp_path / "qsc.txt"
+    (tmp_path / ".claude/scripts/standing-requirements.py").write_text(
+        "import sys,time,os\nop=sys.argv[1]\nsys.stdin.read()\ntime.sleep(3)\n"
+        "print(op+'-out')\nprint(op+'-err',file=sys.stderr)\n"
+        "sys.exit(int(os.environ.get('RC_'+op.replace('-','_').upper(),'0')))\n", encoding="utf-8")
+    (tmp_path / ".claude/scripts/quality-self-check.py").write_text(
+        f"import sys\nopen(r'{rec}','w',encoding='utf-8').write(sys.argv[2])\n", encoding="utf-8")
+    bash = shutil.which("bash") or "bash"
+    path = r"C:\Users\u x\.claude\projects\p q\s.jsonl"
+
+    def hook(**rc):
+        env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path), "PYTHONUTF8": "1", **rc}
+        t = time.time()
+        r = subprocess.run([bash, str(tmp_path / ".claude/hooks/stop-standing-gate.sh")],
+                           input=json.dumps({"transcript_path": path, "stop_hook_active": False}),
+                           capture_output=True, text=True, encoding="utf-8", env=env, timeout=60)
+        return r, time.time() - t
+    r, dt = hook()
+    assert r.returncode == 0 and dt < 5.0, dt                                       # 3초 검사 2개가 동시에 (순차면 6초+ · 부하 여유 1초+)
+    assert r.stdout.split() == ["gate-out", "lang-check-out"] and r.stderr.split() == ["gate-err", "lang-check-err"]
+    for _ in range(150):
+        if rec.exists():
+            break
+        time.sleep(0.1)
+    assert rec.read_text(encoding="utf-8") == path                                 # 셸 추출 경로 = 원래 경로
+    assert hook(RC_GATE="2")[0].returncode == 2                                    # gate 차단 그대로
+    assert hook(RC_LANG_CHECK="1")[0].returncode == 2                              # 언어 검사 실패 = 2 (종전 계약)

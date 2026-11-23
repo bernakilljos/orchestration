@@ -131,6 +131,25 @@ def _color(n: int, is_core: bool = False) -> str:
     return "1;33"  # 주황
 
 
+def _gated_clean_head() -> bool:
+    """R355: 기준선 자동 갱신 조건 — 감시 대상(핵심·규칙·훅·agent)에 미커밋 변경 0 · 회귀 게이트 기록이 통과(pass·preexisting)이고
+    그 tree 가 HEAD tree (커밋 훅 pre-commit-full-check.sh 와 같은 기록·같은 통과 판정). 하나라도 확인 못 하면 False (갱신 X)."""
+    import subprocess
+    try:
+        with open(os.path.join(ROOT, ".claude", "state", "regression-gate.json"), encoding="utf-8") as f:
+            st = json.load(f)
+        if st.get("status") not in ("pass", "preexisting"):
+            return False
+        g = lambda *a: subprocess.run(["git", "-C", ROOT, *a], capture_output=True, text=True, timeout=10)
+        head = g("rev-parse", "HEAD^{tree}")
+        if head.returncode != 0 or head.stdout.strip() != st.get("tree"):
+            return False
+        dirty = g("status", "--porcelain", "--", *CORE_FILES, ".claude/rules", ".claude/hooks", ".claude/agents")
+        return dirty.returncode == 0 and not dirty.stdout.strip()
+    except Exception:
+        return False
+
+
 def status_line() -> str:
     """statusline 한 줄 (ANSI 포함)."""
     cur = _scan()
@@ -140,6 +159,10 @@ def status_line() -> str:
         _save_manifest(cur)
         base = cur
     d = diff(cur, base)
+    # R355: 기준선이 수동 baseline 에만 의존해 게이트 통과·커밋된 승인 변경까지 영구 '⚠ 위반' 이던 것 → 그 조건이면 자동 갱신
+    if any(d[c]["total"] for c in ("core", "rule", "hook", "agent")) and _gated_clean_head():
+        _save_manifest(cur)
+        d = diff(cur, cur)
     parts = []
     for cat_key, label in (("core", "core"), ("rule", "rule"),
                             ("hook", "hook"), ("agent", "agent")):

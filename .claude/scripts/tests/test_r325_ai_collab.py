@@ -425,3 +425,42 @@ def test_poll_does_not_redeliver_reported_partial_until_request_changes(tmp_path
     _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A 보완\n')
     again = _run(r, "poll")
     assert again.returncode == 0 and "지시 A 보완" in again.stdout             # 요청이 바뀌면 다시 전달
+
+
+def _load_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("ai_collab_report_mod", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_wait_survives_transient_git_timeout(monkeypatch):
+    """R355: git 조회가 한 번 시간 초과(TimeoutExpired)로 예외를 던지면 대기 전체가 죽던 것 (11-23 실측 · log origin/main 30초) →
+    일시 실패로 세고 다음 주기에 다시 확인 · 연속 3회면 종전대로 2."""
+    mod = _load_module()
+    calls = iter([subprocess.TimeoutExpired(["git"], 30), OSError("일시"), 0])
+
+    def poll():
+        v = next(calls)
+        if isinstance(v, BaseException):
+            raise v
+        return v
+    monkeypatch.setattr(mod, "cmd_poll", poll)
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    assert mod.cmd_wait(interval=0.0, max_sec=60) == 0                     # 예외 2번 뒤 새 파일 → 0 (죽지 않음)
+
+    def always():
+        raise subprocess.TimeoutExpired(["git"], 30)
+    monkeypatch.setattr(mod, "cmd_poll", always)
+    assert mod.cmd_wait(interval=0.0, max_sec=60) == 2                     # 연속 3회 = 종전 계약 그대로
+
+
+def test_git_helper_timeout_returns_empty(monkeypatch):
+    """R355: _git 이 시간 초과 예외를 그대로 던지던 것 → 실패(반환 코드≠0)와 같게 빈 문자열."""
+    mod = _load_module()
+
+    def boom(*a, **k):
+        raise subprocess.TimeoutExpired(a[0], 30)
+    monkeypatch.setattr(mod.subprocess, "run", boom)
+    assert mod._git("log", "-1") == ""

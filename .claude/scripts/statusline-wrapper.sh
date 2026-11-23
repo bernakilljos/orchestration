@@ -24,6 +24,7 @@ if [ -z "$PY" ] || ! command -v "$PY" >/dev/null 2>&1; then
 fi
 
 # statusline_context.py 실행 - 실패 시 fallback
-if ! "$PY" -X utf8 "$ROOT/.claude/scripts/statusline_context.py" 2>/dev/null; then
+# R356: 스크립트로 실행하면 .pyc 를 못 써 렌더마다 2,600줄을 다시 컴파일 (11-23 실측 ≈95ms) → 모듈로 import 해 _cli() 호출 (출력 동일)
+if ! "$PY" -X utf8 -c 'import sys; sys.path.insert(0, sys.argv[1]); import statusline_context as m; m._cli()' "$ROOT/.claude/scripts" 2>/dev/null; then
   echo "[FIX] kit"
 fi
