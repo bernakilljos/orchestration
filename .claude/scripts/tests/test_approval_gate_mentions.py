@@ -283,3 +283,21 @@ def test_detect_argument_is_mention_but_bypass_blocked():   # R293 detect 인자
     assert flagged(f'python -X utf8 {_GATE} detect "x" && {_PF}')      # 뒤에 붙인 실제 실행
     assert flagged(f'python -X utf8 {_GATE} detect "{_PF}" | bash')    # 셸로 넘김
     assert flagged(f'python -X utf8 {_GATE} request t1 "{_PF}" irreversible x')   # detect 외 하위 명령은 해당 없음
+
+
+def test_r375_same_as_head_crlf_file_and_changes(tmp_path):
+    """R375 (2026-11-25): 줄 끝 전부 CRLF 로 커밋된 파일 = HEAD 와 같음 · 한 글자라도 바뀌면 다름 · 커밋 안 된 파일 = 다름."""
+    import subprocess
+    g = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"]
+    subprocess.run(g + ["init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "core.autocrlf", "true"], cwd=tmp_path, check=True)   # 사용자 PC 와 같은 설정
+    f = tmp_path / "s.py"
+    f.write_bytes(b"a = 1\r\nb = 2\r\n")
+    subprocess.run(g + ["-c", "core.autocrlf=false", "add", "s.py"], cwd=tmp_path, check=True)
+    subprocess.run(g + ["commit", "-qm", "c"], cwd=tmp_path, check=True, capture_output=True)
+    kw = dict(cwd=str(tmp_path), capture_output=True, text=True, timeout=5)
+    assert agd._same_as_head("s.py", kw)
+    f.write_bytes(b"a = 1\r\nb = 3\r\n")
+    assert not agd._same_as_head("s.py", kw)
+    (tmp_path / "n.py").write_bytes(b"x\r\n")
+    assert not agd._same_as_head("n.py", kw)

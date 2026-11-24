@@ -26,6 +26,13 @@ MAX_LOG_LINES = _get_env_int("max_log_lines", 10000)
 RULE_ADHERENCE_TTL_SEC = _get_env_int("rule_adherence_ttl_sec", 600)
 SNAPSHOT_RETENTION_DAYS = _get_env_int("snapshot_retention_days", 30)
 
+# ============ APPROVAL GATE ============
+# R375 2차 검토 P1 (2026-11-25): 승인 대기 요청 유효 기간의 단일 출처 — approval-gate.py 와 request-ledger.py 가 같이 읽는다
+#   (종전: 원장이 approval-gate.py 소스를 정규식으로 읽고 실패하면 24시간으로 대체 → 정책이 바뀌면 조용히 어긋남)
+#   덮어쓰기: CLAUDE_KIT_APPROVAL_REQUEST_TTL_SEC (0 이하·숫자 아님 = 기본값)
+_ttl = _get_env_int("approval_request_ttl_sec", 86400)
+APPROVAL_REQUEST_TTL_SEC = _ttl if _ttl > 0 else 86400
+
 # ============ FILE LOCKING ============
 FILE_LOCK_POLL_INTERVAL_SEC = _get_env_int("file_lock_poll_interval_sec", 2)
 FILE_LOCK_MAX_WAIT_SEC = _get_env_int("file_lock_max_wait_sec", 60)

@@ -7,7 +7,12 @@ _spec = importlib.util.spec_from_file_location("ai_collab_report_truth", _P)
 m = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(m)
 
-SHA = "f0a81e7690132d7458d9c59a2dcc4cd90b496b47"
+import subprocess
+
+# R375 2차 검토 P1 (2026-11-25): 고정 SHA(f0a81e76…) 는 얕은 checkout(CI · fetch-depth 1) 에 없어 «없는 커밋» 위반이
+#   덤으로 붙어 Windows 필수 job 이 4회 연속 실패 → 어느 checkout 에나 있는 현재 HEAD 를 쓴다 (게이트 판정은 그대로)
+SHA = subprocess.run(["git", "-C", str(Path(__file__).resolve().parent), "rev-parse", "HEAD"],
+                     capture_output=True, text=True, check=True).stdout.strip()
 
 
 def doc(status="PARTIAL", head=SHA, body=""):

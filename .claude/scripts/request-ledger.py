@@ -184,20 +184,21 @@ def check_integrity(data: dict, before: dict | None = None) -> list:
 #   승인 게이트(approval-gate.expire_stale)와 같은 규칙: 24시간 지난 대기 = 만료 → 원장도 저장할 때마다 동적으로 정리.
 #   현재 세션 항목은 건드리지 않음 · 완료로 바꾸지 않음(보류 · 사유·시각 기록) · 사용자가 다시 지시하면 새 요청으로 등록된다.
 def _approval_ttl_sec() -> int:
-    """만료 기간 정본 = approval-gate.REQUEST_TTL_SEC (R375 리뷰 2: 단일 출처) · 읽기 실패·환경 변수 지정 시 그 값."""
+    """만료 기간 정본 = lib/config.APPROVAL_REQUEST_TTL_SEC (approval-gate.REQUEST_TTL_SEC 와 같은 값 · R375 2차 검토 P1).
+    config 는 상수만 있는 모듈이라 불러도 DB·로그 부작용 없음 · LEDGER_APPROVAL_STALE_SEC 는 원장만의 시험용 덮어쓰기.
+    정본을 못 불러오면 조용히 24시간으로 대체하지 않고 stderr 에 원인을 남긴 뒤 같은 기본값(config 기본)을 쓴다."""
     env = os.environ.get("LEDGER_APPROVAL_STALE_SEC")
-    if env and env.isdigit():
+    if env and env.isdigit() and int(env) > 0:
         return int(env)
     try:
         import importlib.util as _ilu
-        p = Path(__file__).resolve().parent / "approval-gate.py"
-        src = p.read_text(encoding="utf-8")
-        mm = re.search(r"^REQUEST_TTL_SEC\s*=\s*(\d+)", src, re.M)   # 모듈 실행 없이 상수만 (DB 경로 등 부작용 X)
-        if mm:
-            return int(mm.group(1))
-    except OSError:
-        pass
-    return 24 * 3600
+        spec = _ilu.spec_from_file_location("_kit_config", Path(__file__).resolve().parent / "lib" / "config.py")
+        mod = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return int(mod.APPROVAL_REQUEST_TTL_SEC)
+    except Exception as e:  # noqa: BLE001
+        print(f"[request-ledger] 승인 만료 정본(lib/config.py) 읽기 실패 {type(e).__name__}: {e} — 기본 86400초", file=sys.stderr)
+        return 86400
 
 
 APPROVAL_STALE_SEC = 0   # 0 = 아직 안 읽음 → 정리할 때만 읽는다 (상태줄이 원장을 불러올 때마다 approval-gate.py 를 열던 비용 제거 · test_r348)

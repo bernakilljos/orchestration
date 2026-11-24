@@ -120,7 +120,16 @@ RISK_PATTERNS = {
 
 # 승인 1회 사용 유효 시간 (승인 후 이 안에 같은 명령을 실행해야 한다)
 APPROVAL_TTL_SEC = 1800
-REQUEST_TTL_SEC = 86400   # 대기 요청 유효 기간 (approval-gate-rules.md § 승인 만료 24시간) — 지나면 승인 거부·재요청
+def _kit_config():
+    """lib/config.py 를 경로로 직접 (이름 'config' 인 다른 모듈과 섞이지 않게 · 상수만 있는 모듈이라 부작용 없음)."""
+    import importlib.util as _u
+    sp = _u.spec_from_file_location("_kit_config", Path(__file__).resolve().parent / "lib" / "config.py")
+    m = _u.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    return m
+
+
+REQUEST_TTL_SEC = _kit_config().APPROVAL_REQUEST_TTL_SEC   # 대기 요청 유효 기간 (approval-gate-rules.md § 승인 만료 24시간 · 정본 lib/config.py) — 지나면 승인 거부·재요청
 CONSUMED_RESULT_WAIT_SEC = 660   # 도구 최대 실행 600초 + 여유 — 이 안에는 실행 중인 행을 새 요청으로 덮지 않는다
 USER_APPROVER = "user-prompt"   # 사용자 프롬프트 훅(prompt/user_approval.py) 만 쓰는 승인자 표시
 

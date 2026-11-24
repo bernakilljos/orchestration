@@ -351,7 +351,9 @@ def test_r391_ended_session_judged_by_transcript_not_touched_files(env, tmp_path
     temp, _ = env
     ended = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad", ("clone/.git/objects/de/x", "a.txt"))
     _old(ended, 4 * 86400)
-    (ended / "clone/.git/objects/de/x").write_text("y", encoding="utf-8")   # 바깥 도구가 방금 건드림 (종전: 영원히 «사용 중»)
+    (ended / "clone/.git/objects/de/x").write_text("y", encoding="utf-8")   # 바깥 도구가 2시간 전에 건드림 (종전: 영원히 «사용 중»)
+    _old(ended / "clone/.git/objects/de/x", 2 * 3600)
+    monkeypatch.setattr(oc, "_unpushed", lambda p: None)   # .git 흉내 폴더 (실제 저장소 아님) — git 판정은 아래 R375 시험
     _mk(temp / "claude" / "projA" / SID / "scratchpad")
     _transcript(tmp_path, monkeypatch, OLD_SID, 4 * 86400)                   # 세션 기록은 4일 전에 끝남
     oc.run(SID)
@@ -375,3 +377,141 @@ def test_r391_remove_respects_deadline_and_resumes(env):
     assert n1 == 0 and big.exists()
     n2 = oc._remove(big, deadline=time.monotonic() + 30)
     assert n2 > 0 and not big.exists()
+
+
+# ── R375 2차 검토 P0 (2026-11-25): 오래된 대화 기록만으로 지우지 않는다 — 사용 흔적·불확실하면 보존 · 지우기 직전 재확인 ──
+import subprocess as _sp  # noqa: E402
+import sys as _sys  # noqa: E402
+
+
+def _ended(env, tmp_path, monkeypatch, files=("a.txt",)):
+    temp, _ = env
+    ended = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad", files)
+    _old(ended, 4 * 86400)
+    _mk(temp / "claude" / "projA" / SID / "scratchpad")
+    _transcript(tmp_path, monkeypatch, OLD_SID, 4 * 86400)
+    return ended
+
+
+def _why(r):
+    return " | ".join(k["why"] for k in r["kept"])
+
+
+def test_r375_baseline_old_and_idle_is_removed(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc.run(SID)
+    assert not ended.exists()
+
+
+def test_r375_recent_file_change_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    (ended / "a.txt").write_text("new", encoding="utf-8")       # 방금 바뀜
+    r = oc.run(SID)
+    assert ended.exists() and "최근 파일 변경" in _why(r)
+
+
+def test_r375_live_worker_with_cwd_inside_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    p = _sp.Popen([_sys.executable, "-c", "import time; time.sleep(30)"], cwd=str(ended))
+    try:
+        r = oc.run(SID)
+        assert ended.exists() and "사용 중 프로세스" in _why(r)
+    finally:
+        p.kill(); p.wait()
+
+
+def test_r375_process_arg_with_session_id_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    p = _sp.Popen([_sys.executable, "-c", "import time,sys; time.sleep(30)", OLD_SID])
+    try:
+        r = oc.run(SID)
+        assert ended.exists() and "인자" in _why(r)
+    finally:
+        p.kill(); p.wait()
+
+
+def test_r375_psutil_missing_is_uncertain_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    monkeypatch.setitem(_sys.modules, "psutil", None)            # import 실패
+    r = oc.run(SID)
+    assert ended.exists() and "확인 불가" in _why(r)
+
+
+def test_r375_open_ledger_request_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    _, proj = env
+    (proj / ".claude/state/request-ledger.json").write_text(
+        '{"requests":[{"id":"R9","session_id":"%s","status":"pending"}]}' % OLD_SID, encoding="utf-8")
+    r = oc.run(SID)
+    assert ended.exists() and "열린 요청" in _why(r)
+
+
+def test_r375_broken_ledger_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    _, proj = env
+    (proj / ".claude/state/request-ledger.json").write_text("{broken", encoding="utf-8")
+    r = oc.run(SID)
+    assert ended.exists() and "원장 읽기 실패" in _why(r)
+
+
+def _git(*a, cwd):
+    _sp.run(["git", *a], cwd=cwd, check=True, capture_output=True)
+
+
+def _repo_pair(ended):
+    origin = ended.parent.parent.parent.parent / "origin.git"
+    _sp.run(["git", "init", "-q", "--bare", str(origin)], check=True)
+    work = ended / "clone"
+    _sp.run(["git", "clone", "-q", str(origin), str(work)], check=True, capture_output=True)
+    for k, v in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false")):
+        _git("config", k, v, cwd=work)
+    (work / "f.txt").write_text("1", encoding="utf-8")
+    _git("add", ".", cwd=work)
+    _git("commit", "-qm", "c1", cwd=work)
+    _git("push", "-q", "origin", "HEAD", cwd=work)
+    return work
+
+
+def test_r375_unpushed_commit_and_dirty_tree_kept_pushed_clean_removed(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    work = _repo_pair(ended)
+    (work / "f.txt").write_text("2", encoding="utf-8")
+    _git("commit", "-qam", "c2", cwd=work)                      # 원격에 없는 커밋
+    _old(ended, 4 * 86400)
+    r = oc.run(SID)
+    assert ended.exists() and "원격에 없는 커밋" in _why(r)
+    _git("push", "-q", "origin", "HEAD", cwd=work)
+    (work / "g.txt").write_text("x", encoding="utf-8")         # 커밋 안 한 파일
+    _old(ended, 4 * 86400)
+    r = oc.run(SID)
+    assert ended.exists() and "커밋 안 한 변경" in _why(r)
+    (work / "g.txt").unlink()
+    _old(ended, 4 * 86400)
+    oc.run(SID)
+    assert not ended.exists()                                    # 깨끗하고 다 올라간 복제본만 지움
+
+
+def test_r375_git_failure_is_uncertain_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch, ("clone/.git/HEAD", "clone/a.txt"))   # 깨진 저장소
+    r = oc.run(SID)
+    assert ended.exists() and "git 확인 실패" in _why(r)
+
+
+def test_r375_recheck_right_before_delete(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    calls = []
+    real = oc.busy_reason
+
+    def flip(p, sid, now):                                       # 판정 땐 한가 → 지우기 직전 워커가 붙음 (경합)
+        calls.append(1)
+        return None if len(calls) == 1 else "사용 중 프로세스 (경합)"
+    monkeypatch.setattr(oc, "busy_reason", flip)
+    r = oc.run(SID)
+    assert ended.exists() and "삭제 직전 재확인" in _why(r) and len(calls) == 2
+    monkeypatch.setattr(oc, "busy_reason", real)
+
+
+def test_r375_dry_run_does_not_recheck_or_delete(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    r = oc.run(SID, dry=True)
+    assert ended.exists() and any(x["kind"] == "ended-scratchpad" for x in r["removed"])

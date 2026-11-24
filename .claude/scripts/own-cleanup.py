@@ -146,6 +146,95 @@ def _session_last_active(sid: str) -> float | None:
     return best
 
 
+# R375 2차 검토 P0 (2026-11-25): 대화 기록이 오래됐다는 것만으로 끝난 세션이라 단정하면 그 폴더를 아직 쓰는
+#   워커·외부 도구·미Push 작업을 지울 수 있다 → 아래 넷 중 하나라도 해당하거나 확인이 불확실하면 보존하고,
+#   지우기 직전에 한 번 더 확인한다. (대화 기록 판정은 그대로 — 바깥 도구의 1회 접촉이 영원히 보존시키던 R391 결함 방지)
+RECENT_WRITE_SEC = int(os.environ.get("OWN_CLEANUP_RECENT_WRITE_SEC", "3600"))   # 이 시간 안 파일 변경 = 사용 중
+_LEDGER_OPEN = ("pending", "implemented")   # request-ledger.py 의 «열린 요청» 과 같은 상태
+
+
+def _users_of(p: Path, sid: str) -> str | None:
+    """그 폴더를 작업 위치·인자로 쓰거나 세션 번호를 인자로 가진 실행 중 프로세스. 확인 불가 = 사유 문자열(보존)."""
+    try:
+        import psutil
+    except ImportError:
+        return "프로세스 확인 불가 (psutil 없음)"
+    key = os.path.normcase(str(_real(p)))
+    try:
+        procs = list(psutil.process_iter(["pid", "name", "cmdline", "cwd"]))
+    except Exception as e:  # noqa: BLE001
+        return f"프로세스 확인 불가 ({type(e).__name__})"
+    for pr in procs:
+        info = pr.info
+        cwd = info.get("cwd") or ""
+        if cwd and (os.path.normcase(cwd) == key or _inside(Path(os.path.normcase(cwd)), Path(key))):
+            return f"사용 중 프로세스 (작업 위치 · pid {info.get('pid')} {info.get('name')})"
+        args = " ".join(info.get("cmdline") or [])
+        if args and (key in os.path.normcase(args).replace("/", os.sep) or (sid and sid in args)):
+            return f"사용 중 프로세스 (인자 · pid {info.get('pid')} {info.get('name')})"
+    return None
+
+
+def _open_ledger(sid: str) -> str | None:
+    f = ROOT / ".claude" / "state" / "request-ledger.json"
+    if not f.exists():
+        return None
+    try:
+        reqs = json.loads(f.read_text(encoding="utf-8")).get("requests") or []
+    except (OSError, ValueError, AttributeError):
+        return "작업 원장 읽기 실패"
+    open_ = [r.get("id") for r in reqs if r.get("session_id") == sid and r.get("status") in _LEDGER_OPEN]
+    return f"그 세션의 열린 요청 {open_[:3]}" if open_ else None
+
+
+def _git_repos(p: Path, depth: int = 3):
+    """폴더 안 git 저장소 (링크는 따라가지 않음 · 얕게)."""
+    stack = [(str(p), 0)]
+    while stack:
+        d, lv = stack.pop()
+        try:
+            with os.scandir(d) as it:
+                ents = list(it)
+        except OSError:
+            continue
+        if any(e.name == ".git" for e in ents):
+            yield d
+            continue
+        if lv < depth:
+            stack.extend((e.path, lv + 1) for e in ents if e.is_dir(follow_symlinks=False) and not _is_link(e.path))
+
+
+def _unpushed(p: Path) -> str | None:
+    """안에 든 git 저장소에 커밋 안 한 변경·원격에 없는 커밋이 있으면 사유. git 실행 실패·시간 초과 = 보존."""
+    import subprocess
+    for repo in _git_repos(p):
+        for args, what in ((["status", "--porcelain"], "커밋 안 한 변경"),
+                           (["log", "--branches", "--not", "--remotes", "-1", "--format=%h"], "원격에 없는 커밋")):
+            try:
+                r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, timeout=5,
+                                   encoding="utf-8", errors="replace")
+            except (OSError, subprocess.TimeoutExpired) as e:
+                return f"git 확인 실패 ({type(e).__name__}) {repo}"
+            if r.returncode != 0:
+                return f"git 확인 실패 (종료 {r.returncode}) {repo}"
+            if r.stdout.strip():
+                return f"{what} {repo}"
+    return None
+
+
+def busy_reason(p: Path, sid: str, now: float) -> str | None:
+    """끝난 세션 폴더를 지우면 안 되는 사유 (없으면 None). 지우기 직전에도 다시 부른다."""
+    act = _session_last_active(sid)
+    if act is not None and now - act < IDLE_SCRATCH_SEC:
+        return f"세션 활동 중 (대화 기록 {IDLE_SCRATCH_SEC // 60}분 안에 갱신)"
+    last = _newest_mtime(p)
+    if act is None and now - last < IDLE_SCRATCH_SEC:
+        return f"사용 중 ({IDLE_SCRATCH_SEC // 60}분 안에 수정)"
+    if now - last < RECENT_WRITE_SEC:
+        return f"최근 파일 변경 ({RECENT_WRITE_SEC // 60}분 안)"
+    return _open_ledger(sid) or _users_of(p, sid) or _unpushed(p)
+
+
 def _remove(p: Path, deadline: float | None = None) -> int:
     """링크를 따라가지 않고 지운다 · 읽기 전용 파일도 (git 객체). 지운 항목 수.
     deadline(time.monotonic 기준) 을 넘으면 거기서 멈춘다 — 큰 폴더는 다음 작업 종료 때 이어서 (Stop 훅 제한 안에서)."""
@@ -307,11 +396,13 @@ def run(session: str = "", dry: bool = False, now: float | None = None) -> dict:
             continue
         why = safe_target(p)
         if not why:
-            act = _session_last_active(p.parent.name) if kind == "ended-scratchpad" else None
-            last = act if act is not None else _newest_mtime(p)
-            if now - last < idle:
-                why = (f"세션 활동 중 (대화 기록 {idle // 60}분 안에 갱신)" if act is not None
-                       else f"사용 중 ({idle // 60}분 안에 수정)")
+            if kind == "ended-scratchpad":
+                why = busy_reason(p, p.parent.name, now)
+            elif now - _newest_mtime(p) < idle:
+                why = f"사용 중 ({idle // 60}분 안에 수정)"
+        if not why and kind == "ended-scratchpad" and not dry:
+            why = busy_reason(p, p.parent.name, time.time())   # 지우기 직전 재확인 (판정과 삭제 사이 경합)
+            why = f"삭제 직전 재확인: {why}" if why else None
         if why:
             kept.append({"path": str(p), "kind": kind, "why": why})
             continue

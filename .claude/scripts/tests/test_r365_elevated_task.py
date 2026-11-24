@@ -113,6 +113,18 @@ def test_malformed_request_41_and_no_execution(layer):
     assert outs[0].name.startswith("invalid-") and (layer[2] / "tool").exists()
 
 
+def _is_admin() -> bool:
+    try:
+        import ctypes
+        return bool(ctypes.windll.shell32.IsUserAnAdmin())
+    except Exception:  # noqa: BLE001
+        return False
+
+
+# R375 2차 검토 P1 (2026-11-25): GitHub Windows 러너는 관리자 권한으로 돈다 → «권한 없으면 50» 을 볼 수 없고 실제로 작업
+#   스케줄러에 \Orca\ElevatedRunner 를 등록해 버렸다 (실패 4회 · 같은 메시지). 비관리자 동작 시험이므로 관리자면 건너뛴다
+#   (게이트 완화 아님 · 이 PC 같은 일반 사용자 창에서는 그대로 검사).
+@pytest.mark.skipif(_is_admin(), reason="관리자 권한으로 실행 중 — 비관리자 거부(50) 동작은 일반 권한에서만 확인 가능")
 def test_install_and_uninstall_require_admin_50(tmp_path):
     for act in ("Install", "Uninstall"):
         rc, out = _run(S / "elevated-task.ps1", "-Action", act, "-Root", str(tmp_path / "r"), "-Io", str(tmp_path / "i"))

@@ -70,3 +70,57 @@ def test_r375_review2_active_session_not_assumed_from_last_item_and_timezone():
     assert sorted(m.expire_stale_approvals(data, NOW)) == ["R3", "R4"]
     assert {r["id"]: r["status"] for r in data["requests"]}["R5"] == "approval_required"   # 해석 불가 = 그대로
     assert m._stale_sec() == m._approval_ttl_sec() > 0                              # 정본(approval-gate) 에서 읽음
+
+
+# ── R375 2차 검토 P1 (2026-11-25): 승인 만료 기간 단일 출처 = lib/config.py (소스 정규식 읽기 제거) ──
+def _fresh(name, path, monkeypatch, **env):
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    import importlib.util as u
+    sp = u.spec_from_file_location(name, path)
+    m = u.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    return m
+
+
+def test_r375_ttl_single_source_and_env_override(monkeypatch):
+    import sys as _s
+    kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
+    monkeypatch.delenv("LEDGER_APPROVAL_STALE_SEC", raising=False)
+    monkeypatch.delenv("CLAUDE_KIT_APPROVAL_REQUEST_TTL_SEC", raising=False)
+    led = _fresh("led_ttl1", kit / "request-ledger.py", monkeypatch)
+    gate = _fresh("gate_ttl1", kit / "approval-gate.py", monkeypatch)
+    assert led._approval_ttl_sec() == gate.REQUEST_TTL_SEC == 86400          # 기본값 같음
+    for val, want in (("7200", 7200), ("0", 86400), ("-5", 86400), ("abc", 86400)):   # 정책 변경 · 잘못된 값 = 기본
+        monkeypatch.setenv("CLAUDE_KIT_APPROVAL_REQUEST_TTL_SEC", val)
+        g2 = _fresh(f"gate_ttl_{val}", kit / "approval-gate.py", monkeypatch)
+        assert led._approval_ttl_sec() == g2.REQUEST_TTL_SEC == want, val    # 두 쪽이 항상 같은 값
+
+
+def test_r375_ttl_config_failure_is_reported_not_silent(monkeypatch, capsys, tmp_path):
+    kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
+    monkeypatch.delenv("LEDGER_APPROVAL_STALE_SEC", raising=False)
+    led = _fresh("led_ttl2", kit / "request-ledger.py", monkeypatch)
+    fake = tmp_path / "request-ledger.py"
+    fake.write_text("", encoding="utf-8")
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "lib" / "config.py").write_text("raise RuntimeError('broken policy')", encoding="utf-8")
+    monkeypatch.setattr(led, "__file__", str(fake))
+    monkeypatch.setitem(led._approval_ttl_sec.__globals__, "__file__", str(fake))
+    assert led._approval_ttl_sec() == 86400
+    assert "broken policy" in capsys.readouterr().err                         # 조용히 대체하지 않음
+
+
+def test_r375_gate_ignores_foreign_config_module(monkeypatch):
+    import sys as _s
+    import types
+    kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
+    monkeypatch.setitem(_s.modules, "config", types.ModuleType("config"))   # 다른 패키지의 config 가 먼저 불려 있어도
+    g = _fresh("gate_ttl_foreign", kit / "approval-gate.py", monkeypatch)
+    assert g.REQUEST_TTL_SEC > 0
+
+
+def test_r375_statusline_import_does_not_read_policy(monkeypatch):
+    kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
+    led = _fresh("led_ttl3", kit / "request-ledger.py", monkeypatch)
+    assert led.APPROVAL_STALE_SEC == 0                                          # 불러오기만 해선 정책을 읽지 않음 (지연 읽기 유지)

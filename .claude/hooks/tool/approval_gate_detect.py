@@ -283,6 +283,21 @@ _KIT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.p
 _PY_SAFE_FLAGS = {"-u", "-B", "-I", "-E", "-s", "-Xutf8"}
 
 
+def _same_as_head(rel: str, kw: dict) -> bool:
+    """작업본이 HEAD 커밋 내용과 같은가 — Git 필터 적용 해시 또는 원본 바이트 해시 중 하나가 HEAD 와 같으면 같음.
+    R375 (2026-11-25): 줄 끝이 전부 CRLF 인 파일을 CRLF 그대로 커밋하면 core.autocrlf=true 의 hash-object 가 LF 로 바꿔 계산해
+    바이트까지 같은 파일을 «바뀜» 으로 판정했다 (줄 끝이 섞인 파일은 변환하지 않아 우연히 통과) → 원본 바이트 해시도 본다.
+    어느 쪽이든 커밋된 내용과 같아야 하므로 허용 범위는 넓어지지 않는다."""
+    import subprocess
+    head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
+    if not head:
+        return False
+    for args in (["hash-object", rel], ["hash-object", "--no-filters", rel]):
+        if subprocess.run(["git", *args], **kw).stdout.strip() == head:
+            return True
+    return False
+
+
 def _kit_script_unchanged(path: str) -> bool:
     """허용 kit 스크립트는 «이 kit 저장소의 그 파일» 이고 kit HEAD 와 내용이 같을 때만 (2026-11-09 리뷰 MUST 3:
     경로 끝만 보면 다른 저장소에 커밋한 같은 이름 스크립트가 통과). 확인 실패 = 해당 없음 (fail-closed)."""
@@ -306,9 +321,7 @@ def _kit_script_unchanged(path: str) -> bool:
             with open(want, "rb") as f:
                 got_h = hashlib.md5(f.read().replace(b"\r\n", b"\n")).hexdigest()
             return bool(want_h) and want_h == got_h
-        head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
-        work = subprocess.run(["git", "hash-object", rel], **kw).stdout.strip()
-        return bool(head) and head == work
+        return _same_as_head(rel, kw)
     except Exception:  # noqa: BLE001
         return False
 
@@ -490,9 +503,7 @@ def _kit_tracked_unchanged(path: str) -> bool:
             return False
         rel = os.path.relpath(os.path.realpath(path), os.path.realpath(_KIT_ROOT)).replace("\\", "/")
         kw = dict(cwd=_KIT_ROOT, capture_output=True, text=True, timeout=2)
-        head = subprocess.run(["git", "rev-parse", "HEAD:" + rel], **kw).stdout.strip()
-        work = subprocess.run(["git", "hash-object", rel], **kw).stdout.strip()
-        return bool(head) and head == work
+        return _same_as_head(rel, kw)
     except Exception:  # noqa: BLE001
         return False
 
