@@ -111,7 +111,46 @@ def run_action(ctx, action: str):
         pend.append({"type": atype, "description": (ti.get("description") or atype)[:80],
                      "model": (ti.get("model") or "").lower(), "ts": _ts(now)})
         _save(pending_file, pend[-50:])
+        return _tag_description(ctx, ti, atype)
+    return _run_sub(ctx, action, hook, state_dir, state_file, pending_file, now)
+
+
+# R354 (2026-11-24): /tasks 작업 목록(Claude Code 내장 UI)에 등급 표식이 없던 것.
+#   내장 목록의 글자색은 플러그인·설정으로 바꿀 공식 방법이 없다 (행 문구 = 작업 설명 또는 모델이 만든 진행 요약) →
+#   바꿀 수 있는 «작업 설명» 앞에 등급 표식(색 이모지 + 글자)을 붙인다 (PreToolUse updatedInput · ANSI 를 넣지 않는다).
+#   등급 = 사용자 정의 «특·상·중·하» (2026-11-18 · 모델 기준 · 상태줄 서브 줄과 같은 표) — 작업 이름 단어로 추측하지 않는다.
+GRADES = (  # (판정 키워드, 표식, 이름) — 상태줄 statusline_context._GRADES 와 같은 순서·같은 표식
+    (("fable", "mythos"), "🔴", "특"),
+    (("opus", "inherit"), "🟣", "상"),
+    (("sonnet",), "🔵", "중"),
+    (("haiku",), "🟢", "하"),
+)
+_TAG_RE = re.compile(r"^\s*(?:🔴|🟣|🔵|🟢)\s*[특상중하]\s")
+
+
+def grade_tag(model: str) -> str:
+    m = (model or "inherit").lower()
+    for keys, mark, nm in GRADES:
+        if any(k in m for k in keys):
+            return f"{mark}{nm}"
+    return "🟣상"  # 모르는 값 = 메인 모델 상속 (상태줄과 같은 규칙)
+
+
+def _tag_description(ctx, ti: dict, atype: str):
+    if os.environ.get("AGENT_GRADE_TAG", "1") == "0":   # 끄기 스위치 (기본 켬)
         return None
+    desc = ti.get("description")
+    if not isinstance(desc, str) or not desc.strip() or _TAG_RE.match(desc):
+        return None   # 설명 없음 · 이미 표식 있음 = 그대로 (중복 접두 방지)
+    model = (ti.get("model") or "").lower() or _agent_model(ctx, atype)
+    from _common import Result
+    new = dict(ti)
+    new["description"] = f"{grade_tag(model)} {desc}"
+    return Result(0, json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "updatedInput": new}},
+                                ensure_ascii=False), "")
+
+
+def _run_sub(ctx, action, hook, state_dir, state_file, pending_file, now):
 
     if action != "sub":
         return None
