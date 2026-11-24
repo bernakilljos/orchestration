@@ -183,6 +183,10 @@ def main():
         _pend = _ac.pending_lines()
         if _pend:
             top += "\n## ★ 협업 폴더 미처리 (ChatGPT 지시·리뷰) — 먼저 읽고 실행\n" + "\n".join(_pend[:20]) + "\n"
+        # R375 후속 (2026-11-24 사용자 "loop 로 읽게 하지 않았어?"): 대기 루프(wait)는 Bash 백그라운드라 세션이 바뀌면 꺼진다 —
+        #   이 문구가 붙는 시점(새 세션·compact 복구)마다 다시 켜도록 지시 (새 리뷰가 오면 셸이 Claude 를 한 번 깨움 · 대기 중 모델 호출 0)
+        top += ("\n## ★ 협업 대기 루프 — 첫 동작으로 Bash 백그라운드(run_in_background) 시작: "
+                "`python -X utf8 .claude/scripts/ai-collab-report.py wait --interval 300` · 끝나면(새 리뷰·지시 도착) 처리 후 다시 시작\n")
     except Exception as _e:
         top += f"\n## ★ 협업 폴더 확인 실패 ({type(_e).__name__}) — `python .claude/scripts/ai-collab-report.py pending` 직접 실행\n"
     if (ROOT / ".claude" / "state" / "changelog-new.md").is_file():

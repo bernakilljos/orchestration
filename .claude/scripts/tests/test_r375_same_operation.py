@@ -81,3 +81,52 @@ def test_r375_expired_or_withdrawn_request_not_reused(tmp_root):
     gate.withdraw(t1, "시험 취소")
     t2 = _tid(agd.run(_hook(f"Remove-Item -Recurse '{d}'", str(tmp_root))))
     assert t2 != t1
+
+
+def test_r375_review1_unresolved_targets_fall_back_to_exact_scope(tmp_root):
+    """변수·명령 치환·와일드카드 = 대상 미확정 → 같은 작업 판정 안 함 (기존 정확한 범위 지문만)."""
+    d, = _rand_dirs(tmp_root, 1)
+    k = gate.operation_key
+    for c in (f'{RM} "$D" "{_bash_path(d)}"', f"{RM} {_bash_path(d)}/*", f"Remove-Item -Recurse $env:X,'{d}'",
+              f"{RM} $(cat list.txt) {_bash_path(d)}", f"{RM} `pwd`/{d.name}"):
+        assert k(c, "data_loss", str(tmp_root), "폴더 삭제") == "", c
+
+
+def test_r375_review1_compound_and_different_effect(tmp_root):
+    """복합 명령은 모든 대상 경로가 지문에 들어감 · 같은 경로라도 범주·행위가 다르면 다른 작업."""
+    a, b = _rand_dirs(tmp_root, 2)
+    k = gate.operation_key
+    one = k(f'{RM} "{_bash_path(a)}"', "data_loss", str(tmp_root), "rm -r — 폴더 삭제")
+    both = k(f'{RM} "{_bash_path(a)}" && {RM} "{_bash_path(b)}"', "data_loss", str(tmp_root), "rm -r — 폴더 삭제")
+    assert one and both and one != both
+    assert k(f'{RM} "{_bash_path(a)}"', "data_loss", str(tmp_root), "shutil.rmtree — 폴더 삭제") == one   # 도구 설명만 다름
+    assert k(f'chmod 777 "{_bash_path(a)}"', "security", str(tmp_root), "chmod 777 — 권한 개방") != one
+
+
+def test_r375_review1_link_resolves_to_real_target(tmp_root):
+    """링크·정션 이름이 달라도 실제 대상이 같으면 같은 작업 (만들 수 없는 환경이면 건너뜀)."""
+    import os
+    import subprocess
+    real, = _rand_dirs(tmp_root, 1)
+    link = tmp_root / ("lnk_" + uuid.uuid4().hex[:6])
+    try:
+        os.symlink(real, link, target_is_directory=True)
+    except OSError:
+        r = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(real)], capture_output=True)
+        if r.returncode != 0 or not link.exists():
+            import pytest
+            pytest.skip("링크·정션 생성 불가 환경")
+    k = gate.operation_key
+    assert k(f"Remove-Item -Recurse '{link}'", "data_loss", str(tmp_root), "폴더 삭제") == \
+        k(f"Remove-Item -Recurse '{real}'", "data_loss", str(tmp_root), "폴더 삭제")
+
+
+def test_r375_review1_concurrent_requests_one_number(tmp_root):
+    """같은 명령이 동시에 8번 들어와도 승인 번호는 1개 (확인·등록 원자 처리)."""
+    from concurrent.futures import ThreadPoolExecutor
+    d, = _rand_dirs(tmp_root, 1)
+    cmd = f"Remove-Item -Recurse -Force -LiteralPath '{d}'"
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        ids = list(ex.map(lambda _: _tid(agd.run(_hook(cmd, str(tmp_root)))), range(8)))
+    assert len(set(ids)) == 1, ids
+    assert len(gate.list_waiting()) == 1

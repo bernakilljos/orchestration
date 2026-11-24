@@ -225,7 +225,13 @@ def _norm_op_path(p: str, cwd: str) -> str:
         p = os.path.expanduser(p)
     if not re.match(r"^(?:[A-Za-z]:|\\\\|/)", p):
         p = os.path.join(cwd or os.getcwd(), p)
-    return os.path.normpath(p).replace("\\", "/").rstrip("/").lower()
+    p = os.path.normpath(p)
+    try:   # R375 리뷰 1: 링크·정션은 실제 대상으로 (다른 이름의 같은 대상 = 같은 작업 · 링크 이름만 같고 대상이 다르면 다른 작업)
+        if os.path.lexists(p):
+            p = os.path.realpath(p)
+    except OSError:
+        pass
+    return p.replace("\\", "/").rstrip("/").lower()
 
 
 def operation_targets(command: str, cwd: str = "") -> list:
@@ -239,13 +245,26 @@ def operation_targets(command: str, cwd: str = "") -> list:
     return sorted(out)
 
 
-def operation_key(command: str, category: str, cwd: str = "") -> str:
-    """위험 범주 + 대상 경로 → 작업 지문. 경로를 못 뽑으면 '' (= 기존 범위 지문만 사용)."""
+# 대상이 실행 때 정해지는 표현(변수·명령 치환·와일드카드) — 명령 글자로 대상을 확정할 수 없으면 같은 작업 판정을 하지 않는다
+_OP_UNRESOLVED_RE = re.compile(r"[$%`*?]|\$\(")
+
+
+def operation_effect(description: str) -> str:
+    """위험 패턴 표 설명의 «— 뒤» 결과 (예: '폴더 삭제') → 행위 구분. 삭제 계열은 하나로 (도구별 설명 차이 흡수)."""
+    tail = (description or "").split("—")[-1].strip()
+    return "삭제" if "삭제" in tail else tail
+
+
+def operation_key(command: str, category: str, cwd: str = "", description: str = "") -> str:
+    """위험 범주 + 행위 + 대상 경로 → 작업 지문. 경로를 못 뽑거나 대상이 실행 때 정해지면 '' (= 기존 범위 지문만 사용)."""
     import hashlib as _h
-    targets = operation_targets(command, cwd)
-    if not targets or not category:
+    if not category or _OP_UNRESOLVED_RE.search(command or ""):
         return ""
-    return _h.sha256((category + "\n" + "\n".join(targets)).encode("utf-8")).hexdigest()[:16]
+    targets = operation_targets(command, cwd)
+    if not targets:
+        return ""
+    body = category + "\n" + operation_effect(description) + "\n" + "\n".join(targets)
+    return _h.sha256(body.encode("utf-8")).hexdigest()[:16]
 
 
 def find_request(field: str, value: str, states: tuple) -> str | None:
@@ -305,13 +324,34 @@ def new_request(command: str, category: str, detail: str, artifacts: dict | None
         risk["op"] = op
     if artifacts:
         risk["artifacts"] = artifacts
-    conn = sqlite3.connect(str(get_db_path()))
+    # R375 리뷰 1: find_request → new_request 사이 동시 요청 경합으로 같은 범위·작업 번호가 둘 생기지 않게 —
+    #   쓰기 잠금(BEGIN IMMEDIATE) 안에서 같은 scope·op 의 유효한 대기 행을 다시 확인하고 없을 때만 넣는다
+    conn = sqlite3.connect(str(get_db_path()), timeout=30, isolation_level=None)
     try:
+        conn.execute("BEGIN IMMEDIATE")
+        now = int(time.time())
+        rows = conn.execute(
+            "SELECT task_id, risk_detail FROM tasks WHERE task_file = '<approval-gate>' AND approval_state = 'waiting' "
+            "AND created_at >= ? ORDER BY created_at DESC, rowid DESC", (now - REQUEST_TTL_SEC,)).fetchall()
+        for tid, d in rows:
+            try:
+                dd = json.loads(d or "{}") or {}
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if dd.get("scope") == scope or (op and dd.get("op") == op):
+                conn.execute("COMMIT")
+                return tid
         conn.execute(
             "INSERT INTO tasks (task_id, task_file, status, created_at, approval_state, risk_category, risk_detail) "
             "VALUES (?, '<approval-gate>', 'waiting_approval', ?, 'waiting', ?, ?)",
-            (task_id, int(time.time()), category, json.dumps(risk, ensure_ascii=False)))
-        conn.commit()
+            (task_id, now, category, json.dumps(risk, ensure_ascii=False)))
+        conn.execute("COMMIT")
+    except Exception:
+        try:
+            conn.execute("ROLLBACK")
+        except sqlite3.Error:
+            pass
+        raise
     finally:
         conn.close()
     return task_id

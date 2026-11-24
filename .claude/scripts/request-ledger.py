@@ -183,28 +183,69 @@ def check_integrity(data: dict, before: dict | None = None) -> list:
 #   (67건 · 대부분 붙여 넣은 리뷰 글의 '운영 DB'·'유료' 단어로 자동 분류된 것 · 승인 게이트 대기는 0건).
 #   승인 게이트(approval-gate.expire_stale)와 같은 규칙: 24시간 지난 대기 = 만료 → 원장도 저장할 때마다 동적으로 정리.
 #   현재 세션 항목은 건드리지 않음 · 완료로 바꾸지 않음(보류 · 사유·시각 기록) · 사용자가 다시 지시하면 새 요청으로 등록된다.
-APPROVAL_STALE_SEC = int(os.environ.get("LEDGER_APPROVAL_STALE_SEC", str(24 * 3600)))
+def _approval_ttl_sec() -> int:
+    """만료 기간 정본 = approval-gate.REQUEST_TTL_SEC (R375 리뷰 2: 단일 출처) · 읽기 실패·환경 변수 지정 시 그 값."""
+    env = os.environ.get("LEDGER_APPROVAL_STALE_SEC")
+    if env and env.isdigit():
+        return int(env)
+    try:
+        import importlib.util as _ilu
+        p = Path(__file__).resolve().parent / "approval-gate.py"
+        src = p.read_text(encoding="utf-8")
+        mm = re.search(r"^REQUEST_TTL_SEC\s*=\s*(\d+)", src, re.M)   # 모듈 실행 없이 상수만 (DB 경로 등 부작용 X)
+        if mm:
+            return int(mm.group(1))
+    except OSError:
+        pass
+    return 24 * 3600
+
+
+APPROVAL_STALE_SEC = 0   # 0 = 아직 안 읽음 → 정리할 때만 읽는다 (상태줄이 원장을 불러올 때마다 approval-gate.py 를 열던 비용 제거 · test_r348)
+
+
+def _stale_sec() -> int:
+    global APPROVAL_STALE_SEC
+    if not APPROVAL_STALE_SEC:
+        APPROVAL_STALE_SEC = _approval_ttl_sec()
+    return APPROVAL_STALE_SEC
+
+
+def _ts_age_sec(ts: str, now: datetime) -> float | None:
+    """시각 문자열 → 경과 초 (시간대 포함이면 그대로 · 없으면 로컬 시각) · 해석 불가 = None (보류하지 않음)."""
+    try:
+        t = datetime.fromisoformat(str(ts or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if t.tzinfo is not None:
+        from datetime import timezone as _tz
+        base = now if now.tzinfo is not None else now.astimezone()
+        return (base.astimezone(_tz.utc) - t.astimezone(_tz.utc)).total_seconds()
+    return ((now.replace(tzinfo=None) if now.tzinfo is not None else now) - t).total_seconds()
 
 
 def expire_stale_approvals(data: dict, now: datetime | None = None) -> list:
+    """R375 리뷰 2 반영: «현재 세션» 을 마지막 항목으로 가정하지 않는다 — 만료 기간 안에 기록이 하나라도 있는 세션은
+    모두 활성으로 보고 건드리지 않음 · 시각은 시간대 포함 그대로 비교 · 해석 불가 시각은 보류하지 않음."""
     reqs = data.get("requests") or []
     if not reqs:
         return []
-    cur_sess = reqs[-1].get("session_id") or ""
     now = now or datetime.now()
+    ttl = _stale_sec()
+    active = set()
+    for r in reqs:
+        a = _ts_age_sec(r.get("ts"), now)
+        if r.get("session_id") and a is not None and a < ttl:
+            active.add(r["session_id"])
     out = []
     for r in reqs:
-        if r.get("status") != "approval_required" or (cur_sess and r.get("session_id") == cur_sess):
+        if r.get("status") != "approval_required" or r.get("session_id") in active:
             continue
-        try:
-            age = (now - datetime.fromisoformat(str(r.get("ts") or "")[:19])).total_seconds()
-        except ValueError:
-            continue
-        if age < APPROVAL_STALE_SEC:
+        age = _ts_age_sec(r.get("ts"), now)
+        if age is None or age < ttl:
             continue
         r["status"] = "deferred"
         r["deferred_reason"] = ("승인 대기 %d시간 경과 · 세션 종료 · 사용자 승인 원문 없음 → 자동 보류 (완료 아님 · R384)"
-                                % (APPROVAL_STALE_SEC // 3600))
+                                % (ttl // 3600))
         r["deferred_at"] = now.isoformat(timespec="seconds")
         out.append(r.get("id"))
     return out
@@ -215,8 +256,8 @@ def _save(data: dict) -> None:
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
     try:
         expire_stale_approvals(data)
-    except Exception:  # noqa: BLE001 — 정리는 보조 · 실패해도 저장은 그대로
-        pass
+    except Exception as e:  # noqa: BLE001 — 정리는 보조 · 실패해도 저장은 그대로 (R375 리뷰 2: 조용히 삼키지 않고 원인 남김)
+        print(f"[ledger] 승인 대기 자동 정리 실패 — 저장은 계속 ({type(e).__name__}: {e})", file=sys.stderr)
     with _Lock():
         before = None
         if LEDGER.exists():

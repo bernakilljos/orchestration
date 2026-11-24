@@ -126,8 +126,29 @@ def safe_target(p: Path) -> str | None:
     return None
 
 
-def _remove(p: Path) -> int:
-    """링크를 따라가지 않고 지운다 · 읽기 전용 파일도 (git 객체). 지운 항목 수."""
+def _session_last_active(sid: str) -> float | None:
+    """R391 (2026-11-24 디스크 22% 남음 · 끝난 세션 복제본 24.8GB 4일째 남음): 세션이 끝났는지 = 그 세션 대화 기록
+    (<설정 폴더>/projects/*/<sid>.jsonl) 의 마지막 수정 시각. 폴더 안 최신 파일 시각은 바깥 도구가 복제본 안 git 객체를
+    건드리기만 해도 갱신돼 끝난 세션이 영원히 «사용 중» 이 됐다. 기록을 못 찾으면 None (= 종전 판정)."""
+    bases = []
+    for env in ("CLAUDE_CONFIG_DIR",):
+        if os.environ.get(env):
+            bases.append(Path(os.environ[env]))
+    bases.append(Path.home() / ".claude")
+    best = None
+    for b in bases:
+        try:
+            for f in (b / "projects").glob(f"*/{sid}.jsonl"):
+                m = os.lstat(f).st_mtime
+                best = m if best is None else max(best, m)
+        except OSError:
+            continue
+    return best
+
+
+def _remove(p: Path, deadline: float | None = None) -> int:
+    """링크를 따라가지 않고 지운다 · 읽기 전용 파일도 (git 객체). 지운 항목 수.
+    deadline(time.monotonic 기준) 을 넘으면 거기서 멈춘다 — 큰 폴더는 다음 작업 종료 때 이어서 (Stop 훅 제한 안에서)."""
     n = 0
     sp = str(p)
     if _is_link(sp):
@@ -144,6 +165,11 @@ def _remove(p: Path) -> int:
         except OSError:
             return 0
     for q, link, isdir in _entries(sp):
+        if deadline is not None and time.monotonic() > deadline:
+            break
+        # R391: Windows 260자 넘는 경로는 일반 경로로 지울 수 없다(WinError 3 · 실측 10개 남음) → 확장 경로(\\?\) 로
+        if os.name == "nt" and len(q) >= 248 and not q.startswith("\\\\?\\"):
+            q = "\\\\?\\" + os.path.abspath(q)
         try:
             if link:             # 링크·정션 = 그 자체만 제거 (가리키는 곳 X)
                 try:
@@ -280,13 +306,18 @@ def run(session: str = "", dry: bool = False, now: float | None = None) -> dict:
             deferred += 1
             continue
         why = safe_target(p)
-        if not why and now - _newest_mtime(p) < idle:
-            why = f"사용 중 ({idle // 60}분 안에 수정)"
+        if not why:
+            act = _session_last_active(p.parent.name) if kind == "ended-scratchpad" else None
+            last = act if act is not None else _newest_mtime(p)
+            if now - last < idle:
+                why = (f"세션 활동 중 (대화 기록 {idle // 60}분 안에 갱신)" if act is not None
+                       else f"사용 중 ({idle // 60}분 안에 수정)")
         if why:
             kept.append({"path": str(p), "kind": kind, "why": why})
             continue
-        n = 0 if dry else _remove(p)
-        removed.append({"path": str(p), "kind": kind, "items": n})
+        n = 0 if dry else _remove(p, deadline=t0 + BUDGET_SEC)
+        removed.append({"path": str(p), "kind": kind, "items": n,
+                        "partial": bool(not dry and os.path.lexists(str(p)))})   # 남은 것은 다음 작업 종료 때 이어서
     if not dry:   # 등록 목록에서 사라진 것 정리
         left = [x for x in _registered() if os.path.lexists(x.get("path", ""))]
         if REG.exists():

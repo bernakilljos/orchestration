@@ -499,6 +499,17 @@ def cmd_poll() -> int:
         if m and _reported_after_change(st, m.group(1), path):
             reported.append(path)
             continue
+        # R375 후속 (2026-11-24): 세션 시작 목록(pending_lines)과 대기(poll)의 «보고됨» 판정이 달랐다 —
+        #   poll 은 state.json 기록만 봐서 손으로 쓴 보고서(R363·R364 등)가 있는 지시·리뷰를 계속 «새 것» 으로 돌려
+        #   wait 가 켜지자마자 끝났다 (리뷰를 기다리는 루프가 실제로는 돌지 못함). → 같은 git 이력 워터마크를 쓴다.
+        mr = m or re.fullmatch(r"\.ai-collab/reviews/(R\d{1,6})\.md", path)
+        if mr and _report_newer_on_remote(mr.group(1), path):
+            reported.append(path)
+            continue
+        if not m and mr and _review_verdict(blob).endswith("approved"):   # 승인 리뷰 = 할 일 없음 (pending 과 같은 기준)
+            _ack(st, path, blob)
+            changed = True
+            continue
         cur = inflight.get(path) or {}
         same = cur.get("blob") == blob
         n = int(cur.get("n", 0) or 0) if same else 0

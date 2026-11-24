@@ -333,3 +333,45 @@ def test_compact_resets_prompt_inject_dedupe_for_that_session_only(tmp_path):
                            encoding="utf-8", errors="replace", env=env, timeout=60)
         assert r.returncode == 0 and "재발 방지 헌장" not in r.stdout
     assert sorted(p.name for p in d.iterdir()) == ["other-9.json"]
+
+
+# ── R391 (2026-11-24) 끝난 세션 판정 = 대화 기록 시각 · 큰 폴더는 시간 예산 안에서 나눠 지움 ──
+def _transcript(tmp_path, monkeypatch, sid, age):
+    cfg = tmp_path / "cfg"
+    f = cfg / "projects" / "some-proj" / f"{sid}.jsonl"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text("{}\n", encoding="utf-8")
+    t = time.time() - age
+    os.utime(f, (t, t))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(cfg))
+    return f
+
+
+def test_r391_ended_session_judged_by_transcript_not_touched_files(env, tmp_path, monkeypatch):
+    temp, _ = env
+    ended = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad", ("clone/.git/objects/de/x", "a.txt"))
+    _old(ended, 4 * 86400)
+    (ended / "clone/.git/objects/de/x").write_text("y", encoding="utf-8")   # 바깥 도구가 방금 건드림 (종전: 영원히 «사용 중»)
+    _mk(temp / "claude" / "projA" / SID / "scratchpad")
+    _transcript(tmp_path, monkeypatch, OLD_SID, 4 * 86400)                   # 세션 기록은 4일 전에 끝남
+    oc.run(SID)
+    assert not ended.exists()
+
+
+def test_r391_active_transcript_keeps_scratchpad_even_if_files_old(env, tmp_path, monkeypatch):
+    temp, _ = env
+    live = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad")
+    _old(live, 4 * 86400)
+    _mk(temp / "claude" / "projA" / SID / "scratchpad")
+    _transcript(tmp_path, monkeypatch, OLD_SID, 60)                          # 다른 창에서 그 세션이 1분 전에도 활동
+    r = oc.run(SID)
+    assert live.exists() and any("세션 활동 중" in k["why"] for k in r["kept"])
+
+
+def test_r391_remove_respects_deadline_and_resumes(env):
+    temp, _ = env
+    big = _mk(temp / "r256-kit-big", tuple(f"d{i}/f{j}.txt" for i in range(20) for j in range(10)))
+    n1 = oc._remove(big, deadline=time.monotonic() - 1)                       # 이미 지난 예산 = 하나도 안 지움
+    assert n1 == 0 and big.exists()
+    n2 = oc._remove(big, deadline=time.monotonic() + 30)
+    assert n2 > 0 and not big.exists()

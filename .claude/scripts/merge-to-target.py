@@ -47,6 +47,8 @@ TREES = [
     ".claude/hooks", ".claude/scripts", ".claude/commands",
     ".claude/skills", ".claude/agents", "plugins", ".claude-plugin",
     ".claude/config",   # §84 공통 정책(자원 상한·자동 실행 허용 목록·검증 패턴·모델 등록) — 대상 스크립트가 읽는데 전파 안 돼 기본값으로 동작
+    # R389 (2026-11-24): 대상에도 등록된 deploy-vscode-settings 훅이 읽는 템플릿 — 전파 안 돼 IFRS 는 훅이 아무것도 못 하고 끝났다
+    "setup/templates/vscode-settings.template.json",
 ]
 SKIP_PARTS = {"__pycache__", "backups", "state", "logs", "tasks", "context-cache", "learning",
               ".pytest_cache", ".mypy_cache", ".ruff_cache"}   # 캐시 = 공통 기능 아님 (1110 §72: IFRS·ICMAI 로 전파됐던 결함)
@@ -155,6 +157,9 @@ def norm(b: bytes) -> bytes:
 def walk(root: Path, rel_tree: str):
     base = root / rel_tree
     if not base.exists():
+        return
+    if base.is_file():   # R389: 폴더 대신 파일 하나도 전파 단위로 (같은 판정 규칙 적용)
+        yield rel_tree
         return
     for p in base.rglob("*"):
         if p.is_file() and not (set(p.relative_to(root).parts) & SKIP_PARTS) and p.suffix not in SKIP_SUFFIX:

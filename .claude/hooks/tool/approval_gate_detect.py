@@ -794,7 +794,8 @@ def _run(ctx, box):
         req_id = mod.find_request("scope", scope, ("waiting",))
         # R374/R375: 실행 도구·글자만 바뀐 «같은 작업»(위험 범주 + 대상 경로가 같음) 이면 새 번호를 만들지 않는다.
         #   승인은 원래 명령(범위 지문)에만 쓰이므로 — 그 요청의 원래 명령을 그대로 실행하라고 안내 (승인 전용 X · 차단 유지)
-        op = mod.operation_key(raw_cmd, category, raw_cwd) if (not req_id and hasattr(mod, "operation_key")) else ""
+        op = (mod.operation_key(raw_cmd, category, raw_cwd, risk.get("description") or "")
+              if (not req_id and hasattr(mod, "operation_key")) else "")
         if op and arts:   # 실행 대상 내용(스크립트 해시·올라갈 HEAD 등)도 같아야 같은 작업 — 승인 뒤 내용이 바뀌면 새 요청
             import hashlib as _hl
             op = _hl.sha256((op + "\n" + json.dumps(arts, sort_keys=True, ensure_ascii=True)).encode("utf-8")).hexdigest()[:16]

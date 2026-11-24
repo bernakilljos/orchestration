@@ -99,3 +99,29 @@ def test_r372_pending_watermark_by_git_history(monkeypatch):
     assert any("지시 R2" in x for x in lines)
     assert any("리뷰 R3" in x and "changes_requested" in x for x in lines)
     assert not any("R4" in x for x in lines)
+
+
+def test_r375_poll_uses_same_git_watermark_as_pending(monkeypatch):
+    """R375 후속: 대기(poll)가 손으로 쓴 보고서를 몰라 옛 지시를 계속 «새 것» 으로 돌려 wait 가 바로 끝나던 결함."""
+    times = {".ai-collab/requests/R1.md": "100", ".ai-collab/reports/R1.md": "200",     # 보고됨 (state 기록 없음)
+             ".ai-collab/reviews/R2.md": "300", ".ai-collab/reports/R2.md": "250",      # 리뷰가 더 새로움 → 새 것
+             ".ai-collab/reviews/R3.md": "300"}                                          # approved → 할 일 없음
+
+    def fake_git(*a):
+        if a[:2] == ("log", "-1"):
+            return times.get(a[-1], "")
+        return "body"
+    saved = {}
+    monkeypatch.setattr(m, "_git", fake_git)
+    monkeypatch.setattr(m, "_remote_files", lambda: {p: "b" + p[-4] for p in times if "/reports/" not in p})
+    monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "inflight": {}})
+    monkeypatch.setattr(m, "_save_state", lambda st: saved.update(st))
+    monkeypatch.setattr(m, "cmd_queue", lambda quiet=True: 0)
+    monkeypatch.setattr(m, "_review_verdict", lambda blob: "판정 approved" if blob == "b3" else "판정 changes_requested")
+    monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0, "stderr": ""})())
+    out = []
+    monkeypatch.setattr("builtins.print", lambda *a, **k: out.append(" ".join(map(str, a))))
+    assert m.cmd_poll() == 0
+    body = "\n".join(out)
+    assert "reviews/R2.md" in body
+    assert "requests/R1.md" not in body and "reviews/R3.md" not in body

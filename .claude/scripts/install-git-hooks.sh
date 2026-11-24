@@ -38,12 +38,15 @@ echo "[install-git-hooks] pre-commit hook 설치 완료"
 fi
 
 # post-merge: git pull 후 등록된 대상 프로젝트(.claude/state/merge-targets.txt)에 kit 자동 병합
+# R389 (2026-11-24): pull 받으면 kit 자체 VS Code 설정 병합도 무조건 — 대상 목록이 없는 PC 는 종전 훅이 바로 끝나 아무것도 안 했다.
+#   표식(deploy-vscode-settings)이 없는 옛 훅은 새 내용으로 다시 설치 (이미 설치된 PC 도 갱신되게)
 PM="$PROJECT_DIR/.git/hooks/post-merge"
-if ! grep -q "merge-to-target" "$PM" 2>/dev/null; then
+if ! grep -q "deploy-vscode-settings" "$PM" 2>/dev/null; then
   cat > "$PM" <<'PM_EOF'
 #!/usr/bin/env bash
-# kit git pull → 대상 프로젝트 자동 병합 (덮어쓰기 X · 대상 수정본 보존 · 백업)
+# kit git pull → ① kit VS Code 설정 병합(템플릿에만 있는 키만 · 그 PC 값 보존) ② 대상 프로젝트 자동 병합(덮어쓰기 X · 백업 · 대상별 VS Code 설정 병합 포함)
 ROOT="$(git rev-parse --show-toplevel)"
+[ -f "$ROOT/plugins/exec_orch/hooks/deploy-vscode-settings.sh" ] && bash "$ROOT/plugins/exec_orch/hooks/deploy-vscode-settings.sh" || true
 PY="$(command -v python || command -v python3)"
 [ -n "$PY" ] && [ -f "$ROOT/.claude/state/merge-targets.txt" ] || exit 0
 mkdir -p "$ROOT/.claude/logs"
