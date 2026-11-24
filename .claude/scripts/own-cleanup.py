@@ -33,6 +33,7 @@ from pathlib import Path
 ROOT = Path(os.environ.get("CLAUDE_PROJECT_DIR") or Path(__file__).resolve().parents[2])
 STATE = ROOT / ".claude" / "state" / "own-cleanup.json"
 REG = ROOT / ".claude" / "state" / "own-artifacts.json"
+PROG = ROOT / ".claude" / "state" / "own-cleanup-progress.json"   # 지우기 시작한 끝난 세션 폴더 (예산 초과로 남은 것 이어 지우기)
 LOG = ROOT / ".claude" / "logs" / "own-cleanup.log"
 
 # kit 안 mkdtemp(prefix=…) 호출에서 온 이름 (시험 test_kit_prefixes_match_kit_code 가 대조)
@@ -153,25 +154,50 @@ RECENT_WRITE_SEC = int(os.environ.get("OWN_CLEANUP_RECENT_WRITE_SEC", "3600"))  
 _LEDGER_OPEN = ("pending", "implemented")   # request-ledger.py 의 «열린 요청» 과 같은 상태
 
 
+def _birth(p: Path) -> float:
+    st = os.stat(p)
+    return getattr(st, "st_birthtime", None) or st.st_ctime
+
+
+_PROCS: tuple | None = None   # run() 1차 판정 동안만 쓰는 프로세스 목록 (삭제 직전 재확인은 항상 새로 읽음)
+
+
+def _proc_snapshot() -> tuple:
+    import psutil
+    nd = object()
+    return (psutil.Process().username(),
+            list(psutil.process_iter(["pid", "name", "cmdline", "cwd", "username", "create_time"], ad_value=nd)), nd)
+
+
 def _users_of(p: Path, sid: str) -> str | None:
-    """그 폴더를 작업 위치·인자로 쓰거나 세션 번호를 인자로 가진 실행 중 프로세스. 확인 불가 = 사유 문자열(보존)."""
+    """그 폴더를 작업 위치·인자로 쓰거나 세션 번호를 인자로 가진 실행 중 프로세스. 확인 불가 = 사유 문자열(보존).
+    R375 3차 검토: 작업 위치·인자를 못 읽는 프로세스를 «안 씀» 으로 치지 않는다 — 같은 사용자 프로세스가 그 폴더가 생긴 뒤에
+    시작됐는데 못 읽으면 그 세션이 띄운 것일 수 있어 보존 (로그인 때 뜬 상주 프로세스는 폴더보다 먼저라 제외 · 실측 186개 중 6개)."""
     try:
         import psutil
     except ImportError:
         return "프로세스 확인 불가 (psutil 없음)"
     key = os.path.normcase(str(_real(p)))
     try:
-        procs = list(psutil.process_iter(["pid", "name", "cmdline", "cwd"]))
+        born = _birth(p)
+        me, procs, nd = _PROCS if _PROCS else _proc_snapshot()
     except Exception as e:  # noqa: BLE001
         return f"프로세스 확인 불가 ({type(e).__name__})"
+    unknown = []
     for pr in procs:
         info = pr.info
-        cwd = info.get("cwd") or ""
-        if cwd and (os.path.normcase(cwd) == key or _inside(Path(os.path.normcase(cwd)), Path(key))):
+        cwd, cmd = info.get("cwd"), info.get("cmdline")
+        if isinstance(cwd, str) and cwd and (os.path.normcase(cwd) == key or _inside(Path(os.path.normcase(cwd)), Path(key))):
             return f"사용 중 프로세스 (작업 위치 · pid {info.get('pid')} {info.get('name')})"
-        args = " ".join(info.get("cmdline") or [])
+        args = " ".join(cmd) if isinstance(cmd, list) else ""
         if args and (key in os.path.normcase(args).replace("/", os.sep) or (sid and sid in args)):
             return f"사용 중 프로세스 (인자 · pid {info.get('pid')} {info.get('name')})"
+        if (cwd is nd or cmd is nd) and info.get("username") == me:   # 사용자를 못 읽는 것 = 다른 계정·시스템 (실측 · 우리 임시 폴더 밖)
+            ct = info.get("create_time")
+            if not isinstance(ct, (int, float)) or ct >= born:
+                unknown.append(f"{info.get('pid')} {info.get('name')}")
+    if unknown:
+        return f"프로세스 확인 불가 (폴더 생성 뒤 시작 · 작업 위치 못 읽음 {unknown[:3]})"
     return None
 
 
@@ -187,39 +213,103 @@ def _open_ledger(sid: str) -> str | None:
     return f"그 세션의 열린 요청 {open_[:3]}" if open_ else None
 
 
-def _git_repos(p: Path, depth: int = 3):
-    """폴더 안 git 저장소 (링크는 따라가지 않음 · 얕게)."""
-    stack = [(str(p), 0)]
+SCAN_SEC = float(os.environ.get("OWN_CLEANUP_SCAN_SEC", "20"))   # 저장소 찾기 상한 — 넘으면 «탐색 미완료» 로 보존
+# 무시(ignored) 파일 중 다시 만들 수 있는 캐시 (환경 변수로 바꿈) — 그 밖의 무시 파일(.env·로컬 설정 등)은 보존 사유
+REGENERABLE = tuple(x for x in os.environ.get(
+    "OWN_CLEANUP_REGENERABLE", "__pycache__,.pytest_cache,.mypy_cache,.ruff_cache,node_modules,*.pyc").split(",") if x)
+
+
+def _git_repos(p: Path):
+    """폴더 안 git 저장소 전부 (깊이 제한 X · 저장소 안의 중첩 저장소도 · 링크는 따라가지 않음).
+    (경로, None) 또는 탐색이 불완전하면 (경로, 사유) — 사유가 있으면 부르는 쪽이 보존한다 (R375 3차 검토)."""
+    t0 = time.monotonic()
+    stack = [str(p)]
     while stack:
-        d, lv = stack.pop()
+        if time.monotonic() - t0 > SCAN_SEC:
+            yield p, f"탐색 미완료 ({SCAN_SEC:g}초 초과)"
+            return
+        d = stack.pop()
         try:
             with os.scandir(d) as it:
                 ents = list(it)
-        except OSError:
+        except OSError as e:
+            yield d, f"폴더 읽기 실패 ({type(e).__name__})"
             continue
         if any(e.name == ".git" for e in ents):
-            yield d
-            continue
-        if lv < depth:
-            stack.extend((e.path, lv + 1) for e in ents if e.is_dir(follow_symlinks=False) and not _is_link(e.path))
+            yield d, None
+        for e in ents:
+            if e.name == ".git":
+                continue
+            try:
+                if e.is_dir(follow_symlinks=False) and not _is_link(e.path):
+                    stack.append(e.path)
+            except OSError as ex:
+                yield e.path, f"폴더 판정 실패 ({type(ex).__name__})"
+
+
+def _regenerable(rel: str) -> bool:
+    import fnmatch
+    parts = rel.rstrip("/").split("/")
+    return any(fnmatch.fnmatch(x, pat) for x in parts for pat in REGENERABLE)
+
+
+def _git(repo: str, *args, inp: str | None = None, timeout: float = 5):
+    import subprocess
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never", GIT_ASKPASS="", SSH_ASKPASS="")
+    # --no-optional-locks: status 가 .git/index 를 고쳐 쓰면 삭제 직전 재확인이 «최근 변경» 으로 오판 (CI 실측)
+    return subprocess.run(["git", "--no-optional-locks", "-C", repo, *args], input=inp, capture_output=True, text=True,
+                          timeout=timeout, encoding="utf-8", errors="replace", env=env)
+
+
+def _repo_reason(repo: str) -> str | None:
+    """저장소 하나 — 지우면 잃는 것이 있으면 사유 (확인 실패도 사유)."""
+    import subprocess
+    try:
+        r = _git(repo, "status", "--porcelain", "--untracked-files=all", "--ignored=matching", "--ignore-submodules=none")
+        if r.returncode != 0:
+            return f"git 확인 실패 (종료 {r.returncode}) {repo}"
+        lines = [x for x in r.stdout.splitlines() if x.strip()]
+        if any(not x.startswith("!! ") for x in lines):
+            return f"커밋 안 한 변경 {repo}"
+        keep = [x[3:] for x in lines if not _regenerable(x[3:].strip('"'))]
+        if keep:
+            return f"무시된 파일 (다시 못 만들 수 있음 {keep[:3]}) {repo}"
+        r = _git(repo, "stash", "list")
+        if r.returncode != 0:
+            return f"git 확인 실패 (종료 {r.returncode}) {repo}"
+        if r.stdout.strip():
+            return f"stash 있음 {repo}"
+        # 원격 추적 ref 는 오래됐을 수 있다 → 원격에 실제로 물어본 끝 커밋만 «올라간 증거» 로 친다 (detached HEAD·태그 포함)
+        pos = ["--all"]   # HEAD(detached 포함)·브랜치·태그·원격 추적 ref 전부 — 원격이 실제로 가진 커밋만 빼고 남으면 보존
+        remotes = _git(repo, "remote").stdout.split()
+        shas = set()
+        for rm in remotes:
+            lr = _git(repo, "ls-remote", rm, timeout=15)
+            if lr.returncode != 0:
+                return f"원격 확인 실패 ({rm} 종료 {lr.returncode}) {repo}"
+            shas |= {x.split()[0] for x in lr.stdout.splitlines() if x.strip()}
+        have = []
+        if shas:
+            ck = _git(repo, "cat-file", "--batch-check", inp="\n".join(sorted(shas)) + "\n")
+            have = [x.split()[0] for x in ck.stdout.splitlines() if x.strip() and not x.endswith("missing")]
+        rl = _git(repo, "rev-list", "-1", *pos, "--stdin", inp="".join(f"^{h}\n" for h in have))
+        if rl.returncode != 0:
+            return f"git 확인 실패 (종료 {rl.returncode}) {repo}"
+        if rl.stdout.strip():
+            return f"원격에 없는 커밋 {rl.stdout.strip()[:8]} {repo}"
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return f"git 확인 실패 ({type(e).__name__}) {repo}"
+    return None
 
 
 def _unpushed(p: Path) -> str | None:
-    """안에 든 git 저장소에 커밋 안 한 변경·원격에 없는 커밋이 있으면 사유. git 실행 실패·시간 초과 = 보존."""
-    import subprocess
-    for repo in _git_repos(p):
-        for args, what in ((["status", "--porcelain"], "커밋 안 한 변경"),
-                           (["log", "--branches", "--not", "--remotes", "-1", "--format=%h"], "원격에 없는 커밋")):
-            try:
-                # status 가 .git/index 를 고쳐 쓰면 삭제 직전 재확인이 «최근 변경» 으로 오판 (CI 실측)
-                r = subprocess.run(["git", "--no-optional-locks", "-C", repo, *args], capture_output=True, text=True, timeout=5,
-                                   encoding="utf-8", errors="replace")
-            except (OSError, subprocess.TimeoutExpired) as e:
-                return f"git 확인 실패 ({type(e).__name__}) {repo}"
-            if r.returncode != 0:
-                return f"git 확인 실패 (종료 {r.returncode}) {repo}"
-            if r.stdout.strip():
-                return f"{what} {repo}"
+    """안에 든 git 저장소에 잃을 것이 있거나 탐색·확인이 불완전하면 사유 (= 보존)."""
+    for repo, err in _git_repos(p):
+        if err:
+            return f"{err} {repo}"
+        why = _repo_reason(repo)
+        if why:
+            return why
     return None
 
 
@@ -280,6 +370,22 @@ def _remove(p: Path, deadline: float | None = None) -> int:
     except OSError:
         pass
     return n
+
+
+def _load_prog() -> dict:
+    try:
+        d = json.loads(PROG.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_prog(d: dict) -> None:
+    try:
+        PROG.parent.mkdir(parents=True, exist_ok=True)
+        PROG.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+    except OSError:
+        pass
 
 
 def _registered() -> list:
@@ -389,6 +495,11 @@ def run(session: str = "", dry: bool = False, now: float | None = None) -> dict:
     now = time.time() if now is None else now
     t0 = time.monotonic()
     removed, kept, deferred = [], [], 0
+    global _PROCS
+    prog = _load_prog()
+    if not dry and any(not os.path.lexists(k) for k in prog):   # 다 지워진 것 정리
+        prog = {k: v for k, v in prog.items() if os.path.lexists(k)}
+        _save_prog(prog)
     for p, kind, idle in candidates(session, now):
         if not os.path.lexists(str(p)):
             continue
@@ -396,20 +507,36 @@ def run(session: str = "", dry: bool = False, now: float | None = None) -> dict:
             deferred += 1
             continue
         why = safe_target(p)
-        if not why:
+        resume = kind == "ended-scratchpad" and str(p) in prog
+        if not why and resume:
+            # R375 3차 검토: 이미 확인을 마치고 지우기 시작한 폴더 — 반쯤 지운 .git 은 git 확인이 실패해 영원히 남고,
+            #   지우는 동안 바뀐 폴더 시각이 «최근 변경» 으로 보인다 → 그 폴더를 쓰는 프로세스만 다시 확인하고 이어서 지운다
+            why = _users_of(p, p.parent.name)
+        elif not why:
             if kind == "ended-scratchpad":
+                try:
+                    _PROCS = _PROCS or _proc_snapshot()
+                except Exception:  # noqa: BLE001 — 실패하면 _users_of 가 직접 읽다가 «확인 불가» 로 보존
+                    _PROCS = None
                 why = busy_reason(p, p.parent.name, now)
             elif now - _newest_mtime(p) < idle:
                 why = f"사용 중 ({idle // 60}분 안에 수정)"
-        if not why and kind == "ended-scratchpad" and not dry:
+        if not why and kind == "ended-scratchpad" and not dry and not resume:
+            _PROCS = None                                        # 재확인은 지금 프로세스 목록으로
             why = busy_reason(p, p.parent.name, time.time())   # 지우기 직전 재확인 (판정과 삭제 사이 경합)
             why = f"삭제 직전 재확인: {why}" if why else None
         if why:
             kept.append({"path": str(p), "kind": kind, "why": why})
             continue
+        if not dry and kind == "ended-scratchpad":
+            prog[str(p)] = prog.get(str(p)) or int(time.time())
+            _save_prog(prog)
         n = 0 if dry else _remove(p, deadline=t0 + BUDGET_SEC)
-        removed.append({"path": str(p), "kind": kind, "items": n,
-                        "partial": bool(not dry and os.path.lexists(str(p)))})   # 남은 것은 다음 작업 종료 때 이어서
+        left = bool(not dry and os.path.lexists(str(p)))
+        if not dry and not left and prog.pop(str(p), None) is not None:
+            _save_prog(prog)
+        removed.append({"path": str(p), "kind": kind, "items": n, "partial": left})   # 남은 것은 다음 작업 종료 때 이어서
+    _PROCS = None
     if not dry:   # 등록 목록에서 사라진 것 정리
         left = [x for x in _registered() if os.path.lexists(x.get("path", ""))]
         if REG.exists():

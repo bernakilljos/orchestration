@@ -183,32 +183,35 @@ def check_integrity(data: dict, before: dict | None = None) -> list:
 #   (67건 · 대부분 붙여 넣은 리뷰 글의 '운영 DB'·'유료' 단어로 자동 분류된 것 · 승인 게이트 대기는 0건).
 #   승인 게이트(approval-gate.expire_stale)와 같은 규칙: 24시간 지난 대기 = 만료 → 원장도 저장할 때마다 동적으로 정리.
 #   현재 세션 항목은 건드리지 않음 · 완료로 바꾸지 않음(보류 · 사유·시각 기록) · 사용자가 다시 지시하면 새 요청으로 등록된다.
-def _approval_ttl_sec() -> int:
+def _approval_ttl_sec() -> int | None:
     """만료 기간 정본 = lib/config.APPROVAL_REQUEST_TTL_SEC (approval-gate.REQUEST_TTL_SEC 와 같은 값 · R375 2차 검토 P1).
-    config 는 상수만 있는 모듈이라 불러도 DB·로그 부작용 없음 · LEDGER_APPROVAL_STALE_SEC 는 원장만의 시험용 덮어쓰기.
-    정본을 못 불러오면 조용히 24시간으로 대체하지 않고 stderr 에 원인을 남긴 뒤 같은 기본값(config 기본)을 쓴다."""
-    env = os.environ.get("LEDGER_APPROVAL_STALE_SEC")
-    if env and env.isdigit() and int(env) > 0:
-        return int(env)
+    config 는 상수만 있는 모듈이라 불러도 DB·로그 부작용 없음. 정책 변경은 게이트와 같은 환경 변수
+    CLAUDE_KIT_APPROVAL_REQUEST_TTL_SEC 하나로만 (R375 3차 검토: 원장 전용 덮어쓰기 LEDGER_APPROVAL_STALE_SEC 제거 —
+    게이트와 다른 값이 될 수 있었음 · 시험은 이 함수를 monkeypatch).
+    정본을 못 읽으면 None — 정리를 건너뛰어 승인 대기를 그대로 보존하고 stderr 에 원인을 남긴다 (임의 기본값으로 보류 X)."""
     try:
         import importlib.util as _ilu
         spec = _ilu.spec_from_file_location("_kit_config", Path(__file__).resolve().parent / "lib" / "config.py")
         mod = _ilu.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        return int(mod.APPROVAL_REQUEST_TTL_SEC)
+        v = int(mod.APPROVAL_REQUEST_TTL_SEC)
+        if v <= 0:
+            raise ValueError(f"APPROVAL_REQUEST_TTL_SEC={v}")
+        return v
     except Exception as e:  # noqa: BLE001
-        print(f"[request-ledger] 승인 만료 정본(lib/config.py) 읽기 실패 {type(e).__name__}: {e} — 기본 86400초", file=sys.stderr)
-        return 86400
+        print(f"[request-ledger] 승인 만료 정본(lib/config.py) 읽기 실패 {type(e).__name__}: {e} — 이번 정리 건너뜀 (승인 대기 보존)",
+              file=sys.stderr)
+        return None
 
 
 APPROVAL_STALE_SEC = 0   # 0 = 아직 안 읽음 → 정리할 때만 읽는다 (상태줄이 원장을 불러올 때마다 approval-gate.py 를 열던 비용 제거 · test_r348)
 
 
-def _stale_sec() -> int:
+def _stale_sec() -> int | None:
     global APPROVAL_STALE_SEC
     if not APPROVAL_STALE_SEC:
-        APPROVAL_STALE_SEC = _approval_ttl_sec()
-    return APPROVAL_STALE_SEC
+        APPROVAL_STALE_SEC = _approval_ttl_sec() or 0   # 실패는 기억하지 않음 → 다음 저장 때 다시 읽음
+    return APPROVAL_STALE_SEC or None
 
 
 def _ts_age_sec(ts: str, now: datetime) -> float | None:
@@ -232,6 +235,8 @@ def expire_stale_approvals(data: dict, now: datetime | None = None) -> list:
         return []
     now = now or datetime.now()
     ttl = _stale_sec()
+    if not ttl:   # 정본을 못 읽음 = 아무것도 보류하지 않음 (보존)
+        return []
     active = set()
     for r in reqs:
         a = _ts_age_sec(r.get("ts"), now)

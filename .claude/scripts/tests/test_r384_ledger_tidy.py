@@ -97,18 +97,33 @@ def test_r375_ttl_single_source_and_env_override(monkeypatch):
         assert led._approval_ttl_sec() == g2.REQUEST_TTL_SEC == want, val    # 두 쪽이 항상 같은 값
 
 
-def test_r375_ttl_config_failure_is_reported_not_silent(monkeypatch, capsys, tmp_path):
+def test_r375_ttl_config_failure_is_reported_and_preserves(monkeypatch, capsys, tmp_path):
+    """R375 3차 검토: 정본을 못 읽으면 임의 기본값(24h)으로 보류하지 않고 승인 대기를 그대로 둔다 + 원인 기록."""
     kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
-    monkeypatch.delenv("LEDGER_APPROVAL_STALE_SEC", raising=False)
     led = _fresh("led_ttl2", kit / "request-ledger.py", monkeypatch)
     fake = tmp_path / "request-ledger.py"
     fake.write_text("", encoding="utf-8")
     (tmp_path / "lib").mkdir()
     (tmp_path / "lib" / "config.py").write_text("raise RuntimeError('broken policy')", encoding="utf-8")
-    monkeypatch.setattr(led, "__file__", str(fake))
     monkeypatch.setitem(led._approval_ttl_sec.__globals__, "__file__", str(fake))
-    assert led._approval_ttl_sec() == 86400
+    assert led._approval_ttl_sec() is None
     assert "broken policy" in capsys.readouterr().err                         # 조용히 대체하지 않음
+    data = {"requests": [_r("R1", "approval_required", uuid.uuid4().hex, 999)]}
+    assert led.expire_stale_approvals(data, NOW) == []                        # 보존
+    assert data["requests"][0]["status"] == "approval_required"
+    assert led.APPROVAL_STALE_SEC == 0                                        # 실패를 기억하지 않음 → 다음에 다시 읽음
+    (tmp_path / "lib" / "config.py").write_text("APPROVAL_REQUEST_TTL_SEC = 0", encoding="utf-8")
+    assert led._approval_ttl_sec() is None                                    # 0·음수 정책 = 잘못된 값 → 보존
+
+
+def test_r375_ledger_only_override_removed(monkeypatch):
+    """R375 3차 검토: 원장만 다른 값을 쓰게 하던 LEDGER_APPROVAL_STALE_SEC 는 더 이상 효과 없음 (게이트와 항상 같은 값)."""
+    kit = Path(__file__).resolve().parents[3] / ".claude" / "scripts"
+    monkeypatch.delenv("CLAUDE_KIT_APPROVAL_REQUEST_TTL_SEC", raising=False)
+    monkeypatch.setenv("LEDGER_APPROVAL_STALE_SEC", "60")
+    led = _fresh("led_ttl4", kit / "request-ledger.py", monkeypatch)
+    gate = _fresh("gate_ttl4", kit / "approval-gate.py", monkeypatch)
+    assert led._approval_ttl_sec() == gate.REQUEST_TTL_SEC != 60
 
 
 def test_r375_gate_ignores_foreign_config_module(monkeypatch):

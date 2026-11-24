@@ -46,6 +46,7 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(oc, "STATE", proj / ".claude/state/own-cleanup.json")
     monkeypatch.setattr(oc, "REG", proj / ".claude/state/own-artifacts.json")
     monkeypatch.setattr(oc, "LOG", proj / ".claude/logs/own-cleanup.log")
+    monkeypatch.setattr(oc, "PROG", proj / ".claude/state/own-cleanup-progress.json")
     monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
     monkeypatch.setenv("ORCHESTRATION_ROOT", str(proj))
     with sqlite3.connect(proj / ".claude/state/orca.db") as c:
@@ -534,3 +535,145 @@ def test_r375_git_check_does_not_rewrite_index(env, tmp_path, monkeypatch):
     before = os.stat(idx).st_mtime_ns
     assert oc._unpushed(ended) is None
     assert os.stat(idx).st_mtime_ns == before
+
+
+# ── R375 3차 검토 P0 (2026-11-25): 탐색 완전성·실제 원격 증거·확인 불가 = 보존 ──
+def _clean_pair(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    work = _repo_pair(ended)
+    _old(ended, 4 * 86400)
+    return ended, work
+
+
+def test_r375c_ignored_user_file_kept_regenerable_cache_removed(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / ".gitignore").write_text(".env\n__pycache__/\n", encoding="utf-8")
+    _git("add", ".", cwd=work); _git("commit", "-qm", "ign", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    (work / "__pycache__").mkdir(); (work / "__pycache__" / "x.pyc").write_bytes(b"0")
+    assert oc._unpushed(ended) is None                                   # 다시 만들 수 있는 캐시만 = 지워도 됨
+    (work / ".env").write_text("K=1", encoding="utf-8")
+    assert "무시된 파일" in (oc._unpushed(ended) or "")                     # .env 같은 무시 파일 = 보존
+
+
+def test_r375c_untracked_hidden_by_repo_config_still_kept(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    _git("config", "status.showUntrackedFiles", "no", cwd=work)          # 저장소 설정이 미추적 파일을 숨겨도
+    (work / "new.txt").write_text("x", encoding="utf-8")
+    assert "커밋 안 한 변경" in (oc._unpushed(ended) or "")
+
+
+def test_r375c_detached_head_commit_kept(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    _git("checkout", "-q", "--detach", cwd=work)
+    (work / "f.txt").write_text("d", encoding="utf-8")
+    _git("commit", "-qam", "detached", cwd=work)                         # 어느 브랜치에도 없는 커밋
+    assert "원격에 없는 커밋" in (oc._unpushed(ended) or "")
+
+
+def test_r375c_stale_remote_tracking_ref_not_trusted(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / "f.txt").write_text("2", encoding="utf-8")
+    _git("commit", "-qam", "c2", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    origin = ended.parent.parent.parent.parent / "origin.git"
+    br = _sp.run(["git", "symbolic-ref", "--short", "HEAD"], cwd=work, capture_output=True, text=True).stdout.strip()
+    _sp.run(["git", "--git-dir", str(origin), "update-ref", f"refs/heads/{br}", "HEAD~1"], check=True)   # 원격에서 c2 가 사라짐
+    assert "원격에 없는 커밋" in (oc._unpushed(ended) or "")                 # 로컬 origin/<br> 은 아직 c2 (오래된 추적 ref)
+
+
+def test_r375c_stash_kept(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / "f.txt").write_text("s", encoding="utf-8")
+    _git("stash", "-q", cwd=work)
+    assert "stash" in (oc._unpushed(ended) or "")
+
+
+def test_r375c_deep_and_nested_repos_found(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    deep = ended / "a" / "b" / "c" / "d" / "e" / "deep"
+    deep.mkdir(parents=True)
+    _sp.run(["git", "init", "-q", str(deep)], check=True)
+    (deep / "x.txt").write_text("x", encoding="utf-8")
+    assert "커밋 안 한 변경" in (oc._unpushed(ended) or "") and "deep" in oc._unpushed(ended)   # 깊이 6
+    inner = work / "vendor" / "inner"
+    inner.mkdir(parents=True)
+    _sp.run(["git", "init", "-q", str(inner)], check=True)
+    repos = [r for r, e in oc._git_repos(ended)]
+    assert str(inner) in repos and str(work) in repos                   # 저장소 안의 중첩 저장소도
+
+
+def test_r375c_unreadable_folder_or_scan_timeout_kept(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    real = os.scandir
+    bad = str(ended / "clone")
+
+    def flaky(d):
+        if str(d) == bad:
+            raise PermissionError(13, "denied")
+        return real(d)
+    monkeypatch.setattr(oc.os, "scandir", flaky)
+    assert "폴더 읽기 실패" in (oc._unpushed(ended) or "")
+    monkeypatch.setattr(oc.os, "scandir", real)
+    monkeypatch.setattr(oc, "SCAN_SEC", -1)
+    assert "탐색 미완료" in (oc._unpushed(ended) or "")
+
+
+def test_r375c_unreachable_remote_kept(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    _git("remote", "set-url", "origin", str(tmp_path / "nowhere.git"), cwd=work)
+    assert "원격 확인 실패" in (oc._unpushed(ended) or "")
+
+
+def test_r375c_unreadable_same_user_process_started_after_folder_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    import psutil
+    me = psutil.Process().username()
+
+    class P:
+        def __init__(self, info):
+            self.info = info
+
+    def fake_iter(attrs, ad_value=None):
+        return [P({"pid": 1, "name": "old", "cmdline": ad_value, "cwd": ad_value, "username": me, "create_time": 1.0}),
+                P({"pid": 2, "name": "other", "cmdline": ad_value, "cwd": ad_value, "username": ad_value,
+                   "create_time": time.time() + 9})]
+    monkeypatch.setattr(psutil, "process_iter", fake_iter)
+    assert oc._users_of(ended, OLD_SID) is None          # 폴더보다 먼저 뜬 것 · 사용자 못 읽는 것 = 제외
+    def fake_iter2(attrs, ad_value=None):
+        return [P({"pid": 3, "name": "elev", "cmdline": ad_value, "cwd": ad_value, "username": me,
+                   "create_time": time.time() + 9})]
+    monkeypatch.setattr(psutil, "process_iter", fake_iter2)
+    assert "확인 불가" in (oc._users_of(ended, OLD_SID) or "")   # 폴더 생긴 뒤 뜬 같은 사용자 프로세스를 못 읽음 = 보존
+
+
+def test_r375c_partial_delete_resumes_even_with_broken_git(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    for i in range(30):
+        (work / f"z{i}.txt").write_text("z", encoding="utf-8")
+    _git("add", ".", cwd=work); _git("commit", "-qm", "z", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    _old(ended, 4 * 86400)
+    real_remove = oc._remove
+
+    def half(p, deadline=None):                       # 예산 초과로 .git 만 반쯤 지운 상태 흉내
+        objs = work / ".git" / "objects"
+        n = real_remove(objs, deadline=None)
+        return n
+    monkeypatch.setattr(oc, "_remove", half)
+    r = oc.run(SID)
+    assert ended.exists() and r["removed"][0]["partial"]
+    assert str(ended) in oc._load_prog()
+    assert "git 확인 실패" in (oc._unpushed(ended) or "")   # 이제 일반 판정이면 영원히 보존될 상태
+    monkeypatch.setattr(oc, "_remove", real_remove)
+    r = oc.run(SID)                                       # 기록이 있어 이어서 지움 (프로세스 확인만)
+    assert not ended.exists(), _why(r)
+    assert str(ended) not in oc._load_prog()
+
+
+def test_r375c_resume_still_respects_live_process(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc._save_prog({str(ended): 1})
+    p = _sp.Popen([_sys.executable, "-c", "import time; time.sleep(30)"], cwd=str(ended))
+    try:
+        r = oc.run(SID)
+        assert ended.exists() and "사용 중 프로세스" in _why(r)
+    finally:
+        p.kill(); p.wait()
