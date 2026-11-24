@@ -179,9 +179,44 @@ def check_integrity(data: dict, before: dict | None = None) -> list:
     return probs
 
 
+# R384 (2026-11-24 사용자 "원장 정리 · 매번 호출할 때마다 정리를 안 한다"): 지난 세션의 «승인 대기» 가 끝없이 쌓였다
+#   (67건 · 대부분 붙여 넣은 리뷰 글의 '운영 DB'·'유료' 단어로 자동 분류된 것 · 승인 게이트 대기는 0건).
+#   승인 게이트(approval-gate.expire_stale)와 같은 규칙: 24시간 지난 대기 = 만료 → 원장도 저장할 때마다 동적으로 정리.
+#   현재 세션 항목은 건드리지 않음 · 완료로 바꾸지 않음(보류 · 사유·시각 기록) · 사용자가 다시 지시하면 새 요청으로 등록된다.
+APPROVAL_STALE_SEC = int(os.environ.get("LEDGER_APPROVAL_STALE_SEC", str(24 * 3600)))
+
+
+def expire_stale_approvals(data: dict, now: datetime | None = None) -> list:
+    reqs = data.get("requests") or []
+    if not reqs:
+        return []
+    cur_sess = reqs[-1].get("session_id") or ""
+    now = now or datetime.now()
+    out = []
+    for r in reqs:
+        if r.get("status") != "approval_required" or (cur_sess and r.get("session_id") == cur_sess):
+            continue
+        try:
+            age = (now - datetime.fromisoformat(str(r.get("ts") or "")[:19])).total_seconds()
+        except ValueError:
+            continue
+        if age < APPROVAL_STALE_SEC:
+            continue
+        r["status"] = "deferred"
+        r["deferred_reason"] = ("승인 대기 %d시간 경과 · 세션 종료 · 사용자 승인 원문 없음 → 자동 보류 (완료 아님 · R384)"
+                                % (APPROVAL_STALE_SEC // 3600))
+        r["deferred_at"] = now.isoformat(timespec="seconds")
+        out.append(r.get("id"))
+    return out
+
+
 def _save(data: dict) -> None:
     _guard_operational()
     LEDGER.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        expire_stale_approvals(data)
+    except Exception:  # noqa: BLE001 — 정리는 보조 · 실패해도 저장은 그대로
+        pass
     with _Lock():
         before = None
         if LEDGER.exists():
@@ -528,6 +563,12 @@ def queue_view(reqs: list, cur) -> dict:
             return "확인필요"
         if r.get("status") == "verified" and r.get("verification") == "BLOCKED":
             return "차단"
+        # R384 (2026-11-24 사용자 "현행화 안 됨"): PARTIAL 인데 Claude 가 지금 할 수 있는 열린 항목이 없으면
+        #   (남은 일이 전부 external·사용자 승인·다음 세션 관측) «다음» 이 아니라 «외부» 대기 — 원장 항목에서 동적으로 판정
+        if r.get("status") == "verified" and r.get("verification") == "PARTIAL":
+            its = r.get("items") or []
+            if not any(i.get("state") in ("open", "partial") and i.get("owner", "claude") == "claude" for i in its):
+                return "외부"
         return ""
 
     def _tag(r):

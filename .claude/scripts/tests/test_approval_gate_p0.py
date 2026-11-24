@@ -669,12 +669,12 @@ def test_r363_changed_command_mentions_waiting_request(tmp_root):
     assert _tid(r1b) == t1 and "승인 교착" not in r1b.err               # 같은 명령 = 같은 번호 · 안내 없음
     cmd2 = f"Start-Process -FilePath powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-File','{s}'"
     r2 = agd.run(_hook(cmd2, str(tmp_root)))
-    t2 = _tid(r2)                                                       # 첫 번호 = 새 요청 번호 (안내는 뒤쪽)
-    assert r2.rc == 2 and t2 != t1 and "승인 교착" in r2.err and t1 in r2.err
-    assert r2.err.index(t2) < r2.err.index("승인 교착")
-    gate.approve(t1, gate.USER_APPROVER)                               # 옛 번호 승인은 바뀐 명령에 쓰이지 않음 (교착 원인 그대로 고정)
+    # R374/R375 동작 변경: 예전엔 여기서 새 번호가 생겨 사용자가 같은 승인을 또 받았다 (그 결함을 시험이 고정하고 있었음)
+    assert r2.rc == 2 and _tid(r2) == t1 and "같은 작업" in r2.err      # 글자만 바뀐 같은 작업 = 옛 번호 그대로 · 새 번호 없음
+    assert len(gate.list_waiting()) == 1                               # 대기 요청은 처음 하나뿐 (번호 남발 없음)
+    gate.approve(t1, gate.USER_APPROVER)                               # 옛 번호 승인은 바뀐 명령에 쓰이지 않음 (승인 전용 금지 유지)
     assert agd.run(_hook(cmd2, str(tmp_root))).rc == 2
-    assert agd.run(_hook(cmd1, str(tmp_root))) is None                 # 옛 명령 글자 그대로면 1회 통과 (안내한 해결 경로)
+    assert agd.run(_hook(cmd1, str(tmp_root))) is None                 # 원래 명령 글자 그대로면 1회 통과 (안내한 해결 경로)
 
 
 def test_r363_no_notice_for_withdrawn_other_category_or_old(tmp_root):

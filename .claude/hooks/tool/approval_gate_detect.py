@@ -792,6 +792,26 @@ def _run(ctx, box):
     note = ""
     try:
         req_id = mod.find_request("scope", scope, ("waiting",))
+        # R374/R375: 실행 도구·글자만 바뀐 «같은 작업»(위험 범주 + 대상 경로가 같음) 이면 새 번호를 만들지 않는다.
+        #   승인은 원래 명령(범위 지문)에만 쓰이므로 — 그 요청의 원래 명령을 그대로 실행하라고 안내 (승인 전용 X · 차단 유지)
+        op = mod.operation_key(raw_cmd, category, raw_cwd) if (not req_id and hasattr(mod, "operation_key")) else ""
+        if op and arts:   # 실행 대상 내용(스크립트 해시·올라갈 HEAD 등)도 같아야 같은 작업 — 승인 뒤 내용이 바뀌면 새 요청
+            import hashlib as _hl
+            op = _hl.sha256((op + "\n" + json.dumps(arts, sort_keys=True, ensure_ascii=True)).encode("utf-8")).hexdigest()[:16]
+        same_op = mod.find_request("op", op, ("approved", "waiting")) if op else None
+        if same_op:
+            st = mod.status(same_op) or {}
+            orig = ((st.get("risk_detail") or {}).get("command") or "")[:300]
+            state = st.get("approval_state") or ""
+            _safe_log(log, "[%s] SAME-OP: %s | task_id=%s | op=%s | cmd=%s\n"
+                      % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, same_op, op, cmd))
+            how = ("이미 승인됨 — 원래 명령을 글자 그대로 같은 폴더에서 다시 실행하면 1회 실행된다"
+                   if state == "approved" else
+                   "사용자 승인 대기 중 — 사용자에게 같은 번호 하나만 안내 (새 번호 없음)")
+            return _block(" 위험 명령 감지 (%s): %s. 같은 대상에 대한 같은 작업 요청 %s 가 이미 있다 (%s) — 실행 도구·글자를 바꿔도 "
+                          "새 승인 번호를 만들지 않는다. 원래 명령: %s"
+                          % (category, desc, same_op, how, orig),
+                          "HITL Approval Gate — 같은 작업 요청 재사용 task_id=%s | category=%s" % (same_op, category))
         if not req_id:
             # R363 승인 교착 방지: 같은 범주 대기 요청이 이미 있으면 (명령을 바꿔 새 번호가 생기는 경우) 그 사실과 옛 번호를 함께 안내
             try:
@@ -804,7 +824,10 @@ def _run(ctx, box):
                         % ", ".join(prev))
             if mod.find_request("base", task_id, ("approved", "waiting")):
                 desc = "승인 뒤 실행 대상(스크립트 내용·올라갈 커밋 등)이 바뀌어 이전 요청을 쓰지 않음 — 새 요청 확인 후 승인 · " + desc
-            req_id = mod.new_request(cmd, category, desc, arts, task_id, scope)
+            try:
+                req_id = mod.new_request(cmd, category, desc, arts, task_id, scope, op=op)
+            except TypeError:   # 옛 approval-gate (op 인자 없음)
+                req_id = mod.new_request(cmd, category, desc, arts, task_id, scope)
             _safe_log(log, "[%s] REQUEST: %s | task_id=%s | scope=%s\n"
                       % (time.strftime("%Y-%m-%d_%H:%M:%S"), category, req_id, scope))
     except Exception as e:  # noqa: BLE001

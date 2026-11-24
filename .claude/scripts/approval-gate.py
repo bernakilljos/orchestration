@@ -204,6 +204,50 @@ def scope_key(base: str, artifacts: dict | None) -> str:
     return _h.sha256(body.encode("utf-8")).hexdigest()[:16]
 
 
+# ── R374/R375 (2026-11-24) 같은 작업 = 같은 요청 (실행 도구가 달라도) ─────────────────────
+# 같은 폴더 삭제를 rm → python shutil → PowerShell Remove-Item 으로 바꿀 때마다 명령 글자가 달라
+# 범위 지문이 바뀌고 새 승인 번호가 생겼다 (사용자가 같은 승인을 여러 번 받는 결함).
+# 작업 지문(op) = 위험 범주 + 명령이 가리키는 대상 경로(정규화 · 작업 폴더 기준 절대화) — 명령에서 동적으로 뽑는다
+# (특정 경로·번호·도구 이름을 코드에 두지 않음). 같은 op 의 대기·승인 요청이 있으면 새 번호를 만들지 않고
+# 그 요청을 안내한다. 승인은 여전히 범위 지문(scope)이 같은 «원래 명령» 에만 쓰인다 (다른 명령으로 승인 전용 X).
+_OP_PATH_RE = re.compile(
+    r"""(['"])((?:[A-Za-z]:[\\/]|/|\\\\|\.{1,2}[\\/]|~[\\/])[^'"\r\n]*)\1"""
+    r"""|(?<![\w$%{-])((?:[A-Za-z]:[\\/]|/[A-Za-z0-9_.~]|\.{1,2}[\\/]|~[\\/])[^\s'";|&()<>]*)""")
+_OP_PATH_SKIP = {"/dev/null", "nul", "/dev/stdout", "/dev/stderr"}
+
+
+def _norm_op_path(p: str, cwd: str) -> str:
+    p = p.strip().rstrip("\\/") or p.strip()
+    m = re.match(r"^/([A-Za-z])(?=/|$)", p)          # Git Bash /c/... → c:/...
+    if m:
+        p = m.group(1) + ":" + p[2:]
+    if p.startswith("~"):
+        p = os.path.expanduser(p)
+    if not re.match(r"^(?:[A-Za-z]:|\\\\|/)", p):
+        p = os.path.join(cwd or os.getcwd(), p)
+    return os.path.normpath(p).replace("\\", "/").rstrip("/").lower()
+
+
+def operation_targets(command: str, cwd: str = "") -> list:
+    """명령이 가리키는 경로 목록 (정규화 · 중복 제거 · 정렬). 리다이렉트용 장치 경로는 제외."""
+    out = set()
+    for _q, quoted, bare in _OP_PATH_RE.findall(command or ""):
+        raw = quoted or bare
+        if not raw or raw.lower() in _OP_PATH_SKIP:
+            continue
+        out.add(_norm_op_path(raw, cwd))
+    return sorted(out)
+
+
+def operation_key(command: str, category: str, cwd: str = "") -> str:
+    """위험 범주 + 대상 경로 → 작업 지문. 경로를 못 뽑으면 '' (= 기존 범위 지문만 사용)."""
+    import hashlib as _h
+    targets = operation_targets(command, cwd)
+    if not targets or not category:
+        return ""
+    return _h.sha256((category + "\n" + "\n".join(targets)).encode("utf-8")).hexdigest()[:16]
+
+
 def find_request(field: str, value: str, states: tuple) -> str | None:
     """risk_detail[field] == value 이고 approval_state 가 states 중인 가장 최근 승인 게이트 행."""
     if not value or not states:
@@ -251,11 +295,14 @@ def recent_waiting(category: str, within_sec: int = 1800, exclude_scope: str = "
     return out
 
 
-def new_request(command: str, category: str, detail: str, artifacts: dict | None, base: str, scope: str) -> str:
-    """항상 새 번호로 새 대기 요청 행을 만든다 (기존 행 수정 없음)."""
+def new_request(command: str, category: str, detail: str, artifacts: dict | None, base: str, scope: str,
+                op: str = "") -> str:
+    """항상 새 번호로 새 대기 요청 행을 만든다 (기존 행 수정 없음). op = 작업 지문 (operation_key)."""
     import hashlib as _h
     task_id = "appr-" + _h.sha256(("%s\n%s\n%s" % (scope, time.time_ns(), os.urandom(8).hex())).encode()).hexdigest()[:12]
     risk = {"command": command, "detail": detail, "base": base, "scope": scope}
+    if op:
+        risk["op"] = op
     if artifacts:
         risk["artifacts"] = artifacts
     conn = sqlite3.connect(str(get_db_path()))

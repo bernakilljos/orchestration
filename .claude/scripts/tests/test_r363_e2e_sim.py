@@ -137,9 +137,9 @@ def test_d_changed_command_notice_prevents_deadlock(tmp_root):
     r2 = agd.run(_hook(f"Start-Process -FilePath powershell -Verb RunAs -ArgumentList '-NoProfile','-File','{s}'",
                        str(tmp_root)))
     t2 = _tid(r2)
-    assert t2 != t1
-    assert "승인 교착" in r2.err and t1 in r2.err, "옛 대기 번호를 알리지 않아 승인 교착이 생김"
-    assert r2.err.index(t2) < r2.err.index(t1)          # 맨 앞 번호 = 지금 명령의 번호
+    # R374/R375 동작 변경: 글자만 바뀐 같은 작업(같은 대상·같은 내용) 은 새 번호 없이 옛 대기 번호 하나만 안내 — 교착·번호 남발 둘 다 없음
+    assert t2 == t1, "같은 작업인데 새 승인 번호가 생김 (사용자가 같은 승인을 또 받게 됨)"
+    assert "같은 작업" in r2.err and len(_rows("waiting")) == 1     # 대기 행 하나 · 원래 명령 안내
 
 
 # (e) 같은 명령 재시도 2회·5회 → 같은 번호·새 행 없음 · 일상어 재촉은 승인이 아님
