@@ -487,8 +487,14 @@ def test_r375_unpushed_commit_and_dirty_tree_kept_pushed_clean_removed(env, tmp_
     assert ended.exists() and "커밋 안 한 변경" in _why(r)
     (work / "g.txt").unlink()
     _old(ended, 4 * 86400)
-    oc.run(SID)
-    assert not ended.exists()                                    # 깨끗하고 다 올라간 복제본만 지움
+    r = oc.run(SID)
+    assert any(x["path"] == str(ended) for x in r["removed"]), _why(r)   # 깨끗하고 다 올라간 복제본만 지움
+    for _ in range(5):   # 느린 디스크(CI)에서는 시간 예산 안에 다 못 지워 다음 실행에서 이어서 지운다 (R391)
+        if not ended.exists():
+            break
+        _old(ended, 4 * 86400)
+        r = oc.run(SID)
+    assert not ended.exists(), (_why(r), r["removed"], r["deferred"])                                    # 깨끗하고 다 올라간 복제본만 지움
 
 
 def test_r375_git_failure_is_uncertain_kept(env, tmp_path, monkeypatch):
