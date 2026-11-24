@@ -521,3 +521,16 @@ def test_r375_dry_run_does_not_recheck_or_delete(env, tmp_path, monkeypatch):
     ended = _ended(env, tmp_path, monkeypatch)
     r = oc.run(SID, dry=True)
     assert ended.exists() and any(x["kind"] == "ended-scratchpad" for x in r["removed"])
+
+
+def test_r375_git_check_does_not_rewrite_index(env, tmp_path, monkeypatch):
+    """CI 실측 (run 45443022804): 미Push 확인의 git status 가 .git/index 를 새로 써 삭제 직전 재확인이 «최근 파일 변경» 으로
+    오판 → 깨끗한 복제본이 영원히 남음. git --no-optional-locks 로 index 를 쓰지 않는다."""
+    ended = _ended(env, tmp_path, monkeypatch)
+    work = _repo_pair(ended)
+    t = time.time() + 5
+    os.utime(work / "f.txt", (t, t))                              # 내용 같고 시각만 바뀜 → 일반 status 는 index 를 갱신해 씀
+    idx = work / ".git" / "index"
+    before = os.stat(idx).st_mtime_ns
+    assert oc._unpushed(ended) is None
+    assert os.stat(idx).st_mtime_ns == before

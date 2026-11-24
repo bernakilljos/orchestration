@@ -211,7 +211,8 @@ def _unpushed(p: Path) -> str | None:
         for args, what in ((["status", "--porcelain"], "커밋 안 한 변경"),
                            (["log", "--branches", "--not", "--remotes", "-1", "--format=%h"], "원격에 없는 커밋")):
             try:
-                r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, timeout=5,
+                # status 가 .git/index 를 고쳐 쓰면 삭제 직전 재확인이 «최근 변경» 으로 오판 (CI 실측)
+                r = subprocess.run(["git", "--no-optional-locks", "-C", repo, *args], capture_output=True, text=True, timeout=5,
                                    encoding="utf-8", errors="replace")
             except (OSError, subprocess.TimeoutExpired) as e:
                 return f"git 확인 실패 ({type(e).__name__}) {repo}"
