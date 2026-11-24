@@ -18,7 +18,19 @@ def test_installed_claim_blocked_when_not_installed():
     t = doc(body="관리자 실행기 **INSTALLED** · installed:true")
     assert m.truth_violations(t, installed=False)
     assert not m.truth_violations(t, installed=True)
-    assert not m.truth_violations(t, installed=None)       # 확인 불가는 위반으로 단정하지 않음
+    assert m.truth_violations(t, installed=None)           # R371 후속: 확인 불가(UNKNOWN)인데 설치 주장 = 위반
+
+
+def test_followup_multiline_delete_missing_head_fake_sha():
+    """R371 후속 리뷰 3건: 주장·경로가 다른 줄 · head 누락 · 형식만 40자리인 없는 커밋."""
+    t = doc(body="R363 결과: 삭제 완료\n대상: C:\\Windows\\System32\\powershell")
+    assert m.truth_violations(t, exists=lambda p: True)
+    assert not m.truth_violations(t, exists=lambda p: False)
+    no_head = '---\nrequest_id: "R1"\nstatus: "PASS"\n---\n# 보고\n'
+    assert any("누락" in v for v in m.truth_violations(no_head))
+    fake = doc("PASS", head="0" * 40)
+    assert any("없는 커밋" in v for v in m.truth_violations(fake, commit_exists=lambda s: False))
+    assert not m.truth_violations(doc("PASS"), commit_exists=lambda s: True)
 
 
 def test_not_installed_statement_is_not_claim():

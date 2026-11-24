@@ -250,27 +250,40 @@ def _probe_installed():
         return None
 
 
-def truth_violations(text: str, installed=None, exists=os.path.exists, gate_status: str = "") -> list:
-    """보고서 본문과 실제 상태 대조 → 위반 목록 (빈 목록 = 통과). 사실값은 인자로 받아 시험에서 바꿔 끼운다."""
+def _commit_exists(sha: str) -> bool:
+    return _git("cat-file", "-t", sha) == "commit"
+
+
+def truth_violations(text: str, installed=None, exists=os.path.exists, gate_status: str = "",
+                     commit_exists=_commit_exists) -> list:
+    """보고서 본문과 실제 상태 대조 → 위반 목록 (빈 목록 = 통과). 사실값은 인자로 받아 시험에서 바꿔 끼운다.
+    R371 후속 리뷰: 설치 상태 UNKNOWN 인데 설치 주장 · 삭제 주장과 경로가 다른 줄 · head 누락 · 형식만 맞는 가짜 SHA 도 막는다."""
     fm = _frontmatter(text) or {}
     status = str(fm.get("status") or "").upper()
-    head = str(fm.get("head_commit") or "")
+    head = str(fm.get("head_commit") or "").strip()
+    lines = text.splitlines()
     out = []
-    if installed is False:
-        for ln in text.splitlines():
-            if _CLAIM_INSTALLED.search(ln) and not re.search(r"installed\s*[:=]\s*false|NOT_INSTALLED|미설치", ln, re.I):
+    for ln in lines:
+        if _CLAIM_INSTALLED.search(ln) and not re.search(r"installed\s*[:=]\s*false|NOT_INSTALLED|미설치", ln, re.I):
+            if installed is False:
                 out.append(f"설치 주장인데 실측 installed:false — {ln.strip()[:100]}")
-                break
-    for ln in text.splitlines():
+            elif installed is None:
+                out.append(f"설치 상태 확인 불가(UNKNOWN)인데 설치 주장 — {ln.strip()[:100]}")
+            break
+    for i, ln in enumerate(lines):
         if _CLAIM_DELETED.search(ln):
-            for p in _WIN_PATH.findall(ln):
+            near = " ".join(lines[max(0, i - 1):i + 3])          # 주장과 경로가 다른 줄(앞 1·뒤 2줄)이어도 대조
+            for p in dict.fromkeys(_WIN_PATH.findall(near)):
                 if exists(p.rstrip(".")):
                     out.append(f"삭제 주장인데 대상이 아직 있음(Test-Path True) — {p}")
-    body_running = any(_RUNNING.search(ln) for ln in text.splitlines())
+    body_running = any(_RUNNING.search(ln) for ln in lines)
     if status == "PASS" and (gate_status.lower() == "running" or body_running):
         out.append("회귀 게이트가 RUNNING(진행 중)인데 상태 PASS")
-    if head and not _HEX40.match(head) and (status == "PASS" or _CLAIM_DEPLOYED.search(text)):
-        out.append(f"head_commit 이 실제 40자리 SHA 가 아님({head}) — PASS·DEPLOYED·DONE 주장 불가")
+    claims_done = status == "PASS" or bool(_CLAIM_DEPLOYED.search(text))
+    if claims_done and not _HEX40.match(head):
+        out.append(f"head_commit 이 실제 40자리 SHA 가 아님({head or '누락'}) — PASS·DEPLOYED·DONE 주장 불가")
+    elif claims_done and not commit_exists(head):
+        out.append(f"head_commit {head[:12]} 이 저장소에 없는 커밋 — PASS·DEPLOYED·DONE 주장 불가")
     return out
 
 
