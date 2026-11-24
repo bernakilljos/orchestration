@@ -32,6 +32,7 @@ def _load(name, path):
 gate = _load("gate_r258", KIT / ".claude/scripts/approval-gate.py")
 oc = _load("oc_r258", KIT / ".claude/scripts/own-cleanup.py")
 SID = "11111111-2222-3333-4444-555555555555"
+REAL_BIRTH = oc._birth
 OLD_SID = "99999999-8888-7777-6666-555555555555"
 
 
@@ -54,6 +55,9 @@ def env(tmp_path, monkeypatch):
                   "created_at INTEGER NOT NULL, completed_at INTEGER, approval_state TEXT DEFAULT 'not_required', "
                   "risk_category TEXT, risk_detail TEXT, approved_at INTEGER, approved_by TEXT)")
     monkeypatch.setattr(oc, "_gate", lambda: gate)
+    # 시험 폴더는 방금 만들어져 같은 PC·CI 러너의 무관한 프로세스(작업 위치 못 읽음)가 «폴더 생성 뒤 시작» 규칙에 걸린다
+    #   (CI run 45507681757 · 로컬 find.exe/bash.exe) → 기본은 생성 시각 고정 · 규칙 자체는 real_birth 시험이 검증
+    monkeypatch.setattr(oc, "_birth", lambda p: time.time() + 86400)
     return temp, proj
 
 
@@ -243,7 +247,7 @@ def test_time_budget_defers_rest_to_next_run(env, monkeypatch):
     assert r["deferred"] == 3 and all(p.exists() for p in olds)
     monkeypatch.setattr(oc, "BUDGET_SEC", 6.0)
     r = oc.run(SID)
-    assert r["deferred"] == 0 and not any(p.exists() for p in olds)
+    assert r["deferred"] == 0 and not any(p.exists() for p in olds), r["kept"]
 
 
 # R297·R298 쌓이는 것 규칙 정리 — 규칙 파일(base+glob) 로만 판정 · base 밖 불가 · 규칙 밖 큰 폴더는 기록만
@@ -387,8 +391,8 @@ import sys as _sys  # noqa: E402
 
 def _ended(env, tmp_path, monkeypatch, files=("a.txt",), real_birth=False):
     temp, _ = env
-    if not real_birth:   # 같은 PC 에서 시험 뒤에 뜬 무관한 프로세스(다른 세션의 find·bash)가 «폴더 생성 뒤 시작» 규칙에 걸리지 않게 — 규칙 자체는 전용 시험
-        monkeypatch.setattr(oc, "_birth", lambda p: time.time() + 86400)
+    if real_birth:       # «폴더 생성 뒤 시작» 규칙을 직접 보는 시험만 실제 생성 시각 (기본 고정은 env fixture)
+        monkeypatch.setattr(oc, "_birth", REAL_BIRTH)
     ended = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad", files)
     _old(ended, 4 * 86400)
     _mk(temp / "claude" / "projA" / SID / "scratchpad")
