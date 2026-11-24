@@ -2395,3 +2395,13 @@ def test_r357_merge_settings_retires_folded_edit_hooks():
     assert len(logs) == 1 and "bash -c" not in logs[0]                             # 새 형식 1개만
     assert any("target-only.sh" in c for c in cmds)                                # 대상 고유 훅은 유지
     assert "settings.hooks 대체로 제거 4" in rep
+
+
+def test_r372_merge_settings_env_mcp_timeout_only_if_missing():
+    """R372: 전역 MCP 공유 → 대상에도 MCP_TIMEOUT · 허용 목록 키만 · 대상 값 보존 · kit 고유 운영값(자동 압축 %)은 안 옮김."""
+    m = _m2t_mod()
+    kit = {"hooks": {}, "env": {"MCP_TIMEOUT": "90000", "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"}}
+    out = m.merge_settings(kit, {"hooks": {}, "env": {"A": "1"}}, [])
+    assert out["env"] == {"A": "1", "MCP_TIMEOUT": "90000"}
+    assert m.merge_settings(kit, {"hooks": {}, "env": {"MCP_TIMEOUT": "120000"}}, [])["env"] == {"MCP_TIMEOUT": "120000"}
+    assert m.merge_settings(kit, out, []) == out

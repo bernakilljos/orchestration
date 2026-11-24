@@ -215,6 +215,9 @@ def _retire(th: dict, ev: str, spec: dict) -> int:
     return retired_n
 
 
+ENV_PROPAGATE = ("MCP_TIMEOUT",)   # 대상에도 필요한 env 만 (자동 압축 % 같은 kit 고유 운영값은 옮기지 않음)
+
+
 def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     out = json.loads(json.dumps(tgt))
     # hooks: event 별 command 합집합 (대상 순서 유지, kit 것은 뒤에 append)
@@ -322,6 +325,13 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     add_allow = [a for a in ka if a not in ta]
     ta.extend(add_allow)
     report.append(f"settings.permissions.allow +{len(add_allow)}")
+    # R372: 전역 MCP 설정은 모든 프로젝트가 공유 → 기동 한도(MCP_TIMEOUT)도 대상에 필요 · 허용 목록 키만 · 없을 때만 추가 (대상 값 보존)
+    kenv = kit.get("env") or {}
+    tenv = out.setdefault("env", {})
+    add_env = [k for k in ENV_PROPAGATE if k in kenv and k not in tenv]
+    for k in add_env:
+        tenv[k] = kenv[k]
+    report.append(f"settings.env +{len(add_env)}")
     # statusLine: 없거나 전역 옛 스크립트를 가리키면 kit 포인터로
     sl = (out.get("statusLine") or {}).get("command", "")
     if not sl or ".claude/statusline_context.py" in sl.replace("\\", "/") and "$CLAUDE_PROJECT_DIR" not in sl:

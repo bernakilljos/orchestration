@@ -410,6 +410,48 @@ def _ack(st: dict, path: str, blob: str) -> None:
     st.setdefault("inflight", {}).pop(path, None)
 
 
+def _report_newer_on_remote(rid: str, path: str) -> bool:
+    """origin/main 에서 reports/<rid>.md 의 마지막 커밋이 지시·리뷰 파일의 마지막 커밋보다 나중이면 True (그 판은 보고됨)."""
+    rep = _git("log", "-1", "--format=%ct", "origin/main", "--", f".ai-collab/reports/{rid}.md").strip()
+    src = _git("log", "-1", "--format=%ct", "origin/main", "--", path).strip()
+    return bool(rep.isdigit() and src.isdigit() and int(rep) > int(src))
+
+
+def pending_lines(fetch_timeout: float = 8.0) -> list:
+    """R372: 세션 시작용 읽기 전용 확인 — 처리 확정(seen) 안 된 requests/·reviews/ 를 한 줄씩 (inflight·state 쓰기 X).
+    fetch 가 안 되면 이미 받아 둔 origin/main 기준으로 (오프라인이어도 아는 만큼은 알린다)."""
+    out = []
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True,
+                           timeout=fetch_timeout)
+        if r.returncode != 0:
+            out.append("(원격 확인 실패 — 마지막으로 받아 둔 origin/main 기준)")
+    except (subprocess.SubprocessError, OSError):
+        out.append("(원격 확인 시간 초과 — 마지막으로 받아 둔 origin/main 기준)")
+    st = _state()
+    seen, handled = st.get("seen", {}), st.get("handled", {})
+    items = []
+    for path, blob in sorted(_remote_files().items()):
+        if seen.get(path) == blob:
+            continue
+        m = re.fullmatch(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md", path)
+        if not m:
+            continue
+        kind, rid = m.groups()
+        if kind == "requests" and (rid in handled and path not in seen or _reported_after_change(st, rid, path)):
+            continue
+        if _report_newer_on_remote(rid, path):   # 워터마크 = git 이력 (세션·state 와 무관): 이 판 뒤에 보고서가 올라갔으면 처리된 판
+            continue
+        if kind == "reviews":
+            v = _review_verdict(blob) or "판정 없음"
+            if v.endswith("approved"):
+                continue
+            items.append(f"- 리뷰 {rid}: {v} → 지적 사항 수정·시험·push·보고 (`{path}`)")
+        else:
+            items.append(f"- 지시 {rid}: 미처리 → 읽고 실행 (`{path}`)")
+    return (out + items) if items else []
+
+
 def cmd_poll() -> int:
     """R330 5분 주기 확인 1회분 — origin 을 받아 requests/·reviews/ 에서 아직 처리 확정 안 된 파일만 알린다.
     새 파일 있음 = 0 (내용 출력 · «처리 중» 표시) · 없음·처리 중만 = 3 · fetch 실패 = 2. 실행·승인으로 간주하지 않는다.
@@ -717,6 +759,10 @@ def main(argv: list) -> int:
                           opts.get("--reason", ""))
     if op == "check-requests":
         return cmd_check_requests()
+    if op == "pending":
+        lines = pending_lines()
+        print("\n".join(lines) if lines else "[ai-collab] 미처리 지시·리뷰 없음")
+        return 0 if lines else 3
     if op == "truth-check" and len(argv) >= 2:
         return max(cmd_truth_check(t) for t in argv[1:])
     if op == "prune":

@@ -173,6 +173,22 @@ def main():
                        "`python .claude/scripts/auto-save-next-actions.py manual-clear`)\n\n")
     except Exception as _e:
         header += f"\n## ★ 이어서 할 일 읽기 실패 — .claude/state/next-actions.md 직접 확인 ({type(_e).__name__})\n\n"
+    # R372: 새 세션이 ChatGPT 리뷰(changes_requested)·새 지시·공식 변경 알림을 못 읽고 «할 일 없음» 으로 답하던 것 →
+    #   협업 폴더 미처리(git 이력 워터마크 · 읽기 전용)와 changelog-new 를 맨 위에 붙인다 (실행 중 0 ≠ 미완료 0)
+    top = ""
+    try:
+        _sp2 = _ilu.spec_from_file_location("_ai_collab", Path(__file__).resolve().parent / "ai-collab-report.py")
+        _ac = _ilu.module_from_spec(_sp2)
+        _sp2.loader.exec_module(_ac)
+        _pend = _ac.pending_lines()
+        if _pend:
+            top += "\n## ★ 협업 폴더 미처리 (ChatGPT 지시·리뷰) — 먼저 읽고 실행\n" + "\n".join(_pend[:20]) + "\n"
+    except Exception as _e:
+        top += f"\n## ★ 협업 폴더 확인 실패 ({type(_e).__name__}) — `python .claude/scripts/ai-collab-report.py pending` 직접 실행\n"
+    if (ROOT / ".claude" / "state" / "changelog-new.md").is_file():
+        top += ("\n## ★ 공식 변경 알림 미처리 — `.claude/state/changelog-new.md` 와 `changelog-cache/` 의 새 내용(.prev 대비)을 읽고 "
+                "영향 있는 것만 반영 후 알림 파일 삭제\n")
+    header = header.replace("\n## ★ 이어서 할 일", top + "\n## ★ 이어서 할 일", 1) if top and "\n## ★ 이어서 할 일" in header else header + top
     # 사용자 지시 '--json' 시 SessionStart hook JSON 직접 반환 (shell escape 우회)
     if "--json" in sys.argv:
         import json as _j

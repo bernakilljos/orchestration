@@ -639,7 +639,8 @@
     "claude-haiku-4-5"
   ],
   "env": {
-    "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1"
+    "CLAUDE_CODE_ENABLE_TODO_TOOLS": "1",
+    "MCP_TIMEOUT": "90000"
   },
   "outputStyle": "concise",
   "keybindingFlavor": "readline",

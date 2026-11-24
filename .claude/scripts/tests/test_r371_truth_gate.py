@@ -62,3 +62,28 @@ def test_cli_truth_check_exit_code(tmp_path):
     good.write_text(doc("PARTIAL"), encoding="utf-8")
     assert m.main(["truth-check", str(bad)]) == 1
     assert m.main(["truth-check", str(good)]) == 0
+
+
+def test_r372_pending_watermark_by_git_history(monkeypatch):
+    """R372: 세션 시작 미처리 목록 — 보고서가 지시·리뷰보다 나중에 올라갔으면 처리된 판 · 리뷰 approved 는 제외."""
+    times = {".ai-collab/requests/R1.md": "100", ".ai-collab/reports/R1.md": "200",       # 보고됨
+             ".ai-collab/requests/R2.md": "300", ".ai-collab/reports/R2.md": "200",       # 보고 뒤 지시가 바뀜
+             ".ai-collab/reviews/R3.md": "500", ".ai-collab/reports/R3.md": "400",        # 리뷰가 더 새로움
+             ".ai-collab/reviews/R4.md": "500"}
+
+    def fake_git(*a):
+        if a[:2] == ("log", "-1"):
+            return times.get(a[-1], "")
+        if a[0] == "fetch":
+            return ""
+        return ""
+    monkeypatch.setattr(m, "_git", fake_git)
+    monkeypatch.setattr(m, "_remote_files", lambda: {p: "b" + p[-4] for p in times if "/reports/" not in p})
+    monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "requests": {}})
+    monkeypatch.setattr(m, "_review_verdict", lambda blob: "판정 approved" if blob == "b4" else "판정 changes_requested")
+    monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0})())
+    lines = m.pending_lines()
+    assert not any("R1" in x for x in lines)
+    assert any("지시 R2" in x for x in lines)
+    assert any("리뷰 R3" in x and "changes_requested" in x for x in lines)
+    assert not any("R4" in x for x in lines)
