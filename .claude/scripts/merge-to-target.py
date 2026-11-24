@@ -513,6 +513,7 @@ def main() -> int:
                 idx.parent.mkdir(parents=True, exist_ok=True)
                 with open(idx, "a", encoding="utf-8") as f:
                     f.write(line)
+    _merge_vscode_settings(target, backup, apply, report)
 
     if apply:
         man_p.parent.mkdir(parents=True, exist_ok=True)
@@ -560,6 +561,53 @@ def _settings_delta(before: dict, after: dict) -> list:
         if k != "hooks" and before.get(k) != after.get(k):
             out.append(f"    ~ {k}")
     return out
+
+
+def _merge_vscode_settings(target: Path, backup: Path, apply: bool, report: list) -> None:
+    """VS Code 성능 설정 (setup/templates/vscode-settings.template.json) — 대상 .vscode/settings.json 에 빠진 키만 채움.
+    2026-11-24: 종전 SessionStart hook 은 파일이 있으면 건너뛰고 · 템플릿이 대상에 없어 4곳 모두 미적용이었다.
+    대상 값은 그대로 (dict 는 빠진 하위 키만 · list 는 빠진 항목만) · python.defaultInterpreterPath 는 대상 고유라 제외."""
+    tp = KIT / "setup" / "templates" / "vscode-settings.template.json"
+    if not tp.exists():
+        return
+    try:
+        tpl = json.loads(tp.read_text(encoding="utf-8-sig"))
+    except ValueError:
+        report.append("vscode 템플릿 파싱 실패 — 건너뜀")
+        return
+    tpl.pop("python.defaultInterpreterPath", None)
+    dst = target / ".vscode" / "settings.json"
+    cur: dict = {}
+    if dst.exists():
+        try:
+            cur = json.loads(re.sub(r"^\s*//.*$", "", dst.read_text(encoding="utf-8-sig"), flags=re.M) or "{}")
+        except ValueError:
+            report.append(f"vscode 설정 파싱 실패(대상 보존) {dst}")
+            return
+    added = 0
+    for k, v in tpl.items():
+        if k not in cur:
+            cur[k] = v
+            added += 1
+        elif isinstance(v, dict) and isinstance(cur[k], dict):
+            for sk, sv in v.items():
+                if sk not in cur[k]:
+                    cur[k][sk] = sv
+                    added += 1
+        elif isinstance(v, list) and isinstance(cur[k], list):
+            for item in v:
+                if item not in cur[k]:
+                    cur[k].append(item)
+                    added += 1
+    if not added:
+        return
+    report.append(f"vscode 설정 +{added} → {dst}")
+    if apply:
+        if dst.exists():
+            backup.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(dst, backup / "vscode-settings.json")
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(json.dumps(cur, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def _merge_settings_file(target: Path, backup: Path, apply: bool, report: list, show: bool = False) -> bool:
