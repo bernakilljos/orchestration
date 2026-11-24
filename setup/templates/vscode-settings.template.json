@@ -16,7 +16,15 @@
     "**/frontend/**",
     "**/.claude/**",
     "**/.venv/**",
-    "**/venv/**"
+    "**/venv/**",
+    "**/_archive/**",
+    "**/_svn_mirror/**",
+    "**/*_bk/**",
+    "**/*_bk_*/**",
+    "**/_bk-*/**",
+    "**/*backup*/**",
+    "**/.claude_backup*/**",
+    "**/.claude/backups/**"
   ],
   "files.watcherExclude": {
     "**/.repair-sandbox/**": true,
