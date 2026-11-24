@@ -354,7 +354,7 @@ def test_r391_ended_session_judged_by_transcript_not_touched_files(env, tmp_path
     _old(ended, 4 * 86400)
     (ended / "clone/.git/objects/de/x").write_text("y", encoding="utf-8")   # 바깥 도구가 2시간 전에 건드림 (종전: 영원히 «사용 중»)
     _old(ended / "clone/.git/objects/de/x", 2 * 3600)
-    monkeypatch.setattr(oc, "_unpushed", lambda p: None)   # .git 흉내 폴더 (실제 저장소 아님) — git 판정은 아래 R375 시험
+    monkeypatch.setattr(oc, "_unpushed", lambda p, deadline=None: None)   # .git 흉내 폴더 (실제 저장소 아님) — git 판정은 아래 R375 시험
     _mk(temp / "claude" / "projA" / SID / "scratchpad")
     _transcript(tmp_path, monkeypatch, OLD_SID, 4 * 86400)                   # 세션 기록은 4일 전에 끝남
     oc.run(SID)
@@ -385,8 +385,10 @@ import subprocess as _sp  # noqa: E402
 import sys as _sys  # noqa: E402
 
 
-def _ended(env, tmp_path, monkeypatch, files=("a.txt",)):
+def _ended(env, tmp_path, monkeypatch, files=("a.txt",), real_birth=False):
     temp, _ = env
+    if not real_birth:   # 같은 PC 에서 시험 뒤에 뜬 무관한 프로세스(다른 세션의 find·bash)가 «폴더 생성 뒤 시작» 규칙에 걸리지 않게 — 규칙 자체는 전용 시험
+        monkeypatch.setattr(oc, "_birth", lambda p: time.time() + 86400)
     ended = _mk(temp / "claude" / "projA" / OLD_SID / "scratchpad", files)
     _old(ended, 4 * 86400)
     _mk(temp / "claude" / "projA" / SID / "scratchpad")
@@ -509,7 +511,7 @@ def test_r375_recheck_right_before_delete(env, tmp_path, monkeypatch):
     calls = []
     real = oc.busy_reason
 
-    def flip(p, sid, now):                                       # 판정 땐 한가 → 지우기 직전 워커가 붙음 (경합)
+    def flip(p, sid, now, deadline=None):                                       # 판정 땐 한가 → 지우기 직전 워커가 붙음 (경합)
         calls.append(1)
         return None if len(calls) == 1 else "사용 중 프로세스 (경합)"
     monkeypatch.setattr(oc, "busy_reason", flip)
@@ -550,7 +552,10 @@ def test_r375c_ignored_user_file_kept_regenerable_cache_removed(env, tmp_path, m
     (work / ".gitignore").write_text(".env\n__pycache__/\n", encoding="utf-8")
     _git("add", ".", cwd=work); _git("commit", "-qm", "ign", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
     (work / "__pycache__").mkdir(); (work / "__pycache__" / "x.pyc").write_bytes(b"0")
-    assert oc._unpushed(ended) is None                                   # 다시 만들 수 있는 캐시만 = 지워도 됨
+    assert "무시된 파일" in (oc._unpushed(ended) or "")                     # 4차 검토: 이름만 맞고 원본 소스 없음 = 보존
+    (work / "x.py").write_text("", encoding="utf-8")
+    _git("add", ".", cwd=work); _git("commit", "-qm", "src", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    assert oc._unpushed(ended) is None                                   # 다시 만들 수 있다는 증거(옆 원본 소스)까지 = 지워도 됨
     (work / ".env").write_text("K=1", encoding="utf-8")
     assert "무시된 파일" in (oc._unpushed(ended) or "")                     # .env 같은 무시 파일 = 보존
 
@@ -624,13 +629,16 @@ def test_r375c_unreachable_remote_kept(env, tmp_path, monkeypatch):
 
 
 def test_r375c_unreadable_same_user_process_started_after_folder_kept(env, tmp_path, monkeypatch):
-    ended = _ended(env, tmp_path, monkeypatch)
+    ended = _ended(env, tmp_path, monkeypatch, real_birth=True)
     import psutil
     me = psutil.Process().username()
 
     class P:
         def __init__(self, info):
             self.info = info
+
+        def is_running(self):
+            return True
 
     def fake_iter(attrs, ad_value=None):
         return [P({"pid": 1, "name": "old", "cmdline": ad_value, "cwd": ad_value, "username": me, "create_time": 1.0}),
@@ -677,3 +685,162 @@ def test_r375c_resume_still_respects_live_process(env, tmp_path, monkeypatch):
         assert ended.exists() and "사용 중 프로세스" in _why(r)
     finally:
         p.kill(); p.wait()
+
+
+# ── R375 4차 검토 P0·P1 (2026-11-25): 재개 안전성 · 진행 기록 원자성 · 동시 실행 · 오류 = 보존 · 예산 공유 ──
+def _rec(p, t):
+    return {"t": t, **oc._identity(p)}
+
+
+def test_r375d_resume_record_for_recreated_path_is_ignored(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc._save_prog({str(ended): {"t": time.time() - 100, "ino": 1, "birth": 1.0}})   # 같은 경로 · 다른 폴더의 기록
+    _sp.run(["git", "init", "-q", str(ended / "repo")], check=True)
+    (ended / "repo" / "x.txt").write_text("x", encoding="utf-8")
+    _old(ended, 4 * 86400)
+    r = oc.run(SID)
+    assert ended.exists() and "커밋 안 한 변경" in _why(r)               # 재개 대신 일반 판정 → 보존
+    assert str(ended) not in oc._load_prog()
+
+
+def test_r375d_resume_kept_when_new_file_after_start(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc._save_prog({str(ended): _rec(ended, time.time() - 100)})
+    (ended / "new.txt").write_text("after", encoding="utf-8")            # 중단 뒤 새 파일
+    r = oc.run(SID)
+    assert ended.exists() and "삭제 시작 뒤 새·바뀐 파일" in _why(r)
+
+
+def test_r375d_resume_kept_when_session_active_after_start(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc._save_prog({str(ended): _rec(ended, time.time() - 100)})
+    _transcript(tmp_path, monkeypatch, OLD_SID, 10)                      # 중단 뒤 그 세션이 다시 움직임
+    r = oc.run(SID)
+    assert ended.exists() and "세션 활동" in _why(r)
+
+
+def test_r375d_resume_kept_when_ledger_open(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    _, proj = env
+    oc._save_prog({str(ended): _rec(ended, time.time() - 100)})
+    (proj / ".claude/state/request-ledger.json").write_text(
+        '{"requests":[{"id":"R9","session_id":"%s","status":"pending"}]}' % OLD_SID, encoding="utf-8")
+    r = oc.run(SID)
+    assert ended.exists() and "열린 요청" in _why(r)
+
+
+def test_r375d_progress_save_failure_does_not_delete(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    monkeypatch.setattr(oc, "_save_prog", lambda d: False)
+    r = oc.run(SID)
+    assert ended.exists() and "재개 기록 저장 실패" in _why(r)
+
+
+def test_r375d_progress_save_is_atomic(env):
+    assert oc._save_prog({"a": 1}) and oc._load_prog() == {"a": 1}
+    assert not list(oc.PROG.parent.glob("*.tmp"))                       # 임시 파일 안 남음 (교체 방식)
+
+
+def test_r375d_concurrent_run_locked_out_dead_lock_taken_over(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    p = _sp.Popen([_sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        oc._lock_path().write_text(str(p.pid), encoding="utf-8")         # 살아 있는 다른 정리 실행
+        r = oc.run(SID)
+        assert ended.exists() and "잠금" in _why(r)
+    finally:
+        p.kill(); p.wait()
+    r = oc.run(SID)                                                      # 주인이 죽은 잠금 = 넘겨받음
+    assert not ended.exists(), _why(r)
+    assert not oc._lock_path().exists()
+
+
+def test_r375d_remote_and_catfile_exit_codes_fail_closed(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    real = oc._git
+
+    def bad(sub):
+        def g(repo, *a, **k):
+            r = real(repo, *a, **k)
+            if a and a[0] == sub:
+                r.returncode = 1
+            return r
+        return g
+    monkeypatch.setattr(oc, "_git", bad("remote"))
+    assert "remote 종료" in (oc._unpushed(ended) or "")
+    monkeypatch.setattr(oc, "_git", bad("cat-file"))
+    assert "cat-file 종료" in (oc._unpushed(ended) or "")
+
+
+def test_r375d_unreadable_subfolder_in_mtime_scan_kept(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch, ("a.txt", "sub/b.txt"))
+    real = os.scandir
+    bad = str(ended / "sub")
+    monkeypatch.setattr(oc.os, "scandir", lambda d: (_ for _ in ()).throw(PermissionError(13, "x")) if str(d) == bad else real(d))
+    r = oc.run(SID)
+    assert ended.exists() and "변경 확인 불완전" in _why(r)
+
+
+def test_r375d_kit_temp_in_use_by_process_kept(env):
+    temp, _ = env
+    d = _mk(temp / "r256-kit-busy")
+    _old(d, 2 * 3600)
+    p = _sp.Popen([_sys.executable, "-c", "import time; time.sleep(30)"], cwd=str(d))
+    try:
+        r = oc.run(SID)
+        assert d.exists() and "사용 중 프로세스" in _why(r)
+    finally:
+        p.kill(); p.wait()
+
+
+def test_r375d_shared_deadline_stops_git_and_scan(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    assert "시간 예산 소진" in (oc._repo_reason(str(work), deadline=time.monotonic() + 0.05) or "")
+    assert "시간 예산 소진" in (oc._unpushed(ended, deadline=time.monotonic() - 1) or "")
+    assert "시간 예산 소진" in (oc.busy_reason(ended, OLD_SID, time.time(), deadline=time.monotonic() - 1) or "")
+
+
+def test_r375d_same_network_remote_queried_once_per_run(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    origin = ended.parent.parent.parent.parent / "origin.git"
+    url = origin.as_uri()                                                # file:// = 주소로 공유되는 원격
+    work2 = ended / "clone2"
+    _sp.run(["git", "clone", "-q", url, str(work2)], check=True, capture_output=True)
+    _git("remote", "set-url", "origin", url, cwd=work)
+    calls = []
+    real = oc._git
+
+    def count(repo, *a, **k):
+        if a and a[0] == "ls-remote":
+            calls.append(repo)
+        return real(repo, *a, **k)
+    monkeypatch.setattr(oc, "_git", count)
+    oc._REMOTE_TIPS.clear()
+    assert oc._unpushed(ended) is None and len(calls) == 1               # 복제본 2개 · 원격 조회 1회
+    oc._REMOTE_TIPS.clear()
+
+
+def test_r375d_node_modules_needs_package_json(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    _git("add", ".", cwd=work); _git("commit", "-qm", "ign", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    (work / "node_modules" / "m").mkdir(parents=True); (work / "node_modules" / "m" / "i.js").write_text("", encoding="utf-8")
+    assert "무시된 파일" in (oc._unpushed(ended) or "")                     # 패키지 정의 없음 = 다시 못 만듦
+    (work / "package.json").write_text("{}", encoding="utf-8")
+    _git("add", ".", cwd=work); _git("commit", "-qm", "pkg", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    assert oc._unpushed(ended) is None
+
+
+def test_r375d_unreadable_process_that_already_exited_is_not_a_user(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch, real_birth=True)
+    import psutil
+    me = psutil.Process().username()
+
+    class Gone:
+        info = {"pid": 7, "name": "find.exe", "cmdline": None, "cwd": None, "username": me, "create_time": time.time() + 9}
+
+        def is_running(self):
+            return False
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs, ad_value=None: [
+        type("G", (Gone,), {"info": {**Gone.info, "cmdline": ad_value, "cwd": ad_value}})()])
+    assert oc._users_of(ended, OLD_SID) is None          # 그새 끝난 프로세스 = 폴더를 못 씀
