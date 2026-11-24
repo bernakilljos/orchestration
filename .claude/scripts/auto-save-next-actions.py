@@ -64,7 +64,7 @@ EMPTY_MARKERS = re.compile(r"\b(완료|done|끝|empty|없음|비움|clear)\b", r
 _RX_BLOCK = re.compile(r"<!-- AUTO:(\w+) BEGIN -->\n?(.*?)<!-- AUTO:\1 END -->\n?", re.S)
 _LEGACY_MARK = "# 이어서 할 일 — 자동 재기록"
 BLOCK_ORDER = ("collab", "goals", "answer")   # R354: collab = PARTIAL 보고 뒤 남은 큐 (ai-collab-report.py queue)
-LOCK_WAIT_SEC = 8.0
+LOCK_WAIT_SEC = 30.0   # R371: 8초면 부하 중(전체 회귀 실행) 9개 동시 쓰기 중 일부가 대기 초과로 갱신을 건너뛰어 지시가 빠졌다 → 오래된 잠금 기준과 같게
 LOCK_STALE_SEC = 30.0
 
 

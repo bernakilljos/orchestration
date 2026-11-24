@@ -5,6 +5,7 @@
   report <요청ID> [--base <커밋>] [--status PASS|PARTIAL|BLOCKED] [--head <커밋> --reason <근거>]   커밋 직후 실행 → reports/<요청ID>.md + state.json 갱신
         (--head: 메시지에 요청 ID 를 빠뜨린 후속 수정 커밋을 기준 SHA 로 · base..tip 안 · 게시 전용 아님 · 자동 선택보다 최신만 ·
          --reason 8자 이상 필수 → state head_override_reason · 보고서 머리 head_override 줄 (R354 18차))
+  truth-check <요청ID|경로>...                                      보고 진실 게이트 (R371 C1 · 설치·삭제·회귀·head 주장 vs 실측 · 위반 1)
   check-requests                                                   requests/*.md 검증만 (실행 안 함 · GitHub 문서 ≠ 사용자 승인)
   prune                                                            검토 끝난 완료 보고서 정리 (내용은 Git 이력·원장에 남음)
   poll                                                             5분 주기 확인 1회 — 처리 확정 안 된 requests·reviews 만 출력 (새것 0 · 없음 3)
@@ -200,7 +201,14 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
             title = sec[3:].split("\n", 1)[0].strip() if sec.startswith("## ") else ""
             if title and title not in _GENERATED_SECTIONS:
                 kept.append(sec.rstrip())
-    out.write_text("\n".join(lines).rstrip() + "\n" + ("\n" + "\n\n".join(kept) + "\n" if kept else ""), encoding="utf-8")
+    final = "\n".join(lines).rstrip() + "\n" + ("\n" + "\n\n".join(kept) + "\n" if kept else "")
+    bad = truth_violations(final, _probe_installed() if _CLAIM_INSTALLED.search(final) else None,
+                           gate_status=str(gate.get("status") or ""))
+    if bad:      # R371 C1: 실제 상태와 어긋난 보고는 쓰지 않는다
+        for b in bad:
+            print(f"[ai-collab] 진실 게이트 위반 — 게시 거부: {b}", file=sys.stderr)
+        return 3
+    out.write_text(final, encoding="utf-8")
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
                            "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig,
                            **({"head_override": True, "head_override_reason": reason} if head_override else {})}
@@ -215,6 +223,70 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
     cmd_queue(quiet=True)    # R354: 보고 직후 남은 일 큐 갱신
     print(f"[ai-collab] {out.relative_to(ROOT)} · {base[:8]}..{head[:8]} · 파일 {len(files)} · 상태 {status}")
     return 0
+
+
+# R371 C1: 보고 진실 게이트 — 보고서 문구가 실제 상태와 어긋나면 게시하지 않는다
+#   (installed:false 인데 INSTALLED · 대상이 남아 있는데 삭제 완료 · 회귀 RUNNING 인데 PASS · head PENDING 인데 배포/DONE)
+_HEX40 = re.compile(r"^[0-9a-f]{40}$")
+_CLAIM_INSTALLED = re.compile(r"\bINSTALLED\b|installed\s*[:=]\s*true|설치\s*(완료|됨)", re.I)
+_CLAIM_DELETED = re.compile(r"DELETE_DONE|삭제\s*(완료|됨)|Test-Path\s*=?\s*False", re.I)
+_WIN_PATH = re.compile(r"[A-Za-z]:\\[^\s`'\"|)(\]*,·]+")
+_CLAIM_DEPLOYED = re.compile(r"\b(DEPLOYED|DONE)\b|배포\s*완료")
+_RUNNING = re.compile(r"\bRUNNING\b|회귀[^\n]{0,20}진행\s*중")
+
+
+def _probe_installed():
+    """관리자 실행기 설치 여부 (True·False · 확인 불가 None) — elevated-task.ps1 -Action Status JSON."""
+    ps1 = ROOT / ".claude" / "scripts" / "elevated-task.ps1"
+    if os.name != "nt" or not ps1.is_file():
+        return None
+    try:
+        out = subprocess.run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps1),
+                              "-Action", "Status"], capture_output=True, timeout=30,
+                             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout
+        m = re.search(rb"\{.*\}", out, re.S)
+        return bool(json.loads(m.group(0)).get("installed")) if m else None
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+
+
+def truth_violations(text: str, installed=None, exists=os.path.exists, gate_status: str = "") -> list:
+    """보고서 본문과 실제 상태 대조 → 위반 목록 (빈 목록 = 통과). 사실값은 인자로 받아 시험에서 바꿔 끼운다."""
+    fm = _frontmatter(text) or {}
+    status = str(fm.get("status") or "").upper()
+    head = str(fm.get("head_commit") or "")
+    out = []
+    if installed is False:
+        for ln in text.splitlines():
+            if _CLAIM_INSTALLED.search(ln) and not re.search(r"installed\s*[:=]\s*false|NOT_INSTALLED|미설치", ln, re.I):
+                out.append(f"설치 주장인데 실측 installed:false — {ln.strip()[:100]}")
+                break
+    for ln in text.splitlines():
+        if _CLAIM_DELETED.search(ln):
+            for p in _WIN_PATH.findall(ln):
+                if exists(p.rstrip(".")):
+                    out.append(f"삭제 주장인데 대상이 아직 있음(Test-Path True) — {p}")
+    body_running = any(_RUNNING.search(ln) for ln in text.splitlines())
+    if status == "PASS" and (gate_status.lower() == "running" or body_running):
+        out.append("회귀 게이트가 RUNNING(진행 중)인데 상태 PASS")
+    if head and not _HEX40.match(head) and (status == "PASS" or _CLAIM_DEPLOYED.search(text)):
+        out.append(f"head_commit 이 실제 40자리 SHA 가 아님({head}) — PASS·DEPLOYED·DONE 주장 불가")
+    return out
+
+
+def cmd_truth_check(target: str) -> int:
+    p = COLLAB / "reports" / f"{target}.md" if _RID.match(target) else Path(target)
+    if not p.is_file():
+        print(f"[ai-collab] 보고서 없음: {p}", file=sys.stderr)
+        return 2
+    text = p.read_text(encoding="utf-8", errors="replace")
+    inst = _probe_installed() if _CLAIM_INSTALLED.search(text) else None
+    bad = truth_violations(text, inst, gate_status=str(_load(GATE, {}).get("status") or ""))
+    for b in bad:
+        print(f"[ai-collab] 진실 게이트 위반 {p.name}: {b}", file=sys.stderr)
+    if not bad:
+        print(f"[ai-collab] 진실 게이트 통과: {p.name}")
+    return 1 if bad else 0
 
 
 def cmd_check_requests() -> int:
@@ -645,6 +717,8 @@ def main(argv: list) -> int:
                           opts.get("--reason", ""))
     if op == "check-requests":
         return cmd_check_requests()
+    if op == "truth-check" and len(argv) >= 2:
+        return max(cmd_truth_check(t) for t in argv[1:])
     if op == "prune":
         return cmd_prune()
     if op == "poll":

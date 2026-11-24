@@ -78,7 +78,10 @@ def _ps_danger(cmd: str, depth: int = 0) -> bool:
 _SYSROOT = (__import__("os").environ.get("SystemRoot") or r"C:\Windows").replace("/", "\\").rstrip("\\").lower()
 _CD = re.compile(r"(?:^|[;&|]\s*)(?:cd|chdir|Set-Location|sl|pushd)\s+(?:/d\s+)?['\"]?([^'\";&|\s]+)", re.I)
 _REDIR = re.compile(r"(?<![<>&\w-])(?:[12*]?>>?)\s*['\"]?([^\s'\";|&)]+)")
-_WRITE_CMD = re.compile(r"\b(?:Out-File|Set-Content|Add-Content|New-Item|Tee-Object)\b[^;|\n]*?(?:-(?:FilePath|Path|LiteralPath)\s+)?['\"]?([A-Za-z]:\\[^\s'\";|]+|[^\s'\";|-][^\s'\";|]*)", re.I)
+_SEGMENT = re.compile(r"\s*(?:;|&&|\|\||\||\n)\s*")
+_REDIR_Q = re.compile(r"(?<![<>&\w-])[12*]?>>?\s*(['\"])([^'\"]+)\1")
+_WRITE_HEAD = re.compile(r"\b(?:Out-File|Set-Content|Add-Content|New-Item|Tee-Object)\b", re.I)
+_NAMED_PATH = re.compile(r"(?i)-(?:FilePath|Path|LiteralPath)\s+['\"]?([^\s'\";|]+)")
 _DISCARD = {"nul", "$null", "/dev/null", "null", "&1", "&2"}
 
 
@@ -87,7 +90,7 @@ def _norm_win(p: str) -> str:
     m = re.match(r"^/([a-zA-Z])/(.*)$", p)               # Git Bash /c/Windows → C:\Windows
     if m:
         p = m.group(1) + ":\\" + m.group(2)
-    p = re.sub(r"(?i)%SystemRoot%|%windir%|\$env:SystemRoot|\$env:windir|\$SYSTEMROOT|\$WINDIR", lambda _m: _SYSROOT, p)   # 치환 문자열의 \ 를 정규식 이스케이프로 읽지 않게
+    p = re.sub(r"(?i)%SystemRoot%|%windir%|\$\{env:SystemRoot\}|\$\{env:windir\}|\$env:SystemRoot|\$env:windir|\$SYSTEMROOT|\$WINDIR", lambda _m: _SYSROOT, p)   # 치환 문자열의 \ 를 정규식 이스케이프로 읽지 않게
     return p.replace("/", "\\").lower()
 
 
@@ -97,24 +100,40 @@ def _in_sysroot(p: str) -> bool:
 
 
 def _system_dir_write(cmd: str, cwd: str) -> str | None:
-    """작업 폴더(또는 명령 안 cd 대상)가 Windows 폴더인데 상대 경로로 쓰거나, 쓰기 대상이 Windows 폴더면 그 대상."""
+    """작업 폴더(또는 명령 안 cd 대상)가 Windows 폴더인데 상대 경로로 쓰거나, 쓰기 대상이 Windows 폴더면 그 대상.
+    R371 #6: 구간(; & | 줄바꿈)마다 그 시점의 작업 폴더로 판정 (이동→쓰기→되돌아오기 누락 수정) ·
+    -Path/-FilePath/-LiteralPath 는 위치와 무관하게 실제 대상 · 따옴표로 감싼 리디렉션 대상 · ${env:SystemRoot} 표기."""
     if sys.platform != "win32":
         return None
     eff = cwd or ""
-    for m in _CD.finditer(cmd):
-        eff = m.group(1)
-    in_sys = bool(eff) and _in_sysroot(eff)
-    targets = [m.group(1) for m in _REDIR.finditer(_strip_quoted(cmd))]   # 따옴표 안의 > (비교 연산자·문자열)는 리디렉션 아님
-    targets += [m.group(1) for m in _WRITE_CMD.finditer(cmd)]
-    for t in targets:
-        tl = t.strip("'\"").lower()
-        if not tl or tl in _DISCARD or tl.startswith("&"):
+    for seg in _SEGMENT.split(_HEREDOC.sub(r"<<\1>>", cmd)):   # heredoc 본문은 명령이 아니라 입력 데이터
+        if not seg.strip():
             continue
-        absolute = bool(re.match(r"^(?:[a-z]:[\\/]|/[a-z]/|\\\\|%systemroot%|%windir%|\$env:)", tl))
-        if absolute and _in_sysroot(t):
-            return t
-        if not absolute and in_sys:
-            return t
+        m = _CD.match(seg.strip()) if re.match(r"(?i)\s*(?:cd|chdir|Set-Location|sl|pushd)\b", seg) else None
+        if m:
+            eff = m.group(1)
+            continue
+        in_sys = bool(eff) and _in_sysroot(eff)
+        targets = [x.group(1) for x in _REDIR.finditer(_strip_quoted(seg))]   # 따옴표 안의 > 는 리디렉션 아님
+        targets += [x.group(2) for x in _REDIR_Q.finditer(seg)]               # > "대상" (따옴표로 감싼 대상)
+        for w in _WRITE_HEAD.finditer(seg):
+            rest = seg[w.end():]
+            named = _NAMED_PATH.search(rest)
+            if named:
+                targets.append(named.group(1))
+            else:
+                pos = re.match(r"\s+(?:-\w+\s+\S+\s+)*?['\"]?([^\s'\";|-][^\s'\";|]*)", rest)
+                if pos:
+                    targets.append(pos.group(1))
+        for t in targets:
+            tl = t.strip("'\"").lower()
+            if not tl or tl in _DISCARD or tl.startswith("&"):
+                continue
+            absolute = bool(re.match(r"^(?:[a-z]:[\\/]|/[a-z]/|\\\\|%systemroot%|%windir%|\$\{?env:)", tl))
+            if absolute and _in_sysroot(t):
+                return t
+            if not absolute and in_sys:
+                return t
     return None
 
 

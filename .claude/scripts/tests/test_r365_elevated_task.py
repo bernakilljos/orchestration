@@ -138,3 +138,19 @@ def test_status_reports_hash_tamper(layer):
     (root / "elevated-runner.ps1").write_text("# x", encoding="utf-8")
     rc, out = _run(S / "elevated-task.ps1", "-Action", "Status", "-Root", str(root), "-Io", str(io))
     assert _json_line(out)["hashes_ok"] is False
+
+
+def test_r371_b3_queued_requests_and_duplicate_id(layer):
+    """R371 B3: 한 번에 쌓인 요청 2건 모두 처리 · 같은 id 재요청은 기존 결과를 덮어쓰지 않고 실행도 안 함."""
+    root, io, sysd = layer
+    a = _request(layer, "remove-shadow-command", sysd / "tool")
+    b = _request(layer, "remove-shadow-command", sysd / "nothing")
+    _drain(layer)
+    assert _result(layer, a)["code"] == 0 and _result(layer, b)["code"] == 3
+    before = (io / "outbox" / (a + ".json")).read_bytes()
+    (sysd / "tool").write_bytes(b"")                       # 대상이 다시 생겨도
+    (io / "inbox" / "dup.json").write_text(json.dumps({"id": a, "op": "remove-shadow-command", "path": str(sysd / "tool")}),
+                                           encoding="utf-8")
+    _drain(layer)
+    assert (io / "outbox" / (a + ".json")).read_bytes() == before   # 기존 결과 보존
+    assert (sysd / "tool").exists()                                 # 중복 id 요청은 실행되지 않음

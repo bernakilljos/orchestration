@@ -964,11 +964,21 @@ def _gate_loop_exceeded(blocking: list) -> bool:
         st = json.loads(GATE_LOOP_FILE.read_text(encoding="utf-8"))
     except Exception:
         st = {}
-    if not payload.get("stop_hook_active") or st.get("key") != key or st.get("session_id") != sid:
+    same = st.get("key") == key and st.get("session_id") == sid
+    if same and st.get("released"):
+        # R371 C2(R364 D6): 같은 세션·같은 미완료로 이미 반복 해제됐으면 다음 턴에도 다시 3회 막지 않는다
+        #   (종전: 새 턴마다 카운터 초기화 → 같은 미완료로 턴마다 최대 3회 차단) · 진전(집합 변경)·새 세션이면 다시 막음
+        print(f"[request-ledger] 같은 미완료 {key} 는 이 세션에서 이미 반복 해제됨 · 통과 (항목은 미완료 유지)", file=sys.stderr)
+        return True
+    if not payload.get("stop_hook_active") or not same:
         st = {"key": key, "session_id": sid, "count": 0}
     st["count"] = int(st.get("count", 0)) + 1
     if st["count"] > GATE_LOOP_MAX:
-        _gate_loop_reset()
+        try:
+            GATE_LOOP_FILE.write_text(json.dumps({"key": key, "session_id": sid, "count": st["count"], "released": True},
+                                                 ensure_ascii=False), encoding="utf-8")
+        except Exception:
+            pass
         line = (f"[{datetime.now().isoformat(timespec='seconds')}] stop-gate loop 해제 · session={sid} · "
                 f"같은 미완료 {key} 로 {GATE_LOOP_MAX}회 연속 차단 후 진전 없음 → 이번 Stop 통과 (항목은 미완료 유지)\n")
         try:

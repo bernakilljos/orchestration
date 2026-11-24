@@ -108,13 +108,21 @@ def main() -> int:
     reach = set(hooked)
     # VAR=".../x.py" 로 경로를 담고 "$VAR" 로 실행하는 형식 (detect-artifact-staleness.sh 의 "$PY_BIN" "$REPORT")
     var_re = re.compile(r"""^\s*(\w+)=["'][^"'\n]*?([\w.-]+\.(?:sh|py))["']""", re.M)
-    for p, t in texts.items():
-        if p.name in hooked:
-            reach |= {m for m in run_re.findall(t)}
+    # R371: Stop 훅 18개가 tool-dispatch.py 아래로 한 단계 내려가(fadbd05b) 생성기가 2단계가 됐다 → 실행 경로를 끝까지(고정점) 따라간다
+    frontier = set(hooked)
+    while frontier:
+        nxt = set()
+        for p, t in texts.items():
+            if p.name not in frontier:
+                continue
+            found = set(run_re.findall(t))
             for var, script in var_re.findall(t):
                 # 인터프리터 바로 뒤 인자로 쓰일 때만 실행으로 본다 ([ -f "$VAR" ] 같은 존재 검사는 제외)
                 if re.search(r'^(?!\s*#).*(?:\bbash|\bsh|python3?|\$\{?PY\w*\}?)"?\s+"\$\{?' + var + r'\}?"', t, re.M):
-                    reach.add(script)
+                    found.add(script)
+            nxt |= found - reach
+            reach |= found
+        frontier = nxt
     # 2026-10-12 — prompt-dispatch.py 처럼 hook 이 모듈을 import 해 in-process 로 돌리면 실행 줄이 없다.
     #   hook 인 .py 안에 이름(stem)이 나오는 같은 트리의 .py 모듈도 실행 경로로 본다 (1단계 + 그 모듈의 실행 줄).
     mods = set()

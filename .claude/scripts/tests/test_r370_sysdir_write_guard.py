@@ -60,3 +60,28 @@ def test_run_denies_end_to_end(monkeypatch):
     assert hso["permissionDecision"] == "deny" and "R370" in hso["permissionDecisionReason"]
     payload["cwd"] = PROJ
     assert bdb.run(object()) is None                                # 같은 명령도 프로젝트 폴더면 통과
+
+
+# R371 #6 (외부 검토): 정규식 우회 형태 — 수정 전 6건 모두 통과(누락) 재현 → 구간별 판정으로 수정
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 전용 판정")
+@pytest.mark.parametrize("cmd", [
+    r"cd C:\Windows\System32; echo x > powershell; cd C:\pjt\proj",   # 이동 → 쓰기 → 되돌아오기
+    r"Set-Content -Value x -Path C:\Windows\System32\foo",             # -Path 가 뒤에
+    r"Out-File -InputObject x -FilePath C:\Windows\System32\foo",
+    r'echo x > "C:\Windows\System32\foo"',                             # 따옴표로 감싼 대상
+    r"echo x > ${env:SystemRoot}\System32\foo",                        # ${env:} 표기
+    r"New-Item -ItemType File -Path $env:windir\foo",
+])
+def test_r371_bypass_forms_blocked(cmd):
+    assert bdb._system_dir_write(cmd, PROJ)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 전용 판정")
+@pytest.mark.parametrize("cmd", [
+    r"cd C:\Windows\System32; dir; cd C:\pjt\proj; echo x > out.txt",  # 되돌아온 뒤 쓰기 = 정상
+    r"Set-Content -Path out.txt -Value C:\Windows\System32",            # 값에 시스템 경로 문자열
+    r'echo "a > C:\Windows\x" > out.txt',                               # 따옴표 안 문자열
+    "cat >> t.py <<'EOF'\n" + r"New-Item -Path $env:windir\foo" + "\nEOF",   # heredoc 본문 = 데이터
+])
+def test_r371_no_false_positive(cmd):
+    assert bdb._system_dir_write(cmd, PROJ) is None

@@ -107,8 +107,23 @@ def run(ctx):
     promoted = [d for d in detected if d[2].get("promoted_level", 0) >= 2]
     # R310 근본 원인 기록 연결: 같은 유형 2회+ 재발 = 원인 미해결 신호 → 이번 이벤트 번호로 원인 기록을 요구 (증상과 원인 분리)
     repeated = [d for d in detected if (d[2].get("total") or 0) >= 2 and d[2].get("event_id")]
+    # R371 C2(R364 D7): 기록은 매번 하되 알림은 같은 세션에서 규칙·승격 단계별 1번만
+    #   (종전: 같은 재발이 프롬프트마다 같은 안내를 다시 주입 · 횟수만 1씩 늘어남)
+    seen_file = ctx.root / ".claude" / "state" / "recurrence-notified.d" / (re.sub(r"[^A-Za-z0-9_-]", "_", str(session_id or "nosid"))[:80] + ".txt")
+    try:
+        seen = set(seen_file.read_text(encoding="utf-8").split())
+    except OSError:
+        seen = set()
+    key = lambda d: f"{d[0]}:{d[2].get('promoted_level', 0)}"   # noqa: E731
+    promoted = [d for d in promoted if key(d) not in seen]
+    repeated = [d for d in repeated if key(d) not in seen]
     if not promoted and not repeated:
         return None
+    try:
+        seen_file.parent.mkdir(parents=True, exist_ok=True)
+        seen_file.write_text(" ".join(sorted(seen | {key(d) for d in promoted + repeated})), encoding="utf-8")
+    except OSError:
+        pass
 
     lines = []
     if promoted:

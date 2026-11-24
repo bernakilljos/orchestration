@@ -69,3 +69,32 @@ def test_copied_statusline_lines_do_not_count(monkeypatch, tmp_path):
          "이거 또 이모지 넣었네")
     assert _detect(p, monkeypatch, tmp_path) == ["이모지"]
     assert _detect("  🎨 디자인  │ 이모지 33 · 여백 15", monkeypatch, tmp_path) == []
+
+
+def test_r371_d7_same_notice_once_per_session(monkeypatch, tmp_path):
+    """R364 D7: 같은 재발은 기록은 매번 · 알림은 세션·규칙·승격 단계별 1번만 (단계가 오르면 다시 알림)."""
+    import shutil
+    (tmp_path / ".claude" / "scripts").mkdir(parents=True)
+    shutil.copy(ROOT / ".claude" / "scripts" / "recurrence-tracker.py", tmp_path / ".claude" / "scripts")
+    rt = importlib.import_module("recurrence_tracker")
+    level = {"v": 1}
+    calls = []
+    real_exec = importlib.util.spec_from_file_location
+
+    def fake_spec(name, path):
+        spec = real_exec(name, path)
+        orig = spec.loader.exec_module
+
+        def exec_module(mod):
+            orig(mod)
+            mod.record = lambda rid, cat, snip, sid: calls.append(rid) or {
+                "promoted_level": level["v"], "total": 5, "event_id": 7}
+        spec.loader.exec_module = exec_module
+        return spec
+    monkeypatch.setattr(rt.importlib.util, "spec_from_file_location", fake_spec)
+    msg = "넌 속도개선을 대충하는구나"
+    assert rt.run(_Ctx(msg, tmp_path))                 # 첫 알림
+    assert rt.run(_Ctx(msg, tmp_path)) is None         # 같은 세션 같은 단계 → 알림 X
+    assert len(calls) == 2                             # 기록은 두 번 다
+    level["v"] = 2
+    assert rt.run(_Ctx(msg, tmp_path))                 # 승격 단계 상승 → 다시 알림

@@ -52,6 +52,7 @@ foreach ($f in @(Get-ChildItem -LiteralPath $inbox -File -Filter '*.json' -Force
     Remove-Item -LiteralPath $f.FullName -Force          # 읽은 뒤 바로 제거 (같은 요청 재실행 방지)
     $id = [string]$req.id
     if ($id -notmatch '^[a-z0-9-]{1,40}$') { Write-Result '' 41 "id 형식 오류"; continue }
+    if (Test-Path -LiteralPath (Join-Path $outbox ($id + '.json'))) { Write-Audit "중복 id 거부 (기존 결과 보존): $id"; continue }   # R371 B3
     $op = [string]$req.op
     $path = [string]$req.path
     $rule = if ($allow) { $allow.$op } else { $null }

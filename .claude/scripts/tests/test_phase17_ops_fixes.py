@@ -224,6 +224,18 @@ def test_gate_breaks_stop_hook_active_loop_but_resets_on_progress(tmp_path):
     assert _gate(tmp_path, [_r("R1", "implemented")], {"session_id": "s1", "stop_hook_active": True}).returncode == 2
 
 
+def test_r371_c2_released_loop_not_rearmed_next_turn(tmp_path):
+    """R364 D6: 반복 해제 뒤 다음 턴(stop_hook_active 없음) 같은 미완료로 다시 3회 막지 않는다 · 진전·새 세션은 다시 막음."""
+    reqs = [_r("R1", "pending")]
+    assert _gate(tmp_path, reqs, {"session_id": "s1"}).returncode == 2
+    for _ in range(2):
+        assert _gate(tmp_path, reqs, {"session_id": "s1", "stop_hook_active": True}).returncode == 2
+    assert _gate(tmp_path, reqs, {"session_id": "s1", "stop_hook_active": True}).returncode == 0   # 해제
+    assert _gate(tmp_path, reqs, {"session_id": "s1"}).returncode == 0                            # 다음 턴: 재차단 X
+    assert _gate(tmp_path, [_r("R1", "implemented")], {"session_id": "s1"}).returncode == 2        # 진전 → 다시 막음
+    assert _gate(tmp_path, reqs, {"session_id": "s2"}).returncode == 2                            # 새 세션 → 다시 막음
+
+
 def test_gate_without_stop_hook_active_always_blocks(tmp_path):
     for _ in range(6):
         assert _gate(tmp_path, [_r("R1", "pending")], {"session_id": "s1"}).returncode == 2
