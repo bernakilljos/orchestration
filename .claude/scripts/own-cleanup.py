@@ -703,11 +703,11 @@ def _run_body(session: str, dry: bool, now: float, locked: bool) -> dict:
             else:
                 resume, why = True, r
         if not why and not resume:
+            try:   # 1차 판정용 프로세스 목록은 실행당 1회 공유 (종류 무관 · CI 러너 첫 읽기 수 초 · 삭제 직전 재확인은 새로)
+                _PROCS = _PROCS or _proc_snapshot()
+            except Exception:  # noqa: BLE001 — 실패하면 _users_of 가 직접 읽다가 «확인 불가» 로 보존
+                _PROCS = None
             if kind == "ended-scratchpad":
-                try:
-                    _PROCS = _PROCS or _proc_snapshot()
-                except Exception:  # noqa: BLE001 — 실패하면 _users_of 가 직접 읽다가 «확인 불가» 로 보존
-                    _PROCS = None
                 why = busy_reason(p, sid, now, deadline)
             else:
                 # R375 4차 검토: kit 임시·등록 산출물도 같은 보호 계약 — 시각 확인 실패 = 보존 · 쓰는 프로세스 = 보존
