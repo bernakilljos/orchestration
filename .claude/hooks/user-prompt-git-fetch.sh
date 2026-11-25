@@ -22,11 +22,25 @@ echo "$NOW" > "$LAST"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
 
 (
-  git fetch origin 2>/dev/null
-  BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
-  [ "$BEHIND" -eq 0 ] && exit 0
-
   TS=$(date '+%Y-%m-%d %H:%M:%S')
+  # R589 리뷰 1번 (11-25): fetch 실패·브랜치 미확인·역사 불일치를 «뒤처짐 0 = 정상 무변경» 과 구별해 기록한다
+  if ! git fetch origin 2>/dev/null; then
+    echo "[$TS] FETCH_FAIL origin fetch 실패 — 비교 안 함 (다음 주기 재시도)" >> "$LOG"
+    exit 0
+  fi
+  # 원격 기본 브랜치 = origin/HEAD 만 (main·master 추측 X · 없으면 BLOCKED · lottoclaude 는 master 라 main 고정으로는 늘 0 이었다)
+  REF=$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null)
+  if [ -z "$REF" ] || ! git rev-parse -q --verify "$REF^{commit}" >/dev/null 2>&1; then
+    echo "[$TS] BLOCKED 원격 기본 브랜치 미확인 (origin/HEAD 없음 · git remote set-head origin -a) — 자동 pull 안 함" >> "$LOG"
+    exit 0
+  fi
+  #   공통 조상이 없으면(로컬 역사가 다시 쓰인 저장소) 자동 pull 하지 않는다 — 남의 역사를 끌어오면 작업 트리가 깨진다
+  if ! git merge-base HEAD "$REF" >/dev/null 2>&1; then
+    echo "[$TS] SKIP_UNRELATED HEAD 와 $REF 공통 조상 없음 — 자동 pull 안 함" >> "$LOG"
+    exit 0
+  fi
+  BEHIND=$(git rev-list --count HEAD.."$REF" 2>/dev/null || echo 0)
+  [ "$BEHIND" -eq 0 ] && exit 0
   STASH_MSG="auto-pull-prompt-$NOW"
   STASHED=0
   if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
@@ -34,7 +48,7 @@ cd "$PROJECT_DIR" 2>/dev/null || exit 0
   fi
 
   PULL_RC=1
-  if git pull --rebase origin main >/dev/null 2>&1; then
+  if git pull --rebase origin "${REF#origin/}" >/dev/null 2>&1; then
     PULL_RC=0
   else
     CONFLICTS=$(git diff --name-only --diff-filter=U 2>/dev/null)

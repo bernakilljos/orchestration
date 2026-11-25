@@ -30,7 +30,7 @@ COLLAB = ROOT / ".ai-collab"
 STATE = COLLAB / "state.json"
 LEDGER = ROOT / ".claude" / "state" / "request-ledger.json"
 GATE = ROOT / ".claude" / "state" / "regression-gate.json"
-_RID = re.compile(r"^R\d{1,6}$")
+_RID = re.compile(r"^[A-Z]{1,2}\d{1,6}$")   # 2026-11-25: 원장 R### 외에 ChatGPT 지시서 ID(L001 등) 허용 · 원장에는 "[L001] …" 로 등록
 
 
 def _git(*args: str) -> str:
@@ -41,6 +41,33 @@ def _git(*args: str) -> str:
         print(f"[ai-collab] git {' '.join(args[:2])} 실패: {type(e).__name__}", file=sys.stderr)
         return ""
     return r.stdout.strip() if r.returncode == 0 else ""
+
+
+_REMOTE: dict = {}   # 한 실행 안에서 한 번만 조회
+
+
+def _remote_ref() -> str:
+    """원격 기본 브랜치 — ① origin/HEAD(symbolic-ref) ② 명시 설정(state.json "branch" 또는 env AI_COLLAB_BRANCH) 순.
+    어느 쪽이든 origin/<브랜치> 커밋이 실제로 있어야 채택 · 둘 다 없으면 "" (= BLOCKED · 호출부가 알린다).
+    2026-11-25: lottoclaude 기본 브랜치가 master 인데 origin/main 이 박혀 있어 지시서·리뷰를 영원히 못 봤다 (저장소마다 다름 · 고정 금지).
+    R589 리뷰 1번 (11-25): main/master 추측·origin/main 최종 대체를 없앰 — 추측이 틀리면 «새 것 없음» 으로 조용히 보였다."""
+    if "ref" not in _REMOTE:
+        cands = [_git("symbolic-ref", "-q", "--short", "refs/remotes/origin/HEAD")]
+        explicit = (os.environ.get("AI_COLLAB_BRANCH") or str(_load(STATE, {}).get("branch") or "")).strip()
+        if explicit:
+            cands.append(explicit if explicit.startswith("origin/") else "origin/" + explicit)
+        _REMOTE["ref"] = next((c for c in cands if c and _git("rev-parse", "-q", "--verify", c + "^{commit}")), "")
+    return _REMOTE["ref"]
+
+
+_BLOCKED_REF = ("[ai-collab] BLOCKED: 원격 기본 브랜치를 확인할 수 없음 — origin/HEAD 없음·명시 설정(.ai-collab/state.json"
+                " \"branch\" · AI_COLLAB_BRANCH) 없음 또는 그 브랜치가 원격에 없음 (`git remote set-head origin -a` 로 받기)")
+
+
+def _repo_slug() -> str:
+    """state.json repository 기본값 — origin URL 의 <소유자>/<저장소> · 못 읽으면 "" (다른 저장소 이름으로 채우지 않는다 · R589 리뷰 1번)."""
+    m = re.search(r"[:/]([^/:\s]+/[^/\s]+?)(?:\.git)?/?$", _git("remote", "get-url", "origin"))
+    return m.group(1) if m else ""
 
 
 _RANK = {"BLOCKED": 0, "FAIL": 0, "PARTIAL": 1, "PASS": 2}
@@ -94,18 +121,21 @@ def _save_state(st: dict) -> None:
 
 def _state() -> dict:
     st = _load(STATE, {})
-    st.setdefault("repository", "bernakilljos/orchestration")
+    st.setdefault("repository", _repo_slug())
     st.setdefault("requests", {})
     return st
 
 
 def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = "", reason: str = "") -> int:
     if not _RID.match(rid):
-        print(f"[ai-collab] 요청 ID 형식 아님: {rid!r} (예: R325)", file=sys.stderr)
+        print(f"[ai-collab] 요청 ID 형식 아님: {rid!r} (예: R325 · L001)", file=sys.stderr)
         return 2
-    req = next((r for r in _load(LEDGER, {}).get("requests", []) if r.get("id") == rid), None)
+    reqs = _load(LEDGER, {}).get("requests", [])
+    # 원장 ID 그대로(R589) 또는 외부 지시서 ID 를 desc 머리에 "[L001] …" 로 적어 등록한 원장 항목 (2026-11-25)
+    req = next((r for r in reqs if r.get("id") == rid), None) \
+        or next((r for r in reqs if re.match(r"^\s*\[" + re.escape(rid) + r"\]", r.get("desc") or "")), None)
     if req is None:
-        print(f"[ai-collab] 원장에 없는 요청: {rid}", file=sys.stderr)
+        print(f"[ai-collab] 원장에 없는 요청: {rid} (원장 id 또는 desc 머리 [{rid}])", file=sys.stderr)
         return 2
     tip = _work_head()                                 # 보고서 게시 커밋(.ai-collab/ 만 바꾼 것)은 작업 커밋이 아니다
     if not tip:
@@ -166,10 +196,12 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
             status = "PARTIAL"
     gate = _load(GATE, {})
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "main"
-    meta = {"request_id": rid, "repository": st["repository"], "branch": branch, "base_commit": base,
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD") or "(미확인)"   # R589 리뷰 1번: "main" 추측 X
+    meta = {"request_id": rid, "repository": st["repository"] or "(미확인)", "branch": branch, "base_commit": base,
             "head_commit": head, "status": status, "created_at": now, "review_required": True,
             "commit_link": "verified" if mine else "unverified"}
+    if req.get("id") and req.get("id") != rid:
+        meta["ledger_id"] = req["id"]            # 외부 지시서 ID 로 보고할 때 원장 번호도 남김
     if head_override:
         meta["head_override"] = f"{head} — {reason}"
     if not mine:
@@ -396,7 +428,7 @@ def _lease_sec() -> int:
 
 
 def _reported_after_change(st: dict, rid: str, path: str) -> bool:
-    """이 요청의 보고서가 요청 파일의 마지막 변경(origin/main 커밋 시각) 뒤에 만들어졌나. 확인 불가 = False (다시 알림 쪽)."""
+    """이 요청의 보고서가 요청 파일의 마지막 변경(원격 기본 브랜치 커밋 시각) 뒤에 만들어졌나. 확인 불가 = False (다시 알림 쪽)."""
     at = ((st.get("requests") or {}).get(rid) or {}).get("reported_at")
     ct = _last_commit_times().get(path)        # R375 5차: 파일마다 git log 대신 한 번 읽은 경로별 시각
     if not at or ct is None:
@@ -410,9 +442,11 @@ def _reported_after_change(st: dict, rid: str, path: str) -> bool:
 
 
 def _remote_files() -> dict:
-    """origin/main 의 requests/·reviews/ 파일 {경로: blob} (.gitkeep 제외)."""
+    """원격 기본 브랜치(_remote_ref) 의 requests/·reviews/ 파일 {경로: blob} (.gitkeep 제외)."""
     out = {}
-    for ln in _git("ls-tree", "-r", "origin/main", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
+    if not _remote_ref():          # BLOCKED — 빈 브랜치 이름으로 조회하면 «파일 없음» 으로 보인다
+        return out
+    for ln in _git("ls-tree", "-r", _remote_ref(), "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
         meta, _, path = ln.partition("\t")
         if path and not path.endswith(".gitkeep") and meta:
             out[path] = meta.split()[-1]
@@ -427,16 +461,19 @@ def _ack(st: dict, path: str, blob: str) -> None:
 
 _LAST_CT: dict = {}   # 한 번의 확인(pending·poll) 동안만 쓰는 {경로: 마지막 커밋 시각} — git log 1회로 전부
 #   (R375 5차: 파일마다 git log 2회 = 실측 54회·7초 → 세션 시작 훅 10초 제한에서 잘려 미처리 리뷰가 주입되지 않음)
-#   확인을 시작할 때마다 비운다 (fetch 로 origin/main 이 바뀌었을 수 있음 · 오래 도는 wait 루프에서도 최신).
+#   확인을 시작할 때마다 비운다 (fetch 로 원격 기본 브랜치가 바뀌었을 수 있음 · 오래 도는 wait 루프에서도 최신).
 
 
 def _last_commit_times() -> dict:
-    """origin/main 기준 .ai-collab/ 아래 경로별 마지막 커밋 시각 (이번 확인 안에서는 다시 읽지 않는다)."""
+    """원격 기본 브랜치 기준 .ai-collab/ 아래 경로별 마지막 커밋 시각 (이번 확인 안에서는 다시 읽지 않는다)."""
     if "t" in _LAST_CT:
         return _LAST_CT["t"]
     out: dict = {}
     ct = None
-    for ln in _git("log", "--format=@@CT %ct", "--name-only", "origin/main", "--", ".ai-collab").splitlines():
+    if not _remote_ref():
+        _LAST_CT["t"] = out
+        return out
+    for ln in _git("log", "--format=@@CT %ct", "--name-only", _remote_ref(), "--", ".ai-collab").splitlines():
         if ln.startswith("@@CT "):
             ct = ln[5:].strip()
         elif ln.strip() and ct and ct.isdigit():
@@ -446,7 +483,7 @@ def _last_commit_times() -> dict:
 
 
 def _report_newer_on_remote(rid: str, path: str) -> bool:
-    """origin/main 에서 reports/<rid>.md 의 마지막 커밋이 지시·리뷰 파일의 마지막 커밋보다 나중이면 True (그 판은 보고됨)."""
+    """원격 기본 브랜치에서 reports/<rid>.md 의 마지막 커밋이 지시·리뷰 파일의 마지막 커밋보다 나중이면 True (그 판은 보고됨)."""
     times = _last_commit_times()
     rep, src = times.get(f".ai-collab/reports/{rid}.md"), times.get(path)
     return bool(rep is not None and src is not None and rep > src)
@@ -454,23 +491,25 @@ def _report_newer_on_remote(rid: str, path: str) -> bool:
 
 def pending_lines(fetch_timeout: float = 8.0) -> list:
     """R372: 세션 시작용 읽기 전용 확인 — 처리 확정(seen) 안 된 requests/·reviews/ 를 한 줄씩 (inflight·state 쓰기 X).
-    fetch 가 안 되면 이미 받아 둔 origin/main 기준으로 (오프라인이어도 아는 만큼은 알린다)."""
+    fetch 가 안 되면 이미 받아 둔 원격 기본 브랜치 기준으로 (오프라인이어도 아는 만큼은 알린다)."""
     _LAST_CT.clear()
     out = []
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True,
                            timeout=fetch_timeout)
         if r.returncode != 0:
-            out.append("(원격 확인 실패 — 마지막으로 받아 둔 origin/main 기준)")
+            out.append(f"(원격 확인 실패 — 마지막으로 받아 둔 {_remote_ref()} 기준)")
     except (subprocess.SubprocessError, OSError):
-        out.append("(원격 확인 시간 초과 — 마지막으로 받아 둔 origin/main 기준)")
+        out.append(f"(원격 확인 시간 초과 — 마지막으로 받아 둔 {_remote_ref()} 기준)")
+    if not _remote_ref():                       # R589 리뷰 1번: 브랜치 미확인 = «없음» 이 아니라 BLOCKED
+        return out + [_BLOCKED_REF]
     st = _state()
     seen, handled = st.get("seen", {}), st.get("handled", {})
     items = []
     for path, blob in sorted(_remote_files().items()):
         if seen.get(path) == blob:
             continue
-        m = re.fullmatch(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md", path)
+        m = re.fullmatch(r"\.ai-collab/(requests|reviews)/([A-Z]{1,2}\d{1,6})\.md", path)
         if not m:
             continue
         kind, rid = m.groups()
@@ -490,7 +529,7 @@ def pending_lines(fetch_timeout: float = 8.0) -> list:
 
 def cmd_poll() -> int:
     """R330 5분 주기 확인 1회분 — origin 을 받아 requests/·reviews/ 에서 아직 처리 확정 안 된 파일만 알린다.
-    새 파일 있음 = 0 (내용 출력 · «처리 중» 표시) · 없음·처리 중만 = 3 · fetch 실패 = 2. 실행·승인으로 간주하지 않는다.
+    새 파일 있음 = 0 (내용 출력 · «처리 중» 표시) · 없음·처리 중만 = 3 · fetch 실패 = 2 · 원격 기본 브랜치 미확인 = 4 (BLOCKED). 실행·승인으로 간주하지 않는다.
     R332 (외부 검토): 알리기만 해도 seen(처리 확정)으로 적어, 세션이 처리 도중 끊기면 다음 주기에 사라지던 것 →
     poll 은 inflight(처리 중 · 임대 시간)만 적고, 처리 확정(seen)은 보고(report)·ack 가 적는다.
     임대 시간 안 = 다른 주기·세션이 같은 요청을 겹쳐 받지 않음 · 지나면 다시 전달 (중단·재시작 복구)."""
@@ -503,6 +542,9 @@ def cmd_poll() -> int:
     if r.returncode != 0:
         print(f"[ai-collab] fetch 실패: {(r.stderr or '').strip()[:160]}", file=sys.stderr)
         return 2
+    if not _remote_ref():                       # R589 리뷰 1번: fetch 성공·브랜치 미확인 = BLOCKED 4 (정상 무변경 3 과 구별)
+        print(_BLOCKED_REF, file=sys.stderr)
+        return 4
     st = _state()
     seen = st.setdefault("seen", {})
     inflight = st.setdefault("inflight", {})
@@ -512,7 +554,7 @@ def cmd_poll() -> int:
     for path, blob in _remote_files().items():
         if seen.get(path) == blob:
             continue
-        m = re.fullmatch(r"\.ai-collab/requests/(R\d{1,6})\.md", path)
+        m = re.fullmatch(r"\.ai-collab/requests/([A-Z]{1,2}\d{1,6})\.md", path)
         if m and m.group(1) in handled and path not in seen:   # R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
             _ack(st, path, blob)
             changed = True
@@ -526,7 +568,7 @@ def cmd_poll() -> int:
         # R375 후속 (2026-11-24): 세션 시작 목록(pending_lines)과 대기(poll)의 «보고됨» 판정이 달랐다 —
         #   poll 은 state.json 기록만 봐서 손으로 쓴 보고서(R363·R364 등)가 있는 지시·리뷰를 계속 «새 것» 으로 돌려
         #   wait 가 켜지자마자 끝났다 (리뷰를 기다리는 루프가 실제로는 돌지 못함). → 같은 git 이력 워터마크를 쓴다.
-        mr = m or re.fullmatch(r"\.ai-collab/reviews/(R\d{1,6})\.md", path)
+        mr = m or re.fullmatch(r"\.ai-collab/reviews/([A-Z]{1,2}\d{1,6})\.md", path)
         if mr and _report_newer_on_remote(mr.group(1), path):
             reported.append(path)
             continue
@@ -700,7 +742,7 @@ def _save_state_quiet(st: dict, context: str) -> bool:
         return False
 
 
-_ACK_PATH = re.compile(r"\.ai-collab/(requests|reviews)/(R\d{1,6})\.md")
+_ACK_PATH = re.compile(r"\.ai-collab/(requests|reviews)/([A-Z]{1,2}\d{1,6})\.md")
 
 
 def _request_done(rid: str) -> str:
@@ -744,8 +786,8 @@ def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
         except (subprocess.SubprocessError, OSError) as e:   # R355: 일시 조회 실패 예외 = fetch 실패와 같이 세고 다음 주기에 재시도
             print(f"[ai-collab] 확인 실패 (다음 주기 재시도): {type(e).__name__}", file=sys.stderr)
             rc = 2
-        if rc == 0:
-            return 0
+        if rc in (0, 4):                        # 4 = BLOCKED (설정 문제 · 기다려도 안 풀림 → 바로 끝내 알림)
+            return rc
         fails = fails + 1 if rc == 2 else 0
         if fails >= 3:
             return 2
@@ -770,7 +812,8 @@ def cmd_ack(target: str) -> int:
             return 2
     else:
         paths = [target.replace("\\", "/")]
-    remote = _remote_files()
+    remote = _remote_files() if _remote_ref() else None   # None = BLOCKED (원격 판 대조가 필요한 단계에서만 4)
+    blocked = False
     done, refused = [], []
     for p in paths:
         m = _ACK_PATH.fullmatch(p)
@@ -779,6 +822,9 @@ def cmd_ack(target: str) -> int:
             refused.append(f"{p}: 협업 폴더 requests/·reviews/ 경로 아님")
         elif not cur.get("blob"):
             refused.append(f"{p}: 전달받지 않음 (poll 로 먼저 받아야 함)")
+        elif remote is None:
+            blocked = True
+            refused.append(f"{p}: 원격 판 대조 불가 — {_BLOCKED_REF}")
         elif remote.get(p) != cur["blob"]:
             refused.append(f"{p}: 전달 뒤 내용이 바뀜 — 새 판을 다시 받아 처리해야 함")
         else:
@@ -793,7 +839,7 @@ def cmd_ack(target: str) -> int:
         print(f"[ai-collab] 처리 확정 {len(done)}건: {' · '.join(done)}")
     for r in refused:
         print(f"[ai-collab] 확정 거부 — {r}", file=sys.stderr)
-    return 0 if done and not refused else 2
+    return 0 if done and not refused else (4 if blocked else 2)
 
 
 def main(argv: list) -> int:

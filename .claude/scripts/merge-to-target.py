@@ -393,7 +393,19 @@ def main() -> int:
         return 2
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
-    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only", "forced")}
+    # 2026-11-26 R375 리뷰 P0: 강제 교체 원본은 정리(_prune_backups, kit-merge-* 최신 1개만) 대상이 아닌 별도 폴더에 영구 보존
+    force_backup = target / ".claude" / "backups" / f"kit-force-{ts}"
+    # 대상에 커밋 안 된 수정이 있는 파일은 강제 교체하지 않는다 (11-25 23:50 다른 세션의 미커밋 수정 3건을 덮을 뻔함)
+    #   git status 실패 = 알 수 없음 → 강제 교체 전부 보류 (덮지 않는 쪽)
+    _target_dirty = None
+    if force:
+        try:
+            _r = subprocess.run(["git", "-C", str(target), "status", "--porcelain", "-uno"],
+                                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
+            _target_dirty = {ln[3:].strip().strip('"').replace("\\", "/") for ln in _r.stdout.splitlines()} if _r.returncode == 0 else None
+        except Exception:
+            _target_dirty = None
+    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only", "forced", "force-held")}
     # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
     man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
     try:
@@ -451,12 +463,14 @@ def main() -> int:
                         (backup / rel).parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(dst, backup / rel)
                         dst.write_bytes(merged)
-                elif force:
+                elif force and _target_dirty is not None and rel not in _target_dirty:
                     stats["forced"].append(rel)
                     if apply:
-                        (backup / rel).parent.mkdir(parents=True, exist_ok=True)
-                        shutil.copy2(dst, backup / rel)
+                        (force_backup / rel).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(dst, force_backup / rel)
                         put(rel, src, dst)
+                elif force:
+                    stats["force-held"].append(rel)
                 else:
                     stats["target-custom"].append(rel)
 
@@ -559,7 +573,9 @@ def main() -> int:
         warn = rel != "CLAUDE.md" and Path(rel).name not in _retired_names() and kit_newer(rel, target)
         print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if warn else ""))
     for rel in stats["forced"]:
-        print(f"    강제 교체(대상 수정본 → kit 판 · 백업 있음) {rel}")
+        print(f"    강제 교체(대상 수정본 → kit 판 · " + (f"원본 보존 {force_backup}" if apply else "적용 시 원본 보존") + f") {rel}")
+    for rel in stats["force-held"]:
+        print(f"    강제 보류(대상에 미커밋 수정 또는 git 상태 확인 실패) {rel}")
     for rel in stats["auto-merged"]:
         print(f"    3-way 병합(대상 수정 유지 + kit 새 수정) {rel}")
     for r in report:
