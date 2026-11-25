@@ -104,10 +104,28 @@ def _entries(top: str, errs: list | None = None):
         yield e.path, link, isdir
 
 
-def _newest_mtime(p: Path, errs: list | None = None, deadline: float | None = None, files_only: bool = False) -> float:
+def _digest(top: str, q: str, st, link: bool) -> str:
+    """항목 하나의 식별 지문 — 상대 경로·파일 식별자·크기·수정 시각(ns)·링크 대상.
+    R375 5차 검토 P0: 폴더 식별자·mtime 만 보면 «오래된 mtime 을 보존한 복사·이름 바꾸기·링크 대상 변경» 을 놓친다 →
+    복사(식별자 바뀜)·이름 바꾸기(경로 바뀜)·링크 변경(대상 바뀜) 모두 지문이 달라진다."""
+    import hashlib
+    tgt = ""
+    if link:
+        try:
+            tgt = os.readlink(q)
+        except OSError:
+            tgt = "?"             # 대상 못 읽음 = 지문이 매번 같지 않을 수 있어 보존 쪽으로 기운다
+    rel = os.path.relpath(q, top).replace(os.sep, "/")
+    raw = f"{rel}|{st.st_ino}|{st.st_size}|{st.st_mtime_ns}|{int(link)}|{tgt}"
+    return hashlib.blake2b(raw.encode("utf-8", "surrogatepass"), digest_size=10).hexdigest()
+
+
+def _newest_mtime(p: Path, errs: list | None = None, deadline: float | None = None, files_only: bool = False,
+                  manifest: list | None = None) -> float:
     """폴더 안 가장 최근 수정 시각 (링크·정션은 따라가지 않고 그 자체 시각도 세지 않음) — 사용 중 판정.
     읽기 실패·시간 예산 초과는 errs 에 사유를 넣고 «지금» 을 돌려준다 (확인 못 한 것 = 최근 사용으로 · 보존).
-    files_only: 폴더 시각 제외 (지우는 중에는 폴더 시각이 삭제 때문에 바뀐다)."""
+    files_only: 폴더 시각 제외 (지우는 중에는 폴더 시각이 삭제 때문에 바뀐다).
+    manifest: 주면 폴더가 아닌 항목(파일·링크) 지문을 모은다 — 같은 순회 1번으로 (R375 5차 검토 · 추가 탐색 없음)."""
     errs = [] if errs is None else errs
     try:
         newest = 0.0 if files_only else os.lstat(p).st_mtime
@@ -119,14 +137,21 @@ def _newest_mtime(p: Path, errs: list | None = None, deadline: float | None = No
             if deadline is not None and time.monotonic() > deadline:
                 errs.append("시간 예산 소진 (변경 확인 미완료 · 다음 실행)")
                 return time.time()
-            if link or (files_only and isdir):
+            if isdir and files_only:
+                continue
+            if link and manifest is None:
                 continue
             try:
-                newest = max(newest, os.lstat(q).st_mtime)
+                st = os.lstat(q)
             except FileNotFoundError:
-                pass                      # 확인 사이 사라진 항목 = 잃을 것 없음
+                continue                  # 확인 사이 사라진 항목 = 잃을 것 없음
             except OSError as e:
                 errs.append(f"시각 확인 실패 ({type(e).__name__}) {q}")
+                continue
+            if manifest is not None and not isdir:
+                manifest.append(_digest(str(p), q, st, link))
+            if not link:
+                newest = max(newest, st.st_mtime)
     return time.time() if errs else newest
 
 
@@ -143,6 +168,8 @@ def safe_target(p: Path) -> str | None:
 
 
 def _session_last_active(sid: str) -> float | None:
+    if not sid:
+        return None
     """R391 (2026-11-24 디스크 22% 남음 · 끝난 세션 복제본 24.8GB 4일째 남음): 세션이 끝났는지 = 그 세션 대화 기록
     (<설정 폴더>/projects/*/<sid>.jsonl) 의 마지막 수정 시각. 폴더 안 최신 파일 시각은 바깥 도구가 복제본 안 git 객체를
     건드리기만 해도 갱신돼 끝난 세션이 영원히 «사용 중» 이 됐다. 기록을 못 찾으면 None (= 종전 판정)."""
@@ -227,7 +254,7 @@ def _users_of(p: Path, sid: str) -> str | None:
 
 def _open_ledger(sid: str) -> str | None:
     f = ROOT / ".claude" / "state" / "request-ledger.json"
-    if not f.exists():
+    if not sid or not f.exists():   # 세션 모름 = 원장으로 묶을 근거 없음 (빈 세션 번호가 무관한 요청과 맞지 않게)
         return None
     try:
         reqs = json.loads(f.read_text(encoding="utf-8")).get("requests") or []
@@ -308,6 +335,10 @@ class _OutOfTime(Exception):
     pass
 
 
+def _over(deadline: float | None) -> bool:
+    return deadline is not None and time.monotonic() > deadline
+
+
 def _left(deadline: float | None, want: float) -> float:
     if deadline is None:
         return want
@@ -348,19 +379,30 @@ def _repo_reason_inner(repo: str, deadline: float | None) -> str | None:
             return f"stash 있음 {repo}"
         # 원격 추적 ref 는 오래됐을 수 있다 → 원격에 실제로 물어본 끝 커밋만 «올라간 증거» 로 친다 (detached HEAD·태그 포함)
         pos = ["--all"]   # HEAD(detached 포함)·브랜치·태그·원격 추적 ref 전부 — 원격이 실제로 가진 커밋만 빼고 남으면 보존
-        rv = _git(repo, "remote", "-v", timeout=_left(deadline, 5))
-        if rv.returncode != 0:
-            return f"git 확인 실패 (remote 종료 {rv.returncode}) {repo}"
-        urls = {}
-        for ln in rv.stdout.splitlines():
-            f = ln.split()
-            if len(f) >= 2:
-                urls[f[0]] = f[1]          # 이름 → 주소
+        # R375 5차 검토 P0: 예전엔 remote -v 의 (fetch)·(push) 행을 같은 키로 덮어써 «실제로 조회한 fetch 주소» 와 캐시 키(push
+        #   주소)가 어긋날 수 있었다 → 설정 1회 조회로 원격별 fetch 주소(remote.<이름>.url 첫 값 = git 이 fetch·ls-remote 에 쓰는 값)와
+        #   주소를 바꾸거나 인증·전송에 영향을 주는 설정(url.*.insteadOf·credential.*·http.*·core.sshCommand)을 함께 읽는다.
+        #   캐시 키 = (원래 fetch 주소, 그 설정 전체) → 재작성 규칙·인증 맥락이 다르면 같은 주소라도 공유하지 않는다 (보수적).
+        #   ls-remote 는 원격 이름으로 (git 이 같은 규칙으로 재작성한 바로 그 주소를 조회 · 조회 대상 = 키의 주소).
+        #   한 번의 호출로 remote -v + config 2회를 대신한다 (속도 · 검증 약화 없음).
+        cf = _git(repo, "config", "--get-regexp",
+                  r"^(remote\..*\.url|core\.sshcommand|http\..*|credential\..*|url\..*)$", timeout=_left(deadline, 5))
+        if cf.returncode not in (0, 1):    # 1 = 해당 설정 없음 (원격 없음)
+            return f"git 확인 실패 (config 종료 {cf.returncode}) {repo}"
+        urls, ctx = {}, []
+        for ln in cf.stdout.splitlines():
+            k, _, v = ln.partition(" ")
+            kl = k.lower()
+            if kl.startswith("remote.") and kl.endswith(".url"):
+                urls.setdefault(k[7:-4], v.strip())   # 원격 이름 → 첫 url (fetch 주소)
+            elif k:
+                ctx.append(ln)
+        ctx = chr(10).join(sorted(ctx))
         shas = set()
         for rm, url in sorted(urls.items()):
             # 네트워크 원격(scheme:// · user@host:)만 주소로 공유 · 로컬 경로 원격은 상대 경로일 수 있어 저장소별로 따로
             net = bool(re.match(r"^[a-z][a-z0-9+.-]*://|^[^/\\:]+@", url, re.I))
-            key = (url, "" if net else os.path.normcase(repo))
+            key = (url, ctx, "" if net else os.path.normcase(repo))
             if key not in _REMOTE_TIPS:
                 lr = _git(repo, "ls-remote", rm, timeout=_left(deadline, 15))
                 if lr.returncode != 0:
@@ -393,14 +435,17 @@ def _unpushed(p: Path, deadline: float | None = None) -> str | None:
     return None
 
 
-def busy_reason(p: Path, sid: str, now: float, deadline: float | None = None) -> str | None:
+def busy_reason(p: Path, sid: str, now: float, deadline: float | None = None, manifest: list | None = None) -> str | None:
     """끝난 세션 폴더를 지우면 안 되는 사유 (없으면 None). 지우기 직전에도 다시 부른다.
-    deadline: run 전체 시간 예산 (time.monotonic 기준) — 모든 확인이 공유 · 못 끝낸 확인 = 보존하고 다음 실행에서 다시."""
+    deadline: run 전체 시간 예산 (time.monotonic 기준) — 모든 확인이 공유 · 못 끝낸 확인 = 보존하고 다음 실행에서 다시.
+    manifest: 주면 같은 순회에서 삭제 대상 지문을 모은다 (재개 때 대조)."""
+    if _over(deadline):
+        return "시간 예산 소진 (확인 미완료 · 다음 실행)"
     act = _session_last_active(sid)
     if act is not None and now - act < IDLE_SCRATCH_SEC:
         return f"세션 활동 중 (대화 기록 {IDLE_SCRATCH_SEC // 60}분 안에 갱신)"
     errs: list = []
-    last = _newest_mtime(p, errs, deadline)
+    last = _newest_mtime(p, errs, deadline, manifest=manifest)
     if errs:
         return f"변경 확인 불완전 ({errs[0]})"
     if act is None and now - last < IDLE_SCRATCH_SEC:
@@ -415,10 +460,54 @@ def _identity(p: Path) -> dict:
     return {"ino": int(st.st_ino), "birth": round(getattr(st, "st_birthtime", None) or st.st_ctime, 3)}
 
 
+def _mf_path(p: Path) -> Path:
+    import hashlib
+    h = hashlib.blake2b(os.path.normcase(str(p)).encode("utf-8", "surrogatepass"), digest_size=12).hexdigest()
+    return PROG.with_name("own-cleanup-manifests") / f"{h}.txt"
+
+
+def _save_manifest(p: Path, items: list) -> str | None:
+    """삭제 대상 지문 목록을 원자적으로 저장 · 내용 해시 반환 (실패 = None → 부르는 쪽은 지우지 않는다)."""
+    import hashlib
+    body = "\n".join(sorted(set(items)))
+    f = _mf_path(p)
+    tmp = f.with_name(f"{f.name}.{os.getpid()}.tmp")
+    try:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(body, encoding="utf-8")
+        os.replace(tmp, f)
+        return hashlib.blake2b(body.encode("utf-8"), digest_size=12).hexdigest()
+    except OSError:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        return None
+
+
+def _load_manifest(p: Path, want_hash: str) -> set | None:
+    import hashlib
+    try:
+        body = _mf_path(p).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if hashlib.blake2b(body.encode("utf-8"), digest_size=12).hexdigest() != want_hash:
+        return None                                   # 잘리거나 바뀐 manifest = 증거 아님
+    return set(body.split("\n")) if body else set()
+
+
+def _drop_manifest(p: Path) -> None:
+    try:
+        _mf_path(p).unlink()
+    except OSError:
+        pass
+
+
 def resume_reason(p: Path, sid: str, rec, deadline: float | None = None) -> str | None:
-    """지우기 시작했던 폴더를 이어서 지워도 되나 (R375 4차 검토 P0). 일반 판정의 git 확인은 반쯤 지운 .git 때문에
-    영원히 실패하므로 대신: 같은 폴더(식별자)인지 · 삭제 시작 뒤 새·바뀐 파일이 없는지 · 그 뒤 세션 활동·열린 요청이 없는지 ·
-    쓰는 프로세스가 없는지. 하나라도 아니거나 확인 불가면 보존. 기록이 무효(형식 불명·같은 경로 재생성)면 «일반 판정»."""
+    """지우기 시작했던 폴더를 이어서 지워도 되나 (R375 4차·5차 검토 P0). 일반 판정의 git 확인은 반쯤 지운 .git 때문에
+    영원히 실패하므로 대신: 같은 폴더(식별자)인지 · 남은 항목이 전부 삭제 시작 때 manifest 에 있던 그대로인지
+    (복사·이름 바꾸기·링크 변경·새 파일 = 지문 불일치) · 그 뒤 세션 활동·열린 요청이 없는지 · 쓰는 프로세스가 없는지.
+    하나라도 아니거나 확인 불가(manifest 없음·손상 포함)면 보존. 기록이 무효(형식 불명·같은 경로 재생성)면 «일반 판정»."""
     if not isinstance(rec, dict) or "t" not in rec or "ino" not in rec:
         return "재개 기록 형식 불명 (일반 판정)"
     try:
@@ -426,16 +515,23 @@ def resume_reason(p: Path, sid: str, rec, deadline: float | None = None) -> str 
             return "재개 대상이 다른 폴더 (같은 경로 재생성 · 일반 판정)"
     except OSError as e:
         return f"재개 대상 확인 실패 ({type(e).__name__})"
+    if _over(deadline):
+        return "재개 보류: 시간 예산 소진 (다음 실행)"
     started = float(rec["t"])
     act = _session_last_active(sid)
     if act is not None and act > started:
         return "재개 보류: 삭제 시작 뒤 세션 활동"
+    known = _load_manifest(p, rec.get("mh", "")) if rec.get("mh") else None
+    if known is None:
+        return "재개 보류: 삭제 시작 때 목록(manifest) 없음·손상 (확인 불가 · 보존)"
     errs: list = []
-    newest = _newest_mtime(p, errs, deadline, files_only=True)
+    now_items: list = []
+    newest = _newest_mtime(p, errs, deadline, files_only=True, manifest=now_items)
     if errs:
         return f"재개 보류: 변경 확인 불완전 ({errs[0]})"
-    if newest > started:
-        return "재개 보류: 삭제 시작 뒤 새·바뀐 파일"
+    extra = [x for x in now_items if x not in known]
+    if extra or newest > started:
+        return f"재개 보류: 삭제 시작 뒤 새·바뀐 항목 ({len(extra)}개 · 복사·이름 바꾸기·링크 변경 포함)"
     return _open_ledger(sid) or _users_of(p, sid)
 
 
@@ -444,6 +540,8 @@ def _remove(p: Path, deadline: float | None = None) -> int:
     deadline(time.monotonic 기준) 을 넘으면 거기서 멈춘다 — 큰 폴더는 다음 작업 종료 때 이어서 (Stop 훅 제한 안에서)."""
     n = 0
     sp = str(p)
+    if _over(deadline):   # R375 5차 검토: 예산 넘은 뒤 새 삭제 시작 금지 (비디렉터리·링크 분기 포함)
+        return 0
     if _is_link(sp):
         try:
             os.rmdir(sp) if os.path.isdir(sp) else os.unlink(sp)
@@ -513,52 +611,98 @@ def _lock_path() -> Path:
     return PROG.with_name("own-cleanup.lock")
 
 
-def _acquire_lock() -> bool:
-    """정리 실행은 하나만 (동시 Stop·SessionEnd · 여러 창). 잠금 주인 pid 가 살아 있으면 False (이번엔 지우지 않음 = 보존).
-    주인이 죽은 잠금은 넘겨받는다. 확인 불가(psutil 없음·잠금 읽기 실패)면 살아 있다고 본다."""
+_LOCK_FD: int | None = None
+
+
+def _os_lock(fd: int) -> bool:
+    """비차단 배타 잠금 — 커널이 잡는 잠금이라 주인 프로세스가 죽으면 저절로 풀린다 (pid 판정·잠금 파일 삭제 불필요)."""
+    try:
+        if os.name == "nt":
+            import msvcrt
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except OSError:
+        return False
+
+
+def _acquire_lock(wait: float = 0.0) -> bool:
+    """정리 실행·등록은 하나씩 (동시 Stop·SessionEnd · 여러 창 · register 와 run 의 등록 목록 갱신).
+    R375 5차 검토 P0: 예전 방식(O_EXCL 파일 + pid)은 ① pid 쓰기 전 빈 파일을 «주인 없음» 으로 보고 지우고
+    ② 죽은 잠금을 둘이 동시에 지우면 한쪽이 다른 실행이 새로 잡은 잠금을 지울 수 있었다 → OS 잠금으로 교체:
+    파일은 지우지 않고(상주) 잠금만 잡는다 · 주인이 죽으면 OS 가 푼다 · 잡지 못하면 False (= 이번엔 아무것도 바꾸지 않음).
+    pid 는 진단용으로만 적는다."""
+    global _LOCK_FD
+    if _LOCK_FD is not None:
+        return False                     # 같은 프로세스 안 중첩 획득 X (호출 순서 오류 = 보수적으로 실패)
     lp = _lock_path()
-    for _ in range(2):
-        try:
-            lp.parent.mkdir(parents=True, exist_ok=True)
-            fd = os.open(str(lp), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-            with os.fdopen(fd, "w") as f:
-                f.write(str(os.getpid()))
-            return True
-        except FileExistsError:
-            try:
-                pid = int(lp.read_text(encoding="utf-8").strip() or "0")
-            except (OSError, ValueError):
-                return False
-            try:
-                import psutil
-                alive = pid > 0 and psutil.pid_exists(pid)
-            except ImportError:
-                alive = True
-            if alive:
-                return False
-            try:
-                lp.unlink()
-            except OSError:
-                return False
-        except OSError:
+    end = time.monotonic() + max(0.0, wait)
+    try:
+        lp.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(str(lp), os.O_RDWR | os.O_CREAT, 0o644)
+    except OSError:
+        return False
+    while True:
+        if _os_lock(fd):
+            break
+        if time.monotonic() >= end:
+            os.close(fd)
             return False
-    return False
+        time.sleep(0.1)
+    try:
+        os.lseek(fd, 1, os.SEEK_SET)     # 잠근 0번 바이트 뒤에 진단용 pid (Windows 는 잠근 바이트에 쓰기만 막힘)
+        os.ftruncate(fd, 1)
+        os.write(fd, str(os.getpid()).encode())
+    except OSError:
+        pass
+    _LOCK_FD = fd
+    return True
 
 
 def _release_lock() -> None:
-    lp = _lock_path()
+    global _LOCK_FD
+    fd, _LOCK_FD = _LOCK_FD, None
+    if fd is None:
+        return
     try:
-        if lp.read_text(encoding="utf-8").strip() == str(os.getpid()):
-            lp.unlink()
+        if os.name == "nt":
+            import msvcrt
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_UN)
     except OSError:
         pass
+    finally:
+        os.close(fd)
 
 
 def _registered() -> list:
     try:
-        return json.loads(REG.read_text(encoding="utf-8"))
+        d = json.loads(REG.read_text(encoding="utf-8"))
+        return d if isinstance(d, list) else []
     except (OSError, ValueError):
         return []
+
+
+def _write_reg(items: list) -> bool:
+    """등록 목록 원자적 저장 (임시 파일 → 교체) — 잠금 안에서만 부른다."""
+    tmp = REG.with_name(f"{REG.name}.{os.getpid()}.tmp")
+    try:
+        REG.parent.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(tmp, REG)
+        return True
+    except OSError:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+        return False
 
 
 def register(path: str, session: str = "") -> dict:
@@ -566,19 +710,32 @@ def register(path: str, session: str = "") -> dict:
     why = safe_target(p)
     if why:
         return {"error": f"등록 안 함 — {why}: {path}"}
-    items = [x for x in _registered() if x.get("path") != str(_real(p))]
-    items.append({"path": str(_real(p)), "session": session, "registered_at": int(time.time())})
-    REG.parent.mkdir(parents=True, exist_ok=True)
-    REG.write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
-    return {"registered": str(_real(p))}
+    # R375 5차 검토 P0: register 와 run 이 같은 목록을 동시에 고쳐 쓰면 한쪽 갱신이 사라진다 → 같은 잠금 안에서 읽고·쓰기
+    if not _acquire_lock(wait=BUDGET_SEC + 4):
+        return {"error": f"등록 안 함 — 정리 실행이 잠금을 쥐고 있음 (재시도 필요): {path}"}
+    try:
+        items = [x for x in _registered() if x.get("path") != str(_real(p))]
+        items.append({"path": str(_real(p)), "session": session, "registered_at": int(time.time())})
+        if not _write_reg(items):
+            return {"error": f"등록 안 함 — 목록 저장 실패: {path}"}
+        return {"registered": str(_real(p))}
+    finally:
+        _release_lock()
 
 
-def candidates(session: str, now: float) -> list:
-    """(경로, 종류, 최소 미사용 초)"""
+def candidates(session: str, now: float, deadline: float | None = None, info: dict | None = None) -> list:
+    """(경로, 종류, 최소 미사용 초) — 예산을 넘기면 거기까지만 (info["incomplete"]=True · 나머지는 다음 실행)."""
     tmp = _temp_root()
     out = []
+    info = {} if info is None else info
+    if _over(deadline):
+        info["incomplete"] = True
+        return out
     try:
         for e in os.scandir(tmp):
+            if _over(deadline):
+                info["incomplete"] = True
+                return out
             if e.name.startswith(KIT_TEMP_PREFIXES):
                 out.append((Path(e.path), "kit-temp", IDLE_PREFIX_SEC))
     except OSError:
@@ -633,19 +790,32 @@ def _gate():
     return m
 
 
-def review_approvals(dry: bool) -> dict:
+def review_approvals(dry: bool, deadline: float | None = None, removed_paths: tuple = ()) -> dict:
+    """R375 5차 검토 P0: «임시 폴더 안만 지운다» 는 범위 증거일 뿐 «이 정리가 대신 했다» 는 증거가 아니다 →
+    취소는 대체 실행 증거가 있을 때만: 명령의 대상 경로가 전부 이미 없거나(할 일이 사라짐) 이번 실행에서 이 정리가 지운
+    폴더 안. 대상이 아직 있으면 남은 승인으로 기록만. 예산을 넘기면 새 취소를 하지 않는다."""
     withdrawn, remaining = [], []
     try:
         g = _gate()
         waiting = g.list_waiting()
     except Exception as e:  # noqa: BLE001 — 조회 실패는 기록만 (정리를 막지 않음)
         return {"error": type(e).__name__, "withdrawn": [], "remaining": []}
+    done = [_real(x) for x in removed_paths]
     for w in waiting:
         st = g.status(w["task_id"])
         cmd = ((st.get("risk_detail") or {}).get("command")) or ""
         if st.get("risk_category") == "data_loss" and temp_only_delete(cmd):
+            targets = [_real(_to_win(x)) for x in _RX_ABS.findall(cmd)]
+            pending = [t for t in targets if os.path.lexists(t) and not any(t == d or _inside(t, d) for d in done)]
+            if pending:
+                remaining.append({"task_id": w["task_id"], "category": w.get("category"),
+                                  "why": f"대상이 아직 있음 (대체 실행 증거 없음) {pending[0]}"})
+                continue
+            if _over(deadline):
+                remaining.append({"task_id": w["task_id"], "why": "시간 예산 소진 (취소 보류 · 다음 실행)"})
+                continue
             if not dry:
-                r = g.withdraw(w["task_id"], "임시 폴더 안만 지우는 자기 요청 — own-cleanup 이 소유·범위 확인 후 정리 (R258)",
+                r = g.withdraw(w["task_id"], "임시 폴더 안 대상이 이미 없거나 own-cleanup 이 지움 — 대체 실행 증거 확인 (R258·R375)",
                                by="own-cleanup")
                 if r.get("state") != "expired":
                     remaining.append({"task_id": w["task_id"], "why": r.get("error", "취소 실패")})
@@ -661,44 +831,68 @@ def run(session: str = "", dry: bool = False, now: float | None = None) -> dict:
     now = time.time() if now is None else now
     global _PROCS
     _REMOTE_TIPS.clear()
-    locked = dry or _acquire_lock()
+    locked = (not dry) and _acquire_lock()
     try:
         return _run_body(session, dry, now, locked)
     finally:
         _PROCS = None
         _REMOTE_TIPS.clear()
-        if locked and not dry:
+        if locked:
             _release_lock()
+
+
+def _owned_reason(p: Path, sid: str, now: float, idle: float, deadline: float | None,
+                  manifest: list | None = None) -> str | None:
+    """kit 임시·등록 산출물 판정 — 끝난 세션 폴더와 같은 보호 계약 (R375 4차·5차 검토):
+    시각 확인 실패·최근 수정 = 보존 · 등록한 세션의 열린 요청 = 보존 · 쓰는 프로세스 = 보존 · 안의 git 저장소에 잃을 것 = 보존."""
+    if _over(deadline):
+        return "시간 예산 소진 (확인 미완료 · 다음 실행)"
+    errs: list = []
+    last = _newest_mtime(p, errs, deadline, manifest=manifest)
+    if errs:
+        return f"변경 확인 불완전 ({errs[0]})"
+    if now - last < idle:
+        return f"사용 중 ({int(idle) // 60}분 안에 수정)"
+    return _open_ledger(sid) or _users_of(p, sid) or (_unpushed(p, deadline) if p.is_dir() and not _is_link(str(p)) else None)
 
 
 def _run_body(session: str, dry: bool, now: float, locked: bool) -> dict:
     global _PROCS
     t0 = time.monotonic()
-    deadline = t0 + BUDGET_SEC   # 탐색·프로세스·git·삭제가 모두 이 하나를 공유 (R375 4차 검토)
+    deadline = t0 + BUDGET_SEC   # 탐색·프로세스·git·승인·삭제가 모두 이 하나를 공유 (R375 4차·5차 검토)
+    res = {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "session": session, "dry": dry}
+    if not dry and not locked:
+        # R375 5차 검토 P0: 잠금을 못 잡은 실행은 아무것도 바꾸지 않는다 — 삭제·진행 기록·등록 목록·승인 취소·상태/로그 쓰기 모두 X
+        kept = [{"path": str(p), "kind": kind, "why": "다른 정리 실행 중 (잠금)"}
+                for p, kind, _ in candidates(session, now, deadline) if os.path.lexists(str(p))]
+        return {**res, "locked": False, "removed": [], "kept": kept[:50], "kept_count": len(kept), "deferred": 0,
+                "approvals": {"skipped": "잠금 없음 (변경 작업 안 함)", "withdrawn": [], "remaining": []}}
     removed, kept, deferred = [], [], 0
-    prog = _load_prog() if locked else {}
-    if locked and not dry and any(not os.path.lexists(k) for k in prog):   # 다 지워진 것 정리
-        prog = {k: v for k, v in prog.items() if os.path.lexists(k)}
+    prog = _load_prog()
+    if not dry and any(not os.path.lexists(k) for k in prog):   # 다 지워진 것 정리
+        for k in [k for k in prog if not os.path.lexists(k)]:
+            prog.pop(k, None)
+            _drop_manifest(Path(k))
         _save_prog(prog)
-    for p, kind, idle in candidates(session, now):
+    regsid = {x.get("path"): x.get("session", "") for x in _registered()}
+    scan: dict = {}
+    for p, kind, idle in candidates(session, now, deadline, scan):
         if not os.path.lexists(str(p)):
             continue
-        if not locked:   # 다른 정리 실행이 도는 중 — 이번엔 아무것도 지우지 않는다
-            kept.append({"path": str(p), "kind": kind, "why": "다른 정리 실행 중 (잠금)"})
-            continue
-        if time.monotonic() > deadline:   # Stop 훅 제한(10초) 안에서 끝내고 나머지는 다음 작업 종료 때 (첫 실행 96개 10.4초 실측)
+        if _over(deadline):   # Stop 훅 제한(10초) 안에서 끝내고 나머지는 다음 작업 종료 때 (첫 실행 96개 10.4초 실측)
             deferred += 1
             continue
         why = safe_target(p)
-        sid = p.parent.name
+        sid = p.parent.name if kind == "ended-scratchpad" else (regsid.get(str(p), "") if kind == "registered" else "")
         resume = False
-        if not why and kind == "ended-scratchpad" and str(p) in prog:
-            # 이미 확인을 마치고 지우기 시작한 폴더 — 반쯤 지운 .git 은 git 확인이 실패해 영원히 남는다 →
-            #   같은 폴더·삭제 시작 뒤 변경 없음·세션 활동 없음·열린 요청 없음·쓰는 프로세스 없음이면 이어서 지운다
+        if not why and str(p) in prog:
+            # 이미 확인을 마치고 지우기 시작한 폴더 (종류 무관) — 반쯤 지운 .git 은 git 확인이 실패해 영원히 남는다 →
+            #   같은 폴더·남은 항목이 시작 때 manifest 그대로·세션 활동 없음·열린 요청 없음·쓰는 프로세스 없음이면 이어서
             r = resume_reason(p, sid, prog[str(p)], deadline)
             if r and "일반 판정" in r:
                 prog.pop(str(p), None)
                 if not dry:
+                    _drop_manifest(p)
                     _save_prog(prog)
             else:
                 resume, why = True, r
@@ -710,51 +904,48 @@ def _run_body(session: str, dry: bool, now: float, locked: bool) -> dict:
             if kind == "ended-scratchpad":
                 why = busy_reason(p, sid, now, deadline)
             else:
-                # R375 4차 검토: kit 임시·등록 산출물도 같은 보호 계약 — 시각 확인 실패 = 보존 · 쓰는 프로세스 = 보존
-                errs: list = []
-                last = _newest_mtime(p, errs, deadline)
-                if errs:
-                    why = f"변경 확인 불완전 ({errs[0]})"
-                elif now - last < idle:
-                    why = f"사용 중 ({idle // 60}분 안에 수정)"
-                else:
-                    why = _users_of(p, "")
+                why = _owned_reason(p, sid, now, idle, deadline)
+        mf: list = []
         if not why and not dry:
             _PROCS = None                                        # 재확인은 지금 프로세스 목록으로
             if resume:
                 why = resume_reason(p, sid, prog[str(p)], deadline)
             elif kind == "ended-scratchpad":
-                why = busy_reason(p, sid, time.time(), deadline)   # 지우기 직전 재확인 (판정과 삭제 사이 경합)
+                why = busy_reason(p, sid, time.time(), deadline, manifest=mf)   # 지우기 직전 재확인 + 같은 순회로 manifest
             else:
-                why = _users_of(p, "")
+                why = _owned_reason(p, sid, time.time(), idle, deadline, manifest=mf)
             why = f"삭제 직전 재확인: {why}" if why else None
         if why:
             kept.append({"path": str(p), "kind": kind, "why": why})
             continue
-        if not dry and kind == "ended-scratchpad" and not resume:
+        if not dry and not resume:
+            mh = _save_manifest(p, mf)
             try:
-                prog[str(p)] = {"t": time.time(), **_identity(p)}
+                prog[str(p)] = {"t": time.time(), **_identity(p), "mh": mh}
             except OSError as e:
                 kept.append({"path": str(p), "kind": kind, "why": f"재개 기록 준비 실패 ({type(e).__name__})"})
                 continue
-            if not _save_prog(prog):   # 기록 없이 지우기 시작하면 반쯤 지운 폴더가 영원히 «git 확인 실패» 로 남는다
+            if mh is None or not _save_prog(prog):   # 기록 없이 지우기 시작하면 반쯤 지운 폴더를 안전하게 이어 지울 수 없다
                 prog.pop(str(p), None)
+                _drop_manifest(p)
                 kept.append({"path": str(p), "kind": kind, "why": "재개 기록 저장 실패 (지우지 않음)"})
                 continue
         n = 0 if dry else _remove(p, deadline=deadline)
         left = bool(not dry and os.path.lexists(str(p)))
         if not dry and not left and prog.pop(str(p), None) is not None:
+            _drop_manifest(p)
             _save_prog(prog)
         removed.append({"path": str(p), "kind": kind, "items": n, "partial": left})   # 남은 것은 다음 작업 종료 때 이어서
     _PROCS = None
-    if not dry and locked:   # 등록 목록에서 사라진 것 정리
-        left = [x for x in _registered() if os.path.lexists(x.get("path", ""))]
-        if REG.exists():
-            REG.write_text(json.dumps(left, ensure_ascii=False, indent=1), encoding="utf-8")
-    appr = review_approvals(dry)
-    res = {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "session": session, "dry": dry,
-           "removed": removed, "kept": kept[:50], "kept_count": len(kept), "deferred": deferred, "approvals": appr}
-    if not dry:
+    if not dry and not _over(deadline):   # 등록 목록에서 사라진 것 정리 (잠금 안 · 원자적 · 예산 안에서만)
+        items = _registered()
+        left_items = [x for x in items if os.path.lexists(x.get("path", ""))]
+        if len(left_items) != len(items):
+            _write_reg(left_items)
+    appr = review_approvals(dry, deadline, tuple(r["path"] for r in removed if not r["partial"]))
+    res.update({"removed": removed, "kept": kept[:50], "kept_count": len(kept), "deferred": deferred,
+                "scan_incomplete": bool(scan.get("incomplete")), "approvals": appr})
+    if not dry:   # 결과 기록 (삭제·취소가 아닌 관측 기록이라 예산과 무관하게 남긴다 · 잠금 안)
         try:
             STATE.parent.mkdir(parents=True, exist_ok=True)
             STATE.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")

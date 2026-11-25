@@ -244,7 +244,7 @@ def test_time_budget_defers_rest_to_next_run(env, monkeypatch):
         _old(p, 2 * 3600)
     monkeypatch.setattr(oc, "BUDGET_SEC", -1)            # 예산 소진 상태 = 아무것도 지우지 않고 다음으로 미룸
     r = oc.run(SID)
-    assert r["deferred"] == 3 and all(p.exists() for p in olds)
+    assert r["scan_incomplete"] and all(p.exists() for p in olds)    # 후보 탐색부터 예산 적용 (R375 5차 검토)
     monkeypatch.setattr(oc, "BUDGET_SEC", 6.0)
     r = oc.run(SID)
     assert r["kept"] == [], r["kept"]
@@ -523,7 +523,7 @@ def test_r375_recheck_right_before_delete(env, tmp_path, monkeypatch):
     calls = []
     real = oc.busy_reason
 
-    def flip(p, sid, now, deadline=None):                                       # 판정 땐 한가 → 지우기 직전 워커가 붙음 (경합)
+    def flip(p, sid, now, deadline=None, **k):                                       # 판정 땐 한가 → 지우기 직전 워커가 붙음 (경합)
         calls.append(1)
         return None if len(calls) == 1 else "사용 중 프로세스 (경합)"
     monkeypatch.setattr(oc, "busy_reason", flip)
@@ -701,7 +701,9 @@ def test_r375c_resume_still_respects_live_process(env, tmp_path, monkeypatch):
 
 # ── R375 4차 검토 P0·P1 (2026-11-25): 재개 안전성 · 진행 기록 원자성 · 동시 실행 · 오류 = 보존 · 예산 공유 ──
 def _rec(p, t):
-    return {"t": t, **oc._identity(p)}
+    mf = []                                                              # 삭제 시작 때와 같은 방식으로 manifest 기록
+    oc._newest_mtime(p, [], None, manifest=mf)
+    return {"t": t, **oc._identity(p), "mh": oc._save_manifest(p, mf)}
 
 
 def test_r375d_resume_record_for_recreated_path_is_ignored(env, tmp_path, monkeypatch):
@@ -720,7 +722,7 @@ def test_r375d_resume_kept_when_new_file_after_start(env, tmp_path, monkeypatch)
     oc._save_prog({str(ended): _rec(ended, time.time() - 100)})
     (ended / "new.txt").write_text("after", encoding="utf-8")            # 중단 뒤 새 파일
     r = oc.run(SID)
-    assert ended.exists() and "삭제 시작 뒤 새·바뀐 파일" in _why(r)
+    assert ended.exists() and "삭제 시작 뒤 새·바뀐 항목" in _why(r)
 
 
 def test_r375d_resume_kept_when_session_active_after_start(env, tmp_path, monkeypatch):
@@ -755,31 +757,29 @@ def test_r375d_progress_save_is_atomic(env):
 
 def test_r375d_concurrent_run_locked_out_dead_lock_taken_over(env, tmp_path, monkeypatch):
     ended = _ended(env, tmp_path, monkeypatch)
-    p = _sp.Popen([_sys.executable, "-c", "import time; time.sleep(30)"])
+    p = _hold_lock(oc._lock_path())                                      # 살아 있는 다른 정리 실행 (OS 잠금)
     try:
-        oc._lock_path().write_text(str(p.pid), encoding="utf-8")         # 살아 있는 다른 정리 실행
         r = oc.run(SID)
-        assert ended.exists() and "잠금" in _why(r)
+        assert ended.exists() and "잠금" in _why(r) and r["locked"] is False
     finally:
         p.kill(); p.wait()
-    r = oc.run(SID)                                                      # 주인이 죽은 잠금 = 넘겨받음
+    r = oc.run(SID)                                                      # 주인이 죽으면 OS 가 잠금을 푼다 = 넘겨받음
     assert not ended.exists(), _why(r)
-    assert not oc._lock_path().exists()
 
 
 def test_r375d_remote_and_catfile_exit_codes_fail_closed(env, tmp_path, monkeypatch):
     ended, work = _clean_pair(env, tmp_path, monkeypatch)
     real = oc._git
 
-    def bad(sub):
+    def bad(sub, code=1):
         def g(repo, *a, **k):
             r = real(repo, *a, **k)
             if a and a[0] == sub:
-                r.returncode = 1
+                r.returncode = code
             return r
         return g
-    monkeypatch.setattr(oc, "_git", bad("remote"))
-    assert "remote 종료" in (oc._unpushed(ended) or "")
+    monkeypatch.setattr(oc, "_git", bad("config", 128))   # 1 = 설정 없음(정상) · 그 밖 = 실패
+    assert "config 종료" in (oc._unpushed(ended) or "")
     monkeypatch.setattr(oc, "_git", bad("cat-file"))
     assert "cat-file 종료" in (oc._unpushed(ended) or "")
 
@@ -856,3 +856,239 @@ def test_r375d_unreadable_process_that_already_exited_is_not_a_user(env, tmp_pat
     monkeypatch.setattr(psutil, "process_iter", lambda attrs, ad_value=None: [
         type("G", (Gone,), {"info": {**Gone.info, "cmdline": ad_value, "cwd": ad_value}})()])
     assert oc._users_of(ended, OLD_SID) is None          # 그새 끝난 프로세스 = 폴더를 못 씀
+
+
+# ── R375 5차 검토 P0·P1 (2026-11-25): manifest 재개 · OS 잠금 · 등록 경합 · 잠금 실패 = 무변경 · fetch 키 · 승인 취소 증거 · 예산 ──
+_HOLD = r"""
+import os, sys, time
+fd = os.open(sys.argv[1], os.O_RDWR | os.O_CREAT)
+if os.name == "nt":
+    import msvcrt; msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+else:
+    import fcntl; fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+print("held", flush=True)
+time.sleep(float(sys.argv[2]) if len(sys.argv) > 2 else 30)
+"""
+_REAL_REMOVE = oc._remove
+
+
+def _hold_lock(lp, secs=30):
+    lp.parent.mkdir(parents=True, exist_ok=True)
+    p = _sp.Popen([_sys.executable, "-c", _HOLD, str(lp), str(secs)], stdout=_sp.PIPE, text=True)
+    assert p.stdout.readline().strip() == "held"
+    return p
+
+
+def _half_started(env, tmp_path, monkeypatch, files=("a.txt", "sub/b.txt")):
+    """삭제를 시작했다가 예산 초과로 멈춘 폴더 — 실제 run 으로 진행 기록·manifest 를 만든다 (삭제만 0건으로)."""
+    ended = _ended(env, tmp_path, monkeypatch, files)
+    monkeypatch.setattr(oc, "_remove", lambda p, deadline=None: 0)
+    oc.run(SID)
+    monkeypatch.setattr(oc, "_remove", _REAL_REMOVE)
+    assert str(ended) in oc._load_prog()
+    return ended
+
+
+def test_r375e_resume_kept_when_old_mtime_copy_added(env, tmp_path, monkeypatch):
+    import shutil
+    ended = _half_started(env, tmp_path, monkeypatch)
+    src = tmp_path / "user.txt"
+    src.write_text("user data", encoding="utf-8")
+    t = time.time() - 10 * 86400
+    os.utime(src, (t, t))
+    shutil.copy2(src, ended / "user.txt")                                # 오래된 mtime 을 보존한 복사
+    r = oc.run(SID)
+    assert (ended / "user.txt").exists() and "새·바뀐 항목" in _why(r)
+
+
+def test_r375e_resume_kept_when_file_renamed(env, tmp_path, monkeypatch):
+    ended = _half_started(env, tmp_path, monkeypatch)
+    os.replace(ended / "sub" / "b.txt", ended / "renamed.txt")           # mtime 그대로 이름만 바뀜
+    r = oc.run(SID)
+    assert ended.exists() and "새·바뀐 항목" in _why(r)
+
+
+def test_r375e_resume_kept_when_link_target_changed(env, tmp_path, monkeypatch):
+    a, b = tmp_path / "ta", tmp_path / "tb"
+    a.mkdir(); b.mkdir()
+    ended = _ended(env, tmp_path, monkeypatch)
+    try:
+        os.symlink(str(a), str(ended / "ln"), target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("심볼릭 링크 만들 권한 없음")
+    _old(ended, 4 * 86400)
+    monkeypatch.setattr(oc, "_remove", lambda p, deadline=None: 0)
+    oc.run(SID)
+    monkeypatch.setattr(oc, "_remove", _REAL_REMOVE)
+    assert str(ended) in oc._load_prog()
+    if os.name == "nt":
+        os.rmdir(str(ended / "ln"))
+    else:
+        os.unlink(str(ended / "ln"))
+    os.symlink(str(b), str(ended / "ln"), target_is_directory=True)     # 같은 이름 · 다른 대상
+    r = oc.run(SID)
+    assert ended.exists() and "새·바뀐 항목" in _why(r)
+    assert a.exists() and b.exists()
+
+
+def test_r375e_resume_kept_when_manifest_corrupt(env, tmp_path, monkeypatch):
+    ended = _half_started(env, tmp_path, monkeypatch)
+    oc._mf_path(ended).write_text("tampered", encoding="utf-8")
+    r = oc.run(SID)
+    assert ended.exists() and "manifest" in _why(r)
+
+
+def test_r375e_resume_unchanged_continues_and_cleans_records(env, tmp_path, monkeypatch):
+    ended = _half_started(env, tmp_path, monkeypatch)
+    mf = oc._mf_path(ended)
+    assert mf.exists()
+    r = oc.run(SID)
+    assert not ended.exists(), _why(r)
+    assert not mf.exists() and str(ended) not in oc._load_prog()        # 다 지우면 기록·manifest 도 정리
+
+
+def test_r375e_empty_or_stale_lock_file_does_not_block(env, tmp_path, monkeypatch):
+    ended = _ended(env, tmp_path, monkeypatch)
+    oc._lock_path().write_text("", encoding="utf-8")                     # pid 쓰기 전 빈 파일 · 주인 없음
+    r = oc.run(SID)
+    assert not ended.exists(), _why(r)
+    oc._lock_path().write_text("0", encoding="utf-8")
+    assert oc._acquire_lock() and not oc._acquire_lock()                 # 같은 프로세스 중첩 X
+    oc._release_lock()
+
+
+def test_r375e_locked_out_run_changes_nothing(env, tmp_path, monkeypatch):
+    temp, proj = env
+    ended = _ended(env, tmp_path, monkeypatch)
+    t = str(temp).replace("\\", "/")
+    tid = _req(f'rm -rf "{t}/gone-dir"')
+    oc._save_prog({"x": 1})
+    before = oc.PROG.read_bytes()
+    p = _hold_lock(oc._lock_path())
+    try:
+        r = oc.run(SID)
+    finally:
+        p.kill(); p.wait()
+    assert ended.exists() and r["locked"] is False
+    assert gate.status(tid)["approval_state"] == "waiting"               # 승인 취소 X
+    assert not oc.STATE.exists() and not oc.LOG.exists()                 # 상태·로그 쓰기 X
+    assert oc.PROG.read_bytes() == before                                 # 진행 기록 X
+
+
+_REG_CODE = ("import importlib.util,sys,tempfile;from pathlib import Path;"
+             "s=importlib.util.spec_from_file_location('oc',sys.argv[1]);m=importlib.util.module_from_spec(s);"
+             "s.loader.exec_module(m);tempfile.tempdir=sys.argv[2];m.ROOT=Path(sys.argv[3]);m.REG=Path(sys.argv[4]);"
+             "m.PROG=Path(sys.argv[5]);print(m.register(sys.argv[6],'S2'))")
+
+
+def test_r375e_register_waits_for_lock_and_concurrent_registers_all_kept(env, tmp_path, monkeypatch):
+    temp, proj = env
+    p = _hold_lock(oc._lock_path(), secs=1.0)
+    t0 = time.monotonic()
+    r = oc.register(str(_mk(temp / "reg-a")), "S1")
+    p.wait()
+    assert "registered" in r and time.monotonic() - t0 >= 0.5            # 잠금이 풀릴 때까지 기다렸다 기록
+    procs = []
+    for i in range(6):
+        d = _mk(temp / f"reg-c{i}")
+        procs.append(_sp.Popen([_sys.executable, "-c", _REG_CODE, str(KIT / ".claude/scripts/own-cleanup.py"), str(temp),
+                                str(proj), str(oc.REG), str(oc.PROG), str(d)], stdout=_sp.PIPE, text=True))
+    outs = [q.communicate(timeout=60)[0] for q in procs]
+    assert all("registered" in o for o in outs), outs
+    assert len({x["path"] for x in oc._registered()}) == 7              # 동시 등록 7건 중 사라진 것 없음
+
+
+def test_r375e_registered_kept_while_its_session_has_open_request(env, tmp_path, monkeypatch):
+    temp, proj = env
+    d = _mk(temp / "reg-open")
+    assert "registered" in oc.register(str(d), OLD_SID)
+    _old(d, 3600)
+    (proj / ".claude/state/request-ledger.json").write_text(
+        '{"requests":[{"id":"R9","session_id":"%s","status":"pending"}]}' % OLD_SID, encoding="utf-8")
+    r = oc.run(SID)
+    assert d.exists() and "열린 요청" in _why(r)
+
+
+def test_r375e_kit_temp_with_uncommitted_repo_kept(env):
+    temp, _ = env
+    d = _mk(temp / "regress-base-g1")
+    _sp.run(["git", "init", "-q", str(d / "wt")], check=True)
+    (d / "wt" / "work.txt").write_text("not committed", encoding="utf-8")
+    _old(d, 2 * 3600)
+    r = oc.run(SID)
+    assert d.exists() and "커밋 안 한 변경" in _why(r)
+
+
+def _count_ls_remote(monkeypatch):
+    calls = []
+    real = oc._git
+
+    def count(repo, *a, **k):
+        if a and a[0] == "ls-remote":
+            calls.append(repo)
+        return real(repo, *a, **k)
+    monkeypatch.setattr(oc, "_git", count)
+    return calls
+
+
+def test_r375e_remote_cache_keyed_by_fetch_url_not_push(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    root = ended.parent.parent.parent.parent
+    other = root / "other.git"
+    _sp.run(["git", "init", "-q", "--bare", str(other)], check=True)
+    push = "https://example.invalid/same-push.git"
+    _git("remote", "set-url", "origin", (root / "origin.git").as_uri(), cwd=work)
+    _git("remote", "set-url", "--push", "origin", push, cwd=work)
+    work2 = ended / "clone2"
+    _sp.run(["git", "init", "-q", str(work2)], check=True)
+    (work2 / "f.txt").write_text("only local", encoding="utf-8")
+    _git("add", ".", cwd=work2)
+    _git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "c", cwd=work2)
+    _git("remote", "add", "origin", other.as_uri(), cwd=work2)           # 다른 fetch 원격 · 같은 push 주소
+    _git("remote", "set-url", "--push", "origin", push, cwd=work2)
+    calls = _count_ls_remote(monkeypatch)
+    oc._REMOTE_TIPS.clear()
+    assert oc._repo_reason(str(work)) is None                            # 첫 저장소 증거가 먼저 캐시에 들어간 상태
+    why = oc._repo_reason(str(work2))                                    # push 주소로 묶이면 이 증거를 잘못 재사용
+    oc._REMOTE_TIPS.clear()
+    assert "원격에 없는 커밋" in (why or "") and len(calls) == 2, (why, calls)
+
+
+def test_r375e_same_fetch_url_different_auth_context_not_shared(env, tmp_path, monkeypatch):
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    url = (ended.parent.parent.parent.parent / "origin.git").as_uri()
+    _git("remote", "set-url", "origin", url, cwd=work)
+    work2 = ended / "clone2"
+    _sp.run(["git", "clone", "-q", url, str(work2)], check=True, capture_output=True)
+    _git("config", "credential.username", "someone-else", cwd=work2)    # 인증 맥락이 다름
+    calls = _count_ls_remote(monkeypatch)
+    oc._REMOTE_TIPS.clear()
+    assert oc._unpushed(ended) is None and len(calls) == 2
+    oc._REMOTE_TIPS.clear()
+
+
+def test_r375e_withdraw_needs_substitute_evidence(env):
+    temp, _ = env
+    t = str(temp).replace("\\", "/")
+    live = _mk(temp / "someone-dir")                                     # 대상이 아직 있음 = 이 정리가 대신 한 게 아님
+    still = _req(f'rm -rf "{t}/someone-dir"')
+    olddir = _mk(temp / "tgt-iso-w1")
+    _old(olddir, 2 * 3600)
+    done = _req(f'rm -rf "{t}/tgt-iso-w1"')                              # 이번 실행에서 정리가 지움 = 대체 실행 증거
+    r = oc.run(SID)
+    assert done in r["approvals"]["withdrawn"] and not olddir.exists()
+    assert still not in r["approvals"]["withdrawn"] and live.exists()
+    assert gate.status(still)["approval_state"] == "waiting"
+
+
+def test_r375e_budget_blocks_new_withdraw_delete_and_scan(env):
+    temp, _ = env
+    t = str(temp).replace("\\", "/")
+    tid = _req(f'rm -rf "{t}/gone-x"')
+    r = oc.review_approvals(False, deadline=time.monotonic() - 1)
+    assert tid not in r["withdrawn"] and gate.status(tid)["approval_state"] == "waiting"
+    f = temp / "lone.txt"
+    f.write_text("x", encoding="utf-8")
+    assert oc._remove(f, deadline=time.monotonic() - 1) == 0 and f.exists()   # 비디렉터리 분기도 예산 적용
+    info = {}
+    assert oc.candidates(SID, time.time(), deadline=time.monotonic() - 1, info=info) == [] and info["incomplete"]

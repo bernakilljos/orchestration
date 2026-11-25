@@ -398,12 +398,14 @@ def _lease_sec() -> int:
 def _reported_after_change(st: dict, rid: str, path: str) -> bool:
     """이 요청의 보고서가 요청 파일의 마지막 변경(origin/main 커밋 시각) 뒤에 만들어졌나. 확인 불가 = False (다시 알림 쪽)."""
     at = ((st.get("requests") or {}).get(rid) or {}).get("reported_at")
-    changed = _git("log", "-1", "--format=%cI", "origin/main", "--", path).strip()
-    if not at or not changed:
+    ct = _last_commit_times().get(path)        # R375 5차: 파일마다 git log 대신 한 번 읽은 경로별 시각
+    if not at or ct is None:
         return False
     try:
-        return datetime.fromisoformat(changed) < datetime.fromisoformat(at)       # 같은 초 = 다시 알림 쪽
-    except ValueError:
+        a = datetime.fromisoformat(at)
+        changed = datetime.fromtimestamp(ct, tz=timezone.utc) if a.tzinfo else datetime.fromtimestamp(ct)
+        return changed < a       # 같은 초 = 다시 알림 쪽
+    except (ValueError, OverflowError, OSError):
         return False
 
 
@@ -423,16 +425,37 @@ def _ack(st: dict, path: str, blob: str) -> None:
     st.setdefault("inflight", {}).pop(path, None)
 
 
+_LAST_CT: dict = {}   # 한 번의 확인(pending·poll) 동안만 쓰는 {경로: 마지막 커밋 시각} — git log 1회로 전부
+#   (R375 5차: 파일마다 git log 2회 = 실측 54회·7초 → 세션 시작 훅 10초 제한에서 잘려 미처리 리뷰가 주입되지 않음)
+#   확인을 시작할 때마다 비운다 (fetch 로 origin/main 이 바뀌었을 수 있음 · 오래 도는 wait 루프에서도 최신).
+
+
+def _last_commit_times() -> dict:
+    """origin/main 기준 .ai-collab/ 아래 경로별 마지막 커밋 시각 (이번 확인 안에서는 다시 읽지 않는다)."""
+    if "t" in _LAST_CT:
+        return _LAST_CT["t"]
+    out: dict = {}
+    ct = None
+    for ln in _git("log", "--format=@@CT %ct", "--name-only", "origin/main", "--", ".ai-collab").splitlines():
+        if ln.startswith("@@CT "):
+            ct = ln[5:].strip()
+        elif ln.strip() and ct and ct.isdigit():
+            out.setdefault(ln.strip(), int(ct))   # 최신 커밋부터 나오므로 처음 본 값 = 마지막 커밋
+    _LAST_CT["t"] = out
+    return out
+
+
 def _report_newer_on_remote(rid: str, path: str) -> bool:
     """origin/main 에서 reports/<rid>.md 의 마지막 커밋이 지시·리뷰 파일의 마지막 커밋보다 나중이면 True (그 판은 보고됨)."""
-    rep = _git("log", "-1", "--format=%ct", "origin/main", "--", f".ai-collab/reports/{rid}.md").strip()
-    src = _git("log", "-1", "--format=%ct", "origin/main", "--", path).strip()
-    return bool(rep.isdigit() and src.isdigit() and int(rep) > int(src))
+    times = _last_commit_times()
+    rep, src = times.get(f".ai-collab/reports/{rid}.md"), times.get(path)
+    return bool(rep is not None and src is not None and rep > src)
 
 
 def pending_lines(fetch_timeout: float = 8.0) -> list:
     """R372: 세션 시작용 읽기 전용 확인 — 처리 확정(seen) 안 된 requests/·reviews/ 를 한 줄씩 (inflight·state 쓰기 X).
     fetch 가 안 되면 이미 받아 둔 origin/main 기준으로 (오프라인이어도 아는 만큼은 알린다)."""
+    _LAST_CT.clear()
     out = []
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True,
@@ -471,6 +494,7 @@ def cmd_poll() -> int:
     R332 (외부 검토): 알리기만 해도 seen(처리 확정)으로 적어, 세션이 처리 도중 끊기면 다음 주기에 사라지던 것 →
     poll 은 inflight(처리 중 · 임대 시간)만 적고, 처리 확정(seen)은 보고(report)·ack 가 적는다.
     임대 시간 안 = 다른 주기·세션이 같은 요청을 겹쳐 받지 않음 · 지나면 다시 전달 (중단·재시작 복구)."""
+    _LAST_CT.clear()
     try:
         r = subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin"], capture_output=True, text=True, timeout=60)
     except (subprocess.SubprocessError, OSError) as e:   # R355: 시간 초과 = fetch 실패 (2)

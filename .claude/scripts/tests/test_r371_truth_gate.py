@@ -81,6 +81,11 @@ def test_cli_truth_check_exit_code(tmp_path):
     assert m.main(["truth-check", str(good)]) == 0
 
 
+def _batch_log(times):
+    rows = sorted(times.items(), key=lambda kv: -int(kv[1]))
+    return chr(10).join(f"@@CT {t}{chr(10)}{chr(10)}{path}" for path, t in rows)
+
+
 def test_r372_pending_watermark_by_git_history(monkeypatch):
     """R372: 세션 시작 미처리 목록 — 보고서가 지시·리뷰보다 나중에 올라갔으면 처리된 판 · 리뷰 approved 는 제외."""
     times = {".ai-collab/requests/R1.md": "100", ".ai-collab/reports/R1.md": "200",       # 보고됨
@@ -91,6 +96,8 @@ def test_r372_pending_watermark_by_git_history(monkeypatch):
     def fake_git(*a):
         if a[:2] == ("log", "-1"):
             return times.get(a[-1], "")
+        if a[:2] == ("log", "--format=@@CT %ct"):                    # R375 5차: 경로별 시각을 git log 한 번으로
+            return _batch_log(times)
         if a[0] == "fetch":
             return ""
         return ""
@@ -115,6 +122,8 @@ def test_r375_poll_uses_same_git_watermark_as_pending(monkeypatch):
     def fake_git(*a):
         if a[:2] == ("log", "-1"):
             return times.get(a[-1], "")
+        if a[:2] == ("log", "--format=@@CT %ct"):                    # R375 5차: 경로별 시각을 git log 한 번으로
+            return _batch_log(times)
         return "body"
     saved = {}
     monkeypatch.setattr(m, "_git", fake_git)
@@ -130,3 +139,23 @@ def test_r375_poll_uses_same_git_watermark_as_pending(monkeypatch):
     body = "\n".join(out)
     assert "reviews/R2.md" in body
     assert "requests/R1.md" not in body and "reviews/R3.md" not in body
+
+
+def test_r375e_pending_reads_commit_times_with_one_git_log(monkeypatch):
+    """R375 5차: 파일마다 git log 2회(실측 54회·7초 → 세션 시작 훅 10초 제한에서 잘림) → 한 번으로 · 결과는 같다."""
+    times = {f".ai-collab/requests/R{i}.md": str(100 + i) for i in range(20)}
+    times.update({f".ai-collab/reports/R{i}.md": str(300) for i in range(10)})      # 앞 10개는 보고됨
+    calls = []
+
+    def fake_git(*a):
+        calls.append(a[:2])
+        if a[:2] == ("log", "--format=@@CT %ct"):
+            return _batch_log(times)
+        return ""
+    monkeypatch.setattr(m, "_git", fake_git)
+    monkeypatch.setattr(m, "_remote_files", lambda: {p: "b" + p for p in times if "/reports/" not in p})
+    monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "requests": {}})
+    monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0})())
+    lines = m.pending_lines()
+    assert sum(1 for c in calls if c[0] == "log") == 1                # 20개 파일 · git log 1회
+    assert sorted(int(x.split("지시 R")[1].split(":")[0]) for x in lines) == list(range(10, 20))
