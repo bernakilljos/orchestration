@@ -381,12 +381,19 @@ def main() -> int:
     target = Path(sys.argv[1]).resolve()
     apply = "--apply" in sys.argv
     only = {sys.argv[i + 1].replace("\\", "/") for i, a in enumerate(sys.argv[:-1]) if a == "--only"}
+    # 2026-11-25 사용자 "강제적으로 해 · 앞으로 내 지시 없어도 해": 대상 수정본(target-custom)도 kit 판으로 덮어쓴다 (백업 후).
+    #   --force 또는 PC 별 목록 .claude/state/merge-force-targets.txt (gitignore) 에 대상이 있으면 적용. CLAUDE.md·guide.txt 는 대상 고유본이라 제외.
+    _force_list = KIT / ".claude" / "state" / "merge-force-targets.txt"
+    force = "--force" in sys.argv or (
+        _force_list.exists()
+        and str(Path(sys.argv[1]).resolve()) in [ln.strip() for ln in _force_list.read_text(encoding="utf-8").splitlines()]
+    )
     if not target.is_dir():
         print(f"대상 없음: {target}")
         return 2
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
-    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only")}
+    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only", "forced")}
     # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
     man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
     try:
@@ -444,6 +451,12 @@ def main() -> int:
                         (backup / rel).parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(dst, backup / rel)
                         dst.write_bytes(merged)
+                elif force:
+                    stats["forced"].append(rel)
+                    if apply:
+                        (backup / rel).parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(dst, backup / rel)
+                        put(rel, src, dst)
                 else:
                     stats["target-custom"].append(rel)
 
@@ -545,6 +558,8 @@ def main() -> int:
         # CLAUDE.md = 대상 고유본(설계상 다름) · retired 훅 = 대체돼 실행 안 됨 → 경고 대상 아님
         warn = rel != "CLAUDE.md" and Path(rel).name not in _retired_names() and kit_newer(rel, target)
         print(f"    보존(대상 수정본) {rel}" + ("  ⚠ kit 이 더 최근에 고침 — 수동 병합 필요" if warn else ""))
+    for rel in stats["forced"]:
+        print(f"    강제 교체(대상 수정본 → kit 판 · 백업 있음) {rel}")
     for rel in stats["auto-merged"]:
         print(f"    3-way 병합(대상 수정 유지 + kit 새 수정) {rel}")
     for r in report:
