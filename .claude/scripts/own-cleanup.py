@@ -915,6 +915,11 @@ def _run_body(session: str, dry: bool, now: float, locked: bool) -> dict:
             else:
                 why = _owned_reason(p, sid, time.time(), idle, deadline, manifest=mf)
             why = f"삭제 직전 재확인: {why}" if why else None
+        if why and _over(deadline):
+            # 예산 안에 확인을 못 끝낸 것 = «지우면 안 되는 사유 발견» 이 아니라 «다음 실행으로 미룸» (지우지 않는 것은 같음)
+            #   CI run 45573136328: 느린 러너에서 kit 임시 폴더가 «시간 예산 소진» 보존으로 기록돼 미룸 수와 섞였다
+            deferred += 1
+            continue
         if why:
             kept.append({"path": str(p), "kind": kind, "why": why})
             continue

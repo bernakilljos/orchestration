@@ -1092,3 +1092,15 @@ def test_r375e_budget_blocks_new_withdraw_delete_and_scan(env):
     assert oc._remove(f, deadline=time.monotonic() - 1) == 0 and f.exists()   # 비디렉터리 분기도 예산 적용
     info = {}
     assert oc.candidates(SID, time.time(), deadline=time.monotonic() - 1, info=info) == [] and info["incomplete"]
+
+
+def test_r375e_budget_exhausted_mid_check_is_deferred_not_kept(env, monkeypatch):
+    """CI run 45573136328 (Windows 러너): 확인 도중 예산이 다 되면 «보존 사유» 가 아니라 «다음 실행으로 미룸» — 지우지도 않는다."""
+    temp, _ = env
+    olds = [_mk(temp / f"tgt-iso-s{i}") for i in range(2)]
+    for p in olds:
+        _old(p, 2 * 3600)
+    monkeypatch.setattr(oc, "BUDGET_SEC", 0.3)
+    monkeypatch.setattr(oc, "_users_of", lambda p, s: (time.sleep(0.5), None)[1])   # 느린 러너의 프로세스 확인
+    r = oc.run(SID)
+    assert r["kept"] == [] and r["deferred"] >= 1 and all(p.exists() for p in olds), (r["kept"], r["deferred"])
