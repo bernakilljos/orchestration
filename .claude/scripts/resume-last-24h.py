@@ -15,6 +15,15 @@ SessionStart hook 가 호출 → stdout → systemMessage 로 주입
 from __future__ import annotations
 import time
 import os
+_T0 = time.monotonic()
+# 세션 시작 훅 제한 10초 안에서 협업 원격 확인(fetch+ls-remote)에 줄 수 있는 시간 = 제한 − 이미 쓴 시간 − 여유.
+#   여유 3초 = 셸·Python 기동(부하 때 ~1초) + 원격 확인 뒤 로컬 git 호출·출력(~2초).
+#   11-26 바로잡기: 고정 8초를 줘 시작 훅 28개가 함께 뜬 11:07 에 10.9초로 출력이 버려졌다(단독 4.0초 · 96% 가 pending_lines).
+_HOOK_LIMIT_S, _HOOK_MARGIN_S = 10.0, 3.0
+
+
+def _collab_budget() -> float:
+    return max(1.0, _HOOK_LIMIT_S - _HOOK_MARGIN_S - (time.monotonic() - _T0))
 import json, os, re, sqlite3, subprocess, sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -180,7 +189,7 @@ def main():
         _sp2 = _ilu.spec_from_file_location("_ai_collab", Path(__file__).resolve().parent / "ai-collab-report.py")
         _ac = _ilu.module_from_spec(_sp2)
         _sp2.loader.exec_module(_ac)
-        _pend = _ac.pending_lines()
+        _pend = _ac.pending_lines(_collab_budget())
         if _pend:
             top += "\n## ★ 협업 폴더 미처리 (ChatGPT 지시·리뷰) — 먼저 읽고 실행\n" + "\n".join(_pend[:20]) + "\n"
         # R375 후속 (2026-11-24 사용자 "loop 로 읽게 하지 않았어?"): 대기 루프(wait)는 Bash 백그라운드라 세션이 바뀌면 꺼진다 —
