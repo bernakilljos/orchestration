@@ -104,6 +104,44 @@ def _entries(top: str, errs: list | None = None):
         yield e.path, link, isdir
 
 
+_WINFI: dict = {}   # Windows ChangeTime 조회 도구 (처음 한 번만 준비)
+
+
+def _change_time(q: str, st) -> str:
+    """내용·메타데이터가 바뀔 때마다 바뀌는 시각 — 같은 크기로 덮어쓰고 mtime 을 되돌려도 달라진다 (R375 6차 검토 P0).
+    POSIX = st_ctime_ns (쓰기·utime 때 커널이 갱신) · Windows = ChangeTime (os.stat 의 ctime 은 생성 시각이라 못 씀 ·
+    실측 2026-11-26: 덮어쓰기+mtime 복원 후 os.stat 전 필드 동일, ChangeTime 만 다름 · 파일당 약 25µs).
+    못 읽으면 매번 다른 값 → 지문 불일치 → 재개하지 않고 보존 (fail-closed)."""
+    if os.name != "nt":
+        return str(st.st_ctime_ns)
+    try:
+        if "k" not in _WINFI:
+            import ctypes
+            import ctypes.wintypes as w
+            k = ctypes.WinDLL("kernel32", use_last_error=True)
+            k.CreateFileW.restype = w.HANDLE
+            k.CreateFileW.argtypes = [w.LPCWSTR, w.DWORD, w.DWORD, w.LPVOID, w.DWORD, w.DWORD, w.HANDLE]
+
+            class _FBI(ctypes.Structure):
+                _fields_ = [("c", ctypes.c_int64), ("a", ctypes.c_int64), ("wr", ctypes.c_int64),
+                            ("ch", ctypes.c_int64), ("attr", w.DWORD)]
+            _WINFI.update(k=k, fbi=_FBI, bad=w.HANDLE(-1).value, ct=ctypes)
+        k, ct = _WINFI["k"], _WINFI["ct"]
+        # FILE_READ_ATTRIBUTES · 공유 읽기/쓰기/삭제 · OPEN_EXISTING · BACKUP_SEMANTICS | OPEN_REPARSE_POINT (링크는 그 자체)
+        h = k.CreateFileW(q, 0x80, 7, None, 3, 0x02000000 | 0x00200000, None)
+        if h is None or h == _WINFI["bad"]:
+            raise OSError
+        try:
+            b = _WINFI["fbi"]()
+            if not k.GetFileInformationByHandleEx(h, 0, ct.byref(b), ct.sizeof(b)):
+                raise OSError
+            return str(b.ch)
+        finally:
+            k.CloseHandle(h)
+    except (OSError, AttributeError, ValueError):
+        return "?" + os.urandom(4).hex()
+
+
 def _digest(top: str, q: str, st, link: bool) -> str:
     """항목 하나의 식별 지문 — 상대 경로·파일 식별자·크기·수정 시각(ns)·링크 대상.
     R375 5차 검토 P0: 폴더 식별자·mtime 만 보면 «오래된 mtime 을 보존한 복사·이름 바꾸기·링크 대상 변경» 을 놓친다 →
@@ -116,7 +154,7 @@ def _digest(top: str, q: str, st, link: bool) -> str:
         except OSError:
             tgt = "?"             # 대상 못 읽음 = 지문이 매번 같지 않을 수 있어 보존 쪽으로 기운다
     rel = os.path.relpath(q, top).replace(os.sep, "/")
-    raw = f"{rel}|{st.st_ino}|{st.st_size}|{st.st_mtime_ns}|{int(link)}|{tgt}"
+    raw = f"{rel}|{st.st_ino}|{st.st_size}|{st.st_mtime_ns}|{int(link)}|{tgt}|{_change_time(q, st)}"
     return hashlib.blake2b(raw.encode("utf-8", "surrogatepass"), digest_size=10).hexdigest()
 
 

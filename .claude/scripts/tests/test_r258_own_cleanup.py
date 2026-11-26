@@ -931,6 +931,29 @@ def test_r375e_resume_kept_when_link_target_changed(env, tmp_path, monkeypatch):
     assert a.exists() and b.exists()
 
 
+def test_r375f_resume_kept_when_overwritten_same_size_and_mtime(env, tmp_path, monkeypatch):
+    """R375 6차 검토 P0: 같은 크기로 내용만 덮어쓰고 mtime 을 되돌린 경우 (Windows os.stat 전 필드 동일 실측) → 보존."""
+    ended = _half_started(env, tmp_path, monkeypatch)
+    f = next(q for q in ended.rglob("*") if q.is_file())
+    st = f.stat()
+    time.sleep(0.05)
+    f.write_bytes(b"X" * st.st_size)                                     # 같은 크기 · 다른 내용 (사용자 데이터로 바뀜)
+    os.utime(f, ns=(st.st_atime_ns, st.st_mtime_ns))                     # mtime 복원
+    assert f.stat().st_size == st.st_size and f.stat().st_mtime_ns == st.st_mtime_ns
+    r = oc.run(SID)
+    assert f.exists() and "새·바뀐 항목" in _why(r)
+
+
+def test_r375f_change_time_unreadable_is_not_a_match(monkeypatch, tmp_path):
+    """바뀜 시각을 못 읽으면 매번 다른 값 → manifest 와 불일치 → 이어 지우지 않음 (fail-closed)."""
+    q = tmp_path / "gone.txt"
+    q.write_text("x", encoding="utf-8")
+    st = q.stat()
+    q.unlink()                                                           # 읽기 직전 사라짐 = 못 읽음
+    if os.name == "nt":
+        assert oc._change_time(str(q), st) != oc._change_time(str(q), st)
+
+
 def test_r375e_resume_kept_when_manifest_corrupt(env, tmp_path, monkeypatch):
     ended = _half_started(env, tmp_path, monkeypatch)
     oc._mf_path(ended).write_text("tampered", encoding="utf-8")
