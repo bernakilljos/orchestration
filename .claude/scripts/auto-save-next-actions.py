@@ -127,10 +127,13 @@ def _pid_alive(pid: int) -> bool:
     name = "_kit_proc_lock"
     if name not in sys.modules:
         import importlib.util
-        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
-        mod = importlib.util.module_from_spec(spec)
+        try:
+            spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except Exception:  # noqa: BLE001 — R375 8차: 정본 못 불러옴 = 생존 확인 불가 = 살아 있다고 봄 (잠금 회수 X)
+            return True
         sys.modules[name] = mod
-        spec.loader.exec_module(mod)
     return sys.modules[name].pid_alive(pid, unknown=True)
 
 

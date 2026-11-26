@@ -655,10 +655,13 @@ def _os_lock(fd: int) -> bool:
     name = "_kit_proc_lock"
     if name not in sys.modules:
         import importlib.util
-        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
-        mod = importlib.util.module_from_spec(spec)
+        try:
+            spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except Exception:  # noqa: BLE001 — R375 8차: 정본 못 불러옴 = 잠금 실패 (정리·등록 변경 없음 · fail closed)
+            return False
         sys.modules[name] = mod
-        spec.loader.exec_module(mod)
     return sys.modules[name].os_lock(fd)
 
 

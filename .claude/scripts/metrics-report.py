@@ -39,10 +39,11 @@ def format_table(summary: dict, ai_filter: str = None):
     total_cost = 0.0
     total_calls = 0
     total_success = 0
+    total_known = 0
 
     for ai in sorted(summary.keys()):
         m = summary[ai]
-        success_pct = (m["success_rate"] * 100) if m["success_rate"] else 0
+        sr = m.get("success_rate")                     # None = 결과를 아는 행 0건 (R375 8차 · outcome_unknown 제외)
         tokens_in = m.get("tokens_in", 0)
         tokens_out = m.get("tokens_out", 0)
         cost = m.get("total_cost_usd", 0.0)
@@ -64,18 +65,22 @@ def format_table(summary: dict, ai_filter: str = None):
         else:
             tokens_out_str = str(tokens_out)
 
+        sr_txt = f"{sr * 100:.1f}%" if sr is not None else "UNKNOWN"
         print(
-            f"{ai:<20} {count:<10} {success_pct:<11.1f}% {tokens_in_str}/{tokens_out_str:<17} ${cost:<11.4f} {latency:.0f}ms"
+            f"{ai:<20} {count:<10} {sr_txt:<12} {tokens_in_str}/{tokens_out_str:<17} ${cost:<11.4f} {latency:.0f}ms"
         )
 
         total_cost += cost
         total_calls += count
-        total_success += m.get("success_rate", 0) * count
+        if sr is not None:
+            known = m.get("outcome_known", count)
+            total_success += sr * known
+            total_known += known
 
     print("─" * 100)
 
-    overall_success_pct = (total_success / total_calls * 100) if total_calls > 0 else 0
-    print(f"{'TOTAL':<20} {total_calls:<10} {overall_success_pct:<11.1f}% {'':20} ${total_cost:<11.4f}")
+    overall = f"{total_success / total_known * 100:.1f}%" if total_known > 0 else "UNKNOWN"
+    print(f"{'TOTAL':<20} {total_calls:<10} {overall:<12} {'':20} ${total_cost:<11.4f}")
     print()
 
     # Cache stats

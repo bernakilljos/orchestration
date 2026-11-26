@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from test_r325_ai_collab import _origin, _push_file, _repo, _run, _state  # noqa: E402
+from test_r325_ai_collab import _merge_origin, _origin, _push_file, _repo, _run, _state  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 LEDGER = ROOT / ".claude" / "scripts" / "request-ledger.py"
@@ -117,7 +117,8 @@ def test_poll_keeps_quiet_but_refreshes_queue(tmp_path):
     _push_file(other, ".ai-collab/requests/R2.md", '---\nrequest_id: "R2"\n---\n지시 B\n')
     time.sleep(1.1)
     assert _run(r, "poll").returncode == 0
-    assert _run(r, "report", "R2", "--status", "PARTIAL").returncode == 0
+    _merge_origin(r)                                    # R375 8차: 받은 지시를 병합한 뒤 작업·보고 (보고 head = 지시 커밋의 후손)
+    assert _run(r, "report", "R2", "--status", "PARTIAL", "--base", "HEAD~1").returncode == 0
     p = r / ".claude" / "state" / "next-actions.md"
     p.unlink(missing_ok=True)                                                  # 큐 사본이 사라진 상태(재시작 등)
     st = _state(r)

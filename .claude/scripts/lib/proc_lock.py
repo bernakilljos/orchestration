@@ -30,36 +30,53 @@ def _kernel32():
     return _K["k"], _K["ct"], _K["w"]
 
 
-def pid_alive(pid: int, unknown: bool = True) -> bool:
-    """이 PC 의 pid 가 살아 있나. 확인 자체가 안 되면 unknown 값 (기본 True = 살아 있다고 봄 → 회수·중복 실행 쪽으로 기울지 않음)."""
+ALIVE, DEAD, UNKNOWN = "alive", "dead", "unknown"
+_WIN_NO_PID = 87          # ERROR_INVALID_PARAMETER = 그런 pid 없음 (명확한 종료)
+_WIN_DENIED = 5           # ERROR_ACCESS_DENIED = 존재함
+
+
+def pid_state(pid) -> str:
+    """이 PC 의 pid 상태 3분류 — ALIVE · DEAD(명확한 종료 증거) · UNKNOWN(확인 불가).
+    R375 8차 검토 P0: 예전 pid_alive 는 OpenProcess 실패 중 접근 거부(5)만 생존으로, 그 밖의 모든 오류를 종료로 봐서
+    «확인 못 함» 이 «죽었음» 으로 바뀌어 잠금 회수·중복 실행 쪽으로 기울 수 있었다. 종료는 «없는 pid(87)» · 종료 코드 · ESRCH 만."""
     try:
         pid = int(pid)
     except (TypeError, ValueError):
-        return unknown
+        return UNKNOWN
     if pid <= 0:
-        return unknown
+        return UNKNOWN
     if os.name == "nt":
         try:
             k, ct, w = _kernel32()
             h = k.OpenProcess(0x1000, False, pid)            # PROCESS_QUERY_LIMITED_INFORMATION
             if not h:
-                return ct.get_last_error() == 5               # 접근 거부(5) = 존재함 · 없는 pid = 87
+                err = ct.get_last_error()
+                if err == _WIN_DENIED:
+                    return ALIVE
+                return DEAD if err == _WIN_NO_PID else UNKNOWN
             try:
                 code = w.DWORD()
                 if not k.GetExitCodeProcess(h, ct.byref(code)):
-                    return unknown
-                return code.value == 259                      # STILL_ACTIVE
+                    return UNKNOWN
+                return ALIVE if code.value == 259 else DEAD  # STILL_ACTIVE (종료 코드 259 로 끝난 프로세스는 생존으로 = 보수적)
             finally:
                 k.CloseHandle(h)
         except (OSError, AttributeError, ValueError):
-            return unknown
+            return UNKNOWN
+    import errno
     try:
         os.kill(pid, 0)
-        return True
+        return ALIVE
     except PermissionError:
-        return True
-    except OSError:
-        return False
+        return ALIVE
+    except OSError as e:
+        return DEAD if e.errno == errno.ESRCH else UNKNOWN
+
+
+def pid_alive(pid: int, unknown: bool = True) -> bool:
+    """이 PC 의 pid 가 살아 있나. 확인 자체가 안 되면 unknown 값 (기본 True = 살아 있다고 봄 → 회수·중복 실행 쪽으로 기울지 않음)."""
+    s = pid_state(pid)
+    return unknown if s == UNKNOWN else s == ALIVE
 
 
 def proc_start(pid: int) -> str:

@@ -2284,6 +2284,8 @@ def test_merge_to_target_identical_to_uncommitted_kit_is_not_kit_owned(tmp_path)
     (kit / ".claude" / "scripts").mkdir(parents=True)
     (kit / ".claude" / "hooks").mkdir(parents=True)
     shutil.copy2(ROOT / ".claude" / "scripts" / "merge-to-target.py", kit / ".claude" / "scripts" / "merge-to-target.py")
+    (kit / ".claude" / "scripts" / "lib").mkdir()                     # R375 8차: 잠금 정본 없으면 --apply 거부 (fail closed)
+    shutil.copy2(ROOT / ".claude" / "scripts" / "lib" / "proc_lock.py", kit / ".claude" / "scripts" / "lib" / "proc_lock.py")
     hook = kit / ".claude" / "hooks" / "x.sh"
     hook.write_text("echo v1\n", encoding="utf-8")
     g = lambda *a: subprocess.run(["git", "-C", str(kit), *a], capture_output=True, text=True, timeout=60)

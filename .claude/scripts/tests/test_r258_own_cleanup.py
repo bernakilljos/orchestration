@@ -1146,3 +1146,84 @@ def test_r375e_budget_exhausted_mid_check_is_deferred_not_kept(env, monkeypatch)
     monkeypatch.setattr(oc, "_users_of", lambda p, s: (time.sleep(0.5), None)[1])   # 느린 러너의 프로세스 확인
     r = oc.run(SID)
     assert r["kept"] == [] and r["deferred"] >= 1 and all(p.exists() for p in olds), (r["kept"], r["deferred"])
+
+
+# ── R375 8차 검토: cat-file → rev-list --ignore-missing 교체(4c1ea594)의 보존 동등성 — 실제 임시 git 저장소 ──
+def _old_unpushed_commit(work) -> bool:
+    """4c1ea594 이전 방식 (기준 구현): ls-remote 끝 커밋 → cat-file --batch-check 로 이 저장소에 있는 것만 → rev-list -1 --all ^있는것."""
+    tips = set()
+    for rm in _sp.run(["git", "remote"], cwd=work, capture_output=True, text=True).stdout.split():
+        lr = _sp.run(["git", "ls-remote", rm], cwd=work, capture_output=True, text=True)
+        tips |= {x.split()[0] for x in lr.stdout.splitlines() if x.strip()}
+    cf = _sp.run(["git", "cat-file", "--batch-check"], cwd=work, input="".join(f"{h}\n" for h in sorted(tips)),
+                 capture_output=True, text=True)
+    have = [ln.split()[0] for ln in cf.stdout.splitlines() if ln.split()[1:2] == ["commit"]]
+    rl = _sp.run(["git", "rev-list", "-1", "--all", "--stdin"], cwd=work, input="".join(f"^{h}\n" for h in have),
+                 capture_output=True, text=True)
+    return bool(rl.stdout.strip())
+
+
+def _verdict(ended, work):
+    oc._REMOTE_TIPS.clear()
+    new = oc._unpushed(ended) or ""
+    return ("원격에 없는 커밋" in new), _old_unpushed_commit(work), new
+
+
+def test_r375i_tag_only_commit_kept_same_as_old(env, tmp_path, monkeypatch):
+    """브랜치에서 빠지고 태그에만 남은 커밋 = 보존 (--all 이 태그 포함) · 기준 구현과 같은 판정."""
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / "f.txt").write_text("t", encoding="utf-8")
+    _git("commit", "-qam", "tagged", cwd=work)
+    _git("tag", "v-local", cwd=work)
+    _git("reset", "-q", "--hard", "HEAD~1", cwd=work)
+    new, old, msg = _verdict(ended, work)
+    assert new and old, msg
+
+
+def test_r375i_remote_ahead_missing_objects_ignored_same_as_old(env, tmp_path, monkeypatch):
+    """원격에만 있고 로컬에 없는 커밋(받지 않음) = --ignore-missing 이 무시 · 로컬이 전부 올라가 있으면 지워도 됨 (기준 구현과 동일)."""
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    other = tmp_path / "other"
+    origin = ended.parent.parent.parent.parent / "origin.git"
+    _sp.run(["git", "clone", "-q", str(origin), str(other)], check=True, capture_output=True)
+    for k, v in (("user.email", "o@o"), ("user.name", "o")):
+        _git("config", k, v, cwd=other)
+    (other / "g.txt").write_text("o", encoding="utf-8")
+    _git("add", ".", cwd=other); _git("commit", "-qm", "ahead", cwd=other); _git("push", "-q", "origin", "HEAD", cwd=other)
+    new, old, msg = _verdict(ended, work)
+    # 원격 끝(ahead)이 로컬에 없으면 로컬 c1 이 그 조상인지 확인할 수 없다 → 두 방식 모두 보존 (확인 불가 = 보존 · 데이터 손실 방향 X)
+    assert new == old is True, msg
+    _git("fetch", "-q", "origin", cwd=work)                              # 받아 오면 조상 관계 확인 가능 → 지워도 됨 (둘 다)
+    new, old, msg = _verdict(ended, work)
+    assert new == old is False and msg == "", msg
+    (work / "f.txt").write_text("l", encoding="utf-8")
+    _git("commit", "-qam", "local", cwd=work)
+    new, old, msg = _verdict(ended, work)
+    assert new and old, msg                                              # 원격이 앞서 있어도 로컬 고유 커밋은 보존
+
+
+def test_r375i_shallow_clone_pushed_vs_unpushed_same_as_old(env, tmp_path, monkeypatch):
+    """shallow 복제 (--depth 1): 다 올라가 있으면 지워도 됨 · 로컬 커밋이 생기면 보존 — 기준 구현과 같은 판정."""
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    (work / "f.txt").write_text("2", encoding="utf-8")
+    _git("commit", "-qam", "c2", cwd=work); _git("push", "-q", "origin", "HEAD", cwd=work)
+    origin = ended.parent.parent.parent.parent / "origin.git"
+    sh = ended / "shallow"
+    _sp.run(["git", "clone", "-q", "--depth", "1", origin.as_uri(), str(sh)], check=True, capture_output=True)
+    for k, v in (("user.email", "s@s"), ("user.name", "s")):
+        _git("config", k, v, cwd=sh)
+    assert (sh / ".git" / "shallow").is_file()
+    new, old, msg = _verdict(ended, sh)
+    assert not new and not old, msg
+    (sh / "f.txt").write_text("3", encoding="utf-8")
+    _git("commit", "-qam", "c3", cwd=sh)
+    new, old, msg = _verdict(ended, sh)
+    assert new and old, msg
+
+
+def test_r375i_unreachable_remote_kept(env, tmp_path, monkeypatch):
+    """원격에 물어볼 수 없으면(경로 없음) 보존 — 확인 불가 ≠ 안전."""
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    _git("remote", "set-url", "origin", str(tmp_path / "없는-원격.git"), cwd=work)
+    oc._REMOTE_TIPS.clear()
+    assert "원격 확인 실패" in (oc._unpushed(ended) or "")

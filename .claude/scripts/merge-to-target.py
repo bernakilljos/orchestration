@@ -392,11 +392,14 @@ def _proc_lock():
         import importlib.util
         lp = Path(__file__).resolve().parent / "lib" / "proc_lock.py"
         if not lp.is_file():
-            return None                  # 스크립트만 따로 복사된 환경 (호출부가 경고 후 잠금 없이 진행)
-        spec = importlib.util.spec_from_file_location(name, lp)
-        mod = importlib.util.module_from_spec(spec)
+            return None                  # 스크립트만 따로 복사된 환경 (호출부가 쓰기 거부)
+        try:
+            spec = importlib.util.spec_from_file_location(name, lp)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except Exception:  # noqa: BLE001 — 손상·문법 오류도 «못 불러옴» = 쓰기 거부
+            return None
         sys.modules[name] = mod
-        spec.loader.exec_module(mod)
     return sys.modules[name]
 
 
@@ -512,8 +515,9 @@ def main() -> int:
     #   잠금 파일은 대상이 아니라 kit 쪽 상태 폴더(대상 경로 해시별)에 둔다 — 대상에 새 파일을 남기지 않는다
     pl = _proc_lock()
     if pl is None:
-        print("  ⚠ lib/proc_lock.py 없음 — 대상 잠금 없이 진행 (kit 을 최신으로 받으면 해소)")
-        return _merge_one(target, apply, only, force)
+        # R375 8차 검토 P0: 잠금 정본을 못 불러오면 잠금 없이 쓰지 않는다 (fail closed · 대상 변경 0 · dry-run 은 그대로 가능)
+        print(f"=== merge-to-target [건너뜀] {target} — lib/proc_lock.py 를 불러올 수 없어 대상 잠금 불가 (대상 변경 없음 · kit 을 최신으로 받으면 해소)")
+        return 2
     lfd = pl.try_lock(_target_lock_path(target))
     if lfd is None:
         print(f"=== merge-to-target [건너뜀] {target} — 다른 전파가 이 대상에 진행 중 (대상 변경 없음)")

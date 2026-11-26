@@ -657,15 +657,22 @@ def _answered(rid: str, path: str, seen_commit: str = "") -> bool:
     head = rep.get("head_commit", "").strip().lower()
     if not re.fullmatch(r"[0-9a-f]{7,40}", head):
         return False                                # head 가 SHA 가 아님(PENDING 등) = 새 작업으로 답했다는 증거 없음
+    return _linked_commit(path, head, seen_commit, need_src=False)
+
+
+def _linked_commit(path: str, head: str, seen_commit: str = "", need_src: bool = True) -> bool:
+    """응답 커밋 연결 계약 (원격 보고서·state 기록 공통 · R375 8차 검토 P0):
+    head 가 저장소에 실제로 있는 커밋 · 리뷰가 본 커밋(seen_commit)과 다름 · 지시·리뷰 파일을 마지막으로 바꾼 커밋의 후손.
+    need_src=True(state 기록) 면 그 «마지막으로 바꾼 커밋» 을 모를 때도 False — 오프라인·기록 손상에서 시각·blob 만으로 답함 처리 X."""
     full = _full_commit(head)
     if not full:
         return False                                # 저장소에 없는 커밋 (형식만 맞는 SHA)
     if seen_commit and full == seen_commit.lower():
         return False                                # 리뷰가 본 그 커밋 = 문서만 고침 (짧은 SHA 도 풀어서 비교)
     src = (_LAST_CT.get("h") or {}).get(path)
-    if src and not _is_ancestor(src, full):
-        return False                                # 응답 커밋이 지시·리뷰보다 앞서거나 다른 갈래
-    return True
+    if not src:
+        return not need_src
+    return _is_ancestor(src, full)                  # 응답 커밋이 지시·리뷰보다 앞서거나 다른 갈래면 False
 
 
 def _answered_state(st: dict, rid: str, path: str, blob: str = "") -> bool:
@@ -673,11 +680,17 @@ def _answered_state(st: dict, rid: str, path: str, blob: str = "") -> bool:
     커밋이어야 하고 ① 새 기록: 그 보고가 답한 판(answered[path]) = 지금 판 (해당 blob 에 대한 응답 증거 · 판이 바뀌면 다시 전달)
     ② answered 가 없는 옛 기록(R375 7차 이전): 지시 변경 뒤 보고(reported_at) — 옛 PARTIAL 이 한꺼번에 재전달되지 않게."""
     ent = (st.get("requests") or {}).get(rid) or {}
-    if not _full_commit(ent.get("head_commit", "")):
+    # R375 8차 검토 P0: 예전엔 새 기록 = blob 일치만, 옛 기록 = 보고 시각만으로 답함 처리 →
+    #   둘 다 응답 커밋 연결 계약(_linked_commit: 실제 커밋 · 리뷰가 본 커밋 아님 · 지시·리뷰 커밋의 후손 · 모르면 False)을 먼저 통과해야 한다
+    seen_commit = ""
+    if path.startswith(".ai-collab/reviews/") and blob:
+        sc = _blob_fm(blob).get("reviewed_commit", "")
+        seen_commit = sc if _SHA40.fullmatch(sc) else ""
+    if not _linked_commit(path, ent.get("head_commit", ""), seen_commit):
         return False
     if isinstance(ent.get("answered"), dict):
         return bool(blob) and ent["answered"].get(path) == blob
-    return _reported_after_change(st, rid, path)
+    return _reported_after_change(st, rid, path)    # 옛 기록(answered 없음) = 연결 계약 + 변경 뒤 보고 둘 다
 
 
 def _review_answered(rid: str, path: str, blob: str) -> bool:
@@ -1015,11 +1028,19 @@ def _pl():
     name = "_kit_proc_lock"
     if name not in sys.modules:
         import importlib.util
-        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
-        mod = importlib.util.module_from_spec(spec)
+        try:
+            spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+        except Exception:  # noqa: BLE001 — R375 8차: 못 불러옴 = None (호출부가 생존 증거 없음·갱신 안 함으로 처리 · fail closed)
+            return None
         sys.modules[name] = mod
-        spec.loader.exec_module(mod)
     return sys.modules[name]
+
+
+def _pstart(pid) -> str:
+    pl = _pl()
+    return pl.proc_start(pid) if pl else ""
 
 
 def _atomic_json(p: Path, obj) -> None:
@@ -1031,7 +1052,8 @@ def _atomic_json(p: Path, obj) -> None:
 
 def _pid_alive(pid: int) -> bool:
     """같은 장비의 프로세스가 살아 있나 — 정본 lib/proc_lock.pid_alive (확인 불가 = False: 생존 표시는 살아 있다는 증거가 필요)."""
-    return _pl().pid_alive(pid, unknown=False)
+    pl = _pl()
+    return bool(pl) and pl.pid_alive(pid, unknown=False)
 
 
 def _hb_file(pid: int = None) -> Path:
@@ -1041,7 +1063,7 @@ def _hb_file(pid: int = None) -> Path:
 
 def _hb_write(interval: float, started: str) -> None:
     import socket
-    _atomic_json(_hb_file(), {"pid": os.getpid(), "pstart": _pl().proc_start(os.getpid()),
+    _atomic_json(_hb_file(), {"pid": os.getpid(), "pstart": _pstart(os.getpid()),
                               "host": socket.gethostname(), "root": str(ROOT),
                               "session": os.environ.get("CLAUDE_SESSION_ID") or os.environ.get("CLAUDE_CODE_SESSION_ID") or "",
                               "interval": interval, "started": started,
@@ -1068,7 +1090,7 @@ def _hb_judge(hb, now: datetime) -> dict:
         return {"alive": False, "why": f"박동 {int(age)}초 전 (한도 {int(limit)}초)", **hb}
     if not _pid_alive(pid):
         return {"alive": False, "why": "프로세스 종료", "age": age, **hb}
-    if hb.get("pstart") and _pl().proc_start(pid) not in ("", hb.get("pstart")):
+    if hb.get("pstart") and _pstart(pid) not in ("", hb.get("pstart")):
         return {"alive": False, "why": "pid 가 다른 프로세스로 재사용됨", "age": age, **hb}
     return {"alive": True, "age": age, **hb}
 
@@ -1157,9 +1179,9 @@ def _spawn_refresh(spawn=None) -> bool:
     R375 7차 검토: O_EXCL 파일 + 120초 stale 교체 + 끝날 때 무조건 unlink 는 오래된 작업이 새 주인의 잠금을 지울 수 있었다 →
     OS 잠금(lib/proc_lock · 파일 삭제 없음) · 실제 독점은 자식(cmd_refresh)이 잠금을 잡을 때 정해진다 (둘이 떠도 하나만 실행)."""
     pl = _pl()
-    fd = pl.try_lock(REFRESH_LOCK)
+    fd = pl.try_lock(REFRESH_LOCK) if pl else None
     if fd is None:
-        return False                     # 다른 갱신이 진행 중
+        return False                     # 다른 갱신이 진행 중 (또는 잠금 정본 못 불러옴 = 띄우지 않음)
     pl.release(fd)
     cmd = [sys.executable, "-X", "utf8", str(Path(__file__).resolve()), "refresh"]
     if spawn:
@@ -1179,9 +1201,9 @@ def cmd_refresh() -> int:
     """백그라운드 갱신 1회 — OS 잠금을 잡은 프로세스만 pending_lines 결과를 캐시에 쓴다 (state.json 은 쓰지 않음).
     잠금을 못 잡으면(다른 갱신 진행 중) 아무것도 하지 않고 0."""
     pl = _pl()
-    fd = pl.try_lock(REFRESH_LOCK)
+    fd = pl.try_lock(REFRESH_LOCK) if pl else None
     if fd is None:
-        return 0
+        return 0                         # 잠금 정본 못 불러옴도 = 쓰지 않음
     try:
         lines = pending_lines()
         _write_pending_cache(lines, ok=not any(x.startswith("(원격 확인") for x in lines))
