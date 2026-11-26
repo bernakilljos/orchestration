@@ -33,6 +33,47 @@ def _q(c, sql, args=()):
         return None
 
 
+def repair_quality(c, since: float) -> Dict[str, Any]:
+    """수리 목표의 첫 통과율·재작업 토큰 (R375 8차 검토 P1 · 읽기 전용 · 스키마 변경 없음).
+    연결: goal_tasks → tasks(g<목표>-agent-fix · task_file 의 agent_sessions = 라운드별 fix 세션 · judge_session) →
+    metrics(task_id = 에이전트 세션 · ai claude-agent:fix|judge). metrics 의 success 는 «프로세스 정상 종료» 라 쓰지 않고
+    결과는 목표 상태(VERIFIED·FAILED)로 본다. 세션이 metrics 에 없는 목표(Phase 15 이전)는 토큰을 UNKNOWN 으로 따로 센다."""
+    rows = _q(c, "SELECT gt.goal_id, g.status, t.task_file FROM goal_tasks gt JOIN tasks t ON t.task_id=gt.task_id "
+                 "JOIN goals g ON g.goal_id=gt.goal_id WHERE t.task_id LIKE 'g%-agent-fix' AND g.created_at>=?", (since,))
+    if rows is None:
+        return {"status": UNKNOWN}
+    met = {}
+    for sid, ai, ti, to in _q(c, "SELECT task_id, ai, COALESCE(tokens_in,0), COALESCE(tokens_out,0) FROM metrics "
+                                 "WHERE ai IN ('claude-agent:fix','claude-agent:judge')") or []:
+        met.setdefault(sid, []).append((ai, ti + to))
+    done = first = linked = jlinked = 0
+    fix_tok = rework_tok = judge_tok = 0
+    for _gid, gst, tf in rows:
+        if gst not in ("VERIFIED", "FAILED"):
+            continue                                    # 진행 중·차단 = 결과 미정 (분모 X)
+        try:
+            spec = json.loads(tf or "{}")
+        except ValueError:
+            spec = {}
+        sess = [s for s in (spec.get("agent_sessions") or []) if s]
+        done += 1
+        if gst == "VERIFIED" and len(sess) == 1:
+            first += 1                                  # 수정 1라운드로 통과 = 첫 통과
+        toks = [sum(t for _a, t in met.get(s, [])) for s in sess]
+        if sess and all(s in met for s in sess):
+            linked += 1
+            fix_tok += sum(toks)
+            rework_tok += sum(toks[1:])                 # 2라운드 이후 = 재작업
+            js = spec.get("judge_session")
+            if js in met:
+                jlinked += 1
+                judge_tok += sum(t for _a, t in met[js])
+    return {"finished": done, "first_pass": first, "first_pass_rate": _rate(first, done),
+            "token_linked_goals": linked, "token_unlinked_goals": done - linked,
+            "fix_tokens": fix_tok if linked else UNKNOWN, "rework_tokens": rework_tok if linked else UNKNOWN,
+            "judge_tokens": judge_tok if jlinked else UNKNOWN, "judge_linked_goals": jlinked}
+
+
 def scheduler(since: float) -> Dict[str, Any]:
     """loop START 마다 END 가 있는가 (= tick 완주) · self-heal tick rc 분포."""
     if not LOOP_LOG.exists():
@@ -88,7 +129,8 @@ def report(window_h: float = 24) -> Dict[str, Any]:
     rep = dict(repair or [])
     rep_done = rep.get("VERIFIED", 0) + rep.get("FAILED", 0)
     out["goals"] = {"by_status": dist or UNKNOWN, "repair_goals": rep or UNKNOWN,
-                    "repair_success_rate": _rate(rep.get("VERIFIED", 0), rep_done)}
+                    "repair_success_rate": _rate(rep.get("VERIFIED", 0), rep_done),
+                    "repair_quality": repair_quality(c, since)}
     # 2026-11-01: 기간 이전에 생성된 goal 의 상태 변화 (예: supervisor 24h timeout) 는 위 집계에 안 잡힌다 → goal_transitions 직접
     gt = _q(c, "SELECT from_status, to_status, actor, COUNT(*), GROUP_CONCAT(goal_id) FROM goal_transitions "
                "WHERE ts>=? GROUP BY 1,2,3", (since,))

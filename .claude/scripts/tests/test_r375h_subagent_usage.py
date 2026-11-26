@@ -126,3 +126,39 @@ print(json.dumps({k: [v["count"], v["outcome_known"], v["success_rate"]] for k, 
     assert got["claude-agent:x"] == [4, 1, 0.0]          # 예전: 3/4 = 75% (모르는 3건이 성공으로 셈)
     assert got["claude-agent:y"] == [1, 0, None]         # 예전: 100%
     assert got["claude"] == [2, 1, 1.0]                  # 구형 서브에이전트 행은 모름 · 일반 호출 1건만 분모
+
+
+def test_r375i_repair_first_pass_and_rework_tokens():
+    """R375 8차 P1: 첫 통과율·재작업 토큰은 metrics.success(프로세스 정상 종료)가 아니라 목표 결과 + 라운드별 세션으로.
+    세션이 metrics 에 없는 목표(Phase 15 이전)는 토큰 UNKNOWN 으로 따로 · judge 연결 없으면 judge 토큰 UNKNOWN."""
+    import ops_metrics as om
+    c = sqlite3.connect(":memory:")
+    c.executescript("""
+CREATE TABLE goals (goal_id INTEGER, status TEXT, created_at REAL);
+CREATE TABLE goal_tasks (goal_id INTEGER, task_id TEXT, sequence INTEGER);
+CREATE TABLE tasks (task_id TEXT, task_file TEXT);
+CREATE TABLE metrics (task_id TEXT, ai TEXT, tokens_in INTEGER, tokens_out INTEGER);
+""")
+
+    def goal(gid, st, sessions, judge=None):
+        c.execute("INSERT INTO goals VALUES (?,?,?)", (gid, st, 100.0))
+        c.execute("INSERT INTO goal_tasks VALUES (?,?,0)", (gid, f"g{gid}-agent-fix"))
+        spec = {"agent_sessions": sessions, **({"judge_session": judge} if judge else {})}
+        c.execute("INSERT INTO tasks VALUES (?,?)", (f"g{gid}-agent-fix", json.dumps(spec)))
+
+    goal(1, "VERIFIED", ["s1"], judge="j1")                  # 첫 통과
+    goal(2, "VERIFIED", ["s2a", "s2b"])                      # 2라운드 통과 = 재작업
+    goal(3, "FAILED", ["s3"])                                # 실패
+    goal(4, "VERIFIED", ["old"])                             # metrics 없음(이전 형식) = 첫 통과지만 토큰 미연결
+    goal(5, "RUNNING", ["s5"])                               # 결과 미정 = 분모 X
+    for sid, ai, ti, to in (("s1", "claude-agent:fix", 100, 10), ("j1", "claude-agent:judge", 50, 5),
+                            ("s2a", "claude-agent:fix", 200, 20), ("s2b", "claude-agent:fix", 300, 30),
+                            ("s3", "claude-agent:fix", 400, 40), ("s5", "claude-agent:fix", 9, 9)):
+        c.execute("INSERT INTO metrics VALUES (?,?,?,?)", (sid, ai, ti, to))
+    r = om.repair_quality(c, 0)
+    assert r["finished"] == 4 and r["first_pass"] == 2 and r["first_pass_rate"] == 0.5
+    assert r["token_linked_goals"] == 3 and r["token_unlinked_goals"] == 1
+    assert r["fix_tokens"] == 110 + 220 + 330 + 440 and r["rework_tokens"] == 330
+    assert r["judge_tokens"] == 55 and r["judge_linked_goals"] == 1
+    c.execute("UPDATE tasks SET task_file=? WHERE task_id='g1-agent-fix'", (json.dumps({"agent_sessions": ["s1"]}),))
+    assert om.repair_quality(c, 0)["judge_tokens"] == "UNKNOWN"          # judge 연결 0 = 0 이 아니라 UNKNOWN

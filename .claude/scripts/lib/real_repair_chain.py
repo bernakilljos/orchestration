@@ -396,13 +396,19 @@ def _register_repair_task(repair_goal_id: int, test_cmd: str, agent_session_id: 
     return tid
 
 
-def _set_task_spec_sessions(tid: str, sessions: list) -> None:
+def _set_task_spec_sessions(tid: str, sessions: Optional[list] = None, judge_session: Optional[str] = None,
+                            judge_verdict: Optional[str] = None) -> None:
     import sqlite3
     with sqlite3.connect(str(STATE / "orca.db")) as c:
         row = c.execute("SELECT task_file FROM tasks WHERE task_id=?", (tid,)).fetchone()
         spec = json.loads(row[0]) if row and row[0] else {}
-        spec["cmd"] = "agent:claude-p sessions=" + ",".join(s or "?" for s in sessions)
-        spec["agent_sessions"] = sessions
+        if sessions is not None:
+            spec["cmd"] = "agent:claude-p sessions=" + ",".join(s or "?" for s in sessions)
+            spec["agent_sessions"] = sessions
+        if judge_session is not None or judge_verdict is not None:
+            # R375 8차 P1: judge 세션·최종 판정도 같은 기록에 — 판정 비용·결과를 목표별로 잇는 근거 (ops_metrics.repair_quality)
+            spec["judge_session"] = judge_session
+            spec["judge_verdict"] = judge_verdict
         c.execute("UPDATE tasks SET task_file=? WHERE task_id=?", (json.dumps(spec), tid))
 
 
@@ -673,6 +679,10 @@ def agent_repair_chain(repair_goal_id: int, sandbox_id: str, test_cmd: str,
     ab = _iv.judge_absorb(repair_goal_id, json.dumps(verdict_json), required_ids=req["ids"] if req else None,
                           source=_iv.judge_source(jd))
     final = (ab.get("final_verdict") or {}).get("status")
+    try:
+        _set_task_spec_sessions(tid, judge_session=jd.get("agent_session_id"), judge_verdict=final)
+    except Exception:  # noqa: BLE001 — 기록 실패가 판정·반영을 막지 않게 (지표만 UNKNOWN)
+        pass
     out["judge"] = {"llm_verdict": verdict_json, "final_verdict": ab.get("final_verdict")}
     out["stages"].append({"stage": "llm_judge", "agent_session_id": jd.get("agent_session_id"),
                           "final": final})
