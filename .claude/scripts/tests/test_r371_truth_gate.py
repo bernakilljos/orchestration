@@ -6,6 +6,16 @@ _P = Path(__file__).resolve().parents[1] / "ai-collab-report.py"
 _spec = importlib.util.spec_from_file_location("ai_collab_report_truth", _P)
 m = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(m)
+import pytest  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _known_remote_branch(monkeypatch):
+    """ea40d9c9(2026-11-26) 뒤로 원격 기본 브랜치를 모르면 BLOCKED — 이 파일의 시험은 _git 을 가짜로 바꿔
+    origin/HEAD 확인까지 빈 값이 되어 watermark 검사 전에 BLOCKED 로 끝났다 (CI run 45643771016 Windows 3건).
+    여기 시험의 대상은 브랜치 해석이 아니라 시각 비교이므로 브랜치를 고정한다 (lottoclaude 동일 수정 역반영)."""
+    monkeypatch.setattr(m, "_remote_ref", lambda: "origin/main")
+
 
 import subprocess
 

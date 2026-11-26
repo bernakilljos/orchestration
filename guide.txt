@@ -2666,3 +2666,4 @@ scheduler_only goal 33 등록 (PENDING · 수동 호출 X) · 다음 자연 사�
 - 작업 현황 상태줄·지시 누락 등록 (2026-11-16 · R263·R264): 요청 줄 맨 앞 «남은N · 실행R… · 대기N(R…) · 다음R…→R…» (원장 동적 · 같은 세션 미완료 · 승인 필요·차단은 대기로 분리 · FIFO 앞의 대기가 뒤 실행을 가리지 않음) · 평서형 사양서 지시(~확인한다·~않는다 3줄 이상·보고 문장보다 많음)가 pasted_report 로 분류돼 미등록되던 것 수정 (과거 44건 중 2건만 판정 변경).
 - 2026-11-25 merge-to-target --force · .claude/state/merge-force-targets.txt (PC별): 대상 수정본도 kit 판으로 덮어씀 (백업 후 · CLAUDE.md·guide.txt 제외)
 - 2026-11-26 merge-to-target 강제 교체 보강: 대상 미커밋 수정 파일은 강제 보류(force-held) · 강제 원본은 kit-force-<ts> 에 영구 보존 (정리 대상 아님) · git-fetch 훅·ai-collab-report 원격 기본 브랜치 고정 제거(lottoclaude fcc087336 역반영)
+- 2026-11-26 test_r371_truth_gate: 원격 기본 브랜치 고정 장치(autouse) — ea40d9c9 뒤 가짜 git 에서 BLOCKED 로 끝나던 Windows CI 3건(run 45643771016) 해소 · lottoclaude 동일 수정 역반영
