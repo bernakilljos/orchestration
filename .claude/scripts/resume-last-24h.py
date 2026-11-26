@@ -15,15 +15,34 @@ SessionStart hook 가 호출 → stdout → systemMessage 로 주입
 from __future__ import annotations
 import time
 import os
-_T0 = time.monotonic()
-# 세션 시작 훅 제한 10초 안에서 협업 원격 확인(fetch+ls-remote)에 줄 수 있는 시간 = 제한 − 이미 쓴 시간 − 여유.
-#   여유 3초 = 셸·Python 기동(부하 때 ~1초) + 원격 확인 뒤 로컬 git 호출·출력(~2초).
-#   11-26 바로잡기: 고정 8초를 줘 시작 훅 28개가 함께 뜬 11:07 에 10.9초로 출력이 버려졌다(단독 4.0초 · 96% 가 pending_lines).
-_HOOK_LIMIT_S, _HOOK_MARGIN_S = 10.0, 3.0
+# 협업 미처리는 세션 시작 때 원격을 직접 보지 않고 마지막 확인 결과(ai-collab-pending.json)만 읽는다.
+#   11-26 바로잡기는 fetch+ls-remote 만 남은 시간 안에 넣었지만 그 뒤 응답 계약 확인(git·map 호출 ~30회)은 무제한이라
+#   11-27 00:36 에 또 10.9초로 출력이 버려졌다(단독 4.3~5.6초 · 95% 가 pending_lines 의 네트워크·git).
+#   결과가 _COLLAB_MAX_AGE_S 보다 오래됐으면 백그라운드 갱신만 띄운다(기다리지 않음 · OS 잠금으로 1개만).
+_COLLAB_MAX_AGE_S = 900.0
 
 
-def _collab_budget() -> float:
-    return max(1.0, _HOOK_LIMIT_S - _HOOK_MARGIN_S - (time.monotonic() - _T0))
+def _collab_cached(ac, spawn=None) -> list:
+    """마지막 확인 결과의 미처리 줄 + 확인 시점·실패 표시 (네트워크·git 호출 0)."""
+    from datetime import datetime as _dt, timezone as _tz
+    cache = ac._load(ac.PENDING_CACHE, {})
+    cache = cache if isinstance(cache, dict) else {}
+    lines = cache.get("lines") if isinstance(cache.get("lines"), list) else None
+    try:
+        age = (_dt.now(_tz.utc) - _dt.fromisoformat(cache.get("at", ""))).total_seconds()
+    except (ValueError, TypeError, AttributeError):
+        age = float("inf")
+    if lines is None or age == float("inf") or age < -ac._FUTURE_SKEW:
+        ac._spawn_refresh(spawn)
+        return ["(협업 확인 기록 없음·손상 = 최신 여부 UNKNOWN · 백그라운드 확인 시작 · "
+                "`python -X utf8 .claude/scripts/ai-collab-report.py pending` 로 직접 확인)"]
+    notes = []
+    if age > _COLLAB_MAX_AGE_S:
+        ac._spawn_refresh(spawn)
+        notes.append(f"({int(age // 60)}분 전 확인 결과 · 백그라운드 갱신 시작)")
+    if not cache.get("ok", True):
+        notes.append("(마지막 원격 확인 실패 = 최신 여부 UNKNOWN)")
+    return (notes + lines) if (lines or not cache.get("ok", True)) else []
 import json, os, re, sqlite3, subprocess, sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -189,7 +208,7 @@ def main():
         _sp2 = _ilu.spec_from_file_location("_ai_collab", Path(__file__).resolve().parent / "ai-collab-report.py")
         _ac = _ilu.module_from_spec(_sp2)
         _sp2.loader.exec_module(_ac)
-        _pend = _ac.pending_lines(_collab_budget())
+        _pend = _collab_cached(_ac)
         if _pend:
             top += "\n## ★ 협업 폴더 미처리 (ChatGPT 지시·리뷰) — 먼저 읽고 실행\n" + "\n".join(_pend[:20]) + "\n"
         # R375 후속 (2026-11-24 사용자 "loop 로 읽게 하지 않았어?"): 대기 루프(wait)는 Bash 백그라운드라 세션이 바뀌면 꺼진다 —
