@@ -120,6 +120,29 @@ def _lock_path() -> Path:
     return OUT.with_name(OUT.name + ".lock")
 
 
+def _pid_alive(pid: int) -> bool:
+    """이 PC 의 프로세스 생존 (Windows = OpenProcess+종료 코드 · 그 밖 = kill 0). 확인 불가 = 살아 있다고 봄 (회수 안 함)."""
+    # 정본 = lib/proc_lock.pid_alive (R375 7차 검토: 같은 판정이 세 곳에 따로 있었고 Windows 핸들 반환형 미지정)
+    #   접근 거부(5) = 존재함 · 없는 pid = 87 · STILL_ACTIVE = 259 — 판정 세부는 정본 쪽에 유지
+    name = "_kit_proc_lock"
+    if name not in sys.modules:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[name].pid_alive(pid, unknown=True)
+
+
+def _holder_dead(lp: Path) -> bool:
+    """잠금 파일 «<pid> <시각>» 의 pid 가 죽었나 (내 pid·형식 오류·읽기 실패 = False)."""
+    try:
+        pid = int(lp.read_text(encoding="ascii", errors="replace").split()[0])
+    except (OSError, ValueError, IndexError):
+        return False
+    return pid != os.getpid() and not _pid_alive(pid)
+
+
 def _acquire() -> bool:
     lp = _lock_path()
     deadline = time.time() + LOCK_WAIT_SEC
@@ -131,7 +154,10 @@ def _acquire() -> bool:
             return True
         except FileExistsError:
             try:
-                if time.time() - lp.stat().st_mtime > LOCK_STALE_SEC:
+                # R371 후속 (2026-11-26 실측): 주인이 죽은 잠금도 30초(STALE) 를 다 기다렸다 — Stop·SessionEnd 경로는
+                #   이 쓰기를 10초에 끊어(tool-dispatch.py) 결국 유실 + 10초 지연 → 잠금에 적힌 pid 가 이 PC 에서 죽었으면 즉시 회수
+                #   (pid 를 못 읽거나 살아 있으면 종전대로 30초 기준 · 회수 경합은 update() 의 내용 해시 검사가 막음)
+                if time.time() - lp.stat().st_mtime > LOCK_STALE_SEC or _holder_dead(lp):
                     lp.unlink()   # 죽은 writer 가 남긴 잠금
                     continue
             except OSError:

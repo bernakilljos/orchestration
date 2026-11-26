@@ -654,17 +654,15 @@ _LOCK_FD: int | None = None
 
 def _os_lock(fd: int) -> bool:
     """비차단 배타 잠금 — 커널이 잡는 잠금이라 주인 프로세스가 죽으면 저절로 풀린다 (pid 판정·잠금 파일 삭제 불필요)."""
-    try:
-        if os.name == "nt":
-            import msvcrt
-            os.lseek(fd, 0, os.SEEK_SET)
-            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
-        else:
-            import fcntl
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return True
-    except OSError:
-        return False
+    #   정본 = lib/proc_lock.os_lock (R375 7차: ai-collab-report 갱신 잠금·merge-to-target 대상 잠금과 같은 구현 공유)
+    name = "_kit_proc_lock"
+    if name not in sys.modules:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[name].os_lock(fd)
 
 
 def _acquire_lock(wait: float = 0.0) -> bool:

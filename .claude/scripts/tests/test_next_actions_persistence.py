@@ -200,3 +200,28 @@ def test_r364_blocked_goals_not_resumed_and_block_stable(tmp_path):
     m.cmd_goals(json.dumps(goals[1:], ensure_ascii=False))  # BLOCKED 만 → 재개 지시 문구 없음
     t = _utf8(m.OUT)
     assert "확인 질문 없이 이어서 진행" not in t and "BLOCKED goal 2 건" in t
+
+
+def test_r371f_dead_holder_lock_reclaimed_immediately(tmp_path):
+    """R371 후속 (2026-11-26 실측): 주인이 죽은 잠금도 30초를 다 기다렸고, Stop 경로는 10초에 끊어 유실됐다 →
+    잠금에 적힌 pid 가 죽었으면 즉시 회수 (격리 측정: 9개 동시 쓰기 유실 9→0 · 대기 29.6초→0.24초 이하)."""
+    m = _load(tmp_path)
+    m.OUT.write_text("수동 지시 유지\n", encoding="utf-8")
+    p = subprocess.Popen([sys.executable, "-c", "pass"])
+    p.wait()                                                     # 방금 끝난 프로세스 = 죽은 주인
+    m._lock_path().write_text(f"{p.pid} {time.time()}", encoding="ascii")
+    m.LOCK_WAIT_SEC = 3.0
+    t0 = time.perf_counter()
+    assert m.set_block("collab", "새 줄") is True
+    assert time.perf_counter() - t0 < 2.0
+    assert "새 줄" in _utf8(m.OUT) and "수동 지시 유지" in _utf8(m.OUT)
+
+
+def test_r371f_live_holder_lock_is_respected(tmp_path):
+    """주인이 살아 있는 잠금은 회수하지 않는다 (대기 초과 = 건너뜀 · 기존 내용 유지)."""
+    m = _load(tmp_path)
+    m.OUT.write_text("수동 지시 유지\n", encoding="utf-8")
+    m._lock_path().write_text(f"{os.getppid()} {time.time()}", encoding="ascii")   # 살아 있는 부모 프로세스
+    m.LOCK_WAIT_SEC = 0.5
+    assert m.set_block("collab", "새 줄") is False
+    assert _utf8(m.OUT).replace("\r\n", "\n") == "수동 지시 유지\n" and m._lock_path().exists()

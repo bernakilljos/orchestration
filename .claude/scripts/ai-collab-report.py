@@ -43,6 +43,126 @@ def _git(*args: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+GIT_CACHE = ROOT / ".claude" / "state" / "ai-collab-gitcache.json"
+#   R375 7차: 응답 계약 확인이 보고서·리뷰마다 git 을 따로 불러 72회·약 4초 (세션 시작 훅 10초 제한 재위험 · 실측) →
+#   바뀌지 않는 값만 저장: blob 머리(blob id = 내용) · 짧은 SHA→커밋 · 두 커밋 조상 관계 · 확인 1회 안 묶음 조회 1번
+_GC: dict = {}
+_GC_MAX = 3000
+
+
+def _gc() -> dict:
+    if not _GC:
+        d = _load(GIT_CACHE, {})
+        d = d if isinstance(d, dict) else {}
+        for k in ("fm", "rp", "anc"):
+            _GC[k] = d.get(k) if isinstance(d.get(k), dict) else {}
+        _GC["dirty"] = False
+    return _GC
+
+
+def _gc_save() -> None:
+    g = _gc()
+    if not g.get("dirty"):
+        return
+    try:
+        out = {k: dict(list(g[k].items())[-_GC_MAX:]) for k in ("fm", "rp", "anc")}
+        GIT_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        tmp = GIT_CACHE.with_name(f"{GIT_CACHE.name}.{os.getpid()}.tmp")
+        tmp.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, GIT_CACHE)
+        g["dirty"] = False
+    except OSError:
+        pass
+
+
+def _git_batch(lines: list, mode: str) -> bytes:
+    """git cat-file --batch / --batch-check 1회 (입력 = 줄 목록) · 실패 = b"" (호출부는 개별 조회로 대체)."""
+    if not lines:
+        return b""
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "cat-file", f"--{mode}"], input=("\n".join(lines) + "\n").encode("utf-8"),
+                           capture_output=True, timeout=30)
+        return r.stdout if r.returncode == 0 else b""
+    except (subprocess.SubprocessError, OSError):
+        return b""
+
+
+def _prefetch(blobs: list, commits: list) -> None:
+    """확인 1회 시작 때 필요한 blob 머리·커밋을 묶어서 1~2번에 읽어 캐시에 둔다."""
+    g = _gc()
+    need = [b for b in dict.fromkeys(blobs) if b and re.fullmatch(r"[0-9a-f]{40}", b) and b not in g["fm"]]
+    out = _git_batch(need, "batch")
+    i = 0
+    while i < len(out):
+        nl = out.find(b"\n", i)
+        if nl < 0:
+            break
+        head = out[i:nl].decode("ascii", "replace").split()
+        i = nl + 1
+        if len(head) == 3 and head[2].isdigit():
+            n = int(head[2])
+            if head[1] == "blob":
+                g["fm"][head[0]] = _frontmatter(out[i:i + n].decode("utf-8", "replace")) or {}
+                g["dirty"] = True
+            i += n + 1
+    want = [c.lower() for c in dict.fromkeys(commits) if c and re.fullmatch(r"[0-9a-fA-F]{7,40}", c) and c.lower() not in g["rp"]]
+    res = _git_batch([f"{c}^{{commit}}" for c in want], "batch-check").decode("ascii", "replace").splitlines()
+    for c, ln in zip(want, res):
+        parts = ln.split()
+        if len(parts) == 3 and parts[1] == "commit" and _SHA40.fullmatch(parts[0]):
+            g["rp"][c] = parts[0]
+            g["dirty"] = True
+
+
+def _blob_fm(blob: str) -> dict:
+    """blob 의 YAML 머리 (캐시 → 없으면 개별 조회) · 머리 없음 = {}."""
+    g = _gc()
+    if blob in g["fm"]:
+        return g["fm"][blob] or {}
+    fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
+    if fm is not None and re.fullmatch(r"[0-9a-f]{40}", blob or ""):
+        g["fm"][blob] = fm
+        g["dirty"] = True
+    return fm or {}
+
+
+def _full_commit(ref: str) -> str:
+    """짧은·전체 SHA → 저장소에 있는 커밋의 40자리 (없으면 "") · 있는 커밋만 캐시 (없는 값은 나중에 생길 수 있어 저장 X)."""
+    ref = (ref or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{7,40}", ref):
+        return ""
+    g = _gc()
+    if ref in g["rp"]:
+        return g["rp"][ref]
+    full = _git("rev-parse", "-q", "--verify", f"{ref}^{{commit}}").lower()
+    if _SHA40.fullmatch(full):
+        g["rp"][ref] = full
+        g["dirty"] = True
+        return full
+    return ""
+
+
+def _is_ancestor(a: str, b: str) -> bool:
+    """a 가 b 의 조상(또는 같음)인가 — 커밋 그래프는 바뀌지 않으므로 결과 캐시 (둘 다 40자리일 때만)."""
+    key = f"{a} {b}"
+    g = _gc()
+    if key in g["anc"]:
+        return bool(g["anc"][key])
+    v = _git_ok("merge-base", "--is-ancestor", a, b)
+    if _SHA40.fullmatch(a or "") and _SHA40.fullmatch(b or ""):
+        g["anc"][key] = v
+        g["dirty"] = True
+    return v
+
+
+def _git_ok(*args: str) -> bool:
+    """반환 코드만 보는 git (merge-base --is-ancestor 처럼 출력 없이 참/거짓을 코드로 내는 명령) · 실행 실패 = False."""
+    try:
+        return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, timeout=30).returncode == 0
+    except (subprocess.SubprocessError, OSError):
+        return False
+
+
 _REMOTE: dict = {}   # 한 실행 안에서 한 번만 조회
 
 
@@ -241,8 +361,12 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
             print(f"[ai-collab] 진실 게이트 위반 — 게시 거부: {b}", file=sys.stderr)
         return 3
     out.write_text(final, encoding="utf-8")
+    # R375 7차: 이 보고가 답한 판(전달받아 처리 중이던 지시·리뷰 blob) — 같은 판 재전달 금지의 근거 (시각 단독 판정 대체)
+    answered = {p: (v or {}).get("blob") for p, v in (st.get("inflight") or {}).items()
+                if (v or {}).get("blob") and p in (f".ai-collab/requests/{rid}.md", f".ai-collab/reviews/{rid}.md")}
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
                            "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig,
+                           **({"answered": answered} if answered else {}),
                            **({"head_override": True, "head_override_reason": reason} if head_override else {})}
     st["last_head"] = tip          # 마지막 «작업» 커밋 · 이 보고서를 올리는 게시 커밋(.ai-collab/ 만 변경)은 그 뒤에 생긴다
     if (COLLAB / "requests" / f"{rid}.md").is_file() and mine:   # 같은 ID 지시를 처리한 작업 커밋이 있으면 처리됨 (check-requests 중복 판정)
@@ -469,17 +593,48 @@ def _last_commit_times() -> dict:
     if "t" in _LAST_CT:
         return _LAST_CT["t"]
     out: dict = {}
-    ct = None
+    hashes: dict = {}
+    ct = h = None
     if not _remote_ref():
-        _LAST_CT["t"] = out
+        _LAST_CT["t"], _LAST_CT["h"] = out, hashes
         return out
-    for ln in _git("log", "--format=@@CT %ct", "--name-only", _remote_ref(), "--", ".ai-collab").splitlines():
+    # R375 7차: 경로별 마지막 커밋 해시도 같은 1회 조회로 (응답 커밋이 그 후손인지 확인하는 근거)
+    for ln in _git("log", "--format=@@CT %ct %H", "--name-only", _remote_ref(), "--", ".ai-collab").splitlines():
         if ln.startswith("@@CT "):
-            ct = ln[5:].strip()
+            parts = ln[5:].split()
+            ct = parts[0] if parts else None
+            h = parts[1] if len(parts) > 1 else None
         elif ln.strip() and ct and ct.isdigit():
             out.setdefault(ln.strip(), int(ct))   # 최신 커밋부터 나오므로 처음 본 값 = 마지막 커밋
-    _LAST_CT["t"] = out
+            if h:
+                hashes.setdefault(ln.strip(), h)
+    _LAST_CT["t"], _LAST_CT["h"] = out, hashes
     return out
+
+
+def _report_blobs() -> dict:
+    """원격 기본 브랜치의 reports/ {경로: blob} — 확인 1회 안에서 1번만 (ls-tree)."""
+    if "r" not in _LAST_CT:
+        out = {}
+        if _remote_ref():
+            for ln in _git("ls-tree", "-r", _remote_ref(), "--", ".ai-collab/reports").splitlines():
+                meta, _, path = ln.partition("\t")
+                if path and meta:
+                    out[path] = meta.split()[-1]
+        _LAST_CT["r"] = out
+    return _LAST_CT["r"]
+
+
+def _prefetch_all(remote: dict) -> None:
+    """확인 1회의 묶음 조회: 지시·리뷰·보고서 blob 머리 1번 → 그 안의 head·reviewed_commit 커밋 확인 1번."""
+    blobs = list(remote.values()) + list(_report_blobs().values())
+    _prefetch(blobs, [])
+    g = _gc()
+    commits = []
+    for b in blobs:
+        fm = g["fm"].get(b) or {}
+        commits += [fm.get("head_commit", ""), fm.get("reviewed_commit", "")]
+    _prefetch([], commits)
 
 
 def _report_newer_on_remote(rid: str, path: str) -> bool:
@@ -489,21 +644,49 @@ def _report_newer_on_remote(rid: str, path: str) -> bool:
     return bool(rep is not None and src is not None and rep > src)
 
 
+def _answered(rid: str, path: str, seen_commit: str = "") -> bool:
+    """공통 응답 계약 (지시·리뷰 공통 · R375 7차 검토 P0) — 이 판에 «보고로 답했다» 는 증거가 모두 있어야 True:
+    ① 보고서가 지시·리뷰 파일의 마지막 변경 뒤에 올라감 ② 보고서 head_commit 이 저장소에 실제로 있는 커밋
+    ③ 그 커밋이 지시·리뷰 파일을 마지막으로 바꾼 커밋의 후손 (무관한·이전 커밋으로 가려지지 않음)
+    ④ 리뷰면 리뷰가 본 커밋(seen_commit)과 다름 (보고서 문서만 고친 경우 제외).
+    하나라도 확인 불가 = False (다시 알림 쪽 · 열린 PARTIAL 의 같은 판 재전달은 poll 의 임대·백오프가 막는다)."""
+    if not _report_newer_on_remote(rid, path):
+        return False
+    rb = _report_blobs().get(f".ai-collab/reports/{rid}.md")
+    rep = _blob_fm(rb) if rb else (_frontmatter(_git("show", f"{_remote_ref()}:.ai-collab/reports/{rid}.md")) or {})
+    head = rep.get("head_commit", "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{7,40}", head):
+        return False                                # head 가 SHA 가 아님(PENDING 등) = 새 작업으로 답했다는 증거 없음
+    full = _full_commit(head)
+    if not full:
+        return False                                # 저장소에 없는 커밋 (형식만 맞는 SHA)
+    if seen_commit and full == seen_commit.lower():
+        return False                                # 리뷰가 본 그 커밋 = 문서만 고침 (짧은 SHA 도 풀어서 비교)
+    src = (_LAST_CT.get("h") or {}).get(path)
+    if src and not _is_ancestor(src, full):
+        return False                                # 응답 커밋이 지시·리뷰보다 앞서거나 다른 갈래
+    return True
+
+
+def _answered_state(st: dict, rid: str, path: str, blob: str = "") -> bool:
+    """report 명령이 state.json 에 남긴 보고(아직 원격에 없을 수 있음)를 응답 증거로 확인 — 기록된 head_commit 이 저장소에 있는
+    커밋이어야 하고 ① 새 기록: 그 보고가 답한 판(answered[path]) = 지금 판 (해당 blob 에 대한 응답 증거 · 판이 바뀌면 다시 전달)
+    ② answered 가 없는 옛 기록(R375 7차 이전): 지시 변경 뒤 보고(reported_at) — 옛 PARTIAL 이 한꺼번에 재전달되지 않게."""
+    ent = (st.get("requests") or {}).get(rid) or {}
+    if not _full_commit(ent.get("head_commit", "")):
+        return False
+    if isinstance(ent.get("answered"), dict):
+        return bool(blob) and ent["answered"].get(path) == blob
+    return _reported_after_change(st, rid, path)
+
+
 def _review_answered(rid: str, path: str, blob: str) -> bool:
     """리뷰에 답한 보고 = 리뷰 뒤에 올라간 보고서 + 그 보고서의 head_commit 이 리뷰가 본 커밋(reviewed_commit)과 다름.
     R375 6차 검토: 보고서 오타·문서만 고쳐 다시 올리면(head_commit 그대로) 시각만으로는 «답함» 이 돼 미처리 리뷰가 가려졌다.
     리뷰 머리에 reviewed_commit 이 없으면 시각만 본다 (옛 형식) · 보고서를 못 읽으면 답 안 함(다시 알림 쪽)."""
-    if not _report_newer_on_remote(rid, path):
-        return False
-    fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
-    seen_commit = (fm or {}).get("reviewed_commit", "")
-    if not _SHA40.fullmatch(seen_commit):
-        return True
-    rep = _frontmatter(_git("show", f"{_remote_ref()}:.ai-collab/reports/{rid}.md")) or {}
-    head = rep.get("head_commit", "").strip().lower()
-    if not re.fullmatch(r"[0-9a-f]{7,40}", head):
-        return False                                # head 가 SHA 가 아님(PENDING 등) = 새 작업으로 답했다는 증거 없음
-    return not seen_commit.startswith(head)         # 짧은 SHA(8자리) 도 같은 커밋이면 «문서만 고침» (실측 R375 79ad3742)
+    seen_commit = _blob_fm(blob).get("reviewed_commit", "") if blob else ""
+    #   짧은 SHA(8자리) 도 같은 커밋이면 «문서만 고침» (실측 R375 79ad3742) — _answered 가 rev-parse 로 풀어 비교
+    return _answered(rid, path, seen_commit if _SHA40.fullmatch(seen_commit) else "")
 
 
 def _classify(st: dict, path: str, blob: str) -> str:
@@ -518,9 +701,9 @@ def _classify(st: dict, path: str, blob: str) -> str:
     if kind == "requests":
         if rid in (st.get("handled") or {}) and path not in (st.get("seen") or {}):
             return "legacy"
-        if _reported_after_change(st, rid, path) or _report_newer_on_remote(rid, path):
-            return "reported"
-        return "pending"
+        # R375 7차: 시각 단독(_reported_after_change · state.json 기록 시각) 판정 제거 → 리뷰와 같은 응답 계약
+        #   report 명령이 남긴 state 기록(PARTIAL 보고 · 아직 push 전)도 같은 계약을 통과할 때만 인정 — 같은 판 재전달 금지 유지
+        return "reported" if (_answered(rid, path) or _answered_state(st, rid, path, blob)) else "pending"
     if _verdict_of(blob) == "approved":           # 정확 일치만 (endswith 금지 · R375 6차)
         return "approved"
     return "reported" if _review_answered(rid, path, blob) else "pending"
@@ -545,7 +728,9 @@ def pending_lines(fetch_timeout: float = 8.0) -> list:
     #   «완료» 로 보이던 것(실측: 원장 R375 = '삭제 했다매' 대화 요청) 때문에 원장은 보지 않는다
     done = {rid for rid, ent in (st.get("requests") or {}).items() if (ent or {}).get("status") == "PASS"}
     items = []
-    for path, blob in sorted(_remote_files().items()):
+    remote = _remote_files()
+    _prefetch_all(remote)                        # R375 7차: 응답 계약 확인용 조회를 묶어서 (개별 72회 → 1~2회)
+    for path, blob in sorted(remote.items()):
         if _classify(st, path, blob) != "pending":
             continue
         kind, rid = _ACK_PATH.fullmatch(path).groups()
@@ -561,6 +746,7 @@ def pending_lines(fetch_timeout: float = 8.0) -> list:
     else:
         res = (out + items) if items else []
     _write_pending_cache(res, ok=not out)      # 프롬프트 경로(prompt_notice)는 이 결과만 읽는다 (네트워크 X)
+    _gc_save()
     return res
 
 
@@ -588,7 +774,9 @@ def cmd_poll() -> int:
     handled = st.get("handled", {})
     now = datetime.now(timezone.utc)
     new, busy, reported, changed = [], [], [], False
-    for path, blob in _remote_files().items():
+    remote = _remote_files()
+    _prefetch_all(remote)
+    for path, blob in remote.items():
         # 판정 정본 = _classify (pending_lines 와 같은 기준 · R375 6차 검토 공통화 · 아래 이력은 _classify 안에 그대로 반영)
         #   legacy: R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
         # R346 후속 9 (2026-11-20): 보고서(PARTIAL·BLOCKED)를 이미 올린 요청이 임대 시간마다 영원히 다시 전달돼
@@ -624,6 +812,7 @@ def cmd_poll() -> int:
                     "redelivery": bool(cur)})
         inflight[path] = {"blob": blob, "at": now.isoformat(timespec="seconds"), "n": (n + 1) if same else 0}
         changed = True
+    _gc_save()
     _write_pending_cache([f"- {'리뷰' if '/reviews/' in p else '지시'} {Path(p).stem}: 미처리 (`{p}`)"
                           for p in [x["path"] for x in new] + busy], ok=True)
     if new:
@@ -799,11 +988,11 @@ def _request_done(rid: str) -> str:
 def _verdict_of(blob: str) -> str:
     """검토 파일(blob) 머리의 명시 판정 값 — 정확히 approved·changes_requested 중 하나이고 reviewed_commit 이 저장소에 있는
     40자 SHA 일 때만 그 값 · 그 밖(대소문자 다름 포함 · 'not_approved' 같은 값)은 "" (R375 6차: endswith 판정 제거)."""
-    fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
+    fm = _blob_fm(blob) if blob else {}
     if not fm:
         return ""
     v, c = fm.get("verdict", ""), fm.get("reviewed_commit", "")
-    if v in _VERDICTS and _SHA40.fullmatch(c) and _git("cat-file", "-t", c) == "commit":
+    if v in _VERDICTS and _SHA40.fullmatch(c) and _full_commit(c) == c.lower():
         return v
     return ""
 
@@ -814,9 +1003,23 @@ def _review_verdict(blob: str) -> str:
     return f"판정 {v}" if v else ""
 
 
-WAIT_HB = ROOT / ".claude" / "state" / "ai-collab-wait.json"        # 대기 루프 생존 표시 (장비·프로세스·세션)
+WAIT_DIR = ROOT / ".claude" / "state" / "ai-collab-wait.d"     # 대기 루프 생존 표시 — 프로세스마다 파일 1개 (장비·pid·시작 시각)
+#   R375 7차 검토: 단일 파일(ai-collab-wait.json)을 여러 세션이 덮어쓰고 종료 때 검사→삭제 경합 → 프로세스별 파일로 분리
 PENDING_CACHE = ROOT / ".claude" / "state" / "ai-collab-pending.json"  # 마지막 확인 결과 (프롬프트 경로는 이것만 읽음)
-REFRESH_LOCK = ROOT / ".claude" / "state" / "ai-collab-refresh.lock"
+REFRESH_LOCK = ROOT / ".claude" / "state" / "ai-collab-refresh.lock"   # OS 잠금 (파일은 지우지 않음 · 주인이 죽으면 OS 가 해제)
+_FUTURE_SKEW = 120.0     # 박동 시각이 이만큼 미래면 손상으로 봄 (시계 오차 허용 범위)
+
+
+def _pl():
+    """공용 프로세스·잠금 모듈 (lib/proc_lock.py · 정본) — 경로로 적재해 sys.path 와 무관하게."""
+    name = "_kit_proc_lock"
+    if name not in sys.modules:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / "lib" / "proc_lock.py")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[name]
 
 
 def _atomic_json(p: Path, obj) -> None:
@@ -827,56 +1030,86 @@ def _atomic_json(p: Path, obj) -> None:
 
 
 def _pid_alive(pid: int) -> bool:
-    """같은 장비의 프로세스가 살아 있나 (Windows = OpenProcess+종료코드 · 그 밖 = kill 0). 확인 불가 = False."""
-    if pid <= 0:
-        return False
-    if os.name == "nt":
-        import ctypes
-        k = ctypes.windll.kernel32
-        h = k.OpenProcess(0x1000, False, pid)              # PROCESS_QUERY_LIMITED_INFORMATION
-        if not h:
-            return False
-        code = ctypes.c_ulong()
-        ok = k.GetExitCodeProcess(h, ctypes.byref(code))
-        k.CloseHandle(h)
-        return bool(ok) and code.value == 259              # STILL_ACTIVE
-    try:
-        os.kill(pid, 0)
-        return True
-    except PermissionError:
-        return True
-    except OSError:
-        return False
+    """같은 장비의 프로세스가 살아 있나 — 정본 lib/proc_lock.pid_alive (확인 불가 = False: 생존 표시는 살아 있다는 증거가 필요)."""
+    return _pl().pid_alive(pid, unknown=False)
+
+
+def _hb_file(pid: int = None) -> Path:
+    import socket
+    return WAIT_DIR / f"{socket.gethostname()}-{pid or os.getpid()}.json"
 
 
 def _hb_write(interval: float, started: str) -> None:
     import socket
-    _atomic_json(WAIT_HB, {"pid": os.getpid(), "host": socket.gethostname(), "root": str(ROOT),
-                           "session": os.environ.get("CLAUDE_SESSION_ID") or os.environ.get("CLAUDE_CODE_SESSION_ID") or "",
-                           "interval": interval, "started": started,
-                           "beat": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+    _atomic_json(_hb_file(), {"pid": os.getpid(), "pstart": _pl().proc_start(os.getpid()),
+                              "host": socket.gethostname(), "root": str(ROOT),
+                              "session": os.environ.get("CLAUDE_SESSION_ID") or os.environ.get("CLAUDE_CODE_SESSION_ID") or "",
+                              "interval": interval, "started": started,
+                              "beat": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+
+
+def _hb_judge(hb, now: datetime) -> dict:
+    """표시 하나 판정 — ① 형식 ② 이 장비·저장소 ③ 박동이 미래 아님 ④ 최근 박동(주기×2+120초) ⑤ pid 생존
+    ⑥ 같은 프로세스(시작 시각 일치 · PID 재사용 차단)."""
+    import socket
+    if not isinstance(hb, dict) or not hb:
+        return {"alive": False, "why": "표시 손상"}
+    try:
+        age = (now - datetime.fromisoformat(hb.get("beat", ""))).total_seconds()
+        limit = float(hb.get("interval") or 300) * 2 + 120
+        pid = int(hb.get("pid") or 0)
+    except (ValueError, TypeError):
+        return {"alive": False, "why": "표시 손상"}
+    if hb.get("host") != socket.gethostname() or hb.get("root") != str(ROOT):
+        return {"alive": False, "why": "다른 장비·저장소 표시", **hb}
+    if age < -_FUTURE_SKEW:
+        return {"alive": False, "why": f"박동 시각이 미래 ({int(-age)}초)", **hb}
+    if age > limit:
+        return {"alive": False, "why": f"박동 {int(age)}초 전 (한도 {int(limit)}초)", **hb}
+    if not _pid_alive(pid):
+        return {"alive": False, "why": "프로세스 종료", "age": age, **hb}
+    if hb.get("pstart") and _pl().proc_start(pid) not in ("", hb.get("pstart")):
+        return {"alive": False, "why": "pid 가 다른 프로세스로 재사용됨", "age": age, **hb}
+    return {"alive": True, "age": age, **hb}
 
 
 def wait_alive(now: datetime = None) -> dict:
-    """대기 루프가 지금 돌고 있나 — 표시가 ① 이 장비 ② 이 저장소 ③ 프로세스 생존 ④ 최근 박동(주기×2+120초 안)을 모두 만족해야 alive.
-    오래된 표시만 있으면 alive 아님(죽은 루프) · 다른 세션이 돌리는 살아 있는 루프도 alive (겹쳐 돌리지 않는다)."""
-    import socket
-    hb = _load(WAIT_HB, {})
-    if not isinstance(hb, dict) or not hb:
-        return {"alive": False, "why": "표시 없음"}
+    """대기 루프가 지금 돌고 있나 — 프로세스별 표시 중 하나라도 _hb_judge 를 통과하면 alive
+    (다른 세션의 살아 있는 루프도 alive = 겹쳐 돌리지 않음). 손상·죽은·재사용 표시는 alive 근거가 아니다."""
     now = now or datetime.now(timezone.utc)
+    seen = []
     try:
-        age = (now - datetime.fromisoformat(hb.get("beat", ""))).total_seconds()
-    except (ValueError, TypeError):
-        return {"alive": False, "why": "표시 손상"}
-    limit = float(hb.get("interval") or 300) * 2 + 120
-    if hb.get("host") != socket.gethostname() or hb.get("root") != str(ROOT):
-        return {"alive": False, "why": "다른 장비·저장소 표시", **hb}
-    if not _pid_alive(int(hb.get("pid") or 0)):
-        return {"alive": False, "why": "프로세스 종료", "age": age, **hb}
-    if age > limit:
-        return {"alive": False, "why": f"박동 {int(age)}초 전 (한도 {int(limit)}초)", **hb}
-    return {"alive": True, "age": age, **hb}
+        files = sorted(WAIT_DIR.glob("*.json"))
+    except OSError:
+        files = []
+    for f in files:
+        r = _hb_judge(_load(f, {}), now)
+        if r.get("alive"):
+            return r
+        seen.append(r)
+    return {"alive": False, "why": seen[-1]["why"] if seen else "표시 없음", "stale": len(seen)}
+
+
+def _hb_prune(now: datetime = None) -> int:
+    """이 장비의 죽은 루프 표시만 지운다 (프로세스 종료·재사용·한도 넘은 박동·손상) — 살아 있는 표시·다른 장비 표시는 그대로."""
+    import socket
+    now = now or datetime.now(timezone.utc)
+    gone = 0
+    try:
+        files = list(WAIT_DIR.glob(f"{socket.gethostname()}-*.json"))
+    except OSError:
+        return 0
+    for f in files:
+        if f == _hb_file():
+            continue
+        r = _hb_judge(_load(f, {}), now)
+        if not r.get("alive") and r.get("why") != "다른 장비·저장소 표시":
+            try:
+                f.unlink()
+                gone += 1
+            except OSError:
+                pass
+    return gone
 
 
 def _write_pending_cache(lines: list, ok: bool) -> None:
@@ -887,43 +1120,47 @@ def _write_pending_cache(lines: list, ok: bool) -> None:
         pass
 
 
+_RESTART = "`python -X utf8 .claude/scripts/ai-collab-report.py wait --interval 300` 백그라운드 재시작"
+
+
 def prompt_notice(max_age: float = 600.0, spawn=None) -> str:
-    """프롬프트 훅용 — 네트워크·git 호출 없이 파일 두 개만 읽는다 (사용자 응답을 지연시키지 않음 · R375 6차 검토 F/G/J).
+    """프롬프트 훅용 — 네트워크·git 호출 없이 파일만 읽는다 (사용자 응답을 지연시키지 않음 · R375 6차 검토 F/G/J).
     대기 루프가 살아 있으면 "" (그 루프가 Claude 를 깨운다 · 중복 실행 X).
-    죽어 있으면 마지막 확인 결과의 미처리 줄을 알리고, 결과가 max_age 보다 오래됐으면 백그라운드 갱신을 1개만 띄운다."""
-    if wait_alive().get("alive"):
+    죽어 있으면 ① 미처리 줄 ② 확인 결과가 없거나 손상이면 UNKNOWN (7차 검토: 빈 캐시를 «없음» 으로 보이게 하지 않음)
+    ③ 미처리 없음이어도 «루프 꺼짐» 1줄 — 결과가 max_age 보다 오래됐으면 백그라운드 갱신을 띄운다 (실행은 1개만)."""
+    w = wait_alive()
+    if w.get("alive"):
         return ""
     cache = _load(PENDING_CACHE, {})
-    lines = cache.get("lines") if isinstance(cache, dict) else None
+    cache = cache if isinstance(cache, dict) else {}
+    lines = cache.get("lines") if isinstance(cache.get("lines"), list) else None
     try:
         age = (datetime.now(timezone.utc) - datetime.fromisoformat(cache.get("at", ""))).total_seconds()
     except (ValueError, TypeError, AttributeError):
         age = float("inf")
-    if age > max_age:
+    bad = age == float("inf") or age < -_FUTURE_SKEW or lines is None
+    if bad or age > max_age:
         _spawn_refresh(spawn)
+    if bad:
+        return (f"[협업 폴더 확인 결과 UNKNOWN · 대기 루프 꺼짐 ({w.get('why')}) · 확인 기록 없음·손상 — 백그라운드 확인 시작]\n"
+                f"→ {_RESTART}")
+    when = f"{int(age // 60)}분 전 확인"
+    if not cache.get("ok", True):
+        when += " · 원격 확인 실패 = 최신 여부 UNKNOWN"
     if not lines:
-        return ""
-    when = "확인 시각 UNKNOWN" if age == float("inf") else f"{int(age // 60)}분 전 확인"
-    return ("[협업 폴더 미처리 · 대기 루프 꺼짐 · " + when + "]\n" + "\n".join(lines[:8]) +
-            "\n→ 처리 후 `python -X utf8 .claude/scripts/ai-collab-report.py wait --interval 300` 백그라운드 재시작")
+        return f"[대기 루프 꺼짐 ({w.get('why')}) · 협업 미처리 없음 ({when})]\n→ {_RESTART}"
+    return f"[협업 폴더 미처리 · 대기 루프 꺼짐 · {when}]\n" + "\n".join(lines[:8]) + f"\n→ 처리 후 {_RESTART}"
 
 
 def _spawn_refresh(spawn=None) -> bool:
-    """pending 갱신을 분리 프로세스로 1개만 (잠금 파일 O_EXCL · 120초 지난 잠금만 회수) · 기다리지 않는다."""
-    try:
-        REFRESH_LOCK.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            fd = os.open(REFRESH_LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            if _t_now() - REFRESH_LOCK.stat().st_mtime < 120:
-                return False
-            os.replace(REFRESH_LOCK, REFRESH_LOCK.with_suffix(f".stale{os.getpid()}"))
-            os.unlink(REFRESH_LOCK.with_suffix(f".stale{os.getpid()}"))
-            fd = os.open(REFRESH_LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        os.write(fd, str(os.getpid()).encode())
-        os.close(fd)
-    except OSError:
-        return False
+    """pending 갱신을 분리 프로세스로 띄운다 · 기다리지 않는다. 갱신 중(OS 잠금이 잡혀 있음)이면 안 띄움.
+    R375 7차 검토: O_EXCL 파일 + 120초 stale 교체 + 끝날 때 무조건 unlink 는 오래된 작업이 새 주인의 잠금을 지울 수 있었다 →
+    OS 잠금(lib/proc_lock · 파일 삭제 없음) · 실제 독점은 자식(cmd_refresh)이 잠금을 잡을 때 정해진다 (둘이 떠도 하나만 실행)."""
+    pl = _pl()
+    fd = pl.try_lock(REFRESH_LOCK)
+    if fd is None:
+        return False                     # 다른 갱신이 진행 중
+    pl.release(fd)
     cmd = [sys.executable, "-X", "utf8", str(Path(__file__).resolve()), "refresh"]
     if spawn:
         spawn(cmd)
@@ -935,23 +1172,22 @@ def _spawn_refresh(spawn=None) -> bool:
                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT)})
         return True
     except OSError:
-        REFRESH_LOCK.unlink(missing_ok=True)
         return False
 
 
-def _t_now() -> float:
-    import time as _t
-    return _t.time()
-
-
 def cmd_refresh() -> int:
-    """백그라운드 갱신 1회 — pending_lines 결과를 캐시에 쓰고 잠금을 푼다 (state.json 은 쓰지 않음)."""
+    """백그라운드 갱신 1회 — OS 잠금을 잡은 프로세스만 pending_lines 결과를 캐시에 쓴다 (state.json 은 쓰지 않음).
+    잠금을 못 잡으면(다른 갱신 진행 중) 아무것도 하지 않고 0."""
+    pl = _pl()
+    fd = pl.try_lock(REFRESH_LOCK)
+    if fd is None:
+        return 0
     try:
         lines = pending_lines()
         _write_pending_cache(lines, ok=not any(x.startswith("(원격 확인") for x in lines))
         return 0
     finally:
-        REFRESH_LOCK.unlink(missing_ok=True)
+        pl.release(fd)                   # 내 잠금만 푼다 (파일은 남김 · 다른 주인의 잠금을 지울 일 없음)
 
 
 def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
@@ -963,10 +1199,13 @@ def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
     fails = 0
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
     try:
+        _hb_prune()                            # 이 장비의 죽은 루프 표시 정리 (OOM·강제 종료로 남은 것)
+    except OSError:
+        pass
+    try:
         return _wait_loop(interval, max_sec, t0, started)
-    finally:                                   # 끝날 때 내 표시만 지운다 (다른 프로세스 표시는 건드리지 않음)
-        if (_load(WAIT_HB, {}) or {}).get("pid") == os.getpid():
-            WAIT_HB.unlink(missing_ok=True)
+    finally:                                   # 끝날 때 내 표시만 지운다 (프로세스별 파일이라 다른 루프 표시와 경합 없음)
+        _hb_file().unlink(missing_ok=True)
 
 
 def _wait_loop(interval: float, max_sec: float, t0: float, started: str) -> int:

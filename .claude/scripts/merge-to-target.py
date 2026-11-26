@@ -351,10 +351,88 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
 
 
 def _isjunction(p: Path) -> bool:
+    """정션 판정 — Python 3.12+ os.path.isjunction · 그 전(3.11 등)은 reparse point 속성으로 · 판정 실패 = True (지우지 않는 쪽).
+    R375 7차 검토: 3.11 에서 isjunction 이 없으면 False 를 돌려 정션 백업을 일반 폴더로 보고 rmtree 할 수 있었다."""
+    f = getattr(os.path, "isjunction", None)
+    if f is not None:
+        try:
+            return bool(f(p))
+        except OSError:
+            return True
     try:
-        return os.path.isjunction(p)
-    except (AttributeError, OSError):
+        return bool(os.lstat(p).st_file_attributes & 0x400)   # FILE_ATTRIBUTE_REPARSE_POINT (Windows)
+    except AttributeError:
+        return False                                         # POSIX 엔 정션 없음 (링크는 is_symlink 가 따로 거름)
+    except OSError:
+        return True
+
+
+_PRUNABLE = ".kit-owned-only"   # 이 표시가 있는 백업만 정리 대상 (안의 파일이 전부 kit 소유 판 = git 이력으로 복구 가능)
+
+
+def _has_any_file(d: Path) -> bool:
+    """폴더 안 어디에든 파일이 하나라도 있나 (링크 따라가지 않음 · 읽기 실패 = 있다고 봄 = 지우지 않는 쪽)."""
+    try:
+        for root, _dirs, files in os.walk(d, followlinks=False):
+            if files:
+                return True
         return False
+    except OSError:
+        return True
+
+
+class _TargetChanged(Exception):
+    """확인한 뒤 쓰기 직전까지 대상 파일이 바뀜 (다른 세션·사용자 편집) — 덮어쓰지 않는다."""
+
+
+def _proc_lock():
+    """공용 OS 잠금 (lib/proc_lock.py · 정본) — 경로로 적재."""
+    name = "_kit_proc_lock"
+    if name not in sys.modules:
+        import importlib.util
+        lp = Path(__file__).resolve().parent / "lib" / "proc_lock.py"
+        if not lp.is_file():
+            return None                  # 스크립트만 따로 복사된 환경 (호출부가 경고 후 잠금 없이 진행)
+        spec = importlib.util.spec_from_file_location(name, lp)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+    return sys.modules[name]
+
+
+def _write_atomic(dst: Path, data: bytes = None, src: Path = None, expect: bytes = None) -> None:
+    """대상 파일을 원자적으로 교체 (임시 파일 → os.replace) · expect 를 주면 쓰기 직전 대상이 그 내용인지 다시 확인.
+    R375 7차 검토: 백업 검증 뒤 실제 덮어쓰기 전에 대상이 바뀌는 경합 · 쓰는 도중 끊기면 반쯤 쓴 파일이 남던 것."""
+    if expect is not None and dst.exists() and dst.read_bytes() != expect:
+        raise _TargetChanged(str(dst))
+    tmp = dst.with_name(f".{dst.name}.kit-merge.{os.getpid()}.tmp")
+    try:
+        if src is not None:
+            shutil.copy2(src, tmp)
+        else:
+            tmp.write_bytes(data)
+        if expect is not None and dst.exists() and dst.read_bytes() != expect:
+            raise _TargetChanged(str(dst))
+        os.replace(tmp, dst)
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+
+def _mark_prunable(backup: Path, kit_owned: set) -> None:
+    """백업 안 파일이 전부 kit 소유 판(stale-kit)일 때만 정리 가능 표시 — 3-way 병합 전 대상본·settings·.mcp.json·
+    강제 교체 원본 같은 사용자 내용이 하나라도 있으면 표시하지 않는다 (= 정리하지 않음 · 복구 증거 보존)."""
+    try:
+        files = [f.relative_to(backup).as_posix() for f in backup.rglob("*") if f.is_file() and f.name != _PRUNABLE]
+    except OSError:
+        return
+    if files and all(f in kit_owned for f in files):
+        try:
+            (backup / _PRUNABLE).write_text("이 백업의 파일은 모두 kit 소유 판 (git 이력으로 복구 가능)\n", encoding="utf-8")
+        except OSError:
+            pass
 
 
 def _reserve_dir(root: Path, base: str) -> Path:
@@ -384,8 +462,11 @@ def _prune_backups(target: Path, keep: int = 1) -> str:
     root = target / ".claude" / "backups"
     try:
         # R375 7차: 같은 초 충돌 방지 접미사(-2…)도 이 도구 이름 · 링크·정션은 따라가지 않고 건너뜀 (바깥 삭제 방지)
+        # R375 7차 검토: 이름만 보고 지우면 사용자 내용(3-way 병합 전 대상본·settings 등) 백업도 지웠다 →
+        #   정리 가능 표시(_PRUNABLE · 안의 파일이 전부 kit 소유 판)가 있는 백업만
         mine = sorted((d for d in root.iterdir() if d.is_dir() and not d.is_symlink() and not _isjunction(d)
-                       and re.fullmatch(r"kit-merge-\d{8}-\d{6}(?:-\d{1,3})?", d.name)),
+                       and re.fullmatch(r"kit-merge-\d{8}-\d{6}(?:-\d{1,3})?", d.name)
+                       and ((d / _PRUNABLE).is_file() or not _has_any_file(d))),   # 빈 백업 = 복구 증거 없음 (R297)
                       key=lambda d: (d.name[:25], int(d.name[26:] or 1)))
     except OSError:
         return ""
@@ -425,6 +506,29 @@ def main() -> int:
     if not target.is_dir():
         print(f"대상 없음: {target}")
         return 2
+    if not apply:
+        return _merge_one(target, apply, only, force)
+    # R375 7차 검토: 같은 대상에 전파 둘이 겹치면(post-merge 자동 + 수동) 백업·교체가 섞인다 → 대상별 OS 잠금 (dry-run 은 읽기만)
+    #   잠금 파일은 대상이 아니라 kit 쪽 상태 폴더(대상 경로 해시별)에 둔다 — 대상에 새 파일을 남기지 않는다
+    pl = _proc_lock()
+    if pl is None:
+        print("  ⚠ lib/proc_lock.py 없음 — 대상 잠금 없이 진행 (kit 을 최신으로 받으면 해소)")
+        return _merge_one(target, apply, only, force)
+    lfd = pl.try_lock(_target_lock_path(target))
+    if lfd is None:
+        print(f"=== merge-to-target [건너뜀] {target} — 다른 전파가 이 대상에 진행 중 (대상 변경 없음)")
+        return 2
+    try:
+        return _merge_one(target, apply, only, force)
+    finally:
+        pl.release(lfd)
+
+
+def _target_lock_path(target: Path) -> Path:
+    return KIT / ".claude" / "state" / "merge-locks" / (md5(str(target).lower().encode("utf-8"))[:16] + ".lock")
+
+
+def _merge_one(target: Path, apply: bool, only: set, force: bool) -> int:
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
     # 2026-11-26 R375 리뷰 P0: 강제 교체 원본은 정리(_prune_backups, kit-merge-* 최신 1개만) 대상이 아닌 별도 폴더에 영구 보존
@@ -447,7 +551,8 @@ def main() -> int:
             _target_dirty = {ln[3:].strip().strip('"').replace("\\", "/") for ln in _r.stdout.splitlines()} if _r.returncode == 0 else None
         except Exception:
             _target_dirty = None
-    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only", "forced", "force-held")}
+    stats = {k: [] for k in ("identical", "stale-kit", "target-custom", "auto-merged", "kit-only", "forced", "force-held",
+                             "changed-held")}   # changed-held = 확인 뒤 쓰기 직전 대상이 바뀌어 덮지 않음 (R375 7차)
     # 이 도구가 마지막으로 써 넣은 내용 지문 — 그대로면 kit 소유 (커밋 전 버전을 복사했어도 갱신 가능)
     man_p = target / ".claude" / "state" / "kit-merge-manifest.json"
     try:
@@ -469,8 +574,8 @@ def main() -> int:
     def owned(rel: str, db: bytes) -> bool:
         return manifest.get(rel) == md5(norm(db)) or md5(db) in git_history_hashes(rel)
 
-    def put(rel: str, src: Path, dst: Path) -> None:
-        shutil.copy2(src, dst)
+    def put(rel: str, src: Path, dst: Path, expect: bytes = None) -> None:
+        _write_atomic(dst, src=src, expect=expect)       # R375 7차: 원자 교체 + 쓰기 직전 대상 재확인
         manifest[rel] = md5(norm(src.read_bytes()))
 
     for tree in TREES:
@@ -492,19 +597,27 @@ def main() -> int:
                     manifest[rel] = md5(norm(db))
                 continue
             if owned(rel, db):
-                stats["stale-kit"].append(rel)
                 if apply:
                     (backup / rel).parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(dst, backup / rel)
-                    put(rel, src, dst)
+                    try:
+                        put(rel, src, dst, expect=db)
+                    except _TargetChanged:
+                        stats["changed-held"].append(rel)
+                        continue
+                stats["stale-kit"].append(rel)
             else:
                 merged = None if Path(rel).name in _retired_names() else three_way(rel, db)
                 if merged is not None and norm(merged) != norm(db):
-                    stats["auto-merged"].append(rel)
                     if apply:
                         (backup / rel).parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(dst, backup / rel)
-                        dst.write_bytes(merged)
+                        try:
+                            _write_atomic(dst, data=merged, expect=db)
+                        except _TargetChanged:
+                            stats["changed-held"].append(rel)
+                            continue
+                    stats["auto-merged"].append(rel)
                 elif force and _target_dirty is not None and rel not in _target_dirty:
                     if apply:
                         (force_backup / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -513,7 +626,11 @@ def main() -> int:
                         if (force_backup / rel).read_bytes() != db:
                             stats["force-held"].append(rel)
                             continue
-                        put(rel, src, dst)
+                        try:
+                            put(rel, src, dst, expect=db)
+                        except _TargetChanged:
+                            stats["changed-held"].append(rel)
+                            continue
                     stats["forced"].append(rel)
                 elif force:
                     stats["force-held"].append(rel)
@@ -533,11 +650,16 @@ def main() -> int:
         elif norm(src.read_bytes()) == norm(dst.read_bytes()):
             stats["identical"].append(rel)
         elif owned(rel, dst.read_bytes()):
-            stats["stale-kit"].append(rel)
             if apply:
+                db = dst.read_bytes()
                 backup.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(dst, backup / rel)
-                put(rel, src, dst)
+                try:
+                    put(rel, src, dst, expect=db)
+                except _TargetChanged:
+                    stats["changed-held"].append(rel)
+                    continue
+            stats["stale-kit"].append(rel)
         else:
             stats["target-custom"].append(rel)
 
@@ -552,6 +674,7 @@ def main() -> int:
                 if apply:
                     man_p.parent.mkdir(parents=True, exist_ok=True)
                     man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
+                    _mark_prunable(backup, set(stats["stale-kit"]))
                     print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
                     _drop_empty(backup, force_backup)
                 return 0
@@ -627,7 +750,10 @@ def main() -> int:
         print(f"    3-way 병합(대상 수정 유지 + kit 새 수정) {rel}")
     for r in report:
         print(f"  {r}")
+    for rel in stats["changed-held"]:
+        print(f"    보류(확인 뒤 대상이 바뀜 · 덮지 않음) {rel}")
     if apply:
+        _mark_prunable(backup, set(stats["stale-kit"]))
         print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
         _drop_empty(backup, force_backup)
     return 0
@@ -746,11 +872,12 @@ def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Pa
         hs = md5(norm(src.read_bytes()))[:12] if src.exists() else "-"
         hd = md5(norm(dst.read_bytes()))[:12] if dst.exists() else "-"
         print(f"  {k:14} kit={hs} 대상={hd}  {rel}")
-        if k in ("target-custom", "kit에 없음", "제외(캐시·백업 등)", "force-held"):
+        if k in ("target-custom", "kit에 없음", "제외(캐시·백업 등)", "force-held", "changed-held"):
             rc = 1   # 보류·불일치는 성공으로 숨기지 않는다 (R375 7차: 강제 보류 포함)
     if apply:
         man_p.parent.mkdir(parents=True, exist_ok=True)
         man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
+        _mark_prunable(backup, set(stats["stale-kit"]))
         print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
         if stats.get("forced") and force_backup is not None:
             print(f"  강제 교체 원본 보존: {force_backup} ({len(stats['forced'])}개)")   # R375 7차: --only 보고에 강제 반영
