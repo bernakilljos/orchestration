@@ -400,20 +400,21 @@ def _repo_reason(repo: str, deadline: float | None = None) -> str | None:
 
 def _repo_reason_inner(repo: str, deadline: float | None) -> str | None:
     if True:
-        r = _git(repo, "status", "--porcelain", "--untracked-files=all", "--ignored=matching", "--ignore-submodules=none",
-                 timeout=_left(deadline, 5))
+        # R375 7차 P1 (2026-11-27 실측): dry N16 5.5초 중 git 81회가 3.85초(회당 ~48ms · Windows 프로세스 생성) →
+        #   status 를 porcelain v2 + --show-stash 로 받아 stash 확인을 같은 호출에 합침 (stash list 1회 제거 · 판정 기준 동일)
+        r = _git(repo, "status", "--porcelain=v2", "--show-stash", "--untracked-files=all", "--ignored=matching",
+                 "--ignore-submodules=none", timeout=_left(deadline, 5))
         if r.returncode != 0:
             return f"git 확인 실패 (종료 {r.returncode}) {repo}"
         lines = [x for x in r.stdout.splitlines() if x.strip()]
-        if any(not x.startswith("!! ") for x in lines):
+        stash = any(x.startswith("# stash ") and x.split()[-1] != "0" for x in lines)
+        lines = [x for x in lines if not x.startswith("# ")]           # 머리 줄(branch·stash) 제외 = 항목 줄만
+        if any(not x.startswith("! ") for x in lines):                # v2: 변경 1·2·u · 미추적 ? · 무시 !
             return f"커밋 안 한 변경 {repo}"
-        keep = [x[3:] for x in lines if not _regenerable(x[3:].strip('"'), repo)]
+        keep = [x[2:] for x in lines if not _regenerable(x[2:].strip('"'), repo)]
         if keep:
             return f"무시된 파일 (다시 못 만들 수 있음 {keep[:3]}) {repo}"
-        r = _git(repo, "stash", "list", timeout=_left(deadline, 5))
-        if r.returncode != 0:
-            return f"git 확인 실패 (종료 {r.returncode}) {repo}"
-        if r.stdout.strip():
+        if stash:
             return f"stash 있음 {repo}"
         # 원격 추적 ref 는 오래됐을 수 있다 → 원격에 실제로 물어본 끝 커밋만 «올라간 증거» 로 친다 (detached HEAD·태그 포함)
         pos = ["--all"]   # HEAD(detached 포함)·브랜치·태그·원격 추적 ref 전부 — 원격이 실제로 가진 커밋만 빼고 남으면 보존
@@ -447,14 +448,10 @@ def _repo_reason_inner(repo: str, deadline: float | None) -> str | None:
                     return f"원격 확인 실패 ({rm} 종료 {lr.returncode}) {repo}"
                 _REMOTE_TIPS[key] = {x.split()[0] for x in lr.stdout.splitlines() if x.strip()}
             shas |= _REMOTE_TIPS[key]
-        have = []
-        if shas:
-            ck = _git(repo, "cat-file", "--batch-check", inp="\n".join(sorted(shas)) + "\n", timeout=_left(deadline, 5))
-            if ck.returncode != 0:
-                return f"git 확인 실패 (cat-file 종료 {ck.returncode}) {repo}"
-            have = [x.split()[0] for x in ck.stdout.splitlines() if x.strip() and not x.endswith("missing")]
-        rl = _git(repo, "rev-list", "-1", *pos, "--stdin", inp="".join(f"^{h}\n" for h in have),
-                  timeout=_left(deadline, 5))
+        # R375 7차 P1: 원격 끝 커밋 중 이 저장소에 있는 것만 고르던 cat-file --batch-check 1회 제거 →
+        #   rev-list --ignore-missing 이 이 저장소에 없는 ^커밋 입력을 무시 (같은 결과 · 없는 커밋으로 오류 나지 않음)
+        rl = _git(repo, "rev-list", "-1", *pos, "--ignore-missing", "--stdin",
+                  inp="".join(f"^{h}\n" for h in sorted(shas)), timeout=_left(deadline, 5))
         if rl.returncode != 0:
             return f"git 확인 실패 (종료 {rl.returncode}) {repo}"
         if rl.stdout.strip():

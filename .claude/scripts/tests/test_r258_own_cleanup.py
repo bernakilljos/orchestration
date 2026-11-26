@@ -780,8 +780,27 @@ def test_r375d_remote_and_catfile_exit_codes_fail_closed(env, tmp_path, monkeypa
         return g
     monkeypatch.setattr(oc, "_git", bad("config", 128))   # 1 = 설정 없음(정상) · 그 밖 = 실패
     assert "config 종료" in (oc._unpushed(ended) or "")
-    monkeypatch.setattr(oc, "_git", bad("cat-file"))
-    assert "cat-file 종료" in (oc._unpushed(ended) or "")
+    # R375 7차 P1: cat-file 확인은 rev-list --ignore-missing 으로 대체 (호출 1회 감소) → 남은 rev-list 실패도 보존
+    monkeypatch.setattr(oc, "_git", bad("rev-list"))
+    assert "git 확인 실패" in (oc._unpushed(ended) or "")
+    monkeypatch.setattr(oc, "_git", bad("status"))
+    assert "git 확인 실패" in (oc._unpushed(ended) or "")
+
+
+def test_r375h_stash_detected_via_status_v2(env, tmp_path, monkeypatch):
+    """stash 확인을 status --porcelain=v2 --show-stash 로 합친 뒤에도 stash 가 있으면 보존 (stash list 호출 없음)."""
+    ended, work = _clean_pair(env, tmp_path, monkeypatch)
+    repo = next(p for p in ended.rglob(".git") if p.is_dir()).parent
+    (repo / "s.txt").write_text("임시", encoding="utf-8")
+    g = lambda *a: _sp.run(["git", "-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t", *a],
+                           check=True, capture_output=True)
+    g("add", "s.txt")
+    g("stash")
+    calls = []
+    real = oc._git
+    monkeypatch.setattr(oc, "_git", lambda r, *a, **k: (calls.append(a[0]), real(r, *a, **k))[1])
+    assert "stash 있음" in (oc._unpushed(ended) or "")
+    assert "stash" not in calls and "cat-file" not in calls
 
 
 def test_r375d_unreadable_subfolder_in_mtime_scan_kept(env, tmp_path, monkeypatch):
