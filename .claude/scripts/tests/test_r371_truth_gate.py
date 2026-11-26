@@ -17,6 +17,15 @@ def _known_remote_branch(monkeypatch):
     monkeypatch.setattr(m, "_remote_ref", lambda: "origin/main")
 
 
+@pytest.fixture(autouse=True)
+def _isolated_collab_files(monkeypatch, tmp_path):
+    """R375 6차: pending·poll 이 결과 캐시·생존 표시를 쓰게 됐다 — 시험이 실제 .claude/state 에 쓰지 않도록 격리."""
+    monkeypatch.setattr(m, "PENDING_CACHE", tmp_path / "pending.json", raising=False)
+    monkeypatch.setattr(m, "WAIT_HB", tmp_path / "wait.json", raising=False)
+    monkeypatch.setattr(m, "REFRESH_LOCK", tmp_path / "refresh.lock", raising=False)
+    monkeypatch.setattr(m, "LEDGER", tmp_path / "ledger.json")
+
+
 import subprocess
 
 # R375 2차 검토 P1 (2026-11-25): 고정 SHA(f0a81e76…) 는 얕은 checkout(CI · fetch-depth 1) 에 없어 «없는 커밋» 위반이
@@ -114,7 +123,7 @@ def test_r372_pending_watermark_by_git_history(monkeypatch):
     monkeypatch.setattr(m, "_git", fake_git)
     monkeypatch.setattr(m, "_remote_files", lambda: {p: "b" + p[-4] for p in times if "/reports/" not in p})
     monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "requests": {}})
-    monkeypatch.setattr(m, "_review_verdict", lambda blob: "판정 approved" if blob == "b4" else "판정 changes_requested")
+    monkeypatch.setattr(m, "_verdict_of", lambda blob: "approved" if blob == "b4" else "changes_requested")
     monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0})())
     lines = m.pending_lines()
     assert not any("R1" in x for x in lines)
@@ -141,7 +150,7 @@ def test_r375_poll_uses_same_git_watermark_as_pending(monkeypatch):
     monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "inflight": {}})
     monkeypatch.setattr(m, "_save_state", lambda st: saved.update(st))
     monkeypatch.setattr(m, "cmd_queue", lambda quiet=True: 0)
-    monkeypatch.setattr(m, "_review_verdict", lambda blob: "판정 approved" if blob == "b3" else "판정 changes_requested")
+    monkeypatch.setattr(m, "_verdict_of", lambda blob: "approved" if blob == "b3" else "changes_requested")
     monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": 0, "stderr": ""})())
     out = []
     monkeypatch.setattr("builtins.print", lambda *a, **k: out.append(" ".join(map(str, a))))
@@ -169,3 +178,138 @@ def test_r375e_pending_reads_commit_times_with_one_git_log(monkeypatch):
     lines = m.pending_lines()
     assert sum(1 for c in calls if c[0] == "log") == 1                # 20개 파일 · git log 1회
     assert sorted(int(x.split("지시 R")[1].split(":")[0]) for x in lines) == list(range(10, 20))
+
+
+# ---- R375 6차 검토 F/G/J: 판정 공통화 · 정확 판정 · 문서만 고친 보고 · fetch 실패 · 완료 요청 · 네트워크 없는 프롬프트 알림 ----
+from datetime import timedelta as _td  # noqa: E402
+
+_SEEN_C = "a" * 40
+_NEW_C = "b" * 40
+
+
+def _fm(**kv):
+    return "---\n" + "".join(f'{k}: "{v}"\n' for k, v in kv.items()) + "---\n본문\n"
+
+
+def _review_repo(monkeypatch, report_head, verdict="changes_requested", ledger=None, fetch_rc=0, collab=None):
+    """리뷰(시각 300) 뒤에 보고서(시각 400)가 올라간 상황 · 보고서 head_commit 만 바꿔 가며 본다."""
+    times = {".ai-collab/reviews/R9.md": "300", ".ai-collab/reports/R9.md": "400"}
+    blobs = {"rv9": _fm(request_id="R9", verdict=verdict, reviewed_commit=_SEEN_C)}
+
+    def fake_git(*a):
+        if a[:2] == ("log", "--format=@@CT %ct"):
+            return _batch_log(times)
+        if a[:2] == ("cat-file", "-p"):
+            return blobs.get(a[2], "")
+        if a[:2] == ("cat-file", "-t"):
+            return "commit"
+        if a[0] == "show" and a[1].endswith("reports/R9.md"):
+            return _fm(request_id="R9", head_commit=report_head, status="PARTIAL")
+        return ""
+    monkeypatch.setattr(m, "_git", fake_git)
+    monkeypatch.setattr(m, "_remote_files", lambda: {".ai-collab/reviews/R9.md": "rv9"})
+    monkeypatch.setattr(m, "_state", lambda: {"seen": {}, "handled": {}, "inflight": {}, "requests": collab or {}})
+    monkeypatch.setattr(m, "_load", lambda p, d: ledger if (p == m.LEDGER and ledger is not None) else
+                        (d if p == m.LEDGER else m.json.loads(p.read_text(encoding="utf-8")) if p.is_file() else d))
+    monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": fetch_rc, "stderr": ""})())
+
+
+def test_r375f_doc_only_report_edit_does_not_hide_review(monkeypatch):
+    """보고서를 리뷰 뒤에 다시 올렸어도 head_commit 이 리뷰가 본 커밋 그대로면(문서만 수정) 리뷰는 미처리."""
+    _review_repo(monkeypatch, report_head=_SEEN_C)
+    assert any("리뷰 R9" in x for x in m.pending_lines())
+    _review_repo(monkeypatch, report_head=_NEW_C)                    # 새 작업 커밋으로 답한 보고 = 처리됨
+    assert m.pending_lines() == []
+
+
+def test_r375f_poll_and_pending_share_one_classifier(monkeypatch):
+    """같은 입력에서 poll 이 «새 것» 으로 전달하는 집합 = pending 이 알리는 집합 (따로 판정하지 않음)."""
+    for head, expect in ((_SEEN_C, True), (_NEW_C, False)):
+        _review_repo(monkeypatch, report_head=head)
+        monkeypatch.setattr(m, "_save_state", lambda st: None)
+        monkeypatch.setattr(m, "cmd_queue", lambda quiet=True: 0)
+        out = []
+        monkeypatch.setattr("builtins.print", lambda *a, **k: out.append(" ".join(map(str, a))))
+        rc = m.cmd_poll()
+        delivered = "reviews/R9.md" in "\n".join(out) and rc == 0
+        listed = any("리뷰 R9" in x for x in m.pending_lines())
+        assert delivered == listed == expect
+
+
+def test_r375f_verdict_requires_exact_value(monkeypatch):
+    """'Approved'·'not_approved' 처럼 비슷한 값은 승인이 아님 (endswith 판정 제거)."""
+    for v, want in (("approved", "approved"), ("Approved", ""), ("not_approved", ""), ("changes_requested", "changes_requested")):
+        monkeypatch.setattr(m, "_git", lambda *a, v=v: _fm(verdict=v, reviewed_commit=_SEEN_C) if a[:2] == ("cat-file", "-p") else "commit")
+        assert m._verdict_of("x") == want, v
+    _review_repo(monkeypatch, report_head=_SEEN_C, verdict="not_approved")
+    assert any("리뷰 R9" in x for x in m.pending_lines())          # 승인 아님 → 알림 유지
+
+
+def test_r375f_fetch_failure_is_unknown_not_empty(monkeypatch):
+    """fetch 실패 + 받아 둔 판 기준 할 일 없음 → 빈 목록(=없음) 이 아니라 확인 불가를 알림."""
+    _review_repo(monkeypatch, report_head=_NEW_C, fetch_rc=128)
+    lines = m.pending_lines()
+    assert lines and "원격 확인 실패" in lines[0] and "UNKNOWN" in lines[-1]
+
+
+def test_r375f_review_on_completed_request_is_flagged(monkeypatch):
+    """원장에서 완료(completed)된 요청에 새 changes_requested 가 오면 «원장 재개» 로 표시 (blob 단위)."""
+    _review_repo(monkeypatch, report_head=_SEEN_C, collab={"R9": {"status": "PASS"}})
+    line = next(x for x in m.pending_lines() if "리뷰 R9" in x)
+    assert "완료 처리된 요청" in line and "blob rv9" in line
+    # 원장에 같은 번호의 «다른» 대화 요청이 completed 여도 협업 보고가 PARTIAL 이면 완료 표시 X (ID 충돌 실측)
+    _review_repo(monkeypatch, report_head=_SEEN_C, ledger={"requests": [{"id": "R9", "status": "completed"}]},
+                 collab={"R9": {"status": "PARTIAL"}})
+    assert "완료 처리된 요청" not in next(x for x in m.pending_lines() if "리뷰 R9" in x)
+
+
+def test_r375f_short_head_sha_same_commit_is_not_answer(monkeypatch):
+    """보고서 head_commit 이 8자리 짧은 SHA 여도 리뷰가 본 커밋과 같으면 답한 것이 아님 · SHA 가 아닌 값(PENDING)도 답 아님."""
+    for head, pending in ((_SEEN_C[:8], True), ("PENDING", True), (_NEW_C[:8], False)):
+        _review_repo(monkeypatch, report_head=head)
+        assert any("리뷰 R9" in x for x in m.pending_lines()) == pending, head
+
+
+def test_r375f_prompt_notice_no_network_and_single_refresh(monkeypatch, tmp_path):
+    """프롬프트 알림: git·네트워크 호출 0 · 루프 살아 있으면 침묵 · 죽었으면 캐시 줄 · 오래된 캐시는 갱신 1개만 띄움."""
+    import json as _j
+    import os as _os
+    import socket
+    def boom(*a, **k):
+        raise AssertionError("프롬프트 경로에서 git/subprocess 호출")
+    monkeypatch.setattr(m, "_git", boom)
+    monkeypatch.setattr(m.subprocess, "run", boom)
+    now = m.datetime.now(m.timezone.utc)
+    m.PENDING_CACHE.write_text(_j.dumps({"at": (now - _td(hours=1)).isoformat(), "ok": True,
+                                         "lines": ["- 리뷰 R9: 판정 changes_requested"]}), encoding="utf-8")
+    hb = {"pid": _os.getpid(), "host": socket.gethostname(), "root": str(m.ROOT), "interval": 300,
+          "beat": now.isoformat()}
+    m.WAIT_HB.write_text(_j.dumps(hb), encoding="utf-8")
+    spawned = []
+    assert m.prompt_notice(spawn=spawned.append) == "" and not spawned        # 살아 있는 루프 = 침묵 · 중복 X
+    hb["beat"] = (now - _td(hours=2)).isoformat()                       # 오래된 박동 = 죽은 루프
+    m.WAIT_HB.write_text(_j.dumps(hb), encoding="utf-8")
+    t = m.prompt_notice(spawn=spawned.append)
+    assert "리뷰 R9" in t and "대기 루프 꺼짐" in t and len(spawned) == 1
+    m.prompt_notice(spawn=spawned.append)                                       # 잠금이 살아 있으면 다시 안 띄움
+    assert len(spawned) == 1
+
+
+def test_r375f_dead_pid_heartbeat_is_not_alive(monkeypatch):
+    import json as _j
+    import socket
+    m.WAIT_HB.write_text(_j.dumps({"pid": 2 ** 22 + 7, "host": socket.gethostname(), "root": str(m.ROOT),
+                                   "interval": 300, "beat": m.datetime.now(m.timezone.utc).isoformat()}), encoding="utf-8")
+    w = m.wait_alive()
+    assert not w["alive"] and "종료" in w["why"]
+
+
+def test_r375f_wait_writes_heartbeat_and_clears_own(monkeypatch):
+    """wait 는 주기마다 생존 표시를 쓰고 끝나면 자기 표시만 지운다."""
+    seen = []
+    def fake_poll():
+        seen.append(m.wait_alive()["alive"])
+        return 0
+    monkeypatch.setattr(m, "cmd_poll", fake_poll)
+    assert m.cmd_wait(interval=1, max_sec=5) == 0
+    assert seen == [True] and not m.WAIT_HB.exists()

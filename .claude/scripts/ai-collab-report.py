@@ -489,6 +489,43 @@ def _report_newer_on_remote(rid: str, path: str) -> bool:
     return bool(rep is not None and src is not None and rep > src)
 
 
+def _review_answered(rid: str, path: str, blob: str) -> bool:
+    """리뷰에 답한 보고 = 리뷰 뒤에 올라간 보고서 + 그 보고서의 head_commit 이 리뷰가 본 커밋(reviewed_commit)과 다름.
+    R375 6차 검토: 보고서 오타·문서만 고쳐 다시 올리면(head_commit 그대로) 시각만으로는 «답함» 이 돼 미처리 리뷰가 가려졌다.
+    리뷰 머리에 reviewed_commit 이 없으면 시각만 본다 (옛 형식) · 보고서를 못 읽으면 답 안 함(다시 알림 쪽)."""
+    if not _report_newer_on_remote(rid, path):
+        return False
+    fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
+    seen_commit = (fm or {}).get("reviewed_commit", "")
+    if not _SHA40.fullmatch(seen_commit):
+        return True
+    rep = _frontmatter(_git("show", f"{_remote_ref()}:.ai-collab/reports/{rid}.md")) or {}
+    head = rep.get("head_commit", "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{7,40}", head):
+        return False                                # head 가 SHA 가 아님(PENDING 등) = 새 작업으로 답했다는 증거 없음
+    return not seen_commit.startswith(head)         # 짧은 SHA(8자리) 도 같은 커밋이면 «문서만 고침» (실측 R375 79ad3742)
+
+
+def _classify(st: dict, path: str, blob: str) -> str:
+    """pending(세션 시작·프롬프트)과 poll(대기)이 같은 기준으로 판정 (R375 6차 검토: 둘이 따로 판정해 어긋나던 것 공통화).
+    seen = 이 판 처리 확정 · legacy = R332 이전 처리 지시 · reported = 이 판 뒤 보고됨 · approved = 승인 리뷰 · pending = 할 일."""
+    if (st.get("seen") or {}).get(path) == blob:
+        return "seen"
+    m = _ACK_PATH.fullmatch(path)
+    if not m:
+        return "seen"
+    kind, rid = m.groups()
+    if kind == "requests":
+        if rid in (st.get("handled") or {}) and path not in (st.get("seen") or {}):
+            return "legacy"
+        if _reported_after_change(st, rid, path) or _report_newer_on_remote(rid, path):
+            return "reported"
+        return "pending"
+    if _verdict_of(blob) == "approved":           # 정확 일치만 (endswith 금지 · R375 6차)
+        return "approved"
+    return "reported" if _review_answered(rid, path, blob) else "pending"
+
+
 def pending_lines(fetch_timeout: float = 8.0) -> list:
     """R372: 세션 시작용 읽기 전용 확인 — 처리 확정(seen) 안 된 requests/·reviews/ 를 한 줄씩 (inflight·state 쓰기 X).
     fetch 가 안 되면 이미 받아 둔 원격 기본 브랜치 기준으로 (오프라인이어도 아는 만큼은 알린다)."""
@@ -504,27 +541,27 @@ def pending_lines(fetch_timeout: float = 8.0) -> list:
     if not _remote_ref():                       # R589 리뷰 1번: 브랜치 미확인 = «없음» 이 아니라 BLOCKED
         return out + [_BLOCKED_REF]
     st = _state()
-    seen, handled = st.get("seen", {}), st.get("handled", {})
+    # 완료 여부 = 협업 보고 기록(state.json requests · PASS) — 원장 ID(대화 요청 R###)와 협업 ID 가 겹쳐 엉뚱한 요청이
+    #   «완료» 로 보이던 것(실측: 원장 R375 = '삭제 했다매' 대화 요청) 때문에 원장은 보지 않는다
+    done = {rid for rid, ent in (st.get("requests") or {}).items() if (ent or {}).get("status") == "PASS"}
     items = []
     for path, blob in sorted(_remote_files().items()):
-        if seen.get(path) == blob:
+        if _classify(st, path, blob) != "pending":
             continue
-        m = re.fullmatch(r"\.ai-collab/(requests|reviews)/([A-Z]{1,2}\d{1,6})\.md", path)
-        if not m:
-            continue
-        kind, rid = m.groups()
-        if kind == "requests" and (rid in handled and path not in seen or _reported_after_change(st, rid, path)):
-            continue
-        if _report_newer_on_remote(rid, path):   # 워터마크 = git 이력 (세션·state 와 무관): 이 판 뒤에 보고서가 올라갔으면 처리된 판
-            continue
+        kind, rid = _ACK_PATH.fullmatch(path).groups()
         if kind == "reviews":
             v = _review_verdict(blob) or "판정 없음"
-            if v.endswith("approved"):
-                continue
-            items.append(f"- 리뷰 {rid}: {v} → 지적 사항 수정·시험·push·보고 (`{path}`)")
+            again = " · 완료 처리된 요청에 온 새 수정 요청 → 원장 재개" if rid in done else ""
+            items.append(f"- 리뷰 {rid}: {v}{again} → 지적 사항 수정·시험·push·보고 (`{path}` · blob {blob[:8]})")
         else:
             items.append(f"- 지시 {rid}: 미처리 → 읽고 실행 (`{path}`)")
-    return (out + items) if items else []
+    # R375 6차 검토: fetch 실패만 있고 받아 둔 판 기준 할 일이 없으면 빈 목록 = «없음» 처럼 보였다 → 확인 불가를 그대로 알림
+    if out and not items:
+        res = out + ["(받아 둔 판 기준 미처리 없음 — 원격 최신 여부 UNKNOWN)"]
+    else:
+        res = (out + items) if items else []
+    _write_pending_cache(res, ok=not out)      # 프롬프트 경로(prompt_notice)는 이 결과만 읽는다 (네트워크 X)
+    return res
 
 
 def cmd_poll() -> int:
@@ -552,29 +589,24 @@ def cmd_poll() -> int:
     now = datetime.now(timezone.utc)
     new, busy, reported, changed = [], [], [], False
     for path, blob in _remote_files().items():
-        if seen.get(path) == blob:
-            continue
-        m = re.fullmatch(r"\.ai-collab/requests/([A-Z]{1,2}\d{1,6})\.md", path)
-        if m and m.group(1) in handled and path not in seen:   # R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
-            _ack(st, path, blob)
-            changed = True
-            continue
+        # 판정 정본 = _classify (pending_lines 와 같은 기준 · R375 6차 검토 공통화 · 아래 이력은 _classify 안에 그대로 반영)
+        #   legacy: R332 이전에 처리한 지시 (handled 만 있음) — 재실행 X
         # R346 후속 9 (2026-11-20): 보고서(PARTIAL·BLOCKED)를 이미 올린 요청이 임대 시간마다 영원히 다시 전달돼
         #   (처리 확정은 연결 커밋·완료가 있어야 함 · R347~R349 = 20분마다 대기가 깨어나 할 일 없이 모델 호출) →
         #   요청 파일의 마지막 변경 뒤에 보고서가 있으면 «이 판은 보고됨» (열린 상태 유지 · 확정 X · 요청이 바뀌면 다시 전달).
-        if m and _reported_after_change(st, m.group(1), path):
-            reported.append(path)
-            continue
         # R375 후속 (2026-11-24): 세션 시작 목록(pending_lines)과 대기(poll)의 «보고됨» 판정이 달랐다 —
         #   poll 은 state.json 기록만 봐서 손으로 쓴 보고서(R363·R364 등)가 있는 지시·리뷰를 계속 «새 것» 으로 돌려
         #   wait 가 켜지자마자 끝났다 (리뷰를 기다리는 루프가 실제로는 돌지 못함). → 같은 git 이력 워터마크를 쓴다.
-        mr = m or re.fullmatch(r"\.ai-collab/reviews/([A-Z]{1,2}\d{1,6})\.md", path)
-        if mr and _report_newer_on_remote(mr.group(1), path):
-            reported.append(path)
+        #   승인 리뷰 = 할 일 없음 (pending 과 같은 기준 · 정확 일치만)
+        kind = _classify(st, path, blob)
+        if kind == "seen":
             continue
-        if not m and mr and _review_verdict(blob).endswith("approved"):   # 승인 리뷰 = 할 일 없음 (pending 과 같은 기준)
+        if kind in ("legacy", "approved"):
             _ack(st, path, blob)
             changed = True
+            continue
+        if kind == "reported":
+            reported.append(path)
             continue
         cur = inflight.get(path) or {}
         same = cur.get("blob") == blob
@@ -592,6 +624,8 @@ def cmd_poll() -> int:
                     "redelivery": bool(cur)})
         inflight[path] = {"blob": blob, "at": now.isoformat(timespec="seconds"), "n": (n + 1) if same else 0}
         changed = True
+    _write_pending_cache([f"- {'리뷰' if '/reviews/' in p else '지시'} {Path(p).stem}: 미처리 (`{p}`)"
+                          for p in [x["path"] for x in new] + busy], ok=True)
     if new:
         st["last_poll_hit"] = now.isoformat(timespec="seconds")
     if changed:
@@ -762,15 +796,162 @@ def _request_done(rid: str) -> str:
     return ""
 
 
-def _review_verdict(blob: str) -> str:
-    """검토 파일(blob) 머리의 명시 판정 — verdict 가 approved·changes_requested 이고 reviewed_commit 이 저장소에 있는 40자 SHA 일 때만."""
+def _verdict_of(blob: str) -> str:
+    """검토 파일(blob) 머리의 명시 판정 값 — 정확히 approved·changes_requested 중 하나이고 reviewed_commit 이 저장소에 있는
+    40자 SHA 일 때만 그 값 · 그 밖(대소문자 다름 포함 · 'not_approved' 같은 값)은 "" (R375 6차: endswith 판정 제거)."""
     fm = _frontmatter(_git("cat-file", "-p", blob)) if blob else None
     if not fm:
         return ""
-    v, c = fm.get("verdict", "").lower(), fm.get("reviewed_commit", "")
+    v, c = fm.get("verdict", ""), fm.get("reviewed_commit", "")
     if v in _VERDICTS and _SHA40.fullmatch(c) and _git("cat-file", "-t", c) == "commit":
-        return f"판정 {v}"
+        return v
     return ""
+
+
+def _review_verdict(blob: str) -> str:
+    """사람이 읽는 판정 문구 (ack 근거·목록 표시) — 값 판정은 _verdict_of."""
+    v = _verdict_of(blob)
+    return f"판정 {v}" if v else ""
+
+
+WAIT_HB = ROOT / ".claude" / "state" / "ai-collab-wait.json"        # 대기 루프 생존 표시 (장비·프로세스·세션)
+PENDING_CACHE = ROOT / ".claude" / "state" / "ai-collab-pending.json"  # 마지막 확인 결과 (프롬프트 경로는 이것만 읽음)
+REFRESH_LOCK = ROOT / ".claude" / "state" / "ai-collab-refresh.lock"
+
+
+def _atomic_json(p: Path, obj) -> None:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name(f"{p.name}.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, p)
+
+
+def _pid_alive(pid: int) -> bool:
+    """같은 장비의 프로세스가 살아 있나 (Windows = OpenProcess+종료코드 · 그 밖 = kill 0). 확인 불가 = False."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        import ctypes
+        k = ctypes.windll.kernel32
+        h = k.OpenProcess(0x1000, False, pid)              # PROCESS_QUERY_LIMITED_INFORMATION
+        if not h:
+            return False
+        code = ctypes.c_ulong()
+        ok = k.GetExitCodeProcess(h, ctypes.byref(code))
+        k.CloseHandle(h)
+        return bool(ok) and code.value == 259              # STILL_ACTIVE
+    try:
+        os.kill(pid, 0)
+        return True
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+
+
+def _hb_write(interval: float, started: str) -> None:
+    import socket
+    _atomic_json(WAIT_HB, {"pid": os.getpid(), "host": socket.gethostname(), "root": str(ROOT),
+                           "session": os.environ.get("CLAUDE_SESSION_ID") or os.environ.get("CLAUDE_CODE_SESSION_ID") or "",
+                           "interval": interval, "started": started,
+                           "beat": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+
+
+def wait_alive(now: datetime = None) -> dict:
+    """대기 루프가 지금 돌고 있나 — 표시가 ① 이 장비 ② 이 저장소 ③ 프로세스 생존 ④ 최근 박동(주기×2+120초 안)을 모두 만족해야 alive.
+    오래된 표시만 있으면 alive 아님(죽은 루프) · 다른 세션이 돌리는 살아 있는 루프도 alive (겹쳐 돌리지 않는다)."""
+    import socket
+    hb = _load(WAIT_HB, {})
+    if not isinstance(hb, dict) or not hb:
+        return {"alive": False, "why": "표시 없음"}
+    now = now or datetime.now(timezone.utc)
+    try:
+        age = (now - datetime.fromisoformat(hb.get("beat", ""))).total_seconds()
+    except (ValueError, TypeError):
+        return {"alive": False, "why": "표시 손상"}
+    limit = float(hb.get("interval") or 300) * 2 + 120
+    if hb.get("host") != socket.gethostname() or hb.get("root") != str(ROOT):
+        return {"alive": False, "why": "다른 장비·저장소 표시", **hb}
+    if not _pid_alive(int(hb.get("pid") or 0)):
+        return {"alive": False, "why": "프로세스 종료", "age": age, **hb}
+    if age > limit:
+        return {"alive": False, "why": f"박동 {int(age)}초 전 (한도 {int(limit)}초)", **hb}
+    return {"alive": True, "age": age, **hb}
+
+
+def _write_pending_cache(lines: list, ok: bool) -> None:
+    try:
+        _atomic_json(PENDING_CACHE, {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                     "ok": ok, "lines": lines})
+    except OSError:
+        pass
+
+
+def prompt_notice(max_age: float = 600.0, spawn=None) -> str:
+    """프롬프트 훅용 — 네트워크·git 호출 없이 파일 두 개만 읽는다 (사용자 응답을 지연시키지 않음 · R375 6차 검토 F/G/J).
+    대기 루프가 살아 있으면 "" (그 루프가 Claude 를 깨운다 · 중복 실행 X).
+    죽어 있으면 마지막 확인 결과의 미처리 줄을 알리고, 결과가 max_age 보다 오래됐으면 백그라운드 갱신을 1개만 띄운다."""
+    if wait_alive().get("alive"):
+        return ""
+    cache = _load(PENDING_CACHE, {})
+    lines = cache.get("lines") if isinstance(cache, dict) else None
+    try:
+        age = (datetime.now(timezone.utc) - datetime.fromisoformat(cache.get("at", ""))).total_seconds()
+    except (ValueError, TypeError, AttributeError):
+        age = float("inf")
+    if age > max_age:
+        _spawn_refresh(spawn)
+    if not lines:
+        return ""
+    when = "확인 시각 UNKNOWN" if age == float("inf") else f"{int(age // 60)}분 전 확인"
+    return ("[협업 폴더 미처리 · 대기 루프 꺼짐 · " + when + "]\n" + "\n".join(lines[:8]) +
+            "\n→ 처리 후 `python -X utf8 .claude/scripts/ai-collab-report.py wait --interval 300` 백그라운드 재시작")
+
+
+def _spawn_refresh(spawn=None) -> bool:
+    """pending 갱신을 분리 프로세스로 1개만 (잠금 파일 O_EXCL · 120초 지난 잠금만 회수) · 기다리지 않는다."""
+    try:
+        REFRESH_LOCK.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            fd = os.open(REFRESH_LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            if _t_now() - REFRESH_LOCK.stat().st_mtime < 120:
+                return False
+            os.replace(REFRESH_LOCK, REFRESH_LOCK.with_suffix(f".stale{os.getpid()}"))
+            os.unlink(REFRESH_LOCK.with_suffix(f".stale{os.getpid()}"))
+            fd = os.open(REFRESH_LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+    except OSError:
+        return False
+    cmd = [sys.executable, "-X", "utf8", str(Path(__file__).resolve()), "refresh"]
+    if spawn:
+        spawn(cmd)
+        return True
+    flags = 0x08000000 | 0x00000008 if os.name == "nt" else 0   # CREATE_NO_WINDOW | DETACHED_PROCESS
+    try:
+        subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         creationflags=flags, start_new_session=(os.name != "nt"),
+                         env={**os.environ, "CLAUDE_PROJECT_DIR": str(ROOT)})
+        return True
+    except OSError:
+        REFRESH_LOCK.unlink(missing_ok=True)
+        return False
+
+
+def _t_now() -> float:
+    import time as _t
+    return _t.time()
+
+
+def cmd_refresh() -> int:
+    """백그라운드 갱신 1회 — pending_lines 결과를 캐시에 쓰고 잠금을 푼다 (state.json 은 쓰지 않음)."""
+    try:
+        lines = pending_lines()
+        _write_pending_cache(lines, ok=not any(x.startswith("(원격 확인") for x in lines))
+        return 0
+    finally:
+        REFRESH_LOCK.unlink(missing_ok=True)
 
 
 def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
@@ -780,7 +961,22 @@ def cmd_wait(interval: float = 300.0, max_sec: float = 7 * 86400.0) -> int:
     import time as _t
     t0 = _t.time()
     fails = 0
+    started = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    try:
+        return _wait_loop(interval, max_sec, t0, started)
+    finally:                                   # 끝날 때 내 표시만 지운다 (다른 프로세스 표시는 건드리지 않음)
+        if (_load(WAIT_HB, {}) or {}).get("pid") == os.getpid():
+            WAIT_HB.unlink(missing_ok=True)
+
+
+def _wait_loop(interval: float, max_sec: float, t0: float, started: str) -> int:
+    import time as _t
+    fails = 0
     while True:
+        try:
+            _hb_write(interval, started)       # R375 6차: 생존 표시 — 프롬프트 훅이 «루프 죽음» 을 알아채는 근거
+        except OSError:
+            pass
         try:
             rc = cmd_poll()
         except (subprocess.SubprocessError, OSError) as e:   # R355: 일시 조회 실패 예외 = fetch 실패와 같이 세고 다음 주기에 재시도
@@ -863,6 +1059,11 @@ def main(argv: list) -> int:
         return cmd_prune()
     if op == "poll":
         return cmd_poll()
+    if op == "refresh":                         # prompt_notice 가 띄우는 백그라운드 갱신 1회 (사람이 직접 불러도 무해)
+        return cmd_refresh()
+    if op == "alive":                           # 대기 루프 생존 판정 (진단용)
+        print(json.dumps(wait_alive(), ensure_ascii=False))
+        return 0
     if op == "queue":
         return 1 if cmd_queue(write="--no-write" not in argv[1:]) < 0 else 0
     if op == "ack" and len(argv) >= 2:

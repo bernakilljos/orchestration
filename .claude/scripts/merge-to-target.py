@@ -350,13 +350,43 @@ def merge_settings(kit: dict, tgt: dict, report: list) -> dict:
     return out
 
 
+def _isjunction(p: Path) -> bool:
+    try:
+        return os.path.isjunction(p)
+    except (AttributeError, OSError):
+        return False
+
+
+def _reserve_dir(root: Path, base: str) -> Path:
+    """백업 폴더 이름 예약 — mkdir(exist_ok=False) 로 원자적으로 잡는다 (R375 7차 검토: 초 단위 이름이 같은 초·동시 전파에서
+    겹쳐 이전 백업에 덮어씀). 이미 있으면 -2, -3 … · 999 까지 실패하면 OSError (강제 교체 안 함 쪽)."""
+    root.mkdir(parents=True, exist_ok=True)
+    for i in range(1, 1000):
+        d = root / (base if i == 1 else f"{base}-{i}")
+        try:
+            d.mkdir()
+            return d
+        except FileExistsError:
+            continue
+    raise OSError(f"백업 폴더 예약 실패: {root / base}")
+
+
+def _has_files(d: Path) -> bool:
+    try:
+        return d.is_dir() and any(d.iterdir())
+    except OSError:
+        return False
+
+
 def _prune_backups(target: Path, keep: int = 1) -> str:
     """2026-11-18 R293: 전파마다 kit-merge-<ts> 백업이 쌓이기만 했다 (IFRS 114개·ICMAI 46개 · 지우는 곳 없음).
     롤백에 쓰는 가장 최근 keep 개만 남기고 이 도구가 만든 이전 백업을 지운다 (이름 형식이 정확히 맞는 폴더만)."""
     root = target / ".claude" / "backups"
     try:
-        mine = sorted((d for d in root.iterdir() if d.is_dir() and re.fullmatch(r"kit-merge-\d{8}-\d{6}", d.name)),
-                      key=lambda d: d.name)
+        # R375 7차: 같은 초 충돌 방지 접미사(-2…)도 이 도구 이름 · 링크·정션은 따라가지 않고 건너뜀 (바깥 삭제 방지)
+        mine = sorted((d for d in root.iterdir() if d.is_dir() and not d.is_symlink() and not _isjunction(d)
+                       and re.fullmatch(r"kit-merge-\d{8}-\d{6}(?:-\d{1,3})?", d.name)),
+                      key=lambda d: (d.name[:25], int(d.name[26:] or 1)))
     except OSError:
         return ""
     gone = 0
@@ -373,9 +403,13 @@ def main() -> int:
     if sys.argv[1] == "--all":
         reg = KIT / ".claude" / "state" / "merge-targets.txt"
         rc = 0
+        rest = [a for a in sys.argv[2:] if a != "--force"]
+        if len(rest) != len(sys.argv[2:]):
+            # R375 7차 검토: --all --force 가 등록 대상 전부로 강제 범위를 넓혔다 → 강제는 대상별 목록(merge-force-targets.txt)만
+            print("  --all 에서는 --force 무시 — 강제 교체는 merge-force-targets.txt 에 적은 대상만")
         for line in (reg.read_text(encoding="utf-8").splitlines() if reg.exists() else []):
             if line.strip() and Path(line.strip()).is_dir():
-                sys.argv = [sys.argv[0], line.strip()] + [a for a in sys.argv[2:]]
+                sys.argv = [sys.argv[0], line.strip()] + rest
                 rc |= main()
         return rc
     target = Path(sys.argv[1]).resolve()
@@ -395,6 +429,14 @@ def main() -> int:
     backup = target / ".claude" / "backups" / f"kit-merge-{ts}"
     # 2026-11-26 R375 리뷰 P0: 강제 교체 원본은 정리(_prune_backups, kit-merge-* 최신 1개만) 대상이 아닌 별도 폴더에 영구 보존
     force_backup = target / ".claude" / "backups" / f"kit-force-{ts}"
+    if apply:
+        # R375 7차: 적용할 때만 이름을 원자적으로 예약 (같은 초·동시 전파가 같은 폴더를 쓰지 않게) · 빈 채 남으면 끝에서 rmdir
+        try:
+            backup = _reserve_dir(backup.parent, backup.name)
+            force_backup = _reserve_dir(force_backup.parent, force_backup.name) if force else force_backup
+        except OSError as e:
+            print(f"백업 폴더를 잡지 못해 중단 (대상 변경 없음): {e}")
+            return 2
     # 대상에 커밋 안 된 수정이 있는 파일은 강제 교체하지 않는다 (11-25 23:50 다른 세션의 미커밋 수정 3건을 덮을 뻔함)
     #   git status 실패 = 알 수 없음 → 강제 교체 전부 보류 (덮지 않는 쪽)
     _target_dirty = None
@@ -464,11 +506,15 @@ def main() -> int:
                         shutil.copy2(dst, backup / rel)
                         dst.write_bytes(merged)
                 elif force and _target_dirty is not None and rel not in _target_dirty:
-                    stats["forced"].append(rel)
                     if apply:
                         (force_backup / rel).parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(dst, force_backup / rel)
+                        # R375 7차: 백업이 원본과 바이트 단위로 같을 때만 덮어씀 (복사 실패·부분 복사면 강제 보류)
+                        if (force_backup / rel).read_bytes() != db:
+                            stats["force-held"].append(rel)
+                            continue
                         put(rel, src, dst)
+                    stats["forced"].append(rel)
                 elif force:
                     stats["force-held"].append(rel)
                 else:
@@ -506,9 +552,10 @@ def main() -> int:
                 if apply:
                     man_p.parent.mkdir(parents=True, exist_ok=True)
                     man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
-                    print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
+                    print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
+                    _drop_empty(backup, force_backup)
                 return 0
-        return _report_only(target, only, stats, manifest, man_p, backup, apply)
+        return _report_only(target, only, stats, manifest, man_p, backup, apply, force_backup)
     _merge_settings_file(target, backup, apply, report)
     # .mcp.json
     km, tm_p = load_json(KIT / ".mcp.json"), target / ".mcp.json"
@@ -581,8 +628,18 @@ def main() -> int:
     for r in report:
         print(f"  {r}")
     if apply:
-        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
+        print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
+        _drop_empty(backup, force_backup)
     return 0
+
+
+def _drop_empty(*dirs: Path) -> None:
+    """예약했지만 쓰지 않은 백업 폴더만 지운다 (rmdir = 비어 있을 때만 성공 · 내용 있는 백업은 절대 안 지움)."""
+    for d in dirs:
+        try:
+            d.rmdir()
+        except OSError:
+            pass
 
 
 def _settings_delta(before: dict, after: dict) -> list:
@@ -677,7 +734,8 @@ def _record_apply(target: Path, note: str) -> None:
         pass
 
 
-def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Path, backup: Path, apply: bool) -> int:
+def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Path, backup: Path, apply: bool,
+                 force_backup: Path = None) -> int:
     """--only 제한 전파 결과: 파일별 판정 + kit·대상 해시 (전후 비교 증거)."""
     kind = {rel: k for k, v in stats.items() for rel in v}
     print(f"=== merge-to-target [{'APPLY' if apply else 'DRY-RUN'} · --only {len(only)}] {target}")
@@ -688,12 +746,15 @@ def _report_only(target: Path, only: set, stats: dict, manifest: dict, man_p: Pa
         hs = md5(norm(src.read_bytes()))[:12] if src.exists() else "-"
         hd = md5(norm(dst.read_bytes()))[:12] if dst.exists() else "-"
         print(f"  {k:14} kit={hs} 대상={hd}  {rel}")
-        if k in ("target-custom", "kit에 없음", "제외(캐시·백업 등)"):
-            rc = 1   # 보류·불일치는 성공으로 숨기지 않는다
+        if k in ("target-custom", "kit에 없음", "제외(캐시·백업 등)", "force-held"):
+            rc = 1   # 보류·불일치는 성공으로 숨기지 않는다 (R375 7차: 강제 보류 포함)
     if apply:
         man_p.parent.mkdir(parents=True, exist_ok=True)
         man_p.write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding="utf-8")
-        print(f"  백업: {backup if backup.exists() else '(교체 없음)'}{_prune_backups(target)}")
+        print(f"  백업: {backup if _has_files(backup) else '(교체 없음)'}{_prune_backups(target)}")
+        if stats.get("forced") and force_backup is not None:
+            print(f"  강제 교체 원본 보존: {force_backup} ({len(stats['forced'])}개)")   # R375 7차: --only 보고에 강제 반영
+        _drop_empty(backup, *( [force_backup] if force_backup is not None else []))
         _record_apply(target, f"--only {len(only)}개 · 판정 {'보류 있음' if rc else '정상'}")
     return rc
 
