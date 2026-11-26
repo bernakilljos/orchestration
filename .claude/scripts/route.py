@@ -137,12 +137,13 @@ def cmd_status(args):
     if metrics:
         print("Metrics (24h):")
         for ai, stats in metrics.items():
-            success_rate = stats["success_rate"] * 100
+            sr = stats["success_rate"]
+            sr_txt = f"{sr * 100:.0f}% success" if sr is not None else "success UNKNOWN (결과 기록 없음)"
             cost = stats["total_cost_usd"]
             print(
                 f"  {ai:<20} "
                 f"{stats['count']} calls, "
-                f"{success_rate:.0f}% success, "
+                f"{sr_txt}, "
                 f"${cost:.2f} cost"
             )
     else:
@@ -191,7 +192,9 @@ def cmd_metrics(args):
         for ai, stats in metrics.items():
             print(f"AI: {ai}")
             print(f"  Calls: {stats['count']}")
-            print(f"  Success rate: {stats['success_rate']*100:.1f}%")
+            sr = stats["success_rate"]
+            print(f"  Success rate: {sr*100:.1f}% (결과 아는 {stats.get('outcome_known', stats['count'])}건 기준)" if sr is not None
+                  else "  Success rate: UNKNOWN (결과 기록 없음 · outcome_unknown 제외)")
             print(f"  Input tokens: {stats['tokens_in']:,}")
             print(f"  Output tokens: {stats['tokens_out']:,}")
             print(f"  Total cost: ${stats['total_cost_usd']:.4f}")

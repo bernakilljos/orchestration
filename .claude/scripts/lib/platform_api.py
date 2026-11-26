@@ -115,10 +115,14 @@ def decide(kind: str, item_id, decision: str, by: str, reason: str = "") -> Dict
 def agents() -> Dict[str, Any]:
     import agent_registry
     with sqlite3.connect(str(DB)) as c:
-        usage = c.execute("SELECT ai, COUNT(*), SUM(success), SUM(tokens_in), SUM(tokens_out), SUM(cost_usd) "
+        # R375 8차 P1: 결과를 모르는 행(outcome_unknown)은 성공 수에 넣지 않고 따로 센다
+        from state_db import OUTCOME_UNKNOWN_SQL as U
+        usage = c.execute(f"SELECT ai, COUNT(*), SUM(CASE WHEN {U} THEN 0 ELSE success END), "
+                          "SUM(tokens_in), SUM(tokens_out), SUM(cost_usd), "
+                          f"SUM(CASE WHEN {U} THEN 1 ELSE 0 END) "
                           "FROM metrics WHERE ai LIKE 'claude-agent:%' GROUP BY ai").fetchall()
     return {"registry": [{k: a[k] for k in ("name", "capabilities", "model")} for a in agent_registry.load_agents()],
-            "usage": {u[0]: {"calls": u[1], "success": u[2], "tokens_in": u[3], "tokens_out": u[4],
+            "usage": {u[0]: {"calls": u[1], "success": u[2], "outcome_unknown": u[6], "tokens_in": u[3], "tokens_out": u[4],
                              "cost_usd": round(u[5] or 0, 4)} for u in usage} or "UNKNOWN"}
 
 

@@ -384,12 +384,23 @@ def record_metric(
     )
 
 
+# 결과를 모르는 지표 행 (정본 · R375 8차 검토 P1) — 성공률·배정 소비처는 이 행을 분모·분자에서 뺀다:
+#   ① error_class='outcome_unknown' (13500384 이후 서브에이전트 훅 · success 열은 NOT NULL 이라 1)
+#   ② 그 이전 서브에이전트 훅 행 (task_id 'subagent-…' · error_class 없음 · success 1 고정이던 611건) — 운영 DB 는 고치지 않고 읽을 때 구분
+OUTCOME_UNKNOWN_SQL = ("(COALESCE(error_class,'') = 'outcome_unknown' OR "
+                       "(COALESCE(task_id,'') LIKE 'subagent-%' AND error_class IS NULL))")
+
+
 def get_metrics_summary(hours: int = 24) -> Dict[str, Any]:
   """Return aggregated metrics for last N hours."""
   since = int(time.time()) - (hours * 3600)
   with tx() as conn:
     rows = conn.execute(
-      "SELECT ai, COUNT(*) as count, SUM(success) as successes, "
+      # R375 8차 검토 P1: error_class=outcome_unknown(결과를 모름 · 서브에이전트 훅) 행은 성공률 분모·분자에서 뺀다
+      #   (success 열은 NOT NULL 이라 1 이 들어 있음 → 그대로 더하면 성공률 100% 거짓 값) · 아는 결과 0건 = None(UNKNOWN)
+      "SELECT ai, COUNT(*) as count, "
+      f"SUM(CASE WHEN {OUTCOME_UNKNOWN_SQL} THEN 0 ELSE 1 END) as known, "
+      f"SUM(CASE WHEN {OUTCOME_UNKNOWN_SQL} THEN 0 ELSE success END) as successes, "
       "SUM(tokens_in) as total_tokens_in, SUM(tokens_out) as total_tokens_out, "
       "SUM(cost_usd) as total_cost, AVG(latency_ms) as avg_latency, "
       "SUM(cache_hit) as cache_hits "
@@ -402,7 +413,8 @@ def get_metrics_summary(hours: int = 24) -> Dict[str, Any]:
     ai = row["ai"]
     summary[ai] = {
       "count": row["count"],
-      "success_rate": (row["successes"] or 0) / (row["count"] or 1),
+      "outcome_known": row["known"] or 0,
+      "success_rate": ((row["successes"] or 0) / row["known"]) if row["known"] else None,
       "tokens_in": row["total_tokens_in"] or 0,
       "tokens_out": row["total_tokens_out"] or 0,
       "total_cost_usd": row["total_cost"] or 0.0,

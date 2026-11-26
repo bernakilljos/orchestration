@@ -416,7 +416,8 @@ def test_poll_does_not_redeliver_reported_partial_until_request_changes(tmp_path
     _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A\n')
     _t.sleep(1.1)
     assert _run(r, "poll").returncode == 0
-    assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0
+    _merge_origin(r)                                    # 실제 흐름: 받은 지시를 병합한 뒤 작업·보고 (R375 8차: 보고 head = 지시 커밋의 후손)
+    assert _run(r, "report", "R1", "--status", "PARTIAL", "--base", "HEAD~1").returncode == 0   # 연결 작업 커밋 0건
     assert ".ai-collab/requests/R1.md" not in _state(r).get("seen", {})       # PARTIAL·연결 커밋 없음 = 확정 X (종전 계약)
     _age_inflight(r)
     quiet = _run(r, "poll")
@@ -425,6 +426,74 @@ def test_poll_does_not_redeliver_reported_partial_until_request_changes(tmp_path
     _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A 보완\n')
     again = _run(r, "poll")
     assert again.returncode == 0 and "지시 A 보완" in again.stdout             # 요청이 바뀌면 다시 전달
+
+
+def _merge_origin(r, work=True):
+    """받은 지시를 병합하고 그 뒤 작업 커밋 1개 (제목에 요청 ID 없음 = 연결 작업 커밋 0건 · 처리 확정 X)."""
+    subprocess.run(["git", "-C", str(r), "fetch", "-q", "origin"], check=True)
+    subprocess.run(["git", "-C", str(r), "merge", "-q", "--ff-only", "origin/main"], check=True)
+    if work:
+        (r / "w.txt").write_text("work", encoding="utf-8")
+        subprocess.run(["git", "-C", str(r), "add", "w.txt"], check=True)
+        subprocess.run(["git", "-C", str(r), "commit", "-q", "-m", "work"], check=True)
+
+
+def test_r375h_state_report_not_linked_to_request_commit_is_redelivered(tmp_path):
+    """R375 8차 검토 P0: state 기록(PARTIAL 보고)이 blob 만 같으면 «답함» 이던 것 — 받은 지시 커밋을 포함하지 않는 head
+    (지시를 병합하지 않은 채 이전 커밋으로 보고 = 그 지시에 대한 작업 증거 없음) 는 임대가 끝나면 다시 전달한다."""
+    import time as _t
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A\n')
+    _t.sleep(1.1)
+    assert _run(r, "poll").returncode == 0
+    assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0   # 병합 없이 보고 (head = 지시 이전 커밋)
+    assert _state(r)["requests"]["R1"].get("answered")                       # blob 은 기록됐어도
+    _age_inflight(r)
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "지시 A" in again.stdout, again.stdout   # 연결 커밋이 없으니 다시 전달
+
+
+def test_r375h_legacy_state_record_needs_commit_link(tmp_path):
+    """R375 8차 검토 P0: answered 가 없는 옛 기록은 보고 시각(reported_at)만으로 답함 → 연결 계약(지시 커밋의 후손)도 요구.
+    연결된 옛 기록은 종전대로 답함 (한꺼번에 재전달 X) · 연결 안 된 옛 기록은 다시 알림."""
+    import time as _t
+    r = _repo(tmp_path)
+    other = _origin(tmp_path, r)
+    _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n지시 A\n')
+    _t.sleep(1.1)
+    assert _run(r, "poll").returncode == 0
+    _merge_origin(r)
+    assert _run(r, "report", "R1", "--status", "PARTIAL", "--base", "HEAD~1").returncode == 0
+    st = _state(r)
+    st["requests"]["R1"].pop("answered", None)                               # R375 7차 이전 형식으로
+    old_head = subprocess.run(["git", "-C", str(r), "rev-parse", "HEAD~2"], capture_output=True, text=True).stdout.strip()
+    stp = r / ".ai-collab" / "state.json"
+    stp.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
+    _age_inflight(r)
+    assert _run(r, "poll").returncode == 3                                   # 연결된 옛 기록 = 답함 유지
+    st = _state(r)
+    st["requests"]["R1"]["head_commit"] = old_head                           # 지시 이전 커밋을 가리키는 옛 기록
+    stp.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
+    _age_inflight(r)
+    again = _run(r, "poll")
+    assert again.returncode == 0 and "지시 A" in again.stdout, again.stdout   # 시각만으로는 답함 X
+
+
+def test_r375h_state_record_unknown_source_commit_is_not_answered():
+    """R375 8차: 지시·리뷰 파일의 마지막 커밋을 모르면(오프라인·기록 없음) state 기록만으로 답함 처리하지 않는다."""
+    mod = _load_module()
+    mod._LAST_CT.clear()
+    mod._LAST_CT["h"] = {}
+    mod._full_commit = lambda h: "a" * 40 if h else ""
+    mod._is_ancestor = lambda a, b: True
+    st = {"requests": {"R9": {"head_commit": "a" * 40, "answered": {".ai-collab/requests/R9.md": "b1"}}}}
+    assert mod._answered_state(st, "R9", ".ai-collab/requests/R9.md", "b1") is False
+    mod._LAST_CT["h"] = {".ai-collab/requests/R9.md": "c" * 40}
+    assert mod._answered_state(st, "R9", ".ai-collab/requests/R9.md", "b1") is True     # 연결 + 같은 판 = 같은 PARTIAL 재전달 X
+    assert mod._answered_state(st, "R9", ".ai-collab/requests/R9.md", "b2") is False    # 판이 바뀌면 다시 전달
+    mod._is_ancestor = lambda a, b: False
+    assert mod._answered_state(st, "R9", ".ai-collab/requests/R9.md", "b1") is False    # 무관한 갈래
 
 
 def _load_module():

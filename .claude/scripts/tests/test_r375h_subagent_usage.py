@@ -103,3 +103,26 @@ def test_log_subagent_passes_transcript_and_outcome_unknown(tmp_path, monkeypatc
     args = seen[0]
     assert args[args.index("--usage-from-transcript") + 1] == str(t)
     assert args[args.index("--error-class") + 1] == "outcome_unknown" and "--usage-unknown" not in args
+
+
+def test_r375i_success_rate_excludes_outcome_unknown(tmp_path):
+    """R375 8차 P1: outcome_unknown 행(success=1 이 들어 있음)은 성공률 분모·분자에서 제외 · 아는 결과 0건 = None(UNKNOWN)."""
+    env = {**os.environ, "ORCHESTRATION_ROOT": str(tmp_path), "PYTHONIOENCODING": "utf-8"}
+    _init_db(tmp_path, env)
+    code = r"""
+import sys, json; sys.path.insert(0, sys.argv[1]); import state_db as s
+for _ in range(3):
+    s.record_metric("claude-agent:x", "m", 1, 1, 0.0, 0, True, task_id="t", error_class="outcome_unknown")
+s.record_metric("claude-agent:x", "m", 1, 1, 0.0, 0, False, task_id="t", error_class="tool_error")
+s.record_metric("claude-agent:y", "m", 1, 1, 0.0, 0, True, task_id="t", error_class="outcome_unknown")
+s.record_metric("claude", "subagent-?", 0, 0, 0.0, 0, True, task_id="subagent-a1")       # 13500384 이전 형식 (error_class 없음)
+s.record_metric("claude", "m", 1, 1, 0.0, 0, True, task_id="task-9")                     # 일반 호출 = 결과 앎
+r = s.get_metrics_summary(hours=1)
+print(json.dumps({k: [v["count"], v["outcome_known"], v["success_rate"]] for k, v in r.items()}))
+"""
+    out = subprocess.run([sys.executable, "-c", code, str(REC.parent)], env=env, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr
+    got = json.loads(out.stdout.strip().splitlines()[-1])
+    assert got["claude-agent:x"] == [4, 1, 0.0]          # 예전: 3/4 = 75% (모르는 3건이 성공으로 셈)
+    assert got["claude-agent:y"] == [1, 0, None]         # 예전: 100%
+    assert got["claude"] == [2, 1, 1.0]                  # 구형 서브에이전트 행은 모름 · 일반 호출 1건만 분모
