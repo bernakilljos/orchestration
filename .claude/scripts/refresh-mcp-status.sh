@@ -6,7 +6,7 @@
 #   · 결과 파일은 임시 파일에 쓰고 옮김 (중간 상태가 읽히지 않게)
 set -e
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OUT="$ROOT/.claude/state/mcp-status.json"
+OUT="${MCP_STATUS_OUT:-$ROOT/.claude/state/mcp-status.json}"   # 시험은 격리 경로 (운영 상태 파일 X)
 LOG="$ROOT/.claude/logs/mcp-health.log"
 mkdir -p "$(dirname "$OUT")" "$(dirname "$LOG")"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] refresh-mcp-status: $*" >> "$LOG" 2>/dev/null || true; }
@@ -34,13 +34,56 @@ if [ "$fail" -gt 0 ] && [ -z "${MCP_REFRESH_NO_RETRY:-}" ]; then
 fi
 ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 tmp="$OUT.tmp.$$"
-cat > "$tmp" <<EOF
+# R375 E (2026-11-26): 개수만 적어 «어느 서버가» 실패했는지·등록됐는데 목록에 없는 서버를 알 수 없었다 →
+#   서버별 상태(servers) + 실제 등록 목록 대조(registered · missing) 를 함께 기록 (connected·failed 키는 그대로 · 소비처 호환)
+#   등록 목록 = ~/.claude.json 전역 mcpServers + 이 저장소 프로젝트 항목 + .mcp.json (코드에 서버 이름 고정 X)
+PY="$(command -v python || command -v python3 || true)"
+if [ -n "$PY" ] && MCP_RAW="$raw" MCP_TS="$ts" MCP_OK="$ok" MCP_FAIL="$fail" MCP_ROOT="$ROOT" \
+     "$PY" -X utf8 - > "$tmp" 2>/dev/null <<'PYEOF'
+import json, os, pathlib, re
+raw, root = os.environ.get("MCP_RAW", ""), os.environ.get("MCP_ROOT", "")
+servers = {}
+for ln in raw.splitlines():
+    m = re.match(r"^([A-Za-z0-9_.@-]+): .* - (.+)$", ln.strip())
+    if m:
+        st = m.group(2)
+        servers[m.group(1)] = ("connected" if "Connected" in st else "failed" if "Failed" in st
+                               else "needs_auth" if "auth" in st.lower() else "unknown:" + st[:40])
+reg = {}
+try:
+    cj = json.loads((pathlib.Path(os.environ.get("MCP_HOME") or pathlib.Path.home()) / ".claude.json").read_text(encoding="utf-8"))
+    for n in cj.get("mcpServers") or {}:
+        reg[n] = "user"
+    want = os.path.normcase(os.path.abspath(root)).replace("\\", "/")
+    for k, v in (cj.get("projects") or {}).items():
+        if os.path.normcase(os.path.abspath(k)).replace("\\", "/") == want:
+            for n in (v or {}).get("mcpServers") or {}:
+                reg[n] = "local"
+except (OSError, ValueError):
+    pass
+try:
+    for n in json.loads((pathlib.Path(root) / ".mcp.json").read_text(encoding="utf-8")).get("mcpServers") or {}:
+        reg.setdefault(n, "project")
+except (OSError, ValueError):
+    pass
+out = {"connected": int(os.environ.get("MCP_OK") or 0), "failed": int(os.environ.get("MCP_FAIL") or 0),
+       "timestamp": os.environ.get("MCP_TS", ""), "servers": dict(sorted(servers.items())),
+       "registered": dict(sorted(reg.items())),
+       "missing": sorted(n for n in reg if n not in servers),        # 등록됐는데 목록에 안 나옴 (설정 손상·신뢰 전 등)
+       "unregistered": sorted(n for n in servers if n not in reg)}   # 목록엔 있는데 등록 위치 미확인 (플러그인 등)
+print(json.dumps(out, ensure_ascii=False, indent=2))
+PYEOF
+then
+  :
+else
+  cat > "$tmp" <<EOF
 {
   "connected": $ok,
   "failed": $fail,
   "timestamp": "$ts"
 }
 EOF
+fi
 mv -f "$tmp" "$OUT"
 log "connected=$ok failed=$fail"
 echo "[mcp-status] connected=$ok failed=$fail"

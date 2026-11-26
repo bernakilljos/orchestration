@@ -584,3 +584,40 @@ def test_r361_cost_daily_ledger_keeps_days_after_jsonl_cleanup(tmp_path, monkeyp
     a.unlink()
     d3 = sl.cost_daily_ledger(str(tmp_path), "claude-opus-5-5")
     assert d3 == d1                                                                # 장부 값은 줄지 않음
+
+
+def test_r375e_mcp_status_per_server_and_registered_diff(tmp_path):
+    """R375 E: 서버 1개가 고장 나면 그 서버만 failed 로 격리 기록 · 나머지는 connected · 등록 목록(~/.claude.json 전역·프로젝트·
+    .mcp.json)과 대조해 «등록됐는데 목록에 없음» 을 따로 남김 · 기존 connected·failed 키 유지 (서버 이름 코드 고정 X)."""
+    import os as _o
+    import subprocess as _sp
+    import sys as _s
+    root = tmp_path / "kit"
+    (root / ".claude" / "scripts").mkdir(parents=True)
+    src = (KIT / ".claude/scripts/refresh-mcp-status.sh").read_text(encoding="utf-8")
+    (root / ".claude/scripts/refresh-mcp-status.sh").write_text(src, encoding="utf-8", newline="\n")
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".claude.json").write_text(json.dumps({
+        "mcpServers": {"alpha": {}, "beta": {}, "gamma": {}},
+        "projects": {str(root): {"mcpServers": {"local1": {}}}, str(tmp_path / "other"): {"mcpServers": {"nope": {}}}},
+    }), encoding="utf-8")
+    (root / ".mcp.json").write_text(json.dumps({"mcpServers": {"proj1": {}}}), encoding="utf-8")
+    listing = "\n".join(["alpha: node a - ✔ Connected", "beta: node b - ✗ Failed to connect",
+                         "local1: node l - ✔ Connected", "proj1: node p - ✔ Connected", "plugin-x: node q - ✔ Connected"])
+    _s.path.insert(0, str(KIT / ".claude" / "hooks" / "prompt"))
+    from _common import bash_exe
+    out = tmp_path / "status.json"
+    env = {**_o.environ, "MCP_LIST_OUTPUT": listing, "MCP_REFRESH_NO_RETRY": "1", "MCP_HOME": str(home),
+           "MCP_STATUS_OUT": str(out)}
+    r = _sp.run([bash_exe(), str(root / ".claude/scripts/refresh-mcp-status.sh")], env=env, capture_output=True,
+                text=True, encoding="utf-8", errors="replace", timeout=60)
+    assert r.returncode == 0, r.stderr
+    st = json.loads(out.read_text(encoding="utf-8"))
+    assert (st["connected"], st["failed"]) == (4, 1)                  # 기존 키 호환
+    assert st["servers"]["beta"] == "failed"                            # 고장 1개만 격리
+    assert all(st["servers"][n] == "connected" for n in ("alpha", "local1", "proj1", "plugin-x"))
+    assert st["registered"] == {"alpha": "user", "beta": "user", "gamma": "user", "local1": "local", "proj1": "project"}
+    assert st["missing"] == ["gamma"]                                   # 등록됐는데 목록에 없음
+    assert st["unregistered"] == ["plugin-x"]                           # 다른 프로젝트 등록(nope)은 섞이지 않음
+    assert not (root / ".claude/state/mcp-status.json").exists()        # 격리 경로에만 씀
