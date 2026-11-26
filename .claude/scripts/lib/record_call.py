@@ -55,6 +55,33 @@ def estimate_cost(model: str, tokens_in: int, tokens_out: int,
     return regular_cost + cache_cost
 
 
+def usage_from_transcript(path: str):
+    """서브에이전트 대화 기록(jsonl)의 assistant 메시지 usage 합 — (입력, 출력, 캐시 읽기, 캐시 쓰기, 모델) · 못 읽으면 None.
+    R375 사용자 지시 4 (2026-11-27): SubagentStop 은 사용량을 주지 않아 서브에이전트 631건이 전부 토큰 0(UNKNOWN) 이었다 →
+    공식 훅 입력 agent_transcript_path 의 기록에서 실측. 같은 메시지 id 가 여러 줄(스트리밍)로 나오면 마지막 값 1번만 센다."""
+    import json
+    seen = {}
+    model = ""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for ln in f:
+                try:
+                    o = json.loads(ln)
+                except ValueError:
+                    continue
+                msg = o.get("message") if isinstance(o, dict) else None
+                if not isinstance(msg, dict) or not isinstance(msg.get("usage"), dict):
+                    continue
+                seen[msg.get("id") or o.get("uuid") or len(seen)] = msg["usage"]
+                model = msg.get("model") or model
+    except OSError:
+        return None
+    if not seen:
+        return None
+    g = lambda k: sum(int((u or {}).get(k) or 0) for u in seen.values())
+    return (g("input_tokens"), g("output_tokens"), g("cache_read_input_tokens"), g("cache_creation_input_tokens"), model)
+
+
 def record_api_call(
     ai: str,
     model: str,
@@ -69,6 +96,7 @@ def record_api_call(
     retry: int = 0,
     cost_usd: float | None = None,
     usage_known: bool = True,
+    cost_known: bool = True,
 ) -> float | None:
     """
     Record API call to metrics table and update budget.
@@ -80,6 +108,13 @@ def record_api_call(
     Returns: cost_usd of this call (None = UNKNOWN)
     """
     check_daily_rollover()
+
+    if usage_known and not cost_known:
+        # 토큰은 실측 · 비용은 모름(구독 요금제는 청구액 아님) → 비용 NULL · 추정 X · budget 반영 X (차단기 오작동 방지)
+        record_metric(ai=ai, model_id=model, tokens_in=tokens_in, tokens_out=tokens_out, cost_usd=None,
+                      latency_ms=latency_ms, success=success, task_id=task_id, cache_hit=bool(cache_hit_tokens > 0),
+                      error_class=error_class if error_class and error_class != "none" else None)
+        return None
 
     if not usage_known:
         record_metric(ai=ai, model_id=model, tokens_in=0, tokens_out=0, cost_usd=None,
@@ -142,8 +177,21 @@ def main():
     ap.add_argument("--error-class", default=None)
     ap.add_argument("--retry", type=int, default=0)
     ap.add_argument("--cost-usd", type=float, default=None)
+    ap.add_argument("--usage-from-transcript", default=None,
+                    help="서브에이전트 대화 기록 경로 — 토큰 실측 (못 읽으면 --usage-unknown 과 같음) · 비용은 UNKNOWN")
 
     args = ap.parse_args()
+    cost_known = True
+    if args.usage_from_transcript:
+        u = usage_from_transcript(args.usage_from_transcript)
+        if u:
+            args.tokens_in = u[0] + u[2] + u[3]          # 입력 = 새 입력 + 캐시 읽기 + 캐시 쓰기 (모델이 실제로 읽은 양)
+            args.tokens_out = u[1]
+            args.cache_hit_tokens, args.cache_write_tokens = u[2], u[3]
+            args.usage_unknown = False
+            cost_known = False
+        else:
+            args.usage_unknown = True
 
     cost = record_api_call(
         ai=args.ai,
@@ -159,6 +207,7 @@ def main():
         retry=args.retry,
         cost_usd=args.cost_usd,
         usage_known=not args.usage_unknown,
+        cost_known=cost_known,
     )
     cost_txt = "UNKNOWN" if cost is None else f"${cost:.6f}"
     print(f"Recorded: {args.ai}/{args.model} in={args.tokens_in} out={args.tokens_out} cost={cost_txt}")

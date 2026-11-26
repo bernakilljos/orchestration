@@ -38,9 +38,14 @@ def run(ctx):
         kw = {"creationflags": 0x08000000} if os.name == "nt" else {}
         try:  # 기다리지 않는다 (훅 지연 방지) — 원본도 실패를 무시했다
             # SubagentStop 은 사용량을 주지 않는다 → 0 이 아니라 UNKNOWN (2026-11-02)
+            # R375 지시 4 (2026-11-27): 공식 입력 agent_transcript_path 가 있으면 그 기록에서 토큰 실측 (자식 프로세스가 읽음 · 훅 지연 X)
+            #   성공 여부는 훅이 주지 않는다 → success 열은 NOT NULL 이라 1 을 두되 error_class=outcome_unknown 으로 «모름» 표시
+            #   (종전: --success 1 고정 = 631건 성공률 100% 로 보이던 거짓 값 · 성공률 집계는 outcome_unknown 제외)
+            tp = str(hook.get("agent_transcript_path") or "")
+            usage = ["--usage-from-transcript", tp] if tp and os.path.isfile(tp) else ["--usage-unknown"]
             subprocess.Popen(["python", rec, "--ai", "claude", "--model", f"subagent-{atype}",
-                              "--usage-unknown", "--latency-ms", str(dur_ms),
-                              "--success", "1", "--task-id", f"subagent-{aid}"],
+                              *usage, "--latency-ms", str(dur_ms),
+                              "--success", "1", "--error-class", "outcome_unknown", "--task-id", f"subagent-{aid}"],
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kw)
         except Exception:
             pass
