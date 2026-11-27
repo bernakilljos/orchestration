@@ -702,6 +702,22 @@ def _review_answered(rid: str, path: str, blob: str) -> bool:
     return _answered(rid, path, seen_commit if _SHA40.fullmatch(seen_commit) else "")
 
 
+_LOCAL_BLOBS: dict = {}
+
+
+def _local_blob(path: str) -> str:
+    """로컬 HEAD 에 커밋된 그 협업 파일의 blob ("" = 없음·확인 불가). HEAD 가 바뀌면 다시 읽는다 (한 번에 ls-tree 1회)."""
+    head = _git("rev-parse", "HEAD")
+    if _LOCAL_BLOBS.get("_head") != head:
+        _LOCAL_BLOBS.clear()
+        _LOCAL_BLOBS["_head"] = head
+        for ln in _git("ls-tree", "-r", "HEAD", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
+            parts = ln.split(None, 3)
+            if len(parts) == 4:
+                _LOCAL_BLOBS[parts[3].replace("\\", "/")] = parts[2]
+    return _LOCAL_BLOBS.get(path, "")
+
+
 def _classify(st: dict, path: str, blob: str) -> str:
     """pending(세션 시작·프롬프트)과 poll(대기)이 같은 기준으로 판정 (R375 6차 검토: 둘이 따로 판정해 어긋나던 것 공통화).
     seen = 이 판 처리 확정 · legacy = R332 이전 처리 지시 · reported = 이 판 뒤 보고됨 · approved = 승인 리뷰 · pending = 할 일."""
@@ -711,6 +727,14 @@ def _classify(st: dict, path: str, blob: str) -> str:
     if not m:
         return "seen"
     kind, rid = m.groups()
+    # 2026-11-27 (lottoclaude ebf4eb602 과 같은 수정): 원격 원문이 로컬 HEAD 사본과 다르면 이 저장소는 그 판을 아직 받지 않았다
+    #   → 보고 기록과 무관하게 할 일. report 명령이 보고 때 그 순간의 원격 blob 을 answered 로 적어, 사용자 추가 지시와
+    #   리뷰가 아무도 읽지 않은 채 7시간 «보고됨» 으로 숨었다. 원문을 받아(git checkout origin/<브랜치> -- 파일) 커밋하면 풀린다.
+    #   승인 리뷰(approved)는 할 일이 아니므로 예외 · 로컬 HEAD 를 못 읽으면("") 기존 판정 그대로.
+    if _verdict_of(blob) != "approved" or kind == "requests":
+        local = _local_blob(path)
+        if local and local != blob:
+            return "pending"
     if kind == "requests":
         if rid in (st.get("handled") or {}) and path not in (st.get("seen") or {}):
             return "legacy"
