@@ -153,6 +153,9 @@ class _FakeRepo:
         monkeypatch.setattr(m, "_git_ok", lambda *a: self.anc(a[-2], a[-1]) if a[:2] == ("merge-base", "--is-ancestor") else True,
                             raising=False)
         monkeypatch.setattr(m, "_remote_files", lambda: dict(remote))
+        # ACK-05: 이 가짜 저장소는 원격 판을 로컬 HEAD 에 받은 상태 (받지 않은 판 = pending 은 실제 git 시험이 검사)
+        if hasattr(m, "_local_blob"):
+            monkeypatch.setattr(m, "_local_blob", lambda path: dict(remote).get(path, ""))
         st = state or {"seen": {}, "handled": {}, "inflight": {}, "requests": {}}
         monkeypatch.setattr(m, "_state", lambda: st)
         monkeypatch.setattr(m.subprocess, "run", lambda *a, **k: type("R", (), {"returncode": fetch_rc, "stderr": ""})())

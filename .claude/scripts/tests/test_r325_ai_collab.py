@@ -315,6 +315,7 @@ def test_poll_keeps_legacy_handled_requests_done(tmp_path):
     r = _repo(tmp_path)
     other = _origin(tmp_path, r)
     _push_file(other, ".ai-collab/requests/R1.md", '---\nrequest_id: "R1"\n---\n옛 지시\n')
+    _merge_origin(r)                                                         # ACK-05: 처리한 지시는 로컬에 받은 판이어야 완료
     (r / ".ai-collab").mkdir(exist_ok=True)
     (r / ".ai-collab" / "state.json").write_text(json.dumps({"requests": {}, "handled": {"R1": "abc"}}), encoding="utf-8")
     assert _run(r, "poll").returncode == 3
@@ -448,7 +449,7 @@ def test_r375h_state_report_not_linked_to_request_commit_is_redelivered(tmp_path
     _t.sleep(1.1)
     assert _run(r, "poll").returncode == 0
     assert _run(r, "report", "R1", "--status", "PARTIAL").returncode == 0   # 병합 없이 보고 (head = 지시 이전 커밋)
-    assert _state(r)["requests"]["R1"].get("answered")                       # blob 은 기록됐어도
+    assert not _state(r)["requests"]["R1"].get("answered")                   # ACK-05: 받지 않은 판은 answered 로 안 적음
     _age_inflight(r)
     again = _run(r, "poll")
     assert again.returncode == 0 and "지시 A" in again.stdout, again.stdout   # 연결 커밋이 없으니 다시 전달

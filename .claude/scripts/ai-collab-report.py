@@ -362,8 +362,10 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
         return 3
     out.write_text(final, encoding="utf-8")
     # R375 7차: 이 보고가 답한 판(전달받아 처리 중이던 지시·리뷰 blob) — 같은 판 재전달 금지의 근거 (시각 단독 판정 대체)
+    #   R594 ACK-05: 받은 판(로컬 HEAD 사본 = 전달 blob)만 — poll 뒤 원격이 B→C 로 바뀌었거나 아직 안 받은 판은 답한 판으로 적지 않는다
     answered = {p: (v or {}).get("blob") for p, v in (st.get("inflight") or {}).items()
-                if (v or {}).get("blob") and p in (f".ai-collab/requests/{rid}.md", f".ai-collab/reviews/{rid}.md")}
+                if (v or {}).get("blob") and p in (f".ai-collab/requests/{rid}.md", f".ai-collab/reviews/{rid}.md")
+                and _received(p, (v or {}).get("blob"))}
     st["requests"][rid] = {"head_commit": head, "base_commit": base, "range_tip": tip, "status": status,
                            "report": f"reports/{rid}.md", "reported_at": now, "reviewed": False, "items_sig": sig,
                            **({"answered": answered} if answered else {}),
@@ -373,7 +375,7 @@ def cmd_report(rid: str, base: str = "", status: str = "", head_override: str = 
         st.setdefault("handled", {})[rid] = head
         rpath = f".ai-collab/requests/{rid}.md"   # R332: 처리 확정은 poll 이 아니라 여기 (연결 커밋이 있는 보고 뒤)
         rblob = (st.get("inflight", {}).get(rpath) or {}).get("blob")   # R333: 전달받은(inflight) 판만 · 못 받은 판을 확정하지 않음
-        if rblob:
+        if rblob and _received(rpath, rblob):    # R594 ACK-05: 받지 않은 판은 처리 확정 X
             _ack(st, rpath, rblob)
     _save_state(st)
     cmd_queue(quiet=True)    # R354: 보고 직후 남은 일 큐 갱신
@@ -705,36 +707,44 @@ def _review_answered(rid: str, path: str, blob: str) -> bool:
 _LOCAL_BLOBS: dict = {}
 
 
-def _local_blob(path: str) -> str:
-    """로컬 HEAD 에 커밋된 그 협업 파일의 blob ("" = 없음·확인 불가). HEAD 가 바뀌면 다시 읽는다 (한 번에 ls-tree 1회)."""
+def _local_blob(path: str):
+    """로컬 HEAD 에 커밋된 그 협업 파일의 blob — "" = HEAD 에 없음 · None = 확인 불가(git 실패).
+    R594 16:12 리뷰 ACK-05: 예전엔 둘 다 "" 라 «확인 불가» 가 옛 판정(reported·legacy)으로 통과했고, 실패한 조회도
+    같은 HEAD 로 캐시돼 재시도가 안 됐다 → 성공한 조회만 캐시 (실패는 다음 호출이 다시 읽는다)."""
     head = _git("rev-parse", "HEAD")
+    if not _SHA40.fullmatch(head or ""):
+        return None
     if _LOCAL_BLOBS.get("_head") != head:
+        listing = _git("ls-tree", "-r", "HEAD", "--", ".ai-collab")
+        if not listing:
+            return None          # .ai-collab 이 HEAD 에 아예 없거나 조회 실패 — 구분 못 하면 확인 불가 (캐시 X)
         _LOCAL_BLOBS.clear()
         _LOCAL_BLOBS["_head"] = head
-        for ln in _git("ls-tree", "-r", "HEAD", "--", ".ai-collab/requests", ".ai-collab/reviews").splitlines():
+        for ln in listing.splitlines():
             parts = ln.split(None, 3)
             if len(parts) == 4:
                 _LOCAL_BLOBS[parts[3].replace("\\", "/")] = parts[2]
     return _LOCAL_BLOBS.get(path, "")
 
 
+def _received(path: str, blob: str) -> bool:
+    """이 저장소가 그 판(blob)을 실제로 받았나 = 로컬 HEAD 사본 blob 과 같음. 없음·확인 불가·다른 판 = False."""
+    return bool(blob) and _local_blob(path) == blob
+
+
 def _classify(st: dict, path: str, blob: str) -> str:
     """pending(세션 시작·프롬프트)과 poll(대기)이 같은 기준으로 판정 (R375 6차 검토: 둘이 따로 판정해 어긋나던 것 공통화).
     seen = 이 판 처리 확정 · legacy = R332 이전 처리 지시 · reported = 이 판 뒤 보고됨 · approved = 승인 리뷰 · pending = 할 일."""
-    if (st.get("seen") or {}).get(path) == blob:
-        return "seen"
     m = _ACK_PATH.fullmatch(path)
     if not m:
         return "seen"
     kind, rid = m.groups()
-    # 2026-11-27 (lottoclaude ebf4eb602 과 같은 수정): 원격 원문이 로컬 HEAD 사본과 다르면 이 저장소는 그 판을 아직 받지 않았다
-    #   → 보고 기록과 무관하게 할 일. report 명령이 보고 때 그 순간의 원격 blob 을 answered 로 적어, 사용자 추가 지시와
-    #   리뷰가 아무도 읽지 않은 채 7시간 «보고됨» 으로 숨었다. 원문을 받아(git checkout origin/<브랜치> -- 파일) 커밋하면 풀린다.
-    #   승인 리뷰(approved)는 할 일이 아니므로 예외 · 로컬 HEAD 를 못 읽으면("") 기존 판정 그대로.
-    if _verdict_of(blob) != "approved" or kind == "requests":
-        local = _local_blob(path)
-        if local and local != blob:
-            return "pending"
+    # R594 16:12 리뷰 ACK-05: 받은 판 확인을 seen·legacy·보고 판정보다 먼저 — 로컬 HEAD 에 없음·확인 불가·다른 판이면
+    #   seen=A·answered=True 여도 pending (다운로드·보고 기록만으로 처리 완료 X). 승인 리뷰는 할 일이 아니라 기존 계약 유지.
+    if not (kind == "reviews" and _verdict_of(blob) == "approved") and not _received(path, blob):
+        return "pending"
+    if (st.get("seen") or {}).get(path) == blob:
+        return "seen"
     if kind == "requests":
         if rid in (st.get("handled") or {}) and path not in (st.get("seen") or {}):
             return "legacy"
