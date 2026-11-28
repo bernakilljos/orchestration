@@ -242,17 +242,6 @@
             "timeout": 60
           }
         ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-after-edit-logger.py\" '' 2>/dev/null || true",
-            "timeout": 10,
-            "async": true
-          }
-        ]
       }
     ],
     "PostToolUse": [
@@ -273,13 +262,6 @@
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/plugins/review_qa/hooks/post-impl-verify.sh\"",
             "timeout": 30,
-            "continueOnBlock": true,
-            "async": true
-          },
-          {
-            "type": "command",
-            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/scripts/verify-teaching-doc-sections.py\"",
-            "timeout": 10,
             "continueOnBlock": true,
             "async": true
           }

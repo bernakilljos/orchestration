@@ -69,6 +69,8 @@ PRE = [
     # R351 F1 (2026-11-20): pre-commit-infra-check 등록 제거 — 판정 경로가 full-check 와 같고 막는 경우가 그 부분 집합
     #   (문서 3종 모두 없음 ⊂ guide.txt 없음) 이라 매 커밋마다 같은 검사를 한 번 더 돌릴 뿐이었다 · 파일은 보존 (test_r351_commit_hooks_dedup)
     ("track-agent-dispatch", "track_agent_dispatch", "Agent", 5, "pending"),
+    # R375 (2026-11-28): 종전 settings 비동기 훅 verify-after-edit-logger.py (Edit 마다 python 1개 · 빈 경로 기록) → in-process
+    ("verify-after-edit-logger", "verify_after_edit_logger", "Edit|Write", 10, None),
 ]
 POST = [
     ("check-korean-only", "check_korean_only", "Edit|Write", 60, None),
@@ -92,6 +94,8 @@ POST = [
     ("post-edit-ping-pong", "post_edit_ping_pong", "Edit|Write|MultiEdit", 10, None),
     # R357: 종전 settings 비동기 훅 auto-smoke-test.sh · index-rule-on-edit.sh — 판정은 여기서 · 대상일 때만 분리 실행
     ("post-edit-bg", "post_edit_bg", "Edit|Write", 5, None),
+    # R375 (2026-11-28): 종전 settings 비동기 훅 verify-teaching-doc-sections.py (Edit 마다 python 1개 · 인자 없어 미검사) → in-process
+    ("verify-teaching-doc-sections", "post_edit_checks", "Edit|Write", 10, None),
 ]
 # SubagentStart / SubagentStop (2026-10-16) — 백그라운드 서브에이전트의 실제 시작·종료는 여기로만 온다
 #   (PostToolUse Agent 는 백그라운드면 «실행 직후» 에 와서 종료 신호로 쓸 수 없다)

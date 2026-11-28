@@ -56,6 +56,14 @@
       "hooks": [
         "bash -c \"python \\\"$CLAUDE_PROJECT_DIR/"
       ]
+    },
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-11-28",
+      "_why": "R375 Hook 경량화 — Edit 마다 별도 python 프로세스 → tool-dispatch in-process (verify_after_edit_logger · post_edit_checks) · 종전 판은 인자 없이 실행돼 빈 경로 기록·문서 미검사",
+      "hooks": [
+        "verify-after-edit-logger.py"
+      ]
     }
   ],
   "PostToolUse": [
@@ -87,6 +95,14 @@
         "post-edit-ping-pong.sh",
         "auto-smoke-test.sh",
         "index-rule-on-edit.sh"
+      ]
+    },
+    {
+      "replaced_by": "tool-dispatch.py",
+      "since": "2026-11-28",
+      "_why": "R375 Hook 경량화 — Edit 마다 별도 python 프로세스 → tool-dispatch in-process (verify_after_edit_logger · post_edit_checks) · 종전 판은 인자 없이 실행돼 빈 경로 기록·문서 미검사",
+      "hooks": [
+        "verify-teaching-doc-sections.py"
       ]
     }
   ],

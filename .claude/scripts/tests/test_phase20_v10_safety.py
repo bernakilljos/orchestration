@@ -2109,7 +2109,7 @@ def _m2t_mod():
 
 
 _TD = 'python -X utf8 "$CLAUDE_PROJECT_DIR/.claude/hooks/tool-dispatch.py" pre'
-_LOG = 'bash -c "python .claude/scripts/verify-after-edit-logger.py $1"'
+_LOG = 'bash -c "python .claude/scripts/target-own-logger.py $1"'   # R375: 폐기 목록에 없는 대상 고유 훅 예시 (logger 는 R375 에서 dispatcher 로 이전)
 
 
 def _hooks(cfg, ev="PreToolUse"):
@@ -2397,7 +2397,7 @@ def test_r357_merge_settings_retires_folded_edit_hooks():
     for gone in ("post-edit-ping-pong.sh", "auto-smoke-test.sh", "index-rule-on-edit.sh"):
         assert not any(gone in c for c in cmds), gone
     logs = [c for c in cmds if "verify-after-edit-logger" in c]
-    assert len(logs) == 1 and "bash -c" not in logs[0]                             # 새 형식 1개만
+    assert logs == []                                                              # R375: logger 는 tool-dispatch 안으로 → 대상에서도 옛·새 형식 모두 제거
     assert any("target-only.sh" in c for c in cmds)                                # 대상 고유 훅은 유지
     assert "settings.hooks 대체로 제거 4" in rep
 

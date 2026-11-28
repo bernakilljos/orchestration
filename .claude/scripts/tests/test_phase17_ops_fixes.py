@@ -606,3 +606,42 @@ def test_r363_child_creationflags_inherits_console_when_present():
     with_console = subprocess.run([sys.executable, "-c", code, pdir], capture_output=True, text=True,
                                   creationflags=0x08000000).stdout.strip()                 # 숨은 새 콘솔
     assert no_console == str(0x08000000) and with_console == "0"
+
+
+def test_r375_edit_logger_and_teaching_folded_into_dispatcher(tmp_path, monkeypatch):
+    """R375 Hook 경량화: Edit 마다 따로 뜨던 python 2개(verify-after-edit-logger · verify-teaching-doc-sections) → tool-dispatch in-process ·
+    종전 판은 인자 없이 실행돼 빈 경로만 기록하고 문서를 검사하지 않았다 → 실제 file_path 로 동작 · 정규식의 빈 대안/문자 묶음 결함 수정."""
+    for f in (ROOT / ".claude" / "settings.json", ROOT / "setup" / "templates" / "settings.template.json"):
+        s = json.loads(f.read_text(encoding="utf-8"))
+        cmds = [h["command"] for ev in s["hooks"].values() for g in ev for h in g["hooks"]]
+        assert not any("verify-after-edit-logger" in c or "verify-teaching-doc-sections" in c for c in cmds), f
+        assert any("post-impl-verify.sh" in c for c in cmds)                    # async 무거운 검사는 그대로
+    src = (ROOT / ".claude" / "hooks" / "tool-dispatch.py").read_text(encoding="utf-8")
+    assert '"verify_after_edit_logger", "Edit|Write"' in src and '"post_edit_checks", "Edit|Write"' in src
+    ret = json.loads((ROOT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
+    flat = [h for ev in ("PreToolUse", "PostToolUse") for spec in ret[ev] for h in spec.get("hooks", [])]
+    assert "verify-after-edit-logger.py" in flat and "verify-teaching-doc-sections.py" in flat   # 대상 전파 때도 제거
+
+    m, Ctx = _tool_mod("post_edit_checks", monkeypatch, tmp_path)
+    g = tmp_path / "docs" / "guide.md"
+    g.parent.mkdir()
+    g.write_text("# 제목\n본문\n", encoding="utf-8")
+    r = m.run(Ctx(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": str(g)}})))
+    assert r.rc == 1 and "8섹션 누락 (8/8)" in r.err                          # 예전: 빈 대안 때문에 3/8 · 훅은 아예 미검사
+    g.write_text("핵심 한 줄\n| a | b |\n흐름\n강점\n약점\n강추\n우리 시스템\n점검\n", encoding="utf-8")
+    assert m.run(Ctx(json.dumps({"tool_input": {"file_path": str(g)}}))) is None
+    other = tmp_path / "src" / "a.md"
+    other.parent.mkdir()
+    other.write_text("x", encoding="utf-8")
+    assert m.run(Ctx(json.dumps({"tool_input": {"file_path": str(other)}}))) is None   # 교재 경로 아님 = 건너뜀
+
+    lg, Ctx2 = _tool_mod("verify_after_edit_logger", monkeypatch, tmp_path)
+    seen = []
+
+    class Fake:
+        @staticmethod
+        def on_edit_tool(fp):
+            seen.append(fp)
+    monkeypatch.setattr(lg, "load_script", lambda name: Fake)
+    assert lg.run(Ctx2(json.dumps({"tool_input": {"file_path": "C:/x/a.py"}}))) is None and seen == ["C:/x/a.py"]
+    assert lg.run(Ctx2(json.dumps({"tool_input": {}}))) is None and seen == ["C:/x/a.py"]   # 경로 없으면 기록 안 함
