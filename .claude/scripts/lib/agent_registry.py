@@ -112,7 +112,8 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
     sys.path.insert(0, str(LIB))
     if max_parallel is None:        # 자원 정책 단일 계층 (sandbox-policy.json)
         import repair_sandbox as _sbp
-        max_parallel = int(_sbp._policy().get("agent_max_parallel", 3))
+        # R375: 정책 상한을 메모리 단계로 동적 축소 (constrained = 순차 · blocked 여도 1 — 각 dispatch 의 memory_gate 가 시작을 보류)
+        max_parallel = max(1, int(_sbp.admission_now()["max_parallel"]))
     if dispatch is None:
         import real_repair_chain as _rc
         dispatch = _rc.dispatch_agent

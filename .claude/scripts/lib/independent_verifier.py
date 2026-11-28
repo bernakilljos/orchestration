@@ -586,8 +586,10 @@ def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import repair_sandbox as _sb
         probe = _sb.commit_memory
+        th = _sb.admission_thresholds()          # R375: 80/75/90 고정값 → 공통 admission 임계값 정본
     except Exception:  # noqa: BLE001
         return None
+    enter, resume, block = th["constrained_pct"], th["resume_pct"], th["block_pct"]
     try:
         wait_max = float(os.environ.get("ORCA_GATE_MEM_WAIT_SEC", "300"))
     except ValueError:                      # 잘못된 값으로 게이트가 죽지 않게 (리뷰 SHOULD 10)
@@ -601,20 +603,20 @@ def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
         pct, waited = cm["percent"], _t.time() - t0
         res["memory_wait"] = {"waited_sec": round(waited), "percent": pct, "free_gb": cm.get("free_gb"),
                               "phys_free_gb": cm.get("phys_free_gb")}
-        if pct < (75 if waited > 0 else 80):        # 대기에 들어가면 75% 이하에서 재개
+        if pct < (resume if waited > 0 else enter):   # 대기에 들어가면 재개선(기본 75%) 아래에서 재개
             return None
         # R339: % 만으로 기다리면 commit 이 85~87% 에 머무는 PC 에선 300초 뒤 결국 그대로 진행해 대기가 순수 낭비였다
         #   (2026-11-20 실측 3회: 86.7·85.6% · commit 여유 3.5GB · 물리 여유 5.7GB · pytest 최대 0.5GB).
         #   90% 미만이고 commit 여유·물리 여유가 둘 다 넉넉하면 바로 진행 · 하나라도 부족하면 종전대로 대기 · 90%+ 는 종전대로 보류.
         need_commit, need_phys = _gate_mem_need(res.get("memory_history"))
         # 기본 꺼짐: STD-MEMORY-001(사용자 확정 2026-11-09 '80%부터 무거운 작업 대기') 을 바꾸는 판정이라 사용자 결정 전까지 opt-in
-        if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < 90 and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
+        if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < block and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
             res["memory_wait"]["reason"] = "여유 충분 (commit %.2fGB ≥ %.1f · 물리 %.2fGB ≥ %.1f)" % (
                 cm["free_gb"], need_commit, cm["phys_free_gb"], need_phys)
             return None
         if waited >= wait_max:
-            if pct >= 90:
-                return "메모리 %s%% — %d초 대기 후에도 90%% 이상 · 전체 회귀 보류 (메모리 회복 후 다시 실행)" % (pct, wait_max)
+            if pct >= block:
+                return "메모리 %s%% — %d초 대기 후에도 %s%% 이상 · 전체 회귀 보류 (메모리 회복 후 다시 실행)" % (pct, wait_max, block)
             return None                              # 80~90%: 병렬 없이 순차 실행 (pytest 단일 프로세스)
         _t.sleep(min(15.0, max(0.2, wait_max / 20)))
 

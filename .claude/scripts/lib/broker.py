@@ -409,6 +409,18 @@ def _memory_pct():
         return None
 
 
+def _memory_level(pct) -> str:
+    """commit % → 공통 admission 단계 (repair_sandbox.admission_now · 히스테리시스 포함). 측정 불가·판정 실패 = unknown(막지 않음)."""
+    if pct is None:
+        return "unknown"
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import repair_sandbox
+        return repair_sandbox.admission_now({"measured": True, "percent": pct})["level"]
+    except Exception:  # noqa: BLE001
+        return "unknown"
+
+
 def process(broker_root) -> list:
     """요청 함을 한 번 처리하고, Broker 채널로 승인된 요청을 실행한다. 반환 = 처리 기록."""
     broker_root = Path(broker_root)
@@ -428,9 +440,10 @@ def process(broker_root) -> list:
         except Exception as e:  # noqa: BLE001
             log.append({"result": "error", "reason": "recover:" + type(e).__name__})
         pct = _memory_pct()
-        cap = MAX_PER_RUN if pct is None or pct < 80 else (5 if pct < 90 else 0)
+        lvl = _memory_level(pct)       # R375: 공통 admission (임계값·히스테리시스 정본 = repair_sandbox)
+        cap = {"blocked": 0, "constrained": 5}.get(lvl, MAX_PER_RUN)
         if cap == 0:
-            log.append({"result": "deferred", "reason": f"메모리 {pct}% ≥ 90% — 새 요청 접수 보류 (요청 함에 그대로)"})
+            log.append({"result": "deferred", "reason": f"메모리 {pct}% — 공통 admission blocked · 새 요청 접수 보류 (요청 함에 그대로)"})
         for src in sorted(Path(cfg["inbox"]).glob("*.json"))[:cap]:
             try:
                 _intake(broker_root, cfg, gate, git, src, log)
@@ -545,7 +558,7 @@ def gc(broker_root, gate=None, git=None, pct=None, force=False) -> dict:
         return {"ran": False, "reason": "interval"}
     if pct is None:
         pct = _memory_pct()
-    if pct is not None and pct >= 80:
+    if _memory_level(pct) in ("constrained", "blocked"):     # 선택 작업(git gc) = 압박이면 미룸
         return {"ran": False, "reason": f"memory {pct}%"}
     gate = gate or _gate(broker_root)
     git = git or _Git(broker_root)
