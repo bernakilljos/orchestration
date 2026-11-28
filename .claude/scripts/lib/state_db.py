@@ -277,7 +277,9 @@ def _ckpt_read(path: Path):
   if (isinstance(o, dict) and isinstance(o.get("gen"), str) and o["gen"].isalnum()
       and all(type(o.get(k)) is int for k in ints) and min(o["pos"], o["idx"], o["held"]) >= 0
       and o["size"] >= -1 and isinstance(o.get("head", ""), str)
-      and all(type(o[k]) is int for k in ("ino", "mt") if k in o)):
+      and all(type(o[k]) is int for k in ("ino", "mt") if k in o)
+      and ("skip" not in o or (isinstance(o["skip"], list) and len(o["skip"]) == 2
+                               and all(type(x) is int for x in o["skip"]) and 0 <= o["skip"][0] <= o["skip"][1]))):
     return "ok", o
   return "bad", None
 
@@ -351,20 +353,28 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
   if ck["size"] < 0:
     ck.update(size=msize, head=_head_sig(mig), **_file_ident(mig))   # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
     _ckpt_write(pos_f, ck)
-  ident = {k: ck[k] for k in ("ino", "mt") if k in ck}
+  if not all(k in ck for k in ("ino", "mt")):
+    # R375 22차 검토: 11b61cbe 판 JSON 체크포인트(크기·앞부분만 기록 · identity 없음) → 그 뒤 파일이 그대로인지 증거 없음.
+    # identity 를 지금 채워 넣으면 과거 동일성을 입증한 것처럼 보이므로 하지 않음 → UNKNOWN 보존 (자동 이어받기 X)
+    return _hold("identity 없는 이전 판 진행 체크포인트 — 파일 불변 증거 부족 · 자동 이관 중단")
+  skip = ck.get("skip")
   if (ck["size"] != msize or ck["pos"] > msize or (ck.get("head") and ck["head"] != _head_sig(mig))
-      or (ident and ident != _file_ident(mig))):
+      or {k: ck[k] for k in ("ino", "mt")} != _file_ident(mig) or (skip and skip[1] > msize)):
     return _hold(f"이관 체크포인트와 파일 불일치 (크기 {ck['size']}/{msize} · 앞부분 해시 · 파일 번호·수정 시각) — 다른 파일로 바뀜 · 원본 보존")
   gen, pos, idx, held = ck["gen"], ck["pos"], ck["idx"], ck["held"]
   moved = 0
+  stalled = None                               # 큰 줄 건너뛰기가 마감으로 멈춘 위치 [줄 시작, 도달 위치]
   with open(mig, "rb") as f:
     f.seek(pos)
     while moved < SPOOL_MIGRATE_BATCH and sess.remaining() > 0.1:
+      line_start = f.tell()
       raw = f.readline(SPOOL_EVENT_MAX_BYTES + 1)
       if not raw:
         break
       big = len(raw) > SPOOL_EVENT_MAX_BYTES and not raw.endswith(b"\n")
       if big:                                  # 상한 초과 줄 → 줄 끝까지 건너뜀 (원본은 끝나도 held/ 보존)
+        if skip and skip[0] == line_start and skip[1] > f.tell():
+          f.seek(skip[1])                      # R375 22차 검토: 지난 회차 도달 위치부터 (같은 큰 줄을 매번 처음부터 읽는 기아 X)
         done_skip = False
         while sess.remaining() > 0.1:
           rest = f.readline(1 << 20)
@@ -372,7 +382,8 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
             done_skip = True
             break
         if not done_skip:
-          break                                # 마감 → 이 줄 처음부터 다음 회차
+          stalled = [line_start, f.tell()]
+          break                                # 마감 → 줄 번호·위치는 이 줄 시작 그대로 · 도달 위치만 기록
       ln = raw.decode("utf-8", errors="replace").rstrip("\r\n")
       i, idx = idx, idx + 1
       if ln.strip():
@@ -399,7 +410,11 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
         os.replace(tmp, dst)
         moved += 1
       pos = f.tell()
-    finished = not f.read(1)
+    f.seek(pos)                                # R375 22차 검토: 끝 판정은 읽던 위치가 아니라 저장할 위치 기준 (건너뛰다 멈춘 줄을 끝으로 오판 X)
+    finished = stalled is None and not f.read(1)
+  ck = {k: v for k, v in ck.items() if k != "skip"}
+  if stalled:
+    ck["skip"] = stalled
   if finished:
     if held:
       if not _park(db_path, mig, "held", f"이관 끝 · 손상·상한 초과 줄 {held}개 → 원본 보존", d, gen):

@@ -1398,3 +1398,69 @@ def test_r375_spool_stale_checkpoint_park_failure_blocks_new_batch(tmp_path, mon
     for _ in range(2):
         m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert sorted(x for x in _t_rows(db) if x < 100) == [1]
+
+
+def test_r375_spool_identityless_progress_checkpoint_preserved(tmp_path, monkeypatch):
+    """22차 검토 P0: 11b61cbe 판 JSON 진행 체크포인트(size·head 있음 · identity 없음) → 업그레이드 뒤 identity 를 뒤늦게 채워 이어받지 않음 · 원본 unknown/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    import hashlib
+    monkeypatch.setattr(m, "_head_sig", lambda p: hashlib.sha1(open(p, "rb").read(32)).hexdigest()[:16])   # 앞부분 해시 범위를 첫 줄 안으로
+    _t_lines(m, db, [1, 2, 3, 4])
+    mig, pos_f = _t_mig(m, db)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    ck = json.loads(pos_f.read_text(encoding="ascii"))
+    assert ck["pos"] > 0
+    pos_f.write_text(json.dumps({k: v for k, v in ck.items() if k not in ("ino", "mt")}), encoding="ascii")
+    raw = mig.read_bytes()
+    mig.write_bytes(raw.replace(b"[4]", b"[8]"))                           # 같은 크기 · 앞부분 동일 · 뒤만 다름
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]
+    assert any(x.name.startswith(mig.name + ".2") for x in (m.spool_dir(db) / "unknown").iterdir())
+
+
+class _T_Budget:
+    """마감 주입용 — remaining() 을 n 번까지만 넉넉히 주고 그 뒤 0."""
+    def __init__(self, n):
+        self.n = n
+
+    def remaining(self):
+        self.n -= 1
+        return 1.0 if self.n >= 0 else 0.0
+
+
+def _t_big_tail(m, db, monkeypatch, mb):
+    monkeypatch.setattr(m, "SPOOL_EVENT_MAX_BYTES", 200)
+    ok = json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]})
+    m.spool_path(db).write_bytes(ok.encode() + b"\n" + b"x" * (201 + mb * (1 << 20)))   # EOF 까지 줄바꿈 없는 큰 줄
+    d = m.spool_dir(db)
+    return d, _t_mig(m, db)
+
+
+def test_r375_spool_big_line_stall_at_eof_not_finished(tmp_path, monkeypatch):
+    """22차 검토 P0: 큰 줄 건너뛰기가 EOF 직전 마감으로 멈추면 읽던 위치 기준 끝 판정으로 원본을 지우던 결함 → 저장 위치 기준 · 원본 유지."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    d, (mig, pos_f) = _t_big_tail(m, db, monkeypatch, 1)
+    m._migrate_legacy(db, d, _T_Budget(3))                                 # 첫 줄 · 큰 줄 시작 · 1MB 읽고 마감
+    assert mig.exists() and pos_f.exists()                                 # 직전 판: 끝으로 오판 → 원본 삭제 · 큰 줄 유실
+    ck = json.loads(pos_f.read_text(encoding="ascii"))
+    assert ck["idx"] == 1 and ck["skip"][0] == ck["pos"] and ck["skip"][1] == mig.stat().st_size
+    assert m._migrate_legacy(db, d, _T_Budget(100)) is True
+    assert not mig.exists()
+    assert any(x.name.startswith(mig.name + ".") for x in (d / "held").iterdir())   # 큰 줄 있는 원본은 held/ 보존
+    assert len(list((d / "held").glob("*.legacy-line"))) == 1
+
+
+def test_r375_spool_big_line_skip_progress_resumes(tmp_path, monkeypatch):
+    """22차 검토: 회차마다 마감이 짧아도 큰 줄을 처음부터 다시 읽지 않고 지난 도달 위치부터 → 유한 회차 안에 끝남 (기아 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    d, (mig, pos_f) = _t_big_tail(m, db, monkeypatch, 4)
+    for _ in range(8):
+        if m._migrate_legacy(db, d, _T_Budget(3)) and not mig.exists():
+            break
+    assert not mig.exists() and not pos_f.exists()                         # 직전 판: 매 회차 1MB 만 읽고 처음으로 → 영원히 못 끝냄
+    assert any(x.name.startswith(mig.name + ".") for x in (d / "held").iterdir())
