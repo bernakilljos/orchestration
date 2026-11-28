@@ -215,6 +215,7 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
                 if len(batch) > 1:         # 병렬 wave = 끝난 작업부터 바로 반환 · 단일 작업 wave 는 peak 측정 뒤 아래에서 관측값과 함께
                     rid = held.pop(tid, None)
                     if rid:
+                        watch.discard(rid)
                         _sbp.release_memory(rid)
         try:
             watch.start()
@@ -280,32 +281,49 @@ def _write_set(t: Dict[str, Any]) -> set:
 
 
 class _TreeWatch:
-    """wave 동안 이 프로세스의 자식 트리를 주기 측정 — 자식 PID 를 예약에 붙이고(부모 종료 후에도 자식 생존 동안 예약 유지)
-    지금 쓰는 RAM 을 예약 used_gb 로 기록(측정 여유와 이중 차감 방지) · 끝나면 자식 트리 peak(GB) 반환 (측정 불가 = None)."""
+    """wave 동안 이 프로세스의 자식 트리를 측정 (R375 4차 검토 반영).
+    - 자식 PID 를 예약에 붙인다 (부모 종료 후에도 자식 생존 동안 유지 · 256개 초과면 truncated → 소유 상태 unknown 으로 보수 유지)
+    - 실사용 차감은 진행 중 예약이 1개일 때만 (작업별 귀속 확실) · commit = private bytes · 물리 = RSS 분리 ·
+      여러 작업이 동시에 돌면 귀속 불명 → 실사용을 기록하지 않아 예약 전체 유지
+    - 처음 몇 초는 0.5초 간격 (부모가 첫 측정 전에 죽는 구간 축소) · 해제된 예약은 분모에서 뺀다
+    - 측정 실패·stop 시간 초과 = peak 신뢰 불가 → None (관측 기록 안 함)"""
     def __init__(self, rids, sbp, interval: float = 2.0):
         self.rids, self.sbp, self.interval = [r for r in rids if r], sbp, interval
-        self.peak, self._stop, self._th = None, threading.Event(), None
+        self.peak, self.failed, self._stop, self._th = None, False, threading.Event(), None
+        self._lock = threading.Lock()
+
+    def discard(self, rid):
+        with self._lock:
+            if rid in self.rids:
+                self.rids.remove(rid)
 
     def _sample(self):
         try:
             import psutil
             kids = psutil.Process().children(recursive=True)
-            rss = 0
+            rss = priv = 0
             for k in kids:
                 try:
-                    rss += k.memory_info().rss
-                except Exception:  # noqa: BLE001
+                    mi = k.memory_info()
+                    rss += mi.rss
+                    priv += getattr(mi, "private", None) or k.memory_full_info().uss
+                except psutil.NoSuchProcess:
                     pass
-            gb = round(rss / 1024 ** 3, 3)
-            self.peak = gb if self.peak is None else max(self.peak, gb)
-            if self.rids:
-                share = gb / len(self.rids)
-                self.sbp.update_reservations(self.rids, pids=[k.pid for k in kids], used_gb=share)
-        except Exception:  # noqa: BLE001 — 측정 실패는 실행에 영향 없음
-            pass
+            gb, pgb = round(rss / 1024 ** 3, 3), round(priv / 1024 ** 3, 3)
+            self.peak = max(gb, pgb) if self.peak is None else max(self.peak, gb, pgb)
+            with self._lock:
+                rids = list(self.rids)
+            if rids:
+                pids = [k.pid for k in kids]
+                self.sbp.update_reservations(rids, pids=pids[:256], used_commit_gb=pgb, used_phys_gb=gb,
+                                             exact=len(rids) == 1, pids_truncated=len(pids) > 256)
+        except Exception:  # noqa: BLE001 — 측정 실패: 실행에는 영향 없음 · 관측은 신뢰 불가로 표시
+            self.failed = True
 
     def _run(self):
-        while not self._stop.wait(self.interval):
+        n = 0
+        while not self._stop.wait(0.5 if n < 6 else self.interval):
+            n += 1
             self._sample()
 
     def start(self):
@@ -316,7 +334,9 @@ class _TreeWatch:
         self._stop.set()
         if self._th:
             self._th.join(timeout=5)
-        return self.peak
+            if self._th.is_alive():
+                self.failed = True
+        return None if self.failed else self.peak
 
 
 def _conflict_free(ready: List[str], by_id: Dict[str, Dict[str, Any]]) -> List[str]:

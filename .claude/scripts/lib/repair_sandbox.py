@@ -377,39 +377,80 @@ def _proc_start(pid: int) -> Optional[float]:
         return -1.0 if type(e).__name__ == "NoSuchProcess" else None
 
 
+def _fin(v, lo: float = 0.0, hi: float = 1e9, none_ok: bool = False) -> bool:
+    import math
+    if v is None:
+        return none_ok
+    if isinstance(v, bool):
+        return False
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(f) and lo <= f <= hi
+
+
+def _entry_problem(e) -> Optional[str]:
+    """예약 항목 스키마·유한값·소유권 검증 (R375 4차 검토) — 문제 문자열 · 정상 = None."""
+    if not isinstance(e, dict):
+        return "항목 형식"
+    if not (isinstance(e.get("pid"), int) and not isinstance(e.get("pid"), bool) and e["pid"] > 0):
+        return "pid"
+    if not _fin(e.get("ts"), 0, 1e11) or not _fin(e.get("gb"), 0, 1e6) or not _fin(e.get("ttl"), 0, 1e7):
+        return "ts·gb·ttl"
+    if not _fin(e.get("start"), 0, 1e11, none_ok=True):
+        return "start"
+    pids = e.get("pids", [])
+    if not isinstance(pids, list) or len(pids) > _MAX_CHILD_PIDS:
+        return "pids"
+    for p in pids:
+        if not (isinstance(p, dict) and isinstance(p.get("pid"), int) and p["pid"] > 0 and _fin(p.get("start"), 0, 1e11, True)):
+            return "pids 항목"
+    for k in ("used_commit_gb", "used_phys_gb", "used_ts"):
+        if k in e and not _fin(e[k], 0, 1e11, none_ok=True):
+            return k
+    return None
+
+
+_MAX_CHILD_PIDS = 256
+_USED_FRESH_SEC = 10.0          # 실사용 차감은 이 시간 안에 잰 값만 (stale used_gb 로 과소 계산 X)
+_PENDING_RELEASE: set = set()   # 해제 실패분 — 다음 장부 접근 때 재시도 (살아 있는 부모의 예약 영구 잔류 방지)
+_ESS_SLOTS: dict = {}           # 필수 복구 예약 id → (proc_lock 모듈, fd) — 프로세스 간 공통 상한 (OS 잠금 슬롯)
+
+
 def _holder_state(e: dict) -> str:
-    """예약 소유 프로세스(주인 + 붙인 자식) 상태 — alive(하나라도 살아 있음·시작 시각 일치) · dead(전부 확인된 종료/재사용) · unknown(조회 불가)."""
-    pairs = [(e.get("pid"), e.get("start"))] + [(p.get("pid"), p.get("start")) for p in (e.get("pids") or [])
-                                                if isinstance(p, dict)]
-    seen_unknown = False
-    for pid, start in pairs:
-        try:
+    """예약 소유 프로세스(주인 + 붙인 자식) 상태 — alive · dead(전부 확인된 종료/재사용) · unknown(조회 불가·값 이상 = 보수적으로 유지)."""
+    try:
+        pairs = [(e["pid"], e.get("start"))] + [(p["pid"], p.get("start")) for p in e.get("pids") or []]
+        seen_unknown = bool(e.get("pids_truncated"))      # 자식이 상한을 넘어 다 못 붙였으면 «전부 종료» 단정 X
+        for pid, start in pairs:
             st = _proc_start(int(pid))
-        except (TypeError, ValueError):
-            continue
-        if st is None:
-            seen_unknown = True
-        elif st != -1.0 and (start is None or abs(st - float(start)) <= 1):
-            return "alive"
-    return "unknown" if seen_unknown else "dead"
+            if st is None:
+                seen_unknown = True
+            elif st != -1.0 and (start is None or abs(st - float(start)) <= 1):
+                return "alive"
+        return "unknown" if seen_unknown else "dead"
+    except Exception:  # noqa: BLE001
+        return "unknown"
 
 
-def _live_mem(book: dict, now: float) -> dict:
-    """살아 있는 예약만 (R375 3차 검토: 살아 있는 작업의 예약을 시간만으로 회수 X).
-    소유 프로세스(주인·자식) 중 하나라도 살아 있으면 TTL·시계 이동과 무관하게 유지 · 전부 종료(OOM·강제 종료 포함)·PID 재사용 = 제외 ·
-    TTL 은 소유 상태를 조회할 수 없을 때만 적용 (영구 누수 방지) · 손상 항목 제외."""
+def _live_mem(book: dict, now: float, diag: Optional[dict] = None) -> dict:
+    """살아 있는 예약만 (R375 3·4차 검토) — 확인된 종료·PID 재사용만 제거 · 조회 불가(unknown)는 TTL 과 무관하게 유지(진단 기록) ·
+    스키마 이상 항목은 여기서 버리지 않는다 → diag['suspect'] 로 보존 (호출부가 장부에 그대로 남기고 선택 작업 보류)."""
+    diag = {} if diag is None else diag
+    diag.setdefault("suspect", {})
+    diag.setdefault("unverified", [])
     live = {}
     for rid, e in (book.get("reservations") or {}).items():
-        try:
-            ts, ttl, gb = float(e["ts"]), float(e["ttl"]), float(e["gb"])
-        except Exception:  # noqa: BLE001
-            continue
-        import math
-        if not (math.isfinite(ts) and math.isfinite(ttl) and 0 <= gb < 1e6):
+        prob = _entry_problem(e)
+        if prob:
+            diag["suspect"][rid] = e
             continue
         st = _holder_state(e)
-        if st == "dead" or (st == "unknown" and not (now - ttl <= ts <= now + 60)):
+        if st == "dead":
             continue
+        if st == "unknown":
+            diag["unverified"].append(rid)
         live[rid] = e
     return live
 
@@ -472,7 +513,7 @@ def _observed_list(book: dict, kind: str) -> list:
     lst = obs.get(kind) if isinstance(obs.get(kind), list) else []
     if kind == "default" and isinstance(book.get("observed_gb"), list):       # 이전 형식 호환
         lst = list(book["observed_gb"]) + lst
-    return [float(x) for x in lst if isinstance(x, (int, float)) and 0 <= x < 64]
+    return [float(x) for x in lst if _fin(x, 0, 63.999)]
 
 
 def _observed_est(book: dict, base: float, kind: str = "default") -> float:
@@ -483,8 +524,11 @@ def _observed_est(book: dict, base: float, kind: str = "default") -> float:
     return max(base, obs[min(len(obs) - 1, int(len(obs) * 0.9))])
 
 
-def _book_out(live: dict, book: dict) -> dict:
-    out = {"reservations": live}
+def _book_out(live: dict, book: dict, suspect: Optional[dict] = None) -> dict:
+    """장부 쓰기 본문 — 스키마 이상 항목(suspect)은 원문 그대로 보존 (조용히 덮어써 사라지지 않게)."""
+    res = dict(suspect or {})
+    res.update(live)
+    out = {"reservations": res}
     obs = book.get("observed") if isinstance(book.get("observed"), dict) else {}
     if isinstance(book.get("observed_gb"), list) and book["observed_gb"]:
         obs = dict(obs, default=(list(book["observed_gb"]) + list(obs.get("default") or []))[-50:])
@@ -492,21 +536,56 @@ def _book_out(live: dict, book: dict) -> dict:
     return out
 
 
-def _unconsumed(e: dict) -> float:
-    """예약 중 아직 실제 RAM 으로 잡히지 않은 몫 = 예약량 − 이미 쓰는 양 (측정에 이미 들어간 만큼 이중 차감 X)."""
+def _unconsumed(e: dict, side: str, now: Optional[float] = None) -> float:
+    """예약 중 아직 실제 RAM 으로 잡히지 않은 몫 (side = commit | phys).
+    실사용 차감은 작업별 귀속이 확실(attrib exact)하고 최근 측정(_USED_FRESH_SEC)일 때만 — 불확실하면 예약 전체 유지 (보수적)."""
+    now = time.time() if now is None else now
+    gb = float(e.get("gb") or 0.0)
+    used = e.get("used_commit_gb" if side == "commit" else "used_phys_gb")
+    if e.get("attrib") != "exact" or not _fin(used) or not _fin(e.get("used_ts"), 0, 1e11) \
+            or not (0 <= now - float(e["used_ts"]) <= _USED_FRESH_SEC):
+        return gb
+    return max(0.0, gb - float(used))
+
+
+def _take_essential_slot(path: Path, cap: int):
+    """필수 복구 공통 상한 — OS 잠금 슬롯 cap 개 중 빈 것 1개 (프로세스 간 공통 · 주인이 죽으면 커널이 해제 · 장부 손상과 무관)."""
     try:
-        return max(0.0, float(e["gb"]) - max(0.0, float(e.get("used_gb") or 0.0)))
-    except (TypeError, ValueError):
-        return 0.0
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import proc_lock as pl
+    except Exception:  # noqa: BLE001
+        return None
+    for i in range(max(0, cap)):
+        fd = pl.try_lock(f"{path}.essential{i}.lock")
+        if fd is not None:
+            return (pl, fd)
+    return None
+
+
+def _drop_essential_slot(rid: str) -> None:
+    s = _ESS_SLOTS.pop(rid, None)
+    if s:
+        try:
+            s[0].release(s[1])
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _flush_pending(live: dict) -> int:
+    n = 0
+    for rid in list(_PENDING_RELEASE):
+        n += live.pop(rid, None) is not None
+        _PENDING_RELEASE.discard(rid)
+    return n
 
 
 def reserve_memory(n_wanted: int, owner: str, est_gb: Optional[float] = None, essential: bool = False,
                    pol: Optional[dict] = None, cm: Optional[dict] = None, kind: str = "default") -> dict:
-    """판정과 예약을 한 잠금 안에서 — 다른 프로세스 예약의 미소비분을 측정 여유에서 빼고 판정한 뒤 허용 수만큼 장부에 적는다.
-    반환 max_parallel = 실제로 확보한 예약 수 (len(granted)) — 호출부는 이 수만큼만 시작한다 (R375 3차 검토).
-    장부 잠금 실패·읽기 손상/접근 실패·쓰기 실패 = 선택 작업 0 (예약 없는 시작 금지) · 필수 복구(essential)는
-    별도 제한 예산(mem_essential_parallel · 기본 1)으로 장부 없이도 허용하되 unbooked 로 기록.
-    unknown(측정 불완전)은 프로세스마다 허용량을 따로 주지 않는다 — 전역 상한(constrained_parallel)에서 다른 예약 수를 뺀다.
+    """판정과 예약을 한 잠금 안에서 — 다른 예약의 미소비분을 측정 여유(commit·물리 각각)에서 빼고 판정한 뒤 허용 수만큼 장부에 적는다.
+    반환 max_parallel = 실제로 확보한 예약 수 (len(granted)) — 호출부는 이 수만큼만 시작한다.
+    선택 작업: 장부 잠금 실패·손상/접근 실패·쓰기 실패·스키마 이상 항목 존재 = 0 (예약 없는 시작 X).
+    필수 복구(essential): 정상 장부에서도 공통 OS 잠금 슬롯(mem_essential_parallel)으로 프로세스 간 상한 · 장부를 못 쓰면 unbooked 표시.
+    unknown(측정 불완전)은 전역 상한(constrained_parallel)에서 살아 있는 다른 예약 수를 뺀다.
     시험 전용 무장부 경로(pytest 중 ORCA_MEM_RESERVATIONS 미지정)는 book='disabled_test' 로 구분."""
     pol = _policy() if pol is None else pol
     t = admission_thresholds(pol)
@@ -523,19 +602,27 @@ def reserve_memory(n_wanted: int, owner: str, est_gb: Optional[float] = None, es
     ess_cap = int(_num(pol.get("mem_essential_parallel", 1), 1, 0, 8, t["invalid"], "mem_essential_parallel"))
     with _MemBook(path) as mb:
         book = mb.read() if mb.ok else {}
-        usable = mb.ok and not mb.corrupt
         now = time.time()
-        live = _live_mem(book, now)
+        diag: dict = {}
+        live = _live_mem(book, now, diag)
+        pend = list(_PENDING_RELEASE)
+        flushed = _flush_pending(live)
+        suspect = diag["suspect"]
+        usable = mb.ok and not mb.corrupt
         base = t["task_est_gb"] if est_gb is None else _num(est_gb, t["task_est_gb"], 0, 64, t["invalid"], "est_gb")
         per = _observed_est(book, base, kind)
         mine = [e for e in live.values() if (e.get("essential") or not essential)]
-        others = sum(_unconsumed(e) for e in mine)
+        oc = sum(_unconsumed(e, "commit", now) for e in mine)
+        op = sum(_unconsumed(e, "phys", now) for e in mine)
+        if suspect and not essential:          # 이상 항목의 크기를 믿을 수 없음 → 선택 작업은 보류 (아래 why)
+            pass
         cm0 = commit_memory() if cm is None else dict(cm or {})
         adj = dict(cm0)
         bad = set(_measure_problems(cm0))
-        for k in ("free_gb", "phys_free_gb"):           # 유효한 필드는 부분 측정이어도 각각 차감
-            if k not in bad and others:
-                adj[k] = round(max(0.0 if k == "phys_free_gb" else -1e6, float(cm0[k]) - others), 3)
+        if "free_gb" not in bad and oc:
+            adj["free_gb"] = round(float(cm0["free_gb"]) - oc, 3)
+        if "phys_free_gb" not in bad and op:
+            adj["phys_free_gb"] = round(max(0.0, float(cm0["phys_free_gb"]) - op), 3)
         adm = admission_now(adj, pol, per)
         k = min(n_wanted, int(adm.get("max_parallel") or 0))
         why = ""
@@ -543,31 +630,56 @@ def reserve_memory(n_wanted: int, owner: str, est_gb: Optional[float] = None, es
             k = min(k, max(0, min(t["max_parallel"], t["constrained_parallel"]) - len(mine)))
         if not usable:
             why = "예약 장부 " + ("잠금 실패" if not mb.ok else "손상·접근 실패")
-            k = min(k, ess_cap) if essential else 0
+        elif suspect:
+            why = f"예약 장부 이상 항목 {len(suspect)}건 (보존 · 진단 필요)"
+        if why and not essential:
+            k = 0
+        slots = []
+        if essential:                           # 정상·비정상 장부 모두 공통 슬롯으로 프로세스 간 상한
+            for _ in range(k):
+                s = _take_essential_slot(path, ess_cap)
+                if not s:
+                    break
+                slots.append(s)
+            k = len(slots)
         granted = []
+        if not k and flushed and usable:            # 해제 대기분만 정리된 경우도 저장 (실패하면 대기 목록 복원)
+            try:
+                mb.write(_book_out(live, book, suspect))
+            except Exception:  # noqa: BLE001
+                _PENDING_RELEASE.update(pend)
         if k:
             start = _proc_start(os.getpid())
             import uuid
-            for _ in range(k):
+            for i in range(k):
                 rid = f"{os.getpid()}-{uuid.uuid4().hex}"
                 granted.append(rid)
+                if essential:
+                    _ESS_SLOTS[rid] = slots[i]
                 live[rid] = {"owner": str(owner)[:80], "kind": kind, "pid": os.getpid(),
                              "start": start if start and start > 0 else None, "pids": [],
-                             "gb": round(per * t["margin"], 3), "used_gb": 0.0, "ts": now, "ttl": ttl,
-                             "essential": bool(essential)}
-            if usable:
+                             "gb": round(per * t["margin"], 3), "ts": now, "ttl": ttl, "essential": bool(essential)}
+            if usable and not suspect:
                 try:
                     mb.write(_book_out(live, book))
                 except Exception:  # noqa: BLE001 — 기록 실패 = 확보 실패
                     why = "예약 장부 쓰기 실패"
-                    if not essential:
-                        granted = []
-                    else:
-                        granted = granted[:ess_cap]
-            if not usable or why:
-                granted = [f"unbooked-{g}" for g in granted]      # 필수 복구 제한 예산 (장부 밖)
-        adm.update(granted=granted, reserved=bool(granted) and not why, reserved_gb_others=round(others, 3),
-                   est_gb_used=per, book="active" if usable and not why else "failed", book_problem=why or None)
+            elif usable:
+                try:                             # 이상 항목은 보존한 채 필수 예약만 추가
+                    mb.write(_book_out(live, book, suspect))
+                    why = why + " · 필수 예약은 기록됨"
+                except Exception:  # noqa: BLE001
+                    why = why + " · 쓰기 실패"
+            if why and not essential:
+                granted = []
+            elif why and "기록됨" not in why:
+                for g in list(granted):          # 장부 밖 필수 = unbooked 표시 (슬롯은 같은 id 로 유지)
+                    _ESS_SLOTS[f"unbooked-{g}"] = _ESS_SLOTS.pop(g)
+                granted = [f"unbooked-{g}" for g in granted]
+        adm.update(granted=granted, reserved=bool(granted) and not why, reserved_gb_others=round(max(oc, op), 3),
+                   reserved_commit_gb_others=round(oc, 3), reserved_phys_gb_others=round(op, 3),
+                   est_gb_used=per, book="active" if usable and not why else "failed", book_problem=why or None,
+                   unverified=diag["unverified"][:20], suspect=list(suspect)[:20])
         adm["max_parallel"] = len(granted)
         if why and not granted:
             adm["reason"] = f"{adm.get('reason', '')} · {why} → 선택 작업 보류 (예약 없이 시작 X)"
@@ -584,19 +696,21 @@ def _edit_book(fn) -> bool:
         book = mb.read()
         if mb.corrupt:
             return False                                  # 손상 장부는 덮어쓰지 않음 (진단 보존)
-        live = _live_mem(book, time.time())
+        diag: dict = {}
+        live = _live_mem(book, time.time(), diag)
+        _flush_pending(live)
         fn(live, book)
         try:
-            mb.write(_book_out(live, book))
+            mb.write(_book_out(live, book, diag["suspect"]))
             return True
         except Exception:  # noqa: BLE001
             return False
 
 
-def update_reservations(ids, pids=None, used_gb: Optional[float] = None) -> bool:
+def update_reservations(ids, pids=None, used_commit_gb: Optional[float] = None, used_phys_gb: Optional[float] = None,
+                        exact: bool = False, pids_truncated: bool = False) -> bool:
     """작업 중 갱신 — 자식 프로세스(PID·시작 시각)를 붙여 부모가 죽어도 자식이 살아 있는 동안 예약 유지 ·
-    used_gb = 지금 실제로 쓰는 양 (그만큼은 다른 판정에서 이중 차감하지 않음)."""
-    import math
+    실사용(commit=private bytes · 물리=RSS)은 작업별 귀속이 확실할 때(exact)만 기록 — 아니면 지워서 예약 전체를 유지."""
     ids = [i for i in ([ids] if isinstance(ids, str) else list(ids or [])) if not str(i).startswith("unbooked-")]
     if not ids:
         return False
@@ -607,24 +721,31 @@ def update_reservations(ids, pids=None, used_gb: Optional[float] = None) -> bool
             add.append({"pid": int(p), "start": st})
 
     def fn(live, book):
+        now = time.time()
         for rid in ids:
             e = live.get(rid)
             if not e:
                 continue
-            known = {(x.get("pid"), x.get("start")) for x in e.get("pids") or [] if isinstance(x, dict)}
-            e["pids"] = (list(e.get("pids") or []) + [x for x in add if (x["pid"], x["start"]) not in known])[-64:]
-            try:
-                if used_gb is not None and math.isfinite(float(used_gb)) and float(used_gb) >= 0:
-                    e["used_gb"] = round(float(used_gb), 3)
-            except (TypeError, ValueError):
-                pass
+            known = {(x.get("pid"), x.get("start")) for x in e.get("pids") or []}
+            merged = list(e.get("pids") or []) + [x for x in add if (x["pid"], x["start"]) not in known]
+            if len(merged) > _MAX_CHILD_PIDS or pids_truncated:
+                e["pids_truncated"] = True          # 다 못 붙임 → 소유 상태는 unknown 으로 남겨 보수적으로 유지
+            e["pids"] = merged[-_MAX_CHILD_PIDS:]
+            if exact and _fin(used_commit_gb) and _fin(used_phys_gb):
+                e.update(attrib="exact", used_commit_gb=round(float(used_commit_gb), 3),
+                         used_phys_gb=round(float(used_phys_gb), 3), used_ts=now)
+            else:
+                for k in ("attrib", "used_commit_gb", "used_phys_gb", "used_ts"):
+                    e.pop(k, None)
     return _edit_book(fn)
 
 
 def release_memory(ids, observed_gb: Optional[float] = None, kind: Optional[str] = None) -> bool:
-    """예약 해제 (시작 실패·정상 종료·예외 모두 호출) · observed_gb = 실제 peak (작업 유형별 최근 50건 · 비정상 값 무시)."""
-    import math
+    """예약 해제 (시작 실패·정상 종료·예외 모두 호출) · observed_gb = 실제 peak (작업 유형별 최근 50건 · 비정상 값 무시).
+    필수 슬롯은 즉시 반환 · 장부 해제가 실패하면 3회 재시도 후 대기 목록 → 다음 장부 접근(예약·갱신·해제) 때 제거."""
     ids = [ids] if isinstance(ids, str) else list(ids or [])
+    for rid in ids:
+        _drop_essential_slot(rid)
     booked = [i for i in ids if not str(i).startswith("unbooked-")]
     if not booked:
         return bool(ids)
@@ -635,13 +756,20 @@ def release_memory(ids, observed_gb: Optional[float] = None, kind: Optional[str]
             e = live.pop(rid, None)
             if e and not k:
                 k = e.get("kind")
-        try:
-            if observed_gb is not None and math.isfinite(float(observed_gb)) and 0 <= float(observed_gb) < 64:
-                obs = book.setdefault("observed", {}) if isinstance(book.get("observed"), dict) else book.setdefault("observed", {})
-                obs.setdefault(k or "default", []).append(round(float(observed_gb), 3))
-        except (TypeError, ValueError):
-            pass
-    return _edit_book(fn)
+        if _fin(observed_gb, 0, 63.999):
+            obs = book["observed"] if isinstance(book.get("observed"), dict) else book.setdefault("observed", {})
+            if not isinstance(book.get("observed"), dict):
+                book["observed"] = obs = {}
+            obs.setdefault(k or "default", []).append(round(float(observed_gb), 3))
+    for delay in (0.0, 0.1, 0.3):
+        if delay:
+            time.sleep(delay)
+        if _edit_book(fn):
+            for rid in booked:
+                _PENDING_RELEASE.discard(rid)
+            return True
+    _PENDING_RELEASE.update(booked)
+    return False
 
 
 def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None, est_gb: Optional[float] = None) -> Optional[dict]:
