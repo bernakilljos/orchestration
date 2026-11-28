@@ -274,17 +274,20 @@
       "items_sig": "94f8ac673544"
     },
     "R375": {
-      "head_commit": "901fbe1aaf95a309c0760382f623dbe8ab105d8c",
-      "base_commit": "ac1229f8bb105917af19a751f8db1a41a6f62bc2",
-      "range_tip": "901fbe1aaf95a309c0760382f623dbe8ab105d8c",
+      "head_commit": "1cc2334bc1139214804f197b8d7eb78c00620d4e",
+      "base_commit": "901fbe1aaf95a309c0760382f623dbe8ab105d8c",
+      "range_tip": "1cc2334bc1139214804f197b8d7eb78c00620d4e",
       "status": "PARTIAL",
       "report": "reports/R375.md",
-      "reported_at": "2026-11-28T11:39:41+00:00",
+      "reported_at": "2026-11-28T12:43:20+00:00",
       "reviewed": false,
-      "items_sig": "d01f9ffe64b7"
+      "items_sig": "d01f9ffe64b7",
+      "answered": {
+        ".ai-collab/reviews/R375.md": "af4a3844a9f4eae2572809f675bf726ab07e197a"
+      }
     }
   },
-  "last_head": "901fbe1aaf95a309c0760382f623dbe8ab105d8c",
+  "last_head": "1cc2334bc1139214804f197b8d7eb78c00620d4e",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -309,7 +312,7 @@
     ".ai-collab/reviews/R354.md": "9e4d909cb0246bb632287eec81db086852a9d62f",
     ".ai-collab/requests/R375.md": "3cbdaae0220ceaaf6c150fc3b8ab08a5b31046fb"
   },
-  "last_poll_hit": "2026-11-28T11:16:34+00:00",
+  "last_poll_hit": "2026-11-28T12:25:52+00:00",
   "handled": {
     "R329": "703ce80215855a633f672d57273c1b35a4c71764",
     "R332": "53d2c02baea4d2b525ac293cecc413c0342c74fe",
@@ -331,7 +334,7 @@
     "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
     "R353": "c839445a89b6943ee02158de3075848c1f6dd940",
     "R354": "be25922efa600c839e07676bd6e40396773dcd7b",
-    "R375": "901fbe1aaf95a309c0760382f623dbe8ab105d8c"
+    "R375": "1cc2334bc1139214804f197b8d7eb78c00620d4e"
   },
   "inflight": {
     ".ai-collab/requests/R347.md": {
@@ -422,8 +425,8 @@
       "n": 3
     },
     ".ai-collab/reviews/R375.md": {
-      "blob": "f5fc45057c6f2a3a87c982f4a5659f5da3683474",
-      "at": "2026-11-28T11:16:34+00:00",
+      "blob": "af4a3844a9f4eae2572809f675bf726ab07e197a",
+      "at": "2026-11-28T12:25:52+00:00",
       "n": 0
     }
   }
