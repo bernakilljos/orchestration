@@ -274,20 +274,20 @@
       "items_sig": "94f8ac673544"
     },
     "R375": {
-      "head_commit": "f3e39541d9ab96d1cb8bfa4433539d8c5f7ef183",
-      "base_commit": "1cc2334bc1139214804f197b8d7eb78c00620d4e",
-      "range_tip": "f3e39541d9ab96d1cb8bfa4433539d8c5f7ef183",
+      "head_commit": "11b61cbe3f1ac528fa53e50244bbda7ca6fd1b91",
+      "base_commit": "f3e39541d9ab96d1cb8bfa4433539d8c5f7ef183",
+      "range_tip": "11b61cbe3f1ac528fa53e50244bbda7ca6fd1b91",
       "status": "PARTIAL",
       "report": "reports/R375.md",
-      "reported_at": "2026-11-28T14:42:19+00:00",
+      "reported_at": "2026-11-28T16:01:14+00:00",
       "reviewed": false,
       "items_sig": "d01f9ffe64b7",
       "answered": {
-        ".ai-collab/reviews/R375.md": "401a1e77819c475e0bb16d9819ecc93312db847c"
+        ".ai-collab/reviews/R375.md": "b9af1e3a9d2c83083689be8cc852147e353435c9"
       }
     }
   },
-  "last_head": "f3e39541d9ab96d1cb8bfa4433539d8c5f7ef183",
+  "last_head": "11b61cbe3f1ac528fa53e50244bbda7ca6fd1b91",
   "seen": {
     ".ai-collab/requests/R329.md": "02f50b98f2798e1038348bd6b6b8696a3c7c6f90",
     ".ai-collab/requests/R332.md": "37119dbcac04fc796584685ce8f8186ad5144911",
@@ -334,7 +334,7 @@
     "R351": "f8000065585ac4d6f6d5e2e8af0c3fa7e5ea5c83",
     "R353": "c839445a89b6943ee02158de3075848c1f6dd940",
     "R354": "be25922efa600c839e07676bd6e40396773dcd7b",
-    "R375": "f3e39541d9ab96d1cb8bfa4433539d8c5f7ef183"
+    "R375": "11b61cbe3f1ac528fa53e50244bbda7ca6fd1b91"
   },
   "inflight": {
     ".ai-collab/requests/R347.md": {
