@@ -947,7 +947,7 @@ def test_r375_spool_legacy_file_migrated_once(tmp_path):
     assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])]) == "ok"
     assert _t_rows(db) == [9, 5, 10] and not m.spool_path(db).exists()
     held = sorted(x.name for x in (m.spool_dir(db) / "held").iterdir())   # 손상 줄 1 + 원본(손상 줄이 있어 삭제 X · 19차 검토)
-    assert len(held) == 2 and "hook-db-spool.jsonl.migrating" in held
+    assert len(held) == 2 and any(x.startswith("hook-db-spool.jsonl.migrating.") for x in held)   # 원본 = 세대 붙은 이름
 
 
 def test_r375_ping_pong_spool_keeps_event_time_and_schema(tmp_path, monkeypatch):
@@ -1159,7 +1159,9 @@ def test_r375_spool_checkpoint_size_mismatch_preserves_original(tmp_path):
                                                  encoding="ascii")
     m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert _t_rows(db) == [100]
-    assert (m.spool_dir(db) / "held" / mig.name).exists()                  # 원본 보존 (삭제 X)
+    kept = [x.name for x in (m.spool_dir(db) / "unknown").iterdir()]
+    assert any(x.startswith(mig.name + ".") and not x.startswith(mig.name + ".pos") for x in kept)   # 원본 보존 (삭제 X)
+    assert any(x.startswith(mig.name + ".pos.") for x in kept)             # 체크포인트도 함께 보존
 
 
 def test_r375_spool_oversize_legacy_line_keeps_original(tmp_path, monkeypatch):
@@ -1173,7 +1175,7 @@ def test_r375_spool_oversize_legacy_line_keeps_original(tmp_path, monkeypatch):
     for _ in range(2):
         m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert sorted(x for x in _t_rows(db) if isinstance(x, int) and x < 100) == [1, 2]
-    assert (m.spool_dir(db) / "held" / "hook-db-spool.jsonl.migrating").exists()
+    assert any(x.name.startswith("hook-db-spool.jsonl.migrating.") for x in (m.spool_dir(db) / "held").iterdir())
 
 
 def test_r375_spool_old_format_checkpoint_resumes_idempotently(tmp_path, monkeypatch):
@@ -1199,3 +1201,113 @@ def test_r375_spool_old_format_checkpoint_resumes_idempotently(tmp_path, monkeyp
         m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2, 3, 4]
 
+
+
+def _t_mig(m, db):
+    sp = m.spool_path(db)
+    return sp.with_name(sp.name + ".migrating"), sp.with_name(sp.name + ".migrating.pos")
+
+
+def _t_lines(m, db, xs, bad=False):
+    rows = [json.dumps({"kind": "t", "ts": 1, "ops": [["INSERT INTO t VALUES(?)", [x]]]}) for x in xs]
+    if bad:
+        rows.append("{bad")
+    m.spool_path(db).write_text(chr(10).join(rows) + chr(10), encoding="utf-8")
+
+
+def test_r375_spool_two_damaged_batches_both_preserved(tmp_path):
+    """20차 검토 P0: 손상 줄이 있는 예전 스풀 배치 2개를 차례로 이관 → 원본 2개 모두 보존 (같은 이름 덮어쓰기 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    for xs in ([1], [2]):
+        _t_lines(m, db, xs, bad=True)
+        for _ in range(2):
+            m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    held = [x.name for x in (m.spool_dir(db) / "held").iterdir() if x.name.startswith("hook-db-spool.jsonl.migrating")]
+    assert len(held) == 2
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]
+
+
+def test_r375_spool_park_failure_keeps_checkpoint(tmp_path, monkeypatch):
+    """보존 이동이 실패하면 체크포인트를 지우지 않고 '이관 끝' 로그도 남기지 않음 → 다음 회차 재시도."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    _t_lines(m, db, [1], bad=True)
+    mig, pos_f = _t_mig(m, db)
+    real = m.os.replace
+
+    def flaky(a, b):
+        if str(a).endswith(".migrating") and "held" in str(b):
+            raise OSError("injected")
+        return real(a, b)
+    monkeypatch.setattr(m.os, "replace", flaky)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert mig.exists() and pos_f.exists()
+    log = tmp_path / "logs" / "hook-db-spool.log"
+    assert "이관 끝" not in (log.read_text(encoding="utf-8") if log.exists() else "")
+    monkeypatch.setattr(m.os, "replace", real)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert not mig.exists() and not pos_f.exists()
+    assert any(x.name.startswith(mig.name + ".") for x in (m.spool_dir(db) / "held").iterdir())
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1]
+
+
+def test_r375_spool_corrupt_checkpoint_preserved_not_reidentified(tmp_path, monkeypatch):
+    """20차 검토 P0: 세대 id 로 일부 이벤트를 만든 뒤 체크포인트가 손상 → 파일 해시 id 로 다시 만들지 않음 · 원본·체크포인트 unknown/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    _t_lines(m, db, [1, 2, 3, 4])
+    mig, pos_f = _t_mig(m, db)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2] and mig.exists()
+    pos_f.write_text("{garbage", encoding="ascii")
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]          # 1·2 재생성(중복) X · 3·4 는 보존 대기
+    kept = [x.name for x in (m.spool_dir(db) / "unknown").iterdir()]
+    assert any(x.startswith(mig.name + ".2") for x in kept) and any(x.startswith(pos_f.name + ".") for x in kept)
+
+
+def test_r375_spool_negative_offset_checkpoint_preserved(tmp_path):
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig, pos_f = _t_mig(m, db)
+    mig.write_text(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]}) + chr(10), encoding="utf-8")
+    pos_f.write_text(json.dumps({"gen": "cccccccccccc", "pos": -5, "idx": 0, "size": mig.stat().st_size, "held": 0}),
+                     encoding="ascii")
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert _t_rows(db) == [100] and not mig.exists()
+    assert len(list((m.spool_dir(db) / "unknown").iterdir())) == 2
+
+
+def test_r375_spool_same_size_swapped_file_preserved(tmp_path, monkeypatch):
+    """이관 중 크기가 같은 다른 파일로 바뀜 → 앞부분 해시 불일치 → 원본 보존 · 이어 붙이기 X."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    _t_lines(m, db, [1, 2, 3, 4])
+    mig, pos_f = _t_mig(m, db)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    raw = mig.read_bytes()
+    mig.write_bytes(raw.replace(b"[1]", b"[7]"))                           # 같은 크기 · 다른 내용
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]
+    assert any(x.name.startswith(mig.name + ".2") for x in (m.spool_dir(db) / "unknown").iterdir())
+
+
+def test_r375_spool_missing_checkpoint_with_v1_events_preserved(tmp_path):
+    """체크포인트 없는 이관 + 901fbe1a 판 이관 이벤트(다른 id 규칙) 잔존 → 근거 부족 · 자동 이관 X · 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig, pos_f = _t_mig(m, db)
+    mig.write_text(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]}) + chr(10), encoding="utf-8")
+    d = m.spool_dir(db)
+    d.mkdir()
+    v1 = "00000000000000000000-legacy-000000-0123456789ab"
+    (d / f"{v1}.json").write_text(json.dumps({"id": v1, "ops": [["INSERT INTO t VALUES(?)", [1]]]}), encoding="utf-8")
+    for _ in range(2):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1]                # v1 이벤트 1회만 · 원본 재이관 X
+    assert any(x.name.startswith(mig.name + ".") for x in (d / "unknown").iterdir())

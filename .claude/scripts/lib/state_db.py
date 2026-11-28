@@ -219,15 +219,22 @@ def _spool_diag(db_path, msg: str) -> None:
     pass
 
 
-def _park(db_path, src: Path, sub: str, why: str, root: Path = None) -> None:
-  """지우지 않고 하위 폴더로 옮겨 보존 (held=손상·비허용 · failed=영구 오류 · unknown=반영 여부 불명)."""
+def _park(db_path, src: Path, sub: str, why: str, root: Path = None, tag: str = "") -> bool:
+  """지우지 않고 하위 폴더로 옮겨 보존 (held=손상·비허용 · failed=영구 오류 · unknown=반영 여부 불명) — 반환 = 옮김 성공.
+  R375 20차 검토: 같은 이름 보존물이 이미 있으면 덮어쓰지 않고 번호를 붙임 (소비자는 잠금 1곳이라 확인→이동 사이 경쟁 없음)."""
   try:
     dst = (root or src.parent) / sub
     dst.mkdir(exist_ok=True)
-    os.replace(src, dst / src.name)
-    _spool_diag(db_path, f"spool {sub}/ 보관: {src.name} — {why}")
+    base = src.name + (f".{tag}" if tag else "")
+    target, n = dst / base, 1
+    while target.exists():
+      target, n = dst / f"{base}.{n}", n + 1
+    os.replace(src, target)
+    _spool_diag(db_path, f"spool {sub}/ 보관: {target.name} — {why}")
+    return True
   except OSError as e:
     _spool_diag(db_path, f"spool {sub}/ 이동 실패(그대로 둠): {src.name} — {type(e).__name__} · {why}")
+    return False
 
 
 SPOOL_APPLIED_DDL = ("CREATE TABLE IF NOT EXISTS hook_spool_applied ("
@@ -247,19 +254,53 @@ def _ckpt_write(path: Path, obj: dict) -> None:
 
 
 def _ckpt_read(path: Path):
-  """체크포인트 → dict | 'old'(19차 판 'pos idx' 형식 · 세대 없음) | None(없음·손상)."""
+  """체크포인트 → (상태, 값). 상태: 'ok'(dict) · 'old'((pos, idx) · 19차 판 'pos idx' 형식) · 'missing' · 'bad'(손상·음수·형식 밖).
+  R375 20차 검토: 손상과 부재를 합치지 않음 — 손상은 이전 판으로 간주하지 않고 보존(UNKNOWN)."""
+  if not path.exists():
+    return "missing", None
   try:
-    raw = path.read_text(encoding="ascii")
-  except OSError:
-    return None
+    raw = path.read_bytes()[:4096].decode("ascii")
+  except (OSError, UnicodeDecodeError):
+    return "bad", None
+  parts = raw.split()
+  if len(parts) == 2 and all(x.isdigit() for x in parts):
+    return "old", (int(parts[0]), int(parts[1]))
   try:
     o = json.loads(raw)
   except ValueError:
-    return "old" if len(raw.split()) == 2 and all(x.isdigit() for x in raw.split()) else None
-  if (isinstance(o, dict) and isinstance(o.get("gen"), str) and o["gen"]
-      and all(isinstance(o.get(k), int) for k in ("pos", "idx", "held"))):
-    return o
-  return "old" if isinstance(o, int) else None
+    return "bad", None
+  ints = ("pos", "idx", "held", "size")
+  if (isinstance(o, dict) and isinstance(o.get("gen"), str) and o["gen"].isalnum()
+      and all(type(o.get(k)) is int for k in ints) and min(o["pos"], o["idx"], o["held"]) >= 0
+      and o["size"] >= -1 and isinstance(o.get("head", ""), str)):
+    return "ok", o
+  return "bad", None
+
+
+def _head_sig(path: Path) -> str:
+  """파일 앞 64KB 해시 — 크기가 같은 다른 파일로 바뀐 것 감지 (읽기량 묶음)."""
+  import hashlib
+  with open(path, "rb") as f:
+    return hashlib.sha1(f.read(SPOOL_EVENT_MAX_BYTES)).hexdigest()[:16]
+
+
+def _v1_legacy_events_exist(d: Path) -> bool:
+  """901fbe1a 판 이관 이벤트(이름 = legacy-줄번호-해시12 · 세대 없음)가 남아 있는지 — 있으면 체크포인트 없는 이관을 이어받지 않음."""
+  import re
+  pat = re.compile(r"^0{20}-legacy-\d{6}-[0-9a-f]{12}\.")
+  for sub in (d, d / "held"):
+    try:
+      with os.scandir(sub) as it:
+        for k, e in enumerate(it):
+          if k >= SPOOL_SCAN_MAX:
+            return True                        # 다 못 봄 = 근거 부족 → 보수적으로 있음
+          if pat.match(e.name):
+            return True
+    except FileNotFoundError:
+      continue
+    except OSError:
+      return True
+  return False
 
 
 def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
@@ -275,7 +316,7 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
   pos_f = sp.with_name(sp.name + ".migrating.pos")
   d.mkdir(parents=True, exist_ok=True)
   if sp.exists() and not mig.exists():
-    _ckpt_write(pos_f, {"gen": uuid.uuid4().hex[:12], "pos": 0, "idx": 0, "size": -1, "held": 0})  # 새 세대 (남은 옛 체크포인트 덮어씀)
+    _ckpt_write(pos_f, {"gen": uuid.uuid4().hex[:12], "pos": 0, "idx": 0, "size": -1, "head": "", "held": 0})  # 새 세대 (남은 옛 체크포인트 덮어씀)
     try:
       os.replace(sp, mig)
     except OSError:
@@ -283,30 +324,37 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
   if not mig.exists():
     return True
   msize = mig.stat().st_size
-  ck = _ckpt_read(pos_f)
-  if not isinstance(ck, dict):
-    # 19차 판이 남긴 이관(세대 없음) → 그 판과 같은 id(파일 전체 해시)로 이어 감 — 이미 만든 이벤트와 멱등
-    old_pos = old_idx = 0
-    if ck == "old":
-      try:
-        old_pos, old_idx = (int(x) for x in pos_f.read_text(encoding="ascii").split())
-      except (OSError, ValueError):
-        old_pos = old_idx = 0
+  st, ck = _ckpt_read(pos_f)
+  tag = time.strftime("%Y%m%d%H%M%S")
+
+  def _hold(why: str) -> bool:                 # 원본·체크포인트를 unknown/ 보존 (원본 이동이 실패하면 체크포인트도 그대로 → 다음 회차 재시도)
+    if _park(db_path, mig, "unknown", why, d, tag) and pos_f.exists():
+      _park(db_path, pos_f, "unknown", "위 원본의 체크포인트", d, tag)
+    return True
+
+  if st == "bad":
+    return _hold("이관 체크포인트 손상·형식 밖 — 어느 세대인지 근거 없음 · 자동 이관 중단")
+  if st in ("old", "missing"):
+    # 명확한 이전 계약만 이어받음: 19차 판(1cc2334b) = id 가 파일 전체 해시 · 'pos idx' 또는 첫 배치 전(체크포인트 없음).
+    # 901fbe1a 판 이벤트(다른 id 규칙)가 남아 있으면 같은 줄이 다른 id 로 다시 생길 수 있음 → 보존
+    if st == "missing" and _v1_legacy_events_exist(d):
+      return _hold("체크포인트 없는 이관 + 901fbe1a 판 이관 이벤트 잔존 — 다른 id 규칙이라 중복 위험 · 자동 이관 중단")
+    old_pos, old_idx = ck if st == "old" else (0, 0)
+    if old_pos > msize:
+      return _hold(f"19차 판 체크포인트 위치가 파일 크기 밖 ({old_pos} > {msize})")
     fh = hashlib.sha1()
     with open(mig, "rb") as f:
       for chunk in iter(lambda: f.read(1 << 20), b""):
         fh.update(chunk)
         if sess.remaining() <= 0.1:
           return False                         # 마감 → 다음 회차 (진행 기록 없음 · 이벤트 생성 전)
-    ck = {"gen": fh.hexdigest()[:12], "pos": old_pos, "idx": old_idx, "size": msize, "held": 0}
+    ck = {"gen": fh.hexdigest()[:12], "pos": old_pos, "idx": old_idx, "size": msize, "head": _head_sig(mig), "held": 0}
     _ckpt_write(pos_f, ck)
-  if ck.get("size", -1) < 0:
-    ck["size"] = msize                         # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
+  if ck["size"] < 0:
+    ck["size"], ck["head"] = msize, _head_sig(mig)   # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
     _ckpt_write(pos_f, ck)
-  if ck["size"] != msize or ck["pos"] > msize:
-    _park(db_path, mig, "held", f"이관 체크포인트와 파일 크기 불일치 ({ck['size']} ≠ {msize}) — 원본 보존 · 자동 이관 중단", d)
-    _park(db_path, pos_f, "held", "불일치 체크포인트 보존", d)
-    return True
+  if ck["size"] != msize or ck["pos"] > msize or (ck.get("head") and ck["head"] != _head_sig(mig)):
+    return _hold(f"이관 체크포인트와 파일 불일치 (크기 {ck['size']}/{msize} · 앞부분 해시) — 다른 파일로 바뀜 · 원본 보존")
   gen, pos, idx, held = ck["gen"], ck["pos"], ck["idx"], ck["held"]
   moved = 0
   with open(mig, "rb") as f:
@@ -344,14 +392,19 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
           held += 1
           body, dst = ln, d / "held" / f"{name}.legacy-line"
         tmp = d / f".tmp-{name}"
-        tmp.write_text(body, encoding="utf-8")
+        with open(tmp, "w", encoding="utf-8") as tf:
+          tf.write(body)
+          tf.flush()
+          os.fsync(tf.fileno())                # 원본을 나중에 지우므로 이벤트 내용을 먼저 디스크에
         os.replace(tmp, dst)
         moved += 1
       pos = f.tell()
     finished = not f.read(1)
   if finished:
     if held:
-      _park(db_path, mig, "held", f"이관 끝 · 손상·상한 초과 줄 {held}개 → 원본 보존", d)
+      if not _park(db_path, mig, "held", f"이관 끝 · 손상·상한 초과 줄 {held}개 → 원본 보존", d, gen):
+        _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "head": ck.get("head", ""), "held": held})
+        return False                           # 보존 실패 → 체크포인트 유지 · 다음 회차 재시도 (끝 로그 X)
     else:
       mig.unlink()
     try:
@@ -360,7 +413,7 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
       pass
     _spool_diag(db_path, f"예전 스풀 이관 끝 ({idx}줄 · 세대 {gen})")
     return True
-  _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "held": held})
+  _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "head": ck.get("head", ""), "held": held})
   return False
 
 
