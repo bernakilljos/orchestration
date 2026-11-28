@@ -1311,3 +1311,90 @@ def test_r375_spool_missing_checkpoint_with_v1_events_preserved(tmp_path):
         m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert sorted(x for x in _t_rows(db) if x < 100) == [1]                # v1 이벤트 1회만 · 원본 재이관 X
     assert any(x.name.startswith(mig.name + ".") for x in (d / "unknown").iterdir())
+
+
+def test_r375_spool_checkpoint_deleted_after_batch_not_reapplied(tmp_path, monkeypatch):
+    """21차 검토 P0: 새 세대 첫 배치 적용 뒤 체크포인트만 사라짐 → 파일 해시 id 로 재생성(중복) X · 원본 unknown/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    _t_lines(m, db, [1, 2, 3, 4])
+    mig, pos_f = _t_mig(m, db)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])       # 첫 배치 이벤트 생성·반영 끝 (진행 기록 pos>0)
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2] and mig.exists()
+    pos_f.unlink()
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]           # 직전 판: [1,1,2,2,3,4]
+    assert any(x.name.startswith(mig.name + ".") for x in (m.spool_dir(db) / "unknown").iterdir())
+
+
+def test_r375_spool_tail_changed_same_head_preserved(tmp_path, monkeypatch):
+    """21차 검토 P0: 앞 64KB 같고 뒤만 바뀐 같은 크기 파일 → 파일 identity(수정 시각) 불일치로 보존 · 이어 붙이기 X."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    import hashlib
+    monkeypatch.setattr(m, "_head_sig", lambda p: hashlib.sha1(open(p, "rb").read(32)).hexdigest()[:16])   # 앞부분 해시 범위를 첫 줄 안으로 (줄 상한은 그대로)
+    _t_lines(m, db, [1, 2, 3, 4])
+    mig, pos_f = _t_mig(m, db)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    raw = mig.read_bytes()
+    st = mig.stat()
+    mig.write_bytes(raw.replace(b"[4]", b"[8]"))                           # 같은 크기 · 앞부분 동일 · 뒤만 다름
+    os.utime(mig, ns=(st.st_atime_ns, st.st_mtime_ns + 5_000_000_000))   # 거친 시각 해상도에서도 차이 보장
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert 8 not in _t_rows(db) and 4 not in _t_rows(db)
+    assert any(x.name.startswith(mig.name + ".2") for x in (m.spool_dir(db) / "unknown").iterdir())
+
+
+def test_r375_spool_oversize_checkpoint_rejected(tmp_path):
+    """체크포인트 읽기는 4KB 상한 — 정상 JSON 뒤에 4KB 를 넘는 꼬리가 붙으면 잘라 읽고 통과시키지 않음 (형식 밖 → 보존)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig, pos_f = _t_mig(m, db)
+    mig.write_text(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]}) + chr(10), encoding="utf-8")
+    pos_f.write_text(json.dumps({"gen": "dddddddddddd", "pos": 0, "idx": 0, "size": -1, "held": 0}) + " " * 5000,
+                     encoding="ascii")
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert _t_rows(db) == [100] and not mig.exists()
+    assert len(list((m.spool_dir(db) / "unknown").iterdir())) == 2
+
+
+def test_r375_spool_stale_checkpoint_preserved_before_new_batch(tmp_path):
+    """원본 없이 남은 체크포인트(보존 이동 실패 잔존 등) → 새 배치 시작 전 unknown/ 으로 보존 (새 세대가 덮어쓰지 않음)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig, pos_f = _t_mig(m, db)
+    old = json.dumps({"gen": "eeeeeeeeeeee", "pos": 7, "idx": 1, "size": 30, "head": "", "held": 0})
+    pos_f.write_text(old, encoding="ascii")
+    _t_lines(m, db, [1, 2])
+    for _ in range(2):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2]
+    kept = [x for x in (m.spool_dir(db) / "unknown").iterdir() if x.name.startswith(pos_f.name + ".")]
+    assert len(kept) == 1 and kept[0].read_text(encoding="ascii") == old
+
+
+def test_r375_spool_stale_checkpoint_park_failure_blocks_new_batch(tmp_path, monkeypatch):
+    """남은 체크포인트 보존 이동이 실패하면 새 배치를 시작하지 않음 → 증거 내용 그대로 · 원본 이름 바꾸기 X · 다음 회차 재시도."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig, pos_f = _t_mig(m, db)
+    old = json.dumps({"gen": "ffffffffffff", "pos": 7, "idx": 1, "size": 30, "head": "", "held": 0})
+    pos_f.write_text(old, encoding="ascii")
+    _t_lines(m, db, [1])
+    real = m.os.replace
+
+    def flaky(a, b):
+        if str(a).endswith(".migrating.pos") and "unknown" in str(b):
+            raise OSError("injected")
+        return real(a, b)
+    monkeypatch.setattr(m.os, "replace", flaky)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert pos_f.read_text(encoding="ascii") == old and m.spool_path(db).exists() and not mig.exists()
+    monkeypatch.setattr(m.os, "replace", real)
+    for _ in range(2):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1]

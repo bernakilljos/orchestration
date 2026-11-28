@@ -259,7 +259,11 @@ def _ckpt_read(path: Path):
   if not path.exists():
     return "missing", None
   try:
-    raw = path.read_bytes()[:4096].decode("ascii")
+    with open(path, "rb") as f:                # R375 21차 검토: 실제 읽기량 상한 (전체 읽은 뒤 자르기 X)
+      raw_b = f.read(4097)
+    if len(raw_b) > 4096:
+      return "bad", None                       # 기록기는 4KB 를 넘게 쓰지 않음 → 형식 밖
+    raw = raw_b.decode("ascii")
   except (OSError, UnicodeDecodeError):
     return "bad", None
   parts = raw.split()
@@ -272,7 +276,8 @@ def _ckpt_read(path: Path):
   ints = ("pos", "idx", "held", "size")
   if (isinstance(o, dict) and isinstance(o.get("gen"), str) and o["gen"].isalnum()
       and all(type(o.get(k)) is int for k in ints) and min(o["pos"], o["idx"], o["held"]) >= 0
-      and o["size"] >= -1 and isinstance(o.get("head", ""), str)):
+      and o["size"] >= -1 and isinstance(o.get("head", ""), str)
+      and all(type(o[k]) is int for k in ("ino", "mt") if k in o)):
     return "ok", o
   return "bad", None
 
@@ -284,23 +289,11 @@ def _head_sig(path: Path) -> str:
     return hashlib.sha1(f.read(SPOOL_EVENT_MAX_BYTES)).hexdigest()[:16]
 
 
-def _v1_legacy_events_exist(d: Path) -> bool:
-  """901fbe1a 판 이관 이벤트(이름 = legacy-줄번호-해시12 · 세대 없음)가 남아 있는지 — 있으면 체크포인트 없는 이관을 이어받지 않음."""
-  import re
-  pat = re.compile(r"^0{20}-legacy-\d{6}-[0-9a-f]{12}\.")
-  for sub in (d, d / "held"):
-    try:
-      with os.scandir(sub) as it:
-        for k, e in enumerate(it):
-          if k >= SPOOL_SCAN_MAX:
-            return True                        # 다 못 봄 = 근거 부족 → 보수적으로 있음
-          if pat.match(e.name):
-            return True
-    except FileNotFoundError:
-      continue
-    except OSError:
-      return True
-  return False
+def _file_ident(path: Path) -> dict:
+  """파일 identity — 파일 번호(같은 볼륨 이름 바꾸기는 유지 · 다른 파일로 교체되면 바뀜) + 수정 시각(제자리 수정이면 바뀜).
+  R375 21차 검토: 앞 64KB 해시만으로는 뒤쪽만 바뀐 같은 크기 파일을 못 잡음 → 이관 중 불변 계약을 identity 로 확인 (전체 재해시 X)."""
+  s = os.stat(path)
+  return {"ino": int(s.st_ino), "mt": int(s.st_mtime_ns)}
 
 
 def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
@@ -316,7 +309,10 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
   pos_f = sp.with_name(sp.name + ".migrating.pos")
   d.mkdir(parents=True, exist_ok=True)
   if sp.exists() and not mig.exists():
-    _ckpt_write(pos_f, {"gen": uuid.uuid4().hex[:12], "pos": 0, "idx": 0, "size": -1, "head": "", "held": 0})  # 새 세대 (남은 옛 체크포인트 덮어씀)
+    if pos_f.exists() and not _park(db_path, pos_f, "unknown", "원본 없이 남은 이관 체크포인트 — 새 세대로 덮어쓰기 전 보존", d,
+                                    time.strftime("%Y%m%d%H%M%S")):
+      return True                             # R375 21차 검토: 남은 증거를 새 배치가 덮어쓰지 않음 → 보존될 때까지 새 이관 보류
+    _ckpt_write(pos_f, {"gen": uuid.uuid4().hex[:12], "pos": 0, "idx": 0, "size": -1, "head": "", "held": 0})  # 새 세대
     try:
       os.replace(sp, mig)
     except OSError:
@@ -334,12 +330,13 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
 
   if st == "bad":
     return _hold("이관 체크포인트 손상·형식 밖 — 어느 세대인지 근거 없음 · 자동 이관 중단")
-  if st in ("old", "missing"):
-    # 명확한 이전 계약만 이어받음: 19차 판(1cc2334b) = id 가 파일 전체 해시 · 'pos idx' 또는 첫 배치 전(체크포인트 없음).
-    # 901fbe1a 판 이벤트(다른 id 규칙)가 남아 있으면 같은 줄이 다른 id 로 다시 생길 수 있음 → 보존
-    if st == "missing" and _v1_legacy_events_exist(d):
-      return _hold("체크포인트 없는 이관 + 901fbe1a 판 이관 이벤트 잔존 — 다른 id 규칙이라 중복 위험 · 자동 이관 중단")
-    old_pos, old_idx = ck if st == "old" else (0, 0)
+  if st == "missing":
+    # R375 21차 검토: 부재를 이전 형식으로 추정하지 않음 — 새 세대 배치 적용 뒤 체크포인트만 사라진 경우와
+    # 이전 판(901fbe1a·1cc2334b 첫 배치 전) 상태를 구분할 세대 증거가 없음 → UNKNOWN 보존 (자동 이관 X · 중복 반영 방지)
+    return _hold("체크포인트 없는 이관 파일 — 세대 증거 없음 · 자동 이관 중단")
+  if st == "old":
+    # 명확한 이전 계약만 이어받음: 19차 판(1cc2334b)의 'pos idx' 체크포인트 = id 가 파일 전체 해시
+    old_pos, old_idx = ck
     if old_pos > msize:
       return _hold(f"19차 판 체크포인트 위치가 파일 크기 밖 ({old_pos} > {msize})")
     fh = hashlib.sha1()
@@ -348,13 +345,16 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
         fh.update(chunk)
         if sess.remaining() <= 0.1:
           return False                         # 마감 → 다음 회차 (진행 기록 없음 · 이벤트 생성 전)
-    ck = {"gen": fh.hexdigest()[:12], "pos": old_pos, "idx": old_idx, "size": msize, "head": _head_sig(mig), "held": 0}
+    ck = {"gen": fh.hexdigest()[:12], "pos": old_pos, "idx": old_idx, "size": msize, "head": _head_sig(mig), "held": 0,
+          **_file_ident(mig)}
     _ckpt_write(pos_f, ck)
   if ck["size"] < 0:
-    ck["size"], ck["head"] = msize, _head_sig(mig)   # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
+    ck.update(size=msize, head=_head_sig(mig), **_file_ident(mig))   # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
     _ckpt_write(pos_f, ck)
-  if ck["size"] != msize or ck["pos"] > msize or (ck.get("head") and ck["head"] != _head_sig(mig)):
-    return _hold(f"이관 체크포인트와 파일 불일치 (크기 {ck['size']}/{msize} · 앞부분 해시) — 다른 파일로 바뀜 · 원본 보존")
+  ident = {k: ck[k] for k in ("ino", "mt") if k in ck}
+  if (ck["size"] != msize or ck["pos"] > msize or (ck.get("head") and ck["head"] != _head_sig(mig))
+      or (ident and ident != _file_ident(mig))):
+    return _hold(f"이관 체크포인트와 파일 불일치 (크기 {ck['size']}/{msize} · 앞부분 해시 · 파일 번호·수정 시각) — 다른 파일로 바뀜 · 원본 보존")
   gen, pos, idx, held = ck["gen"], ck["pos"], ck["idx"], ck["held"]
   moved = 0
   with open(mig, "rb") as f:
@@ -403,7 +403,7 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
   if finished:
     if held:
       if not _park(db_path, mig, "held", f"이관 끝 · 손상·상한 초과 줄 {held}개 → 원본 보존", d, gen):
-        _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "head": ck.get("head", ""), "held": held})
+        _ckpt_write(pos_f, {**ck, "pos": pos, "idx": idx, "held": held})
         return False                           # 보존 실패 → 체크포인트 유지 · 다음 회차 재시도 (끝 로그 X)
     else:
       mig.unlink()
@@ -413,7 +413,7 @@ def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
       pass
     _spool_diag(db_path, f"예전 스풀 이관 끝 ({idx}줄 · 세대 {gen})")
     return True
-  _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "head": ck.get("head", ""), "held": held})
+  _ckpt_write(pos_f, {**ck, "pos": pos, "idx": idx, "held": held})   # identity·세대 그대로 이어 기록
   return False
 
 
