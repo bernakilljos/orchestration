@@ -141,6 +141,7 @@ def spool_dir(db_path) -> Path:
 SPOOL_MAX_EVENTS = 5000                 # 폴더 안 대기 이벤트 상한 (동시 writer 수만큼만 넘을 수 있음)
 SPOOL_EVENT_MAX_BYTES = 64 * 1024       # 이벤트 1건 상한 (응답 경로 읽기량 묶음)
 SPOOL_STALE_TMP_SEC = 3600              # 쓰다 만 임시 파일 = 이 시간 뒤 held/ 로 옮겨 보존
+SPOOL_GEN = 2                           # 이벤트 형식 세대 — 2 = 반영 증거(hook_spool_applied) 계약 · 이 값이 없는 점유 파일은 이전 판(증거 없이 commit 됐을 수 있음)
 
 
 def _allowed_stmt(stmt) -> bool:
@@ -190,7 +191,7 @@ def spool_append(db_path, kind: str, ops: list, why: str, setup: tuple = ()) -> 
       _spool_diag(db_path, f"spool full ({kind}) — 대기 {SPOOL_MAX_EVENTS}건 이상 · 이번 기록 미보관 · {why}")
       return "spool-full"
     eid = f"{time.time_ns():020d}-{os.getpid()}-{uuid.uuid4().hex[:12]}"
-    data = json.dumps({"id": eid, "ts": time.time(), "kind": kind, "why": why,
+    data = json.dumps({"id": eid, "gen": SPOOL_GEN, "ts": time.time(), "kind": kind, "why": why,
                        "setup": [[str(x), []] for x in setup], "ops": [[str(o[0]), list(o[1])] for o in ops]},
                       ensure_ascii=False)
     if len(data.encode("utf-8")) > SPOOL_EVENT_MAX_BYTES:
@@ -218,10 +219,10 @@ def _spool_diag(db_path, msg: str) -> None:
     pass
 
 
-def _park(db_path, src: Path, sub: str, why: str) -> None:
+def _park(db_path, src: Path, sub: str, why: str, root: Path = None) -> None:
   """지우지 않고 하위 폴더로 옮겨 보존 (held=손상·비허용 · failed=영구 오류 · unknown=반영 여부 불명)."""
   try:
-    dst = src.parent / sub
+    dst = (root or src.parent) / sub
     dst.mkdir(exist_ok=True)
     os.replace(src, dst / src.name)
     _spool_diag(db_path, f"spool {sub}/ 보관: {src.name} — {why}")
@@ -235,69 +236,131 @@ SPOOL_MIGRATE_BATCH = 200               # 예전 스풀 이관: 한 번에 옮�
 SPOOL_SCAN_MAX = 2000                   # 재생 1회에 훑는 폴더 항목 상한 (5000건 대기에서도 응답 경로 묶음)
 
 
+def _ckpt_write(path: Path, obj: dict) -> None:
+  """이관 체크포인트 원자 기록 (임시 파일 fsync → os.replace)."""
+  tmp = path.with_name(path.name + ".tmp")
+  with open(tmp, "w", encoding="ascii") as f:
+    f.write(json.dumps(obj))
+    f.flush()
+    os.fsync(f.fileno())
+  os.replace(tmp, path)
+
+
+def _ckpt_read(path: Path):
+  """체크포인트 → dict | 'old'(19차 판 'pos idx' 형식 · 세대 없음) | None(없음·손상)."""
+  try:
+    raw = path.read_text(encoding="ascii")
+  except OSError:
+    return None
+  try:
+    o = json.loads(raw)
+  except ValueError:
+    return "old" if len(raw.split()) == 2 and all(x.isdigit() for x in raw.split()) else None
+  if (isinstance(o, dict) and isinstance(o.get("gen"), str) and o["gen"]
+      and all(isinstance(o.get(k), int) for k in ("pos", "idx", "held"))):
+    return o
+  return "old" if isinstance(o, int) else None
+
+
 def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
-  """예전 단일 스풀 파일 → 이벤트 파일 (잠금 안 · 남은 마감 안에서 SPOOL_MIGRATE_BATCH 줄씩 · 진행 바이트 위치 기록).
-  이벤트 id = 파일 전체 해시 + 줄 번호 + 줄 해시 (결정적) → 중간 실패·재시작으로 같은 이벤트를 다시 만들어도
-  hook_spool_applied 가 한 번만 반영 (DB 멱등). 반환 = 이관 끝(또는 할 것 없음) 여부."""
+  """예전 단일 스풀 파일 → 이벤트 파일 (잠금 안 · 남은 마감 안에서 SPOOL_MIGRATE_BATCH 줄씩).
+  R375 19차 검토: 이관 **세대 id** 를 이름 바꾸기 전에 체크포인트에 원자 기록 → 새 파일은 항상 새 세대(이전 진행 위치 재사용 X ·
+  같은 내용의 별도 파일도 다른 id) · 체크포인트 = {gen, pos, idx, size, held} · 크기가 다르면 다른 파일 → 원본 held/ 보존(삭제 X).
+  이벤트 id = 세대 + 줄 번호 + 줄 해시 → 중간 실패·재시작으로 같은 이벤트를 다시 만들어도 hook_spool_applied 가 한 번만 반영.
+  줄 읽기는 64KB 상한 · 손상·초과 줄이 하나라도 있으면 끝난 원본도 지우지 않고 held/ 로 보존. 반환 = 이관 끝(또는 할 것 없음) 여부."""
   import hashlib
+  import uuid
   sp = spool_path(db_path)
   mig = sp.with_name(sp.name + ".migrating")
   pos_f = sp.with_name(sp.name + ".migrating.pos")
+  d.mkdir(parents=True, exist_ok=True)
   if sp.exists() and not mig.exists():
+    _ckpt_write(pos_f, {"gen": uuid.uuid4().hex[:12], "pos": 0, "idx": 0, "size": -1, "held": 0})  # 새 세대 (남은 옛 체크포인트 덮어씀)
     try:
       os.replace(sp, mig)
     except OSError:
-      return True                             # 예전 판 writer 가 열고 있음 → 다음에 (이관 대상 아님으로 진행)
+      return True                             # 예전 판 writer 가 열고 있음 → 다음에
   if not mig.exists():
     return True
-  d.mkdir(parents=True, exist_ok=True)
-  fh = hashlib.sha1()
-  with open(mig, "rb") as f:                  # 파일 identity (같은 줄 번호·내용이어도 다른 파일이면 다른 id)
-    for chunk in iter(lambda: f.read(1 << 20), b""):
-      fh.update(chunk)
-  fid = fh.hexdigest()[:12]
-  try:
-    pos, idx = (int(x) for x in pos_f.read_text(encoding="ascii").split())
-  except (OSError, ValueError):
-    pos, idx = 0, 0
+  msize = mig.stat().st_size
+  ck = _ckpt_read(pos_f)
+  if not isinstance(ck, dict):
+    # 19차 판이 남긴 이관(세대 없음) → 그 판과 같은 id(파일 전체 해시)로 이어 감 — 이미 만든 이벤트와 멱등
+    old_pos = old_idx = 0
+    if ck == "old":
+      try:
+        old_pos, old_idx = (int(x) for x in pos_f.read_text(encoding="ascii").split())
+      except (OSError, ValueError):
+        old_pos = old_idx = 0
+    fh = hashlib.sha1()
+    with open(mig, "rb") as f:
+      for chunk in iter(lambda: f.read(1 << 20), b""):
+        fh.update(chunk)
+        if sess.remaining() <= 0.1:
+          return False                         # 마감 → 다음 회차 (진행 기록 없음 · 이벤트 생성 전)
+    ck = {"gen": fh.hexdigest()[:12], "pos": old_pos, "idx": old_idx, "size": msize, "held": 0}
+    _ckpt_write(pos_f, ck)
+  if ck.get("size", -1) < 0:
+    ck["size"] = msize                         # 이름 바꾼 직후 (아직 한 줄도 안 옮김)
+    _ckpt_write(pos_f, ck)
+  if ck["size"] != msize or ck["pos"] > msize:
+    _park(db_path, mig, "held", f"이관 체크포인트와 파일 크기 불일치 ({ck['size']} ≠ {msize}) — 원본 보존 · 자동 이관 중단", d)
+    _park(db_path, pos_f, "held", "불일치 체크포인트 보존", d)
+    return True
+  gen, pos, idx, held = ck["gen"], ck["pos"], ck["idx"], ck["held"]
   moved = 0
   with open(mig, "rb") as f:
     f.seek(pos)
     while moved < SPOOL_MIGRATE_BATCH and sess.remaining() > 0.1:
-      raw = f.readline()
+      raw = f.readline(SPOOL_EVENT_MAX_BYTES + 1)
       if not raw:
         break
+      big = len(raw) > SPOOL_EVENT_MAX_BYTES and not raw.endswith(b"\n")
+      if big:                                  # 상한 초과 줄 → 줄 끝까지 건너뜀 (원본은 끝나도 held/ 보존)
+        done_skip = False
+        while sess.remaining() > 0.1:
+          rest = f.readline(1 << 20)
+          if not rest or rest.endswith(b"\n"):
+            done_skip = True
+            break
+        if not done_skip:
+          break                                # 마감 → 이 줄 처음부터 다음 회차
       ln = raw.decode("utf-8", errors="replace").rstrip("\r\n")
       i, idx = idx, idx + 1
       if ln.strip():
-        name = f"00000000000000000000-legacy-{fid}-{i:06d}-{hashlib.sha1(ln.encode('utf-8')).hexdigest()[:8]}"
-        try:
-          rec = json.loads(ln)
-          ok = isinstance(rec, dict)
-        except json.JSONDecodeError:
-          ok = False
-        if ok:
-          body = json.dumps({"id": name, "ts": rec.get("ts"), "kind": rec.get("kind"), "why": rec.get("why"),
-                             "setup": [], "ops": rec.get("ops") or []}, ensure_ascii=False)
+        name = f"00000000000000000000-legacy-{gen}-{i:06d}-{hashlib.sha1(ln.encode('utf-8')).hexdigest()[:8]}"
+        rec = None
+        if not big:
+          try:
+            rec = json.loads(ln)
+          except json.JSONDecodeError:
+            rec = None
+        if isinstance(rec, dict):
+          body = json.dumps({"id": name, "gen": SPOOL_GEN, "ts": rec.get("ts"), "kind": rec.get("kind"),
+                             "why": rec.get("why"), "setup": [], "ops": rec.get("ops") or []}, ensure_ascii=False)
           dst = d / f"{name}.json"
         else:
           (d / "held").mkdir(exist_ok=True)
+          held += 1
           body, dst = ln, d / "held" / f"{name}.legacy-line"
         tmp = d / f".tmp-{name}"
         tmp.write_text(body, encoding="utf-8")
         os.replace(tmp, dst)
         moved += 1
       pos = f.tell()
-    finished = not f.readline()
+    finished = not f.read(1)
   if finished:
-    mig.unlink()
+    if held:
+      _park(db_path, mig, "held", f"이관 끝 · 손상·상한 초과 줄 {held}개 → 원본 보존", d)
+    else:
+      mig.unlink()
     try:
-      pos_f.unlink()
+      pos_f.unlink()                           # 실패해도 다음 새 파일은 새 세대로 덮어써 재사용 X
     except OSError:
       pass
-    _spool_diag(db_path, f"예전 스풀 이관 끝 ({idx}줄 · 파일 {fid})")
+    _spool_diag(db_path, f"예전 스풀 이관 끝 ({idx}줄 · 세대 {gen})")
     return True
-  pos_f.write_text(f"{pos} {idx}", encoding="ascii")
+  _ckpt_write(pos_f, {"gen": gen, "pos": pos, "idx": idx, "size": msize, "held": held})
   return False
 
 
@@ -317,7 +380,8 @@ def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
   이미 증거가 있는 이벤트(이관 재시작 등)는 SQL 을 다시 실행하지 않고 정리만. unknown/ (증거 장치 전 보관분)은 자동 재생하지 않음."""
   import heapq
   d = spool_dir(db_path)
-  if (not d.exists() and not spool_path(db_path).exists()) or sess.remaining() <= 0.05:
+  sp0 = spool_path(db_path)
+  if (not d.exists() and not sp0.exists() and not sp0.with_name(sp0.name + ".migrating").exists()) or sess.remaining() <= 0.05:
     return 0
   try:
     import sys as _sys
@@ -371,6 +435,9 @@ def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
               os.unlink(e.path)                  # commit 됨 → 정리만 (재생 X)
             except OSError:
               pass
+          elif st_ is False and rec.get("gen") != SPOOL_GEN:
+            _park(db_path, Path(e.path), "unknown",
+                  "이전 판 점유 파일 — 반영 증거 계약 전이라 commit 여부 불명 · 자동 재생 X")
           elif st_ is False:
             try:
               os.replace(e.path, src)            # commit 안 됨 → 되돌려 재생 대상으로

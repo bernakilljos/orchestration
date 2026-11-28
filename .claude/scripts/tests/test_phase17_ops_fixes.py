@@ -946,7 +946,8 @@ def test_r375_spool_legacy_file_migrated_once(tmp_path):
     assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok+replay1"
     assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])]) == "ok"
     assert _t_rows(db) == [9, 5, 10] and not m.spool_path(db).exists()
-    assert len(list((m.spool_dir(db) / "held").iterdir())) == 1
+    held = sorted(x.name for x in (m.spool_dir(db) / "held").iterdir())   # 손상 줄 1 + 원본(손상 줄이 있어 삭제 X · 19차 검토)
+    assert len(held) == 2 and "hook-db-spool.jsonl.migrating" in held
 
 
 def test_r375_ping_pong_spool_keeps_event_time_and_schema(tmp_path, monkeypatch):
@@ -973,11 +974,13 @@ def test_r375_ping_pong_spool_keeps_event_time_and_schema(tmp_path, monkeypatch)
     assert got["a.py"] == ts                                                # 재생돼도 발생 시각 그대로
 
 
-def _t_inflight(m, db, x, eid):
+def _t_inflight(m, db, x, eid, gen=True):
     d = m.spool_dir(db)
     d.mkdir(exist_ok=True)
-    (d / f"{eid}.inflight").write_text(json.dumps({"id": eid, "ops": [["INSERT INTO t VALUES(?)", [x]]]}),
-                                       encoding="utf-8")
+    rec = {"id": eid, "ops": [["INSERT INTO t VALUES(?)", [x]]]}
+    if gen:
+        rec["gen"] = m.SPOOL_GEN
+    (d / f"{eid}.inflight").write_text(json.dumps(rec), encoding="utf-8")
 
 
 def test_r375_spool_crash_after_claim_is_replayed(tmp_path):
@@ -1095,4 +1098,104 @@ def test_r375_spool_legacy_migration_bounded_batches(tmp_path, monkeypatch):
     for _ in range(4):
         m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
     assert sorted(x for x in _t_rows(db) if x < 100) == list(range(1, 8))
+
+
+def _t_legacy(m, db, xs):
+    m.spool_path(db).write_text("".join(json.dumps({"kind": "t", "ts": 1, "ops": [["INSERT INTO t VALUES(?)", [x]]]}) + "\n"
+                                        for x in xs), encoding="utf-8")
+
+
+def test_r375_spool_upgrade_old_inflight_not_replayed(tmp_path):
+    """19차 검토 P0: 이전 판(세대 없음)이 commit 뒤 정리 실패로 남긴 .inflight → 증거 없어도 재생 X · unknown/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    c = sqlite3.connect(db)
+    c.execute("INSERT INTO t VALUES(1)")                                    # 이전 판이 이미 반영한 상태
+    c.commit()
+    c.close()
+    _t_inflight(m, db, 1, "00000000000000000001-old", gen=False)
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok"
+    assert _t_rows(db) == [1, 9]                                            # 중복 반영 X
+    assert [x.name for x in (m.spool_dir(db) / "unknown").iterdir()] == ["00000000000000000001-old.inflight"]
+
+
+def test_r375_spool_new_events_carry_generation(tmp_path):
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    assert m.spool_append(db, "t", [("INSERT INTO t VALUES(?)", [1])], "x") == "spooled"
+    rec = json.loads(next(m.spool_dir(db).glob("*.json")).read_text(encoding="utf-8"))
+    assert rec["gen"] == m.SPOOL_GEN
+
+
+def test_r375_spool_stale_checkpoint_not_reused_for_new_file(tmp_path):
+    """19차 검토 P0: 이전 이관의 진행 파일이 남은 채 새 예전 스풀 파일이 오면 → 새 세대로 처음부터 (건너뛰기·원본 삭제 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    pos_f = m.spool_path(db).with_name("hook-db-spool.jsonl.migrating.pos")
+    pos_f.write_text("200 5", encoding="ascii")                           # 직전 판 형식 진행 파일이 정리 실패로 남음
+    _t_legacy(m, db, [1, 2, 3])
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2, 3]
+
+
+def test_r375_spool_same_content_separate_files_both_applied(tmp_path):
+    """같은 내용의 별도 예전 스풀 파일 2개 → 세대가 달라 각각 반영 (내용 해시 id 충돌로 두 번째가 사라지지 않음)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    for _ in range(2):
+        _t_legacy(m, db, [1, 2])
+        for _ in range(2):
+            m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 1, 2, 2]
+
+
+def test_r375_spool_checkpoint_size_mismatch_preserves_original(tmp_path):
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    mig = m.spool_path(db).with_name("hook-db-spool.jsonl.migrating")
+    mig.write_text(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]}) + "\n", encoding="utf-8")
+    mig.with_name(mig.name + ".pos").write_text(json.dumps({"gen": "bbbbbbbbbbbb", "pos": 0, "idx": 0, "size": 5, "held": 0}),
+                                                 encoding="ascii")
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert _t_rows(db) == [100]
+    assert (m.spool_dir(db) / "held" / mig.name).exists()                  # 원본 보존 (삭제 X)
+
+
+def test_r375_spool_oversize_legacy_line_keeps_original(tmp_path, monkeypatch):
+    """상한 초과 줄은 읽기량 묶음 · 나머지 줄은 이관 · 원본은 끝나도 held/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_EVENT_MAX_BYTES", 200)
+    big = json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", ["x" * 1000]]]})
+    ok = [json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [i]]]}) for i in (1, 2)]
+    m.spool_path(db).write_text(ok[0] + "\n" + big + "\n" + ok[1] + "\n", encoding="utf-8")
+    for _ in range(2):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if isinstance(x, int) and x < 100) == [1, 2]
+    assert (m.spool_dir(db) / "held" / "hook-db-spool.jsonl.migrating").exists()
+
+
+def test_r375_spool_old_format_checkpoint_resumes_idempotently(tmp_path, monkeypatch):
+    """19차 판(1cc2334b)이 남긴 'pos idx' 체크포인트 → 같은 id(파일 해시)로 이어 감 · 이미 만든 이벤트와 중복 X."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 2)
+    _t_legacy(m, db, [1, 2, 3, 4])
+    sp = m.spool_path(db)
+    mig = sp.with_name(sp.name + ".migrating")
+    import hashlib
+    os.replace(sp, mig)
+    raw = mig.read_bytes()
+    fid = hashlib.sha1(raw).hexdigest()[:12]
+    first = raw.split(b"\n")[0].decode("utf-8").rstrip("\r")              # Windows write_text = CRLF
+    d = m.spool_dir(db)
+    d.mkdir()
+    name = f"00000000000000000000-legacy-{fid}-000000-{hashlib.sha1(first.encode('utf-8')).hexdigest()[:8]}"
+    (d / f"{name}.json").write_text(json.dumps({"id": name, "kind": "t", "ops": [["INSERT INTO t VALUES(?)", [1]]]}),
+                                    encoding="utf-8")                   # 19차 판이 만든 첫 이벤트
+    mig.with_name(mig.name + ".pos").write_text("0 0", encoding="ascii")  # 진행 기록 전에 끊긴 상태
+    for _ in range(4):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == [1, 2, 3, 4]
 
