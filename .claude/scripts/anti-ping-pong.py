@@ -32,7 +32,13 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
 # R375 Hook 응답성 (2026-11-28 실측): 훅 응답 경로에서 orca.db 잠금 시 기본 5초 대기 × 여러 문장 = Edit 마다 약 7.5초 정지
 #   → 기록 전용 연결은 짧게 기다리고 못 잡으면 기록 생략 (ORCA_HOOK_DB_TIMEOUT 초 · 기본 0.5)
-_DB_TIMEOUT = float(__import__("os").environ.get("ORCA_HOOK_DB_TIMEOUT", "0.5") or 0.5)
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+import state_db as _sdb  # noqa: E402 — 훅 기록 정본 (전체 마감 · 스풀)
+_DB_TIMEOUT = _sdb.hook_db_budget()
+_PP_SETUP = ("""CREATE TABLE IF NOT EXISTS ping_pong_tracker (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, path TEXT NOT NULL,
+            hunk_hash TEXT NOT NULL, goal_id INTEGER, session_id TEXT, diff_preview TEXT)""",
+             "CREATE INDEX IF NOT EXISTS idx_pp_path_hash ON ping_pong_tracker(path, hunk_hash)")
 LOG = ROOT / ".claude" / "logs" / "anti-ping-pong.log"
 LOG.parent.mkdir(parents=True, exist_ok=True)
 
@@ -64,22 +70,27 @@ def _ensure_table() -> None:
 
 def record(path: str, diff: str, goal_id: int | None = None, session_id: str | None = None) -> int:
     """수정 기록. hunk_hash = SHA-256(path + diff first 500 chars)."""
-    _ensure_table()
+    # R375 6차 검토: 연결·SQL·commit 전부 전체 마감 안 (state_db.bounded_insert) · 못 쓰면 스풀 · 예외에도 close
+    if not DB.exists():
+        DB.parent.mkdir(parents=True, exist_ok=True)
+        sqlite3.connect(str(DB)).close()
     hunk = hashlib.sha256(f"{path}:{diff[:500]}".encode()).hexdigest()[:16]
-    conn = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
-    conn.execute(
+    r = _sdb.bounded_insert(DB, "ping_pong_tracker", [(
         "INSERT INTO ping_pong_tracker (path, hunk_hash, goal_id, session_id, diff_preview) VALUES (?, ?, ?, ?, ?)",
-        (path, hunk, goal_id, session_id, diff[:200]),
-    )
-    conn.commit()
-    # 같은 hunk 반복 횟수 조회
-    cur = conn.execute(
-        f"SELECT COUNT(*) FROM ping_pong_tracker WHERE path = ? AND hunk_hash = ? AND ts > datetime('now', '-{WINDOW_HOURS} hours')",
-        (path, hunk),
-    )
-    count = int(cur.fetchone()[0])
-    conn.close()
-    return count
+        [path, hunk, goal_id, session_id, diff[:200]])], setup=_PP_SETUP)
+    if not r.startswith("ok"):
+        return 0                                   # 스풀됨 = 횟수 미확인 (호출부는 0 을 경고 없음으로 처리)
+    sess = None
+    try:                                           # 같은 hunk 반복 횟수 — 짧은 마감 안에서만
+        sess = _sdb.BoundedSession(DB, min(0.2, _DB_TIMEOUT))
+        cur = sess.sql(f"SELECT COUNT(*) FROM ping_pong_tracker WHERE path = ? AND hunk_hash = ? "
+                       f"AND ts > datetime('now', '-{WINDOW_HOURS} hours')", (path, hunk))
+        return int(cur.fetchone()[0])
+    except Exception:  # noqa: BLE001
+        return 0
+    finally:
+        if sess is not None:
+            sess.close()
 
 
 def check(path: str | None = None, goal_id: int | None = None) -> dict:

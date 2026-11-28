@@ -637,8 +637,11 @@ def test_r375_record_edit_bounded_utc_normalized(tmp_path):
     m = _logger_script()
     db = tmp_path / "orca.db"
     sqlite3.connect(db).close()
-    assert m.record_edit("C:\\X\\a.py", db_path=db) == "ok"
-    assert m.record_edit("c:/x/./a.py", db_path=db) == "ok"                 # 같은 파일 다른 표기 → 같은 경로로 셈
+    a1, a2 = ("C:\\X\\a.py", "c:/x/./a.py") if os.name == "nt" else ("/x/a.py", "/x/./a.py")   # 플랫폼별 동등 표기
+    assert m.record_edit(a1, db_path=db) == "ok"
+    assert m.record_edit(a2, db_path=db) == "ok"                             # 같은 파일 다른 표기 → 같은 경로로 셈
+    if os.name != "nt":
+        assert m.normalize_path("/X/A\\b.py") == "/X/A\\b.py"              # POSIX: 대소문자·역슬래시 유지 (파일명 글자)
     rows = sqlite3.connect(db).execute("SELECT ts, file_path, edit_count, requery_pattern, reason FROM "
                                        "verify_after_edit_patterns ORDER BY id").fetchall()
     assert [r[2] for r in rows] == [1, 2] and len({r[1] for r in rows}) == 1
@@ -649,10 +652,12 @@ def test_r375_record_edit_bounded_utc_normalized(tmp_path):
     try:
         t0 = time.time()
         r = m.record_edit("C:/x/b.py", db_path=db)
-        assert r.startswith("skip:") and time.time() - t0 < 2.0              # 응답 경로를 오래 붙잡지 않음
+        assert r == "spooled" and time.time() - t0 < 2.0                     # 응답 경로를 오래 붙잡지 않음 · 버리지 않고 스풀
     finally:
         lock.execute("ROLLBACK")
         lock.close()
+    assert m.record_edit("C:/x/c.py", db_path=db) == "ok+replay1"              # 다음 성공 때 스풀분 이어 씀
+    assert not (tmp_path / "hook-db-spool.jsonl").exists()
     assert m.record_edit("", db_path=db) == "skip:경로 없음"
     assert m.record_edit("C:/x/a.py", db_path=tmp_path / "none.db") == "skip:DB 없음"
 
@@ -716,7 +721,7 @@ def test_r375_hook_db_writes_bounded_under_lock(tmp_path, monkeypatch):
         spec = importlib.util.spec_from_file_location("r375db_" + name.replace("-", "_"), ROOT / ".claude" / "scripts" / (name + ".py"))
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
-        assert m._DB_TIMEOUT == 0.5
+        assert m._DB_TIMEOUT == 0.5 and hasattr(m, "_sdb")
         monkeypatch.setattr(m, "DB", db)
         out[name] = m
     lock = sqlite3.connect(db, isolation_level=None)
@@ -733,4 +738,114 @@ def test_r375_hook_db_writes_bounded_under_lock(tmp_path, monkeypatch):
         lock.execute("ROLLBACK")
         lock.close()
     out["audit_file_write"].log_action("write", str(tmp_path / "x.py"), "t")
-    assert sqlite3.connect(db).execute("SELECT COUNT(*) FROM file_audit").fetchone()[0] == 1   # 잠금 풀리면 정상 기록
+    assert sqlite3.connect(db).execute("SELECT COUNT(*) FROM file_audit").fetchone()[0] == 2   # 잠금 중 1건은 스풀 → 이번에 함께 반영 (유실 0)
+
+
+def _sdb_mod():
+    spec = importlib.util.spec_from_file_location("sdb_r375", ROOT / ".claude" / "scripts" / "lib" / "state_db.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+@pytest.mark.parametrize("raw,want", [("abc", 0.5), ("nan", 0.5), ("-1", 0.5), ("inf", 0.5), ("99", 0.5),
+                                      ("0.01", 0.5), ("1.5", 1.5), ("", 0.5)])
+def test_r375_hook_db_budget_env_validated(monkeypatch, raw, want):
+    monkeypatch.setenv("ORCA_HOOK_DB_TIMEOUT", raw)
+    assert _sdb_mod().hook_db_budget() == want
+
+
+def test_r375_bounded_session_total_deadline_and_spool_integrity(tmp_path):
+    """문장마다 busy_timeout 을 새로 주지 않고 전체 마감 하나 · 스풀 손상 줄은 보존 · INSERT/CREATE 만 재생."""
+    m = _sdb_mod()
+    db = tmp_path / "orca.db"
+    c = sqlite3.connect(db)
+    c.execute("CREATE TABLE t(x)")
+    c.commit()
+    c.close()
+    lock = sqlite3.connect(db, isolation_level=None)
+    lock.execute("BEGIN EXCLUSIVE")
+    try:
+        t0 = time.time()
+        r = m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [i]) for i in range(5)], budget=0.3)
+        assert r == "spooled" and time.time() - t0 < 0.45                  # 5문장이어도 0.3초 마감 하나 (예전: 문장마다·단계마다 대기 2~2.7배)
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    sp = m.spool_path(db)
+    with open(sp, "a", encoding="utf-8") as f:
+        f.write("{broken\n")
+        f.write(json.dumps({"kind": "x", "ops": [["DELETE FROM t", []]]}) + "\n")   # 재생 허용 안 됨
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [99])]).startswith("ok+replay1")
+    assert sqlite3.connect(db).execute("SELECT COUNT(*) FROM t").fetchone()[0] == 6
+    left = sp.read_text(encoding="utf-8").splitlines()
+    assert left[0] == "{broken" and "DELETE" in left[1]                    # 손상·비허용 줄은 지우지 않고 보존 (진단 로그)
+    assert m.bounded_insert(tmp_path / "none.db", "t", []) == "skip:DB 없음"
+
+
+def test_r375_audit_hash_capped_and_stat_safe(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("afw_r375", ROOT / ".claude" / "scripts" / "audit_file_write.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    monkeypatch.setattr(m, "HASH_MAX_BYTES", 100)
+    big = tmp_path / "big.bin"
+    big.write_bytes(b"x" * 1000)
+    assert m._sha16(big) == "skip:size"                                     # 전체 파일 무제한 읽기 X · 실제 해시 아님을 값으로
+    small = tmp_path / "s.bin"
+    small.write_bytes(b"abc")
+    assert len(m._sha16(small)) == 16
+    monkeypatch.setattr(m, "DB", tmp_path / "none.db")
+    assert m.log_action("write", str(tmp_path / "gone.py"), "t") == "skip:DB 없음"   # 없는 파일·DB 에도 예외 없음
+
+
+def test_r375_doc_read_capped_even_if_file_grows(tmp_path, monkeypatch):
+    m, Ctx = _tool_mod("post_edit_checks", monkeypatch, tmp_path)
+    d = tmp_path / "docs"
+    d.mkdir()
+    g = d / "grow_guide.md"
+    g.write_text("# x\n", encoding="utf-8")
+    real_open = open
+    reads = []
+
+    class Grow:
+        def __init__(self, *a, **k):
+            self.f = real_open(*a, **k)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            self.f.close()
+
+        def read(self, n=-1):
+            reads.append(n)
+            return b"#" * (n if n > 0 else 10)                             # stat 뒤 파일이 커진 상황
+
+        def fileno(self):
+            return self.f.fileno()
+    monkeypatch.setattr(m, "open", Grow, raising=False)
+    r = m.run(Ctx(json.dumps({"tool_input": {"file_path": str(g)}})))
+    msg = json.loads(r.out)["hookSpecificOutput"]["additionalContext"]
+    assert reads == [2 * 1024 * 1024 + 1] and "초과" in msg                  # 읽기량 = 상한+1 바이트로 묶임
+    r2 = m.run(Ctx(json.dumps({"tool_input": {"file_path": "//server/share/docs/guide.md"}})))
+    assert "네트워크" in json.loads(r2.out)["hookSpecificOutput"]["additionalContext"]
+
+
+
+def test_r375_spool_permanent_error_does_not_block_queue(tmp_path):
+    """영구 오류 줄(테이블 없음 등)이 맨 앞에 있어도 뒤 줄은 반영 · 그 줄은 failed 파일로 보관 (삭제 X · 진단)."""
+    m = _sdb_mod()
+    db = tmp_path / "orca.db"
+    c = sqlite3.connect(db)
+    c.execute("CREATE TABLE t(x)")
+    c.commit()
+    c.close()
+    sp = m.spool_path(db)
+    with open(sp, "w", encoding="utf-8") as f:
+        f.write(json.dumps({"kind": "x", "ops": [["INSERT INTO no_such_table VALUES(?)", [1]]]}) + "\n")
+        f.write(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [7]]]}) + "\n")
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [8])]) == "ok+replay1"
+    assert sorted(r[0] for r in sqlite3.connect(db).execute("SELECT x FROM t")) == [7, 8]
+    assert not sp.exists()
+    failed = sp.with_name("hook-db-spool.failed.jsonl").read_text(encoding="utf-8")
+    assert "no_such_table" in failed                                      # 보관 · 앞을 막지 않음

@@ -66,6 +66,180 @@ def tx():
       conn.close()
 
 
+# ── 훅 응답 경로용 시간 상한 기록 (R375 Hook 응답성 · 2026-11-28) ─────────────────
+# 훅(Edit 직후 등)이 orca.db 에 기록할 때 잠금을 오래 기다리면 Edit 응답이 멈춘다 (실측: 잠금 중 약 15초).
+# 문장마다 busy_timeout 을 새로 주면 문장 수만큼 대기가 늘어나므로, 전체 마감(deadline)에서 남은 시간만 쓴다.
+# 시간 안에 못 쓴 기록은 버리지 않고 스풀(JSON 줄)에 남겨 다음 성공 세션에서 이어 쓴다 (감사 기록 조용한 유실 X).
+HOOK_DB_BUDGET_DEFAULT = 0.5
+SPOOL_MAX_BYTES = 5 * 1024 * 1024
+
+
+def hook_db_budget() -> float:
+  """ORCA_HOOK_DB_TIMEOUT 검증 — 숫자 아님·NaN·무한·0.05 미만·5 초과 = 기본 0.5초."""
+  import math
+  try:
+    v = float(os.environ.get("ORCA_HOOK_DB_TIMEOUT", HOOK_DB_BUDGET_DEFAULT))
+    if math.isfinite(v) and 0.05 <= v <= 5.0:
+      return v
+  except (TypeError, ValueError):
+    pass
+  return HOOK_DB_BUDGET_DEFAULT
+
+
+def _is_busy(e: Exception) -> bool:
+  msg = str(e).lower()
+  return isinstance(e, sqlite3.OperationalError) and ("locked" in msg or "busy" in msg)
+
+
+class BoundedSession:
+  """전체 마감 안에서만 SQL 실행 · close 는 호출부 finally.
+  SQLite 자체 대기(busy_timeout)는 끈다 — 실측: 문장 하나가 busy_timeout 의 2~2.7배를 기다렸고(준비·실행 단계 각각) ·
+  interrupt 로도 대기가 끊기지 않았다 (2026-11-28) → 잠기면 즉시 실패시키고 마감 전까지 짧게 쉬며 재시도 (상한이 정확)."""
+  RETRY_SLEEP = 0.02
+
+  def __init__(self, db_path, budget: Optional[float] = None):
+    self.deadline = time.monotonic() + (hook_db_budget() if budget is None else float(budget))
+    self.conn = sqlite3.connect(str(db_path), timeout=0)
+    self.conn.execute("PRAGMA busy_timeout = 0")
+
+  def remaining(self) -> float:
+    return self.deadline - time.monotonic()
+
+  def _retry(self, fn):
+    while True:
+      if self.remaining() <= 0:
+        raise TimeoutError("hook db budget exceeded")
+      try:
+        return fn()
+      except sqlite3.OperationalError as e:
+        if not _is_busy(e) or self.remaining() <= self.RETRY_SLEEP:
+          raise
+        time.sleep(self.RETRY_SLEEP)
+
+  def sql(self, stmt: str, params=()):
+    return self._retry(lambda: self.conn.execute(stmt, params))
+
+  def commit(self) -> None:
+    self._retry(self.conn.commit)
+
+  def close(self) -> None:
+    try:
+      self.conn.close()
+    except Exception:  # noqa: BLE001
+      pass
+
+
+def spool_path(db_path) -> Path:
+  return Path(db_path).with_name("hook-db-spool.jsonl")
+
+
+def spool_append(db_path, kind: str, ops: list, why: str) -> str:
+  """기록 못 한 INSERT 들을 스풀에 보관 — 'spooled' | 'spool-full'(상한 초과 · 진단 로그 남김) | 'spool-fail:<오류>'."""
+  sp = spool_path(db_path)
+  try:
+    if sp.exists() and sp.stat().st_size > SPOOL_MAX_BYTES:
+      _spool_diag(db_path, f"spool full ({kind}) — 기록 유실 위험 · {why}")
+      return "spool-full"
+    line = json.dumps({"ts": time.time(), "kind": kind, "why": why, "ops": ops}, ensure_ascii=False)
+    with open(sp, "a", encoding="utf-8") as f:
+      f.write(line + "\n")
+    return "spooled"
+  except Exception as e:  # noqa: BLE001
+    _spool_diag(db_path, f"spool append 실패 ({kind}): {type(e).__name__} · {why}")
+    return f"spool-fail:{type(e).__name__}"
+
+
+def _spool_diag(db_path, msg: str) -> None:
+  try:
+    log = Path(db_path).parent.parent / "logs" / "hook-db-spool.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with open(log, "a", encoding="utf-8") as f:
+      f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+  except Exception:  # noqa: BLE001
+    pass
+
+
+def spool_replay(sess: "BoundedSession", db_path, max_lines: int = 20) -> int:
+  """남은 시간 안에서 스풀을 앞에서부터 이어 쓴다 (OS 잠금으로 한 번에 한 곳만 · 성공한 줄만 제거) — 반영한 줄 수."""
+  sp = spool_path(db_path)
+  if not sp.exists() or sess.remaining() <= 0.05:
+    return 0
+  try:
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import proc_lock as pl
+  except Exception:  # noqa: BLE001
+    return 0
+  fd = pl.try_lock(str(sp) + ".lock")
+  if fd is None:
+    return 0
+  done = 0
+  try:
+    lines = sp.read_text(encoding="utf-8").splitlines()
+    keep = []
+    for i, ln in enumerate(lines):
+      if done >= max_lines or sess.remaining() <= 0.05:
+        keep.extend(lines[i:])
+        break
+      try:
+        rec = json.loads(ln)
+        for stmt, params in rec.get("ops") or []:
+          if not str(stmt).lstrip().upper().startswith(("INSERT", "CREATE")):
+            raise ValueError("insert only")
+          sess.sql(stmt, params)
+        sess.commit()
+        done += 1
+      except (json.JSONDecodeError, ValueError):
+        _spool_diag(db_path, f"spool 줄 손상·허용 안 됨 — 보존: {ln[:120]}")
+        keep.append(ln)
+      except Exception as e:  # noqa: BLE001
+        if isinstance(e, TimeoutError) or _is_busy(e):      # 시간·잠금 = 일시적 → 이 줄부터 남김
+          keep.extend(lines[i:])
+          break
+        try:                                               # 영구 오류(테이블 없음 등) = 앞을 막지 않게 보관 파일로 옮김 (삭제 X)
+          sess.conn.rollback()
+          with open(sp.with_name("hook-db-spool.failed.jsonl"), "a", encoding="utf-8") as f:
+            f.write(ln + "\n")
+          _spool_diag(db_path, f"spool 영구 오류 줄 → failed 파일 보관 ({type(e).__name__}: {e})")
+        except Exception:  # noqa: BLE001
+          keep.append(ln)
+    tmp = sp.with_name(sp.name + ".tmp")
+    tmp.write_text("".join(x + "\n" for x in keep), encoding="utf-8")
+    os.replace(tmp, sp)
+    if not keep:
+      try:
+        sp.unlink()
+      except OSError:
+        pass
+  except Exception as e:  # noqa: BLE001
+    _spool_diag(db_path, f"spool replay 실패: {type(e).__name__}")
+  finally:
+    pl.release(fd)
+  return done
+
+
+def bounded_insert(db_path, kind: str, ops: list, budget: Optional[float] = None, setup: tuple = ()) -> str:
+  """훅 기록 정본 — setup(CREATE 등) + ops(INSERT) 를 전체 마감 안에서 · 실패는 스풀 · 성공하면 스풀 이어 쓰기.
+  반환: 'ok' | 'ok+replay<n>' | 'spooled' | 'spool-full' | 'spool-fail:..' | 'skip:DB 없음'."""
+  if not Path(db_path).exists():
+    return "skip:DB 없음"
+  sess = None
+  try:
+    sess = BoundedSession(db_path, budget)
+    for stmt in setup:
+      sess.sql(stmt)
+    for stmt, params in ops:
+      sess.sql(stmt, params)
+    sess.commit()
+    n = spool_replay(sess, db_path)
+    return f"ok+replay{n}" if n else "ok"
+  except Exception as e:  # noqa: BLE001 — 잠금·시간 초과·디스크 = 스풀
+    return spool_append(db_path, kind, [list(o) for o in ops], type(e).__name__)
+  finally:
+    if sess is not None:
+      sess.close()
+
+
 def ensure_history_tables(conn) -> None:
   """이력 테이블 4종 (conversations·session_summary·problem_solutions·file_audit). Idempotent.
 
