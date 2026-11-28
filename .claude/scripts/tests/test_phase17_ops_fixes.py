@@ -609,39 +609,128 @@ def test_r363_child_creationflags_inherits_console_when_present():
 
 
 def test_r375_edit_logger_and_teaching_folded_into_dispatcher(tmp_path, monkeypatch):
-    """R375 Hook 경량화: Edit 마다 따로 뜨던 python 2개(verify-after-edit-logger · verify-teaching-doc-sections) → tool-dispatch in-process ·
-    종전 판은 인자 없이 실행돼 빈 경로만 기록하고 문서를 검사하지 않았다 → 실제 file_path 로 동작 · 정규식의 빈 대안/문자 묶음 결함 수정."""
+    """R375 Hook 경량화: Edit 마다 따로 뜨던 python 2개 → tool-dispatch in-process (5차 검토: logger 는 POST·시간 제한)."""
     for f in (ROOT / ".claude" / "settings.json", ROOT / "setup" / "templates" / "settings.template.json"):
         s = json.loads(f.read_text(encoding="utf-8"))
         cmds = [h["command"] for ev in s["hooks"].values() for g in ev for h in g["hooks"]]
         assert not any("verify-after-edit-logger" in c or "verify-teaching-doc-sections" in c for c in cmds), f
         assert any("post-impl-verify.sh" in c for c in cmds)                    # async 무거운 검사는 그대로
     src = (ROOT / ".claude" / "hooks" / "tool-dispatch.py").read_text(encoding="utf-8")
-    assert '"verify_after_edit_logger", "Edit|Write"' in src and '"post_edit_checks", "Edit|Write"' in src
+    pre, post = src.split("POST = [", 1)[0], src.split("POST = [", 1)[1].split("]\n", 1)[0]
+    assert "verify_after_edit_logger" not in pre and '"verify_after_edit_logger", "Edit|Write"' in post   # 성공한 Edit 만
+    assert '"post_edit_checks", "Edit|Write"' in post
     ret = json.loads((ROOT / ".claude" / "scripts" / "retired-hooks.json").read_text(encoding="utf-8"))
     flat = [h for ev in ("PreToolUse", "PostToolUse") for spec in ret[ev] for h in spec.get("hooks", [])]
-    assert "verify-after-edit-logger.py" in flat and "verify-teaching-doc-sections.py" in flat   # 대상 전파 때도 제거
+    assert "verify-after-edit-logger.py" in flat and "verify-teaching-doc-sections.py" in flat
 
+
+def _logger_script():
+    spec = importlib.util.spec_from_file_location("veal_r375", ROOT / ".claude" / "scripts" / "verify-after-edit-logger.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def test_r375_record_edit_bounded_utc_normalized(tmp_path):
+    import re
+    import sqlite3
+    m = _logger_script()
+    db = tmp_path / "orca.db"
+    sqlite3.connect(db).close()
+    assert m.record_edit("C:\\X\\a.py", db_path=db) == "ok"
+    assert m.record_edit("c:/x/./a.py", db_path=db) == "ok"                 # 같은 파일 다른 표기 → 같은 경로로 셈
+    rows = sqlite3.connect(db).execute("SELECT ts, file_path, edit_count, requery_pattern, reason FROM "
+                                       "verify_after_edit_patterns ORDER BY id").fetchall()
+    assert [r[2] for r in rows] == [1, 2] and len({r[1] for r in rows}) == 1
+    assert all(r[3] is None for r in rows)                                    # 반복 수정만으로 재질의 단정 X
+    assert rows[1][4] == "repeat_edit_1h" and re.fullmatch(r"\d{4}-\d\d-\d\d \d\d:\d\d:\d\d", rows[0][0])   # UTC 한 형식
+    lock = sqlite3.connect(db, isolation_level=None)
+    lock.execute("BEGIN EXCLUSIVE")                                           # 다른 쪽이 DB 를 잠금
+    try:
+        t0 = time.time()
+        r = m.record_edit("C:/x/b.py", db_path=db)
+        assert r.startswith("skip:") and time.time() - t0 < 2.0              # 응답 경로를 오래 붙잡지 않음
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    assert m.record_edit("", db_path=db) == "skip:경로 없음"
+    assert m.record_edit("C:/x/a.py", db_path=tmp_path / "none.db") == "skip:DB 없음"
+
+
+def test_r375_doc_section_check_bounded_and_delivered(tmp_path, monkeypatch):
     m, Ctx = _tool_mod("post_edit_checks", monkeypatch, tmp_path)
-    g = tmp_path / "docs" / "guide.md"
-    g.parent.mkdir()
-    g.write_text("# 제목\n본문\n", encoding="utf-8")
-    r = m.run(Ctx(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": str(g)}})))
-    assert r.rc == 1 and "8섹션 누락 (8/8)" in r.err                          # 예전: 빈 대안 때문에 3/8 · 훅은 아예 미검사
-    g.write_text("핵심 한 줄\n| a | b |\n흐름\n강점\n약점\n강추\n우리 시스템\n점검\n", encoding="utf-8")
-    assert m.run(Ctx(json.dumps({"tool_input": {"file_path": str(g)}}))) is None
+    d = tmp_path / "docs"
+    d.mkdir()
+
+    def ctx_of(p):
+        r = m.run(Ctx(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": str(p)}})))
+        return None if r is None else json.loads(r.out)["hookSpecificOutput"]["additionalContext"]
+    g = d / "guide.md"
+    g.write_text("# 제목\n본문에 흐름 강점 약점 확인 단계 같은 단어만 있음\n", encoding="utf-8")
+    msg = ctx_of(g)
+    assert msg and "8개" in msg                                                # 본문 키워드는 섹션으로 안 침 (제목·표만)
+    g.write_text("# 핵심 한 줄\n| a | b |\n## 흐름\n## 강점\n## 약점\n## 강추\n## 우리 시스템\n## 점검\n", encoding="utf-8")
+    assert ctx_of(g) is None
+    big = d / "big_guide.md"
+    big.write_bytes(b"# x\n" + b"a" * (2 * 1024 * 1024 + 10))
+    assert "UNKNOWN" in ctx_of(big) and "상한" in ctx_of(big)                 # 큰 문서 = 미검사 진단
+    dx = d / "guide.docx"
+    dx.write_bytes(b"PK")
+    assert "UNKNOWN" in ctx_of(dx)                                             # docx·pdf 는 응답 경로에서 추출 안 함
+    assert ctx_of(d / "missing_guide.md") is not None and "읽기 실패" in ctx_of(d / "missing_guide.md")
     other = tmp_path / "src" / "a.md"
     other.parent.mkdir()
     other.write_text("x", encoding="utf-8")
-    assert m.run(Ctx(json.dumps({"tool_input": {"file_path": str(other)}}))) is None   # 교재 경로 아님 = 건너뜀
+    assert ctx_of(other) is None                                               # 교재 경로 아님 = 건너뜀
 
-    lg, Ctx2 = _tool_mod("verify_after_edit_logger", monkeypatch, tmp_path)
-    seen = []
 
-    class Fake:
-        @staticmethod
-        def on_edit_tool(fp):
-            seen.append(fp)
-    monkeypatch.setattr(lg, "load_script", lambda name: Fake)
-    assert lg.run(Ctx2(json.dumps({"tool_input": {"file_path": "C:/x/a.py"}}))) is None and seen == ["C:/x/a.py"]
-    assert lg.run(Ctx2(json.dumps({"tool_input": {}}))) is None and seen == ["C:/x/a.py"]   # 경로 없으면 기록 안 함
+def test_r375_dispatcher_delivers_doc_context_end_to_end(tmp_path):
+    """디스패처 실제 실행: 비차단 안내가 stdout JSON additionalContext 로 나간다 (예전 exit 1 stderr 는 Claude 에 안 감)."""
+    d = tmp_path / "docs"
+    d.mkdir()
+    g = d / "guide.md"
+    g.write_text("# 제목\n", encoding="utf-8")
+    payload = json.dumps({"session_id": "t", "hook_event_name": "PostToolUse", "tool_name": "Edit",
+                          "tool_input": {"file_path": str(g)}, "tool_response": {"success": True}})
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(tmp_path)}
+    t0 = time.time()
+    r = subprocess.run([sys.executable, "-X", "utf8", str(ROOT / ".claude" / "hooks" / "tool-dispatch.py"), "post"],
+                       input=payload.encode(), capture_output=True, env=env, timeout=60)
+    assert r.returncode == 0
+    out = json.loads(r.stdout.decode("utf-8"))
+    assert "[teaching-doc]" in out["hookSpecificOutput"]["additionalContext"]
+    assert time.time() - t0 < 30
+
+
+def test_r375_hook_db_writes_bounded_under_lock(tmp_path, monkeypatch):
+    """R375 실측: orca.db 잠금 시 enforce-file-naming·post-edit-ping-pong 이 각 약 7.5초 응답 경로를 붙잡았다
+    (sqlite 기본 5초 × 여러 문장) → 기록 전용 연결 대기 ORCA_HOOK_DB_TIMEOUT(기본 0.5초) · 못 잡으면 생략."""
+    import importlib
+    db = tmp_path / "orca.db"
+    c = sqlite3.connect(db)
+    c.execute("CREATE TABLE file_audit(session_id,action,path,size,hash,actor,reason)")
+    c.commit()
+    c.close()
+    out = {}
+    for name in ("audit_file_write", "anti-ping-pong"):
+        spec = importlib.util.spec_from_file_location("r375db_" + name.replace("-", "_"), ROOT / ".claude" / "scripts" / (name + ".py"))
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        assert m._DB_TIMEOUT == 0.5
+        monkeypatch.setattr(m, "DB", db)
+        out[name] = m
+    lock = sqlite3.connect(db, isolation_level=None)
+    lock.execute("BEGIN EXCLUSIVE")
+    try:
+        t0 = time.time()
+        out["audit_file_write"].log_action("write", str(tmp_path / "x.py"), "t")     # 실패는 stderr 기록만
+        try:
+            out["anti-ping-pong"].record(str(tmp_path / "x.py"), "d", None, "s")
+        except Exception:  # noqa: BLE001 — 훅 모듈이 예외를 삼키는 경로 (post_edit_ping_pong)
+            pass
+        assert time.time() - t0 < 3.0
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    out["audit_file_write"].log_action("write", str(tmp_path / "x.py"), "t")
+    assert sqlite3.connect(db).execute("SELECT COUNT(*) FROM file_audit").fetchone()[0] == 1   # 잠금 풀리면 정상 기록

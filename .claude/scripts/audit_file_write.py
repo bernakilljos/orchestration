@@ -12,6 +12,9 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DB = PROJECT_ROOT / ".claude" / "state" / "orca.db"
+# R375 Hook 응답성 (2026-11-28 실측): 훅 응답 경로에서 orca.db 잠금 시 기본 5초 대기 × 여러 문장 = Edit 마다 약 7.5초 정지
+#   → 기록 전용 연결은 짧게 기다리고 못 잡으면 기록 생략 (ORCA_HOOK_DB_TIMEOUT 초 · 기본 0.5)
+_DB_TIMEOUT = float(os.environ.get("ORCA_HOOK_DB_TIMEOUT", "0.5") or 0.5)
 
 
 def _sha16(path: Path) -> str:
@@ -31,13 +34,16 @@ def log_action(action: str, path: str, reason: str = "", actor: str = "claude") 
     size = p.stat().st_size if p.exists() else 0
     ph = _sha16(p) if p.exists() else ""
     try:
-        with sqlite3.connect(str(DB)) as c:
+        c = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
+        try:                                   # with sqlite3.connect() 는 commit 만 하고 닫지 않는다 → 명시 close
             c.execute(
                 """INSERT INTO file_audit(session_id,action,path,size,hash,actor,reason)
                    VALUES(?,?,?,?,?,?,?)""",
                 (sid, action, str(p), size, ph, actor, reason[:500]),
             )
             c.commit()
+        finally:
+            c.close()
     except Exception as e:
         sys.stderr.write(f"[audit-file] {e}\n")
 

@@ -30,6 +30,30 @@ SECTION_PATTERNS = {
 }
 
 
+TEACHING_KEYS = ("teaching", "교재", "강의", "guide", "가이드", "튜토리얼", "tutorial", "docs/", "docs\\")
+SYNC_SUFFIXES = (".md", ".txt")                      # 훅 응답 경로에서 검사하는 형식 (docx·pdf 는 CLI 로)
+SYNC_MAX_BYTES = 2 * 1024 * 1024                     # 훅 응답 경로 크기 상한 (넘으면 UNKNOWN)
+
+
+def is_teaching_path(path) -> bool:
+    """교재/강의/가이드 문서 판정 — 파일명·경로 휴리스틱 (CLI·훅 공통 정본)."""
+    name = str(path).lower()
+    return any(k in name for k in TEACHING_KEYS)
+
+
+def section_scope(text: str, suffix: str) -> str:
+    """섹션 판정 대상 — md 는 제목 줄(#)과 표 줄(|)만 (본문 아무 데나 «확인»·«단계» 가 있다고 섹션으로 치지 않음) ·
+    그 밖 형식은 제목 구분이 없어 전체 텍스트."""
+    if suffix.lower() == ".md":
+        return "\n".join(l for l in text.splitlines() if l.lstrip().startswith(("#", "|")))
+    return text
+
+
+def missing_sections(text: str, suffix: str) -> list:
+    scope = section_scope(text, suffix)
+    return [k for k, pat in SECTION_PATTERNS.items() if not re.search(pat, scope, re.IGNORECASE | re.MULTILINE)]
+
+
 def extract_text(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".docx":
@@ -71,13 +95,8 @@ def main():
         print(f"[ERROR] 파일 없음: {path}", file=sys.stderr)
         sys.exit(2)
 
-    # 교재/강의/가이드 doc 만 검증 — 파일명-경로 휴리스틱
-    name_lower = str(path).lower()
-    is_teaching = any(k in name_lower for k in [
-        "teaching", "교재", "강의", "guide", "가이드", "튜토리얼", "tutorial",
-        "docs/", "docs\\",
-    ])
-    if not is_teaching:
+    # 교재/강의/가이드 doc 만 검증 — 파일명-경로 휴리스틱 (정본 is_teaching_path)
+    if not is_teaching_path(path):
         # 비-교재 doc 은 skip
         sys.exit(0)
 
@@ -85,13 +104,8 @@ def main():
     if not text:
         sys.exit(2)
 
-    missing = []
-    found = []
-    for label, pattern in SECTION_PATTERNS.items():
-        if re.search(pattern, text, re.IGNORECASE | re.MULTILINE):
-            found.append(label)
-        else:
-            missing.append(label)
+    missing = missing_sections(text, path.suffix)
+    found = [k for k in SECTION_PATTERNS if k not in missing]
 
     if missing:
         # systemMessage 로 Claude 에게 알림 (PostToolUse 차단 X)

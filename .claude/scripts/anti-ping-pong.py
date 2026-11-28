@@ -30,6 +30,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DB = ROOT / ".claude" / "state" / "orca.db"
+# R375 Hook 응답성 (2026-11-28 실측): 훅 응답 경로에서 orca.db 잠금 시 기본 5초 대기 × 여러 문장 = Edit 마다 약 7.5초 정지
+#   → 기록 전용 연결은 짧게 기다리고 못 잡으면 기록 생략 (ORCA_HOOK_DB_TIMEOUT 초 · 기본 0.5)
+_DB_TIMEOUT = float(__import__("os").environ.get("ORCA_HOOK_DB_TIMEOUT", "0.5") or 0.5)
 LOG = ROOT / ".claude" / "logs" / "anti-ping-pong.log"
 LOG.parent.mkdir(parents=True, exist_ok=True)
 
@@ -42,7 +45,7 @@ def _ensure_table() -> None:
     """ping_pong_tracker 테이블 자동 생성."""
     if not DB.exists():
         DB.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB))
+    conn = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS ping_pong_tracker (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +66,7 @@ def record(path: str, diff: str, goal_id: int | None = None, session_id: str | N
     """수정 기록. hunk_hash = SHA-256(path + diff first 500 chars)."""
     _ensure_table()
     hunk = hashlib.sha256(f"{path}:{diff[:500]}".encode()).hexdigest()[:16]
-    conn = sqlite3.connect(str(DB))
+    conn = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
     conn.execute(
         "INSERT INTO ping_pong_tracker (path, hunk_hash, goal_id, session_id, diff_preview) VALUES (?, ?, ?, ?, ?)",
         (path, hunk, goal_id, session_id, diff[:200]),
@@ -82,7 +85,7 @@ def record(path: str, diff: str, goal_id: int | None = None, session_id: str | N
 def check(path: str | None = None, goal_id: int | None = None) -> dict:
     """반복 수정 조회."""
     _ensure_table()
-    conn = sqlite3.connect(str(DB))
+    conn = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
     if path:
         cur = conn.execute(
             f"""SELECT path, hunk_hash, COUNT(*) as n, MAX(ts) as last_ts
@@ -129,7 +132,7 @@ def check(path: str | None = None, goal_id: int | None = None) -> dict:
 
 def stats(days: int = 7) -> dict:
     _ensure_table()
-    conn = sqlite3.connect(str(DB))
+    conn = sqlite3.connect(str(DB), timeout=_DB_TIMEOUT)
     cur = conn.execute(
         f"""SELECT path, COUNT(*) as total, COUNT(DISTINCT hunk_hash) as distinct_hunks
             FROM ping_pong_tracker

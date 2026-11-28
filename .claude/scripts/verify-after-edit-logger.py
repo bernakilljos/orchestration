@@ -5,7 +5,7 @@
 import os
 import json
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_DIR = os.environ.get('CLAUDE_PROJECT_DIR', os.getcwd())
@@ -45,65 +45,62 @@ def log(msg: str):
     with open(LOG_FILE, 'a', encoding='utf-8') as f:
         f.write(f"[{datetime.now().isoformat()}] {msg}\n")
 
-def detect_requery_pattern(ts_edit: datetime) -> bool:
-    """
-    지난 1시간 내 같은 파일 Edit 2회 이상 + 사이에 "왜 안 됐어" 패턴 키워드 감지
-    (개선: UserPromptSubmit hook 에서 keyword 저장 필요 · 현재는 heuristic)
-    """
-    # 실제 구현: session_summary 또는 conversations 테이블에서
-    # ts_edit 전후 대화에 "왜"·"안 됐"·"적용"·"효과" 등 키워드 확인
-    # 임시: True 반환 (보수적으로)
-    return True
+def normalize_path(file_path: str) -> str:
+    """기록용 경로 정규화 — 구분자 / · 대소문자(Windows) 통일 (같은 파일이 표기만 달라 따로 세지지 않게)."""
+    fp = os.path.normpath(str(file_path or "")).replace("\\", "/")
+    return fp.lower() if os.name == "nt" else fp
 
-# 2. PostToolUse Edit/Write 감지
-def on_edit_tool(file_path: str):
-    """Edit/Write 도구 실행 감지 (2026-10-26: disk I/O error 1회 retry 추가)"""
-    init_db()
 
-    import time
-    for attempt in range(2):
-        try:
-            conn = sqlite3.connect(DB_PATH, timeout=10)
-            c = conn.cursor()
-            break
-        except sqlite3.OperationalError:
-            if attempt == 0:
-                time.sleep(0.3)
-                continue
-            return  # 2회 실패 silent return — 로거 자체는 메인 작업 방해 X
-
+def record_edit(file_path: str, db_path=None, timeout: float = 0.25, budget: float = 0.5) -> str:
+    """성공한 Edit/Write 1건을 시간 제한 안에서 기록 (R375 5차 검토 · 훅 응답 경로용 단일 정본).
+    - 연결 대기 timeout(기본 0.25초) · 전체 budget(0.5초) 초과·잠금·디스크 오류 = 기록 생략 + 사유 반환 (작업을 막지 않음)
+    - 연결은 finally 에서 항상 닫는다
+    - 시각은 UTC 'YYYY-MM-DD HH:MM:SS' 한 형식으로 쓰고 비교 (SQLite CURRENT_TIMESTAMP 와 같은 형식 · 예전: 로컬 ISO 와 비교)
+    - 반복 수정 횟수만 센다 — 사용자 재질의는 이 정보로 판정하지 않는다 (requery_pattern 은 비워 둔다 · 예전: 무조건 suspected_requery)
+    반환: 'ok' | 'skip:<사유>'"""
+    import time as _t
+    t0 = _t.monotonic()
+    fp = normalize_path(file_path)
+    if not fp or fp == ".":
+        return "skip:경로 없음"
+    dbp = Path(db_path) if db_path else DB_PATH
+    if not dbp.exists():
+        return "skip:DB 없음"
+    conn = None
     try:
-
-        # 지난 1시간 내 같은 파일 Edit 이력 조회
-        hour_ago = datetime.now() - timedelta(hours=1)
-        c.execute("""
-            SELECT COUNT(*), MAX(ts) FROM verify_after_edit_patterns
-            WHERE file_path = ? AND ts > ?
-        """, (file_path, hour_ago.isoformat()))
-        count, last_ts = c.fetchone()
-
-        if count > 0 and last_ts:
-            last_ts_obj = datetime.fromisoformat(last_ts)
-            if detect_requery_pattern(last_ts_obj):
-                c.execute("""
-                    INSERT INTO verify_after_edit_patterns
-                    (file_path, edit_count, last_user_requery_ts, requery_pattern, reason)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (file_path, count + 1, datetime.now().isoformat(), 'suspected_requery',
-                      'Multiple edits within 1h + likely user requery'))
-                log(f"[PATTERN] {file_path} — edit #{count+1} (possible requery)")
-        else:
-            c.execute("""
-                INSERT INTO verify_after_edit_patterns
-                (file_path, edit_count)
-                VALUES (?, 1)
-            """, (file_path,))
-            log(f"[EDIT] {file_path} — first edit in window")
-
+        conn = sqlite3.connect(str(dbp), timeout=timeout)
+        conn.execute(f"PRAGMA busy_timeout = {int(timeout * 1000)}")
+        conn.execute("""CREATE TABLE IF NOT EXISTS verify_after_edit_patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            file_path TEXT NOT NULL, edit_count INTEGER DEFAULT 1, last_user_requery_ts TIMESTAMP,
+            requery_pattern TEXT, reason TEXT)""")
+        if _t.monotonic() - t0 > budget:
+            return "skip:시간 예산 초과"
+        now = datetime.now(timezone.utc)
+        since = (now - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+        (count,) = conn.execute("SELECT COUNT(*) FROM verify_after_edit_patterns WHERE file_path = ? AND ts > ?",
+                                (fp, since)).fetchone()
+        conn.execute("INSERT INTO verify_after_edit_patterns (ts, file_path, edit_count, reason) VALUES (?, ?, ?, ?)",
+                     (now.strftime("%Y-%m-%d %H:%M:%S"), fp, int(count) + 1,
+                      "repeat_edit_1h" if count else "first_edit_1h"))
         conn.commit()
-        conn.close()
-    except Exception as e:
-        log(f"[ERROR] on_edit_tool({file_path}): {e}")
+        return "ok"
+    except Exception as e:  # noqa: BLE001 — 잠금·디스크 오류 = 생략 (진단만)
+        return f"skip:{type(e).__name__}"
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+# 2. Edit/Write 기록 (CLI · 훅 공통 = record_edit)
+def on_edit_tool(file_path: str):
+    """CLI 호환 — record_edit 사용 (R375: 무조건 재질의 판정·로컬/UTC 시각 혼용 제거)."""
+    r = record_edit(file_path, timeout=2.0, budget=5.0)
+    log(f"[EDIT] {normalize_path(file_path)} — {r}")
+    return r
 
 # 3. 주간 리포트 생성
 def generate_weekly_report():
