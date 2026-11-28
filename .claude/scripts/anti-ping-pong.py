@@ -68,18 +68,21 @@ def _ensure_table() -> None:
     conn.close()
 
 
-def record(path: str, diff: str, goal_id: int | None = None, session_id: str | None = None) -> int:
-    """수정 기록. hunk_hash = SHA-256(path + diff first 500 chars)."""
+def record(path: str, diff: str, goal_id: int | None = None, session_id: str | None = None) -> int | None:
+    """수정 기록. hunk_hash = SHA-256(path + diff first 500 chars).
+    반환 = 최근 창 안 같은 hunk 횟수 · None = 미확인(스풀 보관·조회 실패 — 실제 0 과 구분 · R375 7차 검토)."""
     # R375 6차 검토: 연결·SQL·commit 전부 전체 마감 안 (state_db.bounded_insert) · 못 쓰면 스풀 · 예외에도 close
     if not DB.exists():
         DB.parent.mkdir(parents=True, exist_ok=True)
         sqlite3.connect(str(DB)).close()
     hunk = hashlib.sha256(f"{path}:{diff[:500]}".encode()).hexdigest()[:16]
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")   # 발생 시각 명시 (스풀 재생 때 시각이 바뀌지 않게 · CURRENT_TIMESTAMP 와 같은 UTC 형식)
     r = _sdb.bounded_insert(DB, "ping_pong_tracker", [(
-        "INSERT INTO ping_pong_tracker (path, hunk_hash, goal_id, session_id, diff_preview) VALUES (?, ?, ?, ?, ?)",
-        [path, hunk, goal_id, session_id, diff[:200]])], setup=_PP_SETUP)
+        "INSERT INTO ping_pong_tracker (ts, path, hunk_hash, goal_id, session_id, diff_preview) VALUES (?, ?, ?, ?, ?, ?)",
+        [ts, path, hunk, goal_id, session_id, diff[:200]])], setup=_PP_SETUP)
     if not r.startswith("ok"):
-        return 0                                   # 스풀됨 = 횟수 미확인 (호출부는 0 을 경고 없음으로 처리)
+        return None                                # 스풀됨 = 횟수 미확인 (0 = 실제 0 회와 구분)
     sess = None
     try:                                           # 같은 hunk 반복 횟수 — 짧은 마감 안에서만
         sess = _sdb.BoundedSession(DB, min(0.2, _DB_TIMEOUT))
@@ -87,7 +90,7 @@ def record(path: str, diff: str, goal_id: int | None = None, session_id: str | N
                        f"AND ts > datetime('now', '-{WINDOW_HOURS} hours')", (path, hunk))
         return int(cur.fetchone()[0])
     except Exception:  # noqa: BLE001
-        return 0
+        return None
     finally:
         if sess is not None:
             sess.close()
@@ -179,7 +182,10 @@ def main() -> int:
     try:
         if args.cmd == "record":
             n = record(args.file, args.diff, args.goal, args.session)
-            print(json.dumps({"path": args.file, "count": n}, ensure_ascii=False))
+            print(json.dumps({"path": args.file, "count": n, "status": "unknown" if n is None else "ok"},
+                             ensure_ascii=False))
+            if n is None:
+                return 0                           # 미확인 = 차단 근거 없음 (경고·차단은 실측 횟수로만)
             if n >= THRESHOLD_BLOCK:
                 return 2
             if n >= THRESHOLD_WARN:

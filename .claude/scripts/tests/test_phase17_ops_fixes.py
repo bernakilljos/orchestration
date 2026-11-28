@@ -713,7 +713,7 @@ def test_r375_hook_db_writes_bounded_under_lock(tmp_path, monkeypatch):
     import importlib
     db = tmp_path / "orca.db"
     c = sqlite3.connect(db)
-    c.execute("CREATE TABLE file_audit(session_id,action,path,size,hash,actor,reason)")
+    c.execute("CREATE TABLE file_audit(ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,session_id,action,path,size,hash,actor,reason)")  # 실제 스키마
     c.commit()
     c.close()
     out = {}
@@ -772,14 +772,15 @@ def test_r375_bounded_session_total_deadline_and_spool_integrity(tmp_path):
     finally:
         lock.execute("ROLLBACK")
         lock.close()
-    sp = m.spool_path(db)
-    with open(sp, "a", encoding="utf-8") as f:
-        f.write("{broken\n")
-        f.write(json.dumps({"kind": "x", "ops": [["DELETE FROM t", []]]}) + "\n")   # 재생 허용 안 됨
+    d = m.spool_dir(db)
+    assert len(list(d.glob("*.json"))) == 1                                # 이벤트 1건 = 파일 1개
+    (d / "00000000000000000001-x.json").write_text("{broken", encoding="utf-8")
+    (d / "00000000000000000002-x.json").write_text(json.dumps(
+        {"id": "e2", "ops": [["DELETE FROM t", []]]}), encoding="utf-8")   # 재생 허용 안 됨
     assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [99])]).startswith("ok+replay1")
     assert sqlite3.connect(db).execute("SELECT COUNT(*) FROM t").fetchone()[0] == 6
-    left = sp.read_text(encoding="utf-8").splitlines()
-    assert left[0] == "{broken" and "DELETE" in left[1]                    # 손상·비허용 줄은 지우지 않고 보존 (진단 로그)
+    held = sorted(x.name for x in (d / "held").iterdir())
+    assert len(held) == 2 and not list(d.glob("*.json"))                    # 손상·비허용은 지우지 않고 held/ 보존 (앞을 막지 않음)
     assert m.bounded_insert(tmp_path / "none.db", "t", []) == "skip:DB 없음"
 
 
@@ -831,21 +832,143 @@ def test_r375_doc_read_capped_even_if_file_grows(tmp_path, monkeypatch):
     assert "네트워크" in json.loads(r2.out)["hookSpecificOutput"]["additionalContext"]
 
 
-
-def test_r375_spool_permanent_error_does_not_block_queue(tmp_path):
-    """영구 오류 줄(테이블 없음 등)이 맨 앞에 있어도 뒤 줄은 반영 · 그 줄은 failed 파일로 보관 (삭제 X · 진단)."""
-    m = _sdb_mod()
+def _t_db(tmp_path):
     db = tmp_path / "orca.db"
     c = sqlite3.connect(db)
     c.execute("CREATE TABLE t(x)")
     c.commit()
     c.close()
-    sp = m.spool_path(db)
-    with open(sp, "w", encoding="utf-8") as f:
-        f.write(json.dumps({"kind": "x", "ops": [["INSERT INTO no_such_table VALUES(?)", [1]]]}) + "\n")
-        f.write(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [7]]]}) + "\n")
+    return db
+
+
+def _t_rows(db):
+    return [r[0] for r in sqlite3.connect(db).execute("SELECT x FROM t ORDER BY rowid")]
+
+
+def _t_spool_one(m, db, x):
+    assert m.spool_append(db, "t", [["INSERT INTO t VALUES(?)", [x]]], "test") == "spooled"
+
+
+def test_r375_spool_permanent_error_does_not_block_queue(tmp_path):
+    """영구 오류 이벤트(테이블 없음 등)가 맨 앞에 있어도 뒤 이벤트는 반영 · 그 이벤트는 failed/ 보관 (삭제 X · 진단)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    assert m.spool_append(db, "x", [["INSERT INTO no_such_table VALUES(?)", [1]]], "test") == "spooled"
+    _t_spool_one(m, db, 7)
     assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [8])]) == "ok+replay1"
-    assert sorted(r[0] for r in sqlite3.connect(db).execute("SELECT x FROM t")) == [7, 8]
-    assert not sp.exists()
-    failed = sp.with_name("hook-db-spool.failed.jsonl").read_text(encoding="utf-8")
-    assert "no_such_table" in failed                                      # 보관 · 앞을 막지 않음
+    assert sorted(_t_rows(db)) == [7, 8]
+    d = m.spool_dir(db)
+    assert not list(d.glob("*.json"))
+    assert "no_such_table" in next((d / "failed").iterdir()).read_text(encoding="utf-8")
+
+
+def test_r375_spool_append_during_replay_not_lost(tmp_path, monkeypatch):
+    """7차 검토 P0-1 반례: 재생 도중(점유·삭제 직전) 다른 writer 가 스풀 → 예전 판은 그 기록이 사라짐(DB=[9,1]·스풀 없음)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    _t_spool_one(m, db, 1)
+    real_replace, real_unlink, fired = m.os.replace, m.os.unlink, []
+
+    def rep(a, b):
+        if str(b).endswith(".inflight") and "claim" not in fired:
+            fired.append("claim")
+            _t_spool_one(m, db, 2)                                          # 점유 직전 끼어든 기록
+        return real_replace(a, b)
+
+    def unl(x):
+        if str(x).endswith(".inflight") and "ack" not in fired:
+            fired.append("ack")
+            _t_spool_one(m, db, 3)                                          # 반영 후 삭제 직전 끼어든 기록
+        return real_unlink(x)
+    monkeypatch.setattr(m.os, "replace", rep)
+    monkeypatch.setattr(m.os, "unlink", unl)
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])])
+    monkeypatch.setattr(m.os, "replace", real_replace)
+    monkeypatch.setattr(m.os, "unlink", real_unlink)
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])])
+    rows = _t_rows(db)
+    assert sorted(x for x in rows if x < 9) == [1, 2, 3]                    # 끼어든 기록 유실 0 · 중복 0
+    assert not list(m.spool_dir(db).glob("*.json"))
+
+
+@pytest.mark.parametrize("done_fails", [False, True])
+def test_r375_spool_ack_failure_no_duplicate(tmp_path, monkeypatch, done_fails):
+    """7차 검토 P0-2 반례: DB commit 뒤 스풀 정리 실패 → 예전 판은 다음 회차에 같은 기록 재반영(DB=[9,1,10,1])."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    _t_spool_one(m, db, 1)
+    real_replace, real_unlink = m.os.replace, m.os.unlink
+
+    def unl(x):
+        if str(x).endswith(".inflight"):
+            raise OSError("injected")
+        return real_unlink(x)
+
+    def rep(a, b):
+        if done_fails and str(b).endswith(".done"):
+            raise OSError("injected")
+        return real_replace(a, b)
+    monkeypatch.setattr(m.os, "unlink", unl)
+    monkeypatch.setattr(m.os, "replace", rep)
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok+replay1"
+    monkeypatch.setattr(m.os, "unlink", real_unlink)
+    monkeypatch.setattr(m.os, "replace", real_replace)
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])]) == "ok"
+    assert _t_rows(db) == [9, 1, 10]                                       # 중복 반영 없음
+    d = m.spool_dir(db)
+    assert not list(d.glob("*.done")) and not list(d.glob("*.inflight"))
+    assert (len(list((d / "unknown").iterdir())) == 1) if done_fails else not (d / "unknown").exists()
+
+
+def test_r375_spool_event_prevalidated_no_partial_commit(tmp_path):
+    """7차 검토 P0-3 반례: 한 이벤트에 INSERT(1)+DELETE → 예전 판은 앞 INSERT 까지 커밋(DB=[9,1,2])."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    d = m.spool_dir(db)
+    d.mkdir()
+    (d / "00000000000000000001-a.json").write_text(json.dumps(
+        {"id": "a", "ops": [["INSERT INTO t VALUES(?)", [1]], ["DELETE FROM t", []]]}), encoding="utf-8")
+    (d / "00000000000000000002-b.json").write_text(json.dumps(
+        {"id": "b", "ops": [["INSERT INTO t VALUES(?); DELETE FROM t", [2]]]}), encoding="utf-8")
+    _t_spool_one(m, db, 3)
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok+replay1"
+    assert _t_rows(db) == [9, 3]                                           # 비허용 이벤트는 한 문장도 실행 안 함
+    assert len(list((d / "held").iterdir())) == 2
+
+
+def test_r375_spool_legacy_file_migrated_once(tmp_path):
+    """예전 단일 파일 스풀(JSON 줄)은 이벤트 파일로 1회 이관 후 반영 · 손상 줄은 held/ 보존."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    m.spool_path(db).write_text(json.dumps({"kind": "t", "ops": [["INSERT INTO t VALUES(?)", [5]]]}) + "\n{bad\n",
+                                encoding="utf-8")
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok+replay1"
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])]) == "ok"
+    assert _t_rows(db) == [9, 5, 10] and not m.spool_path(db).exists()
+    assert len(list((m.spool_dir(db) / "held").iterdir())) == 1
+
+
+def test_r375_ping_pong_spool_keeps_event_time_and_schema(tmp_path, monkeypatch):
+    """스풀 재생 때 발생 시각 보존(DEFAULT CURRENT_TIMESTAMP 아님) · 표 생성문 동봉 · 미확인은 None(실제 0 과 구분)."""
+    spec = importlib.util.spec_from_file_location("app_r375", ROOT / ".claude" / "scripts" / "anti-ping-pong.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    db = tmp_path / "orca.db"
+    sqlite3.connect(db).close()                                             # 표 없음
+    monkeypatch.setattr(m, "DB", db)
+    lock = sqlite3.connect(db, isolation_level=None)
+    lock.execute("BEGIN EXCLUSIVE")
+    try:
+        assert m.record("a.py", "d", None, "s") is None                    # 미확인 (예전 판: 0)
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    ev = json.loads(next(m._sdb.spool_dir(db).glob("*.json")).read_text(encoding="utf-8"))
+    ts = ev["ops"][0][1][0]
+    assert ev["setup"] and len(ts) == 19
+    time.sleep(1.1)
+    assert m.record("b.py", "d", None, "s") == 1
+    got = dict(sqlite3.connect(db).execute("SELECT path, ts FROM ping_pong_tracker"))
+    assert got["a.py"] == ts                                                # 재생돼도 발생 시각 그대로
+

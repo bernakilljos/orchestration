@@ -69,9 +69,8 @@ def tx():
 # ── 훅 응답 경로용 시간 상한 기록 (R375 Hook 응답성 · 2026-11-28) ─────────────────
 # 훅(Edit 직후 등)이 orca.db 에 기록할 때 잠금을 오래 기다리면 Edit 응답이 멈춘다 (실측: 잠금 중 약 15초).
 # 문장마다 busy_timeout 을 새로 주면 문장 수만큼 대기가 늘어나므로, 전체 마감(deadline)에서 남은 시간만 쓴다.
-# 시간 안에 못 쓴 기록은 버리지 않고 스풀(JSON 줄)에 남겨 다음 성공 세션에서 이어 쓴다 (감사 기록 조용한 유실 X).
+# 시간 안에 못 쓴 기록은 버리지 않고 스풀(이벤트 1건 = 파일 1개)에 남겨 다음 성공 세션에서 이어 쓴다 (감사 기록 조용한 유실 X).
 HOOK_DB_BUDGET_DEFAULT = 0.5
-SPOOL_MAX_BYTES = 5 * 1024 * 1024
 
 
 def hook_db_budget() -> float:
@@ -130,19 +129,77 @@ class BoundedSession:
 
 
 def spool_path(db_path) -> Path:
+  """예전 단일 JSON 줄 스풀 (읽기·이관 전용 · 새 기록은 spool_dir 에 이벤트 1건 = 파일 1개)."""
   return Path(db_path).with_name("hook-db-spool.jsonl")
 
 
-def spool_append(db_path, kind: str, ops: list, why: str) -> str:
-  """기록 못 한 INSERT 들을 스풀에 보관 — 'spooled' | 'spool-full'(상한 초과 · 진단 로그 남김) | 'spool-fail:<오류>'."""
-  sp = spool_path(db_path)
+def spool_dir(db_path) -> Path:
+  """스풀 폴더 — 이벤트 1건 = 파일 1개 (R375 7차 검토: 단일 파일 append·replace 경쟁으로 실제 유실 재현)."""
+  return Path(db_path).with_name("hook-db-spool.d")
+
+
+SPOOL_MAX_EVENTS = 5000                 # 폴더 안 대기 이벤트 상한 (동시 writer 수만큼만 넘을 수 있음)
+SPOOL_EVENT_MAX_BYTES = 64 * 1024       # 이벤트 1건 상한 (응답 경로 읽기량 묶음)
+SPOOL_STALE_TMP_SEC = 3600              # 쓰다 만 임시 파일 = 이 시간 뒤 held/ 로 옮겨 보존
+
+
+def _allowed_stmt(stmt) -> bool:
+  t = " ".join(str(stmt).split()).upper()
+  if ";" in t.rstrip("; "):
+    return False                          # 한 문장만
+  return t.startswith("INSERT INTO ") or t.startswith(("CREATE TABLE IF NOT EXISTS ", "CREATE INDEX IF NOT EXISTS "))
+
+
+def _valid_event(rec) -> bool:
+  """재생 전 이벤트 전체 선검증 — 하나라도 허용 밖이면 아무것도 실행하지 않음 (부분 커밋 X)."""
+  if not isinstance(rec, dict) or not isinstance(rec.get("id"), str):
+    return False
+  for key in ("setup", "ops"):
+    items = rec.get(key) or []
+    if not isinstance(items, list):
+      return False
+    for it in items:
+      if not (isinstance(it, list) and len(it) == 2 and isinstance(it[0], str) and isinstance(it[1], list)
+              and _allowed_stmt(it[0])):
+        return False
+  return bool(rec.get("ops"))
+
+
+def _count_at_least(d: Path, n: int) -> bool:
   try:
-    if sp.exists() and sp.stat().st_size > SPOOL_MAX_BYTES:
-      _spool_diag(db_path, f"spool full ({kind}) — 기록 유실 위험 · {why}")
+    with os.scandir(d) as it:
+      c = 0
+      for e in it:
+        if e.name.endswith(".json"):
+          c += 1
+          if c >= n:
+            return True
+  except OSError:
+    return False
+  return False
+
+
+def spool_append(db_path, kind: str, ops: list, why: str, setup: tuple = ()) -> str:
+  """기록 못 한 이벤트를 파일 1개로 원자 생성 (임시 파일 → os.replace) — 재생과 같은 파일을 만지지 않아 경쟁 유실 없음.
+  반환: 'spooled' | 'spool-full'(상한 · 진단 로그) | 'spool-fail:<오류>'."""
+  import uuid
+  d = spool_dir(db_path)
+  try:
+    d.mkdir(parents=True, exist_ok=True)
+    if _count_at_least(d, SPOOL_MAX_EVENTS):
+      _spool_diag(db_path, f"spool full ({kind}) — 대기 {SPOOL_MAX_EVENTS}건 이상 · 이번 기록 미보관 · {why}")
       return "spool-full"
-    line = json.dumps({"ts": time.time(), "kind": kind, "why": why, "ops": ops}, ensure_ascii=False)
-    with open(sp, "a", encoding="utf-8") as f:
-      f.write(line + "\n")
+    eid = f"{time.time_ns():020d}-{os.getpid()}-{uuid.uuid4().hex[:12]}"
+    data = json.dumps({"id": eid, "ts": time.time(), "kind": kind, "why": why,
+                       "setup": [[str(x), []] for x in setup], "ops": [[str(o[0]), list(o[1])] for o in ops]},
+                      ensure_ascii=False)
+    if len(data.encode("utf-8")) > SPOOL_EVENT_MAX_BYTES:
+      _spool_diag(db_path, f"spool event too large ({kind}) — 이번 기록 미보관 · {why}")
+      return "spool-fail:too-large"
+    tmp = d / f".tmp-{eid}"
+    with open(tmp, "w", encoding="utf-8") as f:
+      f.write(data)
+    os.replace(tmp, d / f"{eid}.json")
     return "spooled"
   except Exception as e:  # noqa: BLE001
     _spool_diag(db_path, f"spool append 실패 ({kind}): {type(e).__name__} · {why}")
@@ -159,10 +216,61 @@ def _spool_diag(db_path, msg: str) -> None:
     pass
 
 
-def spool_replay(sess: "BoundedSession", db_path, max_lines: int = 20) -> int:
-  """남은 시간 안에서 스풀을 앞에서부터 이어 쓴다 (OS 잠금으로 한 번에 한 곳만 · 성공한 줄만 제거) — 반영한 줄 수."""
+def _park(db_path, src: Path, sub: str, why: str) -> None:
+  """지우지 않고 하위 폴더로 옮겨 보존 (held=손상·비허용 · failed=영구 오류 · unknown=반영 여부 불명)."""
+  try:
+    dst = src.parent / sub
+    dst.mkdir(exist_ok=True)
+    os.replace(src, dst / src.name)
+    _spool_diag(db_path, f"spool {sub}/ 보관: {src.name} — {why}")
+  except OSError as e:
+    _spool_diag(db_path, f"spool {sub}/ 이동 실패(그대로 둠): {src.name} — {type(e).__name__} · {why}")
+
+
+def _migrate_legacy(db_path, d: Path) -> None:
+  """예전 단일 스풀 파일 → 이벤트 파일 (잠금 안 · 반영은 이관을 다 끝낸 뒤라 재시도해도 중복 없음 · 이름 결정적)."""
+  import hashlib
   sp = spool_path(db_path)
-  if not sp.exists() or sess.remaining() <= 0.05:
+  mig = sp.with_name(sp.name + ".migrating")
+  if sp.exists() and not mig.exists():
+    try:
+      os.replace(sp, mig)
+    except OSError:
+      return                                  # 예전 판 writer 가 열고 있음 → 다음에
+  if not mig.exists():
+    return
+  d.mkdir(parents=True, exist_ok=True)
+  raw = mig.read_bytes().decode("utf-8", errors="replace").splitlines()
+  for i, ln in enumerate(raw):
+    if not ln.strip():
+      continue
+    name = f"00000000000000000000-legacy-{i:06d}-{hashlib.sha1(ln.encode('utf-8')).hexdigest()[:12]}"
+    try:
+      rec = json.loads(ln)
+      ok = isinstance(rec, dict)
+    except json.JSONDecodeError:
+      ok = False
+    if ok:
+      rec = {"id": name, "ts": rec.get("ts"), "kind": rec.get("kind"), "why": rec.get("why"),
+             "setup": [], "ops": rec.get("ops") or []}
+      body, dst = json.dumps(rec, ensure_ascii=False), d / f"{name}.json"
+    else:
+      (d / "held").mkdir(exist_ok=True)
+      body, dst = ln, d / "held" / f"{name}.legacy-line"
+    tmp = d / f".tmp-{name}"
+    tmp.write_text(body, encoding="utf-8")
+    os.replace(tmp, dst)
+  mig.unlink()
+  _spool_diag(db_path, f"예전 스풀 {len(raw)}줄 → 이벤트 파일 이관")
+
+
+def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
+  """남은 시간 안에서 오래된 이벤트부터 반영 — 반영한 이벤트 수.
+  소비 계약 (OS 잠금으로 소비자 1곳): x.json → x.inflight(점유) → 선검증 → 실행·commit → inflight 삭제.
+  commit 뒤 삭제 실패 = .done 으로 표시(다음에 삭제만) · 이전 소비자가 남긴 .inflight = 반영 여부 불명 → unknown/ 보존(재생 X · 중복 X)."""
+  import heapq
+  d = spool_dir(db_path)
+  if (not d.exists() and not spool_path(db_path).exists()) or sess.remaining() <= 0.05:
     return 0
   try:
     import sys as _sys
@@ -170,47 +278,79 @@ def spool_replay(sess: "BoundedSession", db_path, max_lines: int = 20) -> int:
     import proc_lock as pl
   except Exception:  # noqa: BLE001
     return 0
-  fd = pl.try_lock(str(sp) + ".lock")
+  fd = pl.try_lock(str(d) + ".lock")
   if fd is None:
     return 0
   done = 0
   try:
-    lines = sp.read_text(encoding="utf-8").splitlines()
-    keep = []
-    for i, ln in enumerate(lines):
-      if done >= max_lines or sess.remaining() <= 0.05:
-        keep.extend(lines[i:])
+    try:
+      _migrate_legacy(db_path, d)
+    except Exception as e:  # noqa: BLE001
+      _spool_diag(db_path, f"예전 스풀 이관 보류: {type(e).__name__}")
+    if not d.exists():
+      return 0
+    now, names = time.time(), []
+    with os.scandir(d) as it:
+      for e in it:
+        if not e.is_file():
+          continue
+        if e.name.endswith(".done"):
+          try:
+            os.unlink(e.path)
+          except OSError:
+            pass
+        elif e.name.endswith(".inflight"):
+          _park(db_path, Path(e.path), "unknown", "이전 소비 중단 — 반영 여부 불명 (재생하지 않음)")
+        elif e.name.startswith(".tmp-"):
+          try:
+            if now - e.stat().st_mtime > SPOOL_STALE_TMP_SEC:
+              _park(db_path, Path(e.path), "held", "쓰다 만 임시 파일")
+          except OSError:
+            pass
+        elif e.name.endswith(".json"):
+          names.append(e.name)
+    for name in heapq.nsmallest(max_events, names):
+      if sess.remaining() <= 0.05:
         break
+      src, inf = d / name, d / (name[:-5] + ".inflight")
       try:
-        rec = json.loads(ln)
-        for stmt, params in rec.get("ops") or []:
-          if not str(stmt).lstrip().upper().startswith(("INSERT", "CREATE")):
-            raise ValueError("insert only")
+        os.replace(src, inf)
+      except OSError:
+        continue
+      try:
+        with open(inf, "rb") as f:
+          raw = f.read(SPOOL_EVENT_MAX_BYTES + 1)
+        rec = json.loads(raw.decode("utf-8")) if len(raw) <= SPOOL_EVENT_MAX_BYTES else None
+      except (OSError, ValueError):
+        rec = None
+      if not _valid_event(rec):
+        _park(db_path, inf, "held", "손상·크기 초과·허용 밖 문장 (아무것도 실행 안 함)")
+        continue
+      try:
+        for stmt, params in (rec.get("setup") or []) + rec["ops"]:
           sess.sql(stmt, params)
         sess.commit()
-        done += 1
-      except (json.JSONDecodeError, ValueError):
-        _spool_diag(db_path, f"spool 줄 손상·허용 안 됨 — 보존: {ln[:120]}")
-        keep.append(ln)
       except Exception as e:  # noqa: BLE001
-        if isinstance(e, TimeoutError) or _is_busy(e):      # 시간·잠금 = 일시적 → 이 줄부터 남김
-          keep.extend(lines[i:])
-          break
-        try:                                               # 영구 오류(테이블 없음 등) = 앞을 막지 않게 보관 파일로 옮김 (삭제 X)
+        try:
           sess.conn.rollback()
-          with open(sp.with_name("hook-db-spool.failed.jsonl"), "a", encoding="utf-8") as f:
-            f.write(ln + "\n")
-          _spool_diag(db_path, f"spool 영구 오류 줄 → failed 파일 보관 ({type(e).__name__}: {e})")
         except Exception:  # noqa: BLE001
-          keep.append(ln)
-    tmp = sp.with_name(sp.name + ".tmp")
-    tmp.write_text("".join(x + "\n" for x in keep), encoding="utf-8")
-    os.replace(tmp, sp)
-    if not keep:
+          pass
+        if isinstance(e, TimeoutError) or _is_busy(e):     # 일시적 → 원래 이름으로 되돌리고 중단
+          try:
+            os.replace(inf, src)
+          except OSError:
+            _spool_diag(db_path, f"spool 되돌리기 실패 — {inf.name} 는 다음 회차에 unknown/ 보존")
+          break
+        _park(db_path, inf, "failed", f"영구 오류 {type(e).__name__}: {e}")
+        continue
+      done += 1
       try:
-        sp.unlink()
+        os.unlink(inf)
       except OSError:
-        pass
+        try:
+          os.replace(inf, d / (name[:-5] + ".done"))
+        except OSError:
+          _spool_diag(db_path, f"spool 반영됨·표시 실패 — {inf.name} 는 다음 회차 unknown/ (재생 X)")
   except Exception as e:  # noqa: BLE001
     _spool_diag(db_path, f"spool replay 실패: {type(e).__name__}")
   finally:
@@ -219,7 +359,8 @@ def spool_replay(sess: "BoundedSession", db_path, max_lines: int = 20) -> int:
 
 
 def bounded_insert(db_path, kind: str, ops: list, budget: Optional[float] = None, setup: tuple = ()) -> str:
-  """훅 기록 정본 — setup(CREATE 등) + ops(INSERT) 를 전체 마감 안에서 · 실패는 스풀 · 성공하면 스풀 이어 쓰기.
+  """훅 기록 정본 — setup(CREATE IF NOT EXISTS) + ops(INSERT) 를 전체 마감 안에서 · 실패는 스풀(setup 동봉) · 성공하면 스풀 이어 쓰기.
+  ops 에 발생 시각을 명시 값으로 넣을 것 (재생 때 DEFAULT CURRENT_TIMESTAMP 로 시각이 바뀌지 않게).
   반환: 'ok' | 'ok+replay<n>' | 'spooled' | 'spool-full' | 'spool-fail:..' | 'skip:DB 없음'."""
   if not Path(db_path).exists():
     return "skip:DB 없음"
@@ -231,13 +372,16 @@ def bounded_insert(db_path, kind: str, ops: list, budget: Optional[float] = None
     for stmt, params in ops:
       sess.sql(stmt, params)
     sess.commit()
-    n = spool_replay(sess, db_path)
-    return f"ok+replay{n}" if n else "ok"
   except Exception as e:  # noqa: BLE001 — 잠금·시간 초과·디스크 = 스풀
-    return spool_append(db_path, kind, [list(o) for o in ops], type(e).__name__)
-  finally:
     if sess is not None:
       sess.close()
+      sess = None
+    return spool_append(db_path, kind, [list(o) for o in ops], type(e).__name__, setup)
+  try:
+    n = spool_replay(sess, db_path)
+    return f"ok+replay{n}" if n else "ok"
+  finally:
+    sess.close()
 
 
 def ensure_history_tables(conn) -> None:

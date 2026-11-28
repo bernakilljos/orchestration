@@ -49,9 +49,11 @@ def log_action(action: str, path: str, reason: str = "", actor: str = "claude") 
         st = None
     size = st.st_size if st else 0
     ph = _sha16(p) if st else ""
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")   # 발생 시각 명시 (스풀 재생 때 시각 보존)
     r = _sdb.bounded_insert(DB, "file_audit", [(
-        "INSERT INTO file_audit(session_id,action,path,size,hash,actor,reason) VALUES(?,?,?,?,?,?,?)",
-        [sid, action, str(p), size, ph, actor, reason[:500]])])
+        "INSERT INTO file_audit(ts,session_id,action,path,size,hash,actor,reason) VALUES(?,?,?,?,?,?,?,?)",
+        [ts, sid, action, str(p), size, ph, actor, reason[:500]])])
     if not r.startswith("ok"):
         sys.stderr.write(f"[audit-file] {r}\n")
     return r
