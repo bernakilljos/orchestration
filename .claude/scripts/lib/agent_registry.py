@@ -110,10 +110,26 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
     → 결과·선택·wave·지표. may_spawn 작업의 JSON 결과 {"followups":[...]} 는 새 작업으로 추가된다
     (편집 범위는 spawn_allow_paths 안으로 제한)."""
     sys.path.insert(0, str(LIB))
-    if max_parallel is None:        # 자원 정책 단일 계층 (sandbox-policy.json)
-        import repair_sandbox as _sbp
-        # R375: 정책 상한을 메모리 단계로 동적 축소 (constrained = 순차 · blocked 여도 1 — 각 dispatch 의 memory_gate 가 시작을 보류)
-        max_parallel = max(1, int(_sbp.admission_now()["max_parallel"]))
+    import repair_sandbox as _sbp
+    # R375 독립 검토: 시작 때 한 번이 아니라 wave 마다 공통 admission 재판정 · 명시 max_parallel 도 상한일 뿐 판정을 건너뛰지 않음
+    #   · blocked(0) 를 1 로 바꾸지 않고 보류 → 회복 대기(상한 있는 backoff) → 그래도 blocked 면 남은 작업 deferred (재실행으로 재개)
+    cap_parallel = max_parallel
+    mem_wait = float(os.environ.get("ORCA_DAG_MEM_WAIT_SEC", _sbp._policy().get("dag_mem_wait_sec", 60)))
+    mem_log: List[Dict[str, Any]] = []
+
+    def admit_wave() -> int:
+        t_start = time.time()
+        delay = 2.0
+        while True:
+            adm = _sbp.admission_now()
+            n = int(adm.get("max_parallel") or 0)
+            if cap_parallel is not None:
+                n = min(n, int(cap_parallel))
+            mem_log.append({"level": adm.get("level"), "start": n})
+            if n > 0 or time.time() - t_start >= mem_wait:
+                return n
+            time.sleep(min(delay, max(0.0, mem_wait - (time.time() - t_start))))
+            delay = min(delay * 2, 30.0)
     if dispatch is None:
         import real_repair_chain as _rc
         dispatch = _rc.dispatch_agent
@@ -171,9 +187,16 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
                 results[tid] = {"status": "skipped", "reason": "dependency cycle"}
                 pending.pop(tid)
             break
-        batch = _conflict_free(sorted(ready), by_id)[:max(1, max_parallel)]
+        n_start = admit_wave()
+        if n_start <= 0:            # 메모리 blocked 지속 — 새 작업 시작 X · 실패 아님 (재실행으로 재개)
+            for tid in sorted(pending):
+                results[tid] = {"status": "skipped", "deferred": True,
+                                "reason": f"메모리 admission blocked ({mem_wait:.0f}초 대기 후에도) — 재실행 시 재개"}
+            pending.clear()
+            break
+        batch = _conflict_free(sorted(ready), by_id)[:n_start]
         waves.append(batch)
-        with ThreadPoolExecutor(max_workers=max(1, max_parallel)) as ex:
+        with ThreadPoolExecutor(max_workers=len(batch)) as ex:
             futs = {tid: ex.submit(run_one, tid) for tid in batch}
             for tid, f in futs.items():
                 try:
@@ -215,6 +238,7 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
         _record_tasks(goal_id, tasks, results)
         _record_run(goal_id, metrics)
     return {"layers": waves, "waves": waves, "results": results, "changed_files": changed,
+            "memory_admission": mem_log[-20:],
             "unclaimed_changes": [p for p in changed if p not in claimed], "spawned": spawned,
             "metrics": metrics}
 

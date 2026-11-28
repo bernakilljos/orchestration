@@ -399,24 +399,23 @@ def _guard(broker_root: Path):
 
 
 # ── 메모리 (STD-MEMORY-001 · 기존 repair_sandbox.commit_memory 재사용) ──────────
-def _memory_pct():
+def _memory_cm() -> dict:
+    """commit·물리 여유까지 담은 전체 측정 (R375 독립 검토: 퍼센트만 넘기면 commit 여유·물리 RAM 부족을 못 본다)."""
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import repair_sandbox
-        cm = repair_sandbox.commit_memory() or {}
-        return cm.get("percent") if cm.get("measured") else None
-    except Exception:  # noqa: BLE001 — 측정 불가는 막지 않는다
-        return None
+        return repair_sandbox.commit_memory() or {}
+    except Exception:  # noqa: BLE001 — 측정 불가 = unknown
+        return {"measured": False}
 
 
-def _memory_level(pct) -> str:
-    """commit % → 공통 admission 단계 (repair_sandbox.admission_now · 히스테리시스 포함). 측정 불가·판정 실패 = unknown(막지 않음)."""
-    if pct is None:
-        return "unknown"
+def _memory_level(cm) -> str:
+    """전체 측정 → 공통 admission 단계 (repair_sandbox.admission_now · 히스테리시스 포함). 판정 실패 = unknown.
+    unknown 은 필수 작업(승인 실행·복구)은 계속하되 선택 작업(새 접수 상한·git gc)은 constrained 처럼 제한한다."""
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import repair_sandbox
-        return repair_sandbox.admission_now({"measured": True, "percent": pct})["level"]
+        return repair_sandbox.admission_now(cm or {"measured": False})["level"]
     except Exception:  # noqa: BLE001
         return "unknown"
 
@@ -439,12 +438,18 @@ def process(broker_root) -> list:
             log.extend(_recover(broker_root, cfg, gate, git))      # 지난 실행이 소비 직후 죽었으면 결과 확정
         except Exception as e:  # noqa: BLE001
             log.append({"result": "error", "reason": "recover:" + type(e).__name__})
-        pct = _memory_pct()
-        lvl = _memory_level(pct)       # R375: 공통 admission (임계값·히스테리시스 정본 = repair_sandbox)
-        cap = {"blocked": 0, "constrained": 5}.get(lvl, MAX_PER_RUN)
+        cm = _memory_cm()
+        pct = cm.get("percent") if cm.get("measured") else None
+        lvl = _memory_level(cm)        # R375: 공통 admission (임계값·히스테리시스·여유 정본 = repair_sandbox)
+        cap = {"blocked": 0, "constrained": 5, "unknown": 5}.get(lvl, MAX_PER_RUN)
         if cap == 0:
             log.append({"result": "deferred", "reason": f"메모리 {pct}% — 공통 admission blocked · 새 요청 접수 보류 (요청 함에 그대로)"})
-        for src in sorted(Path(cfg["inbox"]).glob("*.json"))[:cap]:
+        for i, src in enumerate(sorted(Path(cfg["inbox"]).glob("*.json"))[:cap]):
+            if i:                       # 접수 중 압박 변화 재확인 (첫 건은 위에서 판정) · blocked 가 되면 나머지는 요청 함에 그대로
+                cm = _memory_cm()
+                if _memory_level(cm) == "blocked":
+                    log.append({"result": "deferred", "reason": f"메모리 {cm.get('percent')}% — 접수 중 blocked · 남은 요청 보류"})
+                    break
             try:
                 _intake(broker_root, cfg, gate, git, src, log)
             except Exception as e:  # noqa: BLE001 — 한 건이 실패해도 나머지·승인 실행은 계속
@@ -454,7 +459,7 @@ def process(broker_root) -> list:
         except Exception as e:  # noqa: BLE001
             log.append({"result": "error", "reason": "execute:" + type(e).__name__})
         try:
-            g = gc(broker_root, gate, git, pct)
+            g = gc(broker_root, gate, git, cm=cm)
             if g.get("ran"):
                 log.append({"result": "gc", **g})
         except Exception as e:  # noqa: BLE001
@@ -547,7 +552,7 @@ GC_INTERVAL_SEC = 86400
 _TERMINAL = ("executed", "rejected", "expired")
 
 
-def gc(broker_root, gate=None, git=None, pct=None, force=False) -> dict:
+def gc(broker_root, gate=None, git=None, pct=None, force=False, cm=None) -> dict:
     """끝난 요청(실행·거부·만료 후 7일)의 미러 ref · 원격 캐시 ref · 남은 작업 사본만 정리.
     대기·승인·실행 중 요청, Broker DB 행, 처리 기록(번호 재사용 방지), 설정은 지우지 않는다.
     메모리 80% 이상이면 미룬다 (git gc 가 무거움) · 하루 1회."""
@@ -556,10 +561,10 @@ def gc(broker_root, gate=None, git=None, pct=None, force=False) -> dict:
     now = time.time()
     if not force and stamp.exists() and now - stamp.stat().st_mtime < GC_INTERVAL_SEC:
         return {"ran": False, "reason": "interval"}
-    if pct is None:
-        pct = _memory_pct()
-    if _memory_level(pct) in ("constrained", "blocked"):     # 선택 작업(git gc) = 압박이면 미룸
-        return {"ran": False, "reason": f"memory {pct}%"}
+    if cm is None:
+        cm = {"measured": True, "percent": pct} if pct is not None else _memory_cm()
+    if _memory_level(cm) != "normal":     # 선택 작업(git gc) = 압박·측정 불가면 미룸
+        return {"ran": False, "reason": f"memory {cm.get('percent')}%"}
     gate = gate or _gate(broker_root)
     git = git or _Git(broker_root)
     rows = {r["d"].get("request_id"): r for r in _broker_rows(gate, ("waiting", "approved", "consumed") + _TERMINAL)}

@@ -23,6 +23,7 @@ import time
 import subprocess
 import shutil
 import tempfile
+import threading
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
@@ -157,108 +158,173 @@ def commit_memory() -> dict:
     return out
 
 
-ADMISSION_LEVELS = ("normal", "constrained", "blocked")
+ADMISSION_LEVELS = ("normal", "constrained", "blocked", "unknown")
+_ADM_THREAD_LOCK = threading.Lock()
+
+
+def _num(raw, default: float, lo: float, hi: float, bad: list, key: str) -> float:
+    """정책·환경 값 검증 — 숫자 아님·NaN·무한·범위 밖이면 기본값 + 진단 기록 (잘못된 설정이 판정을 느슨하게 만들지 않게)."""
+    import math
+    try:
+        v = float(raw)
+        if math.isfinite(v) and lo <= v <= hi:
+            return v
+    except (TypeError, ValueError):
+        pass
+    bad.append(key)
+    return default
 
 
 def admission_thresholds(pol: Optional[dict] = None) -> dict:
-    """R375 메모리 압박: 공통 admission 임계값 정본 (sandbox-policy.json · 환경 변수 우선).
+    """R375 메모리 압박: 공통 admission 임계값 정본 (sandbox-policy.json · 환경 변수 우선 · 값 검증).
     예전에는 memory_gate(90%)·broker(80/90)·회귀 게이트(80/75/90) 가 숫자를 각자 들고 있었다."""
     pol = _policy() if pol is None else pol
-    f = lambda env, key, d: float(os.environ.get(env, pol.get(key, d)))
-    t = {"constrained_pct": f("ORCA_MEM_CONSTRAINED_PERCENT", "mem_constrained_percent", 80),
-         "block_pct": f("ORCA_MAX_COMMIT_PERCENT", "max_commit_percent", 90),
-         "resume_pct": f("ORCA_MEM_RESUME_PERCENT", "mem_resume_percent", 75),
-         "min_free_gb": f("ORCA_MIN_COMMIT_FREE_GB", "min_commit_free_gb", 2),
-         "max_parallel": int(pol.get("agent_max_parallel", 3)),
-         "constrained_parallel": int(pol.get("mem_constrained_parallel", 1)),
-         "state_ttl_sec": f("ORCA_MEM_STATE_TTL_SEC", "mem_state_ttl_sec", 3600)}
-    t["resume_pct"] = min(t["resume_pct"], t["constrained_pct"])        # 설정 실수로 재개선이 진입선보다 높으면 진동
+    bad: list = []
+
+    def g(env, key, d, lo, hi):
+        return _num(os.environ.get(env, pol.get(key, d)), d, lo, hi, bad, key)
+
+    t = {"constrained_pct": g("ORCA_MEM_CONSTRAINED_PERCENT", "mem_constrained_percent", 80, 1, 100),
+         "block_pct": g("ORCA_MAX_COMMIT_PERCENT", "max_commit_percent", 90, 1, 100),
+         "resume_pct": g("ORCA_MEM_RESUME_PERCENT", "mem_resume_percent", 75, 0, 100),
+         "min_free_gb": g("ORCA_MIN_COMMIT_FREE_GB", "min_commit_free_gb", 2, 0, 1024),
+         "min_phys_free_gb": g("ORCA_MIN_PHYS_FREE_GB", "min_phys_free_gb", 1, 0, 1024),
+         "task_est_gb": g("ORCA_TASK_EST_GB", "agent_est_gb", 1.0, 0, 64),
+         "margin": g("ORCA_ESTIMATE_MARGIN", "estimate_margin", 1.2, 1, 10),
+         "max_parallel": int(g("ORCA_AGENT_MAX_PARALLEL", "agent_max_parallel", 3, 1, 64)),
+         "constrained_parallel": int(g("ORCA_MEM_CONSTRAINED_PARALLEL", "mem_constrained_parallel", 1, 1, 64)),
+         "state_ttl_sec": g("ORCA_MEM_STATE_TTL_SEC", "mem_state_ttl_sec", 3600, 1, 86400)}
+    t["block_pct"] = max(t["block_pct"], t["constrained_pct"])        # 상한 < 진입선 = 설정 실수 → 진입선으로
+    t["resume_pct"] = min(t["resume_pct"], t["constrained_pct"])      # 재개선 > 진입선 = 진동 → 진입선으로
     t["gap"] = t["constrained_pct"] - t["resume_pct"]
+    t["invalid"] = bad[:10]                                            # 진단은 상한 있게
     return t
 
 
 def memory_admission(cm: Optional[dict] = None, pol: Optional[dict] = None, prior: Optional[str] = None,
-                     est_gb: float = 0.0) -> dict:
-    """공통 자원 admission — 실제 commit 여유와 이 작업의 예상 비용(est_gb)으로 단계·동시 실행 수를 정한다 (순수 함수).
-    normal = 정책 동시 실행 · constrained = 선택 작업 미룸·동시 실행 축소(기본 1 = 순차) · blocked = 새 작업 시작 X
-    · unknown = 측정 불가 (막지 않음 — 측정 불가 환경에서 영구 정지 방지 · 호출부가 기록).
-    히스테리시스(prior = 직전 단계): constrained 는 resume_pct 아래로 내려가야 normal · blocked 는 block_pct-gap 아래로
-    내려가야 풀린다 → 80% 부근에서 켜졌다 꺼졌다 하는 진동과 OOM 반복 방지."""
+                     est_gb: Optional[float] = None) -> dict:
+    """공통 자원 admission — 실제 commit·물리 여유와 작업당 예상 비용(est_gb · 없으면 정책 agent_est_gb)으로
+    단계와 «지금 새로 시작해도 되는 작업 수»(max_parallel)를 정한다 (순수 함수).
+    normal = 정책 동시 실행 · constrained = 선택 작업 미룸·동시 실행 축소 · blocked = 새 작업 시작 X (0)
+    · unknown = 측정 불가: 필수 작업은 막지 않되(memory_gate 통과) 선택 작업은 constrained 처럼 제한 (최대 병렬 복귀 X).
+    max_parallel 은 여유 예산으로도 깎인다: (여유 − 최소) ÷ (작업당 비용 × 여유율) — 여러 작업이 같은 여유를 중복 소비하지 않게.
+    히스테리시스(prior = 직전 단계): constrained 는 resume_pct 아래 · blocked 는 block_pct-gap 아래로 내려가야 풀린다."""
     pol = _policy() if pol is None else pol
     t = admission_thresholds(pol)
-    cm = commit_memory() if cm is None else cm
+    cm = commit_memory() if cm is None else (cm or {})
+    per = t["task_est_gb"] if est_gb is None else max(0.0, float(est_gb))
     if not cm.get("measured") or cm.get("percent") is None:
-        return {"level": "unknown", "max_parallel": t["max_parallel"], "defer_optional": False, "commit": cm,
-                "reason": "commit 측정 불가 — 막지 않음", "thresholds": t}
-    pct, free = float(cm["percent"]), cm.get("free_gb")
-    need = float(est_gb or 0) * float(pol.get("estimate_margin", 1.2))
-    starved = free is not None and float(free) - need < t["min_free_gb"]
-    level = "blocked" if (starved or pct > t["block_pct"]) else ("constrained" if pct >= t["constrained_pct"] else "normal")
+        return {"level": "unknown", "max_parallel": t["constrained_parallel"], "defer_optional": True, "commit": cm,
+                "reason": "commit 측정 불가 — 필수 작업은 계속 · 선택 작업 제한", "thresholds": t}
+    pct, free, phys = float(cm["percent"]), cm.get("free_gb"), cm.get("phys_free_gb")
+    need = per * t["margin"]
+    low_commit = free is not None and float(free) - need < t["min_free_gb"]
+    low_phys = phys is not None and float(phys) - need < t["min_phys_free_gb"]
+    if low_commit or low_phys or pct > t["block_pct"]:
+        level = "blocked"
+    else:
+        level = "constrained" if pct >= t["constrained_pct"] else "normal"
     held = ""
     if prior == "blocked" and level != "blocked" and pct > t["block_pct"] - t["gap"]:
         level, held = "blocked", f"회복 대기 ({t['block_pct'] - t['gap']:.0f}% 아래에서 해제)"
     elif prior in ("constrained", "blocked") and level == "normal" and pct >= t["resume_pct"]:
         level, held = "constrained", f"회복 대기 ({t['resume_pct']:.0f}% 아래에서 해제)"
-    par = {"normal": t["max_parallel"], "constrained": min(t["max_parallel"], t["constrained_parallel"]), "blocked": 0}[level]
-    reason = (f"가상 메모리(commit) {cm.get('used_gb')}/{cm.get('limit_gb')}GB ({pct}%) · 여유 {free}GB"
-              + (f" · 이 작업 예상 {need:.2f}GB" if need else "")
-              + f" → {level}" + (f" · {held}" if held else ""))
+    par = {"normal": t["max_parallel"], "constrained": min(t["max_parallel"], t["constrained_parallel"]),
+           "blocked": 0}[level]
+    if par and need > 0:
+        budgets = [(float(free) - t["min_free_gb"]) / need] if free is not None else []
+        budgets += [(float(phys) - t["min_phys_free_gb"]) / need] if phys is not None else []
+        if budgets:
+            par = max(0, min(par, int(min(budgets))))
+    why = ("commit 여유 부족" if low_commit else "") or ("물리 RAM 여유 부족" if low_phys else "")
+    reason = (f"가상 메모리(commit) {cm.get('used_gb')}/{cm.get('limit_gb')}GB ({pct}%) · 여유 {free}GB · 물리 여유 {phys}GB"
+              f" · 작업당 {need:.2f}GB → {level} · 새로 시작 가능 {par}" + (f" · {why}" if why else "")
+              + (f" · {held}" if held else ""))
     return {"level": level, "max_parallel": par, "defer_optional": level != "normal", "commit": cm,
             "reason": reason, "thresholds": t}
 
 
 def _admission_state_path() -> Optional[Path]:
-    """히스테리시스 기록 위치 — 운영/시험 경계 분리: 시험 root 면 그 안 · 운영 root 인데 pytest 실행 중이면 기록 안 함
-    (시험이 운영 state 를 오염시키지 않게 · 이때는 직전 단계 없이 순수 판정)."""
+    """히스테리시스 기록 위치 — 운영/시험 경계 분리: 시험 root 면 그 안 · pytest 실행 중이면 기록 안 함
+    (시험끼리·운영 state 와 직전 단계를 공유하지 않게 · 기록 시험은 ORCA_MEM_ADMISSION_STATE 로 명시)."""
     env = os.environ.get("ORCA_MEM_ADMISSION_STATE", "").strip()
     if env:
         return Path(env)
     if os.environ.get("PYTEST_CURRENT_TEST"):
-        return None          # 시험끼리 직전 단계를 공유하지 않게 (순서 의존 방지) · 기록 시험은 위 환경 변수로 명시
+        return None
     if not IS_OPERATIONAL_ROOT:
         return STATE_FILE.with_name("_memory-admission.json")
     return OPERATIONAL_STATE_FILE.with_name("memory-admission.json")
 
 
-def admission_now(cm: Optional[dict] = None, pol: Optional[dict] = None, est_gb: float = 0.0) -> dict:
-    """memory_admission + 직전 단계 읽기·기록 (프로세스 간 히스테리시스). 기록 읽기·쓰기 실패 = 직전 단계 없이 판정
-    (실패해도 더 느슨해지지 않게: 손상 기록은 무시하되 현재 측정으로만 판단)."""
+def _read_prior(path: Path, ttl: float) -> Optional[str]:
+    """직전 단계 — 없음·손상·미래 시각(시계 오류)·TTL 지남·모르는 값 = None."""
+    try:
+        st = json.loads(path.read_text(encoding="utf-8"))
+        ts, lvl = float(st.get("ts", 0)), st.get("level")
+    except Exception:  # noqa: BLE001
+        return None
+    now = time.time()
+    if not (now - ttl <= ts <= now + 60) or lvl not in ("normal", "constrained", "blocked"):
+        return None
+    return lvl
+
+
+def admission_now(cm: Optional[dict] = None, pol: Optional[dict] = None, est_gb: Optional[float] = None) -> dict:
+    """memory_admission + 직전 단계 읽기·기록 (프로세스 간 히스테리시스).
+    읽기-판정-쓰기는 스레드 잠금 + OS 잠금(proc_lock.try_lock · 주인이 죽으면 커널이 해제) 안에서 한다.
+    잠금을 0.5초 안에 못 잡거나 기록이 실패하면 기록 없이 판정 (판정 자체는 항상 돌려준다 · state_written 으로 구분)."""
     pol = _policy() if pol is None else pol
-    path, prior = _admission_state_path(), None
+    path = _admission_state_path()
     t = admission_thresholds(pol)
-    if path:
+    if not path:
+        adm = memory_admission(cm, pol, None, est_gb)
+        adm["prior"], adm["state_written"] = None, False
+        return adm
+    pl, fd = None, None
+    with _ADM_THREAD_LOCK:
         try:
-            st = json.loads(path.read_text(encoding="utf-8"))
-            if time.time() - float(st.get("ts", 0)) <= t["state_ttl_sec"]:
-                prior = st.get("level")
-        except Exception:  # noqa: BLE001 — 없음·손상 = 직전 단계 없음
-            prior = None
-    adm = memory_admission(cm, pol, prior, est_gb)
-    adm["prior"] = prior
-    if path and adm["level"] != "unknown":
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import proc_lock as pl
+            for _ in range(10):
+                fd = pl.try_lock(str(path) + ".lock")
+                if fd is not None:
+                    break
+                time.sleep(0.05)
+        except Exception:  # noqa: BLE001 — 잠금 모듈 없음 = 기록 안 함
+            pl, fd = None, None
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
-            tmp.write_text(json.dumps({"level": adm["level"], "percent": adm["commit"].get("percent"),
-                                       "ts": time.time()}), encoding="utf-8")
-            os.replace(tmp, path)
-        except Exception:  # noqa: BLE001 — 기록 실패는 판정에 영향 없음
-            pass
-    return adm
+            prior = _read_prior(path, t["state_ttl_sec"])
+            adm = memory_admission(cm, pol, prior, est_gb)
+            adm["prior"], adm["state_written"] = prior, False
+            if fd is not None and adm["level"] != "unknown":
+                try:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+                    tmp.write_text(json.dumps({"level": adm["level"], "percent": adm["commit"].get("percent"),
+                                               "ts": time.time()}), encoding="utf-8")
+                    os.replace(tmp, path)
+                    adm["state_written"] = True
+                except Exception:  # noqa: BLE001 — 기록 실패는 판정에 영향 없음
+                    pass
+            return adm
+        finally:
+            if fd is not None and pl is not None:
+                pl.release(fd)
 
 
-def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None, est_gb: float = 0.0) -> Optional[dict]:
-    """신규 Agent·worktree 시작 전 commit 메모리 확인. 부족 = retryable 거부 dict · 충분/측정 불가 = None.
-    측정 불가는 막지 않는다 (막으면 측정 불가 환경에서 영구 정지) — 호출부가 결과를 기록한다.
-    판정 정본 = admission_now (blocked 만 거부 · 히스테리시스 포함 · 임계값 = sandbox-policy.json)."""
+def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None, est_gb: Optional[float] = None) -> Optional[dict]:
+    """신규 Agent·worktree 시작 전 메모리 확인. blocked = retryable 거부 dict · 그 밖 = None.
+    측정 불가(unknown)는 필수 작업을 막지 않는다 (막으면 측정 불가 환경에서 영구 정지) — 호출부가 결과를 기록한다.
+    판정 정본 = admission_now (히스테리시스 · commit·물리 여유 · 작업 비용 · 임계값 = sandbox-policy.json)."""
     adm = admission_now(cm, pol, est_gb)
     if adm["level"] == "blocked":
         cm = adm["commit"]
         t = adm["thresholds"]
         return {"ok": False, "retryable": True, "deferred": True, "commit": cm, "admission": adm["level"],
                 "reason": f"가상 메모리(commit) 부족: {cm.get('used_gb')}/{cm.get('limit_gb')}GB ({cm.get('percent')}%) · "
-                          f"여유 {cm.get('free_gb')}GB · 최소 {t['min_free_gb']}GB·상한 {t['block_pct']}% 기준 · 시작 보류"
-                          + (" · " + adm["reason"].split(" · ")[-1] if "회복 대기" in adm["reason"] else "")}
+                          f"여유 {cm.get('free_gb')}GB · 최소 {t['min_free_gb']}GB·상한 {t['block_pct']}% 기준 · 시작 보류 · "
+                          + adm["reason"].split(" → ", 1)[-1]}
     return None
 
 

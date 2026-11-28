@@ -1874,10 +1874,13 @@ def test_memory_wait_skips_only_when_absolute_headroom_is_enough(monkeypatch):
 
     out, res, dt = run({"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 4.66})       # 2026-11-20 실측값
     assert out is None and dt < 0.5 and "여유 충분" in res["memory_wait"]["reason"]
-    for low in ({"percent": 87.5, "free_gb": 1.2, "phys_free_gb": 4.66},              # commit 여유 부족
-                {"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 2.3}):             # 물리 여유 부족 (강제 종료 시점 값)
-        out, res, dt = run(low)
-        assert out is None and dt >= 0.9 and "reason" not in res["memory_wait"], low   # 기다린 뒤 순차 진행 (종전)
+    low = {"percent": 87.5, "free_gb": 3.22, "phys_free_gb": 2.3}                       # 물리 여유 부족 (강제 종료 시점 값)
+    out, res, dt = run(low)
+    assert out is None and dt >= 0.9 and "reason" not in res["memory_wait"], low       # 기다린 뒤 순차 진행 (종전)
+    # R375 독립 검토 864fda9d: commit 여유가 공통 최소값(min_commit_free_gb 2GB) 미만이면 대기 만료 뒤에도 진행하지 않는다
+    #   (종전: 87.5% · 여유 1.2GB 를 기다린 뒤 그대로 진행 = 절대 여유 부족 무시 · memory_gate 는 같은 값에서 이미 거부)
+    out, res, dt = run({"percent": 87.5, "free_gb": 1.2, "phys_free_gb": 4.66})
+    assert out and "절대 여유 부족" in out and dt >= 0.9
     out, res, dt = run({"percent": 92.0, "free_gb": 2.5, "phys_free_gb": 6.0})         # 90%+ = 여유 GB 와 무관하게 보류
     assert out and "보류" in out and dt >= 0.9
 

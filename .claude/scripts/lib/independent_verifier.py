@@ -603,20 +603,27 @@ def _wait_memory_for_heavy(res: Dict[str, Any]) -> str | None:
         pct, waited = cm["percent"], _t.time() - t0
         res["memory_wait"] = {"waited_sec": round(waited), "percent": pct, "free_gb": cm.get("free_gb"),
                               "phys_free_gb": cm.get("phys_free_gb")}
-        if pct < (resume if waited > 0 else enter):   # 대기에 들어가면 재개선(기본 75%) 아래에서 재개
+        # R375 독립 검토: 퍼센트가 낮아도 절대 여유(commit·물리)가 최소값 미만이면 진행하지 않는다 — 공통 판정(작업 비용 0 · 최소 여유만)
+        starved = pct <= block and _sb.memory_admission(cm, est_gb=0)["level"] == "blocked"
+        if starved:
+            res["memory_wait"]["reason"] = "절대 여유 부족 (공통 admission)"
+        if pct < (resume if waited > 0 else enter) and not starved:   # 대기에 들어가면 재개선(기본 75%) 아래에서 재개
             return None
         # R339: % 만으로 기다리면 commit 이 85~87% 에 머무는 PC 에선 300초 뒤 결국 그대로 진행해 대기가 순수 낭비였다
         #   (2026-11-20 실측 3회: 86.7·85.6% · commit 여유 3.5GB · 물리 여유 5.7GB · pytest 최대 0.5GB).
         #   90% 미만이고 commit 여유·물리 여유가 둘 다 넉넉하면 바로 진행 · 하나라도 부족하면 종전대로 대기 · 90%+ 는 종전대로 보류.
         need_commit, need_phys = _gate_mem_need(res.get("memory_history"))
         # 기본 꺼짐: STD-MEMORY-001(사용자 확정 2026-11-09 '80%부터 무거운 작업 대기') 을 바꾸는 판정이라 사용자 결정 전까지 opt-in
-        if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < block and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
+        if os.environ.get("ORCA_GATE_MEM_ABSOLUTE") == "1" and pct < block and not starved and (cm.get("free_gb") or 0) >= need_commit and (cm.get("phys_free_gb") or 0) >= need_phys:
             res["memory_wait"]["reason"] = "여유 충분 (commit %.2fGB ≥ %.1f · 물리 %.2fGB ≥ %.1f)" % (
                 cm["free_gb"], need_commit, cm["phys_free_gb"], need_phys)
             return None
         if waited >= wait_max:
             if pct >= block:
                 return "메모리 %s%% — %d초 대기 후에도 %s%% 이상 · 전체 회귀 보류 (메모리 회복 후 다시 실행)" % (pct, wait_max, block)
+            if starved:
+                return "메모리 %s%% · commit 여유 %sGB · 물리 여유 %sGB — %d초 대기 후에도 절대 여유 부족 · 전체 회귀 보류" % (
+                    pct, cm.get("free_gb"), cm.get("phys_free_gb"), wait_max)
             return None                              # 80~90%: 병렬 없이 순차 실행 (pytest 단일 프로세스)
         _t.sleep(min(15.0, max(0.2, wait_max / 20)))
 

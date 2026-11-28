@@ -56,7 +56,7 @@ def env(tmp_path, monkeypatch):
     (broker / "broker-config.json").write_text(json.dumps(
         {"inbox": str(inbox), "repos": {"kit": {"remote_url": str(remote), "branches": ["main"]}}}), encoding="utf-8")
     b = _load()
-    b._memory_pct = lambda: 50                          # 메모리 판정 고정 (메모리 시험은 따로 값 지정)
+    b._memory_cm = lambda: {"measured": True, "percent": 50, "free_gb": 8.0, "phys_free_gb": 6.0}                          # 메모리 판정 고정 (메모리 시험은 따로 값 지정)
     return {"b": b, "remote": remote, "agent": agent, "inbox": inbox, "broker": broker, "tmp": tmp_path}
 
 
@@ -419,9 +419,9 @@ def test_gc_removes_only_finished_broker_temp_data(env):
     refs = lambda: set(subprocess.run(["git", "--git-dir", str(mirror), "for-each-ref", "--format=%(refname)",
                                        "refs/incoming/"], capture_output=True, text=True).stdout.split())
     assert len(refs()) == 2
-    b._memory_pct = lambda: 85
+    b._memory_cm = lambda: {"measured": True, "percent": 85, "free_gb": 8.0, "phys_free_gb": 6.0}
     assert b.gc(env["broker"], force=True) == {"ran": False, "reason": "memory 85%"}   # 80% 이상 = 미룸
-    b._memory_pct = lambda: 50
+    b._memory_cm = lambda: {"measured": True, "percent": 50, "free_gb": 8.0, "phys_free_gb": 6.0}
     g = b.gc(env["broker"], force=True)
     assert g["ran"] and g["removed_refs"] == 1 and g["removed_work"] == 1
     st_wait = b.status(env["broker"], tid_wait)
@@ -480,10 +480,10 @@ def test_memory_90_defers_intake_keeps_inbox(env):
     b = env["b"]
     _commit(env["agent"], "mm.txt", "m")
     b.submit_push(env["agent"], "kit", "main", env["inbox"])
-    b._memory_pct = lambda: 93
+    b._memory_cm = lambda: {"measured": True, "percent": 93, "free_gb": 8.0, "phys_free_gb": 6.0}
     log = b.process(env["broker"])
     assert log[0]["result"] == "deferred" and len(list(env["inbox"].glob("*.json"))) == 1
-    b._memory_pct = lambda: 50
+    b._memory_cm = lambda: {"measured": True, "percent": 50, "free_gb": 8.0, "phys_free_gb": 6.0}
     assert b.process(env["broker"])[0]["result"] == "waiting"
 
 
