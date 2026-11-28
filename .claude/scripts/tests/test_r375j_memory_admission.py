@@ -17,7 +17,7 @@ POL = {"min_commit_free_gb": 2, "max_commit_percent": 90, "mem_constrained_perce
        "agent_est_gb": 1.0}
 
 
-def cm(pct, free=8.0, phys=None):
+def cm(pct, free=8.0, phys=8.0):
     d = {"measured": True, "percent": pct, "free_gb": free, "used_gb": 20.0, "limit_gb": 25.0}
     if phys is not None:
         d["phys_free_gb"] = phys
@@ -217,3 +217,157 @@ def test_run_dag_waits_then_resumes(monkeypatch, tmp_path):
     monkeypatch.setattr(ar.time, "sleep", lambda s: None)
     r, calls = _dag(monkeypatch, tmp_path, [0, 0, 2], wait="60")                # 대기 중 회복 → 재개
     assert len(calls) == 5 and not any(v.get("deferred") for v in r["results"].values())
+
+
+# ── 2026-11-28 2차 독립 검토 f2376021 반례 ──────────────────────────────────────
+FULL = {"measured": True, "percent": 50.0, "free_gb": 4.5, "phys_free_gb": 8.0, "used_gb": 20.0, "limit_gb": 25.0}
+
+
+def _book(monkeypatch, tmp_path):
+    p = tmp_path / "mem-res.json"
+    monkeypatch.setenv("ORCA_MEM_RESERVATIONS", str(p))
+    monkeypatch.delenv("ORCA_MEM_ADMISSION_STATE", raising=False)
+    return p
+
+
+def test_cross_process_reservation_prevents_double_spend(monkeypatch, tmp_path):
+    """독립 프로세스 2개가 같은 여유를 각각 소비하던 반례 — 자식이 예약을 쥔 동안 부모는 시작 0 · 자식이 죽으면(OOM·강제 종료) 자동 만료."""
+    import subprocess
+    import time
+    p = _book(monkeypatch, tmp_path)
+    child = ("import sys,time,json;sys.path.insert(0,sys.argv[1]);import repair_sandbox as sb;"
+             "a=sb.reserve_memory(3,'child',pol=json.loads(sys.argv[2]),cm=json.loads(sys.argv[3]));"
+             "print(len(a['granted']),flush=True);time.sleep(60)")
+    proc = subprocess.Popen([sys.executable, "-c", child, str(LIB), json.dumps(POL), json.dumps(FULL)],
+                            stdout=subprocess.PIPE, text=True)
+    try:
+        assert proc.stdout.readline().strip() == "2"                 # (4.5−2)÷1.2 = 2
+        a = sb.reserve_memory(3, "parent", pol=POL, cm=FULL)
+        assert a["granted"] == [] and a["level"] == "blocked" and a["reserved_gb_others"] == 2.4
+        assert sb.memory_admission(FULL, POL)["max_parallel"] == 2    # 예약 장부 없이 판정하면 2 를 또 줬다 (예전 동작)
+    finally:
+        proc.kill()
+        proc.wait()
+    time.sleep(0.2)
+    b = sb.reserve_memory(3, "parent", pol=POL, cm=FULL)
+    assert len(b["granted"]) == 2                                     # 죽은 주인의 예약은 제외
+    assert sb.release_memory(b["granted"]) and json.loads(p.read_text(encoding="utf-8"))["reservations"] == {}
+
+
+def test_reservation_pid_reuse_stale_future_and_essential(monkeypatch, tmp_path):
+    import os
+    import time
+    p = _book(monkeypatch, tmp_path)
+    now = time.time()
+    me = sb._proc_start(os.getpid())
+    base = {"pid": os.getpid(), "gb": 2.4, "ttl": 600, "owner": "x"}
+    p.write_text(json.dumps({"reservations": {
+        "reused": dict(base, start=(me or 0) - 1000, ts=now),        # 같은 PID · 다른 시작 시각 = 재사용
+        "stale": dict(base, start=me, ts=now - 700),                  # TTL 지남
+        "future": dict(base, start=me, ts=now + 3600),                # 미래 시각
+        "bad": {"pid": "x"}}}), encoding="utf-8")
+    a = sb.reserve_memory(3, "t", pol=POL, cm=FULL)
+    assert a["reserved_gb_others"] == 0 and len(a["granted"]) == 2
+    b = sb.reserve_memory(1, "fix", essential=True, pol=POL, cm=FULL)  # 선택 작업 예약 2.4 가 필수 복구를 굶기지 않음
+    assert len(b["granted"]) == 1
+    c = sb.reserve_memory(1, "opt", pol=POL, cm=FULL)                 # 선택 작업은 필수 예약까지 합산 → 0
+    assert c["granted"] == []
+    sb.release_memory(a["granted"] + b["granted"])
+
+
+def test_observed_cost_raises_estimate(monkeypatch, tmp_path):
+    _book(monkeypatch, tmp_path)
+    for _ in range(5):
+        g = sb.reserve_memory(1, "t", pol=POL, cm=dict(FULL, free_gb=20.0, phys_free_gb=20.0))["granted"]
+        sb.release_memory(g, observed_gb=3.0)
+    a = sb.reserve_memory(3, "t", pol=POL, cm=dict(FULL, free_gb=20.0, phys_free_gb=20.0))
+    assert a["est_gb_used"] == 3.0 and len(a["granted"]) == 3         # (20−2)÷3.6 = 5 → 상한 3
+    sb.release_memory(a["granted"], observed_gb=float("nan"))          # 비정상 관측값은 기록 안 함
+
+
+@pytest.mark.parametrize("bad", [{"free_gb": float("nan")}, {"phys_free_gb": float("inf")}, {"percent": 120},
+                                 {"free_gb": None}, {"phys_free_gb": "x"}, {"percent": float("nan")}])
+def test_partial_or_nonfinite_measurement_is_unknown(bad):
+    m = dict(FULL, **bad)
+    a = sb.memory_admission(m, dict(POL, mem_constrained_parallel=5, agent_max_parallel=2))
+    assert a["level"] == "unknown" and a["max_parallel"] == 2 and a["measure_invalid"]   # unknown 도 전체 상한 이하
+    assert sb.memory_gate(POL, m) is None                              # 필수 작업은 계속
+
+
+def test_missing_field_and_bad_est_and_stale_ts():
+    m = dict(FULL)
+    m.pop("phys_free_gb")
+    assert sb.memory_admission(m, POL)["level"] == "unknown"           # 예전: 물리 여유 누락 = 정상 통과
+    assert sb.memory_admission(dict(FULL, ts=0), POL)["level"] == "unknown"
+    a = sb.memory_admission(FULL, POL, est_gb=float("nan"))
+    assert a["level"] == "normal" and "est_gb" in a["thresholds"]["invalid"]
+
+
+def test_broker_cap_follows_level_change_mid_intake(monkeypatch, tmp_path):
+    """normal 로 시작해 접수 중 constrained 로 바뀌면 누적 5건에서 멈춤 (예전: 최초 cap 50 유지)."""
+    import broker as b
+    seq = iter([cm(50)] + [cm(50)] * 2 + [cm(85)] * 100)
+    monkeypatch.setattr(b, "_memory_cm", lambda: next(seq))
+    monkeypatch.setattr(b, "_memory_level", lambda c: "constrained" if c["percent"] >= 80 else "normal")
+    inbox = tmp_path / "inbox"
+    inbox.mkdir()
+    for i in range(12):
+        (inbox / f"r{i:02}.json").write_text("{}", encoding="utf-8")
+    taken = []
+    monkeypatch.setattr(b, "_guard", lambda r: None)
+    lk = tmp_path / "lock"
+    lk.write_text("", encoding="utf-8")
+    monkeypatch.setattr(b, "_lock", lambda r: lk)
+    monkeypatch.setattr(b, "_config", lambda r: {"inbox": str(inbox)})
+    monkeypatch.setattr(b, "_gate", lambda r: None)
+    monkeypatch.setattr(b, "_Git", lambda r: None)
+    monkeypatch.setattr(b, "_recover", lambda *a: [])
+    monkeypatch.setattr(b, "_intake", lambda r, c, g, gi, src, log: taken.append(src.stem))
+    monkeypatch.setattr(b, "_execute_approved", lambda *a: [])
+    gc_cm = []
+    monkeypatch.setattr(b, "gc", lambda *a, **k: gc_cm.append(k.get("cm")) or {"ran": False})
+    log = b.process(tmp_path)
+    assert len(taken) == 5 and any("상한 5" in (x.get("reason") or "") for x in log)
+    assert gc_cm == [None]                                              # gc 는 승인 실행 뒤 새로 측정
+
+
+def test_gc_pct_only_compat_uses_full_measurement(monkeypatch, tmp_path):
+    import broker as b
+    monkeypatch.setattr(b, "_memory_cm", lambda: {"measured": False})
+    assert b.gc(tmp_path, pct=10, force=True)["ran"] is False          # 퍼센트만으로 정상 판정 X → 측정 불가 = 미룸
+
+
+def test_run_dag_releases_reservation_on_failure_and_bad_wait(monkeypatch, tmp_path):
+    import agent_registry as ar
+    p = _book(monkeypatch, tmp_path)
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(FULL, free_gb=20.0, phys_free_gb=20.0))
+    monkeypatch.setattr(sb, "_policy", lambda: dict(POL, dag_mem_wait_sec=0))
+    monkeypatch.setenv("ORCA_DAG_MEM_WAIT_SEC", "nan")                 # 예전: NaN 이면 blocked 때 영원히 대기
+    ag = {"name": "a", "tools": ["Read"], "model": "m", "body": "", "selection": "t"}
+    monkeypatch.setattr(ar, "load_agents", lambda: [ag])
+    monkeypatch.setattr(ar, "select_agent", lambda *a, **k: ag)
+    monkeypatch.setattr(ar, "_changed_files", lambda cwd: [])
+    seen = []
+
+    def boom(*a, **k):
+        seen.append(len(json.loads(p.read_text(encoding="utf-8"))["reservations"]))
+        raise RuntimeError("start failed")
+    tasks = [{"id": f"t{i}", "needs": ["read"], "prompt": "p", "allow_paths": [f"f{i}"]} for i in range(2)]
+    r = ar.run_dag(tasks, str(tmp_path), dispatch=boom)
+    assert seen and max(seen) >= 1 and all(v["status"] == "failed" for v in r["results"].values())
+    assert json.loads(p.read_text(encoding="utf-8"))["reservations"] == {}      # 시작 실패에도 해제
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(FULL, free_gb=1.0))  # blocked + 대기값 NaN → 정책 0초 → 즉시 deferred
+    r2 = ar.run_dag(tasks, str(tmp_path), dispatch=boom)
+    assert all(v.get("deferred") for v in r2["results"].values())
+
+
+def test_partial_measurement_never_looser_than_known_fields():
+    """부분 측정을 unknown 으로 풀어 주면 이미 확정된 부족을 놓친다 — 유효 필드만으로 blocked 면 blocked."""
+    for m in ({"measured": True, "percent": 50.0, "free_gb": 0.5},                      # 물리 여유 누락 + commit 여유 부족
+              {"measured": True, "percent": 95.0, "free_gb": float("nan")},             # 여유 NaN + 95%
+              {"measured": True, "percent": 50.0, "free_gb": 8.0, "phys_free_gb": 0.2, "used_gb": None}):
+        m2 = dict(m)
+        a = sb.memory_admission(m2, POL)
+        assert a["level"] in ("blocked",) or not sb._measure_problems(m2), (m, a)
+        assert a["max_parallel"] == 0 or not sb._measure_problems(m2)
+    assert sb.memory_admission({"measured": True, "percent": 50.0, "free_gb": 8.0}, POL)["level"] == "unknown"

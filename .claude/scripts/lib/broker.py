@@ -420,6 +420,11 @@ def _memory_level(cm) -> str:
         return "unknown"
 
 
+def _intake_cap(lvl: str) -> int:
+    """단계별 1회 접수 상한 (blocked 0 · constrained·unknown 5 · normal MAX_PER_RUN)."""
+    return {"blocked": 0, "constrained": 5, "unknown": 5}.get(lvl, MAX_PER_RUN)
+
+
 def process(broker_root) -> list:
     """요청 함을 한 번 처리하고, Broker 채널로 승인된 요청을 실행한다. 반환 = 처리 기록."""
     broker_root = Path(broker_root)
@@ -441,15 +446,19 @@ def process(broker_root) -> list:
         cm = _memory_cm()
         pct = cm.get("percent") if cm.get("measured") else None
         lvl = _memory_level(cm)        # R375: 공통 admission (임계값·히스테리시스·여유 정본 = repair_sandbox)
-        cap = {"blocked": 0, "constrained": 5, "unknown": 5}.get(lvl, MAX_PER_RUN)
-        if cap == 0:
+        if _intake_cap(lvl) == 0:
             log.append({"result": "deferred", "reason": f"메모리 {pct}% — 공통 admission blocked · 새 요청 접수 보류 (요청 함에 그대로)"})
-        for i, src in enumerate(sorted(Path(cfg["inbox"]).glob("*.json"))[:cap]):
-            if i:                       # 접수 중 압박 변화 재확인 (첫 건은 위에서 판정) · blocked 가 되면 나머지는 요청 함에 그대로
+        taken = 0
+        for i, src in enumerate(sorted(Path(cfg["inbox"]).glob("*.json"))):
+            if i:                       # R375 2차 검토: 매 건 현재 단계의 상한을 누적 접수량에 적용 (최초 cap 고정 X)
                 cm = _memory_cm()
-                if _memory_level(cm) == "blocked":
-                    log.append({"result": "deferred", "reason": f"메모리 {cm.get('percent')}% — 접수 중 blocked · 남은 요청 보류"})
-                    break
+                lvl = _memory_level(cm)
+            if taken >= _intake_cap(lvl):
+                if i:
+                    log.append({"result": "deferred", "reason": f"메모리 {cm.get('percent')}% — 접수 중 {lvl} · "
+                                                                 f"상한 {_intake_cap(lvl)} 도달 · 남은 요청 보류"})
+                break
+            taken += 1
             try:
                 _intake(broker_root, cfg, gate, git, src, log)
             except Exception as e:  # noqa: BLE001 — 한 건이 실패해도 나머지·승인 실행은 계속
@@ -459,7 +468,7 @@ def process(broker_root) -> list:
         except Exception as e:  # noqa: BLE001
             log.append({"result": "error", "reason": "execute:" + type(e).__name__})
         try:
-            g = gc(broker_root, gate, git, cm=cm)
+            g = gc(broker_root, gate, git)          # 승인 실행 뒤 새 측정 (실행 전 cm 재사용 X)
             if g.get("ran"):
                 log.append({"result": "gc", **g})
         except Exception as e:  # noqa: BLE001
@@ -562,7 +571,9 @@ def gc(broker_root, gate=None, git=None, pct=None, force=False, cm=None) -> dict
     if not force and stamp.exists() and now - stamp.stat().st_mtime < GC_INTERVAL_SEC:
         return {"ran": False, "reason": "interval"}
     if cm is None:
-        cm = {"measured": True, "percent": pct} if pct is not None else _memory_cm()
+        cm = _memory_cm()                 # pct 단독 호환: 퍼센트만으로는 여유를 모름 → 전체 측정 (실패 = unknown = 미룸)
+        if pct is not None and cm.get("measured"):
+            cm = dict(cm, percent=pct)
     if _memory_level(cm) != "normal":     # 선택 작업(git gc) = 압박·측정 불가면 미룸
         return {"ran": False, "reason": f"memory {cm.get('percent')}%"}
     gate = gate or _gate(broker_root)

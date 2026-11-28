@@ -74,7 +74,7 @@ def _fixed_commit_memory(monkeypatch):
         sys.path.insert(0, lib)
     import repair_sandbox as sb
     monkeypatch.setattr(sb, "commit_memory", lambda: {"measured": True, "used_gb": 8.0, "limit_gb": 32.0,
-                                                      "free_gb": 24.0, "percent": 25.0})
+                                                      "free_gb": 24.0, "phys_free_gb": 24.0, "percent": 25.0})
     monkeypatch.delenv("ORCA_MIN_COMMIT_FREE_GB", raising=False)
     monkeypatch.delenv("ORCA_MAX_COMMIT_PERCENT", raising=False)
 

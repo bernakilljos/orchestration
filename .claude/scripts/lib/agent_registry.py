@@ -114,21 +114,25 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
     # R375 독립 검토: 시작 때 한 번이 아니라 wave 마다 공통 admission 재판정 · 명시 max_parallel 도 상한일 뿐 판정을 건너뛰지 않음
     #   · blocked(0) 를 1 로 바꾸지 않고 보류 → 회복 대기(상한 있는 backoff) → 그래도 blocked 면 남은 작업 deferred (재실행으로 재개)
     cap_parallel = max_parallel
-    mem_wait = float(os.environ.get("ORCA_DAG_MEM_WAIT_SEC", _sbp._policy().get("dag_mem_wait_sec", 60)))
+    _bad: List[str] = []   # R375 2차 검토: 대기 값 NaN·음수·무한 = 기본값 (공통 _num 재사용) · 대기 마감은 monotonic (시계 변경 무관)
+    mem_wait = _sbp._num(_sbp._policy().get("dag_mem_wait_sec", 60), 60, 0, 3600, _bad, "dag_mem_wait_sec")
+    if os.environ.get("ORCA_DAG_MEM_WAIT_SEC") is not None:      # 환경 값이 잘못되면 정책값 유지
+        mem_wait = _sbp._num(os.environ["ORCA_DAG_MEM_WAIT_SEC"], mem_wait, 0, 3600, _bad, "ORCA_DAG_MEM_WAIT_SEC")
     mem_log: List[Dict[str, Any]] = []
+    held: Dict[str, Any] = {}   # tid → 예약 id (프로세스 간 공통 장부 · 작업 끝·실패·예외에 해제)
 
-    def admit_wave() -> int:
-        t_start = time.time()
+    def admit_wave(want: int):
+        t_start = time.monotonic()
         delay = 2.0
         while True:
-            adm = _sbp.admission_now()
+            want_n = want if cap_parallel is None else min(want, max(0, int(cap_parallel)))
+            adm = _sbp.reserve_memory(want_n, owner=f"run_dag:{goal_id}")
             n = int(adm.get("max_parallel") or 0)
-            if cap_parallel is not None:
-                n = min(n, int(cap_parallel))
-            mem_log.append({"level": adm.get("level"), "start": n})
-            if n > 0 or time.time() - t_start >= mem_wait:
-                return n
-            time.sleep(min(delay, max(0.0, mem_wait - (time.time() - t_start))))
+            mem_log.append({"level": adm.get("level"), "start": n, "reserved": adm.get("reserved"),
+                            "others_gb": adm.get("reserved_gb_others")})
+            if n > 0 or time.monotonic() - t_start >= mem_wait:
+                return n, list(adm.get("granted") or [])
+            time.sleep(min(delay, max(0.0, mem_wait - (time.monotonic() - t_start))))
             delay = min(delay * 2, 30.0)
     if dispatch is None:
         import real_repair_chain as _rc
@@ -187,23 +191,36 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
                 results[tid] = {"status": "skipped", "reason": "dependency cycle"}
                 pending.pop(tid)
             break
-        n_start = admit_wave()
+        cand = _conflict_free(sorted(ready), by_id)
+        n_start, grants = admit_wave(len(cand))
         if n_start <= 0:            # 메모리 blocked 지속 — 새 작업 시작 X · 실패 아님 (재실행으로 재개)
             for tid in sorted(pending):
                 results[tid] = {"status": "skipped", "deferred": True,
                                 "reason": f"메모리 admission blocked ({mem_wait:.0f}초 대기 후에도) — 재실행 시 재개"}
             pending.clear()
             break
-        batch = _conflict_free(sorted(ready), by_id)[:n_start]
+        batch = cand[:n_start]
         waves.append(batch)
+        for tid, rid in zip(batch, grants):
+            held[tid] = rid
+
+        def run_held(tid: str) -> Dict[str, Any]:
+            try:
+                return run_one(tid)
+            finally:                       # 시작 실패·예외·정상 종료 모두 해제 (죽으면 장부가 PID·TTL 로 만료)
+                rid = held.pop(tid, None)
+                if rid:
+                    _sbp.release_memory(rid)
         with ThreadPoolExecutor(max_workers=len(batch)) as ex:
-            futs = {tid: ex.submit(run_one, tid) for tid in batch}
+            futs = {tid: ex.submit(run_held, tid) for tid in batch}
             for tid, f in futs.items():
                 try:
                     results[tid] = f.result()
                 except Exception as e:
                     results[tid] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
                 pending.pop(tid, None)
+        if grants[len(batch):]:            # 허용 > 실제 시작 = 남는 예약 즉시 반환
+            _sbp.release_memory(grants[len(batch):])
         for tid in batch:
             t = by_id[tid]
             if results[tid].get("status") != "ok" or not t.get("may_spawn"):

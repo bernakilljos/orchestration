@@ -201,6 +201,29 @@ def admission_thresholds(pol: Optional[dict] = None) -> dict:
     return t
 
 
+def _measure_problems(cm: dict) -> list:
+    """R375 2차 검토: measured·percent 만 보면 free/phys 누락·NaN·inf 가 정상으로 통과했다.
+    판정에 쓰는 필드 전부 유한·범위 검사 · 측정 시각(ts)이 있으면 신선도(60초)도 · 문제 목록 (빈 목록 = 정상)."""
+    import math
+    if not isinstance(cm, dict) or not cm.get("measured"):
+        return ["measured"]
+    out = []
+    for k, lo, hi in (("percent", 0, 100), ("free_gb", -1e6, 1e6), ("phys_free_gb", 0, 1e6)):
+        try:
+            v = float(cm.get(k))
+            if not (math.isfinite(v) and lo <= v <= hi):
+                out.append(k)
+        except (TypeError, ValueError):
+            out.append(k)
+    if cm.get("ts") is not None:
+        try:
+            if abs(time.time() - float(cm["ts"])) > 60:
+                out.append("stale")
+        except (TypeError, ValueError):
+            out.append("ts")
+    return out
+
+
 def memory_admission(cm: Optional[dict] = None, pol: Optional[dict] = None, prior: Optional[str] = None,
                      est_gb: Optional[float] = None) -> dict:
     """공통 자원 admission — 실제 commit·물리 여유와 작업당 예상 비용(est_gb · 없으면 정책 agent_est_gb)으로
@@ -212,14 +235,34 @@ def memory_admission(cm: Optional[dict] = None, pol: Optional[dict] = None, prio
     pol = _policy() if pol is None else pol
     t = admission_thresholds(pol)
     cm = commit_memory() if cm is None else (cm or {})
-    per = t["task_est_gb"] if est_gb is None else max(0.0, float(est_gb))
-    if not cm.get("measured") or cm.get("percent") is None:
-        return {"level": "unknown", "max_parallel": t["constrained_parallel"], "defer_optional": True, "commit": cm,
-                "reason": "commit 측정 불가 — 필수 작업은 계속 · 선택 작업 제한", "thresholds": t}
-    pct, free, phys = float(cm["percent"]), cm.get("free_gb"), cm.get("phys_free_gb")
+    per = t["task_est_gb"] if est_gb is None else _num(est_gb, t["task_est_gb"], 0, 64, t["invalid"], "est_gb")
+    bad = _measure_problems(cm)
+    if bad and "stale" not in bad:   # 부분 측정이어도 유효한 필드만으로 blocked 가 확정되면 blocked (unknown 이 더 느슨해지지 않게)
+        import math
+
+        def ok(k):
+            try:
+                return k not in bad and math.isfinite(float(cm.get(k)))
+            except (TypeError, ValueError):
+                return False
+        need0 = per * t["margin"]
+        hits = [f"commit {cm['percent']}%" for _ in [0] if ok("percent") and float(cm["percent"]) > t["block_pct"]]
+        hits += ["commit 여유 부족" for _ in [0] if ok("free_gb") and float(cm["free_gb"]) - need0 < t["min_free_gb"]]
+        hits += ["물리 RAM 여유 부족" for _ in [0]
+                 if ok("phys_free_gb") and float(cm["phys_free_gb"]) - need0 < t["min_phys_free_gb"]]
+        if hits:
+            return {"level": "blocked", "max_parallel": 0, "defer_optional": True, "commit": cm, "measure_invalid": bad,
+                    "reason": f"가상 메모리(commit) {cm.get('used_gb')}/{cm.get('limit_gb')}GB · 여유 {cm.get('free_gb')}GB"
+                              f" · 측정 불완전({', '.join(bad)})이지만 {' · '.join(hits)} → blocked · 새로 시작 가능 0",
+                    "thresholds": t}
+    if bad:
+        return {"level": "unknown", "max_parallel": min(t["max_parallel"], t["constrained_parallel"]),
+                "defer_optional": True, "commit": cm, "measure_invalid": bad,
+                "reason": f"측정 불완전({', '.join(bad)}) — 필수 작업은 계속 · 선택 작업 제한", "thresholds": t}
+    pct, free, phys = float(cm["percent"]), float(cm["free_gb"]), float(cm["phys_free_gb"])
     need = per * t["margin"]
-    low_commit = free is not None and float(free) - need < t["min_free_gb"]
-    low_phys = phys is not None and float(phys) - need < t["min_phys_free_gb"]
+    low_commit = free - need < t["min_free_gb"]
+    low_phys = phys - need < t["min_phys_free_gb"]
     if low_commit or low_phys or pct > t["block_pct"]:
         level = "blocked"
     else:
@@ -232,10 +275,7 @@ def memory_admission(cm: Optional[dict] = None, pol: Optional[dict] = None, prio
     par = {"normal": t["max_parallel"], "constrained": min(t["max_parallel"], t["constrained_parallel"]),
            "blocked": 0}[level]
     if par and need > 0:
-        budgets = [(float(free) - t["min_free_gb"]) / need] if free is not None else []
-        budgets += [(float(phys) - t["min_phys_free_gb"]) / need] if phys is not None else []
-        if budgets:
-            par = max(0, min(par, int(min(budgets))))
+        par = max(0, min(par, int(min((free - t["min_free_gb"]) / need, (phys - t["min_phys_free_gb"]) / need))))
     why = ("commit 여유 부족" if low_commit else "") or ("물리 RAM 여유 부족" if low_phys else "")
     reason = (f"가상 메모리(commit) {cm.get('used_gb')}/{cm.get('limit_gb')}GB ({pct}%) · 여유 {free}GB · 물리 여유 {phys}GB"
               f" · 작업당 {need:.2f}GB → {level} · 새로 시작 가능 {par}" + (f" · {why}" if why else "")
@@ -311,6 +351,173 @@ def admission_now(cm: Optional[dict] = None, pol: Optional[dict] = None, est_gb:
         finally:
             if fd is not None and pl is not None:
                 pl.release(fd)
+
+
+def _mem_reservation_path() -> Optional[Path]:
+    """R375 2차 검토 P0: 호스트 공통 메모리 예약 장부 — 운영/시험 경계는 히스테리시스 기록과 같다."""
+    env = os.environ.get("ORCA_MEM_RESERVATIONS", "").strip()
+    if env:
+        return Path(env)
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return None
+    if not IS_OPERATIONAL_ROOT:
+        return STATE_FILE.with_name("_memory-reservations.json")
+    return OPERATIONAL_STATE_FILE.with_name("memory-reservations.json")
+
+
+def _proc_start(pid: int) -> Optional[float]:
+    """프로세스 시작 시각 (PID 재사용 구분) · 확인 불가 = None · 없는 프로세스 = -1."""
+    try:
+        import psutil
+        return round(psutil.Process(int(pid)).create_time(), 3)
+    except Exception as e:  # noqa: BLE001
+        return -1.0 if type(e).__name__ == "NoSuchProcess" else None
+
+
+def _live_mem(book: dict, now: float) -> dict:
+    """살아 있는 예약만 — 주인 프로세스 종료(OOM·강제 종료 포함)·PID 재사용(시작 시각 다름)·TTL 지남·미래 시각 = 제외."""
+    live = {}
+    for rid, e in (book.get("reservations") or {}).items():
+        try:
+            ts, ttl, gb = float(e["ts"]), float(e["ttl"]), float(e["gb"])
+        except Exception:  # noqa: BLE001 — 손상 항목 제외
+            continue
+        if not (now - ttl <= ts <= now + 60) or not (0 <= gb < 1e6):
+            continue
+        st = _proc_start(e.get("pid", 0))
+        if st == -1.0 or (st is not None and e.get("start") is not None and abs(st - float(e["start"])) > 1):
+            continue
+        live[rid] = e
+    return live
+
+
+class _MemBook:
+    """예약 장부 잠금 (스레드 잠금 + proc_lock OS 잠금 · 주인이 죽으면 커널이 해제). 잠금 실패 = ok False."""
+    def __init__(self, path: Path):
+        self.path, self.fd, self.pl, self.ok = path, None, None, False
+
+    def __enter__(self):
+        _ADM_THREAD_LOCK.acquire()
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import proc_lock as pl
+            self.pl = pl
+            for _ in range(40):
+                self.fd = pl.try_lock(str(self.path) + ".lock")
+                if self.fd is not None:
+                    break
+                time.sleep(0.05)
+        except Exception:  # noqa: BLE001
+            self.fd = None
+        self.ok = self.fd is not None
+        return self
+
+    def read(self) -> dict:
+        try:
+            d = json.loads(self.path.read_text(encoding="utf-8"))
+            return d if isinstance(d, dict) else {}
+        except Exception:  # noqa: BLE001
+            return {}
+
+    def write(self, d: dict) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+        tmp.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, self.path)
+
+    def __exit__(self, *a):
+        try:
+            if self.fd is not None and self.pl is not None:
+                self.pl.release(self.fd)
+        finally:
+            _ADM_THREAD_LOCK.release()
+
+
+def _observed_est(book: dict, base: float) -> float:
+    """관측 비용 기반 조정 — 해제 때 기록된 실제 peak 가 5건 이상이면 p90 과 정책값 중 큰 값 (낮추지 않음 · 안전 쪽)."""
+    obs = sorted(float(x) for x in (book.get("observed_gb") or []) if isinstance(x, (int, float)) and 0 <= x < 64)
+    if len(obs) < 5:
+        return base
+    return max(base, obs[min(len(obs) - 1, int(len(obs) * 0.9))])
+
+
+def reserve_memory(n_wanted: int, owner: str, est_gb: Optional[float] = None, essential: bool = False,
+                   pol: Optional[dict] = None, cm: Optional[dict] = None) -> dict:
+    """판정과 예약을 한 잠금 안에서 — 다른 프로세스가 이미 예약한 양을 측정 여유에서 빼고 판정한 뒤 허용 수만큼 장부에 적는다.
+    (예전: admission_now 의 잠금이 단계 기록까지만 보호 → 독립 DAG 두 개가 같은 여유를 각자 소비)
+    반환 = admission dict + granted(예약 id 목록). 끝나면 반드시 release_memory(id) — 해제 못 하고 죽으면 PID·TTL 로 자동 만료.
+    essential=True (필수 복구) 는 선택 작업 예약을 여유에서 빼지 않는다 (선택 작업 예약이 필수 경로를 굶기지 않게).
+    장부 잠금 실패·기록 실패 = 예약 없이 판정만 (reserved False · 호출부는 기존처럼 시작 직전 memory_gate 로 재확인)."""
+    pol = _policy() if pol is None else pol
+    t = admission_thresholds(pol)
+    path = _mem_reservation_path()
+    n_wanted = max(0, int(n_wanted))
+    if not path:
+        adm = admission_now(cm, pol, est_gb)
+        adm.update(granted=[], reserved=False, reserved_gb_others=0.0)
+        adm["max_parallel"] = min(adm["max_parallel"], n_wanted)
+        return adm
+    ttl = _num(os.environ.get("ORCA_MEM_RESERVATION_TTL_SEC", pol.get("mem_reservation_ttl_sec", 1800)),
+               1800, 30, 86400, t["invalid"], "mem_reservation_ttl_sec")
+    with _MemBook(path) as mb:
+        book = mb.read() if mb.ok else {}
+        now = time.time()
+        live = _live_mem(book, now)
+        base = t["task_est_gb"] if est_gb is None else _num(est_gb, t["task_est_gb"], 0, 64, t["invalid"], "est_gb")
+        per = _observed_est(book, base)
+        others = sum(float(e["gb"]) for e in live.values() if (e.get("essential") or not essential))
+        cm0 = commit_memory() if cm is None else dict(cm or {})
+        adj = dict(cm0)
+        if not _measure_problems(cm0) and others:
+            adj["free_gb"] = round(float(cm0["free_gb"]) - others, 3)
+            adj["phys_free_gb"] = round(max(0.0, float(cm0["phys_free_gb"]) - others), 3)
+        adm = admission_now(adj, pol, per)
+        k = min(n_wanted, int(adm.get("max_parallel") or 0))
+        granted = []
+        if mb.ok and k:
+            start = _proc_start(os.getpid())
+            for i in range(k):
+                rid = f"{os.getpid()}-{threading.get_ident()}-{int(now * 1000)}-{i}"
+                live[rid] = {"owner": str(owner)[:80], "pid": os.getpid(), "start": start if start and start > 0 else None,
+                             "gb": round(per * t["margin"], 3), "ts": now, "ttl": ttl, "essential": bool(essential)}
+                granted.append(rid)
+            try:
+                mb.write({"reservations": live, "observed_gb": (book.get("observed_gb") or [])[-50:]})
+            except Exception:  # noqa: BLE001 — 기록 실패 = 예약 없음 (시작 수는 그대로 · 호출부 재확인)
+                for rid in granted:
+                    live.pop(rid, None)
+                granted = []
+        adm.update(granted=granted, reserved=bool(granted), reserved_gb_others=round(others, 3), est_gb_used=per,
+                   book_locked=mb.ok)
+        adm["max_parallel"] = k
+        return adm
+
+
+def release_memory(ids, observed_gb: Optional[float] = None) -> bool:
+    """예약 해제 (시작 실패·정상 종료·예외 모두 호출) · observed_gb = 실제 peak (관측 비용 조정용 · 최근 50건)."""
+    import math
+    path = _mem_reservation_path()
+    ids = [ids] if isinstance(ids, str) else list(ids or [])
+    if not path or not ids:
+        return False
+    with _MemBook(path) as mb:
+        if not mb.ok:
+            return False
+        book = mb.read()
+        live = _live_mem(book, time.time())
+        for rid in ids:
+            live.pop(rid, None)
+        obs = list(book.get("observed_gb") or [])
+        try:
+            if observed_gb is not None and math.isfinite(float(observed_gb)) and 0 <= float(observed_gb) < 64:
+                obs.append(round(float(observed_gb), 3))
+        except (TypeError, ValueError):
+            pass
+        try:
+            mb.write({"reservations": live, "observed_gb": obs[-50:]})
+            return True
+        except Exception:  # noqa: BLE001
+            return False
 
 
 def memory_gate(pol: Optional[dict] = None, cm: Optional[dict] = None, est_gb: Optional[float] = None) -> Optional[dict]:
