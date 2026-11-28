@@ -918,7 +918,7 @@ def test_r375_spool_ack_failure_no_duplicate(tmp_path, monkeypatch, done_fails):
     assert _t_rows(db) == [9, 1, 10]                                       # 중복 반영 없음
     d = m.spool_dir(db)
     assert not list(d.glob("*.done")) and not list(d.glob("*.inflight"))
-    assert (len(list((d / "unknown").iterdir())) == 1) if done_fails else not (d / "unknown").exists()
+    assert not (d / "unknown").exists()                                  # 남은 점유 파일은 반영 증거로 정리 (재생 X · 불명 처리 X)
 
 
 def test_r375_spool_event_prevalidated_no_partial_commit(tmp_path):
@@ -971,4 +971,128 @@ def test_r375_ping_pong_spool_keeps_event_time_and_schema(tmp_path, monkeypatch)
     assert m.record("b.py", "d", None, "s") == 1
     got = dict(sqlite3.connect(db).execute("SELECT path, ts FROM ping_pong_tracker"))
     assert got["a.py"] == ts                                                # 재생돼도 발생 시각 그대로
+
+
+def _t_inflight(m, db, x, eid):
+    d = m.spool_dir(db)
+    d.mkdir(exist_ok=True)
+    (d / f"{eid}.inflight").write_text(json.dumps({"id": eid, "ops": [["INSERT INTO t VALUES(?)", [x]]]}),
+                                       encoding="utf-8")
+
+
+def test_r375_spool_crash_after_claim_is_replayed(tmp_path):
+    """18차 검토 P0: 점유 직후·commit 직전 종료로 남은 .inflight → 반영 증거 없음 = commit 안 됨 → 재생 (영구 미반영 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    _t_inflight(m, db, 1, "00000000000000000001-claim")
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok+replay1"
+    assert _t_rows(db) == [9, 1]
+    assert not list(m.spool_dir(db).iterdir()) or not list(m.spool_dir(db).glob("*.*"))
+
+
+def test_r375_spool_crash_after_commit_not_replayed(tmp_path):
+    """commit 직후·삭제 전 종료 → 증거 있음 → 정리만 (재생 X · 중복 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    c = sqlite3.connect(db)
+    c.execute(m.SPOOL_APPLIED_DDL)
+    c.execute("INSERT INTO t VALUES(1)")
+    c.execute("INSERT INTO hook_spool_applied VALUES('00000000000000000001-done', 't', 'x')")   # 같은 트랜잭션으로 반영된 상태
+    c.commit()
+    c.close()
+    _t_inflight(m, db, 1, "00000000000000000001-done")
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok"
+    assert _t_rows(db) == [1, 9]
+    assert not list(m.spool_dir(db).glob("*.inflight"))
+
+
+def test_r375_spool_crash_mid_transaction_rolls_back_and_replays(tmp_path, monkeypatch):
+    """SQL 실행 뒤 commit 직전 종료 → 증거·데이터 모두 rollback (원자성) → 다음 회차 재생 1회."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    _t_spool_one(m, db, 1)
+
+    class Crash(BaseException):
+        pass
+    real = m.BoundedSession.commit
+    calls = []
+
+    def boom(self):
+        calls.append(1)
+        if len(calls) == 2:                                                 # 1번째 = 본 기록 · 2번째 = 스풀 재생 commit
+            raise Crash()
+        return real(self)
+    monkeypatch.setattr(m.BoundedSession, "commit", boom)
+    try:
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])])
+    except Crash:
+        pass
+    monkeypatch.setattr(m.BoundedSession, "commit", real)
+    assert _t_rows(db) == [9] and list(m.spool_dir(db).glob("*.inflight"))    # 프로세스 종료 흉내 · 점유 파일 남음
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])]) == "ok+replay1"
+    assert _t_rows(db) == [9, 10, 1]
+
+
+def test_r375_spool_concurrent_consumers_no_duplicate(tmp_path):
+    """동시 소비자 여러 개 → OS 잠금 + 반영 증거로 이벤트당 정확히 1회."""
+    import threading
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    for x in range(1, 31):
+        _t_spool_one(m, db, x)
+    errs = []
+
+    def worker(k):
+        try:
+            for j in range(4):
+                m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [1000 + k * 10 + j])], budget=2.0)
+        except Exception as e:  # noqa: BLE001
+            errs.append(e)
+    ts = [threading.Thread(target=worker, args=(k,)) for k in range(4)]
+    [t.start() for t in ts]
+    [t.join() for t in ts]
+    for _ in range(5):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [5000])], budget=2.0)
+    rows = [x for x in _t_rows(db) if x < 1000]
+    assert not errs and sorted(rows) == list(range(1, 31))                 # 유실 0 · 중복 0
+
+
+def test_r375_spool_legacy_migration_interrupted_no_duplicate(tmp_path, monkeypatch):
+    """18차 검토 P0: 이관 도중 실패 → 그 회차는 소비 안 함 · 재시작해도 같은 이벤트 1회만 (결정적 id + 반영 증거)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    lines = [json.dumps({"kind": "t", "ts": i, "ops": [["INSERT INTO t VALUES(?)", [i]]]}) for i in range(1, 6)]
+    m.spool_path(db).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    real = m.os.replace
+    n = []
+
+    def flaky(a, b):
+        if ".tmp-" in str(a) and "legacy" in str(a):
+            n.append(1)
+            if len(n) == 3:
+                raise OSError("injected")                                   # 3번째 이벤트 생성 중 실패
+        return real(a, b)
+    monkeypatch.setattr(m.os, "replace", flaky)
+    assert m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [9])]) == "ok"   # 이관 실패 회차 = 소비 안 함
+    monkeypatch.setattr(m.os, "replace", real)
+    assert _t_rows(db) == [9]
+    for _ in range(3):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [10])])
+    assert sorted(x for x in _t_rows(db) if x < 9) == [1, 2, 3, 4, 5]
+    assert not m.spool_path(db).with_name("hook-db-spool.jsonl.migrating").exists()
+
+
+def test_r375_spool_legacy_migration_bounded_batches(tmp_path, monkeypatch):
+    """큰 예전 스풀은 SPOOL_MIGRATE_BATCH 줄씩 · 진행 위치 기록 후 다음 회차 이어서 (한 회차 전체 읽기·쓰기 X)."""
+    m = _sdb_mod()
+    db = _t_db(tmp_path)
+    monkeypatch.setattr(m, "SPOOL_MIGRATE_BATCH", 3)
+    lines = [json.dumps({"kind": "t", "ts": i, "ops": [["INSERT INTO t VALUES(?)", [i]]]}) for i in range(1, 8)]
+    m.spool_path(db).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert len([x for x in _t_rows(db) if x < 100]) == 3
+    assert m.spool_path(db).with_name("hook-db-spool.jsonl.migrating.pos").exists()
+    for _ in range(4):
+        m.bounded_insert(db, "t", [("INSERT INTO t VALUES(?)", [100])])
+    assert sorted(x for x in _t_rows(db) if x < 100) == list(range(1, 8))
 

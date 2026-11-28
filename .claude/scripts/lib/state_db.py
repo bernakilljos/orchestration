@@ -199,6 +199,8 @@ def spool_append(db_path, kind: str, ops: list, why: str, setup: tuple = ()) -> 
     tmp = d / f".tmp-{eid}"
     with open(tmp, "w", encoding="utf-8") as f:
       f.write(data)
+      f.flush()
+      os.fsync(f.fileno())                  # 내용을 디스크에 내린 뒤 이름 공개 (전원 장애 때 반쪽 이벤트 X)
     os.replace(tmp, d / f"{eid}.json")
     return "spooled"
   except Exception as e:  # noqa: BLE001
@@ -227,47 +229,92 @@ def _park(db_path, src: Path, sub: str, why: str) -> None:
     _spool_diag(db_path, f"spool {sub}/ 이동 실패(그대로 둠): {src.name} — {type(e).__name__} · {why}")
 
 
-def _migrate_legacy(db_path, d: Path) -> None:
-  """예전 단일 스풀 파일 → 이벤트 파일 (잠금 안 · 반영은 이관을 다 끝낸 뒤라 재시도해도 중복 없음 · 이름 결정적)."""
+SPOOL_APPLIED_DDL = ("CREATE TABLE IF NOT EXISTS hook_spool_applied ("
+                     "event_id TEXT PRIMARY KEY, kind TEXT, applied_at TEXT)")
+SPOOL_MIGRATE_BATCH = 200               # 예전 스풀 이관: 한 번에 옮기는 줄 수 (남은 마감 안에서만 · 진행 위치 기록 후 다음 회차 이어서)
+SPOOL_SCAN_MAX = 2000                   # 재생 1회에 훑는 폴더 항목 상한 (5000건 대기에서도 응답 경로 묶음)
+
+
+def _migrate_legacy(db_path, d: Path, sess: "BoundedSession") -> bool:
+  """예전 단일 스풀 파일 → 이벤트 파일 (잠금 안 · 남은 마감 안에서 SPOOL_MIGRATE_BATCH 줄씩 · 진행 바이트 위치 기록).
+  이벤트 id = 파일 전체 해시 + 줄 번호 + 줄 해시 (결정적) → 중간 실패·재시작으로 같은 이벤트를 다시 만들어도
+  hook_spool_applied 가 한 번만 반영 (DB 멱등). 반환 = 이관 끝(또는 할 것 없음) 여부."""
   import hashlib
   sp = spool_path(db_path)
   mig = sp.with_name(sp.name + ".migrating")
+  pos_f = sp.with_name(sp.name + ".migrating.pos")
   if sp.exists() and not mig.exists():
     try:
       os.replace(sp, mig)
     except OSError:
-      return                                  # 예전 판 writer 가 열고 있음 → 다음에
+      return True                             # 예전 판 writer 가 열고 있음 → 다음에 (이관 대상 아님으로 진행)
   if not mig.exists():
-    return
+    return True
   d.mkdir(parents=True, exist_ok=True)
-  raw = mig.read_bytes().decode("utf-8", errors="replace").splitlines()
-  for i, ln in enumerate(raw):
-    if not ln.strip():
-      continue
-    name = f"00000000000000000000-legacy-{i:06d}-{hashlib.sha1(ln.encode('utf-8')).hexdigest()[:12]}"
+  fh = hashlib.sha1()
+  with open(mig, "rb") as f:                  # 파일 identity (같은 줄 번호·내용이어도 다른 파일이면 다른 id)
+    for chunk in iter(lambda: f.read(1 << 20), b""):
+      fh.update(chunk)
+  fid = fh.hexdigest()[:12]
+  try:
+    pos, idx = (int(x) for x in pos_f.read_text(encoding="ascii").split())
+  except (OSError, ValueError):
+    pos, idx = 0, 0
+  moved = 0
+  with open(mig, "rb") as f:
+    f.seek(pos)
+    while moved < SPOOL_MIGRATE_BATCH and sess.remaining() > 0.1:
+      raw = f.readline()
+      if not raw:
+        break
+      ln = raw.decode("utf-8", errors="replace").rstrip("\r\n")
+      i, idx = idx, idx + 1
+      if ln.strip():
+        name = f"00000000000000000000-legacy-{fid}-{i:06d}-{hashlib.sha1(ln.encode('utf-8')).hexdigest()[:8]}"
+        try:
+          rec = json.loads(ln)
+          ok = isinstance(rec, dict)
+        except json.JSONDecodeError:
+          ok = False
+        if ok:
+          body = json.dumps({"id": name, "ts": rec.get("ts"), "kind": rec.get("kind"), "why": rec.get("why"),
+                             "setup": [], "ops": rec.get("ops") or []}, ensure_ascii=False)
+          dst = d / f"{name}.json"
+        else:
+          (d / "held").mkdir(exist_ok=True)
+          body, dst = ln, d / "held" / f"{name}.legacy-line"
+        tmp = d / f".tmp-{name}"
+        tmp.write_text(body, encoding="utf-8")
+        os.replace(tmp, dst)
+        moved += 1
+      pos = f.tell()
+    finished = not f.readline()
+  if finished:
+    mig.unlink()
     try:
-      rec = json.loads(ln)
-      ok = isinstance(rec, dict)
-    except json.JSONDecodeError:
-      ok = False
-    if ok:
-      rec = {"id": name, "ts": rec.get("ts"), "kind": rec.get("kind"), "why": rec.get("why"),
-             "setup": [], "ops": rec.get("ops") or []}
-      body, dst = json.dumps(rec, ensure_ascii=False), d / f"{name}.json"
-    else:
-      (d / "held").mkdir(exist_ok=True)
-      body, dst = ln, d / "held" / f"{name}.legacy-line"
-    tmp = d / f".tmp-{name}"
-    tmp.write_text(body, encoding="utf-8")
-    os.replace(tmp, dst)
-  mig.unlink()
-  _spool_diag(db_path, f"예전 스풀 {len(raw)}줄 → 이벤트 파일 이관")
+      pos_f.unlink()
+    except OSError:
+      pass
+    _spool_diag(db_path, f"예전 스풀 이관 끝 ({idx}줄 · 파일 {fid})")
+    return True
+  pos_f.write_text(f"{pos} {idx}", encoding="ascii")
+  return False
+
+
+def _applied(sess: "BoundedSession", eid: str):
+  """반영 증거 조회 — True/False · 조회 실패 = None (판단 보류)."""
+  try:
+    return sess.sql("SELECT 1 FROM hook_spool_applied WHERE event_id = ?", (eid,)).fetchone() is not None
+  except Exception:  # noqa: BLE001
+    return None
 
 
 def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
   """남은 시간 안에서 오래된 이벤트부터 반영 — 반영한 이벤트 수.
-  소비 계약 (OS 잠금으로 소비자 1곳): x.json → x.inflight(점유) → 선검증 → 실행·commit → inflight 삭제.
-  commit 뒤 삭제 실패 = .done 으로 표시(다음에 삭제만) · 이전 소비자가 남긴 .inflight = 반영 여부 불명 → unknown/ 보존(재생 X · 중복 X)."""
+  멱등 소비 계약 (R375 18차 검토): 반영 증거 hook_spool_applied(event_id) 를 이벤트 SQL 과 **같은 트랜잭션**에 기록.
+  x.json → x.inflight(점유) → 선검증 → [증거 INSERT + setup + ops] commit → 파일 삭제(실패 시 .done).
+  이전 소비자가 남긴 .inflight 는 증거로 결정: 증거 있음 = commit 됨 → 삭제만 · 증거 없음 = commit 안 됨(트랜잭션 원자성) → .json 으로 되돌려 재생.
+  이미 증거가 있는 이벤트(이관 재시작 등)는 SQL 을 다시 실행하지 않고 정리만. unknown/ (증거 장치 전 보관분)은 자동 재생하지 않음."""
   import heapq
   d = spool_dir(db_path)
   if (not d.exists() and not spool_path(db_path).exists()) or sess.remaining() <= 0.05:
@@ -284,31 +331,63 @@ def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
   done = 0
   try:
     try:
-      _migrate_legacy(db_path, d)
-    except Exception as e:  # noqa: BLE001
-      _spool_diag(db_path, f"예전 스풀 이관 보류: {type(e).__name__}")
+      sess.sql(SPOOL_APPLIED_DDL)
+    except Exception as e:  # noqa: BLE001 — 증거 표 없이는 소비하지 않음 (멱등 보장 불가)
+      _spool_diag(db_path, f"반영 증거 표 준비 실패 — 이번 회차 재생 안 함 ({type(e).__name__})")
+      return 0
+    try:
+      _migrate_legacy(db_path, d, sess)
+    except Exception as e:  # noqa: BLE001 — 이관 중 실패 = 이번 회차 소비 안 함 (다음 회차 이어서 · 멱등이라 중복 X)
+      _spool_diag(db_path, f"예전 스풀 이관 보류 — 이번 회차 재생 안 함: {type(e).__name__}")
+      return 0
     if not d.exists():
       return 0
-    now, names = time.time(), []
+    now, names, scanned = time.time(), [], 0
     with os.scandir(d) as it:
       for e in it:
+        scanned += 1
+        if scanned > SPOOL_SCAN_MAX or (scanned % 200 == 0 and sess.remaining() <= 0.1):
+          break                                # 큰 대기열에서도 한 회차 훑기량 묶음 (나머지는 다음 회차)
         if not e.is_file():
           continue
-        if e.name.endswith(".done"):
+        nm = e.name
+        if nm.endswith(".done"):
           try:
             os.unlink(e.path)
           except OSError:
             pass
-        elif e.name.endswith(".inflight"):
-          _park(db_path, Path(e.path), "unknown", "이전 소비 중단 — 반영 여부 불명 (재생하지 않음)")
-        elif e.name.startswith(".tmp-"):
+        elif nm.endswith(".inflight"):
+          eid_guess = nm[:-9]
+          src = d / (eid_guess + ".json")
+          try:
+            with open(e.path, "rb") as f:
+              rec = json.loads(f.read(SPOOL_EVENT_MAX_BYTES + 1).decode("utf-8"))
+            eid = rec.get("id") if isinstance(rec, dict) else None
+          except (OSError, ValueError):
+            eid = None
+          st_ = _applied(sess, eid) if isinstance(eid, str) else None
+          if st_ is True:
+            try:
+              os.unlink(e.path)                  # commit 됨 → 정리만 (재생 X)
+            except OSError:
+              pass
+          elif st_ is False:
+            try:
+              os.replace(e.path, src)            # commit 안 됨 → 되돌려 재생 대상으로
+              names.append(src.name)
+            except OSError:
+              pass
+          elif eid is None:
+            _park(db_path, Path(e.path), "held", "중단된 점유 파일이 손상 (아무것도 실행 안 함)")
+          # 조회 실패(None) = 판단 보류 · 그대로 두고 다음 회차
+        elif nm.startswith(".tmp-"):
           try:
             if now - e.stat().st_mtime > SPOOL_STALE_TMP_SEC:
               _park(db_path, Path(e.path), "held", "쓰다 만 임시 파일")
           except OSError:
             pass
-        elif e.name.endswith(".json"):
-          names.append(e.name)
+        elif nm.endswith(".json"):
+          names.append(nm)
     for name in heapq.nsmallest(max_events, names):
       if sess.remaining() <= 0.05:
         break
@@ -326,10 +405,21 @@ def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
       if not _valid_event(rec):
         _park(db_path, inf, "held", "손상·크기 초과·허용 밖 문장 (아무것도 실행 안 함)")
         continue
+      dup = False
       try:
-        for stmt, params in (rec.get("setup") or []) + rec["ops"]:
+        for stmt, params in rec.get("setup") or []:
           sess.sql(stmt, params)
-        sess.commit()
+        try:
+          sess.sql("INSERT INTO hook_spool_applied(event_id, kind, applied_at) VALUES(?, ?, ?)",
+                   (rec["id"], str(rec.get("kind") or ""), time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())))
+        except sqlite3.IntegrityError:
+          dup = True                             # 이미 반영된 이벤트 (이관 재시작·중단 후 재생성) → SQL 재실행 X
+        if not dup:
+          for stmt, params in rec["ops"]:
+            sess.sql(stmt, params)
+          sess.commit()
+        else:
+          sess.conn.rollback()
       except Exception as e:  # noqa: BLE001
         try:
           sess.conn.rollback()
@@ -339,18 +429,19 @@ def spool_replay(sess: "BoundedSession", db_path, max_events: int = 20) -> int:
           try:
             os.replace(inf, src)
           except OSError:
-            _spool_diag(db_path, f"spool 되돌리기 실패 — {inf.name} 는 다음 회차에 unknown/ 보존")
+            pass                                 # 남은 .inflight 는 다음 회차가 증거로 결정
           break
         _park(db_path, inf, "failed", f"영구 오류 {type(e).__name__}: {e}")
         continue
-      done += 1
+      if not dup:
+        done += 1
       try:
         os.unlink(inf)
       except OSError:
         try:
           os.replace(inf, d / (name[:-5] + ".done"))
         except OSError:
-          _spool_diag(db_path, f"spool 반영됨·표시 실패 — {inf.name} 는 다음 회차 unknown/ (재생 X)")
+          pass                                   # 남은 .inflight 는 다음 회차가 증거로 정리 (재생 X)
   except Exception as e:  # noqa: BLE001
     _spool_diag(db_path, f"spool replay 실패: {type(e).__name__}")
   finally:
