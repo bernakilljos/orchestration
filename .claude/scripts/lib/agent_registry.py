@@ -16,6 +16,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -204,23 +205,35 @@ def run_dag(tasks: List[Dict[str, Any]], cwd: str, max_parallel: Optional[int] =
         for tid, rid in zip(batch, grants):
             held[tid] = rid
 
+        watch = _TreeWatch([held[t] for t in batch if t in held], _sbp)
+        peak_one = {"v": None}
+
         def run_held(tid: str) -> Dict[str, Any]:
             try:
                 return run_one(tid)
-            finally:                       # 시작 실패·예외·정상 종료 모두 해제 (죽으면 장부가 PID·TTL 로 만료)
-                rid = held.pop(tid, None)
-                if rid:
-                    _sbp.release_memory(rid)
-        with ThreadPoolExecutor(max_workers=len(batch)) as ex:
-            futs = {tid: ex.submit(run_held, tid) for tid in batch}
-            for tid, f in futs.items():
-                try:
-                    results[tid] = f.result()
-                except Exception as e:
-                    results[tid] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
-                pending.pop(tid, None)
-        if grants[len(batch):]:            # 허용 > 실제 시작 = 남는 예약 즉시 반환
-            _sbp.release_memory(grants[len(batch):])
+            finally:                       # 시작 실패·예외·정상 종료 모두 해제 (부모가 죽으면 자식 생존 동안 유지 · 전부 종료 시 만료)
+                if len(batch) > 1:         # 병렬 wave = 끝난 작업부터 바로 반환 · 단일 작업 wave 는 peak 측정 뒤 아래에서 관측값과 함께
+                    rid = held.pop(tid, None)
+                    if rid:
+                        _sbp.release_memory(rid)
+        try:
+            watch.start()
+            with ThreadPoolExecutor(max_workers=len(batch)) as ex:
+                futs = {tid: ex.submit(run_held, tid) for tid in batch}
+                for tid, f in futs.items():
+                    try:
+                        results[tid] = f.result()
+                    except Exception as e:
+                        results[tid] = {"status": "failed", "reason": f"{type(e).__name__}: {e}"}
+                    pending.pop(tid, None)
+        finally:                           # executor 생성·submit 실패에도 예약 회수 · 관측 peak (단일 작업 wave 만 · 병렬은 귀속 불명)
+            peak_one["v"] = watch.stop()
+            left = [held.pop(t) for t in batch if t in held]
+            if left:
+                _sbp.release_memory(left, observed_gb=peak_one["v"] if len(batch) == 1 else None)
+            if grants[len(batch):]:
+                _sbp.release_memory(list(grants[len(batch):]))
+            mem_log[-1]["peak_tree_gb"] = peak_one["v"]
         for tid in batch:
             t = by_id[tid]
             if results[tid].get("status") != "ok" or not t.get("may_spawn"):
@@ -264,6 +277,46 @@ def _write_set(t: Dict[str, Any]) -> set:
     if "edit" not in (t.get("needs") or []):
         return set()
     return set(t.get("allow_paths") or ["*"])        # 범위 미지정 편집 = 전체 잠금 (단독 실행)
+
+
+class _TreeWatch:
+    """wave 동안 이 프로세스의 자식 트리를 주기 측정 — 자식 PID 를 예약에 붙이고(부모 종료 후에도 자식 생존 동안 예약 유지)
+    지금 쓰는 RAM 을 예약 used_gb 로 기록(측정 여유와 이중 차감 방지) · 끝나면 자식 트리 peak(GB) 반환 (측정 불가 = None)."""
+    def __init__(self, rids, sbp, interval: float = 2.0):
+        self.rids, self.sbp, self.interval = [r for r in rids if r], sbp, interval
+        self.peak, self._stop, self._th = None, threading.Event(), None
+
+    def _sample(self):
+        try:
+            import psutil
+            kids = psutil.Process().children(recursive=True)
+            rss = 0
+            for k in kids:
+                try:
+                    rss += k.memory_info().rss
+                except Exception:  # noqa: BLE001
+                    pass
+            gb = round(rss / 1024 ** 3, 3)
+            self.peak = gb if self.peak is None else max(self.peak, gb)
+            if self.rids:
+                share = gb / len(self.rids)
+                self.sbp.update_reservations(self.rids, pids=[k.pid for k in kids], used_gb=share)
+        except Exception:  # noqa: BLE001 — 측정 실패는 실행에 영향 없음
+            pass
+
+    def _run(self):
+        while not self._stop.wait(self.interval):
+            self._sample()
+
+    def start(self):
+        self._th = threading.Thread(target=self._run, daemon=True)
+        self._th.start()
+
+    def stop(self):
+        self._stop.set()
+        if self._th:
+            self._th.join(timeout=5)
+        return self.peak
 
 
 def _conflict_free(ready: List[str], by_id: Dict[str, Dict[str, Any]]) -> List[str]:

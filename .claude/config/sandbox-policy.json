@@ -18,6 +18,8 @@
   "agent_est_gb": 1.0,
   "dag_mem_wait_sec": 60,
   "mem_reservation_ttl_sec": 1800,
+  "mem_essential_parallel": 1,
+  "_mem_reservation_note2": "R375 3차 검토 — 예약 확보(장부 잠금·읽기·쓰기) 실패 = 선택 작업 0 (예약 없이 시작 X) · 필수 복구는 mem_essential_parallel 만큼 장부 밖(unbooked) 허용 · 파일 없음 = 빈 장부 · 손상·접근 실패 = 장부 사용 불가(덮어쓰지 않음) · 주인 또는 붙인 자식 PID 가 살아 있으면 TTL·시계 이동과 무관하게 유지 · TTL(mem_reservation_ttl_sec)은 소유 상태 조회 불가일 때만 · 작업이 이미 쓰는 RAM(used_gb)은 다른 판정에서 이중 차감 X · 관측 peak 는 작업 유형(kind)별 · unknown 은 전역 상한에서 다른 예약 수를 뺌",
   "_mem_reservation_note": "R375 2차 검토 — 프로세스 간 메모리 예약 장부(.claude/state/memory-reservations.json · repair_sandbox.reserve_memory/release_memory) · 판정과 예약을 한 OS 잠금 안에서 · 다른 프로세스 예약을 여유에서 빼고 판정 · 주인 종료·PID 재사용(시작 시각)·TTL·미래 시각 = 자동 만료 · 필수 복구(essential)는 선택 작업 예약을 빼지 않음 · 해제 때 실제 peak 5건+ 이면 p90 으로 작업 비용 상향(낮추지 않음) · 측정 필드 하나라도 누락·NaN·범위 밖 = unknown",
   "_mem_admission_note": "R375 공통 admission (repair_sandbox.memory_admission) — normal < constrained(80%·선택 작업 미룸·동시 실행 1) < blocked(90% 초과 또는 commit 여유 − 작업비용 < min_commit_free_gb 또는 물리 여유 − 작업비용 < min_phys_free_gb · 새 작업 0) · unknown(측정 불가) = 필수 작업 계속·선택 작업 제한 · 새로 시작 가능 수 = 정책 상한과 (여유−최소)÷(agent_est_gb×estimate_margin) 중 작은 값 · 히스테리시스 constrained→75%·blocked→85% 아래에서 해제 · run_dag 는 wave 마다 재판정 (blocked 면 dag_mem_wait_sec 대기 후 deferred) · broker 는 접수 건마다 재판정 · agent_est_gb 는 관측값으로 갱신 대상 · STD-MEMORY-001(80/90/75) 정본 값",
   "max_total_active_gb": 20,

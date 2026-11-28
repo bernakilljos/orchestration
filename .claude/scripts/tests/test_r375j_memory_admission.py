@@ -254,20 +254,29 @@ def test_cross_process_reservation_prevents_double_spend(monkeypatch, tmp_path):
     assert sb.release_memory(b["granted"]) and json.loads(p.read_text(encoding="utf-8"))["reservations"] == {}
 
 
-def test_reservation_pid_reuse_stale_future_and_essential(monkeypatch, tmp_path):
+def test_reservation_pid_reuse_ttl_only_when_unverifiable_and_essential(monkeypatch, tmp_path):
+    """3차 검토: 살아 있는 소유자의 예약은 TTL·시계 이동과 무관하게 유지 · TTL 은 소유 상태 조회 불가일 때만 · PID 재사용 = 제외."""
     import os
     import time
     p = _book(monkeypatch, tmp_path)
     now = time.time()
     me = sb._proc_start(os.getpid())
-    base = {"pid": os.getpid(), "gb": 2.4, "ttl": 600, "owner": "x"}
+    ghost = 999999                                                  # 조회 불가로 만들 PID
+    real = sb._proc_start
+    monkeypatch.setattr(sb, "_proc_start", lambda pid: None if int(pid) == ghost else real(pid))
+    base = {"gb": 2.4, "ttl": 600, "owner": "x"}
     p.write_text(json.dumps({"reservations": {
-        "reused": dict(base, start=(me or 0) - 1000, ts=now),        # 같은 PID · 다른 시작 시각 = 재사용
-        "stale": dict(base, start=me, ts=now - 700),                  # TTL 지남
-        "future": dict(base, start=me, ts=now + 3600),                # 미래 시각
+        "reused": dict(base, pid=os.getpid(), start=(me or 0) - 1000, ts=now),   # 같은 PID · 다른 시작 시각 = 재사용 → 제외
+        "unk_old": dict(base, pid=ghost, start=None, ts=now - 700),            # 조회 불가 + TTL 지남 → 제외
+        "unk_future": dict(base, pid=ghost, start=None, ts=now + 3600),        # 조회 불가 + 미래 시각 → 제외
         "bad": {"pid": "x"}}}), encoding="utf-8")
     a = sb.reserve_memory(3, "t", pol=POL, cm=FULL)
     assert a["reserved_gb_others"] == 0 and len(a["granted"]) == 2
+    d = json.loads(p.read_text(encoding="utf-8"))["reservations"]
+    for rid in a["granted"]:                                        # 내 예약을 TTL 지난·미래 시각으로 바꿔도 살아 있으면 유지
+        d[rid]["ts"] = now - 99999
+    p.write_text(json.dumps({"reservations": d}), encoding="utf-8")
+    assert set(sb._live_mem({"reservations": d}, time.time())) == set(a["granted"])
     b = sb.reserve_memory(1, "fix", essential=True, pol=POL, cm=FULL)  # 선택 작업 예약 2.4 가 필수 복구를 굶기지 않음
     assert len(b["granted"]) == 1
     c = sb.reserve_memory(1, "opt", pol=POL, cm=FULL)                 # 선택 작업은 필수 예약까지 합산 → 0
@@ -371,3 +380,143 @@ def test_partial_measurement_never_looser_than_known_fields():
         assert a["level"] in ("blocked",) or not sb._measure_problems(m2), (m, a)
         assert a["max_parallel"] == 0 or not sb._measure_problems(m2)
     assert sb.memory_admission({"measured": True, "percent": 50.0, "free_gb": 8.0}, POL)["level"] == "unknown"
+
+
+# ── 2026-11-28 3차 독립 검토 0d49fa5e 반례 ──────────────────────────────────────
+def _own(gb=2.4, **k):
+    import os
+    import time
+    return dict({"pid": os.getpid(), "start": sb._proc_start(os.getpid()), "gb": gb, "ttl": 600, "ts": time.time(),
+                 "owner": "other", "pids": []}, **k)
+
+
+def test_lock_failure_blocks_optional_but_essential_gets_limited_budget(monkeypatch, tmp_path):
+    import proc_lock
+    p = _book(monkeypatch, tmp_path)
+    fd = proc_lock.try_lock(str(p) + ".lock")                       # 다른 쪽이 장부 잠금을 쥔 상태
+    try:
+        a = sb.reserve_memory(3, "opt", pol=POL, cm=FULL)
+        assert a["max_parallel"] == 0 and a["granted"] == [] and a["book"] == "failed" and "잠금" in a["book_problem"]
+        e = sb.reserve_memory(3, "fix", essential=True, pol=POL, cm=FULL)
+        assert len(e["granted"]) == 1 and e["granted"][0].startswith("unbooked-")   # 필수 = 제한 예산 1 · 장부 밖 표시
+        assert sb.release_memory(e["granted"])
+    finally:
+        proc_lock.release(fd)
+
+
+def test_corrupt_or_unreadable_book_blocks_optional_and_is_preserved(monkeypatch, tmp_path):
+    p = _book(monkeypatch, tmp_path)
+    p.write_text("{not json", encoding="utf-8")
+    a = sb.reserve_memory(2, "opt", pol=POL, cm=FULL)
+    assert a["granted"] == [] and "손상" in a["book_problem"]
+    assert p.read_text(encoding="utf-8") == "{not json"             # 손상 장부를 덮어쓰지 않음 (진단 보존)
+    p.write_text(json.dumps({"reservations": []}), encoding="utf-8")   # 형식 오류도 손상
+    assert sb.reserve_memory(2, "opt", pol=POL, cm=FULL)["granted"] == []
+    p.unlink()
+    assert len(sb.reserve_memory(2, "opt", pol=POL, cm=FULL)["granted"]) == 2   # 파일 없음 = 빈 장부 (정상)
+
+
+def test_write_failure_yields_no_reservation(monkeypatch, tmp_path):
+    p = _book(monkeypatch, tmp_path)
+    monkeypatch.setattr(sb._MemBook, "write", lambda self, d: (_ for _ in ()).throw(OSError("disk")))
+    a = sb.reserve_memory(2, "opt", pol=POL, cm=FULL)
+    assert a["granted"] == [] and a["max_parallel"] == 0 and "쓰기" in a["book_problem"]
+    assert not p.exists()
+
+
+def test_run_dag_does_not_dispatch_without_reservation(monkeypatch, tmp_path):
+    import agent_registry as ar
+    import proc_lock
+    p = _book(monkeypatch, tmp_path)
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(FULL, free_gb=20.0, phys_free_gb=20.0))
+    monkeypatch.setattr(sb, "_policy", lambda: dict(POL, dag_mem_wait_sec=0))
+    ag = {"name": "a", "tools": ["Read"], "model": "m", "body": "", "selection": "t"}
+    monkeypatch.setattr(ar, "load_agents", lambda: [ag])
+    monkeypatch.setattr(ar, "select_agent", lambda *a, **k: ag)
+    monkeypatch.setattr(ar, "_changed_files", lambda cwd: [])
+    calls = []
+    fd = proc_lock.try_lock(str(p) + ".lock")
+    try:
+        r = ar.run_dag([{"id": "t0", "needs": ["read"], "prompt": "p"}], str(tmp_path),
+                       dispatch=lambda *a, **k: calls.append(1) or {"ok": True})
+    finally:
+        proc_lock.release(fd)
+    assert calls == [] and r["results"]["t0"].get("deferred")       # 예전: 예약 실패여도 n_start 만큼 실행
+
+
+def test_child_alive_keeps_reservation_after_parent_exit(monkeypatch, tmp_path):
+    import os
+    import subprocess
+    import time
+    p = _book(monkeypatch, tmp_path)
+    dead = subprocess.Popen([sys.executable, "-c", "pass"])
+    dead.wait()
+    time.sleep(0.2)
+    me = {"pid": os.getpid(), "start": sb._proc_start(os.getpid())}
+    book = {"reservations": {"r1": {"pid": dead.pid, "start": 1.0, "gb": 2.4, "ttl": 1, "ts": time.time() - 999,
+                                    "pids": [me]},                        # 부모 종료 · 자식(여기선 이 프로세스) 생존 · TTL 지남
+                             "r2": {"pid": dead.pid, "start": 1.0, "gb": 2.4, "ttl": 600, "ts": time.time(), "pids": []}}}
+    assert set(sb._live_mem(book, time.time())) == {"r1"}
+    g = sb.reserve_memory(1, "t", pol=POL, cm=dict(FULL, free_gb=20.0, phys_free_gb=20.0))["granted"]
+    assert sb.update_reservations(g, pids=[os.getpid()], used_gb=0.5)
+    e = json.loads(p.read_text(encoding="utf-8"))["reservations"][g[0]]
+    assert e["used_gb"] == 0.5 and e["pids"][0]["pid"] == os.getpid()
+    sb.release_memory(g)
+
+
+def test_reservation_ids_unique_in_same_ms(monkeypatch, tmp_path):
+    _book(monkeypatch, tmp_path)
+    ids = []
+    for _ in range(20):
+        ids += sb.reserve_memory(3, "t", pol=dict(POL, agent_max_parallel=3), cm=dict(FULL, free_gb=500.0, phys_free_gb=500.0))["granted"]
+    assert len(ids) == len(set(ids)) == 60
+    sb.release_memory(ids)
+
+
+def test_executor_failure_releases_reservations(monkeypatch, tmp_path):
+    import agent_registry as ar
+    p = _book(monkeypatch, tmp_path)
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(FULL, free_gb=20.0, phys_free_gb=20.0))
+    ag = {"name": "a", "tools": ["Read"], "model": "m", "body": "", "selection": "t"}
+    monkeypatch.setattr(ar, "load_agents", lambda: [ag])
+    monkeypatch.setattr(ar, "select_agent", lambda *a, **k: ag)
+    monkeypatch.setattr(ar, "_changed_files", lambda cwd: [])
+
+    class Boom:
+        def __init__(self, *a, **k):
+            raise RuntimeError("cannot start thread")
+    monkeypatch.setattr(ar, "ThreadPoolExecutor", Boom)
+    with pytest.raises(RuntimeError):
+        ar.run_dag([{"id": f"t{i}", "needs": ["read"], "prompt": "p", "allow_paths": [f"f{i}"]} for i in range(2)],
+                   str(tmp_path), dispatch=lambda *a, **k: {"ok": True})
+    assert json.loads(p.read_text(encoding="utf-8"))["reservations"] == {}
+
+
+def test_ts_nan_and_partial_measurement_subtracts_and_unknown_global_cap(monkeypatch, tmp_path):
+    assert "ts" in sb._measure_problems(dict(FULL, ts=float("nan")))
+    p = _book(monkeypatch, tmp_path)
+    p.write_text(json.dumps({"reservations": {"o1": _own(2.4)}}), encoding="utf-8")
+    part = {k: v for k, v in FULL.items() if k != "phys_free_gb"}         # 물리 누락 · commit 여유 4.5
+    a = sb.reserve_memory(1, "t", pol=POL, cm=part)
+    assert a["granted"] == [] and a["level"] == "blocked"            # 4.5 − 2.4 예약 = 2.1 → 작업 1.2 넣으면 최소 2 미만
+    p.write_text(json.dumps({"reservations": {"o1": _own(0.1)}}), encoding="utf-8")
+    big = {k: v for k, v in dict(FULL, free_gb=50.0).items() if k != "phys_free_gb"}
+    b = sb.reserve_memory(3, "t", pol=POL, cm=big)                   # unknown · 전역 상한 1 − 다른 예약 1 = 0
+    assert b["level"] == "unknown" and b["granted"] == []
+
+
+def test_used_gb_not_double_counted_and_observed_from_run_dag(monkeypatch, tmp_path):
+    import agent_registry as ar
+    p = _book(monkeypatch, tmp_path)
+    p.write_text(json.dumps({"reservations": {"o1": _own(2.4, used_gb=2.0)}}), encoding="utf-8")
+    assert sb.reserve_memory(1, "t", pol=POL, cm=FULL)["reserved_gb_others"] == 0.4   # 이미 측정에 잡힌 2.0 은 빼지 않음
+    p.write_text(json.dumps({"reservations": {}}), encoding="utf-8")
+    monkeypatch.setattr(sb, "commit_memory", lambda: dict(FULL, free_gb=20.0, phys_free_gb=20.0))
+    monkeypatch.setattr(ar._TreeWatch, "stop", lambda self: 2.5)
+    ag = {"name": "a", "tools": ["Read"], "model": "m", "body": "", "selection": "t"}
+    monkeypatch.setattr(ar, "load_agents", lambda: [ag])
+    monkeypatch.setattr(ar, "select_agent", lambda *a, **k: ag)
+    monkeypatch.setattr(ar, "_changed_files", lambda cwd: [])
+    ar.run_dag([{"id": "t0", "needs": ["read"], "prompt": "p"}], str(tmp_path), dispatch=lambda *a, **k: {"ok": True})
+    d = json.loads(p.read_text(encoding="utf-8"))
+    assert d["reservations"] == {} and d["observed"]["default"] == [2.5]   # 예전: run_held 가 관측 없이 해제
